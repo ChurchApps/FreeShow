@@ -39,7 +39,7 @@ import {
     sortedShowsList,
     stageShows,
     styles,
-    textEditActive
+    editMode
 } from "../../stores"
 import { triggerFunction } from "../../utils/common"
 import { translateText } from "../../utils/language"
@@ -232,7 +232,7 @@ const triggerActions = {
         }
 
         if (id === "textedit") {
-            textEditActive.set(!get(textEditActive))
+            editMode.set(get(editMode) === "text" ? "default" : "text")
             return
         }
 

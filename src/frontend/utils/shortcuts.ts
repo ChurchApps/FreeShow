@@ -20,7 +20,7 @@ import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
 import { changeSlidesView } from "../show/slides"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeStage, alertMessage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, projects, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, special, spellcheck, styles, textEditActive, timelineRecordingAction, topContextActive, videosData, volume } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeStage, alertMessage, contextActive, drawer, editMode, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, projects, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, special, spellcheck, styles, timelineRecordingAction, topContextActive, videosData, volume } from "../stores"
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
@@ -57,13 +57,13 @@ const shiftCtrlKeys = {
     t: () => {
         // toggle text edit
         if (get(activeShow)?.type !== "show") return
-        if (get(activePage) === "edit" && get(textEditActive)) {
+        if (get(activePage) === "edit" && get(editMode) === "text") {
             activePage.set("show")
-            textEditActive.set(false)
+            editMode.set("default")
             return
         }
         if (!get(activeEdit)?.showId) activeEdit.set({ slide: 0, items: [], showId: get(activeShow)?.id })
-        textEditActive.set(true)
+        editMode.set("text")
         activePage.set("edit")
     },
     f: () => menuClick("focus_mode"),

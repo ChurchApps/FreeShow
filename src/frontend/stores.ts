@@ -16,7 +16,7 @@ import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
-import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
+import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
 import type { AudioChannel, AudioChannelData, AudioStream, Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
@@ -178,7 +178,7 @@ export const refreshListBoxes: Writable<number> = writable(-1)
 export const triggerAutoSplit: Writable<boolean> = writable(false)
 export const storedEditMenuState: Writable<any> = writable({})
 export const copyPasteEdit: Writable<any> = writable({})
-export const textEditActive: Writable<boolean> = writable(false)
+export const editMode: Writable<EditMode> = writable("default")
 export const textEditZoom: Writable<number> = writable(10)
 export const spellcheck: Writable<{ misspelled: string; suggestions: string[] } | null> = writable(null)
 

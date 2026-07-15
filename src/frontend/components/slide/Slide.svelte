@@ -3,7 +3,7 @@
     import type { MediaStyle } from "../../../types/Main"
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
     import { removeTagsAndContent } from "../../show/slides"
-    import { activeEdit, activePage, activeTimers, effects, focusMode, fullColors, groups, media, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, slideNotesActive, slidesOptions, slideTimers, special, styles, textEditActive } from "../../stores"
+    import { activeEdit, activePage, activeTimers, editMode, effects, focusMode, fullColors, groups, media, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, slideNotesActive, slidesOptions, slideTimers, special, styles } from "../../stores"
     import { wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -195,7 +195,7 @@
     }
 
     function openNotes() {
-        if ($textEditActive) textEditActive.set(false)
+        if ($editMode === "text") editMode.set("default")
         slideNotesActive.set(true)
 
         activeEdit.set({ slide: index, items: [], showId })

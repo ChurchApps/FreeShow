@@ -77,7 +77,7 @@ import {
     styles,
     templateCategories,
     templates,
-    textEditActive,
+    editMode,
     themes,
     timers,
     toggleOutputEnabled,
@@ -2196,7 +2196,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
     }
 
     const ref = getLayoutRef()
-    if (get(textEditActive)) {
+    if (get(editMode) === "text") {
         // select all slides
         slideIds = _show()
             .slides()

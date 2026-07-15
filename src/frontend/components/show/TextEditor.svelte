@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Show } from "../../../types/Show"
     import { getQuickExample } from "../../converters/txt"
-    import { activePopup, textEditActive, textEditZoom } from "../../stores"
+    import { activePopup, textEditZoom } from "../../stores"
     import { transposeText } from "../../utils/chordTranspose"
     import { newToast } from "../../utils/common"
     import Icon from "../helpers/Icon.svelte"
@@ -42,12 +42,6 @@
 
 <FloatingInputs>
     <MaterialZoom columns={$textEditZoom / 10} min={0.5} max={2} defaultValue={1} addValue={-0.1} on:change={(e) => textEditZoom.set(e.detail * 10)} />
-
-    <div class="divider"></div>
-
-    <MaterialButton isActive title="show.text" on:click={() => textEditActive.set(false)}>
-        <Icon id="text_edit" white />
-    </MaterialButton>
 </FloatingInputs>
 
 {#if showHasChords}
