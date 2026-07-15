@@ -5,7 +5,7 @@ import { Main } from "../../types/IPC/Main"
 import type { Folders, Projects } from "../../types/Projects"
 import type { Show } from "../../types/Show"
 import { restoreFiles, startBackup } from "../data/backup"
-import { _store, getStore, safeStoreSet } from "../data/store"
+import { _store, getStore, safeStoreSet, storeFilesData } from "../data/store"
 import { compressToZip, decompressZipStream, getZipModifiedDates } from "../data/zip"
 import { sendMain } from "../IPC/main"
 import { asyncPool, createFolder, deleteFile, deleteFolderAsync, doesPathExistAsync, getDataFolderPath, getFileStatsAsync, getTimePointString, loadShows, moveFileAsync, readFileAsync, readFolderAsync, writeFileAsync } from "../utils/files"
@@ -119,9 +119,19 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
     console.log("Files:", extractedFiles.length)
 
+    // add any missing files in cloud as empty objects so they are properly merged
+    const expectedStores = Object.entries(storeFilesData)
+        .filter(([id, data]) => data.portable || id === "MEDIA")
+        .map(([id]) => `${id}.json`)
+    for (const name of expectedStores) {
+        if (!extractedFiles.some((f) => f.name === name)) {
+            extractedFiles.push({ name, content: "{}", extension: ".json", isTemp: true } as any)
+        }
+    }
+
     const showsFolder = getDataFolderPath("shows")
     const biblesFolder = getDataFolderPath("scriptures")
-
+    let showsFound = false
     const changesFile = extractedFiles.find((file) => file.name === changes_name)
     if (typeof changesFile?.content === "string") {
         const changesContent = await readFileAsync(changesFile.content)
@@ -129,6 +139,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         const deviceId = getDeviceId()
 
         if (parsedChanges && data.method !== "replace") {
+            showsFound = true
             CHANGES = parsedChanges
             if (CHANGES.version !== version) CHANGES = clone(DEFAULT_CHANGES)
             cloudChanges = clone(CHANGES)
@@ -166,7 +177,6 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     const cloudBibleNames: string[] = []
     const cloudShowNames: string[] = []
     const replacedShows: string[] = []
-    let showsFound = false
 
     await asyncPool(50, extractedFiles, async (file) => {
         if (!file) return
@@ -239,7 +249,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             return
         }
 
-        const cloudFile = await readFileAsync(cloudPath)
+        const cloudFile = (file as any).isTemp ? file.content : await readFileAsync(cloudPath)
         const cloudFileData = safeParseJSON(cloudFile)
         if (!cloudFileData) return
 
@@ -315,9 +325,11 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         const localData = clone(localStore.store)
 
         if (id === "PROJECTS") {
+            const fileData = cloudFileData as { projects: Projects; folders: Folders; projectTemplates?: Projects }
             // promises not needed here, but keeps the code consistent
             await Promise.all(
-                Object.entries<{ projects: Projects; folders: Folders; projectTemplates: Projects }>(cloudFileData).map(async ([type, object]) => {
+                (["projects", "folders", "projectTemplates"] as const).map(async (type) => {
+                    const object = fileData[type] || {}
                     if (!localData[type]) localData[type] = {}
 
                     await Promise.all(
@@ -330,7 +342,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
                             const getLocalData = () => localData[type][key]
 
-                            const result = await checkCloudEntry(id, key, value, getLocalData)
+                            const result = await checkCloudEntry(id, type + "." + key, value, getLocalData)
 
                             if (result.action === "delete") delete localData[type][key]
                             else if (result.action === "create" || result.action === "download") localData[type][key] = value
@@ -340,7 +352,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                     // check any local instance not in cloud
                     const localKeys = getLocalOnlyKeys(object, localData[type])
                     for (const key of localKeys) {
-                        const result = checkLocalEntry(id, key)
+                        const result = checkLocalEntry(id, type + "." + key)
 
                         if (result.action === "delete") delete localData[type][key]
                     }
@@ -433,13 +445,14 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
     const success = await uploadLocalData()
 
-    // silently backup in the background, this is skipped when the program is being closed
-    setTimeout(async () => {
-        if (DEBUG_MODE) return
-        await uploadBackupData()
-        await deleteFolderAsync(EXTRACT_LOCATION)
-        console.log("Backup sync completed!")
-    }, 1000)
+    if (!DEBUG_MODE && !process.env.VITEST) {
+        // silently backup in the background, this is skipped when the program is being closed
+        setTimeout(async () => {
+            await uploadBackupData()
+            await deleteFolderAsync(EXTRACT_LOCATION)
+            console.log("Backup sync completed!")
+        }, 1000)
+    }
 
     return await finish(success)
 
@@ -690,4 +703,12 @@ function removeDeviceRecords() {
         const index = deviceIds.indexOf(deviceId)
         if (index !== -1) deviceIds.splice(index, 1)
     })
+}
+
+// For testing
+export function resetSyncManagerModule() {
+    _deviceId = ""
+    CHANGES = clone(DEFAULT_CHANGES)
+    cloudChanges = null
+    isNewDevice = false
 }
