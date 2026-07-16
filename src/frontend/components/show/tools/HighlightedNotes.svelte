@@ -39,14 +39,14 @@
         if (!val) return ""
         let escaped = val.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 
-        // Highlight brackets with faded brackets and colored inner text
-        escaped = escaped.replace(/\[([^\]]*)\]/g, (_match, innerText) => {
+        // Highlight brackets [] and curly braces {} with faded brackets and colored inner text
+        escaped = escaped.replace(/(\[|\{)([^\]\}]*)(\]|\})/g, (_match, openSymbol, innerText, closeSymbol) => {
             const groupId = getGlobalGroup(innerText)
             const color = groupId && currentGroups[groupId]?.color
             if (color) {
-                return `<span class="bracket-symbol">[</span><span class="bracket-content" style="color: ${color} !important;">${innerText}</span><span class="bracket-symbol">]</span>`
+                return `<span class="bracket-symbol">${openSymbol}</span><span class="bracket-content" style="color: ${color} !important;">${innerText}</span><span class="bracket-symbol">${closeSymbol}</span>`
             }
-            return `<span class="bracket-symbol">[</span><span class="bracket-content">${innerText}</span><span class="bracket-symbol">]</span>`
+            return `<span class="bracket-symbol">${openSymbol}</span><span class="bracket-content">${innerText}</span><span class="bracket-symbol">${closeSymbol}</span>`
         })
 
         if (escaped.endsWith("\n")) {
