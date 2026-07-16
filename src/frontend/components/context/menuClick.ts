@@ -1887,24 +1887,31 @@ const clickActions = {
 
                 const slideItems: Item[] = _show().slides([slideRef.id]).get("items")[0]
 
-                // check lines array & text array first, then text value
-                let firstTextItemIndex = slideItems.findIndex((a) => getItemText(a).length && ((a.lines?.length || 0) > 1 || (a.lines?.[0]?.text?.length || 0) > 1))
-                if (firstTextItemIndex < 0) firstTextItemIndex = slideItems.findIndex((a) => getItemText(a).length > 18)
-                if (firstTextItemIndex < 0) return
+                // find all text item indexes on this slide
+                const textItemIndexes: number[] = []
+                slideItems.forEach((a, i) => {
+                    const isText = getItemText(a).length && ((a.lines?.length || 0) > 1 || (a.lines?.[0]?.text?.length || 0) > 1)
+                    const isFallbackText = getItemText(a).length > 18
+                    if (isText || isFallbackText) {
+                        textItemIndexes.push(i)
+                    }
+                })
 
-                splitItemInTwo(slideRef, firstTextItemIndex)
+                if (!textItemIndexes.length) return
+
+                splitItemInTwo(slideRef, textItemIndexes)
             })
         } else if (!obj.sel?.id) {
             // textbox
             const editSlideIndex: number = get(activeEdit).slide ?? -1
             if (editSlideIndex < 0) return
 
-            const textItemIndex: number = get(activeEdit).items[0] ?? -1
-            if (textItemIndex < 0) return
+            const textItemIndexes: number[] = get(activeEdit).items || []
+            if (!textItemIndexes.length) return
 
             const slideRef = getLayoutRef()[editSlideIndex]
             if (!slideRef) return
-            splitItemInTwo(slideRef, textItemIndex)
+            splitItemInTwo(slideRef, textItemIndexes)
         }
     },
     merge: (obj: ObjData) => {
