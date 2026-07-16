@@ -669,39 +669,10 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number | number[]
     slides[slideId] = newSlide
 
     // update scripture dynamic values
-    let numbersAdded: string[] = []
-    if (scriptureFirstLines && scriptureSecondLines) {
-        if (slides[slideRef.id].customDynamicValues?.scripture_text) {
-            const texts = scriptureFirstLines
-                .flat()[0]
-                ?.text.filter((a) => !a.customType)
-                .map((a) => a.value)
-            texts.forEach((t, i) => {
-                if (!slides[slideRef.id].customDynamicValues.scripture_text[i]) return
-
-                numbersAdded.push(slides[slideRef.id].customDynamicValues.scripture_text[i][0])
-                slides[slideRef.id].customDynamicValues.scripture_text[i][1] = t
-                slides[slideRef.id].customDynamicValues.scripture1_text[i][1] = t
-            })
-        }
-        if (slides[slideId].customDynamicValues?.scripture_text) {
-            const texts = scriptureSecondLines
-                .flat()[0]
-                ?.text.filter((a) => !a.customType)
-                .map((a) => a.value)
-            texts.forEach((t, i) => {
-                if (!slides[slideId].customDynamicValues.scripture_text[i]) return
-
-                slides[slideId].customDynamicValues.scripture_text[i][1] = t
-                slides[slideId].customDynamicValues.scripture1_text[i][1] = t
-
-                let removeNumber = numbersAdded.find((a) => a === slides[slideId].customDynamicValues.scripture_text[i][0])
-                if (removeNumber) {
-                    slides[slideId].customDynamicValues.scripture_text[i][0] = "0"
-                    slides[slideId].customDynamicValues.scripture1_text[i][0] = "0"
-                }
-            })
-        }
+    const split = splitCustomDynamicValues(slides[slideRef.id].customDynamicValues)
+    if (split) {
+        slides[slideRef.id].customDynamicValues = split.firstDV
+        slides[slideId].customDynamicValues = split.secondDV
     }
 
     // set child
@@ -715,6 +686,24 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number | number[]
     history({ id: "UPDATE", newData: { key: "slides", data: clone(slides) }, oldData: { id: showId }, location: { page: "show", id: "show_key", override: "show_slides_" + showId } })
 
     refreshEditSlide.set(true)
+}
+
+export function splitCustomDynamicValues(originalDV: any): { firstDV: any; secondDV: any } | null {
+    if (!originalDV) return null
+    const firstDV: any = {}
+    const secondDV: any = {}
+    Object.keys(originalDV).forEach((key) => {
+        const val = originalDV[key]
+        if (Array.isArray(val)) {
+            const center = Math.ceil(val.length / 2)
+            firstDV[key] = val.slice(0, center)
+            secondDV[key] = val.slice(center)
+        } else {
+            firstDV[key] = val
+            secondDV[key] = val
+        }
+    })
+    return { firstDV, secondDV }
 }
 
 export function splitTextContentInHalf(text: string) {
