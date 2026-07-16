@@ -111,13 +111,8 @@ function autoBackup() {
     }
 }
 
-let lastContentProviderSync = 0
+const lastProviderSyncs: Partial<Record<ContentProviderId, number>> = {}
 export function contentProviderSync(startup = false, remainingOnly = false) {
-    // make sure this does not run multiple times at once
-    const now = Date.now()
-    if (now - lastContentProviderSync < 5000) return
-    lastContentProviderSync = now
-
     const isCloudSyncEnabled = get(cloudSyncData).enabled && get(cloudSyncData).id
 
     const providers = [
@@ -129,8 +124,14 @@ export function contentProviderSync(startup = false, remainingOnly = false) {
     providers.forEach(({ providerId, scope, data, autoSync }) => {
         if (startup && autoSync === false) return
 
-        // don't run this right away on startup if cloud sync is enabled
-        if (startup && isCloudSyncEnabled && !remainingOnly) return
+        // don't run Planning Center sync right away on startup if cloud sync is enabled
+        if (providerId === "planningcenter" && startup && isCloudSyncEnabled && !remainingOnly) return
+
+        // make sure the same provider does not run multiple times at once
+        const now = Date.now()
+        const lastSync = lastProviderSyncs[providerId] || 0
+        if (now - lastSync < 5000) return
+        lastProviderSyncs[providerId] = now
 
         const cloudOnly = providerId === "churchApps" && get(special).churchAppsCloudOnly
         sendMain(Main.PROVIDER_STARTUP_LOAD, { providerId, scope, data, cloudOnly })
