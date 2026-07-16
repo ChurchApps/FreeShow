@@ -797,12 +797,12 @@ const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 // \{           -> Opening brace
 // ${id}        -> Your variable
 // (?:#(\d+))?  -> Optional group 1: the number after #
-// (?:\|(.*?))? -> Optional group 2: the fallback after |
+// (?:[|?](.*?))? -> Optional group 2: the fallback after ? (or |)
 // \}           -> Closing brace
 const createRegex = (id: string) => {
     // Escape the ID so the '$' isn't treated as "End of Line"
     const safeId = escapeRegExp(id)
-    return new RegExp(`\\{${safeId}(?:#(\\d+))?(?:\\|([^}]*))?\\}`, "g")
+    return new RegExp(`\\{${safeId}(?:#(\\d+))?(?:[|?]([^}]*))?\\}`, "g")
 }
 
 /** Check if the pattern exists **/
@@ -858,7 +858,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
     return text
 
-    // append {variable|no value} to add fallback
+    // append {variable?no value} to add fallback
     function replaceDynamicValueWithFallback(text: string, dynamicId: string, newValue: string | string[]): string {
         if (!Array.isArray(newValue)) newValue = [newValue]
         return replaceTokens(text, dynamicId, newValue)
