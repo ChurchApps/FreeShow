@@ -1083,4 +1083,155 @@ describe("syncManager tests", () => {
             expect(fs.existsSync(path.join(showsDirB, "dummy.show"))).toBe(false)
         })
     })
+
+    describe("three-machine sync scenarios", () => {
+        it("should resolve modification conflicts correctly when Device B and Device C both modify the same project", async () => {
+            const now = Date.now()
+            
+            // Register devices in the ledger
+            await createCloudState([
+                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: now } }]) }
+            ], {
+                devices: ["device-A", "device-B", "device-C", "test-device-id"],
+                modified: {
+                    "device-A": now,
+                    "device-B": now,
+                    "device-C": now,
+                    "test-device-id": now
+                }
+            })
+
+            const fileA = path.join(h.userDataDir, "device-A", "projects.json")
+            const fileB = path.join(h.userDataDir, "device-B", "projects.json")
+            const fileC = path.join(h.userDataDir, "device-C", "projects.json")
+
+            // 1. Device A creates a project and syncs
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+
+            const projectStoreA = { projects: { "proj-shared": { id: "proj-shared", name: "Original Project", modified: 1000 } }, folders: {}, projectTemplates: {} }
+            fs.mkdirSync(path.dirname(fileA), { recursive: true })
+            fs.writeFileSync(fileA, JSON.stringify(projectStoreA))
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 2. Device B downloads the project
+            h.currentMachineId = "device-B"
+            resetSyncManagerModule()
+            createStores()
+            
+            fs.mkdirSync(path.dirname(fileB), { recursive: true })
+            fs.writeFileSync(fileB, JSON.stringify({ projects: {}, folders: {}, projectTemplates: {} }))
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 3. Device C downloads the project
+            h.currentMachineId = "device-C"
+            resetSyncManagerModule()
+            createStores()
+            
+            fs.mkdirSync(path.dirname(fileC), { recursive: true })
+            fs.writeFileSync(fileC, JSON.stringify({ projects: {}, folders: {}, projectTemplates: {} }))
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 4. Device B modifies the project with an older change (modified = 5000) and syncs
+            h.currentMachineId = "device-B"
+            resetSyncManagerModule()
+            createStores()
+
+            const projectStoreB_updated = JSON.parse(fs.readFileSync(fileB, "utf8"))
+            projectStoreB_updated.projects["proj-shared"] = { id: "proj-shared", name: "Project Modified by B", modified: 5000 }
+            fs.writeFileSync(fileB, JSON.stringify(projectStoreB_updated))
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 5. Device C modifies the project with a newer change (modified = 10000) and syncs
+            h.currentMachineId = "device-C"
+            resetSyncManagerModule()
+            createStores()
+
+            const projectStoreC_updated = JSON.parse(fs.readFileSync(fileC, "utf8"))
+            projectStoreC_updated.projects["proj-shared"] = { id: "proj-shared", name: "Project Modified by C (Newest)", modified: 10000 }
+            fs.writeFileSync(fileC, JSON.stringify(projectStoreC_updated))
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 6. Device A and B sync again to receive the newest modification (from C)
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+            
+            const projectStoreA_final = JSON.parse(fs.readFileSync(fileA, "utf8"))
+            expect(projectStoreA_final.projects["proj-shared"].name).toBe("Project Modified by C (Newest)")
+
+            h.currentMachineId = "device-B"
+            resetSyncManagerModule()
+            createStores()
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+            
+            const projectStoreB_final = JSON.parse(fs.readFileSync(fileB, "utf8"))
+            expect(projectStoreB_final.projects["proj-shared"].name).toBe("Project Modified by C (Newest)")
+        })
+
+        it("should successfully propagate show creations among three machines (Device A, B, and C)", async () => {
+            const now = Date.now()
+            
+            // Register devices in the ledger
+            await createCloudState([
+                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: now } }]) }
+            ], {
+                devices: ["device-A", "device-B", "device-C", "test-device-id"],
+                modified: {
+                    "device-A": now,
+                    "device-B": now,
+                    "device-C": now,
+                    "test-device-id": now
+                }
+            })
+
+            const showsDirA = path.join(h.userDataDir, "device-A", "Shows")
+            const showsDirB = path.join(h.userDataDir, "device-B", "Shows")
+            const showsDirC = path.join(h.userDataDir, "device-C", "Shows")
+
+            // 1. Device A creates show-A and syncs
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+
+            const showAContent = JSON.stringify(["show-A-id", { name: "Show A", slides: [], timestamps: { modified: 1000 } }])
+            fs.mkdirSync(showsDirA, { recursive: true })
+            await writeFileAsync(path.join(showsDirA, "show-A.show"), showAContent)
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 2. Device B syncs (downloads show-A), creates show-B, and syncs
+            h.currentMachineId = "device-B"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(showsDirB, { recursive: true })
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+            expect(fs.existsSync(path.join(showsDirB, "show-A.show"))).toBe(true)
+
+            const showBContent = JSON.stringify(["show-B-id", { name: "Show B", slides: [], timestamps: { modified: 2000 } }])
+            await writeFileAsync(path.join(showsDirB, "show-B.show"), showBContent)
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 3. Device C syncs. It should download both show-A and show-B
+            h.currentMachineId = "device-C"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(showsDirC, { recursive: true })
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+            expect(fs.existsSync(path.join(showsDirC, "show-A.show"))).toBe(true)
+            expect(fs.existsSync(path.join(showsDirC, "show-B.show"))).toBe(true)
+
+            // 4. Device A syncs again and downloads show-B
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+            expect(fs.existsSync(path.join(showsDirA, "show-B.show"))).toBe(true)
+        })
+    })
 })
