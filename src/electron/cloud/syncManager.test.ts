@@ -755,6 +755,52 @@ describe("syncManager tests", () => {
             const hasLocalShow = files.some((f) => f.name.includes("local-show.show"))
             expect(hasLocalShow).toBe(false) // Read-only sync should not push changes to the cloud
         })
+
+        it("should successfully upload unique shows from a new device joining the sync team and not delete them on subsequent syncs", async () => {
+            const now = Date.now()
+
+            // 1. Initial cloud setup: Device A and Device B are synced
+            await createCloudState([
+                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: now } }]) }
+            ], {
+                devices: ["device-A", "device-B", "test-device-id"],
+                modified: {
+                    "device-A": now,
+                    "device-B": now,
+                    "test-device-id": now
+                }
+            })
+
+            // 2. Device C (new device) joins with a unique show
+            h.currentMachineId = "device-C"
+            resetSyncManagerModule()
+            createStores()
+
+            const showsDirC = getDataFolderPath("shows")
+            fs.mkdirSync(showsDirC, { recursive: true })
+            const uniqueShowContent = JSON.stringify(["c-unique-id", { name: "C Unique Show", slides: [], timestamps: { modified: now } }])
+            await writeFileAsync(path.join(showsDirC, "c-unique.show"), uniqueShowContent)
+
+            // C syncs (uploads its unique show as a new device)
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 3. Device A syncs. It should download Device C's unique show (NOT mark it as deleted!)
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+
+            const showsDirA = getDataFolderPath("shows")
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+            expect(fs.existsSync(path.join(showsDirA, "c-unique.show"))).toBe(true)
+
+            // 4. Device C syncs again. Its unique show should NOT be deleted!
+            h.currentMachineId = "device-C"
+            resetSyncManagerModule()
+            createStores()
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+            expect(fs.existsSync(path.join(showsDirC, "c-unique.show"))).toBe(true)
+        })
     })
 
     describe("multiple machines sync scenarios", () => {
