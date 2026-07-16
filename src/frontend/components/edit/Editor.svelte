@@ -44,7 +44,7 @@
     $: editTabs = {
         default: { name: "example.default", icon: "slide" },
         ...(!chordsHidden && { chords: { name: "edit.chords", icon: "chords", data: chordCount > 0 ? chordCount : undefined, disabled: chordsDisabled } }),
-        text_edit: { name: "show.text", tooltip: "show.text [Ctrl+Shift+T]", icon: "text" }
+        text_edit: { name: "show.text", tooltip: "show.text [Ctrl+Shift+T]", icon: "text_edit" }
     } as TabsObj
 
     onMount(() => {
