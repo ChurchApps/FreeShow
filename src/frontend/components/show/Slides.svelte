@@ -31,6 +31,7 @@
     $: layoutSlides = currentShow ? getCachedShow(showId, activeLayout, $cachedShowsData)?.layout || [] : []
 
     let hasMounted = false
+    let isDestroyed = false
     onMount(() => {
         // don't double render all slides on first load because of cachedShowsData update
         setTimeout(() => (hasMounted = true), 80)
@@ -40,8 +41,11 @@
     })
 
     onDestroy(() => {
+        isDestroyed = true
         if (timeout && typeof timeout !== "boolean") clearTimeout(timeout)
         if (loadingTimeout) clearTimeout(loadingTimeout)
+        if (lessonsTimeout) clearTimeout(lessonsTimeout)
+        if (nextScrollTimeout) clearTimeout(nextScrollTimeout)
     })
 
     // fix broken media
@@ -190,6 +194,7 @@
 
     $: if (showId && $special.capitalize_words) capitalizeWords()
     function capitalizeWords() {
+        if (isDestroyed || !showId) return
         // keep letters and spaces
         // const regEx = /[^a-zA-Z\s]+/
 
@@ -355,7 +360,7 @@
 
     let lazyLoading = false
     function startLazyLoader() {
-        if (!layoutSlides || timeout) return
+        if (isDestroyed || !layoutSlides || timeout) return
 
         if (lazyLoader >= layoutSlides.length) {
             loaded = true
@@ -421,13 +426,15 @@
             return
         }
 
-        timeout = setTimeout(next, 10)
+        timeout = setTimeout(next, 50)
 
         function next() {
+            if (isDestroyed) return
+
             // start small (e.g. 4) and double each step up to a max batch size of 32 (or 128 in focusMode)
             const currentBatch = lazyLoader === 0 ? 4 : Math.min($focusMode ? 128 : 32, lazyLoader * 2)
             lazyLoader += currentBatch
-            clearTimeout(timeout as NodeJS.Timeout)
+            if (timeout && typeof timeout !== "boolean") clearTimeout(timeout)
             timeout = null
             startLazyLoader()
         }
