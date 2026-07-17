@@ -113,6 +113,11 @@
             </MaterialButton>
         {/if}
 
+        <!-- zoom icon ? -->
+        <!-- <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="actions.zoom" on:click={() => }>
+            <Icon size={0.9} id="zoomIn" white />
+        </MaterialButton> -->
+
         {#if !hideOptions}
             <!-- show more -->
             <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showDropdown = !showDropdown)} white={!showDropdown}>

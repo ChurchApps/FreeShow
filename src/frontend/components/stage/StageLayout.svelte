@@ -20,6 +20,7 @@
     import Snaplines from "../system/Snaplines.svelte"
     import { getSlideTextItems, stageItemToItem, updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
+    import RadialAddMenu from "../edit/RadialAddMenu.svelte"
 
     export let outputId = ""
     export let stageId = ""
@@ -138,6 +139,7 @@
     // stage output
 
     $: hasStageOutput = edit && Object.values($outputs).some((a) => a.stageOutput && (a.enabled || a.stageOutput === stageLayoutId))
+    $: isLocked = readOnly
 
     function createStageOutput() {
         toggleOutputEnabled.set(true)
@@ -148,6 +150,14 @@
             activePage.set("settings")
         }, 100)
     }
+
+    // Stage Radial Textbox Dynamic Values Shortcut:
+    // const excludeValues = ["project_", "time_", "exif_", "audio_", "meta_", "slide_text_", "show_text_full", "slide_group_color", "slide_group_next_color", "slide_group_upcoming_color"]
+    // const ref = { type: "stage" }
+    // const dynamicValues = getDynamicIds()
+    //     .filter((id) => !excludeValues.find((v) => id.includes(v))) // || id.startsWith("project_")
+    //     .map((id) => ({ value: `{${id}}`, label: `{${id}}`, data: replaceDynamicValues(`{${id}}`, ref).slice(0, 20) }))
+    // <MaterialDropdown label="actions.dynamic_values" options={dynamicValues} value="" style="border: 1px solid var(--primary-lighter);" on:change={(e) => addItem("text", e.detail)} onlyArrow />
 </script>
 
 <div class="stageArea">
@@ -181,17 +191,17 @@
     </div> -->
 
     {#if edit && stageLayoutId}
-        {#if !hasStageOutput}
-            <FloatingInputs side="left" onlyOne>
+        <FloatingInputs side="left" onlyOne>
+            {#if !hasStageOutput}
                 <MaterialButton icon="autofill" title="stage.create_stage_output" on:click={createStageOutput}>
                     <T id="stage.create_stage_output" />
                 </MaterialButton>
-            </FloatingInputs>
-        {/if}
+            {/if}
 
-        <FloatingInputs>
-            <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
+            <MaterialZoom hidden={!hasStageOutput} columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
         </FloatingInputs>
+
+        <RadialAddMenu {isLocked} />
     {/if}
 </div>
 
@@ -201,7 +211,8 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-        /* overflow: hidden; */
+        position: relative;
+        overflow: hidden;
     }
 
     .parent {

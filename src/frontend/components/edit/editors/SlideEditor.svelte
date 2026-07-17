@@ -1,7 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
-    import type { ItemType } from "../../../../types/Show"
     import { activeEdit, activePopup, activeShow, alertMessage, editMode, focusMode, media, outputs, overlays, refreshEditSlide, resized, showsCache, slideNotesActive, special, styles } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
     import { DEFAULT_WIDTH } from "../../../utils/common"
@@ -287,8 +286,6 @@
     $: notes = Slide?.notes?.replaceAll("\n", "&nbsp;")
     $: notesVisible = !!notes // && $editMode !== "chords"
 
-    const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
-
     $: widthOrHeight = getStyleResolution(resolution, width, height, "fit", { zoom })
 
     // BACKGROUND
@@ -389,23 +386,8 @@
     {/if}
 
     {#if !$focusMode && !isLocked && !$slideNotesActive && !$special.slideTimelineActive}
-        <!-- && Slide?.items?.length -->
-        {#if $editMode !== "chords" && !hasBackground && !widthOrHeight.includes("height")}
-            <FloatingInputs bottom={notesVisible ? bottomHeight : 10} side="center">
-                {#each shortcutItems as item}
-                    <MaterialButton title="settings.add: items.{item.id}" on:click={() => addItem(item.id)}>
-                        <Icon id={item.icon || item.id} size={1.3} white />
-                    </MaterialButton>
-                {/each}
-            </FloatingInputs>
-        {/if}
-
-        <FloatingInputs bottom={notesVisible ? bottomHeight : 10}>
-            <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
-        </FloatingInputs>
-
-        {#if $editMode === "chords"}
-            <FloatingInputs side="left" bottom={notesVisible ? bottomHeight : 10}>
+        <FloatingInputs side="left" bottom={notesVisible ? bottomHeight : 10} onlyOne={hasBackground}>
+            {#if $editMode === "chords"}
                 <MaterialButton on:click={transposeUp} title="edit.transpose_up">
                     <Icon id="arrow_up" size={1.3} white />
                 </MaterialButton>
@@ -424,14 +406,14 @@
                         {chord}
                     </MaterialButton>
                 {/each}
-            </FloatingInputs>
-        {:else if hasBackground}
-            <FloatingInputs side="left" bottom={notesVisible ? bottomHeight : 10} onlyOne>
+            {:else if hasBackground}
                 <MaterialButton icon="autofill" on:click={convertBackgroundToMedia}>
                     <T id="edit.convert_to_media_item" />
                 </MaterialButton>
-            </FloatingInputs>
-        {/if}
+            {/if}
+
+            <MaterialZoom hidden={$editMode === "chords" || hasBackground} columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
+        </FloatingInputs>
     {/if}
 
     {#if $special.slideTimelineActive}
