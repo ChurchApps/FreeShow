@@ -721,6 +721,7 @@ function handleTemplate(obj, data, initializing) {
                     .filter((a) => {
                         const type = a.type || "text"
                         if (templateItemCount[type] - slideItemCount[type] >= 0) return true
+                        if (type !== "text" && !a.fromTemplate) return true
                         if (type === "text" && !isEmptyOrSpecial(a)) return true
                         if (type === "media" && a.src) return true
                         slideItemCount[type]--

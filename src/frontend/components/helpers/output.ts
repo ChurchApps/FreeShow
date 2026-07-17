@@ -1158,7 +1158,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     })
 
     if (addOverflowTemplateItems || hasScriptureDynamicValue) {
-        const remainingTextTemplateItems = sorted.text?.slice(slideTextboxes) || []
+        const remainingTextTemplateItems = sortedTemplateItems.text || []
 
         if (hasScriptureDynamicValue) {
             remainingTextTemplateItems.forEach((item) => {
