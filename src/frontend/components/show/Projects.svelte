@@ -328,9 +328,17 @@
     function refreshPcoProject(serviceTypeId: string, planId: string) {
         sendMain(Main.PCO_LOAD_PLAN, { serviceTypeId, planId })
     }
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (addMenuOpen && e.key === "Escape") {
+            addMenuOpen = false
+            e.preventDefault()
+            e.stopPropagation()
+        }
+    }
 </script>
 
-<svelte:window on:keydown={checkInput} on:mousedown={mousedown} on:dragenter={dragStart} on:dragstart={dragStart} on:dragend={dragEnd} on:drop={dragEnd} on:mouseup={dragEnd} />
+<svelte:window on:keydown={checkInput} on:keydown|capture={handleKeydown} on:mousedown={mousedown} on:dragenter={dragStart} on:dragstart={dragStart} on:dragend={dragEnd} on:drop={dragEnd} on:mouseup={dragEnd} />
 
 <div class="main" class:focusMode={$focusMode}>
     <span class="tabs">

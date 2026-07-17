@@ -247,9 +247,17 @@
     function mousedown(e: any) {
         if (!e.target.closest(".addMenu") && !e.target.closest(".addButton")) addMenuOpen = false
     }
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (addMenuOpen && e.key === "Escape") {
+            addMenuOpen = false
+            e.preventDefault()
+            e.stopPropagation()
+        }
+    }
 </script>
 
-<svelte:window on:mousedown={mousedown} />
+<svelte:window on:mousedown={mousedown} on:keydown|capture={handleKeydown} />
 
 <div id="projectArea" class="list {projectReadOnly ? '' : 'context #project'}">
     <Autoscroll {offset} bind:scrollElem timeout={150}>

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item, ItemType } from "../../../../types/Show"
-    import { activeEdit, activePopup, labelsDisabled, selected, showsCache, timers, variables } from "../../../stores"
+    import { activeEdit, activePopup, labelsDisabled, selected, timers, variables } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { clone } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -19,7 +19,7 @@
         { id: "camera" },
         { id: "slide_tracker", icon: "percentage" },
         { id: "table", icon: "grid" },
-        { id: "chart", icon: "charts" },
+        { id: "chart", icon: "pie_chart" },
         { id: "events", icon: "calendar" },
         { id: "weather", icon: "cloud" },
         { id: "visualizer", maxAmount: 1 },

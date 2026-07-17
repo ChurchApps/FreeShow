@@ -38,6 +38,7 @@ import {
     drawer,
     drawerTabsData,
     editingProjectTemplate,
+    editMode,
     effects,
     effectsLibrary,
     eventEdit,
@@ -77,7 +78,6 @@ import {
     styles,
     templateCategories,
     templates,
-    editMode,
     themes,
     timers,
     toggleOutputEnabled,
@@ -1184,6 +1184,7 @@ const clickActions = {
             const slide = obj.sel.data[0]
             if (!slide) return
             activeEdit.set({ slide: slide.index, items: [], showId: slide.showId || get(activeShow)?.id })
+            editMode.set("default")
             activePage.set("edit")
             setTimeout(() => selected.set({ id: null, data: [] }))
         } else if (obj.sel.id === "media") {
