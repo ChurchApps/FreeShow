@@ -140,7 +140,7 @@ export async function decompressZipStream(file: string, asBuffer = false, option
 function sanitizeZipPath(name: string): string {
     return name
         .replace(/\\/g, "/")
-        .replace(/^[a-zA-Z]:/, "")
+        .replace(/^([a-zA-Z]:|\/)/, "") // strip leading C: or /
         .split("/")
         .filter((segment) => segment && segment !== "." && segment !== "..")
         .join("/")
