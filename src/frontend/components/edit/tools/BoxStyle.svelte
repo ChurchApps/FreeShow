@@ -266,6 +266,8 @@
         setBoxInputValue(box, "default", "font-family", "styleValue", getStyles(style)["font"] || "")
         // setBoxInputValue(box2, "default", "textFit", "hidden", !item?.auto)
         setBoxInputValue(box, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
+        setBoxInputValue(box, "text", "dynamicPadding", "value", item?.dynamicPadding !== false)
+        setBoxInputValue(box, "text", "dynamicPadding", "hidden", !item || !getItemText(item).includes("{timer_"))
         setBoxInputValue(box, "lines", "specialStyle.lineRadius", "hidden", !item?.specialStyle?.lineRadius && !item?.specialStyle?.lineBg)
 
         setBoxInputValue(box, "default", "textFit", "value", item?.auto ? "shrinkToFit" : "none") // text items

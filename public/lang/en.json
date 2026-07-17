@@ -1056,6 +1056,7 @@
         "transpose_down": "Transpose down",
         "auto_size": "Auto size",
         "no_wrap": "Text on one line",
+        "padded_numbers": "Zero-padded timer values",
         "line_spacing": "Line spacing",
         "line_radius": "Line radius",
         "line_height": "Line height",

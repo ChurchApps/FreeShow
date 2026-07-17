@@ -105,6 +105,7 @@ export interface Item {
     list?: List
     auto?: boolean // DEPRECATED - use textFit
     textFit?: AutosizeTypes // auto size text fix option (default: shrinkToFit)
+    dynamicPadding?: boolean // zero-pad dynamic timer values (default: true)
     autoFontSize?: number // only used to store the calculated auto size text size
     previewAutoFontSize?: number // only used to store the calculated auto size text size for the preview
     style: string

@@ -246,7 +246,7 @@
     const previousValue: { [key: string]: string } = {}
     function getTextValue(value: string, i: number, ti: number, _updater: number) {
         if (dynamicValues && value.includes("{")) {
-            const newValue = replaceDynamicValues(value, { ...ref, slideIndex })
+            const newValue = replaceDynamicValues(value, { ...ref, slideIndex, dynamicPadding: item?.dynamicPadding !== false })
 
             const id = i + "_" + ti
             if (previousValue[id] !== newValue) {
