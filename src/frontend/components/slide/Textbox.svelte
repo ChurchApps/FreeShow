@@ -303,8 +303,9 @@
 
     $: if (stateSignature !== lastRenderedSignature) {
         autoSizeReady = false
-        // Check if autosize is active - for STAGE, use stageAutoSize since slide items don't have auto/textFit set
-        const hasAutoSize = stageAutoSize || item?.auto || (item?.textFit || "none") !== "none"
+        const isTextItem = (item?.type || "text") === "text"
+        const textFit = item?.textFit || (item?.auto ? (isTextItem ? "shrinkToFit" : "growToFit") : "none")
+        const hasAutoSize = stageAutoSize || textFit !== "none"
         if (hasAutoSize) {
             // Determine if we'll hide during autosize calculation
             const willHide = shouldHideUntilAutoSizeCompletes()
@@ -383,7 +384,7 @@
         }
 
         const isTextItem = (item.type || "text") === "text"
-        let textFit = item.textFit || (item.auto ? (isTextItem ? "shrinkToFit" : "growToFit") : "none")
+        let textFit = item.textFit || (isTextItem ? (item?.auto ? "shrinkToFit" : "none") : "growToFit")
         if (textFit === "none" && !isStage) {
             fontSize = 0
             markAutoSizeReady()
@@ -644,17 +645,14 @@
         // but for the first render, that mechanism shows nothing while the new content loads
         // We need to hide content until autosize is ready for stage too
         if (preview || fontPreview) return false
-        const type = item?.type || "text"
-        if (type !== "text") return false
 
         // Use detailed validation to ensure we catch all autosize candidates
         // For STAGE: stageAutoSize controls autosize, slide items don't have auto/textFit set
-        const isExplicitNone = item?.textFit === "none"
-        const isExplicitActive = item?.textFit && item?.textFit !== "none"
-        const isImpliedActive = !item?.textFit && item?.auto
-        const isStageAutoSizeActive = stageAutoSize
+        const isTextItem = (item?.type || "text") === "text"
+        const textFit = item?.textFit || (item?.auto ? (isTextItem ? "shrinkToFit" : "growToFit") : "none")
+        const isExplicitNone = textFit === "none"
 
-        if (!isStageAutoSizeActive && (isExplicitNone || (!isExplicitActive && !isImpliedActive))) {
+        if (!stageAutoSize && isExplicitNone) {
             return false
         }
 
