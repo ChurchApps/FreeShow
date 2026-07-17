@@ -69,6 +69,7 @@
                 update()
             }}
             allowEmpty
+            allowGradients
             noLabel
         />
 
