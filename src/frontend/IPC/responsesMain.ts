@@ -54,10 +54,8 @@ import {
     currentOutputSettings,
     dataPath,
     driveKeys,
-    events,
     folders,
     lessonsLoaded,
-    media,
     mediaDownloads,
     outputs,
     overlays,
@@ -237,7 +235,7 @@ export const mainResponses: MainResponses = {
                     })
                 }, 2000)
             }
-            newDownloads.set(data.url, { progress, total, status: data.status })
+            newDownloads.set(data.url, { progress, total, status: data.status, name: data.name })
             return newDownloads
         })
     },

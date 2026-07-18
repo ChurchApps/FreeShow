@@ -24,6 +24,13 @@ const setValues = {
         output.webrtcData = value
         CaptureHelper.Lifecycle.startCapture(id, { webrtc: !!value?.streaming })
     },
+    rtmp: (value: boolean, _window: BrowserWindow, id: string) => {
+        if (!value) CaptureHelper.Lifecycle.startCapture(id, { rtmp: false })
+    },
+    rtmpData: (value: any, _window: BrowserWindow, id: string, output: OutputWindow) => {
+        output.rtmpData = value
+        CaptureHelper.Lifecycle.startCapture(id, { rtmp: !!value?.streaming })
+    },
     capture: (data: { key: string; value: boolean }, _window: BrowserWindow, id: string) => {
         CaptureHelper.Lifecycle.startCapture(id, { [data.key]: data.value })
         // if (data.value) sendFrames(id, storedFrames[id], {[data.key]: true})
@@ -51,6 +58,9 @@ export class OutputValues {
 
         if (key === "webrtcData") {
             output.webrtcData = value
+        }
+        if (key === "rtmpData") {
+            output.rtmpData = value
         }
 
         if (!output.window || output.window.isDestroyed()) return

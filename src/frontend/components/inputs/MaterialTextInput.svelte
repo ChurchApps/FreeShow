@@ -110,7 +110,7 @@
         </div>
     {/if}
 
-    {#if type === "password" && !pasteBtn}
+    {#if type === "password" && (!pasteBtn || value)}
         <div class="remove">
             <MaterialButton
                 on:click={(e) => {
@@ -124,7 +124,7 @@
                 <Icon id={showText ? "eye" : "hide"} white />
             </MaterialButton>
         </div>
-    {:else if pasteBtn && !disabled}
+    {:else if pasteBtn && !value && !disabled}
         <div class="remove">
             <MaterialButton
                 on:click={(e) => {

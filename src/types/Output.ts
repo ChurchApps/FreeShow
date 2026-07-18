@@ -28,6 +28,8 @@ export interface Output {
     blackmagicData?: any
     webrtc?: boolean
     webrtcData?: any
+    rtmp?: boolean
+    rtmpData?: { url: string; key: string; streaming?: boolean }
     forcedResolution?: Resolution
     invisible?: boolean
     taskbar?: boolean

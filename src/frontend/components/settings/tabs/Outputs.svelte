@@ -2,15 +2,18 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
     import { Option } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
+    import { requestMain } from "../../../IPC/main"
     import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, os, outputDisplay, outputs, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
+    import { confirmCustom } from "../../../utils/popup"
     import { destroy, receive, send } from "../../../utils/request"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { refreshOut, startStreaming, stopStreaming, toggleOutput, updateOutputWebrtcData } from "../../helpers/output"
+    import { refreshOut, startRtmpStreaming, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutput, updateOutputRtmpData, updateOutputWebrtcData } from "../../helpers/output"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -334,6 +337,53 @@
     let ndiMenuOpened = false
     let bmdMenuOpened = false
     let webrtcMenuOpened = false
+    let rtmpMenuOpened = false
+
+    function updateRtmpData(value: any, key: string) {
+        if (!currentOutput?.id) return
+        updateOutputRtmpData(currentOutput.id, key, value)
+    }
+
+    function handleWebrtcToggle(e: any) {
+        const enabled = e.detail
+        updateOutput("webrtc", enabled)
+        if (enabled) {
+            updateOutput("rtmp", false)
+            if (currentOutput) stopRtmpStreaming(currentOutput.id, false)
+        }
+    }
+
+    async function handleRtmpToggle(e: any) {
+        const enabled = e.detail
+        if (!enabled) {
+            updateOutput("rtmp", false)
+            if (currentOutput) stopRtmpStreaming(currentOutput.id, false)
+            return
+        }
+
+        // Check if FFmpeg is installed
+        const res: any = await requestMain(Main.FFMPEG_CHECK)
+        if (res && res.installed) {
+            updateOutput("rtmp", true)
+            updateOutput("webrtc", false)
+        } else {
+            // Prompt to download
+            const confirmed = await confirmCustom("To enable RTMP streaming, FreeShow needs to download and install FFmpeg. Do you want to proceed?")
+            if (confirmed) {
+                const downloadRes: any = await requestMain(Main.FFMPEG_DOWNLOAD)
+                if (downloadRes && downloadRes.success) {
+                    updateOutput("rtmp", true)
+                    updateOutput("webrtc", false)
+                    newToast("FFmpeg installed successfully!")
+                } else {
+                    newToast(translateText("Failed to download FFmpeg: ") + (downloadRes?.error || "Unknown error"))
+                    updateOutput("rtmp", false)
+                }
+            } else {
+                updateOutput("rtmp", false)
+            }
+        }
+    }
 </script>
 
 {#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
@@ -429,12 +479,12 @@
 <Title label="WebRTC Streaming" icon="record" />
 
 <InputRow arrow={currentOutput?.webrtc} bind:open={webrtcMenuOpened}>
-    <MaterialToggleSwitch label={translateText("actions.enable_specific", null, ["WebRTC"])} style="width: 100%;" checked={currentOutput?.webrtc} defaultValue={false} on:change={(e) => updateOutput("webrtc", e.detail)} />
+    <MaterialToggleSwitch label={translateText("actions.enable_specific", null, ["WebRTC"])} style="width: 100%;" checked={currentOutput?.webrtc} defaultValue={false} on:change={handleWebrtcToggle} disabled={currentOutput?.rtmp} />
 
     <svelte:fragment slot="menu">
         {#if currentOutput}
-            <MaterialTextInput label="WHIP Endpoint URL" value={currentOutput.webrtcData?.url || ""} placeholder="e.g. https://live.restream.io/whip/live/YOUR_KEY" on:change={(e) => updateWebrtcData(e.detail, "url")} />
-            <MaterialTextInput label="Bearer Token (Optional)" value={currentOutput.webrtcData?.token || ""} placeholder="Authorization token" on:change={(e) => updateWebrtcData(e.detail, "token")} />
+            <MaterialTextInput label="WHIP Endpoint URL" value={currentOutput.webrtcData?.url || ""} placeholder="e.g. https://live.restream.io/whip/live/YOUR_KEY" on:change={(e) => updateWebrtcData(e.detail, "url")} pasteBtn />
+            <MaterialTextInput label="Bearer Token (Optional)" value={currentOutput.webrtcData?.token || ""} placeholder="Authorization token" on:change={(e) => updateWebrtcData(e.detail, "token")} pasteBtn />
         {/if}
     </svelte:fragment>
 </InputRow>
@@ -443,6 +493,28 @@
     <div style="padding-bottom: 10px;">
         <MaterialButton variant="outlined" icon={currentOutput.webrtcData?.streaming ? "stop" : "record"} style="width: 100%; justify-content: center; {currentOutput.webrtcData?.streaming ? 'background: #b60707 !important;' : ''}" on:click={() => (currentOutput?.webrtcData?.streaming ? stopStreaming(currentOutput.id, true) : startStreaming(currentOutput?.id))} white>
             {translateText(currentOutput.webrtcData?.streaming ? "output.stop_streaming" : "output.start_streaming")}
+        </MaterialButton>
+    </div>
+{/if}
+
+<!-- RTMP -->
+<Title label="RTMP Streaming" icon="record" />
+
+<InputRow arrow={currentOutput?.rtmp} bind:open={rtmpMenuOpened}>
+    <MaterialToggleSwitch label={translateText("actions.enable_specific", null, ["RTMP"])} style="width: 100%;" checked={currentOutput?.rtmp} defaultValue={false} on:change={handleRtmpToggle} disabled={currentOutput?.webrtc} />
+
+    <svelte:fragment slot="menu">
+        {#if currentOutput}
+            <MaterialTextInput label="Stream URL" value={currentOutput.rtmpData?.url || ""} placeholder="e.g. rtmp://a.rtmp.youtube.com/live2" on:change={(e) => updateRtmpData(e.detail, "url")} pasteBtn />
+            <MaterialTextInput label="Stream key" value={currentOutput.rtmpData?.key || ""} type="password" on:change={(e) => updateRtmpData(e.detail, "key")} pasteBtn />
+        {/if}
+    </svelte:fragment>
+</InputRow>
+
+{#if currentOutput?.rtmp && currentOutput?.rtmpData?.url && currentOutput?.rtmpData?.key}
+    <div style="padding-bottom: 10px;">
+        <MaterialButton variant="outlined" icon={currentOutput.rtmpData?.streaming ? "stop" : "record"} style="width: 100%; justify-content: center; {currentOutput.rtmpData?.streaming ? 'background: #b60707 !important;' : ''}" on:click={() => (currentOutput?.rtmpData?.streaming ? stopRtmpStreaming(currentOutput.id, true) : startRtmpStreaming(currentOutput?.id))} white>
+            {translateText(currentOutput.rtmpData?.streaming ? "output.stop_streaming" : "output.start_streaming")}
         </MaterialButton>
     </div>
 {/if}
