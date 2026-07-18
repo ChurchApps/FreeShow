@@ -217,6 +217,7 @@
         "image": "Only images",
         "video": "Only videos",
         "fit": "Fit",
+        "blend": "Blend mode",
         "contain": "Contain",
         "fill": "Fill",
         "blur_fill": "Blur fill",

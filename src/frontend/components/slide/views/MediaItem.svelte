@@ -101,7 +101,7 @@
     $: flipY = item?.flippedY ? -1 : 1
     $: transformString = `scale(${flipX}, ${flipY})`
 
-    $: mediaStyleString = `filter: ${item?.filter};object-fit: ${item?.fit === "blur" ? "contain" : item?.fit || "contain"};`
+    $: mediaStyleString = `filter: ${item?.filter};object-fit: ${item?.fit === "blur" ? "contain" : item?.fit || "contain"};mix-blend-mode: ${item?.blend || "normal"};`
     $: mediaStyleBlurString = `position: absolute;filter: ${item?.filter || ""} blur(6px) opacity(0.3);object-fit: cover;`
     $: mediaStyleCombinedString = `${mediaCropGeometry}transform-origin: center;transform: ${transformString};${edit ? "pointer-events: none;" : ""}`
     $: mediaOverflowPreviewStyle = `position: absolute;width: 100%;height: 100%;left: 0;top: 0;opacity: 0.35;pointer-events: none;transform-origin: center;transform: ${transformString};`

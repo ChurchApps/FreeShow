@@ -372,6 +372,7 @@ export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: St
         filter: "",
         flipped: false,
         flippedY: false,
+        blend: "",
         fit: currentStyle?.fit || "contain",
         fitOptions,
         volume: currentStyle?.volume ?? 100,

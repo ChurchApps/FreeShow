@@ -1333,7 +1333,7 @@ function cloneChildren(slide, data, i, copiedIds, addedChildren, newSlides, layo
 }
 
 const videoKeys = ["speed", "volume"]
-const mediaCopyKeys = ["filter", "fit", "flipped", "flippedY", "speed", "volume", "videoType"]
+const mediaCopyKeys = ["filter", "fit", "flipped", "flippedY", "blend", "speed", "volume", "videoType"]
 function mediaPaste(data: any) {
     if (!data || get(selected).id !== "media") return
 

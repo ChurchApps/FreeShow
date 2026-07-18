@@ -1098,7 +1098,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // remove exiting styling & add new if set in template
         // WIP some keys are probably missing here...
         // NOTE: textFit is already handled above in the auto/textFit logic block
-        const extraStyles = ["chords", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY"]
+        const extraStyles = ["chords", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY", "blend"]
         extraStyles.forEach((key) => {
             delete item[key]
             if (templateItem[key]) item[key] = templateItem[key]
