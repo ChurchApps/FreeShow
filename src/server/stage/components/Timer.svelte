@@ -18,7 +18,7 @@
     let timeValue: string = "00:00"
     let currentTime: number
     // $: currentTime = getCurrentTime()
-    $: timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0, item?.timer?.showHours !== false)
+    $: timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0, item?.timer?.showHours !== false, item?.timer?.padding !== false)
 
     $: if (timer?.type) currentTime = getCurrentTimerValue(timer, ref, today, $activeTimers)
     else currentTime = 0

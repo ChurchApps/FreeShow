@@ -1208,6 +1208,7 @@
         "warn_early": "Early warning",
         "warn_offset": "Seconds before end",
         "overflow": "Show overtime",
+        "padding": "Number padding",
         "flash": "Flash",
         "preview": "Preview",
         "clock": "Clock",

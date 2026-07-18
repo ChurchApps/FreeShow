@@ -30,18 +30,16 @@ export function joinTime(time: Time, ms: boolean = false): string {
     return arr.join(":")
 }
 
-export function joinTimeBig(time: number, showHours: boolean = true) {
+export function joinTimeBig(time: number, showHours: boolean = true, padding: boolean = true) {
     let allTimes: any = secondsToTime(time)
 
-    let days = allTimes.d === 0 ? "" : allTimes.d + ", "
-    let hours = showHours ? (allTimes.h === "00" ? "" : allTimes.h) : ""
-    let minutes = padString(Number(allTimes.m) + (showHours ? 0 : Number(allTimes.h) * 60))
-    let timeValue = days + [hours, minutes, allTimes.s].join(":")
-    while (timeValue[0] === ":") timeValue = timeValue.slice(1, timeValue.length)
+    let days = allTimes.d ? allTimes.d + ", " : ""
+    let h = showHours && Number(allTimes.h) ? (padding ? allTimes.h : Number(allTimes.h).toString()) : ""
 
-    timeValue = timeValue.replace(" :", " ")
+    let mins = Number(allTimes.m) + (showHours ? 0 : Number(allTimes.h) * 60)
+    let m = h || padding ? padString(mins) : mins.toString()
 
-    return timeValue
+    return (days + [h, m, allTimes.s].filter(Boolean).join(":")).replace(" :", " ")
 }
 
 export function dateToString(date: Date, full: boolean = false): string {

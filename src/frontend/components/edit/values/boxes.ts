@@ -409,7 +409,8 @@ export const itemBoxes: Box2 = {
                         }
                     },
                     { id: "timer.circleMask", type: "checkbox", value: false, values: { label: "timer.mask" } },
-                    { id: "timer.showHours", type: "checkbox", value: true, values: { label: "timer.hours" } }
+                    { id: "timer.showHours", type: "checkbox", value: true, values: { label: "timer.hours" } },
+                    { id: "timer.padding", type: "checkbox", value: true, values: { label: "timer.padding" } }
                 ])
             })
         }
