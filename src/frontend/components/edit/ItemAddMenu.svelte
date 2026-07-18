@@ -183,10 +183,14 @@
                             on:mouseenter={(e) => {
                                 clearTimeout(hoverTimeout)
                                 clearTimeout(delayedHoverTimeout)
-                                const rect = e.currentTarget.getBoundingClientRect()
-                                const shell = e.currentTarget.closest(".addMenu")
-                                const parentRect = shell.getBoundingClientRect()
+
+                                const target = e.currentTarget
                                 const open = () => {
+                                    const rect = target.getBoundingClientRect()
+                                    const shell = target.closest(".addMenu")
+                                    if (!shell) return
+
+                                    const parentRect = shell.getBoundingClientRect()
                                     hoveredSubmenu = item.children || null
                                     hoveredId = item.id
                                     hoveredY = parentRect.bottom - rect.bottom
@@ -195,7 +199,8 @@
                                 if (item.children) {
                                     delayedHoverTimeout = setTimeout(open, 120)
                                 } else {
-                                    open()
+                                    hoveredSubmenu = null
+                                    hoveredId = null
                                 }
                             }}
                             on:mouseleave={() => {
