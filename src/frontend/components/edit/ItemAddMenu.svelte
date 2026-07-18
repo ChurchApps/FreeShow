@@ -19,6 +19,7 @@
     let hoveredId: string | null = null
     let hoveredSubmenu: any[] | null = null
     let hoveredY = 0
+    let hoverTimeout: any = null
 
     $: isStage = $activePage === "stage"
 
@@ -178,12 +179,19 @@
                         <div
                             class="item-wrapper"
                             on:mouseenter={(e) => {
+                                clearTimeout(hoverTimeout)
                                 hoveredSubmenu = item.children || null
                                 hoveredId = item.id
                                 const rect = e.currentTarget.getBoundingClientRect()
                                 const shell = e.currentTarget.closest(".addMenu")
                                 const parentRect = shell.getBoundingClientRect()
                                 hoveredY = parentRect.bottom - rect.bottom
+                            }}
+                            on:mouseleave={() => {
+                                hoverTimeout = setTimeout(() => {
+                                    hoveredSubmenu = null
+                                    hoveredId = null
+                                }, 150)
                             }}
                         >
                             <MaterialButton class="add-item-button" variant={item.children ? "text" : "outlined"} on:click={() => (item.children && item.id !== "dynamic_values" ? null : handleAdd(item.id))} title={item.title || item.label} white={!isFirst}>
@@ -200,7 +208,7 @@
                     class="addMenu submenu"
                     transition:fade={{ duration: 80 }}
                     style="bottom: {hoveredY - 6}px;"
-                    on:mouseenter={() => (hoveredId = hoveredId)}
+                    on:mouseenter={() => clearTimeout(hoverTimeout)}
                     on:mouseleave={() => {
                         hoveredSubmenu = null
                         hoveredId = null
@@ -305,7 +313,7 @@
 
     .submenu {
         position: absolute;
-        right: calc(100% + 12px);
+        right: calc(100% + 4px);
         width: 260px;
         z-index: 1000;
 

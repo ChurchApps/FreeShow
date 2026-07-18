@@ -14,6 +14,8 @@
     import BoxStyle from "./tools/BoxStyle.svelte"
     import ItemStyle from "./tools/ItemStyle.svelte"
     import SlideStyle from "./tools/SlideStyle.svelte"
+    import T from "../helpers/T.svelte"
+    import Center from "../system/Center.svelte"
 
     const tabs: TabsObj = {
         text: { name: "items.text", icon: "text" },
@@ -31,7 +33,7 @@
 
     $: item = activeItemId ? stageItems[activeItemId] : null
 
-    let active: string = selectedItemIds.length ? "item" : "text"
+    let active: string = "text"
     $: type = item?.type || "text"
     $: if (type === "slide_text" || type === "slide_notes") type = "text"
     $: tabs.text.name = "items." + type
@@ -39,6 +41,10 @@
 
     $: if (item !== undefined) updateTabs()
     function updateTabs() {
+        if (!activeItemId) {
+            if (active === "item") active = "text"
+        }
+
         if (item?.type === "metronome") {
             tabs.text.disabled = true
             if (active === "text") active = "item"
@@ -51,8 +57,6 @@
             // tabs.text.disabled = tabs.item.disabled = false
             // WIP don't change if clicking in "Arrange items"
             // if ($activeStage.items?.length) active = "text"
-        } else if (!activeItemId) {
-            if (active === "item" || active === "text") active = "slide"
         }
     }
 
@@ -178,7 +182,13 @@
         <!-- labels={false} -->
         {#if active === "text"}
             <div class="content">
-                <BoxStyle />
+                {#if activeItemId}
+                    <BoxStyle />
+                {:else}
+                    <Center faded>
+                        <T id="empty.items" />
+                    </Center>
+                {/if}
             </div>
         {:else if active === "item"}
             <div class="content">
@@ -190,9 +200,11 @@
             </div>
         {/if}
 
-        <FloatingInputs>
-            <MaterialButton icon="reset" title="actions.reset" on:click={resetStageStyle} />
-        </FloatingInputs>
+        {#if activeItemId || active === "slide"}
+            <FloatingInputs>
+                <MaterialButton icon="reset" title="actions.reset" on:click={resetStageStyle} />
+            </FloatingInputs>
+        {/if}
     {/if}
 </div>
 

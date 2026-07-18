@@ -81,7 +81,7 @@
             <FloatingInputs gradient style="width: 50px;height: 50px;border: none;">
                 <MaterialButton
                     class="addButton"
-                    title="context.addToProject"
+                    title="edit.add_items"
                     style="width: 50px;height: 50px;"
                     on:click={() => {
                         activePopup.set("effect_items")

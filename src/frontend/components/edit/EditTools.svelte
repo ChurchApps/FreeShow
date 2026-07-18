@@ -444,45 +444,47 @@
             </div>
         {/if}
 
-        <FloatingInputs>
-            {#if copiedStyleDifferent}
-                <MaterialButton icon="paste" title="actions.paste" on:click={() => pasteStyle()}>
-                    <T id="actions.paste" />
-                </MaterialButton>
+        {#if item || active === "slide" || active === "filters"}
+            <FloatingInputs>
+                {#if copiedStyleDifferent}
+                    <MaterialButton icon="paste" title="actions.paste" on:click={() => pasteStyle()}>
+                        <T id="actions.paste" />
+                    </MaterialButton>
 
-                <div class="divider"></div>
-            {/if}
-            {#if currentCopied && !copiedStyleDifferent}
-                {#if isShow}
-                    {#if active === "filters"}
-                        <MaterialButton icon="down" title="actions.to_following" on:click={() => pasteStyle(false, true)}>
-                            <!-- <T id="actions.to_following" /> -->
+                    <div class="divider"></div>
+                {/if}
+                {#if currentCopied && !copiedStyleDifferent}
+                    {#if isShow}
+                        {#if active === "filters"}
+                            <MaterialButton icon="down" title="actions.to_following" on:click={() => pasteStyle(false, true)}>
+                                <!-- <T id="actions.to_following" /> -->
+                            </MaterialButton>
+
+                            <div class="divider"></div>
+                        {/if}
+                        <MaterialButton icon="paste" title="actions.to_all" on:click={() => pasteStyle(true)}>
+                            <T id="actions.to_all" />
                         </MaterialButton>
-
-                        <div class="divider"></div>
                     {/if}
-                    <MaterialButton icon="paste" title="actions.to_all" on:click={() => pasteStyle(true)}>
-                        <T id="actions.to_all" />
+                {:else}
+                    <MaterialButton disabled={!currentItemStyle?.length} title="actions.copy" on:click={copyStyle}>
+                        <Icon id="copy" white={copiedStyleDifferent} />
+                        {#if !copiedStyleDifferent}<T id="actions.copy" />{/if}
                     </MaterialButton>
                 {/if}
-            {:else}
-                <MaterialButton disabled={!currentItemStyle?.length} title="actions.copy" on:click={copyStyle}>
-                    <Icon id="copy" white={copiedStyleDifferent} />
-                    {#if !copiedStyleDifferent}<T id="actions.copy" />{/if}
-                </MaterialButton>
-            {/if}
 
-            <div class="divider"></div>
+                <div class="divider"></div>
 
-            <!-- && !copiedStyleDifferent -->
-            {#if currentCopied}
-                <MaterialButton icon="clear" title="clear.general: formats.clipboard" on:click={clearClipboard}></MaterialButton>
-            {:else}
-                <MaterialButton icon="reset" title="actions.reset" on:click={reset}>
-                    <!-- {#if !isShow}<T id="actions.reset" />{/if} -->
-                </MaterialButton>
-            {/if}
-        </FloatingInputs>
+                <!-- && !copiedStyleDifferent -->
+                {#if currentCopied}
+                    <MaterialButton icon="clear" title="clear.general: formats.clipboard" on:click={clearClipboard}></MaterialButton>
+                {:else}
+                    <MaterialButton icon="reset" title="actions.reset" on:click={reset}>
+                        <!-- {#if !isShow}<T id="actions.reset" />{/if} -->
+                    </MaterialButton>
+                {/if}
+            </FloatingInputs>
+        {/if}
 
         <!-- <span style="display: flex;flex-wrap: wrap;white-space: nowrap;">
             {#if $activeEdit.type === "template" || $activeEdit.type === "overlay"}
