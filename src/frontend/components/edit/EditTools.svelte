@@ -428,10 +428,6 @@
             <div class="content">
                 <ItemStyle bind:allSlideItems bind:item />
             </div>
-            <!-- {:else if active === "items"}
-            <div class="content">
-                <Items bind:allSlideItems />
-            </div> -->
         {:else if active === "filters"}
             <div class="content">
                 <SlideFilters />
