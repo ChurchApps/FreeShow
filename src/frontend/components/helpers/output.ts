@@ -694,7 +694,8 @@ export function shouldBeCaptured(outputId: string, startup = false) {
         server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getFirstOutput()?.id) === outputId),
         // only capture while a connected stage client is actually viewing a "current output" mirror (text-only stage displays need no capture)
         stage: !get(disabledServers).stage && stageConnectionIds.length > 0 && stageHasOutput(outputId) && hasStageStreamViewers(stageConnectionIds, outputId),
-        webrtc: !!output.webrtc
+        webrtc: !!output.webrtc,
+        rtmp: !!output.rtmp
     }
 
     // alert user that screen recording starts
@@ -759,6 +760,45 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
     send(OUTPUT, ["SET_VALUE"], { id: outputId, key: "webrtcData", value: newData })
     return newData
 }
+
+export function startRtmpStreaming(outputId: string = "") {
+    const outputIds = outputId ? [outputId] : getAllActiveOutputIds()
+    outputIds.forEach((outputId) => updateOutputRtmpData(outputId, "streaming", true))
+}
+
+export async function stopRtmpStreaming(outputId: string = "", confirmStop: boolean = false) {
+    if (confirmStop) {
+        const confirmed = await confirmCustom(translateText("output.confirm_stop"))
+        if (!confirmed) return
+    }
+
+    const outputIds = outputId ? [outputId] : getAllActiveOutputIds()
+    outputIds.forEach((outputId) => updateOutputRtmpData(outputId, "streaming", false))
+}
+
+export function updateOutputRtmpData(outputId: string, key: string, value: any) {
+    const output = get(outputs)[outputId]
+    if (!output) return null
+
+    const newData = { ...(output.rtmpData || {}), [key]: value }
+
+    if (key === "streaming") {
+        if (!output.rtmp || !output.rtmpData?.url) return
+
+        if (value) AudioAnalyser.recorderActivate()
+        else AudioAnalyser.recorderDeactivate()
+    }
+
+    outputs.update((a: any) => {
+        if (!a[outputId]) return a
+        a[outputId].rtmpData = newData
+        return a
+    })
+
+    send(OUTPUT, ["SET_VALUE"], { id: outputId, key: "rtmpData", value: newData })
+    return newData
+}
+
 
 // settings
 

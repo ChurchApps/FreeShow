@@ -117,7 +117,9 @@
         unmute_output: () => sortByName(keysToID($outputs).filter((a) => !a.stageOutput)).map((a) => ({ value: a.id, label: a.name }), "label"),
         interactions: () => convertToOptions($interactions),
         start_webrtc_stream: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs)).map((a) => ({ value: a.id, label: a.name }), "label")],
-        stop_webrtc_stream: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs)).map((a) => ({ value: a.id, label: a.name }), "label")]
+        stop_webrtc_stream: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs)).map((a) => ({ value: a.id, label: a.name }), "label")],
+        start_rtmp_stream: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs)).map((a) => ({ value: a.id, label: a.name }), "label")],
+        stop_rtmp_stream: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs)).map((a) => ({ value: a.id, label: a.name }), "label")]
     }
 
     $: options = getOptions[actionId]?.() || []

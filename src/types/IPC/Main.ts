@@ -169,7 +169,10 @@ export enum Main {
     TIMECODE_STATUS = "TIMECODE_STATUS",
     // Spotify
     SPOTIFY_GET_STATE = "SPOTIFY_GET_STATE",
-    SPOTIFY_COMMAND = "SPOTIFY_COMMAND"
+    SPOTIFY_COMMAND = "SPOTIFY_COMMAND",
+    // FFmpeg Download
+    FFMPEG_CHECK = "FFMPEG_CHECK",
+    FFMPEG_DOWNLOAD = "FFMPEG_DOWNLOAD"
 }
 
 export interface MainSendPayloads {
@@ -268,6 +271,9 @@ export interface MainSendPayloads {
     // Spotify
     [Main.SPOTIFY_GET_STATE]: undefined
     [Main.SPOTIFY_COMMAND]: { command: "playpause" | "next" | "prev" | "seek" | "setVolume" | "pause"; value?: number }
+    // FFmpeg
+    [Main.FFMPEG_CHECK]: undefined
+    [Main.FFMPEG_DOWNLOAD]: undefined
 }
 
 export interface MainReturnPayloads {
@@ -365,6 +371,9 @@ export interface MainReturnPayloads {
     // Spotify
     [Main.SPOTIFY_GET_STATE]: Promise<SpotifyState | null>
     [Main.SPOTIFY_COMMAND]: Promise<boolean>
+    // FFmpeg
+    [Main.FFMPEG_CHECK]: { installed: boolean; path?: string }
+    [Main.FFMPEG_DOWNLOAD]: Promise<{ success: boolean; error?: string }>
 }
 
 ///////////

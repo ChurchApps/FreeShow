@@ -6,6 +6,7 @@ import path from "path"
 import { getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from ".."
 import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
+import { ToMain } from "../../types/IPC/ToMain"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { getAudioMetadata } from "../audio/audio"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
@@ -26,6 +27,7 @@ import { closeServers, startServers, updateServerData } from "../servers"
 import { processAudioData, timecodeStart, timecodeStop, updateTimecodeValue } from "../timecode/timecode"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
+import { downloadFfmpeg, getFfmpegPath, isFfmpegInstalled } from "../streaming/ffmpegManager"
 import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShowsAsync, locateMediaFile, openInSystem, readExifData, readFile, readFolder, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
 import { getMachineId } from "../utils/helpers"
 import { LyricSearch } from "../utils/LyricSearch"
@@ -34,6 +36,7 @@ import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refresh
 import { correctSpelling } from "../utils/spellcheck"
 import { executeSpotifyCommand, getSpotifyState } from "../utils/spotify"
 import checkForUpdates from "../utils/updater"
+import { sendToMain } from "./main"
 
 // no need to await Promise returns here
 export const mainResponses: MainResponses = {
@@ -238,6 +241,23 @@ export const mainResponses: MainResponses = {
     [Main.SPOTIFY_COMMAND]: async (data) => {
         await executeSpotifyCommand(data.command, data.value)
         return true
+    },
+    // FFmpeg
+    [Main.FFMPEG_CHECK]: () => {
+        return { installed: isFfmpegInstalled(), path: isFfmpegInstalled() ? getFfmpegPath() : undefined }
+    },
+    [Main.FFMPEG_DOWNLOAD]: async () => {
+        try {
+            await downloadFfmpeg((progress) => {
+                sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: "ffmpeg", name: "FFmpeg", progress, total: 100, status: "downloading" })
+            })
+            sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: "ffmpeg", name: "FFmpeg", progress: 100, total: 100, status: "complete" })
+            return { success: true }
+        } catch (error: any) {
+            console.error("FFmpeg download error:", error)
+            sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: "ffmpeg", name: "FFmpeg", progress: 0, total: 0, status: "error" })
+            return { success: false, error: error?.message || "Unknown download error" }
+        }
     }
 }
 

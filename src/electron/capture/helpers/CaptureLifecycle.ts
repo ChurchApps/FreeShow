@@ -1,8 +1,10 @@
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 import { OutputHelper } from "../../output/OutputHelper"
+import { RtmpStreamer } from "../../streaming/RtmpStreamer"
+import { WebRtcHost } from "../../streaming/WebRtcHost"
+import { isAudioEnabled } from "../../audio/processAudio"
 import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
-import { WebRtcHost } from "../../webrtc/WebRtcHost"
 
 export class CaptureLifecycle {
     private static readonly BACKPRESSURE_LOOKUP = [
@@ -32,6 +34,7 @@ export class CaptureLifecycle {
                 this.updateCaptureToggles(id, output.captureOptions, toggle)
                 CaptureHelper.Transmitter.startTransmitting(id)
                 this.updateWebRtcHostState()
+                this.updateRtmpState()
             }
             return
         }
@@ -69,6 +72,7 @@ export class CaptureLifecycle {
 
         this.activeCaptures.add(id)
         this.updateWebRtcHostState()
+        this.updateRtmpState()
 
         this.runCaptureLoop(id, token, output)
     }
@@ -202,7 +206,7 @@ export class CaptureLifecycle {
             capture.frameSubscription = null
         }
 
-        const channels = ["ndi", "blackmagic", "server", "stage", "webrtc"]
+        const channels = ["ndi", "blackmagic", "server", "stage", "webrtc", "rtmp"]
         channels.forEach((channel) => CaptureHelper.Transmitter.stopChannel(id, channel))
 
         console.info("Capture - stopping: " + id)
@@ -210,6 +214,7 @@ export class CaptureLifecycle {
         this.cleanupListeners(capture.window)
         delete output.captureOptions
         this.updateWebRtcHostState()
+        this.updateRtmpState()
     }
 
     private static cleanupListeners(window: any) {
@@ -251,5 +256,29 @@ export class CaptureLifecycle {
         } else {
             WebRtcHost.stop()
         }
+    }
+
+    private static updateRtmpState() {
+        const allOutputs = OutputHelper.getAllOutputs()
+        allOutputs.forEach((o) => {
+            if (!o.id) return
+
+            const rtmpEnabled = o.captureOptions?.options?.rtmp && o.rtmpData?.streaming
+            if (rtmpEnabled) {
+                const url = o.rtmpData?.url || ""
+                const key = o.rtmpData?.key || ""
+                const fullUrl = key ? `${url}/${key}` : url
+                const bounds = o.window?.getBounds() || { width: 1920, height: 1080 }
+                const fps = o.captureOptions?.framerates?.rtmp || 30
+
+                if (url && !RtmpStreamer.isRunning(o.id)) {
+                    RtmpStreamer.start(o.id, fullUrl, bounds.width, bounds.height, fps, isAudioEnabled())
+                }
+            } else {
+                if (RtmpStreamer.isRunning(o.id)) {
+                    RtmpStreamer.stop(o.id)
+                }
+            }
+        })
     }
 }

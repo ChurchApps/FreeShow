@@ -7,6 +7,7 @@ export class Output {
     boundsLocked?: boolean
     transparent?: boolean
     webrtcData?: any
+    rtmpData?: any
     // previewWindow: BrowserWindow
     captureOptions?: CaptureOptions
     /*
