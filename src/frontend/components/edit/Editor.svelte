@@ -18,7 +18,7 @@
     import OverlayEditor from "./editors/OverlayEditor.svelte"
     import SlideEditor from "./editors/SlideEditor.svelte"
     import TemplateEditor from "./editors/TemplateEditor.svelte"
-    import RadialAddMenu from "./RadialAddMenu.svelte"
+    import ItemAddMenu from "./ItemAddMenu.svelte"
     import { getSlideChords } from "./scripts/chords"
     import { getSlideText } from "./scripts/textStyle"
 
@@ -70,11 +70,11 @@
         {#if $activeEdit.type === "overlay"}
             <OverlayEditor />
 
-            <RadialAddMenu {isLocked} />
+            <ItemAddMenu {isLocked} />
         {:else if $activeEdit.type === "template"}
             <TemplateEditor />
 
-            <RadialAddMenu {isLocked} />
+            <ItemAddMenu {isLocked} />
         {:else if $activeEdit.type === "effect"}
             <EffectEditor />
 
@@ -122,7 +122,7 @@
                     <SlideEditor />
 
                     {#if $editMode !== "chords" && !$focusMode}
-                        <RadialAddMenu {isLocked} />
+                        <ItemAddMenu {isLocked} />
                     {/if}
                 {/if}
             </div>

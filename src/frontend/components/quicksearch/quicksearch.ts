@@ -119,11 +119,14 @@ export async function quicksearch(searchValue: string, categoryFilter: null | Se
 
         if (isEditMode) {
             currentCategory = "items"
-            const addItems = slideItems.map((item) => ({
-                id: item.id,
-                icon: item.icon,
-                name: translateText(item.title || item.label)
-            }))
+            const addItems = slideItems
+                .flatMap((group) => group.items)
+                .flatMap((item) => (item.children ? item.children : [item]))
+                .map((item) => ({
+                    id: item.id,
+                    icon: item.icon,
+                    name: translateText(item.title || item.label)
+                }))
 
             addValues(trimValues(sort(addItems)), "add_item_edit")
         } else if (isStageMode) {
@@ -131,17 +134,20 @@ export async function quicksearch(searchValue: string, categoryFilter: null | Se
             const stageId = get(activeStage).id || ""
             const stageShow = get(stageShows)[stageId] || {}
             const slideTextItemsCount = Object.values(stageShow.items || {}).filter((a: any) => a.type === "slide_text").length
-            const addItems = stageItems.map((item) => {
-                let name = translateText(item.title || item.label)
-                if (item.id === "slide_text") {
-                    name = slideTextItemsCount === 1 ? translateText("stage.next_slide_text") : translateText("items.slide_text") + (slideTextItemsCount > 1 ? ` (+${slideTextItemsCount})` : "")
-                }
-                return {
-                    id: item.id,
-                    icon: item.icon,
-                    name
-                }
-            })
+            const addItems = stageItems
+                .flatMap((group) => group.items)
+                .flatMap((item) => (item.children ? item.children : [item]))
+                .map((item) => {
+                    let name = translateText(item.title || item.label)
+                    if (item.id === "slide_text") {
+                        name = slideTextItemsCount === 1 ? translateText("stage.next_slide_text") : translateText("items.slide_text") + (slideTextItemsCount > 1 ? ` (+${slideTextItemsCount})` : "")
+                    }
+                    return {
+                        id: item.id,
+                        icon: item.icon,
+                        name
+                    }
+                })
 
             addValues(trimValues(sort(addItems)), "add_item_stage")
         }

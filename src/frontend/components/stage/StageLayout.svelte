@@ -20,7 +20,7 @@
     import Snaplines from "../system/Snaplines.svelte"
     import { getSlideTextItems, stageItemToItem, updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
-    import RadialAddMenu from "../edit/RadialAddMenu.svelte"
+    import ItemAddMenu from "../edit/ItemAddMenu.svelte"
 
     export let outputId = ""
     export let stageId = ""
@@ -150,14 +150,6 @@
             activePage.set("settings")
         }, 100)
     }
-
-    // Stage Radial Textbox Dynamic Values Shortcut:
-    // const excludeValues = ["project_", "time_", "exif_", "audio_", "meta_", "slide_text_", "show_text_full", "slide_group_color", "slide_group_next_color", "slide_group_upcoming_color"]
-    // const ref = { type: "stage" }
-    // const dynamicValues = getDynamicIds()
-    //     .filter((id) => !excludeValues.find((v) => id.includes(v))) // || id.startsWith("project_")
-    //     .map((id) => ({ value: `{${id}}`, label: `{${id}}`, data: replaceDynamicValues(`{${id}}`, ref).slice(0, 20) }))
-    // <MaterialDropdown label="actions.dynamic_values" options={dynamicValues} value="" style="border: 1px solid var(--primary-lighter);" on:change={(e) => addItem("text", e.detail)} onlyArrow />
 </script>
 
 <div class="stageArea">
@@ -201,7 +193,7 @@
             <MaterialZoom hidden={!hasStageOutput} columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
         </FloatingInputs>
 
-        <RadialAddMenu {isLocked} />
+        <ItemAddMenu {isLocked} />
     {/if}
 </div>
 
