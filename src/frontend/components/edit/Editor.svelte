@@ -10,6 +10,7 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Splash from "../main/Splash.svelte"
     import Tabs from "../main/Tabs.svelte"
+    import ChordEditor from "../show/ChordEditor.svelte"
     import TextEditor from "../show/TextEditor.svelte"
     import AudioEditor from "./editors/AudioEditor.svelte"
     import CameraEditor from "./editors/CameraEditor.svelte"
@@ -118,6 +119,8 @@
             <div class="content">
                 {#if $editMode === "text_edit" && !$focusMode}
                     <TextEditor currentShow={$showsCache[$activeShow?.id || ""]} />
+                {:else if $editMode === "chords" && !$focusMode}
+                    <ChordEditor showId={currentShowId} currentShow={$showsCache[currentShowId]} />
                 {:else}
                     <SlideEditor />
 

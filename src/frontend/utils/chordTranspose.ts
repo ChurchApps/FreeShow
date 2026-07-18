@@ -58,6 +58,63 @@ function transposeFullChord(chord: string, step: number, preferSharps = true): s
     return transposeChord(chord, step, preferSharps)
 }
 
+// transpose a single chord key (e.g. "Gmaj7", "Bm7/E"), handling slash/bass notes
+export function transposeChordKey(key: string, step: number, preferSharps = step >= 0): string {
+    return transposeFullChord(key, step, preferSharps)
+}
+
+// get the chromatic index (0-11, C=0) of a chord/key root, or -1 if not a note
+export function keyToIndex(key: string): number {
+    if (!key) return -1
+    const match = key.match(/^([A-G])([b#♭♯]?)/)
+    if (!match) return -1
+    const base: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
+    let i = base[match[1]]
+    if (i === undefined) return -1
+    const accidental = match[2].replace("♭", "b").replace("♯", "#")
+    if (accidental === "#") i += 1
+    else if (accidental === "b") i -= 1
+    return (i + 12) % 12
+}
+
+// semitone distance to get from one key to another (0-11)
+export function getSemitonesBetweenKeys(from: string, to: string): number {
+    const a = keyToIndex(from)
+    const b = keyToIndex(to)
+    if (a === -1 || b === -1) return 0
+    return (b - a + 12) % 12
+}
+
+// diatonic triads for each major key (root indexes), used for key detection
+const MAJOR_SCALE_STEPS = [0, 2, 4, 5, 7, 9, 11]
+
+// detect the most likely key of a song from its chords (major keys only)
+export function detectKey(chordKeys: string[]): string {
+    const roots = chordKeys.map(keyToIndex).filter((i) => i >= 0)
+    if (!roots.length) return ""
+
+    let bestKey = 0
+    let bestScore = -Infinity
+    for (let tonic = 0; tonic < 12; tonic++) {
+        const scale = MAJOR_SCALE_STEPS.map((s) => (tonic + s) % 12)
+        let score = 0
+        roots.forEach((root, i) => {
+            if (scale.includes(root)) score += 1
+            if (root === tonic) score += 2 // tonic
+            if (root === (tonic + 7) % 12) score += 1 // dominant
+            if (root === (tonic + 5) % 12) score += 1 // subdominant
+            // first & last chord are strong tonic indicators
+            if ((i === 0 || i === roots.length - 1) && root === tonic) score += 3
+        })
+        if (score > bestScore) {
+            bestScore = score
+            bestKey = tonic
+        }
+    }
+
+    return SHARP_SCALE[bestKey]
+}
+
 export function transposeText(text: string, step: number): string {
     // Prefer sharps when transposing up, flats when down
     const preferSharps = step >= 0

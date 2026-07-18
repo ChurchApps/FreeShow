@@ -91,11 +91,14 @@
     // don't change order when changing edits
     $: if ($editHistory.length !== clonedHistory.length || (!$activeEdit.id && !$activeShow?.id)) setTimeout(() => (clonedHistory = clone($editHistory).reverse()))
 
+    // the text & chord editors work on the whole show, so list recent shows instead of slides
+    $: wholeShowMode = $editMode === "text_edit" || $editMode === "chords"
+
     $: activeIndex = clonedHistory.findIndex((edited) => ($activeEdit.id ? $activeEdit.id === edited.id : currentShowId === edited.id))
     function handleKeyDown(e: KeyboardEvent) {
         if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return
 
-        const showRecent = !($focusMode && currentShowId) && ($activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || $editMode === "text_edit")
+        const showRecent = !($focusMode && currentShowId) && ($activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || wholeShowMode)
         if (!showRecent || clonedHistory.length === 0) return
 
         if (e.key === "ArrowDown") {
@@ -135,7 +138,7 @@
 
 {#if $focusMode && currentShowId}
     <Slides />
-{:else if $activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || $editMode === "text_edit"}
+{:else if $activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || wholeShowMode}
     <div class="title">
         <h3 style="font-style: italic;opacity: 0.7;"><T id="edit.recent" /></h3>
     </div>
