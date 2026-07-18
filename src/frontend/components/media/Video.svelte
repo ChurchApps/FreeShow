@@ -169,17 +169,18 @@
     $: actualEndTime = endTime || videoData.duration || 0
     $: if (softLoopValue > 0) {
         if (video) {
-            video.volume = volume * (1 - softLoopOpacity)
+            video.volume = Math.min(1, Math.max(0, volume * (1 - softLoopOpacity)))
             AudioAnalyser.setSourceVolume(path, video.volume)
         }
         if (softLoopVideo) {
-            softLoopVideo.volume = volume * softLoopOpacity
+            softLoopVideo.volume = Math.min(1, Math.max(0, volume * softLoopOpacity))
             AudioAnalyser.setSourceVolume(path + "_softloop", softLoopVideo.volume)
         }
     } else {
         if (video) {
-            video.volume = volume
-            AudioAnalyser.setSourceVolume(path, volume)
+            const clampedVolume = Math.min(1, Math.max(0, volume))
+            video.volume = clampedVolume
+            AudioAnalyser.setSourceVolume(path, clampedVolume)
         }
         if (softLoopVideo) {
             softLoopVideo.volume = 0
