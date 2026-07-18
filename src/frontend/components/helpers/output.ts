@@ -694,7 +694,8 @@ export function shouldBeCaptured(outputId: string, startup = false) {
         server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getFirstOutput()?.id) === outputId),
         // only capture while a connected stage client is actually viewing a "current output" mirror (text-only stage displays need no capture)
         stage: !get(disabledServers).stage && stageConnectionIds.length > 0 && stageHasOutput(outputId) && hasStageStreamViewers(stageConnectionIds, outputId),
-        webrtc: !!output.webrtc
+        webrtc: !!output.webrtc,
+        rtmp: !!output.rtmp
     }
 
     // alert user that screen recording starts
