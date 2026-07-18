@@ -20,12 +20,14 @@
     let hoveredSubmenu: any[] | null = null
     let hoveredY = 0
     let hoverTimeout: any = null
+    let delayedHoverTimeout: any = null
 
     $: isStage = $activePage === "stage"
 
     $: if (!isOpen) {
         hoveredSubmenu = null
         hoveredId = null
+        clearTimeout(delayedHoverTimeout)
     }
 
     $: stageId = $activeStage.id || ""
@@ -180,14 +182,24 @@
                             class="item-wrapper"
                             on:mouseenter={(e) => {
                                 clearTimeout(hoverTimeout)
-                                hoveredSubmenu = item.children || null
-                                hoveredId = item.id
+                                clearTimeout(delayedHoverTimeout)
                                 const rect = e.currentTarget.getBoundingClientRect()
                                 const shell = e.currentTarget.closest(".addMenu")
                                 const parentRect = shell.getBoundingClientRect()
-                                hoveredY = parentRect.bottom - rect.bottom
+                                const open = () => {
+                                    hoveredSubmenu = item.children || null
+                                    hoveredId = item.id
+                                    hoveredY = parentRect.bottom - rect.bottom
+                                }
+
+                                if (item.children) {
+                                    delayedHoverTimeout = setTimeout(open, 120)
+                                } else {
+                                    open()
+                                }
                             }}
                             on:mouseleave={() => {
+                                clearTimeout(delayedHoverTimeout)
                                 hoverTimeout = setTimeout(() => {
                                     hoveredSubmenu = null
                                     hoveredId = null
