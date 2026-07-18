@@ -739,6 +739,9 @@ export function updateVolumeValues(value: number | undefined | "local") {
         if (!value) unmutedValue = get(volume)
     }
 
+    // supposed to be in 0-1 range instead of 0-100
+    if (typeof value === "number" && value > 1) value = value / 100
+
     volume.set(Number(Number(value).toFixed(2)))
 
     AudioPlayer.updateVolume()
