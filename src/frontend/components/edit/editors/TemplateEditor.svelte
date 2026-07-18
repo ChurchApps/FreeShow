@@ -1,22 +1,18 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import type { ItemType } from "../../../../types/Show"
-    import { activeEdit, activePopup, outputs, popupData, styles, templates } from "../../../stores"
+    import { activeEdit, activePopup, popupData, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import TemplateSlide from "../../drawer/pages/TemplateSlide.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { getResolution } from "../../helpers/output"
     import { getStyles } from "../../helpers/style"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialZoom from "../../inputs/MaterialZoom.svelte"
-    import { getStyleResolution } from "../../slide/getStyleResolution"
     import Center from "../../system/Center.svelte"
     import DropArea from "../../system/DropArea.svelte"
-    import { addItem } from "../scripts/itemHelpers"
     import { centerZoom } from "../scripts/zoom"
 
     const update = () => (Slide = clone($templates[currentId]))
@@ -71,13 +67,6 @@
         centerZoom(origin, scrollElem, ".droparea")
     }
 
-    const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
-
-    $: resolution = getResolution(null, { $outputs, $styles })
-    $: widthOrHeight = getStyleResolution(resolution, width, height, "fit", { zoom })
-
-    $: mode = Slide?.settings?.mode || "default"
-
     $: styleOverrides = (Slide?.settings?.styleOverrides || []).filter((a) => (a.globalRegex || a.pattern) && a.templateId).length
 </script>
 
@@ -100,16 +89,6 @@
             </Center>
         {/if}
     </div>
-
-    {#if !widthOrHeight.includes("height") && mode !== "text"}
-        <FloatingInputs side="center">
-            {#each shortcutItems as item}
-                <MaterialButton title="settings.add: items.{item.id}" on:click={() => addItem(item.id, null, {}, translateText("example.text"))}>
-                    <Icon id={item.icon || item.id} size={1.3} white />
-                </MaterialButton>
-            {/each}
-        </FloatingInputs>
-    {/if}
 
     <FloatingInputs>
         {#if styleOverrides > 0}

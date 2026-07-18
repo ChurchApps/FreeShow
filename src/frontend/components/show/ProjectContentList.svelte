@@ -462,6 +462,8 @@
                 </div>
             </MaterialButton>
 
+            <div class="group-spacer" />
+
             <MaterialButton
                 variant="outlined"
                 icon="import"
@@ -476,6 +478,8 @@
                     <p><T id="popup.import" /></p>
                 </div>
             </MaterialButton>
+
+            <div class="group-spacer" />
 
             <MaterialButton variant="outlined" icon="section" title="new.section" disabled={currentProject?.sectionsLocked} on:click={addSection} white={lessVisibleSection}>
                 <div class="label">
@@ -601,12 +605,16 @@
         flex-direction: column;
         gap: 2px;
 
-        /* background-color: var(--primary);
-        padding: 5px;
-        border-radius: 24px;
-        border: 1px solid var(--primary-lighter);
+        max-height: calc(100% - 100px);
+        overflow-y: auto;
+        overflow-x: hidden;
 
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); */
+        background: rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(15px);
+        border-radius: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 6px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
     }
 
     .addMenu :global(button) {
@@ -615,9 +623,20 @@
 
         border-radius: 50px;
 
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 
-        backdrop-filter: blur(10px);
+        /* for overflow shrinking */
+        min-height: 35px;
+    }
+
+    /* remove blur from individual buttons to avoid double blur */
+    .addMenu :global(button .surface) {
+        backdrop-filter: none !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+    }
+
+    .group-spacer {
+        height: 6px;
     }
 
     .addMenu .label {
@@ -644,6 +663,11 @@
         align-items: center;
 
         opacity: 0.2;
+    }
+
+    /* +/x rotate animation */
+    :global(.addButton svg) {
+        transition: transform 0.2s ease !important;
     }
 
     .recommended {
