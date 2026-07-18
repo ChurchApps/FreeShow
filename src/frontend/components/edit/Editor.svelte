@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activePopup, activeShow, cloudUsers, drawer, drawerOpenedInEdit, editMode, focusMode, refreshEditSlide, showsCache } from "../../stores"
+    import { activeEdit, activePopup, activeShow, cloudUsers, drawer, drawerOpenedInEdit, editMode, focusMode, refreshEditSlide, showsCache, slideNotesActive, special } from "../../stores"
     import { isActiveShowInUseByCloudUser } from "../../utils/cloudSync"
     import { getAccess } from "../../utils/profile"
     import Icon from "../helpers/Icon.svelte"
@@ -121,7 +121,7 @@
                 {:else}
                     <SlideEditor />
 
-                    {#if $editMode !== "chords" && !$focusMode}
+                    {#if $editMode === "default" && !$slideNotesActive && !$special.slideTimelineActive && !$focusMode}
                         <ItemAddMenu {isLocked} />
                     {/if}
                 {/if}
