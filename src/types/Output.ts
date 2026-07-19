@@ -21,7 +21,6 @@ export interface Output {
     kioskMode?: boolean
     alwaysOnTop?: boolean
     transparent?: boolean
-    allowMainScreen?: boolean // allow custom output bounds
     ndi?: boolean
     ndiData?: any
     blackmagic?: boolean

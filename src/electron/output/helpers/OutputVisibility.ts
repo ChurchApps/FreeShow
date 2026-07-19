@@ -12,7 +12,7 @@ export class OutputVisibility {
         const newStates: { id: string; active: boolean | "invisible" }[] = []
 
         data.outputs.forEach((output) => {
-            const force = !!(data.force || output.allowMainScreen || output.boundsLocked)
+            const force = !!(data.force || output.boundsLocked)
             const newState = OutputVisibility.toggleOutput(output, data.state, force, data.autoStartup, data.autoPosition)
             newStates.push({ id: output.id, active: newState })
         })

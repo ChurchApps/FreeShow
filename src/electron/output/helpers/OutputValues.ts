@@ -47,6 +47,10 @@ const setValues = {
     },
     kioskMode: (value: boolean, window: BrowserWindow) => {
         window.setKiosk(value)
+    },
+    boundsLocked: (value: boolean, _window: BrowserWindow, id: string, output: OutputWindow) => {
+        output.boundsLocked = value
+        OutputHelper.Lifecycle.updateWindowConstraints(id)
     }
 }
 

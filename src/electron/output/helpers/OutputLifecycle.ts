@@ -1,4 +1,4 @@
-import { BrowserWindow, type BrowserWindowConstructorOptions } from "electron"
+import { BrowserWindow, screen, type BrowserWindowConstructorOptions } from "electron"
 import { OUTPUT_CONSOLE, getMainWindow, isMac, loadWindowContent, toApp } from "../.."
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
@@ -24,6 +24,38 @@ export class OutputLifecycle {
         delete this.pendingCaptureStart[id]
     }
 
+    static initListeners() {
+        screen.on("display-metrics-changed", () => {
+            setTimeout(() => this.restoreAllOutputBounds(), 500)
+        })
+        screen.on("display-added", () => {
+            setTimeout(() => this.restoreAllOutputBounds(), 1000)
+        })
+        screen.on("display-removed", () => {
+            this.restoreAllOutputBounds()
+        })
+    }
+
+    static restoreAllOutputBounds() {
+        OutputHelper.getKeys().forEach((id) => {
+            const output = OutputHelper.getOutput(id)
+            if (!output || !output.window || output.window.isDestroyed()) return
+            if (output.invisible || !output.intendedBounds) return
+
+            // if a specific screen is selected, check if it's available
+            if (output.screen) {
+                const displays = screen.getAllDisplays()
+                const targetDisplay = displays.find((d) => d.id.toString() === output.screen)
+                if (!targetDisplay) return
+            }
+
+            const currentBounds = output.window.getBounds()
+            if (JSON.stringify(currentBounds) !== JSON.stringify(output.intendedBounds)) {
+                OutputHelper.Bounds.updateBounds({ id, bounds: output.intendedBounds })
+            }
+        })
+    }
+
     static async createOutput(output: Output) {
         const id: string = output.id || ""
 
@@ -45,9 +77,10 @@ export class OutputLifecycle {
         const outputWindow = this.createOutputWindow({ ...output.bounds, alwaysOnTop: output.alwaysOnTop !== false, kiosk: output.kioskMode === true, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name, output)
         // const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
-        OutputHelper.setOutput(id, { window: outputWindow, invisible: output.invisible, boundsLocked: output.boundsLocked, transparent: output.transparent, webrtcData: output.webrtcData })
+        OutputHelper.setOutput(id, { window: outputWindow, invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: output.bounds, transparent: output.transparent, webrtcData: output.webrtcData })
         // OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds({ id: output.id!, bounds: output.bounds })
+        this.updateWindowConstraints(id)
 
         // OutputHelper.Bounds.updatePreviewBounds()
 
@@ -189,6 +222,26 @@ export class OutputLifecycle {
             const bounds = window.getBounds()
             toApp(OUTPUT, { channel: "MOVE", data: { id, bounds } })
         })
+    }
+
+    static updateWindowConstraints(id: string) {
+        const output = OutputHelper.getOutput(id)
+        if (!output || !output.window || output.window.isDestroyed()) return
+
+        const locked = output.boundsLocked === true || output.invisible === true
+        const movable = OutputHelper.Bounds.moveEnabled && !locked
+
+        output.window.setResizable(movable)
+        output.window.setMovable(movable)
+
+        if (locked) {
+            const bounds = output.window.getBounds()
+            output.window.setMinimumSize(bounds.width, bounds.height)
+            output.window.setMaximumSize(bounds.width, bounds.height)
+        } else {
+            output.window.setMinimumSize(0, 0)
+            output.window.setMaximumSize(99999, 99999)
+        }
     }
 
     static async closeAllOutputs() {
