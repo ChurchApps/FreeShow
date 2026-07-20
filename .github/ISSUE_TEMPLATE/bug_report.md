@@ -1,36 +1,86 @@
----
 name: Bug report
-about: Help us improve the stability of FreeShow
+description: Help us improve the stability of FreeShow
 title: ""
-labels: bug
-assignees: ''
+labels: ["bug"]
 
----
-<!-- Before filling a bug report please be able to answer the following three questions with a YES (Please delete the No after each question). Failure to do so may result in your bug being closed as a duplicate. This waste the developers time.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting, please:
+        - Search existing **open and closed** issues.
+        - Test on the latest stable version.
+        - Test on the latest beta version if possible.
 
-This will help to reduce the number of duplicate bug reports and reports for bugs that have already been fixed in newer versions. Please respect our developers time and take the time to check for similar issues and test or the latest stable and beta versions. The lastest versions stable and beta can always be found on the GitHub releases page. https://github.com/ChurchApps/FreeShow/releases -->
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing open and closed issues.
+          required: true
+        - label: I reproduced this on the latest stable version.
+          required: true
+        - label: I reproduced this on the latest beta version, or I am unable to test the beta.
+          required: true
 
-<!-- Please search for keywords related to your issue to see if it has already been reported. Do not forget to check the closed issues as it may already have been resolved in a newer release. When searching issues it defaults to showing open issues but at the top will also show you the number of closed issues related to your search. Clicking on "Closed" will switch you to the list of matching closed issues. -->
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      placeholder: What happened?
+    validations:
+      required: true
 
-**Have you searched the FreeShow issues on GitHub (open and closed) for similar or the same issue and not found any matching or similar issues? Yes/No**
+  - type: dropdown
+    id: reproducible
+    attributes:
+      label: How often does this happen?
+      options:
+        - Every time
+        - Sometimes
+        - Only once
 
-**Have you tested and been able to reproduce the bug on the latest stable version? Yes/No** <!-- [e.g. 1.6.3, 1.6.4] -->
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+    validations:
+      required: true
 
-**Have you tested and been able to reproduce the bug on the latest beta version? Yes/No** <!-- [e.g. 1.6.3-beta.1, 1.6.4-beta.3] -->
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
 
-**Describe the bug**
-<!-- A clear and concise description of what the bug is. -->
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots, logs, or files
+      description: Drag and drop screenshots, log files, or other helpful files here if they help explain the issue.
 
-**Reproducing**
-<!-- Please give some steps we can follow to recreate this issue. -->
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other
 
-**Screenshots (Optional)**
-<!-- If applicable, add screenshots to help explain your problem. -->
+  - type: input
+    id: version
+    attributes:
+      label: FreeShow version
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
 
-**Version (Optional)**
-<!-- If you know that the issues is related to a specific OS please include it here. If you are able to determine in what version of FreeShow the issue started, please include that here and mention it in the description. -->
- - OS: <!-- [Windows/MacOS/Linux] -->
- - FreeShow Version: <!-- [e.g. 1.0.0] -->
-
-**Additional context**
-<!-- Add any other context about the problem here. -->
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context

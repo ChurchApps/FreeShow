@@ -21,7 +21,10 @@ export class OutputHelper {
             TOGGLE_OUTPUTS: (data: { outputs: (Output & { id: string })[]; state: boolean; force?: boolean; autoStartup?: boolean; autoPosition?: boolean }) => OutputHelper.Visibility.toggleOutputs(data),
             ALIGN_WITH_SCREEN: () => OutputHelper.Bounds.alignWithScreens(),
 
-            MOVE: (data: { enabled: boolean }) => (OutputHelper.Bounds.moveEnabled = data.enabled),
+            MOVE: (data: { enabled: boolean }) => {
+                OutputHelper.Bounds.moveEnabled = data.enabled
+                OutputHelper.getKeys().forEach((id) => OutputHelper.Lifecycle.updateWindowConstraints(id))
+            },
 
             UPDATE_BOUNDS: (data: { id: string; bounds: Rectangle }) => OutputHelper.Bounds.updateBounds(data),
             SET_VALUE: (data: { id: string; key: string; value: boolean | { key: string; value: boolean } }) => OutputHelper.Values.updateValue(data),
@@ -63,6 +66,10 @@ export class OutputHelper {
 
     static getKeys() {
         return Object.keys(OutputHelper.outputs)
+    }
+
+    static init() {
+        OutputLifecycle.initListeners()
     }
 
     static Bounds = OutputBounds

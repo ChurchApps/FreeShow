@@ -24,18 +24,16 @@ export function joinTime(time: Time, ms = false): string {
     return arr.join(":")
 }
 
-export function joinTimeBig(time: number, showHours = true) {
+export function joinTimeBig(time: number, showHours = true, padding = true) {
     const allTimes = secondsToTime(time)
 
-    const days = allTimes.d === 0 ? "" : allTimes.d.toString() + ", "
-    const hours = showHours ? (allTimes.h === "00" ? "" : allTimes.h) : ""
-    const minutes = padString(Number(allTimes.m) + (showHours ? 0 : Number(allTimes.h) * 60))
-    let timeValue = days + [hours, minutes, allTimes.s].join(":")
-    while (timeValue[0] === ":") timeValue = timeValue.slice(1, timeValue.length)
+    const days = allTimes.d ? allTimes.d + ", " : ""
+    const h = showHours && Number(allTimes.h) ? (padding ? allTimes.h : Number(allTimes.h).toString()) : ""
 
-    timeValue = timeValue.replace(" :", " ")
+    const mins = Number(allTimes.m) + (showHours ? 0 : Number(allTimes.h) * 60)
+    const m = h || padding ? padString(mins) : mins.toString()
 
-    return timeValue
+    return (days + [h, m, allTimes.s].filter(Boolean).join(":")).replace(" :", " ")
 }
 
 export function dateToString(date: string | number | Date, full = false, d = get(dictionary)): string {

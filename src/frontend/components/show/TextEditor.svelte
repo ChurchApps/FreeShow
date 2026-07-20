@@ -35,22 +35,20 @@
         formatText(transposeText(text, -1))
     }
 
-    $: showHasChords = Object.values(currentShow?.slides || {}).find((a) => a?.items?.find((a) => a.lines?.find((a) => a.chords)))
+    $: showHasChords = Object.values(currentShow?.slides || {}).some((a) => a?.items?.some((a) => a.lines?.some((a) => a.chords)))
 </script>
 
 <HighlightedNotes class="context #editbox_text" disabled={isLocked} style="padding: 30px;font-size: {$textEditZoom / 8}em;" placeholder={getQuickExample()} value={text} on:change={(e) => formatText(e.detail)} on:keydown={keydown} />
 
-<FloatingInputs>
-    <MaterialZoom columns={$textEditZoom / 10} min={0.5} max={2} defaultValue={1} addValue={-0.1} on:change={(e) => textEditZoom.set(e.detail * 10)} />
-</FloatingInputs>
-
-{#if showHasChords}
-    <FloatingInputs side="left">
+<FloatingInputs side="left">
+    {#if showHasChords}
         <MaterialButton on:click={transposeUp} title="edit.transpose_up">
             <Icon id="arrow_up" size={1.3} white />
         </MaterialButton>
         <MaterialButton on:click={transposeDown} title="edit.transpose_down">
             <Icon id="arrow_down" size={1.3} white />
         </MaterialButton>
-    </FloatingInputs>
-{/if}
+    {/if}
+
+    <MaterialZoom hidden={showHasChords} columns={$textEditZoom / 10} min={0.5} max={2} defaultValue={1} addValue={-0.1} on:change={(e) => textEditZoom.set(e.detail * 10)} />
+</FloatingInputs>

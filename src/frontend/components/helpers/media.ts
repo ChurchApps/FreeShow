@@ -372,6 +372,7 @@ export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: St
         filter: "",
         flipped: false,
         flippedY: false,
+        blend: "",
         fit: currentStyle?.fit || "contain",
         fitOptions,
         volume: currentStyle?.volume ?? 100,
@@ -525,7 +526,7 @@ export function getVideoDuration(path: string): Promise<number> {
         }
 
         const video = document.createElement("video")
-        video.src = path
+        video.src = encodeFilePath(path)
         video.preload = "metadata"
 
         let loaded = false

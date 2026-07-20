@@ -7,7 +7,6 @@
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tip from "../Tip.svelte"
 
     let currentOutput: (Output & { id: string }) | null = null
@@ -48,31 +47,26 @@
 <div style="min-width: 650px;">
     {#if !currentOutput?.invisible}
         {#if !$special.hideCursor}
-            <Tip value="settings.manual_drag_hint" bottom={20} />
+            <Tip value="settings.manual_drag_hint" />
         {/if}
-
-        <!-- This also makes the output never "auto position" itself if there is just 1 output and 1 extra screen -->
-        <MaterialToggleSwitch label="settings.allow_main_screen" checked={currentOutput?.allowMainScreen} defaultValue={false} on:change={(e) => updateOutput("allowMainScreen", e.detail)} />
     {/if}
 </div>
 
-{#if currentOutput?.allowMainScreen === true || currentOutput?.invisible}
-    {#if !currentOutput?.invisible}
-        <HRule title="settings.position" />
-
-        <InputRow>
-            <MaterialNumberInput label="edit.x (px)" value={currentOutput?.bounds?.x || 0} min={-10000} on:change={(e) => updateBounds("x", e.detail)} />
-            <MaterialNumberInput label="edit.y (px)" value={currentOutput?.bounds?.y || 0} min={-10000} on:change={(e) => updateBounds("y", e.detail)} />
-        </InputRow>
-    {/if}
-
-    <HRule title="edit.size" />
+{#if !currentOutput?.invisible}
+    <HRule title="settings.position" />
 
     <InputRow>
-        <MaterialNumberInput label="edit.width (px)" disabled={!!currentOutput?.forcedResolution} value={currentOutput?.bounds?.width || 0} min={40} on:change={(e) => updateBounds("width", e.detail)} />
-        <MaterialNumberInput label="edit.height (px)" disabled={!!currentOutput?.forcedResolution} value={currentOutput?.bounds?.height || 0} min={40} on:change={(e) => updateBounds("height", e.detail)} />
+        <MaterialNumberInput label="edit.x (px)" value={currentOutput?.bounds?.x || 0} min={-10000} on:change={(e) => updateBounds("x", e.detail)} />
+        <MaterialNumberInput label="edit.y (px)" value={currentOutput?.bounds?.y || 0} min={-10000} on:change={(e) => updateBounds("y", e.detail)} />
     </InputRow>
+
+    <HRule title="edit.size" />
 {/if}
+
+<InputRow>
+    <MaterialNumberInput label="edit.width (px)" disabled={!!currentOutput?.forcedResolution} value={currentOutput?.bounds?.width || 0} min={40} on:change={(e) => updateBounds("width", e.detail)} />
+    <MaterialNumberInput label="edit.height (px)" disabled={!!currentOutput?.forcedResolution} value={currentOutput?.bounds?.height || 0} min={40} on:change={(e) => updateBounds("height", e.detail)} />
+</InputRow>
 
 <!-- {#if !currentOutput?.invisible}
     <Button on:click={() => toggleOutputs(null, { force: true })} style="width: 100%;margin-top: 10px;" dark center>

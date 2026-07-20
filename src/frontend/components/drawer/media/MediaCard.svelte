@@ -188,6 +188,7 @@
                 delete a[path].fit
                 delete a[path].flipped
                 delete a[path].flippedY
+                delete a[path].blend
                 delete a[path].filter
                 delete a[path].cropping
             } else if (key === "tags") {
@@ -244,7 +245,7 @@
                     </div>
                 </div>
             {/if}
-            {#if !!mediaStyle.filter?.length || $media[path]?.fit || mediaStyle.flipped || mediaStyle.flippedY || Object.keys(mediaStyle.cropping || {}).length}
+            {#if !!mediaStyle.filter?.length || $media[path]?.fit || mediaStyle.flipped || mediaStyle.flippedY || (mediaStyle.blend && mediaStyle.blend !== "normal") || Object.keys(mediaStyle.cropping || {}).length}
                 <div style="max-width: 100%;">
                     <div class="button">
                         <Button style="padding: 3px;" redHover title={translateText("actions.remove")} on:click={() => removeStyle("filters")}>

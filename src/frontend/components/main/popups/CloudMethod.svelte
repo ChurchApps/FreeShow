@@ -7,7 +7,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Tip from "../Tip.svelte"
 
-    let showMore = false
+    let showMore = true
     $: multipleTeams = ($cloudSyncData.team?.count || 0) > 1
     $: options = [
         { name: "actions.merge", description: "cloud.merge_tip", icon: "merge", click: () => setMethod("merge") },
@@ -41,9 +41,9 @@
 
 <Tip type="info" value="cloud.choose_method_tip" bottom={20} />
 
-{#if !multipleTeams}
+<!-- {#if !multipleTeams}
     <MaterialButton class="popup-options {showMore ? 'active' : ''}" style="inset-inline-end: 0;" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
-{/if}
+{/if} -->
 
 <div style="display: flex;flex-direction: column;gap: 5px;">
     {#each options as option, i}

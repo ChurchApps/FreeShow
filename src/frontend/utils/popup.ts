@@ -13,6 +13,7 @@ import ChangeOutputValues from "../components/main/popups/ChangeOutputValues.sve
 import ChooseCamera from "../components/main/popups/ChooseCamera.svelte"
 import ChooseChord from "../components/main/popups/ChooseChord.svelte"
 import ChooseOutput from "../components/main/popups/ChooseOutput.svelte"
+import OutputSetup from "../components/main/popups/OutputSetup.svelte"
 import ChooseScreen from "../components/main/popups/ChooseScreen.svelte"
 import ChooseStyle from "../components/main/popups/ChooseStyle.svelte"
 import ChurchAppsSyncCategories from "../components/main/popups/ChurchAppsSyncCategories.svelte"
@@ -130,7 +131,8 @@ export const popups: { [key in Popups]: ComponentType } = {
     edit_event: EditEvent,
     edit_chart: EditChart,
     choose_screen: ChooseScreen,
-    choose_output: ChooseOutput,
+    choose_output_input: ChooseOutput,
+    choose_output_type: OutputSetup,
     choose_style: ChooseStyle,
     change_output_values: ChangeOutputValues,
     output_selector: OutputSelector,
@@ -173,27 +175,33 @@ export const popups: { [key in Popups]: ComponentType } = {
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {
-    popupData.set({ ...get(popupData), id: "", value: "" })
-    activePopup.set(popupId)
+    const promise = new Promise((resolve) => {
+        let unsubscribe = () => {}
 
-    return new Promise((resolve) => {
         // check that popup is still active
         const interval = setInterval(() => {
             if (get(activePopup) !== popupId) finish(undefined)
-        }, 1000)
+        }, 300)
 
-        const unsubscribe = popupData.subscribe((a) => {
+        unsubscribe = popupData.subscribe((a) => {
             if (a.id !== popupId) return
             activePopup.set(null)
             finish(a.value)
         })
 
         function finish(value) {
-            unsubscribe()
+            if (unsubscribe) unsubscribe()
             clearInterval(interval)
-            resolve(value)
+            setTimeout(() => {
+                resolve(value)
+            }, 50)
         }
     })
+
+    popupData.set({ ...get(popupData), id: "", value: "" })
+    activePopup.set(popupId)
+
+    return promise
 }
 
 export async function confirmCustom(prompt: string) {

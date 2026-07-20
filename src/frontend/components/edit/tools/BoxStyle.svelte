@@ -287,6 +287,8 @@
         const timerLength = Math.abs((timer?.start || 0) - (timer?.end || 0))
         setBoxInputValue(box, "default", "timer.showHours", "value", item.timer?.showHours !== false)
         setBoxInputValue(box, "default", "timer.showHours", "hidden", (item.timer?.viewType || "time") !== "time" || timerLength < 3600)
+        setBoxInputValue(box, "default", "timer.padding", "value", item.timer?.padding !== false)
+        setBoxInputValue(box, "default", "timer.padding", "hidden", (item.timer?.viewType || "time") !== "time")
     }
     $: if (id === "clock" && item) {
         const clockType = item.clock?.type || "digital"

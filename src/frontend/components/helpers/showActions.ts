@@ -702,8 +702,12 @@ export function getDynamicIds(noVariables = false, mode: null | "scripture" = nu
         .filter((a) => a.name)
         .forEach(({ name }) => {
             timersList.push(`timer_${getVariableNameId(name)}`)
-            if (showAll) timersList.push(`timer_m_${getVariableNameId(name)}`)
-            if (showAll) timersList.push(`timer_s_${getVariableNameId(name)}`)
+            if (showAll) {
+                timersList.push(`timer_m_${getVariableNameId(name)}`)
+                timersList.push(`timer_s_${getVariableNameId(name)}`)
+                timersList.push(`timer_mp_${getVariableNameId(name)}`)
+                timersList.push(`timer_sp_${getVariableNameId(name)}`)
+            }
         })
 
     const rssValues = sortByName(get(special).dynamicRSS || [])
@@ -883,11 +887,14 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         }
 
         if (dynamicId.startsWith("timer_")) {
-            let min = dynamicId.startsWith("timer_m_")
-            let sec = dynamicId.startsWith("timer_s_")
-            const nameId = dynamicId.slice(min || sec ? 8 : 6)
+            let minP = dynamicId.startsWith("timer_mp_")
+            let secP = dynamicId.startsWith("timer_sp_")
+            let min = !minP && dynamicId.startsWith("timer_m_")
+            let sec = !secP && dynamicId.startsWith("timer_s_")
+
+            const nameId = dynamicId.slice(min || sec ? 8 : minP || secP ? 9 : 6)
             const timer = keysToID(get(timers)).find((a) => getVariableNameId(a.name) === nameId)
-            if (!timer) return min || sec ? "00" : "00:00"
+            if (!timer) return minP || secP ? "00" : min || sec ? "0" : "00:00"
 
             const today = new Date()
             const currentTime = Math.floor(getCurrentTimerValue(timer, { id: timer.id }, today))
@@ -895,18 +902,20 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             const overflow = !!timer.overflow
             const isOverflowing = getTimerOverflow()
 
-            if ((min || sec) && isOverflowing) {
-                if (min || !overflow) return "00"
-                return (currentTime < 0 ? "" : "-") + currentTime.toString().padStart(2, "0")
+            if ((min || sec || minP || secP) && isOverflowing) {
+                if (min || minP || !overflow) return minP || secP ? "00" : "0"
+                const absTime = Math.abs(currentTime)
+                return (currentTime < 0 ? "" : "-") + (secP || minP ? absTime.toString().padStart(2, "0") : absTime.toString())
             }
-            if (min) {
-                return currentTime >= 60
-                    ? Math.floor(currentTime / 60)
-                          .toString()
-                          .padStart(2, "0")
-                    : "00"
+
+            if (min || minP) {
+                const minsValue = currentTime >= 60 ? Math.floor(currentTime / 60) : 0
+                return minP ? minsValue.toString().padStart(2, "0") : minsValue.toString()
             }
-            if (sec) return (currentTime % 60).toString().padStart(2, "0")
+            if (sec || secP) {
+                const secsValue = currentTime % 60
+                return secP ? secsValue.toString().padStart(2, "0") : secsValue.toString()
+            }
 
             const timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0)
             if (isOverflowing) return `-${timeValue}`

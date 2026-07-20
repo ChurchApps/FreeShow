@@ -127,6 +127,7 @@ export interface Item {
     filter?: string
     flipped?: boolean
     flippedY?: boolean // media item
+    blend?: string
     muted?: boolean // media item
     loop?: boolean // media item
     speed?: number // media item
@@ -575,6 +576,7 @@ export interface OutBackground {
     filter?: string
     flipped?: boolean
     flippedY?: boolean
+    blend?: string
     title?: string // player
     cameraGroup?: string // camera
     folderPath?: string // project media folder

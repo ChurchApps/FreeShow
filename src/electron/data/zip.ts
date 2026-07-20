@@ -102,7 +102,7 @@ export async function decompressZipStream(file: string, asBuffer = false, option
             resolve(data)
         }
 
-        yauzl.open(file, { lazyEntries: true }, (err, zipfile) => {
+        yauzl.open(file, { lazyEntries: true, decodeStrings: false } as any, (err, zipfile) => {
             if (err) {
                 rejectOnce(err)
                 return
@@ -116,13 +116,15 @@ export async function decompressZipStream(file: string, asBuffer = false, option
             zipfile.on("entry", (entry: yauzl.Entry) => {
                 if (hasFinished) return
 
+                const fileName = (entry.fileName as any as Buffer).toString("utf8")
+
                 // Skip directories
-                if (/\/$/.test(entry.fileName)) {
+                if (/\/$/.test(fileName)) {
                     zipfile.readEntry()
                     return
                 }
 
-                processEntry(entry, zipfile, data, asBuffer, options)
+                processEntry(entry, zipfile, data, asBuffer, options, fileName)
             })
 
             zipfile.on("end", resolveOnce)
@@ -138,13 +140,14 @@ export async function decompressZipStream(file: string, asBuffer = false, option
 function sanitizeZipPath(name: string): string {
     return name
         .replace(/\\/g, "/")
+        .replace(/^([a-zA-Z]:|\/)/, "") // strip leading C: or /
         .split("/")
         .filter((segment) => segment && segment !== "." && segment !== "..")
         .join("/")
 }
 
-function processEntry(entry: yauzl.Entry, zipfile: yauzl.ZipFile, data: { content: Buffer | string; name: string; extension: string }[], asBuffer: boolean, options: DecompressStreamOptions | undefined) {
-    const name = entry.fileName
+function processEntry(entry: yauzl.Entry, zipfile: yauzl.ZipFile, data: { content: Buffer | string; name: string; extension: string }[], asBuffer: boolean, options: DecompressStreamOptions | undefined, fileName: string) {
+    const name = fileName
     const safeName = sanitizeZipPath(name)
     const extension = getExtension(name)
     // pass the sanitized name to callers that build a destination path, so "../" entries can't escape the target folder
@@ -239,13 +242,14 @@ function bufferInMemory(readStream: NodeJS.ReadableStream, name: string, extensi
 
 export function getZipModifiedDates(filePath: string): Promise<{ [key: string]: Date }> {
     return new Promise((resolve) => {
-        yauzl.open(filePath, { lazyEntries: true }, (err, zipfile) => {
+        yauzl.open(filePath, { lazyEntries: true, decodeStrings: false } as any, (err, zipfile) => {
             if (err || !zipfile) return resolve({})
 
             const modified: { [key: string]: Date } = {}
 
             zipfile.on("entry", (entry: yauzl.Entry) => {
-                modified[sanitizeZipPath(entry.fileName)] = entry.getLastModDate()
+                const fileName = (entry.fileName as any as Buffer).toString("utf8")
+                modified[sanitizeZipPath(fileName)] = entry.getLastModDate()
                 zipfile.readEntry()
             })
 

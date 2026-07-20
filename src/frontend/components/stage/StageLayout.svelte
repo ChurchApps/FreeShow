@@ -20,6 +20,7 @@
     import Snaplines from "../system/Snaplines.svelte"
     import { getSlideTextItems, stageItemToItem, updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
+    import ItemAddMenu from "../edit/ItemAddMenu.svelte"
 
     export let outputId = ""
     export let stageId = ""
@@ -138,6 +139,7 @@
     // stage output
 
     $: hasStageOutput = edit && Object.values($outputs).some((a) => a.stageOutput && (a.enabled || a.stageOutput === stageLayoutId))
+    $: isLocked = readOnly
 
     function createStageOutput() {
         toggleOutputEnabled.set(true)
@@ -181,17 +183,17 @@
     </div> -->
 
     {#if edit && stageLayoutId}
-        {#if !hasStageOutput}
-            <FloatingInputs side="left" onlyOne>
+        <FloatingInputs side="left" onlyOne>
+            {#if !hasStageOutput}
                 <MaterialButton icon="autofill" title="stage.create_stage_output" on:click={createStageOutput}>
                     <T id="stage.create_stage_output" />
                 </MaterialButton>
-            </FloatingInputs>
-        {/if}
+            {/if}
 
-        <FloatingInputs>
-            <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
+            <MaterialZoom hidden={!hasStageOutput} columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
         </FloatingInputs>
+
+        <ItemAddMenu {isLocked} />
     {/if}
 </div>
 
@@ -201,7 +203,8 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-        /* overflow: hidden; */
+        position: relative;
+        overflow: hidden;
     }
 
     .parent {

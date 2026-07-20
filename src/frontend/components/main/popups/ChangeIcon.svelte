@@ -40,7 +40,7 @@
     }
 </script>
 
-<MaterialButton class="popup-options" icon="edit" iconSize={1.1} title="create_show.more_options" on:click={manageIcons} white />
+<MaterialButton class="popup-options" icon="edit" iconSize={1.1} title="menu.edit" on:click={manageIcons} white />
 
 <div class="grid" style={boxed ? "gap: 8px;" : ""}>
     {#each filteredIcons as icon}

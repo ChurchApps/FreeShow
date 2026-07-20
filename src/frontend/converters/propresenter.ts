@@ -61,7 +61,7 @@ function importFile({ content, name, extension }: ImportFile, categoryId: string
     if (!song) return null
 
     const layoutId = uid()
-    const show = new ShowObj(false, categoryId, layoutId)
+    const show = new ShowObj(false, categoryId, layoutId, Date.now(), false)
     show.origin = "propresenter"
 
     const showId = resolveShowId(song, name, tempShows)

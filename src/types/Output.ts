@@ -18,16 +18,16 @@ export interface Output {
     cropping?: Cropping
     blending?: { left: number; right: number; rotate: number; opacity: number; centered: boolean; offset: number }
     screen: string | null
-    kioskMode?: boolean
     alwaysOnTop?: boolean
     transparent?: boolean
-    allowMainScreen?: boolean // allow custom output bounds
     ndi?: boolean
     ndiData?: any
     blackmagic?: boolean
     blackmagicData?: any
     webrtc?: boolean
     webrtcData?: any
+    rtmp?: boolean
+    rtmpData?: { url: string; key: string; streaming?: boolean }
     forcedResolution?: Resolution
     invisible?: boolean
     taskbar?: boolean

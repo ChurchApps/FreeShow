@@ -237,7 +237,7 @@ export const mainResponses: MainResponses = {
                     })
                 }, 2000)
             }
-            newDownloads.set(data.url, { progress, total, status: data.status })
+            newDownloads.set(data.url, { progress, total, status: data.status, name: data.name })
             return newDownloads
         })
     },
@@ -552,7 +552,7 @@ export const mainResponses: MainResponses = {
             powerpoint: () => convertPowerpoint(data),
             word: () => convertTexts(data),
             // Other programs
-            propresenter: () => convertProPresenter(data),
+            propresenter: () => convertProPresenter(data as { content: any; name: string; extension: string }[]),
             easyworship: () => convertEasyWorship(data),
             videopsalm: () => convertVideopsalm(data),
             openlp: () => convertOpenLP(data),

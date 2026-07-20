@@ -1,8 +1,10 @@
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 import { OutputHelper } from "../../output/OutputHelper"
+import { RtmpStreamer } from "../../streaming/RtmpStreamer"
+import { WebRtcHost } from "../../streaming/WebRtcHost"
+import { isAudioEnabled } from "../../audio/processAudio"
 import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
-import { WebRtcHost } from "../../webrtc/WebRtcHost"
 
 export class CaptureLifecycle {
     private static readonly BACKPRESSURE_LOOKUP = [
@@ -32,6 +34,7 @@ export class CaptureLifecycle {
                 this.updateCaptureToggles(id, output.captureOptions, toggle)
                 CaptureHelper.Transmitter.startTransmitting(id)
                 this.updateWebRtcHostState()
+                this.updateRtmpState()
             }
             return
         }
@@ -42,6 +45,9 @@ export class CaptureLifecycle {
             return
         }
 
+        const toggleHasActive = Object.values(toggle).some(Boolean)
+        if (!toggleHasActive) return
+
         if (!output.captureOptions) output.captureOptions = CaptureHelper.getDefaultCapture(output.window, id)
         const captureOptions = output.captureOptions
 
@@ -50,10 +56,7 @@ export class CaptureLifecycle {
 
         const hasEnabledCapture = captureOptions?.options && Object.values(captureOptions.options).some(Boolean)
         if (!hasEnabledCapture || captureOptions?.window.isDestroyed()) {
-            if (captureOptions?.frameSubscription) {
-                clearTimeout(captureOptions.frameSubscription)
-                captureOptions.frameSubscription = null
-            }
+            this.stopCapture(id)
             return
         }
 
@@ -69,6 +72,7 @@ export class CaptureLifecycle {
 
         this.activeCaptures.add(id)
         this.updateWebRtcHostState()
+        this.updateRtmpState()
 
         this.runCaptureLoop(id, token, output)
     }
@@ -83,6 +87,8 @@ export class CaptureLifecycle {
     }
 
     private static runCaptureLoop(id: string, token: number, output: any) {
+        console.info("Capture - starting: " + id)
+
         const captureFrame = async () => {
             const captureOpts = output.captureOptions
 
@@ -202,7 +208,7 @@ export class CaptureLifecycle {
             capture.frameSubscription = null
         }
 
-        const channels = ["ndi", "blackmagic", "server", "stage", "webrtc"]
+        const channels = ["ndi", "blackmagic", "server", "stage", "webrtc", "rtmp"]
         channels.forEach((channel) => CaptureHelper.Transmitter.stopChannel(id, channel))
 
         console.info("Capture - stopping: " + id)
@@ -210,6 +216,7 @@ export class CaptureLifecycle {
         this.cleanupListeners(capture.window)
         delete output.captureOptions
         this.updateWebRtcHostState()
+        this.updateRtmpState()
     }
 
     private static cleanupListeners(window: any) {
@@ -223,7 +230,7 @@ export class CaptureLifecycle {
 
     private static updateWebRtcHostState() {
         const allOutputs = OutputHelper.getAllOutputs()
-        const webrtcActive = allOutputs.some((o) => o.captureOptions?.options?.webrtc)
+        const webrtcActive = allOutputs.some((o) => o.webrtcData?.streaming)
 
         if (webrtcActive) {
             const wasRunning = WebRtcHost.isRunning()
@@ -233,7 +240,7 @@ export class CaptureLifecycle {
                 allOutputs.forEach((o) => {
                     if (!o.id) return
 
-                    if (o.captureOptions?.options?.webrtc) {
+                    if (o.webrtcData?.streaming) {
                         const url = o.webrtcData?.url || ""
                         const token = o.webrtcData?.token || ""
                         if (url) WebRtcHost.startWhip(o.id, url, token)
@@ -251,5 +258,29 @@ export class CaptureLifecycle {
         } else {
             WebRtcHost.stop()
         }
+    }
+
+    private static updateRtmpState() {
+        const allOutputs = OutputHelper.getAllOutputs()
+        allOutputs.forEach((o) => {
+            if (!o.id) return
+
+            const rtmpEnabled = o.rtmpData?.streaming
+            if (rtmpEnabled) {
+                const url = o.rtmpData?.url || ""
+                const key = o.rtmpData?.key || ""
+                const fullUrl = key ? `${url}/${key}` : url
+                const bounds = o.window?.getBounds() || { width: 1920, height: 1080 }
+                const fps = o.captureOptions?.framerates?.rtmp || 30
+
+                if (url && !RtmpStreamer.isRunning(o.id)) {
+                    RtmpStreamer.start(o.id, fullUrl, bounds.width, bounds.height, fps, isAudioEnabled())
+                }
+            } else {
+                if (RtmpStreamer.isRunning(o.id)) {
+                    RtmpStreamer.stop(o.id)
+                }
+            }
+        })
     }
 }

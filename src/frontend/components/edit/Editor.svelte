@@ -1,11 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activeShow, cloudUsers, drawer, drawerOpenedInEdit, editMode, focusMode, refreshEditSlide, showsCache } from "../../stores"
+    import { activeEdit, activePopup, activeShow, cloudUsers, drawer, drawerOpenedInEdit, editMode, focusMode, refreshEditSlide, showsCache, slideNotesActive, special } from "../../stores"
     import { isActiveShowInUseByCloudUser } from "../../utils/cloudSync"
     import { getAccess } from "../../utils/profile"
+    import Icon from "../helpers/Icon.svelte"
     import { getLayoutRef } from "../helpers/show"
-    import { _show } from "../helpers/shows"
+    import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Splash from "../main/Splash.svelte"
     import Tabs from "../main/Tabs.svelte"
@@ -17,6 +18,7 @@
     import OverlayEditor from "./editors/OverlayEditor.svelte"
     import SlideEditor from "./editors/SlideEditor.svelte"
     import TemplateEditor from "./editors/TemplateEditor.svelte"
+    import ItemAddMenu from "./ItemAddMenu.svelte"
     import { getSlideChords } from "./scripts/chords"
     import { getSlideText } from "./scripts/textStyle"
 
@@ -67,10 +69,30 @@
     {#key $refreshEditSlide}
         {#if $activeEdit.type === "overlay"}
             <OverlayEditor />
+
+            <ItemAddMenu {isLocked} />
         {:else if $activeEdit.type === "template"}
             <TemplateEditor />
+
+            <ItemAddMenu {isLocked} />
         {:else if $activeEdit.type === "effect"}
             <EffectEditor />
+
+            <FloatingInputs gradient style="width: 50px;height: 50px;border: none;">
+                <MaterialButton
+                    class="addButton"
+                    title="edit.add_items"
+                    style="width: 50px;height: 50px;"
+                    on:click={() => {
+                        activePopup.set("effect_items")
+                        // const currentEffect = $effects[$activeEdit.id || ""] || {}
+                        // const nextIndex = currentEffect?.items?.length || 0
+                        // if (!openedMenus[nextIndex]) openedMenus[nextIndex] = true
+                    }}
+                >
+                    <Icon id="add" size={1.5} white />
+                </MaterialButton>
+            </FloatingInputs>
         {:else if $activeEdit.type === "media"}
             <MediaEditor />
         {:else if $activeEdit.type === "camera"}
@@ -98,6 +120,10 @@
                     <TextEditor currentShow={$showsCache[$activeShow?.id || ""]} />
                 {:else}
                     <SlideEditor />
+
+                    {#if $editMode === "default" && !$slideNotesActive && !$special.slideTimelineActive && !$focusMode}
+                        <ItemAddMenu {isLocked} />
+                    {/if}
                 {/if}
             </div>
         {:else}
@@ -108,6 +134,7 @@
 
 <style>
     .editor {
+        position: relative;
         height: 100%;
         display: flex;
         flex-direction: column;

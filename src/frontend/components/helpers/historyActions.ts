@@ -217,7 +217,7 @@ function handleUpdate(obj, data, initializing) {
     }
 }
 
-async function handleShows(obj, data, initializing) {
+async function handleShows(obj, _data, initializing) {
     const showsList = obj.newData?.data || obj.oldData?.data || []
     if (!showsList.length) return
 
@@ -408,7 +408,7 @@ function handleSlides(obj, data, initializing) {
     if (data.layouts) data.layouts.reverse()
     if (data.layout?.backgrounds?.[1]) data.layout.backgrounds.reverse()
 
-    slides.forEach((slide, i) => processSlide(slide, i, { deleting, data, showId, layout, ref, index, type, obj, initializing }))
+    slides.forEach((slide, i) => processSlide(slide, i, { deleting, data, showId, layout, ref, index, type }))
 
     if (deleting) {
         if (type === "delete" || type === "delete_group") {
@@ -432,7 +432,7 @@ function handleSlides(obj, data, initializing) {
     else obj.newData = clone(data)
 }
 
-function processSlide(slide, i, { deleting, data, showId, layout, ref, index, type, obj, initializing }) {
+function processSlide(slide, i, { deleting, data, showId, layout, ref, index, type }) {
     let slideId = slide.id
     delete slide.id
     const slideIndex = slide.index ?? index
@@ -450,7 +450,10 @@ function removeSlideFromLayout(showId, layout, slideId, slideIndex, isParent, ty
     showsCache.update((a) => {
         if (!a[showId]?.layouts?.[layout]) return a
         const layoutSlides = a[showId].layouts[layout].slides
-        let newSlides = clone(layoutSlides).filter((ls) => ls.id !== slideId)
+        let newSlides = clone(layoutSlides)
+
+        if (type === "remove") newSlides.splice(slideIndex, 1)
+        else newSlides = newSlides.filter((ls) => ls.id !== slideId)
 
         if (type === "delete") {
             Object.keys(a[showId].slides).forEach((currentSlideId) => {
@@ -532,7 +535,7 @@ function addSlideToLayout(slide, slideId, slideIndex, i, showId, layout, ref, da
     }
 }
 
-function createNewSlide(showId, layout, ref, data, index) {
+function createNewSlide(showId, _layout, ref, data, index) {
     const isParent = !ref.length || data.replace?.parent
     const id = data.id || uid()
 
@@ -721,6 +724,7 @@ function handleTemplate(obj, data, initializing) {
                     .filter((a) => {
                         const type = a.type || "text"
                         if (templateItemCount[type] - slideItemCount[type] >= 0) return true
+                        if (type !== "text" && !a.fromTemplate) return true
                         if (type === "text" && !isEmptyOrSpecial(a)) return true
                         if (type === "media" && a.src) return true
                         slideItemCount[type]--

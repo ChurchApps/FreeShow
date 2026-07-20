@@ -38,6 +38,7 @@ import {
     drawer,
     drawerTabsData,
     editingProjectTemplate,
+    editMode,
     effects,
     effectsLibrary,
     eventEdit,
@@ -77,7 +78,6 @@ import {
     styles,
     templateCategories,
     templates,
-    editMode,
     themes,
     timers,
     toggleOutputEnabled,
@@ -1184,6 +1184,7 @@ const clickActions = {
             const slide = obj.sel.data[0]
             if (!slide) return
             activeEdit.set({ slide: slide.index, items: [], showId: slide.showId || get(activeShow)?.id })
+            editMode.set("default")
             activePage.set("edit")
             setTimeout(() => selected.set({ id: null, data: [] }))
         } else if (obj.sel.id === "media") {
@@ -2147,7 +2148,7 @@ export async function removeSlide(initialData: any[], type: "delete" | "remove" 
         if (!ref[index]) return
 
         if (type === "remove") {
-            if (ref[index].type === "child" && parents.find((a) => a.id === ref[index].parent?.id)) return
+            if (ref[index].type === "child" && parents.find((a) => a.index === ref[index].parent?.index)) return
 
             index = ref[index].parent?.layoutIndex ?? index
             parents.push({ index: ref[index].index, id: ref[index].id })

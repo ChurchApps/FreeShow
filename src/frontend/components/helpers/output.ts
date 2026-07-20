@@ -7,7 +7,7 @@ import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, LayoutRef, Media, OutSlide, Show, Slide, SlideData, Template, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audioFading"
-import { sendMain } from "../../IPC/main"
+import { requestMain, sendMain } from "../../IPC/main"
 import { actions, activeFocus, activeProject, activeRename, activeShow, activeTimers, allOutputs, categories, connections, currentOutputSettings, customMessageCredits, disabledServers, effects, focusMode, lockedOverlays, media, outputDisplay, outputs, outputSlideCache, outputState, overlays, overlayTimers, playingVideos, projects, scriptures, scriptureSettings, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, usageLog } from "../../stores"
 import { trackScriptureUsage } from "../../utils/analytics"
 import { isMainWindow, isOutputWindow, newToast } from "../../utils/common"
@@ -694,7 +694,8 @@ export function shouldBeCaptured(outputId: string, startup = false) {
         server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getFirstOutput()?.id) === outputId),
         // only capture while a connected stage client is actually viewing a "current output" mirror (text-only stage displays need no capture)
         stage: !get(disabledServers).stage && stageConnectionIds.length > 0 && stageHasOutput(outputId) && hasStageStreamViewers(stageConnectionIds, outputId),
-        webrtc: !!output.webrtc
+        webrtc: !!output.webrtc,
+        rtmp: !!output.rtmp
     }
 
     // alert user that screen recording starts
@@ -760,6 +761,44 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
     return newData
 }
 
+export function startRtmpStreaming(outputId: string = "") {
+    const outputIds = outputId ? [outputId] : getAllActiveOutputIds()
+    outputIds.forEach((outputId) => updateOutputRtmpData(outputId, "streaming", true))
+}
+
+export async function stopRtmpStreaming(outputId: string = "", confirmStop: boolean = false) {
+    if (confirmStop) {
+        const confirmed = await confirmCustom(translateText("output.confirm_stop"))
+        if (!confirmed) return
+    }
+
+    const outputIds = outputId ? [outputId] : getAllActiveOutputIds()
+    outputIds.forEach((outputId) => updateOutputRtmpData(outputId, "streaming", false))
+}
+
+export function updateOutputRtmpData(outputId: string, key: string, value: any) {
+    const output = get(outputs)[outputId]
+    if (!output) return null
+
+    const newData = { ...(output.rtmpData || {}), [key]: value }
+
+    if (key === "streaming") {
+        if (!output.rtmp || !output.rtmpData?.url) return
+
+        if (value) AudioAnalyser.recorderActivate()
+        else AudioAnalyser.recorderDeactivate()
+    }
+
+    outputs.update((a: any) => {
+        if (!a[outputId]) return a
+        a[outputId].rtmpData = newData
+        return a
+    })
+
+    send(OUTPUT, ["SET_VALUE"], { id: outputId, key: "rtmpData", value: newData })
+    return newData
+}
+
 // settings
 
 export const defaultOutput: Output = {
@@ -772,11 +811,13 @@ export const defaultOutput: Output = {
 }
 
 // WIP history
-export function addOutput(onlyFirst = false, styleId = "") {
-    if (onlyFirst && get(outputs).length) return
+export function addOutput(onlyFirst = false, styleId = "", enabled = true) {
+    if (onlyFirst && Object.keys(get(outputs)).length) return ""
 
+    let outputId = ""
     outputs.update((output) => {
         const id = uid()
+        outputId = id
         if (get(themes)[get(theme)]?.colors?.secondary) defaultOutput.color = get(themes)[get(theme)].colors.secondary!
         output[id] = clone(defaultOutput)
         if (styleId) output[id].style = styleId
@@ -788,13 +829,32 @@ export function addOutput(onlyFirst = false, styleId = "") {
         if (onlyFirst) output[id].name = translateText("theme.primary")
 
         // show
-        if (!onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id] })
-        if (!onlyFirst && get(outputDisplay)) toggleOutput(id)
+        if (enabled && !onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id] })
+        if (enabled && !onlyFirst && get(outputDisplay)) toggleOutput(id)
 
         if (get(currentOutputSettings) !== id) currentOutputSettings.set(id)
         activeRename.set("output_" + id)
         return output
     })
+
+    return outputId
+}
+
+export async function checkFFmpeg(): Promise<boolean> {
+    const res = await requestMain(Main.FFMPEG_CHECK)
+    if (res?.installed) return true
+
+    if (await confirmCustom("To create an RTMP output, FreeShow needs to download and install FFmpeg. Do you want to proceed?")) {
+        const downloadRes = await requestMain(Main.FFMPEG_DOWNLOAD)
+        if (downloadRes?.success) {
+            newToast("FFmpeg installed successfully!")
+            return true
+        } else {
+            newToast(translateText("Failed to download FFmpeg: ") + (downloadRes?.error || "Unknown error"))
+        }
+    }
+
+    return false
 }
 
 // WIP history
@@ -1098,7 +1158,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // remove exiting styling & add new if set in template
         // WIP some keys are probably missing here...
         // NOTE: textFit is already handled above in the auto/textFit logic block
-        const extraStyles = ["chords", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY"]
+        const extraStyles = ["chords", "actions", "specialStyle", "scrolling", "bindings", "conditions", "clickReveal", "lineReveal", "fit", "filter", "flipped", "flippedY", "blend"]
         extraStyles.forEach((key) => {
             delete item[key]
             if (templateItem[key]) item[key] = templateItem[key]
@@ -1158,7 +1218,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     })
 
     if (addOverflowTemplateItems || hasScriptureDynamicValue) {
-        const remainingTextTemplateItems = sorted.text?.slice(slideTextboxes) || []
+        const remainingTextTemplateItems = !templateClicked || hasScriptureDynamicValue ? sorted.text?.slice(slideTextboxes) || [] : sortedTemplateItems.text || []
 
         if (hasScriptureDynamicValue) {
             remainingTextTemplateItems.forEach((item) => {

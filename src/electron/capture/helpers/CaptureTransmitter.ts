@@ -6,7 +6,8 @@ import { NdiSender } from "../../ndi/NdiSender"
 import util from "../../ndi/vingester-util"
 import { OutputHelper } from "../../output/OutputHelper"
 import { getConnections, getStageStreamSubscriberIds, toServer, toStageStreamSubscribers } from "../../servers"
-import { WebRtcHost } from "../../webrtc/WebRtcHost"
+import { RtmpStreamer } from "../../streaming/RtmpStreamer"
+import { WebRtcHost } from "../../streaming/WebRtcHost"
 import { CaptureHelper } from "../CaptureHelper"
 
 export type Channel = {
@@ -51,7 +52,7 @@ export class CaptureTransmitter {
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
         if (!captureOptions) return
 
-        const channelKeys = ["ndi", "blackmagic", "server", "stage", "webrtc"]
+        const channelKeys = ["ndi", "blackmagic", "server", "stage", "webrtc", "rtmp"]
         channelKeys.forEach((key) => {
             if (captureOptions.options[key]) this.startChannel(captureId, key)
         })
@@ -248,6 +249,9 @@ export class CaptureTransmitter {
             case "webrtc":
                 this.sendBufferToWebRtcHost(captureId, image)
                 break
+            case "rtmp":
+                this.sendBufferToRtmpStreamer(captureId, image)
+                break
         }
     }
 
@@ -388,6 +392,17 @@ export class CaptureTransmitter {
         /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
         this.convertToRGBA(buffer)
         WebRtcHost.sendFrame(outputId, buffer, size)
+    }
+
+    // RTMP
+    static sendBufferToRtmpStreamer(outputId: string, image: NativeImage) {
+        if (!image || !RtmpStreamer.isRunning(outputId)) return
+
+        const buffer = image.toBitmap()
+        const size = image.getSize()
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("rtmp", outputId, buffer, size)) return
+
+        RtmpStreamer.updateFrame(outputId, buffer)
     }
 
     static requestPreview(data: { id: string; previewId: string }) {

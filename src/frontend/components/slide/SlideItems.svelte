@@ -59,8 +59,11 @@
 
     $: noAutoSize = item.auto === false && item.textFit === "none"
 
+    let previousItem = "{}"
+    $: newItem = JSON.stringify(item)
+
     // this only applies to the stage slide editor
-    $: if (edit && item && itemElem) calculateAutosize()
+    $: if (edit && item && itemElem && !noAutoSize && newItem !== previousItem) calculateAutosize()
     let autoSize = 0
     let loopStop: NodeJS.Timeout | null = null
     function calculateAutosize() {
@@ -68,6 +71,7 @@
         loopStop = setTimeout(() => {
             loopStop = null
         }, 200)
+        previousItem = newItem
 
         let textQuery = item.type === "slide_tracker" ? ".progress div" : ""
         // timeout to update size after content change (e.g. Clock seconds)

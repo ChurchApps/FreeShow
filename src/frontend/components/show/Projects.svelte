@@ -328,9 +328,17 @@
     function refreshPcoProject(serviceTypeId: string, planId: string) {
         sendMain(Main.PCO_LOAD_PLAN, { serviceTypeId, planId })
     }
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (addMenuOpen && e.key === "Escape") {
+            addMenuOpen = false
+            e.preventDefault()
+            e.stopPropagation()
+        }
+    }
 </script>
 
-<svelte:window on:keydown={checkInput} on:mousedown={mousedown} on:dragenter={dragStart} on:dragstart={dragStart} on:dragend={dragEnd} on:drop={dragEnd} on:mouseup={dragEnd} />
+<svelte:window on:keydown={checkInput} on:keydown|capture={handleKeydown} on:mousedown={mousedown} on:dragenter={dragStart} on:dragstart={dragStart} on:dragend={dragEnd} on:drop={dragEnd} on:mouseup={dragEnd} />
 
 <div class="main" class:focusMode={$focusMode}>
     <span class="tabs">
@@ -505,9 +513,13 @@
                         <T id="media.folder_type" />
                     </MaterialButton>
 
+                    <div class="group-spacer" />
+
                     <MaterialButton variant="outlined" icon="templates" title="actions.project_template" on:click={createProjectTemplate} white>
                         <T id="actions.project_template" />
                     </MaterialButton>
+
+                    <div class="group-spacer" />
 
                     <MaterialButton variant="outlined" icon="import" title="actions.import: formats.project" on:click={importProject} white>
                         <T id="actions.import" />
@@ -518,6 +530,7 @@
                     </MaterialButton>
 
                     {#if $providerConnections.planningcenter}
+                        <div class="group-spacer" />
                         <MaterialButton variant="outlined" icon="list" title="Planning Center" on:click={openPcoPicker} white>Planning Center</MaterialButton>
                     {/if}
                 </div>
@@ -699,6 +712,17 @@
         display: flex;
         flex-direction: column;
         gap: 2px;
+
+        max-height: calc(100% - 100px);
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        background: rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(15px);
+        border-radius: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 6px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
     }
 
     .addMenu :global(button) {
@@ -707,9 +731,20 @@
 
         border-radius: 50px;
 
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 
-        backdrop-filter: blur(10px);
+        /* for overflow shrinking */
+        min-height: 35px;
+    }
+
+    /* remove blur from individual buttons to avoid double blur */
+    .addMenu :global(button .surface) {
+        backdrop-filter: none !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+    }
+
+    .group-spacer {
+        height: 6px;
     }
 
     .actionType {
@@ -771,5 +806,10 @@
         width: 100%;
         height: 1px;
         background-color: var(--primary-lighter);
+    }
+
+    /* +/x rotate animation */
+    :global(.addButton svg) {
+        transition: transform 0.2s ease !important;
     }
 </style>

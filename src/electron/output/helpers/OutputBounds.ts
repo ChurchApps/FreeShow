@@ -21,22 +21,25 @@ export class OutputBounds {
     }
 
     static updateBounds(data: { id: string; bounds: Rectangle }) {
-        const window: BrowserWindow = OutputHelper.getOutput(data.id)?.window
-        if (!window || window.isDestroyed()) return
+        const output = OutputHelper.getOutput(data.id)
+        if (!output || !output.window || output.window.isDestroyed()) return
+
+        output.intendedBounds = data.bounds
 
         this.disableWindowMoveListener()
-        window.setBounds(data.bounds)
+        output.window.setBounds(data.bounds)
 
         // has to be set twice to work first time
         setTimeout(() => {
-            if (!window || window.isDestroyed()) return
-            window.setBounds(data.bounds)
+            if (!output.window || output.window.isDestroyed()) return
+            output.window.setBounds(data.bounds)
         }, 10)
 
         // ensure bounds are set properly
         setTimeout(() => {
-            if (!window || window.isDestroyed()) return
-            window.setBounds(data.bounds)
+            if (!output.window || output.window.isDestroyed()) return
+            output.window.setBounds(data.bounds)
+            OutputHelper.Lifecycle.updateWindowConstraints(data.id)
         }, 80)
     }
 

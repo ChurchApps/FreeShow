@@ -53,7 +53,7 @@
     }
 
     function reset() {
-        let deleteKeys: string[] = ["flipped", "flippedY", "fit", "speed", "volume", "fromTime", "toTime", "videoType", "cropping"]
+        let deleteKeys: string[] = ["flipped", "flippedY", "blend", "fit", "speed", "volume", "fromTime", "toTime", "videoType", "cropping"]
 
         // reset
         if (active === "filters") deleteKeys = ["filter"]

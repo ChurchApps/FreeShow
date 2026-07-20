@@ -177,6 +177,7 @@ export interface MediaStyle {
     filter?: string
     flipped?: boolean
     flippedY?: boolean
+    blend?: string
     fit?: MediaFit | ""
     fitOptions?: any
     speed?: string
@@ -413,7 +414,8 @@ export type Popups =
     | "choose_chord"
     | "choose_screen"
     | "choose_camera"
-    | "choose_output"
+    | "choose_output_input"
+    | "choose_output_type"
     | "choose_style"
     | "change_output_values"
     | "output_selector"

@@ -739,6 +739,9 @@ export function updateVolumeValues(value: number | undefined | "local") {
         if (!value) unmutedValue = get(volume)
     }
 
+    // supposed to be in 0-1 range instead of 0-100
+    if (typeof value === "number" && value > 1) value = value / 100
+
     volume.set(Number(Number(value).toFixed(2)))
 
     AudioPlayer.updateVolume()
@@ -898,7 +901,7 @@ function levenshteinDistance(a, b) {
 
 // PDF
 
-export async function getPDFThumbnails({ path }: API_media) {
+export async function getPDFThumbnails({ path, data }: API_media) {
     if (!path) return []
     const name =
         path
@@ -927,7 +930,24 @@ export async function getPDFThumbnails({ path }: API_media) {
     try {
         for (let i = 0; i < pageCount; i++) {
             const page = await pdfDoc.getPage(i + 1)
-            const viewport = page.getViewport({ scale: 1.5 })
+            const viewportAtScale1 = page.getViewport({ scale: 1 })
+
+            // Use provided width/height or target a high-quality default (e.g. 2160px for 4K-ready quality)
+            let scale
+            const maxDim = Math.max(viewportAtScale1.width, viewportAtScale1.height)
+            if (data?.width) {
+                scale = data.width / viewportAtScale1.width
+            } else if (data?.height) {
+                scale = data.height / viewportAtScale1.height
+            } else {
+                const targetRes = 2160
+                scale = targetRes / maxDim
+                // Clamp scale to reasonable bounds (1.0 = 72dpi, 4.5 = ~325dpi)
+                if (scale < 1.0) scale = 1.0
+                if (scale > 4.5) scale = 4.5
+            }
+
+            const viewport = page.getViewport({ scale })
 
             canvas.height = viewport.height
             canvas.width = viewport.width

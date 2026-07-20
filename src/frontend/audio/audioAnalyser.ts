@@ -488,8 +488,11 @@ export class AudioAnalyser {
         // any outputs with webrtc streaming enabled
         if (outputList.find((a) => a && a.enabled && a.webrtc)) return true
 
-        // any outputs with ndi audio enabled
-        if (outputList.find((a) => a && a.enabled && a.ndi && a.ndiData?.audio)) return true
+        // any outputs with rtmp streaming enabled
+        if (outputList.find((a) => a && a.enabled && a.rtmp)) return true
+
+        // any outputs with ndi enabled
+        if (outputList.find((a) => a && a.enabled && a.ndi)) return true
 
         // any outputs with blackmagic enabled (audio always enabled for blackmagic)
         if (outputList.find((a) => a && a.enabled && a.blackmagic)) return true
