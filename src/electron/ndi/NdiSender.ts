@@ -52,7 +52,6 @@ export class NdiSender {
             previousStatus?: string
             sender?: any
             timer?: NodeJS.Timeout
-            sendAudio?: boolean
             sendingVideo?: boolean
             pendingVideoFrame?: any
             paddedVideoBuffer?: Buffer
@@ -209,18 +208,8 @@ export class NdiSender {
         }
     }
 
-    static enableAudio(id: string) {
-        if (!this.NDI[id]) return
-        this.NDI[id].sendAudio = true
-    }
-
-    static disableAudio(id: string) {
-        if (!this.NDI[id]) return
-        this.NDI[id].sendAudio = false
-    }
-
     static async sendAudioBufferNDI(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
-        const activeSender = Object.values(this.NDI).find((s) => s?.sendAudio)
+        const activeSender = Object.values(this.NDI).find((s) => s?.sender)
         if (!activeSender) return
 
         const ndiAudioBuffer = convertPCMtoPlanarFloat32(buffer, channelCount)
@@ -259,7 +248,7 @@ export class NdiSender {
         }
 
         Object.values(this.NDI).forEach((data) => {
-            if (!data?.sendAudio || !data?.sender) return
+            if (!data?.sender) return
 
             try {
                 data.sender.audio(frame)

@@ -2,6 +2,7 @@
     import { OUTPUT } from "../../../../types/Channels"
     import type { ClickEvent } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
+    import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { activeTriggerFunction, currentOutputSettings, outputs, popupData, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
@@ -62,6 +63,8 @@
 
             if (key === "enabled" && value) {
                 send(OUTPUT, ["CREATE"], { ...out, id: outputId })
+                // checkWindowCapture()
+                AudioAnalyser.recorderActivate()
             }
 
             const captureTypeKeys = ["blackmagic", "ndi", "webrtc", "rtmp"]

@@ -5,7 +5,7 @@
     import { Option } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, os, outputDisplay, outputs, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, outputDisplay, outputs, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
@@ -47,8 +47,10 @@
 
             // IPC
             if (key === "enabled") {
-                if (value) send(OUTPUT, ["CREATE"], { ...out, id: outputId })
-                else {
+                if (value) {
+                    send(OUTPUT, ["CREATE"], { ...out, id: outputId })
+                    AudioAnalyser.recorderActivate()
+                } else {
                     send(OUTPUT, ["REMOVE"], { id: outputId })
                     updateOutput("hideFromPreview", false, outputId)
 
@@ -56,6 +58,7 @@
                         delete n[outputId]
                         return n
                     })
+
                     AudioAnalyser.recorderDeactivate()
                 }
             }
@@ -108,11 +111,6 @@
         updateOutput("ndiData", newData)
 
         send(NDI, ["NDI_DATA"], { id, ...newData })
-
-        if (key === "audio") {
-            if (value) AudioAnalyser.recorderActivate()
-            else AudioAnalyser.recorderDeactivate()
-        }
 
         if (key === "name" || key === "groups") {
             alertMessage.set("settings.restart_for_change")
@@ -340,8 +338,6 @@
 
     <!-- not sure if we need to toggle this off? -->
     <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={true} on:change={(e) => updateOutput("transparent", e.detail)} />
-
-    <MaterialToggleSwitch label="preview.audio" checked={currentOutput.ndiData?.audio} defaultValue={false} on:change={(e) => updateNdiData(e.detail, "audio")} />
 
     {#if $ndiData[currentOutput?.id || ""]?.connections > 0}
         <div style="padding: 10px;font-size: 0.8em;opacity: 0.4;text-align: center;">
