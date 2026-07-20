@@ -65,7 +65,7 @@
             }
 
             const captureTypeKeys = ["blackmagic", "ndi", "webrtc", "rtmp"]
-            const ipcKeys = ["alwaysOnTop", "kioskMode", "transparent", "invisible"]
+            const ipcKeys = ["alwaysOnTop", "transparent", "invisible"]
             if (out.enabled && (captureTypeKeys.includes(key) || ipcKeys.includes(key))) {
                 if (value && captureTypeKeys.includes(key)) newToast("toast.output_capture_enabled")
                 send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value: key === "blackmagic" ? out : value })

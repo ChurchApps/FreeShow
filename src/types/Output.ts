@@ -18,7 +18,6 @@ export interface Output {
     cropping?: Cropping
     blending?: { left: number; right: number; rotate: number; opacity: number; centered: boolean; offset: number }
     screen: string | null
-    kioskMode?: boolean
     alwaysOnTop?: boolean
     transparent?: boolean
     ndi?: boolean

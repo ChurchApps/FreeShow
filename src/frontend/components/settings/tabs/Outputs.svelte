@@ -27,23 +27,9 @@
 
     $: if (currentOutput?.blackmagic) send(BLACKMAGIC, ["GET_DEVICES"])
 
-    const autoRevert: string[] = ["kioskMode"] // changing these settings could break some things in some cases
-    const revertTime = 5 // seconds
-    let reverted: string[] = []
-
     function updateOutput(key: string, value: any, outputId = "") {
         if (!outputId) outputId = currentOutput?.id || ""
         if (!outputId || !$outputs[outputId]) return
-
-        // auto revert special values
-        if (autoRevert.includes(key) && value && !reverted.includes(key)) {
-            newToast(translateText("toast.reverting_setting").replace("{}", revertTime.toString()))
-            reverted.push(key)
-            setTimeout(() => {
-                updateOutput(key, false, outputId)
-                newToast(translateText("toast.reverted"))
-            }, revertTime * 1000)
-        }
 
         if (key === "style") setTimeout(refreshOut)
 
@@ -75,7 +61,7 @@
             }
 
             if (out.enabled) {
-                const ipcKeys = ["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi", "webrtc", "rtmp"]
+                const ipcKeys = ["alwaysOnTop", "transparent", "invisible", "ndi", "webrtc", "rtmp"]
                 if (key === "transparent") {
                     send(OUTPUT, ["CREATE"], { id: outputId, ...out })
                 } else if (key === "blackmagic" || ipcKeys.includes(key)) {
@@ -306,13 +292,6 @@
 
     <MaterialPopupButton label="settings.output_screen" value={outputLabel} name={outputLabel} icon={currentOutput?.boundsLocked ? "locked" : "screen"} popupId="choose_screen" />
     <MaterialToggleSwitch label="settings.always_on_top" checked={currentOutput?.alwaysOnTop !== false} defaultValue={true} on:change={(e) => updateOutput("alwaysOnTop", e.detail)} />
-
-    <!-- this will make the whole application "locked" so no other apps can be accessed, might increase performance, but generally not recommend -->
-    <!-- disable on windows -->
-    <!-- only <= 1.4.5 -->
-    {#if $os.platform !== "win32" && currentOutput?.kioskMode === true}
-        <MaterialToggleSwitch label="settings.kiosk_mode" checked={currentOutput?.kioskMode === true} defaultValue={false} on:change={(e) => updateOutput("kioskMode", e.detail)} />
-    {/if}
 {/if}
 
 {#if currentOutput?.blackmagic}

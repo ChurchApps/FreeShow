@@ -1344,7 +1344,6 @@
         "normal": "Normal",
         "enable_key_output": "Enable alpha key output",
         "always_on_top": "Always on top",
-        "kiosk_mode": "Kiosk mode",
         "change_key_output_position": "Change key output position",
         "position": "Position",
         "enabled": "Enabled",

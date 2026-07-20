@@ -1508,15 +1508,8 @@ export function getShowsFromIds(showIds: string[], projectItems?: any[]) {
 
 // some users might have got themselves in a situation they can't get out of
 // example: enables "kiosk" mode on mac might have resulted in a black screen, and they can't find the app data location to revert it!
-// how: Place any file in your Documents/FreeShow folder that has the FIXES key in it's name (e.g. DISABLE_KIOSK_MODE), when you now start your app the fix will be triggered!
+// how: Place any file in your Documents/FreeShow folder that has the FIXES key in it's name (e.g. OPEN_APPDATA_SETTINGS), when you now start your app the fix will be triggered!
 const FIXES = {
-    DISABLE_KIOSK_MODE: () => {
-        // wait to ensure output settings have loaded in the app!
-        setTimeout(() => {
-            toApp(OUTPUT, { channel: "UPDATE_OUTPUTS_DATA", data: { key: "kioskMode", value: false, autoSave: true } })
-            OutputHelper.getAllOutputs().forEach((output) => output.window.setKiosk(false))
-        }, 1000)
-    },
     OPEN_APPDATA_SETTINGS: () => {
         // this will open the "settings.json" file located at the app data location (can also be used to find other setting files here)
         openInSystem(_store.SETTINGS?.path || "", true)
