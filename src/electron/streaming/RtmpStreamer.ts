@@ -39,44 +39,56 @@ export class RtmpStreamer {
         }
 
         const ffmpegPath = getFfmpegPath()
-        const args = this.getFfmpegArgs(url, width, height, fps, enableAudio)
 
-        console.log(`[RtmpStreamer] Spawning FFmpeg to stream ${outputId} to ${url} at ${width}x${height} (${fps} fps, audio: ${enableAudio})...`)
+        // Detect if we're likely getting Retina/HighDPI frames from Electron
+        // macOS on ARM (M-series) usually captures at 2x scale
+        const isRetina = process.platform === "darwin"
+
+        const args = this.getFfmpegArgs(url, width, height, fps, enableAudio, isRetina)
+
+        console.log(`[RtmpStreamer] Spawning FFmpeg to stream ${outputId} to ${url} at ${width}x${height} (${fps} fps, audio: ${enableAudio}, retina: ${isRetina})...`)
         try {
             const stdioConfig: any = enableAudio ? ["pipe", "ignore", "inherit", "pipe"] : ["pipe", "ignore", "inherit"]
-            const process = spawn(ffmpegPath, args, {
-                stdio: stdioConfig
+            const ffmpegProcess = spawn(ffmpegPath, args, {
+                stdio: stdioConfig,
+                env: { ...process.env, NSUnbufferedIO: "YES" }
             })
 
-            process.stdin?.on("error", (_err) => {
+            ffmpegProcess.stdin?.on("error", (_err) => {
                 // Suppress write errors on exit
             })
 
-            const audioStream = process.stdio[3] as any
+            const audioStream = ffmpegProcess.stdio[3] as any
             audioStream?.on("error", (_err: any) => {
                 // Suppress write errors on exit
             })
 
-            process.on("error", (err) => {
+            ffmpegProcess.on("error", (err) => {
                 console.error(`[RtmpStreamer] FFmpeg process error for ${outputId}:`, err)
                 this.stop(outputId)
             })
 
-            process.on("exit", (code, signal) => {
+            ffmpegProcess.on("exit", (code, signal) => {
                 console.log(`[RtmpStreamer] FFmpeg exited for ${outputId} with code ${code} and signal ${signal}`)
                 this.stop(outputId)
             })
 
-            const initialFrame = Buffer.alloc(width * height * 4)
+            const initialFrame = Buffer.alloc(width * height * 4 * (isRetina ? 4 : 1))
             const frameDelay = 1000 / fps
 
+            let isWriting = false
             const videoInterval = setInterval(() => {
                 const streamer = this.streamers.get(outputId)
                 if (!streamer || !streamer.process.stdin || streamer.process.stdin.destroyed) return
+                if (isWriting) return // Skip if previous frame still writing
 
                 try {
-                    streamer.process.stdin.write(streamer.lastFrame)
+                    isWriting = true
+                    streamer.process.stdin.write(streamer.lastFrame, () => {
+                        isWriting = false
+                    })
                 } catch (err) {
+                    isWriting = false
                     console.error(`[RtmpStreamer] Error writing video frame to FFmpeg for ${outputId}:`, err)
                 }
             }, frameDelay)
@@ -101,7 +113,7 @@ export class RtmpStreamer {
             }
 
             this.streamers.set(outputId, {
-                process,
+                process: ffmpegProcess,
                 width,
                 height,
                 fps,
@@ -116,16 +128,21 @@ export class RtmpStreamer {
         }
     }
 
-    private static getFfmpegArgs(url: string, width: number, height: number, fps: number, enableAudio: boolean): string[] {
-        const args = ["-f", "rawvideo", "-pixel_format", "bgra", "-video_size", `${width}x${height}`, "-framerate", `${fps}`, "-i", "pipe:0"]
+    private static getFfmpegArgs(url: string, width: number, height: number, fps: number, enableAudio: boolean, isRetina = false): string[] {
+        const inputWidth = isRetina ? width * 2 : width
+        const inputHeight = isRetina ? height * 2 : height
+
+        const args = ["-f", "rawvideo", "-pixel_format", "bgra", "-video_size", `${inputWidth}x${inputHeight}`, "-framerate", `${fps}`, "-thread_queue_size", "4096", "-i", "pipe:0"]
 
         if (enableAudio) {
-            args.push("-f", "s16le", "-ar", `${SAMPLE_RATE}`, "-ac", `${AUDIO_CHANNELS}`, "-i", "pipe:3")
+            args.push("-f", "s16le", "-ar", `${SAMPLE_RATE}`, "-ac", `${AUDIO_CHANNELS}`, "-thread_queue_size", "4096", "-i", "pipe:3")
         } else {
             args.push("-f", "lavfi", "-i", `anullsrc=channel_layout=stereo:sample_rate=${SAMPLE_RATE}`)
         }
 
-        args.push("-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency", "-pix_fmt", "yuv420p", "-g", `${fps * 2}`, "-c:a", "aac", "-b:a", "128k", "-f", "flv", url)
+        const vf = isRetina ? `scale=${width}:${height},format=yuv420p` : "format=yuv420p"
+
+        args.push("-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency", "-pix_fmt", "yuv420p", "-vf", vf, "-g", `${fps * 2}`, "-crf", "23", "-c:a", "aac", "-b:a", "128k", "-f", "flv", url)
         return args
     }
 
@@ -154,14 +171,17 @@ export class RtmpStreamer {
         }
     }
 
-    static sendFrame(outputId: string, buffer: Buffer) {
+    static updateFrame(outputId: string, buffer: Buffer) {
         const streamer = this.streamers.get(outputId)
         if (streamer) {
-            streamer.lastFrame = buffer
+            // Create a copy to avoid race conditions with the capture buffer
+            const frameCopy = Buffer.allocUnsafe(buffer.length)
+            buffer.copy(frameCopy)
+            streamer.lastFrame = frameCopy
         }
     }
 
-    static sendAudio(buffer: Buffer) {
+    static updateAudio(buffer: Buffer) {
         const now = Date.now()
         for (const streamer of this.streamers.values()) {
             if (!streamer.enableAudio) continue

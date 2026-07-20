@@ -52,7 +52,7 @@ export async function processAudio(buffer: Buffer, icecast?: any) {
 
     // Stream system audio to RTMP Streamer
     if (RtmpStreamer.anyRunning()) {
-        RtmpStreamer.sendAudio(buffer)
+        RtmpStreamer.updateAudio(buffer)
     }
 }
 

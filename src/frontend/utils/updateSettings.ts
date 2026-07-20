@@ -4,7 +4,7 @@ import { Main } from "../../types/IPC/Main"
 import type { Output } from "../../types/Output"
 import type { Metadata, Themes } from "../../types/Settings"
 import { clone, keysToID } from "../components/helpers/array"
-import { checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
+import { checkFFmpeg, checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { sendMain } from "../IPC/main"
 import {
@@ -311,6 +311,9 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
             delete v[id].out
         })
         outputs.set(v)
+
+        // RTMP check
+        if (Object.values(v).some((out: any) => out.enabled && out.rtmp)) checkFFmpeg()
     },
     sorted: (v: any) => sorted.set(v),
     styles: (v: any) => {

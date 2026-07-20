@@ -35,16 +35,24 @@ export function getFfmpegPath(): string {
 export function isFfmpegInstalled(): boolean {
     if (isSystemFfmpegAvailable()) return true
     const binPath = getFfmpegPathLocal()
-    return fs.existsSync(binPath) && fs.statSync(binPath).isFile()
+    if (!fs.existsSync(binPath) || !fs.statSync(binPath).isFile()) return false
+    try {
+        // Use double quotes for the path and use the same shell as the app
+        execSync(`"${binPath}" -version`, { stdio: "ignore", windowsHide: true })
+        return true
+    } catch (err) {
+        console.warn(`[ffmpegManager] Incompatible or broken FFmpeg detected at ${binPath}:`, err.message)
+        return false
+    }
 }
 
 function getPlatformKey(): string | null {
     const { platform, arch } = process
     if (platform === "win32") return arch === "ia32" ? "win-32" : "win-64"
-    if (platform === "darwin") return "osx-64"
+    if (platform === "darwin") return "macos-64"
     if (platform === "linux") {
         if (arch === "arm64") return "linux-arm-64"
-        if (arch === "arm") return "linux-arm-32"
+        if (arch === "arm") return "linux-armhf-32"
         return "linux-64"
     }
     return null
@@ -72,6 +80,7 @@ function extractFfmpeg(zipPath: string, targetDir: string): Promise<string> {
                     pipeline(readStream, writeStream)
                         .then(() => {
                             zipfile.close()
+                            if (process.platform !== "win32") fs.chmodSync(destPath, 0o755)
                             resolve(destPath)
                         })
                         .catch(reject)
@@ -106,10 +115,7 @@ export async function downloadFfmpeg(onProgress: (percent: number) => void): Pro
 
     try {
         await pipeline(body, fs.createWriteStream(zipPath))
-        const ffmpegPath = await extractFfmpeg(zipPath, binDir)
-
-        if (process.platform !== "win32") fs.chmodSync(ffmpegPath, 0o755)
-        return ffmpegPath
+        return await extractFfmpeg(zipPath, binDir)
     } finally {
         try {
             fs.unlinkSync(zipPath)
