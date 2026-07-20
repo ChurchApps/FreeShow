@@ -46,7 +46,7 @@
     </div>
 {:else if openedTab === "display_settings"}
     <div class="bottom">
-        {#if Object.keys($outputs).length > 1}
+        {#if Object.values($outputs).filter((o) => !o.invisible).length > 1}
             <MaterialButton variant="outlined" icon="screen" on:click={() => open("output_selector")} small>
                 <T id="popup.output_selector" />
             </MaterialButton>
