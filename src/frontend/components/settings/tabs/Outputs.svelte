@@ -357,7 +357,7 @@
     <MaterialTextInput label="Bearer Token (Optional)" value={currentOutput.webrtcData?.token || ""} placeholder="Authorization token" on:change={(e) => updateWebrtcData(e.detail, "token")} pasteBtn />
     <!-- <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={false} on:change={(e) => updateOutput("transparent", e.detail)} /> -->
 
-    {#if currentOutput?.webrtcData?.url}
+    {#if currentOutput?.enabled && currentOutput?.webrtcData?.url}
         <div style="padding-bottom: 10px;">
             <MaterialButton variant="outlined" icon={currentOutput.webrtcData?.streaming ? "stop" : "record"} style="width: 100%; justify-content: center; {currentOutput.webrtcData?.streaming ? 'background: #b60707 !important;' : ''}" on:click={() => (currentOutput?.webrtcData?.streaming ? stopStreaming(currentOutput.id, true) : startStreaming(currentOutput?.id))} white>
                 {translateText(currentOutput.webrtcData?.streaming ? "output.stop_streaming" : "output.start_streaming")}
@@ -375,7 +375,7 @@
     <MaterialTextInput label="Stream URL" value={currentOutput.rtmpData?.url || ""} placeholder="e.g. rtmp://a.rtmp.youtube.com/live2" on:change={(e) => updateRtmpData(e.detail, "url")} pasteBtn />
     <MaterialTextInput label="Stream key" value={currentOutput.rtmpData?.key || ""} type="password" on:change={(e) => updateRtmpData(e.detail, "key")} pasteBtn />
 
-    {#if currentOutput?.rtmpData?.url && currentOutput?.rtmpData?.key}
+    {#if currentOutput?.enabled && currentOutput?.rtmpData?.url && currentOutput?.rtmpData?.key}
         <div style="padding-bottom: 10px;">
             <MaterialButton variant="outlined" icon={currentOutput.rtmpData?.streaming ? "stop" : "record"} style="width: 100%; justify-content: center; {currentOutput.rtmpData?.streaming ? 'background: #b60707 !important;' : ''}" on:click={() => (currentOutput?.rtmpData?.streaming ? stopRtmpStreaming(currentOutput.id, true) : startRtmpStreaming(currentOutput?.id))} white>
                 {translateText(currentOutput.rtmpData?.streaming ? "output.stop_streaming" : "output.start_streaming")}
