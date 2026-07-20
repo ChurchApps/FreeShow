@@ -339,11 +339,12 @@
     <!-- not sure if we need to toggle this off? -->
     <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={true} on:change={(e) => updateOutput("transparent", e.detail)} />
 
-    {#if $ndiData[currentOutput?.id || ""]?.connections > 0}
+    <!-- Connections count (connection status visible by blue indicator) -->
+    <!-- {#if $ndiData[currentOutput?.id || ""]?.connections > 0}
         <div style="padding: 10px;font-size: 0.8em;opacity: 0.4;text-align: center;">
             {$ndiData[currentOutput?.id || ""].connections}
         </div>
-    {/if}
+    {/if} -->
 {/if}
 
 {#if currentOutput?.webrtc}
