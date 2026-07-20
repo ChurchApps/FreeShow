@@ -76,7 +76,7 @@ body:
     id: version
     attributes:
       label: FreeShow version
-      placeholder: e.g. 1.6.0
+      placeholder: e.g. 1.0.0
     validations:
       required: true
 
