@@ -45,6 +45,9 @@ export class CaptureLifecycle {
             return
         }
 
+        const toggleHasActive = Object.values(toggle).some(Boolean)
+        if (!toggleHasActive) return
+
         if (!output.captureOptions) output.captureOptions = CaptureHelper.getDefaultCapture(output.window, id)
         const captureOptions = output.captureOptions
 
