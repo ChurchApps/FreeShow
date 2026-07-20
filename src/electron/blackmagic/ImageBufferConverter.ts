@@ -115,26 +115,22 @@ export class ImageBufferConverter {
                         R2 = data[i2 + 2]
                     }
 
-                    const Y1 = 0.299 * R1 + 0.587 * G1 + 0.114 * B1
-                    const U1 = (B1 - Y1) / 1.772 + 128
-                    const V1 = (R1 - Y1) / 1.402 + 128
+                    const Y1 = (306 * R1 + 601 * G1 + 117 * B1) >> 10
+                    const Y2 = (306 * R2 + 601 * G2 + 117 * B2) >> 10
 
-                    const Y2 = 0.299 * R2 + 0.587 * G2 + 0.114 * B2
-                    const U2 = (B2 - Y2) / 1.772 + 128
-                    const V2 = (R2 - Y2) / 1.402 + 128
+                    // Fast U/V calculation from averaged pixel
+                    const avgR = (R1 + R2) >> 1
+                    const avgG = (G1 + G2) >> 1
+                    const avgB = (B1 + B2) >> 1
+                    const avgY = (306 * avgR + 601 * avgG + 117 * avgB) >> 10
 
-                    const U = Math.round((U1 + U2) / 2)
-                    const V = Math.round((V1 + V2) / 2)
+                    const U = (((avgB - avgY) * 578) >> 10) + 128
+                    const V = (((avgR - avgY) * 730) >> 10) + 128
 
-                    const clampedY1 = Math.min(255, Math.max(0, Math.round(Y1)))
-                    const clampedY2 = Math.min(255, Math.max(0, Math.round(Y2)))
-                    const clampedU = Math.min(255, Math.max(0, U))
-                    const clampedV = Math.min(255, Math.max(0, V))
-
-                    newData[outIndex++] = clampedU
-                    newData[outIndex++] = clampedY1
-                    newData[outIndex++] = clampedV
-                    newData[outIndex++] = clampedY2
+                    newData[outIndex++] = U < 0 ? 0 : U > 255 ? 255 : U
+                    newData[outIndex++] = Y1 < 0 ? 0 : Y1 > 255 ? 255 : Y1
+                    newData[outIndex++] = V < 0 ? 0 : V > 255 ? 255 : V
+                    newData[outIndex++] = Y2 < 0 ? 0 : Y2 > 255 ? 255 : Y2
                 }
             }
 
@@ -171,30 +167,24 @@ export class ImageBufferConverter {
                     }
                 }
 
-                // Calculate YUV for both pixels using standard BT.601 coefficients
-                const Y1 = 0.299 * R1 + 0.587 * G1 + 0.114 * B1
-                const U1 = (B1 - Y1) / 1.772 + 128
-                const V1 = (R1 - Y1) / 1.402 + 128
+                // Calculate YUV for both pixels using integer BT.601 coefficients
+                const Y1 = (306 * R1 + 601 * G1 + 117 * B1) >> 10
+                const Y2 = (306 * R2 + 601 * G2 + 117 * B2) >> 10
 
-                const Y2 = 0.299 * R2 + 0.587 * G2 + 0.114 * B2
-                const U2 = (B2 - Y2) / 1.772 + 128
-                const V2 = (R2 - Y2) / 1.402 + 128
+                // Fast U/V calculation from averaged pixel
+                const avgR = (R1 + R2) >> 1
+                const avgG = (G1 + G2) >> 1
+                const avgB = (B1 + B2) >> 1
+                const avgY = (306 * avgR + 601 * avgG + 117 * avgB) >> 10
 
-                // Average U and V for the pair (horizontal chroma subsampling)
-                const U = Math.round((U1 + U2) / 2)
-                const V = Math.round((V1 + V2) / 2)
-
-                // Clamp values to 0-255
-                const clampedY1 = Math.min(255, Math.max(0, Math.round(Y1)))
-                const clampedY2 = Math.min(255, Math.max(0, Math.round(Y2)))
-                const clampedU = Math.min(255, Math.max(0, U))
-                const clampedV = Math.min(255, Math.max(0, V))
+                const U = (((avgB - avgY) * 578) >> 10) + 128
+                const V = (((avgR - avgY) * 730) >> 10) + 128
 
                 // Write UYVY format: U Y V Y
-                newData[outIndex++] = clampedU
-                newData[outIndex++] = clampedY1
-                newData[outIndex++] = clampedV
-                newData[outIndex++] = clampedY2
+                newData[outIndex++] = U < 0 ? 0 : U > 255 ? 255 : U
+                newData[outIndex++] = Y1 < 0 ? 0 : Y1 > 255 ? 255 : Y1
+                newData[outIndex++] = V < 0 ? 0 : V > 255 ? 255 : V
+                newData[outIndex++] = Y2 < 0 ? 0 : Y2 > 255 ? 255 : Y2
             }
         }
 
@@ -239,26 +229,22 @@ export class ImageBufferConverter {
                         B2 = data[i2 + 3]
                     }
 
-                    const Y1 = 0.299 * R1 + 0.587 * G1 + 0.114 * B1
-                    const U1 = (B1 - Y1) / 1.772 + 128
-                    const V1 = (R1 - Y1) / 1.402 + 128
+                    const Y1 = (306 * R1 + 601 * G1 + 117 * B1) >> 10
+                    const Y2 = (306 * R2 + 601 * G2 + 117 * B2) >> 10
 
-                    const Y2 = 0.299 * R2 + 0.587 * G2 + 0.114 * B2
-                    const U2 = (B2 - Y2) / 1.772 + 128
-                    const V2 = (R2 - Y2) / 1.402 + 128
+                    // Fast U/V calculation from averaged pixel
+                    const avgR = (R1 + R2) >> 1
+                    const avgG = (G1 + G2) >> 1
+                    const avgB = (B1 + B2) >> 1
+                    const avgY = (306 * avgR + 601 * avgG + 117 * avgB) >> 10
 
-                    const U = Math.round((U1 + U2) / 2)
-                    const V = Math.round((V1 + V2) / 2)
+                    const U = (((avgB - avgY) * 578) >> 10) + 128
+                    const V = (((avgR - avgY) * 730) >> 10) + 128
 
-                    const clampedY1 = Math.min(255, Math.max(0, Math.round(Y1)))
-                    const clampedY2 = Math.min(255, Math.max(0, Math.round(Y2)))
-                    const clampedU = Math.min(255, Math.max(0, U))
-                    const clampedV = Math.min(255, Math.max(0, V))
-
-                    newData[outIndex++] = clampedU
-                    newData[outIndex++] = clampedY1
-                    newData[outIndex++] = clampedV
-                    newData[outIndex++] = clampedY2
+                    newData[outIndex++] = U < 0 ? 0 : U > 255 ? 255 : U
+                    newData[outIndex++] = Y1 < 0 ? 0 : Y1 > 255 ? 255 : Y1
+                    newData[outIndex++] = V < 0 ? 0 : V > 255 ? 255 : V
+                    newData[outIndex++] = Y2 < 0 ? 0 : Y2 > 255 ? 255 : Y2
                 }
             }
 
@@ -295,30 +281,24 @@ export class ImageBufferConverter {
                     }
                 }
 
-                // Calculate YUV for both pixels using standard BT.601 coefficients
-                const Y1 = 0.299 * R1 + 0.587 * G1 + 0.114 * B1
-                const U1 = (B1 - Y1) / 1.772 + 128
-                const V1 = (R1 - Y1) / 1.402 + 128
+                // Calculate YUV for both pixels using integer BT.601 coefficients
+                const Y1 = (306 * R1 + 601 * G1 + 117 * B1) >> 10
+                const Y2 = (306 * R2 + 601 * G2 + 117 * B2) >> 10
 
-                const Y2 = 0.299 * R2 + 0.587 * G2 + 0.114 * B2
-                const U2 = (B2 - Y2) / 1.772 + 128
-                const V2 = (R2 - Y2) / 1.402 + 128
+                // Fast U/V calculation from averaged pixel
+                const avgR = (R1 + R2) >> 1
+                const avgG = (G1 + G2) >> 1
+                const avgB = (B1 + B2) >> 1
+                const avgY = (306 * avgR + 601 * avgG + 117 * avgB) >> 10
 
-                // Average U and V for the pair (horizontal chroma subsampling)
-                const U = Math.round((U1 + U2) / 2)
-                const V = Math.round((V1 + V2) / 2)
-
-                // Clamp values to 0-255
-                const clampedY1 = Math.min(255, Math.max(0, Math.round(Y1)))
-                const clampedY2 = Math.min(255, Math.max(0, Math.round(Y2)))
-                const clampedU = Math.min(255, Math.max(0, U))
-                const clampedV = Math.min(255, Math.max(0, V))
+                const U = (((avgB - avgY) * 578) >> 10) + 128
+                const V = (((avgR - avgY) * 730) >> 10) + 128
 
                 // Write UYVY format: U Y V Y
-                newData[outIndex++] = clampedU
-                newData[outIndex++] = clampedY1
-                newData[outIndex++] = clampedV
-                newData[outIndex++] = clampedY2
+                newData[outIndex++] = U < 0 ? 0 : U > 255 ? 255 : U
+                newData[outIndex++] = Y1 < 0 ? 0 : Y1 > 255 ? 255 : Y1
+                newData[outIndex++] = V < 0 ? 0 : V > 255 ? 255 : V
+                newData[outIndex++] = Y2 < 0 ? 0 : Y2 > 255 ? 255 : Y2
             }
         }
 
@@ -702,36 +682,37 @@ export class ImageBufferConverter10Bit {
                 // Process 6 pixels at a time
                 const pixels: { y: number; u: number; v: number }[] = []
 
-                for (let i = 0; i < 6 && x + i < width; i++) {
-                    const idx = (y * width + x + i) * 4
-                    const B = data[idx]
-                    const G = data[idx + 1]
-                    const R = data[idx + 2]
+                for (let i = 0; i < 6; i++) {
+                    if (x + i < width) {
+                        const idx = (y * width + x + i) * 4
+                        const B = data[idx]
+                        const G = data[idx + 1]
+                        const R = data[idx + 2]
 
-                    // Convert to YUV (BT.601) and scale to 10-bit (0-1023)
-                    const Y = (0.299 * R + 0.587 * G + 0.114 * B) * 4
-                    const U = ((B - Y / 4) / 1.772 + 128) * 4
-                    const V = ((R - Y / 4) / 1.402 + 128) * 4
+                        // Convert to YUV (BT.601) and scale to 10-bit using integer math
+                        const y8 = (306 * R + 601 * G + 117 * B) >> 10
+                        const Y = (306 * R + 601 * G + 117 * B) >> 8
+                        const U = (((B - y8) * 578) >> 8) + 512
+                        const V = (((R - y8) * 730) >> 8) + 512
 
-                    pixels.push({
-                        y: Math.min(1023, Math.max(0, Math.round(Y))),
-                        u: Math.min(1023, Math.max(0, Math.round(U))),
-                        v: Math.min(1023, Math.max(0, Math.round(V)))
-                    })
-                }
-
-                // Pad with black if less than 6 pixels
-                while (pixels.length < 6) {
-                    pixels.push({ y: 64, u: 512, v: 512 })
+                        pixels[i] = {
+                            y: Y < 0 ? 0 : Y > 1023 ? 1023 : Y,
+                            u: U < 0 ? 0 : U > 1023 ? 1023 : U,
+                            v: V < 0 ? 0 : V > 1023 ? 1023 : V
+                        }
+                    } else {
+                        // Pad with black
+                        pixels[i] = { y: 64, u: 512, v: 512 }
+                    }
                 }
 
                 // Average chroma for 4:2:2 subsampling
-                const u0 = Math.round((pixels[0].u + pixels[1].u) / 2)
-                const u2 = Math.round((pixels[2].u + pixels[3].u) / 2)
-                const u4 = Math.round((pixels[4].u + pixels[5].u) / 2)
-                const v0 = Math.round((pixels[0].v + pixels[1].v) / 2)
-                const v2 = Math.round((pixels[2].v + pixels[3].v) / 2)
-                const v4 = Math.round((pixels[4].v + pixels[5].v) / 2)
+                const u0 = (pixels[0].u + pixels[1].u) >> 1
+                const u2 = (pixels[2].u + pixels[3].u) >> 1
+                const u4 = (pixels[4].u + pixels[5].u) >> 1
+                const v0 = (pixels[0].v + pixels[1].v) >> 1
+                const v2 = (pixels[2].v + pixels[3].v) >> 1
+                const v4 = (pixels[4].v + pixels[5].v) >> 1
 
                 // Pack into v210 format (4 × 32-bit little-endian words)
                 // Word 0: [31:30]=0 [29:20]=V0 [19:10]=Y0 [9:0]=U0
@@ -770,37 +751,38 @@ export class ImageBufferConverter10Bit {
                 // Process 6 pixels at a time
                 const pixels: { y: number; u: number; v: number }[] = []
 
-                for (let i = 0; i < 6 && x + i < width; i++) {
-                    const idx = (y * width + x + i) * 4
-                    // ARGB format: A R G B
-                    const R = data[idx + 1]
-                    const G = data[idx + 2]
-                    const B = data[idx + 3]
+                for (let i = 0; i < 6; i++) {
+                    if (x + i < width) {
+                        const idx = (y * width + x + i) * 4
+                        // ARGB format: A R G B
+                        const R = data[idx + 1]
+                        const G = data[idx + 2]
+                        const B = data[idx + 3]
 
-                    // Convert to YUV (BT.601) and scale to 10-bit
-                    const Y = (0.299 * R + 0.587 * G + 0.114 * B) * 4
-                    const U = ((B - Y / 4) / 1.772 + 128) * 4
-                    const V = ((R - Y / 4) / 1.402 + 128) * 4
+                        // Convert to YUV (BT.601) and scale to 10-bit using integer math
+                        const y8 = (306 * R + 601 * G + 117 * B) >> 10
+                        const Y = (306 * R + 601 * G + 117 * B) >> 8
+                        const U = (((B - y8) * 578) >> 8) + 512
+                        const V = (((R - y8) * 730) >> 8) + 512
 
-                    pixels.push({
-                        y: Math.min(1023, Math.max(0, Math.round(Y))),
-                        u: Math.min(1023, Math.max(0, Math.round(U))),
-                        v: Math.min(1023, Math.max(0, Math.round(V)))
-                    })
-                }
-
-                // Pad with black if less than 6 pixels
-                while (pixels.length < 6) {
-                    pixels.push({ y: 64, u: 512, v: 512 })
+                        pixels[i] = {
+                            y: Y < 0 ? 0 : Y > 1023 ? 1023 : Y,
+                            u: U < 0 ? 0 : U > 1023 ? 1023 : U,
+                            v: V < 0 ? 0 : V > 1023 ? 1023 : V
+                        }
+                    } else {
+                        // Pad with black
+                        pixels[i] = { y: 64, u: 512, v: 512 }
+                    }
                 }
 
                 // Average chroma for 4:2:2 subsampling
-                const u0 = Math.round((pixels[0].u + pixels[1].u) / 2)
-                const u2 = Math.round((pixels[2].u + pixels[3].u) / 2)
-                const u4 = Math.round((pixels[4].u + pixels[5].u) / 2)
-                const v0 = Math.round((pixels[0].v + pixels[1].v) / 2)
-                const v2 = Math.round((pixels[2].v + pixels[3].v) / 2)
-                const v4 = Math.round((pixels[4].v + pixels[5].v) / 2)
+                const u0 = (pixels[0].u + pixels[1].u) >> 1
+                const u2 = (pixels[2].u + pixels[3].u) >> 1
+                const u4 = (pixels[4].u + pixels[5].u) >> 1
+                const v0 = (pixels[0].v + pixels[1].v) >> 1
+                const v2 = (pixels[2].v + pixels[3].v) >> 1
+                const v4 = (pixels[4].v + pixels[5].v) >> 1
 
                 // Pack into v210 format (4 × 32-bit little-endian words)
                 const word0 = (v0 << 20) | (pixels[0].y << 10) | u0
