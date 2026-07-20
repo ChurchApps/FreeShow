@@ -1,6 +1,5 @@
 name: Bug report
 description: Help us improve the stability of FreeShow
-title: ""
 labels: ["bug"]
 
 body:
