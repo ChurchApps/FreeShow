@@ -93,6 +93,7 @@ export class WebRtcHost {
     static start() {
         if (this.started) return
         this.started = true
+        console.log("[WebRtcHost] Starting WebRTC host...")
 
         this.window = new BrowserWindow({
             show: false,
@@ -117,7 +118,10 @@ export class WebRtcHost {
     }
 
     static stop() {
+        if (!this.started) return
         this.started = false
+        console.log("[WebRtcHost] Stopping WebRTC host...")
+
         if (this.window && !this.window.isDestroyed()) {
             this.window.destroy()
             this.window = null

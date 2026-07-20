@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activeStyle, audioChannelsData, outputs, selected, settingsTab, styles, templates, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activeStyle, audioChannelsData, dictionary, outputs, selected, settingsTab, styles, templates, toggleOutputEnabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { openDrawer } from "../../edit/scripts/edit"
     import Icon from "../../helpers/Icon.svelte"
@@ -158,12 +158,12 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
             <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
 
             <!-- LIVE -->
-            {#if (output.webrtcData?.url && output.webrtc) || (output.rtmpData?.url && output.rtmpData?.key && output.rtmp)}
+            {#if !fullscreen && ((output.webrtcData?.url && output.webrtc) || (output.rtmpData?.url && output.rtmpData?.key && output.rtmp))}
                 {@const isRtmp = output.rtmp}
                 {@const isStreaming = isRtmp ? output.rtmpData?.streaming : output.webrtcData?.streaming}
                 <div class="live" style="{isStreaming ? 'background-color: #b60707;' : ''};">
-                    <MaterialButton style="padding: 2px 3px;min-height: 0;" on:click={() => (isRtmp ? (output.rtmpData?.streaming ? stopRtmpStreaming(output.id, true) : startRtmpStreaming(output.id)) : (output.webrtcData?.streaming ? stopStreaming(output.id, true) : startStreaming(output.id)))} title={isStreaming ? "output.stop_streaming" : "output.start_streaming"}>
-                        {translateText(isStreaming ? "output.is_live" : "output.go_live")}
+                    <MaterialButton style="padding: 2px 3px;min-height: 0;" on:click={() => (isRtmp ? (output.rtmpData?.streaming ? stopRtmpStreaming(output.id, true) : startRtmpStreaming(output.id)) : output.webrtcData?.streaming ? stopStreaming(output.id, true) : startStreaming(output.id))} title={isStreaming ? "output.stop_streaming" : "output.start_streaming"}>
+                        {translateText(isStreaming ? "output.is_live" : "output.go_live", $dictionary)}
                     </MaterialButton>
                 </div>
             {/if}

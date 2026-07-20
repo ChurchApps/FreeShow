@@ -31,6 +31,8 @@ export class RtmpStreamer {
 
     static start(outputId: string, url: string, width: number, height: number, fps = 30, enableAudio = true) {
         if (this.isRunning(outputId)) return
+        console.log(`[RtmpStreamer] Starting RTMP stream for ${outputId}...`)
+
         if (!isFfmpegInstalled()) {
             console.error(`[RtmpStreamer] Cannot start RTMP stream: FFmpeg is not installed.`)
             return

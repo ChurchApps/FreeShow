@@ -53,10 +53,7 @@ export class CaptureLifecycle {
 
         const hasEnabledCapture = captureOptions?.options && Object.values(captureOptions.options).some(Boolean)
         if (!hasEnabledCapture || captureOptions?.window.isDestroyed()) {
-            if (captureOptions?.frameSubscription) {
-                clearTimeout(captureOptions.frameSubscription)
-                captureOptions.frameSubscription = null
-            }
+            this.stopCapture(id)
             return
         }
 
@@ -87,6 +84,8 @@ export class CaptureLifecycle {
     }
 
     private static runCaptureLoop(id: string, token: number, output: any) {
+        console.info("Capture - starting: " + id)
+
         const captureFrame = async () => {
             const captureOpts = output.captureOptions
 
@@ -228,7 +227,7 @@ export class CaptureLifecycle {
 
     private static updateWebRtcHostState() {
         const allOutputs = OutputHelper.getAllOutputs()
-        const webrtcActive = allOutputs.some((o) => o.captureOptions?.options?.webrtc)
+        const webrtcActive = allOutputs.some((o) => o.webrtcData?.streaming)
 
         if (webrtcActive) {
             const wasRunning = WebRtcHost.isRunning()
@@ -238,7 +237,7 @@ export class CaptureLifecycle {
                 allOutputs.forEach((o) => {
                     if (!o.id) return
 
-                    if (o.captureOptions?.options?.webrtc) {
+                    if (o.webrtcData?.streaming) {
                         const url = o.webrtcData?.url || ""
                         const token = o.webrtcData?.token || ""
                         if (url) WebRtcHost.startWhip(o.id, url, token)
@@ -263,7 +262,7 @@ export class CaptureLifecycle {
         allOutputs.forEach((o) => {
             if (!o.id) return
 
-            const rtmpEnabled = o.captureOptions?.options?.rtmp && o.rtmpData?.streaming
+            const rtmpEnabled = o.rtmpData?.streaming
             if (rtmpEnabled) {
                 const url = o.rtmpData?.url || ""
                 const key = o.rtmpData?.key || ""

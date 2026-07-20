@@ -20,10 +20,7 @@ export function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
         console.error("Received invalid audio data")
         return
     }
-    if (input.length === 0) {
-        console.error("Received audio buffer with invalid length")
-        return
-    }
+    if (input.length === 0) return
 
     // if (msg.data.channels) channelCount = msg.data.channels
     // if (msg.data.sampleRate) sampleRate = msg.data.sampleRate

@@ -36,7 +36,7 @@ export class CaptureHelper {
             window,
             frameSubscription: null,
             displayFrequency: screen.displayFrequency || 60,
-            options: { ndi: false, blackmagic: false, server: false, stage: false, webrtc: false },
+            options: { ndi: false, blackmagic: false, server: false, stage: false, webrtc: false, rtmp: false },
             framerates: defaultFramerates,
             id
         }

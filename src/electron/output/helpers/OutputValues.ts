@@ -18,14 +18,14 @@ const setValues = {
         initializeSender(data, window, id)
     },
     webrtc: (value: boolean, _window: BrowserWindow, id: string) => {
-        if (!value) CaptureHelper.Lifecycle.startCapture(id, { webrtc: false })
+        CaptureHelper.Lifecycle.startCapture(id, { webrtc: value })
     },
     webrtcData: (value: any, _window: BrowserWindow, id: string, output: OutputWindow) => {
         output.webrtcData = value
         CaptureHelper.Lifecycle.startCapture(id, { webrtc: !!value?.streaming })
     },
     rtmp: (value: boolean, _window: BrowserWindow, id: string) => {
-        if (!value) CaptureHelper.Lifecycle.startCapture(id, { rtmp: false })
+        CaptureHelper.Lifecycle.startCapture(id, { rtmp: value })
     },
     rtmpData: (value: any, _window: BrowserWindow, id: string, output: OutputWindow) => {
         output.rtmpData = value
@@ -33,7 +33,6 @@ const setValues = {
     },
     capture: (data: { key: string; value: boolean }, _window: BrowserWindow, id: string) => {
         CaptureHelper.Lifecycle.startCapture(id, { [data.key]: data.value })
-        // if (data.value) sendFrames(id, storedFrames[id], {[data.key]: true})
     },
     transparent: (value: boolean, window: BrowserWindow, _id: string, output: OutputWindow) => {
         window.setBackgroundColor(value ? "#00000000" : "#000000")
@@ -59,13 +58,6 @@ export class OutputValues {
         const output = OutputHelper.getOutput(id)
         if (!output) return
         if (!(key in setValues)) return
-
-        if (key === "webrtcData") {
-            output.webrtcData = value
-        }
-        if (key === "rtmpData") {
-            output.rtmpData = value
-        }
 
         if (!output.window || output.window.isDestroyed()) return
         setValues[key as keyof typeof setValues](value, output.window, id, output)
