@@ -526,7 +526,7 @@ export function getVideoDuration(path: string): Promise<number> {
         }
 
         const video = document.createElement("video")
-        video.src = path
+        video.src = encodeFilePath(path)
         video.preload = "metadata"
 
         let loaded = false
