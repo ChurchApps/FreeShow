@@ -233,7 +233,7 @@
     {#if item?.lines && !noTextMode}
         <EditboxLines {item} {ref} {index} {editIndex} {plain} {chordsMode} {chordsAction} {isLocked} />
     {:else if previewItem}
-        {#if previewItem.type === "media"}
+        {#if previewItem.type === "media" || previewItem.type === "camera"}
             <div class="mediaFrame" class:showOverflow={cropActive}>
                 <SlideItems item={previewItem} {ratio} {ref} {itemElem} slideIndex={$activeEdit.slide || 0} edit cropPreviewMode={cropActive} />
             </div>
