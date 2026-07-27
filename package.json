@@ -138,7 +138,7 @@
         "electron-updater": "^6.6.7",
         "exif": "^0.6.0",
         "express": "^4.21.2",
-        "fast-xml-parser": "5.4.1",
+        "fast-xml-parser": "^5.10.1",
         "genius-lyrics": "^4.4.7",
         "grandiose": "github:ChurchApps/grandiose#4e02dea",
         "json-bible": "^1.1.9",
