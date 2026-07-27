@@ -75,7 +75,7 @@
 
     function updateSet(index: number, e: any, key: string) {
         let value = e?.target?.value ?? e
-        if (!value) return
+        if (typeof value !== "number" && !value) return
 
         if (!currentVariable.sets) currentVariable.sets = []
         if (!currentVariable.sets[index]) currentVariable.sets[index] = clone(DEFAULT_SET)
@@ -285,8 +285,8 @@
                 {/if}
 
                 <!-- WIP no negative numbers at the moment -->
-                <MaterialNumberInput label="variables.minimum" style="flex: 1;" value={set.minValue ?? DEFAULT_SET.minValue} step={1} max={maxAbsolute} on:change={(e) => updateSet(i, e.detail, "minValue")} />
-                <MaterialNumberInput label="variables.maximum" style="flex: 1;" value={set.maxValue ?? DEFAULT_SET.maxValue} step={1} max={maxAbsolute} on:change={(e) => updateSet(i, e.detail, "maxValue")} />
+                <MaterialNumberInput label="variables.minimum" style="flex: 1;" value={set.minValue ?? DEFAULT_SET.minValue} step={1} min={0} max={maxAbsolute} on:change={(e) => updateSet(i, e.detail, "minValue")} />
+                <MaterialNumberInput label="variables.maximum" style="flex: 1;" value={set.maxValue ?? DEFAULT_SET.maxValue} step={1} min={0} max={maxAbsolute} on:change={(e) => updateSet(i, e.detail, "maxValue")} />
                 <!-- {#if i > 0 && i === (currentVariable.sets?.length || 0) - 1} -->
                 {#if (currentVariable.sets?.length || 1) > 1}
                     <MaterialButton icon="delete" title="actions.delete" on:click={() => removeSet(i)} />
