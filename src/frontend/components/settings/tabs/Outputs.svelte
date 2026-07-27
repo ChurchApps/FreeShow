@@ -353,6 +353,10 @@
     {#if currentOutput.invisible && !currentOutput.blackmagic}
         <MaterialPopupButton label="edit.size" value={outputLabel} name={outputLabel} icon="resize" popupId="change_output_values" />
     {/if}
+    <InputRow>
+        <MaterialDropdown label="settings.frame_rate" value={currentOutput.webrtcData?.fps?.toString() || "30"} defaultValue="30" options={framerates} on:change={(e) => updateWebrtcData(e.detail, "fps")} />
+        <MaterialTextInput label="Bitrate (kbps)" value={currentOutput.webrtcData?.bitrate?.toString() || "2500"} defaultValue="2500" placeholder="2500" on:change={(e) => updateWebrtcData(e.detail, "bitrate")} />
+    </InputRow>
     <MaterialTextInput label="WHIP Endpoint URL" value={currentOutput.webrtcData?.url || ""} placeholder="e.g. https://live.restream.io/whip/live/YOUR_KEY" on:change={(e) => updateWebrtcData(e.detail, "url")} pasteBtn />
     <MaterialTextInput label="Bearer Token (Optional)" value={currentOutput.webrtcData?.token || ""} placeholder="Authorization token" on:change={(e) => updateWebrtcData(e.detail, "token")} pasteBtn />
     <!-- <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={false} on:change={(e) => updateOutput("transparent", e.detail)} /> -->
@@ -372,6 +376,10 @@
     {#if currentOutput.invisible && !currentOutput.blackmagic}
         <MaterialPopupButton label="edit.size" value={outputLabel} name={outputLabel} icon="resize" popupId="change_output_values" />
     {/if}
+    <InputRow>
+        <MaterialDropdown label="settings.frame_rate" value={currentOutput.rtmpData?.fps?.toString() || "30"} defaultValue="30" options={framerates} on:change={(e) => updateRtmpData(e.detail, "fps")} />
+        <MaterialTextInput label="Bitrate (kbps)" value={currentOutput.rtmpData?.bitrate?.toString() || "4000"} defaultValue="4000" placeholder="4000" on:change={(e) => updateRtmpData(e.detail, "bitrate")} />
+    </InputRow>
     <MaterialTextInput label="Stream URL" value={currentOutput.rtmpData?.url || ""} placeholder="e.g. rtmp://a.rtmp.youtube.com/live2" on:change={(e) => updateRtmpData(e.detail, "url")} pasteBtn />
     <MaterialTextInput label="Stream key" value={currentOutput.rtmpData?.key || ""} type="password" on:change={(e) => updateRtmpData(e.detail, "key")} pasteBtn />
 
