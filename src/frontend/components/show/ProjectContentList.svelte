@@ -254,7 +254,7 @@
         <DropArea id="project" selectChildren hoverTimeout={150} let:fileOver file>
             {#if projectItemsList.length}
                 {#each splittedProjectsList as splittedItemsList}
-                    <div class="listSection" style="--border-color: {splittedItemsList.color};">
+                    <div class="listSection" style={splittedItemsList.color ? `--border-color: ${splittedItemsList.color};` : ""}>
                         {#each splittedItemsList.items as show, i}
                             {@const index = show.index}
                             {@const triggerAction = show.data?.settings?.triggerAction || $special.sectionTriggerAction}

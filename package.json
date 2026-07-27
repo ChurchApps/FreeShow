@@ -11,7 +11,6 @@
         "node": ">=22.12.0"
     },
     "overrides": {
-        "shell-quote": "^1.8.4",
         "tmp": "^0.2.7"
     },
     "scripts": {
@@ -93,7 +92,7 @@
         "eslint-config-prettier": "^8.10.2",
         "eslint-plugin-jsdoc": "^39.9.1",
         "eslint-plugin-prefer-arrow": "^1.2.3",
-        "npm-run-all2": "^9.0.1",
+        "npm-run-all2": "^9.0.2",
         "pdfjs-dist": "^5.4.296",
         "playwright": "^1.56.1",
         "prettier": "^3.6.2",
@@ -130,7 +129,7 @@
         "electron-updater": "^6.6.7",
         "exif": "^0.6.0",
         "express": "^4.21.2",
-        "fast-xml-parser": "5.4.1",
+        "fast-xml-parser": "^5.10.1",
         "genius-lyrics": "^4.4.7",
         "grandiose": "github:ChurchApps/grandiose#4e02dea",
         "json-bible": "^1.1.9",
