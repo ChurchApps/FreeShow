@@ -1040,7 +1040,11 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
             const valueName = slideDynamicValues[contentIndex]?.[itemKey] as string
             if (valueName) {
                 delete slideDynamicValues[contentIndex][itemKey]
-                const content = bibleVerses.map((v) => [verseNumbers && v.number ? v.number : "0", v.text]) as [string, string][]
+                const content = bibleVerses.map((v, i) => {
+                    const formattedText = formatBibleText(v.text)
+                    const text = i < bibleVerses.length - 1 ? formattedText + getVerseSeparator(v, bibleVerses[i + 1], versesOnIndividualLines) : formattedText
+                    return [verseNumbers && v.number ? v.number : "0", text]
+                }) as [string, string][]
                 slideDynamicValues[contentIndex][valueName] = content
                 if (valueName === "scripture1_text") slideDynamicValues[contentIndex].scripture_text = content
             }
@@ -1099,19 +1103,8 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
 
                             // Separator between verses (don't break verses in multiple parts)
                             if (i < bibleVerses.length - 1) {
-                                const { id: currentVerseId, endNumber } = getVerseIdParts(verse.verseId)
-                                const nextVerseId = getVerseIdParts(bibleVerses[i + 1].verseId).id
-                                const isConsecutive = nextVerseId === currentVerseId + 1 || nextVerseId === endNumber + 1
-                                const isSameVersePart = currentVerseId === nextVerseId
-
-                                // Same verse parts get a space, non-consecutive verses get newline, consecutive verses follow settings
-                                if (isSameVersePart) {
-                                    newLineText.push({ ...keyTextObj, value: " " })
-                                } else if (!isConsecutive) {
-                                    newLineText.push({ ...keyTextObj, value: "<br><br>", style: keyTextObj.style + ";line-height: 0.1em;" })
-                                } else {
-                                    newLineText.push({ ...keyTextObj, value: versesOnIndividualLines ? "<br>" : " " })
-                                }
+                                const sep = getVerseSeparator(verse, bibleVerses[i + 1], versesOnIndividualLines)
+                                newLineText.push({ ...keyTextObj, value: sep })
                             }
                         })
 
@@ -1786,6 +1779,21 @@ export function formatBibleText(text: string | undefined, redJesus = false) {
 
 // CREATE SHOW/SLIDES
 
+function getVerseSeparator(verse: { verseId: string }, nextVerse: { verseId: string }, versesOnIndividualLines: boolean) {
+    const { id: currentVerseId, endNumber } = getVerseIdParts(verse.verseId)
+    const nextVerseId = getVerseIdParts(nextVerse.verseId).id
+    const isConsecutive = nextVerseId === currentVerseId + 1 || nextVerseId === endNumber + 1
+    const isSameVersePart = currentVerseId === nextVerseId
+
+    if (isSameVersePart) {
+        return " "
+    } else if (!isConsecutive) {
+        return "\n\n"
+    } else {
+        return versesOnIndividualLines ? "\n" : " "
+    }
+}
+
 export async function createScriptureShow() {
     const biblesContent = await getActiveScripturesContent()
     if (!biblesContent?.length) return
@@ -1945,6 +1953,8 @@ function fixHTMLTags(items: Item[]) {
                 if (typeof text.value !== "string") return
                 // replace <q> with actual quotes
                 text.value = text.value.replace(/<q>(.*?)<\/q>/g, "“$1”")
+                // update <br> to newlines
+                text.value = text.value.replace(/<br\s*\/?>/gi, "\n")
                 // remove HTML tags
                 // text.value = text.value.replace(/<[^>]+>/g, "")
             })

@@ -1350,8 +1350,9 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
 
                                     // Add trailing space if there is a next item on the slide
                                     const nextItem = (value as [string, string][])[index + 1]
-                                    const needsSpace = !!nextItem
-                                    newTexts.push({ value: needsSpace ? verseText + " " : verseText, sourceDynamicKey: key + ":" + index, style: style + ";" + baseStyle })
+                                    const needsSpace = !!nextItem && !verseText.endsWith(" ") && !verseText.endsWith("\n") && !verseText.endsWith(">")
+                                    let val = needsSpace ? verseText + " " : verseText
+                                    newTexts.push({ value: val, sourceDynamicKey: key + ":" + index, style: style + ";" + baseStyle })
                                 })
                             }
                         })
