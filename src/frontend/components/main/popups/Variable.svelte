@@ -88,6 +88,21 @@
         })
     }
 
+    function duplicateSet(index: number) {
+        if (!currentVariable.sets?.[index]) return
+
+        const variable = clone(currentVariable.sets[index])
+        variable.name += " 2"
+
+        currentVariable.sets.splice(index + 1, 0, variable)
+        currentVariable = currentVariable
+
+        variables.update((a) => {
+            a[variableId] = currentVariable
+            return a
+        })
+    }
+
     function removeSet(index: number) {
         if (!currentVariable.sets?.[index]) return
 
@@ -289,7 +304,8 @@
                 <MaterialNumberInput label="variables.maximum" style="flex: 1;" value={set.maxValue ?? DEFAULT_SET.maxValue} step={1} min={0} max={maxAbsolute} on:change={(e) => updateSet(i, e.detail, "maxValue")} />
                 <!-- {#if i > 0 && i === (currentVariable.sets?.length || 0) - 1} -->
                 {#if (currentVariable.sets?.length || 1) > 1}
-                    <MaterialButton icon="delete" title="actions.delete" on:click={() => removeSet(i)} />
+                    <MaterialButton icon="duplicate" title="actions.duplicate" on:click={() => duplicateSet(i)} />
+                    <MaterialButton icon="delete" title="actions.delete" on:click={() => removeSet(i)} red />
                 {/if}
             </InputRow>
         {/each}
