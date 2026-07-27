@@ -140,7 +140,7 @@ function decodeString(input: string) {
 function cleanRTFTags(text: string) {
     if (!text) return ""
 
-    // 1. Decode unicode escapes BEFORE stripping tags so we don't lose the \u marker
+    // 1. Decode unicode escapes BEFORE stripping tags
     let decoded = decodeString(text)
 
     // 2. Remove EasyWorship/RTF groups: {\* ... } or { ... }
@@ -151,13 +151,20 @@ function cleanRTFTags(text: string) {
         cleaned = cleaned.replace(/\{[^{}]*\}/g, " ")
     } while (cleaned !== prev)
 
-    // 3. Remove RTF control words: \f0, \pard, \plain, \sdfsauto, \cf1, etc.
+    // 3. Specifically target the smushed \fN\fntnamaut pattern before general command stripping
+    // This catches \f1\fntnamaut where the backslash might be missing or combined
+    cleaned = cleaned.replace(/\\f\d+\\fntnamaut/gi, " ")
+    cleaned = cleaned.replace(/f\d+fntnamaut/gi, " ")
+    cleaned = cleaned.replace(/\\fntnamaut/gi, " ")
+    cleaned = cleaned.replace(/fntnamaut/gi, " ")
+
+    // 4. Remove RTF control words: \f0, \pard, \plain, \sdfsauto, \cf1, etc.
     cleaned = cleaned.replace(/\\[a-z*]+[0-9-]*\s?/gi, " ")
 
-    // 4. Remove any remaining stray braces
+    // 5. Remove any remaining stray braces
     cleaned = cleaned.replace(/[{}]/g, "")
 
-    // 5. Clean up whitespace
+    // 6. Clean up whitespace
     return cleaned.replace(/\s+/g, " ").trim()
 }
 
@@ -170,16 +177,17 @@ function createSlides(wordObj: Words) {
     let lines: any[] = []
 
     // EasyWorship RTF is structured as a series of {\pard ... \par} blocks.
-    // Each block contains paragraph metadata and the actual text.
+    // However, some versions just use \par internally.
 
-    // 1. extract all paragraph blocks
+    // 1. First, check for {\pard ... \par} blocks
     const paragraphRegex = /\{\\pard([\s\S]*?)\\par\}/g
     let match
+    let foundPardBlocks = false
 
     while ((match = paragraphRegex.exec(words)) !== null) {
+        foundPardBlocks = true
         let block = match[1]
 
-        // Remove known EasyWorship markers that shouldn't contribute to text
         if (block.includes("sdslidemarker")) {
             if (lines.length > 0) {
                 newSlides.push(lines)
@@ -189,17 +197,39 @@ function createSlides(wordObj: Words) {
         }
 
         const cleanedLine = cleanRTFTags(block)
-
         if (cleanedLine.length) {
-            // Check if this line is a section header (e.g. "Verse 1")
             const globalGroup = getGlobalGroup(cleanedLine)
-
             if (globalGroup && lines.length > 0) {
                 newSlides.push(lines)
                 lines = []
             }
             lines.push(cleanedLine)
         }
+    }
+
+    // 2. Fallback: If no wrapped {\pard...} blocks or it's a flatter structure
+    if (!foundPardBlocks) {
+        // Split by \par (ensuring it's not \pard or other commands starting with \par)
+        const flatSegments = words.split(/\\par(?![a-z])/gi)
+        flatSegments.forEach((segment) => {
+            if (segment.includes("sdslidemarker")) {
+                if (lines.length > 0) {
+                    newSlides.push(lines)
+                    lines = []
+                }
+                return
+            }
+
+            const cleaned = cleanRTFTags(segment)
+            if (cleaned.length) {
+                const globalGroup = getGlobalGroup(cleaned)
+                if (globalGroup && lines.length > 0) {
+                    newSlides.push(lines)
+                    lines = []
+                }
+                lines.push(cleaned)
+            }
+        })
     }
 
     if (lines.length) newSlides.push(lines)
