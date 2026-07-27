@@ -48,6 +48,12 @@
     let newStyles: { [key: string]: string | number } = {}
     $: active = $activeEdit.items
 
+    let lastActiveIds = ""
+    $: if (active.join(",") !== lastActiveIds) {
+        newStyles = {}
+        lastActiveIds = active.join(",")
+    }
+
     let width = 0
     let height = 0
     // Slide?.settings?.resolution

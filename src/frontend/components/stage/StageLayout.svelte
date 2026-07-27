@@ -46,6 +46,12 @@
     let newStyles: { [key: string]: number | string } = {}
     $: active = $activeStage.items
 
+    let lastActiveIds = ""
+    $: if (active.join(",") !== lastActiveIds) {
+        newStyles = {}
+        lastActiveIds = active.join(",")
+    }
+
     let ratio = 1
 
     $: {
