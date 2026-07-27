@@ -181,8 +181,9 @@ export class CaptureLifecycle {
         }
 
         // static content - capture at a low rate until a change is detected
-        // (Blackmagic frames bypass change detection, so skip the backoff when it's active)
-        if (!options.blackmagic && CaptureTransmitter.getTimeSinceLastChange(id) > this.IDLE_AFTER_MS) {
+        // (Blackmagic and NDI frames bypass change detection / idle backoff to maintain video stream clocks)
+        const timeSinceChange = CaptureTransmitter.getTimeSinceLastChange(id)
+        if (!options.blackmagic && !options.ndi && timeSinceChange > this.IDLE_AFTER_MS) {
             return Math.min(baseCaptureFrameRate, this.IDLE_FPS)
         }
 
