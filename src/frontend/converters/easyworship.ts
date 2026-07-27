@@ -7,7 +7,7 @@ import { checkName, getGlobalGroup } from "../components/helpers/show"
 import { newToast } from "../utils/common"
 import { translateText } from "../utils/language"
 import { ShowObj } from "./../classes/Show"
-import { activePopup, alertMessage, dictionary, groups, shows } from "./../stores"
+import { activePopup, alertMessage, dictionary, groups } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
 import { trimNameFromString } from "./txt"
 
@@ -63,11 +63,12 @@ export function convertEasyWorship(data: any) {
         activePopup.set("alert")
         alertMessage.set(importingText + " " + String(i) + "/" + String(songsCount) + " (" + percentage + "%)" + "<br>" + (song?.title || ""))
 
-        if (get(shows)[song?.song_uid || ""] && i < songsCount - 1) {
-            i++
-            requestAnimationFrame(asyncLoop)
-            return
-        }
+        // skip existing songs
+        // if (get(shows)[song?.song_uid || ""] && i < songsCount - 1) {
+        //     i++
+        //     requestAnimationFrame(asyncLoop)
+        //     return
+        // }
 
         const layoutID = uid()
         let show = new ShowObj(false, categoryId, layoutID)
@@ -107,87 +108,100 @@ export function convertEasyWorship(data: any) {
     }
 }
 
-// https://asecuritysite.com/coding/asc2
-const replaceCodes: any = {
-    "u8211?": "–"
-}
+function decodeString(input: string) {
+    if (!input) return ""
 
-function decodeString(input) {
-    const regex = /u(\d+)\?/g
+    // 1. Unicode decoding: \u8217? or \u8217 followed by a replacement character
+    // RTF uses signed 16-bit integers for \u, so we handle possible negative values too
+    const unicodeRegex = /\\u(-?\d+)\??/g
+    let decodedString = input.replace(unicodeRegex, (_match, number) => {
+        let code = Number(number)
+        if (code < 0) code += 65536
+        return String.fromCodePoint(code)
+    })
 
-    const decodedString = input.replace(regex, (_match, number) => {
-        return String.fromCharCode(Number(number))
+    // 2. Hex decoding: \'e5 (common for Latin1 characters in RTF)
+    decodedString = decodedString.replace(/\\'([0-9a-fA-F]{2})/g, (_, hex) => {
+        const byte = parseInt(hex, 16)
+        // Try to use latin1 decoder if available, otherwise fallback to fromCharCode
+        if (typeof TextDecoder !== "undefined") {
+            try {
+                return new TextDecoder("windows-1252").decode(Uint8Array.from([byte]))
+            } catch (e) {
+                return String.fromCharCode(byte)
+            }
+        }
+        return String.fromCharCode(byte)
     })
 
     return decodedString
 }
 
-function createSlides({ words }: Words) {
+function cleanRTFTags(text: string) {
+    if (!text) return ""
+
+    // 1. Decode unicode escapes BEFORE stripping tags so we don't lose the \u marker
+    let decoded = decodeString(text)
+
+    // 2. Remove EasyWorship/RTF groups: {\* ... } or { ... }
+    let cleaned = decoded
+    let prev
+    do {
+        prev = cleaned
+        cleaned = cleaned.replace(/\{[^{}]*\}/g, " ")
+    } while (cleaned !== prev)
+
+    // 3. Remove RTF control words: \f0, \pard, \plain, \sdfsauto, \cf1, etc.
+    cleaned = cleaned.replace(/\\[a-z*]+[0-9-]*\s?/gi, " ")
+
+    // 4. Remove any remaining stray braces
+    cleaned = cleaned.replace(/[{}]/g, "")
+
+    // 5. Clean up whitespace
+    return cleaned.replace(/\s+/g, " ").trim()
+}
+
+function createSlides(wordObj: Words) {
+    let { words } = wordObj
     const slides: any = {}
     const layout: any[] = []
 
-    // format
     const newSlides: any[] = []
     let lines: any[] = []
 
-    // easyworship2 format not supported
+    // EasyWorship RTF is structured as a series of {\pard ... \par} blocks.
+    // Each block contains paragraph metadata and the actual text.
 
-    // .replaceAll('"', '\\"')
-    words = words.replaceAll("\\", "").replaceAll("\r\n", "")
-    let index = words.indexOf("li0fi0ri0sb0slsa0", words.indexOf("pard")) + 22
-    if (index < 22) index = words.indexOf("sdfsauto")
-    words = words.slice(index, words.lastIndexOf("}"))
-    if (words.charAt(words.length - 2) === "}") words = words.slice(0, words.length - 1)
+    // 1. extract all paragraph blocks
+    const paragraphRegex = /\{\\pard([\s\S]*?)\\par\}/g
+    let match
 
-    // convert ascii decimals to chars
-    words = decodeString(words)
-    // replace special encoded chars
-    Object.keys(replaceCodes).forEach((key) => {
-        words = words.replaceAll(key, replaceCodes[key])
-    })
+    while ((match = paragraphRegex.exec(words)) !== null) {
+        let block = match[1]
 
-    let splitString = "li0fi0ri0sb0slsa0 "
-    if (words.indexOf(splitString) < 0) splitString = "sdfsauto"
-    const splitted = words?.split(splitString)
-    // console.log(splitted)
-    splitted.forEach((text: any) => {
-        // if (text.includes("plainf1fntnamaut")) {
-        // let sliced: string = text.slice(text.indexOf("t ") + 2, text.lastIndexOf("par"))
-        // <SIDESKIFT>
-        // sdewtemplatestyle101
-        let sliced: string = text
-        if (/^(plain|sdfsauto|sdew)/.test(text)) {
-            const spaceIdx = text.indexOf(" ")
-            if (spaceIdx > -1) sliced = text.slice(spaceIdx)
+        // Remove known EasyWorship markers that shouldn't contribute to text
+        if (block.includes("sdslidemarker")) {
+            if (lines.length > 0) {
+                newSlides.push(lines)
+                lines = []
+            }
+            continue
         }
-        sliced = sliced.slice(0, sliced.indexOf("par")).replaceAll("plainf1fntnamaut ", "").trim()
 
-        // console.log(text.includes("plainf") && sliced.length, sliced)
-        if (sliced.length) {
-            sliced.split("line").forEach((line: string, i: number) => {
-                // \sdewparatemplatestyle102\plain\sdewtemplatestyle102\
-                if (line.includes("templatestyle")) return
+        const cleanedLine = cleanRTFTags(block)
 
-                // console.log(line, line.slice(line.indexOf(" ") + 1, line.length))
-                if (i > 0) {
-                    if (/^(plain|sdfsauto|sdew)/.test(line)) {
-                        const spaceIdx = line.indexOf(" ", 2)
-                        if (spaceIdx > -1) line = line.slice(spaceIdx + 1, line.length)
-                    }
-                }
-                let plainIndex = line.indexOf("plainf")
-                while (plainIndex > -1) {
-                    line = line.slice(0, plainIndex) + line.slice(line.indexOf(" ", plainIndex), line.length)
-                    plainIndex = line.indexOf("plainf")
-                }
+        if (cleanedLine.length) {
+            // Check if this line is a section header (e.g. "Verse 1")
+            const globalGroup = getGlobalGroup(cleanedLine)
 
-                lines.push(line)
-            })
-        } else if (text.length) {
-            newSlides.push(lines)
-            lines = []
+            if (globalGroup && lines.length > 0) {
+                newSlides.push(lines)
+                lines = []
+            }
+            lines.push(cleanedLine)
         }
-    })
+    }
+
     if (lines.length) newSlides.push(lines)
 
     newSlides?.forEach((slideLines: any) => {
