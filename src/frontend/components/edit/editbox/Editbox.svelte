@@ -57,7 +57,7 @@
 
             if (e.shiftKey) {
                 if (ae.items.includes(index)) {
-                    if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(index), 1)
+                    ae.items.splice(ae.items.indexOf(index), 1)
                 } else {
                     ae.items.push(index)
                 }
@@ -69,6 +69,13 @@
 
             return ae
         })
+
+        // deselect selected text
+        if (e.shiftKey) {
+            e.preventDefault()
+            if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+            window.getSelection()?.removeAllRanges()
+        }
 
         let target = e.target.closest(".item")
         if (!target) return
@@ -96,7 +103,13 @@
     $: layout = active && $showsCache[active]?.settings ? $showsCache[active].settings.activeLayout : ""
     // $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
 
+    let isShiftPressed = false
+    function keyup(e: KeyboardEvent) {
+        if (e.key === "Shift") isShiftPressed = false
+    }
     function keydown(e: KeyboardEvent) {
+        if (e.key === "Shift") isShiftPressed = true
+
         if (cropElem?.handleKeydown(e)) return
 
         if (e.key === "Escape") {
@@ -211,7 +224,7 @@
 </script>
 
 <!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
-<svelte:window on:mousedown={deselect} on:keydown={keydown} />
+<svelte:window on:mousedown={deselect} on:keydown={keydown} on:keyup={keyup} />
 
 <div
     bind:this={itemElem}
@@ -222,6 +235,7 @@
     class:chords={chordsMode}
     class:isOptimized
     class:showOverflow={item?.type === "table" || cropActive}
+    class:isShiftPressed
     style="{plain ? 'width: 100%;' : `${getCustomStyle(item?.style || '', customOutputId)}; outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);z-index: ${index + 1 + ($activeEdit.items.includes(index) ? 100 : 0)};${filter ? 'filter: ' + filter + ';' : ''}${backdropFilter ? 'backdrop-filter: ' + backdropFilter + ';' : ''}`}{cssVariables}{fixedWidth}"
     data-index={index}
     on:mousedown={mousedown}
@@ -287,6 +301,10 @@
         /* .item:hover > .edit { */
         background-color: rgb(255 255 255 / 0.05);
         backdrop-filter: blur(20px);
+    }
+    .item.isShiftPressed,
+    .item.isShiftPressed :global(.edit) {
+        cursor: default !important;
     }
 
     .mediaFrame {

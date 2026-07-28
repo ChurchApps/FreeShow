@@ -49,12 +49,19 @@
         activeStage.update((ae) => {
             if (e.shiftKey) {
                 if (ae.items.includes(id)) {
-                    if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
+                    ae.items.splice(ae.items.indexOf(id), 1)
                 } else ae.items.push(id)
             } else ae.items = [id]
 
             return ae
         })
+
+        // deselect selected text
+        if (e.shiftKey) {
+            e.preventDefault()
+            if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+            window.getSelection()?.removeAllRanges()
+        }
 
         let target = e.target.closest(".stage_item")
         if (!target) return
@@ -77,7 +84,13 @@
         }
     }
 
+    let isShiftPressed = false
+    function keyup(e: KeyboardEvent) {
+        if (e.key === "Shift") isShiftPressed = false
+    }
     function keydown(e: KeyboardEvent) {
+        if (e.key === "Shift") isShiftPressed = true
+
         if (!edit) return
 
         if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
@@ -301,7 +314,7 @@
     }
 </script>
 
-<svelte:window on:keydown={keydown} on:mousedown={deselect} />
+<svelte:window on:mousedown={deselect} on:keydown={keydown} on:keyup={keyup} />
 
 <div
     {id}
@@ -311,6 +324,7 @@
     class:selected={edit && $activeStage.items.includes(id)}
     class:isDisabledVariable
     class:isOutput={!!$currentWindow}
+    class:isShiftPressed
     style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}"
     on:mousedown={mousedown}
 >
@@ -456,6 +470,10 @@
 
     .stage_item.outline {
         outline: 5px solid rgb(255 255 255 / 0.2);
+    }
+    .stage_item.isShiftPressed,
+    .stage_item.isShiftPressed :global(*) {
+        cursor: default !important;
     }
     .stage_item.selected {
         outline: 5px solid var(--secondary);
