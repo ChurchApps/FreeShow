@@ -50,7 +50,7 @@
 
     function getOutputStateTitle(output: Output, _updater: any) {
         if (!output.active) return "output.state_locked"
-        if ($outputState.find((a) => a.id === output.id)?.active) return "output.state_active"
+        if ($outputState.find((a) => a.id === output.id)?.active) return "settings.enabled"
         if ($ndiData[output?.id || ""]?.connections > 0) return "NDI"
         if (output.invisible) return "settings.invisible_window"
         return "output.state_inactive"
