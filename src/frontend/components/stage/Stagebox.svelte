@@ -49,7 +49,7 @@
         activeStage.update((ae) => {
             if (e.shiftKey) {
                 if (ae.items.includes(id)) {
-                    ae.items.splice(ae.items.indexOf(id), 1)
+                    if (!e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
                 } else ae.items.push(id)
             } else ae.items = [id]
 
@@ -472,8 +472,11 @@
         outline: 5px solid rgb(255 255 255 / 0.2);
     }
     .stage_item.isShiftPressed,
-    .stage_item.isShiftPressed :global(*) {
+    .stage_item.isShiftPressed :global(*:not(.line)) {
         cursor: default !important;
+    }
+    .stage_item.isShiftPressed :global(.line) {
+        cursor: move !important;
     }
     .stage_item.selected {
         outline: 5px solid var(--secondary);

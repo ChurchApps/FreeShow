@@ -57,7 +57,7 @@
 
             if (e.shiftKey) {
                 if (ae.items.includes(index)) {
-                    ae.items.splice(ae.items.indexOf(index), 1)
+                    if (!e.target.closest(".line")) ae.items.splice(ae.items.indexOf(index), 1)
                 } else {
                     ae.items.push(index)
                 }
@@ -305,6 +305,9 @@
     .item.isShiftPressed,
     .item.isShiftPressed :global(.edit) {
         cursor: default !important;
+    }
+    .item.isShiftPressed :global(.line) {
+        cursor: move !important;
     }
 
     .mediaFrame {
