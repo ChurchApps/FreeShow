@@ -207,7 +207,11 @@ export const receiveSTAGE = {
         checkWindowCapture()
     },
 
-    RUN_ACTION: (a: { id: string }) => {
+    RUN_ACTION: (a: { id: string }, connectionId: string) => {
+        const stageId = get(connections).STAGE?.[connectionId]?.active
+        const hasPassword = Object.values(get(stageShows) || {}).some((s: any) => s?.password)
+        if (hasPassword && !stageId) return
+
         runAction(get(actions)[a.id], { source: "remote" })
     }
 
