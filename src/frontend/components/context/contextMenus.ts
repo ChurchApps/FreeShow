@@ -26,6 +26,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     history: { label: "popup.history", icon: "history", iconColor: "var(--secondary)", shortcuts: ["Ctrl+H"] },
     cut: { label: "actions.cut", icon: "cut", iconColor: "#97c7ff", shortcuts: ["Ctrl+X"] },
     copy: { label: "actions.copy", icon: "copy", iconColor: "#97c7ff", shortcuts: ["Ctrl+C"] },
+    copy_id: { label: "actions.copy_id", icon: "copy", iconColor: "#97c7ff" },
     paste: { label: "actions.paste", icon: "paste", iconColor: "#97c7ff", shortcuts: ["Ctrl+V"] },
     docs: { label: "main.docs", icon: "document", external: true },
     quick_search: { label: "main.quick_search", icon: "search", shortcuts: ["Ctrl+G"] },
