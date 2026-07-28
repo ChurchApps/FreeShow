@@ -66,12 +66,13 @@
 
         active.forEach((id) => {
             let styles = getStyles(items[id].style)
-            Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
+            const itemNewStyles = (newStyles as any).__multiPositions ? (newStyles as any).__multiPositions[id] || {} : newStyles
+
+            Object.entries(itemNewStyles).forEach(([key, value]) => (styles[key] = (value as any).toString()))
 
             let textStyles = ""
             Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
-            // TODO: move multiple!
             newData[id] = textStyles
         })
 
