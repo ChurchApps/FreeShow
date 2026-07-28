@@ -7,6 +7,7 @@
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import StageItemsList from "./StageItemsList.svelte"
 
     $: currentStage = $stageShows[$activeStage.id || ""]
     $: settings = currentStage?.settings || {}
@@ -45,6 +46,8 @@
             <MaterialColorInput label="stage.label_color" value={settings.labelColor || "#ac9c35"} defaultValue={"#ac9c35"} on:input={(e) => updateStageSettings(e.detail, "labelColor")} />
         {/if}
     </div>
+
+    <StageItemsList />
 </div>
 
 <!-- probably not needed -->

@@ -126,16 +126,18 @@
             if (typeof a !== "object") return
 
             const previousItem = projectItemsList[index - 1]
+            const nextItem = projectItemsList[index + 1]
 
             let previousType = previousItem?.type || "show"
             let currentType = a.type || "show"
+            let nextType = nextItem?.type || "show"
 
             // media as same type
             if (previousType === "image" || previousType === "video") previousType = "image"
             if (currentType === "image" || currentType === "video") currentType = "image"
 
             if (!splittedProjectsList.at(-1)) newSection()
-            else if (currentType === "section" && (a.color || previousType === "section")) newSection()
+            else if (currentType === "section" && (a.color || previousType === "section" || nextType === "section")) newSection()
             else if (currentType !== "section" && previousType !== "section" && projectItemsList[index - 2]?.type !== "section" && currentType !== previousType) {
                 if (splittedProjectsList.at(-1)?.color === "") newSection()
                 else splittedProjectsList.at(-1)!.items.push({ type: "DIVIDER", id: "" })
@@ -200,7 +202,7 @@
 
     // remove files already in project - max 5
     $: recommended = $recentFiles.projectMedia
-        .filter((a) => !projectItemsList.find((b) => b.id === a))
+        .filter((a) => !projectItemsList.find((b) => b.id === a || b.name === removeExtension(getFileName(a))))
         .sort((a, b) => a.localeCompare(b))
         .slice(0, 5)
 
@@ -245,9 +247,17 @@
     function mousedown(e: any) {
         if (!e.target.closest(".addMenu") && !e.target.closest(".addButton")) addMenuOpen = false
     }
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (addMenuOpen && e.key === "Escape") {
+            addMenuOpen = false
+            e.preventDefault()
+            e.stopPropagation()
+        }
+    }
 </script>
 
-<svelte:window on:mousedown={mousedown} />
+<svelte:window on:mousedown={mousedown} on:keydown|capture={handleKeydown} />
 
 <div id="projectArea" class="list {projectReadOnly ? '' : 'context #project'}">
     <Autoscroll {offset} bind:scrollElem timeout={150}>
@@ -328,7 +338,7 @@
 
                 <!-- suggestions -->
                 {#if recommended.length}
-                    <div class="section" style="margin-top: 50px;border-top: 1px solid var(--primary-lighter);background-color: var(--primary-darkest);padding: 2px 18px;display: flex;justify-content: space-between;align-items: center;">
+                    <div class="section" style="margin-top: 80px;border-top: 1px solid var(--primary-lighter);background-color: var(--primary-darkest);padding: 2px 18px;display: flex;justify-content: space-between;align-items: center;">
                         <T id="media.recommended" />
 
                         <MaterialButton
@@ -348,33 +358,35 @@
                         </MaterialButton>
                     </div>
 
-                    <div class="listSection">
-                        {#each recommended as path, i}
-                            {@const name = getFileName(path)}
-                            {@const type = getMediaType(getExtension(name))}
-                            {@const isFirst = i === 0}
-                            {@const isLast = i === recommended.length - 1}
-                            {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
-                            {@const icon = type === "audio" ? "music" : type}
+                    <div class="recommended">
+                        <div class="listSection">
+                            {#each recommended as path, i}
+                                {@const name = getFileName(path)}
+                                {@const type = getMediaType(getExtension(name))}
+                                {@const isFirst = i === 0}
+                                {@const isLast = i === recommended.length - 1}
+                                {@const borderRadiusStyle = `${isFirst ? "border-top-right-radius: 10px;" : ""}${isLast ? "border-bottom-right-radius: 10px;" : ""}`}
+                                {@const icon = type === "audio" ? "music" : type}
 
-                            <MaterialButton
-                                class="show context #recent_file__project"
-                                style="justify-content: space-between;padding: 0.35em 0.8em;font-weight: normal;{borderRadiusStyle}"
-                                on:click={() => {
-                                    // convert to image? - probably better not to, this can be done via import
-                                    // if (type === "pdf") sendMain(Main.PDF_TO_IMAGE, { filePath: path })
-                                    addToProject(null, [path])
-                                }}
-                                title="context.addToProject: <b>{name}</b>"
-                                tab
-                            >
-                                <span style="display: flex;align-items: center;gap: 8px;">
-                                    <Icon id={icon} size={0.9} white right />
-                                    <p style="min-height: 10px;">{removeExtension(name)}</p>
-                                </span>
-                                <Icon id="add" size={0.9} white right />
-                            </MaterialButton>
-                        {/each}
+                                <MaterialButton
+                                    class="show context #recent_file__project"
+                                    style="justify-content: space-between;padding: 0.35em 0.8em;font-weight: normal;{borderRadiusStyle}"
+                                    on:click={() => {
+                                        // convert to image? - probably better not to, this can be done via import
+                                        // if (type === "pdf") sendMain(Main.PDF_TO_IMAGE, { filePath: path })
+                                        addToProject(null, [path])
+                                    }}
+                                    title="context.addToProject: <b>{name}</b>"
+                                    tab
+                                >
+                                    <span style="display: flex;align-items: center;gap: 8px;">
+                                        <Icon id={icon} size={0.9} white right />
+                                        <p style="min-height: 10px;">{removeExtension(name)}</p>
+                                    </span>
+                                    <Icon id="add" size={0.9} white right />
+                                </MaterialButton>
+                            {/each}
+                        </div>
                     </div>
                 {/if}
             {:else}
@@ -450,6 +462,8 @@
                 </div>
             </MaterialButton>
 
+            <div class="group-spacer" />
+
             <MaterialButton
                 variant="outlined"
                 icon="import"
@@ -464,6 +478,8 @@
                     <p><T id="popup.import" /></p>
                 </div>
             </MaterialButton>
+
+            <div class="group-spacer" />
 
             <MaterialButton variant="outlined" icon="section" title="new.section" disabled={currentProject?.sectionsLocked} on:click={addSection} white={lessVisibleSection}>
                 <div class="label">
@@ -589,12 +605,16 @@
         flex-direction: column;
         gap: 2px;
 
-        /* background-color: var(--primary);
-        padding: 5px;
-        border-radius: 24px;
-        border: 1px solid var(--primary-lighter);
+        max-height: calc(100% - 100px);
+        overflow-y: auto;
+        overflow-x: hidden;
 
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); */
+        background: rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(15px);
+        border-radius: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 6px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
     }
 
     .addMenu :global(button) {
@@ -603,9 +623,20 @@
 
         border-radius: 50px;
 
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 
-        backdrop-filter: blur(10px);
+        /* for overflow shrinking */
+        min-height: 35px;
+    }
+
+    /* remove blur from individual buttons to avoid double blur */
+    .addMenu :global(button .surface) {
+        backdrop-filter: none !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+    }
+
+    .group-spacer {
+        height: 6px;
     }
 
     .addMenu .label {
@@ -632,5 +663,17 @@
         align-items: center;
 
         opacity: 0.2;
+    }
+
+    /* +/x rotate animation */
+    :global(.addButton svg) {
+        transition: transform 0.2s ease !important;
+    }
+
+    .recommended {
+        display: flex;
+        flex-direction: column;
+
+        background-color: var(--primary-darker);
     }
 </style>

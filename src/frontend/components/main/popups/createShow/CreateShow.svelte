@@ -170,10 +170,10 @@
         }
 
         if (e.key === "Enter") {
-            if (!ctrl && e.target?.closest(".edit") && !document.activeElement?.closest("#name")) return
+            if (!ctrl && e.target?.closest?.(".edit") && !document.activeElement?.closest?.("#name")) return
 
             e.preventDefault()
-            if (e.target?.closest("button")) return
+            if (e.target?.closest?.("button")) return
 
             if (!ctrl) {
                 selectOption("text")

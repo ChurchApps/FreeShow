@@ -86,7 +86,7 @@
         clearInterval(updaterInterval)
         updaterInterval = setInterval(
             () => {
-                if (isClearing) return
+                if (isClearing || !Array.isArray(currentItems)) return
                 if (currentItems.find((a) => a?.conditions)) conditionsUpdater++
             },
             isMic ? 100 : 300
@@ -416,7 +416,6 @@
             <!-- Persistent item: unchanged content, render outside transition to avoid flicker -->
             <Textbox
                 backdropFilter={current.slideData?.["backdrop-filter"] || ""}
-                disableListTransition={mirror}
                 chords={item.chords?.enabled}
                 animationStyle={animationData.style || {}}
                 item={timelineItems.get(`${current.outSlide?.id}-${current.outSlide?.layout}-${current.outSlide?.index}`)?.[index] || item}
@@ -442,7 +441,6 @@
                     <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} currentSlide={current.currentSlide} {item} outSlide={current.outSlide} lines={current.lines} currentStyle={current.currentStyle} let:customSlide let:customItem let:customLines let:customOut let:transition>
                         <Textbox
                             backdropFilter={current.slideData?.["backdrop-filter"] || ""}
-                            disableListTransition={mirror}
                             chords={customItem.chords?.enabled}
                             animationStyle={animationData.style || {}}
                             item={timelineItems.get(`${customOut?.id}-${customOut?.layout}-${customOut?.index}`)?.[index] || customItem}

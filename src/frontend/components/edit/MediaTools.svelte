@@ -53,7 +53,7 @@
     }
 
     function reset() {
-        let deleteKeys: string[] = ["flipped", "flippedY", "fit", "speed", "volume", "fromTime", "toTime", "videoType", "cropping"]
+        let deleteKeys: string[] = ["flipped", "flippedY", "blend", "fit", "speed", "volume", "fromTime", "toTime", "videoType", "cropping"]
 
         // reset
         if (active === "filters") deleteKeys = ["filter"]
@@ -64,6 +64,9 @@
         let currentOutput: any = getFirstActiveOutput()
         let bg = currentOutput?.out?.background
         if (!bg) return
+        const bgId = bg.path || bg.id || ""
+        if (bgId !== mediaId) return
+
         deleteKeys.forEach((key) => delete bg[key])
         setOutput("background", bg)
 
@@ -81,9 +84,11 @@
 
         // update output filters
         let currentOutput = getFirstActiveOutput()
-        if (!currentOutput?.out?.background || currentOutput?.out?.background?.path !== mediaId) return
+        let bg = currentOutput?.out?.background
+        if (!bg) return
+        const bgId = bg.path || bg.id || ""
+        if (bgId !== mediaId) return
 
-        let bg = currentOutput?.out.background
         bg[input.id] = value
         setOutput("background", bg)
     }

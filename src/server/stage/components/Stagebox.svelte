@@ -28,6 +28,16 @@
     $: currentOutput = $output
     $: currentSlide = currentOutput?.out?.slide || (slideOffset !== 0 ? $outputSlideCache[currentOutput?.id || ""] || null : null)
 
+    // pick the pushed frame for this layout's output, falling back deterministically
+    function getStreamCapture(streamMap: any, outputId: string | undefined) {
+        if (outputId && streamMap[outputId]) return streamMap[outputId]
+
+        const outputKeys = Object.keys(streamMap).sort()
+        if (outputKeys.length) return streamMap[outputKeys[0]]
+
+        return null
+    }
+
     $: currentBackground = $background
 
     // timer
@@ -54,12 +64,11 @@
     }
 
     // custom dynamic size
-    // WIP this does not update when window size changes...
     let newSizes = `;
-        top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
-        left: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
-        width: ${Math.min(itemStyles.width, (itemStyles.width / 1920) * resolution.width)}px;
-        height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
+        top: ${(itemStyles.top / 1080) * resolution.height}px;
+        left: ${(itemStyles.left / 1920) * resolution.width}px;
+        width: ${(itemStyles.width / 1920) * resolution.width}px;
+        height: ${(itemStyles.height / 1080) * resolution.height}px;
     `
 
     let alignElem: HTMLElement | undefined
@@ -187,7 +196,7 @@
         <span style="pointer-events: none;width: 100%;height: 100%;">
             {#if item.type === "current_output" || id.includes("current_output")}
                 <!-- width gets squished when resized -->
-                <PreviewCanvas alpha={id.includes("_alpha")} id={stageLayout?.settings?.output} capture={$stream[id.includes("_alpha") ? "alpha" : "default"]} />
+                <PreviewCanvas outputId={stageLayout?.settings?.output} capture={getStreamCapture($stream, stageLayout?.settings?.output)} />
             {:else if item.type === "slide_text" || id.includes("slide")}
                 {@const slideBackground = slideOffset === 0 ? currentBackground : slideOffset === 1 ? currentBackground.next : null}
 
@@ -198,7 +207,7 @@
                 {#if currentSlide}
                     {#key item || currentSlide}
                         <!-- autoStage={show.settings.autoStretch !== false} -->
-                        <SlideText {currentSlide} {slideOffset} stageItem={item} show={stageLayout} {resolution} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} autoSize={item.auto !== false} {fontSize} autoStage {textStyle} style={item.type ? item.keepStyle : false} />
+                        <SlideText {currentSlide} {slideOffset} stageItem={item} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} autoSize={item.textFit !== "none" && item.auto !== false} {fontSize} autoStage {textStyle} style={item.type ? item.keepStyle : false} />
                     {/key}
                 {/if}
             {:else if item.type === "slide_notes" || id.includes("notes")}

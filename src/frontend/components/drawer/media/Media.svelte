@@ -37,6 +37,14 @@
     export let searchValue = ""
     export let streams: MediaStream[] = []
 
+    const setView = (v: any) => mediaOptions.update((a) => ({ ...a, view: v }))
+
+    let prevActiveSubTab = active
+    $: if (active !== prevActiveSubTab) {
+        if (active !== "online") setView("all")
+        prevActiveSubTab = active
+    }
+
     // type File = { path: string; favourite: boolean; name: string; extension: string; audio: boolean; folder?: boolean; stat?: any }
     // let files: File[] = []
 
@@ -107,11 +115,11 @@
     let prevTab = ""
     $: if (active || path) updateContent()
     async function updateContent() {
-        if (prevActive === "online" && active !== "online") activeView = "all"
+        if (prevActive === "online" && active !== "online") setView("all")
         if (active !== "online") prevTab = ""
 
         if (active === "online") {
-            if (onlineTab !== prevTab) activeView = "image"
+            if (onlineTab !== prevTab) setView("image")
             prevTab = onlineTab
 
             prevActive = active
@@ -260,7 +268,7 @@
     }
 
     // filter files
-    let activeView = "all" // keyof typeof nextActiveView
+    $: activeView = $mediaOptions.view || "all"
     $: if (activeView || $activeMediaTagFilter || $sorted) filterFiles()
     $: if (searchValue !== undefined) filterSearch()
 
@@ -268,16 +276,19 @@
     function filterFiles() {
         if (active === "online" || active === "inputs" || isProviderSection) return
 
-        let localFilteredFiles: FileFolder[] = []
+        let localFilteredFiles: FileFolder[] = clone(filesList)
 
         // filter by tag
         if ($activeMediaTagFilter.length) {
-            localFilteredFiles = clone(filesList).filter((a) => $media[a.path]?.tags?.length && !$activeMediaTagFilter.find((tagId) => !$media[a.path].tags!.includes(tagId)))
+            localFilteredFiles = localFilteredFiles.filter((a) => $media[a.path]?.tags?.length && !$activeMediaTagFilter.find((tagId) => !$media[a.path].tags!.includes(tagId)))
         }
+
         // filter by type
-        else if (activeView === "all") localFilteredFiles = clone(filesList)
-        else if (activeView === "folder") localFilteredFiles = clone(foldersList)
-        else localFilteredFiles = clone(filesList).filter((a) => activeView === getMediaType(getExtension(a.name)))
+        if (activeView === "folder") {
+            localFilteredFiles = clone(foldersList)
+        } else if (activeView !== "all") {
+            localFilteredFiles = localFilteredFiles.filter((a) => activeView === getMediaType(getExtension(a.name)))
+        }
 
         // reset arrow selector
         hightlightActive()
@@ -399,7 +410,7 @@
             return
         }
 
-        if (e.target?.closest("input") || e.target?.closest(".edit") || $activeEdit.items.length) return
+        if (e.target?.closest?.("input") || e.target?.closest?.(".edit") || $activeEdit.items.length) return
 
         if ((e.ctrlKey || e.metaKey) && shortcuts[e.key]) {
             // e.preventDefault()
@@ -436,8 +447,8 @@
     }
 
     const slidesViews: any = { grid: "list", list: "grid" }
-    const nextActiveView = { all: "image", folder: "image", image: "video", video: "all" } // all: "folder"
-    $: if (notFolders.includes(active || "") && activeView === "folder") activeView = "image"
+    // const nextActiveView = { all: "image", folder: "image", image: "video", video: "all" } // all: "folder"
+    $: if (notFolders.includes(active || "") && activeView === "folder") setView("image")
 
     $: currentOutput = getFirstActiveOutput($outputs)
 
@@ -456,17 +467,6 @@
     }
 
     $: pathString = path.replace(rootPath, "").replace(folderName, "").replaceAll("\\", "/").split("/").filter(Boolean).join("/")
-
-    function handleDisconnect() {
-        requestMain(Main.PROVIDER_DISCONNECT, { providerId: "canva" }, (result) => {
-            if (result?.success) {
-                providerConnections.update((c) => {
-                    c.canva = false
-                    return c
-                })
-            }
-        })
-    }
 </script>
 
 <svelte:window on:keydown={keydown} on:mouseup={mousepress} />
@@ -624,20 +624,12 @@
             </MaterialButton>
         </FloatingInputs>
     {:else if onlineTab !== "canva" || $providerConnections.canva}
-        <FloatingInputs arrow={onlineTab === "canva"}>
-            <svelte:fragment slot="menu">
-                {#if onlineTab === "canva"}
-                    <MaterialButton title="settings.disconnect_from" replace={["Canva"]} on:click={handleDisconnect} icon="logout">
-                        <T id="settings.disconnect_from" replace={["Canva"]} />
-                    </MaterialButton>
-                {/if}
-            </svelte:fragment>
-
+        <FloatingInputs>
             {#if onlineTab === "pixabay"}
-                <MaterialButton title="media.image" on:click={() => (activeView = "image")}>
-                    <Icon size={1.2} id="image" white={activeView !== "image"} />
+                <MaterialButton title="media.image" on:click={() => setView("image")}>
+                    <Icon size={1.2} id="image" white={activeView === "video"} />
                 </MaterialButton>
-                <MaterialButton title="media.video" on:click={() => (activeView = "video")}>
+                <MaterialButton title="media.video" on:click={() => setView("video")}>
                     <Icon size={1.2} id="video" white={activeView !== "video"} />
                 </MaterialButton>
 
@@ -693,26 +685,14 @@
         {/if}
     {/if}
 
-    <FloatingInputs arrow let:open>
-        {#if open}
-            <MaterialButton title="media.all" on:click={() => (activeView = "all")}>
-                <Icon size={1.2} id="media" white={activeView !== "all"} />
-            </MaterialButton>
-            <MaterialButton title="media.image" on:click={() => (activeView = "image")}>
-                <Icon size={1.2} id="image" white={activeView !== "image"} />
-            </MaterialButton>
-            <MaterialButton title="media.video" on:click={() => (activeView = "video")}>
-                <Icon size={1.2} id="video" white={activeView !== "video"} />
-            </MaterialButton>
-
-            <div class="divider"></div>
-        {:else}
-            <MaterialButton title="media.{activeView}" on:click={() => (activeView = nextActiveView[activeView])}>
+    <FloatingInputs>
+        <!-- {#if open}
+            <MaterialButton title="media.{activeView}" on:click={() => setView(nextActiveView[activeView])}>
                 <Icon size={1.2} id={activeView === "all" ? "media" : activeView} white={activeView === "all"} />
             </MaterialButton>
-        {/if}
+        {/if} -->
 
-        <MaterialZoom hidden={!open} columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
+        <MaterialZoom columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
 
         <MaterialButton
             on:click={() =>

@@ -1,14 +1,16 @@
 <script lang="ts">
-    import { BLACKMAGIC, OUTPUT } from "../../../../types/Channels"
+    import { OUTPUT } from "../../../../types/Channels"
     import type { ClickEvent } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
-    import { activeTriggerFunction, currentOutputSettings, ndiData, outputs, popupData, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { AudioAnalyser } from "../../../audio/audioAnalyser"
+    import { activeTriggerFunction, currentOutputSettings, outputs, popupData, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
+    import { translateText } from "../../../utils/language"
     import { waitForPopupData } from "../../../utils/popup"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { addOutput, enableStageOutput, refreshOut } from "../../helpers/output"
+    import { addOutput, checkFFmpeg, enableStageOutput, refreshOut } from "../../helpers/output"
     import Tabs from "../../input/Tabs.svelte"
     import HiddenInput from "../../inputs/HiddenInput.svelte"
 
@@ -42,93 +44,34 @@
     let currentOutput: Output | null = null
     $: if ($currentOutputSettings) currentOutput = { id: $currentOutputSettings, ...currentOutputs[$currentOutputSettings] }
 
-    function updateOutput(key: string, value: any, outputId = "") {
-        if (!outputId) outputId = currentOutput?.id || ""
+    function updateOutput(key: string, value: any, outputId = currentOutput?.id || "") {
         if (!outputId || !$outputs[outputId]) return
 
-        // properly update output content
-        if (key === "style") {
-            // wait to update output, so slide is refreshed after style is changed in output window
-            setTimeout(refreshOut)
-        }
+        if (key === "style") setTimeout(refreshOut)
 
-        if (key === "ndi") {
-            if (value) {
-                newToast("toast.output_capture_enabled")
-
-                const enabledOutputs = Object.values($outputs).filter((a) => a.enabled && !a.stageOutput)
-                if (enabledOutputs.length > 1) {
-                    updateOutput("transparent", true)
-                    updateOutput("invisible", true)
-                }
-            }
-        } else if (key === "blackmagic") {
-            if (value === true) {
-                // send(BLACKMAGIC, ["GET_DEVICES"])
-                updateOutput("transparent", true)
-                updateOutput("invisible", true)
-            } else {
-                send(BLACKMAGIC, ["STOP_SENDER"], { id: outputId })
-            }
-        }
-
-        // TODO: history
         outputs.update((a: any) => {
+            const out = a[outputId]
+
+            // Update value
             if (key.includes(".")) {
-                let split = key.split(".")
-                a[outputId][split[0]][split[1]] = value
-                if (split[1] === "lines" && !Number(value)) delete a[outputId][split[0]][split[1]]
+                const [p1, p2] = key.split(".")
+                out[p1][p2] = value
+                if (p2 === "lines" && !Number(value)) delete out[p1][p2]
             } else {
-                a[outputId][key] = value
+                out[key] = value
             }
 
-            if (key === "ndi") {
-                if (!value) {
-                    ndiData.update((a) => {
-                        delete a[outputId]
-                        return a
-                    })
-
-                    // delete a[outputId].ndiData
-                    if (!a[outputId].blackmagic) {
-                        if (a[outputId].ndiData?.audio) delete a[outputId].ndiData.audio
-                        delete a[outputId].transparent
-                        delete a[outputId].invisible
-                    }
-                }
+            if (key === "enabled" && value) {
+                send(OUTPUT, ["CREATE"], { ...out, id: outputId })
+                // checkWindowCapture()
+                AudioAnalyser.recorderActivate()
             }
 
-            if (key === "blackmagic") {
-                if (!value) {
-                    // ndiData.update((a) => {
-                    //     delete a[outputId]
-                    //     return a
-                    // })
-
-                    // delete a[outputId].blackmagicData
-                    if (!a[outputId].ndi) {
-                        delete a[outputId].transparent
-                        delete a[outputId].invisible
-                    }
-                }
-            }
-
-            if (key === "enabled") {
-                if (value) send(OUTPUT, ["CREATE"], currentOutput)
-                else {
-                    send(OUTPUT, ["REMOVE"], { id: outputId })
-                    updateOutput("hideFromPreview", false, outputId)
-                }
-
-                // WIP if only one left, all outputs should be "active"
-            }
-
-            if (!a[outputId].enabled) return a
-
-            // UPDATE OUTPUT WINDOW
-
-            if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi"].includes(key)) {
-                send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
+            const captureTypeKeys = ["blackmagic", "ndi", "webrtc", "rtmp"]
+            const ipcKeys = ["alwaysOnTop", "transparent", "invisible"]
+            if (out.enabled && (captureTypeKeys.includes(key) || ipcKeys.includes(key))) {
+                if (value && captureTypeKeys.includes(key)) newToast("toast.output_capture_enabled")
+                send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value: key === "blackmagic" ? out : value })
             }
 
             return a
@@ -140,64 +83,84 @@
     $: if ($activeTriggerFunction === "create_output") createOutput()
     async function createOutput(e?: ClickEvent) {
         const skipPopup = e?.detail.ctrl
-        let stageLayouts = keysToID($stageShows)
-        let type = stageLayouts.length && !skipPopup ? await waitForPopupData("choose_output") : "normal"
+        const stageLayouts = keysToID($stageShows)
+
+        // input type (normal/stage)
+        const type = stageLayouts.length && !skipPopup ? await waitForPopupData("choose_output_input") : "normal"
         if (!type) return
 
+        // data (style/layout)
+        let styleId = ""
+        let stageId = ""
         if (type === "stage") {
-            let firstStageLayoutId = sortByName(stageLayouts)[0]?.id || ""
-            let stageId = stageLayouts.length > 1 ? (await waitForPopupData("select_stage_layout")) || firstStageLayoutId : firstStageLayoutId
+            const sorted = sortByName(stageLayouts)
+            const firstId = sorted[0]?.id || ""
+            stageId = stageLayouts.length > 1 ? (await waitForPopupData("select_stage_layout")) || firstId : firstId
+        } else if (Object.keys($styles).length && !skipPopup) {
+            popupData.set({ outputId: currentOutput?.id, skip: true })
+            styleId = await waitForPopupData("select_style")
+        }
 
-            let stageLayout = $stageShows[stageId]
+        // output type (local/network)
+        let setup = { localType: "window", networkType: "" }
+        if (!skipPopup) setup = (await waitForPopupData("choose_output_type")) || setup
+        const { localType, networkType } = setup
 
+        // FFmpeg check for RTMP
+        if (networkType === "rtmp" && !(await checkFFmpeg())) return
+
+        // create
+        let outputId = ""
+        if (type === "stage") {
             toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
-            setTimeout(() => {
-                let id = enableStageOutput({ stageOutput: stageId, name: stageLayout?.name || "" })
-                currentOutputSettings.set(id)
-            }, 100)
-        } else if (type === "normal") {
-            let styleId = ""
-            if (Object.keys($styles).length && !skipPopup) {
-                popupData.set({ outputId: currentOutput?.id, skip: true })
-                styleId = await waitForPopupData("select_style")
+            outputId = enableStageOutput({ stageOutput: stageId, name: $stageShows[stageId]?.name || "" })
+        } else {
+            outputId = addOutput(false, styleId, false)
+        }
+
+        // apply settings
+        if (!skipPopup) {
+            if (localType !== "window") {
+                updateOutput("invisible", true, outputId)
+                if (!localType && networkType === "ndi") updateOutput("transparent", true, outputId)
             }
 
-            addOutput(false, styleId)
+            if (localType === "blackmagic") updateOutput("blackmagic", true, outputId)
+            if (networkType === "ndi") updateOutput("ndi", true, outputId)
+            else if (networkType === "webrtc") updateOutput("webrtc", true, outputId)
+            else if (networkType === "rtmp") updateOutput("rtmp", true, outputId)
+
+            updateOutput("enabled", true, outputId)
         }
     }
 
     let edit: any
 </script>
 
-<!-- <InputRow style="background-color: var(--primary);">
-    {#if outputsList.length > 1}
-        <MaterialButton variant="text" title="popup.output_selector" class="small_add" on:click={() => activePopup.set("output_selector")}>
-            <Icon id="outputs" size={1.2} white />
-        </MaterialButton>
-    {/if} -->
-
 <Tabs id="output" tabs={outputsList} value={$currentOutputSettings || ""} newLabel="settings.new_output" class="context #output_screen" on:open={(e) => currentOutputSettings.set(e.detail)} on:create={createOutput} let:tab>
-    {#if tab.stageOutput}<Icon id="stage" right />{/if}
+    {#if tab.stageOutput}<Icon id="stage" right title={translateText("menu.stage")} />{/if}
     {#if tab.enabled !== false}<Icon id="check" size={0.7} white right />{/if}
     <HiddenInput value={tab.name} id={"output_" + tab.id} on:edit={(e) => updateOutput("name", e.detail.value, tab.id)} bind:edit />
+
+    <div class="right-icons">
+        {#if !tab.invisible}<Icon id="hdmi" size={0.6} white title={translateText("settings.window")} />{/if}
+        {#if tab.blackmagic}<Icon id="blackmagic" size={0.6} white title="Blackmagic Design" />{/if}
+        {#if tab.ndi}<Icon id="ndi" size={0.6} white title="NDI" />{/if}
+        {#if tab.webrtc}<Icon id="broadcast" size={0.6} white title="WebRTC" />{/if}
+        {#if tab.rtmp}<Icon id="broadcast" size={0.6} white title="RTMP" />{/if}
+    </div>
 
     {#if tab.color}
         <div class="color" style="--color: {tab.color};"></div>
     {/if}
 </Tabs>
-<!-- </InputRow> -->
 
-<!-- <style>
-    :global(.row button.small_add) {
-        transform: translate(6px, 4px);
-
-        background-color: transparent !important;
-        border-radius: 15px;
-        height: 40px;
-        aspect-ratio: 1;
+<style>
+    .right-icons {
+        display: flex;
+        gap: 2px;
+        margin-left: auto;
+        padding-left: 8px;
+        opacity: 0.7;
     }
-
-    :global(.center) {
-        overflow: hidden;
-    }
-</style> -->
+</style>

@@ -97,7 +97,7 @@
 
     <Button title={name} on:click={() => openAudio(path, playing)} active={$activeShow?.id === path} style="padding: 5px 10px;opacity: 0.8;width: 100%;z-index: 2;" bold={false} center>
         {#if playing.isMic}<Icon id="microphone" size={1.2} right />{/if}
-        <p>{$activePlaylist?.active === path ? `${$audioPlaylists[$activePlaylist.id]?.name}: ` : ""}{name}</p>
+        <p style="font-size: 0.9em;">{$activePlaylist?.active === path ? `${$audioPlaylists[$activePlaylist.id]?.name}: ` : ""}{name}</p>
     </Button>
 
     <!-- AUDIO CONTROLS -->

@@ -14,7 +14,7 @@
     else activeTabs = clone(tabs)
 
     function keydown(e: KeyboardEvent) {
-        if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
+        if (e.target?.closest?.(".edit") || e.ctrlKey || e.metaKey) return
 
         let nextTab = -1
         let currentTabIndex = activeTabs.findIndex((tab) => tab === $settingsTab)

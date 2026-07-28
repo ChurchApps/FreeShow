@@ -3,26 +3,35 @@
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
-    export let options: { id: string; name: string; title?: string; icon: string; disabled?: boolean; colored?: boolean }[] = []
+    export let options: { id: string; name: string; title?: string; icon: string; tip?: string; disabled?: boolean; colored?: boolean }[] = []
+    export let value: string = ""
     export let highlightFirst = true
     export let gradient = false
+    export let canDeselect = false
 
     let dispatch = createEventDispatcher()
     function click(id: string) {
-        dispatch("click", id)
+        if (canDeselect && value === id) {
+            dispatch("click", "")
+        } else {
+            dispatch("click", id)
+        }
     }
 </script>
 
 <div class="choice" class:highlightFirst>
     {#each options as option, i}
-        <MaterialButton title={option.title || option.name} disabled={option.disabled} class={i === 0 ? "first" : i === options.length - 1 ? "last" : ""} variant="outlined" on:click={() => click(option.id)} white>
+        <MaterialButton title={option.title || option.name} disabled={option.disabled} class={i === 0 ? "first" : i === options.length - 1 ? "last" : ""} variant="outlined" isActive={option.id === value} on:click={() => click(option.id)} white>
             <div class="list">
                 {#if option.icon.includes(".webp")}
                     <img src={option.icon} alt="{option.id}-logo" draggable={false} />
                 {:else}
                     <Icon id={option.icon} size={5} white={!option.colored && !gradient} {gradient} />
                 {/if}
-                <p>{option.name}</p>
+                <div class="text">
+                    <p>{option.name}</p>
+                    {#if option.tip}<p class="tip">{option.tip}</p>{/if}
+                </div>
             </div>
         </MaterialButton>
     {/each}
@@ -49,6 +58,20 @@
         max-width: 280px;
 
         /* border-radius: 0; */
+    }
+
+    .text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .tip {
+        opacity: 0.4;
+        font-size: 0.7em;
+        font-style: italic;
+        font-weight: normal;
+        margin-top: 5px;
     }
 
     .choice.highlightFirst :global(button.first) {

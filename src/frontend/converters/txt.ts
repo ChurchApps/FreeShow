@@ -101,8 +101,9 @@ export function convertText({ name = "", origin = "", category = null, text, noF
 
     let labeled: { type: string; text: string }[] = []
 
+    const autoGroups: boolean = get(special).autoGroups !== false
     // find chorus phrase
-    const patterns = findPatterns(sections)
+    const patterns = findPatterns(sections, autoGroups)
     sections = patterns.sections
     labeled = patterns.indexes.map((a, i) => ({ type: a, text: sections[i] || "" }))
     labeled = checkRepeats(labeled)
@@ -113,7 +114,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     const show: Show = new ShowObj(false, category, layoutID)
     if (origin) show.origin = origin
     // , existingSlides
-    const { slides, layouts } = createSlides(labeled, noFormatting)
+    const { slides, layouts } = createSlides(labeled, noFormatting, autoGroups)
 
     // if (onlySlides) return { slides, layouts }
 
@@ -294,7 +295,7 @@ function insertChordsIntoLyrics(chordLine: string, lyricLine: string): string {
 
 // TODO: this sometimes splits all slides up with no children (when adding [group])
 // , existingSlides = {}
-function createSlides(labeled: { type: string; text: string }[], noFormatting) {
+function createSlides(labeled: { type: string; text: string }[], noFormatting, autoGroups: boolean) {
     const slides: { [key: string]: Slide } = {}
     const layouts: SlideData[] = []
 
@@ -325,7 +326,6 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
 
         let id = ""
         const formatText: boolean = noFormatting ? false : get(formatNewShow)
-        const autoGroups: boolean = get(special).autoGroups !== false
 
         const slideText: string = fixText(a.text, formatText)
         // this only accounted for the parent slide, so if the same group was placed multiple times with different children that would be replaced & all "duplicate" children would be removed!
@@ -349,7 +349,11 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
         // stored[a.type].push({ id, text })
 
         let group = activeGroup && !hasTextGroup ? null : a.type
-        if (!autoGroups && !hasTextGroup && group) group = "verse"
+        if (!autoGroups && !hasTextGroup && group) {
+            const matched = findGroupMatch(group)
+            if (matched) group = matched
+            else group = "verse"
+        }
         const color: string | null = null
 
         // split slide notes from text ("---")
@@ -419,6 +423,7 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting) {
                     let isChord = false
 
                     line?.text?.forEach((text) => {
+                        if (typeof text !== "object" || text === null) return
                         let newValue = ""
                         text.value?.split("").forEach((char) => {
                             if ((char === "[" || char === "]") && !text.value.slice(0, -2).includes(":")) {
@@ -614,7 +619,7 @@ function fixText(text: string, formatText: boolean): string {
 
 const similarityNum = 0.7
 
-function findPatterns(sections: string[]) {
+function findPatterns(sections: string[], autoGroups: boolean) {
     const similarCount: { matches: number[]; count: 0 }[] = []
     // total count of totally different slides
     let totalMatches = 0
@@ -682,20 +687,24 @@ function findPatterns(sections: string[]) {
         }
 
         // if (length < 10 && !sections[i].includes("\n")) return sections[i].trim()
-        if (length < 30 || linesSimilarity(sections[i])) return "tag"
-        if (splitted[0].length < 8 && splitted[1]?.length > 20 && !/[,.!?-]/.test(splitted[0])) {
-            sections[i] = splitted.slice(1, splitted.length).join("\n")
-            let group = splitted[0]
-            if (get(groupNumbers)) group = group.replace(/\d+/g, "").trim()
-            return get(groups)[group.toLowerCase()] ? group.toLowerCase() : splitted[0]
-        }
-        if (similar.count > 0) {
-            const globalGroups = ["pre_chorus", "chorus", "bridge", "bridge", "bridge"]
-            matches++
-            let group = globalGroups[matches]
-            if (totalMatches > 2) group = globalGroups[matches - 1] || "other"
-            stored.push({ type: group, text: sections[i] })
-            return group
+        if (autoGroups) {
+            if (length < 30 || linesSimilarity(sections[i])) return "tag"
+
+            const cleanGroup = get(groupNumbers) ? splitted[0].replace(/\d+/g, "").trim() : splitted[0].trim()
+            const matchedGroup = findGroupMatch(cleanGroup)
+            if (splitted[0].length < 8 && splitted[1]?.length > 20 && !/[,.!?-]/.test(splitted[0]) && matchedGroup) {
+                sections[i] = splitted.slice(1, splitted.length).join("\n")
+                return matchedGroup
+            }
+
+            if (similar.count > 0) {
+                const globalGroups = ["pre_chorus", "chorus", "bridge", "bridge", "bridge"]
+                matches++
+                let group = globalGroups[matches]
+                if (totalMatches > 2) group = globalGroups[matches - 1] || "other"
+                stored.push({ type: group, text: sections[i] })
+                return group
+            }
         }
 
         return "verse"

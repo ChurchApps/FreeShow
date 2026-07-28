@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePopup, popupData } from "../../../stores"
+    import { popupData } from "../../../stores"
     import { chooseTeam } from "../../../utils/cloudSync"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
     import Tip from "../Tip.svelte"
@@ -7,13 +7,14 @@
     const type = $popupData.type
     const teams = $popupData.teams || []
 
+    let selected = false
     function teamChosen(e: any) {
-        if (!Array.isArray(teams)) return
+        if (selected || !Array.isArray(teams)) return
 
         const selectedId = e.detail
         const team = teams.find((a) => a.id === selectedId)
 
-        activePopup.set(null)
+        selected = true
         chooseTeam({ ...team, count: teams.length })
     }
 </script>

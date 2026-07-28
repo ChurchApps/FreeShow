@@ -54,7 +54,7 @@ export class AmazingLifeConnect {
     public static async connect(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
         let accessData = this.AMAZING_LIFE_ACCESS || (getContentProviderAccess("amazinglife", scope) as AmazingLifeAuthData | null)
 
-        if (this.isTokenExpired(accessData)) accessData = await this.refreshToken(scope)
+        if (this.isTokenExpired(accessData)) accessData = await this.refreshToken(scope, accessData)
         if (!accessData) accessData = await this.authenticate(scope)
         if (!accessData) return null
 
@@ -83,7 +83,7 @@ export class AmazingLifeConnect {
         }
 
         if (this.isTokenExpired(accessData)) {
-            accessData = await this.refreshToken(scope)
+            accessData = await this.refreshToken(scope, accessData)
             if (!accessData) {
                 console.error("Failed to refresh token")
                 return null
@@ -125,14 +125,14 @@ export class AmazingLifeConnect {
         }
     }
 
-    private static async refreshToken(scope: AmazingLifeScopes): Promise<AmazingLifeAuthData | null> {
-        if (!this.AMAZING_LIFE_ACCESS?.refresh_token) return null
+    private static async refreshToken(scope: AmazingLifeScopes, existingAccess?: AmazingLifeAuthData | null): Promise<AmazingLifeAuthData | null> {
+        const currentAccess = existingAccess || this.AMAZING_LIFE_ACCESS
+        if (!currentAccess?.refresh_token) return null
 
         try {
             this.initializeOAuthHelper()
-            const refreshed = await this.oauthHelper.refreshAccessToken(this.AMAZING_LIFE_ACCESS.refresh_token, scope)
+            const refreshed = await this.oauthHelper.refreshAccessToken(currentAccess.refresh_token, scope)
             if (refreshed) {
-                this.AMAZING_LIFE_ACCESS = refreshed
                 setContentProviderAccess("amazinglife", scope, refreshed)
             }
             return refreshed

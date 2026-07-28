@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ClickEvent } from "../../../types/Main"
-    import { activeEdit, activePage, activeShow, editHistory, effects, focusMode, labelsDisabled, overlays, refreshEditSlide, shows, templates, textEditActive } from "../../stores"
+    import { activeEdit, activePage, activeShow, editHistory, editMode, effects, focusMode, labelsDisabled, overlays, refreshEditSlide, shows, templates } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -95,7 +95,7 @@
     function handleKeyDown(e: KeyboardEvent) {
         if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return
 
-        const showRecent = !($focusMode && currentShowId) && ($activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || $textEditActive)
+        const showRecent = !($focusMode && currentShowId) && ($activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || $editMode === "text_edit")
         if (!showRecent || clonedHistory.length === 0) return
 
         if (e.key === "ArrowDown") {
@@ -135,7 +135,7 @@
 
 {#if $focusMode && currentShowId}
     <Slides />
-{:else if $activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || $textEditActive}
+{:else if $activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || $editMode === "text_edit"}
     <div class="title">
         <h3 style="font-style: italic;opacity: 0.7;"><T id="edit.recent" /></h3>
     </div>

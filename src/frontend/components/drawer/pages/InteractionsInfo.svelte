@@ -42,11 +42,11 @@
 
             <!-- Generate slides -->
             {#if !isActive || !showExists}
-                <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("join")} white><T id="interaction.generate_slide" />: Join</MaterialButton>
-                <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("players")} white><T id="interaction.generate_slide" />: Players</MaterialButton>
-                <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("question")} white><T id="interaction.generate_slide" />: Question</MaterialButton>
-                <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("chart")} white><T id="interaction.generate_slide" />: Chart</MaterialButton>
-                <MaterialButton variant="outlined" icon="slide" style="width: 100%;" on:click={() => generateSlide("leaderboard")} white><T id="interaction.generate_slide" />: Leaderboard</MaterialButton>
+                <MaterialButton variant="outlined" icon="slide" style="width: 100%;justify-content: left;" on:click={() => generateSlide("join")} white><T id="interaction.generate_slide" />: Join</MaterialButton>
+                <MaterialButton variant="outlined" icon="slide" style="width: 100%;justify-content: left;" on:click={() => generateSlide("players")} white><T id="interaction.generate_slide" />: Players</MaterialButton>
+                <MaterialButton variant="outlined" icon="slide" style="width: 100%;justify-content: left;" on:click={() => generateSlide("question")} white><T id="interaction.generate_slide" />: Question</MaterialButton>
+                <MaterialButton variant="outlined" icon="slide" style="width: 100%;justify-content: left;" on:click={() => generateSlide("chart")} white><T id="interaction.generate_slide" />: Chart</MaterialButton>
+                <MaterialButton variant="outlined" icon="slide" style="width: 100%;justify-content: left;" on:click={() => generateSlide("leaderboard")} white><T id="interaction.generate_slide" />: Leaderboard</MaterialButton>
             {/if}
         {/if}
 

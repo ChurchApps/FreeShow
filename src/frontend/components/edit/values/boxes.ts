@@ -79,6 +79,25 @@ export const mediaFitOptionsNoBlur = [
     { value: "fill", label: "media.fill" }
 ]
 
+export const mediaBlendOptions = [
+    { value: "normal", label: "color.normal" },
+    { value: "screen", label: "Screen" },
+    { value: "multiply", label: "Multiply" },
+    { value: "overlay", label: "Overlay" },
+    { value: "soft-light", label: "Soft Light" },
+    { value: "hard-light", label: "Hard Light" },
+    { value: "color-dodge", label: "Color Dodge" },
+    { value: "color-burn", label: "Color Burn" },
+    { value: "lighten", label: "Lighten" },
+    { value: "darken", label: "Darken" },
+    { value: "difference", label: "Difference" },
+    { value: "exclusion", label: "Exclusion" },
+    { value: "hue", label: "Hue" },
+    { value: "saturation", label: "Saturation" },
+    { value: "color", label: "Color" },
+    { value: "luminosity", label: "Luminosity" }
+]
+
 export const filterSection = splitIntoRows([
     { id: "filter", key: "hue-rotate", type: "number", value: 0, extension: "deg", values: { label: "filter.hue-rotate", defaultValue: 0, step: 5, max: 360, showSlider: true, sliderValues: { step: 1 } } },
     { id: "filter", key: "invert", type: "number", value: 0, multiplier: 10, values: { label: "filter.invert", defaultValue: 0, max: 10, showSlider: true } },
@@ -310,6 +329,7 @@ const mediaSections: { [key: string]: EditBoxSection } = {
             { id: "src", type: "media", value: "", values: { label: "items.media" } },
             { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", defaultValue: "contain", options: mediaFitOptions } },
             // { name: "popup.media_fit", id: "fit", input: "popup", popup: "media_fit" }, // WIP
+            { id: "blend", type: "dropdown", value: "normal", values: { label: "media.blend", defaultValue: "normal", options: mediaBlendOptions } },
             { id: "muted", type: "checkbox", value: false, values: { label: "actions.mute" } }, // , hidden: true
             { id: "loop", type: "checkbox", value: true, values: { label: "media._loop" } },
             { id: "speed", type: "number", value: 1, values: { label: "media.speed", defaultValue: 1, step: 0.1, min: 0.1, max: 15, showSlider: true } },
@@ -409,7 +429,8 @@ export const itemBoxes: Box2 = {
                         }
                     },
                     { id: "timer.circleMask", type: "checkbox", value: false, values: { label: "timer.mask" } },
-                    { id: "timer.showHours", type: "checkbox", value: true, values: { label: "timer.hours" } }
+                    { id: "timer.showHours", type: "checkbox", value: true, values: { label: "timer.hours" } },
+                    { id: "timer.padding", type: "checkbox", value: true, values: { label: "timer.padding" } }
                 ])
             })
         }
@@ -554,6 +575,10 @@ export const itemBoxes: Box2 = {
                     [{ id: "events.maxEvents", type: "number", value: 5, values: { label: "edit.max_events", max: 20 } }],
                     [{ id: "events.startDaysFromToday", type: "number", value: 0, values: { label: "edit.start_days_from_today", max: 10000 } }],
                     [{ id: "events.justOneDay", type: "checkbox", value: false, values: { label: "edit.just_one_day" } }],
+                    [
+                        { id: "events.fromTime", type: "time", hidden: true, value: "00:00", values: { label: "calendar.from_time" } },
+                        { id: "events.toTime", type: "time", hidden: true, value: "00:00", values: { label: "calendar.to_time" } }
+                    ],
                     [{ id: "events.enableStartDate", type: "checkbox", value: false, values: { label: "edit.enable_start_date" } }],
                     [
                         { id: "events.startDate", type: "date", hidden: true, value: "", values: { label: "calendar.from_date" } },

@@ -20,6 +20,7 @@
     import Snaplines from "../system/Snaplines.svelte"
     import { getSlideTextItems, stageItemToItem, updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
+    import ItemAddMenu from "../edit/ItemAddMenu.svelte"
 
     export let outputId = ""
     export let stageId = ""
@@ -113,7 +114,7 @@
         zoom = e.detail
         const origin = zoomOrigin
         zoomOrigin = null
-        centerZoom(zoom, origin, scrollElem, "")
+        centerZoom(origin, scrollElem, "")
     }
 
     $: currentOutput = $outputs[outputId] || $allOutputs[outputId] || {}
@@ -138,6 +139,7 @@
     // stage output
 
     $: hasStageOutput = edit && Object.values($outputs).some((a) => a.stageOutput && (a.enabled || a.stageOutput === stageLayoutId))
+    $: isLocked = readOnly
 
     function createStageOutput() {
         toggleOutputEnabled.set(true)
@@ -155,7 +157,7 @@
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if stageLayoutId}
             <!-- TODO: stage resolution... -->
-            <Zoomed background={backgroundColor} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio isStage disableStyle hideOverflow={!edit} center={zoom >= 1}>
+            <Zoomed background={backgroundColor} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio isStage disableStyle hideOverflow={!edit} center>
                 <!-- TODO: snapping to top left... -->
                 {#if edit && !readOnly}
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} isStage />
@@ -181,17 +183,17 @@
     </div> -->
 
     {#if edit && stageLayoutId}
-        {#if !hasStageOutput}
-            <FloatingInputs side="left" onlyOne>
+        <FloatingInputs side="left" onlyOne>
+            {#if !hasStageOutput}
                 <MaterialButton icon="autofill" title="stage.create_stage_output" on:click={createStageOutput}>
                     <T id="stage.create_stage_output" />
                 </MaterialButton>
-            </FloatingInputs>
-        {/if}
+            {/if}
 
-        <FloatingInputs>
-            <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
+            <MaterialZoom hidden={!hasStageOutput} columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
         </FloatingInputs>
+
+        <ItemAddMenu {isLocked} />
     {/if}
 </div>
 
@@ -201,7 +203,8 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-        /* overflow: hidden; */
+        position: relative;
+        overflow: hidden;
     }
 
     .parent {

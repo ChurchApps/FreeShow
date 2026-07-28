@@ -9,7 +9,7 @@ import { ShowObj } from "../../classes/Show"
 import { markItemsAsPlayed } from "../../converters/project"
 import { sendMain } from "../../IPC/main"
 import { cameraManager } from "../../media/cameraManager"
-import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo } from "../../show/slides"
+import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo, VIRTUAL_BREAK_CHAR } from "../../show/slides"
 import {
     $,
     actions,
@@ -38,6 +38,7 @@ import {
     drawer,
     drawerTabsData,
     editingProjectTemplate,
+    editMode,
     effects,
     effectsLibrary,
     eventEdit,
@@ -45,9 +46,11 @@ import {
     focusMode,
     forceClock,
     guideActive,
+    interactions,
     livePrepare,
     media,
     mediaFolders,
+    mediaOptions,
     openedInteractionId,
     outLocked,
     outputs,
@@ -75,7 +78,6 @@ import {
     styles,
     templateCategories,
     templates,
-    textEditActive,
     themes,
     timers,
     toggleOutputEnabled,
@@ -90,6 +92,7 @@ import { initializeClosing, save } from "../../utils/save"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { getActionTriggerId } from "../actions/actions"
 import { moveStageConnection } from "../actions/apiHelper"
+import { midiInListen } from "../actions/midi"
 import { createScriptureShow, openActiveInRouteBible } from "../drawer/bible/scripture"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
@@ -110,7 +113,6 @@ import { clearSlide } from "../output/clear"
 import { defaultThemes } from "../settings/tabs/defaultThemes"
 import { activeProject } from "./../../stores"
 import type { ContextMenuItem } from "./contextMenus"
-import { midiInListen } from "../actions/midi"
 
 interface ObjData {
     sel: Selected | null
@@ -177,14 +179,14 @@ const clickActions = {
     cut: () => cut(),
     copy: () => copy(),
     text_copy: (obj: ObjData) => {
-        const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
+        const editElem = obj.contextElem?.closest?.(".edit") as HTMLElement | null
         if (!editElem) return
 
         focusAndRestoreSelection(editElem)
         document.execCommand("copy")
     },
     text_cut: (obj: ObjData) => {
-        const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
+        const editElem = obj.contextElem?.closest?.(".edit") as HTMLElement | null
         if (!editElem) return
 
         focusAndRestoreSelection(editElem)
@@ -195,7 +197,7 @@ const clickActions = {
         }
     },
     text_paste: (obj: ObjData) => {
-        const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
+        const editElem = obj.contextElem?.closest?.(".edit") as HTMLElement | null
         if (!editElem) return
 
         navigator.clipboard
@@ -210,6 +212,17 @@ const clickActions = {
                 }
             })
             .catch(() => {})
+    },
+    insert_virtual_break: (obj: ObjData) => {
+        const editElem = obj.contextElem?.closest?.(".edit") as HTMLElement | null
+        if (!editElem) return
+
+        focusAndRestoreSelection(editElem)
+        document.execCommand("insertText", false, VIRTUAL_BREAK_CHAR)
+        if (editElem instanceof HTMLTextAreaElement) {
+            editElem.dispatchEvent(new Event("input", { bubbles: true }))
+            editElem.dispatchEvent(new Event("change", { bubbles: true }))
+        }
     },
     paste: (obj: ObjData) => paste(null, {}, obj.contextElem),
     // view
@@ -246,6 +259,9 @@ const clickActions = {
     sort_shows: (obj: ObjData) => sort(obj, "shows"),
     sort_projects: (obj: ObjData) => sort(obj, "projects"),
     sort_media: (obj: ObjData) => sort(obj, "media"),
+    media_view: (obj: ObjData) => {
+        mediaOptions.update((a) => ({ ...a, view: obj.menu.id as any }))
+    },
     remove: (obj: ObjData) => {
         if (obj.sel && deleteAction(obj.sel)) return
 
@@ -359,6 +375,20 @@ const clickActions = {
 
         if (obj.contextElem?.classList.value.includes("#event")) {
             duplicate({ id: "event", data: { id: obj.contextElem.id } })
+            return
+        }
+
+        if (obj.contextElem?.classList.value.includes("#interaction_input")) {
+            const index = parseInt(obj.contextElem.id.slice(1))
+            const interactionId = get(openedInteractionId)
+            if (!interactionId) return
+
+            interactions.update((a) => {
+                if (!a[interactionId]) return a
+                const input = clone(a[interactionId].inputs[index])
+                a[interactionId].inputs.splice(index + 1, 0, { ...input, question: input.question + " 2" })
+                return a
+            })
             return
         }
 
@@ -1154,6 +1184,7 @@ const clickActions = {
             const slide = obj.sel.data[0]
             if (!slide) return
             activeEdit.set({ slide: slide.index, items: [], showId: slide.showId || get(activeShow)?.id })
+            editMode.set("default")
             activePage.set("edit")
             setTimeout(() => selected.set({ id: null, data: [] }))
         } else if (obj.sel.id === "media") {
@@ -1427,7 +1458,7 @@ const clickActions = {
         if (!obj.sel || !obj.menu.id) return
 
         const type: null | "image" | "overlays" | "music" | "microphone" | "action" = obj.menu.type || (obj.menu.icon as any) || null
-        const slide: number = obj.sel.data[0].index
+        const slide: number = obj.sel.data[0]?.index
         const indexes: number[] = obj.sel.data.map(({ index }) => index)
         let newData: any = null
 
@@ -1737,7 +1768,7 @@ const clickActions = {
 
     selectAll: (obj: ObjData) => selectAll(obj.sel),
     text_select_all: (obj: ObjData) => {
-        const editElem = obj.contextElem?.closest(".edit") as HTMLElement | null
+        const editElem = obj.contextElem?.closest?.(".edit") as HTMLElement | null
         if (!editElem) return
 
         editElem.focus()
@@ -1857,24 +1888,31 @@ const clickActions = {
 
                 const slideItems: Item[] = _show().slides([slideRef.id]).get("items")[0]
 
-                // check lines array & text array first, then text value
-                let firstTextItemIndex = slideItems.findIndex((a) => getItemText(a).length && ((a.lines?.length || 0) > 1 || (a.lines?.[0]?.text?.length || 0) > 1))
-                if (firstTextItemIndex < 0) firstTextItemIndex = slideItems.findIndex((a) => getItemText(a).length > 18)
-                if (firstTextItemIndex < 0) return
+                // find all text item indexes on this slide
+                const textItemIndexes: number[] = []
+                slideItems.forEach((a, i) => {
+                    const isText = getItemText(a).length && ((a.lines?.length || 0) > 1 || (a.lines?.[0]?.text?.length || 0) > 1)
+                    const isFallbackText = getItemText(a).length > 18
+                    if (isText || isFallbackText) {
+                        textItemIndexes.push(i)
+                    }
+                })
 
-                splitItemInTwo(slideRef, firstTextItemIndex)
+                if (!textItemIndexes.length) return
+
+                splitItemInTwo(slideRef, textItemIndexes)
             })
         } else if (!obj.sel?.id) {
             // textbox
             const editSlideIndex: number = get(activeEdit).slide ?? -1
             if (editSlideIndex < 0) return
 
-            const textItemIndex: number = get(activeEdit).items[0] ?? -1
-            if (textItemIndex < 0) return
+            const textItemIndexes: number[] = get(activeEdit).items || []
+            if (!textItemIndexes.length) return
 
             const slideRef = getLayoutRef()[editSlideIndex]
             if (!slideRef) return
-            splitItemInTwo(slideRef, textItemIndex)
+            splitItemInTwo(slideRef, textItemIndexes)
         }
     },
     merge: (obj: ObjData) => {
@@ -2110,7 +2148,7 @@ export async function removeSlide(initialData: any[], type: "delete" | "remove" 
         if (!ref[index]) return
 
         if (type === "remove") {
-            if (ref[index].type === "child" && parents.find((a) => a.id === ref[index].parent?.id)) return
+            if (ref[index].type === "child" && parents.find((a) => a.index === ref[index].parent?.index)) return
 
             index = ref[index].parent?.layoutIndex ?? index
             parents.push({ index: ref[index].index, id: ref[index].id })
@@ -2146,6 +2184,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
         currentItems.forEach((item) => {
             item.lines?.forEach((line, j: number) => {
                 line.text?.forEach((text, k: number) => {
+                    if (typeof text !== "object" || text === null) return
                     if (item.lines?.[j]?.text?.[k]) item.lines[j].text[k].value = formatting[id](text.value, data)
                 })
             })
@@ -2165,7 +2204,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
     }
 
     const ref = getLayoutRef()
-    if (get(textEditActive)) {
+    if (get(editMode) === "text") {
         // select all slides
         slideIds = _show()
             .slides()
@@ -2191,6 +2230,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
         slideItems.forEach((item) => {
             item.lines?.forEach((line, j: number) => {
                 line.text?.forEach((text, k: number) => {
+                    if (typeof text !== "object" || text === null) return
                     if (item.lines?.[j]?.text?.[k]) item.lines[j].text[k].value = formatting[id](text.value, data)
                 })
             })

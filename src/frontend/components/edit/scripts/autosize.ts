@@ -108,7 +108,12 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
             const htmlTextElem = textElem as HTMLElement
             if (!styles[i]) styles[i] = htmlTextElem.getAttribute("style") || ""
             const autosizeRatio = Number(htmlTextElem.dataset.autosizeRatio || "") || 1
-            htmlTextElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${currentFontSize * autosizeRatio}px !important;`)
+            if (styles[i].includes("var(--base-font-size)")) {
+                const newStyle = styles[i].replace(/--base-font-size:\s*[^;]+;?/gi, `--base-font-size: ${currentFontSize * autosizeRatio}px;`)
+                htmlTextElem.setAttribute("style", newStyle + ";overflow:visible;")
+            } else {
+                htmlTextElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${currentFontSize * autosizeRatio}px !important;`)
+            }
             i++
         }
     }

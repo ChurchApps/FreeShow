@@ -529,116 +529,136 @@ export function removeItemValues(items: Item[]) {
 
 // split in half
 // WIP similar to Editbox.svelte
-export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { start?: number; end?: number }[] = [], cutIndex = -1) {
-    let lines: Line[] = clone(_show().slides([slideRef.id]).items([itemIndex]).get("lines")[0]?.[0] || [])
-    lines = lines.filter((a) => a.text?.[0]?.value?.length)
-
-    // if only one line (like scriptures, split by text)
-    if (cutIndex === -1 && lines.length === 1 && lines[0]?.text?.length > 1) {
-        const newLines: Line[] = []
-        let centerTextIndex = Math.ceil(lines[0]?.text?.length / 2)
-        if (lines[0]?.text?.[centerTextIndex - 1]?.customType) centerTextIndex++
-        newLines.push({ ...lines[0], text: lines[0]?.text.slice(0, centerTextIndex) || [] })
-        if (centerTextIndex < lines[0]?.text?.length) newLines.push({ ...lines[0], text: lines[0].text.slice(centerTextIndex) })
-        lines = newLines
-    }
-
-    // split text content directly in half
-    if (cutIndex === -1 && lines.length === 1 && lines[0]?.text?.[0]?.value?.length) {
-        // verse number style
-        const custom = lines[0].text[0].customType ? lines[0].text.shift() : null
-
-        const text = getItemText({ lines } as Item)
-        const [firstHalf, secondHalf] = splitTextContentInHalf(text)
-        const newLines: Line[] = []
-        // try getting second text first (if customType is first)
-        const styling = lines[0].text[1] || lines[0].text[0]
-        newLines.push({ ...lines[0], text: [...(custom ? [custom] : []), { ...styling, value: firstHalf }] })
-        newLines.push({ ...lines[0], text: [{ ...styling, value: secondHalf }] })
-
-        lines = newLines
-    }
-
-    if (lines.length <= 1) return
-
-    if (cutIndex > -1) {
-        sel = []
-        sel[cutIndex] = { start: 0 }
-    } else if (!sel.length) {
-        // auto find center line
-        // round up to 5 = 3+2
-        const centerLineIndex = Math.ceil(lines.length / 2)
-        sel[centerLineIndex] = { start: 0 }
-    }
-
-    let firstLines: Line[] = []
-    let secondLines: Line[] = []
-
-    let currentIndex = 0
-    let textPos = 0
-    let start = -1
-
-    // split lines in two
-    lines.forEach((line, i) => {
-        if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
-        else firstLines.push({ align: line.align, text: [] })
-
-        textPos = 0
-        line.text?.forEach(splitLines)
-
-        if (!firstLines.at(-1)?.text.length) firstLines.pop()
-
-        function splitLines(text) {
-            const value = text.value || ""
-
-            currentIndex += value.length
-            if (sel[i]?.start !== undefined) start = sel[i].start!
-
-            if (start < 0 || currentIndex < start) {
-                if (!firstLines.length) firstLines.push({ align: line.align, text: [] })
-                firstLines[firstLines.length - 1].text.push(text)
-                textPos += value.length
-                return
-            }
-
-            if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
-            const pos = (sel[i]?.start || 0) - textPos
-
-            if (pos > 0) {
-                if (!firstLines.length) firstLines.push({ align: line.align, text: [] })
-                firstLines[firstLines.length - 1].text.push({
-                    style: text.style,
-                    value: value.slice(0, pos)
-                })
-            }
-            secondLines[secondLines.length - 1].text.push({
-                style: text.style,
-                value: value.slice(0, value.length)
-            })
-
-            textPos += value.length
-        }
-    })
-
-    const defaultLine = [
-        {
-            align: lines[0]?.align || "",
-            text: [{ style: (lines[0].text[1] || lines[0].text[0])?.style || "", value: "" }]
-        }
-    ]
-    if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
-    if (!secondLines.length) secondLines = defaultLine
-
-    // add chords
-    const chordLines = clone(lines.map((a) => a.chords || []))
-    ;[...firstLines, ...secondLines].forEach((line) => {
-        const oldLineChords = chordLines.shift()
-        if (oldLineChords?.length) line.chords = oldLineChords
-    })
+export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number | number[], sel: { start?: number; end?: number }[] = [], cutIndex = -1) {
+    const itemIndexes = Array.isArray(itemIndex) ? itemIndex : [itemIndex]
+    if (!itemIndexes.length) return
 
     // create new slide
     const newSlide = clone(_show().slides([slideRef.id]).get()[0])
-    newSlide.items[itemIndex].lines = secondLines
+    const slides = clone(_show().get("slides"))
+
+    let scriptureFirstLines: Line[] | null = null
+    let scriptureSecondLines: Line[] | null = null
+
+    for (const idx of itemIndexes) {
+        if (!newSlide.items?.[idx]) continue
+        let lines: Line[] = clone(_show().slides([slideRef.id]).items([idx]).get("lines")[0]?.[0] || [])
+        lines = lines.filter((a) => a.text?.[0]?.value?.length)
+
+        // if only one line (like scriptures, split by text)
+        if (cutIndex === -1 && lines.length === 1 && lines[0]?.text?.length > 1) {
+            const newLines: Line[] = []
+            let centerTextIndex = Math.ceil(lines[0]?.text?.length / 2)
+            if (lines[0]?.text?.[centerTextIndex - 1]?.customType) centerTextIndex++
+            newLines.push({ ...lines[0], text: lines[0]?.text.slice(0, centerTextIndex) || [] })
+            if (centerTextIndex < lines[0]?.text?.length) newLines.push({ ...lines[0], text: lines[0].text.slice(centerTextIndex) })
+            lines = newLines
+        }
+
+        // split text content directly in half
+        if (cutIndex === -1 && lines.length === 1 && lines[0]?.text?.[0]?.value?.length) {
+            // verse number style
+            const custom = lines[0].text[0].customType ? lines[0].text.shift() : null
+
+            const text = getItemText({ lines } as Item)
+            const [firstHalf, secondHalf] = splitTextContentInHalf(text)
+            const newLines: Line[] = []
+            // try getting second text first (if customType is first)
+            const styling = lines[0].text[1] || lines[0].text[0]
+            newLines.push({ ...lines[0], text: [...(custom ? [custom] : []), { ...styling, value: firstHalf }] })
+            newLines.push({ ...lines[0], text: [{ ...styling, value: secondHalf }] })
+
+            lines = newLines
+        }
+
+        if (lines.length <= 1) continue
+
+        let itemSel = sel
+        if (cutIndex > -1) {
+            itemSel = []
+            itemSel[cutIndex] = { start: 0 }
+        } else if (!itemSel.length) {
+            // auto find center line
+            // round up to 5 = 3+2
+            const centerLineIndex = Math.ceil(lines.length / 2)
+            itemSel = []
+            itemSel[centerLineIndex] = { start: 0 }
+        }
+
+        let firstLines: Line[] = []
+        let secondLines: Line[] = []
+
+        let currentIndex = 0
+        let textPos = 0
+        let start = -1
+
+        // split lines in two
+        lines.forEach((line, i) => {
+            if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
+            else firstLines.push({ align: line.align, text: [] })
+
+            textPos = 0
+            line.text?.forEach(splitLines)
+
+            if (!firstLines.at(-1)?.text.length) firstLines.pop()
+
+            function splitLines(text) {
+                const value = text.value || ""
+
+                currentIndex += value.length
+                if (itemSel[i]?.start !== undefined) start = itemSel[i].start!
+
+                if (start < 0 || currentIndex < start) {
+                    if (!firstLines.length) firstLines.push({ align: line.align, text: [] })
+                    firstLines[firstLines.length - 1].text.push(text)
+                    textPos += value.length
+                    return
+                }
+
+                if (!secondLines.length) secondLines.push({ align: line.align, text: [] })
+                const pos = (itemSel[i]?.start || 0) - textPos
+
+                if (pos > 0) {
+                    if (!firstLines.length) firstLines.push({ align: line.align, text: [] })
+                    firstLines[firstLines.length - 1].text.push({
+                        style: text.style,
+                        value: value.slice(0, pos)
+                    })
+                }
+                secondLines[secondLines.length - 1].text.push({
+                    style: text.style,
+                    value: value.slice(0, value.length)
+                })
+
+                textPos += value.length
+            }
+        })
+
+        const defaultLine = [
+            {
+                align: lines[0]?.align || "",
+                text: [{ style: (lines[0].text[1] || lines[0].text[0])?.style || "", value: "" }]
+            }
+        ]
+        if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
+        if (!secondLines.length) secondLines = defaultLine
+
+        // add chords
+        const chordLines = clone(lines.map((a) => a.chords || []))
+        ;[...firstLines, ...secondLines].forEach((line) => {
+            const oldLineChords = chordLines.shift()
+            if (oldLineChords?.length) line.chords = oldLineChords
+        })
+
+        newSlide.items[idx].lines = secondLines
+        slides[slideRef.id].items[idx].lines = firstLines
+
+        if (!scriptureFirstLines) {
+            scriptureFirstLines = firstLines
+            scriptureSecondLines = secondLines
+        }
+    }
+
     delete newSlide.id
     delete newSlide.globalGroup
     newSlide.group = null
@@ -646,43 +666,13 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
 
     // add new slide
     const slideId = uid()
-    const slides = clone(_show().get("slides"))
-
     slides[slideId] = newSlide
-    slides[slideRef.id].items[itemIndex].lines = firstLines
 
     // update scripture dynamic values
-    let numbersAdded: string[] = []
-    if (slides[slideRef.id].customDynamicValues?.scripture_text) {
-        const texts = firstLines
-            .flat()[0]
-            ?.text.filter((a) => !a.customType)
-            .map((a) => a.value)
-        texts.forEach((t, i) => {
-            if (!slides[slideRef.id].customDynamicValues.scripture_text[i]) return
-
-            numbersAdded.push(slides[slideRef.id].customDynamicValues.scripture_text[i][0])
-            slides[slideRef.id].customDynamicValues.scripture_text[i][1] = t
-            slides[slideRef.id].customDynamicValues.scripture1_text[i][1] = t
-        })
-    }
-    if (slides[slideId].customDynamicValues?.scripture_text) {
-        const texts = secondLines
-            .flat()[0]
-            ?.text.filter((a) => !a.customType)
-            .map((a) => a.value)
-        texts.forEach((t, i) => {
-            if (!slides[slideId].customDynamicValues.scripture_text[i]) return
-
-            slides[slideId].customDynamicValues.scripture_text[i][1] = t
-            slides[slideId].customDynamicValues.scripture1_text[i][1] = t
-
-            let removeNumber = numbersAdded.find((a) => a === slides[slideId].customDynamicValues.scripture_text[i][0])
-            if (removeNumber) {
-                slides[slideId].customDynamicValues.scripture_text[i][0] = "0"
-                slides[slideId].customDynamicValues.scripture1_text[i][0] = "0"
-            }
-        })
+    const split = splitCustomDynamicValues(slides[slideRef.id].customDynamicValues)
+    if (split) {
+        slides[slideRef.id].customDynamicValues = split.firstDV
+        slides[slideId].customDynamicValues = split.secondDV
     }
 
     // set child
@@ -696,6 +686,24 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number, sel: { st
     history({ id: "UPDATE", newData: { key: "slides", data: clone(slides) }, oldData: { id: showId }, location: { page: "show", id: "show_key", override: "show_slides_" + showId } })
 
     refreshEditSlide.set(true)
+}
+
+export function splitCustomDynamicValues(originalDV: any): { firstDV: any; secondDV: any } | null {
+    if (!originalDV) return null
+    const firstDV: any = {}
+    const secondDV: any = {}
+    Object.keys(originalDV).forEach((key) => {
+        const val = originalDV[key]
+        if (Array.isArray(val)) {
+            const center = Math.ceil(val.length / 2)
+            firstDV[key] = val.slice(0, center)
+            secondDV[key] = val.slice(center)
+        } else {
+            firstDV[key] = val
+            secondDV[key] = val
+        }
+    })
+    return { firstDV, secondDV }
 }
 
 export function splitTextContentInHalf(text: string) {
@@ -745,11 +753,14 @@ export function splitTextContentInHalf(text: string) {
 export function mergeSlides(indexes: { index: number }[]) {
     const layoutRef = getLayoutRef()
 
+    // merge in slide order, instead of selection order
+    indexes.sort((a, b) => a.index - b.index)
+
     const allMergedSlideIds: string[] = []
     const firstSlideIndex = indexes[0].index
     const firstSlideId: string = layoutRef[firstSlideIndex]?.id
     const newSlide: Slide = clone(_show().slides([firstSlideId]).get()[0])
-    const previousTextboxStyles = newSlide.items.filter((a) => (a.type || "text") === "text").map((a) => a.style || "")
+    const previousTextboxes = newSlide.items.filter((a) => (a.type || "text") === "text").map((a) => clone(a))
 
     if (newSlide.group === null) {
         newSlide.group = ""
@@ -792,7 +803,11 @@ export function mergeSlides(indexes: { index: number }[]) {
     // add textbox
     newSlide.items = [...getTextItems(), ...newSlide.items]
     function getTextItems() {
-        return newLines.map((lines, i) => ({ type: "text", lines, style: previousTextboxStyles[i] }) as Item)
+        return newLines.map((lines, i) => {
+            const item: Item = previousTextboxes[i] || { type: "text", style: "" }
+            item.lines = lines
+            return item
+        })
     }
 
     const newShow: Show = clone(_show().get())
@@ -917,7 +932,7 @@ export function breakLongLines(showId: string, breakPoint: number) {
                 item.lines?.forEach((line) => {
                     // merge all text styles into one, if multiple!
                     const lineText = line.text[0]
-                    if (!lineText) return
+                    if (typeof lineText !== "object" || lineText === null) return
 
                     lineText.value = getLineText(line)
 
@@ -954,6 +969,7 @@ export function createVirtualBreaks(lines: Line[], skip = false) {
         if (!Array.isArray(line?.text)) return
 
         line.text.forEach((text) => {
+            if (typeof text !== "object" || text === null) return
             if (!text.value) text.value = ""
             text.value = replaceVirtualBreaks(text.value, replaceWith)
         })

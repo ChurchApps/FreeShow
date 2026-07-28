@@ -150,7 +150,10 @@ export class SyncLedger {
     // Item present only locally (not in the cloud snapshot).
     // Single source of truth for the ledger decision: syncManager.checkLocalEntry delegates here.
     resolveLocalEntry(storeId: string, key: string): { action: EntryAction } {
-        if (this.isNewDevice) return { action: "upload" }
+        if (this.isNewDevice) {
+            this.markAsCreated(storeId, key)
+            return { action: "upload" }
+        }
 
         if (this.isDeleted(storeId, key)) {
             // this device had deleted it then restored it → revive

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { activeEdit, activePopup, groups, showsCache, slideNotesActive, special, templates } from "../../stores"
+    import { activeEdit, activePopup, editMode, groups, showsCache, slideNotesActive, special, templates } from "../../stores"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -40,48 +40,49 @@
         {/if}
     </div>
 
-    <div class="right">
-        {#if templateId}
-            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="formats.template: <b>{$templates[templateId]?.name || 'info.template'}</b>" on:click={() => activePopup.set("template_info")}>
-                <Icon size={0.8} id="templates" white />
-            </MaterialButton>
-        {/if}
-
-        {#if !hideOptions}
-            <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showDropdown = !showDropdown)} white={!showDropdown}>
-                <!-- prevent force "white" -->
-                <span style="display: none;"></span>
-            </MaterialButton>
-        {/if}
-
-        {#if showDropdown && currentShow}
-            <div class="showDropdown" transition:fade={{ duration: 100 }} role="none" on:click={() => (showDropdown = false)}>
-                <MaterialButton title="tooltip.notes" on:click={() => slideNotesActive.set(!$slideNotesActive)}>
-                    <Icon id="notes" white={!$slideNotesActive} />
-
-                    {#if $slideNotesActive}
-                        <Icon id="check" size={0.7} white />
-                    {/if}
-
-                    <p><T id="items.slide_notes" /></p>
+    {#if $editMode === "default"}
+        <div class="right">
+            {#if templateId}
+                <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;" title="formats.template: <b>{$templates[templateId]?.name || 'info.template'}</b>" on:click={() => activePopup.set("template_info")}>
+                    <Icon size={0.8} id="templates" white />
                 </MaterialButton>
+            {/if}
 
-                <div class="DIVIDER"></div>
-
-                <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, slideTimelineActive: !a.slideTimelineActive }))}>
-                    <Icon id="timeline" white={!$special.slideTimelineActive} />
-
-                    {#if $special.slideTimelineActive}
-                        <Icon id="check" size={0.7} white />
-                    {/if}
-
-                    <p><T id="timeline.toggle_timeline" /></p>
+            {#if !hideOptions}
+                <MaterialButton style="width: 32px;height: 100%;padding: 0.3em 0.5em;border-bottom-right-radius: 10px;{showDropdown ? '' : 'opacity: 0.8;'}" title="create_show.more_options" icon="more" on:click={() => (showDropdown = !showDropdown)} white={!showDropdown}>
+                    <!-- prevent force "white" -->
+                    <span style="display: none;"></span>
                 </MaterialButton>
+            {/if}
 
-                <!-- <div class="DIVIDER"></div> -->
+            {#if showDropdown && currentShow}
+                <div class="showDropdown" transition:fade={{ duration: 100 }} role="none" on:click={() => (showDropdown = false)}>
+                    <MaterialButton title="tooltip.notes" on:click={() => slideNotesActive.set(!$slideNotesActive)}>
+                        <Icon id="notes" white={!$slideNotesActive} />
 
-                <!-- lock slide group from here? -->
-                <!-- <MaterialButton title="context.lockForChanges" on:click={toggleSlideGroupLock}>
+                        {#if $slideNotesActive}
+                            <Icon id="check" size={0.7} white />
+                        {/if}
+
+                        <p><T id="items.slide_notes" /></p>
+                    </MaterialButton>
+
+                    <div class="DIVIDER"></div>
+
+                    <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, slideTimelineActive: !a.slideTimelineActive }))}>
+                        <Icon id="timeline" white={!$special.slideTimelineActive} />
+
+                        {#if $special.slideTimelineActive}
+                            <Icon id="check" size={0.7} white />
+                        {/if}
+
+                        <p><T id="timeline.toggle_timeline" /></p>
+                    </MaterialButton>
+
+                    <!-- <div class="DIVIDER"></div> -->
+
+                    <!-- lock slide group from here? -->
+                    <!-- <MaterialButton title="context.lockForChanges" on:click={toggleSlideGroupLock}>
                     <Icon id="lock" white={!slide.locked} />
 
                     {#if slide.locked}
@@ -90,9 +91,10 @@
 
                     <p><T id="context.lockForChanges" /></p>
                 </MaterialButton> -->
-            </div>
-        {/if}
-    </div>
+                </div>
+            {/if}
+        </div>
+    {/if}
 </div>
 
 <style>

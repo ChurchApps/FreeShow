@@ -74,9 +74,12 @@ export const receiver = {
         if (data.timeFormat) timeFormat.set(data.timeFormat)
     },
 
-    REQUEST_STREAM: (data: any) => {
+
+    // push-driven frames from the app - keyed per output id so multiple mirrored outputs don't clobber each other
+    STREAM_FRAME: (data: any) => {
+        if (!data?.id || !data.jpeg) return
         stream.update((a) => {
-            a[data.alpha ? "alpha" : "default"] = data.stream
+            a[data.id] = { jpeg: data.jpeg, size: data.size }
             return a
         })
     },

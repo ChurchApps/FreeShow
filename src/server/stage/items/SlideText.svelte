@@ -13,10 +13,6 @@
     export let slideOffset: number = 0
     export let stageItem: any
 
-    // current slide zooming
-    export let show: any = {}
-    export let resolution: any = {}
-
     // export let parent: any
     export let chords: boolean = false
     export let autoSize: boolean = false
@@ -91,22 +87,25 @@
 
     $: clickRevealed = slideOffset === 0 && !!currentSlide?.itemClickReveal
     $: revealed = slideOffset === 0 ? (currentSlide?.revealCount || 0) - 1 : -1
+
+    // "Keep Style" renders items at their original position/size inside a slide-resolution canvas (matching the app)
+    $: slideResolution = (slide as any)?.settings?.resolution || { width: 1920, height: 1080 }
 </script>
 
 {#if slide}
     {#if style}
         <Main let:width let:height>
-            <Zoomed {show} style={getStyleResolution(resolution, width, height, "fit")} center>
+            <Zoomed show={{ settings: { resolution: slideResolution } }} dynamicResolution={false} style={getStyleResolution(slideResolution, width, height, "fit")} center>
                 {#each items as item, i}
                     {#if !itemNumber || itemNumber - 1 === i}
-                        <Textbox showId={currentSlide.id} {item} customStyle={textStyle} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} autoSize={item.auto && autoSize} {fontSize} {autoStage} {clickRevealed} {revealed} />
+                        <Textbox showId={currentSlide.id} {item} originalStyle customStyle={textStyle} {chords} {stageItem} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} autoSize={(item.textFit !== "none" || item.auto) && autoSize} fontSize={0} {autoStage} {clickRevealed} {revealed} />
                     {/if}
                 {/each}
             </Zoomed>
         </Main>
     {:else}
         {#each items as item}
-            <Textbox showId={currentSlide.id} {item} style={false} customStyle={textStyle} {chords} {stageItem} maxLines={Number(stageItem.lineCount)} {autoSize} {fontSize} {autoStage} {clickRevealed} {revealed} />
+            <Textbox showId={currentSlide.id} {item} style={false} customStyle={textStyle} {chords} {stageItem} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} {autoSize} {fontSize} {autoStage} {clickRevealed} {revealed} />
         {/each}
     {/if}
 {/if}

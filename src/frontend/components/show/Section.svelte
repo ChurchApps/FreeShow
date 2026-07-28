@@ -11,6 +11,7 @@
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
     import MaterialTimePicker from "../inputs/MaterialTimePicker.svelte"
     import TextInput from "../inputs/TextInput.svelte"
+    import Tip from "../main/Tip.svelte"
     import Notes from "./tools/Notes.svelte"
 
     export let section: any
@@ -83,7 +84,7 @@
 
     let settingsOpened = false
 
-    $: sectionUpdated = currentProject?.shows?.[section.index] || {}
+    $: sectionUpdated = currentProject?.shows?.[section.index] || section || {}
     $: localAction = currentProject?.shows?.[section.index]?.data?.settings?.triggerAction || ""
 
     $: currentActionId = localAction || $special.sectionTriggerAction
@@ -95,7 +96,7 @@
 {#if settingsOpened}
     <div class="settings">
         <Title label="popup.action" icon="actions" />
-        <div class="info">{translateText("settings.section_trigger_action")}</div>
+        <Tip type="info" value="settings.section_trigger_action" style="justify-content: left;" bottom={10} />
 
         <InputRow>
             <MaterialDropdown label="groups.global" disabled={localAction && $actions[localAction]} options={actionOptions} value={$special.sectionTriggerAction} on:change={updateTrigger} allowEmpty />
@@ -105,12 +106,12 @@
 {:else}
     {#key section}
         <InputRow>
-            <h4 id="sectionTitle" class:empty={!sectionUpdated?.name} style="flex: 6;border-bottom: 2px solid {sectionUpdated.color || 'var(--primary-darker);'}">
+            <h4 id="sectionTitle" class:empty={!sectionUpdated?.name} style="flex: 6;border-bottom: 1.2px solid {sectionUpdated.color || 'var(--primary-lighter)'};">
                 <TextInput value={section?.name || ""} placeholder={translateText("main.unnamed")} disabled={isLocked} on:input={updateName} on:keydown={keydown} />
             </h4>
             <!-- WIP suggest titles based on previous titles? (maybe not needed as we have project templates) -->
 
-            <MaterialTimePicker label="calendar.time" value={section?.data?.time} disabled={isLocked} style="flex: 1;" on:change={(e) => updateSectionData("time", e.detail)} />
+            <MaterialTimePicker label="calendar.time" value={section?.data?.time} disabled={isLocked} style="flex: 1;height: 100%;" on:change={(e) => updateSectionData("time", e.detail)} />
         </InputRow>
 
         <Notes value={note} disabled={isLocked} on:edit={edit} />
@@ -153,11 +154,5 @@
         margin-block-end: auto;
         border: 1px solid var(--primary-lighter);
         border-radius: 8px;
-    }
-
-    .settings .info {
-        opacity: 0.8;
-        font-size: 0.9em;
-        margin-bottom: 10px;
     }
 </style>

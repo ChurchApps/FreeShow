@@ -123,7 +123,7 @@
     onMount(() => (mounted = true))
     $: if (id && !fadingOut && mounted) startReceiver()
     function startReceiver() {
-        const isStage = !!Object.values($outputs)[0]?.stageOutput
+        const isStage = $currentWindow === "output" && !!Object.values($outputs)[0]?.stageOutput
         if ((mirror && !isStage) || receiving) return
         receiving = true
 
@@ -136,7 +136,7 @@
     onDestroy(removeReceiver)
     $: if (fadingOut || id) removeReceiver()
     function removeReceiver() {
-        if (mirror || !receiving || !mounted) return
+        if (!receiving || !mounted) return
         receiving = false
 
         destroy(OUTPUT, listenerId)
@@ -214,7 +214,7 @@
     // AUDIO
 
     $: videoExists = !!video
-    $: if ($currentWindow === "output" && videoExists) analyseVideo()
+    $: if ($currentWindow === "output" && !mirror && videoExists) analyseVideo()
 
     onDestroy(() => {
         if ($currentWindow !== "output" || !previousPath) return

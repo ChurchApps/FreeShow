@@ -187,6 +187,9 @@
                 if ($spellcheck?.suggestions) hide = true
             }, 20)
         },
+        insert_virtual_break: () => {
+            if (window.getSelection()?.toString()) hide = true
+        },
         createSlideshow: () => {
             hide = $selected.id !== "media" || $selected.data.length < 2
         },

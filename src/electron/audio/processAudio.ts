@@ -2,7 +2,8 @@ import type { OpusEncoder as TOpusEncoder } from "@discordjs/opus"
 import { BlackmagicSender } from "../blackmagic/BlackmagicSender"
 import { NdiSender } from "../ndi/NdiSender"
 import { getServerData, toServer } from "../servers"
-import { WebRtcHost } from "../webrtc/WebRtcHost"
+import { RtmpStreamer } from "../streaming/RtmpStreamer"
+import { WebRtcHost } from "../streaming/WebRtcHost"
 import { IcecastSender } from "./IcecastSender"
 
 // const isStopping = false
@@ -15,6 +16,10 @@ try {
     opusEncoder = new OpusEncoder(sampleRate2, channelCount2)
 } catch (err) {
     console.error("OPUS not found!")
+}
+
+export function isAudioEnabled(): boolean {
+    return opusEncoder !== null
 }
 
 // , { audioDelay }
@@ -43,6 +48,11 @@ export async function processAudio(buffer: Buffer, icecast?: any) {
     // Stream system audio through WebRTC/WHIP
     if (WebRtcHost.isRunning()) {
         WebRtcHost.sendAudio(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
+    }
+
+    // Stream system audio to RTMP Streamer
+    if (RtmpStreamer.anyRunning()) {
+        RtmpStreamer.updateAudio(buffer)
     }
 }
 

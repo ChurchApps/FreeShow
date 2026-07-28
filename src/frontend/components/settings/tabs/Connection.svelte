@@ -78,8 +78,12 @@
     }
 
     // restart servers on toggle on/off
-    let initialServerState = JSON.stringify($disabledServers)
-    $: if (JSON.stringify($disabledServers) !== initialServerState) restart()
+    let initial = true
+    $: {
+        $disabledServers
+        if (initial) initial = false
+        else restart()
+    }
 
     $: if ($activeTriggerFunction.includes("open_connection_") && ip !== "localhost") openConnection()
     function openConnection() {
@@ -281,12 +285,16 @@
         </MaterialButton>
     </InputRow>
 
-    <InputRow>
-        <!-- <MaterialPopupButton label="popup.sync_folders" value="" name="" icon="folder" popupId="sync_folders" on:click={() => activePopup.set("sync_folders")} style="flex: 1;" /> -->
-        <MaterialButton icon="folder" on:click={() => activePopup.set("sync_folders")} style="flex: 1;">
-            <T id="popup.sync_folders" />
-        </MaterialButton>
-    </InputRow>
+    <MaterialToggleSwitch label="settings.auto_sync_startup" checked={$contentProviderData.planningcenter?.autoSync !== false} on:change={(e) => updateProvider("planningcenter", "autoSync", e.detail)} />
+
+    {#if $contentProviderData.planningcenter?.autoSync !== false}
+        <InputRow>
+            <!-- <MaterialPopupButton label="popup.sync_folders" value="" name="" icon="folder" popupId="sync_folders" on:click={() => activePopup.set("sync_folders")} style="flex: 1;" /> -->
+            <MaterialButton icon="folder" on:click={() => activePopup.set("sync_folders")} style="flex: 1;">
+                <T id="popup.sync_folders" />
+            </MaterialButton>
+        </InputRow>
+    {/if}
 
     <MaterialDropdown label="Song origin" options={providerOriginOptions} value={$contentProviderData.planningcenter?.songOrigin || ""} on:change={(e) => updateProvider("planningcenter", "songOrigin", e.detail)} />
     {#if Object.keys($projectTemplates).length}

@@ -26,6 +26,15 @@
     // WIP image is flashing a bit in scripture transition none
 
     function startTransition() {
+        // prevent stacking of the same item on update
+        const lastStateId = Object.keys(currentlyTransitioning).pop()
+        if (lastStateId) {
+            const lastState = currentlyTransitioning[lastStateId]
+            if (JSON.stringify(lastState.item) === JSON.stringify(item) && JSON.stringify(lastState.lines) === JSON.stringify(lines) && JSON.stringify(lastState.outSlide) === JSON.stringify(outSlide) && JSON.stringify(lastState.currentSlide) === JSON.stringify(currentSlide)) {
+                return
+            }
+        }
+
         let itemTransition = item.actions?.transition ? clone(item.actions.transition) : null
         if (itemTransition?.type === "none") itemTransition.duration = 0
 
@@ -98,28 +107,8 @@
             transitionBetween
         }
 
-        // Identify outgoing states (all currently active states before we add the new one)
-        const outgoingStateIds = Object.keys(currentlyTransitioning)
-
         currentlyTransitioning[stateId] = state
         currentlyTransitioning = currentlyTransitioning
-
-        // Clean up the OUTGOING transition states after their outro transition completes
-        // this fixes duplicated "Scrolling" text when refreshed
-        let outroDuration = transitionEnabled ? (outTransition.duration ?? 300) + (outTransition.delay ?? 0) : 0
-        outgoingStateIds.forEach((oldId) => {
-            setTimeout(() => {
-                removeState(oldId)
-            }, outroDuration + 100)
-        })
-    }
-
-    function removeState(stateId: string) {
-        if (!currentlyTransitioning[stateId]) return
-        delete currentlyTransitioning[stateId]
-        currentlyTransitioning = currentlyTransitioning
-        currentOut = clone(currentlyTransitioning)
-        currentIds = Object.keys(currentlyTransitioning)
     }
 
     // only update if new ID! Previous is removed, but output should not update until a new value is set

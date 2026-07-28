@@ -21,7 +21,7 @@ import { getCurrentTimerValue, getTimeUntilClock, playPauseGlobal } from "../dra
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
-import { activeEdit, activeFocus, activeInteractions, activePage, activeProject, activeShow, allOutputs, audioData, cachedDynamicValues, customMetadata, dictionary, dynamicValueData, focusMode, interactions, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, projects, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, variables, videosData, videosTime } from "./../../stores"
+import { activeEdit, activeFocus, activeInteractions, activePage, activeProject, activeShow, allOutputs, audioData, cachedDynamicValues, customMetadata, dictionary, dynamicValueData, editingProjectTemplate, focusMode, interactions, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, projects, projectTemplates, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, variables, videosData, videosTime } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
@@ -49,7 +49,7 @@ const getProjectIndex = {
 }
 
 export function checkInput(e: any) {
-    if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
+    if (e.target?.closest?.(".edit") || e.ctrlKey || e.metaKey) return
     // TODO: combine with ShowButton.svelte click()
 
     if (!["ArrowDown", "ArrowUp"].includes(e.key)) return
@@ -84,8 +84,12 @@ export function selectProjectShow(select: number | "next" | "previous") {
 }
 
 export function swichProjectItem(pos: number, id: string) {
-    if (!get(showsCache)[id]?.layouts || !get(projects)[get(activeProject)!]?.shows?.[pos] || get(focusMode)) return
-    let projectLayout: string = get(projects)[get(activeProject)!].shows[pos].layout || ""
+    const isTemplate = !!get(editingProjectTemplate)
+    const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
+    const store = isTemplate ? projectTemplates : projects
+
+    if (!get(showsCache)[id]?.layouts || !get(store)[projectId!]?.shows?.[pos] || get(focusMode)) return
+    let projectLayout: string = get(store)[projectId!].shows[pos].layout || ""
 
     // set active layout from project if it exists
     if (projectLayout) {
@@ -99,9 +103,9 @@ export function swichProjectItem(pos: number, id: string) {
 
     // set project layout
     if (Object.keys(get(showsCache)[id].layouts)?.length > 1) {
-        projects.update((a) => {
-            if (Object.keys(get(showsCache)[id].layouts)?.length < 2) delete a[get(activeProject)!].shows[pos].layout
-            else a[get(activeProject)!].shows[pos].layout = get(showsCache)[id].settings?.activeLayout || ""
+        store.update((a) => {
+            if (Object.keys(get(showsCache)[id].layouts)?.length < 2) delete a[projectId!].shows[pos].layout
+            else a[projectId!].shows[pos].layout = get(showsCache)[id].settings?.activeLayout || ""
             return a
         })
     }
@@ -698,8 +702,12 @@ export function getDynamicIds(noVariables = false, mode: null | "scripture" = nu
         .filter((a) => a.name)
         .forEach(({ name }) => {
             timersList.push(`timer_${getVariableNameId(name)}`)
-            if (showAll) timersList.push(`timer_m_${getVariableNameId(name)}`)
-            if (showAll) timersList.push(`timer_s_${getVariableNameId(name)}`)
+            if (showAll) {
+                timersList.push(`timer_m_${getVariableNameId(name)}`)
+                timersList.push(`timer_s_${getVariableNameId(name)}`)
+                timersList.push(`timer_mp_${getVariableNameId(name)}`)
+                timersList.push(`timer_sp_${getVariableNameId(name)}`)
+            }
         })
 
     const rssValues = sortByName(get(special).dynamicRSS || [])
@@ -793,12 +801,12 @@ const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 // \{           -> Opening brace
 // ${id}        -> Your variable
 // (?:#(\d+))?  -> Optional group 1: the number after #
-// (?:\|(.*?))? -> Optional group 2: the fallback after |
+// (?:[|?](.*?))? -> Optional group 2: the fallback after ? (or |)
 // \}           -> Closing brace
 const createRegex = (id: string) => {
     // Escape the ID so the '$' isn't treated as "End of Line"
     const safeId = escapeRegExp(id)
-    return new RegExp(`\\{${safeId}(?:#(\\d+))?(?:\\|([^}]*))?\\}`, "g")
+    return new RegExp(`\\{${safeId}(?:#(\\d+))?(?:[|?]([^}]*))?\\}`, "g")
 }
 
 /** Check if the pattern exists **/
@@ -854,7 +862,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
     return text
 
-    // append {variable|no value} to add fallback
+    // append {variable?no value} to add fallback
     function replaceDynamicValueWithFallback(text: string, dynamicId: string, newValue: string | string[]): string {
         if (!Array.isArray(newValue)) newValue = [newValue]
         return replaceTokens(text, dynamicId, newValue)
@@ -879,11 +887,14 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         }
 
         if (dynamicId.startsWith("timer_")) {
-            let min = dynamicId.startsWith("timer_m_")
-            let sec = dynamicId.startsWith("timer_s_")
-            const nameId = dynamicId.slice(min || sec ? 8 : 6)
+            let minP = dynamicId.startsWith("timer_mp_")
+            let secP = dynamicId.startsWith("timer_sp_")
+            let min = !minP && dynamicId.startsWith("timer_m_")
+            let sec = !secP && dynamicId.startsWith("timer_s_")
+
+            const nameId = dynamicId.slice(min || sec ? 8 : minP || secP ? 9 : 6)
             const timer = keysToID(get(timers)).find((a) => getVariableNameId(a.name) === nameId)
-            if (!timer) return min || sec ? "00" : "00:00"
+            if (!timer) return minP || secP ? "00" : min || sec ? "0" : "00:00"
 
             const today = new Date()
             const currentTime = Math.floor(getCurrentTimerValue(timer, { id: timer.id }, today))
@@ -891,18 +902,20 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             const overflow = !!timer.overflow
             const isOverflowing = getTimerOverflow()
 
-            if ((min || sec) && isOverflowing) {
-                if (min || !overflow) return "00"
-                return (currentTime < 0 ? "" : "-") + currentTime.toString().padStart(2, "0")
+            if ((min || sec || minP || secP) && isOverflowing) {
+                if (min || minP || !overflow) return minP || secP ? "00" : "0"
+                const absTime = Math.abs(currentTime)
+                return (currentTime < 0 ? "" : "-") + (secP || minP ? absTime.toString().padStart(2, "0") : absTime.toString())
             }
-            if (min) {
-                return currentTime >= 60
-                    ? Math.floor(currentTime / 60)
-                          .toString()
-                          .padStart(2, "0")
-                    : "00"
+
+            if (min || minP) {
+                const minsValue = currentTime >= 60 ? Math.floor(currentTime / 60) : 0
+                return minP ? minsValue.toString().padStart(2, "0") : minsValue.toString()
             }
-            if (sec) return (currentTime % 60).toString().padStart(2, "0")
+            if (sec || secP) {
+                const secsValue = currentTime % 60
+                return secP ? secsValue.toString().padStart(2, "0") : secsValue.toString()
+            }
 
             const timeValue = joinTimeBig(typeof currentTime === "number" ? currentTime : 0)
             if (isOverflowing) return `-${timeValue}`

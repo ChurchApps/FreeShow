@@ -2,8 +2,7 @@
     import { onMount, tick } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
-    import { VIRTUAL_BREAK_CHAR } from "../../../show/slides"
-    import { activeEdit, activeShow, activeStage, activeTriggerFunction, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
+    import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { getNormalizedKey, isFormattingKey } from "../../../utils/shortcuts"
     import T from "../../helpers/T.svelte"
@@ -17,6 +16,7 @@
     import { getItemText, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
     import { EditboxHelper } from "./EditboxHelper"
+    import { EditboxPaste } from "./EditboxPaste"
 
     export let item: Item
     export let ref: {
@@ -611,14 +611,22 @@
 
         if (getNormalizedKey(e).toLowerCase() === "v" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault()
-            navigator.clipboard
-                .readText()
-                .then((clipText: string) => {
-                    paste(e, clipText)
-                })
-                .catch((e) => {
-                    console.warn("Could not read clipboard:", e)
-                })
+            EditboxPaste.handlePaste(
+                e,
+                {
+                    item,
+                    ref,
+                    textElem,
+                    lastCaretPos,
+                    getNewLines,
+                    updateLines,
+                    getStyle,
+                    setPasting: (p) => {
+                        pasting = p
+                    }
+                },
+                e.shiftKey
+            )
         }
 
         if (e.key === "<") {
@@ -636,107 +644,29 @@
         }
     }
 
-    $: if ($activeTriggerFunction === "insert_virtual_break") paste({}, VIRTUAL_BREAK_CHAR)
+    function handleCopy(e: ClipboardEvent) {
+        EditboxPaste.handleCopy(e, getNewLines())
+    }
+
+    function handleCut(e: ClipboardEvent) {
+        EditboxPaste.handleCut(e, getNewLines(), paste)
+    }
 
     // paste
     let pasting = false
-    function paste(e: any, clipboardText = "") {
-        let clipboard: string = clipboardText || e.clipboardData?.getData("text/plain") || ""
-        if (!clipboard) return
-
-        pasting = true
-
-        let sel = getSelectionRange()
-        if (!sel.length && lastCaretPos.line > -1) {
-            // create range from lastCaretPos (probably only used with "insert_virtual_break")
-            const linesLength = getNewLines().length
-            sel = [...Array(linesLength)].map((_, i) => (i === lastCaretPos.line ? { start: lastCaretPos.pos, end: lastCaretPos.pos } : ({} as any)))
-        }
-        let caret = { line: 0, pos: 0 }
-        let emptySelection = !sel.filter((a) => Object.keys(a).length).length
-
-        let lines: Line[] = getNewLines()
-        let newLines: any[] = []
-        let pastingIndex = -1
-        sel.forEach((lineSel, lineIndex) => {
-            if (!lines[lineIndex]) return
-            if (lineSel.start === undefined && (!emptySelection || lineIndex < sel.length - 1)) {
-                newLines.push(lines[lineIndex])
-                return
-            }
-
-            if (pastingIndex < 0) {
-                pastingIndex = lineIndex
-                let splitted = clipboard.split("\n")
-                let lastPastedLine = pastingIndex + (splitted.length - 1)
-                let pos = lineSel.start + clipboard.length
-                if (splitted.length > 1) pos = splitted[splitted.length - 1].trim().length
-                caret = { line: lastPastedLine, pos }
-            }
-
-            let lineText: any[] = []
-            let linePos = 0
-            let pasteOverflow = 0
-            // move multi line select to one line
-            lines[lineIndex].text?.forEach((text) => {
-                let value = text.value
-                let newLinePos = linePos + value.length
-                if (newLinePos < lineSel.start || linePos > lineSel.end) {
-                    lineText.push(text)
-                    linePos = newLinePos
-                    return
-                }
-
-                // selected more text (different styles) on one line
-                if (pasteOverflow > 0) {
-                    let newValue = value.slice(pasteOverflow)
-                    pasteOverflow = pasteOverflow - value.length
-                    if (!newValue.length) return
-
-                    text.value = newValue
-                    lineText.push(text)
-                    return
-                }
-
-                let caretPos = lineSel.start - linePos
-                let removeText = lineSel.end - lineSel.start
-                removeText = removeText > 0 ? removeText : 0
-                pasteOverflow = caretPos + removeText - value.length
-
-                let newValue = value.slice(0, caretPos) + (pastingIndex === lineIndex ? clipboard : "") + value.slice(caretPos + removeText)
-                if (!newValue.length) return
-
-                text.value = newValue
-                lineText.push(text)
-
-                linePos = newLinePos
-            })
-
-            if (pastingIndex < 0) {
-                newLines.push(lines[lineIndex])
-                return
-            }
-
-            if (!newLines[pastingIndex]?.text) {
-                newLines[pastingIndex] = clone(lines[lineIndex])
-                newLines[pastingIndex].text = lineText
-            } else {
-                newLines[pastingIndex].text.push(...lineText)
+    function paste(e: any, clipboardText = "", clipboardHtml = "") {
+        EditboxPaste.paste(e, clipboardText, clipboardHtml, {
+            item,
+            ref,
+            textElem,
+            lastCaretPos,
+            getNewLines,
+            updateLines,
+            getStyle,
+            setPasting: (p) => {
+                pasting = p
             }
         })
-
-        lines = newLines
-
-        lines = EditboxHelper.splitAllCrlf(lines)
-        updateLines(lines)
-        setTimeout(() => {
-            getStyle()
-            // set caret position back
-            setTimeout(() => {
-                setCaret(textElem, caret)
-                pasting = false
-            }, 10)
-        }, 10)
     }
 </script>
 
@@ -769,6 +699,8 @@
                 class:autoSize={item.auto && autoSize}
                 contenteditable
                 on:keydown={textElemKeydown}
+                on:copy={handleCopy}
+                on:cut={handleCut}
                 bind:innerHTML={html}
                 style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain ? lineStyleBox : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}"
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}

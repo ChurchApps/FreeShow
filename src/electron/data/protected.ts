@@ -8,7 +8,7 @@ import { ToMain } from "../../types/IPC/ToMain"
 import { ContentProviderFactory } from "../contentProviders/base/ContentProvider"
 import type { ContentProviderId } from "../contentProviders/base/types"
 import { sendToMain } from "../IPC/main"
-import { createFolder, deleteFolderAsync, getMimeType } from "../utils/files"
+import { asyncPool, createFolder, deleteFolderAsync, getMimeType } from "../utils/files"
 import { getKey } from "../utils/keys"
 import { appDataPath } from "./store"
 import { filePathHashCode } from "./thumbnails"
@@ -31,19 +31,17 @@ export async function cleanupProtectedCache() {
     try {
         const entries = await fs.promises.readdir(dir)
         const now = Date.now()
-        await Promise.all(
-            entries.map(async (name) => {
-                const filePath = path.join(dir, name)
-                try {
-                    const stats = await fs.promises.stat(filePath)
-                    if (now - (stats.atimeMs || stats.mtimeMs) > PROTECTED_CACHE_MAX_AGE_MS) {
-                        await fs.promises.unlink(filePath)
-                    }
-                } catch {
-                    // ignore per-file errors
+        await asyncPool(50, entries, async (name) => {
+            const filePath = path.join(dir, name)
+            try {
+                const stats = await fs.promises.stat(filePath)
+                if (now - (stats.atimeMs || stats.mtimeMs) > PROTECTED_CACHE_MAX_AGE_MS) {
+                    await fs.promises.unlink(filePath)
                 }
-            })
-        )
+            } catch {
+                // ignore per-file errors
+            }
+        })
     } catch {
         // dir may not exist yet — nothing to clean
     }

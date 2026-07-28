@@ -110,6 +110,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     sort_shows_by: { label: "sort.sort_by", icon: "sort", iconColor: "#979aff", items: ["LOAD_sort_shows"] },
     sort_projects_by: { label: "sort.sort_by", icon: "sort", iconColor: "#979aff", items: ["LOAD_sort_projects"] },
     sort_media_by: { label: "sort.sort_by", icon: "sort", iconColor: "#979aff", items: ["LOAD_sort_media"] },
+    media_view: { label: "titlebar.view", icon: "media", items: ["LOAD_media_view"] },
     // SHOWS
     lock_group: { label: "context.lockForChanges", icon: "lock", iconColor: "#ff5454" },
     remove: { label: "actions.remove", icon: "delete", iconColor: "#ff6b54" },
@@ -160,6 +161,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     stage: { label: "menu.stage", id: "stage" },
     // formatting
     find_replace: { label: "actions.find_replace", icon: "find_replace", iconColor: "#90f1cc" },
+    insert_virtual_break: { label: "edit.insert_virtual_break", icon: "add", iconColor: "#90f1cc" },
     cut_in_half: { label: "actions.cut_in_half", tooltip: "tooltip.context_cut_in_half [Alt+Enter]", icon: "cut_in_half", iconColor: "#90f1b5" },
     merge: { label: "actions.merge", tooltip: "tooltip.context_merge", icon: "merge", iconColor: "#90f1b5" },
     uppercase: { label: "actions.uppercase", icon: "increase_text", iconColor: "#93f190" },
@@ -284,7 +286,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     slide_recorder_item: ["remove"],
     // , "addToShow"
     // show_in_explorer!!
-    media: ["manage_media_tags", "media_tag_filter", "sort_media_by"],
+    media: ["manage_media_tags", "media_tag_filter", "sort_media_by", "media_view"],
     media_card: ["GROUP_open", "createSlideshow", "play_no_audio", "play_no_filters", "SEPARATOR", "favourite", "SEPARATOR", "media_tag_set", "media_tag_filter", "sort_media_by", "SEPARATOR", "system_open"],
     // "addToFirstSlide",
     drawer_overlays: ["reset_defaults"],
@@ -314,7 +316,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     scripture_verse: ["create_show", "SEPARATOR", "selectAll", "SEPARATOR", "route_bible"],
     scripture_chapter: ["create_show"],
     interaction: ["GROUP_edit", "rename", "delete"],
-    interaction_input: ["GROUP_edit", "delete"],
+    interaction_input: ["GROUP_edit", "duplicate", "delete"],
 
     // PROJECT
     projects: ["newProject", "newFolder", "SEPARATOR", "sort_projects_by"],
@@ -385,13 +387,13 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     stage_slide: ["GROUP_rename_only", "move_connections", "disable", "SEPARATOR", "export", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
     stage_slide_readonly: ["move_connections"],
     stage_item: ["GROUP_conditions", "rearrange_stage", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
-    stage_item_output: ["rearrange_stage", "SEPARATOR", "delete"],
+    stage_item_output: ["GROUP_conditions", "rearrange_stage", "SEPARATOR", "delete"],
     stage_text_item: ["GROUP_dynamic", "rearrange_stage", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
     items_list_item_stage: ["to_front_stage", "forward_stage", "backward_stage", "to_back_stage"],
 
     // EDIT
     edit_box: ["GROUP_dynamic", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPARATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar) // "GROUP_duplicate_delete"
-    editbox_text: ["text_copy", "text_cut", "text_paste", "text_select_all"],
+    editbox_text: ["text_copy", "text_cut", "text_paste", "text_select_all", "SEPARATOR", "insert_virtual_break"],
     items_list_item: ["to_front", "forward", "backward", "to_back"],
     table_context: ["delete_row", "delete_col"],
 

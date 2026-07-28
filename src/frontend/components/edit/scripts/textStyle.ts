@@ -152,8 +152,15 @@ export function getSelectionRange(): { start: number; end: number }[] {
     }
 
     const getBoundary = (node: Node, offset: number) => {
-        const lineIndex = lines.findIndex((line) => line === node || line.contains(node))
-        if (lineIndex < 0) return null
+        let lineIndex = lines.findIndex((line) => line === node || line.contains(node))
+        if (lineIndex < 0) {
+            if (node === parent) {
+                lineIndex = Math.min(offset, lines.length - 1)
+                if (lineIndex < 0) return null
+                return { line: lineIndex, pos: lineLength(lines[lineIndex]) }
+            }
+            return null
+        }
 
         const line = lines[lineIndex]
         const range = document.createRange()

@@ -16,7 +16,7 @@ import type { Dictionary, Styles, Themes } from "../types/Settings"
 import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
-import type { BibleCategories, Categories, DrawerTabs, SettingsTabs, TopViews } from "../types/Tabs"
+import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
 import type { AudioChannel, AudioChannelData, AudioStream, Playlist } from "./../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
@@ -84,7 +84,7 @@ export const runningActions: Writable<string[]> = writable([])
 export const scriptureMode: Writable<"grid" | "list"> = writable("list")
 export const providerConnections: Writable<{ [key in ContentProviderId]?: boolean }> = writable({})
 export const metronomeTimer: Writable<{ beat: number; timeToNext: number }> = writable({ beat: 0, timeToNext: 0 })
-export const mediaDownloads: Writable<Map<string, { progress: number; total: number; status: string }>> = writable(new Map())
+export const mediaDownloads: Writable<Map<string, { progress: number; total: number; status: string; name?: string }>> = writable(new Map())
 export const pdfImports: Writable<Map<string, { name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }>> = writable(new Map())
 export const showChangeProfileMenu: Writable<boolean> = writable(false)
 export const cloudUsers: Writable<{ displayName: string; color: string; lastUpdate?: number; activePage?: string; activeShow?: ShowRef }[]> = writable([])
@@ -165,7 +165,6 @@ export const scriptureHistory: Writable<any[]> = writable([])
 export const actionHistory: Writable<{ action: string; data: any; time: number; count: number; source?: string }[]> = writable([])
 export const audioData: Writable<{ [key: string]: { metadata: ICommonTagsResult } }> = writable({})
 export const customScriptureBooks: Writable<{ [key: string]: string[] }> = writable({})
-export const scriptureHistoryUsed: Writable<boolean> = writable(false)
 export const actionRevealUsed: Writable<boolean> = writable(false)
 export const actionMoreOptionsUsed: Writable<boolean> = writable(false)
 export const dynamicValuesRevealUsed: Writable<boolean> = writable(false)
@@ -179,7 +178,7 @@ export const refreshListBoxes: Writable<number> = writable(-1)
 export const triggerAutoSplit: Writable<boolean> = writable(false)
 export const storedEditMenuState: Writable<any> = writable({})
 export const copyPasteEdit: Writable<any> = writable({})
-export const textEditActive: Writable<boolean> = writable(false)
+export const editMode: Writable<EditMode> = writable("default")
 export const textEditZoom: Writable<number> = writable(10)
 export const spellcheck: Writable<{ misspelled: string; suggestions: string[] } | null> = writable(null)
 

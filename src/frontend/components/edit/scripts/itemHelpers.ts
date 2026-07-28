@@ -66,7 +66,6 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     activeEdit.update((ae) => ({ ...ae, items: [selectedIndex] }))
 
     if (type === "text") newData.lines = [{ align: template?.[0]?.lines?.[0]?.align || "", text: [{ value: textValue, style: template?.[0]?.lines?.[0]?.text?.[0]?.style || "" }] }]
-    if (type === "list") newData.list = { items: [] }
     // else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
     else if (type === "timer") {
         const timerId = options.timer?.id || sortByName(keysToID(get(timers)))[0]?.id || createNewTimer()
@@ -83,8 +82,7 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
             styleString += `${key}: ${value};`
         })
         newData.style = styleString
-    } else if (type === "mirror") newData.mirror = {}
-    else if (type === "media") newData.src = options.src || ""
+    } else if (type === "media") newData.src = options.src || ""
     else if (type === "variable") newData.variable = { id: "" }
     else if (type === "slide_tracker") newData.auto = true
     else if (type === "web") newData.web = { url: "" }

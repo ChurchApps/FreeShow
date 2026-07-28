@@ -32,6 +32,11 @@ const serverPorts: { [key in ServerName]: number } = {
 const servers: { [key in ServerName]?: ServerValues } = {}
 const ioServers: { [key in ServerName]?: Server } = {}
 
+// STAGE clients with a visible "current output" mirror subscribe to frame pushes (renewed by heartbeat)
+// declared before createServers() below, which resets it when the STAGE server instance is (re)created
+const STAGE_STREAM_SUBSCRIPTION_TTL = 10000
+let stageStreamSubscribers: { [socketId: string]: number } = {} // socketId: expiry time
+
 createServers()
 function createServers() {
     const serverList = Object.keys(serverPorts) as ServerName[]
@@ -71,6 +76,7 @@ function createServerInstance(id: ServerName) {
         data: servers[id]?.data ?? {}
     }
     ioServers[id] = io
+    if (id === "STAGE") stageStreamSubscribers = {}
 
     // RECEIVE CONNECTION FROM CLIENT
     io.on("connection", (socket) => {
@@ -166,6 +172,22 @@ export function getConnections(id: ServerName) {
     return Object.keys(servers[id]?.connections || {}).length
 }
 
+// Stage Stream
+function updateStageStreamSubscription(socketId: string, channel: string) {
+    if (channel === "STREAM_SUBSCRIBE") stageStreamSubscribers[socketId] = Date.now() + STAGE_STREAM_SUBSCRIPTION_TTL
+    else if (channel === "STREAM_UNSUBSCRIBE") delete stageStreamSubscribers[socketId]
+}
+export function getStageStreamSubscriberIds(): string[] {
+    const now = Date.now()
+    for (const id in stageStreamSubscribers) if (stageStreamSubscribers[id] < now) delete stageStreamSubscribers[id]
+    return Object.keys(stageStreamSubscribers)
+}
+// send only to subscribed sockets - text-only stage clients should never receive frame data
+export function toStageStreamSubscribers(msg: any) {
+    const io = ioServers.STAGE
+    if (io) getStageStreamSubscriberIds().forEach((id) => io.to(id).emit("STAGE", msg))
+}
+
 // FUNCTIONS
 
 function initialize(id: ServerName, socket: Socket) {
@@ -190,6 +212,7 @@ function initialize(id: ServerName, socket: Socket) {
             const bounds = window.getBounds()
             toServer(id, { channel: "OUTPUT_FRAME", data: { frame, width: bounds.width, height: bounds.height } })
         } else if (msg) {
+            if (id === "STAGE") updateStageStreamSubscription(socket.id, msg.channel)
             toApp(id, msg)
         }
     })
@@ -201,6 +224,7 @@ function initialize(id: ServerName, socket: Socket) {
 function disconnect(id: ServerName, socket: Socket) {
     toApp(id, { channel: "DISCONNECT", id: socket.id })
     delete servers[id]!.connections[socket.id]
+    if (id === "STAGE") delete stageStreamSubscribers[socket.id]
 }
 
 // https://stackoverflow.com/a/59706252

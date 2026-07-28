@@ -130,7 +130,7 @@
                     <Icon id="image" size={1.2} white />
                 </MaterialButton>
                 {#if !allCleared}
-                    <MaterialButton style="padding: {activeClear === 'background' ? 0 : 2}px !important;min-height: 15px;" isActive={activeClear === "background"} disabled={backgroundCleared} on:click={() => openPreview("background")} title="preview.background">
+                    <MaterialButton style="padding: {activeClear === 'background' ? 0 : 2}px !important;min-height: 15px;border-left: 0 !important;" isActive={activeClear === "background"} disabled={backgroundCleared} on:click={() => openPreview("background")} title="preview.background">
                         {#if activeClear === "background"}
                             <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
                         {/if}
@@ -188,7 +188,7 @@
                     <Icon id={isTimer ? "timer" : "clock"} size={1.2} white />
                 </MaterialButton>
                 {#if !allCleared}
-                    <MaterialButton style="padding: 2px !important;min-height: 15px;" isActive={activeClear === "nextTimer"} disabled={slideTimerCleared && activeClear !== "nextTimer"} on:click={() => openPreview("nextTimer")} title="preview.nextTimer">
+                    <MaterialButton style="padding: 2px !important;min-height: 15px;border-right: 0 !important;" isActive={activeClear === "nextTimer"} disabled={slideTimerCleared && activeClear !== "nextTimer"} on:click={() => openPreview("nextTimer")} title="preview.nextTimer">
                         {#if activeClear === "nextTimer"}
                             <Icon style="opacity: 0.8;" id="expand" size={0.7} white />
                         {/if}

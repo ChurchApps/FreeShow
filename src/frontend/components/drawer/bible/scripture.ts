@@ -35,8 +35,12 @@ export async function getApiBiblesList() {
     }
 }
 
-const jsonBibleCache: { [id: string]: any } = {}
-export async function loadJsonBible(id: string) {
+export type BibleInstance = Awaited<ReturnType<typeof JsonBible>> | Awaited<ReturnType<typeof JsonBibleApi>>
+export type BookInstance = Awaited<ReturnType<BibleInstance["getBook"]>>
+export type ChapterInstance = Awaited<ReturnType<BookInstance["getChapter"]>>
+
+const jsonBibleCache: { [id: string]: BibleInstance } = {}
+export async function loadJsonBible(id: string): Promise<BibleInstance | null> {
     if (jsonBibleCache[id]) return jsonBibleCache[id]
 
     const scriptureData = get(scriptures)[id]
@@ -139,17 +143,25 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
                 const BibleData = await loadJsonBible(id)
                 if (!BibleData) return null
 
-                const Book = await BibleData.getBook(active?.book)
-
                 const scriptureData = get(scriptures)[id]
                 const version = scriptureData?.customName || scriptureData?.name || ""
                 const attributionString = scriptureData?.attributionString || ""
                 const attributionRequired = !!scriptureData?.attributionRequired
 
-                const bookName = Book.name
-                const bookAbbr = Book.getAbbreviation()
-                const selectedChapters = active?.chapters.map((c) => Number(c)) || []
-                const Chapters = await Promise.all(selectedChapters.map((c) => Book.getChapter(c)))
+                let bookName = ""
+                let bookAbbr = ""
+                let selectedChapters: number[] = []
+                let Chapters: ChapterInstance[] = []
+                try {
+                    const Book = await BibleData.getBook(active?.book)
+                    bookName = Book.name
+                    bookAbbr = Book.getAbbreviation()
+                    selectedChapters = active?.chapters.map((c) => Number(c)) || []
+                    Chapters = await Promise.all(selectedChapters.map((c) => Book.getChapter(c)))
+                } catch (err) {
+                    console.error("Error loading scripture book/chapter data:", id, err)
+                    return null
+                }
 
                 const metadata = BibleData.data.metadata || {}
                 Object.entries(scriptureData?.metadata || {}).forEach(([key, value]) => {
@@ -2050,10 +2062,10 @@ export function getShortBibleName(name: string) {
     name = name
         .replace(/[^a-zA-Z ]+/g, "")
         .trim()
-        .replaceAll("  ", " ")
+        .replaceAll(/\s+/g, " ")
 
     if (name.split(" ").length < 2) name = name.slice(0, 3)
-    else name = name.split(" ").reduce((current, word) => (current += word[0]), "")
+    else name = name.split(" ").reduce((current, word) => (current += word[0] || ""), "")
 
     return name || "B"
 }

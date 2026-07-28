@@ -19,7 +19,7 @@
     import { addStyleString } from "./scripts/textStyle"
     import BoxStyle from "./tools/BoxStyle.svelte"
     import ItemStyle from "./tools/ItemStyle.svelte"
-    import Items from "./tools/Items.svelte"
+    import OverlayStyle from "./tools/OverlayStyle.svelte"
     import SlideFilters from "./tools/SlideFilters.svelte"
     import SlideStyle from "./tools/SlideStyle.svelte"
     import TemplateStyle from "./tools/TemplateStyle.svelte"
@@ -28,7 +28,6 @@
     let tabs: TabsObj = {
         text: { name: "items.text", icon: "text" },
         item: { name: "tools.item", icon: "item" },
-        items: { name: "tools.items", icon: "items" },
         slide: { name: "tools.slide", icon: "options", overflow: true },
         filters: { name: "edit.filters", icon: "filter", overflow: true }
     }
@@ -42,22 +41,20 @@
     // is not template or overlay
     $: isShow = !activeId
     $: tabs.filters.remove = !isShow // TODO: set filters in template / overlay ? ( && $activeEdit.type !== "template")
-    $: tabs.slide.remove = (!isShow && $activeEdit.type !== "template") || templateTextMode
-    $: if ((tabs.slide.remove && active === "slide") || (tabs.filters.remove && active === "filters")) active = item ? "text" : "items"
+    $: tabs.slide.remove = (!isShow && $activeEdit.type !== "template" && $activeEdit.type !== "overlay") || templateTextMode
+    $: if ((tabs.slide.remove && active === "slide") || (tabs.filters.remove && active === "filters")) active = "text"
 
     $: templateTextMode = $activeEdit.type === "template" && $templates[activeId]?.settings?.mode === "text"
     $: if (templateTextMode) {
         tabs.item.remove = true
-        tabs.items.remove = true
         // tabs.slide.remove = true
     } else {
         tabs.item.remove = false
-        tabs.items.remove = false
         // tabs.slide.remove = false
     }
     $: templateItemMode = $activeEdit.type === "template" && $templates[activeId]?.settings?.mode === "item"
     $: if (templateItemMode) {
-        if (active === "text") active = item ? "item" : "items"
+        if (active === "text") active = "item"
         tabs.text.remove = true
     } else {
         tabs.text.remove = false
@@ -76,15 +73,13 @@
     $: isEmpty = !allSlideItems?.length
     $: tabs.item.disabled = isEmpty
     let previousCount = 0
-    let actualPreviousCount = 0
     $: if (isEmpty || activeId || activeSlide) {
-        actualPreviousCount = previousCount
         previousCount = 0
     }
     $: if (item !== undefined) itemChanged()
     function itemChanged() {
         if (item === null) {
-            if (active === "text" || active === "item") active = "items"
+            if (active === "text" || active === "item") active = "text"
             tabs.text.disabled = true
             return
         }
@@ -93,8 +88,6 @@
         if (previousCount === currentCount) return
         previousCount = currentCount
 
-        if (active === "items" && (!actualPreviousCount || actualPreviousCount !== currentCount)) active = "text"
-        actualPreviousCount = 0
         tabs.text.disabled = false
     }
 
@@ -373,7 +366,7 @@
     }
     $: isLocked = activeId ? false : currentShow?.locked || isSlideLockedFn() || profile.global === "read" || profile[currentShow?.category || ""] === "read"
     // $: isDefault = $activeEdit.type === "overlay" ? $overlays[activeId || ""]?.isDefault : $activeEdit.type === "template" ? $templates[activeId || ""]?.isDefault : false
-    $: overflowHidden = !!(isShow || $activeEdit.type === "template")
+    $: overflowHidden = !!(isShow || $activeEdit.type === "template" || $activeEdit.type === "overlay")
 
     $: currentCopied = $copyPasteEdit[type]
     $: currentItemStyle = getItemsStyle($showsCache[$activeEdit?.id || $activeShow?.id || ""])
@@ -435,10 +428,6 @@
             <div class="content">
                 <ItemStyle bind:allSlideItems bind:item />
             </div>
-        {:else if active === "items"}
-            <div class="content">
-                <Items bind:allSlideItems />
-            </div>
         {:else if active === "filters"}
             <div class="content">
                 <SlideFilters />
@@ -446,14 +435,16 @@
         {:else if active === "slide"}
             <div class="content">
                 {#if $activeEdit.type === "template"}
-                    <TemplateStyle />
+                    <TemplateStyle bind:allSlideItems />
+                {:else if $activeEdit.type === "overlay"}
+                    <OverlayStyle bind:allSlideItems />
                 {:else}
-                    <SlideStyle />
+                    <SlideStyle bind:allSlideItems />
                 {/if}
             </div>
         {/if}
 
-        {#if active !== "items"}
+        {#if item || active === "slide" || active === "filters"}
             <FloatingInputs>
                 {#if copiedStyleDifferent}
                     <MaterialButton icon="paste" title="actions.paste" on:click={() => pasteStyle()}>

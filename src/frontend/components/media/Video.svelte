@@ -136,7 +136,7 @@
         }, 20)
     }
 
-    $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: mediaStyleString = `width: 100%;height: 100%;object-fit: ${mediaStyle.fit === "blur" ? "contain" : mediaStyle.fit || "contain"};filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});mix-blend-mode: ${mediaStyle.blend || "normal"};`
     $: mediaStyleBlurString = `position: absolute;filter: ${mediaStyle.filter || ""} blur(${mediaStyle.fitOptions?.blurAmount ?? 6}px) opacity(${mediaStyle.fitOptions?.blurOpacity || 0.3});object-fit: cover;width: 100%;height: 100%;transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 
     let blurVideo: HTMLVideoElement | null = null
@@ -169,17 +169,18 @@
     $: actualEndTime = endTime || videoData.duration || 0
     $: if (softLoopValue > 0) {
         if (video) {
-            video.volume = volume * (1 - softLoopOpacity)
+            video.volume = Math.min(1, Math.max(0, volume * (1 - softLoopOpacity)))
             AudioAnalyser.setSourceVolume(path, video.volume)
         }
         if (softLoopVideo) {
-            softLoopVideo.volume = volume * softLoopOpacity
+            softLoopVideo.volume = Math.min(1, Math.max(0, volume * softLoopOpacity))
             AudioAnalyser.setSourceVolume(path + "_softloop", softLoopVideo.volume)
         }
     } else {
         if (video) {
-            video.volume = volume
-            AudioAnalyser.setSourceVolume(path, volume)
+            const clampedVolume = Math.min(1, Math.max(0, volume))
+            video.volume = clampedVolume
+            AudioAnalyser.setSourceVolume(path, clampedVolume)
         }
         if (softLoopVideo) {
             softLoopVideo.volume = 0

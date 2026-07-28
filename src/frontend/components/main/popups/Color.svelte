@@ -15,6 +15,8 @@
     onMount(() => {
         if (selection.id === "slide") {
             let firstSelected = selection.data[0]
+            if (!firstSelected) return
+
             let ref: any = getLayoutRef()[firstSelected.index]
             if (!ref) return
 
@@ -111,6 +113,6 @@
     }
 </script>
 
-<MaterialButton class="popup-options" icon="edit" iconSize={1.1} title="create_show.more_options" on:click={() => activePopup.set("manage_colors")} white />
+<MaterialButton class="popup-options" icon="edit" iconSize={1.1} title="menu.edit" on:click={() => activePopup.set("manage_colors")} white />
 
 <MaterialColorInput label="" {value} on:input={update} {allowEmpty} alwaysVisible />

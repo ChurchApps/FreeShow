@@ -54,7 +54,13 @@
                 <Icon id={tab.icon} white={active === id} />
                 {#if labels}
                     {#key tab.name}
-                        <span>{translateText(tab.name)}</span>
+                        <span>
+                            {translateText(tab.name)}
+
+                            {#if tab.data !== undefined}
+                                <span style="margin-left: 4px;opacity: 0.5;font-size: 0.75em;">{tab.data}</span>
+                            {/if}
+                        </span>
                     {/key}
                 {/if}
             </MaterialButton>

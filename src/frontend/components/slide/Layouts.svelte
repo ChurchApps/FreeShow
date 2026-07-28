@@ -2,7 +2,7 @@
     import { uid } from "uid"
     import type { ClickEvent } from "../../../types/Main"
     import { changeSlidesView } from "../../show/slides"
-    import { actions, activePopup, activeProject, activeShow, alertMessage, labelsDisabled, projects, showsCache, slidesOptions } from "../../stores"
+    import { actions, activePopup, activeProject, activeShow, alertMessage, editingProjectTemplate, labelsDisabled, projects, projectTemplates, showsCache, slidesOptions } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { getActionIcon, runAction } from "../actions/actions"
@@ -24,6 +24,11 @@
     $: currentShow = $showsCache[showId] || {}
     $: layouts = currentShow.layouts
     $: activeLayout = currentShow.settings?.activeLayout
+
+    $: isTemplate = !!$editingProjectTemplate
+    $: projectId = isTemplate ? $editingProjectTemplate : $activeProject
+    $: store = isTemplate ? projectTemplates : projects
+    $: project = $store[projectId!]
 
     $: sortedLayouts = sortByName(keysToID(layouts || {}))
 
@@ -68,12 +73,11 @@
         const newName = e.detail.value
         history({ id: "UPDATE", newData: { key: "layouts", keys: [currentLayout], subkey: "name", data: newName }, oldData: { id: showId }, location: { page: "show", id: "show_key" } })
 
-        const project = $projects[$activeProject!]
         const showIndex = $activeShow?.index
         if (project?.shows?.[showIndex ?? -1]?.layout === currentLayout) {
-            projects.update((a) => {
-                if (a[$activeProject!]?.shows?.[showIndex!]) {
-                    a[$activeProject!].shows[showIndex!].layoutInfo = { name: newName }
+            store.update((a) => {
+                if (a[projectId!]?.shows?.[showIndex!]) {
+                    a[projectId!].shows[showIndex!].layoutInfo = { name: newName }
                 }
                 return a
             })
@@ -94,11 +98,11 @@
         // set active layout in project
         if (sortedLayouts?.length < 2) return
         const showIndex = $activeShow?.index
-        if (($activeShow?.type === undefined || $activeShow?.type === "show") && showIndex !== undefined && $activeProject && $projects[$activeProject]?.shows?.[showIndex]) {
-            projects.update((a) => {
-                if (a[$activeProject!]?.shows?.[showIndex]) {
-                    a[$activeProject!].shows[showIndex].layout = id
-                    a[$activeProject!].shows[showIndex].layoutInfo = layoutInfo
+        if (($activeShow?.type === undefined || $activeShow?.type === "show") && showIndex !== undefined && projectId && project?.shows?.[showIndex]) {
+            store.update((a) => {
+                if (a[projectId!]?.shows?.[showIndex]) {
+                    a[projectId!].shows[showIndex].layout = id
+                    a[projectId!].shows[showIndex].layoutInfo = layoutInfo
                 }
                 return a
             })

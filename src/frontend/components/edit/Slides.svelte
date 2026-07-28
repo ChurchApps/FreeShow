@@ -26,7 +26,7 @@
             altKeyPressed = true
         }
 
-        if (e.target instanceof HTMLTextAreaElement || e.target?.closest(".edit")) return
+        if (e.target instanceof HTMLTextAreaElement || e.target?.closest?.(".edit")) return
         if ($activeEdit.items.length) return
 
         if (e.key === "ArrowDown") {

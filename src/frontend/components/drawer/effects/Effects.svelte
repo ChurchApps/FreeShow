@@ -67,13 +67,13 @@
                     showPlayOnHover
                     on:click={(e) => {
                         if ($outLocked || e.ctrlKey || e.metaKey) return
-                        if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
+                        if (e.target?.closest?.(".edit") || e.target?.closest?.(".icons")) return
 
                         setOutput("effects", effect.id, true)
                     }}
                     on:dblclick={(e) => {
                         if (e.ctrlKey || e.metaKey) return
-                        if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
+                        if (e.target?.closest?.(".edit") || e.target?.closest?.(".icons")) return
 
                         addProjectItem({ id: effect.id, name: effect.name || "", type: "effect" })
                     }}

@@ -275,7 +275,7 @@
     }
 
     function setActiveSubtitle(e: any, lang: string) {
-        if (e.target?.closest(".edit")) return
+        if (e.target?.closest?.(".edit")) return
 
         media.update((a) => {
             if (!a[mediaPath]) a[mediaPath] = {}
@@ -372,7 +372,7 @@
                 {#if mediaStyle.fit === "blur"}
                     <video style={mediaStyleBlurString} src={encodeFilePath(mediaPath)} bind:this={blurVideo} bind:paused={blurPausedState} loop={videoData.loop} muted />
                 {/if}
-                <video style={mediaStyleString} src={encodeFilePath(mediaPath)} on:loadedmetadata={onLoad} on:playing={onPlay} bind:this={video} bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} bind:muted={videoData.muted} bind:volume={$volume} loop={videoData.loop}>
+                <video style={mediaStyleString} src={encodeFilePath(mediaPath)} on:loadedmetadata={onLoad} on:playing={onPlay} bind:this={video} bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} bind:muted={videoData.muted} volume={Math.min(1, Math.max(0, $volume))} loop={videoData.loop}>
                     <track kind="captions" src="" label="No captions available" />
                     {#each tracks as track}
                         <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />

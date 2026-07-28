@@ -12,7 +12,6 @@
     export let center = false
     export let zoom = true
     export let mirror = false
-    export let showMirror = false
     export let disableStyle = false
     export let isStage = false
     export let checkered = false
@@ -112,7 +111,7 @@
     $: canOverflow = false // $special.textCanOverflow !== false
 </script>
 
-<div id={outputId} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
+<div id={outputId} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}{center ? 'display: flex;justify-content: safe center;align-items: safe center;overflow: visible;' : ''}" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
     <div
         bind:this={slideElem}
         class="slide"
@@ -120,7 +119,6 @@
         class:hideOverflow
         class:canOverflow
         class:disableStyle
-        class:showMirror
         class:relative
         class:checkered
         class:border
@@ -181,31 +179,14 @@
         height: 150px;
         width: 400px;
     }
-    /* enable styling for stage mirrors */
-    .slide.showMirror :global(.item) {
-        color: unset;
-        font-size: unset;
-        font-family: unset;
-        line-height: unset;
-        -webkit-text-stroke-color: unset;
-        text-shadow: unset;
-
-        border-style: unset;
-        border-width: unset;
-        border-color: unset;
-
-        height: 100%;
-        width: 100%;
-    }
 
     .hideOverflow {
         overflow: hidden;
     }
 
-    .center {
-        display: flex;
-        justify-content: center;
-        align-items: center;
+    .center .slide {
+        margin: auto;
+        flex: 0 0 auto;
     }
 
     /* .zoom {

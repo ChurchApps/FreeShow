@@ -33,8 +33,8 @@
         let target: any = e.target
         if (!target || closingMenuTimeout) return
 
-        let input = ["text", "textarea"].includes(target.type) && !target.closest(".numberInput")
-        if ((!input && (target.closest(".contextMenu") || $activePopup)) || target.closest(".nocontext")) {
+        let input = ["text", "textarea"].includes(target.type) && !target.closest?.(".numberInput")
+        if ((!input && (target.closest?.(".contextMenu") || $activePopup)) || target.closest?.(".nocontext")) {
             closeContextMenu()
             return
         }
@@ -46,7 +46,7 @@
         // side = "right"
         translate = 0
 
-        contextElem = target.closest(".context") || document.body
+        contextElem = target.closest?.(".context") || document.body
         let id: string | null = contextElem?.classList.length ? [...contextElem?.classList].find((c: string) => c.includes("#")) || null : null
 
         // don't show drawer context menu in search input
@@ -96,7 +96,7 @@
     }
 
     const click = (e: MouseEvent) => {
-        if (!e.target?.closest(".contextMenu")) closeContextMenu()
+        if (!e.target?.closest?.(".contextMenu")) closeContextMenu()
     }
 
     function handleKeydown(e: KeyboardEvent) {

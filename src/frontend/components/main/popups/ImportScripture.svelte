@@ -129,7 +129,7 @@
         <div class="list">
             {#if searchedRecommendedBibles.length}
                 {#each searchedRecommendedBibles as bible}
-                    <MaterialCheckbox label={bible.name} data={bible.description} checked={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)} on:change={() => toggleScripture(bible)} />
+                    <MaterialCheckbox label={bible.name} title="{bible.source === 'youversion' ? '[YouVersion] ' : ''}{bible.name}" data={bible.description} style={bible.source === "youversion" ? "border-left: 2px solid #4a3a30;" : bible.source === "api.bible" ? "border-left: 2px solid #253354;" : ""} checked={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)} on:change={() => toggleScripture(bible)} />
                 {/each}
 
                 {#if searchedBibles.length}
@@ -140,7 +140,7 @@
             {#if bibles.length}
                 {#if searchedBibles.length}
                     {#each searchedBibles as bible}
-                        <MaterialCheckbox label={bible.name} data={bible.description} checked={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)} on:change={() => toggleScripture(bible)} />
+                        <MaterialCheckbox label={bible.name} title="{bible.source === 'youversion' ? '[YouVersion] ' : ''}{bible.name}" data={bible.description} style={bible.source === "youversion" ? "border-left: 2px solid #4a3a30;" : bible.source === "api.bible" ? "border-left: 2px solid #253354;" : ""} checked={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)} on:change={() => toggleScripture(bible)} />
                     {/each}
                 {:else if !searchedRecommendedBibles.length}
                     <Center faded>

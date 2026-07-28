@@ -41,6 +41,8 @@ export function formatToFileName(name = "") {
 
 // convert any text to a label id format
 export function getLabelId(label: string, replaceNumbers = true) {
+    if (!label) return ""
+
     // TODO: disallow chars in labels: #:;!.,- ??
     label = label
         .toLowerCase()

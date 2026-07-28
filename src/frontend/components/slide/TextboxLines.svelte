@@ -13,7 +13,6 @@
 
     export let item: Item
     export let slideIndex = 0
-    // export let isMirrorItem = false
     export let key = false
     export let smallFontSize = false
     export let animationStyle: any = {}
@@ -67,11 +66,6 @@
 
     function getCustomStyle(style: string) {
         if (!style) return ""
-
-        // if (outputId && !isMirrorItem) {
-        //     const outputResolution = getOutputResolution(outputId, $outputs, true)
-        //     style = percentageStylePos(style, outputResolution)
-        // }
 
         // text gradient
 

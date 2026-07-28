@@ -75,7 +75,7 @@
 
     function overlayClick(e: any, id: string) {
         if ($outLocked || e.ctrlKey || e.metaKey) return
-        if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
+        if (e.target?.closest?.(".edit") || e.target?.closest?.(".icons")) return
 
         const isActive = findMatchingOut(id, $outputs) !== null
 
@@ -91,7 +91,7 @@
     }
 
     function keydown(e: KeyboardEvent) {
-        if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest(".search")) {
+        if (e.key === "Enter" && searchValue.length > 1 && e.target?.closest?.(".search")) {
             let overlay = fullFilteredOverlays[0]
             if (!overlay) return
 
@@ -140,7 +140,7 @@
                                 on:click={(e) => overlayClick(e, overlay.id)}
                                 on:dblclick={(e) => {
                                     if (e.ctrlKey || e.metaKey) return
-                                    if (e.target?.closest(".edit") || e.target?.closest(".icons")) return
+                                    if (e.target?.closest?.(".edit") || e.target?.closest?.(".icons")) return
 
                                     addProjectItem({ id: overlay.id, name: overlay.name || "", type: "overlay" })
                                 }}

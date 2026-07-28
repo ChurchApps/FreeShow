@@ -3,7 +3,7 @@
     import type { MediaStyle } from "../../../types/Main"
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
     import { removeTagsAndContent } from "../../show/slides"
-    import { activeEdit, activePage, activeTimers, effects, focusMode, fullColors, groups, media, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, slideNotesActive, slidesOptions, slideTimers, special, styles, textEditActive } from "../../stores"
+    import { activeEdit, activePage, activeTimers, editMode, effects, focusMode, fullColors, groups, media, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, slideNotesActive, slidesOptions, slideTimers, special, styles } from "../../stores"
     import { wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -195,7 +195,7 @@
     }
 
     function openNotes() {
-        if ($textEditActive) textEditActive.set(false)
+        if ($editMode === "text_edit") editMode.set("default")
         slideNotesActive.set(true)
 
         activeEdit.set({ slide: index, items: [], showId })
@@ -251,6 +251,7 @@
     let conditionsUpdater = 0
     onMount(() => {
         const interval = setInterval(() => {
+            if (!Array.isArray(itemsList)) return
             if (itemsList.find((a) => a?.conditions)) conditionsUpdater++
         }, 3000)
 
@@ -317,7 +318,7 @@
                     {#if !altKeyPressed && layoutSlide.overlays?.length && (viewMode !== "lyrics" || noQuickEdit)}
                         {#each layoutSlide.overlays as id}
                             {#if $overlays[id]?.placeUnderSlide === true}
-                                {#each $overlays[id].items as item}
+                                {#each $overlays[id]?.items || [] as item}
                                     <Textbox {item} ref={{ type: "overlay", id }} />
                                 {/each}
                             {/if}
@@ -333,7 +334,6 @@
                                 <!-- backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""} -->
                                 <Textbox
                                     backdropFilter={layoutSlide["backdrop-filter"] || ""}
-                                    disableListTransition
                                     {item}
                                     isOutputted={!!output?.color}
                                     revealed={output?.line ?? -1}
@@ -371,7 +371,7 @@
                     {#if !altKeyPressed && layoutSlide.overlays?.length && (viewMode !== "lyrics" || noQuickEdit)}
                         {#each layoutSlide.overlays as id}
                             {#if $overlays[id] && !$overlays[id]?.placeUnderSlide}
-                                {#each $overlays[id].items as item}
+                                {#each $overlays[id]?.items || [] as item}
                                     <Textbox {item} ref={{ type: "overlay", id }} />
                                 {/each}
                             {/if}
@@ -396,7 +396,7 @@
                         </div>
                     {/if}
 
-                    <div data-title={name || ""} style="height: 2px;" />
+                    <div data-title={name || ""} style="height: 2px;background-color: {color};" />
                 {:else if viewMode !== "lyrics" || noQuickEdit}
                     <!-- style="width: {resolution.width * zoom}px;" -->
                     <div class="label" data-title={removeTagsAndContent(name || "")} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
