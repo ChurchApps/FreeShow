@@ -6,12 +6,14 @@
     import { getAccess } from "../../utils/profile"
     import { getSortedStageItems, shouldItemBeShown } from "../edit/scripts/itemHelpers"
     import { clone } from "../helpers/array"
+    import Icon from "../helpers/Icon.svelte"
     import { getStageOutputId, getStageResolution } from "../helpers/output"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
     import SelectElem from "../system/SelectElem.svelte"
     import { getSlideTextItems, stageItemToItem } from "./stage"
     import Stagebox from "./Stagebox.svelte"
+    import { translateText } from "../../utils/language"
 
     export let layout: StageLayout
     export let id: string
@@ -72,15 +74,17 @@
                         {/if}
                     {/each}
                 </Zoomed>
-                <div class="label" data-title={layout.name}>
+                <div class="label" style="position: relative;" data-title={layout.name}>
+                    {#if layout.password}
+                        <span style="position: absolute;left: 5px;" data-title={translateText("remote.password")}>
+                            <Icon id="locked" size={0.8} style="opacity: 0.5;" white />
+                        </span>
+                    {/if}
+
                     <!-- no need to display index number -->
                     <!-- <span style="position: absolute;display: contents;">{index + 1}</span> -->
+
                     <span class="text">
-                        <!-- {#if show.name}
-              {show.name}
-            {:else}
-              <span style="opacity: 0.5;"><T id="main.unnamed" /></span>
-            {/if} -->
                         <HiddenInput value={layout.name} id={"stage_" + id} on:edit={edit} allowEmpty={false} allowEdit={!readOnly} />
                     </span>
                 </div>
