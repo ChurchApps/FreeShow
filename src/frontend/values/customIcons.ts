@@ -1,4 +1,5 @@
 export const customIcons = {
+    empty: '<path d="M0 0h24v24H0z" fill="none"/>',
     circle: '<path d="M0 0h24v24H0z" fill="none"/><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2z"/>',
     triangle: '<path d="M0 0h24v24H0z" fill="none"/><path d="M1 21h22L12 2"/>',
     right_triangle: '<path d="M0 0h24v24H0z" fill="none"/><path d="M2 22h20L2 2"/>',
