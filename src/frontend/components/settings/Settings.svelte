@@ -4,6 +4,7 @@
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tip from "../main/Tip.svelte"
+    import AudioRouting from "./tabs/AudioRouting.svelte"
     import Connection from "./tabs/Connection.svelte"
     import Files from "./tabs/Files.svelte"
     import FilesButtons from "./tabs/FilesButtons.svelte"
@@ -63,7 +64,7 @@
         </div>
     </div>
 
-    <div class="scroll" on:scroll={scroll}>
+    <div class="scroll" style={tabId === "audio" ? "--padding: 20px;" : ""} on:scroll={scroll}>
         {#if tabId === "general"}
             <General />
         {:else if tabId === "display_settings"}
@@ -74,6 +75,8 @@
             {/if}
         {:else if tabId === "styles"}
             <Styles />
+        {:else if tabId === "audio"}
+            <AudioRouting />
         {:else if tabId === "connection"}
             <Connection />
         {:else if tabId === "files"}

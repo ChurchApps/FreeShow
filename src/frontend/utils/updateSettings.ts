@@ -1,8 +1,11 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import type { Output } from "../../types/Output"
+import type { SaveListSettings, SaveListSyncedSettings } from "../../types/Save"
 import type { Metadata, Themes } from "../../types/Settings"
+import { initAudioRouting } from "../audio/routing/audioRoutingInit"
 import { clone, keysToID } from "../components/helpers/array"
 import { checkFFmpeg, checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
@@ -51,6 +54,7 @@ import {
     loaded,
     loadedState,
     lockedOverlays,
+    maxConnections,
     mediaFolders,
     mediaOptions,
     mediaTags,
@@ -59,6 +63,7 @@ import {
     openedFolders,
     os,
     outLocked,
+    outputs,
     overlayCategories,
     overlays,
     playerTags,
@@ -68,12 +73,15 @@ import {
     projectView,
     remotePassword,
     resized,
+    scriptureSettings,
+    scriptures,
     serverData,
     showRecentlyUsedProjects,
     showsPath,
     slidesOptions,
     sorted,
     special,
+    splitLines,
     styles,
     templateCategories,
     theme,
@@ -83,16 +91,15 @@ import {
     timeline,
     timerTags,
     timers,
+    transitionData,
     variableTags,
     variables,
     version,
     videoMarkers,
     videosData,
-    videosTime
-} from "../stores"
-import { OUTPUT } from "./../../types/Channels"
-import type { SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
-import { maxConnections, outputs, scriptureSettings, scriptures, splitLines, transitionData, volume } from "./../stores"
+    videosTime,
+    volume
+} from "./../stores"
 import { checkForUpdates } from "./checkForUpdates"
 import { isMainWindow, startAutosave } from "./common"
 import { setLanguage } from "./language"
@@ -444,5 +451,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     contentProviderData: (v: any) => contentProviderData.set(v),
     obsData: (v: any) => obsData.set(v),
     effects: (a: any) => effects.set(a),
-    deletedDefaults: (a: any) => deletedDefaults.set({ ...get(deletedDefaults), ...a })
+    deletedDefaults: (a: any) => deletedDefaults.set({ ...get(deletedDefaults), ...a }),
+    audioRouting: (v: any) => initAudioRouting(v)
 }

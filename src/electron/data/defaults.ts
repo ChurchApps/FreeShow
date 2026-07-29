@@ -165,5 +165,6 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     globalRegexes: {},
     customMetadata: { disabled: [], custom: [] },
     effects: {},
+    audioRouting: {},
     deletedDefaults: {}
 }

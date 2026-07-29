@@ -100,8 +100,18 @@ export class AudioEqualizer {
         filter.gain.setValueAtTime(effectiveGain, currentTime)
     }
 
-    private connectFilters() {
-        if (!this.inputGainNode || !this.outputGainNode || this.filterNodes.length === 0) return
+    public connectFilters() {
+        if (!this.inputGainNode || !this.outputGainNode) return
+
+        this.inputGainNode.disconnect()
+        for (const filter of this.filterNodes) {
+            filter.disconnect()
+        }
+
+        if (this.filterNodes.length === 0) {
+            this.inputGainNode.connect(this.outputGainNode)
+            return
+        }
 
         // Connect input -> first filter
         this.inputGainNode.connect(this.filterNodes[0])
@@ -113,6 +123,11 @@ export class AudioEqualizer {
 
         // Connect last filter -> output
         this.filterNodes[this.filterNodes.length - 1].connect(this.outputGainNode)
+    }
+
+    public getNodes(): { input: GainNode; output: GainNode } | null {
+        if (!this.inputGainNode || !this.outputGainNode) return null
+        return { input: this.inputGainNode, output: this.outputGainNode }
     }
 
     // Connect an audio source through the equalizer
@@ -387,6 +402,15 @@ let autoInitializeCallback: (() => Promise<void>) | null = null
 
 export function setAutoInitializeCallback(callback: () => Promise<void>) {
     autoInitializeCallback = callback
+}
+
+// Get symbols for external reference
+export function getGlobalEqualizer(): AudioEqualizer | null {
+    return globalEqualizer
+}
+
+export function getGlobalEqualizerNodes(): { input: GainNode; output: GainNode } | null {
+    return globalEqualizer?.getNodes() || null
 }
 
 // Connect an audio source node to the equalizer (for integration with existing audio systems)

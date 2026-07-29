@@ -1,11 +1,13 @@
 import { get } from "svelte/store"
+import { AudioAnalyser } from "../../../audio/audioAnalyser"
 import { AudioPlayer } from "../../../audio/audioPlayer"
+import { AudioRoutingManager } from "../../../audio/routing/audioRoutingManager"
 import { customMetadata, metronome, metronomeTimer, playingMetronome, special, volume } from "../../../stores"
 import type { API_metronome } from "../../actions/api"
 import { clone } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
 
-const audioContext = new AudioContext()
+const audioContext = AudioAnalyser.getAudioContext()
 
 const defaultMetronomeValues = {
     tempo: 120, // BPM
@@ -163,6 +165,9 @@ function getTimeToNextNote() {
     return nextPlayTime - timePassed
 }
 
+const accentVolume = 2
+const secondaryVolume = 1.75
+
 async function playNote(time: number, first = false) {
     const source = audioContext.createBufferSource()
     const clickSound = get(special)?.clickSound || "metal"
@@ -175,21 +180,28 @@ async function playNote(time: number, first = false) {
     // volume control
     const gainNode = audioContext.createGain()
     const audioChannel = metronomeValues.audioChannel || ""
+
+    let routingNode: AudioNode = gainNode
+
     if (audioChannel === "mono_left" || audioChannel === "mono_right") {
         const merger = audioContext.createChannelMerger(2)
         source.connect(gainNode)
 
         const channel = audioChannel === "mono_left" ? 0 : 1
         gainNode.connect(merger, 0, channel)
-
-        merger.connect(audioContext.destination)
+        routingNode = merger
     } else {
         // Stereo (default)
         source.connect(gainNode)
-        gainNode.connect(audioContext.destination)
     }
 
-    // WIP connect getAnalyser()
+    // Connect to AudioRoutingManager (this also handles capture/visualizer)
+    AudioRoutingManager.getInstance().registerInputNode("metronome", routingNode)
+    AudioRoutingManager.getInstance().updateRoutingNodes()
+
+    source.onended = () => {
+        AudioRoutingManager.getInstance().unregisterInputNode("metronome", routingNode)
+    }
 
     // custom audio output
     if (metronomeValues.audioOutput !== undefined) {
@@ -205,8 +217,6 @@ async function playNote(time: number, first = false) {
     source.start(audioContext.currentTime + time)
 }
 
-const accentVolume = 2
-const secondaryVolume = 1.75
 function getVolume(beatVolume) {
     return beatVolume * (metronomeValues.volume || 1) * get(volume) * AudioPlayer.getGain()
 }

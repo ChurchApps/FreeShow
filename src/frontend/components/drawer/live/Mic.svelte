@@ -98,7 +98,8 @@
         if (retryTimeout) clearTimeout(retryTimeout)
     })
 
-    $: muted = !$playingAudio[mic.id]
+    $: micId = "mic_sub_" + mic.id
+    $: muted = !$playingAudio[micId]
 </script>
 
 <div class="main">

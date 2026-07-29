@@ -13,6 +13,7 @@ import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
 import { AudioMultichannel } from "./audioMultichannel"
 import { AudioPlaylist } from "./audioPlaylist"
+import { AudioRoutingManager } from "./routing/audioRoutingManager"
 
 type AudioMetadata = {
     name: string
@@ -206,6 +207,10 @@ export class AudioPlayer {
 
     private static async createAudioFromStream(id: string, stream: MediaStream): Promise<HTMLAudioElement | null> {
         const audio = new Audio()
+        // The audio element should be muted for streams, as we are routing the stream directly
+        // through AudioContext.createMediaStreamSource. If not muted, the element plays
+        // directly to the system output, bypassing our routing graph.
+        audio.muted = true
         audio.srcObject = stream
         audio.addEventListener("play", () => {
             updatePlayingStore(id, "paused", false)
@@ -217,7 +222,13 @@ export class AudioPlayer {
                 AudioAnalyserMerger.stop()
             }
         })
-        return await this.waitForAudio(id, audio)
+        // For streams, we don't necessarily need to wait for 'canplay'
+        // as the stream is already active, but we'll try to load it.
+        try {
+            await audio.play().catch(() => {})
+        } catch (e) {}
+
+        return audio
     }
 
     private static waitForAudio(pathOrId: string, audio: HTMLAudioElement): Promise<HTMLAudioElement | null> {
@@ -245,15 +256,16 @@ export class AudioPlayer {
     private static initAudio(id: string, waitToPlay = 0, startPaused = false) {
         setTimeout(async () => {
             // audio might have been cleared
-            const audio = this.getAudio(id)
-            if (!audio) return
+            const playing = get(playingAudio)[id]
+            if (!playing) return
+            const audio = playing.audio
 
             if (!startPaused) this.play(id)
             customActionActivation("audio_start")
 
-            // WIP get microphone input stream (audio will have to be muted in that case)
-            // let stream = this.getPlaying(id)?.stream || audio
-            await AudioAnalyser.attach(id, audio)
+            // Use stream if available for better support in some browsers
+            await AudioAnalyser.attach(id, playing.stream || audio)
+            AudioRoutingManager.getInstance().updateRoutingNodes()
             this.applyProcessing(id)
         }, waitToPlay * 1000)
     }

@@ -8,7 +8,7 @@ import type { Item, Layout, LayoutRef, Media, OutSlide, Show, Slide, SlideData, 
 import { AudioAnalyser } from "../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audioFading"
 import { requestMain, sendMain } from "../../IPC/main"
-import { actions, activeFocus, activeProject, activeRename, activeShow, activeTimers, allOutputs, categories, connections, currentOutputSettings, customMessageCredits, disabledServers, effects, focusMode, lockedOverlays, media, outputDisplay, outputs, outputSlideCache, outputState, overlays, overlayTimers, playingVideos, projects, scriptures, scriptureSettings, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, usageLog } from "../../stores"
+import { actions, activeFocus, activeProject, activeRename, activeShow, activeTimers, allOutputs, audioRouting, categories, connections, currentOutputSettings, customMessageCredits, disabledServers, effects, focusMode, lockedOverlays, media, outputDisplay, outputs, outputSlideCache, outputState, overlays, overlayTimers, playingVideos, projects, scriptures, scriptureSettings, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, usageLog } from "../../stores"
 import { trackScriptureUsage } from "../../utils/analytics"
 import { isMainWindow, isOutputWindow, newToast } from "../../utils/common"
 import { translateText } from "../../utils/language"
@@ -834,10 +834,48 @@ export function addOutput(onlyFirst = false, styleId = "", enabled = true) {
 
         if (get(currentOutputSettings) !== id) currentOutputSettings.set(id)
         activeRename.set("output_" + id)
+        updateAudioRoutingOnOutputCreated(id, false)
         return output
     })
 
     return outputId
+}
+
+function updateAudioRoutingOnOutputCreated(outputId: string, isStage: boolean) {
+    audioRouting.update((config) => {
+        const copy = JSON.parse(JSON.stringify(config || { mergers: [], connections: [] }))
+        const mergerId = "merger_" + outputId
+        const outObj = get(outputs)[outputId]
+        const mergerName = ((outObj?.name) || "Output") + " Bus"
+
+        if (!copy.mergers.some((m: any) => m.id === mergerId)) {
+            copy.mergers.push({ id: mergerId, name: mergerName })
+            copy.connections.push({ from: "drawer_audio", to: mergerId })
+            copy.connections.push({ from: "mic_default", to: mergerId })
+
+            const targetOutputId = isStage ? "output_window" : (outputId === "default" ? "speaker_default" : "speaker_sub_" + outputId)
+            copy.connections.push({ from: mergerId, to: targetOutputId })
+        }
+        return copy
+    })
+}
+
+function updateAudioRoutingOnOutputDeleted(outputId: string) {
+    audioRouting.update((config) => {
+        const copy = JSON.parse(JSON.stringify(config || { mergers: [], connections: [] }))
+        const mergerId = "merger_" + outputId
+        const subSpeakerId = "speaker_sub_" + outputId
+        const subNetId = "network_sub_" + outputId
+
+        // Remove merger and any connections linked to it or the output
+        copy.mergers = copy.mergers.filter((m: any) => m.id !== mergerId)
+        copy.connections = copy.connections.filter((conn: any) =>
+            conn.from !== mergerId && conn.to !== mergerId &&
+            conn.from !== subSpeakerId && conn.to !== subSpeakerId &&
+            conn.from !== subNetId && conn.to !== subNetId
+        )
+        return copy
+    })
 }
 
 export async function checkFFmpeg(): Promise<boolean> {
@@ -876,6 +914,7 @@ export function enableStageOutput(options: any = {}) {
 
         send(OUTPUT, ["CREATE"], { ...a[id], id })
         activeRename.set("output_" + id)
+        updateAudioRoutingOnOutputCreated(id, true)
 
         return a
     })
@@ -906,6 +945,7 @@ export function deleteOutput(outputId: string) {
         delete a[outputId]
 
         currentOutputSettings.set(Object.keys(a)[0])
+        updateAudioRoutingOnOutputDeleted(outputId)
         return a
     })
 }

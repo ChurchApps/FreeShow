@@ -1,30 +1,14 @@
 <script lang="ts">
-    import { outputs } from "../../../stores"
-    import { translateText } from "../../../utils/language"
-    import { getAllNormalOutputs } from "../../helpers/output"
+    import { audioRouting } from "../../../stores"
     import AudioChannelMixer from "./AudioChannelMixer.svelte"
-    import AudioMixersGroup from "./AudioMixersGroup.svelte"
 
-    const outputIds = getAllNormalOutputs().map((a) => a.id)
-
-    const mixerGroups = [
-        {
-            icon: "display_settings",
-            label: "settings.display_settings",
-            channels: outputIds.map((id) => ({ id, label: $outputs[id]?.name || id }))
-        }
-    ]
+    $: mergers = $audioRouting?.mergers || [{ id: "main", name: "Main Bus" }]
 </script>
 
 <div class="mixers">
-    <AudioChannelMixer channelId="main" label={translateText("audio.main")} />
-
-    {#each mixerGroups as group}
-        <AudioMixersGroup label={group.label} icon={group.icon} channels={group.channels} />
+    {#each mergers as merger (merger.id)}
+        <AudioChannelMixer channelId={merger.id} label={merger.name} />
     {/each}
-
-    <!-- WIP microphones / audio streams / metronome / playing playlists -->
-    <!-- music / sound effects -->
 </div>
 
 <style>

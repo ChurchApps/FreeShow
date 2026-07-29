@@ -39,6 +39,7 @@ export type SaveListSyncedSettings =
     | "globalRegexes"
     | "customMetadata"
     | "effects"
+    | "audioRouting"
     | "deletedDefaults"
 
 export type SaveListSettings =

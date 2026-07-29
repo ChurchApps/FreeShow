@@ -18,6 +18,7 @@ import {
     audioEffects,
     audioFolders,
     audioPlaylists,
+    audioRouting,
     autoOutput,
     autosave,
     calendarAddShow,
@@ -271,6 +272,7 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         globalRegexes,
         customMetadata,
         effects,
+        audioRouting,
         deletedDefaults
     }
 }
@@ -502,5 +504,6 @@ const saveList: { [key in SaveList]: any } = {
     contentProviderData,
     obsData: null,
     effects,
+    audioRouting,
     deletedDefaults: null
 }

@@ -2,12 +2,13 @@ import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { OUTPUT } from "../../types/Channels"
 import { clone } from "../components/helpers/array"
-import { audioChannels, outputs } from "../stores"
+import { audioChannels, audioChannelsData, audioRouting, outputs, playingAudio } from "../stores"
 import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioPlaylist } from "./audioPlaylist"
+import { AudioInputCapture } from "./routing/audioInputCapture"
 
 export class AudioAnalyserMerger {
     static dBmin = -80
@@ -25,22 +26,7 @@ export class AudioAnalyserMerger {
     }
 
     static getChannels() {
-        const channels = clone(this.channels)
-
-        // smooth channel values
-        Object.entries(channels).forEach(([id, channelArray]) => {
-            channelArray.forEach((channel, _channelIndex) => {
-                if (typeof channel.dB === "number") channel.dB = { value: channel.dB }
-                if (isNaN(channel.dB.value)) return
-
-                // already smoothed
-                if (id === "main") return
-
-                // channel.dB.value = this.getExponentiallySmoothedVolume(`${id}:${channelIndex}`, channel.dB.value)
-            })
-        })
-
-        return channels
+        return clone(this.channels)
     }
 
     static stop() {
@@ -49,6 +35,7 @@ export class AudioAnalyserMerger {
         this.timeout = null
         this.channels = {}
         audioChannels.set([])
+        audioChannelsData.set({})
     }
 
     private static timeout: NodeJS.Timeout | null = null
@@ -109,6 +96,77 @@ export class AudioAnalyserMerger {
 
         const mergedChannels = merged.map((a, i) => ({ dB: { value: this.mergeDB(a, i) } }))
         audioChannels.set(mergedChannels)
+
+        // Store per-node volume data for visualizers & Audio drawer mixers
+        const nodeVolumes: { [key: string]: { dB: number } } = {}
+        const capture = AudioInputCapture.getInstance()
+
+        // 1. Process standard analyzer channels (Main/Drawer)
+        Object.entries(allChannels).forEach(([id, chs]) => {
+            if (chs?.length) {
+                const avg = chs.reduce((sum, c) => sum + (c.dB?.value ?? -80), 0) / chs.length
+                if (avg > -80) nodeVolumes[id] = { dB: avg }
+            }
+        })
+        if (allChannels.main?.length) {
+            const avgDrawer = allChannels.main.reduce((sum, c) => sum + (c.dB?.value ?? -80), 0) / allChannels.main.length
+            if (avgDrawer > -80) {
+                nodeVolumes["drawer_audio"] = { dB: avgDrawer }
+            }
+        }
+
+        // 2. Add real-time levels from AudioInputCapture for all nodes
+        const config = get(audioRouting)
+        const playing = AudioPlayer.getAllPlaying()
+        const inputLevels: { [key: string]: number[] } = {}
+
+        // Capture data for active playing sources
+        playing.forEach((id) => {
+            const audioPlaying = get(playingAudio)[id]
+            if (!audioPlaying || audioPlaying.paused) return
+
+            const isMic = audioPlaying.isMic === true || id.startsWith("mic_sub_")
+            const nodeKey = isMic ? id : id === "metronome" ? "metronome" : "drawer_audio"
+
+            // Prefer allChannels.main for drawer
+            if (nodeKey === "drawer_audio" && nodeVolumes["drawer_audio"] !== undefined) return
+
+            const data = capture.getVisualizerData(nodeKey)
+            if (data && (data.db > -80 || isMic)) {
+                ;(inputLevels[nodeKey] ??= []).push(data.db)
+                if (isMic) (inputLevels["mic_default"] ??= []).push(data.db)
+            }
+        })
+
+        // Combine captured input levels
+        Object.entries(inputLevels).forEach(([key, dbs]) => {
+            const linearSum = dbs.reduce((sum, db) => sum + Math.pow(10, db / 20), 0)
+            nodeVolumes[key] = { dB: Math.round(20 * Math.log10(linearSum / dbs.length)) }
+        })
+
+        // Capture data for mergers and outputs directly
+        if (config) {
+            ;[...config.mergers.map((m) => m.id), "speaker_default", "network_default", "icecast"].forEach((id) => {
+                const data = capture.getVisualizerData(id)
+                if (data && data.db > -80) nodeVolumes[id] = { dB: Math.round(data.db) }
+            })
+
+            // Fallback: Calculate merger/output levels mapping based on graph if capture isn't available
+            config.mergers.forEach((m) => {
+                if (nodeVolumes[m.id] !== undefined) return
+                const activeDbs = config.connections
+                    .filter((c) => c.to === m.id && nodeVolumes[c.from] !== undefined)
+                    .map((c) => nodeVolumes[c.from].dB)
+                    .filter((db) => db > -80)
+
+                if (activeDbs.length) {
+                    const linear = activeDbs.reduce((s, db) => s + Math.pow(10, db / 20), 0) / activeDbs.length
+                    nodeVolumes[m.id] = { dB: Math.round(20 * Math.log10(linear)) }
+                }
+            })
+        }
+
+        audioChannelsData.set(nodeVolumes as any)
 
         if (isOutputWindow()) {
             send(OUTPUT, ["AUDIO_MAIN"], { id: Object.keys(get(outputs))[0], channels: mergedChannels })
