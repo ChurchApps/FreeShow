@@ -146,7 +146,10 @@ export class AudioAnalyserMerger {
 
         // Capture data for mergers and outputs directly
         if (config) {
-            ;[...config.mergers.map((m) => m.id), "speaker_default", "network_default", "icecast"].forEach((id) => {
+            const subOutputIds = config.connections
+                .map((c) => c.to)
+                .filter((to) => to.startsWith("speaker_sub_") || to.startsWith("network_sub_"))
+            ;[...config.mergers.map((m) => m.id), "speaker_default", "network_default", "icecast", ...subOutputIds].forEach((id) => {
                 const data = capture.getVisualizerData(id)
                 if (data && data.db > -80) nodeVolumes[id] = { dB: Math.round(data.db) }
             })
@@ -166,7 +169,13 @@ export class AudioAnalyserMerger {
             })
         }
 
-        audioChannelsData.set(nodeVolumes as any)
+        audioChannelsData.update((prev) => {
+            const copy = { ...prev }
+            Object.entries(nodeVolumes).forEach(([id, vol]) => {
+                copy[id] = { ...copy[id], ...vol }
+            })
+            return copy
+        })
 
         if (isOutputWindow()) {
             send(OUTPUT, ["AUDIO_MAIN"], { id: Object.keys(get(outputs))[0], channels: mergedChannels })

@@ -1,5 +1,7 @@
+import { get } from "svelte/store"
 import type { AudioRoutingConfig } from "../../../types/AudioRouting"
-import { audioRouting } from "../../stores"
+import { audioChannelsData, audioRouting } from "../../stores"
+import { AudioAnalyser } from "../audioAnalyser"
 import { AudioInputCapture } from "./audioInputCapture"
 
 export class AudioRoutingManager {
@@ -16,6 +18,12 @@ export class AudioRoutingManager {
             if (val) {
                 this.config = val
                 this.updateRoutingNodes()
+                AudioAnalyser.recorderActivate()
+            }
+        })
+        audioChannelsData.subscribe((data) => {
+            if (data) {
+                this.updateAllGains()
             }
         })
     }
@@ -42,13 +50,79 @@ export class AudioRoutingManager {
         this.updateRoutingNodes()
     }
 
+    private speakerSinks: Map<string, { ctx: AudioContext; element: HTMLAudioElement }> = new Map()
+
+    private getOrCreateSpeakerSink(deviceId: string): { ctx: AudioContext; element: HTMLAudioElement } | null {
+        if (this.speakerSinks.has(deviceId)) {
+            return this.speakerSinks.get(deviceId)!
+        }
+        try {
+            const ctx = new AudioContext({ latencyHint: "interactive" })
+            if ((ctx as any).setSinkId) {
+                ;(ctx as any).setSinkId(deviceId).catch((e: any) => console.error(`[AudioRoutingManager] Failed to set sinkId ${deviceId}:`, e))
+            }
+            const element = new Audio()
+            element.muted = true
+            this.speakerSinks.set(deviceId, { ctx, element })
+            return { ctx, element }
+        } catch (e) {
+            console.error(`[AudioRoutingManager] Could not create sink for device ${deviceId}:`, e)
+            return null
+        }
+    }
+
+    private cleanupUnusedSpeakerSinks(activeDeviceIds: Set<string>) {
+        this.speakerSinks.forEach((sink, deviceId) => {
+            if (!activeDeviceIds.has(deviceId)) {
+                try {
+                    sink.ctx.close()
+                    sink.element.pause()
+                    sink.element.srcObject = null
+                } catch (e) {}
+                this.speakerSinks.delete(deviceId)
+            }
+        })
+    }
+
+    private applyMergerGain(id: string, node: GainNode) {
+        if (!this.audioCtx) return
+        const data = get(audioChannelsData)[id] || {}
+        const isMuted = !!data.isMuted
+        const vol = data.volume ?? 1
+        const targetGain = isMuted ? 0 : Math.max(0, vol)
+        try {
+            node.gain.setValueAtTime(targetGain, this.audioCtx.currentTime)
+        } catch (e) {}
+    }
+
+    public updateAllGains() {
+        if (!this.audioCtx) return
+        const data = get(audioChannelsData) || {}
+        this.mergerNodes.forEach((node, id) => {
+            this.applyMergerGain(id, node)
+        })
+        if (this.masterNode && (this.masterNode as GainNode).gain) {
+            const mainData = data.main || {}
+            const isMuted = !!mainData.isMuted
+            const vol = mainData.volume ?? 1
+            const targetGain = isMuted ? 0 : Math.max(0, vol)
+            try {
+                ;(this.masterNode as GainNode).gain.setValueAtTime(targetGain, this.audioCtx.currentTime)
+            } catch (e) {}
+        }
+    }
+
     public updateRoutingNodes() {
         if (!this.audioCtx) return
 
         // Ensure all configured mergers have corresponding GainNode instances
         this.config.mergers.forEach((m) => {
             if (!this.mergerNodes.has(m.id)) {
-                this.mergerNodes.set(m.id, this.audioCtx!.createGain())
+                const gainNode = this.audioCtx!.createGain()
+                this.mergerNodes.set(m.id, gainNode)
+                this.applyMergerGain(m.id, gainNode)
+            } else {
+                this.applyMergerGain(m.id, this.mergerNodes.get(m.id)!)
             }
         })
 
@@ -64,7 +138,35 @@ export class AudioRoutingManager {
             }
         })
 
+        // Track active child speaker device IDs
+        const activeSubDeviceIds = new Set<string>()
+        this.config.connections.forEach((c) => {
+            if (c.to.startsWith("speaker_sub_")) {
+                activeSubDeviceIds.add(c.to.replace("speaker_sub_", ""))
+            }
+        })
+        this.cleanupUnusedSpeakerSinks(activeSubDeviceIds)
+
         // Connect mergers to sinks (Speakers / Network)
+        const speakerSubMergers = new Map<string, { mergerNode: ChannelMergerNode; maxChannels: number }>()
+
+        // 1. Pre-pass: calculate max channels needed per speaker sub-device and create per-speaker merger nodes
+        this.config.connections.forEach((c) => {
+            if (c.to.startsWith("speaker_sub_")) {
+                const chIndex = (c as any).channelIndex ?? 0
+                const current = speakerSubMergers.get(c.to)
+                const count = Math.max(current?.maxChannels || 2, chIndex + 1)
+                if (!current) {
+                    const mergerNode = this.audioCtx!.createChannelMerger(count)
+                    speakerSubMergers.set(c.to, { mergerNode, maxChannels: count })
+                } else if (count > current.maxChannels) {
+                    const mergerNode = this.audioCtx!.createChannelMerger(count)
+                    speakerSubMergers.set(c.to, { mergerNode, maxChannels: count })
+                }
+            }
+        })
+
+        // 2. Connect individual merger sources to their target speaker channel pins
         this.mergerNodes.forEach((node, id) => {
             try {
                 node.disconnect()
@@ -74,15 +176,49 @@ export class AudioRoutingManager {
             AudioInputCapture.getInstance().captureInput(id, node)
 
             // Speaker Sink
-            const targetsSpeakers = this.config.connections.some((c) => c.from === id && (c.to === "speaker_default" || c.to.startsWith("speaker_sub_")))
-            if (targetsSpeakers && this.masterNode) {
-                node.connect(this.masterNode)
-            }
+            const speakerConns = this.config.connections.filter((c) => c.from === id && (c.to === "speaker_default" || c.to.startsWith("speaker_sub_")))
+            speakerConns.forEach((c) => {
+                if (c.to === "speaker_default") {
+                    if (this.audioCtx) {
+                        node.connect(this.audioCtx.destination)
+                        AudioInputCapture.getInstance().captureInput("speaker_default", node)
+                    }
+                } else if (c.to.startsWith("speaker_sub_")) {
+                    const targetSpeaker = speakerSubMergers.get(c.to)
+                    if (targetSpeaker) {
+                        const channelIndex = (c as any).channelIndex ?? 0
+                        // Connect source merger to target speaker pin
+                        node.connect(targetSpeaker.mergerNode, 0, channelIndex)
+                    }
+                }
+            })
 
             // Network Sink
-            const targetsNetwork = this.config.connections.some((c) => c.from === id && (c.to === "network_default" || c.to === "icecast" || c.to.startsWith("network_sub_")))
-            if (targetsNetwork && this.destinationNode) {
+            const networkConns = this.config.connections.filter((c) => c.from === id && (c.to === "network_default" || c.to === "icecast" || c.to.startsWith("network_sub_")))
+            if (networkConns.length > 0 && this.destinationNode) {
                 node.connect(this.destinationNode)
+                networkConns.forEach((c) => {
+                    AudioInputCapture.getInstance().captureInput(c.to, node)
+                })
+            }
+        })
+
+        // 3. Connect each per-speaker merger to its sub-speaker AudioContext sink & visualizer capture
+        speakerSubMergers.forEach(({ mergerNode, maxChannels }, targetId) => {
+            const deviceId = targetId.replace("speaker_sub_", "")
+            const sink = this.getOrCreateSpeakerSink(deviceId)
+            if (sink) {
+                const streamDest = this.audioCtx!.createMediaStreamDestination()
+                mergerNode.connect(streamDest)
+
+                // Capture combined multi-channel output for speaker visualizer meter with exact channel count
+                AudioInputCapture.getInstance().captureInput(targetId, mergerNode, maxChannels)
+
+                const streamSource = sink.ctx.createMediaStreamSource(streamDest.stream)
+                streamSource.connect(sink.ctx.destination)
+                if (sink.ctx.state === "suspended") {
+                    sink.ctx.resume().catch(() => {})
+                }
             }
         })
 
@@ -93,6 +229,11 @@ export class AudioRoutingManager {
         if (this.destinationNode) {
             AudioInputCapture.getInstance().captureInput("network_default", this.destinationNode)
             AudioInputCapture.getInstance().captureInput("icecast", this.destinationNode)
+            this.config.connections.forEach((c) => {
+                if (c.to.startsWith("network_sub_")) {
+                    AudioInputCapture.getInstance().captureInput(c.to, this.destinationNode!)
+                }
+            })
         }
 
         // Update input connectivity (real-time routing)

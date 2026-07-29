@@ -92,6 +92,7 @@ export class AudioAnalyser {
         // Start the pipeline immediately with the current channel count (no blocking)
         AudioRoutingManager.getInstance().setAudioContext(this.getAudioContext())
         this.initAnalysers()
+        this.initDestination()
         this.initRecorder()
         this.customOutput(get(special).audioOutput)
 
@@ -462,29 +463,15 @@ export class AudioAnalyser {
             prev = seg.output
         }
 
-        // Connect master output to speakers if any merger is routed to speakers
-        const routing = get(audioRouting)
-        const connectedToSpeakers = routing?.connections.some((c) => c.to === "speaker_default" || c.to.startsWith("speaker_sub_"))
-
-        if (connectedToSpeakers) {
-            try {
-                prev.connect(this.ac.destination)
-                // Capture the speaker output for the visualizer in settings
-                AudioInputCapture.getInstance().captureInput("speaker_default", prev)
-
-                // Also capture individual speaker sub-nodes if they are active in the routing config
-                routing?.connections.forEach((c) => {
-                    if (c.to.startsWith("speaker_sub_")) {
-                        AudioInputCapture.getInstance().captureInput(c.to, prev)
-                    }
-                })
-            } catch (e) {}
-        }
+        // Master gain node is managed by AudioRoutingManager
+        try {
+            AudioInputCapture.getInstance().captureInput("speaker_default", prev)
+        } catch (e) {}
     }
 
     static setGain(value: number) {
         if (!this.gainNode) this.initGain()
-        this.gainNode!.gain.value = Math.max(1, value)
+        this.gainNode!.gain.setValueAtTime(Math.max(0, value), this.ac.currentTime)
     }
 
     static setPitch(id: string, value: number) {
@@ -611,20 +598,13 @@ export class AudioAnalyser {
         let outputList = Object.values(get(outputs))
         if (isOutputWindow()) outputList = [Object.values(get(outputs))[0]]
 
-        // any outputs with webrtc streaming enabled
-        if (outputList.find((a) => a && a.enabled && a.webrtc)) return true
-
-        // any outputs with rtmp streaming enabled
-        if (outputList.find((a) => a && a.enabled && a.rtmp)) return true
-
-        // any outputs with ndi enabled
-        if (outputList.find((a) => a && a.enabled && a.ndi)) return true
-
-        // any outputs with blackmagic enabled (audio always enabled for blackmagic)
-        if (outputList.find((a) => a && a.enabled && a.blackmagic)) return true
-
-        // Icecast streaming enabled
+        if (outputList.find((a) => a && a.enabled && (a.webrtc || a.rtmp || a.ndi || a.blackmagic))) return true
         if (get(special).icecastEnabled) return true
+
+        const routing = get(audioRouting)
+        if (routing?.connections.some((c) => c.to === "network_default" || c.to === "icecast" || c.to.startsWith("network_sub_"))) {
+            return true
+        }
 
         return false
     }

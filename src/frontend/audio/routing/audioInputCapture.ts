@@ -1,13 +1,29 @@
-export interface InputVisualizerData {
-    nodeId: string
+export interface ChannelVisualizerData {
+    channelIndex: number
     db: number
     spectrum: number[]
 }
 
+export interface InputVisualizerData {
+    nodeId: string
+    db: number
+    channels: ChannelVisualizerData[]
+    // Backwards compatibility properties
+    dbL?: number
+    dbR?: number
+    spectrum?: number[]
+}
+
+interface CapturedAnalyzers {
+    splitter: ChannelSplitterNode
+    analysers: AnalyserNode[]
+    channelCount: number
+}
+
 export class AudioInputCapture {
     private static instance: AudioInputCapture
-    private analysers: Map<string, AnalyserNode> = new Map()
-    private buffers: Map<string, Uint8Array> = new Map()
+    private analysers: Map<string, CapturedAnalyzers> = new Map()
+    private buffers: Map<string, Uint8Array[]> = new Map()
     private audioCtx: AudioContext | null = null
 
     private constructor() {}
@@ -21,66 +37,98 @@ export class AudioInputCapture {
     }
 
     /**
-     * Connect a node to an analyzer for visualization.
-     * Reuses existing analyzer if available to prevent node churn.
+     * Connect a node to dynamic N-channel analyzers based on the node's channel count.
      */
-    public captureInput(nodeId: string, source: AudioNode): AnalyserNode | null {
+    public captureInput(nodeId: string, source: AudioNode, forcedChannelCount?: number): CapturedAnalyzers | null {
         const ctx = (this.audioCtx ??= source.context as AudioContext)
         if (!ctx) return null
 
-        let analyser = this.analysers.get(nodeId)
-        if (!analyser) {
+        const channelCount = forcedChannelCount ?? Math.max(source.numberOfOutputs || 1, source.channelCount || 2)
+        let entry = this.analysers.get(nodeId)
+
+        if (!entry || entry.channelCount !== channelCount) {
+            if (entry) this.removeInput(nodeId)
+
             try {
-                analyser = ctx.createAnalyser()
-                analyser.fftSize = 64
-                analyser.smoothingTimeConstant = 0.8
-                this.analysers.set(nodeId, analyser)
+                const splitter = ctx.createChannelSplitter(channelCount)
+                const analysers: AnalyserNode[] = []
+
+                for (let i = 0; i < channelCount; i++) {
+                    const analyser = ctx.createAnalyser()
+                    analyser.fftSize = 64
+                    analyser.smoothingTimeConstant = 0.8
+                    splitter.connect(analyser, i)
+                    analysers.push(analyser)
+                }
+
+                entry = { splitter, analysers, channelCount }
+                this.analysers.set(nodeId, entry)
             } catch (e) {
-                console.warn(`Could not create analyser for ${nodeId}:`, e)
+                console.warn(`Could not create ${channelCount}-channel analysers for ${nodeId}:`, e)
                 return null
             }
         }
 
         try {
-            source.connect(analyser)
-            return analyser
+            source.connect(entry.splitter)
+            return entry
         } catch (e) {
             return null
         }
     }
 
     public removeInput(nodeId: string) {
-        const analyser = this.analysers.get(nodeId)
-        if (analyser) {
-            analyser.disconnect()
+        const entry = this.analysers.get(nodeId)
+        if (entry) {
+            try {
+                entry.splitter.disconnect()
+                entry.analysers.forEach((a) => a.disconnect())
+            } catch (e) {}
             this.analysers.delete(nodeId)
             this.buffers.delete(nodeId)
         }
     }
 
     public getVisualizerData(nodeId: string): InputVisualizerData | null {
-        const analyser = this.analysers.get(nodeId)
-        if (!analyser) return null
+        const entry = this.analysers.get(nodeId)
+        if (!entry) return null
 
-        let buffer = this.buffers.get(nodeId)
-        if (!buffer) {
-            buffer = new Uint8Array(analyser.frequencyBinCount)
-            this.buffers.set(nodeId, buffer)
+        let nodeBuffers = this.buffers.get(nodeId)
+        if (!nodeBuffers || nodeBuffers.length !== entry.channelCount) {
+            nodeBuffers = entry.analysers.map((a) => new Uint8Array(a.frequencyBinCount))
+            this.buffers.set(nodeId, nodeBuffers)
         }
 
-        analyser.getByteFrequencyData(buffer as Uint8Array<ArrayBuffer>)
+        const channelResults: ChannelVisualizerData[] = []
+        let maxDb = -80
 
-        let sum = 0
-        const spectrum = new Array(buffer.length)
-        for (let i = 0; i < buffer.length; i++) {
-            const val = buffer[i] / 255
-            sum += val
-            spectrum[i] = val
+        entry.analysers.forEach((analyser, i) => {
+            const buf = nodeBuffers![i]
+            analyser.getByteFrequencyData(buf as Uint8Array<ArrayBuffer>)
+
+            let sumSquare = 0
+            const spectrum = new Array(buf.length)
+            for (let j = 0; j < buf.length; j++) {
+                const norm = buf[j] / 255
+                sumSquare += norm * norm
+                spectrum[j] = norm
+            }
+
+            const rms = Math.sqrt(buf.length ? sumSquare / buf.length : 0)
+            // Convert RMS (0..1) to decibels (-60 dB floor to 0 dB max)
+            const db = rms > 0.001 ? Math.max(-60, Math.min(0, 20 * Math.log10(rms))) : -60
+            if (db > maxDb) maxDb = db
+
+            channelResults.push({ channelIndex: i, db, spectrum })
+        })
+
+        return {
+            nodeId,
+            db: maxDb,
+            channels: channelResults,
+            dbL: channelResults[0]?.db ?? -80,
+            dbR: channelResults[1]?.db ?? channelResults[0]?.db ?? -80,
+            spectrum: channelResults[0]?.spectrum || []
         }
-
-        const avg = buffer.length ? sum / buffer.length : 0
-        const db = avg > 0 ? 20 * Math.log10(avg) : -80
-
-        return { nodeId, db, spectrum }
     }
 }

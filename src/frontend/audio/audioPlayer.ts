@@ -6,7 +6,7 @@ import { customActionActivation } from "../components/actions/actions"
 import { encodeFilePath, getFileName, locateMediaFile, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { requestMain, sendMain } from "../IPC/main"
-import { activePlaylist, audioChannelsData, dictionary, media, outLocked, playingAudio, playingAudioPaths, special, volume } from "../stores"
+import { activePlaylist, dictionary, media, outLocked, playingAudio, playingAudioPaths, special, volume } from "../stores"
 import { addToMediaFolder } from "../utils/cloudSync"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
@@ -449,9 +449,8 @@ export class AudioPlayer {
     }
 
     static getVolume(id: string | null = null, _updater = get(volume)) {
-        const mainVolume = get(audioChannelsData).main?.isMuted ? 0 : _updater
-        if (!id) return mainVolume
-        return mainVolume * (get(media)[id]?.volume || 1)
+        if (!id) return _updater
+        return get(media)[id]?.volume || 1
     }
 
     static getGain() {
@@ -478,14 +477,25 @@ export class AudioPlayer {
         return globalEnd > 0 ? Math.min(duration, globalEnd) : duration
     }
 
-    static getOutputs(): Promise<{ value: string; label: string }[]> {
+    static getOutputs(): Promise<{ value: string; label: string; channels: number }[]> {
         return new Promise((resolve) => {
             navigator.mediaDevices
                 .enumerateDevices()
-                .then((devices) => {
-                    // only get audio outputs & not "default" becuase that does not work
+                .then(async (devices) => {
                     const outputDevices = devices.filter((device) => device.kind === "audiooutput" && device.deviceId !== "default")
-                    const audioOutputs = outputDevices.map((a) => ({ value: a.deviceId, label: a.label }))
+
+                    let defaultMaxChannels = 2
+                    try {
+                        const tempCtx = new AudioContext()
+                        defaultMaxChannels = tempCtx.destination.maxChannelCount || 2
+                        tempCtx.close()
+                    } catch (e) {}
+
+                    const audioOutputs = outputDevices.map((a) => {
+                        const cap = (a as any).getCapabilities ? (a as any).getCapabilities() : null
+                        const channels = cap?.channelCount?.max || defaultMaxChannels || 2
+                        return { value: a.deviceId, label: a.label || "Speaker Output", channels }
+                    })
                     resolve(audioOutputs)
                 })
                 .catch((err) => {

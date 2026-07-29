@@ -4,11 +4,22 @@
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
 
     export let channelId: string = ""
-    export let height: number = 8
+    export let height: number = 10
     export let width: number = 60
 
     let canvas: HTMLCanvasElement
     let animationFrame: number
+
+    // Smooth level tracking per channel index
+    let smoothedLevels: number[] = []
+
+    function getChannelLabel(index: number, count: number): string {
+        if (count === 1) return "M"
+        if (count === 2) return index === 0 ? "L" : "R"
+        return `${index + 1}`
+    }
+
+    let channelLabels: string[] = ["L", "R"]
 
     function render() {
         if (!canvas) {
@@ -16,47 +27,89 @@
             return
         }
 
+        const rectWidth = canvas.clientWidth || width
+        if (canvas.width !== rectWidth) {
+            canvas.width = rectWidth
+        }
+
         const ctx = canvas.getContext("2d")
         if (!ctx) return
 
-        ctx.clearRect(0, 0, width, height)
-        ctx.fillStyle = "rgba(255, 255, 255, 0.08)"
-        ctx.fillRect(0, 0, width, height)
+        const w = canvas.width
 
+        // Fetch current channel volume data
         const captured = AudioInputCapture.getInstance().getVisualizerData(channelId)
         const nodeData = ($audioChannelsData || {})[channelId]
-        let activeLevel = 0
 
-        if (captured && captured.db > -80) {
-            activeLevel = Math.min(1, Math.max(0, (captured.db + 80) / 80))
+        let channelDbs: number[] = []
+
+        if (captured && captured.channels?.length) {
+            channelDbs = captured.channels.map((c) => c.db)
         } else {
             const data = nodeData as any
             if (data && typeof data.dB === "number" && data.dB > -80) {
-                activeLevel = Math.min(1, Math.max(0, (data.dB + 80) / 80))
+                channelDbs = [data.dB, data.dB]
+            } else {
+                channelDbs = [-80, -80]
             }
         }
 
-        if (activeLevel > 0 || (captured && captured.spectrum.some((v) => v > 0.01))) {
-            const barCount = 12
-            const gap = 1
-            const barWidth = (width - (barCount - 1) * gap) / barCount
-            const spectrum = captured?.spectrum || []
-            const step = Math.floor(spectrum.length / barCount) || 1
+        const count = channelDbs.length || 2
+        channelLabels = Array.from({ length: count }, (_, i) => getChannelLabel(i, count))
 
-            const grad = ctx.createLinearGradient(0, height, 0, 0)
-            grad.addColorStop(0, "#4caf50")
-            grad.addColorStop(0.7, "#ffeb3b")
-            grad.addColorStop(1, "#f44336")
-            ctx.fillStyle = grad
+        const channelHeight = Math.max(2, Math.floor((height || 8) / count))
+        const channelGap = 2
+        const totalHeight = channelHeight * count + channelGap * (count - 1)
 
-            for (let i = 0; i < barCount; i++) {
-                const val = spectrum.length ? spectrum[i * step] : activeLevel
-                if (val > 0.01) {
-                    const barHeight = Math.max(1, height * val)
-                    ctx.fillRect(i * (barWidth + gap), height - barHeight, barWidth, barHeight)
+        if (canvas.height !== totalHeight) {
+            canvas.height = totalHeight
+        }
+
+        ctx.clearRect(0, 0, w, totalHeight)
+
+        // Ensure smoothed levels array matches channel count
+        while (smoothedLevels.length < count) smoothedLevels.push(0)
+        if (smoothedLevels.length > count) smoothedLevels.length = count
+
+        // Draw track backgrounds
+        ctx.fillStyle = "rgba(255, 255, 255, 0.1)"
+        for (let ch = 0; ch < count; ch++) {
+            const y = ch * (channelHeight + channelGap)
+            ctx.fillRect(0, y, w, channelHeight)
+        }
+
+        const numSegments = 24
+        const gap = 1.5
+        const totalGap = gap * (numSegments - 1)
+        const segWidth = (w - totalGap) / numSegments
+
+        // Process and draw each channel meter
+        for (let ch = 0; ch < count; ch++) {
+            const db = channelDbs[ch]
+            // Standard logarithmic dB mapping: -60 dB to 0 dB mapped to 0..1 scale
+            // dB values above -60 dB scale smoothly up to 1.0 (0 dB full-scale)
+            const target = db > -60 ? Math.min(1, Math.max(0, (db + 60) / 60)) : 0
+
+            // Fast attack, smooth decay
+            if (target > smoothedLevels[ch]) {
+                smoothedLevels[ch] = target
+            } else {
+                smoothedLevels[ch] += (target - smoothedLevels[ch]) * 0.2
+            }
+
+            const currentLevel = smoothedLevels[ch]
+            if (currentLevel > 0.005) {
+                const activeCount = Math.round(currentLevel * numSegments)
+                const y = ch * (channelHeight + channelGap)
+
+                for (let i = 0; i < activeCount; i++) {
+                    const ratio = i / (numSegments - 1)
+                    ctx.fillStyle = ratio < 0.6 ? "#4caf50" : ratio < 0.85 ? "#ffeb3b" : "#f44336"
+                    ctx.fillRect(i * (segWidth + gap), y, segWidth, channelHeight)
                 }
             }
         }
+
         animationFrame = requestAnimationFrame(render)
     }
 
@@ -69,12 +122,38 @@
     })
 </script>
 
-<canvas bind:this={canvas} {width} {height} class="node-visualizer"></canvas>
+<div class="visualizer-container">
+    <canvas bind:this={canvas} class="node-visualizer" title="{channelId} multi-channel meter"></canvas>
+    <div class="channel-labels">
+        {#each channelLabels as label}
+            <span>{label}</span>
+        {/each}
+    </div>
+</div>
 
 <style>
+    .visualizer-container {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+        margin-top: 2px;
+    }
+
     .node-visualizer {
-        border-radius: 3px;
+        border-radius: 2px;
         display: block;
-        margin-left: auto;
+        flex: 1;
+    }
+
+    .channel-labels {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        font-size: 7px;
+        font-weight: 700;
+        line-height: 1;
+        opacity: 0.6;
+        user-select: none;
     }
 </style>

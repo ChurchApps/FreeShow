@@ -1,5 +1,6 @@
 <script lang="ts">
     import { AudioAnalyserMerger } from "../../../audio/audioAnalyserMerger"
+    import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
     import { audioChannels, audioChannelsData } from "../../../stores"
 
     export let channelId: string = ""
@@ -11,10 +12,26 @@
     let highestDB: { timeout: NodeJS.Timeout; value: number }[] = []
 
     function getDBValue(channelIndex: number, _updater: any) {
-        const dB = channelId === "main" ? $audioChannels[channelIndex]?.dB : AudioAnalyserMerger.getChannels()[channelId]?.[channelIndex]?.dB
-        if (!dB) return AudioAnalyserMerger.dBmax
+        if (isMuted) {
+            if (highestDB[channelIndex]) highestDB[channelIndex].value = 0
+            return 0
+        }
 
-        let value: number = dB.value
+        let value = AudioAnalyserMerger.dBmin
+
+        if (channelId === "main") {
+            value = $audioChannels[channelIndex]?.dB?.value ?? AudioAnalyserMerger.dBmin
+        } else {
+            const captured = AudioInputCapture.getInstance().getVisualizerData(channelId)
+            if (captured && captured.channels && captured.channels[channelIndex] !== undefined) {
+                value = captured.channels[channelIndex].db
+            } else if (captured && typeof captured.db === "number") {
+                value = captured.db
+            } else {
+                const nodeData = $audioChannelsData[channelId] as any
+                value = nodeData?.dB ?? AudioAnalyserMerger.dBmin
+            }
+        }
         // const max: number = dB.max || AudioAnalyserMerger.dBmax
         // const min: number = dB.min || AudioAnalyserMerger.dBmin
 

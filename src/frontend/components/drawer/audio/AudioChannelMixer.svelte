@@ -1,6 +1,6 @@
 <script lang="ts">
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { activeAudioEffects, audioChannelsData, gain, volume } from "../../../stores"
+    import { activeAudioEffects, audioChannelsData } from "../../../stores"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import Slider from "../../inputs/Slider.svelte"
@@ -18,40 +18,16 @@
             return a
         })
 
-        if (channelId === "main") AudioPlayer.updateVolume()
-    }
-
-    const allowGaining = false // $special.allowGaining || false
-    function setVolume(e: any) {
-        let value = e.target?.value || e
-
-        if (channelId !== "main") {
-            updateData("volume", value)
-            return
-        }
-
-        // "snap" to 100%
-        // && !e.altKey
-        if (allowGaining && value > 0.95 && value < 1.05) value = 1
-
-        let newGain = 1
-        let newVolume = 1
-
-        if (value > 1) newGain = (value - 1) / 0.125 + 1
-        else newVolume = value
-
-        volume.set(newVolume)
-        gain.set(newGain)
-
         AudioPlayer.updateVolume()
     }
 
-    // 25% / 200 = 0.125
-    $: gainValue = (Number($gain || 0) - 1) * 0.125
-    $: mainVolume = allowGaining ? Number($volume ?? 1) + gainValue : Number($volume ?? 1)
+    const allowGaining = false
+    function setVolume(e: any) {
+        let value = typeof e === "number" ? e : e?.detail !== undefined ? e.detail : e?.target?.value !== undefined ? parseFloat(e.target.value) : 1
+        updateData("volume", value)
+    }
 
-    $: volumeValue = channelId === "main" ? mainVolume : Number(channelData.volume ?? 1)
-
+    $: volumeValue = Number(channelData.volume ?? 1)
     $: muted = !!channelData.isMuted
 </script>
 

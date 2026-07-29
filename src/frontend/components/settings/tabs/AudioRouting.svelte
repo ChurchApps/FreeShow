@@ -27,7 +27,7 @@
 
     // Dynamic Lists
     let availableAudioInputs: { value: string; label: string }[] = []
-    let availableAudioOutputs: { value: string; label: string }[] = []
+    let availableAudioOutputs: { value: string; label: string; channels: number }[] = []
 
     let micInputsExpanded = false
     let speakerOutputsExpanded = false
@@ -55,13 +55,21 @@
             }
         })
 
-    // Auto-expand if a child node has an active connection
-    $: hasConnectedMicChild = config.connections.some((conn) => conn.from.startsWith("mic_sub_"))
-    $: hasConnectedSpeakerChild = config.connections.some((conn) => conn.to.startsWith("speaker_sub_"))
+    // Auto-expand if a child node has an active connection (and retain expanded state)
+    $: if (config.connections.some((conn) => conn.from.startsWith("mic_sub_"))) {
+        micInputsExpanded = true
+    }
+    $: if (config.connections.some((conn) => conn.to.startsWith("speaker_sub_"))) {
+        speakerOutputsExpanded = true
+    }
 
-    $: isMicExpanded = micInputsExpanded || hasConnectedMicChild
-    $: isSpeakerExpanded = speakerOutputsExpanded || hasConnectedSpeakerChild
+    $: isMicExpanded = micInputsExpanded
+    $: isSpeakerExpanded = speakerOutputsExpanded
     $: isNetworkExpanded = true
+
+    $: if (config || isMicExpanded || isSpeakerExpanded || nonStageOutputs || networkOutputWindows) {
+        tick().then(updateConnectionLines)
+    }
 
     onMount(async () => {
         availableAudioOutputs = await AudioPlayer.getOutputs()
@@ -83,7 +91,11 @@
         updateConnectionLines()
         const resizeObs = new ResizeObserver(() => updateConnectionLines())
         if (spaceEl) resizeObs.observe(spaceEl)
-        return () => resizeObs.disconnect()
+        if (containerEl) containerEl.addEventListener("scroll", updateConnectionLines)
+        return () => {
+            resizeObs.disconnect()
+            if (containerEl) containerEl.removeEventListener("scroll", updateConnectionLines)
+        }
     })
 
     function updateConfig(fn: (c: AudioRoutingConfig) => void) {
@@ -158,10 +170,12 @@
     let dragFromPos = { x: 0, y: 0 }
     let dragCurrentPos = { x: 0, y: 0 }
     let hoverTargetId: string | null = null
+    let hoverTargetPortEl: HTMLElement | null = null
 
     interface RenderedLine {
         fromId: string
         toId: string
+        channelIndex: number
         x1: number
         y1: number
         x2: number
@@ -169,9 +183,12 @@
     }
     let lines: RenderedLine[] = []
 
-    function getNodePortPos(nodeId: string, portType: "in" | "out"): { x: number; y: number } | null {
+    function getNodePortPos(nodeId: string, portType: "in" | "out", portElement?: HTMLElement | null): { x: number; y: number } | null {
         if (!spaceEl) return null
-        const portEl = spaceEl.querySelector(`[data-node-id="${nodeId}"] .port-${portType}`) as HTMLElement
+        let portEl = portElement
+        if (!portEl) {
+            portEl = spaceEl.querySelector(`[data-node-id="${nodeId}"] .port-${portType}`) as HTMLElement
+        }
         if (!portEl) return null
         const spaceRect = spaceEl.getBoundingClientRect()
         const portRect = portEl.getBoundingClientRect()
@@ -186,11 +203,18 @@
         const newLines: RenderedLine[] = []
         for (const conn of config.connections) {
             const fromPos = getNodePortPos(conn.from, "out")
-            const toPos = getNodePortPos(conn.to, "in")
+            let portEl: HTMLElement | null = null
+            const chIndex = (conn as any).channelIndex ?? 0
+            if (conn.to.startsWith("speaker_sub_")) {
+                portEl = spaceEl.querySelector(`[data-node-id="${conn.to}"] [data-ch-index="${chIndex}"]`) as HTMLElement
+                if (!portEl) portEl = spaceEl.querySelector(`[data-node-id="${conn.to}"] .port-multi`) as HTMLElement
+            }
+            const toPos = getNodePortPos(conn.to, "in", portEl)
             if (fromPos && toPos) {
                 newLines.push({
                     fromId: conn.from,
                     toId: conn.to,
+                    channelIndex: chIndex,
                     x1: fromPos.x,
                     y1: fromPos.y,
                     x2: toPos.x,
@@ -202,10 +226,11 @@
     }
 
     // --- Port Mouse Down (Connecting) ---
-    function handlePortMouseDown(e: MouseEvent, nodeId: string, nodeType: "input" | "merger" | "output", portType: "in" | "out") {
+    function handlePortMouseDown(e: MouseEvent, nodeId: string, nodeType: "input" | "merger" | "output", portType: "in" | "out", _channelIndex: number = 0) {
         e.preventDefault()
         e.stopPropagation()
-        const pos = getNodePortPos(nodeId, portType)
+        const portEl = e.currentTarget as HTMLElement
+        const pos = getNodePortPos(nodeId, portType, portEl)
         if (!pos) return
         isConnecting = true
         dragStartId = nodeId
@@ -274,34 +299,68 @@
 
             if (valid) {
                 updateConfig((c) => {
-                    const existingIndex = c.connections.findIndex((conn) => conn.from === fromId && conn.to === toId)
-                    if (existingIndex !== -1) {
-                        c.connections.splice(existingIndex, 1)
-                    } else {
-                        // Helper to check parent-child relationships
-                        const isChildInput = fromId.startsWith("drawer_sub_") || fromId.startsWith("mic_sub_") || fromId.startsWith("output_win_sub_")
-                        const isParentInput = fromId === "drawer_audio" || fromId === "mic_default"
-                        const isChildOutput = toId.startsWith("speaker_sub_") || toId.startsWith("network_sub_")
-                        const isParentOutput = toId === "speaker_default" || toId === "network_default"
+                    const isSpeakerSub = toId.startsWith("speaker_sub_")
+                    const deviceId = isSpeakerSub ? toId.replace("speaker_sub_", "") : ""
+                    const speakerObj = availableAudioOutputs.find((s) => s.value === deviceId)
+                    const chCount = speakerObj?.channels || 2
 
-                        if (isChildInput) {
-                            const parentId = fromId.startsWith("drawer_sub_") ? "drawer_audio" : "mic_default"
-                            c.connections = c.connections.filter((conn) => !(conn.from === parentId && conn.to === toId))
-                        }
-                        if (isParentInput) {
-                            const prefix = fromId === "drawer_audio" ? "drawer_sub_" : "mic_sub_"
-                            c.connections = c.connections.filter((conn) => !(conn.from.startsWith(prefix) && conn.to === toId))
-                        }
-                        if (isChildOutput) {
-                            const parentId = toId.startsWith("speaker_sub_") ? "speaker_default" : "network_default"
+                    const chIndexStr = hoverTargetPortEl?.dataset?.chIndex
+                    const isSpecificCircle = chIndexStr !== undefined
+
+                    if (isSpeakerSub && chCount > 1 && !isSpecificCircle) {
+                        // Dropped onto the node card itself -> connect all or disconnect all
+                        const activeChannels = c.connections.filter((conn) => conn.from === fromId && conn.to === toId)
+                        const allConnected = activeChannels.length >= chCount
+
+                        if (allConnected) {
+                            c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to === toId))
+                        } else {
+                            const parentId = "speaker_default"
                             c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to === parentId))
+                            for (let ch = 0; ch < chCount; ch++) {
+                                if (!c.connections.some((conn) => conn.from === fromId && conn.to === toId && ((conn as any).channelIndex ?? 0) === ch)) {
+                                    c.connections.push({ from: fromId, to: toId, channelIndex: ch } as any)
+                                }
+                            }
                         }
-                        if (isParentOutput) {
-                            const prefix = toId === "speaker_default" ? "speaker_sub_" : "network_sub_"
-                            c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to.startsWith(prefix)))
-                        }
+                    } else {
+                        // Dropped onto a specific channel circle or single node port
+                        const targetChIndex = isSpecificCircle ? parseInt(chIndexStr) : 0
+                        const existingIndex = c.connections.findIndex((conn) => {
+                            if (conn.from !== fromId || conn.to !== toId) return false
+                            if (isSpeakerSub) {
+                                return ((conn as any).channelIndex ?? 0) === targetChIndex
+                            }
+                            return true
+                        })
 
-                        c.connections.push({ from: fromId, to: toId })
+                        if (existingIndex !== -1) {
+                            c.connections.splice(existingIndex, 1)
+                        } else {
+                            const isChildInput = fromId.startsWith("drawer_sub_") || fromId.startsWith("mic_sub_") || fromId.startsWith("output_win_sub_")
+                            const isParentInput = fromId === "drawer_audio" || fromId === "mic_default"
+                            const isChildOutput = toId.startsWith("speaker_sub_") || toId.startsWith("network_sub_")
+                            const isParentOutput = toId === "speaker_default" || toId === "network_default"
+
+                            if (isChildInput) {
+                                const parentId = fromId.startsWith("drawer_sub_") ? "drawer_audio" : "mic_default"
+                                c.connections = c.connections.filter((conn) => !(conn.from === parentId && conn.to === toId))
+                            }
+                            if (isParentInput) {
+                                const prefix = fromId === "drawer_audio" ? "drawer_sub_" : "mic_sub_"
+                                c.connections = c.connections.filter((conn) => !(conn.from.startsWith(prefix) && conn.to === toId))
+                            }
+                            if (isChildOutput) {
+                                const parentId = toId.startsWith("speaker_sub_") ? "speaker_default" : "network_default"
+                                c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to === parentId))
+                            }
+                            if (isParentOutput) {
+                                const prefix = toId === "speaker_default" ? "speaker_sub_" : "network_sub_"
+                                c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to.startsWith(prefix)))
+                            }
+
+                            c.connections.push({ from: fromId, to: toId, channelIndex: targetChIndex } as any)
+                        }
                     }
                 })
             }
@@ -334,7 +393,7 @@
                     </linearGradient>
                 </defs>
 
-                {#each lines as line (line.fromId + "-" + line.toId)}
+                {#each lines as line (line.fromId + "-" + line.toId + "-" + line.channelIndex)}
                     {@const dx = Math.abs(line.x2 - line.x1) / 2}
                     <path d="M {line.x1} {line.y1} C {line.x1 + dx} {line.y1}, {line.x2 - dx} {line.y2}, {line.x2} {line.y2}" class="connection-path" on:dblclick={() => removeConnection(line.fromId, line.toId)}>
                         <title>Double click or drag again to disconnect</title>
@@ -377,10 +436,10 @@
                                         {/if}
                                         <Icon id={getIcon(item.type)} size={1.1} />
                                         <span class="card-name">{item.name}</span>
-                                        {#if item.type !== "output_window"}
-                                            <AudioNodeVisualizer channelId={item.id} width={50} height={4} />
-                                        {/if}
                                     </div>
+                                    {#if item.type !== "output_window"}
+                                        <AudioNodeVisualizer channelId={item.id} width={140} height={4} />
+                                    {/if}
                                     {#if item.type !== "output_window"}
                                         <div class="port port-out" title="Drag to connect or disconnect Merger" on:mousedown={(e) => handlePortMouseDown(e, item.id, "input", "out")}></div>
                                     {/if}
@@ -405,8 +464,8 @@
                                                     <div class="card-content">
                                                         <Icon id="mic" size={0.9} />
                                                         <span class="card-name sub-name">{mic.label}</span>
-                                                        <AudioNodeVisualizer channelId={subId} width={40} height={3} />
                                                     </div>
+                                                    <AudioNodeVisualizer channelId={subId} width={120} height={3} />
                                                     <div class="port port-out" title="Drag to connect or disconnect Merger" on:mousedown={(e) => handlePortMouseDown(e, subId, "input", "out")}></div>
                                                 </div>
                                             {/each}
@@ -434,8 +493,8 @@
                                                     <div class="card-content">
                                                         <Icon id="display_settings" size={0.9} />
                                                         <span class="card-name sub-name">{win.name}</span>
-                                                        <AudioNodeVisualizer channelId={win.id} width={40} height={3} />
                                                     </div>
+                                                    <AudioNodeVisualizer channelId={win.id} width={120} height={3} />
                                                     <div class="port port-out" title="Drag to connect or disconnect Merger" on:mousedown={(e) => handlePortMouseDown(e, win.id, "input", "out")}></div>
                                                 </div>
                                             {/each}
@@ -475,13 +534,13 @@
                                 <div class="card-content">
                                     <Icon id="options" size={1.1} />
                                     <MaterialTextInput label="Merger Name" value={merger.name} style="margin: 0; width: 100%;" on:change={(e) => renameMerger(merger.id, e.detail)} />
-                                    <AudioNodeVisualizer channelId={merger.id} width={45} height={4} />
                                     {#if index > 0}
                                         <button class="delete-btn" title="Delete merger" on:click|stopPropagation={() => removeMerger(merger.id)}>
                                             <Icon id="delete" size={0.8} />
                                         </button>
                                     {/if}
                                 </div>
+                                <AudioNodeVisualizer channelId={merger.id} width={140} height={4} />
 
                                 <div class="port port-out" title="Drag to connect or disconnect Output" on:mousedown={(e) => handlePortMouseDown(e, merger.id, "merger", "out")}></div>
                             </div>
@@ -525,10 +584,10 @@
                                         {/if}
                                         <Icon id={getIcon(item.type)} size={1.1} />
                                         <span class="card-name">{item.name}</span>
-                                        {#if item.type !== "network"}
-                                            <AudioNodeVisualizer channelId={item.id} width={50} height={4} />
-                                        {/if}
                                     </div>
+                                    {#if item.type !== "network"}
+                                        <AudioNodeVisualizer channelId={item.id} width={140} height={4} />
+                                    {/if}
                                 </div>
 
                                 {#if item.type === "speaker" && isSpeakerExpanded}
@@ -536,24 +595,51 @@
                                         {#if availableAudioOutputs.length > 0}
                                             {#each availableAudioOutputs as speaker (speaker.value)}
                                                 {@const subId = "speaker_sub_" + speaker.value}
+                                                {@const chCount = speaker.channels || 2}
                                                 <div
                                                     class="node-card sub-card"
                                                     class:hover-valid={hoverTargetId === subId}
                                                     data-node-id={subId}
                                                     on:mouseenter={() => {
-                                                        if (isConnecting && dragStartType === "merger") hoverTargetId = subId
+                                                        if (isConnecting && dragStartType === "merger") {
+                                                            hoverTargetId = subId
+                                                            hoverTargetPortEl = null
+                                                        }
                                                     }}
                                                     on:mouseleave={() => {
-                                                        if (hoverTargetId === subId) hoverTargetId = null
+                                                        if (hoverTargetId === subId) {
+                                                            hoverTargetId = null
+                                                            hoverTargetPortEl = null
+                                                        }
                                                     }}
                                                 >
-                                                    <div class="port port-in" title="Input connection port" on:mousedown={(e) => handlePortMouseDown(e, subId, "output", "in")}></div>
+                                                    <div class="ports-column-in">
+                                                        {#each Array(chCount) as _, chIdx}
+                                                            <div
+                                                                class="port port-in port-multi"
+                                                                data-ch-index={chIdx}
+                                                                title="Channel {chIdx + 1}"
+                                                                on:mouseenter={(e) => {
+                                                                    if (isConnecting && dragStartType === "merger") {
+                                                                        hoverTargetId = subId
+                                                                        hoverTargetPortEl = e.currentTarget
+                                                                    }
+                                                                }}
+                                                                on:mouseleave={() => {
+                                                                    if (isConnecting) {
+                                                                        hoverTargetPortEl = null
+                                                                    }
+                                                                }}
+                                                                on:mousedown={(e) => handlePortMouseDown(e, subId, "output", "in", chIdx)}
+                                                            ></div>
+                                                        {/each}
+                                                    </div>
 
                                                     <div class="card-content">
                                                         <Icon id="volume" size={0.9} />
                                                         <span class="card-name sub-name">{speaker.label}</span>
-                                                        <AudioNodeVisualizer channelId={subId} width={40} height={3} />
                                                     </div>
+                                                    <AudioNodeVisualizer channelId={subId} width={120} height={3} />
                                                 </div>
                                             {/each}
                                         {:else}
@@ -582,8 +668,8 @@
                                                     <div class="card-content">
                                                         <Icon id="broadcast" size={0.9} />
                                                         <span class="card-name sub-name">{netWin.name}</span>
-                                                        <AudioNodeVisualizer channelId={netWin.id} width={40} height={3} />
                                                     </div>
+                                                    <AudioNodeVisualizer channelId={netWin.id} width={120} height={3} />
                                                 </div>
                                             {/each}
                                         {:else}
@@ -634,6 +720,8 @@
         width: 100%;
         min-width: 750px;
         min-height: 100%;
+        display: flex;
+        flex-direction: column;
     }
 
     .connections-layer {
@@ -642,6 +730,7 @@
         left: 0;
         width: 100%;
         height: 100%;
+        overflow: visible;
         pointer-events: none;
         z-index: 1;
     }
@@ -720,7 +809,9 @@
         padding: 10px 14px;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
         transition:
             border-color 0.15s ease,
             box-shadow 0.15s ease;
@@ -821,6 +912,28 @@
 
     .port-out {
         right: -8px;
+    }
+
+    .ports-column-in {
+        position: absolute;
+        left: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        z-index: 5;
+    }
+
+    .ports-column-in .port-multi {
+        position: relative;
+        top: 0;
+        left: 0;
+        transform: none;
+    }
+
+    .ports-column-in .port-multi:hover {
+        transform: scale(1.3);
     }
 
     .add-merger-btn {
