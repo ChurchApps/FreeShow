@@ -130,10 +130,7 @@ export class AudioAnalyser {
                 // We don't need a separate captureInput for mic_default as it's aggregated in the visualizer logic
             }
 
-            // Connection to splitter for main analysers / visualizers (exclude mics)
-            if (this.splitter && !isMic) {
-                sourceGain.connect(this.splitter)
-            }
+
 
             // Route audio to configured mergers
             this.connectToSinks(processor, id)
@@ -178,22 +175,11 @@ export class AudioAnalyser {
         }
         const gainNode = this.gainNodes[id]
         if (gainNode) {
-            const audioPlaying = get(playingAudio)[id]
-            const isMic = audioPlaying?.isMic === true || id.startsWith("mic_sub_")
-            if (isMic) {
-                gainNode.gain.setValueAtTime(volume, this.ac.currentTime)
-            } else {
-                const activeCount = Object.values(get(playingAudio)).filter((a) => !a.paused && !a.isMic).length + Object.values(get(playingVideos)).filter((v) => !v.video?.paused && !v.video?.muted).length
-                const scale = activeCount > 0 ? 1 / Math.sqrt(activeCount) : 1
-                gainNode.gain.setValueAtTime(volume * scale, this.ac.currentTime)
-            }
+            gainNode.gain.setValueAtTime(volume, this.ac.currentTime)
         }
     }
 
     private static updateScales() {
-        const activeCount = Object.values(get(playingAudio)).filter((a) => !a.paused && !a.isMic).length + Object.values(get(playingVideos)).filter((v) => !v.video?.paused && !v.video?.muted).length
-        const scale = activeCount > 0 ? 1 / Math.sqrt(activeCount) : 1
-
         Object.keys(this.gainNodes).forEach((id) => {
             const gainNode = this.gainNodes[id]
             if (gainNode) {
@@ -201,7 +187,6 @@ export class AudioAnalyser {
                 const audioPlaying = get(playingAudio)[id]
                 if (audioPlaying) {
                     if (audioPlaying.isMic || id.startsWith("mic_sub_")) {
-                        // Don't scale mics - use their dedicated volume directly
                         const micVolume = audioPlaying.audio?.volume ?? 1.0
                         gainNode.gain.setValueAtTime(micVolume, this.ac.currentTime)
                         return
@@ -213,7 +198,7 @@ export class AudioAnalyser {
                     const videoPlaying = get(playingVideos).find((v) => v.id === id)
                     if (videoPlaying) baseVolume = videoPlaying.video?.volume ?? 1.0
                 }
-                if (baseVolume !== null) gainNode.gain.setValueAtTime(baseVolume * scale, this.ac.currentTime)
+                if (baseVolume !== null) gainNode.gain.setValueAtTime(baseVolume, this.ac.currentTime)
             }
         })
     }
@@ -643,23 +628,18 @@ export class AudioAnalyser {
         if (this.timeDomainArray.length !== size) {
             this.timeDomainArray = new Uint8Array(size)
         }
-        const array = this.timeDomainArray
+        const floatArray = new Float32Array(analyser.fftSize)
+        analyser.getFloatTimeDomainData(floatArray)
 
-        // analyze amplitude values in time domain
-        analyser.getByteTimeDomainData(array)
-
-        // calculate RMS value to represent perceived volume
-        let sumOfSquares = 0
-        const len = array.length
+        let sumSquare = 0
+        const len = floatArray.length
         for (let i = 0; i < len; i++) {
-            const normalizedValue = (array[i] - 128) / 128 // Normalize between -1 and 1
-            sumOfSquares += normalizedValue * normalizedValue
+            const sample = floatArray[i]
+            sumSquare += sample * sample
         }
 
-        const rms = Math.sqrt(sumOfSquares / len)
-
-        // map RMS to dB scale & protect against log(0)
-        const dB = 20 * Math.log10(rms || 0.0001)
+        const rms = Math.sqrt(len ? sumSquare / len : 0)
+        const dB = rms > 0.000001 ? Math.max(-60, Math.min(0, 20 * Math.log10(rms))) : -60
 
         return { dB: { value: dB } }
     }

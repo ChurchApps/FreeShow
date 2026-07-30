@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte"
-    import { audioChannelsData } from "../../../stores"
+    import { audioChannels, audioChannelsData } from "../../../stores"
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
 
     export let channelId: string = ""
@@ -45,6 +45,8 @@
 
         if (captured && captured.channels?.length) {
             channelDbs = captured.channels.map((c) => c.db)
+        } else if (channelId === "main" && $audioChannels?.length) {
+            channelDbs = $audioChannels.map((c) => c?.dB?.value ?? -80)
         } else {
             const data = nodeData as any
             if (data && typeof data.dB === "number" && data.dB > -80) {
@@ -71,23 +73,43 @@
         while (smoothedLevels.length < count) smoothedLevels.push(0)
         if (smoothedLevels.length > count) smoothedLevels.length = count
 
+        const numSegments = 24
+        const gap = 1.5
+        const dotSize = 3
+        const dotGap = 4
+        const meterOffset = dotSize + dotGap
+        const meterWidth = w - meterOffset
+        const totalGap = gap * (numSegments - 1)
+        const segWidth = (meterWidth - totalGap) / numSegments
+
         // Draw track backgrounds
         ctx.fillStyle = "rgba(255, 255, 255, 0.1)"
         for (let ch = 0; ch < count; ch++) {
             const y = ch * (channelHeight + channelGap)
-            ctx.fillRect(0, y, w, channelHeight)
+            ctx.fillRect(meterOffset, y, meterWidth, channelHeight)
         }
-
-        const numSegments = 24
-        const gap = 1.5
-        const totalGap = gap * (numSegments - 1)
-        const segWidth = (w - totalGap) / numSegments
 
         // Process and draw each channel meter
         for (let ch = 0; ch < count; ch++) {
-            const db = channelDbs[ch]
-            // Standard logarithmic dB mapping: -60 dB to 0 dB mapped to 0..1 scale
-            // dB values above -60 dB scale smoothly up to 1.0 (0 dB full-scale)
+            const rawDb = channelDbs[ch]
+            let db = rawDb
+            const channelVolume = Number(($audioChannelsData || {})[channelId]?.volume ?? 1)
+            if (channelVolume > 0 && channelVolume < 1) {
+                db += 20 * Math.log10(channelVolume)
+            } else if (channelVolume === 0) {
+                db = -60
+            }
+
+            const y = ch * (channelHeight + channelGap)
+
+            // Draw pre-fader audio presence signal dot
+            const hasSignal = rawDb > -60
+            ctx.fillStyle = hasSignal ? "#00ff66" : "rgba(255, 255, 255, 0.2)"
+            ctx.beginPath()
+            ctx.arc(dotSize / 2, y + channelHeight / 2, dotSize / 2, 0, Math.PI * 2)
+            ctx.fill()
+
+            // Linear dB scale mapping: -60 dB to 0 dB mapped proportionally to 0..1 scale
             const target = db > -60 ? Math.min(1, Math.max(0, (db + 60) / 60)) : 0
 
             // Fast attack, smooth decay
@@ -100,12 +122,11 @@
             const currentLevel = smoothedLevels[ch]
             if (currentLevel > 0.005) {
                 const activeCount = Math.round(currentLevel * numSegments)
-                const y = ch * (channelHeight + channelGap)
 
                 for (let i = 0; i < activeCount; i++) {
                     const ratio = i / (numSegments - 1)
                     ctx.fillStyle = ratio < 0.6 ? "#4caf50" : ratio < 0.85 ? "#ffeb3b" : "#f44336"
-                    ctx.fillRect(i * (segWidth + gap), y, segWidth, channelHeight)
+                    ctx.fillRect(meterOffset + i * (segWidth + gap), y, segWidth, channelHeight)
                 }
             }
         }

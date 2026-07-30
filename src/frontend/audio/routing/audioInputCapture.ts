@@ -55,7 +55,7 @@ export class AudioInputCapture {
 
                 for (let i = 0; i < channelCount; i++) {
                     const analyser = ctx.createAnalyser()
-                    analyser.fftSize = 64
+                    analyser.fftSize = 256
                     analyser.smoothingTimeConstant = 0.8
                     splitter.connect(analyser, i)
                     analysers.push(analyser)
@@ -93,41 +93,41 @@ export class AudioInputCapture {
         const entry = this.analysers.get(nodeId)
         if (!entry) return null
 
-        let nodeBuffers = this.buffers.get(nodeId)
-        if (!nodeBuffers || nodeBuffers.length !== entry.channelCount) {
-            nodeBuffers = entry.analysers.map((a) => new Uint8Array(a.frequencyBinCount))
-            this.buffers.set(nodeId, nodeBuffers)
+        let nodeFloatBuffers = this.buffers.get(nodeId + "_float") as unknown as Float32Array[]
+        if (!nodeFloatBuffers || nodeFloatBuffers.length !== entry.channelCount) {
+            nodeFloatBuffers = entry.analysers.map((a) => new Float32Array(a.fftSize))
+            this.buffers.set(nodeId + "_float", nodeFloatBuffers as unknown as Uint8Array[])
         }
 
         const channelResults: ChannelVisualizerData[] = []
-        let maxDb = -80
+        let maxDb = -60
 
         entry.analysers.forEach((analyser, i) => {
-            const buf = nodeBuffers![i]
-            analyser.getByteFrequencyData(buf as Uint8Array<ArrayBuffer>)
+            const buf = nodeFloatBuffers[i]
+            analyser.getFloatTimeDomainData(buf as Float32Array<ArrayBuffer>)
 
             let sumSquare = 0
-            const spectrum = new Array(buf.length)
-            for (let j = 0; j < buf.length; j++) {
-                const norm = buf[j] / 255
-                sumSquare += norm * norm
-                spectrum[j] = norm
+            const len = buf.length
+            for (let j = 0; j < len; j++) {
+                const sample = buf[j]
+                sumSquare += sample * sample
             }
 
-            const rms = Math.sqrt(buf.length ? sumSquare / buf.length : 0)
-            // Convert RMS (0..1) to decibels (-60 dB floor to 0 dB max)
-            const db = rms > 0.001 ? Math.max(-60, Math.min(0, 20 * Math.log10(rms))) : -60
+            const rms = Math.sqrt(len ? sumSquare / len : 0)
+            // OBS Studio RMS / perceived level formula: 20 * log10(rms)
+            const db = rms > 0.000001 ? Math.max(-60, Math.min(0, 20 * Math.log10(rms))) : -60
+
             if (db > maxDb) maxDb = db
 
-            channelResults.push({ channelIndex: i, db, spectrum })
+            channelResults.push({ channelIndex: i, db, spectrum: [] })
         })
 
         return {
             nodeId,
             db: maxDb,
             channels: channelResults,
-            dbL: channelResults[0]?.db ?? -80,
-            dbR: channelResults[1]?.db ?? channelResults[0]?.db ?? -80,
+            dbL: channelResults[0]?.db ?? -60,
+            dbR: channelResults[1]?.db ?? channelResults[0]?.db ?? -60,
             spectrum: channelResults[0]?.spectrum || []
         }
     }
