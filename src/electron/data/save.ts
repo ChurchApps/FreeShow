@@ -13,9 +13,8 @@ import { deleteFile, doesPathExist, getDataFolderPath, parseShow, readFile, writ
 import { checkIfMatching, clone, wait } from "../utils/helpers"
 import { renameShows } from "../utils/shows"
 
-// full-file stores whose cloud sync "newest wins" comparison relies on a real edit timestamp
-// (see Changes.fileModified in syncLedger.ts) instead of file mtime, which the sync's own
-// download write would otherwise bump to "now" regardless of whether anything was really edited
+// Full-file stores that use real edit timestamps instead of file mtime for cloud sync comparison.
+// Prevents sync writes from falsely flagging stores as newer.
 const TRACK_FILE_MODIFIED = ["EVENTS", "THEMES", "MEDIA"]
 
 let isSaving = false

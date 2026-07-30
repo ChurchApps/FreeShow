@@ -64,10 +64,8 @@ const DEBUG_MODE = false && !isProd
 const EXTRACT_LOCATION = path.join(app.getPath("temp"), "freeshow-cloud")
 const MERGE_INDIVIDUAL = ["OVERLAYS", "PROJECTS", "STAGE", "TEMPLATES", "SYNCED_SETTINGS"] // "EVENTS", "THEMES"
 
-// SYNCED_SETTINGS sub-keys that are item-collections: merged per-item via the created/deleted
-// ledger (like PROJECTS), so items unique to a device aren't lost and deletions propagate.
-// Other keys (e.g. drawSettings, scriptureSettings, deletedDefaults) are atomic settings and
-// keep the previous newest-file-wins behavior.
+// SYNCED_SETTINGS item-collections merged per-item via ledger.
+// Atomic settings (e.g. drawSettings) keep newest-file-wins behavior.
 const SYNCED_SETTINGS_COLLECTIONS = ["categories", "overlayCategories", "templateCategories", "styles", "profiles", "timers", "variables", "audioStreams", "audioPlaylists", "scriptures", "groups", "midiIn", "emitters", "playerVideos", "videoMarkers", "mediaTags", "playerTags", "actionTags", "variableTags", "timerTags", "customizedIcons", "globalTags", "globalRegexes", "customMetadata", "effects"]
 
 const STALE_MERGE_GUARD_MS = 1000 * 60 * 60 * 24 * 30 // 30 days
@@ -153,7 +151,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             }
         }
 
-        // set to read-only always initially if not synced for 30+ days
+        // Stale merge guard: force read-only if not synced for 30+ days to prevent cloud overwrite.
         if (data.method === "merge" && !isNewDevice && CHANGES.devices.length > 1) {
             const latestCloudModifiedAt = Math.max(0, ...Object.values(CHANGES.modified || {}).map((value) => Number(value) || 0))
             const guardKey = getMergeGuardKey(data)
@@ -170,7 +168,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     }
     // console.log("Devices:", CHANGES.devices)
 
-    // the ledger owns all created/deleted reconciliation; build it once per run from the resolved state
+    // Ledger for created/deleted reconciliation.
     ledger = new SyncLedger({ changes: CHANGES, cloudChanges, deviceId: getDeviceId(), isNewDevice })
 
     // MERGE
@@ -561,8 +559,7 @@ async function isCloudNewerThanFile(localFilePath: string, cloudDate: Date): Pro
     return cloudDate.getTime() > localStats.mtime.getTime()
 }
 
-// device-local cache of the real last-edit time per full-file store, bumped only by genuine
-// edits (save.ts), never by the sync's own download writes - see the Changes.fileModified comment
+// Tracks the real last-edit time per full-file store, bumped only by genuine edits (save.ts).
 export async function setLocalFileModified(id: string, timestamp: number) {
     const syncCache = getStore("CACHE_SYNC") || {}
     if (!syncCache.fileModified) syncCache.fileModified = {}
@@ -571,9 +568,7 @@ export async function setLocalFileModified(id: string, timestamp: number) {
     if (_store.CACHE_SYNC) await safeStoreSet(_store.CACHE_SYNC, syncCache, "CACHE_SYNC")
 }
 
-// used when this device downloads content that carries no tracked edit time (old client, or the
-// mtime-fallback path) - any previously tracked local time no longer describes this content, so it
-// must be cleared instead of surviving and being mistaken for a real edit of the new content
+// Clears tracked edit time for stores without tracked timestamps to prevent stale survival.
 async function clearLocalFileModified(id: string) {
     const syncCache = getStore("CACHE_SYNC") || {}
     if (!syncCache.fileModified?.[id]) return
