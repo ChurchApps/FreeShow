@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { _store, createStores } from "../data/store"
 import { compressToZip, decompressZipStream } from "../data/zip"
 import { getDataFolderPath, writeFileAsync } from "../utils/files"
-import { resetSyncManagerModule, syncData } from "./syncManager"
+import { resetSyncManagerModule, setLocalFileModified, syncData } from "./syncManager"
 
 // 1. Host the temporary folder setup so it runs before imports are resolved
 const h = vi.hoisted(() => {
@@ -760,9 +760,7 @@ describe("syncManager tests", () => {
             const now = Date.now()
 
             // 1. Initial cloud setup: Device A and Device B are synced
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: now } }]) }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: now } }]) }], {
                 devices: ["device-A", "device-B", "test-device-id"],
                 modified: {
                     "device-A": now,
@@ -1087,11 +1085,9 @@ describe("syncManager tests", () => {
     describe("three-machine sync scenarios", () => {
         it("should resolve modification conflicts correctly when Device B and Device C both modify the same project", async () => {
             const now = Date.now()
-            
+
             // Register devices in the ledger
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: now } }]) }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: now } }]) }], {
                 devices: ["device-A", "device-B", "device-C", "test-device-id"],
                 modified: {
                     "device-A": now,
@@ -1120,7 +1116,7 @@ describe("syncManager tests", () => {
             h.currentMachineId = "device-B"
             resetSyncManagerModule()
             createStores()
-            
+
             fs.mkdirSync(path.dirname(fileB), { recursive: true })
             fs.writeFileSync(fileB, JSON.stringify({ projects: {}, folders: {}, projectTemplates: {} }))
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
@@ -1129,7 +1125,7 @@ describe("syncManager tests", () => {
             h.currentMachineId = "device-C"
             resetSyncManagerModule()
             createStores()
-            
+
             fs.mkdirSync(path.dirname(fileC), { recursive: true })
             fs.writeFileSync(fileC, JSON.stringify({ projects: {}, folders: {}, projectTemplates: {} }))
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
@@ -1159,7 +1155,7 @@ describe("syncManager tests", () => {
             resetSyncManagerModule()
             createStores()
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             const projectStoreA_final = JSON.parse(fs.readFileSync(fileA, "utf8"))
             expect(projectStoreA_final.projects["proj-shared"].name).toBe("Project Modified by C (Newest)")
 
@@ -1167,18 +1163,16 @@ describe("syncManager tests", () => {
             resetSyncManagerModule()
             createStores()
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
-            
+
             const projectStoreB_final = JSON.parse(fs.readFileSync(fileB, "utf8"))
             expect(projectStoreB_final.projects["proj-shared"].name).toBe("Project Modified by C (Newest)")
         })
 
         it("should successfully propagate show creations among three machines (Device A, B, and C)", async () => {
             const now = Date.now()
-            
+
             // Register devices in the ledger
-            await createCloudState([
-                { name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: now } }]) }
-            ], {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: now } }]) }], {
                 devices: ["device-A", "device-B", "device-C", "test-device-id"],
                 modified: {
                     "device-A": now,
@@ -1232,6 +1226,147 @@ describe("syncManager tests", () => {
 
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
             expect(fs.existsSync(path.join(showsDirA, "show-B.show"))).toBe(true)
+        })
+    })
+
+    describe("full-file store real edit timestamp (MEDIA/EVENTS/THEMES)", () => {
+        it("should not let a device that only re-syncs (never edits) beat a real tracked edit, regardless of file mtime", async () => {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
+                devices: ["device-resync-a", "device-resync-b", "test-device-id"],
+                modified: {
+                    "device-resync-a": Date.now(),
+                    "device-resync-b": Date.now(),
+                    "test-device-id": Date.now()
+                }
+            })
+
+            const fileA = path.join(h.userDataDir, "device-resync-a", "media.json")
+            const fileB = path.join(h.userDataDir, "device-resync-b", "media.json")
+            const earlyRealEditTime = 1000
+
+            // 1. Device A: Future mtime, no real edit tracked. Fix ensures mtime no longer wins.
+            h.currentMachineId = "device-resync-a"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(path.dirname(fileA), { recursive: true })
+            fs.writeFileSync(fileA, JSON.stringify({ background: { brightness: 10 } }))
+            const farFuture = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365)
+            fs.utimesSync(fileA, farFuture, farFuture)
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 2. Device B: Real, tracked edit (earlier than A's mtime).
+            h.currentMachineId = "device-resync-b"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(path.dirname(fileB), { recursive: true })
+            fs.writeFileSync(fileB, JSON.stringify({ background: { brightness: 5 } }))
+            await setLocalFileModified("MEDIA", earlyRealEditTime)
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            const settingsB = JSON.parse(fs.readFileSync(fileB, "utf8"))
+            expect(settingsB.background.brightness).toBe(5)
+
+            // 3. Device A: Re-syncs and must pick up B's real edit.
+            h.currentMachineId = "device-resync-a"
+            resetSyncManagerModule()
+            createStores()
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            const settingsA = JSON.parse(fs.readFileSync(fileA, "utf8"))
+            expect(settingsA.background.brightness).toBe(5)
+        })
+
+        it("should fall back to file mtime when neither device has ever tracked a real edit time (backward compatibility)", async () => {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
+                devices: ["device-mtime-a", "device-mtime-b", "test-device-id"],
+                modified: {
+                    "device-mtime-a": Date.now(),
+                    "device-mtime-b": Date.now(),
+                    "test-device-id": Date.now()
+                }
+            })
+
+            const fileA = path.join(h.userDataDir, "device-mtime-a", "media.json")
+            const fileB = path.join(h.userDataDir, "device-mtime-b", "media.json")
+
+            // 1. Device A: Old mtime, no real edit tracked. Uses mtime-based comparison.
+            h.currentMachineId = "device-mtime-a"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(path.dirname(fileA), { recursive: true })
+            fs.writeFileSync(fileA, JSON.stringify({ background: { brightness: 1 } }))
+            fs.utimesSync(fileA, new Date(1000), new Date(1000))
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 2. Device B: Future mtime, also untracked. Must win by mtime.
+            h.currentMachineId = "device-mtime-b"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(path.dirname(fileB), { recursive: true })
+            fs.writeFileSync(fileB, JSON.stringify({ background: { brightness: 2 } }))
+            const farFuture = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365)
+            fs.utimesSync(fileB, farFuture, farFuture)
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 3. Device A: Syncs again and adopts B's content (newer by mtime).
+            h.currentMachineId = "device-mtime-a"
+            resetSyncManagerModule()
+            createStores()
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            const settingsA = JSON.parse(fs.readFileSync(fileA, "utf8"))
+            expect(settingsA.background.brightness).toBe(2)
+        })
+
+        it("KNOWN LIMITATION: an untracked device's genuinely newer edit can be lost to an older tracked edit during mixed-version rollout", async () => {
+            // Documenting an accepted tradeoff: updated clients prioritize tracked edit times over file mtime.
+            // Old clients (untracked) can have edits discarded in mixed fleets to fix #3434 for updated fleets.
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
+                devices: ["device-new", "device-old", "test-device-id"],
+                modified: {
+                    "device-new": Date.now(),
+                    "device-old": Date.now(),
+                    "test-device-id": Date.now()
+                }
+            })
+
+            const fileNew = path.join(h.userDataDir, "device-new", "media.json")
+            const fileOld = path.join(h.userDataDir, "device-old", "media.json")
+
+            // 1. Updated device: Tracked edit in the past.
+            h.currentMachineId = "device-new"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(path.dirname(fileNew), { recursive: true })
+            fs.writeFileSync(fileNew, JSON.stringify({ background: { brightness: 1 } }))
+            await setLocalFileModified("MEDIA", 1000)
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 2. Old client: Real edit now, but untracked (no concept of fileModified).
+            h.currentMachineId = "device-old"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(path.dirname(fileOld), { recursive: true })
+            fs.writeFileSync(fileOld, JSON.stringify({ background: { brightness: 2 } }))
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // Old client's edit is discarded for the cloud's tracked value (accepted cost).
+            const settingsOld = JSON.parse(fs.readFileSync(fileOld, "utf8"))
+            expect(settingsOld.background.brightness).toBe(1)
         })
     })
 })
