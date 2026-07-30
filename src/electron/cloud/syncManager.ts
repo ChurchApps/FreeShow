@@ -79,15 +79,15 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     let guardCloudModifiedAt = 0
 
     const provider = getManager[data.id]()
-    if (!provider) return { changedFiles }
+    if (!provider) return { success: false, error: "error.cloud_not_connected", changedFiles }
 
     if (data.method === "replace") await deleteLocalFiles()
 
     console.log("Syncing to cloud")
 
     if (data.method === "upload") {
-        await uploadLocalData()
-        return await finish()
+        const uploadResult = await uploadLocalData()
+        return await finish(uploadResult.success, uploadResult.error)
     }
 
     // clear any uncleared previous data
@@ -95,8 +95,8 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
     const cloudDataPath = await provider.getData(data.churchId, data.teamId, EXTRACT_LOCATION)
     if (!cloudDataPath) {
-        await uploadLocalData()
-        return await finish()
+        const uploadResult = await uploadLocalData()
+        return await finish(uploadResult.success, uploadResult.error)
     }
 
     // extract cloud data
@@ -112,7 +112,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         modifiedDates = await getZipModifiedDates(cloudDataPath)
     } catch (err) {
         console.error("Could not decompress cloud sync zip:", cloudDataPath, err)
-        return await finish(false)
+        return await finish(false, "error.cloud_download_unreadable")
     }
 
     console.log("Files:", extractedFiles.length)
@@ -453,7 +453,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         return await finish()
     }
 
-    const success = await uploadLocalData()
+    const uploadResult = await uploadLocalData()
 
     if (!DEBUG_MODE && !process.env.VITEST) {
         // silently backup in the background, this is skipped when the program is being closed
@@ -464,13 +464,29 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         }, 1000)
     }
 
-    return await finish(success)
+    return await finish(uploadResult.success, uploadResult.error)
 
-    async function uploadLocalData() {
-        const zipPath = await compressUserData()
-        if (!zipPath) return false
-        const uploadSuccess = await provider!.uploadData(data.teamId, zipPath)
-        return uploadSuccess
+    async function uploadLocalData(): Promise<{ success: boolean; error?: string }> {
+        let zipPath: string | null = null
+        try {
+            zipPath = await compressUserData()
+        } catch (err) {
+            console.error("Could not package data for cloud upload:", err)
+        }
+        if (!zipPath) return { success: false, error: "error.cloud_package_failed" }
+
+        // a rejection here would leave the IPC call unresolved until the renderer timeout
+        let uploadSuccess = false
+        try {
+            uploadSuccess = await provider!.uploadData(data.teamId, zipPath)
+        } catch (err) {
+            console.error("Could not upload data to cloud:", err)
+        }
+
+        // kept generic: the provider shows its own alert with the specific cause when it has one
+        if (!uploadSuccess) return { success: false, error: "error.cloud_upload_failed" }
+
+        return { success: true }
     }
 
     // if cloud backup is non existent or older than a week
@@ -499,11 +515,11 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         }
     }
 
-    async function finish(success = true) {
+    async function finish(success = true, error?: string) {
         if (!DEBUG_MODE) await deleteFolderAsync(EXTRACT_LOCATION)
         console.log("Sync completed!")
         isNewDevice = false
-        return { success, changedFiles }
+        return { success, error, changedFiles }
     }
 }
 

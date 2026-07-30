@@ -215,6 +215,8 @@ vi.mock("../utils/files", async (importOriginal) => {
 // Fake Cloud Provider
 class MockProvider {
     public mockCloudZipPath: string | null = null
+    public forceUploadFailure = false
+    public forceUploadThrow = false
 
     async hasValidConnection() {
         return true
@@ -241,6 +243,9 @@ class MockProvider {
     }
 
     async uploadData(teamId: string, zipPath: string) {
+        if (this.forceUploadThrow) throw new Error("network connection lost mid-upload")
+        if (this.forceUploadFailure) return false
+
         const cloudDest = path.join(h.tempRoot, "cloud_current.zip")
         if (fs.existsSync(cloudDest)) {
             fs.unlinkSync(cloudDest)
@@ -261,9 +266,10 @@ class MockProvider {
 
 const mockProviderInstance = new MockProvider()
 
+let forceNoProvider = false
 vi.mock("./ChurchAppsSyncManager", () => {
     return {
-        getChurchAppsSyncManager: () => mockProviderInstance
+        getChurchAppsSyncManager: () => (forceNoProvider ? null : mockProviderInstance)
     }
 })
 
@@ -295,6 +301,7 @@ describe("syncManager tests", () => {
     }
 
     beforeEach(() => {
+        vi.restoreAllMocks()
         // clear tempDir
         if (fs.existsSync(h.tempDir)) {
             fs.rmSync(h.tempDir, { recursive: true, force: true })
@@ -314,6 +321,9 @@ describe("syncManager tests", () => {
 
         // Reset mock provider zip
         mockProviderInstance.mockCloudZipPath = null
+        mockProviderInstance.forceUploadFailure = false
+        mockProviderInstance.forceUploadThrow = false
+        forceNoProvider = false
 
         // Reset stores to default
         if (_store.PROJECTS) _store.PROJECTS.store = { projects: {}, folders: {}, projectTemplates: {} }
@@ -1367,6 +1377,138 @@ describe("syncManager tests", () => {
             // Old client's edit is discarded for the cloud's tracked value (accepted cost).
             const settingsOld = JSON.parse(fs.readFileSync(fileOld, "utf8"))
             expect(settingsOld.background.brightness).toBe(1)
+        })
+    })
+
+    describe("sync failure reporting", () => {
+        it("should report a specific error message instead of a generic one when the downloaded cloud data can't be read", async () => {
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+
+            const corruptedZipPath = path.join(h.tempRoot, "corrupted.zip")
+            fs.writeFileSync(corruptedZipPath, "not actually a zip file")
+            mockProviderInstance.mockCloudZipPath = corruptedZipPath
+
+            const result = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            expect(result.success).toBe(false)
+            expect(result.error).toBe("error.cloud_download_unreadable")
+        })
+
+        it("should report a specific error message when uploading to the cloud fails (upload returns false)", async () => {
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+
+            mockProviderInstance.forceUploadFailure = true
+
+            // no cloud data yet, so this device seeds the team - the upload step is what fails here
+            const result = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            expect(result.success).toBe(false)
+            expect(result.error).toBe("error.cloud_upload_failed")
+        })
+
+        it("should still report the upload failure when the upload request rejects instead of returning false", async () => {
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+
+            mockProviderInstance.forceUploadThrow = true
+
+            const result = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            expect(result.success).toBe(false)
+            expect(result.error).toBe("error.cloud_upload_failed")
+        })
+
+        it("should report the same upload failure with the explicit 'upload' method, not just the seeding path", async () => {
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+
+            mockProviderInstance.forceUploadFailure = true
+
+            const result = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "upload" })
+
+            expect(result.success).toBe(false)
+            expect(result.error).toBe("error.cloud_upload_failed")
+        })
+
+        it("should report the upload failure after merging existing cloud data, not only when seeding", async () => {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
+                devices: ["device-A", "test-device-id"],
+                modified: { "device-A": Date.now(), "test-device-id": Date.now() }
+            })
+
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+
+            mockProviderInstance.forceUploadFailure = true
+
+            const result = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            expect(result.success).toBe(false)
+            expect(result.error).toBe("error.cloud_upload_failed")
+        })
+
+        it("should report a specific error message when packaging the local data for upload fails", async () => {
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+
+            // local failure while packaging, before any network call
+            const zipModule = await import("../data/zip")
+            vi.spyOn(zipModule, "compressToZip").mockRejectedValueOnce(new Error("ENOSPC: no space left on device"))
+
+            const result = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "upload" })
+
+            expect(result.success).toBe(false)
+            expect(result.error).toBe("error.cloud_package_failed")
+        })
+
+        it("should report a packaging error, not an upload error, when the failure happens before compressToZip (e.g. startBackup)", async () => {
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+
+            const backupModule = await import("../data/backup")
+            vi.spyOn(backupModule, "startBackup").mockRejectedValueOnce(new Error("ENOSPC: no space left on device"))
+
+            const result = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "upload" })
+
+            expect(result.success).toBe(false)
+            expect(result.error).toBe("error.cloud_package_failed")
+        })
+
+        it("should report a specific error message when the sync provider isn't available", async () => {
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+            forceNoProvider = true
+
+            const result = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            expect(result.success).toBe(false)
+            expect(result.error).toBe("error.cloud_not_connected")
+        })
+
+        it("should not set an error message when a full download+merge+upload sync succeeds", async () => {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
+                devices: ["device-A", "test-device-id"],
+                modified: { "device-A": Date.now(), "test-device-id": Date.now() }
+            })
+
+            h.currentMachineId = "device-A"
+            resetSyncManagerModule()
+            createStores()
+
+            const result = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            expect(result.success).toBe(true)
+            expect(result.error).toBeUndefined()
         })
     })
 })
