@@ -12,6 +12,12 @@ export type Changes = {
     modified: { [key: string]: number }
     deleted: { [key: string]: string[] }
     created: { [key: string]: string[] }
+    // real last-edit time per full-file store (EVENTS/THEMES/MEDIA), keyed by store id. These
+    // stores are compared by "newest wins", but a store's own file mtime gets bumped to "now" by
+    // the sync's own download write, not just by real edits - so relying on it makes the last
+    // device to merely sync (not edit) look newer than the device that actually edited it. This
+    // field tracks the real edit time instead, additive and optional so older clients ignore it.
+    fileModified?: { [storeId: string]: number }
 }
 
 export type EntryAction = "create" | "download" | "upload" | "delete" | "skip"

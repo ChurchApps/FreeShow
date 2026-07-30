@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { _store, createStores } from "../data/store"
 import { compressToZip, decompressZipStream } from "../data/zip"
 import { getDataFolderPath, writeFileAsync } from "../utils/files"
-import { resetSyncManagerModule, syncData } from "./syncManager"
+import { resetSyncManagerModule, setLocalFileModified, syncData } from "./syncManager"
 
 // 1. Host the temporary folder setup so it runs before imports are resolved
 const h = vi.hoisted(() => {
@@ -1232,6 +1232,161 @@ describe("syncManager tests", () => {
 
             await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
             expect(fs.existsSync(path.join(showsDirA, "show-B.show"))).toBe(true)
+        })
+    })
+
+    describe("full-file store real edit timestamp (MEDIA/EVENTS/THEMES)", () => {
+        it("should not let a device that only re-syncs (never edits) beat a real tracked edit, regardless of file mtime", async () => {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
+                devices: ["device-resync-a", "device-resync-b", "test-device-id"],
+                modified: {
+                    "device-resync-a": Date.now(),
+                    "device-resync-b": Date.now(),
+                    "test-device-id": Date.now()
+                }
+            })
+
+            const fileA = path.join(h.userDataDir, "device-resync-a", "media.json")
+            const fileB = path.join(h.userDataDir, "device-resync-b", "media.json")
+            const earlyRealEditTime = 1000
+
+            // 1. Device A never really edits MEDIA. Give its local file a far-future mtime to prove
+            // the fix no longer looks at mtime at all once a real edit is tracked anywhere - without
+            // the fix this file's fresh/future mtime would otherwise win the old comparison
+            h.currentMachineId = "device-resync-a"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(path.dirname(fileA), { recursive: true })
+            fs.writeFileSync(fileA, JSON.stringify({ background: { brightness: 10 } }))
+            const farFuture = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365)
+            fs.utimesSync(fileA, farFuture, farFuture)
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 2. Device B makes a real, tracked edit (logically earlier than A's file mtime above,
+            // but that must not matter since it is the only device with a real edit timestamp)
+            h.currentMachineId = "device-resync-b"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(path.dirname(fileB), { recursive: true })
+            fs.writeFileSync(fileB, JSON.stringify({ background: { brightness: 5 } }))
+            await setLocalFileModified("MEDIA", earlyRealEditTime)
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            const settingsB = JSON.parse(fs.readFileSync(fileB, "utf8"))
+            expect(settingsB.background.brightness).toBe(5) // B's real edit must survive its own sync
+
+            // 3. Device A syncs again (still without ever editing) and must pick up B's real edit
+            h.currentMachineId = "device-resync-a"
+            resetSyncManagerModule()
+            createStores()
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            const settingsA = JSON.parse(fs.readFileSync(fileA, "utf8"))
+            expect(settingsA.background.brightness).toBe(5)
+        })
+
+        it("should fall back to file mtime when neither device has ever tracked a real edit time (backward compatibility)", async () => {
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
+                devices: ["device-mtime-a", "device-mtime-b", "test-device-id"],
+                modified: {
+                    "device-mtime-a": Date.now(),
+                    "device-mtime-b": Date.now(),
+                    "test-device-id": Date.now()
+                }
+            })
+
+            const fileA = path.join(h.userDataDir, "device-mtime-a", "media.json")
+            const fileB = path.join(h.userDataDir, "device-mtime-b", "media.json")
+
+            // 1. Device A writes content with an old mtime, never tracking a real edit time -
+            // this exercises the pre-existing mtime-based comparison, untouched by this fix
+            h.currentMachineId = "device-mtime-a"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(path.dirname(fileA), { recursive: true })
+            fs.writeFileSync(fileA, JSON.stringify({ background: { brightness: 1 } }))
+            fs.utimesSync(fileA, new Date(1000), new Date(1000))
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 2. Device B writes different content with a far-future mtime, also untracked - by
+            // plain mtime this must win, exactly like before this fix existed
+            h.currentMachineId = "device-mtime-b"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(path.dirname(fileB), { recursive: true })
+            fs.writeFileSync(fileB, JSON.stringify({ background: { brightness: 2 } }))
+            const farFuture = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365)
+            fs.utimesSync(fileB, farFuture, farFuture)
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 3. Device A syncs again and must adopt B's content because it is newer by mtime
+            h.currentMachineId = "device-mtime-a"
+            resetSyncManagerModule()
+            createStores()
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            const settingsA = JSON.parse(fs.readFileSync(fileA, "utf8"))
+            expect(settingsA.background.brightness).toBe(2)
+        })
+
+        it("KNOWN LIMITATION: an untracked device's genuinely newer edit can be lost to an older tracked edit during mixed-version rollout", async () => {
+            // This documents an accepted tradeoff, not a bug to fix here: once any device has
+            // tracked a real edit time for a store, an old client that never adopted this field
+            // (so it always looks "untracked") can have its own real edits silently discarded,
+            // however recent, because untracked is always treated as time 0. There is no way to
+            // tell "an old client's genuine edit" apart from "a resync that merely bumped mtime"
+            // without that old client tracking its own edit time too - fixing the reported bug
+            // (#3434) for fully-updated fleets requires accepting this cost for mixed fleets.
+            await createCloudState([{ name: "SHOWS/dummy.show", content: JSON.stringify(["dummy", { name: "Dummy", slides: [], timestamps: { modified: Date.now() } }]) }], {
+                devices: ["device-new", "device-old", "test-device-id"],
+                modified: {
+                    "device-new": Date.now(),
+                    "device-old": Date.now(),
+                    "test-device-id": Date.now()
+                }
+            })
+
+            const fileNew = path.join(h.userDataDir, "device-new", "media.json")
+            const fileOld = path.join(h.userDataDir, "device-old", "media.json")
+
+            // 1. The updated device makes a tracked edit far in the past (an old timestamp) and syncs
+            h.currentMachineId = "device-new"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(path.dirname(fileNew), { recursive: true })
+            fs.writeFileSync(fileNew, JSON.stringify({ background: { brightness: 1 } }))
+            await setLocalFileModified("MEDIA", 1000)
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // 2. The old client makes a genuinely fresh, real edit just now, but has no concept of
+            // fileModified (never calls setLocalFileModified) - it never even downloaded the
+            // updated device's version first, exactly like an old build that has no idea this
+            // field exists
+            h.currentMachineId = "device-old"
+            resetSyncManagerModule()
+            createStores()
+
+            fs.mkdirSync(path.dirname(fileOld), { recursive: true })
+            fs.writeFileSync(fileOld, JSON.stringify({ background: { brightness: 2 } }))
+
+            await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+
+            // The old client's own real, fresh edit is discarded in favor of the cloud's tracked
+            // (but chronologically much older) value - this is the accepted, documented cost
+            const settingsOld = JSON.parse(fs.readFileSync(fileOld, "utf8"))
+            expect(settingsOld.background.brightness).toBe(1)
         })
     })
 })

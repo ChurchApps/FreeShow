@@ -303,8 +303,18 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         // replace full files
         if (data.method === "replace" || !MERGE_INDIVIDUAL.includes(id)) {
             const localPath = localStore.path
+
+            // prefer the real edit time (fileModified) over file mtime whenever either side has one -
+            // mtime gets bumped to "now" by the sync's own writes, not just by real edits, so it can
+            // make the last device to merely sync (not edit) look newer than the one that actually
+            // edited. If only one side has a tracked time, treat the other as untrusted/very old
+            // (0) rather than falling back to mtime, which would make the comparison flaky again.
+            const cloudFileModified = CHANGES.fileModified?.[id]
+            const localFileModified = getStore("CACHE_SYNC")?.fileModified?.[id]
+            const cloudIsNewer = data.method === "replace" || isNewDevice || (cloudFileModified || localFileModified ? (cloudFileModified || 0) > (localFileModified || 0) : await isCloudNewerThanFile(localPath, modifiedDates[file.name]))
+
             // replace local file if cloud is newer or new device
-            if (data.method === "replace" || isNewDevice || (await isCloudNewerThanFile(localPath, modifiedDates[file.name]))) {
+            if (cloudIsNewer) {
                 // try to set store directly first, otherwise move the file
                 const cloudContent = await readFileAsync(cloudPath)
                 const parsedData = safeParseJSON(cloudContent)
@@ -314,9 +324,24 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                     await moveFileAsync(cloudPath, localPath)
                 }
 
+                // record the real edit time this content carries (not "now"), so this device's
+                // next sync doesn't look artificially fresher than a device that hasn't synced yet.
+                // If the cloud copy had no tracked time either (old client, or mtime-fallback path),
+                // clear any stale local tracked time instead of keeping it - this content is no
+                // longer this device's own tracked edit, so it must not be treated as one
+                if (cloudFileModified) await setLocalFileModified(id, cloudFileModified)
+                else await clearLocalFileModified(id)
+
                 // send to frontend
                 const localData = localStore.store
                 sendMain(Main[id], localData)
+            } else if (localFileModified) {
+                // local wins - carry its real edit time into the outgoing ledger so other devices
+                // compare against it instead of this sync's own file mtime. CHANGES may come from a
+                // parsed cloud changes.json written by a client that predates this field, so it can
+                // be missing here even though DEFAULT_CHANGES seeds it - guard before writing to it
+                if (!CHANGES.fileModified) CHANGES.fileModified = {}
+                CHANGES.fileModified[id] = Math.max(CHANGES.fileModified[id] || 0, localFileModified)
             }
             return
         }
@@ -536,6 +561,26 @@ async function isCloudNewerThanFile(localFilePath: string, cloudDate: Date): Pro
     return cloudDate.getTime() > localStats.mtime.getTime()
 }
 
+// device-local cache of the real last-edit time per full-file store, bumped only by genuine
+// edits (save.ts), never by the sync's own download writes - see the Changes.fileModified comment
+export async function setLocalFileModified(id: string, timestamp: number) {
+    const syncCache = getStore("CACHE_SYNC") || {}
+    if (!syncCache.fileModified) syncCache.fileModified = {}
+    if ((syncCache.fileModified[id] || 0) >= timestamp) return
+    syncCache.fileModified[id] = timestamp
+    if (_store.CACHE_SYNC) await safeStoreSet(_store.CACHE_SYNC, syncCache, "CACHE_SYNC")
+}
+
+// used when this device downloads content that carries no tracked edit time (old client, or the
+// mtime-fallback path) - any previously tracked local time no longer describes this content, so it
+// must be cleared instead of surviving and being mistaken for a real edit of the new content
+async function clearLocalFileModified(id: string) {
+    const syncCache = getStore("CACHE_SYNC") || {}
+    if (!syncCache.fileModified?.[id]) return
+    delete syncCache.fileModified[id]
+    if (_store.CACHE_SYNC) await safeStoreSet(_store.CACHE_SYNC, syncCache, "CACHE_SYNC")
+}
+
 function getLocalOnlyKeys(cloudKeys: any, localKeys: any): string[] {
     const cloud = Array.isArray(cloudKeys) ? cloudKeys : Object.keys(cloudKeys || {})
     const local = Array.isArray(localKeys) ? localKeys : Object.keys(localKeys || {})
@@ -661,7 +706,7 @@ function safeParseJSON(text: string) {
 
 const changes_name = "changes.json"
 const version = "0.1.1"
-const DEFAULT_CHANGES: Changes = { version, devices: [], modified: {}, deleted: {}, created: {} }
+const DEFAULT_CHANGES: Changes = { version, devices: [], modified: {}, deleted: {}, created: {}, fileModified: {} }
 let CHANGES: Changes = clone(DEFAULT_CHANGES)
 let cloudChanges: Changes | null = null
 let isNewDevice = false
