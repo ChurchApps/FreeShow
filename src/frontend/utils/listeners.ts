@@ -29,7 +29,6 @@ import {
     effects,
     events,
     folders,
-    gain,
     globalRegexes,
     groups,
     livePrepare,
@@ -60,8 +59,7 @@ import {
     timerTags,
     transitionData,
     variables,
-    variableTags,
-    volume
+    variableTags
 } from "../stores"
 import { hasNewerUpdate } from "./common"
 import { driveConnect } from "./drive"
@@ -392,15 +390,6 @@ export function storeSubscriber() {
         send(OUTPUT, ["SLIDE_TIMELINE_SPEED_MULTIPLIER"], data)
     })
 
-    volume.subscribe((data) => {
-        send(OUTPUT, ["VOLUME"], data)
-
-        // REMOTE mixer updates
-        sendRemoteMixer()
-    })
-    gain.subscribe((data) => {
-        send(OUTPUT, ["GAIN"], data)
-    })
     audioChannelsData.subscribe((data) => {
         send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
 

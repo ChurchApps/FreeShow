@@ -20,6 +20,7 @@ export function initAudioRouting(data: AudioRoutingConfig | null) {
             // Connect default inputs to each output's merger
             connections.push({ from: "drawer_audio", to: mergerId })
             connections.push({ from: "mic_default", to: mergerId })
+            connections.push({ from: "output_window", to: mergerId })
 
             // Connect merger to physical/virtual output
             const to = out.stageOutput ? "output_window" : id === "default" ? "speaker_default" : `speaker_sub_${id}`
@@ -27,7 +28,7 @@ export function initAudioRouting(data: AudioRoutingConfig | null) {
         }
     } else {
         mergers.push({ id: "main", name: "Main Bus" })
-        connections.push({ from: "drawer_audio", to: "main" }, { from: "mic_default", to: "main" }, { from: "main", to: "speaker_default" })
+        connections.push({ from: "drawer_audio", to: "main" }, { from: "mic_default", to: "main" }, { from: "output_window", to: "main" }, { from: "main", to: "speaker_default" })
     }
 
     audioRouting.set({ mergers, connections })

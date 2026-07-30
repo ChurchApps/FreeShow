@@ -43,7 +43,6 @@ import {
     eqPresets,
     formatNewShow,
     fullColors,
-    gain,
     globalRegexes,
     globalTags,
     groupNumbers,
@@ -97,8 +96,7 @@ import {
     version,
     videoMarkers,
     videosData,
-    videosTime,
-    volume
+    videosTime
 } from "./../stores"
 import { checkForUpdates } from "./checkForUpdates"
 import { isMainWindow, startAutosave } from "./common"
@@ -369,8 +367,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     audioPlaylists: (v: any) => audioPlaylists.set(v),
     theme: (v: any) => theme.set(v),
     transitionData: (v: any) => transitionData.set(v),
-    volume: (v: any) => volume.set(v),
-    gain: (v: any) => gain.set(v),
     audioChannelsData: (v: any) => audioChannelsData.set(v),
     emitters: (v: any) => emitters.set(v),
     midiIn: (v: any) => actions.set(v),

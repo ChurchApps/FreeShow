@@ -36,7 +36,6 @@ import {
     dynamicValueData,
     effects,
     events,
-    gain,
     globalRegexes,
     groups,
     livePrepare,
@@ -69,8 +68,7 @@ import {
     variables,
     videosData,
     videosTime,
-    visualizerData,
-    volume
+    visualizerData
 } from "../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
@@ -251,7 +249,7 @@ const receiveOUTPUTasMAIN: any = {
         let value = -80
         if (data.deviceId === "main") {
             const channels = get(audioChannels)
-            const db = channels.length ? Math.max(...channels.map(c => c.dB?.value ?? -80)) : -80
+            const db = channels.length ? Math.max(...channels.map((c) => c.dB?.value ?? -80)) : -80
             value = Math.round(db)
         } else {
             AudioMicrophone.startListening(data.deviceId)
@@ -349,8 +347,6 @@ export const receiveOUTPUTasOUTPUT: any = {
         videosTime.set(data.time)
     },
 
-    VOLUME: (a: any) => volume.set(a),
-    GAIN: (a: any) => gain.set(a),
     AUDIO_CHANNELS_DATA: (a: any) => audioChannelsData.set(a),
 
     AUDIO_EFFECTS: (a: any) => {

@@ -1,3 +1,6 @@
+import { AudioAnalyser } from "../audioAnalyser"
+import { AudioRoutingManager } from "./audioRoutingManager"
+
 export interface ChannelVisualizerData {
     channelIndex: number
     db: number
@@ -32,8 +35,73 @@ export class AudioInputCapture {
         return (AudioInputCapture.instance ??= new AudioInputCapture())
     }
 
+    private windowStreams: Map<string, MediaStream> = new Map()
+
     public setAudioContext(ctx: AudioContext) {
         this.audioCtx = ctx
+    }
+
+    /**
+     * Capture window/desktop audio loopback via desktopCapturer source ID and connect to AudioRoutingManager.
+     */
+    public async captureDesktopAudio(nodeId: string, label?: string, mediaId: string = "screen:0:0") {
+        if (!this.audioCtx) {
+            this.audioCtx = AudioAnalyser.getAudioContext()
+        }
+        if (!this.audioCtx || this.windowStreams.has(mediaId)) return
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    mandatory: {
+                        chromeMediaSource: "desktop",
+                        chromeMediaSourceId: mediaId
+                    }
+                } as any,
+                video: {
+                    mandatory: {
+                        chromeMediaSource: "desktop",
+                        chromeMediaSourceId: mediaId
+                    }
+                } as any
+            })
+
+            this.windowStreams.set(mediaId, stream)
+
+            if (stream.getAudioTracks().length > 0) {
+                const sourceNode = this.audioCtx.createMediaStreamSource(stream)
+                const nodeSubId = nodeId
+                const parentId = nodeId.includes("output_win_sub_") ? "output_window" : "desktop_default"
+
+                // Register for specific sub-node visualizer (for meters in drawer)
+                this.captureInput(nodeSubId, sourceNode)
+
+                if (parentId === "output_window") {
+                    // Legacy output windows still get their own routable nodes
+                    AudioRoutingManager.getInstance().registerInputNode(nodeSubId, sourceNode)
+                }
+
+                // All desktop audio feeds into the global desktop_default node
+                AudioRoutingManager.getInstance().registerInputNode(parentId, sourceNode)
+            }
+        } catch (e) {
+            console.warn(`[AudioInputCapture] Could not capture desktop audio for ${label || nodeId}:`, e)
+        }
+    }
+
+    /**
+     * @deprecated Use captureDesktopAudio instead
+     */
+    public async captureOutputWindowStream(windowMediaId: string, outputId: string = "output_window") {
+        return this.captureDesktopAudio("output_win_sub_" + outputId, `Output Window ${outputId}`, windowMediaId)
+    }
+
+    public stopOutputWindowStream(windowMediaId: string) {
+        const stream = this.windowStreams.get(windowMediaId)
+        if (stream) {
+            stream.getTracks().forEach((track) => track.stop())
+            this.windowStreams.delete(windowMediaId)
+        }
     }
 
     /**

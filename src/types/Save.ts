@@ -76,8 +76,6 @@ export type SaveListSettings =
     | "splitLines"
     | "theme"
     | "transitionData"
-    | "volume"
-    | "gain"
     | "audioChannelsData"
     | "cloudSyncData"
     | "driveData"

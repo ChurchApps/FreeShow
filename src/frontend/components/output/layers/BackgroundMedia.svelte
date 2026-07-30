@@ -8,7 +8,7 @@
     import type { OutBackground, Transition } from "../../../../types/Show"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { requestMain } from "../../../IPC/main"
-    import { audioChannelsData, currentWindow, media, outputs, playerVideos, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
+    import { audioChannelsData, currentWindow, media, outputs, playerVideos, playingVideos, special, videosData, videosTime } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import { videoExtensions } from "../../../values/extensions"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
@@ -195,7 +195,8 @@
         }
     }
 
-    $: calculatedVolume = $volume * (isMuted ? 0 : 1) * audioChannelVolume * (($media[id]?.volume ?? currentStyle?.volume ?? 100) / 100) * replayGainMultiplier
+    $: mainBusVolume = $audioChannelsData.main?.volume ?? 1
+    $: calculatedVolume = mainBusVolume * (isMuted ? 0 : 1) * audioChannelVolume * (($media[id]?.volume ?? currentStyle?.volume ?? 100) / 100) * replayGainMultiplier
     $: videoVolumeProp = calculatedVolume * fadeoutVolume
 
     $: if (fadingOut && !videoData.muted) fadeoutVideo()
@@ -237,6 +238,7 @@
     // previousPath is probably not needed as component is unmounted on new path
     let previousPath = id
     function analyseVideo() {
+        if (true) return // DEBUG
         if (fadingOut || $playingVideos[0]?.id === id) return
         if (previousPath && previousPath !== id) {
             AudioAnalyser.detach(previousPath)
@@ -244,7 +246,7 @@
         if (!video) return
 
         playingVideos.set([{ id, video }])
-        AudioAnalyser.attach(id, video)
+        AudioAnalyser.attach(id, video as HTMLMediaElement)
         AudioAnalyser.recorderActivate()
 
         // Sync initial processing state

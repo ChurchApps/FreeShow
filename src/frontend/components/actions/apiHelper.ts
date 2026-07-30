@@ -6,7 +6,7 @@ import type { DropData, Selected, Variable } from "../../../types/Main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -735,14 +735,20 @@ let unmutedValue = 1
 export function updateVolumeValues(value: number | undefined | "local") {
     // api mute(unmute)
     if (value === undefined) {
-        value = get(volume) ? 0 : unmutedValue
-        if (!value) unmutedValue = get(volume)
+        const currentVolume = get(audioChannelsData).main?.volume ?? 1
+        value = currentVolume ? 0 : unmutedValue
+        if (!value) unmutedValue = currentVolume
     }
 
     // supposed to be in 0-1 range instead of 0-100
     if (typeof value === "number" && value > 1) value = value / 100
 
-    volume.set(Number(Number(value).toFixed(2)))
+    const newVolume = Number(Number(value).toFixed(2))
+    audioChannelsData.update((data) => {
+        if (!data.main) data.main = { volume: 1 }
+        data.main.volume = newVolume
+        return data
+    })
 
     AudioPlayer.updateVolume()
 }

@@ -107,6 +107,12 @@ export class AudioAnalyserMerger {
             }
         })
 
+        // Capture output_window level if active
+        const outData = capture.getVisualizerData("output_window")
+        if (outData && outData.db > -60) {
+            nodeVolumes["output_window"] = { dB: Math.round(outData.db) }
+        }
+
         // Combine captured input levels
         Object.entries(inputLevels).forEach(([key, dbs]) => {
             const linearSum = dbs.reduce((sum, db) => sum + Math.pow(10, db / 20), 0)

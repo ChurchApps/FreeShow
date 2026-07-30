@@ -1,7 +1,7 @@
 <script>
     import { createEventDispatcher, onDestroy } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
-    import { currentWindow, focusMode, special, volume } from "../../../stores"
+    import { audioChannelsData, currentWindow, focusMode, special } from "../../../stores"
     import { send } from "../../../utils/request"
     import YouTubePlayer from "./YouTubePlayer.svelte"
 
@@ -139,10 +139,10 @@
         dispatch("ended", true)
     }
 
-    // update volume based on global slider value
-    $: if (!preview && $volume !== undefined && player) updateVolume()
+    $: mainVol = $audioChannelsData.main?.isMuted ? 0 : ($audioChannelsData.main?.volume ?? 1)
+    $: if (!preview && mainVol !== undefined && player) updateVolume()
     function updateVolume() {
-        player.setVolume($volume * 100)
+        player.setVolume(mainVol * 100)
     }
 </script>
 

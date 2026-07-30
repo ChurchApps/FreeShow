@@ -1,8 +1,7 @@
 import { get } from "svelte/store"
 import { AudioAnalyser } from "../../../audio/audioAnalyser"
-import { AudioPlayer } from "../../../audio/audioPlayer"
 import { AudioRoutingManager } from "../../../audio/routing/audioRoutingManager"
-import { customMetadata, metronome, metronomeTimer, playingMetronome, special, volume } from "../../../stores"
+import { customMetadata, metronome, metronomeTimer, playingMetronome, special } from "../../../stores"
 import type { API_metronome } from "../../actions/api"
 import { clone } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
@@ -218,5 +217,5 @@ async function playNote(time: number, first = false) {
 }
 
 function getVolume(beatVolume) {
-    return beatVolume * (metronomeValues.volume || 1) * get(volume) * AudioPlayer.getGain()
+    return beatVolume * (metronomeValues.volume || 1)
 }

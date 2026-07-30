@@ -7,6 +7,11 @@
     import Icon from "../../helpers/Icon.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import AudioNodeVisualizer from "./AudioNodeVisualizer.svelte"
+    import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
+
+    onMount(() => {
+        AudioInputCapture.getInstance().captureDesktopAudio("desktop_default", "Desktop Audio")
+    })
 
     let config: AudioRoutingConfig
     $: config = $audioRouting || { mergers: [], connections: [] }
@@ -16,6 +21,7 @@
         { id: "drawer_audio", name: "Audio Files (Drawer)", type: "drawer_audio" },
         { id: "mic_default", name: "Microphone", type: "mic" },
         { id: "metronome", name: "Metronome", type: "metronome" },
+        { id: "desktop_default", name: "Desktop Audio", type: "desktop_audio" },
         { id: "output_window", name: "Output Windows", type: "output_window" }
     ]
 
@@ -146,6 +152,7 @@
             drawer_audio: "audio",
             mic: "mic",
             metronome: "timer",
+            desktop_audio: "screen",
             output_window: "display_settings",
             speaker: "volume",
             network: "connection",
@@ -343,12 +350,18 @@
                             const isParentOutput = toId === "speaker_default" || toId === "network_default"
 
                             if (isChildInput) {
-                                const parentId = fromId.startsWith("drawer_sub_") ? "drawer_audio" : "mic_default"
-                                c.connections = c.connections.filter((conn) => !(conn.from === parentId && conn.to === toId))
+                                let parentId = ""
+                                if (fromId.startsWith("drawer_sub_")) parentId = "drawer_audio"
+                                else if (fromId.startsWith("mic_sub_")) parentId = "mic_default"
+
+                                if (parentId) c.connections = c.connections.filter((conn) => !(conn.from === parentId && conn.to === toId))
                             }
                             if (isParentInput) {
-                                const prefix = fromId === "drawer_audio" ? "drawer_sub_" : "mic_sub_"
-                                c.connections = c.connections.filter((conn) => !(conn.from.startsWith(prefix) && conn.to === toId))
+                                let prefix = ""
+                                if (fromId === "drawer_audio") prefix = "drawer_sub_"
+                                else if (fromId === "mic_default") prefix = "mic_sub_"
+
+                                if (prefix) c.connections = c.connections.filter((conn) => !(conn.from.startsWith(prefix) && conn.to === toId))
                             }
                             if (isChildOutput) {
                                 const parentId = toId.startsWith("speaker_sub_") ? "speaker_default" : "network_default"
@@ -429,7 +442,7 @@
                                     }}
                                 >
                                     <div class="card-content">
-                                        {#if item.type === "mic"}
+                                        {#if item.id === "mic_default"}
                                             <button class="expand-btn" on:click={toggleMicExpanded}>
                                                 <Icon id={isMicExpanded ? "chevron_down" : "chevron_right"} size={0.9} />
                                             </button>
@@ -437,10 +450,8 @@
                                         <Icon id={getIcon(item.type)} size={1.1} />
                                         <span class="card-name">{item.name}</span>
                                     </div>
-                                    {#if item.type !== "output_window"}
+                                    {#if item.id !== "output_window"}
                                         <AudioNodeVisualizer channelId={item.id} width={140} height={4} />
-                                    {/if}
-                                    {#if item.type !== "output_window"}
                                         <div class="port port-out" title="Drag to connect or disconnect Merger" on:mousedown={(e) => handlePortMouseDown(e, item.id, "input", "out")}></div>
                                     {/if}
                                 </div>
@@ -577,7 +588,7 @@
                                     {/if}
 
                                     <div class="card-content">
-                                        {#if item.type === "speaker"}
+                                        {#if item.id === "speaker_default"}
                                             <button class="expand-btn" on:click={toggleSpeakerExpanded}>
                                                 <Icon id={isSpeakerExpanded ? "chevron_down" : "chevron_right"} size={0.9} />
                                             </button>
@@ -585,7 +596,7 @@
                                         <Icon id={getIcon(item.type)} size={1.1} />
                                         <span class="card-name">{item.name}</span>
                                     </div>
-                                    {#if item.type !== "network"}
+                                    {#if item.id !== "network_default"}
                                         <AudioNodeVisualizer channelId={item.id} width={140} height={4} />
                                     {/if}
                                 </div>

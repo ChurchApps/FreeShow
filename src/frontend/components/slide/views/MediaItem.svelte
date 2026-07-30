@@ -3,14 +3,13 @@
     import { uid } from "uid"
     import { OUTPUT } from "../../../../types/Channels"
     import type { Item } from "../../../../types/Show"
-    import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { currentWindow, outputs, slideVideoData, styles, volume } from "../../../stores"
+    import { audioChannelsData, currentWindow, outputs, slideVideoData, styles } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import Image from "../../drawer/media/Image.svelte"
+    import { getCropState } from "../../helpers/cropping"
     import { encodeFilePath, getExtension, getMedia, getMediaType, getThumbnailPath, mediaSize } from "../../helpers/media"
     import { defaultLayers } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
-    import { getCropState } from "../../helpers/cropping"
 
     export let id: string
     export let item: Item
@@ -178,7 +177,8 @@
         {#if item.fit === "blur"}
             <video bind:this={videoBlurElem} src={encodeFilePath(mediaPath)} style="{mediaStyleBlurString}{mediaStyleCombinedString}" bind:playbackRate muted autoplay loop={shouldLoop} />
         {/if}
-        <video bind:this={videoElem} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString}" bind:playbackRate muted={mirror || item.muted} volume={AudioPlayer.getVolume(null, $volume)} autoplay loop={shouldLoop}>
+        {@const mainVol = $audioChannelsData.main?.volume ?? 1}
+        <video bind:this={videoElem} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString}" bind:playbackRate muted={mirror || item.muted} volume={mainVol} autoplay loop={shouldLoop}>
             <track kind="captions" />
         </video>
     {:else}

@@ -6,7 +6,7 @@ import { customActionActivation } from "../components/actions/actions"
 import { encodeFilePath, getFileName, locateMediaFile, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { requestMain, sendMain } from "../IPC/main"
-import { activePlaylist, dictionary, media, outLocked, playingAudio, playingAudioPaths, special, volume } from "../stores"
+import { activePlaylist, dictionary, media, outLocked, playingAudio, playingAudioPaths, special } from "../stores"
 import { addToMediaFolder } from "../utils/cloudSync"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
@@ -343,12 +343,6 @@ export class AudioPlayer {
 
             updateAudioStore(id, "volume", Math.min(1, Math.max(0, newVolume)))
         })
-
-        AudioAnalyser.setGain(this.getGain())
-    }
-
-    static setGain(value: number) {
-        AudioAnalyser.setGain(value)
     }
 
     static setPitch(id: string, value: number) {
@@ -448,14 +442,8 @@ export class AudioPlayer {
         return this.storedDurations.get(id) || 0
     }
 
-    static getVolume(id: string | null = null, _updater = get(volume)) {
-        if (!id) return _updater
+    static getVolume(id: string) {
         return get(media)[id]?.volume || 1
-    }
-
-    static getGain() {
-        return 1
-        // return get(special).allowGaining ? get(gain) || 1 : 1
     }
 
     static getGlobalOptions(path: string) {

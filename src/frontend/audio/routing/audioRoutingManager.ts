@@ -19,6 +19,11 @@ export class AudioRoutingManager {
                 this.config = val
                 this.updateRoutingNodes()
                 AudioAnalyser.recorderActivate()
+
+                // Ensure desktop audio is captured if connected
+                if (val.connections.some((c) => c.from === "desktop_default")) {
+                    AudioInputCapture.getInstance().captureDesktopAudio("desktop_default", "Desktop Audio")
+                }
             }
         })
         audioChannelsData.subscribe((data) => {
@@ -36,6 +41,8 @@ export class AudioRoutingManager {
     }
 
     public setAudioContext(ctx: AudioContext) {
+        if (this.audioCtx === ctx) return
+        console.log("[AudioRoutingManager] Updating AudioContext")
         this.audioCtx = ctx
         this.updateRoutingNodes()
     }
@@ -180,8 +187,9 @@ export class AudioRoutingManager {
             speakerConns.forEach((c) => {
                 if (c.to === "speaker_default") {
                     if (this.audioCtx) {
-                        node.connect(this.audioCtx.destination)
-                        AudioInputCapture.getInstance().captureInput("speaker_default", node)
+                        const master = AudioAnalyser.getMasterGainNode()
+                        node.connect(master)
+                        AudioInputCapture.getInstance().captureInput("speaker_default", master)
                     }
                 } else if (c.to.startsWith("speaker_sub_")) {
                     const targetSpeaker = speakerSubMergers.get(c.to)
@@ -300,6 +308,7 @@ export class AudioRoutingManager {
             this.inputNodes.set(inputId, new Set())
         }
         this.inputNodes.get(inputId)!.add(node)
+        this.routeInput(inputId, node)
     }
 
     public unregisterInputNode(inputId: string, node?: AudioNode) {

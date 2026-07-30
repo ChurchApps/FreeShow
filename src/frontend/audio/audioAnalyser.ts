@@ -6,7 +6,6 @@ import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
-import { AudioPlayer } from "./audioPlayer"
 import { AudioProcessor, PitchShiftNode } from "./audioProcessor"
 import { initializeCompressor } from "./effects/audioCompressor"
 import { initializeDelay } from "./effects/audioDelay"
@@ -39,6 +38,10 @@ export class AudioAnalyser {
         if (this.ac.state === "suspended") {
             this.ac.resume().catch(() => {})
         }
+
+        // Sync context to routing manager
+        AudioRoutingManager.getInstance().setAudioContext(this.ac)
+
         return this.ac
     }
 
@@ -118,7 +121,10 @@ export class AudioAnalyser {
             // A more reliable check: actual media streams are hardware inputs (mics),
             // while HTMLMediaElements are files from the drawer.
             const isMic = audio instanceof MediaStream || (audioPlaying && audioPlaying.isMic === true)
+
+            // Determine the node key for routing purposes
             const nodeKey = isMic ? id : id === "metronome" ? "metronome" : "drawer_audio"
+
             console.log(`[AudioAnalyser] Registering input node for "${id}" with key "${nodeKey}"`)
 
             AudioInputCapture.getInstance().captureInput(nodeKey, sourceGain)
@@ -129,8 +135,6 @@ export class AudioAnalyser {
                 AudioRoutingManager.getInstance().registerInputNode("mic_default", processor.output)
                 // We don't need a separate captureInput for mic_default as it's aggregated in the visualizer logic
             }
-
-
 
             // Route audio to configured mergers
             this.connectToSinks(processor, id)
@@ -375,11 +379,17 @@ export class AudioAnalyser {
     private static gainNode: GainNode | null = null
     private static effectNodes: { [K: string]: { input: GainNode; output: GainNode } } = {}
 
+    // We keep gainNode for legacy sink routing, but AudioRoutingManager
+    // now manages its own GainNode cluster for proper isolation.
+    static getMasterGainNode(): GainNode {
+        this.initGain()
+        return this.gainNode!
+    }
+
     private static initGain() {
         if (this.gainNode) return
 
         this.gainNode = AudioMultichannel.createMultichannelGainNode(this.ac, this.channels)
-        this.gainNode.gain.value = AudioPlayer.getGain()
 
         // Pass master gain node to routing manager so mergers connect to it
         AudioRoutingManager.getInstance().setMasterNode(this.gainNode)
@@ -454,11 +464,6 @@ export class AudioAnalyser {
         } catch (e) {}
     }
 
-    static setGain(value: number) {
-        if (!this.gainNode) this.initGain()
-        this.gainNode!.gain.setValueAtTime(Math.max(0, value), this.ac.currentTime)
-    }
-
     static setPitch(id: string, value: number) {
         const processor = this.processors[id]
         if (processor) {
@@ -489,6 +494,11 @@ export class AudioAnalyser {
         // Route input to configured mergers
         const audioPlaying = id ? get(playingAudio)[id] : null
         const isMic = audioPlaying?.isMic === true || (id && id.startsWith("mic_sub_"))
+
+        // Skip routing for specific output windows in this legacy path
+        // because they are handled exclusively by AudioInputCapture.
+        if (id && id.startsWith("output_win_sub_")) return
+
         const nodeKey = id ? (isMic ? id : id === "metronome" ? "metronome" : "drawer_audio") : "drawer_audio"
 
         const manager = AudioRoutingManager.getInstance()
@@ -504,6 +514,9 @@ export class AudioAnalyser {
 
     static disconnectGain(source: AudioNode | PitchShiftNode, id?: string) {
         const node = source instanceof PitchShiftNode ? source.output : source
+
+        if (id && id.startsWith("output_win_sub_")) return
+
         const audioPlaying = id ? get(playingAudio)[id] : null
         const isMic = audioPlaying?.isMic === true || (id && id.startsWith("mic_sub_"))
         const nodeKey = id ? (isMic ? id : id === "metronome" ? "metronome" : "drawer_audio") : "drawer_audio"

@@ -2,6 +2,8 @@ import { get } from "svelte/store"
 import { Main } from "../../types/IPC/Main"
 import { sendMain } from "../IPC/main"
 import { outLocked } from "../stores"
+import { AudioAnalyser } from "./audioAnalyser"
+import { AudioInputCapture } from "./routing/audioInputCapture"
 import { AudioPlayer } from "./audioPlayer"
 
 type AudioMetadata = {
@@ -11,8 +13,14 @@ type AudioOptions = {
     pauseIfPlaying?: boolean
 }
 
+interface AudioMicrophoneListener {
+    stream: MediaStream
+    source: MediaStreamAudioSourceNode
+}
+
 export class AudioMicrophone {
     static volumes: { [deviceId: string]: number } = {}
+    private static activeListeners: { [deviceId: string]: AudioMicrophoneListener } = {}
 
     static start(deviceId: string, metadata: AudioMetadata, options: AudioOptions = {}) {
         if (get(outLocked)) return
@@ -38,6 +46,32 @@ export class AudioMicrophone {
 
     static stop(id: string) {
         AudioPlayer.stop(id)
+    }
+
+    static startListening(deviceId: string) {
+        if (this.activeListeners[deviceId]) return
+
+        navigator.mediaDevices
+            .getUserMedia({ audio: { deviceId: { exact: deviceId } } })
+            .then((stream) => {
+                const ac = AudioAnalyser.getAudioContext()
+                const source = ac.createMediaStreamSource(stream)
+                this.activeListeners[deviceId] = { stream, source }
+
+                // Capture for visualizer but don't connect to destination
+                AudioInputCapture.getInstance().captureInput("mic_sub_" + deviceId, source)
+            })
+            .catch((err) => {
+                console.error("Could not start microphone listener:", err)
+            })
+    }
+
+    static getVolume(deviceId: string): number {
+        const id = "mic_sub_" + deviceId
+        const data = AudioInputCapture.getInstance().getVisualizerData(id)
+        if (data && typeof data.db === "number") return data.db
+        if (data && data.channels?.[0]) return data.channels[0].db
+        return -80
     }
 
     static async getList() {

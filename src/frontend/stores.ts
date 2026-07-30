@@ -266,8 +266,6 @@ export const deletedDefaults: Writable<{ [key: string]: string[] }> = writable({
 export const audioFolders: Writable<Categories> = writable({}) // {default}
 export const audioStreams: Writable<{ [key: string]: AudioStream }> = writable({}) // {}
 export const audioPlaylists: Writable<{ [key: string]: Playlist }> = writable({}) // {}
-export const volume: Writable<number> = writable(1) // 1
-export const gain: Writable<number> = writable(1) // DEPRECATED - only use volume
 export const audioChannelsData: Writable<{ [key: string]: AudioChannelData }> = writable({}) // {}
 export const metronome: Writable<API_metronome> = writable({}) // {}
 export const audioRouting: Writable<AudioRoutingConfig | null> = writable(null) // {init}
@@ -453,7 +451,6 @@ export const $ = {
     overlayCategories,
     overlays,
     audioFolders,
-    volume,
     playerVideos,
     templateCategories,
     templates,
