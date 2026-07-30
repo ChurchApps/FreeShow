@@ -524,6 +524,9 @@ export const itemBoxes: Box2 = {
                     { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
                     { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
                 ])
+            },
+            cropping: {
+                inputs: croppingRowsPercentage
             }
         }
     },

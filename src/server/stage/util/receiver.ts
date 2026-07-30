@@ -1,9 +1,9 @@
 import type { Output } from "../../../types/Output"
 import type { Show } from "../../../types/Show"
 import type { StageLayout } from "../../../types/Stage"
-import { openLayout, setError } from "./helpers"
+import { lastAttemptedLayoutId, lastAttemptedPassword, openLayout, setError, translate } from "./helpers"
 import { send } from "./socket"
-import { _, _set, _update, activeTimers, events, outputSlideCache, progressData, stream, timeFormat, timers, variables } from "./stores"
+import { _, _get, _set, _update, activeTimers, events, outputSlideCache, progressData, stream, timeFormat, timers, variables } from "./stores"
 
 export type ReceiverKey = keyof typeof receiver
 export const receiver = {
@@ -11,17 +11,17 @@ export const receiver = {
         _set("layouts", data)
         if (!data.length) return
 
-        // password is not implemented
+        const urlParams = new URLSearchParams(window.location.search)
+        const pwdQuery = urlParams.get("password") || ""
 
         if (data.length === 1) {
-            openLayout(data[0].id)
+            openLayout(data[0].id, pwdQuery)
             return
         }
 
-        const urlParams = new URLSearchParams(window.location.search)
         const idQuery = urlParams.get("id")
         if (idQuery) {
-            openLayout(idQuery)
+            openLayout(idQuery, pwdQuery)
             return
         }
 
@@ -29,23 +29,30 @@ export const receiver = {
         if (nameQuery) {
             let matchingLayout = data.find((a) => a.name.replaceAll(" ", "").toLowerCase() === nameQuery.toLowerCase())
             if (matchingLayout) {
-                openLayout(matchingLayout.id)
+                openLayout(matchingLayout.id, pwdQuery)
                 return
             }
         }
 
         const storedValue = localStorage.getItem("selectedLayout") || localStorage.getItem("show")
         if (storedValue) {
-            openLayout(storedValue)
+            openLayout(storedValue, pwdQuery)
             return
         }
     },
-    LAYOUT: (data: StageLayout) => {
+    LAYOUT: (data: StageLayout & { id?: string }) => {
         if (data.disabled) {
             _set("selectedLayout", "")
             return
         }
 
+        const id = data.id || _get("selectedLayout") || lastAttemptedLayoutId
+        if (lastAttemptedPassword) {
+            localStorage.setItem("password_" + id, lastAttemptedPassword)
+            localStorage.setItem("password", lastAttemptedPassword)
+        }
+
+        _set("passwordRequiredLayout", null)
         _set("stageLayout", data)
     },
     SWITCH: (data: { id: string }) => openLayout(data.id),
@@ -74,7 +81,6 @@ export const receiver = {
         if (data.timeFormat) timeFormat.set(data.timeFormat)
     },
 
-
     // push-driven frames from the app - keyed per output id so multiple mirrored outputs don't clobber each other
     STREAM_FRAME: (data: any) => {
         if (!data?.id || !data.jpeg) return
@@ -92,7 +98,17 @@ export const receiver = {
     // },
 
     ERROR: (data: any) => {
-        setError(data)
+        if (data === "wrongPass") {
+            setError(translate("remote.wrong_password") || "Wrong password")
+            const layoutId = _get("selectedLayout") || lastAttemptedLayoutId
+            const layoutsList = _get("layouts") || []
+            const layoutObj = layoutsList.find((a) => a.id === layoutId)
+            _set("passwordRequiredLayout", { id: layoutId, name: layoutObj?.name || "" })
+            localStorage.removeItem("password")
+            if (layoutId) localStorage.removeItem("password_" + layoutId)
+        } else {
+            setError(data)
+        }
         _set("selectedLayout", "")
     },
     LANGUAGE: (data: any) => {

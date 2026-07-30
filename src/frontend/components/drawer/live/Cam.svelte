@@ -5,6 +5,7 @@
     import { media, os, outputs, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
+    import { getCropState } from "../../helpers/cropping"
     import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
@@ -16,13 +17,25 @@
     export let style = ""
     export let showPlayOnHover = true
     export let disablePreview = false
+    export let cropping: any = undefined
+    export let cropPreviewMode = false
 
     let loaded = false
     // $: active = $outBackground?.type === "camera" && $outBackground.id === cam.id
 
     let videoElem: HTMLVideoElement | undefined
+    let videoOverflowElem: HTMLVideoElement | undefined
     let error: null | string = null
     let retryTimeout: NodeJS.Timeout | null = null
+
+    $: cropState = getCropState(cropping, cropPreviewMode)
+    $: showCropOverflowPreview = cropState.showCropOverflowPreview
+    $: mediaOverflowPreviewStyle = `position: absolute;width: 100%;height: 100%;left: 0;top: 0;opacity: 0.35;pointer-events: none;`
+
+    $: if (videoOverflowElem && videoElem?.srcObject && videoOverflowElem.srcObject !== videoElem.srcObject) {
+        videoOverflowElem.srcObject = videoElem.srcObject
+        videoOverflowElem.play()
+    }
 
     let isDestroyed = false
 
@@ -112,6 +125,11 @@
             <Icon id="camera" size={3} white />
         </div>
     {:else if !error}
+        {#if showCropOverflowPreview}
+            <video style="{mediaOverflowPreviewStyle}{style.replace(/clip-path:[^;]+;|-webkit-clip-path:[^;]+;/g, '')}" bind:this={videoOverflowElem}>
+                <track kind="captions" />
+            </video>
+        {/if}
         <video style="width: 100%;height: 100%;{style}" bind:this={videoElem}>
             <track kind="captions" />
         </video>

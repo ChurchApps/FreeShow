@@ -6,6 +6,7 @@
     import Cam from "../drawer/live/Cam.svelte"
     import autosize from "../edit/scripts/autosize"
     import { getStyles } from "../helpers/style"
+    import { getCropState } from "../helpers/cropping"
     import Clock from "../system/Clock.svelte"
     import Captions from "./views/Captions.svelte"
     import Chart from "./views/Chart.svelte"
@@ -81,7 +82,8 @@
         }, 50)
     }
 
-    $: cameraStyleString = `object-fit: ${item.fit || "contain"};filter: ${item.filter};transform: scale(${item.flipped ? "-1" : "1"}, ${item.flippedY ? "-1" : "1"});`
+    $: cameraCropState = getCropState(item.cropping, cropPreviewMode)
+    $: cameraStyleString = `${cameraCropState.mediaCropGeometry}object-fit: ${item.fit || "contain"};filter: ${item.filter};transform: scale(${item.flipped ? "-1" : "1"}, ${item.flippedY ? "-1" : "1"});`
     $: variableStyleString = typeof item.style === "string" ? (item.style.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${edit ? autoSize : fontSize}px;`) : ""
 </script>
 
@@ -95,7 +97,7 @@
     <Clock {item} fontStyle={noAutoSize ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} style={false} {...item.clock} />
 {:else if item.type === "camera"}
     {#if item.device}
-        <Cam cam={item.device} item style={cameraStyleString} disablePreview={isTemplatePreview} />
+        <Cam cam={item.device} item style={cameraStyleString} disablePreview={isTemplatePreview} cropping={item.cropping} {cropPreviewMode} />
     {/if}
 {:else if item.type === "slide_tracker"}
     <SlideProgress {item} tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : edit ? autoSize : fontSize} {outputId} />

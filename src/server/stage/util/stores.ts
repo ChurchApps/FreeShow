@@ -16,7 +16,8 @@ export let updateTransposed: Writable<number> = writable(1)
 export let isConnected = writable(false)
 export let layouts: Writable<{ id: string; name: string; password: boolean }[] | null> = writable(null)
 export let selectedLayout = writable("")
-export let stageLayout: Writable<StageLayout | null> = writable(null)
+export let stageLayout: Writable<(StageLayout & { id?: string }) | null> = writable(null)
+export let passwordRequiredLayout: Writable<{ id: string; name: string } | null> = writable(null)
 
 export let output: Writable<Output | null> = writable(null)
 export let outputSlideCache: Writable<any> = writable({})
@@ -59,6 +60,7 @@ export const _ = {
     layouts,
     selectedLayout,
     stageLayout,
+    passwordRequiredLayout,
 
     output,
     background,

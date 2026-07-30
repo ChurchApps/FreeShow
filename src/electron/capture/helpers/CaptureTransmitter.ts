@@ -268,7 +268,6 @@ export class CaptureTransmitter {
         if (!NdiSender.NDI[captureId]?.sender) return
 
         const buffer = image.toBitmap()
-        if (this.shouldSkipUnchangedNonBlackmagicFrame("ndi", captureId, buffer, size)) return
 
         const output = OutputHelper.getOutput(captureId)
         const ratio = image.getAspectRatio()

@@ -15,6 +15,7 @@ interface PlaybackData {
     scheduledFrames: number
     pixelFormat: string
     displayMode: string
+    colorSpace?: string
     targetSize: Size
     expectedVideoFrameSize: number
     expectedAudioSampleCount: number
@@ -90,7 +91,7 @@ export class BlackmagicSender {
         return Object.values(this.audioQueuesByOutput).reduce((sum, q) => sum + q.length, 0)
     }
 
-    static initialize(outputId?: string, deviceIndex?: number, displayModeName?: string, pixelFormat?: string, enableKeying?: boolean, audioChannels = 2) {
+    static initialize(outputId?: string, deviceIndex?: number, displayModeName?: string, pixelFormat?: string, enableKeying?: boolean, audioChannels = 2, colorSpace = "rec709") {
         // Start global memory cleanup
         if (!this.globalCleanupTimer) {
             this.globalCleanupTimer = setInterval(() => {
@@ -100,14 +101,14 @@ export class BlackmagicSender {
 
         // If parameters are provided, handle the old initialization logic
         if (outputId && deviceIndex !== undefined && displayModeName && pixelFormat) {
-            return this.initializeDevice(outputId, deviceIndex, displayModeName, pixelFormat, enableKeying || false, audioChannels)
+            return this.initializeDevice(outputId, deviceIndex, displayModeName, pixelFormat, enableKeying || false, audioChannels, colorSpace)
         }
 
         // Return undefined if no device-specific initialization
         return Promise.resolve(undefined)
     }
 
-    static async initializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
+    static async initializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2, colorSpace = "rec709") {
         const currentOutputDeviceIndex = this.playbackData[outputId]?.deviceIndex
         // prevent using a device if already in use by another output
         if (this.usedDeviceIndices.has(deviceIndex) && currentOutputDeviceIndex !== deviceIndex) {
@@ -124,7 +125,7 @@ export class BlackmagicSender {
         this.usedDeviceIndices.add(deviceIndex)
 
         // Create a promise that tracks this initialization
-        const initPromise = this._performInitializeDevice(outputId, deviceIndex, displayModeName, pixelFormat, enableKeying, audioChannels)
+        const initPromise = this._performInitializeDevice(outputId, deviceIndex, displayModeName, pixelFormat, enableKeying, audioChannels, colorSpace)
 
         // Store the promise to prevent concurrent attempts
         this.initializationInProgress[outputId] = initPromise
@@ -139,7 +140,7 @@ export class BlackmagicSender {
         }
     }
 
-    static async _performInitializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
+    static async _performInitializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2, colorSpace = "rec709") {
         const macadam = getMacadam()
         if (!macadam) {
             console.error("Cannot initialize Blackmagic device: macadam module not available")
@@ -275,6 +276,7 @@ export class BlackmagicSender {
                     scheduledFrames: 0,
                     pixelFormat,
                     displayMode: displayModeName,
+                    colorSpace,
                     targetSize,
                     expectedVideoFrameSize,
                     expectedAudioSampleCount,
@@ -632,7 +634,7 @@ export class BlackmagicSender {
                     let convertedFrame
                     try {
                         const reusableOutputBuffer = this.getReusableConversionBuffer(outputId, data.expectedVideoFrameSize)
-                        convertedFrame = this.convertVideoFrameFormat(videoFrame, data.pixelFormat, size, reusableOutputBuffer, data.enableKeying === true)
+                        convertedFrame = this.convertVideoFrameFormat(videoFrame, data.pixelFormat, size, reusableOutputBuffer, data.enableKeying === true, outputId)
                         data.conversionErrorCount = 0
                     } catch (err) {
                         console.error(`Frame conversion error: ${err instanceof Error ? err.message : String(err)}`)
@@ -928,7 +930,7 @@ export class BlackmagicSender {
         }
     }
 
-    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size, reusableOutputBuffer?: Buffer, enableKeying = false) {
+    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size, reusableOutputBuffer?: Buffer, enableKeying = false, outputId?: string) {
         // Check specific bit-depth RGB formats FIRST before generic checks
         if (format.includes("12Bit") || format.includes("12-bit") || format.includes("12 bit")) {
             const isLE = format.includes("RGBLE") || format.includes("RGB LE")
@@ -951,12 +953,13 @@ export class BlackmagicSender {
             if (this.devicePixelMode === "BGRA") return ImageBufferConverter10BitRGB.BGRAtoRGB(frame, size, reusableOutputBuffer)
             else return ImageBufferConverter10BitRGB.ARGBtoRGB(frame, size, reusableOutputBuffer)
         } else if (format.includes("YUV")) {
+            const colorSpace = this.playbackData[outputId || ""]?.colorSpace || "rec709"
             if (format.includes("10")) {
-                if (this.devicePixelMode === "BGRA") return ImageBufferConverter10Bit.BGRAtoYUV(frame, size, reusableOutputBuffer)
-                else return ImageBufferConverter10Bit.ARGBtoYUV(frame, size, reusableOutputBuffer)
+                if (this.devicePixelMode === "BGRA") return ImageBufferConverter10Bit.BGRAtoYUV(frame, size, reusableOutputBuffer, colorSpace)
+                else return ImageBufferConverter10Bit.ARGBtoYUV(frame, size, reusableOutputBuffer, colorSpace)
             } else {
-                if (this.devicePixelMode === "BGRA") return ImageBufferConverter.BGRAtoYUV(frame, size, reusableOutputBuffer)
-                else return ImageBufferConverter.ARGBtoYUV(frame, size, reusableOutputBuffer)
+                if (this.devicePixelMode === "BGRA") return ImageBufferConverter.BGRAtoYUV(frame, size, reusableOutputBuffer, colorSpace)
+                else return ImageBufferConverter.ARGBtoYUV(frame, size, reusableOutputBuffer, colorSpace)
             }
         } else if (format.includes("RGBXLE")) {
             const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)

@@ -29,7 +29,7 @@ export class RtmpStreamer {
         return this.streamers.size > 0
     }
 
-    static start(outputId: string, url: string, width: number, height: number, fps = 30, enableAudio = true) {
+    static start(outputId: string, url: string, width: number, height: number, fps = 30, enableAudio = true, bitrate = 4000) {
         if (this.isRunning(outputId)) return
         console.log(`[RtmpStreamer] Starting RTMP stream for ${outputId}...`)
 
@@ -44,9 +44,9 @@ export class RtmpStreamer {
         // macOS on ARM (M-series) usually captures at 2x scale
         const isRetina = process.platform === "darwin"
 
-        const args = this.getFfmpegArgs(url, width, height, fps, enableAudio, isRetina)
+        const args = this.getFfmpegArgs(url, width, height, fps, enableAudio, isRetina, bitrate)
 
-        console.log(`[RtmpStreamer] Spawning FFmpeg to stream ${outputId} to ${url} at ${width}x${height} (${fps} fps, audio: ${enableAudio}, retina: ${isRetina})...`)
+        console.log(`[RtmpStreamer] Spawning FFmpeg to stream ${outputId} to ${url} at ${width}x${height} (${fps} fps, bitrate: ${bitrate}k, audio: ${enableAudio}, retina: ${isRetina})...`)
         try {
             const stdioConfig: any = enableAudio ? ["pipe", "ignore", "inherit", "pipe"] : ["pipe", "ignore", "inherit"]
             const ffmpegProcess = spawn(ffmpegPath, args, {
@@ -128,7 +128,7 @@ export class RtmpStreamer {
         }
     }
 
-    private static getFfmpegArgs(url: string, width: number, height: number, fps: number, enableAudio: boolean, isRetina = false): string[] {
+    private static getFfmpegArgs(url: string, width: number, height: number, fps: number, enableAudio: boolean, isRetina = false, bitrate = 4000): string[] {
         const inputWidth = isRetina ? width * 2 : width
         const inputHeight = isRetina ? height * 2 : height
 
@@ -141,8 +141,10 @@ export class RtmpStreamer {
         }
 
         const vf = isRetina ? `scale=${width}:${height},format=yuv420p` : "format=yuv420p"
+        const bitrateKbps = `${bitrate}k`
+        const bufsizeKbps = `${bitrate * 2}k`
 
-        args.push("-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency", "-pix_fmt", "yuv420p", "-vf", vf, "-g", `${fps * 2}`, "-crf", "23", "-c:a", "aac", "-b:a", "128k", "-f", "flv", url)
+        args.push("-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency", "-b:v", bitrateKbps, "-maxrate", bitrateKbps, "-bufsize", bufsizeKbps, "-pix_fmt", "yuv420p", "-vf", vf, "-g", `${fps * 2}`, "-c:a", "aac", "-b:a", "128k", "-f", "flv", url)
         return args
     }
 

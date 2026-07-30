@@ -114,7 +114,7 @@ import { audioStreams, companion } from "./../stores"
 import { socketDisconnect, syncWithCloud } from "./cloudSync"
 import { newToast, setStatus, startAutosave } from "./common"
 import { syncDrive } from "./drive"
-import { stopRemoteController } from "./remoteController"
+import { autoDisableRemoteController, stopRemoteController } from "./remoteController"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
     startAutosave() // reset auto save timer
@@ -332,8 +332,10 @@ export async function closeApp() {
         const timeout = <T>(promise: Promise<T>, ms: number): Promise<T | void> => {
             return Promise.race([promise, new Promise<void>((resolve) => setTimeout(resolve, ms))])
         }
+
         await timeout(stopAllInteractions(), 500)
         await timeout(stopRemoteController(), 500)
+        autoDisableRemoteController()
     } catch (e) {
         console.error("Could not stop interactions before closing!", e)
     }

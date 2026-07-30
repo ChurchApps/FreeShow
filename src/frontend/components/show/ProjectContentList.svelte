@@ -492,7 +492,7 @@
 
     <FloatingInputs gradient style="width: 50px;height: 50px;border: none;">
         <!-- {addMenuOpen ? 'border-color: white;' : ''} -->
-        <MaterialButton class="addButton" title="context.addToProject" style="width: 50px;height: 50px;" on:click={() => (addMenuOpen = !addMenuOpen)} on:dblclick={() => (addMenuOpen ? null : addSection())}>
+        <MaterialButton class="addButton" title={addMenuOpen ? "actions.close" : "context.addToProject"} style="width: 50px;height: 50px;" on:click={() => (addMenuOpen = !addMenuOpen)} on:dblclick={() => (addMenuOpen ? null : addSection())}>
             <Icon id="add" size={1.5} style={addMenuOpen ? "transform: rotate(135deg);" : ""} white />
         </MaterialButton>
     </FloatingInputs>

@@ -5,7 +5,16 @@ import type { ErrorLog } from "../../types/Main"
 import { createLog, logError } from "../IPC/responsesMain"
 import { createFolder } from "./files"
 
-export function httpsRequest(hostname: string, path: string, method: "POST" | "GET" | "HEAD", headers: object = {}, content: object = {}, cb: (err: (Error & { statusCode?: number; code?: string; headers?: any }) | null, result?: any) => void, outputFilePath?: string, onlyHeaders = false) {
+export function httpsRequest(hostname: string, path: string, method: "POST" | "GET" | "HEAD", headers: object = {}, content: object = {}, callback: (err: (Error & { statusCode?: number; code?: string; headers?: any }) | null, result?: any) => void, outputFilePath?: string, onlyHeaders = false) {
+    // a hung response can fire both the request's own "error" (from the timeout destroy) and the
+    // response stream's "error"/"end" afterwards - guard so callers only ever see the first result
+    let done = false
+    const cb: typeof callback = (err, result) => {
+        if (done) return
+        done = true
+        callback(err, result)
+    }
+
     const headersObj = headers as Record<string, string>
     const isFormEncoded = headersObj["Content-Type"] === "application/x-www-form-urlencoded"
     let dataString = ""
@@ -90,6 +99,13 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
         request.on("error", (err) => {
             console.error("Request error:", err)
             cb(err, null)
+        })
+
+        // options.timeout alone only emits this event, it does not abort the connection - without
+        // destroying the request here, a hung/slow response left the promise (and callers waiting on
+        // it, e.g. cloud sync) unresolved forever.
+        request.on("timeout", () => {
+            request.destroy(new Error(`Request timed out after ${options.timeout}ms`))
         })
 
         if (dataString.length) request.write(dataString)

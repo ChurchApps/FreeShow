@@ -654,7 +654,15 @@ function findPatterns(sections: string[], autoGroups: boolean) {
     function getIndexes(similar: { matches: number[]; count: 0 }, i: number): string {
         // let lines = sections[i].split("\n")
         const splitted: string[] = sections[i].split("\n").filter((a) => a.length)
+        if (!splitted.length) return "break"
+
         const length: number = sections[i].replaceAll("\n", "").length
+
+        // Priority: Use explicit label match before checking for text similarity to respect musical structure
+        const rawName = splitted[0].replace(/[\[\]'":]+/g, "").trim()
+        const exactMatch = findGroupMatch(rawName)
+        if (exactMatch) return exactMatch
+
         const find = stored.find((a) => similarity(a.text, sections[i]) > similarityNum)
 
         // TODO: repeat x6
@@ -664,12 +672,6 @@ function findPatterns(sections: string[], autoGroups: boolean) {
 
         // if (lines.length < 2) group =  "break"
         if (find) return find.type
-        if (!length) return "break"
-
-        // Priority: Use explicit label match before checking for text similarity to respect musical structure
-        const rawName = splitted[0].replace(/[\[\]'":]+/g, "").trim()
-        const exactMatch = findGroupMatch(rawName)
-        if (exactMatch) return exactMatch
 
         // TODO: group....
         const name = getLabelId(splitted[0])

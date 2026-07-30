@@ -920,8 +920,7 @@ export function removeTagsAndContent(input) {
 
 // BREAK LONG LINES
 
-export function breakLongLines(showId: string, breakPoint: number) {
-    const slides = get(showsCache)[showId]?.slides
+export function breakLongLines(slides: { [key: string]: Slide }, breakPoint: number) {
     if (!slides || !Number(breakPoint)) return slides
 
     Object.values(slides).forEach((slide) => {
@@ -931,18 +930,20 @@ export function breakLongLines(showId: string, breakPoint: number) {
                 const newLines: Line[] = []
                 item.lines?.forEach((line) => {
                     // merge all text styles into one, if multiple!
-                    const lineText = line.text[0]
-                    if (typeof lineText !== "object" || lineText === null) return
+                    const lineText = line.text?.[0]
+                    if (!lineText) {
+                        newLines.push(line)
+                        return
+                    }
 
-                    lineText.value = getLineText(line)
-
-                    const textWords = lineText.value.split(" ")
+                    const fullLineText = getLineText(line)
+                    const textWords = fullLineText.split(" ").filter((w) => w !== "")
                     if (textWords.length > Number(breakPoint)) {
                         const centerPoint = Math.floor(textWords.length / 2)
                         const firstPart = textWords.slice(0, centerPoint).join(" ")
                         const secondPart = textWords.slice(centerPoint).join(" ")
-                        const firstLine = { ...clone(line), text: [{ ...lineText, value: firstPart }] }
-                        const secondLine = { ...clone(line), text: [{ ...lineText, value: secondPart }] }
+                        const firstLine = { ...clone(line), text: [{ ...clone(lineText), value: firstPart }] }
+                        const secondLine = { ...clone(line), text: [{ ...clone(lineText), value: secondPart }] }
                         newLines.push(firstLine)
                         newLines.push(secondLine)
                         return
@@ -953,7 +954,15 @@ export function breakLongLines(showId: string, breakPoint: number) {
 
                 item.lines = newLines
                 freezeStop++
-            } while (item.lines.find((a) => a.text[0]?.value?.split(" ").length > breakPoint) && freezeStop < 500)
+            } while (
+                item.lines?.find(
+                    (a) =>
+                        getLineText(a)
+                            .split(" ")
+                            .filter((w) => w !== "").length > breakPoint
+                ) &&
+                freezeStop < 500
+            )
         })
     })
 

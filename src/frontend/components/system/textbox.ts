@@ -3,7 +3,7 @@ import { getStyles } from "./../helpers/style"
 type TMouse = { x: number; y: number; left: number; top: number; width: number; height: number; offset: { x: number; y: number; width: number; height: number }; e: any }
 
 const snapDistance = 8
-export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | string)[], lines: [string, number][], styles: { [key: string]: string | number } = {}) {
+export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | string)[], lines: [string, number][], styles: { [key: string]: any } = {}) {
     const itemElem = mouse.e.target.closest(".item")
     if (!itemElem?.closest(".slide")) return { styles: {}, lines: [] }
 
@@ -17,6 +17,28 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
     if (!isResizing) {
         styles.left = mouseLeft
         styles.top = mouseTop
+
+        // move multiple items at once relative to themselves
+        if (active.length > 1) {
+            const slideElem = itemElem.closest(".slide")
+            const itemElems = Array.from(slideElem.querySelectorAll(".item, .stage_item")) as HTMLElement[]
+            const initialStyles = getStyles(itemElem.getAttribute("style"))
+            const deltaX = mouseLeft - (parseFloat(String(initialStyles.left)) || mouse.left)
+            const deltaY = mouseTop - (parseFloat(String(initialStyles.top)) || mouse.top)
+
+            const multiPositions: { [id: string | number]: { left: number; top: number } } = {}
+            active.forEach((id) => {
+                const elem = itemElems.find((el) => el.getAttribute("data-index") === String(id) || el.id === String(id) || el.getAttribute("id") === String(id))
+                if (!elem) return
+                const parsed = getStyles(elem.getAttribute("style"))
+                multiPositions[id] = {
+                    left: (parseFloat(String(parsed.left)) || elem.offsetLeft || 0) + deltaX,
+                    top: (parseFloat(String(parsed.top)) || elem.offsetTop || 0) + deltaY
+                }
+            })
+
+            styles.__multiPositions = multiPositions
+        }
     }
 
     let gotMatch = false
