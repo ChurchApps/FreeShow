@@ -302,11 +302,8 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         if (data.method === "replace" || !MERGE_INDIVIDUAL.includes(id)) {
             const localPath = localStore.path
 
-            // prefer the real edit time (fileModified) over file mtime whenever either side has one -
-            // mtime gets bumped to "now" by the sync's own writes, not just by real edits, so it can
-            // make the last device to merely sync (not edit) look newer than the one that actually
-            // edited. If only one side has a tracked time, treat the other as untrusted/very old
-            // (0) rather than falling back to mtime, which would make the comparison flaky again.
+            // Prefer real edit time (fileModified) over file mtime.
+            // mtime bumps on sync writes, which can falsely flag devices as newer.
             const cloudFileModified = CHANGES.fileModified?.[id]
             const localFileModified = getStore("CACHE_SYNC")?.fileModified?.[id]
             const cloudIsNewer = data.method === "replace" || isNewDevice || (cloudFileModified || localFileModified ? (cloudFileModified || 0) > (localFileModified || 0) : await isCloudNewerThanFile(localPath, modifiedDates[file.name]))
@@ -322,11 +319,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                     await moveFileAsync(cloudPath, localPath)
                 }
 
-                // record the real edit time this content carries (not "now"), so this device's
-                // next sync doesn't look artificially fresher than a device that hasn't synced yet.
-                // If the cloud copy had no tracked time either (old client, or mtime-fallback path),
-                // clear any stale local tracked time instead of keeping it - this content is no
-                // longer this device's own tracked edit, so it must not be treated as one
+                // Record true edit time. Clear local if cloud is untracked to prevent stale survival.
                 if (cloudFileModified) await setLocalFileModified(id, cloudFileModified)
                 else await clearLocalFileModified(id)
 
@@ -334,10 +327,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 const localData = localStore.store
                 sendMain(Main[id], localData)
             } else if (localFileModified) {
-                // local wins - carry its real edit time into the outgoing ledger so other devices
-                // compare against it instead of this sync's own file mtime. CHANGES may come from a
-                // parsed cloud changes.json written by a client that predates this field, so it can
-                // be missing here even though DEFAULT_CHANGES seeds it - guard before writing to it
+                // Local wins: carry real edit time into ledger for other devices.
                 if (!CHANGES.fileModified) CHANGES.fileModified = {}
                 CHANGES.fileModified[id] = Math.max(CHANGES.fileModified[id] || 0, localFileModified)
             }
@@ -382,10 +372,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 })
             )
         } else if (id === "SYNCED_SETTINGS") {
-            // SYNCED_SETTINGS bundles item-collections (scriptures, categories, styles…) plus a
-            // few atomic settings. Merge the collections per-item via the ledger (like PROJECTS),
-            // so items unique to either device survive and deletions propagate. See #3335.
-            // The per-item logic lives in the pure, unit-tested SyncLedger module (syncLedger.ts).
+            // Merge item-collections per-item via ledger. See #3335.
             const cloudFileIsNewer = isNewDevice || (await isCloudNewerThanFile(localStore.path, modifiedDates[file.name]))
             for (const [type, object] of Object.entries<{ [key: string]: any }>(cloudFileData)) {
                 const isCollection = SYNCED_SETTINGS_COLLECTIONS.includes(type) && !!object && typeof object === "object" && !Array.isArray(object)
