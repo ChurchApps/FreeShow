@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { isComposingKey } from "../../../utils/composition"
     import type { Item } from "../../../../types/Show"
     import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, special, templates, variables } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -97,6 +98,10 @@
     // $: slide = layout && $activeEdit.slide !== null && $activeEdit.slide !== undefined ? [$showsCache, GetLayoutRef(active, layout)[$activeEdit.slide].id][1] : null
 
     function keydown(e: KeyboardEvent) {
+        // Escape dismisses an IME candidate window; it must not also blur the
+        // editbox and clear the selection
+        if (isComposingKey(e)) return
+
         if (cropElem?.handleKeydown(e)) return
 
         if (e.key === "Escape") {
