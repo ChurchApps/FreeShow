@@ -4,8 +4,7 @@
     import type { Item, Line } from "../../../../types/Show"
     import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
     import { newToast } from "../../../utils/common"
-    import { isComposingKey } from "../../../utils/composition"
-    import { getNormalizedKey, isFormattingKey } from "../../../utils/shortcuts"
+    import { getNormalizedKey, isComposing, isFormattingKey } from "../../../utils/shortcuts"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -38,13 +37,6 @@
     let previousHTML = ""
     let currentStyle = ""
 
-    // An IME (Chinese/Japanese/Korean) inserts provisional text into the
-    // contenteditable and fires "input" for every keystroke while the candidate
-    // window is open. Reading that back into the model and re-rendering would
-    // detach the composition from its text node, so the commit inserts the text
-    // a second time. Freeze the DOM <-> model round trip until it is over.
-    let composing = false
-
     // WIP pressing line break on empty html (textbox) does not work, but it works after typing something
     // NOTE: undoing a change will set the html to "", causing the same issue
 
@@ -60,18 +52,13 @@
         }, 50)
     })
 
+    // prevent certain updates during IME composition to prevent text deselecting and double-insertion.
+    let composing = false
+
     let currentSlide = -1
-    $: if (!composing && $activeEdit.slide !== null && $activeEdit.slide !== undefined && $activeEdit.slide !== currentSlide) {
+    $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && $activeEdit.slide !== currentSlide && !composing) {
         currentSlide = $activeEdit.slide
         setTimeout(getStyle, 10)
-    }
-
-    // "composing" is read here on purpose: when it flips back to false this
-    // re-runs and picks up whatever the composition committed
-    $: if (textElem && !composing && html !== previousHTML) {
-        previousHTML = html
-        // let pos = getCaretCharacterOffsetWithin(textElem)
-        setTimeout(updateLines, 10)
     }
 
     $: {
@@ -89,16 +76,14 @@
 
         // dont replace while typing
         // && (window.getSelection() === null || window.getSelection()!.type === "None")
-        // reading "composing" here is what makes this block re-run on release —
-        // it is not redundant with the guard inside getStyle()
-        if (!composing && currentStyle.replaceAll(";", "") !== s.replaceAll(";", "")) getStyle()
+        if (currentStyle.replaceAll(";", "") !== s.replaceAll(";", "") && !composing) getStyle()
     }
 
     let previousChords = ""
     $: {
         // chords updated! (needed to save chords so they don't get reset when changing the lines)
         let newChords = JSON.stringify(item?.lines?.map((a) => a.chords?.map((a) => a.key)))
-        if (!composing && previousChords !== newChords) {
+        if (previousChords !== newChords) {
             previousChords = newChords
             getStyle()
         }
@@ -112,13 +97,21 @@
     $: lineStyleBg = lineBg ? `background: ${lineBg};` : ""
 
     function getStyle() {
-        // never swap out innerHTML under an active composition
         if (composing) return
         if (!plain && $activeEdit.slide === null) return
+
         let result = EditboxHelper.getStyleHtml(item, plain, currentStyle, ref.origin === "powerpoint")
         html = result.html
         currentStyle = result.currentStyle
         previousHTML = html
+    }
+
+    // let sel = getSelectionRange()
+
+    $: if (textElem && html !== previousHTML && !composing) {
+        previousHTML = html
+        // let pos = getCaretCharacterOffsetWithin(textElem)
+        setTimeout(updateLines, 10)
     }
 
     function setCaretDelayed(line: number, pos: number) {
@@ -133,30 +126,8 @@
         setCaret(textElem, caret)
     }
 
-    let compositionRelease: NodeJS.Timeout | undefined
-    function compositionStart() {
-        // an IME can commit part of the buffer and start the next composition in
-        // the same task, so cancel a release that has not run yet
-        clearTimeout(compositionRelease)
-        composing = true
-    }
-
-    function compositionEnd() {
-        // some browsers commit the text after this event, so let the DOM settle
-        // before the reactive block above reads it back
-        compositionRelease = setTimeout(() => (composing = false))
-    }
-
-    function compositionCancel() {
-        // losing focus mid-composition would otherwise leave the flag stuck and
-        // silently stop the editbox from saving
-        clearTimeout(compositionRelease)
-        composing = false
-    }
-
     function keydown(e: KeyboardEvent) {
-        // the Enter/Space that picks an IME candidate is not a line break
-        if (isComposingKey(e)) return
+        if (isComposing(e)) return
 
         if (e.key === "Enter" && e.shiftKey) {
             // by default the browser contenteditable will add a <br> instead of our custom <span class="break"> when pressing SHIFT
@@ -294,8 +265,8 @@
     let updates = 0
     let recentKeyboardLineMutationAt = 0
     function updateLines(newLines: Line[] = []) {
-        // a composition may have started since this was scheduled
         if (composing) return
+
         // updateItem = true
         if (!newLines?.length) newLines = getNewLines()
 
@@ -638,9 +609,7 @@
     }
 
     function textElemKeydown(e: KeyboardEvent) {
-        // during composition Enter/Backspace act on the candidate list, not on
-        // the text — treating them as line edits corrupts the commit
-        if (!isComposingKey(e) && (e.key === "Enter" || e.key === "Backspace" || e.key === "Delete")) {
+        if ((e.key === "Enter" || e.key === "Backspace" || e.key === "Delete") && !isComposing(e)) {
             recentKeyboardLineMutationAt = Date.now()
         }
 
@@ -739,9 +708,9 @@
                 class:autoSize={item.auto && autoSize}
                 contenteditable
                 on:keydown={textElemKeydown}
-                on:compositionstart={compositionStart}
-                on:compositionend={compositionEnd}
-                on:blur={compositionCancel}
+                on:compositionstart={() => (composing = true)}
+                on:compositionend={() => (composing = false)}
+                on:blur={() => (composing = false)}
                 on:copy={handleCopy}
                 on:cut={handleCut}
                 bind:innerHTML={html}

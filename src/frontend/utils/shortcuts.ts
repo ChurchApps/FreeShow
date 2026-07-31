@@ -27,7 +27,6 @@ import { activeShow } from "./../stores"
 import { hideDisplay, isOutputWindow, togglePanels, triggerFunction } from "./common"
 import { send } from "./request"
 import { save } from "./save"
-import { isComposingKey } from "./composition"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -150,10 +149,7 @@ export function keydown(e: KeyboardEvent) {
         return
     }
 
-    // an IME candidate window owns the keyboard while composing — Space picks a
-    // candidate, it does not advance the slide
-    if (isComposingKey(e)) return
-
+    if (isComposing(e)) return
     if (get(guideActive)) return
 
     // clicking e.g. "Show" tab button will focus that making number tab change not work
@@ -309,6 +305,12 @@ export function isFormattingKey(e: KeyboardEvent): boolean {
     if (!e.ctrlKey && !e.metaKey) return false
     const key = getNormalizedKey(e).toLowerCase()
     return formattingKeys.includes(key)
+}
+
+// IME candidate window check
+export function isComposing(e: KeyboardEvent): boolean {
+    // while keyCode is deprecated, "keyCode === 229" is an official exception
+    return e.isComposing || e.keyCode === 229
 }
 
 /// // PREVIEW /////
