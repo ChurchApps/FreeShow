@@ -8,7 +8,7 @@ import { addParents, cloneSlide, getCurrentLayout } from "../components/helpers/
 import { addToPos } from "../components/helpers/mover"
 import { getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
-import { activeEdit, activeShow, refreshEditSlide, showsCache, slidesOptions } from "../stores"
+import { activeEdit, activeShow, refreshEditSlide, slidesOptions } from "../stores"
 
 // only available with right click: "simple", "groups"
 const slidesViews = { grid: "list", list: "lyrics", lyrics: "grid", simple: "grid", groups: "grid" }
@@ -891,7 +891,7 @@ export function breakLongLines(slides: { [key: string]: Slide }, breakPoint: num
                         newLines.push(line)
                         return
                     }
-                  
+
                     const fullLineText = getLineText(line)
                     const words = fullLineText.split(" ").filter((w) => w !== "")
                     if (words.length > Number(breakPoint)) {
