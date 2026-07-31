@@ -56,7 +56,8 @@ export const receiver = {
         })
     },
     ACCESS: () => {
-        if (_get("password").remember && _get("password").stored.length) localStorage.password = _get("password").stored
+        const storedPwd = _get("password").stored
+        if (storedPwd && storedPwd.length) localStorage.password = storedPwd
         _set("isConnected", true)
 
         // Request current output data which should include scripture state

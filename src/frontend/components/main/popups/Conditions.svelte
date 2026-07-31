@@ -182,6 +182,17 @@
         clipboard = clone(content)
     }
 
+    function pasteContent(a: number, b: number, c: number, d: number) {
+        if (!clipboard) return
+        if (!showItemValues[a]) showItemValues[a] = []
+        if (!showItemValues[a][b]) showItemValues[a][b] = []
+        if (!showItemValues[a][b][c]) showItemValues[a][b][c] = []
+
+        showItemValues[a][b][c][d] = clone(clipboard)
+
+        updateValue("showItem", showItemValues)
+    }
+
     $: OUTER_OR = showItemValues?.length ? showItemValues : [[]]
     // only show if multiple "outer and" (& it has content)
     // $: addMoreOuter = showItemValues?.length > 1 || showItemValues?.[0]?.length > 1 || (showItemValues?.[0]?.[0]?.[0]?.[0] && (showItemValues?.[0]?.[0]?.[0]?.[1] || showItemValues?.[0]?.[0]?.[1]?.[0]))
@@ -256,6 +267,10 @@
                                             </div>
                                             <div class="copy">
                                                 <MaterialButton variant="outlined" showOutline={JSON.stringify(CONTENT) === JSON.stringify(clipboard)} icon="copy" title="actions.copy" style="padding: 8px;border-radius: 50%;" on:click={() => copyContent(CONTENT)} />
+                                            </div>
+                                        {:else if clipboard}
+                                            <div class="delete paste">
+                                                <MaterialButton variant="outlined" icon="paste" title="actions.paste" style="padding: 8px;border-radius: 50%;" on:click={() => pasteContent(a, b, c, d)} />
                                             </div>
                                         {/if}
 

@@ -78,10 +78,10 @@ export const receiveSTAGE = {
             .filter((a) => !a.disabled)
             .map((a) => ({ id: a.id, name: a.name, password: !!a.password }))
     },
-    LAYOUT: (data: { id: string }, connectionId: string) => {
+    LAYOUT: (data: { id: string; password?: string }, connectionId: string) => {
         let layout = get(stageShows)[data.id]
         if (!layout || layout.disabled) return { channel: "ERROR", data: "noShow" }
-        // if (show.password.length && show.password !== data.password) return { channel: "ERROR", data: "wrongPass" }
+        if (layout.password && layout.password !== data.password) return { channel: "ERROR", data: "wrongPass" }
         setConnectedState("STAGE", connectionId, "active", data.id)
 
         layout = arrayToObject(filterObjectArray(get(stageShows), ["disabled", "name", "settings", "items"]))[data.id]
@@ -207,7 +207,11 @@ export const receiveSTAGE = {
         checkWindowCapture()
     },
 
-    RUN_ACTION: (a: { id: string }) => {
+    RUN_ACTION: (a: { id: string }, connectionId: string) => {
+        const stageId = get(connections).STAGE?.[connectionId]?.active
+        const hasPassword = Object.values(get(stageShows) || {}).some((s: any) => s?.password)
+        if (hasPassword && !stageId) return
+
         runAction(get(actions)[a.id], { source: "remote" })
     }
 

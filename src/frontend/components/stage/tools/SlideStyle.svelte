@@ -7,6 +7,7 @@
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import StageItemsList from "./StageItemsList.svelte"
 
     $: currentStage = $stageShows[$activeStage.id || ""]
@@ -19,16 +20,20 @@
         history({ id: "UPDATE", newData: { data: value, key: "settings", subkey: key }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage" } })
     }
 
-    // add?:
-    // flash on update
-    // password
+    function updateStagePassword(e: any) {
+        let value = e.detail ?? e.target?.value ?? e
+        if (value === (currentStage?.password || "")) return
+
+        history({ id: "UPDATE", newData: { data: value, key: "password" }, oldData: { id: $activeStage.id }, location: { page: "stage", id: "stage" } })
+    }
 
     $: outputsList = sortByName(keysToID($outputs).filter((a) => !a.stageOutput)).map((a) => ({ value: a.id, label: a.name }))
 </script>
 
 <div class="tools">
-    <div>
+    <div style="display: flex;flex-direction: column;gap: 5px;">
         <MaterialDropdown label="stage.source_output" options={outputsList} value={settings.output || ""} on:change={(e) => updateStageSettings(e.detail, "output")} allowEmpty />
+        <MaterialTextInput label="remote.password" type="password" value={currentStage?.password || ""} defaultValue="" on:change={updateStagePassword} />
     </div>
 
     <div>

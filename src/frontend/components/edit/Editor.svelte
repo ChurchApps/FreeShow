@@ -44,7 +44,7 @@
 
     // TODO: could add more tabs, like to edit slide layers (like background media)
     $: editTabs = {
-        default: { name: "example.default", icon: "slide" },
+        default: { name: "tools.slide", icon: "slide" }, // example.default
         ...(!chordsHidden && { chords: { name: "edit.chords", icon: "chords", data: chordCount > 0 ? chordCount : undefined, disabled: chordsDisabled } }),
         text_edit: { name: "show.text", tooltip: "show.text [Ctrl+Shift+T]", icon: "text_edit" }
     } as TabsObj

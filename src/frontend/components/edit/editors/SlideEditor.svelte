@@ -48,6 +48,12 @@
     let newStyles: { [key: string]: string | number } = {}
     $: active = $activeEdit.items
 
+    let lastActiveIds = ""
+    $: if (active.join(",") !== lastActiveIds) {
+        newStyles = {}
+        lastActiveIds = active.join(",")
+    }
+
     let width = 0
     let height = 0
     // Slide?.settings?.resolution
@@ -124,7 +130,9 @@
                 let styles = getStyles(item.style)
                 let textStyles = ""
 
-                Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
+                const itemNewStyles = (newStyles as any).__multiPositions ? (newStyles as any).__multiPositions[id] || {} : newStyles
+
+                Object.entries(itemNewStyles).forEach(([key, value]) => (styles[key] = (value as any).toString()))
                 Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
                 values.push(textStyles)
@@ -297,8 +305,21 @@
         addItem("media", null, { src: currentBackgroundPath }, "", { left: "0px", top: "0px", width: "1920px", height: "1080px" }, 0)
 
         showsCache.update((a) => {
-            if (!a[currentShowId]?.layouts?.[currentShow?.settings?.activeLayout || ""]?.slides?.[$activeEdit.slide || 0]?.background) return a
-            delete a[currentShowId].layouts[currentShow?.settings?.activeLayout || ""].slides[$activeEdit.slide || 0].background
+            const currentRef = ref[$activeEdit.slide || 0]
+            if (!currentRef) return a
+
+            const layoutId = currentShow?.settings?.activeLayout || ""
+            const layoutSlides = a[currentShowId]?.layouts?.[layoutId]?.slides
+            if (!layoutSlides) return a
+
+            if (currentRef.type === "child" && currentRef.parent) {
+                const parentSlide = layoutSlides[currentRef.parent.index]
+                if (parentSlide?.children?.[currentRef.id]?.background) {
+                    delete parentSlide.children[currentRef.id].background
+                }
+            } else if (layoutSlides[currentRef.index]?.background) {
+                delete layoutSlides[currentRef.index].background
+            }
             return a
         })
     }

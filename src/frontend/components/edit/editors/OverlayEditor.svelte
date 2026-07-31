@@ -32,6 +32,12 @@
     let newStyles: { [key: string]: string | number } = {}
     $: active = $activeEdit.items
 
+    let lastActiveIds = ""
+    $: if (active.join(",") !== lastActiveIds) {
+        newStyles = {}
+        lastActiveIds = active.join(",")
+    }
+
     let width = 0
     let height = 0
     $: resolution = getResolution(null, { $outputs, $styles })
@@ -53,10 +59,11 @@
             let styles = getStyles(item.style)
             let textStyles = ""
 
-            Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
+            const itemNewStyles = (newStyles as any).__multiPositions ? (newStyles as any).__multiPositions[id] || {} : newStyles
+
+            Object.entries(itemNewStyles).forEach(([key, value]) => (styles[key] = (value as any).toString()))
             Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
-            // TODO: move multiple!
             values.push(textStyles)
         })
 

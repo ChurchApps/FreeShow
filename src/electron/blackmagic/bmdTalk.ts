@@ -89,7 +89,7 @@ export async function initializeSender(data: Output, window: BrowserWindow, id: 
     const deviceIndex = BlackmagicManager.getIndexById(deviceId)
     if (deviceIndex < 0) return
 
-    if (data.blackmagic) await BlackmagicSender.initialize(id, deviceIndex, bmdData.displayMode, bmdData.pixelFormat, bmdData.alphaKey)
+    if (data.blackmagic) await BlackmagicSender.initialize(id, deviceIndex, bmdData.displayMode, bmdData.pixelFormat, bmdData.alphaKey, 2, bmdData.sdr !== false ? "rec709" : "passthrough")
     else BlackmagicSender.stop(id)
 
     // get & set custom frame rate

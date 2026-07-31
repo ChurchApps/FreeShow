@@ -1,4 +1,4 @@
-import JsonBible from "json-bible"
+﻿import JsonBible from "json-bible"
 import { ApiBiblesList, ApiBible as JsonBibleApi } from "json-bible/lib/api"
 import type { CustomBibleListContent } from "json-bible/lib/api/ApiBible"
 import { stripMarkdown } from "json-bible/lib/markdown"
@@ -11,7 +11,7 @@ import type { Item, Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain, sendMain } from "../../../IPC/main"
-import { splitTextContentInHalf } from "../../../show/slides"
+import { findBestBreak, splitTextContentInHalf } from "../../../show/slides"
 import { activeProject, activeScripture, activeShow, drawerTabsData, media, notFound, outLocked, overlays, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { trackScriptureUsage } from "../../../utils/analytics"
 import { TemplateHelper } from "../../../utils/templates"
@@ -1040,7 +1040,11 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
             const valueName = slideDynamicValues[contentIndex]?.[itemKey] as string
             if (valueName) {
                 delete slideDynamicValues[contentIndex][itemKey]
-                const content = bibleVerses.map((v) => [verseNumbers && v.number ? v.number : "0", v.text]) as [string, string][]
+                const content = bibleVerses.map((v, i) => {
+                    const formattedText = formatBibleText(v.text)
+                    const text = i < bibleVerses.length - 1 ? formattedText + getVerseSeparator(v, bibleVerses[i + 1], versesOnIndividualLines) : formattedText
+                    return [verseNumbers && v.number ? v.number : "0", text]
+                }) as [string, string][]
                 slideDynamicValues[contentIndex][valueName] = content
                 if (valueName === "scripture1_text") slideDynamicValues[contentIndex].scripture_text = content
             }
@@ -1099,19 +1103,8 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
 
                             // Separator between verses (don't break verses in multiple parts)
                             if (i < bibleVerses.length - 1) {
-                                const { id: currentVerseId, endNumber } = getVerseIdParts(verse.verseId)
-                                const nextVerseId = getVerseIdParts(bibleVerses[i + 1].verseId).id
-                                const isConsecutive = nextVerseId === currentVerseId + 1 || nextVerseId === endNumber + 1
-                                const isSameVersePart = currentVerseId === nextVerseId
-
-                                // Same verse parts get a space, non-consecutive verses get newline, consecutive verses follow settings
-                                if (isSameVersePart) {
-                                    newLineText.push({ ...keyTextObj, value: " " })
-                                } else if (!isConsecutive) {
-                                    newLineText.push({ ...keyTextObj, value: "<br><br>", style: keyTextObj.style + ";line-height: 0.1em;" })
-                                } else {
-                                    newLineText.push({ ...keyTextObj, value: versesOnIndividualLines ? "<br>" : " " })
-                                }
+                                const sep = getVerseSeparator(verse, bibleVerses[i + 1], versesOnIndividualLines)
+                                newLineText.push({ ...keyTextObj, value: sep })
                             }
                         })
 
@@ -1517,13 +1510,13 @@ function splitPlainText(value: string, maxLength: number, tolerance: number = 0)
             second = rebalanced.second
         }
 
-        if (second.length < 1) {
-            segments.push(first)
+        if (!first.length || !second.length) {
+            segments.push(current)
             continue
         }
 
-        if (second.length > 0) queue.unshift(second)
-        if (first.length > 0) queue.unshift(first)
+        queue.unshift(second)
+        queue.unshift(first)
     }
 
     if (segments.length > 1 && segments[segments.length - 1].length < minSegmentLength) {
@@ -1635,112 +1628,30 @@ function getTagName(tag: string) {
 
 function findHtmlSplitIndex(text: string, capacity: number, tolerance: number = 0) {
     if (text.length <= capacity) return text.length
-
-    // Tolerance-aware punctuation split
-    if (tolerance > 0) {
-        const windowMin = Math.max(0, capacity - tolerance)
-        const windowMax = Math.min(text.length - 1, capacity + tolerance)
-        for (let i = windowMin; i <= windowMax; i++) {
-            if (/[.,;:!?]/.test(text.charAt(i))) {
-                let breakPos = i + 1
-                breakPos = adjustSplitIndexForBracket(text, breakPos)
-                return Math.max(0, breakPos)
-            }
-        }
-    }
-
-    const slice = text.slice(0, capacity)
-    const breakChars = [" ", "\n", "\t", "-", ","]
-    let splitIndex = -1
-    breakChars.forEach((char) => {
-        const idx = slice.lastIndexOf(char)
-        if (idx > splitIndex) splitIndex = idx
-    })
-    if (splitIndex === -1) {
-        // Look ahead a little so we prefer the next whitespace instead of cutting through a word
-        const nextBreak = text.slice(capacity).search(/[ \n\t\-,]/)
-        if (nextBreak >= 0 && nextBreak <= 20) {
-            splitIndex = capacity + nextBreak
-        }
-    }
-    let breakPos = splitIndex === -1 ? capacity : splitIndex + 1
-    breakPos = adjustSplitIndexForBracket(text, breakPos)
-    return Math.max(0, breakPos)
+    let breakPos = findBestBreak(text, capacity, tolerance)
+    if (breakPos === -1 || breakPos > capacity + tolerance) breakPos = capacity
+    return Math.max(0, adjustSplitIndexForBracket(text, breakPos))
 }
 
 function getSplitHalves(text: string, maxLength: number, tolerance: number = 0): [string, string] | null {
-    // Only use splitTextContentInHalf when tolerance is 0 (original behavior)
     if (tolerance === 0) {
         const halves = splitTextContentInHalf(text)
-        if (halves.length >= 2) {
-            const first = halves[0].trim()
-            const second = halves[1].trim()
-            if (first.length && second.length) {
-                return [first, second]
-            }
-        }
+        if (halves.length >= 2) return [halves[0], halves[1]]
     }
 
     if (text.length <= maxLength) return null
 
-    let pivot = -1
+    // 1. Try to find the best break near the center
+    const center = Math.floor(text.length / 2)
+    let pivot = findBestBreak(text, center, center / 2)
 
-    // When tolerance > 0, search for punctuation near the CENTER for balanced splits
-    if (tolerance > 0) {
-        const center = Math.floor(text.length / 2)
-        const windowMin = Math.max(0, center - tolerance)
-        const windowMax = Math.min(text.length - 1, center + tolerance)
-
-        // Find punctuation closest to center (best balance)
-        let bestPivot = -1
-        let bestDistance = Infinity
-        for (let i = windowMin; i <= windowMax; i++) {
-            const ch = text.charAt(i)
-            if (/[.,;:!?]/.test(ch)) {
-                const distance = Math.abs(i - center)
-                if (distance < bestDistance) {
-                    bestDistance = distance
-                    bestPivot = i + 1
-                }
-            }
-        }
-
-        if (bestPivot !== -1) {
-            pivot = bestPivot
-        }
-
-        // No punctuation near center — try nearest space to center
-        if (pivot === -1) {
-            let leftSpace = -1
-            let rightSpace = -1
-            for (let i = center; i >= windowMin; i--) {
-                if (text[i] === " ") {
-                    leftSpace = i
-                    break
-                }
-            }
-            for (let i = center; i <= windowMax; i++) {
-                if (text[i] === " ") {
-                    rightSpace = i
-                    break
-                }
-            }
-            if (leftSpace !== -1 && rightSpace !== -1) {
-                pivot = center - leftSpace <= rightSpace - center ? leftSpace : rightSpace
-            } else if (leftSpace !== -1) {
-                pivot = leftSpace
-            } else if (rightSpace !== -1) {
-                pivot = rightSpace
-            }
-        }
+    // 2. Fall back to the last best break before the limit
+    if (pivot === -1 || pivot > maxLength + tolerance) {
+        pivot = findBestBreak(text, maxLength, maxLength)
     }
 
-    // Original behavior: find space near maxLength (used when tolerance=0 or no split found)
-    if (pivot === -1) {
-        pivot = text.lastIndexOf(" ", maxLength)
-        if (pivot <= 0) pivot = text.indexOf(" ", maxLength)
-        if (pivot <= 0) pivot = maxLength
-    }
+    // 3. Absolute fallback
+    if (pivot <= 0 || pivot > text.length - 1) pivot = maxLength
 
     const first = text.slice(0, pivot).trim()
     const second = text.slice(pivot).trim()
@@ -1785,6 +1696,21 @@ export function formatBibleText(text: string | undefined, redJesus = false) {
 }
 
 // CREATE SHOW/SLIDES
+
+function getVerseSeparator(verse: { verseId: string }, nextVerse: { verseId: string }, versesOnIndividualLines: boolean) {
+    const { id: currentVerseId, endNumber } = getVerseIdParts(verse.verseId)
+    const nextVerseId = getVerseIdParts(nextVerse.verseId).id
+    const isConsecutive = nextVerseId === currentVerseId + 1 || nextVerseId === endNumber + 1
+    const isSameVersePart = currentVerseId === nextVerseId
+
+    if (isSameVersePart) {
+        return " "
+    } else if (!isConsecutive) {
+        return "\n\n"
+    } else {
+        return versesOnIndividualLines ? "\n" : " "
+    }
+}
 
 export async function createScriptureShow() {
     const biblesContent = await getActiveScripturesContent()
@@ -1945,6 +1871,8 @@ function fixHTMLTags(items: Item[]) {
                 if (typeof text.value !== "string") return
                 // replace <q> with actual quotes
                 text.value = text.value.replace(/<q>(.*?)<\/q>/g, "“$1”")
+                // update <br> to newlines
+                text.value = text.value.replace(/<br\s*\/?>/gi, "\n")
                 // remove HTML tags
                 // text.value = text.value.replace(/<[^>]+>/g, "")
             })
