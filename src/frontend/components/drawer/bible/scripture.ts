@@ -1517,13 +1517,13 @@ function splitPlainText(value: string, maxLength: number, tolerance: number = 0)
             second = rebalanced.second
         }
 
-        if (second.length < 1) {
-            segments.push(first)
+        if (!first.length || !second.length) {
+            segments.push(current)
             continue
         }
 
-        if (second.length > 0) queue.unshift(second)
-        if (first.length > 0) queue.unshift(first)
+        queue.unshift(second)
+        queue.unshift(first)
     }
 
     if (segments.length > 1 && segments[segments.length - 1].length < minSegmentLength) {
