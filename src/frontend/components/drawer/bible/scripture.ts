@@ -1909,7 +1909,7 @@ export function getReferenceText(biblesContent: BibleContent[]) {
     // if (get(scriptureSettings).firstSlideReference) i--
     // let range: any[] = selectedVerses.slice((i + 1) * v - v, (i + 1) * v)
     // let scriptureRef = books + " " + biblesContent[0].chapter + referenceDivider + joinRange(range)
-    // if (i === -1) scriptureRef = "â€”"
+    // if (i === -1) scriptureRef = "—"
 }
 
 // MOVE SELECTION
@@ -2001,7 +2001,7 @@ export function getShortBibleName(name: string) {
 // hard coded custom Bible data
 const bibleData = {
     "eea18ccd2ca05dde-01": {
-        nameLocal: "Bibel 2011 BokmÃ¥l" // med gammeltestamentlige apokryfer
+        nameLocal: "Bibel 2011 Bokmål" // med gammeltestamentlige apokryfer
     },
     "7bcaa2f2e77739d5-01": {
         nameLocal: "Bibel 2011 Nynorsk"
