@@ -9,6 +9,7 @@ import { addToPos } from "../components/helpers/mover"
 import { getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { activeEdit, activeShow, refreshEditSlide, showsCache, slidesOptions } from "../stores"
+import { nearestPunctuationBreak } from "../utils/textSplit"
 
 // only available with right click: "simple", "groups"
 const slidesViews = { grid: "list", list: "lyrics", lyrics: "grid", simple: "grid", groups: "grid" }
@@ -711,12 +712,7 @@ export function splitTextContentInHalf(text: string) {
 
     // find split index based on input "./,/!/?" closest to center
     function findSplitIndex(chars) {
-        const MARGIN = center / 2
-        let index = -1
-        for (let i = center - MARGIN; i <= center + MARGIN; i++) {
-            if (chars.includes(text[i])) index = i + 1
-        }
-        return index
+        return nearestPunctuationBreak(text, chars, center, center / 2)
     }
 
     function checkForSpaces(left = true) {
