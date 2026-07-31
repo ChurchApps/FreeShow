@@ -79,7 +79,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     let guardCloudModifiedAt = 0
 
     const provider = getManager[data.id]()
-    if (!provider) return { success: false, error: "error.cloud_not_connected", changedFiles }
+    if (!provider) return { success: false, error: "Sync provider not available. Try connecting again." }
 
     if (data.method === "replace") await deleteLocalFiles()
 
@@ -112,7 +112,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         modifiedDates = await getZipModifiedDates(cloudDataPath)
     } catch (err) {
         console.error("Could not decompress cloud sync zip:", cloudDataPath, err)
-        return await finish(false, "error.cloud_download_unreadable")
+        return await finish(false, "Could not read the downloaded cloud data. Please try again.")
     }
 
     console.log("Files:", extractedFiles.length)
@@ -467,26 +467,16 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     return await finish(uploadResult.success, uploadResult.error)
 
     async function uploadLocalData(): Promise<{ success: boolean; error?: string }> {
-        let zipPath: string | null = null
+        let success = false
         try {
-            zipPath = await compressUserData()
-        } catch (err) {
-            console.error("Could not package data for cloud upload:", err)
-        }
-        if (!zipPath) return { success: false, error: "error.cloud_package_failed" }
-
-        // a rejection here would leave the IPC call unresolved until the renderer timeout
-        let uploadSuccess = false
-        try {
-            uploadSuccess = await provider!.uploadData(data.teamId, zipPath)
+            const zipPath = await compressUserData()
+            if (zipPath) success = await provider!.uploadData(data.teamId, zipPath)
         } catch (err) {
             console.error("Could not upload data to cloud:", err)
         }
 
-        // kept generic: the provider shows its own alert with the specific cause when it has one
-        if (!uploadSuccess) return { success: false, error: "error.cloud_upload_failed" }
-
-        return { success: true }
+        if (!success) return { success, error: "Could not upload your data to the cloud. Please try again." }
+        return { success }
     }
 
     // if cloud backup is non existent or older than a week
