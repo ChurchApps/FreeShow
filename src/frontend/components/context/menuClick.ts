@@ -178,6 +178,20 @@ const clickActions = {
     history: () => activePopup.set("history"),
     cut: () => cut(),
     copy: () => copy(),
+    copy_id: (obj: ObjData) => {
+        let itemId: string | undefined = undefined
+        const sel = obj.sel
+        if (sel?.data?.[0]) {
+            if (typeof sel.data[0] === "string") itemId = sel.data[0]
+            else if (typeof sel.data[0] === "object" && sel.data[0] !== null) itemId = sel.data[0].id
+        }
+        if (!itemId && obj.contextElem?.id) itemId = obj.contextElem.id
+
+        if (itemId) {
+            navigator.clipboard.writeText(itemId)
+            newToast("actions.copied")
+        }
+    },
     text_copy: (obj: ObjData) => {
         const editElem = obj.contextElem?.closest?.(".edit") as HTMLElement | null
         if (!editElem) return

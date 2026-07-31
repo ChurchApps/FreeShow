@@ -876,8 +876,7 @@ export function removeTagsAndContent(input) {
 
 // BREAK LONG LINES
 
-export function breakLongLines(showId: string, breakPoint: number) {
-    const slides = get(showsCache)[showId]?.slides
+export function breakLongLines(slides: { [key: string]: Slide }, breakPoint: number) {
     if (!slides || !Number(breakPoint)) return slides
 
     Object.values(slides).forEach((slide) => {
@@ -887,21 +886,24 @@ export function breakLongLines(showId: string, breakPoint: number) {
                 const newLines: Line[] = []
                 item.lines?.forEach((line) => {
                     // merge all text styles into one, if multiple!
-                    const lineText = line.text[0]
-                    if (typeof lineText !== "object" || lineText === null) return
-
-                    lineText.value = getLineText(line)
-
-                    const words = lineText.value.split(" ")
+                    const lineText = line.text?.[0]
+                    if (!lineText) {
+                        newLines.push(line)
+                        return
+                    }
+                  
+                    const fullLineText = getLineText(line)
+                    const words = fullLineText.split(" ").filter((w) => w !== "")
                     if (words.length > Number(breakPoint)) {
-                        const center = Math.floor(lineText.value.length / 2)
-                        const res = findBestBreak(lineText.value, center, center / 2)
-                        const pivot = res > -1 ? res : Math.floor(lineText.value.length / 2)
+                        const center = Math.floor(fullLineText.length / 2)
+                        const res = findBestBreak(fullLineText, center, center / 2)
+                        const pivot = res > -1 ? res : center
 
-                        const firstPart = lineText.value.slice(0, pivot).trim()
-                        const secondPart = lineText.value.slice(pivot).trim()
-                        const firstLine = { ...clone(line), text: [{ ...lineText, value: firstPart }] }
-                        const secondLine = { ...clone(line), text: [{ ...lineText, value: secondPart }] }
+                        const firstPart = fullLineText.slice(0, pivot).trim()
+                        const secondPart = fullLineText.slice(pivot).trim()
+                        const firstLine = { ...clone(line), text: [{ ...clone(lineText), value: firstPart }] }
+                        const secondLine = { ...clone(line), text: [{ ...clone(lineText), value: secondPart }] }
+
                         newLines.push(firstLine)
                         newLines.push(secondLine)
                         return
@@ -912,7 +914,15 @@ export function breakLongLines(showId: string, breakPoint: number) {
 
                 item.lines = newLines
                 freezeStop++
-            } while (item.lines.find((a) => a.text[0]?.value?.split(" ").length > breakPoint) && freezeStop < 500)
+            } while (
+                item.lines?.find(
+                    (a) =>
+                        getLineText(a)
+                            .split(" ")
+                            .filter((w) => w !== "").length > breakPoint
+                ) &&
+                freezeStop < 500
+            )
         })
     })
 

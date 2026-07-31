@@ -217,7 +217,9 @@ export function selectAll(data: any = {}) {
     }
 
     let selectId = data.id || get(selected)?.id || get(focusedArea)
-    if (!selectId) {
+    if (get(activePage) === "stage" && get(activeStage)?.id) {
+        selectId = "stage_items"
+    } else if (!selectId) {
         if (get(activeEdit) && get(activePage) === "edit") selectId = "edit_items"
         else if (get(activeStage) && get(activePage) === "stage") selectId = "stage_items"
         else if (get(activeDrawerTab) === "calendar" && get(drawerTabsData).calendar?.activeSubTab !== "timers") selectId = "events"

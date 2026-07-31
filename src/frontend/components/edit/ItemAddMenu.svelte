@@ -211,7 +211,7 @@
                                 }, 150)
                             }}
                         >
-                            <MaterialButton class="add-item-button" variant={item.children ? "text" : "outlined"} on:click={() => (item.children && item.id !== "dynamic_values" ? null : handleAdd(item.id))} title={item.title || item.label} white={!isFirst}>
+                            <MaterialButton class="add-item-button" variant={item.children ? "text" : "outlined"} on:click={() => (item.children ? null : handleAdd(item.id))} title={item.title || item.label} white={!isFirst}>
                                 <Icon id={item.icon} size={1.2} white={!isFirst} />
                                 <T id={item.label} />{item.suffix || ""}
                             </MaterialButton>

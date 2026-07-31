@@ -89,15 +89,14 @@
 
     <span class="underline" />
 
-    {#if autofill}
-        <div class="remove">
+    <div class="remove">
+        {#if autofill}
             <MaterialButton on:click={() => updateValue(autofill)} title="meta.autofill" white>
                 <Icon id="autofill" white />
             </MaterialButton>
-        </div>
-    {/if}
-    {#if defaultValue !== null}
-        <div class="remove">
+        {/if}
+
+        {#if defaultValue !== null}
             {#if value !== defaultValue}
                 <MaterialButton on:click={reset} title="actions.reset" white>
                     <Icon id="reset" white />
@@ -107,11 +106,9 @@
                     <Icon id="undo" white />
                 </MaterialButton>
             {/if}
-        </div>
-    {/if}
+        {/if}
 
-    {#if type === "password" && (!pasteBtn || value)}
-        <div class="remove">
+        {#if type === "password" && (!pasteBtn || value)}
             <MaterialButton
                 on:click={(e) => {
                     showText = !showText
@@ -123,9 +120,7 @@
             >
                 <Icon id={showText ? "eye" : "hide"} white />
             </MaterialButton>
-        </div>
-    {:else if pasteBtn && !value && !disabled}
-        <div class="remove">
+        {:else if pasteBtn && !value && !disabled}
             <MaterialButton
                 on:click={(e) => {
                     const textInput = e.detail.target?.closest(".textfield")?.querySelector("input")
@@ -137,8 +132,8 @@
             >
                 <Icon id="paste" white />
             </MaterialButton>
-        </div>
-    {/if}
+        {/if}
+    </div>
 </div>
 
 <style>
@@ -253,6 +248,8 @@
         right: 4px;
         transform: translateY(-50%);
 
+        display: flex;
+        align-items: center;
         z-index: 2;
     }
     .remove :global(button) {

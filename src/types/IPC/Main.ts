@@ -350,7 +350,7 @@ export interface MainReturnPayloads {
     [Main.GET_TEAMS]: Promise<{ id: string; churchId: string; name: string }[]>
     [Main.CLOUD_DATA]: Promise<boolean>
     [Main.CLOUD_CHANGED]: Promise<boolean>
-    [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles: any[] }>
+    [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles?: any[] }>
     [Main.GET_CONVERSATION_ID]: Promise<string | null>
     [Main.SEND_SOCKET_MESSAGE]: Promise<boolean>
     // Provider-based routing
