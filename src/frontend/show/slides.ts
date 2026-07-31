@@ -9,7 +9,7 @@ import { addToPos } from "../components/helpers/mover"
 import { getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { activeEdit, activeShow, refreshEditSlide, showsCache, slidesOptions } from "../stores"
-import { nearestPunctuationBreak } from "../utils/textSplit"
+import { CJK_SPLIT_PUNCTUATION, nearestPunctuationBreak } from "../utils/textSplit"
 
 // only available with right click: "simple", "groups"
 const slidesViews = { grid: "list", list: "lyrics", lyrics: "grid", simple: "grid", groups: "grid" }
@@ -726,7 +726,9 @@ export function splitTextContentInHalf(text: string) {
         return index
     }
 
-    const splitChars = [".", ",", "!", "?"]
+    // CJK has no spaces to fall back on, so its punctuation has to be a candidate.
+    // The half-width set is left as-is so Latin behaviour does not change.
+    const splitChars = [".", ",", "!", "?", ...CJK_SPLIT_PUNCTUATION]
     let splitIndex = findSplitIndex(splitChars)
 
     // split by the closest space if no punctuations matched

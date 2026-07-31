@@ -23,6 +23,7 @@ import { history } from "../../helpers/history"
 import { getMediaStyle } from "../../helpers/media"
 import { getAllNormalOutputs, getFirstActiveOutput, setOutput } from "../../helpers/output"
 import { checkName } from "../../helpers/show"
+import { CJK_SPLIT_PUNCTUATION, hasContent, includeTrailingClosing, lastPunctuationBreak, SPLIT_PUNCTUATION_REGEX } from "../../../utils/textSplit"
 
 const SCRIPTURE_API_URL = "https://api.churchapps.org/content/bibles"
 
@@ -1641,8 +1642,8 @@ function findHtmlSplitIndex(text: string, capacity: number, tolerance: number = 
         const windowMin = Math.max(0, capacity - tolerance)
         const windowMax = Math.min(text.length - 1, capacity + tolerance)
         for (let i = windowMin; i <= windowMax; i++) {
-            if (/[.,;:!?]/.test(text.charAt(i))) {
-                let breakPos = i + 1
+            if (SPLIT_PUNCTUATION_REGEX.test(text.charAt(i))) {
+                let breakPos = Math.min(capacity, includeTrailingClosing(text, i + 1))
                 breakPos = adjustSplitIndexForBracket(text, breakPos)
                 return Math.max(0, breakPos)
             }
@@ -1650,7 +1651,7 @@ function findHtmlSplitIndex(text: string, capacity: number, tolerance: number = 
     }
 
     const slice = text.slice(0, capacity)
-    const breakChars = [" ", "\n", "\t", "-", ","]
+    const breakChars = [" ", "\n", "\t", "-", ",", ...CJK_SPLIT_PUNCTUATION]
     let splitIndex = -1
     breakChars.forEach((char) => {
         const idx = slice.lastIndexOf(char)
@@ -1658,12 +1659,12 @@ function findHtmlSplitIndex(text: string, capacity: number, tolerance: number = 
     })
     if (splitIndex === -1) {
         // Look ahead a little so we prefer the next whitespace instead of cutting through a word
-        const nextBreak = text.slice(capacity).search(/[ \n\t\-,]/)
+        const nextBreak = text.slice(capacity).search(new RegExp(`[ \\n\\t\\-,${CJK_SPLIT_PUNCTUATION.join("")}]`))
         if (nextBreak >= 0 && nextBreak <= 20) {
             splitIndex = capacity + nextBreak
         }
     }
-    let breakPos = splitIndex === -1 ? capacity : splitIndex + 1
+    let breakPos = splitIndex === -1 ? capacity : Math.min(capacity, includeTrailingClosing(text, splitIndex + 1))
     breakPos = adjustSplitIndexForBracket(text, breakPos)
     return Math.max(0, breakPos)
 }
@@ -1696,11 +1697,12 @@ function getSplitHalves(text: string, maxLength: number, tolerance: number = 0):
         let bestDistance = Infinity
         for (let i = windowMin; i <= windowMax; i++) {
             const ch = text.charAt(i)
-            if (/[.,;:!?]/.test(ch)) {
+            if (SPLIT_PUNCTUATION_REGEX.test(ch)) {
                 const distance = Math.abs(i - center)
-                if (distance < bestDistance) {
+                const breakPos = includeTrailingClosing(text, i + 1)
+                if (distance < bestDistance && breakPos < text.length) {
                     bestDistance = distance
-                    bestPivot = i + 1
+                    bestPivot = breakPos
                 }
             }
         }
@@ -1738,13 +1740,18 @@ function getSplitHalves(text: string, maxLength: number, tolerance: number = 0):
     // Original behavior: find space near maxLength (used when tolerance=0 or no split found)
     if (pivot === -1) {
         pivot = text.lastIndexOf(" ", maxLength)
+        // no spaces anywhere (CJK) — break on the last sentence punctuation
+        // instead of slicing through the middle of a clause
+        if (pivot <= 0) pivot = lastPunctuationBreak(text, maxLength)
         if (pivot <= 0) pivot = text.indexOf(" ", maxLength)
         if (pivot <= 0) pivot = maxLength
     }
 
     const first = text.slice(0, pivot).trim()
     const second = text.slice(pivot).trim()
-    if (!first.length || !second.length) return null
+    // a hard cut at maxLength can leave a fragment that is only punctuation —
+    // one character over is better than a slide holding a lone "，"
+    if (!hasContent(first) || !hasContent(second)) return null
     return [first, second]
 }
 
