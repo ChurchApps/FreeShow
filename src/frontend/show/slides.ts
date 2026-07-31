@@ -9,7 +9,6 @@ import { addToPos } from "../components/helpers/mover"
 import { getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { activeEdit, activeShow, refreshEditSlide, showsCache, slidesOptions } from "../stores"
-import { CJK_SPLIT_PUNCTUATION, nearestPunctuationBreak } from "../utils/textSplit"
 
 // only available with right click: "simple", "groups"
 const slidesViews = { grid: "list", list: "lyrics", lyrics: "grid", simple: "grid", groups: "grid" }
@@ -538,9 +537,6 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number | number[]
     const newSlide = clone(_show().slides([slideRef.id]).get()[0])
     const slides = clone(_show().get("slides"))
 
-    let scriptureFirstLines: Line[] | null = null
-    let scriptureSecondLines: Line[] | null = null
-
     for (const idx of itemIndexes) {
         if (!newSlide.items?.[idx]) continue
         let lines: Line[] = clone(_show().slides([slideRef.id]).items([idx]).get("lines")[0]?.[0] || [])
@@ -653,11 +649,6 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number | number[]
 
         newSlide.items[idx].lines = secondLines
         slides[slideRef.id].items[idx].lines = firstLines
-
-        if (!scriptureFirstLines) {
-            scriptureFirstLines = firstLines
-            scriptureSecondLines = secondLines
-        }
     }
 
     delete newSlide.id
@@ -709,43 +700,10 @@ export function splitCustomDynamicValues(originalDV: any): { firstDV: any; secon
 
 export function splitTextContentInHalf(text: string) {
     const center = Math.floor(text.length / 2)
-
-    // find split index based on input "./,/!/?" closest to center
-    function findSplitIndex(chars) {
-        return nearestPunctuationBreak(text, chars, center, center / 2)
-    }
-
-    function checkForSpaces(left = true) {
-        let index = -1
-        for (let i = center; left ? i >= 0 : i < text.length; i += left ? -1 : 1) {
-            if (text[i] === " ") {
-                index = i
-                break
-            }
-        }
-        return index
-    }
-
-    // CJK has no spaces to fall back on, so its punctuation has to be a candidate.
-    // The half-width set is left as-is so Latin behaviour does not change.
-    const splitChars = [".", ",", "!", "?", ...CJK_SPLIT_PUNCTUATION]
-    let splitIndex = findSplitIndex(splitChars)
-
-    // split by the closest space if no punctuations matched
-    if (splitIndex === -1) {
-        const leftIndex = checkForSpaces(true)
-        const rightIndex = checkForSpaces(false)
-
-        // get the closest space
-        if (leftIndex !== -1 && (rightIndex === -1 || center - leftIndex <= rightIndex - center)) splitIndex = leftIndex
-        else splitIndex = rightIndex
-    }
+    const splitIndex = findBestBreak(text, center, center / 2)
 
     if (splitIndex === -1) return [text]
-
-    const firstHalf = text.slice(0, splitIndex).trim()
-    const secondHalf = text.slice(splitIndex).trim()
-    return [firstHalf, secondHalf]
+    return [text.slice(0, splitIndex).trim(), text.slice(splitIndex).trim()]
 }
 
 export function mergeSlides(indexes: { index: number }[]) {
@@ -934,11 +892,14 @@ export function breakLongLines(showId: string, breakPoint: number) {
 
                     lineText.value = getLineText(line)
 
-                    const textWords = lineText.value.split(" ")
-                    if (textWords.length > Number(breakPoint)) {
-                        const centerPoint = Math.floor(textWords.length / 2)
-                        const firstPart = textWords.slice(0, centerPoint).join(" ")
-                        const secondPart = textWords.slice(centerPoint).join(" ")
+                    const words = lineText.value.split(" ")
+                    if (words.length > Number(breakPoint)) {
+                        const center = Math.floor(lineText.value.length / 2)
+                        const res = findBestBreak(lineText.value, center, center / 2)
+                        const pivot = res > -1 ? res : Math.floor(lineText.value.length / 2)
+
+                        const firstPart = lineText.value.slice(0, pivot).trim()
+                        const secondPart = lineText.value.slice(pivot).trim()
                         const firstLine = { ...clone(line), text: [{ ...lineText, value: firstPart }] }
                         const secondLine = { ...clone(line), text: [{ ...lineText, value: secondPart }] }
                         newLines.push(firstLine)
@@ -956,6 +917,45 @@ export function breakLongLines(showId: string, breakPoint: number) {
     })
 
     return slides
+}
+
+// SPLIT AT PUNCTUATION
+
+const CJK_PUNC = ["，", "。", "；", "：", "！", "？", "、"]
+const CJK_END = ["」", "』", "）", "》", "〉", "】", "〕"]
+const PUNC_REGEX = new RegExp(`[.,;:!?${CJK_PUNC.join("")}]`)
+const CONTENT_REGEX = new RegExp(`[^\\s.,;:\\!\\?${CJK_PUNC.join("")}${CJK_END.join("")}]`)
+
+export function findBestBreak(text: string, target: number, range: number) {
+    let best = -1
+    let bestDist = Infinity
+
+    const start = Math.floor(Math.max(0, target - range))
+    const end = Math.floor(Math.min(text.length, target + range))
+
+    for (let i = start; i < end; i++) {
+        const char = text[i]
+        const isPunc = PUNC_REGEX.test(char)
+        const isSpace = char === " "
+        if (!isPunc && !isSpace) continue
+
+        const dist = Math.abs(i - target)
+        const score = dist + (isPunc ? 0 : text.length)
+
+        if (score < bestDist) {
+            let pos = i + (isPunc ? 1 : 0)
+            if (isPunc) while (pos < text.length && CJK_END.includes(text[pos])) pos++
+
+            if (pos > 0 && pos < text.length) {
+                // Ensure the second half isn't just punctuation
+                if (CONTENT_REGEX.test(text.slice(pos))) {
+                    bestDist = score
+                    best = pos
+                }
+            }
+        }
+    }
+    return best
 }
 
 export const VIRTUAL_BREAK_CHAR = "[_VB]"

@@ -1,4 +1,4 @@
-import JsonBible from "json-bible"
+﻿import JsonBible from "json-bible"
 import { ApiBiblesList, ApiBible as JsonBibleApi } from "json-bible/lib/api"
 import type { CustomBibleListContent } from "json-bible/lib/api/ApiBible"
 import { stripMarkdown } from "json-bible/lib/markdown"
@@ -11,7 +11,7 @@ import type { Item, Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain, sendMain } from "../../../IPC/main"
-import { splitTextContentInHalf } from "../../../show/slides"
+import { findBestBreak, splitTextContentInHalf } from "../../../show/slides"
 import { activeProject, activeScripture, activeShow, drawerTabsData, media, notFound, outLocked, overlays, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { trackScriptureUsage } from "../../../utils/analytics"
 import { TemplateHelper } from "../../../utils/templates"
@@ -23,7 +23,6 @@ import { history } from "../../helpers/history"
 import { getMediaStyle } from "../../helpers/media"
 import { getAllNormalOutputs, getFirstActiveOutput, setOutput } from "../../helpers/output"
 import { checkName } from "../../helpers/show"
-import { CJK_SPLIT_PUNCTUATION, hasContent, includeTrailingClosing, lastPunctuationBreak, SPLIT_PUNCTUATION_REGEX } from "../../../utils/textSplit"
 
 const SCRIPTURE_API_URL = "https://api.churchapps.org/content/bibles"
 
@@ -1636,122 +1635,34 @@ function getTagName(tag: string) {
 
 function findHtmlSplitIndex(text: string, capacity: number, tolerance: number = 0) {
     if (text.length <= capacity) return text.length
-
-    // Tolerance-aware punctuation split
-    if (tolerance > 0) {
-        const windowMin = Math.max(0, capacity - tolerance)
-        const windowMax = Math.min(text.length - 1, capacity + tolerance)
-        for (let i = windowMin; i <= windowMax; i++) {
-            if (SPLIT_PUNCTUATION_REGEX.test(text.charAt(i))) {
-                let breakPos = Math.min(capacity, includeTrailingClosing(text, i + 1))
-                breakPos = adjustSplitIndexForBracket(text, breakPos)
-                return Math.max(0, breakPos)
-            }
-        }
-    }
-
-    const slice = text.slice(0, capacity)
-    const breakChars = [" ", "\n", "\t", "-", ",", ...CJK_SPLIT_PUNCTUATION]
-    let splitIndex = -1
-    breakChars.forEach((char) => {
-        const idx = slice.lastIndexOf(char)
-        if (idx > splitIndex) splitIndex = idx
-    })
-    if (splitIndex === -1) {
-        // Look ahead a little so we prefer the next whitespace instead of cutting through a word
-        const nextBreak = text.slice(capacity).search(new RegExp(`[ \\n\\t\\-,${CJK_SPLIT_PUNCTUATION.join("")}]`))
-        if (nextBreak >= 0 && nextBreak <= 20) {
-            splitIndex = capacity + nextBreak
-        }
-    }
-    let breakPos = splitIndex === -1 ? capacity : Math.min(capacity, includeTrailingClosing(text, splitIndex + 1))
-    breakPos = adjustSplitIndexForBracket(text, breakPos)
-    return Math.max(0, breakPos)
+    let breakPos = findBestBreak(text, capacity, tolerance)
+    if (breakPos === -1 || breakPos > capacity + tolerance) breakPos = capacity
+    return Math.max(0, adjustSplitIndexForBracket(text, breakPos))
 }
 
 function getSplitHalves(text: string, maxLength: number, tolerance: number = 0): [string, string] | null {
-    // Only use splitTextContentInHalf when tolerance is 0 (original behavior)
     if (tolerance === 0) {
         const halves = splitTextContentInHalf(text)
-        if (halves.length >= 2) {
-            const first = halves[0].trim()
-            const second = halves[1].trim()
-            if (first.length && second.length) {
-                return [first, second]
-            }
-        }
+        if (halves.length >= 2) return [halves[0], halves[1]]
     }
 
     if (text.length <= maxLength) return null
 
-    let pivot = -1
+    // 1. Try to find the best break near the center
+    const center = Math.floor(text.length / 2)
+    let pivot = findBestBreak(text, center, center / 2)
 
-    // When tolerance > 0, search for punctuation near the CENTER for balanced splits
-    if (tolerance > 0) {
-        const center = Math.floor(text.length / 2)
-        const windowMin = Math.max(0, center - tolerance)
-        const windowMax = Math.min(text.length - 1, center + tolerance)
-
-        // Find punctuation closest to center (best balance)
-        let bestPivot = -1
-        let bestDistance = Infinity
-        for (let i = windowMin; i <= windowMax; i++) {
-            const ch = text.charAt(i)
-            if (SPLIT_PUNCTUATION_REGEX.test(ch)) {
-                const distance = Math.abs(i - center)
-                const breakPos = includeTrailingClosing(text, i + 1)
-                if (distance < bestDistance && breakPos < text.length) {
-                    bestDistance = distance
-                    bestPivot = breakPos
-                }
-            }
-        }
-
-        if (bestPivot !== -1) {
-            pivot = bestPivot
-        }
-
-        // No punctuation near center — try nearest space to center
-        if (pivot === -1) {
-            let leftSpace = -1
-            let rightSpace = -1
-            for (let i = center; i >= windowMin; i--) {
-                if (text[i] === " ") {
-                    leftSpace = i
-                    break
-                }
-            }
-            for (let i = center; i <= windowMax; i++) {
-                if (text[i] === " ") {
-                    rightSpace = i
-                    break
-                }
-            }
-            if (leftSpace !== -1 && rightSpace !== -1) {
-                pivot = center - leftSpace <= rightSpace - center ? leftSpace : rightSpace
-            } else if (leftSpace !== -1) {
-                pivot = leftSpace
-            } else if (rightSpace !== -1) {
-                pivot = rightSpace
-            }
-        }
+    // 2. Fall back to the last best break before the limit
+    if (pivot === -1 || pivot > maxLength + tolerance) {
+        pivot = findBestBreak(text, maxLength, maxLength)
     }
 
-    // Original behavior: find space near maxLength (used when tolerance=0 or no split found)
-    if (pivot === -1) {
-        pivot = text.lastIndexOf(" ", maxLength)
-        // no spaces anywhere (CJK) — break on the last sentence punctuation
-        // instead of slicing through the middle of a clause
-        if (pivot <= 0) pivot = lastPunctuationBreak(text, maxLength)
-        if (pivot <= 0) pivot = text.indexOf(" ", maxLength)
-        if (pivot <= 0) pivot = maxLength
-    }
+    // 3. Absolute fallback
+    if (pivot <= 0 || pivot > text.length - 1) pivot = maxLength
 
     const first = text.slice(0, pivot).trim()
     const second = text.slice(pivot).trim()
-    // a hard cut at maxLength can leave a fragment that is only punctuation —
-    // one character over is better than a slide holding a lone "，"
-    if (!hasContent(first) || !hasContent(second)) return null
+    if (!first.length || !second.length) return null
     return [first, second]
 }
 
@@ -1951,7 +1862,7 @@ function fixHTMLTags(items: Item[]) {
             line.text?.forEach((text) => {
                 if (typeof text.value !== "string") return
                 // replace <q> with actual quotes
-                text.value = text.value.replace(/<q>(.*?)<\/q>/g, "“$1”")
+                text.value = text.value.replace(/<q>(.*?)<\/q>/g, "â€œ$1â€")
                 // remove HTML tags
                 // text.value = text.value.replace(/<[^>]+>/g, "")
             })
@@ -1988,7 +1899,7 @@ export function getReferenceText(biblesContent: BibleContent[]) {
     // if (get(scriptureSettings).firstSlideReference) i--
     // let range: any[] = selectedVerses.slice((i + 1) * v - v, (i + 1) * v)
     // let scriptureRef = books + " " + biblesContent[0].chapter + referenceDivider + joinRange(range)
-    // if (i === -1) scriptureRef = "—"
+    // if (i === -1) scriptureRef = "â€”"
 }
 
 // MOVE SELECTION
@@ -2080,7 +1991,7 @@ export function getShortBibleName(name: string) {
 // hard coded custom Bible data
 const bibleData = {
     "eea18ccd2ca05dde-01": {
-        nameLocal: "Bibel 2011 Bokmål" // med gammeltestamentlige apokryfer
+        nameLocal: "Bibel 2011 BokmÃ¥l" // med gammeltestamentlige apokryfer
     },
     "7bcaa2f2e77739d5-01": {
         nameLocal: "Bibel 2011 Nynorsk"
