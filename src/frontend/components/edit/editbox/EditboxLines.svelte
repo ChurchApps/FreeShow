@@ -4,7 +4,7 @@
     import type { Item, Line } from "../../../../types/Show"
     import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
     import { newToast } from "../../../utils/common"
-    import { getNormalizedKey, isFormattingKey } from "../../../utils/shortcuts"
+    import { getNormalizedKey, isComposing, isFormattingKey } from "../../../utils/shortcuts"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
@@ -52,8 +52,11 @@
         }, 50)
     })
 
+    // prevent certain updates during IME composition to prevent text deselecting and double-insertion.
+    let composing = false
+
     let currentSlide = -1
-    $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && $activeEdit.slide !== currentSlide) {
+    $: if ($activeEdit.slide !== null && $activeEdit.slide !== undefined && $activeEdit.slide !== currentSlide && !composing) {
         currentSlide = $activeEdit.slide
         setTimeout(getStyle, 10)
     }
@@ -73,7 +76,7 @@
 
         // dont replace while typing
         // && (window.getSelection() === null || window.getSelection()!.type === "None")
-        if (currentStyle.replaceAll(";", "") !== s.replaceAll(";", "")) getStyle()
+        if (currentStyle.replaceAll(";", "") !== s.replaceAll(";", "") && !composing) getStyle()
     }
 
     let previousChords = ""
@@ -94,7 +97,9 @@
     $: lineStyleBg = lineBg ? `background: ${lineBg};` : ""
 
     function getStyle() {
+        if (composing) return
         if (!plain && $activeEdit.slide === null) return
+
         let result = EditboxHelper.getStyleHtml(item, plain, currentStyle, ref.origin === "powerpoint")
         html = result.html
         currentStyle = result.currentStyle
@@ -103,7 +108,7 @@
 
     // let sel = getSelectionRange()
 
-    $: if (textElem && html !== previousHTML) {
+    $: if (textElem && html !== previousHTML && !composing) {
         previousHTML = html
         // let pos = getCaretCharacterOffsetWithin(textElem)
         setTimeout(updateLines, 10)
@@ -122,6 +127,8 @@
     }
 
     function keydown(e: KeyboardEvent) {
+        if (isComposing(e)) return
+
         if (e.key === "Enter" && e.shiftKey) {
             // by default the browser contenteditable will add a <br> instead of our custom <span class="break"> when pressing SHIFT
             // so just prevent shift break!
@@ -258,6 +265,8 @@
     let updates = 0
     let recentKeyboardLineMutationAt = 0
     function updateLines(newLines: Line[] = []) {
+        if (composing) return
+
         // updateItem = true
         if (!newLines?.length) newLines = getNewLines()
 
@@ -600,7 +609,7 @@
     }
 
     function textElemKeydown(e: KeyboardEvent) {
-        if (e.key === "Enter" || e.key === "Backspace" || e.key === "Delete") {
+        if ((e.key === "Enter" || e.key === "Backspace" || e.key === "Delete") && !isComposing(e)) {
             recentKeyboardLineMutationAt = Date.now()
         }
 
@@ -699,6 +708,9 @@
                 class:autoSize={item.auto && autoSize}
                 contenteditable
                 on:keydown={textElemKeydown}
+                on:compositionstart={() => (composing = true)}
+                on:compositionend={() => (composing = false)}
+                on:blur={() => (composing = false)}
                 on:copy={handleCopy}
                 on:cut={handleCut}
                 bind:innerHTML={html}
