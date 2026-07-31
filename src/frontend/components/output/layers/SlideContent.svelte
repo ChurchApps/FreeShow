@@ -75,8 +75,6 @@
     let precomputePending = new Set<string>()
 
     const showItemRef = { outputId, slideIndex: outSlide?.index }
-    // $: videoTime = $videosTime[outputId] || 0 // WIP only update if the items text has a video dynamic value
-    // $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
     let conditionsUpdater = 0
     let isMic = false
     $: isMic = JSON.stringify(currentItems.map((a) => a?.conditions) || "").includes('"element":"volume"')

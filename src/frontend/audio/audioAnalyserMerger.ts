@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { clone } from "../components/helpers/array"
-import { audioChannels, audioChannelsData, audioRouting, playingAudio } from "../stores"
+import { audioChannels, audioChannelsData, audioRouting, outputs, playingAudio, playingVideos } from "../stores"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioPlaylist } from "./audioPlaylist"
 import { AudioInputCapture } from "./routing/audioInputCapture"
@@ -87,9 +87,10 @@ export class AudioAnalyserMerger {
         // 2. Add real-time levels from AudioInputCapture for all nodes
         const config = get(audioRouting)
         const playing = AudioPlayer.getAllPlaying()
+        const playingVids = get(playingVideos)
         const inputLevels: { [key: string]: number[] } = {}
 
-        // Capture data for active playing sources
+        // Capture data for active playing sources (audio player)
         playing.forEach((id) => {
             const audioPlaying = get(playingAudio)[id]
             if (!audioPlaying || audioPlaying.paused) return
@@ -107,6 +108,16 @@ export class AudioAnalyserMerger {
             }
         })
 
+        // Capture data for active playing videos
+        playingVids.forEach((v) => {
+            if (!v.video || v.video.paused) return
+
+            const data = capture.getVisualizerData("output_window")
+            if (data && data.db > -60) {
+                ;(inputLevels["output_window"] ??= []).push(data.db)
+            }
+        })
+
         // Capture output_window level if active
         const outData = capture.getVisualizerData("output_window")
         if (outData && outData.db > -60) {
@@ -119,7 +130,13 @@ export class AudioAnalyserMerger {
             nodeVolumes[key] = { dB: Math.round(20 * Math.log10(linearSum / dbs.length)) }
         })
 
-        // Capture data for mergers and outputs directly
+        // Capture data for mergers, outputs, and sub output windows directly
+        const allOutputWinIds = Object.keys(get(outputs)).map((id) => "output_win_sub_" + id)
+        allOutputWinIds.forEach((subId) => {
+            const subData = capture.getVisualizerData(subId)
+            if (subData && subData.db > -60) nodeVolumes[subId] = { dB: Math.round(subData.db) }
+        })
+
         if (config) {
             const subOutputIds = config.connections.map((c) => c.to).filter((to) => to.startsWith("speaker_sub_") || to.startsWith("network_sub_"))
             ;[...config.mergers.map((m) => m.id), "speaker_default", "network_default", "icecast", ...subOutputIds].forEach((id) => {

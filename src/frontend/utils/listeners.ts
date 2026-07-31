@@ -390,11 +390,23 @@ export function storeSubscriber() {
         send(OUTPUT, ["SLIDE_TIMELINE_SPEED_MULTIPLIER"], data)
     })
 
+    let prevAudioChannelsJson = ""
     audioChannelsData.subscribe((data) => {
-        send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
+        const controlData: any = {}
+        Object.entries(data || {}).forEach(([id, ch]: [string, any]) => {
+            if (!ch) return
+            const { dB, ...rest } = ch
+            controlData[id] = rest
+        })
 
-        // REMOTE mixer updates
-        sendRemoteMixer()
+        const json = JSON.stringify(controlData)
+        if (json !== prevAudioChannelsJson) {
+            prevAudioChannelsJson = json
+            send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
+
+            // REMOTE mixer updates
+            sendRemoteMixer()
+        }
     })
 
     audioEffects.subscribe(async (data) => {

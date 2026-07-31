@@ -8,6 +8,7 @@ import type { Metadata, Themes } from "../../types/Settings"
 import { initAudioRouting } from "../audio/routing/audioRoutingInit"
 import { clone, keysToID } from "../components/helpers/array"
 import { checkFFmpeg, checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
+import { VideoController } from "../components/media/VideoController"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { sendMain } from "../IPC/main"
 import {
@@ -236,8 +237,10 @@ export function restartOutputs(specificId = "") {
     videoDataUpdating = true
 
     // restore output video data when recreating window
-    // WIP values are empty when sent
+    // For native videos: VideoController.resyncAll() re-sends TIME + DATA via the controller
+    // For player/image backgrounds: send legacy DATA/TIME IPC as fallback
     setTimeout(() => {
+        VideoController.resyncAll()
         send(OUTPUT, ["DATA"], data)
         send(OUTPUT, ["TIME"], time)
         videoDataUpdating = false

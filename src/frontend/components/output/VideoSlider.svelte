@@ -1,8 +1,10 @@
 <script lang="ts">
     import { OUTPUT } from "../../../types/Channels"
+    import { outputs, videosTime } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import { send } from "../../utils/request"
     import { joinTime, secondsToTime } from "../helpers/time"
+    import { VideoController } from "../media/VideoController"
     import Slider from "../inputs/Slider.svelte"
 
     export let videoData: any
@@ -43,39 +45,72 @@
         time = joinTime(secondsToTime((videoData.duration || 0) * percentage))
     }
 
-    // WIP duplicate of video.ts
-    let latestValue = "0"
+    let latestValue: number | null = null
+
+    function getNumericValue(e: any): number | null {
+        if (typeof e === "number") return isNaN(e) ? null : e
+        if (typeof e === "string") {
+            const num = Number(e)
+            return isNaN(num) ? null : num
+        }
+        if (e && typeof e === "object") {
+            if (e.target && "value" in e.target) {
+                const num = Number(e.target.value)
+                return isNaN(num) ? null : num
+            }
+            if ("detail" in e) {
+                return getNumericValue(e.detail)
+            }
+        }
+        return null
+    }
+
+    let dragSeekTimeout: NodeJS.Timeout | null = null
+
     function sliderInput(e: any) {
-        latestValue = e?.target?.value || e
-        if ((!movePause && !videoData.paused) || !latestValue) return
+        const val = getNumericValue(e) ?? latestValue
+        if (val === null) return
+        latestValue = val
+        sliderValue = val
 
-        videoTime = Number(latestValue)
+        if (!dragSeekTimeout) {
+            dragSeekTimeout = setTimeout(() => {
+                dragSeekTimeout = null
+                if (movePause && sliderValue !== null) {
+                    videoTime = sliderValue
+                    seekAllOutputs(videoTime)
+                }
+            }, 150)
+        }
+    }
 
-        if (!toOutput) return
-
-        let timeValues: any = {}
-        activeOutputIds.forEach((id) => {
-            timeValues[id] = videoTime
-        })
-
-        send(OUTPUT, ["TIME"], timeValues)
+    function seekAllOutputs(time: number) {
+        // Seek via controller if available (native videos)
+        const ctrl = VideoController.get(unmutedId)
+        if (ctrl) {
+            ctrl.seek(time)
+        } else {
+            // Fallback: update store & send IPC for players/images
+            const outputList = toOutput && activeOutputIds.length ? activeOutputIds : Object.keys($outputs)
+            let timeValues: any = {}
+            outputList.forEach((id) => { timeValues[id] = time })
+            videosTime.update((a) => ({ ...a, ...timeValues }))
+            send(OUTPUT, ["TIME"], timeValues)
+        }
     }
 
     const sendToOutput = (e: any = null) => {
-        if (!movePause || !videoData.paused) return
+        if (dragSeekTimeout) {
+            clearTimeout(dragSeekTimeout)
+            dragSeekTimeout = null
+        }
 
-        let value = e?.target?.value
-
-        if (value !== undefined) {
-            videoTime = Number(value)
-            if (toOutput) {
-                let timeValues: any = {}
-                activeOutputIds.forEach((id) => {
-                    timeValues[id] = videoTime
-                })
-
-                send(OUTPUT, ["TIME"], timeValues)
-            }
+        const val = getNumericValue(e) ?? sliderValue ?? latestValue
+        if (val !== null) {
+            latestValue = val
+            sliderValue = val
+            videoTime = val
+            seekAllOutputs(videoTime)
         }
 
         if (movePause) pauseAtMove(false)
@@ -84,11 +119,24 @@
     $: if (videoTime !== undefined && !movePause) sliderValue = videoTime
 
     let movePause = false
+    let wasPausedBeforeMove = false
     function pauseAtMove(boolean = true) {
-        movePause = videoData.paused = boolean
+        const ctrl = VideoController.get(unmutedId)
 
-        if (!toOutput) return
+        if (boolean) {
+            wasPausedBeforeMove = !!videoData.paused
+            movePause = true
+            videoData.paused = true
+            if (ctrl) ctrl.pause()
+        } else {
+            movePause = false
+            videoData.paused = wasPausedBeforeMove
+            if (ctrl && !wasPausedBeforeMove) ctrl.play()
+        }
 
+        if (!toOutput || ctrl) return
+
+        // Fallback for non-native-video: send DATA IPC
         let dataValues: any = {}
         activeOutputIds.forEach((id) => {
             dataValues[id] = { ...videoData, muted: id !== unmutedId ? true : videoData.muted }
@@ -98,11 +146,13 @@
     }
 
     let fullLength = false
+    $: displayTime = Math.max(0, videoData?.duration ? Math.min(videoTime || 0, videoData.duration) : videoTime || 0)
+    $: remainingTime = Math.max(0, (videoData?.duration || 0) - Math.floor(displayTime))
 </script>
 
 <svelte:window
-    on:mouseup={(e) => {
-        if (!e.target?.closest(".slider") && movePause) pauseAtMove(false)
+    on:mouseup={() => {
+        if (movePause) sendToOutput()
     }}
 />
 
@@ -113,7 +163,7 @@
         </span>
     {:else}
         <span style="color: var(--secondary)">
-            {joinTime(secondsToTime(Math.floor(videoTime)))}
+            {joinTime(secondsToTime(Math.floor(displayTime)))}
         </span>
     {/if}
     <div class="slider">
@@ -125,7 +175,7 @@
             step={1}
             max={videoData.duration}
             on:mousedown={() => {
-                if (!videoData.paused) pauseAtMove()
+                pauseAtMove(true)
             }}
             on:mousemove={move}
             on:change={sendToOutput}
@@ -136,7 +186,7 @@
         {#if fullLength}
             {joinTime(secondsToTime(videoData.duration || 0))}
         {:else}
-            {joinTime(secondsToTime((videoData.duration || 0) - Math.floor(videoTime)))}
+            {joinTime(secondsToTime(remainingTime))}
         {/if}
     </span>
 </div>

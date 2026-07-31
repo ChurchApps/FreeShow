@@ -22,6 +22,7 @@
     import MediaControls from "../output/tools/MediaControls.svelte"
     import Player from "../system/Player.svelte"
     import { formatVTT, SRTtoVTT } from "./media/subtitles"
+    import { AudioAnalyser } from "../../audio/audioAnalyser"
 
     export let mediaPath: string
     export let show
@@ -209,13 +210,34 @@
         setOutput("background", bg)
     }
 
+    $: videoData.muted = shouldBeMuted
+    $: videoData.loop = shouldLoop
+
+    function updateActiveBackground(updateData: any) {
+        allActiveOutputs.forEach((id) => {
+            const currentBg = $outputs[id]?.out?.background
+            if (currentBg) {
+                setOutput("background", { ...currentBg, ...updateData }, false, id)
+            }
+        })
+    }
+
+    $: if (mediaPath && shouldBeMuted !== undefined) {
+        AudioAnalyser.setSourceVolume(mediaPath, shouldBeMuted ? 0 : 1)
+    }
+
     function toggleLoop() {
         shouldLoop = !shouldLoop
+        videoData.loop = shouldLoop
         saveToProject("loop", shouldLoop)
+        if (playingInOutput) updateActiveBackground({ loop: shouldLoop })
     }
     function toggleMute() {
         shouldBeMuted = !shouldBeMuted
+        videoData.muted = shouldBeMuted
+        AudioAnalyser.setSourceVolume(mediaPath, shouldBeMuted ? 0 : 1)
         saveToProject("muted", shouldBeMuted)
+        if (playingInOutput) updateActiveBackground({ muted: shouldBeMuted })
     }
 
     // save in project item if any active
@@ -373,7 +395,7 @@
                     <video style={mediaStyleBlurString} src={encodeFilePath(mediaPath)} bind:this={blurVideo} bind:paused={blurPausedState} loop={videoData.loop} muted />
                 {/if}
                 {@const mainVol = $audioChannelsData.main?.volume ?? 1}
-                <video style={mediaStyleString} src={encodeFilePath(mediaPath)} on:loadedmetadata={onLoad} on:playing={onPlay} bind:this={video} bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} bind:muted={videoData.muted} volume={Math.min(1, Math.max(0, mainVol))} loop={videoData.loop}>
+                <video style={mediaStyleString} src={encodeFilePath(mediaPath)} on:loadedmetadata={onLoad} on:playing={onPlay} bind:this={video} bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} bind:muted={videoData.muted} volume={shouldBeMuted ? 0 : Math.min(1, Math.max(0, mainVol))} loop={videoData.loop}>
                     <track kind="captions" src="" label="No captions available" />
                     {#each tracks as track}
                         <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
@@ -480,8 +502,8 @@
 
                 <VideoSlider bind:videoData bind:videoTime />
 
-                <MaterialButton title={videoData.muted ? "actions.unmute" : "actions.mute"} on:click={() => (videoData.muted = !videoData.muted)}>
-                    <Icon id={videoData.muted ? "muted" : "volume"} white={videoData.muted} />
+                <MaterialButton title={shouldBeMuted ? "actions.unmute" : "actions.mute"} on:click={toggleMute}>
+                    <Icon id={shouldBeMuted ? "muted" : "volume"} white={shouldBeMuted} />
                 </MaterialButton>
 
                 <div class="divider"></div>

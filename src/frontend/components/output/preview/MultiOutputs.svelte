@@ -148,7 +148,7 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         </span>
     {/if}
 
-    {#each outs as output}
+    {#each outs as output (output.id)}
         {@const style = $styles[output.style || ""] || {}}
         {@const layers = Array.isArray(style.layers) ? style.layers : clone(defaultLayers)}
         {@const styleTemplate = isScriptureOutput ? style.templateScripture : style.template}

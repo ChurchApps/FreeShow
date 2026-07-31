@@ -29,6 +29,7 @@ import { getFewestOutputLines, getItemWithMostLines } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
 import { getFirstOutputIdWithAudableBackground } from "./video"
+import { VideoController } from "../media/VideoController"
 
 export function toggleOutputs(outputIds: string[] | null = null, options: { force?: boolean; autoStartup?: boolean; state?: boolean } = {}) {
     if (outputIds === null) outputIds = getActiveOutputs(get(outputs), false)
@@ -284,6 +285,9 @@ function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
     const previousWasVideo: boolean = videoExtensions.includes(getExtension(output.out?.background?.path))
 
     if (data === null) {
+        // Clean up audio controller for this output
+        VideoController.destroy(id)
+
         if (id === videoOutputId) fadeinAllPlayingAudio()
         if (previousWasVideo) videoEnding()
 
@@ -293,8 +297,6 @@ function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
     // mute videos in the other output windows if more than one
     data.muted = data.muted || false
     if (mute) data.muted = true
-
-    const videoData = { muted: data.muted, loop: data.loop || false }
 
     if (id === videoOutputId) {
         const muteAudio = get(special).muteAudioWhenVideoPlays
@@ -306,14 +308,34 @@ function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
 
         if (isVideo) videoStarting(type)
         else if (previousWasVideo) videoEnding()
-    }
 
-    // wait for video receiver to change
-    setTimeout(() => {
-        // data is sent directly in output as well ??
-        send(OUTPUT, ["DATA"], { [id]: videoData })
-        if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
-    }, 600)
+        // Start the VideoController for native video files
+        const isNativeVideo = videoExtensions.includes(getExtension(data.path))
+        if (isNativeVideo && data.path) {
+            const ctrl = VideoController.getOrCreate(id)
+            ctrl.load(data.path, {
+                startAt: data.startAt,
+                loop: data.loop ?? false,
+                muted: data.muted ?? false
+            })
+        } else {
+            // For non-video backgrounds (images, cameras, players) — no audio controller
+            VideoController.destroy(id)
+            const videoData = { muted: data.muted, loop: data.loop || false }
+            setTimeout(() => {
+                send(OUTPUT, ["DATA"], { [id]: videoData })
+                if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
+            }, 600)
+        }
+    } else {
+        // Secondary (muted) outputs: no audio controller, just send state
+        VideoController.destroy(id)
+        const videoData = { muted: true, loop: data.loop || false }
+        setTimeout(() => {
+            send(OUTPUT, ["DATA"], { [id]: videoData })
+            if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
+        }, 600)
+    }
 
     return data
 }

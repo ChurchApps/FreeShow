@@ -42,8 +42,6 @@
 
     $: stageItems = getSortedStageItems(id, $stageShows)
 
-    // $: videoTime = $videosTime[stageOutputId] || 0
-    // { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime }
     let conditionsUpdater = 0
     const updaterInterval = setInterval(() => {
         if (!Array.isArray(stageItems)) return
