@@ -922,9 +922,10 @@ export function breakLongLines(showId: string, breakPoint: number) {
 // SPLIT AT PUNCTUATION
 
 const CJK_PUNC = ["，", "。", "；", "：", "！", "？", "、"]
-const CJK_END = ["」", "』", "）", "》", "〉", "】", "〕"]
+const CJK_START = ["「", "『", "（", "《", "〈", "【", "〔", "“", "‘"]
+const CJK_END = ["」", "』", "）", "》", "〉", "】", "〕", "”", "’"]
+const WRAP_CHARS = [...CJK_START, ...CJK_END, '"', "'", "(", ")", "[", "]", "{", "}"]
 const PUNC_REGEX = new RegExp(`[.,;:!?${CJK_PUNC.join("")}]`)
-const CONTENT_REGEX = new RegExp(`[^\\s.,;:\\!\\?${CJK_PUNC.join("")}${CJK_END.join("")}]`)
 
 export function findBestBreak(text: string, target: number, range: number) {
     let best = -1
@@ -944,11 +945,14 @@ export function findBestBreak(text: string, target: number, range: number) {
 
         if (score < bestDist) {
             let pos = i + (isPunc ? 1 : 0)
-            if (isPunc) while (pos < text.length && CJK_END.includes(text[pos])) pos++
+            if (isPunc) while (pos < text.length && (WRAP_CHARS.includes(text[pos]) || PUNC_REGEX.test(text[pos]))) pos++
 
             if (pos > 0 && pos < text.length) {
                 // Ensure the second half isn't just punctuation
-                if (CONTENT_REGEX.test(text.slice(pos))) {
+                const remaining = text.slice(pos)
+                const hasContent = [...remaining].some((c) => !/\s/.test(c) && !PUNC_REGEX.test(c) && !WRAP_CHARS.includes(c))
+
+                if (hasContent) {
                     bestDist = score
                     best = pos
                 }
