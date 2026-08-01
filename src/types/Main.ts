@@ -1,11 +1,21 @@
 import type { Stats } from "fs"
-import type { dataFolderNames } from "../electron/utils/files"
 import type { Cropping } from "./Settings"
+
+// keys of electron/utils/files.ts dataFolderNames (declared here to avoid types->electron coupling)
+export type DataFolderName = "shows" | "backups" | "scriptures" | "onlineMedia" | "media" | "exports" | "imports" | "lessons" | "planningcenter" | "recordings" | "audio" | "userData" | "cloud"
+
+// equivalent to Electron.Rectangle (declared here to avoid depending on the Electron ambient namespace)
+export interface Rectangle {
+    x: number
+    y: number
+    width: number
+    height: number
+}
 
 export interface Config {
     loaded: boolean
     maximized: boolean
-    bounds: Electron.Rectangle
+    bounds: Rectangle
     dataPath: string | null
     disableHardwareAcceleration: boolean | null
     autoErrorReporting?: boolean
@@ -238,7 +248,7 @@ export interface DriveData {
 }
 
 export interface LessonsData {
-    type?: keyof typeof dataFolderNames
+    type?: DataFolderName
     showId: string
     name: string
     files: LessonFile[]
@@ -455,6 +465,7 @@ export type Popups =
     | "cleaning_utility"
     | "pco_picker"
     | "sync_folders"
+    | "remote_folder"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

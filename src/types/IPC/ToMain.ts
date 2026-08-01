@@ -2,38 +2,11 @@ import type { ICommonTagsResult } from "music-metadata"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { TrimmedShows } from "../Show"
 
-export enum ToMain {
-    ALERT = "ALERT",
-    TOAST = "TOAST",
-    MENU = "MENU",
-    API = "API",
-    SPELL_CHECK = "SPELL_CHECK",
-    BACKUP = "BACKUP",
-    RECENTLY_ADDED_FILES = "RECENTLY_ADDED_FILES",
-    PRESENTATION_STATE = "PRESENTATION_STATE",
-    CAPTURE_CANVAS = "CAPTURE_CANVAS",
-    REPLACE_MEDIA_PATHS = "REPLACE_MEDIA_PATHS",
-    LESSONS_DONE = "LESSONS_DONE",
-    IMAGES_TO_SHOW = "IMAGES_TO_SHOW",
-    MEDIA_DOWNLOAD_PROGRESS = "MEDIA_DOWNLOAD_PROGRESS",
-    PDF_IMPORT_PROGRESS = "PDF_IMPORT_PROGRESS",
-    // Unified provider callbacks
-    PROVIDER_CONNECT = "PROVIDER_CONNECT",
-    PROVIDER_PROJECTS = "PROVIDER_PROJECTS",
-    WEBSOCKET = "WEBSOCKET",
-    AUDIO_METADATA = "AUDIO_METADATA",
-    GET_DYNAMIC_VALUES = "GET_DYNAMIC_VALUES",
-    // Main
-    IMPORT2 = "IMPORT2",
-    SHOW2 = "SHOW2",
-    SAVE2 = "SAVE2",
-    REFRESH_SHOWS2 = "REFRESH_SHOWS2",
-    RESTORE2 = "RESTORE2",
-    API_TRIGGER2 = "API_TRIGGER2",
-    OPEN_FOLDER2 = "OPEN_FOLDER2",
-    OPEN_FILE2 = "OPEN_FILE2",
-    RECEIVE_MIDI2 = "RECEIVE_MIDI2"
-}
+// enum declared in ./channels (no imports) and re-exported so it can be consumed
+// without pulling in the payload/Electron types below.
+export { ToMain } from "./channels"
+import { ToMain } from "./channels"
+
 export interface ToMainSendPayloads {
     [ToMain.ALERT]: string
     [ToMain.TOAST]: string

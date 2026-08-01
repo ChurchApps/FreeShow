@@ -1,7 +1,9 @@
-import type { AutosizeTypes } from "../frontend/components/edit/scripts/autosize"
 import type { Input } from "./Input"
 import type { Animation } from "./Output"
 import type { Cropping, Resolution } from "./Settings"
+
+// kept in sync with src/frontend/components/edit/scripts/autosize.ts (declared here to avoid types->frontend coupling)
+export type AutosizeTypes = "shrinkToFit" | "growToFit" | "none"
 
 export interface Shows {
     [key: string]: Show

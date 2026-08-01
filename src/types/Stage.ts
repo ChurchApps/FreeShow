@@ -1,4 +1,4 @@
-import type { AutosizeTypes } from "../frontend/components/edit/scripts/autosize"
+import type { AutosizeTypes } from "./Show"
 import type { Resolution } from "./Settings"
 import type { Condition, Line } from "./Show"
 

@@ -13,8 +13,10 @@ export const CLOUD = "CLOUD"
 export const NDI = "NDI"
 export const BLACKMAGIC = "BLACKMAGIC"
 export const AUDIO = "AUDIO"
+// real-time co-editing (web/remote only)
+export const YJS = "YJS"
 
-export type ValidChannels = "STARTUP" | "MAIN" | "OUTPUT" | "EXPORT" | "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM" | "CLOUD" | "NDI" | "BLACKMAGIC" | "AUDIO"
+export type ValidChannels = "STARTUP" | "MAIN" | "OUTPUT" | "EXPORT" | "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM" | "CLOUD" | "NDI" | "BLACKMAGIC" | "AUDIO" | "YJS"
 
 export type Data = string | DataObject
 export interface DataObject {
