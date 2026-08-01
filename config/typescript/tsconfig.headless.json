@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "outDir": "../../build/headless",
+        "rootDir": "../../src",
+        "target": "ES2019",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "lib": ["es2019", "esnext"],
+        "sourceMap": true,
+        "strict": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": true,
+        "noImplicitThis": true,
+        "noImplicitReturns": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "noEmitOnError": false,
+        "types": ["node"]
+    },
+    "include": ["../../src/server/headless/**/*", "../../src/shared/**/*"],
+    "exclude": ["node_modules", "**/*.test.ts"]
+}

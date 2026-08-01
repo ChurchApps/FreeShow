@@ -36,6 +36,12 @@
         "build:servers:prod": "cross-env NODE_ENV=production node scripts/vite/createServerFiles.js",
         "build:servers:dev": "cross-env NODE_ENV=development node scripts/vite/createServerFiles.js",
         "build:electron:prod": "cross-env NODE_ENV=production tsc --p config/typescript/tsconfig.electron.prod.json",
+        "---HEADLESS / WEB---": "",
+        "build:web": "cross-env NODE_ENV=production vite build --config config/building/vite.config.web.mjs",
+        "build:headless": "tsc -p config/typescript/tsconfig.headless.json",
+        "build:server-app": "npm-run-all -s build:web build:headless",
+        "start:server": "node build/headless/server/headless/index.js",
+        "dev:server": "node scripts/startServer.js",
         "---RELEASE---": "",
         "prerelease": "npm run build",
         "release": "electron-builder --config config/building/electron-builder.yaml --publish always",
@@ -153,13 +159,15 @@
         "pcm-convert": "^1.6.5",
         "protobufjs": "^7.5.3",
         "pusher-js": "^8.5.0",
+        "sharp": "^0.35.3",
         "slideshow": "github:vassbo/slideshow#224d50f",
         "socket.io": "^4.8.1",
         "uid": "^2.0.2",
         "upath": "^2.0.1",
         "word-extractor": "^1.0.4",
         "yauzl": "^3.2.0",
-        "yazl": "^3.3.1"
+        "yazl": "^3.3.1",
+        "yjs": "^13.6.31"
     },
     "optionalDependencies": {
         "libspotifyctl": "^0.3.4"
