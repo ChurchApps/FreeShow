@@ -5,7 +5,8 @@
     import { ToMain } from "../../../../types/IPC/ToMain"
     import { AudioPlaylist } from "../../../audio/audioPlaylist"
     import { destroyMain, receiveToMain, requestMain, sendMain } from "../../../IPC/main"
-    import { activeRename, audioFolders, audioPlaylists, drawerTabsData, effectsLibrary, labelsDisabled, media } from "../../../stores"
+    import { activePopup, activeRename, audioFolders, audioPlaylists, drawerTabsData, effectsLibrary, labelsDisabled, media, popupData } from "../../../stores"
+    import { isSocketTransport } from "../../../IPC/transport"
     import { getAccess } from "../../../utils/profile"
     import { keysToID, sortObject } from "../../helpers/array"
     import { addDrawerFolder } from "../../helpers/dropActions"
@@ -17,6 +18,9 @@
 
     const profile = getAccess("audio")
     $: readOnly = profile.global === "read"
+
+    // when connected to a server, browse/create SERVER folders (so audio syncs) instead of a local dialog
+    const remoteLibrary = isSocketTransport()
 
     $: activeSubTab = $drawerTabsData.audio?.activeSubTab || ""
 
@@ -80,6 +84,11 @@
     function addFolder() {
         sendMain(Main.OPEN_FOLDER, { channel: PICK_ID })
     }
+    // remote clients browse the server's folders instead of a native OS dialog
+    function addServerFolder() {
+        popupData.set({ type: "audio" })
+        activePopup.set("remote_folder")
+    }
     let listenerId = receiveToMain(ToMain.OPEN_FOLDER2, (data) => {
         if (data.channel !== PICK_ID || !data.path) return
         addDrawerFolder(data, "audio")
@@ -128,9 +137,16 @@
         </MaterialButton>
     </div>
     <div slot="section_4" style="padding: 8px;{foldersList.length ? 'padding-top: 12px;' : ''}">
-        <MaterialButton style="width: 100%;" title="new.system_folder" variant="outlined" disabled={readOnly} on:click={addFolder} small>
-            <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
-            {#if !$labelsDisabled}<T id="new.system_folder" />{/if}
-        </MaterialButton>
+        {#if !remoteLibrary}
+            <MaterialButton style="width: 100%;" title="new.system_folder" variant="outlined" disabled={readOnly} on:click={addFolder} small>
+                <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="new.system_folder" />{/if}
+            </MaterialButton>
+        {:else}
+            <MaterialButton style="width: 100%;" title="new.folder" variant="outlined" disabled={readOnly} on:click={addServerFolder} small>
+                <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="new.folder" />{/if}
+            </MaterialButton>
+        {/if}
     </div>
 </NavigationSections>

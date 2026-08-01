@@ -5,7 +5,8 @@
     import { Main } from "../../../../types/IPC/Main"
     import { ToMain } from "../../../../types/IPC/ToMain"
     import { destroyMain, receiveToMain, requestMain, sendMain } from "../../../IPC/main"
-    import { drawerTabsData, labelsDisabled, media, mediaFolders, providerConnections, special } from "../../../stores"
+    import { activePopup, drawerTabsData, labelsDisabled, media, mediaFolders, popupData, providerConnections, special } from "../../../stores"
+    import { isSocketTransport } from "../../../IPC/transport"
     import { getAccess } from "../../../utils/profile"
     import { keysToID, sortObject } from "../../helpers/array"
     import { addDrawerFolder } from "../../helpers/dropActions"
@@ -14,6 +15,10 @@
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NavigationSections from "./NavigationSections.svelte"
+
+    // when connected to a server, the media library lives there — browse/create SERVER
+    // folders (so media syncs) instead of a local OS folder dialog
+    const remoteLibrary = isSocketTransport()
 
     const profile = getAccess("media")
     $: readOnly = profile.global === "read"
@@ -83,6 +88,11 @@
     function addFolder() {
         sendMain(Main.OPEN_FOLDER, { channel: PICK_ID })
     }
+    // remote clients browse the server's folders instead of a native OS dialog
+    function addServerFolder() {
+        popupData.set({ type: "media" })
+        activePopup.set("remote_folder")
+    }
     let listenerId = receiveToMain(ToMain.OPEN_FOLDER2, (data) => {
         if (data.channel !== PICK_ID || !data.path) return
         addDrawerFolder(data, "media")
@@ -102,16 +112,30 @@
 <NavigationSections {sections} active={activeSubTab} on:rename={updateName}>
     <div slot="section_2" style="{!curriculumProviders.length ? 'padding: 8px;' : ''}{foldersList.length && !curriculumProviders.length ? 'padding-top: 12px;' : ''}">
         {#if !curriculumProviders.length}
+            {#if !remoteLibrary}
+                <MaterialButton style="width: 100%;" title="new.system_folder" variant="outlined" disabled={readOnly} on:click={addFolder} small>
+                    <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
+                    {#if !$labelsDisabled}<T id="new.system_folder" />{/if}
+                </MaterialButton>
+            {:else}
+                <MaterialButton style="width: 100%;" title="new.folder" variant="outlined" disabled={readOnly} on:click={addServerFolder} small>
+                    <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
+                    {#if !$labelsDisabled}<T id="new.folder" />{/if}
+                </MaterialButton>
+            {/if}
+        {/if}
+    </div>
+    <div slot="section_3" style="padding: 8px;{foldersList.length ? 'padding-top: 12px;' : ''}">
+        {#if !remoteLibrary}
             <MaterialButton style="width: 100%;" title="new.system_folder" variant="outlined" disabled={readOnly} on:click={addFolder} small>
                 <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
                 {#if !$labelsDisabled}<T id="new.system_folder" />{/if}
             </MaterialButton>
+        {:else}
+            <MaterialButton style="width: 100%;" title="new.folder" variant="outlined" disabled={readOnly} on:click={addServerFolder} small>
+                <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
+                {#if !$labelsDisabled}<T id="new.folder" />{/if}
+            </MaterialButton>
         {/if}
-    </div>
-    <div slot="section_3" style="padding: 8px;{foldersList.length ? 'padding-top: 12px;' : ''}">
-        <MaterialButton style="width: 100%;" title="new.system_folder" variant="outlined" disabled={readOnly} on:click={addFolder} small>
-            <Icon id="add" size={$labelsDisabled ? 0.9 : 1} white={$labelsDisabled} />
-            {#if !$labelsDisabled}<T id="new.system_folder" />{/if}
-        </MaterialButton>
     </div>
 </NavigationSections>

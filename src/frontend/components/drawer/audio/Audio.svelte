@@ -13,6 +13,8 @@
     import { clone, keysToID, sortFilenames } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getFileName, getMediaType } from "../../helpers/media"
+    import { isSocketTransport } from "../../../IPC/transport"
+    import { uploadToServer } from "../../../utils/mediaGateway"
     import { joinTime, secondsToTime } from "../../helpers/time"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -84,6 +86,24 @@
     let foldersList: FileFolder[] = []
     let filesList: FileFolder[] = []
     let allRelevantFiles: FileFolder[] = []
+
+    // upload into the current server folder (remote clients can't drag in local files)
+    const remoteLibrary = isSocketTransport()
+    let uploadInput: HTMLInputElement
+    let uploading = ""
+    async function uploadFiles(e: Event) {
+        const files = Array.from((e.target as HTMLInputElement).files || [])
+        if (!files.length || !path) return
+
+        let done = 0
+        for (const file of files) {
+            uploading = `${++done}/${files.length}`
+            await uploadToServer(path, file)
+        }
+        uploading = ""
+        if (uploadInput) uploadInput.value = ""
+        requestFiles(path, currentDepth)
+    }
 
     let requesting = 0
     let currentDepth = 0
@@ -487,6 +507,17 @@
             <span style="opacity: 0.5;font-size: 0.9em;margin-inline-start: 10px;">{content}</span>
         {/if} -->
             </p>
+        </FloatingInputs>
+    {/if}
+
+    <!-- upload into the current SERVER folder (remote clients have no local file access) -->
+    {#if remoteLibrary && path}
+        <FloatingInputs>
+            <input bind:this={uploadInput} type="file" multiple accept="audio/*" style="display: none;" on:change={uploadFiles} />
+            <MaterialButton title="Upload files" disabled={!!uploading} on:click={() => uploadInput?.click()}>
+                <Icon id="upload" white />
+                {#if uploading}<span style="font-size: 0.8em;margin-inline-start: 6px;">{uploading}</span>{/if}
+            </MaterialButton>
         </FloatingInputs>
     {/if}
 

@@ -4,7 +4,7 @@
     import { Main } from "../../../types/IPC/Main"
     import { ToMain } from "../../../types/IPC/ToMain"
     import { destroyMain, receiveToMain, sendMain } from "../../IPC/main"
-    import { activePopup, alertMessage, os } from "../../stores"
+    import { activePopup, alertMessage, capabilities, os } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "./MaterialButton.svelte"
@@ -16,6 +16,9 @@
     export let disabled = false
     export let allowEmpty = false
     export let openButton = true
+
+    // native folder dialog isn't available on remote/web clients
+    $: disabled = $$props.disabled || !$capabilities.nativeDialogs
 
     function pickFolder() {
         if (disabled) return

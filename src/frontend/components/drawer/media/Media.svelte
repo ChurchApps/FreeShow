@@ -5,12 +5,14 @@
     import type { ClickEvent, FileFolder } from "../../../../types/Main"
     import { requestMain } from "../../../IPC/main"
     import { addProjectItem } from "../../../converters/project"
-    import { activeDrawerTab, activeEdit, activeFocus, activeMediaTagFilter, activePopup, activeShow, audioFolders, cloudSyncData, drawerTabsData, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, providerConnections, selectAllMedia, selected, sorted, special, styles } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activeFocus, activeMediaTagFilter, activePopup, activeShow, audioFolders, capabilities, cloudSyncData, drawerTabsData, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, providerConnections, selectAllMedia, selected, sorted, special, styles } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortFilenames } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
     import { countFolderMediaItems, getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
+    import { isSocketTransport } from "../../../IPC/transport"
+    import { uploadToServer } from "../../../utils/mediaGateway"
     import { getFirstActiveOutput, setOutput } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -168,6 +170,24 @@
         })
 
         openAudioFolder()
+    }
+
+    // upload into the current server folder (remote clients can't drag in local files)
+    const remoteLibrary = isSocketTransport()
+    let uploadInput: HTMLInputElement
+    let uploading = ""
+    async function uploadFiles(e: Event) {
+        const files = Array.from((e.target as HTMLInputElement).files || [])
+        if (!files.length || !path) return
+
+        let done = 0
+        for (const file of files) {
+            uploading = `${++done}/${files.length}`
+            await uploadToServer(path, file)
+        }
+        uploading = ""
+        if (uploadInput) uploadInput.value = ""
+        requestFiles(path, currentDepth)
     }
 
     let foldersList: FileFolder[] = []
@@ -479,22 +499,28 @@
             <Icon size={1.2} id="camera" white />
             <p><T id="live.cameras" /></p>
         </MaterialButton>
-        <MaterialButton style="flex: 1;" isActive={inputsTab === "screens"} on:click={() => setSubSubTab("screens")}>
-            <Icon size={1.2} id="screen" white />
-            <p><T id="live.screens" /></p>
-        </MaterialButton>
+        {#if $capabilities.screenCapture}
+            <MaterialButton style="flex: 1;" isActive={inputsTab === "screens"} on:click={() => setSubSubTab("screens")}>
+                <Icon size={1.2} id="screen" white />
+                <p><T id="live.screens" /></p>
+            </MaterialButton>
+        {/if}
         <!-- <MaterialButton style="flex: 1;" isActive={inputsTab === "windows"} on:click={() => setSubSubTab("windows")}>
             <Icon size={1.2} id="window" white />
             <p><T id="live.windows" /></p>
         </MaterialButton> -->
-        <MaterialButton style="flex: 1;" isActive={inputsTab === "ndi"} on:click={() => setSubSubTab("ndi")}>
-            <Icon size={1.1} id="ndi" white />
-            <p>NDI</p>
-        </MaterialButton>
-        <MaterialButton style="flex: 1;" isActive={inputsTab === "blackmagic"} on:click={() => setSubSubTab("blackmagic")}>
-            <Icon size={1.2} id="blackmagic" white />
-            <p>Blackmagic</p>
-        </MaterialButton>
+        {#if $capabilities.ndi}
+            <MaterialButton style="flex: 1;" isActive={inputsTab === "ndi"} on:click={() => setSubSubTab("ndi")}>
+                <Icon size={1.1} id="ndi" white />
+                <p>NDI</p>
+            </MaterialButton>
+        {/if}
+        {#if $capabilities.blackmagic}
+            <MaterialButton style="flex: 1;" isActive={inputsTab === "blackmagic"} on:click={() => setSubSubTab("blackmagic")}>
+                <Icon size={1.2} id="blackmagic" white />
+                <p>Blackmagic</p>
+            </MaterialButton>
+        {/if}
     </div>
 {:else if active === "online"}
     <div class="tabs">
@@ -691,6 +717,15 @@
                 <Icon size={1.2} id={activeView === "all" ? "media" : activeView} white={activeView === "all"} />
             </MaterialButton>
         {/if} -->
+
+        <!-- upload into the current SERVER folder (remote clients have no local file access) -->
+        {#if remoteLibrary && path && !notFolders.includes(active || "")}
+            <input bind:this={uploadInput} type="file" multiple accept="image/*,video/*,audio/*" style="display: none;" on:change={uploadFiles} />
+            <MaterialButton title="Upload files" disabled={!!uploading} on:click={() => uploadInput?.click()}>
+                <Icon id="upload" white />
+                {#if uploading}<span style="font-size: 0.8em;margin-inline-start: 6px;">{uploading}</span>{/if}
+            </MaterialButton>
+        {/if}
 
         <MaterialZoom columns={$mediaOptions.columns} defaultValue={5} on:change={(e) => mediaOptions.set({ ...$mediaOptions, columns: e.detail })} />
 

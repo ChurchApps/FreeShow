@@ -4,6 +4,7 @@ import { Main } from "../../types/IPC/Main"
 import type { Output } from "../../types/Output"
 import type { Metadata, Themes } from "../../types/Settings"
 import { clone, keysToID } from "../components/helpers/array"
+import { isSocketTransport } from "../IPC/transport"
 import { checkFFmpeg, checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { sendMain } from "../IPC/main"
@@ -120,6 +121,15 @@ export function updateSettings(data: any) {
     if (data.equalizerConfig && !data.audioEffects?.main) {
         data.audioEffects = { main: { equalizer: clone(data.equalizerConfig) } }
         delete data.equalizerConfig
+    }
+
+    // When connected to a server the media/audio library lives there, so ignore this
+    // machine's local folder lists — their paths don't exist on the server and would
+    // break shows synced from it. The server's lists arrive via SYNCED_SETTINGS instead.
+    if (isSocketTransport()) {
+        data = { ...data }
+        delete data.mediaFolders
+        delete data.audioFolders
     }
 
     Object.entries(data).forEach(([key, value]: any) => {
@@ -395,7 +405,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     },
     special: (v: any) => {
         if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, Lord" // God
-        if (v.autoUpdates) sendMain(Main.AUTO_UPDATE)
+        if (v.autoUpdates && !isSocketTransport()) sendMain(Main.AUTO_UPDATE)
         // don't backup when just initialized (or reset)
         if (!v.autoBackupPrevious) v.autoBackupPrevious = Date.now()
         if (v.startupProjectsList) {

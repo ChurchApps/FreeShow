@@ -545,6 +545,7 @@
         "choose_camera": "Choose camera",
         "manage_tags": "Manage tags",
         "sync_folders": "Sync folders",
+        "remote_folder": "Add server folder",
         "sync_categories": "Sync categories",
         "effect_items": "Effect items",
         "timeline": "Timeline",
