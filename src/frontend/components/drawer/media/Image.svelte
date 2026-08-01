@@ -37,10 +37,15 @@
         e.target.style.display = null
         loaded = true
     }
+
+    // the cache-buster must use "&" when the resolved src already has a query string
+    // (remote clients resolve media to a gateway URL like /media?path=…&token=…)
+    $: encodedSrc = encodeFilePath(src)
+    $: imageSrc = updater ? `${encodedSrc}${encodedSrc.includes("?") ? "&" : "?"}${updater}` : encodedSrc
 </script>
 
 {#key retryCount}
-    <img style={$$props.style} src="{encodeFilePath(src)}{updater ? '?' + updater : ''}" {alt} draggable="false" class:loaded class:transition bind:this={image} on:load={hasLoaded} on:error={reload} />
+    <img style={$$props.style} src={imageSrc} {alt} draggable="false" class:loaded class:transition bind:this={image} on:load={hasLoaded} on:error={reload} />
 {/key}
 
 <style>
