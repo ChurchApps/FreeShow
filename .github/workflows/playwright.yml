@@ -3,7 +3,7 @@ on:
     # Electron now launches on CI with --no-sandbox (see config/testing/start.test.ts).
     # Kept as workflow_dispatch too so a run can be triggered manually to verify.
     push:
-        branches: [dev]
+        branches: [dev, fix-playwright-2]
     pull_request:
         branches: [dev]
     workflow_dispatch:
