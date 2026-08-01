@@ -6,6 +6,7 @@ import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { ContentProviderId } from "../electron/contentProviders/base/types"
 import type { TimecodeMode } from "../electron/timecode/timecode"
+import { ELECTRON_CAPABILITIES, type CapabilitySet } from "../shared/platform/capabilities"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
 import type { Effects } from "../types/Effects"
@@ -38,6 +39,10 @@ export const os: Writable<OS> = writable({ platform: "win32", name: "", arch: ""
 export const deviceId: Writable<string> = writable("")
 export const version: Writable<string> = writable("0.0.0")
 export const currentWindow: Writable<null | "output" | "pdf"> = writable(null)
+// which platform features are available (advertised by the backend at STARTUP); defaults to full desktop
+export const capabilities: Writable<CapabilitySet> = writable(ELECTRON_CAPABILITIES)
+// socket transport connection state (null when using local Electron IPC)
+export const connectionStatus: Writable<null | "connected" | "disconnected" | "reconnecting"> = writable(null)
 export const localeDirection: Writable<"rtl" | "ltr"> = writable("ltr")
 export const dictionary: Writable<Dictionary> = writable({})
 export const saved: Writable<boolean> = writable(true)

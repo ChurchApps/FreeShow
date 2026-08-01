@@ -27,6 +27,9 @@ interface Window {
         getListeners: () => [string, number][]
         showFilePath: (file: File) => string
     }
+    // Electron preload exposes the IPC bridge here (read-only via contextBridge);
+    // the renderer copies/overrides it onto the writable window.api in installTransport.
+    electronAPI?: Window["api"]
     queryLocalFonts: () => Promise<FontData[]>
 }
 

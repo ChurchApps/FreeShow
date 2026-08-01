@@ -17,7 +17,9 @@ const filteredChannels: ValidChannels[] = ["AUDIO"]
 
 const storedReceivers: { [key: string]: (e: IpcRendererEvent, args: any) => void } = {}
 
-contextBridge.exposeInMainWorld("api", {
+// exposed as "electronAPI" (not "api") so the renderer can own a writable window.api
+// and swap the transport (Electron IPC vs Socket.IO). See src/frontend/IPC/transport.
+contextBridge.exposeInMainWorld("electronAPI", {
     send: (channel: ValidChannels, data: any, id?: string) => {
         if (LOG_MESSAGES && appLoaded && !filteredChannels.includes(channel) && !filteredChannelsData.includes(data?.channel)) console.info("TO ELECTRON [" + channel + "]: ", data)
         // if (useTimeout.includes(channel) && data.channel === lastChannel && data.id) return

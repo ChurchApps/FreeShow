@@ -7,6 +7,7 @@
     import { getContrast } from "./components/helpers/color"
     import { getBlending } from "./components/helpers/output"
     import { checkTimers, startEventTimer, startTimer } from "./components/helpers/timerTick"
+    import ConnectionStatus from "./components/main/ConnectionStatus.svelte"
     import Loader from "./components/main/Loader.svelte"
     import ProgressPanel from "./components/main/ProgressPanel.svelte"
     import MenuBar from "./components/main/MenuBar.svelte"
@@ -18,7 +19,7 @@
     import TooltipManager from "./components/main/TooltipManager.svelte"
     import QuickSearch from "./components/quicksearch/QuickSearch.svelte"
     import Center from "./components/system/Center.svelte"
-    import { activeProfile, activeTimers, closeAd, currentWindow, disabledServers, events, language, loaded, localeDirection, os, outputDisplay, outputs, profiles, theme, themes, timers } from "./stores"
+    import { activeProfile, activeTimers, capabilities, closeAd, currentWindow, disabledServers, events, language, loaded, localeDirection, os, outputDisplay, outputs, profiles, theme, themes, timers } from "./stores"
     import { focusArea, logerror, mainClick, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
@@ -69,6 +70,8 @@
 {#if $currentWindow === "pdf"}
     <Pdf />
 {:else}
+    <ConnectionStatus />
+
     <!-- "isWindows" is only set in main window -->
     {#if isWindows}
         <MenuBar />
@@ -85,7 +88,9 @@
             <QuickSearch />
             <Toast />
             <StatusIndicator />
-            <Recorder />
+            {#if $capabilities.outputWindows}
+                <Recorder />
+            {/if}
             <Guide />
             <ProgressPanel />
 
