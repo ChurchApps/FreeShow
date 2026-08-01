@@ -1,0 +1,59 @@
+# Reproduce the GitHub Actions "Playwright Tests" job locally.
+#
+# GitHub-hosted runners are VMs, not containers, so there is NO official runner
+# Docker image (they're built from github.com/actions/runner-images as VM images).
+# But `ubuntu-latest` currently boots Ubuntu 24.04, and the thing that broke this
+# suite — the Electron/Chromium sandbox failing to init under xvfb on 24.04 — is an
+# OS-level behaviour that this base image reproduces faithfully. Electron in a
+# container also refuses to launch without --no-sandbox, so this is a good place to
+# prove the fix.
+#
+# Build (from the repo root, NOT from config/testing):
+#   docker build -f config/testing/Dockerfile.e2e -t freeshow-e2e .
+#
+# Run the test:
+#   docker run --rm freeshow-e2e
+#
+# To confirm this environment reproduces the ORIGINAL failure, temporarily remove the
+# "--no-sandbox" branch in config/testing/start.test.ts, rebuild, and you should see
+# "electron.launch: Process failed to launch!" — exactly the CI error.
+#
+# Copy the HTML report out of a finished/failed container:
+#   docker run --name fs-e2e freeshow-e2e; docker cp fs-e2e:/app/test-output ./test-output
+
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Node 22 — matches actions/setup-node@v4 with node-version: 22.
+# libfontconfig1-dev + xvfb mirror the workflow's "Install libraries" step and the
+# xvfb-run wrapper used to give Electron a virtual display.
+#
+# git + build-essential + python3 are pre-installed on GitHub's ubuntu-latest image
+# but NOT on the bare ubuntu:24.04 base — the project has native/node-gyp modules
+# (NDI, opus, …) and git-based dependencies that fail to install without them.
+RUN apt-get update \
+    && apt-get install -y curl ca-certificates gnupg git build-essential python3 \
+    && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs libfontconfig1-dev xvfb \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install deps first so this layer is cached across source-only changes.
+# Native modules (and postinstall's electron-builder install-app-deps) are rebuilt
+# for Linux here — which is exactly why we must NOT copy the host's node_modules
+# (see .dockerignore).
+COPY package*.json ./
+RUN npm install
+
+# Playwright browser + Electron OS runtime deps (mirrors the workflow step).
+RUN npx playwright install --with-deps
+
+# App source (node_modules/build/etc. excluded via .dockerignore).
+COPY . .
+
+RUN npm run build
+
+# Identical invocation to .github/workflows/playwright.yml.
+CMD ["xvfb-run", "--auto-servernum", "--server-args=-screen 0 1280x960x24", "npm", "run", "test:playwright"]

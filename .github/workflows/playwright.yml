@@ -1,16 +1,18 @@
 name: Playwright Tests
 on:
-    # turning off temporarily as it does not work properly!
-    # Error: electron.launch: Process failed to launch!
-    # push:
-    #     branches: [dev]
-    # pull_request:
-    #     branches: [dev]
+    # Electron now launches on CI with --no-sandbox (see config/testing/start.test.ts).
+    # Kept as workflow_dispatch too so a run can be triggered manually to verify.
+    push:
+        branches: [dev]
+    pull_request:
+        branches: [dev]
     workflow_dispatch:
 
 jobs:
     test:
-        timeout-minutes: 60
+        # The whole suite runs in well under a minute; keep a tight ceiling so a
+        # regression that hangs on exit fails the job fast instead of burning an hour.
+        timeout-minutes: 15
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
