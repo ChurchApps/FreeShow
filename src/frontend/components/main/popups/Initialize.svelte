@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePopup, dataPath, dictionary, guideActive, language, popupData, timeFormat } from "../../../stores"
+    import { activePopup, capabilities, dataPath, dictionary, guideActive, language, popupData, timeFormat } from "../../../stores"
     import { createData } from "../../../utils/createData"
     import { getLanguageList, setLanguage, translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
@@ -15,7 +15,7 @@
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     onMount(() => {
-        if (!$dataPath) sendMain(Main.DATA_PATH)
+        if (!$dataPath && $capabilities.localFiles) sendMain(Main.DATA_PATH)
 
         // check time format (based on browser language)
         const locale = navigator.language
@@ -65,7 +65,11 @@
         <MaterialToggleSwitch style="width: 50%;" label="settings.use24hClock" checked={$timeFormat === "24"} on:change={(e) => timeFormat.set(e.detail ? "24" : "12")} />
     </InputRow>
 
-    <MaterialFolderPicker PICK_ID="DATA_SHOWS" label={translateText("settings.data_location", $dictionary)} value={$dataPath} on:change={updateDataPath} openButton={false} />
+    <!-- the data location belongs to whichever machine stores the data; a remote client
+         can't browse or change it (the server sets it via --data / FREESHOW_DATA) -->
+    {#if $capabilities.localFiles}
+        <MaterialFolderPicker PICK_ID="DATA_SHOWS" label={translateText("settings.data_location", $dictionary)} value={$dataPath} on:change={updateDataPath} openButton={false} />
+    {/if}
 
     <MaterialButton variant="outlined" class="start" style="font-size: 1.8em;padding: 15px;margin-top: 20px;" on:click={create} white>
         <Icon id="check" size={2.5} />

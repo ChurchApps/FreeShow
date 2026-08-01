@@ -2,7 +2,7 @@
     import { Main } from "../../../types/IPC/Main"
     import type { Popups } from "../../../types/Main"
     import { sendMain } from "../../IPC/main"
-    import { activePopup, dataPath, outputs, popupData, settingsTab } from "../../stores"
+    import { activePopup, capabilities, dataPath, outputs, popupData, settingsTab } from "../../stores"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
 
@@ -54,16 +54,19 @@
     </div>
 {:else if openedTab === "other"}
     <div class="bottom">
-        <MaterialButton variant="outlined" icon="document" on:click={openLog} small>
-            <T id="actions.open_error_log" />
-        </MaterialButton>
-        <MaterialButton variant="outlined" icon="folder" on:click={openAppData} small>
-            <T id="actions.open_app_data_folder" />
-        </MaterialButton>
-        <!-- in settings>Files we can press "Open in system" on the user data folder, so we don't need this! - but it makes sense to have it next to "Open app data folder" -->
-        <MaterialButton variant="outlined" icon="folder" on:click={openUserData} small>
-            <T id="actions.open_user_data_folder" />
-        </MaterialButton>
+        <!-- these open folders in the OS file manager, which only makes sense on this machine -->
+        {#if $capabilities.localFiles}
+            <MaterialButton variant="outlined" icon="document" on:click={openLog} small>
+                <T id="actions.open_error_log" />
+            </MaterialButton>
+            <MaterialButton variant="outlined" icon="folder" on:click={openAppData} small>
+                <T id="actions.open_app_data_folder" />
+            </MaterialButton>
+            <!-- in settings>Files we can press "Open in system" on the user data folder, so we don't need this! - but it makes sense to have it next to "Open app data folder" -->
+            <MaterialButton variant="outlined" icon="folder" on:click={openUserData} small>
+                <T id="actions.open_user_data_folder" />
+            </MaterialButton>
+        {/if}
     </div>
 {/if}
 

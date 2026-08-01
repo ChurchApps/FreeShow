@@ -2,7 +2,7 @@
     import { fade } from "svelte/transition"
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
-    import { activeProfile, profiles, saved, topContextActive, windowState } from "../../stores"
+    import { activeProfile, capabilities, profiles, saved, topContextActive, windowState } from "../../stores"
     import { initializeClosing } from "../../utils/save"
     import ContextChild from "../context/ContextChild.svelte"
     import ContextItem from "../context/ContextItem.svelte"
@@ -78,17 +78,19 @@
         </div>
     {/if}
 
-    <div class="window">
-        <Button on:click={() => sendMain(Main.MINIMIZE)} center>
-            <Icon id="remove" size={1.2} white />
-        </Button>
-        <Button on:click={() => sendMain(Main.MAXIMIZE)} style="transform: rotate(180deg);" center>
-            <Icon id={maximized ? "maximized" : "unmaximized"} size={maximized ? 0.8 : 0.9} white />
-        </Button>
-        <Button id="close" on:click={() => initializeClosing()} center>
-            <Icon id="close" size={1.2} white />
-        </Button>
-    </div>
+    {#if $capabilities.windowControls}
+        <div class="window">
+            <Button on:click={() => sendMain(Main.MINIMIZE)} center>
+                <Icon id="remove" size={1.2} white />
+            </Button>
+            <Button on:click={() => sendMain(Main.MAXIMIZE)} style="transform: rotate(180deg);" center>
+                <Icon id={maximized ? "maximized" : "unmaximized"} size={maximized ? 0.8 : 0.9} white />
+            </Button>
+            <Button id="close" on:click={() => initializeClosing()} center>
+                <Icon id="close" size={1.2} white />
+            </Button>
+        </div>
+    {/if}
 </main>
 
 <style>

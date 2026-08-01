@@ -1,5 +1,6 @@
 import { get } from "svelte/store"
 import { activePopup, alertUpdates, isDev, popupData, special } from "./../stores"
+import { isSocketTransport } from "../IPC/transport"
 
 interface UpdateData {
     latestVersion: string
@@ -28,6 +29,9 @@ export async function getUpdateData(currentVersion: string, includeBeta: boolean
 
 export function checkForUpdates(currentVersion: string) {
     if (get(isDev) || get(alertUpdates) === false) return
+    // a browser/remote client can't update the app it's connected to — that's the
+    // desktop installation's business, so don't check or prompt
+    if (isSocketTransport()) return
     const includeBeta = currentVersion.includes("-beta") || get(special).betaVersionAlert
 
     getUpdateData(currentVersion, includeBeta)

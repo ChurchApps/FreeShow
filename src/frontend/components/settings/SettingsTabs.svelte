@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { SettingsTabs } from "../../../types/Tabs"
-    import { activePage, activeProfile, focusMode, profiles, settingsTab } from "../../stores"
+    import { activePage, activeProfile, capabilities, focusMode, profiles, settingsTab } from "../../stores"
     import { clone } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -8,10 +8,14 @@
 
     const tabs: SettingsTabs[] = ["general", "display_settings", "styles", "connection", "files", "profiles", "theme", "other"]
 
+    // hide tabs whose features this client doesn't have (e.g. output/display settings on a
+    // remote client, which can't own output windows or enumerate this machine's screens)
+    $: availableTabs = clone(tabs).filter((tabId) => (tabId === "display_settings" ? $capabilities.outputWindows : true))
+
     let activeTabs: SettingsTabs[] = []
     $: profile = $profiles[$activeProfile || ""]
-    $: if (profile) activeTabs = clone(tabs).filter((tabId) => profile.access.settings?.[tabId] !== "none")
-    else activeTabs = clone(tabs)
+    $: if (profile) activeTabs = availableTabs.filter((tabId) => profile.access.settings?.[tabId] !== "none")
+    else activeTabs = availableTabs
 
     function keydown(e: KeyboardEvent) {
         if (e.target?.closest?.(".edit") || e.ctrlKey || e.metaKey) return
