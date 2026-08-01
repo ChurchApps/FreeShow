@@ -75,7 +75,7 @@
 
     let options = false
 
-    const RESERVED_PORTS = { nowPlaying: [5502], WebSocket: [5505], REST: [5506], companion: [5505, 5506], remote: [5510], stage: [5511], controller: [5512], output_stream: [5513] }
+    const RESERVED_PORTS = { server: [5540], nowPlaying: [5502], WebSocket: [5505], REST: [5506], companion: [5505, 5506], remote: [5510], stage: [5511], controller: [5512], output_stream: [5513] }
     $: isReserved = !RESERVED_PORTS[id]?.includes(port) && Object.values(RESERVED_PORTS).flat().includes(port)
 
     function updatePort(e: any) {

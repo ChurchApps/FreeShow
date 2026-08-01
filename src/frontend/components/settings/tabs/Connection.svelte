@@ -3,7 +3,7 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, notFound, obsData, outputs, popupData, ports, projectTemplates, providerConnections, serverData, special } from "../../../stores"
+    import { activePage, activePopup, activeShow, activeTriggerFunction, capabilities, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, notFound, obsData, outputs, popupData, ports, projectTemplates, providerConnections, serverData, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { contentProviderSync } from "../../../utils/startup"
     import { keysToID, sortByName } from "../../helpers/array"
@@ -19,6 +19,7 @@
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tip from "../../main/Tip.svelte"
     import { startRemoteController, stopRemoteController } from "../../../utils/remoteController"
+    import ServerConnection from "./ServerConnection.svelte"
 
     let ip = "localhost"
 
@@ -188,65 +189,70 @@
     $: if (obsIP || obsPort) obsData.update((d) => ({ ...d, ip: obsIP, port: obsPort }))
 </script>
 
-{#each servers as server}
-    {@const disabled = server.id === "companion" ? $companion?.enabled !== true : server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
-    {@const connections = Object.keys($connections[server.id.toUpperCase()] || {})?.length || 0}
+<ServerConnection />
+
+<!-- hosting LAN servers / a remote clicker requires this machine to run them -->
+{#if $capabilities.servers}
+    {#each servers as server}
+        {@const disabled = server.id === "companion" ? $companion?.enabled !== true : server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
+        {@const connections = Object.keys($connections[server.id.toUpperCase()] || {})?.length || 0}
+
+        <InputRow>
+            <MaterialButton
+                style="flex: 1;justify-content: space-between;"
+                {disabled}
+                on:click={() => {
+                    popupData.set({ ip, id: server.id })
+                    activePopup.set("connect")
+                }}
+            >
+                <span style="display: flex;align-items: center;justify-content: center;gap: 15px;">
+                    <Icon id={server.icon} size={1.1} />
+
+                    {server.name}
+
+                    {#if server.id === "companion"}
+                        <span style="opacity: 0.5;font-size: 0.7em;margin-left: 5px;">WebSocket/REST/OSC/Companion</span>
+                    {/if}
+                    {#if connections}
+                        <span style="opacity: 0.5;font-size: 0.7em;margin-left: 5px;">{connections}</span>
+                    {/if}
+                </span>
+
+                {#if server.id === "output_stream" && $serverData.output_stream?.sendAudio}
+                    <span style="border: none;display: flex;align-items: center;justify-content: end;">
+                        <Icon id="volume" />
+                    </span>
+                {/if}
+            </MaterialButton>
+
+            {#if server.id === "companion"}
+                <MaterialToggleSwitch label="" checked={$companion?.enabled === true} on:change={toggleCompanion} />
+            {:else}
+                <MaterialToggleSwitch label="" checked={server.enabledByDefault ? $disabledServers[server.id] !== true : $disabledServers[server.id] === false} on:change={(e) => toggleServer(e, server.id)} />
+            {/if}
+        </InputRow>
+    {/each}
 
     <InputRow>
         <MaterialButton
             style="flex: 1;justify-content: space-between;"
-            {disabled}
+            disabled={!$special.remoteController}
             on:click={() => {
-                popupData.set({ ip, id: server.id })
+                popupData.set({ remoteController: true })
                 activePopup.set("connect")
             }}
         >
             <span style="display: flex;align-items: center;justify-content: center;gap: 15px;">
-                <Icon id={server.icon} size={1.1} />
+                <Icon id="web" size={1.1} />
 
-                {server.name}
-
-                {#if server.id === "companion"}
-                    <span style="opacity: 0.5;font-size: 0.7em;margin-left: 5px;">WebSocket/REST/OSC/Companion</span>
-                {/if}
-                {#if connections}
-                    <span style="opacity: 0.5;font-size: 0.7em;margin-left: 5px;">{connections}</span>
-                {/if}
+                Remote Clicker
             </span>
-
-            {#if server.id === "output_stream" && $serverData.output_stream?.sendAudio}
-                <span style="border: none;display: flex;align-items: center;justify-content: end;">
-                    <Icon id="volume" />
-                </span>
-            {/if}
         </MaterialButton>
 
-        {#if server.id === "companion"}
-            <MaterialToggleSwitch label="" checked={$companion?.enabled === true} on:change={toggleCompanion} />
-        {:else}
-            <MaterialToggleSwitch label="" checked={server.enabledByDefault ? $disabledServers[server.id] !== true : $disabledServers[server.id] === false} on:change={(e) => toggleServer(e, server.id)} />
-        {/if}
+        <MaterialToggleSwitch label="" checked={$special.remoteController} on:change={(e) => toggleRemoteController(e.detail)} />
     </InputRow>
-{/each}
-
-<InputRow>
-    <MaterialButton
-        style="flex: 1;justify-content: space-between;"
-        disabled={!$special.remoteController}
-        on:click={() => {
-            popupData.set({ remoteController: true })
-            activePopup.set("connect")
-        }}
-    >
-        <span style="display: flex;align-items: center;justify-content: center;gap: 15px;">
-            <Icon id="web" size={1.1} />
-
-            Remote Clicker
-        </span>
-    </MaterialButton>
-
-    <MaterialToggleSwitch label="" checked={$special.remoteController} on:change={(e) => toggleRemoteController(e.detail)} />
-</InputRow>
+{/if}
 
 {#if !$providerConnections.planningcenter && (!$providerConnections.churchApps || cloudOnly.churchApps) && !$providerConnections.amazinglife}
     <!-- No provider connected - show connection options -->
