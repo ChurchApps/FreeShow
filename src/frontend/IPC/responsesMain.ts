@@ -106,14 +106,18 @@ export const mainResponses: MainResponses = {
     [Main.SYNCED_SETTINGS]: (a) => updateSyncedSettings(a),
     [Main.SHOWS]: async (a) => {
         const difference = Object.keys(a).length - Object.keys(get(shows)).length
-        if (difference < 15 && Object.keys(get(shows)).length && difference > 0) {
+        const newShowIds = difference < 15 && Object.keys(get(shows)).length && difference > 0 ? Object.keys(a).filter((id) => !get(shows)[id]) : []
+
+        // the index must be set BEFORE loading: loadShows() marks any id that isn't in
+        // `shows` as not found (red) instead of fetching it, so a show that just arrived
+        // from another client would be flagged without ever being requested
+        shows.set(a)
+
+        if (newShowIds.length) {
             // get new shows & cache their content
-            const newShowIds = Object.keys(a).filter((id) => !get(shows)[id])
             await loadShows(newShowIds)
             newShowIds.forEach((id) => saveTextCache(id, get(showsCache)[id]))
         }
-
-        shows.set(a)
     },
     [Main.STAGE]: (a) => stageShows.set(a),
     [Main.PROJECTS]: (a) => {
