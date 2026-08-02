@@ -84,6 +84,7 @@ import Timer from "../components/main/popups/Timer.svelte"
 import Transition from "../components/main/popups/Transition.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
 import UpdateManager from "../components/main/popups/UpdateManager.svelte"
+import Message from "../components/main/popups/Message.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import { activePopup, popupData } from "../stores"
 
@@ -118,6 +119,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     find_replace: FindReplace,
     timer: Timer,
     variable: Variable,
+    message: Message,
     interaction_input: InteractionInput,
     audio_stream: AudioStream,
     now_playing: NowPlaying,

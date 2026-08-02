@@ -527,6 +527,24 @@ export interface Overlay {
     actions?: any[]
     placeUnderSlide?: boolean
     displayDuration?: number
+    fromMessageId?: ID // materialized from a Message on trigger (hidden in the overlay drawer, removed on clear) - see actions/messages.ts
+}
+
+// templated audience alerts (e.g. "Parent of child {{number}}, please come to the lobby")
+// triggered/cleared live from the Messages drawer tab or the trigger_message/clear_message API - rendered through the overlay output layer
+export interface Messages {
+    [key: ID]: Message
+}
+export interface Message {
+    name: string
+    color?: null | string
+    tags?: string[]
+    modified?: number // cloud sync
+    text: string // supports {{token}} fill-ins (replaced on trigger) and {dynamic value} (live at render)
+    style?: string // custom item position/box style (defaults to a lower third)
+    textStyle?: string // custom text style
+    displayDuration?: number // seconds - auto clears after this (0/unset = until cleared)
+    tokens?: { [key: string]: string } // default {{token}} values, can be overridden per trigger
 }
 
 export interface Templates {

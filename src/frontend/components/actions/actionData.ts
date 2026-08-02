@@ -46,6 +46,10 @@ export const actionData = {
     id_start_effect: { common: true, canAddMultiple: true, name: "actions.id_start_effect", icon: "effects", input: "id" },
     id_select_overlay: { common: true, canAddMultiple: true, name: "actions.id_select_overlay", icon: "overlays", input: "id" },
 
+    // MESSAGES
+    trigger_message: { canAddMultiple: true, name: "actions.trigger_message", icon: "message", input: "id" },
+    clear_message: { canAddMultiple: true, name: "actions.clear_message", icon: "message", input: "id", red: true },
+
     // OUTPUT
     start_webrtc_stream: { SECTION: "guide_title.output", name: "output.start_streaming (WebRTC)", icon: "record", input: "id" },
     stop_webrtc_stream: { name: "output.stop_streaming (WebRTC)", icon: "stop", input: "id", red: true },

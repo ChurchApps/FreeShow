@@ -26,6 +26,7 @@ export type SaveListSyncedSettings =
     | "groups"
     | "midiIn"
     | "emitters"
+    | "messages"
     | "playerVideos"
     | "videoMarkers"
     | "mediaTags"

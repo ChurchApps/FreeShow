@@ -12,6 +12,7 @@
     import Overlays from "./pages/Overlays.svelte"
     import Shows from "./pages/Shows.svelte"
     import Templates from "./pages/Templates.svelte"
+    import Messages from "./pages/Messages.svelte"
     import Variables from "./pages/Variables.svelte"
     import Timers from "./timers/Timers.svelte"
 
@@ -71,6 +72,8 @@
             <Timers {searchValue} />
         {:else if active === "variables"}
             <Variables {searchValue} />
+        {:else if active === "messages"}
+            <Messages {searchValue} />
         {:else if active === "interactions"}
             <Interactions {searchValue} />
         {:else if active === "obs"}

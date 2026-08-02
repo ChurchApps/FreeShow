@@ -145,6 +145,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     groups: defaultGroups,
     midiIn: {},
     emitters: {},
+    messages: {},
     playerVideos: {
         chosen: { name: "The Chosen Trailer", type: "youtube", id: "X-AJdKty74M" },
         story: { name: "The Jesus Story", type: "youtube", id: "2Yvs-Pz8KK0" },

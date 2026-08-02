@@ -84,6 +84,7 @@ import {
 } from "./apiHelper"
 import { oscToAPI } from "./apiOSC"
 import { emitData } from "./emitters"
+import { clearMessage, getMessages, triggerMessage, triggerMessageByName } from "./messages"
 import { sendRestCommandSync } from "./rest"
 
 /// STEPS TO CREATE A CUSTOM API ACTION ///
@@ -141,6 +142,11 @@ export type API_transition = {
     type?: TransitionType // default: "fade"
     duration?: number // default: 500
     easing?: string // default: "sine"
+}
+export type API_message = {
+    id?: string
+    name?: string // used if no id is set (closest match)
+    values?: { [key: string]: string } // {{token}} fill-in values for this trigger
 }
 export type API_variable = {
     id?: string
@@ -258,6 +264,10 @@ export const API_ACTIONS = {
     index_select_overlay: (data: API_index) => selectOverlayByIndex(data.index), // BC
     name_select_overlay: (data: API_strval) => selectOverlayByName(data.value), // BC
     id_select_overlay: (data: API_id) => selectOverlayById(data.id),
+
+    // MESSAGES (templated audience alerts - values fill the {{token}} placeholders)
+    trigger_message: (data: API_message) => (data.id ? triggerMessage(data.id, data.values) : triggerMessageByName(data.name || "", data.values)),
+    clear_message: (data: API_id) => clearMessage(data.id),
 
     // SCRIPTURE
     start_scripture: (data: API_scripture) => startScripture(data), // BC
@@ -397,6 +407,8 @@ export const API_ACTIONS = {
 
     get_variables: () => getVariables(),
     get_variable: (data: { id?: string; name?: string }) => getVariable(data),
+
+    get_messages: () => getMessages(),
 
     get_timers: () => getTimersDetailed(),
 

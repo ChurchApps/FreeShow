@@ -3,7 +3,7 @@
     import { Main } from "../../../types/IPC/Main"
     import { requestMain } from "../../IPC/main"
     import { cameraManager } from "../../media/cameraManager"
-    import { actions, activePopup, audioPlaylists, audioStreams, effects, effectsLibrary, groups, interactions, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, variables } from "../../stores"
+    import { actions, activePopup, audioPlaylists, audioStreams, effects, effectsLibrary, groups, interactions, messages, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
     import { obsGetScenes } from "../../utils/obsTalk"
     import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
@@ -99,6 +99,8 @@
         id_start_effect: () => convertToOptions($effects),
         id_select_overlay: () => convertToOptions($overlays),
         id_select_stage_layout: () => convertToOptions($stageShows),
+        trigger_message: () => convertToOptions($messages),
+        clear_message: () => convertToOptions($messages),
         normal_outputs: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs).filter((a) => !a.stageOutput)).map((a) => ({ value: a.id, label: a.name }), "label")],
         output_lock: () => [{ value: "", label: translateText("preview.lock") }, { value: "all", label: translateText("actions.all_outputs") }, ...getOptions.normal_outputs().slice(1)],
         stage_outputs: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs).filter((a) => a.stageOutput)).map((a) => ({ value: a.id, label: a.name }), "label")],

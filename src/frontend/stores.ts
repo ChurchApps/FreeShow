@@ -13,7 +13,7 @@ import type { History, HistoryNew } from "../types/History"
 import type { ActiveEdit, Clipboard, Interaction, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
+import type { Action, Emitter, ID, Messages, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
@@ -370,6 +370,9 @@ export const profiles: Writable<Profiles> = writable({}) // {}
 export const actions: Writable<{ [key: string]: Action }> = writable({}) // {}
 export const emitters: Writable<{ [key: string]: Emitter }> = writable({}) // {}
 
+// MESSAGES (templated audience alerts, triggered from the Messages drawer tab or trigger_message API)
+export const messages: Writable<Messages> = writable({}) // {}
+
 // TIMECODE
 export const timeline: Writable<{ startTime?: number }> = writable({}) // {}
 export const timecode: Writable<{ type?: "send" | "receive"; mode?: TimecodeMode; framerate?: number; offset?: number; audioOutput?: string; audioInput?: string; midiOutput?: string; midiInput?: string }> = writable({}) // {}
@@ -445,6 +448,7 @@ export const $ = {
     folders,
     timers,
     variables,
+    messages,
     media,
     mediaFolders,
     effects,

@@ -429,7 +429,8 @@
         "triggers": "Triggers",
         "templates": "Templates",
         "web": "Web",
-        "search_tip": "Drawer content search"
+        "search_tip": "Drawer content search",
+        "messages": "Messages"
     },
     "category": {
         "all": "All",
@@ -561,7 +562,8 @@
         "reset_all_confirm": "Are you sure you want to reset everything?",
         "reset_all_action": "This will reset the whole program, but not delete the .show files in your \"Shows\"-folder.",
         "quit": "Quit without saving",
-        "save_quit": "Save & Quit"
+        "save_quit": "Save & Quit",
+        "message": "Message"
     },
     "confirm": {
         "statement_slide_exists_layout": "Slide exists in a different layout!",
@@ -628,7 +630,8 @@
         "event": "New event",
         "event_action": "New scheduled action",
         "effect": "New effect",
-        "interaction": "New interaction"
+        "interaction": "New interaction",
+        "message": "New message"
     },
     "show": {
         "name": "Name",
@@ -886,7 +889,9 @@
         "activate_show_opened": "Activate when show is opened",
         "activate_audio_playlist_ended": "Activate when audio playlist has ended",
         "mark_played": "Mark as played",
-        "mark_not_played": "Mark as not played"
+        "mark_not_played": "Mark as not played",
+        "trigger_message": "Show message",
+        "clear_message": "Clear message"
     },
     "conditions": {
         "show_item": "Show item if",
@@ -1771,5 +1776,13 @@
         "translation_description_multiline": "Adds all languages in a single textbox in alternating lines. (Like in Songbeamer)",
         "translation_description_textboxes": "Adds every language as a separate textbox to the slide.",
         "translation_description_layouts": "Creates a unique set of slides and a layout for every language."
+    },
+    "messages": {
+        "text": "Message text",
+        "tokens_tip": "Use {{token}} placeholders (e.g. \"Parent of child {{number}}\") - fill in the values when showing the message. Single-brace {dynamic values} update live.",
+        "default_value": "Default value",
+        "display_duration": "Auto clear after",
+        "show": "Show",
+        "update": "Update"
     }
 }
