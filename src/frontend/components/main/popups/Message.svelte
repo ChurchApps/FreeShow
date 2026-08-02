@@ -60,7 +60,8 @@
 
 <MaterialTextInput label="inputs.name" style="margin-bottom: 10px;" value={currentMessage.name} on:change={(e) => updateValue(e.detail, "name")} autofocus={!currentMessage.name} on:keydown={nameKeydown} />
 
-<MaterialTextarea label="messages.text" value={currentMessage.text || ""} rows={3} on:change={(e) => updateValue(e.detail, "text")} />
+<!-- on:input keeps the {{token}} rows appearing live while typing; the store write (undo history) only happens on change (blur) -->
+<MaterialTextarea label="messages.text" value={currentMessage.text || ""} rows={3} on:input={(e) => (currentMessage.text = e.detail)} on:change={(e) => updateValue(e.detail, "text")} />
 <p class="tip"><T id="messages.tokens_tip" /></p>
 
 {#if tokens.length}
