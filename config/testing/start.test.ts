@@ -12,15 +12,9 @@ test.beforeEach(async ({ context }) => {
 test("Launch electron app", async () => {
     const tmpSettingFolder = tmp.dirSync({ unsafeCleanup: true })
 
-    // On Linux CI (GitHub Actions runs on Ubuntu, now 24.04) the Chromium/Electron
-    // setuid sandbox cannot initialise — unprivileged user namespaces are restricted
-    // by AppArmor and there is no SUID chrome-sandbox helper under xvfb. Without this
-    // flag Electron exits immediately and Playwright reports "Process failed to launch!".
-    // The flag is a no-op on macOS/Windows, so it's safe to always pass on Linux.
-    const launchArgs = process.platform === "linux" ? [".", "--no-sandbox"] : ["."]
-
     const electronApp = await electron.launch({
-        args: launchArgs,
+        // --no-sandbox is required for Electron to launch reliably on Linux CI.
+        args: [".", "--no-sandbox"],
         env: { ...process.env, NODE_ENV: "production", FS_MOCK_STORE_PATH: tmpSettingFolder.name },
     })
 
@@ -133,18 +127,14 @@ test("Launch electron app", async () => {
     }
 
     // Close after finishing.
-    // On Linux, electronApp.close() often never resolves, and any Electron child
-    // processes it leaves behind keep the test runner (and the xvfb-run wrapper) alive
-    // — the process never exits, so the GitHub Actions job hangs until its 60-minute
-    // timeout. Race close() against a short fallback, then force-kill the process so
-    // the run always terminates cleanly.
     console.log("Closing app...")
+    // Race shutdown with a timeout to avoid hanging CI on Linux.
     const electronProcess = electronApp.process()
     await Promise.race([electronApp.close(), delay(5_000)]).catch(() => {})
     try {
         if (electronProcess?.pid && !electronProcess.killed) electronProcess.kill("SIGKILL")
     } catch {
-        /* already gone */
+        // already exited
     }
     await delay(1_000)
     console.log("App closed!")

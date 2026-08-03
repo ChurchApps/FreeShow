@@ -22,10 +22,8 @@ import { defaultConfig, defaultSettings, defaultSyncedSettings } from "./default
 
 // NOTE: defaults will always replace the keys with any in the default when they are removed
 
-// Tests set FS_MOCK_STORE_PATH to redirect every electron-store file into a throwaway
-// temp folder so runs are isolated from the real user config. It is always undefined in
-// production, so this is a no-op there.
-const mockStorePath = process.env.FS_MOCK_STORE_PATH || undefined
+// throwaway test path for Playwright tests
+const mockStorePath = process.env.FS_MOCK_STORE_PATH
 
 export const config = new Store<Config>({ defaults: defaultConfig, cwd: mockStorePath })
 

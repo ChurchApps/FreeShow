@@ -1,18 +1,16 @@
 name: Playwright Tests
 on:
-    # Electron now launches on CI with --no-sandbox (see config/testing/start.test.ts).
-    # Kept as workflow_dispatch too so a run can be triggered manually to verify.
-    push:
-        branches: [dev]
-    pull_request:
-        branches: [dev]
+    # want to keep this as manual activation
+    # push:
+    #     branches: [dev]
+    # pull_request:
+    #     branches: [dev]
     workflow_dispatch:
 
 jobs:
     test:
-        # The whole suite runs in well under a minute; keep a tight ceiling so a
-        # regression that hangs on exit fails the job fast instead of burning an hour.
-        timeout-minutes: 15
+        # keep timeout low in case it hangs. Should run in well under a minute.
+        timeout-minutes: 10
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
