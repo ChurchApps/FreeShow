@@ -689,11 +689,26 @@ export function sendMidi(data: any) {
 // DYNAMIC VALUES
 
 const commonOnly = ["time_str", "project_section_time", "show_name_next", "show_text_full", "slide_group_text", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
-export const dynamicValueText = (id: string) => `{${id}}`
-export function getDynamicIds(noVariables = false, mode: null | "scripture" = null, showAll: boolean = true): string[] {
-    const mainValues = Object.keys(dynamicValues).filter((id) => (showAll ? true : !commonOnly.find((cId) => id.startsWith(cId))))
-    const metaValues = showAll ? Object.keys(getCustomMetadata()).map((id) => `meta_${id.replaceAll(" ", "_").toLowerCase()}`) : []
+const deprecatedDynamicValues = ["show_name_next", "project_section_next", "project_section_time_next", "slide_group_next", "slide_group_next_color", "slide_notes_next", "slide_text_previous", "slide_text_current", "slide_text_next"]
 
+function insertOffsetVariants(idList: string[]): string[] {
+    // dynamic values that should also display +1 variants
+    const offsetVariants = ["project_section", "show_name", "slide_group", "slide_notes", "slide_text"]
+
+    const result: string[] = []
+    idList.forEach((id) => {
+        result.push(id)
+        if (offsetVariants.includes(id)) result.push(`${id}+1`)
+    })
+    return result
+}
+
+export const dynamicValueText = (id: string) => `{${id}}`
+export function getDynamicIds(noVariables = false, mode: null | "scripture" | "dropdown" = null, showAll: boolean = true): string[] {
+    const rawMainValues = Object.keys(dynamicValues).filter((id) => !deprecatedDynamicValues.includes(id) && (showAll ? true : !commonOnly.find((cId) => id.startsWith(cId))))
+    const mainValues = mode !== "dropdown" ? insertOffsetVariants(rawMainValues) : rawMainValues
+
+    const metaValues = showAll ? Object.keys(getCustomMetadata()).map((id) => `meta_${id.replaceAll(" ", "_").toLowerCase()}`) : []
     const mergedValues = [...(mode === "scripture" ? Object.keys(scriptureDynamicValues) : []), ...mainValues, ...metaValues]
     if (noVariables) return mergedValues
 
@@ -850,8 +865,8 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     const regex = /\{scripture(?:\d+)?_[^}]*\}/g
     if (regex.test(text) && !popup) text = text.replace(regex, "")
 
-    const customIds = ["slide_text_current", "active_layers", "active_styles", "output_windows_active", "log_song_usage"]
-    ;[...getDynamicIds(false, mode), ...customIds].forEach((dynamicId) => {
+    const customIds = ["slide_text", "active_layers", "active_styles", "output_windows_active", "log_song_usage"]
+    ;[...getDynamicIds(false, mode), ...deprecatedDynamicValues, ...customIds].forEach((dynamicId) => {
         if (!exists(text, dynamicId) && !(dynamicId.startsWith("$") && exists(text, dynamicId.replace("$", "variable_")))) return
 
         // get offset from {dynamicId+num} or {dynamicId-num}
@@ -1025,7 +1040,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const rawValue = dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, bgPath, videoTime, videoDuration, audioTime, audioDuration, audioPath, offset }) ?? ""
         const value = Array.isArray(rawValue) ? rawValue : rawValue.toString()
 
-        if (dynamicId === "show_name_next" && !value && isOutputWin) {
+        if (((dynamicId === "show_name" && offset) || dynamicId === "show_name_next") && !value && isOutputWin) {
             send(OUTPUT, ["MAIN_SHOWS_DATA"])
         }
 
@@ -1058,24 +1073,31 @@ const dynamicValues = {
     time_str_month: ({ offset }) => getMonthName(getOffsetDate(offset, "month").getMonth(), get(dictionary), true),
 
     // project
-    project_section: ({ outSlide }) => {
-        const active = getActiveProjectSection({ outSlide })
+    project_section: ({ outSlide, offset }) => {
+        const active = getActiveProjectSection({ outSlide }, offset)
         return active?.name || ""
     },
     project_section_next: ({ outSlide }) => {
-        const active = getActiveProjectSection({ outSlide }, true)
+        const active = getActiveProjectSection({ outSlide }, 1)
         return active?.name || ""
-    },
-    project_section_time: () => getActiveProjectSection()?.data?.time || "00:00",
-    project_section_time_next: () => getActiveProjectSection({}, true)?.data?.time || "00:00",
-    project_section_time_until_next: () => {
-        const projectTime = getActiveProjectSection({}, true)?.data?.time
-        return projectTime ? joinTimeBig(getTimeUntilClock(getActiveProjectSection({}, true)?.data?.time)) : "00:00"
+    }, // DEPRECATED
+    project_section_time: ({ offset }) => getActiveProjectSection({}, offset)?.data?.time || "00:00",
+    project_section_time_next: () => getActiveProjectSection({}, 1)?.data?.time || "00:00", // DEPRECATED
+    project_section_time_until_next: ({ offset }) => {
+        const projectTime = getActiveProjectSection({}, 1 + offset)?.data?.time
+        return projectTime ? joinTimeBig(getTimeUntilClock(getActiveProjectSection({}, 1 + offset)?.data?.time)) : "00:00"
     },
 
     // show
-    show_name: ({ show }) => show?.name || "",
-    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.find((a, i) => a && a.type !== "section" && i > projectRef.index)?.id ?? -1]?.name || "",
+    show_name: ({ show, projectRef, offset }) => {
+        if (!offset) return show?.name || ""
+        const projectItems = get(projects)[projectRef?.id || ""]?.shows || []
+        let currentIndex = projectRef?.index ?? 0
+        currentIndex -= projectItems.slice(0, currentIndex).reduce((count, a) => (a?.type === "section" ? count + 1 : count), 0)
+        const filteredProjectItems = projectItems.filter((a) => a && a.type !== "section")
+        return get(shows)[filteredProjectItems[currentIndex + offset]?.id]?.name || ""
+    },
+    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.find((a, i) => a && a.type !== "section" && i > projectRef.index)?.id ?? -1]?.name || "", // DEPRECATED
 
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",
@@ -1094,17 +1116,15 @@ const dynamicValues = {
         return groupColor
     },
     slide_group_next: ({ show, ref, slideIndex, outSlide }) => {
-        const idx = slideIndex + 1
-        const parentIndex = ref[idx]?.parent?.layoutIndex ?? idx
+        const parentIndex = ref[slideIndex + 1]?.parent?.layoutIndex ?? slideIndex + 1
         const group = show?.slides?.[ref[parentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
-    },
+    }, // DEPRECATED
     slide_group_next_color: ({ show, ref, slideIndex }) => {
-        const idx = slideIndex + 1
-        const parentIndex = ref[idx]?.parent?.layoutIndex ?? idx
+        const parentIndex = ref[slideIndex + 1]?.parent?.layoutIndex ?? slideIndex + 1
         const groupColor = show?.slides?.[ref[parentIndex]?.id]?.color || ""
         return groupColor
-    },
+    }, // DEPRECATED
     slide_group_upcoming: ({ show, ref, slideIndex, outSlide }) => {
         if (slideIndex < 0) return ""
         let nextParentIndex = slideIndex + 1
@@ -1120,13 +1140,14 @@ const dynamicValues = {
         return groupColor
     },
     slide_notes: ({ show, ref, slideIndex, offset }) => show?.slides?.[ref[slideIndex + offset]?.id]?.notes || "",
-    slide_notes_next: ({ show, ref, slideIndex }) => show?.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
+    slide_notes_next: ({ show, ref, slideIndex }) => show?.slides?.[ref[slideIndex + 1]?.id]?.notes || "", // DEPRECATED
 
     // text
+    slide_text: ({ show, ref, slideIndex, outSlide, offset }) => getSlideText({ outSlide, show, ref }, slideIndex + offset),
+    slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex - 1), // DEPRECATED
+    slide_text_current: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex), // DEPRECATED
+    slide_text_next: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex + 1), // DEPRECATED
     slide_group_text: ({ show, ref, slideIndex, outSlide, offset }) => getGroupText({ outSlide, show, ref, slideIndex }, offset),
-    slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex - 1),
-    slide_text_current: ({ show, ref, slideIndex, outSlide, offset }) => getSlideText({ outSlide, show, ref }, slideIndex + offset),
-    slide_text_next: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex + 1),
     show_text_full: ({ show, ref }) => ref.map((a) => getTextLines(show?.slides?.[a.id]).join("<br>")).join("<br><br>"),
 
     // image (exif)
@@ -1282,6 +1303,7 @@ export function createCSSVariables(variableUpdater = get(variables), _dynamicUpd
     // add color dynamic values
     css += `--slide-group-color: ${getDynamicValue("slide_group_color", type)};`
     css += `--slide-group-next-color: ${getDynamicValue("slide_group_next_color", type)};`
+    // css += `--slide-group-color-next: ${getDynamicValue("slide_group_color+1", type)};`
     css += `--slide-group-upcoming-color: ${getDynamicValue("slide_group_upcoming_color", type)};`
 
     return css
@@ -1289,9 +1311,12 @@ export function createCSSVariables(variableUpdater = get(variables), _dynamicUpd
 
 // PROJECT SECTION DATA
 
-function getActiveProjectSection(data: any = {}, next = false): ProjectShowRef | null {
+function getActiveProjectSection(data: any = {}, offset = 0): ProjectShowRef | null {
     const project = get(projects)[get(activeProject) || ""]
     if (!project?.shows) return null
+
+    const sections = project.shows.filter((a) => a?.type === "section")
+    if (!sections.length) return null
 
     const hasTime = project.shows.find((a) => a?.data?.time)
     if (!hasTime) {
@@ -1300,12 +1325,19 @@ function getActiveProjectSection(data: any = {}, next = false): ProjectShowRef |
         let showIndex = project.shows.findIndex((a, i) => a && a.id === showId && (data.outSlide?.projectIndex === undefined || i === data.outSlide.projectIndex))
         if (showIndex < 0) showIndex = project.shows.findIndex((a) => a && a.id === showId)
 
-        if (next) return project.shows.find((a, i) => i > showIndex && a?.type === "section") || null
-        return project.shows.findLast((a, i) => i <= showIndex && a?.type === "section") || null
+        const activeSectionIndex = sections.findLastIndex((a) => {
+            const i = project.shows.indexOf(a)
+            return i <= showIndex
+        })
+        const targetIndex = (activeSectionIndex >= 0 ? activeSectionIndex : 0) + offset
+        return sections[targetIndex] || null
     }
 
     const active = getClosestProjectSectionByTime()
-    return project.shows.find((a) => a && a.id === (next ? active?.closestUpcommingId : active?.closestPassedId)) || null
+    const activeSection = project.shows.find((a) => a && a.id === active?.closestPassedId) || sections[0]
+    const activeSectionIndex = sections.indexOf(activeSection)
+    const targetIndex = activeSectionIndex + offset
+    return sections[targetIndex] || null
 }
 
 function getClosestProjectSectionByTime() {
