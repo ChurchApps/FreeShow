@@ -798,15 +798,16 @@ export function getVariableValue(dynamicId: string, ref: any = null): string | s
 const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
 // This pattern breaks down as:
-// \{           -> Opening brace
-// ${id}        -> Your variable
-// (?:#(\d+))?  -> Optional group 1: the number after #
-// (?:[|?](.*?))? -> Optional group 2: the fallback after ? (or |)
-// \}           -> Closing brace
+// \{             -> Opening brace
+// ${id}          -> Your variable
+// (?:([+-]\d+))? -> Optional group 1: +num or -num offset
+// (?:#(\d+))?    -> Optional group 2: the number after #
+// (?:[|?](.*?))? -> Optional group 3: the fallback after ? (or |)
+// \}             -> Closing brace
 const createRegex = (id: string) => {
     // Escape the ID so the '$' isn't treated as "End of Line"
     const safeId = escapeRegExp(id)
-    return new RegExp(`\\{${safeId}(?:#(\\d+))?(?:[|?]([^}]*))?\\}`, "g")
+    return new RegExp(`\\{${safeId}(?:([+-]\\d+))?(?:#(\\d+))?(?:[|?]([^}]*))?\\}`, "g")
 }
 
 /** Check if the pattern exists **/
@@ -817,7 +818,7 @@ const exists = (str: string, id: string) => createRegex(id).test(str)
 
 /** Replace with input value or fallback **/
 const replaceTokens = (str: string, id: string, inputs: string[] = []) => {
-    return str.replace(createRegex(id), (match: string, num: string | undefined, fallback: string | undefined) => {
+    return str.replace(createRegex(id), (match: string, _offset: string | undefined, num: string | undefined, fallback: string | undefined) => {
         // 1. Determine index: Use the #num if it exists, otherwise default to 0
         const index = num !== undefined ? parseInt(num, 10) : 0
 
@@ -853,7 +854,11 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     ;[...getDynamicIds(false, mode), ...customIds].forEach((dynamicId) => {
         if (!exists(text, dynamicId) && !(dynamicId.startsWith("$") && exists(text, dynamicId.replace("$", "variable_")))) return
 
-        const newValue = getDynamicValueText(dynamicId, currentShow)
+        // get offset from {dynamicId+num} or {dynamicId-num}
+        const match = createRegex(dynamicId).exec(text)
+        const offset = match?.[1] ? parseInt(match[1], 10) : 0
+
+        const newValue = getDynamicValueText(dynamicId, currentShow, offset)
         text = replaceDynamicValueWithFallback(text, dynamicId, newValue)
 
         // $ = variable_
@@ -868,13 +873,13 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         return replaceTokens(text, dynamicId, newValue)
     }
 
-    function getDynamicValueText(dynamicId: string, show: Show | null): string | string[] {
+    function getDynamicValueText(dynamicId: string, show: Show | null, offset = 0): string | string[] {
         // request from frontend
         if (isOutputWin && dynamicId.startsWith("interaction_")) {
             const matches = [...text.matchAll(createRegex(dynamicId))]
             if (matches.length === 0) return requestDynamicValue(dynamicId)
             const results: string[] = []
-            matches.forEach(([_, num]) => {
+            matches.forEach(([_, _off, num]) => {
                 const idx = num ? parseInt(num, 10) : 0
                 results[idx] = requestDynamicValue(num ? `${dynamicId}#${num}` : dynamicId) as string
             })
@@ -1017,7 +1022,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         if (!dynamicValues[dynamicId]) return ""
 
-        const rawValue = dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, bgPath, videoTime, videoDuration, audioTime, audioDuration, audioPath }) ?? ""
+        const rawValue = dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, bgPath, videoTime, videoDuration, audioTime, audioDuration, audioPath, offset }) ?? ""
         const value = Array.isArray(rawValue) ? rawValue : rawValue.toString()
 
         if (dynamicId === "show_name_next" && !value && isOutputWin) {
@@ -1041,16 +1046,16 @@ function requestDynamicValue(id: string) {
 
 const dynamicValues = {
     // time
-    time_date: () => addZero(new Date().getDate()),
-    time_month: () => addZero(new Date().getMonth() + 1),
-    time_year: () => new Date().getFullYear(),
-    time_hours: () => addZero(new Date().getHours()),
-    time_minutes: () => addZero(new Date().getMinutes()),
-    time_seconds: () => addZero(new Date().getSeconds()),
+    time_date: ({ offset }) => addZero(getOffsetDate(offset, "date").getDate()),
+    time_month: ({ offset }) => addZero(getOffsetDate(offset, "month").getMonth() + 1),
+    time_year: ({ offset }) => getOffsetDate(offset, "year").getFullYear(),
+    time_hours: ({ offset }) => addZero(getOffsetDate(offset, "hours").getHours()),
+    time_minutes: ({ offset }) => addZero(getOffsetDate(offset, "minutes").getMinutes()),
+    time_seconds: ({ offset }) => addZero(getOffsetDate(offset, "seconds").getSeconds()),
     // time_weeknum: () => "52",
 
-    time_str_day: () => getWeekday(new Date().getDay(), get(dictionary), true),
-    time_str_month: () => getMonthName(new Date().getMonth(), get(dictionary), true),
+    time_str_day: ({ offset }) => getWeekday(getOffsetDate(offset, "date").getDay(), get(dictionary), true),
+    time_str_month: ({ offset }) => getMonthName(getOffsetDate(offset, "month").getMonth(), get(dictionary), true),
 
     // project
     project_section: ({ outSlide }) => {
@@ -1075,24 +1080,28 @@ const dynamicValues = {
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",
 
-    slide_number: ({ slideIndex }) => (Number(slideIndex ?? -1) + 1).toString(),
-    slide_group: ({ show, ref, slideIndex, outSlide }) => {
-        const parentIndex = ref[slideIndex]?.parent?.layoutIndex ?? slideIndex
+    slide_number: ({ slideIndex, offset }) => (Number(slideIndex ?? -1) + 1 + offset).toString(),
+    slide_group: ({ show, ref, slideIndex, outSlide, offset }) => {
+        const idx = slideIndex + offset
+        const parentIndex = ref[idx]?.parent?.layoutIndex ?? idx
         const group = show?.slides?.[ref[parentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
     },
-    slide_group_color: ({ show, ref, slideIndex }) => {
-        const parentIndex = ref[slideIndex]?.parent?.layoutIndex ?? slideIndex
+    slide_group_color: ({ show, ref, slideIndex, offset }) => {
+        const idx = slideIndex + offset
+        const parentIndex = ref[idx]?.parent?.layoutIndex ?? idx
         const groupColor = show?.slides?.[ref[parentIndex]?.id]?.color || ""
         return groupColor
     },
     slide_group_next: ({ show, ref, slideIndex, outSlide }) => {
-        const parentIndex = ref[slideIndex + 1]?.parent?.layoutIndex ?? slideIndex + 1
+        const idx = slideIndex + 1
+        const parentIndex = ref[idx]?.parent?.layoutIndex ?? idx
         const group = show?.slides?.[ref[parentIndex]?.id]?.group || ""
         return getGroupName({ show, showId: outSlide?.id }, ref[parentIndex]?.id, group, parentIndex, false, false)
     },
     slide_group_next_color: ({ show, ref, slideIndex }) => {
-        const parentIndex = ref[slideIndex + 1]?.parent?.layoutIndex ?? slideIndex + 1
+        const idx = slideIndex + 1
+        const parentIndex = ref[idx]?.parent?.layoutIndex ?? idx
         const groupColor = show?.slides?.[ref[parentIndex]?.id]?.color || ""
         return groupColor
     },
@@ -1110,15 +1119,13 @@ const dynamicValues = {
         const groupColor = show?.slides?.[ref[nextParentIndex]?.id]?.color || ""
         return groupColor
     },
-    slide_notes: ({ show, ref, slideIndex }) => show?.slides?.[ref[slideIndex]?.id]?.notes || "",
+    slide_notes: ({ show, ref, slideIndex, offset }) => show?.slides?.[ref[slideIndex + offset]?.id]?.notes || "",
     slide_notes_next: ({ show, ref, slideIndex }) => show?.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
 
     // text
-    slide_group_text_previous: ({ show, ref, slideIndex, outSlide }) => getGroupText({ outSlide, show, ref, slideIndex }, -1),
-    slide_group_text_current: ({ show, ref, slideIndex, outSlide }) => getGroupText({ outSlide, show, ref, slideIndex }, 0),
-    slide_group_text_next: ({ show, ref, slideIndex, outSlide }) => getGroupText({ outSlide, show, ref, slideIndex }, 1),
+    slide_group_text: ({ show, ref, slideIndex, outSlide, offset }) => getGroupText({ outSlide, show, ref, slideIndex }, offset),
     slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex - 1),
-    slide_text_current: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex),
+    slide_text_current: ({ show, ref, slideIndex, outSlide, offset }) => getSlideText({ outSlide, show, ref }, slideIndex + offset),
     slide_text_next: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex + 1),
     show_text_full: ({ show, ref }) => ref.map((a) => getTextLines(show?.slides?.[a.id]).join("<br>")).join("<br><br>"),
 
@@ -1191,6 +1198,18 @@ const scriptureDynamicValues = {
     // not replaced directly, but the style is used:
     scripture_number: () => "1",
     scripture_red_jesus: () => "Words"
+}
+
+function getOffsetDate(offset = 0, unit: "date" | "month" | "year" | "hours" | "minutes" | "seconds" = "date") {
+    const d = new Date()
+    if (!offset) return d
+    if (unit === "month") d.setMonth(d.getMonth() + offset)
+    else if (unit === "year") d.setFullYear(d.getFullYear() + offset)
+    else if (unit === "hours") d.setHours(d.getHours() + offset)
+    else if (unit === "minutes") d.setMinutes(d.getMinutes() + offset)
+    else if (unit === "seconds") d.setSeconds(d.getSeconds() + offset)
+    else d.setDate(d.getDate() + offset)
+    return d
 }
 
 export function getGroupText({ outSlide, show, ref, slideIndex }, groupOffset: number = 0) {
