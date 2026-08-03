@@ -537,7 +537,7 @@
             {/if}
 
             <FloatingInputs gradient style="width: 50px;height: 50px;border: none;">
-                <MaterialButton class="addButton" title="context.addToProject" style="width: 50px;height: 50px;" on:click={() => (addMenuOpen = !addMenuOpen)} on:dblclick={() => (addMenuOpen ? null : createProject())}>
+                <MaterialButton class="addButton" title={addMenuOpen ? "actions.close" : "context.addToProject"} style="width: 50px;height: 50px;" on:click={() => (addMenuOpen = !addMenuOpen)} on:dblclick={() => (addMenuOpen ? null : createProject())}>
                     <Icon id="add" size={1.5} style={addMenuOpen ? "transform: rotate(135deg);" : ""} white />
                 </MaterialButton>
             </FloatingInputs>

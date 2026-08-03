@@ -2,6 +2,7 @@
     import { createEventDispatcher, onDestroy } from "svelte"
     import { cameraManager } from "../../media/cameraManager"
     import { media } from "../../stores"
+    import { getCropState } from "../helpers/cropping"
     import { getMediaStyle } from "../helpers/media"
 
     export let id: string
@@ -31,7 +32,8 @@
     }
 
     $: mediaStyle = getMediaStyle($media[id], undefined)
-    $: cameraStyleString = `object-fit: ${mediaStyle.fit || "contain"};filter: ${mediaStyle.filter};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: cropState = getCropState(mediaStyle.cropping, false)
+    $: cameraStyleString = `${cropState.mediaCropGeometry}object-fit: ${mediaStyle.fit || "contain"};filter: ${mediaStyle.filter};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 </script>
 
 <video class={$$props.class} bind:this={videoElem} style={cameraStyleString}>

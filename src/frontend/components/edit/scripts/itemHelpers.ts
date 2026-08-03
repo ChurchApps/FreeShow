@@ -134,6 +134,10 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
         newData.customSvg = options.path
     }
 
+    if (type === "icon" && id === "empty") {
+        newData.style += "background-color: rgba(255, 255, 255, 0.5);"
+    }
+
     // console.log("NEW ITEM", newData)
 
     const hData = index === -1 ? newData : [...currentItems.slice(0, index), newData, ...currentItems.slice(index)]

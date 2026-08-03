@@ -37,7 +37,7 @@
     }
 
     export function handleDblclick(e: MouseEvent) {
-        if (item?.type !== "media" || isLocked || (ref?.type || "show") !== "show" || !$activeShow) return false
+        if ((item?.type !== "media" && item?.type !== "camera") || isLocked || (ref?.type || "show") !== "show" || !$activeShow) return false
         if (e.target instanceof HTMLElement && (e.target.closest(".line") || e.target.closest(".square") || e.target.closest(".rotate") || e.target.closest(".radius") || e.target.closest(".editTools"))) return false
 
         const wasActive = cropEditMode
@@ -58,7 +58,7 @@
     }
 
     function startCropDrag(side: CropSide, e: MouseEvent) {
-        if (item?.type !== "media" || !itemElem || isLocked) return
+        if ((item?.type !== "media" && item?.type !== "camera") || !itemElem || isLocked) return
 
         e.preventDefault()
         e.stopPropagation()
@@ -71,7 +71,7 @@
     }
 
     function startCropMove(e: MouseEvent) {
-        if (item?.type !== "media" || !itemElem || isLocked) return
+        if ((item?.type !== "media" && item?.type !== "camera") || !itemElem || isLocked) return
 
         e.preventDefault()
         e.stopPropagation()
@@ -146,7 +146,7 @@
         cropPreview = nextCrop
     }
 
-    $: cropActive = item?.type === "media" && cropEditMode && selected && !plain && !isLocked
+    $: cropActive = (item?.type === "media" || item?.type === "camera") && cropEditMode && selected && !plain && !isLocked
     $: cropCenter = getCropCenter(cropPreview)
     $: cropCenterX = cropCenter.x
     $: cropCenterY = cropCenter.y

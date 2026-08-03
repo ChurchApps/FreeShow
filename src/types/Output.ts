@@ -25,9 +25,9 @@ export interface Output {
     blackmagic?: boolean
     blackmagicData?: any
     webrtc?: boolean
-    webrtcData?: any
+    webrtcData?: { url?: string; token?: string; streaming?: boolean; fps?: string | number; bitrate?: string | number }
     rtmp?: boolean
-    rtmpData?: { url: string; key: string; streaming?: boolean }
+    rtmpData?: { url: string; key: string; streaming?: boolean; fps?: string | number; bitrate?: string | number }
     forcedResolution?: Resolution
     invisible?: boolean
     taskbar?: boolean

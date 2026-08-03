@@ -134,7 +134,7 @@
                 <SelectElem style="min-width: calc(25% - 5px);" id="variable" data={variable} draggable>
                     <div class="variable numberBox context #variable{readOnly ? '_readonly' : ''}">
                         <div class="reset">
-                            <Button disabled={$randomNumberVariable[variable.id]} title={translateText("actions.reset")} on:click={() => resetVariable(variable.id)}>
+                            <Button disabled={!variable.setLog?.length || $randomNumberVariable[variable.id]} title={translateText("actions.reset")} on:click={() => resetVariable(variable.id)}>
                                 <Icon id="reset" white />
                             </Button>
                         </div>

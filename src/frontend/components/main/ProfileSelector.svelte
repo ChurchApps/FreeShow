@@ -96,6 +96,8 @@
     .flex {
         margin-top: 20px;
         display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
         gap: 20px;
     }
 

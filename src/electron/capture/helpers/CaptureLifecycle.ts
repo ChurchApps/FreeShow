@@ -181,8 +181,9 @@ export class CaptureLifecycle {
         }
 
         // static content - capture at a low rate until a change is detected
-        // (Blackmagic frames bypass change detection, so skip the backoff when it's active)
-        if (!options.blackmagic && CaptureTransmitter.getTimeSinceLastChange(id) > this.IDLE_AFTER_MS) {
+        // (Blackmagic and NDI frames bypass change detection / idle backoff to maintain video stream clocks)
+        const timeSinceChange = CaptureTransmitter.getTimeSinceLastChange(id)
+        if (!options.blackmagic && !options.ndi && timeSinceChange > this.IDLE_AFTER_MS) {
             return Math.min(baseCaptureFrameRate, this.IDLE_FPS)
         }
 
@@ -243,7 +244,10 @@ export class CaptureLifecycle {
                     if (o.webrtcData?.streaming) {
                         const url = o.webrtcData?.url || ""
                         const token = o.webrtcData?.token || ""
-                        if (url) WebRtcHost.startWhip(o.id, url, token)
+                        const fps = o.webrtcData?.fps ? Number(o.webrtcData.fps) : 30
+                        const bitrate = o.webrtcData?.bitrate ? Number(o.webrtcData.bitrate) : 2500
+                        if (o.captureOptions?.framerates) o.captureOptions.framerates.webrtc = fps
+                        if (url) WebRtcHost.startWhip(o.id, url, token, { fps, bitrate })
                     } else {
                         WebRtcHost.stopWhip(o.id)
                     }
@@ -271,10 +275,12 @@ export class CaptureLifecycle {
                 const key = o.rtmpData?.key || ""
                 const fullUrl = key ? `${url}/${key}` : url
                 const bounds = o.window?.getBounds() || { width: 1920, height: 1080 }
-                const fps = o.captureOptions?.framerates?.rtmp || 30
+                const fps = o.rtmpData?.fps ? Number(o.rtmpData.fps) : 30
+                const bitrate = o.rtmpData?.bitrate ? Number(o.rtmpData.bitrate) : 4000
+                if (o.captureOptions?.framerates) o.captureOptions.framerates.rtmp = fps
 
                 if (url && !RtmpStreamer.isRunning(o.id)) {
-                    RtmpStreamer.start(o.id, fullUrl, bounds.width, bounds.height, fps, isAudioEnabled())
+                    RtmpStreamer.start(o.id, fullUrl, bounds.width, bounds.height, fps, isAudioEnabled(), bitrate)
                 }
             } else {
                 if (RtmpStreamer.isRunning(o.id)) {
