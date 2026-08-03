@@ -44,9 +44,11 @@
 
 <div class="grid" style={boxed ? "gap: 8px;" : ""}>
     {#each filteredIcons as icon}
-        <MaterialButton style="padding: {boxed ? 0 : 8}px;" showOutline={activeIcon === icon} on:click={() => click(icon)}>
-            <Icon id={icon} size={2} custom white color={customIconsColors[icon]} {boxed} />
-        </MaterialButton>
+        {#if !boxed || icon !== "empty"}
+            <MaterialButton style="padding: {boxed ? 0 : 6}px;{boxed ? '' : 'border: 1px solid var(--focus);'}" showOutline={activeIcon === icon} title={icon[0].toUpperCase() + icon.slice(1).replaceAll("_", " ")} on:click={() => click(icon)}>
+                <Icon id={icon} size={2} custom white color={customIconsColors[icon]} {boxed} />
+            </MaterialButton>
+        {/if}
     {/each}
 </div>
 

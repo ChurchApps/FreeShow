@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { activePage, activePopup, contextActive, contextData, currentWindow, dictionary, localeDirection, os, special, spellcheck, theme, themes } from "../../stores"
+    import { activePage, activePopup, companion, contextActive, contextData, currentWindow, dictionary, localeDirection, os, special, spellcheck, theme, themes } from "../../stores"
     import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { getEditItems } from "../edit/scripts/itemHelpers"
@@ -57,7 +57,15 @@
             contextElem = target
         }
 
-        activeMenu = getContextMenu(id) || contextMenuLayouts.default
+        activeMenu = [...(getContextMenu(id) || contextMenuLayouts.default)]
+        // show "Copy ID" button if API is enabled
+        if ($companion?.enabled && id) {
+            const baseId = id.slice(1).split("_readonly")[0].split("_default")[0]
+            const idCopyableMenus = ["action", "overlay_card", "drawer_show_button", "global_timer", "variable", "project_button", "template_card", "stage_slide", "style", "audio_stream", "interaction", "camera_card", "screen_card", "output_screen", "output_screen_stage"]
+            if (idCopyableMenus.includes(baseId) && !activeMenu.includes("copy_id")) {
+                activeMenu.push("SEPARATOR", "copy_id")
+            }
+        }
 
         let contextHeight = activeMenu.reduce((acc, id) => acc + (id.includes("GROUP") ? 73.6 : id === "SEPARATOR" ? 17 : 33.6), 0) + 16
         // if ($spellcheck?.suggestions?.length) contextHeight += $spellcheck.suggestions.length * 33.6 + 33.6

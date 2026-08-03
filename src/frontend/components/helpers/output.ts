@@ -811,7 +811,7 @@ export const defaultOutput: Output = {
 }
 
 // WIP history
-export function addOutput(onlyFirst = false, styleId = "", enabled = true) {
+export function addOutput(onlyFirst = false, styleId = "", enabled = true, name = "") {
     if (onlyFirst && Object.keys(get(outputs)).length) return ""
 
     let outputId = ""
@@ -821,6 +821,7 @@ export function addOutput(onlyFirst = false, styleId = "", enabled = true) {
         if (get(themes)[get(theme)]?.colors?.secondary) defaultOutput.color = get(themes)[get(theme)].colors.secondary!
         output[id] = clone(defaultOutput)
         if (styleId) output[id].style = styleId
+        if (name) output[id].name = name
 
         // set name
         let n = 0
@@ -1350,8 +1351,9 @@ function replaceScriptureValues(items: Item[], templateItems: Item[], customDyna
 
                                     // Add trailing space if there is a next item on the slide
                                     const nextItem = (value as [string, string][])[index + 1]
-                                    const needsSpace = !!nextItem
-                                    newTexts.push({ value: needsSpace ? verseText + " " : verseText, sourceDynamicKey: key + ":" + index, style: style + ";" + baseStyle })
+                                    const needsSpace = !!nextItem && !verseText.endsWith(" ") && !verseText.endsWith("\n") && !verseText.endsWith(">")
+                                    let val = needsSpace ? verseText + " " : verseText
+                                    newTexts.push({ value: val, sourceDynamicKey: key + ":" + index, style: style + ";" + baseStyle })
                                 })
                             }
                         })

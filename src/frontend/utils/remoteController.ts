@@ -48,6 +48,9 @@ export async function startRemoteController(id?: string) {
             set(commandRef, null).catch((err) => {
                 console.error("Error clearing remote command:", err)
             })
+
+            // mark last used date
+            special.update((a) => ({ ...a, remoteControllerLastUsed: Date.now() }))
         }
     })
 }
@@ -65,5 +68,18 @@ export async function stopRemoteController(id?: string) {
         await remove(controlRef)
     } catch (error) {
         console.error("Error removing remote controller db path:", error)
+    }
+}
+
+// disable if last used is more than two weeks ago (14 + 1 days)
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
+export function autoDisableRemoteController() {
+    const lastUsed = getStore(special).remoteControllerLastUsed
+    if (lastUsed && Date.now() - lastUsed > ONE_DAY_MS * 15) {
+        special.update((a) => {
+            delete a.remoteController
+            delete a.remoteControllerLastUsed
+            return a
+        })
     }
 }

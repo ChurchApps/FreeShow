@@ -1,19 +1,14 @@
 <script lang="ts">
     import type { AccessType, Profile } from "../../../../types/Main"
     import { SettingsTabs } from "../../../../types/Tabs"
-    import { actions, actionTags, activeProfile, categories, folders, groups, overlayCategories, profiles, selectedProfile, special, stageShows, templateCategories, timerTags, variableTags } from "../../../stores"
-    import { newToast } from "../../../utils/common"
+    import { actions, actionTags, activeProfile, categories, folders, groups, overlayCategories, profiles, selectedProfile, stageShows, templateCategories, timerTags, variableTags } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { promptCustom } from "../../../utils/popup"
-    import { checkPassword, encodePassword } from "../../../utils/profile"
+    import { encodePassword } from "../../../utils/profile"
     import { customIconsColors } from "../../../values/customIcons"
-    import { runActionId } from "../../actions/actions"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialMultiButtons from "../../inputs/MaterialMultiButtons.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
@@ -201,41 +196,11 @@
 
     $: profilesList = Object.keys($profiles).filter((a) => a !== "admin")
 
-    async function setCurrentAsActive() {
-        // require password if setting admin profile (and password exists)
-        if (profileId === "" && hasAdminPass) {
-            const pwd = await promptCustom(translateText("remote.password"), "password")
-            const adminPassword = $profiles.admin?.password || ""
-            if (!checkPassword(pwd, adminPassword)) {
-                newToast("remote.wrong_password")
-                return
-            }
-        }
-
-        activeProfile.set(profileId)
-
-        // run action
-        const actionId = currentProfile.action
-        if (actionId) runActionId(actionId, "profile")
-
-        // store last used profile
-        special.update((a) => {
-            a.lastUsedProfile = profileId
-            return a
-        })
-    }
-
     $: currentAction = currentProfile?.action || ""
     let actionOptions = Object.entries($actions)
         .map(([id, a]) => ({ id, name: a.name }))
         .sort((a, b) => a.name?.localeCompare(b.name))
 </script>
-
-{#if $activeProfile !== profileId && profilesList.length}
-    <MaterialButton variant="outlined" style="width: 100%;margin-bottom: 10px;" icon="check" on:click={setCurrentAsActive}>
-        <T id="profile.set_active" />
-    </MaterialButton>
-{/if}
 
 {#if !profileId || !profilesList.length}
     {#if profilesList.length && isAdmin}

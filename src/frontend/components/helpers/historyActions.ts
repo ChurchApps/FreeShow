@@ -606,7 +606,7 @@ function handleTemplate(obj, data, initializing) {
         }
         const brLongLines = template?.settings?.breakLongLines
         if (brLongLines !== "0" && !isNaN(Number(brLongLines))) {
-            slides = breakLongLines(data.remember.showId, Number(brLongLines))
+            slides = breakLongLines(slides, Number(brLongLines))
             show.slides = slides
         }
         updateSlidesWithTemplate(template)

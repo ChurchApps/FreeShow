@@ -11,7 +11,7 @@
     export let active: (number | string)[]
     export let isStage = false
 
-    let styles: { [key: string]: string | number } = {}
+    let styles: { [key: string]: any } = {}
     function mousemove(e: any) {
         if (!mouse?.item || mouse.rightClick) return
 
@@ -20,8 +20,6 @@
 
         e?.preventDefault()
         styles = {}
-
-        // TODO: move multiple!
 
         let control = mouse.e.ctrlKey || mouse.e.metaKey
         let moveCondition: boolean = mouse.e.target.closest(".line") || ((!mouse.e.target.closest(".edit") || notTextBox || mouse.e.altKey) && !mouse.e.target.closest(".square")) || (control && !mouse.e.target.closest(".square")) || mouse.e.buttons === 4
@@ -73,17 +71,30 @@
         const width = DEFAULT_BOUNDS.width
         const height = DEFAULT_BOUNDS.width / aspectRatio
 
-        if (styles.left) styles.left = DEFAULT_BOUNDS.width * (Number(styles.left) / width)
-        if (styles.top) styles.top = DEFAULT_BOUNDS.height * (Number(styles.top) / height)
-        if (styles.width) styles.width = DEFAULT_BOUNDS.width * (Number(styles.width) / width)
-        if (styles.height) styles.height = DEFAULT_BOUNDS.height * (Number(styles.height) / height)
+        if (styles.__multiPositions) {
+            const multiPositions = styles.__multiPositions as any
+            Object.keys(multiPositions).forEach((id) => {
+                let pos = multiPositions[id]
+                let scaledLeft = DEFAULT_BOUNDS.width * (Number(pos.left) / width)
+                let scaledTop = DEFAULT_BOUNDS.height * (Number(pos.top) / height)
+                multiPositions[id] = {
+                    left: scaledLeft.toFixed(2) + "px",
+                    top: scaledTop.toFixed(2) + "px"
+                }
+            })
+        } else {
+            if (styles.left) styles.left = DEFAULT_BOUNDS.width * (Number(styles.left) / width)
+            if (styles.top) styles.top = DEFAULT_BOUNDS.height * (Number(styles.top) / height)
+            if (styles.width) styles.width = DEFAULT_BOUNDS.width * (Number(styles.width) / width)
+            if (styles.height) styles.height = DEFAULT_BOUNDS.height * (Number(styles.height) / height)
 
-        // finalize values
-        Object.keys(styles).forEach((key) => {
-            if (styles[key] === undefined || styles[key].toString().includes("px") || styles[key].toString().includes("deg")) return
-            if (key === "width" || key === "height") styles[key] = Math.max(16 / ratio, Number(styles[key]))
-            styles[key] = Number(styles[key]).toFixed(2) + "px"
-        })
+            // finalize values
+            Object.keys(styles).forEach((key) => {
+                if (styles[key] === undefined || styles[key].toString().includes("px") || styles[key].toString().includes("deg")) return
+                if (key === "width" || key === "height") styles[key] = Math.max(16 / ratio, Number(styles[key]))
+                styles[key] = Number(styles[key]).toFixed(2) + "px"
+            })
+        }
 
         throttle("EDIT_ITEM_MOVE", styles, (value) => (newStyles = value), 50)
     }
