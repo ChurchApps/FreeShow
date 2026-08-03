@@ -11,7 +11,6 @@ test.beforeEach(async ({ context }) => {
 
 test("Launch electron app", async () => {
     const tmpSettingFolder = tmp.dirSync({ unsafeCleanup: true })
-
     const electronApp = await electron.launch({
         // --no-sandbox is required for Electron to launch reliably on Linux CI.
         args: [".", "--no-sandbox"],
@@ -126,7 +125,7 @@ test("Launch electron app", async () => {
         throw ex
     }
 
-    // Close after finishing.
+    // Close after finishing
     console.log("Closing app...")
     // Race shutdown with a timeout to avoid hanging CI on Linux.
     const electronProcess = electronApp.process()
