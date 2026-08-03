@@ -500,6 +500,7 @@ export const itemBoxes: Box2 = {
                             placeholder: "E.g.: LT, LLLL, MMMM D YYYY h:mm A"
                         }
                     },
+                    { id: "clock.offsetDays", type: "number", value: 0, hidden: true, values: { label: "edit.offset (calendar.day)", defaultValue: 0, min: -10000, max: 10000 } },
                     {
                         id: "tip",
                         type: "tip",

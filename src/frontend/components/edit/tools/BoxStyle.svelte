@@ -293,11 +293,14 @@
     $: if (id === "clock" && item) {
         const clockType = item.clock?.type || "digital"
         const dateFormat = item.clock?.dateFormat || "none"
+        const customFormat = item.clock?.customFormat || ""
+        const showOffsetDays = clockType === "custom" && /[MDY]/.test(customFormat) // has M or D or Y
 
         setBoxInputValue(box, "default", "clock.dateFormat", "hidden", clockType !== "digital")
         setBoxInputValue(box, "default", "clock.showTime", "hidden", clockType !== "digital" || dateFormat === "none")
         setBoxInputValue(box, "default", "clock.seconds", "hidden", clockType === "custom" || (clockType === "digital" && item.clock?.showTime === false && dateFormat !== "none"))
         setBoxInputValue(box, "default", "clock.customFormat", "hidden", clockType !== "custom")
+        setBoxInputValue(box, "default", "clock.offsetDays", "hidden", !showOffsetDays)
         setBoxInputValue(box, "default", "tip", "hidden", clockType !== "custom")
     }
     $: if (id === "camera" && item) {
