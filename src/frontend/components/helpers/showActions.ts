@@ -688,7 +688,7 @@ export function sendMidi(data: any) {
 
 // DYNAMIC VALUES
 
-const commonOnly = ["time_str", "project_section_time", "show_name_next", "show_text_full", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
+const commonOnly = ["time_str", "project_section_time", "show_name_next", "show_text_full", "slide_group_text", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
 export const dynamicValueText = (id: string) => `{${id}}`
 export function getDynamicIds(noVariables = false, mode: null | "scripture" = null, showAll: boolean = true): string[] {
     const mainValues = Object.keys(dynamicValues).filter((id) => (showAll ? true : !commonOnly.find((cId) => id.startsWith(cId))))
@@ -1114,6 +1114,9 @@ const dynamicValues = {
     slide_notes_next: ({ show, ref, slideIndex }) => show?.slides?.[ref[slideIndex + 1]?.id]?.notes || "",
 
     // text
+    slide_group_text_previous: ({ show, ref, slideIndex, outSlide }) => getGroupText({ outSlide, show, ref, slideIndex }, -1),
+    slide_group_text_current: ({ show, ref, slideIndex, outSlide }) => getGroupText({ outSlide, show, ref, slideIndex }, 0),
+    slide_group_text_next: ({ show, ref, slideIndex, outSlide }) => getGroupText({ outSlide, show, ref, slideIndex }, 1),
     slide_text_previous: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex - 1),
     slide_text_current: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex),
     slide_text_next: ({ show, ref, slideIndex, outSlide }) => getSlideText({ outSlide, show, ref }, slideIndex + 1),
@@ -1188,6 +1191,44 @@ const scriptureDynamicValues = {
     // not replaced directly, but the style is used:
     scripture_number: () => "1",
     scripture_red_jesus: () => "Words"
+}
+
+export function getGroupText({ outSlide, show, ref, slideIndex }, groupOffset: number = 0) {
+    if (!show) return ""
+
+    // fallback to current slide text if scripture
+    if (outSlide?.id === "temp") return getSlideText({ outSlide, show, ref }, slideIndex + groupOffset)
+
+    const outIndex = outSlide?.index ?? slideIndex
+
+    const activeLayout = outSlide?.layout ?? show.settings?.activeLayout
+    const index = ref?.[outIndex]?.parent?.index ?? ref?.[outIndex]?.index
+    const layout = show.layouts[activeLayout]?.slides?.[index + groupOffset]
+    const currentSlideId = layout?.id
+
+    const slideData = show.slides[currentSlideId]
+    const groupSlides = [currentSlideId, ...(slideData?.children || [])]
+
+    let slidesText: string[] = []
+    groupSlides.forEach((slideId) => {
+        const slide = show.slides?.[slideId]
+        let slideItemLines = getTextLines(slide, true)
+
+        // correct order
+        slideItemLines = clone(slideItemLines)
+        slideItemLines.reverse()
+
+        slidesText.push(slideItemLines.join("<br>"))
+    })
+
+    // remove any trailing <br> tags and whitespace
+    const mergedText = slidesText
+        .join("<br>")
+        .trim()
+        .replace(/(<br\s*\/?>\s*)+$/i, "")
+
+    // return [text, ...slidesText]
+    return mergedText
 }
 
 function getSlideText({ outSlide, show, ref }, slideIndex: number = 0) {
