@@ -14,7 +14,6 @@ import {
     activeScripture,
     activeShow,
     activeTimers,
-    audioChannelsData,
     audioData,
     audioEffects,
     cachedShowsData,
@@ -42,6 +41,7 @@ import {
     overlays,
     playerVideos,
     playingAudio,
+    playingVideoState,
     projects,
     refreshSlideThumbnails,
     runningActions,
@@ -390,23 +390,27 @@ export function storeSubscriber() {
         send(OUTPUT, ["SLIDE_TIMELINE_SPEED_MULTIPLIER"], data)
     })
 
-    let prevAudioChannelsJson = ""
-    audioChannelsData.subscribe((data) => {
-        const controlData: any = {}
-        Object.entries(data || {}).forEach(([id, ch]: [string, any]) => {
-            if (!ch) return
-            const { dB, ...rest } = ch
-            controlData[id] = rest
-        })
+    // let prevAudioChannelsJson = ""
+    // audioChannelsData.subscribe((data) => {
+    //     const controlData: any = {}
+    //     Object.entries(data || {}).forEach(([id, ch]: [string, any]) => {
+    //         if (!ch) return
+    //         const { dB, ...rest } = ch
+    //         controlData[id] = rest
+    //     })
 
-        const json = JSON.stringify(controlData)
-        if (json !== prevAudioChannelsJson) {
-            prevAudioChannelsJson = json
-            send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
+    //     const json = JSON.stringify(controlData)
+    //     if (json !== prevAudioChannelsJson) {
+    //         prevAudioChannelsJson = json
+    //         send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
 
-            // REMOTE mixer updates
-            sendRemoteMixer()
-        }
+    //         // REMOTE mixer updates
+    //         sendRemoteMixer()
+    //     }
+    // })
+
+    playingVideoState.subscribe((data) => {
+        send(OUTPUT, ["PLAYING_VIDEO_STATE"], data)
     })
 
     audioEffects.subscribe(async (data) => {

@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
-import { AUDIO, OUTPUT } from "../../types/Channels"
-import { audioEffects, audioRouting, disabledServers, media, outputs, playingAudio, playingVideos, serverData, special, videosData } from "../stores"
+import { AUDIO } from "../../types/Channels"
+import { audioEffects, audioRouting, disabledServers, media, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
 import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
@@ -54,8 +54,8 @@ export class AudioAnalyser {
         })
 
         playingAudio.subscribe(() => this.updateScales())
-        playingVideos.subscribe(() => this.updateScales())
-        videosData.subscribe(() => this.updateScales())
+        // playingVideos.subscribe(() => this.updateScales())
+        // videosData.subscribe(() => this.updateScales())
         audioRouting.subscribe(() => {
             // Re-route everything through the routing manager
         })
@@ -132,7 +132,7 @@ export class AudioAnalyser {
             sourceGain.connect(processor.input)
 
             const audioPlaying = get(playingAudio)[id]
-            const videoPlaying = get(playingVideos).some((v) => v.id === id)
+            const videoPlaying = get(playingVideos).some((v) => v.path === id)
 
             // Capture for settings audio routing visualizer
             // A more reliable check: actual media streams are hardware inputs (mics),
@@ -232,8 +232,8 @@ export class AudioAnalyser {
                 } else if (baseId === "metronome") {
                     baseVolume = 1.0
                 } else {
-                    const videoPlaying = get(playingVideos).find((v) => v.id === baseId)
-                    if (videoPlaying) baseVolume = videoPlaying.video?.volume ?? 1.0
+                    const videoPlaying = get(playingVideos).find((v) => v.path === baseId)
+                    if (videoPlaying) baseVolume = videoPlaying.audio?.volume ?? 1.0
                 }
                 if (baseVolume === null) baseVolume = 1.0
                 gainNode.gain.setValueAtTime(baseVolume, this.ac.currentTime)
@@ -268,9 +268,10 @@ export class AudioAnalyser {
         const audioPlaying = get(playingAudio)[id]
         const isMic = audioPlaying?.isMic === true || id.startsWith("mic_sub_")
         const nodeKey = isMic ? id : id === "metronome" ? "metronome" : "drawer_audio"
+        const specificInputId = outputId ? `output_win_sub_${outputId}` : null
 
         // Use disconnectGain to handle all unregistrations consistently
-        this.disconnectGain(processor || source, id)
+        this.disconnectGain(processor || source, id, outputId)
 
         // Only remove capture visualizer for drawer_audio if no more drawer audio files are playing
         if (nodeKey === "drawer_audio") {
@@ -280,6 +281,10 @@ export class AudioAnalyser {
             }
         } else {
             AudioInputCapture.getInstance().removeInput(nodeKey)
+        }
+
+        if (specificInputId) {
+            AudioInputCapture.getInstance().removeInput(specificInputId)
         }
         this.recorderDeactivate()
 
@@ -301,15 +306,15 @@ export class AudioAnalyser {
 
         delete this.sources[key]
 
-        if (!isOutputWindow()) return
+        // if (!isOutputWindow()) return
 
-        // wait for audio to clear before checking
-        setTimeout(() => {
-            if (!this.shouldAnalyse()) {
-                AudioAnalyserMerger.stop()
-                send(OUTPUT, ["AUDIO_MAIN"], { id: Object.keys(get(outputs))[0], stop: true })
-            }
-        })
+        // // wait for audio to clear before checking
+        // setTimeout(() => {
+        //     if (!this.shouldAnalyse()) {
+        //         AudioAnalyserMerger.stop()
+        //         send(OUTPUT, ["AUDIO_MAIN"], { id: Object.keys(get(outputs))[0], stop: true })
+        //     }
+        // })
     }
 
     static shouldAnalyse() {
@@ -319,7 +324,7 @@ export class AudioAnalyser {
         return !!Object.values(get(playingAudio)).filter((a) => !a.paused).length
     }
     private static getActiveVideos() {
-        return !!Object.values(get(playingVideos)).filter((a) => !a.video?.paused && !a.video?.muted).length
+        return !!Object.values(get(playingVideos)).filter((a) => !a.audio?.paused && !a.audio?.muted).length
     }
     private static sendOutputShowAudio() {
         return get(disabledServers).output_stream === false && get(serverData)?.output_stream?.sendAudio
@@ -526,15 +531,15 @@ export class AudioAnalyser {
         this.disconnectGain(source, id)
     }
 
-    static connectGain(source: AudioNode | PitchShiftNode, id?: string) {
+    static connectGain(source: AudioNode | PitchShiftNode, id?: string, outputId?: string) {
         this.initGain()
         const node = source instanceof PitchShiftNode ? source.output : source
 
         // Route input to configured mergers
         const audioPlaying = id ? get(playingAudio)[id] : null
-        const videoPlaying = id ? get(playingVideos).some((v) => v.id === id) : false
+        const videoPlaying = id ? get(playingVideos).some((v) => v.path === id) : false
         const isMic = audioPlaying?.isMic === true || (id && id.startsWith("mic_sub_"))
-        const isVideo = videoPlaying || (id && id.startsWith("output_win_sub_"))
+        const isVideo = videoPlaying || (id && id.startsWith("output_win_sub_")) || !!outputId
 
         const nodeKey = id ? (isMic ? id : id === "metronome" ? "metronome" : isVideo ? "output_window" : "drawer_audio") : "drawer_audio"
 
@@ -545,18 +550,21 @@ export class AudioAnalyser {
             manager.registerInputNode("mic_default", node)
         } else if (isVideo) {
             manager.registerInputNode("output_window", node)
+            if (outputId) {
+                manager.registerInputNode(`output_win_sub_${outputId}`, node)
+            }
         }
 
         manager.updateRoutingNodes()
     }
 
-    static disconnectGain(source: AudioNode | PitchShiftNode, id?: string) {
+    static disconnectGain(source: AudioNode | PitchShiftNode, id?: string, outputId?: string) {
         const node = source instanceof PitchShiftNode ? source.output : source
 
         const audioPlaying = id ? get(playingAudio)[id] : null
-        const videoPlaying = id ? get(playingVideos).some((v) => v.id === id) : false
+        const videoPlaying = id ? get(playingVideos).some((v) => v.path === id) : false
         const isMic = audioPlaying?.isMic === true || (id && id.startsWith("mic_sub_"))
-        const isVideo = videoPlaying || (id && id.startsWith("output_win_sub_"))
+        const isVideo = videoPlaying || (id && id.startsWith("output_win_sub_")) || !!outputId
 
         const nodeKey = id ? (isMic ? id : id === "metronome" ? "metronome" : isVideo ? "output_window" : "drawer_audio") : "drawer_audio"
         AudioRoutingManager.getInstance().unregisterInputNode(nodeKey, node)
@@ -565,6 +573,9 @@ export class AudioAnalyser {
             AudioRoutingManager.getInstance().unregisterInputNode("mic_default", node)
         } else if (isVideo) {
             AudioRoutingManager.getInstance().unregisterInputNode("output_window", node)
+            if (outputId) {
+                AudioRoutingManager.getInstance().unregisterInputNode(`output_win_sub_${outputId}`, node)
+            }
         }
 
         try {

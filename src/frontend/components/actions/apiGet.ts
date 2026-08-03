@@ -54,8 +54,8 @@ export function getOutputGroupName() {
 
 export function getPlayingVideoDuration() {
     const outputPath = getFirstActiveOutput()?.out?.background?.path || ""
-    const video = get(playingVideos)[outputPath] || {}
-    const time: number = video?.duration || video?.video?.duration || 0
+    const video = get(playingVideos).find((a) => a.path === outputPath)
+    const time = video?.audio?.duration || 0
     return time
 }
 
@@ -71,13 +71,12 @@ export function getPlayingVideoState() {
     const bg = output?.out?.background
     const path = bg?.path || bg?.id || ""
 
-    const playingList = (get(playingVideos) as any[]) || []
-    const videoEntry = playingList.find((v: any) => v?.id === path) || {}
+    const videoEntry = (get(playingVideos).find((v) => v.path === path) || {})?.audio
     const videoData = get(videosData)[outputId] || {}
 
-    const duration = videoData?.duration ?? videoEntry?.duration ?? videoEntry?.video?.duration ?? 0
-    const time = get(videosTime)[outputId] ?? videoEntry?.time ?? videoEntry?.video?.currentTime ?? 0
-    const paused = videoData?.paused ?? videoEntry?.paused ?? videoEntry?.video?.paused ?? false
+    const duration = videoData?.duration ?? videoEntry?.duration ?? 0
+    const time = get(videosTime)[outputId] ?? videoEntry?.currentTime ?? 0
+    const paused = videoData?.paused ?? videoEntry?.paused ?? false
     const loop = bg?.loop !== false // default to true
     const muted = bg?.muted !== false // default to true
 

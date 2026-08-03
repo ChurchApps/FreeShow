@@ -5,6 +5,7 @@
     import Image from "../../media/Image.svelte"
     import Video from "../../media/Video.svelte"
 
+    export let outputId: string
     export let path: string
     export let path2 = ""
     export let data: OutBackground = {}
@@ -50,7 +51,7 @@
 {#key retryCount}
     {#if type === "video"}
         <div class="video">
-            <Video {path} bind:video bind:videoData bind:videoTime startAt={data.startAt} {mediaStyle} {animationStyle} {mirror} on:loaded on:ended on:error={reload} />
+            <Video {outputId} {path} bind:video bind:videoData bind:videoTime startAt={data.startAt} {mediaStyle} {animationStyle} {mirror} on:loaded on:ended on:error={reload} />
         </div>
     {:else if type === "image"}
         <div class="image" style="height: 100%;{animationStyle}">

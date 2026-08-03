@@ -173,23 +173,23 @@
         }
     }
 
-    $: audioChannelVolume = $audioChannelsData[outputId]?.volume ?? 1
-    $: isMuted = !!(effectiveMuted || $audioChannelsData[outputId]?.isMuted || $audioChannelsData.main?.isMuted)
-    $: mainBusVolume = $audioChannelsData.main?.volume ?? 1
+    // $: audioChannelVolume = $audioChannelsData[outputId]?.volume ?? 1
+    // $: isMuted = !!(effectiveMuted || $audioChannelsData[outputId]?.isMuted || $audioChannelsData.main?.isMuted)
+    // $: mainBusVolume = $audioChannelsData.main?.volume ?? 1
     // ReplayGain is applied internally by VideoController.load(); don't include it here to avoid double-application
-    $: calculatedVolume = mainBusVolume * (isMuted ? 0 : 1) * audioChannelVolume * (($media[id]?.volume ?? currentStyle?.volume ?? 100) / 100)
+    // $: calculatedVolume = mainBusVolume * (isMuted ? 0 : 1) * audioChannelVolume * (($media[id]?.volume ?? currentStyle?.volume ?? 100) / 100)
 
-    // Pass computed volume/pitch to the controller (frontend/mirror side only)
-    $: if (mirror && calculatedVolume !== undefined) VideoController.get(outputId)?.setComputedVolume(calculatedVolume, isMuted)
+    // // Pass computed volume/pitch to the controller (frontend/mirror side only)
+    // $: if (mirror && calculatedVolume !== undefined) VideoController.get(outputId)?.setComputedVolume(calculatedVolume, isMuted)
 
-    $: videoPitch = $media[id]?.pitch ?? 0
-    $: if (mirror && videoPitch !== undefined) VideoController.get(outputId)?.setPitch(videoPitch)
+    // $: videoPitch = $media[id]?.pitch ?? 0
+    // $: if (mirror && videoPitch !== undefined) VideoController.get(outputId)?.setPitch(videoPitch)
 
-    $: videoSpeed = Number(mediaStyle.speed) || 1
-    $: if (mirror && videoSpeed) VideoController.get(outputId)?.setSpeed(videoSpeed)
+    // $: videoSpeed = Number(mediaStyle.speed) || 1
+    // $: if (mirror && videoSpeed) VideoController.get(outputId)?.setSpeed(videoSpeed)
 
-    // When the visual transition starts, fade audio out through the controller
-    $: if (mirror && fadingOut && duration) VideoController.get(outputId)?.fadeOut(duration)
+    // // When the visual transition starts, fade audio out through the controller
+    // $: if (mirror && fadingOut && duration) VideoController.get(outputId)?.fadeOut(duration)
 
     // Keep audioChannelsData in sync with the effective mute state (for routing display)
     $: if (outputId !== undefined) {
@@ -209,7 +209,7 @@
 
 <OutputTransition {transition} inTransition={transition.in} outTransition={transition.out} on:outrostart={() => (fadingOut = true)}>
     {#if type === "media"}
-        <Media path={id} {data} {animationStyle} bind:video bind:videoData bind:videoTime {mirror} {mediaStyle} on:loaded on:ended={videoEnded} />
+        <Media {outputId} path={id} {data} {animationStyle} bind:video bind:videoData bind:videoTime {mirror} {mediaStyle} on:loaded on:ended={videoEnded} />
     {:else if type === "screen"}
         <Window {id} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "ndi"}

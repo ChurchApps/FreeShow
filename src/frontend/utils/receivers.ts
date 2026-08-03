@@ -1,8 +1,6 @@
 import { get } from "svelte/store"
 import { CLOUD, CONTROLLER, NDI, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
-import { AudioAnalyser } from "../audio/audioAnalyser"
-import { AudioAnalyserMerger } from "../audio/audioAnalyserMerger"
 import { AudioMicrophone } from "../audio/audioMicrophone"
 import { setEqualizerEnabled, updateEqualizerBands } from "../audio/effects/audioEqualizer"
 import { runAction } from "../components/actions/actions"
@@ -20,7 +18,6 @@ import {
     alertMessage,
     allOutputs,
     audioChannels,
-    audioChannelsData,
     audioData,
     audioEffects,
     cachedDynamicValues,
@@ -50,7 +47,7 @@ import {
     overlays,
     playerVideos,
     playingAudioPaths,
-    playingVideos,
+    playingVideoState,
     popupData,
     previewBuffers,
     projects,
@@ -139,32 +136,32 @@ const receiveOUTPUTasMAIN: any = {
         })
     },
     ACTION_MAIN: (a: { id: string }) => runAction(get(actions)[a.id], { source: "remote" }),
-    AUDIO_MAIN: (data: any) => {
-        if (!data.id) return
+    // AUDIO_MAIN: (data: any) => {
+    //     if (!data.id) return
 
-        if (data.channels) AudioAnalyserMerger.addChannels(data.id, data.channels)
+    //     if (data.channels) AudioAnalyserMerger.addChannels(data.id, data.channels)
 
-        playingVideos.update((playingVideo) => {
-            const existing = playingVideo.findIndex((a) => a.id === data.id)
+    //     playingVideos.update((playingVideo) => {
+    //         const existing = playingVideo.findIndex((a) => a.id === data.id)
 
-            if (data.stop) {
-                if (existing > -1) playingVideo.splice(existing, 1)
-                return playingVideo
-            }
+    //         if (data.stop) {
+    //             if (existing > -1) playingVideo.splice(existing, 1)
+    //             return playingVideo
+    //         }
 
-            if (existing > -1) {
-                playingVideo[existing] = { ...data, location: "output" }
-            } else if (get(outputs)[data.id]?.out?.background) {
-                playingVideo.push({ location: "output", ...data })
-            }
+    //         if (existing > -1) {
+    //             playingVideo[existing] = { ...data, location: "output" }
+    //         } else if (get(outputs)[data.id]?.out?.background) {
+    //             playingVideo.push({ location: "output", ...data })
+    //         }
 
-            return playingVideo
-        })
+    //         return playingVideo
+    //     })
 
-        if (data.stop && !AudioAnalyser.shouldAnalyse()) {
-            AudioAnalyserMerger.stop()
-        }
-    },
+    //     if (data.stop && !AudioAnalyser.shouldAnalyse()) {
+    //         AudioAnalyserMerger.stop()
+    //     }
+    // },
     MOVE: (data) => {
         outputs.update((a) => {
             if (!a[data.id] || a[data.id].boundsLocked) return a
@@ -346,8 +343,9 @@ export const receiveOUTPUTasOUTPUT: any = {
         videosTime.set(data.time)
     },
 
-    AUDIO_CHANNELS_DATA: (a: any) => audioChannelsData.set(a),
+    // AUDIO_CHANNELS_DATA: (a: any) => audioChannelsData.set(a),
 
+    PLAYING_VIDEO_STATE: (a: any) => playingVideoState.set(a),
     AUDIO_EFFECTS: (a: any) => {
         audioEffects.set(a)
 

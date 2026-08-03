@@ -4,7 +4,8 @@
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
     import { requestMain, sendMain } from "../../IPC/main"
-    import { activeProject, activeRename, audioChannelsData, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime } from "../../stores"
+    import { AudioAnalyser } from "../../audio/audioAnalyser"
+    import { activeProject, activeRename, audioChannelsData, focusMode, media, outLocked, outputs, projects, videoMarkers, videosData, videosTime } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -22,7 +23,6 @@
     import MediaControls from "../output/tools/MediaControls.svelte"
     import Player from "../system/Player.svelte"
     import { formatVTT, SRTtoVTT } from "./media/subtitles"
-    import { AudioAnalyser } from "../../audio/audioAnalyser"
 
     export let mediaPath: string
     export let show
@@ -160,10 +160,10 @@
             // let analyser = await getAnalyser(video)
             // if (!analyser) return
 
-            playingVideos.update((a) => {
-                a.push({ id: mediaPath, location: "preview" })
-                return a
-            })
+            // playingVideos.update((a) => {
+            //     a.push({ id: mediaPath, location: "preview" })
+            //     return a
+            // })
 
             // WIP analyser
             // analyseAudio()

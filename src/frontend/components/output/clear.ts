@@ -7,7 +7,6 @@ import { customActionActivation } from "../actions/actions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { clone } from "../helpers/array"
 import { clearOverlayTimer, clearPlayingVideo, getAllActiveOutputIds, getAllActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
-import { VideoController } from "../media/VideoController"
 import { _show } from "../helpers/shows"
 import { getActiveTimelinePlayback } from "../timeline/TimelinePlayback"
 
@@ -89,7 +88,7 @@ export function clearBackground(specificOutputId = "") {
 
     outputIds.forEach((outputId) => {
         // Stop and clean up the audio controller for this output
-        VideoController.destroy(outputId)
+        // VideoController.destroy(outputId)
 
         // clearVideo()
         setOutput("background", null, false, outputId)

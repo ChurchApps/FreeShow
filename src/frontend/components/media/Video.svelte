@@ -5,7 +5,9 @@
     import { media } from "../../stores"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
     import { SoftLoopManager } from "./softLoop"
+    import { videoSync } from "./video/videoSync"
 
+    export let outputId: string
     export let path: string
     export let video: HTMLVideoElement | null = null
     export let videoData: any
@@ -25,11 +27,28 @@
     let perfectFit = false
 
     onMount(() => {
+        // sync state listener
+        const unsubscribe = videoSync(path, outputId, (data) => {
+            if (!video) return
+
+            // more than 0.1s difference, update video time
+            if (data.currentTime !== undefined && Math.abs(video.currentTime - data.currentTime) > 0.1) video.currentTime = data.currentTime
+
+            if (data.paused !== undefined && video.paused !== data.paused) {
+                if (data.paused) video.pause()
+                else video.play().catch((e) => console.error("Error playing video:", e))
+            }
+        })
+
         if (!container) return
 
         const w = container.clientWidth
         const h = container.clientHeight
         containerAspect = w && h ? w / h : null
+
+        return () => {
+            unsubscribe()
+        }
     })
 
     let hasLoaded = false

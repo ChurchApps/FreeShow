@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { clone } from "../components/helpers/array"
-import { audioChannels, audioChannelsData, audioRouting, outputs, playingAudio, playingVideos } from "../stores"
+import { audioChannels, audioChannelsData, audioRouting, outputs, playingAudio } from "../stores"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioPlaylist } from "./audioPlaylist"
 import { AudioInputCapture } from "./routing/audioInputCapture"
@@ -87,7 +87,7 @@ export class AudioAnalyserMerger {
         // 2. Add real-time levels from AudioInputCapture for all nodes
         const config = get(audioRouting)
         const playing = AudioPlayer.getAllPlaying()
-        const playingVids = get(playingVideos)
+        // const playingVids = get(playingVideos)
         const inputLevels: { [key: string]: number[] } = {}
 
         // Capture data for active playing sources (audio player)
@@ -109,14 +109,14 @@ export class AudioAnalyserMerger {
         })
 
         // Capture data for active playing videos
-        playingVids.forEach((v) => {
-            if (!v.video || v.video.paused) return
+        // playingVids.forEach((v) => {
+        //     if (!v.video || v.video.paused) return
 
-            const data = capture.getVisualizerData("output_window")
-            if (data && data.db > -60) {
-                ;(inputLevels["output_window"] ??= []).push(data.db)
-            }
-        })
+        //     const data = capture.getVisualizerData("output_window")
+        //     if (data && data.db > -60) {
+        //         ;(inputLevels["output_window"] ??= []).push(data.db)
+        //     }
+        // })
 
         // Capture output_window level if active
         const outData = capture.getVisualizerData("output_window")

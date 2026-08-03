@@ -1,17 +1,20 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
+    import { Unsubscriber } from "svelte/store"
     import type { Output } from "../../../../types/Output"
     import type { MediaType, ShowType } from "../../../../types/Show"
-    import { activeFocus, activeShow, focusMode, outLocked, outputs, playerVideos, videosData, videosTime } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, outLocked, playerVideos, videosData, videosTime } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getMediaType } from "../../helpers/media"
-    import { getActiveOutputs, setOutput } from "../../helpers/output"
-    import { VideoController } from "../../media/VideoController"
+    import { setOutput } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import { VideoPlayer } from "../../media/video/videoPlayer"
+    import { videoSync } from "../../media/video/videoSync"
     import VideoSlider from "../VideoSlider.svelte"
 
     export let currentOutput: Output | null
@@ -34,25 +37,57 @@
     $: type = background?.type || "image"
     if (path && !type) type = getMediaType(getExtension(path)) as MediaType
 
+    // LISTENER
+
+    let unsubscriber: Unsubscriber | null = null
+    $: setTimeout(() => pathChanged(path))
+    function pathChanged(path: string | undefined) {
+        if (unsubscriber) {
+            unsubscriber()
+            unsubscriber = null
+        }
+
+        if (!path || type !== "video") return
+
+        // WIP break if changing this slider
+
+        // const currentVideoAudio = $playingVideos.find((a) => a.path === path)?.audio
+        // console.log(currentVideoAudio)
+        // videoData.duration = currentVideoAudio?.duration || 0
+
+        unsubscriber = videoSync(path, outputId, (data) => {
+            videoTime = data.currentTime || 0
+            if (data.duration) videoData.duration = data.duration
+            videoData.paused = data.paused
+            videoData.loop = data.loop
+            // videoData.muted = data.muted
+        })
+    }
+    onDestroy(() => {
+        if (unsubscriber) unsubscriber()
+    })
+
+    $: if (path && videoData) VideoPlayer.updateProperties(path, videoData, outputId)
+
     let mediaName = ""
     $: outName = path && path.includes(".") && !path.includes("base64") ? splitPath(path).name : ""
     $: mediaName = outName ? outName.slice(0, outName.lastIndexOf(".")) : background?.name || ""
 
-    $: activeOutputIds = getActiveOutputs($outputs, true, true, true)
+    // $: activeOutputIds = getActiveOutputs($outputs, true, true, true)
 
     function toggleMute() {
         if (videoData.muted === undefined) videoData.muted = true
         videoData.muted = !videoData.muted
         if (background) setOutput("background", { ...background, muted: videoData.muted }, false, outputId)
         // Update controller audio
-        VideoController.get(outputId)?.setComputedVolume(videoData.muted ? 0 : 1, !!videoData.muted)
-        videosData.update((a) => ({ ...a, [outputId]: { ...a[outputId], muted: videoData.muted } }))
+        // VideoController.get(outputId)?.setComputedVolume(videoData.muted ? 0 : 1, !!videoData.muted)
+        // videosData.update((a) => ({ ...a, [outputId]: { ...a[outputId], muted: videoData.muted } }))
     }
 
     function toggleLoop() {
         videoData.loop = !videoData.loop
         if (background) setOutput("background", { ...background, loop: videoData.loop }, false, outputId)
-        VideoController.get(outputId)?.setLoop(!!videoData.loop)
+        // VideoController.get(outputId)?.setLoop(!!videoData.loop)
     }
 
     function openPreview() {
@@ -63,15 +98,23 @@
     }
 
     function playPause() {
-        const ctrl = VideoController.get(outputId)
-        if (ctrl) {
-            if (videoData.paused) ctrl.play()
-            else ctrl.pause()
-        } else {
-            // fallback for player/non-native-video types: update store only
-            videoData.paused = !videoData.paused
-            videosData.update((a) => ({ ...a, [outputId]: { ...a[outputId], paused: videoData.paused } }))
-        }
+        if (!path) return
+
+        const isPaused = videoData.paused
+        videoData.paused = !isPaused
+
+        if (isPaused) VideoPlayer.play(path, outputId)
+        else VideoPlayer.pause(path, outputId)
+
+        // const ctrl = VideoController.get(outputId)
+        // if (ctrl) {
+        //     if (videoData.paused) ctrl.play()
+        //     else ctrl.pause()
+        // } else {
+        //     // fallback for player/non-native-video types: update store only
+        //     videoData.paused = !videoData.paused
+        //     videosData.update((a) => ({ ...a, [outputId]: { ...a[outputId], paused: videoData.paused } }))
+        // }
     }
 
     let changeValue = 0
@@ -88,7 +131,7 @@
 
                 <div class="divider" />
 
-                <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue unmutedId={outputId} toOutput big />
+                <VideoSlider {outputId} {path} disabled={$outLocked} bind:videoData bind:videoTime bind:changeValue big />
 
                 <div class="divider" />
 
@@ -135,7 +178,7 @@
                     <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
                 </Button>
 
-                <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue unmutedId={outputId} toOutput />
+                <VideoSlider {outputId} {path} disabled={$outLocked} bind:videoData bind:videoTime bind:changeValue />
 
                 <Button
                     center

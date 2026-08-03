@@ -6,9 +6,8 @@ import type { Output, Outputs } from "../../../types/Output"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, LayoutRef, Media, OutSlide, Show, Slide, SlideData, Template, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
-import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../audio/audioFading"
 import { requestMain, sendMain } from "../../IPC/main"
-import { actions, activeFocus, activeProject, activeRename, activeShow, activeTimers, allOutputs, audioRouting, categories, connections, currentOutputSettings, customMessageCredits, disabledServers, effects, focusMode, lockedOverlays, media, outputDisplay, outputs, outputSlideCache, outputState, overlays, overlayTimers, playingVideos, projects, scriptures, scriptureSettings, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, usageLog } from "../../stores"
+import { actions, activeFocus, activeProject, activeRename, activeShow, activeTimers, allOutputs, audioRouting, categories, connections, currentOutputSettings, customMessageCredits, disabledServers, effects, focusMode, lockedOverlays, media, outputDisplay, outputs, outputSlideCache, outputState, overlays, overlayTimers, projects, scriptures, scriptureSettings, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, usageLog } from "../../stores"
 import { trackScriptureUsage } from "../../utils/analytics"
 import { isMainWindow, isOutputWindow, newToast } from "../../utils/common"
 import { translateText } from "../../utils/language"
@@ -16,20 +15,18 @@ import { confirmCustom } from "../../utils/popup"
 import { send } from "../../utils/request"
 import { hasStageStreamViewers, sendBackgroundToStage } from "../../utils/stageTalk"
 import { TemplateHelper } from "../../utils/templates"
-import { videoExtensions } from "../../values/extensions"
 import { customActionActivation, runAction } from "../actions/actions"
 import type { API_camera, API_screen, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import type { EditInput } from "../edit/values/boxes"
+import { VideoPlayer } from "../media/video/videoPlayer"
 import { clearBackground, clearSlide } from "../output/clear"
 import { areObjectsEqual, clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
-import { getExtension, getFileName, getMediaLayerType, removeExtension } from "./media"
+import { getFileName, getMediaLayerType, removeExtension } from "./media"
 import { getLayoutRef } from "./show"
 import { getFewestOutputLines, getItemWithMostLines } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
-import { getFirstOutputIdWithAudableBackground } from "./video"
-import { VideoController } from "../media/VideoController"
 
 export function toggleOutputs(outputIds: string[] | null = null, options: { force?: boolean; autoStartup?: boolean; state?: boolean } = {}) {
     if (outputIds === null) outputIds = getActiveOutputs(get(outputs), false)
@@ -115,7 +112,11 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
     }
 
     const inputData = clone(data)
-    const backgroundId = getFirstOutputIdWithAudableBackground(allOutputIds)
+    // const backgroundId = getFirstOutputIdWithAudableBackground(allOutputIds)
+
+    // setup video manager (and audio analyser)
+    if (type === "background" && data) VideoPlayer.start(data.path, { loop: data.loop, muted: data.muted, startAt: data.startAt || 0 }, allOutputIds)
+    else if (type === "background" && !data) VideoPlayer.stopByOutputIds(allOutputIds)
 
     outputs.update((a) => {
         if (type === "slide" && data?.id) {
@@ -164,7 +165,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
                 const slideContent = getOutputContent(id)
                 if (data && (slideContent.type === "pdf" || slideContent.type === "ppt")) clearSlide()
 
-                data = changeOutputBackground(data, { output, id, mute: allOutputIds.length > 1 && id !== backgroundId, videoOutputId: backgroundId })
+                if (data) data = changeOutputBackground(data, { output, id })
             }
 
             let outData = a[id].out?.[type] || null
@@ -272,7 +273,7 @@ function _stopBreakRecording() {
     })
 }
 
-function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
+function changeOutputBackground(data, { output, id }) {
     if (isMainWindow()) {
         setTimeout(() => {
             // update stage background if any
@@ -282,75 +283,76 @@ function changeOutputBackground(data, { output, id, mute, videoOutputId }) {
         }, 100)
     }
 
-    const previousWasVideo: boolean = videoExtensions.includes(getExtension(output.out?.background?.path))
+    console.log(output)
 
-    if (data === null) {
-        // Clean up audio controller for this output
-        VideoController.destroy(id)
+    // const previousWasVideo: boolean = videoExtensions.includes(getExtension(output.out?.background?.path))
 
-        if (id === videoOutputId) fadeinAllPlayingAudio()
-        if (previousWasVideo) videoEnding()
+    // if (data === null) {
+    //     // Clean up audio controller for this output
+    //     VideoController.destroy(id)
 
-        return data
-    }
+    //     if (previousWasVideo) videoEnding()
+
+    //     return data
+    // }
 
     // mute videos in the other output windows if more than one
     data.muted = data.muted || false
-    if (mute) data.muted = true
+    // if (mute) data.muted = true
 
-    if (id === videoOutputId) {
-        const muteAudio = get(special).muteAudioWhenVideoPlays
-        const isVideo = data.type === "player" || data.type === "video" || videoExtensions.includes(getExtension(data.path))
-        if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
-        else fadeinAllPlayingAudio()
+    // if (id === videoOutputId) {
+    //     const muteAudio = get(special).muteAudioWhenVideoPlays
+    //     const isVideo = data.type === "player" || data.type === "video" || videoExtensions.includes(getExtension(data.path))
+    //     if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
+    //     else fadeinAllPlayingAudio()
 
-        const type = data.muted && data.loop ? "background" : !data.muted && !data.loop ? "foreground" : null
+    //     const type = data.muted && data.loop ? "background" : !data.muted && !data.loop ? "foreground" : null
 
-        if (isVideo) videoStarting(type)
-        else if (previousWasVideo) videoEnding()
+    //     if (isVideo) videoStarting(type)
+    //     else if (previousWasVideo) videoEnding()
 
-        // Start the VideoController for native video files
-        const isNativeVideo = videoExtensions.includes(getExtension(data.path))
-        if (isNativeVideo && data.path) {
-            const ctrl = VideoController.getOrCreate(id)
-            ctrl.load(data.path, {
-                startAt: data.startAt,
-                loop: data.loop ?? false,
-                muted: data.muted ?? false
-            })
-        } else {
-            // For non-video backgrounds (images, cameras, players) — no audio controller
-            VideoController.destroy(id)
-            const videoData = { muted: data.muted, loop: data.loop || false }
-            setTimeout(() => {
-                send(OUTPUT, ["DATA"], { [id]: videoData })
-                if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
-            }, 600)
-        }
-    } else {
-        // Secondary (muted) outputs: no audio controller, just send state
-        VideoController.destroy(id)
-        const videoData = { muted: true, loop: data.loop || false }
-        setTimeout(() => {
-            send(OUTPUT, ["DATA"], { [id]: videoData })
-            if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
-        }, 600)
-    }
+    //     // Start the VideoController for native video files
+    //     const isNativeVideo = videoExtensions.includes(getExtension(data.path))
+    //     if (isNativeVideo && data.path) {
+    //         const ctrl = VideoController.getOrCreate(id)
+    //         ctrl.load(data.path, {
+    //             startAt: data.startAt,
+    //             loop: data.loop ?? false,
+    //             muted: data.muted ?? false
+    //         })
+    //     } else {
+    //         // For non-video backgrounds (images, cameras, players) — no audio controller
+    //         VideoController.destroy(id)
+    //         const videoData = { muted: data.muted, loop: data.loop || false }
+    //         setTimeout(() => {
+    //             send(OUTPUT, ["DATA"], { [id]: videoData })
+    //             if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
+    //         }, 600)
+    //     }
+    // } else {
+    //     // Secondary (muted) outputs: no audio controller, just send state
+    //     VideoController.destroy(id)
+    //     const videoData = { muted: true, loop: data.loop || false }
+    //     setTimeout(() => {
+    //         send(OUTPUT, ["DATA"], { [id]: videoData })
+    //         if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
+    //     }, 600)
+    // }
 
     return data
 }
 
-function videoEnding() {
-    setTimeout(() => {
-        customActionActivation("video_end")
-    })
-}
-function videoStarting(type: "foreground" | "background" | null) {
-    customActionActivation("video_start")
+// function videoEnding() {
+//     setTimeout(() => {
+//         customActionActivation("video_end")
+//     })
+// }
+// function videoStarting(type: "foreground" | "background" | null) {
+//     customActionActivation("video_start")
 
-    if (type === "foreground") customActionActivation("video_start_foreground")
-    else if (type === "background") customActionActivation("video_start_background")
-}
+//     if (type === "foreground") customActionActivation("video_start_foreground")
+//     else if (type === "background") customActionActivation("video_start_background")
+// }
 
 export function startCamera(cam: API_camera) {
     setOutput("background", { name: cam.name || "", id: cam.id, cameraGroup: cam.groupId, type: "camera" })
@@ -868,14 +870,14 @@ function updateAudioRoutingOnOutputCreated(outputId: string, isStage: boolean) {
         const copy = JSON.parse(JSON.stringify(config || { mergers: [], connections: [] }))
         const mergerId = "merger_" + outputId
         const outObj = get(outputs)[outputId]
-        const mergerName = ((outObj?.name) || "Output") + " Bus"
+        const mergerName = (outObj?.name || "Output") + " Bus"
 
         if (!copy.mergers.some((m: any) => m.id === mergerId)) {
             copy.mergers.push({ id: mergerId, name: mergerName })
             copy.connections.push({ from: "drawer_audio", to: mergerId })
             copy.connections.push({ from: "mic_default", to: mergerId })
 
-            const targetOutputId = isStage ? "output_window" : (outputId === "default" ? "speaker_default" : "speaker_sub_" + outputId)
+            const targetOutputId = isStage ? "output_window" : outputId === "default" ? "speaker_default" : "speaker_sub_" + outputId
             copy.connections.push({ from: mergerId, to: targetOutputId })
         }
         return copy
@@ -891,11 +893,7 @@ function updateAudioRoutingOnOutputDeleted(outputId: string) {
 
         // Remove merger and any connections linked to it or the output
         copy.mergers = copy.mergers.filter((m: any) => m.id !== mergerId)
-        copy.connections = copy.connections.filter((conn: any) =>
-            conn.from !== mergerId && conn.to !== mergerId &&
-            conn.from !== subSpeakerId && conn.to !== subSpeakerId &&
-            conn.from !== subNetId && conn.to !== subNetId
-        )
+        copy.connections = copy.connections.filter((conn: any) => conn.from !== mergerId && conn.to !== mergerId && conn.from !== subSpeakerId && conn.to !== subSpeakerId && conn.from !== subNetId && conn.to !== subNetId)
         return copy
     })
 }
@@ -981,15 +979,15 @@ export async function clearPlayingVideo(clearOutput = "") {
     return new Promise((resolve) => {
         setTimeout(() => {
             // remove from playing
-            playingVideos.update((playingVideo) => {
-                let existing = -1
-                do {
-                    existing = playingVideo.findIndex((a) => (clearOutput ? a.id === clearOutput : a.location === "output") || a.location === "preview")
-                    if (existing > -1) playingVideo.splice(existing, 1)
-                } while (existing > -1)
+            // playingVideos.update((playingVideo) => {
+            //     let existing = -1
+            //     do {
+            //         existing = playingVideo.findIndex((a) => (clearOutput ? a.id === clearOutput : a.location === "output") || a.location === "preview")
+            //         if (existing > -1) playingVideo.splice(existing, 1)
+            //     } while (existing > -1)
 
-                return playingVideo
-            })
+            //     return playingVideo
+            // })
             // playingVideos.set([])
 
             //   let video = null

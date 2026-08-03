@@ -1,17 +1,14 @@
 <script lang="ts">
-    import { OUTPUT } from "../../../types/Channels"
-    import { outputs, videosTime } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
-    import { send } from "../../utils/request"
     import { joinTime, secondsToTime } from "../helpers/time"
-    import { VideoController } from "../media/VideoController"
     import Slider from "../inputs/Slider.svelte"
+    import { VideoPlayer } from "../media/video/videoPlayer"
+
+    export let outputId: string
+    export let path: string | undefined
 
     export let videoData: any
     export let videoTime: any
-    export let activeOutputIds: string[] = []
-    export let unmutedId = ""
-    export let toOutput = false
     export let big = false
     export let disabled = false
     export let changeValue = 0
@@ -85,18 +82,22 @@
     }
 
     function seekAllOutputs(time: number) {
-        // Seek via controller if available (native videos)
-        const ctrl = VideoController.get(unmutedId)
-        if (ctrl) {
-            ctrl.seek(time)
-        } else {
-            // Fallback: update store & send IPC for players/images
-            const outputList = toOutput && activeOutputIds.length ? activeOutputIds : Object.keys($outputs)
-            let timeValues: any = {}
-            outputList.forEach((id) => { timeValues[id] = time })
-            videosTime.update((a) => ({ ...a, ...timeValues }))
-            send(OUTPUT, ["TIME"], timeValues)
-        }
+        if (!path) return
+
+        VideoPlayer.seekTo(path, outputId, time)
+
+        // // Seek via controller if available (native videos)
+        // const ctrl = VideoController.get(unmutedId)
+        // if (ctrl) {
+        //     ctrl.seek(time)
+        // } else {
+        //     // Fallback: update store & send IPC for players/images
+        //     const outputList = toOutput && activeOutputIds.length ? activeOutputIds : Object.keys($outputs)
+        //     let timeValues: any = {}
+        //     outputList.forEach((id) => { timeValues[id] = time })
+        //     videosTime.update((a) => ({ ...a, ...timeValues }))
+        //     send(OUTPUT, ["TIME"], timeValues)
+        // }
     }
 
     const sendToOutput = (e: any = null) => {
@@ -121,28 +122,31 @@
     let movePause = false
     let wasPausedBeforeMove = false
     function pauseAtMove(boolean = true) {
-        const ctrl = VideoController.get(unmutedId)
+        if (!path) return
+        // const ctrl = VideoController.get(unmutedId)
 
         if (boolean) {
             wasPausedBeforeMove = !!videoData.paused
             movePause = true
             videoData.paused = true
-            if (ctrl) ctrl.pause()
+            // if (ctrl) ctrl.pause()
+            VideoPlayer.pause(path, outputId)
         } else {
             movePause = false
             videoData.paused = wasPausedBeforeMove
-            if (ctrl && !wasPausedBeforeMove) ctrl.play()
+            // if (ctrl && !wasPausedBeforeMove) ctrl.play()
+            if (!wasPausedBeforeMove) VideoPlayer.play(path, outputId)
         }
 
-        if (!toOutput || ctrl) return
+        // if (!toOutput) return
 
-        // Fallback for non-native-video: send DATA IPC
-        let dataValues: any = {}
-        activeOutputIds.forEach((id) => {
-            dataValues[id] = { ...videoData, muted: id !== unmutedId ? true : videoData.muted }
-        })
+        // // Fallback for non-native-video: send DATA IPC
+        // let dataValues: any = {}
+        // activeOutputIds.forEach((id) => {
+        //     dataValues[id] = { ...videoData, muted: id !== unmutedId ? true : videoData.muted }
+        // })
 
-        send(OUTPUT, ["DATA"], dataValues)
+        // send(OUTPUT, ["DATA"], dataValues)
     }
 
     let fullLength = false

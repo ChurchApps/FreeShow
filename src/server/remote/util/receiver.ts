@@ -364,23 +364,23 @@ export const receiver = {
             }
         })
     },
-    AUDIO_CHANNELS_DATA: (data: any) => {
-        mixer.update((prev: any) => {
-            const current = prev || { main: {}, outputs: {} }
-            const { main, ...outs } = data
+    // AUDIO_CHANNELS_DATA: (data: any) => {
+    //     mixer.update((prev: any) => {
+    //         const current = prev || { main: {}, outputs: {} }
+    //         const { main, ...outs } = data
 
-            const outputs = { ...current.outputs }
-            Object.keys(outs).forEach((id) => {
-                if (outputs[id]) outputs[id] = { ...outputs[id], ...outs[id] }
-            })
+    //         const outputs = { ...current.outputs }
+    //         Object.keys(outs).forEach((id) => {
+    //             if (outputs[id]) outputs[id] = { ...outputs[id], ...outs[id] }
+    //         })
 
-            return {
-                ...current,
-                main: { ...current.main, ...main },
-                outputs
-            }
-        })
-    },
+    //         return {
+    //             ...current,
+    //             main: { ...current.main, ...main },
+    //             outputs
+    //         }
+    //     })
+    // },
 
     /////
 
