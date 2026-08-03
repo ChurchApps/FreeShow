@@ -2,6 +2,7 @@
     import { onMount, tick } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
+    import { splitCustomDynamicValues } from "../../../show/slides"
     import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { getNormalizedKey, isComposing, isFormattingKey } from "../../../utils/shortcuts"
@@ -182,51 +183,48 @@
         newSlide.group = null
         newSlide.color = null
 
-        // update scripture dynamic values
-        // WIP duplicate of splitItemInTwo
-        // TODO: use "sourceDynamicKey" from text instead
-        let numbersAdded: string[] = []
-        // newSlide here is a clone of "oldSlide"
-        if (newSlide.customDynamicValues?.scripture_text) {
-            const firstLine = firstLines.flat()[0]
-            const texts = (Array.isArray(firstLine?.text) ? firstLine.text : []).filter((a) => !a.customType).map((a) => a.value)
+        // update scripture dynamic values based on current firstLines & secondLines
+        // WIP duplicate of splitItemInTwo (kinda)
+        if (newSlide.customDynamicValues) {
+            const buildDV = (lines: Line[]) => {
+                const targetCDV = clone(newSlide.customDynamicValues!)
+                const collected: Record<string, Record<number, string>> = {}
+
+                lines.forEach((line) => {
+                    line.text?.forEach((text) => {
+                        if (!text.sourceDynamicKey) return
+                        const [key, indexStr] = text.sourceDynamicKey.split(":")
+                        const idx = Number(indexStr || "0")
+                        collected[key] = collected[key] || {}
+                        collected[key][idx] = (collected[key][idx] ? collected[key][idx] + " " : "") + text.value
+                    })
+                })
+
+                Object.keys(targetCDV).forEach((key) => {
+                    const val = targetCDV[key]
+                    if (Array.isArray(val)) {
+                        targetCDV[key] = val.map((item, idx) => (collected[key]?.[idx] !== undefined ? (Array.isArray(item) ? [item[0], collected[key][idx]] : collected[key][idx]) : null)).filter(Boolean)
+                    } else if (collected[key]?.[0] !== undefined) {
+                        targetCDV[key] = collected[key][0]
+                    }
+                })
+                return targetCDV
+            }
+
+            const firstDV = buildDV(firstLines)
+            const secondDV = buildDV(secondLines)
+
             showsCache.update((a) => {
                 const showId = ref.showId || $activeShow?.id || ""
-                const slide = a[showId]?.slides?.[ref.id]
-                if (!slide?.customDynamicValues?.scripture_text) return a
-
-                texts.forEach((t, i) => {
-                    if (!slide.customDynamicValues!.scripture_text[i]) return
-
-                    numbersAdded.push(slide.customDynamicValues!.scripture_text[i][0])
-                    ;(slide.customDynamicValues!.scripture_text[i] as [string, string])[1] = t
-                    ;(slide.customDynamicValues!.scripture1_text[i] as [string, string])[1] = t
-                })
+                if (a[showId]?.slides?.[ref.id]) a[showId].slides[ref.id].customDynamicValues = firstDV
                 return a
             })
-        }
-        if (newSlide.customDynamicValues?.scripture_text) {
-            const secondLine = secondLines.flat()[0]
-            const texts = (Array.isArray(secondLine?.text) ? secondLine.text : []).filter((a) => !a.customType).map((a) => a.value)
-            texts.forEach((t, i) => {
-                if (!newSlide.customDynamicValues.scripture_text[i]) return
-
-                newSlide.customDynamicValues.scripture_text[i][1] = t
-                newSlide.customDynamicValues.scripture1_text[i][1] = t
-
-                let removeNumber = numbersAdded.find((a) => a === newSlide.customDynamicValues.scripture_text[i][0])
-                if (removeNumber) {
-                    newSlide.customDynamicValues.scripture_text[i][0] = "0"
-                    newSlide.customDynamicValues.scripture1_text[i][0] = "0"
-                }
-            })
+            newSlide.customDynamicValues = secondDV
         }
 
         // add new slide
         let id = uid()
-        _show()
-            .slides([id])
-            .add([clone(newSlide)])
+        _show().slides([id]).add([newSlide])
 
         // update slide
         updateLines(firstLines)
