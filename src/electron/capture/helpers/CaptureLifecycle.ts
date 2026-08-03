@@ -74,7 +74,9 @@ export class CaptureLifecycle {
         this.updateWebRtcHostState()
         this.updateRtmpState()
 
-        this.runCaptureLoop(id, token, output)
+        // OSR outputs are driven by paint events (OutputLifecycle.attachOsrCapture -> transmitFrame),
+        // so skip the capturePage poll for them; channels/senders are still set up above.
+        if (!output.osr) this.runCaptureLoop(id, token, output)
     }
 
     private static updateCaptureToggles(id: string, captureOptions: any, toggle: { [key: string]: boolean }) {

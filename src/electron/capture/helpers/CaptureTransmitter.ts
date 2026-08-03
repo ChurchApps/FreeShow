@@ -267,6 +267,10 @@ export class CaptureTransmitter {
     static sendBufferToNdi(captureId: string, image: NativeImage, { size }: { size: { width: number; height: number } }) {
         if (!NdiSender.NDI[captureId]?.sender) return
 
+        // NDI drops to the latest frame while a send is in flight; skip the expensive toBitmap readback
+        // for frames that would be dropped anyway (avoids ~33MB/frame of throwaway allocation at 4K).
+        if (NdiSender.isBusyNDI(captureId)) return
+
         const buffer = image.toBitmap()
 
         const output = OutputHelper.getOutput(captureId)
@@ -312,6 +316,15 @@ export class CaptureTransmitter {
     // BLACKMAGIC
     static sendBufferToBlackmagic(captureId: string, image: NativeImage) {
         if (!image || !BlackmagicSender.canAcceptFrame(captureId)) return
+
+        // match the Blackmagic device display mode. The capturePage poll resizes in
+        // captureAndProcessFrame; OSR outputs are captured at their render resolution, so resize here to
+        // cover both paths (no-op when the sizes already match).
+        const targetSize = BlackmagicSender.getTargetDimensions(captureId)
+        const currentSize = image.getSize()
+        if (targetSize?.width && (currentSize.width !== targetSize.width || currentSize.height !== targetSize.height)) {
+            image = image.resize({ width: targetSize.width, height: targetSize.height })
+        }
 
         const buffer = image.toBitmap({ scaleFactor: 1 })
         // release immediately to prevent memory accumulation

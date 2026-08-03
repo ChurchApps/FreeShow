@@ -86,7 +86,7 @@ export class OutputLifecycle {
         const outputWindow = this.createOutputWindow({ ...renderBounds, alwaysOnTop: output.alwaysOnTop !== false, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name, output)
         // const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
-        OutputHelper.setOutput(id, { window: outputWindow, invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: output.bounds, transparent: output.transparent, webrtcData: output.webrtcData, rtmpData: output.rtmpData })
+        OutputHelper.setOutput(id, { window: outputWindow, osr: this.isOsrOutput(output), invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: output.bounds, transparent: output.transparent, webrtcData: output.webrtcData, rtmpData: output.rtmpData })
         // OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds({ id: output.id!, bounds: output.bounds })
         this.updateWindowConstraints(id)
@@ -137,6 +137,14 @@ export class OutputLifecycle {
     private static createOutputWindow(options: BrowserWindowConstructorOptions, id: string, name: string, extra: any) {
         options = { ...outputOptions, ...options }
 
+        // render-overhaul: network/device outputs render offscreen (OSR) and are captured via paint
+        // events instead of the main-thread capturePage poll.
+        const osr = this.isOsrOutput(extra)
+        if (osr) {
+            options.show = false
+            options.webPreferences = { ...outputOptions.webPreferences, offscreen: true }
+        }
+
         if (options.alwaysOnTop === false) {
             options.skipTaskbar = false
             if (!extra.boundsLocked) options.resizable = true
@@ -144,6 +152,8 @@ export class OutputLifecycle {
 
         if (OUTPUT_CONSOLE) options.webPreferences!.devTools = true
         const window: BrowserWindow | null = new BrowserWindow(options)
+
+        if (osr) this.attachOsrCapture(window, id)
 
         // only win & linux
         // window.removeMenu() // hide menubar
@@ -164,6 +174,51 @@ export class OutputLifecycle {
         if (OUTPUT_CONSOLE) window.webContents.openDevTools({ mode: "detach" })
 
         return window
+    }
+
+    // render-overhaul: network/device outputs (NDI/WebRTC/RTMP/Blackmagic) are capture-only — never shown
+    // on a monitor — so render them offscreen (OSR) and capture via paint events instead of the
+    // main-thread capturePage poll. These are persistent config flags (set when the output type is
+    // configured), stable across the streaming on/off toggle, so the window's OSR mode never has to change.
+    private static isOsrOutput(output: { ndi?: boolean; webrtc?: boolean; rtmp?: boolean; blackmagic?: boolean }): boolean {
+        return !!(output.ndi || output.webrtc || output.rtmp || output.blackmagic)
+    }
+
+    // render-overhaul: OSR outputs render offscreen; `paint` provides the latest rendered frame (GPU
+    // readback happens off the main thread) while a timer emits that frame at the output's configured
+    // framerate. This decouples the SEND rate from the content-change rate, so the output holds a
+    // constant frame rate and honors the per-consumer FPS setting (matches the old capturePage cadence),
+    // instead of dropping to the paint rate (e.g. a 30fps video capping a 60fps NDI output).
+    private static attachOsrCapture(window: BrowserWindow, id: string) {
+        try {
+            window.webContents.setFrameRate(60)
+        } catch {
+            // ignore
+        }
+
+        let lastImage: Electron.NativeImage | null = null
+        window.webContents.on("paint", (_e: unknown, _dirty: unknown, image: Electron.NativeImage) => {
+            lastImage = image
+        })
+
+        let sendTimer: NodeJS.Timeout
+        const emitFrame = () => {
+            // transmitFrame no-ops until the output's capture channels are set up, and throttles each
+            // consumer (ndi/server/webrtc/...) to its own configured framerate
+            if (!window.isDestroyed() && lastImage) CaptureHelper.Transmitter.transmitFrame(id, lastImage)
+            // re-read the interval each tick so framerate changes (e.g. NDI connect) take effect
+            sendTimer = setTimeout(emitFrame, this.getOsrSendInterval(id))
+        }
+        sendTimer = setTimeout(emitFrame, this.getOsrSendInterval(id))
+        window.on("closed", () => clearTimeout(sendTimer))
+    }
+
+    private static getOsrSendInterval(id: string): number {
+        const captureOptions = OutputHelper.getOutput(id)?.captureOptions
+        // no capture configured yet: tick fast; transmitFrame no-ops until channels exist
+        if (!captureOptions) return 1000 / 60
+        const fps = CaptureHelper.getMaxActiveFramerate(captureOptions.framerates || {}, captureOptions.options || {})
+        return Math.max(1, Math.round(1000 / Math.max(1, fps)))
     }
 
     static async removeOutput(id: string, reopen: Output | null = null) {

@@ -101,6 +101,11 @@ export class NdiSender {
         return name || `FreeShow NDI${outputName ? ` - ${outputName}` : ""}`
     }
 
+    // true while a video() send is in flight for this output (its next frame would be dropped-to-latest)
+    static isBusyNDI(id: string): boolean {
+        return !!this.NDI[id]?.sendingVideo
+    }
+
     static async createSenderNDI(id: string, name = "", groups?: string) {
         if (this.NDI[id]) return
 
