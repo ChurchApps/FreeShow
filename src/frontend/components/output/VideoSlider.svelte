@@ -4,7 +4,7 @@
     import Slider from "../inputs/Slider.svelte"
     import { VideoPlayer } from "../media/video/videoPlayer"
 
-    export let outputId: string
+    export let outputId: string | undefined = undefined
     export let path: string | undefined
 
     export let videoData: any
@@ -75,29 +75,17 @@
                 dragSeekTimeout = null
                 if (movePause && sliderValue !== null) {
                     videoTime = sliderValue
-                    seekAllOutputs(videoTime)
+                    seekTo(videoTime)
                 }
             }, 150)
         }
     }
 
-    function seekAllOutputs(time: number) {
+    function seekTo(time: number) {
         if (!path) return
 
-        VideoPlayer.seekTo(path, outputId, time)
-
-        // // Seek via controller if available (native videos)
-        // const ctrl = VideoController.get(unmutedId)
-        // if (ctrl) {
-        //     ctrl.seek(time)
-        // } else {
-        //     // Fallback: update store & send IPC for players/images
-        //     const outputList = toOutput && activeOutputIds.length ? activeOutputIds : Object.keys($outputs)
-        //     let timeValues: any = {}
-        //     outputList.forEach((id) => { timeValues[id] = time })
-        //     videosTime.update((a) => ({ ...a, ...timeValues }))
-        //     send(OUTPUT, ["TIME"], timeValues)
-        // }
+        if (outputId) VideoPlayer.seekTo(path, outputId, time)
+        else videoTime = time
     }
 
     const sendToOutput = (e: any = null) => {
@@ -111,7 +99,7 @@
             latestValue = val
             sliderValue = val
             videoTime = val
-            seekAllOutputs(videoTime)
+            seekTo(videoTime)
         }
 
         if (movePause) pauseAtMove(false)
@@ -123,30 +111,17 @@
     let wasPausedBeforeMove = false
     function pauseAtMove(boolean = true) {
         if (!path) return
-        // const ctrl = VideoController.get(unmutedId)
 
         if (boolean) {
             wasPausedBeforeMove = !!videoData.paused
             movePause = true
             videoData.paused = true
-            // if (ctrl) ctrl.pause()
-            VideoPlayer.pause(path, outputId)
+            if (outputId) VideoPlayer.pause(path, outputId)
         } else {
             movePause = false
             videoData.paused = wasPausedBeforeMove
-            // if (ctrl && !wasPausedBeforeMove) ctrl.play()
-            if (!wasPausedBeforeMove) VideoPlayer.play(path, outputId)
+            if (outputId && !wasPausedBeforeMove) VideoPlayer.play(path, outputId)
         }
-
-        // if (!toOutput) return
-
-        // // Fallback for non-native-video: send DATA IPC
-        // let dataValues: any = {}
-        // activeOutputIds.forEach((id) => {
-        //     dataValues[id] = { ...videoData, muted: id !== unmutedId ? true : videoData.muted }
-        // })
-
-        // send(OUTPUT, ["DATA"], dataValues)
     }
 
     let fullLength = false

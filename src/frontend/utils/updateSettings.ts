@@ -94,9 +94,7 @@ import {
     variableTags,
     variables,
     version,
-    videoMarkers,
-    videosData,
-    videosTime
+    videoMarkers
 } from "./../stores"
 import { checkForUpdates } from "./checkForUpdates"
 import { isMainWindow, startAutosave } from "./common"
@@ -217,11 +215,7 @@ function convertTriggersToActions(data: any) {
     return data
 }
 
-let videoDataUpdating = false
 export function restartOutputs(specificId = "") {
-    const data = clone(get(videosData))
-    const time = clone(get(videosTime))
-
     const allOutputs = keysToID(get(outputs))
     const outputIds = specificId ? [specificId] : allOutputs.filter((a) => a.enabled).map(({ id }) => id)
 
@@ -231,19 +225,6 @@ export function restartOutputs(specificId = "") {
 
         send(OUTPUT, ["CREATE"], { ...output, id })
     })
-
-    if (videoDataUpdating) return
-    videoDataUpdating = true
-
-    // restore output video data when recreating window
-    // For native videos: VideoController.resyncAll() re-sends TIME + DATA via the controller
-    // For player/image backgrounds: send legacy DATA/TIME IPC as fallback
-    setTimeout(() => {
-        // VideoController.resyncAll()
-        send(OUTPUT, ["DATA"], data)
-        send(OUTPUT, ["TIME"], time)
-        videoDataUpdating = false
-    }, 2200)
 }
 
 export function updateThemeValues(themeValues: Themes) {

@@ -15,7 +15,7 @@ import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensio
 import { actionData } from "../actions/actionData"
 import { addSlideAction, getActionTriggerId } from "../actions/actions"
 import { getActiveScripturesContent, getReferenceText, getScriptureShow, getScriptureSlidesNew } from "../drawer/bible/scripture"
-import { getVimeoName, getYouTubeName, trimPlayerId } from "../drawer/player/playerHelper"
+import { getVimeoData, getYouTubeData, trimPlayerId } from "../drawer/player/playerHelper"
 import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { projectDropFolders } from "./drop"
@@ -197,12 +197,12 @@ export const dropActions = {
                 data.map(async (url) => {
                     if (url.includes("youtube.com") || url.includes("youtu.be")) {
                         const id = trimPlayerId(url, "youtube")
-                        const name = await getYouTubeName(id)
+                        const name = (await getYouTubeData(id)).name
                         return { id: "-", type: "player", data: { type: "youtube", id, name } }
                     }
                     if (url.includes("vimeo.com")) {
                         const id = trimPlayerId(url, "vimeo")
-                        const name = await getVimeoName(id)
+                        const name = (await getVimeoData(id)).name
                         return { id: "-", type: "player", data: { type: "vimeo", id, name } }
                     }
 

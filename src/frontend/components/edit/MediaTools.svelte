@@ -8,6 +8,7 @@
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tabs from "../main/Tabs.svelte"
+    import { VideoPlayer } from "../media/video/videoPlayer"
     import { addFilterString } from "./scripts/textStyle"
     import EditValues from "./tools/EditValues.svelte"
     import { setBoxInputValue } from "./values/boxes"
@@ -33,12 +34,9 @@
     $: isVideo = mediaType === "video"
     $: if (mediaId && isVideo) getVideoDuration()
     function getVideoDuration() {
-        let video = document.createElement("video")
-        video.setAttribute("src", mediaId)
-        video.addEventListener("loadedmetadata", loaded)
+        VideoPlayer.getDuration(mediaId).then(loaded)
 
-        function loaded() {
-            let videoDuration = video?.duration || 0
+        function loaded(videoDuration: number) {
             if (!videoDuration) return
 
             const maxSoftLoop = Math.floor(videoDuration / 2)
@@ -91,6 +89,7 @@
 
         bg[input.id] = value
         setOutput("background", bg)
+        VideoPlayer.updateProperties(mediaId)
     }
 
     function valueChanged2(e: any) {

@@ -3,50 +3,77 @@
 import { get } from "svelte/store"
 import { AudioAnalyser } from "../../../audio/audioAnalyser"
 import { AudioAnalyserMerger } from "../../../audio/audioAnalyserMerger"
-import { media, playingVideos, playingVideoState } from "../../../stores"
+import { media, playerVideos, playingVideos, playingVideoState, special, transitionData } from "../../../stores"
 import { customActionActivation } from "../../actions/actions"
+import { getVimeoData, getYouTubeData } from "../../drawer/player/playerHelper"
 import { encodeFilePath, getExtension, getMediaType } from "../../helpers/media"
 import { checkNextAfterMedia } from "../../helpers/showActions"
+import { TimeInterpolator } from "./videoTime"
 
 type VideoOptions = {
+    isOnline?: boolean // youtube / vimeo
     paused?: boolean
     loop?: boolean
     muted?: boolean
     startAt?: number
 }
+// online videos
+type VirtualAudioElement = {
+    currentTime: number
+    timeTick: TimeInterpolator
+    duration: number
+    paused: boolean
+    loop: boolean
+    muted: boolean
+}
 export type VideoAudioData = {
     path: string
-    audio: HTMLAudioElement
+    audio: HTMLAudioElement | VirtualAudioElement
     linkedOutputIds: string[]
 }
 
-// WIP check that this also works for videos without audio tracks
-
-// WIP fade in/out audio
-
 export class VideoPlayer {
-    static async start(path: string, options: VideoOptions = {}, linkedOutputIds?: string[]): Promise<boolean> {
+    static async start(id: string, options: VideoOptions = {}, linkedOutputIds?: string[]): Promise<boolean> {
         // stop fading out if playing again
-        if (this.isFadingOut.includes(path)) this.isFadingOut.splice(this.isFadingOut.indexOf(path), 1)
+        if (this.isFadingOut.includes(id)) this.isFadingOut.splice(this.isFadingOut.indexOf(id), 1)
 
-        const isVideo = getMediaType(getExtension(path)) === "video"
+        const isVideo = options.isOnline || getMediaType(getExtension(id)) === "video"
         if (!isVideo) return false
 
-        const audio = await this.createAudio(path)
+        // check if already playing
+        if (this.audioExists(id, linkedOutputIds)) {
+            if (!options.paused) this.play(id)
+            return true
+        }
+
+        const audio = await this.createAudio(id, options.isOnline)
         if (!audio) return false
 
-        if (options.startAt) audio.currentTime = options.startAt
+        if (options.startAt) {
+            audio.currentTime = options.startAt
+            if ("timeTick" in audio) audio.timeTick.update(options.startAt)
+        }
 
-        // WIP check that it's not already playing
         playingVideos.update((a) => {
-            a.push({ path, audio, linkedOutputIds: linkedOutputIds || [] })
+            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [] })
             return a
         })
 
-        await this.attachToAnalyser(path, audio, linkedOutputIds || [])
-        this.updateProperties(path, options)
+        if (audio instanceof HTMLAudioElement) await this.attachToAnalyser(id, audio, linkedOutputIds || [])
 
-        if (!options.paused) this.play(path)
+        // this.updateProperties(path, options)
+        audio.loop = options.loop ?? false
+        audio.muted = options.muted ?? false
+
+        if (!options.paused) this.play(id)
+
+        if (options.startAt && options.startAt > 0 && !audio.muted && audio instanceof HTMLAudioElement) {
+            const mediaTransition = get(transitionData)?.media
+            const durationMs = mediaTransition?.duration ?? 800
+            if (durationMs > 0) {
+                this.fadeIn(id, audio, durationMs)
+            }
+        }
 
         this.initSyncClock()
 
@@ -58,31 +85,42 @@ export class VideoPlayer {
         return true
     }
 
-    static updateProperties(path: string, options: VideoOptions, outputId?: string) {
-        const audio = this.getAudio(path, outputId)
+    static updateProperties(path: string) {
+        const audio = this.getAudio(path)
         if (!audio) return
 
         const data = get(media)[path]
 
-        if (audio.paused) this.pause(path)
-        audio.loop = options.loop ?? data?.loop ?? false
-        audio.muted = options.muted ?? false
+        if (data.speed && audio instanceof HTMLAudioElement) audio.playbackRate = parseFloat(data.speed)
     }
 
-    private static async createAudio(path: string): Promise<HTMLAudioElement | null> {
-        const audio = new Audio(encodeFilePath(path))
+    private static async createAudio(id: string, isOnline?: boolean): Promise<HTMLAudioElement | VirtualAudioElement | null> {
+        if (isOnline) {
+            const playerData = get(playerVideos)[id]
+            const path = playerData?.id || ""
+            const data = await (playerData?.type === "youtube" ? getYouTubeData(path) : playerData?.type === "vimeo" ? getVimeoData(path) : null)
+
+            return {
+                currentTime: 0,
+                timeTick: new TimeInterpolator(),
+                duration: data?.duration || 0,
+                paused: true,
+                loop: false,
+                muted: false
+            }
+        }
+
+        const audio = new Audio(encodeFilePath(id))
         audio.addEventListener("play", () => {
-            updatePlayingStore(path, "paused", false)
             AudioAnalyserMerger.init()
         })
         audio.addEventListener("pause", () => {
-            updatePlayingStore(path, "paused", true)
             if (!AudioAnalyser.shouldAnalyse()) AudioAnalyserMerger.stop()
         })
         audio.addEventListener("ended", () => {
-            this.checkIfEnding(path, true)
+            this.checkIfEnding(id, true)
         })
-        return await this.waitForAudio(path, audio)
+        return await this.waitForAudio(id, audio)
     }
 
     private static waitForAudio(pathOrId: string, audio: HTMLAudioElement): Promise<HTMLAudioElement | null> {
@@ -117,7 +155,7 @@ export class VideoPlayer {
         // should loop
         if (get(media)[path]?.loop) return
 
-        this.stop(path)
+        this.stop(path, undefined, true)
 
         checkNextAfterMedia(path)
     }
@@ -127,32 +165,53 @@ export class VideoPlayer {
     static play(path: string, outputId?: string) {
         if (!this.audioExists(path)) return
 
-        updatePlayingStore(path, "paused", false)
-        this.getAudio(path, outputId)?.play()
+        const audio = this.getAudio(path, outputId)
+        if (!audio) return
 
-        AudioAnalyserMerger.init()
+        if (audio instanceof HTMLAudioElement) {
+            audio.play()
+            AudioAnalyserMerger.init()
+        } else if ("timeTick" in audio) {
+            audio.paused = false
+            audio.timeTick.play()
+        }
+
         this.initSyncClock()
     }
 
     static pause(path: string, outputId?: string) {
         if (!this.audioExists(path)) return
 
-        updatePlayingStore(path, "paused", true)
-        this.getAudio(path, outputId)?.pause()
+        const audio = this.getAudio(path, outputId)
+        if (!audio) return
 
-        if (!AudioAnalyser.shouldAnalyse()) AudioAnalyserMerger.stop()
+        if (audio instanceof HTMLAudioElement) {
+            audio.pause()
+            if (!AudioAnalyser.shouldAnalyse()) AudioAnalyserMerger.stop()
+        } else if ("timeTick" in audio) {
+            audio.paused = true
+            audio.timeTick.pause()
+        }
+
         this.initSyncClock()
     }
 
     static isFadingOut: string[] = []
-    static stop(path: string, outputId?: string) {
+    static async stop(path: string, outputId?: string, reachedEnd = false) {
         if (!this.audioExists(path) || this.isFadingOut.includes(path)) return
 
-        this.isFadingOut.push(path)
-        // WIP await fade out
+        const audio = this.getAudio(path, outputId)
 
-        // might have been started again while fading out
-        if (!this.isFadingOut.includes(path)) return
+        if (audio instanceof HTMLAudioElement && !reachedEnd && audio && !audio.paused && audio.volume > 0) {
+            const durationMs = get(transitionData)?.media?.duration ?? 800
+            if (durationMs > 0) {
+                const faded = await this.fadeOut(path, audio, durationMs)
+                if (!faded) return
+
+                const fadeIndex = this.isFadingOut.indexOf(path)
+                if (fadeIndex !== -1) this.isFadingOut.splice(fadeIndex, 1)
+            }
+        }
 
         this.pause(path, outputId)
 
@@ -163,7 +222,7 @@ export class VideoPlayer {
             // reset
             const index = a.findIndex((v) => v.path === path && (!outputId || v.linkedOutputIds.includes(outputId)))
             if (index !== -1) {
-                a[index].audio.src = ""
+                if (a[index].audio instanceof HTMLAudioElement) a[index].audio.src = ""
                 a.splice(index, 1)
             }
             return a
@@ -172,16 +231,93 @@ export class VideoPlayer {
         videoEnding()
     }
 
+    private static async fadeOut(path: string, audio: HTMLAudioElement, durationMs: number): Promise<boolean> {
+        this.isFadingOut.push(path)
+
+        // WIP account for transition offset
+        // if (!clearOutput) duration /= 2.4 // a little less than half the time
+
+        const startVolume = audio.volume
+        const steps = 30
+        const intervalMs = durationMs / steps
+        const volumeStep = startVolume / steps
+
+        await new Promise<void>((resolve) => {
+            const timer = setInterval(() => {
+                if (!this.isFadingOut.includes(path)) {
+                    clearInterval(timer)
+                    resolve()
+                    return
+                }
+                if (audio.volume > volumeStep) {
+                    audio.volume = Math.max(0, audio.volume - volumeStep)
+                    AudioAnalyser.setSourceVolume(path, audio.volume)
+                } else {
+                    audio.volume = 0
+                    AudioAnalyser.setSourceVolume(path, 0)
+                    clearInterval(timer)
+                    resolve()
+                }
+            }, intervalMs)
+        })
+
+        return this.isFadingOut.includes(path)
+    }
+
+    private static async fadeIn(path: string, audio: HTMLAudioElement, durationMs: number): Promise<void> {
+        const targetVolume = audio.volume || 1
+        audio.volume = 0
+        AudioAnalyser.setSourceVolume(path, 0)
+
+        const steps = 30
+        const intervalMs = durationMs / steps
+        const volumeStep = targetVolume / steps
+
+        await new Promise<void>((resolve) => {
+            const timer = setInterval(() => {
+                if (this.isFadingOut.includes(path) || audio.paused) {
+                    clearInterval(timer)
+                    resolve()
+                    return
+                }
+                if (audio.volume < targetVolume - volumeStep) {
+                    audio.volume = Math.min(targetVolume, audio.volume + volumeStep)
+                    AudioAnalyser.setSourceVolume(path, audio.volume)
+                } else {
+                    audio.volume = targetVolume
+                    AudioAnalyser.setSourceVolume(path, targetVolume)
+                    clearInterval(timer)
+                    resolve()
+                }
+            }, intervalMs)
+        })
+    }
+
     static stopByOutputIds(outputIds: string[]) {
         const videosToStop = get(playingVideos).filter((v) => v.linkedOutputIds?.some((id) => outputIds.includes(id)))
         videosToStop.forEach((v) => this.stop(v.path))
     }
 
     static seekTo(path: string, outputId: string, time: number) {
+        this.setAudioValue(path, outputId, "currentTime", time)
+    }
+
+    static toggleLoop(path: string, outputId: string) {
+        this.setAudioValue(path, outputId, "loop", !this.getAudio(path, outputId)?.loop)
+    }
+
+    static toggleMute(path: string, outputId: string) {
+        this.setAudioValue(path, outputId, "muted", !this.getAudio(path, outputId)?.muted)
+    }
+
+    private static setAudioValue(path: string, outputId: string, key: string, value: any) {
         const audio = this.getAudio(path, outputId)
         if (!audio) return
 
-        audio.currentTime = time
+        audio[key] = value
+
+        if (key === "currentTime" && "timeTick" in audio) audio.timeTick.update(value)
+
         this.initSyncClock()
     }
 
@@ -191,7 +327,7 @@ export class VideoPlayer {
         return get(playingVideos).find((v) => v.path === path) || null
     }
 
-    static getAudio(path: string, outputId?: string): HTMLAudioElement | null {
+    static getAudio(path: string, outputId?: string) {
         const video = get(playingVideos).find((v) => v.path === path && (!outputId || v.linkedOutputIds.includes(outputId)))
         return video?.audio || null
     }
@@ -211,10 +347,28 @@ export class VideoPlayer {
         return duration
     }
 
+    static async getDuration(path: string): Promise<number> {
+        const audio = this.getAudio(path)
+        if (audio) return audio.duration
+
+        return new Promise((resolve) => {
+            let video = document.createElement("audio")
+            video.setAttribute("src", encodeFilePath(path))
+            video.addEventListener("loadedmetadata", () => {
+                resolve(video.duration)
+                video.remove()
+            })
+        })
+    }
+
     // STATE
 
-    static audioExists(path: string) {
-        return !!this.getPlaying(path)
+    static audioExists(path: string, outputIds?: string[]) {
+        const playing = this.getPlaying(path)
+        if (!playing) return false
+
+        if (!outputIds || !outputIds.length) return !!playing
+        return outputIds.some((id) => playing.linkedOutputIds.includes(id))
     }
 
     static isPaused(path: string) {
@@ -239,7 +393,7 @@ export class VideoPlayer {
     private static initSyncClock() {
         if (this.syncClockTimer) clearInterval(this.syncClockTimer)
         this.syncState() // update immediately
-        this.syncClockTimer = setInterval(() => this.syncState(), 1000)
+        this.syncClockTimer = setInterval(() => this.syncState(), get(special).optimizedMode ? 1000 : 100)
     }
 
     private static syncState() {
@@ -248,8 +402,9 @@ export class VideoPlayer {
         playingVideoState.update((a) => {
             get(playingVideos).forEach((video) => {
                 const audio = video.audio
-                console.log(audio, audio?.currentTime, audio?.paused)
                 if (!audio) return
+
+                if ("timeTick" in audio) audio.currentTime = audio.timeTick.value
 
                 const outputIds = video.linkedOutputIds || []
                 outputIds.forEach((outputId) => {
@@ -258,7 +413,8 @@ export class VideoPlayer {
                         currentTime: audio.currentTime,
                         duration: audio.duration,
                         paused: audio.paused,
-                        loop: audio.loop
+                        loop: audio.loop,
+                        muted: audio.muted
                     }
                 })
 
@@ -275,15 +431,6 @@ export class VideoPlayer {
             }
         }
     }
-}
-
-function updatePlayingStore(id: string, key: string, value: any) {
-    playingVideos.update((a) => {
-        const index = a.findIndex((v) => v.path === id)
-        if (index === -1) return a
-        a[index][key] = value
-        return a
-    })
 }
 
 function videoEnding() {

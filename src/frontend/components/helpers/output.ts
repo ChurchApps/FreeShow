@@ -115,8 +115,22 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
     // const backgroundId = getFirstOutputIdWithAudableBackground(allOutputIds)
 
     // setup video manager (and audio analyser)
-    if (type === "background" && data) VideoPlayer.start(data.path, { loop: data.loop, muted: data.muted, startAt: data.startAt || 0 }, allOutputIds)
-    else if (type === "background" && !data) VideoPlayer.stopByOutputIds(allOutputIds)
+    if (type === "background") {
+        if (data) {
+            const newPath = data.path || data.id || ""
+
+            // stop any playing backgrounds (if different than new path)
+            allOutputIds.forEach((outputId) => {
+                const currentBg = get(outputs)[outputId]?.out?.background
+                const bgPath = currentBg?.path || currentBg?.id || ""
+                if (bgPath && bgPath !== newPath) VideoPlayer.stop(bgPath, outputId)
+            })
+
+            VideoPlayer.start(newPath, { loop: data.loop, muted: data.muted, startAt: data.startAt || 0, isOnline: data.type === "player" }, allOutputIds)
+        } else {
+            VideoPlayer.stopByOutputIds(allOutputIds)
+        }
+    }
 
     outputs.update((a) => {
         if (type === "slide" && data?.id) {
@@ -165,7 +179,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
                 const slideContent = getOutputContent(id)
                 if (data && (slideContent.type === "pdf" || slideContent.type === "ppt")) clearSlide()
 
-                if (data) data = changeOutputBackground(data, { output, id })
+                if (data) data = changeOutputBackground(data, { id })
             }
 
             let outData = a[id].out?.[type] || null
@@ -273,7 +287,7 @@ function _stopBreakRecording() {
     })
 }
 
-function changeOutputBackground(data, { output, id }) {
+function changeOutputBackground(data, { id }) {
     if (isMainWindow()) {
         setTimeout(() => {
             // update stage background if any
@@ -282,62 +296,6 @@ function changeOutputBackground(data, { output, id }) {
             // sendBackgroundToController(id)
         }, 100)
     }
-
-    console.log(output)
-
-    // const previousWasVideo: boolean = videoExtensions.includes(getExtension(output.out?.background?.path))
-
-    // if (data === null) {
-    //     // Clean up audio controller for this output
-    //     VideoController.destroy(id)
-
-    //     if (previousWasVideo) videoEnding()
-
-    //     return data
-    // }
-
-    // mute videos in the other output windows if more than one
-    data.muted = data.muted || false
-    // if (mute) data.muted = true
-
-    // if (id === videoOutputId) {
-    //     const muteAudio = get(special).muteAudioWhenVideoPlays
-    //     const isVideo = data.type === "player" || data.type === "video" || videoExtensions.includes(getExtension(data.path))
-    //     if (!data.muted && muteAudio && isVideo) fadeoutAllPlayingAudio()
-    //     else fadeinAllPlayingAudio()
-
-    //     const type = data.muted && data.loop ? "background" : !data.muted && !data.loop ? "foreground" : null
-
-    //     if (isVideo) videoStarting(type)
-    //     else if (previousWasVideo) videoEnding()
-
-    //     // Start the VideoController for native video files
-    //     const isNativeVideo = videoExtensions.includes(getExtension(data.path))
-    //     if (isNativeVideo && data.path) {
-    //         const ctrl = VideoController.getOrCreate(id)
-    //         ctrl.load(data.path, {
-    //             startAt: data.startAt,
-    //             loop: data.loop ?? false,
-    //             muted: data.muted ?? false
-    //         })
-    //     } else {
-    //         // For non-video backgrounds (images, cameras, players) — no audio controller
-    //         VideoController.destroy(id)
-    //         const videoData = { muted: data.muted, loop: data.loop || false }
-    //         setTimeout(() => {
-    //             send(OUTPUT, ["DATA"], { [id]: videoData })
-    //             if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
-    //         }, 600)
-    //     }
-    // } else {
-    //     // Secondary (muted) outputs: no audio controller, just send state
-    //     VideoController.destroy(id)
-    //     const videoData = { muted: true, loop: data.loop || false }
-    //     setTimeout(() => {
-    //         send(OUTPUT, ["DATA"], { [id]: videoData })
-    //         if (data.startAt !== undefined) send(OUTPUT, ["TIME"], { [id]: data.startAt || 0 })
-    //     }, 600)
-    // }
 
     return data
 }
@@ -970,46 +928,46 @@ export function deleteOutput(outputId: string) {
     })
 }
 
-export async function clearPlayingVideo(clearOutput = "") {
-    const mediaTransition: Transition = getCurrentMediaTransition()
+// export async function clearPlayingVideo(clearOutput = "") {
+//     const mediaTransition: Transition = getCurrentMediaTransition()
 
-    let duration = (mediaTransition?.duration || 0) + 200
-    if (!clearOutput) duration /= 2.4 // a little less than half the time
+//     let duration = (mediaTransition?.duration || 0) + 200
+//     if (!clearOutput) duration /= 2.4 // a little less than half the time
 
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            // remove from playing
-            // playingVideos.update((playingVideo) => {
-            //     let existing = -1
-            //     do {
-            //         existing = playingVideo.findIndex((a) => (clearOutput ? a.id === clearOutput : a.location === "output") || a.location === "preview")
-            //         if (existing > -1) playingVideo.splice(existing, 1)
-            //     } while (existing > -1)
+//     return new Promise((resolve) => {
+//         setTimeout(() => {
+//             // remove from playing
+//             // playingVideos.update((playingVideo) => {
+//             //     let existing = -1
+//             //     do {
+//             //         existing = playingVideo.findIndex((a) => (clearOutput ? a.id === clearOutput : a.location === "output") || a.location === "preview")
+//             //         if (existing > -1) playingVideo.splice(existing, 1)
+//             //     } while (existing > -1)
 
-            //     return playingVideo
-            // })
-            // playingVideos.set([])
+//             //     return playingVideo
+//             // })
+//             // playingVideos.set([])
 
-            //   let video = null
-            const videoData = {
-                time: 0,
-                duration: 0,
-                paused: !!clearOutput,
-                muted: false,
-                loop: false
-            }
+//             //   let video = null
+//             const videoData = {
+//                 time: 0,
+//                 duration: 0,
+//                 paused: !!clearOutput,
+//                 muted: false,
+//                 loop: false
+//             }
 
-            // if (!AudioAnalyser.shouldAnalyse()) {
-            //     // wait for video to clear in output
-            //     setTimeout(() => AudioAnalyserMerger.stop(), 5000)
-            // }
+//             // if (!AudioAnalyser.shouldAnalyse()) {
+//             //     // wait for video to clear in output
+//             //     setTimeout(() => AudioAnalyserMerger.stop(), 5000)
+//             // }
 
-            // send(OUTPUT, ["UPDATE_VIDEO"], { id: clearOutput, data: videoData, time: 0 })
+//             // send(OUTPUT, ["UPDATE_VIDEO"], { id: clearOutput, data: videoData, time: 0 })
 
-            resolve(videoData)
-        }, duration)
-    })
-}
+//             resolve(videoData)
+//         }, duration)
+//     })
+// }
 
 export function getCurrentMediaTransition() {
     const transition: Transition = get(transitionData).media

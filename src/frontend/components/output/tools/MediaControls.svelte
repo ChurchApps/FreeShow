@@ -3,13 +3,12 @@
     import { Unsubscriber } from "svelte/store"
     import type { Output } from "../../../../types/Output"
     import type { MediaType, ShowType } from "../../../../types/Show"
-    import { activeFocus, activeShow, focusMode, outLocked, playerVideos, videosData, videosTime } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, outLocked, playerVideos } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getMediaType } from "../../helpers/media"
-    import { setOutput } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -21,13 +20,8 @@
     export let outputId: string
     export let big = false
 
-    $: videoData = $videosData[outputId] || {}
-
+    let videoData = { duration: 0, paused: true, loop: false, muted: false }
     let videoTime = 0
-    $: if ($videosTime[outputId] !== undefined) {
-        const raw = $videosTime[outputId] || 0
-        videoTime = videoData?.duration ? Math.min(raw, videoData.duration) : raw
-    }
 
     // reset
     $: if (path) videoTime = 0
@@ -47,27 +41,29 @@
             unsubscriber = null
         }
 
-        if (!path || type !== "video") return
+        if (!path || (type !== "video" && type !== "player")) return
 
-        // WIP break if changing this slider
-
-        // const currentVideoAudio = $playingVideos.find((a) => a.path === path)?.audio
-        // console.log(currentVideoAudio)
-        // videoData.duration = currentVideoAudio?.duration || 0
+        // interpolate video time (so slider updates more smoothly) / slider step is 1 anyway
+        // const interpolator = new TimeInterpolator((time) => videoTime = time)
 
         unsubscriber = videoSync(path, outputId, (data) => {
             videoTime = data.currentTime || 0
             if (data.duration) videoData.duration = data.duration
             videoData.paused = data.paused
             videoData.loop = data.loop
-            // videoData.muted = data.muted
+            videoData.muted = data.muted
+
+            // interpolator.update(videoTime)
+            // if (videoData.paused) interpolator.stop()
+            // else interpolator.start()
         })
     }
     onDestroy(() => {
+        // interpolator.stop()
         if (unsubscriber) unsubscriber()
     })
 
-    $: if (path && videoData) VideoPlayer.updateProperties(path, videoData, outputId)
+    // $: if (path && videoData) VideoPlayer.updateProperties(path, videoData, outputId)
 
     let mediaName = ""
     $: outName = path && path.includes(".") && !path.includes("base64") ? splitPath(path).name : ""
@@ -76,18 +72,19 @@
     // $: activeOutputIds = getActiveOutputs($outputs, true, true, true)
 
     function toggleMute() {
-        if (videoData.muted === undefined) videoData.muted = true
+        if (!path) return
+
         videoData.muted = !videoData.muted
-        if (background) setOutput("background", { ...background, muted: videoData.muted }, false, outputId)
-        // Update controller audio
-        // VideoController.get(outputId)?.setComputedVolume(videoData.muted ? 0 : 1, !!videoData.muted)
-        // videosData.update((a) => ({ ...a, [outputId]: { ...a[outputId], muted: videoData.muted } }))
+        // if (background) setOutput("background", { ...background, muted: videoData.muted }, false, outputId)
+        VideoPlayer.toggleMute(path, outputId)
     }
 
     function toggleLoop() {
+        if (!path) return
+
         videoData.loop = !videoData.loop
-        if (background) setOutput("background", { ...background, loop: videoData.loop }, false, outputId)
-        // VideoController.get(outputId)?.setLoop(!!videoData.loop)
+        // if (background) setOutput("background", { ...background, loop: videoData.loop }, false, outputId)
+        VideoPlayer.toggleLoop(path, outputId)
     }
 
     function openPreview() {
@@ -105,16 +102,6 @@
 
         if (isPaused) VideoPlayer.play(path, outputId)
         else VideoPlayer.pause(path, outputId)
-
-        // const ctrl = VideoController.get(outputId)
-        // if (ctrl) {
-        //     if (videoData.paused) ctrl.play()
-        //     else ctrl.pause()
-        // } else {
-        //     // fallback for player/non-native-video types: update store only
-        //     videoData.paused = !videoData.paused
-        //     videosData.update((a) => ({ ...a, [outputId]: { ...a[outputId], paused: videoData.paused } }))
-        // }
     }
 
     let changeValue = 0

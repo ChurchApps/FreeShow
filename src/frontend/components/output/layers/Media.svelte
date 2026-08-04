@@ -5,7 +5,7 @@
     import Image from "../../media/Image.svelte"
     import Video from "../../media/Video.svelte"
 
-    export let outputId: string
+    export let outputId: string = ""
     export let path: string
     export let path2 = ""
     export let data: OutBackground = {}
@@ -15,6 +15,7 @@
     export let mirror = false
 
     export let video: HTMLVideoElement | null = null
+    // for previews that are not outputted
     export let videoData: any = { paused: false, muted: true, duration: 0, loop: false }
     export let videoTime = 0
 

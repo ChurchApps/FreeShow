@@ -1,18 +1,17 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
+    import type { Unsubscriber } from "svelte/store"
     import { uid } from "uid"
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
     import { requestMain, sendMain } from "../../IPC/main"
-    import { AudioAnalyser } from "../../audio/audioAnalyser"
-    import { activeProject, activeRename, audioChannelsData, focusMode, media, outLocked, outputs, projects, videoMarkers, videosData, videosTime } from "../../stores"
+    import { activeProject, activeRename, audioChannelsData, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import { enableSubtitle, encodeFilePath, getExtension, getFileName, getMediaLayerType, removeExtension } from "../helpers/media"
-    import { getActiveOutputs, setOutput } from "../helpers/output"
+    import { getFirstActiveOutput, setOutput } from "../helpers/output"
     import { joinTime, secondsToTime } from "../helpers/time"
-    import { getFirstOutputIdWithAudableBackground } from "../helpers/video"
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import HiddenInput from "../inputs/HiddenInput.svelte"
     import HoverButton from "../inputs/HoverButton.svelte"
@@ -23,6 +22,7 @@
     import MediaControls from "../output/tools/MediaControls.svelte"
     import Player from "../system/Player.svelte"
     import { formatVTT, SRTtoVTT } from "./media/subtitles"
+    import { videoSync } from "../media/video/videoSync"
 
     export let mediaPath: string
     export let show
@@ -43,16 +43,35 @@
 
     export let mediaStyle: MediaStyle = {}
 
-    let videoTime = 0
-    let videoData = {
-        paused: false,
-        muted: true,
-        duration: 0,
-        loop: false
+    let unsubscriber: Unsubscriber | null = null
+    $: setTimeout(() => pathChanged(mediaPath))
+    function pathChanged(path: string | undefined) {
+        if (unsubscriber) {
+            unsubscriber()
+            unsubscriber = null
+        }
+
+        if (!path || type !== "video") return
+
+        videoData = { paused: false, muted: true, duration: 0, loop: false }
+
+        unsubscriber = videoSync(path, outputId, (data) => {
+            videoTime = data.currentTime || 0
+            if (data.duration) videoData.duration = data.duration
+            if (playingInOutput) videoData.paused = data.paused
+            videoData.loop = playingInOutput ? data.loop : false
+            // videoData.muted = data.muted
+        })
     }
+    onDestroy(() => {
+        if (unsubscriber) unsubscriber()
+    })
+
+    let videoTime = 0
+    let videoData = { paused: false, muted: true, duration: 0, loop: false }
     $: if (showId) videoData.paused = false
     $: if (!videoData) videoData = { paused: false, muted: true, duration: 0, loop: false }
-    $: if (playingInOutput && $videosData[outputId]) setVideoData()
+    // $: if (playingInOutput && $videosData[outputId]) setVideoData()
     $: if (playingInOutput && $videosData[outputId]?.paused && !videoData.paused) setPaused()
     function setPaused() {
         videoData.paused = true
@@ -60,9 +79,9 @@
         videoTime = 0
         autoPause = false
     }
-    function setVideoData() {
-        videoData = { ...$videosData[outputId], muted: true }
-    }
+    // function setVideoData() {
+    //     videoData = { ...$videosData[outputId], muted: true }
+    // }
 
     let prevId: string | undefined = undefined
     $: if (mediaPath !== prevId) {
@@ -74,12 +93,13 @@
         if (timeMarkersEnabled && manageSubtitles) manageSubtitles = false
     }
 
-    $: allActiveOutputs = getActiveOutputs($outputs, true, true, true)
+    // $: allActiveOutputs = getActiveOutputs($outputs, true, true, true)
     // $: outputId = allActiveOutputs[0]
     // $: currentOutput = $outputs[outputId]
 
     // background output
-    $: outputId = getFirstOutputIdWithAudableBackground(allActiveOutputs) || allActiveOutputs.find((id) => $outputs[id]?.out?.background) || allActiveOutputs[0]
+    // $: outputId = getFirstOutputIdWithAudableBackground(allActiveOutputs) || allActiveOutputs.find((id) => $outputs[id]?.out?.background) || allActiveOutputs[0]
+    $: outputId = $playingVideos.find((a) => a.path === mediaPath)?.linkedOutputIds?.[0] || getFirstActiveOutput()?.id || ""
     $: currentOutput = outputId ? $outputs[outputId] || null : null
 
     // outBackground.subscribe(backgroundChanged)
@@ -152,33 +172,11 @@
 
     let video: HTMLVideoElement | undefined
     function onPlay() {
-        // autoPause = false
         if (hasLoaded) {
             if (!playingInOutput) videoTime = 0
             hasLoaded = false
-
-            // let analyser = await getAnalyser(video)
-            // if (!analyser) return
-
-            // playingVideos.update((a) => {
-            //     a.push({ id: mediaPath, location: "preview" })
-            //     return a
-            // })
-
-            // WIP analyser
-            // analyseAudio()
         }
     }
-    // $: if (videoData) {
-    //     playingVideos.update((a) => {
-    //         let existing = a.findIndex((a) => a.id === mediaPath && a.location === "preview")
-    //         if (existing > -1) {
-    //             a[existing].paused = videoData.muted ? true : videoData.paused
-    //             if (!a[existing].paused) analyseAudio()
-    //         }
-    //         return a
-    //     })
-    // }
 
     let shouldLoop = false
     let shouldBeMuted = false
@@ -210,34 +208,13 @@
         setOutput("background", bg)
     }
 
-    $: videoData.muted = shouldBeMuted
-    $: videoData.loop = shouldLoop
-
-    function updateActiveBackground(updateData: any) {
-        allActiveOutputs.forEach((id) => {
-            const currentBg = $outputs[id]?.out?.background
-            if (currentBg) {
-                setOutput("background", { ...currentBg, ...updateData }, false, id)
-            }
-        })
-    }
-
-    $: if (mediaPath && shouldBeMuted !== undefined) {
-        AudioAnalyser.setSourceVolume(mediaPath, shouldBeMuted ? 0 : 1)
-    }
-
     function toggleLoop() {
         shouldLoop = !shouldLoop
-        videoData.loop = shouldLoop
         saveToProject("loop", shouldLoop)
-        if (playingInOutput) updateActiveBackground({ loop: shouldLoop })
     }
     function toggleMute() {
         shouldBeMuted = !shouldBeMuted
-        videoData.muted = shouldBeMuted
-        AudioAnalyser.setSourceVolume(mediaPath, shouldBeMuted ? 0 : 1)
         saveToProject("muted", shouldBeMuted)
-        if (playingInOutput) updateActiveBackground({ muted: shouldBeMuted })
     }
 
     // save in project item if any active
@@ -388,14 +365,15 @@
         <!-- TODO: info about: CTRL click to play at current pos -->
         <HoverButton hide={playingInOutput} icon="play" size={10} on:click={(e) => playVideo(e.ctrlKey || e.metaKey ? videoTime : 0)}>
             {#if type === "player"}
-                <Player id={showId} bind:videoData bind:videoTime preview />
+                <Player id={showId} {outputId} preview />
             {:else if mediaPath}
+                <!-- TODO: use Video.svelte element instead -->
                 <!-- TODO: on:error={videoError} - ERR_FILE_NOT_FOUND -->
                 {#if mediaStyle.fit === "blur"}
                     <video style={mediaStyleBlurString} src={encodeFilePath(mediaPath)} bind:this={blurVideo} bind:paused={blurPausedState} loop={videoData.loop} muted />
                 {/if}
                 {@const mainVol = $audioChannelsData.main?.volume ?? 1}
-                <video style={mediaStyleString} src={encodeFilePath(mediaPath)} on:loadedmetadata={onLoad} on:playing={onPlay} bind:this={video} bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} bind:muted={videoData.muted} volume={shouldBeMuted ? 0 : Math.min(1, Math.max(0, mainVol))} loop={videoData.loop}>
+                <video style={mediaStyleString} src={encodeFilePath(mediaPath)} on:loadedmetadata={onLoad} on:playing={onPlay} bind:this={video} bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} bind:muted={videoData.muted} volume={Math.min(1, Math.max(0, mainVol))} loop={videoData.loop}>
                     <track kind="captions" src="" label="No captions available" />
                     {#each tracks as track}
                         <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
@@ -488,7 +466,7 @@
     {#if playingInOutput}
         <MediaControls {currentOutput} {outputId} big />
     {:else}
-        <FloatingInputs arrow let:open>
+        <FloatingInputs arrow={type === "video"} let:open>
             <div slot="menu" style="display: flex;min-width: 500px;">
                 <MaterialButton
                     title={videoData.paused ? "media.play" : "media.pause"}
@@ -500,10 +478,10 @@
                     <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} />
                 </MaterialButton>
 
-                <VideoSlider bind:videoData bind:videoTime />
+                <VideoSlider {outputId} path={mediaPath} bind:videoData bind:videoTime />
 
-                <MaterialButton title={shouldBeMuted ? "actions.unmute" : "actions.mute"} on:click={toggleMute}>
-                    <Icon id={shouldBeMuted ? "muted" : "volume"} white={shouldBeMuted} />
+                <MaterialButton title={videoData.muted ? "actions.unmute" : "actions.mute"} on:click={() => (videoData.muted = !videoData.muted)}>
+                    <Icon id={videoData.muted ? "muted" : "volume"} white={videoData.muted} />
                 </MaterialButton>
 
                 <div class="divider"></div>

@@ -1,17 +1,15 @@
 <script lang="ts">
-    import { currentWindow } from "../../stores"
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
-    import { media } from "../../stores"
+    import { currentWindow, media } from "../../stores"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
-    import { SoftLoopManager } from "./softLoop"
     import { videoSync } from "./video/videoSync"
 
     export let outputId: string
     export let path: string
     export let video: HTMLVideoElement | null = null
-    export let videoData: any
-    export let videoTime: number
+    export let videoData: any = { paused: false, loop: false }
+    export let videoTime: number = 0
     export let startAt = 0
 
     export let mediaStyle: MediaStyle = {}
@@ -26,18 +24,26 @@
     let videoAspect: number | null = null
     let perfectFit = false
 
+    // let videoData = { paused: false, loop: false }
+    // let videoTime = 0
+
     onMount(() => {
         // sync state listener
         const unsubscribe = videoSync(path, outputId, (data) => {
             if (!video) return
 
             // more than 0.1s difference, update video time
-            if (data.currentTime !== undefined && Math.abs(video.currentTime - data.currentTime) > 0.1) video.currentTime = data.currentTime
-
-            if (data.paused !== undefined && video.paused !== data.paused) {
-                if (data.paused) video.pause()
-                else video.play().catch((e) => console.error("Error playing video:", e))
+            if (data.currentTime !== undefined && video.readyState >= 2 && !video.seeking && Math.abs(video.currentTime - data.currentTime) > 0.1) {
+                video.currentTime = data.currentTime
             }
+
+            videoData.loop = data.loop
+            videoData.paused = data.paused
+
+            // if (data.paused !== undefined && video.paused !== data.paused) {
+            //     if (data.paused) video.pause()
+            //     else video.play().catch((e) => console.error("Error playing video:", e))
+            // }
         })
 
         if (!container) return
@@ -88,7 +94,7 @@
     }
 
     onDestroy(() => {
-        if (endInterval) clearInterval(endInterval)
+        // if (endInterval) clearInterval(endInterval)
         if (pingbackInterval) clearInterval(pingbackInterval)
 
         const cleanupVideo = (el: HTMLVideoElement | null | undefined) => {
@@ -104,21 +110,21 @@
 
         cleanupVideo(video)
         cleanupVideo(blurVideo)
-        cleanupVideo(softLoopVideo)
+        // cleanupVideo(softLoopVideo)
     })
 
     // custom end time
-    $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0 // || videoData.duration
-    let endInterval: NodeJS.Timeout | null = null
-    $: if (endTime && !endInterval) endInterval = setInterval(checkIfEnded, 1000 * playbackRate)
-    function checkIfEnded() {
-        if (!videoTime || !endTime) return
-        if (videoTime >= endTime) {
-            if (videoData.loop) {
-                if (!softLoopValue) videoTime = mediaStyle.fromTime || 0
-            } else dispatch("ended")
-        }
-    }
+    // $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0 // || videoData.duration
+    // let endInterval: NodeJS.Timeout | null = null
+    // $: if (endTime && !endInterval) endInterval = setInterval(checkIfEnded, 1000 * playbackRate)
+    // function checkIfEnded() {
+    //     if (!videoTime || !endTime) return
+    //     if (videoTime >= endTime) {
+    //         if (videoData.loop) {
+    //             if (!softLoopValue) videoTime = mediaStyle.fromTime || 0
+    //         } else dispatch("ended")
+    //     }
+    // }
 
     function playing() {
         if (!hasLoaded || mirror) return
@@ -170,55 +176,19 @@
     // some videos don't like high playback speed (above 5.9)
     // https://issues.chromium.org/issues/40167938
 
-    // Soft loop
-    // WIP currently not working well in preview
-    const slManager = new SoftLoopManager()
-    const slUpdate = (res: any) => {
-        if (res.opacity !== undefined) softLoopOpacity = res.opacity
-        if (res.videoTime !== undefined) videoTime = res.videoTime
-        if (res.paused !== undefined) videoData.paused = res.paused
-    }
-
-    let softLoopVideo: HTMLVideoElement | null = null
-    let softLoopOpacity = 0
-
-    // Soft loop — visual cross-fade only (audio fade is handled by VideoController)
-    $: softLoopValue = Number(mediaStyle.softLoop) > 0 ? Number(mediaStyle.softLoop) : 0
-    $: actualEndTime = endTime || videoData.duration || 0
-    $: if (softLoopValue > 0 && softLoopVideo && playbackRate) softLoopVideo.playbackRate = playbackRate
-
-    $: slParams = {
-        video,
-        softLoopVideo,
-        softLoopValue,
-        actualEndTime,
-        mirror,
-        fromTime: mediaStyle.fromTime || 0,
-        loop: videoData.loop,
-        paused: videoData.paused,
-        onUpdate: slUpdate
-    }
-
-    function handleTimeUpdate() {
-        if (video) slManager.update(slParams)
-    }
-    $: if (video) slManager.update(slParams)
-
-    function handleEnded() {
-        if (!slManager.handleEnded(slParams)) dispatch("ended")
-    }
+    // TODO: re-add softloop
 </script>
 
 <div bind:this={container} style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
     {#if mediaStyle.fit === "blur" && !perfectFit}
         <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:playbackRate bind:this={blurVideo} bind:paused={blurPausedState} muted loop={videoData.loop || false} />
     {/if}
-    <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:ended={handleEnded} on:error on:timeupdate={handleTimeUpdate} bind:playbackRate bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} muted src={encodeFilePath(path)} autoplay loop={videoData.loop && !softLoopValue}>
+    <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:error bind:playbackRate bind:currentTime={videoTime} bind:paused={videoData.paused} muted src={encodeFilePath(path)} autoplay loop={videoData.loop}>
         {#each tracks as track}
             <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
         {/each}
     </video>
-    {#if softLoopValue > 0 && videoData.loop}
+    <!-- {#if softLoopValue > 0 && videoData.loop}
         <video class="media" style="{mediaStyleString} position: absolute; top: 0; left: 0; opacity: {softLoopOpacity}; pointer-events: none;" bind:this={softLoopVideo} bind:paused={videoData.paused} src={encodeFilePath(path)} muted bind:playbackRate />
-    {/if}
+    {/if} -->
 </div>
