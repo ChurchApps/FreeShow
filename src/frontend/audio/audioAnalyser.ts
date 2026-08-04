@@ -1,20 +1,12 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { AUDIO } from "../../types/Channels"
-import { audioEffects, audioRouting, disabledServers, media, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
+import { audioRouting, disabledServers, media, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
 import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
 import { AudioProcessor, PitchShiftNode } from "./audioProcessor"
-import { initializeCompressor } from "./effects/audioCompressor"
-import { initializeDelay } from "./effects/audioDelay"
-import { disconnectAudioSourceFromEqualizer, getGlobalEqualizer, getGlobalEqualizerNodes, initializeEqualizer, setAutoInitializeCallback } from "./effects/audioEqualizer"
-import { initializeFilter } from "./effects/audioFilter"
-import { initializeLimiter } from "./effects/audioLimiter"
-import { initializeNoiseGate } from "./effects/audioNoiseGate"
-import { initializeReverb } from "./effects/audioReverb"
-import { initializeStereoShaper } from "./effects/audioStereoShaper"
 import { AudioInputCapture } from "./routing/audioInputCapture"
 import { AudioRoutingManager } from "./routing/audioRoutingManager"
 
@@ -23,7 +15,6 @@ export class AudioAnalyser {
     static channels = AudioMultichannel.DEFAULT_CHANNELS // default left/right, will be updated dynamically
     static maxChannels = AudioMultichannel.MAX_CHANNELS // support up to 8 channels (7.1 surround)
     static recorderFrameRate = 24 // fps
-    // WIP set recorder send time delay?
 
     private static ac = new AudioContext({ latencyHint: "interactive", sampleRate: this.sampleRate })
     private static splitter: ChannelSplitterNode | null = null
@@ -45,20 +36,8 @@ export class AudioAnalyser {
         return this.ac
     }
 
-    // Set up auto-initialization for equalizer when first audio source connects
     static {
-        setAutoInitializeCallback(async () => {
-            await initializeEqualizer(this.getAudioContext(), async () => {
-                this.rebuildEffectChain()
-            })
-        })
-
         playingAudio.subscribe(() => this.updateScales())
-        // playingVideos.subscribe(() => this.updateScales())
-        // videosData.subscribe(() => this.updateScales())
-        audioRouting.subscribe(() => {
-            // Re-route everything through the routing manager
-        })
     }
 
     private static elementSources = new WeakMap<HTMLMediaElement, AudioNode>()
@@ -233,7 +212,7 @@ export class AudioAnalyser {
                     baseVolume = 1.0
                 } else {
                     const videoPlaying = get(playingVideos).find((v) => v.path === baseId)
-                    if (videoPlaying) baseVolume = videoPlaying.audio?.volume ?? 1.0
+                    if (videoPlaying && videoPlaying.audio instanceof HTMLAudioElement) baseVolume = videoPlaying.audio.volume ?? 1.0
                 }
                 if (baseVolume === null) baseVolume = 1.0
                 gainNode.gain.setValueAtTime(baseVolume, this.ac.currentTime)
@@ -301,20 +280,7 @@ export class AudioAnalyser {
             delete this.gainNodes[key]
         }
 
-        // Disconnect from equalizer
-        disconnectAudioSourceFromEqualizer(key)
-
         delete this.sources[key]
-
-        // if (!isOutputWindow()) return
-
-        // // wait for audio to clear before checking
-        // setTimeout(() => {
-        //     if (!this.shouldAnalyse()) {
-        //         AudioAnalyserMerger.stop()
-        //         send(OUTPUT, ["AUDIO_MAIN"], { id: Object.keys(get(outputs))[0], stop: true })
-        //     }
-        // })
     }
 
     static shouldAnalyse() {
@@ -417,7 +383,6 @@ export class AudioAnalyser {
     }
 
     private static gainNode: GainNode | null = null
-    private static effectNodes: { [K: string]: { input: GainNode; output: GainNode } } = {}
 
     // We keep gainNode for legacy sink routing, but AudioRoutingManager
     // now manages its own GainNode cluster for proper isolation.
@@ -434,75 +399,11 @@ export class AudioAnalyser {
         // Pass master gain node to routing manager so mergers connect to it
         AudioRoutingManager.getInstance().setMasterNode(this.gainNode)
 
-        // Ensure Equalizer is initialized if needed
-        const currentEq = getGlobalEqualizer()
-        if (!currentEq) {
-            initializeEqualizer(this.getAudioContext()).then(() => {
-                this.rebuildEffectChain()
-            })
-        }
-
-        this.rebuildEffectChain()
-
-        // Rebuild chain when any effect is toggled (not on param changes)
-        let prevEnabled = ""
-        audioEffects.subscribe(() => {
-            const m = get(audioEffects).main
-            const enabled = [m?.equalizer, m?.filter, m?.noiseGate, m?.compressor, m?.reverb, m?.delay, m?.limiter, m?.stereoShaper].map((e) => (e?.enabled ? 1 : 0)).join("")
-            if (enabled !== prevEnabled) {
-                prevEnabled = enabled
-                this.rebuildEffectChain()
-            }
-        })
-    }
-
-    private static rebuildEffectChain() {
-        if (!this.gainNode) return
+        // Gain node is connected to AudioContext destination
+        this.gainNode.connect(this.ac.destination)
 
         try {
-            this.gainNode.disconnect()
-        } catch {
-            /* not yet connected */
-        }
-        for (const node of Object.values(this.effectNodes)) {
-            try {
-                node.output.disconnect()
-            } catch {}
-        }
-
-        // We don't need to disconnect destination itself as it's a sink,
-        // but we'll ensure we disconnect the nodes connected to it.
-        try {
-            // No direct way to find what's connected to destination without external tracking,
-            // but our gainNode/effect chain will be disconnected in the loop above.
-        } catch {}
-
-        const main = get(audioEffects).main
-        const chain: { input: GainNode; output: GainNode }[] = []
-
-        if (main?.equalizer?.enabled) {
-            const eqNodes = getGlobalEqualizerNodes()
-            if (eqNodes) chain.push(eqNodes)
-        }
-        if (main?.filter?.enabled) chain.push((this.effectNodes.filter ??= initializeFilter(this.ac)))
-        if (main?.noiseGate?.enabled) chain.push((this.effectNodes.noiseGate ??= initializeNoiseGate(this.ac)))
-        if (main?.compressor?.enabled) chain.push((this.effectNodes.compressor ??= initializeCompressor(this.ac)))
-        if (main?.reverb?.enabled) chain.push((this.effectNodes.reverb ??= initializeReverb(this.ac)))
-        if (main?.delay?.enabled) chain.push((this.effectNodes.delay ??= initializeDelay(this.ac)))
-        if (main?.limiter?.enabled) chain.push((this.effectNodes.limiter ??= initializeLimiter(this.ac)))
-        if (main?.stereoShaper?.enabled) chain.push((this.effectNodes.stereoShaper ??= initializeStereoShaper(this.ac)))
-
-        let prev: AudioNode = this.gainNode
-        for (const seg of chain) {
-            prev.connect(seg.input)
-            prev = seg.output
-        }
-
-        prev.connect(this.ac.destination)
-
-        // Master gain node is managed by AudioRoutingManager
-        try {
-            AudioInputCapture.getInstance().captureInput("speaker_default", prev)
+            AudioInputCapture.getInstance().captureInput("speaker_default", this.gainNode)
         } catch (e) {}
     }
 

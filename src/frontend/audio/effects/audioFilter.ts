@@ -102,16 +102,16 @@ let globalFilter: AudioFilter | null = null
 export function initializeFilter(ac: AudioContext): AudioFilter {
     if (globalFilter) return globalFilter
 
-    globalFilter = new AudioFilter(ac, getEffectConfig("filter", DEFAULT_FILTER_CONFIG))
-    subscribeEffect("filter", (cfg: FilterConfig) => globalFilter?.updateConfig(cfg))
+    globalFilter = new AudioFilter(ac, getEffectConfig("filter", DEFAULT_FILTER_CONFIG, "main"))
+    subscribeEffect("filter", (cfg: FilterConfig) => globalFilter?.updateConfig(cfg), "main")
 
     return globalFilter
 }
 
-export function updateFilterConfig(partial: Partial<FilterConfig>) {
-    updateEffectInStore("filter", DEFAULT_FILTER_CONFIG, partial, globalFilter)
+export function updateFilterConfig(partial: Partial<FilterConfig>, channelId?: string) {
+    updateEffectInStore("filter", DEFAULT_FILTER_CONFIG, partial, channelId)
 }
 
-export function setFilterEnabled(enabled: boolean) {
-    setEffectEnabledInStore("filter", DEFAULT_FILTER_CONFIG, enabled, globalFilter)
+export function setFilterEnabled(enabled: boolean, channelId?: string) {
+    setEffectEnabledInStore("filter", DEFAULT_FILTER_CONFIG, enabled, channelId)
 }

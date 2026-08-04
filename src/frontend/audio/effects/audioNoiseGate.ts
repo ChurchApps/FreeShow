@@ -122,16 +122,16 @@ let globalNoiseGate: AudioNoiseGate | null = null
 export function initializeNoiseGate(ac: AudioContext): AudioNoiseGate {
     if (globalNoiseGate) return globalNoiseGate
 
-    globalNoiseGate = new AudioNoiseGate(ac, getEffectConfig("noiseGate", DEFAULT_NOISE_GATE_CONFIG))
-    subscribeEffect("noiseGate", (cfg: NoiseGateConfig) => globalNoiseGate?.updateConfig(cfg))
+    globalNoiseGate = new AudioNoiseGate(ac, getEffectConfig("noiseGate", DEFAULT_NOISE_GATE_CONFIG, "main"))
+    subscribeEffect("noiseGate", (cfg: NoiseGateConfig) => globalNoiseGate?.updateConfig(cfg), "main")
 
     return globalNoiseGate
 }
 
-export function updateNoiseGateConfig(partial: Partial<NoiseGateConfig>) {
-    updateEffectInStore("noiseGate", DEFAULT_NOISE_GATE_CONFIG, partial, globalNoiseGate)
+export function updateNoiseGateConfig(partial: Partial<NoiseGateConfig>, channelId?: string) {
+    updateEffectInStore("noiseGate", DEFAULT_NOISE_GATE_CONFIG, partial, channelId)
 }
 
-export function setNoiseGateEnabled(enabled: boolean) {
-    setEffectEnabledInStore("noiseGate", DEFAULT_NOISE_GATE_CONFIG, enabled, globalNoiseGate)
+export function setNoiseGateEnabled(enabled: boolean, channelId?: string) {
+    setEffectEnabledInStore("noiseGate", DEFAULT_NOISE_GATE_CONFIG, enabled, channelId)
 }
