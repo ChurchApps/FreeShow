@@ -173,7 +173,7 @@
         if (value) {
             popupData.set({ remoteController: true })
             activePopup.set("connect")
-            startRemoteController()
+            if ($special.remoteControllerId) startRemoteController()
         } else {
             stopRemoteController()
         }
