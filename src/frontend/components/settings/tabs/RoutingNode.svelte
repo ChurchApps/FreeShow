@@ -6,7 +6,7 @@
     export let id: string
     export let name: string
     export let type: string
-    export let nodeType: "input" | "merger" | "output"
+    export let nodeType: "input" | "channel" | "merger" | "output"
     export let isSubNode: boolean = false
     export let isExpanded: boolean = false
     export let hasSubNodes: boolean = false
@@ -41,10 +41,11 @@
         return icons[type] || "settings"
     }
 
-    $: isValidHover = isConnecting && ((dragStartType === "input" && nodeType === "merger") || (dragStartType === "output" && nodeType === "merger") || (dragStartType === "merger" && dragStartPortType === "in" && nodeType === "input") || (dragStartType === "merger" && dragStartPortType === "out" && nodeType === "output"))
+    $: isChannel = nodeType === "channel" || nodeType === "merger"
+    $: isValidHover = isConnecting && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isChannel && dragStartPortType === "in" && nodeType === "input") || (isChannel && dragStartPortType === "out" && nodeType === "output"))
 </script>
 
-<div class="node-card" class:merger-card={nodeType === "merger"} class:sub-card={isSubNode} class:hover-valid={hoverTargetId === id} class:disabled={!isEnabled} class:invalid={isConnecting && !isValidHover && id !== dragStartId} data-node-id={id} on:mouseenter={onMouseEnter} on:mouseleave={onMouseLeave}>
+<div class="node-card" class:merger-card={isChannel} class:sub-card={isSubNode} class:hover-valid={hoverTargetId === id} class:disabled={!isEnabled} class:invalid={isConnecting && !isValidHover && id !== dragStartId} data-node-id={id} on:mouseenter={onMouseEnter} on:mouseleave={onMouseLeave}>
     {#if nodeType !== "input" && type !== "network" && !isSubNode}
         <div class="port port-in" title="Input connection port" on:mousedown={(e) => onMouseDown(e, "in")}></div>
     {/if}
@@ -66,13 +67,13 @@
             </button>
         {/if}
 
-        {#if nodeType === "merger"}
+        {#if isChannel}
             {#if !hasSubNodes}
                 <Icon id="options" size={1.1} />
             {/if}
-            <MaterialTextInput label="Merger Name" value={name} style="margin: 0; width: 100%;" on:change={(e) => onRename(e.detail)} />
-            {#if id !== "main" && id !== "merger_main"}
-                <button class="delete-btn" title="Delete merger" on:click|stopPropagation={onRemove}>
+            <MaterialTextInput label="Channel Name" value={name} style="margin: 0; width: 100%;" on:change={(e) => onRename(e.detail)} />
+            {#if id !== "main" && id !== "merger_main" && id !== "channel_main"}
+                <button class="delete-btn" title="Delete channel" on:click|stopPropagation={onRemove}>
                     <Icon id="delete" size={0.8} />
                 </button>
             {/if}

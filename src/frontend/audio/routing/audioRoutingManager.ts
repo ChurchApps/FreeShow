@@ -14,7 +14,7 @@ import { AudioInputCapture } from "./audioInputCapture"
 
 export class AudioRoutingManager {
     private static instance: AudioRoutingManager
-    private config: AudioRoutingConfig = { mergers: [], connections: [] }
+    private config: AudioRoutingConfig = { channels: [], connections: [] }
     private audioCtx: AudioContext | null = null
     private mergerNodes: Map<string, GainNode> = new Map()
     private mergerEffectChains: Map<string, { input: AudioNode; output: AudioNode; dispose: () => void }> = new Map()
@@ -198,8 +198,9 @@ export class AudioRoutingManager {
     public updateRoutingNodes() {
         if (!this.audioCtx) return
 
-        // Ensure all configured mergers have corresponding GainNode instances
-        this.config.mergers.forEach((m) => {
+        // Ensure all configured channels have corresponding GainNode instances
+        const channels = this.config.channels || []
+        channels.forEach((m) => {
             if (!this.mergerNodes.has(m.id)) {
                 const gainNode = this.audioCtx!.createGain()
                 this.mergerNodes.set(m.id, gainNode)
@@ -209,10 +210,10 @@ export class AudioRoutingManager {
             }
         })
 
-        // Clean up removed mergers
-        const currentMergerIds = new Set(this.config.mergers.map((m) => m.id))
+        // Clean up removed channels
+        const currentChannelIds = new Set(channels.map((m) => m.id))
         this.mergerNodes.forEach((node, id) => {
-            if (!currentMergerIds.has(id)) {
+            if (!currentChannelIds.has(id)) {
                 try {
                     node.disconnect()
                     AudioInputCapture.getInstance().removeInput(id)

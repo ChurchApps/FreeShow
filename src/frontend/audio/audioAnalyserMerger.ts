@@ -138,14 +138,15 @@ export class AudioAnalyserMerger {
         })
 
         if (config) {
+            const channels = config.channels || []
             const subOutputIds = config.connections.map((c) => c.to).filter((to) => to.startsWith("speaker_sub_") || to.startsWith("network_sub_"))
-            ;[...config.mergers.map((m) => m.id), "speaker_default", "network_default", "icecast", ...subOutputIds].forEach((id) => {
+            ;[...channels.map((m) => m.id), "speaker_default", "network_default", "icecast", ...subOutputIds].forEach((id) => {
                 const data = capture.getVisualizerData(id)
                 if (data && data.db > -60) nodeVolumes[id] = { dB: Math.round(data.db) }
             })
 
-            // Fallback: Calculate merger/output levels mapping based on graph if capture isn't available
-            config.mergers.forEach((m) => {
+            // Fallback: Calculate channel/output levels mapping based on graph if capture isn't available
+            channels.forEach((m) => {
                 if (nodeVolumes[m.id] !== undefined) return
                 const activeDbs = config.connections
                     .filter((c) => c.to === m.id && nodeVolumes[c.from] !== undefined)

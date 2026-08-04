@@ -825,18 +825,18 @@ export function addOutput(onlyFirst = false, styleId = "", enabled = true) {
 
 function updateAudioRoutingOnOutputCreated(outputId: string, isStage: boolean) {
     audioRouting.update((config) => {
-        const copy = JSON.parse(JSON.stringify(config || { mergers: [], connections: [] }))
-        const mergerId = "merger_" + outputId
+        const copy = JSON.parse(JSON.stringify(config || { channels: [], connections: [] }))
+        const channelId = "channel_" + outputId
         const outObj = get(outputs)[outputId]
-        const mergerName = (outObj?.name || "Output") + " Bus"
+        const channelName = outObj?.name || "Output" // + " Bus"
 
-        if (!copy.mergers.some((m: any) => m.id === mergerId)) {
-            copy.mergers.push({ id: mergerId, name: mergerName })
-            copy.connections.push({ from: "drawer_audio", to: mergerId })
-            copy.connections.push({ from: "mic_default", to: mergerId })
+        if (!copy.channels.some((m: any) => m.id === channelId)) {
+            copy.channels.push({ id: channelId, name: channelName })
+            copy.connections.push({ from: "drawer_audio", to: channelId })
+            copy.connections.push({ from: "mic_default", to: channelId })
 
             const targetOutputId = isStage ? "output_window" : outputId === "default" ? "speaker_default" : "speaker_sub_" + outputId
-            copy.connections.push({ from: mergerId, to: targetOutputId })
+            copy.connections.push({ from: channelId, to: targetOutputId })
         }
         return copy
     })
@@ -844,14 +844,14 @@ function updateAudioRoutingOnOutputCreated(outputId: string, isStage: boolean) {
 
 function updateAudioRoutingOnOutputDeleted(outputId: string) {
     audioRouting.update((config) => {
-        const copy = JSON.parse(JSON.stringify(config || { mergers: [], connections: [] }))
-        const mergerId = "merger_" + outputId
+        const copy = JSON.parse(JSON.stringify(config || { channels: [], connections: [] }))
+        const channelId = "channel_" + outputId
         const subSpeakerId = "speaker_sub_" + outputId
         const subNetId = "network_sub_" + outputId
 
-        // Remove merger and any connections linked to it or the output
-        copy.mergers = copy.mergers.filter((m: any) => m.id !== mergerId)
-        copy.connections = copy.connections.filter((conn: any) => conn.from !== mergerId && conn.to !== mergerId && conn.from !== subSpeakerId && conn.to !== subSpeakerId && conn.from !== subNetId && conn.to !== subNetId)
+        // Remove channel and any connections linked to it or the output
+        copy.channels = copy.channels.filter((m: any) => m.id !== channelId)
+        copy.connections = copy.connections.filter((conn: any) => conn.from !== channelId && conn.to !== channelId && conn.from !== subSpeakerId && conn.to !== subSpeakerId && conn.from !== subNetId && conn.to !== subNetId)
         return copy
     })
 }

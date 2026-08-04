@@ -1,13 +1,14 @@
 <script lang="ts">
     import { audioRouting } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import AudioChannelMixer from "./AudioChannelMixer.svelte"
 
-    $: mergers = $audioRouting?.mergers || [{ id: "main", name: "Main Bus" }]
+    $: channels = $audioRouting?.channels || [{ id: "main", name: translateText("audio.main") }]
 </script>
 
 <div class="mixers">
-    {#each mergers as merger (merger.id)}
-        <AudioChannelMixer channelId={merger.id} label={merger.name} />
+    {#each channels as channel (channel.id)}
+        <AudioChannelMixer channelId={channel.id} label={channel.name} />
     {/each}
 </div>
 

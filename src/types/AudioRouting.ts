@@ -6,18 +6,18 @@ export interface AudioRoutingItem {
     deviceId?: string
 }
 
-export interface AudioRoutingMerger {
+export interface AudioRoutingChannel {
     id: string
     name: string
 }
 
 export interface AudioRoutingConnection {
-    from: string // input ID or merger ID
-    to: string   // merger ID or output ID
+    from: string // input ID or channel ID
+    to: string   // channel ID or output ID
 }
 
 export interface AudioRoutingConfig {
-    mergers: AudioRoutingMerger[]
+    channels: AudioRoutingChannel[]
     connections: AudioRoutingConnection[]
     inputs?: AudioRoutingItem[]
     outputs?: AudioRoutingItem[]

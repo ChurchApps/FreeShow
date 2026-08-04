@@ -5,11 +5,13 @@
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
     import { audioRouting, outputs as outputsStore } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import RoutingNode from "./RoutingNode.svelte"
 
     let config: AudioRoutingConfig
-    $: config = $audioRouting || { mergers: [], connections: [] }
+    $: config = $audioRouting || { channels: [], connections: [] }
+    $: channelsList = config.channels || []
 
     interface RoutingColumnNode {
         id: string
@@ -24,7 +26,7 @@
 
     interface RoutingColumn {
         title: string
-        type: "input" | "merger" | "output"
+        type: "input" | "channel" | "merger" | "output"
         nodes: RoutingColumnNode[]
     }
 
@@ -128,9 +130,9 @@
             })
         },
         {
-            title: "Mergers",
-            type: "merger",
-            nodes: config.mergers.map((m) => ({ id: m.id, name: m.name, type: "merger" }))
+            title: "Channels",
+            type: "channel",
+            nodes: channelsList.map((m) => ({ id: m.id, name: m.name, type: "channel" }))
         },
         {
             title: "Outputs",
@@ -167,34 +169,39 @@
 
     function updateConfig(fn: (c: AudioRoutingConfig) => void) {
         audioRouting.update((c) => {
-            const copy = { ...c, mergers: [...(c?.mergers || [])], connections: [...(c?.connections || [])] }
+            const copy: AudioRoutingConfig = { ...c, channels: [...(c?.channels || [])], connections: [...(c?.connections || [])] }
             fn(copy)
             return copy
         })
         tick().then(updateConnectionLines)
     }
 
-    function addMerger() {
+    function addChannel() {
         updateConfig((c) => {
-            const newId = "merger_" + uid()
-            const name = "Merger " + (c.mergers.length + 1)
-            c.mergers.push({ id: newId, name })
+            const list = c.channels || []
+            const newId = "channel_" + uid()
+            const name = `${translateText("midi.channel")} ${list.length + 1}`
+            list.push({ id: newId, name })
+            c.channels = list
         })
     }
 
-    function removeMerger(id: string) {
+    function removeChannel(id: string) {
         updateConfig((c) => {
-            const index = c.mergers.findIndex((m) => m.id === id)
-            if (index <= 0) return // First merger cannot be deleted
-            c.mergers.splice(index, 1)
+            const list = c.channels || []
+            const index = list.findIndex((m) => m.id === id)
+            if (index <= 0) return // First channel cannot be deleted
+            list.splice(index, 1)
+            c.channels = list
             c.connections = c.connections.filter((conn) => conn.from !== id && conn.to !== id)
         })
     }
 
-    function renameMerger(id: string, newName: string) {
+    function renameChannel(id: string, newName: string) {
         updateConfig((c) => {
-            const merger = c.mergers.find((m) => m.id === id)
-            if (merger) merger.name = newName
+            const list = c.channels || []
+            const channel = list.find((m) => m.id === id)
+            if (channel) channel.name = newName
         })
     }
 
@@ -210,7 +217,7 @@
     // Connecting
     let isConnecting = false
     let dragStartId: string | null = null
-    let dragStartType: "input" | "merger" | "output" | null = null
+    let dragStartType: "input" | "channel" | "merger" | "output" | null = null
     let dragStartPortType: "in" | "out" | null = null
     let dragFromPos = { x: 0, y: 0 }
     let dragCurrentPos = { x: 0, y: 0 }
@@ -248,18 +255,24 @@
         const newLines: RenderedLine[] = []
         for (const conn of config.connections) {
             const fromPos = getNodePortPos(conn.from, "out")
-            let portEl: HTMLElement | null = null
-            const chIndex = (conn as any).channelIndex ?? 0
-            if (conn.to.startsWith("speaker_sub_")) {
-                portEl = spaceEl.querySelector(`[data-node-id="${conn.to}"] [data-ch-index="${chIndex}"]`) as HTMLElement
-                if (!portEl) portEl = spaceEl.querySelector(`[data-node-id="${conn.to}"] .port-multi`) as HTMLElement
+            const isSpeakerSub = conn.to.startsWith("speaker_sub_")
+            let toPos: { x: number; y: number } | null = null
+            if (isSpeakerSub && (conn as any).channelIndex !== undefined) {
+                const targetNodeEl = spaceEl.querySelector(`[data-node-id="${conn.to}"]`)
+                const chCircleEl = targetNodeEl?.querySelector(`[data-ch-index="${(conn as any).channelIndex}"]`) as HTMLElement
+                if (chCircleEl) {
+                    toPos = getNodePortPos(conn.to, "in", chCircleEl)
+                }
             }
-            const toPos = getNodePortPos(conn.to, "in", portEl)
+            if (!toPos) {
+                toPos = getNodePortPos(conn.to, "in")
+            }
+
             if (fromPos && toPos) {
                 newLines.push({
                     fromId: conn.from,
                     toId: conn.to,
-                    channelIndex: chIndex,
+                    channelIndex: (conn as any).channelIndex ?? 0,
                     x1: fromPos.x,
                     y1: fromPos.y,
                     x2: toPos.x,
@@ -271,18 +284,19 @@
     }
 
     // --- Port Mouse Down (Connecting) ---
-    function handlePortMouseDown(e: MouseEvent, nodeId: string, nodeType: "input" | "merger" | "output", portType: "in" | "out", _channelIndex: number = 0) {
+    function handlePortMouseDown(e: MouseEvent, nodeId: string, nodeType: "input" | "channel" | "merger" | "output", portType: "in" | "out", _channelIndex: number = 0) {
         e.preventDefault()
         e.stopPropagation()
-        const portEl = e.currentTarget as HTMLElement
-        const pos = getNodePortPos(nodeId, portType, portEl)
-        if (!pos) return
         isConnecting = true
         dragStartId = nodeId
         dragStartType = nodeType
         dragStartPortType = portType
-        dragFromPos = pos
-        dragCurrentPos = { ...pos }
+
+        const pos = getNodePortPos(nodeId, portType, e.currentTarget as HTMLElement)
+        if (pos) {
+            dragFromPos = pos
+            dragCurrentPos = pos
+        }
 
         window.addEventListener("mousemove", handleGlobalMouseMove)
         window.addEventListener("mouseup", handleGlobalMouseUp)
@@ -293,34 +307,25 @@
         if (e.button !== 0 && e.button !== 1) return
         if ((e.target as HTMLElement).closest(".node-card, .port, button, input, .dropdown")) return
 
-        e.preventDefault()
         isPanning = true
         startPanMouse = { x: e.clientX, y: e.clientY }
-        if (containerEl) {
-            startScroll = { left: containerEl.scrollLeft, top: containerEl.scrollTop }
-        }
-
+        startScroll = { left: containerEl.scrollLeft, top: containerEl.scrollTop }
         window.addEventListener("mousemove", handleGlobalMouseMove)
         window.addEventListener("mouseup", handleGlobalMouseUp)
     }
 
-    let animFrame: number | null = null
-
     function handleGlobalMouseMove(e: MouseEvent) {
-        if (animFrame) cancelAnimationFrame(animFrame)
-
-        animFrame = requestAnimationFrame(() => {
-            if (isConnecting && spaceEl) {
-                const spaceRect = spaceEl.getBoundingClientRect()
-                dragCurrentPos = {
-                    x: e.clientX - spaceRect.left,
-                    y: e.clientY - spaceRect.top
-                }
-            } else if (isPanning && containerEl) {
-                containerEl.scrollLeft = startScroll.left - (e.clientX - startPanMouse.x)
-                containerEl.scrollTop = startScroll.top - (e.clientY - startPanMouse.y)
+        if (!spaceEl) return
+        const spaceRect = spaceEl.getBoundingClientRect()
+        if (isConnecting) {
+            dragCurrentPos = {
+                x: e.clientX - spaceRect.left,
+                y: e.clientY - spaceRect.top
             }
-        })
+        } else if (isPanning && containerEl) {
+            containerEl.scrollLeft = startScroll.left - (e.clientX - startPanMouse.x)
+            containerEl.scrollTop = startScroll.top - (e.clientY - startPanMouse.y)
+        }
     }
 
     function handleGlobalMouseUp() {
@@ -332,13 +337,13 @@
             let toId = hoverTargetId
 
             const isInput = (id: string) => fixedInputs.some((i) => i.id === id) || id.startsWith("mic_sub_") || id.startsWith("output_win_sub_")
-            const isMerger = (id: string) => config.mergers.some((m) => m.id === id)
+            const isChannelNode = (id: string) => channelsList.some((m) => m.id === id)
             const isOutput = (id: string) => fixedOutputs.some((o) => o.id === id) || id.startsWith("speaker_sub_") || id.startsWith("network_sub_")
 
             let valid = false
-            if ((isInput(fromId) && isMerger(toId)) || (isMerger(fromId) && isOutput(toId))) {
+            if ((isInput(fromId) && isChannelNode(toId)) || (isChannelNode(fromId) && isOutput(toId))) {
                 valid = true
-            } else if ((isOutput(fromId) && isMerger(toId)) || (isMerger(fromId) && isInput(toId))) {
+            } else if ((isOutput(fromId) && isChannelNode(toId)) || (isChannelNode(fromId) && isInput(fromId))) {
                 ;[fromId, toId] = [toId, fromId]
                 valid = true
             }
@@ -433,13 +438,13 @@
     }
 
     // --- Hover Helpers to avoid TS errors in template ---
-    function handleNodeMouseEnter(nodeId: string, type: string, columnType: "input" | "merger" | "output") {
+    function handleNodeMouseEnter(nodeId: string, type: string, columnType: "input" | "channel" | "merger" | "output") {
         if (!isConnecting) return
 
         let valid = false
-        if (dragStartType === "input" && columnType === "merger") valid = true
-        else if (dragStartType === "output" && columnType === "merger") valid = true
-        else if (dragStartType === "merger") {
+        if (dragStartType === "input" && (columnType === "channel" || columnType === "merger")) valid = true
+        else if (dragStartType === "output" && (columnType === "channel" || columnType === "merger")) valid = true
+        else if (dragStartType === "channel" || dragStartType === "merger") {
             if (dragStartPortType === "in" && columnType === "input") {
                 // For inputs, we can only connect to sub-nodes or direct inputs (like metronome)
                 if (type !== "output_window" && type !== "mic") valid = true
@@ -524,8 +529,8 @@
                                         onMouseLeave={() => handleNodeMouseLeave(node.id)}
                                         onMouseEnterPort={handlePortMouseEnter}
                                         onMouseLeavePort={handlePortMouseLeave}
-                                        onRemove={() => removeMerger(node.id)}
-                                        onRename={(newName) => renameMerger(node.id, newName)}
+                                        onRemove={() => removeChannel(node.id)}
+                                        onRename={(newName) => renameChannel(node.id, newName)}
                                     />
 
                                     {#if node.isExpanded && node.subNodes}
@@ -563,8 +568,8 @@
                                 </div>
                             {/each}
 
-                            {#if column.type === "merger"}
-                                <button class="add-merger-btn" title="Add merger" on:click={addMerger}>
+                            {#if column.type === "channel" || column.type === "merger"}
+                                <button class="add-merger-btn" title="Add channel" on:click={addChannel}>
                                     <Icon id="add" size={1.2} />
                                 </button>
                             {/if}

@@ -14,7 +14,7 @@
     import AudioReverb from "./effects/AudioReverb.svelte"
     import AudioStereoShaper from "./effects/AudioStereoShaper.svelte"
 
-    $: channelName = $audioRouting?.mergers?.find((m) => m.id === $activeAudioEffects)?.name || ($activeAudioEffects === "main" ? translateText("audio.main") : $activeAudioEffects)
+    $: channelName = $audioRouting?.channels?.find((m) => m.id === $activeAudioEffects)?.name || ($activeAudioEffects === "main" ? translateText("audio.main") : $activeAudioEffects)
 
     let expanded = {}
     function toggleSection(type) {
