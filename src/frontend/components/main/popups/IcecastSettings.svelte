@@ -17,4 +17,4 @@
     <MaterialNumberInput label="settings.port" value={$special.icecastPort ?? 8000} max={65535} min={1} step={1} on:change={(e) => updateSpecial(e.detail, "icecastPort")} />
 </InputRow>
 <MaterialTextInput label="Mountpoint" value={$special.icecastMount || "/stream.opus"} on:change={(e) => updateSpecial(e.detail, "icecastMount")} />
-<MaterialTextInput label="remote.password" type="password" value={$special.icecastPassword || ""} on:change={(e) => updateSpecial(e.detail, "icecastPassword")} />
+<MaterialTextInput label="remote.password" type="password" value={$special.icecastPassword ?? "hackme"} defaultValue="hackme" on:change={(e) => updateSpecial(e.detail, "icecastPassword")} />

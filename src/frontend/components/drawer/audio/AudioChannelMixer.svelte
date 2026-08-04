@@ -8,6 +8,7 @@
 
     export let channelId: string
     export let label: string
+    export let inactive: boolean = false
 
     $: channelData = $audioChannelsData[channelId] || {}
 
@@ -34,7 +35,7 @@
 <section>
     <!-- <MaterialNumberInput style="width: 100px;" label="media.volume (%)" value={volumeValue * 100} min={0} max={allowGaining ? 125 : 100} on:change={(e) => setVolume(e.detail / 100)} showSlider /> -->
 
-    <div class="output">
+    <div class="output" class:inactive>
         <div class="label" style="margin-right: 7px;">
             <!-- {translateText("media.volume")} -->
             <p style="opacity: 0.9;">{label || ""}</p>
@@ -53,7 +54,9 @@
 
     <!-- <p style="font-size: 1em;margin: 10px;{volumeValue === 1 || volumeValue === 0 ? 'color: var(--secondary);' : ''}">{(volumeValue * 100).toFixed()}<span style="color: var(--text);">%</span></p> -->
 
-    <AudioMeter {channelId} />
+    {#if !inactive}
+        <AudioMeter {channelId} />
+    {/if}
 </section>
 
 <style>
@@ -72,6 +75,12 @@
         align-items: center;
         gap: 3px;
         margin-bottom: 10px;
+    }
+
+    .output.inactive {
+        margin-bottom: 0px;
+        opacity: 0.5;
+        pointer-events: none;
     }
 
     .label {

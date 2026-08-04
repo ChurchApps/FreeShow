@@ -159,10 +159,10 @@
             const channelId = $selected.data?.[0]?.id
             if (!channelId) return
             audioRouting.update((c) => {
-                const list = c.channels || []
+                const list = c?.channels || []
                 const channel = list.find((m) => m.id === channelId)
                 if (channel) channel.name = groupName
-                return { ...c, channels: list }
+                return { ...c, channels: list, connections: c?.connections || [] }
             })
         },
         audio_effect: () => {

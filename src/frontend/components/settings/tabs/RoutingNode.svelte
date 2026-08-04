@@ -3,6 +3,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import AudioNodeVisualizer from "./AudioNodeVisualizer.svelte"
     import { activePopup } from "../../../stores"
+    import { translateText } from "../../../utils/language"
 
     export let id: string
     export let name: string
@@ -54,17 +55,17 @@
 
 <div {id} class="node-card {isChannel ? `context #audio_channel${id === 'main' ? '_main' : ''}` : type}" class:merger-card={isChannel} class:sub-card={isSubNode} class:hover-valid={hoverTargetId === id && hasValidPort} class:disabled={!isEnabled} class:invalid={isConnecting && !isValidHover && id !== dragStartId} data-node-id={id} on:mouseenter={onMouseEnter} on:mouseleave={onMouseLeave}>
     {#if nodeType !== "input" && type !== "network" && !isSubNode}
-        <div class="port port-in" title="Input connection port" on:mousedown={(e) => onMouseDown(e, "in")}></div>
+        <div class="port port-in" on:mousedown={(e) => onMouseDown(e, "in")}></div>
     {/if}
 
     {#if isSubNode && nodeType === "output" && channels > 1}
         <div class="ports-column-in">
             {#each Array(channels) as _, chIdx}
-                <div class="port port-in port-multi" data-ch-index={chIdx} title="Channel {chIdx + 1}" on:mouseenter={(e) => onMouseEnterPort(e, chIdx)} on:mouseleave={onMouseLeavePort} on:mousedown={(e) => onMouseDown(e, "in", chIdx)}></div>
+                <div class="port port-in port-multi" data-ch-index={chIdx} data-title="{translateText('midi.channel')} {chIdx + 1}" on:mouseenter={(e) => onMouseEnterPort(e, chIdx)} on:mouseleave={onMouseLeavePort} on:mousedown={(e) => onMouseDown(e, "in", chIdx)}></div>
             {/each}
         </div>
     {:else if isSubNode && nodeType === "output"}
-        <div class="port port-in" title="Input connection port" on:mousedown={(e) => onMouseDown(e, "in")}></div>
+        <div class="port port-in" on:mousedown={(e) => onMouseDown(e, "in")}></div>
     {/if}
 
     <div class="card-content">
@@ -91,7 +92,7 @@
     {/if}
 
     {#if nodeType !== "output" && (type !== "output_window" || isSubNode)}
-        <div class="port port-out" title="Output connection port" on:mousedown={(e) => onMouseDown(e, "out")}></div>
+        <div class="port port-out" on:mousedown={(e) => onMouseDown(e, "out")}></div>
     {/if}
 </div>
 

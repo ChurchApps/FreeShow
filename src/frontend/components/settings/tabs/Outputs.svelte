@@ -21,7 +21,7 @@
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     onMount(() => {
-        AudioInputCapture.getInstance().captureDesktopAudio("desktop_default", "Desktop Audio")
+        AudioInputCapture.getInstance().captureDesktopAudio("desktop_default")
     })
 
     let outputsList: Output[] = []

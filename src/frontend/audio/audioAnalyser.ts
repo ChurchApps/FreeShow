@@ -502,7 +502,7 @@ export class AudioAnalyser {
                 const arrayBuffer = await ev.data.arrayBuffer()
                 const uint8Array = new Uint8Array(arrayBuffer)
                 const isIcecastConnected = !!get(audioRouting)?.connections.some((c) => c.to === "icecast")
-                const icecast = { enabled: isIcecastConnected, host: get(special).icecastHost, port: get(special).icecastPort, mount: get(special).icecastMount, password: get(special).icecastPassword }
+                const icecast = { enabled: isIcecastConnected, host: get(special).icecastHost, port: get(special).icecastPort, mount: get(special).icecastMount, password: get(special).icecastPassword ?? "hackme" }
 
                 send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array, icecast })
             })

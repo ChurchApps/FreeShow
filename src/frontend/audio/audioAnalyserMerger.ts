@@ -161,11 +161,15 @@ export class AudioAnalyserMerger {
         }
 
         audioChannelsData.update((prev) => {
+            let hasChanged = false
             const copy = { ...prev }
             Object.entries(nodeVolumes).forEach(([id, vol]) => {
-                copy[id] = { ...copy[id], ...vol }
+                if (!copy[id] || copy[id].dB !== vol.dB) {
+                    copy[id] = { ...copy[id], ...vol }
+                    hasChanged = true
+                }
             })
-            return copy
+            return hasChanged ? copy : prev
         })
     }
 }

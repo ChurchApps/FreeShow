@@ -74,6 +74,7 @@ import { select } from "./select"
 import { loadShows } from "./setShow"
 import { checkName, getLayoutRef, removeTemplatesFromShow } from "./show"
 import { _show } from "./shows"
+import { removeOutputAudioChannel } from "../../audio/routing/audioRoutingInit"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
     let copyData: Clipboard | null = clip
@@ -1026,6 +1027,7 @@ const deleteActions = {
     output: (data: any) => {
         data.forEach(({ id }) => {
             history({ id: "UPDATE", newData: { id }, location: { page: "settings", id: "settings_output" } })
+            removeOutputAudioChannel(id)
         })
 
         currentOutputSettings.set(Object.keys(get(outputs))[0])

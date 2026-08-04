@@ -44,7 +44,7 @@ export class AudioInputCapture {
     /**
      * Capture window/desktop audio loopback via desktopCapturer source ID and connect to AudioRoutingManager.
      */
-    public async captureDesktopAudio(nodeId: string, label?: string, mediaId: string = "screen:0:0") {
+    public async captureDesktopAudio(nodeId: string, mediaId: string = "screen:0:0") {
         if (!this.audioCtx) {
             this.audioCtx = AudioAnalyser.getAudioContext()
         }
@@ -85,7 +85,7 @@ export class AudioInputCapture {
                 AudioRoutingManager.getInstance().registerInputNode(parentId, sourceNode)
             }
         } catch (e) {
-            console.warn(`[AudioInputCapture] Could not capture desktop audio for ${label || nodeId}:`, e)
+            console.warn(`[AudioInputCapture] Could not capture desktop audio for ${nodeId}:`, e)
         }
     }
 
@@ -93,7 +93,7 @@ export class AudioInputCapture {
      * @deprecated Use captureDesktopAudio instead
      */
     public async captureOutputWindowStream(windowMediaId: string, outputId: string = "output_window") {
-        return this.captureDesktopAudio("output_win_sub_" + outputId, `Output Window ${outputId}`, windowMediaId)
+        return this.captureDesktopAudio("output_win_sub_" + outputId, windowMediaId)
     }
 
     public stopOutputWindowStream(windowMediaId: string) {

@@ -4,8 +4,10 @@
     import type { AudioRoutingConfig } from "../../../../types/AudioRouting"
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
-    import { audioRouting, outputs as outputsStore } from "../../../stores"
+    import { deduplicateConnections } from "../../../audio/routing/audioRoutingInit"
+    import { audioRouting } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { getAllOutputs } from "../../helpers/output"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import RoutingNode from "./RoutingNode.svelte"
 
@@ -51,22 +53,22 @@
     let expandedNodes: Set<string> = new Set(["output_window", "network_default"])
 
     let nonStageOutputs: RoutingColumnNode[] = []
-    $: nonStageOutputs = Object.entries($outputsStore || {})
-        .filter(([_, out]) => out && !out.stageOutput)
-        .map(([id, out]) => ({
-            id: "output_win_sub_" + id,
-            name: out.name || id,
+    $: nonStageOutputs = getAllOutputs()
+        .filter((out) => out && !out.stageOutput)
+        .map((out) => ({
+            id: "output_win_sub_" + out.id,
+            name: out.name || out.id,
             type: "output_window",
             isEnabled: (out as any).enabled
         }))
 
     let networkOutputWindows: RoutingColumnNode[] = []
-    $: networkOutputWindows = Object.entries($outputsStore || {})
-        .filter(([_, out]) => out && (out.rtmp || out.webrtc || out.ndi))
-        .map(([id, out]) => {
-            let label = out.name || id
+    $: networkOutputWindows = getAllOutputs()
+        .filter((out) => out && (out.rtmp || out.webrtc || out.ndi))
+        .map((out) => {
+            let label = out.name || out.id
             return {
-                id: "network_sub_" + id,
+                id: "network_sub_" + out.id,
                 name: label,
                 type: "network",
                 icon: out.ndi ? "ndi" : "broadcast",
@@ -84,8 +86,17 @@
         expandedNodes = expandedNodes
     }
 
+    let connectionFrame: number | null = null
+    function requestUpdateConnectionLines() {
+        if (connectionFrame !== null) return
+        connectionFrame = requestAnimationFrame(() => {
+            connectionFrame = null
+            updateConnectionLines()
+        })
+    }
+
     $: if (config || expandedNodes || nonStageOutputs || networkOutputWindows) {
-        tick().then(updateConnectionLines)
+        tick().then(requestUpdateConnectionLines)
     }
 
     async function refreshDevices() {
@@ -147,20 +158,21 @@
     ]
 
     onMount(() => {
-        AudioInputCapture.getInstance().captureDesktopAudio("desktop_default", "Desktop Audio")
+        AudioInputCapture.getInstance().captureDesktopAudio("desktop_default")
         refreshDevices()
 
         // Listen for hardware changes
         navigator.mediaDevices.addEventListener("devicechange", refreshDevices)
 
-        const resizeObs = new ResizeObserver(() => updateConnectionLines())
+        const resizeObs = new ResizeObserver(() => requestUpdateConnectionLines())
         if (spaceEl) resizeObs.observe(spaceEl)
-        if (containerEl) containerEl.addEventListener("scroll", updateConnectionLines)
+        if (containerEl) containerEl.addEventListener("scroll", requestUpdateConnectionLines)
 
         return () => {
             navigator.mediaDevices.removeEventListener("devicechange", refreshDevices)
             resizeObs.disconnect()
-            if (containerEl) containerEl.removeEventListener("scroll", updateConnectionLines)
+            if (containerEl) containerEl.removeEventListener("scroll", requestUpdateConnectionLines)
+            if (connectionFrame !== null) cancelAnimationFrame(connectionFrame)
         }
     })
 
@@ -168,9 +180,10 @@
         audioRouting.update((c) => {
             const copy: AudioRoutingConfig = { ...c, channels: [...(c?.channels || [])], connections: [...(c?.connections || [])] }
             fn(copy)
+            copy.connections = deduplicateConnections(copy.connections)
             return copy
         })
-        tick().then(updateConnectionLines)
+        tick().then(requestUpdateConnectionLines)
     }
 
     function addChannel() {
@@ -483,9 +496,7 @@
                 {#each lines as line (line.fromId + "-" + line.toId + "-" + line.channelIndex)}
                     {@const gradId = "grad-" + line.fromId + "-" + line.toId + "-" + line.channelIndex}
                     {@const dx = Math.max(20, Math.abs(line.x2 - line.x1) / 2)}
-                    <path d="M {line.x1} {line.y1} C {line.x1 + dx} {line.y1}, {line.x2 - dx} {line.y2}, {line.x2} {line.y2}" stroke={`url(#${gradId})`} class="connection-path" on:dblclick={() => removeConnection(line.fromId, line.toId)}>
-                        <title>Double click or drag again to disconnect</title>
-                    </path>
+                    <path d="M {line.x1} {line.y1} C {line.x1 + dx} {line.y1}, {line.x2 - dx} {line.y2}, {line.x2} {line.y2}" stroke={`url(#${gradId})`} class="connection-path" on:dblclick={() => removeConnection(line.fromId, line.toId)} />
                 {/each}
 
                 {#if isConnecting}

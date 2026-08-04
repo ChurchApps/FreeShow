@@ -10,6 +10,7 @@ import { AudioLimiter } from "../effects/audioLimiter"
 import { AudioNoiseGate } from "../effects/audioNoiseGate"
 import { AudioReverb } from "../effects/audioReverb"
 import { AudioStereoShaper } from "../effects/audioStereoShaper"
+import { deduplicateConnections } from "./audioRoutingInit"
 import { AudioInputCapture } from "./audioInputCapture"
 
 export class AudioRoutingManager {
@@ -25,13 +26,14 @@ export class AudioRoutingManager {
     private constructor() {
         audioRouting.subscribe((val) => {
             if (val) {
+                val.connections = deduplicateConnections(val.connections)
                 this.config = val
                 this.updateRoutingNodes()
                 AudioAnalyser.recorderActivate()
 
                 // Ensure desktop audio is captured if connected
                 if (val.connections.some((c) => c.from === "desktop_default")) {
-                    AudioInputCapture.getInstance().captureDesktopAudio("desktop_default", "Desktop Audio")
+                    AudioInputCapture.getInstance().captureDesktopAudio("desktop_default")
                 }
             }
         })

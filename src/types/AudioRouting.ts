@@ -13,7 +13,8 @@ export interface AudioRoutingChannel {
 
 export interface AudioRoutingConnection {
     from: string // input ID or channel ID
-    to: string   // channel ID or output ID
+    to: string // channel ID or output ID
+    channelIndex?: number
 }
 
 export interface AudioRoutingConfig {
