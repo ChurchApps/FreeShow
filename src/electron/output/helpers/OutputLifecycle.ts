@@ -142,7 +142,11 @@ export class OutputLifecycle {
         const osr = this.isOsrOutput(extra)
         if (osr) {
             options.show = false
-            options.webPreferences = { ...outputOptions.webPreferences, offscreen: true }
+            // #16: use GPU shared-texture mode when the native readback addon is available (keeps the GPU->CPU
+            // readback off the main thread); otherwise fall back to CPU offscreen (macOS/Linux/unbuilt).
+            const useSharedTexture = !!this.getOsrCaptureAddon()
+            const wp: any = { ...outputOptions.webPreferences, offscreen: useSharedTexture ? { useSharedTexture: true } : true }
+            options.webPreferences = wp
         }
 
         if (options.alwaysOnTop === false) {
@@ -196,16 +200,90 @@ export class OutputLifecycle {
             // ignore
         }
 
+        const addon = this.getOsrCaptureAddon()
+        if (addon) this.attachOsrSharedTexture(window, id, addon)
+        else this.attachOsrCpu(window, id)
+    }
+
+    // #16: lazily load the native shared-texture readback addon (Windows/D3D11). null when unavailable
+    // (non-Windows or not built) -> OSR falls back to CPU offscreen capture.
+    private static osrCaptureAddon: any = undefined
+    private static getOsrCaptureAddon(): any {
+        if (this.osrCaptureAddon !== undefined) return this.osrCaptureAddon
+        // null when the addon can't load (platform without a built backend / not installed) -> CPU offscreen.
+        try {
+            this.osrCaptureAddon = require("osr-capture")
+        } catch {
+            console.info("OSR shared-texture addon unavailable, using CPU offscreen capture")
+            this.osrCaptureAddon = null
+        }
+        return this.osrCaptureAddon
+    }
+
+    // GPU shared-texture path (#16): read each paint texture back to a BGRA buffer off the main thread and
+    // wrap it as a NativeImage for the existing transmit pipeline. Readbacks are throttled to the send rate
+    // (one in flight); every texture is released or the compositor frame pool drains.
+    private static attachOsrSharedTexture(window: BrowserWindow, id: string, addon: any) {
+        const nativeImage = require("electron").nativeImage
+        let lastImage: Electron.NativeImage | null = null
+        let readingBack = false
+        let lastReadback = 0
+
+        window.webContents.on("paint", (event: any) => {
+            const tex = event?.texture
+            const info = tex?.textureInfo
+            if (!info) return
+
+            if (readingBack || Date.now() - lastReadback < this.getOsrSendInterval(id)) {
+                try {
+                    tex.release()
+                } catch {
+                    // ignore
+                }
+                return
+            }
+            readingBack = true
+            lastReadback = Date.now()
+            const width = info.codedSize.width
+            const height = info.codedSize.height
+            // Windows/macOS pass the shared-texture handle; Linux passes the dmabuf planes + modifier
+            const source = process.platform === "linux" ? { planes: info.planes, modifier: info.modifier } : info.sharedTextureHandle
+            addon
+                .readback(source, width, height)
+                .then((buf: Buffer) => {
+                    lastImage = nativeImage.createFromBitmap(buf, { width, height })
+                })
+                .catch((err: any) => console.error("OSR shared-texture readback error:", err))
+                .finally(() => {
+                    try {
+                        tex.release()
+                    } catch {
+                        // ignore
+                    }
+                    readingBack = false
+                })
+        })
+
+        this.startOsrSendTimer(window, id, () => lastImage)
+    }
+
+    // CPU fallback path: the paint event delivers a NativeImage directly.
+    private static attachOsrCpu(window: BrowserWindow, id: string) {
         let lastImage: Electron.NativeImage | null = null
         window.webContents.on("paint", (_e: unknown, _dirty: unknown, image: Electron.NativeImage) => {
             lastImage = image
         })
+        this.startOsrSendTimer(window, id, () => lastImage)
+    }
 
+    // emit the latest frame at the output's configured framerate: decouples the send rate from the
+    // content-change rate so the per-consumer FPS is honored and static content still holds a constant rate
+    private static startOsrSendTimer(window: BrowserWindow, id: string, getImage: () => Electron.NativeImage | null) {
         let sendTimer: NodeJS.Timeout
         const emitFrame = () => {
-            // transmitFrame no-ops until the output's capture channels are set up, and throttles each
-            // consumer (ndi/server/webrtc/...) to its own configured framerate
-            if (!window.isDestroyed() && lastImage) CaptureHelper.Transmitter.transmitFrame(id, lastImage)
+            const image = getImage()
+            // transmitFrame no-ops until the output's capture channels are set up, and throttles each consumer
+            if (!window.isDestroyed() && image) CaptureHelper.Transmitter.transmitFrame(id, image)
             // re-read the interval each tick so framerate changes (e.g. NDI connect) take effect
             sendTimer = setTimeout(emitFrame, this.getOsrSendInterval(id))
         }
