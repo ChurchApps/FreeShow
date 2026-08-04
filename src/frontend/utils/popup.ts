@@ -85,6 +85,7 @@ import Transition from "../components/main/popups/Transition.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
 import UpdateManager from "../components/main/popups/UpdateManager.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
+import IcecastSettings from "../components/main/popups/IcecastSettings.svelte"
 import { activePopup, popupData } from "../stores"
 
 export const popups: { [key in Popups]: ComponentType } = {
@@ -171,7 +172,8 @@ export const popups: { [key in Popups]: ComponentType } = {
     template_info: TemplateInfo,
     cleaning_utility: CleaningUtility,
     pco_picker: PcoServicePicker,
-    sync_folders: SyncFolders
+    sync_folders: SyncFolders,
+    icecast_settings: IcecastSettings
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {

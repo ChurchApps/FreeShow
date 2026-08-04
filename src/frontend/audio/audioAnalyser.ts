@@ -510,8 +510,8 @@ export class AudioAnalyser {
             this.recorder.addEventListener("dataavailable", async (ev) => {
                 const arrayBuffer = await ev.data.arrayBuffer()
                 const uint8Array = new Uint8Array(arrayBuffer)
-                // , audioDelay: 0, channels: this.channels, frameRate: this.recorderFrameRate
-                const icecast = { enabled: !!get(special).icecastEnabled, host: get(special).icecastHost, port: get(special).icecastPort, mount: get(special).icecastMount, password: get(special).icecastPassword }
+                const isIcecastConnected = !!get(audioRouting)?.connections.some((c) => c.to === "icecast")
+                const icecast = { enabled: isIcecastConnected, host: get(special).icecastHost, port: get(special).icecastPort, mount: get(special).icecastMount, password: get(special).icecastPassword }
 
                 send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array, icecast })
             })
@@ -549,7 +549,6 @@ export class AudioAnalyser {
         if (isOutputWindow()) outputList = [Object.values(get(outputs))[0]]
 
         if (outputList.find((a) => a && a.enabled && (a.webrtc || a.rtmp || a.ndi || a.blackmagic))) return true
-        if (get(special).icecastEnabled) return true
 
         const routing = get(audioRouting)
         if (routing?.connections.some((c) => c.to === "network_default" || c.to === "icecast" || c.to.startsWith("network_sub_"))) {

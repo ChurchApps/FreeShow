@@ -2,6 +2,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import AudioNodeVisualizer from "./AudioNodeVisualizer.svelte"
+    import { activePopup } from "../../../stores"
 
     export let id: string
     export let name: string
@@ -78,6 +79,10 @@
                 <Icon id={getIcon(type)} size={isSubNode ? 0.9 : 1.1} />
             {/if}
             <span class="card-name" class:sub-name={isSubNode}>{name}</span>
+        {/if}
+
+        {#if type === "icecast"}
+            <MaterialButton variant="outlined" icon="options" style="padding: 5px;" title="audio.settings" on:click={() => activePopup.set("icecast_settings")} />
         {/if}
     </div>
 

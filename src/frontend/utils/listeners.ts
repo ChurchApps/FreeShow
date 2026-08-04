@@ -381,9 +381,6 @@ export function storeSubscriber() {
 
     special.subscribe((data) => {
         send(OUTPUT, ["SPECIAL"], data)
-
-        if (data.icecastEnabled) AudioAnalyser.recorderActivate()
-        else AudioAnalyser.recorderDeactivate()
     })
 
     slideTimelineSpeedMultiplier.subscribe((data) => {

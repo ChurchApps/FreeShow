@@ -32,17 +32,17 @@
 
     // Fixed Inputs & Outputs (no longer persisted in settings store)
     const fixedInputs = [
-        { id: "drawer_audio", name: "Audio Files (Drawer)", type: "drawer_audio" },
-        { id: "mic_default", name: "Microphone", type: "mic" },
-        { id: "metronome", name: "Metronome", type: "metronome" },
-        { id: "desktop_default", name: "Desktop Audio", type: "desktop_audio" },
-        { id: "output_window", name: "Output Windows", type: "output_window" }
+        { id: "drawer_audio", name: translateText("tabs.audio"), type: "drawer_audio" },
+        { id: "mic_default", name: translateText("live.microphones"), type: "mic" },
+        { id: "metronome", name: translateText("audio.metronome"), type: "metronome" },
+        { id: "desktop_default", name: translateText("audio.desktop_audio"), type: "desktop_audio" },
+        { id: "output_window", name: translateText("settings.display_settings"), type: "output_window" }
     ]
 
     const fixedOutputs = [
-        { id: "speaker_default", name: "Speaker Output", type: "speaker" },
-        { id: "network_default", name: "Network Output", type: "network" },
-        { id: "icecast", name: "Icecast Stream", type: "icecast" }
+        { id: "speaker_default", name: translateText("audio.speakers"), type: "speaker" },
+        { id: "network_default", name: translateText("settings.network_output"), type: "network" },
+        { id: "icecast", name: "Icecast", type: "icecast" }
     ]
 
     let availableAudioInputs: { value: string; label: string }[] = []
