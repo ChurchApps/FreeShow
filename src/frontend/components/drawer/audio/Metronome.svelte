@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { onMount } from "svelte"
-    import { AudioPlayer } from "../../../audio/audioPlayer"
     import { metronome, outLocked, playingMetronome, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import type { API_metronome } from "../../actions/api"
@@ -18,12 +16,6 @@
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import { audioExtensions } from "../../../values/extensions"
     import InputRow from "../../input/InputRow.svelte"
-
-    // audio outputs
-    let audioOutputs: { value: string; label: string }[] = []
-    onMount(async () => {
-        audioOutputs = await AudioPlayer.getOutputs()
-    })
 
     function playPause() {
         paused = !paused
@@ -59,19 +51,11 @@
             return a
         })
     }
-
-    const audioChannels = [
-        { value: "", label: "Stereo" },
-        { value: "mono_left", label: "Mono left" },
-        { value: "mono_right", label: "Mono right" }
-    ]
 </script>
 
 {#if options}
     <div class="settings">
         <MaterialNumberInput label="media.volume" value={Number(((values.volume || 1) * 100).toFixed(2))} min={1} max={300} on:change={(e) => updateValue("volume", e.detail / 100)} showSlider sliderValues={{ max: 100 }} />
-        <MaterialDropdown label="audio.custom_output" style="margin-top: 5px;" options={audioOutputs} value={values.audioOutput || ""} on:change={(e) => updateValue("audioOutput", e.detail)} allowEmpty />
-        <MaterialDropdown label="audio.channel" options={audioChannels} value={values.audioChannel || ""} defaultValue="" on:change={(e) => updateValue("audioChannel", e.detail)} />
 
         <MaterialDropdown label="audio.click_sound" style="margin-top: 20px;" disabled={!paused} options={clickSounds} value={$special.clickSound || "metal"} on:change={(e) => updateSpecial("clickSound", e.detail)} />
         {#if $special.clickSound === "custom"}

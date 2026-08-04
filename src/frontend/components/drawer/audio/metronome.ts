@@ -13,7 +13,6 @@ const defaultMetronomeValues = {
     beats: 4,
     volume: 1
     // notesPerBeat: 1
-    // audioOutput: ""
 }
 let metronomeValues: API_metronome = {}
 
@@ -61,8 +60,6 @@ export function updateMetronome(values: API_metronome, starting = false) {
     metronomeValues.tempo = values.tempo
     if (values.beats) metronomeValues.beats = values.beats
     if (values.volume) metronomeValues.volume = values.volume
-    if (values.audioOutput !== undefined) metronomeValues.audioOutput = values.audioOutput
-    if (values.audioChannel !== undefined) metronomeValues.audioChannel = values.audioChannel
 
     metronome.set(metronomeValues)
 }
@@ -173,42 +170,17 @@ async function playNote(time: number, first = false) {
     const bufferId = clickSound === "custom" ? get(special)?.clickSound_hi + get(special)?.clickSound_lo : clickSound
     const audioBuffer = audioBuffers[bufferId]?.[first ? "hi" : "lo"]
     if (!audioBuffer) return
-
     source.buffer = audioBuffer
 
-    // volume control
     const gainNode = audioContext.createGain()
-    const audioChannel = metronomeValues.audioChannel || ""
-
-    let routingNode: AudioNode = gainNode
-
-    if (audioChannel === "mono_left" || audioChannel === "mono_right") {
-        const merger = audioContext.createChannelMerger(2)
-        source.connect(gainNode)
-
-        const channel = audioChannel === "mono_left" ? 0 : 1
-        gainNode.connect(merger, 0, channel)
-        routingNode = merger
-    } else {
-        // Stereo (default)
-        source.connect(gainNode)
-    }
+    source.connect(gainNode)
 
     // Connect to AudioRoutingManager (this also handles capture/visualizer)
-    AudioRoutingManager.getInstance().registerInputNode("metronome", routingNode)
+    AudioRoutingManager.getInstance().registerInputNode("metronome", gainNode)
     AudioRoutingManager.getInstance().updateRoutingNodes()
 
     source.onended = () => {
-        AudioRoutingManager.getInstance().unregisterInputNode("metronome", routingNode)
-    }
-
-    // custom audio output
-    if (metronomeValues.audioOutput !== undefined) {
-        try {
-            await (audioContext as any).setSinkId(metronomeValues.audioOutput)
-        } catch (err) {
-            console.error(err)
-        }
+        AudioRoutingManager.getInstance().unregisterInputNode("metronome", gainNode)
     }
 
     gainNode.gain.value = getVolume(first ? accentVolume : secondaryVolume)

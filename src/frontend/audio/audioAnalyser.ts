@@ -73,15 +73,7 @@ export class AudioAnalyser {
                 }
             }
 
-            const audioChannel = get(special).audioChannel || ""
-            if (audioChannel === "mono_left" || audioChannel === "mono_right") {
-                const merger = this.ac.createChannelMerger(2)
-                const channel = audioChannel === "mono_left" ? 0 : 1
-                source.connect(merger, 0, channel)
-                this.sources[key] = merger
-            } else {
-                this.sources[key] = source
-            }
+            this.sources[key] = source
         } catch (err) {
             console.error("Could not create media source:", err)
             return
@@ -92,7 +84,6 @@ export class AudioAnalyser {
         this.initAnalysers()
         this.initDestination()
         this.initRecorder()
-        this.customOutput(get(special).audioOutput)
 
         // Equalizer is now applied globally in the master effect chain to prevent cross-source leakage
         if (this.sources[key]) {

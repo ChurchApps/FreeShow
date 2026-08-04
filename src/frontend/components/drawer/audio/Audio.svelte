@@ -344,11 +344,6 @@
                 <MaterialNumberInput label="settings.audio_crossfade (s)" value={playlist?.crossfade || 0} max={30} step={0.5} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
                 <MaterialNumberInput label="settings.playlist_volume (%)" value={Number(((playlist?.volume || 1) * 100).toFixed(2))} min={1} max={100} on:change={(e) => AudioPlaylist.update(active || "", "volume", e.detail / 100)} />
             </div>
-
-            <!-- <CombinedInput>
-                <p><T id="settings.custom_audio_output" /></p>
-                <Dropdown options={audioOutputs} value={audioOutputs.find((a) => a.id === $special.audioOutput)?.name || "—"} on:click={(e) => updateSpecial(e.detail.id, "audioOutput")} />
-            </CombinedInput> -->
         {:else if playlist}
             <DropArea id="audio_playlist" selectChildren let:fileOver file>
                 {#if playlist.songs.length}
