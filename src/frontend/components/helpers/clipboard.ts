@@ -18,6 +18,7 @@ import {
     activeStage,
     audioFolders,
     audioPlaylists,
+    audioRouting,
     audioStreams,
     categories,
     clipboard,
@@ -1032,6 +1033,21 @@ const deleteActions = {
     profile: (data: any) => {
         data.forEach(({ id }) => {
             history({ id: "UPDATE", newData: { id }, location: { page: "settings", id: "settings_profile" } })
+        })
+    },
+    audio_channel: (data: any) => {
+        const channelId = data?.[0]?.id || data?.[0]
+        if (!channelId) return
+        audioRouting.update((c) => {
+            if (!c?.channels?.length) return c
+
+            const list = c.channels
+            const index = list.findIndex((m) => m.id === channelId)
+            if (index <= 0) return c // First channel ("main") cannot be deleted
+
+            list.splice(index, 1)
+            const connections = c.connections.filter((conn) => conn.from !== channelId && conn.to !== channelId)
+            return { ...c, channels: list, connections }
         })
     },
     tag: (data: any) => {

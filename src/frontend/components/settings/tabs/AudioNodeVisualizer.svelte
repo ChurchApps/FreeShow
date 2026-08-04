@@ -158,6 +158,7 @@
         align-items: center;
         gap: 6px;
         width: 100%;
+        min-width: 0;
         margin-top: 2px;
     }
 
@@ -165,6 +166,8 @@
         border-radius: 2px;
         display: block;
         flex: 1;
+        width: 100%;
+        min-width: 0;
     }
 
     .channel-labels {

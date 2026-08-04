@@ -1,11 +1,12 @@
 <script lang="ts">
     import Icon from "../../helpers/Icon.svelte"
-    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import AudioNodeVisualizer from "./AudioNodeVisualizer.svelte"
 
     export let id: string
     export let name: string
     export let type: string
+    export let icon: string | null = null
     export let nodeType: "input" | "channel" | "merger" | "output"
     export let isSubNode: boolean = false
     export let isExpanded: boolean = false
@@ -24,28 +25,33 @@
     export let onMouseLeave: () => void
     export let onMouseEnterPort: (e: MouseEvent, chIdx: number) => void = () => {}
     export let onMouseLeavePort: () => void = () => {}
-    export let onRemove: () => void = () => {}
-    export let onRename: (newName: string) => void = () => {}
 
     function getIcon(type: string): string {
+        if (icon) return icon
+
         const icons: Record<string, string> = {
             drawer_audio: "audio",
             mic: "mic",
             metronome: "timer",
-            desktop_audio: "screen",
+            desktop_audio: "volume",
             output_window: "display_settings",
             speaker: "volume",
-            network: "connection",
             icecast: "cloud"
         }
         return icons[type] || "settings"
     }
 
     $: isChannel = nodeType === "channel" || nodeType === "merger"
-    $: isValidHover = isConnecting && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isChannel && dragStartPortType === "in" && nodeType === "input") || (isChannel && dragStartPortType === "out" && nodeType === "output"))
+    $: isInputCol = nodeType === "input"
+    $: isOutputCol = nodeType === "output"
+    $: isStartChannel = dragStartType === "channel" || dragStartType === "merger"
+    $: hasInPort = nodeType !== "input" && (type !== "network" || isSubNode) && (!isSubNode || nodeType === "output")
+    $: hasOutPort = nodeType !== "output" && (type !== "output_window" || isSubNode)
+    $: hasValidPort = (dragStartType === "input" && hasInPort) || (dragStartType === "output" && hasOutPort) || (isStartChannel && dragStartPortType === "in" && hasOutPort) || (isStartChannel && dragStartPortType === "out" && hasInPort)
+    $: isValidHover = isConnecting && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isStartChannel && dragStartPortType === "in" && isInputCol) || (isStartChannel && dragStartPortType === "out" && isOutputCol))
 </script>
 
-<div class="node-card" class:merger-card={isChannel} class:sub-card={isSubNode} class:hover-valid={hoverTargetId === id} class:disabled={!isEnabled} class:invalid={isConnecting && !isValidHover && id !== dragStartId} data-node-id={id} on:mouseenter={onMouseEnter} on:mouseleave={onMouseLeave}>
+<div {id} class="node-card {isChannel ? `context #audio_channel${id === 'main' ? '_main' : ''}` : type}" class:merger-card={isChannel} class:sub-card={isSubNode} class:hover-valid={hoverTargetId === id && hasValidPort} class:disabled={!isEnabled} class:invalid={isConnecting && !isValidHover && id !== dragStartId} data-node-id={id} on:mouseenter={onMouseEnter} on:mouseleave={onMouseLeave}>
     {#if nodeType !== "input" && type !== "network" && !isSubNode}
         <div class="port port-in" title="Input connection port" on:mousedown={(e) => onMouseDown(e, "in")}></div>
     {/if}
@@ -62,21 +68,11 @@
 
     <div class="card-content">
         {#if hasSubNodes && type !== "output_window" && type !== "network"}
-            <button class="expand-btn" on:click|stopPropagation={onToggleExpand}>
-                <Icon id={isExpanded ? "expand" : "next"} size={0.9} />
-            </button>
+            <MaterialButton variant="outlined" icon={isExpanded ? "expand" : "next"} style="padding: 5px;" on:click={onToggleExpand} />
         {/if}
 
         {#if isChannel}
-            {#if !hasSubNodes}
-                <Icon id="options" size={1.1} />
-            {/if}
-            <MaterialTextInput label="Channel Name" value={name} style="margin: 0; width: 100%;" on:change={(e) => onRename(e.detail)} />
-            {#if id !== "main" && id !== "merger_main" && id !== "channel_main"}
-                <button class="delete-btn" title="Delete channel" on:click|stopPropagation={onRemove}>
-                    <Icon id="delete" size={0.8} />
-                </button>
-            {/if}
+            <span class="card-name">{name}</span>
         {:else}
             {#if !hasSubNodes}
                 <Icon id={getIcon(type)} size={isSubNode ? 0.9 : 1.1} />
@@ -97,6 +93,10 @@
 <style>
     .node-card {
         position: relative;
+        max-width: 500px;
+        min-width: 200px;
+        width: 100%;
+        box-sizing: border-box;
         background: var(--primary-darker, rgba(30, 30, 40, 0.9));
         border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 8px;
@@ -106,9 +106,11 @@
         flex-direction: column;
         align-items: stretch;
         gap: 8px;
+        cursor: default;
         transition:
             border-color 0.15s ease,
-            box-shadow 0.15s ease;
+            box-shadow 0.15s ease,
+            opacity 0.2s ease;
     }
 
     .sub-card {
@@ -121,8 +123,7 @@
     }
 
     .node-card.hover-valid {
-        border-color: #ff9800;
-        box-shadow: 0 0 12px rgba(255, 152, 0, 0.5);
+        border-color: var(--text);
     }
 
     .node-card.disabled {
@@ -164,34 +165,19 @@
         align-items: center;
     }
 
-    .delete-btn {
-        background: none;
-        border: none;
-        color: rgba(255, 255, 255, 0.5);
-        cursor: pointer;
-        padding: 2px;
-        display: flex;
-        align-items: center;
-    }
-
-    .delete-btn:hover {
-        color: #f44336;
-    }
-
     .port {
         position: absolute;
         width: 12px;
         height: 12px;
-        background: #4caf50;
+        background: var(--secondary);
         border: 2px solid #fff;
         border-radius: 50%;
         cursor: crosshair;
         z-index: 10;
         transition: background 0.1s ease;
     }
-
     .port:hover {
-        background: #ff9800;
+        background: var(--text);
     }
 
     .port-in {

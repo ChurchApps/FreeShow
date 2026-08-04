@@ -6,7 +6,7 @@
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
     import { audioRouting, outputs as outputsStore } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import Icon from "../../helpers/Icon.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import RoutingNode from "./RoutingNode.svelte"
 
     let config: AudioRoutingConfig
@@ -65,14 +65,11 @@
         .filter(([_, out]) => out && (out.rtmp || out.webrtc || out.ndi))
         .map(([id, out]) => {
             let label = out.name || id
-            let types: string[] = []
-            if (out.rtmp) types.push("RTMP")
-            if (out.webrtc) types.push("WebRTC")
-            if (out.ndi) types.push("NDI")
             return {
                 id: "network_sub_" + id,
-                name: `${label} (${types.join(", ")})`,
+                name: label,
                 type: "network",
+                icon: out.ndi ? "ndi" : "broadcast",
                 isEnabled: (out as any).enabled
             }
         })
@@ -183,25 +180,6 @@
             const name = `${translateText("midi.channel")} ${list.length + 1}`
             list.push({ id: newId, name })
             c.channels = list
-        })
-    }
-
-    function removeChannel(id: string) {
-        updateConfig((c) => {
-            const list = c.channels || []
-            const index = list.findIndex((m) => m.id === id)
-            if (index <= 0) return // First channel cannot be deleted
-            list.splice(index, 1)
-            c.channels = list
-            c.connections = c.connections.filter((conn) => conn.from !== id && conn.to !== id)
-        })
-    }
-
-    function renameChannel(id: string, newName: string) {
-        updateConfig((c) => {
-            const list = c.channels || []
-            const channel = list.find((m) => m.id === id)
-            if (channel) channel.name = newName
         })
     }
 
@@ -343,7 +321,7 @@
             let valid = false
             if ((isInput(fromId) && isChannelNode(toId)) || (isChannelNode(fromId) && isOutput(toId))) {
                 valid = true
-            } else if ((isOutput(fromId) && isChannelNode(toId)) || (isChannelNode(fromId) && isInput(fromId))) {
+            } else if ((isOutput(fromId) && isChannelNode(toId)) || (isChannelNode(fromId) && isInput(toId))) {
                 ;[fromId, toId] = [toId, fromId]
                 valid = true
             }
@@ -438,7 +416,7 @@
     }
 
     // --- Hover Helpers to avoid TS errors in template ---
-    function handleNodeMouseEnter(nodeId: string, type: string, columnType: "input" | "channel" | "merger" | "output") {
+    function handleNodeMouseEnter(nodeId: string, columnType: "input" | "channel" | "merger" | "output") {
         if (!isConnecting) return
 
         let valid = false
@@ -446,11 +424,9 @@
         else if (dragStartType === "output" && (columnType === "channel" || columnType === "merger")) valid = true
         else if (dragStartType === "channel" || dragStartType === "merger") {
             if (dragStartPortType === "in" && columnType === "input") {
-                // For inputs, we can only connect to sub-nodes or direct inputs (like metronome)
-                if (type !== "output_window" && type !== "mic") valid = true
+                if (nodeId !== "output_window") valid = true
             } else if (dragStartPortType === "out" && columnType === "output") {
-                // For outputs, we can connect to most things
-                if (type !== "network") valid = true
+                if (nodeId !== "network_default") valid = true
             }
         }
 
@@ -484,15 +460,30 @@
             <!-- SVG Connections Layer -->
             <svg class="connections-layer">
                 <defs>
-                    <linearGradient id="line-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stop-color="#4caf50" />
-                        <stop offset="100%" stop-color="#2196f3" />
-                    </linearGradient>
+                    {#each lines as line (line.fromId + "-" + line.toId + "-" + line.channelIndex)}
+                        {@const isToOutput = fixedOutputs.some((o) => o.id === line.toId) || line.toId.startsWith("speaker_sub_") || line.toId.startsWith("network_sub_")}
+                        <linearGradient id={"grad-" + line.fromId + "-" + line.toId + "-" + line.channelIndex} gradientUnits="userSpaceOnUse" x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2}>
+                            {#if isToOutput}
+                                <stop offset="0%" stop-color="var(--secondary)" />
+                                <stop offset="50%" stop-color="#d100db" />
+                                <stop offset="70%" stop-color="#b300f0" />
+                                <stop offset="90%" stop-color="#9000f0" />
+                                <stop offset="100%" stop-color="#8000f0" />
+                            {:else}
+                                <stop offset="0%" stop-color="#8000f0" />
+                                <stop offset="10%" stop-color="#9000f0" />
+                                <stop offset="30%" stop-color="#b300f0" />
+                                <stop offset="50%" stop-color="#d100db" />
+                                <stop offset="100%" stop-color="var(--secondary)" />
+                            {/if}
+                        </linearGradient>
+                    {/each}
                 </defs>
 
                 {#each lines as line (line.fromId + "-" + line.toId + "-" + line.channelIndex)}
+                    {@const gradId = "grad-" + line.fromId + "-" + line.toId + "-" + line.channelIndex}
                     {@const dx = Math.max(20, Math.abs(line.x2 - line.x1) / 2)}
-                    <path d="M {line.x1} {line.y1} C {line.x1 + dx} {line.y1}, {line.x2 - dx} {line.y2}, {line.x2} {line.y2}" class="connection-path" on:dblclick={() => removeConnection(line.fromId, line.toId)}>
+                    <path d="M {line.x1} {line.y1} C {line.x1 + dx} {line.y1}, {line.x2 - dx} {line.y2}, {line.x2} {line.y2}" stroke={`url(#${gradId})`} class="connection-path" on:dblclick={() => removeConnection(line.fromId, line.toId)}>
                         <title>Double click or drag again to disconnect</title>
                     </path>
                 {/each}
@@ -508,9 +499,9 @@
             <div class="nodes-grid">
                 {#each columns as column (column.title)}
                     <div class="space-column">
-                        <div class="column-title">
+                        <!-- <div class="column-title">
                             <h3>{column.title}</h3>
-                        </div>
+                        </div> -->
 
                         <div class="nodes-list">
                             {#each column.nodes as node (node.id)}
@@ -525,16 +516,14 @@
                                         {dragStartPortType}
                                         onToggleExpand={() => toggleExpand(node.id)}
                                         onMouseDown={(e, portType, chIdx) => handlePortMouseDown(e, node.id, column.type, portType, chIdx)}
-                                        onMouseEnter={() => handleNodeMouseEnter(node.id, node.type, column.type)}
+                                        onMouseEnter={() => handleNodeMouseEnter(node.id, column.type)}
                                         onMouseLeave={() => handleNodeMouseLeave(node.id)}
                                         onMouseEnterPort={handlePortMouseEnter}
                                         onMouseLeavePort={handlePortMouseLeave}
-                                        onRemove={() => removeChannel(node.id)}
-                                        onRename={(newName) => renameChannel(node.id, newName)}
                                     />
 
                                     {#if node.isExpanded && node.subNodes}
-                                        <div class="sub-nodes-list">
+                                        <div class="sub-nodes-list" style={column.type === "input" ? "margin-left: 12px;" : column.type === "output" ? "margin-right: 12px;" : ""}>
                                             {#if node.subNodes.length > 0}
                                                 {#each node.subNodes as sub (sub.id)}
                                                     <RoutingNode
@@ -547,7 +536,7 @@
                                                         {dragStartType}
                                                         {dragStartPortType}
                                                         onMouseDown={(e, portType, chIdx) => handlePortMouseDown(e, sub.id, column.type, portType, chIdx)}
-                                                        onMouseEnter={() => handleNodeMouseEnter(sub.id, sub.type, column.type)}
+                                                        onMouseEnter={() => handleNodeMouseEnter(sub.id, column.type)}
                                                         onMouseLeave={() => handleNodeMouseLeave(sub.id)}
                                                         onMouseEnterPort={(e) => {
                                                             if (isConnecting) {
@@ -569,9 +558,7 @@
                             {/each}
 
                             {#if column.type === "channel" || column.type === "merger"}
-                                <button class="add-merger-btn" title="Add channel" on:click={addChannel}>
-                                    <Icon id="add" size={1.2} />
-                                </button>
+                                <MaterialButton variant="outlined" icon="add" on:click={addChannel} white />
                             {/if}
                         </div>
                     </div>
@@ -629,7 +616,6 @@
     }
 
     .connection-path {
-        stroke: url(#line-grad);
         stroke-width: 3px;
         fill: none;
         pointer-events: stroke;
@@ -637,13 +623,8 @@
         transition: stroke-width 0.15s ease;
     }
 
-    .connection-path:hover {
-        stroke-width: 5px;
-        stroke: #ff9800;
-    }
-
     .drag-path {
-        stroke: #ff9800;
+        stroke: var(--secondary);
         stroke-width: 3px;
         stroke-dasharray: 6 4;
         fill: none;
@@ -653,7 +634,8 @@
         position: relative;
         z-index: 2;
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: repeat(3, minmax(200px, 1fr));
+        justify-items: center;
         gap: 40px;
         min-height: 100%;
         padding: 20px;
@@ -664,9 +646,12 @@
         display: flex;
         flex-direction: column;
         gap: 15px;
+        max-width: 500px;
+        min-width: 200px;
+        width: 100%;
     }
 
-    .column-title {
+    /* .column-title {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -675,12 +660,12 @@
         border-radius: 6px;
         backdrop-filter: blur(4px);
     }
-
     .column-title h3 {
         margin: 0;
         font-size: 1em;
         font-weight: 600;
-    }
+        color: var(--text);
+    } */
 
     .nodes-list {
         display: flex;
@@ -697,17 +682,13 @@
 
     .node-card-group.has-subnodes {
         background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 8px;
-        padding: 8px;
-        margin: -4px;
+        border-radius: 6px;
     }
 
     .sub-nodes-list {
         display: flex;
         flex-direction: column;
         gap: 8px;
-        padding-left: 12px;
     }
 
     .disabled-hint {
@@ -720,26 +701,5 @@
     .sub-name {
         font-size: 0.9em;
         opacity: 0.9;
-    }
-
-    .add-merger-btn {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px dashed rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        color: var(--text);
-        padding: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition:
-            background 0.15s ease,
-            border-color 0.15s ease;
-        width: 100%;
-    }
-
-    .add-merger-btn:hover {
-        background: rgba(255, 255, 255, 0.18);
-        border-color: var(--secondary, #f0008c);
     }
 </style>
