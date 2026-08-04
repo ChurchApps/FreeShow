@@ -1,4 +1,4 @@
-import type { NativeImage, Size } from "electron"
+import { nativeImage, type NativeImage, type Size } from "electron"
 import os from "os"
 import { OUTPUT_STREAM } from "../../../types/Channels"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
@@ -196,7 +196,14 @@ export class CaptureTransmitter {
         return false
     }
 
-    static transmitFrame(captureId: string, image: NativeImage, captureTimestamp?: number) {
+    // buffer-consumers need only raw BGRA bytes (no NativeImage resize/toJPEG), so on the shared-texture
+    // path they can take the readback buffer directly instead of a createFromBitmap -> toBitmap round-trip.
+    private static readonly BUFFER_CONSUMERS = new Set(["ndi", "webrtc", "rtmp"])
+
+    // `image` is provided by the capturePage/CPU paths; `raw` (a BGRA readback buffer + size) is provided by
+    // the shared-texture path. When raw is present and a single buffer-consumer is active, we skip building a
+    // NativeImage entirely; otherwise a NativeImage is used (given, or built once from the raw buffer).
+    static transmitFrame(captureId: string, image: NativeImage | null, captureTimestamp?: number, raw?: { buffer: Buffer; size: Size }) {
         const frameTimestamp = captureTimestamp ?? performance.now()
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
         if (!captureOptions) return
@@ -205,10 +212,11 @@ export class CaptureTransmitter {
 
         // free the lifecycle loop immediately
         setImmediate(() => {
-            if (image.isEmpty()) return
+            if (!raw && (!image || image.isEmpty())) return
 
             const baseCaptureFrameRate = CaptureHelper.getMaxActiveFramerate(framerates || {}, captureOptions.options || {})
 
+            const firing: Channel[] = []
             for (const channel of Object.values(this.channels)) {
                 if (channel.captureId !== captureId) continue
 
@@ -217,15 +225,67 @@ export class CaptureTransmitter {
                 const timeSinceLastFrame = frameTimestamp - channel.lastFrameTime
 
                 const epsilon = fps >= baseCaptureFrameRate ? this.FPS_EPSILON_HIGH : this.FPS_EPSILON_LOW
-                if (timeSinceLastFrame < minInterval - epsilon) {
-                    continue
-                }
+                if (timeSinceLastFrame < minInterval - epsilon) continue
 
                 channel.lastFrameTime = frameTimestamp
-
-                this.sendFrameToChannel(captureId, channel.key, image)
+                firing.push(channel)
             }
+            if (firing.length === 0) return
+
+            // #20 fast path: a single buffer-consumer on the shared-texture path takes the raw readback
+            // buffer directly (each send owns its copy), skipping the createFromBitmap -> toBitmap copies.
+            if (raw && firing.length === 1 && this.BUFFER_CONSUMERS.has(firing[0].key)) {
+                this.sendRawToChannel(captureId, firing[0].key, raw.buffer, raw.size)
+                return
+            }
+
+            // general path: obtain a NativeImage (given directly, or built once from the raw buffer)
+            const frameImage = image ?? (raw ? nativeImage.createFromBitmap(raw.buffer, raw.size) : null)
+            if (!frameImage || frameImage.isEmpty()) return
+            for (const channel of firing) this.sendFrameToChannel(captureId, channel.key, frameImage)
         })
+    }
+
+    // send a raw BGRA readback buffer straight to a buffer-consumer. `buffer` is the shared latest-frame
+    // buffer, so any consumer that mutates (convertToRGBA) or transfers (NDI worker) it must copy first.
+    private static sendRawToChannel(captureId: string, key: string, buffer: Buffer, size: Size) {
+        switch (key) {
+            case "ndi":
+                this.sendRawToNdi(captureId, buffer, size)
+                break
+            case "webrtc":
+                this.sendRawToWebRtc(captureId, buffer, size)
+                break
+            case "rtmp":
+                this.sendRawToRtmp(captureId, buffer, size)
+                break
+        }
+    }
+
+    private static sendRawToNdi(captureId: string, buffer: Buffer, size: Size) {
+        if (!NdiSender.NDI[captureId]?.sender || NdiSender.isBusyNDI(captureId)) return
+        const output = OutputHelper.getOutput(captureId)
+        const ratio = size.height ? size.width / size.height : 16 / 9
+        const transparent = output?.transparent !== false
+        const framerate = output?.captureOptions?.framerates?.ndi || 30
+        // NDI transfers the buffer to its worker (detaches it) -> hand it an owned copy
+        NdiSender.sendVideoBufferNDI(captureId, Buffer.from(buffer), { size, ratio, framerate, transparent })
+    }
+
+    private static sendRawToWebRtc(captureId: string, buffer: Buffer, size: Size) {
+        if (!WebRtcHost.isRunning()) return
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("webrtc", captureId, buffer, size)) return
+        // convertToRGBA mutates in place -> operate on an owned copy so the shared buffer stays reusable
+        const owned = Buffer.from(buffer)
+        this.convertToRGBA(owned)
+        WebRtcHost.sendFrame(captureId, owned, size)
+    }
+
+    private static sendRawToRtmp(captureId: string, buffer: Buffer, size: Size) {
+        if (!RtmpStreamer.isRunning(captureId)) return
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("rtmp", captureId, buffer, size)) return
+        // rtmp does not mutate/retain the buffer beyond the write, so no copy needed
+        RtmpStreamer.updateFrame(captureId, buffer)
     }
 
     private static sendFrameToChannel(captureId: string, key: string, image: NativeImage) {

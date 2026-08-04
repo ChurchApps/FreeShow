@@ -276,7 +276,10 @@ export class CaptureLifecycle {
                 const url = o.rtmpData?.url || ""
                 const key = o.rtmpData?.key || ""
                 const fullUrl = key ? `${url}/${key}` : url
-                const bounds = o.window?.getBounds() || { width: 1920, height: 1080 }
+                // use the configured output resolution — it matches the captured frame (codedSize). The
+                // window's own bounds are DPI-scaled DOWN for capture, so on a scaled display they would
+                // mis-size the ffmpeg encoder (e.g. 960x540 for a 1920x1080 frame -> torn/duplicated video).
+                const bounds = o.intendedBounds || o.window?.getBounds() || { width: 1920, height: 1080 }
                 const fps = o.rtmpData?.fps ? Number(o.rtmpData.fps) : 30
                 const bitrate = o.rtmpData?.bitrate ? Number(o.rtmpData.bitrate) : 4000
                 if (o.captureOptions?.framerates) o.captureOptions.framerates.rtmp = fps

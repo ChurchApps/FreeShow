@@ -221,11 +221,11 @@ export class OutputLifecycle {
     }
 
     // GPU shared-texture path (#16): read each paint texture back to a BGRA buffer off the main thread and
-    // wrap it as a NativeImage for the existing transmit pipeline. Readbacks are throttled to the send rate
-    // (one in flight); every texture is released or the compositor frame pool drains.
+    // hand the RAW buffer to the transmit pipeline (no createFromBitmap here — buffer-consumers take it
+    // directly, #20). Readbacks are throttled to the send rate (one in flight); every texture is released or
+    // the compositor frame pool drains.
     private static attachOsrSharedTexture(window: BrowserWindow, id: string, addon: any) {
-        const nativeImage = require("electron").nativeImage
-        let lastImage: Electron.NativeImage | null = null
+        let lastRaw: { buffer: Buffer; size: { width: number; height: number } } | null = null
         let readingBack = false
         let lastReadback = 0
 
@@ -251,7 +251,7 @@ export class OutputLifecycle {
             addon
                 .readback(source, width, height)
                 .then((buf: Buffer) => {
-                    lastImage = nativeImage.createFromBitmap(buf, { width, height })
+                    lastRaw = { buffer: buf, size: { width, height } }
                 })
                 .catch((err: any) => console.error("OSR shared-texture readback error:", err))
                 .finally(() => {
@@ -264,7 +264,9 @@ export class OutputLifecycle {
                 })
         })
 
-        this.startOsrSendTimer(window, id, () => lastImage)
+        this.startOsrSendTimer(window, id, () => {
+            if (lastRaw) CaptureHelper.Transmitter.transmitFrame(id, null, undefined, lastRaw)
+        })
     }
 
     // CPU fallback path: the paint event delivers a NativeImage directly.
@@ -273,21 +275,22 @@ export class OutputLifecycle {
         window.webContents.on("paint", (_e: unknown, _dirty: unknown, image: Electron.NativeImage) => {
             lastImage = image
         })
-        this.startOsrSendTimer(window, id, () => lastImage)
+        this.startOsrSendTimer(window, id, () => {
+            if (lastImage) CaptureHelper.Transmitter.transmitFrame(id, lastImage)
+        })
     }
 
     // emit the latest frame at the output's configured framerate: decouples the send rate from the
     // content-change rate so the per-consumer FPS is honored and static content still holds a constant rate
-    private static startOsrSendTimer(window: BrowserWindow, id: string, getImage: () => Electron.NativeImage | null) {
+    private static startOsrSendTimer(window: BrowserWindow, id: string, emit: () => void) {
         let sendTimer: NodeJS.Timeout
-        const emitFrame = () => {
-            const image = getImage()
+        const tick = () => {
             // transmitFrame no-ops until the output's capture channels are set up, and throttles each consumer
-            if (!window.isDestroyed() && image) CaptureHelper.Transmitter.transmitFrame(id, image)
+            if (!window.isDestroyed()) emit()
             // re-read the interval each tick so framerate changes (e.g. NDI connect) take effect
-            sendTimer = setTimeout(emitFrame, this.getOsrSendInterval(id))
+            sendTimer = setTimeout(tick, this.getOsrSendInterval(id))
         }
-        sendTimer = setTimeout(emitFrame, this.getOsrSendInterval(id))
+        sendTimer = setTimeout(tick, this.getOsrSendInterval(id))
         window.on("closed", () => clearTimeout(sendTimer))
     }
 
