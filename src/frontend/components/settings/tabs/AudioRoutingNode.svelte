@@ -2,14 +2,18 @@
     import Icon from "../../helpers/Icon.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import AudioNodeVisualizer from "./AudioNodeVisualizer.svelte"
-    import { activePopup } from "../../../stores"
+    import { activePopup, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
 
     export let id: string
     export let name: string
     export let type: string
     export let icon: string | null = null
+    export let color: string | undefined = undefined
+    export let autoColor: string | undefined = undefined
     export let nodeType: "input" | "channel" | "merger" | "output"
+
+    $: activeColor = color || autoColor
     export let isSubNode: boolean = false
     export let isExpanded: boolean = false
     export let hasSubNodes: boolean = false
@@ -20,6 +24,7 @@
     export let dragStartPortType: "in" | "out" | null = null
     export let channels: number = 0
     export let isEnabled: boolean = true
+    export let isMuted: boolean = false
 
     export let onToggleExpand: () => void = () => {}
     export let onMouseDown: (e: MouseEvent, portType: "in" | "out", chIdx?: number) => void
@@ -53,7 +58,7 @@
     $: isValidHover = isConnecting && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isStartChannel && dragStartPortType === "in" && isInputCol) || (isStartChannel && dragStartPortType === "out" && isOutputCol))
 </script>
 
-<div {id} class="node-card {isChannel ? `context #audio_channel${id === 'main' ? '_main' : ''}` : type}" class:merger-card={isChannel} class:sub-card={isSubNode} class:hover-valid={hoverTargetId === id && hasValidPort} class:disabled={!isEnabled} class:invalid={isConnecting && !isValidHover && id !== dragStartId} data-node-id={id} on:mouseenter={onMouseEnter} on:mouseleave={onMouseLeave}>
+<div {id} class="node-card {isChannel ? `context #audio_channel${id === 'main' ? '_main' : ''}` : type}" class:merger-card={isChannel} class:sub-card={isSubNode} class:hover-valid={hoverTargetId === id && hasValidPort} class:disabled={!isEnabled} class:invalid={isConnecting && !isValidHover && id !== dragStartId} data-node-id={id} on:mouseenter={onMouseEnter} on:mouseleave={onMouseLeave} style={activeColor ? `--port-color: ${activeColor};` : ""}>
     {#if nodeType !== "input" && type !== "network" && !isSubNode}
         <div class="port port-in" on:mousedown={(e) => onMouseDown(e, "in")}></div>
     {/if}
@@ -75,19 +80,31 @@
 
         {#if isChannel}
             <span class="card-name">{name}</span>
+            {#if isMuted}
+                <Icon id="muted" size={0.9} style="opacity: 0.7;" white />
+            {/if}
         {:else}
             {#if !hasSubNodes}
-                <Icon id={getIcon(type)} size={isSubNode ? 0.9 : 1.1} />
+                <Icon id={getIcon(type)} size={isSubNode ? 0.9 : 1.1} {color} white />
             {/if}
             <span class="card-name" class:sub-name={isSubNode}>{name}</span>
         {/if}
 
         {#if type === "icecast"}
-            <MaterialButton variant="outlined" icon="options" style="padding: 5px;" title="audio.settings" on:click={() => activePopup.set("icecast_settings")} />
+            <MaterialButton
+                variant="outlined"
+                icon="options"
+                style="padding: 5px;"
+                title="popup.node_options"
+                on:click={() => {
+                    popupData.set({ nodeId: id })
+                    activePopup.set("node_options")
+                }}
+            />
         {/if}
     </div>
 
-    {#if id !== "network_default" && id !== "output_window"}
+    {#if id !== "network_default" && id !== "output_window" && isEnabled}
         <AudioNodeVisualizer channelId={id} width={isSubNode ? 120 : 140} height={isSubNode ? 3 : 4} />
     {/if}
 
@@ -175,7 +192,7 @@
         position: absolute;
         width: 12px;
         height: 12px;
-        background: var(--secondary);
+        background: var(--port-color, var(--secondary));
         border: 2px solid #fff;
         border-radius: 50%;
         cursor: crosshair;

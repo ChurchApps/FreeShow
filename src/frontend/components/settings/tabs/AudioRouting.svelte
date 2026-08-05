@@ -5,15 +5,18 @@
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
     import { deduplicateConnections } from "../../../audio/routing/audioRoutingInit"
-    import { audioRouting } from "../../../stores"
+    import { audioChannelsData, audioRouting, outputs } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { keysToID } from "../../helpers/array"
     import { getAllOutputs } from "../../helpers/output"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import RoutingNode from "./RoutingNode.svelte"
+    import AudioRoutingNode from "./AudioRoutingNode.svelte"
 
     let config: AudioRoutingConfig
     $: config = $audioRouting || { channels: [], connections: [] }
     $: channelsList = config.channels || []
+
+    $: inactiveOutputIds = keysToID($outputs).filter((a) => !a.enabled)
 
     interface RoutingColumnNode {
         id: string
@@ -24,6 +27,8 @@
         subNodes?: RoutingColumnNode[]
         channels?: number
         isEnabled?: boolean
+        color?: string
+        isMuted?: boolean
     }
 
     interface RoutingColumn {
@@ -59,6 +64,7 @@
             id: "output_win_sub_" + out.id,
             name: out.name || out.id,
             type: "output_window",
+            color: out.color,
             isEnabled: (out as any).enabled
         }))
 
@@ -72,6 +78,7 @@
                 name: label,
                 type: "network",
                 icon: out.ndi ? "ndi" : "broadcast",
+                color: out.color,
                 isEnabled: (out as any).enabled
             }
         })
@@ -140,7 +147,12 @@
         {
             title: "Channels",
             type: "channel",
-            nodes: channelsList.map((m) => ({ id: m.id, name: m.name, type: "channel" }))
+            nodes: channelsList.map((m) => {
+                const inactive = inactiveOutputIds.some((a) => `channel_${a.id}` === m.id)
+                const chData = $audioChannelsData[m.id]
+                const muted = chData ? chData.isMuted || chData.volume === 0 : false
+                return { id: m.id, name: m.name, type: "channel", color: m.color, isEnabled: !inactive, isMuted: muted }
+            })
         },
         {
             title: "Outputs",
@@ -472,37 +484,28 @@
         <div class="routing-space" bind:this={spaceEl}>
             <!-- SVG Connections Layer -->
             <svg class="connections-layer">
-                <defs>
-                    {#each lines as line (line.fromId + "-" + line.toId + "-" + line.channelIndex)}
-                        {@const isToOutput = fixedOutputs.some((o) => o.id === line.toId) || line.toId.startsWith("speaker_sub_") || line.toId.startsWith("network_sub_")}
-                        <linearGradient id={"grad-" + line.fromId + "-" + line.toId + "-" + line.channelIndex} gradientUnits="userSpaceOnUse" x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2}>
-                            {#if isToOutput}
-                                <stop offset="0%" stop-color="var(--secondary)" />
-                                <stop offset="50%" stop-color="#d100db" />
-                                <stop offset="70%" stop-color="#b300f0" />
-                                <stop offset="90%" stop-color="#9000f0" />
-                                <stop offset="100%" stop-color="#8000f0" />
-                            {:else}
-                                <stop offset="0%" stop-color="#8000f0" />
-                                <stop offset="10%" stop-color="#9000f0" />
-                                <stop offset="30%" stop-color="#b300f0" />
-                                <stop offset="50%" stop-color="#d100db" />
-                                <stop offset="100%" stop-color="var(--secondary)" />
-                            {/if}
-                        </linearGradient>
-                    {/each}
-                </defs>
-
                 {#each lines as line (line.fromId + "-" + line.toId + "-" + line.channelIndex)}
-                    {@const gradId = "grad-" + line.fromId + "-" + line.toId + "-" + line.channelIndex}
+                    {@const sourceCol = columns.find((col) => col.nodes.some((n) => n.id === line.fromId || (n.subNodes || []).some((s) => s.id === line.fromId)))}
+                    {@const colNodes = (sourceCol?.nodes || []).flatMap((n) => [n, ...(n.subNodes || [])])}
+                    {@const sourceNode = colNodes.find((n) => n.id === line.fromId)}
+                    {@const nodeIndex = colNodes.findIndex((n) => n.id === line.fromId)}
+                    {@const hue = (275 + (nodeIndex >= 0 ? nodeIndex : 0) * 6) % 360}
+                    {@const strokeColor = sourceNode?.color || `hsl(${hue}, 80%, 65%)`}
+                    {@const isDisabled = sourceNode?.isEnabled === false}
                     {@const dx = Math.max(20, Math.abs(line.x2 - line.x1) / 2)}
-                    <path d="M {line.x1} {line.y1} C {line.x1 + dx} {line.y1}, {line.x2 - dx} {line.y2}, {line.x2} {line.y2}" stroke={`url(#${gradId})`} class="connection-path" on:dblclick={() => removeConnection(line.fromId, line.toId)} />
+                    <path d="M {line.x1} {line.y1} C {line.x1 + dx} {line.y1}, {line.x2 - dx} {line.y2}, {line.x2} {line.y2}" stroke={strokeColor} class="connection-path" class:disabled={isDisabled} on:dblclick={() => removeConnection(line.fromId, line.toId)} />
                 {/each}
 
-                {#if isConnecting}
+                {#if isConnecting && dragStartId}
+                    {@const dragSourceCol = columns.find((col) => col.nodes.some((n) => n.id === dragStartId || (n.subNodes || []).some((s) => s.id === dragStartId)))}
+                    {@const dragColNodes = (dragSourceCol?.nodes || []).flatMap((n) => [n, ...(n.subNodes || [])])}
+                    {@const dragSourceNode = dragColNodes.find((n) => n.id === dragStartId)}
+                    {@const dragNodeIndex = dragColNodes.findIndex((n) => n.id === dragStartId)}
+                    {@const dragHue = (275 + (dragNodeIndex >= 0 ? dragNodeIndex : 0) * 6) % 360}
+                    {@const dragColor = dragSourceNode?.color || `hsl(${dragHue}, 80%, 65%)`}
                     {@const dx = Math.max(20, Math.abs(dragCurrentPos.x - dragFromPos.x) / 2)}
                     {@const sign = dragStartPortType === "out" ? 1 : -1}
-                    <path d="M {dragFromPos.x} {dragFromPos.y} C {dragFromPos.x + dx * sign} {dragFromPos.y}, {dragCurrentPos.x - dx * sign} {dragCurrentPos.y}, {dragCurrentPos.x} {dragCurrentPos.y}" class="drag-path" />
+                    <path d="M {dragFromPos.x} {dragFromPos.y} C {dragFromPos.x + dx * sign} {dragFromPos.y}, {dragCurrentPos.x - dx * sign} {dragCurrentPos.y}, {dragCurrentPos.x} {dragCurrentPos.y}" stroke={dragColor} class="drag-path" />
                 {/if}
             </svg>
 
@@ -516,9 +519,14 @@
 
                         <div class="nodes-list">
                             {#each column.nodes as node (node.id)}
+                                {@const colNodes = column.nodes.flatMap((n) => [n, ...(n.subNodes || [])])}
+                                {@const nodeIndex = colNodes.findIndex((n) => n.id === node.id)}
+                                {@const defaultHue = (275 + (nodeIndex >= 0 ? nodeIndex : 0) * 6) % 360}
+                                {@const autoColor = `hsl(${defaultHue}, 80%, 65%)`}
                                 <div class="node-card-group" class:has-subnodes={node.hasSubNodes}>
-                                    <RoutingNode
+                                    <AudioRoutingNode
                                         {...node}
+                                        {autoColor}
                                         nodeType={column.type}
                                         {hoverTargetId}
                                         {isConnecting}
@@ -537,8 +545,12 @@
                                         <div class="sub-nodes-list" style={column.type === "input" ? "margin-left: 12px;" : column.type === "output" ? "margin-right: 12px;" : ""}>
                                             {#if node.subNodes.length > 0}
                                                 {#each node.subNodes as sub (sub.id)}
-                                                    <RoutingNode
+                                                    {@const subIndex = colNodes.findIndex((n) => n.id === sub.id)}
+                                                    {@const subHue = (275 + (subIndex >= 0 ? subIndex : 0) * 6) % 360}
+                                                    {@const subAutoColor = `hsl(${subHue}, 80%, 65%)`}
+                                                    <AudioRoutingNode
                                                         {...sub}
+                                                        autoColor={subAutoColor}
                                                         nodeType={column.type}
                                                         isSubNode={true}
                                                         {hoverTargetId}
@@ -631,11 +643,16 @@
         fill: none;
         pointer-events: stroke;
         cursor: pointer;
-        transition: stroke-width 0.15s ease;
+        transition:
+            stroke-width 0.15s ease,
+            opacity 0.2s ease;
+    }
+
+    .connection-path.disabled {
+        opacity: 0.4;
     }
 
     .drag-path {
-        stroke: var(--secondary);
         stroke-width: 3px;
         stroke-dasharray: 6 4;
         fill: none;

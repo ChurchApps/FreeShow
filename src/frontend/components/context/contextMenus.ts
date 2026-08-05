@@ -411,6 +411,6 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     profile_tab_admin: [],
     output_screen: ["GROUP_rename_recolor", "duplicate", "delete"], // , "SEPARATOR", "reset" // "GROUP_rename_color"
     output_screen_stage: ["GROUP_rename_recolor", "duplicate", "delete"], // , "SEPARATOR", "reset" // "GROUP_rename_color"
-    audio_channel: ["GROUP_rename_only", "delete"], // "GROUP_rename_color"
+    audio_channel: ["GROUP_rename_recolor", "delete"],
     audio_channel_main: ["GROUP_rename_only"]
 }

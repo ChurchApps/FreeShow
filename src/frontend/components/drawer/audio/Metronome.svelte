@@ -1,28 +1,28 @@
 <script lang="ts">
     import { metronome, outLocked, playingMetronome, special } from "../../../stores"
+    import type { MetronomeSettings } from "../../../types/Audio"
     import { translateText } from "../../../utils/language"
-    import type { API_metronome } from "../../actions/api"
+    import { audioExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
     import { clone } from "../../helpers/array"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
+    import InputRow from "../../input/InputRow.svelte"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import MetronomeInputs from "./MetronomeInputs.svelte"
     import MetronomeVisualizer from "./MetronomeVisualizer.svelte"
     import { toggleMetronome, updateMetronome } from "./metronome"
-    import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
-    import { audioExtensions } from "../../../values/extensions"
-    import InputRow from "../../input/InputRow.svelte"
 
     function playPause() {
         paused = !paused
         toggleMetronome()
     }
 
-    let values: API_metronome = {}
+    let values: MetronomeSettings = {}
     let paused = true
 
     $: values = clone($metronome)
@@ -55,15 +55,17 @@
 
 {#if options}
     <div class="settings">
-        <MaterialNumberInput label="media.volume" value={Number(((values.volume || 1) * 100).toFixed(2))} min={1} max={300} on:change={(e) => updateValue("volume", e.detail / 100)} showSlider sliderValues={{ max: 100 }} />
-
-        <MaterialDropdown label="audio.click_sound" style="margin-top: 20px;" disabled={!paused} options={clickSounds} value={$special.clickSound || "metal"} on:change={(e) => updateSpecial("clickSound", e.detail)} />
+        <MaterialDropdown label="audio.click_sound" disabled={!paused} options={clickSounds} value={$special.clickSound || "metal"} on:change={(e) => updateSpecial("clickSound", e.detail)} />
         {#if $special.clickSound === "custom"}
             <InputRow>
                 <MaterialFilePicker label="tabs.audio (Hi)" icon="music" disabled={!paused} value={$special.clickSound_hi || ""} filter={{ name: "Audio files", extensions: audioExtensions }} on:change={(e) => updateSpecial("clickSound_hi", e.detail)} />
                 <MaterialFilePicker label="tabs.audio (Lo)" icon="music" disabled={!paused} value={$special.clickSound_lo || ""} filter={{ name: "Audio files", extensions: audioExtensions }} on:change={(e) => updateSpecial("clickSound_lo", e.detail)} />
             </InputRow>
         {/if}
+        <InputRow>
+            <MaterialNumberInput label="media.volume (Hi)" value={Number(((values.accentVolume ?? 2) * 100).toFixed(0))} min={0} max={500} step={5} defaultValue={200} on:change={(e) => updateValue("accentVolume", e.detail / 100)} showSlider />
+            <MaterialNumberInput label="media.volume (Lo)" value={Number(((values.secondaryVolume ?? 1.75) * 100).toFixed(0))} min={0} max={500} step={5} defaultValue={175} on:change={(e) => updateValue("secondaryVolume", e.detail / 100)} showSlider />
+        </InputRow>
     </div>
 {:else}
     <div class="settings" style="display: flex;gap: 10px;">

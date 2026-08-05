@@ -9,6 +9,7 @@ export interface AudioRoutingItem {
 export interface AudioRoutingChannel {
     id: string
     name: string
+    color?: string
 }
 
 export interface AudioRoutingConnection {

@@ -13,7 +13,7 @@
     {#each channels as channel (channel.id)}
         {@const inactive = inactiveOutputIds.some((a) => `channel_${a.id}` === channel.id)}
 
-        <AudioChannelMixer channelId={channel.id} label={channel.name} {inactive} />
+        <AudioChannelMixer channelId={channel.id} label={channel.name} color={channel.color} {inactive} />
     {/each}
 </div>
 

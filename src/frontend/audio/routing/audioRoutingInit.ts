@@ -57,7 +57,7 @@ export async function initAudioRouting(data: AudioRoutingConfig | null) {
     outputsList.forEach((out) => {
         // any network outputs should have their own channel
         if (out.ndi || out.webrtc || out.rtmp) {
-            channels.push({ id: `channel_${out.id}`, name: out.name })
+            channels.push({ id: `channel_${out.id}`, name: out.name, color: out.color })
             connections.push({ from: "drawer_audio", to: `channel_${out.id}` })
             connections.push({ from: `output_win_sub_${out.id}`, to: `channel_${out.id}` })
             connections.push({ from: `channel_${out.id}`, to: `network_sub_${out.id}` })
@@ -80,6 +80,9 @@ export async function initAudioRouting(data: AudioRoutingConfig | null) {
 }
 
 export function createOutputAudioChannel(outputId: string) {
+    const output = get(outputs)[outputId]
+    if (!output) return
+
     audioRouting.update((a) => {
         const channels = a?.channels || []
         const connections = a?.connections || []
@@ -87,7 +90,7 @@ export function createOutputAudioChannel(outputId: string) {
         const channelId = `channel_${outputId}`
         if (channels.some((c) => c.id === channelId)) return a
 
-        channels.push({ id: channelId, name: get(outputs)[outputId]?.name || "" })
+        channels.push({ id: channelId, name: output.name, color: output.color })
         connections.push({ from: "drawer_audio", to: channelId })
         connections.push({ from: `output_win_sub_${outputId}`, to: channelId })
         connections.push({ from: channelId, to: `network_sub_${outputId}` })

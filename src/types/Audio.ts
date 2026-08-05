@@ -25,3 +25,10 @@ export interface AudioStream {
     name: string
     value: string
 }
+
+export interface MetronomeSettings {
+    tempo?: number
+    beats?: number
+    accentVolume?: number
+    secondaryVolume?: number
+}

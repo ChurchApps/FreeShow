@@ -8,6 +8,7 @@
 
     export let channelId: string
     export let label: string
+    export let color: string | undefined = undefined
     export let inactive: boolean = false
 
     $: channelData = $audioChannelsData[channelId] || {}
@@ -35,7 +36,7 @@
 <section>
     <!-- <MaterialNumberInput style="width: 100px;" label="media.volume (%)" value={volumeValue * 100} min={0} max={allowGaining ? 125 : 100} on:change={(e) => setVolume(e.detail / 100)} showSlider /> -->
 
-    <div class="output" class:inactive>
+    <div class="output" class:inactive style="--color: {color || 'var(--secondary)'};">
         <div class="label" style="margin-right: 7px;">
             <!-- {translateText("media.volume")} -->
             <p style="opacity: 0.9;">{label || ""}</p>
@@ -44,7 +45,7 @@
 
         <div class="input" style="position: relative;">
             <NumberInput style="width: 60px;" disabled={muted} value={volumeValue * 100} min={0} max={allowGaining ? 125 : 100} on:change={(e) => setVolume(e.detail / 100)} buttons={false} />
-            <span style="position: absolute;right: 0;bottom: 5px;transform: translateX(-7px);pointer-events: none;color: var(--secondary);font-weight: bold;font-size: 0.7em;">%</span>
+            <span style="position: absolute;right: 0;bottom: 5px;transform: translateX(-7px);pointer-events: none;color: var(--color);font-weight: bold;font-size: 0.7em;">%</span>
         </div>
 
         <MaterialButton variant="outlined" style="padding: 8px;" icon={muted ? "muted" : "volume"} title="actions.{muted ? 'unmute' : 'mute'}" red={muted} on:click={() => updateData("isMuted", !muted)} />
@@ -95,5 +96,9 @@
 
     .input :global(input) {
         padding-right: 14px;
+    }
+
+    section :global(input::-webkit-slider-thumb) {
+        background: var(--color);
     }
 </style>

@@ -486,7 +486,7 @@
         "interaction_input": "Input",
         "trigger": "Trigger",
         "audio_stream": "Audio stream",
-        "icecast_settings": "Icecast options",
+        "node_options": "Node options",
         "now_playing": "Now playing file",
         "aspect_ratio": "Change aspect ratio",
         "max_lines": "Set max lines",
