@@ -2208,29 +2208,45 @@ function buildRouteBibleUrl(referenceLabel: string, translation = "") {
     return url.toString()
 }
 
-export async function generateScriptureShowFromReference(referenceText: string) {
+// resolve a human-readable reference like "John 3:16" against a scripture (defaults to the active drawer one)
+// collections are parsed through their first version, as loadJsonBible() can only load single bibles
+export async function resolveScriptureReference(referenceText: string, scriptureId = "") {
     if (typeof referenceText !== "string" || !referenceText.trim()) return null
 
-    const activeScriptureId = get(drawerTabsData).scripture?.activeSubTab || ""
-    if (!activeScriptureId) return null
+    const id = scriptureId || get(drawerTabsData).scripture?.activeSubTab || ""
+    if (!id) return null
+
+    const parseId = get(scriptures)[id]?.collection?.versions?.[0] || id
 
     try {
-        const activeBible = await loadJsonBible(activeScriptureId)
-        if (!activeBible) return null
+        const bible = await loadJsonBible(parseId)
+        if (!bible) return null
 
-        const bookResult = activeBible.bookSearch(referenceText)
+        const bookResult = bible.bookSearch(referenceText)
         if (!bookResult?.book) return null
 
-        const bookNum = bookResult.book
-        const chapterNum = bookResult.chapter ? Number(bookResult.chapter) : 1
+        const book = bookResult.book
+        const chapter = bookResult.chapter ? Number(bookResult.chapter) : 1
         let verses = bookResult.verses || []
         if (!verses.length) {
-            const bookData = await activeBible.getBook(bookNum)
-            const chapterData = await bookData.getChapter(chapterNum)
+            const bookData = await bible.getBook(book)
+            const chapterData = await bookData.getChapter(chapter)
             verses = (chapterData?.data?.verses || []).map((v) => Number(v.number)).filter(Boolean)
         }
 
-        activeScripture.set({ id: activeScriptureId, reference: { book: bookNum, chapters: [chapterNum], verses: [verses] } })
+        return { id, book, chapter, verses }
+    } catch (err) {
+        console.error("Error resolving scripture reference:", err)
+        return null
+    }
+}
+
+export async function generateScriptureShowFromReference(referenceText: string) {
+    const resolved = await resolveScriptureReference(referenceText)
+    if (!resolved) return null
+
+    try {
+        activeScripture.set({ id: resolved.id, reference: { book: resolved.book, chapters: [resolved.chapter], verses: [resolved.verses] } })
 
         const biblesContent = await getActiveScripturesContent()
         if (!biblesContent?.length) return null
