@@ -440,6 +440,27 @@
         })
     }
 
+    function handlePortContextMenu(e: MouseEvent, nodeId: string, portType: "in" | "out", channelIndex: number = 0) {
+        e.preventDefault()
+        e.stopPropagation()
+
+        updateConfig((c) => {
+            if (portType === "in") {
+                // Incoming port on channel or output node
+                c.connections = c.connections.filter((conn) => {
+                    if (conn.to !== nodeId) return true
+                    if (nodeId.startsWith("speaker_sub_")) {
+                        return ((conn as any).channelIndex ?? 0) !== channelIndex
+                    }
+                    return false
+                })
+            } else {
+                // Outgoing port on input or channel node
+                c.connections = c.connections.filter((conn) => conn.from !== nodeId)
+            }
+        })
+    }
+
     // --- Hover Helpers to avoid TS errors in template ---
     function handleNodeMouseEnter(nodeId: string, columnType: "input" | "channel" | "merger" | "output") {
         if (!isConnecting) return
@@ -539,6 +560,7 @@
                                         onMouseLeave={() => handleNodeMouseLeave(node.id)}
                                         onMouseEnterPort={handlePortMouseEnter}
                                         onMouseLeavePort={handlePortMouseLeave}
+                                        onPortContextMenu={(e, portType, chIdx) => handlePortContextMenu(e, node.id, portType, chIdx)}
                                     />
 
                                     {#if node.isExpanded && node.subNodes}
@@ -568,6 +590,7 @@
                                                             }
                                                         }}
                                                         onMouseLeavePort={handlePortMouseLeave}
+                                                        onPortContextMenu={(e, portType, chIdx) => handlePortContextMenu(e, sub.id, portType, chIdx)}
                                                     />
                                                 {/each}
                                             {:else}

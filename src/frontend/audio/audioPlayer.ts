@@ -66,6 +66,8 @@ export class AudioPlayer {
         const pathId = path
         this.setLoading(pathId)
 
+        const isOnline = path.startsWith("http")
+
         const located = await locateMediaFile(path)
         if (!located) {
             this.clearLoading(pathId)
@@ -81,7 +83,7 @@ export class AudioPlayer {
         }
 
         path = located.path
-        if (!located.hasChanged) addToMediaFolder(path)
+        if (!located.hasChanged && !isOnline) addToMediaFolder(path)
 
         // get type
         const duration = await this.getDuration(path)
@@ -204,7 +206,6 @@ export class AudioPlayer {
         audio.addEventListener("play", onPlay)
         audio.addEventListener("pause", onPause)
         audio.addEventListener("ended", onEnded)
-
         ;(audio as any)._cleanupListeners = () => {
             audio.removeEventListener("play", onPlay)
             audio.removeEventListener("pause", onPause)
@@ -233,7 +234,6 @@ export class AudioPlayer {
         }
         audio.addEventListener("play", onPlay)
         audio.addEventListener("pause", onPause)
-
         ;(audio as any)._cleanupListeners = () => {
             audio.removeEventListener("play", onPlay)
             audio.removeEventListener("pause", onPause)

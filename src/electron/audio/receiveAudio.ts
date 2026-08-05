@@ -33,6 +33,15 @@ export function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
         decoder.write(input)
     } catch (error) {
         console.error("Failed to decode incoming audio chunk", error)
+        // Reset decoder state for this id on decode error
+        const id = data.id || "main"
+        const dec = ebmlDecoders.get(id)
+        if (dec) {
+            try {
+                dec.removeAllListeners()
+            } catch (e) {}
+            ebmlDecoders.delete(id)
+        }
     }
 }
 

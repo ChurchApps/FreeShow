@@ -486,16 +486,18 @@ export class AudioAnalyser {
             this.recorder = new MediaRecorder(this.destNode!.stream, {
                 mimeType: 'audio/webm; codecs="opus"'
             })
-            this.recorder.addEventListener("dataavailable", async (ev) => {
-                const arrayBuffer = await ev.data.arrayBuffer()
-                const uint8Array = new Uint8Array(arrayBuffer)
-                const isIcecastConnected = !!get(audioRouting)?.connections.some((c) => c.to === "icecast")
-                const icecast = { enabled: isIcecastConnected, host: get(special).icecastHost, port: get(special).icecastPort, mount: get(special).icecastMount, password: get(special).icecastPassword ?? "hackme" }
+            this.recorder.addEventListener("dataavailable", (ev) => {
+                if (!ev.data || ev.data.size === 0) return
+                ev.data.arrayBuffer().then((arrayBuffer) => {
+                    const uint8Array = new Uint8Array(arrayBuffer)
+                    const isIcecastConnected = !!get(audioRouting)?.connections.some((c) => c.to === "icecast")
+                    const icecast = isIcecastConnected ? { enabled: true, host: get(special).icecastHost, port: get(special).icecastPort, mount: get(special).icecastMount, password: get(special).icecastPassword ?? "hackme" } : undefined
 
-                send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array, icecast })
+                    send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array, icecast })
+                })
             })
 
-            if (this.recorder.state === "paused") this.recorder.play()
+            if (this.recorder.state === "paused") this.recorder.resume()
             else if (this.recorder.state !== "recording") {
                 this.recorder.start(Math.round(1000 / this.recorderFrameRate))
             }

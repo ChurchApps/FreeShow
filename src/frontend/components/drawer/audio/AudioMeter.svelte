@@ -13,10 +13,8 @@
 
     const numbers: number[] = [-60, -54, -48, -42, -36, -30, -24, -18, -12, -6, 0]
 
-    const meterState = {
-        highestDB: new Map<number, { lastTime: number; value: number }>(),
-        smoothedDB: new Map<number, number>()
-    }
+    let highestDB: { lastTime: number; value: number }[] = []
+    let smoothedDB: number[] = []
     let tick = 0
     let animationFrame: number
 
@@ -60,9 +58,9 @@
         }
     }
 
-    function getDBValue(rawDb: number, channelIndex: number) {
+    function updateMeterChannel(rawDb: number, channelIndex: number) {
         if (typeof channelIndex !== "number" || isNaN(channelIndex) || channelIndex < 0) {
-            return 0
+            return { dbValue: 0, highestDb: 100 }
         }
 
         let db = rawDb
@@ -78,25 +76,28 @@
         const target = dbToPos(db)
 
         // Smooth attack / decay
-        const prevSmoothed = meterState.smoothedDB.get(channelIndex) ?? 0
+        const prevSmoothed = smoothedDB[channelIndex] ?? 0
         const newSmoothed = target > prevSmoothed ? target : prevSmoothed + (target - prevSmoothed) * 0.2
-        meterState.smoothedDB.set(channelIndex, newSmoothed)
+        smoothedDB[channelIndex] = newSmoothed
 
         const dBPercentage = newSmoothed * 100
         const now = Date.now()
 
-        const highest = meterState.highestDB.get(channelIndex) ?? { lastTime: 0, value: 0 }
+        const highest = highestDB[channelIndex] ?? { lastTime: 0, value: 0 }
 
         if (dBPercentage >= highest.value) {
             highest.value = dBPercentage
             highest.lastTime = now
         } else if (now - highest.lastTime > 1000) {
-            highest.value = 0
+            highest.value = Math.max(dBPercentage, highest.value - 2)
         }
 
-        meterState.highestDB.set(channelIndex, highest)
+        highestDB[channelIndex] = highest
 
-        return dBPercentage
+        return {
+            dbValue: dBPercentage,
+            highestDb: 100 - highest.value
+        }
     }
 
     function getPercentageFromDB(dB: number) {
@@ -118,7 +119,8 @@
 <div class="background" class:preview class:vertical on:click={openAudioMix} role="none">
     <div class="main" class:vertical>
         {#each getChannelDbs(tick) as rawDb, i}
-            {@const dbValue = getDBValue(rawDb, i)}
+            {@const { dbValue, highestDb } = updateMeterChannel(rawDb, i)}
+
             {#if i > 0 && !preview}
                 <div style="height: 1px;width: 100%;"></div>
             {/if}
@@ -130,8 +132,8 @@
                 <span class="meter" class:isMuted class:vertical style={!vertical ? `height: ${detailed ? "6px" : "3px"};` : ""}>
                     <div style={vertical ? `height: ${100 - dbValue}%; width: 100%; top: 0; position: absolute;` : `width: ${100 - dbValue}%; height: inherit; right: 0; position: absolute;`} />
                     <span class="meter" class:isMuted class:vertical style="position: absolute; opacity: 0.08; {vertical ? 'top: 0; width: 100%; height: 100%;' : 'right: 0; height: inherit; width: 100%;'}" />
-                    {#if rawDb > -60}
-                        <div class="highest" class:vertical style={vertical ? `top: ${100 - (meterState.highestDB.get(i)?.value || 0)}%;` : `right: ${100 - (meterState.highestDB.get(i)?.value || 0)}%;`} />
+                    {#if highestDb < 100}
+                        <div class="highest" class:vertical style="{vertical ? 'top' : 'right'}: {highestDb}%;" />
                     {/if}
                 </span>
 

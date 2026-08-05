@@ -32,6 +32,7 @@
     export let onMouseLeave: () => void
     export let onMouseEnterPort: (e: MouseEvent, chIdx: number) => void = () => {}
     export let onMouseLeavePort: () => void = () => {}
+    export let onPortContextMenu: (e: MouseEvent, portType: "in" | "out", chIdx?: number) => void = () => {}
 
     function getIcon(type: string): string {
         if (icon) return icon
@@ -60,17 +61,17 @@
 
 <div {id} class="node-card {isChannel ? `context #audio_channel${id === 'main' ? '_main' : ''}` : type}" class:merger-card={isChannel} class:sub-card={isSubNode} class:hover-valid={hoverTargetId === id && hasValidPort} class:disabled={!isEnabled} class:invalid={isConnecting && !isValidHover && id !== dragStartId} data-node-id={id} on:mouseenter={onMouseEnter} on:mouseleave={onMouseLeave} style={activeColor ? `--port-color: ${activeColor};` : ""}>
     {#if nodeType !== "input" && type !== "network" && !isSubNode}
-        <div class="port port-in" on:mousedown={(e) => onMouseDown(e, "in")}></div>
+        <div class="port port-in" on:mousedown={(e) => onMouseDown(e, "in")} on:contextmenu={(e) => onPortContextMenu(e, "in")}></div>
     {/if}
 
     {#if isSubNode && nodeType === "output" && channels > 1}
         <div class="ports-column-in">
             {#each Array(channels) as _, chIdx}
-                <div class="port port-in port-multi" data-ch-index={chIdx} data-title="{translateText('midi.channel')} {chIdx + 1}" on:mouseenter={(e) => onMouseEnterPort(e, chIdx)} on:mouseleave={onMouseLeavePort} on:mousedown={(e) => onMouseDown(e, "in", chIdx)}></div>
+                <div class="port port-in port-multi" data-ch-index={chIdx} data-title="{translateText('midi.channel')} {chIdx + 1}" on:mouseenter={(e) => onMouseEnterPort(e, chIdx)} on:mouseleave={onMouseLeavePort} on:mousedown={(e) => onMouseDown(e, "in", chIdx)} on:contextmenu={(e) => onPortContextMenu(e, "in", chIdx)}></div>
             {/each}
         </div>
     {:else if isSubNode && nodeType === "output"}
-        <div class="port port-in" on:mousedown={(e) => onMouseDown(e, "in")}></div>
+        <div class="port port-in" on:mousedown={(e) => onMouseDown(e, "in")} on:contextmenu={(e) => onPortContextMenu(e, "in")}></div>
     {/if}
 
     <div class="card-content">
@@ -109,7 +110,7 @@
     {/if}
 
     {#if nodeType !== "output" && (type !== "output_window" || isSubNode)}
-        <div class="port port-out" on:mousedown={(e) => onMouseDown(e, "out")}></div>
+        <div class="port port-out" on:mousedown={(e) => onMouseDown(e, "out")} on:contextmenu={(e) => onPortContextMenu(e, "out")}></div>
     {/if}
 </div>
 
