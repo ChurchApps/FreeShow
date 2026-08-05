@@ -38,13 +38,16 @@ export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
     }
 
     const clearTime = options.playlistCrossfade ? 0 : (options.clearTime ?? get(special).audio_fade_duration ?? 1.5)
-    const clearIds = audioPath ? [audioPath] : Object.keys(get(playingAudio))
+    let clearIds = audioPath ? [audioPath] : Object.keys(get(playingAudio))
+    if (!audioPath && !options.commonClear) {
+        // don't clear microphones when playing an audio file
+        const allPlaying = get(playingAudio)
+        clearIds = clearIds.filter((id) => !allPlaying[id]?.isMic)
+    }
     clearIds.forEach(clear)
 
     async function clear(path: string) {
         if (clearing.includes(path)) return
-
-        stopFading()
 
         clearing.push(path)
         const audio = AudioPlayer.getAudio(path)
