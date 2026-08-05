@@ -154,6 +154,7 @@ export class AudioInputCapture {
             } catch (e) {}
             this.analysers.delete(nodeId)
             this.buffers.delete(nodeId)
+            this.buffers.delete(nodeId + "_float")
         }
     }
 

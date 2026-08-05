@@ -165,4 +165,20 @@ export class PitchShiftNode {
             else this.output.disconnect()
         } catch { /* Already disconnected */ }
     }
+
+    dispose() {
+        try {
+            this.input.disconnect()
+            this.dryGain.disconnect()
+            this.wetGain.disconnect()
+            if (this.soundTouch) {
+                this.soundTouch.disconnect()
+                try {
+                    this.soundTouch.port?.close()
+                } catch { }
+                this.soundTouch = null
+            }
+            this.output.disconnect()
+        } catch { /* Already disposed */ }
+    }
 }

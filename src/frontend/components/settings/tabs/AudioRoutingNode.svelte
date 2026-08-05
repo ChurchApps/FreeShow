@@ -1,7 +1,7 @@
 <script lang="ts">
     import Icon from "../../helpers/Icon.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import AudioNodeVisualizer from "./AudioNodeVisualizer.svelte"
+    import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
     import { activePopup, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
 
@@ -105,7 +105,7 @@
     </div>
 
     {#if id !== "network_default" && id !== "output_window" && isEnabled}
-        <AudioNodeVisualizer channelId={id} width={isSubNode ? 120 : 140} height={isSubNode ? 3 : 4} />
+        <AudioMeter channelId={id} />
     {/if}
 
     {#if nodeType !== "output" && (type !== "output_window" || isSubNode)}

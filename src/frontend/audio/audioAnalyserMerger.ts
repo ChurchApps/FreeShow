@@ -31,6 +31,18 @@ export class AudioAnalyserMerger {
         this.timeout = null
         this.channels = {}
         audioChannels.set([])
+
+        audioChannelsData.update((prev) => {
+            let hasChanged = false
+            const copy = { ...prev }
+            Object.keys(copy).forEach((id) => {
+                if (copy[id]?.dB !== undefined && copy[id].dB !== -60) {
+                    copy[id] = { ...copy[id], dB: -60 }
+                    hasChanged = true
+                }
+            })
+            return hasChanged ? copy : prev
+        })
     }
 
     private static timeout: NodeJS.Timeout | null = null
@@ -163,6 +175,12 @@ export class AudioAnalyserMerger {
         audioChannelsData.update((prev) => {
             let hasChanged = false
             const copy = { ...prev }
+            Object.keys(copy).forEach((id) => {
+                if (nodeVolumes[id] === undefined && copy[id]?.dB !== undefined && copy[id].dB !== -60) {
+                    copy[id] = { ...copy[id], dB: -60 }
+                    hasChanged = true
+                }
+            })
             Object.entries(nodeVolumes).forEach(([id, vol]) => {
                 if (!copy[id] || copy[id].dB !== vol.dB) {
                     copy[id] = { ...copy[id], ...vol }

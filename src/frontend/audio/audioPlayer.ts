@@ -189,19 +189,29 @@ export class AudioPlayer {
 
     private static async createAudio(path: string): Promise<HTMLAudioElement | null> {
         const audio = new Audio(encodeFilePath(path))
-        audio.addEventListener("play", () => {
+        const onPlay = () => {
             updatePlayingStore(path, "paused", false)
             AudioAnalyserMerger.init()
-        })
-        audio.addEventListener("pause", () => {
+        }
+        const onPause = () => {
             updatePlayingStore(path, "paused", true)
             if (!AudioAnalyser.shouldAnalyse()) {
                 AudioAnalyserMerger.stop()
             }
-        })
-        audio.addEventListener("ended", () => {
+        }
+        const onEnded = () => {
             AudioPlayer.checkIfEnding(path, true)
-        })
+        }
+        audio.addEventListener("play", onPlay)
+        audio.addEventListener("pause", onPause)
+        audio.addEventListener("ended", onEnded)
+
+        ;(audio as any)._cleanupListeners = () => {
+            audio.removeEventListener("play", onPlay)
+            audio.removeEventListener("pause", onPause)
+            audio.removeEventListener("ended", onEnded)
+        }
+
         return await this.waitForAudio(path, audio)
     }
 
@@ -212,16 +222,24 @@ export class AudioPlayer {
         // directly to the system output, bypassing our routing graph.
         audio.muted = true
         audio.srcObject = stream
-        audio.addEventListener("play", () => {
+        const onPlay = () => {
             updatePlayingStore(id, "paused", false)
             AudioAnalyserMerger.init()
-        })
-        audio.addEventListener("pause", () => {
+        }
+        const onPause = () => {
             updatePlayingStore(id, "paused", true)
             if (!AudioAnalyser.shouldAnalyse()) {
                 AudioAnalyserMerger.stop()
             }
-        })
+        }
+        audio.addEventListener("play", onPlay)
+        audio.addEventListener("pause", onPause)
+
+        ;(audio as any)._cleanupListeners = () => {
+            audio.removeEventListener("play", onPlay)
+            audio.removeEventListener("pause", onPause)
+        }
+
         // For streams, we don't necessarily need to wait for 'canplay'
         // as the stream is already active, but we'll try to load it.
         try {
@@ -305,9 +323,17 @@ export class AudioPlayer {
 
         this.pause(id)
         playingAudio.update((a) => {
-            // reset
-            a[id].audio.src = ""
-            this.stopStream(a[id].stream)
+            const item = a[id]
+            if (item?.audio) {
+                try {
+                    ;(item.audio as any)._cleanupListeners?.()
+                    item.audio.pause()
+                    item.audio.src = ""
+                    item.audio.removeAttribute("src")
+                    item.audio.load()
+                } catch (e) {}
+            }
+            this.stopStream(item?.stream)
 
             delete a[id]
             return a

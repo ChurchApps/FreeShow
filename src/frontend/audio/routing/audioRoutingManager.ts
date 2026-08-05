@@ -76,6 +76,7 @@ export class AudioRoutingManager {
     }
 
     private speakerSinks: Map<string, { ctx: AudioContext; element: HTMLAudioElement }> = new Map()
+    private speakerSubStreams: Map<string, { streamDest: MediaStreamAudioDestinationNode; streamSource: MediaStreamAudioSourceNode }> = new Map()
 
     private getOrCreateSpeakerSink(deviceId: string): { ctx: AudioContext; element: HTMLAudioElement } | null {
         if (this.speakerSinks.has(deviceId)) {
@@ -105,6 +106,16 @@ export class AudioRoutingManager {
                     sink.element.srcObject = null
                 } catch (e) {}
                 this.speakerSinks.delete(deviceId)
+            }
+        })
+        this.speakerSubStreams.forEach((sub, targetId) => {
+            const deviceId = targetId.replace("speaker_sub_", "")
+            if (!activeDeviceIds.has(deviceId)) {
+                try {
+                    sub.streamDest.disconnect()
+                    sub.streamSource.disconnect()
+                } catch (e) {}
+                this.speakerSubStreams.delete(targetId)
             }
         })
     }
@@ -336,6 +347,14 @@ export class AudioRoutingManager {
             const deviceId = targetId.replace("speaker_sub_", "")
             const sink = this.getOrCreateSpeakerSink(deviceId)
             if (sink) {
+                const prev = this.speakerSubStreams.get(targetId)
+                if (prev) {
+                    try {
+                        prev.streamDest.disconnect()
+                        prev.streamSource.disconnect()
+                    } catch (e) {}
+                }
+
                 const streamDest = this.audioCtx!.createMediaStreamDestination()
                 mergerNode.connect(streamDest)
 
@@ -347,6 +366,7 @@ export class AudioRoutingManager {
                 if (sink.ctx.state === "suspended") {
                     sink.ctx.resume().catch(() => {})
                 }
+                this.speakerSubStreams.set(targetId, { streamDest, streamSource })
             }
         })
 

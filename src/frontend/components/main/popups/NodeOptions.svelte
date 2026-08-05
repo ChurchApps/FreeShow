@@ -13,6 +13,7 @@
     $: channel = $audioRouting?.channels?.find((c) => c.id === nodeId)
     $: isChannelNode = !!channel || nodeId === "main" || nodeId?.startsWith("channel_")
 
+    $: channelData = $audioChannelsData[nodeId] || {}
     $: rawVolume = Number(channelData.volume ?? 1)
     $: volumeValue = rawVolume > 5 ? rawVolume / 100 : rawVolume
     $: muted = !!channelData.isMuted

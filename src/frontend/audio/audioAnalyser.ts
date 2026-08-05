@@ -260,6 +260,9 @@ export class AudioAnalyser {
 
         // Disconnect and remove processor
         if (processor) {
+            try {
+                processor.dispose()
+            } catch (e) {}
             delete this.processors[key]
         }
 
@@ -270,6 +273,12 @@ export class AudioAnalyser {
             } catch (e) {}
             delete this.gainNodes[key]
         }
+
+        try {
+            source.disconnect()
+        } catch (e) {}
+        delete this.sourceVolumes[key]
+        delete this.sourceVolumes[id]
 
         delete this.sources[key]
     }

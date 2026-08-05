@@ -58,7 +58,7 @@
     <!-- <p style="font-size: 1em;margin: 10px;{volumeValue === 1 || volumeValue === 0 ? 'color: var(--secondary);' : ''}">{(volumeValue * 100).toFixed()}<span style="color: var(--text);">%</span></p> -->
 
     {#if !inactive}
-        <AudioMeter {channelId} />
+        <AudioMeter {channelId} detailed />
     {/if}
 </section>
 
