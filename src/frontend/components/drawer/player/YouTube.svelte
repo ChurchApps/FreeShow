@@ -53,7 +53,6 @@
             if (player.getPlayerState() === 1) actualVideoTime = player.getCurrentTime()
         }, 500)
     }
-
     onDestroy(() => {
         if (timeInterval) clearInterval(timeInterval)
     })
@@ -114,9 +113,11 @@
         dispatch("ended", true)
     }
 
+    // WIP main volume channel should control player videos even though it's not connected at the moment ?
     // $: mainVol = $audioChannelsData.main?.isMuted ? 0 : ($audioChannelsData.main?.volume ?? 1)
-    // $: if (!preview && mainVol !== undefined && player) updateVolume()
+    // $: if (!shouldBeMuted && mainVol !== undefined) updateVolume()
     // function updateVolume() {
+    //     if (!player) return
     //     player.setVolume(mainVol * 100)
     // }
 </script>

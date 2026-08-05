@@ -1,21 +1,25 @@
-<script>
+<script lang="ts">
     import Player from "@vimeo/player"
-    import { createEventDispatcher } from "svelte"
-    import { audioChannelsData, currentWindow, focusMode, theme, themes } from "../../../stores"
+    import { createEventDispatcher, onDestroy } from "svelte"
+    import { currentWindow, focusMode, theme, themes } from "../../../stores"
 
     export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
     export let videoTime = 0
+    export let actualVideoTime = 0
     export let id
-    export let outputId
+    // export let outputId
     export let preview
 
-    export let startAt = 0
+    // export let startAt = 0
+
+    let shouldBeMuted = preview || $currentWindow !== "output" ? true : !!videoData.muted
+    $: if (videoData) shouldBeMuted = preview || $currentWindow !== "output" ? true : !!videoData.muted
 
     const options = {
         autoplay: true,
         autopause: false,
         loop: videoData.loop,
-        muted: videoData.muted,
+        muted: shouldBeMuted,
         color: $themes[$theme]?.colors?.secondary || "#ffffff",
         controls: false
         // title: false,
@@ -23,22 +27,21 @@
     }
 
     let dispatch = createEventDispatcher()
-    let iframe = null
-    let player = null
+    let iframe: HTMLIFrameElement | null = null
+    let player: Player | null = null
     let loaded = false
     let paused = true
     let time = 0
     function iframeLoaded() {
+        if (!iframe) return
+
         player = new Player(iframe, options)
         player.on("error", (err) => console.warn("Vimeo player error event:", err))
         player.setColor(options.color).catch((err) => console.warn("Vimeo setColor error:", err))
 
-        if (videoData.muted || (!preview && $currentWindow !== "output")) {
+        if (shouldBeMuted) {
             player.setMuted(true).catch((err) => console.warn("Vimeo setMuted error:", err))
         }
-
-        videoTime = startAt
-        // WIP captions...
 
         loaded = true
 
@@ -53,14 +56,27 @@
             time = seconds
             videoTime = seconds
         })
-        player.on("seeked", () => change)
+        // player.on("seeked", () => change)
     }
+
+    $: if (loaded) updateTime()
+    let timeInterval: NodeJS.Timeout | null = null
+    function updateTime() {
+        // if (!preview) return
+        if (timeInterval) clearInterval(timeInterval)
+        timeInterval = setInterval(async () => {
+            if (player) actualVideoTime = await player.getCurrentTime()
+        }, 500)
+    }
+    onDestroy(() => {
+        if (timeInterval) clearInterval(timeInterval)
+    })
 
     $: if (player && loaded && !seeking) {
         if (videoData.paused) player.pause().catch((err) => console.warn("Vimeo pause error:", err))
         else player.play().catch((err) => console.warn("Vimeo play error:", err))
 
-        if (videoData.muted) player.setMuted(true).catch((err) => console.warn("Vimeo setMuted error:", err))
+        if (shouldBeMuted) player.setMuted(true).catch((err) => console.warn("Vimeo setMuted error:", err))
         else if ($currentWindow === "output" || preview) player.setMuted(false).catch((err) => console.warn("Vimeo setMuted error:", err))
 
         // player.setLoop(videoData.loop)
@@ -81,6 +97,8 @@
         videoData.paused = true
         seeking = true
         setTimeout(() => {
+            if (!player) return
+
             player.setCurrentTime(time).catch((err) => console.warn("Vimeo setCurrentTime error:", err))
 
             setTimeout(() => {
@@ -92,25 +110,27 @@
         }, 100)
     }
 
-    function change() {
-        if (!loaded && !seeking) return
+    // function change() {
+    //     if (!loaded && !seeking) return
 
-        videoData.paused = paused
-        if (preview) {
-            player
-                .getCurrentTime()
-                .then((seconds) => {
-                    videoTime = seconds
-                })
-                .catch((err) => console.warn("Vimeo getCurrentTime error:", err))
-        }
-    }
+    //     videoData.paused = paused
 
-    $: mainVol = $audioChannelsData.main?.isMuted ? 0 : ($audioChannelsData.main?.volume ?? 1)
-    $: if (!preview && mainVol !== undefined && player) updateVolume()
-    function updateVolume() {
-        player.setVolume(mainVol).catch((err) => console.warn("Vimeo setVolume error:", err))
-    }
+    //     if (!preview || !player) return
+
+    //     player
+    //         .getCurrentTime()
+    //         .then((seconds) => {
+    //             videoTime = seconds
+    //         })
+    //         .catch((err) => console.warn("Vimeo getCurrentTime error:", err))
+    // }
+
+    // $: mainVol = $audioChannelsData.main?.isMuted ? 0 : ($audioChannelsData.main?.volume ?? 1)
+    // $: if (!shouldBeMuted && mainVol !== undefined) updateVolume()
+    // function updateVolume() {
+    //     if (!player) return
+    //     player.setVolume(mainVol).catch((err) => console.warn("Vimeo setVolume error:", err))
+    // }
 </script>
 
 <div class="main" class:hide={!id}>

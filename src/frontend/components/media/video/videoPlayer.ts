@@ -151,6 +151,7 @@ export class VideoPlayer {
             if (!AudioAnalyser.shouldAnalyse()) AudioAnalyserMerger.stop()
         })
         audio.addEventListener("ended", () => {
+            // absolute end
             this.checkIfEnding(id, outputIds, true)
         })
         return await this.waitForAudio(id, audio)
@@ -175,44 +176,54 @@ export class VideoPlayer {
         })
     }
 
-    // TODO: we want to check ended before it actually ends, so we can fade out while next starts
+    private static isCheckingEnding = new Set<string>()
     static async checkIfEnding(path: string, outputIds?: string[], force = false) {
+        if (this.isCheckingEnding.has(path)) return
+        this.isCheckingEnding.add(path)
+
         const playing = this.getPlaying(path, outputIds || [])
-        if (!playing || (playing.audio.paused && !force)) return
+        if (!playing || (playing.audio.paused && !force)) return finish()
 
         const audio = this.getAudio(path, outputIds ? outputIds[0] : undefined)
-        if (!audio) return
+        if (!audio) return finish()
 
         const endingTime = this.getEndTime(path, audio.duration)
-        if (audio.currentTime < endingTime && !force) return
+        const offset = ((get(transitionData)?.media?.duration ?? 800) / 1000) * 0.5
+        if (audio.currentTime < endingTime - offset && !force) return finish()
 
         // should loop
-        if (this.getGlobalOptions(path)?.loop) return
+        if (this.getGlobalOptions(path)?.loop) return finish()
 
         const outputId = outputIds?.[0] || ""
         const background = get(outputs)[outputIds?.[0] || ""]?.out?.background
         // project media folder
         if (background?.folderPath) {
             playFolder(background.folderPath)
-            return
+            return finish()
         }
 
         const localLoop = this.getAudio(path, outputId)?.loop
 
         // check and execute next after media regardless of loop
-        if ((await checkNextAfterMedia(path, "media", outputId)) || localLoop) return
+        if ((await checkNextAfterMedia(path, "media", outputId)) || localLoop) return finish()
 
-        if (get(special).clearMediaOnFinish === false) return
+        if (get(special).clearMediaOnFinish === false) return finish()
 
         setTimeout(() => {
             // double check that output is still the same
             const outputState = get(outputs)[outputId]?.out?.background
             const newVideoPath: string = outputState?.path || outputState?.id || ""
-            if (newVideoPath !== path) return
+            if (newVideoPath !== path) return finish()
 
             clearBackground(outputId)
             // this.stop(path, outputIds ? outputIds[0] : undefined, true)
+
+            finish()
         }, 200) // WAIT FOR NEXT AFTER MEDIA TO FINISH
+
+        function finish() {
+            VideoPlayer.isCheckingEnding.delete(path)
+        }
     }
 
     //
@@ -458,6 +469,11 @@ export class VideoPlayer {
                 if ("timeTick" in audio) audio.currentTime = audio.timeTick.value
 
                 const outputIds = video.linkedOutputIds || []
+
+                // check if ended before it actually ends, so we can fade out while next starts
+                // this also accounts for clearing player videos
+                this.checkIfEnding(video.path, outputIds)
+
                 outputIds.forEach((outputId) => {
                     const id = `${video.path}_${outputId}`
                     a[id] = {
