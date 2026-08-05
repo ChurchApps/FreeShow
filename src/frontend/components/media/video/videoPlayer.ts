@@ -3,12 +3,14 @@
 import { get } from "svelte/store"
 import { AudioAnalyser } from "../../../audio/audioAnalyser"
 import { AudioAnalyserMerger } from "../../../audio/audioAnalyserMerger"
-import { media, playerVideos, playingVideos, playingVideoState, special, transitionData } from "../../../stores"
+import { media, outputs, playerVideos, playingVideos, playingVideoState, special, transitionData } from "../../../stores"
 import { customActionActivation } from "../../actions/actions"
 import { getVimeoData, getYouTubeData } from "../../drawer/player/playerHelper"
 import { encodeFilePath, getExtension, getMediaType, locateMediaFile } from "../../helpers/media"
 import { checkNextAfterMedia } from "../../helpers/showActions"
 import { TimeInterpolator } from "./videoTime"
+import { playFolder } from "../../../utils/shortcuts"
+import { clearBackground } from "../../output/clear"
 
 type VideoOptions = {
     isOnline?: boolean // youtube / vimeo
@@ -65,7 +67,10 @@ export class VideoPlayer {
             if (newOutputIds.length) {
                 linkedOutputIds = newOutputIds
             } else {
-                if (!options.paused) this.play(id, linkedOutputIds?.[0])
+                // toggle play/pause if already playing
+                if (options.paused) this.pause(id, linkedOutputIds?.[0])
+                else this.play(id, linkedOutputIds?.[0])
+
                 this.isStarting.delete(ref)
                 return true
             }
@@ -170,7 +175,8 @@ export class VideoPlayer {
         })
     }
 
-    static checkIfEnding(path: string, outputIds?: string[], force = false) {
+    // TODO: we want to check ended before it actually ends, so we can fade out while next starts
+    static async checkIfEnding(path: string, outputIds?: string[], force = false) {
         const playing = this.getPlaying(path, outputIds || [])
         if (!playing || (playing.audio.paused && !force)) return
 
@@ -181,11 +187,32 @@ export class VideoPlayer {
         if (audio.currentTime < endingTime && !force) return
 
         // should loop
-        if (get(media)[path]?.loop) return
+        if (this.getGlobalOptions(path)?.loop) return
 
-        this.stop(path, outputIds ? outputIds[0] : undefined, true)
+        const outputId = outputIds?.[0] || ""
+        const background = get(outputs)[outputIds?.[0] || ""]?.out?.background
+        // project media folder
+        if (background?.folderPath) {
+            playFolder(background.folderPath)
+            return
+        }
 
-        checkNextAfterMedia(path)
+        const localLoop = this.getAudio(path, outputId)?.loop
+
+        // check and execute next after media regardless of loop
+        if ((await checkNextAfterMedia(path, "media", outputId)) || localLoop) return
+
+        if (get(special).clearMediaOnFinish === false) return
+
+        setTimeout(() => {
+            // double check that output is still the same
+            const outputState = get(outputs)[outputId]?.out?.background
+            const newVideoPath: string = outputState?.path || outputState?.id || ""
+            if (newVideoPath !== path) return
+
+            clearBackground(outputId)
+            // this.stop(path, outputIds ? outputIds[0] : undefined, true)
+        }, 200) // WAIT FOR NEXT AFTER MEDIA TO FINISH
     }
 
     //
@@ -323,7 +350,7 @@ export class VideoPlayer {
 
     static stopByOutputIds(outputIds: string[]) {
         const videosToStop = get(playingVideos).filter((v) => v.linkedOutputIds?.some((id) => outputIds.includes(id)))
-        videosToStop.forEach((v) => this.stop(v.path))
+        videosToStop.forEach((v) => this.stop(v.path, outputIds?.[0]))
     }
 
     static seekTo(path: string, outputId: string, time: number) {
@@ -351,8 +378,8 @@ export class VideoPlayer {
 
     // GET
 
-    static getPlaying(path: string, outputIds: string[]): VideoAudioData | null {
-        return get(playingVideos).find((v) => v.path === path && v.linkedOutputIds.join(",") === outputIds.join(",")) || null
+    static getPlaying(path: string, outputIds?: string[]): VideoAudioData | null {
+        return get(playingVideos).find((v) => v.path === path && (outputIds ? v.linkedOutputIds.join(",") === outputIds.join(",") : true)) || null
     }
 
     static getAudio(path: string, outputId?: string) {

@@ -59,7 +59,7 @@ export class AudioAnalyser {
 
         let source: AudioNode
         try {
-            console.log(`[AudioAnalyser] Attaching ${id} for output ${outputId || "main"}`, audio)
+            console.log(`[AudioAnalyser] Attaching ${id} for output ${outputId || "main"}`)
             if (audio instanceof MediaStream) {
                 source = this.ac.createMediaStreamSource(audio)
             } else {

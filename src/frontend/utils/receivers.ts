@@ -6,8 +6,6 @@ import { setEqualizerEnabled, updateEqualizerBands } from "../audio/effects/audi
 import { runAction } from "../components/actions/actions"
 import { getDynamicValue } from "../components/edit/scripts/itemHelpers"
 import { clone } from "../components/helpers/array"
-import { checkNextAfterMedia } from "../components/helpers/showActions"
-import { clearBackground } from "../components/output/clear"
 import { receiveMainGlobal } from "../IPC/main"
 import {
     actions,
@@ -55,7 +53,6 @@ import {
     shows,
     showsCache,
     slideTimelineSpeedMultiplier,
-    slideVideoData,
     special,
     stageShows,
     styles,
@@ -64,8 +61,6 @@ import {
     timers,
     transitionData,
     variables,
-    videosData,
-    videosTime,
     visualizerData
 } from "../stores"
 import { newToast } from "./common"
@@ -75,7 +70,7 @@ import { sendInitialOutputData } from "./listeners"
 import { receive, send } from "./request"
 import { closeApp, save } from "./save"
 import { client } from "./sendData"
-import { playFolder, previewShortcuts } from "./shortcuts"
+import { previewShortcuts } from "./shortcuts"
 import { restartOutputs } from "./updateSettings"
 
 let mainReceiversInitialized = false
@@ -104,7 +99,6 @@ export function remoteListen() {
 
 // OUTPUT
 
-const clearing: string[] = []
 const receiveOUTPUTasMAIN: any = {
     BUFFER: ({ id, time, buffer, size }) => {
         // this will infinitely increace if this is not in place
@@ -183,40 +177,6 @@ const receiveOUTPUTasMAIN: any = {
     },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
     MAIN_LOG: (msg: any) => console.info(msg),
-    MAIN_TIME: (msg: any) => videosTime.update((a) => ({ ...a, ...msg })),
-    MAIN_VIDEO_ENDED: async (msg) => {
-        if (!msg || clearing.includes(msg.id)) return
-        clearing.push(msg.id)
-        setTimeout(() => clearing.splice(clearing.indexOf(msg.id), 1), msg.duration || 1000)
-
-        const background = get(outputs)[msg.id]?.out?.background
-        const videoPath: string = background?.path || background?.id || ""
-        if (!videoPath) return
-
-        // project media folder
-        if (background?.folderPath) {
-            playFolder(background.folderPath)
-            return
-        }
-
-        // check and execute next after media regardless of loop
-        if ((await checkNextAfterMedia(videoPath, "media", msg.id)) || msg.loop) return
-
-        if (get(special).clearMediaOnFinish === false) return
-
-        setTimeout(() => {
-            // double check that output is still the same
-            const newVideoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
-            if (newVideoPath !== videoPath) return
-
-            clearBackground(msg.id)
-        }, 200) // WAIT FOR NEXT AFTER MEDIA TO FINISH
-    },
-    // stage
-    MAIN_REQUEST_VIDEO_DATA: (data: any) => {
-        if (!data.id) return
-        send(OUTPUT, ["VIDEO_DATA"], { id: data.id, data: get(videosData), time: get(videosTime) })
-    },
     ALERT_MAIN: (data: string) => {
         if (!data) return
 
@@ -229,13 +189,6 @@ const receiveOUTPUTasMAIN: any = {
         }
     },
     MAIN_SHOWS_DATA: () => send(OUTPUT, ["SHOWS_DATA"], get(shows)),
-    MAIN_SLIDE_VIDEO: (data: { id: string; path: string; data: any }) => {
-        slideVideoData.update((a) => {
-            if (!a[data.id]) a = { [data.id]: {} }
-            a[data.id][data.path] = data.data
-            return a
-        })
-    },
 
     MAIN_REQUEST_DYNAMIC_VALUE: (data: { dynamicId: string }) => {
         if (!data?.dynamicId) return
@@ -341,12 +294,6 @@ export const receiveOUTPUTasOUTPUT: any = {
     PROJECTS: (a: any) => projects.set(a),
     ACTIVE_PROJECT: (a: any) => activeProject.set(a),
     SHOWS_DATA: (a: any) => shows.set(a),
-
-    // stage & dynamic value (video)
-    VIDEO_DATA: (data) => {
-        videosData.set(data.data)
-        videosTime.set(data.time)
-    },
 
     // AUDIO_CHANNELS_DATA: (a: any) => audioChannelsData.set(a),
 

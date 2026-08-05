@@ -6,6 +6,7 @@ import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { ContentProviderId } from "../electron/contentProviders/base/types"
 import type { TimecodeMode } from "../electron/timecode/timecode"
+import type { AudioChannel, AudioChannelData, AudioStream, MetronomeSettings, Playlist } from "../types/Audio"
 import type { AudioRoutingConfig } from "../types/AudioRouting"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
@@ -18,7 +19,6 @@ import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowTy
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
-import type { AudioChannel, AudioChannelData, AudioStream, MetronomeSettings, Playlist } from "../types/Audio"
 import type { Outputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
@@ -30,7 +30,6 @@ import type { LimiterConfig } from "./audio/effects/audioLimiter"
 import type { NoiseGateConfig } from "./audio/effects/audioNoiseGate"
 import type { ReverbConfig } from "./audio/effects/audioReverb"
 import type { StereoShaperConfig } from "./audio/effects/audioStereoShaper"
-import type { API_metronome } from "./components/actions/api"
 import type { VideoAudioData } from "./components/media/video/videoPlayer"
 
 // ----- TEMPORARY VARIABLES -----
@@ -142,8 +141,6 @@ export const outputSlideCache: Writable<any> = writable({})
 export const previewBuffers: Writable<any> = writable({})
 export const ndiData: Writable<any> = writable({})
 export const closeAd: Writable<boolean> = writable(false)
-export const videosData: Writable<any> = writable({})
-export const videosTime: Writable<any> = writable({})
 export const textLoaded: Writable<boolean> = writable(false)
 export const toggleOutputEnabled: Writable<boolean> = writable(false)
 export const customMessageCredits: Writable<string> = writable("")

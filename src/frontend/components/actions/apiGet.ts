@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Shows } from "../../../types/Show"
-import { activePlaylist, audioPlaylists, outputs, playingAudio, playingVideos, projects, shows, showsCache, variables, videosData, videosTime } from "../../stores"
+import { activePlaylist, audioPlaylists, outputs, playingAudio, playingVideos, playingVideoState, projects, shows, showsCache, variables } from "../../stores"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { keysToID } from "../helpers/array"
 import { getFirstActiveOutput } from "../helpers/output"
@@ -60,8 +60,12 @@ export function getPlayingVideoDuration() {
 }
 
 export function getPlayingVideoTime() {
-    const outputId = getFirstActiveOutput()?.id || ""
-    const time: number = get(videosTime)[outputId] || 0
+    const firstOutput = getFirstActiveOutput()
+    const bg = firstOutput?.out?.background
+    const videoPath = bg?.path || bg?.id || ""
+    const key = `${videoPath}_${firstOutput?.id || ""}`
+
+    const time = get(playingVideoState)[key]?.currentTime || 0
     return time
 }
 
@@ -71,12 +75,12 @@ export function getPlayingVideoState() {
     const bg = output?.out?.background
     const path = bg?.path || bg?.id || ""
 
-    const videoEntry = (get(playingVideos).find((v) => v.path === path) || {})?.audio
-    const videoData = get(videosData)[outputId] || {}
+    const key = `${path}_${outputId}`
+    const videoData = get(playingVideoState)[key]
 
-    const duration = videoData?.duration ?? videoEntry?.duration ?? 0
-    const time = get(videosTime)[outputId] ?? videoEntry?.currentTime ?? 0
-    const paused = videoData?.paused ?? videoEntry?.paused ?? false
+    const duration = videoData?.duration ?? 0
+    const time = videoData?.currentTime ?? 0
+    const paused = videoData?.paused ?? false
     const loop = bg?.loop !== false // default to true
     const muted = bg?.muted !== false // default to true
 

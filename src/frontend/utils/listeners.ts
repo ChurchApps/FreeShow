@@ -1,6 +1,5 @@
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
-import { AudioAnalyser } from "../audio/audioAnalyser"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { midiInListen } from "../components/actions/midi"
 import { getAllActiveOutputIds, getAllNormalOutputs } from "../components/helpers/output"

@@ -5,7 +5,7 @@
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
     import { requestMain, sendMain } from "../../IPC/main"
-    import { activeProject, activeRename, audioChannelsData, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers, videosData, videosTime } from "../../stores"
+    import { activeProject, activeRename, audioChannelsData, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -17,12 +17,12 @@
     import HoverButton from "../inputs/HoverButton.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MediaPicker from "../inputs/MediaPicker.svelte"
+    import { shouldSyncVideoTime, videoSync } from "../media/video/videoSync"
     import VideoSlider from "../output/VideoSlider.svelte"
     import { clearSlide } from "../output/clear"
     import MediaControls from "../output/tools/MediaControls.svelte"
     import Player from "../system/Player.svelte"
     import { formatVTT, SRTtoVTT } from "./media/subtitles"
-    import { shouldSyncVideoTime, videoSync } from "../media/video/videoSync"
 
     export let mediaPath: string
     export let show
@@ -84,17 +84,6 @@
     let videoData = { paused: false, muted: true, duration: 0, loop: false }
     $: if (showId) videoData.paused = false
     $: if (!videoData) videoData = { paused: false, muted: true, duration: 0, loop: false }
-    // $: if (playingInOutput && $videosData[outputId]) setVideoData()
-    $: if (playingInOutput && $videosData[outputId]?.paused && !videoData.paused) setPaused()
-    function setPaused() {
-        videoData.paused = true
-        // trigger time update
-        videoTime = 0
-        autoPause = false
-    }
-    // function setVideoData() {
-    //     videoData = { ...$videosData[outputId], muted: true }
-    // }
 
     let prevId: string | undefined = undefined
     $: if (mediaPath !== prevId) {
@@ -105,10 +94,6 @@
         timeMarkersEnabled = !!$videoMarkers[mediaPath]?.length || false
         if (timeMarkersEnabled && manageSubtitles) manageSubtitles = false
     }
-
-    // $: allActiveOutputs = getActiveOutputs($outputs, true, true, true)
-    // $: outputId = allActiveOutputs[0]
-    // $: currentOutput = $outputs[outputId]
 
     // background output
     $: outputId = $playingVideos.find((a) => a.path === mediaPath)?.linkedOutputIds?.[0] || getFirstActiveOutput()?.id || ""
@@ -134,16 +119,8 @@
         // trigger time update
         setTimeout(() => (videoTime = 0), 50)
     }
-    $: if (playingInOutput && Math.abs(videoTime - $videosTime[outputId]) > 1) updateVideoTime()
-    function updateVideoTime() {
-        // get and set actual time
-        videoTime = $videosTime[outputId]
-    }
 
-    // WIP toggle between output/preview video...
     // WIP player video output time
-
-    // $: if (background.path === mediaPath && autoPause) videoData.paused = true
 
     let autoPause = true
     let hasLoaded = false

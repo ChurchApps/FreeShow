@@ -1,6 +1,6 @@
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
 import { get } from "svelte/store"
-import { OUTPUT, STAGE } from "../../../types/Channels"
+import { STAGE } from "../../../types/Channels"
 import type { History } from "../../../types/History"
 import type { DropData, Selected, Variable } from "../../../types/Main"
 import { clearAudio } from "../../audio/audioFading"
@@ -16,12 +16,13 @@ import { dropActions } from "../helpers/dropActions"
 import { history } from "../helpers/history"
 import { setDrawerTabData } from "../helpers/historyHelpers"
 import { encodeFilePath, getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
-import { getActiveOutputs, getAllActiveOutputs, getAllEnabledOutputs, getCurrentStyle, getFirstActiveOutput, isOutCleared, setOutput } from "../helpers/output"
+import { getActiveOutputs, getAllEnabledOutputs, getCurrentStyle, getFirstActiveOutput, isOutCleared, setOutput } from "../helpers/output"
 import { setRandomValue } from "../helpers/randomValue"
 import { loadShows, setShow } from "../helpers/setShow"
 import { getLabelId, getLayoutRef } from "../helpers/show"
 import { playNextGroup, selectProjectShow, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
+import { VideoPlayer } from "../media/video/videoPlayer"
 import { clearBackground, clearSlide } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
@@ -668,13 +669,12 @@ export function playMedia(data: API_media) {
 export function videoSeekTo(data: API_seek) {
     if (get(outLocked)) return
 
-    const activeOutputIds = getAllActiveOutputs().map((a) => a.id)
-    const timeValues: any = {}
-    activeOutputIds.forEach((id) => {
-        timeValues[id] = data.seconds
-    })
+    const outputId = data.id || getFirstActiveOutput()?.id || ""
+    const bg = get(outputs)[outputId]?.out?.background
+    const path = bg?.path || bg?.id
+    if (!path) return
 
-    send(OUTPUT, ["TIME"], timeValues)
+    VideoPlayer.seekTo(path, outputId, data.seconds)
 }
 
 export function toggleMediaLoop() {

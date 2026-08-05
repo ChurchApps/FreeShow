@@ -4,7 +4,7 @@
     import { OUTPUT } from "../../../../types/Channels"
     import type { Item } from "../../../../types/Show"
     import { audioChannelsData, currentWindow, outputs, slideVideoData, styles } from "../../../stores"
-    import { destroy, receive, send } from "../../../utils/request"
+    import { destroy, receive } from "../../../utils/request"
     import Image from "../../drawer/media/Image.svelte"
     import { getCropState } from "../../helpers/cropping"
     import { encodeFilePath, getExtension, getMedia, getMediaType, getThumbnailPath, mediaSize } from "../../helpers/media"
@@ -132,9 +132,9 @@
         const interval = setInterval(() => {
             if (!videoElem) return
 
-            const videoData = { currentTime: videoElem.currentTime, duration: videoElem.duration, isPaused: videoElem.paused, loop: videoElem.loop }
+            // const videoData = { currentTime: videoElem.currentTime, duration: videoElem.duration, isPaused: videoElem.paused, loop: videoElem.loop }
             // send(Main.MAIN_SLIDE_VIDEO, videoData)
-            send(OUTPUT, ["MAIN_SLIDE_VIDEO"], { id, path: bgPath, data: videoData })
+            // send(OUTPUT, ["MAIN_SLIDE_VIDEO"], { id, path: bgPath, data: videoData })
         }, 200)
 
         const videoReceiver = {

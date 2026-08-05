@@ -1,9 +1,7 @@
 <script>
     import Player from "@vimeo/player"
     import { createEventDispatcher } from "svelte"
-    import { OUTPUT } from "../../../../types/Channels"
     import { audioChannelsData, currentWindow, focusMode, theme, themes } from "../../../stores"
-    import { send } from "../../../utils/request"
 
     export let videoData = { paused: false, muted: true, loop: false, duration: 0 }
     export let videoTime = 0
@@ -89,7 +87,7 @@
                 if (isPlaying) videoData.paused = false
                 seeking = false
 
-                if (outputId) send(OUTPUT, ["MAIN_TIME"], { [outputId]: time })
+                // if (outputId) send(OUTPUT, ["MAIN_TIME"], { [outputId]: time })
             }, 800)
         }, 100)
     }
