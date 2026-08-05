@@ -5,16 +5,18 @@
     import AudioChannelMixer from "./AudioChannelMixer.svelte"
 
     $: channels = $audioRouting?.channels || [{ id: "main", name: translateText("audio.main") }]
+    $: connections = $audioRouting?.connections || []
 
     $: inactiveOutputIds = keysToID($outputs).filter((a) => !a.enabled)
 </script>
 
 <div class="mixers">
     {#each channels as channel (channel.id)}
-        {@const inactive = inactiveOutputIds.some((a) => `channel_${a.id}` === channel.id)}
+        {@const disabledOutput = inactiveOutputIds.some((a) => `channel_${a.id}` === channel.id)}
+        {@const unconnectedChannel = !connections.some((c) => c.from === channel.id || c.from.startsWith(`${channel.id}_`))}
 
-        {#if !inactive}
-            <AudioChannelMixer channelId={channel.id} label={channel.name} color={channel.color} {inactive} />
+        {#if !disabledOutput}
+            <AudioChannelMixer channelId={channel.id} label={channel.name} color={channel.color} inactive={unconnectedChannel} />
         {/if}
     {/each}
 </div>

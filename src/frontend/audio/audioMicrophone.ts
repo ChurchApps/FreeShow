@@ -67,11 +67,11 @@ export class AudioMicrophone {
     }
 
     static getVolume(deviceId: string): number {
-        const id = "mic_sub_" + deviceId
+        const id = deviceId.startsWith("mic_sub_") ? deviceId : "mic_sub_" + deviceId
         const data = AudioInputCapture.getInstance().getVisualizerData(id)
         if (data && typeof data.db === "number") return data.db
         if (data && data.channels?.[0]) return data.channels[0].db
-        return -80
+        return -60
     }
 
     static async getList() {

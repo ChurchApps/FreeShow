@@ -18,6 +18,7 @@ import {
     alertMessage,
     allOutputs,
     audioChannels,
+    audioChannelsData,
     audioData,
     audioEffects,
     cachedDynamicValues,
@@ -242,14 +243,18 @@ const receiveOUTPUTasMAIN: any = {
     },
     MAIN_REQUEST_VOLUME: (data: { deviceId: string }) => {
         if (!data?.deviceId) return
-        let value = -80
-        if (data.deviceId === "main") {
+        let value = -60
+
+        const chData = (get(audioChannelsData) || {})[data.deviceId]
+        if (chData && typeof chData.dB === "number") {
+            value = Math.round(chData.dB)
+        } else if (data.deviceId === "main") {
             const channels = get(audioChannels)
-            const db = channels.length ? Math.max(...channels.map((c) => c.dB?.value ?? -80)) : -80
+            const db = channels.length ? Math.max(...channels.map((c) => c.dB?.value ?? -60)) : -60
             value = Math.round(db)
         } else {
             AudioMicrophone.startListening(data.deviceId)
-            value = AudioMicrophone.getVolume(data.deviceId)
+            value = Math.round(AudioMicrophone.getVolume(data.deviceId))
         }
         send(OUTPUT, ["REQUEST_VOLUME"], { deviceId: data.deviceId, value })
     }

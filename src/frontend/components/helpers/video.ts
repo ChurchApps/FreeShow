@@ -33,7 +33,7 @@ function getLayersFromId(id: string) {
     return ["background"]
 }
 
-export function getFirstOutputIdWithAudableBackground(outputIds: string[] = [], _updater: any = null) {
+export function getFirstOutputIdWithBackground(outputIds: string[] = [], _updater: any = null) {
     if (!outputIds.length) outputIds = getAllNormalOutputs().map((a) => a.id)
 
     return (
@@ -41,17 +41,11 @@ export function getFirstOutputIdWithAudableBackground(outputIds: string[] = [], 
             const output = get(outputs)[id]
             if (!output || output.stageOutput) return false
 
-            const data = get(audioChannelsData)[id]
-            // only skip if muted, not if volume is 0, for more customization
-            // if (data.volume === 0) return false
-            if (data?.isMuted) return false
-
-            // style volume moved to per output volume (controllable by actions)
             const style = get(styles)[output.style || ""]
             let layers = style?.layers
             if (!Array.isArray(layers)) layers = ["background"]
 
-            return layers.includes("background") && style?.volume !== 0
+            return layers.includes("background")
         }) || null
     )
 }

@@ -98,7 +98,6 @@
     // $: currentOutput = $outputs[outputId]
 
     // background output
-    // $: outputId = getFirstOutputIdWithAudableBackground(allActiveOutputs) || allActiveOutputs.find((id) => $outputs[id]?.out?.background) || allActiveOutputs[0]
     $: outputId = $playingVideos.find((a) => a.path === mediaPath)?.linkedOutputIds?.[0] || getFirstActiveOutput()?.id || ""
     $: currentOutput = outputId ? $outputs[outputId] || null : null
 

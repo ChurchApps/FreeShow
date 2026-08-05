@@ -88,11 +88,14 @@ export class AudioAnalyserMerger {
         const nodeVolumes: { [key: string]: { dB: number } } = {}
         const capture = AudioInputCapture.getInstance()
 
-        // 1. Process standard analyzer channels
+        // 1. Process standard analyzer channels using RMS power summation (10^(dB/20))
         Object.entries(this.channels).forEach(([id, chs]) => {
             if (chs?.length) {
-                const avg = chs.reduce((sum, c) => sum + (c.dB?.value ?? -60), 0) / chs.length
-                if (avg > -60) nodeVolumes[id] = { dB: avg }
+                const activeDbs = chs.map((c) => c.dB?.value ?? -60).filter((db) => db > -60)
+                if (activeDbs.length) {
+                    const linearSum = activeDbs.reduce((sum, db) => sum + Math.pow(10, db / 20), 0)
+                    nodeVolumes[id] = { dB: Math.round(20 * Math.log10(linearSum)) }
+                }
             }
         })
 
@@ -125,10 +128,13 @@ export class AudioAnalyserMerger {
             nodeVolumes["output_window"] = { dB: Math.round(outData.db) }
         }
 
-        // Combine captured input levels
+        // Combine captured input levels via RMS amplitude summation
         Object.entries(inputLevels).forEach(([key, dbs]) => {
-            const linearSum = dbs.reduce((sum, db) => sum + Math.pow(10, db / 20), 0)
-            nodeVolumes[key] = { dB: Math.round(20 * Math.log10(linearSum / dbs.length)) }
+            const activeDbs = dbs.filter((db) => db > -60)
+            if (activeDbs.length) {
+                const linearSum = activeDbs.reduce((sum, db) => sum + Math.pow(10, db / 20), 0)
+                nodeVolumes[key] = { dB: Math.min(0, Math.round(20 * Math.log10(linearSum))) }
+            }
         })
 
         // Capture data for mergers, outputs, and sub output windows directly
@@ -155,8 +161,8 @@ export class AudioAnalyserMerger {
                     .filter((db) => db > -60)
 
                 if (activeDbs.length) {
-                    const linear = activeDbs.reduce((s, db) => s + Math.pow(10, db / 20), 0) / activeDbs.length
-                    nodeVolumes[m.id] = { dB: Math.round(20 * Math.log10(linear)) }
+                    const linearSum = activeDbs.reduce((s, db) => s + Math.pow(10, db / 20), 0)
+                    nodeVolumes[m.id] = { dB: Math.min(0, Math.round(20 * Math.log10(linearSum))) }
                 }
             })
         }

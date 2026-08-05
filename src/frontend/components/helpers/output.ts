@@ -112,7 +112,6 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
     }
 
     const inputData = clone(data)
-    // const backgroundId = getFirstOutputIdWithAudableBackground(allOutputIds)
 
     // setup video manager (and audio analyser)
     if (type === "background") {

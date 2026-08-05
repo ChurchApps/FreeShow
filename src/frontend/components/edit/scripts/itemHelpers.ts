@@ -4,7 +4,7 @@ import { OUTPUT } from "../../../../types/Channels"
 import type { Condition, ConditionValue, Item, ItemType, Slide } from "../../../../types/Show"
 import type { StageItem } from "../../../../types/Stage"
 import { AudioMicrophone } from "../../../audio/audioMicrophone"
-import { activeEdit, activeShow, activeStage, activeTimers, allOutputs, audioChannels, outputs, outputSlideCache, overlays, refreshEditSlide, showsCache, stageShows, templates, timers, variables } from "../../../stores"
+import { activeEdit, activeShow, activeStage, activeTimers, allOutputs, audioChannels, audioChannelsData, outputs, outputSlideCache, overlays, refreshEditSlide, showsCache, stageShows, templates, timers, variables } from "../../../stores"
 import { isOutputWindow } from "../../../utils/common"
 import { send } from "../../../utils/request"
 import { addSlideAction } from "../../actions/actions"
@@ -394,16 +394,19 @@ export function checkConditionValue(cVal: ConditionValue, itemsText: string, typ
         else value = val
     } else if (element === "dynamicValue") value = getDynamicValue(elementId, type)
     else if (element === "volume") {
-        if (isOutputWindow()) {
+        const chData = (get(audioChannelsData) || {})[elementId]
+        if (chData && typeof chData.dB === "number") {
+            value = Math.round(chData.dB).toString()
+        } else if (isOutputWindow()) {
             send(OUTPUT, ["MAIN_REQUEST_VOLUME"], { deviceId: elementId })
-            value = AudioMicrophone.getVolume(elementId).toString()
+            value = Math.round(AudioMicrophone.getVolume(elementId)).toString()
         } else if (elementId === "main") {
             const channels = get(audioChannels)
-            const db = channels.length ? Math.max(...channels.map((c) => c.dB?.value ?? -80)) : -80
+            const db = channels.length ? Math.max(...channels.map((c) => c.dB?.value ?? -60)) : -60
             value = Math.round(db).toString()
         } else {
             AudioMicrophone.startListening(elementId)
-            value = AudioMicrophone.getVolume(elementId).toString()
+            value = Math.round(AudioMicrophone.getVolume(elementId)).toString()
         }
     }
 
