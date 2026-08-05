@@ -851,9 +851,10 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
     if (type === "stage") {
         const stageLayoutId: string = isOutputWin ? Object.values(get(outputs))[0]?.stageOutput || id : id
-        const stageOutput = get(stageShows)[stageLayoutId]?.settings?.output
-        const outputId = stageOutput || getActiveOutputs(isOutputWin ? get(allOutputs) : get(outputs), false, true, true)[0]
-        const outSlide = (isOutputWin ? get(allOutputs) : get(outputs))[outputId]?.out?.slide
+        const sourceOutputId = get(stageShows)[stageLayoutId]?.settings?.output
+        const outputStores = isOutputWin ? get(allOutputs) : get(outputs)
+        const outputId = sourceOutputId && outputStores[sourceOutputId] ? sourceOutputId : getActiveOutputs(outputStores, false, true, true)[0]
+        const outSlide = outputStores[outputId]?.out?.slide
         showId = outSlide?.id
         slideIndex = outSlide?.index ?? -1
     }
@@ -969,8 +970,12 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const output = get(outputs)[outputId]
 
         // set to normal output, if stage output, for video time
-        const stageLayout = output?.stageOutput
-        if (stageLayout) outputId = get(stageShows)[stageLayout]?.settings?.output || getActiveOutputs(get(allOutputs), false, true, true)[0]
+        const stageLayoutId = output?.stageOutput
+        if (stageLayoutId) {
+            const sourceOutputId = get(stageShows)[stageLayoutId]?.settings?.output
+            const outputStores = isOutputWin ? get(allOutputs) : get(outputs)
+            outputId = sourceOutputId && outputStores[sourceOutputId] ? sourceOutputId : getActiveOutputs(outputStores, false, true, true)[0]
+        }
 
         const outSlide: OutSlide | null = output?.out?.slide || null
 
