@@ -4,6 +4,7 @@ import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
+import { handleDetection } from "../audio/aiScripture"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
@@ -48,6 +49,8 @@ import {
     activeProject,
     activeShow,
     activeTimers,
+    aiScriptureStatus,
+    aiScriptureTranscript,
     alertMessage,
     audioData,
     contentProviderData,
@@ -83,6 +86,7 @@ import {
     undoHistory,
     usageLog,
     variables,
+    whisperDownloads,
     windowState
 } from "../stores"
 import { setupCloudSync } from "../utils/cloudSync"
@@ -274,6 +278,22 @@ export const mainResponses: MainResponses = {
         audioData.update((a) => {
             a[data.filePath] = { metadata: data.metadata }
             return a
+        })
+    },
+
+    // AI SCRIPTURE
+    [ToMain.AI_SCRIPTURE_TRANSCRIPT]: (data) => {
+        aiScriptureTranscript.update((a) => [...a, data].slice(-20))
+    },
+    [ToMain.AI_SCRIPTURE_STATUS]: (data) => aiScriptureStatus.set(data),
+    [ToMain.AI_SCRIPTURE_DETECTION]: (data) => {
+        handleDetection(data)
+    },
+    [ToMain.AI_SCRIPTURE_WHISPER_PROGRESS]: (data) => {
+        whisperDownloads.update((downloads) => {
+            const updated = new Map(downloads)
+            updated.set(data.name, { progress: data.progress, total: data.total, status: data.status, message: data.message })
+            return updated
         })
     },
 
