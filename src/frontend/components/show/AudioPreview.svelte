@@ -79,6 +79,10 @@
     let analysers: AnalyserNode[] = []
     let rendering = 0
     function renderVisualiser() {
+        if (rendering) {
+            cancelAnimationFrame(rendering)
+            rendering = 0
+        }
         analysers = AudioAnalyser.getAnalysers()
         if (!canvas || !analysers.length) return
         if (isRendering) return
@@ -97,18 +101,15 @@
 
         const dataArrays: Uint8Array[] = analysers.map(() => new Uint8Array(bufferLength))
 
-        // const padding = -0.5
-        // const barWidth = bufferLength ? (WIDTH / bufferLength - padding) * 1.3 : 0
-
         const padding = -0.5
         const barWidth = (WIDTH / bufferLength - padding) * 1.42 // 1.3
 
         isRendering = true
         function renderFrame() {
-            // || ($playingAudio[path]?.paused !== false && allBars === 0)
-            if (!$playingAudio[path]) {
+            if (!$playingAudio[path] || $playingAudio[path].paused) {
                 ctx!.clearRect(0, 0, WIDTH, HEIGHT)
                 isRendering = false
+                rendering = 0
                 return
             }
 

@@ -13,8 +13,10 @@
 
     const numbers: number[] = [-60, -54, -48, -42, -36, -30, -24, -18, -12, -6, 0]
 
-    let highestDB: { timeout: NodeJS.Timeout; value: number }[] = []
-    let smoothedDB: number[] = []
+    const meterState = {
+        highestDB: new Map<number, { lastTime: number; value: number }>(),
+        smoothedDB: new Map<number, number>()
+    }
     let tick = 0
     let animationFrame: number
 
@@ -28,9 +30,6 @@
 
     onDestroy(() => {
         if (animationFrame) cancelAnimationFrame(animationFrame)
-        highestDB.forEach((h) => {
-            if (h?.timeout) clearTimeout(h.timeout)
-        })
     })
 
     const minDB = -60
@@ -62,11 +61,15 @@
     }
 
     function getDBValue(rawDb: number, channelIndex: number) {
+        if (typeof channelIndex !== "number" || isNaN(channelIndex) || channelIndex < 0) {
+            return 0
+        }
+
         let db = rawDb
 
         // Apply channel volume fader adjustment (dB = rawDB + 20 * log10(volume))
         const channelVolume = Number((get(audioChannelsData) || {})[channelId]?.volume ?? 1)
-        if (channelVolume > 0 && channelVolume < 1) {
+        if (channelVolume > 0 && channelVolume !== 1) {
             db += 20 * Math.log10(channelVolume)
         } else if (channelVolume === 0) {
             db = -60
@@ -75,26 +78,23 @@
         const target = dbToPos(db)
 
         // Smooth attack / decay
-        if (smoothedDB[channelIndex] === undefined) smoothedDB[channelIndex] = 0
-        if (target > smoothedDB[channelIndex]) {
-            smoothedDB[channelIndex] = target
-        } else {
-            smoothedDB[channelIndex] += (target - smoothedDB[channelIndex]) * 0.2
+        const prevSmoothed = meterState.smoothedDB.get(channelIndex) ?? 0
+        const newSmoothed = target > prevSmoothed ? target : prevSmoothed + (target - prevSmoothed) * 0.2
+        meterState.smoothedDB.set(channelIndex, newSmoothed)
+
+        const dBPercentage = newSmoothed * 100
+        const now = Date.now()
+
+        const highest = meterState.highestDB.get(channelIndex) ?? { lastTime: 0, value: 0 }
+
+        if (dBPercentage >= highest.value) {
+            highest.value = dBPercentage
+            highest.lastTime = now
+        } else if (now - highest.lastTime > 1000) {
+            highest.value = 0
         }
 
-        const dBPercentage = smoothedDB[channelIndex] * 100
-
-        if (!highestDB[channelIndex]) {
-            highestDB[channelIndex] = { timeout: null as any, value: 0 }
-        }
-
-        if (dBPercentage > highestDB[channelIndex].value) {
-            if (highestDB[channelIndex].timeout) clearTimeout(highestDB[channelIndex].timeout)
-            highestDB[channelIndex].value = dBPercentage
-            highestDB[channelIndex].timeout = setTimeout(() => {
-                if (highestDB[channelIndex]) highestDB[channelIndex].value = 0
-            }, 1000)
-        }
+        meterState.highestDB.set(channelIndex, highest)
 
         return dBPercentage
     }
@@ -115,7 +115,7 @@
     const vertical = preview
 </script>
 
-<div class="background" class:preview class:vertical on:click={openAudioMix} role={preview ? "button" : undefined} tabindex={preview ? 0 : undefined}>
+<div class="background" class:preview class:vertical on:click={openAudioMix} role="none">
     <div class="main" class:vertical>
         {#each getChannelDbs(tick) as rawDb, i}
             {@const dbValue = getDBValue(rawDb, i)}
@@ -131,7 +131,7 @@
                     <div style={vertical ? `height: ${100 - dbValue}%; width: 100%; top: 0; position: absolute;` : `width: ${100 - dbValue}%; height: inherit; right: 0; position: absolute;`} />
                     <span class="meter" class:isMuted class:vertical style="position: absolute; opacity: 0.08; {vertical ? 'top: 0; width: 100%; height: 100%;' : 'right: 0; height: inherit; width: 100%;'}" />
                     {#if rawDb > -60}
-                        <div class="highest" class:vertical style={vertical ? `top: ${100 - (highestDB[i]?.value || 0)}%;` : `right: ${100 - (highestDB[i]?.value || 0)}%;`} />
+                        <div class="highest" class:vertical style={vertical ? `top: ${100 - (meterState.highestDB.get(i)?.value || 0)}%;` : `right: ${100 - (meterState.highestDB.get(i)?.value || 0)}%;`} />
                     {/if}
                 </span>
 

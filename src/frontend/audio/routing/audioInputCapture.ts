@@ -145,6 +145,8 @@ export class AudioInputCapture {
         }
     }
 
+    private resultCache: Map<string, InputVisualizerData> = new Map()
+
     public removeInput(nodeId: string) {
         const entry = this.analysers.get(nodeId)
         if (entry) {
@@ -155,6 +157,7 @@ export class AudioInputCapture {
             this.analysers.delete(nodeId)
             this.buffers.delete(nodeId)
             this.buffers.delete(nodeId + "_float")
+            this.resultCache.delete(nodeId)
         }
     }
 
@@ -168,9 +171,24 @@ export class AudioInputCapture {
             this.buffers.set(nodeId + "_float", nodeFloatBuffers as unknown as Uint8Array[])
         }
 
-        const channelResults: ChannelVisualizerData[] = []
-        let maxDb = -60
+        let cachedResult = this.resultCache.get(nodeId)
+        if (!cachedResult || cachedResult.channels.length !== entry.channelCount) {
+            const channels: ChannelVisualizerData[] = []
+            for (let i = 0; i < entry.channelCount; i++) {
+                channels.push({ channelIndex: i, db: -60, spectrum: [] })
+            }
+            cachedResult = {
+                nodeId,
+                db: -60,
+                channels,
+                dbL: -60,
+                dbR: -60,
+                spectrum: []
+            }
+            this.resultCache.set(nodeId, cachedResult)
+        }
 
+        let maxDb = -60
         entry.analysers.forEach((analyser, i) => {
             const buf = nodeFloatBuffers[i]
             analyser.getFloatTimeDomainData(buf as Float32Array<ArrayBuffer>)
@@ -183,21 +201,16 @@ export class AudioInputCapture {
             }
 
             const rms = Math.sqrt(len ? sumSquare / len : 0)
-            // OBS Studio RMS / perceived level formula: 20 * log10(rms)
             const db = rms > 0.000001 ? Math.max(-60, Math.min(0, 20 * Math.log10(rms))) : -60
 
             if (db > maxDb) maxDb = db
-
-            channelResults.push({ channelIndex: i, db, spectrum: [] })
+            cachedResult!.channels[i].db = db
         })
 
-        return {
-            nodeId,
-            db: maxDb,
-            channels: channelResults,
-            dbL: channelResults[0]?.db ?? -60,
-            dbR: channelResults[1]?.db ?? channelResults[0]?.db ?? -60,
-            spectrum: channelResults[0]?.spectrum || []
-        }
+        cachedResult.db = maxDb
+        cachedResult.dbL = cachedResult.channels[0]?.db ?? -60
+        cachedResult.dbR = cachedResult.channels[1]?.db ?? cachedResult.channels[0]?.db ?? -60
+
+        return cachedResult
     }
 }

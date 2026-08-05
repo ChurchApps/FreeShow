@@ -52,10 +52,32 @@ function toAudioBuffer(value: unknown): Buffer | null {
 }
 
 const ebmlDecoders = new Map<string, Decoder>()
+const decoderIdleTimeouts = new Map<string, NodeJS.Timeout>()
 let previousDataId = ""
 let newIdTimeout: NodeJS.Timeout | null = null
 let timeoutId = ""
+
+function refreshDecoderTimeout(id: string) {
+    if (decoderIdleTimeouts.has(id)) {
+        clearTimeout(decoderIdleTimeouts.get(id)!)
+    }
+    decoderIdleTimeouts.set(
+        id,
+        setTimeout(() => {
+            const dec = ebmlDecoders.get(id)
+            if (dec) {
+                try {
+                    dec.removeAllListeners()
+                } catch (e) {}
+                ebmlDecoders.delete(id)
+            }
+            decoderIdleTimeouts.delete(id)
+        }, 5000)
+    )
+}
+
 function createDecoder(id: string) {
+    refreshDecoderTimeout(id)
     const existing = ebmlDecoders.get(id)
     if (existing) return existing
     previousDataId = id
