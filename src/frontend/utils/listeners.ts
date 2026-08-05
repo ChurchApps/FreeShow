@@ -63,20 +63,9 @@ import {
 } from "../stores"
 import { hasNewerUpdate } from "./common"
 import { driveConnect } from "./drive"
-import { convertBackgrounds, getMixerPayload } from "./remoteTalk"
+import { convertBackgrounds } from "./remoteTalk"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
-
-// simple debounce helper (shared for mixer pushes)
-const debounce = (fn: (...args: any[]) => void, wait: number) => {
-    let t: any
-    return (...args: any[]) => {
-        clearTimeout(t)
-        t = setTimeout(() => fn(...args), wait)
-    }
-}
-
-const sendRemoteMixer = debounce(() => send(REMOTE, ["GET_MIXER"], getMixerPayload()), 50)
 
 // shows list has not changed when only a timestamp value changes
 function hasShowsListChanged(prevData: any, newData: any): boolean {
@@ -244,9 +233,6 @@ export function storeSubscriber() {
         send(OUTPUT, ["OUTPUTS"], data)
         // used for stage mirror data
         send(OUTPUT, ["ALL_OUTPUTS"], data)
-
-        // REMOTE mixer updates (labels/available outputs)
-        sendRemoteMixer()
 
         // let it update properly
         setTimeout(() => {
