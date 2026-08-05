@@ -6,7 +6,7 @@ import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { ContentProviderId } from "../electron/contentProviders/base/types"
 import type { TimecodeMode } from "../electron/timecode/timecode"
-import type { AudioChannel, AudioChannelData, AudioStream, MetronomeSettings, Playlist } from "../types/Audio"
+import type { AudioChannelData, AudioStream, MetronomeSettings, Playlist } from "../types/Audio"
 import type { AudioRoutingConfig } from "../types/AudioRouting"
 import type { Event } from "../types/Calendar"
 import type { Draw, DrawLine, DrawSettings, DrawTools } from "../types/Draw"
@@ -115,7 +115,6 @@ export const nextActionEventStart: Writable<any> = writable({})
 export const nextActionEventPaused: Writable<boolean> = writable(false)
 
 // AUDIO
-export const audioChannels: Writable<AudioChannel[]> = writable([])
 export const playingAudio: Writable<{ [key: string]: AudioData }> = writable({})
 export const playingAudioPaths: Writable<string[]> = writable([])
 export const playingVideos: Writable<VideoAudioData[]> = writable([])
@@ -412,7 +411,6 @@ export const $ = {
     settingsTab,
     projectView,
     eventEdit,
-    audioChannels,
     playingAudio,
     playingVideos,
     visualizerData,

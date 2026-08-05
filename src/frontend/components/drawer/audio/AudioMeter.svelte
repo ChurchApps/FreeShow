@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import { get } from "svelte/store"
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
-    import { activeDrawerTab, activePage, audioChannels, audioChannelsData, drawer } from "../../../stores"
+    import { activeDrawerTab, activePage, audioChannelsData, drawer } from "../../../stores"
     import { DEFAULT_DRAWER_HEIGHT } from "../../../utils/common"
 
     export let channelId: string = ""
@@ -46,9 +46,6 @@
             return captured.channels.map((c) => c.db)
         } else if (captured && typeof captured.db === "number") {
             return [captured.db]
-        } else if (channelId === "main") {
-            const channels = get(audioChannels)
-            return channels?.length ? channels.map((c) => c?.dB?.value ?? -60) : [-60, -60]
         } else {
             const data = (get(audioChannelsData) || {})[channelId] as any
             if (data && typeof data.dB === "number") {

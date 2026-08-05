@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { clone } from "../components/helpers/array"
-import { audioChannels, audioChannelsData, audioRouting, outputs, playingAudio } from "../stores"
+import { audioChannelsData, audioRouting, outputs, playingAudio } from "../stores"
 import { AudioPlayer } from "./audioPlayer"
 import { AudioPlaylist } from "./audioPlaylist"
 import { AudioInputCapture } from "./routing/audioInputCapture"
@@ -30,7 +30,6 @@ export class AudioAnalyserMerger {
         clearTimeout(this.timeout)
         this.timeout = null
         this.channels = {}
-        audioChannels.set([])
 
         audioChannelsData.update((prev) => {
             let hasChanged = false
