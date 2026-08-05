@@ -24,6 +24,7 @@ import { OutputHelper } from "../output/OutputHelper"
 import { libreConvert } from "../output/ppt/libreConverter"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers, updateServerData } from "../servers"
+import { aiScriptureWhisper, getAiScriptureStatus, receiveAiScriptureAudio, setAiKey, startAiScripture, stopAiScripture, testAiConnection } from "../aiScripture"
 import { processAudioData, timecodeStart, timecodeStop, updateTimecodeValue } from "../timecode/timecode"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
@@ -258,7 +259,18 @@ export const mainResponses: MainResponses = {
             sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: "ffmpeg", name: "FFmpeg", progress: 0, total: 0, status: "error" })
             return { success: false, error: error?.message || "Unknown download error" }
         }
-    }
+    },
+    // AI Scripture
+    [Main.AI_SCRIPTURE_START]: (data) => startAiScripture(data),
+    [Main.AI_SCRIPTURE_STOP]: () => stopAiScripture(),
+    [Main.AI_SCRIPTURE_AUDIO_DATA]: (data) => receiveAiScriptureAudio(data),
+    [Main.AI_SCRIPTURE_SET_KEY]: (data) => setAiKey(data),
+    [Main.AI_SCRIPTURE_GET_STATUS]: () => getAiScriptureStatus(),
+    [Main.AI_SCRIPTURE_TEST_CONNECTION]: (data) => testAiConnection(data),
+    [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_BINARY]: () => aiScriptureWhisper.downloadBinary(),
+    [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_MODEL]: (data) => aiScriptureWhisper.downloadModel(data),
+    [Main.AI_SCRIPTURE_WHISPER_CANCEL]: () => aiScriptureWhisper.cancel(),
+    [Main.AI_SCRIPTURE_WHISPER_VERIFY_PATH]: (data) => aiScriptureWhisper.verifyPath(data)
 }
 
 /// ///////

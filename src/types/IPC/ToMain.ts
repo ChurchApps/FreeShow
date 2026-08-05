@@ -1,5 +1,6 @@
 import type { ICommonTagsResult } from "music-metadata"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
+import type { AiScriptureState, DetectedReference } from "../AiScripture"
 import type { TrimmedShows } from "../Show"
 
 export enum ToMain {
@@ -17,6 +18,11 @@ export enum ToMain {
     IMAGES_TO_SHOW = "IMAGES_TO_SHOW",
     MEDIA_DOWNLOAD_PROGRESS = "MEDIA_DOWNLOAD_PROGRESS",
     PDF_IMPORT_PROGRESS = "PDF_IMPORT_PROGRESS",
+    // AI Scripture
+    AI_SCRIPTURE_TRANSCRIPT = "AI_SCRIPTURE_TRANSCRIPT",
+    AI_SCRIPTURE_DETECTION = "AI_SCRIPTURE_DETECTION",
+    AI_SCRIPTURE_STATUS = "AI_SCRIPTURE_STATUS",
+    AI_SCRIPTURE_WHISPER_PROGRESS = "AI_SCRIPTURE_WHISPER_PROGRESS",
     // Unified provider callbacks
     PROVIDER_CONNECT = "PROVIDER_CONNECT",
     PROVIDER_PROJECTS = "PROVIDER_PROJECTS",
@@ -49,6 +55,11 @@ export interface ToMainSendPayloads {
     [ToMain.IMAGES_TO_SHOW]: { images: string[]; name: string }
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: { url: string; progress: number; total: number; status: "downloading" | "complete" | "error"; name?: string }
     [ToMain.PDF_IMPORT_PROGRESS]: { filePath: string; name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }
+    // AI Scripture
+    [ToMain.AI_SCRIPTURE_TRANSCRIPT]: { text: string; startMs: number; endMs: number }
+    [ToMain.AI_SCRIPTURE_DETECTION]: DetectedReference
+    [ToMain.AI_SCRIPTURE_STATUS]: { state: AiScriptureState; message?: string; keyless?: boolean }
+    [ToMain.AI_SCRIPTURE_WHISPER_PROGRESS]: { name: string; progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }
     // Unified provider callbacks
     [ToMain.PROVIDER_CONNECT]: { providerId: ContentProviderId; success: boolean; isFirstConnection?: boolean }
     [ToMain.PROVIDER_PROJECTS]: { providerId: ContentProviderId; categoryName: string; shows: any; projects: any; pcoPlans?: { planId: string; serviceTypeId: string; name: string; date: string }[] }
