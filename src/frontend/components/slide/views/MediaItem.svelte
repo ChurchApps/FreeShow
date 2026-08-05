@@ -133,9 +133,9 @@
             if (shouldSyncVideoTime(videoElem, data.currentTime, lastSyncedTime, isSoftLoop)) {
                 videoElem.currentTime = data.currentTime
                 if (videoBlurElem) videoBlurElem.currentTime = data.currentTime
-                if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
             }
             if (data.currentTime !== undefined) {
+                lastSyncedTime = data.currentTime
                 videoTime = data.currentTime
             }
 

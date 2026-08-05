@@ -71,8 +71,8 @@
                 const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
                 if (video && shouldSyncVideoTime(video, data.currentTime, lastSyncedTime, isSoftLoop)) {
                     videoTime = data.currentTime || 0
-                    if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
                 }
+                if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
             }
 
             if (data.duration) videoData.duration = data.duration

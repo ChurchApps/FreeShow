@@ -160,6 +160,7 @@ export class VideoPlayer {
                 if (data.loop !== undefined) item.loop = data.loop
                 item.fromTime = data.fromTime || 0
                 item.toTime = data.toTime || audio.duration
+                audio.loop = !!item.loop
             }
             return a
         })
@@ -207,7 +208,8 @@ export class VideoPlayer {
             if (!AudioAnalyser.shouldAnalyse()) AudioAnalyserMerger.stop()
         })
         audio.addEventListener("ended", () => {
-            if (this.getGlobalOptions(id)?.loop) return
+            const playing = this.getPlaying(id, outputIds || [])
+            if (playing?.loop || this.getGlobalOptions(id)?.loop) return
             // absolute end
             this.checkIfEnding(id, outputIds, true)
         })
@@ -249,7 +251,7 @@ export class VideoPlayer {
         if (audio.currentTime < endingTime - offset && !force) return finish()
 
         // should loop
-        if (this.getGlobalOptions(path)?.loop) return finish()
+        if (playing.loop || this.getGlobalOptions(path)?.loop) return finish()
 
         const outputId = outputIds?.[0] || ""
         const background = get(outputs)[outputIds?.[0] || ""]?.out?.background
@@ -590,21 +592,22 @@ export class VideoPlayer {
                 outputIds.forEach((outputId) => {
                     const id = `${video.path}_${outputId}`
                     const softLoop = video.softLoop || 0
-                    const softLoopOpacity = this.handleSoftLoop(video, audio, softLoop, audio.loop)
+                    const softLoopOpacity = this.handleSoftLoop(video, video.audio, softLoop, video.audio.loop)
+                    const activeAudio = video.audio
 
                     a[id] = {
-                        currentTime: audio.currentTime,
-                        duration: audio.duration,
-                        paused: audio.paused,
-                        loop: audio.loop,
-                        muted: audio.muted,
+                        currentTime: activeAudio.currentTime,
+                        duration: activeAudio.duration,
+                        paused: activeAudio.paused,
+                        loop: activeAudio.loop,
+                        muted: activeAudio.muted,
                         softLoop,
                         softLoopOpacity,
                         type: video.type || "background"
                     }
                 })
 
-                if (!audio.paused) isPlaying = true
+                if (!video.audio.paused) isPlaying = true
             })
 
             return a
@@ -645,7 +648,7 @@ export class VideoPlayer {
         const toTime = video.toTime || audio.duration
         const remaining = toTime - audio.currentTime
 
-        if (remaining > softLoop || remaining <= 0) {
+        if (remaining > softLoop) {
             if (crossfadeAudio) {
                 try {
                     crossfadeAudio.pause()
