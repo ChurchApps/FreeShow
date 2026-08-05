@@ -47,16 +47,15 @@ export class AudioPlayer {
 
     // LOADING
 
-    private static currentlyLoading: string[] = []
+    private static currentlyLoading = new Set<string>()
     private static isLoading(path: string) {
-        return this.currentlyLoading.includes(path)
+        return this.currentlyLoading.has(path)
     }
     private static setLoading(path: string) {
-        if (!this.isLoading(path)) this.currentlyLoading.push(path)
+        this.currentlyLoading.add(path)
     }
     private static clearLoading(path: string) {
-        const index = AudioPlayer.currentlyLoading.indexOf(path)
-        if (index !== -1) AudioPlayer.currentlyLoading.splice(index, 1)
+        this.currentlyLoading.delete(path)
     }
 
     // INIT

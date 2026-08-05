@@ -99,7 +99,6 @@ export class AudioAnalyserMerger {
         // 2. Add real-time levels from AudioInputCapture for all nodes
         const config = get(audioRouting)
         const playing = AudioPlayer.getAllPlaying()
-        // const playingVids = get(playingVideos)
         const inputLevels: { [key: string]: number[] } = {}
 
         // Capture data for active playing sources (audio player)
@@ -119,16 +118,6 @@ export class AudioAnalyserMerger {
                 if (isMic) (inputLevels["mic_default"] ??= []).push(data.db)
             }
         })
-
-        // Capture data for active playing videos
-        // playingVids.forEach((v) => {
-        //     if (!v.video || v.video.paused) return
-
-        //     const data = capture.getVisualizerData("output_window")
-        //     if (data && data.db > -60) {
-        //         ;(inputLevels["output_window"] ??= []).push(data.db)
-        //     }
-        // })
 
         // Capture output_window level if active
         const outData = capture.getVisualizerData("output_window")

@@ -12,6 +12,7 @@ export interface AudioChannelData {
     volume?: number
     isMuted?: boolean
     delay?: number // delay in ms
+    dB?: number
 }
 
 export interface AudioChannel {

@@ -103,32 +103,11 @@ export class AudioAnalyser {
 
             const audioPlaying = get(playingAudio)[id]
             const videoPlaying = get(playingVideos).some((v) => v.path === id)
-
-            // Capture for settings audio routing visualizer
-            // A more reliable check: actual media streams are hardware inputs (mics),
-            // while HTMLMediaElements are files from the drawer or output video elements.
             const isMic = audio instanceof MediaStream || (audioPlaying && audioPlaying.isMic === true)
             const isVideo = audio instanceof HTMLVideoElement || videoPlaying
 
-            // Determine the node key for routing purposes
-            const nodeKey = isMic ? id : id === "metronome" ? "metronome" : isVideo ? "output_window" : "drawer_audio"
-
-            console.log(`[AudioAnalyser] Registering input node for "${id}" with key "${nodeKey}"`)
-
-            if (isMic) {
-                const subKey = id.startsWith("mic_sub_") ? id : "mic_sub_" + id
-                AudioInputCapture.getInstance().captureInput(subKey, sourceGain)
-                AudioInputCapture.getInstance().captureInput("mic_default", sourceGain)
-                AudioRoutingManager.getInstance().registerInputNode(subKey, processor.output)
-            } else if (isVideo) {
-                const subKey = outputId ? "output_win_sub_" + outputId : "output_window"
-                AudioInputCapture.getInstance().captureInput(subKey, sourceGain)
-                AudioInputCapture.getInstance().captureInput("output_window", sourceGain)
-                AudioRoutingManager.getInstance().registerInputNode(subKey, processor.output)
-            } else {
-                AudioInputCapture.getInstance().captureInput(nodeKey, sourceGain)
-                AudioRoutingManager.getInstance().registerInputNode(nodeKey, processor.output)
-            }
+            const subKey = isMic ? (id.startsWith("mic_sub_") ? id : "mic_sub_" + id) : isVideo ? (outputId ? "output_win_sub_" + outputId : "output_window") : id === "metronome" ? "metronome" : "drawer_audio"
+            AudioRoutingManager.getInstance().registerInputNode(subKey, processor.output)
 
             // Route audio to configured mergers
             this.connectToSinks(processor, id)

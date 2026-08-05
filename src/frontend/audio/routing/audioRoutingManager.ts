@@ -59,7 +59,7 @@ export class AudioRoutingManager {
 
     public setAudioContext(ctx: AudioContext) {
         if (this.audioCtx === ctx) return
-        console.log("[AudioRoutingManager] Updating AudioContext")
+
         this.audioCtx = ctx
         this.updateRoutingNodes()
     }
@@ -120,24 +120,28 @@ export class AudioRoutingManager {
         })
     }
 
-    private applyMergerGain(id: string, node: GainNode) {
+    private setNodeGainAndDelay(id: string, gainNode: GainNode, chData: any) {
         if (!this.audioCtx) return
-        const data = get(audioChannelsData)[id] || {}
-        const isMuted = !!data.isMuted
-        let vol = data.volume ?? 1
-        if (vol > 5) vol /= 100 // Normalize if volume was accidentally saved as 0-100 percentage instead of 0-1 scale
+        const isMuted = !!chData.isMuted
+        let vol = chData.volume ?? 1
+        if (vol > 5) vol /= 100 // Normalize if volume was accidentally saved as 0-100 percentage
         const targetGain = isMuted ? 0 : Math.max(0, vol)
         try {
-            node.gain.setValueAtTime(targetGain, this.audioCtx.currentTime)
+            gainNode.gain.setValueAtTime(targetGain, this.audioCtx.currentTime)
         } catch (e) {}
 
         const delayNode = this.channelDelayNodes.get(id)
         if (delayNode) {
-            const delaySec = Math.max(0, Math.min(5, (data.delay || 0) / 1000))
+            const delaySec = Math.max(0, Math.min(5, (chData.delay || 0) / 1000))
             try {
                 delayNode.delayTime.setValueAtTime(delaySec, this.audioCtx.currentTime)
             } catch (e) {}
         }
+    }
+
+    private applyMergerGain(id: string, node: GainNode) {
+        const data = get(audioChannelsData)[id] || {}
+        this.setNodeGainAndDelay(id, node, data)
     }
 
     public updateAllGains() {
@@ -147,22 +151,7 @@ export class AudioRoutingManager {
             this.applyMergerGain(id, node)
         })
         if (this.masterNode && (this.masterNode as GainNode).gain) {
-            const mainData = data.main || {}
-            const isMuted = !!mainData.isMuted
-            let vol = mainData.volume ?? 1
-            if (vol > 5) vol /= 100
-            const targetGain = isMuted ? 0 : Math.max(0, vol)
-            try {
-                ;(this.masterNode as GainNode).gain.setValueAtTime(targetGain, this.audioCtx.currentTime)
-            } catch (e) {}
-
-            const mainDelayNode = this.channelDelayNodes.get("main")
-            if (mainDelayNode) {
-                const delaySec = Math.max(0, Math.min(5, (mainData.delay || 0) / 1000))
-                try {
-                    mainDelayNode.delayTime.setValueAtTime(delaySec, this.audioCtx.currentTime)
-                } catch (e) {}
-            }
+            this.setNodeGainAndDelay("main", this.masterNode as GainNode, data.main || {})
         }
     }
 
@@ -175,30 +164,28 @@ export class AudioRoutingManager {
 
         if (!channelEffects || !this.audioCtx) return node
 
-        const effectFactories: [string, (cfg: any) => { input: GainNode; output: GainNode; dispose?: () => void } | null][] = [
-            [
-                "equalizer",
-                (cfg) => {
-                    const eq = new AudioEqualizer(cfg)
-                    eq.initialize(this.audioCtx!)
-                    const nodes = eq.getNodes()
-                    return nodes ? { ...nodes, dispose: () => eq.dispose() } : null
-                }
-            ],
-            ["filter", (cfg) => new AudioFilter(this.audioCtx!, cfg)],
-            ["noiseGate", (cfg) => new AudioNoiseGate(this.audioCtx!, cfg)],
-            ["compressor", (cfg) => new AudioCompressor(this.audioCtx!, cfg)],
-            ["reverb", (cfg) => new AudioReverb(this.audioCtx!, cfg)],
-            ["delay", (cfg) => new AudioDelay(this.audioCtx!, cfg)],
-            ["limiter", (cfg) => new AudioLimiter(this.audioCtx!, cfg)],
-            ["stereoShaper", (cfg) => new AudioStereoShaper(this.audioCtx!, cfg)]
-        ]
+        const ctx = this.audioCtx
+        const effectConstructors: Record<string, (cfg: any) => { input: GainNode; output: GainNode; dispose?: () => void } | null> = {
+            equalizer: (cfg) => {
+                const eq = new AudioEqualizer(cfg)
+                eq.initialize(ctx)
+                const nodes = eq.getNodes()
+                return nodes ? { ...nodes, dispose: () => eq.dispose() } : null
+            },
+            filter: (cfg) => new AudioFilter(ctx, cfg),
+            noiseGate: (cfg) => new AudioNoiseGate(ctx, cfg),
+            compressor: (cfg) => new AudioCompressor(ctx, cfg),
+            reverb: (cfg) => new AudioReverb(ctx, cfg),
+            delay: (cfg) => new AudioDelay(ctx, cfg),
+            limiter: (cfg) => new AudioLimiter(ctx, cfg),
+            stereoShaper: (cfg) => new AudioStereoShaper(ctx, cfg)
+        }
 
         const chain: { input: GainNode; output: GainNode; dispose?: () => void }[] = []
-        for (const [key, factory] of effectFactories) {
+        for (const key of Object.keys(effectConstructors)) {
             const cfg = channelEffects[key]
             if (cfg?.enabled) {
-                const seg = factory(cfg)
+                const seg = effectConstructors[key](cfg)
                 if (seg) chain.push(seg)
             }
         }
@@ -443,10 +430,7 @@ export class AudioRoutingManager {
      * update its connections in real-time when the routing config changes.
      */
     public registerInputNode(inputId: string, node: AudioNode) {
-        console.log(`[AudioRoutingManager] registering input node for "${inputId}"`)
-        if (!this.inputNodes.has(inputId)) {
-            this.inputNodes.set(inputId, new Set())
-        }
+        if (!this.inputNodes.has(inputId)) this.inputNodes.set(inputId, new Set())
         this.inputNodes.get(inputId)!.add(node)
         this.routeInput(inputId, node)
     }
