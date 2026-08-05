@@ -16,13 +16,8 @@
     $: if (changeValue) updateValue()
     function updateValue() {
         if (!videoData.paused) pauseAtMove()
-        sliderValue = changeValue
-        sliderInput(changeValue)
-
-        setTimeout(() => {
-            sendToOutput()
-            changeValue = 0
-        })
+        finishDrag(changeValue)
+        changeValue = 0
     }
 
     let sliderValue = 0
@@ -64,7 +59,7 @@
 
     let dragSeekTimeout: NodeJS.Timeout | null = null
 
-    function sliderInput(e: any) {
+    function onInput(e: any) {
         const val = getNumericValue(e) ?? latestValue
         if (val === null) return
         latestValue = val
@@ -75,20 +70,13 @@
                 dragSeekTimeout = null
                 if (movePause && sliderValue !== null) {
                     videoTime = sliderValue
-                    seekTo(videoTime)
+                    if (path && outputId) VideoPlayer.seekTo(path, outputId, videoTime)
                 }
             }, 150)
         }
     }
 
-    function seekTo(time: number) {
-        if (!path) return
-
-        if (outputId) VideoPlayer.seekTo(path, outputId, time)
-        else videoTime = time
-    }
-
-    const sendToOutput = (e: any = null) => {
+    function finishDrag(e: any = null) {
         if (dragSeekTimeout) {
             clearTimeout(dragSeekTimeout)
             dragSeekTimeout = null
@@ -99,7 +87,7 @@
             latestValue = val
             sliderValue = val
             videoTime = val
-            seekTo(videoTime)
+            if (path && outputId) VideoPlayer.seekTo(path, outputId, videoTime)
         }
 
         if (movePause) pauseAtMove(false)
@@ -131,7 +119,7 @@
 
 <svelte:window
     on:mouseup={() => {
-        if (movePause) sendToOutput()
+        if (movePause) finishDrag()
     }}
 />
 
@@ -157,8 +145,8 @@
                 pauseAtMove(true)
             }}
             on:mousemove={move}
-            on:change={sendToOutput}
-            on:input={sliderInput}
+            on:change={finishDrag}
+            on:input={onInput}
         />
     </div>
     <span style={fullLength ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)} on:keydown={triggerClickOnEnterSpace} role="button" tabindex="0" aria-label="Toggle time display format">

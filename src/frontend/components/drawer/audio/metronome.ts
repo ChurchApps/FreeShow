@@ -67,13 +67,26 @@ export function updateMetronome(values: API_metronome | MetronomeSettings, start
 }
 
 export function stopMetronome() {
-    if (scheduleTimeout) clearTimeout(scheduleTimeout)
-    scheduleTimeout = null
+    if (timerInterval) {
+        clearInterval(timerInterval)
+        timerInterval = null
+    }
+
+    for (const source of scheduledSources) {
+        try {
+            source.stop()
+            source.disconnect()
+        } catch (e) {}
+    }
+    scheduledSources = []
+
+    for (const timer of activeTimeouts) {
+        clearTimeout(timer)
+    }
+    activeTimeouts = []
+
     playingMetronome.set(false)
     metronomeTimer.set({ beat: 0, timeToNext: 0 })
-
-    startTime = 0
-    beatsPlayed = 0
 }
 
 const clickFiles = {
@@ -107,83 +120,100 @@ async function setAudioBuffers() {
 
 /// /////////////////
 
-// time values are in seconds
-let timeBetweenEachBeat = 0
-let startTime = 0
+let timerInterval: NodeJS.Timeout | null = null
+let nextNoteTime = 0
+let currentBeat = 1
+
+const lookahead = 1.5 // 1.5 seconds lookahead buffer in Web Audio time to withstand UI thread freezes
+let scheduledSources: AudioBufferSourceNode[] = []
+let activeTimeouts: NodeJS.Timeout[] = []
+
 async function initializeMetronome() {
     await setAudioBuffers()
 
-    const beatsPerSecond = 60 / (metronomeValues.tempo || defaultMetronomeValues.tempo)
-    timeBetweenEachBeat = beatsPerSecond
+    currentBeat = 1
+    nextNoteTime = getAudioContext().currentTime
 
-    scheduleNextNote()
+    playingMetronome.set(true)
+
+    if (timerInterval) clearInterval(timerInterval)
+    timerInterval = setInterval(() => scheduler(), 25)
+
+    scheduler()
 }
 
-const preScheduleTime = 0.1
-let scheduleTimeout: NodeJS.Timeout | null = null
-function scheduleNextNote(time = 0, beat = 1) {
-    // changing tempo when active could cause many to play at once without this check
-    if (scheduleTimeout) return
+function scheduler() {
+    if (!get(playingMetronome)) return
 
-    if (!startTime) {
-        startTime = getAudioContext().currentTime
-        scheduleNote(beat)
-        return
+    const audioContext = getAudioContext()
+    if (!audioContext) return
+
+    const totalBeats = metronomeValues.beats || defaultMetronomeValues.beats
+    const tempo = metronomeValues.tempo || defaultMetronomeValues.tempo
+    const secondsPerBeat = 60 / tempo
+
+    const currentTime = audioContext.currentTime
+
+    // prevent stacking up beats
+    if (nextNoteTime < currentTime - 0.05) {
+        const timeLag = currentTime - nextNoteTime
+
+        // skip missed beats and catch up currentBeat index
+        if (timeLag > secondsPerBeat) {
+            const missedBeats = Math.floor(timeLag / secondsPerBeat)
+            currentBeat = ((currentBeat - 1 + missedBeats) % totalBeats) + 1
+            nextNoteTime += missedBeats * secondsPerBeat
+        }
+
+        // don't play missed beats from the past
+        if (nextNoteTime < currentTime) nextNoteTime = currentTime
     }
 
-    if (beat > (metronomeValues.beats || defaultMetronomeValues.beats)) beat = 1
-
-    scheduleTimeout = setTimeout(
-        () => {
-            scheduleTimeout = null
-            scheduleNote(beat)
-        },
-        (time + timeBetweenEachBeat - preScheduleTime) * 1000
-    )
-    playingMetronome.set(true)
+    while (nextNoteTime < currentTime + lookahead) {
+        scheduleNote(currentBeat, nextNoteTime)
+        nextNoteTime += secondsPerBeat
+        currentBeat = (currentBeat % totalBeats) + 1
+    }
 }
 
-let beatsPlayed = 0
-function scheduleNote(beat: number) {
-    beatsPlayed++
-    const timeUntilNextNote = getTimeToNextNote()
-
-    metronomeTimer.set({ beat, timeToNext: timeUntilNextNote })
-
-    playNote(timeUntilNextNote, beat === 1)
-    scheduleNextNote(timeUntilNextNote, beat + 1)
-}
-
-function getTimeToNextNote() {
+function scheduleNote(beat: number, noteTime: number) {
     const contextTime = getAudioContext().currentTime
+    const delayMs = Math.max(0, (noteTime - contextTime) * 1000)
 
-    const nextPlayTime = timeBetweenEachBeat * beatsPlayed
-    const timePassed = contextTime - startTime
+    const timer = setTimeout(() => {
+        if (get(playingMetronome)) metronomeTimer.set({ beat, timeToNext: 0 })
+    }, delayMs)
+    activeTimeouts.push(timer)
 
-    return nextPlayTime - timePassed
+    playNoteAtTime(noteTime, beat === 1)
 }
 
-async function playNote(time: number, first = false) {
-    const source = getAudioContext().createBufferSource()
+async function playNoteAtTime(time: number, first = false) {
+    const audioContext = getAudioContext()
+    const source = audioContext.createBufferSource()
     const clickSound = get(special)?.clickSound || "metal"
     const bufferId = clickSound === "custom" ? get(special)?.clickSound_hi + get(special)?.clickSound_lo : clickSound
     const audioBuffer = audioBuffers[bufferId]?.[first ? "hi" : "lo"]
     if (!audioBuffer) return
     source.buffer = audioBuffer
 
-    const gainNode = getAudioContext().createGain()
+    const gainNode = audioContext.createGain()
     source.connect(gainNode)
 
     // Connect to AudioRoutingManager (this also handles capture/visualizer)
     AudioRoutingManager.getInstance().registerInputNode("metronome", gainNode)
     AudioRoutingManager.getInstance().updateRoutingNodes()
 
+    scheduledSources.push(source)
+
     source.onended = () => {
         AudioRoutingManager.getInstance().unregisterInputNode("metronome", gainNode)
+        const idx = scheduledSources.indexOf(source)
+        if (idx !== -1) scheduledSources.splice(idx, 1)
     }
 
     const volume = first ? (metronomeValues.accentVolume ?? defaultMetronomeValues.accentVolume) : (metronomeValues.secondaryVolume ?? defaultMetronomeValues.secondaryVolume)
     gainNode.gain.value = volume
 
-    source.start(getAudioContext().currentTime + time)
+    source.start(Math.max(audioContext.currentTime, time))
 }
