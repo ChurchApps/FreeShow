@@ -6,7 +6,7 @@ import { AudioAnalyserMerger } from "../../../audio/audioAnalyserMerger"
 import { media, playerVideos, playingVideos, playingVideoState, special, transitionData } from "../../../stores"
 import { customActionActivation } from "../../actions/actions"
 import { getVimeoData, getYouTubeData } from "../../drawer/player/playerHelper"
-import { encodeFilePath, getExtension, getMediaType } from "../../helpers/media"
+import { encodeFilePath, getExtension, getMediaType, locateMediaFile } from "../../helpers/media"
 import { checkNextAfterMedia } from "../../helpers/showActions"
 import { TimeInterpolator } from "./videoTime"
 
@@ -33,21 +33,49 @@ export type VideoAudioData = {
 }
 
 export class VideoPlayer {
+    private static isStarting = new Set<string>()
     static async start(id: string, options: VideoOptions = {}, linkedOutputIds?: string[]): Promise<boolean> {
+        const ref = `${id}_${linkedOutputIds?.join(",")}`
+        if (this.isStarting.has(ref)) return true
+        this.isStarting.add(ref)
+
         // stop fading out if playing again
         if (this.isFadingOut.includes(id)) this.isFadingOut.splice(this.isFadingOut.indexOf(id), 1)
 
         const isVideo = options.isOnline || getMediaType(getExtension(id)) === "video"
-        if (!isVideo) return false
-
-        // check if already playing
-        if (this.audioExists(id, linkedOutputIds)) {
-            if (!options.paused) this.play(id)
-            return true
+        if (!isVideo) {
+            this.isStarting.delete(ref)
+            return false
         }
 
-        const audio = await this.createAudio(id, options.isOnline)
-        if (!audio) return false
+        if (!options.isOnline) {
+            const located = await locateMediaFile(id)
+            if (!located) {
+                this.isStarting.delete(ref)
+                return false
+            }
+
+            id = located.path
+        }
+
+        // check if already playing
+        const existingPlaying = this.getPlaying(id, linkedOutputIds || [])
+        if (existingPlaying) {
+            const newOutputIds = (linkedOutputIds || []).filter((outId) => !existingPlaying.linkedOutputIds.includes(outId))
+            if (newOutputIds.length) {
+                linkedOutputIds = newOutputIds
+            } else {
+                if (!options.paused) this.play(id, linkedOutputIds?.[0])
+                this.isStarting.delete(ref)
+                return true
+            }
+        }
+
+        const audio = await this.createAudio(id, linkedOutputIds, options.isOnline)
+        if (!audio) {
+            this.isStarting.delete(ref)
+            return false
+        }
 
         if (options.startAt) {
             audio.currentTime = options.startAt
@@ -59,13 +87,12 @@ export class VideoPlayer {
             return a
         })
 
-        if (audio instanceof HTMLAudioElement) await this.attachToAnalyser(id, audio, linkedOutputIds || [])
-
-        // this.updateProperties(path, options)
         audio.loop = options.loop ?? false
         audio.muted = options.muted ?? false
 
-        if (!options.paused) this.play(id)
+        if (!options.paused) this.play(id, linkedOutputIds?.[0])
+
+        if (audio instanceof HTMLAudioElement) this.attachToAnalyser(id, audio, linkedOutputIds || [])
 
         if (options.startAt && options.startAt > 0 && !audio.muted && audio instanceof HTMLAudioElement) {
             const mediaTransition = get(transitionData)?.media
@@ -82,6 +109,7 @@ export class VideoPlayer {
 
         // AudioAnalyser.attach(path, audio)
 
+        this.isStarting.delete(ref)
         return true
     }
 
@@ -89,12 +117,12 @@ export class VideoPlayer {
         const audio = this.getAudio(path)
         if (!audio) return
 
-        const data = get(media)[path]
+        const data = this.getGlobalOptions(path)
 
         if (data.speed && audio instanceof HTMLAudioElement) audio.playbackRate = parseFloat(data.speed)
     }
 
-    private static async createAudio(id: string, isOnline?: boolean): Promise<HTMLAudioElement | VirtualAudioElement | null> {
+    private static async createAudio(id: string, outputIds?: string[], isOnline?: boolean): Promise<HTMLAudioElement | VirtualAudioElement | null> {
         if (isOnline) {
             const playerData = get(playerVideos)[id]
             const path = playerData?.id || ""
@@ -118,7 +146,7 @@ export class VideoPlayer {
             if (!AudioAnalyser.shouldAnalyse()) AudioAnalyserMerger.stop()
         })
         audio.addEventListener("ended", () => {
-            this.checkIfEnding(id, true)
+            this.checkIfEnding(id, outputIds, true)
         })
         return await this.waitForAudio(id, audio)
     }
@@ -142,11 +170,11 @@ export class VideoPlayer {
         })
     }
 
-    static checkIfEnding(path: string, force = false) {
-        const playing = this.getPlaying(path)
+    static checkIfEnding(path: string, outputIds?: string[], force = false) {
+        const playing = this.getPlaying(path, outputIds || [])
         if (!playing || (playing.audio.paused && !force)) return
 
-        const audio = this.getAudio(path)
+        const audio = this.getAudio(path, outputIds ? outputIds[0] : undefined)
         if (!audio) return
 
         const endingTime = this.getEndTime(path, audio.duration)
@@ -155,7 +183,7 @@ export class VideoPlayer {
         // should loop
         if (get(media)[path]?.loop) return
 
-        this.stop(path, undefined, true)
+        this.stop(path, outputIds ? outputIds[0] : undefined, true)
 
         checkNextAfterMedia(path)
     }
@@ -163,7 +191,7 @@ export class VideoPlayer {
     //
 
     static play(path: string, outputId?: string) {
-        if (!this.audioExists(path)) return
+        if (!this.audioExists(path, outputId ? [outputId] : undefined)) return
 
         const audio = this.getAudio(path, outputId)
         if (!audio) return
@@ -180,7 +208,7 @@ export class VideoPlayer {
     }
 
     static pause(path: string, outputId?: string) {
-        if (!this.audioExists(path)) return
+        if (!this.audioExists(path, outputId ? [outputId] : undefined)) return
 
         const audio = this.getAudio(path, outputId)
         if (!audio) return
@@ -198,7 +226,7 @@ export class VideoPlayer {
 
     static isFadingOut: string[] = []
     static async stop(path: string, outputId?: string, reachedEnd = false) {
-        if (!this.audioExists(path) || this.isFadingOut.includes(path)) return
+        if (!this.audioExists(path, outputId ? [outputId] : undefined) || this.isFadingOut.includes(path)) return
 
         const audio = this.getAudio(path, outputId)
 
@@ -215,7 +243,7 @@ export class VideoPlayer {
 
         this.pause(path, outputId)
 
-        const linkedOutputIds = this.getPlaying(path)?.linkedOutputIds || []
+        const linkedOutputIds = this.getPlaying(path, outputId ? [outputId] : [])?.linkedOutputIds || []
         linkedOutputIds.forEach((outputId) => AudioAnalyser.detach(path, outputId))
 
         playingVideos.update((a) => {
@@ -323,17 +351,13 @@ export class VideoPlayer {
 
     // GET
 
-    static getPlaying(path: string): VideoAudioData | null {
-        return get(playingVideos).find((v) => v.path === path) || null
+    static getPlaying(path: string, outputIds: string[]): VideoAudioData | null {
+        return get(playingVideos).find((v) => v.path === path && v.linkedOutputIds.join(",") === outputIds.join(",")) || null
     }
 
     static getAudio(path: string, outputId?: string) {
         const video = get(playingVideos).find((v) => v.path === path && (!outputId || v.linkedOutputIds.includes(outputId)))
         return video?.audio || null
-    }
-
-    static getTime(path: string) {
-        return this.getAudio(path)?.currentTime || 0
     }
 
     static getGlobalOptions(path: string) {
@@ -364,16 +388,16 @@ export class VideoPlayer {
     // STATE
 
     static audioExists(path: string, outputIds?: string[]) {
-        const playing = this.getPlaying(path)
+        const playing = this.getPlaying(path, outputIds || [])
         if (!playing) return false
 
-        if (!outputIds || !outputIds.length) return !!playing
+        if (!outputIds?.length) return !!playing
         return outputIds.some((id) => playing.linkedOutputIds.includes(id))
     }
 
-    static isPaused(path: string) {
-        return !!this.getPlaying(path)?.audio?.paused
-    }
+    // static isPaused(path: string) {
+    //     return !!this.getPlaying(path)?.audio?.paused
+    // }
 
     // SYNC
 

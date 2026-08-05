@@ -22,7 +22,7 @@
     import MediaControls from "../output/tools/MediaControls.svelte"
     import Player from "../system/Player.svelte"
     import { formatVTT, SRTtoVTT } from "./media/subtitles"
-    import { videoSync } from "../media/video/videoSync"
+    import { shouldSyncVideoTime, videoSync } from "../media/video/videoSync"
 
     export let mediaPath: string
     export let show
@@ -44,8 +44,8 @@
     export let mediaStyle: MediaStyle = {}
 
     let unsubscriber: Unsubscriber | null = null
-    $: setTimeout(() => pathChanged(mediaPath))
-    function pathChanged(path: string | undefined) {
+    $: setTimeout(() => pathChanged(mediaPath, outputId))
+    function pathChanged(path: string | undefined, outputId: string) {
         if (unsubscriber) {
             unsubscriber()
             unsubscriber = null
@@ -55,8 +55,21 @@
 
         videoData = { paused: false, muted: true, duration: 0, loop: false }
 
+        let firstLoad = true
+        let lastSyncedTime: number | null = null
         unsubscriber = videoSync(path, outputId, (data) => {
-            videoTime = data.currentTime || 0
+            if (firstLoad) {
+                firstLoad = false
+                setTimeout(() => {
+                    videoTime = data.currentTime || 0
+                }, 50)
+            } else {
+                if (video && shouldSyncVideoTime(video, data.currentTime, lastSyncedTime)) {
+                    videoTime = data.currentTime || 0
+                }
+            }
+            if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
+
             if (data.duration) videoData.duration = data.duration
             if (playingInOutput) videoData.paused = data.paused
             videoData.loop = playingInOutput ? data.loop : false

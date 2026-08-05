@@ -2,8 +2,9 @@
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
     import { currentWindow, media } from "../../stores"
+    import { waitUntilValueIsDefined } from "../../utils/common"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
-    import { videoSync } from "./video/videoSync"
+    import { shouldSyncVideoTime, videoSync } from "./video/videoSync"
 
     export let outputId: string
     export let path: string
@@ -27,23 +28,19 @@
     // let videoData = { paused: false, loop: false }
     // let videoTime = 0
 
-    onMount(() => {
-        // sync state listener
-        const unsubscribe = videoSync(path, outputId, (data) => {
-            if (!video) return
+    onMount(async () => {
+        await waitUntilValueIsDefined(() => ready)
 
-            // more than 0.1s difference, update video time
-            if (data.currentTime !== undefined && video.readyState >= 2 && !video.seeking && Math.abs(video.currentTime - data.currentTime) > 0.1) {
-                video.currentTime = data.currentTime
+        let lastSyncedTime: number | null = null
+
+        const unsubscribe = videoSync(path, outputId, (data) => {
+            if (shouldSyncVideoTime(video, data.currentTime, lastSyncedTime)) {
+                video!.currentTime = data.currentTime
             }
+            if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
 
             videoData.loop = data.loop
             videoData.paused = data.paused
-
-            // if (data.paused !== undefined && video.paused !== data.paused) {
-            //     if (data.paused) video.pause()
-            //     else video.play().catch((e) => console.error("Error playing video:", e))
-            // }
         })
 
         if (!container) return
@@ -53,7 +50,7 @@
         containerAspect = w && h ? w / h : null
 
         return () => {
-            unsubscribe()
+            unsubscribe?.()
         }
     })
 
@@ -126,7 +123,10 @@
     //     }
     // }
 
+    let ready = false
     function playing() {
+        ready = true
+
         if (!hasLoaded || mirror) return
         hasLoaded = false
 
@@ -134,10 +134,11 @@
         if ((Math.max(startAt, mediaStyle.fromTime || 0) || 0) === 0) return
 
         // go to custom start time
-        videoData.paused = true
+        const alreadyPaused = videoData.paused
+        if (!alreadyPaused) videoData.paused = true
         setTimeout(() => {
             videoTime = Math.max(startAt, mediaStyle.fromTime || 0) || 0
-            videoData.paused = false
+            if (!alreadyPaused) videoData.paused = false
             startAt = 0
         }, 50)
     }

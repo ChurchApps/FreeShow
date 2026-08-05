@@ -7,7 +7,9 @@ import type { API_metronome } from "../../actions/api"
 import { clone } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
 
-const audioContext = AudioAnalyser.getAudioContext()
+function getAudioContext() {
+    return AudioAnalyser.getAudioContext()
+}
 
 const defaultMetronomeValues: MetronomeSettings = {
     tempo: 120, // BPM
@@ -95,7 +97,7 @@ async function setAudioBuffers() {
 
             const audioBuffer = await fetch(path)
                 .then((res) => res.arrayBuffer())
-                .then((ArrayBuffer) => audioContext.decodeAudioData(ArrayBuffer))
+                .then((ArrayBuffer) => getAudioContext().decodeAudioData(ArrayBuffer))
 
             const id = index === 0 ? "hi" : "lo"
             audioBuffers[bufferId] = { ...audioBuffers[bufferId], [id]: audioBuffer }
@@ -124,7 +126,7 @@ function scheduleNextNote(time = 0, beat = 1) {
     if (scheduleTimeout) return
 
     if (!startTime) {
-        startTime = audioContext.currentTime
+        startTime = getAudioContext().currentTime
         scheduleNote(beat)
         return
     }
@@ -153,7 +155,7 @@ function scheduleNote(beat: number) {
 }
 
 function getTimeToNextNote() {
-    const contextTime = audioContext.currentTime
+    const contextTime = getAudioContext().currentTime
 
     const nextPlayTime = timeBetweenEachBeat * beatsPlayed
     const timePassed = contextTime - startTime
@@ -162,14 +164,14 @@ function getTimeToNextNote() {
 }
 
 async function playNote(time: number, first = false) {
-    const source = audioContext.createBufferSource()
+    const source = getAudioContext().createBufferSource()
     const clickSound = get(special)?.clickSound || "metal"
     const bufferId = clickSound === "custom" ? get(special)?.clickSound_hi + get(special)?.clickSound_lo : clickSound
     const audioBuffer = audioBuffers[bufferId]?.[first ? "hi" : "lo"]
     if (!audioBuffer) return
     source.buffer = audioBuffer
 
-    const gainNode = audioContext.createGain()
+    const gainNode = getAudioContext().createGain()
     source.connect(gainNode)
 
     // Connect to AudioRoutingManager (this also handles capture/visualizer)
@@ -183,5 +185,5 @@ async function playNote(time: number, first = false) {
     const volume = first ? (metronomeValues.accentVolume ?? defaultMetronomeValues.accentVolume) : (metronomeValues.secondaryVolume ?? defaultMetronomeValues.secondaryVolume)
     gainNode.gain.value = volume
 
-    source.start(audioContext.currentTime + time)
+    source.start(getAudioContext().currentTime + time)
 }

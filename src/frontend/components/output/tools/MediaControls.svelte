@@ -34,8 +34,8 @@
     // LISTENER
 
     let unsubscriber: Unsubscriber | null = null
-    $: setTimeout(() => pathChanged(path))
-    function pathChanged(path: string | undefined) {
+    $: setTimeout(() => pathChanged(path, outputId))
+    function pathChanged(path: string | undefined, outputId: string) {
         if (unsubscriber) {
             unsubscriber()
             unsubscriber = null
