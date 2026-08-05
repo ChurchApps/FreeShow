@@ -90,14 +90,14 @@
             <span class="card-name" class:sub-name={isSubNode}>{name}</span>
         {/if}
 
-        {#if type === "icecast"}
+        {#if type === "icecast" || isChannel}
             <MaterialButton
                 variant="outlined"
                 icon="options"
                 style="padding: 5px;"
                 title="popup.node_options"
                 on:click={() => {
-                    popupData.set({ nodeId: id })
+                    popupData.set({ nodeId: id, name })
                     activePopup.set("node_options")
                 }}
             />

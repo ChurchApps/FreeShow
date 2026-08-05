@@ -18,6 +18,7 @@ export class AudioRoutingManager {
     private config: AudioRoutingConfig = { channels: [], connections: [] }
     private audioCtx: AudioContext | null = null
     private mergerNodes: Map<string, GainNode> = new Map()
+    private channelDelayNodes: Map<string, DelayNode> = new Map()
     private mergerEffectChains: Map<string, { input: AudioNode; output: AudioNode; dispose: () => void }> = new Map()
     private masterNode: AudioNode | null = null
     private destinationNode: AudioNode | null = null
@@ -112,11 +113,20 @@ export class AudioRoutingManager {
         if (!this.audioCtx) return
         const data = get(audioChannelsData)[id] || {}
         const isMuted = !!data.isMuted
-        const vol = data.volume ?? 1
+        let vol = data.volume ?? 1
+        if (vol > 5) vol /= 100 // Normalize if volume was accidentally saved as 0-100 percentage instead of 0-1 scale
         const targetGain = isMuted ? 0 : Math.max(0, vol)
         try {
             node.gain.setValueAtTime(targetGain, this.audioCtx.currentTime)
         } catch (e) {}
+
+        const delayNode = this.channelDelayNodes.get(id)
+        if (delayNode) {
+            const delaySec = Math.max(0, Math.min(5, (data.delay || 0) / 1000))
+            try {
+                delayNode.delayTime.setValueAtTime(delaySec, this.audioCtx.currentTime)
+            } catch (e) {}
+        }
     }
 
     public updateAllGains() {
@@ -128,11 +138,20 @@ export class AudioRoutingManager {
         if (this.masterNode && (this.masterNode as GainNode).gain) {
             const mainData = data.main || {}
             const isMuted = !!mainData.isMuted
-            const vol = mainData.volume ?? 1
+            let vol = mainData.volume ?? 1
+            if (vol > 5) vol /= 100
             const targetGain = isMuted ? 0 : Math.max(0, vol)
             try {
                 ;(this.masterNode as GainNode).gain.setValueAtTime(targetGain, this.audioCtx.currentTime)
             } catch (e) {}
+
+            const mainDelayNode = this.channelDelayNodes.get("main")
+            if (mainDelayNode) {
+                const delaySec = Math.max(0, Math.min(5, (mainData.delay || 0) / 1000))
+                try {
+                    mainDelayNode.delayTime.setValueAtTime(delaySec, this.audioCtx.currentTime)
+                } catch (e) {}
+            }
         }
     }
 
@@ -218,9 +237,11 @@ export class AudioRoutingManager {
             if (!currentChannelIds.has(id)) {
                 try {
                     node.disconnect()
+                    this.channelDelayNodes.get(id)?.disconnect()
                     AudioInputCapture.getInstance().removeInput(id)
                 } catch (e) {}
                 this.mergerNodes.delete(id)
+                this.channelDelayNodes.delete(id)
             }
         })
 
@@ -259,7 +280,24 @@ export class AudioRoutingManager {
                 node.disconnect()
             } catch (e) {}
 
-            const outNode = this.buildMergerEffectChain(id, node, allEffects[id])
+            let outNode = this.buildMergerEffectChain(id, node, allEffects[id])
+
+            // Channel Delay node (0-5000ms)
+            if (!this.channelDelayNodes.has(id)) {
+                const delayNode = this.audioCtx!.createDelay(5.0)
+                this.channelDelayNodes.set(id, delayNode)
+            }
+            const delayNode = this.channelDelayNodes.get(id)!
+            const chData = get(audioChannelsData)[id] || {}
+            const delaySec = Math.max(0, Math.min(5, (chData.delay || 0) / 1000))
+            delayNode.delayTime.setValueAtTime(delaySec, this.audioCtx!.currentTime)
+
+            try {
+                delayNode.disconnect()
+            } catch (e) {}
+
+            outNode.connect(delayNode)
+            outNode = delayNode
 
             // Re-connect visualizer after disconnect
             AudioInputCapture.getInstance().captureInput(id, outNode)

@@ -11,6 +11,7 @@ export interface Playlist {
 export interface AudioChannelData {
     volume?: number
     isMuted?: boolean
+    delay?: number // delay in ms
 }
 
 export interface AudioChannel {

@@ -23,13 +23,15 @@
         AudioPlayer.updateVolume()
     }
 
-    const allowGaining = false
+    const allowGaining = true
     function setVolume(e: any) {
         let value = typeof e === "number" ? e : e?.detail !== undefined ? e.detail : e?.target?.value !== undefined ? parseFloat(e.target.value) : 1
+        if (value >= 0.95 && value <= 1.05) value = 1.0
         updateData("volume", value)
     }
 
-    $: volumeValue = Number(channelData.volume ?? 1)
+    $: rawVolume = Number(channelData.volume ?? 1)
+    $: volumeValue = rawVolume > 5 ? rawVolume / 100 : rawVolume
     $: muted = !!channelData.isMuted
 </script>
 
@@ -40,11 +42,11 @@
         <div class="label" style="margin-right: 7px;">
             <!-- {translateText("media.volume")} -->
             <p style="opacity: 0.9;">{label || ""}</p>
-            <Slider disabled={muted} value={volumeValue} step={0.01} max={allowGaining ? 1.25 : 1} on:input={setVolume} />
+            <Slider value={volumeValue} step={0.01} max={allowGaining ? 1.25 : 1} on:input={setVolume} />
         </div>
 
         <div class="input" style="position: relative;">
-            <NumberInput style="width: 60px;" disabled={muted} value={volumeValue * 100} min={0} max={allowGaining ? 125 : 100} on:change={(e) => setVolume(e.detail / 100)} buttons={false} />
+            <NumberInput style="width: 60px;" value={volumeValue * 100} min={0} max={allowGaining ? 125 : 100} on:change={(e) => setVolume(e.detail / 100)} buttons={false} />
             <span style="position: absolute;right: 0;bottom: 5px;transform: translateX(-7px);pointer-events: none;color: var(--color);font-weight: bold;font-size: 0.7em;">%</span>
         </div>
 
