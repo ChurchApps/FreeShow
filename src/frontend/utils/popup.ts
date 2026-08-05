@@ -49,6 +49,7 @@ import Initialize from "../components/main/popups/Initialize.svelte"
 import InteractionInput from "../components/main/popups/InteractionInput.svelte"
 import Translate from "../components/main/popups/localization/Translate.svelte"
 import ManageColors from "../components/main/popups/ManageColors.svelte"
+import AiScripture from "../components/main/popups/AiScripture.svelte"
 import ManageDynamicValues from "../components/main/popups/ManageDynamicValues.svelte"
 import ManageGroups from "../components/main/popups/ManageGroups.svelte"
 import ManageIcons from "../components/main/popups/ManageIcons.svelte"
@@ -108,6 +109,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     manage_colors: ManageColors,
     manage_metadata: ManageMetadata,
     manage_dynamic_values: ManageDynamicValues,
+    ai_scripture: AiScripture,
     template_style_overrides: TemplateStyleOverrides,
     regex_manager: RegexManager,
     choose_chord: ChooseChord,
