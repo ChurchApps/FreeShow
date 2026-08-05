@@ -44,6 +44,14 @@
         alertMessage.set("settings.restart_for_change")
         activePopup.set("alert")
     }
+
+    // AI scripture
+    function toggleAiScripture(e: any) {
+        special.update((a) => {
+            a.aiScripture = { ...(a.aiScripture || {}), enabled: !!e.detail }
+            return a
+        })
+    }
 </script>
 
 <MaterialButton variant="outlined" style="width: 100%;margin-bottom: 20px;" icon="loop" on:click={() => activePopup.set("update_manager")}>
@@ -56,6 +64,18 @@
 <MaterialToggleSwitch label="settings.auto_error_reporting" checked={autoErrorReporting} defaultValue={true} on:change={toggleAutoErrorReporting} />
 
 <MaterialToggleSwitch label="settings.disable_hardware_acceleration" checked={disableHardwareAcceleration} defaultValue={false} on:change={toggleHardwareAcceleration} />
+
+<MaterialToggleSwitch label="settings.ai_scripture" checked={$special.aiScripture?.enabled || false} defaultValue={false} on:change={toggleAiScripture} />
+
+{#if $special.aiScripture?.enabled}
+    <MaterialButton variant="outlined" style="width: 100%;" icon="options" on:click={() => activePopup.set("ai_scripture")}>
+        <T id="settings.ai_scripture_configure" />
+    </MaterialButton>
+
+    <p style="font-size: 0.8em;opacity: 0.7;padding: 10px 5px;">
+        <T id="settings.ai_scripture_privacy" />
+    </p>
+{/if}
 
 <!-- Optimized mode is enabled automatically based on the memory usage -->
 <!-- "optimized_mode": "Optimized mode", -->
