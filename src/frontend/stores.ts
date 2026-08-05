@@ -6,6 +6,7 @@ import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { ContentProviderId } from "../electron/contentProviders/base/types"
 import type { TimecodeMode } from "../electron/timecode/timecode"
+import type { AiScriptureState, DetectedReference } from "../types/AiScripture"
 import type { AudioChannelData, AudioStream, MetronomeSettings, Playlist } from "../types/Audio"
 import type { AudioRoutingConfig } from "../types/AudioRouting"
 import type { Event } from "../types/Calendar"
@@ -86,6 +87,13 @@ export const scriptureMode: Writable<"grid" | "list"> = writable("list")
 export const providerConnections: Writable<{ [key in ContentProviderId]?: boolean }> = writable({})
 export const metronomeTimer: Writable<{ beat: number; timeToNext: number }> = writable({ beat: 0, timeToNext: 0 })
 export const mediaDownloads: Writable<Map<string, { progress: number; total: number; status: string; name?: string }>> = writable(new Map())
+// AI scripture (session only - never saved)
+export const aiScriptureStatus: Writable<{ state: AiScriptureState; message?: string; keyless?: boolean }> = writable({ state: "stopped" })
+export const aiScriptureSuggestions: Writable<DetectedReference[]> = writable([])
+export const aiScriptureTranscript: Writable<{ text: string; startMs: number; endMs: number }[]> = writable([])
+export const aiScriptureAutoPaused: Writable<boolean> = writable(false)
+export const aiScriptureHasProjected: Writable<boolean> = writable(false)
+export const whisperDownloads: Writable<Map<string, { progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }>> = writable(new Map())
 export const pdfImports: Writable<Map<string, { name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }>> = writable(new Map())
 export const showChangeProfileMenu: Writable<boolean> = writable(false)
 export const cloudUsers: Writable<{ displayName: string; color: string; lastUpdate?: number; activePage?: string; activeShow?: ShowRef }[]> = writable([])
