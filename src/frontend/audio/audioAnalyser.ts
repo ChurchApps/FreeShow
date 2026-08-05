@@ -95,7 +95,8 @@ export class AudioAnalyser {
             // Create individual gain node to control this source's volume in Web Audio
             const sourceGain = this.ac.createGain()
             this.gainNodes[key] = sourceGain
-            const initialVolume = audio instanceof HTMLMediaElement ? audio.volume : 1.0
+            const storedVol = this.sourceVolumes[key] ?? this.sourceVolumes[id]
+            const initialVolume = storedVol !== undefined ? storedVol : audio instanceof HTMLMediaElement ? audio.volume : 1.0
             sourceGain.gain.setValueAtTime(initialVolume, this.ac.currentTime)
 
             this.sources[key].connect(sourceGain)
@@ -388,18 +389,20 @@ export class AudioAnalyser {
 
     static setPitch(id: string, value: number, outputId?: string) {
         const key = outputId ? `${id}_${outputId}` : id
-        const processor = this.processors[key] || this.processors[id]
-        if (processor) {
-            processor.pitch = value
-        }
+        Object.keys(this.processors).forEach((k) => {
+            if (k === key || k === id || k.startsWith(`${id}_`)) {
+                this.processors[k].pitch = value
+            }
+        })
     }
 
     static setTempo(id: string, value: number, outputId?: string) {
         const key = outputId ? `${id}_${outputId}` : id
-        const processor = this.processors[key] || this.processors[id]
-        if (processor) {
-            processor.tempo = value
-        }
+        Object.keys(this.processors).forEach((k) => {
+            if (k === key || k === id || k.startsWith(`${id}_`)) {
+                this.processors[k].tempo = value
+            }
+        })
     }
 
     static connectToSinks(source: AudioNode | PitchShiftNode, id?: string) {

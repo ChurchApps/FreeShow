@@ -80,6 +80,8 @@
 
         updateStore("media", { keys: [mediaId, ...input.id.split(".")], value })
 
+        VideoPlayer.updateProperties(mediaId)
+
         // update output filters
         let currentOutput = getFirstActiveOutput()
         let bg = currentOutput?.out?.background
@@ -89,7 +91,6 @@
 
         bg[input.id] = value
         setOutput("background", bg)
-        VideoPlayer.updateProperties(mediaId)
     }
 
     function valueChanged2(e: any) {

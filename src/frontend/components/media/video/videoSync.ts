@@ -16,9 +16,15 @@ export function videoSync(path: string, outputId: string, callback: (state: { cu
 export function shouldSyncVideoTime(video: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null): boolean {
     if (!video || targetTime === undefined || video.readyState < 2 || video.seeking) return false
 
+    const rate = video.playbackRate || 1
     const diff = Math.abs(video.currentTime - targetTime)
-    const isExplicitSeek = lastSyncedTime !== null && Math.abs(targetTime - lastSyncedTime) > 0.3
+    
+    // Scale thresholds according to playback rate
+    const seekThreshold = 0.3 * rate
+    const driftThreshold = 0.75 * rate
 
-    // Explicit seek or paused frame sync or major playback drift (>0.75s)
-    return isExplicitSeek || (video.paused && diff > 0.05) || diff > 0.75
+    const isExplicitSeek = lastSyncedTime !== null && Math.abs(targetTime - lastSyncedTime) > seekThreshold
+
+    // Explicit seek or paused frame sync or playback drift scaled by rate
+    return isExplicitSeek || (video.paused && diff > 0.05) || diff > driftThreshold
 }

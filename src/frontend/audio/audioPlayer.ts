@@ -123,15 +123,7 @@ export class AudioPlayer {
             return true
         }
 
-        let replayGainMultiplier = 1
-        try {
-            const audioMetadata = await requestMain(Main.READ_AUDIO_METADATA, { filePath: path })
-            if (audioMetadata?.replayGainMultiplier) {
-                replayGainMultiplier = audioMetadata.replayGainMultiplier
-            }
-        } catch (e) {
-            console.error("Failed to read ReplayGain metadata", e)
-        }
+        const replayGainMultiplier = await this.getReplayGainMultiplier(path)
 
         const newVolume = AudioPlayer.getVolume(path) * (options.volume || 1) * replayGainMultiplier
         audio.volume = Math.min(1, Math.max(0, newVolume))
@@ -366,12 +358,12 @@ export class AudioPlayer {
             const gainMultiplier = get(playingAudio)[id]?.replayGainMultiplier || 1
             newVolume *= gainMultiplier
 
-            updateAudioStore(id, "volume", Math.min(1, Math.max(0, newVolume)))
+            updateAudioStore(id, "volume", newVolume)
         })
     }
 
     static setPitch(id: string, value: number) {
-        if (this.audioExists(id)) AudioAnalyser.setPitch(id, value)
+        AudioAnalyser.setPitch(id, value)
     }
 
     static setTempo(id: string, value: number) {
@@ -527,6 +519,16 @@ export class AudioPlayer {
     static isPaused(id: string) {
         return !!this.getPlaying(id)?.paused
     }
+
+    static async getReplayGainMultiplier(path: string): Promise<number> {
+        try {
+            const audioMetadata = await requestMain(Main.READ_AUDIO_METADATA, { filePath: path })
+            return audioMetadata?.replayGainMultiplier || 1
+        } catch (e) {
+            console.error("Failed to read ReplayGain metadata", e)
+            return 1
+        }
+    }
 }
 
 function updatePlayingStore(id: string, key: string, value: any) {
@@ -540,7 +542,7 @@ function updatePlayingStore(id: string, key: string, value: any) {
 function updateAudioStore(id: string, key: string, value: any) {
     playingAudio.update((a) => {
         if (!a[id]?.audio) return a
-        a[id].audio[key] = value
+        a[id].audio[key] = key === "volume" ? Math.min(1, Math.max(0, value)) : value
         if (key === "volume") AudioAnalyser.setSourceVolume(id, value)
         return a
     })

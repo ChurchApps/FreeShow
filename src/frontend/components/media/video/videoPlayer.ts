@@ -1,16 +1,18 @@
 // plays the audio part of any given video element, and syncs the visible video to this
 
 import { get } from "svelte/store"
+import { Main } from "../../../../types/IPC/Main"
 import { AudioAnalyser } from "../../../audio/audioAnalyser"
 import { AudioAnalyserMerger } from "../../../audio/audioAnalyserMerger"
+import { requestMain } from "../../../IPC/main"
 import { media, outputs, playerVideos, playingVideos, playingVideoState, special, transitionData } from "../../../stores"
+import { playFolder } from "../../../utils/shortcuts"
 import { customActionActivation } from "../../actions/actions"
 import { getVimeoData, getYouTubeData } from "../../drawer/player/playerHelper"
 import { encodeFilePath, getExtension, getMediaType, locateMediaFile } from "../../helpers/media"
 import { checkNextAfterMedia } from "../../helpers/showActions"
-import { TimeInterpolator } from "./videoTime"
-import { playFolder } from "../../../utils/shortcuts"
 import { clearBackground } from "../../output/clear"
+import { TimeInterpolator } from "./videoTime"
 
 type VideoOptions = {
     isOnline?: boolean // youtube / vimeo
@@ -34,6 +36,7 @@ export type VideoAudioData = {
     audio: HTMLAudioElement | VirtualAudioElement
     linkedOutputIds: string[]
     type?: "background" | "item"
+    replayGainMultiplier?: number
 }
 
 export class VideoPlayer {
@@ -89,13 +92,17 @@ export class VideoPlayer {
             if ("timeTick" in audio) audio.timeTick.update(options.startAt)
         }
 
+        const replayGainMultiplier = options.isOnline ? 1 : await this.getReplayGainMultiplier(id)
+
         playingVideos.update((a) => {
-            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background" })
+            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background", replayGainMultiplier })
             return a
         })
 
         audio.loop = options.loop ?? false
         audio.muted = options.muted ?? false
+
+        this.updateVolume(id)
 
         if (!options.paused) this.play(id, linkedOutputIds?.[0])
 
@@ -126,7 +133,23 @@ export class VideoPlayer {
 
         const data = this.getGlobalOptions(path)
 
-        if (data.speed && audio instanceof HTMLAudioElement) audio.playbackRate = parseFloat(data.speed)
+        if (data.volume !== undefined) this.updateVolume(path)
+        if (data.speed && audio instanceof HTMLAudioElement) this.setTempo(path, parseFloat(data.speed))
+        if (data.pitch !== undefined) this.setPitch(path, data.pitch)
+    }
+
+    static updateVolume(specificVideoPath: string | null = null) {
+        const videos = specificVideoPath ? get(playingVideos).filter((v) => v.path === specificVideoPath) : get(playingVideos)
+        videos.forEach((v) => {
+            let newVolume = this.getVolume(v.path) * (v.replayGainMultiplier || 1)
+            v.linkedOutputIds.forEach((outputId) => {
+                const audio = this.getAudio(v.path, outputId)
+                if (audio && "volume" in audio) {
+                    audio.volume = Math.min(1, Math.max(0, newVolume))
+                    AudioAnalyser.setSourceVolume(v.path, Math.max(0, newVolume), outputId)
+                }
+            })
+        })
     }
 
     private static async createAudio(id: string, outputIds?: string[], isOnline?: boolean): Promise<HTMLAudioElement | VirtualAudioElement | null> {
@@ -404,6 +427,10 @@ export class VideoPlayer {
         return get(media)[path] || {}
     }
 
+    static getVolume(path: string) {
+        return this.getGlobalOptions(path)?.volume ?? 1
+    }
+
     static getStartTime(_path: string, startAt?: number | undefined) {
         return startAt || 0
     }
@@ -439,16 +466,44 @@ export class VideoPlayer {
     //     return !!this.getPlaying(path)?.audio?.paused
     // }
 
+    static setPitch(path: string, value: number, outputId?: string) {
+        AudioAnalyser.setPitch(path, value, outputId)
+    }
+
+    static setTempo(path: string, value: number, outputId?: string) {
+        const audio = this.getAudio(path, outputId)
+        if (!audio) return
+
+        if (audio instanceof HTMLAudioElement) {
+            audio.playbackRate = value
+            if ("preservesPitch" in audio) audio.preservesPitch = true
+        }
+        AudioAnalyser.setTempo(path, 1, outputId)
+    }
+
+    static async getReplayGainMultiplier(path: string): Promise<number> {
+        try {
+            const audioMetadata = await requestMain(Main.READ_AUDIO_METADATA, { filePath: path })
+            return audioMetadata?.replayGainMultiplier || 1
+        } catch (e) {
+            console.error("Failed to read ReplayGain metadata for video", e)
+            return 1
+        }
+    }
+
     // SYNC
 
     private static async attachToAnalyser(path: string, audio: HTMLAudioElement, outputIds: string[]) {
         if (!outputIds.length) return
+
+        const data = this.getGlobalOptions(path)
 
         for (const outputId of outputIds) {
             if (AudioAnalyser.hasSource(path, outputId)) continue
             await AudioAnalyser.attach(path, audio, outputId)
             AudioAnalyser.setSourceVolume(path, audio.volume, outputId)
             AudioAnalyser.setTempo(path, 1, outputId)
+            if (data.pitch !== undefined) AudioAnalyser.setPitch(path, data.pitch, outputId)
             AudioAnalyser.recorderActivate()
         }
     }
