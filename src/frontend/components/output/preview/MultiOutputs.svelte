@@ -133,7 +133,7 @@
 <!-- role="button"
 tabindex="0"
 aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"} -->
-<div on:click={toggleFullscreen} class="multipleOutputs" class:multiple={outs.length > 1} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 6px);"} role="none">
+<div on:click={toggleFullscreen} class="multipleOutputs" class:multiple={outs.length > 1} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 4px);"} role="none">
     {#if fullscreen}
         <MaterialButton class="hide" style="z-index: 2;opacity: 1;inset-inline-end: 10px;" title="actions.close" on:click={() => (fullscreen = false)}>
             <Icon id="close" size={1.2} white />

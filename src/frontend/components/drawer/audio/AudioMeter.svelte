@@ -1,10 +1,13 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
+    import { get } from "svelte/store"
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
-    import { audioChannels, audioChannelsData } from "../../../stores"
+    import { activeDrawerTab, activePage, audioChannels, audioChannelsData, drawer } from "../../../stores"
+    import { DEFAULT_DRAWER_HEIGHT } from "../../../utils/common"
 
     export let channelId: string = ""
     export let detailed: boolean = false
+    export let preview: boolean = false
 
     $: isMuted = !!$audioChannelsData[channelId]?.isMuted
 
@@ -47,9 +50,10 @@
         } else if (captured && typeof captured.db === "number") {
             return [captured.db]
         } else if (channelId === "main") {
-            return $audioChannels?.length ? $audioChannels.map((c) => c?.dB?.value ?? -60) : [-60, -60]
+            const channels = get(audioChannels)
+            return channels?.length ? channels.map((c) => c?.dB?.value ?? -60) : [-60, -60]
         } else {
-            const data = ($audioChannelsData || {})[channelId] as any
+            const data = (get(audioChannelsData) || {})[channelId] as any
             if (data && typeof data.dB === "number") {
                 return [data.dB, data.dB]
             }
@@ -61,7 +65,7 @@
         let db = rawDb
 
         // Apply channel volume fader adjustment (dB = rawDB + 20 * log10(volume))
-        const channelVolume = Number(($audioChannelsData || {})[channelId]?.volume ?? 1)
+        const channelVolume = Number((get(audioChannelsData) || {})[channelId]?.volume ?? 1)
         if (channelVolume > 0 && channelVolume < 1) {
             db += 20 * Math.log10(channelVolume)
         } else if (channelVolume === 0) {
@@ -80,14 +84,16 @@
 
         const dBPercentage = smoothedDB[channelIndex] * 100
 
-        if (dBPercentage > (highestDB[channelIndex]?.value || 0)) {
-            if (highestDB[channelIndex]?.timeout) clearTimeout(highestDB[channelIndex].timeout)
-            highestDB[channelIndex] = {
-                timeout: setTimeout(() => {
-                    if (highestDB[channelIndex]) highestDB[channelIndex].value = 0
-                }, 1000),
-                value: dBPercentage
-            }
+        if (!highestDB[channelIndex]) {
+            highestDB[channelIndex] = { timeout: null as any, value: 0 }
+        }
+
+        if (dBPercentage > highestDB[channelIndex].value) {
+            if (highestDB[channelIndex].timeout) clearTimeout(highestDB[channelIndex].timeout)
+            highestDB[channelIndex].value = dBPercentage
+            highestDB[channelIndex].timeout = setTimeout(() => {
+                if (highestDB[channelIndex]) highestDB[channelIndex].value = 0
+            }, 1000)
         }
 
         return dBPercentage
@@ -96,22 +102,42 @@
     function getPercentageFromDB(dB: number) {
         return dbToPos(dB) * 100
     }
+
+    function openAudioMix() {
+        if (!preview) return
+        activePage.set("show")
+        activeDrawerTab.set("audio")
+
+        const minHeight = 40
+        if ($drawer.height <= minHeight) drawer.set({ height: $drawer.stored || DEFAULT_DRAWER_HEIGHT, stored: null })
+    }
+
+    const vertical = preview
 </script>
 
-<div class="background">
-    <div class="main">
+<div class="background" class:preview class:vertical on:click={openAudioMix} role={preview ? "button" : undefined} tabindex={preview ? 0 : undefined}>
+    <div class="main" class:vertical>
         {#each getChannelDbs(tick) as rawDb, i}
             {@const dbValue = getDBValue(rawDb, i)}
-            {#if i > 0}
+            {#if i > 0 && !preview}
                 <div style="height: 1px;width: 100%;"></div>
             {/if}
-            <div class="channel-row">
-                <span class="signal-dot" class:active={rawDb > -60} style="height: {detailed ? '6px' : '3px'};"></span>
-                <span class="meter" class:isMuted style="height: {detailed ? '6px' : '3px'};">
-                    <div style="right: 0;position: absolute;height: inherit;width: {100 - dbValue}%" />
-                    <span class="meter" class:isMuted style="right: 0;position: absolute;height: inherit;width: 100%;opacity: 0.08;" />
-                    <div class="highest" style="right: {100 - (highestDB[i]?.value || 0)}%;" />
+            <div class="channel-row" class:vertical>
+                {#if !vertical}
+                    <span class="signal-dot" class:active={rawDb > -60} style="height: {detailed ? '6px' : '3px'};"></span>
+                {/if}
+
+                <span class="meter" class:isMuted class:vertical style={!vertical ? `height: ${detailed ? "6px" : "3px"};` : ""}>
+                    <div style={vertical ? `height: ${100 - dbValue}%; width: 100%; top: 0; position: absolute;` : `width: ${100 - dbValue}%; height: inherit; right: 0; position: absolute;`} />
+                    <span class="meter" class:isMuted class:vertical style="position: absolute; opacity: 0.08; {vertical ? 'top: 0; width: 100%; height: 100%;' : 'right: 0; height: inherit; width: 100%;'}" />
+                    {#if rawDb > -60}
+                        <div class="highest" class:vertical style={vertical ? `top: ${100 - (highestDB[i]?.value || 0)}%;` : `right: ${100 - (highestDB[i]?.value || 0)}%;`} />
+                    {/if}
                 </span>
+
+                {#if vertical && rawDb > -60}
+                    <span class="signal-dot vertical active" />
+                {/if}
             </div>
         {/each}
 
@@ -150,12 +176,29 @@
         padding: 5px;
     }
 
+    .background.preview {
+        background-color: transparent !important;
+        border-radius: 0;
+        padding: 0;
+        cursor: pointer;
+        width: 4px;
+        height: 100%;
+    }
+    .background.vertical {
+        height: 100%;
+    }
+
     .main {
         width: 100%;
         display: flex;
         flex-direction: column;
 
         position: relative;
+    }
+
+    .main.vertical {
+        height: 100%;
+        flex-direction: row;
     }
 
     .lines {
@@ -209,16 +252,17 @@
         transition: 0.2s right;
     }
 
+    .highest.vertical {
+        height: 2px;
+        width: 100%;
+        transition: 0.2s top;
+    }
+
     .lines-container {
         position: relative;
         margin-left: 5px;
         width: calc(100% - 5px);
     }
-
-    /* .lines p.inf-dot {
-        left: -8.5px !important;
-        transform: translate(-50%, 50%);
-    } */
 
     .lines p.end {
         transform: translate(-4px, 50%);
@@ -231,6 +275,14 @@
         width: 100%;
     }
 
+    .channel-row.vertical {
+        height: 100%;
+        width: 100%;
+        gap: 0;
+        flex: 1;
+        flex-direction: column;
+    }
+
     .signal-dot {
         width: 3px;
         height: 3px;
@@ -240,6 +292,11 @@
             background-color 0.1s ease,
             box-shadow 0.1s ease;
         flex-shrink: 0;
+    }
+
+    .signal-dot.vertical {
+        width: 100%;
+        height: 2px;
     }
 
     .signal-dot.active {
@@ -254,13 +311,22 @@
         border-radius: 1px;
         flex: 1;
     }
+
+    span.meter.vertical {
+        background-image: linear-gradient(0deg, rgb(0, 200, 200) 0%, rgb(0, 255, 50) 55%, rgb(255, 200, 0) 84%, rgb(200, 0, 0) 100%);
+        height: 100%;
+        width: 100%;
+        border-radius: 0;
+    }
+
     span.meter.isMuted {
         filter: grayscale(1) brightness(0.7);
     }
 
     span.meter div {
-        transition: width 0.05s ease 0s;
+        transition:
+            width 0.05s ease 0s,
+            height 0.05s ease 0s;
         background-color: var(--primary-darker);
-        height: 100%;
     }
 </style>

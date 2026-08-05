@@ -22,7 +22,7 @@
     import Overlay from "../tools/Overlay.svelte"
     import Show from "../tools/Show.svelte"
     import TimerControls from "../tools/TimerControls.svelte"
-    import AudioMeter from "./AudioMeter.svelte"
+    import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
     import ClearButtons from "./ClearButtons.svelte"
     import MultiOutputs from "./MultiOutputs.svelte"
     import PreviewOutputs from "./PreviewOutputs.svelte"
@@ -258,7 +258,9 @@
             <MaterialButton class="hide" icon="hide" style="z-index: 2;" title="preview._hide_preview" on:click={() => (enablePreview = false)} />
             <!-- disable before hiding: disableTransitions={!enablePreview} -->
             <MultiOutputs />
-            <AudioMeter />
+            <div class="preview-meter">
+                <AudioMeter channelId="main" preview />
+            </div>
         </div>
     {:else}
         <Button on:click={() => (enablePreview = true)} style="width: 100%;" center dark>
@@ -365,5 +367,14 @@
     }
     .section.float.light {
         --background: rgba(225, 225, 225, 0.6);
+    }
+
+    .preview-meter {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        width: 4px;
+        z-index: 5;
     }
 </style>
