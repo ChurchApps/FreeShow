@@ -5,11 +5,12 @@
     import { waitUntilValueIsDefined } from "../../utils/common"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
     import { shouldSyncVideoTime, videoSync } from "./video/videoSync"
+    import { SoftLoopSync } from "./video/softLoop"
 
     export let outputId: string
     export let path: string
     export let video: HTMLVideoElement | null = null
-    export let videoData: any = { paused: false, loop: false }
+    export let videoData: any = { paused: false, loop: false, softLoop: 0 }
     export let videoTime: number = 0
     export let startAt = 0
 
@@ -25,8 +26,8 @@
     let videoAspect: number | null = null
     let perfectFit = false
 
-    // let videoData = { paused: false, loop: false }
-    // let videoTime = 0
+    let softLoopVideo: HTMLVideoElement | null = null
+    let softLoopOpacity = 0
 
     onMount(async () => {
         await waitUntilValueIsDefined(() => ready)
@@ -34,13 +35,17 @@
         let lastSyncedTime: number | null = null
 
         const unsubscribe = videoSync(path, outputId, (data) => {
-            if (shouldSyncVideoTime(video, data.currentTime, lastSyncedTime)) {
+            const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
+            if (shouldSyncVideoTime(video, data.currentTime, lastSyncedTime, isSoftLoop)) {
                 video!.currentTime = data.currentTime
+                if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
             }
-            if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
 
             videoData.loop = data.loop
             videoData.paused = data.paused
+
+            if (data.softLoop !== undefined) videoData.softLoop = data.softLoop
+            if (data.softLoopOpacity !== undefined) softLoopOpacity = data.softLoopOpacity
         })
 
         if (!container) return
@@ -107,21 +112,8 @@
 
         cleanupVideo(video)
         cleanupVideo(blurVideo)
-        // cleanupVideo(softLoopVideo)
+        cleanupVideo(softLoopVideo)
     })
-
-    // custom end time
-    // $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0 // || videoData.duration
-    // let endInterval: NodeJS.Timeout | null = null
-    // $: if (endTime && !endInterval) endInterval = setInterval(checkIfEnded, 1000 * playbackRate)
-    // function checkIfEnded() {
-    //     if (!videoTime || !endTime) return
-    //     if (videoTime >= endTime) {
-    //         if (videoData.loop) {
-    //             if (!softLoopValue) videoTime = mediaStyle.fromTime || 0
-    //         } else dispatch("ended")
-    //     }
-    // }
 
     let ready = false
     function playing() {
@@ -174,10 +166,15 @@
     // 1% tolerance
     $: perfectFit = containerAspect && videoAspect ? Math.abs(containerAspect - videoAspect) <= 0.01 : false
 
-    // some videos don't like high playback speed (above 5.9)
-    // https://issues.chromium.org/issues/40167938
+    // Soft loop
 
-    // TODO: re-add softloop
+    $: softLoopValue = videoData.softLoop ?? mediaStyle.softLoop ?? 0
+    $: fromTime = mediaStyle.fromTime || 0
+
+    const softLoopSync = new SoftLoopSync()
+    onDestroy(() => softLoopSync.destroy())
+
+    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, video, softLoopVideo, videoData.paused)
 </script>
 
 <div bind:this={container} style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
@@ -189,7 +186,7 @@
             <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
         {/each}
     </video>
-    <!-- {#if softLoopValue > 0 && videoData.loop}
-        <video class="media" style="{mediaStyleString} position: absolute; top: 0; left: 0; opacity: {softLoopOpacity}; pointer-events: none;" bind:this={softLoopVideo} bind:paused={videoData.paused} src={encodeFilePath(path)} muted bind:playbackRate />
-    {/if} -->
+    {#if softLoopValue > 0 && videoData.loop}
+        <video class="media" style="{mediaStyleString} position: absolute;top: 0;left: 0;transition: 0.2s opacity;opacity: {effectiveSoftLoopOpacity};pointer-events: none;" bind:this={softLoopVideo} src={encodeFilePath(path)} muted loop={videoData.loop} bind:playbackRate />
+    {/if}
 </div>

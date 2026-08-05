@@ -30,7 +30,7 @@ import type { LimiterConfig } from "./audio/effects/audioLimiter"
 import type { NoiseGateConfig } from "./audio/effects/audioNoiseGate"
 import type { ReverbConfig } from "./audio/effects/audioReverb"
 import type { StereoShaperConfig } from "./audio/effects/audioStereoShaper"
-import type { VideoAudioData } from "./components/media/video/videoPlayer"
+import type { PlayingVideoState, VideoAudioData } from "./components/media/video/videoPlayer"
 
 // ----- TEMPORARY VARIABLES -----
 
@@ -118,7 +118,7 @@ export const nextActionEventPaused: Writable<boolean> = writable(false)
 export const playingAudio: Writable<{ [key: string]: AudioData }> = writable({})
 export const playingAudioPaths: Writable<string[]> = writable([])
 export const playingVideos: Writable<VideoAudioData[]> = writable([])
-export const playingVideoState: Writable<{ [key: string]: { currentTime: number; duration: number; paused: boolean; loop: boolean; muted: boolean; type?: "background" | "item" } }> = writable({})
+export const playingVideoState: Writable<{ [key: string]: PlayingVideoState }> = writable({})
 export const activePlaylist: Writable<any> = writable(null)
 export const playingMetronome: Writable<boolean> = writable(false)
 export const visualizerData: Writable<any> = writable(null)

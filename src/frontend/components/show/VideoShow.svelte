@@ -17,6 +17,7 @@
     import HoverButton from "../inputs/HoverButton.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MediaPicker from "../inputs/MediaPicker.svelte"
+    import { SoftLoopSync } from "../media/video/softLoop"
     import { shouldSyncVideoTime, videoSync } from "../media/video/videoSync"
     import VideoSlider from "../output/VideoSlider.svelte"
     import { clearSlide } from "../output/clear"
@@ -43,6 +44,9 @@
 
     export let mediaStyle: MediaStyle = {}
 
+    let softLoopVideo: HTMLVideoElement | null = null
+    let softLoopOpacity = 0
+
     let unsubscriber: Unsubscriber | null = null
     $: setTimeout(() => pathChanged(mediaPath, outputId))
     function pathChanged(path: string | undefined, outputId: string) {
@@ -53,7 +57,7 @@
 
         if (!path || type !== "video") return
 
-        videoData = { paused: false, muted: true, duration: 0, loop: false }
+        videoData = { paused: false, muted: true, duration: 0, loop: false, softLoop: 0 }
 
         let firstLoad = true
         let lastSyncedTime: number | null = null
@@ -64,15 +68,18 @@
                     videoTime = data.currentTime || 0
                 }, 50)
             } else {
-                if (video && shouldSyncVideoTime(video, data.currentTime, lastSyncedTime)) {
+                const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
+                if (video && shouldSyncVideoTime(video, data.currentTime, lastSyncedTime, isSoftLoop)) {
                     videoTime = data.currentTime || 0
+                    if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
                 }
             }
-            if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
 
             if (data.duration) videoData.duration = data.duration
             if (playingInOutput) videoData.paused = data.paused
             videoData.loop = playingInOutput ? data.loop : false
+            if (data.softLoop !== undefined) videoData.softLoop = data.softLoop
+            if (data.softLoopOpacity !== undefined) softLoopOpacity = data.softLoopOpacity
             // videoData.muted = data.muted
         })
     }
@@ -81,9 +88,9 @@
     })
 
     let videoTime = 0
-    let videoData = { paused: false, muted: true, duration: 0, loop: false }
+    let videoData = { paused: false, muted: true, duration: 0, loop: false, softLoop: 0 }
     $: if (showId) videoData.paused = false
-    $: if (!videoData) videoData = { paused: false, muted: true, duration: 0, loop: false }
+    $: if (!videoData) videoData = { paused: false, muted: true, duration: 0, loop: false, softLoop: 0 }
 
     let prevId: string | undefined = undefined
     $: if (mediaPath !== prevId) {
@@ -344,9 +351,20 @@
         }
         cleanupVideo(video)
         cleanupVideo(blurVideo)
+        cleanupVideo(softLoopVideo)
     })
 
     // WIP if paused on mount, blur video does not get paused
+
+    // Soft loop
+
+    $: softLoopValue = videoData.softLoop ?? mediaStyle.softLoop ?? 0
+    $: fromTime = mediaStyle.fromTime || 0
+
+    const softLoopSync = new SoftLoopSync()
+    onDestroy(() => softLoopSync.destroy())
+
+    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, video || null, softLoopVideo, videoData.paused)
 </script>
 
 {#key mediaPath || showId}
@@ -368,6 +386,10 @@
                         <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
                     {/each}
                 </video>
+
+                {#if softLoopValue > 0 && videoData.loop}
+                    <video style="{mediaStyleString} position: absolute;top: 0;left: 0;transition: 0.2s opacity;opacity: {effectiveSoftLoopOpacity};pointer-events: none;" bind:this={softLoopVideo} src={encodeFilePath(mediaPath)} muted loop={videoData.loop} />
+                {/if}
             {/if}
         </HoverButton>
     </div>

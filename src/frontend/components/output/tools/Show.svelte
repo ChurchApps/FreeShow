@@ -71,8 +71,9 @@
 
     {#if itemVideos.length}
         {#each itemVideos as [key, data]}
-            {@const path = key.split("_")[0] || ""}
-            {@const outputId = key.split("_")[1] || ""}
+            {@const sepIndex = key.lastIndexOf("_")}
+            {@const path = sepIndex !== -1 ? key.slice(0, sepIndex) : key}
+            {@const outputId = sepIndex !== -1 ? key.slice(sepIndex + 1) : ""}
             <div class="videoValues">
                 <p>{removeExtension(getFileName(path))}</p>
 

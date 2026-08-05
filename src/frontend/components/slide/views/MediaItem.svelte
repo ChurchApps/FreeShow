@@ -2,12 +2,13 @@
     import { onDestroy } from "svelte"
     import type { Unsubscriber } from "svelte/store"
     import type { Item } from "../../../../types/Show"
-    import { audioChannelsData, currentWindow, outputs, styles } from "../../../stores"
+    import { audioChannelsData, currentWindow, media, outputs, styles } from "../../../stores"
     import Image from "../../drawer/media/Image.svelte"
     import { getCropState } from "../../helpers/cropping"
     import { encodeFilePath, getExtension, getMedia, getMediaType, getThumbnailPath, mediaSize } from "../../helpers/media"
     import { defaultLayers } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
+    import { SoftLoopSync } from "../../media/video/softLoop"
     import { shouldSyncVideoTime, videoSync } from "../../media/video/videoSync"
 
     export let item: Item
@@ -111,6 +112,11 @@
     let unsubscriber: Unsubscriber | null = null
     let lastSyncedTime: number | null = null
 
+    let softLoopVideo: HTMLVideoElement | null = null
+    let softLoopOpacity = 0
+    let videoTime = 0
+    let isPaused = false
+
     $: updateVideoSync(bgPath, outputId)
     function updateVideoSync(path: string | undefined, outputId: string) {
         if (unsubscriber) {
@@ -123,11 +129,19 @@
         unsubscriber = videoSync(path, outputId, (data) => {
             if (!videoElem) return
 
-            if (shouldSyncVideoTime(videoElem, data.currentTime, lastSyncedTime)) {
+            const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
+            if (shouldSyncVideoTime(videoElem, data.currentTime, lastSyncedTime, isSoftLoop)) {
                 videoElem.currentTime = data.currentTime
                 if (videoBlurElem) videoBlurElem.currentTime = data.currentTime
+                if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
             }
-            if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
+            if (data.currentTime !== undefined) {
+                videoTime = data.currentTime
+            }
+
+            if (data.softLoop !== undefined) softLoopValue = data.softLoop
+            if (data.softLoopOpacity !== undefined) softLoopOpacity = data.softLoopOpacity
+            isPaused = !!data.paused
 
             if (data.paused && !videoElem.paused) {
                 videoElem.pause()
@@ -142,6 +156,16 @@
     $: playbackRate = item.speed ?? 1
 
     let shouldLoop = item.loop !== false
+
+    // Soft loop
+
+    $: softLoopValue = $media[mediaPath]?.softLoop ?? 0
+    $: fromTime = $media[mediaPath]?.fromTime ?? 0
+
+    const softLoopSync = new SoftLoopSync()
+    onDestroy(() => softLoopSync.destroy())
+
+    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, videoElem, softLoopVideo, isPaused)
 </script>
 
 {#if mediaPath}
@@ -153,6 +177,10 @@
         <video bind:this={videoElem} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString}" bind:playbackRate muted volume={mainVol} autoplay loop={shouldLoop}>
             <track kind="captions" />
         </video>
+
+        {#if softLoopValue > 0 && shouldLoop}
+            <video bind:this={softLoopVideo} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString} position: absolute;top: 0;left: 0;transition: 0.2s opacity;opacity: {effectiveSoftLoopOpacity};pointer-events: none;" bind:playbackRate muted loop={shouldLoop} />
+        {/if}
     {:else}
         <!-- {#key updater} -->
         <!-- WIP image flashes when loading new image (when changing slides with the same image) -->

@@ -37,6 +37,21 @@ export type VideoAudioData = {
     linkedOutputIds: string[]
     type?: "background" | "item"
     replayGainMultiplier?: number
+    softLoop?: number
+    loop?: boolean
+    fromTime?: number
+    toTime?: number
+}
+
+export type PlayingVideoState = {
+    currentTime: number
+    duration: number
+    paused: boolean
+    loop: boolean
+    muted: boolean
+    softLoop?: number
+    softLoopOpacity?: number
+    type?: "background" | "item"
 }
 
 export class VideoPlayer {
@@ -93,9 +108,14 @@ export class VideoPlayer {
         }
 
         const replayGainMultiplier = options.isOnline ? 1 : await this.getReplayGainMultiplier(id)
+        const globalOpts = this.getGlobalOptions(id)
+        const softLoop = globalOpts.softLoop || 0
+        const loop = globalOpts.loop !== undefined ? globalOpts.loop : options.loop
+        const fromTime = globalOpts.fromTime || 0
+        const toTime = globalOpts.toTime || audio.duration
 
         playingVideos.update((a) => {
-            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background", replayGainMultiplier })
+            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background", replayGainMultiplier, softLoop, loop, fromTime, toTime })
             return a
         })
 
@@ -108,7 +128,7 @@ export class VideoPlayer {
 
         if (audio instanceof HTMLAudioElement) this.attachToAnalyser(id, audio, linkedOutputIds || [])
 
-        if (options.startAt && options.startAt > 0 && !audio.muted && audio instanceof HTMLAudioElement) {
+        if (!audio.muted && audio instanceof HTMLAudioElement) {
             const mediaTransition = get(transitionData)?.media
             const durationMs = mediaTransition?.duration ?? 800
             if (durationMs > 0) {
@@ -132,6 +152,17 @@ export class VideoPlayer {
         if (!audio) return
 
         const data = this.getGlobalOptions(path)
+
+        playingVideos.update((a) => {
+            const item = a.find((v) => v.path === path)
+            if (item) {
+                item.softLoop = data.softLoop || 0
+                if (data.loop !== undefined) item.loop = data.loop
+                item.fromTime = data.fromTime || 0
+                item.toTime = data.toTime || audio.duration
+            }
+            return a
+        })
 
         if (data.volume !== undefined) this.updateVolume(path)
         if (data.speed && audio instanceof HTMLAudioElement) this.setTempo(path, parseFloat(data.speed))
@@ -176,6 +207,7 @@ export class VideoPlayer {
             if (!AudioAnalyser.shouldAnalyse()) AudioAnalyserMerger.stop()
         })
         audio.addEventListener("ended", () => {
+            if (this.getGlobalOptions(id)?.loop) return
             // absolute end
             this.checkIfEnding(id, outputIds, true)
         })
@@ -273,6 +305,11 @@ export class VideoPlayer {
     static pause(path: string, outputId?: string) {
         if (!this.audioExists(path, outputId ? [outputId] : undefined)) return
 
+        const playing = this.getPlaying(path, outputId ? [outputId] : undefined)
+        if (playing && (playing as any).crossfadeAudio) {
+            ;(playing as any).crossfadeAudio.pause()
+        }
+
         const audio = this.getAudio(path, outputId)
         if (!audio) return
 
@@ -298,9 +335,6 @@ export class VideoPlayer {
             if (durationMs > 0) {
                 const faded = await this.fadeOut(path, audio, durationMs)
                 if (!faded) return
-
-                const fadeIndex = this.isFadingOut.indexOf(path)
-                if (fadeIndex !== -1) this.isFadingOut.splice(fadeIndex, 1)
             }
         }
 
@@ -319,10 +353,25 @@ export class VideoPlayer {
             return a
         })
 
+        playingVideoState.update((state) => {
+            const targets = outputId ? [outputId] : linkedOutputIds
+            targets.forEach((outId) => {
+                delete state[`${path}_${outId}`]
+            })
+            // If outputId wasn't specified and linkedOutputIds was empty, purge any key starting with path + "_"
+            if (!outputId && linkedOutputIds.length === 0) {
+                Object.keys(state).forEach((key) => {
+                    if (key.startsWith(`${path}_`)) delete state[key]
+                })
+            }
+            return state
+        })
+
         videoEnding()
     }
 
     private static async fadeOut(path: string, audio: HTMLAudioElement, durationMs: number): Promise<boolean> {
+        if (!audio || audio.volume <= 0) return true
         this.isFadingOut.push(path)
 
         // WIP account for transition offset
@@ -330,56 +379,61 @@ export class VideoPlayer {
 
         const startVolume = audio.volume
         const steps = 30
-        const intervalMs = durationMs / steps
+        const intervalMs = Math.max(10, durationMs / steps)
         const volumeStep = startVolume / steps
+        let currentStep = 0
 
         await new Promise<void>((resolve) => {
             const timer = setInterval(() => {
-                if (!this.isFadingOut.includes(path)) {
+                currentStep++
+
+                if (!this.isFadingOut.includes(path) || currentStep >= steps || audio.volume <= volumeStep) {
+                    audio.volume = 0
+                    AudioAnalyser.setSourceVolume(path, 0)
+                    const fadeIndex = this.isFadingOut.indexOf(path)
+                    if (fadeIndex !== -1) this.isFadingOut.splice(fadeIndex, 1)
                     clearInterval(timer)
                     resolve()
                     return
                 }
-                if (audio.volume > volumeStep) {
-                    audio.volume = Math.max(0, audio.volume - volumeStep)
-                    AudioAnalyser.setSourceVolume(path, audio.volume)
-                } else {
-                    audio.volume = 0
-                    AudioAnalyser.setSourceVolume(path, 0)
-                    clearInterval(timer)
-                    resolve()
-                }
+
+                audio.volume = Math.max(0, audio.volume - volumeStep)
+                AudioAnalyser.setSourceVolume(path, audio.volume)
             }, intervalMs)
         })
 
-        return this.isFadingOut.includes(path)
+        return true
     }
 
+    static isFadingIn: string[] = []
     private static async fadeIn(path: string, audio: HTMLAudioElement, durationMs: number): Promise<void> {
-        const targetVolume = audio.volume || 1
+        this.isFadingIn.push(path)
+        const targetVolume = this.getVolume(path) * (this.getPlaying(path)?.replayGainMultiplier ?? 1)
         audio.volume = 0
         AudioAnalyser.setSourceVolume(path, 0)
 
         const steps = 30
-        const intervalMs = durationMs / steps
+        const intervalMs = Math.max(10, durationMs / steps)
         const volumeStep = targetVolume / steps
+        let currentStep = 0
 
         await new Promise<void>((resolve) => {
             const timer = setInterval(() => {
-                if (this.isFadingOut.includes(path) || audio.paused) {
+                currentStep++
+
+                if (this.isFadingOut.includes(path) || !this.isFadingIn.includes(path) || audio.paused || currentStep >= steps || audio.volume >= targetVolume - volumeStep) {
+                    audio.volume = Math.min(1, Math.max(0, targetVolume))
+                    AudioAnalyser.setSourceVolume(path, Math.max(0, targetVolume))
+                    const fadeIndex = this.isFadingIn.indexOf(path)
+                    if (fadeIndex !== -1) this.isFadingIn.splice(fadeIndex, 1)
                     clearInterval(timer)
                     resolve()
                     return
                 }
-                if (audio.volume < targetVolume - volumeStep) {
-                    audio.volume = Math.min(targetVolume, audio.volume + volumeStep)
-                    AudioAnalyser.setSourceVolume(path, audio.volume)
-                } else {
-                    audio.volume = targetVolume
-                    AudioAnalyser.setSourceVolume(path, targetVolume)
-                    clearInterval(timer)
-                    resolve()
-                }
+
+                const nextVol = Math.min(targetVolume, audio.volume + volumeStep)
+                audio.volume = Math.min(1, Math.max(0, nextVol))
+                AudioAnalyser.setSourceVolume(path, Math.max(0, nextVol))
             }, intervalMs)
         })
     }
@@ -470,6 +524,8 @@ export class VideoPlayer {
         AudioAnalyser.setPitch(path, value, outputId)
     }
 
+    // some videos don't like high playback speed (above 5.9)
+    // https://issues.chromium.org/issues/40167938
     static setTempo(path: string, value: number, outputId?: string) {
         const audio = this.getAudio(path, outputId)
         if (!audio) return
@@ -533,12 +589,17 @@ export class VideoPlayer {
 
                 outputIds.forEach((outputId) => {
                     const id = `${video.path}_${outputId}`
+                    const softLoop = video.softLoop || 0
+                    const softLoopOpacity = this.handleSoftLoop(video, audio, softLoop, audio.loop)
+
                     a[id] = {
                         currentTime: audio.currentTime,
                         duration: audio.duration,
                         paused: audio.paused,
                         loop: audio.loop,
                         muted: audio.muted,
+                        softLoop,
+                        softLoopOpacity,
                         type: video.type || "background"
                     }
                 })
@@ -555,6 +616,110 @@ export class VideoPlayer {
                 this.syncClockTimer = null
             }
         }
+    }
+
+    // SOFT LOOP
+
+    private static handleSoftLoop(video: VideoAudioData, audio: HTMLAudioElement | VirtualAudioElement, softLoop: number, loop: boolean): number {
+        if (!softLoop) return 0
+
+        const crossfadeAudio = (video as any).crossfadeAudio as HTMLAudioElement | undefined
+
+        if (softLoop <= 0 || !loop || audio.duration <= softLoop || audio.paused) {
+            if (crossfadeAudio) {
+                try {
+                    crossfadeAudio.pause()
+                    crossfadeAudio.src = ""
+                } catch (e) {}
+                delete (video as any).crossfadeAudio
+            }
+            if (audio instanceof HTMLAudioElement && !this.isFadingOut.includes(video.path) && !this.isFadingIn.includes(video.path)) {
+                const vol = this.getVolume(video.path) * (video.replayGainMultiplier ?? 1)
+                audio.volume = Math.min(1, Math.max(0, vol))
+                AudioAnalyser.setSourceVolume(video.path, Math.max(0, vol))
+            }
+            return 0
+        }
+
+        const fromTime = video.fromTime || 0
+        const toTime = video.toTime || audio.duration
+        const remaining = toTime - audio.currentTime
+
+        if (remaining > softLoop || remaining <= 0) {
+            if (crossfadeAudio) {
+                try {
+                    crossfadeAudio.pause()
+                    crossfadeAudio.src = ""
+                } catch (e) {}
+                delete (video as any).crossfadeAudio
+            }
+            if (audio instanceof HTMLAudioElement && !this.isFadingOut.includes(video.path) && !this.isFadingIn.includes(video.path)) {
+                const vol = this.getVolume(video.path) * (video.replayGainMultiplier ?? 1)
+                audio.volume = Math.min(1, Math.max(0, vol))
+                AudioAnalyser.setSourceVolume(video.path, Math.max(0, vol))
+            }
+            return 0
+        }
+
+        if (audio instanceof HTMLAudioElement) {
+            let nextAudio = crossfadeAudio
+            if (!nextAudio) {
+                nextAudio = new Audio(audio.src)
+                nextAudio.volume = 0
+                nextAudio.loop = loop
+                nextAudio.addEventListener("play", () => AudioAnalyserMerger.init())
+                nextAudio.addEventListener("pause", () => {
+                    if (!AudioAnalyser.shouldAnalyse()) AudioAnalyserMerger.stop()
+                })
+                ;(video as any).crossfadeAudio = nextAudio
+            }
+
+            if (nextAudio.paused && !(nextAudio as any).isPlayPending) {
+                ;(nextAudio as any).isPlayPending = true
+                nextAudio
+                    .play()
+                    .catch(() => {})
+                    .finally(() => {
+                        delete (nextAudio as any).isPlayPending
+                    })
+            }
+
+            const fadeProgress = (softLoop - remaining) / softLoop
+            const baseVol = this.getVolume(video.path) * (video.replayGainMultiplier ?? 1)
+
+            // Scale GainNode via AudioAnalyser to support volumes above 1.0 (e.g. 1.25 / 125%)
+            const currentVol = Math.max(0, baseVol * (1 - fadeProgress))
+            audio.volume = Math.min(1, Math.max(0, currentVol))
+            AudioAnalyser.setSourceVolume(video.path, currentVol)
+
+            const nextVol = Math.max(0, baseVol * fadeProgress)
+            nextAudio.volume = Math.min(1, Math.max(0, nextVol))
+
+            // Seamless swap when near loop boundary
+            if (remaining <= 0.1 && !(video as any).isSwapping) {
+                ;(video as any).isSwapping = true
+
+                const oldAudio = audio
+                video.audio = nextAudio
+                nextAudio.volume = Math.min(1, Math.max(0, baseVol))
+                if (nextAudio.paused) nextAudio.play().catch(() => {})
+                ;(video as any).crossfadeAudio = oldAudio
+                oldAudio.pause()
+                oldAudio.currentTime = fromTime
+
+                const linkedOutputIds = video.linkedOutputIds || []
+                linkedOutputIds.forEach((outId) => {
+                    AudioAnalyser.detach(video.path, outId)
+                })
+                this.attachToAnalyser(video.path, nextAudio, linkedOutputIds)
+                AudioAnalyser.setSourceVolume(video.path, baseVol)
+
+                setTimeout(() => delete (video as any).isSwapping, 300)
+                return 0
+            }
+        }
+
+        return Math.max(0, Math.min(1, (softLoop - remaining) / softLoop))
     }
 }
 
