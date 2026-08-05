@@ -22,7 +22,7 @@ import type { EditInput } from "../edit/values/boxes"
 import { VideoPlayer } from "../media/video/videoPlayer"
 import { clearBackground, clearSlide } from "../output/clear"
 import { areObjectsEqual, clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
-import { getFileName, getMediaLayerType, removeExtension } from "./media"
+import { getExtension, getFileName, getMediaLayerType, getMediaType, removeExtension } from "./media"
 import { getLayoutRef } from "./show"
 import { getFewestOutputLines, getItemWithMostLines } from "./showActions"
 import { _show } from "./shows"
@@ -113,23 +113,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
     const inputData = clone(data)
 
-    // setup video manager (and audio analyser)
-    if (type === "background") {
-        if (data) {
-            const newPath = data.path || data.id || ""
-
-            // stop any playing backgrounds (if different than new path)
-            allOutputIds.forEach((outputId) => {
-                const currentBg = get(outputs)[outputId]?.out?.background
-                const bgPath = currentBg?.path || currentBg?.id || ""
-                if (bgPath && bgPath !== newPath) VideoPlayer.stop(bgPath, outputId)
-            })
-
-            VideoPlayer.start(newPath, { loop: data.loop, muted: data.muted, startAt: data.startAt || 0, isOnline: data.type === "player" }, allOutputIds)
-        } else {
-            VideoPlayer.stopByOutputIds(allOutputIds)
-        }
-    }
+    checkAudio(type, data, allOutputIds, outs)
 
     outputs.update((a) => {
         if (type === "slide" && data?.id) {
@@ -211,6 +195,50 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
         return a
     })
+}
+
+// setup video manager (and audio analyser)
+function checkAudio(type: string, data: any, allOutputIds: string[], outs: string[]) {
+    if (type === "background") {
+        if (data) {
+            const newPath = data.path || data.id || ""
+
+            // stop any playing backgrounds (if different than new path)
+            allOutputIds.forEach((outputId) => {
+                const currentBg = get(outputs)[outputId]?.out?.background
+                const bgPath = currentBg?.path || currentBg?.id || ""
+                if (bgPath && bgPath !== newPath) VideoPlayer.stop(bgPath, outputId)
+            })
+
+            VideoPlayer.start(newPath, { loop: data.loop, muted: data.muted, startAt: data.startAt || 0, isOnline: data.type === "player" }, allOutputIds)
+        } else {
+            VideoPlayer.stopByOutputIds(allOutputIds)
+        }
+    } else if (type === "slide") {
+        const oldSlideOut = get(outputs)[outs?.[0]]?.out?.slide
+        const oldItems = getSlideVideoItems(oldSlideOut)
+        const newItems = getSlideVideoItems(data)
+
+        const newPaths = newItems.map((item: any) => item.src)
+
+        // stop old video items not present on new slide
+        oldItems.forEach((item: any) => {
+            if (!newPaths.includes(item.src)) {
+                allOutputIds.forEach((outId) => VideoPlayer.stop(item.src, outId))
+            }
+        })
+
+        // start new video items
+        newItems.forEach((item: any) => {
+            VideoPlayer.start(item.src, { loop: item.loop !== false, muted: item.muted, startAt: item.startAt || 0, type: "item" }, allOutputIds)
+        })
+    }
+}
+function getSlideVideoItems(slideData: any) {
+    if (!slideData || !slideData.id) return []
+    const layoutRef = slideData.layout ? _show(slideData.id).layouts([slideData.layout]).ref()[0] || [] : []
+    const slide = _show(slideData.id).get("slides")?.[layoutRef[slideData.index]?.id] || {}
+    return (slide.items || []).filter((item: any) => item.type === "media" && item.src && getMediaType(getExtension(item.src)) === "video")
 }
 
 export function startFolderTimer(folderPath: string, file: { type: string; path: string }) {

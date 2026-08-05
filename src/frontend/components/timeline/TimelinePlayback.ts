@@ -446,6 +446,7 @@ export class TimelinePlayback {
 
             const key = `${path}_${outputId}`
             const videoData = get(playingVideoState)[key]
+            if (!videoData || (videoData.type && videoData.type !== "background")) return
 
             // play the video if paused and timeline is playing
             if (videoData.paused && this.isPlaying) VideoPlayer.play(path, outputId)

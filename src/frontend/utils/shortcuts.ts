@@ -487,6 +487,7 @@ export async function togglePlayingMedia(e: Event | null = null, back = false, a
             const outputId = currentOutput?.id || ""
             const key = `${currentlyPlaying}_${outputId}`
             const videoData = get(playingVideoState)[key] || {}
+            if (videoData.type && videoData.type !== "background") return
 
             VideoPlayer.start(currentlyPlaying, { paused: !videoData.paused }, [outputId])
             return

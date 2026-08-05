@@ -18,6 +18,7 @@ type VideoOptions = {
     loop?: boolean
     muted?: boolean
     startAt?: number
+    type?: "background" | "item"
 }
 // online videos
 type VirtualAudioElement = {
@@ -32,6 +33,7 @@ export type VideoAudioData = {
     path: string
     audio: HTMLAudioElement | VirtualAudioElement
     linkedOutputIds: string[]
+    type?: "background" | "item"
 }
 
 export class VideoPlayer {
@@ -88,7 +90,7 @@ export class VideoPlayer {
         }
 
         playingVideos.update((a) => {
-            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [] })
+            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background" })
             return a
         })
 
@@ -481,7 +483,8 @@ export class VideoPlayer {
                         duration: audio.duration,
                         paused: audio.paused,
                         loop: audio.loop,
-                        muted: audio.muted
+                        muted: audio.muted,
+                        type: video.type || "background"
                     }
                 })
 
