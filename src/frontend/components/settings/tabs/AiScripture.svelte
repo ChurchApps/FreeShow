@@ -447,6 +447,7 @@
     {/if}
 
     <MaterialToggleSwitch label="settings.ai_auto_project_quoted" checked={settings.autoProjectQuoted === true} defaultValue={false} on:change={(e) => update("autoProjectQuoted", e.detail)} />
+    <p class="faded hint"><T id="settings.ai_auto_project_quoted_hint" /></p>
 
     <MaterialToggleSwitch label="settings.ai_voice_commands" checked={settings.voiceCommands === true} defaultValue={false} on:change={(e) => update("voiceCommands", e.detail)} />
     {#if settings.voiceCommands}
@@ -481,6 +482,9 @@
         opacity: 0.6;
         font-size: 0.85em;
         white-space: initial;
+    }
+    .hint {
+        padding: 5px 10px 10px;
     }
 
     .installArea {

@@ -1505,11 +1505,11 @@
         "ai_display_drawer": "Active drawer translation",
         "ai_display_matched": "Matched translation",
         "ai_behavior": "Behavior",
-        "ai_mode": "Projection mode",
-        "ai_mode_confirm": "Confirm before projecting",
-        "ai_mode_auto": "Project automatically",
-        "ai_mode_auto_warning": "Detected references will be projected to the output without confirmation!",
-        "ai_auto_project_quoted": "Auto project quoted verses",
+        "ai_mode": "When a scripture is detected",
+        "ai_mode_confirm": "Suggest it first - I click to show it",
+        "ai_mode_auto": "Show it on screen immediately",
+        "ai_mode_auto_warning": "Detected scriptures will appear on the live output instantly, without asking!",
+        "ai_auto_project_quoted": "Also show quoted verses automatically",
         "ai_auto_cooldown": "Auto projection cooldown (seconds)",
         "ai_ref_cooldown": "Same reference cooldown (seconds)",
         "ai_max_verses": "Max verses",
@@ -1522,7 +1522,8 @@
         "ai_error_download_in_progress": "A download is already in progress",
         "ai_voice_commands": "Voice commands",
         "ai_voice_commands_hint": "While a scripture is live, spoken commands control it: \"go to the next verse\", \"give me verse five\", \"show chapter four\", \"give me NIV\", \"give me another translation\". Commands must be phrased as instructions.",
-        "ai_scripture_enable": "Enable AI Scripture"
+        "ai_scripture_enable": "Enable AI Scripture",
+        "ai_auto_project_quoted_hint": "Spoken references like \"John 3:16\" are always clear, so they can be shown right away. But when only the words of a verse are quoted (\"For God so loved the world...\"), the AI has to work out which verse it is - and it can be wrong. Leave this off to review those as suggestions first."
     },
     "output": {
         "state_inactive": "Inactive",
