@@ -448,10 +448,9 @@ export class AudioAnalyser {
         const isIcecastConnected = connections.some((c) => c.to === "icecast")
         if (isIcecastConnected) activeTargets.push("icecast")
 
-        const activeStreamingOutputs = keysToID(get(outputs)).filter((out) => out && out.enabled && (out.webrtc || out.rtmp || out.ndi || out.blackmagic))
+        const activeStreamingOutputs = keysToID(get(outputs)).filter((out) => out && out.enabled && (out.ndi || out.blackmagic || out.webrtcData?.streaming || out.rtmpData?.streaming) && this.isOutputConnected(out.id, connections))
         activeStreamingOutputs.forEach((out) => {
-            const hasConn = connections.some((c) => c.to === `network_sub_${out.id}`)
-            if (hasConn && !activeTargets.includes(out.id)) activeTargets.push(out.id)
+            if (!activeTargets.includes(out.id)) activeTargets.push(out.id)
         })
 
         // OutputShow - this likely does not work
@@ -474,13 +473,24 @@ export class AudioAnalyser {
 
         // Initialize recorders for active targets
         activeTargets.forEach((targetId) => {
-            if (this.recorders.has(targetId)) return
+            const existingRec = this.recorders.get(targetId)
+            if (existingRec) {
+                if (existingRec.state === "inactive") this.recorders.delete(targetId)
+                else return
+            }
 
             const destNode = this.getOrCreateDestinationNode(targetId)
             try {
+                send(AUDIO, ["RESET_DECODER"], { id: targetId })
                 const rec = new MediaRecorder(destNode.stream, {
                     mimeType: 'audio/webm; codecs="opus"'
                 })
+                rec.onerror = () => {
+                    this.recorders.delete(targetId)
+                }
+                rec.onstop = () => {
+                    this.recorders.delete(targetId)
+                }
                 rec.addEventListener("dataavailable", (ev) => {
                     if (!ev.data || ev.data.size === 0) return
                     ev.data.arrayBuffer().then((arrayBuffer) => {
@@ -532,14 +542,18 @@ export class AudioAnalyser {
         if (this.sendOutputShowAudio()) return true
 
         const connections = get(audioRouting)?.connections || []
-        const isIcecastConnected = connections.some((c) => c.to === "icecast")
-        if (isIcecastConnected) return true
+        if (this.isOutputConnected("icecast", connections)) return true
 
-        const outputList = Object.values(get(outputs) || {}).filter(Boolean)
-        const hasConnectedOutput = outputList.some((a) => a.enabled && (a.webrtc || a.rtmp || a.ndi || a.blackmagic) && connections.some((c) => c.to === `network_sub_${a.id}`))
+        const outputList = keysToID(get(outputs) || {}).filter(Boolean)
+        const hasConnectedOutput = outputList.some((a) => a && a.enabled && (a.ndi || a.blackmagic || a.webrtcData?.streaming || a.rtmpData?.streaming) && this.isOutputConnected(a.id, connections))
         if (hasConnectedOutput) return true
 
         return false
+    }
+
+    private static isOutputConnected(id: string | undefined, connections: { from: string; to: string }[]): boolean {
+        if (!id) return false
+        return connections.some((c) => c.to.includes(id))
     }
 
     // custom audio output (supported in Chrome 110+)

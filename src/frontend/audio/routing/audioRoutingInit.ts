@@ -97,7 +97,7 @@ export function createOutputAudioChannel(outputId: string) {
         connections.push({ from: `output_win_sub_${outputId}`, to: channelId })
         connections.push({ from: channelId, to: `network_sub_${outputId}` })
 
-        return { ...a, channels, connections }
+        return { ...a, channels, connections: deduplicateConnections(connections) }
     })
 }
 
