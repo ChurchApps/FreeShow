@@ -1,8 +1,7 @@
 <script lang="ts">
     import type { DetectedReference } from "../../../../types/AiScripture"
-    import type { Popups } from "../../../../types/Main"
     import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../../../audio/aiScripture"
-    import { activePopup, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, outLocked, popupData, scriptures } from "../../../stores"
+    import { activePage, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, outLocked, scriptures, settingsTab } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -27,8 +26,8 @@
     }
 
     function openSetup() {
-        popupData.set({})
-        activePopup.set("ai_scripture" as Popups)
+        settingsTab.set("ai_scripture")
+        activePage.set("settings")
     }
 
     // PROJECTION

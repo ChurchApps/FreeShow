@@ -391,7 +391,6 @@ export type Popups =
     | "manage_colors"
     | "manage_metadata"
     | "manage_dynamic_values"
-    | "ai_scripture"
     | "player"
     | "template_style_overrides"
     | "regex_manager"
