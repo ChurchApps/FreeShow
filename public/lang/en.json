@@ -1512,7 +1512,10 @@
         "ai_privacy": "Privacy",
         "ai_privacy_local": "Speech is transcribed locally on your computer - audio never leaves the device.",
         "ai_privacy_llm": "While listening with an API key set, transcript text is sent to your chosen AI provider for reference detection - nothing else.",
-        "ai_privacy_keys": "API keys are stored locally on this computer and are never synced."
+        "ai_privacy_keys": "API keys are stored locally on this computer and are never synced.",
+        "ai_error_cancelled": "Download cancelled",
+        "ai_error_unsupported_platform": "Automatic download is not available on this platform",
+        "ai_error_download_in_progress": "A download is already in progress"
     },
     "output": {
         "state_inactive": "Inactive",
@@ -1623,7 +1626,11 @@
         "ai_confidence_low": "Low",
         "ai_project": "Project",
         "ai_show_in_drawer": "Show in drawer",
-        "ai_dismiss": "Dismiss"
+        "ai_dismiss": "Dismiss",
+        "ai_error_no_scripture": "No Bible selected in the drawer",
+        "ai_error_start_failed": "Could not start listening",
+        "ai_error_microphone": "Microphone access failed - check system permissions",
+        "ai_error_model_missing": "The selected Whisper model is not downloaded"
     },
     "filter": {
         "blur": "Blur",

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
+    import { stopAiScriptureListening } from "../../../audio/aiScripture"
     import { requestMain, sendMain } from "../../../IPC/main"
     import { activePopup, alertMessage, special } from "../../../stores"
     import T from "../../helpers/T.svelte"
@@ -47,8 +48,13 @@
 
     // AI scripture
     function toggleAiScripture(e: any) {
+        const enabled = !!e.detail
+
+        // stop any active listening session before the panel unmounts
+        if (!enabled) stopAiScriptureListening()
+
         special.update((a) => {
-            a.aiScripture = { ...(a.aiScripture || {}), enabled: !!e.detail }
+            a.aiScripture = { ...(a.aiScripture || {}), enabled }
             return a
         })
     }
