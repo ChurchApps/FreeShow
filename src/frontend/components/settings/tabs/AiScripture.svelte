@@ -394,7 +394,7 @@
     {#if interpretationMode}
         <p class="faded hint"><T id="settings.ai_interpretation_hint" /></p>
 
-        <p class="listLabel"><T id="settings.ai_spoken_languages" /></p>
+        <p class="listLabel"><T id="settings.ai_spoken_languages" /> ({spokenLanguages.length})</p>
         <div class="languageList">
             {#each WHISPER_LANGUAGES as spoken}
                 <MaterialCheckbox label={spoken.name} checked={spokenLanguages.includes(spoken.code)} on:change={(e) => toggleSpokenLanguage(spoken.code, e.detail)} />
