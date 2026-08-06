@@ -81,9 +81,9 @@ describe("detectExplicitReferences", () => {
         expect(detectExplicitReferences("johannes 3:16", BOOKS)).toEqual([{ bookNumber: 43, book: "Johannes", chapter: 3, verseStart: 16, verseEnd: 16, confidence: "high" }])
     })
 
-    it("marks cued chapter-only references as low confidence with verse 1", () => {
+    it("marks cued chapter-only references as high confidence with verse 1 (deliberate spoken intent)", () => {
         const refs = detectExplicitReferences("open your bibles to john chapter three", BOOKS)
-        expect(refs).toEqual([{ bookNumber: 43, book: "John", chapter: 3, verseStart: 1, verseEnd: 1, confidence: "low" }])
+        expect(refs).toEqual([{ bookNumber: 43, book: "John", chapter: 3, verseStart: 1, verseEnd: 1, confidence: "high" }])
     })
 
     it("detects nothing in plain speech", () => {

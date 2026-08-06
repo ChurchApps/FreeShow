@@ -172,9 +172,10 @@ function matchReferences(text: string, index: BookIndex): ReferenceMatch[] {
         // of these words/shapes, so checking the normalized snippet reflects the original text.
         const hasCue = /\bchapter\b|\bverses?\b/.test(quote) || /\d:\d/.test(quote) || /^[1-3]\b/.test(bookToken)
 
-        // a bare "bookname 15" ("he acts 15 years old") is only "medium", and a cued chapter with no verse
-        // ("john chapter 3") is "low" since verse 1 is just a guess
-        const confidence: "high" | "medium" | "low" = hasVerse ? (hasCue ? "high" : "medium") : hasCue ? "low" : "medium"
+        // a bare "bookname 15" ("he acts 15 years old") is only "medium". a CUED chapter with no verse
+        // ("turn to matthew chapter 5") is deliberate spoken intent - treat it as "high" so auto mode
+        // projects the chapter from verse 1, like an operator opening the chapter would
+        const confidence: "high" | "medium" | "low" = hasVerse ? (hasCue ? "high" : "medium") : hasCue ? "high" : "medium"
 
         results.push({ bookNumber: book.number, book: book.name, chapter, verseStart, verseEnd, confidence, quote })
     }
