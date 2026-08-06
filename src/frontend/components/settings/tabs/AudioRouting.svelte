@@ -39,9 +39,9 @@
         nodes: RoutingColumnNode[]
     }
 
-    // Fixed Inputs & Outputs (no longer persisted in settings store)
     const fixedInputs = [
         { id: "drawer_audio", name: translateText("tabs.audio"), type: "drawer_audio" },
+        // WIP music vs effect type / audio streams
         { id: "playlists_default", name: translateText("audio.playlists"), type: "playlist" },
         { id: "mic_default", name: translateText("live.microphones"), type: "mic" },
         { id: "metronome", name: translateText("audio.metronome"), type: "metronome" },

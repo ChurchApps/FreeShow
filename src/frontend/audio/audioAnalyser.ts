@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { AUDIO } from "../../types/Channels"
 import { keysToID } from "../components/helpers/array"
+import { getFirstOutput } from "../components/helpers/output"
 import { audioRouting, disabledServers, media, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
@@ -236,8 +237,11 @@ export class AudioAnalyser {
     private static getActiveVideos() {
         return !!Object.values(get(playingVideos)).filter((a) => !a.audio?.paused && !a.audio?.muted).length
     }
+    private static getOutputShowId(): string | null {
+        return get(serverData)?.output_stream?.outputId || getFirstOutput()?.id || null
+    }
     private static sendOutputShowAudio() {
-        return get(disabledServers).output_stream === false && get(serverData)?.output_stream?.sendAudio
+        return get(disabledServers).output_stream === false && !!get(serverData)?.output_stream?.sendAudio && !!this.getOutputShowId()
     }
 
     // https://stackoverflow.com/questions/48930799/connecting-nodes-with-each-other-with-the-web-audio-api
@@ -442,6 +446,14 @@ export class AudioAnalyser {
             if (hasConn && !activeTargets.includes(out.id)) activeTargets.push(out.id)
         })
 
+        // OutputShow - this likely does not work
+        if (this.sendOutputShowAudio()) {
+            const outputId = this.getOutputShowId()
+            if (outputId && !activeTargets.includes(outputId)) {
+                activeTargets.push(outputId)
+            }
+        }
+
         // Clean up recorders for targets that are no longer active
         this.recorders.forEach((rec, targetId) => {
             if (!activeTargets.includes(targetId)) {
@@ -509,6 +521,8 @@ export class AudioAnalyser {
     }
 
     private static shouldBeActive() {
+        if (this.sendOutputShowAudio()) return true
+
         const connections = get(audioRouting)?.connections || []
         const isIcecastConnected = connections.some((c) => c.to === "icecast")
         if (isIcecastConnected) return true
