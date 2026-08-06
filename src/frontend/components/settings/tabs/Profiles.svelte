@@ -149,7 +149,7 @@
     $: groupsAccess = currentProfile.access.groups || {}
 
     // "display_settings" (can change position still), "connection" (can use still)
-    const tabs: SettingsTabs[] = ["general", "display_settings", "styles", "connection", "files", "profiles", "theme", "other"]
+    const tabs: SettingsTabs[] = ["general", "display_settings", "styles", "connection", "ai_scripture", "files", "profiles", "theme", "other"]
     $: settingsList = tabs.map((id) => ({ id, name: `settings.${id}`, icon: id }))
     $: settingsAccess = currentProfile.access.settings || {}
 

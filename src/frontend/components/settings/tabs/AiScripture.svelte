@@ -20,8 +20,9 @@
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import Loader from "../Loader.svelte"
-    import Tip from "../Tip.svelte"
+    import Loader from "../../main/Loader.svelte"
+    import Tip from "../../main/Tip.svelte"
+    import { stopAiScriptureListening } from "../../../audio/aiScripture"
 
     $: settings = ($special.aiScripture || {}) as { [key: string]: any }
 
@@ -132,8 +133,14 @@
         sendMain(Main.AI_SCRIPTURE_WHISPER_CANCEL)
     }
 
-    $: binaryDownload = binaryDownloading ? getDownload("whisper", $whisperDownloads) : null
-    $: modelDownload = modelDownloading ? getDownload(whisperModelId, $whisperDownloads) : null
+    // driven by the progress store, not the local click flags, so reopening the popup mid-download still shows live progress
+    $: binaryDownload = getDownload("whisper", $whisperDownloads)
+    $: modelDownload = getDownload(whisperModelId, $whisperDownloads)
+    $: binaryActive = binaryDownloading || binaryDownload?.status === "downloading"
+    $: modelActive = modelDownloading || modelDownload?.status === "downloading"
+
+    // a download that finished while the popup was closed still refreshes the "model downloaded" state
+    $: if (modelDownload?.status === "complete" && status && !modelDownloaded) getStatus()
 
     // CUSTOM BINARY PATH
 
@@ -247,207 +254,221 @@
         { value: "confirm", label: translateText("settings.ai_mode_confirm") },
         { value: "auto", label: translateText("settings.ai_mode_auto") }
     ]
+    // stop any active listening session when the feature is turned off (the drawer panel unmounts with it)
+    function toggleEnabled(e: any) {
+        const enabled = !!e.detail
+        if (!enabled) stopAiScriptureListening()
+        update("enabled", enabled)
+    }
 </script>
 
-<Title label="settings.ai_transcription" icon="microphone" />
+<MaterialToggleSwitch label="settings.ai_scripture_enable" checked={settings.enabled || false} defaultValue={false} on:change={toggleEnabled} />
 
-{#if !status}
-    <div class="loading"><Loader /></div>
-{:else if binaryInstalled}
-    <div class="statusLine ok">
-        <Icon id="check" size={0.9} white />
-        <T id="settings.ai_whisper_installed" />
-        {#if settings.whisperCustomPath || status.whisper.binaryPath}
-            <span class="path">{settings.whisperCustomPath || status.whisper.binaryPath}</span>
-        {/if}
-    </div>
+{#if !settings.enabled}
+    <p class="faded" style="padding: 10px 5px;"><T id="settings.ai_scripture_privacy" /></p>
 {:else}
-    <div class="installArea">
-        <p class="faded"><T id="settings.ai_whisper_not_installed" /></p>
+    <Title label="settings.ai_transcription" icon="microphone" />
 
-        {#if platform === "win32"}
-            {#if binaryDownloading}
+    {#if !status}
+        <div class="loading"><Loader /></div>
+    {:else if binaryInstalled}
+        <div class="statusLine ok">
+            <Icon id="check" size={0.9} white />
+            <T id="settings.ai_whisper_installed" />
+            {#if settings.whisperCustomPath || status.whisper.binaryPath}
+                <span class="path">{settings.whisperCustomPath || status.whisper.binaryPath}</span>
+            {/if}
+        </div>
+    {:else}
+        <div class="installArea">
+            <p class="faded"><T id="settings.ai_whisper_not_installed" /></p>
+
+            {#if platform === "win32"}
+                {#if binaryActive}
+                    <div class="progressArea">
+                        <div class="progressBar"><div class="progressFill" style="width: {getPercent(binaryDownload)}%;" /></div>
+                        <span class="percentLabel">{getPercent(binaryDownload)}%</span>
+                        <MaterialButton icon="close" title="popup.cancel" on:click={cancelDownload} />
+                    </div>
+                {:else}
+                    <MaterialButton variant="outlined" icon="download" on:click={downloadBinary}>
+                        <T id="settings.ai_download_whisper" />
+                    </MaterialButton>
+                {/if}
+
+                {#if binaryError}
+                    <Tip type="warning" value={aiScriptureErrorText(binaryError)} />
+                {/if}
+            {:else if platform === "darwin"}
+                <p class="faded"><T id="settings.ai_whisper_mac_guide" /></p>
+                <div class="commandRow">
+                    <code>{BREW_COMMAND}</code>
+                    <MaterialButton icon={commandCopied ? "check" : "copy"} title={commandCopied ? "actions.copied" : "actions.copy"} on:click={copyBrewCommand} />
+                </div>
+                <MaterialButton variant="outlined" icon="refresh" on:click={getStatus}>
+                    <T id="settings.ai_check_again" />
+                </MaterialButton>
+            {:else}
+                <p class="faded"><T id="settings.ai_whisper_linux_guide" /></p>
+                <MaterialButton variant="outlined" icon="refresh" on:click={getStatus}>
+                    <T id="settings.ai_check_again" />
+                </MaterialButton>
+            {/if}
+        </div>
+    {/if}
+
+    {#if status && (!binaryInstalled || settings.whisperCustomPath || platform === "linux")}
+        <MaterialFilePicker label="settings.ai_whisper_custom_path" value={settings.whisperCustomPath || ""} filter={{ name: "whisper-cli", extensions: ["*"] }} icon="folder" allowEmpty on:change={(e) => verifyCustomPath(e.detail || "")} />
+        {#if customPathError}
+            <Tip type="warning" value="settings.ai_whisper_path_invalid" />
+        {/if}
+    {/if}
+
+    <!-- use an already installed ggml model file (e.g. large-v3) instead of downloading one -->
+    <MaterialFilePicker label="settings.ai_whisper_custom_model" value={settings.whisperCustomModelPath || ""} filter={{ name: "ggml model", extensions: ["bin"] }} icon="folder" allowEmpty on:change={(e) => update("whisperCustomModelPath", e.detail || "")} />
+
+    <InputRow>
+        <MaterialDropdown label="settings.ai_whisper_model" options={whisperModelOptions} value={whisperModelBase} defaultValue="base" on:change={(e) => setWhisperModel(e.detail)} />
+
+        {#if status}
+            {#if modelDownloaded}
+                <div class="statusLine ok inline">
+                    <Icon id="check" size={0.9} white />
+                    <T id="settings.ai_model_downloaded" />
+                </div>
+            {:else if modelActive}
                 <div class="progressArea">
-                    <div class="progressBar"><div class="progressFill" style="width: {getPercent(binaryDownload)}%;" /></div>
+                    <div class="progressBar"><div class="progressFill" style="width: {getPercent(modelDownload)}%;" /></div>
+                    <span class="percentLabel">{getPercent(modelDownload)}%</span>
                     <MaterialButton icon="close" title="popup.cancel" on:click={cancelDownload} />
                 </div>
             {:else}
-                <MaterialButton variant="outlined" icon="download" on:click={downloadBinary}>
-                    <T id="settings.ai_download_whisper" />
+                <MaterialButton icon="download" on:click={downloadModel}>
+                    <T id="settings.ai_download_model" />
                 </MaterialButton>
             {/if}
-
-            {#if binaryError}
-                <Tip type="warning" value={aiScriptureErrorText(binaryError)} />
-            {/if}
-        {:else if platform === "darwin"}
-            <p class="faded"><T id="settings.ai_whisper_mac_guide" /></p>
-            <div class="commandRow">
-                <code>{BREW_COMMAND}</code>
-                <MaterialButton icon={commandCopied ? "check" : "copy"} title={commandCopied ? "actions.copied" : "actions.copy"} on:click={copyBrewCommand} />
-            </div>
-            <MaterialButton variant="outlined" icon="refresh" on:click={getStatus}>
-                <T id="settings.ai_check_again" />
-            </MaterialButton>
-        {:else}
-            <p class="faded"><T id="settings.ai_whisper_linux_guide" /></p>
-            <MaterialButton variant="outlined" icon="refresh" on:click={getStatus}>
-                <T id="settings.ai_check_again" />
-            </MaterialButton>
         {/if}
-    </div>
-{/if}
-
-{#if status && (!binaryInstalled || settings.whisperCustomPath || platform === "linux")}
-    <MaterialFilePicker label="settings.ai_whisper_custom_path" value={settings.whisperCustomPath || ""} filter={{ name: "whisper-cli", extensions: ["*"] }} icon="folder" allowEmpty on:change={(e) => verifyCustomPath(e.detail || "")} />
-    {#if customPathError}
-        <Tip type="warning" value="settings.ai_whisper_path_invalid" />
+    </InputRow>
+    {#if modelError || (!modelActive && modelDownload?.status === "error")}
+        <Tip type="warning" value={aiScriptureErrorText(modelError || modelDownload?.message || "start_failed")} />
     {/if}
-{/if}
 
-<!-- use an already installed ggml model file (e.g. large-v3) instead of downloading one -->
-<MaterialFilePicker label="settings.ai_whisper_custom_model" value={settings.whisperCustomModelPath || ""} filter={{ name: "ggml model", extensions: ["bin"] }} icon="folder" allowEmpty on:change={(e) => update("whisperCustomModelPath", e.detail || "")} />
-
-<InputRow>
-    <MaterialDropdown label="settings.ai_whisper_model" options={whisperModelOptions} value={whisperModelBase} defaultValue="base" on:change={(e) => setWhisperModel(e.detail)} />
-
-    {#if status}
-        {#if modelDownloaded}
-            <div class="statusLine ok inline">
-                <Icon id="check" size={0.9} white />
-                <T id="settings.ai_model_downloaded" />
-            </div>
-        {:else if modelDownloading}
-            <div class="progressArea">
-                <div class="progressBar"><div class="progressFill" style="width: {getPercent(modelDownload)}%;" /></div>
-                <MaterialButton icon="close" title="popup.cancel" on:click={cancelDownload} />
-            </div>
-        {:else}
-            <MaterialButton icon="download" on:click={downloadModel}>
-                <T id="settings.ai_download_model" />
-            </MaterialButton>
-        {/if}
-    {/if}
-</InputRow>
-{#if modelError}
-    <Tip type="warning" value={aiScriptureErrorText(modelError)} />
-{/if}
-
-<InputRow>
-    <MaterialDropdown label="live.microphones" options={microphones} value={settings.micDeviceId || ""} on:change={(e) => update("micDeviceId", e.detail)} allowEmpty />
-    <MaterialTextInput label="settings.ai_spoken_language" value={spokenLanguage} defaultValue={($language || "en").slice(0, 2).toLowerCase()} on:change={(e) => setSpokenLanguage(e.detail)} />
-</InputRow>
-
-<Title label="settings.ai_detection" icon="search" />
-
-<MaterialDropdown label="settings.ai_provider" options={providerOptions} value={provider} defaultValue="anthropic" on:change={(e) => setProvider(e.detail)} />
-
-<InputRow>
-    <MaterialTextInput label="settings.ai_api_key" value={keyInput} type="password" pasteBtn on:input={(e) => (keyInput = e.detail)} />
-    <MaterialButton icon="save" disabled={!keyInput} on:click={saveKey}>
-        <T id="actions.save" />
-    </MaterialButton>
-    <MaterialButton icon="connection" disabled={(!keySaved && !keyInput) || testing} on:click={testConnection}>
-        <T id="settings.ai_test_connection" />
-    </MaterialButton>
-    {#if keySaved}
-        <MaterialButton icon="delete" title="settings.ai_remove_key" on:click={removeKey} />
-    {/if}
-</InputRow>
-
-{#if keySaved && !testResult}
-    <div class="statusLine ok">
-        <Icon id="check" size={0.9} white />
-        <T id="settings.ai_key_saved" />
-    </div>
-{/if}
-
-{#if testing}
-    <div class="statusLine"><Loader /></div>
-{:else if testResult}
-    {#if testResult.ok}
-        <div class="statusLine ok">
-            <Icon id="check" size={0.9} white />
-            <T id="settings.ai_test_success" />
-        </div>
-    {:else}
-        <div class="statusLine error">
-            <Icon id="warning" size={0.9} white />
-            <T id="settings.ai_error_{testResult.error?.code || 'network'}" />
-            {#if testResult.error?.message}
-                <span class="path">{testResult.error.message}</span>
-            {/if}
-        </div>
-    {/if}
-{/if}
-
-<MaterialDropdown label="settings.ai_model" options={modelOptions} value={selectedModel} defaultValue={providerData.defaultModel} disabled={showCustomModel} on:change={(e) => setModel(e.detail)} />
-
-<MaterialToggleSwitch label="settings.ai_custom_model" checked={showCustomModel} defaultValue={false} on:change={(e) => toggleCustomModel(e.detail)} />
-{#if showCustomModel}
-    <MaterialTextInput label="settings.ai_custom_model_id" value={settings.customModel || ""} on:change={(e) => update("customModel", e.detail)} />
-{/if}
-
-<Title label="settings.ai_search_bibles" icon="scripture" />
-
-{#if bibleList.length}
     <InputRow>
-        <MaterialButton
-            style="flex: 1;"
-            icon="check"
-            on:click={() =>
-                update(
-                    "searchBibles",
-                    bibleList.map((bible) => bible.id)
-                )}
-        >
-            <T id="settings.ai_select_all" />
-        </MaterialButton>
-        <MaterialButton style="flex: 1;" icon="disable" on:click={() => update("searchBibles", [])}>
-            <T id="settings.ai_deselect_all" />
-        </MaterialButton>
+        <MaterialDropdown label="live.microphones" options={microphones} value={settings.micDeviceId || ""} on:change={(e) => update("micDeviceId", e.detail)} allowEmpty />
+        <MaterialTextInput label="settings.ai_spoken_language" value={spokenLanguage} defaultValue={($language || "en").slice(0, 2).toLowerCase()} on:change={(e) => setSpokenLanguage(e.detail)} />
     </InputRow>
 
-    <div class="bibleList">
-        {#each bibleList as bible}
-            <MaterialCheckbox label={bible.name} checked={searchBibles.includes(bible.id)} on:change={(e) => toggleBible(bible.id, e.detail)} />
-        {/each}
+    <Title label="settings.ai_detection" icon="search" />
+
+    <MaterialDropdown label="settings.ai_provider" options={providerOptions} value={provider} defaultValue="anthropic" on:change={(e) => setProvider(e.detail)} />
+
+    <InputRow>
+        <MaterialTextInput label="settings.ai_api_key" value={keyInput} type="password" pasteBtn on:input={(e) => (keyInput = e.detail)} />
+        <MaterialButton icon="save" disabled={!keyInput} on:click={saveKey}>
+            <T id="actions.save" />
+        </MaterialButton>
+        <MaterialButton icon="connection" disabled={(!keySaved && !keyInput) || testing} on:click={testConnection}>
+            <T id="settings.ai_test_connection" />
+        </MaterialButton>
+        {#if keySaved}
+            <MaterialButton icon="delete" title="settings.ai_remove_key" on:click={removeKey} />
+        {/if}
+    </InputRow>
+
+    {#if keySaved && !testResult}
+        <div class="statusLine ok">
+            <Icon id="check" size={0.9} white />
+            <T id="settings.ai_key_saved" />
+        </div>
+    {/if}
+
+    {#if testing}
+        <div class="statusLine"><Loader /></div>
+    {:else if testResult}
+        {#if testResult.ok}
+            <div class="statusLine ok">
+                <Icon id="check" size={0.9} white />
+                <T id="settings.ai_test_success" />
+            </div>
+        {:else}
+            <div class="statusLine error">
+                <Icon id="warning" size={0.9} white />
+                <T id="settings.ai_error_{testResult.error?.code || 'network'}" />
+                {#if testResult.error?.message}
+                    <span class="path">{testResult.error.message}</span>
+                {/if}
+            </div>
+        {/if}
+    {/if}
+
+    <MaterialDropdown label="settings.ai_model" options={modelOptions} value={selectedModel} defaultValue={providerData.defaultModel} disabled={showCustomModel} on:change={(e) => setModel(e.detail)} />
+
+    <MaterialToggleSwitch label="settings.ai_custom_model" checked={showCustomModel} defaultValue={false} on:change={(e) => toggleCustomModel(e.detail)} />
+    {#if showCustomModel}
+        <MaterialTextInput label="settings.ai_custom_model_id" value={settings.customModel || ""} on:change={(e) => update("customModel", e.detail)} />
+    {/if}
+
+    <Title label="settings.ai_search_bibles" icon="scripture" />
+
+    {#if bibleList.length}
+        <InputRow>
+            <MaterialButton
+                style="flex: 1;"
+                icon="check"
+                on:click={() =>
+                    update(
+                        "searchBibles",
+                        bibleList.map((bible) => bible.id)
+                    )}
+            >
+                <T id="settings.ai_select_all" />
+            </MaterialButton>
+            <MaterialButton style="flex: 1;" icon="disable" on:click={() => update("searchBibles", [])}>
+                <T id="settings.ai_deselect_all" />
+            </MaterialButton>
+        </InputRow>
+
+        <div class="bibleList">
+            {#each bibleList as bible}
+                <MaterialCheckbox label={bible.name} checked={searchBibles.includes(bible.id)} on:change={(e) => toggleBible(bible.id, e.detail)} />
+            {/each}
+        </div>
+    {:else}
+        <p class="faded"><T id="empty.general" /></p>
+    {/if}
+
+    <MaterialDropdown label="settings.ai_display_translation" options={displayTranslationOptions} value={settings.displayTranslation || "drawer"} defaultValue="drawer" on:change={(e) => update("displayTranslation", e.detail)} />
+
+    <Title label="settings.ai_behavior" icon="options" />
+
+    <MaterialDropdown label="settings.ai_mode" options={modeOptions} value={settings.mode || "confirm"} defaultValue="confirm" on:change={(e) => update("mode", e.detail)} />
+    {#if (settings.mode || "confirm") === "auto"}
+        <Tip type="warning" value="settings.ai_mode_auto_warning" top={10} />
+    {/if}
+
+    <MaterialToggleSwitch label="settings.ai_auto_project_quoted" checked={settings.autoProjectQuoted === true} defaultValue={false} on:change={(e) => update("autoProjectQuoted", e.detail)} />
+
+    <MaterialToggleSwitch label="settings.ai_voice_commands" checked={settings.voiceCommands === true} defaultValue={false} on:change={(e) => update("voiceCommands", e.detail)} />
+    {#if settings.voiceCommands}
+        <p class="faded"><T id="settings.ai_voice_commands_hint" /></p>
+    {/if}
+
+    <InputRow>
+        <MaterialNumberInput label="settings.ai_auto_cooldown" value={Number(settings.autoCooldownSeconds ?? 10)} defaultValue={10} min={0} max={300} on:change={(e) => update("autoCooldownSeconds", e.detail)} />
+        <MaterialNumberInput label="settings.ai_ref_cooldown" value={Number(settings.refCooldownSeconds ?? 90)} defaultValue={90} min={0} max={600} on:change={(e) => update("refCooldownSeconds", e.detail)} />
+        <MaterialNumberInput label="settings.ai_max_verses" value={Number(settings.maxVerses ?? 6)} defaultValue={6} min={1} max={20} on:change={(e) => update("maxVerses", e.detail)} />
+    </InputRow>
+
+    <div class="privacy">
+        <div class="privacyTitle">
+            <Icon id="info" size={1.1} white />
+            <T id="settings.ai_privacy" />
+        </div>
+        <p><T id="settings.ai_privacy_local" /></p>
+        <p><T id="settings.ai_privacy_llm" /></p>
+        <p><T id="settings.ai_privacy_keys" /></p>
     </div>
-{:else}
-    <p class="faded"><T id="empty.general" /></p>
 {/if}
-
-<MaterialDropdown label="settings.ai_display_translation" options={displayTranslationOptions} value={settings.displayTranslation || "drawer"} defaultValue="drawer" on:change={(e) => update("displayTranslation", e.detail)} />
-
-<Title label="settings.ai_behavior" icon="options" />
-
-<MaterialDropdown label="settings.ai_mode" options={modeOptions} value={settings.mode || "confirm"} defaultValue="confirm" on:change={(e) => update("mode", e.detail)} />
-{#if (settings.mode || "confirm") === "auto"}
-    <Tip type="warning" value="settings.ai_mode_auto_warning" top={10} />
-{/if}
-
-<MaterialToggleSwitch label="settings.ai_auto_project_quoted" checked={settings.autoProjectQuoted === true} defaultValue={false} on:change={(e) => update("autoProjectQuoted", e.detail)} />
-
-<MaterialToggleSwitch label="settings.ai_voice_commands" checked={settings.voiceCommands === true} defaultValue={false} on:change={(e) => update("voiceCommands", e.detail)} />
-{#if settings.voiceCommands}
-    <p class="faded"><T id="settings.ai_voice_commands_hint" /></p>
-{/if}
-
-<InputRow>
-    <MaterialNumberInput label="settings.ai_auto_cooldown" value={Number(settings.autoCooldownSeconds ?? 10)} defaultValue={10} min={0} max={300} on:change={(e) => update("autoCooldownSeconds", e.detail)} />
-    <MaterialNumberInput label="settings.ai_ref_cooldown" value={Number(settings.refCooldownSeconds ?? 90)} defaultValue={90} min={0} max={600} on:change={(e) => update("refCooldownSeconds", e.detail)} />
-    <MaterialNumberInput label="settings.ai_max_verses" value={Number(settings.maxVerses ?? 6)} defaultValue={6} min={1} max={20} on:change={(e) => update("maxVerses", e.detail)} />
-</InputRow>
-
-<div class="privacy">
-    <div class="privacyTitle">
-        <Icon id="info" size={1.1} white />
-        <T id="settings.ai_privacy" />
-    </div>
-    <p><T id="settings.ai_privacy_local" /></p>
-    <p><T id="settings.ai_privacy_llm" /></p>
-    <p><T id="settings.ai_privacy_keys" /></p>
-</div>
 
 <style>
     .loading {
@@ -519,6 +540,12 @@
         border-radius: 3px;
         background-color: var(--primary-darkest);
         overflow: hidden;
+    }
+    .percentLabel {
+        font-size: 0.75em;
+        opacity: 0.8;
+        min-width: 34px;
+        text-align: end;
     }
     .progressFill {
         height: 100%;
