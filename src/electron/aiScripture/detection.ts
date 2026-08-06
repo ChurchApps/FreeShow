@@ -125,7 +125,9 @@ function buildBookIndex(books: AiScriptureBook[]): BookIndex {
     tokens.sort((a, b) => b.length - a.length)
     const patterns = tokens.map((token) => escapeRegex(token).replace(/ /g, "\\s+"))
 
-    const regex = patterns.length ? new RegExp("(^|[^a-z0-9])(" + patterns.join("|") + ")\\s+(?:chapter\\s+)?(\\d{1,3})\\b(?:\\s*(?::|verses?\\b)\\s*(\\d{1,3})\\b(?:\\s*(?:-|to\\b|through\\b)\\s*(\\d{1,3})\\b)?)?", "g") : null
+    // speakers often say just "matthew 5 1", and whisper's punctuation varies - accept every separator it
+    // produces between chapter & verse: "5:1", "5 verse 1", "5 1", "5, 1", "5. 1", "5-1", "5–1"
+    const regex = patterns.length ? new RegExp("(^|[^a-z0-9])(" + patterns.join("|") + ")\\s+(?:chapter\\s+)?(\\d{1,3})\\b(?:(?:\\s*(?::|verses?\\b)\\s*|\\s*[-–,.]\\s*|\\s+)(\\d{1,3})\\b(?:\\s*(?:-|–|to\\b|through\\b)\\s*(\\d{1,3})\\b)?)?", "g") : null
     return { regex, byToken, bookPattern: patterns.join("|") }
 }
 
@@ -172,10 +174,10 @@ function matchReferences(text: string, index: BookIndex): ReferenceMatch[] {
         // of these words/shapes, so checking the normalized snippet reflects the original text.
         const hasCue = /\bchapter\b|\bverses?\b/.test(quote) || /\d:\d/.test(quote) || /^[1-3]\b/.test(bookToken)
 
-        // a bare "bookname 15" ("he acts 15 years old") is only "medium". a CUED chapter with no verse
-        // ("turn to matthew chapter 5") is deliberate spoken intent - treat it as "high" so auto mode
-        // projects the chapter from verse 1, like an operator opening the chapter would
-        const confidence: "high" | "medium" | "low" = hasVerse ? (hasCue ? "high" : "medium") : hasCue ? "high" : "medium"
+        // book + chapter + verse ("matthew 12 4") or a cued chapter ("turn to matthew chapter 5") is
+        // deliberate spoken intent - "high" so auto mode projects it. only a bare "bookname 15"
+        // ("he acts 15 years old") stays "medium" and waits for confirmation
+        const confidence: "high" | "medium" | "low" = hasVerse || hasCue ? "high" : "medium"
 
         results.push({ bookNumber: book.number, book: book.name, chapter, verseStart, verseEnd, confidence, quote })
     }
