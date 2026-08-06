@@ -44,6 +44,12 @@
 <MaterialToggleSwitch label="settings.disable_labels" checked={$labelsDisabled} defaultValue={false} on:change={(e) => labelsDisabled.set(e.detail)} />
 <MaterialToggleSwitch label="settings.full_colors" checked={$fullColors} defaultValue={false} on:change={(e) => fullColors.set(e.detail)} />
 
+<!-- SEARCH -->
+
+<Title label="main.search" icon="search" />
+
+<MaterialToggleSwitch label="settings.search_near_miss_fallback" title="settings.search_near_miss_fallback_tip" checked={$special.searchNearMissFallback !== false} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "searchNearMissFallback", true)} />
+
 <!-- SLIDES -->
 
 <!-- info.slides -->
