@@ -1,6 +1,5 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { get } from "svelte/store"
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
     import { activeDrawerTab, activePage, audioChannelsData, drawer } from "../../../stores"
     import { DEFAULT_DRAWER_HEIGHT } from "../../../utils/common"
@@ -9,26 +8,22 @@
     export let detailed: boolean = false
     export let preview: boolean = false
 
+    $: channelVolume = Number($audioChannelsData[channelId]?.volume ?? 1)
     $: isMuted = !!$audioChannelsData[channelId]?.isMuted
 
     const numbers: number[] = [-60, -54, -48, -42, -36, -30, -24, -18, -12, -6, 0]
 
     let highestDB: { lastTime: number; value: number }[] = []
     let smoothedDB: number[] = []
-    let tick = 0
-    let animationFrame: number
+    let animationFrame: number = 0
+    let lastTickTime = 0
 
-    onMount(() => {
-        function loop() {
-            tick++
-            animationFrame = requestAnimationFrame(loop)
-        }
-        loop()
-    })
+    // DOM Element references for direct style updates (bypassing Svelte template re-renders)
+    let maskEls: (HTMLDivElement | null)[] = []
+    let peakEls: (HTMLDivElement | null)[] = []
+    let dotEls: (HTMLElement | null)[] = []
 
-    onDestroy(() => {
-        if (animationFrame) cancelAnimationFrame(animationFrame)
-    })
+    let channelIndices: number[] = [0, 1]
 
     const minDB = -60
     const maxDB = 0
@@ -40,14 +35,14 @@
         return (db + 60) / 60
     }
 
-    function getChannelDbs(_updater: any): number[] {
+    function getChannelDbs(): number[] {
         const captured = AudioInputCapture.getInstance().getVisualizerData(channelId)
         if (captured && captured.channels?.length) {
             return captured.channels.map((c) => c.db)
         } else if (captured && typeof captured.db === "number") {
             return [captured.db]
         } else {
-            const data = (get(audioChannelsData) || {})[channelId] as any
+            const data = ($audioChannelsData || {})[channelId] as any
             if (data && typeof data.dB === "number") {
                 return [data.dB, data.dB]
             }
@@ -63,7 +58,6 @@
         let db = rawDb
 
         // Apply channel volume fader adjustment (dB = rawDB + 20 * log10(volume))
-        const channelVolume = Number((get(audioChannelsData) || {})[channelId]?.volume ?? 1)
         if (channelVolume > 0 && channelVolume !== 1) {
             db += 20 * Math.log10(channelVolume)
         } else if (channelVolume === 0) {
@@ -72,7 +66,7 @@
 
         const target = dbToPos(db)
 
-        // Smooth attack / decay
+        // Smooth attack / decay in JS
         const prevSmoothed = smoothedDB[channelIndex] ?? 0
         const newSmoothed = target > prevSmoothed ? target : prevSmoothed + (target - prevSmoothed) * 0.2
         smoothedDB[channelIndex] = newSmoothed
@@ -80,7 +74,11 @@
         const dBPercentage = newSmoothed * 100
         const now = Date.now()
 
-        const highest = highestDB[channelIndex] ?? { lastTime: 0, value: 0 }
+        let highest = highestDB[channelIndex]
+        if (!highest) {
+            highest = { lastTime: 0, value: 0 }
+            highestDB[channelIndex] = highest
+        }
 
         if (dBPercentage >= highest.value) {
             highest.value = dBPercentage
@@ -89,13 +87,71 @@
             highest.value = Math.max(dBPercentage, highest.value - 2)
         }
 
-        highestDB[channelIndex] = highest
-
         return {
             dbValue: dBPercentage,
             highestDb: 100 - highest.value
         }
     }
+
+    function updateDOM() {
+        const rawDbs = getChannelDbs()
+
+        if (rawDbs.length !== channelIndices.length) {
+            channelIndices = Array.from({ length: Math.max(1, rawDbs.length) }, (_, i) => i)
+        }
+
+        for (let i = 0; i < rawDbs.length; i++) {
+            const rawDb = rawDbs[i]
+            const { dbValue, highestDb } = updateMeterChannel(rawDb, i)
+
+            const maskEl = maskEls[i]
+            if (maskEl) {
+                const maskPct = 100 - dbValue
+                if (vertical) {
+                    maskEl.style.height = `${maskPct}%`
+                } else {
+                    maskEl.style.width = `${maskPct}%`
+                }
+            }
+
+            const peakEl = peakEls[i]
+            if (peakEl) {
+                if (highestDb < 100) {
+                    peakEl.style.display = "block"
+                    if (vertical) {
+                        peakEl.style.top = `${highestDb}%`
+                    } else {
+                        peakEl.style.right = `${highestDb}%`
+                    }
+                } else {
+                    peakEl.style.display = "none"
+                }
+            }
+
+            const dotEl = dotEls[i]
+            if (dotEl) {
+                if (rawDb > -60) {
+                    dotEl.classList.add("active")
+                } else {
+                    dotEl.classList.remove("active")
+                }
+            }
+        }
+    }
+
+    onMount(() => {
+        function loop(timestamp: number) {
+            animationFrame = requestAnimationFrame(loop)
+            if (timestamp - lastTickTime < 33) return // Throttle to ~30fps
+            lastTickTime = timestamp
+            updateDOM()
+        }
+        animationFrame = requestAnimationFrame(loop)
+    })
+
+    onDestroy(() => {
+        if (animationFrame) cancelAnimationFrame(animationFrame)
+    })
 
     function getPercentageFromDB(dB: number) {
         return dbToPos(dB) * 100
@@ -115,27 +171,23 @@
 
 <div class="background" class:preview class:vertical on:click={openAudioMix} role="none">
     <div class="main" class:vertical>
-        {#each getChannelDbs(tick) as rawDb, i}
-            {@const { dbValue, highestDb } = updateMeterChannel(rawDb, i)}
-
+        {#each channelIndices as i}
             {#if i > 0 && !preview}
                 <div style="height: 1px;width: 100%;"></div>
             {/if}
             <div class="channel-row" class:vertical>
                 {#if !vertical}
-                    <span class="signal-dot" class:active={rawDb > -60} style="height: {detailed ? '6px' : '3px'};"></span>
+                    <span bind:this={dotEls[i]} class="signal-dot" style="height: {detailed ? '6px' : '3px'};"></span>
                 {/if}
 
                 <span class="meter" class:isMuted class:vertical style={!vertical ? `height: ${detailed ? "6px" : "3px"};` : ""}>
-                    <div style={vertical ? `height: ${100 - dbValue}%; width: 100%; top: 0; position: absolute;` : `width: ${100 - dbValue}%; height: inherit; right: 0; position: absolute;`} />
+                    <div bind:this={maskEls[i]} style={vertical ? "width: 100%; top: 0; position: absolute;" : "height: inherit; right: 0; position: absolute;"} />
                     <span class="meter" class:isMuted class:vertical style="position: absolute; opacity: 0.08; {vertical ? 'top: 0; width: 100%; height: 100%;' : 'right: 0; height: inherit; width: 100%;'}" />
-                    {#if highestDb < 100}
-                        <div class="highest" class:vertical style="{vertical ? 'top' : 'right'}: {highestDb}%;" />
-                    {/if}
+                    <div bind:this={peakEls[i]} class="highest" class:vertical style="display: none;" />
                 </span>
 
-                {#if vertical && rawDb > -60}
-                    <span class="signal-dot vertical active" />
+                {#if vertical}
+                    <span bind:this={dotEls[i]} class="signal-dot vertical" />
                 {/if}
             </div>
         {/each}
@@ -247,14 +299,11 @@
 
         background-color: white !important;
         opacity: 0.2;
-
-        transition: 0.2s right;
     }
 
     .highest.vertical {
         height: 2px;
         width: 100%;
-        transition: 0.2s top;
     }
 
     .lines-container {
@@ -286,10 +335,9 @@
         width: 3px;
         height: 3px;
         border-radius: 2px;
-        background-color: rgba(255, 255, 255, 0.2);
-        transition:
-            background-color 0.1s ease,
-            box-shadow 0.1s ease;
+        /* background-color: rgba(255, 255, 255, 0.2); */
+        background-color: rgb(0, 200, 200);
+        opacity: 0.1;
         flex-shrink: 0;
     }
 
@@ -298,8 +346,9 @@
         height: 2px;
     }
 
-    .signal-dot.active {
-        background-color: rgb(0, 200, 200);
+    .signal-dot:global(.active) {
+        /* background-color: rgb(0, 200, 200); */
+        opacity: 1;
     }
 
     span.meter {
@@ -323,9 +372,6 @@
     }
 
     span.meter div {
-        transition:
-            width 0.05s ease 0s,
-            height 0.05s ease 0s;
         background-color: var(--primary-darker);
     }
 </style>

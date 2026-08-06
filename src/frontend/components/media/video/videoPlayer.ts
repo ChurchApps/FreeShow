@@ -3,7 +3,6 @@
 import { get } from "svelte/store"
 import { Main } from "../../../../types/IPC/Main"
 import { AudioAnalyser } from "../../../audio/audioAnalyser"
-import { AudioAnalyserMerger } from "../../../audio/audioAnalyserMerger"
 import { requestMain } from "../../../IPC/main"
 import { media, outputs, playerVideos, playingVideos, playingVideoState, special, transitionData } from "../../../stores"
 import { playFolder } from "../../../utils/shortcuts"
@@ -13,6 +12,7 @@ import { encodeFilePath, getExtension, getMediaType, locateMediaFile } from "../
 import { checkNextAfterMedia } from "../../helpers/showActions"
 import { clearBackground } from "../../output/clear"
 import { TimeInterpolator } from "./videoTime"
+import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
 
 type VideoOptions = {
     isOnline?: boolean // youtube / vimeo
@@ -201,12 +201,6 @@ export class VideoPlayer {
         }
 
         const audio = new Audio(encodeFilePath(id))
-        audio.addEventListener("play", () => {
-            AudioAnalyserMerger.init()
-        })
-        audio.addEventListener("pause", () => {
-            if (!AudioAnalyser.shouldAnalyse()) AudioAnalyserMerger.stop()
-        })
         audio.addEventListener("ended", () => {
             const playing = this.getPlaying(id, outputIds || [])
             if (playing?.loop || this.getGlobalOptions(id)?.loop) return
@@ -295,7 +289,6 @@ export class VideoPlayer {
 
         if (audio instanceof HTMLAudioElement) {
             audio.play()
-            AudioAnalyserMerger.init()
         } else if ("timeTick" in audio) {
             audio.paused = false
             audio.timeTick.play()
@@ -317,7 +310,6 @@ export class VideoPlayer {
 
         if (audio instanceof HTMLAudioElement) {
             audio.pause()
-            if (!AudioAnalyser.shouldAnalyse()) AudioAnalyserMerger.stop()
         } else if ("timeTick" in audio) {
             audio.paused = true
             audio.timeTick.pause()
@@ -370,6 +362,10 @@ export class VideoPlayer {
         })
 
         videoEnding()
+
+        if (!get(playingVideos).length) {
+            AudioInputCapture.getInstance().clearMergedDbs()
+        }
     }
 
     private static async fadeOut(path: string, audio: HTMLAudioElement, durationMs: number): Promise<boolean> {
@@ -670,10 +666,7 @@ export class VideoPlayer {
                 nextAudio = new Audio(audio.src)
                 nextAudio.volume = 0
                 nextAudio.loop = loop
-                nextAudio.addEventListener("play", () => AudioAnalyserMerger.init())
-                nextAudio.addEventListener("pause", () => {
-                    if (!AudioAnalyser.shouldAnalyse()) AudioAnalyserMerger.stop()
-                })
+                nextAudio.addEventListener("play", () => {})
                 ;(video as any).crossfadeAudio = nextAudio
             }
 

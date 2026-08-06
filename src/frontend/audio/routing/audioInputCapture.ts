@@ -21,12 +21,16 @@ interface CapturedAnalyzers {
     splitter: ChannelSplitterNode
     analysers: AnalyserNode[]
     channelCount: number
+    connectedSources: Set<AudioNode>
 }
 
 export class AudioInputCapture {
     private static instance: AudioInputCapture
     private analysers: Map<string, CapturedAnalyzers> = new Map()
     private buffers: Map<string, Uint8Array[]> = new Map()
+    private mergedLevels: Map<string, number> = new Map()
+    private lastCalcTimestamp: Map<string, number> = new Map()
+    private lastQueryTimestamp: Map<string, number> = new Map()
     private audioCtx: AudioContext | null = null
 
     private constructor() {}
@@ -39,6 +43,20 @@ export class AudioInputCapture {
 
     public setAudioContext(ctx: AudioContext) {
         this.audioCtx = ctx
+    }
+
+    public setMergedDb(nodeId: string, db: number) {
+        this.mergedLevels.set(nodeId, db)
+    }
+
+    public clearMergedDbs() {
+        this.mergedLevels.clear()
+    }
+
+    public onNodeDisconnected(node: AudioNode) {
+        this.analysers.forEach((entry) => {
+            entry.connectedSources.delete(node)
+        })
     }
 
     /**
@@ -129,7 +147,7 @@ export class AudioInputCapture {
                     analysers.push(analyser)
                 }
 
-                entry = { splitter, analysers, channelCount }
+                entry = { splitter, analysers, channelCount, connectedSources: new Set() }
                 this.analysers.set(nodeId, entry)
             } catch (e) {
                 console.warn(`Could not create ${channelCount}-channel analysers for ${nodeId}:`, e)
@@ -137,8 +155,11 @@ export class AudioInputCapture {
             }
         }
 
+        if (entry.connectedSources.has(source)) return entry
+
         try {
             source.connect(entry.splitter)
+            entry.connectedSources.add(source)
             return entry
         } catch (e) {
             return null
@@ -147,9 +168,29 @@ export class AudioInputCapture {
 
     private resultCache: Map<string, InputVisualizerData> = new Map()
 
+    public isNodeObserved(nodeId: string): boolean {
+        if (nodeId === "main" || nodeId === "drawer_audio" || nodeId === "speaker_default") return true
+        const lastQuery = this.lastQueryTimestamp.get(nodeId) || 0
+        return performance.now() - lastQuery < 3000
+    }
+
+    public pruneStaleInputs(activeNodeIds: Set<string>) {
+        this.analysers.forEach((_, nodeId) => {
+            if (!activeNodeIds.has(nodeId) || !this.isNodeObserved(nodeId)) {
+                this.removeInput(nodeId)
+            }
+        })
+    }
+
     public removeInput(nodeId: string) {
         const entry = this.analysers.get(nodeId)
         if (entry) {
+            entry.connectedSources.forEach((s) => {
+                try {
+                    s.disconnect(entry.splitter)
+                } catch (e) {}
+            })
+            entry.connectedSources.clear()
             try {
                 entry.splitter.disconnect()
                 entry.analysers.forEach((a) => a.disconnect())
@@ -162,8 +203,35 @@ export class AudioInputCapture {
     }
 
     public getVisualizerData(nodeId: string): InputVisualizerData | null {
+        this.lastQueryTimestamp.set(nodeId, performance.now())
         const entry = this.analysers.get(nodeId)
-        if (!entry) return null
+        if (!entry) {
+            const mergedDb = this.mergedLevels.get(nodeId)
+            if (mergedDb !== undefined) {
+                let cachedResult = this.resultCache.get(nodeId)
+                if (!cachedResult || cachedResult.channels.length !== 1) {
+                    cachedResult = { nodeId, db: mergedDb, channels: [{ channelIndex: 0, db: mergedDb, spectrum: [] }], dbL: mergedDb, dbR: mergedDb, spectrum: [] }
+                    this.resultCache.set(nodeId, cachedResult)
+                } else {
+                    cachedResult.db = mergedDb
+                    cachedResult.channels[0].db = mergedDb
+                    cachedResult.dbL = mergedDb
+                    cachedResult.dbR = mergedDb
+                }
+                return cachedResult
+            }
+            return null
+        }
+
+        const now = performance.now()
+        const lastCalc = this.lastCalcTimestamp.get(nodeId) || 0
+        let cachedResult = this.resultCache.get(nodeId)
+
+        // Return cached calculation if computed within the last 20ms (~50fps max rate)
+        if (cachedResult && now - lastCalc < 20) {
+            return cachedResult
+        }
+        this.lastCalcTimestamp.set(nodeId, now)
 
         let nodeFloatBuffers = this.buffers.get(nodeId + "_float") as unknown as Float32Array[]
         if (!nodeFloatBuffers || nodeFloatBuffers.length !== entry.channelCount) {
@@ -171,7 +239,6 @@ export class AudioInputCapture {
             this.buffers.set(nodeId + "_float", nodeFloatBuffers as unknown as Uint8Array[])
         }
 
-        let cachedResult = this.resultCache.get(nodeId)
         if (!cachedResult || cachedResult.channels.length !== entry.channelCount) {
             const channels: ChannelVisualizerData[] = []
             for (let i = 0; i < entry.channelCount; i++) {

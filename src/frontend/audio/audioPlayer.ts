@@ -263,8 +263,7 @@ export class AudioPlayer {
     // }
 
     private static initAudio(id: string, waitToPlay = 0, startPaused = false) {
-        setTimeout(async () => {
-            // audio might have been cleared
+        const runInit = async () => {
             const playing = get(playingAudio)[id]
             if (!playing) return
             const audio = playing.audio
@@ -272,11 +271,16 @@ export class AudioPlayer {
             if (!startPaused) this.play(id)
             customActionActivation("audio_start")
 
-            // Use stream if available for better support in some browsers
             await AudioAnalyser.attach(id, playing.stream || audio)
             AudioRoutingManager.getInstance().updateRoutingNodes()
             this.applyProcessing(id)
-        }, waitToPlay * 1000)
+        }
+
+        if (waitToPlay > 0) {
+            setTimeout(runInit, waitToPlay * 1000)
+        } else {
+            runInit()
+        }
     }
 
     static applyProcessing(id: string) {
@@ -447,12 +451,25 @@ export class AudioPlayer {
     static async getDuration(id: string) {
         if (this.storedDurations.has(id)) return this.storedDurations.get(id)!
 
-        const audio = this.getAudio(id) || (await loadAudioFile(id))
+        const activeAudio = this.getAudio(id)
+        let audio = activeAudio || (await loadAudioFile(id))
         let duration = audio?.duration || 0
         // audio streams does not end and have Infinite duration
         if (duration === Infinity) duration = 0
 
         this.storedDurations.set(id, duration)
+
+        // Clean up temporary audio element created solely for duration inspection
+        if (!activeAudio && audio) {
+            try {
+                audio.pause()
+                audio.src = ""
+                audio.removeAttribute("src")
+                audio.load()
+            } catch {}
+            audio = null
+        }
+
         return duration
     }
     static getDurationSync(id: string) {
@@ -552,7 +569,7 @@ export async function loadAudioFile(path: string): Promise<HTMLAudioElement | nu
     return new Promise((resolve) => {
         const audio = new Audio(encodeFilePath(path))
 
-        audio.addEventListener("canplaythrough", loaded, { once: true })
+        audio.addEventListener("loadedmetadata", loaded, { once: true })
         audio.addEventListener("error", error, { once: true })
 
         let resolved = false

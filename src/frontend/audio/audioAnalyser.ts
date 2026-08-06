@@ -16,7 +16,7 @@ export class AudioAnalyser {
     static maxChannels = AudioMultichannel.MAX_CHANNELS // support up to 8 channels (7.1 surround)
     static recorderFrameRate = 24 // fps
 
-    private static ac = new AudioContext({ latencyHint: "interactive", sampleRate: this.sampleRate })
+    private static ac = new AudioContext({ latencyHint: "playback" })
     private static splitter: ChannelSplitterNode | null = null
     private static analysers: AnalyserNode[] = []
     private static sources: { [key: string]: AudioNode } = {}
@@ -107,11 +107,8 @@ export class AudioAnalyser {
             const isMic = audio instanceof MediaStream || (audioPlaying && audioPlaying.isMic === true)
             const isVideo = audio instanceof HTMLVideoElement || videoPlaying
 
-            const subKey = isMic ? (id.startsWith("mic_sub_") ? id : "mic_sub_" + id) : isVideo ? (outputId ? "output_win_sub_" + outputId : "output_window") : id === "metronome" ? "metronome" : "drawer_audio"
-            AudioRoutingManager.getInstance().registerInputNode(subKey, processor.output)
-
             // Route audio to configured mergers
-            this.connectToSinks(processor, id)
+            this.connectToSinks(processor, id, outputId)
 
             if (isMic || isVideo) {
                 if (this.ac.state === "suspended") {
@@ -287,15 +284,12 @@ export class AudioAnalyser {
             this.splitter = AudioMultichannel.createChannelSplitter(this.ac, this.channels)
         }
 
-        const MERGER = AudioMultichannel.createChannelMerger(this.ac, this.channels)
-
         // analyse left/right channels individually
         ;[...Array(this.channels)].forEach((_, channel) => {
             const analyser = (this.analysers[channel] = this.ac.createAnalyser())
             analyser.smoothingTimeConstant = 0.85
             analyser.fftSize = 256
             this.splitter!.connect(analyser, channel)
-            this.splitter!.connect(MERGER, channel, channel)
         })
 
         AudioAnalyserMerger.init()
@@ -405,9 +399,8 @@ export class AudioAnalyser {
         })
     }
 
-    static connectToSinks(source: AudioNode | PitchShiftNode, id?: string) {
-        if (!this.splitter) return
-        this.connectGain(source, id)
+    static connectToSinks(source: AudioNode | PitchShiftNode, id?: string, outputId?: string) {
+        this.connectGain(source, id, outputId)
     }
 
     static disconnectFromSinks(source: AudioNode | PitchShiftNode, id?: string) {
@@ -496,7 +489,12 @@ export class AudioAnalyser {
                     const isIcecastConnected = !!get(audioRouting)?.connections.some((c) => c.to === "icecast")
                     const icecast = isIcecastConnected ? { enabled: true, host: get(special).icecastHost, port: get(special).icecastPort, mount: get(special).icecastMount, password: get(special).icecastPassword ?? "hackme" } : undefined
 
-                    send(AUDIO, ["CAPTURE"], { id, buffer: uint8Array, icecast })
+                    const activeStreamingOutputs = Object.values(get(outputs) || {}).filter((out) => out && out.enabled && (out.webrtc || out.rtmp || out.ndi || out.blackmagic))
+                    const targetIds = activeStreamingOutputs.length ? activeStreamingOutputs.map((out) => out.id) : [id]
+
+                    targetIds.forEach((targetId) => {
+                        send(AUDIO, ["CAPTURE"], { id: targetId, buffer: uint8Array, icecast })
+                    })
                 })
             })
 
@@ -529,15 +527,12 @@ export class AudioAnalyser {
     }
 
     private static shouldBeActive() {
-        let outputList = Object.values(get(outputs))
-        if (isOutputWindow()) outputList = [Object.values(get(outputs))[0]]
+        const outputList = Object.values(get(outputs) || {}).filter(Boolean)
 
-        if (outputList.find((a) => a && a.enabled && (a.webrtc || a.rtmp || a.ndi || a.blackmagic))) return true
+        if (outputList.some((a) => a.enabled && (a.webrtc || a.rtmp || a.ndi || a.blackmagic))) return true
 
-        const routing = get(audioRouting)
-        if (routing?.connections.some((c) => c.to === "network_default" || c.to === "icecast" || c.to.startsWith("network_sub_"))) {
-            return true
-        }
+        const isIcecastConnected = !!get(audioRouting)?.connections.some((c) => c.to === "icecast")
+        if (isIcecastConnected) return true
 
         return false
     }
