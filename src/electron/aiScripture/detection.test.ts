@@ -309,4 +309,76 @@ describe("DetectionCoordinator", () => {
             }
         })
     })
+
+    describe("anchor context (bounded session context)", () => {
+        it("resolves bare 'verse N' mentions against the anchor", () => {
+            const onDetection = vi.fn()
+            const coordinator = createCoordinator(onDetection)
+            coordinator.updateContext({ book: "Romans", bookNumber: 45, chapter: 8, verseStart: 1, verseEnd: 4 })
+
+            coordinator.onTranscriptSegment({ text: "now look at verse twelve", startMs: 0, endMs: 2000 })
+            expect(onDetection).toHaveBeenCalledTimes(1)
+            expect(onDetection.mock.calls[0][0]).toMatchObject({ book: "Romans", bookNumber: 45, chapter: 8, verseStart: 12, verseEnd: 12, type: "explicit", source: "regex", confidence: "high", quote: "verse 12" })
+
+            coordinator.stop()
+        })
+
+        it("resolves bare verse ranges: 'verses three to five'", () => {
+            const onDetection = vi.fn()
+            const coordinator = createCoordinator(onDetection)
+            coordinator.updateContext({ book: "Romans", bookNumber: 45, chapter: 8, verseStart: 1, verseEnd: 1 })
+
+            coordinator.onTranscriptSegment({ text: "let us look at verses three to five together", startMs: 0, endMs: 2000 })
+            expect(onDetection).toHaveBeenCalledTimes(1)
+            expect(onDetection.mock.calls[0][0]).toMatchObject({ book: "Romans", bookNumber: 45, chapter: 8, verseStart: 3, verseEnd: 5 })
+
+            coordinator.stop()
+        })
+
+        it("does not emit bare verse mentions when no anchor is set", () => {
+            const onDetection = vi.fn()
+            const coordinator = createCoordinator(onDetection)
+
+            coordinator.onTranscriptSegment({ text: "now look at verse twelve", startMs: 0, endMs: 2000 })
+            expect(onDetection).not.toHaveBeenCalled()
+
+            coordinator.stop()
+        })
+
+        it("does not fire on the 'fifteen verses' word order", () => {
+            const onDetection = vi.fn()
+            const coordinator = createCoordinator(onDetection)
+            coordinator.updateContext({ book: "Romans", bookNumber: 45, chapter: 8, verseStart: 1, verseEnd: 1 })
+
+            coordinator.onTranscriptSegment({ text: "he has fifteen verses about this", startMs: 0, endMs: 2000 })
+            expect(onDetection).not.toHaveBeenCalled()
+
+            coordinator.stop()
+        })
+
+        it("does not double-emit the verse part of a full explicit reference", () => {
+            const onDetection = vi.fn()
+            const coordinator = createCoordinator(onDetection)
+            coordinator.updateContext({ book: "John", bookNumber: 43, chapter: 3, verseStart: 16, verseEnd: 16 })
+
+            coordinator.onTranscriptSegment({ text: "please turn to romans chapter eight verse twenty-eight", startMs: 0, endMs: 3000 })
+            expect(onDetection).toHaveBeenCalledTimes(1)
+            expect(onDetection.mock.calls[0][0]).toMatchObject({ book: "Romans", bookNumber: 45, chapter: 8, verseStart: 28 })
+
+            coordinator.stop()
+        })
+
+        it("keeps a single replaced anchor - never accumulates", () => {
+            const onDetection = vi.fn()
+            const coordinator = createCoordinator(onDetection)
+            coordinator.updateContext({ book: "Romans", bookNumber: 45, chapter: 8, verseStart: 1, verseEnd: 4 })
+            coordinator.updateContext({ book: "John", bookNumber: 43, chapter: 3, verseStart: 16, verseEnd: 16 })
+
+            coordinator.onTranscriptSegment({ text: "now look at verse two", startMs: 0, endMs: 2000 })
+            expect(onDetection).toHaveBeenCalledTimes(1)
+            expect(onDetection.mock.calls[0][0]).toMatchObject({ book: "John", bookNumber: 43, chapter: 3, verseStart: 2, verseEnd: 2 })
+
+            coordinator.stop()
+        })
+    })
 })

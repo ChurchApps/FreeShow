@@ -16,6 +16,7 @@ export interface RawDetection {
 export interface AIDetectionRequest {
     transcript: string
     alreadyDetected: string[] // formatted references already reported (e.g. "John 3:16-17")
+    liveContext?: string // one-line anchor hint for the passage currently live on the output
 }
 
 export interface AIProvider {
@@ -83,7 +84,8 @@ export function schemaWithoutAdditionalProperties(schema: any): any {
 
 export function buildUserContent(req: AIDetectionRequest): string {
     const alreadyDetected = req.alreadyDetected.length ? req.alreadyDetected.join(", ") : "none"
-    return "Already detected (do not repeat): " + alreadyDetected + "\n\n```\n" + req.transcript + "\n```"
+    const liveContext = req.liveContext ? req.liveContext + "\n\n" : ""
+    return liveContext + "Already detected (do not repeat): " + alreadyDetected + "\n\n```\n" + req.transcript + "\n```"
 }
 
 // parse & defensively validate the model's JSON output - throws AIError shaped objects
