@@ -21,7 +21,6 @@ export class AudioRoutingManager {
     private mergerNodes: Map<string, GainNode> = new Map()
     private channelDelayNodes: Map<string, DelayNode> = new Map()
     private mergerEffectChains: Map<string, { input: AudioNode; output: AudioNode; dispose: () => void }> = new Map()
-    private masterNode: AudioNode | null = null
     private destinationNodes: Map<string, AudioNode> = new Map()
     private inputNodes: Map<string, Set<AudioNode>> = new Map()
 
@@ -66,13 +65,18 @@ export class AudioRoutingManager {
         if (this.audioCtx === ctx) return
 
         this.audioCtx = ctx
-        this.updateRoutingNodes()
-    }
 
-    public setMasterNode(node: AudioNode) {
-        this.masterNode = node
+        // Ensure a default 'main' destination exists and is connected to the AudioContext's destination
+        try {
+            if (!this.destinationNodes.has("main")) {
+                const mg = this.audioCtx.createGain()
+                mg.connect(this.audioCtx.destination)
+                // register without triggering setDestinationNode's update loop
+                this.destinationNodes.set("main", mg)
+            }
+        } catch (e) {}
+
         this.updateRoutingNodes()
-        this.updateAllGains()
     }
 
     public setDestinationNode(targetId: string, node: AudioNode) {
@@ -156,13 +160,9 @@ export class AudioRoutingManager {
 
     public updateAllGains() {
         if (!this.audioCtx) return
-        const data = get(audioChannelsData) || {}
         this.mergerNodes.forEach((node, id) => {
             this.applyMergerGain(id, node)
         })
-        if (this.masterNode && (this.masterNode as GainNode).gain) {
-            this.setNodeGainAndDelay("main", this.masterNode as GainNode, data.main || {})
-        }
     }
 
     private buildMergerEffectChain(id: string, node: GainNode, channelEffects: any): AudioNode {
@@ -354,7 +354,12 @@ export class AudioRoutingManager {
             if (this.audioCtx) {
                 const conns = this.config.connections.filter((c) => c.from === id)
                 if (conns.some((c) => c.to === "speaker_default")) {
-                    outNode.connect(AudioAnalyser.getMasterGainNode())
+                    const mainNode = this.destinationNodes.get("main")
+                    if (mainNode) {
+                        try {
+                            outNode.connect(mainNode)
+                        } catch (e) {}
+                    }
                 }
 
                 let splitter: ChannelSplitterNode | null = null
@@ -433,12 +438,12 @@ export class AudioRoutingManager {
             console.warn(`[AudioRoutingManager] Lag detected: Audio routing update took ${duration.toFixed(2)}ms (budget: 15ms)`)
         }
 
-        // Update Sink Visualizers
-        if (this.masterNode) {
-            AudioInputCapture.getInstance().captureInput("speaker_default", this.masterNode)
-        }
+        // Update Sink Visualizers (map destinationNodes to visualizer keys)
         this.destinationNodes.forEach((destNode, targetKey) => {
-            const visualizerKey = targetKey === "icecast" ? "icecast" : `network_sub_${targetKey}`
+            let visualizerKey: string
+            if (targetKey === "icecast") visualizerKey = "icecast"
+            else if (targetKey === "main") visualizerKey = "speaker_default"
+            else visualizerKey = `network_sub_${targetKey}`
             AudioInputCapture.getInstance().captureInput(visualizerKey, destNode)
         })
 

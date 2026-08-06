@@ -36,10 +36,6 @@ export class AudioAnalyser {
         return this.ac
     }
 
-    static {
-        playingAudio.subscribe(() => this.updateScales())
-    }
-
     private static elementSources = new WeakMap<HTMLMediaElement, AudioNode>()
 
     static hasSource(id: string, outputId?: string) {
@@ -119,7 +115,6 @@ export class AudioAnalyser {
                     AudioRoutingManager.getInstance().updateRoutingNodes()
                 }, 100)
             }
-            this.updateScales()
 
             const mediaData = get(media)[id]
             if (mediaData) {
@@ -143,7 +138,6 @@ export class AudioAnalyser {
     }
 
     private static sourceVolumes: { [key: string]: number } = {}
-
     static setSourceVolume(id: string, volume: number, outputId?: string) {
         if (this.ac.state === "suspended") {
             this.ac.resume().catch(() => {})
@@ -158,38 +152,6 @@ export class AudioAnalyser {
                 if (gainNode) {
                     gainNode.gain.setValueAtTime(volume, this.ac.currentTime)
                 }
-            }
-        })
-    }
-
-    private static updateScales() {
-        Object.keys(this.gainNodes).forEach((key) => {
-            const gainNode = this.gainNodes[key]
-            if (gainNode) {
-                const baseId = key.includes("_") ? key.split("_")[0] : key
-                const storedVol = this.sourceVolumes[key] ?? this.sourceVolumes[baseId]
-                if (storedVol !== undefined) {
-                    gainNode.gain.setValueAtTime(storedVol, this.ac.currentTime)
-                    return
-                }
-
-                let baseVolume: number | null = null
-                const audioPlaying = get(playingAudio)[baseId]
-                if (audioPlaying) {
-                    if (audioPlaying.isMic || baseId.startsWith("mic_sub_")) {
-                        const micVolume = audioPlaying.audio?.volume ?? 1.0
-                        gainNode.gain.setValueAtTime(micVolume, this.ac.currentTime)
-                        return
-                    }
-                    baseVolume = audioPlaying.audio?.volume ?? 1.0
-                } else if (baseId === "metronome") {
-                    baseVolume = 1.0
-                } else {
-                    const videoPlaying = get(playingVideos).find((v) => v.path === baseId)
-                    if (videoPlaying && videoPlaying.audio instanceof HTMLAudioElement) baseVolume = videoPlaying.audio.volume ?? 1.0
-                }
-                if (baseVolume === null) baseVolume = 1.0
-                gainNode.gain.setValueAtTime(baseVolume, this.ac.currentTime)
             }
         })
     }
@@ -262,7 +224,6 @@ export class AudioAnalyser {
         } catch (e) {}
         delete this.sourceVolumes[key]
         delete this.sourceVolumes[id]
-
         delete this.sources[key]
     }
 
@@ -336,7 +297,6 @@ export class AudioAnalyser {
         this.destinationNodes.forEach((destNode) => {
             AudioMultichannel.configureNodeForMultichannel(destNode, this.channels)
         })
-        if (this.gainNode) AudioMultichannel.configureNodeForMultichannel(this.gainNode, this.channels)
 
         this.reconnectAllSources()
     }
@@ -362,31 +322,6 @@ export class AudioAnalyser {
         })
 
         this.initAnalysers()
-    }
-
-    private static gainNode: GainNode | null = null
-
-    // We keep gainNode for legacy sink routing, but AudioRoutingManager
-    // now manages its own GainNode cluster for proper isolation.
-    static getMasterGainNode(): GainNode {
-        this.initGain()
-        return this.gainNode!
-    }
-
-    private static initGain() {
-        if (this.gainNode) return
-
-        this.gainNode = AudioMultichannel.createMultichannelGainNode(this.ac, this.channels)
-
-        // Pass master gain node to routing manager so mergers connect to it
-        AudioRoutingManager.getInstance().setMasterNode(this.gainNode)
-
-        // Gain node is connected to AudioContext destination
-        this.gainNode.connect(this.ac.destination)
-
-        try {
-            AudioInputCapture.getInstance().captureInput("speaker_default", this.gainNode)
-        } catch (e) {}
     }
 
     static setPitch(id: string, value: number, outputId?: string) {
@@ -416,7 +351,6 @@ export class AudioAnalyser {
     }
 
     static connectGain(source: AudioNode | PitchShiftNode, id?: string, outputId?: string) {
-        this.initGain()
         const node = source instanceof PitchShiftNode ? source.output : source
 
         // Route input to configured mergers
