@@ -2170,7 +2170,10 @@ export async function generateScriptureShowFromReference(referenceText: string) 
         const biblesContent = await getActiveScripturesContent()
         if (!biblesContent?.length) return null
 
-        return (await getScriptureShow(biblesContent)) || null
+        const scriptureShow = await getScriptureShow(biblesContent)
+        if (!scriptureShow?.slides) return null
+
+        return scriptureShow
     } catch (err) {
         console.error("Error generating scripture show from reference:", err)
         return null
