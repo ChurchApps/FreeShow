@@ -30,7 +30,8 @@ interface AiScriptureSettings {
     displayTranslation?: "drawer" | "matched"
     micDeviceId?: string
     provider?: AIProviderId
-    model?: string
+    model?: string // legacy single model value (kept as fallback)
+    models?: { [key in AIProviderId]?: string }
     customModel?: string
     whisperModel?: WhisperModelId
     whisperCustomPath?: string
@@ -45,9 +46,27 @@ function getSettings(): AiScriptureSettings {
     return get(special).aiScripture || {}
 }
 
+// map machine error codes to lang keys - unknown codes (e.g. raw device errors) pass through unchanged
+const ERROR_LANG_KEYS: { [code: string]: string } = {
+    no_scripture: "scripture.ai_error_no_scripture",
+    start_failed: "scripture.ai_error_start_failed",
+    microphone_access: "scripture.ai_error_microphone",
+    whisper_not_installed: "settings.ai_whisper_not_installed",
+    whisper_model_missing: "scripture.ai_error_model_missing",
+    cancelled: "settings.ai_error_cancelled",
+    unsupported_platform: "settings.ai_error_unsupported_platform",
+    download_in_progress: "settings.ai_error_download_in_progress"
+}
+
+export function aiScriptureErrorText(code: string): string {
+    return ERROR_LANG_KEYS[code] || code
+}
+
 let sessionActive = false
 let searchBibleIds: string[] = []
 let selfProjecting = false
+let startInFlight: Promise<{ ok: boolean; error?: string }> | null = null
+let suggestionPruneTimer: NodeJS.Timeout | null = null
 
 let captureStream: MediaStream | null = null
 let captureContext: AudioContext | null = null
@@ -62,63 +81,96 @@ let previousState: { activeScripture: { id?: string; reference?: { book: number 
 
 // START / STOP
 
-export async function startAiScriptureListening(): Promise<{ ok: boolean; error?: string }> {
-    stopAiScriptureListening()
+export function startAiScriptureListening(): Promise<{ ok: boolean; error?: string }> {
+    // a start is already in progress - don't run two interleaved start sequences
+    if (startInFlight) return startInFlight
+
+    startInFlight = startSession()
+        .catch((err) => {
+            console.error("Failed to start AI scripture listening:", err)
+            return startError("start_failed")
+        })
+        .finally(() => (startInFlight = null))
+    return startInFlight
+}
+
+function startError(code: string): { ok: boolean; error: string } {
+    // main might send an async "stopped" status right after - don't let it overwrite the error
+    suppressStoppedUntil = Date.now() + 3000
+    aiScriptureStatus.set({ state: "error", message: code })
+    return { ok: false, error: code }
+}
+
+async function startSession(): Promise<{ ok: boolean; error?: string }> {
+    stopSession()
+    aiScriptureStatus.set({ state: "starting" }) // set synchronously so the panel toggle is disabled right away
 
     const settings = getSettings()
 
     const activeSubTab = get(drawerTabsData).scripture?.activeSubTab || ""
-    if (!activeSubTab) return { ok: false, error: "no_scripture" }
+    if (!activeSubTab) return startError("no_scripture")
 
     searchBibleIds = expandBibleIds(settings.searchBibles?.length ? settings.searchBibles : [activeSubTab])
 
     const books = await buildBookTable(searchBibleIds)
-    if (!books.length) return { ok: false, error: "no_scripture" }
+    if (!books.length) return startError("no_scripture")
 
     // only pass the LLM config when a key is saved for the provider (raw keys never leave the electron process)
+    const provider = settings.provider || "anthropic"
     let llm: AiScriptureStartConfig["llm"] = null
-    if (settings.provider) {
-        const status = await requestMain(Main.AI_SCRIPTURE_GET_STATUS)
-        if (status?.keys?.[settings.provider]) {
-            const model = settings.customModel || settings.model || AI_PROVIDER_MODELS[settings.provider].defaultModel
-            llm = { provider: settings.provider, model }
-        }
+    const status = await requestMain(Main.AI_SCRIPTURE_GET_STATUS)
+    if (status?.keys?.[provider]) {
+        // legacy "model" values are shared across providers - only use one that belongs to this provider
+        const legacyModel = settings.model && AI_PROVIDER_MODELS[provider].models.some((a) => a.id === settings.model) ? settings.model : ""
+        const model = settings.customModel || settings.models?.[provider] || legacyModel || "" // providers default internally on empty
+        llm = { provider, model }
     }
 
+    const language = settings.spokenLanguage || "en"
     const startConfig: AiScriptureStartConfig = {
-        whisperModel: settings.whisperModel || "base.en",
+        // default model must match the popup's derivation, or a non English user would request a model they never downloaded
+        whisperModel: settings.whisperModel || (language.startsWith("en") ? "base.en" : "base"),
         whisperCustomPath: settings.whisperCustomPath || undefined,
         whisperCustomModelPath: settings.whisperCustomModelPath || undefined,
-        language: settings.spokenLanguage || "en",
+        language,
         books,
-        llm
+        llm,
+        refCooldownSeconds: settings.refCooldownSeconds
     }
 
-    aiScriptureStatus.set({ state: "starting" })
     aiScriptureTranscript.set([])
     aiScriptureSuggestions.set([])
     aiScriptureAutoPaused.set(false)
 
     // whisper might need a moment to spin up on first start
     const result = await requestMain(Main.AI_SCRIPTURE_START, startConfig, undefined, 60000)
-    if (!result?.started) {
-        const error = result?.error || "start_failed"
-        aiScriptureStatus.set({ state: "error", message: error })
-        return { ok: false, error }
-    }
+    if (!result?.started) return startError(result?.error || "start_failed")
 
     const micError = await startMicCapture(settings.micDeviceId || "")
     if (micError) {
         sendMain(Main.AI_SCRIPTURE_STOP)
-        aiScriptureStatus.set({ state: "error", message: micError })
-        return { ok: false, error: micError }
+        return startError(micError)
     }
 
     sessionActive = true
+
+    // prune suggestions that are too old to still be relevant
+    suggestionPruneTimer = setInterval(pruneSuggestions, 15000)
+
     return { ok: true }
 }
 
 export function stopAiScriptureListening(): void {
+    if (startInFlight) {
+        // a start is in progress - let it finish, then stop cleanly
+        startInFlight.then(() => stopSession())
+        return
+    }
+
+    stopSession()
+}
+
+function stopSession(): void {
     sessionActive = false
     aiScriptureHasProjected.set(false)
 
@@ -128,11 +180,40 @@ export function stopAiScriptureListening(): void {
     }
     pendingAutoRef = null
 
+    if (suggestionPruneTimer) {
+        clearInterval(suggestionPruneTimer)
+        suggestionPruneTimer = null
+    }
+    aiScriptureSuggestions.set([])
+
     sendMain(Main.AI_SCRIPTURE_STOP)
     stopMicCapture()
 
     aiScriptureAutoPaused.set(false)
+    aiScriptureStatus.set({ state: "stopped" })
 }
+
+// STATUS FILTERING
+// main writes status events directly to the store (responsesMain) - reject updates that should not apply:
+// an async "stopped" overwriting a just set local error, & any active status while the feature is disabled
+
+let suppressStoppedUntil = 0
+let lastAcceptedStatus = get(aiScriptureStatus)
+let restoringStatus = false
+aiScriptureStatus.subscribe((status) => {
+    if (restoringStatus) return
+
+    const ignoreDisabled = status.state !== "stopped" && !getSettings().enabled
+    const ignoreStopped = status.state === "stopped" && Date.now() < suppressStoppedUntil
+    if (!ignoreDisabled && !ignoreStopped) {
+        lastAcceptedStatus = status
+        return
+    }
+
+    restoringStatus = true
+    aiScriptureStatus.set(lastAcceptedStatus)
+    restoringStatus = false
+})
 
 // MICROPHONE CAPTURE
 
@@ -230,6 +311,7 @@ function expandBibleIds(ids: string[]): string[] {
 
 async function buildBookTable(bibleIds: string[]): Promise<AiScriptureBook[]> {
     const namesByNumber: Map<number, string[]> = new Map()
+    const canonNumbers: Set<number> = new Set() // book numbers matching the 66 book Protestant canon
     const addName = (number: number, name: string | undefined) => {
         const trimmed = (name || "").trim()
         if (!number || !trimmed) return
@@ -241,38 +323,44 @@ async function buildBookTable(bibleIds: string[]): Promise<AiScriptureBook[]> {
     for (const id of bibleIds) {
         try {
             const bible = await loadJsonBible(id)
-            bible?.data.books?.forEach((book) => {
+            const books = bible?.data.books || []
+            const isCanon = books.length === 66
+            books.forEach((book) => {
                 addName(book.number, book.name)
                 addName(book.number, book.abbreviation)
                 addName(book.number, book.id)
+                if (isCanon) canonNumbers.add(book.number)
             })
         } catch (err) {
             console.error("Error loading Bible for AI scripture book table:", id, err)
         }
 
-        get(scripturesCache)[id]?.books?.forEach((book) => {
+        const cachedBooks = get(scripturesCache)[id]?.books || []
+        const cachedIsCanon = cachedBooks.length === 66
+        cachedBooks.forEach((book) => {
             addName(book.number, book.name)
             addName(book.number, (book as any).customName) // many XML book names are not correct
             addName(book.number, book.abbreviation)
+            if (cachedIsCanon) canonNumbers.add(book.number)
         })
     }
 
     return Array.from(namesByNumber.entries())
         .sort((a, b) => a[0] - b[0])
-        .map(([number, names]) => ({ number, names }))
+        .map(([number, names]) => ({ number, names, canonNumber: canonNumbers.has(number) ? number : undefined }))
 }
 
 // DETECTION HANDLING
 
 export async function handleDetection(ref: DetectedReference): Promise<void> {
-    if (!sessionActive) return
+    const settings = getSettings()
+    if (!sessionActive || !settings.enabled) return
 
     if (ref.type === "quoted" && ref.quote) await verifyQuote(ref)
 
     addSuggestion(ref)
 
     // auto projection
-    const settings = getSettings()
     if (settings.mode !== "auto") return
     if (get(aiScriptureAutoPaused) || get(outLocked)) return
     if (ref.confidence !== "high") return
@@ -354,6 +442,14 @@ function addSuggestion(ref: DetectedReference) {
     })
 }
 
+function pruneSuggestions() {
+    aiScriptureSuggestions.update((list) => {
+        const now = Date.now()
+        const active = list.filter((a) => now - a.timestamp < SUGGESTION_MAX_AGE)
+        return active.length === list.length ? list : active
+    })
+}
+
 export function dismissSuggestion(id: string): void {
     aiScriptureSuggestions.update((list) => list.filter((a) => a.id !== id))
 }
@@ -393,6 +489,12 @@ function queueAutoProjection(ref: DetectedReference, settings: AiScriptureSettin
 
 export async function projectDetection(detection: DetectedReference, manual?: boolean): Promise<boolean> {
     const settings = getSettings()
+
+    // arm the cooldown before any awaits so parallel detections can't project concurrently
+    if (!manual) {
+        lastAutoProjectionAt = Date.now()
+        lastAutoProjectedRef = detection
+    }
 
     const drawerTabId = get(drawerTabsData).scripture?.activeSubTab || ""
     const targetId = settings.displayTranslation === "matched" && detection.matchedBibleId ? detection.matchedBibleId : drawerTabId
@@ -462,11 +564,6 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
         selfProjecting = false
     }
 
-    if (!manual) {
-        lastAutoProjectionAt = Date.now()
-        lastAutoProjectedRef = detection
-    }
-
     aiScriptureHasProjected.set(true)
     return true
 }
@@ -487,6 +584,7 @@ function resolveBookNumber(bible: BibleInstance, ref: DetectedReference): number
 
 export function restorePrevious(): void {
     if (!previousState) return
+    if (get(outLocked)) return
 
     const previous = previousState
     previousState = null
@@ -507,11 +605,29 @@ export function resumeAutoProjection(): void {
     aiScriptureAutoPaused.set(false)
 }
 
-export function showInDrawer(detection: DetectedReference): void {
+export async function showInDrawer(detection: DetectedReference): Promise<void> {
     const verses: number[] = []
     for (let v = detection.verseStart; v <= Math.max(detection.verseStart, detection.verseEnd); v++) verses.push(v)
 
-    openScripture.set({ book: detection.bookNumber, chapter: detection.chapter, verses: [verses], play: false })
+    // map the canon book number to the drawer bible's own numbering
+    let book: number = detection.bookNumber
+    const drawerTabId = get(drawerTabsData).scripture?.activeSubTab || ""
+    if (drawerTabId) {
+        const parseId = get(scriptures)[drawerTabId]?.collection?.versions?.[0] || drawerTabId
+
+        // 66 book bibles use the standard Protestant canon numbering - skip loading in that case
+        const cachedBooks = get(scripturesCache)[parseId]?.books
+        if (cachedBooks?.length !== 66) {
+            try {
+                const bible = await loadJsonBible(parseId)
+                if (bible) book = resolveBookNumber(bible, detection) || detection.bookNumber
+            } catch (err) {
+                console.error("Error resolving AI scripture drawer book:", parseId, err)
+            }
+        }
+    }
+
+    openScripture.set({ book, chapter: detection.chapter, verses: [verses], play: false })
     activeDrawerTab.set("scripture")
 }
 
@@ -532,6 +648,7 @@ outputs.subscribe((allOutputs) => {
 
     if (!changed || !sessionActive || selfProjecting) return
     if (key === null) return // slide cleared (possibly by us or "restore previous") - not a manual override
+    if (getSettings().mode !== "auto") return // nothing to pause in confirm mode
 
     aiScriptureAutoPaused.set(true)
 })

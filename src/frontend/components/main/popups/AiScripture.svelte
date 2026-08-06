@@ -3,6 +3,7 @@
     import type { AIError, AIProviderId, WhisperModelId, WhisperStatus } from "../../../../types/AiScripture"
     import { AI_PROVIDER_MODELS } from "../../../../types/AiScripture"
     import { Main } from "../../../../types/IPC/Main"
+    import { aiScriptureErrorText } from "../../../audio/aiScripture"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import { requestMain, sendMain } from "../../../IPC/main"
     import { language, os, scriptures, special, whisperDownloads } from "../../../stores"
@@ -131,7 +132,7 @@
         sendMain(Main.AI_SCRIPTURE_WHISPER_CANCEL)
     }
 
-    $: binaryDownload = binaryDownloading ? getDownload("binary", $whisperDownloads) : null
+    $: binaryDownload = binaryDownloading ? getDownload("whisper", $whisperDownloads) : null
     $: modelDownload = modelDownloading ? getDownload(whisperModelId, $whisperDownloads) : null
 
     // CUSTOM BINARY PATH
@@ -176,7 +177,8 @@
     $: provider = ((settings.provider as string) || "anthropic") as AIProviderId
     $: providerData = AI_PROVIDER_MODELS[provider]
     $: modelOptions = providerData.models.map((model) => ({ value: model.id, label: model.name }))
-    $: selectedModel = providerData.models.find((model) => model.id === settings.model) ? (settings.model as string) : providerData.defaultModel
+    $: storedModel = ((settings.models?.[provider] as string) || (settings.model as string) || "") as string // "models" is stored per provider - "model" is the legacy shared value
+    $: selectedModel = providerData.models.find((model) => model.id === storedModel) ? storedModel : providerData.defaultModel
     $: effectiveModel = (settings.customModel as string) || selectedModel
     $: keySaved = !!status?.keys[provider]
 
@@ -184,6 +186,10 @@
         update("provider", id)
         keyInput = ""
         testResult = null
+    }
+
+    function setModel(id: string) {
+        update("models", { ...(settings.models || {}), [provider]: id })
     }
 
     let keyInput = ""
@@ -272,7 +278,7 @@
             {/if}
 
             {#if binaryError}
-                <Tip type="warning" value={binaryError} />
+                <Tip type="warning" value={aiScriptureErrorText(binaryError)} />
             {/if}
         {:else if platform === "darwin"}
             <p class="faded"><T id="settings.ai_whisper_mac_guide" /></p>
@@ -324,7 +330,7 @@
     {/if}
 </InputRow>
 {#if modelError}
-    <Tip type="warning" value={modelError} />
+    <Tip type="warning" value={aiScriptureErrorText(modelError)} />
 {/if}
 
 <InputRow>
@@ -375,7 +381,7 @@
     {/if}
 {/if}
 
-<MaterialDropdown label="settings.ai_model" options={modelOptions} value={selectedModel} defaultValue={providerData.defaultModel} disabled={showCustomModel} on:change={(e) => update("model", e.detail)} />
+<MaterialDropdown label="settings.ai_model" options={modelOptions} value={selectedModel} defaultValue={providerData.defaultModel} disabled={showCustomModel} on:change={(e) => setModel(e.detail)} />
 
 <MaterialToggleSwitch label="settings.ai_custom_model" checked={showCustomModel} defaultValue={false} on:change={(e) => toggleCustomModel(e.detail)} />
 {#if showCustomModel}

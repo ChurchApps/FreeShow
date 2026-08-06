@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { DetectedReference } from "../../../../types/AiScripture"
     import type { Popups } from "../../../../types/Main"
-    import { dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../../../audio/aiScripture"
+    import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../../../audio/aiScripture"
     import { activePopup, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, outLocked, popupData, scriptures } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import T from "../../helpers/T.svelte"
@@ -11,6 +11,7 @@
     $: state = $aiScriptureStatus.state
     $: isListening = state === "listening" || state === "llm_paused"
     $: isStarting = state === "starting"
+    $: errorText = state === "error" && $aiScriptureStatus.message ? translateText(aiScriptureErrorText($aiScriptureStatus.message)) : ""
 
     async function toggleListening() {
         if (isStarting) return
@@ -67,8 +68,8 @@
         <span class="dot {state}" />
         <span class="stateLabel"><T id="scripture.ai_state_{state}" /></span>
 
-        {#if state === "error" && $aiScriptureStatus.message}
-            <span class="errorMessage" data-title={$aiScriptureStatus.message}>{$aiScriptureStatus.message}</span>
+        {#if errorText}
+            <span class="errorMessage" data-title={errorText}>{errorText}</span>
         {/if}
 
         {#if isListening && $aiScriptureStatus.keyless}
@@ -83,7 +84,7 @@
         <div class="fill" />
 
         {#if $aiScriptureHasProjected}
-            <MaterialButton icon="undo" title="scripture.ai_restore_previous" on:click={restore} />
+            <MaterialButton icon="undo" title="scripture.ai_restore_previous" disabled={$outLocked} on:click={restore} />
         {/if}
 
         <MaterialButton icon="settings" title="scripture.ai_setup" on:click={openSetup} />
