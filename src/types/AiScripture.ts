@@ -128,7 +128,11 @@ export interface AiScriptureBook {
     names: string[] // name/customName/abbreviations across the selected bibles
 }
 
+/** Which transcription engine a session runs on. */
+export type AiScriptureEngine = "whisper" | "nemotron"
+
 export interface AiScriptureStartConfig {
+    engine?: AiScriptureEngine // defaults to whisper
     whisperModel: WhisperModelId
     whisperCustomPath?: string
     whisperCustomModelPath?: string // use an already installed ggml model file instead of a downloaded one
