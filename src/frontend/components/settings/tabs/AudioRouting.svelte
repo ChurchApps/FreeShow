@@ -6,7 +6,7 @@
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
     import { deduplicateConnections } from "../../../audio/routing/audioRoutingInit"
-    import { audioChannelsData, audioRouting, outputs } from "../../../stores"
+    import { audioChannelsData, audioPlaylists, audioRouting, outputs } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { keysToID } from "../../helpers/array"
     import { getAllOutputs } from "../../helpers/output"
@@ -42,6 +42,7 @@
     // Fixed Inputs & Outputs (no longer persisted in settings store)
     const fixedInputs = [
         { id: "drawer_audio", name: translateText("tabs.audio"), type: "drawer_audio" },
+        { id: "playlists_default", name: translateText("audio.playlists"), type: "playlist" },
         { id: "mic_default", name: translateText("live.microphones"), type: "mic" },
         { id: "metronome", name: translateText("audio.metronome"), type: "metronome" },
         { id: "desktop_default", name: translateText("audio.desktop_audio"), type: "desktop_audio" },
@@ -58,6 +59,12 @@
     let availableAudioOutputs: { value: string; label: string; channels: number }[] = []
 
     let expandedNodes: Set<string> = new Set(["output_window", "network_default"])
+
+    $: availablePlaylists = keysToID($audioPlaylists).map((p) => ({
+        id: "playlist_sub_" + p.id,
+        name: p.name || p.id,
+        type: "playlist"
+    }))
 
     let nonStageOutputs: RoutingColumnNode[] = []
     $: nonStageOutputs = getAllOutputs()
@@ -88,14 +95,28 @@
             }
         })
 
-    // Auto-expand if a child node has an active connection
-    $: if (config.connections.some((conn) => conn.from.startsWith("mic_sub_"))) {
-        expandedNodes.add("mic_default")
-        expandedNodes = expandedNodes
+    // Prefix map for parent-child relationship management
+    const PARENT_PREFIX_MAP: Record<string, { parentId: string; prefix: string }> = {
+        playlist_sub_: { parentId: "playlists_default", prefix: "playlist_sub_" },
+        mic_sub_: { parentId: "mic_default", prefix: "mic_sub_" },
+        drawer_sub_: { parentId: "drawer_audio", prefix: "drawer_sub_" },
+        speaker_sub_: { parentId: "speaker_default", prefix: "speaker_sub_" },
+        network_sub_: { parentId: "network_default", prefix: "network_sub_" },
+        output_win_sub_: { parentId: "output_window", prefix: "output_win_sub_" }
     }
-    $: if (config.connections.some((conn) => conn.to.startsWith("speaker_sub_"))) {
-        expandedNodes.add("speaker_default")
-        expandedNodes = expandedNodes
+
+    // Auto-expand parent nodes if a child node has an active connection
+    $: {
+        let changed = false
+        for (const conn of config.connections) {
+            for (const [, { parentId, prefix }] of Object.entries(PARENT_PREFIX_MAP)) {
+                if ((conn.from.startsWith(prefix) || conn.to.startsWith(prefix)) && !expandedNodes.has(parentId)) {
+                    expandedNodes.add(parentId)
+                    changed = true
+                }
+            }
+        }
+        if (changed) expandedNodes = expandedNodes
     }
 
     let connectionFrame: number | null = null
@@ -107,7 +128,7 @@
         })
     }
 
-    $: if (config || expandedNodes || nonStageOutputs || networkOutputWindows) {
+    $: if (config || expandedNodes || nonStageOutputs || networkOutputWindows || availablePlaylists) {
         tick().then(requestUpdateConnectionLines)
     }
 
@@ -140,7 +161,7 @@
             title: "Inputs",
             type: "input",
             nodes: fixedInputs.map((node) => {
-                const subNodes = node.id === "mic_default" ? availableAudioInputs.map((mic) => ({ id: mic.value, name: mic.label, type: "mic" })) : node.id === "output_window" ? nonStageOutputs : []
+                const subNodes = node.id === "playlists_default" ? availablePlaylists : node.id === "mic_default" ? availableAudioInputs.map((mic) => ({ id: mic.value, name: mic.label, type: "mic" })) : node.id === "output_window" ? nonStageOutputs : []
                 return {
                     ...node,
                     isExpanded: expandedNodes.has(node.id) || node.id === "output_window",
@@ -347,7 +368,7 @@
             let fromId = dragStartId
             let toId = hoverTargetId
 
-            const isInput = (id: string) => fixedInputs.some((i) => i.id === id) || id.startsWith("mic_sub_") || id.startsWith("output_win_sub_")
+            const isInput = (id: string) => fixedInputs.some((i) => i.id === id) || id.startsWith("playlist_sub_") || id.startsWith("mic_sub_") || id.startsWith("output_win_sub_")
             const isChannelNode = (id: string) => channelsList.some((m) => m.id === id)
             const isOutput = (id: string) => fixedOutputs.some((o) => o.id === id) || id.startsWith("speaker_sub_") || id.startsWith("network_sub_")
 
@@ -399,32 +420,18 @@
                         if (existingIndex !== -1) {
                             c.connections.splice(existingIndex, 1)
                         } else {
-                            const isChildInput = fromId.startsWith("drawer_sub_") || fromId.startsWith("mic_sub_") || fromId.startsWith("output_win_sub_")
-                            const isParentInput = fromId === "drawer_audio" || fromId === "mic_default"
-                            const isChildOutput = toId.startsWith("speaker_sub_") || toId.startsWith("network_sub_")
-                            const isParentOutput = toId === "speaker_default" || toId === "network_default"
-
-                            if (isChildInput) {
-                                let parentId = ""
-                                if (fromId.startsWith("drawer_sub_")) parentId = "drawer_audio"
-                                else if (fromId.startsWith("mic_sub_")) parentId = "mic_default"
-
-                                if (parentId) c.connections = c.connections.filter((conn) => !(conn.from === parentId && conn.to === toId))
-                            }
-                            if (isParentInput) {
-                                let prefix = ""
-                                if (fromId === "drawer_audio") prefix = "drawer_sub_"
-                                else if (fromId === "mic_default") prefix = "mic_sub_"
-
-                                if (prefix) c.connections = c.connections.filter((conn) => !(conn.from.startsWith(prefix) && conn.to === toId))
-                            }
-                            if (isChildOutput) {
-                                const parentId = toId.startsWith("speaker_sub_") ? "speaker_default" : "network_default"
-                                c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to === parentId))
-                            }
-                            if (isParentOutput) {
-                                const prefix = toId === "speaker_default" ? "speaker_sub_" : "network_sub_"
-                                c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to.startsWith(prefix)))
+                            // Resolve conflicts between parent defaults and specific sub-nodes
+                            for (const [, { parentId, prefix }] of Object.entries(PARENT_PREFIX_MAP)) {
+                                if (fromId.startsWith(prefix)) {
+                                    c.connections = c.connections.filter((conn) => !(conn.from === parentId && conn.to === toId))
+                                } else if (fromId === parentId) {
+                                    c.connections = c.connections.filter((conn) => !(conn.from.startsWith(prefix) && conn.to === toId))
+                                }
+                                if (toId.startsWith(prefix)) {
+                                    c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to === parentId))
+                                } else if (toId === parentId) {
+                                    c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to.startsWith(prefix)))
+                                }
                             }
 
                             c.connections.push({ from: fromId, to: toId, channelIndex: targetChIndex } as any)

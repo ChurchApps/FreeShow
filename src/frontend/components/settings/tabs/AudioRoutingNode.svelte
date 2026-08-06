@@ -40,6 +40,7 @@
 
         const icons: Record<string, string> = {
             drawer_audio: "audio",
+            playlist: "playlist",
             mic: "mic",
             metronome: "timer",
             desktop_audio: "volume",

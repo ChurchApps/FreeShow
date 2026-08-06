@@ -28,6 +28,7 @@ type AudioOptions = {
     playlistCrossfade?: boolean // playlist
     startPaused?: boolean // playlist
     volume?: number // playlist
+    playlistId?: string
 }
 export type AudioData = {
     name: string
@@ -36,6 +37,7 @@ export type AudioData = {
     audio: HTMLAudioElement
     stream?: MediaStream
     replayGainMultiplier?: number
+    playlistId?: string
 }
 
 export class AudioPlayer {
@@ -137,7 +139,8 @@ export class AudioPlayer {
                 paused: !!options.startPaused,
                 isMic: false,
                 audio,
-                replayGainMultiplier
+                replayGainMultiplier,
+                playlistId: options.playlistId
             }
             return a
         })

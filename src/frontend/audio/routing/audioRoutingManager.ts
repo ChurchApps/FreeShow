@@ -279,6 +279,7 @@ export class AudioRoutingManager {
 
         const activeNodeIds = new Set<string>()
         activeNodeIds.add("drawer_audio")
+        activeNodeIds.add("playlists_default")
         activeNodeIds.add("output_window")
         activeNodeIds.add("mic_default")
         this.inputNodes.forEach((_, key) => activeNodeIds.add(key))

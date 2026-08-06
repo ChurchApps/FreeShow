@@ -152,7 +152,8 @@ export class AudioPlaylist {
         })
 
         // if (crossfade) isCrossfading = true
-        const started = await AudioPlayer.start(nextSong, { name: "" }, { pauseIfPlaying: false, crossfade: data.crossfade, playlistCrossfade: true, startPaused: data.autoNext === false, volume: playlist.volume || 1 })
+        const playlistId = get(activePlaylist)?.id || ""
+        const started = await AudioPlayer.start(nextSong, { name: "" }, { pauseIfPlaying: false, crossfade: data.crossfade, playlistCrossfade: true, startPaused: data.autoNext === false, volume: playlist.volume || 1, playlistId })
 
         // skip songs that can't be played (e.g. moved/deleted files), so one missing file does not stop the playlist
         if (!started) {

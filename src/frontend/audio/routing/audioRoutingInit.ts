@@ -41,6 +41,7 @@ export async function initAudioRouting(data: AudioRoutingConfig | null) {
 
     // connect main inputs
     connections.push({ from: "drawer_audio", to: "main" })
+    connections.push({ from: "playlists_default", to: "main" })
     connections.push({ from: "mic_default", to: "main" })
 
     // create a custom Metronome channel
@@ -59,6 +60,7 @@ export async function initAudioRouting(data: AudioRoutingConfig | null) {
         if (out.ndi || out.webrtc || out.rtmp) {
             channels.push({ id: `channel_${out.id}`, name: out.name, color: out.color })
             connections.push({ from: "drawer_audio", to: `channel_${out.id}` })
+            connections.push({ from: "playlists_default", to: `channel_${out.id}` })
             connections.push({ from: `output_win_sub_${out.id}`, to: `channel_${out.id}` })
             connections.push({ from: `channel_${out.id}`, to: `network_sub_${out.id}` })
             return

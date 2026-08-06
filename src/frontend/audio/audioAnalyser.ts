@@ -359,7 +359,11 @@ export class AudioAnalyser {
         const isMic = audioPlaying?.isMic === true || (id && id.startsWith("mic_sub_"))
         const isVideo = videoPlaying || (id && id.startsWith("output_win_sub_")) || !!outputId
 
-        const nodeKey = id ? (isMic ? id : id === "metronome" ? "metronome" : isVideo ? "output_window" : "drawer_audio") : "drawer_audio"
+        const playlistId = audioPlaying?.playlistId
+        const isPlaylist = !!playlistId
+        const playlistSubId = playlistId ? `playlist_sub_${playlistId}` : null
+
+        const nodeKey = id ? (isMic ? id : id === "metronome" ? "metronome" : isVideo ? "output_window" : isPlaylist ? playlistSubId! : "drawer_audio") : "drawer_audio"
 
         const manager = AudioRoutingManager.getInstance()
         manager.registerInputNode(nodeKey, node)
@@ -371,6 +375,8 @@ export class AudioAnalyser {
             if (outputId) {
                 manager.registerInputNode(`output_win_sub_${outputId}`, node)
             }
+        } else if (isPlaylist) {
+            manager.registerInputNode("playlists_default", node)
         }
 
         manager.updateRoutingNodes()
@@ -384,7 +390,11 @@ export class AudioAnalyser {
         const isMic = audioPlaying?.isMic === true || (id && id.startsWith("mic_sub_"))
         const isVideo = videoPlaying || (id && id.startsWith("output_win_sub_")) || !!outputId
 
-        const nodeKey = id ? (isMic ? id : id === "metronome" ? "metronome" : isVideo ? "output_window" : "drawer_audio") : "drawer_audio"
+        const playlistId = audioPlaying?.playlistId
+        const isPlaylist = !!playlistId
+        const playlistSubId = playlistId ? `playlist_sub_${playlistId}` : null
+
+        const nodeKey = id ? (isMic ? id : id === "metronome" ? "metronome" : isVideo ? "output_window" : isPlaylist ? playlistSubId! : "drawer_audio") : "drawer_audio"
         AudioRoutingManager.getInstance().unregisterInputNode(nodeKey, node)
 
         if (isMic) {
@@ -394,6 +404,8 @@ export class AudioAnalyser {
             if (outputId) {
                 AudioRoutingManager.getInstance().unregisterInputNode(`output_win_sub_${outputId}`, node)
             }
+        } else if (isPlaylist) {
+            AudioRoutingManager.getInstance().unregisterInputNode("playlists_default", node)
         }
 
         try {
