@@ -247,12 +247,6 @@ export class OutputLifecycle {
     // configured rate. TODO: make this adaptive to the measured readback rate.
     private static readonly OSR_RENDER_FPS = 60
 
-    // DIAGNOSTIC (env FS_PAINT_ONLY=1): count paint events and release every texture immediately — NO readback,
-    // NO forward. This measures the compositor's RAW 4K paint-delivery rate with zero readback GPU load, so we
-    // can tell whether readback is stealing GPU (paints jump well above the ~70/s-total seen with readback on)
-    // or the compositor is genuinely capped there. Outputs won't send while this is on; it's a measurement mode.
-    private static readonly PAINT_ONLY = process.env.FS_PAINT_ONLY === "1"
-
     private static attachOsrCapture(window: BrowserWindow, id: string) {
         try {
             window.webContents.setFrameRate(this.OSR_RENDER_FPS)
@@ -343,29 +337,10 @@ export class OutputLifecycle {
             offMainInFlight = Math.max(0, offMainInFlight - 1)
         }
 
-        const paintDiag = { paints: 0, dropped: 0, releaseMs: 0, handlerMs: 0, last: Date.now() }
         window.webContents.on("paint", (event: any) => {
-            const hStart = Date.now()
-            paintDiag.paints++
             const tex = event?.texture
             const info = tex?.textureInfo
             if (!info) return
-
-            // measurement mode: release immediately, count only -> raw compositor paint rate, no readback load
-            if (this.PAINT_ONLY) {
-                try {
-                    tex.release()
-                } catch {
-                    // ignore
-                }
-                const now = Date.now()
-                if (now - paintDiag.last >= 1000) {
-                    console.info(`[PAINT-ONLY] ${id}: ${paintDiag.paints} paints/s (readback disabled)`)
-                    paintDiag.paints = 0
-                    paintDiag.last = now
-                }
-                return
-            }
 
             const width = info.codedSize.width
             const height = info.codedSize.height
@@ -391,24 +366,12 @@ export class OutputLifecycle {
             const mixedOffMain = !!groupInfo && groupInfo.eligible && groupInfo.needsScaled && hasGpuDownscale
             const canOffMain = !!groupInfo && groupInfo.eligible && (!groupInfo.needsScaled || hasGpuDownscale)
             if (canOffMain) {
+                // too many in flight / too soon since the last forward: drop this paint (release the texture)
                 if (offMainInFlight >= this.OFF_MAIN_MAX_INFLIGHT || Date.now() - lastOffMain < this.getOsrSendInterval(id)) {
-                    paintDiag.dropped++
-                    const rs = Date.now()
                     try {
                         tex.release()
                     } catch {
                         // ignore
-                    }
-                    paintDiag.releaseMs += Date.now() - rs
-                    paintDiag.handlerMs += Date.now() - hStart
-                    const now = Date.now()
-                    if (now - paintDiag.last >= 1000) {
-                        console.info(`[PAINT] ${id}: ${paintDiag.paints} paints/s dropped ${paintDiag.dropped}  release ${paintDiag.releaseMs}ms/s  handler ${paintDiag.handlerMs}ms/s`)
-                        paintDiag.paints = 0
-                        paintDiag.dropped = 0
-                        paintDiag.releaseMs = 0
-                        paintDiag.handlerMs = 0
-                        paintDiag.last = now
                     }
                     return
                 }
@@ -509,19 +472,11 @@ export class OutputLifecycle {
     // so this timer can post every interval without stalling on the previous send's (laggy) completion.
     private static startOsrSendTimer(window: BrowserWindow, id: string, emit: () => void) {
         let sendTimer: NodeJS.Timeout
-        const diag = { ticks: 0, last: Date.now() }
         const tick = () => {
             // transmitFrame no-ops until the output's capture channels are set up, and throttles each consumer
             if (!window.isDestroyed()) emit()
             // re-read the interval each tick so framerate changes (e.g. NDI connect) take effect
             const interval = this.getOsrSendInterval(id)
-            diag.ticks++
-            const now = Date.now()
-            if (now - diag.last >= 1000) {
-                console.info(`[OSR-TICK] ${id}: ${diag.ticks} ticks/s  interval ${interval}ms`)
-                diag.ticks = 0
-                diag.last = now
-            }
             sendTimer = setTimeout(tick, interval)
         }
         sendTimer = setTimeout(tick, this.getOsrSendInterval(id))

@@ -326,30 +326,11 @@ export class CaptureTransmitter {
 
         // free the lifecycle loop immediately
         setImmediate(() => {
-            const tfStart = Date.now()
             if (!raw && (!image || image.isEmpty())) return
-            try {
-                this.transmitFrameBody(captureId, image, raw, frameTimestamp, captureOptions, framerates)
-            } finally {
-                let d = this.tfDiag[captureId]
-                if (!d) d = this.tfDiag[captureId] = { ms: 0, n: 0, last: Date.now() }
-                d.ms += Date.now() - tfStart
-                d.n++
-                const now = Date.now()
-                if (now - d.last >= 1000) {
-                    const chans = Object.keys(this.channels)
-                        .filter((k) => k.startsWith(`${captureId}-`))
-                        .map((k) => this.channels[k].key)
-                    console.info(`[TF] ${captureId}: ${d.n}/s  ${d.ms}ms/s  channels=[${chans.join(",")}]`)
-                    d.ms = 0
-                    d.n = 0
-                    d.last = now
-                }
-            }
+            this.transmitFrameBody(captureId, image, raw, frameTimestamp, captureOptions, framerates)
         })
     }
 
-    private static tfDiag: { [id: string]: { ms: number; n: number; last: number } } = {}
     private static transmitFrameBody(captureId: string, image: NativeImage | null, raw: { buffer: Buffer; size: Size; format?: number } | undefined, frameTimestamp: number, captureOptions: any, framerates: any) {
         {
 
@@ -434,14 +415,9 @@ export class CaptureTransmitter {
         if (!image.isEmpty()) this.sendBufferToBlackmagic(captureId, image)
     }
 
-    private static ndiSendDiag: { [id: string]: { sent: number; skipped: number; last: number } } = {}
     private static sendRawToNdi(captureId: string, buffer: Buffer, size: Size, format: number) {
         if (!NdiSender.NDI[captureId]?.sender) return
-        if (NdiSender.isBusyNDI(captureId)) {
-            this.logNdiSendDiag(captureId, false)
-            return
-        }
-        this.logNdiSendDiag(captureId, true)
+        if (NdiSender.isBusyNDI(captureId)) return
         const output = OutputHelper.getOutput(captureId)
         const ratio = size.height ? size.width / size.height : 16 / 9
         const transparent = output?.transparent === true
@@ -452,19 +428,6 @@ export class CaptureTransmitter {
         NdiSender.sendVideoBufferNDI(captureId, Buffer.from(buffer), { size, ratio, framerate, transparent, format })
     }
 
-    private static logNdiSendDiag(id: string, sent: boolean) {
-        let d = this.ndiSendDiag[id]
-        if (!d) d = this.ndiSendDiag[id] = { sent: 0, skipped: 0, last: Date.now() }
-        if (sent) d.sent++
-        else d.skipped++
-        const now = Date.now()
-        if (now - d.last >= 1000) {
-            console.info(`[OSR-NDI] ${id}: sent ${d.sent}/s  busy-skipped ${d.skipped}/s`)
-            d.sent = 0
-            d.skipped = 0
-            d.last = now
-        }
-    }
 
     private static sendRawToWebRtc(captureId: string, buffer: Buffer, size: Size) {
         if (!WebRtcHost.isRunning()) return

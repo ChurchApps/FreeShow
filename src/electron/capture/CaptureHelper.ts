@@ -89,14 +89,10 @@ export class CaptureHelper {
         const win = (output as any)?.window as BrowserWindow | undefined
         if (!(output as any)?.osr || (output as any)?.follower || !win || win.isDestroyed()) return
 
-        // FS_PAINT_ONLY measurement: force full render rate so the raw compositor ceiling can be measured
-        // (otherwise disconnected outputs throttle to 1fps and the measurement reads ~1 paint/s).
-        let fps = process.env.FS_PAINT_ONLY === "1" ? 60 : 0
-        if (!fps) {
-            for (const m of RenderGroups.members(rendererId)) {
-                const mo = OutputHelper.getOutput(m)
-                if (mo?.captureOptions) fps = Math.max(fps, this.getMaxActiveFramerate(mo.captureOptions.framerates || {}, mo.captureOptions.options || {}))
-            }
+        let fps = 0
+        for (const m of RenderGroups.members(rendererId)) {
+            const mo = OutputHelper.getOutput(m)
+            if (mo?.captureOptions) fps = Math.max(fps, this.getMaxActiveFramerate(mo.captureOptions.framerates || {}, mo.captureOptions.options || {}))
         }
         try {
             win.webContents.setFrameRate(Math.max(1, Math.min(60, Math.round(fps || 1))))

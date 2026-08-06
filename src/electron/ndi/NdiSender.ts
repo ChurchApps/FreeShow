@@ -64,19 +64,8 @@ export class NdiSender {
         return this.worker
     }
 
-    private static msgDiag = { count: 0, videoDone: 0, last: Date.now() }
     private static onWorkerMessage(msg: any) {
         if (!msg?.type) return
-
-        this.msgDiag.count++
-        if (msg.type === "videoDone") this.msgDiag.videoDone++
-        const nowMs = Date.now()
-        if (nowMs - this.msgDiag.last >= 1000) {
-            console.info(`[WMSG] ${this.msgDiag.count} worker msgs/s (videoDone ${this.msgDiag.videoDone})`)
-            this.msgDiag.count = 0
-            this.msgDiag.videoDone = 0
-            this.msgDiag.last = nowMs
-        }
 
         if (msg.type === "status") {
             const data = this.NDI[msg.id]

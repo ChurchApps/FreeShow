@@ -8,9 +8,6 @@ import { parentPort } from "worker_threads"
 if (!parentPort) throw new Error("ndiWorker must be run as a worker_thread")
 const port = parentPort
 
-// confirm the enlarged libuv thread pool propagated to this worker (readbacks + NDI sends run on it)
-console.info(`[NDI-WORKER] started; UV_THREADPOOL_SIZE=${process.env.UV_THREADPOOL_SIZE || "(default 4)"}`)
-
 const BYTES_PER_FLOAT32 = 4
 const CONNECTION_POLL_INTERVAL_MS = 250
 const TIMECODE_DIVISOR = BigInt(100)
@@ -52,17 +49,11 @@ type Sender = {
     timer?: NodeJS.Timeout
     sendingVideo?: boolean
     pendingVideoFrame?: any
-    lastFmtLabel?: string
     // off-main capture path (NDI-only outputs): the worker does readback+send itself
     repeatTimer?: NodeJS.Timeout
     lastFrame?: any
     captureFramerate?: number
     offMain?: boolean
-    // diagnostics
-    path?: string
-    lastReadbackMs?: number
-    realN?: number
-    repeatN?: number
 }
 const NDI: { [id: string]: Sender } = {}
 
@@ -134,9 +125,7 @@ async function sendQueuedVideoFrame(id: string) {
     senderData.sendingVideo = true
 
     try {
-        const vt = Date.now()
         await senderData.sender.video(frame)
-        logUyvyTiming(id, (senderData as any).lastConvertMs || 0, Date.now() - vt)
     } catch (err) {
         console.error("Error sending NDI video frame:", err)
     } finally {
@@ -217,39 +206,10 @@ function bgraToUyva(bgra: Buffer, width: number, height: number): Buffer {
     return out
 }
 
-const uyvyTiming: { [id: string]: { conv: number; vid: number; n: number; last: number } } = {}
-function logUyvyTiming(id: string, convMs: number, videoMs: number) {
-    let t = uyvyTiming[id]
-    if (!t) t = uyvyTiming[id] = { conv: 0, vid: 0, n: 0, last: Date.now() }
-    t.conv += convMs
-    t.vid += videoMs
-    t.n++
-    const now = Date.now()
-    if (now - t.last >= 1000) {
-        const sd = NDI[id]
-        const conns = sd?.sender?.connections?.() ?? -1
-        const info = sd?.lastFmtLabel || "?"
-        const path = sd?.path || "?"
-        const rb = sd?.lastReadbackMs ?? -1
-        const real = sd?.realN || 0
-        const rep = sd?.repeatN || 0
-        console.info(`[NDI-UYVY] ${id}: ${t.n}/s  ${path}  ${info}  video() ${(t.vid / t.n).toFixed(0)}ms  readback ${rb}ms  real ${real}/s repeat ${rep}/s  conns ${conns}`)
-        if (sd) {
-            sd.realN = 0
-            sd.repeatN = 0
-        }
-        t.conv = 0
-        t.vid = 0
-        t.n = 0
-        t.last = now
-    }
-}
-
 // format: 0 = BGRA (convert here), 1 = UYVY (already converted, opaque), 2 = UYVA (already converted, alpha)
 async function sendVideoBuffer(id: string, buffer: Buffer, { size, ratio, framerate, transparent, format = 0 }: { size: { width: number; height: number }; ratio: number; framerate: number; transparent: boolean; format?: number }) {
     const senderData = NDI[id]
     if (!senderData?.sender) return
-    senderData.path = "MAIN"
     senderData.offMain = false
 
     const grandiose = await loadGrandiose()
@@ -264,7 +224,6 @@ async function sendVideoBuffer(id: string, buffer: Buffer, { size, ratio, framer
     if (format === 2 || format === 1) {
         data = buffer
         fourCC = format === 2 ? grandiose.FOURCC_UYVA : grandiose.FOURCC_UYVY
-        ;(senderData as any).lastFmtLabel = `${format === 2 ? "UYVA" : "UYVY"} ${size.width}x${size.height}`
     } else {
         const osr = loadOsrCapture()
         if (useAlpha) {
@@ -336,7 +295,6 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
     // pool guarantees the concurrent captures for this output always use distinct osr-capture keys.
     const slot = acquireReadbackSlot(id)
     const rbKey = `${id}#${slot}`
-    senderData.path = "OFF-MAIN"
     senderData.offMain = true
     const twoPhase = typeof osr.readbackConsume === "function" && typeof osr.readbackFinish === "function"
     let textureReleased = false
@@ -348,7 +306,6 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
         port.postMessage({ type: "releaseTexture", id, seq })
     }
     try {
-        const rbStart = Date.now()
         // NDI frame data (UYVY/UYVA). For a mixed output the addon ALSO returns a GPU-downscaled small BGRA
         // (`scaled`) for server/stage — read back in the same pass, so only ~16MB + a few MB cross PCIe.
         let buffer: Buffer
@@ -371,8 +328,6 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
             buffer = await osr.readback(source, size.width, size.height, format, rbKey)
             releaseTexture()
         }
-        senderData.lastReadbackMs = Date.now() - rbStart
-        senderData.realN = (senderData.realN || 0) + 1
 
         // ship the GPU-downscaled server/stage buffer to main (COPY via structured clone, NOT transfer — it is
         // a reused pooled buffer, so detaching it would corrupt the pool). Do this before captureDone frees the slot.
@@ -381,7 +336,6 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
         }
 
         const fourCC: number = format === 2 ? grandiose.FOURCC_UYVA : grandiose.FOURCC_UYVY
-        senderData.lastFmtLabel = `${format === 2 ? "UYVA" : "UYVY"} ${size.width}x${size.height}${wantScaled ? " +s" : ""}${members.length > 1 ? ` x${members.length}` : ""}`
 
         const frame = {
             timecode: (timeStart + process.hrtime.bigint()) / TIMECODE_DIVISOR,
@@ -403,7 +357,6 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
             md.pendingVideoFrame = frame
             md.lastFrame = frame
             md.captureFramerate = framerate
-            md.path = "OFF-MAIN"
             md.offMain = true
             void sendQueuedVideoFrame(m)
             scheduleRepeat(m)
@@ -429,7 +382,6 @@ function scheduleRepeat(id: string) {
         const sd = NDI[id]
         if (sd?.sender && sd.lastFrame) {
             sd.pendingVideoFrame = { ...sd.lastFrame, timecode: (timeStart + process.hrtime.bigint()) / TIMECODE_DIVISOR }
-            sd.repeatN = (sd.repeatN || 0) + 1
             void sendQueuedVideoFrame(id)
         }
         scheduleRepeat(id)
