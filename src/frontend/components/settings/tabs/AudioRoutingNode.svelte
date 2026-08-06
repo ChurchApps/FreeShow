@@ -25,6 +25,7 @@
     export let channels: number = 0
     export let isEnabled: boolean = true
     export let isMuted: boolean = false
+    export let hasInputConnection: boolean = true
 
     export let onToggleExpand: () => void = () => {}
     export let onMouseDown: (e: MouseEvent, portType: "in" | "out", chIdx?: number) => void
@@ -59,7 +60,19 @@
     $: isValidHover = isConnecting && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isStartChannel && dragStartPortType === "in" && isInputCol) || (isStartChannel && dragStartPortType === "out" && isOutputCol))
 </script>
 
-<div {id} class="node-card {isChannel ? `context #audio_channel${id === 'main' ? '_main' : ''}` : type}" class:merger-card={isChannel} class:sub-card={isSubNode} class:hover-valid={hoverTargetId === id && hasValidPort} class:disabled={!isEnabled} class:invalid={isConnecting && !isValidHover && id !== dragStartId} data-node-id={id} on:mouseenter={onMouseEnter} on:mouseleave={onMouseLeave} style={activeColor ? `--port-color: ${activeColor};` : ""}>
+<div
+    {id}
+    class="node-card {isChannel ? `context #audio_channel${id === 'main' ? '_main' : ''}` : type}"
+    class:merger-card={isChannel}
+    class:sub-card={isSubNode}
+    class:hover-valid={hoverTargetId === id && hasValidPort}
+    class:disabled={!isEnabled}
+    class:invalid={isConnecting && !isValidHover && id !== dragStartId}
+    data-node-id={id}
+    on:mouseenter={onMouseEnter}
+    on:mouseleave={onMouseLeave}
+    style="{activeColor ? `--port-color: ${activeColor};` : ''}{channels > 1 ? `min-height: ${channels * 30}px;` : ''}"
+>
     {#if nodeType !== "input" && type !== "network" && !isSubNode}
         <div class="port port-in" on:mousedown={(e) => onMouseDown(e, "in")} on:contextmenu={(e) => onPortContextMenu(e, "in")}></div>
     {/if}
@@ -80,7 +93,7 @@
         {/if}
 
         {#if isChannel}
-            <span class="card-name">{name}</span>
+            <span class="card-name" data-title={name}>{name}</span>
             {#if isMuted}
                 <Icon id="muted" size={0.9} style="opacity: 0.7;" white />
             {/if}
@@ -88,7 +101,7 @@
             {#if !hasSubNodes}
                 <Icon id={getIcon(type)} size={isSubNode ? 0.9 : 1.1} {color} white />
             {/if}
-            <span class="card-name" class:sub-name={isSubNode}>{name}</span>
+            <span class="card-name" data-title={name} class:sub-name={isSubNode}>{name}</span>
         {/if}
 
         {#if type === "icecast" || isChannel}
@@ -105,7 +118,7 @@
         {/if}
     </div>
 
-    {#if id !== "network_default" && id !== "output_window" && isEnabled}
+    {#if id !== "network_default" && id !== "output_window" && isEnabled && (nodeType === "input" || hasInputConnection)}
         <AudioMeter channelId={id} />
     {/if}
 
@@ -128,6 +141,7 @@
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         display: flex;
         flex-direction: column;
+        justify-content: center;
         align-items: stretch;
         gap: 8px;
         cursor: default;

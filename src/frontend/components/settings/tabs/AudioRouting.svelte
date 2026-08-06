@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { get } from "svelte/store"
     import { onMount, tick } from "svelte"
     import { uid } from "uid"
     import type { AudioRoutingConfig } from "../../../../types/AudioRouting"
@@ -29,6 +30,7 @@
         isEnabled?: boolean
         color?: string
         isMuted?: boolean
+        hasInputConnection?: boolean
     }
 
     interface RoutingColumn {
@@ -73,13 +75,16 @@
         .filter((out) => out && (out.rtmp || out.webrtc || out.ndi))
         .map((out) => {
             let label = out.name || out.id
+            const connId = "network_sub_" + out.id
+            const hasInputConnection = config.connections.some((c) => c.to === connId)
             return {
-                id: "network_sub_" + out.id,
+                id: connId,
                 name: label,
                 type: "network",
                 icon: out.ndi ? "ndi" : "broadcast",
                 color: out.color,
-                isEnabled: (out as any).enabled
+                isEnabled: (out as any).enabled,
+                hasInputConnection
             }
         })
 
@@ -149,21 +154,24 @@
             type: "channel",
             nodes: channelsList.map((m) => {
                 const inactive = inactiveOutputIds.some((a) => `channel_${a.id}` === m.id)
-                const chData = $audioChannelsData[m.id]
+                const chData = get(audioChannelsData)[m.id]
                 const muted = chData ? chData.isMuted || chData.volume === 0 : false
-                return { id: m.id, name: m.name, type: "channel", color: m.color, isEnabled: !inactive, isMuted: muted }
+                const hasInputConnection = config.connections.some((c) => c.to === m.id)
+                return { id: m.id, name: m.name, type: "channel", color: m.color, isEnabled: !inactive, isMuted: muted, hasInputConnection }
             })
         },
         {
             title: "Outputs",
             type: "output",
             nodes: fixedOutputs.map((node) => {
-                const subNodes = node.id === "speaker_default" ? availableAudioOutputs.map((s) => ({ id: "speaker_sub_" + s.value, name: s.label, type: "speaker", channels: s.channels })) : node.id === "network_default" ? networkOutputWindows : []
+                const subNodes = node.id === "speaker_default" ? availableAudioOutputs.map((s) => ({ id: "speaker_sub_" + s.value, name: s.label, type: "speaker", channels: s.channels, hasInputConnection: config.connections.some((c) => c.to === "speaker_sub_" + s.value) })) : node.id === "network_default" ? networkOutputWindows : []
+                const hasInputConnection = config.connections.some((c) => c.to === node.id)
                 return {
                     ...node,
                     isExpanded: expandedNodes.has(node.id) || node.id === "network_default",
                     hasSubNodes: subNodes.length > 0,
-                    subNodes
+                    subNodes,
+                    hasInputConnection
                 }
             })
         }
@@ -697,7 +705,7 @@
         display: flex;
         flex-direction: column;
         gap: 15px;
-        max-width: 500px;
+        max-width: 400px;
         min-width: 200px;
         width: 100%;
     }

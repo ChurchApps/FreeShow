@@ -351,22 +351,30 @@ export class AudioRoutingManager {
             AudioInputCapture.getInstance().captureInput(id, outNode)
 
             // Speaker Sink
-            const speakerConns = this.config.connections.filter((c) => c.from === id && (c.to === "speaker_default" || c.to.startsWith("speaker_sub_")))
-            speakerConns.forEach((c) => {
-                if (c.to === "speaker_default") {
-                    if (this.audioCtx) {
-                        const master = AudioAnalyser.getMasterGainNode()
-                        outNode.connect(master)
-                    }
-                } else if (c.to.startsWith("speaker_sub_")) {
-                    const targetSpeaker = speakerSubMergers.get(c.to)
-                    if (targetSpeaker) {
-                        const channelIndex = (c as any).channelIndex ?? 0
-                        // Connect source merger to target speaker pin
-                        outNode.connect(targetSpeaker.mergerNode, 0, channelIndex)
-                    }
+            if (this.audioCtx) {
+                const conns = this.config.connections.filter((c) => c.from === id)
+                if (conns.some((c) => c.to === "speaker_default")) {
+                    outNode.connect(AudioAnalyser.getMasterGainNode())
                 }
-            })
+
+                let splitter: ChannelSplitterNode | null = null
+                speakerSubMergers.forEach(({ mergerNode }, targetId) => {
+                    const subConns = conns.filter((c) => c.to === targetId)
+                    if (subConns.length === 1) {
+                        // mono signal in if only connected to one channel out
+                        outNode.connect(mergerNode, 0, (subConns[0] as any).channelIndex ?? 0)
+                    } else if (subConns.length > 1) {
+                        if (!splitter) {
+                            splitter = this.audioCtx!.createChannelSplitter(2)
+                            outNode.connect(splitter)
+                        }
+                        subConns.forEach((c) => {
+                            const chIdx = (c as any).channelIndex ?? 0
+                            splitter!.connect(mergerNode, Math.min(chIdx, 1), chIdx)
+                        })
+                    }
+                })
+            }
 
             // Network Sink
             const networkConns = this.config.connections.filter((c) => c.from === id && (c.to === "icecast" || c.to.startsWith("network_sub_")))
@@ -405,6 +413,7 @@ export class AudioRoutingManager {
                 }
 
                 const streamDest = this.audioCtx!.createMediaStreamDestination()
+                streamDest.channelCount = maxChannels
                 mergerNode.connect(streamDest)
 
                 // Capture combined multi-channel output for speaker visualizer meter with exact channel count
