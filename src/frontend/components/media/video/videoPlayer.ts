@@ -62,7 +62,10 @@ export class VideoPlayer {
         this.isStarting.add(ref)
 
         // stop fading out if playing again
-        if (this.isFadingOut.includes(id)) this.isFadingOut.splice(this.isFadingOut.indexOf(id), 1)
+        if (this.isFadingOut.includes(id)) {
+            this.isFadingOut.splice(this.isFadingOut.indexOf(id), 1)
+            this.updateVolume(id)
+        }
 
         const isVideo = options.isOnline || getMediaType(getExtension(id)) === "video"
         if (!isVideo) {
@@ -299,6 +302,12 @@ export class VideoPlayer {
     //
 
     static play(path: string, outputId?: string) {
+        if (this.isFadingOut.includes(path)) {
+            const fadeIndex = this.isFadingOut.indexOf(path)
+            if (fadeIndex !== -1) this.isFadingOut.splice(fadeIndex, 1)
+            this.updateVolume(path)
+        }
+
         if (!this.audioExists(path, outputId ? [outputId] : undefined)) return
 
         const audio = this.getAudio(path, outputId)
@@ -397,17 +406,23 @@ export class VideoPlayer {
         const volumeStep = startVolume / steps
         let currentStep = 0
 
-        await new Promise<void>((resolve) => {
+        const finished = await new Promise<boolean>((resolve) => {
             const timer = setInterval(() => {
                 currentStep++
 
-                if (!this.isFadingOut.includes(path) || currentStep >= steps || audio.volume <= volumeStep) {
+                if (!this.isFadingOut.includes(path)) {
+                    clearInterval(timer)
+                    resolve(false)
+                    return
+                }
+
+                if (currentStep >= steps || audio.volume <= volumeStep) {
                     audio.volume = 0
                     AudioAnalyser.setSourceVolume(path, 0)
                     const fadeIndex = this.isFadingOut.indexOf(path)
                     if (fadeIndex !== -1) this.isFadingOut.splice(fadeIndex, 1)
                     clearInterval(timer)
-                    resolve()
+                    resolve(true)
                     return
                 }
 
@@ -416,7 +431,7 @@ export class VideoPlayer {
             }, intervalMs)
         })
 
-        return true
+        return finished
     }
 
     static isFadingIn: string[] = []

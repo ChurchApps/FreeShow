@@ -11,6 +11,8 @@ import { AudioProcessor, PitchShiftNode } from "./audioProcessor"
 import { AudioInputCapture } from "./routing/audioInputCapture"
 import { AudioRoutingManager } from "./routing/audioRoutingManager"
 
+// NOTE: we don't have access to analyse audio from Website/YouTube/Vimeo (But the "Desktop audio" input is a good workaround)
+
 export class AudioAnalyser {
     static sampleRate = 48000 // Hz
     static channels = AudioMultichannel.DEFAULT_CHANNELS // default left/right, will be updated dynamically
