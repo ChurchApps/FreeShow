@@ -1,7 +1,7 @@
 // AI AUTO SCRIPTURE
 // shared types between the renderer & electron process (IPC payloads)
 
-export type AIProviderId = "anthropic" | "openai" | "gemini"
+export type AIProviderId = "anthropic" | "openai" | "gemini" | "ollama"
 
 export type AIErrorCode = "invalid_key" | "forbidden" | "model_not_found" | "rate_limited" | "invalid_request" | "server_error" | "timeout" | "network" | "refusal" | "bad_response"
 
@@ -102,6 +102,22 @@ export const AI_PROVIDER_MODELS: { [id in AIProviderId]: { models: { id: string;
             { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash Lite (fastest)" }
         ],
         defaultModel: "gemini-2.5-flash"
+    },
+    ollama: {
+        // local models served by Ollama - ids verified against ollama.com/library (2026-08)
+        models: [
+            { id: "gemma3:4b", name: "Gemma 3 4B (local, fast)", recommended: true },
+            { id: "gemma3:12b", name: "Gemma 3 12B (local, more accurate)" },
+            { id: "gemma3:27b", name: "Gemma 3 27B (local, most accurate)" },
+            { id: "gemma4:e4b", name: "Gemma 4 E4B (local, fast)" },
+            { id: "gemma4:12b", name: "Gemma 4 12B (local, more accurate)" },
+            { id: "llama3.2:3b", name: "Llama 3.2 3B (local, fastest)" },
+            { id: "llama3.1:8b", name: "Llama 3.1 8B (local, balanced)" },
+            { id: "qwen2.5:7b", name: "Qwen 2.5 7B (local, balanced)" },
+            { id: "mistral:7b", name: "Mistral 7B (local, balanced)" },
+            { id: "phi4:14b", name: "Phi-4 14B (local, more accurate)" }
+        ],
+        defaultModel: "gemma3:4b"
     }
 }
 

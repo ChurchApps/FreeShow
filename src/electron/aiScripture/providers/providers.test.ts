@@ -8,8 +8,10 @@ vi.mock("axios", () => ({
 import { anthropicProvider } from "./anthropic"
 import { geminiProvider } from "./gemini"
 import { getProvider } from "./index"
+import { ollamaProvider } from "./ollama"
 import { openaiProvider } from "./openai"
 import type { AIDetectionRequest, RawDetection } from "./types"
+import { DETECTION_SCHEMA } from "./types"
 
 const post = vi.mocked(axios.post)
 const get = vi.mocked(axios.get)
@@ -273,6 +275,86 @@ describe("gemini provider", () => {
     })
 })
 
+// OLLAMA
+
+function ollamaResponse(references: any[]) {
+    return { data: { message: { role: "assistant", content: JSON.stringify({ references }) }, done: true } }
+}
+
+describe("ollama provider", () => {
+    it("parses references from a successful native chat response", async () => {
+        post.mockResolvedValueOnce(ollamaResponse([detection]) as any)
+
+        const result = await ollamaProvider.detectScripture("", "gemma3:4b", request, signal)
+        expect(result.references).toEqual([detection])
+
+        const [url, body, config] = post.mock.calls[0] as any[]
+        expect(url).toBe("http://127.0.0.1:11434/api/chat")
+        expect(body.model).toBe("gemma3:4b")
+        expect(body.stream).toBe(false)
+        expect(body.format).toEqual(DETECTION_SCHEMA)
+        expect(body.options).toEqual({ temperature: 0, num_predict: 1024 })
+        expect(body.messages[0].role).toBe("system")
+        expect(body.messages[1].content).toContain(request.transcript)
+        expect(config.timeout).toBe(30000) // a cold model load takes far longer than a cloud request
+        expect(config.signal).toBe(signal)
+    })
+
+    it("detectScripture works with an empty apiKey & sends no auth headers", async () => {
+        post.mockResolvedValueOnce(ollamaResponse([]) as any)
+
+        const result = await ollamaProvider.detectScripture("", "gemma3:4b", request, signal)
+        expect(result.references).toEqual([])
+
+        const config = post.mock.calls[0][2] as any
+        expect(config.headers).toBeUndefined()
+    })
+
+    it("maps a refused connection to network with a start/install hint", async () => {
+        post.mockRejectedValueOnce({ code: "ECONNREFUSED", message: "connect ECONNREFUSED 127.0.0.1:11434" })
+        const error = await ollamaProvider.detectScripture("", "gemma3:4b", request, signal).catch((err: any) => err)
+        expect(error.code).toBe("network")
+        expect(error.message).toContain("ollama.com")
+    })
+
+    it("maps 404 to model_not_found with a pull hint", async () => {
+        post.mockRejectedValueOnce(httpError(404, { error: "model 'gemma3:4b' not found, try pulling it first" }))
+        const error = await ollamaProvider.detectScripture("", "gemma3:4b", request, signal).catch((err: any) => err)
+        expect(error.code).toBe("model_not_found")
+        expect(error.message).toContain("ollama pull gemma3:4b")
+    })
+
+    it("testConnection returns ok when the model is in the local list", async () => {
+        get.mockResolvedValueOnce({ data: { models: [{ name: "gemma3:4b" }, { name: "llama3.2:latest" }] } } as any)
+
+        const result = await ollamaProvider.testConnection("", "gemma3:4b")
+        expect(result).toEqual({ ok: true })
+
+        const [url, config] = get.mock.calls[0] as any[]
+        expect(url).toBe("http://127.0.0.1:11434/api/tags")
+        expect(config.timeout).toBe(10000)
+        expect(post).not.toHaveBeenCalled()
+    })
+
+    it("testConnection returns model_not_found with a pull hint when the model is absent", async () => {
+        get.mockResolvedValueOnce({ data: { models: [{ name: "llama3.2:latest" }] } } as any)
+
+        const result = await ollamaProvider.testConnection("", "gemma3:4b")
+        expect(result.ok).toBe(false)
+        if (!result.ok) {
+            expect(result.error.code).toBe("model_not_found")
+            expect(result.error.message).toContain("ollama pull gemma3:4b")
+        }
+    })
+
+    it("testConnection maps a refused connection to network", async () => {
+        get.mockRejectedValueOnce({ code: "ECONNREFUSED", message: "connect ECONNREFUSED 127.0.0.1:11434" })
+        const result = await ollamaProvider.testConnection("", "gemma3:4b")
+        expect(result.ok).toBe(false)
+        if (!result.ok) expect(result.error.code).toBe("network")
+    })
+})
+
 // ERROR REDACTION
 
 describe("toAIError secret redaction", () => {
@@ -300,6 +382,7 @@ describe("getProvider", () => {
         expect(getProvider("anthropic").id).toBe("anthropic")
         expect(getProvider("openai").id).toBe("openai")
         expect(getProvider("gemini").id).toBe("gemini")
+        expect(getProvider("ollama").id).toBe("ollama")
     })
 
     it("falls back to the default model when the model string is empty", async () => {

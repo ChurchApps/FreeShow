@@ -31,7 +31,8 @@ export async function startAiScripture(config: AiScriptureStartConfig): Promise<
     const customModel = config.whisperCustomModelPath && existsSync(config.whisperCustomModelPath) ? config.whisperCustomModelPath : ""
     if (!customModel && !isModelReady(config.whisperModel)) return { started: false, error: "whisper_model_missing" }
 
-    const llm = config.llm && getAiKey(config.llm.provider) ? config.llm : null
+    // ollama runs locally without any credentials - every other provider needs a saved key
+    const llm = config.llm && (config.llm.provider === "ollama" || getAiKey(config.llm.provider)) ? config.llm : null
 
     coordinator = new DetectionCoordinator({
         books: config.books,
@@ -150,7 +151,8 @@ export async function getAiScriptureStatus() {
         keys: {
             anthropic: !!getAiKey("anthropic"),
             openai: !!getAiKey("openai"),
-            gemini: !!getAiKey("gemini")
+            gemini: !!getAiKey("gemini"),
+            ollama: true // local server, no key needed
         },
         whisper: await getWhisperStatus()
     }
@@ -158,7 +160,7 @@ export async function getAiScriptureStatus() {
 
 export async function testAiConnection(data: { provider: AIProviderId; model: string }): Promise<{ ok: boolean; error?: AIError }> {
     const key = getAiKey(data.provider)
-    if (!key) return { ok: false, error: { code: "invalid_key" } }
+    if (!key && data.provider !== "ollama") return { ok: false, error: { code: "invalid_key" } }
 
     const result = await getProvider(data.provider).testConnection(key, data.model)
     if (result.ok) return { ok: true }
