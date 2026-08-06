@@ -3,6 +3,7 @@ import { app } from "electron"
 import fs from "fs"
 import net from "net"
 import path from "path"
+import type { DriverCallbacks, TranscriberSegment as DriverSegment, TranscriptionDriver } from "./drivers/types"
 
 // AI AUTO SCRIPTURE - streaming transcription over whisper.cpp
 // Receives 1s chunks of Int16 LE PCM @ 16kHz mono from the renderer (IPC),
@@ -29,27 +30,19 @@ const SERVER_INFERENCE_TIMEOUT = 30000
 const CLI_INFERENCE_TIMEOUT = 30000
 const KILL_TIMEOUT = 2000
 
-export interface TranscriberSegment {
-    text: string
-    startMs: number
-    endMs: number
-    language?: string // detected language of the window (cli -oj with "-l auto" only)
-    music?: boolean // whisper marked this as sung content (♪) - lyrics are unreliable & never feed detection
-}
+export type { TranscriberSegment } from "./drivers/types"
 
-export interface WhisperSegment extends TranscriberSegment {
+export interface WhisperSegment extends DriverSegment {
     noSpeechProb?: number
     avgLogprob?: number
 }
 
-interface TranscriberOptions {
+interface TranscriberOptions extends DriverCallbacks {
     binary: { kind: "cli" | "server"; binaryPath: string }
     modelPath: string
     language: string
     declaredLanguages?: string[] // interpretation mode: the languages actually being spoken - a "-l auto" guess outside this set triggers a forced re-check
     primaryLanguage?: string // the scripture detection language - forced re-checks transcribe the window with this language
-    onSegment: (segment: TranscriberSegment) => void
-    onError: (message: string) => void
 }
 
 interface PcmWindow {
@@ -57,7 +50,7 @@ interface PcmWindow {
     startSample: number
 }
 
-export class Transcriber {
+export class Transcriber implements TranscriptionDriver {
     private options: TranscriberOptions
 
     private ring = new Int16Array(RING_SECONDS * SAMPLE_RATE)
