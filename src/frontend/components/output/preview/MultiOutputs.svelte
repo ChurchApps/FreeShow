@@ -152,7 +152,7 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         {@const style = $styles[output.style || ""] || {}}
         {@const layers = Array.isArray(style.layers) ? style.layers : clone(defaultLayers)}
         {@const styleTemplate = isScriptureOutput ? style.templateScripture : style.template}
-        {@const isMuted = $audioChannelsData[output.id]?.isMuted}
+        {@const isMuted = $audioChannelsData[`channel_${output.id}`]?.isMuted}
 
         <div id={output.id} class="outputPreview output_button context #output_preview" class:drop-target={!fullscreen && dragOverOutputId === output.id} on:dragover={(e) => handleDragOver(e, output.id)} on:dragleave={(e) => handleDragLeave(e, output.id)} on:drop={(e) => handleDrop(e, output.id)} style={fullscreen ? (fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;") : outs.length > 1 ? `border: 2px solid ${output?.color};width: 50%;` : "display: contents;"}>
             <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />

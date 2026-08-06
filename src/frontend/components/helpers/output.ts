@@ -207,6 +207,8 @@ function checkAudio(type: string, data: any, allOutputIds: string[], outs: strin
             allOutputIds.forEach((outputId) => {
                 const currentBg = get(outputs)[outputId]?.out?.background
                 const bgPath = currentBg?.path || currentBg?.id || ""
+
+                // this will "break" any playing video items if it's the same
                 if (bgPath && bgPath !== newPath) VideoPlayer.stop(bgPath, outputId)
             })
 
@@ -224,6 +226,10 @@ function checkAudio(type: string, data: any, allOutputIds: string[], outs: strin
         // stop old video items not present on new slide
         oldItems.forEach((item: any) => {
             if (!newPaths.includes(item.src)) {
+                // don't stop if the same video is used as background
+                const outBg = get(outputs)[allOutputIds?.[0]]?.out?.background
+                if (outBg?.path === item.src) return
+
                 allOutputIds.forEach((outId) => VideoPlayer.stop(item.src, outId))
             }
         })

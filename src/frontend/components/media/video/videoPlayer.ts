@@ -351,12 +351,14 @@ export class VideoPlayer {
 
         this.pause(path, outputId)
 
-        const linkedOutputIds = this.getPlaying(path, outputId ? [outputId] : [])?.linkedOutputIds || []
-        linkedOutputIds.forEach((outputId) => AudioAnalyser.detach(path, outputId))
+        const playing = get(playingVideos).find((v) => v.path === path)
+        const linkedOutputIds = playing?.linkedOutputIds || []
+        const detachOutputIds = Array.from(new Set([...linkedOutputIds, ...(outputId ? [outputId] : [])]))
+        detachOutputIds.forEach((outId) => AudioAnalyser.detach(path, outId))
 
         playingVideos.update((a) => {
             // reset
-            const index = a.findIndex((v) => v.path === path && (!outputId || v.linkedOutputIds.includes(outputId)))
+            const index = a.findIndex((v) => v.path === path)
             if (index !== -1) {
                 if (a[index].audio instanceof HTMLAudioElement) a[index].audio.src = ""
                 a.splice(index, 1)
@@ -365,16 +367,13 @@ export class VideoPlayer {
         })
 
         playingVideoState.update((state) => {
-            const targets = outputId ? [outputId] : linkedOutputIds
+            const targets = outputId ? [outputId, ...linkedOutputIds] : linkedOutputIds
             targets.forEach((outId) => {
                 delete state[`${path}_${outId}`]
             })
-            // If outputId wasn't specified and linkedOutputIds was empty, purge any key starting with path + "_"
-            if (!outputId && linkedOutputIds.length === 0) {
-                Object.keys(state).forEach((key) => {
-                    if (key.startsWith(`${path}_`)) delete state[key]
-                })
-            }
+            Object.keys(state).forEach((key) => {
+                if (key.startsWith(`${path}_`)) delete state[key]
+            })
             return state
         })
 
@@ -455,7 +454,7 @@ export class VideoPlayer {
 
     static stopByOutputIds(outputIds: string[]) {
         const videosToStop = get(playingVideos).filter((v) => v.linkedOutputIds?.some((id) => outputIds.includes(id)))
-        videosToStop.forEach((v) => this.stop(v.path, outputIds?.[0]))
+        videosToStop.forEach((v) => this.stop(v.path))
     }
 
     static seekTo(path: string, outputId: string, time: number) {
@@ -499,7 +498,7 @@ export class VideoPlayer {
     // GET
 
     static getPlaying(path: string, outputIds?: string[]): VideoAudioData | null {
-        return get(playingVideos).find((v) => v.path === path && (outputIds ? outputIds.every((id) => v.linkedOutputIds.includes(id)) : true)) || null
+        return get(playingVideos).find((v) => v.path === path && (outputIds?.length ? outputIds.some((id) => v.linkedOutputIds.includes(id)) : true)) || null
     }
 
     static getAudio(path: string, outputId?: string) {
@@ -543,10 +542,10 @@ export class VideoPlayer {
     // STATE
 
     static audioExists(path: string, outputIds?: string[]) {
-        const playing = this.getPlaying(path, outputIds || [])
+        const playing = get(playingVideos).find((v) => v.path === path)
         if (!playing) return false
 
-        if (!outputIds?.length) return !!playing
+        if (!outputIds?.length) return true
         return outputIds.some((id) => playing.linkedOutputIds.includes(id))
     }
 
