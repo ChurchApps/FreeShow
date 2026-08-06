@@ -456,7 +456,7 @@
         <MaterialTextInput label="settings.ai_custom_model_id" value={settings.customModel || ""} on:change={(e) => update("customModel", e.detail)} />
     {/if}
 
-    <Title label="settings.ai_search_bibles" icon="scripture" />
+    <Title label="settings.ai_search_bibles ({searchBibles.length})" icon="scripture" />
 
     {#if bibleList.length}
         <InputRow>
