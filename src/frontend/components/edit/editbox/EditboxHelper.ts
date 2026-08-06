@@ -83,12 +83,32 @@ export class EditboxHelper {
             // Update start position if this line has a selection start
             if (sel[i]?.start !== undefined) start = currentIndex + sel[i].start!
 
+            const lineStartIndex = currentIndex
             if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
             else firstLines.push({ align: line.align, text: [] })
+            const firstHalf = start > -1 && lineStartIndex >= start ? null : firstLines[firstLines.length - 1]
 
             textPos = 0
             if (!Array.isArray(line.text)) line.text = []
             line.text.forEach(splitLines)
+
+            // keep chords with their line, a mid-line split partitions them by the split offset
+            const lineChords = line.chords || []
+            if (lineChords.length) {
+                if (start > -1 && lineStartIndex >= start) {
+                    const target = secondLines[secondLines.length - 1]
+                    if (target) target.chords = lineChords
+                } else if (start > lineStartIndex && start < currentIndex) {
+                    const localSplit = start - lineStartIndex
+                    const firstChords = lineChords.filter((a) => a.pos < localSplit)
+                    const secondChords = lineChords.filter((a) => a.pos >= localSplit).map((a) => ({ ...a, pos: a.pos - localSplit }))
+                    if (firstHalf && firstChords.length) firstHalf.chords = firstChords
+                    const secondTarget = secondLines[secondLines.length - 1]
+                    if (secondTarget && secondChords.length) secondTarget.chords = secondChords
+                } else if (firstHalf) {
+                    firstHalf.chords = lineChords
+                }
+            }
 
             if (!firstLines.at(-1)?.text.length) firstLines.pop()
             if (!secondLines.at(0)?.text.length) secondLines.shift()
@@ -152,13 +172,6 @@ export class EditboxHelper {
         if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
         if (!secondLines.length) secondLines = defaultLine
 
-        // add chords (currently only adding full line chords, so splitting in the middle of a line might shift chords)
-        const chordLines = clone(lines.map((a) => a.chords || []))
-        ;[...firstLines, ...secondLines].forEach((line) => {
-            const oldLineChords = chordLines.shift()
-            if (oldLineChords?.length) line.chords = oldLineChords
-        })
-
         return { firstLines, secondLines }
     }
 
@@ -194,9 +207,10 @@ export class EditboxHelper {
             line.text.forEach((a, tIndex) => {
                 currentStyle += this.getTextStyle(a)
 
-                // SAVE CHORDS (WIP does not work well with more "text" per line)
+                // each chord is stored in exactly one segment, the last segment absorbs end-of-line positions
+                const isLastSegment = tIndex === line.text.length - 1
                 const textEnd = textIndex + a.value.length
-                const textChords = currentChords.filter((chord) => chord.pos >= textIndex && (chord.pos <= textEnd || line.text.length - 1 >= tIndex))
+                const textChords = currentChords.filter((chord) => chord.pos >= textIndex && (chord.pos < textEnd || isLastSegment))
                 textIndex = textEnd
 
                 const textStyle = a.style || listStyle ? 'style="' + this.getCustomTextStyle(a.style) + listStyle + '"' : ""

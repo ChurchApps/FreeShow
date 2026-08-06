@@ -516,12 +516,14 @@
             if (lineChords?.length) {
                 newLines[pos].chords = lineChords
 
-                // UPDATE/FIX CHORDS ON LINE BREAK
-                if (pos > 0 && JSON.stringify(newLines[pos].chords) === JSON.stringify(newLines[pos - 1].chords)) {
+                // UPDATE/FIX CHORDS ON LINE BREAK (the browser clones the data-chords attributes when splitting a line)
+                const previousChordIds = newLines[pos - 1]?.chords?.map((a) => a.id) || []
+                const shared = (a) => previousChordIds.includes(a.id)
+                if (pos > 0 && newLines[pos].chords!.some(shared)) {
                     let breakPoint = newLines[pos - 1].text.reduce((textLength, text) => (textLength += text.value.length), 0)
 
-                    newLines[pos - 1].chords = newLines[pos - 1].chords!.filter((a) => a.pos < breakPoint)
-                    newLines[pos].chords = newLines[pos].chords!.filter((a) => a.pos >= breakPoint).map((a) => ({ ...a, pos: a.pos - breakPoint }))
+                    newLines[pos - 1].chords = newLines[pos - 1].chords!.filter((a) => !shared(a) || a.pos < breakPoint)
+                    newLines[pos].chords = newLines[pos].chords!.filter((a) => !shared(a) || a.pos >= breakPoint).map((a) => (shared(a) && a.pos >= breakPoint ? { ...a, pos: a.pos - breakPoint } : a))
                 }
             }
         })
