@@ -136,23 +136,22 @@
 
         // WIP replace with exising altKeys cut_in_half shortcuts.ts
 
-        // TODO: get working in list view
         if (e.key === "Enter" && (e.target?.closest(".item") || e.target?.closest(".quickEdit"))) {
-            // incorrect editbox
+            // only the focused editbox instance should handle the split
+            if (e.target !== textElem) return
             if (e.target.closest(".quickEdit") && Number(e.target.closest(".quickEdit").getAttribute("data-index")) !== editIndex) return
             if (!e.target.closest(".quickEdit") && !$activeEdit.items.includes(index)) return
+
+            if (!e.altKey) return
 
             // split
             let sel = getSelectionRange()
             if (!sel?.length || (sel.length === 1 && !Object.keys(sel[0]).length)) return
 
-            // if (sel.start === sel.end) {
             let lines: Line[] = getNewLines()
             let currentIndex = 0,
                 textPos = 0
             let start = -1
-
-            if (!e.altKey) return
 
             cutInTwo({ e, sel, lines: clone(lines), currentIndex, textPos, start })
         }
@@ -164,8 +163,10 @@
         if ((ref.type || "show") !== "show") return
         let { firstLines, secondLines } = EditboxHelper.cutLinesInTwo({ sel, lines, currentIndex, textPos, start })
 
-        if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
-        let editItemIndex: number = $activeEdit.items[0] ?? Number(e?.target?.closest(".editItem")?.getAttribute("data-index")) ?? 0
+        // in list view the component's own indexes are correct, $activeEdit might hold a stale edit tab state
+        if (!plain && typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
+        let domItemIndex = Number(e?.target?.closest(".editItem")?.getAttribute("data-index"))
+        let editItemIndex: number = plain ? index : ($activeEdit.items[0] ?? (isNaN(domItemIndex) ? 0 : domItemIndex))
 
         let layoutRef = getLayoutRef()
         let slideRef = layoutRef[editIndex]

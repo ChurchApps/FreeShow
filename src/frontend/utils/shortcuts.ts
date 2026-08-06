@@ -73,7 +73,8 @@ const shiftCtrlKeys = {
 }
 
 const altKeys = {
-    Enter: () => (get(activePage) === "show" ? menuClick("cut_in_half", true, null, null, null, get(selected)) : null)
+    // when the caret is inside a list view textbox, EditboxLines splits at the caret instead
+    Enter: () => (get(activePage) === "show" && !document.activeElement?.closest(".quickEdit") ? menuClick("cut_in_half", true, null, null, null, get(selected)) : null)
 }
 
 export const disablePopupClose = ["initialize", "cloud_method"]
