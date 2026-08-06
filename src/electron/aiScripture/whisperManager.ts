@@ -1,6 +1,6 @@
 import { execFile } from "child_process"
 import crypto from "crypto"
-import { app } from "electron"
+import { app, net } from "electron"
 import fs from "fs"
 import path from "path"
 import { Readable } from "stream"
@@ -156,10 +156,15 @@ async function getVerifiedLocalBinary(): Promise<{ kind: "cli" | "server"; binar
     return local
 }
 
-let systemProbe: Promise<string | null> | null = null // null = not probed yet, probed at most once per app run
-function findSystemWhisper(): Promise<string | null> {
+let systemProbe: Promise<string | null> | null = null
+async function findSystemWhisper(): Promise<string | null> {
     if (!systemProbe) systemProbe = probeSystemWhisper()
-    return systemProbe
+
+    const found = await systemProbe
+    // only cache hits - the user may install whisper while the app is running & expect "Check again" to find it
+    if (!found) systemProbe = null
+
+    return found
 }
 
 async function probeSystemWhisper(): Promise<string | null> {
@@ -178,10 +183,16 @@ async function probeSystemWhisper(): Promise<string | null> {
 
 // resolve a bare name to an absolute path by searching PATH entries manually - never execute (or spawn) a bare name:
 // Windows CreateProcess searches the application directory and the CWD before PATH, so a bare name could run a planted binary
-export function findExecutableInPath(name: string): string | null {
+// GUI apps launched from Finder/desktop get a minimal PATH without package manager dirs - also search the well known install locations
+const EXTRA_SEARCH_DIRS: { [platform: string]: string[] } = {
+    darwin: ["/opt/homebrew/bin", "/usr/local/bin"],
+    linux: ["/usr/local/bin", "/usr/bin", "/snap/bin"]
+}
+
+export function findExecutableInPath(name: string, extraDirs: string[] = EXTRA_SEARCH_DIRS[process.platform] || []): string | null {
     const fileName = process.platform === "win32" ? name + ".exe" : name
 
-    for (const dir of (process.env.PATH || "").split(path.delimiter)) {
+    for (const dir of [...(process.env.PATH || "").split(path.delimiter), ...extraDirs]) {
         // skip empty ("" resolves to the CWD) and relative entries
         if (!dir || !path.isAbsolute(dir)) continue
 
@@ -289,27 +300,45 @@ async function downloadFile(url: string, destPath: string, progressName: string)
     const controller = new AbortController()
     activeDownload = { controller, partPath, name: progressName }
 
+    const MAX_ATTEMPTS = 3
+    let totalBytes = 0
+
     try {
-        const response = await fetch(url, { signal: controller.signal })
-        if (!response.ok || !response.body) throw new Error(`Download failed: ${response.status}`)
+        for (let attempt = 1; ; attempt++) {
+            // resume an interrupted download where it left off (large downloads over flaky connections get cut mid-body)
+            const resumeAt = attempt > 1 && fs.existsSync(partPath) ? fs.statSync(partPath).size : 0
 
-        const totalBytes = Number(response.headers.get("content-length")) || 0
-        let downloadedBytes = 0
-        let lastProgressAt = 0
+            // Electron's Chromium network stack handles large redirected downloads far more reliably than Node's fetch,
+            // which is prone to "terminated" errors on long transfers from CDNs
+            const response = await net.fetch(url, { signal: controller.signal, headers: resumeAt > 0 ? { Range: `bytes=${resumeAt}-` } : {} })
+            if (!response.ok || !response.body) throw new Error(`Download failed: ${response.status}`)
 
-        const body = Readable.fromWeb(response.body as any)
-        body.on("data", (chunk: Buffer) => {
-            downloadedBytes += chunk.length
-            if (Date.now() - lastProgressAt < PROGRESS_INTERVAL) return
-            lastProgressAt = Date.now()
-            sendToMain(ToMain.AI_SCRIPTURE_WHISPER_PROGRESS, { name: progressName, progress: downloadedBytes, total: totalBytes, status: "downloading" })
-        })
+            const resumed = resumeAt > 0 && response.status === 206
+            const remainingBytes = Number(response.headers.get("content-length")) || 0
+            if (!totalBytes || !resumed) totalBytes = resumed ? resumeAt + remainingBytes : remainingBytes
 
-        await pipeline(body, fs.createWriteStream(partPath))
+            let downloadedBytes = resumed ? resumeAt : 0
+            let lastProgressAt = 0
 
-        if (totalBytes > 0 && downloadedBytes !== totalBytes) throw new Error(`Download incomplete: got ${downloadedBytes} of ${totalBytes} bytes`)
+            const body = Readable.fromWeb(response.body as any)
+            body.on("data", (chunk: Buffer) => {
+                downloadedBytes += chunk.length
+                if (Date.now() - lastProgressAt < PROGRESS_INTERVAL) return
+                lastProgressAt = Date.now()
+                sendToMain(ToMain.AI_SCRIPTURE_WHISPER_PROGRESS, { name: progressName, progress: downloadedBytes, total: totalBytes, status: "downloading" })
+            })
 
-        fs.renameSync(partPath, destPath)
+            try {
+                await pipeline(body, fs.createWriteStream(partPath, { flags: resumed ? "a" : "w" }))
+                if (totalBytes > 0 && downloadedBytes !== totalBytes) throw new Error(`Download incomplete: got ${downloadedBytes} of ${totalBytes} bytes`)
+            } catch (err) {
+                if (isAbortError(err) || attempt >= MAX_ATTEMPTS) throw err
+                continue
+            }
+
+            fs.renameSync(partPath, destPath)
+            return
+        }
     } catch (err) {
         try {
             fs.unlinkSync(partPath)

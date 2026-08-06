@@ -8,7 +8,9 @@ const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "freeshow-whisper-test-")
 
 // whisperManager imports electron for app.getPath("userData") and IPC/main for sendToMain (which pulls in the whole main process)
 vi.mock("electron", () => ({
-    app: { getPath: () => tempRoot }
+    app: { getPath: () => tempRoot },
+    // delegate to the (stubbable) global fetch so tests can control network behavior
+    net: { fetch: (...args: any[]) => (globalThis.fetch as any)(...args) }
 }))
 vi.mock("../IPC/main", () => ({
     sendToMain: vi.fn()
@@ -96,10 +98,15 @@ describe("findExecutableInPath", () => {
 
     it("returns null when the name is not found or PATH only has relative entries", () => {
         process.env.PATH = ["", "relative/dir", binDir].join(path.delimiter)
-        expect(findExecutableInPath("whisper-cpp")).toBe(null)
+        expect(findExecutableInPath("whisper-cpp", [])).toBe(null)
 
         process.env.PATH = "relative/dir"
-        expect(findExecutableInPath("whisper-cli")).toBe(null)
+        expect(findExecutableInPath("whisper-cli", [])).toBe(null)
+    })
+
+    it("finds executables in well known install dirs even when they are missing from PATH", () => {
+        process.env.PATH = "relative/dir"
+        expect(findExecutableInPath("whisper-cli", [binDir])).toBe(path.join(binDir, "whisper-cli"))
     })
 })
 

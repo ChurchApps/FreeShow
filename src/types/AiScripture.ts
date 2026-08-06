@@ -54,7 +54,8 @@ export const AI_PROVIDER_MODELS: { [id in AIProviderId]: { models: { id: string;
         // verified against ai.google.dev/gemini-api/docs (2026-08): gemini-2.0-flash was shut down 2026-06-01 and "gemini-2.0-pro" never existed
         models: [
             { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (fast)", recommended: true },
-            { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (best accuracy)" }
+            { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (best accuracy)" },
+            { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash Lite (fastest)" }
         ],
         defaultModel: "gemini-2.5-flash"
     }
