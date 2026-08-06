@@ -570,6 +570,7 @@
     "toast": {
         "saving": "Saving...",
         "saved": "Saved",
+        "autosize_disabled": "Auto size disabled",
         "error_media": "Could not get media.",
         "empty_styles": "No styles",
         "chapter_undefined": "Chapter {} does not exist in this book.",
