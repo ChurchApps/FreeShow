@@ -20,7 +20,8 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
 
                 if ((pos < selection[i].start && pos + length > selection[i].start) || (pos < selection[i].end && pos + length > selection[i].end) || (pos >= selection[i].start && pos + length <= selection[i].end)) {
                     if (from > 0) newText.push({ value: value.slice(0, from), style: text.style })
-                    if (to - from > 0 && to - from <= length) {
+                    // also style covered empty text (e.g. an empty textbox), otherwise it would keep the old style
+                    if ((to - from > 0 || length === 0) && to - from <= length) {
                         let newStyle = ""
                         if (Array.isArray(style)) newStyle = addStyleString(text.style, style)
                         else newStyle = style
