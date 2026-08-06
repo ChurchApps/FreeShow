@@ -1,27 +1,40 @@
-import { execFileSync } from "child_process"
+import { execFile } from "child_process"
+import crypto from "crypto"
 import { app } from "electron"
 import fs from "fs"
 import path from "path"
 import { Readable } from "stream"
 import { pipeline } from "stream/promises"
+import { promisify } from "util"
 import yauzl from "yauzl"
 import type { WhisperModelId, WhisperStatus } from "../../types/AiScripture"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
+
+const execFileAsync = promisify(execFile)
 
 // pre-built whisper.cpp binaries from the official GitHub releases (Windows x64 only - other platforms use a system installed binary)
 // verified against https://github.com/ggml-org/whisper.cpp/releases/tag/v1.9.2 - the x64 zip contains whisper-cli.exe/whisper-server.exe + the required DLLs nested in a "Release/" folder
 const WHISPER_RELEASE_TAG = "v1.9.2"
 const WHISPER_WIN_X64_ASSET = "whisper-bin-x64.zip"
 const WHISPER_BINARY_URL = `https://github.com/ggml-org/whisper.cpp/releases/download/${WHISPER_RELEASE_TAG}/${WHISPER_WIN_X64_ASSET}`
+// sha256 of the pinned whisper-bin-x64.zip release asset (8194445 bytes) - matches the official digest published by the GitHub releases API
+// (api.github.com/repos/ggml-org/whisper.cpp/releases/tags/v1.9.2) and independently verified by downloading & hashing the asset (2026-08-06)
+const WHISPER_WIN_X64_SHA256 = "49dcc16de826f20bd53d44f947a1ae49dfa81f86cad67a64d80820cb192d674a"
 
 // ggml models converted & hosted by the whisper.cpp author
 const WHISPER_MODEL_BASE_URL = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main"
 
-const WHISPER_MODELS: WhisperModelId[] = ["tiny", "tiny.en", "base", "base.en", "small", "small.en"]
+export const WHISPER_MODELS: WhisperModelId[] = ["tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v3"]
 const MIN_MODEL_SIZE = 1024 * 1024 // even the tiny model is ~75 MB, anything smaller is a broken download or an error page
 
 const PROGRESS_INTERVAL = 200
+const VERIFY_TIMEOUT = 10000
+
+// modelIds arrive over IPC as plain strings - reject anything not in the known list before it reaches a URL or file path (path traversal / arbitrary download target)
+function isKnownModel(modelId: string): modelId is WhisperModelId {
+    return (WHISPER_MODELS as string[]).includes(modelId)
+}
 
 // PATHS
 
@@ -34,6 +47,7 @@ function getModelsDir(): string {
 }
 
 export function getModelPath(modelId: WhisperModelId): string {
+    if (!isKnownModel(modelId)) throw new Error(`Unknown whisper model: ${String(modelId)}`)
     return path.join(getModelsDir(), `ggml-${modelId}.bin`)
 }
 
@@ -42,21 +56,21 @@ export function getModelPath(modelId: WhisperModelId): string {
 export async function getWhisperStatus(): Promise<WhisperStatus> {
     const downloadedModels = WHISPER_MODELS.filter((id) => isModelReady(id))
 
-    const local = getVerifiedLocalBinary()
+    const local = await getVerifiedLocalBinary()
     if (local) return { binary: "ready_local", binaryPath: local.binaryPath, downloadedModels }
 
-    const system = findSystemWhisper()
+    const system = await findSystemWhisper()
     if (system) return { binary: "ready_system", binaryPath: system, downloadedModels }
 
     return { binary: "not_installed", downloadedModels }
 }
 
-export function verifyWhisperBinary(binaryPath: string): boolean {
+export async function verifyWhisperBinary(binaryPath: string): Promise<boolean> {
     if (!binaryPath) return false
 
     try {
         if (!fs.existsSync(binaryPath) || !fs.statSync(binaryPath).isFile()) return false
-        execFileSync(binaryPath, ["--help"], { stdio: "ignore", windowsHide: true, timeout: 10000 })
+        await execFileAsync(binaryPath, ["--help"], { windowsHide: true, timeout: VERIFY_TIMEOUT })
         return true
     } catch (err) {
         console.warn(`[whisperManager] Incompatible or broken whisper binary at ${binaryPath}:`, (err as Error)?.message || err)
@@ -65,6 +79,8 @@ export function verifyWhisperBinary(binaryPath: string): boolean {
 }
 
 export function isModelReady(modelId: WhisperModelId): boolean {
+    if (!isKnownModel(modelId)) return false
+
     const modelPath = getModelPath(modelId)
 
     try {
@@ -78,19 +94,38 @@ export function isModelReady(modelId: WhisperModelId): boolean {
 // RESOLVE
 
 // resolve priority: verified custom path -> downloaded local binary -> system PATH probe
-export function resolveWhisper(customPath?: string): { kind: "cli" | "server"; binaryPath: string } | null {
-    if (customPath && verifyWhisperBinary(customPath)) {
+export async function resolveWhisper(customPath?: string): Promise<{ kind: "cli" | "server"; binaryPath: string } | null> {
+    if (customPath && (await verifyCustomBinary(customPath))) {
         const kind = path.basename(customPath).toLowerCase().includes("server") ? "server" : "cli"
         return { kind, binaryPath: customPath }
     }
 
-    const local = getVerifiedLocalBinary()
+    const local = await getVerifiedLocalBinary()
     if (local) return local
 
-    const system = findSystemWhisper()
+    const system = await findSystemWhisper()
     if (system) return { kind: "cli", binaryPath: system }
 
     return null
+}
+
+// cache the custom path verification by path + mtime + size so the binary is not re-executed on every session start
+let verifiedCustomKey = ""
+async function verifyCustomBinary(customPath: string): Promise<boolean> {
+    let key = ""
+    try {
+        const stat = fs.statSync(customPath)
+        if (!stat.isFile()) return false
+        key = `${customPath}|${stat.mtimeMs}|${stat.size}`
+    } catch {
+        return false
+    }
+
+    if (key === verifiedCustomKey) return true
+
+    if (!(await verifyWhisperBinary(customPath))) return false
+    verifiedCustomKey = key
+    return true
 }
 
 function findLocalBinary(): { kind: "cli" | "server"; binaryPath: string } | null {
@@ -109,37 +144,61 @@ function findLocalBinary(): { kind: "cli" | "server"; binaryPath: string } | nul
 }
 
 let verifiedLocalPath = ""
-function getVerifiedLocalBinary(): { kind: "cli" | "server"; binaryPath: string } | null {
+async function getVerifiedLocalBinary(): Promise<{ kind: "cli" | "server"; binaryPath: string } | null> {
     const local = findLocalBinary()
     if (!local) return null
 
     if (local.binaryPath !== verifiedLocalPath) {
-        if (!verifyWhisperBinary(local.binaryPath)) return null
+        if (!(await verifyWhisperBinary(local.binaryPath))) return null
         verifiedLocalPath = local.binaryPath
     }
 
     return local
 }
 
-let systemProbe: string | null | undefined // undefined = not probed yet
-function findSystemWhisper(): string | null {
-    if (systemProbe !== undefined) return systemProbe
+let systemProbe: Promise<string | null> | null = null // null = not probed yet, probed at most once per app run
+function findSystemWhisper(): Promise<string | null> {
+    if (!systemProbe) systemProbe = probeSystemWhisper()
+    return systemProbe
+}
 
-    systemProbe = null
+async function probeSystemWhisper(): Promise<string | null> {
     for (const name of ["whisper-cli", "whisper-cpp"]) {
+        const absolutePath = findExecutableInPath(name)
+        if (!absolutePath) continue
+
         try {
-            execFileSync(name, ["--help"], { stdio: "ignore", windowsHide: true, timeout: 10000 })
-            systemProbe = name
-            break
+            await execFileAsync(absolutePath, ["--help"], { windowsHide: true, timeout: VERIFY_TIMEOUT })
+            return absolutePath
         } catch {}
     }
 
-    return systemProbe
+    return null
+}
+
+// resolve a bare name to an absolute path by searching PATH entries manually - never execute (or spawn) a bare name:
+// Windows CreateProcess searches the application directory and the CWD before PATH, so a bare name could run a planted binary
+export function findExecutableInPath(name: string): string | null {
+    const fileName = process.platform === "win32" ? name + ".exe" : name
+
+    for (const dir of (process.env.PATH || "").split(path.delimiter)) {
+        // skip empty ("" resolves to the CWD) and relative entries
+        if (!dir || !path.isAbsolute(dir)) continue
+
+        const candidate = path.join(dir, fileName)
+        try {
+            if (!fs.statSync(candidate).isFile()) continue
+            fs.accessSync(candidate, fs.constants.X_OK)
+            return candidate
+        } catch {}
+    }
+
+    return null
 }
 
 // DOWNLOAD
 
-let activeDownload: { controller: AbortController; partPath: string } | null = null
+let activeDownload: { controller: AbortController; partPath: string; name: string } | null = null
 
 export async function downloadWhisperBinary(): Promise<{ ok: boolean; error?: string }> {
     // the official pre-built binaries only cover Windows - macOS/Linux users install whisper.cpp themselves (e.g. brew install whisper-cpp)
@@ -152,6 +211,11 @@ export async function downloadWhisperBinary(): Promise<{ ok: boolean; error?: st
 
     try {
         await downloadFile(WHISPER_BINARY_URL, zipPath, name)
+
+        // integrity check against the pinned release asset hash before anything gets extracted or executed
+        const checksum = await computeFileSha256(zipPath)
+        if (checksum !== WHISPER_WIN_X64_SHA256) throw new Error(`Downloaded ${WHISPER_WIN_X64_ASSET} failed checksum verification`)
+
         await extractAll(zipPath, targetDir)
     } catch (err) {
         if (isAbortError(err)) return { ok: false, error: "cancelled" }
@@ -165,7 +229,7 @@ export async function downloadWhisperBinary(): Promise<{ ok: boolean; error?: st
 
     verifiedLocalPath = ""
     const local = findLocalBinary()
-    if (!local || !verifyWhisperBinary(local.binaryPath)) {
+    if (!local || !(await verifyWhisperBinary(local.binaryPath))) {
         sendDownloadError(name, "Downloaded whisper binary could not be verified")
         return { ok: false, error: "verify_failed" }
     }
@@ -176,6 +240,7 @@ export async function downloadWhisperBinary(): Promise<{ ok: boolean; error?: st
 }
 
 export async function downloadWhisperModel(modelId: WhisperModelId): Promise<{ ok: boolean; error?: string }> {
+    if (!isKnownModel(modelId)) return { ok: false, error: "invalid_model" }
     if (activeDownload) return { ok: false, error: "download_in_progress" }
 
     const name = "whisper-model-" + modelId
@@ -204,13 +269,16 @@ export async function downloadWhisperModel(modelId: WhisperModelId): Promise<{ o
 export function cancelWhisperDownload(): void {
     if (!activeDownload) return
 
-    const { controller, partPath } = activeDownload
+    const { controller, partPath, name } = activeDownload
     activeDownload = null
 
     controller.abort()
     try {
         fs.unlinkSync(partPath)
     } catch {}
+
+    // terminal event so the renderer's progress entry for this download never stays stuck at "downloading"
+    sendToMain(ToMain.AI_SCRIPTURE_WHISPER_PROGRESS, { name, progress: 0, total: 0, status: "error", message: "cancelled" })
 }
 
 // downloads to a ".part" file first so an aborted/failed download never leaves a valid looking file behind
@@ -219,7 +287,7 @@ async function downloadFile(url: string, destPath: string, progressName: string)
     fs.mkdirSync(path.dirname(destPath), { recursive: true })
 
     const controller = new AbortController()
-    activeDownload = { controller, partPath }
+    activeDownload = { controller, partPath, name: progressName }
 
     try {
         const response = await fetch(url, { signal: controller.signal })
@@ -282,6 +350,16 @@ function extractAll(zipPath: string, targetDir: string): Promise<void> {
 }
 
 // VERIFY
+
+export function computeFileSha256(filePath: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const hash = crypto.createHash("sha256")
+        const stream = fs.createReadStream(filePath)
+        stream.on("error", reject)
+        stream.on("data", (chunk) => hash.update(chunk))
+        stream.on("end", () => resolve(hash.digest("hex")))
+    })
+}
 
 function verifyModelFile(filePath: string): boolean {
     try {

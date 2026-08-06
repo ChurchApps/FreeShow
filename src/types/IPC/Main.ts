@@ -413,7 +413,7 @@ export interface MainReturnPayloads {
     [Main.AI_SCRIPTURE_TEST_CONNECTION]: Promise<{ ok: boolean; error?: AIError }>
     [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_BINARY]: Promise<{ ok: boolean; error?: string }>
     [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_MODEL]: Promise<{ ok: boolean; error?: string }>
-    [Main.AI_SCRIPTURE_WHISPER_VERIFY_PATH]: { valid: boolean }
+    [Main.AI_SCRIPTURE_WHISPER_VERIFY_PATH]: Promise<{ valid: boolean }>
 }
 
 ///////////

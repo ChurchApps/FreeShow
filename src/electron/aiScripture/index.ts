@@ -11,11 +11,14 @@ import { cancelWhisperDownload, downloadWhisperBinary, downloadWhisperModel, get
 
 let transcriber: Transcriber | null = null
 let coordinator: DetectionCoordinator | null = null
+// bumped on every start/stop so a slow start that got superseded can tell it no longer owns the session
+let sessionToken = 0
 
 export async function startAiScripture(config: AiScriptureStartConfig): Promise<{ started: boolean; error?: string }> {
     stopAiScripture()
+    const token = ++sessionToken
 
-    const binary = resolveWhisper(config.whisperCustomPath)
+    const binary = await resolveWhisper(config.whisperCustomPath)
     if (!binary) return { started: false, error: "whisper_not_installed" }
 
     const customModel = config.whisperCustomModelPath && existsSync(config.whisperCustomModelPath) ? config.whisperCustomModelPath : ""
@@ -27,8 +30,12 @@ export async function startAiScripture(config: AiScriptureStartConfig): Promise<
         books: config.books,
         llm,
         getApiKey: getAiKey,
+        cooldownSeconds: config.refCooldownSeconds,
         onDetection: (ref) => sendToMain(ToMain.AI_SCRIPTURE_DETECTION, ref),
-        onStatus: (state, extra) => sendToMain(ToMain.AI_SCRIPTURE_STATUS, { state, ...extra })
+        onStatus: (state, extra) => {
+            if (extra?.message) extra.message = sanitizeErrorMessage(extra.message)
+            sendToMain(ToMain.AI_SCRIPTURE_STATUS, { state, ...extra })
+        }
     })
 
     transcriber = new Transcriber({
@@ -39,21 +46,31 @@ export async function startAiScripture(config: AiScriptureStartConfig): Promise<
             sendToMain(ToMain.AI_SCRIPTURE_TRANSCRIPT, segment)
             coordinator?.onTranscriptSegment(segment)
         },
-        onError: (message) => sendToMain(ToMain.AI_SCRIPTURE_STATUS, { state: "error", message })
+        onError: (message) => {
+            if (token !== sessionToken) return
+            // a fatal transcriber error ends the whole session - stop everything so nothing keeps processing (the renderer stops mic capture on "error")
+            stopAiScripture()
+            sendToMain(ToMain.AI_SCRIPTURE_STATUS, { state: "error", message: sanitizeErrorMessage(message) })
+        }
     })
 
     try {
         await transcriber.start()
     } catch (err) {
-        stopAiScripture()
+        // only tear down if this call still owns the session - a newer start/stop may have superseded it during the slow await
+        if (token === sessionToken) stopAiScripture()
         return { started: false, error: String((err as Error)?.message || err) }
     }
+
+    if (token !== sessionToken) return { started: false, error: "superseded" }
 
     sendToMain(ToMain.AI_SCRIPTURE_STATUS, { state: "listening", keyless: !llm })
     return { started: true }
 }
 
 export function stopAiScripture() {
+    sessionToken++
+
     coordinator?.stop()
     coordinator = null
 
@@ -65,8 +82,14 @@ export function stopAiScripture() {
     }
 }
 
+// audio arriving before START or after STOP is a safe no-op: the transcriber is null outside a session
 export function receiveAiScriptureAudio(data: { buffer: Uint8Array }) {
     transcriber?.pushAudio(data.buffer)
+}
+
+// error messages can contain provider response bodies / whisper stderr - never pass those to the renderer verbatim
+function sanitizeErrorMessage(message: string): string {
+    return message.replace(/\s+/g, " ").trim().slice(0, 200)
 }
 
 // API KEYS
@@ -104,7 +127,11 @@ export async function testAiConnection(data: { provider: AIProviderId; model: st
     if (!key) return { ok: false, error: { code: "invalid_key" } }
 
     const result = await getProvider(data.provider).testConnection(key, data.model)
-    return result.ok ? { ok: true } : { ok: false, error: result.error }
+    if (result.ok) return { ok: true }
+
+    const error = { ...result.error }
+    if (error.message) error.message = sanitizeErrorMessage(error.message)
+    return { ok: false, error }
 }
 
 // WHISPER
@@ -113,7 +140,7 @@ export const aiScriptureWhisper = {
     downloadBinary: () => downloadWhisperBinary(),
     downloadModel: (data: { modelId: Parameters<typeof downloadWhisperModel>[0] }) => downloadWhisperModel(data.modelId),
     cancel: () => cancelWhisperDownload(),
-    verifyPath: (data: { path: string }) => ({ valid: verifyWhisperBinary(data.path) })
+    verifyPath: async (data: { path: string }) => ({ valid: await verifyWhisperBinary(data.path) })
 }
 
 app.on("will-quit", () => stopAiScripture())
