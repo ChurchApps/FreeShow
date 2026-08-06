@@ -13,7 +13,7 @@
     import { history } from "../../helpers/history"
     import { getExtension, getMedia, getMediaFileFromClipboard, getMediaLayerType, getMediaStyle, getMediaType, getThumbnailPath, mediaSize } from "../../helpers/media"
     import { getFirstActiveOutput, getResolution, getSlideFilter } from "../../helpers/output"
-    import { getLayoutRef } from "../../helpers/show"
+    import { getLayoutRef, isSlideLocked } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
@@ -261,7 +261,7 @@
     )
 
     let profile = getAccess("shows")
-    $: isGroupLocked = !!Slide?.locked // WIP get group slide
+    $: isGroupLocked = isSlideLocked(currentShowId, ref[$activeEdit.slide ?? -1]?.id || "", $showsCache)
     $: isLocked = currentShow?.locked || isGroupLocked || profile.global === "read" || profile[currentShow?.category || ""] === "read"
 
     // remove overflow if scrollbars are flickering over 25 times per second

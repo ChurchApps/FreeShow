@@ -7,7 +7,7 @@
     import T from "../helpers/T.svelte"
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
-    import { getLayoutRef } from "../helpers/show"
+    import { getLayoutRef, isSlideLocked } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import { getStyles } from "../helpers/style"
     import FloatingInputs from "../input/FloatingInputs.svelte"
@@ -360,11 +360,7 @@
     let profile = getAccess("shows")
 
     $: currentShow = $showsCache[$activeShow?.id || ""]
-    $: isSlideLockedFn = () => {
-        const slideId = ref[activeSlide]?.parent?.id || ref[activeSlide]?.id
-        return !!currentShow?.slides?.[slideId]?.locked
-    }
-    $: isLocked = activeId ? false : currentShow?.locked || isSlideLockedFn() || profile.global === "read" || profile[currentShow?.category || ""] === "read"
+    $: isLocked = activeId ? false : currentShow?.locked || isSlideLocked($activeShow?.id || "", ref[activeSlide]?.id || "", currentShow) || profile.global === "read" || profile[currentShow?.category || ""] === "read"
     // $: isDefault = $activeEdit.type === "overlay" ? $overlays[activeId || ""]?.isDefault : $activeEdit.type === "template" ? $templates[activeId || ""]?.isDefault : false
     $: overflowHidden = !!(isShow || $activeEdit.type === "template" || $activeEdit.type === "overlay")
 
