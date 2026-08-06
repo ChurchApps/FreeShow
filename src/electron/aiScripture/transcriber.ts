@@ -33,6 +33,7 @@ export interface TranscriberSegment {
     text: string
     startMs: number
     endMs: number
+    language?: string // detected language of the window (cli -oj with "-l auto" only)
 }
 
 export interface WhisperSegment extends TranscriberSegment {
@@ -180,7 +181,7 @@ export class Transcriber {
 
             for (const segment of fresh) {
                 if (segment.endMs > this.lastEmittedEndMs) this.lastEmittedEndMs = segment.endMs
-                this.options.onSegment({ text: segment.text.trim(), startMs: segment.startMs, endMs: segment.endMs })
+                this.options.onSegment({ text: segment.text.trim(), startMs: segment.startMs, endMs: segment.endMs, language: segment.language })
             }
 
             this.consecutiveFailures = 0
@@ -520,12 +521,16 @@ function trimOverlapText(text: string, startMs: number, endMs: number, previousE
 }
 
 // tolerant parser for the different whisper.cpp JSON shapes:
-// - cli -oj: { transcription: [{ text, offsets: { from, to } }] } (ms offsets)
+// - cli -oj: { result: { language }, transcription: [{ text, offsets: { from, to } }] } (ms offsets)
 // - server response_format=json: { text } (no timestamps - spans the whole window)
 // - verbose/OpenAI style: { segments: [{ text, start, end, no_speech_prob, avg_logprob }] } (seconds)
 export function parseWhisperJson(json: any, windowDurationMs: number): WhisperSegment[] {
     if (!json || typeof json !== "object") return []
     const segments: WhisperSegment[] = []
+
+    // overall detected language of the window (cli -oj) - "auto" would mean whisper never resolved it
+    let language = typeof json.result?.language === "string" ? json.result.language.trim().toLowerCase() : undefined
+    if (language === "auto" || language === "") language = undefined
 
     if (Array.isArray(json.transcription)) {
         for (const entry of json.transcription) {
@@ -537,7 +542,8 @@ export function parseWhisperJson(json: any, windowDurationMs: number): WhisperSe
                 startMs: isFinite(from) ? from : 0,
                 endMs: isFinite(to) ? to : windowDurationMs,
                 noSpeechProb: asNumber(entry.no_speech_prob),
-                avgLogprob: asNumber(entry.avg_logprob)
+                avgLogprob: asNumber(entry.avg_logprob),
+                language
             })
         }
         return segments
@@ -553,14 +559,15 @@ export function parseWhisperJson(json: any, windowDurationMs: number): WhisperSe
                 startMs: isFinite(start) ? Math.round(start * 1000) : 0,
                 endMs: isFinite(end) ? Math.round(end * 1000) : windowDurationMs,
                 noSpeechProb: asNumber(entry.no_speech_prob),
-                avgLogprob: asNumber(entry.avg_logprob)
+                avgLogprob: asNumber(entry.avg_logprob),
+                language
             })
         }
         return segments
     }
 
     if (typeof json.text === "string" && json.text.trim()) {
-        segments.push({ text: json.text, startMs: 0, endMs: windowDurationMs })
+        segments.push({ text: json.text, startMs: 0, endMs: windowDurationMs, language })
     }
 
     return segments

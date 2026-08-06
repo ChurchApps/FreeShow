@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { AIError, AIProviderId, WhisperModelId, WhisperStatus } from "../../../../types/AiScripture"
-    import { AI_PROVIDER_MODELS } from "../../../../types/AiScripture"
+    import { AI_PROVIDER_MODELS, WHISPER_LANGUAGES } from "../../../../types/AiScripture"
     import { Main } from "../../../../types/IPC/Main"
     import { aiScriptureErrorText } from "../../../audio/aiScripture"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
@@ -57,8 +57,12 @@
 
     $: platform = $os.platform
 
+    const languageOptions = WHISPER_LANGUAGES.map((a) => ({ value: a.code, label: a.name }))
+
     $: spokenLanguage = ((settings.spokenLanguage as string) || ($language || "en").slice(0, 2)).toLowerCase()
-    $: englishOnly = spokenLanguage === "en"
+    $: interpretationMode = settings.interpretationMode === true
+    // interpretation mode auto-detects the language per window - that needs a multilingual model, never an .en variant
+    $: englishOnly = spokenLanguage === "en" && !interpretationMode
     const hasEnVariant = (base: string) => base !== "large-v3"
     $: whisperModelBase = ((settings.whisperModel as string) || "base").replace(".en", "")
     $: whisperModelId = (englishOnly && hasEnVariant(whisperModelBase) ? `${whisperModelBase}.en` : whisperModelBase) as WhisperModelId
@@ -80,7 +84,15 @@
 
         // keep the derived English-only model variant in sync
         const base = ((settings.whisperModel as string) || "base").replace(".en", "")
-        update("whisperModel", languageCode === "en" && hasEnVariant(base) ? `${base}.en` : base)
+        update("whisperModel", languageCode === "en" && !interpretationMode && hasEnVariant(base) ? `${base}.en` : base)
+    }
+
+    function toggleInterpretation(enabled: boolean) {
+        update("interpretationMode", enabled)
+
+        // re-derive the model: multilingual while interpretation is on, back to the .en variant for English otherwise
+        const base = ((settings.whisperModel as string) || "base").replace(".en", "")
+        update("whisperModel", !enabled && spokenLanguage === "en" && hasEnVariant(base) ? `${base}.en` : base)
     }
 
     // DOWNLOADS
@@ -360,8 +372,15 @@
 
     <InputRow>
         <MaterialDropdown label="live.microphones" options={microphones} value={settings.micDeviceId || ""} on:change={(e) => update("micDeviceId", e.detail)} allowEmpty />
-        <MaterialTextInput label="settings.ai_spoken_language" value={spokenLanguage} defaultValue={($language || "en").slice(0, 2).toLowerCase()} on:change={(e) => setSpokenLanguage(e.detail)} />
+        <MaterialDropdown label="settings.ai_spoken_language" options={languageOptions} value={spokenLanguage} defaultValue={($language || "en").slice(0, 2).toLowerCase()} on:change={(e) => setSpokenLanguage(e.detail)} />
     </InputRow>
+
+    <MaterialToggleSwitch label="settings.ai_interpretation" checked={settings.interpretationMode === true} defaultValue={false} on:change={(e) => toggleInterpretation(e.detail)} />
+    {#if interpretationMode}
+        <p class="faded hint"><T id="settings.ai_interpretation_hint" /></p>
+        <MaterialDropdown label="settings.ai_listen_language" options={languageOptions} value={settings.listenLanguage || spokenLanguage} defaultValue={spokenLanguage} on:change={(e) => update("listenLanguage", e.detail)} />
+        <p class="faded hint"><T id="settings.ai_interpretation_model_hint" /></p>
+    {/if}
 
     <Title label="settings.ai_detection" icon="search" />
 

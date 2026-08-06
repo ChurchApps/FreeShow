@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { DetectedReference } from "../../../../types/AiScripture"
     import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../../../audio/aiScripture"
-    import { activePage, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, outLocked, scriptures, settingsTab } from "../../../stores"
+    import { activePage, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, outLocked, scriptures, settingsTab, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -52,7 +52,10 @@
 
     // TRANSCRIPT
 
-    $: latestSegment = $aiScriptureTranscript[$aiScriptureTranscript.length - 1]?.text || ""
+    // interpretation mode: multiple languages flow through the transcript - label each segment with its detected language
+    $: interpretationMode = $special.aiScripture?.interpretationMode === true
+    $: latestTranscript = $aiScriptureTranscript[$aiScriptureTranscript.length - 1]
+    $: latestSegment = latestTranscript?.text || ""
 
     let transcriptExpanded = false
     let transcriptElem: HTMLElement | undefined
@@ -95,11 +98,17 @@
             {#if transcriptExpanded}
                 <div class="transcriptFull" bind:this={transcriptElem}>
                     {#each $aiScriptureTranscript as segment}
-                        <p>{segment.text}</p>
+                        <p>
+                            {#if interpretationMode && segment.language}<span class="langTag">{segment.language.toUpperCase()} ·</span>
+                            {/if}{segment.text}
+                        </p>
                     {/each}
                 </div>
             {:else if latestSegment}
-                <p class="ticker" on:click={() => (transcriptExpanded = true)} role="none">{latestSegment}</p>
+                <p class="ticker" on:click={() => (transcriptExpanded = true)} role="none">
+                    {#if interpretationMode && latestTranscript?.language}<span class="langTag">{latestTranscript.language.toUpperCase()} ·</span>
+                    {/if}{latestSegment}
+                </p>
             {:else}
                 <p class="ticker faded"><T id="scripture.ai_waiting_for_audio" /></p>
             {/if}
@@ -255,6 +264,13 @@
         white-space: initial;
         opacity: 0.7;
         margin: 2px 0;
+    }
+
+    .langTag {
+        opacity: 0.5;
+        font-size: 0.75em;
+        font-weight: 600;
+        letter-spacing: 0.05em;
     }
 
     .suggestions {

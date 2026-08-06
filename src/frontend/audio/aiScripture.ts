@@ -38,6 +38,8 @@ interface AiScriptureSettings {
     whisperCustomPath?: string
     whisperCustomModelPath?: string
     spokenLanguage?: string
+    interpretationMode?: boolean
+    listenLanguage?: string
     autoCooldownSeconds?: number
     refCooldownSeconds?: number
     maxVerses?: number
@@ -129,12 +131,20 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     }
 
     const language = settings.spokenLanguage || "en"
+    const interpretationMode = !!settings.interpretationMode
+
+    // default model must match the popup's derivation, or a non English user would request a model they never downloaded
+    let whisperModel: WhisperModelId = settings.whisperModel || (language.startsWith("en") && !interpretationMode ? "base.en" : "base")
+    // interpretation mode needs a multilingual model for per-window language detection - never an .en variant
+    if (interpretationMode) whisperModel = whisperModel.replace(".en", "") as WhisperModelId
+
     const startConfig: AiScriptureStartConfig = {
-        // default model must match the popup's derivation, or a non English user would request a model they never downloaded
-        whisperModel: settings.whisperModel || (language.startsWith("en") ? "base.en" : "base"),
+        whisperModel,
         whisperCustomPath: settings.whisperCustomPath || undefined,
         whisperCustomModelPath: settings.whisperCustomModelPath || undefined,
         language,
+        interpretationMode,
+        listenLanguage: settings.listenLanguage || language,
         books,
         llm,
         refCooldownSeconds: settings.refCooldownSeconds,

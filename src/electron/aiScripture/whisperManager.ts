@@ -94,14 +94,35 @@ export function isModelReady(modelId: WhisperModelId): boolean {
 // RESOLVE
 
 // resolve priority: verified custom path -> downloaded local binary -> system PATH probe
-export async function resolveWhisper(customPath?: string): Promise<{ kind: "cli" | "server"; binaryPath: string } | null> {
+// preferCli picks a cli binary (whisper-cli/main) over whisper-server when both are available
+// (per-window language detection needs the cli's -oj output), falling back to a server if that is all there is
+export async function resolveWhisper(customPath?: string, options: { preferCli?: boolean } = {}): Promise<{ kind: "cli" | "server"; binaryPath: string } | null> {
     if (customPath && (await verifyCustomBinary(customPath))) {
         const kind = path.basename(customPath).toLowerCase().includes("server") ? "server" : "cli"
-        return { kind, binaryPath: customPath }
+        if (kind === "cli" || !options.preferCli) return { kind, binaryPath: customPath }
+
+        // the custom path points at a server - try to find a cli elsewhere, keep the server as fallback
+        const cli = await resolveCliBinary()
+        return cli || { kind, binaryPath: customPath }
+    }
+
+    if (options.preferCli) {
+        const cli = await resolveCliBinary()
+        if (cli) return cli
     }
 
     const local = await getVerifiedLocalBinary()
     if (local) return local
+
+    const system = await findSystemWhisper()
+    if (system) return { kind: "cli", binaryPath: system }
+
+    return null
+}
+
+async function resolveCliBinary(): Promise<{ kind: "cli" | "server"; binaryPath: string } | null> {
+    const local = await getVerifiedLocalBinary(true)
+    if (local?.kind === "cli") return local
 
     const system = await findSystemWhisper()
     if (system) return { kind: "cli", binaryPath: system }
@@ -128,11 +149,12 @@ async function verifyCustomBinary(customPath: string): Promise<boolean> {
     return true
 }
 
-function findLocalBinary(): { kind: "cli" | "server"; binaryPath: string } | null {
+function findLocalBinary(preferCli = false): { kind: "cli" | "server"; binaryPath: string } | null {
     const dir = getWhisperDir()
 
     const serverPath = path.join(dir, "whisper-server.exe")
-    if (fs.existsSync(serverPath)) return { kind: "server", binaryPath: serverPath }
+    const server: { kind: "cli" | "server"; binaryPath: string } | null = fs.existsSync(serverPath) ? { kind: "server", binaryPath: serverPath } : null
+    if (server && !preferCli) return server
 
     // "main.exe" is the deprecated name of "whisper-cli.exe" in older whisper.cpp releases
     for (const name of ["whisper-cli.exe", "main.exe"]) {
@@ -140,12 +162,12 @@ function findLocalBinary(): { kind: "cli" | "server"; binaryPath: string } | nul
         if (fs.existsSync(cliPath)) return { kind: "cli", binaryPath: cliPath }
     }
 
-    return null
+    return server
 }
 
 let verifiedLocalPath = ""
-async function getVerifiedLocalBinary(): Promise<{ kind: "cli" | "server"; binaryPath: string } | null> {
-    const local = findLocalBinary()
+async function getVerifiedLocalBinary(preferCli = false): Promise<{ kind: "cli" | "server"; binaryPath: string } | null> {
+    const local = findLocalBinary(preferCli)
     if (!local) return null
 
     if (local.binaryPath !== verifiedLocalPath) {

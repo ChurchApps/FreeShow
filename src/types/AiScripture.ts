@@ -27,6 +27,50 @@ export interface DetectedReference {
 
 export type WhisperModelId = "tiny" | "tiny.en" | "base" | "base.en" | "small" | "small.en" | "medium" | "medium.en" | "large-v3"
 
+// curated list of languages whisper transcribes well, alphabetical by English name
+export const WHISPER_LANGUAGES: { code: string; name: string }[] = [
+    { code: "am", name: "Amharic" },
+    { code: "ar", name: "Arabic" },
+    { code: "bg", name: "Bulgarian" },
+    { code: "zh", name: "Chinese" },
+    { code: "cs", name: "Czech" },
+    { code: "da", name: "Danish" },
+    { code: "nl", name: "Dutch" },
+    { code: "en", name: "English" },
+    { code: "fi", name: "Finnish" },
+    { code: "fr", name: "French" },
+    { code: "de", name: "German" },
+    { code: "el", name: "Greek" },
+    { code: "he", name: "Hebrew" },
+    { code: "hi", name: "Hindi" },
+    { code: "hu", name: "Hungarian" },
+    { code: "is", name: "Icelandic" },
+    { code: "id", name: "Indonesian" },
+    { code: "it", name: "Italian" },
+    { code: "ja", name: "Japanese" },
+    { code: "ko", name: "Korean" },
+    { code: "ms", name: "Malay" },
+    { code: "no", name: "Norwegian" },
+    { code: "pl", name: "Polish" },
+    { code: "pt", name: "Portuguese" },
+    { code: "ro", name: "Romanian" },
+    { code: "ru", name: "Russian" },
+    { code: "sr", name: "Serbian" },
+    { code: "sk", name: "Slovak" },
+    { code: "es", name: "Spanish" },
+    { code: "sw", name: "Swahili" },
+    { code: "sv", name: "Swedish" },
+    { code: "tl", name: "Tagalog" },
+    { code: "ta", name: "Tamil" },
+    { code: "th", name: "Thai" },
+    { code: "tr", name: "Turkish" },
+    { code: "uk", name: "Ukrainian" },
+    { code: "ur", name: "Urdu" },
+    { code: "vi", name: "Vietnamese" },
+    { code: "yo", name: "Yoruba" },
+    { code: "zu", name: "Zulu" }
+]
+
 // transient downloading/verifying states are sent as AI_SCRIPTURE_WHISPER_PROGRESS events,
 // and custom binary paths are verified separately (renderer setting) - this is only what main knows on its own
 export interface WhisperStatus {
@@ -73,6 +117,8 @@ export interface AiScriptureStartConfig {
     whisperCustomPath?: string
     whisperCustomModelPath?: string // use an already installed ggml model file instead of a downloaded one
     language: string // spoken language code passed to whisper (e.g. "en")
+    interpretationMode?: boolean // live interpretation: transcribe everything (auto language), only detect from listenLanguage
+    listenLanguage?: string // language code scripture detection listens to when interpretationMode is on
     books: AiScriptureBook[]
     llm: { provider: AIProviderId; model: string } | null
     refCooldownSeconds?: number // suppress re-emitting an intersecting reference within this window

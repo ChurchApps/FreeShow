@@ -60,7 +60,7 @@ export interface ToMainSendPayloads {
     [ToMain.PDF_IMPORT_PROGRESS]: { filePath: string; name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }
     [ToMain.RTMP_STATUS]: { outputId: string; destinations: RtmpStatus }
     // AI Scripture
-    [ToMain.AI_SCRIPTURE_TRANSCRIPT]: { text: string; startMs: number; endMs: number }
+    [ToMain.AI_SCRIPTURE_TRANSCRIPT]: { text: string; startMs: number; endMs: number; language?: string }
     [ToMain.AI_SCRIPTURE_DETECTION]: DetectedReference
     [ToMain.AI_SCRIPTURE_STATUS]: { state: AiScriptureState; message?: string; keyless?: boolean }
     [ToMain.AI_SCRIPTURE_COMMAND]: AiScriptureCommandEvent

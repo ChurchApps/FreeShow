@@ -165,6 +165,25 @@ describe("parseWhisperJson", () => {
         expect(parseWhisperJson(json, 7000)).toEqual([{ text: "hello", startMs: 1000, endMs: 2500, noSpeechProb: 0.1, avgLogprob: -0.3 }])
     })
 
+    it("flows the overall result.language through to every segment (cli -oj with -l auto)", () => {
+        const json = {
+            result: { language: "fr" },
+            transcription: [
+                { text: " Dieu a tant aimé le monde.", offsets: { from: 0, to: 2500 } },
+                { text: " Jean trois seize.", offsets: { from: 2500, to: 6000 } }
+            ]
+        }
+        expect(parseWhisperJson(json, 7000)).toEqual([
+            { text: " Dieu a tant aimé le monde.", startMs: 0, endMs: 2500, noSpeechProb: undefined, avgLogprob: undefined, language: "fr" },
+            { text: " Jean trois seize.", startMs: 2500, endMs: 6000, noSpeechProb: undefined, avgLogprob: undefined, language: "fr" }
+        ])
+    })
+
+    it("drops an unresolved 'auto' language instead of passing it on", () => {
+        const json = { result: { language: "auto" }, transcription: [{ text: " hello", offsets: { from: 0, to: 1000 } }] }
+        expect(parseWhisperJson(json, 7000)[0].language).toBeUndefined()
+    })
+
     it("returns nothing for empty or malformed responses", () => {
         expect(parseWhisperJson(null, 7000)).toEqual([])
         expect(parseWhisperJson({}, 7000)).toEqual([])

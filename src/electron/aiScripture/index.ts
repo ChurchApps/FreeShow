@@ -24,7 +24,8 @@ export async function startAiScripture(config: AiScriptureStartConfig): Promise<
     stopAiScripture()
     const token = ++sessionToken
 
-    const binary = await resolveWhisper(config.whisperCustomPath)
+    // interpretation mode needs per-window language detection, which only the cli's -oj output provides
+    const binary = await resolveWhisper(config.whisperCustomPath, { preferCli: !!config.interpretationMode })
     if (!binary) return { started: false, error: "whisper_not_installed" }
 
     const customModel = config.whisperCustomModelPath && existsSync(config.whisperCustomModelPath) ? config.whisperCustomModelPath : ""
@@ -47,9 +48,15 @@ export async function startAiScripture(config: AiScriptureStartConfig): Promise<
     transcriber = new Transcriber({
         binary,
         modelPath: customModel || getModelPath(config.whisperModel),
-        language: config.language,
+        // interpretation mode: a multilingual model detects the language of each window on its own
+        language: config.interpretationMode ? "auto" : config.language,
         onSegment: (segment) => {
+            // the full transcript always reaches the renderer - detection only listens to the selected language
             sendToMain(ToMain.AI_SCRIPTURE_TRANSCRIPT, segment)
+
+            const detectable = !config.interpretationMode || !segment.language || !config.listenLanguage || segment.language === config.listenLanguage
+            if (!detectable) return
+
             coordinator?.onTranscriptSegment(segment)
 
             if (!config.voiceCommands) return
