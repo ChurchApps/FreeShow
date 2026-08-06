@@ -46,6 +46,8 @@ interface TranscriberOptions {
     binary: { kind: "cli" | "server"; binaryPath: string }
     modelPath: string
     language: string
+    declaredLanguages?: string[] // interpretation mode: the languages actually being spoken - a "-l auto" guess outside this set triggers a forced re-check
+    primaryLanguage?: string // the scripture detection language - forced re-checks transcribe the window with this language
     onSegment: (segment: TranscriberSegment) => void
     onError: (message: string) => void
 }
@@ -172,7 +174,7 @@ export class Transcriber {
             const windowDurationMs = Math.round((window.samples.length / SAMPLE_RATE) * 1000)
             const wav = buildWavBuffer(window.samples)
 
-            const json = this.options.binary.kind === "cli" ? await this.transcribeCli(wav) : await this.transcribeServer(wav)
+            const json = this.options.binary.kind === "cli" ? await this.transcribeCli(wav, windowDurationMs) : await this.transcribeServer(wav)
             if (this.stopped) return
 
             const parsed = parseWhisperJson(json, windowDurationMs)
@@ -206,7 +208,7 @@ export class Transcriber {
 
     // CLI DRIVER - one whisper.cpp cli process per window, JSON output to a temp file
 
-    private async transcribeCli(wav: Buffer): Promise<unknown> {
+    private async transcribeCli(wav: Buffer, windowDurationMs: number): Promise<unknown> {
         // temp WAV/JSON only live for the duration of this one window - private folder (0700) and files (0600)
         const tmpDir = this.getTmpDir()
         fs.mkdirSync(tmpDir, { recursive: true, mode: 0o700 })
@@ -217,23 +219,49 @@ export class Transcriber {
         this.tempFiles.add(wavPath)
         this.tempFiles.add(jsonPath)
 
+        // the WAV must outlive the first run: a "-l auto" guess outside the declared languages re-transcribes the same file,
+        // and the finally covers every exit (success, re-run, stop, timeout)
         try {
             await fs.promises.writeFile(wavPath, wav, { mode: 0o600 })
             if (this.stopped) throw new Error("Transcriber stopped")
             await this.runCliProcess(wavPath, outBase)
-            return JSON.parse(await fs.promises.readFile(jsonPath, "utf8"))
+            const json = JSON.parse(await fs.promises.readFile(jsonPath, "utf8"))
+            return await this.rerunOutsideDeclared(json, wavPath, outBase, jsonPath, windowDurationMs)
         } finally {
             this.deleteTempFile(wavPath)
             this.deleteTempFile(jsonPath)
         }
     }
 
-    private runCliProcess(wavPath: string, outBase: string): Promise<void> {
+    // interpretation mode guard: whisper's free "-l auto" guess spans ~99 languages, but the user declared which ones
+    // are actually spoken - a guess outside that set is double-checked by re-transcribing the same window forced to the
+    // detection language, and the forced result only wins when it reads as confident speech.
+    // the re-run happens inside the same serialized processing slot (never parallel whisper) with the same 30s watchdog
+    private async rerunOutsideDeclared(json: any, wavPath: string, outBase: string, jsonPath: string, windowDurationMs: number): Promise<unknown> {
+        const primary = this.options.primaryLanguage
+        const detected = typeof json?.result?.language === "string" ? json.result.language : undefined
+        if (!primary || this.stopped || !shouldRerunWindow(detected, this.options.declaredLanguages)) return json
+
+        try {
+            await this.runCliProcess(wavPath, outBase, primary)
+            const rerun = JSON.parse(await fs.promises.readFile(jsonPath, "utf8"))
+            const segments = parseWhisperJson(rerun, windowDurationMs)
+            const confident = segments.some((segment) => !isNoiseSegment(segment.text) && !isLowConfidence(segment))
+            if (!confident) return json // the forced read is noise/uncertain - trust the original guess after all
+
+            return Object.assign({}, rerun, { result: Object.assign({}, rerun.result, { language: primary }) })
+        } catch {
+            // a failed/timed out/stopped re-run never discards the valid first result
+            return json
+        }
+    }
+
+    private runCliProcess(wavPath: string, outBase: string, language: string = this.options.language): Promise<void> {
         return new Promise((resolve, reject) => {
             // stop() could have run while the WAV was being written - never spawn a child once it has begun
             if (this.stopped) return reject(new Error("Transcriber stopped"))
 
-            const args = ["-m", this.options.modelPath, "-l", this.options.language, "-f", wavPath, "-oj", "-of", outBase, "-np"]
+            const args = ["-m", this.options.modelPath, "-l", language, "-f", wavPath, "-oj", "-of", outBase, "-np"]
             const child = spawn(this.options.binary.binaryPath, args, { stdio: ["ignore", "ignore", "pipe"], windowsHide: true })
             this.cliChild = child
 
@@ -489,6 +517,15 @@ export function isNoiseSegment(text: string): boolean {
 // so music segments are shown in the transcript but must never feed scripture detection
 export function isMusicSegment(text: string): boolean {
     return /[♪♫]/.test(text)
+}
+
+// interpretation mode: a "-l auto" guess outside the declared spoken languages warrants a forced re-check.
+// an unset/unresolved detection never re-runs, and an empty declaration means "no constraint"
+export function shouldRerunWindow(detected: string | undefined, declared: string[] | undefined): boolean {
+    const language = (detected || "").trim().toLowerCase()
+    if (!language || language === "auto") return false
+    if (!declared?.length) return false
+    return !declared.some((code) => code.trim().toLowerCase() === language)
 }
 
 // drop segments whisper itself is unsure about - only where the JSON provides the values

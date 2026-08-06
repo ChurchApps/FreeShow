@@ -95,6 +95,21 @@
         update("whisperModel", !enabled && spokenLanguage === "en" && hasEnVariant(base) ? `${base}.en` : base)
     }
 
+    // LANGUAGES SPOKEN (interpretation mode)
+    // the declared set constrains whisper's per-window language guess - default: the speaker & detection languages
+
+    $: listenLanguage = ((settings.listenLanguage as string) || spokenLanguage) as string
+    $: spokenLanguages = ((settings.spokenLanguages as string[]) || Array.from(new Set([spokenLanguage, listenLanguage]))) as string[]
+
+    function toggleSpokenLanguage(code: string, checked: boolean) {
+        const list = spokenLanguages.filter((languageCode) => languageCode !== code)
+        if (checked) list.push(code)
+        update("spokenLanguages", list)
+    }
+
+    // scripture detection can only listen to a language that is actually spoken - full list until a real set is picked
+    $: listenLanguageOptions = spokenLanguages.length >= 2 ? languageOptions.filter((option) => spokenLanguages.includes(option.value)) : languageOptions
+
     // DOWNLOADS
 
     type DownloadInfo = { progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }
@@ -378,7 +393,16 @@
     <MaterialToggleSwitch label="settings.ai_interpretation" checked={settings.interpretationMode === true} defaultValue={false} on:change={(e) => toggleInterpretation(e.detail)} />
     {#if interpretationMode}
         <p class="faded hint"><T id="settings.ai_interpretation_hint" /></p>
-        <MaterialDropdown label="settings.ai_listen_language" options={languageOptions} value={settings.listenLanguage || spokenLanguage} defaultValue={spokenLanguage} on:change={(e) => update("listenLanguage", e.detail)} />
+
+        <p class="listLabel"><T id="settings.ai_spoken_languages" /></p>
+        <div class="languageList">
+            {#each WHISPER_LANGUAGES as spoken}
+                <MaterialCheckbox label={spoken.name} checked={spokenLanguages.includes(spoken.code)} on:change={(e) => toggleSpokenLanguage(spoken.code, e.detail)} />
+            {/each}
+        </div>
+        <p class="faded hint"><T id="settings.ai_spoken_languages_hint" /></p>
+
+        <MaterialDropdown label="settings.ai_listen_language" options={listenLanguageOptions} value={listenLanguage} defaultValue={spokenLanguage} on:change={(e) => update("listenLanguage", e.detail)} />
         <p class="faded hint"><T id="settings.ai_interpretation_model_hint" /></p>
     {/if}
 
@@ -581,13 +605,23 @@
         transition: width 0.2s ease;
     }
 
-    .bibleList {
+    .bibleList,
+    .languageList {
         display: flex;
         flex-direction: column;
         max-height: 200px;
         overflow-y: auto;
         background-color: var(--primary-darker);
         border-radius: 4px;
+    }
+    .languageList {
+        max-height: 150px;
+    }
+
+    .listLabel {
+        font-size: 0.8em;
+        opacity: 0.8;
+        padding: 5px 10px 2px;
     }
 
     .privacy {

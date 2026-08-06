@@ -40,6 +40,7 @@ interface AiScriptureSettings {
     spokenLanguage?: string
     interpretationMode?: boolean
     listenLanguage?: string
+    spokenLanguages?: string[]
     autoCooldownSeconds?: number
     refCooldownSeconds?: number
     maxVerses?: number
@@ -138,13 +139,18 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     // interpretation mode needs a multilingual model for per-window language detection - never an .en variant
     if (interpretationMode) whisperModel = whisperModel.replace(".en", "") as WhisperModelId
 
+    const listenLanguage = settings.listenLanguage || language
+    // the declared spoken set constrains whisper's per-window language guess - default to the two languages we know about
+    const spokenLanguages = interpretationMode ? (settings.spokenLanguages?.length ? settings.spokenLanguages : Array.from(new Set([language, listenLanguage]))) : undefined
+
     const startConfig: AiScriptureStartConfig = {
         whisperModel,
         whisperCustomPath: settings.whisperCustomPath || undefined,
         whisperCustomModelPath: settings.whisperCustomModelPath || undefined,
         language,
         interpretationMode,
-        listenLanguage: settings.listenLanguage || language,
+        listenLanguage,
+        spokenLanguages,
         books,
         llm,
         refCooldownSeconds: settings.refCooldownSeconds,

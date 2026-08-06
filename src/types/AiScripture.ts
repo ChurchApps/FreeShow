@@ -119,6 +119,7 @@ export interface AiScriptureStartConfig {
     language: string // spoken language code passed to whisper (e.g. "en")
     interpretationMode?: boolean // live interpretation: transcribe everything (auto language), only detect from listenLanguage
     listenLanguage?: string // language code scripture detection listens to when interpretationMode is on
+    spokenLanguages?: string[] // interpretation mode: the languages actually being spoken - whisper guesses outside this set are double-checked against listenLanguage
     books: AiScriptureBook[]
     llm: { provider: AIProviderId; model: string } | null
     refCooldownSeconds?: number // suppress re-emitting an intersecting reference within this window
