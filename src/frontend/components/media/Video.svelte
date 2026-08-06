@@ -4,7 +4,7 @@
     import { currentWindow, media } from "../../stores"
     import { waitUntilValueIsDefined } from "../../utils/common"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
-    import { shouldSyncVideoTime, videoSync } from "./video/videoSync"
+    import { videoSync, syncVideoToAudio } from "./video/videoSync"
     import { SoftLoopSync } from "./video/softLoop"
 
     export let outputId: string
@@ -36,9 +36,7 @@
 
         const unsubscribe = videoSync(path, outputId, (data) => {
             const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
-            if (shouldSyncVideoTime(video, data.currentTime, lastSyncedTime, isSoftLoop)) {
-                video!.currentTime = data.currentTime
-            }
+            syncVideoToAudio(video, data.currentTime, lastSyncedTime, isSoftLoop, targetPlaybackRate)
             if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
 
             videoData.loop = data.loop
@@ -135,7 +133,16 @@
         }, 50)
     }
 
-    $: playbackRate = Number(mediaStyle.speed) || 1
+    $: targetPlaybackRate = Number(mediaStyle.speed) || 1
+    // Apply the target rate reactively, but only when not mid-nudge (the sync function manages
+    // the actual video.playbackRate during nudging; setting it here only when the rate changes
+    // avoids fighting the nudge on every reactive tick).
+    let _lastAppliedRate = 1
+    $: if (video && targetPlaybackRate !== _lastAppliedRate) {
+        // Only hard-apply if the difference is meaningful (not a nudge artifact)
+        _lastAppliedRate = targetPlaybackRate
+        video.playbackRate = targetPlaybackRate
+    }
     $: if (video) video.preservesPitch = true
 
     $: isVideoSupported(path)
@@ -160,6 +167,7 @@
     $: if (blurVideo && (videoTime < blurVideo.currentTime - 0.1 || videoTime > blurVideo.currentTime + 0.1)) blurVideo.currentTime = videoTime
     $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
     $: blurPausedState = videoData.paused
+    $: if (blurVideo && blurVideo.playbackRate !== targetPlaybackRate) blurVideo.playbackRate = targetPlaybackRate
 
     // update computed aspects and determine whether the blurred video is necessary
     $: videoAspect = video && video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : null
@@ -175,18 +183,19 @@
     onDestroy(() => softLoopSync.destroy())
 
     $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, video, softLoopVideo, videoData.paused)
+    $: if (softLoopVideo && softLoopVideo.playbackRate !== targetPlaybackRate) softLoopVideo.playbackRate = targetPlaybackRate
 </script>
 
 <div bind:this={container} style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
     {#if mediaStyle.fit === "blur" && !perfectFit}
-        <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:playbackRate bind:this={blurVideo} bind:paused={blurPausedState} muted loop={videoData.loop || false} />
+        <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:this={blurVideo} bind:paused={blurPausedState} muted loop={videoData.loop || false} />
     {/if}
-    <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:error bind:playbackRate bind:currentTime={videoTime} bind:paused={videoData.paused} muted src={encodeFilePath(path)} autoplay loop={videoData.loop}>
+    <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:error bind:currentTime={videoTime} bind:paused={videoData.paused} muted src={encodeFilePath(path)} autoplay loop={videoData.loop}>
         {#each tracks as track}
             <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
         {/each}
     </video>
     {#if softLoopValue > 0 && videoData.loop}
-        <video class="media" style="{mediaStyleString} position: absolute;top: 0;left: 0;transition: 0.2s opacity;opacity: {effectiveSoftLoopOpacity};pointer-events: none;" bind:this={softLoopVideo} src={encodeFilePath(path)} muted loop={videoData.loop} bind:playbackRate />
+        <video class="media" style="{mediaStyleString} position: absolute;top: 0;left: 0;transition: 0.2s opacity;opacity: {effectiveSoftLoopOpacity};pointer-events: none;" bind:this={softLoopVideo} src={encodeFilePath(path)} muted loop={videoData.loop} />
     {/if}
 </div>

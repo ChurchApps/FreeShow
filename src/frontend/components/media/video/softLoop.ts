@@ -1,4 +1,4 @@
-import { shouldSyncVideoTime } from "./videoSync"
+import { syncVideoToAudio } from "./videoSync"
 
 export class SoftLoopSync {
     private isHolding = false
@@ -38,9 +38,7 @@ export class SoftLoopSync {
                     const duration = video?.duration || 0
                     const targetTime = duration > 0 && videoTime !== undefined ? Math.max(fromTime, fromTime + (videoTime - (duration - softLoopValue))) : fromTime
 
-                    if (shouldSyncVideoTime(softLoopVideo, targetTime, this.lastSyncedTime)) {
-                        softLoopVideo.currentTime = targetTime
-                    }
+                    syncVideoToAudio(softLoopVideo, targetTime, this.lastSyncedTime, false, softLoopVideo.playbackRate || 1)
                     this.lastSyncedTime = targetTime
                 }
 

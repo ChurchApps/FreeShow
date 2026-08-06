@@ -18,7 +18,7 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MediaPicker from "../inputs/MediaPicker.svelte"
     import { SoftLoopSync } from "../media/video/softLoop"
-    import { shouldSyncVideoTime, videoSync } from "../media/video/videoSync"
+    import { syncVideoToAudio, videoSync } from "../media/video/videoSync"
     import VideoSlider from "../output/VideoSlider.svelte"
     import { clearSlide } from "../output/clear"
     import MediaControls from "../output/tools/MediaControls.svelte"
@@ -69,9 +69,8 @@
                 }, 50)
             } else {
                 const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
-                if (video && shouldSyncVideoTime(video, data.currentTime, lastSyncedTime, isSoftLoop)) {
-                    videoTime = data.currentTime || 0
-                }
+                const rate = Number(mediaStyle.speed) || 1
+                syncVideoToAudio(video || null, data.currentTime, lastSyncedTime, isSoftLoop, rate)
                 if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
             }
 

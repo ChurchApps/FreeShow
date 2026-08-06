@@ -14,18 +14,42 @@ export function videoSync(path: string, outputId: string, callback: (state: Play
     })
 }
 
-export function shouldSyncVideoTime(video: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false): boolean {
-    if (!video || targetTime === undefined || video.readyState < 2 || video.seeking) return false
+/**
+ * Sync a video element to an authoritative clock time.
+ *
+ * - Hard seek for: explicit timeline jumps, large drift (>0.3s), or paused frame correction.
+ * - Rate nudge for: small drift (<0.3s) while playing — avoids decoder interruption/stutter.
+ * - Restores normal playbackRate once drift is within 20ms.
+ *
+ * @param vid               The video element to sync.
+ * @param targetTime        The authoritative clock time to sync to.
+ * @param lastSyncedTime    The previously synced time (used to detect explicit seeks).
+ * @param isSoftLoop        Whether a soft-loop crossfade is active (affects seek detection).
+ * @param targetPlaybackRate The user-configured playback speed (default 1). Used to scale
+ *                          thresholds and restore the rate after a hard seek.
+ */
+export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1): void {
+    if (!vid || targetTime === undefined || vid.readyState < 2 || vid.seeking) return
 
-    const rate = video.playbackRate || 1
-    const diff = Math.abs(video.currentTime - targetTime)
+    const rate = targetPlaybackRate
+    const diff = vid.currentTime - targetTime // positive = video is ahead of audio
 
-    // Scale thresholds according to playback rate
-    const seekThreshold = 0.3 * rate
-    const driftThreshold = 0.75 * rate
+    // Detect an explicit seek (the authoritative time jumped discontinuously)
+    const isExplicitSeek = lastSyncedTime !== null && (Math.abs(targetTime - lastSyncedTime) > 0.15 * rate || (isSoftLoop && lastSyncedTime > targetTime + 0.1))
 
-    const isExplicitSeek = lastSyncedTime !== null && (Math.abs(targetTime - lastSyncedTime) > seekThreshold || (isSoftLoop ? lastSyncedTime > targetTime + 0.1 : false))
+    // Hard seek — large drift, explicit seek, or paused frame correction
+    if (isExplicitSeek || (vid.paused && Math.abs(diff) > 0.05) || Math.abs(diff) > 0.3 * rate) {
+        vid.currentTime = targetTime
+        vid.playbackRate = rate // restore rate in case it was nudged
+        return
+    }
 
-    // Explicit seek, loop-back reset, or paused frame sync or playback drift scaled by rate
-    return isExplicitSeek || (video.paused && diff > 0.05) || diff > driftThreshold
+    // Rate nudge — gently re-sync without seeking
+    if (!vid.paused && Math.abs(diff) > 0.02) {
+        // Clamp nudge to ±10% of the target rate
+        const nudge = Math.max(-0.1 * rate, Math.min(0.1 * rate, -diff * 2 * rate))
+        vid.playbackRate = Math.max(0.1, rate + nudge)
+    } else if (vid.playbackRate !== rate) {
+        vid.playbackRate = rate
+    }
 }

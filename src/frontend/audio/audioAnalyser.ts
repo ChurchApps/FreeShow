@@ -123,8 +123,15 @@ export class AudioAnalyser {
 
             const mediaData = get(media)[id]
             if (mediaData) {
-                processor.pitch = mediaData.pitch ?? 0
-                processor.tempo = mediaData.tempo ?? 1
+                const pitch = mediaData.pitch ?? 0
+                const tempo = mediaData.tempo ?? 1
+                // Pre-register the SoundTouch worklet if pitch/tempo are already non-default,
+                // so the values apply synchronously rather than after an async module load.
+                if ((pitch !== 0 || tempo !== 1) && !AudioProcessor.isRegistered(this.ac)) {
+                    AudioProcessor.register(this.ac).catch(() => {})
+                }
+                processor.pitch = pitch
+                processor.tempo = tempo
             }
         } else {
             console.warn(`Failed to connect audio source "${id}" to equalizer`)

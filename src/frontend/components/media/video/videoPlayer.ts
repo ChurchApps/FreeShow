@@ -3,6 +3,7 @@
 import { get } from "svelte/store"
 import { Main } from "../../../../types/IPC/Main"
 import { AudioAnalyser } from "../../../audio/audioAnalyser"
+import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
 import { requestMain } from "../../../IPC/main"
 import { media, outputs, playerVideos, playingVideos, playingVideoState, special, transitionData } from "../../../stores"
 import { playFolder } from "../../../utils/shortcuts"
@@ -12,7 +13,6 @@ import { encodeFilePath, getExtension, getMediaType, locateMediaFile } from "../
 import { checkNextAfterMedia } from "../../helpers/showActions"
 import { clearBackground } from "../../output/clear"
 import { TimeInterpolator } from "./videoTime"
-import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
 
 type VideoOptions = {
     isOnline?: boolean // youtube / vimeo
@@ -102,9 +102,10 @@ export class VideoPlayer {
             return false
         }
 
-        if (options.startAt) {
-            audio.currentTime = options.startAt
-            if ("timeTick" in audio) audio.timeTick.update(options.startAt)
+        const startTime = this.getStartTime(id, options.startAt)
+        if (startTime) {
+            audio.currentTime = startTime
+            if ("timeTick" in audio) audio.timeTick.update(startTime)
         }
 
         const replayGainMultiplier = options.isOnline ? 1 : await this.getReplayGainMultiplier(id)
@@ -112,7 +113,7 @@ export class VideoPlayer {
         const softLoop = globalOpts.softLoop || 0
         const loop = globalOpts.loop !== undefined ? globalOpts.loop : options.loop
         const fromTime = globalOpts.fromTime || 0
-        const toTime = globalOpts.toTime || audio.duration
+        const toTime = this.getEndTime(id, audio.duration)
 
         playingVideos.update((a) => {
             a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background", replayGainMultiplier, softLoop, loop, fromTime, toTime })
@@ -467,7 +468,7 @@ export class VideoPlayer {
     // GET
 
     static getPlaying(path: string, outputIds?: string[]): VideoAudioData | null {
-        return get(playingVideos).find((v) => v.path === path && (outputIds ? v.linkedOutputIds.join(",") === outputIds.join(",") : true)) || null
+        return get(playingVideos).find((v) => v.path === path && (outputIds ? outputIds.every((id) => v.linkedOutputIds.includes(id)) : true)) || null
     }
 
     static getAudio(path: string, outputId?: string) {
@@ -483,11 +484,15 @@ export class VideoPlayer {
         return this.getGlobalOptions(path)?.volume ?? 1
     }
 
-    static getStartTime(_path: string, startAt?: number | undefined) {
-        return startAt || 0
+    static getStartTime(path: string, startAt?: number | undefined) {
+        const data = this.getGlobalOptions(path)
+        const startTime = Math.max(startAt || 0, data.fromTime || 0)
+        return startTime
     }
-    static getEndTime(_path: string, duration: number) {
-        return duration
+    static getEndTime(path: string, duration: number) {
+        const data = this.getGlobalOptions(path)
+        const endTime = data.toTime || duration
+        return endTime
     }
 
     static async getDuration(path: string): Promise<number> {

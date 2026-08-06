@@ -9,7 +9,7 @@
     import { defaultLayers } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import { SoftLoopSync } from "../../media/video/softLoop"
-    import { shouldSyncVideoTime, videoSync } from "../../media/video/videoSync"
+    import { syncVideoToAudio, videoSync } from "../../media/video/videoSync"
 
     export let item: Item
     export let outputId = ""
@@ -130,10 +130,9 @@
             if (!videoElem) return
 
             const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
-            if (shouldSyncVideoTime(videoElem, data.currentTime, lastSyncedTime, isSoftLoop)) {
-                videoElem.currentTime = data.currentTime
-                if (videoBlurElem) videoBlurElem.currentTime = data.currentTime
-            }
+            const rate = playbackRate
+            syncVideoToAudio(videoElem, data.currentTime, lastSyncedTime, isSoftLoop, rate)
+            syncVideoToAudio(videoBlurElem, data.currentTime, lastSyncedTime, isSoftLoop, rate)
             if (data.currentTime !== undefined) {
                 lastSyncedTime = data.currentTime
                 videoTime = data.currentTime
@@ -154,6 +153,13 @@
     }
 
     $: playbackRate = item.speed ?? 1
+    let _lastAppliedRate = 1
+    $: if (playbackRate !== _lastAppliedRate) {
+        _lastAppliedRate = playbackRate
+        if (videoElem) videoElem.playbackRate = playbackRate
+        if (videoBlurElem) videoBlurElem.playbackRate = playbackRate
+        if (softLoopVideo) softLoopVideo.playbackRate = playbackRate
+    }
 
     let shouldLoop = item.loop !== false
 
@@ -171,15 +177,15 @@
 {#if mediaPath}
     {#if ($currentWindow || preview) && getMediaType(getExtension(mediaPath)) === "video"}
         {#if item.fit === "blur"}
-            <video bind:this={videoBlurElem} src={encodeFilePath(mediaPath)} style="{mediaStyleBlurString}{mediaStyleCombinedString}" bind:playbackRate muted autoplay loop={shouldLoop} />
+            <video bind:this={videoBlurElem} src={encodeFilePath(mediaPath)} style="{mediaStyleBlurString}{mediaStyleCombinedString}" muted autoplay loop={shouldLoop} />
         {/if}
         {@const mainVol = $audioChannelsData.main?.volume ?? 1}
-        <video bind:this={videoElem} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString}" bind:playbackRate muted volume={mainVol} autoplay loop={shouldLoop}>
+        <video bind:this={videoElem} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString}" muted volume={mainVol} autoplay loop={shouldLoop}>
             <track kind="captions" />
         </video>
 
         {#if softLoopValue > 0 && shouldLoop}
-            <video bind:this={softLoopVideo} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString} position: absolute;top: 0;left: 0;transition: 0.2s opacity;opacity: {effectiveSoftLoopOpacity};pointer-events: none;" bind:playbackRate muted loop={shouldLoop} />
+            <video bind:this={softLoopVideo} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString} position: absolute;top: 0;left: 0;transition: 0.2s opacity;opacity: {effectiveSoftLoopOpacity};pointer-events: none;" muted loop={shouldLoop} />
         {/if}
     {:else}
         <!-- {#key updater} -->
