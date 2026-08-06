@@ -3,12 +3,12 @@
 // receives detected scripture references back & projects/suggests them
 
 import { get } from "svelte/store"
-import type { AiScriptureBook, AiScriptureStartConfig, AIProviderId, DetectedReference, WhisperModelId } from "../../types/AiScripture"
+import type { AiScriptureBook, AiScriptureCommandEvent, AiScriptureStartConfig, AiScriptureTranslation, AIProviderId, DetectedReference, WhisperModelId } from "../../types/AiScripture"
 import { AI_PROVIDER_MODELS } from "../../types/AiScripture"
 import { Main } from "../../types/IPC/Main"
 import type { OutSlide } from "../../types/Show"
 import type { BibleInstance } from "../components/drawer/bible/scripture"
-import { loadJsonBible, playScripture } from "../components/drawer/bible/scripture"
+import { getShortBibleName, loadJsonBible, outputIsScripture, playScripture } from "../components/drawer/bible/scripture"
 import { clone } from "../components/helpers/array"
 import { setDrawerTabData } from "../components/helpers/historyHelpers"
 import { getFirstActiveOutput, setOutput } from "../components/helpers/output"
@@ -40,6 +40,7 @@ interface AiScriptureSettings {
     autoCooldownSeconds?: number
     refCooldownSeconds?: number
     maxVerses?: number
+    voiceCommands?: boolean
 }
 
 function getSettings(): AiScriptureSettings {
@@ -135,7 +136,9 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
         language,
         books,
         llm,
-        refCooldownSeconds: settings.refCooldownSeconds
+        refCooldownSeconds: settings.refCooldownSeconds,
+        voiceCommands: !!settings.voiceCommands,
+        translations: buildTranslationTable(searchBibleIds)
     }
 
     aiScriptureTranscript.set([])
@@ -350,6 +353,25 @@ async function buildBookTable(bibleIds: string[]): Promise<AiScriptureBook[]> {
         .map(([number, names]) => ({ number, names, canonNumber: canonNumbers.has(number) ? number : undefined }))
 }
 
+// installed translation names for spoken translation switching ("give me NIV")
+function buildTranslationTable(bibleIds: string[]): AiScriptureTranslation[] {
+    const translationTable: AiScriptureTranslation[] = []
+    bibleIds.forEach((id) => {
+        const bible = get(scriptures)[id]
+        if (!bible) return
+
+        const names: string[] = []
+        const candidates = [bible.name, bible.customName, getShortBibleName(bible.name)]
+        candidates.forEach((name) => {
+            const trimmed = (name || "").trim()
+            if (trimmed && !names.some((a) => a.toLowerCase() === trimmed.toLowerCase())) names.push(trimmed)
+        })
+
+        if (names.length) translationTable.push({ id, names })
+    })
+    return translationTable
+}
+
 // DETECTION HANDLING
 
 export async function handleDetection(ref: DetectedReference): Promise<void> {
@@ -547,14 +569,21 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
     // "matched" display mode projects from the matched translation
     if (targetId !== drawerTabId) setDrawerTabData("scripture", targetId)
 
+    const verses: number[] = []
+    for (let v = verseStart; v <= verseEnd; v++) verses.push(v)
+
+    await projectResolved(targetId, book, chapter, verses)
+    return true
+}
+
+// shared by detection projections & voice command projections - the selfProjecting wrap
+// keeps the manual-override output watcher from treating our own projection as an operator action
+async function projectResolved(targetId: string, book: number | string, chapter: number, verses: number[]): Promise<void> {
     // snapshot the current state so the operator can restore it
     previousState = {
         activeScripture: clone(get(activeScripture)),
         outSlide: clone(getFirstActiveOutput()?.out?.slide || null)
     }
-
-    const verses: number[] = []
-    for (let v = verseStart; v <= verseEnd; v++) verses.push(v)
 
     selfProjecting = true
     try {
@@ -565,7 +594,32 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
     }
 
     aiScriptureHasProjected.set(true)
-    return true
+
+    // the projected passage becomes the sermon anchor, so bare "verse N" mentions resolve against it
+    sendAnchorContext(targetId, book, chapter, verses)
+}
+
+// SESSION CONTEXT (anchor passage)
+// tells the electron process what passage is live on the output right now
+
+async function sendAnchorContext(targetId: string, book: number | string, chapter: number, verses: number[]): Promise<void> {
+    if (!verses.length) return
+
+    try {
+        const parseId = get(scriptures)[targetId]?.collection?.versions?.[0] || targetId
+        const bible = await loadJsonBible(parseId)
+        if (!bible) return
+
+        const Book = await bible.getBook(book)
+        const name = Book.data.name || String(book)
+        // 66 book bibles use the standard Protestant canon numbering, so the local number doubles as the canon number
+        const bookNumber = Number(Book.data.number ?? book)
+        if (!name || !Number.isFinite(bookNumber) || bookNumber < 1) return
+
+        sendMain(Main.AI_SCRIPTURE_CONTEXT, { book: name, bookNumber, chapter, verseStart: Math.min(...verses), verseEnd: Math.max(...verses) })
+    } catch (err) {
+        // the anchor is best effort - a failed load just leaves the previous anchor in place
+    }
 }
 
 function resolveBookNumber(bible: BibleInstance, ref: DetectedReference): number {
@@ -580,6 +634,131 @@ function resolveBookNumber(bible: BibleInstance, ref: DetectedReference): number
 
     const searched = bible.bookSearch(`${ref.book} ${ref.chapter}`)
     return searched?.book || 0
+}
+
+// VOICE COMMANDS
+// imperative spoken phrases ("go to the next verse") control the projection - only while a scripture is live
+
+// chapter/verse values can be strings, including split ids like "12_1" - parseInt reads the leading number
+function parseNumber(value: number | string | undefined): number {
+    if (typeof value === "number") return value
+    const parsed = parseInt(String(value ?? ""), 10)
+    return Number.isFinite(parsed) ? parsed : 0
+}
+
+export async function executeScriptureCommand(cmd: AiScriptureCommandEvent): Promise<void> {
+    const settings = getSettings()
+    if (!sessionActive || !settings.enabled || !settings.voiceCommands) return
+    if (get(outLocked) || get(aiScriptureAutoPaused)) return
+    if (!outputIsScripture()) return
+
+    const current = get(activeScripture)
+    const currentId = current.id || get(drawerTabsData).scripture?.activeSubTab || ""
+    const reference = current.reference
+    if (!currentId || !reference) return
+
+    const chapter = parseNumber(reference.chapters[0])
+    const currentVerses = (reference.verses[0] || []).map(parseNumber).filter((a) => a >= 1)
+    if (!(chapter >= 1) || !currentVerses.length) return
+
+    // collections load one version at a time - validate against the first one
+    const parseId = get(scriptures)[currentId]?.collection?.versions?.[0] || currentId
+
+    try {
+        const bible = await loadJsonBible(parseId)
+        if (!bible) return
+
+        const Book = await bible.getBook(reference.book)
+        const chapterCount = Book.data.chapters?.length || 0
+        const maxVerseOf = async (chapterNumber: number) => {
+            const Chapter = await Book.getChapter(chapterNumber)
+            const chapterVerses = Chapter.data.verses || []
+            return chapterVerses.length ? (chapterVerses[chapterVerses.length - 1]?.number ?? chapterVerses.length) : 0
+        }
+
+        if (cmd.type === "translation" || cmd.type === "translation_cycle") {
+            await switchTranslation(cmd, { currentId, bible, bookName: Book.data.name || "", book: reference.book, chapter, verses: currentVerses })
+            return
+        }
+
+        let targetChapter = chapter
+        let targetVerse = 1
+
+        if (cmd.type === "verse_next") {
+            const last = Math.max(...currentVerses)
+            const maxVerse = await maxVerseOf(chapter)
+            if (maxVerse && last < maxVerse) targetVerse = last + 1
+            else if (chapter < chapterCount) targetChapter = chapter + 1
+            else return // already at the last verse of the last chapter
+        } else if (cmd.type === "verse_previous") {
+            const first = Math.min(...currentVerses)
+            if (first > 1) targetVerse = first - 1
+            else if (chapter > 1) {
+                targetChapter = chapter - 1
+                targetVerse = await maxVerseOf(targetChapter)
+                if (!targetVerse) return
+            } else return // already at the first verse of the first chapter
+        } else if (cmd.type === "chapter_next") {
+            targetChapter = chapterCount ? Math.min(chapter + 1, chapterCount) : chapter + 1
+        } else if (cmd.type === "chapter_previous") {
+            targetChapter = Math.max(chapter - 1, 1)
+        } else if (cmd.type === "verse_jump") {
+            const maxVerse = await maxVerseOf(chapter)
+            targetVerse = maxVerse ? Math.min(Math.max(1, cmd.verse), maxVerse) : cmd.verse
+        } else {
+            // chapter_jump
+            targetChapter = chapterCount ? Math.min(Math.max(1, cmd.chapter), chapterCount) : cmd.chapter
+            const requestedVerse = cmd.verse ?? 1
+            const maxVerse = await maxVerseOf(targetChapter)
+            targetVerse = maxVerse ? Math.min(Math.max(1, requestedVerse), maxVerse) : requestedVerse
+        }
+
+        await projectResolved(currentId, reference.book, targetChapter, [targetVerse])
+    } catch (err) {
+        console.error("Error executing AI scripture voice command:", err)
+    }
+}
+
+async function switchTranslation(cmd: Extract<AiScriptureCommandEvent, { type: "translation" | "translation_cycle" }>, from: { currentId: string; bible: BibleInstance; bookName: string; book: number | string; chapter: number; verses: number[] }): Promise<void> {
+    let targetId = ""
+    if (cmd.type === "translation") targetId = cmd.bibleId
+    else {
+        // cycle to the next selected translation
+        const ids = searchBibleIds.length ? searchBibleIds : [from.currentId]
+        targetId = ids[(ids.indexOf(from.currentId) + 1) % ids.length] || ""
+    }
+    if (!targetId || targetId === from.currentId) return
+
+    const targetParseId = get(scriptures)[targetId]?.collection?.versions?.[0] || targetId
+    const targetBible = await loadJsonBible(targetParseId)
+    if (!targetBible) return
+
+    // map the current book to the target bible: same number when both use the 66 book canon, name match otherwise
+    let targetBook: number | string = from.book
+    const targetBooks = targetBible.data.books || []
+    if ((from.bible.data.books || []).length !== 66 || targetBooks.length !== 66) {
+        const nameLower = from.bookName.toLowerCase()
+        const match = targetBooks.find((a) => a.name?.toLowerCase() === nameLower || a.abbreviation?.toLowerCase() === nameLower || a.id?.toLowerCase() === nameLower)
+        if (match) targetBook = match.number
+        else {
+            const searched = targetBible.bookSearch(`${from.bookName} ${from.chapter}`)
+            if (!searched?.book) return
+            targetBook = searched.book
+        }
+    }
+
+    // clamp the current chapter & verses to what exists in the target translation
+    const TargetBook = await targetBible.getBook(targetBook)
+    const targetChapterCount = TargetBook.data.chapters?.length || 0
+    const targetChapter = targetChapterCount ? Math.min(Math.max(1, from.chapter), targetChapterCount) : from.chapter
+
+    const TargetChapter = await TargetBook.getChapter(targetChapter)
+    const targetChapterVerses = TargetChapter.data.verses || []
+    const maxVerse = targetChapterVerses.length ? (targetChapterVerses[targetChapterVerses.length - 1]?.number ?? targetChapterVerses.length) : 0
+    const verses = [...new Set(from.verses.map((a) => (maxVerse ? Math.min(Math.max(1, a), maxVerse) : a)))].sort((a, b) => a - b)
+
+    setDrawerTabData("scripture", targetId)
+    await projectResolved(targetId, targetBook, targetChapter, verses)
 }
 
 export function restorePrevious(): void {
@@ -648,7 +827,28 @@ outputs.subscribe((allOutputs) => {
 
     if (!changed || !sessionActive || selfProjecting) return
     if (key === null) return // slide cleared (possibly by us or "restore previous") - not a manual override
+
+    // an operator-initiated scripture play moves the sermon anchor too
+    if (slide?.id === "temp") updateAnchorFromActiveScripture()
+
     if (getSettings().mode !== "auto") return // nothing to pause in confirm mode
 
     aiScriptureAutoPaused.set(true)
 })
+
+function updateAnchorFromActiveScripture(): void {
+    try {
+        const current = get(activeScripture)
+        const id = current.id || get(drawerTabsData).scripture?.activeSubTab || ""
+        const reference = current.reference
+        if (!id || !reference) return
+
+        const chapter = parseNumber(reference.chapters[0])
+        const verses = (reference.verses[0] || []).map(parseNumber).filter((a) => a >= 1)
+        if (!(chapter >= 1) || !verses.length) return
+
+        sendAnchorContext(id, reference.book, chapter, verses)
+    } catch (err) {
+        // skip unparsable states - the previous anchor stays
+    }
+}

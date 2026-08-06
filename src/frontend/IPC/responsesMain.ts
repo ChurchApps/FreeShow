@@ -4,7 +4,7 @@ import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
-import { handleDetection } from "../audio/aiScripture"
+import { executeScriptureCommand, handleDetection } from "../audio/aiScripture"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
@@ -288,6 +288,9 @@ export const mainResponses: MainResponses = {
     [ToMain.AI_SCRIPTURE_STATUS]: (data) => aiScriptureStatus.set(data),
     [ToMain.AI_SCRIPTURE_DETECTION]: (data) => {
         handleDetection(data)
+    },
+    [ToMain.AI_SCRIPTURE_COMMAND]: (data) => {
+        executeScriptureCommand(data)
     },
     [ToMain.AI_SCRIPTURE_WHISPER_PROGRESS]: (data) => {
         whisperDownloads.update((downloads) => {

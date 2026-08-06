@@ -182,6 +182,7 @@ export enum Main {
     AI_SCRIPTURE_START = "AI_SCRIPTURE_START",
     AI_SCRIPTURE_STOP = "AI_SCRIPTURE_STOP",
     AI_SCRIPTURE_AUDIO_DATA = "AI_SCRIPTURE_AUDIO_DATA",
+    AI_SCRIPTURE_CONTEXT = "AI_SCRIPTURE_CONTEXT",
     AI_SCRIPTURE_SET_KEY = "AI_SCRIPTURE_SET_KEY",
     AI_SCRIPTURE_GET_STATUS = "AI_SCRIPTURE_GET_STATUS",
     AI_SCRIPTURE_TEST_CONNECTION = "AI_SCRIPTURE_TEST_CONNECTION",
@@ -297,6 +298,7 @@ export interface MainSendPayloads {
     [Main.AI_SCRIPTURE_START]: AiScriptureStartConfig
     [Main.AI_SCRIPTURE_STOP]: undefined
     [Main.AI_SCRIPTURE_AUDIO_DATA]: { buffer: Uint8Array }
+    [Main.AI_SCRIPTURE_CONTEXT]: { book: string; bookNumber: number; chapter: number; verseStart: number; verseEnd: number }
     [Main.AI_SCRIPTURE_SET_KEY]: { provider: AIProviderId; key: string }
     [Main.AI_SCRIPTURE_GET_STATUS]: undefined
     [Main.AI_SCRIPTURE_TEST_CONNECTION]: { provider: AIProviderId; model: string }

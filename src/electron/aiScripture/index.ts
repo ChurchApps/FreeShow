@@ -4,6 +4,8 @@ import type { AiScriptureStartConfig, AIError, AIProviderId } from "../../types/
 import { ToMain } from "../../types/IPC/ToMain"
 import { getStoreValue, setStoreValue } from "../data/store"
 import { sendToMain } from "../IPC/main"
+import { detectScriptureCommand } from "./commands"
+import type { AiScriptureAnchor } from "./detection"
 import { DetectionCoordinator } from "./detection"
 import { getProvider } from "./providers"
 import { Transcriber } from "./transcriber"
@@ -13,6 +15,10 @@ let transcriber: Transcriber | null = null
 let coordinator: DetectionCoordinator | null = null
 // bumped on every start/stop so a slow start that got superseded can tell it no longer owns the session
 let sessionToken = 0
+
+// voice commands: whisper segments can overlap, so the same spoken command may be detected twice - cooldown per command type
+const COMMAND_COOLDOWN_MS = 3000
+const commandCooldowns = new Map<string, number>()
 
 export async function startAiScripture(config: AiScriptureStartConfig): Promise<{ started: boolean; error?: string }> {
     stopAiScripture()
@@ -45,6 +51,15 @@ export async function startAiScripture(config: AiScriptureStartConfig): Promise<
         onSegment: (segment) => {
             sendToMain(ToMain.AI_SCRIPTURE_TRANSCRIPT, segment)
             coordinator?.onTranscriptSegment(segment)
+
+            if (!config.voiceCommands) return
+            const command = detectScriptureCommand(segment.text, config.language, config.translations || [])
+            if (!command) return
+
+            const now = Date.now()
+            if (now - (commandCooldowns.get(command.type) || 0) < COMMAND_COOLDOWN_MS) return
+            commandCooldowns.set(command.type, now)
+            sendToMain(ToMain.AI_SCRIPTURE_COMMAND, command)
         },
         onError: (message) => {
             if (token !== sessionToken) return
@@ -70,6 +85,7 @@ export async function startAiScripture(config: AiScriptureStartConfig): Promise<
 
 export function stopAiScripture() {
     sessionToken++
+    commandCooldowns.clear()
 
     coordinator?.stop()
     coordinator = null
@@ -85,6 +101,11 @@ export function stopAiScripture() {
 // audio arriving before START or after STOP is a safe no-op: the transcriber is null outside a session
 export function receiveAiScriptureAudio(data: { buffer: Uint8Array }) {
     transcriber?.pushAudio(data.buffer)
+}
+
+// the renderer reports the passage currently live on the output, so bare "verse N" mentions resolve against it
+export function updateAiScriptureContext(data: AiScriptureAnchor) {
+    coordinator?.updateContext(data)
 }
 
 // error messages can contain provider response bodies / whisper stderr - never pass those to the renderer verbatim

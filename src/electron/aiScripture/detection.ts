@@ -100,6 +100,7 @@ export function normalizeSpokenNumbers(text: string): string {
 interface BookIndex {
     regex: RegExp | null
     byToken: Map<string, { name: string; number: number }>
+    bookPattern: string // alternation of all book name patterns ("" when no books)
 }
 
 function escapeRegex(value: string): string {
@@ -125,7 +126,7 @@ function buildBookIndex(books: AiScriptureBook[]): BookIndex {
     const patterns = tokens.map((token) => escapeRegex(token).replace(/ /g, "\\s+"))
 
     const regex = patterns.length ? new RegExp("(^|[^a-z0-9])(" + patterns.join("|") + ")\\s+(?:chapter\\s+)?(\\d{1,3})\\b(?:\\s*(?::|verses?\\b)\\s*(\\d{1,3})\\b(?:\\s*(?:-|to\\b|through\\b)\\s*(\\d{1,3})\\b)?)?", "g") : null
-    return { regex, byToken }
+    return { regex, byToken, bookPattern: patterns.join("|") }
 }
 
 interface ReferenceMatch {
@@ -187,6 +188,18 @@ export function detectExplicitReferences(text: string, books: AiScriptureBook[])
 
 // COORDINATOR
 
+// the anchor passage: what is live on the output right now - bare "verse N" mentions resolve against it
+export interface AiScriptureAnchor {
+    book: string
+    bookNumber: number
+    chapter: number
+    verseStart: number
+    verseEnd: number
+}
+
+// cue-gated: the word "verse(s)" with the number AFTER it is required, so "he has fifteen verses" never fires
+const BARE_VERSE_REGEX = /(^|[^a-z0-9])(verses?\s+(\d{1,3})\b(?:\s*(?:-|to\b|through\b)\s*(\d{1,3})\b)?)/g
+
 interface TranscriptSegment {
     text: string
     startMs: number
@@ -233,6 +246,10 @@ export class DetectionCoordinator {
     private bookIndex: BookIndex
     private cooldownMs: number
 
+    // a single replaced anchor object - strictly bounded, never accumulates over a long sermon
+    private anchor: AiScriptureAnchor | null = null
+    private anchorBookPrefix: RegExp | null
+
     private segments: TranscriptSegment[] = []
     private emitted = new Map<string, EmittedReference[]>() // key: "bookNumber.chapter"
     private idCounter = 0
@@ -250,7 +267,13 @@ export class DetectionCoordinator {
     constructor(opts: DetectionCoordinatorOptions) {
         this.opts = opts
         this.bookIndex = buildBookIndex(opts.books)
+        this.anchorBookPrefix = this.bookIndex.bookPattern ? new RegExp("(?:^|[^a-z0-9])(?:" + this.bookIndex.bookPattern + ")\\s+$") : null
         this.cooldownMs = (opts.cooldownSeconds ?? DEFAULT_COOLDOWN_SECONDS) * 1000
+    }
+
+    // replace the anchor passage (what is live on the output right now)
+    updateContext(ctx: AiScriptureAnchor): void {
+        this.anchor = ctx
     }
 
     onTranscriptSegment(segment: { text: string; startMs: number; endMs: number }): void {
@@ -287,6 +310,41 @@ export class DetectionCoordinator {
         matchReferences(windowText, this.bookIndex).forEach((match) => {
             this.tryEmit({ book: match.book, bookNumber: match.bookNumber, chapter: match.chapter, verseStart: match.verseStart, verseEnd: match.verseEnd, confidence: match.confidence, type: "explicit", quote: match.quote }, "regex")
         })
+
+        this.runAnchorTier1(windowText)
+    }
+
+    // bare "verse N" / "verses N to M" mentions (no book named) resolve against the anchor passage
+    private runAnchorTier1(windowText: string) {
+        const anchor = this.anchor
+        if (!anchor) return
+
+        const normalized = normalizeSpokenNumbers(windowText)
+
+        // spans already matched as full references - the "verse 16" inside "john chapter 3 verse 16" is not anchor-relative
+        const covered: [number, number][] = []
+        if (this.bookIndex.regex) {
+            this.bookIndex.regex.lastIndex = 0
+            let full: RegExpExecArray | null
+            while ((full = this.bookIndex.regex.exec(normalized)) !== null) covered.push([full.index, full.index + full[0].length])
+        }
+
+        BARE_VERSE_REGEX.lastIndex = 0
+        let match: RegExpExecArray | null
+        while ((match = BARE_VERSE_REGEX.exec(normalized)) !== null) {
+            const start = match.index + match[1].length
+            if (covered.some(([from, to]) => start >= from && start < to)) continue
+            // a book name directly before makes it a partial explicit reference ("john verse 7"), not an anchor-relative one
+            if (this.anchorBookPrefix?.test(normalized.slice(0, start))) continue
+
+            const verseStart = parseInt(match[3], 10)
+            if (!(verseStart >= 1)) continue
+            let verseEnd = match[4] !== undefined ? parseInt(match[4], 10) : verseStart
+            if (verseEnd < verseStart) verseEnd = verseStart
+
+            // the anchor is the chapter live on screen, so a bare verse mention is context-certain
+            this.tryEmit({ book: anchor.book, bookNumber: anchor.bookNumber, chapter: anchor.chapter, verseStart, verseEnd, confidence: "high", type: "explicit", quote: match[2] }, "regex")
+        }
     }
 
     // TIER 2 - single flight, newest transcript wins once the in-flight call settles
@@ -319,8 +377,9 @@ export class DetectionCoordinator {
         this.llmCallStartedAt = Date.now()
 
         const transcript = this.segments.map((segment) => segment.text).join(" ")
+        const liveContext = this.anchor ? "Live on screen: " + this.anchor.book + " " + this.anchor.chapter + ":" + this.anchor.verseStart + "-" + this.anchor.verseEnd + ". Bare verse mentions likely refer to this passage." : undefined
         Promise.resolve()
-            .then(() => getProvider(llm.provider).detectScripture(apiKey, llm.model, { transcript, alreadyDetected: this.recentDetectionStrings() }, controller.signal))
+            .then(() => getProvider(llm.provider).detectScripture(apiKey, llm.model, { transcript, alreadyDetected: this.recentDetectionStrings(), liveContext }, controller.signal))
             .then(
                 (result: any) => {
                     if (this.llmController !== controller) return // aborted/superseded

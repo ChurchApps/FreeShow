@@ -25,7 +25,7 @@ import { OutputHelper } from "../output/OutputHelper"
 import { libreConvert } from "../output/ppt/libreConverter"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers, updateServerData } from "../servers"
-import { aiScriptureWhisper, getAiScriptureStatus, receiveAiScriptureAudio, setAiKey, startAiScripture, stopAiScripture, testAiConnection } from "../aiScripture"
+import { aiScriptureWhisper, getAiScriptureStatus, receiveAiScriptureAudio, setAiKey, startAiScripture, stopAiScripture, testAiConnection, updateAiScriptureContext } from "../aiScripture"
 import { processAudioData, timecodeStart, timecodeStop, updateTimecodeValue } from "../timecode/timecode"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
@@ -273,6 +273,7 @@ export const mainResponses: MainResponses = {
     [Main.AI_SCRIPTURE_START]: (data) => startAiScripture(data),
     [Main.AI_SCRIPTURE_STOP]: () => stopAiScripture(),
     [Main.AI_SCRIPTURE_AUDIO_DATA]: (data) => receiveAiScriptureAudio(data),
+    [Main.AI_SCRIPTURE_CONTEXT]: (data) => updateAiScriptureContext(data),
     [Main.AI_SCRIPTURE_SET_KEY]: (data) => setAiKey(data),
     [Main.AI_SCRIPTURE_GET_STATUS]: () => getAiScriptureStatus(),
     [Main.AI_SCRIPTURE_TEST_CONNECTION]: (data) => testAiConnection(data),

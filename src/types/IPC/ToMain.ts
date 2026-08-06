@@ -1,7 +1,7 @@
 import type { ICommonTagsResult } from "music-metadata"
 import type { RtmpStatus } from "../Output"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
-import type { AiScriptureState, DetectedReference } from "../AiScripture"
+import type { AiScriptureCommandEvent, AiScriptureState, DetectedReference } from "../AiScripture"
 import type { TrimmedShows } from "../Show"
 
 export enum ToMain {
@@ -24,6 +24,7 @@ export enum ToMain {
     AI_SCRIPTURE_TRANSCRIPT = "AI_SCRIPTURE_TRANSCRIPT",
     AI_SCRIPTURE_DETECTION = "AI_SCRIPTURE_DETECTION",
     AI_SCRIPTURE_STATUS = "AI_SCRIPTURE_STATUS",
+    AI_SCRIPTURE_COMMAND = "AI_SCRIPTURE_COMMAND",
     AI_SCRIPTURE_WHISPER_PROGRESS = "AI_SCRIPTURE_WHISPER_PROGRESS",
     // Unified provider callbacks
     PROVIDER_CONNECT = "PROVIDER_CONNECT",
@@ -62,6 +63,7 @@ export interface ToMainSendPayloads {
     [ToMain.AI_SCRIPTURE_TRANSCRIPT]: { text: string; startMs: number; endMs: number }
     [ToMain.AI_SCRIPTURE_DETECTION]: DetectedReference
     [ToMain.AI_SCRIPTURE_STATUS]: { state: AiScriptureState; message?: string; keyless?: boolean }
+    [ToMain.AI_SCRIPTURE_COMMAND]: AiScriptureCommandEvent
     [ToMain.AI_SCRIPTURE_WHISPER_PROGRESS]: { name: string; progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }
     // Unified provider callbacks
     [ToMain.PROVIDER_CONNECT]: { providerId: ContentProviderId; success: boolean; isFirstConnection?: boolean }

@@ -1521,7 +1521,9 @@
         "ai_privacy_keys": "API keys are stored locally on this computer and are never synced.",
         "ai_error_cancelled": "Download cancelled",
         "ai_error_unsupported_platform": "Automatic download is not available on this platform",
-        "ai_error_download_in_progress": "A download is already in progress"
+        "ai_error_download_in_progress": "A download is already in progress",
+        "ai_voice_commands": "Voice commands",
+        "ai_voice_commands_hint": "While a scripture is live, spoken commands control it: \"go to the next verse\", \"give me verse five\", \"show chapter four\", \"give me NIV\", \"give me another translation\". Commands must be phrased as instructions."
     },
     "output": {
         "state_inactive": "Inactive",

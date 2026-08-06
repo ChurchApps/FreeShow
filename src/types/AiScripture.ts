@@ -75,6 +75,20 @@ export interface AiScriptureStartConfig {
     books: AiScriptureBook[]
     llm: { provider: AIProviderId; model: string } | null
     refCooldownSeconds?: number // suppress re-emitting an intersecting reference within this window
+    voiceCommands?: boolean
+    translations?: AiScriptureTranslation[] // selected translations, for spoken translation switching
 }
 
 export type AiScriptureState = "starting" | "listening" | "stopped" | "error" | "llm_paused"
+
+// VOICE COMMANDS
+
+// installed translations handed from the renderer at start, so spoken names ("NIV") can be resolved in the electron process
+export interface AiScriptureTranslation {
+    id: string
+    names: string[]
+}
+
+export type AiScriptureCommand = { type: "verse_next" } | { type: "verse_previous" } | { type: "chapter_next" } | { type: "chapter_previous" } | { type: "verse_jump"; verse: number } | { type: "chapter_jump"; chapter: number; verse?: number } | { type: "translation"; bibleId: string } | { type: "translation_cycle" }
+
+export type AiScriptureCommandEvent = AiScriptureCommand & { phrase: string }

@@ -428,6 +428,11 @@
 
 <MaterialToggleSwitch label="settings.ai_auto_project_quoted" checked={settings.autoProjectQuoted === true} defaultValue={false} on:change={(e) => update("autoProjectQuoted", e.detail)} />
 
+<MaterialToggleSwitch label="settings.ai_voice_commands" checked={settings.voiceCommands === true} defaultValue={false} on:change={(e) => update("voiceCommands", e.detail)} />
+{#if settings.voiceCommands}
+    <p class="faded"><T id="settings.ai_voice_commands_hint" /></p>
+{/if}
+
 <InputRow>
     <MaterialNumberInput label="settings.ai_auto_cooldown" value={Number(settings.autoCooldownSeconds ?? 10)} defaultValue={10} min={0} max={300} on:change={(e) => update("autoCooldownSeconds", e.detail)} />
     <MaterialNumberInput label="settings.ai_ref_cooldown" value={Number(settings.refCooldownSeconds ?? 90)} defaultValue={90} min={0} max={600} on:change={(e) => update("refCooldownSeconds", e.detail)} />
