@@ -11,7 +11,9 @@ vi.mock("child_process", () => ({
     spawn: spawnMock
 }))
 
-import { buildWavBuffer, computeRms, dedupeOverlap, isLowConfidence, isNoiseSegment, parseWhisperJson, Transcriber } from "./transcriber"
+import fs from "fs"
+
+import { buildWavBuffer, computeRms, dedupeOverlap, isLowConfidence, isNoiseSegment, parseWhisperJson, shouldRerunWindow, Transcriber } from "./transcriber"
 
 describe("buildWavBuffer", () => {
     const samples = new Int16Array([0, 1000, -1000, 32767, -32768])
@@ -318,5 +320,177 @@ describe("server respawn failure handling", () => {
 
         expect(transcriber.consecutiveFailures).toBe(0)
         expect(onError).not.toHaveBeenCalled()
+    })
+})
+
+describe("shouldRerunWindow", () => {
+    it("re-runs when the detected language falls outside the declared set", () => {
+        expect(shouldRerunWindow("de", ["en", "fr"])).toBe(true)
+        expect(shouldRerunWindow(" DE ", ["en", "fr"])).toBe(true) // whitespace/case tolerant
+    })
+
+    it("does not re-run when the detected language is declared", () => {
+        expect(shouldRerunWindow("en", ["en", "fr"])).toBe(false)
+        expect(shouldRerunWindow("fr", ["en", "fr"])).toBe(false)
+        expect(shouldRerunWindow("FR", ["en", " fr "])).toBe(false)
+    })
+
+    it("never re-runs without a resolved detection or a declared set", () => {
+        expect(shouldRerunWindow(undefined, ["en", "fr"])).toBe(false)
+        expect(shouldRerunWindow("", ["en", "fr"])).toBe(false)
+        expect(shouldRerunWindow("auto", ["en", "fr"])).toBe(false)
+        expect(shouldRerunWindow("de", undefined)).toBe(false)
+        expect(shouldRerunWindow("de", [])).toBe(false)
+    })
+})
+
+// forced re-run of a window whose "-l auto" guess falls outside the declared spoken languages
+
+describe("cli declared-language re-run", () => {
+    const wav = buildWavBuffer(new Int16Array(1600).fill(3000))
+
+    // each spawned "whisper-cli" writes the JSON output matching the requested -l flag, then exits 0
+    function mockCliRuns(jsonByLanguage: { [language: string]: any }) {
+        spawnMock.mockImplementation((_binary: string, args: string[]) => {
+            const child = createFakeChild()
+            const language = args[args.indexOf("-l") + 1]
+            const outBase = args[args.indexOf("-of") + 1]
+            setImmediate(() => {
+                fs.writeFileSync(outBase + ".json", JSON.stringify(jsonByLanguage[language]))
+                child.exitCode = 0
+                child.emit("exit", 0)
+            })
+            return child
+        })
+    }
+
+    function createInterpretationTranscriber() {
+        return new Transcriber({
+            binary: { kind: "cli", binaryPath: "/fake/whisper" },
+            modelPath: "/fake/model.bin",
+            language: "auto",
+            declaredLanguages: ["en", "fr"],
+            primaryLanguage: "en",
+            onSegment: vi.fn(),
+            onError: vi.fn()
+        })
+    }
+
+    function spawnedWavPath(callIndex: number): string {
+        const args = spawnMock.mock.calls[callIndex][1] as string[]
+        return args[args.indexOf("-f") + 1]
+    }
+
+    beforeEach(() => {
+        spawnMock.mockReset()
+    })
+
+    it("replaces the segments with the forced re-run when it reads as confident speech", async () => {
+        mockCliRuns({
+            auto: { result: { language: "de" }, transcription: [{ text: " Kauderwelsch", offsets: { from: 0, to: 1000 } }] },
+            en: { result: { language: "en" }, transcription: [{ text: " For God so loved the world", offsets: { from: 0, to: 1000 } }] }
+        })
+
+        const transcriber: any = createInterpretationTranscriber()
+        const json: any = await transcriber.transcribeCli(wav, 7000)
+
+        expect(spawnMock).toHaveBeenCalledTimes(2)
+        expect(spawnMock.mock.calls[0][1]).toContain("auto")
+        expect(spawnMock.mock.calls[1][1]).toContain("en")
+        // both runs must transcribe the SAME window WAV
+        expect(spawnedWavPath(1)).toBe(spawnedWavPath(0))
+
+        expect(json.result.language).toBe("en")
+        expect(parseWhisperJson(json, 7000)).toEqual([{ text: " For God so loved the world", startMs: 0, endMs: 1000, noSpeechProb: undefined, avgLogprob: undefined, language: "en" }])
+    })
+
+    it("keeps the original segments when the forced re-run is only noise", async () => {
+        mockCliRuns({
+            auto: { result: { language: "de" }, transcription: [{ text: " Etwas auf Deutsch", offsets: { from: 0, to: 1000 } }] },
+            en: { result: { language: "en" }, transcription: [{ text: " [BLANK_AUDIO]", offsets: { from: 0, to: 1000 } }] }
+        })
+
+        const transcriber: any = createInterpretationTranscriber()
+        const json: any = await transcriber.transcribeCli(wav, 7000)
+
+        expect(spawnMock).toHaveBeenCalledTimes(2)
+        expect(json.result.language).toBe("de")
+        expect(parseWhisperJson(json, 7000)[0].text).toBe(" Etwas auf Deutsch")
+    })
+
+    it("keeps the original segments when the forced re-run is low-confidence", async () => {
+        mockCliRuns({
+            auto: { result: { language: "de" }, transcription: [{ text: " Etwas auf Deutsch", offsets: { from: 0, to: 1000 } }] },
+            en: { result: { language: "en" }, transcription: [{ text: " garbled maybe words", offsets: { from: 0, to: 1000 }, no_speech_prob: 0.9, avg_logprob: -2.5 }] }
+        })
+
+        const transcriber: any = createInterpretationTranscriber()
+        const json: any = await transcriber.transcribeCli(wav, 7000)
+
+        expect(spawnMock).toHaveBeenCalledTimes(2)
+        expect(json.result.language).toBe("de")
+        expect(parseWhisperJson(json, 7000)[0].text).toBe(" Etwas auf Deutsch")
+    })
+
+    it("does not re-run when the detected language is inside the declared set, and unlinks the temp files", async () => {
+        mockCliRuns({
+            auto: { result: { language: "fr" }, transcription: [{ text: " Dieu a tant aimé le monde", offsets: { from: 0, to: 1000 } }] }
+        })
+
+        const transcriber: any = createInterpretationTranscriber()
+        const json: any = await transcriber.transcribeCli(wav, 7000)
+
+        expect(spawnMock).toHaveBeenCalledTimes(1)
+        expect(json.result.language).toBe("fr")
+        expect(fs.existsSync(spawnedWavPath(0))).toBe(false)
+    })
+
+    it("unlinks the window WAV only after the re-run has read it", async () => {
+        let wavExistedDuringRerun = false
+        spawnMock.mockImplementation((_binary: string, args: string[]) => {
+            const child = createFakeChild()
+            const language = args[args.indexOf("-l") + 1]
+            const outBase = args[args.indexOf("-of") + 1]
+            const jsonByLanguage: { [key: string]: any } = {
+                auto: { result: { language: "de" }, transcription: [{ text: " Kauderwelsch", offsets: { from: 0, to: 1000 } }] },
+                en: { result: { language: "en" }, transcription: [{ text: " For God so loved the world", offsets: { from: 0, to: 1000 } }] }
+            }
+            setImmediate(() => {
+                if (language === "en") wavExistedDuringRerun = fs.existsSync(args[args.indexOf("-f") + 1])
+                fs.writeFileSync(outBase + ".json", JSON.stringify(jsonByLanguage[language]))
+                child.exitCode = 0
+                child.emit("exit", 0)
+            })
+            return child
+        })
+
+        const transcriber: any = createInterpretationTranscriber()
+        await transcriber.transcribeCli(wav, 7000)
+
+        expect(spawnMock).toHaveBeenCalledTimes(2)
+        expect(wavExistedDuringRerun).toBe(true) // the WAV survived until the re-run
+        expect(fs.existsSync(spawnedWavPath(0))).toBe(false) // ...and is gone afterwards
+        expect(fs.existsSync(spawnedWavPath(0).replace(/\.wav$/, ".json"))).toBe(false)
+    })
+
+    it("skips the re-run once stop() has begun and still unlinks the temp files", async () => {
+        spawnMock.mockImplementation((_binary: string, args: string[]) => {
+            const child = createFakeChild()
+            const outBase = args[args.indexOf("-of") + 1]
+            setImmediate(() => {
+                fs.writeFileSync(outBase + ".json", JSON.stringify({ result: { language: "de" }, transcription: [{ text: " Kauderwelsch", offsets: { from: 0, to: 1000 } }] }))
+                child.exitCode = 0
+                // stop() right before the exit - runCliProcess rejects, so the original result never reaches a re-run
+                transcriber.stopped = true
+                child.emit("exit", 0)
+            })
+            return child
+        })
+
+        const transcriber: any = createInterpretationTranscriber()
+        await expect(transcriber.transcribeCli(wav, 7000)).rejects.toThrow("stopped")
+
+        expect(spawnMock).toHaveBeenCalledTimes(1)
+        expect(fs.existsSync(spawnedWavPath(0))).toBe(false)
     })
 })

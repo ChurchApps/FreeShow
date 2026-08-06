@@ -50,6 +50,9 @@ export async function startAiScripture(config: AiScriptureStartConfig): Promise<
         modelPath: customModel || getModelPath(config.whisperModel),
         // interpretation mode: a multilingual model detects the language of each window on its own
         language: config.interpretationMode ? "auto" : config.language,
+        // ...but the free guess is constrained to the languages the user declared - anything else gets re-checked against the listen language
+        declaredLanguages: config.interpretationMode ? config.spokenLanguages : undefined,
+        primaryLanguage: config.listenLanguage,
         onSegment: (segment) => {
             // the full transcript always reaches the renderer - detection only listens to the selected language
             sendToMain(ToMain.AI_SCRIPTURE_TRANSCRIPT, segment)

@@ -1475,6 +1475,8 @@
         "ai_interpretation": "Interpretation mode",
         "ai_interpretation_hint": "For services with live interpretation: everything is transcribed, but scriptures are only detected from the language selected below.",
         "ai_listen_language": "Detect scriptures from",
+        "ai_spoken_languages": "Languages spoken",
+        "ai_spoken_languages_hint": "Only these languages are expected - anything else whisper thinks it hears is double-checked against your detection language.",
         "ai_interpretation_model_hint": "Language detection needs a multilingual model - Small or larger is recommended.",
         "ai_detection": "Detection (AI)",
         "ai_provider": "AI provider",
