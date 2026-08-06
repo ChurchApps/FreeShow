@@ -1481,6 +1481,7 @@
         "ai_detection": "Detection (AI)",
         "ai_provider": "AI provider",
         "ai_api_key": "API key",
+        "ai_ollama_hint": "Runs entirely on this computer - free, offline, and nothing is sent to the cloud. Install Ollama from ollama.com, then download the model:",
         "ai_key_saved": "API key saved",
         "ai_remove_key": "Remove key",
         "ai_test_connection": "Test",

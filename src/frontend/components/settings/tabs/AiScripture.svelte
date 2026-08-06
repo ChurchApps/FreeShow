@@ -210,7 +210,8 @@
     const providerOptions = [
         { value: "anthropic", label: "Anthropic (Claude)" },
         { value: "openai", label: "OpenAI (GPT)" },
-        { value: "gemini", label: "Google (Gemini)" }
+        { value: "gemini", label: "Google (Gemini)" },
+        { value: "ollama", label: "Local (Ollama - Gemma)" }
     ]
 
     $: provider = ((settings.provider as string) || "anthropic") as AIProviderId
@@ -245,6 +246,15 @@
         sendMain(Main.AI_SCRIPTURE_SET_KEY, { provider, key: "" })
         testResult = null
         setTimeout(getStatus, 200)
+    }
+
+    // local ollama needs no API key - just the selected model pulled
+    $: ollamaPullCommand = `ollama pull ${effectiveModel}`
+    let ollamaCommandCopied = false
+    function copyOllamaCommand() {
+        navigator.clipboard.writeText(ollamaPullCommand)
+        ollamaCommandCopied = true
+        setTimeout(() => (ollamaCommandCopied = false), 2000)
     }
 
     let testing = false
@@ -410,24 +420,36 @@
 
     <MaterialDropdown label="settings.ai_provider" options={providerOptions} value={provider} defaultValue="anthropic" on:change={(e) => setProvider(e.detail)} />
 
-    <InputRow>
-        <MaterialTextInput label="settings.ai_api_key" value={keyInput} type="password" pasteBtn on:input={(e) => (keyInput = e.detail)} />
-        <MaterialButton icon="save" disabled={!keyInput} on:click={saveKey}>
-            <T id="actions.save" />
-        </MaterialButton>
-        <MaterialButton icon="connection" disabled={(!keySaved && !keyInput) || testing} on:click={testConnection}>
+    {#if provider === "ollama"}
+        <!-- no API key: everything runs on the local ollama server - just make sure the model is pulled -->
+        <p class="faded hint"><T id="settings.ai_ollama_hint" /></p>
+        <div class="commandRow">
+            <code>{ollamaPullCommand}</code>
+            <MaterialButton icon={ollamaCommandCopied ? "check" : "copy"} title={ollamaCommandCopied ? "actions.copied" : "actions.copy"} on:click={copyOllamaCommand} />
+        </div>
+        <MaterialButton variant="outlined" icon="connection" disabled={testing} on:click={testConnection}>
             <T id="settings.ai_test_connection" />
         </MaterialButton>
-        {#if keySaved}
-            <MaterialButton icon="delete" title="settings.ai_remove_key" on:click={removeKey} />
-        {/if}
-    </InputRow>
+    {:else}
+        <InputRow>
+            <MaterialTextInput label="settings.ai_api_key" value={keyInput} type="password" pasteBtn on:input={(e) => (keyInput = e.detail)} />
+            <MaterialButton icon="save" disabled={!keyInput} on:click={saveKey}>
+                <T id="actions.save" />
+            </MaterialButton>
+            <MaterialButton icon="connection" disabled={(!keySaved && !keyInput) || testing} on:click={testConnection}>
+                <T id="settings.ai_test_connection" />
+            </MaterialButton>
+            {#if keySaved}
+                <MaterialButton icon="delete" title="settings.ai_remove_key" on:click={removeKey} />
+            {/if}
+        </InputRow>
 
-    {#if keySaved && !testResult}
-        <div class="statusLine ok">
-            <Icon id="check" size={0.9} white />
-            <T id="settings.ai_key_saved" />
-        </div>
+        {#if keySaved && !testResult}
+            <div class="statusLine ok">
+                <Icon id="check" size={0.9} white />
+                <T id="settings.ai_key_saved" />
+            </div>
+        {/if}
     {/if}
 
     {#if testing}

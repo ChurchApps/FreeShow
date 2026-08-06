@@ -4,6 +4,7 @@ import type { AIProviderId } from "../../../types/AiScripture"
 import { AI_PROVIDER_MODELS } from "../../../types/AiScripture"
 import { anthropicProvider } from "./anthropic"
 import { geminiProvider } from "./gemini"
+import { ollamaProvider } from "./ollama"
 import { openaiProvider } from "./openai"
 import type { AIDetectionRequest, AIProvider } from "./types"
 
@@ -12,7 +13,8 @@ export type { AIDetectionRequest, AIProvider, RawDetection } from "./types"
 const providers: { [id in AIProviderId]: AIProvider } = {
     anthropic: anthropicProvider,
     openai: openaiProvider,
-    gemini: geminiProvider
+    gemini: geminiProvider,
+    ollama: ollamaProvider
 }
 
 export function getProvider(id: AIProviderId): AIProvider {
