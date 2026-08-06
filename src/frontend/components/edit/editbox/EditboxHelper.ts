@@ -170,7 +170,10 @@ export class EditboxHelper {
         const lineStyleRadius = item.specialStyle?.lineRadius ? `border-radius: ${item.specialStyle.lineRadius}px;` : ""
         const listStyle = "" // item.list?.enabled ? `;list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};` : "" // item.list?.enabled ? ";display: list-item;" : ""
 
-        item?.lines?.forEach((line, i) => {
+        // a contenteditable without any line blocks can't receive line breaks, so always render at least one
+        const lines: Line[] = item?.lines?.length ? item.lines : [{ align: "", text: [{ style: "", value: "" }] }]
+
+        lines.forEach((line, i) => {
             const align = (typeof line.align === "string" ? line.align : "").replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             currentStyle += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             const style = align || lineStyleBg || lineStyleRadius || listStyle ? 'style="' + align + lineStyleBg + lineStyleRadius + listStyle + '"' : ""
