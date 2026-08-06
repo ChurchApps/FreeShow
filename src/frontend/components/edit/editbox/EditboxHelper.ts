@@ -180,7 +180,8 @@ export class EditboxHelper {
 
             const normalWrap = useNormalWrap || align.includes("justify") || align.includes("left") || JSON.stringify(line).includes("nowrap")
 
-            html += `<div class="break ${normalWrap ? "normalWrap" : ""}" ${plain ? "" : style}>`
+            // plain mode has no style attributes, identity attributes map styles back to the source lines (they are cloned when the browser splits a line)
+            html += `<div class="break ${normalWrap ? "normalWrap" : ""}" ${plain ? `data-line-index="${i}"` : style}>`
 
             // fix removing all text in a line
             if (i === 0 && line.text?.[0]?.style) firstTextStyleArchive = line.text?.[0]?.style || ""
@@ -203,7 +204,7 @@ export class EditboxHelper {
                 // if (value === " ") value = "&nbsp;"
 
                 // this will "hide" any HTML tags if any in the actual text content (not chords or text editor)
-                html += `<span data-freeshow-text="true" class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : textStyle} data-customtype='${a.customType || ""}' data-sourcedynamickey='${a.sourceDynamicKey || ""}' data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
+                html += `<span data-freeshow-text="true" class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? `data-text-index="${tIndex}"` : textStyle} data-customtype='${a.customType || ""}' data-sourcedynamickey='${a.sourceDynamicKey || ""}' data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
             })
             html += "</div>"
         })

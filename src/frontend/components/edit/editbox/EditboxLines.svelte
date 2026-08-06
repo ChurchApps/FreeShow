@@ -424,8 +424,15 @@
         currentStyle = ""
         let updateHTML = false
 
+        // plain mode DOM carries no styles, resolve the source line/text by identity attributes (survives line splits/merges)
+        const attrIndex = (elem: any, name: string, fallback: number) => {
+            const value = Number(elem.getAttribute?.(name) ?? NaN)
+            return isNaN(value) ? fallback : value
+        }
+
         new Array(...textElem.children).forEach((line: any, i) => {
-            let align: string = plain ? (typeof item.lines?.[i]?.align === "string" ? (item.lines?.[i]?.align as string) : "") : line.getAttribute("style") || ""
+            const sourceLine = plain ? attrIndex(line, "data-line-index", i) : i
+            let align: string = plain ? (typeof item.lines?.[sourceLine]?.align === "string" ? (item.lines?.[sourceLine]?.align as string) : "") : line.getAttribute("style") || ""
             align = align.replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             pos++
             currentStyle += align + lineStyleBg + lineStyleRadius
@@ -440,7 +447,7 @@
                     // add "floating" text to previous node (e.g. pressing backspace at the start of a line)
                     // preserve style when merging lines with different styling (macOS issue)
                     let lastNode = newLines[pos].text.length - 1
-                    let originalLineStyle = item.lines?.[i]?.text?.[0]?.style || ""
+                    let originalLineStyle = item.lines?.[sourceLine]?.text?.[0]?.style || ""
                     let lastNodeStyle = lastNode >= 0 ? newLines[pos].text[lastNode]?.style || "" : ""
 
                     // Create new segment if no previous node or styles differ
@@ -458,16 +465,15 @@
                     const strayText = child.nodeType === Node.ELEMENT_NODE ? (child.innerText || "").replaceAll("\n", "") : ""
                     if (strayText) {
                         let lastNode = newLines[pos].text.length - 1
-                        if (lastNode < 0) newLines[pos].text.push({ style: item.lines?.[i]?.text?.[0]?.style || "", value: strayText })
+                        if (lastNode < 0) newLines[pos].text.push({ style: item.lines?.[sourceLine]?.text?.[0]?.style || "", value: strayText })
                         else newLines[pos].text[lastNode].value += strayText
                         updateHTML = true
                     }
                     return
                 }
 
-                let style = plain ? item.lines?.[i]?.text[j]?.style || "" : child.getAttribute("style") || ""
-                // TODO: pressing enter / backspace will remove any following style in list view
-                // if (plain && !style && i > 0) style = item.lines![i - 1]?.text[j]?.style
+                const sourceText = plain ? attrIndex(child, "data-text-index", j) : j
+                let style = plain ? item.lines?.[sourceLine]?.text[sourceText]?.style || "" : child.getAttribute("style") || ""
 
                 let lineText = child.innerText
                 // empty line
