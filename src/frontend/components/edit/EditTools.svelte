@@ -104,7 +104,7 @@
     const getItemsByIndex = (array: number[]): Item[] => array.map((i) => allSlideItems[i])
 
     // select active items or all items
-    $: items = $activeEdit.items.length ? getItemsByIndex($activeEdit.items.sort((a, b) => a - b)) : allSlideItems
+    $: items = $activeEdit.items.length ? getItemsByIndex([...$activeEdit.items].sort((a, b) => a - b)) : allSlideItems
     // select last item
     $: item = items?.length ? items[items.length - 1] : null
 

@@ -298,14 +298,14 @@
 
     // BACKGROUND
 
-    $: currentBackgroundPath = currentShow?.media?.[ref[$activeEdit.slide || 0]?.data.background || ""]?.path || ""
+    $: currentBackgroundPath = currentShow?.media?.[ref[$activeEdit.slide ?? -1]?.data.background || ""]?.path || ""
     $: hasBackground = !!currentBackgroundPath
     function convertBackgroundToMedia() {
         // add behind all other items
         addItem("media", null, { src: currentBackgroundPath }, "", { left: "0px", top: "0px", width: "1920px", height: "1080px" }, 0)
 
         showsCache.update((a) => {
-            const currentRef = ref[$activeEdit.slide || 0]
+            const currentRef = ref[$activeEdit.slide ?? -1]
             if (!currentRef) return a
 
             const layoutId = currentShow?.settings?.activeLayout || ""
