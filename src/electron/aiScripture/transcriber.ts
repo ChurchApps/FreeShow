@@ -26,6 +26,7 @@ const AVG_LOGPROB_MIN = -1.0
 
 const SERVER_START_TIMEOUT = 20000
 const SERVER_INFERENCE_TIMEOUT = 30000
+const CLI_INFERENCE_TIMEOUT = 30000
 const KILL_TIMEOUT = 2000
 
 export interface TranscriberSegment {
@@ -70,6 +71,7 @@ export class Transcriber {
     private serverChild: ChildProcess | null = null
     private serverPort = 0
     private serverRespawned = false
+    private serverRespawning = false
     private tempFiles = new Set<string>()
 
     constructor(options: TranscriberOptions) {
@@ -79,8 +81,12 @@ export class Transcriber {
     async start(): Promise<void> {
         if (this.stopped) throw new Error("Transcriber has already been stopped")
 
+        // window WAV/JSON files only live for the duration of a single window - keep the folder private to this user (0700)
         const tmpDir = this.getTmpDir()
-        fs.mkdirSync(tmpDir, { recursive: true })
+        fs.mkdirSync(tmpDir, { recursive: true, mode: 0o700 })
+        try {
+            fs.chmodSync(tmpDir, 0o700) // mkdirSync does not change the mode of an existing folder
+        } catch {}
         // best effort cleanup of leftovers from a previous crash (the folder is exclusively ours)
         try {
             for (const file of fs.readdirSync(tmpDir)) {
@@ -156,6 +162,7 @@ export class Transcriber {
     }
 
     private async runWindow(window: PcmWindow): Promise<void> {
+        if (this.stopped) return
         this.processing = true
 
         try {
@@ -181,9 +188,11 @@ export class Transcriber {
             if (this.stopped) return
             const message = String((err as Error)?.message || err)
             console.error("[AiScripture] Transcription window failed:", message)
-            // one failed window can be transient (e.g. the server is respawning) - only surface repeated failures
-            this.consecutiveFailures++
-            if (this.consecutiveFailures >= 2) this.options.onError(message)
+            // failures while the server is respawning are expected - don't count them, only surface repeated real failures
+            if (!this.serverRespawning) {
+                this.consecutiveFailures++
+                if (this.consecutiveFailures >= 2) this.options.onError(message)
+            }
         } finally {
             this.processing = false
 
@@ -196,8 +205,9 @@ export class Transcriber {
     // CLI DRIVER - one whisper.cpp cli process per window, JSON output to a temp file
 
     private async transcribeCli(wav: Buffer): Promise<unknown> {
+        // temp WAV/JSON only live for the duration of this one window - private folder (0700) and files (0600)
         const tmpDir = this.getTmpDir()
-        fs.mkdirSync(tmpDir, { recursive: true })
+        fs.mkdirSync(tmpDir, { recursive: true, mode: 0o700 })
 
         const outBase = path.join(tmpDir, `window-${Date.now()}-${this.windowCount++}`)
         const wavPath = outBase + ".wav"
@@ -206,7 +216,8 @@ export class Transcriber {
         this.tempFiles.add(jsonPath)
 
         try {
-            await fs.promises.writeFile(wavPath, wav)
+            await fs.promises.writeFile(wavPath, wav, { mode: 0o600 })
+            if (this.stopped) throw new Error("Transcriber stopped")
             await this.runCliProcess(wavPath, outBase)
             return JSON.parse(await fs.promises.readFile(jsonPath, "utf8"))
         } finally {
@@ -217,9 +228,26 @@ export class Transcriber {
 
     private runCliProcess(wavPath: string, outBase: string): Promise<void> {
         return new Promise((resolve, reject) => {
+            // stop() could have run while the WAV was being written - never spawn a child once it has begun
+            if (this.stopped) return reject(new Error("Transcriber stopped"))
+
             const args = ["-m", this.options.modelPath, "-l", this.options.language, "-f", wavPath, "-oj", "-of", outBase, "-np"]
             const child = spawn(this.options.binary.binaryPath, args, { stdio: ["ignore", "ignore", "pipe"], windowsHide: true })
             this.cliChild = child
+
+            // watchdog: a hung whisper-cli would otherwise keep this.processing set forever and silently stall the pipeline
+            let timedOut = false
+            const termTimer = setTimeout(() => {
+                timedOut = true
+                try {
+                    child.kill("SIGTERM")
+                } catch {}
+            }, CLI_INFERENCE_TIMEOUT)
+            const killTimer = setTimeout(() => {
+                try {
+                    child.kill("SIGKILL")
+                } catch {}
+            }, CLI_INFERENCE_TIMEOUT + KILL_TIMEOUT)
 
             let stderr = ""
             child.stderr?.on("data", (chunk: Buffer) => {
@@ -227,12 +255,17 @@ export class Transcriber {
             })
 
             child.on("error", (err) => {
+                clearTimeout(termTimer)
+                clearTimeout(killTimer)
                 this.cliChild = null
                 reject(err)
             })
 
             child.on("exit", (code) => {
+                clearTimeout(termTimer)
+                clearTimeout(killTimer)
                 this.cliChild = null
+                if (timedOut) return reject(new Error(`Whisper timed out after ${CLI_INFERENCE_TIMEOUT / 1000}s`))
                 if (this.stopped) return reject(new Error("Transcriber stopped"))
                 if (code === 0) return resolve()
                 reject(new Error(`Whisper exited with code ${code}${stderr ? ": " + stderr.slice(-300).trim() : ""}`))
@@ -306,21 +339,33 @@ export class Transcriber {
             if (this.stopped) throw new Error("Transcriber stopped")
             if (child.exitCode !== null) throw new Error(`Whisper server exited with code ${child.exitCode}`)
 
-            try {
-                const controller = new AbortController()
-                const timer = setTimeout(() => controller.abort(), 1000)
-                try {
-                    await fetch(`http://127.0.0.1:${port}/`, { signal: controller.signal })
-                    return // any response means the server is up
-                } finally {
-                    clearTimeout(timer)
-                }
-            } catch {
-                await delay(250)
-            }
+            // another local process could have grabbed the probed port before whisper bound it - only accept a responder
+            // that actually identifies as whisper-server, never post microphone audio to a stranger. if the squatter never
+            // passes the check, whisper's own bind failure exits the child and startServer() retries on a fresh port.
+            if (await this.isWhisperServer(port)) return
+            await delay(250)
         }
 
         throw new Error("Whisper server did not respond in time")
+    }
+
+    // probe /inference without a "file" field - whisper-server answers with a JSON body (an "error" about the missing
+    // file), which an unrelated process that happened to win the port race would not produce
+    private async isWhisperServer(port: number): Promise<boolean> {
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), 1000)
+
+        try {
+            const form = new FormData()
+            form.append("response_format", "json")
+            const response = await fetch(`http://127.0.0.1:${port}/inference`, { method: "POST", body: form, signal: controller.signal })
+            const json: any = await response.json()
+            return !!json && typeof json === "object" && (typeof json.error === "string" || typeof json.text === "string")
+        } catch {
+            return false
+        } finally {
+            clearTimeout(timer)
+        }
     }
 
     private handleServerExit(child: ChildProcess, code: number | null) {
@@ -333,13 +378,26 @@ export class Transcriber {
         }
 
         this.serverRespawned = true
+        this.serverRespawning = true
         console.error(`[AiScripture] Whisper server exited unexpectedly with code ${code}, respawning...`)
-        this.startServer().catch((err: Error) => {
-            if (!this.stopped) this.options.onError(String(err?.message || err))
-        })
+        this.startServer().then(
+            () => {
+                // windows that failed while the server was down were transient - a single successful restart is not an error
+                this.serverRespawning = false
+                this.consecutiveFailures = 0
+            },
+            (err: Error) => {
+                this.serverRespawning = false
+                if (!this.stopped) this.options.onError(String(err?.message || err))
+            }
+        )
     }
 
     private async transcribeServer(wav: Buffer): Promise<unknown> {
+        if (this.stopped) throw new Error("Transcriber stopped")
+        // while the server is respawning this.serverPort is stale - don't post audio anywhere until it is back
+        if (this.serverRespawning) throw new Error("Whisper server is restarting")
+
         const form = new FormData()
         form.append("file", new Blob([wav], { type: "audio/wav" }), "window.wav")
         form.append("response_format", "json")
@@ -432,15 +490,33 @@ export function isLowConfidence(segment: { noSpeechProb?: number; avgLogprob?: n
     return false
 }
 
-// the first 1s of each window overlaps the previous one - drop/trim segments already emitted
-export function dedupeOverlap<T extends { startMs: number; endMs: number }>(segments: T[], previousEndMs: number): T[] {
+// the first 1s of each window overlaps the previous one - drop/trim segments already emitted.
+// trimming clamps the start timestamp AND drops the proportional share of leading words, so the overlap words are not re-emitted
+export function dedupeOverlap<T extends { text: string; startMs: number; endMs: number }>(segments: T[], previousEndMs: number): T[] {
     const result: T[] = []
     for (const segment of segments) {
         if (segment.endMs <= previousEndMs) continue // fully emitted already
-        if (segment.startMs < previousEndMs) result.push(Object.assign({}, segment, { startMs: previousEndMs }))
-        else result.push(segment)
+        if (segment.startMs >= previousEndMs) {
+            result.push(segment)
+            continue
+        }
+
+        const text = trimOverlapText(segment.text, segment.startMs, segment.endMs, previousEndMs)
+        if (!text) continue // every word falls inside the already emitted part
+        result.push(Object.assign({}, segment, { text, startMs: previousEndMs }))
     }
     return result
+}
+
+// drop the leading words that (proportionally by time) fall before previousEndMs
+function trimOverlapText(text: string, startMs: number, endMs: number, previousEndMs: number): string {
+    const words = text.split(/\s+/).filter(Boolean)
+    const durationMs = endMs - startMs
+    if (!words.length || durationMs <= 0) return ""
+
+    const dropCount = Math.round((words.length * (previousEndMs - startMs)) / durationMs)
+    if (dropCount <= 0) return text
+    return words.slice(dropCount).join(" ")
 }
 
 // tolerant parser for the different whisper.cpp JSON shapes:
