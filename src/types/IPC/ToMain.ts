@@ -57,7 +57,7 @@ export interface ToMainSendPayloads {
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: { url: string; progress: number; total: number; status: "downloading" | "complete" | "error"; name?: string }
     [ToMain.PDF_IMPORT_PROGRESS]: { filePath: string; name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }
     // AI Scripture
-    [ToMain.AI_SCRIPTURE_TRANSCRIPT]: { text: string; startMs: number; endMs: number; language?: string }
+    [ToMain.AI_SCRIPTURE_TRANSCRIPT]: { text: string; startMs: number; endMs: number; language?: string; music?: boolean }
     [ToMain.AI_SCRIPTURE_DETECTION]: DetectedReference
     [ToMain.AI_SCRIPTURE_STATUS]: { state: AiScriptureState; message?: string; keyless?: boolean }
     [ToMain.AI_SCRIPTURE_COMMAND]: AiScriptureCommandEvent

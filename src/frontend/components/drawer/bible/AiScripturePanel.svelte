@@ -98,7 +98,7 @@
             {#if transcriptExpanded}
                 <div class="transcriptFull" bind:this={transcriptElem}>
                     {#each $aiScriptureTranscript as segment}
-                        <p>
+                        <p class:music={segment.music}>
                             {#if interpretationMode && segment.language}<span class="langTag">{segment.language.toUpperCase()} ·</span>
                             {/if}{segment.text}
                         </p>
@@ -271,6 +271,12 @@
         font-size: 0.75em;
         font-weight: 600;
         letter-spacing: 0.05em;
+    }
+
+    /* whisper's guessed lyrics for music - shown for context, but faded & never used for detection */
+    .music {
+        opacity: 0.45;
+        font-style: italic;
     }
 
     .suggestions {
