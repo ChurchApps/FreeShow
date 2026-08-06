@@ -141,7 +141,21 @@ export type ProviderQuirks = (status: number, data: any, headers: { [key: string
 
 const AI_ERROR_CODES: AIErrorCode[] = ["invalid_key", "forbidden", "model_not_found", "rate_limited", "invalid_request", "server_error", "timeout", "network", "refusal", "bad_response"]
 
+// provider error bodies can echo the submitted credentials (OpenAI 401s include a partially redacted copy of the key) -
+// strip anything key shaped before the message leaves the provider module for the renderer/UI/logs
+const SECRET_PATTERNS = [/sk-[A-Za-z0-9_-]{8,}/g, /AIza[0-9A-Za-z_-]{20,}/g]
+
+export function redactSecrets(message: string | undefined): string | undefined {
+    if (!message) return message
+    return SECRET_PATTERNS.reduce((text, pattern) => text.replace(pattern, "[redacted]"), message)
+}
+
 export function toAIError(err: unknown, providerQuirks?: ProviderQuirks): AIError {
+    const error = mapToAIError(err, providerQuirks)
+    return { code: error.code, message: redactSecrets(error.message) }
+}
+
+function mapToAIError(err: unknown, providerQuirks?: ProviderQuirks): AIError {
     const e = err as any
 
     // errors thrown by the providers themselves (refusal/bad_response) are already AIError shaped

@@ -4,6 +4,7 @@
 
 import type { AIProviderId, AiScriptureBook, AiScriptureState, DetectedReference } from "../../types/AiScripture"
 import { getProvider } from "./providers"
+import { REQUEST_TIMEOUT } from "./providers/types"
 
 // SPOKEN NUMBERS
 
@@ -113,7 +114,8 @@ function buildBookIndex(books: AiScriptureBook[]): BookIndex {
         book.names.forEach((name) => {
             const token = name.trim().toLowerCase().replace(/\s+/g, " ")
             if (!token || byToken.has(token)) return
-            byToken.set(token, { name: name.trim(), number: book.number })
+            // prefer the 66 book canon number so tier 1 & tier 2 (which always reports canon numbers) share one numbering domain
+            byToken.set(token, { name: name.trim(), number: book.canonNumber ?? book.number })
             tokens.push(token)
         })
     })
@@ -240,6 +242,8 @@ export class DetectionCoordinator {
     private totalWords = 0
     private wordsAtLastLlmCall = 0
     private llmController: AbortController | null = null
+    private llmCallStartedAt = 0
+    private llmRerunPending = false // new speech arrived while a call was in flight: re-run once it settles
     private llmStopped = false
     private llmCooldownUntil = 0
 
@@ -262,6 +266,7 @@ export class DetectionCoordinator {
 
     stop(): void {
         this.stopped = true
+        this.llmRerunPending = false
         if (this.llmController) {
             this.llmController.abort()
             this.llmController = null
@@ -284,17 +289,22 @@ export class DetectionCoordinator {
         })
     }
 
-    // TIER 2 - single flight, newest transcript wins
+    // TIER 2 - single flight, newest transcript wins once the in-flight call settles
 
     private maybeRunTier2() {
         const llm = this.opts.llm
         if (!llm || this.llmStopped) return
 
-        // a call is still in flight, so its transcript window is stale now: abort it & let the next segment trigger a fresh one
+        // a call is in flight: never abort it just because new speech arrived (during continuous speech that would starve
+        // tier 2 completely) - mark a re-run so the fresh transcript is analyzed as soon as the call settles.
+        // only calls stuck past the request timeout are aborted & replaced right away
         if (this.llmController) {
+            if (Date.now() - this.llmCallStartedAt <= REQUEST_TIMEOUT) {
+                this.llmRerunPending = true
+                return
+            }
             this.llmController.abort()
             this.llmController = null
-            return
         }
 
         if (Date.now() < this.llmCooldownUntil) return
@@ -306,6 +316,7 @@ export class DetectionCoordinator {
         this.wordsAtLastLlmCall = this.totalWords
         const controller = new AbortController()
         this.llmController = controller
+        this.llmCallStartedAt = Date.now()
 
         const transcript = this.segments.map((segment) => segment.text).join(" ")
         Promise.resolve()
@@ -315,13 +326,23 @@ export class DetectionCoordinator {
                     if (this.llmController !== controller) return // aborted/superseded
                     this.llmController = null
                     this.handleLlmReferences(Array.isArray(result?.references) ? result.references : [])
+                    this.runPendingRerun()
                 },
                 (err: any) => {
                     if (this.llmController !== controller) return // aborted/superseded
                     this.llmController = null
                     this.handleLlmError(err)
+                    this.runPendingRerun()
                 }
             )
+    }
+
+    // speech arrived while the last call was in flight: immediately analyze the fresh transcript
+    // (maybeRunTier2 re-checks the cooldown/new-words conditions & whether tier 2 was stopped meanwhile)
+    private runPendingRerun() {
+        if (!this.llmRerunPending) return
+        this.llmRerunPending = false
+        if (!this.stopped) this.maybeRunTier2()
     }
 
     private handleLlmReferences(references: any[]) {
@@ -350,8 +371,9 @@ export class DetectionCoordinator {
     private handleLlmError(err: any) {
         const code = err?.code
 
-        // key problems will not fix themselves: stop tier 2 for the rest of the session (tier 1 keeps running)
-        if (code === "invalid_key" || code === "forbidden") {
+        // permanent errors will not fix themselves - bad key, unknown model, malformed request:
+        // stop tier 2 for the rest of the session & tell the user (tier 1 keeps running)
+        if (code === "invalid_key" || code === "forbidden" || code === "model_not_found" || code === "invalid_request") {
             this.llmStopped = true
             this.opts.onStatus("llm_paused", { message: err?.message || String(code) })
             return

@@ -13,7 +13,7 @@ export interface AIError {
 export interface DetectedReference {
     id: string
     book: string // canonical English book name (LLM) / matched book name (local)
-    bookNumber: number // position in the 66 book Protestant canon (LLM) / book number in the matched bible (local)
+    bookNumber: number // position in the 66 book Protestant canon when known, otherwise the matched bible's own book number
     chapter: number
     verseStart: number
     verseEnd: number
@@ -51,17 +51,19 @@ export const AI_PROVIDER_MODELS: { [id in AIProviderId]: { models: { id: string;
         defaultModel: "gpt-4o-mini"
     },
     gemini: {
+        // verified against ai.google.dev/gemini-api/docs (2026-08): gemini-2.0-flash was shut down 2026-06-01 and "gemini-2.0-pro" never existed
         models: [
-            { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (fast)", recommended: true },
-            { id: "gemini-2.0-pro", name: "Gemini 2.0 Pro (best accuracy)" }
+            { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (fast)", recommended: true },
+            { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (best accuracy)" }
         ],
-        defaultModel: "gemini-2.0-flash"
+        defaultModel: "gemini-2.5-flash"
     }
 }
 
 // book table handed from the renderer at start (merged from all selected translations)
 export interface AiScriptureBook {
-    number: number
+    number: number // book number as stored in the bible the names came from
+    canonNumber?: number // position in the 66 book Protestant canon - set by the renderer for 66 book bibles (equal to number), undefined otherwise
     names: string[] // name/customName/abbreviations across the selected bibles
 }
 
@@ -72,6 +74,7 @@ export interface AiScriptureStartConfig {
     language: string // spoken language code passed to whisper (e.g. "en")
     books: AiScriptureBook[]
     llm: { provider: AIProviderId; model: string } | null
+    refCooldownSeconds?: number // suppress re-emitting an intersecting reference within this window
 }
 
 export type AiScriptureState = "starting" | "listening" | "stopped" | "error" | "llm_paused"
