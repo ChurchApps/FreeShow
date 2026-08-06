@@ -49,7 +49,7 @@ export async function processAudio(buffer: Buffer, icecast?: any) {
         }
     }
 
-    await NdiSender.sendAudioBufferNDI(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
+    NdiSender.sendAudioBufferNDI(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
     BlackmagicSender.sendAudioBuffer(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
     sendAudioToOutputServer(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
 
