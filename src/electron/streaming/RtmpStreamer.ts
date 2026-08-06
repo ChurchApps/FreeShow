@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from "child_process"
+import { config } from "../data/store"
 import { getFfmpegPath, isFfmpegInstalled } from "./ffmpegManager"
 
 interface StreamInstance {
@@ -29,8 +30,69 @@ export class RtmpStreamer {
         return this.streamers.size > 0
     }
 
-    static start(outputId: string, url: string, width: number, height: number, fps = 30, enableAudio = true, bitrate = 4000) {
-        if (this.isRunning(outputId)) return
+    // Detected usable hardware H.264 encoder (cached across all streams), or null for software libx264.
+    private static hwEncoderProbe: Promise<string | null> | null = null
+
+    // Probe which hardware H.264 encoder actually WORKS on this machine. Presence in `-encoders` isn't enough
+    // (a build can list an encoder the GPU/driver can't run), so we run a 1-frame test encode of each candidate
+    // and keep the first that exits cleanly. Result is cached; falls back to libx264 when none work.
+    static async detectHwEncoder(): Promise<string | null> {
+        if (this.hwEncoderProbe) return this.hwEncoderProbe
+        this.hwEncoderProbe = (async () => {
+            // respect the app's "disable hardware acceleration" setting — use software libx264 when it's off
+            try {
+                if (config.get("disableHardwareAcceleration") === true) {
+                    console.info("[RtmpStreamer] hardware acceleration disabled in settings; using software libx264")
+                    return null
+                }
+            } catch {
+                // ignore
+            }
+            const ffmpegPath = getFfmpegPath()
+            for (const enc of ["h264_nvenc", "h264_amf", "h264_qsv"]) {
+                if (await this.testEncoder(ffmpegPath, enc)) {
+                    console.info(`[RtmpStreamer] hardware H.264 encoder available: ${enc}`)
+                    return enc
+                }
+            }
+            console.info("[RtmpStreamer] no working hardware H.264 encoder; using software libx264")
+            return null
+        })()
+        return this.hwEncoderProbe
+    }
+
+    private static testEncoder(ffmpegPath: string, encoder: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            let settled = false
+            const finish = (ok: boolean) => {
+                if (settled) return
+                settled = true
+                resolve(ok)
+            }
+            let proc: ChildProcess
+            try {
+                proc = spawn(ffmpegPath, ["-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "nullsrc=s=256x256:d=1", "-frames:v", "1", "-c:v", encoder, "-f", "null", "-"], { windowsHide: true })
+            } catch {
+                return finish(false)
+            }
+            proc.on("error", () => finish(false))
+            proc.on("exit", (code) => finish(code === 0))
+            setTimeout(() => {
+                try {
+                    proc.kill()
+                } catch {
+                    // ignore
+                }
+                finish(false)
+            }, 5000)
+        })
+    }
+
+    // outputs whose async start (encoder probe) is in flight — prevents a double-spawn before `streamers` is set
+    private static starting = new Set<string>()
+
+    static async start(outputId: string, url: string, width: number, height: number, fps = 30, enableAudio = true, bitrate = 4000) {
+        if (this.isRunning(outputId) || this.starting.has(outputId)) return
         console.log(`[RtmpStreamer] Starting RTMP stream for ${outputId}...`)
 
         if (!isFfmpegInstalled()) {
@@ -38,13 +100,19 @@ export class RtmpStreamer {
             return
         }
 
+        this.starting.add(outputId)
         const ffmpegPath = getFfmpegPath()
+        // GPU H.264 encode when available (huge CPU saving at 1080p/4K) — falls back to libx264
+        const hwEncoder = await this.detectHwEncoder()
+        this.starting.delete(outputId)
+        // a stop() may have raced in while we were probing
+        if (this.isRunning(outputId)) return
 
         // Detect if we're likely getting Retina/HighDPI frames from Electron
         // macOS on ARM (M-series) usually captures at 2x scale
         const isRetina = process.platform === "darwin"
 
-        const args = this.getFfmpegArgs(url, width, height, fps, enableAudio, isRetina, bitrate)
+        const args = this.getFfmpegArgs(url, width, height, fps, enableAudio, isRetina, bitrate, hwEncoder)
 
         console.log(`[RtmpStreamer] Spawning FFmpeg to stream ${outputId} to ${url} at ${width}x${height} (${fps} fps, bitrate: ${bitrate}k, audio: ${enableAudio}, retina: ${isRetina})...`)
         try {
@@ -128,7 +196,7 @@ export class RtmpStreamer {
         }
     }
 
-    private static getFfmpegArgs(url: string, width: number, height: number, fps: number, enableAudio: boolean, isRetina = false, bitrate = 4000): string[] {
+    private static getFfmpegArgs(url: string, width: number, height: number, fps: number, enableAudio: boolean, isRetina = false, bitrate = 4000, hwEncoder: string | null = null): string[] {
         const inputWidth = isRetina ? width * 2 : width
         const inputHeight = isRetina ? height * 2 : height
 
@@ -140,11 +208,26 @@ export class RtmpStreamer {
             args.push("-f", "lavfi", "-i", `anullsrc=channel_layout=stereo:sample_rate=${SAMPLE_RATE}`)
         }
 
-        const vf = isRetina ? `scale=${width}:${height},format=yuv420p` : "format=yuv420p"
         const bitrateKbps = `${bitrate}k`
         const bufsizeKbps = `${bitrate * 2}k`
+        const gop = `${fps * 2}`
+        // hardware encoders take NV12; libx264 takes yuv420p. Include the downscale (retina) in the same filter.
+        const pixFmt = hwEncoder ? "nv12" : "yuv420p"
+        const vf = isRetina ? `scale=${width}:${height},format=${pixFmt}` : `format=${pixFmt}`
+        args.push("-vf", vf)
 
-        args.push("-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency", "-b:v", bitrateKbps, "-maxrate", bitrateKbps, "-bufsize", bufsizeKbps, "-pix_fmt", "yuv420p", "-vf", vf, "-g", `${fps * 2}`, "-c:a", "aac", "-b:a", "128k", "-f", "flv", url)
+        // Encoder-specific low-latency CBR settings, roughly matching the libx264 "veryfast/zerolatency" profile.
+        if (hwEncoder === "h264_nvenc") {
+            args.push("-c:v", "h264_nvenc", "-preset", "p4", "-tune", "ll", "-rc", "cbr", "-b:v", bitrateKbps, "-maxrate", bitrateKbps, "-bufsize", bufsizeKbps, "-g", gop)
+        } else if (hwEncoder === "h264_amf") {
+            args.push("-c:v", "h264_amf", "-usage", "lowlatency", "-rc", "cbr", "-b:v", bitrateKbps, "-maxrate", bitrateKbps, "-g", gop)
+        } else if (hwEncoder === "h264_qsv") {
+            args.push("-c:v", "h264_qsv", "-preset", "veryfast", "-b:v", bitrateKbps, "-maxrate", bitrateKbps, "-bufsize", bufsizeKbps, "-g", gop)
+        } else {
+            args.push("-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency", "-b:v", bitrateKbps, "-maxrate", bitrateKbps, "-bufsize", bufsizeKbps, "-g", gop)
+        }
+
+        args.push("-pix_fmt", pixFmt, "-c:a", "aac", "-b:a", "128k", "-f", "flv", url)
         return args
     }
 

@@ -216,7 +216,9 @@ export class CaptureLifecycle {
 
         console.info("Capture - stopping: " + id)
 
-        this.cleanupListeners(capture.window)
+        // A shared-render FOLLOWER's capture.window is the RENDERER's window — never strip its listeners (that
+        // would kill the renderer's paint handler). The renderer's own stopCapture handles cleanup.
+        if (!(output as any).follower) this.cleanupListeners(capture.window)
         delete output.captureOptions
         this.updateWebRtcHostState()
         this.updateRtmpState()

@@ -2,6 +2,7 @@ import type { BrowserWindow, Display, NativeImage, Size } from "electron"
 import electron from "electron"
 import { NdiSender } from "../ndi/NdiSender"
 import { OutputHelper } from "../output/OutputHelper"
+import { RenderGroups } from "../output/helpers/RenderGroups"
 import type { CaptureOptions } from "./CaptureOptions"
 import { CaptureLifecycle } from "./helpers/CaptureLifecycle"
 import { CaptureTransmitter } from "./helpers/CaptureTransmitter"
@@ -71,6 +72,36 @@ export class CaptureHelper {
                 OutputHelper.setOutput(id, output)
                 CaptureTransmitter.startChannel(id, "ndi")
             }
+        }
+
+        // GPU budget: rendering several 4K OSR surfaces at 60fps saturates the GPU and balloons every
+        // readback (~20ms -> ~100ms) -> the received output only gets a few NEW frames/sec. So render each OSR
+        // output at the rate it actually needs: full rate when a receiver is connected, a low rate when not.
+        // Reacts within CONNECTION_POLL_INTERVAL_MS (250ms), so a connecting output ramps to 60 quickly.
+        // The OSR window's render rate is owned by the group RENDERER. A follower must never set it (its window
+        // is the renderer's), and the renderer renders at the MAX rate ANY member needs — so one member with a
+        // connected 60fps receiver keeps the shared render at 60 even if others are idle.
+        this.updateRenderRate(RenderGroups.rendererOf(id))
+    }
+
+    static updateRenderRate(rendererId: string) {
+        const output = OutputHelper.getOutput(rendererId)
+        const win = (output as any)?.window as BrowserWindow | undefined
+        if (!(output as any)?.osr || (output as any)?.follower || !win || win.isDestroyed()) return
+
+        // FS_PAINT_ONLY measurement: force full render rate so the raw compositor ceiling can be measured
+        // (otherwise disconnected outputs throttle to 1fps and the measurement reads ~1 paint/s).
+        let fps = process.env.FS_PAINT_ONLY === "1" ? 60 : 0
+        if (!fps) {
+            for (const m of RenderGroups.members(rendererId)) {
+                const mo = OutputHelper.getOutput(m)
+                if (mo?.captureOptions) fps = Math.max(fps, this.getMaxActiveFramerate(mo.captureOptions.framerates || {}, mo.captureOptions.options || {}))
+            }
+        }
+        try {
+            win.webContents.setFrameRate(Math.max(1, Math.min(60, Math.round(fps || 1))))
+        } catch {
+            // ignore
         }
     }
 

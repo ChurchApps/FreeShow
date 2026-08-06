@@ -18,7 +18,14 @@ import { CaptureHelper } from "../capture/CaptureHelper"
 export class NdiSender {
     private static worker: Worker | null = null
 
-    // main-side mirror of the worker's senders (existence + status + in-flight flag)
+    // How many video sends may be posted to the worker before its completions (videoDone) come back. The
+    // send round-trip is dominated by main<->worker messaging latency (not the ~4-7ms send itself) and can
+    // exceed a 60fps frame interval, so single-in-flight aliases the rate down. With MULTIPLE senders sharing
+    // one worker, each sender's sends also queue behind the others, so 2 occasionally busy-skips; 3 hides that
+    // while still bounding the worker's queue (a stalled receiver can't accumulate more than 3 frames).
+    private static readonly MAX_INFLIGHT_SENDS = 3
+
+    // main-side mirror of the worker's senders (existence + status + count of sends in flight)
     static NDI: {
         [key: string]: {
             name: string
@@ -26,7 +33,8 @@ export class NdiSender {
             status?: string
             previousStatus?: string
             sender?: boolean
-            sendingVideo?: boolean
+            inFlight?: number
+            connections?: number
         }
     } = {}
 
@@ -34,7 +42,13 @@ export class NdiSender {
         if (this.worker) return this.worker
 
         try {
-            this.worker = new Worker(join(__dirname, "ndiWorker.js"))
+            this.worker = new Worker(join(__dirname, "ndiWorker.js"), {
+                // Both grandiose's video() send AND osr-capture's readback run as napi async work on the
+                // worker's libuv THREAD POOL. The default of 4 threads serializes multiple 4K outputs (e.g.
+                // 3 outputs = 3 readbacks + 3 sends contending for 4 threads). Enlarge the pool so per-output
+                // readbacks and sends run truly in parallel — the key to many concurrent 4K outputs.
+                env: { ...process.env, UV_THREADPOOL_SIZE: "32" }
+            })
             this.worker.on("message", (msg: any) => this.onWorkerMessage(msg))
             this.worker.on("error", (err) => console.error("NDI worker error:", err))
             this.worker.on("exit", (code) => {
@@ -50,14 +64,26 @@ export class NdiSender {
         return this.worker
     }
 
+    private static msgDiag = { count: 0, videoDone: 0, last: Date.now() }
     private static onWorkerMessage(msg: any) {
         if (!msg?.type) return
+
+        this.msgDiag.count++
+        if (msg.type === "videoDone") this.msgDiag.videoDone++
+        const nowMs = Date.now()
+        if (nowMs - this.msgDiag.last >= 1000) {
+            console.info(`[WMSG] ${this.msgDiag.count} worker msgs/s (videoDone ${this.msgDiag.videoDone})`)
+            this.msgDiag.count = 0
+            this.msgDiag.videoDone = 0
+            this.msgDiag.last = nowMs
+        }
 
         if (msg.type === "status") {
             const data = this.NDI[msg.id]
             if (!data) return
 
             data.status = msg.status
+            data.connections = msg.connections
             const newStatus = String(msg.status) + String(msg.connections)
             if (newStatus !== data.previousStatus) {
                 toApp("NDI", { channel: "SEND_DATA", data: { id: msg.id, status: msg.status, connections: msg.connections } })
@@ -68,7 +94,17 @@ export class NdiSender {
             delete this.NDI[msg.id]
         } else if (msg.type === "videoDone") {
             const data = this.NDI[msg.id]
-            if (data) data.sendingVideo = false
+            if (data) data.inFlight = Math.max(0, (data.inFlight ?? 0) - 1)
+        } else if (msg.type === "releaseTexture") {
+            // off-main capture: the GPU has consumed the shared texture -> release it (frees the frame pool)
+            this.releaseTextureCallbacks[msg.id]?.(msg.seq)
+        } else if (msg.type === "captureDone") {
+            // off-main capture fully done -> a pipeline slot frees (the lifecycle may forward the next frame)
+            this.captureDoneCallbacks[msg.id]?.(msg.seq)
+        } else if (msg.type === "scaledFrame") {
+            // the worker GPU-downscaled the 4K readback to a small BGRA (server/stage) and copied it here;
+            // main wraps the small image once and fans it out to every group member's server/stage consumers
+            CaptureHelper.Transmitter.receiveScaledFrame(msg.members || [msg.id], msg.buffer, msg.byteOffset, msg.byteLength, msg.size)
         }
     }
 
@@ -76,9 +112,10 @@ export class NdiSender {
         return name || `FreeShow NDI${outputName ? ` - ${outputName}` : ""}`
     }
 
-    // true while a video() send is in flight in the worker (its next frame would be dropped-to-latest)
+    // true once the max number of sends are already in flight in the worker (posting more would just queue/
+    // drop-to-latest); callers skip producing a frame while busy
     static isBusyNDI(id: string): boolean {
-        return !!this.NDI[id]?.sendingVideo
+        return (this.NDI[id]?.inFlight ?? 0) >= this.MAX_INFLIGHT_SENDS
     }
 
     static async createSenderNDI(id: string, name = "", groups?: string) {
@@ -98,11 +135,11 @@ export class NdiSender {
         this.worker?.postMessage({ type: "destroy", id })
     }
 
-    static sendVideoBufferNDI(id: string, buffer: Buffer, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1, transparent = true }: { size?: { width: number; height: number }; ratio?: number; framerate?: number; transparent?: boolean } = {}) {
+    static sendVideoBufferNDI(id: string, buffer: Buffer, { size = { width: 1280, height: 720 }, ratio = 16 / 9, framerate = 1, transparent = true, format = 0 }: { size?: { width: number; height: number }; ratio?: number; framerate?: number; transparent?: boolean; format?: number } = {}) {
         const data = this.NDI[id]
         if (!data?.sender || !this.worker) return
 
-        data.sendingVideo = true
+        data.inFlight = (data.inFlight ?? 0) + 1
 
         // hand the frame buffer to the worker zero-copy via transfer. Only transfer when this Buffer owns
         // its entire backing ArrayBuffer (toBitmap() normally does); otherwise copy just the frame region so
@@ -113,7 +150,19 @@ export class NdiSender {
         } else {
             arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer
         }
-        this.worker.postMessage({ type: "video", id, buffer: arrayBuffer, byteOffset: 0, byteLength: arrayBuffer.byteLength, opts: { size, ratio, framerate, transparent } }, [arrayBuffer])
+        this.worker.postMessage({ type: "video", id, buffer: arrayBuffer, byteOffset: 0, byteLength: arrayBuffer.byteLength, opts: { size, ratio, framerate, transparent, format } }, [arrayBuffer])
+    }
+
+    // Off-main capture (NDI-only outputs): forward just the shared-texture handle to the worker, which does the
+    // readback AND the send itself so the main process never touches 4K pixel data. The worker replies with
+    // "captureDone" (relayed via captureDoneCallbacks) so the capture lifecycle can release the texture.
+    static captureDoneCallbacks: { [id: string]: (seq: number) => void } = {}
+    static releaseTextureCallbacks: { [id: string]: (seq: number) => void } = {}
+    static captureFrameNDI(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; format: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[] }) {
+        const data = this.NDI[id]
+        if (!data?.sender || !this.worker) return false
+        this.worker.postMessage({ type: "captureFrame", id, source, opts })
+        return true
     }
 
     static async sendAudioBufferNDI(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {

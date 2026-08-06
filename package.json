@@ -151,7 +151,7 @@
         "music-metadata": "^7.14.0",
         "node-machine-id": "^1.1.12",
         "osc-js": "^2.4.1",
-        "osr-capture": "github:schplay/osr-capture#7497bf89b78c0fa2e10674b9c154256ce132370b",
+        "osr-capture": "github:schplay/osr-capture#eb5afccdd5185ae9fd5c2f0747a8fde8fe1bf32f",
         "pcm-convert": "^1.6.5",
         "protobufjs": "^7.5.3",
         "pusher-js": "^8.5.0",

@@ -24,6 +24,11 @@ import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
 // ----- STARTUP -----
 
+// Enlarge the libuv thread pool early (before any worker inherits the env / before first async work). Both
+// osr-capture readbacks and grandiose NDI sends run as async work on this pool; the default of 4 threads
+// serializes multiple concurrent 4K outputs. Set as an OS env var so worker_threads inherit it. (multi-4K)
+if (!process.env.UV_THREADPOOL_SIZE) process.env.UV_THREADPOOL_SIZE = "32"
+
 // check if app's in production or not
 export const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
 
