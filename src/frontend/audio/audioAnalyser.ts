@@ -372,6 +372,9 @@ export class AudioAnalyser {
         const manager = AudioRoutingManager.getInstance()
         manager.registerInputNode(nodeKey, node)
 
+        // per item capture for visualizer
+        // if (id) AudioInputCapture.getInstance().captureInput(id, node)
+
         if (isMic) {
             manager.registerInputNode("mic_default", node)
         } else if (isVideo) {
@@ -400,6 +403,9 @@ export class AudioAnalyser {
 
         const nodeKey = id ? (isMic ? id : id === "metronome" ? "metronome" : isVideo ? "output_window" : isPlaylist ? playlistSubId! : "drawer_audio") : "drawer_audio"
         AudioRoutingManager.getInstance().unregisterInputNode(nodeKey, node)
+
+        // per item capture for visualizer
+        // if (id) AudioInputCapture.getInstance().removeInput(id)
 
         if (isMic) {
             AudioRoutingManager.getInstance().unregisterInputNode("mic_default", node)
@@ -588,7 +594,14 @@ export class AudioAnalyser {
         return this.sources[id] || null
     }
 
-    static getAnalysers() {
-        return this.analysers
+    static getAnalysers(path?: string) {
+        let nodeId = "speaker_default"
+
+        // WIP per item capture for visualizer ?
+        // if (path) nodeId = path
+        console.log(path)
+
+        const captured = AudioInputCapture.getInstance().getAnalysers(nodeId)
+        return captured // this.analysers
     }
 }
