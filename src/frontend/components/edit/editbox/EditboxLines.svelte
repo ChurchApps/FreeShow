@@ -456,7 +456,17 @@
                     updateHTML = true
                     return
                 }
-                if (child.nodeName !== "SPAN") return
+                if (child.nodeName !== "SPAN") {
+                    // merge stray elements the browser sometimes creates on backspace/delete (e.g. <font>) into the previous segment
+                    const strayText = child.nodeType === Node.ELEMENT_NODE ? (child.innerText || "").replaceAll("\n", "") : ""
+                    if (strayText) {
+                        let lastNode = newLines[pos].text.length - 1
+                        if (lastNode < 0) newLines[pos].text.push({ style: item.lines?.[i]?.text?.[0]?.style || "", value: strayText })
+                        else newLines[pos].text[lastNode].value += strayText
+                        updateHTML = true
+                    }
+                    return
+                }
 
                 let style = plain ? item.lines?.[i]?.text[j]?.style || "" : child.getAttribute("style") || ""
                 // TODO: pressing enter / backspace will remove any following style in list view
@@ -564,8 +574,10 @@
             }
         }
 
-        // For keyboard line operations, prefer the live caret from the contenteditable DOM.
-        if (keyboardLineMutation && liveCaret) caret = liveCaret
+        // For keyboard line operations that changed the line structure, prefer the live caret from the contenteditable DOM.
+        // In-line edits (e.g. backspace inside a line) must not rebuild the HTML, that would destroy the browser's own caret.
+        const structureChanged = (item.lines || []).length !== newLines.length || newLines.some((line, i) => (line.text?.length || 0) !== (item.lines?.[i]?.text?.length || 0))
+        if (keyboardLineMutation && liveCaret && structureChanged) caret = liveCaret
 
         if (caret) {
             item.lines = newLines
