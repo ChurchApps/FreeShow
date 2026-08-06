@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
 import { AUDIO } from "../../types/Channels"
+import { keysToID } from "../components/helpers/array"
 import { audioRouting, disabledServers, media, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
-import { isOutputWindow } from "../utils/common"
 import { send } from "../utils/request"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
@@ -82,7 +82,6 @@ export class AudioAnalyser {
         // Start the pipeline immediately with the current channel count (no blocking)
         AudioRoutingManager.getInstance().setAudioContext(this.getAudioContext())
         this.initAnalysers()
-        this.initDestination()
         this.initRecorder()
 
         // Equalizer is now applied globally in the master effect chain to prevent cross-source leakage
@@ -327,7 +326,9 @@ export class AudioAnalyser {
         this.channels = validatedChannelCount
         this.splitter = AudioMultichannel.createChannelSplitter(this.ac, this.channels)
 
-        if (this.destNode) AudioMultichannel.configureNodeForMultichannel(this.destNode, this.channels)
+        this.destinationNodes.forEach((destNode) => {
+            AudioMultichannel.configureNodeForMultichannel(destNode, this.channels)
+        })
         if (this.gainNode) AudioMultichannel.configureNodeForMultichannel(this.gainNode, this.channels)
 
         this.reconnectAllSources()
@@ -461,50 +462,74 @@ export class AudioAnalyser {
         }
     }
 
-    private static destNode: MediaStreamAudioDestinationNode | null = null
-    private static initDestination() {
-        if (this.destNode) return
-
-        this.destNode = AudioMultichannel.createMultichannelDestination(this.ac, this.channels)
-        AudioRoutingManager.getInstance().setDestinationNode(this.destNode)
+    private static destinationNodes: Map<string, MediaStreamAudioDestinationNode> = new Map()
+    private static getOrCreateDestinationNode(targetId: string): MediaStreamAudioDestinationNode {
+        if (!this.destinationNodes.has(targetId)) {
+            const destNode = AudioMultichannel.createMultichannelDestination(this.ac, this.channels)
+            this.destinationNodes.set(targetId, destNode)
+            AudioRoutingManager.getInstance().setDestinationNode(targetId, destNode)
+        }
+        return this.destinationNodes.get(targetId)!
     }
 
     // RECORDER
-    private static recorder: MediaRecorder | null = null
+    private static recorders: Map<string, MediaRecorder> = new Map()
     private static initRecorder() {
-        if (this.recorder || !this.recorderActive) return
-        this.initDestination()
+        if (!this.recorderActive) return
 
-        const id = isOutputWindow() ? Object.keys(get(outputs))[0] : "main"
-        // might only work in "main" for OutputShow
+        const activeTargets: string[] = []
 
-        try {
-            this.recorder = new MediaRecorder(this.destNode!.stream, {
-                mimeType: 'audio/webm; codecs="opus"'
-            })
-            this.recorder.addEventListener("dataavailable", (ev) => {
-                if (!ev.data || ev.data.size === 0) return
-                ev.data.arrayBuffer().then((arrayBuffer) => {
-                    const uint8Array = new Uint8Array(arrayBuffer)
-                    const isIcecastConnected = !!get(audioRouting)?.connections.some((c) => c.to === "icecast")
-                    const icecast = isIcecastConnected ? { enabled: true, host: get(special).icecastHost, port: get(special).icecastPort, mount: get(special).icecastMount, password: get(special).icecastPassword ?? "hackme" } : undefined
+        const connections = get(audioRouting)?.connections || []
+        const isIcecastConnected = connections.some((c) => c.to === "icecast")
+        if (isIcecastConnected) activeTargets.push("icecast")
 
-                    const activeStreamingOutputs = Object.values(get(outputs) || {}).filter((out) => out && out.enabled && (out.webrtc || out.rtmp || out.ndi || out.blackmagic))
-                    const targetIds = activeStreamingOutputs.length ? activeStreamingOutputs.map((out) => out.id) : [id]
+        const activeStreamingOutputs = keysToID(get(outputs)).filter((out) => out && out.enabled && (out.webrtc || out.rtmp || out.ndi || out.blackmagic))
+        activeStreamingOutputs.forEach((out) => {
+            const hasConn = connections.some((c) => c.to === `network_sub_${out.id}`)
+            if (hasConn && !activeTargets.includes(out.id)) activeTargets.push(out.id)
+        })
 
-                    targetIds.forEach((targetId) => {
-                        send(AUDIO, ["CAPTURE"], { id: targetId, buffer: uint8Array, icecast })
+        // Clean up recorders for targets that are no longer active
+        this.recorders.forEach((rec, targetId) => {
+            if (!activeTargets.includes(targetId)) {
+                try {
+                    rec.stop()
+                } catch (e) {}
+                this.recorders.delete(targetId)
+            }
+        })
+
+        // Initialize recorders for active targets
+        activeTargets.forEach((targetId) => {
+            if (this.recorders.has(targetId)) return
+
+            const destNode = this.getOrCreateDestinationNode(targetId)
+            try {
+                const rec = new MediaRecorder(destNode.stream, {
+                    mimeType: 'audio/webm; codecs="opus"'
+                })
+                rec.addEventListener("dataavailable", (ev) => {
+                    if (!ev.data || ev.data.size === 0) return
+                    ev.data.arrayBuffer().then((arrayBuffer) => {
+                        const uint8Array = new Uint8Array(arrayBuffer)
+                        if (targetId === "icecast") {
+                            const icecast = { enabled: true, host: get(special).icecastHost, port: get(special).icecastPort, mount: get(special).icecastMount, password: get(special).icecastPassword ?? "hackme" }
+                            send(AUDIO, ["CAPTURE"], { id: "icecast", buffer: uint8Array, icecast })
+                        } else {
+                            send(AUDIO, ["CAPTURE"], { id: targetId, buffer: uint8Array })
+                        }
                     })
                 })
-            })
 
-            if (this.recorder.state === "paused") this.recorder.resume()
-            else if (this.recorder.state !== "recording") {
-                this.recorder.start(Math.round(1000 / this.recorderFrameRate))
+                if (rec.state === "paused") rec.resume()
+                else if (rec.state !== "recording") {
+                    rec.start(Math.round(1000 / this.recorderFrameRate))
+                }
+                this.recorders.set(targetId, rec)
+            } catch (err) {
+                console.error(`[AudioAnalyser] Failed to start MediaRecorder for ${targetId}:`, err)
             }
-        } catch (err) {
-            console.error(`[AudioAnalyser] Failed to start MediaRecorder:`, err)
-        }
+        })
     }
 
     private static recorderActive = false
@@ -519,20 +544,25 @@ export class AudioAnalyser {
         this.initRecorder()
     }
     static recorderDeactivate() {
-        if (this.shouldBeActive() || !this.recorder) return
+        if (this.shouldBeActive()) return
 
         this.recorderActive = false
-        this.recorder.stop()
-        this.recorder = null
+        this.recorders.forEach((rec) => {
+            try {
+                rec.stop()
+            } catch (e) {}
+        })
+        this.recorders.clear()
     }
 
     private static shouldBeActive() {
-        const outputList = Object.values(get(outputs) || {}).filter(Boolean)
-
-        if (outputList.some((a) => a.enabled && (a.webrtc || a.rtmp || a.ndi || a.blackmagic))) return true
-
-        const isIcecastConnected = !!get(audioRouting)?.connections.some((c) => c.to === "icecast")
+        const connections = get(audioRouting)?.connections || []
+        const isIcecastConnected = connections.some((c) => c.to === "icecast")
         if (isIcecastConnected) return true
+
+        const outputList = Object.values(get(outputs) || {}).filter(Boolean)
+        const hasConnectedOutput = outputList.some((a) => a.enabled && (a.webrtc || a.rtmp || a.ndi || a.blackmagic) && connections.some((c) => c.to === `network_sub_${a.id}`))
+        if (hasConnectedOutput) return true
 
         return false
     }

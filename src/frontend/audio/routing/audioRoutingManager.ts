@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { AudioRoutingConfig } from "../../../types/AudioRouting"
-import { audioChannelsData, audioEffects, audioRouting, outputs } from "../../stores"
 import { keysToID } from "../../components/helpers/array"
+import { audioChannelsData, audioEffects, audioRouting, outputs } from "../../stores"
 import { AudioAnalyser } from "../audioAnalyser"
 import { AudioCompressor } from "../effects/audioCompressor"
 import { AudioDelay } from "../effects/audioDelay"
@@ -11,8 +11,8 @@ import { AudioLimiter } from "../effects/audioLimiter"
 import { AudioNoiseGate } from "../effects/audioNoiseGate"
 import { AudioReverb } from "../effects/audioReverb"
 import { AudioStereoShaper } from "../effects/audioStereoShaper"
-import { deduplicateConnections } from "./audioRoutingInit"
 import { AudioInputCapture } from "./audioInputCapture"
+import { deduplicateConnections } from "./audioRoutingInit"
 
 export class AudioRoutingManager {
     private static instance: AudioRoutingManager
@@ -22,7 +22,7 @@ export class AudioRoutingManager {
     private channelDelayNodes: Map<string, DelayNode> = new Map()
     private mergerEffectChains: Map<string, { input: AudioNode; output: AudioNode; dispose: () => void }> = new Map()
     private masterNode: AudioNode | null = null
-    private destinationNode: AudioNode | null = null
+    private destinationNodes: Map<string, AudioNode> = new Map()
     private inputNodes: Map<string, Set<AudioNode>> = new Map()
 
     private constructor() {
@@ -75,8 +75,8 @@ export class AudioRoutingManager {
         this.updateAllGains()
     }
 
-    public setDestinationNode(node: AudioNode) {
-        this.destinationNode = node
+    public setDestinationNode(targetId: string, node: AudioNode) {
+        this.destinationNodes.set(targetId, node)
         this.updateRoutingNodes()
     }
 
@@ -244,9 +244,7 @@ export class AudioRoutingManager {
         const startTime = performance.now()
 
         const allOuts = keysToID(get(outputs) || {})
-        const inactiveOutputChannelIds = new Set<string>(
-            allOuts.filter((out) => !out.enabled).map((out) => `channel_${out.id}`)
-        )
+        const inactiveOutputChannelIds = new Set<string>(allOuts.filter((out) => !out.enabled).map((out) => `channel_${out.id}`))
 
         // Ensure all configured active channels have corresponding GainNode instances
         const channels = (this.config.channels || []).filter((m) => !inactiveOutputChannelIds.has(m.id))
@@ -371,17 +369,17 @@ export class AudioRoutingManager {
             })
 
             // Network Sink
-            const networkConns = this.config.connections.filter((c) => c.from === id && (c.to === "network_default" || c.to === "icecast" || c.to.startsWith("network_sub_")))
-            if (networkConns.length > 0) {
-                if (this.destinationNode) {
+            const networkConns = this.config.connections.filter((c) => c.from === id && (c.to === "icecast" || c.to.startsWith("network_sub_")))
+            networkConns.forEach((c) => {
+                const targetKey = c.to.startsWith("network_sub_") ? c.to.replace("network_sub_", "") : c.to
+                const destNode = this.destinationNodes.get(targetKey)
+                if (destNode) {
                     try {
-                        outNode.connect(this.destinationNode)
+                        outNode.connect(destNode)
                     } catch (e) {}
                 }
-                networkConns.forEach((c) => {
-                    AudioInputCapture.getInstance().captureInput(c.to, outNode)
-                })
-            }
+                AudioInputCapture.getInstance().captureInput(c.to, outNode)
+            })
         })
 
         // 3. Connect each per-speaker merger to its sub-speaker AudioContext sink & visualizer capture
@@ -430,14 +428,10 @@ export class AudioRoutingManager {
         if (this.masterNode) {
             AudioInputCapture.getInstance().captureInput("speaker_default", this.masterNode)
         }
-        if (this.destinationNode) {
-            if (this.config.connections.some((c) => c.to === "network_default")) {
-                AudioInputCapture.getInstance().captureInput("network_default", this.destinationNode)
-            }
-            if (this.config.connections.some((c) => c.to === "icecast")) {
-                AudioInputCapture.getInstance().captureInput("icecast", this.destinationNode)
-            }
-        }
+        this.destinationNodes.forEach((destNode, targetKey) => {
+            const visualizerKey = targetKey === "icecast" ? "icecast" : `network_sub_${targetKey}`
+            AudioInputCapture.getInstance().captureInput(visualizerKey, destNode)
+        })
 
         // Update input connectivity (real-time routing)
         // Group by node to avoid redundant disconnects clearing multi-group connections
@@ -484,9 +478,7 @@ export class AudioRoutingManager {
 
     public getConnectionsFrom(sourceId: string): string[] {
         const allOuts = keysToID(get(outputs) || {})
-        const inactiveOutputChannelIds = new Set<string>(
-            allOuts.filter((out) => !out.enabled).map((out) => `channel_${out.id}`)
-        )
+        const inactiveOutputChannelIds = new Set<string>(allOuts.filter((out) => !out.enabled).map((out) => `channel_${out.id}`))
         if (inactiveOutputChannelIds.has(sourceId)) return []
 
         return this.config.connections
@@ -497,9 +489,7 @@ export class AudioRoutingManager {
 
     public getConnectionsTo(targetId: string): string[] {
         const allOuts = keysToID(get(outputs) || {})
-        const inactiveOutputChannelIds = new Set<string>(
-            allOuts.filter((out) => !out.enabled).map((out) => `channel_${out.id}`)
-        )
+        const inactiveOutputChannelIds = new Set<string>(allOuts.filter((out) => !out.enabled).map((out) => `channel_${out.id}`))
         if (inactiveOutputChannelIds.has(targetId)) return []
 
         return this.config.connections

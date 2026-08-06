@@ -1147,7 +1147,7 @@ const dynamicValues = {
     // disk: {no: null, of: null}
     // track: {no: null, of: null}
     audio_time: ({ audioTime }) => joinTime(secondsToTime(audioTime)),
-    audio_countdown: ({ audioTime, audioDuration }) => joinTime(secondsToTime(audioDuration > 0 ? audioDuration - audioTime : 0)),
+    audio_countdown: ({ audioTime, audioDuration }) => joinTime(secondsToTime(audioDuration > 0 ? audioDuration - Math.floor(audioTime) : 0)),
     audio_duration: ({ audioDuration }) => joinTime(secondsToTime(audioDuration)),
     audio_volume: () => Math.round((get(audioChannelsData).main?.volume ?? 1) * 100),
 
