@@ -27,7 +27,7 @@ export function updateStore<T extends StoreKey>(id: T, key: string, value: Store
         return
     }
 
-    const oldValue = clone($[id][key])
+    const oldValue = clone(get($[id])[key])
     const historyValue = { id, key, value, oldValue }
     historyNew("store_update", historyValue)
 }
@@ -40,7 +40,7 @@ export function deleteStore<T extends StoreKey>(id: T, key: string, addToHistory
         return
     }
 
-    const oldValue = clone($[id][key])
+    const oldValue = clone(get($[id])[key])
     const historyValue = { id, key, oldValue }
     historyNew("store_delete", historyValue)
 }

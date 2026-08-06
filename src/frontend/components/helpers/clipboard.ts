@@ -68,6 +68,7 @@ import { activeEdit } from "./../../stores"
 import { clone, keysToID, removeDeleted, removeDuplicates } from "./array"
 import { pasteText } from "./caretHelper"
 import { history } from "./history"
+import { deleteStore } from "./historyStores"
 import { getFileName, removeExtension } from "./media"
 import { select } from "./select"
 import { loadShows } from "./setShow"
@@ -734,15 +735,8 @@ const deleteActions = {
         history({ id: "SLIDES", oldData: { type: "delete_group", data: data.map(({ id }: any) => ({ id })) } })
     },
     action: (data: any) => {
-        // WIP history
-        data.forEach((selData) => {
-            actions.update((a) => {
-                delete a[selData.id]
-                return a
-            })
-
-            sendMain(Main.CLOSE_MIDI, { id: selData.id })
-        })
+        historyDelete("UPDATE", data, { updater: "action" })
+        data.forEach((selData) => sendMain(Main.CLOSE_MIDI, { id: selData.id }))
     },
     timer: (data: any) => {
         data.forEach((a) => {
@@ -751,24 +745,11 @@ const deleteActions = {
         })
     },
     global_timer: (data: any) => deleteActions.timer(data),
-    // TODO: history
     variable: (data: any) => {
-        variables.update((a) => {
-            data.forEach(({ id }) => {
-                delete a[id]
-            })
-
-            return a
-        })
+        data.forEach(({ id }) => deleteStore("variables", id))
     },
     interaction: (data: any) => {
-        // WIP history
-        interactions.update((a) => {
-            data.forEach(({ id }) => {
-                delete a[id]
-            })
-            return a
-        })
+        historyDelete("UPDATE", data, { updater: "interaction" })
     },
     interaction_input: (data: any) => {
         const id = get(openedInteractionId)
@@ -1149,7 +1130,8 @@ const duplicateActions = {
     },
     folder: (data: any) => {
         // duplicate projects folder and all of the projects inside
-        // TODO: history
+        // intentionally no undo: the recursive tree duplication has no batch history entry,
+        // and per-item entries could partially undo into orphaned children (deleting the copy has undo)
         const newProjects: Project[] = []
 
         folders.update((a) => {
@@ -1191,14 +1173,12 @@ const duplicateActions = {
         })
     },
     project: (data: any) => {
-        // TODO: history
-        projects.update((a) => {
-            data.forEach((project) => {
-                const newProject = clone(a[project.id])
-                a[uid()] = { ...newProject, name: newProject.name + " 2" }
-                return a
-            })
-            return a
+        data.forEach((selData) => {
+            const project = clone(get(projects)[selData.id])
+            if (!project) return
+
+            const id = uid()
+            history({ id: "UPDATE", newData: { data: project, replace: { name: project.name + " 2" } }, oldData: { id }, location: { page: "show", id: "project" } })
         })
     },
     theme: (data: any) => {
