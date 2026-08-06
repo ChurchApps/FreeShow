@@ -1,11 +1,17 @@
-import { describe, expect, it, vi } from "vitest"
+import { EventEmitter } from "events"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // transcriber.ts imports electron for app.getPath("userData") (temp dir) - not used by the pure helpers
 vi.mock("electron", () => ({
     app: { getPath: () => "/tmp/freeshow-vitest" }
 }))
 
-import { buildWavBuffer, computeRms, dedupeOverlap, isLowConfidence, isNoiseSegment, parseWhisperJson } from "./transcriber"
+const spawnMock = vi.hoisted(() => vi.fn())
+vi.mock("child_process", () => ({
+    spawn: spawnMock
+}))
+
+import { buildWavBuffer, computeRms, dedupeOverlap, isLowConfidence, isNoiseSegment, parseWhisperJson, Transcriber } from "./transcriber"
 
 describe("buildWavBuffer", () => {
     const samples = new Int16Array([0, 1000, -1000, 32767, -32768])
@@ -85,6 +91,23 @@ describe("dedupeOverlap", () => {
     it("drops a segment ending exactly at the previously emitted end", () => {
         expect(dedupeOverlap([{ text: "dup", startMs: 6000, endMs: 7000 }], 7000)).toEqual([])
     })
+
+    it("drops the proportional share of leading words when trimming a straddling segment", () => {
+        // 10 words over 5000ms, the first 2000ms were already emitted -> 4 leading words dropped
+        const segments = [{ text: "one two three four five six seven eight nine ten", startMs: 5000, endMs: 10000 }]
+        expect(dedupeOverlap(segments, 7000)).toEqual([{ text: "five six seven eight nine ten", startMs: 7000, endMs: 10000 }])
+    })
+
+    it("removes the re-transcribed overlap words from a whole-window server segment", () => {
+        // server mode: one segment spanning the whole 7s window, the first 1s was emitted by the previous window
+        const segments = [{ text: "a b c d e f g", startMs: 6000, endMs: 13000 }]
+        expect(dedupeOverlap(segments, 7000)).toEqual([{ text: "b c d e f g", startMs: 7000, endMs: 13000 }])
+    })
+
+    it("drops a straddling segment entirely when all its words fall inside the overlap", () => {
+        // 1 word, ~91% overlapped -> the single word is dropped and nothing remains
+        expect(dedupeOverlap([{ text: "word", startMs: 6000, endMs: 7100 }], 7000)).toEqual([])
+    })
 })
 
 describe("isNoiseSegment", () => {
@@ -148,5 +171,133 @@ describe("parseWhisperJson", () => {
         expect(parseWhisperJson({ text: "   " }, 7000)).toEqual([])
         expect(parseWhisperJson("garbage", 7000)).toEqual([])
         expect(parseWhisperJson({ transcription: [{ noText: true }] }, 7000)).toEqual([])
+    })
+})
+
+// class-level behavior (spawn is mocked - no real whisper processes)
+
+function createFakeChild() {
+    const child: any = new EventEmitter()
+    child.stderr = new EventEmitter()
+    child.exitCode = null
+    child.signalCode = null
+    child.kill = vi.fn()
+    return child
+}
+
+function createTranscriber(kind: "cli" | "server", onError = vi.fn()) {
+    return new Transcriber({
+        binary: { kind, binaryPath: "/fake/whisper" },
+        modelPath: "/fake/model.bin",
+        language: "en",
+        onSegment: vi.fn(),
+        onError
+    })
+}
+
+describe("runCliProcess timeout", () => {
+    beforeEach(() => {
+        spawnMock.mockReset()
+        vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+        vi.useRealTimers()
+    })
+
+    it("SIGTERMs then SIGKILLs a hung whisper-cli and rejects so the window counts as a failure", async () => {
+        const child = createFakeChild()
+        spawnMock.mockReturnValueOnce(child)
+
+        const transcriber: any = createTranscriber("cli")
+        const promise: Promise<void> = transcriber.runCliProcess("/tmp/in.wav", "/tmp/out")
+        promise.catch(() => {}) // asserted below - avoid an unhandled rejection in between
+
+        await vi.advanceTimersByTimeAsync(29999)
+        expect(child.kill).not.toHaveBeenCalled()
+
+        await vi.advanceTimersByTimeAsync(1) // 30s watchdog
+        expect(child.kill).toHaveBeenCalledWith("SIGTERM")
+        expect(child.kill).not.toHaveBeenCalledWith("SIGKILL")
+
+        await vi.advanceTimersByTimeAsync(2000) // still alive after the term grace period
+        expect(child.kill).toHaveBeenCalledWith("SIGKILL")
+
+        child.emit("exit", null)
+        await expect(promise).rejects.toThrow(/timed out/)
+        expect(transcriber.cliChild).toBe(null)
+    })
+
+    it("does not time out a whisper-cli run that exits in time", async () => {
+        const child = createFakeChild()
+        spawnMock.mockReturnValueOnce(child)
+
+        const transcriber: any = createTranscriber("cli")
+        const promise: Promise<void> = transcriber.runCliProcess("/tmp/in.wav", "/tmp/out")
+
+        await vi.advanceTimersByTimeAsync(5000)
+        child.emit("exit", 0)
+        await expect(promise).resolves.toBeUndefined()
+        expect(child.kill).not.toHaveBeenCalled()
+    })
+})
+
+describe("stop() guards", () => {
+    beforeEach(() => {
+        spawnMock.mockReset()
+    })
+
+    it("never spawns whisper-cli once stop() has begun", async () => {
+        const transcriber: any = createTranscriber("cli")
+        transcriber.stopped = true
+
+        await expect(transcriber.runCliProcess("/tmp/in.wav", "/tmp/out")).rejects.toThrow("stopped")
+        expect(spawnMock).not.toHaveBeenCalled()
+    })
+
+    it("skips a queued window entirely after stop()", async () => {
+        const transcriber: any = createTranscriber("cli")
+        transcriber.stopped = true
+
+        await transcriber.runWindow({ samples: new Int16Array(16000), startSample: 0 })
+        expect(spawnMock).not.toHaveBeenCalled()
+        expect(transcriber.processing).toBe(false)
+    })
+})
+
+describe("server respawn failure handling", () => {
+    beforeEach(() => {
+        spawnMock.mockReset()
+    })
+
+    it("resets the consecutive failure counter after a successful respawn", async () => {
+        const onError = vi.fn()
+        const transcriber: any = createTranscriber("server", onError)
+        const child = createFakeChild()
+        transcriber.serverChild = child
+        transcriber.consecutiveFailures = 1
+        transcriber.startServer = vi.fn().mockResolvedValue(undefined)
+
+        transcriber.handleServerExit(child, 1)
+        expect(transcriber.serverRespawning).toBe(true)
+        await Promise.resolve()
+        await Promise.resolve()
+
+        expect(transcriber.consecutiveFailures).toBe(0)
+        expect(transcriber.serverRespawning).toBe(false)
+        expect(onError).not.toHaveBeenCalled()
+    })
+
+    it("does not count window failures while the server is respawning", async () => {
+        const onError = vi.fn()
+        const transcriber: any = createTranscriber("server", onError)
+        transcriber.serverRespawning = true
+
+        // transcribeServer throws before posting anywhere while a respawn is in progress
+        await transcriber.runWindow({ samples: new Int16Array(16000).fill(3000), startSample: 0 })
+        await transcriber.runWindow({ samples: new Int16Array(16000).fill(3000), startSample: 16000 })
+
+        expect(transcriber.consecutiveFailures).toBe(0)
+        expect(onError).not.toHaveBeenCalled()
     })
 })
