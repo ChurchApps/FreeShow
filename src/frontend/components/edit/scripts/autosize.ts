@@ -135,9 +135,10 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         cloned.style.height = `${newHeight}px`
         cloned.style.padding = "0"
 
-        // "align-items: flex-end;" does not work with auto size
-        cloned.style.alignItems = "center"
-        if (cloned.querySelector(".edit")) (cloned.querySelector(".edit") as HTMLElement).style.justifyContent = "center"
+        // scrollHeight only measures overflow below the box: with flex-end (and half of it with center) overflow is invisible to it,
+        // so measure with flex-start - vertical alignment does not affect the content size, the computed fit is the same
+        cloned.style.alignItems = "flex-start"
+        if (cloned.querySelector(".edit")) (cloned.querySelector(".edit") as HTMLElement).style.justifyContent = "flex-start"
 
         for (const elemHide of Array.from(cloned.querySelectorAll(".hideFromAutosize"))) {
             ;(elemHide as HTMLElement).style.display = "none"
