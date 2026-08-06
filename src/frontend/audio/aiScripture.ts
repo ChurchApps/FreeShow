@@ -243,12 +243,14 @@ async function resolveMicDeviceId(saved: string): Promise<string> {
 }
 
 function getMicStream(deviceId: string) {
+    // unlike the LTC listener (which needs raw audio), speech recognition wants a clean, well leveled signal:
+    // without gain control & noise suppression a quiet mic makes whisper hallucinate repeated phrases
     return navigator.mediaDevices.getUserMedia({
         audio: {
             deviceId: deviceId ? { exact: deviceId } : undefined,
             echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
+            noiseSuppression: true,
+            autoGainControl: true,
             channelCount: 1,
             sampleRate: 48000
         }
