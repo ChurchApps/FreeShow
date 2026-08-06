@@ -49,14 +49,19 @@
         seekTo(videoTime)
         dispatch("loaded", true)
 
-        player.on("play", () => (paused = false))
-        player.on("pause", () => (paused = true))
+        player.on("play", () => {
+            paused = false
+            isPlayPending = false
+        })
+        player.on("pause", () => {
+            paused = true
+            isPlayPending = false
+        })
         player.on("durationchange", ({ duration }) => (videoData.duration = duration))
         player.on("timeupdate", ({ seconds }) => {
             time = seconds
             videoTime = seconds
         })
-        // player.on("seeked", () => change)
     }
 
     $: if (loaded) updateTime()
@@ -72,42 +77,76 @@
         if (timeInterval) clearInterval(timeInterval)
     })
 
+    let isPlayPending = false
+    let currentMuteState: boolean | null = null
     $: if (player && loaded && !seeking) {
-        if (videoData.paused) player.pause().catch((err) => console.warn("Vimeo pause error:", err))
-        else player.play().catch((err) => console.warn("Vimeo play error:", err))
+        if (videoData.paused && (!paused || isPlayPending)) {
+            isPlayPending = false
+            player.pause().catch((err) => console.warn("Vimeo pause error:", err))
+        } else if (!videoData.paused && paused && !isPlayPending) {
+            isPlayPending = true
+            player
+                .play()
+                .catch((err) => {
+                    console.warn("Vimeo play error:", err)
+                    isPlayPending = false
+                })
+        }
 
-        if (shouldBeMuted) player.setMuted(true).catch((err) => console.warn("Vimeo setMuted error:", err))
-        else if ($currentWindow === "output" || preview) player.setMuted(false).catch((err) => console.warn("Vimeo setMuted error:", err))
-
-        // player.setLoop(videoData.loop)
+        if (currentMuteState !== shouldBeMuted) {
+            currentMuteState = shouldBeMuted
+            player.setMuted(shouldBeMuted).catch((err) => console.warn("Vimeo setMuted error:", err))
+        }
     }
 
     $: if (!id && player) player.unload().catch((err) => console.warn("Vimeo unload error:", err))
 
-    $: if (!seeking && videoTime !== undefined) seekPlayer()
+    $: if (loaded && !seeking && videoTime !== undefined) seekPlayer()
     function seekPlayer() {
-        if (!player || (preview && !paused) || time === videoTime) return
+        if (!player || !loaded || (preview && !paused) || Math.abs(time - videoTime) < 1.0) return
 
         seekTo(videoTime)
     }
 
     let seeking = false
-    function seekTo(time) {
+    let pendingSeekTime: number | null = null
+
+    function timeoutPromise(ms: number) {
+        return new Promise<void>((resolve) => setTimeout(resolve, ms))
+    }
+
+    async function seekTo(targetTime: number) {
+        if (!player) return
+
+        if (seeking) {
+            pendingSeekTime = targetTime
+            return
+        }
+
         let isPlaying = !videoData.paused
         videoData.paused = true
         seeking = true
-        setTimeout(() => {
-            if (!player) return
+        pendingSeekTime = null
 
-            player.setCurrentTime(time).catch((err) => console.warn("Vimeo setCurrentTime error:", err))
+        try {
+            if (targetTime > 0) {
+                await Promise.race([
+                    player.setCurrentTime(targetTime),
+                    timeoutPromise(500)
+                ])
+            }
+        } catch (err) {
+            console.warn("Vimeo setCurrentTime error:", err)
+        } finally {
+            if (isPlaying) videoData.paused = false
+            seeking = false
 
-            setTimeout(() => {
-                if (isPlaying) videoData.paused = false
-                seeking = false
-
-                // if (outputId) send(OUTPUT, ["MAIN_TIME"], { [outputId]: time })
-            }, 800)
-        }, 100)
+            if (pendingSeekTime !== null && pendingSeekTime !== targetTime) {
+                const nextSeek = pendingSeekTime
+                pendingSeekTime = null
+                seekTo(nextSeek)
+            }
+        }
     }
 
     // function change() {
