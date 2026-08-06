@@ -43,7 +43,7 @@ describe("anthropic provider", () => {
         const [url, body, config] = post.mock.calls[0] as any[]
         expect(url).toBe("https://api.anthropic.com/v1/messages")
         expect(body.model).toBe("claude-haiku-4-5")
-        expect(body.max_tokens).toBe(1024)
+        expect(body.max_tokens).toBe(4096)
         expect(body.temperature).toBeUndefined() // anthropic must not receive a temperature
         expect(body.output_config.format.type).toBe("json_schema")
         expect(body.messages[0].content).toContain("Romans 8:28")
@@ -52,6 +52,21 @@ describe("anthropic provider", () => {
         expect(config.headers["anthropic-version"]).toBe("2023-06-01")
         expect(config.timeout).toBe(12000)
         expect(config.signal).toBe(signal)
+    })
+
+    it("reads the text block even when a thinking block comes first (thinking-enabled models)", async () => {
+        post.mockResolvedValueOnce({
+            data: {
+                stop_reason: "end_turn",
+                content: [
+                    { type: "thinking", thinking: "let me check the transcript...", text: undefined },
+                    { type: "text", text: JSON.stringify({ references: [detection] }) }
+                ]
+            }
+        } as any)
+
+        const result = await anthropicProvider.detectScripture("sk-key", "claude-opus-5", request, signal)
+        expect(result.references).toEqual([detection])
     })
 
     it("filters out entries that do not match the reference shape", async () => {
@@ -255,6 +270,26 @@ describe("gemini provider", () => {
         const result = await geminiProvider.testConnection("g-key", "gemini-2.0-flash")
         expect(result.ok).toBe(false)
         if (!result.ok) expect(result.error.code).toBe("invalid_key")
+    })
+})
+
+// ERROR REDACTION
+
+describe("toAIError secret redaction", () => {
+    it("strips echoed OpenAI keys from error messages", async () => {
+        post.mockRejectedValueOnce(httpError(401, { error: { message: "Incorrect API key provided: sk-proj-Abc123DEF456. You can find your API key at platform.openai.com." } }))
+        const error = await openaiProvider.detectScripture("sk-key", "gpt-4o-mini", request, signal).catch((err: any) => err)
+        expect(error.code).toBe("invalid_key")
+        expect(error.message).not.toContain("sk-proj-Abc123DEF456")
+        expect(error.message).toContain("[redacted]")
+    })
+
+    it("strips echoed Google keys from error messages", async () => {
+        post.mockRejectedValueOnce(httpError(400, { error: { message: "API key not valid: AIzaSyA1234567890abcdefghijk. Please pass a valid API key." } }))
+        const error = await geminiProvider.detectScripture("g-key", "gemini-2.5-flash", request, signal).catch((err: any) => err)
+        expect(error.code).toBe("invalid_key")
+        expect(error.message).not.toContain("AIzaSyA1234567890abcdefghijk")
+        expect(error.message).toContain("[redacted]")
     })
 })
 

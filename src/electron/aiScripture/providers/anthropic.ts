@@ -33,7 +33,9 @@ export const anthropicProvider: AIProvider = {
     async detectScripture(apiKey, model, req, signal) {
         const body = {
             model,
-            max_tokens: 1024,
+            // generous cap: on thinking-enabled models (e.g. claude-opus-5) max_tokens covers thinking + text,
+            // so a small value could truncate the JSON payload
+            max_tokens: 4096,
             // no temperature - not supported on newer Anthropic models
             system: DETECTION_PROMPT,
             messages: [{ role: "user", content: buildUserContent(req) }],
@@ -46,7 +48,9 @@ export const anthropicProvider: AIProvider = {
 
             if (data?.stop_reason === "refusal") throw { code: "refusal" } as AIError
 
-            return { references: parseDetectionResponse(data?.content?.[0]?.text) }
+            // thinking-enabled models lead the content array with a thinking block - find the text block explicitly
+            const textBlock = Array.isArray(data?.content) ? data.content.find((block: any) => block?.type === "text") : undefined
+            return { references: parseDetectionResponse(textBlock?.text) }
         } catch (err) {
             throw toAIError(err, mapAnthropicError)
         }
