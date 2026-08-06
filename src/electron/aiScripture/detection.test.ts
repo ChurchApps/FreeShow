@@ -86,6 +86,16 @@ describe("detectExplicitReferences", () => {
         expect(refs).toEqual([{ bookNumber: 43, book: "John", chapter: 3, verseStart: 1, verseEnd: 1, confidence: "high" }])
     })
 
+    it("treats book + two plain numbers as chapter and verse with high confidence", () => {
+        const expected = (bookNumber: number, book: string, chapter: number, verseStart: number, verseEnd = verseStart) => [{ bookNumber, book, chapter, verseStart, verseEnd, confidence: "high" }]
+        expect(detectExplicitReferences("let us read mark 12 4 together", BOOKS)).toEqual(expected(41, "Mark", 12, 4))
+        expect(detectExplicitReferences("john 5, 1 says", BOOKS)).toEqual(expected(43, "John", 5, 1))
+        expect(detectExplicitReferences("mark 12-4 tells us", BOOKS)).toEqual(expected(41, "Mark", 12, 4))
+        expect(detectExplicitReferences("we saw john 3. 16 earlier", BOOKS)).toEqual(expected(43, "John", 3, 16))
+        expect(detectExplicitReferences("mark twelve four together", BOOKS)).toEqual(expected(41, "Mark", 12, 4))
+        expect(detectExplicitReferences("mark 12 4-6 today", BOOKS)).toEqual(expected(41, "Mark", 12, 4, 6))
+    })
+
     it("detects nothing in plain speech", () => {
         expect(detectExplicitReferences("hello world, welcome to the service", BOOKS)).toEqual([])
     })
