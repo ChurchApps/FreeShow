@@ -45,6 +45,11 @@
 
         AudioMicrophone.getList().then((devices) => {
             microphones = devices.map((device) => ({ value: device.deviceId, label: device.label }))
+
+            // auto select the system default so listening captures the right input without any manual choice
+            if (!$special.aiScripture?.micDeviceId && devices.length) {
+                update("micDeviceId", devices.find((device) => device.deviceId === "default")?.deviceId || devices[0].deviceId)
+            }
         })
     })
 

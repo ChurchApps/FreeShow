@@ -14,6 +14,7 @@ import { setDrawerTabData } from "../components/helpers/historyHelpers"
 import { getFirstActiveOutput, setOutput } from "../components/helpers/output"
 import { clearSlide } from "../components/output/clear"
 import { requestMain, sendMain } from "../IPC/main"
+import { AudioMicrophone } from "./audioMicrophone"
 import { activeDrawerTab, activeScripture, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, drawerTabsData, openScripture, outLocked, outputs, scriptures, scripturesCache, special } from "../stores"
 import aiScriptureProcessorUrl from "./aiScriptureProcessor.ts?worker&url"
 
@@ -149,7 +150,13 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     const result = await requestMain(Main.AI_SCRIPTURE_START, startConfig, undefined, 60000)
     if (!result?.started) return startError(result?.error || "start_failed")
 
-    const micError = await startMicCapture(settings.micDeviceId || "")
+    const micDeviceId = await resolveMicDeviceId(settings.micDeviceId || "")
+    if (micDeviceId && micDeviceId !== settings.micDeviceId) {
+        // persist the auto-selected device so the settings dropdown shows what is actually capturing
+        special.update((a) => ({ ...a, aiScripture: { ...(a.aiScripture || {}), micDeviceId } }))
+    }
+
+    const micError = await startMicCapture(micDeviceId)
     if (micError) {
         sendMain(Main.AI_SCRIPTURE_STOP)
         return startError(micError)
@@ -219,6 +226,21 @@ aiScriptureStatus.subscribe((status) => {
 })
 
 // MICROPHONE CAPTURE
+
+// prefer the saved device, else the system default, else the first available input -
+// an unset device previously left the choice to Chromium, which can capture an input the user is not speaking into
+async function resolveMicDeviceId(saved: string): Promise<string> {
+    try {
+        const devices = await AudioMicrophone.getList()
+        if (!devices.length) return saved
+        if (saved && devices.some((device) => device.deviceId === saved)) return saved
+
+        return devices.find((device) => device.deviceId === "default")?.deviceId || devices[0].deviceId
+    } catch (err) {
+        console.error("Could not enumerate microphones:", err)
+        return saved
+    }
+}
 
 function getMicStream(deviceId: string) {
     return navigator.mediaDevices.getUserMedia({
