@@ -34,6 +34,7 @@ export interface TranscriberSegment {
     startMs: number
     endMs: number
     language?: string // detected language of the window (cli -oj with "-l auto" only)
+    music?: boolean // whisper marked this as sung content (♪) - lyrics are unreliable & never feed detection
 }
 
 export interface WhisperSegment extends TranscriberSegment {
@@ -181,7 +182,7 @@ export class Transcriber {
 
             for (const segment of fresh) {
                 if (segment.endMs > this.lastEmittedEndMs) this.lastEmittedEndMs = segment.endMs
-                this.options.onSegment({ text: segment.text.trim(), startMs: segment.startMs, endMs: segment.endMs, language: segment.language })
+                this.options.onSegment({ text: segment.text.trim(), startMs: segment.startMs, endMs: segment.endMs, language: segment.language, music: isMusicSegment(segment.text) || undefined })
             }
 
             this.consecutiveFailures = 0
@@ -482,6 +483,12 @@ export function computeRms(samples: Int16Array): number {
 export function isNoiseSegment(text: string): boolean {
     const leftover = text.replace(/\[[^\]]*\]|\([^)]*\)|\*[^*]*\*/g, "").replace(/[♪♫\s.,!?\-–—_]+/g, "")
     return leftover === ""
+}
+
+// whisper wraps sung content in ♪...♪ - and reliably HALLUCINATES lyrics for music it does not know,
+// so music segments are shown in the transcript but must never feed scripture detection
+export function isMusicSegment(text: string): boolean {
+    return /[♪♫]/.test(text)
 }
 
 // drop segments whisper itself is unsure about - only where the JSON provides the values

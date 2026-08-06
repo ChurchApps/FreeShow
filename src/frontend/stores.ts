@@ -91,7 +91,7 @@ export const rtmpStatus: Writable<{ [outputId: string]: RtmpStatus }> = writable
 // AI scripture (session only - never saved)
 export const aiScriptureStatus: Writable<{ state: AiScriptureState; message?: string; keyless?: boolean }> = writable({ state: "stopped" })
 export const aiScriptureSuggestions: Writable<DetectedReference[]> = writable([])
-export const aiScriptureTranscript: Writable<{ text: string; startMs: number; endMs: number; language?: string }[]> = writable([])
+export const aiScriptureTranscript: Writable<{ text: string; startMs: number; endMs: number; language?: string; music?: boolean }[]> = writable([])
 export const aiScriptureAutoPaused: Writable<boolean> = writable(false)
 export const aiScriptureHasProjected: Writable<boolean> = writable(false)
 export const whisperDownloads: Writable<Map<string, { progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }>> = writable(new Map())

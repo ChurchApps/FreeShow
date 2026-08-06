@@ -54,6 +54,9 @@ export async function startAiScripture(config: AiScriptureStartConfig): Promise<
             // the full transcript always reaches the renderer - detection only listens to the selected language
             sendToMain(ToMain.AI_SCRIPTURE_TRANSCRIPT, segment)
 
+            // music lyrics are whisper hallucination territory - never let them trigger detections or commands
+            if (segment.music) return
+
             const detectable = !config.interpretationMode || !segment.language || !config.listenLanguage || segment.language === config.listenLanguage
             if (!detectable) return
 
