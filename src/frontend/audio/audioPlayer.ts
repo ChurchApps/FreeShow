@@ -397,8 +397,12 @@ export class AudioPlayer {
 
         // loop single audio
         if (get(media)[id]?.loop) {
-            get(playingAudio)[id].audio.currentTime = 0
-            get(playingAudio)[id].audio.play()
+            const startTime = AudioPlayer.getStartTime(id)
+            const audioObj = get(playingAudio)[id]?.audio
+            if (audioObj) {
+                audioObj.currentTime = startTime
+                if (audioObj.paused) audioObj.play().catch(() => {})
+            }
             return
         }
 

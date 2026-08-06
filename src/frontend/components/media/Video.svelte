@@ -4,8 +4,8 @@
     import { currentWindow, media } from "../../stores"
     import { waitUntilValueIsDefined } from "../../utils/common"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
-    import { videoSync, syncVideoToAudio } from "./video/videoSync"
     import { SoftLoopSync } from "./video/softLoop"
+    import { syncVideoToAudio, videoSync } from "./video/videoSync"
 
     export let outputId: string
     export let path: string
@@ -178,17 +178,18 @@
 
     $: softLoopValue = videoData.softLoop ?? mediaStyle.softLoop ?? 0
     $: fromTime = mediaStyle.fromTime || 0
+    $: toTime = mediaStyle.toTime || 0
 
     const softLoopSync = new SoftLoopSync()
     onDestroy(() => softLoopSync.destroy())
 
-    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, video, softLoopVideo, videoData.paused)
+    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, video, softLoopVideo, videoData.paused, toTime)
     $: if (softLoopVideo && softLoopVideo.playbackRate !== targetPlaybackRate) softLoopVideo.playbackRate = targetPlaybackRate
 </script>
 
 <div bind:this={container} style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
     {#if mediaStyle.fit === "blur" && !perfectFit}
-        <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:this={blurVideo} bind:paused={blurPausedState} muted loop={videoData.loop || false} />
+        <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:this={blurVideo} bind:paused={blurPausedState} muted loop={videoData.loop} />
     {/if}
     <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:error bind:currentTime={videoTime} bind:paused={videoData.paused} muted src={encodeFilePath(path)} autoplay loop={videoData.loop}>
         {#each tracks as track}

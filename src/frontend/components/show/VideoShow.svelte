@@ -359,11 +359,12 @@
 
     $: softLoopValue = videoData.softLoop ?? mediaStyle.softLoop ?? 0
     $: fromTime = mediaStyle.fromTime || 0
+    $: toTime = mediaStyle.toTime || 0
 
     const softLoopSync = new SoftLoopSync()
     onDestroy(() => softLoopSync.destroy())
 
-    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, video || null, softLoopVideo, videoData.paused)
+    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, video || null, softLoopVideo, videoData.paused, toTime)
 </script>
 
 {#key mediaPath || showId}

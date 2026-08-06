@@ -120,7 +120,8 @@ export class VideoPlayer {
             return a
         })
 
-        audio.loop = options.loop ?? false
+        const hasCustomBounds = fromTime > 0 || (toTime > 0 && toTime < audio.duration)
+        audio.loop = (options.loop ?? false) && !hasCustomBounds
         audio.muted = options.muted ?? false
 
         this.updateVolume(id)
@@ -161,7 +162,8 @@ export class VideoPlayer {
                 if (data.loop !== undefined) item.loop = data.loop
                 item.fromTime = data.fromTime || 0
                 item.toTime = data.toTime || audio.duration
-                audio.loop = !!item.loop
+                const hasCustomBounds = item.fromTime > 0 || (item.toTime > 0 && item.toTime < audio.duration)
+                audio.loop = !!item.loop && !hasCustomBounds
             }
             return a
         })
@@ -204,7 +206,13 @@ export class VideoPlayer {
         const audio = new Audio(encodeFilePath(id))
         audio.addEventListener("ended", () => {
             const playing = this.getPlaying(id, outputIds || [])
-            if (playing?.loop || this.getGlobalOptions(id)?.loop) return
+            if (playing?.loop || this.getGlobalOptions(id)?.loop) {
+                const startTime = this.getStartTime(id)
+                audio.currentTime = startTime
+                if ("timeTick" in audio) (audio as any).timeTick.update(startTime)
+                if (audio.paused) audio.play().catch(() => {})
+                return
+            }
             // absolute end
             this.checkIfEnding(id, outputIds, true)
         })
@@ -246,7 +254,15 @@ export class VideoPlayer {
         if (audio.currentTime < endingTime - offset && !force) return finish()
 
         // should loop
-        if (playing.loop || this.getGlobalOptions(path)?.loop) return finish()
+        if (playing.loop || this.getGlobalOptions(path)?.loop) {
+            if (audio.currentTime >= endingTime || force) {
+                const startTime = this.getStartTime(path)
+                audio.currentTime = startTime
+                if ("timeTick" in audio) (audio as any).timeTick.update(startTime)
+                if (audio.paused && audio instanceof HTMLAudioElement) audio.play().catch(() => {})
+            }
+            return finish()
+        }
 
         const outputId = outputIds?.[0] || ""
         const background = get(outputs)[outputIds?.[0] || ""]?.out?.background
@@ -256,7 +272,7 @@ export class VideoPlayer {
             return finish()
         }
 
-        const localLoop = this.getAudio(path, outputId)?.loop
+        const localLoop = playing.loop
 
         // check and execute next after media regardless of loop
         if ((await checkNextAfterMedia(path, "media", outputId)) || localLoop) return finish()
@@ -447,7 +463,22 @@ export class VideoPlayer {
     }
 
     static toggleLoop(path: string, outputId: string) {
-        this.setAudioValue(path, outputId, "loop", !this.getAudio(path, outputId)?.loop)
+        const playing = this.getPlaying(path, outputId ? [outputId] : undefined)
+        if (!playing) return
+
+        const newLoop = !playing.loop
+        playingVideos.update((a) => {
+            const item = a.find((v) => v.path === path)
+            if (item) {
+                item.loop = newLoop
+                const fromTime = item.fromTime || 0
+                const toTime = item.toTime || item.audio.duration
+                const hasCustomBounds = fromTime > 0 || (toTime > 0 && toTime < item.audio.duration)
+                item.audio.loop = newLoop && !hasCustomBounds
+            }
+            return a
+        })
+        this.initSyncClock()
     }
 
     static toggleMute(path: string, outputId: string) {
@@ -593,14 +624,14 @@ export class VideoPlayer {
                 outputIds.forEach((outputId) => {
                     const id = `${video.path}_${outputId}`
                     const softLoop = video.softLoop || 0
-                    const softLoopOpacity = this.handleSoftLoop(video, video.audio, softLoop, video.audio.loop)
+                    const softLoopOpacity = this.handleSoftLoop(video, video.audio, softLoop, video.loop || false)
                     const activeAudio = video.audio
 
                     a[id] = {
                         currentTime: activeAudio.currentTime,
                         duration: activeAudio.duration,
                         paused: activeAudio.paused,
-                        loop: activeAudio.loop,
+                        loop: video.loop || false,
                         muted: activeAudio.muted,
                         softLoop,
                         softLoopOpacity,
@@ -669,8 +700,10 @@ export class VideoPlayer {
             let nextAudio = crossfadeAudio
             if (!nextAudio) {
                 nextAudio = new Audio(audio.src)
+                nextAudio.currentTime = fromTime
                 nextAudio.volume = 0
-                nextAudio.loop = loop
+                const hasCustomBounds = fromTime > 0 || (toTime > 0 && toTime < audio.duration)
+                nextAudio.loop = loop && !hasCustomBounds
                 nextAudio.addEventListener("play", () => {})
                 ;(video as any).crossfadeAudio = nextAudio
             }

@@ -167,11 +167,12 @@
 
     $: softLoopValue = $media[mediaPath]?.softLoop ?? 0
     $: fromTime = $media[mediaPath]?.fromTime ?? 0
+    $: toTime = $media[mediaPath]?.toTime ?? 0
 
     const softLoopSync = new SoftLoopSync()
     onDestroy(() => softLoopSync.destroy())
 
-    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, videoElem, softLoopVideo, isPaused)
+    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, videoElem, softLoopVideo, isPaused, toTime)
 </script>
 
 {#if mediaPath}

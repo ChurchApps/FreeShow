@@ -9,7 +9,7 @@ export class SoftLoopSync {
         return this.isHolding
     }
 
-    update(opacity: number, videoTime: number | undefined, fromTime: number, softLoopValue: number, video: HTMLVideoElement | null, softLoopVideo: HTMLVideoElement | null, paused: boolean): number {
+    update(opacity: number, videoTime: number | undefined, fromTime: number, softLoopValue: number, video: HTMLVideoElement | null, softLoopVideo: HTMLVideoElement | null, paused: boolean, toTime: number = 0): number {
         if (!softLoopValue) return 0
 
         if (opacity > 0.1) this.isHolding = true
@@ -35,8 +35,8 @@ export class SoftLoopSync {
         if (softLoopVideo) {
             if (effectiveOpacity > 0) {
                 if (!this.isHolding) {
-                    const duration = video?.duration || 0
-                    const targetTime = duration > 0 && videoTime !== undefined ? Math.max(fromTime, fromTime + (videoTime - (duration - softLoopValue))) : fromTime
+                    const endTime = toTime > 0 ? toTime : video?.duration || 0
+                    const targetTime = endTime > 0 && videoTime !== undefined ? Math.max(fromTime, fromTime + (videoTime - (endTime - softLoopValue))) : fromTime
 
                     syncVideoToAudio(softLoopVideo, targetTime, this.lastSyncedTime, false, softLoopVideo.playbackRate || 1)
                     this.lastSyncedTime = targetTime
