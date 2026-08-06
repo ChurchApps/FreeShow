@@ -6,6 +6,7 @@ import { sendMain, sendToMain } from "../IPC/main"
 import { NdiReceiver } from "../ndi/NdiReceiver"
 import { OutputHelper } from "../output/OutputHelper"
 import { closeServers } from "../servers"
+import { RtmpStreamer } from "../streaming/RtmpStreamer"
 import { stopApiListener } from "./api"
 import { stopMidi } from "./midi"
 
@@ -30,6 +31,7 @@ export async function exitApp() {
 
     dialogClose = false
 
+    RtmpStreamer.stopAll()
     await OutputHelper.Lifecycle.closeAllOutputs()
     NdiReceiver.stopReceiversNDI()
 
