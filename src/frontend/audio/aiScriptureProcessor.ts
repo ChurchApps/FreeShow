@@ -1,11 +1,14 @@
 // AudioWorklet processor for AI auto scripture
 // Captures microphone audio at the actual context sample rate, resamples it to 16kHz
-// (whisper's expected sample rate), converts to 16-bit PCM & posts 1 second chunks
+// (the rate both engines expect), converts to 16-bit PCM & posts it in short chunks
 
 export {} // module scope, so the AudioWorklet declarations don't collide with ltcProcessor.ts
 
 const TARGET_RATE = 16000
-const OUTPUT_SAMPLE_COUNT = 16000 // 1 second of 16kHz audio per message
+// 100ms per message. The streaming engine decodes whatever it is handed, so this is its
+// floor for detecting the end of a phrase - whisper buffers into a ring and triggers on
+// sample counts instead, so a smaller chunk costs it nothing (same bytes, more messages).
+const OUTPUT_SAMPLE_COUNT = 1600
 
 // Declare AudioWorklet types locally since they aren't in the default DOM lib
 declare class AudioWorkletProcessor {
