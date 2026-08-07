@@ -733,7 +733,7 @@
                 on:cut={handleCut}
                 bind:innerHTML={html}
                 style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain ? lineStyleBox : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}"
-                class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
+                class:height={!getItemText(item).length}
                 class:tallLines={chordsMode}
             />
             <!-- this did not work on mac: -->
