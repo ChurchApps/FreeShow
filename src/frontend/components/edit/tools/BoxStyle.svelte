@@ -336,13 +336,14 @@
         else if (input.key === "text-align") value = `text-align: ${value};`
         else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
 
+        let targetId = input.id
         // set nested value
         if (input.id.includes(".")) {
             let splitted = input.id.split(".")
             let item = getSelectedItem()
             if (!item) return
 
-            input.id = splitted[0]
+            targetId = splitted[0]
 
             let newValue = item[splitted[0]]
             if (typeof newValue !== "object" || newValue === null) newValue = {}
@@ -394,7 +395,7 @@
 
         history({
             id: "setItems",
-            newData: { style: { key: input.id, values: [value] } },
+            newData: { style: { key: targetId, values: [value] } },
             location: { page: "edit", show: $activeShow!, slide: getLayoutRef()[$activeEdit.slide!]?.id, items: allItems }
         })
 
@@ -409,12 +410,12 @@
             allItems.forEach((i: number) => {
                 if (!a[$activeEdit.id!].items[i]) return
 
-                if (!input.id.includes(".")) {
-                    a[$activeEdit.id!].items[i][input.id] = value
+                if (!targetId.includes(".")) {
+                    a[$activeEdit.id!].items[i][targetId] = value
                     return
                 }
 
-                let splitted = input.id.split(".")
+                let splitted = targetId.split(".")
                 let nested = a[$activeEdit.id!].items[i][splitted[0]]
                 if (typeof nested !== "object" || nested === null) {
                     a[$activeEdit.id!].items[i][splitted[0]] = {}

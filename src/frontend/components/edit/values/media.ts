@@ -5,12 +5,14 @@ export const filterSections: { [key: string]: EditBoxSection } = {
     default: { inputs: filterSection }
 }
 
-const croppingRows = splitIntoRows([
-    { id: "cropping.top", type: "number", value: 0, values: { label: "screen.top", max: 10000, showSlider: true, sliderValues: { max: 500 } } },
-    { id: "cropping.right", type: "number", value: 0, values: { label: "screen.right", max: 10000, showSlider: true, sliderValues: { max: 500 } } },
-    { id: "cropping.bottom", type: "number", value: 0, values: { label: "screen.bottom", max: 10000, showSlider: true, sliderValues: { max: 500 } } },
-    { id: "cropping.left", type: "number", value: 0, values: { label: "screen.left", max: 10000, showSlider: true, sliderValues: { max: 500 } } }
-])
+function getCroppingRows() {
+    return splitIntoRows([
+        { id: "cropping.top", type: "number", value: 0, values: { label: "screen.top", max: 10000, showSlider: true, sliderValues: { max: 500 } } },
+        { id: "cropping.right", type: "number", value: 0, values: { label: "screen.right", max: 10000, showSlider: true, sliderValues: { max: 500 } } },
+        { id: "cropping.bottom", type: "number", value: 0, values: { label: "screen.bottom", max: 10000, showSlider: true, sliderValues: { max: 500 } } },
+        { id: "cropping.left", type: "number", value: 0, values: { label: "screen.left", max: 10000, showSlider: true, sliderValues: { max: 500 } } }
+    ])
+}
 
 const defaultMedia = splitIntoRows([
     {
@@ -60,7 +62,7 @@ export const mediaBoxes: { [key in MediaType]?: BoxContent2 } = {
                 inputs: defaultMedia
             },
             cropping: {
-                inputs: croppingRows
+                inputs: getCroppingRows()
             }
         }
     },
@@ -75,7 +77,7 @@ export const mediaBoxes: { [key in MediaType]?: BoxContent2 } = {
                 ])
             },
             cropping: {
-                inputs: croppingRows
+                inputs: getCroppingRows()
             }
         }
     }

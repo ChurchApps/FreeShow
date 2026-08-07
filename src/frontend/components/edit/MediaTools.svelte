@@ -82,14 +82,20 @@
 
         VideoPlayer.updateProperties(mediaId)
 
-        // update output filters
+        // update output filters / cropping
         let currentOutput = getFirstActiveOutput()
         let bg = currentOutput?.out?.background
         if (!bg) return
         const bgId = bg.path || bg.id || ""
         if (bgId !== mediaId) return
 
-        bg[input.id] = value
+        const parts = input.id.split(".")
+        if (parts.length > 1) {
+            if (typeof bg[parts[0]] !== "object" || bg[parts[0]] === null) bg[parts[0]] = {}
+            bg[parts[0]][parts[1]] = value
+        } else {
+            bg[input.id] = value
+        }
         setOutput("background", bg)
     }
 

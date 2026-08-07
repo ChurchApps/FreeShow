@@ -317,12 +317,14 @@ export const textSections: { [key: string]: EditBoxSection } = {
     }
 }
 
-const croppingRowsPercentage = splitIntoRows([
-    { id: "cropping.top", type: "number", value: 0, values: { label: "screen.top (%)", max: 100, showSlider: true } },
-    { id: "cropping.right", type: "number", value: 0, values: { label: "screen.right (%)", max: 100, showSlider: true } },
-    { id: "cropping.bottom", type: "number", value: 0, values: { label: "screen.bottom (%)", max: 100, showSlider: true } },
-    { id: "cropping.left", type: "number", value: 0, values: { label: "screen.left (%)", max: 100, showSlider: true } }
-])
+function getCroppingRowsPercentage() {
+    return splitIntoRows([
+        { id: "cropping.top", type: "number", value: 0, values: { label: "screen.top (%)", max: 100, showSlider: true } },
+        { id: "cropping.right", type: "number", value: 0, values: { label: "screen.right (%)", max: 100, showSlider: true } },
+        { id: "cropping.bottom", type: "number", value: 0, values: { label: "screen.bottom (%)", max: 100, showSlider: true } },
+        { id: "cropping.left", type: "number", value: 0, values: { label: "screen.left (%)", max: 100, showSlider: true } }
+    ])
+}
 const mediaSections: { [key: string]: EditBoxSection } = {
     default: {
         inputs: splitIntoRows([
@@ -338,7 +340,7 @@ const mediaSections: { [key: string]: EditBoxSection } = {
         ])
     },
     cropping: {
-        inputs: croppingRowsPercentage
+        inputs: getCroppingRowsPercentage()
     },
     filters: {
         inputs: filterSection
@@ -527,7 +529,7 @@ export const itemBoxes: Box2 = {
                 ])
             },
             cropping: {
-                inputs: croppingRowsPercentage
+                inputs: getCroppingRowsPercentage()
             }
         }
     },
