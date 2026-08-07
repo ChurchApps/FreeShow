@@ -4,7 +4,7 @@ import type { AiScriptureStartConfig, AIError, AIProviderId } from "../../types/
 import { ToMain } from "../../types/IPC/ToMain"
 import { getStoreValue, setStoreValue } from "../data/store"
 import { sendToMain } from "../IPC/main"
-import { detectScriptureCommand } from "./commands"
+import { CommandStream } from "./commands"
 import type { AiScriptureAnchor } from "./detection"
 import { DetectionCoordinator } from "./detection"
 import { getProvider } from "./providers"
@@ -36,12 +36,18 @@ export async function startAiScripture(config: AiScriptureStartConfig): Promise<
     const customModel = config.whisperCustomModelPath && existsSync(config.whisperCustomModelPath) ? config.whisperCustomModelPath : ""
     if (engine === "whisper" && !customModel && !isModelReady(config.whisperModel)) return { started: false, error: "whisper_model_missing" }
 
+    // guard the addon before the model: a downloaded model with no loadable addon must not reach require() and
+    // surface a raw MODULE_NOT_FOUND stack in the UI
+    if (engine === "nemotron" && !isNemotronSupported()) return { started: false, error: "nemotron_unsupported" }
+
     const nemotronPaths = engine === "nemotron" ? getNemotronModelPaths() : null
     const vadPath = engine === "nemotron" ? getVadModelPath() : null
     if (engine === "nemotron" && (!nemotronPaths || !vadPath)) return { started: false, error: "nemotron_model_missing" }
 
     // ollama runs locally without any credentials - every other provider needs a saved key
     const llm = config.llm && (config.llm.provider === "ollama" || getAiKey(config.llm.provider)) ? config.llm : null
+
+    const commandStream = new CommandStream()
 
     coordinator = new DetectionCoordinator({
         books: config.books,
@@ -68,7 +74,8 @@ export async function startAiScripture(config: AiScriptureStartConfig): Promise<
         coordinator?.onTranscriptSegment(segment)
 
         if (!config.voiceCommands) return
-        const command = detectScriptureCommand(segment.text, config.language, config.translations || [])
+        // joined across recent segments: the streaming engine can split a spoken command over utterances ("next" / "verse")
+        const command = commandStream.detect({ text: segment.text, endMs: segment.endMs }, config.language, config.translations || [])
         if (!command) return
 
         const now = Date.now()
@@ -103,7 +110,8 @@ export async function startAiScripture(config: AiScriptureStartConfig): Promise<
     } catch (err) {
         // only tear down if this call still owns the session - a newer start/stop may have superseded it during the slow await
         if (token === sessionToken) stopAiScripture()
-        return { started: false, error: String((err as Error)?.message || err) }
+        // a start failure can carry a raw require/spawn stack - sanitize like every other surfaced error
+        return { started: false, error: sanitizeErrorMessage(String((err as Error)?.message || err)) }
     }
 
     if (token !== sessionToken) return { started: false, error: "superseded" }
