@@ -1,6 +1,7 @@
 <script lang="ts">
     import Icon from "../../helpers/Icon.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
     import { activePopup, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -20,6 +21,8 @@
     export let isEnabled: boolean = true
     export let isMuted: boolean = false
     export let hasInputConnection: boolean = true
+
+    export let onToggleEnabled: ((enabled: boolean) => void) | undefined = undefined
 
     export let hoverTargetId: string | null = null
     export let isConnecting: boolean = false
@@ -72,7 +75,7 @@
     class:merger-card={isChannel}
     class:sub-card={isSubNode}
     class:hover-valid={hoverTargetId === id && hasValidPort}
-    class:disabled={!isEnabled}
+    class:disabled={!isEnabled && !isInputCol}
     class:invalid={isConnecting && !isValidHover && id !== dragStartId}
     data-node-id={id}
     on:mouseenter={onMouseEnter}
@@ -122,6 +125,10 @@
                 <Icon id={getIcon(type)} size={isSubNode ? 0.9 : 1.1} {color} white />
             {/if}
             <span class="card-name" data-title={name} class:sub-name={isSubNode}>{name}</span>
+        {/if}
+
+        {#if type === "desktop_audio"}
+            <MaterialToggleSwitch label="" checked={isEnabled} on:change={(e) => onToggleEnabled?.(e.detail)} />
         {/if}
 
         {#if type === "icecast" || isChannel}
@@ -266,5 +273,15 @@
         top: 0;
         transform: none;
         margin: 2px 0;
+    }
+
+    /* toggle switch */
+    .card-content :global(.togglefield) {
+        padding: 0;
+        border: none;
+        height: auto;
+    }
+    .card-content :global(.togglefield .background) {
+        background-color: transparent;
     }
 </style>

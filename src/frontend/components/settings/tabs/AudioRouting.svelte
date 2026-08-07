@@ -147,11 +147,14 @@
             type: "input",
             nodes: fixedInputs.map((node) => {
                 const subNodes = node.id === "playlists_default" ? availablePlaylists : node.id === "mic_default" ? availableAudioInputs.map((mic) => ({ id: mic.value, name: mic.label, type: "mic" })) : node.id === "output_window" ? nonStageOutputs : []
+                const isEnabled = node.type === "desktop_audio" ? !!config.desktopAudioEnabled : true
                 return {
                     ...node,
+                    isEnabled,
                     isExpanded: expandedNodes.has(node.id) || node.id === "output_window",
                     hasSubNodes: subNodes.length > 0,
-                    subNodes
+                    subNodes,
+                    onToggleEnabled: node.type === "desktop_audio" ? toggleDesktopAudio : undefined
                 }
             })
         },
@@ -215,8 +218,13 @@
           })
         : lines
 
+    function toggleDesktopAudio(enabled: boolean) {
+        updateConfig((c) => {
+            c.desktopAudioEnabled = enabled
+        })
+    }
+
     onMount(() => {
-        AudioInputCapture.getInstance().captureDesktopAudio("desktop_default")
         refreshDevices()
 
         navigator.mediaDevices.addEventListener("devicechange", refreshDevices)

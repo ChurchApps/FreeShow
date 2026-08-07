@@ -106,6 +106,11 @@ export class AudioInputCapture {
         }
     }
 
+    public stopDesktopAudio(mediaId = "screen:0:0") {
+        this.stopOutputWindowStream(mediaId)
+        this.removeInput("desktop_default")
+    }
+
     /**
      * Connect a node to dynamic N-channel analyzers based on the node's channel count.
      */

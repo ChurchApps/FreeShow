@@ -72,8 +72,10 @@ export class AudioRoutingManager {
             this.updateRoutingNodes()
             AudioAnalyser.recorderActivate()
 
-            if (val.connections.some((c) => c.from === "desktop_default")) {
+            if (val.desktopAudioEnabled) {
                 AudioInputCapture.getInstance().captureDesktopAudio("desktop_default")
+            } else {
+                AudioInputCapture.getInstance().stopDesktopAudio("screen:0:0")
             }
         })
 

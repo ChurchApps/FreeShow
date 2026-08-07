@@ -23,4 +23,5 @@ export interface AudioRoutingConfig {
     connections: AudioRoutingConnection[]
     inputs?: AudioRoutingItem[]
     outputs?: AudioRoutingItem[]
+    desktopAudioEnabled?: boolean
 }
