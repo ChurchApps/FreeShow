@@ -3,14 +3,17 @@
     import { uid } from "uid"
     import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
     import { Option } from "../../../../types/Main"
-    import type { Output } from "../../../../types/Output"
+    import { Main } from "../../../../types/IPC/Main"
+    import type { Output, RtmpDestination } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, outputDisplay, outputs, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { requestMain, sendMain } from "../../../IPC/main"
+    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, special, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { refreshOut, startRtmpStreaming, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutput, updateOutputRtmpData, updateOutputWebrtcData } from "../../helpers/output"
+    import { addRtmpDestination, refreshOut, removeRtmpDestination, startRtmpStreaming, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutput, updateOutputRtmpData, updateOutputWebrtcData, updateRtmpDestination } from "../../helpers/output"
+    import { hasStreamableDestination } from "../../helpers/rtmpDestinations"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -129,6 +132,44 @@
         if (!updated) return
 
         saved.set(false)
+    }
+
+    // RTMP encoder (global setting, applies to every RTMP output)
+
+    let encoderOptions: { value: string; label: string; disabled?: boolean }[] = [{ value: "auto", label: "Auto" }]
+    let detectingEncoders = false
+
+    async function loadEncoders(force = false) {
+        detectingEncoders = true
+        try {
+            const detection = await requestMain(Main.ENCODER_DETECT, { force })
+            const recommended = detection?.encoders.find((e) => e.id === detection.recommended)
+            encoderOptions = [{ value: "auto", label: `Auto${recommended ? ` (${recommended.label})` : ""}` }, ...(detection?.encoders || []).map((e) => ({ value: e.id, label: e.available ? e.label : `${e.label} — ${e.reason}`, disabled: !e.available }))]
+        } finally {
+            detectingEncoders = false
+        }
+    }
+
+    function setEncoder(encoder: string) {
+        special.update((a) => ({ ...a, rtmpEncoder: encoder }))
+        sendMain(Main.SET_RTMP_ENCODER, { encoder })
+        saved.set(false)
+    }
+
+    $: if (currentOutput?.rtmp && encoderOptions.length === 1) loadEncoders()
+
+    // RTMP destinations
+
+    function addDestination() {
+        if (currentOutput?.id) addRtmpDestination(currentOutput.id)
+    }
+
+    function updateDestination(destinationId: string, key: keyof RtmpDestination, value: any) {
+        if (currentOutput?.id) updateRtmpDestination(currentOutput.id, destinationId, key, value)
+    }
+
+    function removeDestination(destinationId: string) {
+        if (currentOutput?.id) removeRtmpDestination(currentOutput.id, destinationId)
     }
 
     const framerates = [
@@ -384,10 +425,40 @@
         <MaterialDropdown label="settings.frame_rate" value={currentOutput.rtmpData?.fps?.toString() || "30"} defaultValue="30" options={framerates} on:change={(e) => updateRtmpData(e.detail, "fps")} />
         <MaterialTextInput label="Bitrate (kbps)" value={currentOutput.rtmpData?.bitrate?.toString() || "4000"} defaultValue="4000" placeholder="4000" on:change={(e) => updateRtmpData(e.detail, "bitrate")} />
     </InputRow>
-    <MaterialTextInput label="Stream URL" value={currentOutput.rtmpData?.url || ""} placeholder="e.g. rtmp://a.rtmp.youtube.com/live2" on:change={(e) => updateRtmpData(e.detail, "url")} pasteBtn />
-    <MaterialTextInput label="Stream key" value={currentOutput.rtmpData?.key || ""} type="password" on:change={(e) => updateRtmpData(e.detail, "key")} pasteBtn />
 
-    {#if currentOutput?.enabled && currentOutput?.rtmpData?.url && currentOutput?.rtmpData?.key}
+    <InputRow>
+        <MaterialDropdown label="Video encoder" value={$special.rtmpEncoder || "auto"} defaultValue="auto" options={encoderOptions} on:change={(e) => setEncoder(e.detail)} />
+        <MaterialButton variant="outlined" icon="refresh" title="Re-detect encoders" disabled={detectingEncoders} on:click={() => loadEncoders(true)} />
+    </InputRow>
+    <div class="hint">Applies to all RTMP outputs. Falls back to software encoding if the hardware encoder fails.</div>
+
+    {#each currentOutput.rtmpData?.destinations || [] as destination (destination.id)}
+        {@const status = $rtmpStatus[currentOutput?.id || ""]?.[destination.id]}
+        <div class="destination">
+            <div class="destination-header">
+                <span class="dot {status?.state || 'idle'}" title={status?.error || status?.state || "idle"}></span>
+                <MaterialTextInput label="inputs.name" value={destination.name} on:change={(e) => updateDestination(destination.id, "name", e.detail)} />
+                <MaterialButton variant="outlined" icon="delete" title="settings.remove" on:click={() => removeDestination(destination.id)} />
+            </div>
+            <MaterialTextInput label="Stream URL" value={destination.url} placeholder="e.g. rtmp://a.rtmp.youtube.com/live2" on:change={(e) => updateDestination(destination.id, "url", e.detail)} pasteBtn />
+            <MaterialTextInput label="Stream key" value={destination.key} type="password" on:change={(e) => updateDestination(destination.id, "key", e.detail)} pasteBtn />
+            <MaterialToggleSwitch label="settings.enabled" checked={destination.enabled} defaultValue={true} on:change={(e) => updateDestination(destination.id, "enabled", e.detail)} />
+            {#if status?.error}
+                <div class="destination-error">{status.error}</div>
+            {/if}
+            <!-- kept visible after recovery: a destination that reconnects repeatedly still looks
+                 "live" between drops, so the count is the only signal that it is struggling -->
+            {#if status?.restarts}
+                <div class="destination-warning">
+                    {status.restarts === 1 ? "Reconnected once" : `Reconnected ${status.restarts} times`}{status.lastIssue ? ` — ${status.lastIssue}` : ""}
+                </div>
+            {/if}
+        </div>
+    {/each}
+
+    <MaterialButton variant="outlined" icon="add" style="width: 100%; justify-content: center;" on:click={() => addDestination()}>Add destination</MaterialButton>
+
+    {#if currentOutput?.enabled && hasStreamableDestination(currentOutput.rtmpData)}
         <div style="padding-bottom: 10px;">
             <MaterialButton variant="outlined" icon={currentOutput.rtmpData?.streaming ? "stop" : "record"} style="width: 100%; justify-content: center; {currentOutput.rtmpData?.streaming ? 'background: #b60707 !important;' : ''}" on:click={() => (currentOutput?.rtmpData?.streaming ? stopRtmpStreaming(currentOutput.id, true) : startRtmpStreaming(currentOutput?.id))} white>
                 {translateText(currentOutput.rtmpData?.streaming ? "output.stop_streaming" : "output.start_streaming")}
@@ -395,3 +466,56 @@
         </div>
     {/if}
 {/if}
+
+<style>
+    .hint {
+        padding: 0 10px 10px;
+        font-size: 0.8em;
+        opacity: 0.5;
+    }
+
+    .destination {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 10px;
+        padding: 8px;
+        border: 1px solid var(--primary-lighter);
+        border-radius: 4px;
+    }
+
+    .destination-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .destination-error {
+        padding: 4px 10px 0;
+        color: #ff8080;
+        font-size: 0.8em;
+    }
+
+    .dot {
+        flex-shrink: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #6b6b6b;
+    }
+    .dot.connecting,
+    .dot.reconnecting {
+        background-color: #e0a800;
+    }
+    .dot.live {
+        background-color: #2ecc71;
+    }
+    .dot.error {
+        background-color: #b60707;
+    }
+    .destination-warning {
+        padding: 0 10px 8px;
+        font-size: 0.8em;
+        opacity: 0.7;
+        color: #e0a800;
+    }
+</style>

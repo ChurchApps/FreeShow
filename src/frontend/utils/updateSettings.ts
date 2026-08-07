@@ -8,6 +8,7 @@ import type { Metadata, Themes } from "../../types/Settings"
 import { initAudioRouting } from "../audio/routing/audioRoutingInit"
 import { clone, keysToID } from "../components/helpers/array"
 import { checkFFmpeg, checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
+import { migrateOutputsRtmp } from "../components/helpers/rtmpDestinations"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { sendMain } from "../IPC/main"
 import {
@@ -72,6 +73,7 @@ import {
     projectView,
     remotePassword,
     resized,
+    saved,
     scriptureSettings,
     scriptures,
     serverData,
@@ -298,6 +300,9 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         Object.keys(v).forEach((id: string) => {
             delete v[id].out
         })
+        // without persisting, the legacy fields survive and the migration mints a new
+        // destination id on every launch
+        if (migrateOutputsRtmp(v)) saved.set(false)
         outputs.set(v)
 
         // RTMP check
@@ -382,6 +387,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     special: (v: any) => {
         if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, Lord" // God
         if (v.autoUpdates) sendMain(Main.AUTO_UPDATE)
+        sendMain(Main.SET_RTMP_ENCODER, { encoder: v.rtmpEncoder || "auto" })
         // don't backup when just initialized (or reset)
         if (!v.autoBackupPrevious) v.autoBackupPrevious = Date.now()
         if (v.startupProjectsList) {

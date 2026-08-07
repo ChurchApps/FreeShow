@@ -1,10 +1,13 @@
-import { execSync } from "child_process"
+import { execFile } from "child_process"
 import { app } from "electron"
 import fs from "fs"
 import path from "path"
 import { Readable } from "stream"
 import { pipeline } from "stream/promises"
+import { promisify } from "util"
 import yauzl from "yauzl"
+
+const execFileAsync = promisify(execFile)
 
 // using pre-built, static ffmpeg binaries that can be downloaded at runtime
 const FFMPEG_VERSION = "6.1"
@@ -19,31 +22,57 @@ export function getFfmpegPathLocal(): string {
     return path.join(getFfmpegDir(), BIN_NAME)
 }
 
-export function isSystemFfmpegAvailable(): boolean {
+async function runsOk(binPath: string): Promise<boolean> {
     try {
-        execSync("ffmpeg -version", { stdio: "ignore" })
+        await execFileAsync(binPath, ["-version"], { windowsHide: true, timeout: 10000 })
         return true
     } catch {
         return false
     }
 }
 
-export function getFfmpegPath(): string {
-    return isSystemFfmpegAvailable() ? "ffmpeg" : getFfmpegPathLocal()
+// resolving spawns a process, so the answer is cached and reused by the sync accessor
+let resolvedPath: string | null = null
+let resolving: Promise<string | null> | null = null
+
+export function resolveFfmpegPath(): Promise<string | null> {
+    if (resolvedPath) return Promise.resolve(resolvedPath)
+    if (resolving) return resolving
+
+    resolving = (async () => {
+        if (await runsOk("ffmpeg")) {
+            resolvedPath = "ffmpeg"
+            return resolvedPath
+        }
+
+        const binPath = getFfmpegPathLocal()
+        if (fs.existsSync(binPath) && fs.statSync(binPath).isFile() && (await runsOk(binPath))) {
+            resolvedPath = binPath
+            return resolvedPath
+        }
+
+        console.warn(`[ffmpegManager] No usable FFmpeg found (checked PATH and ${binPath})`)
+        return null
+    })()
+
+    try {
+        return resolving
+    } finally {
+        resolving.finally(() => (resolving = null))
+    }
 }
 
-export function isFfmpegInstalled(): boolean {
-    if (isSystemFfmpegAvailable()) return true
-    const binPath = getFfmpegPathLocal()
-    if (!fs.existsSync(binPath) || !fs.statSync(binPath).isFile()) return false
-    try {
-        // Use double quotes for the path and use the same shell as the app
-        execSync(`"${binPath}" -version`, { stdio: "ignore", windowsHide: true })
-        return true
-    } catch (err) {
-        console.warn(`[ffmpegManager] Incompatible or broken FFmpeg detected at ${binPath}:`, err.message)
-        return false
-    }
+/** Path resolved by a previous resolveFfmpegPath() call, or null if not resolved yet. */
+export function getResolvedFfmpegPath(): string | null {
+    return resolvedPath
+}
+
+export function clearFfmpegPathCache() {
+    resolvedPath = null
+}
+
+export async function isFfmpegInstalled(): Promise<boolean> {
+    return (await resolveFfmpegPath()) !== null
 }
 
 function getPlatformKey(): string | null {
@@ -115,7 +144,9 @@ export async function downloadFfmpeg(onProgress: (percent: number) => void): Pro
 
     try {
         await pipeline(body, fs.createWriteStream(zipPath))
-        return await extractFfmpeg(zipPath, binDir)
+        const extracted = await extractFfmpeg(zipPath, binDir)
+        clearFfmpegPathCache()
+        return extracted
     } finally {
         try {
             fs.unlinkSync(zipPath)

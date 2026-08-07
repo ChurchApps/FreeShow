@@ -11,8 +11,11 @@ import { receiveBM } from "./blackmagic/bmdTalk"
 import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
 import { cleanupProtectedCache, registerProtectedProtocol } from "./data/protected"
+import { ToMain } from "../types/IPC/ToMain"
 import { config, setupStores } from "./data/store"
-import { receiveMain, sendMain } from "./IPC/main"
+import { detectEncoders } from "./streaming/encoderDetection"
+import { receiveMain, sendMain, sendToMain } from "./IPC/main"
+import { setRtmpNoticeListener, setRtmpStatusListener } from "./streaming/RtmpStreamer"
 import { autoErrorReport } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
@@ -106,6 +109,12 @@ async function startApp() {
     // }
 
     setTimeout(createLoading)
+
+    setRtmpStatusListener((outputId, destinations) => sendToMain(ToMain.RTMP_STATUS, { outputId, destinations }))
+    setRtmpNoticeListener((message) => sendToMain(ToMain.ALERT, message))
+    // probing encoders costs a few seconds of test encodes; warm it now so the first
+    // "Start streaming" is not stuck waiting for it
+    detectEncoders().catch((err) => console.error("[encoderDetection] Warm-up failed:", err))
 
     await setupStores()
 
