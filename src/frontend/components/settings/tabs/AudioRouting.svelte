@@ -4,7 +4,6 @@
     import { uid } from "uid"
     import type { AudioRoutingConfig } from "../../../../types/AudioRouting"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
     import { deduplicateConnections } from "../../../audio/routing/audioRoutingInit"
     import { activePopup, audioChannelsData, audioPlaylists, audioRouting, outputs, selected } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -576,67 +575,65 @@
                                 {@const nodeIndex = colNodes.findIndex((n) => n.id === node.id)}
                                 {@const defaultHue = (275 + (nodeIndex >= 0 ? nodeIndex : 0) * 6) % 360}
                                 {@const autoColor = `hsl(${defaultHue}, 80%, 65%)`}
-                                <div class="node-card-group" class:has-subnodes={node.hasSubNodes}>
-                                    <AudioRoutingNode
-                                        {...node}
-                                        {autoColor}
-                                        nodeType={column.type}
-                                        {hoverTargetId}
-                                        {isConnecting}
-                                        {dragStartId}
-                                        {dragStartType}
-                                        {dragStartPortType}
-                                        onToggleExpand={() => toggleExpand(node.id)}
-                                        onMouseDown={(e, portType, chIdx) => handlePortMouseDown(e, node.id, column.type, portType, chIdx)}
-                                        onMouseEnter={() => handleNodeMouseEnter(node.id, column.type)}
-                                        onMouseLeave={() => handleNodeMouseLeave(node.id)}
-                                        onMouseEnterPort={handlePortMouseEnter}
-                                        onMouseLeavePort={handlePortMouseLeave}
-                                        onHoverPort={(_e, portType, chIdx) => handleHoverPort(node.id, portType, chIdx)}
-                                        onHoverPortEnd={handleHoverPortEnd}
-                                        onPortContextMenu={(e, portType, chIdx) => handlePortContextMenu(e, node.id, portType, chIdx)}
-                                    />
+                                {#if !(node.isExpanded && (!node.subNodes || node.subNodes.length === 0))}
+                                    <div class="node-card-group" class:has-subnodes={node.hasSubNodes}>
+                                        <AudioRoutingNode
+                                            {...node}
+                                            {autoColor}
+                                            nodeType={column.type}
+                                            {hoverTargetId}
+                                            {isConnecting}
+                                            {dragStartId}
+                                            {dragStartType}
+                                            {dragStartPortType}
+                                            onToggleExpand={() => toggleExpand(node.id)}
+                                            onMouseDown={(e, portType, chIdx) => handlePortMouseDown(e, node.id, column.type, portType, chIdx)}
+                                            onMouseEnter={() => handleNodeMouseEnter(node.id, column.type)}
+                                            onMouseLeave={() => handleNodeMouseLeave(node.id)}
+                                            onMouseEnterPort={handlePortMouseEnter}
+                                            onMouseLeavePort={handlePortMouseLeave}
+                                            onHoverPort={(_e, portType, chIdx) => handleHoverPort(node.id, portType, chIdx)}
+                                            onHoverPortEnd={handleHoverPortEnd}
+                                            onPortContextMenu={(e, portType, chIdx) => handlePortContextMenu(e, node.id, portType, chIdx)}
+                                        />
 
-                                    {#if node.isExpanded && node.subNodes}
-                                        <div class="sub-nodes-list" style={column.type === "input" ? "margin-left: 12px;" : column.type === "output" ? "margin-right: 12px;" : ""}>
-                                            {#if node.subNodes.length > 0}
-                                                {#each node.subNodes as sub (sub.id)}
-                                                    {@const subIndex = colNodes.findIndex((n) => n.id === sub.id)}
-                                                    {@const subHue = (275 + (subIndex >= 0 ? subIndex : 0) * 6) % 360}
-                                                    {@const subAutoColor = `hsl(${subHue}, 80%, 65%)`}
-                                                    <AudioRoutingNode
-                                                        {...sub}
-                                                        autoColor={subAutoColor}
-                                                        nodeType={column.type}
-                                                        isSubNode={true}
-                                                        {hoverTargetId}
-                                                        {isConnecting}
-                                                        {dragStartId}
-                                                        {dragStartType}
-                                                        {dragStartPortType}
-                                                        onMouseDown={(e, portType, chIdx) => handlePortMouseDown(e, sub.id, column.type, portType, chIdx)}
-                                                        onMouseEnter={() => handleNodeMouseEnter(sub.id, column.type)}
-                                                        onMouseLeave={() => handleNodeMouseLeave(sub.id)}
-                                                        onMouseEnterPort={(e) => {
-                                                            if (isConnecting) {
-                                                                hoverTargetId = sub.id
-                                                                handlePortMouseEnter(e)
-                                                            }
-                                                        }}
-                                                        onMouseLeavePort={handlePortMouseLeave}
-                                                        onHoverPort={(_e, portType, chIdx) => handleHoverPort(sub.id, portType, chIdx)}
-                                                        onHoverPortEnd={handleHoverPortEnd}
-                                                        onPortContextMenu={(e, portType, chIdx) => handlePortContextMenu(e, sub.id, portType, chIdx)}
-                                                    />
-                                                {/each}
-                                            {:else}
-                                                <div class="disabled-hint">
-                                                    <span class="sub-name" style="opacity:0.6;">No devices found</span>
-                                                </div>
-                                            {/if}
-                                        </div>
-                                    {/if}
-                                </div>
+                                        {#if node.isExpanded && node.subNodes}
+                                            <div class="sub-nodes-list" style={column.type === "input" ? "margin-left: 12px;" : column.type === "output" ? "margin-right: 12px;" : ""}>
+                                                {#if node.subNodes.length > 0}
+                                                    {#each node.subNodes as sub (sub.id)}
+                                                        {@const subIndex = colNodes.findIndex((n) => n.id === sub.id)}
+                                                        {@const subHue = (275 + (subIndex >= 0 ? subIndex : 0) * 6) % 360}
+                                                        {@const subAutoColor = `hsl(${subHue}, 80%, 65%)`}
+                                                        <AudioRoutingNode
+                                                            {...sub}
+                                                            autoColor={subAutoColor}
+                                                            nodeType={column.type}
+                                                            isSubNode={true}
+                                                            {hoverTargetId}
+                                                            {isConnecting}
+                                                            {dragStartId}
+                                                            {dragStartType}
+                                                            {dragStartPortType}
+                                                            onMouseDown={(e, portType, chIdx) => handlePortMouseDown(e, sub.id, column.type, portType, chIdx)}
+                                                            onMouseEnter={() => handleNodeMouseEnter(sub.id, column.type)}
+                                                            onMouseLeave={() => handleNodeMouseLeave(sub.id)}
+                                                            onMouseEnterPort={(e) => {
+                                                                if (isConnecting) {
+                                                                    hoverTargetId = sub.id
+                                                                    handlePortMouseEnter(e)
+                                                                }
+                                                            }}
+                                                            onMouseLeavePort={handlePortMouseLeave}
+                                                            onHoverPort={(_e, portType, chIdx) => handleHoverPort(sub.id, portType, chIdx)}
+                                                            onHoverPortEnd={handleHoverPortEnd}
+                                                            onPortContextMenu={(e, portType, chIdx) => handlePortContextMenu(e, sub.id, portType, chIdx)}
+                                                        />
+                                                    {/each}
+                                                {/if}
+                                            </div>
+                                        {/if}
+                                    </div>
+                                {/if}
                             {/each}
 
                             {#if column.type === "channel" || column.type === "merger"}
@@ -785,17 +782,5 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
-    }
-
-    .disabled-hint {
-        padding: 6px 12px;
-        border: 1px dashed rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        background: rgba(20, 20, 30, 0.8);
-    }
-
-    .sub-name {
-        font-size: 0.9em;
-        opacity: 0.9;
     }
 </style>
