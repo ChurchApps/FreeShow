@@ -247,6 +247,8 @@ export async function getMediaCached(path: string, size: number = mediaSize.draw
 }
 
 export async function locateMediaFile(path: string) {
+    if (path.startsWith("http") || path.startsWith("data:") || path.startsWith("blob:") || path.startsWith("freeshow-protected://")) return { path, hasChanged: false }
+
     let folders: string[] = []
     if (get(special).autoLocateMedia !== false) {
         const mediaType = getMediaType(getExtension(path))

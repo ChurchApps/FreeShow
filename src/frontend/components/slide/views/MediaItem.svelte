@@ -1,24 +1,21 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
-    import { uid } from "uid"
-    import { OUTPUT } from "../../../../types/Channels"
+    import { onDestroy } from "svelte"
+    import type { Unsubscriber } from "svelte/store"
     import type { Item } from "../../../../types/Show"
-    import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { currentWindow, outputs, slideVideoData, styles, volume } from "../../../stores"
-    import { destroy, receive, send } from "../../../utils/request"
+    import { audioChannelsData, currentWindow, media, outputs, styles } from "../../../stores"
     import Image from "../../drawer/media/Image.svelte"
+    import { getCropState } from "../../helpers/cropping"
     import { encodeFilePath, getExtension, getMedia, getMediaType, getThumbnailPath, mediaSize } from "../../helpers/media"
     import { defaultLayers } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
-    import { getCropState } from "../../helpers/cropping"
+    import { SoftLoopSync } from "../../media/video/softLoop"
+    import { syncVideoToAudio, videoSync } from "../../media/video/videoSync"
 
-    export let id: string
     export let item: Item
     export let outputId = ""
     export let slideRef: any = {}
 
     export let preview = false
-    export let mirror = true
     export let edit = false
     export let cropPreviewMode = false
 
@@ -52,6 +49,7 @@
     }
     onDestroy(() => {
         if (updateInterval) clearInterval(updateInterval)
+        if (unsubscriber) unsubscriber()
 
         const cleanupVideo = (el: HTMLVideoElement | null | undefined) => {
             if (!el) return
@@ -111,76 +109,87 @@
     let videoElem: HTMLVideoElement | null = null
     let videoBlurElem: HTMLVideoElement | null = null
 
-    $: if (!$currentWindow && $slideVideoData) updateVideo()
-    function updateVideo() {
-        if (!bgPath) return
+    let unsubscriber: Unsubscriber | null = null
+    let lastSyncedTime: number | null = null
 
-        const videoData = $slideVideoData[id]?.[bgPath]
-        if (!videoElem || !videoData) return
+    let softLoopVideo: HTMLVideoElement | null = null
+    let softLoopOpacity = 0
+    let videoTime = 0
+    let isPaused = false
 
-        if (videoData.isPaused && !videoElem.paused) {
-            videoElem.pause()
-            videoBlurElem?.pause()
-        } else if (!videoData.isPaused && videoElem.paused) {
-            videoElem.play()
-            videoBlurElem?.play()
+    $: updateVideoSync(bgPath, outputId)
+    function updateVideoSync(path: string | undefined, outputId: string) {
+        if (unsubscriber) {
+            unsubscriber()
+            unsubscriber = null
         }
-    }
 
-    onMount(() => {
-        if ($currentWindow !== "output") return
+        if (!path || !outputId) return
 
-        const interval = setInterval(() => {
+        unsubscriber = videoSync(path, outputId, (data) => {
             if (!videoElem) return
 
-            const videoData = { currentTime: videoElem.currentTime, duration: videoElem.duration, isPaused: videoElem.paused, loop: videoElem.loop }
-            // send(Main.MAIN_SLIDE_VIDEO, videoData)
-            send(OUTPUT, ["MAIN_SLIDE_VIDEO"], { id, path: bgPath, data: videoData })
-        }, 200)
-
-        const videoReceiver = {
-            SLIDE_VIDEO_STATE: (data: any) => {
-                if (data.slideId !== id || data.path !== bgPath) return
-                if (!videoElem) return
-
-                if (data.action === "play") {
-                    videoElem.play()
-                    videoBlurElem?.play()
-                } else if (data.action === "pause") {
-                    videoElem.pause()
-                    videoBlurElem?.pause()
-                } else if (data.action === "loop") {
-                    videoElem.loop = true
-                    if (videoBlurElem) videoBlurElem.loop = true
-                } else if (data.action === "unloop") {
-                    videoElem.loop = false
-                    if (videoBlurElem) videoBlurElem.loop = false
-                }
+            const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
+            const rate = playbackRate
+            syncVideoToAudio(videoElem, data.currentTime, lastSyncedTime, isSoftLoop, rate)
+            syncVideoToAudio(videoBlurElem, data.currentTime, lastSyncedTime, isSoftLoop, rate)
+            if (data.currentTime !== undefined) {
+                lastSyncedTime = data.currentTime
+                videoTime = data.currentTime
             }
-        }
 
-        const listenerId = "SLIDE_VIDEO_RECEIVE_" + uid(5)
-        receive(OUTPUT, videoReceiver, listenerId)
+            if (data.softLoop !== undefined) softLoopValue = data.softLoop
+            if (data.softLoopOpacity !== undefined) softLoopOpacity = data.softLoopOpacity
+            softLoopAudioTime = data.currentTime
+            isPaused = !!data.paused
 
-        return () => {
-            clearInterval(interval)
-            destroy(OUTPUT, listenerId)
-        }
-    })
+            if (data.paused && !videoElem.paused) {
+                videoElem.pause()
+                videoBlurElem?.pause()
+            } else if (!data.paused && videoElem.paused) {
+                videoElem.play()
+                videoBlurElem?.play()
+            }
+        })
+    }
 
     $: playbackRate = item.speed ?? 1
+    let _lastAppliedRate = 1
+    $: if (playbackRate !== _lastAppliedRate) {
+        _lastAppliedRate = playbackRate
+        if (videoElem) videoElem.playbackRate = playbackRate
+        if (videoBlurElem) videoBlurElem.playbackRate = playbackRate
+        if (softLoopVideo) softLoopVideo.playbackRate = playbackRate
+    }
 
     let shouldLoop = item.loop !== false
+
+    // Soft loop
+
+    $: softLoopValue = $media[mediaPath]?.softLoop ?? 0
+    $: fromTime = $media[mediaPath]?.fromTime ?? 0
+    $: toTime = $media[mediaPath]?.toTime ?? 0
+
+    const softLoopSync = new SoftLoopSync()
+    onDestroy(() => softLoopSync.destroy())
+
+    let softLoopAudioTime: number | undefined
+    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, videoElem, softLoopVideo, isPaused, toTime, softLoopAudioTime)
 </script>
 
 {#if mediaPath}
     {#if ($currentWindow || preview) && getMediaType(getExtension(mediaPath)) === "video"}
         {#if item.fit === "blur"}
-            <video bind:this={videoBlurElem} src={encodeFilePath(mediaPath)} style="{mediaStyleBlurString}{mediaStyleCombinedString}" bind:playbackRate muted autoplay loop={shouldLoop} />
+            <video bind:this={videoBlurElem} src={encodeFilePath(mediaPath)} style="{mediaStyleBlurString}{mediaStyleCombinedString}" muted autoplay loop={shouldLoop} />
         {/if}
-        <video bind:this={videoElem} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString}" bind:playbackRate muted={mirror || item.muted} volume={AudioPlayer.getVolume(null, $volume)} autoplay loop={shouldLoop}>
+        {@const mainVol = $audioChannelsData.main?.volume ?? 1}
+        <video bind:this={videoElem} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString}" muted volume={mainVol} autoplay loop={shouldLoop}>
             <track kind="captions" />
         </video>
+
+        {#if softLoopValue > 0 && shouldLoop}
+            <video bind:this={softLoopVideo} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString} position: absolute;top: 0;left: 0;transition: 0.2s opacity;opacity: {effectiveSoftLoopOpacity};pointer-events: none;" muted loop={shouldLoop} />
+        {/if}
     {:else}
         <!-- {#key updater} -->
         <!-- WIP image flashes when loading new image (when changing slides with the same image) -->

@@ -3,6 +3,7 @@
     import type { ClickEvent } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
+    import { createOutputAudioChannel } from "../../../audio/routing/audioRoutingInit"
     import { activeTriggerFunction, currentOutputSettings, outputs, popupData, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
@@ -138,6 +139,8 @@
             else if (networkType === "rtmp") updateOutput("rtmp", true, outputId)
 
             updateOutput("enabled", true, outputId)
+
+            if (networkType) createOutputAudioChannel(outputId)
         }
     }
 

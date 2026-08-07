@@ -1,30 +1,24 @@
 <script lang="ts">
-    import { outputs } from "../../../stores"
+    import { audioRouting, outputs } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { getAllNormalOutputs } from "../../helpers/output"
+    import { keysToID } from "../../helpers/array"
     import AudioChannelMixer from "./AudioChannelMixer.svelte"
-    import AudioMixersGroup from "./AudioMixersGroup.svelte"
 
-    const outputIds = getAllNormalOutputs().map((a) => a.id)
+    $: channels = $audioRouting?.channels || [{ id: "main", name: translateText("audio.main") }]
+    $: connections = $audioRouting?.connections || []
 
-    const mixerGroups = [
-        {
-            icon: "display_settings",
-            label: "settings.display_settings",
-            channels: outputIds.map((id) => ({ id, label: $outputs[id]?.name || id }))
-        }
-    ]
+    $: inactiveOutputIds = keysToID($outputs).filter((a) => !a.enabled)
 </script>
 
 <div class="mixers">
-    <AudioChannelMixer channelId="main" label={translateText("audio.main")} />
+    {#each channels as channel (channel.id)}
+        {@const disabledOutput = inactiveOutputIds.some((a) => `channel_${a.id}` === channel.id)}
+        {@const unconnectedChannel = !connections.some((c) => c.from === channel.id || c.from.startsWith(`${channel.id}_`))}
 
-    {#each mixerGroups as group}
-        <AudioMixersGroup label={group.label} icon={group.icon} channels={group.channels} />
+        {#if !disabledOutput}
+            <AudioChannelMixer channelId={channel.id} label={channel.name} color={channel.color} inactive={unconnectedChannel} />
+        {/if}
     {/each}
-
-    <!-- WIP microphones / audio streams / metronome / playing playlists -->
-    <!-- music / sound effects -->
 </div>
 
 <style>

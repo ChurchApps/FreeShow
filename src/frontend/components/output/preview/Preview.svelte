@@ -4,6 +4,7 @@
     import { formatSearch } from "../../../utils/search"
     import { getNormalizedKey, previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
     import { runAction } from "../../actions/actions"
+    import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
     import { getSlideText } from "../../edit/scripts/textStyle"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -12,7 +13,7 @@
     import { getFewestOutputLines, getItemWithMostLines, playNextGroup, playPreviousGroup, updateOut } from "../../helpers/showActions"
     import { _show } from "../../helpers/shows"
     import { newSlideTimer } from "../../helpers/tick"
-    import { getFirstOutputIdWithAudableBackground } from "../../helpers/video"
+    import { getFirstOutputIdWithBackground } from "../../helpers/video"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import ShowActions from "../ShowActions.svelte"
@@ -22,7 +23,6 @@
     import Overlay from "../tools/Overlay.svelte"
     import Show from "../tools/Show.svelte"
     import TimerControls from "../tools/TimerControls.svelte"
-    import AudioMeter from "./AudioMeter.svelte"
     import ClearButtons from "./ClearButtons.svelte"
     import MultiOutputs from "./MultiOutputs.svelte"
     import PreviewOutputs from "./PreviewOutputs.svelte"
@@ -34,7 +34,7 @@
     $: currentOutput = outputId ? $outputs[outputId] || {} : {}
 
     $: allOutputsWithBackground = allActiveOutputs.filter((id) => $outputs[id]?.out?.background)
-    $: backgroundOutputId = getFirstOutputIdWithAudableBackground(allOutputsWithBackground) || allOutputsWithBackground[0] || outputId
+    $: backgroundOutputId = getFirstOutputIdWithBackground(allOutputsWithBackground) || allOutputsWithBackground[0] || outputId
     $: currentBgOutput = backgroundOutputId ? $outputs[backgroundOutputId] || null : null
 
     let numberKeyTimeout: NodeJS.Timeout | null = null
@@ -258,7 +258,9 @@
             <MaterialButton class="hide" icon="hide" style="z-index: 2;" title="preview._hide_preview" on:click={() => (enablePreview = false)} />
             <!-- disable before hiding: disableTransitions={!enablePreview} -->
             <MultiOutputs />
-            <AudioMeter />
+            <div class="preview-meter">
+                <AudioMeter channelId="main" preview />
+            </div>
         </div>
     {:else}
         <Button on:click={() => (enablePreview = true)} style="width: 100%;" center dark>
@@ -365,5 +367,14 @@
     }
     .section.float.light {
         --background: rgba(225, 225, 225, 0.6);
+    }
+
+    .preview-meter {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        width: 4px;
+        z-index: 5;
     }
 </style>

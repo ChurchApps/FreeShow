@@ -13,8 +13,7 @@
     const maxHeight = 800
 
     // Tab configuration
-    // const DRAWER_TABS = ["shows", "media", "audio", "overlays", "templates", "scripture", "calendar", "functions"] as const
-    const DRAWER_TABS = ["shows", "audio", "overlays", "templates", "scripture", "functions"] as const
+    const DRAWER_TABS = ["shows", "overlays", "templates", "scripture", "functions"] as const
 
     $: height = $drawer.height ?? defaultHeight
 

@@ -117,16 +117,16 @@ let globalDelay: AudioDelay | null = null
 export function initializeDelay(ac: AudioContext): AudioDelay {
     if (globalDelay) return globalDelay
 
-    globalDelay = new AudioDelay(ac, getEffectConfig("delay", DEFAULT_DELAY_CONFIG))
-    subscribeEffect("delay", (cfg: DelayConfig) => globalDelay?.updateConfig(cfg))
+    globalDelay = new AudioDelay(ac, getEffectConfig("delay", DEFAULT_DELAY_CONFIG, "main"))
+    subscribeEffect("delay", (cfg: DelayConfig) => globalDelay?.updateConfig(cfg), "main")
 
     return globalDelay
 }
 
-export function updateDelayConfig(partial: Partial<DelayConfig>) {
-    updateEffectInStore("delay", DEFAULT_DELAY_CONFIG, partial, globalDelay)
+export function updateDelayConfig(partial: Partial<DelayConfig>, channelId?: string) {
+    updateEffectInStore("delay", DEFAULT_DELAY_CONFIG, partial, channelId)
 }
 
-export function setDelayEnabled(enabled: boolean) {
-    setEffectEnabledInStore("delay", DEFAULT_DELAY_CONFIG, enabled, globalDelay)
+export function setDelayEnabled(enabled: boolean, channelId?: string) {
+    setEffectEnabledInStore("delay", DEFAULT_DELAY_CONFIG, enabled, channelId)
 }

@@ -30,7 +30,6 @@
     export let preview = false
     export let cropPreviewMode = false
     export let isTemplatePreview = false
-    export let mirror = true
     export let smallFontSize = false
     export let fontSize = 0
     export let outputId = ""
@@ -88,7 +87,7 @@
 </script>
 
 {#if item.type === "media"}
-    <MediaItem id="{ref.showId}_{ref.slideId}" {item} {outputId} slideRef={{ ...ref, slideIndex }} {preview} {mirror} {edit} {cropPreviewMode} />
+    <MediaItem {item} {outputId} slideRef={{ ...ref, slideIndex }} {preview} {edit} {cropPreviewMode} />
 {:else if item.type === "web"}
     <Website src={item.web?.src || ""} navigation={!edit && !item.web?.noNavigation} clickable={!edit && $currentWindow === "output"} {ratio} />
 {:else if item.type === "timer"}

@@ -219,23 +219,8 @@ export class NdiSender {
         if (!grandiose) return
 
         const noSamples = Math.trunc(ndiAudioBuffer.byteLength / channelCount / this.BYTES_PER_FLOAT32)
-
         const currentHrTime = process.hrtime.bigint()
-
-        if (this.audioSamplesSent === null || this.audioSamplesSent === undefined) {
-            this.audioSamplesSent = (currentHrTime * BigInt(sampleRate)) / BigInt(1e9)
-        } else {
-            const expectedHrTime = (this.audioSamplesSent * BigInt(1e9)) / BigInt(sampleRate)
-            const driftNs = currentHrTime - expectedHrTime
-            const driftMs = Number(driftNs) / 1e6
-
-            if (Math.abs(driftMs) > 500) {
-                this.audioSamplesSent = (currentHrTime * BigInt(sampleRate)) / BigInt(1e9)
-            }
-        }
-
-        const timecode = (this.timeStart + (this.audioSamplesSent * BigInt(1e9)) / BigInt(sampleRate)) / this.TIMECODE_DIVISOR
-        this.audioSamplesSent += BigInt(noSamples)
+        const timecode = (this.timeStart + currentHrTime) / this.TIMECODE_DIVISOR
 
         const frame = {
             timecode,

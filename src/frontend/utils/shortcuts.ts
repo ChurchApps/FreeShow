@@ -12,15 +12,16 @@ import { keysToID, sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
 import { getExtension, getMedia, getMediaLayerType, getMediaStyle, getMediaType } from "../components/helpers/media"
-import { getAllNormalOutputs, getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
+import { getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
 import { OutputHelper } from "../components/helpers/OutputHelper"
+import { VideoPlayer } from "../components/media/video/videoPlayer"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
 import { getRecentlyUsedProjects, openProject } from "../components/show/project"
 import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
 import { changeSlidesView } from "../show/slides"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeStage, alertMessage, contextActive, drawer, editMode, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, projects, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, special, spellcheck, styles, timelineRecordingAction, topContextActive, videosData, volume } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeStage, alertMessage, audioChannelsData, contextActive, drawer, editMode, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, playingVideoState, projects, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, special, spellcheck, styles, timelineRecordingAction, topContextActive } from "../stores"
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
@@ -42,7 +43,12 @@ const ctrlKeys = {
     i: (e: KeyboardEvent) => (e.altKey ? importFromClipboard() : activePopup.set("import")),
     n: () => createNew(),
     h: () => (get(activeDrawerTab) === "scripture" ? "" : activePopup.set("history")),
-    m: () => volume.set(get(volume) ? 0 : 1),
+    m: () =>
+        audioChannelsData.update((a) => {
+            const main = a.main || {}
+            a.main = { ...main, isMuted: !main.isMuted }
+            return a
+        }),
     o: () => toggleOutputs(),
     s: () => save(),
     t: () => togglePanels(),
@@ -485,15 +491,12 @@ export async function togglePlayingMedia(e: Event | null = null, back = false, a
     if (type === "video" || type === "image" || type === "player") {
         if (alreadyPlaying) {
             // play / pause video
-            // WIP duplicate of MediaControls.svelte
-            const dataValues: any = {}
-            const activeOutputIds = getAllNormalOutputs().map((a) => a.id)
-            const videoData = get(videosData)[currentOutput?.id || ""] || {}
-            activeOutputIds.forEach((id) => {
-                dataValues[id] = { ...videoData, muted: id !== currentOutput?.id ? true : videoData.muted, paused: !videoData.paused }
-            })
+            const outputId = currentOutput?.id || ""
+            const key = `${currentlyPlaying}_${outputId}`
+            const videoData = get(playingVideoState)[key] || {}
+            if (videoData.type && videoData.type !== "background") return
 
-            send(OUTPUT, ["DATA"], dataValues)
+            VideoPlayer.start(currentlyPlaying, { paused: !videoData.paused }, [outputId])
             return
         }
 

@@ -21,7 +21,7 @@ import { getCurrentTimerValue, getTimeUntilClock, playPauseGlobal } from "../dra
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
-import { activeEdit, activeFocus, activeInteractions, activePage, activeProject, activeShow, allOutputs, audioData, cachedDynamicValues, customMetadata, dictionary, dynamicValueData, editingProjectTemplate, focusMode, interactions, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, projects, projectTemplates, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, variables, videosData, videosTime } from "./../../stores"
+import { activeEdit, activeFocus, activeInteractions, activePage, activeProject, activeShow, allOutputs, audioChannelsData, audioData, cachedDynamicValues, customMetadata, dictionary, dynamicValueData, editingProjectTemplate, focusMode, interactions, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, playingVideoState, projects, projectTemplates, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, variables } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
@@ -962,11 +962,6 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         }
 
         let outputId: string = getWindowOutputId()
-
-        if (dynamicId.startsWith("video_") && isOutputWin) {
-            send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId })
-        }
-
         const output = get(outputs)[outputId]
 
         // set to normal output, if stage output, for video time
@@ -1003,8 +998,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const outBackground = output?.out?.background || null
         const bgPath = outBackground?.path || ""
 
-        const videoTime: number = get(videosTime)[outputId] || 0
-        const videoDuration: number = get(videosData)[outputId]?.duration || 0
+        const videoData = keysToID(get(playingVideoState)).find((a) => a.id.includes(outputId) && (!a.type || a.type === "background"))
 
         const playingAudioIds = AudioPlayer.getAllPlaying(false)
         const activeAudio = get(playingAudio)[playingAudioIds[0]]?.audio
@@ -1042,7 +1036,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         if (!dynamicValues[dynamicId]) return ""
 
-        const rawValue = dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, bgPath, videoTime, videoDuration, audioTime, audioDuration, audioPath, offset }) ?? ""
+        const rawValue = dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, bgPath, videoData, audioTime, audioDuration, audioPath, offset }) ?? ""
         const value = Array.isArray(rawValue) ? rawValue : rawValue.toString()
 
         if (((dynamicId === "show_name" && offset) || dynamicId === "show_name_next") && !value && isOutputWin) {
@@ -1174,9 +1168,9 @@ const dynamicValues = {
     exif_software: ({ bgPath }) => getExifData(bgPath, "Software", "image"),
 
     // video
-    video_time: ({ videoTime }) => joinTime(secondsToTime(videoTime)),
-    video_countdown: ({ videoTime, videoDuration }) => joinTime(secondsToTime(videoDuration > 0 ? videoDuration - videoTime : 0)),
-    video_duration: ({ videoDuration }) => joinTime(secondsToTime(videoDuration)),
+    video_time: ({ videoData }) => joinTime(secondsToTime(videoData?.currentTime || 0)),
+    video_countdown: ({ videoData }) => joinTime(secondsToTime(videoData?.duration > 0 ? videoData.duration - Math.floor(videoData?.currentTime || 0) : 0)),
+    video_duration: ({ videoData }) => joinTime(secondsToTime(videoData?.duration || 0)),
 
     // audio
     audio_title: ({ audioPath }) => getMetadata(audioPath).title || removeExtension(getFileName(audioPath)) || "",
@@ -1189,9 +1183,9 @@ const dynamicValues = {
     // disk: {no: null, of: null}
     // track: {no: null, of: null}
     audio_time: ({ audioTime }) => joinTime(secondsToTime(audioTime)),
-    audio_countdown: ({ audioTime, audioDuration }) => joinTime(secondsToTime(audioDuration > 0 ? audioDuration - audioTime : 0)),
+    audio_countdown: ({ audioTime, audioDuration }) => joinTime(secondsToTime(audioDuration > 0 ? audioDuration - Math.floor(audioTime) : 0)),
     audio_duration: ({ audioDuration }) => joinTime(secondsToTime(audioDuration)),
-    audio_volume: () => Math.round(AudioPlayer.getVolume() * 100),
+    audio_volume: () => Math.round((get(audioChannelsData).main?.volume ?? 1) * 100),
 
     // interaction
     interaction_players: ({ show }) => getInteractionPlayers(show),

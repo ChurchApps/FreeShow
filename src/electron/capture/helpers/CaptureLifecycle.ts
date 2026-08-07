@@ -197,12 +197,12 @@ export class CaptureLifecycle {
     }
 
     static stopCapture(id: string) {
+        this.captureLoopToken[id] = (this.captureLoopToken[id] || 0) + 1
+        this.activeCaptures.delete(id)
+
         const output = OutputHelper.getOutput(id)
         const capture = output?.captureOptions
         if (!capture) return
-
-        this.captureLoopToken[id] = (this.captureLoopToken[id] || 0) + 1
-        this.activeCaptures.delete(id)
 
         if (capture.frameSubscription) {
             clearTimeout(capture.frameSubscription)

@@ -1,20 +1,23 @@
 import { get } from "svelte/store"
-import { AudioPlayer } from "../../../audio/audioPlayer"
-import { customMetadata, metronome, metronomeTimer, playingMetronome, special, volume } from "../../../stores"
+import { AudioAnalyser } from "../../../audio/audioAnalyser"
+import { AudioRoutingManager } from "../../../audio/routing/audioRoutingManager"
+import { customMetadata, metronome, metronomeTimer, playingMetronome, special } from "../../../stores"
+import type { MetronomeSettings } from "../../../types/Audio"
 import type { API_metronome } from "../../actions/api"
 import { clone } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
 
-const audioContext = new AudioContext()
+function getAudioContext() {
+    return AudioAnalyser.getAudioContext()
+}
 
-const defaultMetronomeValues = {
+const defaultMetronomeValues: MetronomeSettings = {
     tempo: 120, // BPM
     beats: 4,
-    volume: 1
-    // notesPerBeat: 1
-    // audioOutput: ""
+    accentVolume: 2,
+    secondaryVolume: 1.75
 }
-let metronomeValues: API_metronome = {}
+let metronomeValues: MetronomeSettings = {}
 
 function initializeValues() {
     metronomeValues = clone(defaultMetronomeValues)
@@ -26,18 +29,16 @@ export function toggleMetronome() {
     else startMetronome()
 }
 
-export function startMetronome(values: API_metronome = {}) {
+export function startMetronome(values: API_metronome | MetronomeSettings = {}) {
     if (get(metronome)?.tempo) metronomeValues = get(metronome)
-    if (values.metadataBPM) values.tempo = getShowBPM()
+    if ("metadataBPM" in values && values.metadataBPM) values.tempo = getShowBPM()
     if (Object.keys(values).length) {
         const oldValues = clone(metronomeValues)
-        delete oldValues.volume
 
         updateMetronome(values, true)
 
         // return if playing and values are the same
         const newValues = clone(values)
-        delete newValues.volume
         if (get(playingMetronome) && JSON.stringify(newValues) === JSON.stringify(oldValues)) return
     }
 
@@ -53,27 +54,39 @@ export function getShowBPM() {
     return Math.floor(parseFloat(showMetadata[customKey] || 0)) || 120
 }
 
-export function updateMetronome(values: API_metronome, starting = false) {
+export function updateMetronome(values: API_metronome | MetronomeSettings, starting = false) {
     if (!values.tempo) values.tempo = metronomeValues.tempo || defaultMetronomeValues.tempo
     if (!starting && get(playingMetronome) && values.tempo !== metronomeValues.tempo) return startMetronome(values)
 
     metronomeValues.tempo = values.tempo
     if (values.beats) metronomeValues.beats = values.beats
-    if (values.volume) metronomeValues.volume = values.volume
-    if (values.audioOutput !== undefined) metronomeValues.audioOutput = values.audioOutput
-    if (values.audioChannel !== undefined) metronomeValues.audioChannel = values.audioChannel
+    if ("accentVolume" in values && values.accentVolume !== undefined) metronomeValues.accentVolume = values.accentVolume
+    if ("secondaryVolume" in values && values.secondaryVolume !== undefined) metronomeValues.secondaryVolume = values.secondaryVolume
 
     metronome.set(metronomeValues)
 }
 
 export function stopMetronome() {
-    if (scheduleTimeout) clearTimeout(scheduleTimeout)
-    scheduleTimeout = null
+    if (timerInterval) {
+        clearInterval(timerInterval)
+        timerInterval = null
+    }
+
+    for (const source of scheduledSources) {
+        try {
+            source.stop()
+            source.disconnect()
+        } catch {}
+    }
+    scheduledSources = []
+
+    for (const timer of activeTimeouts) {
+        clearTimeout(timer)
+    }
+    activeTimeouts = []
+
     playingMetronome.set(false)
     metronomeTimer.set({ beat: 0, timeToNext: 0 })
-
-    startTime = 0
-    beatsPlayed = 0
 }
 
 const clickFiles = {
@@ -97,7 +110,7 @@ async function setAudioBuffers() {
 
             const audioBuffer = await fetch(path)
                 .then((res) => res.arrayBuffer())
-                .then((ArrayBuffer) => audioContext.decodeAudioData(ArrayBuffer))
+                .then((ArrayBuffer) => getAudioContext().decodeAudioData(ArrayBuffer))
 
             const id = index === 0 ? "hi" : "lo"
             audioBuffers[bufferId] = { ...audioBuffers[bufferId], [id]: audioBuffer }
@@ -107,106 +120,100 @@ async function setAudioBuffers() {
 
 /// /////////////////
 
-// time values are in seconds
-let timeBetweenEachBeat = 0
-let startTime = 0
+let timerInterval: NodeJS.Timeout | null = null
+let nextNoteTime = 0
+let currentBeat = 1
+
+const lookahead = 1.5 // 1.5 seconds lookahead buffer in Web Audio time to withstand UI thread freezes
+let scheduledSources: AudioBufferSourceNode[] = []
+let activeTimeouts: NodeJS.Timeout[] = []
+
 async function initializeMetronome() {
     await setAudioBuffers()
 
-    const beatsPerSecond = 60 / (metronomeValues.tempo || defaultMetronomeValues.tempo)
-    timeBetweenEachBeat = beatsPerSecond
+    currentBeat = 1
+    nextNoteTime = getAudioContext().currentTime
 
-    scheduleNextNote()
+    playingMetronome.set(true)
+
+    if (timerInterval) clearInterval(timerInterval)
+    timerInterval = setInterval(() => scheduler(), 25)
+
+    scheduler()
 }
 
-const preScheduleTime = 0.1
-let scheduleTimeout: NodeJS.Timeout | null = null
-function scheduleNextNote(time = 0, beat = 1) {
-    // changing tempo when active could cause many to play at once without this check
-    if (scheduleTimeout) return
+function scheduler() {
+    if (!get(playingMetronome)) return
 
-    if (!startTime) {
-        startTime = audioContext.currentTime
-        scheduleNote(beat)
-        return
+    const audioContext = getAudioContext()
+    if (!audioContext) return
+
+    const totalBeats = metronomeValues.beats || defaultMetronomeValues.beats
+    const tempo = metronomeValues.tempo || defaultMetronomeValues.tempo
+    const secondsPerBeat = 60 / tempo
+
+    const currentTime = audioContext.currentTime
+
+    // prevent stacking up beats
+    if (nextNoteTime < currentTime - 0.05) {
+        const timeLag = currentTime - nextNoteTime
+
+        // skip missed beats and catch up currentBeat index
+        if (timeLag > secondsPerBeat) {
+            const missedBeats = Math.floor(timeLag / secondsPerBeat)
+            currentBeat = ((currentBeat - 1 + missedBeats) % totalBeats) + 1
+            nextNoteTime += missedBeats * secondsPerBeat
+        }
+
+        // don't play missed beats from the past
+        if (nextNoteTime < currentTime) nextNoteTime = currentTime
     }
 
-    if (beat > (metronomeValues.beats || defaultMetronomeValues.beats)) beat = 1
-
-    scheduleTimeout = setTimeout(
-        () => {
-            scheduleTimeout = null
-            scheduleNote(beat)
-        },
-        (time + timeBetweenEachBeat - preScheduleTime) * 1000
-    )
-    playingMetronome.set(true)
+    while (nextNoteTime < currentTime + lookahead) {
+        scheduleNote(currentBeat, nextNoteTime)
+        nextNoteTime += secondsPerBeat
+        currentBeat = (currentBeat % totalBeats) + 1
+    }
 }
 
-let beatsPlayed = 0
-function scheduleNote(beat: number) {
-    beatsPlayed++
-    const timeUntilNextNote = getTimeToNextNote()
+function scheduleNote(beat: number, noteTime: number) {
+    const contextTime = getAudioContext().currentTime
+    const delayMs = Math.max(0, (noteTime - contextTime) * 1000)
 
-    metronomeTimer.set({ beat, timeToNext: timeUntilNextNote })
+    const timer = setTimeout(() => {
+        if (get(playingMetronome)) metronomeTimer.set({ beat, timeToNext: 0 })
+    }, delayMs)
+    activeTimeouts.push(timer)
 
-    playNote(timeUntilNextNote, beat === 1)
-    scheduleNextNote(timeUntilNextNote, beat + 1)
+    playNoteAtTime(noteTime, beat === 1)
 }
 
-function getTimeToNextNote() {
-    const contextTime = audioContext.currentTime
-
-    const nextPlayTime = timeBetweenEachBeat * beatsPlayed
-    const timePassed = contextTime - startTime
-
-    return nextPlayTime - timePassed
-}
-
-async function playNote(time: number, first = false) {
+async function playNoteAtTime(time: number, first = false) {
+    const audioContext = getAudioContext()
     const source = audioContext.createBufferSource()
     const clickSound = get(special)?.clickSound || "metal"
     const bufferId = clickSound === "custom" ? get(special)?.clickSound_hi + get(special)?.clickSound_lo : clickSound
     const audioBuffer = audioBuffers[bufferId]?.[first ? "hi" : "lo"]
     if (!audioBuffer) return
-
     source.buffer = audioBuffer
 
-    // volume control
     const gainNode = audioContext.createGain()
-    const audioChannel = metronomeValues.audioChannel || ""
-    if (audioChannel === "mono_left" || audioChannel === "mono_right") {
-        const merger = audioContext.createChannelMerger(2)
-        source.connect(gainNode)
+    source.connect(gainNode)
 
-        const channel = audioChannel === "mono_left" ? 0 : 1
-        gainNode.connect(merger, 0, channel)
+    // Connect to AudioRoutingManager (this also handles capture/visualizer)
+    AudioRoutingManager.getInstance().registerInputNode("metronome", gainNode)
+    AudioRoutingManager.getInstance().updateRoutingNodes()
 
-        merger.connect(audioContext.destination)
-    } else {
-        // Stereo (default)
-        source.connect(gainNode)
-        gainNode.connect(audioContext.destination)
+    scheduledSources.push(source)
+
+    source.onended = () => {
+        AudioRoutingManager.getInstance().unregisterInputNode("metronome", gainNode)
+        const idx = scheduledSources.indexOf(source)
+        if (idx !== -1) scheduledSources.splice(idx, 1)
     }
 
-    // WIP connect getAnalyser()
+    const volume = first ? (metronomeValues.accentVolume ?? defaultMetronomeValues.accentVolume) : (metronomeValues.secondaryVolume ?? defaultMetronomeValues.secondaryVolume)
+    gainNode.gain.value = volume
 
-    // custom audio output
-    if (metronomeValues.audioOutput !== undefined) {
-        try {
-            await (audioContext as any).setSinkId(metronomeValues.audioOutput)
-        } catch (err) {
-            console.error(err)
-        }
-    }
-
-    gainNode.gain.value = getVolume(first ? accentVolume : secondaryVolume)
-
-    source.start(audioContext.currentTime + time)
-}
-
-const accentVolume = 2
-const secondaryVolume = 1.75
-function getVolume(beatVolume) {
-    return beatVolume * (metronomeValues.volume || 1) * get(volume) * AudioPlayer.getGain()
+    source.start(Math.max(audioContext.currentTime, time))
 }

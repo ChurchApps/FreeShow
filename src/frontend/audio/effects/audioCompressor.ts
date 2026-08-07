@@ -132,12 +132,12 @@ export function getGlobalCompressor(): AudioCompressor | null {
     return globalCompressor
 }
 
-export function updateCompressorConfig(partial: Partial<CompressorConfig>) {
-    updateEffectInStore("compressor", DEFAULT_COMPRESSOR_CONFIG, partial, globalCompressor)
+export function updateCompressorConfig(partial: Partial<CompressorConfig>, channelId?: string) {
+    updateEffectInStore("compressor", DEFAULT_COMPRESSOR_CONFIG, partial, channelId)
 }
 
-export function setCompressorEnabled(enabled: boolean) {
-    setEffectEnabledInStore("compressor", DEFAULT_COMPRESSOR_CONFIG, enabled, globalCompressor)
+export function setCompressorEnabled(enabled: boolean, channelId?: string) {
+    setEffectEnabledInStore("compressor", DEFAULT_COMPRESSOR_CONFIG, enabled, channelId)
 }
 
 export function getCompressorReduction(): number {

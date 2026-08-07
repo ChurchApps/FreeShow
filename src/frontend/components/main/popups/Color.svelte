@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeProject, activeShow, editingProjectTemplate, effects, globalTags, outputs, overlays, profiles, projects, projectTemplates, selected, showsCache, templates } from "../../../stores"
+    import { activePopup, activeProject, activeShow, audioRouting, editingProjectTemplate, effects, globalTags, outputs, overlays, profiles, projects, projectTemplates, selected, showsCache, templates } from "../../../stores"
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -8,29 +8,30 @@
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
 
     let value = "#FFFFFF"
-    let allowEmpty = $selected.id === "show" // || $selected.id === "slide"
+    let allowEmpty = $selected.id === "show" || $selected.id === "audio_channel" // || $selected.id === "slide"
 
     const selection = $selected
 
     onMount(() => {
-        if (selection.id === "slide") {
-            let firstSelected = selection.data[0]
-            if (!firstSelected) return
+        const data = selection.data[0]
+        if (!data) return
 
-            let ref: any = getLayoutRef()[firstSelected.index]
+        if (selection.id === "slide") {
+            let ref: any = getLayoutRef()[data.index]
             if (!ref) return
 
             if (ref.type === "child") ref = ref.parent
             value = _show().slides([ref.id]).get("color")[0] || ""
         } else if (selection.id === "group") {
-            value = _show().slides([selection.data[0].id]).get("color")[0] || ""
-        } else if (selection.id === "overlay") value = $overlays[selection.data[0]]?.color || ""
-        else if (selection.id === "template") value = $templates[selection.data[0]]?.color || ""
-        else if (selection.id === "effect") value = $effects[selection.data[0]]?.color || ""
-        else if (selection.id === "output") value = $outputs[selection.data[0]?.id]?.color || ""
-        else if (selection.id === "profile") value = $profiles[selection.data[0]?.id]?.color || ""
-        else if (selection.id === "tag") value = $globalTags[selection.data[0]?.id]?.color || ""
-        else if (selection.id === "show") value = ($editingProjectTemplate ? $projectTemplates[$editingProjectTemplate] : $projects[$activeProject || ""])?.shows?.[selection.data[0]?.index]?.color || ""
+            value = _show().slides([data.id]).get("color")[0] || ""
+        } else if (selection.id === "overlay") value = $overlays[data]?.color || ""
+        else if (selection.id === "template") value = $templates[data]?.color || ""
+        else if (selection.id === "effect") value = $effects[data]?.color || ""
+        else if (selection.id === "output") value = $outputs[data.id]?.color || ""
+        else if (selection.id === "profile") value = $profiles[data.id]?.color || ""
+        else if (selection.id === "tag") value = $globalTags[data.id]?.color || ""
+        else if (selection.id === "show") value = ($editingProjectTemplate ? $projectTemplates[$editingProjectTemplate] : $projects[$activeProject || ""])?.shows?.[data.index]?.color || ""
+        else if (selection.id === "audio_channel") value = $audioRouting?.channels?.find((a) => a.id === data.id)?.color || ""
     })
 
     const actions = {
@@ -102,6 +103,14 @@
                 })
 
                 a[projectId].modified = Date.now()
+                return a
+            })
+        },
+        audio_channel: () => {
+            const id = selection.data[0]?.id
+            audioRouting.update((a) => {
+                const index = (a?.channels || []).findIndex((c) => c.id === id)
+                if (index !== -1) a!.channels[index].color = value
                 return a
             })
         }

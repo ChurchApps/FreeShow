@@ -1,49 +1,27 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
-    import { OUTPUT } from "../../../../types/Channels"
+    import { onDestroy } from "svelte"
+    import { Unsubscriber } from "svelte/store"
     import type { Output } from "../../../../types/Output"
     import type { MediaType, ShowType } from "../../../../types/Show"
-    import { activeFocus, activeShow, focusMode, outLocked, outputs, playerVideos, videosData, videosTime } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, outLocked, playerVideos } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { translateText } from "../../../utils/language"
-    import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import { splitPath } from "../../helpers/get"
     import { getExtension, getMediaType } from "../../helpers/media"
-    import { getActiveOutputs } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import { VideoPlayer } from "../../media/video/videoPlayer"
+    import { videoSync } from "../../media/video/videoSync"
     import VideoSlider from "../VideoSlider.svelte"
 
     export let currentOutput: Output | null
     export let outputId: string
     export let big = false
 
-    $: videoData = $videosData[outputId] || {}
-
+    let videoData = { duration: 0, paused: true, loop: false, muted: false }
     let videoTime = 0
-    $: updateVideoTime($videosTime[outputId])
-    let timeJustUpdated: NodeJS.Timeout | null = null
-    function updateVideoTime(time = 0) {
-        if (timeJustUpdated) clearTimeout(timeJustUpdated)
-        timeJustUpdated = setTimeout(() => (timeJustUpdated = null), 900)
-        videoTime = time
-    }
-
-    // custom time update (for player videos)
-    let timeInterval: NodeJS.Timeout | null = null
-    onMount(() => {
-        if ($videosTime[outputId]) videoTime = $videosTime[outputId]
-        timeInterval = setInterval(() => {
-            if (videoData.paused || timeJustUpdated) return
-            videoTime++
-        }, 1000)
-    })
-
-    onDestroy(() => {
-        if (timeInterval) clearInterval(timeInterval)
-    })
 
     // reset
     $: if (path) videoTime = 0
@@ -53,18 +31,60 @@
     $: type = background?.type || "image"
     if (path && !type) type = getMediaType(getExtension(path)) as MediaType
 
+    // LISTENER
+
+    let unsubscriber: Unsubscriber | null = null
+    $: setTimeout(() => pathChanged(path, outputId))
+    function pathChanged(path: string | undefined, outputId: string) {
+        if (unsubscriber) {
+            unsubscriber()
+            unsubscriber = null
+        }
+
+        if (!path || (type !== "video" && type !== "player")) return
+
+        // interpolate video time (so slider updates more smoothly) / slider step is 1 anyway
+        // const interpolator = new TimeInterpolator((time) => videoTime = time)
+
+        unsubscriber = videoSync(path, outputId, (data) => {
+            videoTime = data.currentTime || 0
+            if (data.duration) videoData.duration = data.duration
+            videoData.paused = data.paused
+            videoData.loop = data.loop
+            videoData.muted = data.muted
+
+            // interpolator.update(videoTime)
+            // if (videoData.paused) interpolator.stop()
+            // else interpolator.start()
+        })
+    }
+    onDestroy(() => {
+        // interpolator.stop()
+        if (unsubscriber) unsubscriber()
+    })
+
+    // $: if (path && videoData) VideoPlayer.updateProperties(path, videoData, outputId)
+
     let mediaName = ""
     $: outName = path && path.includes(".") && !path.includes("base64") ? splitPath(path).name : ""
     $: mediaName = outName ? outName.slice(0, outName.lastIndexOf(".")) : background?.name || ""
 
-    $: activeOutputIds = getActiveOutputs($outputs, true, true, true)
-    const sendToOutput = () => {
-        let dataValues: any = {}
-        activeOutputIds.forEach((id) => {
-            dataValues[id] = { ...videoData, muted: id !== outputId ? true : videoData.muted }
-        })
+    // $: activeOutputIds = getActiveOutputs($outputs, true, true, true)
 
-        send(OUTPUT, ["DATA"], dataValues)
+    function toggleMute() {
+        if (!path) return
+
+        videoData.muted = !videoData.muted
+        // if (background) setOutput("background", { ...background, muted: videoData.muted }, false, outputId)
+        VideoPlayer.toggleMute(path, outputId)
+    }
+
+    function toggleLoop() {
+        if (!path) return
+
+        videoData.loop = !videoData.loop
+        // if (background) setOutput("background", { ...background, loop: videoData.loop }, false, outputId)
+        VideoPlayer.toggleLoop(path, outputId)
     }
 
     function openPreview() {
@@ -75,8 +95,13 @@
     }
 
     function playPause() {
-        videoData.paused = !videoData.paused
-        sendToOutput()
+        if (!path) return
+
+        const isPaused = videoData.paused
+        videoData.paused = !isPaused
+
+        if (isPaused) VideoPlayer.play(path, outputId)
+        else VideoPlayer.pause(path, outputId)
     }
 
     let changeValue = 0
@@ -93,7 +118,7 @@
 
                 <div class="divider" />
 
-                <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue unmutedId={outputId} toOutput big />
+                <VideoSlider {outputId} {path} disabled={$outLocked} bind:videoData bind:videoTime bind:changeValue big />
 
                 <div class="divider" />
 
@@ -116,25 +141,11 @@
 
                 <div class="divider" />
 
-                <MaterialButton
-                    title={"media._loop" + (videoData.loop !== false ? ": settings.enabled" : "")}
-                    on:click={() => {
-                        videoData.loop = !videoData.loop
-                        sendToOutput()
-                    }}
-                >
+                <MaterialButton title={"media._loop" + (videoData.loop !== false ? ": settings.enabled" : "")} on:click={toggleLoop}>
                     <Icon id="loop" white={!videoData.loop} size={1.3} />
                 </MaterialButton>
 
-                <MaterialButton
-                    title={videoData.muted === false ? "actions.mute" : "actions.unmute"}
-                    disabled={$outLocked}
-                    on:click={() => {
-                        if (videoData.muted === undefined) videoData.muted = true
-                        videoData.muted = !videoData.muted
-                        sendToOutput()
-                    }}
-                >
+                <MaterialButton title={videoData.muted === false ? "actions.mute" : "actions.unmute"} disabled={$outLocked} on:click={toggleMute}>
                     <Icon id={videoData.muted === false ? "volume" : "muted"} white={videoData.muted !== false} size={1.3} />
                 </MaterialButton>
             </FloatingInputs>
@@ -154,7 +165,7 @@
                     <Icon id={videoData.paused ? "play" : "pause"} white={videoData.paused} size={1.2} />
                 </Button>
 
-                <VideoSlider disabled={$outLocked} {activeOutputIds} bind:videoData bind:videoTime bind:changeValue unmutedId={outputId} toOutput />
+                <VideoSlider {outputId} {path} disabled={$outLocked} bind:videoData bind:videoTime bind:changeValue />
 
                 <Button
                     center
@@ -165,26 +176,10 @@
                 >
                     <Icon id="forward_10" white size={1.2} />
                 </Button>
-                <Button
-                    center
-                    title={translateText("media._loop" + (videoData.loop ? ": settings.enabled" : ""))}
-                    on:click={() => {
-                        videoData.loop = !videoData.loop
-                        sendToOutput()
-                    }}
-                >
+                <Button center title={translateText("media._loop" + (videoData.loop ? ": settings.enabled" : ""))} on:click={toggleLoop}>
                     <Icon id="loop" white={!videoData.loop} size={1.2} />
                 </Button>
-                <Button
-                    center
-                    title={translateText(videoData.muted === false ? "actions.mute" : "actions.unmute")}
-                    disabled={$outLocked}
-                    on:click={() => {
-                        if (videoData.muted === undefined) videoData.muted = true
-                        videoData.muted = !videoData.muted
-                        sendToOutput()
-                    }}
-                >
+                <Button center title={translateText(videoData.muted === false ? "actions.mute" : "actions.unmute")} disabled={$outLocked} on:click={toggleMute}>
                     <Icon id={videoData.muted === false ? "volume" : "muted"} white={videoData.muted !== false} size={1.2} />
                 </Button>
             </span>

@@ -38,13 +38,16 @@ export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
     }
 
     const clearTime = options.playlistCrossfade ? 0 : (options.clearTime ?? get(special).audio_fade_duration ?? 1.5)
-    const clearIds = audioPath ? [audioPath] : Object.keys(get(playingAudio))
+    let clearIds = audioPath ? [audioPath] : Object.keys(get(playingAudio))
+    if (!audioPath && !options.commonClear) {
+        // don't clear microphones when playing an audio file
+        const allPlaying = get(playingAudio)
+        clearIds = clearIds.filter((id) => !allPlaying[id]?.isMic)
+    }
     clearIds.forEach(clear)
 
     async function clear(path: string) {
         if (clearing.includes(path)) return
-
-        stopFading()
 
         clearing.push(path)
         const audio = AudioPlayer.getAudio(path)
@@ -110,6 +113,7 @@ export function fadeInAudio(path: string, crossfade: number, waitToPlay = false,
 
 const speed = 0.01
 const currentlyFading: { [key: string]: NodeJS.Timeout } = {}
+const currentlyFadingTimeouts: { [key: string]: NodeJS.Timeout } = {}
 async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, increment = false, fadeToVolume = 1): Promise<boolean> {
     duration = Number(duration)
     const fadeId = (increment ? "in_" : "out_") + id
@@ -147,16 +151,20 @@ async function fadeAudio(id: string, audio: HTMLAudioElement, duration = 1, incr
             }
         }, time)
 
-        const timedout = setTimeout(() => {
+        currentlyFadingTimeouts[fadeId] = setTimeout(() => {
             clearInterval(currentlyFading[fadeId])
             delete currentlyFading[fadeId]
+            delete currentlyFadingTimeouts[fadeId]
             resolve(true)
         }, duration * 1500)
 
         function finished() {
             clearInterval(currentlyFading[fadeId])
             delete currentlyFading[fadeId]
-            clearTimeout(timedout)
+            if (currentlyFadingTimeouts[fadeId]) {
+                clearTimeout(currentlyFadingTimeouts[fadeId])
+                delete currentlyFadingTimeouts[fadeId]
+            }
             setTimeout(() => resolve(true), 50)
 
             if (!increment && !Object.keys(currentlyFading).filter((a) => a.includes("out")).length) {
@@ -193,7 +201,7 @@ export function fadeinAllPlayingAudio() {
     isFadingOut.set(false)
     stopFading()
 
-    let fadeToVolume = AudioPlayer.getVolume()
+    let fadeToVolume = 1
     if (get(activePlaylist)?.id) {
         const playlist = get(audioPlaylists)[get(activePlaylist).id]
         fadeToVolume = (playlist?.volume ?? 1) * fadeToVolume
@@ -216,5 +224,9 @@ function stopFading() {
     Object.keys(currentlyFading).forEach((id) => {
         clearInterval(currentlyFading[id])
         delete currentlyFading[id]
+    })
+    Object.keys(currentlyFadingTimeouts).forEach((id) => {
+        clearTimeout(currentlyFadingTimeouts[id])
+        delete currentlyFadingTimeouts[id]
     })
 }

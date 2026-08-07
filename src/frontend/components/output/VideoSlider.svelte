@@ -1,15 +1,14 @@
 <script lang="ts">
-    import { OUTPUT } from "../../../types/Channels"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
-    import { send } from "../../utils/request"
     import { joinTime, secondsToTime } from "../helpers/time"
     import Slider from "../inputs/Slider.svelte"
+    import { VideoPlayer } from "../media/video/videoPlayer"
+
+    export let outputId: string | undefined = undefined
+    export let path: string | undefined
 
     export let videoData: any
     export let videoTime: any
-    export let activeOutputIds: string[] = []
-    export let unmutedId = ""
-    export let toOutput = false
     export let big = false
     export let disabled = false
     export let changeValue = 0
@@ -17,13 +16,8 @@
     $: if (changeValue) updateValue()
     function updateValue() {
         if (!videoData.paused) pauseAtMove()
-        sliderValue = changeValue
-        sliderInput(changeValue)
-
-        setTimeout(() => {
-            sendToOutput()
-            changeValue = 0
-        })
+        finishDrag(changeValue)
+        changeValue = 0
     }
 
     let sliderValue = 0
@@ -43,39 +37,57 @@
         time = joinTime(secondsToTime((videoData.duration || 0) * percentage))
     }
 
-    // WIP duplicate of video.ts
-    let latestValue = "0"
-    function sliderInput(e: any) {
-        latestValue = e?.target?.value || e
-        if ((!movePause && !videoData.paused) || !latestValue) return
+    let latestValue: number | null = null
 
-        videoTime = Number(latestValue)
-
-        if (!toOutput) return
-
-        let timeValues: any = {}
-        activeOutputIds.forEach((id) => {
-            timeValues[id] = videoTime
-        })
-
-        send(OUTPUT, ["TIME"], timeValues)
+    function getNumericValue(e: any): number | null {
+        if (typeof e === "number") return isNaN(e) ? null : e
+        if (typeof e === "string") {
+            const num = Number(e)
+            return isNaN(num) ? null : num
+        }
+        if (e && typeof e === "object") {
+            if (e.target && "value" in e.target) {
+                const num = Number(e.target.value)
+                return isNaN(num) ? null : num
+            }
+            if ("detail" in e) {
+                return getNumericValue(e.detail)
+            }
+        }
+        return null
     }
 
-    const sendToOutput = (e: any = null) => {
-        if (!movePause || !videoData.paused) return
+    let dragSeekTimeout: NodeJS.Timeout | null = null
 
-        let value = e?.target?.value
+    function onInput(e: any) {
+        const val = getNumericValue(e) ?? latestValue
+        if (val === null) return
+        latestValue = val
+        sliderValue = val
 
-        if (value !== undefined) {
-            videoTime = Number(value)
-            if (toOutput) {
-                let timeValues: any = {}
-                activeOutputIds.forEach((id) => {
-                    timeValues[id] = videoTime
-                })
+        if (!dragSeekTimeout) {
+            dragSeekTimeout = setTimeout(() => {
+                dragSeekTimeout = null
+                if (movePause && sliderValue !== null) {
+                    videoTime = sliderValue
+                    if (path && outputId) VideoPlayer.seekTo(path, outputId, videoTime)
+                }
+            }, 150)
+        }
+    }
 
-                send(OUTPUT, ["TIME"], timeValues)
-            }
+    function finishDrag(e: any = null) {
+        if (dragSeekTimeout) {
+            clearTimeout(dragSeekTimeout)
+            dragSeekTimeout = null
+        }
+
+        const val = getNumericValue(e) ?? sliderValue ?? latestValue
+        if (val !== null) {
+            latestValue = val
+            sliderValue = val
+            videoTime = val
+            if (path && outputId) VideoPlayer.seekTo(path, outputId, videoTime)
         }
 
         if (movePause) pauseAtMove(false)
@@ -84,25 +96,30 @@
     $: if (videoTime !== undefined && !movePause) sliderValue = videoTime
 
     let movePause = false
+    let wasPausedBeforeMove = false
     function pauseAtMove(boolean = true) {
-        movePause = videoData.paused = boolean
+        if (!path) return
 
-        if (!toOutput) return
-
-        let dataValues: any = {}
-        activeOutputIds.forEach((id) => {
-            dataValues[id] = { ...videoData, muted: id !== unmutedId ? true : videoData.muted }
-        })
-
-        send(OUTPUT, ["DATA"], dataValues)
+        if (boolean) {
+            wasPausedBeforeMove = !!videoData.paused
+            movePause = true
+            videoData.paused = true
+            if (outputId) VideoPlayer.pause(path, outputId)
+        } else {
+            movePause = false
+            videoData.paused = wasPausedBeforeMove
+            if (outputId && !wasPausedBeforeMove) VideoPlayer.play(path, outputId)
+        }
     }
 
     let fullLength = false
+    $: displayTime = Math.max(0, videoData?.duration ? Math.min(videoTime || 0, videoData.duration) : videoTime || 0)
+    $: remainingTime = Math.max(0, (videoData?.duration || 0) - Math.floor(displayTime))
 </script>
 
 <svelte:window
-    on:mouseup={(e) => {
-        if (!e.target?.closest(".slider") && movePause) pauseAtMove(false)
+    on:mouseup={() => {
+        if (movePause) finishDrag()
     }}
 />
 
@@ -113,7 +130,7 @@
         </span>
     {:else}
         <span style="color: var(--secondary)">
-            {joinTime(secondsToTime(Math.floor(videoTime)))}
+            {joinTime(secondsToTime(Math.floor(displayTime)))}
         </span>
     {/if}
     <div class="slider">
@@ -125,18 +142,18 @@
             step={1}
             max={videoData.duration}
             on:mousedown={() => {
-                if (!videoData.paused) pauseAtMove()
+                pauseAtMove(true)
             }}
             on:mousemove={move}
-            on:change={sendToOutput}
-            on:input={sliderInput}
+            on:change={finishDrag}
+            on:input={onInput}
         />
     </div>
     <span style={fullLength ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)} on:keydown={triggerClickOnEnterSpace} role="button" tabindex="0" aria-label="Toggle time display format">
         {#if fullLength}
             {joinTime(secondsToTime(videoData.duration || 0))}
         {:else}
-            {joinTime(secondsToTime((videoData.duration || 0) - Math.floor(videoTime)))}
+            {joinTime(secondsToTime(remainingTime))}
         {/if}
     </span>
 </div>

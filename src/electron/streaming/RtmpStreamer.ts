@@ -15,7 +15,7 @@ interface StreamInstance {
 
 const SAMPLE_RATE = 48000
 const AUDIO_CHANNELS = 2
-const SILENCE_THRESHOLD_MS = 100
+const SILENCE_THRESHOLD_MS = 150
 const SILENCE_INTERVAL_MS = 50
 
 export class RtmpStreamer {
@@ -54,14 +54,10 @@ export class RtmpStreamer {
                 env: { ...process.env, NSUnbufferedIO: "YES" }
             })
 
-            ffmpegProcess.stdin?.on("error", (_err) => {
-                // Suppress write errors on exit
-            })
+            ffmpegProcess.stdin?.on("error", (_err) => {})
 
             const audioStream = ffmpegProcess.stdio[3] as any
-            audioStream?.on("error", (_err: any) => {
-                // Suppress write errors on exit
-            })
+            audioStream?.on("error", (_err: any) => {})
 
             ffmpegProcess.on("error", (err) => {
                 console.error(`[RtmpStreamer] FFmpeg process error for ${outputId}:`, err)
@@ -76,27 +72,22 @@ export class RtmpStreamer {
             const initialFrame = Buffer.alloc(width * height * 4 * (isRetina ? 4 : 1))
             const frameDelay = 1000 / fps
 
-            let isWriting = false
             const videoInterval = setInterval(() => {
                 const streamer = this.streamers.get(outputId)
                 if (!streamer || !streamer.process.stdin || streamer.process.stdin.destroyed) return
-                if (isWriting) return // Skip if previous frame still writing
 
                 try {
-                    isWriting = true
-                    streamer.process.stdin.write(streamer.lastFrame, () => {
-                        isWriting = false
-                    })
+                    streamer.process.stdin.write(streamer.lastFrame)
                 } catch (err) {
-                    isWriting = false
                     console.error(`[RtmpStreamer] Error writing video frame to FFmpeg for ${outputId}:`, err)
                 }
             }, frameDelay)
 
             let audioInterval: NodeJS.Timeout | undefined
             if (enableAudio) {
-                // Audio silence filling: 50ms of silence at 48k stereo (16-bit)
-                const silenceChunk = Buffer.alloc(SAMPLE_RATE * 2 * AUDIO_CHANNELS * (SILENCE_INTERVAL_MS / 1000))
+                // Audio silence filling: 50ms chunk (9600 bytes) if audio stream pauses
+                const bytesPer50ms = Math.floor(SAMPLE_RATE * 2 * AUDIO_CHANNELS * (SILENCE_INTERVAL_MS / 1000))
+                const silenceChunk = Buffer.alloc(bytesPer50ms)
                 audioInterval = setInterval(() => {
                     const streamer = this.streamers.get(outputId)
                     if (!streamer) return
@@ -132,19 +123,19 @@ export class RtmpStreamer {
         const inputWidth = isRetina ? width * 2 : width
         const inputHeight = isRetina ? height * 2 : height
 
-        const args = ["-f", "rawvideo", "-pixel_format", "bgra", "-video_size", `${inputWidth}x${inputHeight}`, "-framerate", `${fps}`, "-thread_queue_size", "4096", "-i", "pipe:0"]
+        const args = ["-use_wallclock_as_timestamps", "1", "-f", "rawvideo", "-pixel_format", "bgra", "-video_size", `${inputWidth}x${inputHeight}`, "-framerate", `${fps}`, "-i", "pipe:0"]
 
         if (enableAudio) {
-            args.push("-f", "s16le", "-ar", `${SAMPLE_RATE}`, "-ac", `${AUDIO_CHANNELS}`, "-thread_queue_size", "4096", "-i", "pipe:3")
+            args.push("-use_wallclock_as_timestamps", "1", "-f", "s16le", "-ar", `${SAMPLE_RATE}`, "-ac", `${AUDIO_CHANNELS}`, "-i", "pipe:3")
         } else {
             args.push("-f", "lavfi", "-i", `anullsrc=channel_layout=stereo:sample_rate=${SAMPLE_RATE}`)
         }
 
         const vf = isRetina ? `scale=${width}:${height},format=yuv420p` : "format=yuv420p"
         const bitrateKbps = `${bitrate}k`
-        const bufsizeKbps = `${bitrate * 2}k`
+        const bufsizeKbps = `${Math.round(bitrate * 1.5)}k`
 
-        args.push("-c:v", "libx264", "-preset", "veryfast", "-tune", "zerolatency", "-b:v", bitrateKbps, "-maxrate", bitrateKbps, "-bufsize", bufsizeKbps, "-pix_fmt", "yuv420p", "-vf", vf, "-g", `${fps * 2}`, "-c:a", "aac", "-b:a", "128k", "-f", "flv", url)
+        args.push("-c:v", "libx264", "-preset", "ultrafast", "-tune", "zerolatency", "-b:v", bitrateKbps, "-maxrate", bitrateKbps, "-bufsize", bufsizeKbps, "-pix_fmt", "yuv420p", "-vf", vf, "-g", `${fps * 2}`, "-c:a", "aac", "-b:a", "128k", "-ar", `${SAMPLE_RATE}`, "-ac", `${AUDIO_CHANNELS}`, "-af", "aresample=async=1000", "-flvflags", "no_duration_filesize", "-f", "flv", url)
         return args
     }
 
