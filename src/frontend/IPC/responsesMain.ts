@@ -86,7 +86,7 @@ import {
     undoHistory,
     usageLog,
     variables,
-    whisperDownloads,
+    aiScriptureDownloads,
     windowState
 } from "../stores"
 import { setupCloudSync } from "../utils/cloudSync"
@@ -292,8 +292,8 @@ export const mainResponses: MainResponses = {
     [ToMain.AI_SCRIPTURE_COMMAND]: (data) => {
         executeScriptureCommand(data)
     },
-    [ToMain.AI_SCRIPTURE_WHISPER_PROGRESS]: (data) => {
-        whisperDownloads.update((downloads) => {
+    [ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS]: (data) => {
+        aiScriptureDownloads.update((downloads) => {
             const updated = new Map(downloads)
             updated.set(data.name, { progress: data.progress, total: data.total, status: data.status, message: data.message })
             return updated

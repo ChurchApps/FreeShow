@@ -139,7 +139,7 @@ describe("cancelWhisperDownload", () => {
             cancelWhisperDownload()
 
             expect(await downloadPromise).toEqual({ ok: false, error: "cancelled" })
-            expect(sendToMain).toHaveBeenCalledWith(ToMain.AI_SCRIPTURE_WHISPER_PROGRESS, { name: "whisper-model-tiny", progress: 0, total: 0, status: "error", message: "cancelled" })
+            expect(sendToMain).toHaveBeenCalledWith(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name: "whisper-model-tiny", progress: 0, total: 0, status: "error", message: "cancelled" })
         } finally {
             vi.unstubAllGlobals()
         }

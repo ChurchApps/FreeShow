@@ -25,7 +25,7 @@ import { OutputHelper } from "../output/OutputHelper"
 import { libreConvert } from "../output/ppt/libreConverter"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers, updateServerData } from "../servers"
-import { aiScriptureWhisper, getAiScriptureStatus, receiveAiScriptureAudio, setAiKey, startAiScripture, stopAiScripture, testAiConnection, updateAiScriptureContext } from "../aiScripture"
+import { aiScriptureNemotron, aiScriptureWhisper, getAiScriptureStatus, receiveAiScriptureAudio, setAiKey, startAiScripture, stopAiScripture, testAiConnection, updateAiScriptureContext } from "../aiScripture"
 import { processAudioData, timecodeStart, timecodeStop, updateTimecodeValue } from "../timecode/timecode"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
@@ -280,7 +280,10 @@ export const mainResponses: MainResponses = {
     [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_BINARY]: () => aiScriptureWhisper.downloadBinary(),
     [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_MODEL]: (data) => aiScriptureWhisper.downloadModel(data),
     [Main.AI_SCRIPTURE_WHISPER_CANCEL]: () => aiScriptureWhisper.cancel(),
-    [Main.AI_SCRIPTURE_WHISPER_VERIFY_PATH]: (data) => aiScriptureWhisper.verifyPath(data)
+    [Main.AI_SCRIPTURE_WHISPER_VERIFY_PATH]: (data) => aiScriptureWhisper.verifyPath(data),
+    [Main.AI_SCRIPTURE_NEMOTRON_DOWNLOAD]: () => aiScriptureNemotron.download(),
+    [Main.AI_SCRIPTURE_NEMOTRON_CANCEL]: () => aiScriptureNemotron.cancel(),
+    [Main.AI_SCRIPTURE_NEMOTRON_DELETE]: () => aiScriptureNemotron.delete()
 }
 
 /// ///////

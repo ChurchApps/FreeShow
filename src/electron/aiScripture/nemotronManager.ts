@@ -8,6 +8,8 @@ import fs from "fs"
 import path from "path"
 import { Readable } from "stream"
 import { pipeline } from "stream/promises"
+import { ToMain } from "../../types/IPC/ToMain"
+import { sendToMain } from "../IPC/main"
 
 export interface NemotronModelPaths {
     encoder: string
@@ -83,22 +85,43 @@ function isUsableFile(file: string): boolean {
 
 // DOWNLOAD
 
-let cancelled = false
+// the renderer keys progress entries by name, the same way whisper's binary/model downloads do
+const PROGRESS_NAME = "nemotron"
+const MAX_ATTEMPTS = 3
 
-export function cancelNemotronDownload() {
-    cancelled = true
+let activeDownload: { controller: AbortController; partPath: string } | null = null
+
+export function cancelNemotronDownload(): void {
+    if (!activeDownload) return
+
+    const { controller, partPath } = activeDownload
+    activeDownload = null
+
+    controller.abort()
+    try {
+        fs.unlinkSync(partPath)
+    } catch {
+        /* the partial file may not exist */
+    }
+
+    // terminal event so the renderer's progress entry for this download never stays stuck at "downloading"
+    sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: 0, total: 0, status: "error", message: "cancelled" })
 }
 
-/** Download the model (and the VAD gate) with aggregate progress. */
-export async function downloadNemotronModel(onProgress?: (downloaded: number, total: number) => void): Promise<void> {
-    cancelled = false
-    if (isNemotronReady()) return
+/** Download the model files (and the VAD gate) with aggregate progress across all of them. */
+export async function downloadNemotronModel(): Promise<{ ok: boolean; error?: string }> {
+    if (activeDownload) return { ok: false, error: "download_in_progress" }
+    if (isNemotronReady()) {
+        sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: 1, total: 1, status: "complete" })
+        return { ok: true }
+    }
 
     const dir = getModelDir()
     fs.mkdirSync(dir, { recursive: true })
 
     const jobs = [...Object.values(MODEL_FILES).map((file) => ({ url: `${MODEL_BASE_URL}/${file}`, file })), { url: VAD_MODEL_URL, file: VAD_MODEL_FILE }]
 
+    // one download spans several files, so progress is reported against the known total rather than per file
     let completedBytes = 0
     for (const job of jobs) {
         const target = path.join(dir, job.file)
@@ -108,11 +131,25 @@ export async function downloadNemotronModel(onProgress?: (downloaded: number, to
         }
 
         const base = completedBytes
-        await downloadFile(job.url, target, (bytes) => onProgress?.(base + bytes, NEMOTRON_MODEL_BYTES))
+        try {
+            await downloadFile(job.url, target, (bytes) => {
+                sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: base + bytes, total: NEMOTRON_MODEL_BYTES, status: "downloading" })
+            })
+        } catch (err) {
+            if (isAbortError(err)) return { ok: false, error: "cancelled" }
+            sendDownloadError(err)
+            return { ok: false, error: errorMessage(err) }
+        }
         completedBytes = base + fs.statSync(target).size
     }
 
-    onProgress?.(NEMOTRON_MODEL_BYTES, NEMOTRON_MODEL_BYTES)
+    if (!isNemotronReady()) {
+        sendDownloadError("Downloaded Nemotron model is incomplete")
+        return { ok: false, error: "nemotron_model_missing" }
+    }
+
+    sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: 1, total: 1, status: "complete" })
+    return { ok: true }
 }
 
 export function deleteNemotronModel() {
@@ -125,35 +162,72 @@ export function deleteNemotronModel() {
     }
 }
 
-async function downloadFile(url: string, target: string, onProgress?: (downloaded: number) => void): Promise<void> {
-    // electron's net follows redirects (hugging face and github both redirect to a CDN)
-    const response = await net.fetch(url)
-    if (!response.ok || !response.body) throw new Error(`Download failed (${response.status}): ${url}`)
+// downloads to a ".part" file first so a failed download never leaves a valid looking file behind
+async function downloadFile(url: string, target: string, onProgress: (downloaded: number) => void): Promise<void> {
+    const partPath = `${target}.part`
+    const controller = new AbortController()
+    activeDownload = { controller, partPath }
 
-    const partial = `${target}.part`
-    let downloaded = 0
-    let lastReport = 0
-
-    const source = Readable.fromWeb(response.body as any)
-    source.on("data", (chunk: Buffer) => {
-        downloaded += chunk.length
-        const now = Date.now()
-        if (now - lastReport >= PROGRESS_INTERVAL) {
-            lastReport = now
-            onProgress?.(downloaded)
-        }
-        if (cancelled) source.destroy(new Error("cancelled"))
-    })
+    let totalBytes = 0
 
     try {
-        await pipeline(source, fs.createWriteStream(partial))
-        fs.renameSync(partial, target)
+        for (let attempt = 1; ; attempt++) {
+            // resume where it left off - the encoder alone is ~600 MB and long CDN transfers do get cut mid body
+            const resumeAt = attempt > 1 && fs.existsSync(partPath) ? fs.statSync(partPath).size : 0
+
+            // electron's net follows redirects (hugging face and github both redirect to a CDN) and handles
+            // large transfers far more reliably than node's fetch, which throws "terminated" on long downloads
+            const response = await net.fetch(url, { signal: controller.signal, headers: resumeAt > 0 ? { Range: `bytes=${resumeAt}-` } : {} })
+            if (!response.ok || !response.body) throw new Error(`Download failed (${response.status}): ${url}`)
+
+            const resumed = resumeAt > 0 && response.status === 206
+            const remainingBytes = Number(response.headers.get("content-length")) || 0
+            if (!totalBytes || !resumed) totalBytes = resumed ? resumeAt + remainingBytes : remainingBytes
+
+            let downloaded = resumed ? resumeAt : 0
+            let lastReport = 0
+
+            const source = Readable.fromWeb(response.body as any)
+            source.on("data", (chunk: Buffer) => {
+                downloaded += chunk.length
+                if (Date.now() - lastReport < PROGRESS_INTERVAL) return
+                lastReport = Date.now()
+                onProgress(downloaded)
+            })
+
+            try {
+                await pipeline(source, fs.createWriteStream(partPath, { flags: resumed ? "a" : "w" }))
+                if (totalBytes > 0 && downloaded !== totalBytes) throw new Error(`Download incomplete: got ${downloaded} of ${totalBytes} bytes`)
+            } catch (err) {
+                if (isAbortError(err) || attempt >= MAX_ATTEMPTS) throw err
+                continue
+            }
+
+            fs.renameSync(partPath, target)
+            return
+        }
     } catch (err) {
         try {
-            fs.unlinkSync(partial)
+            fs.unlinkSync(partPath)
         } catch {
             /* the partial file may not exist */
         }
         throw err
+    } finally {
+        if (activeDownload?.controller === controller) activeDownload = null
     }
+}
+
+// HELPERS
+
+function isAbortError(err: unknown): boolean {
+    return (err as Error)?.name === "AbortError" || (err as { code?: string })?.code === "ABORT_ERR"
+}
+
+function errorMessage(err: unknown): string {
+    return String((err as Error)?.message || err)
+}
+
+function sendDownloadError(err: unknown) {
+    sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: 0, total: 0, status: "error", message: errorMessage(err) })
 }

@@ -25,7 +25,7 @@ export enum ToMain {
     AI_SCRIPTURE_DETECTION = "AI_SCRIPTURE_DETECTION",
     AI_SCRIPTURE_STATUS = "AI_SCRIPTURE_STATUS",
     AI_SCRIPTURE_COMMAND = "AI_SCRIPTURE_COMMAND",
-    AI_SCRIPTURE_WHISPER_PROGRESS = "AI_SCRIPTURE_WHISPER_PROGRESS",
+    AI_SCRIPTURE_DOWNLOAD_PROGRESS = "AI_SCRIPTURE_DOWNLOAD_PROGRESS",
     // Unified provider callbacks
     PROVIDER_CONNECT = "PROVIDER_CONNECT",
     PROVIDER_PROJECTS = "PROVIDER_PROJECTS",
@@ -64,7 +64,7 @@ export interface ToMainSendPayloads {
     [ToMain.AI_SCRIPTURE_DETECTION]: DetectedReference
     [ToMain.AI_SCRIPTURE_STATUS]: { state: AiScriptureState; message?: string; keyless?: boolean }
     [ToMain.AI_SCRIPTURE_COMMAND]: AiScriptureCommandEvent
-    [ToMain.AI_SCRIPTURE_WHISPER_PROGRESS]: { name: string; progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }
+    [ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS]: { name: string; progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }
     // Unified provider callbacks
     [ToMain.PROVIDER_CONNECT]: { providerId: ContentProviderId; success: boolean; isFirstConnection?: boolean }
     [ToMain.PROVIDER_PROJECTS]: { providerId: ContentProviderId; categoryName: string; shows: any; projects: any; pcoPlans?: { planId: string; serviceTypeId: string; name: string; date: string }[] }
