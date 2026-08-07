@@ -23,6 +23,22 @@ describe("detectScriptureCommand", () => {
             expect(detect("alright everyone show the next chapter")).toEqual({ type: "chapter_next", phrase: "show the next chapter" })
         })
 
+        it("detects a plain 'next chapter' spoken without an imperative", () => {
+            expect(detect("next chapter")).toEqual({ type: "chapter_next", phrase: "next chapter" })
+        })
+
+        it("detects a plain 'next verse' at the end of what was said", () => {
+            expect(detect("and that brings us to the point, next verse")).toEqual({ type: "verse_next", phrase: "next verse" })
+        })
+
+        it("detects a plain 'previous chapter'", () => {
+            expect(detect("previous chapter")).toEqual({ type: "chapter_previous", phrase: "previous chapter" })
+        })
+
+        it("tolerates trailing punctuation on a plain command", () => {
+            expect(detect("next verse.")).toEqual({ type: "verse_next", phrase: "next verse" })
+        })
+
         it("detects chapter_previous: 'take me to the previous chapter'", () => {
             expect(detect("take me to the previous chapter")).toEqual({ type: "chapter_previous", phrase: "take me to the previous chapter" })
         })
@@ -72,6 +88,14 @@ describe("detectScriptureCommand", () => {
 
         it("ignores narration: 'the previous chapter tells us'", () => {
             expect(detect("the previous chapter tells us about grace")).toBeNull()
+        })
+
+        it("ignores narration that ends on the phrase: 'we will see that in the next chapter'", () => {
+            expect(detect("we will see that in the next chapter")).toBeNull()
+        })
+
+        it("ignores a translation named as narration: 'this is from the king james version'", () => {
+            expect(detect("this is from the king james version")).toBeNull()
         })
 
         it("ignores a bare 'verse five'", () => {
