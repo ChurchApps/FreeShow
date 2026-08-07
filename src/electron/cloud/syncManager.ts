@@ -456,9 +456,14 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     if (!DEBUG_MODE && !process.env.VITEST) {
         // silently backup in the background, this is skipped when the program is being closed
         setTimeout(async () => {
-            await uploadBackupData()
-            await deleteFolderAsync(EXTRACT_LOCATION)
-            console.log("Backup sync completed!")
+            try {
+                await uploadBackupData()
+            } catch (err) {
+                console.error("Backup sync error:", err)
+            } finally {
+                await deleteFolderAsync(EXTRACT_LOCATION)
+                console.log("Backup sync completed!")
+            }
         }, 1000)
     }
 
@@ -479,27 +484,32 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
     // if cloud backup is non existent or older than a week
     async function uploadBackupData() {
-        console.log("Syncing backup data")
-        const backupPath = await provider!.getBackup(data.churchId, data.teamId, EXTRACT_LOCATION)
-        if (!backupPath) return await upload()
+        try {
+            console.log("Syncing backup data")
+            const backupPath = await provider!.getBackup(data.churchId, data.teamId, EXTRACT_LOCATION)
+            if (!backupPath) return await upload()
 
-        const oneWeek = ONE_HOUR * 24 * 7
-        const now = Date.now()
-        const stats = await getFileStatsAsync(backupPath)
-        if (!stats) return await upload()
+            const oneWeek = ONE_HOUR * 24 * 7
+            const now = Date.now()
+            const stats = await getFileStatsAsync(backupPath)
+            if (!stats) return await upload()
 
-        const age = now - stats.mtime.getTime()
-        if (age > oneWeek) return await upload()
+            const age = now - stats.mtime.getTime()
+            if (age > oneWeek) return await upload()
 
-        return false
+            return false
 
-        async function upload() {
-            const cloudZipsPath = getDataFolderPath("cloud")
-            const zipFiles = await getFilesSortedByDate(cloudZipsPath)
-            const backupZipPath = zipFiles[0]?.path
-            if (!backupZipPath) return false
+            async function upload() {
+                const cloudZipsPath = getDataFolderPath("cloud")
+                const zipFiles = await getFilesSortedByDate(cloudZipsPath)
+                const backupZipPath = zipFiles[0]?.path
+                if (!backupZipPath) return false
 
-            return await provider!.uploadBackup(data.teamId, backupZipPath)
+                return await provider!.uploadBackup(data.teamId, backupZipPath)
+            }
+        } catch (err) {
+            console.error("Error in uploadBackupData:", err)
+            return false
         }
     }
 

@@ -149,24 +149,29 @@ class ChurchAppsSyncManager {
     }
 
     async uploadData(teamId: string, filePath: string, fileName = "current.zip"): Promise<boolean> {
-        const presigned = await this.getWriteToken(teamId, fileName)
-        if (!presigned?.url) return false
+        try {
+            const presigned = await this.getWriteToken(teamId, fileName)
+            if (!presigned?.url) return false
 
-        const fileBuffer = await fs.promises.readFile(filePath)
-        const blob = new Blob([new Uint8Array(fileBuffer)], { type: ZIP_TYPE })
+            const fileBuffer = await fs.promises.readFile(filePath)
+            const blob = new Blob([new Uint8Array(fileBuffer)], { type: ZIP_TYPE })
 
-        const formData = new FormData()
-        formData.append("acl", "public-read")
-        formData.append("Content-Type", ZIP_TYPE)
+            const formData = new FormData()
+            formData.append("acl", "public-read")
+            formData.append("Content-Type", ZIP_TYPE)
 
-        // Loop through all the presigned parameters returned and append them to this request
-        for (const property in presigned.fields) formData.append(property, presigned.fields[property])
+            // Loop through all the presigned parameters returned and append them to this request
+            for (const property in presigned.fields) formData.append(property, presigned.fields[property])
 
-        console.log("Uploading data...")
-        formData.append("file", blob, fileName)
-        await axios.post(presigned.url, formData, { headers: { "Content-Type": "multipart/form-data" }, timeout: 60000 })
+            console.log("Uploading data...")
+            formData.append("file", blob, fileName)
+            await axios.post(presigned.url, formData, { headers: { "Content-Type": "multipart/form-data" }, timeout: 60000 })
 
-        return true
+            return true
+        } catch (err) {
+            console.error("Failed to upload data:", err)
+            return false
+        }
     }
 
     // BACKUP
