@@ -32,29 +32,27 @@ export function clampPlaybackRate(rate: number): number {
     return Math.min(16, Math.max(0.1, rate || 1))
 }
 
-const videoSyncTracking = new WeakMap<HTMLVideoElement, { lastTargetTime: number | null; lastSyncAt: number | null }>()
 export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1): void {
     if (!vid || targetTime === undefined || vid.readyState < 2 || vid.seeking) return
 
-    const rate = targetPlaybackRate
-    const diff = vid.currentTime - targetTime // positive = video is ahead of audio
+    const rate = clampPlaybackRate(targetPlaybackRate)
+    const diff = vid.currentTime - targetTime // >0: video is ahead, <0: video is behind
 
-    const tracking = videoSyncTracking.get(vid) ?? { lastTargetTime: null, lastSyncAt: null }
-    const now = performance.now()
-    const elapsedSeconds = tracking.lastSyncAt !== null ? (now - tracking.lastSyncAt) / 1000 : 0
-    const expectedAdvance = elapsedSeconds * rate
-    const isExplicitSeek = lastSyncedTime !== null && (Math.abs(targetTime - lastSyncedTime) > Math.max(0.5, expectedAdvance + 0.2) || (isSoftLoop && lastSyncedTime > targetTime + 0.1))
+    // 1. Detect explicit seek: lastSyncedTime jumped unexpectedly relative to the actual video clock
+    const isExplicitSeek = lastSyncedTime !== null && (Math.abs(targetTime - vid.currentTime) > 0.5 * rate || (isSoftLoop && lastSyncedTime > targetTime + 0.1))
 
+    // 2. Perform hard seek ONLY when necessary (paused correction, large drift, or explicit user seek)
     if (isExplicitSeek || (vid.paused && Math.abs(diff) > 0.05) || Math.abs(diff) > 0.3 * rate) {
         vid.currentTime = targetTime
+        vid.playbackRate = rate
+        return
     }
 
+    // 3. Rate nudge for continuous playback drift correction (<0.3s drift)
     const targetRate = !vid.paused && Math.abs(diff) > 0.02 ? rate + Math.max(-0.1 * rate, Math.min(0.1 * rate, -diff * 2 * rate)) : rate
+
     const safeRate = clampPlaybackRate(targetRate)
 
-    if (vid.playbackRate !== safeRate) vid.playbackRate = safeRate
-
-    tracking.lastTargetTime = targetTime
-    tracking.lastSyncAt = now
-    videoSyncTracking.set(vid, tracking)
+    // Minimize DOM writes
+    if (Math.abs(vid.playbackRate - safeRate) > 0.005) vid.playbackRate = safeRate
 }
