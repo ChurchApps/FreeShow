@@ -712,7 +712,7 @@
         display: flex;
         position: relative;
         background-color: var(--primary-darkest);
-        align-items: center;
+        align-items: stretch;
     }
 
     .tabs :global(button) {
