@@ -5,7 +5,7 @@ import type { ErrorLog } from "../../types/Main"
 import { createLog, logError } from "../IPC/responsesMain"
 import { createFolder } from "./files"
 
-export function httpsRequest(hostname: string, path: string, method: "POST" | "GET" | "HEAD", headers: object = {}, content: object = {}, callback: (err: (Error & { statusCode?: number; code?: string; headers?: any }) | null, result?: any) => void, outputFilePath?: string, onlyHeaders = false) {
+export function httpsRequest(hostname: string, path: string, method: "POST" | "GET" | "HEAD", headers: object = {}, content: object = {}, callback: (err: (Error & { statusCode?: number; code?: string; headers?: any }) | null, result?: any) => void, outputFilePath?: string, onlyHeaders = false, timeoutMs = 30000) {
     // a hung response can fire both the request's own "error" (from the timeout destroy) and the
     // response stream's "error"/"end" afterwards - guard so callers only ever see the first result
     let done = false
@@ -38,7 +38,7 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
                 : {}),
             ...headers
         },
-        timeout: 10000
+        timeout: timeoutMs
     }
 
     try {
