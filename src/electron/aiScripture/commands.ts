@@ -205,3 +205,35 @@ export function detectScriptureCommand(text: string, language: string, translati
 
     return null
 }
+
+// STREAMING SEGMENTS
+
+// the streaming engine emits one segment per utterance, and a pause mid-command splits it ("next" / "verse").
+// joining the recent tail lets the command match once its last word arrives - and a command only fires when the
+// NEWEST segment completes it, so text that already fired (or failed) never re-fires from later joins.
+const SEGMENT_JOIN_MS = 4000
+
+export class CommandStream {
+    private segments: { text: string; endMs: number }[] = []
+
+    detect(segment: { text: string; endMs: number }, language: string, translations: AiScriptureTranslation[]): AiScriptureCommandEvent | null {
+        this.segments.push(segment)
+        while (this.segments.length > 1 && segment.endMs - this.segments[0].endMs > SEGMENT_JOIN_MS) this.segments.shift()
+
+        const joined = this.segments.map((entry) => entry.text).join(" ")
+        const command = detectScriptureCommand(joined, language, translations)
+        if (!command) return null
+
+        // the matched phrase must reach into the newest segment - an instruction wholly inside older text already
+        // had its chance when that text was newest (normalization is word-by-word, so lengths compose across the join)
+        const withoutNewest = this.segments
+            .slice(0, -1)
+            .map((entry) => entry.text)
+            .join(" ")
+        const boundary = withoutNewest ? normalizeSpokenNumbers(withoutNewest).length : 0
+        const at = normalizeSpokenNumbers(joined).lastIndexOf(command.phrase)
+        if (at >= 0 && at + command.phrase.length <= boundary) return null
+
+        return command
+    }
+}

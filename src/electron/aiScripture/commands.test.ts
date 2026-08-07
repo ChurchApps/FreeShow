@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { detectScriptureCommand } from "./commands"
+import { CommandStream, detectScriptureCommand } from "./commands"
 
 const TRANSLATIONS = [
     { id: "niv-id", names: ["New International Version", "NIV"] },
@@ -113,5 +113,34 @@ describe("detectScriptureCommand", () => {
         it("only matches within the most recent speech", () => {
             expect(detect("show chapter four " + "filler words keep on coming here ".repeat(4))).toBeNull()
         })
+    })
+})
+
+describe("CommandStream", () => {
+    const feed = (stream: CommandStream, text: string, endMs: number) => stream.detect({ text, endMs }, "en", TRANSLATIONS)
+
+    it("matches a command split across two utterances ('next' / 'verse')", () => {
+        const stream = new CommandStream()
+        expect(feed(stream, "Next", 1000)).toBeNull()
+        expect(feed(stream, "verse", 1800)).toEqual({ type: "verse_next", phrase: "next verse" })
+    })
+
+    it("does not re-fire from stale text when unrelated speech follows", () => {
+        const stream = new CommandStream()
+        expect(feed(stream, "next chapter", 1000)).toEqual({ type: "chapter_next", phrase: "next chapter" })
+        expect(feed(stream, "as we keep reading", 2500)).toBeNull()
+    })
+
+    it("fires again when the command is genuinely spoken again", () => {
+        const stream = new CommandStream()
+        expect(feed(stream, "next verse", 1000)).toEqual({ type: "verse_next", phrase: "next verse" })
+        expect(feed(stream, "next verse", 3000)).toEqual({ type: "verse_next", phrase: "next verse" })
+    })
+
+    it("drops fragments older than the join window", () => {
+        const stream = new CommandStream()
+        expect(feed(stream, "Next", 1000)).toBeNull()
+        // "verse" arrives too late to belong to the same instruction
+        expect(feed(stream, "verse", 9000)).toBeNull()
     })
 })
