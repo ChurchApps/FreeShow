@@ -6,9 +6,9 @@ const h = vi.hoisted(() => {
         let value = initial
         return { _set: (v: unknown) => (value = v), subscribe: (fn: (v: unknown) => void) => (fn(value), () => {}) }
     }
-    return { textCache: makeStore({}), categories: makeStore({}), drawerTabsData: makeStore({}), special: makeStore({}) }
+    return { textCache: makeStore({}), categories: makeStore({}), drawerTabsData: makeStore({}) }
 })
-vi.mock("../stores", () => ({ textCache: h.textCache, categories: h.categories, drawerTabsData: h.drawerTabsData, special: h.special }))
+vi.mock("../stores", () => ({ textCache: h.textCache, categories: h.categories, drawerTabsData: h.drawerTabsData }))
 vi.mock("../components/helpers/array", () => ({
     sortObjectNumbers: (arr: any[], key: string, desc = false) => [...arr].sort((a, b) => (desc ? (b[key] || 0) - (a[key] || 0) : (a[key] || 0) - (b[key] || 0)))
 }))
@@ -53,11 +53,6 @@ const shows = [
 
 const ids = (results: any[]) => results.map((r) => r.id)
 
-const reset = () => {
-    h.textCache._set({})
-    h.special._set({})
-}
-
 describe("formatSearch", () => {
     it("lowercases and strips punctuation + diacritics", () => {
         expect(formatSearch("Café, Réal!")).toBe("cafe real")
@@ -71,7 +66,7 @@ describe("formatSearch", () => {
 })
 
 describe("showSearchFilter", () => {
-    beforeEach(reset)
+    beforeEach(() => h.textCache._set({}))
 
     it("scores an exact title match 100", () => {
         expect(showSearchFilter("Amazing Grace", shows[0])).toBe(100)
@@ -106,7 +101,7 @@ describe("showSearchFilter", () => {
 })
 
 describe("absolute confidence bands", () => {
-    beforeEach(reset)
+    beforeEach(() => h.textCache._set({}))
 
     it("scores all words in the title, adjacent and in order, 90", () => {
         expect(showSearchFilter("anointing here", { id: "a", name: "There's An Anointing Here" } as any)).toBe(90)
@@ -123,7 +118,7 @@ describe("absolute confidence bands", () => {
         expect(score).toBeGreaterThanOrEqual(55)
         expect(score).toBeLessThanOrEqual(75)
     })
-    it("scores content-only matches 40-60 (above the near-miss cap)", () => {
+    it("scores content-only matches 40-60 (at or above the create-hint threshold)", () => {
         h.textCache._set({ great: "thou my everlasting portion more than friend or life to me" })
         const score = showSearchFilter("everlasting portion", shows[2])
         expect(score).toBe(55) // 40 + full adjacency 10 + phrase bonus 5
@@ -138,42 +133,30 @@ describe("absolute confidence bands", () => {
 })
 
 describe("strict AND narrowing", () => {
-    beforeEach(reset)
+    beforeEach(() => h.textCache._set({}))
 
-    it("excludes shows missing a query word when near-miss fallback is off", () => {
-        h.special._set({ searchNearMissFallback: false })
+    it("excludes shows missing any query word", () => {
         const res = showSearch("amazing grace", shows)
         expect(ids(res)).toEqual(["amazing"]) // "Grace Alone" lacks "amazing"
     })
-    it("includes all-but-one-word matches at a low score when near-miss fallback is on (default)", () => {
-        const res = showSearch("amazing grace", shows)
-        expect(ids(res)[0]).toBe("amazing")
-        const nearMiss = res.find((r) => r.id === "gracealone")
-        expect(nearMiss?.match).toBeLessThan(40) // below the content-only floor / create-hint threshold
-        expect(nearMiss?.match).toBeGreaterThanOrEqual(28)
+    it("a garbage word yields no results", () => {
+        const res = showSearch("anointing here mksowejasdlkansdad", [{ id: "anointinghere", name: "There's An Anointing Here" }] as any)
+        expect(res.length).toBe(0)
     })
-    it("a garbage word empties results in strict mode, near-misses in fallback mode", () => {
-        const show = { id: "anointinghere", name: "There's An Anointing Here" } as any
-
-        const fallback = showSearch("anointing here mksowejasdlkansdad", [show])
-        expect(fallback.length).toBe(1)
-        expect(fallback[0].match).toBe(38)
-
-        h.special._set({ searchNearMissFallback: false })
-        expect(showSearch("anointing here mksowejasdlkansdad", [show]).length).toBe(0)
-    })
-    it("requires short words too — a garbage short token excludes in strict mode", () => {
-        h.special._set({ searchNearMissFallback: false })
+    it("requires short words too", () => {
         expect(showSearchFilter("xq grace", shows[0])).toBe(0)
     })
-    it("never rescues a query missing two or more words", () => {
-        const res = showSearch("zzz nonexistent", shows)
-        expect(res.length).toBe(0)
+    it("adding a word can only narrow the results", () => {
+        h.textCache._set({ great: "amazing love how can it be" })
+        const broad = showSearch("amazing", shows)
+        const narrow = showSearch("amazing love", shows)
+        expect(ids(narrow).every((id) => ids(broad).includes(id))).toBe(true)
+        expect(ids(narrow)).toEqual(["great"]) // only the show containing both words remains
     })
 })
 
 describe("showSearch ranking", () => {
-    beforeEach(reset)
+    beforeEach(() => h.textCache._set({}))
 
     it("finds a show by lyric content when the title doesn't match", () => {
         h.textCache._set({ great: "thou my everlasting portion more than friend or life to me" })
@@ -204,7 +187,7 @@ describe("showSearch ranking", () => {
 })
 
 describe("exact phrase (quoted) search", () => {
-    beforeEach(reset)
+    beforeEach(() => h.textCache._set({}))
 
     it("matches a quoted phrase that appears in the title", () => {
         expect(showSearchFilter('"amazing grace"', shows[0])).toBe(100)

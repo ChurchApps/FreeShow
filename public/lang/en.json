@@ -1367,8 +1367,6 @@
         "transparent_slides": "Transparent slide preview",
         "style_template_preview": "Use style template as slide preview",
         "full_colors": "High contrast colors",
-        "search_near_miss_fallback": "Show closest matches when nothing matches the entire search",
-        "search_near_miss_fallback_tip": "Shows matching all but one word are listed with a low match when nothing matches every word. When disabled, the search is fully strict: only shows where every word matches are listed.",
         "next_item_on_last_slide": "Arrow left/right changes project item on first/last slide",
         "slide_number_keys": "Play slides with number keys",
         "auto_shortcut_first_letter": "Auto shortcut to first letter in text",

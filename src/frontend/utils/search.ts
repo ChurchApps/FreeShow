@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import type { ShowList } from "../../types/Show"
 import { sortObjectNumbers } from "../components/helpers/array"
 import { similarity } from "../converters/txt"
-import { categories, drawerTabsData, special, textCache } from "../stores"
+import { categories, drawerTabsData, textCache } from "../stores"
 
 const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_'"´`~()]/g
 export function formatSearch(value: string, removeSpaces = false) {
@@ -31,7 +31,6 @@ interface ParsedQuery {
 
 interface SearchContext {
     query: ParsedQuery
-    nearMiss: boolean
     cache: { [key: string]: string }
 }
 
@@ -53,7 +52,6 @@ function parseQuery(searchValue: string): ParsedQuery {
 function createSearchContext(searchValue: string): SearchContext {
     return {
         query: parseQuery(searchValue),
-        nearMiss: get(special).searchNearMissFallback !== false,
         cache: get(textCache)
     }
 }
@@ -82,7 +80,6 @@ export function showSearch(searchValue: string, shows: ShowList[]): ShowList[] {
 //   60-85  strong fuzzy title match (typo tolerance)
 //   55-75  words split between title and content
 //   40-60  every word in the content (lyrics) only
-//   28-38  near-miss fallback (optional): all but one word matched
 // A show only matches when EVERY search word matches at the start of a word in the
 // title or content, so adding words always narrows the results ("here" never
 // matches "There's"). A "quoted" query requires the exact phrase.
@@ -129,17 +126,16 @@ export function showSearchFilter(searchValue: string, show: ShowList, ctx?: Sear
 
     // strict AND: every word must appear (in title or content) at the start of a word
     let titleMatchedCount = 0
-    let unmatchedCount = 0
-    let unmatchedIndex = -1
+    let hasUnmatched = false
     for (let i = 0; i < q.tokens.length; i++) {
         if (hasWordPrefix(titleText, q.tokens[i])) titleMatchedCount++
         else if (!contentText || !hasWordPrefix(contentText, q.tokens[i])) {
-            unmatchedCount++
-            unmatchedIndex = i
+            hasUnmatched = true
+            break
         }
     }
 
-    if (!unmatchedCount) return strictScore(q.tokens, titleMatchedCount, titleText, contentText, q.fullPhrase)
+    if (!hasUnmatched) return strictScore(q.tokens, titleMatchedCount, titleText, contentText, q.fullPhrase)
 
     // typo tolerance (titles only): a strong fuzzy title match can still qualify.
     // IMPORTANT: similarity() is non-zero even for unrelated text, so only a strong
@@ -151,14 +147,6 @@ export function showSearchFilter(searchValue: string, show: ShowList, ctx?: Sear
             const titleSimilarity = similarity(showNameWithNumber, q.fuzzyNeedle)
             if (titleSimilarity >= 0.7) return Math.round(60 + ((titleSimilarity - 0.7) / 0.3) * 25)
         }
-    }
-
-    // near-miss fallback (optional): all but one word of a multi-word query matched.
-    // Scored well below any full match so the bar clearly reads as partial.
-    if (ctx.nearMiss && q.tokens.length >= 2 && unmatchedCount === 1) {
-        const subTokens = q.tokens.filter((_, i) => i !== unmatchedIndex)
-        const subScore = strictScore(subTokens, titleMatchedCount, titleText, contentText, subTokens.join(" "))
-        return Math.min(38, Math.round(20 + subScore * 0.2))
     }
 
     return 0

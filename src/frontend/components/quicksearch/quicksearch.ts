@@ -664,7 +664,7 @@ const settings = [
         id: "general",
         name: "settings.general",
         icon: "general",
-        aliases: ["settings.language", "settings.use24hClock", "settings.disable_labels", "settings.default_project_name", "settings.startup_projects_list", "settings.auto_output", "settings.hide_cursor_in_output", "settings.clear_media_when_finished", "settings.capitalize_words", "settings.transparent_slides", "settings.full_colors", "settings.search_near_miss_fallback", "settings.slide_number_keys", "settings.auto_shortcut_first_letter"]
+        aliases: ["settings.language", "settings.use24hClock", "settings.disable_labels", "settings.default_project_name", "settings.startup_projects_list", "settings.auto_output", "settings.hide_cursor_in_output", "settings.clear_media_when_finished", "settings.capitalize_words", "settings.transparent_slides", "settings.full_colors", "settings.slide_number_keys", "settings.auto_shortcut_first_letter"]
     },
     { id: "display_settings", name: "settings.display_settings", icon: "display_settings", aliases: ["settings.active_style", "settings.output_screen", "settings.always_on_top", "NDI®", "-Livestream", "-Stage", "-HDMI"] },
     {
