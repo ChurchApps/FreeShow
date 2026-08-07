@@ -42,7 +42,8 @@
     {#each Object.entries(tabs) as [id, tab]}
         {#if tab.remove !== true && (!tab.overflow || !overflowHidden)}
             <MaterialButton
-                style="border-bottom: 2px solid var(--primary-darker);{$$props.style || ''}"
+                class="tabButton"
+                style={$$props.style || null}
                 on:click={() => {
                     active = id
                     manuallyChanged = true
@@ -54,11 +55,11 @@
                 <Icon id={tab.icon} white={active === id} />
                 {#if labels}
                     {#key tab.name}
-                        <span>
+                        <span class="label">
                             {translateText(tab.name)}
 
                             {#if tab.data !== undefined}
-                                <span style="margin-left: 4px;opacity: 0.5;font-size: 0.75em;">{tab.data}</span>
+                                <span class="badge" class:active={active === id}>{tab.data}</span>
                             {/if}
                         </span>
                     {/key}
@@ -85,6 +86,9 @@
     .tabs {
         display: flex;
         flex-wrap: wrap;
+        gap: 4px;
+        padding: 5px;
+
         background-color: var(--primary-darker);
         z-index: 1;
     }
@@ -92,7 +96,41 @@
     .tabs :global(button) {
         flex: auto;
 
-        padding: 0.3em 0.5em;
-        border-radius: 0;
+        padding: 0.5em 0.8em;
+        border-radius: 6px;
+
+        opacity: 0.6;
+        transition:
+            opacity 0.15s ease,
+            background 0.2s ease;
+    }
+    .tabs :global(button:not(:disabled):hover) {
+        opacity: 0.9;
+        background: rgb(255 255 255 / 0.03) !important;
+    }
+
+    .tabs :global(button.tabButton.isActive) {
+        opacity: 1;
+        background-color: rgb(255 255 255 / 0.07) !important;
+        border-bottom: none !important;
+    }
+
+    .label {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .badge {
+        margin-inline-start: 6px;
+        padding: 0.1em 0.45em;
+        border-radius: 8px;
+
+        background-color: var(--primary-lighter);
+        font-size: 0.7em;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+    .badge.active {
+        background-color: rgb(255 255 255 / 0.12);
     }
 </style>
