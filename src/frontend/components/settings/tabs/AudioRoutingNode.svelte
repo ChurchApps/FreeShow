@@ -13,19 +13,19 @@
     export let autoColor: string | undefined = undefined
     export let nodeType: "input" | "channel" | "merger" | "output"
 
-    $: activeColor = color || autoColor
     export let isSubNode: boolean = false
     export let isExpanded: boolean = false
     export let hasSubNodes: boolean = false
+    export let channels: number = 0
+    export let isEnabled: boolean = true
+    export let isMuted: boolean = false
+    export let hasInputConnection: boolean = true
+
     export let hoverTargetId: string | null = null
     export let isConnecting: boolean = false
     export let dragStartId: string | null = null
     export let dragStartType: string | null = null
     export let dragStartPortType: "in" | "out" | null = null
-    export let channels: number = 0
-    export let isEnabled: boolean = true
-    export let isMuted: boolean = false
-    export let hasInputConnection: boolean = true
 
     export let onToggleExpand: () => void = () => {}
     export let onMouseDown: (e: MouseEvent, portType: "in" | "out", chIdx?: number) => void
@@ -37,30 +37,33 @@
     export let onHoverPortEnd: () => void = () => {}
     export let onPortContextMenu: (e: MouseEvent, portType: "in" | "out", chIdx?: number) => void = () => {}
 
-    function getIcon(type: string): string {
-        if (icon) return icon
-
-        const icons: Record<string, string> = {
-            drawer_audio: "audio",
-            playlist: "playlist",
-            mic: "mic",
-            metronome: "timer",
-            desktop_audio: "volume",
-            output_window: "display_settings",
-            speaker: "volume",
-            icecast: "cloud"
-        }
-        return icons[type] || "settings"
+    const NODE_ICONS: Record<string, string> = {
+        drawer_audio: "audio",
+        playlist: "playlist",
+        mic: "mic",
+        metronome: "timer",
+        desktop_audio: "volume",
+        output_window: "display_settings",
+        speaker: "volume",
+        icecast: "cloud"
     }
+
+    function getIcon(nodeTypeKey: string): string {
+        return icon || NODE_ICONS[nodeTypeKey] || ""
+    }
+
+    $: activeColor = color || autoColor
 
     $: isChannel = nodeType === "channel" || nodeType === "merger"
     $: isInputCol = nodeType === "input"
     $: isOutputCol = nodeType === "output"
     $: isStartChannel = dragStartType === "channel" || dragStartType === "merger"
+
     $: hasInPort = nodeType !== "input" && (type !== "network" || isSubNode) && (!isSubNode || nodeType === "output")
     $: hasOutPort = nodeType !== "output" && (type !== "output_window" || isSubNode)
-    $: hasValidPort = (dragStartType === "input" && hasInPort) || (dragStartType === "output" && hasOutPort) || (isStartChannel && dragStartPortType === "in" && hasOutPort) || (isStartChannel && dragStartPortType === "out" && hasInPort)
-    $: isValidHover = isConnecting && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isStartChannel && dragStartPortType === "in" && isInputCol) || (isStartChannel && dragStartPortType === "out" && isOutputCol))
+
+    $: hasValidPort = (dragStartType === "input" && hasInPort) || (dragStartType === "output" && hasOutPort) || (isStartChannel && ((dragStartPortType === "in" && hasOutPort) || (dragStartPortType === "out" && hasInPort)))
+    $: isValidHover = isConnecting && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isStartChannel && ((dragStartPortType === "in" && isInputCol) || (dragStartPortType === "out" && isOutputCol))))
 </script>
 
 <div
