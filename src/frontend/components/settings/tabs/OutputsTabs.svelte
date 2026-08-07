@@ -116,7 +116,14 @@
             toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
             outputId = enableStageOutput({ stageOutput: stageId, name: $stageShows[stageId]?.name || "" })
         } else {
-            outputId = addOutput(false, styleId, false)
+            let name = ""
+            if (networkType && !localType) {
+                if (networkType === "ndi") name = "NDI"
+                else if (networkType === "webrtc") name = "WebRTC"
+                else if (networkType === "rtmp") name = "RTMP"
+            }
+
+            outputId = addOutput(false, styleId, false, name)
         }
 
         // apply settings

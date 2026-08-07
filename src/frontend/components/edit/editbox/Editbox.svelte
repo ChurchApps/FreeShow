@@ -3,6 +3,7 @@
     import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, special, templates, variables } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
+    import { isComposing } from "../../../utils/shortcuts"
     import { deleteAction } from "../../helpers/clipboard"
     import { history } from "../../helpers/history"
     import { getExtension, getFileName, getMediaType } from "../../helpers/media"
@@ -110,6 +111,7 @@
     function keydown(e: KeyboardEvent) {
         if (e.key === "Shift") isShiftPressed = true
 
+        if (isComposing(e)) return
         if (cropElem?.handleKeydown(e)) return
 
         if (e.key === "Escape") {

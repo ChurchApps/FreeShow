@@ -23,6 +23,7 @@ import { getLabelId, getLayoutRef } from "../helpers/show"
 import { playNextGroup, selectProjectShow, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { VideoPlayer } from "../media/video/videoPlayer"
+import { resolveScriptureReference } from "../drawer/bible/scripture"
 import { clearBackground, clearSlide } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
@@ -610,21 +611,29 @@ export function getClearedState() {
 }
 
 // "1.1.1,2,3" = "Gen 1:1-3"
-// WIP allow "John 1:35-36" or "43:1:35" as well
-export function startScripture(data: API_scripture) {
+// or "John 3:16" / "1 John 1:4-6"
+export async function startScripture(data: API_scripture) {
     const split = data.reference.split(".")
-
     const book = Number(split[0])
     const chapter = Number(split[1])
-    const rawVerses = String(split[2] ?? "").trim()
 
-    // Support multiple verses encoded as comma-separated values, e.g. "43.3.16,17,18".
-    const verseItems = rawVerses
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean)
+    let ref: { book: number; chapter: number; verses: (string | number)[][] }
 
-    const ref = { book, chapter, verses: [verseItems.length ? verseItems : [rawVerses]] }
+    if (split.length > 1 && !isNaN(book) && !isNaN(chapter)) {
+        const rawVerses = (split[2] ?? "").trim()
+        // Support multiple verses encoded as comma-separated values, e.g. "43.3.16,17,18".
+        const verseItems = rawVerses
+            .split(",")
+            .map((v) => v.trim())
+            .filter(Boolean)
+        ref = { book, chapter, verses: [verseItems.length ? verseItems : [rawVerses]] }
+    } else {
+        // convert text reference to actual reference
+        const resolved = await resolveScriptureReference(data.reference, data.id)
+        if (!resolved) return
+
+        ref = { book: resolved.book, chapter: resolved.chapter, verses: [resolved.verses] }
+    }
 
     if (get(activePage) !== "edit") activePage.set("show")
     if (data.id) setDrawerTabData("scripture", data.id) // use active if no ID

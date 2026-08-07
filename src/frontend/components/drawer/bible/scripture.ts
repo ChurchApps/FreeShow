@@ -1,4 +1,4 @@
-import JsonBible from "json-bible"
+﻿import JsonBible from "json-bible"
 import { ApiBiblesList, ApiBible as JsonBibleApi } from "json-bible/lib/api"
 import type { CustomBibleListContent } from "json-bible/lib/api/ApiBible"
 import { stripMarkdown } from "json-bible/lib/markdown"
@@ -11,7 +11,7 @@ import type { Item, Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain, sendMain } from "../../../IPC/main"
-import { splitTextContentInHalf } from "../../../show/slides"
+import { findBestBreak, splitTextContentInHalf } from "../../../show/slides"
 import { activeProject, activeScripture, activeShow, drawerTabsData, media, notFound, outLocked, overlays, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { trackScriptureUsage } from "../../../utils/analytics"
 import { TemplateHelper } from "../../../utils/templates"
@@ -1510,13 +1510,13 @@ function splitPlainText(value: string, maxLength: number, tolerance: number = 0)
             second = rebalanced.second
         }
 
-        if (second.length < 1) {
-            segments.push(first)
+        if (!first.length || !second.length) {
+            segments.push(current)
             continue
         }
 
-        if (second.length > 0) queue.unshift(second)
-        if (first.length > 0) queue.unshift(first)
+        queue.unshift(second)
+        queue.unshift(first)
     }
 
     if (segments.length > 1 && segments[segments.length - 1].length < minSegmentLength) {
@@ -1628,112 +1628,30 @@ function getTagName(tag: string) {
 
 function findHtmlSplitIndex(text: string, capacity: number, tolerance: number = 0) {
     if (text.length <= capacity) return text.length
-
-    // Tolerance-aware punctuation split
-    if (tolerance > 0) {
-        const windowMin = Math.max(0, capacity - tolerance)
-        const windowMax = Math.min(text.length - 1, capacity + tolerance)
-        for (let i = windowMin; i <= windowMax; i++) {
-            if (/[.,;:!?]/.test(text.charAt(i))) {
-                let breakPos = i + 1
-                breakPos = adjustSplitIndexForBracket(text, breakPos)
-                return Math.max(0, breakPos)
-            }
-        }
-    }
-
-    const slice = text.slice(0, capacity)
-    const breakChars = [" ", "\n", "\t", "-", ","]
-    let splitIndex = -1
-    breakChars.forEach((char) => {
-        const idx = slice.lastIndexOf(char)
-        if (idx > splitIndex) splitIndex = idx
-    })
-    if (splitIndex === -1) {
-        // Look ahead a little so we prefer the next whitespace instead of cutting through a word
-        const nextBreak = text.slice(capacity).search(/[ \n\t\-,]/)
-        if (nextBreak >= 0 && nextBreak <= 20) {
-            splitIndex = capacity + nextBreak
-        }
-    }
-    let breakPos = splitIndex === -1 ? capacity : splitIndex + 1
-    breakPos = adjustSplitIndexForBracket(text, breakPos)
-    return Math.max(0, breakPos)
+    let breakPos = findBestBreak(text, capacity, tolerance)
+    if (breakPos === -1 || breakPos > capacity + tolerance) breakPos = capacity
+    return Math.max(0, adjustSplitIndexForBracket(text, breakPos))
 }
 
 function getSplitHalves(text: string, maxLength: number, tolerance: number = 0): [string, string] | null {
-    // Only use splitTextContentInHalf when tolerance is 0 (original behavior)
     if (tolerance === 0) {
         const halves = splitTextContentInHalf(text)
-        if (halves.length >= 2) {
-            const first = halves[0].trim()
-            const second = halves[1].trim()
-            if (first.length && second.length) {
-                return [first, second]
-            }
-        }
+        if (halves.length >= 2) return [halves[0], halves[1]]
     }
 
     if (text.length <= maxLength) return null
 
-    let pivot = -1
+    // 1. Try to find the best break near the center
+    const center = Math.floor(text.length / 2)
+    let pivot = findBestBreak(text, center, center / 2)
 
-    // When tolerance > 0, search for punctuation near the CENTER for balanced splits
-    if (tolerance > 0) {
-        const center = Math.floor(text.length / 2)
-        const windowMin = Math.max(0, center - tolerance)
-        const windowMax = Math.min(text.length - 1, center + tolerance)
-
-        // Find punctuation closest to center (best balance)
-        let bestPivot = -1
-        let bestDistance = Infinity
-        for (let i = windowMin; i <= windowMax; i++) {
-            const ch = text.charAt(i)
-            if (/[.,;:!?]/.test(ch)) {
-                const distance = Math.abs(i - center)
-                if (distance < bestDistance) {
-                    bestDistance = distance
-                    bestPivot = i + 1
-                }
-            }
-        }
-
-        if (bestPivot !== -1) {
-            pivot = bestPivot
-        }
-
-        // No punctuation near center — try nearest space to center
-        if (pivot === -1) {
-            let leftSpace = -1
-            let rightSpace = -1
-            for (let i = center; i >= windowMin; i--) {
-                if (text[i] === " ") {
-                    leftSpace = i
-                    break
-                }
-            }
-            for (let i = center; i <= windowMax; i++) {
-                if (text[i] === " ") {
-                    rightSpace = i
-                    break
-                }
-            }
-            if (leftSpace !== -1 && rightSpace !== -1) {
-                pivot = center - leftSpace <= rightSpace - center ? leftSpace : rightSpace
-            } else if (leftSpace !== -1) {
-                pivot = leftSpace
-            } else if (rightSpace !== -1) {
-                pivot = rightSpace
-            }
-        }
+    // 2. Fall back to the last best break before the limit
+    if (pivot === -1 || pivot > maxLength + tolerance) {
+        pivot = findBestBreak(text, maxLength, maxLength)
     }
 
-    // Original behavior: find space near maxLength (used when tolerance=0 or no split found)
-    if (pivot === -1) {
-        pivot = text.lastIndexOf(" ", maxLength)
-        if (pivot <= 0) pivot = text.indexOf(" ", maxLength)
-        if (pivot <= 0) pivot = maxLength
-    }
+    // 3. Absolute fallback
+    if (pivot <= 0 || pivot > text.length - 1) pivot = maxLength
 
     const first = text.slice(0, pivot).trim()
     const second = text.slice(pivot).trim()
@@ -2208,29 +2126,46 @@ function buildRouteBibleUrl(referenceLabel: string, translation = "") {
     return url.toString()
 }
 
-export async function generateScriptureShowFromReference(referenceText: string) {
+// convert text reference (e.g., "John 3:16") to actual reference (e.g., { book: "John", chapter: 3, verses: [16] })
+export async function resolveScriptureReference(referenceText: string, scriptureId = "") {
     if (typeof referenceText !== "string" || !referenceText.trim()) return null
 
-    const activeScriptureId = get(drawerTabsData).scripture?.activeSubTab || ""
-    if (!activeScriptureId) return null
+    const id = scriptureId || get(drawerTabsData).scripture?.activeSubTab || ""
+    if (!id) return null
+
+    // if collection of scriptures, use the first one
+    const activeScriptureId = get(scriptures)[id]?.collection?.versions?.[0] || id
 
     try {
-        const activeBible = await loadJsonBible(activeScriptureId)
-        if (!activeBible) return null
+        const bible = await loadJsonBible(activeScriptureId)
+        if (!bible) return null
 
-        const bookResult = activeBible.bookSearch(referenceText)
+        const bookResult = bible.bookSearch(referenceText)
         if (!bookResult?.book) return null
 
-        const bookNum = bookResult.book
-        const chapterNum = bookResult.chapter ? Number(bookResult.chapter) : 1
+        const book = bookResult.book
+        const chapter = bookResult.chapter ? Number(bookResult.chapter) : 1
         let verses = bookResult.verses || []
         if (!verses.length) {
-            const bookData = await activeBible.getBook(bookNum)
-            const chapterData = await bookData.getChapter(chapterNum)
+            const bookData = await bible.getBook(book)
+            const chapterData = await bookData.getChapter(chapter)
             verses = (chapterData?.data?.verses || []).map((v) => Number(v.number)).filter(Boolean)
         }
 
-        activeScripture.set({ id: activeScriptureId, reference: { book: bookNum, chapters: [chapterNum], verses: [verses] } })
+        return { id, book, chapter, verses }
+    } catch (err) {
+        console.error("Error resolving scripture reference:", err)
+        return null
+    }
+}
+
+export async function generateScriptureShowFromReference(referenceText: string) {
+    const resolved = await resolveScriptureReference(referenceText)
+    if (!resolved) return null
+
+    try {
+        // open the scripture location in the drawer
+        activeScripture.set({ id: resolved.id, reference: { book: resolved.book, chapters: [resolved.chapter], verses: [resolved.verses] } })
 
         const biblesContent = await getActiveScripturesContent()
         if (!biblesContent?.length) return null
@@ -2241,7 +2176,6 @@ export async function generateScriptureShowFromReference(referenceText: string) 
         return scriptureShow
     } catch (err) {
         console.error("Error generating scripture show from reference:", err)
+        return null
     }
-
-    return null
 }

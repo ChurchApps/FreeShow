@@ -38,7 +38,7 @@
     $: showHasChords = Object.values(currentShow?.slides || {}).some((a) => a?.items?.some((a) => a.lines?.some((a) => a.chords)))
 </script>
 
-<HighlightedNotes class="context #editbox_text" disabled={isLocked} style="padding: 30px;font-size: {$textEditZoom / 8}em;" placeholder={getQuickExample()} value={text} on:change={(e) => formatText(e.detail)} on:keydown={keydown} />
+<HighlightedNotes class="context #editbox_text" disabled={isLocked} style="padding: 30px;padding-bottom: 60px;font-size: {$textEditZoom / 8}em;" placeholder={getQuickExample()} value={text} on:change={(e) => formatText(e.detail)} on:keydown={keydown} />
 
 <FloatingInputs side="left">
     {#if showHasChords}

@@ -8,7 +8,7 @@ import { addParents, cloneSlide, getCurrentLayout } from "../components/helpers/
 import { addToPos } from "../components/helpers/mover"
 import { getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
-import { activeEdit, activeShow, refreshEditSlide, showsCache, slidesOptions } from "../stores"
+import { activeEdit, activeShow, refreshEditSlide, slidesOptions } from "../stores"
 
 // only available with right click: "simple", "groups"
 const slidesViews = { grid: "list", list: "lyrics", lyrics: "grid", simple: "grid", groups: "grid" }
@@ -537,9 +537,6 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number | number[]
     const newSlide = clone(_show().slides([slideRef.id]).get()[0])
     const slides = clone(_show().get("slides"))
 
-    let scriptureFirstLines: Line[] | null = null
-    let scriptureSecondLines: Line[] | null = null
-
     for (const idx of itemIndexes) {
         if (!newSlide.items?.[idx]) continue
         let lines: Line[] = clone(_show().slides([slideRef.id]).items([idx]).get("lines")[0]?.[0] || [])
@@ -652,11 +649,6 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number | number[]
 
         newSlide.items[idx].lines = secondLines
         slides[slideRef.id].items[idx].lines = firstLines
-
-        if (!scriptureFirstLines) {
-            scriptureFirstLines = firstLines
-            scriptureSecondLines = secondLines
-        }
     }
 
     delete newSlide.id
@@ -708,46 +700,10 @@ export function splitCustomDynamicValues(originalDV: any): { firstDV: any; secon
 
 export function splitTextContentInHalf(text: string) {
     const center = Math.floor(text.length / 2)
-
-    // find split index based on input "./,/!/?" closest to center
-    function findSplitIndex(chars) {
-        const MARGIN = center / 2
-        let index = -1
-        for (let i = center - MARGIN; i <= center + MARGIN; i++) {
-            if (chars.includes(text[i])) index = i + 1
-        }
-        return index
-    }
-
-    function checkForSpaces(left = true) {
-        let index = -1
-        for (let i = center; left ? i >= 0 : i < text.length; i += left ? -1 : 1) {
-            if (text[i] === " ") {
-                index = i
-                break
-            }
-        }
-        return index
-    }
-
-    const splitChars = [".", ",", "!", "?"]
-    let splitIndex = findSplitIndex(splitChars)
-
-    // split by the closest space if no punctuations matched
-    if (splitIndex === -1) {
-        const leftIndex = checkForSpaces(true)
-        const rightIndex = checkForSpaces(false)
-
-        // get the closest space
-        if (leftIndex !== -1 && (rightIndex === -1 || center - leftIndex <= rightIndex - center)) splitIndex = leftIndex
-        else splitIndex = rightIndex
-    }
+    const splitIndex = findBestBreak(text, center, center / 2)
 
     if (splitIndex === -1) return [text]
-
-    const firstHalf = text.slice(0, splitIndex).trim()
-    const secondHalf = text.slice(splitIndex).trim()
-    return [firstHalf, secondHalf]
+    return [text.slice(0, splitIndex).trim(), text.slice(splitIndex).trim()]
 }
 
 export function mergeSlides(indexes: { index: number }[]) {
@@ -937,13 +893,17 @@ export function breakLongLines(slides: { [key: string]: Slide }, breakPoint: num
                     }
 
                     const fullLineText = getLineText(line)
-                    const textWords = fullLineText.split(" ").filter((w) => w !== "")
-                    if (textWords.length > Number(breakPoint)) {
-                        const centerPoint = Math.floor(textWords.length / 2)
-                        const firstPart = textWords.slice(0, centerPoint).join(" ")
-                        const secondPart = textWords.slice(centerPoint).join(" ")
+                    const words = fullLineText.split(" ").filter((w) => w !== "")
+                    if (words.length > Number(breakPoint)) {
+                        const center = Math.floor(fullLineText.length / 2)
+                        const res = findBestBreak(fullLineText, center, center / 2)
+                        const pivot = res > -1 ? res : center
+
+                        const firstPart = fullLineText.slice(0, pivot).trim()
+                        const secondPart = fullLineText.slice(pivot).trim()
                         const firstLine = { ...clone(line), text: [{ ...clone(lineText), value: firstPart }] }
                         const secondLine = { ...clone(line), text: [{ ...clone(lineText), value: secondPart }] }
+
                         newLines.push(firstLine)
                         newLines.push(secondLine)
                         return
@@ -967,6 +927,49 @@ export function breakLongLines(slides: { [key: string]: Slide }, breakPoint: num
     })
 
     return slides
+}
+
+// SPLIT AT PUNCTUATION
+
+const CJK_PUNC = ["，", "。", "；", "：", "！", "？", "、"]
+const CJK_START = ["「", "『", "（", "《", "〈", "【", "〔", "“", "‘"]
+const CJK_END = ["」", "』", "）", "》", "〉", "】", "〕", "”", "’"]
+const WRAP_CHARS = [...CJK_START, ...CJK_END, '"', "'", "(", ")", "[", "]", "{", "}"]
+const PUNC_REGEX = new RegExp(`[.,;:!?${CJK_PUNC.join("")}]`)
+
+export function findBestBreak(text: string, target: number, range: number) {
+    let best = -1
+    let bestDist = Infinity
+
+    const start = Math.floor(Math.max(0, target - range))
+    const end = Math.floor(Math.min(text.length, target + range))
+
+    for (let i = start; i < end; i++) {
+        const char = text[i]
+        const isPunc = PUNC_REGEX.test(char)
+        const isSpace = char === " "
+        if (!isPunc && !isSpace) continue
+
+        const dist = Math.abs(i - target)
+        const score = dist + (isPunc ? 0 : text.length)
+
+        if (score < bestDist) {
+            let pos = i + (isPunc ? 1 : 0)
+            if (isPunc) while (pos < text.length && (WRAP_CHARS.includes(text[pos]) || PUNC_REGEX.test(text[pos]))) pos++
+
+            if (pos > 0 && pos < text.length) {
+                // Ensure the second half isn't just punctuation
+                const remaining = text.slice(pos)
+                const hasContent = [...remaining].some((c) => !/\s/.test(c) && !PUNC_REGEX.test(c) && !WRAP_CHARS.includes(c))
+
+                if (hasContent) {
+                    bestDist = score
+                    best = pos
+                }
+            }
+        }
+    }
+    return best
 }
 
 export const VIRTUAL_BREAK_CHAR = "[_VB]"

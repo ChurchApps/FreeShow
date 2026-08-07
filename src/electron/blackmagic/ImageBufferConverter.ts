@@ -81,11 +81,22 @@ export class ImageBufferConverter {
      * Convert from BGRA to YUV 422 packed (UYVY format)
      * YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
      */
-    static BGRAtoYUV(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
+    /**
+     * Convert from BGRA to YUV 422 packed (UYVY format)
+     * YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
+     */
+    static BGRAtoYUV(data: Buffer, { width, height }: Size, outputBuffer?: Buffer, colorSpace = "rec709") {
         // YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
         const requiredSize = width * height * 2
         const newData = getOutputBuffer(requiredSize, outputBuffer)
         let outIndex = 0
+
+        const isBt601 = colorSpace === "bt601"
+        const rCoeff = isBt601 ? 306 : 218
+        const gCoeff = isBt601 ? 601 : 732
+        const bCoeff = isBt601 ? 117 : 74
+        const uCoeff = isBt601 ? 578 : 552
+        const vCoeff = isBt601 ? 730 : 650
 
         // Validate input buffer size (should be width * height * 4 for BGRA)
         const expectedInputSize = width * height * 4
@@ -115,17 +126,17 @@ export class ImageBufferConverter {
                         R2 = data[i2 + 2]
                     }
 
-                    const Y1 = (306 * R1 + 601 * G1 + 117 * B1) >> 10
-                    const Y2 = (306 * R2 + 601 * G2 + 117 * B2) >> 10
+                    const Y1 = (rCoeff * R1 + gCoeff * G1 + bCoeff * B1) >> 10
+                    const Y2 = (rCoeff * R2 + gCoeff * G2 + bCoeff * B2) >> 10
 
                     // Fast U/V calculation from averaged pixel
                     const avgR = (R1 + R2) >> 1
                     const avgG = (G1 + G2) >> 1
                     const avgB = (B1 + B2) >> 1
-                    const avgY = (306 * avgR + 601 * avgG + 117 * avgB) >> 10
+                    const avgY = (rCoeff * avgR + gCoeff * avgG + bCoeff * avgB) >> 10
 
-                    const U = (((avgB - avgY) * 578) >> 10) + 128
-                    const V = (((avgR - avgY) * 730) >> 10) + 128
+                    const U = (((avgB - avgY) * uCoeff) >> 10) + 128
+                    const V = (((avgR - avgY) * vCoeff) >> 10) + 128
 
                     newData[outIndex++] = U < 0 ? 0 : U > 255 ? 255 : U
                     newData[outIndex++] = Y1 < 0 ? 0 : Y1 > 255 ? 255 : Y1
@@ -167,18 +178,18 @@ export class ImageBufferConverter {
                     }
                 }
 
-                // Calculate YUV for both pixels using integer BT.601 coefficients
-                const Y1 = (306 * R1 + 601 * G1 + 117 * B1) >> 10
-                const Y2 = (306 * R2 + 601 * G2 + 117 * B2) >> 10
+                // Calculate YUV for both pixels using integer coefficients
+                const Y1 = (rCoeff * R1 + gCoeff * G1 + bCoeff * B1) >> 10
+                const Y2 = (rCoeff * R2 + gCoeff * G2 + bCoeff * B2) >> 10
 
                 // Fast U/V calculation from averaged pixel
                 const avgR = (R1 + R2) >> 1
                 const avgG = (G1 + G2) >> 1
                 const avgB = (B1 + B2) >> 1
-                const avgY = (306 * avgR + 601 * avgG + 117 * avgB) >> 10
+                const avgY = (rCoeff * avgR + gCoeff * avgG + bCoeff * avgB) >> 10
 
-                const U = (((avgB - avgY) * 578) >> 10) + 128
-                const V = (((avgR - avgY) * 730) >> 10) + 128
+                const U = (((avgB - avgY) * uCoeff) >> 10) + 128
+                const V = (((avgR - avgY) * vCoeff) >> 10) + 128
 
                 // Write UYVY format: U Y V Y
                 newData[outIndex++] = U < 0 ? 0 : U > 255 ? 255 : U
@@ -195,11 +206,18 @@ export class ImageBufferConverter {
      * Convert from ARGB to YUV 422 packed (UYVY format)
      * YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
      */
-    static ARGBtoYUV(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
+    static ARGBtoYUV(data: Buffer, { width, height }: Size, outputBuffer?: Buffer, colorSpace = "rec709") {
         // YUV422 packed format: each 2 pixels = 4 bytes (U Y V Y)
         const requiredSize = width * height * 2
         const newData = getOutputBuffer(requiredSize, outputBuffer)
         let outIndex = 0
+
+        const isBt601 = colorSpace === "bt601"
+        const rCoeff = isBt601 ? 306 : 218
+        const gCoeff = isBt601 ? 601 : 732
+        const bCoeff = isBt601 ? 117 : 74
+        const uCoeff = isBt601 ? 578 : 552
+        const vCoeff = isBt601 ? 730 : 650
 
         // Validate input buffer size (should be width * height * 4 for ARGB)
         const expectedInputSize = width * height * 4
@@ -229,17 +247,17 @@ export class ImageBufferConverter {
                         B2 = data[i2 + 3]
                     }
 
-                    const Y1 = (306 * R1 + 601 * G1 + 117 * B1) >> 10
-                    const Y2 = (306 * R2 + 601 * G2 + 117 * B2) >> 10
+                    const Y1 = (rCoeff * R1 + gCoeff * G1 + bCoeff * B1) >> 10
+                    const Y2 = (rCoeff * R2 + gCoeff * G2 + bCoeff * B2) >> 10
 
                     // Fast U/V calculation from averaged pixel
                     const avgR = (R1 + R2) >> 1
                     const avgG = (G1 + G2) >> 1
                     const avgB = (B1 + B2) >> 1
-                    const avgY = (306 * avgR + 601 * avgG + 117 * avgB) >> 10
+                    const avgY = (rCoeff * avgR + gCoeff * avgG + bCoeff * avgB) >> 10
 
-                    const U = (((avgB - avgY) * 578) >> 10) + 128
-                    const V = (((avgR - avgY) * 730) >> 10) + 128
+                    const U = (((avgB - avgY) * uCoeff) >> 10) + 128
+                    const V = (((avgR - avgY) * vCoeff) >> 10) + 128
 
                     newData[outIndex++] = U < 0 ? 0 : U > 255 ? 255 : U
                     newData[outIndex++] = Y1 < 0 ? 0 : Y1 > 255 ? 255 : Y1
@@ -281,18 +299,18 @@ export class ImageBufferConverter {
                     }
                 }
 
-                // Calculate YUV for both pixels using integer BT.601 coefficients
-                const Y1 = (306 * R1 + 601 * G1 + 117 * B1) >> 10
-                const Y2 = (306 * R2 + 601 * G2 + 117 * B2) >> 10
+                // Calculate YUV for both pixels using integer coefficients
+                const Y1 = (rCoeff * R1 + gCoeff * G1 + bCoeff * B1) >> 10
+                const Y2 = (rCoeff * R2 + gCoeff * G2 + bCoeff * B2) >> 10
 
                 // Fast U/V calculation from averaged pixel
                 const avgR = (R1 + R2) >> 1
                 const avgG = (G1 + G2) >> 1
                 const avgB = (B1 + B2) >> 1
-                const avgY = (306 * avgR + 601 * avgG + 117 * avgB) >> 10
+                const avgY = (rCoeff * avgR + gCoeff * avgG + bCoeff * avgB) >> 10
 
-                const U = (((avgB - avgY) * 578) >> 10) + 128
-                const V = (((avgR - avgY) * 730) >> 10) + 128
+                const U = (((avgB - avgY) * uCoeff) >> 10) + 128
+                const V = (((avgR - avgY) * vCoeff) >> 10) + 128
 
                 // Write UYVY format: U Y V Y
                 newData[outIndex++] = U < 0 ? 0 : U > 255 ? 255 : U
@@ -668,7 +686,8 @@ export class ImageBufferConverter12BitRGB {
  */
 export class ImageBufferConverter10Bit {
     /*  convert from BGRA to v210 format (10-bit YUV422 packed) */
-    static BGRAtoYUV(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
+    /*  convert from BGRA to v210 format (10-bit YUV422 packed) */
+    static BGRAtoYUV(data: Buffer, { width, height }: Size, outputBuffer?: Buffer, colorSpace = "rec709") {
         // v210 format: 16 bytes per 6 pixels (10-bit YUV422 packed into 32-bit words)
         // Each 128-bit block contains: U0 Y0 V0 Y1 U2 Y2 V2 Y3 U4 Y4 V4 Y5
         // Packed as: [V0:Y0:U0] [Y2:U2:Y1] [U4:Y3:V2] [Y5:V4:Y4] (little-endian 32-bit words)
@@ -676,6 +695,13 @@ export class ImageBufferConverter10Bit {
         const groupsPerRow = Math.ceil(width / 6)
         const newData = getOutputBuffer(groupsPerRow * height * 16, outputBuffer)
         let outIndex = 0
+
+        const isBt601 = colorSpace === "bt601"
+        const rCoeff = isBt601 ? 306 : 218
+        const gCoeff = isBt601 ? 601 : 732
+        const bCoeff = isBt601 ? 117 : 74
+        const uCoeff = isBt601 ? 578 : 552
+        const vCoeff = isBt601 ? 730 : 650
 
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x += 6) {
@@ -689,11 +715,11 @@ export class ImageBufferConverter10Bit {
                         const G = data[idx + 1]
                         const R = data[idx + 2]
 
-                        // Convert to YUV (BT.601) and scale to 10-bit using integer math
-                        const y8 = (306 * R + 601 * G + 117 * B) >> 10
-                        const Y = (306 * R + 601 * G + 117 * B) >> 8
-                        const U = (((B - y8) * 578) >> 8) + 512
-                        const V = (((R - y8) * 730) >> 8) + 512
+                        // Convert to YUV and scale to 10-bit using integer math
+                        const y8 = (rCoeff * R + gCoeff * G + bCoeff * B) >> 10
+                        const Y = (rCoeff * R + gCoeff * G + bCoeff * B) >> 8
+                        const U = (((B - y8) * uCoeff) >> 8) + 512
+                        const V = (((R - y8) * vCoeff) >> 8) + 512
 
                         pixels[i] = {
                             y: Y < 0 ? 0 : Y > 1023 ? 1023 : Y,
@@ -739,12 +765,19 @@ export class ImageBufferConverter10Bit {
     }
 
     /*  convert from ARGB to v210 format (10-bit YUV422 packed) */
-    static ARGBtoYUV(data: Buffer, { width, height }: Size, outputBuffer?: Buffer) {
+    static ARGBtoYUV(data: Buffer, { width, height }: Size, outputBuffer?: Buffer, colorSpace = "rec709") {
         // v210 format: 16 bytes per 6 pixels
         // Groups are padded per row, so allocation must be based on rows (not total pixels).
         const groupsPerRow = Math.ceil(width / 6)
         const newData = getOutputBuffer(groupsPerRow * height * 16, outputBuffer)
         let outIndex = 0
+
+        const isBt601 = colorSpace === "bt601"
+        const rCoeff = isBt601 ? 306 : 218
+        const gCoeff = isBt601 ? 601 : 732
+        const bCoeff = isBt601 ? 117 : 74
+        const uCoeff = isBt601 ? 578 : 552
+        const vCoeff = isBt601 ? 730 : 650
 
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x += 6) {
@@ -759,11 +792,11 @@ export class ImageBufferConverter10Bit {
                         const G = data[idx + 2]
                         const B = data[idx + 3]
 
-                        // Convert to YUV (BT.601) and scale to 10-bit using integer math
-                        const y8 = (306 * R + 601 * G + 117 * B) >> 10
-                        const Y = (306 * R + 601 * G + 117 * B) >> 8
-                        const U = (((B - y8) * 578) >> 8) + 512
-                        const V = (((R - y8) * 730) >> 8) + 512
+                        // Convert to YUV and scale to 10-bit using integer math
+                        const y8 = (rCoeff * R + gCoeff * G + bCoeff * B) >> 10
+                        const Y = (rCoeff * R + gCoeff * G + bCoeff * B) >> 8
+                        const U = (((B - y8) * uCoeff) >> 8) + 512
+                        const V = (((R - y8) * vCoeff) >> 8) + 512
 
                         pixels[i] = {
                             y: Y < 0 ? 0 : Y > 1023 ? 1023 : Y,

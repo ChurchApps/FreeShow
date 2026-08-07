@@ -233,9 +233,13 @@ export interface Timer {
 
 export interface Clock {
     type: "digital" | "analog" | "custom"
-    dateFormat: "none"
+    dateFormat: string
     showTime?: boolean
     seconds?: boolean
+
+    // custom:
+    customFormat?: string
+    offsetDays?: number
 }
 
 export interface DynamicEvent {

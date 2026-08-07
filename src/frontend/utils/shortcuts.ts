@@ -155,6 +155,7 @@ export function keydown(e: KeyboardEvent) {
         return
     }
 
+    if (isComposing(e)) return
     if (get(guideActive)) return
 
     // clicking e.g. "Show" tab button will focus that making number tab change not work
@@ -187,7 +188,7 @@ export function keydown(e: KeyboardEvent) {
         if (isFormattingKey(e) && isEditingText()) return
 
         // use default input shortcuts on supported devices
-        const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y"]
+        const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y", "x"]
         const macShortcutDebug = false
         if ((key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(key) && get(os).platform !== "darwin" && !macShortcutDebug)) {
             return
@@ -310,6 +311,12 @@ export function isFormattingKey(e: KeyboardEvent): boolean {
     if (!e.ctrlKey && !e.metaKey) return false
     const key = getNormalizedKey(e).toLowerCase()
     return formattingKeys.includes(key)
+}
+
+// IME candidate window check
+export function isComposing(e: KeyboardEvent): boolean {
+    // while keyCode is deprecated, "keyCode === 229" is an official exception
+    return e.isComposing || e.keyCode === 229
 }
 
 /// // PREVIEW /////

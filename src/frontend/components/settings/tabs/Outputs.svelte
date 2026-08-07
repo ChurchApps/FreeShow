@@ -205,7 +205,7 @@
                 setTimeout(() => {
                     if (newData.displayMode && newData.pixelFormat) send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
                 })
-            } else if (key === "pixelFormat" || key === "alphaKey") {
+            } else if (key === "pixelFormat" || key === "alphaKey" || key === "sdr") {
                 if (key === "alphaKey") updateOutput("transparent", value)
                 setTimeout(() => {
                     if (newData.displayMode && newData.pixelFormat) send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
@@ -314,6 +314,10 @@
             <MaterialDropdown label="settings.display_mode" value={currentOutput.blackmagicData?.displayMode} options={currentOutput.blackmagicData?.displayModes?.map((mode) => ({ label: mode.name, value: mode.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "displayMode")} />
             <MaterialDropdown label="settings.pixel_format" value={currentOutput.blackmagicData?.pixelFormat} options={currentOutput.blackmagicData?.pixelFormats?.map((format) => ({ label: format.name, value: format.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "pixelFormat")} />
         </InputRow>
+
+        {#if currentOutput.blackmagicData?.pixelFormat?.includes("YUV")}
+            <MaterialToggleSwitch label="SDR" title="SDR Encoding (Rec. 709)" checked={currentOutput.blackmagicData?.sdr !== false} defaultValue={true} on:change={(e) => updateBlackmagicData(e.detail, "sdr")} />
+        {/if}
 
         {#if isAlphaSupported()}
             <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />

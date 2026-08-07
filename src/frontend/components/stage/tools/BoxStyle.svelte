@@ -135,11 +135,14 @@
     $: if (item?.type === "clock" && item) {
         const clockType = item.clock?.type || "digital"
         const dateFormat = item.clock?.dateFormat || "none"
+        const customFormat = item.clock?.customFormat || ""
+        const showOffsetDays = clockType === "custom" && /[MDY]/.test(customFormat) // has M or D or Y
 
         setBoxInputValue(stageSections, "default", "clock.dateFormat", "hidden", clockType !== "digital")
         setBoxInputValue(stageSections, "default", "clock.showTime", "hidden", clockType !== "digital" || dateFormat === "none")
         setBoxInputValue(stageSections, "default", "clock.seconds", "hidden", clockType === "custom" || (clockType === "digital" && item.clock?.showTime === false && dateFormat !== "none"))
         setBoxInputValue(stageSections, "default", "clock.customFormat", "hidden", clockType !== "custom")
+        setBoxInputValue(stageSections, "default", "clock.offsetDays", "hidden", !showOffsetDays)
 
         // show seconds by default on stage
         setBoxInputValue(stageSections, "default", "clock.seconds", "value", true)

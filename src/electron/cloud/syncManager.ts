@@ -64,10 +64,8 @@ const DEBUG_MODE = false && !isProd
 const EXTRACT_LOCATION = path.join(app.getPath("temp"), "freeshow-cloud")
 const MERGE_INDIVIDUAL = ["OVERLAYS", "PROJECTS", "STAGE", "TEMPLATES", "SYNCED_SETTINGS"] // "EVENTS", "THEMES"
 
-// SYNCED_SETTINGS sub-keys that are item-collections: merged per-item via the created/deleted
-// ledger (like PROJECTS), so items unique to a device aren't lost and deletions propagate.
-// Other keys (e.g. drawSettings, scriptureSettings, deletedDefaults) are atomic settings and
-// keep the previous newest-file-wins behavior.
+// SYNCED_SETTINGS item-collections merged per-item via ledger.
+// Atomic settings (e.g. drawSettings) keep newest-file-wins behavior.
 const SYNCED_SETTINGS_COLLECTIONS = ["categories", "overlayCategories", "templateCategories", "styles", "profiles", "timers", "variables", "audioStreams", "audioPlaylists", "scriptures", "groups", "midiIn", "emitters", "playerVideos", "videoMarkers", "mediaTags", "playerTags", "actionTags", "variableTags", "timerTags", "customizedIcons", "globalTags", "globalRegexes", "customMetadata", "effects"]
 
 const STALE_MERGE_GUARD_MS = 1000 * 60 * 60 * 24 * 30 // 30 days
@@ -81,15 +79,15 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     let guardCloudModifiedAt = 0
 
     const provider = getManager[data.id]()
-    if (!provider) return { changedFiles }
+    if (!provider) return { success: false, error: "Sync provider not available. Try connecting again." }
 
     if (data.method === "replace") await deleteLocalFiles()
 
     console.log("Syncing to cloud")
 
     if (data.method === "upload") {
-        await uploadLocalData()
-        return await finish()
+        const uploadResult = await uploadLocalData()
+        return await finish(uploadResult.success, uploadResult.error)
     }
 
     // clear any uncleared previous data
@@ -97,8 +95,8 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
     const cloudDataPath = await provider.getData(data.churchId, data.teamId, EXTRACT_LOCATION)
     if (!cloudDataPath) {
-        await uploadLocalData()
-        return await finish()
+        const uploadResult = await uploadLocalData()
+        return await finish(uploadResult.success, uploadResult.error)
     }
 
     // extract cloud data
@@ -114,7 +112,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         modifiedDates = await getZipModifiedDates(cloudDataPath)
     } catch (err) {
         console.error("Could not decompress cloud sync zip:", cloudDataPath, err)
-        return await finish(false)
+        return await finish(false, "Could not read the downloaded cloud data. Please try again.")
     }
 
     console.log("Files:", extractedFiles.length)
@@ -153,7 +151,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             }
         }
 
-        // set to read-only always initially if not synced for 30+ days
+        // Stale merge guard: force read-only if not synced for 30+ days to prevent cloud overwrite.
         if (data.method === "merge" && !isNewDevice && CHANGES.devices.length > 1) {
             const latestCloudModifiedAt = Math.max(0, ...Object.values(CHANGES.modified || {}).map((value) => Number(value) || 0))
             const guardKey = getMergeGuardKey(data)
@@ -170,7 +168,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     }
     // console.log("Devices:", CHANGES.devices)
 
-    // the ledger owns all created/deleted reconciliation; build it once per run from the resolved state
+    // Ledger for created/deleted reconciliation.
     ledger = new SyncLedger({ changes: CHANGES, cloudChanges, deviceId: getDeviceId(), isNewDevice })
 
     // MERGE
@@ -303,8 +301,15 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         // replace full files
         if (data.method === "replace" || !MERGE_INDIVIDUAL.includes(id)) {
             const localPath = localStore.path
+
+            // Prefer real edit time (fileModified) over file mtime.
+            // mtime bumps on sync writes, which can falsely flag devices as newer.
+            const cloudFileModified = CHANGES.fileModified?.[id]
+            const localFileModified = getStore("CACHE_SYNC")?.fileModified?.[id]
+            const cloudIsNewer = data.method === "replace" || isNewDevice || (cloudFileModified || localFileModified ? (cloudFileModified || 0) > (localFileModified || 0) : await isCloudNewerThanFile(localPath, modifiedDates[file.name]))
+
             // replace local file if cloud is newer or new device
-            if (data.method === "replace" || isNewDevice || (await isCloudNewerThanFile(localPath, modifiedDates[file.name]))) {
+            if (cloudIsNewer) {
                 // try to set store directly first, otherwise move the file
                 const cloudContent = await readFileAsync(cloudPath)
                 const parsedData = safeParseJSON(cloudContent)
@@ -314,9 +319,17 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                     await moveFileAsync(cloudPath, localPath)
                 }
 
+                // Record true edit time. Clear local if cloud is untracked to prevent stale survival.
+                if (cloudFileModified) await setLocalFileModified(id, cloudFileModified)
+                else await clearLocalFileModified(id)
+
                 // send to frontend
                 const localData = localStore.store
                 sendMain(Main[id], localData)
+            } else if (localFileModified) {
+                // Local wins: carry real edit time into ledger for other devices.
+                if (!CHANGES.fileModified) CHANGES.fileModified = {}
+                CHANGES.fileModified[id] = Math.max(CHANGES.fileModified[id] || 0, localFileModified)
             }
             return
         }
@@ -359,10 +372,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 })
             )
         } else if (id === "SYNCED_SETTINGS") {
-            // SYNCED_SETTINGS bundles item-collections (scriptures, categories, styles…) plus a
-            // few atomic settings. Merge the collections per-item via the ledger (like PROJECTS),
-            // so items unique to either device survive and deletions propagate. See #3335.
-            // The per-item logic lives in the pure, unit-tested SyncLedger module (syncLedger.ts).
+            // Merge item-collections per-item via ledger. See #3335.
             const cloudFileIsNewer = isNewDevice || (await isCloudNewerThanFile(localStore.path, modifiedDates[file.name]))
             for (const [type, object] of Object.entries<{ [key: string]: any }>(cloudFileData)) {
                 const isCollection = SYNCED_SETTINGS_COLLECTIONS.includes(type) && !!object && typeof object === "object" && !Array.isArray(object)
@@ -443,7 +453,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         return await finish()
     }
 
-    const success = await uploadLocalData()
+    const uploadResult = await uploadLocalData()
 
     if (!DEBUG_MODE && !process.env.VITEST) {
         // silently backup in the background, this is skipped when the program is being closed
@@ -454,13 +464,19 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         }, 1000)
     }
 
-    return await finish(success)
+    return await finish(uploadResult.success, uploadResult.error)
 
-    async function uploadLocalData() {
-        const zipPath = await compressUserData()
-        if (!zipPath) return false
-        const uploadSuccess = await provider!.uploadData(data.teamId, zipPath)
-        return uploadSuccess
+    async function uploadLocalData(): Promise<{ success: boolean; error?: string }> {
+        let success = false
+        try {
+            const zipPath = await compressUserData()
+            if (zipPath) success = await provider!.uploadData(data.teamId, zipPath)
+        } catch (err) {
+            console.error("Could not upload data to cloud:", err)
+        }
+
+        if (!success) return { success, error: "Could not upload your data to the cloud. Please try again." }
+        return { success }
     }
 
     // if cloud backup is non existent or older than a week
@@ -489,11 +505,11 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         }
     }
 
-    async function finish(success = true) {
+    async function finish(success = true, error?: string) {
         if (!DEBUG_MODE) await deleteFolderAsync(EXTRACT_LOCATION)
         console.log("Sync completed!")
         isNewDevice = false
-        return { success, changedFiles }
+        return { success, error, changedFiles }
     }
 }
 
@@ -534,6 +550,23 @@ async function isCloudNewerThanFile(localFilePath: string, cloudDate: Date): Pro
     if (!localStats) return true
 
     return cloudDate.getTime() > localStats.mtime.getTime()
+}
+
+// Tracks the real last-edit time per full-file store, bumped only by genuine edits (save.ts).
+export async function setLocalFileModified(id: string, timestamp: number) {
+    const syncCache = getStore("CACHE_SYNC") || {}
+    if (!syncCache.fileModified) syncCache.fileModified = {}
+    if ((syncCache.fileModified[id] || 0) >= timestamp) return
+    syncCache.fileModified[id] = timestamp
+    if (_store.CACHE_SYNC) await safeStoreSet(_store.CACHE_SYNC, syncCache, "CACHE_SYNC")
+}
+
+// Clears tracked edit time for stores without tracked timestamps to prevent stale survival.
+async function clearLocalFileModified(id: string) {
+    const syncCache = getStore("CACHE_SYNC") || {}
+    if (!syncCache.fileModified?.[id]) return
+    delete syncCache.fileModified[id]
+    if (_store.CACHE_SYNC) await safeStoreSet(_store.CACHE_SYNC, syncCache, "CACHE_SYNC")
 }
 
 function getLocalOnlyKeys(cloudKeys: any, localKeys: any): string[] {
@@ -661,7 +694,7 @@ function safeParseJSON(text: string) {
 
 const changes_name = "changes.json"
 const version = "0.1.1"
-const DEFAULT_CHANGES: Changes = { version, devices: [], modified: {}, deleted: {}, created: {} }
+const DEFAULT_CHANGES: Changes = { version, devices: [], modified: {}, deleted: {}, created: {}, fileModified: {} }
 let CHANGES: Changes = clone(DEFAULT_CHANGES)
 let cloudChanges: Changes | null = null
 let isNewDevice = false

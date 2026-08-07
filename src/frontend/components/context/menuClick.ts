@@ -2230,7 +2230,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
     }
 
     const ref = getLayoutRef()
-    if (get(editMode) === "text") {
+    if (get(editMode) === "text_edit") {
         // select all slides
         slideIds = _show()
             .slides()

@@ -4,6 +4,7 @@ import type { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { SaveData } from "../../types/Save"
 import { currentlyDeletedShows } from "../cloud/drive"
+import { setLocalFileModified } from "../cloud/syncManager"
 import { startBackup } from "../data/backup"
 import { defaultSettings, defaultSyncedSettings } from "../data/defaults"
 import { _store, safeStoreSet } from "../data/store"
@@ -11,6 +12,10 @@ import { sendMain, sendToMain } from "../IPC/main"
 import { deleteFile, doesPathExist, getDataFolderPath, parseShow, readFile, writeFile } from "../utils/files"
 import { checkIfMatching, clone, wait } from "../utils/helpers"
 import { renameShows } from "../utils/shows"
+
+// Full-file stores that use real edit timestamps instead of file mtime for cloud sync comparison.
+// Prevents sync writes from falsely flagging stores as newer.
+const TRACK_FILE_MODIFIED = ["EVENTS", "THEMES", "MEDIA"]
 
 let isSaving = false
 export async function save(data: SaveData) {
@@ -49,6 +54,7 @@ export async function save(data: SaveData) {
         if (checkIfMatching(currentData, newData)) return
 
         await safeStoreSet(store, newData, key)
+        if (TRACK_FILE_MODIFIED.includes(key)) await setLocalFileModified(key, Date.now())
 
         if (reset) sendMain(key as Main, newData)
     }

@@ -12,6 +12,7 @@
     export let type: "digital" | "analog" | "custom" = "digital"
     export let dateFormat: string = "none"
     export let customFormat: string = "hh:mm a"
+    export let offsetDays: number = 0
     export let showTime: boolean = true
     export let seconds: boolean = true
 
@@ -66,7 +67,8 @@
         // }
 
         // .locale($language)
-        return dayjs(date).format(format)
+        const targetDate = offsetDays ? dayjs(date).add(Number(offsetDays) || 0, "day") : dayjs(date)
+        return targetDate.format(format)
     }
 
     $: formattedDate = dateFormat !== "none" ? formatDateTime(d, dateFormat) : ""

@@ -157,7 +157,8 @@ export function emitOSC(msg: { signal: any; data: string }) {
     const OSC_SENDER = new OSC({ plugin: new OSC.DatagramPlugin({ send: { host, port } }) })
 
     OSC_SENDER.on("open", sendMessage)
-    OSC_SENDER.open()
+    // set local host/port to 0.0.0.0:0 to allow sending to LAN devices
+    OSC_SENDER.open({ host: "0.0.0.0", port: 0 })
 
     // const IS_OPEN = 1
     // if (OSC_SENDER?.status() === IS_OPEN) {
