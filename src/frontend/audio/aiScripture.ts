@@ -3,7 +3,7 @@
 // receives detected scripture references back & projects/suggests them
 
 import { get } from "svelte/store"
-import type { AiScriptureBook, AiScriptureCommandEvent, AiScriptureStartConfig, AiScriptureTranslation, AIProviderId, DetectedReference, WhisperModelId } from "../../types/AiScripture"
+import type { AiScriptureBook, AiScriptureCommandEvent, AiScriptureEngine, AiScriptureStartConfig, AiScriptureTranslation, AIProviderId, DetectedReference, WhisperModelId } from "../../types/AiScripture"
 import { AI_PROVIDER_MODELS } from "../../types/AiScripture"
 import { Main } from "../../types/IPC/Main"
 import type { OutSlide } from "../../types/Show"
@@ -34,6 +34,7 @@ interface AiScriptureSettings {
     model?: string // legacy single model value (kept as fallback)
     models?: { [key in AIProviderId]?: string }
     customModel?: string
+    engine?: AiScriptureEngine
     whisperModel?: WhisperModelId
     whisperCustomPath?: string
     whisperCustomModelPath?: string
@@ -58,6 +59,8 @@ const ERROR_LANG_KEYS: { [code: string]: string } = {
     microphone_access: "scripture.ai_error_microphone",
     whisper_not_installed: "settings.ai_whisper_not_installed",
     whisper_model_missing: "scripture.ai_error_model_missing",
+    nemotron_model_missing: "settings.ai_nemotron_not_downloaded",
+    nemotron_unsupported: "settings.ai_nemotron_unsupported",
     cancelled: "settings.ai_error_cancelled",
     unsupported_platform: "settings.ai_error_unsupported_platform",
     download_in_progress: "settings.ai_error_download_in_progress"
@@ -131,8 +134,10 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
         llm = { provider, model }
     }
 
-    const language = settings.spokenLanguage || "en"
-    const interpretationMode = !!settings.interpretationMode
+    // the streaming engine transcribes English only, so its transcript language is fixed regardless of the whisper setting
+    const engine = settings.engine || "whisper"
+    const language = engine === "nemotron" ? "en" : settings.spokenLanguage || "en"
+    const interpretationMode = engine === "whisper" && !!settings.interpretationMode
 
     // default model must match the popup's derivation, or a non English user would request a model they never downloaded
     let whisperModel: WhisperModelId = settings.whisperModel || (language.startsWith("en") && !interpretationMode ? "base.en" : "base")
@@ -144,6 +149,7 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     const spokenLanguages = interpretationMode ? (settings.spokenLanguages?.length ? settings.spokenLanguages : Array.from(new Set([language, listenLanguage]))) : undefined
 
     const startConfig: AiScriptureStartConfig = {
+        engine,
         whisperModel,
         whisperCustomPath: settings.whisperCustomPath || undefined,
         whisperCustomModelPath: settings.whisperCustomModelPath || undefined,

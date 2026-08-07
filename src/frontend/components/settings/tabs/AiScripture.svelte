@@ -1,12 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import type { AIError, AIProviderId, WhisperModelId, WhisperStatus } from "../../../../types/AiScripture"
+    import type { AiScriptureEngine, AIError, AIProviderId, NemotronStatus, WhisperModelId, WhisperStatus } from "../../../../types/AiScripture"
     import { AI_PROVIDER_MODELS, WHISPER_LANGUAGES } from "../../../../types/AiScripture"
     import { Main } from "../../../../types/IPC/Main"
     import { aiScriptureErrorText } from "../../../audio/aiScripture"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { language, os, scriptures, special, whisperDownloads } from "../../../stores"
+    import { language, os, scriptures, special, aiScriptureDownloads } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -32,7 +32,7 @@
 
     // STATUS
 
-    let status: { keys: { [id in AIProviderId]: boolean }; whisper: WhisperStatus } | null = null
+    let status: { keys: { [id in AIProviderId]: boolean }; whisper: WhisperStatus; nemotron: NemotronStatus } | null = null
     async function getStatus() {
         status = (await requestMain(Main.AI_SCRIPTURE_GET_STATUS)) || null
     }
@@ -53,9 +53,18 @@
         })
     })
 
-    // TRANSCRIPTION (WHISPER)
+    // TRANSCRIPTION ENGINE
 
     $: platform = $os.platform
+
+    // whisper transcribes fixed windows, the streaming engine decodes as the words arrive - see the driver contract in electron/aiScripture/drivers
+    const engineOptions = [
+        { value: "whisper", label: translateText("settings.ai_engine_whisper") },
+        { value: "nemotron", label: translateText("settings.ai_engine_nemotron") }
+    ]
+    $: engine = ((settings.engine as string) || "whisper") as AiScriptureEngine
+
+    // TRANSCRIPTION (WHISPER)
 
     const languageOptions = WHISPER_LANGUAGES.map((a) => ({ value: a.code, label: a.name }))
 
@@ -113,21 +122,10 @@
     // DOWNLOADS
 
     type DownloadInfo = { progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }
+    // names are assigned by the electron process: "whisper" (binary), "whisper-model-<id>" and "nemotron".
+    // matching has to be exact - a loose match would show one engine's progress under the other's button
     function getDownload(name: string, _updater: any = null): DownloadInfo | null {
-        const downloads = $whisperDownloads
-        if (downloads.has(name)) return downloads.get(name) || null
-
-        let match: DownloadInfo | null = null
-        downloads.forEach((value, key) => {
-            if (!match && key.includes(name)) match = value
-        })
-        if (match) return match
-
-        // fall back to any active download (exact key names are managed by the electron process)
-        downloads.forEach((value) => {
-            if (!match && value.status === "downloading") match = value
-        })
-        return match
+        return $aiScriptureDownloads.get(name) || null
     }
 
     function getPercent(download: DownloadInfo | null) {
@@ -166,13 +164,41 @@
     }
 
     // driven by the progress store, not the local click flags, so reopening the popup mid-download still shows live progress
-    $: binaryDownload = getDownload("whisper", $whisperDownloads)
-    $: modelDownload = getDownload(whisperModelId, $whisperDownloads)
+    $: binaryDownload = getDownload("whisper", $aiScriptureDownloads)
+    $: modelDownload = getDownload(`whisper-model-${whisperModelId}`, $aiScriptureDownloads)
     $: binaryActive = binaryDownloading || binaryDownload?.status === "downloading"
     $: modelActive = modelDownloading || modelDownload?.status === "downloading"
 
     // a download that finished while the popup was closed still refreshes the "model downloaded" state
     $: if (modelDownload?.status === "complete" && status && !modelDownloaded) getStatus()
+
+    // NEMOTRON MODEL (streaming engine)
+
+    let nemotronDownloading = false
+    let nemotronError = ""
+    async function downloadNemotron() {
+        if (nemotronDownloading) return
+        nemotronDownloading = true
+        nemotronError = ""
+
+        const result = await requestMain(Main.AI_SCRIPTURE_NEMOTRON_DOWNLOAD, undefined, undefined, 60 * 60 * 1000)
+        nemotronDownloading = false
+        if (result && !result.ok) nemotronError = result.error || ""
+        getStatus()
+    }
+
+    function cancelNemotronDownload() {
+        sendMain(Main.AI_SCRIPTURE_NEMOTRON_CANCEL)
+    }
+
+    function deleteNemotronModel() {
+        sendMain(Main.AI_SCRIPTURE_NEMOTRON_DELETE)
+        setTimeout(getStatus, 200)
+    }
+
+    $: nemotronDownload = getDownload("nemotron", $aiScriptureDownloads)
+    $: nemotronActive = nemotronDownloading || nemotronDownload?.status === "downloading"
+    $: if (nemotronDownload?.status === "complete" && status && !status.nemotron.ready) getStatus()
 
     // CUSTOM BINARY PATH
 
@@ -311,7 +337,41 @@
 {:else}
     <Title label="settings.ai_transcription" icon="microphone" />
 
-    {#if !status}
+    <MaterialDropdown label="settings.ai_engine" options={engineOptions} value={engine} defaultValue="whisper" on:change={(e) => update("engine", e.detail)} />
+    <p class="faded hint"><T id={engine === "nemotron" ? "settings.ai_engine_nemotron_hint" : "settings.ai_engine_whisper_hint"} /></p>
+
+    {#if engine === "nemotron"}
+        {#if !status}
+            <div class="loading"><Loader /></div>
+        {:else if !status.nemotron.supported}
+            <Tip type="warning" value="settings.ai_nemotron_unsupported" />
+        {:else if status.nemotron.ready}
+            <div class="statusLine ok">
+                <Icon id="check" size={0.9} white />
+                <T id="settings.ai_nemotron_ready" />
+            </div>
+            <MaterialButton variant="outlined" icon="delete" on:click={deleteNemotronModel}>
+                <T id="settings.ai_nemotron_delete" />
+            </MaterialButton>
+        {:else if nemotronActive}
+            <div class="progressArea">
+                <div class="progressBar"><div class="progressFill" style="width: {getPercent(nemotronDownload)}%;" /></div>
+                <span class="percentLabel">{getPercent(nemotronDownload)}%</span>
+                <MaterialButton icon="close" title="popup.cancel" on:click={cancelNemotronDownload} />
+            </div>
+        {:else}
+            <div class="installArea">
+                <p class="faded"><T id="settings.ai_nemotron_not_downloaded" /></p>
+                <MaterialButton variant="outlined" icon="download" on:click={downloadNemotron}>
+                    <T id="settings.ai_download_nemotron" />
+                </MaterialButton>
+            </div>
+        {/if}
+
+        {#if nemotronError || (!nemotronActive && nemotronDownload?.status === "error")}
+            <Tip type="warning" value={aiScriptureErrorText(nemotronError || nemotronDownload?.message || "start_failed")} />
+        {/if}
+    {:else if !status}
         <div class="loading"><Loader /></div>
     {:else if binaryInstalled}
         <div class="statusLine ok">
@@ -359,61 +419,67 @@
         </div>
     {/if}
 
-    {#if status && (!binaryInstalled || settings.whisperCustomPath || platform === "linux")}
+    {#if engine === "whisper" && status && (!binaryInstalled || settings.whisperCustomPath || platform === "linux")}
         <MaterialFilePicker label="settings.ai_whisper_custom_path" value={settings.whisperCustomPath || ""} filter={{ name: "whisper-cli", extensions: ["*"] }} icon="folder" allowEmpty on:change={(e) => verifyCustomPath(e.detail || "")} />
         {#if customPathError}
             <Tip type="warning" value="settings.ai_whisper_path_invalid" />
         {/if}
     {/if}
 
-    <!-- use an already installed ggml model file (e.g. large-v3) instead of downloading one -->
-    <MaterialFilePicker label="settings.ai_whisper_custom_model" value={settings.whisperCustomModelPath || ""} filter={{ name: "ggml model", extensions: ["bin"] }} icon="folder" allowEmpty on:change={(e) => update("whisperCustomModelPath", e.detail || "")} />
+    {#if engine === "whisper"}
+        <!-- use an already installed ggml model file (e.g. large-v3) instead of downloading one -->
+        <MaterialFilePicker label="settings.ai_whisper_custom_model" value={settings.whisperCustomModelPath || ""} filter={{ name: "ggml model", extensions: ["bin"] }} icon="folder" allowEmpty on:change={(e) => update("whisperCustomModelPath", e.detail || "")} />
 
-    <InputRow>
-        <MaterialDropdown label="settings.ai_whisper_model" options={whisperModelOptions} value={whisperModelBase} defaultValue="base" on:change={(e) => setWhisperModel(e.detail)} />
+        <InputRow>
+            <MaterialDropdown label="settings.ai_whisper_model" options={whisperModelOptions} value={whisperModelBase} defaultValue="base" on:change={(e) => setWhisperModel(e.detail)} />
 
-        {#if status}
-            {#if modelDownloaded}
-                <div class="statusLine ok inline">
-                    <Icon id="check" size={0.9} white />
-                    <T id="settings.ai_model_downloaded" />
-                </div>
-            {:else if modelActive}
-                <div class="progressArea">
-                    <div class="progressBar"><div class="progressFill" style="width: {getPercent(modelDownload)}%;" /></div>
-                    <span class="percentLabel">{getPercent(modelDownload)}%</span>
-                    <MaterialButton icon="close" title="popup.cancel" on:click={cancelDownload} />
-                </div>
-            {:else}
-                <MaterialButton icon="download" on:click={downloadModel}>
-                    <T id="settings.ai_download_model" />
-                </MaterialButton>
+            {#if status}
+                {#if modelDownloaded}
+                    <div class="statusLine ok inline">
+                        <Icon id="check" size={0.9} white />
+                        <T id="settings.ai_model_downloaded" />
+                    </div>
+                {:else if modelActive}
+                    <div class="progressArea">
+                        <div class="progressBar"><div class="progressFill" style="width: {getPercent(modelDownload)}%;" /></div>
+                        <span class="percentLabel">{getPercent(modelDownload)}%</span>
+                        <MaterialButton icon="close" title="popup.cancel" on:click={cancelDownload} />
+                    </div>
+                {:else}
+                    <MaterialButton icon="download" on:click={downloadModel}>
+                        <T id="settings.ai_download_model" />
+                    </MaterialButton>
+                {/if}
             {/if}
+        </InputRow>
+        {#if modelError || (!modelActive && modelDownload?.status === "error")}
+            <Tip type="warning" value={aiScriptureErrorText(modelError || modelDownload?.message || "start_failed")} />
         {/if}
-    </InputRow>
-    {#if modelError || (!modelActive && modelDownload?.status === "error")}
-        <Tip type="warning" value={aiScriptureErrorText(modelError || modelDownload?.message || "start_failed")} />
     {/if}
 
     <InputRow>
         <MaterialDropdown label="live.microphones" options={microphones} value={settings.micDeviceId || ""} on:change={(e) => update("micDeviceId", e.detail)} allowEmpty />
-        <MaterialDropdown label="settings.ai_spoken_language" options={languageOptions} value={spokenLanguage} defaultValue={($language || "en").slice(0, 2).toLowerCase()} on:change={(e) => setSpokenLanguage(e.detail)} />
+        {#if engine === "whisper"}
+            <MaterialDropdown label="settings.ai_spoken_language" options={languageOptions} value={spokenLanguage} defaultValue={($language || "en").slice(0, 2).toLowerCase()} on:change={(e) => setSpokenLanguage(e.detail)} />
+        {/if}
     </InputRow>
 
-    <MaterialToggleSwitch label="settings.ai_interpretation" checked={settings.interpretationMode === true} defaultValue={false} on:change={(e) => toggleInterpretation(e.detail)} />
-    {#if interpretationMode}
-        <p class="faded hint"><T id="settings.ai_interpretation_hint" /></p>
+    {#if engine === "whisper"}
+        <MaterialToggleSwitch label="settings.ai_interpretation" checked={settings.interpretationMode === true} defaultValue={false} on:change={(e) => toggleInterpretation(e.detail)} />
+        {#if interpretationMode}
+            <p class="faded hint"><T id="settings.ai_interpretation_hint" /></p>
 
-        <p class="listLabel"><T id="settings.ai_spoken_languages" /> ({spokenLanguages.length})</p>
-        <div class="languageList">
-            {#each WHISPER_LANGUAGES as spoken}
-                <MaterialCheckbox label={spoken.name} checked={spokenLanguages.includes(spoken.code)} on:change={(e) => toggleSpokenLanguage(spoken.code, e.detail)} />
-            {/each}
-        </div>
-        <p class="faded hint"><T id="settings.ai_spoken_languages_hint" /></p>
+            <p class="listLabel"><T id="settings.ai_spoken_languages" /> ({spokenLanguages.length})</p>
+            <div class="languageList">
+                {#each WHISPER_LANGUAGES as spoken}
+                    <MaterialCheckbox label={spoken.name} checked={spokenLanguages.includes(spoken.code)} on:change={(e) => toggleSpokenLanguage(spoken.code, e.detail)} />
+                {/each}
+            </div>
+            <p class="faded hint"><T id="settings.ai_spoken_languages_hint" /></p>
 
-        <MaterialDropdown label="settings.ai_listen_language" options={listenLanguageOptions} value={listenLanguage} defaultValue={spokenLanguage} on:change={(e) => update("listenLanguage", e.detail)} />
-        <p class="faded hint"><T id="settings.ai_interpretation_model_hint" /></p>
+            <MaterialDropdown label="settings.ai_listen_language" options={listenLanguageOptions} value={listenLanguage} defaultValue={spokenLanguage} on:change={(e) => update("listenLanguage", e.detail)} />
+            <p class="faded hint"><T id="settings.ai_interpretation_model_hint" /></p>
+        {/if}
     {/if}
 
     <Title label="settings.ai_detection" icon="search" />

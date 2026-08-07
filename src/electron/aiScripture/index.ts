@@ -11,7 +11,7 @@ import { getProvider } from "./providers"
 import { Transcriber } from "./transcriber"
 import { NemotronDriver } from "./drivers/nemotron"
 import type { TranscriberSegment, TranscriptionDriver } from "./drivers/types"
-import { getNemotronModelPaths, getVadModelPath } from "./nemotronManager"
+import { cancelNemotronDownload, deleteNemotronModel, downloadNemotronModel, getNemotronModelPaths, getVadModelPath, isNemotronReady, isNemotronSupported } from "./nemotronManager"
 import { cancelWhisperDownload, downloadWhisperBinary, downloadWhisperModel, getModelPath, getWhisperStatus, isModelReady, resolveWhisper, verifyWhisperBinary } from "./whisperManager"
 
 let transcriber: TranscriptionDriver | null = null
@@ -169,7 +169,8 @@ export async function getAiScriptureStatus() {
             gemini: !!getAiKey("gemini"),
             ollama: true // local server, no key needed
         },
-        whisper: await getWhisperStatus()
+        whisper: await getWhisperStatus(),
+        nemotron: { supported: isNemotronSupported(), ready: isNemotronReady() }
     }
 }
 
@@ -192,6 +193,14 @@ export const aiScriptureWhisper = {
     downloadModel: (data: { modelId: Parameters<typeof downloadWhisperModel>[0] }) => downloadWhisperModel(data.modelId),
     cancel: () => cancelWhisperDownload(),
     verifyPath: async (data: { path: string }) => ({ valid: await verifyWhisperBinary(data.path) })
+}
+
+// NEMOTRON (streaming engine)
+
+export const aiScriptureNemotron = {
+    download: () => downloadNemotronModel(),
+    cancel: () => cancelNemotronDownload(),
+    delete: () => deleteNemotronModel()
 }
 
 app.on("will-quit", () => stopAiScripture())

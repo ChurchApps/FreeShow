@@ -71,12 +71,18 @@ export const WHISPER_LANGUAGES: { code: string; name: string }[] = [
     { code: "zu", name: "Zulu" }
 ]
 
-// transient downloading/verifying states are sent as AI_SCRIPTURE_WHISPER_PROGRESS events,
+// transient downloading/verifying states are sent as AI_SCRIPTURE_DOWNLOAD_PROGRESS events,
 // and custom binary paths are verified separately (renderer setting) - this is only what main knows on its own
 export interface WhisperStatus {
     binary: "not_installed" | "ready_local" | "ready_system"
     binaryPath?: string
     downloadedModels: WhisperModelId[]
+}
+
+// the streaming engine has no binary to install - only the optional native addon and the downloaded model
+export interface NemotronStatus {
+    supported: boolean // the sherpa-onnx native addon loaded on this platform
+    ready: boolean // model files + the VAD gate are downloaded
 }
 
 export const AI_PROVIDER_MODELS: { [id in AIProviderId]: { models: { id: string; name: string; recommended?: boolean }[]; defaultModel: string } } = {

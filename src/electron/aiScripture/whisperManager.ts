@@ -268,7 +268,7 @@ export async function downloadWhisperBinary(): Promise<{ ok: boolean; error?: st
     }
     verifiedLocalPath = local.binaryPath
 
-    sendToMain(ToMain.AI_SCRIPTURE_WHISPER_PROGRESS, { name, progress: 1, total: 1, status: "complete" })
+    sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name, progress: 1, total: 1, status: "complete" })
     return { ok: true }
 }
 
@@ -295,7 +295,7 @@ export async function downloadWhisperModel(modelId: WhisperModelId): Promise<{ o
         return { ok: false, error: "invalid_model" }
     }
 
-    sendToMain(ToMain.AI_SCRIPTURE_WHISPER_PROGRESS, { name, progress: 1, total: 1, status: "complete" })
+    sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name, progress: 1, total: 1, status: "complete" })
     return { ok: true }
 }
 
@@ -311,7 +311,7 @@ export function cancelWhisperDownload(): void {
     } catch {}
 
     // terminal event so the renderer's progress entry for this download never stays stuck at "downloading"
-    sendToMain(ToMain.AI_SCRIPTURE_WHISPER_PROGRESS, { name, progress: 0, total: 0, status: "error", message: "cancelled" })
+    sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name, progress: 0, total: 0, status: "error", message: "cancelled" })
 }
 
 // downloads to a ".part" file first so an aborted/failed download never leaves a valid looking file behind
@@ -347,7 +347,7 @@ async function downloadFile(url: string, destPath: string, progressName: string)
                 downloadedBytes += chunk.length
                 if (Date.now() - lastProgressAt < PROGRESS_INTERVAL) return
                 lastProgressAt = Date.now()
-                sendToMain(ToMain.AI_SCRIPTURE_WHISPER_PROGRESS, { name: progressName, progress: downloadedBytes, total: totalBytes, status: "downloading" })
+                sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name: progressName, progress: downloadedBytes, total: totalBytes, status: "downloading" })
             })
 
             try {
@@ -446,5 +446,5 @@ function errorMessage(err: unknown): string {
 }
 
 function sendDownloadError(name: string, err: unknown) {
-    sendToMain(ToMain.AI_SCRIPTURE_WHISPER_PROGRESS, { name, progress: 0, total: 0, status: "error", message: errorMessage(err) })
+    sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name, progress: 0, total: 0, status: "error", message: errorMessage(err) })
 }
