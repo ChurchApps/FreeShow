@@ -28,28 +28,26 @@ export function videoSync(path: string, outputId: string, callback: (state: Play
  * @param targetPlaybackRate The user-configured playback speed (default 1). Used to scale
  *                          thresholds and restore the rate after a hard seek.
  */
+export function clampPlaybackRate(rate: number): number {
+    return Math.min(16, Math.max(0.1, rate || 1))
+}
+
 export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1): void {
     if (!vid || targetTime === undefined || vid.readyState < 2 || vid.seeking) return
 
     const rate = targetPlaybackRate
     const diff = vid.currentTime - targetTime // positive = video is ahead of audio
 
-    // Detect an explicit seek (the authoritative time jumped discontinuously)
     const isExplicitSeek = lastSyncedTime !== null && (Math.abs(targetTime - lastSyncedTime) > 0.15 * rate || (isSoftLoop && lastSyncedTime > targetTime + 0.1))
 
-    // Hard seek — large drift, explicit seek, or paused frame correction
     if (isExplicitSeek || (vid.paused && Math.abs(diff) > 0.05) || Math.abs(diff) > 0.3 * rate) {
         vid.currentTime = targetTime
-        vid.playbackRate = rate // restore rate in case it was nudged
-        return
     }
 
-    // Rate nudge — gently re-sync without seeking
-    if (!vid.paused && Math.abs(diff) > 0.02) {
-        // Clamp nudge to ±10% of the target rate
-        const nudge = Math.max(-0.1 * rate, Math.min(0.1 * rate, -diff * 2 * rate))
-        vid.playbackRate = Math.max(0.1, rate + nudge)
-    } else if (vid.playbackRate !== rate) {
-        vid.playbackRate = rate
-    }
+    const targetRate = !vid.paused && Math.abs(diff) > 0.02
+        ? rate + Math.max(-0.1 * rate, Math.min(0.1 * rate, -diff * 2 * rate))
+        : rate
+    const safeRate = clampPlaybackRate(targetRate)
+
+    if (vid.playbackRate !== safeRate) vid.playbackRate = safeRate
 }

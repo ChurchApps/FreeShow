@@ -209,7 +209,8 @@
         width: 12px;
         height: 12px;
         background: var(--port-color, var(--secondary));
-        border: 2px solid #fff;
+        /* border: 2px solid var(--text); */
+        border: 2px solid var(--primary-darkest);
         border-radius: 50%;
         cursor: crosshair;
         z-index: 10;

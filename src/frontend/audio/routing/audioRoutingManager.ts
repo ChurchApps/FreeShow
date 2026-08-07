@@ -529,6 +529,11 @@ export class AudioRoutingManager {
      * Register an active input node (e.g. from AudioAnalyser) so we can
      * update its connections in real-time when the routing config changes.
      */
+    public getInputNodes(inputId: string): AudioNode[] {
+        const nodes = this.inputNodes.get(inputId)
+        return nodes ? Array.from(nodes) : []
+    }
+
     public registerInputNode(inputId: string, node: AudioNode) {
         if (!this.inputNodes.has(inputId)) this.inputNodes.set(inputId, new Set())
         const nodes = this.inputNodes.get(inputId)!

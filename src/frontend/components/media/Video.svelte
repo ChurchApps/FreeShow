@@ -5,7 +5,7 @@
     import { waitUntilValueIsDefined } from "../../utils/common"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
     import { SoftLoopSync } from "./video/softLoop"
-    import { syncVideoToAudio, videoSync } from "./video/videoSync"
+    import { clampPlaybackRate, syncVideoToAudio, videoSync } from "./video/videoSync"
 
     export let outputId: string
     export let path: string
@@ -44,6 +44,7 @@
 
             if (data.softLoop !== undefined) videoData.softLoop = data.softLoop
             if (data.softLoopOpacity !== undefined) softLoopOpacity = data.softLoopOpacity
+            softLoopAudioTime = data.currentTime
         })
 
         if (!container) return
@@ -137,11 +138,12 @@
     // Apply the target rate reactively, but only when not mid-nudge (the sync function manages
     // the actual video.playbackRate during nudging; setting it here only when the rate changes
     // avoids fighting the nudge on every reactive tick).
+    $: safeTargetPlaybackRate = clampPlaybackRate(targetPlaybackRate)
     let _lastAppliedRate = 1
-    $: if (video && targetPlaybackRate !== _lastAppliedRate) {
+    $: if (video && safeTargetPlaybackRate !== _lastAppliedRate) {
         // Only hard-apply if the difference is meaningful (not a nudge artifact)
-        _lastAppliedRate = targetPlaybackRate
-        video.playbackRate = targetPlaybackRate
+        _lastAppliedRate = safeTargetPlaybackRate
+        if (video.playbackRate !== safeTargetPlaybackRate) video.playbackRate = safeTargetPlaybackRate
     }
     $: if (video) video.preservesPitch = true
 
@@ -167,7 +169,7 @@
     $: if (blurVideo && (videoTime < blurVideo.currentTime - 0.1 || videoTime > blurVideo.currentTime + 0.1)) blurVideo.currentTime = videoTime
     $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
     $: blurPausedState = videoData.paused
-    $: if (blurVideo && blurVideo.playbackRate !== targetPlaybackRate) blurVideo.playbackRate = targetPlaybackRate
+    $: if (blurVideo && blurVideo.playbackRate !== safeTargetPlaybackRate) blurVideo.playbackRate = safeTargetPlaybackRate
 
     // update computed aspects and determine whether the blurred video is necessary
     $: videoAspect = video && video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : null
@@ -183,8 +185,9 @@
     const softLoopSync = new SoftLoopSync()
     onDestroy(() => softLoopSync.destroy())
 
-    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, video, softLoopVideo, videoData.paused, toTime)
-    $: if (softLoopVideo && softLoopVideo.playbackRate !== targetPlaybackRate) softLoopVideo.playbackRate = targetPlaybackRate
+    let softLoopAudioTime: number | undefined
+    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, video, softLoopVideo, videoData.paused, toTime, softLoopAudioTime)
+    $: if (softLoopVideo && softLoopVideo.playbackRate !== safeTargetPlaybackRate) softLoopVideo.playbackRate = safeTargetPlaybackRate
 </script>
 
 <div bind:this={container} style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">

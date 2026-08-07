@@ -757,9 +757,8 @@ export class VideoPlayer {
 
                 const linkedOutputIds = video.linkedOutputIds || []
                 linkedOutputIds.forEach((outId) => {
-                    AudioAnalyser.detach(video.path, outId)
+                    AudioAnalyser.updateSource(video.path, nextAudio, outId)
                 })
-                this.attachToAnalyser(video.path, nextAudio, linkedOutputIds)
                 AudioAnalyser.setSourceVolume(video.path, baseVol)
 
                 setTimeout(() => delete (video as any).isSwapping, 300)

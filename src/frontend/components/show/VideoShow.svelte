@@ -79,6 +79,7 @@
             videoData.loop = playingInOutput ? data.loop : false
             if (data.softLoop !== undefined) videoData.softLoop = data.softLoop
             if (data.softLoopOpacity !== undefined) softLoopOpacity = data.softLoopOpacity
+            softLoopAudioTime = data.currentTime
             // videoData.muted = data.muted
         })
     }
@@ -364,7 +365,8 @@
     const softLoopSync = new SoftLoopSync()
     onDestroy(() => softLoopSync.destroy())
 
-    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, video || null, softLoopVideo, videoData.paused, toTime)
+    let softLoopAudioTime: number | undefined
+    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, video || null, softLoopVideo, videoData.paused, toTime, softLoopAudioTime)
 </script>
 
 {#key mediaPath || showId}

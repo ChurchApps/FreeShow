@@ -169,9 +169,17 @@ export class AudioInputCapture {
     private resultCache: Map<string, InputVisualizerData> = new Map()
 
     public isNodeObserved(nodeId: string): boolean {
-        if (nodeId === "main" || nodeId === "drawer_audio" || nodeId === "speaker_default") return true
-        const lastQuery = this.lastQueryTimestamp.get(nodeId) || 0
-        return performance.now() - lastQuery < 3000
+        if (nodeId === "main" || nodeId === "drawer_audio" || nodeId === "speaker_default" || nodeId === "output_window" || nodeId.startsWith("output_win_sub_")) return true
+        return performance.now() - (this.lastQueryTimestamp.get(nodeId) || 0) < 3000
+    }
+
+    private getOrCaptureEntry(nodeId: string): CapturedAnalyzers | undefined {
+        let entry = this.analysers.get(nodeId)
+        if (!entry) {
+            AudioRoutingManager.getInstance().getInputNodes(nodeId).forEach((n) => this.captureInput(nodeId, n))
+            entry = this.analysers.get(nodeId)
+        }
+        return entry
     }
 
     public pruneStaleInputs(activeNodeIds: Set<string>) {
@@ -204,12 +212,12 @@ export class AudioInputCapture {
 
     public getAnalysers(nodeId: string = "speaker_default"): AnalyserNode[] {
         this.lastQueryTimestamp.set(nodeId, performance.now())
-        return this.analysers.get(nodeId)?.analysers || this.analysers.get("drawer_audio")?.analysers || []
+        return this.getOrCaptureEntry(nodeId)?.analysers || this.analysers.get("drawer_audio")?.analysers || []
     }
 
     public getVisualizerData(nodeId: string): InputVisualizerData | null {
         this.lastQueryTimestamp.set(nodeId, performance.now())
-        const entry = this.analysers.get(nodeId)
+        const entry = this.getOrCaptureEntry(nodeId)
         if (!entry) {
             const mergedDb = this.mergedLevels.get(nodeId)
             if (mergedDb !== undefined) {

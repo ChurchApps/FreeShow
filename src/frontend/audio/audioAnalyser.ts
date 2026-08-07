@@ -39,11 +39,38 @@ export class AudioAnalyser {
         return this.ac
     }
 
+    private static createSourceNode(audio: HTMLMediaElement | MediaStream): AudioNode {
+        if (audio instanceof MediaStream) return this.ac.createMediaStreamSource(audio)
+        const cached = this.elementSources.get(audio)
+        if (cached) return cached
+        const source = this.ac.createMediaElementSource(audio)
+        this.elementSources.set(audio, source)
+        return source
+    }
+
     private static elementSources = new WeakMap<HTMLMediaElement, AudioNode>()
 
     static hasSource(id: string, outputId?: string) {
         const key = outputId ? `${id}_${outputId}` : id
         return !!this.sources[key]
+    }
+
+    static updateSource(id: string, audio: HTMLMediaElement | MediaStream, outputId?: string) {
+        const key = outputId ? `${id}_${outputId}` : id
+        const sourceGain = this.gainNodes[key]
+        if (!sourceGain) {
+            this.attach(id, audio, outputId)
+            return
+        }
+
+        this.sources[key]?.disconnect()
+        try {
+            const newSource = this.createSourceNode(audio)
+            this.sources[key] = newSource
+            newSource.connect(sourceGain)
+        } catch (err) {
+            console.error("Could not update media source:", err)
+        }
     }
 
     static async attach(id: string, audio: HTMLMediaElement | MediaStream, outputId?: string) {
@@ -59,19 +86,7 @@ export class AudioAnalyser {
         let source: AudioNode
         try {
             console.log(`[AudioAnalyser] Attaching ${id} for output ${outputId || "main"}`)
-            if (audio instanceof MediaStream) {
-                source = this.ac.createMediaStreamSource(audio)
-            } else {
-                // HTMLMediaElement can only be passed to createMediaElementSource once in Chromium
-                const cached = this.elementSources.get(audio)
-                if (cached) {
-                    source = cached
-                } else {
-                    source = this.ac.createMediaElementSource(audio)
-                    this.elementSources.set(audio, source)
-                }
-            }
-
+            source = this.createSourceNode(audio)
             this.sources[key] = source
         } catch (err) {
             console.error("Could not create media source:", err)
