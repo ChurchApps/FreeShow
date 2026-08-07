@@ -17,8 +17,11 @@ export class AudioMultichannel {
      * slice of the file and decode it with OfflineAudioContext to read AudioBuffer.numberOfChannels.
      * Returns DEFAULT_CHANNELS on any failure.
      */
+    private static channelCache: Map<string, number> = new Map()
+
     static async detectFileChannelCount(filePath: string, maxChannels: number): Promise<number> {
         if (!filePath || filePath.startsWith("blob:") || filePath.startsWith("data:")) return this.DEFAULT_CHANNELS
+        if (this.channelCache.has(filePath)) return this.channelCache.get(filePath)!
 
         try {
             // Use a short timeout for network files to avoid hanging
@@ -44,12 +47,13 @@ export class AudioMultichannel {
             const offlineCtx = new OfflineAudioContext(maxChannels, 1, 48000)
             const audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer)
 
-            const channels = audioBuffer.numberOfChannels
-
-            return Math.min(channels, maxChannels)
+            const channels = Math.min(audioBuffer.numberOfChannels, maxChannels)
+            this.channelCache.set(filePath, channels)
+            return channels
         } catch (err) {
             // AggregateError or AbortError are possible here
             console.warn(`Channel detection for "${filePath}" failed:`, err instanceof Error ? err.message : err)
+            this.channelCache.set(filePath, this.DEFAULT_CHANNELS)
             return this.DEFAULT_CHANNELS
         }
     }

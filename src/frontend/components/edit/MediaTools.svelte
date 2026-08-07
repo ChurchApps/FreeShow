@@ -8,6 +8,7 @@
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tabs from "../main/Tabs.svelte"
+    import { VideoPlayer } from "../media/video/videoPlayer"
     import { addFilterString } from "./scripts/textStyle"
     import EditValues from "./tools/EditValues.svelte"
     import { setBoxInputValue } from "./values/boxes"
@@ -33,12 +34,9 @@
     $: isVideo = mediaType === "video"
     $: if (mediaId && isVideo) getVideoDuration()
     function getVideoDuration() {
-        let video = document.createElement("video")
-        video.setAttribute("src", mediaId)
-        video.addEventListener("loadedmetadata", loaded)
+        VideoPlayer.getDuration(mediaId).then(loaded)
 
-        function loaded() {
-            let videoDuration = video?.duration || 0
+        function loaded(videoDuration: number) {
             if (!videoDuration) return
 
             const maxSoftLoop = Math.floor(videoDuration / 2)
@@ -82,14 +80,22 @@
 
         updateStore("media", { keys: [mediaId, ...input.id.split(".")], value })
 
-        // update output filters
+        VideoPlayer.updateProperties(mediaId)
+
+        // update output filters / cropping
         let currentOutput = getFirstActiveOutput()
         let bg = currentOutput?.out?.background
         if (!bg) return
         const bgId = bg.path || bg.id || ""
         if (bgId !== mediaId) return
 
-        bg[input.id] = value
+        const parts = input.id.split(".")
+        if (parts.length > 1) {
+            if (typeof bg[parts[0]] !== "object" || bg[parts[0]] === null) bg[parts[0]] = {}
+            bg[parts[0]][parts[1]] = value
+        } else {
+            bg[input.id] = value
+        }
         setOutput("background", bg)
     }
 

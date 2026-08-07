@@ -121,7 +121,9 @@ export const receiveSTAGE = {
         const stageLayout = get(stageShows)[stageId]
         if (!stageLayout) return
 
-        const outputId = stageLayout.settings.output || getFirstOutput()?.id
+        const sourceOutputId = stageLayout.settings?.output
+        const outputStores = get(outputs)
+        const outputId = sourceOutputId && outputStores[sourceOutputId] ? sourceOutputId : getFirstOutput()?.id
         const output = { ...get(outputs)[outputId], id: outputId }
         if (!output?.out) return
 
@@ -138,7 +140,9 @@ export const receiveSTAGE = {
         const stageLayout = get(stageShows)[stageId]
         if (!stageLayout) return
 
-        const outputId = stageLayout.settings.output || getFirstOutput()?.id
+        const sourceOutputId = stageLayout.settings?.output
+        const outputStores = get(outputs)
+        const outputId = sourceOutputId && outputStores[sourceOutputId] ? sourceOutputId : getFirstOutput()?.id
         const outSlideId = get(outputs)[outputId]?.out?.slide?.id || ""
         const show = get(showsCache)[outSlideId]
         if (!show) return
@@ -215,19 +219,6 @@ export const receiveSTAGE = {
         runAction(get(actions)[a.id], { source: "remote" })
     }
 
-    // REQUEST_VIDEO_DATA: (data: any) => {
-    //     if (!data) data = {}
-
-    //     // WIP don't know the outputId
-    //     // let id = data.outputId
-    //     let outputId = getFirstOutput()?.id
-    //     if (!outputId) return
-
-    //     data.data = get(videosData)[outputId]
-    //     data.time = get(videosTime)[outputId]
-
-    //     return data
-    // },
     // case "SHOW":
     //   data = getStageShow(message.data)
     //   break

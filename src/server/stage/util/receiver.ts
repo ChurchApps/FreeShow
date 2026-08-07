@@ -89,13 +89,6 @@ export const receiver = {
             return a
         })
     },
-    // REQUEST_VIDEO_DATA: (data: any) => {
-    //     console.log(data)
-
-    //     _set("videoTime", data.time || 0)
-    //     let reverse = id.includes("countdown")
-    //     if (reverse) _set("videoTime", (data.data?.duration || 0) - get(videoTime))
-    // },
 
     ERROR: (data: any) => {
         if (data === "wrongPass") {

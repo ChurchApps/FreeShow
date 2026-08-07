@@ -102,16 +102,16 @@ let globalStereoShaper: AudioStereoShaper | null = null
 export function initializeStereoShaper(ac: AudioContext): AudioStereoShaper {
     if (globalStereoShaper) return globalStereoShaper
 
-    globalStereoShaper = new AudioStereoShaper(ac, getEffectConfig("stereoShaper", DEFAULT_STEREO_SHAPER_CONFIG))
-    subscribeEffect("stereoShaper", (cfg: StereoShaperConfig) => globalStereoShaper?.updateConfig(cfg))
+    globalStereoShaper = new AudioStereoShaper(ac, getEffectConfig("stereoShaper", DEFAULT_STEREO_SHAPER_CONFIG, "main"))
+    subscribeEffect("stereoShaper", (cfg: StereoShaperConfig) => globalStereoShaper?.updateConfig(cfg), "main")
 
     return globalStereoShaper
 }
 
-export function updateStereoShaperConfig(partial: Partial<StereoShaperConfig>) {
-    updateEffectInStore("stereoShaper", DEFAULT_STEREO_SHAPER_CONFIG, partial, globalStereoShaper)
+export function updateStereoShaperConfig(partial: Partial<StereoShaperConfig>, channelId?: string) {
+    updateEffectInStore("stereoShaper", DEFAULT_STEREO_SHAPER_CONFIG, partial, channelId)
 }
 
-export function setStereoShaperEnabled(enabled: boolean) {
-    setEffectEnabledInStore("stereoShaper", DEFAULT_STEREO_SHAPER_CONFIG, enabled, globalStereoShaper)
+export function setStereoShaperEnabled(enabled: boolean, channelId?: string) {
+    setEffectEnabledInStore("stereoShaper", DEFAULT_STEREO_SHAPER_CONFIG, enabled, channelId)
 }

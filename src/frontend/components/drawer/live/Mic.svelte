@@ -98,7 +98,8 @@
         if (retryTimeout) clearTimeout(retryTimeout)
     })
 
-    $: muted = !$playingAudio[mic.id]
+    $: micId = "mic_sub_" + mic.id
+    $: muted = !$playingAudio[micId]
 </script>
 
 <div class="main">
@@ -123,10 +124,13 @@
         </span>
 
         {#if context}
-            <span class="meter">
-                <!-- <p>L</p> -->
-                <div style="width: {100 - soundLevel}%" />
-            </span>
+            <div class="channel-row">
+                <span class="signal-dot" class:active={soundLevel > 0}></span>
+                <span class="meter">
+                    <div style="width: {100 - soundLevel}%;" />
+                    <span class="meter" style="position: absolute; opacity: 0.08; right: 0; height: inherit; width: 100%;" />
+                </span>
+            </div>
         {/if}
     </Button>
 </div>
@@ -139,18 +143,43 @@
         background-color: rgb(0 0 20 / 0.08);
     }
 
-    .meter {
-        background-image: linear-gradient(to right, rgb(200, 0, 0) 1%, rgb(255, 220, 0) 16%, rgb(0, 220, 0) 45%, rgb(0, 120, 0) 100%);
-        /* filter: hue-rotate(250deg); */
-        height: 5px;
-        flex: 1;
+    /* matches AudioMeter.svelte style */
 
-        transform: rotate(180deg);
+    .channel-row {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        flex: 1;
+    }
+
+    .signal-dot {
+        width: 3px;
+        height: 3px;
+        border-radius: 2px;
+        background-color: rgba(255, 255, 255, 0.2);
+        transition:
+            background-color 0.1s ease,
+            box-shadow 0.1s ease;
+        flex-shrink: 0;
+    }
+
+    .signal-dot.active {
+        background-color: rgb(0, 200, 200);
+    }
+
+    .meter {
+        background-image: linear-gradient(90deg, rgb(0, 200, 200) 0%, rgb(0, 255, 50) 55%, rgb(255, 200, 0) 84%, rgb(200, 0, 0) 100%);
+        height: 3px;
+        position: relative;
+        border-radius: 1px;
+        flex: 1;
     }
 
     .meter div {
-        transition: width 0.1s ease 0s;
-        background-color: var(--primary);
+        transition: width 0.05s ease 0s;
+        background-color: var(--primary-darker);
         height: 100%;
+        position: absolute;
+        right: 0;
     }
 </style>

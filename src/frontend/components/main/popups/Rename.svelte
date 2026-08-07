@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Line, SlideData } from "../../../../types/Show"
-    import { activePopup, activeShow, customScriptureBooks, drawerTabsData, effectsLibrary, scripturesCache, selected, showsCache } from "../../../stores"
+    import { activePopup, activeShow, audioRouting, customScriptureBooks, drawerTabsData, effectsLibrary, scripturesCache, selected, showsCache } from "../../../stores"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
@@ -36,6 +36,10 @@
             const bookIndex = selectionData[0]?.index - 1
             const book = activeBible.books?.[bookIndex] || {}
             groupName = (book as any).customName || book.name || ""
+        } else if ($selected.id === "audio_channel") {
+            const channelId = selectionData[0]?.id
+            const channel = ($audioRouting?.channels || []).find((m) => m.id === channelId)
+            groupName = channel?.name || ""
         } else if (selectionData[0]?.name) {
             groupName = selectionData[0].name
         }
@@ -150,6 +154,16 @@
                 .slides([chord.slideId])
                 .items([chord.itemIndex])
                 .set({ key: "lines", values: [newLines] })
+        },
+        audio_channel: () => {
+            const channelId = $selected.data?.[0]?.id
+            if (!channelId) return
+            audioRouting.update((c) => {
+                const list = c?.channels || []
+                const channel = list.find((m) => m.id === channelId)
+                if (channel) channel.name = groupName
+                return { ...c, channels: list, connections: c?.connections || [] }
+            })
         },
         audio_effect: () => {
             let selectedPath = $selected.data?.[0]?.path

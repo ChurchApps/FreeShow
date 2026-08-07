@@ -384,6 +384,19 @@ export function getLayoutRef(showId = "active", _updater?: Shows | Show) {
     return _show(showId).layouts("active").ref()[0] || []
 }
 
+// a child slide has no "locked" state of its own, so check its parent (group) slide
+export function isSlideLocked(showId: string, slideId: string, _updater?: Shows | Show | null): boolean {
+    const slides = get(showsCache)[showId]?.slides || {}
+    const slide = slides[slideId]
+    if (!slide) return false
+    if (slide.locked) return true
+
+    // child slides are stored in the parent slide's "children" array
+    if (slide.group !== null) return false
+    const parentId = Object.keys(slides).find((id) => slides[id]?.children?.includes(slideId))
+    return !!slides[parentId || ""]?.locked
+}
+
 export function bindSlidesToOutput(indexes: number[], outputId: string) {
     const ref = getLayoutRef()
     const newBindings: string[][] = []

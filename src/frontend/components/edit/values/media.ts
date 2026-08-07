@@ -5,12 +5,14 @@ export const filterSections: { [key: string]: EditBoxSection } = {
     default: { inputs: filterSection }
 }
 
-const croppingRows = splitIntoRows([
-    { id: "cropping.top", type: "number", value: 0, values: { label: "screen.top", max: 10000, showSlider: true, sliderValues: { max: 500 } } },
-    { id: "cropping.right", type: "number", value: 0, values: { label: "screen.right", max: 10000, showSlider: true, sliderValues: { max: 500 } } },
-    { id: "cropping.bottom", type: "number", value: 0, values: { label: "screen.bottom", max: 10000, showSlider: true, sliderValues: { max: 500 } } },
-    { id: "cropping.left", type: "number", value: 0, values: { label: "screen.left", max: 10000, showSlider: true, sliderValues: { max: 500 } } }
-])
+function getCroppingRows() {
+    return splitIntoRows([
+        { id: "cropping.top", type: "number", value: 0, values: { label: "screen.top", max: 10000, showSlider: true, sliderValues: { max: 500 } } },
+        { id: "cropping.right", type: "number", value: 0, values: { label: "screen.right", max: 10000, showSlider: true, sliderValues: { max: 500 } } },
+        { id: "cropping.bottom", type: "number", value: 0, values: { label: "screen.bottom", max: 10000, showSlider: true, sliderValues: { max: 500 } } },
+        { id: "cropping.left", type: "number", value: 0, values: { label: "screen.left", max: 10000, showSlider: true, sliderValues: { max: 500 } } }
+    ])
+}
 
 const defaultMedia = splitIntoRows([
     {
@@ -42,9 +44,10 @@ export const mediaBoxes: { [key in MediaType]?: BoxContent2 } = {
             video: {
                 alwaysOpen: true,
                 inputs: splitIntoRows([
-                    { id: "speed", type: "number", value: 1, values: { label: "media.speed", min: 0.1, max: 15, step: 0.1, showSlider: true } },
-                    { id: "volume", type: "number", value: 100, values: { label: "media.volume", max: 100, showSlider: true } },
+                    { id: "volume", type: "number", value: 1, multiplier: 100, values: { label: "media.volume", min: 0, max: 125, defaultValue: 100, showSlider: true } },
                     { id: "pitch", type: "number", value: 0, values: { label: "media.pitch", min: -12, max: 12, step: 1, defaultValue: 0, showSlider: true, sliderValues: { min: -12, max: 12, step: 1 } } },
+                    // audio.tempo vs media.speed
+                    { id: "speed", type: "number", value: 1, values: { label: "media.speed", min: 0.5, max: 5, step: 0.1, defaultValue: 1, showSlider: true, sliderValues: { min: 0.5, max: 2, step: 0.05 } } },
                     { id: "fromTime", type: "number", value: 0, values: { label: "inputs.start", max: 100000, showSlider: true } },
                     { id: "toTime", type: "number", value: 0, values: { label: "inputs.end", max: 100000, showSlider: true } },
                     { id: "softLoop", type: "number", value: 0, values: { label: "media.soft_loop (s)", max: 50, step: 1, showSlider: true, sliderValues: { max: 10, step: 0.5 } } }
@@ -59,7 +62,7 @@ export const mediaBoxes: { [key in MediaType]?: BoxContent2 } = {
                 inputs: defaultMedia
             },
             cropping: {
-                inputs: croppingRows
+                inputs: getCroppingRows()
             }
         }
     },
@@ -74,7 +77,7 @@ export const mediaBoxes: { [key in MediaType]?: BoxContent2 } = {
                 ])
             },
             cropping: {
-                inputs: croppingRows
+                inputs: getCroppingRows()
             }
         }
     }
@@ -99,8 +102,7 @@ export const audioSections: { [key: string]: EditBoxSection } = {
                     ]
                 }
             },
-            // { id: "speed", type: "number", value: 1, values: { label: "media.speed", min: 0.1, max: 15, step: 0.1, showSlider: true } },
-            { id: "volume", type: "number", value: 1, multiplier: 100, values: { label: "media.volume", min: 1, max: 100, defaultValue: 100, showSlider: true } },
+            { id: "volume", type: "number", value: 1, multiplier: 100, values: { label: "media.volume", min: 0, max: 125, defaultValue: 100, showSlider: true } },
             { id: "pitch", type: "number", value: 0, values: { label: "media.pitch", min: -12, max: 12, step: 1, defaultValue: 0, showSlider: true, sliderValues: { min: -12, max: 12, step: 1 } } },
             { id: "tempo", type: "number", value: 1, values: { label: "audio.tempo", min: 0.5, max: 5, step: 0.1, defaultValue: 1, showSlider: true, sliderValues: { min: 0.5, max: 2, step: 0.05 } } },
             { id: "fromTime", type: "number", value: 0, values: { label: "inputs.start", max: 100000, showSlider: true } },

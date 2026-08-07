@@ -1,6 +1,6 @@
 <script lang="ts">
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { activeAudioEffects, audioChannelsData, gain, volume } from "../../../stores"
+    import { activeAudioEffects, audioChannelsData } from "../../../stores"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import Slider from "../../inputs/Slider.svelte"
@@ -8,6 +8,8 @@
 
     export let channelId: string
     export let label: string
+    export let color: string | undefined = undefined
+    export let inactive: boolean = false
 
     $: channelData = $audioChannelsData[channelId] || {}
 
@@ -18,69 +20,46 @@
             return a
         })
 
-        if (channelId === "main") AudioPlayer.updateVolume()
-    }
-
-    const allowGaining = false // $special.allowGaining || false
-    function setVolume(e: any) {
-        let value = e.target?.value || e
-
-        if (channelId !== "main") {
-            updateData("volume", value)
-            return
-        }
-
-        // "snap" to 100%
-        // && !e.altKey
-        if (allowGaining && value > 0.95 && value < 1.05) value = 1
-
-        let newGain = 1
-        let newVolume = 1
-
-        if (value > 1) newGain = (value - 1) / 0.125 + 1
-        else newVolume = value
-
-        volume.set(newVolume)
-        gain.set(newGain)
-
         AudioPlayer.updateVolume()
     }
 
-    // 25% / 200 = 0.125
-    $: gainValue = (Number($gain || 0) - 1) * 0.125
-    $: mainVolume = allowGaining ? Number($volume ?? 1) + gainValue : Number($volume ?? 1)
+    const allowGaining = true
+    function setVolume(e: any) {
+        let value = typeof e === "number" ? e : e?.detail !== undefined ? e.detail : e?.target?.value !== undefined ? parseFloat(e.target.value) : 1
+        if (value >= 0.95 && value <= 1.05) value = 1.0
+        updateData("volume", value)
+    }
 
-    $: volumeValue = channelId === "main" ? mainVolume : Number(channelData.volume ?? 1)
-
+    $: rawVolume = Number(channelData.volume ?? 1)
+    $: volumeValue = rawVolume > 5 ? rawVolume / 100 : rawVolume
     $: muted = !!channelData.isMuted
 </script>
 
 <section>
     <!-- <MaterialNumberInput style="width: 100px;" label="media.volume (%)" value={volumeValue * 100} min={0} max={allowGaining ? 125 : 100} on:change={(e) => setVolume(e.detail / 100)} showSlider /> -->
 
-    <div class="output">
+    <div class="output" class:inactive style="--color: {color || 'var(--secondary)'};">
         <div class="label" style="margin-right: 7px;">
             <!-- {translateText("media.volume")} -->
             <p style="opacity: 0.9;">{label || ""}</p>
-            <Slider disabled={muted} value={volumeValue} step={0.01} max={allowGaining ? 1.25 : 1} on:input={setVolume} />
+            <Slider value={volumeValue} step={0.01} max={allowGaining ? 1.25 : 1} on:input={setVolume} />
         </div>
 
         <div class="input" style="position: relative;">
-            <NumberInput style="width: 60px;" disabled={muted} value={volumeValue * 100} min={0} max={allowGaining ? 125 : 100} on:change={(e) => setVolume(e.detail / 100)} buttons={false} />
-            <span style="position: absolute;right: 0;bottom: 5px;transform: translateX(-7px);pointer-events: none;color: var(--secondary);font-weight: bold;font-size: 0.7em;">%</span>
+            <NumberInput style="width: 60px;" value={volumeValue * 100} min={0} max={allowGaining ? 125 : 100} on:change={(e) => setVolume(e.detail / 100)} buttons={false} />
+            <span style="position: absolute;right: 0;bottom: 5px;transform: translateX(-7px);pointer-events: none;color: var(--color);font-weight: bold;font-size: 0.7em;">%</span>
         </div>
 
         <MaterialButton variant="outlined" style="padding: 8px;" icon={muted ? "muted" : "volume"} title="actions.{muted ? 'unmute' : 'mute'}" red={muted} on:click={() => updateData("isMuted", !muted)} />
 
-        <!-- only Main for now -->
-        {#if channelId === "main"}
-            <MaterialButton variant="outlined" style="padding: 8px;" icon="equalizer" title="tabs.effects" on:click={() => activeAudioEffects.set(channelId)} />
-        {/if}
+        <MaterialButton variant="outlined" style="padding: 8px;" icon="equalizer" title="tabs.effects" on:click={() => activeAudioEffects.set(channelId)} />
     </div>
 
     <!-- <p style="font-size: 1em;margin: 10px;{volumeValue === 1 || volumeValue === 0 ? 'color: var(--secondary);' : ''}">{(volumeValue * 100).toFixed()}<span style="color: var(--text);">%</span></p> -->
 
-    <AudioMeter {channelId} />
+    {#if !inactive}
+        <AudioMeter {channelId} detailed />
+    {/if}
 </section>
 
 <style>
@@ -101,6 +80,12 @@
         margin-bottom: 10px;
     }
 
+    .output.inactive {
+        margin-bottom: 0px;
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
     .label {
         display: flex;
         flex-direction: column;
@@ -113,5 +98,9 @@
 
     .input :global(input) {
         padding-right: 14px;
+    }
+
+    section :global(input::-webkit-slider-thumb) {
+        background: var(--color);
     }
 </style>

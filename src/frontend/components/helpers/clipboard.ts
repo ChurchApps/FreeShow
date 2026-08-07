@@ -18,6 +18,7 @@ import {
     activeStage,
     audioFolders,
     audioPlaylists,
+    audioRouting,
     audioStreams,
     categories,
     clipboard,
@@ -68,11 +69,13 @@ import { activeEdit } from "./../../stores"
 import { clone, keysToID, removeDeleted, removeDuplicates } from "./array"
 import { pasteText } from "./caretHelper"
 import { history } from "./history"
+import { deleteStore } from "./historyStores"
 import { getFileName, removeExtension } from "./media"
 import { select } from "./select"
 import { loadShows } from "./setShow"
 import { checkName, getLayoutRef, removeTemplatesFromShow } from "./show"
 import { _show } from "./shows"
+import { removeOutputAudioChannel } from "../../audio/routing/audioRoutingInit"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
     let copyData: Clipboard | null = clip
@@ -734,15 +737,8 @@ const deleteActions = {
         history({ id: "SLIDES", oldData: { type: "delete_group", data: data.map(({ id }: any) => ({ id })) } })
     },
     action: (data: any) => {
-        // WIP history
-        data.forEach((selData) => {
-            actions.update((a) => {
-                delete a[selData.id]
-                return a
-            })
-
-            sendMain(Main.CLOSE_MIDI, { id: selData.id })
-        })
+        historyDelete("UPDATE", data, { updater: "action" })
+        data.forEach((selData) => sendMain(Main.CLOSE_MIDI, { id: selData.id }))
     },
     timer: (data: any) => {
         data.forEach((a) => {
@@ -751,24 +747,11 @@ const deleteActions = {
         })
     },
     global_timer: (data: any) => deleteActions.timer(data),
-    // TODO: history
     variable: (data: any) => {
-        variables.update((a) => {
-            data.forEach(({ id }) => {
-                delete a[id]
-            })
-
-            return a
-        })
+        data.forEach(({ id }) => deleteStore("variables", id))
     },
     interaction: (data: any) => {
-        // WIP history
-        interactions.update((a) => {
-            data.forEach(({ id }) => {
-                delete a[id]
-            })
-            return a
-        })
+        historyDelete("UPDATE", data, { updater: "interaction" })
     },
     interaction_input: (data: any) => {
         const id = get(openedInteractionId)
@@ -1025,6 +1008,7 @@ const deleteActions = {
     output: (data: any) => {
         data.forEach(({ id }) => {
             history({ id: "UPDATE", newData: { id }, location: { page: "settings", id: "settings_output" } })
+            removeOutputAudioChannel(id)
         })
 
         currentOutputSettings.set(Object.keys(get(outputs))[0])
@@ -1032,6 +1016,21 @@ const deleteActions = {
     profile: (data: any) => {
         data.forEach(({ id }) => {
             history({ id: "UPDATE", newData: { id }, location: { page: "settings", id: "settings_profile" } })
+        })
+    },
+    audio_channel: (data: any) => {
+        const channelId = data?.[0]?.id || data?.[0]
+        if (!channelId) return
+        audioRouting.update((c) => {
+            if (!c?.channels?.length) return c
+
+            const list = c.channels
+            const index = list.findIndex((m) => m.id === channelId)
+            if (index <= 0) return c // First channel ("main") cannot be deleted
+
+            list.splice(index, 1)
+            const connections = c.connections.filter((conn) => conn.from !== channelId && conn.to !== channelId)
+            return { ...c, channels: list, connections }
         })
     },
     tag: (data: any) => {
@@ -1149,7 +1148,8 @@ const duplicateActions = {
     },
     folder: (data: any) => {
         // duplicate projects folder and all of the projects inside
-        // TODO: history
+        // intentionally no undo: the recursive tree duplication has no batch history entry,
+        // and per-item entries could partially undo into orphaned children (deleting the copy has undo)
         const newProjects: Project[] = []
 
         folders.update((a) => {
@@ -1191,14 +1191,12 @@ const duplicateActions = {
         })
     },
     project: (data: any) => {
-        // TODO: history
-        projects.update((a) => {
-            data.forEach((project) => {
-                const newProject = clone(a[project.id])
-                a[uid()] = { ...newProject, name: newProject.name + " 2" }
-                return a
-            })
-            return a
+        data.forEach((selData) => {
+            const project = clone(get(projects)[selData.id])
+            if (!project) return
+
+            const id = uid()
+            history({ id: "UPDATE", newData: { data: project, replace: { name: project.name + " 2" } }, oldData: { id }, location: { page: "show", id: "project" } })
         })
     },
     theme: (data: any) => {

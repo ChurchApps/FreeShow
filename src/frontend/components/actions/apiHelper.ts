@@ -1,12 +1,12 @@
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
 import { get } from "svelte/store"
-import { OUTPUT, STAGE } from "../../../types/Channels"
+import { STAGE } from "../../../types/Channels"
 import type { History } from "../../../types/History"
 import type { DropData, Selected, Variable } from "../../../types/Main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -16,12 +16,14 @@ import { dropActions } from "../helpers/dropActions"
 import { history } from "../helpers/history"
 import { setDrawerTabData } from "../helpers/historyHelpers"
 import { encodeFilePath, getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
-import { getActiveOutputs, getAllActiveOutputs, getAllEnabledOutputs, getCurrentStyle, getFirstActiveOutput, isOutCleared, setOutput } from "../helpers/output"
+import { getActiveOutputs, getAllEnabledOutputs, getCurrentStyle, getFirstActiveOutput, isOutCleared, setOutput } from "../helpers/output"
 import { setRandomValue } from "../helpers/randomValue"
 import { loadShows, setShow } from "../helpers/setShow"
 import { getLabelId, getLayoutRef } from "../helpers/show"
 import { playNextGroup, selectProjectShow, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
+import { VideoPlayer } from "../media/video/videoPlayer"
+import { resolveScriptureReference } from "../drawer/bible/scripture"
 import { clearBackground, clearSlide } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
@@ -609,21 +611,29 @@ export function getClearedState() {
 }
 
 // "1.1.1,2,3" = "Gen 1:1-3"
-// WIP allow "John 1:35-36" or "43:1:35" as well
-export function startScripture(data: API_scripture) {
+// or "John 3:16" / "1 John 1:4-6"
+export async function startScripture(data: API_scripture) {
     const split = data.reference.split(".")
-
     const book = Number(split[0])
     const chapter = Number(split[1])
-    const rawVerses = String(split[2] ?? "").trim()
 
-    // Support multiple verses encoded as comma-separated values, e.g. "43.3.16,17,18".
-    const verseItems = rawVerses
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean)
+    let ref: { book: number; chapter: number; verses: (string | number)[][] }
 
-    const ref = { book, chapter, verses: [verseItems.length ? verseItems : [rawVerses]] }
+    if (split.length > 1 && !isNaN(book) && !isNaN(chapter)) {
+        const rawVerses = (split[2] ?? "").trim()
+        // Support multiple verses encoded as comma-separated values, e.g. "43.3.16,17,18".
+        const verseItems = rawVerses
+            .split(",")
+            .map((v) => v.trim())
+            .filter(Boolean)
+        ref = { book, chapter, verses: [verseItems.length ? verseItems : [rawVerses]] }
+    } else {
+        // convert text reference to actual reference
+        const resolved = await resolveScriptureReference(data.reference, data.id)
+        if (!resolved) return
+
+        ref = { book: resolved.book, chapter: resolved.chapter, verses: [resolved.verses] }
+    }
 
     if (get(activePage) !== "edit") activePage.set("show")
     if (data.id) setDrawerTabData("scripture", data.id) // use active if no ID
@@ -668,13 +678,12 @@ export function playMedia(data: API_media) {
 export function videoSeekTo(data: API_seek) {
     if (get(outLocked)) return
 
-    const activeOutputIds = getAllActiveOutputs().map((a) => a.id)
-    const timeValues: any = {}
-    activeOutputIds.forEach((id) => {
-        timeValues[id] = data.seconds
-    })
+    const outputId = data.id || getFirstActiveOutput()?.id || ""
+    const bg = get(outputs)[outputId]?.out?.background
+    const path = bg?.path || bg?.id
+    if (!path) return
 
-    send(OUTPUT, ["TIME"], timeValues)
+    VideoPlayer.seekTo(path, outputId, data.seconds)
 }
 
 export function toggleMediaLoop() {
@@ -735,14 +744,20 @@ let unmutedValue = 1
 export function updateVolumeValues(value: number | undefined | "local") {
     // api mute(unmute)
     if (value === undefined) {
-        value = get(volume) ? 0 : unmutedValue
-        if (!value) unmutedValue = get(volume)
+        const currentVolume = get(audioChannelsData).main?.volume ?? 1
+        value = currentVolume ? 0 : unmutedValue
+        if (!value) unmutedValue = currentVolume
     }
 
     // supposed to be in 0-1 range instead of 0-100
     if (typeof value === "number" && value > 1) value = value / 100
 
-    volume.set(Number(Number(value).toFixed(2)))
+    const newVolume = Number(Number(value).toFixed(2))
+    audioChannelsData.update((data) => {
+        if (!data.main) data.main = { volume: 1 }
+        data.main.volume = newVolume
+        return data
+    })
 
     AudioPlayer.updateVolume()
 }

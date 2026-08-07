@@ -4,7 +4,7 @@ import { activeEdit, activeShow, showsCache } from "../../../stores"
 import { wait } from "../../../utils/common"
 import { clone } from "../../helpers/array"
 import { history } from "../../helpers/history"
-import { getLayoutRef } from "../../helpers/show"
+import { getLayoutRef, isSlideLocked } from "../../helpers/show"
 import { _show } from "../../helpers/shows"
 import { getStyles } from "../../helpers/style"
 import { itemBoxes } from "../values/boxes"
@@ -282,7 +282,7 @@ export async function setItemStyle(styles: StyleClipboard[], slides: any) {
 
 export async function setSlideStyle(style: StyleClipboard, slides: any) {
     for (const slide of slides) {
-        if (slide.locked) continue // WIP get group slide
+        if (isSlideLocked(get(activeShow)?.id || "", slide.id)) continue
 
         updateSlideStyle(slide)
 

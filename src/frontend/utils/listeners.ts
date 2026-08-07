@@ -1,6 +1,5 @@
 import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
-import { AudioAnalyser } from "../audio/audioAnalyser"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { midiInListen } from "../components/actions/midi"
 import { getAllActiveOutputIds, getAllNormalOutputs } from "../components/helpers/output"
@@ -14,7 +13,6 @@ import {
     activeScripture,
     activeShow,
     activeTimers,
-    audioChannelsData,
     audioData,
     audioEffects,
     cachedShowsData,
@@ -29,7 +27,6 @@ import {
     effects,
     events,
     folders,
-    gain,
     globalRegexes,
     groups,
     livePrepare,
@@ -43,6 +40,7 @@ import {
     overlays,
     playerVideos,
     playingAudio,
+    playingVideoState,
     projects,
     refreshSlideThumbnails,
     runningActions,
@@ -60,25 +58,13 @@ import {
     timerTags,
     transitionData,
     variables,
-    variableTags,
-    volume
+    variableTags
 } from "../stores"
 import { hasNewerUpdate } from "./common"
 import { driveConnect } from "./drive"
-import { convertBackgrounds, getMixerPayload } from "./remoteTalk"
+import { convertBackgrounds } from "./remoteTalk"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
-
-// simple debounce helper (shared for mixer pushes)
-const debounce = (fn: (...args: any[]) => void, wait: number) => {
-    let t: any
-    return (...args: any[]) => {
-        clearTimeout(t)
-        t = setTimeout(() => fn(...args), wait)
-    }
-}
-
-const sendRemoteMixer = debounce(() => send(REMOTE, ["GET_MIXER"], getMixerPayload()), 50)
 
 // shows list has not changed when only a timestamp value changes
 function hasShowsListChanged(prevData: any, newData: any): boolean {
@@ -247,9 +233,6 @@ export function storeSubscriber() {
         // used for stage mirror data
         send(OUTPUT, ["ALL_OUTPUTS"], data)
 
-        // REMOTE mixer updates (labels/available outputs)
-        sendRemoteMixer()
-
         // let it update properly
         setTimeout(() => {
             sendData(REMOTE, { channel: "OUT" })
@@ -383,29 +366,33 @@ export function storeSubscriber() {
 
     special.subscribe((data) => {
         send(OUTPUT, ["SPECIAL"], data)
-
-        if (data.icecastEnabled) AudioAnalyser.recorderActivate()
-        else AudioAnalyser.recorderDeactivate()
     })
 
     slideTimelineSpeedMultiplier.subscribe((data) => {
         send(OUTPUT, ["SLIDE_TIMELINE_SPEED_MULTIPLIER"], data)
     })
 
-    volume.subscribe((data) => {
-        send(OUTPUT, ["VOLUME"], data)
+    // let prevAudioChannelsJson = ""
+    // audioChannelsData.subscribe((data) => {
+    //     const controlData: any = {}
+    //     Object.entries(data || {}).forEach(([id, ch]: [string, any]) => {
+    //         if (!ch) return
+    //         const { dB, ...rest } = ch
+    //         controlData[id] = rest
+    //     })
 
-        // REMOTE mixer updates
-        sendRemoteMixer()
-    })
-    gain.subscribe((data) => {
-        send(OUTPUT, ["GAIN"], data)
-    })
-    audioChannelsData.subscribe((data) => {
-        send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
+    //     const json = JSON.stringify(controlData)
+    //     if (json !== prevAudioChannelsJson) {
+    //         prevAudioChannelsJson = json
+    //         send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
 
-        // REMOTE mixer updates
-        sendRemoteMixer()
+    //         // REMOTE mixer updates
+    //         sendRemoteMixer()
+    //     }
+    // })
+
+    playingVideoState.subscribe((data) => {
+        send(OUTPUT, ["PLAYING_VIDEO_STATE"], data)
     })
 
     audioEffects.subscribe(async (data) => {

@@ -1,8 +1,7 @@
 import { get } from "svelte/store"
 import { ShowList } from "../../types/Show"
-import { categories, drawerTabsData, textCache } from "../stores"
+import { textCache } from "../stores"
 import { formatSearch, tokenize } from "./search"
-import { sortObjectNumbers } from "../components/helpers/array"
 
 // https://github.com/ChurchApps/FreeShow/pull/2790
 
@@ -220,87 +219,6 @@ function indexPhrases(index: Map<string, Set<string>>, showId: string, words: st
             }
         }
     }
-}
-
-/**
- * Fast search using the inverted index
- * Generates subphrases and individual words from the query
- */
-export function fastSearch(searchValue: string, shows: ShowList[]): ShowList[] {
-    // Ensure index is built
-    if (!searchIndex || searchIndex.showData.size !== shows.length) {
-        buildSearchIndex(shows)
-    }
-
-    const formattedQuery = formatSearch(searchValue, false)
-    const queryWords = tokenize(formattedQuery)
-
-    if (queryWords.length === 0) return []
-
-    // Score accumulator: showId -> score
-    const scores = new Map<string, number>()
-
-    // Generate all subphrases and words to search for
-    const searchTerms = generateSearchTerms(queryWords)
-
-    // O(1) lookup for each term
-    for (const { term, weight, isPhrase } of searchTerms) {
-        if (isPhrase) {
-            // Phrase lookup
-            const matchingShows = searchIndex!.phraseIndex.get(term)
-            if (matchingShows) {
-                for (const showId of matchingShows) {
-                    scores.set(showId, (scores.get(showId) || 0) + weight * 20)
-                }
-            }
-        } else {
-            // Word lookup
-            const entries = searchIndex!.wordIndex.get(term)
-            if (entries) {
-                for (const entry of entries) {
-                    const fieldBonus = entry.field === "name" ? 3 : 1
-                    const freqBonus = Math.min(entry.frequency, 5) * 0.5
-                    scores.set(entry.showId, (scores.get(entry.showId) || 0) + weight * fieldBonus + freqBonus)
-                }
-            }
-
-            // Prefix matching for partial words
-            if (term.length >= 3) {
-                for (const [indexedWord, entries] of searchIndex!.wordIndex) {
-                    if (indexedWord.startsWith(term) && indexedWord !== term) {
-                        for (const entry of entries) {
-                            const fieldBonus = entry.field === "name" ? 2 : 0.5
-                            scores.set(entry.showId, (scores.get(entry.showId) || 0) + weight * 0.3 * fieldBonus)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Convert scores to results
-    const showMap = new Map(shows.map((s) => [s.id, s]))
-    let results: ShowList[] = []
-
-    for (const [showId, score] of scores) {
-        const show = showMap.get(showId)
-        if (show && score > 0) {
-            // Don't include archived unless viewing archive
-            const isArchived = get(categories)[show.category || ""]?.isArchive
-            if (isArchived && get(drawerTabsData).shows?.activeSubTab !== show.category) continue
-
-            results.push({ ...show, match: score })
-        }
-    }
-
-    // Sort by score descending
-    results = sortObjectNumbers(results, "match", true)
-
-    // Normalize scores to 0-100
-    const maxScore = results[0]?.match || 1
-    results = results.map((r) => ({ ...r, originalMatch: r.match, match: ((r.match || 0) / maxScore) * 100 }))
-
-    return results
 }
 
 /**

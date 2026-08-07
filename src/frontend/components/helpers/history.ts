@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import type { History, HistoryNew, HistoryTypes } from "../../../types/History"
 import { activePage, historyCacheCount, isDev, undoHistory } from "../../stores"
 import { redoHistory } from "./../../stores"
-import { clone } from "./array"
+import { areObjectsEqual, clone } from "./array"
 import { historyActions } from "./historyActions"
 import { createStore, createStoreHistory, deleteStore, deleteStoreHistory, updateStore, updateStoreHistory } from "./historyStores"
 import { deselect } from "./select"
@@ -21,6 +21,19 @@ export function historyAwait(s: string[], obj: History) {
         .catch((e) => {
             console.error(e)
         })
+}
+
+function isNoDataChange(obj: History) {
+    if (obj.id === "UPDATE") {
+        const data = obj.newData || {}
+        // deleting/creating entries only carry one of the values
+        if (data.previousData === undefined || data.data === undefined) return false
+        if (typeof data.previousData !== "object" || data.previousData === null || typeof data.data !== "object" || data.data === null) return data.previousData === data.data
+        return areObjectsEqual(data.previousData, data.data)
+    }
+
+    if (!obj.oldData || !obj.newData || typeof obj.oldData !== "object" || typeof obj.newData !== "object") return false
+    return areObjectsEqual(obj.oldData, obj.newData)
 }
 
 export function history(obj: History, shouldUndo: null | boolean = null) {
@@ -176,9 +189,9 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
     if (old && !shouldUndo && !obj.oldData) obj.oldData = old
 
     if (obj.save === false) return
+    // don't create a history entry (or clear the redo stack) if nothing changed
+    if (shouldUndo === null && isNoDataChange(obj)) return
     if (shouldUndo === null) redoHistory.set([])
-
-    // TODO: remove history obj if oldData is exactly the same as newdata
 
     // if (obj.id !== "SAVE") {
     // TODO: go to location
@@ -191,7 +204,6 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
         } else activePage.set(obj.location!.page)
     }
 
-    // TODO: slide text edit, dont override different style keys!
     // }
 
     if (shouldUndo) {
@@ -205,14 +217,17 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
         })
     } else {
         undoHistory.update((uh: any) => {
+            const lastEntry = uh[uh.length - 1]
+            // only coalesce entries changing the same key, otherwise the other key's change would be lost on undo
+            const sameKeys = lastEntry?.newData?.style?.key === obj.newData?.style?.key && lastEntry?.newData?.key === obj.newData?.key && lastEntry?.newData?.subkey === obj.newData?.subkey
             // if id and location is equal push new data to previous stored
             // not: project | newProject | newFolder | addShowToProject | slide
-            if (shouldUndo === null && (override.includes(obj.id) || obj.location?.override) && uh[uh.length - 1]?.id === obj.id && JSON.stringify(Object.values(uh[uh.length - 1]?.location || {})) === JSON.stringify(Object.values(obj.location || {}))) {
+            if (shouldUndo === null && sameKeys && (override.includes(obj.id) || obj.location?.override) && lastEntry?.id === obj.id && JSON.stringify(Object.values(lastEntry?.location || {})) === JSON.stringify(Object.values(obj.location || {}))) {
                 // override, but keep previousData!!!
                 const newestData = obj.newData
-                if (newestData?.previousData) newestData.previousData = uh[uh.length - 1].newData.previousData
-                uh[uh.length - 1].newData = newestData
-                uh[uh.length - 1].time = Date.now()
+                if (newestData?.previousData) newestData.previousData = lastEntry.newData.previousData
+                lastEntry.newData = newestData
+                lastEntry.time = Date.now()
             } else {
                 // add to start if redo
                 // if (undo === false) uh = [obj, ...uh]

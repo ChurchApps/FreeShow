@@ -24,7 +24,6 @@ export const DEFAULT_DICTIONARY = {
         shows: "Shows",
         media: "Media",
         overlays: "Overlays",
-        audio: "Audio",
         scripture: "Scriptures",
         calendar: "Calendar",
         templates: "Templates",
@@ -116,9 +115,5 @@ export const DEFAULT_DICTIONARY = {
     },
     context: {
         addToProject: "Add to project"
-    },
-    audio: {
-        main: "Main",
-        mixer: "Mixer"
     }
 }

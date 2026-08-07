@@ -20,7 +20,8 @@ export function addStyle(selection: { start: number; end: number }[], item: Item
 
                 if ((pos < selection[i].start && pos + length > selection[i].start) || (pos < selection[i].end && pos + length > selection[i].end) || (pos >= selection[i].start && pos + length <= selection[i].end)) {
                     if (from > 0) newText.push({ value: value.slice(0, from), style: text.style })
-                    if (to - from > 0 && to - from <= length) {
+                    // also style covered empty text (e.g. an empty textbox), otherwise it would keep the old style
+                    if ((to - from > 0 || length === 0) && to - from <= length) {
                         let newStyle = ""
                         if (Array.isArray(style)) newStyle = addStyleString(text.style, style)
                         else newStyle = style
@@ -350,29 +351,33 @@ export function getLineText(line: Line): string {
 }
 
 export function setCaret(element: any, { line = 0, pos = 0 }, toEnd = false) {
-    if (!element) return
+    if (!element?.childNodes?.length) return
     const range = document.createRange()
     const sel = window.getSelection()
 
-    const lineElem = element.childNodes[line]
+    const lineElem = element.childNodes[Math.min(line, element.childNodes.length - 1)]
     if (!lineElem) return
+
+    // count like getSelectionRange: include plain text nodes, don't count line breaks
+    const nodeTextLength = (node: any) => (((node?.innerText ?? node?.textContent) || "") as string).replaceAll("\n", "").length
 
     // get child elem
     let childElem = -1
     let currentTextLength = 0
     lineElem.childNodes.forEach((elem, i) => {
-        if (!elem?.innerText || childElem >= 0) return
-        if (pos <= currentTextLength + elem.innerText.length) {
+        if (childElem >= 0) return
+        const textLength = nodeTextLength(elem)
+        if (pos <= currentTextLength + textLength) {
             childElem = i
             return
         }
-        currentTextLength += elem.innerText.length
+        currentTextLength += textLength
     })
 
     // pasted on non-existent line
     if (childElem < 0) {
         childElem = lineElem.childNodes.length - 1
-        pos = lineElem.childNodes[childElem]?.innerText?.length ?? 0
+        pos = nodeTextLength(lineElem.childNodes[childElem])
         currentTextLength = 0
     }
 
@@ -386,34 +391,32 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd = false) {
 
     // get end child elem
     const lastEndChild = lastLineElem.childNodes[lastLineElem.childNodes.length - 1]
-    if (!lastEndChild) return
-    let currentEndTextLength = lastEndChild.innerText?.length ?? 0
+    let currentEndTextLength = lastEndChild ? nodeTextLength(lastEndChild) : 0
 
-    const breakElem = lastEndChild.childNodes[0]?.nodeName === "BR"
-    if (line === 0 && breakElem) return
+    const startChild = lineElem.childNodes[childElem]
+    const startElem = startChild?.nodeType === Node.TEXT_NODE ? startChild : startChild?.childNodes[0]
+    const endElem = lastEndChild?.nodeType === Node.TEXT_NODE ? lastEndChild : lastEndChild?.childNodes[0]
 
-    const startElem = lineElem.childNodes[childElem]?.childNodes[0]
-    const endElem = lastEndChild.childNodes[0]
-
-    // If startElem is a BR element, set caret before it and not inside it
-    if (startElem?.nodeName === "BR") {
-        const parentSpan = lineElem.childNodes[childElem]
-        try {
-            range.setStart(parentSpan, 0)
-        } catch {
-            return
+    // always position the range, a fresh unpositioned range would collapse the caret to the start
+    try {
+        if (startElem?.nodeName === "BR") {
+            // if startElem is a BR element, set caret before it and not inside it
+            range.setStart(startElem.parentNode || lineElem, 0)
+        } else if (startElem?.nodeType === Node.TEXT_NODE) {
+            const offset = pos - currentTextLength
+            const startElemLength = startElem.length ?? startElem.textContent?.length ?? 0
+            range.setStart(startElem, Math.max(0, Math.min(startElemLength, offset)))
+        } else if (startChild) {
+            range.setStart(lineElem, Math.max(0, Math.min(lineElem.childNodes.length, childElem)))
+        } else {
+            range.setStart(lineElem, 0)
         }
-    } else if (startElem) {
-        const offset = pos - currentTextLength
-        const startElemLength = startElem.length ?? startElem.textContent?.length ?? 0
-        const safeStartOffset = Math.max(0, Math.min(startElemLength, offset))
-        try {
-            range.setStart(startElem, safeStartOffset)
-        } catch {
-            return
-        }
+    } catch {
+        range.selectNodeContents(lineElem)
+        range.collapse(false)
     }
-    if (toEnd) {
+
+    if (toEnd && lastEndChild) {
         let safeEndOffset = 0
         if (endElem?.nodeType === Node.TEXT_NODE) {
             safeEndOffset = Math.max(0, Math.min(endElem.length ?? endElem.textContent?.length ?? 0, currentEndTextLength))
@@ -421,11 +424,11 @@ export function setCaret(element: any, { line = 0, pos = 0 }, toEnd = false) {
             safeEndOffset = Math.max(0, Math.min(endElem.childNodes.length, currentEndTextLength))
         }
         try {
-            range.setEnd(endElem, safeEndOffset)
+            range.setEnd(endElem || lastEndChild, safeEndOffset)
         } catch {
-            return
+            range.collapse(true)
         }
-    } else range.collapse(true)
+    } else if (!toEnd) range.collapse(true)
 
     sel?.removeAllRanges()
     sel?.addRange(range)

@@ -25,7 +25,6 @@
     import Movebox from "../system/Movebox.svelte"
     import SlideNotes from "./items/SlideNotes.svelte"
     import SlideText from "./items/SlideText.svelte"
-    import VideoTime from "./items/VideoTime.svelte"
     import { getCustomStageLabel, getSlideTextItems, stageItemToItem } from "./stage"
     import StageLayout from "./StageLayout.svelte"
 
@@ -187,8 +186,10 @@
     $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     // SLIDE
-    $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($currentWindow === "output" ? $allOutputs : $outputs, false, true, true)[0]
-    $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
+    $: sourceOutputId = currentShow?.settings?.output
+    $: outputStores = $currentWindow === "output" ? $allOutputs : $outputs
+    $: stageOutputId = sourceOutputId && outputStores[sourceOutputId] ? sourceOutputId : getActiveOutputs(outputStores, false, true, true)[0]
+    $: currentOutput = outputStores[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide || (slideOffset !== 0 ? $outputSlideCache[stageOutputId] || null : null)
 
     $: outputWindowId = item?.currentOutput?.source || stageOutputId
@@ -425,8 +426,6 @@
                             <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} outputId={stageOutputId} />
                         {:else if id.includes("clock")}
                             <Clock style={false} fontStyle={item.auto === false ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
-                        {:else if id.includes("video")}
-                            <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
                         {:else if id.includes("first_active_timer")}
                             <Timer item={stageItemToItem(item)} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                         {:else if id.includes("timers")}

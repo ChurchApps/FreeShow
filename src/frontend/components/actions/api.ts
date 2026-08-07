@@ -17,7 +17,7 @@ import { startMetronome } from "../drawer/audio/metronome"
 import { getInteraction, startInteraction, stopInteraction } from "../drawer/pages/interactions"
 import { pauseAllTimers } from "../drawer/timers/timers"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
-import { changeStageOutputLayout, startCamera, startScreen, startStreaming, stopStreaming, startRtmpStreaming, stopRtmpStreaming, toggleOutputs } from "../helpers/output"
+import { changeStageOutputLayout, startCamera, startRtmpStreaming, startScreen, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutputs } from "../helpers/output"
 import { OutputHelper } from "../helpers/OutputHelper"
 import { changeOutputStyle, playSlideTimers, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
@@ -163,10 +163,6 @@ export type API_metronome = {
     metadataBPM?: boolean // only used by actions
     tempo?: number
     beats?: number
-    volume?: number
-    // notesPerBeat?: number
-    audioOutput?: string
-    audioChannel?: string
 }
 export type API_rest_command = {
     url: string

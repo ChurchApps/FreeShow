@@ -3,6 +3,8 @@
     import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, special, templates, variables } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
+    import { isSlideLocked } from "../../helpers/show"
+    import { isComposing } from "../../../utils/shortcuts"
     import { deleteAction } from "../../helpers/clipboard"
     import { history } from "../../helpers/history"
     import { getExtension, getFileName, getMediaType } from "../../helpers/media"
@@ -110,6 +112,7 @@
     function keydown(e: KeyboardEvent) {
         if (e.key === "Shift") isShiftPressed = true
 
+        if (isComposing(e)) return
         if (cropElem?.handleKeydown(e)) return
 
         if (e.key === "Escape") {
@@ -206,8 +209,8 @@
     $: isDisabledVariable = item?.type === "variable" && $variables[item.variable?.id]?.enabled === false
     // SHOW IS LOCKED FOR EDITING
     let profile = getAccess("shows")
-    $: currentSlide = (ref.type || "show") === "show" ? $showsCache[active || ""]?.slides?.[ref.id] : null // WIP get group slide
-    $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked || currentSlide?.locked || profile.global === "read" || profile[$showsCache[active || ""]?.category || ""] === "read"
+    $: isGroupLocked = (ref.type || "show") === "show" ? isSlideLocked(active || "", ref.id, $showsCache) : false
+    $: isLocked = (ref.type || "show") !== "show" ? false : $showsCache[active || ""]?.locked || isGroupLocked || profile.global === "read" || profile[$showsCache[active || ""]?.category || ""] === "read"
 
     // give CSS access to certain dynamic values
     $: cssVariables = createCSSVariables($variables)

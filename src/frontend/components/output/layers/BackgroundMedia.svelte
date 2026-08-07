@@ -1,19 +1,11 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
-    import { uid } from "uid"
-    import { OUTPUT } from "../../../../types/Channels"
-    import { Main } from "../../../../types/IPC/Main"
     import type { MediaStyle } from "../../../../types/Main"
     import type { Styles } from "../../../../types/Settings"
     import type { OutBackground, Transition } from "../../../../types/Show"
-    import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { requestMain } from "../../../IPC/main"
-    import { audioChannelsData, currentWindow, media, outputs, playerVideos, playingVideos, special, videosData, videosTime, volume } from "../../../stores"
-    import { destroy, receive, send } from "../../../utils/request"
-    import { videoExtensions } from "../../../values/extensions"
+    import { media, playerVideos, special } from "../../../stores"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
-    import { getExtension, getMediaStyle } from "../../helpers/media"
+    import { getMediaStyle } from "../../helpers/media"
     import Player from "../../system/Player.svelte"
     import Camera from "../Camera.svelte"
     import OutputTransition from "../transitions/OutputTransition.svelte"
@@ -27,9 +19,7 @@
     export let fadingOut = false
     export let currentStyle: Styles | null = null
     export let animationStyle = ""
-    export let duration = 0
     export let mirror = false
-    export let styleBackground = false
 
     $: id = data.path || data.id || ""
 
@@ -39,225 +29,12 @@
 
     let mediaStyle: MediaStyle = {}
     $: if (data && currentStyle) mediaStyle = getMediaStyle({ ...$media[id], ...data }, currentStyle)
-
-    // VIDEO
-
-    let videoData = { duration: 0, paused: true, muted: true, loop: styleBackground }
-    let videoTime = 0
-
-    // let videoDuration = 0
-    // if (!videoData.duration && duration) videoData.duration = videoDuration
-    // else if (videoData.duration && videoDuration !== videoData.duration) videoDuration = videoData.duration
-
-    // always muted in mirror (draw/key)
-    $: if (mirror && !videoData.muted) videoData.muted = true
-    // video values updated
-    $: if (!mirror && (data.muted !== undefined || data.loop !== undefined)) updateValues()
-    function updateValues() {
-        if (fadingOut) return
-
-        videoData.muted = data.muted ?? true
-        videoData.loop = data.loop ?? styleBackground
-    }
-    // draw
-
-    //Without the second if, the preview videos don't actually play but just skip ahead when kept in sync with the setTimeout()
-    $: if (mirror && !styleBackground && $videosData[outputId]?.paused) videoData.paused = true
-    $: if (mirror && !styleBackground && $videosData[outputId]?.paused === false) videoData.paused = false
-
-    $: if (mirror && !styleBackground && $videosTime[outputId] !== undefined) setPreviewVideoTime()
-    function setPreviewVideoTime() {
-        // timeout in case video is going to fade out
-        setTimeout(() => {
-            if (fadingOut || (!videoData.paused && videoTime < 2)) return
-
-            const diff = Math.abs($videosTime[outputId] - videoTime)
-            if (diff > 0.5) {
-                videoTime = $videosTime[outputId]
-
-                if (videoTime < 0.6) {
-                    videoData.paused = true // quick fix for preview stutter when video loops (should be a better fix)
-                } else {
-                    videoData.paused = $videosData[outputId]?.paused
-                }
-            }
-        }, 50)
-    }
-
-    $: if (!mirror && !fadingOut) send(OUTPUT, ["MAIN_DATA"], { [outputId]: videoData })
-    $: if (!mirror && !fadingOut) sendVideoTime(videoTime)
-
-    let sendingTimeout: NodeJS.Timeout | null = null
-    let timeUpdateTimeout = 220
-    function sendVideoTime(time: number) {
-        if (sendingTimeout) return
-
-        send(OUTPUT, ["MAIN_TIME"], { [outputId]: time })
-        sendingTimeout = setTimeout(() => {
-            if (fadingOut) return
-
-            send(OUTPUT, ["MAIN_TIME"], { [outputId]: time })
-            sendingTimeout = null
-        }, timeUpdateTimeout)
-    }
-
-    const videoReceiver = {
-        TIME: (data: any) => {
-            let outputData = data[outputId]
-            if (!outputData || fadingOut) return
-
-            videoTime = outputData
-        },
-        DATA: (data: any) => {
-            let outputData = data[outputId]
-            if (!outputData || fadingOut) return
-
-            videoData = { ...outputData, duration: videoData.duration || 0 }
-        }
-    }
-
-    let listenerId = ""
-    let receiving = false
-
-    let mounted = false
-    onMount(() => (mounted = true))
-    $: if (id && !fadingOut && mounted) startReceiver()
-    function startReceiver() {
-        const isStage = $currentWindow === "output" && !!Object.values($outputs)[0]?.stageOutput
-        if ((mirror && !isStage) || receiving) return
-        receiving = true
-
-        destroy(OUTPUT, listenerId)
-
-        listenerId = "MEDIA_RECEIVE_" + uid(5)
-        receive(OUTPUT, videoReceiver, listenerId)
-    }
-
-    onDestroy(removeReceiver)
-    $: if (fadingOut || id) removeReceiver()
-    function removeReceiver() {
-        if (!receiving || !mounted) return
-        receiving = false
-
-        destroy(OUTPUT, listenerId)
-    }
-
-    $: isVideo = videoExtensions.includes(getExtension(id))
-
-    // call end just before (to make room for transition) - this also triggers video ended on loop
-    $: if (isVideo && videoData.duration && videoTime >= videoData.duration - (duration / 1000 + 0.1) && !mediaStyle.softLoop) {
-        videoEnded()
-    }
-
-    let endedCalled = false
-    $: if (id) endedCalled = false
-
-    function videoEnded() {
-        if (fadingOut || mirror || endedCalled) return
-        endedCalled = true
-
-        send(OUTPUT, ["MAIN_VIDEO_ENDED"], { id: outputId, loop: videoData.loop, duration })
-
-        // Only reset if looping, otherwise keep endedCalled true for the remainder of this media's life
-        if (videoData.loop) {
-            setTimeout(() => (endedCalled = false), Math.max(duration, 2000))
-        }
-    }
-
-    // FADE OUT AUDIO
-
-    $: audioChannelVolume = $audioChannelsData[outputId]?.volume ?? 1
-    $: isMuted = !!($audioChannelsData[outputId]?.isMuted || $audioChannelsData.main?.isMuted)
-    let fadeoutVolume = 1
-    $: if (!fadingOut) fadeoutVolume = 1
-
-    let replayGainMultiplier = 1
-    $: if (id) fetchReplayGain(id)
-    async function fetchReplayGain(filePath: string) {
-        replayGainMultiplier = 1
-
-        if (typeof filePath !== "string") return
-
-        // is online path
-        if (/^https?:\/\//i.test(filePath)) return
-
-        // is not video
-        const ext = getExtension(filePath)
-        if (!videoExtensions.includes(ext)) return
-
-        try {
-            const metadata = await requestMain(Main.READ_AUDIO_METADATA, { filePath })
-            if (metadata?.replayGainMultiplier) {
-                replayGainMultiplier = metadata.replayGainMultiplier
-            }
-        } catch (e) {
-            console.error("Failed to fetch video ReplayGain:", e)
-        }
-    }
-
-    $: calculatedVolume = $volume * (isMuted ? 0 : 1) * audioChannelVolume * (($media[id]?.volume ?? currentStyle?.volume ?? 100) / 100) * replayGainMultiplier
-    $: videoVolumeProp = calculatedVolume * fadeoutVolume
-
-    $: if (fadingOut && !videoData.muted) fadeoutVideo()
-    const speed = 0.01
-    const margin = 0.9 // video should fade to 0 before clearing
-    function fadeoutVideo() {
-        if (mirror || !video || !fadingOut || !duration) return
-
-        let time = duration * speed * margin
-        setTimeout(() => {
-            fadeoutVolume = Math.max(0, Number((fadeoutVolume - speed).toFixed(3)))
-            fadeoutVideo()
-        }, time)
-    }
-
-    // AUDIO
-
-    $: videoExists = !!video
-    $: if ($currentWindow === "output" && !mirror && videoExists) analyseVideo()
-
-    onDestroy(() => {
-        if ($currentWindow !== "output" || !previousPath) return
-
-        AudioAnalyser.detach(previousPath)
-
-        // playingVideos.set([])
-        playingVideos.update((a) => {
-            let videoIndex = a.findIndex((a) => a.id === previousPath)
-            if (videoIndex > -1) a.splice(videoIndex, 1)
-            return a
-        })
-    })
-
-    $: videoPitch = $media[id]?.pitch ?? 0
-    $: if (video && videoPitch !== undefined) AudioAnalyser.setPitch(id, videoPitch)
-
-    // analyse video audio
-    let video: HTMLVideoElement | undefined
-    // previousPath is probably not needed as component is unmounted on new path
-    let previousPath = id
-    function analyseVideo() {
-        if (fadingOut || $playingVideos[0]?.id === id) return
-        if (previousPath && previousPath !== id) {
-            AudioAnalyser.detach(previousPath)
-        }
-        if (!video) return
-
-        playingVideos.set([{ id, video }])
-        AudioAnalyser.attach(id, video)
-        AudioAnalyser.recorderActivate()
-
-        // Sync initial processing state
-        AudioAnalyser.setPitch(id, videoPitch)
-        AudioAnalyser.setTempo(id, 1) // Browser handles speed via playbackRate
-
-        previousPath = id
-    }
 </script>
 
 <OutputTransition {transition} inTransition={transition.in} outTransition={transition.out} on:outrostart={() => (fadingOut = true)}>
     {#if type === "media"}
-        <Media path={id} {data} {animationStyle} bind:video bind:videoData bind:videoTime {mirror} {mediaStyle} volume={videoVolumeProp} on:loaded on:ended={videoEnded} />
+        <!-- on:ended={videoEnded} -->
+        <Media {outputId} path={id} {data} {animationStyle} {mirror} {mediaStyle} on:loaded />
     {:else if type === "screen"}
         <Window {id} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "ndi"}
@@ -271,7 +48,8 @@
     {:else if type === "player"}
         <!-- prevent showing controls in output -->
         {#if $special.hideCursor || $playerVideos[id]?.type !== "youtube"}<div class="overlay" />{/if}
-        <Player {outputId} {id} bind:videoData bind:videoTime startAt={data.startAt} on:loaded on:ended={videoEnded} />
+        <!-- on:ended={videoEnded} -->
+        <Player {outputId} {id} on:loaded />
     {/if}
 </OutputTransition>
 

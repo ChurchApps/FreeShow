@@ -18,6 +18,7 @@ import {
     audioEffects,
     audioFolders,
     audioPlaylists,
+    audioRouting,
     autoOutput,
     autosave,
     calendarAddShow,
@@ -44,7 +45,6 @@ import {
     folders,
     formatNewShow,
     fullColors,
-    gain,
     globalRegexes,
     globalTags,
     groupNumbers,
@@ -106,8 +106,7 @@ import {
     usageLog,
     variableTags,
     variables,
-    videoMarkers,
-    volume
+    videoMarkers
 } from "../stores"
 import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
@@ -179,8 +178,6 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         theme: get(theme),
         transitionData: get(transitionData),
         // themes: get(themes),
-        volume: get(volume),
-        gain: get(gain),
         audioChannelsData: get(audioChannelsData),
         cloudSyncData: get(cloudSyncData),
         driveData: get(driveData),
@@ -271,6 +268,7 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         globalRegexes,
         customMetadata,
         effects,
+        audioRouting,
         deletedDefaults
     }
 }
@@ -472,8 +470,6 @@ const saveList: { [key in SaveList]: any } = {
     theme,
     themes,
     transitionData,
-    volume: null,
-    gain: null,
     audioChannelsData,
     midiIn: actions,
     emitters,
@@ -502,5 +498,6 @@ const saveList: { [key in SaveList]: any } = {
     contentProviderData,
     obsData: null,
     effects,
+    audioRouting,
     deletedDefaults: null
 }

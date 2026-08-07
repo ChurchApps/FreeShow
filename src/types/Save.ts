@@ -39,6 +39,7 @@ export type SaveListSyncedSettings =
     | "globalRegexes"
     | "customMetadata"
     | "effects"
+    | "audioRouting"
     | "deletedDefaults"
 
 export type SaveListSettings =
@@ -75,8 +76,6 @@ export type SaveListSettings =
     | "splitLines"
     | "theme"
     | "transitionData"
-    | "volume"
-    | "gain"
     | "audioChannelsData"
     | "cloudSyncData"
     | "driveData"

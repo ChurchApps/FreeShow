@@ -15,7 +15,6 @@
     // Component cache - store loaded components
     let TabletDrawerShows: any = null
     let TabletDrawerMedia: any = null
-    let TabletDrawerAudio: any = null
     let TabletDrawerOverlays: any = null
     let TabletDrawerTemplates: any = null
     let TabletDrawerCalendar: any = null
@@ -28,9 +27,6 @@
     }
     $: if (loaded.includes("media") && !TabletDrawerMedia) {
         import("./pages/TabletDrawerMedia.svelte").then(m => TabletDrawerMedia = m.default)
-    }
-    $: if (loaded.includes("audio") && !TabletDrawerAudio) {
-        import("./pages/TabletDrawerAudio.svelte").then(m => TabletDrawerAudio = m.default)
     }
     $: if (loaded.includes("overlays") && !TabletDrawerOverlays) {
         import("./pages/TabletDrawerOverlays.svelte").then(m => TabletDrawerOverlays = m.default)
@@ -62,14 +58,6 @@
         <div style="display: {id === 'media' ? 'contents' : 'none'}">
             {#if TabletDrawerMedia}
                 <svelte:component this={TabletDrawerMedia} />
-            {/if}
-        </div>
-    {/if}
-
-    {#if loaded.includes("audio")}
-        <div style="display: {id === 'audio' ? 'contents' : 'none'}">
-            {#if TabletDrawerAudio}
-                <svelte:component this={TabletDrawerAudio} />
             {/if}
         </div>
     {/if}

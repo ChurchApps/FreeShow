@@ -230,7 +230,7 @@
 
     const setBox = () => clone(itemBoxes[id])!
     let box = setBox()
-    $: if ($activeEdit.id || $activeShow?.id || $activeEdit.slide) box = setBox()
+    $: if ($activeEdit.id || $activeShow?.id || ($activeEdit.slide ?? -1) > -1) box = setBox()
 
     // get item values
     $: style = item?.lines ? getItemStyleAtPos(item.lines, selection) : item?.type === "table" && activeRowIdx >= 0 && activeColIdx >= 0 && item.table?.rows?.[activeRowIdx]?.cells?.[activeColIdx] ? item.table.rows[activeRowIdx].cells[activeColIdx].style || "" : item?.style || ""
@@ -269,8 +269,6 @@
         setBoxInputValue(box, "lines", "specialStyle.lineRadius", "hidden", !item?.specialStyle?.lineRadius && !item?.specialStyle?.lineBg)
 
         setBoxInputValue(box, "default", "textFit", "value", item?.auto ? "shrinkToFit" : "none") // text items
-        // WIP disabled auto size -- don't disable if all text is selected
-        // setBoxInputValue(box, "default", "font-size", "disabled", selection?.length)
     }
 
     $: if (id === "media" && item) {
@@ -293,11 +291,14 @@
     $: if (id === "clock" && item) {
         const clockType = item.clock?.type || "digital"
         const dateFormat = item.clock?.dateFormat || "none"
+        const customFormat = item.clock?.customFormat || ""
+        const showOffsetDays = clockType === "custom" && /[MDY]/.test(customFormat) // has M or D or Y
 
         setBoxInputValue(box, "default", "clock.dateFormat", "hidden", clockType !== "digital")
         setBoxInputValue(box, "default", "clock.showTime", "hidden", clockType !== "digital" || dateFormat === "none")
         setBoxInputValue(box, "default", "clock.seconds", "hidden", clockType === "custom" || (clockType === "digital" && item.clock?.showTime === false && dateFormat !== "none"))
         setBoxInputValue(box, "default", "clock.customFormat", "hidden", clockType !== "custom")
+        setBoxInputValue(box, "default", "clock.offsetDays", "hidden", !showOffsetDays)
         setBoxInputValue(box, "default", "tip", "hidden", clockType !== "custom")
     }
     $: if (id === "camera" && item) {
@@ -335,13 +336,14 @@
         else if (input.key === "text-align") value = `text-align: ${value};`
         else if (input.key) value = { ...((item as any)?.[input.key] || {}), [input.key]: value }
 
+        let targetId = input.id
         // set nested value
         if (input.id.includes(".")) {
             let splitted = input.id.split(".")
             let item = getSelectedItem()
             if (!item) return
 
-            input.id = splitted[0]
+            targetId = splitted[0]
 
             let newValue = item[splitted[0]]
             if (typeof newValue !== "object" || newValue === null) newValue = {}
@@ -393,7 +395,7 @@
 
         history({
             id: "setItems",
-            newData: { style: { key: input.id, values: [value] } },
+            newData: { style: { key: targetId, values: [value] } },
             location: { page: "edit", show: $activeShow!, slide: getLayoutRef()[$activeEdit.slide!]?.id, items: allItems }
         })
 
@@ -408,12 +410,12 @@
             allItems.forEach((i: number) => {
                 if (!a[$activeEdit.id!].items[i]) return
 
-                if (!input.id.includes(".")) {
-                    a[$activeEdit.id!].items[i][input.id] = value
+                if (!targetId.includes(".")) {
+                    a[$activeEdit.id!].items[i][targetId] = value
                     return
                 }
 
-                let splitted = input.id.split(".")
+                let splitted = targetId.split(".")
                 let nested = a[$activeEdit.id!].items[i][splitted[0]]
                 if (typeof nested !== "object" || nested === null) {
                     a[$activeEdit.id!].items[i][splitted[0]] = {}
@@ -421,6 +423,36 @@
                 a[$activeEdit.id!].items[i][splitted[0]][splitted[1]] = value
             })
 
+            a[$activeEdit.id!].modified = Date.now()
+            return a
+        }
+    }
+
+    function isPartialTextSelection() {
+        if (!selection?.length || !selection.some((a) => a?.start !== undefined && a.start !== a.end)) return false
+        if (!item?.lines?.length) return false
+        return !item.lines.every((line, i) => selection![i]?.start === 0 && selection![i]?.end === getLineText(line).length)
+    }
+
+    function disableAutoSize(items: number[]) {
+        if ($activeEdit.id) {
+            if ($activeEdit.type === "overlay") overlays.update(updateAutoSize)
+            else if ($activeEdit.type === "template") templates.update(updateAutoSize)
+            return
+        }
+
+        const location = { page: "edit" as const, show: $activeShow!, slide: getLayoutRef()[$activeEdit.slide!]?.id, items }
+        // separate location ids so the different keys don't get coalesced into one history entry
+        history({ id: "setItems", newData: { style: { key: "textFit", values: ["none"] } }, location: { ...location, id: "textFit" } })
+        history({ id: "setItems", newData: { style: { key: "auto", values: [false] } }, location: { ...location, id: "auto" } })
+
+        function updateAutoSize(a: any) {
+            if (!a[$activeEdit.id!]?.items) return a
+            items.forEach((i) => {
+                if (!a[$activeEdit.id!].items[i]) return
+                a[$activeEdit.id!].items[i].textFit = "none"
+                a[$activeEdit.id!].items[i].auto = false
+            })
             a[$activeEdit.id!].modified = Date.now()
             return a
         }
@@ -438,7 +470,7 @@
         const colIdx = td ? parseInt(td.getAttribute("data-col") || "") : -1
 
         if (item?.type === "table" && rowIdx >= 0 && colIdx >= 0 && input.key && item.table?.rows?.[rowIdx]?.cells?.[colIdx]) {
-            let allItems: number[] = $activeEdit.items
+            let allItems: number[] = [...$activeEdit.items]
             if (!allItems.length) allSlideItems.forEach((_item, i) => allItems.push(i))
             let cellStyle = item.table.rows[rowIdx].cells[colIdx].style || ""
             cellStyle = addStyleString(cellStyle, [input.key, input.value])
@@ -447,13 +479,7 @@
             return
         }
 
-        // does not work for partial text when auto size is enabled
-        // WIP doesn't need to show if disabled works correctly
-        if (id === "text" && input.key === "font-size" && selection?.length && (item?.textFit || "none") !== "none") {
-            newToast("edit.auto_size settings.enabled!")
-        }
-
-        let allItems: number[] = $activeEdit.items
+        let allItems: number[] = [...$activeEdit.items]
         // update all items if nothing is selected
         if (!allItems.length) allSlideItems.forEach((_item, i) => allItems.push(i))
         allSlideItems = clone(allSlideItems)
@@ -462,8 +488,14 @@
         if (($activeEdit.type || "show") === "show") allItems = allItems.reverse()
 
         // only same type
-        let currentType = id || allSlideItems[allItems[0]].type || "text"
-        allItems = allItems.filter((index) => (allSlideItems[index].type || "text") === currentType)
+        let currentType = id || allSlideItems[allItems[0]]?.type || "text"
+        allItems = allItems.filter((index) => (allSlideItems[index]?.type || "text") === currentType)
+
+        // font size on a partial selection is invisible while auto size is enabled, so disable auto size first
+        if (id === "text" && input.id === "style" && input.key === "font-size" && input.name !== "font_size" && (item?.auto || (item?.textFit || "none") !== "none") && isPartialTextSelection()) {
+            disableAutoSize(allItems)
+            newToast("toast.autosize_disabled")
+        }
 
         if (input.id === "nowrap") input = { ...input, id: "style", key: "white-space", value: input.value ? "nowrap" : undefined }
 
@@ -543,10 +575,10 @@
                 }
             } else {
                 if (input.id.includes("CSS")) {
-                    values[slideId] = [input.value]
+                    values[slideId].push(input.value)
                 } else {
-                    // TODO: don't replace full item style (position) when changing multiple (Like EditTools.svelte:152)
-                    values[slideId] = [addStyleString(item?.style || "", [input.key, input.value])]
+                    // merge into each item's own style so position etc. is kept when changing multiple items
+                    values[slideId].push(addStyleString(currentSlideItem.style || "", [input.key, input.value]))
                 }
             }
         }
@@ -566,39 +598,33 @@
         // update layout
         if ($activeEdit.id) {
             // overlay / template
-            let currentItems: Item[] = []
-            if ($activeEdit.type === "overlay") currentItems = clone($overlays[$activeEdit.id]?.items || [])
-            if ($activeEdit.type === "template") currentItems = clone($templates[$activeEdit.id]?.items || [])
-            // only selected
-            currentItems = currentItems.filter((_item, i) => allItems.includes(i))
-
-            // WIP changing the default "Name" overlay causes textbox swapping....
+            const sourceItems = ($activeEdit.type === "overlay" ? $overlays[$activeEdit.id]?.items : $templates[$activeEdit.id]?.items) || []
+            // pair each selected item with its own computed value (data & indexes must stay aligned)
+            let currentItems: Item[] = allItems.map((itemIndex) => clone(sourceItems[itemIndex]))
+            const allValues: any[] = Object.values(values)[0] || []
 
             allItems.forEach((_itemIndex, i) => {
                 if (!currentItems[i]) return
 
-                let allValues: any = Object.values(values)[0] || []
                 let currentValue: any = allValues[i] ?? allValues[0]
-                // some textboxes don't have lines, this will break things, so make sure it has lines!
-                if (currentItems[i].lines && typeof currentValue === "string") currentValue = allValues.find((a: any) => typeof a !== "string") || allValues[0]
+                if (currentValue === undefined) return
 
                 if (input.key === "align-items") currentItems[i].align = currentValue
-                else if (currentType !== "text") currentItems[i].style = currentValue
+                else if (currentType !== "text" || (!currentItems[i].lines && typeof currentValue === "string")) currentItems[i].style = currentValue
                 else {
                     let lines = currentItems[i].lines
                     lines?.forEach((_a, j) => {
-                        if (currentItems[i].lines?.[j] && currentValue) {
+                        if (currentItems[i].lines?.[j] && currentValue?.[j] !== undefined) {
                             currentItems[i].lines![j][aligns ? "align" : "text"] = currentValue[j]
                         }
                     })
                 }
             })
 
-            // WIP if top textbox is empty, and another has text, that will update (but the right side won't update (as top is empty as not changed)), that is confusing
-
             // no text
-            if (currentItems[0]?.lines) {
-                let textLength = currentItems.reduce((length, item) => (length += getItemText(item).length), 0)
+            const textItems = currentItems.filter((a) => a?.lines)
+            if (textItems.length) {
+                let textLength = textItems.reduce((length, item) => (length += getItemText(item).length), 0)
                 if (!textLength) {
                     newToast("empty.text")
                     return
@@ -628,14 +654,6 @@
                 })
             })
 
-            return
-        }
-
-        // no text
-        // values: {key: [[[]]]}
-        let textLength = Object.values(values).reduce((length: number, value: any) => length + value.flat(2).reduce((value, text) => value + (text?.value || ""), "").length, 0)
-        if (input.key !== "text-align" && !aligns && !textLength) {
-            newToast("empty.text")
             return
         }
 

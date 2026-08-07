@@ -1,7 +1,6 @@
 name: Playwright Tests
 on:
-    # turning off temporarily as it does not work properly!
-    # Error: electron.launch: Process failed to launch!
+    # want to keep this as manual activation
     # push:
     #     branches: [dev]
     # pull_request:
@@ -10,7 +9,8 @@ on:
 
 jobs:
     test:
-        timeout-minutes: 60
+        # keep timeout low in case it hangs. Should run in well under a minute.
+        timeout-minutes: 10
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4

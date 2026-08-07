@@ -6,20 +6,19 @@
     import autosize from "../../common/util/autosize"
     import { keysToID, sortByName } from "../../common/util/helpers"
     import { getStyles } from "../../common/util/style"
+    import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
+    import { getItemText } from "../helpers/textStyle"
     import Clock from "../items/Clock.svelte"
     import SlideNotes from "../items/SlideNotes.svelte"
     import SlideProgress from "../items/SlideProgress.svelte"
     import SlideText from "../items/SlideText.svelte"
-    import VideoTime from "../items/VideoTime.svelte"
     import { _getDynamicValue } from "../util/itemHelpers"
     import { activeTimers, background, media, output, outputSlideCache, progressData, stream, timers, variables } from "../util/stores"
-    import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
     import MediaOutput from "./MediaOutput.svelte"
     import PreviewCanvas from "./PreviewCanvas.svelte"
     import Textbox from "./Textbox.svelte"
     import Timer from "./Timer.svelte"
     import Variable from "./Variable.svelte"
-    import { getItemText } from "../helpers/textStyle"
 
     export let stageLayout: StageLayout
     export let id: string
@@ -79,20 +78,6 @@
     $: slideOffset = item.type ? Number(item.slideOffset || 0) : id.includes("next") ? 1 : 0
 
     $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
-
-    // request video time
-    let videoTime: number = 0
-    // $: if (id.includes("video")) requestVideoData()
-    // let interval: any = null
-    // function requestVideoData() {
-    //     if (interval) return
-    //     // USE API ?!?
-    //     interval = setInterval(() => send("REQUEST_VIDEO_DATA"), 1000)
-    //     // interval = setInterval(() => socket.emit("STAGE", { id: socketId, channel: "REQUEST_VIDEO_DATA" }), 1000)
-    // }
-    // onDestroy(() => {
-    //     if (interval) clearInterval(interval)
-    // })
 
     let firstTimerId: string = ""
     $: if (item.type === "timer" || id.includes("first_active_timer")) {
@@ -234,9 +219,7 @@
             {:else}
                 <!-- OLD CODE -->
                 <div>
-                    {#if id.includes("video")}
-                        <VideoTime {videoTime} autoSize={item.auto !== false ? autoSize : fontSize} />
-                    {:else if id.includes("first_active_timer")}
+                    {#if id.includes("first_active_timer")}
                         <Timer {item} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                     {:else if id.includes("timers")}
                         {#if $timers[id.split("#")[1]]}

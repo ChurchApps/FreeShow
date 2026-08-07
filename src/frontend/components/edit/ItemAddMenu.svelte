@@ -48,9 +48,9 @@
 
                 // Stage textbox quick add dynamic values - we can't have all values anyway, this would just be some common ones
                 if (item.id === "dynamic_values") {
-                    const excludeValues = ["time_", "exif_", "audio_", "meta_", "slide_text_", "show_text_full", "slide_group_color", "slide_group_next_color", "slide_group_upcoming_color", "interaction_", "timer_m", "timer_s"]
+                    const excludeValues = ["time_", "exif_", "audio_", "meta_", "slide_text_", "show_text_full", "slide_group_text", "slide_group_color", "slide_group_next_color", "slide_group_upcoming_color", "interaction_", "timer_m", "timer_s"]
                     const ref = { type: "stage" }
-                    const children = getDynamicIds()
+                    const children = getDynamicIds(false, "dropdown")
                         .filter((id) => !excludeValues.find((v) => id.includes(v)))
                         .map((id) => {
                             const dynamicId = `{${id}}`

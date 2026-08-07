@@ -260,7 +260,10 @@ const clickActions = {
         if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
         else if (renameByIdDirect.includes(id)) activeRename.set(id + "_" + data)
         else if (id === "slide" || id === "group" || id === "audio_effect") activePopup.set("rename")
-        else if (obj.contextElem?.classList.contains("#bible_book_local")) {
+        else if (obj.contextElem?.classList?.contains("#audio_channel") || obj.contextElem?.classList?.contains("#audio_channel_main")) {
+            selected.set({ id: "audio_channel", data: [{ id: obj.contextElem?.id }] })
+            activePopup.set("rename")
+        } else if (obj.contextElem?.classList?.contains("#bible_book_local")) {
             selected.set({ id: "bible_book", data: [{ index: Number(obj.contextElem?.id) }] })
             activePopup.set("rename")
         } else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
@@ -306,7 +309,11 @@ const clickActions = {
 
         console.error("COULD NOT REMOVE", obj)
     },
-    recolor: () => {
+    recolor: (obj: ObjData) => {
+        if (obj.contextElem?.classList?.contains("#audio_channel") || obj.contextElem?.classList?.contains("#audio_channel_main")) {
+            selected.set({ id: "audio_channel", data: [{ id: obj.contextElem?.id }] })
+        }
+
         // "slide" || "group" || "overlay" || "template" || "output" || "effect"
         activePopup.set("color")
     },
@@ -328,6 +335,11 @@ const clickActions = {
         }
 
         if (obj.sel && deleteAction(obj.sel)) return
+
+        if (obj.contextElem?.classList.value.includes("#audio_channel")) {
+            deleteAction({ id: "audio_channel", data: [{ id: obj.contextElem.id }] })
+            return
+        }
 
         if (obj.contextElem?.classList.value.includes("#timeline_node")) {
             triggerFunction("delete_selected_nodes")
@@ -2218,7 +2230,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
     }
 
     const ref = getLayoutRef()
-    if (get(editMode) === "text") {
+    if (get(editMode) === "text_edit") {
         // select all slides
         slideIds = _show()
             .slides()

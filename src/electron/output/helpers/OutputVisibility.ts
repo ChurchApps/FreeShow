@@ -34,6 +34,8 @@ export class OutputVisibility {
         if (output.invisible) {
             OutputHelper.setOutput(output.id, { ...OutputHelper.getOutput(output.id), invisible: true })
             if (window.isVisible()) this.hideWindow(window)
+            // capture-only: render at the configured resolution (DPI-corrected)
+            OutputBounds.updateBounds({ id: output.id, bounds: output.bounds })
             return "invisible"
         }
 
@@ -50,6 +52,8 @@ export class OutputVisibility {
             return true
         } else {
             this.hideWindow(window, output)
+            // returning to capture-only: render at the configured resolution (DPI-corrected)
+            OutputBounds.updateBounds({ id: output.id, bounds: output.bounds })
 
             if (state === true && !autoStartup) toApp(MAIN, { channel: "ALERT", data: "error.display" })
             return false

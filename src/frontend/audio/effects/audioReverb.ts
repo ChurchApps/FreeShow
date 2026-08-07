@@ -130,16 +130,16 @@ let globalReverb: AudioReverb | null = null
 export function initializeReverb(ac: AudioContext): AudioReverb {
     if (globalReverb) return globalReverb
 
-    globalReverb = new AudioReverb(ac, getEffectConfig("reverb", DEFAULT_REVERB_CONFIG))
-    subscribeEffect("reverb", (cfg: ReverbConfig) => globalReverb?.updateConfig(cfg))
+    globalReverb = new AudioReverb(ac, getEffectConfig("reverb", DEFAULT_REVERB_CONFIG, "main"))
+    subscribeEffect("reverb", (cfg: ReverbConfig) => globalReverb?.updateConfig(cfg), "main")
 
     return globalReverb
 }
 
-export function updateReverbConfig(partial: Partial<ReverbConfig>) {
-    updateEffectInStore("reverb", DEFAULT_REVERB_CONFIG, partial, globalReverb)
+export function updateReverbConfig(partial: Partial<ReverbConfig>, channelId?: string) {
+    updateEffectInStore("reverb", DEFAULT_REVERB_CONFIG, partial, channelId)
 }
 
-export function setReverbEnabled(enabled: boolean) {
-    setEffectEnabledInStore("reverb", DEFAULT_REVERB_CONFIG, enabled, globalReverb)
+export function setReverbEnabled(enabled: boolean, channelId?: string) {
+    setEffectEnabledInStore("reverb", DEFAULT_REVERB_CONFIG, enabled, channelId)
 }
