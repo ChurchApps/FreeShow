@@ -756,6 +756,9 @@ export function getVariablesIds(showAll: boolean = false) {
     return [...variableValues, ...variableSetNameValues, ...randomNumberVariableHistory, ...variableTextSets]
 }
 
+// currently resolving text variables, used to stop circular references
+const resolvingVariables: Set<string> = new Set()
+
 export function getVariableValue(dynamicId: string, ref: any = null): string | string[] {
     if (dynamicId.includes("variable_set_")) {
         const nameId = dynamicId.slice(13)
@@ -802,8 +805,13 @@ export function getVariableValue(dynamicId: string, ref: any = null): string | s
         }
 
         if (variable.enabled === false) return ""
-        if (variable.text?.includes(dynamicId) || !ref) return variable.text || ""
-        return replaceDynamicValues(variable.text || "", ref)
+        // circular references (a variable referencing a variable referencing itself) would recurse forever
+        if (variable.text?.includes(dynamicId) || !ref || resolvingVariables.has(dynamicId)) return variable.text || ""
+
+        resolvingVariables.add(dynamicId)
+        const replacedText = replaceDynamicValues(variable.text || "", ref)
+        resolvingVariables.delete(dynamicId)
+        return replacedText
     }
 
     return ""

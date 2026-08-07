@@ -324,7 +324,6 @@ export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId,
 }
 
 // get "temp" items (scripture) if stage
-// TODO: fix "Maximum call stack size exceeded"
 function getTempItems(item: Item, allItems: Item[]) {
     const stageOutputId = getStageOutputId(get(outputs))
     const currentOutput = get(outputs)[stageOutputId] || get(allOutputs)[stageOutputId] || {}
@@ -332,7 +331,7 @@ function getTempItems(item: Item, allItems: Item[]) {
     const currentSlide = currentOutput.out?.slide || (slideOffset !== 0 ? get(outputSlideCache)[stageOutputId] || null : null)
 
     if (currentSlide?.id !== "temp") return allItems
-    return getTempSlides()
+    return getTempSlides() || []
 
     function getTempSlides() {
         if (slideOffset < 0) {

@@ -83,12 +83,32 @@ export class EditboxHelper {
             // Update start position if this line has a selection start
             if (sel[i]?.start !== undefined) start = currentIndex + sel[i].start!
 
+            const lineStartIndex = currentIndex
             if (start > -1 && currentIndex >= start) secondLines.push({ align: line.align, text: [] })
             else firstLines.push({ align: line.align, text: [] })
+            const firstHalf = start > -1 && lineStartIndex >= start ? null : firstLines[firstLines.length - 1]
 
             textPos = 0
             if (!Array.isArray(line.text)) line.text = []
             line.text.forEach(splitLines)
+
+            // keep chords with their line, a mid-line split partitions them by the split offset
+            const lineChords = line.chords || []
+            if (lineChords.length) {
+                if (start > -1 && lineStartIndex >= start) {
+                    const target = secondLines[secondLines.length - 1]
+                    if (target) target.chords = lineChords
+                } else if (start > lineStartIndex && start < currentIndex) {
+                    const localSplit = start - lineStartIndex
+                    const firstChords = lineChords.filter((a) => a.pos < localSplit)
+                    const secondChords = lineChords.filter((a) => a.pos >= localSplit).map((a) => ({ ...a, pos: a.pos - localSplit }))
+                    if (firstHalf && firstChords.length) firstHalf.chords = firstChords
+                    const secondTarget = secondLines[secondLines.length - 1]
+                    if (secondTarget && secondChords.length) secondTarget.chords = secondChords
+                } else if (firstHalf) {
+                    firstHalf.chords = lineChords
+                }
+            }
 
             if (!firstLines.at(-1)?.text.length) firstLines.pop()
             if (!secondLines.at(0)?.text.length) secondLines.shift()
@@ -152,13 +172,6 @@ export class EditboxHelper {
         if (!firstLines.length || !firstLines[0].text.length) firstLines = defaultLine
         if (!secondLines.length) secondLines = defaultLine
 
-        // add chords (currently only adding full line chords, so splitting in the middle of a line might shift chords)
-        const chordLines = clone(lines.map((a) => a.chords || []))
-        ;[...firstLines, ...secondLines].forEach((line) => {
-            const oldLineChords = chordLines.shift()
-            if (oldLineChords?.length) line.chords = oldLineChords
-        })
-
         return { firstLines, secondLines }
     }
 
@@ -170,14 +183,18 @@ export class EditboxHelper {
         const lineStyleRadius = item.specialStyle?.lineRadius ? `border-radius: ${item.specialStyle.lineRadius}px;` : ""
         const listStyle = "" // item.list?.enabled ? `;list-style${item.list?.style?.includes("disclosure") ? "-type:" : ": inside"} ${item.list?.style || "disc"};` : "" // item.list?.enabled ? ";display: list-item;" : ""
 
-        item?.lines?.forEach((line, i) => {
+        // a contenteditable without any line blocks can't receive line breaks, so always render at least one
+        const lines: Line[] = item?.lines?.length ? item.lines : [{ align: "", text: [{ style: "", value: "" }] }]
+
+        lines.forEach((line, i) => {
             const align = (typeof line.align === "string" ? line.align : "").replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             currentStyle += align + lineStyleBg + lineStyleRadius // + line.chords?.map((a) => a.key)
             const style = align || lineStyleBg || lineStyleRadius || listStyle ? 'style="' + align + lineStyleBg + lineStyleRadius + listStyle + '"' : ""
 
             const normalWrap = useNormalWrap || align.includes("justify") || align.includes("left") || JSON.stringify(line).includes("nowrap")
 
-            html += `<div class="break ${normalWrap ? "normalWrap" : ""}" ${plain ? "" : style}>`
+            // plain mode has no style attributes, identity attributes map styles back to the source lines (they are cloned when the browser splits a line)
+            html += `<div class="break ${normalWrap ? "normalWrap" : ""}" ${plain ? `data-line-index="${i}"` : style}>`
 
             // fix removing all text in a line
             if (i === 0 && line.text?.[0]?.style) firstTextStyleArchive = line.text?.[0]?.style || ""
@@ -190,9 +207,10 @@ export class EditboxHelper {
             line.text.forEach((a, tIndex) => {
                 currentStyle += this.getTextStyle(a)
 
-                // SAVE CHORDS (WIP does not work well with more "text" per line)
+                // each chord is stored in exactly one segment, the last segment absorbs end-of-line positions
+                const isLastSegment = tIndex === line.text.length - 1
                 const textEnd = textIndex + a.value.length
-                const textChords = currentChords.filter((chord) => chord.pos >= textIndex && (chord.pos <= textEnd || line.text.length - 1 >= tIndex))
+                const textChords = currentChords.filter((chord) => chord.pos >= textIndex && (chord.pos < textEnd || isLastSegment))
                 textIndex = textEnd
 
                 const textStyle = a.style || listStyle ? 'style="' + this.getCustomTextStyle(a.style) + listStyle + '"' : ""
@@ -200,7 +218,7 @@ export class EditboxHelper {
                 // if (value === " ") value = "&nbsp;"
 
                 // this will "hide" any HTML tags if any in the actual text content (not chords or text editor)
-                html += `<span data-freeshow-text="true" class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? "" : textStyle} data-customtype='${a.customType || ""}' data-sourcedynamickey='${a.sourceDynamicKey || ""}' data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
+                html += `<span data-freeshow-text="true" class="${a.customType && !a.customType.includes("jw") ? "custom" : ""}" ${plain ? `data-text-index="${tIndex}"` : textStyle} data-customtype='${a.customType || ""}' data-sourcedynamickey='${a.sourceDynamicKey || ""}' data-chords='${JSON.stringify(textChords)}'>` + value + "</span>"
             })
             html += "</div>"
         })

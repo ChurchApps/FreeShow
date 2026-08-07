@@ -39,7 +39,6 @@
     let currentStyle = ""
 
     // WIP pressing line break on empty html (textbox) does not work, but it works after typing something
-    // NOTE: undoing a change will set the html to "", causing the same issue
 
     onMount(() => {
         getStyle()
@@ -139,23 +138,22 @@
 
         // WIP replace with exising altKeys cut_in_half shortcuts.ts
 
-        // TODO: get working in list view
         if (e.key === "Enter" && (e.target?.closest(".item") || e.target?.closest(".quickEdit"))) {
-            // incorrect editbox
+            // only the focused editbox instance should handle the split
+            if (e.target !== textElem) return
             if (e.target.closest(".quickEdit") && Number(e.target.closest(".quickEdit").getAttribute("data-index")) !== editIndex) return
             if (!e.target.closest(".quickEdit") && !$activeEdit.items.includes(index)) return
+
+            if (!e.altKey) return
 
             // split
             let sel = getSelectionRange()
             if (!sel?.length || (sel.length === 1 && !Object.keys(sel[0]).length)) return
 
-            // if (sel.start === sel.end) {
             let lines: Line[] = getNewLines()
             let currentIndex = 0,
                 textPos = 0
             let start = -1
-
-            if (!e.altKey) return
 
             cutInTwo({ e, sel, lines: clone(lines), currentIndex, textPos, start })
         }
@@ -167,8 +165,10 @@
         if ((ref.type || "show") !== "show") return
         let { firstLines, secondLines } = EditboxHelper.cutLinesInTwo({ sel, lines, currentIndex, textPos, start })
 
-        if (typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
-        let editItemIndex: number = $activeEdit.items[0] ?? Number(e?.target?.closest(".editItem")?.getAttribute("data-index")) ?? 0
+        // in list view the component's own indexes are correct, $activeEdit might hold a stale edit tab state
+        if (!plain && typeof $activeEdit.slide === "number") editIndex = $activeEdit.slide
+        let domItemIndex = Number(e?.target?.closest(".editItem")?.getAttribute("data-index"))
+        let editItemIndex: number = plain ? index : ($activeEdit.items[0] ?? (isNaN(domItemIndex) ? 0 : domItemIndex))
 
         let layoutRef = getLayoutRef()
         let slideRef = layoutRef[editIndex]
@@ -427,8 +427,15 @@
         currentStyle = ""
         let updateHTML = false
 
+        // plain mode DOM carries no styles, resolve the source line/text by identity attributes (survives line splits/merges)
+        const attrIndex = (elem: any, name: string, fallback: number) => {
+            const value = Number(elem.getAttribute?.(name) ?? NaN)
+            return isNaN(value) ? fallback : value
+        }
+
         new Array(...textElem.children).forEach((line: any, i) => {
-            let align: string = plain ? (typeof item.lines?.[i]?.align === "string" ? (item.lines?.[i]?.align as string) : "") : line.getAttribute("style") || ""
+            const sourceLine = plain ? attrIndex(line, "data-line-index", i) : i
+            let align: string = plain ? (typeof item.lines?.[sourceLine]?.align === "string" ? (item.lines?.[sourceLine]?.align as string) : "") : line.getAttribute("style") || ""
             align = align.replaceAll(lineStyleBg, "").replaceAll(lineStyleRadius, "") + ";"
             pos++
             currentStyle += align + lineStyleBg + lineStyleRadius
@@ -443,7 +450,7 @@
                     // add "floating" text to previous node (e.g. pressing backspace at the start of a line)
                     // preserve style when merging lines with different styling (macOS issue)
                     let lastNode = newLines[pos].text.length - 1
-                    let originalLineStyle = item.lines?.[i]?.text?.[0]?.style || ""
+                    let originalLineStyle = item.lines?.[sourceLine]?.text?.[0]?.style || ""
                     let lastNodeStyle = lastNode >= 0 ? newLines[pos].text[lastNode]?.style || "" : ""
 
                     // Create new segment if no previous node or styles differ
@@ -456,11 +463,20 @@
                     updateHTML = true
                     return
                 }
-                if (child.nodeName !== "SPAN") return
+                if (child.nodeName !== "SPAN") {
+                    // merge stray elements the browser sometimes creates on backspace/delete (e.g. <font>) into the previous segment
+                    const strayText = child.nodeType === Node.ELEMENT_NODE ? (child.innerText || "").replaceAll("\n", "") : ""
+                    if (strayText) {
+                        let lastNode = newLines[pos].text.length - 1
+                        if (lastNode < 0) newLines[pos].text.push({ style: item.lines?.[sourceLine]?.text?.[0]?.style || "", value: strayText })
+                        else newLines[pos].text[lastNode].value += strayText
+                        updateHTML = true
+                    }
+                    return
+                }
 
-                let style = plain ? item.lines?.[i]?.text[j]?.style || "" : child.getAttribute("style") || ""
-                // TODO: pressing enter / backspace will remove any following style in list view
-                // if (plain && !style && i > 0) style = item.lines![i - 1]?.text[j]?.style
+                const sourceText = plain ? attrIndex(child, "data-text-index", j) : j
+                let style = plain ? item.lines?.[sourceLine]?.text[sourceText]?.style || "" : child.getAttribute("style") || ""
 
                 let lineText = child.innerText
                 // empty line
@@ -502,12 +518,14 @@
             if (lineChords?.length) {
                 newLines[pos].chords = lineChords
 
-                // UPDATE/FIX CHORDS ON LINE BREAK
-                if (pos > 0 && JSON.stringify(newLines[pos].chords) === JSON.stringify(newLines[pos - 1].chords)) {
+                // UPDATE/FIX CHORDS ON LINE BREAK (the browser clones the data-chords attributes when splitting a line)
+                const previousChordIds = newLines[pos - 1]?.chords?.map((a) => a.id) || []
+                const shared = (a) => previousChordIds.includes(a.id)
+                if (pos > 0 && newLines[pos].chords!.some(shared)) {
                     let breakPoint = newLines[pos - 1].text.reduce((textLength, text) => (textLength += text.value.length), 0)
 
-                    newLines[pos - 1].chords = newLines[pos - 1].chords!.filter((a) => a.pos < breakPoint)
-                    newLines[pos].chords = newLines[pos].chords!.filter((a) => a.pos >= breakPoint).map((a) => ({ ...a, pos: a.pos - breakPoint }))
+                    newLines[pos - 1].chords = newLines[pos - 1].chords!.filter((a) => !shared(a) || a.pos < breakPoint)
+                    newLines[pos].chords = newLines[pos].chords!.filter((a) => !shared(a) || a.pos >= breakPoint).map((a) => (shared(a) && a.pos >= breakPoint ? { ...a, pos: a.pos - breakPoint } : a))
                 }
             }
         })
@@ -564,8 +582,10 @@
             }
         }
 
-        // For keyboard line operations, prefer the live caret from the contenteditable DOM.
-        if (keyboardLineMutation && liveCaret) caret = liveCaret
+        // For keyboard line operations that changed the line structure, prefer the live caret from the contenteditable DOM.
+        // In-line edits (e.g. backspace inside a line) must not rebuild the HTML, that would destroy the browser's own caret.
+        const structureChanged = (item.lines || []).length !== newLines.length || newLines.some((line, i) => (line.text?.length || 0) !== (item.lines?.[i]?.text?.length || 0))
+        if (keyboardLineMutation && liveCaret && structureChanged) caret = liveCaret
 
         if (caret) {
             item.lines = newLines

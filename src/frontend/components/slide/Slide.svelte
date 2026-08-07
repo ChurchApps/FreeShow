@@ -16,7 +16,7 @@
     import Icon from "../helpers/Icon.svelte"
     import { getMedia, getMediaCached, getMediaStyle, mediaSize } from "../helpers/media"
     import { allOutputsHasStyleTemplate, getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter, setTemplateStyle } from "../helpers/output"
-    import { getGroupName } from "../helpers/show"
+    import { getGroupName, isSlideLocked } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import Effect from "../output/effects/Effect.svelte"
     import SelectElem from "../system/SelectElem.svelte"
@@ -209,7 +209,7 @@
     }
 
     let profile = getAccess("shows")
-    $: isGroupLocked = !!slide?.locked // WIP get group slide
+    $: isGroupLocked = isSlideLocked(showId, layoutSlide.id, show)
     $: isLocked = show?.locked || isGroupLocked || profile.global === "read" || profile[show?.category || ""] === "read"
 
     // correct view order based on arranged order in Items.svelte (?.reverse())
@@ -427,7 +427,7 @@
                         <span class="text" style={name === null || name === "." ? "opacity: 0;" : ""}>{@html name === null || name === "." ? "-" : name || "—"}</span>
 
                         <!-- group is locked! -->
-                        {#if slide.locked || show?.slides?.[layoutSlide?.parent || ""]?.locked}
+                        {#if isGroupLocked}
                             <span class="lock"><Icon id="lock" size={0.7} style="color: var(--text);opacity: 0.3;" white /></span>
                         {/if}
 
