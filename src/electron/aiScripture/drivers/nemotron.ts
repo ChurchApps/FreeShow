@@ -131,7 +131,13 @@ export class NemotronDriver implements TranscriptionDriver {
 
                 this.stream.acceptWaveform({ sampleRate: SAMPLE_RATE, samples })
                 while (this.recognizer.isReady(this.stream)) this.recognizer.decode(this.stream)
-            } else if (!this.stream) {
+            } else if (this.stream) {
+                // the VAD's confidence decays before a word actually ends - while an utterance is open, keep
+                // feeding it through the dip or the tail of the last word is lost ("next verse" -> "next").
+                // the VAD still decides where the utterance closes, so this only adds trailing audio, never a new one
+                this.stream.acceptWaveform({ sampleRate: SAMPLE_RATE, samples })
+                while (this.recognizer.isReady(this.stream)) this.recognizer.decode(this.stream)
+            } else {
                 this.bufferPreroll(samples)
             }
 

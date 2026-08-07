@@ -107,6 +107,23 @@ describe("NemotronDriver", () => {
         expect(state.createdStreams).toBe(2)
     })
 
+    it("keeps feeding an open utterance while the VAD confidence dips", () => {
+        state.detected = true
+        driver.pushAudio(chunk())
+        const whileSpeaking = state.accepted.length
+
+        // the VAD no longer flags speech, but the utterance has not closed - the word's tail is still arriving
+        state.detected = false
+        driver.pushAudio(chunk())
+        expect(state.accepted.length).toBeGreaterThan(whileSpeaking)
+
+        state.text = "next verse"
+        state.closed = 1
+        driver.pushAudio(chunk())
+        expect(segments).toHaveLength(1)
+        expect(segments[0].text).toBe("next verse")
+    })
+
     it("replays pre-roll audio so the first word is not clipped", () => {
         driver.pushAudio(chunk()) // silence, buffered as pre-roll
         state.detected = true
