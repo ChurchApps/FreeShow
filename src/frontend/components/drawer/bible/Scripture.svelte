@@ -6,7 +6,8 @@
     import { onMount } from "svelte"
     import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
-    import { activeEdit, activeScripture, activeTriggerFunction, customScriptureBooks, notFound, openScripture, outLocked, outputs, resized, scriptureHistory, scriptureMode, scriptures, scriptureSettings, selected } from "../../../stores"
+    import { activeEdit, activeScripture, activeTriggerFunction, customScriptureBooks, notFound, openScripture, outLocked, outputs, resized, scriptureHistory, scriptureMode, scriptures, scriptureSettings, selected, special } from "../../../stores"
+    import AiScripturePanel from "./AiScripturePanel.svelte"
     import { wait } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { clone } from "../../helpers/array"
@@ -994,6 +995,10 @@
 </script>
 
 <svelte:window on:keydown={keydown} on:mouseup={mouseup} />
+
+{#if $special.aiScripture?.enabled}
+    <AiScripturePanel />
+{/if}
 
 <div class="scroll" style="flex: 1;overflow-y: auto;">
     <div class="main scripture">

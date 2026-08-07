@@ -21,6 +21,8 @@ linux:
         - "**/node_modules/grandiose/**"
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libltc-wrapper/**/*"
+        # native addon + its onnxruntime libs, loaded by path at runtime (AI scripture streaming engine)
+        - "**/node_modules/sherpa-onnx-*/**"
     category: AudioVideo
     target:
         - AppImage

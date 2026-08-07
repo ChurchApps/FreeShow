@@ -7,6 +7,7 @@ import type { ContentFile, ContentLibraryCategory, ContentProviderId, MediaLicen
 import type { PCOFolderTreeNode } from "../../electron/contentProviders/planningCenter/request"
 import type { _store } from "../../electron/data/store"
 import type { TimecodeMode } from "../../electron/timecode/timecode"
+import type { AIError, AiScriptureStartConfig, AIProviderId, NemotronStatus, WhisperModelId, WhisperStatus } from "../AiScripture"
 import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, SpotifyState, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
@@ -172,7 +173,22 @@ export enum Main {
     SPOTIFY_COMMAND = "SPOTIFY_COMMAND",
     // FFmpeg Download
     FFMPEG_CHECK = "FFMPEG_CHECK",
-    FFMPEG_DOWNLOAD = "FFMPEG_DOWNLOAD"
+    FFMPEG_DOWNLOAD = "FFMPEG_DOWNLOAD",
+    // AI Scripture
+    AI_SCRIPTURE_START = "AI_SCRIPTURE_START",
+    AI_SCRIPTURE_STOP = "AI_SCRIPTURE_STOP",
+    AI_SCRIPTURE_AUDIO_DATA = "AI_SCRIPTURE_AUDIO_DATA",
+    AI_SCRIPTURE_CONTEXT = "AI_SCRIPTURE_CONTEXT",
+    AI_SCRIPTURE_SET_KEY = "AI_SCRIPTURE_SET_KEY",
+    AI_SCRIPTURE_GET_STATUS = "AI_SCRIPTURE_GET_STATUS",
+    AI_SCRIPTURE_TEST_CONNECTION = "AI_SCRIPTURE_TEST_CONNECTION",
+    AI_SCRIPTURE_WHISPER_DOWNLOAD_BINARY = "AI_SCRIPTURE_WHISPER_DOWNLOAD_BINARY",
+    AI_SCRIPTURE_WHISPER_DOWNLOAD_MODEL = "AI_SCRIPTURE_WHISPER_DOWNLOAD_MODEL",
+    AI_SCRIPTURE_WHISPER_CANCEL = "AI_SCRIPTURE_WHISPER_CANCEL",
+    AI_SCRIPTURE_WHISPER_VERIFY_PATH = "AI_SCRIPTURE_WHISPER_VERIFY_PATH",
+    AI_SCRIPTURE_NEMOTRON_DOWNLOAD = "AI_SCRIPTURE_NEMOTRON_DOWNLOAD",
+    AI_SCRIPTURE_NEMOTRON_CANCEL = "AI_SCRIPTURE_NEMOTRON_CANCEL",
+    AI_SCRIPTURE_NEMOTRON_DELETE = "AI_SCRIPTURE_NEMOTRON_DELETE"
 }
 
 export interface MainSendPayloads {
@@ -274,6 +290,21 @@ export interface MainSendPayloads {
     // FFmpeg
     [Main.FFMPEG_CHECK]: undefined
     [Main.FFMPEG_DOWNLOAD]: undefined
+    // AI Scripture
+    [Main.AI_SCRIPTURE_START]: AiScriptureStartConfig
+    [Main.AI_SCRIPTURE_STOP]: undefined
+    [Main.AI_SCRIPTURE_AUDIO_DATA]: { buffer: Uint8Array }
+    [Main.AI_SCRIPTURE_CONTEXT]: { book: string; bookNumber: number; chapter: number; verseStart: number; verseEnd: number }
+    [Main.AI_SCRIPTURE_SET_KEY]: { provider: AIProviderId; key: string }
+    [Main.AI_SCRIPTURE_GET_STATUS]: undefined
+    [Main.AI_SCRIPTURE_TEST_CONNECTION]: { provider: AIProviderId; model: string }
+    [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_BINARY]: undefined
+    [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_MODEL]: { modelId: WhisperModelId }
+    [Main.AI_SCRIPTURE_WHISPER_CANCEL]: undefined
+    [Main.AI_SCRIPTURE_WHISPER_VERIFY_PATH]: { path: string }
+    [Main.AI_SCRIPTURE_NEMOTRON_DOWNLOAD]: undefined
+    [Main.AI_SCRIPTURE_NEMOTRON_CANCEL]: undefined
+    [Main.AI_SCRIPTURE_NEMOTRON_DELETE]: undefined
 }
 
 export interface MainReturnPayloads {
@@ -374,6 +405,14 @@ export interface MainReturnPayloads {
     // FFmpeg
     [Main.FFMPEG_CHECK]: { installed: boolean; path?: string }
     [Main.FFMPEG_DOWNLOAD]: Promise<{ success: boolean; error?: string }>
+    // AI Scripture
+    [Main.AI_SCRIPTURE_START]: Promise<{ started: boolean; error?: string }>
+    [Main.AI_SCRIPTURE_GET_STATUS]: Promise<{ keys: { [id in AIProviderId]: boolean }; whisper: WhisperStatus; nemotron: NemotronStatus }>
+    [Main.AI_SCRIPTURE_TEST_CONNECTION]: Promise<{ ok: boolean; error?: AIError }>
+    [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_BINARY]: Promise<{ ok: boolean; error?: string }>
+    [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_MODEL]: Promise<{ ok: boolean; error?: string }>
+    [Main.AI_SCRIPTURE_WHISPER_VERIFY_PATH]: Promise<{ valid: boolean }>
+    [Main.AI_SCRIPTURE_NEMOTRON_DOWNLOAD]: Promise<{ ok: boolean; error?: string }>
 }
 
 ///////////
