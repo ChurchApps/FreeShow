@@ -88,6 +88,14 @@ const TAIL_CHARS = 80
 // leading word boundary (\b fails before accented characters like "übersetzung")
 const LEAD = "(?:^|[^a-z0-9])"
 
+// a command does not have to be phrased as an order - speakers just say "next chapter". Without an imperative the
+// phrase has to END the utterance, which is what separates an instruction from narration that happens to contain
+// the same words ("in the next verse paul says something amazing" keeps talking, so it is never a command).
+const BARE_TAIL = "\\s*[.,!?]*\\s*$"
+
+// ...and these still read as narration even at the end of a sentence ("we will see that in the next chapter")
+const NARRATION_BEFORE = /\b(?:in|from|on|at|into|within|about|of)(?:\s+the)?\s*$/
+
 function escapeRegex(value: string): string {
     return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
@@ -119,7 +127,21 @@ function mergeGrammar(language: string): CommandGrammar {
 }
 
 function phraseOf(match: RegExpMatchArray): string {
-    return match[0].replace(/^[^a-z0-9]+/, "")
+    return match[0].replace(/^[^a-z0-9]+/, "").replace(/[\s.,!?]+$/, "")
+}
+
+/**
+ * Match a command body either as an order ("show the next chapter", anywhere in the tail) or as a plain
+ * instruction ("next chapter") that has to end the utterance. Returns null when neither reading applies.
+ */
+function matchCommand(tail: string, imperative: string, body: string): RegExpMatchArray | null {
+    const ordered = tail.match(new RegExp(LEAD + imperative + "\\s+" + body))
+    if (ordered) return ordered
+
+    const bare = tail.match(new RegExp(LEAD + body + BARE_TAIL))
+    if (!bare || bare.index === undefined) return null
+
+    return NARRATION_BEFORE.test(tail.slice(0, bare.index)) ? null : bare
 }
 
 export function detectScriptureCommand(text: string, language: string, translations: AiScriptureTranslation[]): AiScriptureCommandEvent | null {
@@ -133,8 +155,8 @@ export function detectScriptureCommand(text: string, language: string, translati
     const transWord = "(?:" + alternation(grammar.translation) + ")"
     const isWord = (word: string, words: string[]) => new RegExp("^(?:" + alternation(words) + ")$").test(word)
 
-    // 1. relative movement: "go to the next verse" / "show the previous chapter"
-    const relative = tail.match(new RegExp(LEAD + imp + "\\s+" + art + "(" + alternation([...grammar.next, ...grammar.previous]) + ")\\s+(" + alternation([...grammar.verse, ...grammar.chapter]) + ")\\b"))
+    // 1. relative movement: "go to the next verse" / "show the previous chapter" / plain "next chapter"
+    const relative = matchCommand(tail, imp, art + "(" + alternation([...grammar.next, ...grammar.previous]) + ")\\s+(" + alternation([...grammar.verse, ...grammar.chapter]) + ")\\b")
     if (relative) {
         const isPrevious = isWord(relative[1], grammar.previous)
         const phrase = phraseOf(relative)
@@ -142,14 +164,16 @@ export function detectScriptureCommand(text: string, language: string, translati
         return { type: isPrevious ? "verse_previous" : "verse_next", phrase }
     }
 
-    // 2. verse jump: "give me verse 5"
+    // 2. verse jump: "give me verse 5". Imperative only - a bare "verse 5" is already resolved against the
+    // live passage by tier 1 detection, and matching it here too would fight that with a second action.
     const verseJump = tail.match(new RegExp(LEAD + imp + "\\s+" + art + verse + "\\s+(\\d{1,3})\\b"))
     if (verseJump) {
         const number = parseInt(verseJump[1], 10)
         if (number >= 1) return { type: "verse_jump", verse: number, phrase: phraseOf(verseJump) }
     }
 
-    // 3. chapter jump: "show chapter 4" / "show chapter 4 verse 2"
+    // 3. chapter jump: "show chapter 4" / "show chapter 4 verse 2". Imperative only - a bare "chapter 4" is
+    // usually the tail of a spoken reference ("deuteronomy chapter 4"), which detection already handles.
     const chapterJump = tail.match(new RegExp(LEAD + imp + "\\s+" + art + chapter + "\\s+(\\d{1,3})\\b(?:\\s+" + verse + "\\s+(\\d{1,3})\\b)?"))
     if (chapterJump) {
         const chapterNumber = parseInt(chapterJump[1], 10)
@@ -159,7 +183,7 @@ export function detectScriptureCommand(text: string, language: string, translati
     }
 
     // 4. cycle: "give me another translation"
-    const cycle = tail.match(new RegExp(LEAD + imp + "\\s+" + art + "(?:" + alternation(grammar.another) + ")\\s+" + transWord + "(?![a-z0-9])"))
+    const cycle = matchCommand(tail, imp, art + "(?:" + alternation(grammar.another) + ")\\s+" + transWord + "(?![a-z0-9])")
     if (cycle) return { type: "translation_cycle", phrase: phraseOf(cycle) }
 
     // 5. named translation: "give me NIV" / "switch to the King James version"
@@ -172,7 +196,7 @@ export function detectScriptureCommand(text: string, language: string, translati
     })
     if (byToken.size) {
         const nameAlt = "(" + alternation([...byToken.keys()]) + ")"
-        const named = tail.match(new RegExp(LEAD + imp + "\\s+" + art + "(?:" + transWord + "\\s+" + art + ")?" + nameAlt + "(?:\\s+" + transWord + ")?(?![a-z0-9])"))
+        const named = matchCommand(tail, imp, art + "(?:" + transWord + "\\s+" + art + ")?" + nameAlt + "(?:\\s+" + transWord + ")?(?![a-z0-9])")
         if (named) {
             const bibleId = byToken.get(named[1].replace(/\s+/g, " "))
             if (bibleId) return { type: "translation", bibleId, phrase: phraseOf(named) }
