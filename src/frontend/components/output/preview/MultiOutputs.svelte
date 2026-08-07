@@ -161,7 +161,7 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
             {#if !fullscreen && ((output.webrtcData?.url && output.webrtc) || (output.rtmpData?.url && output.rtmpData?.key && output.rtmp))}
                 {@const isRtmp = output.rtmp}
                 {@const isStreaming = isRtmp ? output.rtmpData?.streaming : output.webrtcData?.streaming}
-                <div class="live" style="{isStreaming ? 'background-color: #b60707;' : ''};">
+                <div class="live" style="background-color: {isStreaming ? '#b60707' : 'var(--primary-darker)'};">
                     <MaterialButton style="padding: 2px 3px;min-height: 0;" on:click={() => (isRtmp ? (output.rtmpData?.streaming ? stopRtmpStreaming(output.id, true) : startRtmpStreaming(output.id)) : output.webrtcData?.streaming ? stopStreaming(output.id, true) : startStreaming(output.id))} title={isStreaming ? "output.stop_streaming" : "output.start_streaming"}>
                         {translateText(isStreaming ? "output.is_live" : "output.go_live", $dictionary)}
                     </MaterialButton>

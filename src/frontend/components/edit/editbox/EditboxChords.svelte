@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import { activePopup, selected, storedChordsData } from "../../../stores"
+    import { activePopup, popupData, selected, storedChordsData } from "../../../stores"
     import { waitForPopupData } from "../../../utils/popup"
     import { clone } from "../../helpers/array"
     import { deleteAction } from "../../helpers/clipboard"
@@ -33,6 +33,7 @@
             if (!key) return
 
             addChords(item, ref, index, Number(pos[0]), Number(pos[1]), key)
+            popupData.set({}) // reset for next use
             return
         }
 
