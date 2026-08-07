@@ -3,6 +3,7 @@
 // tier 2: LLM detection over the rolling transcript for paraphrased/quoted references (optional, needs an API key)
 
 import type { AIProviderId, AiScriptureBook, AiScriptureState, DetectedReference } from "../../types/AiScripture"
+import { CANON_CHAPTER_COUNTS, MAX_VERSE_NUMBER } from "../../types/AiScripture"
 import { getProvider } from "./providers"
 import { REQUEST_TIMEOUT } from "./providers/types"
 
@@ -99,8 +100,27 @@ export function normalizeSpokenNumbers(text: string): string {
 
 interface BookIndex {
     regex: RegExp | null
-    byToken: Map<string, { name: string; number: number }>
+    byToken: Map<string, { name: string; number: number; chapterCount: number }>
     bookPattern: string // alternation of all book name patterns ("" when no books)
+}
+
+// a spoken "8 18" often reaches us as "818". Recover the pair when the number cannot be a chapter of this book,
+// and only when exactly one split works - an ambiguous number keeps its literal reading and waits for confirmation.
+export function splitGluedReference(value: number, chapterCount: number): { chapter: number; verse: number } | null {
+    if (!chapterCount || value <= chapterCount) return null
+
+    const digits = String(value)
+    const candidates: { chapter: number; verse: number }[] = []
+    for (let cut = 1; cut < digits.length; cut++) {
+        const versePart = digits.slice(cut)
+        if (versePart.startsWith("0")) continue // "805" is not "8" + "05"
+
+        const chapter = parseInt(digits.slice(0, cut), 10)
+        const verse = parseInt(versePart, 10)
+        if (chapter >= 1 && chapter <= chapterCount && verse >= 1 && verse <= MAX_VERSE_NUMBER) candidates.push({ chapter, verse })
+    }
+
+    return candidates.length === 1 ? candidates[0] : null
 }
 
 function escapeRegex(value: string): string {
@@ -108,15 +128,17 @@ function escapeRegex(value: string): string {
 }
 
 function buildBookIndex(books: AiScriptureBook[]): BookIndex {
-    const byToken = new Map<string, { name: string; number: number }>()
+    const byToken = new Map<string, { name: string; number: number; chapterCount: number }>()
     const tokens: string[] = []
 
     books.forEach((book) => {
+        // only a canon book has a known chapter count - without one a glued chapter+verse cannot be told apart from a chapter
+        const chapterCount = book.canonNumber ? CANON_CHAPTER_COUNTS[book.canonNumber] || 0 : 0
         book.names.forEach((name) => {
             const token = name.trim().toLowerCase().replace(/\s+/g, " ")
             if (!token || byToken.has(token)) return
             // prefer the 66 book canon number so tier 1 & tier 2 (which always reports canon numbers) share one numbering domain
-            byToken.set(token, { name: name.trim(), number: book.canonNumber ?? book.number })
+            byToken.set(token, { name: name.trim(), number: book.canonNumber ?? book.number, chapterCount })
             tokens.push(token)
         })
     })
@@ -154,17 +176,27 @@ function matchReferences(text: string, index: BookIndex): ReferenceMatch[] {
         const book = index.byToken.get(bookToken)
         if (!book) continue
 
-        const chapter = parseInt(match[3], 10)
+        let chapter = parseInt(match[3], 10)
         if (!(chapter >= 1)) continue
 
         const hasVerse = match[4] !== undefined
         let verseStart = 1
         let verseEnd = 1
+        let unglued = false
         if (hasVerse) {
             verseStart = parseInt(match[4], 10)
             if (!(verseStart >= 1)) continue
             verseEnd = match[5] !== undefined ? parseInt(match[5], 10) : verseStart
             if (verseEnd < verseStart) verseEnd = verseStart
+        } else {
+            // no separator was spoken/transcribed - the single number may be a chapter and verse run together
+            const split = splitGluedReference(chapter, book.chapterCount)
+            if (split) {
+                chapter = split.chapter
+                verseStart = split.verse
+                verseEnd = split.verse
+                unglued = true
+            }
         }
 
         const quote = match[0].slice(match[1].length)
@@ -174,10 +206,10 @@ function matchReferences(text: string, index: BookIndex): ReferenceMatch[] {
         // of these words/shapes, so checking the normalized snippet reflects the original text.
         const hasCue = /\bchapter\b|\bverses?\b/.test(quote) || /\d:\d/.test(quote) || /^[1-3]\b/.test(bookToken)
 
-        // book + chapter + verse ("matthew 12 4") or a cued chapter ("turn to matthew chapter 5") is
-        // deliberate spoken intent - "high" so auto mode projects it. only a bare "bookname 15"
-        // ("he acts 15 years old") stays "medium" and waits for confirmation
-        const confidence: "high" | "medium" | "low" = hasVerse || hasCue ? "high" : "medium"
+        // book + chapter + verse ("matthew 12 4"), the same pair run together ("deuteronomy 818") or a cued
+        // chapter ("turn to matthew chapter 5") is deliberate spoken intent - "high" so auto mode projects it.
+        // only a bare "bookname 15" ("he acts 15 years old") stays "medium" and waits for confirmation
+        const confidence: "high" | "medium" | "low" = hasVerse || unglued || hasCue ? "high" : "medium"
 
         results.push({ bookNumber: book.number, book: book.name, chapter, verseStart, verseEnd, confidence, quote })
     }
