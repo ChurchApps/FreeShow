@@ -34,7 +34,10 @@
 
     let status: { keys: { [id in AIProviderId]: boolean }; whisper: WhisperStatus; nemotron: NemotronStatus } | null = null
     async function getStatus() {
-        status = (await requestMain(Main.AI_SCRIPTURE_GET_STATUS)) || null
+        const result = await requestMain(Main.AI_SCRIPTURE_GET_STATUS)
+        // an older electron process (dev: the frontend hot reloads, main does not) answers without the engine state -
+        // default it rather than letting a missing field throw and leave the section stuck on its loader
+        status = result ? { ...result, nemotron: result.nemotron || { supported: false, ready: false } } : null
     }
 
     let microphones: { value: string; label: string }[] = []
