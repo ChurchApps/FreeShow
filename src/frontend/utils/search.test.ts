@@ -91,29 +91,87 @@ describe("showSearchFilter", () => {
         expect(showSearchFilter("", shows[0])).toBe(0)
         expect(showSearchFilter("!!!", shows[0])).toBe(0)
     })
+    it("only matches words at word starts — 'here' never matches \"There's\"", () => {
+        expect(showSearchFilter("here", { id: "nothingbetter", name: "There's Nothing Better" } as any)).toBe(0)
+        expect(showSearchFilter("here", { id: "anointinghere", name: "There's An Anointing Here" } as any)).toBe(80)
+    })
+    it("matches partially typed words at word starts (type-ahead)", () => {
+        expect(showSearchFilter("amaz grac", shows[0])).toBe(90)
+    })
+})
+
+describe("absolute confidence bands", () => {
+    beforeEach(() => h.textCache._set({}))
+
+    it("scores all words in the title, adjacent and in order, 90", () => {
+        expect(showSearchFilter("anointing here", { id: "a", name: "There's An Anointing Here" } as any)).toBe(90)
+    })
+    it("scores all words in the title, scattered/reversed, 75", () => {
+        expect(showSearchFilter("grace amazing", shows[0])).toBe(75)
+    })
+    it("scores a single word in the title 80", () => {
+        expect(showSearchFilter("grace", shows[0])).toBe(80)
+    })
+    it("scores words split between title and content 55-75", () => {
+        h.textCache._set({ aida: "the anointing is here today" })
+        const score = showSearchFilter("anointing here", { id: "aida", name: "The Anointing - AIDA" } as any)
+        expect(score).toBeGreaterThanOrEqual(55)
+        expect(score).toBeLessThanOrEqual(75)
+    })
+    it("scores content-only matches 40-60 (at or above the create-hint threshold)", () => {
+        h.textCache._set({ great: "thou my everlasting portion more than friend or life to me" })
+        const score = showSearchFilter("everlasting portion", shows[2])
+        expect(score).toBe(55) // 40 + full adjacency 10 + phrase bonus 5
+        expect(score).toBeGreaterThanOrEqual(40)
+    })
+    it("keeps absolute scores in showSearch results (no renormalizing to the top hit)", () => {
+        const res = showSearch("grace", shows)
+        expect(res[0].id).toBe("gracealone") // starts-with -> 100
+        expect(res[0].match).toBe(100)
+        expect(res.find((r) => r.id === "amazing")?.match).toBe(80) // absolute, not scaled up
+    })
+})
+
+describe("strict AND narrowing", () => {
+    beforeEach(() => h.textCache._set({}))
+
+    it("excludes shows missing any query word", () => {
+        const res = showSearch("amazing grace", shows)
+        expect(ids(res)).toEqual(["amazing"]) // "Grace Alone" lacks "amazing"
+    })
+    it("a garbage word yields no results", () => {
+        const res = showSearch("anointing here mksowejasdlkansdad", [{ id: "anointinghere", name: "There's An Anointing Here" }] as any)
+        expect(res.length).toBe(0)
+    })
+    it("requires short words too", () => {
+        expect(showSearchFilter("xq grace", shows[0])).toBe(0)
+    })
+    it("adding a word can only narrow the results", () => {
+        h.textCache._set({ great: "amazing love how can it be" })
+        const broad = showSearch("amazing", shows)
+        const narrow = showSearch("amazing love", shows)
+        expect(ids(narrow).every((id) => ids(broad).includes(id))).toBe(true)
+        expect(ids(narrow)).toEqual(["great"]) // only the show containing both words remains
+    })
 })
 
 describe("showSearch ranking", () => {
     beforeEach(() => h.textCache._set({}))
 
-    it("ranks a show containing ALL query words above one with only some (multi-word)", () => {
-        const res = showSearch("amazing grace", shows)
-        expect(ids(res)[0]).toBe("amazing")
-        expect(ids(res)).toContain("gracealone")
-        expect(ids(res).indexOf("amazing")).toBeLessThan(ids(res).indexOf("gracealone"))
-    })
     it("finds a show by lyric content when the title doesn't match", () => {
         h.textCache._set({ great: "thou my everlasting portion more than friend or life to me" })
         const res = showSearch("everlasting portion", shows)
         expect(ids(res)[0]).toBe("great")
     })
-    it("excludes non-matching shows", () => {
-        const res = showSearch("zzz nonexistent", shows)
-        expect(res.some((r) => r.id === "amazing")).toBe(false)
-    })
-    it("normalizes the top match to 100", () => {
-        const res = showSearch("grace", shows)
-        expect(res[0].match).toBe(100)
+    it("ranks adjacent title words above a title+content split match", () => {
+        h.textCache._set({ aida: "the anointing is here today" })
+        const res = showSearch("anointing here", [
+            { id: "anointinghere", name: "There's An Anointing Here" },
+            { id: "aida", name: "The Anointing - AIDA" }
+        ] as any)
+        expect(ids(res)).toEqual(["anointinghere", "aida"])
+        expect(res[0].match).toBe(90)
+        expect(res[1].match).toBeLessThan(90)
     })
     it("does not flood results with unrelated shows (fuzzy similarity alone never matches)", () => {
         // regression: similarity() is non-zero for unrelated text; it must not include non-matching shows
@@ -123,6 +181,8 @@ describe("showSearch ranking", () => {
     it("still matches a close typo via fuzzy title similarity", () => {
         const res = showSearch("amzinggrace", shows)
         expect(res[0]?.id).toBe("amazing")
+        expect(res[0]?.match).toBeGreaterThanOrEqual(60) // typo band 60-85
+        expect(res[0]?.match).toBeLessThanOrEqual(85)
     })
 })
 
@@ -136,10 +196,15 @@ describe("exact phrase (quoted) search", () => {
         expect(showSearchFilter('"amazing grace"', shows[1])).toBe(0)
         expect(showSearchFilter('"amzing grace"', shows[0])).toBe(0)
     })
-    it("matches a quoted phrase found in lyrics/content", () => {
+    it("matches a quoted phrase found in lyrics/content at 70", () => {
         h.textCache._set({ great: "thou my everlasting portion more than friend" })
         const res = showSearch('"everlasting portion"', shows)
         expect(res[0]?.id).toBe("great")
+        expect(res[0]?.match).toBe(70)
+    })
+    it("anchors quoted phrases to word boundaries", () => {
+        expect(showSearchFilter('"here"', { id: "nothingbetter", name: "There's Nothing Better" } as any)).toBe(0)
+        expect(showSearchFilter('"here"', { id: "anointinghere", name: "There's An Anointing Here" } as any)).toBe(100)
     })
     it("returns nothing when the quoted phrase matches no show", () => {
         const res = showSearch('"not a real phrase"', shows)
