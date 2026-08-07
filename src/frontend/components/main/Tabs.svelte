@@ -42,6 +42,7 @@
     {#each Object.entries(tabs) as [id, tab]}
         {#if tab.remove !== true && (!tab.overflow || !overflowHidden)}
             <MaterialButton
+                class="tabButton"
                 style={$$props.style || null}
                 on:click={() => {
                     active = id
@@ -54,7 +55,7 @@
                 <Icon id={tab.icon} white={active === id} />
                 {#if labels}
                     {#key tab.name}
-                        <span>
+                        <span class="label">
                             {translateText(tab.name)}
 
                             {#if tab.data !== undefined}
@@ -85,9 +86,10 @@
     .tabs {
         display: flex;
         flex-wrap: wrap;
+        gap: 4px;
+        padding: 5px;
+
         background-color: var(--primary-darker);
-        /* one continuous baseline behind every tab (inset, so tabs don't shift) */
-        box-shadow: inset 0 -2px 0 var(--primary-lighter);
         z-index: 1;
     }
 
@@ -95,9 +97,7 @@
         flex: auto;
 
         padding: 0.5em 0.8em;
-        border-radius: 0;
-        /* keeps inactive tabs the same height as the active one */
-        border-bottom: 2px solid transparent;
+        border-radius: 6px;
 
         opacity: 0.6;
         transition:
@@ -105,12 +105,19 @@
             background 0.2s ease;
     }
     .tabs :global(button:not(:disabled):hover) {
-        opacity: 0.85;
+        opacity: 0.9;
+        background: rgb(255 255 255 / 0.03) !important;
     }
-    .tabs :global(button.isActive) {
+
+    .tabs :global(button.tabButton.isActive) {
         opacity: 1;
-        /* subtle lift instead of the darker "sunken" default */
-        background-color: rgb(255 255 255 / 0.04) !important;
+        background-color: rgb(255 255 255 / 0.07) !important;
+        border-bottom: none !important;
+    }
+
+    .label {
+        display: inline-flex;
+        align-items: center;
     }
 
     .badge {
@@ -121,10 +128,9 @@
         background-color: var(--primary-lighter);
         font-size: 0.7em;
         font-weight: 600;
-        vertical-align: middle;
+        line-height: 1.4;
     }
     .badge.active {
-        background-color: var(--secondary);
-        color: var(--secondary-text);
+        background-color: rgb(255 255 255 / 0.12);
     }
 </style>
