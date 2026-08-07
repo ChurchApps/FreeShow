@@ -311,11 +311,9 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
             // replace local file if cloud is newer or new device
             if (cloudIsNewer) {
                 // try to set store directly first, otherwise move the file
-                const cloudContent = await readFileAsync(cloudPath)
-                const parsedData = safeParseJSON(cloudContent)
-                if (parsedData) {
-                    await safeStoreSet(localStore, parsedData, id)
-                } else {
+                if (cloudFileData) {
+                    await safeStoreSet(localStore, cloudFileData, id)
+                } else if (!(file as any).isTemp) {
                     await moveFileAsync(cloudPath, localPath)
                 }
 
