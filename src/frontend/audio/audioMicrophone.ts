@@ -76,7 +76,7 @@ export class AudioMicrophone {
 
     static async getList() {
         return navigator.mediaDevices.enumerateDevices().then((devices) => {
-            return devices?.filter((device) => device.kind === "audioinput")
+            return devices?.filter((device) => device.kind === "audioinput" && device.deviceId !== "default")
         })
     }
 }
