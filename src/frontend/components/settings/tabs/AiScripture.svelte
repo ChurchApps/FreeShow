@@ -348,6 +348,12 @@
             <div class="loading"><Loader /></div>
         {:else if !status.nemotron.supported}
             <Tip type="warning" value="settings.ai_nemotron_unsupported" />
+            {#if status.nemotron.ready}
+                <!-- the model was downloaded before the addon became unavailable - 660 MB must stay reclaimable -->
+                <MaterialButton variant="outlined" icon="delete" on:click={deleteNemotronModel}>
+                    <T id="settings.ai_nemotron_delete" />
+                </MaterialButton>
+            {/if}
         {:else if status.nemotron.ready}
             <div class="statusLine ok">
                 <Icon id="check" size={0.9} white />
