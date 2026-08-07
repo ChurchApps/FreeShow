@@ -9,12 +9,12 @@ vi.mock("./providers", () => ({
 import { DetectionCoordinator, detectExplicitReferences, normalizeSpokenNumbers } from "./detection"
 
 const BOOKS = [
-    { number: 19, names: ["Psalms", "Psalm"] },
-    { number: 41, names: ["Mark"] },
-    { number: 43, names: ["John", "Jn", "Johannes"] },
-    { number: 44, names: ["Acts"] },
-    { number: 45, names: ["Romans"] },
-    { number: 62, names: ["1 John", "1 Jn"] }
+    { number: 19, canonNumber: 19, names: ["Psalms", "Psalm"] },
+    { number: 41, canonNumber: 41, names: ["Mark"] },
+    { number: 43, canonNumber: 43, names: ["John", "Jn", "Johannes"] },
+    { number: 44, canonNumber: 44, names: ["Acts"] },
+    { number: 45, canonNumber: 45, names: ["Romans"] },
+    { number: 62, canonNumber: 62, names: ["1 John", "1 Jn"] }
 ]
 
 describe("normalizeSpokenNumbers", () => {
@@ -54,6 +54,22 @@ describe("detectExplicitReferences", () => {
     it("detects digit:digit shapes with high confidence", () => {
         const refs = detectExplicitReferences("acts 3:16", BOOKS)
         expect(refs).toEqual([{ bookNumber: 44, book: "Acts", chapter: 3, verseStart: 16, verseEnd: 16, confidence: "high" }])
+    })
+
+    it("splits a glued chapter+verse: 'john 316' spoken as 'john 3 16'", () => {
+        // 316 cannot be a chapter of a 21 chapter book, and 3|16 is the only reading that fits
+        const refs = detectExplicitReferences("give me john 316", BOOKS)
+        expect(refs).toEqual([{ bookNumber: 43, book: "John", chapter: 3, verseStart: 16, verseEnd: 16, confidence: "high" }])
+    })
+
+    it("does not split a number that is a real chapter: 'psalms 119'", () => {
+        const refs = detectExplicitReferences("turn to psalms 119", BOOKS)
+        expect(refs).toEqual([{ bookNumber: 19, book: "Psalms", chapter: 119, verseStart: 1, verseEnd: 1, confidence: "medium" }])
+    })
+
+    it("keeps an ambiguous glued number literal: 'mark 121' could be 1:21 or 12:1", () => {
+        const refs = detectExplicitReferences("we saw mark 121", BOOKS)
+        expect(refs).toEqual([{ bookNumber: 41, book: "Mark", chapter: 121, verseStart: 1, verseEnd: 1, confidence: "medium" }])
     })
 
     it("keeps a bare 'bookname number' at medium confidence ('he acts 15 years old')", () => {
