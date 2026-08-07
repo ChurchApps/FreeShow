@@ -76,7 +76,7 @@ export function stopMetronome() {
         try {
             source.stop()
             source.disconnect()
-        } catch (e) {}
+        } catch {}
     }
     scheduledSources = []
 

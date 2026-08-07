@@ -80,7 +80,7 @@ export class AudioAnalyser {
         if (this.ac.state === "suspended") {
             try {
                 await this.ac.resume()
-            } catch (e) {}
+            } catch {}
         }
 
         let source: AudioNode
@@ -225,7 +225,7 @@ export class AudioAnalyser {
         if (processor) {
             try {
                 processor.dispose()
-            } catch (e) {}
+            } catch {}
             delete this.processors[key]
         }
 
@@ -233,13 +233,13 @@ export class AudioAnalyser {
         if (sourceGain) {
             try {
                 sourceGain.disconnect()
-            } catch (e) {}
+            } catch {}
             delete this.gainNodes[key]
         }
 
         try {
             source.disconnect()
-        } catch (e) {}
+        } catch {}
         delete this.sourceVolumes[key]
         delete this.sourceVolumes[id]
         delete this.sources[key]
@@ -481,7 +481,7 @@ export class AudioAnalyser {
             if (!activeTargets.includes(targetId)) {
                 try {
                     rec.stop()
-                } catch (e) {}
+                } catch {}
                 this.recorders.delete(targetId)
             }
         })
@@ -548,7 +548,7 @@ export class AudioAnalyser {
         this.recorders.forEach((rec) => {
             try {
                 rec.stop()
-            } catch (e) {}
+            } catch {}
         })
         this.recorders.clear()
     }

@@ -238,7 +238,7 @@ export class AudioPlayer {
         // as the stream is already active, but we'll try to load it.
         try {
             await audio.play().catch(() => {})
-        } catch (e) {}
+        } catch {}
 
         return audio
     }
@@ -329,7 +329,7 @@ export class AudioPlayer {
                     item.audio.src = ""
                     item.audio.removeAttribute("src")
                     item.audio.load()
-                } catch (e) {}
+                } catch {}
             }
             this.stopStream(item?.stream)
 
@@ -518,7 +518,7 @@ export class AudioPlayer {
                         const tempCtx = new AudioContext()
                         defaultMaxChannels = tempCtx.destination.maxChannelCount || 2
                         tempCtx.close()
-                    } catch (e) {}
+                    } catch {}
 
                     const audioOutputs = outputDevices.map((a) => {
                         const cap = (a as any).getCapabilities ? (a as any).getCapabilities() : null

@@ -679,7 +679,7 @@ export class VideoPlayer {
                 try {
                     crossfadeAudio.pause()
                     crossfadeAudio.src = ""
-                } catch (e) {}
+                } catch {}
                 delete (video as any).crossfadeAudio
             }
             if (audio instanceof HTMLAudioElement && !this.isFadingOut.includes(video.path) && !this.isFadingIn.includes(video.path)) {
@@ -699,7 +699,7 @@ export class VideoPlayer {
                 try {
                     crossfadeAudio.pause()
                     crossfadeAudio.src = ""
-                } catch (e) {}
+                } catch {}
                 delete (video as any).crossfadeAudio
             }
             if (audio instanceof HTMLAudioElement && !this.isFadingOut.includes(video.path) && !this.isFadingIn.includes(video.path)) {

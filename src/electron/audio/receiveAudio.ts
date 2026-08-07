@@ -15,7 +15,7 @@ export function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
         if (dec) {
             try {
                 dec.removeAllListeners()
-            } catch (e) {}
+            } catch {}
             ebmlDecoders.delete(id)
         }
         return
