@@ -331,7 +331,6 @@ function getTempItems(item: Item, allItems: Item[]) {
     const currentSlide = currentOutput.out?.slide || (slideOffset !== 0 ? get(outputSlideCache)[stageOutputId] || null : null)
 
     if (currentSlide?.id !== "temp") return allItems
-    // slide offsets outside the generated previous/next slides resolve to undefined
     return getTempSlides() || []
 
     function getTempSlides() {

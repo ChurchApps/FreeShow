@@ -226,6 +226,8 @@ export async function setBoxStyle(styles: StyleClipboard[], slides: any, type: I
 }
 
 export async function setItemStyle(styles: StyleClipboard[], slides: any) {
+    // TODO: pasting to multiple items will move around the text lines content
+
     const itemKeys = getItemKeys()
 
     for (const slide of slides) {
@@ -238,8 +240,10 @@ export async function setItemStyle(styles: StyleClipboard[], slides: any) {
     function updateSlideStyle(slide) {
         const values: string[] = []
 
-        const items: number[] = []
+        let items: number[] = []
         slide.items.forEach(updateItemStyle)
+        // fix items swapping positions!
+        items = items.reverse()
 
         history({
             id: "setStyle",

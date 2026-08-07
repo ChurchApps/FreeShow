@@ -38,6 +38,8 @@
     let previousHTML = ""
     let currentStyle = ""
 
+    // WIP pressing line break on empty html (textbox) does not work, but it works after typing something
+
     onMount(() => {
         getStyle()
 

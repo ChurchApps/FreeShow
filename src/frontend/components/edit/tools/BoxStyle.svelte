@@ -656,14 +656,6 @@
             return
         }
 
-        // no text
-        // values: {key: [[[]]]}
-        let textLength = Object.values(values).reduce((length: number, value: any) => length + value.flat(2).reduce((value, text) => value + (text?.value || ""), "").length, 0)
-        if (input.key !== "text-align" && !aligns && !textLength) {
-            newToast("empty.text")
-            return
-        }
-
         let key: string = input.key === "text-align" || aligns ? "align" : "text"
         slides.forEach((slide, i) => {
             if (!slideItems[i].length) return
