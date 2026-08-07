@@ -3,7 +3,7 @@
     import type { MediaStyle } from "../../../types/Main"
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
     import { removeTagsAndContent } from "../../show/slides"
-    import { activeEdit, activePage, activeTimers, editMode, effects, focusMode, fullColors, groups, media, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, slideNotesActive, slidesOptions, slideTimers, special, styles } from "../../stores"
+    import { activeEdit, activePage, activeTimers, editMode, effects, focusMode, fullColors, groups, media, outputs, overlays, playerVideos, refreshListBoxes, refreshSlideThumbnails, slideNotesActive, slidesOptions, slideTimers, special, styles } from "../../stores"
     import { wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -89,6 +89,15 @@
         mediaPath = bgPath
         thumbnailPath = ""
         // thumbnailPath = getThumbnailPath(mediaPath, ghostBackground ? ghostSize : mediaSize.slideSize)
+
+        if (bg?.type === "player" || $playerVideos[bgPath]) {
+            const playerVid = $playerVideos[bgPath] || (bg as any)?.data || bg
+            if (playerVid?.id) {
+                if (playerVid.type === "youtube") thumbnailPath = `https://i.ytimg.com/vi/${playerVid.id}/sddefault.jpg`
+                else if (playerVid.type === "vimeo") thumbnailPath = `https://vumbnail.com/${playerVid.id}_medium.jpg`
+                return
+            }
+        }
 
         // make sure it's downloaded
         if (isLessons) await wait(1000)

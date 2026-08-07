@@ -3,6 +3,7 @@
     import { activeProject, activeShow, playerVideos, projects } from "../../stores"
     import Vimeo from "../drawer/player/Vimeo.svelte"
     import YouTube from "../drawer/player/YouTube.svelte"
+    import { _show } from "../helpers/shows"
     import { videoSync } from "../media/video/videoSync"
 
     export let id: string
@@ -12,7 +13,10 @@
     let data: { type: "youtube" | "vimeo"; id: string; name?: string } | null = null
     $: if ($activeShow && !$playerVideos[id]) getProjectData()
     function getProjectData() {
-        data = $projects[$activeProject || ""]?.shows.find((a) => a.index === $activeShow?.index)?.data || null
+        const showMedia = _show($activeShow?.id || "").get("media")?.[id]
+        if ((showMedia as any)?.data) data = (showMedia as any).data
+        else if (showMedia?.type === "youtube" || showMedia?.type === "vimeo") data = { type: showMedia.type, id: showMedia.id || showMedia.path || id, name: showMedia.name }
+        else data = $projects[$activeProject || ""]?.shows.find((a) => a.index === $activeShow?.index)?.data || null
     }
 
     $: video = $playerVideos[id] || data

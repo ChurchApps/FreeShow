@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeEdit, activePopup, activeShow, alertMessage, editMode, focusMode, media, outputs, overlays, refreshEditSlide, resized, showsCache, slideNotesActive, special, styles } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, alertMessage, editMode, focusMode, media, outputs, overlays, playerVideos, refreshEditSlide, resized, showsCache, slideNotesActive, special, styles } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
     import { DEFAULT_WIDTH } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
@@ -80,7 +80,7 @@
         })
     }
 
-    $: background = bgId && currentShowId ? currentShow?.media[bgId] : Slide?.settings?.backgroundImage ? { path: Slide.settings.backgroundImage, type: getMediaType(getExtension(Slide.settings.backgroundImage)), id: "" } : null
+    $: background = bgId && currentShowId ? currentShow?.media[bgId] : Slide?.settings?.backgroundImage ? { path: Slide.settings.backgroundImage, type: $playerVideos[Slide.settings.backgroundImage] ? "player" : getMediaType(getExtension(Slide.settings.backgroundImage)), id: "" } : null
     $: backgroundPath = background?.path || ""
     // $: slideOverlays = layoutSlide.overlays || []
 
@@ -94,6 +94,15 @@
     async function loadBackground() {
         mediaPath = bgPath
         thumbnailPath = getThumbnailPath(mediaPath, mediaSize.slideSize)
+
+        if (background?.type === "player" || $playerVideos[bgPath]) {
+            const playerVid = $playerVideos[bgPath] || (background as any)?.data || background
+            if (playerVid?.id) {
+                if (playerVid.type === "youtube") thumbnailPath = `https://i.ytimg.com/vi/${playerVid.id}/sddefault.jpg`
+                else if (playerVid.type === "vimeo") thumbnailPath = `https://vumbnail.com/${playerVid.id}_medium.jpg`
+                return
+            }
+        }
 
         const media = await getMedia(bgPath, mediaSize.slideSize)
         if (!media) return

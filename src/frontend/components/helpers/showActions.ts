@@ -21,7 +21,44 @@ import { getCurrentTimerValue, getTimeUntilClock, playPauseGlobal } from "../dra
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { getTextLines } from "../edit/scripts/textStyle"
 import { clearBackground, clearOverlays, clearTimers } from "../output/clear"
-import { activeEdit, activeFocus, activeInteractions, activePage, activeProject, activeShow, allOutputs, audioChannelsData, audioData, cachedDynamicValues, customMetadata, dictionary, dynamicValueData, editingProjectTemplate, focusMode, interactions, media, outLocked, outputDisplay, outputs, overlays, playingAudio, playingMetronome, playingVideoState, projects, projectTemplates, shows, showsCache, slideTimers, special, stageShows, styles, templates, timers, variables } from "./../../stores"
+import {
+    activeEdit,
+    activeFocus,
+    activeInteractions,
+    activePage,
+    activeProject,
+    activeShow,
+    allOutputs,
+    audioChannelsData,
+    audioData,
+    cachedDynamicValues,
+    customMetadata,
+    dictionary,
+    dynamicValueData,
+    editingProjectTemplate,
+    focusMode,
+    interactions,
+    media,
+    outLocked,
+    outputDisplay,
+    outputs,
+    overlays,
+    playerVideos,
+    playingAudio,
+    playingMetronome,
+    playingVideoState,
+    projects,
+    projectTemplates,
+    shows,
+    showsCache,
+    slideTimers,
+    special,
+    stageShows,
+    styles,
+    templates,
+    timers,
+    variables
+} from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
@@ -324,11 +361,11 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
             const outputBg = get(outputs)[outputId]?.out?.background
             const bgPath = bg?.path || bg?.id
             const extension = getExtension(bgPath)
-            const type = bg.type || getMediaType(extension)
+            const type = bg.type || (get(playerVideos)[bgPath] ? "player" : getMediaType(extension))
             const m = type === "video" || type === "image" || type === "media" ? await getMedia(bgPath) : { path: bgPath, data: clone(get(media)[bgPath]) }
 
             if (bg && m && m.path !== outputBg?.path) {
-                const name = bg.name || removeExtension(getFileName(m.path))
+                const name = bg.name || get(playerVideos)[bgPath]?.name || removeExtension(getFileName(m.path))
 
                 const outputStyle = get(styles)[get(outputs)[outputId]?.style || ""]
                 const mediaStyle = getMediaStyle(m.data, outputStyle)
