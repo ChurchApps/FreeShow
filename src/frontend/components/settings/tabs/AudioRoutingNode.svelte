@@ -128,7 +128,7 @@
         {/if}
 
         {#if type === "desktop_audio"}
-            <MaterialToggleSwitch label="" checked={isEnabled} on:change={(e) => onToggleEnabled?.(e.detail)} />
+            <MaterialToggleSwitch label="" checked={isEnabled} on:change={(e) => onToggleEnabled?.(e.detail)} small />
         {/if}
 
         {#if type === "icecast" || isChannel}
@@ -273,15 +273,5 @@
         top: 0;
         transform: none;
         margin: 2px 0;
-    }
-
-    /* toggle switch */
-    .card-content :global(.togglefield) {
-        padding: 0;
-        border: none;
-        height: auto;
-    }
-    .card-content :global(.togglefield .background) {
-        background-color: transparent;
     }
 </style>
