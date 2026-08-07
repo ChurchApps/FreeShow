@@ -6,7 +6,7 @@
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
     import { deduplicateConnections } from "../../../audio/routing/audioRoutingInit"
-    import { audioChannelsData, audioPlaylists, audioRouting, outputs } from "../../../stores"
+    import { activePopup, audioChannelsData, audioPlaylists, audioRouting, outputs, selected } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { keysToID } from "../../helpers/array"
     import { getAllOutputs } from "../../helpers/output"
@@ -228,13 +228,17 @@
     }
 
     function addChannel() {
+        const id = "channel_" + uid()
         updateConfig((c) => {
             const list = c.channels || []
-            const newId = "channel_" + uid()
             const name = `${translateText("midi.channel")} ${list.length + 1}`
-            list.push({ id: newId, name })
+            list.push({ id, name })
             c.channels = list
         })
+
+        // open rename
+        selected.set({ id: "audio_channel", data: [{ id }] })
+        activePopup.set("rename")
     }
 
     // --- Interactive Drag-to-Connect & Smooth Canvas Pan Logic ---
@@ -512,6 +516,41 @@
     function handlePortMouseLeave() {
         hoverTargetPortEl = null
     }
+
+    // Highlight port connections on hover
+
+    let hoveredPort: { nodeId: string; portType: "in" | "out"; channelIndex?: number } | null = null
+    function handleHoverPort(nodeId: string, portType: "in" | "out", channelIndex?: number) {
+        hoveredPort = { nodeId, portType, channelIndex }
+    }
+    function handleHoverPortEnd() {
+        hoveredPort = null
+    }
+
+    function isLineConnectedToPort(line: RenderedLine, port: typeof hoveredPort): boolean {
+        if (!port) return false
+
+        if (port.portType === "out") {
+            return line.fromId === port.nodeId
+        } else if (port.portType === "in") {
+            if (line.toId !== port.nodeId) return false
+            if (port.channelIndex !== undefined) return (line.channelIndex ?? 0) === port.channelIndex
+            return true
+        }
+
+        return false
+    }
+
+    $: activeHoverPort = isConnecting ? (dragStartId && dragStartPortType ? { nodeId: dragStartId, portType: dragStartPortType } : null) : hoveredPort
+    $: sortedLines = activeHoverPort
+        ? [...lines].sort((a, b) => {
+              const aHigh = isLineConnectedToPort(a, activeHoverPort)
+              const bHigh = isLineConnectedToPort(b, activeHoverPort)
+              if (aHigh && !bHigh) return 1
+              if (!aHigh && bHigh) return -1
+              return 0
+          })
+        : lines
 </script>
 
 <div class="audio-routing-wrapper">
@@ -520,7 +559,7 @@
         <div class="routing-space" bind:this={spaceEl}>
             <!-- SVG Connections Layer -->
             <svg class="connections-layer">
-                {#each lines as line (line.fromId + "-" + line.toId + "-" + line.channelIndex)}
+                {#each sortedLines as line (line.fromId + "-" + line.toId + "-" + line.channelIndex)}
                     {@const sourceCol = columns.find((col) => col.nodes.some((n) => n.id === line.fromId || (n.subNodes || []).some((s) => s.id === line.fromId)))}
                     {@const colNodes = (sourceCol?.nodes || []).flatMap((n) => [n, ...(n.subNodes || [])])}
                     {@const sourceNode = colNodes.find((n) => n.id === line.fromId)}
@@ -528,8 +567,10 @@
                     {@const hue = (275 + (nodeIndex >= 0 ? nodeIndex : 0) * 6) % 360}
                     {@const strokeColor = sourceNode?.color || `hsl(${hue}, 80%, 65%)`}
                     {@const isDisabled = sourceNode?.isEnabled === false}
+                    {@const isHighlighted = isLineConnectedToPort(line, activeHoverPort)}
+                    {@const isDimmed = activeHoverPort !== null && !isHighlighted}
                     {@const dx = Math.max(20, Math.abs(line.x2 - line.x1) / 2)}
-                    <path d="M {line.x1} {line.y1} C {line.x1 + dx} {line.y1}, {line.x2 - dx} {line.y2}, {line.x2} {line.y2}" stroke={strokeColor} class="connection-path" class:disabled={isDisabled} on:dblclick={() => removeConnection(line.fromId, line.toId)} />
+                    <path d="M {line.x1} {line.y1} C {line.x1 + dx} {line.y1}, {line.x2 - dx} {line.y2}, {line.x2} {line.y2}" stroke={strokeColor} class="connection-path" class:disabled={isDisabled} class:highlighted={isHighlighted} class:dimmed={isDimmed} style={isHighlighted ? "z-index: 10;" : isDimmed ? "z-index: 1;" : ""} on:dblclick={() => removeConnection(line.fromId, line.toId)} />
                 {/each}
 
                 {#if isConnecting && dragStartId}
@@ -575,6 +616,8 @@
                                         onMouseLeave={() => handleNodeMouseLeave(node.id)}
                                         onMouseEnterPort={handlePortMouseEnter}
                                         onMouseLeavePort={handlePortMouseLeave}
+                                        onHoverPort={(_e, portType, chIdx) => handleHoverPort(node.id, portType, chIdx)}
+                                        onHoverPortEnd={handleHoverPortEnd}
                                         onPortContextMenu={(e, portType, chIdx) => handlePortContextMenu(e, node.id, portType, chIdx)}
                                     />
 
@@ -605,6 +648,8 @@
                                                             }
                                                         }}
                                                         onMouseLeavePort={handlePortMouseLeave}
+                                                        onHoverPort={(_e, portType, chIdx) => handleHoverPort(sub.id, portType, chIdx)}
+                                                        onHoverPortEnd={handleHoverPortEnd}
                                                         onPortContextMenu={(e, portType, chIdx) => handlePortContextMenu(e, sub.id, portType, chIdx)}
                                                     />
                                                 {/each}
@@ -688,6 +733,15 @@
 
     .connection-path.disabled {
         opacity: 0.4;
+    }
+
+    .connection-path.dimmed {
+        opacity: 0.15 !important;
+    }
+
+    .connection-path.highlighted {
+        stroke-width: 4px;
+        opacity: 1 !important;
     }
 
     .drag-path {

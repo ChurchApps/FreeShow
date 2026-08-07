@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { resetAudioRouting } from "../../audio/routing/audioRoutingInit"
     import { dictionary, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
@@ -52,6 +53,8 @@
 
             {#if tabId === "styles"}
                 <StylesButtons />
+            {:else if tabId === "audio"}
+                <MaterialButton title="actions.reset" icon="reset" on:click={resetAudioRouting} />
             {:else if tabId === "profiles"}
                 <ProfilesButtons />
             {:else if tabId === "theme"}

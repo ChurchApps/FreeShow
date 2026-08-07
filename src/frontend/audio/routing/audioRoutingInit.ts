@@ -4,6 +4,7 @@ import { getAllOutputs, getFirstActiveOutput } from "../../components/helpers/ou
 import { audioRouting, dictionary, outputs } from "../../stores"
 import { waitUntilValueIsDefined } from "../../utils/common"
 import { translateText } from "../../utils/language"
+import { confirmCustom } from "../../utils/popup"
 
 export function deduplicateConnections(connections: AudioRoutingConnection[]): AudioRoutingConnection[] {
     const seen = new Set<string>()
@@ -79,6 +80,12 @@ export async function initAudioRouting(data: AudioRoutingConfig | null) {
     }
 
     audioRouting.set({ channels, connections })
+}
+
+export async function resetAudioRouting() {
+    if (await confirmCustom(translateText("popup.reset_all_confirm"))) {
+        initAudioRouting(null)
+    }
 }
 
 export function createOutputAudioChannel(outputId: string) {
