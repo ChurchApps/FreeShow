@@ -137,12 +137,12 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
 
     const timeout = 5 * 60 * 1000 // 5 minutes
     const status = await requestMain(Main.CLOUD_SYNC, { id: data.id as any, churchId: data.team.churchId, teamId: data.team.id, method }, () => {}, timeout)
+    isSyncing = false
+
     if (!status) {
         syncFinished()
         return
     }
-
-    isSyncing = false
 
     // set back to merge
     if (method === "replace" || method === "upload") {
