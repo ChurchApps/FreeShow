@@ -8,6 +8,7 @@ import type { Metadata, Themes } from "../../types/Settings"
 import { initAudioRouting } from "../audio/routing/audioRoutingInit"
 import { clone, keysToID } from "../components/helpers/array"
 import { checkFFmpeg, checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
+import { migrateOutputsRtmp } from "../components/helpers/rtmpDestinations"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { sendMain } from "../IPC/main"
 import {
@@ -298,6 +299,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         Object.keys(v).forEach((id: string) => {
             delete v[id].out
         })
+        migrateOutputsRtmp(v)
         outputs.set(v)
 
         // RTMP check

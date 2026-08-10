@@ -5,6 +5,7 @@ import type { Rectangle } from "electron"
 import { BrowserWindow, Menu, app, ipcMain, powerSaveBlocker, protocol, screen } from "electron"
 import { AUDIO, BLACKMAGIC, CLOUD, EXPORT, MAIN, NDI, OUTPUT, STARTUP } from "../types/Channels"
 import { Main } from "../types/IPC/Main"
+import { ToMain } from "../types/IPC/ToMain"
 import type { Dictionary } from "../types/Settings"
 import { receiveAudio } from "./audio/receiveAudio"
 import { receiveBM } from "./blackmagic/bmdTalk"
@@ -12,10 +13,11 @@ import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
 import { cleanupProtectedCache, registerProtectedProtocol } from "./data/protected"
 import { config, setupStores } from "./data/store"
-import { receiveMain, sendMain } from "./IPC/main"
+import { receiveMain, sendMain, sendToMain } from "./IPC/main"
 import { autoErrorReport } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
+import { setRtmpNoticeListener, setRtmpStatusListener } from "./streaming/RtmpStreamer"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
 import { isDraggableAreaVisible, isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs, waitForBundle } from "./utils/init"
 import { template } from "./utils/menuTemplate"
@@ -106,6 +108,9 @@ async function startApp() {
     // }
 
     setTimeout(createLoading)
+
+    setRtmpStatusListener((outputId, destinations) => sendToMain(ToMain.RTMP_STATUS, { outputId, destinations }))
+    setRtmpNoticeListener((message) => sendToMain(ToMain.ALERT, message))
 
     await setupStores()
 

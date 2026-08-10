@@ -1,4 +1,5 @@
 import type { Display } from "electron"
+import type { EncoderDetection } from "../../electron/streaming/encoderDetection"
 import type { ExifData } from "exif"
 import type { Stats } from "fs"
 import type { Bible } from "json-bible/lib/Bible"
@@ -172,7 +173,10 @@ export enum Main {
     SPOTIFY_COMMAND = "SPOTIFY_COMMAND",
     // FFmpeg Download
     FFMPEG_CHECK = "FFMPEG_CHECK",
-    FFMPEG_DOWNLOAD = "FFMPEG_DOWNLOAD"
+    FFMPEG_DOWNLOAD = "FFMPEG_DOWNLOAD",
+    // Streaming encoder
+    ENCODER_DETECT = "ENCODER_DETECT",
+    SET_RTMP_ENCODER = "SET_RTMP_ENCODER"
 }
 
 export interface MainSendPayloads {
@@ -274,6 +278,9 @@ export interface MainSendPayloads {
     // FFmpeg
     [Main.FFMPEG_CHECK]: undefined
     [Main.FFMPEG_DOWNLOAD]: undefined
+    // Streaming encoder
+    [Main.ENCODER_DETECT]: { force?: boolean } | undefined
+    [Main.SET_RTMP_ENCODER]: { encoder: string }
 }
 
 export interface MainReturnPayloads {
@@ -372,8 +379,11 @@ export interface MainReturnPayloads {
     [Main.SPOTIFY_GET_STATE]: Promise<SpotifyState | null>
     [Main.SPOTIFY_COMMAND]: Promise<boolean>
     // FFmpeg
-    [Main.FFMPEG_CHECK]: { installed: boolean; path?: string }
+    [Main.FFMPEG_CHECK]: Promise<{ installed: boolean; path?: string }>
     [Main.FFMPEG_DOWNLOAD]: Promise<{ success: boolean; error?: string }>
+    // Streaming encoder
+    [Main.ENCODER_DETECT]: Promise<EncoderDetection>
+    [Main.SET_RTMP_ENCODER]: void
 }
 
 ///////////
