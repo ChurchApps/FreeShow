@@ -3,7 +3,7 @@
     import type { ContentFile, ContentLibraryCategory } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activeCanvaPresentation, providerConnections } from "../../../stores"
+    import { activeCanvaPresentation, mediaOptions, providerConnections } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
@@ -26,6 +26,8 @@
     function handleConnect() {
         sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId: "canva", data: { canvaClientId, canvaClientSecret } })
     }
+
+    export let searchValue = ""
 
     let canvaClientId = ""
     let canvaClientSecret = ""
@@ -64,7 +66,7 @@
 {#if $providerConnections.canva}
     <div style="position: relative;width: 100%; height: 100%; display: flex; flex-direction: column;">
         <div style="flex: 1; overflow: hidden;">
-            <ContentLibraryBrowser providerId="canva" columns={5} searchValue="" bind:currentCategory {getContentCategory} />
+            <ContentLibraryBrowser providerId="canva" columns={$mediaOptions.columns} {searchValue} bind:currentCategory {getContentCategory} />
         </div>
     </div>
     <!-- <div style="position: absolute;bottom: 0;width: 100%;padding: 10px;display: flex;justify-content: center;">
