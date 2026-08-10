@@ -8,7 +8,7 @@
 
     const popupInfo = $popupData
     const nodeId = popupInfo?.nodeId
-    popupData.set(null)
+    popupData.set({})
 
     $: channel = $audioRouting?.channels?.find((c) => c.id === nodeId)
     $: isChannelNode = !!channel || nodeId === "main" || nodeId?.startsWith("channel_")
