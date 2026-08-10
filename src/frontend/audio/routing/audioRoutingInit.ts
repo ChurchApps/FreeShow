@@ -101,6 +101,7 @@ export function createOutputAudioChannel(outputId: string) {
 
         channels.push({ id: channelId, name: output.name, color: output.color })
         connections.push({ from: "drawer_audio", to: channelId })
+        connections.push({ from: "playlists_default", to: channelId })
         connections.push({ from: `output_win_sub_${outputId}`, to: channelId })
         connections.push({ from: channelId, to: `network_sub_${outputId}` })
 

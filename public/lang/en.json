@@ -232,6 +232,9 @@
     },
     "audio": {
         "settings": "Audio settings",
+        "inputs": "Inputs",
+        "outputs": "Outputs",
+        "channels": "Channels",
         "playlists": "Playlists",
         "playlist_settings": "Playlist settings",
         "open_audio_folder": "Open related audio folder",

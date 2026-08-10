@@ -513,4 +513,25 @@ export class AudioRoutingManager {
             this.inputNodes.delete(inputId)
         }
     }
+
+    public static sortChannels(config: AudioRoutingConfig): AudioRoutingConfig {
+        if (!config || !config.channels || config.channels.length <= 1) return config
+
+        const mainChannels: typeof config.channels = []
+        const unlinkedChannels: typeof config.channels = []
+        const outputLinkedChannels: typeof config.channels = []
+
+        const isLinkedToOutput = (id: string) => get(outputs)[id.split("_")?.[1]]
+
+        for (const ch of config.channels) {
+            if (ch.id === "main") mainChannels.push(ch)
+            else if (isLinkedToOutput(ch.id)) outputLinkedChannels.push(ch)
+            else unlinkedChannels.push(ch)
+        }
+
+        unlinkedChannels.sort((a, b) => (a.name || "").localeCompare(b.name || "", undefined, { numeric: true, sensitivity: "base" }))
+        outputLinkedChannels.sort((a, b) => (a.name || "").localeCompare(b.name || "", undefined, { numeric: true, sensitivity: "base" }))
+
+        return { ...config, channels: [...mainChannels, ...unlinkedChannels, ...outputLinkedChannels] }
+    }
 }
