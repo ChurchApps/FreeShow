@@ -68,29 +68,29 @@
 <div class="aiPanel">
     <div class="statusRow">
         <span class="dot {state}" />
-        <span class="stateLabel"><T id="scripture.ai_state_{state}" /></span>
+        <span class="stateLabel"><T id="ai_scripture.state_{state}" /></span>
 
         {#if errorText}
             <span class="errorMessage" data-title={errorText}>{errorText}</span>
         {/if}
 
         {#if isListening && $aiScriptureStatus.keyless}
-            <span class="badge" data-title={translateText("scripture.ai_keyless_tip")}><T id="scripture.ai_explicit_only" /></span>
+            <span class="badge" data-title={translateText("ai_scripture.keyless_tip")}><T id="ai_scripture.explicit_only" /></span>
         {/if}
 
         {#if $aiScriptureAutoPaused}
-            <span class="badge paused"><T id="scripture.ai_auto_paused" /></span>
-            <MaterialButton icon="play" title="scripture.ai_resume_auto" on:click={() => resumeAutoProjection()} />
+            <span class="badge paused"><T id="ai_scripture.auto_paused" /></span>
+            <MaterialButton icon="play" title="ai_scripture.resume_auto" on:click={() => resumeAutoProjection()} />
         {/if}
 
         <div class="fill" />
 
         {#if $aiScriptureHasProjected}
-            <MaterialButton icon="undo" title="scripture.ai_restore_previous" disabled={$outLocked} on:click={restore} />
+            <MaterialButton icon="undo" title="ai_scripture.restore_previous" disabled={$outLocked} on:click={restore} />
         {/if}
 
-        <MaterialButton icon="settings" title="scripture.ai_setup" on:click={openSetup} />
-        <MaterialButton icon={isListening ? "stop" : "microphone"} title={isListening ? "scripture.ai_stop_listening" : "scripture.ai_start_listening"} isActive={isListening} disabled={isStarting} on:click={toggleListening} />
+        <MaterialButton icon="settings" title="ai_scripture.setup" on:click={openSetup} />
+        <MaterialButton icon={isListening ? "stop" : "microphone"} title={isListening ? "ai_scripture.stop_listening" : "ai_scripture.start_listening"} isActive={isListening} disabled={isStarting} on:click={toggleListening} />
     </div>
 
     {#if isListening || $aiScriptureTranscript.length}
@@ -110,10 +110,10 @@
                     {/if}{latestSegment}
                 </p>
             {:else}
-                <p class="ticker faded"><T id="scripture.ai_waiting_for_audio" /></p>
+                <p class="ticker faded"><T id="ai_scripture.waiting_for_audio" /></p>
             {/if}
 
-            <MaterialButton icon={transcriptExpanded ? "arrow_up" : "arrow_down"} title="scripture.ai_transcript" on:click={() => (transcriptExpanded = !transcriptExpanded)} />
+            <MaterialButton icon={transcriptExpanded ? "arrow_up" : "arrow_down"} title="ai_scripture.transcript" on:click={() => (transcriptExpanded = !transcriptExpanded)} />
         </div>
     {/if}
 
@@ -123,11 +123,11 @@
                 <div class="suggestion">
                     <div class="suggestionHeader">
                         <span class="reference">{getReferenceLabel(suggestion, $scriptures)}</span>
-                        <span class="confidence {suggestion.confidence}"><T id="scripture.ai_confidence_{suggestion.confidence}" /></span>
+                        <span class="confidence {suggestion.confidence}"><T id="ai_scripture.confidence_{suggestion.confidence}" /></span>
 
                         <div class="fill" />
 
-                        <MaterialButton icon="close" title="scripture.ai_dismiss" on:click={() => dismissSuggestion(suggestion.id)} />
+                        <MaterialButton icon="close" title="ai_scripture.dismiss" on:click={() => dismissSuggestion(suggestion.id)} />
                     </div>
 
                     {#if suggestion.quote}
@@ -135,11 +135,11 @@
                     {/if}
 
                     <div class="suggestionActions">
-                        <MaterialButton icon="play" disabled={$outLocked} title="scripture.ai_project" on:click={() => project(suggestion)}>
-                            <T id="scripture.ai_project" />
+                        <MaterialButton icon="play" disabled={$outLocked} title="ai_scripture.project" on:click={() => project(suggestion)}>
+                            <T id="ai_scripture.project" />
                         </MaterialButton>
-                        <MaterialButton icon="scripture" title="scripture.ai_show_in_drawer" on:click={() => showInDrawer(suggestion)}>
-                            <T id="scripture.ai_show_in_drawer" />
+                        <MaterialButton icon="scripture" title="ai_scripture.show_in_drawer" on:click={() => showInDrawer(suggestion)}>
+                            <T id="ai_scripture.show_in_drawer" />
                         </MaterialButton>
                     </div>
                 </div>
