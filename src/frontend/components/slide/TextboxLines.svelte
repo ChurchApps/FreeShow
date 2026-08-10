@@ -442,6 +442,9 @@
     }
 
     .break {
+        /* prevent line-breaks in HTML to affect content, like "text-align: justify;" */
+        display: grid;
+
         width: 100%;
         /* line-height: normal; */
 
