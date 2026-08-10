@@ -1,41 +1,8 @@
 import { uid } from "uid"
 import type { RtmpData, RtmpDestination, RtmpStatus } from "../../../types/Output"
 
-export function createDestination(index: number): RtmpDestination {
-    return { id: uid(), name: `Destination ${index + 1}`, url: "", key: "", enabled: true }
-}
-
-/**
- * Fold the pre-multi-destination `{ url, key }` pair into the destinations list.
- * Idempotent, so it is safe to run on every settings load.
- */
-export function migrateRtmpData(rtmpData: RtmpData | undefined): RtmpData | undefined {
-    if (!rtmpData) return rtmpData
-    if (rtmpData.url === undefined && rtmpData.key === undefined) return rtmpData
-
-    const { url, key, ...rest } = rtmpData
-    const migrated: RtmpData = { ...rest }
-
-    if (!migrated.destinations?.length && url) {
-        migrated.destinations = [{ id: uid(), name: "Destination 1", url, key: key || "", enabled: true }]
-    }
-
-    return migrated
-}
-
-/** Migrate every output in place. Returns true when something actually changed. */
-export function migrateOutputsRtmp(outputs: { [id: string]: { rtmpData?: RtmpData } }): boolean {
-    let changed = false
-
-    for (const output of Object.values(outputs)) {
-        const migrated = migrateRtmpData(output.rtmpData)
-        if (migrated !== output.rtmpData) {
-            output.rtmpData = migrated
-            changed = true
-        }
-    }
-
-    return changed
+export function createDestination(): RtmpDestination {
+    return { id: uid(), url: "", key: "", enabled: true }
 }
 
 export function hasStreamableDestination(rtmpData: RtmpData | undefined): boolean {
@@ -57,5 +24,31 @@ export function getUnhealthyDestinations(rtmpData: RtmpData | undefined, status:
             const state = status[d.id]?.state
             return !!state && state !== "live"
         })
-        .map((d) => d.name)
+        .map((d) => d.id)
+}
+
+// MIGRATE v1.6.4 config (only this one version uses it)
+
+/** Migrate every output in place. Returns true when something actually changed. */
+export function migrateOutputsRtmp(outputs: { [id: string]: { rtmpData?: RtmpData } }) {
+    for (const output of Object.values(outputs)) {
+        const migrated = migrateRtmpData(output.rtmpData)
+        if (migrated !== output.rtmpData) {
+            output.rtmpData = migrated
+        }
+    }
+}
+
+function migrateRtmpData(rtmpData: RtmpData | undefined): RtmpData | undefined {
+    if (!rtmpData) return rtmpData
+    if (rtmpData.url === undefined && rtmpData.key === undefined) return rtmpData
+
+    const { url, key, ...rest } = rtmpData
+    const migrated: RtmpData = { ...rest }
+
+    if (!migrated.destinations?.length && url) {
+        migrated.destinations = [{ id: uid(), url, key: key || "", enabled: true }]
+    }
+
+    return migrated
 }

@@ -163,9 +163,8 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
                 {@const isRtmp = output.rtmp}
                 {@const isStreaming = isRtmp ? output.rtmpData?.streaming : output.webrtcData?.streaming}
                 {@const unhealthy = isRtmp && isStreaming ? getUnhealthyDestinations(output.rtmpData, $rtmpStatus[output.id]) : []}
-                <!-- amber while any destination is not live, so a partial outage is visible without
-                     opening settings; the per-destination detail lives there -->
-                <div class="live" style="background-color: {isStreaming ? (unhealthy.length ? '#e0a800' : '#b60707') : 'var(--primary-darker)'};">
+
+                <div class="live" style="background-color: {isStreaming ? (unhealthy.length ? '#ab8000' : '#b60707') : 'var(--primary-darker)'};">
                     <MaterialButton style="padding: 2px 3px;min-height: 0;" on:click={() => (isRtmp ? (output.rtmpData?.streaming ? stopRtmpStreaming(output.id, true) : startRtmpStreaming(output.id)) : output.webrtcData?.streaming ? stopStreaming(output.id, true) : startStreaming(output.id))} title={unhealthy.length ? `${unhealthy.join(", ")} not live` : isStreaming ? "output.stop_streaming" : "output.start_streaming"}>
                         {translateText(isStreaming ? "output.is_live" : "output.go_live", $dictionary)}
                     </MaterialButton>

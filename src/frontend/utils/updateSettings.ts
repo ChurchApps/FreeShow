@@ -73,7 +73,6 @@ import {
     projectView,
     remotePassword,
     resized,
-    saved,
     scriptureSettings,
     scriptures,
     serverData,
@@ -300,9 +299,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         Object.keys(v).forEach((id: string) => {
             delete v[id].out
         })
-        // without persisting, the legacy fields survive and the migration mints a new
-        // destination id on every launch
-        if (migrateOutputsRtmp(v)) saved.set(false)
+        migrateOutputsRtmp(v)
         outputs.set(v)
 
         // RTMP check
@@ -387,7 +384,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     special: (v: any) => {
         if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, Lord" // God
         if (v.autoUpdates) sendMain(Main.AUTO_UPDATE)
-        sendMain(Main.SET_RTMP_ENCODER, { encoder: v.rtmpEncoder || "auto" })
         // don't backup when just initialized (or reset)
         if (!v.autoBackupPrevious) v.autoBackupPrevious = Date.now()
         if (v.startupProjectsList) {

@@ -5,20 +5,19 @@ import type { Rectangle } from "electron"
 import { BrowserWindow, Menu, app, ipcMain, powerSaveBlocker, protocol, screen } from "electron"
 import { AUDIO, BLACKMAGIC, CLOUD, EXPORT, MAIN, NDI, OUTPUT, STARTUP } from "../types/Channels"
 import { Main } from "../types/IPC/Main"
+import { ToMain } from "../types/IPC/ToMain"
 import type { Dictionary } from "../types/Settings"
 import { receiveAudio } from "./audio/receiveAudio"
 import { receiveBM } from "./blackmagic/bmdTalk"
 import { cloudConnect } from "./cloud/cloud"
 import { startExport } from "./data/export"
 import { cleanupProtectedCache, registerProtectedProtocol } from "./data/protected"
-import { ToMain } from "../types/IPC/ToMain"
 import { config, setupStores } from "./data/store"
-import { detectEncoders } from "./streaming/encoderDetection"
 import { receiveMain, sendMain, sendToMain } from "./IPC/main"
-import { setRtmpNoticeListener, setRtmpStatusListener } from "./streaming/RtmpStreamer"
 import { autoErrorReport } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
+import { setRtmpNoticeListener, setRtmpStatusListener } from "./streaming/RtmpStreamer"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
 import { isDraggableAreaVisible, isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs, waitForBundle } from "./utils/init"
 import { template } from "./utils/menuTemplate"
@@ -112,9 +111,6 @@ async function startApp() {
 
     setRtmpStatusListener((outputId, destinations) => sendToMain(ToMain.RTMP_STATUS, { outputId, destinations }))
     setRtmpNoticeListener((message) => sendToMain(ToMain.ALERT, message))
-    // probing encoders costs a few seconds of test encodes; warm it now so the first
-    // "Start streaming" is not stuck waiting for it
-    detectEncoders().catch((err) => console.error("[encoderDetection] Warm-up failed:", err))
 
     await setupStores()
 

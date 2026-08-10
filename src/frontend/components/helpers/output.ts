@@ -817,7 +817,7 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
 
 export function addRtmpDestination(outputId: string) {
     const existing = get(outputs)[outputId]?.rtmpData?.destinations || []
-    updateOutputRtmpData(outputId, "destinations", [...existing, createDestination(existing.length)])
+    updateOutputRtmpData(outputId, "destinations", [...existing, createDestination()])
 }
 
 export function updateRtmpDestination(outputId: string, destinationId: string, key: keyof RtmpDestination, value: any) {
@@ -888,6 +888,9 @@ export async function checkFFmpeg(): Promise<boolean> {
         const downloadRes = await requestMain(Main.FFMPEG_DOWNLOAD)
         if (downloadRes?.success) {
             newToast("FFmpeg installed successfully!")
+
+            // probing encoders costs a few seconds of test encodes; warm it now so the first "Start streaming" is not stuck waiting for it
+            sendMain(Main.ENCODER_DETECT)
             return true
         } else {
             newToast(translateText("Failed to download FFmpeg: ") + (downloadRes?.error || "Unknown error"))

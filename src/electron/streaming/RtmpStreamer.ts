@@ -3,9 +3,6 @@ import type { RtmpDestination, RtmpDestinationState, RtmpStatus } from "../../ty
 import { resolveEncoder } from "./encoderDetection"
 import { AUDIO_CHANNELS, buildEncoderCommand, buildRelayCommand, getProfile, SAMPLE_RATE, type EncoderId } from "./encoderProfiles"
 import { resolveFfmpegPath } from "./ffmpegManager"
-import { buildDestinationUrl, configRequiresRestart, type StreamConfig } from "./rtmpConfig"
-
-export { buildDestinationUrl, configRequiresRestart, type StreamConfig }
 
 // status and notices are pushed through registered listeners rather than importing the IPC layer
 // directly, which would create an import cycle back through responsesMain
@@ -78,6 +75,17 @@ interface StreamInstance {
     audioInterval?: NodeJS.Timeout
     lastAudioTime: number
     lastFrame: Buffer | null
+}
+
+interface StreamConfig {
+    /** dimensions to broadcast at */
+    width: number
+    height: number
+    fps: number
+    bitrate: number
+    enableAudio: boolean
+    /** "auto", an explicit encoder id, or undefined */
+    encoder?: string
 }
 
 export class RtmpStreamer {
@@ -424,7 +432,7 @@ export class RtmpStreamer {
             // kept separate from relay.error: ffmpeg emits warnings routinely on a healthy relay,
             // and surfacing those as a destination error would leave a red notice under a live dot
             relay.lastStderr = message.split("\n").pop()!.slice(0, 200)
-            console.warn(`[RtmpStreamer:relay ${relay.destination.name}] ${message}`)
+            console.warn(`[RtmpStreamer:relay ${relay.destination.url}] ${message}`)
         })
 
         relay.liveTimer = setTimeout(() => {
@@ -437,7 +445,7 @@ export class RtmpStreamer {
             if (relay.process !== child) return
             this.clearRelayProcess(relay)
             if (relay.stopped || !this.streamers.has(streamer.outputId)) return
-            console.error(`[RtmpStreamer] Relay "${relay.destination.name}" failed to start:`, err.message)
+            console.error(`[RtmpStreamer] Relay "${relay.destination.url}" failed to start:`, err.message)
             this.noteRelayIssue(relay, err.message)
             this.setRelayState(streamer, relay, "error", err.message)
             this.scheduleRelayRestart(streamer, relay)
@@ -453,7 +461,7 @@ export class RtmpStreamer {
             // several seconds to fail, which is longer than the "live" threshold
             if (uptime >= STABLE_AFTER_MS) relay.backoffMs = BACKOFF_START_MS
 
-            console.log(`[RtmpStreamer] Relay "${relay.destination.name}" exited (code ${code}, up ${Math.round(uptime / 1000)}s), reconnecting...`)
+            console.log(`[RtmpStreamer] Relay "${relay.destination.url}" exited (code ${code}, up ${Math.round(uptime / 1000)}s), reconnecting...`)
             this.noteRelayIssue(relay, relay.lastStderr || `Connection dropped (exit ${code})`)
             this.setRelayState(streamer, relay, "reconnecting", relay.lastStderr)
             this.scheduleRelayRestart(streamer, relay)
@@ -533,7 +541,7 @@ export class RtmpStreamer {
             // dropping chunks would corrupt the bitstream, so a destination that cannot keep up is
             // restarted instead; mpegts resyncs on the next PAT/PMT + keyframe
             if (stdin.writableLength > RELAY_BUFFER_CAP_BYTES) {
-                console.warn(`[RtmpStreamer] Destination "${relay.destination.name}" is too slow, restarting relay`)
+                console.warn(`[RtmpStreamer] Destination "${relay.destination.url}" is too slow, restarting relay`)
                 this.restartRelay(streamer, relay, "Destination could not keep up")
                 continue
             }
@@ -626,4 +634,17 @@ export class RtmpStreamer {
             }, STATUS_PUSH_INTERVAL_MS)
         )
     }
+}
+
+// HELPERS
+
+/** Destination changes are relay-only; anything here means the encoder has to be respawned. */
+function configRequiresRestart(prev: StreamConfig, next: StreamConfig): boolean {
+    return prev.width !== next.width || prev.height !== next.height || prev.fps !== next.fps || prev.bitrate !== next.bitrate || prev.enableAudio !== next.enableAudio || prev.encoder !== next.encoder
+}
+
+function buildDestinationUrl(destination: { url: string; key: string }): string {
+    // remove trailing slashes
+    const url = destination.url.replace(/\/+$/, "")
+    return destination.key ? `${url}/${destination.key}` : url
 }

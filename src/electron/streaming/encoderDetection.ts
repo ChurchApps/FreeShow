@@ -99,7 +99,8 @@ async function probe(ffmpegPath: string): Promise<EncoderDetection> {
         const base = { id: profile.id, label: profile.label, hardware: profile.hardware }
 
         if (!isSupportedOnPlatform(profile.id)) {
-            encoders.push({ ...base, available: false, reason: "Not available on this platform" })
+            // no need to add unsupported encoders to the list
+            // encoders.push({ ...base, available: false, reason: "Not available on this platform" })
             continue
         }
         if (!listed.includes(profile.id)) {

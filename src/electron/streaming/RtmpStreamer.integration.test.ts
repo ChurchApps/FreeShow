@@ -104,8 +104,8 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         const outB = path.join(tmpDir, "b.flv")
 
         await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [
-            { id: "a", name: "A", url: outA, key: "", enabled: true },
-            { id: "b", name: "B", url: outB, key: "", enabled: true }
+            { id: "a", url: outA, key: "", enabled: true },
+            { id: "b", url: outB, key: "", enabled: true }
         ])
 
         // the encoder spawns on the first frame, using its actual dimensions
@@ -134,7 +134,7 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         const pushes: { outputId: string; states: string[] }[] = []
         setRtmpStatusListener((outputId, destinations) => pushes.push({ outputId, states: Object.values(destinations).map((d) => d.state) }))
 
-        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", name: "A", url: path.join(tmpDir, "listener.flv"), key: "", enabled: true }])
+        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", url: path.join(tmpDir, "listener.flv"), key: "", enabled: true }])
 
         let i = 0
         const feed = setInterval(() => RtmpStreamer.updateFrame("test-output", bgraFrame((i++ * 8) % 256), { width: WIDTH, height: HEIGHT }), 1000 / FPS)
@@ -156,7 +156,7 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         setRtmpNoticeListener((message) => notices.push(message))
 
         const out = path.join(tmpDir, "fallback.flv")
-        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "nvenc" }, [{ id: "a", name: "A", url: out, key: "", enabled: true }])
+        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "nvenc" }, [{ id: "a", url: out, key: "", enabled: true }])
 
         const feeding = feed("test-output")
         await new Promise((r) => setTimeout(r, 8000))
@@ -178,7 +178,7 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
 
     it("reconnects relays when the encoder respawns, so timestamps do not jump backwards", async () => {
         const out = path.join(tmpDir, "respawn.flv")
-        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", name: "A", url: out, key: "", enabled: true }])
+        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", url: out, key: "", enabled: true }])
 
         let feeding = feed("test-output")
         await new Promise((r) => setTimeout(r, 3500))
@@ -209,7 +209,7 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
     }, 40000)
 
     it("drops a frame whose buffer does not match the declared size", async () => {
-        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", name: "A", url: path.join(tmpDir, "mismatch.flv"), key: "", enabled: true }])
+        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", url: path.join(tmpDir, "mismatch.flv"), key: "", enabled: true }])
 
         // a truncated buffer would otherwise desync -f rawvideo and shear the broadcast
         RtmpStreamer.updateFrame("test-output", Buffer.alloc(WIDTH * HEIGHT * 4 - 16), { width: WIDTH, height: HEIGHT })
@@ -220,7 +220,7 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
     it("does not leave a stream running when stopped mid-startup", async () => {
         const out = path.join(tmpDir, "cancelled.flv")
 
-        const starting = RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", name: "A", url: out, key: "", enabled: true }])
+        const starting = RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", url: out, key: "", enabled: true }])
         RtmpStreamer.stop("test-output")
         await starting
 
@@ -228,8 +228,8 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
     }, 30000)
 
     it("applies a destination added while start() was still resolving", async () => {
-        const destA = { id: "a", name: "A", url: path.join(tmpDir, "pending-a.flv"), key: "", enabled: true }
-        const destB = { id: "b", name: "B", url: path.join(tmpDir, "pending-b.flv"), key: "", enabled: true }
+        const destA = { id: "a", url: path.join(tmpDir, "pending-a.flv"), key: "", enabled: true }
+        const destB = { id: "b", url: path.join(tmpDir, "pending-b.flv"), key: "", enabled: true }
         const config = { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }
 
         const starting = RtmpStreamer.start("test-output", config, [destA])
@@ -245,8 +245,8 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
     it("keeps the other destination live when one is removed", async () => {
         const outA = path.join(tmpDir, "keep.flv")
         const outB = path.join(tmpDir, "drop.flv")
-        const destA = { id: "a", name: "A", url: outA, key: "", enabled: true }
-        const destB = { id: "b", name: "B", url: outB, key: "", enabled: true }
+        const destA = { id: "a", url: outA, key: "", enabled: true }
+        const destB = { id: "b", url: outB, key: "", enabled: true }
 
         await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [destA, destB])
 

@@ -36,26 +36,22 @@ export interface Output {
     out?: OutData
 }
 
+// RTMP
 export interface RtmpDestination {
     id: string
-    name: string
     url: string
     key: string
     enabled: boolean
 }
-
 export interface RtmpData {
     streaming?: boolean
     fps?: string | number
     bitrate?: string | number
     destinations?: RtmpDestination[]
-    /** legacy single destination, migrated into destinations on load */
-    url?: string
-    key?: string
+    url?: string // deprecated, only used in v1.6.4
+    key?: string // deprecated, only used in v1.6.4
 }
-
 export type RtmpDestinationState = "idle" | "connecting" | "live" | "reconnecting" | "error"
-
 export interface RtmpStatus {
     /**
      * `restarts`/`lastIssue` persist for the whole stream rather than clearing on recovery: a
