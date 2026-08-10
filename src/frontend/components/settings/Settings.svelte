@@ -5,7 +5,7 @@
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tip from "../main/Tip.svelte"
-    import AiScripture from "./tabs/AiScripture.svelte"
+    import AiScriptureSettings from "../ai/AiScriptureSettings.svelte"
     import AudioRouting from "./tabs/AudioRouting.svelte"
     import Connection from "./tabs/Connection.svelte"
     import Files from "./tabs/Files.svelte"
@@ -90,7 +90,7 @@
         {:else if tabId === "theme"}
             <Theme />
         {:else if tabId === "ai_scripture"}
-            <AiScripture />
+            <AiScriptureSettings />
         {:else if tabId === "other"}
             <Other />
         {/if}

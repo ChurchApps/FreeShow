@@ -1,28 +1,28 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import type { AiScriptureEngine, AIError, AIProviderId, NemotronStatus, WhisperModelId, WhisperStatus } from "../../../../types/AiScripture"
-    import { AI_PROVIDER_MODELS, WHISPER_LANGUAGES } from "../../../../types/AiScripture"
-    import { Main } from "../../../../types/IPC/Main"
-    import { aiScriptureErrorText } from "../../../audio/aiScripture"
-    import { AudioMicrophone } from "../../../audio/audioMicrophone"
-    import { requestMain, sendMain } from "../../../IPC/main"
-    import { language, os, scriptures, special, aiScriptureDownloads } from "../../../stores"
-    import { translateText } from "../../../utils/language"
-    import { keysToID, sortByName } from "../../helpers/array"
-    import Icon from "../../helpers/Icon.svelte"
-    import T from "../../helpers/T.svelte"
-    import InputRow from "../../input/InputRow.svelte"
-    import Title from "../../input/Title.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
-    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
-    import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
-    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
-    import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
-    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import Loader from "../../main/Loader.svelte"
-    import Tip from "../../main/Tip.svelte"
-    import { stopAiScriptureListening } from "../../../audio/aiScripture"
+    import type { AiScriptureEngine, AIError, AIProviderId, NemotronStatus, WhisperModelId, WhisperStatus } from "../../../types/AiScripture"
+    import { AI_PROVIDER_MODELS, WHISPER_LANGUAGES } from "../../../types/AiScripture"
+    import { Main } from "../../../types/IPC/Main"
+    import { aiScriptureErrorText } from "../../ai/aiScripture"
+    import { AudioMicrophone } from "../../audio/audioMicrophone"
+    import { requestMain, sendMain } from "../../IPC/main"
+    import { language, os, scriptures, special, aiScriptureDownloads } from "../../stores"
+    import { translateText } from "../../utils/language"
+    import { keysToID, sortByName } from "../helpers/array"
+    import Icon from "../helpers/Icon.svelte"
+    import T from "../helpers/T.svelte"
+    import InputRow from "../input/InputRow.svelte"
+    import Title from "../input/Title.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
+    import MaterialCheckbox from "../inputs/MaterialCheckbox.svelte"
+    import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
+    import MaterialFilePicker from "../inputs/MaterialFilePicker.svelte"
+    import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
+    import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
+    import Loader from "../main/Loader.svelte"
+    import Tip from "../main/Tip.svelte"
+    import { stopAiScriptureListening } from "../../ai/aiScripture"
 
     $: settings = ($special.aiScripture || {}) as { [key: string]: any }
 
@@ -60,7 +60,7 @@
 
     $: platform = $os.platform
 
-    // whisper transcribes fixed windows, the streaming engine decodes as the words arrive - see the driver contract in electron/aiScripture/drivers
+    // whisper transcribes fixed windows, the streaming engine decodes as the words arrive - see the driver contract in electron/ai/drivers
     const engineOptions = [
         { value: "whisper", label: translateText("ai_scripture.engine_whisper") },
         { value: "nemotron", label: translateText("ai_scripture.engine_nemotron") }

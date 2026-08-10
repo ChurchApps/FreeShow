@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type { DetectedReference } from "../../../../types/AiScripture"
-    import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../../../audio/aiScripture"
-    import { activePage, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, outLocked, scriptures, settingsTab, special } from "../../../stores"
-    import { translateText } from "../../../utils/language"
-    import T from "../../helpers/T.svelte"
-    import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import { getShortBibleName } from "./scripture"
+    import type { DetectedReference } from "../../../types/AiScripture"
+    import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../../ai/aiScripture"
+    import { activePage, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, outLocked, scriptures, settingsTab, special } from "../../stores"
+    import { translateText } from "../../utils/language"
+    import T from "../helpers/T.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
+    import { getShortBibleName } from "../drawer/bible/scripture"
 
     $: state = $aiScriptureStatus.state
     $: isListening = state === "listening" || state === "llm_paused"

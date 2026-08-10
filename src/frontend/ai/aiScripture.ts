@@ -14,7 +14,7 @@ import { setDrawerTabData } from "../components/helpers/historyHelpers"
 import { getFirstActiveOutput, setOutput } from "../components/helpers/output"
 import { clearSlide } from "../components/output/clear"
 import { requestMain, sendMain } from "../IPC/main"
-import { AudioMicrophone } from "./audioMicrophone"
+import { AudioMicrophone } from "../audio/audioMicrophone"
 import { activeDrawerTab, activeScripture, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, drawerTabsData, openScripture, outLocked, outputs, scriptures, scripturesCache, special } from "../stores"
 import aiScriptureProcessorUrl from "./aiScriptureProcessor.ts?worker&url"
 
