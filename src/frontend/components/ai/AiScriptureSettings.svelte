@@ -67,8 +67,8 @@
 
     // whisper transcribes fixed windows, the streaming engine decodes as the words arrive - see the driver contract in electron/ai/drivers
     const engineOptions = [
-        { value: "whisper", label: translateText("ai_scripture.engine_whisper") },
-        { value: "nemotron", label: translateText("ai_scripture.engine_nemotron") }
+        { value: "whisper", label: translateText("ai.engine_whisper") },
+        { value: "nemotron", label: translateText("ai.engine_nemotron") }
     ]
     $: engine = ((settings.engine as string) || "whisper") as AiScriptureEngine
 
@@ -89,7 +89,7 @@
 
     const whisperModelSizes: { [key: string]: number } = { tiny: 75, base: 142, small: 466, medium: 1500, "large-v3": 3100 }
     const whisperModelKeys: { [key: string]: string } = { "large-v3": "large" } // dropdown ids not matching their i18n key
-    $: whisperModelOptions = ["tiny", "base", "small", "medium", "large-v3"].map((id) => ({ value: id, label: `${translateText(`ai_scripture.whisper_model_${whisperModelKeys[id] || id}`)} (${whisperModelSizes[id]} MB)` }))
+    $: whisperModelOptions = ["tiny", "base", "small", "medium", "large-v3"].map((id) => ({ value: id, label: `${translateText(`ai.whisper_model_${whisperModelKeys[id] || id}`)} (${whisperModelSizes[id]} MB)` }))
 
     function setWhisperModel(base: string) {
         update("whisperModel", englishOnly && hasEnVariant(base) ? `${base}.en` : base)
@@ -343,29 +343,29 @@
 {#if !settings.enabled}
     <p class="faded" style="padding: 10px 5px;"><T id="ai_scripture.privacy_notice" /></p>
 {:else}
-    <Title label="ai_scripture.transcription" icon="microphone" />
+    <Title label="ai.transcription" icon="microphone" />
 
-    <MaterialDropdown label="ai_scripture.engine" options={engineOptions} value={engine} defaultValue="whisper" on:change={(e) => update("engine", e.detail)} />
-    <p class="faded hint"><T id={engine === "nemotron" ? "ai_scripture.engine_nemotron_hint" : "ai_scripture.engine_whisper_hint"} /></p>
+    <MaterialDropdown label="ai.engine" options={engineOptions} value={engine} defaultValue="whisper" on:change={(e) => update("engine", e.detail)} />
+    <p class="faded hint"><T id={engine === "nemotron" ? "ai.engine_nemotron_hint" : "ai.engine_whisper_hint"} /></p>
 
     {#if engine === "nemotron"}
         {#if !status}
             <div class="loading"><Loader /></div>
         {:else if !status.nemotron.supported}
-            <Tip type="warning" value="ai_scripture.nemotron_unsupported" />
+            <Tip type="warning" value="ai.nemotron_unsupported" />
             {#if status.nemotron.ready}
                 <!-- the model was downloaded before the addon became unavailable - 660 MB must stay reclaimable -->
                 <MaterialButton variant="outlined" icon="delete" on:click={deleteNemotronModel}>
-                    <T id="ai_scripture.nemotron_delete" />
+                    <T id="ai.nemotron_delete" />
                 </MaterialButton>
             {/if}
         {:else if status.nemotron.ready}
             <div class="statusLine ok">
                 <Icon id="check" size={0.9} white />
-                <T id="ai_scripture.nemotron_ready" />
+                <T id="ai.nemotron_ready" />
             </div>
             <MaterialButton variant="outlined" icon="delete" on:click={deleteNemotronModel}>
-                <T id="ai_scripture.nemotron_delete" />
+                <T id="ai.nemotron_delete" />
             </MaterialButton>
         {:else if nemotronActive}
             <div class="progressArea">
@@ -375,9 +375,9 @@
             </div>
         {:else}
             <div class="installArea">
-                <p class="faded"><T id="ai_scripture.nemotron_not_downloaded" /></p>
+                <p class="faded"><T id="ai.nemotron_not_downloaded" /></p>
                 <MaterialButton variant="outlined" icon="download" on:click={downloadNemotron}>
-                    <T id="ai_scripture.download_nemotron" />
+                    <T id="ai.download_nemotron" />
                 </MaterialButton>
             </div>
         {/if}
@@ -390,14 +390,14 @@
     {:else if binaryInstalled}
         <div class="statusLine ok">
             <Icon id="check" size={0.9} white />
-            <T id="ai_scripture.whisper_installed" />
+            <T id="ai.whisper_installed" />
             {#if settings.whisperCustomPath || status.whisper.binaryPath}
                 <span class="path">{settings.whisperCustomPath || status.whisper.binaryPath}</span>
             {/if}
         </div>
     {:else}
         <div class="installArea">
-            <p class="faded"><T id="ai_scripture.whisper_not_installed" /></p>
+            <p class="faded"><T id="ai.whisper_not_installed" /></p>
 
             {#if platform === "win32"}
                 {#if binaryActive}
@@ -408,7 +408,7 @@
                     </div>
                 {:else}
                     <MaterialButton variant="outlined" icon="download" on:click={downloadBinary}>
-                        <T id="ai_scripture.download_whisper" />
+                        <T id="ai.download_whisper" />
                     </MaterialButton>
                 {/if}
 
@@ -416,42 +416,42 @@
                     <Tip type="warning" value={aiScriptureErrorText(binaryError)} />
                 {/if}
             {:else if platform === "darwin"}
-                <p class="faded"><T id="ai_scripture.whisper_mac_guide" /></p>
+                <p class="faded"><T id="ai.whisper_mac_guide" /></p>
                 <div class="commandRow">
                     <code>{BREW_COMMAND}</code>
                     <MaterialButton icon={commandCopied ? "check" : "copy"} title={commandCopied ? "actions.copied" : "actions.copy"} on:click={copyBrewCommand} />
                 </div>
                 <MaterialButton variant="outlined" icon="refresh" on:click={getStatus}>
-                    <T id="ai_scripture.check_again" />
+                    <T id="ai.check_again" />
                 </MaterialButton>
             {:else}
-                <p class="faded"><T id="ai_scripture.whisper_linux_guide" /></p>
+                <p class="faded"><T id="ai.whisper_linux_guide" /></p>
                 <MaterialButton variant="outlined" icon="refresh" on:click={getStatus}>
-                    <T id="ai_scripture.check_again" />
+                    <T id="ai.check_again" />
                 </MaterialButton>
             {/if}
         </div>
     {/if}
 
     {#if engine === "whisper" && status && (!binaryInstalled || settings.whisperCustomPath || platform === "linux")}
-        <MaterialFilePicker label="ai_scripture.whisper_custom_path" value={settings.whisperCustomPath || ""} filter={{ name: "whisper-cli", extensions: ["*"] }} icon="folder" allowEmpty on:change={(e) => verifyCustomPath(e.detail || "")} />
+        <MaterialFilePicker label="ai.whisper_custom_path" value={settings.whisperCustomPath || ""} filter={{ name: "whisper-cli", extensions: ["*"] }} icon="folder" allowEmpty on:change={(e) => verifyCustomPath(e.detail || "")} />
         {#if customPathError}
-            <Tip type="warning" value="ai_scripture.whisper_path_invalid" />
+            <Tip type="warning" value="ai.whisper_path_invalid" />
         {/if}
     {/if}
 
     {#if engine === "whisper"}
         <!-- use an already installed ggml model file (e.g. large-v3) instead of downloading one -->
-        <MaterialFilePicker label="ai_scripture.whisper_custom_model" value={settings.whisperCustomModelPath || ""} filter={{ name: "ggml model", extensions: ["bin"] }} icon="folder" allowEmpty on:change={(e) => update("whisperCustomModelPath", e.detail || "")} />
+        <MaterialFilePicker label="ai.whisper_custom_model" value={settings.whisperCustomModelPath || ""} filter={{ name: "ggml model", extensions: ["bin"] }} icon="folder" allowEmpty on:change={(e) => update("whisperCustomModelPath", e.detail || "")} />
 
         <InputRow>
-            <MaterialDropdown label="ai_scripture.whisper_model" options={whisperModelOptions} value={whisperModelBase} defaultValue="base" on:change={(e) => setWhisperModel(e.detail)} />
+            <MaterialDropdown label="ai.whisper_model" options={whisperModelOptions} value={whisperModelBase} defaultValue="base" on:change={(e) => setWhisperModel(e.detail)} />
 
             {#if status}
                 {#if modelDownloaded}
                     <div class="statusLine ok inline">
                         <Icon id="check" size={0.9} white />
-                        <T id="ai_scripture.model_downloaded" />
+                        <T id="ai.model_downloaded" />
                     </div>
                 {:else if modelActive}
                     <div class="progressArea">
@@ -461,7 +461,7 @@
                     </div>
                 {:else}
                     <MaterialButton icon="download" on:click={downloadModel}>
-                        <T id="ai_scripture.download_model" />
+                        <T id="ai.download_model" />
                     </MaterialButton>
                 {/if}
             {/if}
@@ -474,25 +474,25 @@
     <InputRow>
         <MaterialDropdown label="live.microphones" options={microphones} value={settings.micDeviceId || ""} on:change={(e) => update("micDeviceId", e.detail)} allowEmpty />
         {#if engine === "whisper"}
-            <MaterialDropdown label="ai_scripture.spoken_language" options={languageOptions} value={spokenLanguage} defaultValue={($language || "en").slice(0, 2).toLowerCase()} on:change={(e) => setSpokenLanguage(e.detail)} />
+            <MaterialDropdown label="ai.spoken_language" options={languageOptions} value={spokenLanguage} defaultValue={($language || "en").slice(0, 2).toLowerCase()} on:change={(e) => setSpokenLanguage(e.detail)} />
         {/if}
     </InputRow>
 
     {#if engine === "whisper"}
-        <MaterialToggleSwitch label="ai_scripture.interpretation" checked={settings.interpretationMode === true} defaultValue={false} on:change={(e) => toggleInterpretation(e.detail)} />
+        <MaterialToggleSwitch label="ai.interpretation" checked={settings.interpretationMode === true} defaultValue={false} on:change={(e) => toggleInterpretation(e.detail)} />
         {#if interpretationMode}
-            <p class="faded hint"><T id="ai_scripture.interpretation_hint" /></p>
+            <p class="faded hint"><T id="ai.interpretation_hint" /></p>
 
-            <p class="listLabel"><T id="ai_scripture.spoken_languages" /> ({spokenLanguages.length})</p>
+            <p class="listLabel"><T id="ai.spoken_languages" /> ({spokenLanguages.length})</p>
             <div class="languageList">
                 {#each WHISPER_LANGUAGES as spoken}
                     <MaterialCheckbox label={spoken.name} checked={spokenLanguages.includes(spoken.code)} on:change={(e) => toggleSpokenLanguage(spoken.code, e.detail)} />
                 {/each}
             </div>
-            <p class="faded hint"><T id="ai_scripture.spoken_languages_hint" /></p>
+            <p class="faded hint"><T id="ai.spoken_languages_hint" /></p>
 
-            <MaterialDropdown label="ai_scripture.listen_language" options={listenLanguageOptions} value={listenLanguage} defaultValue={spokenLanguage} on:change={(e) => update("listenLanguage", e.detail)} />
-            <p class="faded hint"><T id="ai_scripture.interpretation_model_hint" /></p>
+            <MaterialDropdown label="ai.listen_language" options={listenLanguageOptions} value={listenLanguage} defaultValue={spokenLanguage} on:change={(e) => update("listenLanguage", e.detail)} />
+            <p class="faded hint"><T id="ai.interpretation_model_hint" /></p>
         {/if}
     {/if}
 
@@ -502,36 +502,36 @@
     <MaterialToggleSwitch label="ai_scripture.quote_matching" checked={settings.quoteMatching !== false} defaultValue={true} on:change={(e) => update("quoteMatching", e.detail)} />
     <p class="faded hint"><T id="ai_scripture.quote_matching_hint" /></p>
 
-    <MaterialDropdown label="ai_scripture.provider" options={providerOptions} value={provider} defaultValue="anthropic" on:change={(e) => setProvider(e.detail)} />
+    <MaterialDropdown label="ai.provider" options={providerOptions} value={provider} defaultValue="anthropic" on:change={(e) => setProvider(e.detail)} />
 
     {#if provider === "ollama"}
         <!-- no API key: everything runs on the local ollama server - just make sure the model is pulled -->
-        <p class="faded hint"><T id="ai_scripture.ollama_hint" /></p>
+        <p class="faded hint"><T id="ai.ollama_hint" /></p>
         <div class="commandRow">
             <code>{ollamaPullCommand}</code>
             <MaterialButton icon={ollamaCommandCopied ? "check" : "copy"} title={ollamaCommandCopied ? "actions.copied" : "actions.copy"} on:click={copyOllamaCommand} />
         </div>
         <MaterialButton variant="outlined" icon="connection" disabled={testing} on:click={testConnection}>
-            <T id="ai_scripture.test_connection" />
+            <T id="ai.test_connection" />
         </MaterialButton>
     {:else}
         <InputRow>
-            <MaterialTextInput label="ai_scripture.api_key" value={keyInput} type="password" pasteBtn on:input={(e) => (keyInput = e.detail)} />
+            <MaterialTextInput label="ai.api_key" value={keyInput} type="password" pasteBtn on:input={(e) => (keyInput = e.detail)} />
             <MaterialButton icon="save" disabled={!keyInput} on:click={saveKey}>
                 <T id="actions.save" />
             </MaterialButton>
             <MaterialButton icon="connection" disabled={(!keySaved && !keyInput) || testing} on:click={testConnection}>
-                <T id="ai_scripture.test_connection" />
+                <T id="ai.test_connection" />
             </MaterialButton>
             {#if keySaved}
-                <MaterialButton icon="delete" title="ai_scripture.remove_key" on:click={removeKey} />
+                <MaterialButton icon="delete" title="ai.remove_key" on:click={removeKey} />
             {/if}
         </InputRow>
 
         {#if keySaved && !testResult}
             <div class="statusLine ok">
                 <Icon id="check" size={0.9} white />
-                <T id="ai_scripture.key_saved" />
+                <T id="ai.key_saved" />
             </div>
         {/if}
     {/if}
@@ -555,11 +555,11 @@
         {/if}
     {/if}
 
-    <MaterialDropdown label="ai_scripture.model" options={modelOptions} value={selectedModel} defaultValue={providerData.defaultModel} disabled={showCustomModel} on:change={(e) => setModel(e.detail)} />
+    <MaterialDropdown label="ai.model" options={modelOptions} value={selectedModel} defaultValue={providerData.defaultModel} disabled={showCustomModel} on:change={(e) => setModel(e.detail)} />
 
-    <MaterialToggleSwitch label="ai_scripture.custom_model" checked={showCustomModel} defaultValue={false} on:change={(e) => toggleCustomModel(e.detail)} />
+    <MaterialToggleSwitch label="ai.custom_model" checked={showCustomModel} defaultValue={false} on:change={(e) => toggleCustomModel(e.detail)} />
     {#if showCustomModel}
-        <MaterialTextInput label="ai_scripture.custom_model_id" value={settings.customModel || ""} on:change={(e) => update("customModel", e.detail)} />
+        <MaterialTextInput label="ai.custom_model_id" value={settings.customModel || ""} on:change={(e) => update("customModel", e.detail)} />
     {/if}
 
     <Title label="ai_scripture.search_bibles ({searchBibles.length})" icon="scripture" />
@@ -622,7 +622,7 @@
         <p><T id="ai_scripture.privacy_local" /></p>
         <p><T id="ai_scripture.privacy_matching" /></p>
         <p><T id="ai_scripture.privacy_llm" /></p>
-        <p><T id="ai_scripture.privacy_keys" /></p>
+        <p><T id="ai.privacy_keys" /></p>
     </div>
 {/if}
 

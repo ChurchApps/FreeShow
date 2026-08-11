@@ -33,13 +33,13 @@ const ERROR_LANG_KEYS: { [code: string]: string } = {
     no_scripture: "ai_scripture.error_no_scripture",
     start_failed: "ai_scripture.error_start_failed",
     microphone_access: "ai_scripture.error_microphone",
-    whisper_not_installed: "ai_scripture.whisper_not_installed",
+    whisper_not_installed: "ai.whisper_not_installed",
     whisper_model_missing: "ai_scripture.error_model_missing",
-    nemotron_model_missing: "ai_scripture.nemotron_not_downloaded",
-    nemotron_unsupported: "ai_scripture.nemotron_unsupported",
-    cancelled: "ai_scripture.error_cancelled",
-    unsupported_platform: "ai_scripture.error_unsupported_platform",
-    download_in_progress: "ai_scripture.error_download_in_progress"
+    nemotron_model_missing: "ai.nemotron_not_downloaded",
+    nemotron_unsupported: "ai.nemotron_unsupported",
+    cancelled: "ai.error_cancelled",
+    unsupported_platform: "ai.error_unsupported_platform",
+    download_in_progress: "ai.error_download_in_progress"
 }
 
 export function aiScriptureErrorText(code: string): string {
