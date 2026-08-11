@@ -17,7 +17,7 @@ vi.mock("../IPC/main", () => ({
 }))
 
 import { sendToMain } from "../IPC/main"
-import type { WhisperModelId } from "../../types/AiScripture"
+import type { WhisperModelId } from "../../types/ai/AiScripture"
 import { ToMain } from "../../types/IPC/ToMain"
 import { cancelWhisperDownload, computeFileSha256, downloadWhisperModel, findExecutableInPath, getModelPath, isModelReady, verifyWhisperBinary, WHISPER_MODELS } from "./whisperManager"
 
@@ -40,7 +40,7 @@ describe("WHISPER_MODELS", () => {
 describe("model id validation", () => {
     it("getModelPath returns a path inside the models dir for known ids", () => {
         const modelPath = getModelPath("large-v3")
-        expect(modelPath).toBe(path.join(tempRoot, "whisper-models", "ggml-large-v3.bin"))
+        expect(modelPath).toBe(path.join(tempRoot, "bin", "whisper", "models", "ggml-large-v3.bin"))
     })
 
     it("getModelPath throws on unknown / path traversal ids", () => {
