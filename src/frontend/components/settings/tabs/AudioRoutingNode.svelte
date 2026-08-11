@@ -174,8 +174,6 @@
 <style>
     .node-card {
         position: relative;
-        max-width: 500px;
-        min-width: 200px;
         width: 100%;
         box-sizing: border-box;
         background: var(--primary-darker, rgba(30, 30, 40, 0.9));
