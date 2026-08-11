@@ -1,6 +1,6 @@
 // AI AUTO SCRIPTURE: shared LLM provider contracts, the detection prompt/schema & error normalization
 
-import type { AIError, AIErrorCode, AIProviderId } from "../../../types/AiScripture"
+import type { AIError, AIErrorCode, AIProviderId } from "../../../types/ai/AiScripture"
 
 export interface RawDetection {
     book: string // canonical English book name

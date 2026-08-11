@@ -3,10 +3,10 @@
 // receives detected scripture references back & projects/suggests them
 
 import { get } from "svelte/store"
-import type { AiScriptureBook, AiScriptureCommandEvent, AiScriptureEngine, AiScriptureStartConfig, AiScriptureTranslation, AIProviderId, DetectedReference, WhisperModelId } from "../../types/AiScripture"
-import { AI_PROVIDER_MODELS } from "../../types/AiScripture"
+import type { AiScriptureBook, AiScriptureCommandEvent, AiScriptureStartConfig, AiScriptureTranslation, DetectedReference, WhisperModelId } from "../../types/ai/AiScripture"
 import { Main } from "../../types/IPC/Main"
 import type { OutSlide } from "../../types/Show"
+import { AudioMicrophone } from "../audio/audioMicrophone"
 import type { BibleInstance } from "../components/drawer/bible/scripture"
 import { getShortBibleName, loadJsonBible, outputIsScripture, playScripture } from "../components/drawer/bible/scripture"
 import { clone } from "../components/helpers/array"
@@ -14,42 +14,17 @@ import { setDrawerTabData } from "../components/helpers/historyHelpers"
 import { getFirstActiveOutput, setOutput } from "../components/helpers/output"
 import { clearSlide } from "../components/output/clear"
 import { requestMain, sendMain } from "../IPC/main"
-import { AudioMicrophone } from "../audio/audioMicrophone"
-import { activeDrawerTab, activeScripture, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, drawerTabsData, openScripture, outLocked, outputs, scriptures, scripturesCache, special } from "../stores"
+import { activeDrawerTab, activeScripture, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, drawerTabsData, openScripture, outLocked, outputs, scriptures, scripturesCache } from "../stores"
 import aiScriptureProcessorUrl from "./aiScriptureProcessor.ts?worker&url"
+import { AI_PROVIDER_MODELS } from "./models"
 
 const SUGGESTION_MAX_AGE = 3 * 60 * 1000
 const SUGGESTION_LIMIT = 5
 const QUOTE_MATCH_SCORE = 0.55
 const QUOTE_DEMOTE_SCORE = 0.35
 
-interface AiScriptureSettings {
-    enabled?: boolean
-    mode?: "confirm" | "auto"
-    autoProjectQuoted?: boolean
-    searchBibles?: string[]
-    displayTranslation?: "drawer" | "matched"
-    micDeviceId?: string
-    provider?: AIProviderId
-    model?: string // legacy single model value (kept as fallback)
-    models?: { [key in AIProviderId]?: string }
-    customModel?: string
-    engine?: AiScriptureEngine
-    whisperModel?: WhisperModelId
-    whisperCustomPath?: string
-    whisperCustomModelPath?: string
-    spokenLanguage?: string
-    interpretationMode?: boolean
-    listenLanguage?: string
-    spokenLanguages?: string[]
-    autoCooldownSeconds?: number
-    refCooldownSeconds?: number
-    maxVerses?: number
-    voiceCommands?: boolean
-}
-
-function getSettings(): AiScriptureSettings {
-    return get(special).aiScripture || {}
+function getSettings() {
+    return get(ai).scripture || {}
 }
 
 // map machine error codes to lang keys - unknown codes (e.g. raw device errors) pass through unchanged
@@ -175,7 +150,11 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     const micDeviceId = await resolveMicDeviceId(settings.micDeviceId || "")
     if (micDeviceId && micDeviceId !== settings.micDeviceId) {
         // persist the auto-selected device so the settings dropdown shows what is actually capturing
-        special.update((a) => ({ ...a, aiScripture: { ...(a.aiScripture || {}), micDeviceId } }))
+        ai.update((a) => {
+            if (!a.scripture) a.scripture = {}
+            a.scripture.micDeviceId = micDeviceId
+            return a
+        })
     }
 
     const micError = await startMicCapture(micDeviceId)
@@ -434,7 +413,7 @@ export async function handleDetection(ref: DetectedReference): Promise<void> {
     if (ref.confidence !== "high") return
     if (ref.type === "quoted" && !settings.autoProjectQuoted) return
 
-    queueAutoProjection(ref, settings)
+    queueAutoProjection(ref)
 }
 
 async function verifyQuote(ref: DetectedReference) {
@@ -524,7 +503,9 @@ export function dismissSuggestion(id: string): void {
 
 // AUTO PROJECTION
 
-function queueAutoProjection(ref: DetectedReference, settings: AiScriptureSettings) {
+function queueAutoProjection(ref: DetectedReference) {
+    const settings = getSettings()
+
     // don't re-project a reference that was just auto projected
     const refCooldownMs = (settings.refCooldownSeconds ?? 90) * 1000
     if (lastAutoProjectedRef && Date.now() - lastAutoProjectionAt < refCooldownMs && isSameReference(lastAutoProjectedRef, ref)) return

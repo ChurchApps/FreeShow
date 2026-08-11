@@ -1,12 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import type { AiScriptureEngine, AIError, AIProviderId, NemotronStatus, WhisperModelId, WhisperStatus } from "../../../types/AiScripture"
-    import { AI_PROVIDER_MODELS, WHISPER_LANGUAGES } from "../../../types/AiScripture"
+    import type { AIError, AIProviderId, AiScriptureEngine, NemotronStatus, WhisperModelId, WhisperStatus } from "../../../types/ai/AiScripture"
     import { Main } from "../../../types/IPC/Main"
-    import { aiScriptureErrorText } from "../../ai/aiScripture"
+    import { aiScriptureErrorText, stopAiScriptureListening } from "../../ai/aiScripture"
+    import { AI_PROVIDER_MODELS } from "../../ai/models"
+    import { WHISPER_LANGUAGES } from "../../ai/whisper"
     import { AudioMicrophone } from "../../audio/audioMicrophone"
     import { requestMain, sendMain } from "../../IPC/main"
-    import { language, os, scriptures, special, aiScriptureDownloads } from "../../stores"
+    import { ai, aiScriptureDownloads, language, os, scriptures } from "../../stores"
     import { translateText } from "../../utils/language"
     import { keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
@@ -22,12 +23,16 @@
     import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
     import Loader from "../main/Loader.svelte"
     import Tip from "../main/Tip.svelte"
-    import { stopAiScriptureListening } from "../../ai/aiScripture"
 
-    $: settings = ($special.aiScripture || {}) as { [key: string]: any }
+    let settings = $ai.scripture || {}
 
     function update(key: string, value: any) {
-        special.update((a) => ({ ...a, aiScripture: { ...(a.aiScripture || {}), [key]: value } }))
+        ai.update((a) => {
+            if (!a.scripture) a.scripture = {}
+            a.scripture[key] = value
+            return a
+        })
+        settings = $ai.scripture || {}
     }
 
     // STATUS
@@ -44,13 +49,13 @@
     onMount(() => {
         getStatus()
 
-        if ($special.aiScripture?.whisperCustomPath) verifyCustomPath($special.aiScripture.whisperCustomPath)
+        if (settings.whisperCustomPath) verifyCustomPath(settings.whisperCustomPath)
 
         AudioMicrophone.getList().then((devices) => {
             microphones = devices.map((device) => ({ value: device.deviceId, label: device.label }))
 
             // auto select the system default so listening captures the right input without any manual choice
-            if (!$special.aiScripture?.micDeviceId && devices.length) {
+            if (!settings.micDeviceId && devices.length) {
                 update("micDeviceId", devices.find((device) => device.deviceId === "default")?.deviceId || devices[0].deviceId)
             }
         })
@@ -297,7 +302,7 @@
         testing = false
     }
 
-    let showCustomModel = !!$special.aiScripture?.customModel
+    let showCustomModel = !!settings.customModel
     function toggleCustomModel(enabled: boolean) {
         showCustomModel = enabled
         if (!enabled) update("customModel", "")

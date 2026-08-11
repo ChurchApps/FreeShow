@@ -201,7 +201,7 @@ export class Transcriber implements TranscriptionDriver {
 
     // CLI DRIVER - one whisper.cpp cli process per window, JSON output to a temp file
 
-    private async transcribeCli(wav: Buffer, windowDurationMs: number): Promise<unknown> {
+    private async transcribeCli(wav: Uint8Array, windowDurationMs: number): Promise<unknown> {
         // temp WAV/JSON only live for the duration of this one window - private folder (0700) and files (0600)
         const tmpDir = this.getTmpDir()
         fs.mkdirSync(tmpDir, { recursive: true, mode: 0o700 })
@@ -382,8 +382,22 @@ export class Transcriber implements TranscriptionDriver {
             const form = new FormData()
             form.append("response_format", "json")
             const response = await fetch(`http://127.0.0.1:${port}/inference`, { method: "POST", body: form, signal: controller.signal })
-            const json: any = await response.json()
-            return !!json && typeof json === "object" && (typeof json.error === "string" || typeof json.text === "string")
+
+            // read body as text first to support servers that return plain-text diagnostics
+            const bodyText = await response.text()
+            if (bodyText && typeof bodyText === "string") {
+                try {
+                    const json = JSON.parse(bodyText)
+                    if (json && typeof json === "object" && (typeof json.error === "string" || typeof json.text === "string")) return true
+                } catch {
+                    // not JSON
+                }
+
+                // accept common plain-text replies the official server uses
+                if (/no \'file\' field|no 'file' field|invalid request/i.test(bodyText)) return true
+            }
+
+            return false
         } catch {
             return false
         } finally {
@@ -416,13 +430,14 @@ export class Transcriber implements TranscriptionDriver {
         )
     }
 
-    private async transcribeServer(wav: Buffer): Promise<unknown> {
+    private async transcribeServer(wav: Uint8Array): Promise<unknown> {
         if (this.stopped) throw new Error("Transcriber stopped")
         // while the server is respawning this.serverPort is stale - don't post audio anywhere until it is back
         if (this.serverRespawning) throw new Error("Whisper server is restarting")
 
         const form = new FormData()
-        form.append("file", new Blob([wav], { type: "audio/wav" }), "window.wav")
+        const viewForBlob = new Uint8Array(wav.buffer as ArrayBuffer, wav.byteOffset, wav.byteLength)
+        form.append("file", new Blob([viewForBlob], { type: "audio/wav" }), "window.wav")
         form.append("response_format", "json")
         form.append("temperature", "0.0")
 
@@ -464,7 +479,7 @@ export class Transcriber implements TranscriptionDriver {
 // PURE HELPERS (exported for tests)
 
 // in-memory WAV: 44 byte header + Int16 LE PCM data (16kHz mono 16-bit)
-export function buildWavBuffer(samples: Int16Array, sampleRate: number = SAMPLE_RATE): Buffer {
+export function buildWavBuffer(samples: Int16Array, sampleRate: number = SAMPLE_RATE): Uint8Array {
     const dataSize = samples.length * 2
     const buffer = Buffer.alloc(44 + dataSize)
 

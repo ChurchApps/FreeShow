@@ -1,7 +1,7 @@
 import type { ICommonTagsResult } from "music-metadata"
 import type { RtmpStatus } from "../Output"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
-import type { AiScriptureCommandEvent, AiScriptureState, DetectedReference } from "../AiScripture"
+import type { AiScriptureCommandEvent, AiScriptureState, DetectedReference } from "../ai/AiScripture"
 import type { TrimmedShows } from "../Show"
 
 export enum ToMain {

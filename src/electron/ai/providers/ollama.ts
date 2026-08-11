@@ -1,7 +1,7 @@
 // AI AUTO SCRIPTURE: local Ollama provider - native REST API on localhost, no auth & nothing leaves the computer
 
 import axios from "axios"
-import type { AIError } from "../../../types/AiScripture"
+import type { AIError } from "../../../types/ai/AiScripture"
 import type { AIProvider } from "./types"
 import { buildUserContent, DETECTION_PROMPT, DETECTION_SCHEMA, parseDetectionResponse, toAIError } from "./types"
 

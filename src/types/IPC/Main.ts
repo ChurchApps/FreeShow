@@ -8,7 +8,7 @@ import type { ContentFile, ContentLibraryCategory, ContentProviderId, MediaLicen
 import type { PCOFolderTreeNode } from "../../electron/contentProviders/planningCenter/request"
 import type { _store } from "../../electron/data/store"
 import type { TimecodeMode } from "../../electron/timecode/timecode"
-import type { AIError, AiScriptureStartConfig, AIProviderId, NemotronStatus, WhisperModelId, WhisperStatus } from "../AiScripture"
+import type { AIError, AiScriptureStartConfig, AIProviderId, NemotronStatus, WhisperModelId, WhisperStatus } from "../ai/AiScripture"
 import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, SpotifyState, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"

@@ -1,7 +1,7 @@
 // AI AUTO SCRIPTURE: Google Gemini provider - raw REST, no SDK
 
 import axios from "axios"
-import type { AIError } from "../../../types/AiScripture"
+import type { AIError } from "../../../types/ai/AiScripture"
 import type { AIProvider } from "./types"
 import { buildUserContent, DETECTION_PROMPT, DETECTION_SCHEMA, parseDetectionResponse, REQUEST_TIMEOUT, schemaWithoutAdditionalProperties, toAIError } from "./types"
 

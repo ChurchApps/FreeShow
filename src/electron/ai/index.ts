@@ -1,6 +1,6 @@
 import { app } from "electron"
 import { existsSync } from "fs"
-import type { AiScriptureStartConfig, AIError, AIProviderId } from "../../types/AiScripture"
+import type { AiScriptureStartConfig, AIError, AIProviderId } from "../../types/ai/AiScripture"
 import { ToMain } from "../../types/IPC/ToMain"
 import { getStoreValue, setStoreValue } from "../data/store"
 import { sendToMain } from "../IPC/main"

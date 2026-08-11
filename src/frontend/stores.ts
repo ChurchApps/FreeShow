@@ -6,7 +6,7 @@ import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { ContentProviderId } from "../electron/contentProviders/base/types"
 import type { TimecodeMode } from "../electron/timecode/timecode"
-import type { AiScriptureState, DetectedReference } from "../types/AiScripture"
+import { AiScriptureState, DetectedReference } from "../types/ai/AiScripture"
 import type { AudioChannelData, AudioStream, MetronomeSettings, Playlist } from "../types/Audio"
 import type { AudioRoutingConfig } from "../types/AudioRouting"
 import type { Event } from "../types/Calendar"
@@ -20,6 +20,7 @@ import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowTy
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
+import { AiSettings } from "./../types/ai/AiSettings"
 import type { Outputs, RtmpStatus } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
@@ -88,13 +89,6 @@ export const providerConnections: Writable<{ [key in ContentProviderId]?: boolea
 export const metronomeTimer: Writable<{ beat: number; timeToNext: number }> = writable({ beat: 0, timeToNext: 0 })
 export const mediaDownloads: Writable<Map<string, { progress: number; total: number; status: string; name?: string }>> = writable(new Map())
 export const rtmpStatus: Writable<{ [outputId: string]: RtmpStatus }> = writable({})
-// AI scripture (session only - never saved)
-export const aiScriptureStatus: Writable<{ state: AiScriptureState; message?: string; keyless?: boolean }> = writable({ state: "stopped" })
-export const aiScriptureSuggestions: Writable<DetectedReference[]> = writable([])
-export const aiScriptureTranscript: Writable<{ text: string; startMs: number; endMs: number; language?: string; music?: boolean }[]> = writable([])
-export const aiScriptureAutoPaused: Writable<boolean> = writable(false)
-export const aiScriptureHasProjected: Writable<boolean> = writable(false)
-export const aiScriptureDownloads: Writable<Map<string, { progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }>> = writable(new Map())
 export const pdfImports: Writable<Map<string, { name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }>> = writable(new Map())
 export const showChangeProfileMenu: Writable<boolean> = writable(false)
 export const cloudUsers: Writable<{ displayName: string; color: string; lastUpdate?: number; activePage?: string; activeShow?: ShowRef }[]> = writable([])
@@ -218,6 +212,14 @@ export const dynamicValueData: Writable<{ [key: string]: any }> = writable({})
 export const cachedDynamicValues: Writable<{ [key: string]: string }> = writable({})
 export const recentFiles: Writable<{ all: string[]; cleared: string[]; projectMedia: string[] }> = writable({ all: [], cleared: [], projectMedia: [] })
 export const statusIndicator: Writable<string> = writable("")
+
+// AI
+export const aiScriptureStatus: Writable<{ state: AiScriptureState; message?: string; keyless?: boolean }> = writable({ state: "stopped" })
+export const aiScriptureSuggestions: Writable<DetectedReference[]> = writable([])
+export const aiScriptureTranscript: Writable<{ text: string; startMs: number; endMs: number; language?: string; music?: boolean }[]> = writable([])
+export const aiScriptureAutoPaused: Writable<boolean> = writable(false)
+export const aiScriptureHasProjected: Writable<boolean> = writable(false)
+export const aiScriptureDownloads: Writable<Map<string, { progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }>> = writable(new Map())
 
 // ----- SAVED VARIABLES -----
 
@@ -394,6 +396,9 @@ export const obsData: Writable<{ enabled?: boolean; connected?: boolean; ip?: st
 export const cloudSyncData: Writable<{ enabled?: boolean; id?: string; deviceName?: string; team?: { id: string; churchId: string; name: string; count?: number }; cloudMethod?: "merge" | "read_only" | "upload" | "replace" }> = writable({}) // {}
 export const driveKeys: Writable<any> = writable({})
 export const driveData: Writable<any> = writable({ mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false })
+
+// AI
+export const ai: Writable<AiSettings> = writable({}) // {}
 
 // ----- STORES LIST -----
 

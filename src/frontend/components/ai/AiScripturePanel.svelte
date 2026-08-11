@@ -1,11 +1,11 @@
 <script lang="ts">
-    import type { DetectedReference } from "../../../types/AiScripture"
+    import type { DetectedReference } from "../../../types/ai/AiScripture"
     import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../../ai/aiScripture"
-    import { activePage, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, outLocked, scriptures, settingsTab, special } from "../../stores"
+    import { activePage, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, outLocked, scriptures, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
+    import { getShortBibleName } from "../drawer/bible/scripture"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
-    import { getShortBibleName } from "../drawer/bible/scripture"
 
     $: state = $aiScriptureStatus.state
     $: isListening = state === "listening" || state === "llm_paused"
@@ -26,7 +26,7 @@
     }
 
     function openSetup() {
-        settingsTab.set("ai_scripture")
+        settingsTab.set("ai")
         activePage.set("settings")
     }
 
@@ -53,7 +53,7 @@
     // TRANSCRIPT
 
     // interpretation mode: multiple languages flow through the transcript - label each segment with its detected language
-    $: interpretationMode = $special.aiScripture?.interpretationMode === true
+    $: interpretationMode = $ai.scripture?.interpretationMode === true
     $: latestTranscript = $aiScriptureTranscript[$aiScriptureTranscript.length - 1]
     $: latestSegment = latestTranscript?.text || ""
 

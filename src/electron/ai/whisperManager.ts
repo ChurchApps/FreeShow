@@ -7,7 +7,7 @@ import { Readable } from "stream"
 import { pipeline } from "stream/promises"
 import { promisify } from "util"
 import yauzl from "yauzl"
-import type { WhisperModelId, WhisperStatus } from "../../types/AiScripture"
+import type { WhisperModelId, WhisperStatus } from "../../types/ai/AiScripture"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
 
@@ -43,7 +43,7 @@ function getWhisperDir(): string {
 }
 
 function getModelsDir(): string {
-    return path.join(app.getPath("userData"), "whisper-models")
+    return path.join(app.getPath("userData"), "bin", "whisper", "models")
 }
 
 export function getModelPath(modelId: WhisperModelId): string {

@@ -1328,6 +1328,7 @@
         "display": "Display",
         "connection": "Connection",
         "cloud": "Cloud",
+        "ai": "AI",
         "calendar": "Calendar",
         "text_import": "Text",
         "media_import": "Media",
@@ -1456,8 +1457,7 @@
         "preview_frame_rate": "Preview frame rate",
         "auto": "Auto",
         "section_trigger_action": "Trigger action when navigating presentation to a section",
-        "rss": "RSS",
-        "ai_scripture": "AI Scripture"
+        "rss": "RSS"
     },
     "output": {
         "state_inactive": "Inactive",

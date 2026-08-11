@@ -16,6 +16,7 @@ import {
     actions,
     activePopup,
     activeProject,
+    ai,
     alertUpdates,
     audioChannelsData,
     audioEffects,
@@ -433,5 +434,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     obsData: (v: any) => obsData.set(v),
     effects: (a: any) => effects.set(a),
     deletedDefaults: (a: any) => deletedDefaults.set({ ...get(deletedDefaults), ...a }),
-    audioRouting: (v: any) => initAudioRouting(v)
+    audioRouting: (v: any) => initAudioRouting(v),
+    ai: (a: any) => ai.set(a)
 }
