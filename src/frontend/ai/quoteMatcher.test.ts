@@ -1,0 +1,210 @@
+import { beforeEach, describe, expect, it } from "vitest"
+
+import { buildTranslationIndex, type IndexableVerse } from "./quoteMatchIndex"
+import { QuoteMatcher, type QuoteMatchEmission } from "./quoteMatcher"
+
+function verse(book: number, chapter: number, number: number, text: string): IndexableVerse {
+    return { book, chapter, verseStart: number, verseEnd: number, cleanText: text }
+}
+
+// public-domain KJV text; the parallel Matthew/Mark pair is the anchor-hysteresis fixture
+const KJV: IndexableVerse[] = [
+    verse(40, 9, 5, "For whether is easier, to say, Thy sins be forgiven thee; or to say, Arise, and walk?"),
+    verse(40, 9, 6, "But that ye may know that the Son of man hath power on earth to forgive sins, (then saith he to the sick of the palsy,) Arise, take up thy bed, and go unto thine house."),
+    verse(40, 9, 7, "And he arose, and departed to his house."),
+    verse(41, 2, 11, "I say unto thee, Arise, and take up thy bed, and go thy way into thine house."),
+    verse(43, 3, 16, "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life."),
+    verse(43, 3, 17, "For God sent not his Son into the world to condemn the world; but that the world through him might be saved."),
+    verse(43, 3, 18, "He that believeth on him is not condemned: but he that believeth not is condemned already, because he hath not believed in the name of the only begotten Son of God."),
+    verse(43, 3, 19, "And this is the condemnation, that light is come into the world, and men loved darkness rather than light, because their deeds were evil."),
+    verse(19, 23, 1, "The LORD is my shepherd; I shall not want."),
+    verse(45, 8, 28, "And we know that all things work together for good to them that love God, to them that are the called according to his purpose."),
+    verse(1, 1, 1, "In the beginning God created the heaven and the earth.")
+]
+
+// invented wording (deliberately divergent, NOT any real translation) for multi-translation tests;
+// the filler verses give the index enough corpus for idf weights to behave like a real translation
+const SIM: IndexableVerse[] = [
+    verse(43, 3, 16, "Because God treasured the planet deeply, he offered his single cherished child, so each person trusting him escapes ruin and receives unending existence."),
+    verse(19, 23, 1, "The Eternal One tends me like a flock keeper; nothing remains lacking."),
+    verse(1, 1, 1, "At the outset God shaped the skies and the ground below them."),
+    verse(1, 1, 2, "The ground lay empty and unformed while darkness covered the deep waters everywhere."),
+    verse(1, 1, 3, "Then God spoke and brightness appeared across the whole expanse."),
+    verse(40, 5, 3, "Favored are the poor in spirit since the kingdom above belongs to them."),
+    verse(40, 5, 4, "Favored are those who grieve because comfort will surely find them."),
+    verse(45, 12, 1, "Therefore friends present your bodies as living offerings holy and pleasing which is true worship."),
+    verse(45, 12, 2, "Do not copy this age but be transformed through renewed thinking to discern the good will."),
+    verse(50, 4, 13, "Every challenge can be handled through the one who supplies my strength."),
+    verse(66, 21, 4, "Every tear will be wiped away and death will exist no longer nor sorrow nor pain."),
+    verse(23, 40, 31, "Those waiting on the Eternal renew their power rising on wings like great soaring birds.")
+]
+
+const kjvIndex = () => buildTranslationIndex("kjv", KJV)
+const simIndex = () => buildTranslationIndex("sim", SIM)
+
+let clock = 0
+function seg(text: string, gapMs = 1000): { text: string; startMs: number; endMs: number } {
+    const startMs = clock + gapMs
+    clock = startMs + 4000
+    return { text, startMs, endMs: clock }
+}
+
+beforeEach(() => {
+    clock = 0
+})
+
+const JOHN_316 = "for god so loved the world that he gave his only begotten son that whosoever believeth in him should not perish but have everlasting life"
+
+describe("QuoteMatcher", () => {
+    it("emits a full recitation from a single utterance", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        const out = matcher.onSegment(seg(JOHN_316))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 43, chapter: 3, verseStart: 16, confidence: "high", translationId: "kjv", kind: "fresh" })
+    })
+
+    it("emits an ASR-mangled recitation", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        const out = matcher.onSegment(seg("for god so loved the world that he gave his only forgotten son that whosoever believe in him should not perish but have everlasting life"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 43, chapter: 3, verseStart: 16 })
+    })
+
+    it("does not emit for a short coincidental overlap", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        expect(matcher.onSegment(seg("for god so loved you this morning church"))).toEqual([])
+    })
+
+    it("does not emit for ordinary sermon speech", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        expect(matcher.onSegment(seg("we are so glad you came to church this morning and we hope you feel welcome here"))).toEqual([])
+        expect(matcher.onSegment(seg("the lord has been good to us this week and we give him praise for everything"))).toEqual([])
+    })
+
+    it("accumulates a recitation dripped over several segments (sustained path)", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        const first = matcher.onSegment(seg("for god so loved the world"))
+        const second = matcher.onSegment(seg("that he gave his only begotten son"))
+        const third = matcher.onSegment(seg("that whosoever believeth in him should not perish"))
+        const all = [...first, ...second, ...third]
+        expect(all.length).toBeGreaterThanOrEqual(1)
+        expect(all[0]).toMatchObject({ book: 43, chapter: 3, verseStart: 16 })
+    })
+
+    it("follows a recitation into the next verse (continuation)", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        const first = matcher.onSegment(seg(JOHN_316))
+        expect(first).toHaveLength(1)
+
+        const second = matcher.onSegment(seg("for god sent not his son into the world to condemn the world but that the world through him might be saved"))
+        const continuation = second.find((emission) => emission.verseStart === 17)
+        expect(continuation).toBeDefined()
+        expect(continuation!.kind).toBe("continuation")
+        expect(continuation!.confidence).toBe("high")
+    })
+
+    it("does not continue into the next verse from ordinary speech", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        matcher.onSegment(seg(JOHN_316))
+        const after = matcher.onSegment(seg("what a wonderful promise that is for every one of us here today"))
+        expect(after.find((emission) => emission.verseStart === 17)).toBeUndefined()
+    })
+
+    it("expires the tracker after silence and does not continue", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        matcher.onSegment(seg(JOHN_316))
+        // 30s of nothing - tracker TTL (20s) passes, and the gap also clears the ring
+        const after = matcher.onSegment(seg("for god sent not his son into the world to condemn the world but that the world through him might be saved", 30000))
+        const continuation = after.find((emission) => emission.kind === "continuation")
+        expect(continuation).toBeUndefined()
+    })
+
+    it("does not re-emit the same verse while the ledger holds it", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        expect(matcher.onSegment(seg(JOHN_316))).toHaveLength(1)
+        expect(matcher.onSegment(seg(JOHN_316))).toEqual([])
+    })
+
+    it("keeps a recitation inside the anchored chapter over a parallel passage (AlloDel rule)", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        matcher.setAnchor({ bookNumber: 40, chapter: 9, verseStart: 5, verseEnd: 5 })
+        // wording nearly identical between Matthew 9:6 and Mark 2:11
+        const out = matcher.onSegment(seg("arise take up thy bed and go unto thine house"))
+        if (out.length) {
+            expect(out[0].book).toBe(40)
+            expect(out[0].chapter).toBe(9)
+        }
+        const sustained = matcher.onSegment(seg("arise take up thy bed and go unto thine house"))
+        const emitted = [...out, ...sustained]
+        expect(emitted.length).toBeGreaterThanOrEqual(1)
+        expect(emitted.every((emission) => emission.book === 40)).toBe(true)
+    })
+
+    it("emits exactly one reference for a parallel passage without an anchor", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        const first = matcher.onSegment(seg("arise take up thy bed and go unto thine house"))
+        const second = matcher.onSegment(seg("arise take up thy bed and go unto thine house"))
+        expect([...first, ...second].length).toBe(1)
+    })
+
+    it("matches through a divergent translation and reports it", () => {
+        const matcher = new QuoteMatcher([kjvIndex(), simIndex()])
+        const out = matcher.onSegment(seg("because god treasured the planet deeply he offered his single cherished child so each person trusting him escapes ruin"))
+        expect(out).toHaveLength(1)
+        expect(out[0].translationId).toBe("sim")
+        expect(out[0]).toMatchObject({ book: 43, chapter: 3, verseStart: 16 })
+    })
+
+    it("seeds the announced reference so a following partial recitation lands (tier-1 seeding)", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        matcher.noteExplicitReference({ bookNumber: 45, chapter: 8, verseStart: 28 })
+        const first = matcher.onSegment(seg("all things work together for good to them that love god"))
+        const second = matcher.onSegment(seg("to them that are the called according to his purpose"))
+        const all = [...first, ...second]
+        expect(all.length).toBeGreaterThanOrEqual(1)
+        expect(all[0]).toMatchObject({ book: 45, chapter: 8, verseStart: 28 })
+    })
+
+    it("clears all state on reset", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        matcher.onSegment(seg(JOHN_316))
+        matcher.reset()
+        // ledger cleared: the same recitation emits again
+        expect(matcher.onSegment(seg(JOHN_316, 30000))).toHaveLength(1)
+    })
+
+    it("carries the matched transcript stretch in the emission", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        const out = matcher.onSegment(seg(JOHN_316))
+        expect(out[0].quoteText).toContain("god so loved")
+    })
+
+    // single-shot disabled so these tests isolate the cue-vs-sustain decision
+    const noSingleShot = { SINGLE_SHOT_INFORMATIVE: 99, SINGLE_SHOT_WEIGHT: 999 }
+    const HALF_ROMANS = "and we know that all things work together for good to them that love god"
+
+    it("skips the sustain wait after a spoken quote cue", () => {
+        const uncued = new QuoteMatcher([kjvIndex()], noSingleShot)
+        expect(uncued.onSegment(seg(HALF_ROMANS))).toEqual([])
+
+        clock = 0
+        const cued = new QuoteMatcher([kjvIndex()], noSingleShot)
+        cued.onSegment(seg("but paul said something we all need to hear"))
+        const out = cued.onSegment(seg(HALF_ROMANS))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 45, chapter: 8, verseStart: 28 })
+    })
+
+    it("a cue never turns ordinary speech into a detection (floors still apply)", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        matcher.onSegment(seg("the bible says so much about how we should live"))
+        expect(matcher.onSegment(seg("we should love one another and be kind to everybody we meet"))).toEqual([])
+    })
+
+    it("the cue expires", () => {
+        const matcher = new QuoteMatcher([kjvIndex()], noSingleShot)
+        matcher.onSegment(seg("jesus said many things during his ministry"))
+        // 20s later the cue window (12s) has passed - back to the sustained path
+        expect(matcher.onSegment(seg(HALF_ROMANS, 20000))).toEqual([])
+    })
+})
