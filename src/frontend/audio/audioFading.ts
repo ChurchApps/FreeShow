@@ -10,6 +10,7 @@ import { AudioAnalyser } from "./audioAnalyser"
 
 type AudioClearOptions = {
     clearPlaylist?: boolean
+    clearMicrophones?: boolean
     playlistCrossfade?: boolean
     commonClear?: boolean
     clearTime?: number // effects
@@ -39,8 +40,8 @@ export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
 
     const clearTime = options.playlistCrossfade ? 0 : (options.clearTime ?? get(special).audio_fade_duration ?? 1.5)
     let clearIds = audioPath ? [audioPath] : Object.keys(get(playingAudio))
-    if (!audioPath && !options.commonClear) {
-        // don't clear microphones when playing an audio file
+    // don't clear microphones by default
+    if (!audioPath && !options.clearMicrophones) {
         const allPlaying = get(playingAudio)
         clearIds = clearIds.filter((id) => !allPlaying[id]?.isMic)
     }
