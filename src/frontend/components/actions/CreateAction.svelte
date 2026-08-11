@@ -214,6 +214,7 @@
         if (id === "wait") return Number(actionValue.number) + "s"
         if (id === "id_select_group") return getGlobalGroupName(actionValue.id)
         if (id === "start_camera") return actionValue.label || ""
+        if (id === "start_microphone" || id === "stop_microphone") return actionValue.name || ""
         if (id === "start_screen") return actionValue.name || ""
         if (id === "change_volume") return ((actionValue.volume || 1) * 100).toString()
         if (id.includes("index")) return actionValue.index || "0"

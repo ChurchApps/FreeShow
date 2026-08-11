@@ -3,6 +3,7 @@ import type { MidiValues, TransitionType } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
+import { AudioMicrophone } from "../../audio/audioMicrophone"
 import { markItemsAsPlayed } from "../../converters/project"
 import { convertText } from "../../converters/txt"
 import { sendMain } from "../../IPC/main"
@@ -133,6 +134,7 @@ export type API_output_style = { outputId?: string; styleId?: string }
 export type API_output_lock = { value?: boolean; outputId?: string }
 export type API_camera = { name?: string; id: string; groupId?: string }
 export type API_screen = { name?: string; id: string }
+export type API_microphone = { name?: string; id: string }
 export type API_dynamic_value = { value: string; ref?: any }
 export type API_draw_zoom = { size?: number; x?: number; y?: number }
 export type API_edit_timer = { id: string; key: string; value: any }
@@ -290,6 +292,8 @@ export const API_ACTIONS = {
     playlist_next: () => AudioPlaylist.next(), // BC
     start_metronome: (data: API_metronome) => startMetronome(data),
     start_audio_effect: (data: API_media) => playAudio(data),
+    start_microphone: (data: API_microphone) => AudioMicrophone.start(data.id, { name: data.name || "" }),
+    stop_microphone: (data: API_microphone) => AudioMicrophone.stop(data.id),
 
     // TIMERS
     // control timer time

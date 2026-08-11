@@ -72,6 +72,8 @@ export const actionData = {
     playlist_next: { name: "actions.playlist_next", icon: "playlist", incompatible: ["start_playlist"] },
     start_metronome: { name: "actions.start_metronome", icon: "metronome", input: "metronome" },
     start_audio_effect: { common: true, canAddMultiple: true, name: "actions.start_audio_effect", icon: "effect", input: "audio_effects" },
+    start_microphone: { common: true, name: "actions.start_microphone", icon: "mic", input: "microphone" },
+    stop_microphone: { common: true, name: "actions.stop_microphone", icon: "mic", input: "microphone", red: true },
 
     // TIMERS
     id_start_timer: { SECTION: "tabs.timers", common: true, canAddMultiple: true, name: "actions.id_start_timer", icon: "timer", input: "id", incompatible: ["pause_timers", "stop_timers"] },
