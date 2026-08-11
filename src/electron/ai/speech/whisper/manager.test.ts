@@ -12,14 +12,14 @@ vi.mock("electron", () => ({
     // delegate to the (stubbable) global fetch so tests can control network behavior
     net: { fetch: (...args: any[]) => (globalThis.fetch as any)(...args) }
 }))
-vi.mock("../IPC/main", () => ({
+vi.mock("../../../IPC/main", () => ({
     sendToMain: vi.fn()
 }))
 
-import { sendToMain } from "../IPC/main"
-import type { WhisperModelId } from "../../types/ai/AiScripture"
-import { ToMain } from "../../types/IPC/ToMain"
-import { cancelWhisperDownload, computeFileSha256, downloadWhisperModel, findExecutableInPath, getModelPath, isModelReady, verifyWhisperBinary, WHISPER_MODELS } from "./whisperManager"
+import { sendToMain } from "../../../IPC/main"
+import type { WhisperModelId } from "../../../../types/ai/AiScripture"
+import { ToMain } from "../../../../types/IPC/ToMain"
+import { cancelWhisperDownload, computeFileSha256, downloadWhisperModel, findExecutableInPath, getModelPath, isModelReady, verifyWhisperBinary, WHISPER_MODELS } from "./manager"
 
 afterAll(() => {
     fs.rmSync(tempRoot, { recursive: true, force: true })

@@ -17,8 +17,8 @@
 //    same samples returns the full text every time, and matches how sherpa's own
 //    VAD-segmented examples drive their recognizers.
 
-import type { DriverCallbacks, TranscriberSegment, TranscriptionDriver } from "./types"
-import type { NemotronModelPaths } from "../nemotronManager"
+import type { DriverCallbacks, TranscriberSegment, TranscriptionDriver } from "../types"
+import type { NemotronModelPaths } from "./manager"
 
 const SAMPLE_RATE = 16000
 

@@ -2,9 +2,9 @@
 // tier 1: fast local regex detection of explicitly spoken references ("John chapter 3 verse 16")
 // tier 2: LLM detection over the rolling transcript for paraphrased/quoted references (optional, needs an API key)
 
-import type { AIProviderId, AiScriptureBook, AiScriptureState, DetectedReference } from "../../types/ai/AiScripture"
-import { getProvider } from "./providers"
-import { REQUEST_TIMEOUT } from "./providers/types"
+import type { AIProviderId, AiScriptureBook, AiScriptureState, DetectedReference } from "../../../types/ai/AiScripture"
+import { getProvider } from "../providers"
+import { REQUEST_TIMEOUT } from "../providers/types"
 
 // SPOKEN NUMBERS
 

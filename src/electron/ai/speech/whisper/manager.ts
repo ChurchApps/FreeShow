@@ -7,9 +7,9 @@ import { Readable } from "stream"
 import { pipeline } from "stream/promises"
 import { promisify } from "util"
 import yauzl from "yauzl"
-import type { WhisperModelId, WhisperStatus } from "../../types/ai/AiScripture"
-import { ToMain } from "../../types/IPC/ToMain"
-import { sendToMain } from "../IPC/main"
+import type { WhisperModelId, WhisperStatus } from "../../../../types/ai/AiScripture"
+import { ToMain } from "../../../../types/IPC/ToMain"
+import { sendToMain } from "../../../IPC/main"
 
 const execFileAsync = promisify(execFile)
 

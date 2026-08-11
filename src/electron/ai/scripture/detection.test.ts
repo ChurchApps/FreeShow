@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // providers.ts talks to real AI APIs - no test here should ever reach it
 const { mockDetectScripture } = vi.hoisted(() => ({ mockDetectScripture: vi.fn() }))
-vi.mock("./providers", () => ({
+vi.mock("../providers", () => ({
     getProvider: () => ({ detectScripture: mockDetectScripture })
 }))
 

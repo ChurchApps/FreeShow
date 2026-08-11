@@ -39,7 +39,7 @@ const fakeSherpa = {
     }
 }
 
-import { NemotronDriver } from "./nemotron"
+import { NemotronDriver } from "./driver"
 
 const PATHS = { encoder: "e", decoder: "d", joiner: "j", tokens: "t" }
 

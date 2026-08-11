@@ -4,15 +4,15 @@ import type { AiScriptureStartConfig, AIError, AIProviderId } from "../../types/
 import { ToMain } from "../../types/IPC/ToMain"
 import { getStoreValue, setStoreValue } from "../data/store"
 import { sendToMain } from "../IPC/main"
-import { CommandStream } from "./commands"
-import type { AiScriptureAnchor } from "./detection"
-import { DetectionCoordinator } from "./detection"
+import { CommandStream } from "./scripture/commands"
+import type { AiScriptureAnchor } from "./scripture/detection"
+import { DetectionCoordinator } from "./scripture/detection"
 import { getProvider } from "./providers"
-import { Transcriber } from "./transcriber"
-import { NemotronDriver } from "./drivers/nemotron"
-import type { TranscriberSegment, TranscriptionDriver } from "./drivers/types"
-import { cancelNemotronDownload, deleteNemotronModel, downloadNemotronModel, getNemotronModelPaths, getVadModelPath, isNemotronReady, isNemotronSupported } from "./nemotronManager"
-import { cancelWhisperDownload, downloadWhisperBinary, downloadWhisperModel, getModelPath, getWhisperStatus, isModelReady, resolveWhisper, verifyWhisperBinary } from "./whisperManager"
+import { Transcriber } from "./speech/whisper/transcriber"
+import { NemotronDriver } from "./speech/nemotron/driver"
+import type { TranscriberSegment, TranscriptionDriver } from "./speech/types"
+import { cancelNemotronDownload, deleteNemotronModel, downloadNemotronModel, getNemotronModelPaths, getVadModelPath, isNemotronReady, isNemotronSupported } from "./speech/nemotron/manager"
+import { cancelWhisperDownload, downloadWhisperBinary, downloadWhisperModel, getModelPath, getWhisperStatus, isModelReady, resolveWhisper, verifyWhisperBinary } from "./speech/whisper/manager"
 
 let transcriber: TranscriptionDriver | null = null
 let coordinator: DetectionCoordinator | null = null

@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import type { AIError, AIProviderId, AiScriptureEngine, NemotronStatus, WhisperModelId, WhisperStatus } from "../../../types/ai/AiScripture"
     import { Main } from "../../../types/IPC/Main"
-    import { aiScriptureErrorText, stopAiScriptureListening } from "../../ai/aiScripture"
+    import { aiScriptureErrorText, stopAiScriptureListening } from "../../ai/scripture/aiScripture"
     import { AI_PROVIDER_MODELS } from "../../ai/models"
     import { WHISPER_LANGUAGES } from "../../ai/whisper"
     import { AudioMicrophone } from "../../audio/audioMicrophone"

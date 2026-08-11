@@ -8,9 +8,9 @@ import fs from "fs"
 import path from "path"
 import { Readable } from "stream"
 import { pipeline } from "stream/promises"
-import { ToMain } from "../../types/IPC/ToMain"
-import { sendToMain } from "../IPC/main"
-import { computeFileSha256 } from "./whisperManager"
+import { ToMain } from "../../../../types/IPC/ToMain"
+import { sendToMain } from "../../../IPC/main"
+import { computeFileSha256 } from "../whisper/manager"
 
 export interface NemotronModelPaths {
     encoder: string
@@ -42,7 +42,21 @@ const MIN_FILE_SIZE = 1024 // anything smaller is a broken download or an error 
 // PATHS
 
 function getModelDir(): string {
-    return path.join(app.getPath("userData"), "nemotron-model")
+    const dir = path.join(app.getPath("userData"), "bin", "nemotron", "models")
+
+    // one-time move of a download made before the bin/<engine>/models convention
+    const legacy = path.join(app.getPath("userData"), "nemotron-model")
+    if (!fs.existsSync(dir) && fs.existsSync(legacy)) {
+        try {
+            fs.mkdirSync(path.dirname(dir), { recursive: true })
+            fs.renameSync(legacy, dir)
+        } catch (err) {
+            console.error("[nemotron] Could not move the model to its new location:", err)
+            return legacy
+        }
+    }
+
+    return dir
 }
 
 export function getNemotronModelPaths(): NemotronModelPaths | null {

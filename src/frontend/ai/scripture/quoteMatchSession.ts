@@ -10,8 +10,8 @@
 import { get } from "svelte/store"
 import { stripMarkdown } from "json-bible/lib/markdown"
 import { stripText } from "json-bible/lib/util"
-import type { DetectedReference } from "../../types/ai/AiScripture"
-import { ai, scriptures, scripturesCache } from "../stores"
+import type { DetectedReference } from "../../../types/ai/AiScripture"
+import { ai, scriptures, scripturesCache } from "../../stores"
 import { buildTranslationIndex, type IndexableVerse, type TranslationIndex } from "./quoteMatchIndex"
 import { QuoteMatcher, type QuoteMatchEmission } from "./quoteMatcher"
 

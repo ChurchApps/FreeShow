@@ -2,7 +2,7 @@
 // detects imperative spoken phrases that control the live scripture projection
 // ("go to the next verse", "give me verse five", "show chapter four", "give me NIV", "give me another translation")
 
-import type { AiScriptureCommandEvent, AiScriptureTranslation } from "../../types/ai/AiScripture"
+import type { AiScriptureCommandEvent, AiScriptureTranslation } from "../../../types/ai/AiScripture"
 import { normalizeSpokenNumbers } from "./detection"
 
 export interface CommandGrammar {

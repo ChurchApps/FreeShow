@@ -3,7 +3,7 @@ import { app } from "electron"
 import fs from "fs"
 import net from "net"
 import path from "path"
-import type { DriverCallbacks, TranscriberSegment as DriverSegment, TranscriptionDriver } from "./drivers/types"
+import type { DriverCallbacks, TranscriberSegment as DriverSegment, TranscriptionDriver } from "../types"
 
 // AI AUTO SCRIPTURE - streaming transcription over whisper.cpp
 // Receives 1s chunks of Int16 LE PCM @ 16kHz mono from the renderer (IPC),
@@ -30,7 +30,7 @@ const SERVER_INFERENCE_TIMEOUT = 30000
 const CLI_INFERENCE_TIMEOUT = 30000
 const KILL_TIMEOUT = 2000
 
-export type { TranscriberSegment } from "./drivers/types"
+export type { TranscriberSegment } from "../types"
 
 export interface WhisperSegment extends DriverSegment {
     noSpeechProb?: number
