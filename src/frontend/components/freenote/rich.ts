@@ -16,9 +16,37 @@ import DOMPurify from "dompurify"
 export const RICH_ALLOWED_TAGS = ["div", "p", "span", "h1", "h2", "h3", "h4", "h5", "h6", "br", "hr", "ul", "ol", "li", "blockquote", "pre", "em", "strong", "b", "i", "u", "s", "strike", "del", "code", "sub", "sup", "a", "mark", "table", "tbody", "thead", "tr", "td", "th"]
 export const RICH_ALLOWED_ATTR = ["style", "href", "rel", "target", "title", "src", "alt", "colspan", "rowspan"]
 
+// the only CSS properties we accept inside style="" (strips everything else,
+// including position:/expression()/url(javascript:) which DOMPurify alone lets
+// through verbatim — keeps the sanitize gate honest as an XSS barrier)
+const RICH_ALLOWED_CSS = new Set(["color", "background-color", "font-family", "font-size", "font-style", "font-weight", "text-decoration", "text-align", "text-transform", "vertical-align", "line-height", "letter-spacing", "word-spacing", "white-space", "text-shadow", "-webkit-text-stroke-width", "-webkit-text-stroke-color", "paint-order"])
+
+function cleanStyles(html: string): string {
+    return html.replace(/style\s*=\s*("([^"]*)"|'([^']*)')/gi, (match, _raw, double, single) => {
+        const value = double ?? single ?? ""
+        const kept = value
+            .split(";")
+            .map((decl) => decl.trim())
+            .filter(Boolean)
+            .map((decl) => {
+                const colon = decl.indexOf(":")
+                if (colon < 0) return ""
+                const prop = decl.slice(0, colon).trim().toLowerCase()
+                const val = decl.slice(colon + 1).trim()
+                if (!RICH_ALLOWED_CSS.has(prop)) return ""
+                if (/expression\s*\(/i.test(val) || /url\s*\(\s*["']?javascript:/i.test(val)) return ""
+                return `${prop}:${val};`
+            })
+            .join("")
+        const quote = double !== undefined ? '"' : "'"
+        if (!kept) return ""
+        return `style=${quote}${kept}${quote}`
+    })
+}
+
 // SECURITY GATE: every editor chunk (and the preview) must pass through here.
 export function sanitizeRich(html: string): string {
-    return DOMPurify.sanitize(String(html ?? ""), { ALLOWED_TAGS: RICH_ALLOWED_TAGS, ALLOWED_ATTR: RICH_ALLOWED_ATTR })
+    return DOMPurify.sanitize(cleanStyles(String(html ?? "")), { ALLOWED_TAGS: RICH_ALLOWED_TAGS, ALLOWED_ATTR: RICH_ALLOWED_ATTR })
 }
 
 // Full rich document -> one chunk per slide. Horizontal rules (`<hr>` = the

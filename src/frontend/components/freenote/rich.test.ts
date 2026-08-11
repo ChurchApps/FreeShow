@@ -23,6 +23,24 @@ describe("sanitizeRich (XSS gate)", () => {
         expect(out).not.toContain("id=")
         expect(out).not.toContain('class="')
     })
+
+    it("strips dangerous CSS properties and javascript/expression payloads", () => {
+        const out = sanitizeRich('<p style="position:fixed;left:0;background-image:url(javascript:alert(1));width:expression(alert(1));color:red">ok</p>')
+        expect(out).not.toContain("position:")
+        expect(out).not.toContain("javascript:")
+        expect(out).not.toContain("expression(")
+        expect(out).not.toContain("background-image")
+        expect(out).toContain("color:red")
+    })
+
+    it("keeps allowed style properties", () => {
+        const out = sanitizeRich('<p style="font-family:Georgia;font-size:40px;text-align:center;color:#fff;background-color:#000">ok</p>')
+        expect(out).toContain("font-family:Georgia;")
+        expect(out).toContain("font-size:40px;")
+        expect(out).toContain("text-align:center;")
+        expect(out).toContain("color:#fff;")
+        expect(out).toContain("background-color:#000;")
+    })
 })
 
 describe("chunkRichHtml", () => {

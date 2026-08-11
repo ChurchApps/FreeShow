@@ -408,7 +408,7 @@
     async function onSave() {
         if (dirty || !$freeNoteSlides.length) {
             const template = getFreeNoteTemplate(templateId)
-            await syncFreeNoteSlides(src, template, outputId)
+            await ($freeNoteMode === "rich" ? syncRichSlides(src, template, outputId) : syncFreeNoteSlides(src, template, outputId))
             dirty = false
         }
         const ok = saveFreeNoteShow()
