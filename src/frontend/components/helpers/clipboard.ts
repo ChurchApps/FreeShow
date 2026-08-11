@@ -574,7 +574,8 @@ const pasteActions = {
         history({ id: "UPDATE", newData: { data: items, key: "slides", keys: [ref.id], subkey: "items", index: -1 }, oldData: { id: get(activeShow)!.id }, location: { page: "edit", id: "show_key" } })
     },
     slide: (data: any, { index }: any = {}, isDuplicating: boolean = false) => {
-        if (!data) return
+        if (!data?.slides) return
+
         data = clone(data)
         const copiedIds: string[] = data.slides.map((a) => a.id)
         const newSlides: any[] = []

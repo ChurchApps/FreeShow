@@ -532,10 +532,11 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
 
         const output = updater[outputId]
         const keys: string[] = key ? [key] : Object.keys(output.out || {})
-        cleared = !keys.find((type: string) => {
+        cleared = !keys.some((type: string) => {
             if (!output.out?.[type]) return
 
             if (type === "overlays") {
+                if (!Array.isArray(output.out.overlays)) return false
                 if (checkLocked && output.out.overlays?.length) return true
                 if (!checkLocked && output.out.overlays?.filter((id: string) => !get(overlays)[id]?.locked).length) return true
                 return false

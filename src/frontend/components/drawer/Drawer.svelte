@@ -165,9 +165,12 @@
             if (e.ctrlKey || e.metaKey) {
                 const showId = match.id
                 await loadShows([showId])
+                if (!$showsCache[showId]) return
+
                 let layoutRef = getLayoutRef(showId)
                 let firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
                 if (firstEnabledIndex === -1) return
+
                 updateOut("active", firstEnabledIndex, layoutRef)
                 setOutput("slide", { id: showId, layout: $showsCache[showId].settings.activeLayout, index: firstEnabledIndex })
                 return

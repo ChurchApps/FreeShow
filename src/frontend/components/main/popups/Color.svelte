@@ -37,7 +37,7 @@
     const actions = {
         slide: () => {
             selection.data.forEach((a) => {
-                let ref: any = a.id ? { id: a.id } : getLayoutRef()[a.index]
+                let ref: any = a?.id ? { id: a.id } : getLayoutRef()[a.index]
                 if (!ref) return
 
                 if (ref.type === "child") ref = ref.parent

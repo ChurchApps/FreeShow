@@ -299,7 +299,7 @@
 
     // $: isScripture = ref?.id === "scripture" || ref?.showId === "temp" || $showsCache[ref.showId || ""]?.reference?.type === "scripture"
 
-    $: baseFontSize = fontSize || (style ? resolveFontSize(renderedLines[0]?.text[0]?.style, outputStyle) : 100)
+    $: baseFontSize = fontSize || (style ? resolveFontSize(renderedLines[0]?.text?.[0]?.style, outputStyle) : 100)
 </script>
 
 <div class="align" class:hidden={hideContent} class:isStage class:scrolling={!isStage && item?.scrolling?.type} style="--scrollSpeed: {(item?.scrolling?.speed ?? 30) * 1.5}s;{style ? item?.align : null};" bind:clientWidth={alignWidth} bind:clientHeight={alignHeight}>
@@ -323,14 +323,14 @@
                                     </div>
                                 {/if}
 
-                                <!-- class:height={!line.text[0]?.value.length} -->
+                                <!-- class:height={!line.text?.[0]?.value.length} -->
                                 {#if !chordOnly}
                                     <div
                                         class="break"
                                         class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                                         class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                                         class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
-                                        style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
+                                        style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text?.[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
                                     >
                                         <!-- style Lines selection in center preview -->
                                         {#each highlighedLines || [] as box}
@@ -374,14 +374,14 @@
                         </div>
                     {/if}
 
-                    <!-- class:height={!line.text[0]?.value.length} -->
+                    <!-- class:height={!line.text?.[0]?.value.length} -->
                     {#if !chordOnly}
                         <div
                             class="break"
                             class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                             class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                             class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
-                            style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
+                            style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text?.[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
                         >
                             <!-- style Lines selection in center preview -->
                             {#each highlighedLines || [] as box}

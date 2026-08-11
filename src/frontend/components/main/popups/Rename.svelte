@@ -47,6 +47,9 @@
 
     const renameAction = {
         slide: () => {
+            const data = $selected.data
+            if (!Array.isArray(data)) return
+
             const showId = $activeShow?.id
             if (!showId) return
 
@@ -54,7 +57,7 @@
 
             // get selected ids
             let ids: string[] = []
-            $selected.data.forEach((a) => {
+            data.forEach((a) => {
                 const id = a.id || ref[a.index]?.id
                 ids.push(id)
             })
@@ -81,6 +84,8 @@
 
             // TODO: history (x3)
             refs.forEach((ref) => {
+                if (!ref?.id) return
+
                 const slideId = ref.id
 
                 // remove global group if active
@@ -128,6 +133,8 @@
         },
         group: () => {
             $selected.data.forEach((a) => {
+                if (!a?.id) return
+
                 const slideId = a.id
 
                 // remove global group if active
