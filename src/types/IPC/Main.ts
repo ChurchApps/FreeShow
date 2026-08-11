@@ -179,20 +179,20 @@ export enum Main {
     ENCODER_DETECT = "ENCODER_DETECT",
     SET_RTMP_ENCODER = "SET_RTMP_ENCODER",
     // AI Scripture
-    AI_SCRIPTURE_START = "AI_SCRIPTURE_START",
-    AI_SCRIPTURE_STOP = "AI_SCRIPTURE_STOP",
-    AI_SCRIPTURE_AUDIO_DATA = "AI_SCRIPTURE_AUDIO_DATA",
+    AI_LISTEN_START = "AI_LISTEN_START",
+    AI_LISTEN_STOP = "AI_LISTEN_STOP",
+    AI_AUDIO_DATA = "AI_AUDIO_DATA",
     AI_SCRIPTURE_CONTEXT = "AI_SCRIPTURE_CONTEXT",
-    AI_SCRIPTURE_SET_KEY = "AI_SCRIPTURE_SET_KEY",
-    AI_SCRIPTURE_GET_STATUS = "AI_SCRIPTURE_GET_STATUS",
-    AI_SCRIPTURE_TEST_CONNECTION = "AI_SCRIPTURE_TEST_CONNECTION",
-    AI_SCRIPTURE_WHISPER_DOWNLOAD_BINARY = "AI_SCRIPTURE_WHISPER_DOWNLOAD_BINARY",
-    AI_SCRIPTURE_WHISPER_DOWNLOAD_MODEL = "AI_SCRIPTURE_WHISPER_DOWNLOAD_MODEL",
-    AI_SCRIPTURE_WHISPER_CANCEL = "AI_SCRIPTURE_WHISPER_CANCEL",
-    AI_SCRIPTURE_WHISPER_VERIFY_PATH = "AI_SCRIPTURE_WHISPER_VERIFY_PATH",
-    AI_SCRIPTURE_NEMOTRON_DOWNLOAD = "AI_SCRIPTURE_NEMOTRON_DOWNLOAD",
-    AI_SCRIPTURE_NEMOTRON_CANCEL = "AI_SCRIPTURE_NEMOTRON_CANCEL",
-    AI_SCRIPTURE_NEMOTRON_DELETE = "AI_SCRIPTURE_NEMOTRON_DELETE"
+    AI_SET_KEY = "AI_SET_KEY",
+    AI_GET_STATUS = "AI_GET_STATUS",
+    AI_TEST_CONNECTION = "AI_TEST_CONNECTION",
+    AI_WHISPER_DOWNLOAD_BINARY = "AI_WHISPER_DOWNLOAD_BINARY",
+    AI_WHISPER_DOWNLOAD_MODEL = "AI_WHISPER_DOWNLOAD_MODEL",
+    AI_WHISPER_CANCEL = "AI_WHISPER_CANCEL",
+    AI_WHISPER_VERIFY_PATH = "AI_WHISPER_VERIFY_PATH",
+    AI_NEMOTRON_DOWNLOAD = "AI_NEMOTRON_DOWNLOAD",
+    AI_NEMOTRON_CANCEL = "AI_NEMOTRON_CANCEL",
+    AI_NEMOTRON_DELETE = "AI_NEMOTRON_DELETE"
 }
 
 export interface MainSendPayloads {
@@ -298,20 +298,20 @@ export interface MainSendPayloads {
     [Main.ENCODER_DETECT]: { force?: boolean } | undefined
     [Main.SET_RTMP_ENCODER]: { encoder: string }
     // AI Scripture
-    [Main.AI_SCRIPTURE_START]: AiScriptureStartConfig
-    [Main.AI_SCRIPTURE_STOP]: undefined
-    [Main.AI_SCRIPTURE_AUDIO_DATA]: { buffer: Uint8Array }
+    [Main.AI_LISTEN_START]: AiScriptureStartConfig
+    [Main.AI_LISTEN_STOP]: undefined
+    [Main.AI_AUDIO_DATA]: { buffer: Uint8Array }
     [Main.AI_SCRIPTURE_CONTEXT]: { book: string; bookNumber: number; chapter: number; verseStart: number; verseEnd: number }
-    [Main.AI_SCRIPTURE_SET_KEY]: { provider: AIProviderId; key: string }
-    [Main.AI_SCRIPTURE_GET_STATUS]: undefined
-    [Main.AI_SCRIPTURE_TEST_CONNECTION]: { provider: AIProviderId; model: string }
-    [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_BINARY]: undefined
-    [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_MODEL]: { modelId: WhisperModelId }
-    [Main.AI_SCRIPTURE_WHISPER_CANCEL]: undefined
-    [Main.AI_SCRIPTURE_WHISPER_VERIFY_PATH]: { path: string }
-    [Main.AI_SCRIPTURE_NEMOTRON_DOWNLOAD]: undefined
-    [Main.AI_SCRIPTURE_NEMOTRON_CANCEL]: undefined
-    [Main.AI_SCRIPTURE_NEMOTRON_DELETE]: undefined
+    [Main.AI_SET_KEY]: { provider: AIProviderId; key: string }
+    [Main.AI_GET_STATUS]: undefined
+    [Main.AI_TEST_CONNECTION]: { provider: AIProviderId; model: string }
+    [Main.AI_WHISPER_DOWNLOAD_BINARY]: undefined
+    [Main.AI_WHISPER_DOWNLOAD_MODEL]: { modelId: WhisperModelId }
+    [Main.AI_WHISPER_CANCEL]: undefined
+    [Main.AI_WHISPER_VERIFY_PATH]: { path: string }
+    [Main.AI_NEMOTRON_DOWNLOAD]: undefined
+    [Main.AI_NEMOTRON_CANCEL]: undefined
+    [Main.AI_NEMOTRON_DELETE]: undefined
 }
 
 export interface MainReturnPayloads {
@@ -416,13 +416,13 @@ export interface MainReturnPayloads {
     [Main.ENCODER_DETECT]: Promise<EncoderDetection>
     [Main.SET_RTMP_ENCODER]: void
     // AI Scripture
-    [Main.AI_SCRIPTURE_START]: Promise<{ started: boolean; error?: string }>
-    [Main.AI_SCRIPTURE_GET_STATUS]: Promise<{ keys: { [id in AIProviderId]: boolean }; whisper: WhisperStatus; nemotron: NemotronStatus }>
-    [Main.AI_SCRIPTURE_TEST_CONNECTION]: Promise<{ ok: boolean; error?: AIError }>
-    [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_BINARY]: Promise<{ ok: boolean; error?: string }>
-    [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_MODEL]: Promise<{ ok: boolean; error?: string }>
-    [Main.AI_SCRIPTURE_WHISPER_VERIFY_PATH]: Promise<{ valid: boolean }>
-    [Main.AI_SCRIPTURE_NEMOTRON_DOWNLOAD]: Promise<{ ok: boolean; error?: string }>
+    [Main.AI_LISTEN_START]: Promise<{ started: boolean; error?: string }>
+    [Main.AI_GET_STATUS]: Promise<{ keys: { [id in AIProviderId]: boolean }; whisper: WhisperStatus; nemotron: NemotronStatus }>
+    [Main.AI_TEST_CONNECTION]: Promise<{ ok: boolean; error?: AIError }>
+    [Main.AI_WHISPER_DOWNLOAD_BINARY]: Promise<{ ok: boolean; error?: string }>
+    [Main.AI_WHISPER_DOWNLOAD_MODEL]: Promise<{ ok: boolean; error?: string }>
+    [Main.AI_WHISPER_VERIFY_PATH]: Promise<{ valid: boolean }>
+    [Main.AI_NEMOTRON_DOWNLOAD]: Promise<{ ok: boolean; error?: string }>
 }
 
 ///////////

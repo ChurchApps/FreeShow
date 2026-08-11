@@ -39,7 +39,7 @@
 
     let status: { keys: { [id in AIProviderId]: boolean }; whisper: WhisperStatus; nemotron: NemotronStatus } | null = null
     async function getStatus() {
-        const result = await requestMain(Main.AI_SCRIPTURE_GET_STATUS)
+        const result = await requestMain(Main.AI_GET_STATUS)
         // an older electron process (dev: the frontend hot reloads, main does not) answers without the engine state -
         // default it rather than letting a missing field throw and leave the section stuck on its loader
         status = result ? { ...result, nemotron: result.nemotron || { supported: false, ready: false } } : null
@@ -148,7 +148,7 @@
         binaryDownloading = true
         binaryError = ""
 
-        const result = await requestMain(Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_BINARY, undefined, undefined, 60 * 60 * 1000)
+        const result = await requestMain(Main.AI_WHISPER_DOWNLOAD_BINARY, undefined, undefined, 60 * 60 * 1000)
         binaryDownloading = false
         if (result && !result.ok) binaryError = result.error || ""
         getStatus()
@@ -161,14 +161,14 @@
         modelDownloading = true
         modelError = ""
 
-        const result = await requestMain(Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_MODEL, { modelId: whisperModelId }, undefined, 60 * 60 * 1000)
+        const result = await requestMain(Main.AI_WHISPER_DOWNLOAD_MODEL, { modelId: whisperModelId }, undefined, 60 * 60 * 1000)
         modelDownloading = false
         if (result && !result.ok) modelError = result.error || ""
         getStatus()
     }
 
     function cancelDownload() {
-        sendMain(Main.AI_SCRIPTURE_WHISPER_CANCEL)
+        sendMain(Main.AI_WHISPER_CANCEL)
     }
 
     // driven by the progress store, not the local click flags, so reopening the popup mid-download still shows live progress
@@ -189,18 +189,18 @@
         nemotronDownloading = true
         nemotronError = ""
 
-        const result = await requestMain(Main.AI_SCRIPTURE_NEMOTRON_DOWNLOAD, undefined, undefined, 60 * 60 * 1000)
+        const result = await requestMain(Main.AI_NEMOTRON_DOWNLOAD, undefined, undefined, 60 * 60 * 1000)
         nemotronDownloading = false
         if (result && !result.ok) nemotronError = result.error || ""
         getStatus()
     }
 
     function cancelNemotronDownload() {
-        sendMain(Main.AI_SCRIPTURE_NEMOTRON_CANCEL)
+        sendMain(Main.AI_NEMOTRON_CANCEL)
     }
 
     function deleteNemotronModel() {
-        sendMain(Main.AI_SCRIPTURE_NEMOTRON_DELETE)
+        sendMain(Main.AI_NEMOTRON_DELETE)
         setTimeout(getStatus, 200)
     }
 
@@ -221,7 +221,7 @@
             return
         }
 
-        const result = await requestMain(Main.AI_SCRIPTURE_WHISPER_VERIFY_PATH, { path })
+        const result = await requestMain(Main.AI_WHISPER_VERIFY_PATH, { path })
         if (result?.valid) {
             customPathValid = true
             update("whisperCustomPath", path)
@@ -270,14 +270,14 @@
     function saveKey() {
         if (!keyInput) return
 
-        sendMain(Main.AI_SCRIPTURE_SET_KEY, { provider, key: keyInput })
+        sendMain(Main.AI_SET_KEY, { provider, key: keyInput })
         keyInput = ""
         testResult = null
         setTimeout(getStatus, 200)
     }
 
     function removeKey() {
-        sendMain(Main.AI_SCRIPTURE_SET_KEY, { provider, key: "" })
+        sendMain(Main.AI_SET_KEY, { provider, key: "" })
         testResult = null
         setTimeout(getStatus, 200)
     }
@@ -298,7 +298,7 @@
         testing = true
         testResult = null
 
-        testResult = (await requestMain(Main.AI_SCRIPTURE_TEST_CONNECTION, { provider, model: effectiveModel }, undefined, 60000)) || { ok: false, error: { code: "timeout" } }
+        testResult = (await requestMain(Main.AI_TEST_CONNECTION, { provider, model: effectiveModel }, undefined, 60000)) || { ok: false, error: { code: "timeout" } }
         testing = false
     }
 

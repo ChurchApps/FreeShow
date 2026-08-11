@@ -109,14 +109,14 @@ export function cancelNemotronDownload(): void {
     }
 
     // terminal event so the renderer's progress entry for this download never stays stuck at "downloading"
-    sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: 0, total: 0, status: "error", message: "cancelled" })
+    sendToMain(ToMain.AI_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: 0, total: 0, status: "error", message: "cancelled" })
 }
 
 /** Download the model files (and the VAD gate) with aggregate progress across all of them. */
 export async function downloadNemotronModel(): Promise<{ ok: boolean; error?: string }> {
     if (activeDownload) return { ok: false, error: "download_in_progress" }
     if (isNemotronReady()) {
-        sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: 1, total: 1, status: "complete" })
+        sendToMain(ToMain.AI_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: 1, total: 1, status: "complete" })
         return { ok: true }
     }
 
@@ -142,7 +142,7 @@ export async function downloadNemotronModel(): Promise<{ ok: boolean; error?: st
         const base = completedBytes
         try {
             await downloadFile(job.url, target, (bytes) => {
-                sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: base + bytes, total: NEMOTRON_MODEL_BYTES, status: "downloading" })
+                sendToMain(ToMain.AI_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: base + bytes, total: NEMOTRON_MODEL_BYTES, status: "downloading" })
             })
 
             // integrity check against the pinned hash - a corrupt or substituted file must never land
@@ -163,7 +163,7 @@ export async function downloadNemotronModel(): Promise<{ ok: boolean; error?: st
         return { ok: false, error: "nemotron_model_missing" }
     }
 
-    sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: 1, total: 1, status: "complete" })
+    sendToMain(ToMain.AI_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: 1, total: 1, status: "complete" })
     return { ok: true }
 }
 
@@ -253,5 +253,5 @@ function errorMessage(err: unknown): string {
 }
 
 function sendDownloadError(err: unknown) {
-    sendToMain(ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: 0, total: 0, status: "error", message: errorMessage(err) })
+    sendToMain(ToMain.AI_DOWNLOAD_PROGRESS, { name: PROGRESS_NAME, progress: 0, total: 0, status: "error", message: errorMessage(err) })
 }

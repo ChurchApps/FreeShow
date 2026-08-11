@@ -283,7 +283,7 @@ export const mainResponses: MainResponses = {
     },
 
     // AI SCRIPTURE
-    [ToMain.AI_SCRIPTURE_TRANSCRIPT]: (data) => {
+    [ToMain.AI_TRANSCRIPT]: (data) => {
         aiScriptureTranscript.update((a) => [...a, data].slice(-20))
         handleQuoteMatchTranscript(data)
     },
@@ -294,7 +294,7 @@ export const mainResponses: MainResponses = {
     [ToMain.AI_SCRIPTURE_COMMAND]: (data) => {
         executeScriptureCommand(data)
     },
-    [ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS]: (data) => {
+    [ToMain.AI_DOWNLOAD_PROGRESS]: (data) => {
         aiScriptureDownloads.update((downloads) => {
             const updated = new Map(downloads)
             updated.set(data.name, { progress: data.progress, total: data.total, status: data.status, message: data.message })

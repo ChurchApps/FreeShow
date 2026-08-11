@@ -27,7 +27,7 @@ export interface DetectedReference {
 
 export type WhisperModelId = "tiny" | "tiny.en" | "base" | "base.en" | "small" | "small.en" | "medium" | "medium.en" | "large-v3"
 
-// transient downloading/verifying states are sent as AI_SCRIPTURE_DOWNLOAD_PROGRESS events,
+// transient downloading/verifying states are sent as AI_DOWNLOAD_PROGRESS events,
 // and custom binary paths are verified separately (renderer setting) - this is only what main knows on its own
 export interface WhisperStatus {
     binary: "not_installed" | "ready_local" | "ready_system"

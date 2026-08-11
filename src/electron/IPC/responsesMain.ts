@@ -270,20 +270,20 @@ export const mainResponses: MainResponses = {
         }
     },
     // AI Scripture
-    [Main.AI_SCRIPTURE_START]: (data) => startAiScripture(data),
-    [Main.AI_SCRIPTURE_STOP]: () => stopAiScripture(),
-    [Main.AI_SCRIPTURE_AUDIO_DATA]: (data) => receiveAiScriptureAudio(data),
+    [Main.AI_LISTEN_START]: (data) => startAiScripture(data),
+    [Main.AI_LISTEN_STOP]: () => stopAiScripture(),
+    [Main.AI_AUDIO_DATA]: (data) => receiveAiScriptureAudio(data),
     [Main.AI_SCRIPTURE_CONTEXT]: (data) => updateAiScriptureContext(data),
-    [Main.AI_SCRIPTURE_SET_KEY]: (data) => setAiKey(data),
-    [Main.AI_SCRIPTURE_GET_STATUS]: () => getAiScriptureStatus(),
-    [Main.AI_SCRIPTURE_TEST_CONNECTION]: (data) => testAiConnection(data),
-    [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_BINARY]: () => aiScriptureWhisper.downloadBinary(),
-    [Main.AI_SCRIPTURE_WHISPER_DOWNLOAD_MODEL]: (data) => aiScriptureWhisper.downloadModel(data),
-    [Main.AI_SCRIPTURE_WHISPER_CANCEL]: () => aiScriptureWhisper.cancel(),
-    [Main.AI_SCRIPTURE_WHISPER_VERIFY_PATH]: (data) => aiScriptureWhisper.verifyPath(data),
-    [Main.AI_SCRIPTURE_NEMOTRON_DOWNLOAD]: () => aiScriptureNemotron.download(),
-    [Main.AI_SCRIPTURE_NEMOTRON_CANCEL]: () => aiScriptureNemotron.cancel(),
-    [Main.AI_SCRIPTURE_NEMOTRON_DELETE]: () => aiScriptureNemotron.delete()
+    [Main.AI_SET_KEY]: (data) => setAiKey(data),
+    [Main.AI_GET_STATUS]: () => getAiScriptureStatus(),
+    [Main.AI_TEST_CONNECTION]: (data) => testAiConnection(data),
+    [Main.AI_WHISPER_DOWNLOAD_BINARY]: () => aiScriptureWhisper.downloadBinary(),
+    [Main.AI_WHISPER_DOWNLOAD_MODEL]: (data) => aiScriptureWhisper.downloadModel(data),
+    [Main.AI_WHISPER_CANCEL]: () => aiScriptureWhisper.cancel(),
+    [Main.AI_WHISPER_VERIFY_PATH]: (data) => aiScriptureWhisper.verifyPath(data),
+    [Main.AI_NEMOTRON_DOWNLOAD]: () => aiScriptureNemotron.download(),
+    [Main.AI_NEMOTRON_CANCEL]: () => aiScriptureNemotron.cancel(),
+    [Main.AI_NEMOTRON_DELETE]: () => aiScriptureNemotron.delete()
 }
 
 /// ///////

@@ -21,11 +21,11 @@ export enum ToMain {
     PDF_IMPORT_PROGRESS = "PDF_IMPORT_PROGRESS",
     RTMP_STATUS = "RTMP_STATUS",
     // AI Scripture
-    AI_SCRIPTURE_TRANSCRIPT = "AI_SCRIPTURE_TRANSCRIPT",
+    AI_TRANSCRIPT = "AI_TRANSCRIPT",
     AI_SCRIPTURE_DETECTION = "AI_SCRIPTURE_DETECTION",
     AI_SCRIPTURE_STATUS = "AI_SCRIPTURE_STATUS",
     AI_SCRIPTURE_COMMAND = "AI_SCRIPTURE_COMMAND",
-    AI_SCRIPTURE_DOWNLOAD_PROGRESS = "AI_SCRIPTURE_DOWNLOAD_PROGRESS",
+    AI_DOWNLOAD_PROGRESS = "AI_DOWNLOAD_PROGRESS",
     // Unified provider callbacks
     PROVIDER_CONNECT = "PROVIDER_CONNECT",
     PROVIDER_PROJECTS = "PROVIDER_PROJECTS",
@@ -60,11 +60,11 @@ export interface ToMainSendPayloads {
     [ToMain.PDF_IMPORT_PROGRESS]: { filePath: string; name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }
     [ToMain.RTMP_STATUS]: { outputId: string; destinations: RtmpStatus }
     // AI Scripture
-    [ToMain.AI_SCRIPTURE_TRANSCRIPT]: { text: string; startMs: number; endMs: number; language?: string; music?: boolean }
+    [ToMain.AI_TRANSCRIPT]: { text: string; startMs: number; endMs: number; language?: string; music?: boolean }
     [ToMain.AI_SCRIPTURE_DETECTION]: DetectedReference
     [ToMain.AI_SCRIPTURE_STATUS]: { state: AiScriptureState; message?: string; keyless?: boolean }
     [ToMain.AI_SCRIPTURE_COMMAND]: AiScriptureCommandEvent
-    [ToMain.AI_SCRIPTURE_DOWNLOAD_PROGRESS]: { name: string; progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }
+    [ToMain.AI_DOWNLOAD_PROGRESS]: { name: string; progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }
     // Unified provider callbacks
     [ToMain.PROVIDER_CONNECT]: { providerId: ContentProviderId; success: boolean; isFirstConnection?: boolean }
     [ToMain.PROVIDER_PROJECTS]: { providerId: ContentProviderId; categoryName: string; shows: any; projects: any; pcoPlans?: { planId: string; serviceTypeId: string; name: string; date: string }[] }

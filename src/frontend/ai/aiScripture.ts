@@ -102,7 +102,7 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     // only pass the LLM config when a key is saved for the provider (raw keys never leave the electron process)
     const provider = settings.provider || "anthropic"
     let llm: AiScriptureStartConfig["llm"] = null
-    const status = await requestMain(Main.AI_SCRIPTURE_GET_STATUS)
+    const status = await requestMain(Main.AI_GET_STATUS)
     if (status?.keys?.[provider]) {
         // legacy "model" values are shared across providers - only use one that belongs to this provider
         const legacyModel = settings.model && AI_PROVIDER_MODELS[provider].models.some((a) => a.id === settings.model) ? settings.model : ""
@@ -145,7 +145,7 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     aiScriptureAutoPaused.set(false)
 
     // whisper might need a moment to spin up on first start
-    const result = await requestMain(Main.AI_SCRIPTURE_START, startConfig, undefined, 60000)
+    const result = await requestMain(Main.AI_LISTEN_START, startConfig, undefined, 60000)
     if (!result?.started) return startError(result?.error || "start_failed")
 
     const micDeviceId = await resolveMicDeviceId(settings.micDeviceId || "")
@@ -160,7 +160,7 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
 
     const micError = await startMicCapture(micDeviceId)
     if (micError) {
-        sendMain(Main.AI_SCRIPTURE_STOP)
+        sendMain(Main.AI_LISTEN_STOP)
         return startError(micError)
     }
 
@@ -210,7 +210,7 @@ function stopSession(): void {
     }
     aiScriptureSuggestions.set([])
 
-    sendMain(Main.AI_SCRIPTURE_STOP)
+    sendMain(Main.AI_LISTEN_STOP)
     stopMicCapture()
 
     aiScriptureAutoPaused.set(false)
@@ -306,7 +306,7 @@ async function startMicCapture(deviceId: string): Promise<string | null> {
 
         captureNode = new AudioWorkletNode(captureContext, "ai-scripture-processor")
         captureNode.port.onmessage = (e) => {
-            sendMain(Main.AI_SCRIPTURE_AUDIO_DATA, { buffer: e.data })
+            sendMain(Main.AI_AUDIO_DATA, { buffer: e.data })
         }
 
         source.connect(captureNode)
