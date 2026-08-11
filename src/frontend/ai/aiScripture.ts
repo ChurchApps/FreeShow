@@ -17,6 +17,7 @@ import { requestMain, sendMain } from "../IPC/main"
 import { activeDrawerTab, activeScripture, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, drawerTabsData, openScripture, outLocked, outputs, scriptures, scripturesCache } from "../stores"
 import aiScriptureProcessorUrl from "./aiScriptureProcessor.ts?worker&url"
 import { AI_PROVIDER_MODELS } from "./models"
+import { noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching } from "./quoteMatchSession"
 
 const SUGGESTION_MAX_AGE = 3 * 60 * 1000
 const SUGGESTION_LIMIT = 5
@@ -165,6 +166,17 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
 
     sessionActive = true
 
+    // local quote matching: recited verses are found by matching the transcript against the
+    // selected bibles on this machine - free and keyless, so it runs unless turned off
+    if (settings.quoteMatching !== false) {
+        startQuoteMatching({
+            bibleIds: searchBibleIds,
+            interpretationMode: startConfig.interpretationMode === true,
+            listenLanguage: startConfig.listenLanguage,
+            onDetection: handleDetection
+        })
+    }
+
     // prune suggestions that are too old to still be relevant
     suggestionPruneTimer = setInterval(pruneSuggestions, 15000)
 
@@ -184,6 +196,7 @@ export function stopAiScriptureListening(): void {
 function stopSession(): void {
     sessionActive = false
     aiScriptureHasProjected.set(false)
+    stopQuoteMatching()
 
     if (autoTimer) {
         clearTimeout(autoTimer)
@@ -403,7 +416,12 @@ export async function handleDetection(ref: DetectedReference): Promise<void> {
     const settings = getSettings()
     if (!sessionActive || !settings.enabled) return
 
-    if (ref.type === "quoted" && ref.quote) await verifyQuote(ref)
+    // a spoken reference primes the quote matcher: the recitation that follows resolves faster
+    if (ref.type === "explicit") noteExplicitDetection(ref)
+
+    // LLM quotes are verified against the actual verse text; local quote matches arrive with
+    // matchedBibleId already set because they WERE matched against it - never re-verify those
+    if (ref.type === "quoted" && ref.quote && !ref.matchedBibleId) await verifyQuote(ref)
 
     addSuggestion(ref)
 
@@ -411,7 +429,9 @@ export async function handleDetection(ref: DetectedReference): Promise<void> {
     if (settings.mode !== "auto") return
     if (get(aiScriptureAutoPaused) || get(outLocked)) return
     if (ref.confidence !== "high") return
-    if (ref.type === "quoted" && !settings.autoProjectQuoted) return
+    // quoted verses are separately gated - except follow-along continuations, which only ever
+    // advance the passage already live on the output within its own chapter
+    if (ref.type === "quoted" && !settings.autoProjectQuoted && !ref.continuation) return
 
     queueAutoProjection(ref)
 }
@@ -643,7 +663,9 @@ async function sendAnchorContext(targetId: string, book: number | string, chapte
         const bookNumber = Number(Book.data.number ?? book)
         if (!name || !Number.isFinite(bookNumber) || bookNumber < 1) return
 
-        sendMain(Main.AI_SCRIPTURE_CONTEXT, { book: name, bookNumber, chapter, verseStart: Math.min(...verses), verseEnd: Math.max(...verses) })
+        const anchor = { book: name, bookNumber, chapter, verseStart: Math.min(...verses), verseEnd: Math.max(...verses) }
+        sendMain(Main.AI_SCRIPTURE_CONTEXT, anchor)
+        setQuoteMatchAnchor(anchor)
     } catch (err) {
         // the anchor is best effort - a failed load just leaves the previous anchor in place
     }

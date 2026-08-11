@@ -5,6 +5,7 @@ import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
 import { executeScriptureCommand, handleDetection } from "../ai/aiScripture"
+import { handleQuoteMatchTranscript } from "../ai/quoteMatchSession"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
@@ -284,6 +285,7 @@ export const mainResponses: MainResponses = {
     // AI SCRIPTURE
     [ToMain.AI_SCRIPTURE_TRANSCRIPT]: (data) => {
         aiScriptureTranscript.update((a) => [...a, data].slice(-20))
+        handleQuoteMatchTranscript(data)
     },
     [ToMain.AI_SCRIPTURE_STATUS]: (data) => aiScriptureStatus.set(data),
     [ToMain.AI_SCRIPTURE_DETECTION]: (data) => {

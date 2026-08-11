@@ -18,9 +18,10 @@ export interface DetectedReference {
     verseEnd: number
     confidence: "high" | "medium" | "low"
     type: "explicit" | "quoted"
-    source: "regex" | "llm"
+    source: "regex" | "llm" | "local" // "local" = the renderer's quote matcher (no LLM involved)
     quote?: string // the transcript text that triggered the detection
     matchedBibleId?: string // set when quoted verse text matched a specific translation
+    continuation?: boolean // a recitation flowing into the next verse of the live passage (follow-along)
     timestamp: number
 }
 

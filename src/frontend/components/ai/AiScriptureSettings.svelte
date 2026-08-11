@@ -498,6 +498,10 @@
 
     <Title label="ai_scripture.detection" icon="search" />
 
+    <!-- on-device quote matching needs no key or provider - the AI provider below is the optional upgrade for paraphrased wording -->
+    <MaterialToggleSwitch label="ai_scripture.quote_matching" checked={settings.quoteMatching !== false} defaultValue={true} on:change={(e) => update("quoteMatching", e.detail)} />
+    <p class="faded hint"><T id="ai_scripture.quote_matching_hint" /></p>
+
     <MaterialDropdown label="ai_scripture.provider" options={providerOptions} value={provider} defaultValue="anthropic" on:change={(e) => setProvider(e.detail)} />
 
     {#if provider === "ollama"}
@@ -616,6 +620,7 @@
             <T id="ai_scripture.privacy" />
         </div>
         <p><T id="ai_scripture.privacy_local" /></p>
+        <p><T id="ai_scripture.privacy_matching" /></p>
         <p><T id="ai_scripture.privacy_llm" /></p>
         <p><T id="ai_scripture.privacy_keys" /></p>
     </div>

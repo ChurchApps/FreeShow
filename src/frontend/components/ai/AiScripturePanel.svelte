@@ -75,7 +75,11 @@
         {/if}
 
         {#if isListening && $aiScriptureStatus.keyless}
-            <span class="badge" data-title={translateText("ai_scripture.keyless_tip")}><T id="ai_scripture.explicit_only" /></span>
+            {#if $ai.scripture?.quoteMatching !== false}
+                <span class="badge" data-title={translateText("ai_scripture.on_device_tip")}><T id="ai_scripture.on_device_only" /></span>
+            {:else}
+                <span class="badge" data-title={translateText("ai_scripture.keyless_tip")}><T id="ai_scripture.explicit_only" /></span>
+            {/if}
         {/if}
 
         {#if $aiScriptureAutoPaused}
@@ -127,21 +131,19 @@
 
                         <div class="fill" />
 
+                        <MaterialButton small icon="play" disabled={$outLocked} title="ai_scripture.project" on:click={() => project(suggestion)}>
+                            <T id="ai_scripture.project" />
+                        </MaterialButton>
+                        <MaterialButton small icon="scripture" title="ai_scripture.show_in_drawer" on:click={() => showInDrawer(suggestion)}>
+                            <T id="ai_scripture.show_in_drawer" />
+                        </MaterialButton>
+
                         <MaterialButton icon="close" title="ai_scripture.dismiss" on:click={() => dismissSuggestion(suggestion.id)} />
                     </div>
 
                     {#if suggestion.quote}
                         <p class="quote">"{suggestion.quote}"</p>
                     {/if}
-
-                    <div class="suggestionActions">
-                        <MaterialButton icon="play" disabled={$outLocked} title="ai_scripture.project" on:click={() => project(suggestion)}>
-                            <T id="ai_scripture.project" />
-                        </MaterialButton>
-                        <MaterialButton icon="scripture" title="ai_scripture.show_in_drawer" on:click={() => showInDrawer(suggestion)}>
-                            <T id="ai_scripture.show_in_drawer" />
-                        </MaterialButton>
-                    </div>
                 </div>
             {/each}
         </div>
@@ -338,10 +340,5 @@
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
-    }
-
-    .suggestionActions {
-        display: flex;
-        gap: 5px;
     }
 </style>

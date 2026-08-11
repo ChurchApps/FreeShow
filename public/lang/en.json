@@ -1785,7 +1785,7 @@
         "translation_description_layouts": "Creates a unique set of slides and a layout for every language."
     },
     "ai_scripture": {
-        "privacy_notice": "Speech is transcribed locally. With an API key set, transcript text is sent to your chosen AI provider for scripture detection while listening. API keys are stored locally and never synced.",
+        "privacy_notice": "Speech is transcribed locally, and quoted verses are matched against your Bibles on this computer. With an API key set, transcript text is also sent to your chosen AI provider for smarter detection while listening. API keys are stored locally and never synced.",
         "transcription": "Transcription",
         "engine": "Speech engine",
         "engine_whisper": "Whisper (whisper.cpp)",
@@ -1821,7 +1821,7 @@
         "spoken_languages": "Languages spoken",
         "spoken_languages_hint": "Only these languages are expected - anything else whisper thinks it hears is double-checked against your detection language.",
         "interpretation_model_hint": "Language detection needs a multilingual model - Small or larger is recommended.",
-        "detection": "Detection (AI)",
+        "detection": "Detection",
         "provider": "AI provider",
         "api_key": "API key",
         "ollama_hint": "Runs entirely on this computer - free, offline, and nothing is sent to the cloud. Install Ollama from ollama.com, then download the model:",
@@ -1859,7 +1859,7 @@
         "max_verses": "Max verses",
         "privacy": "Privacy",
         "privacy_local": "Speech is transcribed locally on your computer - audio never leaves the device.",
-        "privacy_llm": "While listening with an API key set, transcript text is sent to your chosen AI provider for reference detection - nothing else.",
+        "privacy_llm": "With an API key set, transcript text is sent to your chosen AI provider while listening to also catch paraphrased references - nothing else.",
         "privacy_keys": "API keys are stored locally on this computer and are never synced.",
         "error_cancelled": "Download cancelled",
         "error_unsupported_platform": "Automatic download is not available on this platform",
@@ -1867,14 +1867,14 @@
         "voice_commands": "Voice commands",
         "voice_commands_hint": "While a scripture is live, spoken commands control it: \"go to the next verse\", \"give me verse five\", \"show chapter four\", \"give me NIV\", \"give me another translation\". Commands must be phrased as instructions.",
         "enable": "Enable AI Scripture",
-        "auto_project_quoted_hint": "Spoken references like \"John 3:16\" are always clear, so they can be shown right away. But when only the words of a verse are quoted (\"For God so loved the world...\"), the AI has to work out which verse it is - and it can be wrong. Leave this off to review those as suggestions first.",
+        "auto_project_quoted_hint": "Spoken references like \"John 3:16\" are always clear, so they can be shown right away. But when only the words of a verse are quoted (\"For God so loved the world...\"), FreeShow has to work out which verse it is - and it can be wrong. Leave this off to review those as suggestions first.",
         "state_starting": "Starting...",
         "state_listening": "Listening",
         "state_stopped": "Stopped",
         "state_error": "Error",
         "state_llm_paused": "AI paused",
         "explicit_only": "Explicit only",
-        "keyless_tip": "No AI key configured - only spoken references like \"John 3:16\" are detected",
+        "keyless_tip": "No AI key configured, and quote detection is turned off - only spoken references like \"John 3:16\" are detected",
         "auto_paused": "Auto paused",
         "resume_auto": "Resume auto projection",
         "restore_previous": "Restore previous",
@@ -1892,6 +1892,11 @@
         "error_no_scripture": "No Bible selected in the drawer",
         "error_start_failed": "Could not start listening",
         "error_microphone": "Microphone access failed - check system permissions",
-        "error_model_missing": "The selected Whisper model is not downloaded"
+        "error_model_missing": "The selected Whisper model is not downloaded",
+        "quote_matching": "Detect quoted verses (on-device)",
+        "quote_matching_hint": "Recognizes verses read word-for-word by matching the transcript against your selected Bibles on this computer - free, offline, and no AI key needed. Catching paraphrased wording still needs an AI provider below.",
+        "on_device_only": "On-device detection",
+        "on_device_tip": "No AI key configured - spoken references and word-for-word quotes are detected on this computer. Add an AI key to also catch paraphrased verses.",
+        "privacy_matching": "Quoted verses are matched against your installed Bibles on this computer - nothing is sent anywhere."
     }
 }
