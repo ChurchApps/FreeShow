@@ -14,6 +14,8 @@ import {
     freeNoteActive,
     freeNoteDrafts,
     freeNoteHistory,
+    freeNoteMode,
+    freeNoteProjection,
     freeNoteSlides,
     freeNoteNow,
     outputs,
@@ -31,6 +33,7 @@ import { history } from "../helpers/history"
 import { checkName } from "../helpers/show"
 import { loadShows } from "../helpers/setShow"
 import { blockToItem, renderMarkdown, splitBlocks, extractFirstHeading } from "./markdown"
+import { chunkRichHtml, htmlToItems, htmlToMarkdown, plainTextOfChunk, sanitizeRich } from "./rich"
 import { convertText } from "../../converters/txt"
 
 export type FreeNoteTemplate = {
@@ -59,12 +62,14 @@ export type FreeNoteHistoryItem = {
     src: string
     name: string
     time: number
+    mode?: "markdown" | "rich"
 }
 
 export type FreeNoteDraft = {
     id: string
     src: string
     updated: number
+    mode?: "markdown" | "rich"
 }
 
 // set by the Ctrl+Shift+B shortcut to open a specific existing note in the editor
@@ -141,6 +146,9 @@ export const FREENOTE_HORIZONTALS: { id: string; label: string }[] = [
 
 export const freeNoteHorizontal = writable<string>("")
 
+// Default font family applied to every typed line ("", or a font family name)
+export const freeNoteFont = writable<string>("")
+
 // verified temp-slide payload shape (scripture.ts:335 / output.ts:60)
 export function buildTempPayload(items: Item[], _outputId = "", settings: { backgroundColor?: string } = {}) {
     return {
@@ -162,7 +170,7 @@ export async function expandBibleShortcode(reference: string): Promise<Item[][] 
 }
 
 // build slides for one block. Returns array (shortcode blocks can expand).
-export async function buildBlockSlides(block: string, blockIndex: number, template: FreeNoteTemplate | null, outputId = "", vertical = get(freeNoteVertical), horizontal = get(freeNoteHorizontal)): Promise<FreeNoteSlide[]> {
+export async function buildBlockSlides(block: string, blockIndex: number, template: FreeNoteTemplate | null, outputId = "", vertical = get(freeNoteVertical), horizontal = get(freeNoteHorizontal), defaultFont = get(freeNoteFont)): Promise<FreeNoteSlide[]> {
     const trimmed = block.trim()
     const shortcode = trimmed.match(/^([bh]):(.+)$/i)
 
@@ -178,7 +186,7 @@ export async function buildBlockSlides(block: string, blockIndex: number, templa
         }
     }
 
-    const item = blockToItem(trimmed, template, vertical, horizontal)
+    const item = blockToItem(trimmed, template, vertical, horizontal, defaultFont)
     return [createSlide([item], blockIndex, block, template, outputId, 0)]
 }
 
@@ -218,25 +226,52 @@ function getFirstTextLine(items: Item[]): string {
 
 // Build all slides from the markdown source (pure — does not touch the show).
 // This is the list of slides that CAN be displayed.
-export async function buildAllSlides(src: string, template: FreeNoteTemplate | null, outputId = "", vertical = get(freeNoteVertical), horizontal = get(freeNoteHorizontal)): Promise<FreeNoteSlide[]> {
+export async function buildAllSlides(src: string, template: FreeNoteTemplate | null, outputId = "", vertical = get(freeNoteVertical), horizontal = get(freeNoteHorizontal), defaultFont = get(freeNoteFont)): Promise<FreeNoteSlide[]> {
     const blocks = splitBlocks(src)
     const slides: FreeNoteSlide[] = []
     for (let i = 0; i < blocks.length; i++) {
-        slides.push(...(await buildBlockSlides(blocks[i], i, template, outputId, vertical, horizontal)))
+        slides.push(...(await buildBlockSlides(blocks[i], i, template, outputId, vertical, horizontal, defaultFont)))
     }
     return slides
 }
 
-// Sync the full slide list into the real FreeNote show and update the local mirror.
-export async function syncFreeNoteSlides(src: string, template: FreeNoteTemplate | null, outputId = "", vertical = get(freeNoteVertical), horizontal = get(freeNoteHorizontal)): Promise<FreeNoteSlide[]> {
-    const slides = await buildAllSlides(src, template, outputId, vertical, horizontal)
+// Build all slides from the rich HTML (pure — does not touch the show).
+// `<hr>` elements split the document into one chunk (slide) each, and every
+// chunk passes the DOMPurify gate inside htmlToItems.
+export async function buildRichSlides(html: string, template: FreeNoteTemplate | null, outputId = "", vertical = get(freeNoteVertical), horizontal = get(freeNoteHorizontal), defaultFont = get(freeNoteFont), projection = get(freeNoteProjection)): Promise<FreeNoteSlide[]> {
+    const chunks = chunkRichHtml(html)
+    const slides: FreeNoteSlide[] = []
+    for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i]
+        const plain = plainTextOfChunk(chunk)
+
+        // b: shortcode expands through the native scripture pipeline
+        const shortcode = plain.match(/^([bh]):(.+)$/i)
+        if (shortcode && shortcode[1].toLowerCase() === "b") {
+            const scriptureSlides = await expandBibleShortcode(shortcode[2].trim())
+            if (scriptureSlides?.length) {
+                scriptureSlides.forEach((slideItems, k) => slides.push(createSlide(slideItems, i, chunk, template, outputId, k)))
+                continue
+            }
+        }
+
+        const items = htmlToItems(chunk, template, vertical, horizontal, defaultFont, projection)
+        if (!items.length) continue
+        slides.push(createSlide(items, i, chunk, template, outputId, 0))
+    }
+    return slides
+}
+
+// Commit the current slide list into the real FreeNote show + update the mirror.
+// (Title creation only happens once, when the show is first built.)
+async function commitSlidesToShow(slides: FreeNoteSlide[], title: string): Promise<void> {
     if (!slides.length) {
         freeNoteSlides.set([])
-        return slides
+        return
     }
 
     // Ensure we have a FreeNote show
-    await ensureFreeNoteShow(src)
+    await ensureFreeNoteShow(title)
 
     // Replace the show's slides with the current set (full show lives in showsCache)
     const showId = freeNoteShowId!
@@ -273,6 +308,21 @@ export async function syncFreeNoteSlides(src: string, template: FreeNoteTemplate
 
     // Update local slides store for UI (mirror)
     freeNoteSlides.set(slides)
+}
+
+// Sync the full slide list into the real FreeNote show and update the local mirror.
+export async function syncFreeNoteSlides(src: string, template: FreeNoteTemplate | null, outputId = "", vertical = get(freeNoteVertical), horizontal = get(freeNoteHorizontal), defaultFont = get(freeNoteFont)): Promise<FreeNoteSlide[]> {
+    const slides = await buildAllSlides(src, template, outputId, vertical, horizontal, defaultFont)
+    await commitSlidesToShow(slides, extractFirstHeading(src))
+    return slides
+}
+
+// Rich variant of syncFreeNoteSlides — HTML source, rich builder.
+export async function syncRichSlides(html: string, template: FreeNoteTemplate | null, outputId = "", vertical = get(freeNoteVertical), horizontal = get(freeNoteHorizontal), defaultFont = get(freeNoteFont), projection = get(freeNoteProjection)): Promise<FreeNoteSlide[]> {
+    const slides = await buildRichSlides(html, template, outputId, vertical, horizontal, defaultFont, projection)
+    const firstChunk = chunkRichHtml(html)[0] || ""
+    const title = plainTextOfChunk(firstChunk).split("\n")[0].slice(0, 60)
+    await commitSlidesToShow(slides, title)
     return slides
 }
 
@@ -293,13 +343,11 @@ export function setFreeNoteShow(id: string) {
 }
 
 // Ensure a real FreeShow exists for this FreeNote session.
-// Title comes from the first # heading in the markdown.
-async function ensureFreeNoteShow(src: string): Promise<void> {
+// Title comes from the passed heading (markdown) or first plain-text line (rich).
+async function ensureFreeNoteShow(title: string): Promise<void> {
     if (freeNoteShowId && get(shows)[freeNoteShowId]) return
 
-    const heading = extractFirstHeading(src)
-    const title = heading || "FreeNote"
-    const safeTitle = checkName(title)
+    const safeTitle = checkName(title || "FreeNote")
 
     // Use convertText to create a proper show structure
     const { id: showId, show } = convertText({
@@ -369,11 +417,21 @@ export async function refreshAirSlide() {
     if (showIndex < 0 || airSrc === null) return
 
     const template = getFreeNoteTemplate(airTemplateId)
-    const blocks = splitBlocks(airSrc)
-    if (showIndex >= blocks.length) return
+    let rebuilt: FreeNoteSlide | undefined
 
-    const block = blocks[showIndex]
-    const rebuilt = (await buildBlockSlides(block, showIndex, template, airOutputId, get(freeNoteVertical), get(freeNoteHorizontal)))[0]
+    if (get(freeNoteMode) === "rich") {
+        // rich mode: rebuild the on-air chunk from the raw HTML
+        const chunks = chunkRichHtml(airSrc)
+        if (showIndex >= chunks.length) return
+        const items = htmlToItems(chunks[showIndex], template, get(freeNoteVertical), get(freeNoteHorizontal), get(freeNoteFont), get(freeNoteProjection))
+        if (!items.length) return
+        rebuilt = createSlide(items, showIndex, chunks[showIndex], template, airOutputId, 0)
+    } else {
+        const blocks = splitBlocks(airSrc)
+        if (showIndex >= blocks.length) return
+        const block = blocks[showIndex]
+        rebuilt = (await buildBlockSlides(block, showIndex, template, airOutputId, get(freeNoteVertical), get(freeNoteHorizontal), get(freeNoteFont)))[0]
+    }
     if (!rebuilt) return
 
     // Update the real show's slide
@@ -407,7 +465,7 @@ export async function refreshAirSlide() {
 // RECENTS / HISTORY
 
 function saveHistory(slide: FreeNoteSlide) {
-    const item: FreeNoteHistoryItem = { id: uid(6), src: slide.src, name: slide.name, time: Date.now() }
+    const item: FreeNoteHistoryItem = { id: uid(6), src: slide.src, name: slide.name, time: Date.now(), mode: get(freeNoteMode) }
     freeNoteHistory.update((a) => [item, ...a.filter((h) => h.src !== slide.src)].slice(0, 20))
     persist()
 }
@@ -415,7 +473,8 @@ function saveHistory(slide: FreeNoteSlide) {
 export function rebroadcastHistoryItem(id: string) {
     const item = get(freeNoteHistory).find((a) => a.id === id)
     if (!item) return
-    buildBlockSlides(item.src, 0, null).then((slides) => {
+    const rebuild = item.mode === "rich" ? buildRichSlides(item.src, null) : buildBlockSlides(item.src, 0, null).then((slides) => slides)
+    rebuild.then((slides) => {
         if (slides[0]) showSlideAtIndex(0) // will create show if needed
     })
 }
@@ -432,7 +491,16 @@ const DRAFT_KEY = "freeshow_freenote_draft"
 
 export function persist() {
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ slides: get(freeNoteSlides), history: get(freeNoteHistory) }))
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+                slides: get(freeNoteSlides),
+                history: get(freeNoteHistory),
+                font: get(freeNoteFont),
+                mode: get(freeNoteMode),
+                projection: get(freeNoteProjection)
+            })
+        )
     } catch (err) {
         console.error("Error persisting FreeNote slides:", err)
     }
@@ -445,13 +513,17 @@ export function restore() {
             const data = JSON.parse(saved)
             if (Array.isArray(data?.slides)) freeNoteSlides.set(data.slides)
             if (Array.isArray(data?.history)) freeNoteHistory.set(data.history)
+            if (typeof data?.font === "string") freeNoteFont.set(data.font)
+            if (data?.mode === "markdown" || data?.mode === "rich") freeNoteMode.set(data.mode)
+            if (typeof data?.projection === "string") freeNoteProjection.set(data.projection)
         }
         const draft = localStorage.getItem(DRAFT_KEY)
         if (draft) {
             const draftData = JSON.parse(draft)
             if (draftData?.src) {
-                const d: FreeNoteDraft = { id: draftData.id || uid(6), src: draftData.src, updated: draftData.updated || Date.now() }
+                const d: FreeNoteDraft = { id: draftData.id || uid(6), src: draftData.src, updated: draftData.updated || Date.now(), mode: draftData.mode === "rich" ? "rich" : "markdown" }
                 freeNoteDrafts.set([d])
+                if (d.mode) freeNoteMode.set(d.mode)
             }
         }
     } catch (err) {
@@ -460,12 +532,12 @@ export function restore() {
 }
 
 let draftTimer: ReturnType<typeof setTimeout> | null = null
-export function saveDraft(src: string) {
+export function saveDraft(src: string, mode: "markdown" | "rich" = get(freeNoteMode)) {
     if (draftTimer) clearTimeout(draftTimer)
     draftTimer = setTimeout(() => {
         try {
             const current = get(freeNoteDrafts)[0]
-            const draft: FreeNoteDraft = { id: current?.id || uid(6), src, updated: Date.now() }
+            const draft: FreeNoteDraft = { id: current?.id || uid(6), src, updated: Date.now(), mode }
             freeNoteDrafts.set([draft])
             localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
         } catch (err) {
@@ -520,6 +592,38 @@ export function exportHtml(src: string) {
 function getExportFileName() {
     const firstBlock = get(freeNoteSlides)[0]?.name || "FreeNote"
     return firstBlock.replace(/[\\/:*?"<>|]/g, "").slice(0, 60) || "FreeNote"
+}
+
+// rich-mode exports: .md is derived from the plain text, .html stays sanitized
+export function exportRichMarkdown(html: string) {
+    exportMarkdown(htmlToMarkdown(html))
+}
+
+export function exportRichHtml(html: string) {
+    const title = getExportFileName()
+    const body = sanitizeRich(html)
+    const escaped = escapeHtml(title)
+    const htmlDoc = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escaped}</title>
+<style>
+    body { background-color: #101014; color: #f0f0f5; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 40px; }
+    main { max-width: 1000px; margin: 0 auto; font-size: 1.6em; line-height: 1.5; }
+    h1, h2, h3 { color: #ffffff; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid rgba(255,255,255,0.2); padding: 8px 12px; }
+    hr { border: none; border-top: 2px solid #f0008c; margin: 40px 0; }
+    blockquote { border-left: 3px solid #f0008c; margin-left: 0; padding-left: 16px; }
+</style>
+</head>
+<body>
+<main>${body}</main>
+</body>
+</html>`
+    send(EXPORT, ["TEXT"], { content: htmlDoc, name: title, extension: ".html" })
 }
 
 function escapeHtml(value: string) {

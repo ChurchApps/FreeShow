@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { Item } from "../../../types/Show"
-import { buildAllSlides, buildBlockSlides, buildTempPayload, createClockItem, createMediaItem, createTimerItem, expandBibleShortcode, getFreeNoteTemplate } from "./freeNote"
+import { buildAllSlides, buildBlockSlides, buildTempPayload, createClockItem, createMediaItem, createTimerItem, expandBibleShortcode, freeNoteFont, getFreeNoteTemplate } from "./freeNote"
 import { extractFirstHeading, renderMarkdown, splitBlocks } from "./markdown"
 
 vi.mock("dompurify", () => ({
@@ -23,6 +23,11 @@ const h = vi.hoisted(() => {
             freeNoteActive: makeWritable(false),
             freeNoteHistory: makeWritable<any[]>([]),
             freeNoteDrafts: makeWritable<any[]>([]),
+            freeNoteVertical: makeWritable(""),
+            freeNoteHorizontal: makeWritable(""),
+            freeNoteFont: makeWritable(""),
+            freeNoteMode: makeWritable<"markdown" | "rich">("markdown"),
+            freeNoteProjection: makeWritable<string>(""),
             outputs: makeWritable<{ [key: string]: { enabled: boolean; name?: string } }>({}),
             saved: makeWritable(true),
             shows: makeWritable<any>({}),
@@ -54,6 +59,8 @@ beforeEach(() => {
     h.stores.freeNoteActive.set(false)
     h.stores.freeNoteHistory.set([])
     h.stores.freeNoteDrafts.set([])
+    h.stores.freeNoteMode.set("markdown")
+    h.stores.freeNoteProjection.set("")
     h.stores.outputs.set({})
     h.stores.saved.set(true)
     h.stores.activeShow.set(null)
@@ -143,6 +150,13 @@ describe("buildBlockSlides", () => {
         const slides = await buildBlockSlides("h:Amazing Grace", 0, null)
         expect(slides).toHaveLength(1)
         expect(slides[0].name).toContain("Amazing Grace")
+    })
+
+    it("applies the default font to built slides", async () => {
+        freeNoteFont.set("'Georgia'")
+        const slides = await buildBlockSlides("Hello", 0, getFreeNoteTemplate("full_announcement"))
+        expect(slides[0].items[0].lines[0].text[0].style).toContain("font-family:'Georgia';")
+        freeNoteFont.set("")
     })
 })
 

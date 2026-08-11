@@ -10,6 +10,7 @@ import { createScriptureShow } from "../components/drawer/bible/scripture"
 import { addItem } from "../components/edit/scripts/itemHelpers"
 import { keysToID, sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
+import { createNewFreeNote } from "../components/freenote/freeNote"
 import { history, redo, undo } from "../components/helpers/history"
 import { getExtension, getMedia, getMediaLayerType, getMediaStyle, getMediaType } from "../components/helpers/media"
 import { getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
@@ -21,7 +22,7 @@ import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
 import { changeSlidesView } from "../show/slides"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeStage, alertMessage, audioChannelsData, contextActive, drawer, editMode, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, playingVideoState, projects, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, special, spellcheck, styles, timelineRecordingAction, topContextActive } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeStage, alertMessage, audioChannelsData, contextActive, drawer, editMode, focusedArea, focusMode, freeNoteActive, guideActive, media, os, outLocked, outputs, playingVideoState, projects, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, special, spellcheck, styles, timelineRecordingAction, topContextActive } from "../stores"
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
@@ -59,6 +60,7 @@ const ctrlKeys = {
 
 const shiftCtrlKeys = {
     d: () => (get(activePage) === "show" && get(activeShow) && (get(activeShow)?.type || "show") === "show" ? activePopup.set("next_timer") : ""),
+    b: () => createNewFreeNote(),
     // t: () => activePopup.set("translate"),
     t: () => {
         // toggle text edit
@@ -158,6 +160,10 @@ export function keydown(e: KeyboardEvent) {
 
     if (isComposing(e)) return
     if (get(guideActive)) return
+
+    // FreeNote is a modal editor: while open, it owns every keyboard event.
+    // (Presenter controller keys live in the output Preview window, not here.)
+    if (get(freeNoteActive)) return
 
     // clicking e.g. "Show" tab button will focus that making number tab change not work
     if (document.activeElement?.nodeName === "BUTTON") (document.activeElement as any).blur()

@@ -1802,3 +1802,8 @@ export function getBlending() {
     if (blending.centered) return `-webkit-mask-image: linear-gradient(${blending.rotate ?? 90}deg, rgb(0, 0, 0) ${center - blending.left}%, rgba(0, 0, 0, ${opacity}) ${center}%, rgb(0, 0, 0) ${center + Number(blending.right)}%);`
     return `-webkit-mask-image: linear-gradient(${blending.rotate ?? 90}deg, rgba(0, 0, 0, ${opacity}) 0%, rgb(0, 0, 0) ${blending.left}%, rgb(0, 0, 0) ${100 - blending.right}%, rgba(0, 0, 0, ${opacity}) 100%);`
 }
+
+// broadcast a FreeNote temp-slide to the given output (or all enabled outputs)
+export function sendFreeNote(payload: any, outputId = "") {
+    setOutput("slide", payload, false, outputId)
+}

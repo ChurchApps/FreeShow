@@ -30,9 +30,7 @@ export function splitBlocks(src: string): string[] {
 // Expand FreeNote inline tokens ([size:x], [font:y]) into styled HTML spans so the
 // markdown preview shows them as proper styling instead of literal brackets.
 function expandTokens(src: string): string {
-    return src
-        .replace(/\[size:\s*(\d+)\s*\]([\s\S]*?)\[\/size\]/g, (_m, px: string, text: string) => `<span style="font-size:${px}px">${text}</span>`)
-        .replace(/\[font:\s*([^[]+?)\s*\]([\s\S]*?)\[\/font\]/g, (_m, family: string, text: string) => `<span style="font-family:${family.trim()}">${text}</span>`)
+    return src.replace(/\[size:\s*(\d+)\s*\]([\s\S]*?)\[\/size\]/g, (_m, px: string, text: string) => `<span style="font-size:${px}px">${text}</span>`).replace(/\[font\s*:?\s*('?)([^'\]\n]+?)\1\]([\s\S]*?)\[\/font\]/g, (_m, quote: string, family: string, text: string) => `<span style="font-family:${quote}${family.trim()}${quote}">${text}</span>`)
 }
 
 // marked -> DOMPurify -> sanitized HTML (for the live preview)
@@ -46,7 +44,7 @@ export function renderMarkdown(src: string): string {
 // default full-screen text box (mirrors FreeShow's DEFAULT_ITEM_STYLE)
 const DEFAULT_ITEM_STYLE = "top:88px;left:50px;height:904px;width:1820px;"
 
-const INLINE_PATTERN = /(\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`|\*[^*\n]+\*|\[size:\d+\][^[\n]+\[\/size\]|\[font:[^\[\]\n]+\][^[\n]+\[\/font\])/g
+const INLINE_PATTERN = /(\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`|\*[^*\n]+\*|\[size:\d+\][^[\n]+\[\/size\]|\[font\s*:?\s*(?:'[^'\n]+'|"[^"\n]+"|[^\[\]\n]+)\][^[\n]+\[\/font\])/g
 
 // convert inline markdown (bold, italic, underline, code, size) into styled text segments
 export function parseInlineMarkdown(text: string): { value: string; style: string }[] {
@@ -72,14 +70,22 @@ export function parseInlineMarkdown(text: string): { value: string; style: strin
         } else {
             const size = part.match(/^\[size:(\d+)\](.*)\[\/size\]$/)
             if (size) {
-                value = size[2]
-                style = `font-size:${size[1]}px;`
-            } else {
-                const font = part.match(/^\[font:(.+)\](.*)\[\/font\]$/)
-                if (font) {
-                    value = font[2]
-                    style = `font-family:${font[1]};`
-                }
+                // nested markdown inside a size token: recursively parse the body
+                // and prepend the container style so [size:101]**word**[/size]
+                // renders bold AND sized instead of literal asterisks.
+                parseInlineMarkdown(size[2]).forEach((seg) => {
+                    seg.style = `font-size:${size[1]}px;` + seg.style
+                    segments.push(seg)
+                })
+                return
+            }
+            const font = part.match(/^\[font\s*:?\s*('?)([^'\]]+?)\1\](.*)\[\/font\]$/)
+            if (font) {
+                parseInlineMarkdown(font[3]).forEach((seg) => {
+                    seg.style = `font-family:${font[1]}${font[2].trim()}${font[1]};` + seg.style
+                    segments.push(seg)
+                })
+                return
             }
         }
 
@@ -91,16 +97,41 @@ export function parseInlineMarkdown(text: string): { value: string; style: strin
 
 // vertical positions drive where the text block sits inside the slide (.align container)
 const V_ALIGN_CSS: Record<string, string> = { top: "align-items:flex-start;", center: "", bottom: "align-items:flex-end;" }
-// block-level horizontal position (physical placement of the whole text block)
-const H_POS_CSS: Record<string, string> = { left: "justify-content:flex-start;", center: "", right: "justify-content:flex-end;" }
+// block-level horizontal position drives the default per-line text-align.
+// (justify-content on .align can never move the block: .lines is width:100%,
+// so we use FreeShow's native per-line text-align, exactly like <align:>.)
+const H_POS_CSS: Record<string, string> = { left: "text-align:left;", center: "text-align:center;", right: "text-align:right;" }
 
-// turn a single markdown block into a FreeShow text Item (one slide)
-export function blockToItem(block: string, template: FreeNoteTemplate | null = null, vertical = "", horizontal = ""): Item {
+// turn a single markdown block into a FreeShow text item (one slide)
+export function blockToItem(block: string, template: FreeNoteTemplate | null = null, vertical = "", horizontal = "", defaultFont = ""): Item {
     const lines: Line[] = []
-    const effectiveAlign = template?.textAlign || "text-align:center;"
-    const boxCss = ((vertical && V_ALIGN_CSS[vertical]) || "") + ((horizontal && H_POS_CSS[horizontal]) || "")
+    // horizontal position (when set) wins over the template's default alignment,
+    // and an explicit [align:] token on a line still overrides both.
+    const effectiveAlign = (horizontal && H_POS_CSS[horizontal]) || template?.textAlign || "text-align:center;"
+    // vertical position lives on item.align (align-items); horizontal is per-line.
+    const boxCss = (vertical && V_ALIGN_CSS[vertical]) || ""
 
-    block.split("\n").forEach((rawLine) => {
+    // block-level font wrapper: [font 'family'] ... [/font] on their own lines
+    // makes every line inside inherit the font (inline overrides still win).
+    let blockFont = ""
+
+    block.split("\n").forEach((rawLine, lineIndex) => {
+        const trimmed = rawLine.trim()
+        // opening tag: only recognized on the first content line so an inline
+        // [font:...] token inside a line can never be mistaken for a wrapper.
+        if (lineIndex === 0 && !blockFont) {
+            const fontOpen = trimmed.match(/^\[font\s*:?\s*('?)([^'\]\n]+?)\1\]$/)
+            if (fontOpen) {
+                blockFont = fontOpen[1] + fontOpen[2].trim() + fontOpen[1]
+                return
+            }
+        }
+        // closing tag on its own line: stop applying the block font.
+        if (blockFont && trimmed === "[/font]") {
+            blockFont = ""
+            return
+        }
+
         const line = rawLine.trimEnd()
         // A blank line is NOT a slide-break (only `---` is), so treat it as
         // vertical spacing between the surrounding lines instead of dropping it.
@@ -121,7 +152,7 @@ export function blockToItem(block: string, template: FreeNoteTemplate | null = n
             value = perLineAlign[2]
         }
 
-        // headings become larger + bold (level 1-6), proportional to level.
+        // headings become larger BOLD (level 1-6), proportional to level.
         // NOTE: use px (not em/%): TextboxLines.resolveFontSize strips units to px,
         // and the item uses textFit "none" so per-line sizes are applied.
         const heading = value.match(/^(#{1,6})\s+(.*)$/)
@@ -138,9 +169,14 @@ export function blockToItem(block: string, template: FreeNoteTemplate | null = n
         const text = parseInlineMarkdown(value).filter((segment) => segment.value.trim())
         if (!text.length) return
 
-        // keep each segment's own inline style (bold/italic/underline/size),
+        // keep each segment's own inline style (bold/italic/underline/size/font),
         // combined with the line-level style (e.g. heading size + bold)
-        text.forEach((segment) => (segment.style = lineStyle + segment.style))
+        text.forEach((segment) => {
+            // a default font applies to every line, but inline [font:...] overrides win
+            const font = blockFont || defaultFont
+            if (font && !segment.style.includes("font-family:")) segment.style = `font-family:${font};` + segment.style
+            segment.style = lineStyle + segment.style
+        })
         lines.push({ align: lineAlign, text })
     })
 
@@ -167,14 +203,20 @@ export function blockToItem(block: string, template: FreeNoteTemplate | null = n
 // map a styled text segment back to the closest inline markdown token
 export function segmentToMarkdown(segment: { value: string; style?: string }): string {
     const style = segment.style || ""
-    let value = segment.value
+    const value = segment.value
 
     const size = style.match(/font-size\s*:\s*(\d+)px/)
     const bold = /font-weight\s*:\s*(bold|\d+)/.test(style)
     const italic = /font-style\s*:\s*italic/.test(style)
     const underline = /text-decoration\s*:\s*underline/.test(style)
 
-    if (size) return `[size:${size[1]}]${value}[/size]`
+    // keep nested marks inside a size token so the round trip stays lossless
+    if (size) {
+        let markdown = bold ? `**${value}**` : value
+        if (italic) markdown = `*${markdown}*`
+        if (underline) markdown = `__${markdown}__`
+        return `[size:${size[1]}]${markdown}[/size]`
+    }
     if (bold) return `**${value}**`
     if (italic) return `*${value}*`
     if (underline) return `__${value}__`

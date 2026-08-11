@@ -14,7 +14,7 @@
     import StageLayouts from "./components/stage/StageLayouts.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
     import Timeline from "./components/timeline/Timeline.svelte"
-    import { activeEdit, activePage, activeProfile, activeProject, activeShow, activeStage, currentWindow, editMode, focusMode, loaded, os, projectView, resized, showChangeProfileMenu, showsCache, special } from "./stores"
+    import { activeEdit, activePage, activeProfile, activeProject, activeShow, activeStage, currentWindow, editMode, focusMode, freeNoteActive, loaded, os, projectView, resized, showChangeProfileMenu, showsCache, special } from "./stores"
     import { DEFAULT_WIDTH } from "./utils/common"
 
     $: page = $activePage
@@ -55,7 +55,9 @@
         </Resizeable>
 
         <div class="center">
-            {#if page === "show"}
+            {#if $freeNoteActive}
+                <LazyLoad component={() => import("./components/freenote/FreeNote.svelte")} show={$freeNoteActive} />
+            {:else if page === "show"}
                 {#if $focusMode}
                     <LazyLoad component={() => import("./components/show/focus/FocusMode.svelte")} show={$focusMode} />
                 {:else}

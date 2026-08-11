@@ -49,7 +49,7 @@ describe("renderMarkdown", () => {
         const html = renderMarkdown("[size:140]bigger[/size] and [font:'Georgia']serif[/font]")
         expect(html).not.toContain("[size:")
         expect(html).not.toContain("[font:")
-        expect(html).toContain('font-size:140px')
+        expect(html).toContain("font-size:140px")
         expect(html).toContain("font-family:'Georgia'")
     })
 })
@@ -81,6 +81,14 @@ describe("parseInlineMarkdown", () => {
 
     it("parses inline font family", () => {
         expect(parseInlineMarkdown("[font:Georgia]serif[/font]")).toEqual([{ value: "serif", style: "font-family:Georgia;" }])
+    })
+
+    it("parses markdown nested inside a size token", () => {
+        expect(parseInlineMarkdown("[size:101]**word**[/size]")).toEqual([{ value: "word", style: "font-size:101px;font-weight:bold;" }])
+    })
+
+    it("parses markdown nested inside a font token", () => {
+        expect(parseInlineMarkdown("[font:Georgia]*em*[/font]")).toEqual([{ value: "em", style: "font-family:Georgia;font-style:italic;" }])
     })
 
     it("mixes inline segments", () => {
@@ -159,14 +167,28 @@ describe("blockToItem", () => {
         expect(blockToItem("Hello", template, "center").align).toBeUndefined()
     })
 
-    it("positions the text block horizontally via item.align", () => {
+    it("positions the text block horizontally via default line alignment", () => {
         const template = { id: "x", name: "x", backgroundColor: "", textAlign: "text-align:center;" }
-        expect(blockToItem("Hello", template, "", "left").align).toBe("justify-content:flex-start;")
-        expect(blockToItem("Hello", template, "", "right").align).toBe("justify-content:flex-end;")
-        // center (default) => nothing set
-        expect(blockToItem("Hello", template, "", "center").align).toBeUndefined()
-        // combines with vertical
-        expect(blockToItem("Hello", template, "top", "right").align).toBe("align-items:flex-start;justify-content:flex-end;")
+        // justify-content can't move a width:100% .lines, so horizontal position
+        // drives the default per-line text-align (FreeShow's native model)
+        expect(blockToItem("Hello", template, "", "left").lines[0].align).toBe("text-align:left;")
+        expect(blockToItem("Hello", template, "", "right").lines[0].align).toBe("text-align:right;")
+        expect(blockToItem("Hello", template, "", "center").lines[0].align).toBe("text-align:center;")
+        // horizontal is per-line; vertical still lives on item.align
+        expect(blockToItem("Hello", template, "top", "right").align).toBe("align-items:flex-start;")
+        expect(blockToItem("Hello", template, "", "left").align).toBeUndefined()
+    })
+
+    it("lets an [align:] token override the horizontal position on one line", () => {
+        const template = { id: "x", name: "x", backgroundColor: "", textAlign: "text-align:center;" }
+        const item = blockToItem("[align:right]special\nrest", template, "", "left")
+        expect(item.lines[0].align).toBe("text-align:right;")
+        expect(item.lines[1].align).toBe("text-align:left;")
+    })
+
+    it("renders nested markdown inside a size token in a line", () => {
+        const item = blockToItem("[size:101]**word**[/size]")
+        expect(item.lines[0].text[0]).toEqual({ value: "word", style: "font-size:101px;font-weight:bold;" })
     })
 
     it("turns list items into bullets", () => {
@@ -189,6 +211,41 @@ describe("blockToItem", () => {
         expect(item.style).toContain("color:#ffffff;")
         expect(item.style).toContain("font-size:2.2em;")
         expect(item.lines[0].align).toBe("text-align:center;")
+    })
+
+    it("applies a default font to every line", () => {
+        const item = blockToItem("One\nTwo", null, "", "", "'Georgia'")
+        item.lines.forEach((line) => {
+            line.text.forEach((segment) => expect(segment.style).toContain(`font-family:'Georgia';`))
+        })
+    })
+
+    it("lets an inline [font:...] token override the default font", () => {
+        const item = blockToItem("plain [font:Arial]special[/font]", "", "", "", "'Georgia'")
+        expect(item.lines[0].text[0].style).toContain(`font-family:'Georgia';`)
+        expect(item.lines[0].text[1].style).toContain("font-family:Arial;")
+        expect(item.lines[0].text[1].style).not.toContain("'Georgia'")
+    })
+
+    it("applies a block-level [font '...'] wrapper to every line", () => {
+        const item = blockToItem("[font 'Bebe Neues']\njemo\n## hello\n[/font]")
+        expect(item.lines[0].text[0].value).toBe("jemo")
+        item.lines.forEach((line) => {
+            if (line.text[0].value === "\u00A0") return
+            line.text.forEach((segment) => expect(segment.style).toContain(`font-family:'Bebe Neues';`))
+        })
+        expect(item.lines[0].text[0].style).not.toContain("[font")
+    })
+
+    it("lets an inline [font:...] token override a block wrapper font", () => {
+        const item = blockToItem("[font 'Bebe Neues']\nplain [font:Arial]special[/font]\n[/font]")
+        expect(item.lines[0].text[0].style).toContain(`font-family:'Bebe Neues';`)
+        expect(item.lines[0].text[1].style).toContain("font-family:Arial;")
+    })
+
+    it("does not add a font when none is provided", () => {
+        const item = blockToItem("Hello")
+        item.lines.forEach((line) => line.text.forEach((segment) => expect(segment.style).not.toContain("font-family:")))
     })
 
     it("turns blank lines into vertical spacing", () => {
@@ -224,16 +281,13 @@ describe("showToMarkdown", () => {
                     items: [
                         {
                             type: "text",
-                            lines: [
-                                { text: [{ value: "Bold", style: "font-weight:bold;" }] },
-                                { text: [{ value: "Normal", style: "" }] }
-                            ]
+                            lines: [{ text: [{ value: "Bold", style: "font-weight:bold;" }] }, { text: [{ value: "Normal", style: "" }] }]
                         }
                     ]
                 }
             }
         }
-        expect(showToMarkdown(show)).toBe("[size:360]Headline[/size]\n---\n**Bold**\nNormal")
+        expect(showToMarkdown(show)).toBe("[size:360]**Headline**[/size]\n---\n**Bold**\nNormal")
     })
 
     it("skips media items", () => {
@@ -242,7 +296,10 @@ describe("showToMarkdown", () => {
             layouts: { l1: { slides: [{ id: "s1" }] } },
             slides: {
                 s1: {
-                    items: [{ type: "video", src: "clip.mp4" }, { type: "text", lines: [{ text: [{ value: "Hi", style: "" }] }] }]
+                    items: [
+                        { type: "video", src: "clip.mp4" },
+                        { type: "text", lines: [{ text: [{ value: "Hi", style: "" }] }] }
+                    ]
                 }
             }
         }

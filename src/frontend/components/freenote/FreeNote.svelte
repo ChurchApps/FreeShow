@@ -4,7 +4,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { getSystemFontsList } from "../helpers/fonts"
-    import { focusedArea, freeNoteActive, freeNoteDrafts, freeNoteNow, freeNoteSlides, resized, shows, showsCache, theme, themes } from "../../stores"
+    import { focusedArea, freeNoteActive, freeNoteDrafts, freeNoteMode, freeNoteNow, freeNoteProjection, freeNoteSlides, resized, shows, showsCache, theme, themes } from "../../stores"
     import { translateText } from "../../utils/language"
     import { hexToRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
@@ -14,7 +14,9 @@
     import SlideItems from "../slide/SlideItems.svelte"
     import Textbox from "../slide/Textbox.svelte"
     import { loadShows } from "../helpers/setShow"
-    import { showToMarkdown } from "./markdown"
+    import { showToMarkdown, renderMarkdown } from "./markdown"
+    import { FREE_NOTE_PROJECTIONS, htmlToMarkdown } from "./rich"
+    import Editor from "./Editor.svelte"
 
     import {
         addMediaItem,
@@ -26,10 +28,13 @@
         deleteDraft,
         exportHtml,
         exportMarkdown,
+        exportRichHtml,
+        exportRichMarkdown,
         FREENOTE_VERTICALS,
         FREENOTE_HORIZONTALS,
         freeNoteVertical,
         freeNoteHorizontal,
+        freeNoteFont,
         freeNoteTemplates,
         getFreeNoteOutputs,
         getFreeNoteTemplate,
@@ -43,13 +48,37 @@
         scheduleHotRefresh,
         setFreeNoteShow,
         showSlideAtIndex,
-        syncFreeNoteSlides
+        syncFreeNoteSlides,
+        syncRichSlides
     } from "./freeNote"
 
     let src = ""
     let templateId = "full_announcement"
     let outputId = ""
     let openShowId = ""
+
+    // rich / markdown editing mode (persisted in the draft + restored)
+    $: mode = $freeNoteMode
+    function setMode(next: "markdown" | "rich") {
+        if (next === $freeNoteMode) return
+        // convert the current source so nothing is lost when switching surfaces
+        if (next === "rich") src = renderMarkdown(src)
+        else src = htmlToMarkdown(src)
+        $freeNoteMode = next
+        editorKey += 1
+        if ($freeNoteNow >= 0) freeNoteNow.set(-1)
+        scheduleBuild(src)
+    }
+
+    // projection text treatment (outline / shadow / contrast) for on-air notes
+    function setProjection(id: string) {
+        $freeNoteProjection = id
+        rebuild()
+    }
+
+    // bumped to remount the rich editor (new note / open show / mode switch)
+    let editorKey = 0
+    let editorRef: any
 
     let outputsList = getFreeNoteOutputs()
     $: outputsList = getFreeNoteOutputs()
@@ -64,6 +93,15 @@
     function setHorizontal(id: string) {
         $freeNoteHorizontal = id
         rebuild()
+    }
+
+    // default font family used for every typed line
+    function setDefaultFont(family: string) {
+        $freeNoteFont = family
+        rebuild()
+    }
+    function onDefaultFontChange(e: Event) {
+        setDefaultFont((e.target as HTMLSelectElement).value)
     }
 
     function rebuild() {
@@ -103,8 +141,9 @@
     async function buildSlides(value: string) {
         const template = getFreeNoteTemplate(templateId)
         // sync into the real FreeNote show (showsCache) so autosave persists the
-        // slides to disk — buildAllSlides alone only fills the in-memory mirror
-        const slides = await syncFreeNoteSlides(value, template, outputId)
+        // slides to disk — the builders alone only fill the in-memory mirror.
+        // The builder follows the active mode: markdown text or rich HTML.
+        const slides = $freeNoteMode === "rich" ? await syncRichSlides(value, template, outputId) : await syncFreeNoteSlides(value, template, outputId)
         if ($freeNoteNow >= slides.length) freeNoteNow.set(slides.length - 1)
         dirty = false
     }
@@ -152,14 +191,19 @@
             freeNoteNow.set(-1)
             src = ""
             deleteDraft()
+            editorKey += 1
             scheduleBuild("")
         }
     }
 
     // focus editor when opened via hotkey
     $: if ($freeNoteActive && $focusedArea === "free_note") {
-        const el = document.getElementById("freenote-input")
-        if (el) (el as HTMLTextAreaElement).focus()
+        if ($freeNoteMode === "rich") {
+            editorRef?.focus()
+        } else {
+            const el = document.getElementById("freenote-input")
+            if (el) (el as HTMLTextAreaElement).focus()
+        }
     }
 
     // OPEN an existing FreeShow into the editor (reverse: show -> markdown)
@@ -171,13 +215,24 @@
         // bind this session to the opened show so later syncs update it (not a duplicate)
         setFreeNoteShow(id)
         src = showToMarkdown(show) || ""
+        // rich mode editors start from HTML: render the markdown representation
+        if ($freeNoteMode === "rich") src = renderMarkdown(src)
         freeNoteNow.set(-1)
+        editorKey += 1
         scheduleBuild(src)
         saveDraft(src)
     }
 
 function handleInput(e: Event) {
         src = (e.target as HTMLTextAreaElement).value
+        scheduleBuild(src)
+        scheduleHotRefresh(src, templateId, outputId)
+        saveDraft(src)
+    }
+
+    // RICH editor -> raw HTML source (TipTap emits; we sanitize on build)
+    function onRichChange(html: string) {
+        src = html
         scheduleBuild(src)
         scheduleHotRefresh(src, templateId, outputId)
         saveDraft(src)
@@ -267,7 +322,7 @@ function handleInput(e: Event) {
 
     // set an explicit font family on the selection (or the current line).
     // use the same fonts FreeShow itself offers (web fonts + loaded system fonts).
-    const FONT_OPTIONS = ["Georgia", "Times New Roman", "Arial", "Helvetica", "Verdana", "Courier New", "Impact", "Comic Sans MS"]
+    const FONT_OPTIONS = ["CMGSans", "Georgia", "Times New Roman", "Arial", "Helvetica", "Verdana", "Courier New", "Impact", "Comic Sans MS"]
     let fontList: { label: string; value: string }[] = FONT_OPTIONS.map((f) => ({ label: f, value: `'${f}'` }))
     let fontSelect = ""
     onMount(() => {
@@ -325,9 +380,7 @@ function handleInput(e: Event) {
         if (!$freeNoteSlides.length) return
         const target = Math.max(0, Math.min(index, $freeNoteSlides.length - 1))
         if (dirty) {
-            const template = getFreeNoteTemplate(templateId)
-            await syncFreeNoteSlides(src, template, outputId)
-            dirty = false
+            await buildSlides(src)
         }
         await showSlideAtIndex(target, outputId)
     }
@@ -420,6 +473,7 @@ function handleInput(e: Event) {
         resetFreeNoteSession()
         src = ""
         dirty = true
+        editorKey += 1
     }
 </script>
 
@@ -433,9 +487,20 @@ function handleInput(e: Event) {
             <span class="title-text">{translateText("freenote.title")}</span>
             <span class="hint">{translateText("freenote.hint_newline")}</span>
             <span class="hint">{translateText("freenote.hint_show")}</span>
+            {#if mode === "rich"}
+                <span class="hint">{translateText("freenote.hint_rich")}</span>
+            {/if}
         </div>
 
         <div class="header-actions">
+            <!-- RICH / MARKDOWN MODE -->
+            <MaterialButton small isActive={mode === "markdown"} title="freenote.mode_markdown" on:click={() => setMode("markdown")}>
+                MD
+            </MaterialButton>
+            <MaterialButton small isActive={mode === "rich"} title="freenote.mode_rich" on:click={() => setMode("rich")}>
+                Aa
+            </MaterialButton>
+
             <MaterialButton small icon="refresh" title="freenote.new_session" on:click={onNewSession} />
             <MaterialButton small variant="text" icon="close" title="actions.close" on:click={() => freeNoteActive.set(false)} />
         </div>
@@ -446,36 +511,53 @@ function handleInput(e: Event) {
         <!-- EDITOR -->
         {#if !editorCollapsed}
             <div class="editor-pane" style="width: {editorWidth}px;">
-                <textarea id="freenote-input" class="edit editor" bind:this={editorEl} bind:value={src} on:input={handleInput} on:keydown={onEditorKeydown} on:keyup={onSel} on:click={onSel} on:select={onSel} placeholder={translateText("freenote.type_markdown")} spellcheck="false" />
+                {#if mode === "rich"}
+                    {#key editorKey}
+                        <Editor bind:this={editorRef} initial={src} {fontList} onChange={onRichChange} onShowNext={showNextSlide} />
+                    {/key}
+                {:else}
+                    <textarea id="freenote-input" class="edit editor" bind:this={editorEl} bind:value={src} on:input={handleInput} on:keydown={onEditorKeydown} on:keyup={onSel} on:click={onSel} on:select={onSel} placeholder={translateText("freenote.type_markdown")} spellcheck="false" />
 
-                <!-- FONT-EDITING TOOLBAR -->
-                <div class="format-toolbar">
-                    <button class="fmt-btn" title={translateText("freenote.bold")} on:click={() => wrap("**", "**")}>
-                        <b>B</b>
-                    </button>
-                    <button class="fmt-btn" title={translateText("freenote.italic")} on:click={() => wrap("*", "*")}>
-                        <i>I</i>
-                    </button>
-                    <button class="fmt-btn" title={translateText("freenote.underline")} on:click={() => wrap("__", "__")}>
-                        <u>U</u>
-                    </button>
-                    <span class="fmt-divider"></span>
-                    <label class="fmt-size" title={translateText("freenote.font_size")}>
-                        <input type="number" class="fmt-size-input" min="10" step="10" value={sizeInput} on:input={onSizeInput} on:keydown={onSizeKeydown} />
-                        <span class="fmt-size-unit">px</span>
-                    </label>
-                    <button class="fmt-btn" title={translateText("freenote.apply_size")} on:click={() => applySize(sizeInput)}>Apply</button>
-                    <span class="fmt-divider"></span>
-                    <select class="fmt-font" title={translateText("freenote.font_family")} value={fontSelect} on:change={onFontChange}>
-                        <option value="" disabled>{translateText("freenote.font_family")}</option>
-                        {#each fontList as f}
-                            <option value={f.value}>{f.label}</option>
-                        {/each}
-                    </select>
-                </div>
+                    <!-- FONT-EDITING TOOLBAR -->
+                    <div class="format-toolbar">
+                        <button class="fmt-btn" title={translateText("freenote.bold")} on:click={() => wrap("**", "**")}>
+                            <b>B</b>
+                        </button>
+                        <button class="fmt-btn" title={translateText("freenote.italic")} on:click={() => wrap("*", "*")}>
+                            <i>I</i>
+                        </button>
+                        <button class="fmt-btn" title={translateText("freenote.underline")} on:click={() => wrap("__", "__")}>
+                            <u>U</u>
+                        </button>
+                        <span class="fmt-divider"></span>
+                        <label class="fmt-size" title={translateText("freenote.font_size")}>
+                            <input type="number" class="fmt-size-input" min="10" step="10" value={sizeInput} on:input={onSizeInput} on:keydown={onSizeKeydown} />
+                            <span class="fmt-size-unit">px</span>
+                        </label>
+                        <button class="fmt-btn" title={translateText("freenote.apply_size")} on:click={() => applySize(sizeInput)}>Apply</button>
+                        <span class="fmt-divider"></span>
+                        <select class="fmt-font" title={translateText("freenote.font_family")} value={fontSelect} on:change={onFontChange}>
+                            <option value="" disabled>{translateText("freenote.font_family")}</option>
+                            {#each fontList as f}
+                                <option value={f.value}>{f.label}</option>
+                            {/each}
+                        </select>
+                    </div>
+                {/if}
 
                 <div class="controls">
                     <MaterialDropdown label="freenote.template" options={templateOptions} value={templateId} on:change={(e) => (templateId = e.detail) && changeTemplate()} />
+
+                    <!-- DEFAULT FONT -->
+                    <div class="align-row">
+                        <span class="label">{translateText("freenote.default_font")}</span>
+                        <select class="fmt-font" value={$freeNoteFont} on:change={onDefaultFontChange}>
+                            <option value="">{translateText("freenote.default_font_default")}</option>
+                            {#each fontList as f}
+                                <option value={f.value}>{f.label}</option>
+                            {/each}
+                        </select>
+                    </div>
 
                     <!-- VERTICAL POSITION -->
                     <div class="align-row">
@@ -493,6 +575,16 @@ function handleInput(e: Event) {
                         {#each FREENOTE_HORIZONTALS as h}
                             <MaterialButton small isActive={$freeNoteHorizontal === h.id} on:click={() => setHorizontal(h.id)}>
                                 {translateText(`freenote.horizontal_${h.id}`)}
+                            </MaterialButton>
+                        {/each}
+                    </div>
+
+                    <!-- PROJECTION TEXT TREATMENT (on-air note styling) -->
+                    <div class="align-row">
+                        <span class="label">{translateText("freenote.projection")}</span>
+                        {#each FREE_NOTE_PROJECTIONS as p}
+                            <MaterialButton small isActive={$freeNoteProjection === p.id} on:click={() => setProjection(p.id)}>
+                                {translateText(`freenote.projection_${p.label}`)}
                             </MaterialButton>
                         {/each}
                     </div>
@@ -617,10 +709,10 @@ function handleInput(e: Event) {
         <MaterialButton variant="text" icon="save" title="freenote.save" on:click={onSave}>
             {translateText("freenote.save")}
         </MaterialButton>
-        <MaterialButton variant="outlined" icon="download" title="freenote.export_md" on:click={() => exportMarkdown(src)}>
+        <MaterialButton variant="outlined" icon="download" title="freenote.export_md" on:click={() => (mode === "rich" ? exportRichMarkdown(src) : exportMarkdown(src))}>
             {translateText("freenote.export_md")}
         </MaterialButton>
-        <MaterialButton variant="outlined" icon="download" title="freenote.export_html" on:click={() => exportHtml(src)}>
+        <MaterialButton variant="outlined" icon="download" title="freenote.export_html" on:click={() => (mode === "rich" ? exportRichHtml(src) : exportHtml(src))}>
             {translateText("freenote.export_html")}
         </MaterialButton>
         <MaterialButton variant="contained" icon="play" title="freenote.show_next" on:click={onShowNext}>
