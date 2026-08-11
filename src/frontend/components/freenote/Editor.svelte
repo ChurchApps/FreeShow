@@ -37,24 +37,7 @@
     onMount(() => {
         editor = new Editor({
             element: host,
-            extensions: [
-                StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] } }),
-                Underline,
-                TextStyle,
-                FontSize,
-                Color,
-                Highlight.configure({ multicolor: true }),
-                FontFamily,
-                TextAlign.configure({ types: ["heading", "paragraph"] }),
-                Link.configure({ openOnClick: false, autolink: true }),
-                Subscript,
-                Superscript,
-                Placeholder.configure({ placeholder: placeholder || translateText("freenote.type_rich") }),
-                Table.configure({ resizable: true }),
-                TableRow,
-                TableHeader,
-                TableCell
-            ],
+            extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3, 4, 5, 6] } }), Underline, TextStyle, FontSize, Color, Highlight.configure({ multicolor: true }), FontFamily, TextAlign.configure({ types: ["heading", "paragraph"] }), Link.configure({ openOnClick: false, autolink: true }), Subscript, Superscript, Placeholder.configure({ placeholder: placeholder || translateText("freenote.type_rich") }), Table.configure({ resizable: true }), TableRow, TableHeader, TableCell],
             content: initial || "<p></p>",
             autofocus: false,
             editorProps: {
@@ -112,7 +95,7 @@
 
     // heading level for the select
     let headingLevel = 0
-    $: if (editor) headingLevel = editor.isActive("heading") ? (editor.getAttributes("heading").level || 0) : 0
+    $: if (editor) headingLevel = editor.isActive("heading") ? editor.getAttributes("heading").level || 0 : 0
 
     function onHeadingChange(e: Event) {
         const level = Number((e.target as HTMLSelectElement).value) || 0
@@ -217,9 +200,7 @@
         <span class="rich-toolbar-sep" />
 
         <MaterialButton small icon="web" title="freenote.link" isActive={state.link} on:click={toggleLink} />
-        <MaterialButton small title="freenote.table" on:click={insertTable}>
-            Tbl
-        </MaterialButton>
+        <MaterialButton small title="freenote.table" on:click={insertTable}>Tbl</MaterialButton>
 
         <span class="rich-toolbar-sep" />
 

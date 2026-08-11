@@ -6,24 +6,7 @@ import { get, writable } from "svelte/store"
 import { uid } from "uid"
 import { EXPORT } from "../../../types/Channels"
 import type { Item, Show } from "../../../types/Show"
-import {
-    activePage,
-    activeProject,
-    activeShow,
-    focusedArea,
-    freeNoteActive,
-    freeNoteDrafts,
-    freeNoteHistory,
-    freeNoteMode,
-    freeNoteProjection,
-    freeNoteSlides,
-    freeNoteNow,
-    outputs,
-    projects,
-    saved,
-    shows,
-    showsCache
-} from "../../stores"
+import { activePage, activeProject, activeShow, focusedArea, freeNoteActive, freeNoteDrafts, freeNoteHistory, freeNoteMode, freeNoteProjection, freeNoteSlides, freeNoteNow, outputs, projects, saved, shows, showsCache } from "../../stores"
 import { translateText } from "../../utils/language"
 import { send } from "../../utils/request"
 import { generateScriptureShowFromReference } from "../drawer/bible/scripture"

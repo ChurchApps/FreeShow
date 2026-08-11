@@ -13,43 +13,7 @@ import type { FreeNoteTemplate } from "./freeNote"
 import DOMPurify from "dompurify"
 
 // the only tags/attributes we accept from the editor
-export const RICH_ALLOWED_TAGS = [
-    "div",
-    "p",
-    "span",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "h6",
-    "br",
-    "hr",
-    "ul",
-    "ol",
-    "li",
-    "blockquote",
-    "pre",
-    "em",
-    "strong",
-    "b",
-    "i",
-    "u",
-    "s",
-    "strike",
-    "del",
-    "code",
-    "sub",
-    "sup",
-    "a",
-    "mark",
-    "table",
-    "tbody",
-    "thead",
-    "tr",
-    "td",
-    "th"
-]
+export const RICH_ALLOWED_TAGS = ["div", "p", "span", "h1", "h2", "h3", "h4", "h5", "h6", "br", "hr", "ul", "ol", "li", "blockquote", "pre", "em", "strong", "b", "i", "u", "s", "strike", "del", "code", "sub", "sup", "a", "mark", "table", "tbody", "thead", "tr", "td", "th"]
 export const RICH_ALLOWED_ATTR = ["style", "href", "rel", "target", "title", "src", "alt", "colspan", "rowspan"]
 
 // SECURITY GATE: every editor chunk (and the preview) must pass through here.
@@ -114,7 +78,7 @@ const VOID_TAGS = new Set(["br", "hr"])
 type Seg = { value: string; style: string }
 
 function parseDoc(html: string): HTMLElement {
-    if (typeof DOMParser === "undefined") return (null as unknown) as HTMLElement
+    if (typeof DOMParser === "undefined") return null as unknown as HTMLElement
     return new DOMParser().parseFromString(html, "text/html").body
 }
 
@@ -137,15 +101,13 @@ function inlineCss(el: HTMLElement, css: string): string {
 function mergeCss(base: string, extra: string): string {
     if (!extra) return base
     const map: { [key: string]: string } = {}
-    ;(base + ";" + extra)
-        .split(";")
-        .forEach((decl) => {
-            const index = decl.indexOf(":")
-            if (index < 0) return
-            const key = decl.slice(0, index).trim()
-            if (!key) return
-            map[key] = decl.slice(index + 1).trim()
-        })
+    ;(base + ";" + extra).split(";").forEach((decl) => {
+        const index = decl.indexOf(":")
+        if (index < 0) return
+        const key = decl.slice(0, index).trim()
+        if (!key) return
+        map[key] = decl.slice(index + 1).trim()
+    })
     return Object.entries(map)
         .map(([key, value]) => `${key}:${value};`)
         .join("")
@@ -428,9 +390,7 @@ export function htmlToItems(chunkHtml: string, template: FreeNoteTemplate | null
     }
     if (ctx.table) {
         // position the table below an optional text block
-        ctx.table.style = `${DEFAULT_ITEM_STYLE}top:${
-            ctx.lines.length ? 400 : 200
-        }px;height:${ctx.lines.length ? 600 : 700}px;`
+        ctx.table.style = `${DEFAULT_ITEM_STYLE}top:${ctx.lines.length ? 400 : 200}px;height:${ctx.lines.length ? 600 : 700}px;`
         items.push(ctx.table)
     }
     return items

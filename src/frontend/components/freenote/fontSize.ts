@@ -55,7 +55,9 @@ export const FontSize = Extension.create({
             setFontSize:
                 (fontSize: number) =>
                 ({ chain }: { chain: Chain }) =>
-                    chain().setMark("textStyle", { fontSize: Math.max(8, Math.round(fontSize)).toString() }).run(),
+                    chain()
+                        .setMark("textStyle", { fontSize: Math.max(8, Math.round(fontSize)).toString() })
+                        .run(),
             unsetFontSize:
                 () =>
                 ({ chain }: { chain: Chain }) =>

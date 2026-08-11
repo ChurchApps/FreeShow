@@ -223,7 +223,7 @@
         saveDraft(src)
     }
 
-function handleInput(e: Event) {
+    function handleInput(e: Event) {
         src = (e.target as HTMLTextAreaElement).value
         scheduleBuild(src)
         scheduleHotRefresh(src, templateId, outputId)
@@ -494,12 +494,8 @@ function handleInput(e: Event) {
 
         <div class="header-actions">
             <!-- RICH / MARKDOWN MODE -->
-            <MaterialButton small isActive={mode === "markdown"} title="freenote.mode_markdown" on:click={() => setMode("markdown")}>
-                MD
-            </MaterialButton>
-            <MaterialButton small isActive={mode === "rich"} title="freenote.mode_rich" on:click={() => setMode("rich")}>
-                Aa
-            </MaterialButton>
+            <MaterialButton small isActive={mode === "markdown"} title="freenote.mode_markdown" on:click={() => setMode("markdown")}>MD</MaterialButton>
+            <MaterialButton small isActive={mode === "rich"} title="freenote.mode_rich" on:click={() => setMode("rich")}>Aa</MaterialButton>
 
             <MaterialButton small icon="refresh" title="freenote.new_session" on:click={onNewSession} />
             <MaterialButton small variant="text" icon="close" title="actions.close" on:click={() => freeNoteActive.set(false)} />
@@ -637,23 +633,9 @@ function handleInput(e: Event) {
                         <div class="fn-slide" style="background-color: {currentSlide?.settings.backgroundColor || 'black'}; transform: scale({ratio});">
                             {#each previewItems as item, i}
                                 {#if item.type === "text" || item.type === undefined || ["events", "list"].includes(item.type || "")}
-                                    <Textbox
-                                        {item}
-                                        itemIndex={i}
-                                        {ratio}
-                                        outputId={outputId}
-                                        slideIndex={displayIndex}
-                                        ref={{ type: "show", id: "freenote", showId: "freenote", slideId: currentSlide?.id || "preview" }}
-                                        fontPreview
-                                    />
+                                    <Textbox {item} itemIndex={i} {ratio} {outputId} slideIndex={displayIndex} ref={{ type: "show", id: "freenote", showId: "freenote", slideId: currentSlide?.id || "preview" }} fontPreview />
                                 {:else}
-                                    <SlideItems
-                                        {item}
-                                        {ratio}
-                                        {outputId}
-                                        slideIndex={displayIndex}
-                                        ref={{ type: "show", id: "freenote", showId: "freenote", slideId: currentSlide?.id || "preview" }}
-                                    />
+                                    <SlideItems {item} {ratio} {outputId} slideIndex={displayIndex} ref={{ type: "show", id: "freenote", showId: "freenote", slideId: currentSlide?.id || "preview" }} />
                                 {/if}
                             {/each}
                         </div>
