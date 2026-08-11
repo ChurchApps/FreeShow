@@ -443,7 +443,7 @@
 
     .break {
         /* prevent line-breaks in HTML to affect content, like "text-align: justify;" */
-        display: grid;
+        display: table;
 
         width: 100%;
         /* line-height: normal; */
