@@ -8,8 +8,8 @@ import type { Item, Line } from "../../../types/Show"
 import type { FreeNoteTemplate } from "./freeNote"
 
 // lazy import so the module stays importable in non-browser (vitest node) runs
-// without a window: sanitizeRich/renderRichPreview only touch DOMPurify when
-// called, and htmlToItems only touches DOMParser when called.
+// without a window: sanitizeRich only touches DOMPurify when called, and
+// htmlToItems only touches DOMParser when called.
 import DOMPurify from "dompurify"
 
 // the only tags/attributes we accept from the editor
@@ -65,13 +65,6 @@ function visibleText(html: string): string {
         .replace(/&nbsp;/gi, " ")
         .replace(/\s+/g, " ")
         .trim()
-}
-
-// Sanitized full HTML for the live preview (`{@html}`).
-export function renderRichPreview(html: string): string {
-    const sanitized = sanitizeRich(html)
-    if (!sanitized.trim()) return ""
-    return `<div class="fn-rich-preview">${sanitized}</div>`
 }
 
 // ---- projection text treatment (VideoPsalm OutlinedText idea, native CSS) ----
@@ -240,7 +233,8 @@ function blockToLines(el: HTMLElement, ctx: BlockContext, opts: { lineStyle?: st
     // keep other block-level css (font-size on the paragraph etc.) except text-align
     if (css) lineStyle += css.replace(cssTextAlign(css), "")
 
-    const align = opts.align || cssTextAlign(css) || ctx.defaultAlign
+    // the element's own text-align wins over an inherited parent alignment
+    const align = cssTextAlign(css) || opts.align || ctx.defaultAlign
 
     // list marker prefix
     const marker = opts.listMarker || ""
@@ -426,7 +420,139 @@ export function htmlToItems(chunkHtml: string, template: FreeNoteTemplate | null
 
 // ---- reverse helpers (mode switching / export) ----
 
-// flatten one chunk into plain text (blocks -> lines)
+// walk the sanitized inline content and emit markdown tokens (bold/italic/
+// underline/strike/links/code). Preserves as much formatting as the FreeNote
+// markdown compiler understands, so switching rich -> markdown is lossless-ish.
+function inlineToMarkdown(child: ChildNode, out: string[]): void {
+    const node = child as HTMLElement
+    const tag = node.tagName ? node.tagName.toLowerCase() : ""
+    const text = (child.textContent || "").replace(/\s+/g, " ").trim()
+
+    if (node.nodeType === 3 || !tag) {
+        const value = child.textContent || ""
+        if (value) out.push(value)
+        return
+    }
+    if (!text) return
+    if (tag === "br") {
+        out.push("\n")
+        return
+    }
+    if (tag === "a") {
+        const href = node.getAttribute("href") || ""
+        out.push(`[${text}](${href})`)
+        return
+    }
+    if (tag === "strong" || tag === "b") return out.push(`**${text}**`)
+    if (tag === "em" || tag === "i") return out.push(`*${text}*`)
+    if (tag === "u") return out.push(`__${text}__`)
+    if (tag === "s" || tag === "strike" || tag === "del") return out.push(`~~${text}~~`)
+    if (tag === "code") return out.push(`\`${text}\``)
+    if (tag === "sub") return out.push(`~${text}~`)
+    if (tag === "sup") return out.push(`^${text}^`)
+    if (tag === "mark") return out.push(`==${text}==`)
+    if (tag === "span") return inlineContainerToMarkdown(node, out)
+    // generic inline element: emit its text plainly
+    Array.from(node.childNodes).forEach((n) => inlineToMarkdown(n, out))
+}
+
+function inlineContainerToMarkdown(el: HTMLElement, out: string[]): void {
+    // span with an inline style: map size/family to FreeNote tokens
+    const css = el.getAttribute("style") || ""
+    const size = css.match(/font-size\s*:\s*(\d+(?:\.\d+)?)px/)
+    const family = css.match(/font-family\s*:\s*('?)([^;]+?)\1/)
+    const style = css.match(/font-style\s*:\s*italic/)
+    const weight = css.match(/font-weight\s*:\s*(bold|\d+)/)
+    const align = css.match(/text-align\s*:\s*(left|center|right)/)
+
+    const inner: string[] = []
+    if (align) inner.push(`[align:${align[1]}]`)
+    Array.from(el.childNodes).forEach((n) => inlineToMarkdown(n, inner))
+    let text = inner.join("")
+
+    if (style && /^i$/i.test(el.tagName || "")) text = `*${text}*`
+    if (weight) text = `**${text}**`
+    if (size) text = `[size:${Math.round(Number(size[1]))}]${text}[/size]`
+    if (family) text = `[font:${family[1]}${family[2].trim()}${family[1]}]${text}[/font]`
+    if (text) out.push(text)
+}
+
+// one block element -> its markdown line(s)
+function blockToMarkdown(el: HTMLElement, out: string[]): void {
+    const tag = el.tagName.toLowerCase()
+    if (tag === "ul" || tag === "ol") {
+        const ordered = tag === "ol"
+        let counter = 0
+        Array.from(el.children)
+            .filter((c) => c.tagName.toLowerCase() === "li")
+            .forEach((li) => {
+                counter++
+                const inner: string[] = []
+                Array.from(li.childNodes).forEach((n) => inlineToMarkdown(n, inner))
+                out.push(`${ordered ? `${counter}. ` : "- "}${inner.join("").trim()}`)
+            })
+        return
+    }
+    if (tag === "blockquote") {
+        const inner: string[] = []
+        Array.from(el.childNodes).forEach((n) => inlineToMarkdown(n, inner))
+        inner.forEach((line) => out.push(`> ${line.trim()}`))
+        return
+    }
+    if (tag === "pre") {
+        out.push("```", (el.textContent || "").trim(), "```")
+        return
+    }
+    if (tag === "table") {
+        // FreeNote markdown has no table syntax; flatten each row to plain text
+        Array.from(el.querySelectorAll("tr")).forEach((row) => {
+            const cells = Array.from(row.children)
+                .map((c) => (c.textContent || "").trim())
+                .filter(Boolean)
+                .join(" | ")
+            if (cells) out.push(cells)
+        })
+        return
+    }
+    if (tag === "p" || tag === "div" || tag === "h1" || tag === "h2" || tag === "h3" || tag === "h4" || tag === "h5" || tag === "h6" || tag === "li") {
+        const prefix = tag.startsWith("h") ? Array(Number(tag[1]) + 1).join("#") + " " : ""
+        const inner: string[] = []
+        Array.from(el.childNodes).forEach((n) => inlineToMarkdown(n, inner))
+        const css = el.getAttribute("style") || ""
+        const align = css.match(/text-align\s*:\s*(left|center|right)/)
+        const line = (align ? `[align:${align[1]}]` : "") + prefix + inner.join("").trim()
+        if (line.trim()) out.push(line)
+        return
+    }
+    // fallback: recurse
+    Array.from(el.childNodes).forEach((n) => {
+        if ((n as HTMLElement).childNodes?.length && (n as HTMLElement).tagName) blockToMarkdown(n as HTMLElement, out)
+        else inlineToMarkdown(n, out)
+    })
+}
+
+function chunkToMarkdown(chunkHtml: string): string {
+    const root = parseDoc(sanitizeRich(chunkHtml))
+    if (!root) return ""
+    const out: string[] = []
+    Array.from(root.childNodes).forEach((node) => {
+        const el = node as HTMLElement
+        if (el && el.tagName) blockToMarkdown(el, out)
+        else inlineToMarkdown(node, out)
+    })
+    return out.filter((line) => line.trim()).join("\n")
+}
+
+// rich HTML -> markdown source (mode switching / export). Each slide chunk is
+// joined by the standard FreeNote slide separator.
+export function htmlToMarkdown(html: string): string {
+    return chunkRichHtml(html)
+        .map((chunk) => chunkToMarkdown(chunk))
+        .filter((chunk) => chunk.trim().length > 0)
+        .join("\n---\n")
+}
+
+// flatten one chunk into plain lines (used for titles + b:/h: shortcodes)
 function chunkToPlainLines(chunkHtml: string): string[] {
     const root = parseDoc(sanitizeRich(chunkHtml))
     if (!root) return []
@@ -440,13 +566,6 @@ function chunkToPlainLines(chunkHtml: string): string[] {
     }
     processTopLevel(root, ctx)
     return ctx.lines.map((line) => line.text.map((t) => t.value).join(""))
-}
-
-// rich HTML -> plain text (used for markdown input mode and export)
-export function htmlToMarkdown(html: string): string {
-    return chunkRichHtml(html)
-        .map((chunk) => chunkToPlainLines(chunk).join("\n"))
-        .join("\n---\n")
 }
 
 // plain text of the first slide (used for titles + b:/h: shortcodes)

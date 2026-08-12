@@ -60,7 +60,11 @@ const ctrlKeys = {
 
 const shiftCtrlKeys = {
     d: () => (get(activePage) === "show" && get(activeShow) && (get(activeShow)?.type || "show") === "show" ? activePopup.set("next_timer") : ""),
-    b: () => createNewFreeNote(),
+    b: () => {
+        // toggle FreeNote open/closed (Ctrl+Shift+B must work while the modal is open too)
+        if (get(freeNoteActive)) freeNoteActive.set(false)
+        else createNewFreeNote()
+    },
     // t: () => activePopup.set("translate"),
     t: () => {
         // toggle text edit
@@ -163,7 +167,8 @@ export function keydown(e: KeyboardEvent) {
 
     // FreeNote is a modal editor: while open, it owns every keyboard event.
     // (Presenter controller keys live in the output Preview window, not here.)
-    if (get(freeNoteActive)) return
+    // Exception: Ctrl/Cmd+Shift+B must still toggle FreeNote closed from the keyboard.
+    if (get(freeNoteActive) && !(e.ctrlKey && e.shiftKey && getNormalizedKey(e) === "b") && !(e.metaKey && e.shiftKey && getNormalizedKey(e) === "b")) return
 
     // clicking e.g. "Show" tab button will focus that making number tab change not work
     if (document.activeElement?.nodeName === "BUTTON") (document.activeElement as any).blur()
@@ -484,7 +489,7 @@ export async function togglePlayingMedia(e: Event | null = null, back = false, a
 
     if (api) {
         // get playing audio
-        let audioId = AudioPlayer.getAllPlaying(false)[0]
+        const audioId = AudioPlayer.getAllPlaying(false)[0]
         if (audioId) item = { id: audioId, type: "audio" }
         else if (currentlyPlaying) item = { id: currentlyPlaying, type: backgroundType === "player" ? "player" : "video" }
     }

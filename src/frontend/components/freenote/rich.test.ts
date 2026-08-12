@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from "vitest"
-import { chunkRichHtml, getProjectionStyle, htmlToItems, htmlToMarkdown, renderRichPreview, sanitizeRich } from "./rich"
+import { describe, expect, it } from "vitest"
+import { chunkRichHtml, getProjectionStyle, htmlToItems, htmlToMarkdown, sanitizeRich } from "./rich"
 
 describe("sanitizeRich (XSS gate)", () => {
     it("strips scripts and event handlers", () => {
@@ -138,6 +138,35 @@ describe("htmlToItems", () => {
     it("returns [] for empty content", () => {
         expect(htmlToItems("", template)).toEqual([])
     })
+
+    it("lets a nested block's own text-align override an inherited parent alignment", () => {
+        const items = htmlToItems('<div style="text-align: center"><p style="text-align: left">Left</p></div>', template)
+        expect(items[0].lines[0].align).toBe("text-align:left;")
+    })
+
+    it("renders links with a link color", () => {
+        const items = htmlToItems('<p>read <a href="https://example.com">more</a></p>', template)
+        const seg = items[0].lines[0].text[1]
+        expect(seg.value).toBe("more")
+        expect(seg.style).toContain("color:")
+    })
+
+    it("renders sub and sup scripts", () => {
+        const items = htmlToItems("<p>H<sub>2</sub>O and e<sup>x</sup></p>", template)
+        const text = items[0].lines[0].text
+        expect(text[1]).toEqual({ value: "2", style: "vertical-align:sub;" })
+        expect(text[3]).toEqual({ value: "x", style: "vertical-align:super;" })
+    })
+
+    it("renders blockquotes as plain lines", () => {
+        const items = htmlToItems("<blockquote>A quote</blockquote>", template)
+        expect(items[0].lines[0].text[0].value).toBe("A quote")
+    })
+
+    it("renders pre blocks as plain lines", () => {
+        const items = htmlToItems("<pre>line1\nline2</pre>", template)
+        expect(items[0].lines[0].text[0].value).toContain("line1")
+    })
 })
 
 describe("projection style", () => {
@@ -155,25 +184,33 @@ describe("projection style", () => {
     })
 })
 
-describe("renderRichPreview", () => {
-    it("wraps sanitized html in a preview container", () => {
-        const out = renderRichPreview("<p>Hi</p>")
-        expect(out).toContain("fn-rich-preview")
-        expect(out).toContain("<p>Hi</p>")
-        expect(out).not.toContain("<script")
+describe("htmlToMarkdown", () => {
+    it("emits real markdown (headings, bold, bullets) split into --- slides", () => {
+        expect(htmlToMarkdown("<h1>Title</h1><hr><p>Body with <strong>bold</strong> and <em>it</em> and <u>un</u></p>")).toBe("# Title\n---\nBody with **bold** and *it* and __un__")
+    })
+
+    it("converts lists, blockquotes, links, and font-size tokens", () => {
+        const md = htmlToMarkdown('<ul><li>One</li><li>Two</li></ul><ol><li>First</li></ol><blockquote>A quote</blockquote><p>See <a href="https://example.com">here</a></p><p><span style="font-size: 60px">Big</span></p>')
+        expect(md).toContain("- One")
+        expect(md).toContain("- Two")
+        expect(md).toContain("1. First")
+        expect(md).toContain("> A quote")
+        expect(md).toContain("[here](https://example.com)")
+        expect(md).toContain("[size:60]Big[/size]")
+    })
+
+    it("preserves paragraph alignment as [align:] tokens", () => {
+        const md = htmlToMarkdown('<p style="text-align: right">Right</p>')
+        expect(md).toBe("[align:right]Right")
+    })
+
+    it("flattens tables to pipe rows", () => {
+        const md = htmlToMarkdown("<table><tbody><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></tbody></table>")
+        expect(md).toBe("A | B\n1 | 2")
     })
 
     it("returns empty for empty input", () => {
-        expect(renderRichPreview("")).toBe("")
-    })
-})
-
-describe("htmlToMarkdown", () => {
-    beforeEach(() => {
-        // nothing to set up; keeps parity with the other suites
-    })
-
-    it("flattens rich content into --- separated plain text slides", () => {
-        expect(htmlToMarkdown("<h1>Title</h1><hr><p>Body with <strong>bold</strong></p>")).toBe("Title\n---\nBody with bold")
+        expect(htmlToMarkdown("")).toBe("")
+        expect(htmlToMarkdown("<p></p><hr>")).toBe("")
     })
 })

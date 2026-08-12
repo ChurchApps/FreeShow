@@ -10,7 +10,11 @@ jobs:
       matrix:
         os:
           [
-            windows-latest,
+            # windows-2022 (not -latest): new windows-latest runners ship VS 18,
+            # which node-gyp cannot identify, breaking the grandiose (NDI) native
+            # dependency's `node-gyp rebuild`. The repo's release workflow already
+            # builds Windows on windows-2022 for the same reason.
+            windows-2022,
             macos-latest,
             ubuntu-latest
           ]

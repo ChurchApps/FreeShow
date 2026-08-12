@@ -70,9 +70,11 @@
     }
 
     // toolbar active state, refreshed on every selection/transaction
+    let headingLevel = 0
     let state: { [key: string]: boolean } = {}
     function readState(): { [key: string]: boolean } {
         if (!editor) return {}
+        headingLevel = editor.isActive("heading") ? (editor.getAttributes("heading").level as number) || 0 : 0
         return {
             bold: editor.isActive("bold") === true,
             italic: editor.isActive("italic") === true,
@@ -92,10 +94,6 @@
         if (!editor) return
         command(editor.chain().focus())
     }
-
-    // heading level for the select
-    let headingLevel = 0
-    $: if (editor) headingLevel = editor.isActive("heading") ? editor.getAttributes("heading").level || 0 : 0
 
     function onHeadingChange(e: Event) {
         const level = Number((e.target as HTMLSelectElement).value) || 0
