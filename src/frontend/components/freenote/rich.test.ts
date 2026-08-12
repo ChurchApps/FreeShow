@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest"
 import { chunkRichHtml, getProjectionStyle, htmlToItems, htmlToMarkdown, sanitizeRich } from "./rich"
+import { blockToItem } from "./markdown"
 
 describe("sanitizeRich (XSS gate)", () => {
     it("strips scripts and event handlers", () => {
@@ -194,9 +195,36 @@ describe("htmlToMarkdown", () => {
         expect(md).toContain("- One")
         expect(md).toContain("- Two")
         expect(md).toContain("1. First")
-        expect(md).toContain("> A quote")
+        // blockquote emits plain text: the FreeNote compiler wouldn't strip `>`
+        expect(md).toContain("A quote")
+        expect(md).not.toContain("> A quote")
         expect(md).toContain("[here](https://example.com)")
         expect(md).toContain("[size:60]Big[/size]")
+    })
+
+    it("preserves br line breaks within a paragraph", () => {
+        const md = htmlToMarkdown("<p>line1<br>line2</p>")
+        expect(md).toBe("line1\nline2")
+    })
+
+    it("emits sub/sup/strike/highlight as plain text (compiler cannot round-trip those tokens)", () => {
+        const md = htmlToMarkdown("<p>H<sub>2</sub>O and e<sup>x</sup> and <s>old</s> and <mark>hi</mark></p>")
+        expect(md).toBe("H2O and ex and old and hi")
+        expect(md).not.toContain("~")
+        expect(md).not.toContain("^")
+        expect(md).not.toContain("~~")
+        expect(md).not.toContain("==")
+    })
+
+    it("round-trips through the markdown compiler without literal token junk", () => {
+        const md = htmlToMarkdown("<p>H<sub>2</sub>O, <s>old</s>, <blockquote>quote</blockquote></p>")
+        const item = blockToItem(md)
+        const text = item.lines.map((l) => l.text.map((t) => t.value).join("")).join(" ")
+        expect(text).not.toMatch(/[~^=]/)
+        expect(text).not.toContain("> ")
+        expect(text).toContain("H2O")
+        expect(text).toContain("old")
+        expect(text).toContain("quote")
     })
 
     it("preserves paragraph alignment as [align:] tokens", () => {

@@ -421,23 +421,24 @@ export function htmlToItems(chunkHtml: string, template: FreeNoteTemplate | null
 // ---- reverse helpers (mode switching / export) ----
 
 // walk the sanitized inline content and emit markdown tokens (bold/italic/
-// underline/strike/links/code). Preserves as much formatting as the FreeNote
-// markdown compiler understands, so switching rich -> markdown is lossless-ish.
+// underline/links/code). Only tokens the FreeNote compiler understands are
+// emitted; marks it cannot round-trip (sub/sup/strike/highlight) become plain
+// text so re-import never shows literal `~x~`/`^x^`/`~~x~~`/`==x==` junk.
 function inlineToMarkdown(child: ChildNode, out: string[]): void {
     const node = child as HTMLElement
     const tag = node.tagName ? node.tagName.toLowerCase() : ""
     const text = (child.textContent || "").replace(/\s+/g, " ").trim()
 
+    if (tag === "br") {
+        out.push("\n")
+        return
+    }
     if (node.nodeType === 3 || !tag) {
         const value = child.textContent || ""
         if (value) out.push(value)
         return
     }
     if (!text) return
-    if (tag === "br") {
-        out.push("\n")
-        return
-    }
     if (tag === "a") {
         const href = node.getAttribute("href") || ""
         out.push(`[${text}](${href})`)
@@ -446,13 +447,10 @@ function inlineToMarkdown(child: ChildNode, out: string[]): void {
     if (tag === "strong" || tag === "b") return out.push(`**${text}**`)
     if (tag === "em" || tag === "i") return out.push(`*${text}*`)
     if (tag === "u") return out.push(`__${text}__`)
-    if (tag === "s" || tag === "strike" || tag === "del") return out.push(`~~${text}~~`)
     if (tag === "code") return out.push(`\`${text}\``)
-    if (tag === "sub") return out.push(`~${text}~`)
-    if (tag === "sup") return out.push(`^${text}^`)
-    if (tag === "mark") return out.push(`==${text}==`)
     if (tag === "span") return inlineContainerToMarkdown(node, out)
-    // generic inline element: emit its text plainly
+    // generic inline element (incl. sub/sup/s/strike/del/mark, which the
+    // markdown compiler cannot round-trip): emit its text plainly
     Array.from(node.childNodes).forEach((n) => inlineToMarkdown(n, out))
 }
 
@@ -494,9 +492,11 @@ function blockToMarkdown(el: HTMLElement, out: string[]): void {
         return
     }
     if (tag === "blockquote") {
+        // the FreeNote compiler does not strip a `> ` quote prefix, so emit the
+        // content plainly to keep the round-trip free of literal `>` markers
         const inner: string[] = []
         Array.from(el.childNodes).forEach((n) => inlineToMarkdown(n, inner))
-        inner.forEach((line) => out.push(`> ${line.trim()}`))
+        inner.forEach((line) => out.push(line.trim()))
         return
     }
     if (tag === "pre") {
