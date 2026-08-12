@@ -22,46 +22,83 @@ export function isAudioEnabled(): boolean {
     return opusEncoder !== null
 }
 
-export async function processAudio(buffer: Buffer, icecast?: any) {
-    if (!opusEncoder) return
+let icecastPcmAccumulator: Buffer = Buffer.alloc(0)
 
-    // decode raw OPUS/WebM packets into raw PCM/interleaved/signed-int16/little-endian data
-    try {
-        buffer = opusEncoder.decode(buffer)
-    } catch (err) {
-        console.error("Could not process audio.")
-        return
+export async function processAudio(buffer: Buffer, sampleRate: number = 48000, targetId?: any, icecast?: any) {
+    if (!buffer || buffer.length === 0) return
+
+    if (typeof targetId === "object" && targetId !== null) {
+        icecast = targetId
+        targetId = undefined
     }
 
-    // Encode clean PCM into standard 20ms (960 samples = 3840 bytes) Opus frames for Icecast
-    if (icecast) {
+    const sr = Number(sampleRate) || 48000
+    const tid = typeof targetId === "string" ? targetId : undefined
+
+    // Only route to NDI if targetId matches an NDI output ID or is not specified
+    if (!tid || Object.keys(NdiSender.NDI).includes(tid)) {
+        if (tid) {
+            NdiSender.sendAudioBufferNDITarget(tid, buffer, { sampleRate: sr, channelCount: channelCount2 })
+        } else {
+            NdiSender.sendAudioBufferNDI(buffer, { sampleRate: sr, channelCount: channelCount2 })
+        }
+    }
+
+    // Convert Planar Float32 to Int16 LE Interleaved PCM for legacy audio sinks
+    const int16Buffer = convertPlanarFloat32ToInt16Interleaved(buffer, channelCount2)
+
+    // Only route to Icecast if targetId is "icecast" or not specified
+    if (icecast && opusEncoder && (!tid || tid === "icecast")) {
         try {
+            icecastPcmAccumulator = Buffer.concat([icecastPcmAccumulator, int16Buffer])
             const frameByteSize = 960 * 2 * 2 // 960 samples * 2 channels * 2 bytes/sample = 3840 bytes
-            for (let offset = 0; offset < buffer.length; offset += frameByteSize) {
-                const chunk = buffer.subarray(offset, offset + frameByteSize)
-                if (chunk.length === frameByteSize) {
-                    const opusFrame = opusEncoder.encode(chunk)
-                    IcecastSender.sendAudio(opusFrame, icecast)
-                }
+
+            while (icecastPcmAccumulator.length >= frameByteSize) {
+                const chunk = icecastPcmAccumulator.subarray(0, frameByteSize)
+                icecastPcmAccumulator = icecastPcmAccumulator.subarray(frameByteSize)
+                const opusFrame = opusEncoder.encode(chunk)
+                IcecastSender.sendAudio(opusFrame, icecast)
             }
         } catch (err) {
             console.error("Could not encode Opus for Icecast:", err)
         }
     }
 
-    NdiSender.sendAudioBufferNDI(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
-    BlackmagicSender.sendAudioBuffer(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
-    sendAudioToOutputServer(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
+    if (!tid || tid !== "icecast") {
+        BlackmagicSender.sendAudioBuffer(int16Buffer, { sampleRate: sr, channelCount: channelCount2 })
+        sendAudioToOutputServer(int16Buffer, { sampleRate: sr, channelCount: channelCount2 })
 
-    // Stream system audio through WebRTC/WHIP
-    if (WebRtcHost.isRunning()) {
-        WebRtcHost.sendAudio(buffer, { sampleRate: sampleRate2, channelCount: channelCount2 })
+        // Stream system audio through WebRTC/WHIP
+        if (WebRtcHost.isRunning()) {
+            WebRtcHost.sendAudio(int16Buffer, { sampleRate: sr, channelCount: channelCount2 })
+        }
+
+        // Stream system audio to RTMP Streamer targeted to specific outputId
+        if (RtmpStreamer.anyRunning()) {
+            RtmpStreamer.updateAudio(tid, int16Buffer, sr)
+        }
+    }
+}
+
+function convertPlanarFloat32ToInt16Interleaved(buffer: Buffer, channels: number = 2): Buffer {
+    const totalFloat32 = Math.floor(buffer.length / 4)
+    const samplesPerChannel = Math.floor(totalFloat32 / channels)
+    const pcm16 = Buffer.alloc(samplesPerChannel * channels * 2)
+
+    for (let i = 0; i < samplesPerChannel; i++) {
+        const floatL = buffer.readFloatLE(i * 4)
+        const floatR = buffer.readFloatLE((samplesPerChannel + i) * 4)
+
+        const sL = Math.max(-1, Math.min(1, floatL))
+        const intL = sL < 0 ? Math.round(sL * 0x8000) : Math.round(sL * 0x7fff)
+        pcm16.writeInt16LE(intL, i * 4)
+
+        const sR = Math.max(-1, Math.min(1, floatR))
+        const intR = sR < 0 ? Math.round(sR * 0x8000) : Math.round(sR * 0x7fff)
+        pcm16.writeInt16LE(intR, i * 4 + 2)
     }
 
-    // Stream system audio to RTMP Streamer
-    if (RtmpStreamer.anyRunning()) {
-        RtmpStreamer.updateAudio(buffer)
-    }
+    return pcm16
 }
 
 export function sendAudioToOutputServer(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {

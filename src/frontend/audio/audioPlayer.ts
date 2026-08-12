@@ -44,6 +44,7 @@ export class AudioPlayer {
     static channelCount = AudioMultichannel.DEFAULT_CHANNELS // default, will be updated dynamically
     static maxChannels = AudioMultichannel.MAX_CHANNELS // support up to 8 channels (7.1 surround)
     static sampleRate = 48000 // Hz
+    static replayGainCache: Map<string, number> = new Map()
 
     // static playing: { [key: string]: AudioData } = {}
 
@@ -125,9 +126,7 @@ export class AudioPlayer {
             return true
         }
 
-        const replayGainMultiplier = await this.getReplayGainMultiplier(path)
-
-        const newVolume = AudioPlayer.getVolume(path) * (options.volume || 1) * replayGainMultiplier
+        const newVolume = AudioPlayer.getVolume(path) * (options.volume || 1)
         audio.volume = Math.min(1, Math.max(0, newVolume))
 
         options.startAt = AudioPlayer.getStartTime(path, options.startAt)
@@ -139,11 +138,29 @@ export class AudioPlayer {
                 paused: !!options.startPaused,
                 isMic: false,
                 audio,
-                replayGainMultiplier,
                 playlistId: options.playlistId
             }
             return a
         })
+
+        this.getReplayGainMultiplier(path)
+            .then((mult) => {
+                const gain = mult || 1
+                if (gain === 1) return
+
+                playingAudio.update((a) => {
+                    if (!a[path]) return a
+                    a[path].replayGainMultiplier = gain
+                    return a
+                })
+
+                try {
+                    const updatedVolume = AudioPlayer.getVolume(path) * (options.volume || 1) * gain
+                    audio.volume = Math.min(1, Math.max(0, updatedVolume))
+                    AudioAnalyser.setSourceVolume(path, audio.volume)
+                } catch (e) {}
+            })
+            .catch(() => {})
 
         let waitToPlay = 0
         if (audioPlaying && options.crossfade) {
@@ -545,9 +562,12 @@ export class AudioPlayer {
     }
 
     static async getReplayGainMultiplier(path: string): Promise<number> {
+        if (this.replayGainCache.has(path)) return this.replayGainCache.get(path) || 1
         try {
             const audioMetadata = await requestMain(Main.READ_AUDIO_METADATA, { filePath: path })
-            return audioMetadata?.replayGainMultiplier || 1
+            const mult = audioMetadata?.replayGainMultiplier || 1
+            this.replayGainCache.set(path, mult)
+            return mult
         } catch (e) {
             console.error("Failed to read ReplayGain metadata", e)
             return 1
