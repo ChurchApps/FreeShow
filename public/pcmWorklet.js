@@ -1,8 +1,8 @@
 class PcmSenderProcessor extends AudioWorkletProcessor {
     constructor() {
         super()
-        this.bufferL = new Float32Array(1024)
-        this.bufferR = new Float32Array(1024)
+        this.bufferL = new Float32Array(960)
+        this.bufferR = new Float32Array(960)
         this.offset = 0
         this.testTone = false
         this.phase = 0
@@ -35,10 +35,10 @@ class PcmSenderProcessor extends AudioWorkletProcessor {
             }
             this.offset++
 
-            if (this.offset >= 1024) {
-                const planar = new Float32Array(2048)
+            if (this.offset >= 960) {
+                const planar = new Float32Array(1920)
                 planar.set(this.bufferL, 0)
-                planar.set(this.bufferR, 1024)
+                planar.set(this.bufferR, 960)
 
                 const wallTime = Date.now()
                 this.port.postMessage({ buffer: planar.buffer, sendTime: wallTime }, [planar.buffer])

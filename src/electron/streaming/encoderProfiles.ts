@@ -54,7 +54,7 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         pixelFormat: "yuv420p",
         // -no-scenecut only applies with rc_lookahead > 0 and -forced-idr only with -force_key_frames,
         // neither of which are set here, so both would be silent no-ops
-        args: (bitrate, gop) => ["-preset", "p1", "-tune", "ll", "-rc", "cbr", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`]
+        args: (bitrate, gop) => ["-preset", "p4", "-tune", "ll", "-rc", "cbr", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`]
     },
     qsv: {
         id: "qsv",
@@ -107,7 +107,7 @@ export function parseAvailableEncoders(stdout: string): EncoderId[] {
 
 export function buildVideoFilter(profile: EncoderProfile, scaleTo?: { width: number; height: number }): string {
     const parts: string[] = []
-    if (scaleTo) parts.push(`scale=${scaleTo.width}:${scaleTo.height}`)
+    if (scaleTo) parts.push(`scale=${scaleTo.width}:${scaleTo.height}:flags=bicubic`)
     parts.push(`format=${profile.pixelFormat}`)
     if (profile.filterSuffix) parts.push(profile.filterSuffix)
     return parts.join(",")
@@ -159,7 +159,7 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
         args.push("-af", "aresample=async=1:max_soft_comp=10000:first_pts=0")
     }
 
-    args.push("-c:a", "aac", "-ar", "48000", "-ac", `${AUDIO_CHANNELS}`, "-b:a", AUDIO_BITRATE, "-metadata:s:a:0", "bitrate=128")
+    args.push("-c:a", "aac", "-ar", "48000", "-ac", `${AUDIO_CHANNELS}`, "-b:a", AUDIO_BITRATE)
 
     // SWITCH FROM MPEGTS TO FLV FOR RTMP
     // FLV is the native format for RTMP relays and YouTube ingest.
