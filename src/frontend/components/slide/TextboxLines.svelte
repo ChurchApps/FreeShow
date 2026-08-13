@@ -222,7 +222,7 @@
     }
 
     function getLineText(line) {
-        return line.text?.reduce((value, text) => (value += text.value.trim() || ""), "") || ""
+        return line.text?.reduce((value, text) => (value += text.value || ""), "") || ""
     }
 
     function getChordOnlyHtml(chords) {
