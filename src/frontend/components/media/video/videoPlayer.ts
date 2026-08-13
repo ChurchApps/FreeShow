@@ -3,6 +3,7 @@
 import { get } from "svelte/store"
 import { Main } from "../../../../types/IPC/Main"
 import { AudioAnalyser } from "../../../audio/audioAnalyser"
+import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../../audio/audioFading"
 import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
 import { requestMain } from "../../../IPC/main"
 import { media, outputs, playerVideos, playingVideos, playingVideoState, special, transitionData } from "../../../stores"
@@ -337,6 +338,10 @@ export class VideoPlayer {
             audio.timeTick.play()
         }
 
+        if (get(special).muteAudioWhenVideoPlays) {
+            fadeoutAllPlayingAudio()
+        }
+
         this.initSyncClock()
     }
 
@@ -356,6 +361,10 @@ export class VideoPlayer {
         } else if ("timeTick" in audio) {
             audio.paused = true
             audio.timeTick.pause()
+        }
+
+        if (get(special).muteAudioWhenVideoPlays && !get(playingVideos).some((v) => !v.audio.paused)) {
+            fadeinAllPlayingAudio()
         }
 
         this.initSyncClock()
