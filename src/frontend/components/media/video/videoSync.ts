@@ -41,34 +41,30 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     const absDiff = Math.abs(diff)
 
     // 1. Improved Explicit Seek Detection:
-    // A jump occurs when targetTime deviates significantly from EITHER:
-    // a) where the audio was on the last tick (lastSyncedTime)
-    // b) where the video element currently is (vid.currentTime)
+    // A jump occurs when targetTime (authoritative clock) deviates significantly from
+    // where the audio was on the last tick (lastSyncedTime), or on initial sync.
     const isFirstSync = lastSyncedTime === null || lastSyncedTime === undefined
 
     const targetVsLastSynced = lastSyncedTime !== null && lastSyncedTime !== undefined ? Math.abs(targetTime - lastSyncedTime) : 0
 
-    const isExplicitSeek =
-        isFirstSync ||
-        absDiff > 0.5 * rate || // Directly checks if vid.currentTime is far from targetTime after seeking
-        targetVsLastSynced > 0.3 * rate ||
-        (isSoftLoop && lastSyncedTime !== null && lastSyncedTime > targetTime + 0.1)
+    const isExplicitSeek = isFirstSync || targetVsLastSynced > 0.5 * rate || (isSoftLoop && lastSyncedTime !== null && lastSyncedTime > targetTime + 0.1)
 
     // 2. Cooldown check: prevent hard-seek feedback loops while decoder buffers
     const lastSeek = lastSeekTimestamps.get(vid) || 0
-    const inSeekCooldown = now - lastSeek < 1000 // Extended window for slower hardware decoders
+    const inSeekCooldown = now - lastSeek < 1500 // 1.5s cooldown after a hard seek
 
     if (inSeekCooldown && !isExplicitSeek) {
         // While cooling down after a seek, rely exclusively on smooth playbackRate adjustment
         if (!vid.paused && absDiff > 0.03) {
-            const nudgeAmount = Math.max(-0.2 * rate, Math.min(0.2 * rate, -diff * 1.5 * rate))
+            const nudgeAmount = Math.max(-0.25 * rate, Math.min(0.25 * rate, -diff * 1.5 * rate))
             vid.playbackRate = clampPlaybackRate(rate + nudgeAmount)
         }
         return
     }
 
     // 3. Determine threshold
-    const hardSeekThreshold = isExplicitSeek ? 0.8 * rate : 0.35 * rate
+    // For playing videos, hard seek only if drift is large (> 0.8s) to prevent decoder stutter.
+    const hardSeekThreshold = isExplicitSeek ? 0.5 * rate : 0.8 * rate
 
     // 4. Perform Hard Seek
     if (isExplicitSeek || (vid.paused && absDiff > 0.05) || absDiff > hardSeekThreshold) {
