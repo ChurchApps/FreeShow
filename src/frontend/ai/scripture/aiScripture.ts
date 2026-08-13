@@ -3,7 +3,7 @@
 // receives detected scripture references back & projects/suggests them
 
 import { get } from "svelte/store"
-import type { AiScriptureBook, AiScriptureCommandEvent, AiScriptureStartConfig, AiScriptureTranslation, DetectedReference, WhisperModelId } from "../../../types/ai/AiScripture"
+import type { AiScriptureBook, AiScriptureCommandEvent, AiScriptureStartConfig, AiScriptureTranslation, DetectedReference } from "../../../types/ai/AiScripture"
 import { Main } from "../../../types/IPC/Main"
 import type { OutSlide } from "../../../types/Show"
 import { AudioMicrophone } from "../../audio/audioMicrophone"
@@ -15,8 +15,8 @@ import { getFirstActiveOutput, setOutput } from "../../components/helpers/output
 import { clearSlide } from "../../components/output/clear"
 import { requestMain, sendMain } from "../../IPC/main"
 import { activeDrawerTab, activeScripture, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, drawerTabsData, openScripture, outLocked, outputs, scriptures, scripturesCache } from "../../stores"
-import aiScriptureProcessorUrl from "./aiScriptureProcessor.ts?worker&url"
 import { AI_PROVIDER_MODELS } from "../models"
+import aiScriptureProcessorUrl from "./aiScriptureProcessor.ts?worker&url"
 import { noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching } from "./quoteMatchSession"
 
 const SUGGESTION_MAX_AGE = 3 * 60 * 1000
@@ -26,24 +26,6 @@ const QUOTE_DEMOTE_SCORE = 0.35
 
 function getSettings() {
     return get(ai).scripture || {}
-}
-
-// map machine error codes to lang keys - unknown codes (e.g. raw device errors) pass through unchanged
-const ERROR_LANG_KEYS: { [code: string]: string } = {
-    no_scripture: "ai_scripture.error_no_scripture",
-    start_failed: "ai_scripture.error_start_failed",
-    microphone_access: "ai_scripture.error_microphone",
-    whisper_not_installed: "ai.whisper_not_installed",
-    whisper_model_missing: "ai_scripture.error_model_missing",
-    nemotron_model_missing: "ai.nemotron_not_downloaded",
-    nemotron_unsupported: "ai.nemotron_unsupported",
-    cancelled: "ai.error_cancelled",
-    unsupported_platform: "ai.error_unsupported_platform",
-    download_in_progress: "ai.error_download_in_progress"
-}
-
-export function aiScriptureErrorText(code: string): string {
-    return ERROR_LANG_KEYS[code] || code
 }
 
 let sessionActive = false
@@ -103,7 +85,7 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     const provider = settings.provider || "anthropic"
     let llm: AiScriptureStartConfig["llm"] = null
     const status = await requestMain(Main.AI_GET_STATUS)
-    if (status?.keys?.[provider]) {
+    if (status?.[provider]) {
         // legacy "model" values are shared across providers - only use one that belongs to this provider
         const legacyModel = settings.model && AI_PROVIDER_MODELS[provider].models.some((a) => a.id === settings.model) ? settings.model : ""
         const model = settings.customModel || settings.models?.[provider] || legacyModel || "" // providers default internally on empty
@@ -116,9 +98,9 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     const interpretationMode = engine === "whisper" && !!settings.interpretationMode
 
     // default model must match the popup's derivation, or a non English user would request a model they never downloaded
-    let whisperModel: WhisperModelId = settings.whisperModel || (language.startsWith("en") && !interpretationMode ? "base.en" : "base")
+    let whisperModel = settings.whisperModel || (language.startsWith("en") && !interpretationMode ? "base.en" : "base")
     // interpretation mode needs a multilingual model for per-window language detection - never an .en variant
-    if (interpretationMode) whisperModel = whisperModel.replace(".en", "") as WhisperModelId
+    if (interpretationMode) whisperModel = whisperModel.replace(".en", "")
 
     const listenLanguage = settings.listenLanguage || language
     // the declared spoken set constrains whisper's per-window language guess - default to the two languages we know about
@@ -145,7 +127,7 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     aiScriptureAutoPaused.set(false)
 
     // whisper might need a moment to spin up on first start
-    const result = await requestMain(Main.AI_LISTEN_START, startConfig, undefined, 60000)
+    const result = await requestMain(Main.DEPRECATED_AI_LISTEN_START, startConfig, undefined, 60000)
     if (!result?.started) return startError(result?.error || "start_failed")
 
     const micDeviceId = await resolveMicDeviceId(settings.micDeviceId || "")
@@ -160,7 +142,7 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
 
     const micError = await startMicCapture(micDeviceId)
     if (micError) {
-        sendMain(Main.AI_LISTEN_STOP)
+        sendMain(Main.DEPRECATED_AI_LISTEN_STOP)
         return startError(micError)
     }
 
@@ -210,7 +192,7 @@ function stopSession(): void {
     }
     aiScriptureSuggestions.set([])
 
-    sendMain(Main.AI_LISTEN_STOP)
+    sendMain(Main.DEPRECATED_AI_LISTEN_STOP)
     stopMicCapture()
 
     aiScriptureAutoPaused.set(false)
@@ -306,7 +288,7 @@ async function startMicCapture(deviceId: string): Promise<string | null> {
 
         captureNode = new AudioWorkletNode(captureContext, "ai-scripture-processor")
         captureNode.port.onmessage = (e) => {
-            sendMain(Main.AI_AUDIO_DATA, { buffer: e.data })
+            sendMain(Main.DEPRECATED_AI_AUDIO_DATA, { buffer: e.data })
         }
 
         source.connect(captureNode)
@@ -664,7 +646,7 @@ async function sendAnchorContext(targetId: string, book: number | string, chapte
         if (!name || !Number.isFinite(bookNumber) || bookNumber < 1) return
 
         const anchor = { book: name, bookNumber, chapter, verseStart: Math.min(...verses), verseEnd: Math.max(...verses) }
-        sendMain(Main.AI_SCRIPTURE_CONTEXT, anchor)
+        sendMain(Main.DEPRECATED_AI_SCRIPTURE_CONTEXT, anchor)
         setQuoteMatchAnchor(anchor)
     } catch (err) {
         // the anchor is best effort - a failed load just leaves the previous anchor in place

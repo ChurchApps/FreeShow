@@ -30,9 +30,7 @@ const SERVER_INFERENCE_TIMEOUT = 30000
 const CLI_INFERENCE_TIMEOUT = 30000
 const KILL_TIMEOUT = 2000
 
-export type { TranscriberSegment } from "../types"
-
-export interface WhisperSegment extends DriverSegment {
+interface WhisperSegment extends DriverSegment {
     noSpeechProb?: number
     avgLogprob?: number
 }
@@ -479,7 +477,7 @@ export class Transcriber implements TranscriptionDriver {
 // PURE HELPERS (exported for tests)
 
 // in-memory WAV: 44 byte header + Int16 LE PCM data (16kHz mono 16-bit)
-export function buildWavBuffer(samples: Int16Array, sampleRate: number = SAMPLE_RATE): Uint8Array {
+function buildWavBuffer(samples: Int16Array, sampleRate: number = SAMPLE_RATE): Uint8Array {
     const dataSize = samples.length * 2
     const buffer = Buffer.alloc(44 + dataSize)
 
@@ -504,7 +502,7 @@ export function buildWavBuffer(samples: Int16Array, sampleRate: number = SAMPLE_
 }
 
 // root mean square of Int16 samples, normalized to 0-1
-export function computeRms(samples: Int16Array): number {
+function computeRms(samples: Int16Array): number {
     if (!samples.length) return 0
 
     let sum = 0
@@ -516,20 +514,20 @@ export function computeRms(samples: Int16Array): number {
 }
 
 // whisper likes to label non-speech audio, e.g. "[BLANK_AUDIO]", "(music)", "[Music]", "*applause*", "♪"
-export function isNoiseSegment(text: string): boolean {
+function isNoiseSegment(text: string): boolean {
     const leftover = text.replace(/\[[^\]]*\]|\([^)]*\)|\*[^*]*\*/g, "").replace(/[♪♫\s.,!?\-–—_]+/g, "")
     return leftover === ""
 }
 
 // whisper wraps sung content in ♪...♪ - and reliably HALLUCINATES lyrics for music it does not know,
 // so music segments are shown in the transcript but must never feed scripture detection
-export function isMusicSegment(text: string): boolean {
+function isMusicSegment(text: string): boolean {
     return /[♪♫]/.test(text)
 }
 
 // interpretation mode: a "-l auto" guess outside the declared spoken languages warrants a forced re-check.
 // an unset/unresolved detection never re-runs, and an empty declaration means "no constraint"
-export function shouldRerunWindow(detected: string | undefined, declared: string[] | undefined): boolean {
+function shouldRerunWindow(detected: string | undefined, declared: string[] | undefined): boolean {
     const language = (detected || "").trim().toLowerCase()
     if (!language || language === "auto") return false
     if (!declared?.length) return false
@@ -537,7 +535,7 @@ export function shouldRerunWindow(detected: string | undefined, declared: string
 }
 
 // drop segments whisper itself is unsure about - only where the JSON provides the values
-export function isLowConfidence(segment: { noSpeechProb?: number; avgLogprob?: number }): boolean {
+function isLowConfidence(segment: { noSpeechProb?: number; avgLogprob?: number }): boolean {
     if (typeof segment.noSpeechProb === "number" && segment.noSpeechProb > NO_SPEECH_PROB_MAX) return true
     if (typeof segment.avgLogprob === "number" && segment.avgLogprob < AVG_LOGPROB_MIN) return true
     return false
@@ -545,7 +543,7 @@ export function isLowConfidence(segment: { noSpeechProb?: number; avgLogprob?: n
 
 // the first 1s of each window overlaps the previous one - drop/trim segments already emitted.
 // trimming clamps the start timestamp AND drops the proportional share of leading words, so the overlap words are not re-emitted
-export function dedupeOverlap<T extends { text: string; startMs: number; endMs: number }>(segments: T[], previousEndMs: number): T[] {
+function dedupeOverlap<T extends { text: string; startMs: number; endMs: number }>(segments: T[], previousEndMs: number): T[] {
     const result: T[] = []
     for (const segment of segments) {
         if (segment.endMs <= previousEndMs) continue // fully emitted already
@@ -576,7 +574,7 @@ function trimOverlapText(text: string, startMs: number, endMs: number, previousE
 // - cli -oj: { result: { language }, transcription: [{ text, offsets: { from, to } }] } (ms offsets)
 // - server response_format=json: { text } (no timestamps - spans the whole window)
 // - verbose/OpenAI style: { segments: [{ text, start, end, no_speech_prob, avg_logprob }] } (seconds)
-export function parseWhisperJson(json: any, windowDurationMs: number): WhisperSegment[] {
+function parseWhisperJson(json: any, windowDurationMs: number): WhisperSegment[] {
     if (!json || typeof json !== "object") return []
     const segments: WhisperSegment[] = []
 

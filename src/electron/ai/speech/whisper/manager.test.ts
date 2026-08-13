@@ -57,7 +57,8 @@ describe("model id validation", () => {
         vi.stubGlobal("fetch", fetchSpy)
         try {
             const result = await downloadWhisperModel("../../../../foo/attacker-repo/resolve/main/payload" as WhisperModelId)
-            expect(result).toEqual({ ok: false, error: "invalid_model" })
+            expect(result.ok).toBe(false)
+            expect(result.error).toContain("Unknown Whisper model")
             expect(fetchSpy).not.toHaveBeenCalled()
         } finally {
             vi.unstubAllGlobals()
@@ -122,7 +123,7 @@ describe("computeFileSha256", () => {
 })
 
 describe("cancelWhisperDownload", () => {
-    it("emits a terminal error progress event with message 'cancelled' so the renderer entry clears", async () => {
+    it("emits a terminal error progress event so the renderer entry clears", async () => {
         // fetch that hangs until its abort signal fires
         vi.stubGlobal(
             "fetch",
@@ -138,8 +139,8 @@ describe("cancelWhisperDownload", () => {
             const downloadPromise = downloadWhisperModel("tiny")
             cancelWhisperDownload()
 
-            expect(await downloadPromise).toEqual({ ok: false, error: "cancelled" })
-            expect(sendToMain).toHaveBeenCalledWith(ToMain.AI_DOWNLOAD_PROGRESS, { name: "whisper-model-tiny", progress: 0, total: 0, status: "error", message: "cancelled" })
+            expect(await downloadPromise).toEqual({ ok: false, error: "Download was cancelled." })
+            expect(sendToMain).toHaveBeenCalledWith(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: "whisper-model-tiny", name: "Whisper model (tiny)", progress: 0, total: 0, status: "error" })
         } finally {
             vi.unstubAllGlobals()
         }

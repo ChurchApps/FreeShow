@@ -2,9 +2,9 @@
 // tier 1: fast local regex detection of explicitly spoken references ("John chapter 3 verse 16")
 // tier 2: LLM detection over the rolling transcript for paraphrased/quoted references (optional, needs an API key)
 
-import type { AIProviderId, AiScriptureBook, AiScriptureState, DetectedReference } from "../../../types/ai/AiScripture"
-import { getProvider } from "../providers"
-import { REQUEST_TIMEOUT } from "../providers/types"
+import type { AiScriptureBook, AiScriptureState, DetectedReference } from "../../../types/ai/AiScripture"
+import { LLM_API_TIMEOUT } from "../llm/models/APIModel"
+import { getLLMScriptureProvider } from "./llmTalkScripture"
 
 // SPOKEN NUMBERS
 
@@ -261,8 +261,8 @@ interface DetectionCandidate {
 
 interface DetectionCoordinatorOptions {
     books: AiScriptureBook[]
-    llm: { provider: AIProviderId; model: string } | null
-    getApiKey: (provider: AIProviderId) => string
+    llm: { provider: string; model: string } | null
+    getApiKey: (providerId: string) => string
     onDetection: (ref: DetectedReference) => void
     onStatus: (state: AiScriptureState, extra?: { message?: string; keyless?: boolean }) => void
     cooldownSeconds?: number
@@ -391,7 +391,7 @@ export class DetectionCoordinator {
         // tier 2 completely) - mark a re-run so the fresh transcript is analyzed as soon as the call settles.
         // only calls stuck past the request timeout are aborted & replaced right away
         if (this.llmController) {
-            if (Date.now() - this.llmCallStartedAt <= REQUEST_TIMEOUT) {
+            if (Date.now() - this.llmCallStartedAt <= LLM_API_TIMEOUT) {
                 this.llmRerunPending = true
                 return
             }
@@ -413,7 +413,7 @@ export class DetectionCoordinator {
         const transcript = this.segments.map((segment) => segment.text).join(" ")
         const liveContext = this.anchor ? "Live on screen: " + this.anchor.book + " " + this.anchor.chapter + ":" + this.anchor.verseStart + "-" + this.anchor.verseEnd + ". Bare verse mentions likely refer to this passage." : undefined
         Promise.resolve()
-            .then(() => getProvider(llm.provider).detectScripture(apiKey, llm.model, { transcript, alreadyDetected: this.recentDetectionStrings(), liveContext }, controller.signal))
+            .then(() => getLLMScriptureProvider(llm.provider as any).detectScripture(apiKey, llm.model, { transcript, alreadyDetected: this.recentDetectionStrings(), liveContext }, controller.signal))
             .then(
                 (result: any) => {
                     if (this.llmController !== controller) return // aborted/superseded

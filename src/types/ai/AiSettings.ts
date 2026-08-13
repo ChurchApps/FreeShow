@@ -1,7 +1,38 @@
-import type { AIProviderId, AiScriptureEngine, WhisperModelId } from "./AiScripture"
-
 export interface AiSettings {
+    enabled?: boolean
+    stt?: SttSettings
+    llm?: LlmSettings
+
     scripture?: AiScriptureSettings
+}
+
+interface SttSettings {
+    // enabled?: boolean
+    micDeviceId?: string
+
+    engine?: string
+    // per-engine options
+    engineOptions?: {
+        [key: string]: SttEngineOptions
+    }
+}
+
+export interface SttEngineOptions {
+    customPath?: string
+
+    language?: string // transcription language
+    model?: string
+    customModelPath?: string
+
+    // WIP interpretationMode
+    interpretationMode?: boolean
+    listenLanguage?: string
+    spokenLanguages?: string[]
+}
+
+interface LlmSettings {
+    provider?: string
+    model?: string
 }
 
 interface AiScriptureSettings {
@@ -11,12 +42,12 @@ interface AiScriptureSettings {
     searchBibles?: string[]
     displayTranslation?: "drawer" | "matched"
     micDeviceId?: string
-    provider?: AIProviderId
+    provider?: string
     model?: string // legacy single model value (kept as fallback)
-    models?: { [key in AIProviderId]?: string }
+    models?: { [key: string]: string }
     customModel?: string
-    engine?: AiScriptureEngine
-    whisperModel?: WhisperModelId
+    engine?: string
+    whisperModel?: string
     whisperCustomPath?: string
     whisperCustomModelPath?: string
     spokenLanguage?: string

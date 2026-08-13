@@ -1,7 +1,7 @@
 import type { ICommonTagsResult } from "music-metadata"
-import type { RtmpStatus } from "../Output"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { AiScriptureCommandEvent, AiScriptureState, DetectedReference } from "../ai/AiScripture"
+import type { RtmpStatus } from "../Output"
 import type { TrimmedShows } from "../Show"
 
 export enum ToMain {
@@ -25,7 +25,6 @@ export enum ToMain {
     AI_SCRIPTURE_DETECTION = "AI_SCRIPTURE_DETECTION",
     AI_SCRIPTURE_STATUS = "AI_SCRIPTURE_STATUS",
     AI_SCRIPTURE_COMMAND = "AI_SCRIPTURE_COMMAND",
-    AI_DOWNLOAD_PROGRESS = "AI_DOWNLOAD_PROGRESS",
     // Unified provider callbacks
     PROVIDER_CONNECT = "PROVIDER_CONNECT",
     PROVIDER_PROJECTS = "PROVIDER_PROJECTS",
@@ -59,12 +58,6 @@ export interface ToMainSendPayloads {
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: { url: string; progress: number; total: number; status: "downloading" | "complete" | "error"; name?: string }
     [ToMain.PDF_IMPORT_PROGRESS]: { filePath: string; name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }
     [ToMain.RTMP_STATUS]: { outputId: string; destinations: RtmpStatus }
-    // AI Scripture
-    [ToMain.AI_TRANSCRIPT]: { text: string; startMs: number; endMs: number; language?: string; music?: boolean }
-    [ToMain.AI_SCRIPTURE_DETECTION]: DetectedReference
-    [ToMain.AI_SCRIPTURE_STATUS]: { state: AiScriptureState; message?: string; keyless?: boolean }
-    [ToMain.AI_SCRIPTURE_COMMAND]: AiScriptureCommandEvent
-    [ToMain.AI_DOWNLOAD_PROGRESS]: { name: string; progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }
     // Unified provider callbacks
     [ToMain.PROVIDER_CONNECT]: { providerId: ContentProviderId; success: boolean; isFirstConnection?: boolean }
     [ToMain.PROVIDER_PROJECTS]: { providerId: ContentProviderId; categoryName: string; shows: any; projects: any; pcoPlans?: { planId: string; serviceTypeId: string; name: string; date: string }[] }
@@ -81,6 +74,11 @@ export interface ToMainSendPayloads {
     [ToMain.OPEN_FOLDER2]: { channel: string; path: string }
     [ToMain.OPEN_FILE2]: { channel: string; id: string; files: string[]; content: { [key: string]: string } }
     [ToMain.RECEIVE_MIDI2]: { id: string; values: any; type: "noteon" | "noteoff" | "control" }
+    // AI (WIP)
+    [ToMain.AI_TRANSCRIPT]: { text: string; startMs: number; endMs: number; language?: string; music?: boolean }
+    [ToMain.AI_SCRIPTURE_DETECTION]: DetectedReference
+    [ToMain.AI_SCRIPTURE_STATUS]: { state: AiScriptureState; message?: string; keyless?: boolean }
+    [ToMain.AI_SCRIPTURE_COMMAND]: AiScriptureCommandEvent
 }
 
 export interface ToMainReturnPayloads {

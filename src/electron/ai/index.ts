@@ -1,18 +1,18 @@
 import { app } from "electron"
 import { existsSync } from "fs"
-import type { AiScriptureStartConfig, AIError, AIProviderId } from "../../types/ai/AiScripture"
+import type { AiScriptureStartConfig } from "../../types/ai/AiScripture"
 import { ToMain } from "../../types/IPC/ToMain"
-import { getStoreValue, setStoreValue } from "../data/store"
 import { sendToMain } from "../IPC/main"
+import { getLLMProvider } from "./llm/llmProviders"
 import { CommandStream } from "./scripture/commands"
 import type { AiScriptureAnchor } from "./scripture/detection"
 import { DetectionCoordinator } from "./scripture/detection"
-import { getProvider } from "./providers"
-import { Transcriber } from "./speech/whisper/transcriber"
+import { getAiKey } from "./setup/aiKeys"
 import { NemotronDriver } from "./speech/nemotron/driver"
+import { getNemotronModelPaths, getVadModelPath, isNemotronSupported } from "./speech/nemotron/manager"
 import type { TranscriberSegment, TranscriptionDriver } from "./speech/types"
-import { cancelNemotronDownload, deleteNemotronModel, downloadNemotronModel, getNemotronModelPaths, getVadModelPath, isNemotronReady, isNemotronSupported } from "./speech/nemotron/manager"
-import { cancelWhisperDownload, downloadWhisperBinary, downloadWhisperModel, getModelPath, getWhisperStatus, isModelReady, resolveWhisper, verifyWhisperBinary } from "./speech/whisper/manager"
+import { getModelPath, isModelReady, resolveWhisper } from "./speech/whisper/manager"
+import { Transcriber } from "./speech/whisper/transcriber"
 
 let transcriber: TranscriptionDriver | null = null
 let coordinator: DetectionCoordinator | null = null
@@ -150,65 +150,11 @@ function sanitizeErrorMessage(message: string): string {
     return message.replace(/\s+/g, " ").trim().slice(0, 200)
 }
 
-// API KEYS
-// stored in the ACCESS store (plaintext userData JSON, non portable, never cloud synced) like other user entered secrets
-// raw keys never leave the electron process - the renderer only gets booleans
-
-function getAiKey(provider: AIProviderId): string {
-    const secrets = getStoreValue({ file: "ACCESS", key: "secrets" }) || {}
-    return secrets.aiProviders?.[provider] || ""
-}
-
-export function setAiKey(data: { provider: AIProviderId; key: string }) {
-    const secrets = getStoreValue({ file: "ACCESS", key: "secrets" }) || {}
-    const aiProviders = { ...(secrets.aiProviders || {}) }
-
-    if (data.key) aiProviders[data.provider] = data.key
-    else delete aiProviders[data.provider]
-
-    setStoreValue({ file: "ACCESS", key: "secrets", value: { ...secrets, aiProviders } })
-}
-
-export async function getAiScriptureStatus() {
-    return {
-        keys: {
-            anthropic: !!getAiKey("anthropic"),
-            openai: !!getAiKey("openai"),
-            gemini: !!getAiKey("gemini"),
-            ollama: true // local server, no key needed
-        },
-        whisper: await getWhisperStatus(),
-        nemotron: { supported: isNemotronSupported(), ready: isNemotronReady() }
-    }
-}
-
-export async function testAiConnection(data: { provider: AIProviderId; model: string }): Promise<{ ok: boolean; error?: AIError }> {
+export async function testAiConnection(data: { provider: string; model: string }): Promise<{ ok: boolean; error?: string }> {
     const key = getAiKey(data.provider)
-    if (!key && data.provider !== "ollama") return { ok: false, error: { code: "invalid_key" } }
+    if (!key && data.provider !== "ollama") return { ok: false, error: "Invalid API key" }
 
-    const result = await getProvider(data.provider).testConnection(key, data.model)
-    if (result.ok) return { ok: true }
-
-    const error = { ...result.error }
-    if (error.message) error.message = sanitizeErrorMessage(error.message)
-    return { ok: false, error }
-}
-
-// WHISPER
-
-export const aiScriptureWhisper = {
-    downloadBinary: () => downloadWhisperBinary(),
-    downloadModel: (data: { modelId: Parameters<typeof downloadWhisperModel>[0] }) => downloadWhisperModel(data.modelId),
-    cancel: () => cancelWhisperDownload(),
-    verifyPath: async (data: { path: string }) => ({ valid: await verifyWhisperBinary(data.path) })
-}
-
-// NEMOTRON (streaming engine)
-
-export const aiScriptureNemotron = {
-    download: () => downloadNemotronModel(),
-    cancel: () => cancelNemotronDownload(),
-    delete: () => deleteNemotronModel()
+    return await getLLMProvider(data.provider as any).testConnection(key, data.model)
 }
 
 app.on("will-quit", () => stopAiScripture())

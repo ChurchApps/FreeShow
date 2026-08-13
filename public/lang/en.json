@@ -413,7 +413,8 @@
         "close_ad": "Close ad on output screen",
         "start": "Start",
         "end": "End",
-        "change_folder": "Choose another location"
+        "change_folder": "Choose another location",
+        "custom_path": "Custom path"
     },
     "tabs": {
         "shows": "Shows",
@@ -567,7 +568,8 @@
         "reset_all_confirm": "Are you sure you want to reset everything?",
         "reset_all_action": "This will reset the whole program, but not delete the .show files in your \"Shows\"-folder.",
         "quit": "Quit without saving",
-        "save_quit": "Save & Quit"
+        "save_quit": "Save & Quit",
+        "ai_model_manager": "Manage models"
     },
     "confirm": {
         "statement_slide_exists_layout": "Slide exists in a different layout!",
@@ -1853,9 +1855,9 @@
     },
     "ai": {
         "transcription": "Transcription",
-        "engine": "Speech engine",
-        "engine_whisper": "Whisper (whisper.cpp)",
-        "engine_nemotron": "Streaming (Nemotron)",
+        "engine": "Engine",
+        "model": "Model",
+        "---": "---",
         "engine_whisper_hint": "Transcribes in short blocks. Supports many languages and live interpretation, but a spoken phrase is only recognised once its block finishes.",
         "engine_nemotron_hint": "Transcribes as you speak, so references and voice commands are picked up almost immediately. English only, and nothing to install - just one model download.",
         "nemotron_ready": "Streaming model downloaded",
@@ -1893,12 +1895,8 @@
         "key_saved": "API key saved",
         "remove_key": "Remove key",
         "test_connection": "Test",
-        "model": "Model",
         "custom_model": "Use custom model",
         "custom_model_id": "Custom model ID",
-        "privacy_keys": "API keys are stored locally on this computer and are never synced.",
-        "error_cancelled": "Download cancelled",
-        "error_unsupported_platform": "Automatic download is not available on this platform",
-        "error_download_in_progress": "A download is already in progress"
+        "privacy_keys": "API keys are stored locally on this computer and are never synced."
     }
 }

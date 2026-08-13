@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { DetectedReference } from "../../../types/ai/AiScripture"
-    import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../../ai/scripture/aiScripture"
+    import { dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../../ai/scripture/aiScripture"
     import { activePage, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, outLocked, scriptures, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getShortBibleName } from "../drawer/bible/scripture"
@@ -10,7 +10,7 @@
     $: state = $aiScriptureStatus.state
     $: isListening = state === "listening" || state === "llm_paused"
     $: isStarting = state === "starting"
-    $: errorText = state === "error" && $aiScriptureStatus.message ? translateText(aiScriptureErrorText($aiScriptureStatus.message)) : ""
+    $: errorText = state === "error" && $aiScriptureStatus.message ? $aiScriptureStatus.message : ""
 
     async function toggleListening() {
         if (isStarting) return

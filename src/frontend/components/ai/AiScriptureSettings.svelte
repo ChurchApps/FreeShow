@@ -1,13 +1,13 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import type { AIError, AIProviderId, AiScriptureEngine, NemotronStatus, WhisperModelId, WhisperStatus } from "../../../types/ai/AiScripture"
+    import type { EngineStatus } from "../../../types/ai/AiModels"
     import { Main } from "../../../types/IPC/Main"
-    import { aiScriptureErrorText, stopAiScriptureListening } from "../../ai/scripture/aiScripture"
     import { AI_PROVIDER_MODELS } from "../../ai/models"
+    import { stopAiScriptureListening } from "../../ai/scripture/aiScripture"
     import { WHISPER_LANGUAGES } from "../../ai/whisper"
     import { AudioMicrophone } from "../../audio/audioMicrophone"
     import { requestMain, sendMain } from "../../IPC/main"
-    import { ai, aiScriptureDownloads, language, os, scriptures } from "../../stores"
+    import { ai, language, mediaDownloads, os, scriptures } from "../../stores"
     import { translateText } from "../../utils/language"
     import { keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
@@ -37,12 +37,10 @@
 
     // STATUS
 
-    let status: { keys: { [id in AIProviderId]: boolean }; whisper: WhisperStatus; nemotron: NemotronStatus } | null = null
+    let status: { [key: string]: EngineStatus } | null = null
     async function getStatus() {
         const result = await requestMain(Main.AI_GET_STATUS)
-        // an older electron process (dev: the frontend hot reloads, main does not) answers without the engine state -
-        // default it rather than letting a missing field throw and leave the section stuck on its loader
-        status = result ? { ...result, nemotron: result.nemotron || { supported: false, ready: false } } : null
+        status = result || null
     }
 
     let microphones: { value: string; label: string }[] = []
@@ -67,10 +65,10 @@
 
     // whisper transcribes fixed windows, the streaming engine decodes as the words arrive - see the driver contract in electron/ai/drivers
     const engineOptions = [
-        { value: "whisper", label: translateText("ai.engine_whisper") },
-        { value: "nemotron", label: translateText("ai.engine_nemotron") }
+        { value: "whisper", label: "Whisper" },
+        { value: "nemotron", label: "Nemotron" }
     ]
-    $: engine = ((settings.engine as string) || "whisper") as AiScriptureEngine
+    $: engine = (settings.engine as string) || "whisper"
 
     // TRANSCRIPTION (WHISPER)
 
@@ -82,10 +80,10 @@
     $: englishOnly = spokenLanguage === "en" && !interpretationMode
     const hasEnVariant = (base: string) => base !== "large-v3"
     $: whisperModelBase = ((settings.whisperModel as string) || "base").replace(".en", "")
-    $: whisperModelId = (englishOnly && hasEnVariant(whisperModelBase) ? `${whisperModelBase}.en` : whisperModelBase) as WhisperModelId
-    $: modelDownloaded = !!status?.whisper.downloadedModels.includes(whisperModelId)
+    $: whisperModelId = englishOnly && hasEnVariant(whisperModelBase) ? `${whisperModelBase}.en` : whisperModelBase
+    $: modelDownloaded = !!status?.whisper.downloadedModels?.includes(whisperModelId)
 
-    $: binaryInstalled = !!status && (status.whisper.binary !== "not_installed" || customPathValid)
+    $: binaryInstalled = !!status && (status.whisper.ready || customPathValid)
 
     const whisperModelSizes: { [key: string]: number } = { tiny: 75, base: 142, small: 466, medium: 1500, "large-v3": 3100 }
     const whisperModelKeys: { [key: string]: string } = { "large-v3": "large" } // dropdown ids not matching their i18n key
@@ -132,8 +130,8 @@
     type DownloadInfo = { progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }
     // names are assigned by the electron process: "whisper" (binary), "whisper-model-<id>" and "nemotron".
     // matching has to be exact - a loose match would show one engine's progress under the other's button
-    function getDownload(name: string, _updater: any = null): DownloadInfo | null {
-        return $aiScriptureDownloads.get(name) || null
+    function getDownload(_name: string, _updater: any = null): DownloadInfo | null {
+        return null
     }
 
     function getPercent(download: DownloadInfo | null) {
@@ -144,36 +142,22 @@
     let binaryDownloading = false
     let binaryError = ""
     async function downloadBinary() {
-        if (binaryDownloading) return
-        binaryDownloading = true
-        binaryError = ""
-
-        const result = await requestMain(Main.AI_WHISPER_DOWNLOAD_BINARY, undefined, undefined, 60 * 60 * 1000)
-        binaryDownloading = false
-        if (result && !result.ok) binaryError = result.error || ""
-        getStatus()
+        return
     }
 
     let modelDownloading = false
     let modelError = ""
     async function downloadModel() {
-        if (modelDownloading) return
-        modelDownloading = true
-        modelError = ""
-
-        const result = await requestMain(Main.AI_WHISPER_DOWNLOAD_MODEL, { modelId: whisperModelId }, undefined, 60 * 60 * 1000)
-        modelDownloading = false
-        if (result && !result.ok) modelError = result.error || ""
-        getStatus()
+        return
     }
 
     function cancelDownload() {
-        sendMain(Main.AI_WHISPER_CANCEL)
+        return
     }
 
     // driven by the progress store, not the local click flags, so reopening the popup mid-download still shows live progress
-    $: binaryDownload = getDownload("whisper", $aiScriptureDownloads)
-    $: modelDownload = getDownload(`whisper-model-${whisperModelId}`, $aiScriptureDownloads)
+    $: binaryDownload = getDownload("whisper", $mediaDownloads)
+    $: modelDownload = getDownload(`whisper-model-${whisperModelId}`, $mediaDownloads)
     $: binaryActive = binaryDownloading || binaryDownload?.status === "downloading"
     $: modelActive = modelDownloading || modelDownload?.status === "downloading"
 
@@ -185,26 +169,18 @@
     let nemotronDownloading = false
     let nemotronError = ""
     async function downloadNemotron() {
-        if (nemotronDownloading) return
-        nemotronDownloading = true
-        nemotronError = ""
-
-        const result = await requestMain(Main.AI_NEMOTRON_DOWNLOAD, undefined, undefined, 60 * 60 * 1000)
-        nemotronDownloading = false
-        if (result && !result.ok) nemotronError = result.error || ""
-        getStatus()
+        return
     }
 
     function cancelNemotronDownload() {
-        sendMain(Main.AI_NEMOTRON_CANCEL)
+        return
     }
 
     function deleteNemotronModel() {
-        sendMain(Main.AI_NEMOTRON_DELETE)
-        setTimeout(getStatus, 200)
+        return
     }
 
-    $: nemotronDownload = getDownload("nemotron", $aiScriptureDownloads)
+    $: nemotronDownload = getDownload("nemotron", $mediaDownloads)
     $: nemotronActive = nemotronDownloading || nemotronDownload?.status === "downloading"
     $: if (nemotronDownload?.status === "complete" && status && !status.nemotron.ready) getStatus()
 
@@ -212,23 +188,8 @@
 
     let customPathValid = false
     let customPathError = false
-    async function verifyCustomPath(path: string) {
-        customPathError = false
-
-        if (!path) {
-            customPathValid = false
-            update("whisperCustomPath", "")
-            return
-        }
-
-        const result = await requestMain(Main.AI_WHISPER_VERIFY_PATH, { path })
-        if (result?.valid) {
-            customPathValid = true
-            update("whisperCustomPath", path)
-        } else {
-            customPathValid = false
-            customPathError = true
-        }
+    async function verifyCustomPath(_path: string) {
+        return
     }
 
     const BREW_COMMAND = "brew install whisper-cpp"
@@ -248,7 +209,7 @@
         { value: "ollama", label: "Local (Ollama - Gemma)" }
     ]
 
-    $: provider = ((settings.provider as string) || "anthropic") as AIProviderId
+    $: provider = (settings.provider as string) || "anthropic"
     $: providerData = AI_PROVIDER_MODELS[provider]
     $: modelOptions = providerData.models.map((model) => ({ value: model.id, label: model.name }))
     $: storedModel = ((settings.models?.[provider] as string) || (settings.model as string) || "") as string // "models" is stored per provider - "model" is the legacy shared value
@@ -270,14 +231,14 @@
     function saveKey() {
         if (!keyInput) return
 
-        sendMain(Main.AI_SET_KEY, { provider, key: keyInput })
+        sendMain(Main.AI_SET_KEY, { providerId: provider, key: keyInput })
         keyInput = ""
         testResult = null
         setTimeout(getStatus, 200)
     }
 
     function removeKey() {
-        sendMain(Main.AI_SET_KEY, { provider, key: "" })
+        sendMain(Main.AI_SET_KEY, { providerId: provider, key: "" })
         testResult = null
         setTimeout(getStatus, 200)
     }
@@ -292,13 +253,13 @@
     }
 
     let testing = false
-    let testResult: { ok: boolean; error?: AIError } | null = null
+    let testResult: { ok: boolean; error?: string } | null = null
     async function testConnection() {
         if (testing) return
         testing = true
         testResult = null
 
-        testResult = (await requestMain(Main.AI_TEST_CONNECTION, { provider, model: effectiveModel }, undefined, 60000)) || { ok: false, error: { code: "timeout" } }
+        testResult = (await requestMain(Main.DEPRECATED_AI_TEST_CONNECTION, { provider, model: effectiveModel }, undefined, 60000)) || { ok: false, error: "Timed out" }
         testing = false
     }
 
@@ -351,9 +312,9 @@
     {#if engine === "nemotron"}
         {#if !status}
             <div class="loading"><Loader /></div>
-        {:else if !status.nemotron.supported}
+        {:else if !status.nemotron.ready}
             <Tip type="warning" value="ai.nemotron_unsupported" />
-            {#if status.nemotron.ready}
+            {#if status.nemotron.localPath}
                 <!-- the model was downloaded before the addon became unavailable - 660 MB must stay reclaimable -->
                 <MaterialButton variant="outlined" icon="delete" on:click={deleteNemotronModel}>
                     <T id="ai.nemotron_delete" />
@@ -383,7 +344,7 @@
         {/if}
 
         {#if nemotronError || (!nemotronActive && nemotronDownload?.status === "error")}
-            <Tip type="warning" value={aiScriptureErrorText(nemotronError || nemotronDownload?.message || "start_failed")} />
+            <Tip type="warning" value={nemotronError || nemotronDownload?.message || "start_failed"} />
         {/if}
     {:else if !status}
         <div class="loading"><Loader /></div>
@@ -391,8 +352,8 @@
         <div class="statusLine ok">
             <Icon id="check" size={0.9} white />
             <T id="ai.whisper_installed" />
-            {#if settings.whisperCustomPath || status.whisper.binaryPath}
-                <span class="path">{settings.whisperCustomPath || status.whisper.binaryPath}</span>
+            {#if settings.whisperCustomPath || status.whisper.localPath}
+                <span class="path">{settings.whisperCustomPath || status.whisper.localPath}</span>
             {/if}
         </div>
     {:else}
@@ -413,7 +374,7 @@
                 {/if}
 
                 {#if binaryError}
-                    <Tip type="warning" value={aiScriptureErrorText(binaryError)} />
+                    <Tip type="warning" value={binaryError} />
                 {/if}
             {:else if platform === "darwin"}
                 <p class="faded"><T id="ai.whisper_mac_guide" /></p>
@@ -467,7 +428,7 @@
             {/if}
         </InputRow>
         {#if modelError || (!modelActive && modelDownload?.status === "error")}
-            <Tip type="warning" value={aiScriptureErrorText(modelError || modelDownload?.message || "start_failed")} />
+            <Tip type="warning" value={modelError || modelDownload?.message || "start_failed"} />
         {/if}
     {/if}
 
@@ -547,9 +508,9 @@
         {:else}
             <div class="statusLine error">
                 <Icon id="warning" size={0.9} white />
-                <T id="ai_scripture.error_{testResult.error?.code || 'network'}" />
-                {#if testResult.error?.message}
-                    <span class="path">{testResult.error.message}</span>
+                <T id="ai_scripture.error" />
+                {#if testResult.error}
+                    <span class="path">{testResult.error}</span>
                 {/if}
             </div>
         {/if}

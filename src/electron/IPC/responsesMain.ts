@@ -8,6 +8,10 @@ import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
+import { receiveAiScriptureAudio, startAiScripture, stopAiScripture, testAiConnection, updateAiScriptureContext } from "../ai"
+import { aiHandleLocalSetup } from "../ai/setup/LocalModelManager"
+import { aiGetModelStatus } from "../ai/setup/status"
+import { SpeechToText } from "../ai/stt/SpeechToTextManager"
 import { getAudioMetadata } from "../audio/audio"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 import { CaptureHelper } from "../capture/CaptureHelper"
@@ -25,12 +29,11 @@ import { OutputHelper } from "../output/OutputHelper"
 import { libreConvert } from "../output/ppt/libreConverter"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers, updateServerData } from "../servers"
-import { aiScriptureNemotron, aiScriptureWhisper, getAiScriptureStatus, receiveAiScriptureAudio, setAiKey, startAiScripture, stopAiScripture, testAiConnection, updateAiScriptureContext } from "../ai"
+import { detectEncoders, setRtmpEncoderSetting } from "../streaming/encoderDetection"
+import { downloadFfmpeg, resolveFfmpegPath } from "../streaming/ffmpegManager"
 import { processAudioData, timecodeStart, timecodeStop, updateTimecodeValue } from "../timecode/timecode"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
-import { detectEncoders, setRtmpEncoderSetting } from "../streaming/encoderDetection"
-import { downloadFfmpeg, resolveFfmpegPath } from "../streaming/ffmpegManager"
 import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShowsAsync, locateMediaFile, openInSystem, readExifData, readFile, readFolder, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
 import { getMachineId } from "../utils/helpers"
 import { LyricSearch } from "../utils/LyricSearch"
@@ -40,6 +43,7 @@ import { correctSpelling } from "../utils/spellcheck"
 import { executeSpotifyCommand, getSpotifyState } from "../utils/spotify"
 import checkForUpdates from "../utils/updater"
 import { sendToMain } from "./main"
+import { setAiKey } from "../ai/setup/aiKeys"
 
 // no need to await Promise returns here
 export const mainResponses: MainResponses = {
@@ -269,21 +273,19 @@ export const mainResponses: MainResponses = {
             return { success: false, error: error?.message || "Unknown download error" }
         }
     },
-    // AI Scripture
-    [Main.AI_LISTEN_START]: (data) => startAiScripture(data),
-    [Main.AI_LISTEN_STOP]: () => stopAiScripture(),
-    [Main.AI_AUDIO_DATA]: (data) => receiveAiScriptureAudio(data),
-    [Main.AI_SCRIPTURE_CONTEXT]: (data) => updateAiScriptureContext(data),
+    // AI
+    [Main.AI_LISTEN_START]: (data) => SpeechToText.listen(data.engine, data.engineOptions),
+    [Main.AI_LISTEN_STOP]: () => SpeechToText.stop(),
+    [Main.AI_AUDIO_DATA]: (data) => SpeechToText.pushAudio(data.buffer),
+    [Main.AI_GET_STATUS]: (data) => aiGetModelStatus(data),
+    [Main.AI_SETUP]: (data) => aiHandleLocalSetup(data),
     [Main.AI_SET_KEY]: (data) => setAiKey(data),
-    [Main.AI_GET_STATUS]: () => getAiScriptureStatus(),
-    [Main.AI_TEST_CONNECTION]: (data) => testAiConnection(data),
-    [Main.AI_WHISPER_DOWNLOAD_BINARY]: () => aiScriptureWhisper.downloadBinary(),
-    [Main.AI_WHISPER_DOWNLOAD_MODEL]: (data) => aiScriptureWhisper.downloadModel(data),
-    [Main.AI_WHISPER_CANCEL]: () => aiScriptureWhisper.cancel(),
-    [Main.AI_WHISPER_VERIFY_PATH]: (data) => aiScriptureWhisper.verifyPath(data),
-    [Main.AI_NEMOTRON_DOWNLOAD]: () => aiScriptureNemotron.download(),
-    [Main.AI_NEMOTRON_CANCEL]: () => aiScriptureNemotron.cancel(),
-    [Main.AI_NEMOTRON_DELETE]: () => aiScriptureNemotron.delete()
+    // Rework these into the new system:
+    [Main.DEPRECATED_AI_LISTEN_START]: (data) => startAiScripture(data),
+    [Main.DEPRECATED_AI_LISTEN_STOP]: () => stopAiScripture(),
+    [Main.DEPRECATED_AI_AUDIO_DATA]: (data) => receiveAiScriptureAudio(data),
+    [Main.DEPRECATED_AI_SCRIPTURE_CONTEXT]: (data) => updateAiScriptureContext(data),
+    [Main.DEPRECATED_AI_TEST_CONNECTION]: (data) => testAiConnection(data)
 }
 
 /// ///////

@@ -20,7 +20,7 @@ import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowTy
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
-import { AiSettings } from "./../types/ai/AiSettings"
+import type { AiSettings } from "./../types/ai/AiSettings"
 import type { Outputs, RtmpStatus } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
@@ -219,7 +219,6 @@ export const aiScriptureSuggestions: Writable<DetectedReference[]> = writable([]
 export const aiScriptureTranscript: Writable<{ text: string; startMs: number; endMs: number; language?: string; music?: boolean }[]> = writable([])
 export const aiScriptureAutoPaused: Writable<boolean> = writable(false)
 export const aiScriptureHasProjected: Writable<boolean> = writable(false)
-export const aiScriptureDownloads: Writable<Map<string, { progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }>> = writable(new Map())
 
 // ----- SAVED VARIABLES -----
 

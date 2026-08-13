@@ -5,7 +5,7 @@
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tip from "../main/Tip.svelte"
-    import AiSettings from "../ai/AiSettings.svelte"
+    import AiSettings from "../../ai/components/settings/AiSettings.svelte"
     import AudioRouting from "./tabs/AudioRouting.svelte"
     import Connection from "./tabs/Connection.svelte"
     import Files from "./tabs/Files.svelte"

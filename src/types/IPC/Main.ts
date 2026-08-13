@@ -1,5 +1,4 @@
 import type { Display } from "electron"
-import type { EncoderDetection } from "../../electron/streaming/encoderDetection"
 import type { ExifData } from "exif"
 import type { Stats } from "fs"
 import type { Bible } from "json-bible/lib/Bible"
@@ -7,8 +6,11 @@ import type { SyncProviderId } from "../../electron/cloud/syncManager"
 import type { ContentFile, ContentLibraryCategory, ContentProviderId, MediaLicense } from "../../electron/contentProviders/base/types"
 import type { PCOFolderTreeNode } from "../../electron/contentProviders/planningCenter/request"
 import type { _store } from "../../electron/data/store"
+import type { EncoderDetection } from "../../electron/streaming/encoderDetection"
 import type { TimecodeMode } from "../../electron/timecode/timecode"
-import type { AIError, AiScriptureStartConfig, AIProviderId, NemotronStatus, WhisperModelId, WhisperStatus } from "../ai/AiScripture"
+import type { AiSetupOptions, EngineStatus } from "../ai/AiModels"
+import type { AiScriptureStartConfig } from "../ai/AiScripture"
+import type { SttEngineOptions } from "../ai/AiSettings"
 import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, SpotifyState, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
@@ -178,21 +180,18 @@ export enum Main {
     // Streaming encoder
     ENCODER_DETECT = "ENCODER_DETECT",
     SET_RTMP_ENCODER = "SET_RTMP_ENCODER",
-    // AI Scripture
+    // AI
     AI_LISTEN_START = "AI_LISTEN_START",
     AI_LISTEN_STOP = "AI_LISTEN_STOP",
     AI_AUDIO_DATA = "AI_AUDIO_DATA",
-    AI_SCRIPTURE_CONTEXT = "AI_SCRIPTURE_CONTEXT",
-    AI_SET_KEY = "AI_SET_KEY",
     AI_GET_STATUS = "AI_GET_STATUS",
-    AI_TEST_CONNECTION = "AI_TEST_CONNECTION",
-    AI_WHISPER_DOWNLOAD_BINARY = "AI_WHISPER_DOWNLOAD_BINARY",
-    AI_WHISPER_DOWNLOAD_MODEL = "AI_WHISPER_DOWNLOAD_MODEL",
-    AI_WHISPER_CANCEL = "AI_WHISPER_CANCEL",
-    AI_WHISPER_VERIFY_PATH = "AI_WHISPER_VERIFY_PATH",
-    AI_NEMOTRON_DOWNLOAD = "AI_NEMOTRON_DOWNLOAD",
-    AI_NEMOTRON_CANCEL = "AI_NEMOTRON_CANCEL",
-    AI_NEMOTRON_DELETE = "AI_NEMOTRON_DELETE"
+    AI_SETUP = "AI_SETUP",
+    DEPRECATED_AI_LISTEN_START = "DEPRECATED_AI_LISTEN_START",
+    DEPRECATED_AI_LISTEN_STOP = "DEPRECATED_AI_LISTEN_STOP",
+    DEPRECATED_AI_AUDIO_DATA = "DEPRECATED_AI_AUDIO_DATA",
+    DEPRECATED_AI_SCRIPTURE_CONTEXT = "DEPRECATED_AI_SCRIPTURE_CONTEXT",
+    AI_SET_KEY = "AI_SET_KEY",
+    DEPRECATED_AI_TEST_CONNECTION = "DEPRECATED_AI_TEST_CONNECTION"
 }
 
 export interface MainSendPayloads {
@@ -297,21 +296,17 @@ export interface MainSendPayloads {
     // Streaming encoder
     [Main.ENCODER_DETECT]: { force?: boolean } | undefined
     [Main.SET_RTMP_ENCODER]: { encoder: string }
-    // AI Scripture
-    [Main.AI_LISTEN_START]: AiScriptureStartConfig
-    [Main.AI_LISTEN_STOP]: undefined
+    // AI
+    [Main.AI_LISTEN_START]: { engine: string; engineOptions: SttEngineOptions }
     [Main.AI_AUDIO_DATA]: { buffer: Uint8Array }
-    [Main.AI_SCRIPTURE_CONTEXT]: { book: string; bookNumber: number; chapter: number; verseStart: number; verseEnd: number }
-    [Main.AI_SET_KEY]: { provider: AIProviderId; key: string }
-    [Main.AI_GET_STATUS]: undefined
-    [Main.AI_TEST_CONNECTION]: { provider: AIProviderId; model: string }
-    [Main.AI_WHISPER_DOWNLOAD_BINARY]: undefined
-    [Main.AI_WHISPER_DOWNLOAD_MODEL]: { modelId: WhisperModelId }
-    [Main.AI_WHISPER_CANCEL]: undefined
-    [Main.AI_WHISPER_VERIFY_PATH]: { path: string }
-    [Main.AI_NEMOTRON_DOWNLOAD]: undefined
-    [Main.AI_NEMOTRON_CANCEL]: undefined
-    [Main.AI_NEMOTRON_DELETE]: undefined
+    [Main.AI_GET_STATUS]: { engineId?: string; customPath?: string }
+    [Main.AI_SETUP]: AiSetupOptions
+    [Main.AI_SET_KEY]: { providerId: string; key: string }
+    [Main.DEPRECATED_AI_LISTEN_START]: AiScriptureStartConfig
+    [Main.DEPRECATED_AI_LISTEN_STOP]: undefined
+    [Main.DEPRECATED_AI_AUDIO_DATA]: { buffer: Uint8Array }
+    [Main.DEPRECATED_AI_SCRIPTURE_CONTEXT]: { book: string; bookNumber: number; chapter: number; verseStart: number; verseEnd: number }
+    [Main.DEPRECATED_AI_TEST_CONNECTION]: { provider: string; model: string }
 }
 
 export interface MainReturnPayloads {
@@ -415,14 +410,12 @@ export interface MainReturnPayloads {
     // Streaming encoder
     [Main.ENCODER_DETECT]: Promise<EncoderDetection>
     [Main.SET_RTMP_ENCODER]: void
-    // AI Scripture
-    [Main.AI_LISTEN_START]: Promise<{ started: boolean; error?: string }>
-    [Main.AI_GET_STATUS]: Promise<{ keys: { [id in AIProviderId]: boolean }; whisper: WhisperStatus; nemotron: NemotronStatus }>
-    [Main.AI_TEST_CONNECTION]: Promise<{ ok: boolean; error?: AIError }>
-    [Main.AI_WHISPER_DOWNLOAD_BINARY]: Promise<{ ok: boolean; error?: string }>
-    [Main.AI_WHISPER_DOWNLOAD_MODEL]: Promise<{ ok: boolean; error?: string }>
-    [Main.AI_WHISPER_VERIFY_PATH]: Promise<{ valid: boolean }>
-    [Main.AI_NEMOTRON_DOWNLOAD]: Promise<{ ok: boolean; error?: string }>
+    // AI
+    [Main.AI_LISTEN_START]: Promise<boolean>
+    [Main.AI_GET_STATUS]: Promise<{ [key: string]: EngineStatus }>
+    [Main.AI_SETUP]: Promise<boolean>
+    [Main.DEPRECATED_AI_LISTEN_START]: Promise<{ started: boolean; error?: string }>
+    [Main.DEPRECATED_AI_TEST_CONNECTION]: Promise<{ ok: boolean; error?: string }>
 }
 
 ///////////
