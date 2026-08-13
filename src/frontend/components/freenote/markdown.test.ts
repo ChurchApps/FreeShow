@@ -40,11 +40,6 @@ describe("renderMarkdown", () => {
         expect(html).toContain("<strong>world</strong>")
     })
 
-    it("passes output through the sanitizer", () => {
-        const result = renderMarkdown("<script>alert(1)</script>")
-        expect(typeof result).toBe("string")
-    })
-
     it("expands size and font tokens into styled spans (no literal brackets)", () => {
         const html = renderMarkdown("[size:140]bigger[/size] and [font:'Georgia']serif[/font]")
         expect(html).not.toContain("[size:")
@@ -109,6 +104,17 @@ describe("parseInlineMarkdown", () => {
         const sized = blockToItem("hello [size:140]bigger[/size]")
         expect(sized.lines[0].text[0].style).toBe("")
         expect(sized.lines[0].text[1].style).toBe("font-size:140px;")
+    })
+
+    it("escapes HTML so typed markup cannot reach the stage renderer", () => {
+        expect(parseInlineMarkdown("<script>alert(1)</script>")[0].value).toBe("&lt;script&gt;alert(1)&lt;/script&gt;")
+        expect(parseInlineMarkdown("a <img src=x onerror=alert(1)>")[0].value).toBe("a &lt;img src=x onerror=alert(1)&gt;")
+        expect(parseInlineMarkdown('"quoted" & <b>')[0].value).toBe("&quot;quoted&quot; &amp; &lt;b&gt;")
+    })
+
+    it("escapes HTML inside markdown tokens too", () => {
+        expect(parseInlineMarkdown("**<b>x</b>**")[0].value).toBe("&lt;b&gt;x&lt;/b&gt;")
+        expect(parseInlineMarkdown("[size:140]<img src=x>[/size]")[0].value).toBe("&lt;img src=x&gt;")
     })
 })
 

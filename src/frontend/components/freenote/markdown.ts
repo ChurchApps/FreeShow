@@ -46,6 +46,12 @@ const DEFAULT_ITEM_STYLE = "top:88px;left:50px;height:904px;width:1820px;"
 
 const INLINE_PATTERN = /(\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`|\*[^*\n]+\*|\[size:\d+\][^[\n]+\[\/size\]|\[font\s*:?\s*(?:'[^'\n]+'|"[^"\n]+"|[^\[\]\n]+)\][^[\n]+\[\/font\])/g
 
+// escape raw text before it reaches FreeShow's {@html} stage renderer, so typed or
+// pasted HTML in markdown mode can never inject scripts into the projection output.
+function escapeHtml(value: string): string {
+    return value.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch] as string)
+}
+
 // convert inline markdown (bold, italic, underline, code, size) into styled text segments
 export function parseInlineMarkdown(text: string): { value: string; style: string }[] {
     const segments: { value: string; style: string }[] = []
@@ -89,7 +95,7 @@ export function parseInlineMarkdown(text: string): { value: string; style: strin
             }
         }
 
-        segments.push({ value, style })
+        segments.push({ value: escapeHtml(value), style })
     })
 
     return segments
