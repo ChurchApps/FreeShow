@@ -58,6 +58,11 @@
         }
     })
 
+    // ensure video state matches the store state
+    $: if (video && !videoData.paused && video.paused) {
+        video.play().catch(() => {})
+    }
+
     let hasLoaded = false
     function loaded() {
         hasLoaded = true

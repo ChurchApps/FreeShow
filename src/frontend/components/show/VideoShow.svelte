@@ -87,6 +87,11 @@
         if (unsubscriber) unsubscriber()
     })
 
+    // ensure video state matches the store state
+    $: if (video && !videoData.paused && video.paused) {
+        video.play().catch(() => {})
+    }
+
     let videoTime = 0
     let videoData = { paused: false, muted: true, duration: 0, loop: false, softLoop: 0 }
     $: if (showId) videoData.paused = false

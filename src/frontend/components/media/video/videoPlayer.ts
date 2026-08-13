@@ -319,8 +319,6 @@ export class VideoPlayer {
     //
 
     static play(path: string, outputId?: string) {
-        console.log("VideoPlayer.play", path, outputId)
-
         if (this.isFadingOut.includes(path)) {
             const fadeIndex = this.isFadingOut.indexOf(path)
             if (fadeIndex !== -1) this.isFadingOut.splice(fadeIndex, 1)
