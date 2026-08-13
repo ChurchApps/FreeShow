@@ -483,30 +483,6 @@ export class AudioAnalyser {
         AudioSender.deactivate()
     }
 
-    // static resetRecorder(targetId: string) {
-    //     this.destinationNodes.delete(targetId)
-    //     AudioSender.resetTarget(targetId, this.getAudioContext(), (tid) => this.getOrCreateDestinationNode(tid))
-    // }
-
-    // private static shouldBeActive() {
-    //     if (this.sendOutputShowAudio()) return true
-
-    //     const connections = get(audioRouting)?.connections || []
-    //     if (this.isOutputConnected("icecast", connections)) return true
-
-    //     const outputList = keysToID(get(outputs) || {}).filter(Boolean)
-    //     const hasConnectedOutput = outputList.some((a) => a && a.enabled && (a.ndi || a.blackmagic || a.webrtcData?.streaming || a.rtmpData?.streaming) && this.isOutputConnected(a.id, connections))
-    //     return hasConnectedOutput
-    // }
-
-    // private static isOutputConnected(id: string | undefined, connections: { from: string; to: string }[]): boolean {
-    //     if (!id) return false
-    //     for (let i = 0; i < connections.length; i++) {
-    //         if (connections[i].to.includes(id)) return true
-    //     }
-    //     return false
-    // }
-
     static async customOutput(sinkId: string) {
         try {
             await (this.ac as any).setSinkId(sinkId || "")

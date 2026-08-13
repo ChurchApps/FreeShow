@@ -19,8 +19,6 @@ export function setRtmpNoticeListener(listener: RtmpNoticeListener) {
     noticeListener = listener
 }
 
-// const SILENCE_THRESHOLD_MS = 100
-// const SILENCE_INTERVAL_MS = 50
 /** a relay buffering more than this cannot keep up, so it gets restarted instead of stalling the encoder */
 const RELAY_BUFFER_CAP_BYTES = 2 * 1024 * 1024
 const RELAY_LIVE_AFTER_MS = 2000

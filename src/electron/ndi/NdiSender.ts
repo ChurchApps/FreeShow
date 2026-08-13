@@ -148,7 +148,7 @@ export class NdiSender {
                 name: this.NDI[id].name,
                 groups: this.NDI[id].groups,
                 clockVideo: false,
-                clockAudio: true
+                clockAudio: false
             })
         } catch (err) {
             console.error("Could not create NDI sender:", err)
@@ -247,8 +247,6 @@ export class NdiSender {
         const noSamples = Math.trunc(buffer.length / (channelCount * this.BYTES_PER_FLOAT32))
         if (noSamples <= 0) return
 
-        // detectTestToneArtifacts(buffer, sampleRate, channelCount)
-
         const frame = {
             sampleRate,
             noChannels: channelCount,
@@ -272,8 +270,6 @@ export class NdiSender {
         const noSamples = Math.trunc(buffer.length / (channelCount * this.BYTES_PER_FLOAT32))
         if (noSamples <= 0) return
 
-        // detectTestToneArtifacts(buffer, sampleRate, channelCount)
-
         const frame = {
             sampleRate,
             noChannels: channelCount,
@@ -292,71 +288,3 @@ export class NdiSender {
         })
     }
 }
-
-// let lastChannel0Sample: number | null = null
-// let artifactCount = 0
-// let totalFrameCount = 0
-
-// function detectTestToneArtifacts(buffer: Buffer, _sampleRate: number, channelCount: number) {
-//     totalFrameCount++
-//     if (!buffer || buffer.length === 0) return
-
-//     const totalSamples = Math.floor(buffer.length / 4)
-//     const samplesPerChannel = Math.floor(totalSamples / channelCount)
-//     if (samplesPerChannel <= 0) return
-
-//     const float32 = new Float32Array(buffer.buffer, buffer.byteOffset, totalSamples)
-
-//     // Check if audio has non-zero signal (test tone or active playback)
-//     let maxAmp = 0
-//     for (let i = 0; i < samplesPerChannel; i++) {
-//         const abs = Math.abs(float32[i])
-//         if (abs > maxAmp) maxAmp = abs
-//     }
-
-//     if (maxAmp < 0.01) {
-//         lastChannel0Sample = null
-//         return
-//     }
-
-//     const maxExpectedStep = 0.025 // Max sample step for 440Hz sine wave at 48000Hz (amp 0.3)
-
-//     // Check inter-frame boundary discontinuity
-//     if (lastChannel0Sample !== null) {
-//         const boundaryStep = Math.abs(float32[0] - lastChannel0Sample)
-//         if (boundaryStep > maxExpectedStep) {
-//             artifactCount++
-//             // console.warn(`[Test Tone Artifact] Boundary Discontinuity #${artifactCount} in Frame #${totalFrameCount}: step=${boundaryStep.toFixed(4)} (prevEnd=${lastChannel0Sample.toFixed(4)}, currStart=${float32[0].toFixed(4)})`)
-//         }
-//     }
-
-//     let maxStep = 0
-//     let stepAnomalies = 0
-//     let nanCount = 0
-
-//     for (let i = 0; i < samplesPerChannel; i++) {
-//         const val = float32[i]
-//         if (isNaN(val) || !isFinite(val)) {
-//             nanCount++
-//             continue
-//         }
-
-//         if (i > 0) {
-//             const step = Math.abs(val - float32[i - 1])
-//             if (step > maxStep) maxStep = step
-//             if (step > maxExpectedStep) {
-//                 stepAnomalies++
-//             }
-//         }
-//     }
-
-//     lastChannel0Sample = float32[samplesPerChannel - 1]
-
-//     if (nanCount > 0) {
-//         console.warn(`[Test Tone Artifact] Invalid Values in Frame #${totalFrameCount}: ${nanCount} NaN/Infinity samples`)
-//     }
-//     if (stepAnomalies > 0) {
-//         artifactCount++
-//         console.warn(`[Test Tone Artifact] Intra-frame Discontinuity #${artifactCount} in Frame #${totalFrameCount}: ${stepAnomalies} anomalous sample jumps > ${maxExpectedStep} (maxStep=${maxStep.toFixed(4)})`)
-//     }
-// }

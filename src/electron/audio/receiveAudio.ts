@@ -1,18 +1,12 @@
 import type { Message } from "../../types/Socket"
 import { processAudio } from "./processAudio"
 
-// let channelCount = 2
-// let sampleRate = 48000 // Hz
-// let audioDelay = 0
-
 let latestIcecastConfig: any = null
 
 export function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
     const data = msg.data
 
-    if (msg.channel === "RESET_DECODER") {
-        return
-    }
+    if (msg.channel === "RESET_DECODER") return
 
     if (msg.channel !== "PCM" && msg.channel !== "CAPTURE") {
         console.error("Unknown AUDIO channel:", msg.channel)
@@ -28,16 +22,6 @@ export function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
     processAudio(input, sampleRate, targetId, latestIcecastConfig)
 }
 
-// function resetDecoder(id: string) {
-//     const dec = ebmlDecoders.get(id)
-//     if (dec) {
-//         try {
-//             dec.removeAllListeners()
-//         } catch {}
-//         ebmlDecoders.delete(id)
-//     }
-// }
-
 function toAudioBuffer(value: unknown): Buffer | null {
     if (!value) return null
     if (Buffer.isBuffer(value)) return value
@@ -52,24 +36,3 @@ function toAudioBuffer(value: unknown): Buffer | null {
 
     return null
 }
-
-// const ebmlDecoders = new Map<string, Decoder>()
-
-// function createDecoder(id: string) {
-//     const existing = ebmlDecoders.get(id)
-//     if (existing) return existing
-
-//     const decoder = new Decoder()
-//     ebmlDecoders.set(id, decoder)
-
-//     decoder.on("data", ([blockType, data]: StateAndTagData) => {
-//         if (blockType !== "tag" || data.name !== "SimpleBlock" || data.type !== "b") return
-
-//         const block = data as Block
-//         if (!block.payload) return
-
-//         processAudio(block.payload, latestIcecastConfig)
-//     })
-
-//     return decoder
-// }
