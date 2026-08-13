@@ -1,13 +1,11 @@
 import { get } from "svelte/store"
 import type { AudioChannel } from "../../types/Audio"
-import { AUDIO } from "../../types/Channels"
-import { keysToID } from "../components/helpers/array"
 import { getFirstOutput } from "../components/helpers/output"
-import { audioRouting, disabledServers, media, outputs, playingAudio, playingVideos, serverData, special } from "../stores"
-import { send } from "../utils/request"
+import { disabledServers, media, playingAudio, playingVideos, serverData } from "../stores"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
 import { AudioProcessor, PitchShiftNode } from "./audioProcessor"
+import { AudioSender } from "./audioSender"
 import { AudioInputCapture } from "./routing/audioInputCapture"
 import { AudioRoutingManager } from "./routing/audioRoutingManager"
 
@@ -460,136 +458,29 @@ export class AudioAnalyser {
         } catch {}
     }
 
-    private static destinationNodes: Map<string, MediaStreamAudioDestinationNode> = new Map()
-    private static getOrCreateDestinationNode(targetId: string): MediaStreamAudioDestinationNode {
+    private static destinationNodes: Map<string, GainNode> = new Map()
+    static getOrCreateDestinationNode(targetId: string): GainNode {
+        const ctx = (this.ac ??= AudioAnalyser.getAudioContext())
         let destNode = this.destinationNodes.get(targetId)
-        if (!destNode) {
-            destNode = AudioMultichannel.createMultichannelDestination(this.ac, this.channels)
+        if (!destNode || destNode.context !== ctx) {
+            destNode = AudioMultichannel.createMultichannelGainNode(ctx, this.channels)
             this.destinationNodes.set(targetId, destNode)
             AudioRoutingManager.getInstance().setDestinationNode(targetId, destNode)
         }
         return destNode
     }
 
-    // RECORDER
-    private static recorders: Map<string, MediaRecorder> = new Map()
+    // RECORDER & AUDIO SENDER DELEGATION
     private static initRecorder() {
-        if (!this.recorderActive) return
-
-        const activeTargets: string[] = []
-
-        const connections = get(audioRouting)?.connections || []
-        const isIcecastConnected = connections.some((c) => c.to === "icecast")
-        if (isIcecastConnected) activeTargets.push("icecast")
-
-        const activeStreamingOutputs = keysToID(get(outputs)).filter((out) => out && out.enabled && (out.ndi || out.blackmagic || out.webrtcData?.streaming || out.rtmpData?.streaming) && this.isOutputConnected(out.id, connections))
-        activeStreamingOutputs.forEach((out) => {
-            if (!activeTargets.includes(out.id)) activeTargets.push(out.id)
-        })
-
-        // OutputShow - this likely does not work
-        if (this.sendOutputShowAudio()) {
-            const outputId = this.getOutputShowId()
-            if (outputId && !activeTargets.includes(outputId)) {
-                activeTargets.push(outputId)
-            }
-        }
-
-        // Clean up recorders for targets that are no longer active
-        this.recorders.forEach((rec, targetId) => {
-            if (!activeTargets.includes(targetId)) {
-                try {
-                    rec.stop()
-                } catch {}
-                this.recorders.delete(targetId)
-            }
-        })
-
-        // Initialize recorders for active targets
-        activeTargets.forEach((targetId) => {
-            const existingRec = this.recorders.get(targetId)
-            if (existingRec) {
-                if (existingRec.state === "inactive") this.recorders.delete(targetId)
-                else return
-            }
-
-            const destNode = this.getOrCreateDestinationNode(targetId)
-            try {
-                send(AUDIO, ["RESET_DECODER"], { id: targetId })
-                const rec = new MediaRecorder(destNode.stream, {
-                    mimeType: 'audio/webm; codecs="opus"'
-                })
-                rec.onerror = () => {
-                    this.recorders.delete(targetId)
-                }
-                rec.onstop = () => {
-                    this.recorders.delete(targetId)
-                }
-                rec.addEventListener("dataavailable", (ev) => {
-                    if (!ev.data || ev.data.size === 0) return
-                    ev.data.arrayBuffer().then((arrayBuffer) => {
-                        const uint8Array = new Uint8Array(arrayBuffer)
-                        if (targetId === "icecast") {
-                            const spec = get(special)
-                            const icecast = { enabled: true, host: spec.icecastHost, port: spec.icecastPort, mount: spec.icecastMount, password: spec.icecastPassword ?? "hackme" }
-                            send(AUDIO, ["CAPTURE"], { id: "icecast", buffer: uint8Array, icecast })
-                        } else {
-                            send(AUDIO, ["CAPTURE"], { id: targetId, buffer: uint8Array })
-                        }
-                    })
-                })
-
-                if (rec.state === "paused") rec.resume()
-                else if (rec.state !== "recording") {
-                    rec.start(Math.round(1000 / this.recorderFrameRate))
-                }
-                this.recorders.set(targetId, rec)
-            } catch (err) {
-                console.error(`[AudioAnalyser] Failed to start MediaRecorder for ${targetId}:`, err)
-            }
-        })
+        AudioSender.updateProcessors(this.getAudioContext(), (targetId) => this.getOrCreateDestinationNode(targetId))
     }
 
-    private static recorderActive = false
     static recorderActivate() {
-        if (!this.shouldBeActive()) return
-
-        if (this.ac.state === "suspended") {
-            this.ac.resume().catch(() => {})
-        }
-
-        this.recorderActive = true
-        this.initRecorder()
+        AudioSender.activate(this.getAudioContext(), (targetId) => this.getOrCreateDestinationNode(targetId))
     }
+
     static recorderDeactivate() {
-        if (this.shouldBeActive()) return
-
-        this.recorderActive = false
-        this.recorders.forEach((rec) => {
-            try {
-                rec.stop()
-            } catch {}
-        })
-        this.recorders.clear()
-    }
-
-    private static shouldBeActive() {
-        if (this.sendOutputShowAudio()) return true
-
-        const connections = get(audioRouting)?.connections || []
-        if (this.isOutputConnected("icecast", connections)) return true
-
-        const outputList = keysToID(get(outputs) || {}).filter(Boolean)
-        const hasConnectedOutput = outputList.some((a) => a && a.enabled && (a.ndi || a.blackmagic || a.webrtcData?.streaming || a.rtmpData?.streaming) && this.isOutputConnected(a.id, connections))
-        return hasConnectedOutput
-    }
-
-    private static isOutputConnected(id: string | undefined, connections: { from: string; to: string }[]): boolean {
-        if (!id) return false
-        for (let i = 0; i < connections.length; i++) {
-            if (connections[i].to.includes(id)) return true
-        }
-        return false
+        AudioSender.deactivate()
     }
 
     static async customOutput(sinkId: string) {

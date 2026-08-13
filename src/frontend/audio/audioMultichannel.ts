@@ -83,7 +83,7 @@ export class AudioMultichannel {
         if (node.channelCount !== channelCount) {
             node.channelCount = channelCount
             node.channelCountMode = "explicit"
-            node.channelInterpretation = "speakers"
+            node.channelInterpretation = "discrete"
         }
     }
 

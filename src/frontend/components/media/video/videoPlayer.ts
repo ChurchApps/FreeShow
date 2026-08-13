@@ -55,6 +55,8 @@ export type PlayingVideoState = {
 }
 
 export class VideoPlayer {
+    private static replayGainCache: Map<string, number> = new Map()
+
     private static isStarting = new Set<string>()
     static async start(id: string, options: VideoOptions = {}, linkedOutputIds?: string[]): Promise<boolean> {
         const ref = `${id}_${linkedOutputIds?.join(",")}`
@@ -111,7 +113,6 @@ export class VideoPlayer {
             if ("timeTick" in audio) audio.timeTick.update(startTime)
         }
 
-        const replayGainMultiplier = options.isOnline ? 1 : await this.getReplayGainMultiplier(id)
         const globalOpts = this.getGlobalOptions(id)
         const softLoop = globalOpts.softLoop || 0
         const loop = globalOpts.loop !== undefined ? globalOpts.loop : options.loop
@@ -119,9 +120,25 @@ export class VideoPlayer {
         const toTime = this.getEndTime(id, audio.duration)
 
         playingVideos.update((a) => {
-            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background", replayGainMultiplier, softLoop, loop, fromTime, toTime })
+            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background", softLoop, loop, fromTime, toTime })
             return a
         })
+
+        if (!options.isOnline) {
+            this.getReplayGainMultiplier(id)
+                .then((mult) => {
+                    const gain = mult || 1
+                    if (gain === 1) return
+
+                    playingVideos.update((a) => {
+                        const item = a.find((v) => v.path === id)
+                        if (item) item.replayGainMultiplier = gain
+                        return a
+                    })
+                    this.updateVolume(id)
+                })
+                .catch(() => {})
+        }
 
         const hasCustomBounds = fromTime > 0 || (toTime > 0 && toTime < audio.duration)
         audio.loop = (options.loop ?? false) && !hasCustomBounds
@@ -302,6 +319,8 @@ export class VideoPlayer {
     //
 
     static play(path: string, outputId?: string) {
+        console.log("VideoPlayer.play", path, outputId)
+
         if (this.isFadingOut.includes(path)) {
             const fadeIndex = this.isFadingOut.indexOf(path)
             if (fadeIndex !== -1) this.isFadingOut.splice(fadeIndex, 1)
@@ -586,9 +605,12 @@ export class VideoPlayer {
     }
 
     static async getReplayGainMultiplier(path: string): Promise<number> {
+        if (this.replayGainCache.has(path)) return this.replayGainCache.get(path) || 1
         try {
             const audioMetadata = await requestMain(Main.READ_AUDIO_METADATA, { filePath: path })
-            return audioMetadata?.replayGainMultiplier || 1
+            const mult = audioMetadata?.replayGainMultiplier || 1
+            this.replayGainCache.set(path, mult)
+            return mult
         } catch (e) {
             console.error("Failed to read ReplayGain metadata for video", e)
             return 1

@@ -1,9 +1,9 @@
+import { isAudioEnabled } from "../../audio/processAudio"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 import { OutputHelper } from "../../output/OutputHelper"
 import { getRtmpEncoderSetting } from "../../streaming/encoderDetection"
 import { RtmpStreamer } from "../../streaming/RtmpStreamer"
 import { WebRtcHost } from "../../streaming/WebRtcHost"
-import { isAudioEnabled } from "../../audio/processAudio"
 import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
 
@@ -138,13 +138,21 @@ export class CaptureLifecycle {
     private static async captureAndProcessFrame(id: string, captureOpts: any) {
         let image = await captureOpts.window.webContents.capturePage()
 
+        // const output = OutputHelper.getOutput(id)
+        // const targetBounds = output.intendedBounds
+
         // Blackmagic only - resize if needed
         if (captureOpts.options?.blackmagic) {
             const targetSize = BlackmagicSender.getTargetDimensions(id)
             const currentSize = image.getSize()
             if (currentSize.width !== targetSize.width || currentSize.height !== targetSize.height) {
-                image = image.resize({ width: targetSize.width, height: targetSize.height })
+                image = image.resize({ width: targetSize.width, height: targetSize.height, quality: "good" })
             }
+            // } else if (targetBounds?.width && targetBounds?.height) {
+            //     const currentSize = image.getSize()
+            //     if (currentSize.width !== targetBounds.width || currentSize.height !== targetBounds.height) {
+            //         image = image.resize({ width: targetBounds.width, height: targetBounds.height, quality: "good" })
+            //     }
         }
 
         return image

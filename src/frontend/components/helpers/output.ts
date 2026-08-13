@@ -761,18 +761,18 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
 
     const newData = { ...(output.webrtcData || {}), [key]: value }
 
-    if (key === "streaming") {
-        if (!output.webrtc || !output.webrtcData?.url) return
-
-        if (value) AudioAnalyser.recorderActivate()
-        else AudioAnalyser.recorderDeactivate()
-    }
+    if (key === "streaming" && (!output.webrtc || !output.webrtcData?.url)) return null
 
     outputs.update((a: any) => {
         if (!a[outputId]) return a
         a[outputId].webrtcData = newData
         return a
     })
+
+    if (key === "streaming") {
+        if (value) AudioAnalyser.recorderActivate()
+        else AudioAnalyser.recorderDeactivate()
+    }
 
     send(OUTPUT, ["SET_VALUE"], { id: outputId, key: "webrtcData", value: newData })
     return newData
@@ -799,18 +799,18 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
 
     const newData = { ...(output.rtmpData || {}), [key]: value }
 
-    if (key === "streaming") {
-        if (!output.rtmp || !hasStreamableDestination(newData)) return
-
-        if (value) AudioAnalyser.recorderActivate()
-        else AudioAnalyser.recorderDeactivate()
-    }
+    if (key === "streaming" && (!output.rtmp || !hasStreamableDestination(newData))) return null
 
     outputs.update((a: any) => {
         if (!a[outputId]) return a
         a[outputId].rtmpData = newData
         return a
     })
+
+    if (key === "streaming") {
+        if (value) AudioAnalyser.recorderActivate()
+        else AudioAnalyser.recorderDeactivate()
+    }
 
     send(OUTPUT, ["SET_VALUE"], { id: outputId, key: "rtmpData", value: newData })
     return newData

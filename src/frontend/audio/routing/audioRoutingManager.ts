@@ -118,6 +118,7 @@ export class AudioRoutingManager {
     }
 
     public setDestinationNode(targetId: string, node: AudioNode) {
+        if (this.destinationNodes.get(targetId) === node) return
         this.destinationNodes.set(targetId, node)
         this.updateRoutingNodes()
     }
@@ -413,7 +414,8 @@ export class AudioRoutingManager {
                 .filter((c) => c.to === "icecast" || c.to.startsWith("network_sub_"))
                 .forEach((c) => {
                     const targetKey = c.to.startsWith("network_sub_") ? c.to.replace("network_sub_", "") : c.to
-                    const destNode = this.destinationNodes.get(targetKey)
+                    let destNode = this.destinationNodes.get(targetKey)
+                    if (!destNode) destNode = AudioAnalyser.getOrCreateDestinationNode(targetKey)
                     if (destNode) {
                         try {
                             outNode.connect(destNode)
@@ -475,7 +477,23 @@ export class AudioRoutingManager {
 
         nodeToIds.forEach((inputIds, node) => {
             this.safelyDisconnect(node)
-            inputIds.forEach((inputId) => this.routeInput(inputId, node))
+            const targetMergerIds = new Set<string>()
+
+            inputIds.forEach((inputId) => {
+                AudioInputCapture.getInstance().captureInput(inputId, node)
+                this.getConnectionsFrom(inputId).forEach((mergerId) => targetMergerIds.add(mergerId))
+            })
+
+            targetMergerIds.forEach((mergerId) => {
+                const mergerNode = this.getMergerNode(mergerId)
+                if (mergerNode) {
+                    try {
+                        node.connect(mergerNode)
+                    } catch (e) {
+                        console.error(`[AudioRoutingManager] Could not connect source to merger ${mergerId}:`, e)
+                    }
+                }
+            })
         })
     }
 

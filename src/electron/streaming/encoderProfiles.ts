@@ -54,7 +54,7 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         pixelFormat: "yuv420p",
         // -no-scenecut only applies with rc_lookahead > 0 and -forced-idr only with -force_key_frames,
         // neither of which are set here, so both would be silent no-ops
-        args: (bitrate, gop) => ["-preset", "p1", "-tune", "ll", "-rc", "cbr", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`]
+        args: (bitrate, gop) => ["-preset", "p4", "-tune", "ll", "-rc", "cbr", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`]
     },
     qsv: {
         id: "qsv",
@@ -107,7 +107,7 @@ export function parseAvailableEncoders(stdout: string): EncoderId[] {
 
 export function buildVideoFilter(profile: EncoderProfile, scaleTo?: { width: number; height: number }): string {
     const parts: string[] = []
-    if (scaleTo) parts.push(`scale=${scaleTo.width}:${scaleTo.height}`)
+    if (scaleTo) parts.push(`scale=${scaleTo.width}:${scaleTo.height}:flags=bicubic`)
     parts.push(`format=${profile.pixelFormat}`)
     if (profile.filterSuffix) parts.push(profile.filterSuffix)
     return parts.join(",")
@@ -125,9 +125,12 @@ export interface EncoderCommandOptions {
     /** video bitrate in kbps */
     bitrate: number
     enableAudio: boolean
+    sampleRate?: number
 }
 
 /** Full arg list for the encoder process: raw BGRA + PCM in, mpegts out on stdout. */
+// Inside buildEncoderCommand in encoderProfiles.ts:
+
 export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
     const profile = getProfile(opts.encoderId)
     const needsScale = opts.inputWidth !== opts.outputWidth || opts.inputHeight !== opts.outputHeight
@@ -137,26 +140,38 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
 
     if (profile.preInput) args.push(...profile.preInput)
 
-    args.push("-f", "rawvideo", "-pixel_format", "bgra", "-video_size", `${opts.inputWidth}x${opts.inputHeight}`, "-framerate", `${opts.fps}`, "-thread_queue_size", "4096", "-i", "pipe:0")
+    // VIDEO INPUT PIPE
+    args.push("-thread_queue_size", "512", "-use_wallclock_as_timestamps", "1", "-fflags", "+nobuffer", "-f", "rawvideo", "-pixel_format", "bgra", "-video_size", `${opts.inputWidth}x${opts.inputHeight}`, "-framerate", `${opts.fps}`, "-i", "pipe:0")
 
     if (opts.enableAudio) {
-        args.push("-f", "s16le", "-ar", `${SAMPLE_RATE}`, "-ac", `${AUDIO_CHANNELS}`, "-thread_queue_size", "4096", "-i", "pipe:3")
+        const ar = opts.sampleRate || SAMPLE_RATE
+        // AUDIO INPUT PIPE
+        args.push("-thread_queue_size", "512", "-fflags", "+nobuffer", "-f", "s16le", "-ar", `${ar}`, "-ac", `${AUDIO_CHANNELS}`, "-probesize", "32", "-analyzeduration", "0", "-i", "pipe:3")
     } else {
         args.push("-f", "lavfi", "-i", `anullsrc=channel_layout=stereo:sample_rate=${SAMPLE_RATE}`)
     }
 
-    args.push("-vf", buildVideoFilter(profile, scaleTo))
+    const baseFilter = buildVideoFilter(profile, scaleTo)
+    args.push("-vf", `${baseFilter},fps=${opts.fps}`)
     args.push("-c:v", profile.codec, ...profile.args(opts.bitrate, opts.fps * 2))
-    args.push("-c:a", "aac", "-b:a", AUDIO_BITRATE)
-    args.push("-muxdelay", "0", "-muxpreload", "0", "-f", "mpegts", "pipe:1")
+
+    if (opts.enableAudio) {
+        args.push("-af", "aresample=async=1:max_soft_comp=10000:first_pts=0")
+    }
+
+    args.push("-c:a", "aac", "-ar", "48000", "-ac", `${AUDIO_CHANNELS}`, "-b:a", AUDIO_BITRATE)
+
+    // SWITCH FROM MPEGTS TO FLV FOR RTMP
+    // FLV is the native format for RTMP relays and YouTube ingest.
+    // Setting flvflags no_sequence_end prevents stream termination artifacts.
+    args.push("-max_muxing_queue_size", "4096", "-muxdelay", "0", "-muxpreload", "0", "-f", "flv", "-flvflags", "no_sequence_end", "pipe:1")
 
     return args
 }
 
 /** Relay process: remux the encoded mpegts straight to one RTMP destination, no re-encode. */
 export function buildRelayCommand(url: string): string[] {
-    // aac_adtstoasc is required going from mpegts (ADTS) to flv (ASC)
-    return ["-hide_banner", "-loglevel", "warning", "-f", "mpegts", "-i", "pipe:0", "-c", "copy", "-bsf:a", "aac_adtstoasc", "-f", "flv", url]
+    return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-f", "flv", url]
 }
 
 /** Short throwaway encode used to prove the encoder actually works on this machine. */
