@@ -202,8 +202,17 @@
                 })
             })
 
-            chords.forEach((chord, i) => {
-                html += `<span class="chord end" data-autosize-ratio="${autosizeRatio}" style="transform: translateX(calc(${1.4 * (i + 1)}em - 50%));">${chord.key}</span>`
+            // Add leading offset before the first end chord to separate it from the last lyric character
+            if (chords.length > 0) {
+                const leadWidthEm = (0.8 * autosizeRatio).toFixed(2)
+                html += `<span class="invisible trailing-lead-space" style="display: inline-block; width: ${leadWidthEm}em; white-space: nowrap;"></span>`
+            }
+
+            // Dynamically reserve inline horizontal space per trailing chord with generous spacing
+            chords.forEach((chord) => {
+                html += `<span class="chord end" data-autosize-ratio="${autosizeRatio}">${chord.key}</span>`
+                const widthEm = Math.max(1.5, (chord.key.length * 0.65 * autosizeRatio) + 0.8).toFixed(2)
+                html += `<span class="invisible trailing-space" style="display: inline-block; width: ${widthEm}em; white-space: nowrap;"></span>`
             })
 
             if (!html) return
@@ -213,7 +222,7 @@
     }
 
     function getLineText(line) {
-        return line.text?.reduce((value, text) => (value += text.value || ""), "") || ""
+        return line.text?.reduce((value, text) => (value += text.value.trim() || ""), "") || ""
     }
 
     function getChordOnlyHtml(chords) {
