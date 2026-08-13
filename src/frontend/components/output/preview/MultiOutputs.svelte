@@ -1,6 +1,7 @@
 <script lang="ts">
     import { activePage, activeStyle, audioChannelsData, dictionary, outputs, rtmpStatus, selected, settingsTab, styles, templates, toggleOutputEnabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
     import { openDrawer } from "../../edit/scripts/edit"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -154,6 +155,7 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         {@const layers = Array.isArray(style.layers) ? style.layers : clone(defaultLayers)}
         {@const styleTemplate = isScriptureOutput ? style.templateScripture : style.template}
         {@const isMuted = $audioChannelsData[`channel_${output.id}`]?.isMuted}
+        {@const isNetworkOutput = output.ndi || output.webrtc || output.rtmp}
 
         <div id={output.id} class="outputPreview output_button context #output_preview" class:drop-target={!fullscreen && dragOverOutputId === output.id} on:dragover={(e) => handleDragOver(e, output.id)} on:dragleave={(e) => handleDragLeave(e, output.id)} on:drop={(e) => handleDrop(e, output.id)} style={fullscreen ? (fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;") : outs.length > 1 ? `border: 2px solid ${output?.color};width: 50%;` : "display: contents;"}>
             <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
@@ -208,6 +210,13 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
                             <Icon id="muted" size={0.8} white />
                         </div>
                     {/if}
+                </div>
+            {/if}
+
+            <!-- Network Output Audio -->
+            {#if isNetworkOutput}
+                <div class="preview-meter">
+                    <AudioMeter channelId="network_sub_{output.id}" preview />
                 </div>
             {/if}
         </div>
@@ -328,5 +337,18 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
     .icons .divider {
         width: 1px;
         background-color: var(--primary-lighter);
+    }
+
+    /* Audio */
+
+    .preview-meter {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        width: 4px;
+        z-index: 5;
+
+        opacity: 0.7;
     }
 </style>
