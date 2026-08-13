@@ -83,11 +83,7 @@ interface StreamInstance {
         lastLog: number
     }
     videoFrameCount?: number
-
-    firstVideoTime?: number
-    firstAudioTime?: number
     hasReceivedFirstAudio?: boolean
-    diagInterval?: NodeJS.Timeout
 }
 
 interface StreamConfig {
@@ -259,40 +255,8 @@ export class RtmpStreamer {
             return
         }
 
-        // Clear old diagnostic interval if present
-        if (streamer.diagInterval) clearInterval(streamer.diagInterval)
-
-        // DIAGNOSTIC MONITOR: Poll pipe lengths every 5 seconds, switching to every 1s after 100s mark
-        const startTime = Date.now()
-        streamer.diagInterval = setInterval(() => {
-            const uptimeSec = Math.round((Date.now() - startTime) / 1000)
-            const videoPipe = streamer.encoder?.stdin
-            const audioPipe = streamer.encoder?.stdio[3] as any
-
-            const videoBuf = videoPipe?.writableLength ?? 0
-            const audioBuf = audioPipe?.writableLength ?? 0
-
-            // Highlight high queues or log routinely around the 120s - 150s crash window
-            if (uptimeSec >= 100 || videoBuf > 1000000 || audioBuf > 32000) {
-                console.log(`[Diag:${streamer.outputId} @ ${uptimeSec}s] ` + `VideoPipe Queued: ${(videoBuf / 1024).toFixed(1)} KB | ` + `AudioPipe Queued: ${(audioBuf / 1024).toFixed(1)} KB | ` + `Frames Sent: ${streamer.videoFrameCount || 0}`)
-            }
-        }, 5000)
-
         streamer.encoderStartedAt = Date.now()
-        streamer.firstVideoTime = undefined
-        streamer.firstAudioTime = undefined
         streamer.hasReceivedFirstAudio = false
-
-        // Anchor audio pipe immediately at PTS=0 with 10ms of silence
-        // const aStream = encoder.stdio[3] as any
-        // if (aStream && !aStream.destroyed) {
-        //     const sr = streamer.sampleRate || SAMPLE_RATE
-        //     // 10ms of silence = sampleRate * 0.01 * 2 channels * 2 bytes/sample
-        //     const initialSilence = Buffer.alloc(Math.round(sr * 0.01 * AUDIO_CHANNELS * 2))
-        //     try {
-        //         aStream.write(initialSilence)
-        //     } catch {}
-        // }
 
         streamer.encoder = encoder
         streamer.inputSize = inputSize
@@ -316,51 +280,51 @@ export class RtmpStreamer {
             this.onEncoderExit(streamer, code, signal)
         })
 
-        // const frameDelay = 1000 / config.fps
-        // let expectedNextFrameTime = Date.now() + frameDelay
         let isWriting = false
         streamer.videoFrameCount = 0
 
         const sendVideoFrame = () => {
-            const frameDelay = 1000 / config.fps
+            const frameInterval = 1000 / config.fps
+            let startTime = performance.now()
+            let frameCount = 0
 
-            streamer.videoTimeout = setTimeout(() => {
-                sendVideoFrame()
+            const tick = () => {
+                frameCount++
+                const expectedTime = startTime + frameCount * frameInterval
+                const delay = Math.max(0, expectedTime - performance.now())
 
-                const stdin = streamer.encoder?.stdin
-                if (!stdin || stdin.destroyed || !streamer.lastFrame || isWriting) return
+                streamer.videoTimeout = setTimeout(() => {
+                    tick()
 
-                if (config.enableAudio && !streamer.hasReceivedFirstAudio) {
-                    return
-                }
+                    const stdin = streamer.encoder?.stdin
+                    if (!stdin || stdin.destroyed || !streamer.lastFrame || isWriting) return
 
-                // STRICT VIDEO BACKPRESSURE:
-                // A single 1080p raw BGRA frame is ~8.29 MB.
-                // If stdin already has more than 1 frame queued (>8 MB), skip writing!
-                // This prevents Node from filling the pipe with 8.1MB of unencoded frames.
-                if (stdin.writableLength > 8 * 1024 * 1024) {
-                    return
-                }
+                    // Hold video until audio arrives
+                    if (config.enableAudio && !streamer.hasReceivedFirstAudio) return
 
-                isWriting = true
-                try {
-                    stdin.write(streamer.lastFrame, () => {
+                    // Never write if stdin has ANY unsent data (>0 bytes queued).
+                    // This guarantees VideoPipe Queued NEVER hits 8100 KB at startup!
+                    if (stdin.writableLength > 0) return
+
+                    isWriting = true
+                    try {
+                        stdin.write(streamer.lastFrame, () => {
+                            isWriting = false
+                            streamer.videoFrameCount = (streamer.videoFrameCount || 0) + 1
+                        })
+                    } catch {
                         isWriting = false
-                        streamer.videoFrameCount = (streamer.videoFrameCount || 0) + 1
-                    })
-                } catch {
-                    isWriting = false
-                }
-            }, frameDelay)
+                    }
+                }, delay)
+            }
+
+            tick()
         }
 
         sendVideoFrame()
     }
 
     private static stopEncoder(streamer: StreamInstance) {
-        if (streamer.diagInterval) clearInterval(streamer.diagInterval)
-        streamer.diagInterval = undefined
-
         if (streamer.videoTimeout) clearTimeout(streamer.videoTimeout)
         if (streamer.audioInterval) clearInterval(streamer.audioInterval)
         streamer.videoTimeout = undefined
@@ -657,23 +621,15 @@ export class RtmpStreamer {
         }
     }
 
-    static updateAudio(outputId: string | undefined, buffer: Buffer, sampleRate: number = 48000) {
-        const now = Date.now()
-
+    static updateAudio(outputId: string | undefined, buffer: Buffer, _sampleRate: number = 48000) {
         const writeToStreamer = (streamer: StreamInstance) => {
             if (!streamer || !streamer.config.enableAudio) return
 
             const audioStream = streamer.encoder?.stdio[3] as any
             if (!audioStream || audioStream.destroyed) return
 
-            if (!streamer.hasReceivedFirstAudio) {
-                streamer.hasReceivedFirstAudio = true
-                streamer.firstAudioTime = now
-                const videoOffset = streamer.firstVideoTime ? `${streamer.firstAudioTime - streamer.firstVideoTime}ms after video` : "first"
-                console.log(`[AVSync:${streamer.outputId}] First Audio packet received at +${now - streamer.encoderStartedAt}ms from spawn (${videoOffset}). SampleRate: ${sampleRate}`)
-            }
+            if (!streamer.hasReceivedFirstAudio) streamer.hasReceivedFirstAudio = true
 
-            // Write directly to audio stream without dropping
             try {
                 audioStream.write(buffer)
                 if (streamer.audioStats) {

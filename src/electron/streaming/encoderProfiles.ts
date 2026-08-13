@@ -129,6 +129,8 @@ export interface EncoderCommandOptions {
 }
 
 /** Full arg list for the encoder process: raw BGRA + PCM in, mpegts out on stdout. */
+// Inside buildEncoderCommand in encoderProfiles.ts:
+
 export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
     const profile = getProfile(opts.encoderId)
     const needsScale = opts.inputWidth !== opts.outputWidth || opts.inputHeight !== opts.outputHeight
@@ -138,63 +140,38 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
 
     if (profile.preInput) args.push(...profile.preInput)
 
-    // Video input pipe with thread queue limit
-    args.push("-thread_queue_size", "512", "-f", "rawvideo", "-pixel_format", "bgra", "-video_size", `${opts.inputWidth}x${opts.inputHeight}`, "-framerate", `${opts.fps}`, "-i", "pipe:0")
+    // VIDEO INPUT PIPE
+    args.push("-thread_queue_size", "512", "-use_wallclock_as_timestamps", "1", "-fflags", "+nobuffer", "-f", "rawvideo", "-pixel_format", "bgra", "-video_size", `${opts.inputWidth}x${opts.inputHeight}`, "-framerate", `${opts.fps}`, "-i", "pipe:0")
 
     if (opts.enableAudio) {
         const ar = opts.sampleRate || SAMPLE_RATE
-        // Audio input pipe
-        args.push("-thread_queue_size", "512", "-f", "s16le", "-ar", `${ar}`, "-ac", `${AUDIO_CHANNELS}`, "-probesize", "32", "-analyzeduration", "0", "-i", "pipe:3")
+        // AUDIO INPUT PIPE
+        args.push("-thread_queue_size", "512", "-fflags", "+nobuffer", "-f", "s16le", "-ar", `${ar}`, "-ac", `${AUDIO_CHANNELS}`, "-probesize", "32", "-analyzeduration", "0", "-i", "pipe:3")
     } else {
         args.push("-f", "lavfi", "-i", `anullsrc=channel_layout=stereo:sample_rate=${SAMPLE_RATE}`)
     }
 
     const baseFilter = buildVideoFilter(profile, scaleTo)
-    args.push("-vf", baseFilter)
+    args.push("-vf", `${baseFilter},fps=${opts.fps}`)
     args.push("-c:v", profile.codec, ...profile.args(opts.bitrate, opts.fps * 2))
 
     if (opts.enableAudio) {
-        args.push("-af", "aresample=async=1000:max_soft_comp=100:min_hard_comp=0.05:first_pts=0")
+        args.push("-af", "aresample=async=1:max_soft_comp=10000:first_pts=0")
     }
 
-    args.push("-c:a", "aac", "-ar", "48000", "-ac", `${AUDIO_CHANNELS}`, "-b:a", AUDIO_BITRATE)
-    args.push("-max_muxing_queue_size", "1024", "-muxdelay", "0", "-muxpreload", "0", "-f", "mpegts", "pipe:1")
+    args.push("-c:a", "aac", "-ar", "48000", "-ac", `${AUDIO_CHANNELS}`, "-b:a", AUDIO_BITRATE, "-metadata:s:a:0", "bitrate=128")
+
+    // SWITCH FROM MPEGTS TO FLV FOR RTMP
+    // FLV is the native format for RTMP relays and YouTube ingest.
+    // Setting flvflags no_sequence_end prevents stream termination artifacts.
+    args.push("-max_muxing_queue_size", "4096", "-muxdelay", "0", "-muxpreload", "0", "-f", "flv", "-flvflags", "no_sequence_end", "pipe:1")
 
     return args
 }
 
 /** Relay process: remux the encoded mpegts straight to one RTMP destination, no re-encode. */
 export function buildRelayCommand(url: string): string[] {
-    return [
-        "-hide_banner",
-        "-loglevel",
-        "warning",
-        "-rw_timeout",
-        "15000000",
-        "-probesize",
-        "100000",
-        "-analyzeduration",
-        "500000",
-        "-fflags",
-        "+nobuffer+flush_packets", // <-- Add +flush_packets
-        "-f",
-        "mpegts",
-        "-i",
-        "pipe:0",
-        "-c",
-        "copy",
-        "-bsf:a",
-        "aac_adtstoasc",
-        "-muxdelay",
-        "0",
-        "-muxpreload",
-        "0",
-        "-flvflags",
-        "no_duration_filesize",
-        "-f",
-        "flv",
-        url
-    ]
+    return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-f", "flv", url]
 }
 
 /** Short throwaway encode used to prove the encoder actually works on this machine. */
