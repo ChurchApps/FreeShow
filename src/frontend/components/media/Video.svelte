@@ -62,6 +62,35 @@
         dispatch("loaded", true)
     }
 
+    // ensure that video state matches the store state
+    let playPromise: Promise<void> | null = null
+    $: if (video) {
+        if (!videoData.paused && video.paused) {
+            playPromise = video.play()
+            playPromise
+                .catch((err) => {
+                    // Ignore AbortErrors caused by quick pause/play toggles during transitions
+                    if (err.name !== "AbortError") {
+                        console.warn("[Video.svelte] Play failed:", err)
+                    }
+                })
+                .finally(() => {
+                    playPromise = null
+                })
+        } else if (videoData.paused && !video.paused) {
+            if (playPromise) {
+                // Wait for the pending play request to resolve before calling pause()
+                playPromise
+                    .then(() => {
+                        video?.pause()
+                    })
+                    .catch(() => {})
+            } else {
+                video.pause()
+            }
+        }
+    }
+
     // Pingback after 30 playing seconds on videos where tracking is required
     let pingbackTime = 0
     let pingbackInterval: NodeJS.Timeout | null = null

@@ -69,7 +69,14 @@ export class AudioAnalyser {
             return
         }
 
-        this.sources[key]?.disconnect()
+        const oldSource = this.sources[key]
+        if (oldSource && sourceGain) {
+            const isShared = Object.values(this.sources).some((node) => node === oldSource && node !== oldSource) // check if another key uses oldSource
+            try {
+                if (isShared) oldSource.disconnect(sourceGain)
+                else oldSource.disconnect()
+            } catch {}
+        }
         try {
             const newSource = this.createSourceNode(audio)
             this.sources[key] = newSource
@@ -245,12 +252,20 @@ export class AudioAnalyser {
             delete this.gainNodes[key]
         }
 
-        try {
-            source.disconnect()
-        } catch {}
         delete this.sourceVolumes[key]
         delete this.sourceVolumes[id]
         delete this.sources[key]
+
+        const isSourceStillUsed = Object.values(this.sources).some((node) => node === source)
+        if (!isSourceStillUsed) {
+            try {
+                source.disconnect()
+            } catch {}
+        } else if (sourceGain) {
+            try {
+                source.disconnect(sourceGain)
+            } catch {}
+        }
     }
 
     static shouldAnalyse() {
