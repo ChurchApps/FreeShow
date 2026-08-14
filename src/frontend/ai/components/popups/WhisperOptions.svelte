@@ -11,8 +11,8 @@
     import MaterialToggleSwitch from "../../../components/inputs/MaterialToggleSwitch.svelte"
     import Loader from "../../../components/main/Loader.svelte"
     import Tip from "../../../components/main/Tip.svelte"
-    import { requestMain } from "../../../IPC/main"
-    import { ai, os } from "../../../stores"
+    import { requestMain, sendMain } from "../../../IPC/main"
+    import { ai, mediaDownloads, os } from "../../../stores"
     import { customLanguageModels, WHISPER_LANGUAGES, whisperModels } from "../../stt/whisperData"
 
     const engine = "whisper"
@@ -34,7 +34,7 @@
 
     let status: EngineStatus | null = null
     async function getStatus() {
-        const result = await requestMain(Main.AI_GET_STATUS, { engineId: engine })
+        const result = await requestMain(Main.AI_GET_STATUS, { engineId: engine, customPath: engineOptions.customPath || undefined })
         status = result?.[engine] || null
     }
 
@@ -102,37 +102,47 @@
 
     // DOWNLOADS
 
+    // download progress is keyed by the electron DownloadManager: "whisper" for the binary, the model id for models
+    $: engineDownload = $mediaDownloads.get("whisper")
+    $: modelDownload = $mediaDownloads.get(modelId)
+
     $: isEngineDownloaded = status?.ready
-    // $: isEngineDownloading = !!$mediaDownloads["whisper"]
+    $: isEngineDownloading = engineDownloadStarted || engineDownload?.status === "downloading"
 
     $: isModelDownloaded = status?.downloadedModels?.includes(modelId)
-    // $: isModelDownloading = !!$mediaDownloads[`whisper-model-${whisperModelId}`]
+    $: isModelDownloading = modelDownloadStarted || modelDownload?.status === "downloading"
 
-    let isEngineDownloading = false
+    function getPercent(download: { progress: number; total: number } | undefined) {
+        if (!download?.total) return ""
+        return ` ${Math.min(100, Math.floor((download.progress / download.total) * 100))}%`
+    }
+
+    let engineDownloadStarted = false
     async function downloadEngine() {
         if (isEngineDownloading) return
-        isEngineDownloading = true
+        engineDownloadStarted = true
 
         await requestMain(Main.AI_SETUP, { action: "download", engineId: "whisper" }, undefined, 60 * 60 * 1000)
-        isEngineDownloading = false
+        engineDownloadStarted = false
 
         getStatus()
     }
 
-    // function cancelDownload() {
-    //     sendMain(Main.AI_SETUP, { action: "cancel", engineId: "whisper" })
-    //     isEngineDownloading = false
-    // }
-
-    let isModelDownloading = false
+    let modelDownloadStarted = false
     async function downloadModel() {
         if (isModelDownloading) return
-        isModelDownloading = true
+        modelDownloadStarted = true
 
-        await requestMain(Main.AI_SETUP, { action: "download", engineId: "whisper", modelId: modelId as any }, undefined, 60 * 60 * 1000)
-        isModelDownloading = false
+        await requestMain(Main.AI_SETUP, { action: "download", engineId: "whisper", modelId }, undefined, 60 * 60 * 1000)
+        modelDownloadStarted = false
 
         getStatus()
+    }
+
+    function cancelDownload() {
+        sendMain(Main.AI_SETUP, { action: "cancel", engineId: "whisper", modelId: modelDownload ? modelId : undefined })
+        engineDownloadStarted = false
+        modelDownloadStarted = false
     }
 
     // CUSTOM BINARY PATH
@@ -143,8 +153,9 @@
             return
         }
 
-        const result = await requestMain(Main.AI_GET_STATUS, { engineId: "whisper", customPath: path })
-        if (result?.valid) updateEngineOption("customPath", path)
+        const valid = await requestMain(Main.AI_SETUP, { action: "verify", engineId: "whisper", customPath: path })
+        if (valid) updateEngineOption("customPath", path)
+        getStatus()
     }
 
     const BREW_COMMAND = "brew install whisper-cpp"
@@ -166,8 +177,12 @@
     {#if platform === "win32"}
         <InputRow>
             <MaterialButton variant="outlined" icon="download" disabled={isEngineDownloading} style="flex: 1;" on:click={downloadEngine}>
-                <T id="cloud.replace" />
+                <T id="cloud.replace" />{getPercent(engineDownload)}
             </MaterialButton>
+
+            {#if isEngineDownloading}
+                <MaterialButton variant="outlined" icon="close" title="actions.cancel" on:click={cancelDownload} />
+            {/if}
 
             <MaterialFilePicker label="" title="inputs.custom_path" value={engineOptions.customPath || ""} filter={{ name: "whisper-cli", extensions: ["*"] }} icon="folder" style="width: initial;padding: 0 8px;" on:change={(e) => verifyCustomPath(e.detail || "")} noLabel allowEmpty />
         </InputRow>
@@ -210,8 +225,12 @@
                 <MaterialFilePicker label="inputs.custom_path" value={engineOptions.customModelPath || ""} filter={{ name: "ggml model", extensions: ["bin"] }} icon="folder" on:change={(e) => updateEngineOption("customModelPath", e.detail || "")} allowEmpty />
             {:else}
                 <MaterialButton icon="download" disabled={isModelDownloading} style="flex: 1;" on:click={downloadModel}>
-                    <T id="cloud.replace" />
+                    <T id="cloud.replace" />{getPercent(modelDownload)}
                 </MaterialButton>
+
+                {#if isModelDownloading}
+                    <MaterialButton variant="outlined" icon="close" title="actions.cancel" on:click={cancelDownload} />
+                {/if}
 
                 <MaterialFilePicker label="" title="inputs.custom_path" value={engineOptions.customModelPath || ""} filter={{ name: "ggml model", extensions: ["bin"] }} icon="folder" style="width: initial;padding: 0 8px;" on:change={(e) => updateEngineOption("customModelPath", e.detail || "")} noLabel allowEmpty />
             {/if}

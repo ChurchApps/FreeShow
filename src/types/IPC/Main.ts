@@ -299,7 +299,7 @@ export interface MainSendPayloads {
     // AI
     [Main.AI_LISTEN_START]: { engine: string; engineOptions: SttEngineOptions }
     [Main.AI_AUDIO_DATA]: { buffer: Uint8Array }
-    [Main.AI_GET_STATUS]: { engineId?: string; customPath?: string }
+    [Main.AI_GET_STATUS]: { engineId?: string; modelId?: string; customPath?: string } | undefined
     [Main.AI_SETUP]: AiSetupOptions
     [Main.AI_SET_KEY]: { providerId: string; key: string }
     [Main.DEPRECATED_AI_LISTEN_START]: AiScriptureStartConfig

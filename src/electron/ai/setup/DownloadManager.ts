@@ -54,10 +54,13 @@ export class DownloadManager {
 
     async downloadFile(url: string, destPath: string, options: AiDownloadOptions = {}): Promise<void> {
         const partPath = `${destPath}.part`
-        await fs.promises.mkdir(path.dirname(destPath), { recursive: true })
 
+        // arm the abort state before the first await, so a cancel arriving right after start is not dropped
         const controller = new AbortController()
         this.activeDownload = { controller, partPath }
+
+        await fs.promises.mkdir(path.dirname(destPath), { recursive: true })
+        if (controller.signal.aborted) throw Object.assign(new Error("This operation was aborted"), { name: "AbortError" })
 
         let totalBytes = options.totalBytes || 0
 

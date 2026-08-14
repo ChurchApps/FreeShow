@@ -8,7 +8,8 @@ import { DownloadManager } from "../DownloadManager"
 // pinned to a specific repo revision (not "main") and to per-file SHA-256 hashes, so exactly these bytes land
 // or nothing does - the hashes are the LFS checksums Hugging Face publishes for this revision
 const MODEL_BASE_URL = "https://huggingface.co/csukuangfj/sherpa-onnx-nemotron-speech-streaming-en-0.6b-int8-2026-01-14/resolve/f13b0c6a48186fdd9fdd8d203b9527b0b709b09f"
-const MODEL_FILES = {
+// the runtime loader (speech/nemotron/manager.ts) builds its file paths from this same table
+export const NEMOTRON_MODEL_FILES = {
     encoder: { file: "encoder.int8.onnx", sha256: "2f6ae81fe4ccd69ef04cdf048ecd49628e2d3148a6195e152a91b4d2497952dc" },
     decoder: { file: "decoder.int8.onnx", sha256: "1fb1795cb46e7d0e99b2e096eae83f7e324294e895975a1a894b0384cbbe37f6" },
     joiner: { file: "joiner.int8.onnx", sha256: "a3f41dccc0f67f37e4210051d1c39a29d473c841cfc32fe574135bac890db91d" },
@@ -18,7 +19,7 @@ export const NEMOTRON_MODEL_BYTES = 661_920_000
 
 // speech gating, shared by any streaming driver (~630 KB)
 const VAD_MODEL_URL = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx"
-const VAD_MODEL_FILE = "silero_vad.onnx"
+export const NEMOTRON_VAD_FILE = "silero_vad.onnx"
 const VAD_MODEL_SHA256 = "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6"
 
 export class NemotronSetupManager {
@@ -28,14 +29,14 @@ export class NemotronSetupManager {
 
     static engineDLM: DownloadManager | null = null
     static getDownloadManager() {
-        if (!this.engineDLM) this.engineDLM = new DownloadManager("nemotron")
+        if (!this.engineDLM) this.engineDLM = new DownloadManager("nemotron", "Nemotron model")
         return this.engineDLM
     }
 
     static async downloadEngine(outputFolder: string) {
         const dlm = this.getDownloadManager()
 
-        const jobs = [...Object.values(MODEL_FILES).map((entry) => ({ url: `${MODEL_BASE_URL}/${entry.file}`, file: entry.file, sha256: entry.sha256 })), { url: VAD_MODEL_URL, file: VAD_MODEL_FILE, sha256: VAD_MODEL_SHA256 }]
+        const jobs = [...Object.values(NEMOTRON_MODEL_FILES).map((entry) => ({ url: `${MODEL_BASE_URL}/${entry.file}`, file: entry.file, sha256: entry.sha256 })), { url: VAD_MODEL_URL, file: NEMOTRON_VAD_FILE, sha256: VAD_MODEL_SHA256 }]
 
         // one download spans several files, so progress is reported against the known total rather than per file
         let completedBytes = 0
@@ -54,8 +55,9 @@ export class NemotronSetupManager {
             const base = completedBytes
             try {
                 await dlm.downloadFile(job.url, target, {
+                    // one stable key for the whole multi-file download, so the renderer shows a single progress entry
                     onProgress: (bytes) => {
-                        sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: job.url, name: job.file, progress: base + bytes, total: NEMOTRON_MODEL_BYTES, status: "downloading" })
+                        sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: dlm.key, name: dlm.name, progress: base + bytes, total: NEMOTRON_MODEL_BYTES, status: "downloading" })
                     }
                 })
 

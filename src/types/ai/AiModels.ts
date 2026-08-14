@@ -2,6 +2,7 @@ export interface EngineStatus {
     ready: boolean
     localPath?: string | null
     downloadedModels?: string[]
+    supported?: boolean // engines with a native addon (nemotron) report whether this platform can run it at all
 }
 
 export interface AiSetupOptions {

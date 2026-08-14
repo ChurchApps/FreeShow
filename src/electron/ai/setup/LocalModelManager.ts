@@ -1,29 +1,33 @@
 import { app } from "electron"
+import fs from "fs"
 import path from "path"
 import type { AiSetupOptions, EngineStatus } from "../../../types/ai/AiModels"
 import { createFolder } from "../../utils/files"
+import { getModelDir as getNemotronDir, getNemotronModelPaths, getVadModelPath, isNemotronSupported } from "../speech/nemotron/manager"
+import { isModelReady, resolveWhisper, WHISPER_MODELS } from "../speech/whisper/manager"
 import { NemotronSetupManager } from "./models/nemotron"
 import { WhisperSetupManager } from "./models/whisper"
 
 export async function aiHandleLocalSetup(data: AiSetupOptions) {
-    if (data.customPath) console.log("TODO: custom path support for local setup:", data.customPath)
-
     if (data.action === "download") {
         if (data.modelId) return await LocalModelManager.downloadModel(data.engineId, data.modelId)
         return await LocalModelManager.downloadEngine(data.engineId)
     }
 
-    // if (data.action === "verify") {
-    //     return await LocalModelManager.getStatus(data.engineId, data.modelId)
-    // }
+    if (data.action === "verify") {
+        // custom binary path check (e.g. a manually selected whisper-cli)
+        return await LocalModelManager.verifyCustomPath(data.engineId, data.customPath || "")
+    }
 
     if (data.action === "cancel") {
         if (data.modelId) return LocalModelManager.cancelModelDownload(data.engineId, data.modelId)
         return LocalModelManager.cancelEngineDownload(data.engineId)
     }
 
-    // TODO: delete engine/model
-    // if (data.action === "delete")
+    if (data.action === "delete") {
+        if (data.modelId) return LocalModelManager.deleteModel(data.engineId, data.modelId)
+        return LocalModelManager.deleteEngine(data.engineId)
+    }
 
     return false
 }
@@ -47,9 +51,29 @@ export class LocalModelManager {
             return { ready: isReady, localPath: modelPath }
         }
 
+        // engine readiness comes from the same resolvers the transcribers use,
+        // so a system installed binary or an already downloaded model always counts
+        if (engineId === "whisper") {
+            const binary = await resolveWhisper(customPath)
+            const downloadedModels = WHISPER_MODELS.filter((id) => isModelReady(id))
+            return { ready: !!binary, localPath: binary?.binaryPath || null, downloadedModels }
+        }
+
+        if (engineId === "nemotron") {
+            const paths = getNemotronModelPaths()
+            const supported = isNemotronSupported()
+            return { ready: supported && !!paths && !!getVadModelPath(), localPath: paths ? getNemotronDir() : null, supported }
+        }
+
         const enginePath = customPath || this.getEnginePath(engineId)
         const isReady = enginePath ? await manager.verifyEngine(enginePath) : false
         return { ready: isReady, localPath: enginePath }
+    }
+
+    static async verifyCustomPath(engineId: string, customPath: string) {
+        const manager = this.getManager(engineId)
+        if (!manager || !customPath) return false
+        return await manager.verifyEngine(customPath)
     }
 
     static getEngineDir(engineId: string) {
@@ -67,15 +91,19 @@ export class LocalModelManager {
         const manager = this.getManager(engineId)
         if (!manager) return false
 
-        const outputFolder = this.getEngineDir(engineId)
+        // the nemotron "engine" download is its model files - they belong in the models dir the runtime loader reads
+        const outputFolder = engineId === "nemotron" ? this.getModelDir(engineId) : this.getEngineDir(engineId)
         createFolder(outputFolder)
 
-        const isDownloaded = await manager.downloadEngine(outputFolder)
-        if (!isDownloaded) return false
+        const result = await manager.downloadEngine(outputFolder)
+        if ((result as { ok?: boolean })?.ok !== true) return false
 
-        const outputPath = this.getEnginePath(engineId)
-        const isValid = outputPath ? await manager.verifyEngine(outputPath) : false
-        if (!isValid) return false
+        // whisper unzips a binary - make sure it actually runs before reporting success
+        if (engineId === "whisper") {
+            const outputPath = this.getEnginePath(engineId)
+            const isValid = outputPath ? await manager.verifyEngine(outputPath) : false
+            if (!isValid) return false
+        }
 
         return true
     }
@@ -104,8 +132,8 @@ export class LocalModelManager {
 
         const outputPath = this.getModelPath(engineId, modelId)
 
-        const isDownloaded = await manager.downloadModel(modelId, outputPath)
-        if (!isDownloaded) return false
+        const result = await manager.downloadModel(modelId, outputPath)
+        if ((result as { ok?: boolean })?.ok !== true) return false
 
         const isValid = await manager.verifyModel(outputPath)
         if (!isValid) return false
@@ -117,5 +145,29 @@ export class LocalModelManager {
         const manager = this.getManager(engineId)
         if (manager) manager.cancelModelDownload(modelId)
         return true
+    }
+
+    static deleteModel(engineId: string, modelId: string) {
+        if (!this.getManager(engineId)) return false
+
+        try {
+            fs.unlinkSync(this.getModelPath(engineId, modelId))
+            return true
+        } catch (err) {
+            console.error(`Could not delete ${engineId} model ${modelId}:`, err)
+            return false
+        }
+    }
+
+    static deleteEngine(engineId: string) {
+        if (!this.getManager(engineId)) return false
+
+        try {
+            fs.rmSync(this.getEngineDir(engineId), { recursive: true, force: true })
+            return true
+        } catch (err) {
+            console.error(`Could not delete ${engineId} engine files:`, err)
+            return false
+        }
     }
 }

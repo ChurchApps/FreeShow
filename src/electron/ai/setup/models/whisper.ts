@@ -3,6 +3,7 @@ import fs from "fs"
 import path from "path"
 import { promisify } from "util"
 import { decompressZipStream } from "../../../data/zip"
+import { WHISPER_MODELS } from "../../speech/whisper/manager"
 import { DownloadManager } from "../DownloadManager"
 
 const execFileAsync = promisify(execFile)
@@ -85,6 +86,11 @@ export class WhisperSetupManager {
         return this.modelDLMs[modelId]
     }
     static async downloadModel(modelId: string, outputPath: string) {
+        // modelIds arrive over IPC as plain strings - reject anything not in the known list before it reaches a URL or file path (path traversal / arbitrary download target)
+        if (!WHISPER_MODELS.includes(modelId)) {
+            return { ok: false as const, error: `Unknown Whisper model: ${String(modelId)}` }
+        }
+
         const dlm = this.getModelDownloadManager(modelId)
 
         if (dlm.isDownloading()) {
@@ -98,7 +104,7 @@ export class WhisperSetupManager {
             return dlm.reportError(`Failed to download Whisper model: ${dlm.errorMessage(err)}`)
         }
 
-        if (!WhisperSetupManager.verifyModel(outputPath)) {
+        if (!(await WhisperSetupManager.verifyModel(outputPath))) {
             try {
                 fs.unlinkSync(outputPath)
             } catch {}
