@@ -2,18 +2,21 @@ import { spawn, type ChildProcess } from "child_process"
 import { app } from "electron"
 import fs from "fs"
 import net from "net"
+import os from "os"
 import path from "path"
 import type { DriverCallbacks, TranscriberSegment as DriverSegment, TranscriptionDriver } from "../types"
 
 // AI AUTO SCRIPTURE - streaming transcription over whisper.cpp
 // Receives 1s chunks of Int16 LE PCM @ 16kHz mono from the renderer (IPC),
-// keeps them in a ring buffer, and every 6s transcribes the last 7s (1s overlap)
+// keeps them in a ring buffer, and every 2.5s transcribes the last 4s (1.5s overlap)
 // with either the whisper.cpp cli (one process per window) or the whisper.cpp server (spawned once).
+// The step is the floor for speech-to-detection latency, so it is kept short - when a window
+// takes longer than the step to transcribe, the queue skips to the newest window (backpressure).
 
 const SAMPLE_RATE = 16000
 const RING_SECONDS = 30
-const WINDOW_SECONDS = 7
-const STEP_SECONDS = 6
+const WINDOW_SECONDS = 4
+const STEP_SECONDS = 2.5
 
 const WINDOW_SAMPLES = WINDOW_SECONDS * SAMPLE_RATE
 const STEP_SAMPLES = STEP_SECONDS * SAMPLE_RATE
@@ -29,6 +32,9 @@ const SERVER_START_TIMEOUT = 20000
 const SERVER_INFERENCE_TIMEOUT = 30000
 const CLI_INFERENCE_TIMEOUT = 30000
 const KILL_TIMEOUT = 2000
+
+// whisper.cpp defaults to 4 threads - short windows on a short step want the inference as fast as the machine allows
+const WHISPER_THREADS = String(Math.max(4, Math.min(8, os.cpus().length - 2)))
 
 interface WhisperSegment extends DriverSegment {
     noSpeechProb?: number
@@ -252,7 +258,7 @@ export class Transcriber implements TranscriptionDriver {
             // stop() could have run while the WAV was being written - never spawn a child once it has begun
             if (this.stopped) return reject(new Error("Transcriber stopped"))
 
-            const args = ["-m", this.options.modelPath, "-l", language, "-f", wavPath, "-oj", "-of", outBase, "-np"]
+            const args = ["-m", this.options.modelPath, "-l", language, "-f", wavPath, "-oj", "-of", outBase, "-np", "-t", WHISPER_THREADS]
             const child = spawn(this.options.binary.binaryPath, args, { stdio: ["ignore", "ignore", "pipe"], windowsHide: true })
             this.cliChild = child
 
@@ -320,7 +326,7 @@ export class Transcriber implements TranscriptionDriver {
 
     private spawnServer(port: number): Promise<void> {
         return new Promise((resolve, reject) => {
-            const args = ["-m", this.options.modelPath, "-l", this.options.language, "--port", String(port), "--host", "127.0.0.1"]
+            const args = ["-m", this.options.modelPath, "-l", this.options.language, "--port", String(port), "--host", "127.0.0.1", "-t", WHISPER_THREADS]
             const child = spawn(this.options.binary.binaryPath, args, { stdio: "ignore", windowsHide: true })
             this.serverChild = child
 

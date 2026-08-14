@@ -62,6 +62,8 @@ export function isModelReady(modelId: string): boolean {
 // RESOLVE
 
 // resolve priority: verified custom path -> downloaded local binary -> system PATH probe
+// (a server is preferred over a cli where possible: it keeps the model resident for the whole
+// session, where the cli reloads the model on every window - a large per-window latency cost)
 // preferCli picks a cli binary (whisper-cli/main) over whisper-server when both are available
 // (per-window language detection needs the cli's -oj output), falling back to a server if that is all there is
 export async function resolveWhisper(customPath?: string, options: { preferCli?: boolean } = {}): Promise<{ kind: "cli" | "server"; binaryPath: string } | null> {
@@ -81,6 +83,9 @@ export async function resolveWhisper(customPath?: string, options: { preferCli?:
 
     const local = await getVerifiedLocalBinary()
     if (local) return local
+
+    const systemServer = await findSystemWhisperServer()
+    if (systemServer) return { kind: "server", binaryPath: systemServer }
 
     const system = await findSystemWhisper()
     if (system) return { kind: "cli", binaryPath: system }
@@ -148,7 +153,7 @@ async function getVerifiedLocalBinary(preferCli = false): Promise<{ kind: "cli" 
 
 let systemProbe: Promise<string | null> | null = null
 async function findSystemWhisper(): Promise<string | null> {
-    if (!systemProbe) systemProbe = probeSystemWhisper()
+    if (!systemProbe) systemProbe = probeSystemBinary(["whisper-cli", "whisper-cpp"])
 
     const found = await systemProbe
     // only cache hits - the user may install whisper while the app is running & expect "Check again" to find it
@@ -157,8 +162,19 @@ async function findSystemWhisper(): Promise<string | null> {
     return found
 }
 
-async function probeSystemWhisper(): Promise<string | null> {
-    for (const name of ["whisper-cli", "whisper-cpp"]) {
+// package managers (e.g. homebrew's whisper-cpp) ship whisper-server alongside the cli
+let systemServerProbe: Promise<string | null> | null = null
+async function findSystemWhisperServer(): Promise<string | null> {
+    if (!systemServerProbe) systemServerProbe = probeSystemBinary(["whisper-server"])
+
+    const found = await systemServerProbe
+    if (!found) systemServerProbe = null
+
+    return found
+}
+
+async function probeSystemBinary(names: string[]): Promise<string | null> {
+    for (const name of names) {
         const absolutePath = findExecutableInPath(name)
         if (!absolutePath) continue
 
