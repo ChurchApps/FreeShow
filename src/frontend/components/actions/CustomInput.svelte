@@ -59,7 +59,7 @@
         updateValue("value", { detail: value })
     }
 
-    $: if (list && actionId === "start_show" && !value?.id) openSelectShow()
+    $: if (list && (actionId === "start_show" || actionId === "id_select_show") && !value?.id) openSelectShow()
     function openSelectShow() {
         popupData.set({ ...$popupData, action: "select_show", revert: $activePopup === "edit_event" ? "edit_event" : "action", active: value?.id, actionIndex })
         activePopup.set("select_show")

@@ -205,7 +205,7 @@
         if (id === "emit_action") return $emitters[actionValue.emitter]?.name || ""
         if (id === "run_action" || id === "toggle_action") return getName($actions)
         if (id === "id_start_effect") return getName($effects)
-        if (id === "start_show") return getName($shows)
+        if (id === "start_show" || id === "id_select_show") return getName($shows)
         if (id === "id_select_project") return getName($projects)
         if (id === "set_template") return getName($templates)
         if (id === "toggle_output") return getName($outputs)

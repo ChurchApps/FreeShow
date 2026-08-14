@@ -9,7 +9,8 @@ export const actionData = {
     mark_active_as_played: { name: "actions.mark_played", icon: "check", input: "toggle" },
 
     // SHOWS
-    name_select_show: { SECTION: "guide_title.show", name: "actions.name_select_show", icon: "showIcon", input: "strval" },
+    id_select_show: { SECTION: "guide_title.show", name: "actions.id_select_show", icon: "showIcon", input: "start_show" },
+    name_select_show: { name: "actions.name_select_show", icon: "showIcon", input: "strval" },
     start_show: { slideId: "startShow", common: true, name: "preview._start", icon: "showIcon", input: "start_show" }, // any play actions are incompatible with clear actions...
     set_template: { name: "actions.set_template_active", icon: "templates", input: "id" },
     set_next_slide_timer: { name: "preview.nextTimer", icon: "timer", input: "numval" },

@@ -29,6 +29,15 @@ import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
 import type { API_add_to_project, API_create_project, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_toggle_specific, API_variable } from "./api"
 
+export function selectShowById(id: string) {
+    if (typeof id !== "string" || !id) return
+    if (!get(shows)[id]) return
+
+    activeShow.set({ id, type: "show" })
+    if (get(activeEdit).id) activeEdit.set({ type: "show", slide: 0, items: [] })
+    if (get(activePage) === "edit") refreshEditSlide.set(true)
+}
+
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
     if (typeof name !== "string") return
