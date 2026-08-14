@@ -153,7 +153,7 @@ async function getVerifiedLocalBinary(preferCli = false): Promise<{ kind: "cli" 
 
 let systemProbe: Promise<string | null> | null = null
 async function findSystemWhisper(): Promise<string | null> {
-    if (!systemProbe) systemProbe = probeSystemBinary(["whisper-cli", "whisper-cpp"])
+    if (!systemProbe) systemProbe = probeSystemCli(["whisper-cli", "whisper-cpp"])
 
     const found = await systemProbe
     // only cache hits - the user may install whisper while the app is running & expect "Check again" to find it
@@ -162,18 +162,14 @@ async function findSystemWhisper(): Promise<string | null> {
     return found
 }
 
-// package managers (e.g. homebrew's whisper-cpp) ship whisper-server alongside the cli
-let systemServerProbe: Promise<string | null> | null = null
+// package managers (e.g. homebrew's whisper-cpp) ship whisper-server alongside the cli.
+// located by PATH lookup only - a server binary can react to --help by starting to listen,
+// so it is never executed here; spawnServer() validates it against /inference with a timeout
 async function findSystemWhisperServer(): Promise<string | null> {
-    if (!systemServerProbe) systemServerProbe = probeSystemBinary(["whisper-server"])
-
-    const found = await systemServerProbe
-    if (!found) systemServerProbe = null
-
-    return found
+    return findExecutableInPath("whisper-server")
 }
 
-async function probeSystemBinary(names: string[]): Promise<string | null> {
+async function probeSystemCli(names: string[]): Promise<string | null> {
     for (const name of names) {
         const absolutePath = findExecutableInPath(name)
         if (!absolutePath) continue

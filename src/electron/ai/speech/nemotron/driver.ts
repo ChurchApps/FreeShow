@@ -23,6 +23,7 @@
 // back until it stabilizes or the utterance closes - so text streams out while the speaker
 // is mid-sentence, and nothing already emitted is ever retracted.
 
+import { appendTailWords, trimRepeatedLeadWords } from "../seam"
 import type { DriverCallbacks, TranscriberSegment, TranscriptionDriver } from "../types"
 import type { NemotronModelPaths } from "./manager"
 
@@ -43,6 +44,9 @@ const VAD_MAX_SPEECH = 12
 
 // partial decodes: how much new audio accumulates before the open utterance is re-decoded
 const PARTIAL_INTERVAL_SAMPLES = 1.6 * SAMPLE_RATE
+// a re-decode can merge/split words, shifting positions - re-cover this many already emitted words
+// across every decode seam and let the seam stitch drop the ones that really did come out already
+const SEAM_BACKTRACK_WORDS = 2
 // a partial decode this slow means the utterance has grown too heavy for live re-decoding on this
 // machine - stop partials for the rest of the utterance and let the close deliver the remainder
 const PARTIAL_MAX_DECODE_MS = 1000
@@ -90,6 +94,7 @@ export class NemotronDriver implements TranscriptionDriver {
     private partialsDisabled = false
     private lastPartialWords: string[] = []
     private emittedWords = 0 // words of the open utterance already emitted
+    private emittedTailWords: string[] = [] // what those words actually were, for the seam stitch
     private nextEmitStartMs = 0
 
     private preroll: Float32Array[] = []
@@ -255,8 +260,9 @@ export class NemotronDriver implements TranscriptionDriver {
 
         // emitted words are never retracted - a revision earlier in the text only holds further emission back
         if (agreed <= this.emittedWords) return
-        this.emitWords(words.slice(this.emittedWords, agreed))
+        const candidate = words.slice(Math.max(0, this.emittedWords - SEAM_BACKTRACK_WORDS), agreed).join(" ")
         this.emittedWords = agreed
+        this.emitText(trimRepeatedLeadWords(this.emittedTailWords, candidate))
     }
 
     private finalizeUtterance() {
@@ -266,19 +272,21 @@ export class NemotronDriver implements TranscriptionDriver {
 
         // the final read delivers whatever follows the words already emitted by the partial decodes
         const words = text ? text.split(/\s+/) : []
-        this.emitWords(words.slice(Math.min(this.emittedWords, words.length)))
+        const candidate = words.slice(Math.max(0, Math.min(this.emittedWords, words.length) - SEAM_BACKTRACK_WORDS)).join(" ")
+        this.emitText(trimRepeatedLeadWords(this.emittedTailWords, candidate))
 
         this.lastPartialWords = []
         this.emittedWords = 0
         this.partialsDisabled = false
     }
 
-    private emitWords(words: string[]) {
-        if (!words.length) return
+    private emitText(text: string) {
+        if (!text) return
 
         const endMs = Math.round((this.totalSamples / SAMPLE_RATE) * 1000)
-        const segment: TranscriberSegment = { text: words.join(" "), startMs: this.nextEmitStartMs, endMs }
+        const segment: TranscriberSegment = { text, startMs: this.nextEmitStartMs, endMs }
         this.nextEmitStartMs = endMs
+        this.emittedTailWords = appendTailWords(this.emittedTailWords, text)
 
         if (this.options.language) segment.language = this.options.language
         this.options.onSegment(segment)

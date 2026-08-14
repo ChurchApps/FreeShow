@@ -37,25 +37,33 @@
 
     let sessionMode: "off" | "stt" | "scripture" = "off"
     let lastMic = ""
+    let lastEngine = ""
 
-    $: syncSession(isEnabled, scriptureEnabled, micDeviceId)
-    async function syncSession(enabled: boolean | undefined, scripture: boolean, mic: string | undefined) {
+    $: engineId = $ai.stt?.engine || "whisper"
+
+    $: syncSession(isEnabled, scriptureEnabled, micDeviceId, engineId)
+    async function syncSession(enabled: boolean | undefined, scripture: boolean, mic: string | undefined, engine: string) {
         const mode = enabled && scripture ? "scripture" : enabled && mic ? "stt" : "off"
         const micChanged = (mic || "") !== lastMic
+        const engineChanged = engine !== lastEngine
 
         if (mode === sessionMode) {
-            if (mode === "off" || !micChanged) return
+            if (mode === "off" || (!micChanged && !engineChanged)) return
 
-            // switching the input mid-session only swaps the capture - the engine & detection keep running
+            // switching the input or the engine mid-session only swaps that piece -
+            // the rest of the pipeline (and scripture detection) keeps running
             lastMic = mic || ""
-            const result = await SpeechToText.restartCapture()
-            if (sessionMode === mode && !result.ok) state = "error"
+            lastEngine = engine
+            const capture = micChanged ? await SpeechToText.restartCapture() : { ok: true }
+            const engineResult = engineChanged ? await SpeechToText.restartEngine() : { ok: true }
+            if (sessionMode === mode && (!capture.ok || !engineResult.ok)) state = "error"
             return
         }
 
         const previousMode = sessionMode
         sessionMode = mode
         lastMic = mic || ""
+        lastEngine = engine
 
         if (previousMode === "scripture") stopAiScriptureListening()
         else if (previousMode === "stt" && mode !== "stt") SpeechToText.disable()

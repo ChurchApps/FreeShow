@@ -22,14 +22,19 @@ export class SpeechToText {
         const captured = await this.restartCapture()
         if (!captured.ok) return captured
 
+        const started = await this.restartEngine()
+        if (!started.ok) this.stopCapture()
+        return started
+    }
+
+    // (re)start only the engine - switching whisper <-> nemotron mid-session goes through here,
+    // so the capture keeps running and the electron manager just swaps the transcriber
+    static async restartEngine(): Promise<{ ok: boolean; error?: string }> {
         const engine = get(ai)?.stt?.engine || "whisper"
         const engineOptions = get(ai)?.stt?.engineOptions?.[engine] || {}
         // whisper might need a moment to spin up on first start
         const result = await requestMain(Main.AI_LISTEN_START, { engine, engineOptions }, undefined, 60000)
-        if (!result?.started) {
-            this.stopCapture()
-            return { ok: false, error: result?.error || "start_failed" }
-        }
+        if (!result?.started) return { ok: false, error: result?.error || "start_failed" }
 
         return { ok: true }
     }

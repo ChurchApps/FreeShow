@@ -4,22 +4,27 @@ import fs from "fs"
 import net from "net"
 import os from "os"
 import path from "path"
+import { appendTailWords, trimRepeatedLeadWords } from "../seam"
 import type { DriverCallbacks, TranscriberSegment as DriverSegment, TranscriptionDriver } from "../types"
 
 // AI AUTO SCRIPTURE - streaming transcription over whisper.cpp
 // Receives 1s chunks of Int16 LE PCM @ 16kHz mono from the renderer (IPC),
-// keeps them in a ring buffer, and every 2.5s transcribes the last 4s (1.5s overlap)
+// keeps them in a ring buffer, and every 3s transcribes the last 5s (2s overlap)
 // with either the whisper.cpp cli (one process per window) or the whisper.cpp server (spawned once).
 // The step is the floor for speech-to-detection latency, so it is kept short - when a window
 // takes longer than the step to transcribe, the queue skips to the newest window (backpressure).
 
 const SAMPLE_RATE = 16000
 const RING_SECONDS = 30
-const WINDOW_SECONDS = 4
-const STEP_SECONDS = 2.5
+const WINDOW_SECONDS = 5
+const STEP_SECONDS = 3
 
 const WINDOW_SAMPLES = WINDOW_SECONDS * SAMPLE_RATE
 const STEP_SAMPLES = STEP_SECONDS * SAMPLE_RATE
+
+// the time-based overlap trim re-emits from slightly BEFORE the previous window's edge, so a word cut
+// mid-transcription at that edge comes out whole in the next window (the seam stitch drops true repeats)
+const OVERLAP_BACKTRACK_MS = 300
 
 // RMS (normalized 0-1) below this over a whole window counts as silence - no whisper call
 const SILENCE_RMS_THRESHOLD = 0.01
@@ -64,6 +69,7 @@ export class Transcriber implements TranscriptionDriver {
     private processing = false
     private pendingWindow: PcmWindow | null = null
     private lastEmittedEndMs = 0
+    private lastEmittedTailWords: string[] = []
     private consecutiveFailures = 0
     private windowCount = 0
 
@@ -177,11 +183,17 @@ export class Transcriber implements TranscriptionDriver {
             const parsed = parseWhisperJson(json, windowDurationMs)
             const absolute = parsed.map((segment) => Object.assign({}, segment, { startMs: windowStartMs + segment.startMs, endMs: windowStartMs + segment.endMs }))
             const speech = absolute.filter((segment) => !isNoiseSegment(segment.text) && !isLowConfidence(segment))
-            const fresh = dedupeOverlap(speech, this.lastEmittedEndMs)
+            const fresh = dedupeOverlap(speech, Math.max(0, this.lastEmittedEndMs - OVERLAP_BACKTRACK_MS))
 
             for (const segment of fresh) {
                 if (segment.endMs > this.lastEmittedEndMs) this.lastEmittedEndMs = segment.endMs
-                this.options.onSegment({ text: segment.text.trim(), startMs: segment.startMs, endMs: segment.endMs, language: segment.language, music: isMusicSegment(segment.text) || undefined })
+
+                // timings shift between windows, so the seam can survive the time-based trim - drop exact word repeats
+                const text = trimRepeatedLeadWords(this.lastEmittedTailWords, segment.text.trim())
+                if (!text) continue
+
+                this.lastEmittedTailWords = appendTailWords(this.lastEmittedTailWords, text)
+                this.options.onSegment({ text, startMs: segment.startMs, endMs: segment.endMs, language: segment.language, music: isMusicSegment(text) || undefined })
             }
 
             this.consecutiveFailures = 0
@@ -442,7 +454,9 @@ export class Transcriber implements TranscriptionDriver {
         const form = new FormData()
         const viewForBlob = new Uint8Array(wav.buffer as ArrayBuffer, wav.byteOffset, wav.byteLength)
         form.append("file", new Blob([viewForBlob], { type: "audio/wav" }), "window.wav")
-        form.append("response_format", "json")
+        // verbose: per-segment timestamps make the overlap trim exact (plain "json" is a single
+        // untimed text blob, which forces the trim to guess word positions proportionally)
+        form.append("response_format", "verbose_json")
         form.append("temperature", "0.0")
 
         const controller = new AbortController()
