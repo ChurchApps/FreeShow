@@ -3,6 +3,7 @@
     import { Main } from "../../../types/IPC/Main"
     import { requestMain } from "../../IPC/main"
     import { cameraManager } from "../../media/cameraManager"
+    import { AudioMicrophone } from "../../audio/audioMicrophone"
     import { actions, activePopup, audioPlaylists, audioStreams, effects, effectsLibrary, groups, interactions, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
     import { obsGetScenes } from "../../utils/obsTalk"
@@ -69,6 +70,13 @@
     async function getCameras() {
         const cameraList = await cameraManager.getCamerasList()
         cameras = sortByName(cameraList).map((a) => ({ label: a.name, id: a.id, groupId: a.group }))
+    }
+
+    let microphones: { name: string; id: string }[] = []
+    if (inputId === "microphone") getMicrophones()
+    async function getMicrophones() {
+        const micList = (await AudioMicrophone.getList()) || []
+        microphones = sortByName(micList.map((a) => ({ name: a.label || a.deviceId, id: a.deviceId })))
     }
 
     let screens: { name: string; id: string }[] = []
@@ -142,6 +150,16 @@
         on:change={(e) => {
             const cam = cameras.find((a) => a.id === e.detail)
             updateValue("", cam)
+        }}
+    />
+{:else if inputId === "microphone"}
+    <MaterialDropdown
+        label="settings.device"
+        options={microphones.map((a) => ({ value: a.id, label: a.name }))}
+        value={value?.id}
+        on:change={(e) => {
+            const mic = microphones.find((a) => a.id === e.detail)
+            updateValue("", mic)
         }}
     />
 {:else if inputId === "screen"}

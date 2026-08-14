@@ -28,7 +28,7 @@
     let error: null | string = null
     let retryTimeout: NodeJS.Timeout | null = null
 
-    $: cropState = getCropState(cropping, cropPreviewMode)
+    $: cropState = getCropState(cropping, cropPreviewMode, mediaStyle.style)
     $: showCropOverflowPreview = cropState.showCropOverflowPreview
     $: mediaOverflowPreviewStyle = `position: absolute;width: 100%;height: 100%;left: 0;top: 0;opacity: 0.35;pointer-events: none;`
 

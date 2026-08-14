@@ -40,7 +40,14 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
     if (isCloudSync) return { entries }
 
     const zipPath = backupFolder + ".zip"
-    await compressToZip(entries, zipPath)
+    try {
+        await compressToZip(entries, zipPath)
+    } catch (err) {
+        console.error("Could not create backup:", err)
+        sendToMain(ToMain.ALERT, "Could not create the backup file!")
+        sendToMain(ToMain.BACKUP, { finished: false, path: zipPath })
+        return
+    }
 
     sendToMain(ToMain.BACKUP, { finished: true, path: zipPath })
 
@@ -48,7 +55,7 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
 
     /// //
 
-    async function syncStores(id: keyof typeof _store) {
+    function syncStores(id: keyof typeof _store) {
         const store = _store[id]
         if (!store) return
 
@@ -56,8 +63,7 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
         // handing the path to yazl anyway makes its async fs.stat crash the whole main process
         if (!fs.existsSync(store.path)) return
 
-        const name = id + ".json"
-        entries.push({ name, filePath: store.path })
+        entries.push({ name: id + ".json", filePath: store.path })
     }
 
     async function syncBibles() {

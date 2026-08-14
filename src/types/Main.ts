@@ -203,6 +203,7 @@ export interface MediaStyle {
     licenseExpiresAt?: number // unix ms; content provider license is valid while Date.now() < licenseExpiresAt
     pingbackUrl?: string // URL for sending pingback after playback
     cropping?: Partial<Cropping>
+    style?: string // used to transfer styles from main item to cropped part (like border radius)
 
     ignoreLayer?: boolean // foreground background type
 }

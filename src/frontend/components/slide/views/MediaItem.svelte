@@ -92,7 +92,7 @@
         mediaPath = thumbnailPath
     }
 
-    $: cropState = getCropState(item?.cropping, cropPreviewMode)
+    $: cropState = getCropState(item?.cropping, cropPreviewMode, item?.style)
     $: showCropOverflowPreview = cropState.showCropOverflowPreview
     $: mediaCropGeometry = cropState.mediaCropGeometry
     $: flipX = item?.flipped ? -1 : 1

@@ -45,6 +45,8 @@ export const bmResponses: any = {
  * Sets up video output with appropriate resolution and configuration
  */
 export async function initializeSender(data: Output, window: BrowserWindow, id: string) {
+    if (!window || window.isDestroyed()) return
+
     const bmdData = data.blackmagicData || {}
 
     // Get target resolution from display mode

@@ -849,6 +849,8 @@
         "id_select_group": "Play specific group",
         "id_change_stage_layout": "Change stage connections layout",
         "start_camera": "Start camera",
+        "start_microphone": "Start microphone",
+        "stop_microphone": "Stop microphone",
         "start_screen": "Start screen",
         "id_start_effect": "Start effect",
         "id_select_overlay": "Start overlay",

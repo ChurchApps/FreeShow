@@ -116,32 +116,35 @@ export function initSpotify() {
     }
 }
 
-const macScript = (c?: string) => `tell application "Spotify"
-    ${
-        c ||
-        `if running then
-        set isP to player state is playing
+const macScript = (c?: string) => `if application "Spotify" is running then
+    tell application "Spotify"
+        ${
+            c ||
+            `set isP to player state is playing
         set t to name of current track
         set a to artist of current track
         set d to (duration of current track) / 1000
         set p to player position
-        set art to artwork url of current track
+        set art to ""
+        try
+            set art to artwork url of current track
+        end try
         set v to sound volume
-        return (isP as text) & "|SEC|" & t & "|SEC|" & a & "|SEC|" & p & "|SEC|" & d & "|SEC|" & art & "|SEC|" & v
-    else
-        return "NOT_RUNNING"
-    end if`
-    }
-end tell`
+        return (isP as text) & "|SEC|" & t & "|SEC|" & a & "|SEC|" & p & "|SEC|" & d & "|SEC|" & art & "|SEC|" & v`
+        }
+    end tell
+else
+    return "NOT_RUNNING"
+end if`
 
 export async function getSpotifyState(): Promise<SpotifyState | null> {
     try {
         if (isMac)
             return new Promise((res) =>
                 exec(`osascript -e '${macScript().replace(/'/g, "'\\''")}'`, (e, out) => {
-                    if (e && !out.includes("NOT_RUNNING")) console.error("[Spotify] Mac error:", e)
+                    if (e && !out?.includes("NOT_RUNNING") && !e.message?.includes("syntax error") && !e.message?.includes("2741")) console.error("[Spotify] Mac error:", e)
                     const p = out?.trim().split("|SEC|")
-                    res(e || out.includes("NOT_RUNNING") || p.length < 5 ? null : { isPlaying: p[0] === "true", title: p[1], artist: p[2], positionSec: parseFloat(p[3]) || 0, durationSec: parseFloat(p[4]) || 0, albumArt: p[5] || undefined, volume: (parseInt(p[6]) || 0) / 100, platform: "darwin" })
+                    res(e || out?.includes("NOT_RUNNING") || !p || p.length < 5 ? null : { isPlaying: p[0] === "true", title: p[1], artist: p[2], positionSec: parseFloat(p[3]) || 0, durationSec: parseFloat(p[4]) || 0, albumArt: p[5] || undefined, volume: (parseInt(p[6]) || 0) / 100, platform: "darwin" })
                 })
             )
         if (isWin) {

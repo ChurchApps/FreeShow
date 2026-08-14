@@ -56,3 +56,9 @@ contextBridge.exposeInMainWorld("api", {
         return webUtils.getPathForFile(file)
     }
 })
+
+ipcRenderer.on("AUDIO_PORT", (event, data) => {
+    if (event.ports && event.ports.length > 0) {
+        window.postMessage({ type: "AUDIO_PORT_RESPONSE", targetId: data?.targetId }, "*", [event.ports[0]])
+    }
+})

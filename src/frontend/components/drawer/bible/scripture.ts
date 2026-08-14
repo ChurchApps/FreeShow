@@ -1752,7 +1752,7 @@ export async function getScriptureShow(biblesContent: BibleContent[] | null) {
 
     // DEPRECATED
     // create first slide reference
-    const textboxes = slides[0].filter((a) => (a.type || "text") === "text" && a.lines?.length)
+    const textboxes = slides[0]?.filter((a) => (a.type || "text") === "text" && a.lines?.length)
     if (useOldSystem && get(scriptureSettings).firstSlideReference && textboxes[0]?.lines?.[0]?.text?.[0]) {
         const textboxesClone = clone(textboxes)
         // get verse text for correct styling

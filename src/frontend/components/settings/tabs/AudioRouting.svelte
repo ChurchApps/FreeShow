@@ -721,7 +721,7 @@
         position: relative;
         width: 100%;
         min-width: 840px;
-        min-height: 100%;
+        min-height: auto;
         display: flex;
         flex-direction: column;
     }
@@ -773,7 +773,7 @@
         grid-template-columns: repeat(3, minmax(200px, 1fr));
         justify-items: center;
         gap: 100px;
-        min-height: 100%;
+        min-height: auto;
         padding: 20px;
         box-sizing: border-box;
     }
@@ -804,7 +804,7 @@
         justify-content: space-between;
         /* background: rgba(0, 0, 0, 0.3); */
         border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 8px 12px;
+        padding: 6px 12px;
         border-radius: 6px;
         backdrop-filter: blur(4px);
     }

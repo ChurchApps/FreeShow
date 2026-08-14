@@ -10,6 +10,7 @@ import { AudioAnalyser } from "./audioAnalyser"
 
 type AudioClearOptions = {
     clearPlaylist?: boolean
+    clearMicrophones?: boolean
     playlistCrossfade?: boolean
     commonClear?: boolean
     clearTime?: number // effects
@@ -39,8 +40,8 @@ export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
 
     const clearTime = options.playlistCrossfade ? 0 : (options.clearTime ?? get(special).audio_fade_duration ?? 1.5)
     let clearIds = audioPath ? [audioPath] : Object.keys(get(playingAudio))
-    if (!audioPath && !options.commonClear) {
-        // don't clear microphones when playing an audio file
+    // don't clear microphones by default
+    if (!audioPath && !options.clearMicrophones) {
         const allPlaying = get(playingAudio)
         clearIds = clearIds.filter((id) => !allPlaying[id]?.isMic)
     }
@@ -184,12 +185,14 @@ export function fadeoutAllPlayingAudio() {
     stopFading()
     isAllAudioFading = true
 
-    Object.values(get(playingAudio)).forEach(({ audio }) => {
-        fadeoutAudio(audio)
+    Object.entries(get(playingAudio)).forEach(([path, { audio }]) => {
+        if (audio && !audio.paused) {
+            fadeoutAudio(path, audio)
+        }
     })
 
-    async function fadeoutAudio(audio) {
-        const faded = await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5)
+    async function fadeoutAudio(path: string, audio: HTMLAudioElement) {
+        const faded = await fadeAudio(path, audio, get(special).audio_fade_duration ?? 1.5)
         if (faded) {
             audio.pause()
             // analyseAudio()
@@ -207,15 +210,17 @@ export function fadeinAllPlayingAudio() {
         fadeToVolume = (playlist?.volume ?? 1) * fadeToVolume
     }
 
-    Object.values(get(playingAudio)).forEach(({ audio, replayGainMultiplier }) => {
-        fadeinAudio(audio, replayGainMultiplier || 1)
+    Object.entries(get(playingAudio)).forEach(([path, { audio, replayGainMultiplier }]) => {
+        if (audio) {
+            fadeinAudio(path, audio, replayGainMultiplier || 1)
+        }
     })
 
     isAllAudioFading = false
 
-    async function fadeinAudio(audio: HTMLAudioElement, gainMultiplier = 1) {
-        audio.play()
-        await fadeAudio(audio.src, audio, get(special).audio_fade_duration ?? 1.5, true, Math.min(1, fadeToVolume * gainMultiplier))
+    async function fadeinAudio(path: string, audio: HTMLAudioElement, gainMultiplier = 1) {
+        audio.play().catch(() => {})
+        await fadeAudio(path, audio, get(special).audio_fade_duration ?? 1.5, true, Math.min(1, fadeToVolume * gainMultiplier))
         // if (faded) analyseAudio()
     }
 }

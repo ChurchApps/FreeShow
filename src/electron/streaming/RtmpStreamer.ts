@@ -1,7 +1,7 @@
 import { spawn, type ChildProcess } from "child_process"
 import type { RtmpDestination, RtmpDestinationState, RtmpStatus } from "../../types/Output"
 import { resolveEncoder } from "./encoderDetection"
-import { AUDIO_CHANNELS, buildEncoderCommand, buildRelayCommand, getProfile, SAMPLE_RATE, type EncoderId } from "./encoderProfiles"
+import { buildEncoderCommand, buildRelayCommand, getProfile, SAMPLE_RATE, type EncoderId } from "./encoderProfiles"
 import { resolveFfmpegPath } from "./ffmpegManager"
 
 // status and notices are pushed through registered listeners rather than importing the IPC layer
@@ -19,8 +19,6 @@ export function setRtmpNoticeListener(listener: RtmpNoticeListener) {
     noticeListener = listener
 }
 
-const SILENCE_THRESHOLD_MS = 100
-const SILENCE_INTERVAL_MS = 50
 /** a relay buffering more than this cannot keep up, so it gets restarted instead of stalling the encoder */
 const RELAY_BUFFER_CAP_BYTES = 2 * 1024 * 1024
 const RELAY_LIVE_AFTER_MS = 2000
@@ -65,16 +63,25 @@ interface StreamInstance {
     encoder: ChildProcess | null
     /** actual size of the raw frames, learned from the first captured frame */
     inputSize: { width: number; height: number } | null
+    sampleRate?: number
     encoderStartedAt: number
     encoderBackoffMs: number
     encoderFailures: number
     encoderRestartTimer?: NodeJS.Timeout
     triedSoftwareFallback: boolean
     relays: Map<string, RelayInstance>
-    videoInterval?: NodeJS.Timeout
+    videoTimeout?: NodeJS.Timeout
     audioInterval?: NodeJS.Timeout
     lastAudioTime: number
     lastFrame: Buffer | null
+    audioStats?: {
+        totalBytes: number
+        startTime: number
+        chunkCount: number
+        lastLog: number
+    }
+    videoFrameCount?: number
+    hasReceivedFirstAudio?: boolean
 }
 
 interface StreamConfig {
@@ -185,6 +192,11 @@ export class RtmpStreamer {
         if (!streamer) return
 
         console.log(`[RtmpStreamer] Stopping ${outputId}...`)
+
+        // CLEAR AUDIO STATS AND QUEUES ON STOP
+        streamer.audioStats = undefined
+        streamer.lastFrame = null
+
         this.streamers.delete(outputId)
 
         if (streamer.encoderRestartTimer) clearTimeout(streamer.encoderRestartTimer)
@@ -222,7 +234,8 @@ export class RtmpStreamer {
             outputHeight: config.height,
             fps: config.fps,
             bitrate: config.bitrate,
-            enableAudio: config.enableAudio
+            enableAudio: config.enableAudio,
+            sampleRate: streamer.sampleRate || SAMPLE_RATE
         })
 
         const scaling = inputSize.width !== config.width || inputSize.height !== config.height
@@ -240,9 +253,13 @@ export class RtmpStreamer {
             return
         }
 
+        streamer.encoderStartedAt = Date.now()
+        streamer.hasReceivedFirstAudio = false
+
         streamer.encoder = encoder
         streamer.inputSize = inputSize
         streamer.encoderStartedAt = Date.now()
+        streamer.lastAudioTime = Date.now()
 
         encoder.stdin?.on("error", () => {}) // suppress writes racing teardown
         ;(encoder.stdio[3] as any)?.on("error", () => {})
@@ -261,36 +278,54 @@ export class RtmpStreamer {
             this.onEncoderExit(streamer, code, signal)
         })
 
-        const frameDelay = 1000 / config.fps
         let isWriting = false
-        streamer.videoInterval = setInterval(() => {
-            const stdin = streamer.encoder?.stdin
-            if (!stdin || stdin.destroyed || !streamer.lastFrame || isWriting) return
-            isWriting = true
-            try {
-                stdin.write(streamer.lastFrame, () => (isWriting = false))
-            } catch {
-                isWriting = false
-            }
-        }, frameDelay)
+        streamer.videoFrameCount = 0
 
-        if (config.enableAudio) {
-            const silenceChunk = Buffer.alloc(SAMPLE_RATE * 2 * AUDIO_CHANNELS * (SILENCE_INTERVAL_MS / 1000))
-            streamer.audioInterval = setInterval(() => {
-                if (Date.now() - streamer.lastAudioTime <= SILENCE_THRESHOLD_MS) return
-                const aStream = streamer.encoder?.stdio[3] as any
-                if (!aStream || aStream.destroyed) return
-                try {
-                    aStream.write(silenceChunk)
-                } catch {}
-            }, SILENCE_INTERVAL_MS)
+        const sendVideoFrame = () => {
+            const frameInterval = 1000 / config.fps
+            let startTime = performance.now()
+            let frameCount = 0
+
+            const tick = () => {
+                frameCount++
+                const expectedTime = startTime + frameCount * frameInterval
+                const delay = Math.max(0, expectedTime - performance.now())
+
+                streamer.videoTimeout = setTimeout(() => {
+                    tick()
+
+                    const stdin = streamer.encoder?.stdin
+                    if (!stdin || stdin.destroyed || !streamer.lastFrame || isWriting) return
+
+                    // Hold video until audio arrives
+                    if (config.enableAudio && !streamer.hasReceivedFirstAudio) return
+
+                    // Never write if stdin has ANY unsent data (>0 bytes queued).
+                    // This guarantees VideoPipe Queued NEVER hits 8100 KB at startup!
+                    if (stdin.writableLength > 0) return
+
+                    isWriting = true
+                    try {
+                        stdin.write(streamer.lastFrame, () => {
+                            isWriting = false
+                            streamer.videoFrameCount = (streamer.videoFrameCount || 0) + 1
+                        })
+                    } catch {
+                        isWriting = false
+                    }
+                }, delay)
+            }
+
+            tick()
         }
+
+        sendVideoFrame()
     }
 
     private static stopEncoder(streamer: StreamInstance) {
-        if (streamer.videoInterval) clearInterval(streamer.videoInterval)
+        if (streamer.videoTimeout) clearTimeout(streamer.videoTimeout)
         if (streamer.audioInterval) clearInterval(streamer.audioInterval)
-        streamer.videoInterval = undefined
+        streamer.videoTimeout = undefined
         streamer.audioInterval = undefined
 
         const encoder = streamer.encoder
@@ -584,17 +619,32 @@ export class RtmpStreamer {
         }
     }
 
-    static updateAudio(buffer: Buffer) {
-        const now = Date.now()
-        for (const streamer of this.streamers.values()) {
-            if (!streamer.config.enableAudio) continue
-            streamer.lastAudioTime = now
+    static updateAudio(outputId: string | undefined, buffer: Buffer, _sampleRate: number = 48000) {
+        const writeToStreamer = (streamer: StreamInstance) => {
+            if (!streamer || !streamer.config.enableAudio) return
+
             const audioStream = streamer.encoder?.stdio[3] as any
-            if (!audioStream || audioStream.destroyed) continue
+            if (!audioStream || audioStream.destroyed) return
+
+            if (!streamer.hasReceivedFirstAudio) streamer.hasReceivedFirstAudio = true
+
             try {
                 audioStream.write(buffer)
+                if (streamer.audioStats) {
+                    streamer.audioStats.totalBytes += buffer.length
+                    streamer.audioStats.chunkCount++
+                }
             } catch (err) {
-                console.error("[RtmpStreamer] Error writing audio:", err)
+                console.error(`[AudioDebug:${streamer.outputId}] Pipe write error:`, err)
+            }
+        }
+
+        if (outputId) {
+            const streamer = this.streamers.get(outputId)
+            if (streamer) writeToStreamer(streamer)
+        } else {
+            for (const streamer of this.streamers.values()) {
+                writeToStreamer(streamer)
             }
         }
     }

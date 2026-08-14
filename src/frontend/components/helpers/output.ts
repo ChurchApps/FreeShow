@@ -532,10 +532,11 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
 
         const output = updater[outputId]
         const keys: string[] = key ? [key] : Object.keys(output.out || {})
-        cleared = !keys.find((type: string) => {
+        cleared = !keys.some((type: string) => {
             if (!output.out?.[type]) return
 
             if (type === "overlays") {
+                if (!Array.isArray(output.out.overlays)) return false
                 if (checkLocked && output.out.overlays?.length) return true
                 if (!checkLocked && output.out.overlays?.filter((id: string) => !get(overlays)[id]?.locked).length) return true
                 return false
@@ -760,18 +761,18 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
 
     const newData = { ...(output.webrtcData || {}), [key]: value }
 
-    if (key === "streaming") {
-        if (!output.webrtc || !output.webrtcData?.url) return
-
-        if (value) AudioAnalyser.recorderActivate()
-        else AudioAnalyser.recorderDeactivate()
-    }
+    if (key === "streaming" && (!output.webrtc || !output.webrtcData?.url)) return null
 
     outputs.update((a: any) => {
         if (!a[outputId]) return a
         a[outputId].webrtcData = newData
         return a
     })
+
+    if (key === "streaming") {
+        if (value) AudioAnalyser.recorderActivate()
+        else AudioAnalyser.recorderDeactivate()
+    }
 
     send(OUTPUT, ["SET_VALUE"], { id: outputId, key: "webrtcData", value: newData })
     return newData
@@ -798,18 +799,18 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
 
     const newData = { ...(output.rtmpData || {}), [key]: value }
 
-    if (key === "streaming") {
-        if (!output.rtmp || !hasStreamableDestination(newData)) return
-
-        if (value) AudioAnalyser.recorderActivate()
-        else AudioAnalyser.recorderDeactivate()
-    }
+    if (key === "streaming" && (!output.rtmp || !hasStreamableDestination(newData))) return null
 
     outputs.update((a: any) => {
         if (!a[outputId]) return a
         a[outputId].rtmpData = newData
         return a
     })
+
+    if (key === "streaming") {
+        if (value) AudioAnalyser.recorderActivate()
+        else AudioAnalyser.recorderDeactivate()
+    }
 
     send(OUTPUT, ["SET_VALUE"], { id: outputId, key: "rtmpData", value: newData })
     return newData

@@ -31,6 +31,7 @@ import {
     dynamicValueData,
     effects,
     events,
+    focusMode,
     globalRegexes,
     groups,
     livePrepare,
@@ -161,6 +162,7 @@ const receiveOUTPUTasMAIN: any = {
             if (!a[data.id] || a[data.id].boundsLocked) return a
 
             a[data.id].bounds = data.bounds
+            if (data.screen) a[data.id].screen = data.screen
             return a
         })
     },
@@ -415,7 +417,7 @@ const receiveCLOUD = {
         }
 
         // reload shows cache (because there could be some changes)
-        showsCache.set({})
+        if (!get(focusMode)) showsCache.set({})
         activeShow.set(null)
 
         // show completed toast
