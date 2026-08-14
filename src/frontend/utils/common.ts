@@ -227,6 +227,11 @@ export function isDarkTheme() {
     return contrastColor === "#FFFFFF"
 }
 
+/** Escape a plain search term so it can be used inside a RegExp without its metacharacters being interpreted */
+export function escapeRegExp(value: string) {
+    return (value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
 const throttled: { [key: string]: any } = {}
 export function throttle(id: string, value: any, callback: (v: any) => void, maxUpdatesPerSecond: number) {
     // value = clone(value)
