@@ -5,8 +5,9 @@
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
     import { startResizing, stopResizing } from "../../utils/cursor"
     import { translateText } from "../../utils/language"
-    import { getAccess } from "../../utils/profile"
-    import { shouldOpenReplace } from "../../utils/shortcuts"
+    import { getAccess, hiddenInFocusMode } from "../../utils/profile"
+    import { getNormalizedKey, shouldOpenReplace } from "../../utils/shortcuts"
+    import { isTypingTarget } from "../../utils/dom"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
     import Navigation from "../drawer/Navigation.svelte"
@@ -164,7 +165,15 @@
     let firstMatch: null | any = null
     let searchElem: HTMLInputElement | undefined
     async function keydown(e: KeyboardEvent) {
-        if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+        // normalized so these work on non-latin keyboard layouts, like the shortcuts in shortcuts.ts.
+        // shift/alt combos are separate shortcuts (Ctrl+Shift+F is focus mode, Ctrl+Shift+D is the next timer),
+        // and the normalized key is case folded, so they have to be excluded explicitly
+        const isPlainCtrl = (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey
+        const ctrlKey = isPlainCtrl ? getNormalizedKey(e).toLowerCase() : ""
+
+        // this moves focus to the search box, so it has to work while typing elsewhere too
+        // (TextEditor.svelte exists for the same reason)
+        if (ctrlKey === "f") {
             if ($activePopup === "show" || shouldOpenReplace()) return
             focusSearch()
 
@@ -179,7 +188,8 @@
                     return a
                 })
             }
-        } else if ((e.ctrlKey || e.metaKey) && e.key === "d") {
+        } else if (ctrlKey === "d" && !isTypingTarget(document.activeElement)) {
+            // unlike the search shortcut, toggling the drawer while typing is unwanted
             if (!$selected?.id && !$activeEdit.items.length) click(null)
         } else if (e.key === "Enter") {
             if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || $focusMode) return
@@ -236,8 +246,6 @@
         searchActive = false
         setTimeout(() => (searchActive = true))
     }
-
-    const hiddenInFocusMode = ["templates", "calendar"]
 </script>
 
 <svelte:window on:mouseup={mouseup} on:mousemove={mousemove} on:keydown={keydown} />

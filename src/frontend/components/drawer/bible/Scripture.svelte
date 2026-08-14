@@ -7,8 +7,9 @@
     import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
     import { activeEdit, activeScripture, activeTriggerFunction, customScriptureBooks, notFound, openScripture, outLocked, outputs, resized, scriptureHistory, scriptureMode, scriptures, scriptureSettings, selected } from "../../../stores"
-    import { wait } from "../../../utils/common"
+    import { escapeRegExp, wait } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
+    import { getNormalizedKey } from "../../../utils/shortcuts"
     import { clone } from "../../helpers/array"
     import { brightenDarkColor, fadeColor } from "../../helpers/color"
     import { setDrawerTabData } from "../../helpers/historyHelpers"
@@ -779,11 +780,6 @@
         return `${bookName} ${firstLabel}${suffix}`.trim()
     }
 
-    // Escape user-facing book names before building regular expressions.
-    function escapeRegExp(value: string) {
-        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    }
-
     let contentSearchFieldActive = false
     let contentSearchValue = ""
     let contentSearchResults: VerseReference[] | null = null
@@ -874,10 +870,14 @@
 
         if (!e.ctrlKey && !e.metaKey) return
 
+        // normalized so these work on non-latin keyboard layouts, like the shortcuts in shortcuts.ts.
+        // the normalized key is case folded, so shift/alt combos (separate shortcuts) have to be excluded explicitly
+        const ctrlKey = e.shiftKey || e.altKey ? "" : getNormalizedKey(e).toLowerCase()
+
         // Ctrl+N Converts to show (shortcuts.ts)
 
         // Refresh
-        if (e.key === "r") {
+        if (ctrlKey === "r") {
             if (!isActiveInOutput) return
             e.preventDefault()
             playScripture()
@@ -885,14 +885,14 @@
         }
 
         // Toggle History
-        if (e.key === "h") {
+        if (ctrlKey === "h") {
             e.preventDefault()
             historyOpened = !historyOpened
             return
         }
 
         // toggle Bible content search
-        if (e.key === "b") {
+        if (ctrlKey === "b") {
             if (contentSearchFieldActive) resetContentSearch()
             else contentSearchFieldActive = true
             return
