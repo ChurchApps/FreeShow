@@ -29,6 +29,12 @@ export function videoSync(path: string, outputId: string, callback: (state: Play
  *                          thresholds and restore the rate after a hard seek.
  */
 const lastSeekTimestamps = new WeakMap<HTMLVideoElement, number>()
+interface SyncRecord {
+    targetTime: number
+    timestamp: number
+}
+const lastSyncRecords = new WeakMap<HTMLVideoElement, SyncRecord>()
+
 export function clampPlaybackRate(rate: number): number {
     return Math.min(16, Math.max(0.1, rate || 1))
 }
@@ -42,12 +48,29 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
 
     // 1. Improved Explicit Seek Detection:
     // A jump occurs when targetTime (authoritative clock) deviates significantly from
-    // where the audio was on the last tick (lastSyncedTime), or on initial sync.
-    const isFirstSync = lastSyncedTime === null || lastSyncedTime === undefined
+    // expected progress based on elapsed wall-clock time since last sync, or on initial sync.
+    const prevRecord = lastSyncRecords.get(vid)
+    lastSyncRecords.set(vid, { targetTime, timestamp: now })
 
-    const targetVsLastSynced = lastSyncedTime !== null && lastSyncedTime !== undefined ? Math.abs(targetTime - lastSyncedTime) : 0
+    const isFirstSync = lastSyncedTime === null || lastSyncedTime === undefined || !prevRecord
 
-    const isExplicitSeek = isFirstSync || targetVsLastSynced > 0.5 * rate || (isSoftLoop && lastSyncedTime !== null && lastSyncedTime > targetTime + 0.1)
+    let isExplicitSeek = false
+    if (isFirstSync) {
+        isExplicitSeek = true
+    } else if (isSoftLoop && lastSyncedTime > targetTime + 0.1) {
+        isExplicitSeek = true
+    } else {
+        const elapsedSec = Math.max(0, (now - prevRecord.timestamp) / 1000)
+        const targetDelta = targetTime - lastSyncedTime
+
+        if (vid.paused) {
+            isExplicitSeek = Math.abs(targetDelta) > 0.5 * rate
+        } else {
+            const expectedAdvance = elapsedSec * rate
+            const jumpAmount = targetDelta - expectedAdvance
+            isExplicitSeek = targetDelta < -0.3 * rate || jumpAmount > 0.8 * rate
+        }
+    }
 
     // 2. Cooldown check: prevent hard-seek feedback loops while decoder buffers
     const lastSeek = lastSeekTimestamps.get(vid) || 0
