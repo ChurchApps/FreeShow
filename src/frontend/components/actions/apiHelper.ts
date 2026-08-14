@@ -784,6 +784,25 @@ export function timerSeekTo(data: API_seek) {
     })
 }
 
+export function timerSeekAdd(data: API_seek) {
+    if (get(outLocked)) return
+
+    const timerId = data.id || get(activeTimers)[0]?.id
+    const currentTimer = get(timers)[timerId]
+    const time = data.seconds
+    if (!currentTimer) return
+
+    activeTimers.update((a) => {
+        const index = a.findIndex((timer) => timer.id === timerId)
+        if (index < 0) a.push({ ...currentTimer, id: timerId, currentTime: time, paused: true })
+        else {
+            a[index].currentTime = (a[index].currentTime || 0) + time
+            delete a[index].startTime
+        }
+        return a
+    })
+}
+
 // OTHER
 
 export function toggleLogSongUsage(data: API_toggle_specific) {

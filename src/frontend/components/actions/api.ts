@@ -75,6 +75,7 @@ import {
     stopAudio,
     stopTimerById,
     stopTimerByName,
+    timerSeekAdd,
     timerSeekTo,
     toggleLock,
     toggleLogSongUsage,
@@ -303,6 +304,7 @@ export const API_ACTIONS = {
     pause_timers: () => pauseAllTimers(), // BC
     stop_timers: () => stopTimers(), // BC
     timer_seekto: (data: API_seek) => timerSeekTo(data), // BC
+    timer_seek_add: (data: API_seek) => timerSeekAdd(data),
     edit_timer: (data: API_edit_timer) => editTimer(data),
     id_pause_timer: (data: API_id) => pauseTimerById(data.id),
     name_pause_timer: (data: API_strval) => pauseTimerByName(data.value),
