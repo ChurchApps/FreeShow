@@ -47,9 +47,10 @@
 
     // keyboard shortcuts
     function keydown(e: KeyboardEvent) {
-        if ((e.target as HTMLElement)?.closest("textarea") || (e.target as HTMLElement)?.closest("input")) return
+        if ((e.target as HTMLElement)?.closest("textarea, input, select")) return
 
-        if ([" ", "Arrow", "Page"].includes(e.key)) e.preventDefault()
+        // stop the focused list/page from scrolling as well as advancing the slide
+        if (e.key === " " || e.key.startsWith("Arrow") || e.key.startsWith("Page")) e.preventDefault()
 
         // WIP keyboard shortcuts same as main app
         if ([" ", "ArrowRight", "PageDown"].includes(e.key)) send("API:next_slide")
