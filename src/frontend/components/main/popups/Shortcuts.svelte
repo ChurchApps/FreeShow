@@ -14,7 +14,9 @@
         "actions.toggle_drawer": `${ctrl} + d`,
         "actions.export": `${ctrl} + e`,
         "main.search": `${ctrl} + f`,
-        "main.quick_search": `${ctrl} + g`,
+        // same key, opens find & replace instead while editing a show
+        "actions.find_replace": `${ctrl} + f`,
+        "main.quick_search": `${ctrl} + g / f8`,
         "popup.history": `${ctrl} + h`,
         "edit._title_italic": `${ctrl} + i`,
         "actions.import": `${ctrl} + i`,
@@ -33,49 +35,47 @@
         "actions.paste": `${ctrl} + v`,
         // "": `${ctrl} + w`, // closing something
         "actions.cut": `${ctrl} + x`,
-        "actions.redo": `${ctrl} + y`,
+        "actions.redo": `${ctrl} + y / ${ctrl} + shift + z`,
         "actions.undo": `${ctrl} + z`,
         "popup.shortcuts": `${ctrl} + ?`,
 
         shift: "SEPARATOR",
 
+        "popup.next_timer": `${ctrl} + shift + d`,
         "actions.focus_mode": `${ctrl} + shift + f`,
+        "new.show": `${ctrl} + shift + n`,
+        "show.text": `${ctrl} + shift + t`,
         "show.change_view": `${ctrl} + shift + v`,
 
         alt: "SEPARATOR",
 
+        "actions.cut_in_half": `${alt} + enter`,
         "Show Import from Clipboard": `${ctrl} + ${alt} + i`,
 
         clear: "SEPARATOR",
 
         "actions.remove_selection": "esc",
-        "clear.all": "esc",
-        // "clear.all": ".",
+        "clear.all": "esc / .",
         "clear.background": "f1",
         "actions.rename": "f2",
         "clear.slide": "f2",
         "clear.overlays": "f3",
         "clear.audio": "f4",
-        // "preview._next_slide": "f5",
-        // "preview._next_slide": "Arrow Right",
-
-        // "clear.nextTimer": "f5",
-        // "from start": "f5",
-        // MAC: cmd + shift + f
-        // "main.quick_search": "f8",
-        "actions.fullscreen": "f11",
-
-        // presenterKeys: "SEPARATOR",
+        "actions.delete": "del / backspace",
+        // F11 is a no-op on macOS (shortcuts.ts), the context menu hides it there as well
+        ...($os.platform === "darwin" ? {} : { "actions.fullscreen": "f11" }),
 
         num: "SEPARATOR",
 
         // arrow keys, space, tabs, enter, ...
         "actions.change_tab": "num",
         "actions.change_drawer_tab": `${ctrl} + num`,
-        "actions.change_slide": "← / →",
+        "preview._next_slide": "space / → / page down / f5",
+        "preview._previous_slide": "← / page up",
         "actions.change_project_item": "↑ / ↓",
         "actions.change_drawer_item": `${ctrl} + ← / →`,
         "actions.change_drawer_category": `${ctrl} + ↑ / ↓`,
+        "actions.back": `${ctrl} + backspace`,
 
         "tabs.search_tip": "SEPARATOR",
 
