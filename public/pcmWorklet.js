@@ -13,6 +13,10 @@ class PcmSenderProcessor extends AudioWorkletProcessor {
         const right = input && input.length > 1 && input[1] && input[1].length === (left ? left.length : 0) ? input[1] : left
         const len = left && left.length > 0 ? left.length : 128
 
+        // ensure buffers exist and are not detached
+        if (this.bufferL.byteLength === 0) this.bufferL = new Float32Array(960)
+        if (this.bufferR.byteLength === 0) this.bufferR = new Float32Array(960)
+
         for (let i = 0; i < len; i++) {
             this.bufferL[this.offset] = left ? left[i] : 0.0
             this.bufferR[this.offset] = right ? right[i] : 0.0

@@ -283,7 +283,8 @@ export class NdiSender {
             const senderData = this.NDI[id]
             if (!senderData?.sender) return
 
-            senderData.pendingAudioFrame = frame
+            // Clone frame object to prevent frame state collisions across multiple senders
+            senderData.pendingAudioFrame = { ...frame }
             void this.sendQueuedAudioFrameNDI(id)
         })
     }

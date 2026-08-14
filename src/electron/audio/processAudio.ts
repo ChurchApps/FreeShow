@@ -6,7 +6,6 @@ import { RtmpStreamer } from "../streaming/RtmpStreamer"
 import { WebRtcHost } from "../streaming/WebRtcHost"
 import { IcecastSender } from "./IcecastSender"
 
-// const isStopping = false
 const channelCount2 = 2
 const sampleRate2 = 48000 // Hz
 
@@ -24,13 +23,8 @@ export function isAudioEnabled(): boolean {
 
 let icecastPcmAccumulator: Buffer = Buffer.alloc(0)
 
-export async function processAudio(buffer: Buffer, sampleRate: number = 48000, targetId?: any, icecast?: any) {
+export async function processAudio(buffer: Buffer, sampleRate: number = 48000, targetId?: string, icecast?: any) {
     if (!buffer || buffer.length === 0) return
-
-    if (typeof targetId === "object" && targetId !== null) {
-        icecast = targetId
-        targetId = undefined
-    }
 
     const sr = Number(sampleRate) || 48000
     const tid = typeof targetId === "string" ? targetId : undefined
@@ -53,21 +47,19 @@ export async function processAudio(buffer: Buffer, sampleRate: number = 48000, t
             const pcm48k = sr === 48000 ? int16Buffer : resamplePcmInt16Stereo(int16Buffer, sr, 48000)
             const frameByteSize = 960 * 2 * 2 // 3840 bytes
 
-            // Fast-path: Skip the accumulator entirely if it's perfectly sized (which it usually is)
+            // Fast-path: Skip accumulator if perfectly sized
             if (icecastPcmAccumulator.length === 0 && pcm48k.length === frameByteSize) {
                 const opusFrame = opusEncoder.encode(pcm48k)
-                enqueueOpusFrame(opusFrame, icecast) // Use the new paced queue
+                enqueueOpusFrame(opusFrame, icecast)
             } else {
                 icecastPcmAccumulator = Buffer.concat([icecastPcmAccumulator, pcm48k])
 
                 while (icecastPcmAccumulator.length >= frameByteSize) {
                     const chunk = icecastPcmAccumulator.subarray(0, frameByteSize)
-
-                    // Buffer.from() prevents the memory leak by breaking the reference to the old concatenated chunk
                     icecastPcmAccumulator = Buffer.from(icecastPcmAccumulator.subarray(frameByteSize))
 
                     const opusFrame = opusEncoder.encode(chunk)
-                    enqueueOpusFrame(opusFrame, icecast) // Use the new paced queue
+                    enqueueOpusFrame(opusFrame, icecast)
                 }
             }
         } catch (err) {
@@ -79,12 +71,10 @@ export async function processAudio(buffer: Buffer, sampleRate: number = 48000, t
         BlackmagicSender.sendAudioBuffer(int16Buffer, { sampleRate: sr, channelCount: channelCount2 })
         sendAudioToOutputServer(int16Buffer, { sampleRate: sr, channelCount: channelCount2 })
 
-        // Stream system audio through WebRTC/WHIP
         if (WebRtcHost.isRunning()) {
             WebRtcHost.sendAudio(int16Buffer, { sampleRate: sr, channelCount: channelCount2 })
         }
 
-        // Stream system audio to RTMP Streamer targeted to specific outputId
         if (RtmpStreamer.anyRunning()) {
             RtmpStreamer.updateAudio(tid, int16Buffer, sr)
         }
@@ -95,10 +85,8 @@ function convertPlanarFloat32ToInt16Interleaved(buffer: Buffer, channels: number
     const totalFloat32 = buffer.length / 4
     const samplesPerChannel = totalFloat32 / channels
 
-    // allocUnsafe skips zero-filling, which is safe here because we overwrite every byte
     const pcm16 = Buffer.allocUnsafe(samplesPerChannel * channels * 2)
 
-    // View the Node Buffers as native TypedArrays for massive speedups
     const floatArr = new Float32Array(buffer.buffer, buffer.byteOffset, totalFloat32)
     const intArr = new Int16Array(pcm16.buffer, pcm16.byteOffset, pcm16.length / 2)
 
@@ -122,7 +110,7 @@ export function sendAudioToOutputServer(buffer: Buffer, { sampleRate, channelCou
     toServer("OUTPUT_STREAM", { channel: "AUDIO_BUFFER", data: { buffer, sampleRate, channelCount } })
 }
 
-let resampleBuffer = Buffer.alloc(1920 * 4) // Pre-allocated reusable buffer
+let resampleBuffer = Buffer.alloc(1920 * 4)
 function resamplePcmInt16Stereo(input: Buffer, inSampleRate: number, outSampleRate: number = 48000): Buffer {
     if (inSampleRate === outSampleRate || !input || input.length === 0) return input
 
@@ -131,7 +119,6 @@ function resamplePcmInt16Stereo(input: Buffer, inSampleRate: number, outSampleRa
     const numOutputFrames = Math.floor(numInputFrames / ratio)
     const requiredBytes = numOutputFrames * 4
 
-    // Resize shared buffer only if necessary
     if (resampleBuffer.length < requiredBytes) {
         resampleBuffer = Buffer.alloc(requiredBytes)
     }
@@ -139,19 +126,22 @@ function resamplePcmInt16Stereo(input: Buffer, inSampleRate: number, outSampleRa
     for (let i = 0; i < numOutputFrames; i++) {
         const inputIndex = i * ratio
         const index0 = Math.floor(inputIndex)
-        const index1 = Math.min(index0 + 1, numInputFrames - 1) //[cite: 2]
+        const index1 = Math.min(index0 + 1, numInputFrames - 1)
         const frac = inputIndex - index0
 
-        const l0 = input.readInt16LE(index0 * 4) //[cite: 2]
-        const l1 = input.readInt16LE(index1 * 4) //[cite: 2]
-        const lSample = Math.round(l0 + (l1 - l0) * frac) //[cite: 2]
+        const pos0 = index0 * 4
+        const pos1 = index1 * 4
 
-        const r0 = input.readInt16LE(index0 * 4 + 2) //[cite: 2]
-        const r1 = input.readInt16LE(index1 * 4 + 2) //[cite: 2]
-        const rSample = Math.round(r0 + (r1 - r0) * frac) //[cite: 2]
+        const l0 = input.readInt16LE(pos0)
+        const l1 = input.readInt16LE(pos1)
+        const lSample = Math.round(l0 + (l1 - l0) * frac)
 
-        resampleBuffer.writeInt16LE(Math.max(-32768, Math.min(32767, lSample)), i * 4) //[cite: 2]
-        resampleBuffer.writeInt16LE(Math.max(-32768, Math.min(32767, rSample)), i * 4 + 2) //[cite: 2]
+        const r0 = input.readInt16LE(pos0 + 2)
+        const r1 = input.readInt16LE(pos1 + 2)
+        const rSample = Math.round(r0 + (r1 - r0) * frac)
+
+        resampleBuffer.writeInt16LE(Math.max(-32768, Math.min(32767, lSample)), i * 4)
+        resampleBuffer.writeInt16LE(Math.max(-32768, Math.min(32767, rSample)), i * 4 + 2)
     }
 
     return resampleBuffer.subarray(0, requiredBytes)
@@ -162,7 +152,6 @@ const opusQueue: Buffer[] = []
 let isPacing = false
 let nextSendMs = 0
 
-// Helper to get high-resolution time in milliseconds as a standard number
 function getHrTimeMs(): number {
     const [sec, nsec] = process.hrtime()
     return sec * 1000 + nsec / 1e6
@@ -183,7 +172,7 @@ function pacePackets(icecast: any) {
         return
     }
 
-    // Drop oldest frames if tab was backgrounded and accumulated > 1 second of audio
+    // Drop oldest frames if backed up over 1s (50 x 20ms frames)
     if (opusQueue.length > 50) {
         opusQueue.splice(0, opusQueue.length - 10)
         nextSendMs = getHrTimeMs()
@@ -191,19 +180,22 @@ function pacePackets(icecast: any) {
 
     const nowMs = getHrTimeMs()
 
-    // Resync clock if event loop lagged heavily (> 500ms behind)
     if (nowMs > nextSendMs + 500) {
         nextSendMs = nowMs
     }
 
-    // Process all frames that are due right now
     while (opusQueue.length > 0 && getHrTimeMs() >= nextSendMs) {
         const frame = opusQueue.shift()!
         IcecastSender.sendAudio(frame, icecast)
-        nextSendMs += 20 // Advance target time by 20ms
+        nextSendMs += 20
     }
 
-    // Schedule next execution precisely
-    const delayMs = Math.max(1, nextSendMs - getHrTimeMs())
-    setTimeout(() => pacePackets(icecast), delayMs)
+    const delayMs = Math.max(0, nextSendMs - getHrTimeMs())
+
+    // High-precision scheduling
+    if (delayMs <= 2) {
+        setImmediate(() => pacePackets(icecast))
+    } else {
+        setTimeout(() => pacePackets(icecast), delayMs)
+    }
 }
