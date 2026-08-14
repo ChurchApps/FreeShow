@@ -135,7 +135,7 @@
 {/if}
 
 <div class="speech-widget {isOpen ? 'is-open' : 'is-closed'}">
-    <AiRing {state} {audioLevel} borderRadius={isOpen ? "20px" : "50%"}>
+    <AiRing {state} {audioLevel} borderRadius={isOpen ? "20px" : "50%"} fill>
         {#if !isOpen}
             <button class="floating-trigger" on:click={toggleExpand} aria-label="Expand Speech Recognition Modal">
                 {#if state === "inactive" || state === "error"}

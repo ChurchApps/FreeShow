@@ -4,9 +4,10 @@
     export let audioLevel = 0.0
     export let borderRadius = "20px"
     export let borderWidth = "3px"
+    export let fill = false // stretch to the parent's size (the floating bubble) instead of the content's natural height
 </script>
 
-<div class="card-border-wrapper state-{state}" style="--audio-level: {audioLevel};--ring-radius: {borderRadius};--ring-width: {borderWidth};">
+<div class="card-border-wrapper state-{state}" class:fill style="--audio-level: {audioLevel};--ring-radius: {borderRadius};--ring-width: {borderWidth};">
     <div class="inner-content">
         <slot />
     </div>
@@ -19,17 +20,20 @@
 
     .card-border-wrapper {
         width: 100%;
-        height: 100%;
         position: relative;
         border-radius: var(--ring-radius);
         padding: var(--ring-width);
         background: var(--ai-gradient);
         background-size: 200% 200%;
-        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
         transition:
             border-radius 0.4s cubic-bezier(0.16, 1, 0.3, 1),
             box-shadow 0.3s ease;
         animation: rotateGradient 10s ease infinite;
+    }
+
+    .card-border-wrapper.fill {
+        height: 100%;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
     }
 
     .card-border-wrapper.state-inactive {
