@@ -1,4 +1,4 @@
-import { AIProviderId } from "../../types/ai/AiScripture"
+import type { AIProviderId } from "../../types/ai/AiScripture"
 
 export const AI_PROVIDER_MODELS: { [id in AIProviderId]: { models: { id: string; name: string; recommended?: boolean }[]; defaultModel: string } } = {
     anthropic: {
