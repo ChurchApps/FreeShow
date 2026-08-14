@@ -32,7 +32,7 @@
     }
 
     $: mediaStyle = getMediaStyle($media[id], undefined)
-    $: cropState = getCropState(mediaStyle.cropping, false)
+    $: cropState = getCropState(mediaStyle.cropping, false, mediaStyle.style)
     $: cameraStyleString = `${cropState.mediaCropGeometry}object-fit: ${mediaStyle.fit || "contain"};filter: ${mediaStyle.filter};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 </script>
 
