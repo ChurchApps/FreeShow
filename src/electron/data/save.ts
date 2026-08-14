@@ -25,7 +25,7 @@ export async function save(data: SaveData) {
     // auto backup right after startup does not need to write again
     const isAutoBackupOnly = !!data.customTriggers?.backup && !!data.customTriggers?.isAutoBackup && !data.customTriggers?.autosave && !data.closeWhenFinished
     if (isAutoBackupOnly) {
-        startBackup({ customTriggers: data.customTriggers })
+        startBackup({ customTriggers: data.customTriggers }).catch((err) => console.error("Backup failed:", err))
         sendToMain(ToMain.SAVE2, { closeWhenFinished: false, customTriggers: data.customTriggers })
         isSaving = false
         return
@@ -104,7 +104,7 @@ export async function save(data: SaveData) {
 
     // SAVED
 
-    if (data.customTriggers?.backup) startBackup({ customTriggers: data.customTriggers })
+    if (data.customTriggers?.backup) startBackup({ customTriggers: data.customTriggers }).catch((err) => console.error("Backup failed:", err))
 
     if (data.closeWhenFinished) await wait(300) // make sure files are written before closing
     if (!reset) sendToMain(ToMain.SAVE2, { closeWhenFinished: data.closeWhenFinished, customTriggers: data.customTriggers })

@@ -40,7 +40,14 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
     if (isCloudSync) return { entries }
 
     const zipPath = backupFolder + ".zip"
-    await compressToZip(entries, zipPath)
+    try {
+        await compressToZip(entries, zipPath)
+    } catch (err) {
+        console.error("Could not create backup:", err)
+        sendToMain(ToMain.ALERT, "Could not create the backup file!")
+        sendToMain(ToMain.BACKUP, { finished: false, path: zipPath })
+        return
+    }
 
     sendToMain(ToMain.BACKUP, { finished: true, path: zipPath })
 
@@ -53,6 +60,11 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
         if (!store) return
 
         const name = id + ".json"
+
+        // a store that never got any value set has no file on disk yet.
+        // compressToZip skips it, and syncManager treats a store missing from the
+        // cloud data as empty — don't add it as a buffer, that would stamp it with
+        // the current time and make an empty store look newer than real cloud data
         entries.push({ name, filePath: store.path })
     }
 
