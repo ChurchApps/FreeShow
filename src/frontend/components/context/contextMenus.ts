@@ -32,7 +32,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     quick_search: { label: "main.quick_search", icon: "search", shortcuts: ["Ctrl+G"] },
     quick_start_guide: { label: "guide.start", icon: "guide" },
     focus_mode: { label: "actions.focus_mode", icon: "focus_mode", shortcuts: ["Ctrl+Shift+F"] },
-    fullscreen: { label: "actions.fullscreen", icon: "fullscreen", shortcuts: ["F11"] },
+    fullscreen: { label: "actions.fullscreen", icon: "fullscreen", shortcuts: ["F11", ""] },
     resetZoom: { label: "actions.resetZoom", icon: "reset", iconColor: "#ff6b54" },
     zoomIn: { label: "actions.zoomIn", icon: "zoomIn" },
     zoomOut: { label: "actions.zoomOut", icon: "zoomOut" },
@@ -161,7 +161,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // stage
     stage: { label: "menu.stage", id: "stage" },
     // formatting
-    find_replace: { label: "actions.find_replace", icon: "find_replace", iconColor: "#90f1cc" },
+    find_replace: { label: "actions.find_replace", icon: "find_replace", iconColor: "#90f1cc", shortcuts: ["Ctrl+F"] },
     insert_virtual_break: { label: "edit.insert_virtual_break", icon: "add", iconColor: "#90f1cc" },
     cut_in_half: { label: "actions.cut_in_half", tooltip: "tooltip.context_cut_in_half [Alt+Enter]", icon: "cut_in_half", iconColor: "#90f1b5" },
     merge: { label: "actions.merge", tooltip: "tooltip.context_merge", icon: "merge", iconColor: "#90f1b5" },
