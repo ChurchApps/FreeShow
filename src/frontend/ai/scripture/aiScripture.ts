@@ -346,7 +346,7 @@ export async function handleDetection(ref: DetectedReference): Promise<void> {
     // auto projection
     if (settings.mode !== "auto") return
     if (get(aiScriptureAutoPaused) || get(outLocked)) return
-    if (ref.confidence !== "high") return
+    if (confidencePercent(ref.confidence) < (typeof settings.autoMinConfidence === "number" ? settings.autoMinConfidence : 80)) return
     // quoted verses are separately gated - except follow-along continuations, which only ever
     // advance the passage already live on the output within its own chapter
     if (ref.type === "quoted" && !settings.autoProjectQuoted && !ref.continuation) return
@@ -408,6 +408,14 @@ function tokenOverlapSimilarity(verseText: string, quote: string): number {
         if (verseTokens.has(token)) matched++
     })
     return matched / quoteTokens.length
+}
+
+// detection confidence is categorical - map the bands onto the percent scale the
+// auto-show threshold uses (the settings slider shows which band a percent lands in)
+export function confidencePercent(confidence: DetectedReference["confidence"]): number {
+    if (confidence === "high") return 90
+    if (confidence === "medium") return 65
+    return 35
 }
 
 // same book/chapter with an overlapping verse range

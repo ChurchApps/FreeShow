@@ -8,6 +8,7 @@
     import InputRow from "../input/InputRow.svelte"
     import Title from "../input/Title.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
+    import Slider from "../inputs/Slider.svelte"
     import MaterialCheckbox from "../inputs/MaterialCheckbox.svelte"
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
     import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
@@ -49,6 +50,13 @@
         { value: "confirm", label: translateText("ai_scripture.mode_confirm") },
         { value: "auto", label: translateText("ai_scripture.mode_auto") }
     ]
+
+    // percent threshold for auto-show, with the band it lands in ("high" starts at 80, "medium" at 50)
+    $: autoMinConfidence = typeof settings.autoMinConfidence === "number" ? settings.autoMinConfidence : 80
+    $: confidenceBand = autoMinConfidence >= 80 ? "high" : autoMinConfidence >= 50 ? "medium" : "low"
+    function setAutoMinConfidence(e: any) {
+        update("autoMinConfidence", Number(e.target?.value ?? 80))
+    }
     // stop any active listening session when the feature is turned off (the session controller follows this toggle)
     function toggleEnabled(e: any) {
         const enabled = !!e.detail
@@ -104,6 +112,13 @@
     <MaterialDropdown label="ai_scripture.mode" options={modeOptions} value={settings.mode || "confirm"} defaultValue="confirm" on:change={(e) => update("mode", e.detail)} />
     {#if (settings.mode || "confirm") === "auto"}
         <Tip type="warning" value="ai_scripture.mode_auto_warning" top={10} />
+
+        <!-- how sure a detection must be before it is shown automatically -->
+        <div class="confidenceRow">
+            <p class="confidenceLabel"><T id="ai_scripture.auto_min_confidence" /></p>
+            <Slider value={autoMinConfidence} min={0} max={100} step={5} style="flex: 1;" on:input={setAutoMinConfidence} />
+            <span class="confidence {confidenceBand}">{autoMinConfidence}% · <T id="ai_scripture.confidence_{confidenceBand}" /></span>
+        </div>
     {/if}
 
     <MaterialToggleSwitch label="ai_scripture.auto_project_quoted" checked={settings.autoProjectQuoted === true} defaultValue={false} on:change={(e) => update("autoProjectQuoted", e.detail)} />
@@ -149,6 +164,42 @@
         overflow-y: auto;
         background-color: var(--primary-darker);
         border-radius: 4px;
+    }
+
+    .confidenceRow {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 10px;
+        background-color: var(--primary-darker);
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+    .confidenceLabel {
+        font-size: 0.9em;
+        white-space: nowrap;
+    }
+
+    .confidence {
+        font-size: 0.75em;
+        text-transform: uppercase;
+        padding: 1px 8px;
+        border-radius: 10px;
+        white-space: nowrap;
+        min-width: 90px;
+        text-align: center;
+    }
+    .confidence.high {
+        background-color: rgb(39 168 39 / 0.25);
+        color: #6fdc6f;
+    }
+    .confidence.medium {
+        background-color: rgb(255 165 0 / 0.25);
+        color: #ffc966;
+    }
+    .confidence.low {
+        background-color: rgb(255 80 80 / 0.25);
+        color: #ff9090;
     }
 
     .privacy {

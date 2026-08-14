@@ -1842,7 +1842,8 @@
         "quote_matching_hint": "Recognizes verses read word-for-word by matching the transcript against your selected Bibles on this computer - free, offline, and no AI key needed. Catching paraphrased wording still needs an AI provider below.",
         "on_device_only": "On-device detection",
         "on_device_tip": "No AI key configured - spoken references and word-for-word quotes are detected on this computer. Add an AI key to also catch paraphrased verses.",
-        "privacy_matching": "Quoted verses are matched against your installed Bibles on this computer - nothing is sent anywhere."
+        "privacy_matching": "Quoted verses are matched against your installed Bibles on this computer - nothing is sent anywhere.",
+        "auto_min_confidence": "Show automatically from confidence"
     },
     "ai": {
         "transcription": "Transcription",

@@ -38,6 +38,7 @@ interface LlmSettings {
 interface AiScriptureSettings {
     enabled?: boolean
     mode?: "confirm" | "auto"
+    autoMinConfidence?: number // auto mode only shows detections scoring at/above this percent (default 80 - "high" band)
     autoProjectQuoted?: boolean
     searchBibles?: string[]
     displayTranslation?: "drawer" | "matched"
