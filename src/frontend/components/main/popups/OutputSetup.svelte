@@ -3,6 +3,9 @@
     import { translateText } from "../../../utils/language"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
+    import { registerPopupSubmit } from "../../../utils/popupSubmit"
+
+    registerPopupSubmit(() => (!localType && !networkType ? null : confirm()))
 
     const localTypes = [
         { id: "window", name: translateText("settings.window"), icon: "hdmi", tip: "HDMI, DisplayPort" },

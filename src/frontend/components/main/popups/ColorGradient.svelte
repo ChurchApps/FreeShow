@@ -10,6 +10,9 @@
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialRadialPicker from "../../inputs/MaterialRadialPicker.svelte"
+    import { registerPopupSubmit } from "../../../utils/popupSubmit"
+
+    registerPopupSubmit(() => change())
 
     const DEFAULT = "linear-gradient(120deg, rgb(255 128 212) 0%, rgb(193 47 106) 62%, rgb(167 19 45) 100%)"
 

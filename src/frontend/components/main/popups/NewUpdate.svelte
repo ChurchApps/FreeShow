@@ -5,6 +5,9 @@
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import { registerPopupSubmit } from "../../../utils/popupSubmit"
+
+    registerPopupSubmit(() => download())
 
     let changelog = ($popupData.changelog || "").replaceAll("\r\n", "<br>").replaceAll("-", "•")
     let latestVersion = $popupData.latestVersion
