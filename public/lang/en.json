@@ -1883,6 +1883,6 @@
         "error_refusal": "The AI refused to answer",
         "error_bad_response": "Unexpected response from the AI",
         "error_ollama_not_running": "Ollama is not running - start it and try again",
-        "provider_none_hint": "Scriptures are detected from the speech alone: spoken references and word-for-word quotes of your installed Bibles. An AI provider additionally catches paraphrased wording."
+        "provider_none_hint": "No language model will be used. On-device features keep working - anything that needs an AI provider stays off."
     }
 }
