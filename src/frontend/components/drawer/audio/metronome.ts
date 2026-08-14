@@ -129,6 +129,7 @@ let scheduledSources: AudioBufferSourceNode[] = []
 let activeTimeouts: NodeJS.Timeout[] = []
 
 async function initializeMetronome() {
+    AudioRoutingManager.getInstance().setAudioContext(getAudioContext())
     await setAudioBuffers()
 
     currentBeat = 1
