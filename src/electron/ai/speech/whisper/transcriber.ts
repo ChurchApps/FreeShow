@@ -134,6 +134,12 @@ export class Transcriber implements TranscriptionDriver {
             const samples = this.readRange(endSample - WINDOW_SAMPLES, endSample)
             if (computeRms(samples) < SILENCE_RMS_THRESHOLD) continue // whole window is silence - skip
 
+            // the step's worth of NEW audio is all this window adds - when that part is silent, any
+            // speech in the window was already covered by the previous one, and transcribing a mostly
+            // silent window is whisper's favorite place to hallucinate ("thank you", subtitle dashes)
+            const fresh = samples.subarray(Math.max(0, samples.length - STEP_SAMPLES))
+            if (computeRms(fresh) < SILENCE_RMS_THRESHOLD) continue
+
             this.enqueueWindow({ samples, startSample: endSample - samples.length })
         }
     }
@@ -270,7 +276,9 @@ export class Transcriber implements TranscriptionDriver {
             // stop() could have run while the WAV was being written - never spawn a child once it has begun
             if (this.stopped) return reject(new Error("Transcriber stopped"))
 
-            const args = ["-m", this.options.modelPath, "-l", language, "-f", wavPath, "-oj", "-of", outBase, "-np", "-t", WHISPER_THREADS]
+            // -nf: temperature fallback re-decodes uncertain (usually quiet) audio at higher temperatures,
+            // which is where whisper invents text - live captioning is better off skipping than guessing
+            const args = ["-m", this.options.modelPath, "-l", language, "-f", wavPath, "-oj", "-of", outBase, "-np", "-t", WHISPER_THREADS, "-nf"]
             const child = spawn(this.options.binary.binaryPath, args, { stdio: ["ignore", "ignore", "pipe"], windowsHide: true })
             this.cliChild = child
 
@@ -458,6 +466,9 @@ export class Transcriber implements TranscriptionDriver {
         // untimed text blob, which forces the trim to guess word positions proportionally)
         form.append("response_format", "verbose_json")
         form.append("temperature", "0.0")
+        // no temperature fallback: re-decoding uncertain (usually quiet) audio at higher temperatures
+        // is where whisper invents text - live captioning is better off skipping than guessing
+        form.append("temperature_inc", "0.0")
 
         const controller = new AbortController()
         const timer = setTimeout(() => controller.abort(), SERVER_INFERENCE_TIMEOUT)
