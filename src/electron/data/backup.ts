@@ -55,17 +55,9 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
 
     /// //
 
-    async function syncStores(id: keyof typeof _store) {
+    function syncStores(id: keyof typeof _store) {
         const store = _store[id]
-        if (!store) return
-
-        const name = id + ".json"
-
-        // a store that never got any value set has no file on disk yet.
-        // compressToZip skips it, and syncManager treats a store missing from the
-        // cloud data as empty — don't add it as a buffer, that would stamp it with
-        // the current time and make an empty store look newer than real cloud data
-        entries.push({ name, filePath: store.path })
+        if (store) entries.push({ name: id + ".json", filePath: store.path })
     }
 
     async function syncBibles() {

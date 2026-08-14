@@ -31,10 +31,7 @@ export function compressToZip(entries: { name: string; content?: Buffer | string
         })
 
         // yazl reads added files lazily and reports failures on the ZipFile itself.
-        // Without this the "error" event is unhandled, which crashes the main process
-        // and leaves this promise pending forever.
         zipfile.on("error", (err: Error) => fail(err))
-        zipfile.outputStream.on("error", (err) => fail(err))
 
         entries.forEach((entry) => {
             try {
@@ -70,30 +67,13 @@ export function compressToZip(entries: { name: string; content?: Buffer | string
             settled = true
             console.error(err)
 
-            // stop yazl from pumping the remaining entries into an orphaned stream
-            // (typed as a plain ReadableStream, but it's a PassThrough at runtime)
+            // stop yazl from pumping remaining entries
             zipfile.outputStream.unpipe(writeStream)
             ;(zipfile.outputStream as Readable).destroy()
 
-            // never leave a truncated zip behind, it could get uploaded or restored from
-            let cleanedUp = false
-            const cleanup = () => {
-                if (cleanedUp) return
-                cleanedUp = true
-
-                fs.rmSync(outputPath, { force: true })
-                reject(err)
-            }
-
-            if (writeStream.destroyed) {
-                cleanup()
-                return
-            }
-
-            writeStream.once("close", cleanup)
-            writeStream.destroy()
-            // "close" always fires, but this promise must never be left pending
-            setTimeout(cleanup, 2000).unref()
+            // clean up output file and reject promise
+            fs.rmSync(outputPath, { force: true })
+            reject(err)
         }
     })
 }
