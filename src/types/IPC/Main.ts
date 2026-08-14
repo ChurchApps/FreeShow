@@ -411,7 +411,7 @@ export interface MainReturnPayloads {
     [Main.ENCODER_DETECT]: Promise<EncoderDetection>
     [Main.SET_RTMP_ENCODER]: void
     // AI
-    [Main.AI_LISTEN_START]: Promise<boolean>
+    [Main.AI_LISTEN_START]: Promise<{ started: boolean; error?: string }>
     [Main.AI_GET_STATUS]: Promise<{ [key: string]: EngineStatus }>
     [Main.AI_SETUP]: Promise<boolean>
     [Main.DEPRECATED_AI_LISTEN_START]: Promise<{ started: boolean; error?: string }>

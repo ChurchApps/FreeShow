@@ -1,32 +1,21 @@
-import crypto from "crypto"
 import fs from "fs"
 import os from "os"
 import path from "path"
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest"
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "freeshow-whisper-test-"))
 
-// whisperManager imports electron for app.getPath("userData") and IPC/main for sendToMain (which pulls in the whole main process)
+// whisperManager imports electron for app.getPath("userData")
 vi.mock("electron", () => ({
-    app: { getPath: () => tempRoot },
-    // delegate to the (stubbable) global fetch so tests can control network behavior
-    net: { fetch: (...args: any[]) => (globalThis.fetch as any)(...args) }
-}))
-vi.mock("../../../IPC/main", () => ({
-    sendToMain: vi.fn()
+    app: { getPath: () => tempRoot }
 }))
 
-import { sendToMain } from "../../../IPC/main"
-import type { WhisperModelId } from "../../../../types/ai/AiScripture"
-import { ToMain } from "../../../../types/IPC/ToMain"
-import { cancelWhisperDownload, computeFileSha256, downloadWhisperModel, findExecutableInPath, getModelPath, isModelReady, verifyWhisperBinary, WHISPER_MODELS } from "./manager"
+import { findExecutableInPath, getModelPath, isModelReady, verifyWhisperBinary, WHISPER_MODELS } from "./manager"
+
+// download/cancel/checksum behavior moved to the setup layer - covered by src/electron/ai/setup tests
 
 afterAll(() => {
     fs.rmSync(tempRoot, { recursive: true, force: true })
-})
-
-afterEach(() => {
-    vi.mocked(sendToMain).mockClear()
 })
 
 describe("WHISPER_MODELS", () => {
@@ -44,25 +33,12 @@ describe("model id validation", () => {
     })
 
     it("getModelPath throws on unknown / path traversal ids", () => {
-        expect(() => getModelPath("../../../evil" as WhisperModelId)).toThrow()
-        expect(() => getModelPath("huge" as WhisperModelId)).toThrow()
+        expect(() => getModelPath("../../../evil")).toThrow()
+        expect(() => getModelPath("huge")).toThrow()
     })
 
     it("isModelReady returns false for unknown ids instead of touching the filesystem", () => {
-        expect(isModelReady("../../../evil" as WhisperModelId)).toBe(false)
-    })
-
-    it("downloadWhisperModel rejects unknown ids before any network request", async () => {
-        const fetchSpy = vi.fn()
-        vi.stubGlobal("fetch", fetchSpy)
-        try {
-            const result = await downloadWhisperModel("../../../../foo/attacker-repo/resolve/main/payload" as WhisperModelId)
-            expect(result.ok).toBe(false)
-            expect(result.error).toContain("Unknown Whisper model")
-            expect(fetchSpy).not.toHaveBeenCalled()
-        } finally {
-            vi.unstubAllGlobals()
-        }
+        expect(isModelReady("../../../evil")).toBe(false)
     })
 })
 
@@ -108,46 +84,5 @@ describe("findExecutableInPath", () => {
     it("finds executables in well known install dirs even when they are missing from PATH", () => {
         process.env.PATH = "relative/dir"
         expect(findExecutableInPath("whisper-cli", [binDir])).toBe(path.join(binDir, "whisper-cli"))
-    })
-})
-
-describe("computeFileSha256", () => {
-    it("matches a directly computed hash", async () => {
-        const filePath = path.join(tempRoot, "hash-me.bin")
-        const content = Buffer.from("freeshow whisper checksum test")
-        fs.writeFileSync(filePath, content)
-
-        const expected = crypto.createHash("sha256").update(content).digest("hex")
-        expect(await computeFileSha256(filePath)).toBe(expected)
-    })
-})
-
-describe("cancelWhisperDownload", () => {
-    it("emits a terminal error progress event so the renderer entry clears", async () => {
-        // fetch that hangs until its abort signal fires
-        vi.stubGlobal(
-            "fetch",
-            vi.fn(
-                (_url: string, init: { signal: AbortSignal }) =>
-                    new Promise((_resolve, reject) => {
-                        init.signal.addEventListener("abort", () => reject(Object.assign(new Error("This operation was aborted"), { name: "AbortError" })))
-                    })
-            )
-        )
-
-        try {
-            const downloadPromise = downloadWhisperModel("tiny")
-            cancelWhisperDownload()
-
-            expect(await downloadPromise).toEqual({ ok: false, error: "Download was cancelled." })
-            expect(sendToMain).toHaveBeenCalledWith(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: "whisper-model-tiny", name: "Whisper model (tiny)", progress: 0, total: 0, status: "error" })
-        } finally {
-            vi.unstubAllGlobals()
-        }
-    })
-
-    it("does nothing when no download is active", () => {
-        cancelWhisperDownload()
-        expect(sendToMain).not.toHaveBeenCalled()
     })
 })

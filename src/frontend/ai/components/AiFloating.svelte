@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { fade } from "svelte/transition"
     import MaterialButton from "../../components/inputs/MaterialButton.svelte"
-    import { ai, aiScriptureTranscript } from "../../stores"
+    import { ai, aiScriptureTranscript, aiStatus } from "../../stores"
     import { audioLevelStore, SpeechToText } from "../stt/stt"
 
     let state: "inactive" | "error" | "listening" | "processing" = "inactive"
@@ -24,8 +24,14 @@
         SpeechToText.disable()
     }
     async function enable() {
-        if (await SpeechToText.enable()) state = "listening"
-        else state = "error"
+        const result = await SpeechToText.enable()
+        state = result.ok ? "listening" : "error"
+    }
+
+    // a runtime engine failure in the electron process ends the session - reflect it & stop capturing
+    $: if ($aiStatus.state === "error" && state === "listening") {
+        state = "error"
+        SpeechToText.stopCapture()
     }
 
     $: audioLevel = $audioLevelStore

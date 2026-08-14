@@ -6,7 +6,7 @@ import { promisify } from "util"
 
 const execFileAsync = promisify(execFile)
 
-const WHISPER_MODELS = ["tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v3"]
+export const WHISPER_MODELS = ["tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v3"]
 const MIN_MODEL_SIZE = 1024 * 1024 // even the tiny model is ~75 MB, anything smaller is a broken download or an error page
 
 const VERIFY_TIMEOUT = 10000
@@ -33,7 +33,7 @@ export function getModelPath(modelId: string): string {
 
 // STATUS
 
-async function verifyWhisperBinary(binaryPath: string): Promise<boolean> {
+export async function verifyWhisperBinary(binaryPath: string): Promise<boolean> {
     if (!binaryPath) return false
 
     try {
@@ -179,7 +179,7 @@ const EXTRA_SEARCH_DIRS: { [platform: string]: string[] } = {
     linux: ["/usr/local/bin", "/usr/bin", "/snap/bin"]
 }
 
-function findExecutableInPath(name: string, extraDirs: string[] = EXTRA_SEARCH_DIRS[process.platform] || []): string | null {
+export function findExecutableInPath(name: string, extraDirs: string[] = EXTRA_SEARCH_DIRS[process.platform] || []): string | null {
     const fileName = process.platform === "win32" ? name + ".exe" : name
 
     for (const dir of [...(process.env.PATH || "").split(path.delimiter), ...extraDirs]) {

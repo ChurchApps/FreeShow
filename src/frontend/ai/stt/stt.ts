@@ -1,6 +1,7 @@
 import { get, writable } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
 import { requestMain, sendMain } from "../../IPC/main"
+import { AudioMicrophone } from "../../audio/audioMicrophone"
 import { ai } from "../../stores"
 import audioProcessor from "./audioProcessor.ts?worker&url"
 
@@ -17,27 +18,56 @@ export class SpeechToText {
     private static animFrameId: number | null = null
     private static listeners: Set<AudioLevelCallback> = new Set()
 
-    static async enable() {
+    static async enable(): Promise<{ ok: boolean; error?: string }> {
         this.stopCapture()
 
-        const deviceId = get(ai).stt?.micDeviceId
+        const savedDeviceId = get(ai).stt?.micDeviceId || ""
+        const deviceId = await this.resolveMicDeviceId(savedDeviceId)
+        if (deviceId && deviceId !== savedDeviceId) {
+            // persist the auto-selected device so the settings dropdown shows what is actually capturing
+            ai.update((a) => {
+                if (!a.stt) a.stt = {}
+                a.stt.micDeviceId = deviceId
+                return a
+            })
+        }
+
         const stream = await this.getMicStream(deviceId)
-        if (!stream) return false
+        if (!stream) return { ok: false, error: "microphone_access" }
 
         this.stream = stream
         this.captureAudioContext(stream)
 
         const engine = get(ai)?.stt?.engine || "whisper"
         const engineOptions = get(ai)?.stt?.engineOptions?.[engine] || {}
+        // whisper might need a moment to spin up on first start
         const result = await requestMain(Main.AI_LISTEN_START, { engine, engineOptions }, undefined, 60000)
-        if (!result) return false
+        if (!result?.started) {
+            this.stopCapture()
+            return { ok: false, error: result?.error || "start_failed" }
+        }
 
-        return true
+        return { ok: true }
     }
 
-    static async disable() {
-        // sendMain(Main.AI_LISTEN_STOP)
+    static disable() {
+        sendMain(Main.AI_LISTEN_STOP)
         this.stopCapture()
+    }
+
+    // prefer the saved device, else the system default, else the first available input -
+    // an unset device leaves the choice to Chromium, which can capture an input the user is not speaking into
+    private static async resolveMicDeviceId(saved: string): Promise<string> {
+        try {
+            const devices = await AudioMicrophone.getList()
+            if (!devices.length) return saved
+            if (saved && devices.some((device) => device.deviceId === saved)) return saved
+
+            return devices.find((device) => device.deviceId === "default")?.deviceId || devices[0].deviceId
+        } catch (err) {
+            console.error("Could not enumerate microphones:", err)
+            return saved
+        }
     }
 
     static async getMicStream(deviceId: string = ""): Promise<MediaStream | null> {

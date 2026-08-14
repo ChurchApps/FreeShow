@@ -214,6 +214,7 @@ export const recentFiles: Writable<{ all: string[]; cleared: string[]; projectMe
 export const statusIndicator: Writable<string> = writable("")
 
 // AI
+export const aiStatus: Writable<{ state: "inactive" | "listening" | "stopped" | "error"; message?: string }> = writable({ state: "inactive" })
 export const aiScriptureStatus: Writable<{ state: AiScriptureState; message?: string; keyless?: boolean }> = writable({ state: "stopped" })
 export const aiScriptureSuggestions: Writable<DetectedReference[]> = writable([])
 export const aiScriptureTranscript: Writable<{ text: string; startMs: number; endMs: number; language?: string; music?: boolean }[]> = writable([])

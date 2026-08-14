@@ -1,17 +1,23 @@
 import type { SttEngineOptions } from "../../../../types/ai/AiSettings"
 import { NemotronDriver } from "../../speech/nemotron/driver"
-import { NemotronModelPaths, getModelDir } from "../../speech/nemotron/manager"
+import type { NemotronModelPaths } from "../../speech/nemotron/manager"
+import type { TranscriberSegment } from "../../speech/types"
+
+interface NemotronTranscriberOptions extends SttEngineOptions {
+    nemotron: NemotronModelPaths
+    vadModelPath: string // resolved by the manager - a file path, not the model directory
+}
 
 export class NemotronTranscriber {
     transcriber: NemotronDriver | null = null
 
-    constructor(_options: SttEngineOptions & { nemotron: NemotronModelPaths | null }, onSegment: (segment: any) => void, onError: (message: string) => void) {
+    constructor(_options: NemotronTranscriberOptions, onSegment: (segment: TranscriberSegment) => void, onError: (message: string) => void) {
         const options = {
-            paths: _options.nemotron!,
-            vadModelPath: _options.customModelPath || getModelDir(),
+            paths: _options.nemotron,
+            vadModelPath: _options.vadModelPath,
             language: _options.language || "en",
-            onSegment: onSegment,
-            onError: onError
+            onSegment,
+            onError
         }
         this.transcriber = new NemotronDriver(options)
     }

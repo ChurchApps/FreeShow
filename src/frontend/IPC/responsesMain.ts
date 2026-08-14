@@ -52,6 +52,7 @@ import {
     activeTimers,
     aiScriptureStatus,
     aiScriptureTranscript,
+    aiStatus,
     alertMessage,
     audioData,
     contentProviderData,
@@ -281,7 +282,8 @@ export const mainResponses: MainResponses = {
         })
     },
 
-    // AI SCRIPTURE
+    // AI
+    [ToMain.AI_STATUS]: (data) => aiStatus.set(data),
     [ToMain.AI_TRANSCRIPT]: (data) => {
         aiScriptureTranscript.update((a) => [...a, data].slice(-20))
         handleQuoteMatchTranscript(data)

@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-// providers.ts talks to real AI APIs - no test here should ever reach it
+// llmTalkScripture composes real AI API providers - no test here should ever reach them
 const { mockDetectScripture } = vi.hoisted(() => ({ mockDetectScripture: vi.fn() }))
-vi.mock("../providers", () => ({
-    getProvider: () => ({ detectScripture: mockDetectScripture })
+vi.mock("./llmTalkScripture", () => ({
+    getLLMScriptureProvider: () => ({ detectScripture: mockDetectScripture })
 }))
 
 import { DetectionCoordinator, detectExplicitReferences, normalizeSpokenNumbers } from "./detection"
