@@ -19,6 +19,24 @@ export class SpeechToText {
     private static listeners: Set<AudioLevelCallback> = new Set()
 
     static async enable(): Promise<{ ok: boolean; error?: string }> {
+        const captured = await this.restartCapture()
+        if (!captured.ok) return captured
+
+        const engine = get(ai)?.stt?.engine || "whisper"
+        const engineOptions = get(ai)?.stt?.engineOptions?.[engine] || {}
+        // whisper might need a moment to spin up on first start
+        const result = await requestMain(Main.AI_LISTEN_START, { engine, engineOptions }, undefined, 60000)
+        if (!result?.started) {
+            this.stopCapture()
+            return { ok: false, error: result?.error || "start_failed" }
+        }
+
+        return { ok: true }
+    }
+
+    // (re)start only the microphone capture - switching the input mid-session goes through here,
+    // so the engine in the electron process keeps running and just sees a short gap in audio
+    static async restartCapture(): Promise<{ ok: boolean; error?: string }> {
         this.stopCapture()
 
         const savedDeviceId = get(ai).stt?.micDeviceId || ""
@@ -37,15 +55,6 @@ export class SpeechToText {
 
         this.stream = stream
         this.captureAudioContext(stream)
-
-        const engine = get(ai)?.stt?.engine || "whisper"
-        const engineOptions = get(ai)?.stt?.engineOptions?.[engine] || {}
-        // whisper might need a moment to spin up on first start
-        const result = await requestMain(Main.AI_LISTEN_START, { engine, engineOptions }, undefined, 60000)
-        if (!result?.started) {
-            this.stopCapture()
-            return { ok: false, error: result?.error || "start_failed" }
-        }
 
         return { ok: true }
     }

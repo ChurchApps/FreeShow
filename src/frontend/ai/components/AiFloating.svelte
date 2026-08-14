@@ -41,8 +41,17 @@
     $: syncSession(isEnabled, scriptureEnabled, micDeviceId)
     async function syncSession(enabled: boolean | undefined, scripture: boolean, mic: string | undefined) {
         const mode = enabled && scripture ? "scripture" : enabled && mic ? "stt" : "off"
-        const micChanged = mode === "stt" && (mic || "") !== lastMic
-        if (mode === sessionMode && !micChanged) return
+        const micChanged = (mic || "") !== lastMic
+
+        if (mode === sessionMode) {
+            if (mode === "off" || !micChanged) return
+
+            // switching the input mid-session only swaps the capture - the engine & detection keep running
+            lastMic = mic || ""
+            const result = await SpeechToText.restartCapture()
+            if (sessionMode === mode && !result.ok) state = "error"
+            return
+        }
 
         const previousMode = sessionMode
         sessionMode = mode
