@@ -131,8 +131,8 @@
 
             const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
             const rate = playbackRate
-            syncVideoToAudio(videoElem, data.currentTime, lastSyncedTime, isSoftLoop, rate)
-            syncVideoToAudio(videoBlurElem, data.currentTime, lastSyncedTime, isSoftLoop, rate)
+            syncVideoToAudio(videoElem, data.currentTime, lastSyncedTime, isSoftLoop, rate, data.isFadingOut)
+            syncVideoToAudio(videoBlurElem, data.currentTime, lastSyncedTime, isSoftLoop, rate, data.isFadingOut)
             if (data.currentTime !== undefined) {
                 lastSyncedTime = data.currentTime
                 videoTime = data.currentTime

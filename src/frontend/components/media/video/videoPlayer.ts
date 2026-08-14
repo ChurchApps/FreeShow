@@ -55,6 +55,7 @@ export type PlayingVideoState = {
     softLoop?: number
     softLoopOpacity?: number
     type?: "background" | "item"
+    isFadingOut?: boolean
 }
 
 export class VideoPlayer {
@@ -157,19 +158,24 @@ export class VideoPlayer {
 
         this.updateVolume(id)
 
-        if (!options.paused) this.play(id, linkedOutputIds?.[0])
+        const mediaTransition = get(transitionData)?.media
+        const durationMs = mediaTransition?.duration ?? 800
+        const delayMs = durationMs > 0 ? durationMs / 4 + 20 : 0
 
-        if (audio instanceof HTMLAudioElement) this.attachToAnalyser(id, audio, linkedOutputIds || [])
+        const startPlayback = () => {
+            if (!options.paused) this.play(id, linkedOutputIds?.[0])
 
-        if (!audio.muted && audio instanceof HTMLAudioElement) {
-            const mediaTransition = get(transitionData)?.media
-            const durationMs = mediaTransition?.duration ?? 800
-            if (durationMs > 0) {
+            if (audio instanceof HTMLAudioElement) this.attachToAnalyser(id, audio, linkedOutputIds || [])
+
+            if (!audio.muted && audio instanceof HTMLAudioElement && durationMs > 0) {
                 this.fadeIn(id, audio, durationMs)
             }
+
+            this.initSyncClock()
         }
 
-        this.initSyncClock()
+        if (delayMs > 0) setTimeout(startPlayback, delayMs)
+        else startPlayback()
 
         const type = options.muted && options.loop ? "background" : !options.muted && !options.loop ? "foreground" : null
         videoStarting(type)
@@ -709,7 +715,8 @@ export class VideoPlayer {
                         muted: activeAudio.muted,
                         softLoop,
                         softLoopOpacity,
-                        type: video.type || "background"
+                        type: video.type || "background",
+                        isFadingOut: this.isFadingOut.includes(video.path)
                     }
                 })
 

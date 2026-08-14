@@ -70,7 +70,7 @@
             } else {
                 const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
                 const rate = Number(mediaStyle.speed) || 1
-                syncVideoToAudio(video || null, data.currentTime, lastSyncedTime, isSoftLoop, rate)
+                syncVideoToAudio(video || null, data.currentTime, lastSyncedTime, isSoftLoop, rate, data.isFadingOut)
                 if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
             }
 

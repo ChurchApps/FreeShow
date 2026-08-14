@@ -37,7 +37,7 @@
             let lastSyncedTime: number | null = null
             unsubscribeSync = videoSync(targetPath, outputId, (data) => {
                 const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
-                syncVideoToAudio(video, data.currentTime, lastSyncedTime, isSoftLoop, targetPlaybackRate)
+                syncVideoToAudio(video, data.currentTime, lastSyncedTime, isSoftLoop, targetPlaybackRate, data.isFadingOut)
                 if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
 
                 videoData.loop = data.loop
@@ -221,7 +221,7 @@
     {#if mediaStyle.fit === "blur" && !perfectFit}
         <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:this={blurVideo} muted loop={videoData.loop} />
     {/if}
-    <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:error bind:currentTime={videoTime} muted src={encodeFilePath(path)} autoplay loop={videoData.loop}>
+    <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:error bind:currentTime={videoTime} muted src={encodeFilePath(path)} loop={videoData.loop}>
         {#each tracks as track}
             <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
         {/each}
