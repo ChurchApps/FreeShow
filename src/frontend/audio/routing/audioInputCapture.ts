@@ -1,4 +1,5 @@
 import { AudioAnalyser } from "../audioAnalyser"
+import { calculatePeakDb, MIN_DB } from "../dBUtils"
 import { AudioRoutingManager } from "./audioRoutingManager"
 
 export interface ChannelVisualizerData {
@@ -268,45 +269,35 @@ export class AudioInputCapture {
         if (!cachedResult || cachedResult.channels.length !== entry.channelCount) {
             const channelsArr: ChannelVisualizerData[] = new Array(entry.channelCount)
             for (let i = 0; i < entry.channelCount; i++) {
-                channelsArr[i] = { channelIndex: i, db: -60, spectrum: [] }
+                channelsArr[i] = { channelIndex: i, db: MIN_DB, spectrum: [] }
             }
 
             cachedResult = {
                 nodeId,
-                db: -60,
+                db: MIN_DB,
                 channels: channelsArr,
-                dbL: -60,
-                dbR: -60,
+                dbL: MIN_DB,
+                dbR: MIN_DB,
                 spectrum: []
             }
             this.resultCache.set(nodeId, cachedResult)
         }
 
-        let maxDb = -60
+        let maxDb = MIN_DB
         for (let i = 0; i < entry.channelCount; i++) {
             const analyser = entry.analysers[i]
             const buf = buffers[i] as Float32Array<ArrayBuffer>
             analyser.getFloatTimeDomainData(buf)
 
-            const db = this.calculateRmsDb(buf)
+            const db = calculatePeakDb(buf)
             if (db > maxDb) maxDb = db
             cachedResult.channels[i].db = db
         }
 
         cachedResult.db = maxDb
-        cachedResult.dbL = cachedResult.channels[0]?.db ?? -60
-        cachedResult.dbR = cachedResult.channels[1]?.db ?? cachedResult.channels[0]?.db ?? -60
+        cachedResult.dbL = cachedResult.channels[0]?.db ?? MIN_DB
+        cachedResult.dbR = cachedResult.channels[1]?.db ?? cachedResult.channels[0]?.db ?? MIN_DB
 
         return cachedResult
-    }
-
-    private calculateRmsDb(buffer: Float32Array): number {
-        let sumSquare = 0
-        const len = buffer.length
-        for (let j = 0; j < len; j++) {
-            sumSquare += buffer[j] * buffer[j]
-        }
-        const rms = Math.sqrt(len ? sumSquare / len : 0)
-        return rms > 0.000001 ? Math.max(-60, Math.min(0, 20 * Math.log10(rms))) : -60
     }
 }

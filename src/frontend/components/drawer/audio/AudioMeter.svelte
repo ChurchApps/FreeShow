@@ -2,13 +2,13 @@
     import { onDestroy, onMount } from "svelte"
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
     import { activeDrawerTab, activePage, audioChannelsData, drawer } from "../../../stores"
+    import { dbToLinear, MIN_DB } from "../../../audio/dBUtils"
     import { DEFAULT_DRAWER_HEIGHT } from "../../../utils/common"
 
     export let channelId: string = ""
     export let detailed: boolean = false
     export let preview: boolean = false
 
-    $: channelVolume = Number($audioChannelsData[channelId]?.volume ?? 1)
     $: isMuted = !!$audioChannelsData[channelId]?.isMuted
 
     const numbers: number[] = [-60, -54, -48, -42, -36, -30, -24, -18, -12, -6, 0]
@@ -25,15 +25,8 @@
 
     let channelIndices: number[] = [0, 1]
 
-    const minDB = -60
+    const minDB = MIN_DB
     const maxDB = 0
-
-    // Linear proportional dB scaling formula: (db + 60) / 60
-    function dbToPos(db: number): number {
-        if (db <= -60) return 0
-        if (db >= 0) return 1
-        return (db + 60) / 60
-    }
 
     function getChannelDbs(): number[] {
         const captured = AudioInputCapture.getInstance().getVisualizerData(channelId)
@@ -56,15 +49,9 @@
         }
 
         let db = rawDb
+        if (isMuted) db = -60
 
-        // Apply channel volume fader adjustment (dB = rawDB + 20 * log10(volume))
-        if (channelVolume > 0 && channelVolume !== 1) {
-            db += 20 * Math.log10(channelVolume)
-        } else if (channelVolume === 0) {
-            db = -60
-        }
-
-        const target = dbToPos(db)
+        const target = dbToLinear(db)
 
         // Smooth attack / decay in JS
         const prevSmoothed = smoothedDB[channelIndex] ?? 0
@@ -83,7 +70,7 @@
         if (dBPercentage >= highest.value) {
             highest.value = dBPercentage
             highest.lastTime = now
-        } else if (now - highest.lastTime > 1000) {
+        } else if (now - highest.lastTime > 2000) {
             highest.value = Math.max(dBPercentage, highest.value - 2)
         }
 
@@ -154,7 +141,7 @@
     })
 
     function getPercentageFromDB(dB: number) {
-        return dbToPos(dB) * 100
+        return dbToLinear(dB) * 100
     }
 
     function openAudioMix() {
