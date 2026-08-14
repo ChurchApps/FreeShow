@@ -721,7 +721,7 @@
         position: relative;
         width: 100%;
         min-width: 840px;
-        min-height: 100%;
+        min-height: auto;
         display: flex;
         flex-direction: column;
     }
@@ -773,7 +773,7 @@
         grid-template-columns: repeat(3, minmax(200px, 1fr));
         justify-items: center;
         gap: 100px;
-        min-height: 100%;
+        min-height: auto;
         padding: 20px;
         box-sizing: border-box;
     }

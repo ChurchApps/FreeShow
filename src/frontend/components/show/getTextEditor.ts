@@ -67,19 +67,11 @@ function getItems(items: Item[]) {
                 tempText += txt.value
             })
 
-            // Chords: Sort right-to-left by position (b.pos - a.pos).
-            // BUG FIX: When multiple chords share the exact same `pos` (like trailing chords at line end),
-            // inserting right-to-left requires the chord with the HIGHER array index (the second chord)
-            // to be inserted FIRST. When the first chord is then inserted at position 5 second,
-            // it lands in front of the second chord, producing something like "[D][C]" instead of "[C][D]".
-            const sortedChords = (line.chords || [])
+            // Chords: Sort right-to-left. For equal positions, higher array indexes come first
+            // to prevent reverse-ordering nested/adjacent insertions (e.g., "[C][D]").
+            const sortedChords = clone(line.chords || [])
                 .map((chord, originalIndex) => ({ chord, originalIndex }))
-                .sort((a, b) => {
-                    if (b.chord.pos !== a.chord.pos) {
-                        return b.chord.pos - a.chord.pos
-                    }
-                    return b.originalIndex - a.originalIndex
-                })
+                .sort((a, b) => b.chord.pos - a.chord.pos || b.originalIndex - a.originalIndex)
 
             sortedChords.forEach(({ chord }) => {
                 while (!tempText[chord.pos]) tempText += " "
