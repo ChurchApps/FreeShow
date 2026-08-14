@@ -1,9 +1,4 @@
 class PcmSenderProcessor extends AudioWorkletProcessor {
-    bufferL: Float32Array
-    bufferR: Float32Array
-    offset: number
-    workerPort: MessagePort | null
-
     constructor() {
         super()
 
@@ -11,15 +6,25 @@ class PcmSenderProcessor extends AudioWorkletProcessor {
         this.bufferR = new Float32Array(960)
         this.offset = 0
 
-        this.workerPort = null
-        this.port.onmessage = (e: MessageEvent) => {
+        this.mainPort = null
+        this.targetId = null
+        this.sampleRate = 48000
+        this.icecastConfig = null
+
+        this.port.onmessage = (e) => {
             if (e.data?.type === "INIT_PORT") {
-                this.workerPort = e.ports[0]
+                if (e.ports && e.ports[0]) {
+                    this.mainPort = e.ports[0]
+                    if (this.mainPort.start) this.mainPort.start()
+                }
+                if (e.data.targetId) this.targetId = e.data.targetId
+                if (e.data.sampleRate) this.sampleRate = e.data.sampleRate
+                if (e.data.icecastConfig) this.icecastConfig = e.data.icecastConfig
             }
         }
     }
 
-    process(inputs: Float32Array[][]) {
+    process(inputs) {
         const input = inputs[0]
         const left = input && input.length > 0 ? input[0] : null
         const right = input && input.length > 1 && input[1] && input[1].length === (left ? left.length : 0) ? input[1] : left
@@ -39,11 +44,17 @@ class PcmSenderProcessor extends AudioWorkletProcessor {
                 planar.set(this.bufferL, 0)
                 planar.set(this.bufferR, 960)
 
-                const message = { buffer: planar.buffer, sendTime: Date.now() }
-
-                // post directly to the Web Worker if port is available to bypass Main Thread
-                if (this.workerPort) this.workerPort.postMessage(message, [planar.buffer])
-                else this.port.postMessage(message, [planar.buffer])
+                if (this.mainPort) {
+                    this.mainPort.postMessage({
+                        channel: "AUDIO",
+                        payload: {
+                            id: this.targetId,
+                            buffer: new Uint8Array(planar.buffer),
+                            sampleRate: this.sampleRate,
+                            icecast: this.icecastConfig
+                        }
+                    })
+                }
 
                 this.offset = 0
             }

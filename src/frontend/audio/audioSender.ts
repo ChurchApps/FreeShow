@@ -1,5 +1,3 @@
-import AudioSenderWorker from "./audioSender.worker.ts?worker"
-import pcmWorkletUrl from "./pcmWorklet.ts?worker&url"
 import { get } from "svelte/store"
 import { AUDIO } from "../../types/Channels"
 import { keysToID } from "../components/helpers/array"
@@ -12,8 +10,8 @@ export class AudioSender {
     private static isActive = false
     private static isUpdating = false
     private static silentGain: GainNode | null = null
-    private static workletModuleLoaded = false
-    private static workletLoadingPromise: Promise<boolean> | null = null
+    private static registeredContexts = new WeakSet<BaseAudioContext>()
+    private static workletLoadingPromises = new WeakMap<BaseAudioContext, Promise<boolean>>()
 
     private static getSilentGain(ac: AudioContext): GainNode {
         if (!this.silentGain || this.silentGain.context !== ac) {
@@ -27,30 +25,31 @@ export class AudioSender {
     }
 
     private static async ensureWorkletModule(ac: AudioContext): Promise<boolean> {
-        if (this.workletModuleLoaded) return true
+        if (this.registeredContexts.has(ac)) return true
         if (!ac.audioWorklet) return false
 
-        if (this.workletLoadingPromise) return this.workletLoadingPromise
+        const existingPromise = this.workletLoadingPromises.get(ac)
+        if (existingPromise) return existingPromise
 
-        this.workletLoadingPromise = (async () => {
+        const promise = (async () => {
             try {
-                await ac.audioWorklet.addModule(pcmWorkletUrl)
-                this.workletModuleLoaded = true
+                await ac.audioWorklet.addModule("./assets/pcm-worklet.js")
+                this.registeredContexts.add(ac)
                 console.info("[AudioSender] AudioWorklet loaded")
                 return true
             } catch (err: any) {
-                if (err?.name === "AbortError" || this.workletModuleLoaded) {
-                    this.workletModuleLoaded = true
-                    return true
+                if (this.registeredContexts.has(ac)) return true
+                if (err?.name !== "AbortError") {
+                    console.error("[AudioSender] Failed to load pcmWorklet module:", err)
                 }
-                console.error("[AudioSender] Failed to load pcmWorklet module:", err)
                 return false
             } finally {
-                this.workletLoadingPromise = null
+                this.workletLoadingPromises.delete(ac)
             }
         })()
 
-        return this.workletLoadingPromise
+        this.workletLoadingPromises.set(ac, promise)
+        return promise
     }
 
     static async activate(ac: AudioContext, getDestinationNode: (targetId: string) => AudioNode) {
@@ -66,7 +65,7 @@ export class AudioSender {
 
         this.isActive = true
         await this.ensureWorkletModule(ac)
-        this.updateProcessors(ac, getDestinationNode)
+        await this.updateProcessors(ac, getDestinationNode)
     }
 
     static deactivate() {
@@ -75,11 +74,17 @@ export class AudioSender {
         this.cleanupAll()
     }
 
-    static updateProcessors(ac: AudioContext, getDestinationNode: (targetId: string) => AudioNode) {
+    static async updateProcessors(ac: AudioContext, getDestinationNode: (targetId: string) => AudioNode) {
         if (!this.isActive || this.isUpdating) return
         this.isUpdating = true
 
         try {
+            const isLoaded = await this.ensureWorkletModule(ac)
+            if (!isLoaded) {
+                console.warn("[AudioSender] Cannot update processors: Worklet module failed to load.")
+                return
+            }
+
             const activeTargets = this.getActiveTargets()
 
             if (activeTargets.size === 0) {
@@ -115,21 +120,23 @@ export class AudioSender {
     }
 
     private static createProcessor(ac: AudioContext, targetId: string): AudioNode {
-        if (this.workletModuleLoaded && ac.audioWorklet) {
+        if (this.registeredContexts.has(ac) && ac.audioWorklet) {
             const node = new AudioWorkletNode(ac, "pcm-sender-processor")
-
-            const audioWorker = new AudioSenderWorker()
-            const channelWorklet = new MessageChannel()
-
-            audioWorker.postMessage({ type: "CONNECT_WORKLET_PORT", targetId, sampleRate: ac.sampleRate, icecastConfig: this.getIcecastConfig(targetId) }, [channelWorklet.port1])
-            node.port.postMessage({ type: "INIT_PORT" }, [channelWorklet.port2])
 
             // request Main process to create a MessageChannelMain and send port2 back
             const portResponseHandler = (ev: MessageEvent) => {
                 if (ev.data?.type === "AUDIO_PORT_RESPONSE" && ev.data?.targetId === targetId && ev.ports?.[0]) {
                     window.removeEventListener("message", portResponseHandler)
                     if (!(node as any)._destroyed) {
-                        audioWorker.postMessage({ type: "CONNECT_MAIN_PORT", targetId }, [ev.ports[0]])
+                        node.port.postMessage(
+                            {
+                                type: "INIT_PORT",
+                                targetId,
+                                sampleRate: ac.sampleRate,
+                                icecastConfig: this.getIcecastConfig(targetId)
+                            },
+                            [ev.ports[0]]
+                        )
                     }
                 }
             }
@@ -138,30 +145,36 @@ export class AudioSender {
 
             send(AUDIO, ["INIT_PORT"], { id: targetId })
 
-            // fallback listener in case worker sends messages back to parent thread
-            audioWorker.onmessage = (ev) => {
-                if ((node as any)._destroyed) return
-                const rawBuffer = ev.data?.buffer || (ev.data instanceof ArrayBuffer ? ev.data : null)
-                if (rawBuffer) this.sendBuffer(targetId, ac.sampleRate, new Uint8Array(rawBuffer))
-            }
-            ;(node as any)._worker = audioWorker
-
             return node
         }
 
         // Fallback ScriptProcessor
-        const processor = ac.createScriptProcessor(1024, 2, 2)
+        const FRAME_SIZE = 960
+        const bufL = new Float32Array(FRAME_SIZE)
+        const bufR = new Float32Array(FRAME_SIZE)
+        let offset = 0
+        const processor = ac.createScriptProcessor(2048, 2, 2)
         processor.onaudioprocess = (ev) => {
             if ((processor as any)._destroyed) return
             const inputBuffer = ev.inputBuffer
             const left = inputBuffer.getChannelData(0)
             const right = inputBuffer.numberOfChannels > 1 ? inputBuffer.getChannelData(1) : left
+            const len = left ? left.length : 0
 
-            const planar = new Float32Array(left.length * 2)
-            planar.set(left, 0)
-            planar.set(right, left.length)
+            for (let i = 0; i < len; i++) {
+                bufL[offset] = left ? left[i] : 0.0
+                bufR[offset] = right ? right[i] : 0.0
+                offset++
 
-            this.sendBuffer(targetId, ac.sampleRate, new Uint8Array(planar.buffer))
+                if (offset >= FRAME_SIZE) {
+                    const planar = new Float32Array(FRAME_SIZE * 2)
+                    planar.set(bufL, 0)
+                    planar.set(bufR, FRAME_SIZE)
+
+                    this.sendBuffer(targetId, ac.sampleRate, new Uint8Array(planar.buffer))
+                    offset = 0
+                }
+            }
         }
         return processor
     }
@@ -212,12 +225,6 @@ export class AudioSender {
         try {
             ;(proc as any)._destroyed = true
 
-            if ((proc as any)._worker) {
-                try {
-                    ;(proc as any)._worker.postMessage({ type: "DISCONNECT", targetId })
-                    ;(proc as any)._worker.terminate()
-                } catch {}
-            }
             if ((proc as any)._cleanupListener) {
                 ;(proc as any)._cleanupListener()
             }
