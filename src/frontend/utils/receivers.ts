@@ -162,6 +162,7 @@ const receiveOUTPUTasMAIN: any = {
             if (!a[data.id] || a[data.id].boundsLocked) return a
 
             a[data.id].bounds = data.bounds
+            if (data.screen) a[data.id].screen = data.screen
             return a
         })
     },
