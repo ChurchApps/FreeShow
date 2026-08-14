@@ -31,7 +31,7 @@ export class AudioSender {
             try {
                 await ac.audioWorklet.addModule(path)
                 this.workletModuleLoaded = true
-                console.log(`[AudioSender] AudioWorklet loaded from: ${path}`)
+                console.info("[AudioSender] AudioWorklet loaded")
                 return true
             } catch {}
         }
@@ -104,11 +104,35 @@ export class AudioSender {
     private static createProcessor(ac: AudioContext, targetId: string): AudioNode {
         if (this.workletModuleLoaded && ac.audioWorklet) {
             const node = new AudioWorkletNode(ac, "pcm-sender-processor")
-            node.port.onmessage = (ev) => {
+
+            const audioWorker = new Worker(new URL("./audioSender.worker.ts", import.meta.url))
+            const channelWorklet = new MessageChannel()
+
+            audioWorker.postMessage({ type: "CONNECT_WORKLET_PORT", targetId, sampleRate: ac.sampleRate, icecastConfig: this.getIcecastConfig(targetId) }, [channelWorklet.port1])
+            node.port.postMessage({ type: "INIT_PORT" }, [channelWorklet.port2])
+
+            // request Main process to create a MessageChannelMain and send port2 back
+            const portResponseHandler = (ev: MessageEvent) => {
+                if (ev.data?.type === "AUDIO_PORT_RESPONSE" && ev.data?.targetId === targetId && ev.ports?.[0]) {
+                    window.removeEventListener("message", portResponseHandler)
+                    if (!(node as any)._destroyed) {
+                        audioWorker.postMessage({ type: "CONNECT_MAIN_PORT", targetId }, [ev.ports[0]])
+                    }
+                }
+            }
+            window.addEventListener("message", portResponseHandler)
+            ;(node as any)._cleanupListener = () => window.removeEventListener("message", portResponseHandler)
+
+            send(AUDIO, ["INIT_PORT"], { id: targetId })
+
+            // fallback listener in case worker sends messages back to parent thread
+            audioWorker.onmessage = (ev) => {
                 if ((node as any)._destroyed) return
                 const rawBuffer = ev.data?.buffer || (ev.data instanceof ArrayBuffer ? ev.data : null)
                 if (rawBuffer) this.sendBuffer(targetId, ac.sampleRate, new Uint8Array(rawBuffer))
             }
+            ;(node as any)._worker = audioWorker
+
             return node
         }
 
@@ -129,10 +153,10 @@ export class AudioSender {
         return processor
     }
 
-    private static sendBuffer(targetId: string, sampleRate: number, buffer: Uint8Array) {
+    private static getIcecastConfig(targetId: string) {
         const spec = get(special)
         const isIcecast = targetId === "icecast"
-        const icecastConfig = isIcecast
+        return isIcecast
             ? {
                   enabled: true,
                   host: spec.icecastHost,
@@ -141,7 +165,10 @@ export class AudioSender {
                   password: spec.icecastPassword ?? "hackme"
               }
             : undefined
+    }
 
+    private static sendBuffer(targetId: string, sampleRate: number, buffer: Uint8Array) {
+        const icecastConfig = this.getIcecastConfig(targetId)
         send(AUDIO, ["PCM"], { id: targetId, buffer, sampleRate, icecast: icecastConfig })
     }
 
@@ -171,6 +198,17 @@ export class AudioSender {
         const { proc, destNode } = entry
         try {
             ;(proc as any)._destroyed = true
+
+            if ((proc as any)._worker) {
+                try {
+                    ;(proc as any)._worker.postMessage({ type: "DISCONNECT", targetId })
+                    ;(proc as any)._worker.terminate()
+                } catch {}
+            }
+            if ((proc as any)._cleanupListener) {
+                ;(proc as any)._cleanupListener()
+            }
+
             if ("port" in proc && (proc as any).port) {
                 ;(proc as any).port.onmessage = null
                 ;(proc as any).port.close()

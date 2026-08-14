@@ -1,12 +1,43 @@
+import { MessageChannelMain } from "electron"
 import type { Message } from "../../types/Socket"
 import { processAudio } from "./processAudio"
 
 let latestIcecastConfig: any = null
+const activeAudioPorts = new Set<any>()
 
 export function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
     const data = msg.data
 
     if (msg.channel === "RESET_DECODER") return
+
+    if (msg.channel === "INIT_PORT") {
+        const { port1, port2 } = new MessageChannelMain()
+        activeAudioPorts.add(port1)
+
+        port1.on("message", (msgEvent) => {
+            const { channel, payload } = msgEvent.data || {}
+            if (channel === "AUDIO" && payload) {
+                const input = toAudioBuffer(payload.buffer)
+                if (!input || input.length === 0) return
+
+                if (payload.icecast) latestIcecastConfig = payload.icecast
+                const sampleRate = Number(payload.sampleRate) || 48000
+                const targetId = payload.id ? String(payload.id) : undefined
+                processAudio(input, sampleRate, targetId, latestIcecastConfig)
+            }
+        })
+
+        port1.on("close", () => {
+            activeAudioPorts.delete(port1)
+        })
+
+        port1.start()
+
+        if (_e.sender && !_e.sender.isDestroyed()) {
+            _e.sender.postMessage("AUDIO_PORT", { targetId: data?.id }, [port2])
+        }
+        return
+    }
 
     if (msg.channel !== "PCM" && msg.channel !== "CAPTURE") {
         console.error("Unknown AUDIO channel:", msg.channel)

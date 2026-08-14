@@ -1,10 +1,17 @@
 class PcmSenderProcessor extends AudioWorkletProcessor {
     constructor() {
         super()
+
         this.bufferL = new Float32Array(960)
         this.bufferR = new Float32Array(960)
         this.offset = 0
-        this.phase = 0
+
+        this.workerPort = null
+        this.port.onmessage = (e) => {
+            if (e.data?.type === "INIT_PORT") {
+                this.workerPort = e.ports[0]
+            }
+        }
     }
 
     process(inputs) {
@@ -27,8 +34,11 @@ class PcmSenderProcessor extends AudioWorkletProcessor {
                 planar.set(this.bufferL, 0)
                 planar.set(this.bufferR, 960)
 
-                const wallTime = Date.now()
-                this.port.postMessage({ buffer: planar.buffer, sendTime: wallTime }, [planar.buffer])
+                const message = { buffer: planar.buffer, sendTime: Date.now() }
+
+                // post directly to the Web Worker if port is available to bypass Main Thread
+                if (this.workerPort) this.workerPort.postMessage(message, [planar.buffer])
+                else this.port.postMessage(message, [planar.buffer])
 
                 this.offset = 0
             }
