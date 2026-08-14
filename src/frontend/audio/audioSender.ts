@@ -1,3 +1,5 @@
+import AudioSenderWorker from "./audioSender.worker.ts?worker"
+import pcmWorkletUrl from "./pcmWorklet.ts?worker&url"
 import { get } from "svelte/store"
 import { AUDIO } from "../../types/Channels"
 import { keysToID } from "../components/helpers/array"
@@ -11,6 +13,7 @@ export class AudioSender {
     private static isUpdating = false
     private static silentGain: GainNode | null = null
     private static workletModuleLoaded = false
+    private static workletLoadingPromise: Promise<boolean> | null = null
 
     private static getSilentGain(ac: AudioContext): GainNode {
         if (!this.silentGain || this.silentGain.context !== ac) {
@@ -27,17 +30,27 @@ export class AudioSender {
         if (this.workletModuleLoaded) return true
         if (!ac.audioWorklet) return false
 
-        for (const path of ["pcmWorklet.js", "./pcmWorklet.js", "/pcmWorklet.js"]) {
+        if (this.workletLoadingPromise) return this.workletLoadingPromise
+
+        this.workletLoadingPromise = (async () => {
             try {
-                await ac.audioWorklet.addModule(path)
+                await ac.audioWorklet.addModule(pcmWorkletUrl)
                 this.workletModuleLoaded = true
                 console.info("[AudioSender] AudioWorklet loaded")
                 return true
-            } catch {}
-        }
+            } catch (err: any) {
+                if (err?.name === "AbortError" || this.workletModuleLoaded) {
+                    this.workletModuleLoaded = true
+                    return true
+                }
+                console.error("[AudioSender] Failed to load pcmWorklet module:", err)
+                return false
+            } finally {
+                this.workletLoadingPromise = null
+            }
+        })()
 
-        console.error("[AudioSender] Failed to load pcmWorklet.js from public paths")
-        return false
+        return this.workletLoadingPromise
     }
 
     static async activate(ac: AudioContext, getDestinationNode: (targetId: string) => AudioNode) {
@@ -105,7 +118,7 @@ export class AudioSender {
         if (this.workletModuleLoaded && ac.audioWorklet) {
             const node = new AudioWorkletNode(ac, "pcm-sender-processor")
 
-            const audioWorker = new Worker(new URL("./audioSender.worker.ts", import.meta.url))
+            const audioWorker = new AudioSenderWorker()
             const channelWorklet = new MessageChannel()
 
             audioWorker.postMessage({ type: "CONNECT_WORKLET_PORT", targetId, sampleRate: ac.sampleRate, icecastConfig: this.getIcecastConfig(targetId) }, [channelWorklet.port1])

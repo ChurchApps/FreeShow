@@ -1,4 +1,9 @@
 class PcmSenderProcessor extends AudioWorkletProcessor {
+    bufferL: Float32Array
+    bufferR: Float32Array
+    offset: number
+    workerPort: MessagePort | null
+
     constructor() {
         super()
 
@@ -7,14 +12,14 @@ class PcmSenderProcessor extends AudioWorkletProcessor {
         this.offset = 0
 
         this.workerPort = null
-        this.port.onmessage = (e) => {
+        this.port.onmessage = (e: MessageEvent) => {
             if (e.data?.type === "INIT_PORT") {
                 this.workerPort = e.ports[0]
             }
         }
     }
 
-    process(inputs) {
+    process(inputs: Float32Array[][]) {
         const input = inputs[0]
         const left = input && input.length > 0 ? input[0] : null
         const right = input && input.length > 1 && input[1] && input[1].length === (left ? left.length : 0) ? input[1] : left
