@@ -27,7 +27,7 @@
 
     function persistMissingTypeAsClipIfNeeded() {
         const refType = ref?.type || "show"
-        if (!item || !$activeShow || !["show", "overlay", "template"].includes(refType)) return
+        if (!item || (refType === "show" && !$activeShow) || !["show", "overlay", "template"].includes(refType)) return
         if (!item.cropping || item.cropping.type) return
 
         if (refType === "show") {
@@ -48,7 +48,7 @@
 
     export function handleDblclick(e: MouseEvent) {
         const refType = ref?.type || "show"
-        if ((item?.type !== "media" && item?.type !== "camera") || isLocked || !$activeShow || !["show", "overlay", "template"].includes(refType)) return false
+        if ((item?.type !== "media" && item?.type !== "camera") || isLocked || (refType === "show" && !$activeShow) || !["show", "overlay", "template"].includes(refType)) return false
         if (e.target instanceof HTMLElement && (e.target.closest(".line") || e.target.closest(".square") || e.target.closest(".rotate") || e.target.closest(".radius") || e.target.closest(".editTools"))) return false
 
         const wasActive = cropEditMode
@@ -141,7 +141,7 @@
         cropMoveActive = false
 
         const refType = ref?.type || "show"
-        if (!item || !$activeShow || !["show", "overlay", "template"].includes(refType)) return
+        if (!item || (refType === "show" && !$activeShow) || !["show", "overlay", "template"].includes(refType)) return
 
         const nextCrop = clampCrop(cropPreview)
         const oldCrop = getCropValues(item.cropping)
