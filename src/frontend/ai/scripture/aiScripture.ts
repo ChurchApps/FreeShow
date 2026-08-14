@@ -103,15 +103,18 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     const interpretationMode = engine === "whisper" && engineOptions.interpretationMode === true
     const listenLanguage = engineOptions.listenLanguage || language
 
-    // only pass the LLM config when a key is saved for the provider (raw keys never leave the electron process)
-    const provider = get(ai).llm?.provider || settings.provider || "anthropic"
+    // "none" is the explicit STT-only choice - and even a chosen provider only travels when its
+    // key is saved (raw keys never leave the electron process)
+    const provider = get(ai).llm?.provider || settings.provider || "none"
     let llm: AiScriptureDetectionConfig["llm"] = null
-    const status = await requestMain(Main.AI_GET_STATUS, { engineId: provider })
-    if (status?.[provider]?.ready) {
-        // legacy "model" values are shared across providers - only use one that belongs to this provider
-        const legacyModel = settings.model && AI_PROVIDER_MODELS[provider].models.some((a) => a.id === settings.model) ? settings.model : ""
-        const model = get(ai).llm?.model || settings.customModel || settings.models?.[provider] || legacyModel || "" // providers default internally on empty
-        llm = { provider, model }
+    if (provider !== "none") {
+        const status = await requestMain(Main.AI_GET_STATUS, { engineId: provider })
+        if (status?.[provider]?.ready) {
+            // legacy "model" values are shared across providers - only use one that belongs to this provider
+            const legacyModel = settings.model && AI_PROVIDER_MODELS[provider].models.some((a) => a.id === settings.model) ? settings.model : ""
+            const model = get(ai).llm?.model || settings.customModel || settings.models?.[provider] || legacyModel || "" // providers default internally on empty
+            llm = { provider, model }
+        }
     }
 
     const detectionConfig: AiScriptureDetectionConfig = {

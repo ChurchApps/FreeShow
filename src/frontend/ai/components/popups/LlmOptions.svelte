@@ -24,6 +24,8 @@
     }
 
     const providerOptions = [
+        // explicitly no LLM: detection runs on speech-to-text alone (tier-1 references + on-device quote matching)
+        { value: "none", label: translateText("main.none") },
         { value: "anthropic", label: "Anthropic (Claude)" },
         { value: "openai", label: "OpenAI (GPT)" },
         { value: "gemini", label: "Google (Gemini)" },
@@ -31,11 +33,11 @@
     ]
 
     // legacy values lived under the scripture settings - read them as fallback until a new choice is saved
-    $: provider = llmOptions.provider || $ai.scripture?.provider || "anthropic"
-    $: providerData = AI_PROVIDER_MODELS[provider]
-    $: modelOptions = providerData.models.map((model) => ({ value: model.id, label: model.name }))
+    $: provider = llmOptions.provider || $ai.scripture?.provider || "none"
+    $: providerData = provider === "none" ? null : AI_PROVIDER_MODELS[provider]
+    $: modelOptions = providerData ? providerData.models.map((model) => ({ value: model.id, label: model.name })) : []
     $: storedModel = llmOptions.model || $ai.scripture?.models?.[provider] || ""
-    $: selectedModel = providerData.models.find((model) => model.id === storedModel) ? storedModel : providerData.defaultModel
+    $: selectedModel = providerData ? (providerData.models.find((model) => model.id === storedModel) ? storedModel : providerData.defaultModel) : ""
 
     function setProvider(id: string) {
         updateLlmOption("provider", id)
@@ -47,7 +49,7 @@
     // STATUS (a saved key - or a reachable local server for ollama)
 
     let status: { [key: string]: EngineStatus } | null = null
-    $: if (provider) getStatus()
+    $: if (provider && provider !== "none") getStatus()
     async function getStatus() {
         const result = await requestMain(Main.AI_GET_STATUS, { engineId: provider })
         status = result || null
@@ -94,9 +96,12 @@
     }
 </script>
 
-<MaterialDropdown label="ai.provider" options={providerOptions} value={provider} defaultValue="anthropic" on:change={(e) => setProvider(e.detail)} />
+<MaterialDropdown label="ai.provider" options={providerOptions} value={provider} defaultValue="none" on:change={(e) => setProvider(e.detail)} />
 
-{#if provider === "ollama"}
+{#if provider === "none"}
+    <!-- explicitly no LLM - detection runs on speech-to-text alone -->
+    <p class="faded hint"><T id="ai.provider_none_hint" /></p>
+{:else if provider === "ollama"}
     <!-- no API key: everything runs on the local ollama server - just make sure the model is pulled -->
     <p class="faded hint"><T id="ai.ollama_hint" /></p>
     <div class="commandRow">
@@ -128,26 +133,28 @@
     {/if}
 {/if}
 
-{#if testing}
-    <div class="statusLine"><Loader /></div>
-{:else if testResult}
-    {#if testResult.ok}
-        <div class="statusLine ok">
-            <Icon id="check" size={0.9} white />
-            <T id="ai.test_success" />
-        </div>
-    {:else}
-        <div class="statusLine error">
-            <Icon id="warning" size={0.9} white />
-            <T id="ai.test_failed" />
-            {#if testResult.error}
-                <span class="path">{translateText(aiErrorText(testResult.error))}</span>
-            {/if}
-        </div>
+{#if provider !== "none"}
+    {#if testing}
+        <div class="statusLine"><Loader /></div>
+    {:else if testResult}
+        {#if testResult.ok}
+            <div class="statusLine ok">
+                <Icon id="check" size={0.9} white />
+                <T id="ai.test_success" />
+            </div>
+        {:else}
+            <div class="statusLine error">
+                <Icon id="warning" size={0.9} white />
+                <T id="ai.test_failed" />
+                {#if testResult.error}
+                    <span class="path">{translateText(aiErrorText(testResult.error))}</span>
+                {/if}
+            </div>
+        {/if}
     {/if}
-{/if}
 
-<MaterialDropdown label="ai.model" options={modelOptions} value={selectedModel} defaultValue={providerData.defaultModel} on:change={(e) => updateLlmOption("model", e.detail)} />
+    <MaterialDropdown label="ai.model" options={modelOptions} value={selectedModel} defaultValue={providerData?.defaultModel || ""} on:change={(e) => updateLlmOption("model", e.detail)} />
+{/if}
 
 <style>
     .faded {
