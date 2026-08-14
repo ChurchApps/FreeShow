@@ -17,6 +17,7 @@ import { OutputHelper } from "../components/helpers/OutputHelper"
 import { VideoPlayer } from "../components/media/video/videoPlayer"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
 import { getRecentlyUsedProjects, openProject } from "../components/show/project"
+import { isDrawerTabAllowed, isPageAllowed } from "./profile"
 import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
@@ -26,6 +27,7 @@ import { audioExtensions, imageExtensions, videoExtensions } from "../values/ext
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
 import { hideDisplay, isOutputWindow, togglePanels, triggerFunction } from "./common"
+import { isTypingTarget } from "./dom"
 import { send } from "./request"
 import { save } from "./save"
 
@@ -122,6 +124,8 @@ const keys = {
         }, 20)
     },
     Enter: () => {
+        if (get(activePopup)) return
+
         // open last used project if Enter pressed "first" on startup
         if (get(showRecentlyUsedProjects) && !get(activeShow) && get(activePage) === "show") {
             const lastUsedProject = getRecentlyUsedProjects()[0]
@@ -173,8 +177,12 @@ export function keydown(e: KeyboardEvent) {
 
     if (e.ctrlKey || e.metaKey) {
         const drawerMenus = Object.keys(drawerTabs) as DrawerTabIds[]
-        if (document.activeElement === document.body && Object.keys(drawerMenus).includes((Number(e.key) - 1).toString())) {
-            activeDrawerTab.set(drawerMenus[Number(e.key) - 1])
+        const drawerTabId = drawerMenus[Number(e.key) - 1]
+        if (document.activeElement === document.body && drawerTabId) {
+            // don't open tabs the user has disabled or the profile has no access to
+            if (!isDrawerTabAllowed(drawerTabId)) return
+
+            activeDrawerTab.set(drawerTabId)
             // open drawer
             if (get(drawer).height < 300) drawer.set({ height: get(drawer).stored || 300, stored: null })
             return
@@ -190,10 +198,16 @@ export function keydown(e: KeyboardEvent) {
 
         // use default input shortcuts on supported devices
         const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y", "x"]
-        const macShortcutDebug = false
-        if ((key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(key) && get(os).platform !== "darwin" && !macShortcutDebug)) {
-            return
-        }
+        // the app menu has no clipboard roles, so on macOS these reach our own copy/paste
+        // handlers instead of the native ones - don't block them without testing
+        // copy/cut/paste inside a text field on an actual Mac first
+        const macExeption = ["c", "v"]
+        const passthrough = get(os).platform === "darwin" ? [...exeption, ...macExeption] : exeption
+
+        const activeElem = document.activeElement
+        if (key === "i" && activeElem?.closest(".editItem")) return
+        // previously skipped entirely on macOS, which let every shortcut fire while typing
+        if (isTypingTarget(activeElem) && !passthrough.includes(key)) return
 
         key = key.toLowerCase()
 
@@ -211,7 +225,7 @@ export function keydown(e: KeyboardEvent) {
             if (!handler) return false
             handler(e)
 
-            if (preventDefaults.includes(k) || macShortcutDebug) {
+            if (preventDefaults.includes(k)) {
                 e.preventDefault()
                 if (get(activePage) === "edit") refreshEditSlide.set(true)
             }
@@ -236,11 +250,16 @@ export function keydown(e: KeyboardEvent) {
         return
     }
 
-    if (document.activeElement?.classList.contains("edit") && e.key !== "Escape") return
+    // don't let global keys (Delete/Backspace/F2/Enter) through while typing.
+    // checking the "edit" class alone is not enough as not every text field has it
+    if (isTypingTarget(document.activeElement) && e.key !== "Escape") return
 
     // change tab with number keys
-    if (document.activeElement === document.body && !get(special).numberKeys && Object.keys(menus).includes((Number(e.key) - 1).toString())) {
-        const menu = menus[Number(e.key) - 1]
+    const menu = menus[Number(e.key) - 1]
+    if (document.activeElement === document.body && !get(special).numberKeys && menu) {
+        // don't open pages the profile has no access to (the top bar hides/disables these)
+        if (!isPageAllowed(menu)) return
+
         activePage.set(menu)
 
         // open edit
