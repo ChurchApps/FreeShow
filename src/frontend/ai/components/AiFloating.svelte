@@ -5,9 +5,11 @@
     import { getShortBibleName } from "../../components/drawer/bible/scripture"
     import T from "../../components/helpers/T.svelte"
     import MaterialButton from "../../components/inputs/MaterialButton.svelte"
-    import { ai, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, outLocked, scriptures } from "../../stores"
+    import MaterialDropdown from "../../components/inputs/MaterialDropdown.svelte"
+    import MaterialToggleSwitch from "../../components/inputs/MaterialToggleSwitch.svelte"
+    import { activePage, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, outLocked, scriptures, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
-    import { aiScriptureErrorText, dismissSuggestion, projectDetection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../scripture/aiScripture"
+    import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../scripture/aiScripture"
     import { audioLevelStore, SpeechToText } from "../stt/stt"
     import AiRing from "./AiRing.svelte"
 
@@ -83,11 +85,12 @@
     }
 
     // the scripture session state is richer (starting/llm_paused/error) - mirror it onto the bubble
-    $: if (sessionMode === "scripture") state = mapScriptureState($aiScriptureStatus.state)
-    function mapScriptureState(scriptureState: string): typeof state {
-        if (scriptureState === "listening" || scriptureState === "llm_paused") return "listening"
-        if (scriptureState === "starting") return "processing"
-        if (scriptureState === "error") return "error"
+    $: scriptureState = $aiScriptureStatus.state
+    $: if (sessionMode === "scripture") state = mapScriptureState(scriptureState)
+    function mapScriptureState(currentState: string): typeof state {
+        if (currentState === "listening" || currentState === "llm_paused") return "listening"
+        if (currentState === "starting") return "processing"
+        if (currentState === "error") return "error"
         return "inactive"
     }
 
@@ -105,6 +108,54 @@
         sessionMode = "off"
     })
 
+    // LISTEN TOGGLE
+    // the session normally follows the settings toggles - this is the manual pause/resume on top
+
+    $: isListening = state === "listening"
+    $: isStarting = state === "processing"
+    async function toggleListening() {
+        if (isStarting || sessionMode === "off") return
+
+        if (sessionMode === "scripture") {
+            if (isListening) {
+                stopAiScriptureListening()
+                return
+            }
+            state = "processing"
+            await startAiScriptureListening()
+            return
+        }
+
+        if (isListening) {
+            SpeechToText.disable()
+            state = "inactive"
+        } else {
+            const result = await SpeechToText.enable()
+            if (sessionMode === "stt") state = result.ok ? "listening" : "error"
+        }
+    }
+
+    function openSetup() {
+        isOpen = false
+        settingsTab.set("ai")
+        activePage.set("settings")
+    }
+
+    // QUICK SETTINGS (inside the popup)
+
+    function updateScripture(key: string, value: any) {
+        ai.update((a) => {
+            if (!a.scripture) a.scripture = {}
+            a.scripture[key] = value
+            return a
+        })
+    }
+
+    const modeOptions = [
+        { value: "confirm", label: translateText("ai_scripture.mode_confirm") },
+        { value: "auto", label: translateText("ai_scripture.mode_auto") }
+    ]
+
     // SUGGESTIONS
     // confident detections surface here so the operator can present them with one click
     // (auto mode projects on its own - the cards double as a record of what was heard)
@@ -120,6 +171,10 @@
 
         return label
     }
+
+    // TICKER - the latest transcript line, visible without opening the bubble
+
+    $: latestSegment = $aiScriptureTranscript[$aiScriptureTranscript.length - 1]?.text || ""
 </script>
 
 <svelte:window on:keydown={(e) => isOpen && e.key === "Escape" && toggleExpand()} />
@@ -128,8 +183,27 @@
     <div class="backdrop" on:mousedown|self={toggleExpand} transition:fade={{ duration: 250 }}></div>
 {/if}
 
-{#if !isOpen && suggestions.length}
-    <div class="ai-suggestions">
+{#if !isOpen && (suggestions.length || $aiScriptureAutoPaused || $aiScriptureHasProjected || (isListening && latestSegment))}
+    <div class="ai-stack">
+        {#if isListening && latestSegment}
+            <button class="ticker" title={translateText("ai_scripture.transcript")} on:click={toggleExpand}>{latestSegment}</button>
+        {/if}
+
+        {#if $aiScriptureAutoPaused || $aiScriptureHasProjected}
+            <div class="chips" transition:fly={{ y: 20, duration: 250 }}>
+                {#if $aiScriptureAutoPaused}
+                    <span class="badge paused"><T id="ai_scripture.auto_paused" /></span>
+                    <MaterialButton icon="play" title="ai_scripture.resume_auto" on:click={() => resumeAutoProjection()} />
+                {/if}
+
+                <div class="fill" />
+
+                {#if $aiScriptureHasProjected}
+                    <MaterialButton icon="undo" title="ai_scripture.restore_previous" disabled={$outLocked} on:click={() => restorePrevious()} />
+                {/if}
+            </div>
+        {/if}
+
         {#each suggestions as suggestion (suggestion.id)}
             <div class="suggestion" transition:fly={{ y: 20, duration: 250 }}>
                 <div class="suggestionHeader">
@@ -182,10 +256,29 @@
             <div class="modal-view">
                 <div class="card-header">
                     <div class="ai-badge">
-                        <p style="font-weight: bold;">{state.replace("_", " ").toUpperCase()}...</p>
+                        {#if sessionMode === "scripture"}
+                            <p style="font-weight: bold;"><T id="ai_scripture.state_{scriptureState}" /></p>
+                        {:else}
+                            <p style="font-weight: bold;">{state.toUpperCase()}</p>
+                        {/if}
+
+                        {#if sessionMode === "scripture" && isListening && $aiScriptureStatus.keyless}
+                            <span class="badge" data-title={translateText($ai.scripture?.quoteMatching !== false ? "ai_scripture.on_device_tip" : "ai_scripture.keyless_tip")}>
+                                <T id={$ai.scripture?.quoteMatching !== false ? "ai_scripture.on_device_only" : "ai_scripture.explicit_only"} />
+                            </span>
+                        {/if}
                     </div>
 
-                    <MaterialButton class="popup-close" icon="close" iconSize={1.3} title="actions.close" style="padding: 10px;" on:click={toggleExpand} />
+                    <div class="headerActions">
+                        {#if $aiScriptureAutoPaused}
+                            <MaterialButton icon="play" title="ai_scripture.resume_auto" on:click={() => resumeAutoProjection()} />
+                        {/if}
+                        {#if $aiScriptureHasProjected}
+                            <MaterialButton icon="undo" title="ai_scripture.restore_previous" disabled={$outLocked} on:click={() => restorePrevious()} />
+                        {/if}
+                        <MaterialButton icon={isListening ? "stop" : "microphone"} title={isListening ? "ai_scripture.stop_listening" : "ai_scripture.start_listening"} isActive={isListening} disabled={isStarting || sessionMode === "off"} on:click={toggleListening} />
+                        <MaterialButton class="popup-close" icon="close" iconSize={1.3} title="actions.close" style="padding: 10px;" on:click={toggleExpand} />
+                    </div>
                 </div>
 
                 <div class="card-body">
@@ -198,19 +291,24 @@
                             <div class="spinner large"></div>
                             <p><T id="ai.processing" /></p>
                         </div>
-                    {:else}
+                    {:else if $aiScriptureTranscript.length}
                         <div class="transcript-box" bind:this={transcriptElem}>
                             {#each $aiScriptureTranscript as segment}
-                                <p class:music={segment.music}>
-                                    <!-- {#if interpretationMode && segment.language}<span class="langTag">{segment.language.toUpperCase()} ·</span>{/if} -->
-                                    {segment.text}
-                                </p>
+                                <p class:music={segment.music}>{segment.text}</p>
                             {/each}
                         </div>
+                    {:else}
+                        <p class="placeholder"><T id="ai_scripture.waiting_for_audio" /></p>
                     {/if}
-
-                    <!-- WIP options -->
                 </div>
+
+                {#if sessionMode === "scripture"}
+                    <div class="card-footer">
+                        <MaterialDropdown label="ai_scripture.mode" options={modeOptions} value={$ai.scripture?.mode || "confirm"} defaultValue="confirm" on:change={(e) => updateScripture("mode", e.detail)} />
+                        <MaterialToggleSwitch label="ai_scripture.voice_commands" checked={$ai.scripture?.voiceCommands === true} defaultValue={false} on:change={(e) => updateScripture("voiceCommands", e.detail)} />
+                        <MaterialButton icon="settings" title="ai_scripture.setup" on:click={openSetup} />
+                    </div>
+                {/if}
             </div>
         {/if}
     </AiRing>
@@ -258,8 +356,8 @@
         bottom: 50%;
         right: 50%;
         transform: translate(50%, 50%);
-        width: 420px;
-        height: 300px;
+        width: 440px;
+        height: 360px;
         max-width: 90vw;
     }
 
@@ -339,7 +437,7 @@
     }
 
     .card-header {
-        padding: 10px 20px;
+        padding: 5px 10px 5px 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -351,6 +449,14 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+
+    .headerActions {
+        display: flex;
+        align-items: center;
+        gap: 2px;
     }
 
     .card-body {
@@ -361,6 +467,15 @@
         justify-content: center;
         background: var(--card-bg);
         overflow-y: auto;
+    }
+
+    .card-footer {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-top: 1px solid #1e293b;
+        background: var(--bg-dark);
     }
 
     .transcript-box {
@@ -392,6 +507,7 @@
     .placeholder.error {
         color: #ff5050;
         font-style: normal;
+        white-space: initial;
     }
 
     .processing-view {
@@ -402,8 +518,8 @@
         color: #00dfd8;
     }
 
-    /* Suggestions */
-    .ai-suggestions {
+    /* Floating stack above the closed bubble: ticker, action chips & suggestion cards */
+    .ai-stack {
         position: fixed;
         bottom: 120px;
         right: 45px;
@@ -413,6 +529,50 @@
         gap: 8px;
         width: 340px;
         max-width: 90vw;
+    }
+
+    .ticker {
+        border: none;
+        text-align: end;
+        background: rgba(17, 24, 39, 0.85);
+        color: inherit;
+        border-radius: 12px;
+        padding: 6px 12px;
+        font-size: 0.85em;
+        opacity: 0.8;
+        cursor: pointer;
+        white-space: initial;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        align-self: flex-end;
+        max-width: 100%;
+    }
+
+    .chips {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--card-bg, #111827);
+        border: 1px solid #1e293b;
+        border-radius: 12px;
+        padding: 4px 8px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .badge {
+        background-color: rgba(9, 13, 22, 0.9);
+        border-radius: 12px;
+        padding: 1px 8px;
+        font-size: 0.7em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        opacity: 0.9;
+    }
+    .badge.paused {
+        color: #ffa500;
     }
 
     .suggestion {
