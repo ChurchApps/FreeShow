@@ -1,12 +1,11 @@
 // AI AUTO SCRIPTURE
-// captures microphone audio & streams it to the electron process for transcription,
-// receives detected scripture references back & projects/suggests them
+// the scripture feature on top of the generic speech-to-text layer (ai/stt):
+// starts detection in the electron process, receives detected references back & projects/suggests them
 
 import { get } from "svelte/store"
-import type { AiScriptureBook, AiScriptureCommandEvent, AiScriptureStartConfig, AiScriptureTranslation, DetectedReference } from "../../../types/ai/AiScripture"
+import type { AiScriptureBook, AiScriptureCommandEvent, AiScriptureDetectionConfig, AiScriptureTranslation, DetectedReference } from "../../../types/ai/AiScripture"
 import { Main } from "../../../types/IPC/Main"
 import type { OutSlide } from "../../../types/Show"
-import { AudioMicrophone } from "../../audio/audioMicrophone"
 import type { BibleInstance } from "../../components/drawer/bible/scripture"
 import { getShortBibleName, loadJsonBible, outputIsScripture, playScripture } from "../../components/drawer/bible/scripture"
 import { clone } from "../../components/helpers/array"
@@ -14,9 +13,9 @@ import { setDrawerTabData } from "../../components/helpers/historyHelpers"
 import { getFirstActiveOutput, setOutput } from "../../components/helpers/output"
 import { clearSlide } from "../../components/output/clear"
 import { requestMain, sendMain } from "../../IPC/main"
-import { activeDrawerTab, activeScripture, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, drawerTabsData, openScripture, outLocked, outputs, scriptures, scripturesCache } from "../../stores"
+import { activeDrawerTab, activeScripture, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, drawerTabsData, openScripture, outLocked, outputs, scriptures, scripturesCache } from "../../stores"
 import { AI_PROVIDER_MODELS } from "../models"
-import aiScriptureProcessorUrl from "./aiScriptureProcessor.ts?worker&url"
+import { SpeechToText } from "../stt/stt"
 import { noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching } from "./quoteMatchSession"
 
 const SUGGESTION_MAX_AGE = 3 * 60 * 1000
@@ -33,10 +32,6 @@ let searchBibleIds: string[] = []
 let selfProjecting = false
 let startInFlight: Promise<{ ok: boolean; error?: string }> | null = null
 let suggestionPruneTimer: NodeJS.Timeout | null = null
-
-let captureStream: MediaStream | null = null
-let captureContext: AudioContext | null = null
-let captureNode: AudioWorkletNode | null = null
 
 let lastAutoProjectionAt = 0
 let lastAutoProjectedRef: DetectedReference | null = null
@@ -81,80 +76,64 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     const books = await buildBookTable(searchBibleIds)
     if (!books.length) return startError("no_scripture")
 
+    // engine/model/mic settings live in the generic STT layer - seed it once from the legacy scripture fields
+    seedSttSettingsFromLegacy()
+
+    const sttSettings = get(ai).stt || {}
+    const engine = sttSettings.engine || "whisper"
+    const engineOptions = sttSettings.engineOptions?.[engine] || {}
+
+    // the streaming engine transcribes English only, so its transcript language is fixed regardless of the whisper setting
+    const language = engine === "nemotron" ? "en" : engineOptions.language || "en"
+    const interpretationMode = engine === "whisper" && engineOptions.interpretationMode === true
+    const listenLanguage = engineOptions.listenLanguage || language
+
     // only pass the LLM config when a key is saved for the provider (raw keys never leave the electron process)
-    const provider = settings.provider || "anthropic"
-    let llm: AiScriptureStartConfig["llm"] = null
-    const status = await requestMain(Main.AI_GET_STATUS)
-    if (status?.[provider]) {
+    const provider = get(ai).llm?.provider || settings.provider || "anthropic"
+    let llm: AiScriptureDetectionConfig["llm"] = null
+    const status = await requestMain(Main.AI_GET_STATUS, { engineId: provider })
+    if (status?.[provider]?.ready) {
         // legacy "model" values are shared across providers - only use one that belongs to this provider
         const legacyModel = settings.model && AI_PROVIDER_MODELS[provider].models.some((a) => a.id === settings.model) ? settings.model : ""
-        const model = settings.customModel || settings.models?.[provider] || legacyModel || "" // providers default internally on empty
+        const model = get(ai).llm?.model || settings.customModel || settings.models?.[provider] || legacyModel || "" // providers default internally on empty
         llm = { provider, model }
     }
 
-    // the streaming engine transcribes English only, so its transcript language is fixed regardless of the whisper setting
-    const engine = settings.engine || "whisper"
-    const language = engine === "nemotron" ? "en" : settings.spokenLanguage || "en"
-    const interpretationMode = engine === "whisper" && !!settings.interpretationMode
-
-    // default model must match the popup's derivation, or a non English user would request a model they never downloaded
-    let whisperModel = settings.whisperModel || (language.startsWith("en") && !interpretationMode ? "base.en" : "base")
-    // interpretation mode needs a multilingual model for per-window language detection - never an .en variant
-    if (interpretationMode) whisperModel = whisperModel.replace(".en", "")
-
-    const listenLanguage = settings.listenLanguage || language
-    // the declared spoken set constrains whisper's per-window language guess - default to the two languages we know about
-    const spokenLanguages = interpretationMode ? (settings.spokenLanguages?.length ? settings.spokenLanguages : Array.from(new Set([language, listenLanguage]))) : undefined
-
-    const startConfig: AiScriptureStartConfig = {
-        engine,
-        whisperModel,
-        whisperCustomPath: settings.whisperCustomPath || undefined,
-        whisperCustomModelPath: settings.whisperCustomModelPath || undefined,
-        language,
-        interpretationMode,
-        listenLanguage,
-        spokenLanguages,
+    const detectionConfig: AiScriptureDetectionConfig = {
         books,
         llm,
         refCooldownSeconds: settings.refCooldownSeconds,
         voiceCommands: !!settings.voiceCommands,
-        translations: buildTranslationTable(searchBibleIds)
+        translations: buildTranslationTable(searchBibleIds),
+        language,
+        interpretationMode,
+        listenLanguage
     }
 
     aiScriptureTranscript.set([])
     aiScriptureSuggestions.set([])
     aiScriptureAutoPaused.set(false)
 
-    // whisper might need a moment to spin up on first start
-    const result = await requestMain(Main.DEPRECATED_AI_LISTEN_START, startConfig, undefined, 60000)
-    if (!result?.started) return startError(result?.error || "start_failed")
+    // detection must be subscribed in the electron process before the first transcript segment arrives
+    sendMain(Main.AI_SCRIPTURE_START, detectionConfig)
 
-    const micDeviceId = await resolveMicDeviceId(settings.micDeviceId || "")
-    if (micDeviceId && micDeviceId !== settings.micDeviceId) {
-        // persist the auto-selected device so the settings dropdown shows what is actually capturing
-        ai.update((a) => {
-            if (!a.scripture) a.scripture = {}
-            a.scripture.micDeviceId = micDeviceId
-            return a
-        })
-    }
-
-    const micError = await startMicCapture(micDeviceId)
-    if (micError) {
-        sendMain(Main.DEPRECATED_AI_LISTEN_STOP)
-        return startError(micError)
+    // the generic layer resolves the mic & starts the engine (whisper might need a moment on first start)
+    const result = await SpeechToText.enable()
+    if (!result.ok) {
+        sendMain(Main.AI_SCRIPTURE_STOP)
+        return startError(result.error || "start_failed")
     }
 
     sessionActive = true
+    aiScriptureStatus.set({ state: "listening", keyless: !llm })
 
     // local quote matching: recited verses are found by matching the transcript against the
     // selected bibles on this machine - free and keyless, so it runs unless turned off
     if (settings.quoteMatching !== false) {
         startQuoteMatching({
             bibleIds: searchBibleIds,
-            interpretationMode: startConfig.interpretationMode === true,
-            listenLanguage: startConfig.listenLanguage,
+            interpretationMode,
+            listenLanguage,
             onDetection: handleDetection
         })
     }
@@ -163,6 +142,33 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     suggestionPruneTimer = setInterval(pruneSuggestions, 15000)
 
     return { ok: true }
+}
+
+// settings from before the generic STT layer existed lived under ai.scripture - copy them over
+// once so an updated install keeps its engine/model/mic choices without re-configuring
+function seedSttSettingsFromLegacy() {
+    const settings = getSettings()
+    const stt = get(ai).stt || {}
+    if (stt.engine || stt.engineOptions) return // already configured in the new location
+    if (!settings.engine && !settings.whisperModel && !settings.micDeviceId) return // nothing legacy to migrate
+
+    ai.update((a) => {
+        if (!a.stt) a.stt = {}
+        if (!a.stt.micDeviceId && settings.micDeviceId) a.stt.micDeviceId = settings.micDeviceId
+        if (settings.engine) a.stt.engine = settings.engine
+
+        const whisperOptions: { [key: string]: any } = {}
+        if (settings.whisperModel) whisperOptions.model = settings.whisperModel
+        if (settings.whisperCustomPath) whisperOptions.customPath = settings.whisperCustomPath
+        if (settings.whisperCustomModelPath) whisperOptions.customModelPath = settings.whisperCustomModelPath
+        if (settings.spokenLanguage) whisperOptions.language = settings.spokenLanguage
+        if (settings.interpretationMode !== undefined) whisperOptions.interpretationMode = settings.interpretationMode
+        if (settings.listenLanguage) whisperOptions.listenLanguage = settings.listenLanguage
+        if (settings.spokenLanguages) whisperOptions.spokenLanguages = settings.spokenLanguages
+        if (Object.keys(whisperOptions).length) a.stt.engineOptions = { whisper: whisperOptions }
+
+        return a
+    })
 }
 
 export function stopAiScriptureListening(): void {
@@ -192,12 +198,21 @@ function stopSession(): void {
     }
     aiScriptureSuggestions.set([])
 
-    sendMain(Main.DEPRECATED_AI_LISTEN_STOP)
-    stopMicCapture()
+    sendMain(Main.AI_SCRIPTURE_STOP)
+    SpeechToText.disable()
 
     aiScriptureAutoPaused.set(false)
     aiScriptureStatus.set({ state: "stopped" })
 }
+
+// a runtime engine failure in the electron process ends the whole session
+aiStatus.subscribe((status) => {
+    if (status.state !== "error" || !sessionActive) return
+
+    stopSession()
+    suppressStoppedUntil = Date.now() + 3000
+    aiScriptureStatus.set({ state: "error", message: status.message || "start_failed" })
+})
 
 // STATUS FILTERING
 // main writes status events directly to the store (responsesMain) - reject updates that should not apply:
@@ -220,103 +235,6 @@ aiScriptureStatus.subscribe((status) => {
     aiScriptureStatus.set(lastAcceptedStatus)
     restoringStatus = false
 })
-
-// MICROPHONE CAPTURE
-
-// prefer the saved device, else the system default, else the first available input -
-// an unset device previously left the choice to Chromium, which can capture an input the user is not speaking into
-async function resolveMicDeviceId(saved: string): Promise<string> {
-    try {
-        const devices = await AudioMicrophone.getList()
-        if (!devices.length) return saved
-        if (saved && devices.some((device) => device.deviceId === saved)) return saved
-
-        return devices.find((device) => device.deviceId === "default")?.deviceId || devices[0].deviceId
-    } catch (err) {
-        console.error("Could not enumerate microphones:", err)
-        return saved
-    }
-}
-
-function getMicStream(deviceId: string) {
-    // unlike the LTC listener (which needs raw audio), speech recognition wants a clean, well leveled signal:
-    // without gain control & noise suppression a quiet mic makes whisper hallucinate repeated phrases
-    return navigator.mediaDevices.getUserMedia({
-        audio: {
-            deviceId: deviceId ? { exact: deviceId } : undefined,
-            echoCancellation: false,
-            noiseSuppression: true,
-            autoGainControl: true,
-            channelCount: 1,
-            sampleRate: 48000
-        }
-    })
-}
-
-async function startMicCapture(deviceId: string): Promise<string | null> {
-    let stream: MediaStream | null = null
-    try {
-        stream = await getMicStream(deviceId)
-    } catch (err: any) {
-        if (err?.name === "NotReadableError") {
-            sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
-            return "microphone_access"
-        }
-
-        // saved device is probably unplugged - retry once with the default device
-        if (err?.name === "OverconstrainedError" && deviceId) {
-            try {
-                stream = await getMicStream("")
-            } catch (retryErr: any) {
-                console.error("Failed to start AI scripture microphone:", retryErr)
-                return String(retryErr?.message || retryErr?.name || retryErr)
-            }
-        } else {
-            console.error("Failed to start AI scripture microphone:", err)
-            return String(err?.message || err?.name || err)
-        }
-    }
-
-    if (!stream) return "microphone_access"
-    captureStream = stream
-
-    try {
-        captureContext = new AudioContext({ sampleRate: 48000 })
-        const source = captureContext.createMediaStreamSource(stream)
-
-        await captureContext.audioWorklet.addModule(aiScriptureProcessorUrl)
-
-        captureNode = new AudioWorkletNode(captureContext, "ai-scripture-processor")
-        captureNode.port.onmessage = (e) => {
-            sendMain(Main.DEPRECATED_AI_AUDIO_DATA, { buffer: e.data })
-        }
-
-        source.connect(captureNode)
-        captureNode.connect(captureContext.destination) // needed for chrome to keep the node alive
-    } catch (err: any) {
-        console.error("Failed to start AI scripture audio processing:", err)
-        stopMicCapture()
-        return String(err?.message || err)
-    }
-
-    return null
-}
-
-function stopMicCapture() {
-    if (captureStream) {
-        captureStream.getTracks().forEach((t) => t.stop())
-        captureStream = null
-    }
-    if (captureNode) {
-        captureNode.port.onmessage = null
-        captureNode.disconnect()
-        captureNode = null
-    }
-    if (captureContext) {
-        captureContext.close().catch(() => null)
-        captureContext = null
-    }
-}
 
 // BOOK TABLE
 
@@ -646,7 +564,7 @@ async function sendAnchorContext(targetId: string, book: number | string, chapte
         if (!name || !Number.isFinite(bookNumber) || bookNumber < 1) return
 
         const anchor = { book: name, bookNumber, chapter, verseStart: Math.min(...verses), verseEnd: Math.max(...verses) }
-        sendMain(Main.DEPRECATED_AI_SCRIPTURE_CONTEXT, anchor)
+        sendMain(Main.AI_SCRIPTURE_CONTEXT, anchor)
         setQuoteMatchAnchor(anchor)
     } catch (err) {
         // the anchor is best effort - a failed load just leaves the previous anchor in place

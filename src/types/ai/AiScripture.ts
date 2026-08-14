@@ -37,6 +37,19 @@ export interface AiScriptureStartConfig {
     translations?: AiScriptureTranslation[] // selected translations, for spoken translation switching
 }
 
+// scripture detection config handed from the renderer at start - engine/model/mic settings
+// live in the generic STT layer (AiSettings.stt), so only detection concerns travel here
+export interface AiScriptureDetectionConfig {
+    books: AiScriptureBook[]
+    llm: { provider: string; model: string } | null
+    refCooldownSeconds?: number // suppress re-emitting an intersecting reference within this window
+    voiceCommands?: boolean
+    translations?: AiScriptureTranslation[] // selected translations, for spoken translation switching
+    language?: string // spoken language code, for voice command matching
+    interpretationMode?: boolean // live interpretation: transcribe everything, only detect from listenLanguage
+    listenLanguage?: string // language code scripture detection listens to when interpretationMode is on
+}
+
 export type AiScriptureState = "starting" | "listening" | "stopped" | "error" | "llm_paused"
 
 // VOICE COMMANDS

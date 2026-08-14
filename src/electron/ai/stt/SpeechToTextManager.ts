@@ -9,11 +9,14 @@ import { NemotronTranscriber } from "./transcribers/NemotronTranscriber"
 import { WhisperTranscriber } from "./transcribers/WhisperTranscriber"
 
 type SttEngine = WhisperTranscriber | NemotronTranscriber
+type SegmentListener = (segment: TranscriberSegment) => void
 
 export class SpeechToText {
     static transcriberEngine: SttEngine | null = null
     // bumped on every start/stop so a slow start that got superseded can tell it no longer owns the session
     static sessionToken = 0
+    // features (e.g. scripture detection) subscribe to the transcript stream while their toggle is on
+    private static segmentListeners: Set<SegmentListener> = new Set()
 
     static async listen(engine: string, options: SttEngineOptions): Promise<{ started: boolean; error?: string }> {
         this.stopInternal(false)
@@ -100,9 +103,18 @@ export class SpeechToText {
         return { error: "unknown_engine" }
     }
 
+    static addSegmentListener(listener: SegmentListener) {
+        this.segmentListeners.add(listener)
+    }
+
+    static removeSegmentListener(listener: SegmentListener) {
+        this.segmentListeners.delete(listener)
+    }
+
     private static onSegment(segment: TranscriberSegment) {
         // the full transcript always reaches the renderer - detection only listens to the selected language
         sendToMain(ToMain.AI_TRANSCRIPT, segment)
+        this.segmentListeners.forEach((listener) => listener(segment))
     }
 
     private static onError(message: string) {

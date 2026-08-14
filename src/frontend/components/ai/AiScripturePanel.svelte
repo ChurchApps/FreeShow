@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { DetectedReference } from "../../../types/ai/AiScripture"
     import { dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../../ai/scripture/aiScripture"
+    import AiRing from "../../ai/components/AiRing.svelte"
     import { activePage, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, outLocked, scriptures, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getShortBibleName } from "../drawer/bible/scripture"
@@ -10,6 +11,12 @@
     $: state = $aiScriptureStatus.state
     $: isListening = state === "listening" || state === "llm_paused"
     $: isStarting = state === "starting"
+    $: ringState = getRingState(isListening, isStarting, state)
+    function getRingState(listening: boolean, starting: boolean, currentState: string): "inactive" | "error" | "listening" | "processing" {
+        if (listening) return "listening"
+        if (starting) return "processing"
+        return currentState === "error" ? "error" : "inactive"
+    }
     $: errorText = state === "error" && $aiScriptureStatus.message ? $aiScriptureStatus.message : ""
 
     async function toggleListening() {
@@ -65,90 +72,93 @@
     }
 </script>
 
-<div class="aiPanel">
-    <div class="statusRow">
-        <span class="dot {state}" />
-        <span class="stateLabel"><T id="ai_scripture.state_{state}" /></span>
+<!-- the gradient ring marks this section as AI driven, matching the floating bubble -->
+<AiRing state={ringState} borderRadius="0px" borderWidth="2px">
+    <div class="aiPanel">
+        <div class="statusRow">
+            <span class="dot {state}" />
+            <span class="stateLabel"><T id="ai_scripture.state_{state}" /></span>
 
-        {#if errorText}
-            <span class="errorMessage" data-title={errorText}>{errorText}</span>
-        {/if}
-
-        {#if isListening && $aiScriptureStatus.keyless}
-            {#if $ai.scripture?.quoteMatching !== false}
-                <span class="badge" data-title={translateText("ai_scripture.on_device_tip")}><T id="ai_scripture.on_device_only" /></span>
-            {:else}
-                <span class="badge" data-title={translateText("ai_scripture.keyless_tip")}><T id="ai_scripture.explicit_only" /></span>
-            {/if}
-        {/if}
-
-        {#if $aiScriptureAutoPaused}
-            <span class="badge paused"><T id="ai_scripture.auto_paused" /></span>
-            <MaterialButton icon="play" title="ai_scripture.resume_auto" on:click={() => resumeAutoProjection()} />
-        {/if}
-
-        <div class="fill" />
-
-        {#if $aiScriptureHasProjected}
-            <MaterialButton icon="undo" title="ai_scripture.restore_previous" disabled={$outLocked} on:click={restore} />
-        {/if}
-
-        <MaterialButton icon="settings" title="ai_scripture.setup" on:click={openSetup} />
-        <MaterialButton icon={isListening ? "stop" : "microphone"} title={isListening ? "ai_scripture.stop_listening" : "ai_scripture.start_listening"} isActive={isListening} disabled={isStarting} on:click={toggleListening} />
-    </div>
-
-    {#if isListening || $aiScriptureTranscript.length}
-        <div class="transcript">
-            {#if transcriptExpanded}
-                <div class="transcriptFull" bind:this={transcriptElem}>
-                    {#each $aiScriptureTranscript as segment}
-                        <p class:music={segment.music}>
-                            {#if interpretationMode && segment.language}<span class="langTag">{segment.language.toUpperCase()} ·</span>
-                            {/if}{segment.text}
-                        </p>
-                    {/each}
-                </div>
-            {:else if latestSegment}
-                <p class="ticker" on:click={() => (transcriptExpanded = true)} role="none">
-                    {#if interpretationMode && latestTranscript?.language}<span class="langTag">{latestTranscript.language.toUpperCase()} ·</span>
-                    {/if}{latestSegment}
-                </p>
-            {:else}
-                <p class="ticker faded"><T id="ai_scripture.waiting_for_audio" /></p>
+            {#if errorText}
+                <span class="errorMessage" data-title={errorText}>{errorText}</span>
             {/if}
 
-            <MaterialButton icon={transcriptExpanded ? "arrow_up" : "arrow_down"} title="ai_scripture.transcript" on:click={() => (transcriptExpanded = !transcriptExpanded)} />
+            {#if isListening && $aiScriptureStatus.keyless}
+                {#if $ai.scripture?.quoteMatching !== false}
+                    <span class="badge" data-title={translateText("ai_scripture.on_device_tip")}><T id="ai_scripture.on_device_only" /></span>
+                {:else}
+                    <span class="badge" data-title={translateText("ai_scripture.keyless_tip")}><T id="ai_scripture.explicit_only" /></span>
+                {/if}
+            {/if}
+
+            {#if $aiScriptureAutoPaused}
+                <span class="badge paused"><T id="ai_scripture.auto_paused" /></span>
+                <MaterialButton icon="play" title="ai_scripture.resume_auto" on:click={() => resumeAutoProjection()} />
+            {/if}
+
+            <div class="fill" />
+
+            {#if $aiScriptureHasProjected}
+                <MaterialButton icon="undo" title="ai_scripture.restore_previous" disabled={$outLocked} on:click={restore} />
+            {/if}
+
+            <MaterialButton icon="settings" title="ai_scripture.setup" on:click={openSetup} />
+            <MaterialButton icon={isListening ? "stop" : "microphone"} title={isListening ? "ai_scripture.stop_listening" : "ai_scripture.start_listening"} isActive={isListening} disabled={isStarting} on:click={toggleListening} />
         </div>
-    {/if}
 
-    {#if $aiScriptureSuggestions.length}
-        <div class="suggestions">
-            {#each $aiScriptureSuggestions as suggestion (suggestion.id)}
-                <div class="suggestion">
-                    <div class="suggestionHeader">
-                        <span class="reference">{getReferenceLabel(suggestion, $scriptures)}</span>
-                        <span class="confidence {suggestion.confidence}"><T id="ai_scripture.confidence_{suggestion.confidence}" /></span>
-
-                        <div class="fill" />
-
-                        <MaterialButton small icon="play" disabled={$outLocked} title="ai_scripture.project" on:click={() => project(suggestion)}>
-                            <T id="ai_scripture.project" />
-                        </MaterialButton>
-                        <MaterialButton small icon="scripture" title="ai_scripture.show_in_drawer" on:click={() => showInDrawer(suggestion)}>
-                            <T id="ai_scripture.show_in_drawer" />
-                        </MaterialButton>
-
-                        <MaterialButton icon="close" title="ai_scripture.dismiss" on:click={() => dismissSuggestion(suggestion.id)} />
+        {#if isListening || $aiScriptureTranscript.length}
+            <div class="transcript">
+                {#if transcriptExpanded}
+                    <div class="transcriptFull" bind:this={transcriptElem}>
+                        {#each $aiScriptureTranscript as segment}
+                            <p class:music={segment.music}>
+                                {#if interpretationMode && segment.language}<span class="langTag">{segment.language.toUpperCase()} ·</span>
+                                {/if}{segment.text}
+                            </p>
+                        {/each}
                     </div>
+                {:else if latestSegment}
+                    <p class="ticker" on:click={() => (transcriptExpanded = true)} role="none">
+                        {#if interpretationMode && latestTranscript?.language}<span class="langTag">{latestTranscript.language.toUpperCase()} ·</span>
+                        {/if}{latestSegment}
+                    </p>
+                {:else}
+                    <p class="ticker faded"><T id="ai_scripture.waiting_for_audio" /></p>
+                {/if}
 
-                    {#if suggestion.quote}
-                        <p class="quote">"{suggestion.quote}"</p>
-                    {/if}
-                </div>
-            {/each}
-        </div>
-    {/if}
-</div>
+                <MaterialButton icon={transcriptExpanded ? "arrow_up" : "arrow_down"} title="ai_scripture.transcript" on:click={() => (transcriptExpanded = !transcriptExpanded)} />
+            </div>
+        {/if}
+
+        {#if $aiScriptureSuggestions.length}
+            <div class="suggestions">
+                {#each $aiScriptureSuggestions as suggestion (suggestion.id)}
+                    <div class="suggestion">
+                        <div class="suggestionHeader">
+                            <span class="reference">{getReferenceLabel(suggestion, $scriptures)}</span>
+                            <span class="confidence {suggestion.confidence}"><T id="ai_scripture.confidence_{suggestion.confidence}" /></span>
+
+                            <div class="fill" />
+
+                            <MaterialButton small icon="play" disabled={$outLocked} title="ai_scripture.project" on:click={() => project(suggestion)}>
+                                <T id="ai_scripture.project" />
+                            </MaterialButton>
+                            <MaterialButton small icon="scripture" title="ai_scripture.show_in_drawer" on:click={() => showInDrawer(suggestion)}>
+                                <T id="ai_scripture.show_in_drawer" />
+                            </MaterialButton>
+
+                            <MaterialButton icon="close" title="ai_scripture.dismiss" on:click={() => dismissSuggestion(suggestion.id)} />
+                        </div>
+
+                        {#if suggestion.quote}
+                            <p class="quote">"{suggestion.quote}"</p>
+                        {/if}
+                    </div>
+                {/each}
+            </div>
+        {/if}
+    </div>
+</AiRing>
 
 <style>
     .aiPanel {
