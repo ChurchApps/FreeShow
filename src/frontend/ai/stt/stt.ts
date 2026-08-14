@@ -1,7 +1,6 @@
 import { get, writable } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
 import { requestMain, sendMain } from "../../IPC/main"
-import { AudioMicrophone } from "../../audio/audioMicrophone"
 import { ai } from "../../stores"
 import audioProcessor from "./audioProcessor.ts?worker&url"
 
@@ -69,15 +68,21 @@ export class SpeechToText {
         this.stopCapture()
     }
 
-    // prefer the saved device, else the system default, else the first available input -
-    // an unset device leaves the choice to Chromium, which can capture an input the user is not speaking into
-    private static async resolveMicDeviceId(saved: string): Promise<string> {
+    // prefer the saved device, else the SYSTEM default input, else the first available input -
+    // simply taking the first enumerated device can land on e.g. a continuity iPhone microphone
+    static async resolveMicDeviceId(saved: string): Promise<string> {
         try {
-            const devices = await AudioMicrophone.getList()
-            if (!devices.length) return saved
-            if (saved && devices.some((device) => device.deviceId === saved)) return saved
+            const devices = (await navigator.mediaDevices.enumerateDevices()).filter((device) => device.kind === "audioinput")
+            const inputs = devices.filter((device) => device.deviceId !== "default")
+            if (!inputs.length) return saved
+            if (saved && inputs.some((device) => device.deviceId === saved)) return saved
 
-            return devices.find((device) => device.deviceId === "default")?.deviceId || devices[0].deviceId
+            // the "default" virtual device mirrors the system default input - resolve the concrete
+            // device behind it (same groupId), so the settings dropdown shows the real device
+            const virtualDefault = devices.find((device) => device.deviceId === "default")
+            const systemDefault = virtualDefault?.groupId ? inputs.find((device) => device.groupId === virtualDefault.groupId) : undefined
+
+            return systemDefault?.deviceId || inputs[0].deviceId
         } catch (err) {
             console.error("Could not enumerate microphones:", err)
             return saved

@@ -8,6 +8,7 @@
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../../components/inputs/MaterialDropdown.svelte"
     import { activePopup, ai } from "../../../stores"
+    import { SpeechToText } from "../../stt/stt"
 
     $: options = $ai.stt || {}
 
@@ -35,13 +36,13 @@
 
     let microphones: { value: string; label: string }[] = []
     function getMicrophones() {
-        AudioMicrophone.getList().then((devices) => {
+        AudioMicrophone.getList().then(async (devices) => {
             microphones = devices.map((device) => ({ value: device.deviceId, label: device.label }))
 
-            // auto select a mic
+            // auto select the SYSTEM default input (the first listed device can be e.g. a continuity iPhone)
             if (!options.micDeviceId && devices.length) {
-                const defaultDevice = devices.find((device) => device.deviceId === "default")
-                updateValue("micDeviceId", defaultDevice?.deviceId || devices[0].deviceId)
+                const deviceId = await SpeechToText.resolveMicDeviceId("")
+                if (deviceId) updateValue("micDeviceId", deviceId)
             }
         })
     }
