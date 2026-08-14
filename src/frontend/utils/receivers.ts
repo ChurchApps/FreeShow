@@ -31,6 +31,7 @@ import {
     dynamicValueData,
     effects,
     events,
+    focusMode,
     globalRegexes,
     groups,
     livePrepare,
@@ -415,7 +416,7 @@ const receiveCLOUD = {
         }
 
         // reload shows cache (because there could be some changes)
-        showsCache.set({})
+        if (!get(focusMode)) showsCache.set({})
         activeShow.set(null)
 
         // show completed toast

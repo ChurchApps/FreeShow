@@ -27,6 +27,17 @@ export async function setupCloudSync(auto: boolean = false) {
         return
     }
     if (auto && get(cloudSyncData).id) {
+        if (!get(providerConnections).churchApps) {
+            if (await requestMain(Main.CAN_SYNC)) {
+                providerConnections.update((c) => {
+                    c.churchApps = true
+                    return c
+                })
+            } else {
+                syncFinished()
+                return
+            }
+        }
         syncWithCloud()
         return
     }
