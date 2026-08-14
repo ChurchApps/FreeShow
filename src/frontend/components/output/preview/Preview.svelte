@@ -42,23 +42,29 @@
     function keydown(e: KeyboardEvent) {
         if ($contextActive) return
         if ($guideActive || $activePopup === "assign_shortcut") return
-        if ((e.ctrlKey || e.metaKey || e.altKey) && previewCtrlShortcuts[e.key]) {
-            e.preventDefault()
-            previewCtrlShortcuts[e.key]()
-        }
 
         const functionKey = /^F(?:[1-9]|1[0-9]|2[0-4])$/
         if ((e.target?.closest?.("input") || e.target?.closest?.(".edit")) && !functionKey.test(e.key)) return
 
+        // has to run after the input check, or these would fire while typing
+        const ctrlShortcut = e.ctrlKey || e.metaKey ? previewCtrlShortcuts[getNormalizedKey(e)] : null
+        if (ctrlShortcut) {
+            e.preventDefault()
+            ctrlShortcut()
+        }
+
+        // a popup blocks the single key shortcuts below, but not the clear/advance keys at the bottom
+        const singleKeysActive = !$activePopup
+
         // start action with custom shortcut key
         // /^[A-Z]{1}$/i.test(e.key) &&
-        if (!e.ctrlKey && !e.metaKey && actionKeyActivate(e.key.toUpperCase())) {
+        if (singleKeysActive && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && actionKeyActivate(e.key.toUpperCase())) {
             e.preventDefault()
             return
         }
 
         // group shortcuts
-        if ((outSlide?.id || $activeShow) && !e.ctrlKey && !e.metaKey && !$outLocked) {
+        if (singleKeysActive && (outSlide?.id || $activeShow) && !e.ctrlKey && !e.metaKey && !$outLocked) {
             // play slide with custom shortcut key
             let layoutRef = getLayoutRef(outSlide?.id || "active")
             let slideShortcutMatch = layoutRef.findIndex((ref) => ref.data?.actions?.slide_shortcut?.key === e.key)

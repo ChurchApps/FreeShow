@@ -6,6 +6,7 @@ import type { Folder, Project } from "../../../types/Projects"
 import type { Item } from "../../../types/Show"
 import { getProjectsInFolder } from "../../converters/project"
 import { sendMain } from "../../IPC/main"
+import { getTextFieldSelection, isFormField, isTextField } from "../../utils/dom"
 import {
     actions,
     activeDays,
@@ -80,6 +81,19 @@ import { removeOutputAudioChannel } from "../../audio/routing/audioRoutingInit"
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
     let copyData: Clipboard | null = clip
 
+    // a focused form field owns its own selection. copy it explicitly instead of falling through
+    // to the app selection, which is what happened when nothing was selected (a collapsed caret
+    // makes window.getSelection() empty). on macOS the app menu has no clipboard roles, so this
+    // may be the only handler that runs - see the Ctrl/Cmd branch in shortcuts.ts
+    const activeField = document.activeElement
+    if (!clip && isFormField(activeField)) {
+        if (isTextField(activeField)) {
+            const fieldSelection = getTextFieldSelection(activeField)
+            if (fieldSelection) navigator.clipboard.writeText(fieldSelection)
+        }
+        return
+    }
+
     if (window.getSelection()?.toString()) {
         navigator.clipboard.writeText(window.getSelection()!.toString())
         return
@@ -116,6 +130,7 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
 
 // pasting text in editbox is it's own function
 export function paste(clip: Clipboard | null = null, extraData: any = {}, customElem: HTMLElement | null = null, isDuplicating = false) {
+    const hasCustomClip = !!clip
     if (!clip) clip = get(clipboard)
     let activeElem = document.activeElement
 
@@ -130,6 +145,10 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
         pasteText(activeElem)
         return
     }
+
+    // same as copy/cut: never fall through to an app level paste while a form field is focused
+    // (macOS reaches this handler for Cmd+V, see the Ctrl/Cmd branch in shortcuts.ts)
+    if (!hasCustomClip && isFormField(activeElem)) return
 
     if (clip.id === null) return
 
@@ -154,6 +173,18 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
 }
 
 export function cut(clip: Clipboard | null = null) {
+    // never fall through, or a collapsed caret would delete the app selection while typing.
+    // the text is copied here but removal is left to the browser's native cut - if that ever
+    // turns out not to fire on macOS, Cmd+X degrades to a copy rather than removing anything
+    const activeField = document.activeElement
+    if (!clip && isFormField(activeField)) {
+        if (isTextField(activeField)) {
+            const fieldSelection = getTextFieldSelection(activeField)
+            if (fieldSelection) navigator.clipboard.writeText(fieldSelection)
+        }
+        return
+    }
+
     // Handle text directly
     if (window.getSelection()?.toString()) {
         const selection = window.getSelection()!
