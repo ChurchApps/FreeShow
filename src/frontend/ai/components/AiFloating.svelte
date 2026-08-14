@@ -18,6 +18,13 @@
         isOpen = !isOpen
     }
 
+    // the transcript follows the speech - newest segment stays in view
+    let transcriptElem: HTMLElement | undefined
+    $: if (isOpen && $aiScriptureTranscript.length && transcriptElem) scrollToBottom()
+    function scrollToBottom() {
+        setTimeout(() => transcriptElem?.scrollTo(0, transcriptElem.scrollHeight))
+    }
+
     // STATE
 
     $: isEnabled = $ai.enabled
@@ -175,7 +182,7 @@
                             <p><T id="ai.processing" /></p>
                         </div>
                     {:else}
-                        <div class="transcript-box">
+                        <div class="transcript-box" bind:this={transcriptElem}>
                             {#each $aiScriptureTranscript as segment}
                                 <p class:music={segment.music}>
                                     <!-- {#if interpretationMode && segment.language}<span class="langTag">{segment.language.toUpperCase()} ·</span>{/if} -->
@@ -342,6 +349,8 @@
     .transcript-box {
         width: 100%;
         max-height: 100%;
+        overflow-y: auto;
+        scroll-behavior: smooth;
         font-size: 0.95rem;
         line-height: 1.5;
     }
