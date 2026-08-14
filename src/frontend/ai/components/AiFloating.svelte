@@ -355,6 +355,13 @@
         line-height: 1.5;
     }
 
+    /* the app's global styles ellipsize paragraphs - transcript lines must wrap instead */
+    .transcript-box p {
+        white-space: initial;
+        overflow-wrap: anywhere;
+        margin: 2px 0;
+    }
+
     /* whisper's guessed lyrics for music - shown for context, but faded & never used for detection */
     .transcript-box .music {
         opacity: 0.45;
