@@ -35,7 +35,7 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
     }
 
     // SHOWS
-    if (!isAutoBackup || customTriggers?.backupShows) await syncAllShows()
+    await syncAllShows()
 
     if (isCloudSync) return { entries }
 

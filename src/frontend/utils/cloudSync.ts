@@ -126,7 +126,7 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
 
     if (initialize) {
         // save & backup
-        save(false, { autosave: true, backup: true, isAutoBackup: true, backupShows: true })
+        save(false, { autosave: true, backup: true, isAutoBackup: true })
         syncFinished()
         return false
     }
