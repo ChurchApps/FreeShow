@@ -22,8 +22,12 @@
     $: extension = getExtension(path)
     $: type = data.type || getMediaType(extension)
 
+    let syncPath = ""
+    $: if (path && !syncPath) syncPath = path
+
     $: if (typeof path === "string" && path.startsWith("http")) download()
     async function download() {
+        syncPath = path
         path = await downloadOnlineMedia(path)
     }
 
@@ -52,7 +56,7 @@
 {#key retryCount}
     {#if type === "video"}
         <div class="video">
-            <Video {outputId} {path} bind:video bind:videoData bind:videoTime startAt={data.startAt} {mediaStyle} {animationStyle} {mirror} on:loaded on:ended on:error={reload} />
+            <Video {outputId} {path} syncPath={syncPath || path} bind:video bind:videoData bind:videoTime startAt={data.startAt} {mediaStyle} {animationStyle} {mirror} on:loaded on:ended on:error={reload} />
         </div>
     {:else if type === "image"}
         <div class="image" style="height: 100%;{animationStyle}">

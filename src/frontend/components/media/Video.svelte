@@ -8,6 +8,7 @@
 
     export let outputId: string
     export let path: string
+    export let syncPath: string = ""
     export let video: HTMLVideoElement | null = null
     export let videoData: any = { paused: false, loop: false, softLoop: 0 }
     export let videoTime: number = 0
@@ -31,9 +32,10 @@
     let unsubscribeSync: (() => void) | null = null
     $: {
         unsubscribeSync?.()
-        if (path && outputId) {
+        const targetPath = syncPath || path
+        if (targetPath && outputId) {
             let lastSyncedTime: number | null = null
-            unsubscribeSync = videoSync(path, outputId, (data) => {
+            unsubscribeSync = videoSync(targetPath, outputId, (data) => {
                 const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
                 syncVideoToAudio(video, data.currentTime, lastSyncedTime, isSoftLoop, targetPlaybackRate)
                 if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
