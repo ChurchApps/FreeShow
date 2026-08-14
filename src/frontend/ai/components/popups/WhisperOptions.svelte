@@ -188,11 +188,11 @@
         </InputRow>
     {:else if platform === "darwin"}
         <InputRow>
-            <Tip type="info" value="Install with Homebrew by running this command in the Terminal:" style="padding: 6px;flex: 1;" />
+            <Tip type="info" value="ai.whisper_mac_guide" style="padding: 6px;flex: 1;" />
 
             <MaterialFilePicker label="" title="inputs.custom_path" value={engineOptions.customPath || ""} filter={{ name: "whisper-cli", extensions: ["*"] }} icon="folder" style="width: initial;padding: 0 8px;" on:change={(e) => verifyCustomPath(e.detail || "")} noLabel allowEmpty />
 
-            <MaterialButton variant="outlined" icon="refresh" title="Refresh" on:click={getStatus} />
+            <MaterialButton variant="outlined" icon="refresh" title="ai.check_again" on:click={getStatus} />
         </InputRow>
 
         <InputRow>
@@ -201,8 +201,8 @@
         </InputRow>
     {:else}
         <InputRow>
-            <Tip type="info" value="Install whisper.cpp with your package manager, or select the whisper-cli binary below." style="padding: 6px;flex: 1;" />
-            <MaterialButton variant="outlined" icon="refresh" title="Refresh" on:click={getStatus} />
+            <Tip type="info" value="ai.whisper_linux_guide" style="padding: 6px;flex: 1;" />
+            <MaterialButton variant="outlined" icon="refresh" title="ai.check_again" on:click={getStatus} />
         </InputRow>
 
         <MaterialFilePicker label="inputs.custom_path" value={engineOptions.customPath || ""} filter={{ name: "whisper-cli", extensions: ["*"] }} icon="folder" on:change={(e) => verifyCustomPath(e.detail || "")} allowEmpty />

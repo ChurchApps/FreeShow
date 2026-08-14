@@ -1,13 +1,6 @@
 <script lang="ts">
-    import { onMount } from "svelte"
-    import type { EngineStatus } from "../../../types/ai/AiModels"
-    import { Main } from "../../../types/IPC/Main"
-    import { AI_PROVIDER_MODELS } from "../../ai/models"
     import { stopAiScriptureListening } from "../../ai/scripture/aiScripture"
-    import { WHISPER_LANGUAGES } from "../../ai/whisper"
-    import { AudioMicrophone } from "../../audio/audioMicrophone"
-    import { requestMain, sendMain } from "../../IPC/main"
-    import { ai, language, mediaDownloads, os, scriptures } from "../../stores"
+    import { ai, scriptures } from "../../stores"
     import { translateText } from "../../utils/language"
     import { keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
@@ -17,11 +10,8 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialCheckbox from "../inputs/MaterialCheckbox.svelte"
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
-    import MaterialFilePicker from "../inputs/MaterialFilePicker.svelte"
     import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
-    import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
-    import Loader from "../main/Loader.svelte"
     import Tip from "../main/Tip.svelte"
 
     let settings = $ai.scripture || {}
@@ -35,239 +25,7 @@
         settings = $ai.scripture || {}
     }
 
-    // STATUS
-
-    let status: { [key: string]: EngineStatus } | null = null
-    async function getStatus() {
-        const result = await requestMain(Main.AI_GET_STATUS)
-        status = result || null
-    }
-
-    let microphones: { value: string; label: string }[] = []
-    onMount(() => {
-        getStatus()
-
-        if (settings.whisperCustomPath) verifyCustomPath(settings.whisperCustomPath)
-
-        AudioMicrophone.getList().then((devices) => {
-            microphones = devices.map((device) => ({ value: device.deviceId, label: device.label }))
-
-            // auto select the system default so listening captures the right input without any manual choice
-            if (!settings.micDeviceId && devices.length) {
-                update("micDeviceId", devices.find((device) => device.deviceId === "default")?.deviceId || devices[0].deviceId)
-            }
-        })
-    })
-
-    // TRANSCRIPTION ENGINE
-
-    $: platform = $os.platform
-
-    // whisper transcribes fixed windows, the streaming engine decodes as the words arrive - see the driver contract in electron/ai/drivers
-    const engineOptions = [
-        { value: "whisper", label: "Whisper" },
-        { value: "nemotron", label: "Nemotron" }
-    ]
-    $: engine = (settings.engine as string) || "whisper"
-
-    // TRANSCRIPTION (WHISPER)
-
-    const languageOptions = WHISPER_LANGUAGES.map((a) => ({ value: a.code, label: a.name }))
-
-    $: spokenLanguage = ((settings.spokenLanguage as string) || ($language || "en").slice(0, 2)).toLowerCase()
-    $: interpretationMode = settings.interpretationMode === true
-    // interpretation mode auto-detects the language per window - that needs a multilingual model, never an .en variant
-    $: englishOnly = spokenLanguage === "en" && !interpretationMode
-    const hasEnVariant = (base: string) => base !== "large-v3"
-    $: whisperModelBase = ((settings.whisperModel as string) || "base").replace(".en", "")
-    $: whisperModelId = englishOnly && hasEnVariant(whisperModelBase) ? `${whisperModelBase}.en` : whisperModelBase
-    $: modelDownloaded = !!status?.whisper.downloadedModels?.includes(whisperModelId)
-
-    $: binaryInstalled = !!status && (status.whisper.ready || customPathValid)
-
-    const whisperModelSizes: { [key: string]: number } = { tiny: 75, base: 142, small: 466, medium: 1500, "large-v3": 3100 }
-    const whisperModelKeys: { [key: string]: string } = { "large-v3": "large" } // dropdown ids not matching their i18n key
-    $: whisperModelOptions = ["tiny", "base", "small", "medium", "large-v3"].map((id) => ({ value: id, label: `${translateText(`ai.whisper_model_${whisperModelKeys[id] || id}`)} (${whisperModelSizes[id]} MB)` }))
-
-    function setWhisperModel(base: string) {
-        update("whisperModel", englishOnly && hasEnVariant(base) ? `${base}.en` : base)
-    }
-
-    function setSpokenLanguage(code: string) {
-        const languageCode = (code || "").trim().toLowerCase().slice(0, 2) || ($language || "en").slice(0, 2).toLowerCase()
-        update("spokenLanguage", languageCode)
-
-        // keep the derived English-only model variant in sync
-        const base = ((settings.whisperModel as string) || "base").replace(".en", "")
-        update("whisperModel", languageCode === "en" && !interpretationMode && hasEnVariant(base) ? `${base}.en` : base)
-    }
-
-    function toggleInterpretation(enabled: boolean) {
-        update("interpretationMode", enabled)
-
-        // re-derive the model: multilingual while interpretation is on, back to the .en variant for English otherwise
-        const base = ((settings.whisperModel as string) || "base").replace(".en", "")
-        update("whisperModel", !enabled && spokenLanguage === "en" && hasEnVariant(base) ? `${base}.en` : base)
-    }
-
-    // LANGUAGES SPOKEN (interpretation mode)
-    // the declared set constrains whisper's per-window language guess - default: the speaker & detection languages
-
-    $: listenLanguage = ((settings.listenLanguage as string) || spokenLanguage) as string
-    $: spokenLanguages = ((settings.spokenLanguages as string[]) || Array.from(new Set([spokenLanguage, listenLanguage]))) as string[]
-
-    function toggleSpokenLanguage(code: string, checked: boolean) {
-        const list = spokenLanguages.filter((languageCode) => languageCode !== code)
-        if (checked) list.push(code)
-        update("spokenLanguages", list)
-    }
-
-    // scripture detection can only listen to a language that is actually spoken - full list until a real set is picked
-    $: listenLanguageOptions = spokenLanguages.length >= 2 ? languageOptions.filter((option) => spokenLanguages.includes(option.value)) : languageOptions
-
-    // DOWNLOADS
-
-    type DownloadInfo = { progress: number; total: number; status: "downloading" | "complete" | "error"; message?: string }
-    // names are assigned by the electron process: "whisper" (binary), "whisper-model-<id>" and "nemotron".
-    // matching has to be exact - a loose match would show one engine's progress under the other's button
-    function getDownload(_name: string, _updater: any = null): DownloadInfo | null {
-        return null
-    }
-
-    function getPercent(download: DownloadInfo | null) {
-        if (!download?.total) return 0
-        return Math.min(100, Math.round((download.progress / download.total) * 100))
-    }
-
-    let binaryDownloading = false
-    let binaryError = ""
-    async function downloadBinary() {
-        return
-    }
-
-    let modelDownloading = false
-    let modelError = ""
-    async function downloadModel() {
-        return
-    }
-
-    function cancelDownload() {
-        return
-    }
-
-    // driven by the progress store, not the local click flags, so reopening the popup mid-download still shows live progress
-    $: binaryDownload = getDownload("whisper", $mediaDownloads)
-    $: modelDownload = getDownload(`whisper-model-${whisperModelId}`, $mediaDownloads)
-    $: binaryActive = binaryDownloading || binaryDownload?.status === "downloading"
-    $: modelActive = modelDownloading || modelDownload?.status === "downloading"
-
-    // a download that finished while the popup was closed still refreshes the "model downloaded" state
-    $: if (modelDownload?.status === "complete" && status && !modelDownloaded) getStatus()
-
-    // NEMOTRON MODEL (streaming engine)
-
-    let nemotronDownloading = false
-    let nemotronError = ""
-    async function downloadNemotron() {
-        return
-    }
-
-    function cancelNemotronDownload() {
-        return
-    }
-
-    function deleteNemotronModel() {
-        return
-    }
-
-    $: nemotronDownload = getDownload("nemotron", $mediaDownloads)
-    $: nemotronActive = nemotronDownloading || nemotronDownload?.status === "downloading"
-    $: if (nemotronDownload?.status === "complete" && status && !status.nemotron.ready) getStatus()
-
-    // CUSTOM BINARY PATH
-
-    let customPathValid = false
-    let customPathError = false
-    async function verifyCustomPath(_path: string) {
-        return
-    }
-
-    const BREW_COMMAND = "brew install whisper-cpp"
-    let commandCopied = false
-    function copyBrewCommand() {
-        navigator.clipboard.writeText(BREW_COMMAND)
-        commandCopied = true
-        setTimeout(() => (commandCopied = false), 2000)
-    }
-
-    // DETECTION (AI)
-
-    const providerOptions = [
-        { value: "anthropic", label: "Anthropic (Claude)" },
-        { value: "openai", label: "OpenAI (GPT)" },
-        { value: "gemini", label: "Google (Gemini)" },
-        { value: "ollama", label: "Local (Ollama - Gemma)" }
-    ]
-
-    $: provider = (settings.provider as string) || "anthropic"
-    $: providerData = AI_PROVIDER_MODELS[provider]
-    $: modelOptions = providerData.models.map((model) => ({ value: model.id, label: model.name }))
-    $: storedModel = ((settings.models?.[provider] as string) || (settings.model as string) || "") as string // "models" is stored per provider - "model" is the legacy shared value
-    $: selectedModel = providerData.models.find((model) => model.id === storedModel) ? storedModel : providerData.defaultModel
-    $: effectiveModel = (settings.customModel as string) || selectedModel
-    $: keySaved = !!status?.keys[provider]
-
-    function setProvider(id: string) {
-        update("provider", id)
-        keyInput = ""
-        testResult = null
-    }
-
-    function setModel(id: string) {
-        update("models", { ...(settings.models || {}), [provider]: id })
-    }
-
-    let keyInput = ""
-    function saveKey() {
-        if (!keyInput) return
-
-        sendMain(Main.AI_SET_KEY, { providerId: provider, key: keyInput })
-        keyInput = ""
-        testResult = null
-        setTimeout(getStatus, 200)
-    }
-
-    function removeKey() {
-        sendMain(Main.AI_SET_KEY, { providerId: provider, key: "" })
-        testResult = null
-        setTimeout(getStatus, 200)
-    }
-
-    // local ollama needs no API key - just the selected model pulled
-    $: ollamaPullCommand = `ollama pull ${effectiveModel}`
-    let ollamaCommandCopied = false
-    function copyOllamaCommand() {
-        navigator.clipboard.writeText(ollamaPullCommand)
-        ollamaCommandCopied = true
-        setTimeout(() => (ollamaCommandCopied = false), 2000)
-    }
-
-    let testing = false
-    let testResult: { ok: boolean; error?: string } | null = null
-    async function testConnection() {
-        if (testing) return
-        testing = true
-        testResult = null
-
-        testResult = (await requestMain(Main.DEPRECATED_AI_TEST_CONNECTION, { provider, model: effectiveModel }, undefined, 60000)) || { ok: false, error: "Timed out" }
-        testing = false
-    }
-
-    let showCustomModel = !!settings.customModel
-    function toggleCustomModel(enabled: boolean) {
-        showCustomModel = enabled
-        if (!enabled) update("customModel", "")
-    }
+    // engine/model/mic settings live in the AI model manager popup - only scripture behavior lives here
 
     // SEARCH BIBLES
 
@@ -291,7 +49,7 @@
         { value: "confirm", label: translateText("ai_scripture.mode_confirm") },
         { value: "auto", label: translateText("ai_scripture.mode_auto") }
     ]
-    // stop any active listening session when the feature is turned off (the drawer panel unmounts with it)
+    // stop any active listening session when the feature is turned off (the session controller follows this toggle)
     function toggleEnabled(e: any) {
         const enabled = !!e.detail
         if (!enabled) stopAiScriptureListening()
@@ -304,224 +62,11 @@
 {#if !settings.enabled}
     <p class="faded" style="padding: 10px 5px;"><T id="ai_scripture.privacy_notice" /></p>
 {:else}
-    <Title label="ai.transcription" icon="microphone" />
-
-    <MaterialDropdown label="ai.engine" options={engineOptions} value={engine} defaultValue="whisper" on:change={(e) => update("engine", e.detail)} />
-    <p class="faded hint"><T id={engine === "nemotron" ? "ai.engine_nemotron_hint" : "ai.engine_whisper_hint"} /></p>
-
-    {#if engine === "nemotron"}
-        {#if !status}
-            <div class="loading"><Loader /></div>
-        {:else if !status.nemotron.ready}
-            <Tip type="warning" value="ai.nemotron_unsupported" />
-            {#if status.nemotron.localPath}
-                <!-- the model was downloaded before the addon became unavailable - 660 MB must stay reclaimable -->
-                <MaterialButton variant="outlined" icon="delete" on:click={deleteNemotronModel}>
-                    <T id="ai.nemotron_delete" />
-                </MaterialButton>
-            {/if}
-        {:else if status.nemotron.ready}
-            <div class="statusLine ok">
-                <Icon id="check" size={0.9} white />
-                <T id="ai.nemotron_ready" />
-            </div>
-            <MaterialButton variant="outlined" icon="delete" on:click={deleteNemotronModel}>
-                <T id="ai.nemotron_delete" />
-            </MaterialButton>
-        {:else if nemotronActive}
-            <div class="progressArea">
-                <div class="progressBar"><div class="progressFill" style="width: {getPercent(nemotronDownload)}%;" /></div>
-                <span class="percentLabel">{getPercent(nemotronDownload)}%</span>
-                <MaterialButton icon="close" title="popup.cancel" on:click={cancelNemotronDownload} />
-            </div>
-        {:else}
-            <div class="installArea">
-                <p class="faded"><T id="ai.nemotron_not_downloaded" /></p>
-                <MaterialButton variant="outlined" icon="download" on:click={downloadNemotron}>
-                    <T id="ai.download_nemotron" />
-                </MaterialButton>
-            </div>
-        {/if}
-
-        {#if nemotronError || (!nemotronActive && nemotronDownload?.status === "error")}
-            <Tip type="warning" value={nemotronError || nemotronDownload?.message || "start_failed"} />
-        {/if}
-    {:else if !status}
-        <div class="loading"><Loader /></div>
-    {:else if binaryInstalled}
-        <div class="statusLine ok">
-            <Icon id="check" size={0.9} white />
-            <T id="ai.whisper_installed" />
-            {#if settings.whisperCustomPath || status.whisper.localPath}
-                <span class="path">{settings.whisperCustomPath || status.whisper.localPath}</span>
-            {/if}
-        </div>
-    {:else}
-        <div class="installArea">
-            <p class="faded"><T id="ai.whisper_not_installed" /></p>
-
-            {#if platform === "win32"}
-                {#if binaryActive}
-                    <div class="progressArea">
-                        <div class="progressBar"><div class="progressFill" style="width: {getPercent(binaryDownload)}%;" /></div>
-                        <span class="percentLabel">{getPercent(binaryDownload)}%</span>
-                        <MaterialButton icon="close" title="popup.cancel" on:click={cancelDownload} />
-                    </div>
-                {:else}
-                    <MaterialButton variant="outlined" icon="download" on:click={downloadBinary}>
-                        <T id="ai.download_whisper" />
-                    </MaterialButton>
-                {/if}
-
-                {#if binaryError}
-                    <Tip type="warning" value={binaryError} />
-                {/if}
-            {:else if platform === "darwin"}
-                <p class="faded"><T id="ai.whisper_mac_guide" /></p>
-                <div class="commandRow">
-                    <code>{BREW_COMMAND}</code>
-                    <MaterialButton icon={commandCopied ? "check" : "copy"} title={commandCopied ? "actions.copied" : "actions.copy"} on:click={copyBrewCommand} />
-                </div>
-                <MaterialButton variant="outlined" icon="refresh" on:click={getStatus}>
-                    <T id="ai.check_again" />
-                </MaterialButton>
-            {:else}
-                <p class="faded"><T id="ai.whisper_linux_guide" /></p>
-                <MaterialButton variant="outlined" icon="refresh" on:click={getStatus}>
-                    <T id="ai.check_again" />
-                </MaterialButton>
-            {/if}
-        </div>
-    {/if}
-
-    {#if engine === "whisper" && status && (!binaryInstalled || settings.whisperCustomPath || platform === "linux")}
-        <MaterialFilePicker label="ai.whisper_custom_path" value={settings.whisperCustomPath || ""} filter={{ name: "whisper-cli", extensions: ["*"] }} icon="folder" allowEmpty on:change={(e) => verifyCustomPath(e.detail || "")} />
-        {#if customPathError}
-            <Tip type="warning" value="ai.whisper_path_invalid" />
-        {/if}
-    {/if}
-
-    {#if engine === "whisper"}
-        <!-- use an already installed ggml model file (e.g. large-v3) instead of downloading one -->
-        <MaterialFilePicker label="ai.whisper_custom_model" value={settings.whisperCustomModelPath || ""} filter={{ name: "ggml model", extensions: ["bin"] }} icon="folder" allowEmpty on:change={(e) => update("whisperCustomModelPath", e.detail || "")} />
-
-        <InputRow>
-            <MaterialDropdown label="ai.whisper_model" options={whisperModelOptions} value={whisperModelBase} defaultValue="base" on:change={(e) => setWhisperModel(e.detail)} />
-
-            {#if status}
-                {#if modelDownloaded}
-                    <div class="statusLine ok inline">
-                        <Icon id="check" size={0.9} white />
-                        <T id="ai.model_downloaded" />
-                    </div>
-                {:else if modelActive}
-                    <div class="progressArea">
-                        <div class="progressBar"><div class="progressFill" style="width: {getPercent(modelDownload)}%;" /></div>
-                        <span class="percentLabel">{getPercent(modelDownload)}%</span>
-                        <MaterialButton icon="close" title="popup.cancel" on:click={cancelDownload} />
-                    </div>
-                {:else}
-                    <MaterialButton icon="download" on:click={downloadModel}>
-                        <T id="ai.download_model" />
-                    </MaterialButton>
-                {/if}
-            {/if}
-        </InputRow>
-        {#if modelError || (!modelActive && modelDownload?.status === "error")}
-            <Tip type="warning" value={modelError || modelDownload?.message || "start_failed"} />
-        {/if}
-    {/if}
-
-    <InputRow>
-        <MaterialDropdown label="live.microphones" options={microphones} value={settings.micDeviceId || ""} on:change={(e) => update("micDeviceId", e.detail)} allowEmpty />
-        {#if engine === "whisper"}
-            <MaterialDropdown label="ai.spoken_language" options={languageOptions} value={spokenLanguage} defaultValue={($language || "en").slice(0, 2).toLowerCase()} on:change={(e) => setSpokenLanguage(e.detail)} />
-        {/if}
-    </InputRow>
-
-    {#if engine === "whisper"}
-        <MaterialToggleSwitch label="ai.interpretation" checked={settings.interpretationMode === true} defaultValue={false} on:change={(e) => toggleInterpretation(e.detail)} />
-        {#if interpretationMode}
-            <p class="faded hint"><T id="ai.interpretation_hint" /></p>
-
-            <p class="listLabel"><T id="ai.spoken_languages" /> ({spokenLanguages.length})</p>
-            <div class="languageList">
-                {#each WHISPER_LANGUAGES as spoken}
-                    <MaterialCheckbox label={spoken.name} checked={spokenLanguages.includes(spoken.code)} on:change={(e) => toggleSpokenLanguage(spoken.code, e.detail)} />
-                {/each}
-            </div>
-            <p class="faded hint"><T id="ai.spoken_languages_hint" /></p>
-
-            <MaterialDropdown label="ai.listen_language" options={listenLanguageOptions} value={listenLanguage} defaultValue={spokenLanguage} on:change={(e) => update("listenLanguage", e.detail)} />
-            <p class="faded hint"><T id="ai.interpretation_model_hint" /></p>
-        {/if}
-    {/if}
-
     <Title label="ai_scripture.detection" icon="search" />
 
-    <!-- on-device quote matching needs no key or provider - the AI provider below is the optional upgrade for paraphrased wording -->
+    <!-- on-device quote matching needs no key or provider - the AI provider (model manager popup) is the optional upgrade for paraphrased wording -->
     <MaterialToggleSwitch label="ai_scripture.quote_matching" checked={settings.quoteMatching !== false} defaultValue={true} on:change={(e) => update("quoteMatching", e.detail)} />
     <p class="faded hint"><T id="ai_scripture.quote_matching_hint" /></p>
-
-    <MaterialDropdown label="ai.provider" options={providerOptions} value={provider} defaultValue="anthropic" on:change={(e) => setProvider(e.detail)} />
-
-    {#if provider === "ollama"}
-        <!-- no API key: everything runs on the local ollama server - just make sure the model is pulled -->
-        <p class="faded hint"><T id="ai.ollama_hint" /></p>
-        <div class="commandRow">
-            <code>{ollamaPullCommand}</code>
-            <MaterialButton icon={ollamaCommandCopied ? "check" : "copy"} title={ollamaCommandCopied ? "actions.copied" : "actions.copy"} on:click={copyOllamaCommand} />
-        </div>
-        <MaterialButton variant="outlined" icon="connection" disabled={testing} on:click={testConnection}>
-            <T id="ai.test_connection" />
-        </MaterialButton>
-    {:else}
-        <InputRow>
-            <MaterialTextInput label="ai.api_key" value={keyInput} type="password" pasteBtn on:input={(e) => (keyInput = e.detail)} />
-            <MaterialButton icon="save" disabled={!keyInput} on:click={saveKey}>
-                <T id="actions.save" />
-            </MaterialButton>
-            <MaterialButton icon="connection" disabled={(!keySaved && !keyInput) || testing} on:click={testConnection}>
-                <T id="ai.test_connection" />
-            </MaterialButton>
-            {#if keySaved}
-                <MaterialButton icon="delete" title="ai.remove_key" on:click={removeKey} />
-            {/if}
-        </InputRow>
-
-        {#if keySaved && !testResult}
-            <div class="statusLine ok">
-                <Icon id="check" size={0.9} white />
-                <T id="ai.key_saved" />
-            </div>
-        {/if}
-    {/if}
-
-    {#if testing}
-        <div class="statusLine"><Loader /></div>
-    {:else if testResult}
-        {#if testResult.ok}
-            <div class="statusLine ok">
-                <Icon id="check" size={0.9} white />
-                <T id="ai_scripture.test_success" />
-            </div>
-        {:else}
-            <div class="statusLine error">
-                <Icon id="warning" size={0.9} white />
-                <T id="ai_scripture.error" />
-                {#if testResult.error}
-                    <span class="path">{testResult.error}</span>
-                {/if}
-            </div>
-        {/if}
-    {/if}
-
-    <MaterialDropdown label="ai.model" options={modelOptions} value={selectedModel} defaultValue={providerData.defaultModel} disabled={showCustomModel} on:change={(e) => setModel(e.detail)} />
-
-    <MaterialToggleSwitch label="ai.custom_model" checked={showCustomModel} defaultValue={false} on:change={(e) => toggleCustomModel(e.detail)} />
-    {#if showCustomModel}
-        <MaterialTextInput label="ai.custom_model_id" value={settings.customModel || ""} on:change={(e) => update("customModel", e.detail)} />
-    {/if}
 
     <Title label="ai_scripture.search_bibles ({searchBibles.length})" icon="scripture" />
 
@@ -588,12 +133,6 @@
 {/if}
 
 <style>
-    .loading {
-        display: flex;
-        justify-content: center;
-        padding: 10px;
-    }
-
     .faded {
         opacity: 0.6;
         font-size: 0.85em;
@@ -603,93 +142,13 @@
         padding: 5px 10px 10px;
     }
 
-    .installArea {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding: 5px 0;
-    }
-
-    .statusLine {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 5px 10px;
-        font-size: 0.8em;
-    }
-    .statusLine.inline {
-        white-space: nowrap;
-    }
-    .statusLine.ok {
-        color: #6fdc6f;
-    }
-    .statusLine.error {
-        color: #ff9090;
-    }
-    .statusLine .path {
-        opacity: 0.5;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-    }
-
-    .commandRow {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    .commandRow code {
-        flex: 1;
-        background-color: var(--primary-darkest);
-        padding: 8px 12px;
-        border-radius: 4px;
-        font-family: monospace;
-        font-size: 0.85em;
-    }
-
-    .progressArea {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        flex: 1;
-        padding: 0 5px;
-    }
-    .progressBar {
-        flex: 1;
-        height: 6px;
-        border-radius: 3px;
-        background-color: var(--primary-darkest);
-        overflow: hidden;
-    }
-    .percentLabel {
-        font-size: 0.75em;
-        opacity: 0.8;
-        min-width: 34px;
-        text-align: end;
-    }
-    .progressFill {
-        height: 100%;
-        background-color: var(--secondary);
-        transition: width 0.2s ease;
-    }
-
-    .bibleList,
-    .languageList {
+    .bibleList {
         display: flex;
         flex-direction: column;
         max-height: 200px;
         overflow-y: auto;
         background-color: var(--primary-darker);
         border-radius: 4px;
-    }
-    .languageList {
-        max-height: 150px;
-    }
-
-    .listLabel {
-        font-size: 0.8em;
-        opacity: 0.8;
-        padding: 5px 10px 2px;
     }
 
     .privacy {

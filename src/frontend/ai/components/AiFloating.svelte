@@ -6,7 +6,8 @@
     import T from "../../components/helpers/T.svelte"
     import MaterialButton from "../../components/inputs/MaterialButton.svelte"
     import { ai, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, outLocked, scriptures } from "../../stores"
-    import { dismissSuggestion, projectDetection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../scripture/aiScripture"
+    import { translateText } from "../../utils/language"
+    import { aiScriptureErrorText, dismissSuggestion, projectDetection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../scripture/aiScripture"
     import { audioLevelStore, SpeechToText } from "../stt/stt"
     import AiRing from "./AiRing.svelte"
 
@@ -165,13 +166,13 @@
 
                 <div class="card-body">
                     {#if state === "inactive"}
-                        <p class="placeholder">Select a microphone input...</p>
+                        <p class="placeholder"><T id="ai.select_mic" /></p>
                     {:else if state === "error"}
-                        <p class="placeholder error">{(sessionMode === "scripture" ? $aiScriptureStatus.message : $aiStatus.message) || ""}</p>
+                        <p class="placeholder error">{translateText(aiScriptureErrorText((sessionMode === "scripture" ? $aiScriptureStatus.message : $aiStatus.message) || "start_failed"))}</p>
                     {:else if state === "processing"}
                         <div class="processing-view">
                             <div class="spinner large"></div>
-                            <p>Processing speech...</p>
+                            <p><T id="ai.processing" /></p>
                         </div>
                     {:else}
                         <div class="transcript-box">

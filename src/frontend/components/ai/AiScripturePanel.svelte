@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { DetectedReference } from "../../../types/ai/AiScripture"
-    import { dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../../ai/scripture/aiScripture"
+    import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../../ai/scripture/aiScripture"
     import AiRing from "../../ai/components/AiRing.svelte"
     import { activePage, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, outLocked, scriptures, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
@@ -17,7 +17,7 @@
         if (starting) return "processing"
         return currentState === "error" ? "error" : "inactive"
     }
-    $: errorText = state === "error" && $aiScriptureStatus.message ? $aiScriptureStatus.message : ""
+    $: errorText = state === "error" && $aiScriptureStatus.message ? translateText(aiScriptureErrorText($aiScriptureStatus.message)) : ""
 
     async function toggleListening() {
         if (isStarting) return

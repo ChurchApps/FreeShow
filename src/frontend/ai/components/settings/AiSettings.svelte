@@ -14,7 +14,7 @@
     }
 </script>
 
-<MaterialToggleSwitch label="Enable AI features" checked={isEnabled} on:change={(e) => updateValue("enabled", e.detail)} />
+<MaterialToggleSwitch label="ai.enable" checked={isEnabled} on:change={(e) => updateValue("enabled", e.detail)} />
 
 {#if isEnabled}
     <STTOptions />

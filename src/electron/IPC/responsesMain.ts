@@ -8,7 +8,7 @@ import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
-import { receiveAiScriptureAudio, startAiScripture, startScriptureDetection, stopAiScripture, stopScriptureDetection, testAiConnection, updateAiScriptureContext, updateScriptureDetectionContext } from "../ai"
+import { startScriptureDetection, stopScriptureDetection, testAiConnection, updateScriptureDetectionContext } from "../ai"
 import { aiHandleLocalSetup } from "../ai/setup/LocalModelManager"
 import { aiGetModelStatus } from "../ai/setup/status"
 import { SpeechToText } from "../ai/stt/SpeechToTextManager"
@@ -283,12 +283,7 @@ export const mainResponses: MainResponses = {
     [Main.AI_SCRIPTURE_STOP]: () => stopScriptureDetection(),
     [Main.AI_SCRIPTURE_CONTEXT]: (data) => updateScriptureDetectionContext(data),
     [Main.AI_SET_KEY]: (data) => setAiKey(data),
-    // Rework these into the new system:
-    [Main.DEPRECATED_AI_LISTEN_START]: (data) => startAiScripture(data),
-    [Main.DEPRECATED_AI_LISTEN_STOP]: () => stopAiScripture(),
-    [Main.DEPRECATED_AI_AUDIO_DATA]: (data) => receiveAiScriptureAudio(data),
-    [Main.DEPRECATED_AI_SCRIPTURE_CONTEXT]: (data) => updateAiScriptureContext(data),
-    [Main.DEPRECATED_AI_TEST_CONNECTION]: (data) => testAiConnection(data)
+    [Main.AI_TEST_CONNECTION]: (data) => testAiConnection(data)
 }
 
 /// ///////

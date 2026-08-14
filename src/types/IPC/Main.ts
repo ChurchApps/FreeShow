@@ -9,7 +9,7 @@ import type { _store } from "../../electron/data/store"
 import type { EncoderDetection } from "../../electron/streaming/encoderDetection"
 import type { TimecodeMode } from "../../electron/timecode/timecode"
 import type { AiSetupOptions, EngineStatus } from "../ai/AiModels"
-import type { AiScriptureDetectionConfig, AiScriptureStartConfig } from "../ai/AiScripture"
+import type { AiScriptureDetectionConfig } from "../ai/AiScripture"
 import type { SttEngineOptions } from "../ai/AiSettings"
 import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, SpotifyState, Subtitle } from "../Main"
 import type { Output } from "../Output"
@@ -189,12 +189,8 @@ export enum Main {
     AI_SCRIPTURE_START = "AI_SCRIPTURE_START",
     AI_SCRIPTURE_STOP = "AI_SCRIPTURE_STOP",
     AI_SCRIPTURE_CONTEXT = "AI_SCRIPTURE_CONTEXT",
-    DEPRECATED_AI_LISTEN_START = "DEPRECATED_AI_LISTEN_START",
-    DEPRECATED_AI_LISTEN_STOP = "DEPRECATED_AI_LISTEN_STOP",
-    DEPRECATED_AI_AUDIO_DATA = "DEPRECATED_AI_AUDIO_DATA",
-    DEPRECATED_AI_SCRIPTURE_CONTEXT = "DEPRECATED_AI_SCRIPTURE_CONTEXT",
     AI_SET_KEY = "AI_SET_KEY",
-    DEPRECATED_AI_TEST_CONNECTION = "DEPRECATED_AI_TEST_CONNECTION"
+    AI_TEST_CONNECTION = "AI_TEST_CONNECTION"
 }
 
 export interface MainSendPayloads {
@@ -308,11 +304,7 @@ export interface MainSendPayloads {
     [Main.AI_SCRIPTURE_STOP]: undefined
     [Main.AI_SCRIPTURE_CONTEXT]: { book: string; bookNumber: number; chapter: number; verseStart: number; verseEnd: number }
     [Main.AI_SET_KEY]: { providerId: string; key: string }
-    [Main.DEPRECATED_AI_LISTEN_START]: AiScriptureStartConfig
-    [Main.DEPRECATED_AI_LISTEN_STOP]: undefined
-    [Main.DEPRECATED_AI_AUDIO_DATA]: { buffer: Uint8Array }
-    [Main.DEPRECATED_AI_SCRIPTURE_CONTEXT]: { book: string; bookNumber: number; chapter: number; verseStart: number; verseEnd: number }
-    [Main.DEPRECATED_AI_TEST_CONNECTION]: { provider: string; model: string }
+    [Main.AI_TEST_CONNECTION]: { providerId: string; model: string }
 }
 
 export interface MainReturnPayloads {
@@ -420,8 +412,7 @@ export interface MainReturnPayloads {
     [Main.AI_LISTEN_START]: Promise<{ started: boolean; error?: string }>
     [Main.AI_GET_STATUS]: Promise<{ [key: string]: EngineStatus }>
     [Main.AI_SETUP]: Promise<boolean>
-    [Main.DEPRECATED_AI_LISTEN_START]: Promise<{ started: boolean; error?: string }>
-    [Main.DEPRECATED_AI_TEST_CONNECTION]: Promise<{ ok: boolean; error?: string }>
+    [Main.AI_TEST_CONNECTION]: Promise<{ ok: boolean; error?: string }>
 }
 
 ///////////
