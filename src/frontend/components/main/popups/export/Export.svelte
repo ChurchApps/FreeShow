@@ -21,6 +21,16 @@
     import Loader from "../../Loader.svelte"
     import { convertShowSlidesToImages, exportFormats, exportTypes, getActiveShowId, getShowIdsFromType } from "./exportHelper"
     import PdfExport from "./PdfExport.svelte"
+    import { registerPopupSubmit } from "../../../../utils/popupSubmit"
+
+    // the export button only exists after a format has been picked
+    registerPopupSubmit(() => {
+        if (!exportFormat || loading) return
+        const nothingToExport = exportType === "project" ? !$projects[$activeProject || ""]?.shows?.length : !showIds.length && exportType !== "all_shows"
+        if (nothingToExport) return
+
+        exportClick()
+    })
 
     let previewShow: Show | null = null
     let showIds: string[] = []

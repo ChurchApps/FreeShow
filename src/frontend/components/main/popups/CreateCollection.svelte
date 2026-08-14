@@ -7,6 +7,9 @@
     import HRule from "../../input/HRule.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
+    import { registerPopupSubmit } from "../../../utils/popupSubmit"
+
+    registerPopupSubmit(() => (selectedScriptures.length < 2 ? null : create()))
 
     $: scripturesList = keysToID($scriptures).filter((a) => !a.collection)
     $: localScripturesList = sortByName(scripturesList.filter((a) => !a.api))

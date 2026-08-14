@@ -9,6 +9,10 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import InputRow from "../../input/InputRow.svelte"
+    import { registerPopupSubmit } from "../../../utils/popupSubmit"
+
+    // the download button only exists when there is an update
+    registerPopupSubmit(() => (hasUpdate ? downloadLatest() : null))
 
     let loading = true
     let hasError = false
