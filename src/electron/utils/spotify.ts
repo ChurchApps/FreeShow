@@ -5,6 +5,18 @@ import type { SpotifyState } from "../../types/Main"
 // ----- BRIDGE LOGIC (Windows only) -----
 if (process.env.SPOTIFY_BRIDGE === "true") {
     let client: any = null
+    let commandQueue = Promise.resolve()
+
+    // Helper to queue native lib calls sequentially to prevent C++ thread race conditions
+    const enqueueNativeCall = (fn: () => void) => {
+        commandQueue = commandQueue
+            .then(() => {
+                if (client) fn()
+            })
+            .catch((err) => {
+                process.send?.({ type: "error", error: err?.message || String(err) })
+            })
+    }
 
     process.on("message", (msg: any) => {
         try {
@@ -20,34 +32,41 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
                 } catch (e: any) {
                     let error = e.message
 
-                    if (e.message.includes("Failed to load shared library")) {
+                    if (e.message?.includes("Failed to load shared library")) {
                         error += "\n\nYou are likely missing the Visual C++ Redistributable. You can download and install it from here: https://aka.ms/vs/17/release/vc_redist.x64.exe"
                     }
 
                     process.send?.({ type: "error", error: `Failed to init Spotify Controller: ${error}` })
                 }
             } else if (msg.type === "getState") {
-                const s = client?.latestState()
-                if (s) {
-                    if (s.albumArt?.length) s.albumArtBase64 = `data:image/jpeg;base64,${s.albumArt.toString("base64")}`
-                    delete s.albumArt
-                }
-                process.send?.({ type: "state", state: s })
-            } else if (msg.type === "command" && client) {
-                const { command: c, value: v } = msg
-                if (c === "playpause") {
+                enqueueNativeCall(() => {
+                    if (!client) return
                     const s = client.latestState()
                     if (s) {
-                        if (s.statusName === "PLAYING") client.pause()
-                        else client.play()
+                        if (s.albumArt?.length) s.albumArtBase64 = `data:image/jpeg;base64,${s.albumArt.toString("base64")}`
+                        delete s.albumArt
                     }
-                } else if (c === "next") client.next()
-                else if (c === "prev") client.previous()
-                else if (c === "seek") client.seekMs(v * 1000)
-                else if (c === "setVolume") {
-                    if (typeof client.setVolume === "function") client.setVolume(v)
-                    else client.appVolume = v
-                } else if (c === "pause") client.pause()
+                    process.send?.({ type: "state", state: s })
+                })
+            } else if (msg.type === "command") {
+                enqueueNativeCall(() => {
+                    if (!client) return
+                    const { command: c, value: v } = msg
+
+                    if (c === "playpause") {
+                        const s = client.latestState()
+                        if (s) {
+                            if (s.statusName === "PLAYING") client.pause()
+                            else client.play()
+                        }
+                    } else if (c === "next") client.next()
+                    else if (c === "prev") client.previous()
+                    else if (c === "seek") client.seekMs(v * 1000)
+                    else if (c === "setVolume") {
+                        if (typeof client.setVolume === "function") client.setVolume(v)
+                        else client.appVolume = v
+                    } else if (c === "pause") client.pause()
+                })
             }
         } catch (e: any) {
             process.send?.({ type: "error", error: e.message })
@@ -57,8 +76,10 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
     process.on("exit", () => {
         if (client) {
             try {
-                client.stop()
-                client.close()
+                const activeClient = client
+                client = null // Disallow subsequent queued calls immediately
+                activeClient.stop()
+                activeClient.close()
             } catch {}
         }
     })
@@ -95,32 +116,35 @@ export function initSpotify() {
     }
 }
 
-const macScript = (c?: string) => `tell application "Spotify"
-    ${
-        c ||
-        `if running then
-        set isP to player state is playing
+const macScript = (c?: string) => `if application "Spotify" is running then
+    tell application "Spotify"
+        ${
+            c ||
+            `set isP to player state is playing
         set t to name of current track
         set a to artist of current track
         set d to (duration of current track) / 1000
         set p to player position
-        set art to artwork url of current track
+        set art to ""
+        try
+            set art to artwork url of current track
+        end try
         set v to sound volume
-        return (isP as text) & "|SEC|" & t & "|SEC|" & a & "|SEC|" & p & "|SEC|" & d & "|SEC|" & art & "|SEC|" & v
-    else
-        return "NOT_RUNNING"
-    end if`
-    }
-end tell`
+        return (isP as text) & "|SEC|" & t & "|SEC|" & a & "|SEC|" & p & "|SEC|" & d & "|SEC|" & art & "|SEC|" & v`
+        }
+    end tell
+else
+    return "NOT_RUNNING"
+end if`
 
 export async function getSpotifyState(): Promise<SpotifyState | null> {
     try {
         if (isMac)
             return new Promise((res) =>
                 exec(`osascript -e '${macScript().replace(/'/g, "'\\''")}'`, (e, out) => {
-                    if (e && !out.includes("NOT_RUNNING")) console.error("[Spotify] Mac error:", e)
+                    if (e && !out?.includes("NOT_RUNNING") && !e.message?.includes("syntax error") && !e.message?.includes("2741")) console.error("[Spotify] Mac error:", e)
                     const p = out?.trim().split("|SEC|")
-                    res(e || out.includes("NOT_RUNNING") || p.length < 5 ? null : { isPlaying: p[0] === "true", title: p[1], artist: p[2], positionSec: parseFloat(p[3]) || 0, durationSec: parseFloat(p[4]) || 0, albumArt: p[5] || undefined, volume: (parseInt(p[6]) || 0) / 100, platform: "darwin" })
+                    res(e || out?.includes("NOT_RUNNING") || !p || p.length < 5 ? null : { isPlaying: p[0] === "true", title: p[1], artist: p[2], positionSec: parseFloat(p[3]) || 0, durationSec: parseFloat(p[4]) || 0, albumArt: p[5] || undefined, volume: (parseInt(p[6]) || 0) / 100, platform: "darwin" })
                 })
             )
         if (isWin) {

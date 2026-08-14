@@ -3,13 +3,16 @@
 import { get } from "svelte/store"
 import { Main } from "../../../../types/IPC/Main"
 import { AudioAnalyser } from "../../../audio/audioAnalyser"
+import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../../audio/audioFading"
 import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
 import { requestMain } from "../../../IPC/main"
 import { media, outputs, playerVideos, playingVideos, playingVideoState, special, transitionData } from "../../../stores"
 import { playFolder } from "../../../utils/shortcuts"
 import { customActionActivation } from "../../actions/actions"
 import { getVimeoData, getYouTubeData } from "../../drawer/player/playerHelper"
-import { encodeFilePath, getExtension, getMediaType, locateMediaFile } from "../../helpers/media"
+import { clone } from "../../helpers/array"
+import { downloadOnlineMedia, encodeFilePath, getExtension, getMediaType, locateMediaFile } from "../../helpers/media"
+import { getAllOutputs } from "../../helpers/output"
 import { checkNextAfterMedia } from "../../helpers/showActions"
 import { clearBackground } from "../../output/clear"
 import { TimeInterpolator } from "./videoTime"
@@ -52,11 +55,16 @@ export type PlayingVideoState = {
     softLoop?: number
     softLoopOpacity?: number
     type?: "background" | "item"
+    isFadingOut?: boolean
 }
 
 export class VideoPlayer {
+    private static replayGainCache: Map<string, number> = new Map()
+
     private static isStarting = new Set<string>()
     static async start(id: string, options: VideoOptions = {}, linkedOutputIds?: string[]): Promise<boolean> {
+        if (!id) return false
+
         const ref = `${id}_${linkedOutputIds?.join(",")}`
         if (this.isStarting.has(ref)) return true
         this.isStarting.add(ref)
@@ -73,14 +81,20 @@ export class VideoPlayer {
             return false
         }
 
+        let audioPath = id
         if (!options.isOnline) {
-            const located = await locateMediaFile(id)
-            if (!located) {
-                this.isStarting.delete(ref)
-                return false
-            }
+            if (audioPath.startsWith("http")) {
+                audioPath = (await downloadOnlineMedia(audioPath)) || audioPath
+            } else {
+                const located = await locateMediaFile(audioPath)
+                if (!located) {
+                    this.isStarting.delete(ref)
+                    return false
+                }
 
-            id = located.path
+                audioPath = located.path
+                id = located.path
+            }
         }
 
         // check if already playing
@@ -99,7 +113,7 @@ export class VideoPlayer {
             }
         }
 
-        const audio = await this.createAudio(id, linkedOutputIds, options.isOnline)
+        const audio = await this.createAudio(audioPath, id, linkedOutputIds, options.isOnline)
         if (!audio) {
             this.isStarting.delete(ref)
             return false
@@ -111,7 +125,6 @@ export class VideoPlayer {
             if ("timeTick" in audio) audio.timeTick.update(startTime)
         }
 
-        const replayGainMultiplier = options.isOnline ? 1 : await this.getReplayGainMultiplier(id)
         const globalOpts = this.getGlobalOptions(id)
         const softLoop = globalOpts.softLoop || 0
         const loop = globalOpts.loop !== undefined ? globalOpts.loop : options.loop
@@ -119,9 +132,25 @@ export class VideoPlayer {
         const toTime = this.getEndTime(id, audio.duration)
 
         playingVideos.update((a) => {
-            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background", replayGainMultiplier, softLoop, loop, fromTime, toTime })
+            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background", softLoop, loop, fromTime, toTime })
             return a
         })
+
+        if (!options.isOnline) {
+            this.getReplayGainMultiplier(id)
+                .then((mult) => {
+                    const gain = mult || 1
+                    if (gain === 1) return
+
+                    playingVideos.update((a) => {
+                        const item = a.find((v) => v.path === id)
+                        if (item) item.replayGainMultiplier = gain
+                        return a
+                    })
+                    this.updateVolume(id)
+                })
+                .catch(() => {})
+        }
 
         const hasCustomBounds = fromTime > 0 || (toTime > 0 && toTime < audio.duration)
         audio.loop = (options.loop ?? false) && !hasCustomBounds
@@ -129,19 +158,24 @@ export class VideoPlayer {
 
         this.updateVolume(id)
 
-        if (!options.paused) this.play(id, linkedOutputIds?.[0])
+        const mediaTransition = get(transitionData)?.media
+        const durationMs = mediaTransition?.duration ?? 800
+        const delayMs = durationMs > 0 ? durationMs / 4 + 20 : 0
 
-        if (audio instanceof HTMLAudioElement) this.attachToAnalyser(id, audio, linkedOutputIds || [])
+        const startPlayback = () => {
+            if (!options.paused) this.play(id, linkedOutputIds?.[0])
 
-        if (!audio.muted && audio instanceof HTMLAudioElement) {
-            const mediaTransition = get(transitionData)?.media
-            const durationMs = mediaTransition?.duration ?? 800
-            if (durationMs > 0) {
+            if (audio instanceof HTMLAudioElement) this.attachToAnalyser(id, audio, linkedOutputIds || [])
+
+            if (!audio.muted && audio instanceof HTMLAudioElement && durationMs > 0) {
                 this.fadeIn(id, audio, durationMs)
             }
+
+            this.initSyncClock()
         }
 
-        this.initSyncClock()
+        if (delayMs > 0) setTimeout(startPlayback, delayMs)
+        else startPlayback()
 
         const type = options.muted && options.loop ? "background" : !options.muted && !options.loop ? "foreground" : null
         videoStarting(type)
@@ -190,9 +224,9 @@ export class VideoPlayer {
         })
     }
 
-    private static async createAudio(id: string, outputIds?: string[], isOnline?: boolean): Promise<HTMLAudioElement | VirtualAudioElement | null> {
+    private static async createAudio(audioPath: string, originalId: string, outputIds?: string[], isOnline?: boolean): Promise<HTMLAudioElement | VirtualAudioElement | null> {
         if (isOnline) {
-            const playerData = get(playerVideos)[id]
+            const playerData = get(playerVideos)[originalId]
             const path = playerData?.id || ""
             const data = await (playerData?.type === "youtube" ? getYouTubeData(path) : playerData?.type === "vimeo" ? getVimeoData(path) : null)
 
@@ -206,20 +240,20 @@ export class VideoPlayer {
             }
         }
 
-        const audio = new Audio(encodeFilePath(id))
+        const audio = new Audio(encodeFilePath(audioPath))
         audio.addEventListener("ended", () => {
-            const playing = this.getPlaying(id, outputIds || [])
-            if (playing?.loop || this.getGlobalOptions(id)?.loop) {
-                const startTime = this.getStartTime(id)
+            const playing = this.getPlaying(originalId, outputIds || [])
+            if (playing?.loop || this.getGlobalOptions(originalId)?.loop) {
+                const startTime = this.getStartTime(originalId)
                 audio.currentTime = startTime
                 if ("timeTick" in audio) (audio as any).timeTick.update(startTime)
                 if (audio.paused) audio.play().catch(() => {})
                 return
             }
             // absolute end
-            this.checkIfEnding(id, outputIds, true)
+            this.checkIfEnding(originalId, outputIds, true)
         })
-        return await this.waitForAudio(id, audio)
+        return await this.waitForAudio(originalId, audio)
     }
 
     private static waitForAudio(pathOrId: string, audio: HTMLAudioElement): Promise<HTMLAudioElement | null> {
@@ -320,6 +354,10 @@ export class VideoPlayer {
             audio.timeTick.play()
         }
 
+        if (get(special).muteAudioWhenVideoPlays) {
+            fadeoutAllPlayingAudio()
+        }
+
         this.initSyncClock()
     }
 
@@ -341,16 +379,34 @@ export class VideoPlayer {
             audio.timeTick.pause()
         }
 
+        if (get(special).muteAudioWhenVideoPlays && !get(playingVideos).some((v) => !v.audio.paused)) {
+            fadeinAllPlayingAudio()
+        }
+
         this.initSyncClock()
     }
 
     static isFadingOut: string[] = []
+    static isStopping = new Set<string>()
     static async stop(path: string, outputId?: string, reachedEnd = false) {
         if (!this.audioExists(path, outputId ? [outputId] : undefined) || this.isFadingOut.includes(path)) return
 
-        const audio = this.getAudio(path, outputId)
+        // multiple outputs at once
+        if (this.isStopping.has(path)) return
+        this.isStopping.add(path)
+        setTimeout(() => this.isStopping.delete(path), 20)
 
-        if (audio instanceof HTMLAudioElement && !reachedEnd && audio && !audio.paused && audio.volume > 0) {
+        const audio = this.getAudio(path, outputId)
+        const playing = get(playingVideos).find((v) => v.path === path)
+
+        const nonActiveOutputs = getAllOutputs()
+            .filter((a) => !a.enabled || !a.active)
+            .map((a) => a.id)
+        const linkedOutputIds = clone(playing?.linkedOutputIds || [])
+        const stopInOutputIds = linkedOutputIds.filter((id) => !nonActiveOutputs.includes(id))
+        const shouldStop = linkedOutputIds.length === stopInOutputIds.length
+
+        if (shouldStop && audio instanceof HTMLAudioElement && !reachedEnd && audio && !audio.paused && audio.volume > 0) {
             const durationMs = get(transitionData)?.media?.duration ?? 800
             if (durationMs > 0) {
                 const faded = await this.fadeOut(path, audio, durationMs)
@@ -358,31 +414,38 @@ export class VideoPlayer {
             }
         }
 
-        this.pause(path, outputId)
+        if (shouldStop) this.pause(path, outputId)
 
-        const playing = get(playingVideos).find((v) => v.path === path)
-        const linkedOutputIds = playing?.linkedOutputIds || []
-        const detachOutputIds = Array.from(new Set([...linkedOutputIds, ...(outputId ? [outputId] : [])]))
+        const detachOutputIds = Array.from(new Set(shouldStop ? [...stopInOutputIds, ...(outputId ? [outputId] : [])] : stopInOutputIds))
         detachOutputIds.forEach((outId) => AudioAnalyser.detach(path, outId))
 
         playingVideos.update((a) => {
-            // reset
             const index = a.findIndex((v) => v.path === path)
-            if (index !== -1) {
+            if (index === -1) return a
+
+            // reset
+            if (shouldStop) {
                 if (a[index].audio instanceof HTMLAudioElement) a[index].audio.src = ""
                 a.splice(index, 1)
+            } else {
+                a[index].linkedOutputIds = linkedOutputIds.filter((id) => nonActiveOutputs.includes(id))
             }
+
             return a
         })
 
         playingVideoState.update((state) => {
-            const targets = outputId ? [outputId, ...linkedOutputIds] : linkedOutputIds
+            const targets = outputId && !shouldStop ? [outputId, ...stopInOutputIds] : stopInOutputIds
             targets.forEach((outId) => {
                 delete state[`${path}_${outId}`]
             })
-            Object.keys(state).forEach((key) => {
-                if (key.startsWith(`${path}_`)) delete state[key]
-            })
+
+            if (shouldStop) {
+                Object.keys(state).forEach((key) => {
+                    if (key.startsWith(`${path}_`)) delete state[key]
+                })
+            }
+
             return state
         })
 
@@ -586,9 +649,12 @@ export class VideoPlayer {
     }
 
     static async getReplayGainMultiplier(path: string): Promise<number> {
+        if (this.replayGainCache.has(path)) return this.replayGainCache.get(path) || 1
         try {
             const audioMetadata = await requestMain(Main.READ_AUDIO_METADATA, { filePath: path })
-            return audioMetadata?.replayGainMultiplier || 1
+            const mult = audioMetadata?.replayGainMultiplier || 1
+            this.replayGainCache.set(path, mult)
+            return mult
         } catch (e) {
             console.error("Failed to read ReplayGain metadata for video", e)
             return 1
@@ -649,7 +715,8 @@ export class VideoPlayer {
                         muted: activeAudio.muted,
                         softLoop,
                         softLoopOpacity,
-                        type: video.type || "background"
+                        type: video.type || "background",
+                        isFadingOut: this.isFadingOut.includes(video.path)
                     }
                 })
 

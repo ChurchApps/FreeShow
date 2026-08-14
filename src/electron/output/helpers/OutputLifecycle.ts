@@ -52,16 +52,10 @@ export class OutputLifecycle {
                 return
             }
 
-            // if a specific screen is selected, check if it's available
-            if (output.screen) {
-                const displays = screen.getAllDisplays()
-                const targetDisplay = displays.find((d) => d.id.toString() === output.screen)
-                if (!targetDisplay) return
-            }
-
+            const targetBounds = OutputVisibility.resolveOutputBounds({ ...output, bounds: output.intendedBounds, id })
             const currentBounds = output.window.getBounds()
-            if (JSON.stringify(currentBounds) !== JSON.stringify(output.intendedBounds)) {
-                OutputHelper.Bounds.updateBounds({ id, bounds: output.intendedBounds })
+            if (JSON.stringify(currentBounds) !== JSON.stringify(targetBounds)) {
+                OutputHelper.Bounds.updateBounds({ id, bounds: targetBounds })
             }
         })
     }

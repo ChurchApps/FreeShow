@@ -10,6 +10,7 @@ import { ToMain } from "../../types/IPC/ToMain"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
 import { getAudioMetadata } from "../audio/audio"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
+import { CaptureHelper } from "../capture/CaptureHelper"
 import { canSync, getSyncTeams, hasDataChanged, hasTeamData, markAsNewSync, restoreCloudBackup, syncData } from "../cloud/syncManager"
 import { ContentProviderRegistry } from "../contentProviders"
 import { ChurchAppsChat } from "../contentProviders/churchApps/ChurchAppsChat"
@@ -27,7 +28,8 @@ import { closeServers, startServers, updateServerData } from "../servers"
 import { processAudioData, timecodeStart, timecodeStop, updateTimecodeValue } from "../timecode/timecode"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
-import { downloadFfmpeg, getFfmpegPath, isFfmpegInstalled } from "../streaming/ffmpegManager"
+import { detectEncoders, setRtmpEncoderSetting } from "../streaming/encoderDetection"
+import { downloadFfmpeg, resolveFfmpegPath } from "../streaming/ffmpegManager"
 import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShowsAsync, locateMediaFile, openInSystem, readExifData, readFile, readFolder, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
 import { getMachineId } from "../utils/helpers"
 import { LyricSearch } from "../utils/LyricSearch"
@@ -243,8 +245,15 @@ export const mainResponses: MainResponses = {
         return true
     },
     // FFmpeg
-    [Main.FFMPEG_CHECK]: () => {
-        return { installed: isFfmpegInstalled(), path: isFfmpegInstalled() ? getFfmpegPath() : undefined }
+    [Main.FFMPEG_CHECK]: async () => {
+        const path = await resolveFfmpegPath()
+        return { installed: !!path, path: path || undefined }
+    },
+    [Main.ENCODER_DETECT]: (data) => detectEncoders(data?.force),
+    [Main.SET_RTMP_ENCODER]: (data) => {
+        setRtmpEncoderSetting(data.encoder)
+        // apply now rather than lying dormant until some unrelated capture event restarts the encode
+        CaptureHelper.Lifecycle.updateRtmpState()
     },
     [Main.FFMPEG_DOWNLOAD]: async () => {
         try {

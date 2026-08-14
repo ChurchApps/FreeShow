@@ -15,7 +15,8 @@
     export let activeClear: any
 
     $: audioCleared = !Object.keys($playingAudio).length && !$playingMetronome
-    $: allCleared = isOutCleared(null, $outputs) && audioCleared
+    $: audioClearedWithoutMics = !Object.values($playingAudio).filter((a) => !a.isMic).length && !$playingMetronome
+    $: allCleared = isOutCleared(null, $outputs) && audioClearedWithoutMics
     $: if (allCleared) autoChange = true
 
     let enableRestore = false
@@ -36,7 +37,7 @@
         background: () => clearBackground(),
         slide: () => clearSlide(),
         overlays: () => clearOverlays(),
-        audio: () => clearAudio("", { clearPlaylist: true, commonClear: true }),
+        audio: () => clearAudio("", { clearPlaylist: true, clearMicrophones: true, commonClear: true }),
         nextTimer: () => clearTimers()
     }
 

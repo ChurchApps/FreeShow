@@ -1,5 +1,7 @@
 <script lang="ts">
-    import { activeAudioEffects, activePopup, special } from "../../../stores"
+    import { get } from "svelte/store"
+    import { activeAudioEffects, activePopup, playingVideos, special } from "../../../stores"
+    import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio, isAllAudioFading } from "../../../audio/audioFading"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
@@ -19,6 +21,14 @@
         })
 
         // if (!value && key === "allowGaining") AudioPlayer.updateVolume()
+
+        if (key === "muteAudioWhenVideoPlays") {
+            if (value && get(playingVideos).some((v) => !v.audio.paused)) {
+                fadeoutAllPlayingAudio()
+            } else if (!value && isAllAudioFading) {
+                fadeinAllPlayingAudio()
+            }
+        }
     }
 </script>
 

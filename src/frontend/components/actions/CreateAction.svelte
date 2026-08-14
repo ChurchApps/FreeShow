@@ -205,7 +205,7 @@
         if (id === "emit_action") return $emitters[actionValue.emitter]?.name || ""
         if (id === "run_action" || id === "toggle_action") return getName($actions)
         if (id === "id_start_effect") return getName($effects)
-        if (id === "start_show") return getName($shows)
+        if (id === "start_show" || id === "id_select_show") return getName($shows)
         if (id === "id_select_project") return getName($projects)
         if (id === "set_template") return getName($templates)
         if (id === "toggle_output") return getName($outputs)
@@ -214,6 +214,7 @@
         if (id === "wait") return Number(actionValue.number) + "s"
         if (id === "id_select_group") return getGlobalGroupName(actionValue.id)
         if (id === "start_camera") return actionValue.label || ""
+        if (id === "start_microphone" || id === "stop_microphone") return actionValue.name || ""
         if (id === "start_screen") return actionValue.name || ""
         if (id === "change_volume") return ((actionValue.volume || 1) * 100).toString()
         if (id.includes("index")) return actionValue.index || "0"

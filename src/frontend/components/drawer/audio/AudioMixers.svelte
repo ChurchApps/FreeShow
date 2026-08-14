@@ -2,10 +2,12 @@
     import { audioRouting, outputs } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { keysToID } from "../../helpers/array"
+    import { AudioRoutingManager } from "../../../audio/routing/audioRoutingManager"
     import AudioChannelMixer from "./AudioChannelMixer.svelte"
 
-    $: channels = $audioRouting?.channels || [{ id: "main", name: translateText("audio.main") }]
-    $: connections = $audioRouting?.connections || []
+    $: sortedConfig = AudioRoutingManager.sortChannels($audioRouting || { channels: [{ id: "main", name: translateText("audio.main") }], connections: [] })
+    $: channels = sortedConfig.channels
+    $: connections = sortedConfig.connections
 
     $: inactiveOutputIds = keysToID($outputs).filter((a) => !a.enabled)
 </script>

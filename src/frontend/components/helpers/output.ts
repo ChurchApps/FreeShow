@@ -2,7 +2,8 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
-import type { Output, Outputs } from "../../../types/Output"
+import type { Output, Outputs, RtmpDestination } from "../../../types/Output"
+import { createDestination, hasStreamableDestination } from "./rtmpDestinations"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, LayoutRef, Media, OutSlide, Show, Slide, SlideData, Template, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
@@ -531,10 +532,11 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
 
         const output = updater[outputId]
         const keys: string[] = key ? [key] : Object.keys(output.out || {})
-        cleared = !keys.find((type: string) => {
+        cleared = !keys.some((type: string) => {
             if (!output.out?.[type]) return
 
             if (type === "overlays") {
+                if (!Array.isArray(output.out.overlays)) return false
                 if (checkLocked && output.out.overlays?.length) return true
                 if (!checkLocked && output.out.overlays?.filter((id: string) => !get(overlays)[id]?.locked).length) return true
                 return false
@@ -759,18 +761,18 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
 
     const newData = { ...(output.webrtcData || {}), [key]: value }
 
-    if (key === "streaming") {
-        if (!output.webrtc || !output.webrtcData?.url) return
-
-        if (value) AudioAnalyser.recorderActivate()
-        else AudioAnalyser.recorderDeactivate()
-    }
+    if (key === "streaming" && (!output.webrtc || !output.webrtcData?.url)) return null
 
     outputs.update((a: any) => {
         if (!a[outputId]) return a
         a[outputId].webrtcData = newData
         return a
     })
+
+    if (key === "streaming") {
+        if (value) AudioAnalyser.recorderActivate()
+        else AudioAnalyser.recorderDeactivate()
+    }
 
     send(OUTPUT, ["SET_VALUE"], { id: outputId, key: "webrtcData", value: newData })
     return newData
@@ -797,12 +799,7 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
 
     const newData = { ...(output.rtmpData || {}), [key]: value }
 
-    if (key === "streaming") {
-        if (!output.rtmp || !output.rtmpData?.url) return
-
-        if (value) AudioAnalyser.recorderActivate()
-        else AudioAnalyser.recorderDeactivate()
-    }
+    if (key === "streaming" && (!output.rtmp || !hasStreamableDestination(newData))) return null
 
     outputs.update((a: any) => {
         if (!a[outputId]) return a
@@ -810,8 +807,36 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
         return a
     })
 
+    if (key === "streaming") {
+        if (value) AudioAnalyser.recorderActivate()
+        else AudioAnalyser.recorderDeactivate()
+    }
+
     send(OUTPUT, ["SET_VALUE"], { id: outputId, key: "rtmpData", value: newData })
     return newData
+}
+
+export function addRtmpDestination(outputId: string) {
+    const existing = get(outputs)[outputId]?.rtmpData?.destinations || []
+    updateOutputRtmpData(outputId, "destinations", [...existing, createDestination()])
+}
+
+export function updateRtmpDestination(outputId: string, destinationId: string, key: keyof RtmpDestination, value: any) {
+    const existing = get(outputs)[outputId]?.rtmpData?.destinations || []
+    updateOutputRtmpData(
+        outputId,
+        "destinations",
+        existing.map((d) => (d.id === destinationId ? { ...d, [key]: value } : d))
+    )
+}
+
+export function removeRtmpDestination(outputId: string, destinationId: string) {
+    const existing = get(outputs)[outputId]?.rtmpData?.destinations || []
+    updateOutputRtmpData(
+        outputId,
+        "destinations",
+        existing.filter((d) => d.id !== destinationId)
+    )
 }
 
 // settings
@@ -864,6 +889,9 @@ export async function checkFFmpeg(): Promise<boolean> {
         const downloadRes = await requestMain(Main.FFMPEG_DOWNLOAD)
         if (downloadRes?.success) {
             newToast("FFmpeg installed successfully!")
+
+            // probing encoders costs a few seconds of test encodes; warm it now so the first "Start streaming" is not stuck waiting for it
+            sendMain(Main.ENCODER_DETECT)
             return true
         } else {
             newToast(translateText("Failed to download FFmpeg: ") + (downloadRes?.error || "Unknown error"))

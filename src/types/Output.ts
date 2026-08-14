@@ -27,13 +27,37 @@ export interface Output {
     webrtc?: boolean
     webrtcData?: { url?: string; token?: string; streaming?: boolean; fps?: string | number; bitrate?: string | number }
     rtmp?: boolean
-    rtmpData?: { url: string; key: string; streaming?: boolean; fps?: string | number; bitrate?: string | number }
+    rtmpData?: RtmpData
     forcedResolution?: Resolution
     invisible?: boolean
     taskbar?: boolean
     style?: string
     show?: any
     out?: OutData
+}
+
+// RTMP
+export interface RtmpDestination {
+    id: string
+    url: string
+    key: string
+    enabled: boolean
+}
+export interface RtmpData {
+    streaming?: boolean
+    fps?: string | number
+    bitrate?: string | number
+    destinations?: RtmpDestination[]
+    url?: string // deprecated, only used in v1.6.4
+    key?: string // deprecated, only used in v1.6.4
+}
+export type RtmpDestinationState = "idle" | "connecting" | "live" | "reconnecting" | "error"
+export interface RtmpStatus {
+    /**
+     * `restarts`/`lastIssue` persist for the whole stream rather than clearing on recovery: a
+     * destination that keeps dropping and reconnecting reads as healthy from `state` alone.
+     */
+    [destinationId: string]: { state: RtmpDestinationState; error?: string; restarts?: number; lastIssue?: string }
 }
 
 export interface OutData {

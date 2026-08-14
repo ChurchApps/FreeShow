@@ -401,7 +401,7 @@ export class CaptureTransmitter {
         const size = image.getSize()
         if (this.shouldSkipUnchangedNonBlackmagicFrame("rtmp", outputId, buffer, size)) return
 
-        RtmpStreamer.updateFrame(outputId, buffer)
+        RtmpStreamer.updateFrame(outputId, buffer, size)
     }
 
     static requestPreview(data: { id: string; previewId: string }) {

@@ -1245,7 +1245,7 @@
         {/if}
 
         <!-- content search is not supported for YouVersion Bibles (at the moment)-->
-        <MaterialButton title="scripture.search [Ctrl+B]" disabled={$scriptures[activeScriptureId]?.id?.includes("YOUVERSION")} on:click={() => (contentSearchFieldActive = true)}>
+        <MaterialButton title="scripture.search [Ctrl+B]" disabled={typeof $scriptures[activeScriptureId]?.id === "string" ? $scriptures[activeScriptureId].id.includes("YOUVERSION") : false} on:click={() => (contentSearchFieldActive = true)}>
             <Icon size={1.1} id="search" white />
         </MaterialButton>
     </FloatingInputs>

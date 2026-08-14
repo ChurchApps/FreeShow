@@ -35,12 +35,19 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
     }
 
     // SHOWS
-    if (!isAutoBackup || customTriggers?.backupShows) await syncAllShows()
+    await syncAllShows()
 
     if (isCloudSync) return { entries }
 
     const zipPath = backupFolder + ".zip"
-    await compressToZip(entries, zipPath)
+    try {
+        await compressToZip(entries, zipPath)
+    } catch (err) {
+        console.error("Could not create backup:", err)
+        sendToMain(ToMain.ALERT, "Could not create the backup file!")
+        sendToMain(ToMain.BACKUP, { finished: false, path: zipPath })
+        return
+    }
 
     sendToMain(ToMain.BACKUP, { finished: true, path: zipPath })
 
@@ -48,12 +55,9 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
 
     /// //
 
-    async function syncStores(id: keyof typeof _store) {
+    function syncStores(id: keyof typeof _store) {
         const store = _store[id]
-        if (!store) return
-
-        const name = id + ".json"
-        entries.push({ name, filePath: store.path })
+        if (store) entries.push({ name: id + ".json", filePath: store.path })
     }
 
     async function syncBibles() {

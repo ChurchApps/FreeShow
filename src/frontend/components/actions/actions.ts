@@ -214,6 +214,7 @@ export function getActionTriggerId(id: string) {
 const namedObjects = {
     run_action: () => get(actions),
     start_show: () => get(shows),
+    id_select_show: () => get(shows),
     start_audio_stream: () => get(audioStreams),
     start_playlist: () => get(audioPlaylists),
     id_select_stage_layout: () => get(stageShows)

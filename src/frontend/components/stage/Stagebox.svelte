@@ -248,12 +248,13 @@
         return style
     }
 
-    let video: HTMLVideoElement | undefined
-    function loaded() {
-        if (!video) return
-        video.pause()
-        video.currentTime = video.duration / 2
-    }
+    // pause video at middle
+    // let video: HTMLVideoElement | undefined
+    // function loaded() {
+    //     if (!video) return
+    //     video.pause()
+    //     video.currentTime = video.duration / 2
+    // }
 
     $: if ($refreshEditSlide) {
         setTimeout(() => {
@@ -391,7 +392,8 @@
                         <!-- WIP this only includes "next" slide background -->
                         {#if typeof slideBackground?.path === "string"}
                             <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
-                                <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror bind:video on:loaded={loaded} />
+                                <!-- bind:video on:loaded={loaded} -->
+                                <Media outputId={outputWindowId} path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror />
                             </div>
                         {/if}
                     {/if}

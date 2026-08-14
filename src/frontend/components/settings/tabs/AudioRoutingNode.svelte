@@ -1,10 +1,11 @@
 <script lang="ts">
+    import { AudioMicrophone } from "../../../audio/audioMicrophone"
+    import { activePopup, playingAudio, popupData } from "../../../stores"
+    import { translateText } from "../../../utils/language"
+    import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
-    import { activePopup, popupData } from "../../../stores"
-    import { translateText } from "../../../utils/language"
 
     export let id: string
     export let name: string
@@ -75,7 +76,7 @@
     class:merger-card={isChannel}
     class:sub-card={isSubNode}
     class:hover-valid={hoverTargetId === id && hasValidPort}
-    class:disabled={!isEnabled && !isInputCol}
+    class:disabled={!isEnabled && (!isInputCol || type === "output_window")}
     class:invalid={isConnecting && !isValidHover && id !== dragStartId}
     data-node-id={id}
     on:mouseenter={onMouseEnter}
@@ -127,6 +128,22 @@
             <span class="card-name" data-title={name} class:sub-name={isSubNode}>{name}</span>
         {/if}
 
+        {#if type === "mic" && isSubNode}
+            <MaterialToggleSwitch
+                label=""
+                checked={!!$playingAudio[id]}
+                on:change={() => {
+                    const micId = id.startsWith("mic_sub_") ? id.slice(8) : id
+                    AudioMicrophone.start(micId, { name }, { pauseIfPlaying: true })
+                }}
+                small
+            />
+        {/if}
+
+        <!-- {#if type === "metronome"}
+            <MaterialToggleSwitch label="" checked={$playingMetronome} on:change={toggleMetronome} small />
+        {/if} -->
+
         {#if type === "desktop_audio"}
             <MaterialToggleSwitch label="" checked={isEnabled} on:change={(e) => onToggleEnabled?.(e.detail)} small />
         {/if}
@@ -157,8 +174,6 @@
 <style>
     .node-card {
         position: relative;
-        max-width: 500px;
-        min-width: 200px;
         width: 100%;
         box-sizing: border-box;
         background: var(--primary-darker, rgba(30, 30, 40, 0.9));
@@ -183,12 +198,12 @@
         padding: 8px 12px;
     }
 
-    .node-card:hover {
+    .node-card.merger-card:hover {
         border-color: rgba(255, 255, 255, 0.3);
     }
 
     .node-card.hover-valid {
-        border-color: var(--text);
+        border-color: rgba(255, 255, 255, 0.5);
     }
 
     .node-card.disabled {
@@ -216,6 +231,7 @@
     }
 
     .sub-name {
+        font-weight: normal;
         font-size: 0.9em;
         opacity: 0.9;
     }
@@ -242,6 +258,19 @@
         z-index: 10;
         transition: background 0.1s ease;
     }
+
+    .port::before {
+        --size: 16px;
+
+        content: "";
+        position: absolute;
+        top: calc(var(--size) * -0.5);
+        left: calc(var(--size) * -0.5);
+        right: calc(var(--size) * -0.5);
+        bottom: calc(var(--size) * -0.5);
+        border-radius: 50%;
+    }
+
     .port:hover {
         background: var(--text);
     }

@@ -336,7 +336,7 @@ export function changeLayout(layout: LayoutRef[], slides: { [key: string]: Slide
 
         // find and remove old children (this is already done but wont remove all always)
         Object.keys(slides).forEach((slideId) => {
-            if (slideId === id) return
+            if (slideId === id || !slides[slideId]) return
             children.forEach((childId) => {
                 if (slides[slideId].children?.length) {
                     const childIndex = slides[slideId].children!.indexOf(childId)

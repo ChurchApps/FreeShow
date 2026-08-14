@@ -4,8 +4,8 @@
     import { uid } from "uid"
     import type { AudioRoutingConfig } from "../../../../types/AudioRouting"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
     import { deduplicateConnections } from "../../../audio/routing/audioRoutingInit"
+    import { AudioRoutingManager } from "../../../audio/routing/audioRoutingManager"
     import { activePopup, audioChannelsData, audioPlaylists, audioRouting, outputs, selected } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { keysToID } from "../../helpers/array"
@@ -91,6 +91,7 @@
 
     let lines: RenderedLine[] = []
     let connectionFrame: number | null = null
+    let zoom = 1
 
     $: config = $audioRouting || { channels: [], connections: [] }
     $: channelsList = config.channels || []
@@ -127,23 +128,9 @@
             }
         })
 
-    // Auto-expand parent nodes if a child has active connections
-    $: {
-        let changed = false
-        for (const conn of config.connections) {
-            for (const [, { parentId, prefix }] of Object.entries(PARENT_PREFIX_MAP)) {
-                if ((conn.from.startsWith(prefix) || conn.to.startsWith(prefix)) && !expandedNodes.has(parentId)) {
-                    expandedNodes.add(parentId)
-                    changed = true
-                }
-            }
-        }
-        if (changed) expandedNodes = expandedNodes
-    }
-
     $: columns = [
         {
-            title: "Inputs",
+            title: "audio.inputs",
             type: "input",
             nodes: fixedInputs.map((node) => {
                 const subNodes = node.id === "playlists_default" ? availablePlaylists : node.id === "mic_default" ? availableAudioInputs.map((mic) => ({ id: mic.value, name: mic.label, type: "mic" })) : node.id === "output_window" ? nonStageOutputs : []
@@ -159,7 +146,7 @@
             })
         },
         {
-            title: "Channels",
+            title: "audio.channels",
             type: "channel",
             nodes: channelsList.map((m) => {
                 const inactive = inactiveOutputIds.some((a) => `channel_${a.id}` === m.id)
@@ -177,7 +164,7 @@
             })
         },
         {
-            title: "Outputs",
+            title: "audio.outputs",
             type: "output",
             nodes: fixedOutputs.map((node) => {
                 const subNodes =
@@ -204,7 +191,7 @@
         }
     ] as RoutingColumn[]
 
-    $: if (config || expandedNodes || nonStageOutputs || networkOutputWindows || availablePlaylists) {
+    $: if (config || expandedNodes || zoom || nonStageOutputs || networkOutputWindows || availablePlaylists) {
         tick().then(requestUpdateConnectionLines)
     }
 
@@ -225,6 +212,7 @@
     }
 
     onMount(() => {
+        sortChannelsOnMount()
         refreshDevices()
 
         navigator.mediaDevices.addEventListener("devicechange", refreshDevices)
@@ -240,6 +228,10 @@
             if (connectionFrame !== null) cancelAnimationFrame(connectionFrame)
         }
     })
+
+    function sortChannelsOnMount() {
+        audioRouting.update((a) => a && AudioRoutingManager.sortChannels(a))
+    }
 
     function requestUpdateConnectionLines() {
         if (connectionFrame !== null) return
@@ -304,8 +296,8 @@
         const spaceRect = spaceEl.getBoundingClientRect()
         const portRect = portEl.getBoundingClientRect()
         return {
-            x: portRect.left + portRect.width / 2 - spaceRect.left,
-            y: portRect.top + portRect.height / 2 - spaceRect.top
+            x: (portRect.left + portRect.width / 2 - spaceRect.left) / zoom,
+            y: (portRect.top + portRect.height / 2 - spaceRect.top) / zoom
         }
     }
 
@@ -374,12 +366,53 @@
         const spaceRect = spaceEl.getBoundingClientRect()
 
         if (isConnecting) {
-            dragCurrentPos = { x: e.clientX - spaceRect.left, y: e.clientY - spaceRect.top }
+            dragCurrentPos = { x: (e.clientX - spaceRect.left) / zoom, y: (e.clientY - spaceRect.top) / zoom }
         } else if (isPanning && containerEl) {
             containerEl.scrollLeft = startScroll.left - (e.clientX - startPanMouse.x)
             containerEl.scrollTop = startScroll.top - (e.clientY - startPanMouse.y)
         }
     }
+
+    // WIP zoom?
+    // function handleWheel(e: WheelEvent) {
+    //     if (e.ctrlKey || e.metaKey || e.altKey) {
+    //         e.preventDefault()
+    //         const zoomFactor = Math.pow(1.0015, -e.deltaY)
+    //         setZoomAtMouse(Math.min(2, Math.max(0.5, zoom * zoomFactor)), e.clientX, e.clientY)
+    //     }
+    // }
+
+    // function setZoomAtMouse(newZoom: number, clientX?: number, clientY?: number) {
+    //     if (newZoom === zoom) return
+    //     if (containerEl) {
+    //         const rect = containerEl.getBoundingClientRect()
+    //         const mouseX = clientX !== undefined ? clientX - rect.left : rect.width / 2
+    //         const mouseY = clientY !== undefined ? clientY - rect.top : rect.height / 2
+
+    //         const contentX = (containerEl.scrollLeft + mouseX) / zoom
+    //         const contentY = (containerEl.scrollTop + mouseY) / zoom
+
+    //         zoom = newZoom
+
+    //         tick().then(() => {
+    //             containerEl.scrollLeft = contentX * zoom - mouseX
+    //             containerEl.scrollTop = contentY * zoom - mouseY
+    //             updateConnectionLines()
+    //         })
+    //     } else {
+    //         zoom = newZoom
+    //         tick().then(updateConnectionLines)
+    //     }
+    // }
+    // function zoomIn() {
+    //     setZoomAtMouse(Math.min(2, zoom + 0.15))
+    // }
+    // function zoomOut() {
+    //     setZoomAtMouse(Math.max(0.5, zoom - 0.15))
+    // }
+    // function resetZoom() {
+    //     setZoomAtMouse(1)
+    // }
 
     function isValidConnection(fromId: string, toId: string): { valid: boolean; from: string; to: string } {
         const isInput = (id: string) => fixedInputs.some((i) => i.id === id) || id.startsWith("playlist_sub_") || id.startsWith("mic_sub_") || id.startsWith("output_win_sub_")
@@ -531,8 +564,9 @@
 
 <div class="audio-routing-wrapper">
     <!-- MAIN OVERFLOW CONTAINER & CHECKERED CANVAS -->
+    <!-- on:wheel={handleWheel}  -->
     <div class="routing-container checkered" bind:this={containerEl} on:mousedown={handleContainerMouseDown} class:is-panning={isPanning}>
-        <div class="routing-space" bind:this={spaceEl}>
+        <div class="routing-space" bind:this={spaceEl} style="transform: scale({zoom}); transform-origin: 0 0; width: {100 / zoom}%; min-height: {100 / zoom}%;">
             <!-- SVG Connections Layer -->
             <svg class="connections-layer">
                 {#each sortedLines as line (line.fromId + "-" + line.toId + "-" + line.channelIndex)}
@@ -566,9 +600,9 @@
             <div class="nodes-grid">
                 {#each columns as column (column.title)}
                     <div class="space-column">
-                        <!-- <div class="column-title">
-                            <h3>{column.title}</h3>
-                        </div> -->
+                        <div class="column-title">
+                            <h3>{translateText(column.title)}</h3>
+                        </div>
 
                         <div class="nodes-list">
                             {#each column.nodes as node (node.id)}
@@ -576,31 +610,33 @@
                                 {@const nodeIndex = colNodes.findIndex((n) => n.id === node.id)}
                                 {@const defaultHue = (275 + (nodeIndex >= 0 ? nodeIndex : 0) * 6) % 360}
                                 {@const autoColor = `hsl(${defaultHue}, 80%, 65%)`}
-                                <div class="node-card-group" class:has-subnodes={node.hasSubNodes}>
-                                    <AudioRoutingNode
-                                        {...node}
-                                        {autoColor}
-                                        nodeType={column.type}
-                                        {hoverTargetId}
-                                        {isConnecting}
-                                        {dragStartId}
-                                        {dragStartType}
-                                        {dragStartPortType}
-                                        onToggleExpand={() => toggleExpand(node.id)}
-                                        onMouseDown={(e, portType, chIdx) => handlePortMouseDown(e, node.id, column.type, portType, chIdx)}
-                                        onMouseEnter={() => handleNodeMouseEnter(node.id, column.type)}
-                                        onMouseLeave={() => handleNodeMouseLeave(node.id)}
-                                        onMouseEnterPort={handlePortMouseEnter}
-                                        onMouseLeavePort={handlePortMouseLeave}
-                                        onHoverPort={(_e, portType, chIdx) => handleHoverPort(node.id, portType, chIdx)}
-                                        onHoverPortEnd={handleHoverPortEnd}
-                                        onPortContextMenu={(e, portType, chIdx) => handlePortContextMenu(e, node.id, portType, chIdx)}
-                                    />
+                                {@const visibleSubNodes = node.subNodes ? (node.isExpanded ? node.subNodes : node.subNodes.filter((sub) => config.connections.some((c) => c.from === sub.id || c.to === sub.id))) : []}
 
-                                    {#if node.isExpanded && node.subNodes}
-                                        <div class="sub-nodes-list" style={column.type === "input" ? "margin-left: 12px;" : column.type === "output" ? "margin-right: 12px;" : ""}>
-                                            {#if node.subNodes.length > 0}
-                                                {#each node.subNodes as sub (sub.id)}
+                                {#if !(node.isExpanded && (!node.subNodes || node.subNodes.length === 0))}
+                                    <div class="node-card-group" class:has-subnodes={node.hasSubNodes}>
+                                        <AudioRoutingNode
+                                            {...node}
+                                            {autoColor}
+                                            nodeType={column.type}
+                                            {hoverTargetId}
+                                            {isConnecting}
+                                            {dragStartId}
+                                            {dragStartType}
+                                            {dragStartPortType}
+                                            onToggleExpand={() => toggleExpand(node.id)}
+                                            onMouseDown={(e, portType, chIdx) => handlePortMouseDown(e, node.id, column.type, portType, chIdx)}
+                                            onMouseEnter={() => handleNodeMouseEnter(node.id, column.type)}
+                                            onMouseLeave={() => handleNodeMouseLeave(node.id)}
+                                            onMouseEnterPort={handlePortMouseEnter}
+                                            onMouseLeavePort={handlePortMouseLeave}
+                                            onHoverPort={(_e, portType, chIdx) => handleHoverPort(node.id, portType, chIdx)}
+                                            onHoverPortEnd={handleHoverPortEnd}
+                                            onPortContextMenu={(e, portType, chIdx) => handlePortContextMenu(e, node.id, portType, chIdx)}
+                                        />
+
+                                        {#if visibleSubNodes.length > 0}
+                                            <div class="sub-nodes-list {column.type}">
+                                                {#each visibleSubNodes as sub (sub.id)}
                                                     {@const subIndex = colNodes.findIndex((n) => n.id === sub.id)}
                                                     {@const subHue = (275 + (subIndex >= 0 ? subIndex : 0) * 6) % 360}
                                                     {@const subAutoColor = `hsl(${subHue}, 80%, 65%)`}
@@ -629,14 +665,10 @@
                                                         onPortContextMenu={(e, portType, chIdx) => handlePortContextMenu(e, sub.id, portType, chIdx)}
                                                     />
                                                 {/each}
-                                            {:else}
-                                                <div class="disabled-hint">
-                                                    <span class="sub-name" style="opacity:0.6;">No devices found</span>
-                                                </div>
-                                            {/if}
-                                        </div>
-                                    {/if}
-                                </div>
+                                            </div>
+                                        {/if}
+                                    </div>
+                                {/if}
                             {/each}
 
                             {#if column.type === "channel" || column.type === "merger"}
@@ -647,6 +679,14 @@
                 {/each}
             </div>
         </div>
+
+        <!-- <div class="zoom-controls">
+            <MaterialButton variant="outlined" icon="zoomOut" style="padding: 4px;" title="Zoom Out" on:click={zoomOut} white />
+            <button class="zoom-percentage" on:click={resetZoom} title="Reset Zoom">
+                {Math.round(zoom * 100)}%
+            </button>
+            <MaterialButton variant="outlined" icon="zoomIn" style="padding: 4px;" title="Zoom In" on:click={zoomIn} white />
+        </div> -->
     </div>
 </div>
 
@@ -680,8 +720,8 @@
     .routing-space {
         position: relative;
         width: 100%;
-        min-width: 750px;
-        min-height: 100%;
+        min-width: 840px;
+        min-height: auto;
         display: flex;
         flex-direction: column;
     }
@@ -732,8 +772,8 @@
         display: grid;
         grid-template-columns: repeat(3, minmax(200px, 1fr));
         justify-items: center;
-        gap: 40px;
-        min-height: 100%;
+        gap: 100px;
+        min-height: auto;
         padding: 20px;
         box-sizing: border-box;
     }
@@ -741,61 +781,74 @@
     .space-column {
         display: flex;
         flex-direction: column;
-        gap: 15px;
-        max-width: 400px;
+        gap: 10px;
+        max-width: 250px;
         min-width: 200px;
         width: 100%;
+
+        background: rgb(0 0 0 / 0.2);
+        height: fit-content;
+        padding: 10px;
+        border-radius: 12px;
+    }
+    .space-column:first-child {
+        justify-self: start;
+    }
+    .space-column:last-child {
+        justify-self: end;
     }
 
-    /* .column-title {
+    .column-title {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: rgba(0, 0, 0, 0.4);
-        padding: 8px 12px;
+        /* background: rgba(0, 0, 0, 0.3); */
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 6px 12px;
         border-radius: 6px;
         backdrop-filter: blur(4px);
     }
     .column-title h3 {
+        width: 100%;
+        text-align: center;
+
         margin: 0;
         font-size: 1em;
         font-weight: 600;
         color: var(--text);
-    } */
+    }
 
     .nodes-list {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 8px;
     }
 
     .node-card-group {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 5px;
         transition: all 0.2s ease;
     }
 
-    .node-card-group.has-subnodes {
+    /* .node-card-group.has-subnodes {
         background: rgba(255, 255, 255, 0.03);
         border-radius: 6px;
-    }
+    } */
 
     .sub-nodes-list {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-    }
+        gap: 3px;
 
-    .disabled-hint {
-        padding: 6px 12px;
-        border: 1px dashed rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        background: rgba(20, 20, 30, 0.8);
+        border-radius: 6px;
     }
-
-    .sub-name {
-        font-size: 0.9em;
-        opacity: 0.9;
+    .sub-nodes-list.input {
+        padding-left: 5px;
+        border-left: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    .sub-nodes-list.output {
+        padding-right: 5px;
+        border-right: 2px solid rgba(255, 255, 255, 0.2);
     }
 </style>

@@ -3,6 +3,7 @@ import type { MidiValues, TransitionType } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
+import { AudioMicrophone } from "../../audio/audioMicrophone"
 import { markItemsAsPlayed } from "../../converters/project"
 import { convertText } from "../../converters/txt"
 import { sendMain } from "../../IPC/main"
@@ -62,6 +63,7 @@ import {
     selectProjectById,
     selectProjectByIndex,
     selectProjectByName,
+    selectShowById,
     selectShowByName,
     selectSlideByIndex,
     selectSlideByName,
@@ -74,6 +76,7 @@ import {
     stopAudio,
     stopTimerById,
     stopTimerByName,
+    timerSeekAdd,
     timerSeekTo,
     toggleLock,
     toggleLogSongUsage,
@@ -133,6 +136,7 @@ export type API_output_style = { outputId?: string; styleId?: string }
 export type API_output_lock = { value?: boolean; outputId?: string }
 export type API_camera = { name?: string; id: string; groupId?: string }
 export type API_screen = { name?: string; id: string }
+export type API_microphone = { name?: string; id: string }
 export type API_dynamic_value = { value: string; ref?: any }
 export type API_draw_zoom = { size?: number; x?: number; y?: number }
 export type API_edit_timer = { id: string; key: string; value: any }
@@ -206,6 +210,7 @@ export const API_ACTIONS = {
     mark_active_as_played: (data: API_toggle_specific) => markItemsAsPlayed("active", data.value),
 
     // SHOWS
+    id_select_show: (data: API_id) => selectShowById(data.id),
     name_select_show: (data: API_strval) => selectShowByName(data.value), // BC
     start_show: (data: API_id) => startShowSync(data.id),
     change_layout: (data: API_layout) => changeShowLayout(data),
@@ -290,6 +295,8 @@ export const API_ACTIONS = {
     playlist_next: () => AudioPlaylist.next(), // BC
     start_metronome: (data: API_metronome) => startMetronome(data),
     start_audio_effect: (data: API_media) => playAudio(data),
+    start_microphone: (data: API_microphone) => AudioMicrophone.start(data.id, { name: data.name || "" }),
+    stop_microphone: (data: API_microphone) => AudioMicrophone.stop(data.id),
 
     // TIMERS
     // control timer time
@@ -299,6 +306,7 @@ export const API_ACTIONS = {
     pause_timers: () => pauseAllTimers(), // BC
     stop_timers: () => stopTimers(), // BC
     timer_seekto: (data: API_seek) => timerSeekTo(data), // BC
+    timer_seek_add: (data: API_seek) => timerSeekAdd(data),
     edit_timer: (data: API_edit_timer) => editTimer(data),
     id_pause_timer: (data: API_id) => pauseTimerById(data.id),
     name_pause_timer: (data: API_strval) => pauseTimerByName(data.value),

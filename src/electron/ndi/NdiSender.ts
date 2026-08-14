@@ -43,6 +43,7 @@ export class NdiSender {
 
     static timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
     static audioSamplesSent: bigint | null = null
+    static audioTimecodeStart: bigint | null = null
 
     static NDI: {
         [key: string]: {
@@ -54,6 +55,8 @@ export class NdiSender {
             timer?: NodeJS.Timeout
             sendingVideo?: boolean
             pendingVideoFrame?: any
+            sendingAudio?: boolean
+            pendingAudioFrame?: any
             paddedVideoBuffer?: Buffer
             paddedVideoBufferStride?: number
             paddedVideoBufferHeight?: number
@@ -73,6 +76,10 @@ export class NdiSender {
         }
 
         delete this.NDI[id]
+        if (Object.keys(this.NDI).length === 0) {
+            this.audioSamplesSent = null
+            this.audioTimecodeStart = null
+        }
     }
 
     private static async sendQueuedVideoFrameNDI(id: string) {
@@ -93,6 +100,28 @@ export class NdiSender {
             senderData.sendingVideo = false
             if (senderData.pendingVideoFrame) {
                 void this.sendQueuedVideoFrameNDI(id)
+            }
+        }
+    }
+
+    private static async sendQueuedAudioFrameNDI(id: string) {
+        const senderData = this.NDI[id]
+        if (!senderData?.sender || senderData.sendingAudio) return
+
+        const frame = senderData.pendingAudioFrame
+        if (!frame) return
+
+        senderData.pendingAudioFrame = undefined
+        senderData.sendingAudio = true
+
+        try {
+            await senderData.sender.audio(frame)
+        } catch (err) {
+            console.error("Error sending NDI audio frame:", err)
+        } finally {
+            senderData.sendingAudio = false
+            if (senderData.pendingAudioFrame) {
+                void this.sendQueuedAudioFrameNDI(id)
             }
         }
     }
@@ -208,49 +237,55 @@ export class NdiSender {
         }
     }
 
-    static async sendAudioBufferNDI(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
-        const activeSender = Object.values(this.NDI).find((s) => s?.sender)
-        if (!activeSender) return
-
-        const ndiAudioBuffer = convertPCMtoPlanarFloat32(buffer, channelCount)
-        if (!ndiAudioBuffer) return
+    static async sendAudioBufferNDITarget(id: string, buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
+        const senderData = this.NDI[id]
+        if (!senderData?.sender || !buffer || buffer.length === 0) return
 
         const grandiose = await loadGrandiose()
         if (!grandiose) return
 
-        const noSamples = Math.trunc(ndiAudioBuffer.byteLength / channelCount / this.BYTES_PER_FLOAT32)
-        const currentHrTime = process.hrtime.bigint()
-        const timecode = (this.timeStart + currentHrTime) / this.TIMECODE_DIVISOR
+        const noSamples = Math.trunc(buffer.length / (channelCount * this.BYTES_PER_FLOAT32))
+        if (noSamples <= 0) return
 
         const frame = {
-            timecode,
             sampleRate,
             noChannels: channelCount,
             noSamples,
-            channelStrideBytes: Math.trunc(ndiAudioBuffer.byteLength / channelCount),
+            channelStrideBytes: noSamples * this.BYTES_PER_FLOAT32,
             fourCC: grandiose.FOURCC_FLTp,
-            data: ndiAudioBuffer
+            data: buffer
         }
 
-        Object.values(this.NDI).forEach((data) => {
-            if (!data?.sender) return
-
-            try {
-                data.sender.audio(frame)
-            } catch (err) {
-                console.error("Error sending NDI audio frame:", err)
-            }
-        })
+        senderData.pendingAudioFrame = frame
+        void this.sendQueuedAudioFrameNDI(id)
     }
-}
 
-// convert from PCM/signed-16-bit/little-endian data to NDI's "PCM/planar/signed-float32/little-endian"
-function convertPCMtoPlanarFloat32(buffer: Buffer, channels: number) {
-    try {
-        const pcmconvert = require("pcm-convert")
-        return pcmconvert(buffer, { channels, dtype: "int16", endianness: "le", interleaved: true }, { dtype: "float32", endianness: "le", interleaved: false }) as Buffer
-    } catch (err) {
-        console.error("Could not convert audio")
-        return null
+    static async sendAudioBufferNDI(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
+        const hasSender = Object.values(this.NDI).some((s) => s?.sender)
+        if (!hasSender || !buffer || buffer.length === 0) return
+
+        const grandiose = await loadGrandiose()
+        if (!grandiose) return
+
+        const noSamples = Math.trunc(buffer.length / (channelCount * this.BYTES_PER_FLOAT32))
+        if (noSamples <= 0) return
+
+        const frame = {
+            sampleRate,
+            noChannels: channelCount,
+            noSamples,
+            channelStrideBytes: noSamples * this.BYTES_PER_FLOAT32,
+            fourCC: grandiose.FOURCC_FLTp,
+            data: buffer
+        }
+
+        Object.keys(this.NDI).forEach((id) => {
+            const senderData = this.NDI[id]
+            if (!senderData?.sender) return
+
+            // Clone frame object to prevent frame state collisions across multiple senders
+            senderData.pendingAudioFrame = { ...frame }
+            void this.sendQueuedAudioFrameNDI(id)
+        })
     }
 }

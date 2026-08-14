@@ -9,7 +9,8 @@ export const actionData = {
     mark_active_as_played: { name: "actions.mark_played", icon: "check", input: "toggle" },
 
     // SHOWS
-    name_select_show: { SECTION: "guide_title.show", name: "actions.name_select_show", icon: "showIcon", input: "strval" },
+    id_select_show: { SECTION: "guide_title.show", name: "actions.id_select_show", icon: "showIcon", input: "start_show" },
+    name_select_show: { name: "actions.name_select_show", icon: "showIcon", input: "strval" },
     start_show: { slideId: "startShow", common: true, name: "preview._start", icon: "showIcon", input: "start_show" }, // any play actions are incompatible with clear actions...
     set_template: { name: "actions.set_template_active", icon: "templates", input: "id" },
     set_next_slide_timer: { name: "preview.nextTimer", icon: "timer", input: "numval" },
@@ -72,6 +73,8 @@ export const actionData = {
     playlist_next: { name: "actions.playlist_next", icon: "playlist", incompatible: ["start_playlist"] },
     start_metronome: { name: "actions.start_metronome", icon: "metronome", input: "metronome" },
     start_audio_effect: { common: true, canAddMultiple: true, name: "actions.start_audio_effect", icon: "effect", input: "audio_effects" },
+    start_microphone: { common: true, name: "actions.start_microphone", icon: "mic", input: "microphone" },
+    stop_microphone: { common: true, name: "actions.stop_microphone", icon: "mic", input: "microphone", red: true },
 
     // TIMERS
     id_start_timer: { SECTION: "tabs.timers", common: true, canAddMultiple: true, name: "actions.id_start_timer", icon: "timer", input: "id", incompatible: ["pause_timers", "stop_timers"] },

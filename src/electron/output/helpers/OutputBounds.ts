@@ -48,12 +48,10 @@ export class OutputBounds {
     }
 
     // HiDPI capture fix:
-    // Hidden/Capturing: Scale bounds by 1/scaleFactor to match config resolution.
-    // Visible: Keep raw bounds to fill the display and avoid double-scaling.
+    // Invisible/Capturing: Scale bounds by 1/scaleFactor to match config resolution.
+    // Physical Screen Output: Keep raw bounds to fill the display and avoid double-scaling.
     static getRenderBounds(output: { invisible?: boolean; window?: BrowserWindow }, bounds: Rectangle): Rectangle {
-        // shown on a physical display -> keep configured bounds (window created hidden has no window yet)
-        const shownOnDisplay = !output?.invisible && !!output?.window && !output.window.isDestroyed() && output.window.isVisible()
-        if (shownOnDisplay) return bounds
+        if (!output?.invisible) return bounds
 
         const scaleFactor = screen.getDisplayMatching(bounds).scaleFactor || 1
         if (scaleFactor === 1) return bounds
@@ -76,21 +74,31 @@ export class OutputBounds {
     static alignWithScreens() {
         OutputHelper.getKeys().forEach((outputId) => {
             const output = OutputHelper.getOutput(outputId)
-            if (output.boundsLocked) return
             if (output.invisible) return // capture-only outputs have no physical screen to align to (and are DPI-corrected)
             if (!output.window || output.window.isDestroyed()) return
+
+            const displays = screen.getAllDisplays()
+            if (displays.length === 0) return
 
             const wBounds = output.window.getBounds()
             const centerLeft = wBounds.x + wBounds.width / 2
             const centerTop = wBounds.y + wBounds.height / 2
 
             const point = { x: centerLeft, y: centerTop }
-            const closestScreen = screen.getDisplayNearestPoint(point)
+            let targetDisplay = screen.getDisplayNearestPoint(point)
 
-            if (JSON.stringify(wBounds) === JSON.stringify(closestScreen.bounds)) return
+            // If output window is currently on primary screen (0,0) and secondary screen exists, align to secondary screen
+            if (displays.length >= 2 && targetDisplay.id === displays[0].id && output.screen) {
+                const savedDisplay = displays.find((d) => d.id.toString() === output.screen)
+                if (savedDisplay) targetDisplay = savedDisplay
+            }
 
-            output.window.setBounds(closestScreen.bounds)
-            toApp(OUTPUT, { channel: "MOVE", data: { id: outputId, bounds: closestScreen.bounds } })
+            output.screen = targetDisplay.id.toString()
+
+            if (JSON.stringify(wBounds) !== JSON.stringify(targetDisplay.bounds)) {
+                output.window.setBounds(targetDisplay.bounds)
+            }
+            toApp(OUTPUT, { channel: "MOVE", data: { id: outputId, bounds: targetDisplay.bounds, screen: targetDisplay.id.toString() } })
         })
     }
 }

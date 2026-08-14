@@ -11,6 +11,7 @@ import { startTracking } from "./analytics"
 import { wait, waitUntilValueIsDefined } from "./common"
 import { getDefaultElements } from "./createData"
 import { setLanguage } from "./language"
+import { setupCloudSync } from "./cloudSync"
 import { storeSubscriber } from "./listeners"
 import { autoOpenLastUsedProfile, openProfileByName } from "./profile"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
@@ -106,14 +107,18 @@ function autoBackup() {
     const minTimeToBackup = getTimeFromInterval(interval)
 
     if (now - lastBackup > minTimeToBackup) {
-        // 20% chance of backing up all shows as well (just in case)
-        save(false, { backup: true, isAutoBackup: true, backupShows: Math.random() < 0.2 })
+        save(false, { backup: true, isAutoBackup: true })
     }
 }
 
 const lastProviderSyncs: Partial<Record<ContentProviderId, number>> = {}
 export function contentProviderSync(startup = false, remainingOnly = false) {
     const isCloudSyncEnabled = get(cloudSyncData).enabled && get(cloudSyncData).id
+
+    if (startup && isCloudSyncEnabled && !remainingOnly) {
+        setupCloudSync(true)
+        return
+    }
 
     const providers = [
         { providerId: "planningcenter" as ContentProviderId, scope: "services", data: get(contentProviderData).planningcenter?.syncFolderIds || [], autoSync: get(contentProviderData).planningcenter?.autoSync !== false },
@@ -123,9 +128,6 @@ export function contentProviderSync(startup = false, remainingOnly = false) {
 
     providers.forEach(({ providerId, scope, data, autoSync }) => {
         if (startup && autoSync === false) return
-
-        // don't run Planning Center sync right away on startup if cloud sync is enabled
-        if (providerId === "planningcenter" && startup && isCloudSyncEnabled && !remainingOnly) return
 
         // make sure the same provider does not run multiple times at once
         const now = Date.now()

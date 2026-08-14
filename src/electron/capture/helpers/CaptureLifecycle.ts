@@ -1,8 +1,9 @@
+import { isAudioEnabled } from "../../audio/processAudio"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 import { OutputHelper } from "../../output/OutputHelper"
+import { getRtmpEncoderSetting } from "../../streaming/encoderDetection"
 import { RtmpStreamer } from "../../streaming/RtmpStreamer"
 import { WebRtcHost } from "../../streaming/WebRtcHost"
-import { isAudioEnabled } from "../../audio/processAudio"
 import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
 
@@ -137,13 +138,21 @@ export class CaptureLifecycle {
     private static async captureAndProcessFrame(id: string, captureOpts: any) {
         let image = await captureOpts.window.webContents.capturePage()
 
+        // const output = OutputHelper.getOutput(id)
+        // const targetBounds = output.intendedBounds
+
         // Blackmagic only - resize if needed
         if (captureOpts.options?.blackmagic) {
             const targetSize = BlackmagicSender.getTargetDimensions(id)
             const currentSize = image.getSize()
             if (currentSize.width !== targetSize.width || currentSize.height !== targetSize.height) {
-                image = image.resize({ width: targetSize.width, height: targetSize.height })
+                image = image.resize({ width: targetSize.width, height: targetSize.height, quality: "good" })
             }
+            // } else if (targetBounds?.width && targetBounds?.height) {
+            //     const currentSize = image.getSize()
+            //     if (currentSize.width !== targetBounds.width || currentSize.height !== targetBounds.height) {
+            //         image = image.resize({ width: targetBounds.width, height: targetBounds.height, quality: "good" })
+            //     }
         }
 
         return image
@@ -264,29 +273,32 @@ export class CaptureLifecycle {
         }
     }
 
-    private static updateRtmpState() {
+    /** Public so a settings change (e.g. the encoder) can be applied without waiting for a capture event. */
+    static updateRtmpState() {
         const allOutputs = OutputHelper.getAllOutputs()
         allOutputs.forEach((o) => {
             if (!o.id) return
 
-            const rtmpEnabled = o.rtmpData?.streaming
-            if (rtmpEnabled) {
-                const url = o.rtmpData?.url || ""
-                const key = o.rtmpData?.key || ""
-                const fullUrl = key ? `${url}/${key}` : url
-                const bounds = o.window?.getBounds() || { width: 1920, height: 1080 }
-                const fps = o.rtmpData?.fps ? Number(o.rtmpData.fps) : 30
-                const bitrate = o.rtmpData?.bitrate ? Number(o.rtmpData.bitrate) : 4000
-                if (o.captureOptions?.framerates) o.captureOptions.framerates.rtmp = fps
-
-                if (url && !RtmpStreamer.isRunning(o.id)) {
-                    RtmpStreamer.start(o.id, fullUrl, bounds.width, bounds.height, fps, isAudioEnabled(), bitrate)
-                }
-            } else {
-                if (RtmpStreamer.isRunning(o.id)) {
-                    RtmpStreamer.stop(o.id)
-                }
+            if (!o.rtmpData?.streaming) {
+                if (RtmpStreamer.isRunning(o.id)) RtmpStreamer.stop(o.id)
+                return
             }
+
+            const destinations = (o.rtmpData.destinations || []).filter((d) => d.enabled && d.url)
+            if (!destinations.length) {
+                if (RtmpStreamer.isRunning(o.id)) RtmpStreamer.stop(o.id)
+                return
+            }
+
+            // getBounds() is the DPI-corrected render size (halved on HiDPI for capture-only outputs),
+            // so broadcast at the configured resolution instead
+            const bounds = o.intendedBounds || o.window?.getBounds() || { width: 1920, height: 1080 }
+            const fps = o.rtmpData.fps ? Number(o.rtmpData.fps) : 30
+            const bitrate = o.rtmpData.bitrate ? Number(o.rtmpData.bitrate) : 4000
+            if (o.captureOptions?.framerates) o.captureOptions.framerates.rtmp = fps
+
+            // destination changes only touch relays; the encode keeps running
+            RtmpStreamer.update(o.id, { width: bounds.width, height: bounds.height, fps, bitrate, enableAudio: isAudioEnabled(), encoder: getRtmpEncoderSetting() }, destinations)
         })
     }
 }

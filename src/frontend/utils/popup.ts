@@ -186,7 +186,7 @@ export function waitForPopupData(popupId: Popups): Promise<any> {
         }, 300)
 
         unsubscribe = popupData.subscribe((a) => {
-            if (a.id !== popupId) return
+            if (!a || a.id !== popupId) return
             activePopup.set(null)
             finish(a.value)
         })

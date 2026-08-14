@@ -3,6 +3,7 @@ import { Main } from "../../types/IPC/Main"
 import { sendMain } from "../IPC/main"
 import { outLocked } from "../stores"
 import { AudioAnalyser } from "./audioAnalyser"
+import { clearAudio } from "./audioFading"
 import { AudioInputCapture } from "./routing/audioInputCapture"
 import { AudioPlayer } from "./audioPlayer"
 
@@ -45,7 +46,10 @@ export class AudioMicrophone {
     }
 
     static stop(id: string) {
-        AudioPlayer.stop(id)
+        if (!id) return
+        const micId = id.startsWith("mic_sub_") ? id : "mic_sub_" + id
+        clearAudio(micId, { clearPlaylist: false, clearMicrophones: true })
+        // AudioPlayer.stop(micId)
     }
 
     static startListening(deviceId: string) {

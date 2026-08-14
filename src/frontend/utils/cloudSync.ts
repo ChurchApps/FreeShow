@@ -27,6 +27,17 @@ export async function setupCloudSync(auto: boolean = false) {
         return
     }
     if (auto && get(cloudSyncData).id) {
+        if (!get(providerConnections).churchApps) {
+            if (await requestMain(Main.CAN_SYNC)) {
+                providerConnections.update((c) => {
+                    c.churchApps = true
+                    return c
+                })
+            } else {
+                syncFinished()
+                return
+            }
+        }
         syncWithCloud()
         return
     }
@@ -115,7 +126,7 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
 
     if (initialize) {
         // save & backup
-        save(false, { autosave: true, backup: true, isAutoBackup: true, backupShows: true })
+        save(false, { autosave: true, backup: true, isAutoBackup: true })
         syncFinished()
         return false
     }
@@ -137,12 +148,12 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
 
     const timeout = 5 * 60 * 1000 // 5 minutes
     const status = await requestMain(Main.CLOUD_SYNC, { id: data.id as any, churchId: data.team.churchId, teamId: data.team.id, method }, () => {}, timeout)
+    isSyncing = false
+
     if (!status) {
         syncFinished()
         return
     }
-
-    isSyncing = false
 
     // set back to merge
     if (method === "replace" || method === "upload") {

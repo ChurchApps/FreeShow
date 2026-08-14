@@ -31,6 +31,12 @@ interface EffectChainSegment {
     dispose?: () => void
 }
 
+interface Connection {
+    from: string
+    to: string
+    channelIndex?: number
+}
+
 const EFFECT_CONSTRUCTORS: Record<string, (ctx: AudioContext, cfg: any) => EffectChainSegment | null> = {
     equalizer: (ctx, cfg) => {
         const eq = new AudioEqualizer(cfg)
@@ -54,7 +60,7 @@ export class AudioRoutingManager {
 
     private mergerNodes = new Map<string, GainNode>()
     private channelDelayNodes = new Map<string, DelayNode>()
-    private mergerEffectChains = new Map<string, { input: AudioNode; output: AudioNode; dispose: () => void }>()
+    private mergerEffectChains = new Map<string, { input: AudioNode; output: AudioNode; dispose: () => void; configHash: string }>()
     private destinationNodes = new Map<string, AudioNode>()
     private inputNodes = new Map<string, Set<AudioNode>>()
 
@@ -112,6 +118,7 @@ export class AudioRoutingManager {
     }
 
     public setDestinationNode(targetId: string, node: AudioNode) {
+        if (this.destinationNodes.get(targetId) === node) return
         this.destinationNodes.set(targetId, node)
         this.updateRoutingNodes()
     }
@@ -207,14 +214,25 @@ export class AudioRoutingManager {
         this.mergerNodes.forEach((node, id) => this.applyMergerGain(id, node))
     }
 
+    /**
+     * Builds or reuses an existing effect chain for a channel.
+     * Caches native Web Audio nodes to avoid recreating them on every routing update.
+     */
     private buildMergerEffectChain(id: string, node: GainNode, channelEffects: any): AudioNode {
+        if (!this.audioCtx) return node
+
+        const configHash = JSON.stringify(channelEffects || {})
         const existingChain = this.mergerEffectChains.get(id)
+
         if (existingChain) {
+            if (existingChain.configHash === configHash) {
+                return existingChain.output
+            }
             existingChain.dispose()
             this.mergerEffectChains.delete(id)
         }
 
-        if (!channelEffects || !this.audioCtx) return node
+        if (!channelEffects) return node
 
         const chain: EffectChainSegment[] = []
         for (const [key, constructor] of Object.entries(EFFECT_CONSTRUCTORS)) {
@@ -236,6 +254,7 @@ export class AudioRoutingManager {
         this.mergerEffectChains.set(id, {
             input: node,
             output: prev,
+            configHash,
             dispose: () => {
                 chain.forEach((seg) => {
                     this.safelyDisconnect(seg.output)
@@ -251,7 +270,7 @@ export class AudioRoutingManager {
         if (!this.audioCtx || this.updateScheduled) return
         this.updateScheduled = true
 
-        queueMicrotask(() => {
+        requestAnimationFrame(() => {
             if (!this.updateScheduled) return
             this.updateScheduled = false
             this.executeRoutingUpdate()
@@ -263,6 +282,7 @@ export class AudioRoutingManager {
         const startTime = performance.now()
         const inactiveChannelIds = this.getInactiveChannelIds()
 
+        // 1. Manage merger gain nodes for active channels
         const channels = (this.config.channels || []).filter((m) => !inactiveChannelIds.has(m.id))
         channels.forEach((m) => {
             let gainNode = this.mergerNodes.get(m.id)
@@ -273,7 +293,7 @@ export class AudioRoutingManager {
             this.applyMergerGain(m.id, gainNode)
         })
 
-        // Clean up removed channels
+        // 2. Clean up removed channels and their cached effect chains
         const currentChannelIds = new Set(channels.map((m) => m.id))
         this.mergerNodes.forEach((node, id) => {
             if (!currentChannelIds.has(id)) {
@@ -281,50 +301,68 @@ export class AudioRoutingManager {
                 this.safelyDisconnect(this.channelDelayNodes.get(id))
                 AudioInputCapture.getInstance().removeInput(id)
 
+                const chain = this.mergerEffectChains.get(id)
+                if (chain) {
+                    chain.dispose()
+                    this.mergerEffectChains.delete(id)
+                }
+
                 this.mergerNodes.delete(id)
                 this.channelDelayNodes.delete(id)
             }
         })
 
-        // Prune inactive inputs
+        // 3. Pre-index active connections to avoid O(N^2) array filtering in loops
         const activeNodeIds = new Set(["drawer_audio", "playlists_default", "output_window", "mic_default", ...this.inputNodes.keys(), ...this.mergerNodes.keys()])
-
         const activeSubDeviceIds = new Set<string>()
-        this.config.connections.forEach((c) => {
+        const connectionsByFrom = new Map<string, Connection[]>()
+
+        const rawConns = (this.config.connections || []) as Connection[]
+        for (const c of rawConns) {
             activeNodeIds.add(c.from)
             activeNodeIds.add(c.to)
+
             if (c.to.startsWith("speaker_sub_")) {
                 activeSubDeviceIds.add(c.to.replace("speaker_sub_", ""))
             }
-        })
+
+            let list = connectionsByFrom.get(c.from)
+            if (!list) {
+                list = []
+                connectionsByFrom.set(c.from, list)
+            }
+            list.push(c)
+        }
 
         AudioInputCapture.getInstance().pruneStaleInputs(activeNodeIds)
         this.cleanupUnusedSpeakerSinks(activeSubDeviceIds)
 
-        // Pre-calculate per-speaker merger channels
+        // 4. Pre-calculate per-speaker merger channels
         const speakerSubMergers = new Map<string, { mergerNode: ChannelMergerNode; maxChannels: number }>()
-        this.config.connections.forEach((c) => {
+        for (const c of rawConns) {
             if (c.to.startsWith("speaker_sub_")) {
-                const chIndex = (c as any).channelIndex ?? 0
+                const chIndex = c.channelIndex ?? 0
                 const current = speakerSubMergers.get(c.to)
                 const count = Math.max(current?.maxChannels || 2, chIndex + 1)
 
                 if (!current || count > current.maxChannels) {
                     speakerSubMergers.set(c.to, {
-                        mergerNode: this.audioCtx!.createChannelMerger(count),
+                        mergerNode: this.audioCtx.createChannelMerger(count),
                         maxChannels: count
                     })
                 }
             }
-        })
+        }
 
-        // Route merger output nodes
-        const allEffects = get(audioEffects)
+        // 5. Route merger output nodes
+        const allEffects = get(audioEffects) || {}
+        const allChannelData = get(audioChannelsData) || {}
+
         this.mergerNodes.forEach((node, id) => {
             this.safelyDisconnect(node)
             let outNode = this.buildMergerEffectChain(id, node, allEffects[id])
 
-            const chData = get(audioChannelsData)[id] || {}
+            const chData = allChannelData[id] || {}
             const delaySec = Math.max(0, Math.min(5, (chData.delay || 0) / 1000))
 
             if (delaySec > 0) {
@@ -342,7 +380,9 @@ export class AudioRoutingManager {
 
             AudioInputCapture.getInstance().captureInput(id, outNode)
 
-            const conns = this.config.connections.filter((c) => c.from === id)
+            const conns = connectionsByFrom.get(id) || []
+
+            // Connect to main destination if requested
             if (conns.some((c) => c.to === "speaker_default")) {
                 const mainNode = this.destinationNodes.get("main")
                 if (mainNode) {
@@ -352,16 +392,18 @@ export class AudioRoutingManager {
                 }
             }
 
+            // Connect to speaker sub-mergers
             let splitter: ChannelSplitterNode | null = null
             speakerSubMergers.forEach(({ mergerNode }, targetId) => {
                 const subConns = conns.filter((c) => c.to === targetId)
+
                 if (subConns.length === 1) {
-                    outNode.connect(mergerNode, 0, (subConns[0] as any).channelIndex ?? 0)
+                    outNode.connect(mergerNode, 0, subConns[0].channelIndex ?? 0)
                 } else if (subConns.length > 1) {
                     splitter ??= this.audioCtx!.createChannelSplitter(2)
                     outNode.connect(splitter)
                     subConns.forEach((c) => {
-                        const chIdx = (c as any).channelIndex ?? 0
+                        const chIdx = c.channelIndex ?? 0
                         splitter!.connect(mergerNode, Math.min(chIdx, 1), chIdx)
                     })
                 }
@@ -372,7 +414,8 @@ export class AudioRoutingManager {
                 .filter((c) => c.to === "icecast" || c.to.startsWith("network_sub_"))
                 .forEach((c) => {
                     const targetKey = c.to.startsWith("network_sub_") ? c.to.replace("network_sub_", "") : c.to
-                    const destNode = this.destinationNodes.get(targetKey)
+                    let destNode = this.destinationNodes.get(targetKey)
+                    if (!destNode) destNode = AudioAnalyser.getOrCreateDestinationNode(targetKey)
                     if (destNode) {
                         try {
                             outNode.connect(destNode)
@@ -382,7 +425,7 @@ export class AudioRoutingManager {
                 })
         })
 
-        // Connect speaker sinks
+        // 6. Connect speaker sinks
         speakerSubMergers.forEach(({ mergerNode, maxChannels }, targetId) => {
             const deviceId = targetId.replace("speaker_sub_", "")
             const sink = this.getOrCreateSpeakerSink(deviceId)
@@ -417,13 +460,13 @@ export class AudioRoutingManager {
             console.warn(`[AudioRoutingManager] Lag detected: Audio routing update took ${duration.toFixed(2)}ms (budget: 15ms)`)
         }
 
-        // Capture visualizers for destinations
+        // 7. Capture visualizers for destinations
         this.destinationNodes.forEach((destNode, targetKey) => {
             const visualizerKey = targetKey === "icecast" ? "icecast" : targetKey === "main" ? "speaker_default" : `network_sub_${targetKey}`
             AudioInputCapture.getInstance().captureInput(visualizerKey, destNode)
         })
 
-        // Route inputs
+        // 8. Route inputs
         const nodeToIds = new Map<AudioNode, Set<string>>()
         this.inputNodes.forEach((nodes, inputId) => {
             nodes.forEach((node) => {
@@ -434,7 +477,23 @@ export class AudioRoutingManager {
 
         nodeToIds.forEach((inputIds, node) => {
             this.safelyDisconnect(node)
-            inputIds.forEach((inputId) => this.routeInput(inputId, node))
+            const targetMergerIds = new Set<string>()
+
+            inputIds.forEach((inputId) => {
+                AudioInputCapture.getInstance().captureInput(inputId, node)
+                this.getConnectionsFrom(inputId).forEach((mergerId) => targetMergerIds.add(mergerId))
+            })
+
+            targetMergerIds.forEach((mergerId) => {
+                const mergerNode = this.getMergerNode(mergerId)
+                if (mergerNode) {
+                    try {
+                        node.connect(mergerNode)
+                    } catch (e) {
+                        console.error(`[AudioRoutingManager] Could not connect source to merger ${mergerId}:`, e)
+                    }
+                }
+            })
         })
     }
 
@@ -512,5 +571,29 @@ export class AudioRoutingManager {
         if (nodes.size === 0) {
             this.inputNodes.delete(inputId)
         }
+    }
+
+    public static sortChannels(config: AudioRoutingConfig): AudioRoutingConfig {
+        if (!config?.channels || config.channels.length <= 1) return config
+
+        const mainChannels: typeof config.channels = []
+        const unlinkedChannels: typeof config.channels = []
+        const outputLinkedChannels: typeof config.channels = []
+
+        const outputsMap = get(outputs) || {}
+        const isLinkedToOutput = (id: string) => outputsMap[id.split("_")?.[1]]
+
+        for (const ch of config.channels) {
+            if (ch.id === "main") mainChannels.push(ch)
+            else if (isLinkedToOutput(ch.id)) outputLinkedChannels.push(ch)
+            else unlinkedChannels.push(ch)
+        }
+
+        const sortByName = (a: any, b: any) => (a.name || "").localeCompare(b.name || "", undefined, { numeric: true, sensitivity: "base" })
+
+        unlinkedChannels.sort(sortByName)
+        outputLinkedChannels.sort(sortByName)
+
+        return { ...config, channels: [...mainChannels, ...unlinkedChannels, ...outputLinkedChannels] }
     }
 }

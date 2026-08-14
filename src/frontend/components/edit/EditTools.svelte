@@ -271,7 +271,7 @@
         items.forEach((item) => {
             if (item.lines) {
                 let text = item.lines.map((a) => {
-                    return a.text.map((a) => {
+                    return (a.text || []).map((a) => {
                         a.style = ""
                         return a
                     })

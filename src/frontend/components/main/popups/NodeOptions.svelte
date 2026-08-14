@@ -1,6 +1,7 @@
 <script lang="ts">
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { audioChannelsData, audioRouting, popupData, special } from "../../../stores"
+    import { dbToGain, gainToDb, MIN_DB } from "../../../audio/dBUtils"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
@@ -8,7 +9,7 @@
 
     const popupInfo = $popupData
     const nodeId = popupInfo?.nodeId
-    popupData.set(null)
+    popupData.set({})
 
     $: channel = $audioRouting?.channels?.find((c) => c.id === nodeId)
     $: isChannelNode = !!channel || nodeId === "main" || nodeId?.startsWith("channel_")
@@ -16,6 +17,7 @@
     $: channelData = $audioChannelsData[nodeId] || {}
     $: rawVolume = Number(channelData.volume ?? 1)
     $: volumeValue = rawVolume > 5 ? rawVolume / 100 : rawVolume
+    $: dbValue = Math.max(MIN_DB, Math.min(6, gainToDb(volumeValue)))
     $: muted = !!channelData.isMuted
 
     $: delayMs = Number(channelData.delay ?? 0)
@@ -48,7 +50,7 @@
 {:else if isChannelNode}
     <!-- this is the same options we find in the audio drawer -->
     <InputRow>
-        <MaterialNumberInput label="media.volume (%)" value={Number((volumeValue * 100).toFixed(0))} min={0} max={125} step={1} defaultValue={100} on:change={(e) => updateChannelData("volume", e.detail / 100)} showSlider />
+        <MaterialNumberInput label="media.volume (dB)" value={Number(dbValue.toFixed(1))} min={MIN_DB} max={6} step={0.5} defaultValue={0} on:change={(e) => updateChannelData("volume", dbToGain(e.detail))} showSlider />
         <MaterialButton variant="outlined" icon={muted ? "muted" : "volume"} title="actions.{muted ? 'unmute' : 'mute'}" on:click={() => updateChannelData("isMuted", !muted)} red={muted} />
     </InputRow>
 

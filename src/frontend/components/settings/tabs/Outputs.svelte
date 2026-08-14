@@ -2,18 +2,22 @@
     import { onDestroy } from "svelte"
     import { uid } from "uid"
     import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
     import { Option } from "../../../../types/Main"
-    import type { Output } from "../../../../types/Output"
+    import type { Output, RtmpDestination } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, outputDisplay, outputs, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { requestMain, sendMain } from "../../../IPC/main"
+    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, special, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { refreshOut, startRtmpStreaming, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutput, updateOutputRtmpData, updateOutputWebrtcData } from "../../helpers/output"
+    import { addRtmpDestination, checkFFmpeg, refreshOut, removeRtmpDestination, startRtmpStreaming, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutput, updateOutputRtmpData, updateOutputWebrtcData, updateRtmpDestination } from "../../helpers/output"
+    import { hasStreamableDestination } from "../../helpers/rtmpDestinations"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
@@ -35,6 +39,7 @@
 
         outputs.update((a: any) => {
             const out = a[outputId]
+            if (!out) return a
 
             // Update value
             if (key.includes(".")) {
@@ -48,8 +53,7 @@
             // IPC
             if (key === "enabled") {
                 if (value) {
-                    send(OUTPUT, ["CREATE"], { ...out, id: outputId })
-                    AudioAnalyser.recorderActivate()
+                    enableOutput(out)
                 } else {
                     send(OUTPUT, ["REMOVE"], { id: outputId })
                     updateOutput("hideFromPreview", false, outputId)
@@ -74,6 +78,12 @@
 
             return a
         })
+
+        async function enableOutput(out: Output) {
+            if (out.rtmp) await checkFFmpeg()
+            send(OUTPUT, ["CREATE"], { ...out, id: outputId })
+            AudioAnalyser.recorderActivate()
+        }
     }
 
     function _toggleOutput(state: boolean) {
@@ -130,6 +140,64 @@
 
         saved.set(false)
     }
+
+    // RTMP
+
+    function updateRtmpData(value: any, key: string) {
+        if (!currentOutput?.id) return
+        updateOutputRtmpData(currentOutput.id, key, value)
+    }
+
+    function extractPlatformName(urlString: string | undefined): string | null {
+        if (!urlString) return null
+        try {
+            const normalizedUrl = urlString.replace(/^rtmp(s)?:\/\//i, "http$1://")
+            const parsedUrl = new URL(normalizedUrl)
+            const match = parsedUrl.hostname.toLowerCase().match(/([^.]+)\.[^.]+$/)
+            return match ? match[1] : null
+        } catch {
+            return null
+        }
+    }
+
+    // RTMP encoder
+
+    let encoderOptions: { value: string; label: string; data?: string; disabled?: boolean }[] = [{ value: "auto", label: "Auto" }]
+    // let detectingEncoders = false
+    async function loadEncoders(force = false) {
+        // detectingEncoders = true
+        try {
+            const detection = await requestMain(Main.ENCODER_DETECT, { force })
+            const encoders = (detection?.encoders || []).sort((a, b) => a.label.localeCompare(b.label)).sort((a, b) => (a.available === b.available ? 0 : a.available ? -1 : 1))
+            // .filter((a) => a.available) // should we hide unavailable encoders?
+            const recommended = encoders.find((e) => e.id === detection?.recommended)
+            encoderOptions = [{ value: "auto", label: "Auto", data: recommended?.label || "" }, ...encoders.map((e) => ({ value: e.id, label: e.label, data: e.available ? "" : e.reason, disabled: !e.available }))]
+        } finally {
+            // detectingEncoders = false
+        }
+    }
+
+    function setEncoder(encoder: string) {
+        special.update((a) => ({ ...a, rtmpEncoder: encoder }))
+        sendMain(Main.SET_RTMP_ENCODER, { encoder })
+        saved.set(false)
+    }
+
+    $: if (currentOutput?.rtmp && encoderOptions.length === 1) loadEncoders()
+
+    // RTMP destinations
+
+    function addDestination() {
+        if (currentOutput?.id) addRtmpDestination(currentOutput.id)
+    }
+    function updateDestination(destinationId: string, key: keyof RtmpDestination, value: any) {
+        if (currentOutput?.id) updateRtmpDestination(currentOutput.id, destinationId, key, value)
+    }
+    function removeDestination(destinationId: string) {
+        if (currentOutput?.id) removeRtmpDestination(currentOutput.id, destinationId)
+    }
+
+    // Frame rates
 
     const framerates = [
         { value: "10", label: "10 fps" },
@@ -253,11 +321,6 @@
 
     $: isCropped = currentOutput?.cropping && (currentOutput.cropping.left || 0) + (currentOutput.cropping.right || 0) + (currentOutput.cropping.top || 0) + (currentOutput.cropping.bottom || 0) > 0
     $: outputLabel = (currentOutput?.blackmagicData?.displayMode || `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`) + (isCropped ? ` - settings.cropped` : "")
-
-    function updateRtmpData(value: any, key: string) {
-        if (!currentOutput?.id) return
-        updateOutputRtmpData(currentOutput.id, key, value)
-    }
 </script>
 
 {#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
@@ -359,7 +422,7 @@
     {/if}
     <InputRow>
         <MaterialDropdown label="settings.frame_rate" value={currentOutput.webrtcData?.fps?.toString() || "30"} defaultValue="30" options={framerates} on:change={(e) => updateWebrtcData(e.detail, "fps")} />
-        <MaterialTextInput label="Bitrate (kbps)" value={currentOutput.webrtcData?.bitrate?.toString() || "2500"} defaultValue="2500" placeholder="2500" on:change={(e) => updateWebrtcData(e.detail, "bitrate")} />
+        <MaterialTextInput label="Bitrate (kbps)" value={currentOutput.webrtcData?.bitrate?.toString() || "4000"} defaultValue="4000" placeholder="4000" on:change={(e) => updateWebrtcData(e.detail, "bitrate")} />
     </InputRow>
     <MaterialTextInput label="WHIP Endpoint URL" value={currentOutput.webrtcData?.url || ""} placeholder="e.g. https://live.restream.io/whip/live/YOUR_KEY" on:change={(e) => updateWebrtcData(e.detail, "url")} pasteBtn />
     <MaterialTextInput label="Bearer Token (Optional)" value={currentOutput.webrtcData?.token || ""} placeholder="Authorization token" on:change={(e) => updateWebrtcData(e.detail, "token")} pasteBtn />
@@ -382,16 +445,113 @@
     {/if}
     <InputRow>
         <MaterialDropdown label="settings.frame_rate" value={currentOutput.rtmpData?.fps?.toString() || "30"} defaultValue="30" options={framerates} on:change={(e) => updateRtmpData(e.detail, "fps")} />
-        <MaterialTextInput label="Bitrate (kbps)" value={currentOutput.rtmpData?.bitrate?.toString() || "4000"} defaultValue="4000" placeholder="4000" on:change={(e) => updateRtmpData(e.detail, "bitrate")} />
+        <MaterialTextInput label="settings.bitrate (kbps)" value={currentOutput.rtmpData?.bitrate?.toString() || "4000"} defaultValue="4000" placeholder="4000" on:change={(e) => updateRtmpData(e.detail, "bitrate")} />
     </InputRow>
-    <MaterialTextInput label="Stream URL" value={currentOutput.rtmpData?.url || ""} placeholder="e.g. rtmp://a.rtmp.youtube.com/live2" on:change={(e) => updateRtmpData(e.detail, "url")} pasteBtn />
-    <MaterialTextInput label="Stream key" value={currentOutput.rtmpData?.key || ""} type="password" on:change={(e) => updateRtmpData(e.detail, "key")} pasteBtn />
 
-    {#if currentOutput?.enabled && currentOutput?.rtmpData?.url && currentOutput?.rtmpData?.key}
-        <div style="padding-bottom: 10px;">
+    <InputRow style="margin-bottom: 10px;">
+        <MaterialDropdown label="settings.video_encoder" value={$special.rtmpEncoder || "auto"} defaultValue="auto" options={encoderOptions} on:change={(e) => setEncoder(e.detail)} />
+        <!-- <MaterialButton variant="outlined" icon="refresh" title="Re-detect encoders" disabled={detectingEncoders} on:click={() => loadEncoders(true)} /> -->
+    </InputRow>
+
+    <div class="destinations">
+        {#each currentOutput.rtmpData?.destinations || [] as destination (destination.id)}
+            {@const status = $rtmpStatus[currentOutput?.id || ""]?.[destination.id]}
+
+            <div class="destination">
+                <div style="display: flex;align-items: center;gap: 10px;padding-bottom: 4px;text-transform: uppercase;">
+                    <span class="dot {status?.state || 'idle'}" title={status?.error || status?.state || "idle"}></span>
+                    <div style="font-size: 0.8em; opacity: 0.5;">{extractPlatformName(destination.url) || ""}</div>
+                </div>
+
+                {#if (currentOutput.rtmpData?.destinations || []).length > 1 || destination.enabled === false}
+                    <InputRow>
+                        <MaterialCheckbox label="settings.enabled" checked={destination.enabled} defaultValue={true} style="flex: 1;" on:change={(e) => updateDestination(destination.id, "enabled", e.detail)} />
+                        {#if !destination.enabled || !destination.url}
+                            <MaterialButton variant="outlined" icon="delete" title="settings.remove" on:click={() => removeDestination(destination.id)} red />
+                        {/if}
+                    </InputRow>
+                {/if}
+
+                <MaterialTextInput label="Stream URL" value={destination.url} placeholder="e.g. rtmp://a.rtmp.youtube.com/live2" on:change={(e) => updateDestination(destination.id, "url", e.detail)} pasteBtn />
+                <MaterialTextInput label="Stream key" value={destination.key} type="password" on:change={(e) => updateDestination(destination.id, "key", e.detail)} pasteBtn />
+
+                <!-- kept visible after recovery: a destination that reconnects repeatedly still looks
+                     "live" between drops, so the count is the only signal that it is struggling -->
+                {#if status?.restarts}
+                    <div class="destination-warning">
+                        {status.restarts === 1 ? "Reconnected once" : `Reconnected ${status.restarts} times`}{status.lastIssue && !status.error ? ` — ${status.lastIssue}` : ""}
+                    </div>
+                {/if}
+                {#if status?.error}
+                    <div class="destination-error">{status.error}</div>
+                {/if}
+            </div>
+        {/each}
+
+        <MaterialButton variant="outlined" icon="add" disabled={(currentOutput.rtmpData?.destinations || []).some((a) => !a.url)} on:click={() => addDestination()}>
+            {translateText("settings.add_destination")}
+        </MaterialButton>
+    </div>
+
+    {#if currentOutput?.enabled && hasStreamableDestination(currentOutput.rtmpData)}
+        <div style="padding: 10px 0;">
             <MaterialButton variant="outlined" icon={currentOutput.rtmpData?.streaming ? "stop" : "record"} style="width: 100%; justify-content: center; {currentOutput.rtmpData?.streaming ? 'background: #b60707 !important;' : ''}" on:click={() => (currentOutput?.rtmpData?.streaming ? stopRtmpStreaming(currentOutput.id, true) : startRtmpStreaming(currentOutput?.id))} white>
                 {translateText(currentOutput.rtmpData?.streaming ? "output.stop_streaming" : "output.start_streaming")}
             </MaterialButton>
         </div>
     {/if}
 {/if}
+
+<style>
+    .hint {
+        padding: 0 10px 10px;
+        font-size: 0.8em;
+        opacity: 0.5;
+    }
+
+    /* Stream destinations */
+
+    .destinations {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .destination {
+        display: flex;
+        flex-direction: column;
+
+        padding: 8px;
+        border: 1px solid var(--primary-lighter);
+        border-radius: 4px;
+    }
+
+    .dot {
+        flex-shrink: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #6b6b6b;
+    }
+    .dot.connecting,
+    .dot.reconnecting {
+        background-color: #e0a800;
+    }
+    .dot.live {
+        background-color: #2ecc71;
+    }
+    .dot.error {
+        background-color: #b60707;
+    }
+
+    .destination-warning {
+        padding-top: 4px;
+        font-size: 0.8em;
+        color: #e0bc50;
+    }
+    .destination-error {
+        padding-top: 4px;
+        color: #ff8080;
+        font-size: 0.8em;
+    }
+</style>

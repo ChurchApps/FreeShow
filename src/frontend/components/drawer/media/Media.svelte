@@ -537,7 +537,7 @@
                 <PlayerVideos active={onlineTab} {searchValue} />
             </div>
         {:else if active === "online" && onlineTab === "canva"}
-            <Canva />
+            <Canva {searchValue} />
         {:else if active === "inputs"}
             <div class="gridgap">
                 {#if inputsTab === "cameras"}
@@ -712,7 +712,7 @@
         display: flex;
         position: relative;
         background-color: var(--primary-darkest);
-        align-items: center;
+        align-items: stretch;
     }
 
     .tabs :global(button) {

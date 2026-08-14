@@ -47,7 +47,7 @@ export const mediaBoxes: { [key in MediaType]?: BoxContent2 } = {
                     { id: "volume", type: "number", value: 1, multiplier: 100, values: { label: "media.volume", min: 0, max: 125, defaultValue: 100, showSlider: true } },
                     { id: "pitch", type: "number", value: 0, values: { label: "media.pitch", min: -12, max: 12, step: 1, defaultValue: 0, showSlider: true, sliderValues: { min: -12, max: 12, step: 1 } } },
                     // audio.tempo vs media.speed
-                    { id: "speed", type: "number", value: 1, values: { label: "media.speed", min: 0.5, max: 5, step: 0.1, defaultValue: 1, showSlider: true, sliderValues: { min: 0.5, max: 2, step: 0.05 } } },
+                    { id: "speed", type: "number", value: 1, values: { label: "media.speed", min: 0.5, max: 10, step: 0.1, defaultValue: 1, showSlider: true, sliderValues: { min: 0.5, max: 5, step: 0.05 } } },
                     { id: "fromTime", type: "number", value: 0, values: { label: "inputs.start", max: 100000, showSlider: true } },
                     { id: "toTime", type: "number", value: 0, values: { label: "inputs.end", max: 100000, showSlider: true } },
                     { id: "softLoop", type: "number", value: 0, values: { label: "media.soft_loop (s)", max: 50, step: 1, showSlider: true, sliderValues: { max: 10, step: 0.5 } } }
@@ -104,7 +104,7 @@ export const audioSections: { [key: string]: EditBoxSection } = {
             },
             { id: "volume", type: "number", value: 1, multiplier: 100, values: { label: "media.volume", min: 0, max: 125, defaultValue: 100, showSlider: true } },
             { id: "pitch", type: "number", value: 0, values: { label: "media.pitch", min: -12, max: 12, step: 1, defaultValue: 0, showSlider: true, sliderValues: { min: -12, max: 12, step: 1 } } },
-            { id: "tempo", type: "number", value: 1, values: { label: "audio.tempo", min: 0.5, max: 5, step: 0.1, defaultValue: 1, showSlider: true, sliderValues: { min: 0.5, max: 2, step: 0.05 } } },
+            { id: "tempo", type: "number", value: 1, values: { label: "audio.tempo", min: 0.5, max: 10, step: 0.1, defaultValue: 1, showSlider: true, sliderValues: { min: 0.5, max: 5, step: 0.05 } } },
             { id: "fromTime", type: "number", value: 0, values: { label: "inputs.start", max: 100000, showSlider: true } },
             { id: "toTime", type: "number", value: 0, values: { label: "inputs.end", max: 100000, showSlider: true } }
         ])
