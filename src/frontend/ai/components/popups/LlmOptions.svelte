@@ -10,7 +10,8 @@
     import Loader from "../../../components/main/Loader.svelte"
     import { requestMain, sendMain } from "../../../IPC/main"
     import { ai } from "../../../stores"
-    import { AI_PROVIDER_MODELS } from "../../models"
+    import { translateText } from "../../../utils/language"
+    import { AI_PROVIDER_MODELS, aiErrorText } from "../../models"
 
     $: llmOptions = $ai.llm || {}
 
@@ -140,7 +141,7 @@
             <Icon id="warning" size={0.9} white />
             <T id="ai.test_failed" />
             {#if testResult.error}
-                <span class="path">{testResult.error}</span>
+                <span class="path">{translateText(aiErrorText(testResult.error))}</span>
             {/if}
         </div>
     {/if}

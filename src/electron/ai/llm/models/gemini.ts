@@ -1,12 +1,22 @@
 import axios from "axios"
 import type { LLMCompletionOptions } from "../../../../types/ai/AiModels"
-import { APIModel } from "./APIModel"
+import type { ProviderQuirks } from "./APIModel"
+import { APIModel, codedError } from "./APIModel"
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+
+// a bad key is reported as HTTP 400 INVALID_ARGUMENT, not 401 - only the message identifies it
+const geminiQuirks: ProviderQuirks = (status, data) => {
+    const message = typeof data?.error?.message === "string" ? data.error.message : undefined
+    if (status === 400 && message && message.includes("API key not valid")) return { code: "invalid_key", message }
+
+    return null
+}
 
 export class GeminiProvider extends APIModel {
     readonly id = "gemini"
     readonly fallbackModel = "gemini-2.5-flash"
+    protected testQuirks = geminiQuirks
 
     private getHeaders(apiKey: string) {
         return { "x-goog-api-key": apiKey, "content-type": "application/json" }
@@ -54,15 +64,16 @@ export class GeminiProvider extends APIModel {
             })
             const data = response.data
 
-            if (data?.promptFeedback?.blockReason) throw new Error("Request was refused by the model: " + String(data.promptFeedback.blockReason))
+            if (data?.promptFeedback?.blockReason) throw codedError("refusal", "Request was refused by the model: " + String(data.promptFeedback.blockReason))
 
             const candidate = data?.candidates?.[0]
-            if (candidate?.finishReason === "SAFETY") throw new Error("Request was refused by the model due to safety reasons")
+            if (candidate?.finishReason === "SAFETY") throw codedError("refusal", "Request was refused by the model due to safety reasons")
 
             const parts = candidate?.content?.parts
             return Array.isArray(parts) ? parts.map((part: any) => part?.text || "").join("") : ""
         } catch (err) {
-            throw new Error("Failed to complete request: " + (err instanceof Error ? err.message : String(err)))
+            // rethrow with a stable code so callers can react to the class of failure
+            throw this.toLLMError(err, geminiQuirks)
         }
     }
 }

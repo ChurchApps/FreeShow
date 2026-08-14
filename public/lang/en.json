@@ -1871,6 +1871,17 @@
         "select_mic": "Select a microphone input",
         "processing": "Processing speech...",
         "test_success": "Connection successful!",
-        "test_failed": "Connection failed"
+        "test_failed": "Connection failed",
+        "error_invalid_key": "Invalid API key",
+        "error_forbidden": "Access denied - check your API key permissions",
+        "error_model_not_found": "Model not found",
+        "error_rate_limited": "Rate limited - try again in a moment",
+        "error_invalid_request": "Invalid request",
+        "error_server_error": "Provider server error - try again later",
+        "error_timeout": "The request timed out",
+        "error_network": "Network error - check your internet connection",
+        "error_refusal": "The AI refused to answer",
+        "error_bad_response": "Unexpected response from the AI",
+        "error_ollama_not_running": "Ollama is not running - start it and try again"
     }
 }

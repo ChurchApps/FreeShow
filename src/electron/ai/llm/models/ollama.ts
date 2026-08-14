@@ -1,10 +1,19 @@
 import axios from "axios"
 import type { LLMCompletionOptions } from "../../../../types/ai/AiModels"
+import type { ProviderQuirks } from "./APIModel"
 import { APIModel } from "./APIModel"
 
 const API_URL = "http://127.0.0.1:11434"
 const DETECT_TIMEOUT = 30000
 const TEST_TIMEOUT = 10000
+
+// ollama error bodies are { error: "<string>" } - a missing model is a 404, but older versions used other statuses, so also match the message
+const ollamaQuirks: ProviderQuirks = (status, data) => {
+    const bodyError = typeof data?.error === "string" ? data.error : ""
+    if (status === 404 || bodyError.toLowerCase().includes("not found")) return { code: "model_not_found", message: bodyError || undefined }
+
+    return null
+}
 
 export class OllamaProvider extends APIModel {
     readonly id = "ollama"
@@ -19,9 +28,10 @@ export class OllamaProvider extends APIModel {
             const found = installed.some((entry: any) => typeof entry?.name === "string" && (entry.name === model || entry.name.split(":")[0] === base))
 
             if (found) return { ok: true as const }
-            return { ok: false as const, error: "Model not found" }
-        } catch (err) {
-            return { ok: false as const, error: String(err) }
+            return { ok: false as const, error: "model_not_found" }
+        } catch {
+            // everything runs on localhost - any failure here means the server is not there
+            return { ok: false as const, error: "ollama_not_running" }
         }
     }
 
@@ -45,7 +55,9 @@ export class OllamaProvider extends APIModel {
             })
             return response.data?.message?.content || ""
         } catch (err) {
-            throw new Error("Failed to complete request: " + (err instanceof Error ? err.message : String(err)))
+            // rethrow with a stable code so callers can react to the class of failure
+            // (everything runs on localhost, so a network level failure means the server is not there)
+            throw this.toLLMError(err, ollamaQuirks)
         }
     }
 }

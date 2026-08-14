@@ -1,12 +1,31 @@
 import axios from "axios"
 import { LLMCompletionOptions } from "../../../../types/ai/AiModels"
-import { APIModel } from "./APIModel"
+import type { ProviderQuirks } from "./APIModel"
+import { APIModel, codedError } from "./APIModel"
 
 const API_URL = "https://api.anthropic.com/v1/messages"
+
+// error shapes the generic HTTP status mapping can't infer on its own
+const anthropicQuirks: ProviderQuirks = (status, data, headers) => {
+    const type = data?.error?.type
+    const message = typeof data?.error?.message === "string" ? data.error.message : undefined
+
+    if (status === 401 || type === "authentication_error") return { code: "invalid_key", message }
+    if (status === 404 || type === "not_found_error") return { code: "model_not_found", message }
+    if (status === 429) {
+        const retryAfter = headers["retry-after"]
+        return { code: "rate_limited", message: retryAfter ? `Rate limited, retry after ${retryAfter}s` : message }
+    }
+    if (type === "overloaded_error") return { code: "server_error", message }
+
+    // 403/400/500/529 are covered by the generic status mapping
+    return null
+}
 
 export class AnthropicProvider extends APIModel {
     readonly id = "anthropic"
     readonly fallbackModel = "claude-haiku-4-5"
+    protected testQuirks = anthropicQuirks
 
     private getHeaders(apiKey: string) {
         return { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" }
@@ -39,13 +58,14 @@ export class AnthropicProvider extends APIModel {
             })
             const data = response.data
 
-            if (data?.stop_reason === "refusal") throw new Error("Request was refused by the model")
-            if (data?.stop_reason === "length") throw new Error("Response was cut off at the token limit")
+            if (data?.stop_reason === "refusal") throw codedError("refusal", "Request was refused by the model")
+            if (data?.stop_reason === "length") throw codedError("bad_response", "Response was cut off at the token limit")
 
             const textBlock = Array.isArray(data?.content) ? data.content.find((block: any) => block?.type === "text") : undefined
             return textBlock?.text || ""
         } catch (err) {
-            throw new Error("Failed to complete request: " + (err instanceof Error ? err.message : String(err)))
+            // rethrow with a stable code so callers can react to the class of failure
+            throw this.toLLMError(err, anthropicQuirks)
         }
     }
 }

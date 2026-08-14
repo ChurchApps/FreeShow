@@ -1,13 +1,25 @@
 import axios from "axios"
 import type { LLMCompletionOptions } from "../../../../types/ai/AiModels"
-import { APIModel } from "./APIModel"
+import type { ProviderQuirks } from "./APIModel"
+import { APIModel, codedError } from "./APIModel"
 
 const API_URL = "https://api.openai.com/v1/chat/completions"
 const MODELS_URL = "https://api.openai.com/v1/models"
 
+// a 429 with insufficient_quota is a billing problem, not a transient rate limit
+const openaiQuirks: ProviderQuirks = (status, data) => {
+    if (status === 429 && data?.error?.code === "insufficient_quota") {
+        const message = typeof data.error.message === "string" ? data.error.message : undefined
+        return { code: "rate_limited", message: message || "API quota exceeded, check your OpenAI plan and billing" }
+    }
+
+    return null
+}
+
 export class OpenAIProvider extends APIModel {
     readonly id = "openai"
     readonly fallbackModel = "gpt-4o-mini"
+    protected testQuirks = openaiQuirks
 
     private getHeaders(apiKey: string) {
         return { Authorization: `Bearer ${apiKey}`, "content-type": "application/json" }
@@ -44,12 +56,13 @@ export class OpenAIProvider extends APIModel {
             })
             const choice = response.data?.choices?.[0]
 
-            if (choice?.message?.refusal) throw new Error("Request was refused by the model: " + String(choice.message.refusal))
-            if (choice?.finish_reason === "length") throw new Error("Response was cut off at the token limit")
+            if (choice?.message?.refusal) throw codedError("refusal", "Request was refused by the model: " + String(choice.message.refusal))
+            if (choice?.finish_reason === "length") throw codedError("bad_response", "Response was cut off at the token limit")
 
             return choice?.message?.content || ""
         } catch (err) {
-            throw new Error("Failed to complete request: " + (err instanceof Error ? err.message : String(err)))
+            // rethrow with a stable code so callers can react to the class of failure
+            throw this.toLLMError(err, openaiQuirks)
         }
     }
 }

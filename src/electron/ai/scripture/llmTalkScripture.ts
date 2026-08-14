@@ -1,4 +1,5 @@
 import { getLLMProvider, type llmProviders } from "../llm/llmProviders"
+import { codedError } from "../llm/models/APIModel"
 
 export interface RawDetection {
     book: string
@@ -125,7 +126,13 @@ export function getLLMScriptureProvider(id: keyof typeof llmProviders) {
                 jsonSchema: DETECTION_SCHEMA,
                 signal
             })
-            return { references: parseDetectionResponse(rawResponse) }
+
+            // an unparsable answer is a transient bad_response - the coordinator skips the window & keeps going
+            try {
+                return { references: parseDetectionResponse(rawResponse) }
+            } catch (err) {
+                throw codedError("bad_response", (err as Error)?.message)
+            }
         }
     }
 }

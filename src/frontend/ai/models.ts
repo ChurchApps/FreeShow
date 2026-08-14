@@ -1,4 +1,23 @@
-import type { AIProviderId } from "../../types/ai/AiScripture"
+export type AIProviderId = "anthropic" | "openai" | "gemini" | "ollama"
+
+// stable LLM error codes (electron ai/llm) -> locale keys (unknown codes pass through as-is)
+const AI_ERROR_LANG_KEYS: { [code: string]: string } = {
+    invalid_key: "ai.error_invalid_key",
+    forbidden: "ai.error_forbidden",
+    model_not_found: "ai.error_model_not_found",
+    rate_limited: "ai.error_rate_limited",
+    invalid_request: "ai.error_invalid_request",
+    server_error: "ai.error_server_error",
+    timeout: "ai.error_timeout",
+    network: "ai.error_network",
+    refusal: "ai.error_refusal",
+    bad_response: "ai.error_bad_response",
+    ollama_not_running: "ai.error_ollama_not_running"
+}
+
+export function aiErrorText(code: string): string {
+    return AI_ERROR_LANG_KEYS[code] || code
+}
 
 export const AI_PROVIDER_MODELS: { [id in AIProviderId]: { models: { id: string; name: string; recommended?: boolean }[]; defaultModel: string } } = {
     anthropic: {
