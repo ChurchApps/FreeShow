@@ -161,6 +161,47 @@ describe("NemotronDriver", () => {
         expect(segments).toEqual([])
     })
 
+    // partial decodes: PARTIAL_INTERVAL_SAMPLES (1.6s) is 16 of the 100ms test chunks
+    function pushChunks(count: number) {
+        for (let i = 0; i < count; i++) driver.pushAudio(chunk())
+    }
+
+    it("streams out the words two consecutive partial decodes agree on", () => {
+        state.detected = true
+        state.text = "in the beginning"
+        pushChunks(16) // first partial: nothing out yet - agreement needs two reads
+        expect(segments).toEqual([])
+        expect(state.createdStreams).toBe(1)
+
+        state.text = "in the beginning god created"
+        pushChunks(16) // second partial: the first three words are stable
+        expect(segments.map((segment) => segment.text)).toEqual(["in the beginning"])
+
+        state.text = "in the beginning god created the heaven"
+        state.closed = 1
+        driver.pushAudio(chunk())
+        pushDeferTail(driver)
+
+        // the close delivers the rest - no word is ever emitted twice
+        expect(segments.map((segment) => segment.text)).toEqual(["in the beginning", "god created the heaven"])
+    })
+
+    it("never retracts emitted words when a later read revises them", () => {
+        state.detected = true
+        state.text = "he said go"
+        pushChunks(16)
+        state.text = "he said go up"
+        pushChunks(16)
+        expect(segments.map((segment) => segment.text)).toEqual(["he said go"])
+
+        // the final read revises the opening - the emitted words stand, only the remainder goes out
+        state.text = "we said go up now"
+        state.closed = 1
+        driver.pushAudio(chunk())
+        pushDeferTail(driver)
+        expect(segments.map((segment) => segment.text)).toEqual(["he said go", "up now"])
+    })
+
     it("flushes an in-progress utterance on stop", async () => {
         state.detected = true
         driver.pushAudio(chunk())

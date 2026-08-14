@@ -16,6 +16,12 @@
 //    ("next verse") accept the audio and decode to nothing. Batch decoding the exact
 //    same samples returns the full text every time, and matches how sherpa's own
 //    VAD-segmented examples drive their recognizers.
+//
+// Long continuous speech does NOT wait for the VAD boundary: while an utterance is open,
+// the audio so far is periodically re-decoded (still one batch on a fresh stream), and the
+// words two consecutive decodes agree on are emitted immediately. The unstable tail is held
+// back until it stabilizes or the utterance closes - so text streams out while the speaker
+// is mid-sentence, and nothing already emitted is ever retracted.
 
 import type { DriverCallbacks, TranscriberSegment, TranscriptionDriver } from "../types"
 import type { NemotronModelPaths } from "./manager"
@@ -31,8 +37,15 @@ const VAD_THRESHOLD = 0.3
 const VAD_MIN_SILENCE = 0.8
 // low enough that a short soft word after a pause ("...verse" trailing a command) still counts as speech
 const VAD_MIN_SPEECH = 0.15
-// force a boundary during continuous speech so segments keep flowing
-const VAD_MAX_SPEECH = 20
+// force a boundary during continuous speech - partial decodes stream the text out along the way,
+// this cap mostly bounds how much audio a single (synchronous) batch decode can ever cover
+const VAD_MAX_SPEECH = 12
+
+// partial decodes: how much new audio accumulates before the open utterance is re-decoded
+const PARTIAL_INTERVAL_SAMPLES = 1.6 * SAMPLE_RATE
+// a partial decode this slow means the utterance has grown too heavy for live re-decoding on this
+// machine - stop partials for the rest of the utterance and let the close deliver the remainder
+const PARTIAL_MAX_DECODE_MS = 1000
 
 // audio kept from just before the VAD triggers - long enough that the batch has lead-in for the encoder to
 // warm up on before the first word, or the utterance's opening syllables decode garbled
@@ -71,6 +84,13 @@ export class NemotronDriver implements TranscriptionDriver {
     private inUtterance = false
     // set when the VAD closed - the decode waits for CLOSE_DEFER_SAMPLES of real tail audio first
     private finalizeAtSample = 0
+
+    // partial decode state for the open utterance
+    private nextPartialAtSamples = 0
+    private partialsDisabled = false
+    private lastPartialWords: string[] = []
+    private emittedWords = 0 // words of the open utterance already emitted
+    private nextEmitStartMs = 0
 
     private preroll: Float32Array[] = []
     private prerollSamples = 0
@@ -158,6 +178,12 @@ export class NemotronDriver implements TranscriptionDriver {
                     this.utteranceStartSample = Math.max(0, this.totalSamples - this.prerollSamples)
                     this.preroll = []
                     this.prerollSamples = 0
+
+                    this.nextPartialAtSamples = this.utteranceSamples + PARTIAL_INTERVAL_SAMPLES
+                    this.partialsDisabled = false
+                    this.lastPartialWords = []
+                    this.emittedWords = 0
+                    this.nextEmitStartMs = Math.round((this.utteranceStartSample / SAMPLE_RATE) * 1000)
                 }
                 // speech resumed inside the defer window - it was a pause, the utterance continues
                 this.finalizeAtSample = 0
@@ -182,6 +208,12 @@ export class NemotronDriver implements TranscriptionDriver {
             }
             if (closed && this.inUtterance) this.finalizeAtSample = this.totalSamples + CLOSE_DEFER_SAMPLES
 
+            // stream the open utterance out early - unless the close is already pending (the full decode is imminent)
+            if (this.inUtterance && !this.finalizeAtSample && !this.partialsDisabled && this.utteranceSamples >= this.nextPartialAtSamples) {
+                this.nextPartialAtSamples = this.utteranceSamples + PARTIAL_INTERVAL_SAMPLES
+                this.decodePartial()
+            }
+
             if (this.finalizeAtSample && this.totalSamples >= this.finalizeAtSample) {
                 this.finalizeAtSample = 0
                 this.inUtterance = false
@@ -195,27 +227,59 @@ export class NemotronDriver implements TranscriptionDriver {
     // UTTERANCE HANDLING
 
     /** Decode the buffered utterance in one batch on a fresh stream - see the file header for why. */
-    private finalizeUtterance() {
-        const endMs = Math.round((this.totalSamples / SAMPLE_RATE) * 1000)
-        const startMs = Math.round((this.utteranceStartSample / SAMPLE_RATE) * 1000)
-
-        const batch = new Float32Array(this.utteranceSamples + FINALIZE_PAD_SAMPLES)
+    private decodeBatch(finalize: boolean): string {
+        // partials skip the trailing pad: the unflushed last word is exactly the unstable tail being held back
+        const batch = new Float32Array(this.utteranceSamples + (finalize ? FINALIZE_PAD_SAMPLES : 0))
         let offset = 0
         for (const part of this.utterance) {
             batch.set(part, offset)
             offset += part.length
         }
-        this.utterance = []
-        this.utteranceSamples = 0
 
         const stream = this.recognizer.createStream()
         stream.acceptWaveform({ sampleRate: SAMPLE_RATE, samples: batch })
         while (this.recognizer.isReady(stream)) this.recognizer.decode(stream)
-        const text: string = (this.recognizer.getResult(stream).text || "").trim()
+        return ((this.recognizer.getResult(stream).text || "") as string).trim()
+    }
 
-        if (!text) return
+    /** Re-decode the open utterance & emit the words two consecutive decodes agree on. */
+    private decodePartial() {
+        const startedAt = Date.now()
+        const text = this.decodeBatch(false)
+        if (Date.now() - startedAt > PARTIAL_MAX_DECODE_MS) this.partialsDisabled = true
 
-        const segment: TranscriberSegment = { text, startMs, endMs }
+        const words = text ? text.split(/\s+/) : []
+        let agreed = 0
+        while (agreed < words.length && agreed < this.lastPartialWords.length && words[agreed] === this.lastPartialWords[agreed]) agreed++
+        this.lastPartialWords = words
+
+        // emitted words are never retracted - a revision earlier in the text only holds further emission back
+        if (agreed <= this.emittedWords) return
+        this.emitWords(words.slice(this.emittedWords, agreed))
+        this.emittedWords = agreed
+    }
+
+    private finalizeUtterance() {
+        const text = this.decodeBatch(true)
+        this.utterance = []
+        this.utteranceSamples = 0
+
+        // the final read delivers whatever follows the words already emitted by the partial decodes
+        const words = text ? text.split(/\s+/) : []
+        this.emitWords(words.slice(Math.min(this.emittedWords, words.length)))
+
+        this.lastPartialWords = []
+        this.emittedWords = 0
+        this.partialsDisabled = false
+    }
+
+    private emitWords(words: string[]) {
+        if (!words.length) return
+
+        const endMs = Math.round((this.totalSamples / SAMPLE_RATE) * 1000)
+        const segment: TranscriberSegment = { text: words.join(" "), startMs: this.nextEmitStartMs, endMs }
+        this.nextEmitStartMs = endMs
+
         if (this.options.language) segment.language = this.options.language
         this.options.onSegment(segment)
     }
