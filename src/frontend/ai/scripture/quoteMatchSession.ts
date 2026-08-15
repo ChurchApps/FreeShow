@@ -151,6 +151,7 @@ function toDetectedReference(emission: QuoteMatchEmission): DetectedReference {
         quote: emission.quoteText,
         matchedBibleId: emission.translationId,
         continuation: emission.kind === "continuation" || undefined,
+        corrects: emission.corrects ? { bookNumber: emission.corrects.book, chapter: emission.corrects.chapter, verseStart: emission.corrects.verseStart, verseEnd: emission.corrects.verseEnd } : undefined,
         timestamp: Date.now()
     }
 }

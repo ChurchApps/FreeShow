@@ -351,8 +351,9 @@ export async function handleDetection(ref: DetectedReference): Promise<void> {
     if (get(aiScriptureAutoPaused) || get(outLocked)) return
     if (confidencePercent(ref.confidence) < (typeof settings.autoMinConfidence === "number" ? settings.autoMinConfidence : 80)) return
     // quoted verses are separately gated - except follow-along continuations, which only ever
-    // advance the passage already live on the output within its own chapter
-    if (ref.type === "quoted" && !settings.autoProjectQuoted && !ref.continuation) return
+    // advance the passage already live on the output within its own chapter, and corrections
+    // replacing the very verse this feature just projected
+    if (ref.type === "quoted" && !settings.autoProjectQuoted && !ref.continuation && !correctsLiveProjection(ref)) return
 
     queueAutoProjection(ref)
 }
@@ -422,14 +423,19 @@ export function confidencePercent(confidence: DetectedReference["confidence"]): 
 }
 
 // same book/chapter with an overlapping verse range
-function isSameReference(a: DetectedReference, b: DetectedReference) {
+type RefRange = Pick<DetectedReference, "bookNumber" | "chapter" | "verseStart" | "verseEnd">
+
+function isSameReference(a: RefRange, b: RefRange) {
     return a.bookNumber === b.bookNumber && a.chapter === b.chapter && a.verseStart <= b.verseEnd && b.verseStart <= a.verseEnd
 }
 
 function addSuggestion(ref: DetectedReference) {
     aiScriptureSuggestions.update((list) => {
         const now = Date.now()
-        const active = list.filter((a) => now - a.timestamp < SUGGESTION_MAX_AGE)
+        let active = list.filter((a) => now - a.timestamp < SUGGESTION_MAX_AGE)
+
+        // a correction supersedes an earlier similar-passage suggestion - replace, don't stack
+        if (ref.corrects) active = active.filter((a) => !isSameReference(a, ref.corrects!))
 
         // skip near-duplicates of an existing suggestion
         if (active.some((a) => isSameReference(a, ref))) return active
@@ -452,8 +458,23 @@ export function dismissSuggestion(id: string): void {
 
 // AUTO PROJECTION
 
+/** The wrong verse of a similar pair is on the output right now and this detection fixes it. */
+function correctsLiveProjection(ref: DetectedReference): boolean {
+    return !!(ref.corrects && lastAutoProjectedRef && isSameReference(lastAutoProjectedRef, ref.corrects))
+}
+
 function queueAutoProjection(ref: DetectedReference) {
     const settings = getSettings()
+
+    // a correction replacing what is live doesn't wait out the display cooldown - the point is
+    // to take the wrong verse DOWN as fast as the right one goes up
+    if (correctsLiveProjection(ref)) {
+        if (autoTimer) clearTimeout(autoTimer)
+        autoTimer = null
+        pendingAutoRef = null
+        projectDetection(ref)
+        return
+    }
 
     // don't re-project a reference that was just auto projected
     const refCooldownMs = (settings.refCooldownSeconds ?? 90) * 1000

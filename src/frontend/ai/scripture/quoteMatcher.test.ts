@@ -179,6 +179,51 @@ describe("QuoteMatcher", () => {
         expect(out[0].quoteText).toContain("god so loved")
     })
 
+    it("reports only the verse being read even when the recitation spills onward", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        const first = matcher.onSegment(seg("for god so loved the world that he gave his only begotten son"))
+        const second = matcher.onSegment(seg("that whosoever believeth in him should not perish but have everlasting life for god sent not his son into the world to condemn the world"))
+        const all = [...first, ...second]
+        const start = all.find((emission) => emission.verseStart === 16)
+        expect(start).toBeDefined()
+        expect(all.every((emission) => emission.verseEnd === emission.verseStart)).toBe(true)
+    })
+
+    // an invented three-verse passage with distinctive vocabulary, so each verse clears the
+    // floors on its own (filler verses give the idf weights a realistic spread)
+    const CHAIN: IndexableVerse[] = [
+        verse(30, 2, 1, "the watchman climbed the granite tower counting distant ships at anchor"),
+        verse(30, 2, 2, "silver trumpets sounded from the harbor calling weary sailors homeward"),
+        verse(30, 2, 3, "lanterns flickered along the pier while merchants counted copper coins"),
+        verse(30, 4, 1, "rain swept the terraced hills and the shepherds sought shelter"),
+        verse(30, 4, 2, "the potter shaped red clay while the wheel spun beneath his hands"),
+        verse(30, 5, 1, "grain merchants weighed their measures against the honest stone"),
+        verse(30, 5, 2, "the vineyard keeper pruned the branches before the autumn rains"),
+        verse(30, 6, 1, "smoke rose from the evening fires as the city gates were closed")
+    ]
+
+    it("follows a multi-verse reading one verse at a time", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("kjv", CHAIN)])
+        const first = matcher.onSegment(seg("the watchman climbed the granite tower"))
+        const second = matcher.onSegment(seg("counting distant ships at anchor"))
+        const third = matcher.onSegment(seg("silver trumpets sounded from the harbor calling weary sailors homeward"))
+        const fourth = matcher.onSegment(seg("lanterns flickered along the pier while merchants counted copper coins"))
+        const all = [...first, ...second, ...third, ...fourth]
+
+        expect(all.map((emission) => emission.verseStart)).toEqual([1, 2, 3])
+        expect(all.every((emission) => emission.book === 30 && emission.chapter === 2 && emission.verseStart === emission.verseEnd)).toBe(true)
+        expect(all[1].kind).toBe("continuation")
+        expect(all[2].kind).toBe("continuation")
+    })
+
+    it("emits on the first floor-passing segment when earlier weak segments already pointed there (sustain credit)", () => {
+        const matcher = new QuoteMatcher([kjvIndex()], noSingleShot)
+        expect(matcher.onSegment(seg("for god so loved the world that he gave his only begotten"))).toEqual([])
+        const second = matcher.onSegment(seg("son that whosoever believeth in him should not perish but have everlasting life"))
+        expect(second).toHaveLength(1)
+        expect(second[0]).toMatchObject({ book: 43, chapter: 3, verseStart: 16 })
+    })
+
     // single-shot disabled so these tests isolate the cue-vs-sustain decision
     const noSingleShot = { SINGLE_SHOT_INFORMATIVE: 99, SINGLE_SHOT_WEIGHT: 999 }
     const HALF_ROMANS = "and we know that all things work together for good to them that love god"
@@ -206,5 +251,91 @@ describe("QuoteMatcher", () => {
         matcher.onSegment(seg("jesus said many things during his ministry"))
         // 20s later the cue window (12s) has passed - back to the sustained path
         expect(matcher.onSegment(seg(HALF_ROMANS, 20000))).toEqual([])
+    })
+})
+
+describe("QuoteMatcher corrections", () => {
+    // an invented cross-book twin pair: identical opening, diverging tails (the similar-passage
+    // trap), with filler corpus so idf weights behave
+    const TWIN: IndexableVerse[] = [
+        verse(19, 5, 9, "the faithful servant rises before dawn and quietly gathers scattered wheat across the eastern field while the master sleeps"),
+        verse(45, 2, 4, "the faithful servant rises before dawn and quietly gathers scattered wisdom beside the temple lampstand until the morning watch returns"),
+        verse(19, 7, 2, "sing praises with the harp and lift a joyful sound to heaven"),
+        verse(19, 9, 3, "the mountains tremble when thunder rolls across the mighty waters"),
+        verse(45, 6, 1, "walk in kindness bearing one another through every trial and sorrow"),
+        verse(45, 9, 8, "hope endures beyond the grave because mercy triumphs over judgment"),
+        verse(66, 2, 5, "a lamp burns bright upon the golden stand giving light to the house"),
+        verse(66, 4, 7, "rivers of living water flow from the throne renewing the weary lands"),
+        verse(40, 3, 1, "a voice cries out prepare the way and make the paths straight"),
+        verse(41, 5, 6, "the storm obeyed his word and a great calm settled over the sea"),
+        verse(42, 8, 2, "seed fell among thorns and the cares of riches choked the growing plant"),
+        verse(44, 12, 3, "chains fell away as the messenger led him past the sleeping guards")
+    ]
+    const twinIndex = () => buildTranslationIndex("kjv", TWIN)
+
+    it("corrects a similar-passage mispick once later words settle it", () => {
+        const matcher = new QuoteMatcher([twinIndex()])
+        // the shared opening is all the matcher can see - it fires the first twin
+        const first = matcher.onSegment(seg("the faithful servant rises before dawn"))
+        const second = matcher.onSegment(seg("and quietly gathers scattered"))
+        // the tail belongs to the OTHER twin: the mispick must be superseded
+        const third = matcher.onSegment(seg("wisdom beside the temple lampstand until the"))
+        const fourth = matcher.onSegment(seg("morning watch returns"))
+        const all = [...first, ...second, ...third, ...fourth]
+
+        const initial = all.find((emission) => emission.book === 19)
+        expect(initial).toBeDefined()
+        expect(initial!.kind).toBe("fresh")
+
+        const correction = all.find((emission) => emission.kind === "correction")
+        expect(correction).toBeDefined()
+        expect(correction!).toMatchObject({ book: 45, chapter: 2, verseStart: 4, confidence: "high" })
+        expect(correction!.corrects).toMatchObject({ book: 19, chapter: 5, verseStart: 9 })
+    })
+
+    it("a genuinely new quote after a finished one is fresh, not a correction", () => {
+        const matcher = new QuoteMatcher([twinIndex()])
+        matcher.onSegment(seg("the faithful servant rises before dawn and quietly gathers scattered wheat"))
+        matcher.onSegment(seg("across the eastern field while the master sleeps"))
+        // long gap: the first quote's speech has aged out of the window entirely
+        const later = [...matcher.onSegment(seg("rivers of living water flow from the throne renewing the weary lands", 30000)), ...matcher.onSegment(seg("rivers of living water flow from the throne renewing the weary lands"))]
+        expect(later.length).toBeGreaterThanOrEqual(1)
+        for (const emission of later) expect(emission.kind).not.toBe("correction")
+    })
+})
+
+describe("QuoteMatcher verbatim continuation", () => {
+    // the next verse is all common words (a real trap: "And God said, Let there be light...") -
+    // the filler corpus makes every token of verse 2 common enough to carry no informative weight
+    const PLAIN: IndexableVerse[] = [
+        verse(1, 1, 1, "the maker fashioned every quiet river crossing the silver valley floor"),
+        verse(1, 1, 2, "and he said it was good and it was so"),
+        verse(1, 2, 1, "he said the work was good and so it stood"),
+        verse(1, 2, 2, "it was said among them that all he made was good"),
+        verse(1, 3, 1, "and so it was that he said all of it was good"),
+        verse(1, 3, 2, "they said it was so and he saw all was good"),
+        verse(1, 4, 1, "so he said it was good and it was full of light")
+    ]
+
+    it("continues into an all-common-words next verse recited start to end", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("kjv", PLAIN)])
+        matcher.onSegment(seg("the maker fashioned every quiet river"))
+        const first = matcher.onSegment(seg("crossing the silver valley floor"))
+        expect(first).toHaveLength(1)
+        expect(first[0].verseStart).toBe(1)
+
+        const second = matcher.onSegment(seg("and he said it was good and it was so"))
+        const continuation = second.find((emission) => emission.kind === "continuation")
+        expect(continuation).toBeDefined()
+        expect(continuation!.verseStart).toBe(2)
+    })
+
+    it("does not treat scattered common words as a verbatim continuation", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("kjv", PLAIN)])
+        matcher.onSegment(seg("the maker fashioned every quiet river"))
+        expect(matcher.onSegment(seg("crossing the silver valley floor"))).toHaveLength(1)
+        // ordinary speech sharing a few words with verse 2, nowhere near a full recitation
+        const after = matcher.onSegment(seg("and i think he was a good man in every way"))
+        expect(after.find((emission) => emission.kind === "continuation")).toBeUndefined()
     })
 })

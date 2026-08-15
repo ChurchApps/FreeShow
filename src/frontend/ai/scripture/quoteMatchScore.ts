@@ -16,6 +16,10 @@ export const TUNING = {
     SPILL_TOKENS: 24, // next-verse tokens appended to the scoring window
 
     TOP_K: 8, // candidates scored per segment (beyond injected ones)
+    // scores are span-relative, so a verse and the neighbor a reading flowed into often tie at
+    // ~1.0. Within this band the candidate matching the EARLIEST transcript stretch wins - that
+    // is where the reading started, and continuations advance from there
+    TOP_TIE_BAND: 0.05,
     // 2, not 3: a short verse ("The LORD is my shepherd; I shall not want.") only OWNS two rare
     // keys - the weight floor still demands real idf mass, and the emission floors do the rest
     MIN_VOTE_KEYS: 2,
@@ -41,6 +45,11 @@ export const TUNING = {
     CONT_MIN_WEIGHT: 10,
     CONT_DENSITY: 0.6,
     CONT_COVERAGE: 0.5,
+    // a short next verse of all-common words ("And God said, Let there be light...") can never
+    // produce informative matches - reciting essentially ALL of it verbatim continues instead
+    CONT_VERBATIM_DENSITY: 0.75,
+    CONT_VERBATIM_COVERAGE: 0.8,
+    CONT_VERBATIM_MATCHED: 6,
 
     ANCHOR_BONUS_Z0: 0.1, // same book+chapter as the live passage
     ANCHOR_BONUS_Z1: 0.05, // same book, +-1 chapter
@@ -48,6 +57,11 @@ export const TUNING = {
     CROSS_BOOK_MARGIN: 0.12, // raw-score lead a cross-book candidate needs over the best anchored one
     CROSS_BOOK_MIN_INFORMATIVE: 7,
     TRACKER_ESCAPE_MARGIN: 0.25, // cross-book lead needed to override an actively advancing recitation
+    // scores are span-relative (a matched opening stretch scores like a matched whole verse), so
+    // score margins can't see one candidate PULLING AHEAD in evidence. Carrying this much more
+    // matched idf weight than the anchored/tracked candidate bypasses the score-margin gates -
+    // that is how a similar-passage mispick gets corrected once later words settle the ambiguity
+    CORRECTION_WEIGHT_RATIO: 1.6,
     TRACKER_TTL_MS: 20000,
 
     CONSENSUS_BONUS: 0.04 // two translations independently agree on the ref

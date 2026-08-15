@@ -7,12 +7,15 @@
 //   - anchor hysteresis, so a recitation stays in the chapter being read instead of jumping
 //     to a similar verse in another book (parallel gospel passages are the classic trap)
 //   - a continuation tracker, so a reading that flows into the next verse follows along
+//   - a correction path, so a similar-passage mispick is superseded once later words settle it
 //
-// The whole machine is pure: segments in, emissions out, time taken from segment timestamps.
+// Emissions are per verse - the verse being read RIGHT NOW - and a reading advances verse by
+// verse through continuations. The whole machine is pure: segments in, emissions out, time
+// taken from segment timestamps.
 
 import type { PrefixPool, TranslationIndex } from "./quoteMatchIndex"
 import { postingsForKey, prefixIdf } from "./quoteMatchIndex"
-import { alignQuoteWindow, classify, meetsFloors, TUNING, type AlignResult, type Tuning } from "./quoteMatchScore"
+import { alignQuoteWindow, classify, meetsFloors, TUNING, type AlignResult, type QueryToken, type Tuning } from "./quoteMatchScore"
 import { canonKey, tokenizeTranscript } from "./quoteMatchTokens"
 
 export interface QuoteMatchSegment {
@@ -36,7 +39,8 @@ export interface QuoteMatchEmission {
     confidence: "high" | "medium"
     translationId: string
     quoteText: string // the transcript stretch that matched
-    kind: "fresh" | "continuation" | "upgrade"
+    kind: "fresh" | "continuation" | "upgrade" | "correction"
+    corrects?: RefKey // correction only: the earlier emission this one supersedes (same speech, better match)
 }
 
 interface Candidate {
@@ -56,7 +60,7 @@ interface ActiveTracker {
     lastAdvanceMs: number
 }
 
-interface RefKey {
+export interface RefKey {
     book: number
     chapter: number
     verseStart: number
@@ -84,6 +88,9 @@ export class QuoteMatcher {
 
     // canonical refs already emitted (with confidence, for the single medium->high upgrade)
     private emitted = new Map<string, { confidence: "high" | "medium"; upgraded: boolean }>()
+    // the last emission and WHEN its matched speech ended - a different ref built from the same
+    // speech stretch is a reinterpretation (more words narrowed the search), not a second quote
+    private lastEmitted: { ref: RefKey; queryToMs: number } | null = null
     // sustained-path memory: the top ref of the previous segment
     private previousTop: { key: string; count: number } | null = null
     // cross-book escape hatch memory
@@ -117,6 +124,7 @@ export class QuoteMatcher {
         this.seededOrdinals = []
         this.cueUntilMs = 0
         this.emitted.clear()
+        this.lastEmitted = null
     }
 
     onSegment(segment: QuoteMatchSegment): QuoteMatchEmission[] {
@@ -160,9 +168,13 @@ export class QuoteMatcher {
 
     // CANDIDATES
 
+    private windowQuery(): QueryToken[] {
+        return this.ring.map((entry) => ({ token: entry.token, endMs: entry.endMs }))
+    }
+
     private scoreCandidates(nowMs: number): Candidate[] {
         const tuning = this.tuning
-        const query = this.ring.map((entry) => ({ token: entry.token, endMs: entry.endMs }))
+        const query = this.windowQuery()
         const out: Candidate[] = []
 
         // resolve each distinct spoken token's prefix key to a pool id ONCE for all translations
@@ -267,33 +279,63 @@ export class QuoteMatcher {
         const nextOrdinal = this.tracker.verseOrdinal + 1
         const candidate = candidates.find((entry) => entry.index.translationId === this.tracker!.translationId && entry.ordinal === nextOrdinal)
         if (!candidate) return null
+        // ordinal + 1 at the end of a book is another book's first verse - never a continuation
+        if (candidate.index.book[nextOrdinal] !== this.tracker.book) return null
 
         const a = candidate.align
-        const ok = a.matchedInformative >= tuning.CONT_MIN_INFORMATIVE && a.matchedWeight >= tuning.CONT_MIN_WEIGHT && a.density >= tuning.CONT_DENSITY && a.coverage >= tuning.CONT_COVERAGE
-        if (!ok) return null
+        const informativeOk = a.density >= tuning.CONT_DENSITY && a.coverage >= tuning.CONT_COVERAGE && a.matchedInformative >= tuning.CONT_MIN_INFORMATIVE && a.matchedWeight >= tuning.CONT_MIN_WEIGHT
+        if (!informativeOk && !this.verbatimContinuation(candidate)) return null
 
         const emission = this.emit(candidate, "high", "continuation", nowMs)
         return emission
     }
 
+    /**
+     * Start-to-end recitation of the whole next verse: accepted even when its words are all too
+     * common to count as informative ("And God said, Let there be light..."). Judged on a
+     * spill-free realignment - the verse AFTER next often shares those same common words, and
+     * spill matches would otherwise stretch the span and dilute its coverage.
+     */
+    private verbatimContinuation(candidate: Candidate): boolean {
+        const tuning = this.tuning
+        const bare = alignQuoteWindow(this.windowQuery(), candidate.index, candidate.ordinal, { ...tuning, SPILL_TOKENS: 0 })
+        if (!bare) return false
+        return bare.verseFrom <= 1 && bare.verseTo >= bare.verseLength - 2 && bare.density >= tuning.CONT_VERBATIM_DENSITY && bare.coverage >= tuning.CONT_VERBATIM_COVERAGE && bare.matched >= tuning.CONT_VERBATIM_MATCHED
+    }
+
     private tryFresh(candidates: Candidate[], nowMs: number): QuoteMatchEmission[] {
         const tuning = this.tuning
-        const top = candidates[0]
+        let top = candidates[0]
         if (!top) return []
 
-        const confidence = classify(top.align, tuning)
-        if (!confidence) {
-            this.previousTop = null
-            return []
+        // near-tied candidates are usually a verse and the neighbor one reading flowed into (the
+        // span-relative score can't separate them): the one matching the earliest transcript
+        // stretch is where the reading started, so it emits first and continuation advances
+        for (const candidate of candidates) {
+            if (candidate === top) continue
+            if (top.effectiveScore - candidate.effectiveScore > tuning.TOP_TIE_BAND) break // sorted desc
+            if (candidate.align.queryFrom < top.align.queryFrom && meetsFloors(candidate.align, tuning)) top = candidate
         }
 
         const key = refKey(this.refOf(top))
 
+        const confidence = classify(top.align, tuning)
+        if (!confidence) {
+            // the top ref earns sustain credit while its evidence is still building - the floors
+            // stay the safety bar, sustain only proves the window keeps pointing at the same verse
+            this.previousTop = { key, count: this.previousTop?.key === key ? this.previousTop.count + 1 : 1 }
+            return []
+        }
+
         // cross-book protection: while a recitation is actively advancing near the anchor,
-        // a cross-book candidate must decisively beat it, twice, before it may emit
-        if (top.zone === 3) {
+        // a cross-book candidate must decisively beat it, twice, before it may emit. "Decisively"
+        // is a score margin OR weight dominance - parallel passages tie on both, while a candidate
+        // the window's later words genuinely narrowed to pulls far ahead on matched weight.
+        // With no anchor and no tracker there is nothing to be "cross" to - the floors alone gate
+        if (top.zone === 3 && (this.anchor || this.tracker)) {
+            const dominates = (other: Candidate | undefined) => !other || top.align.matchedWeight >= other.align.matchedWeight * tuning.CORRECTION_WEIGHT_RATIO
             const bestAnchored = candidates.find((entry) => entry.zone <= 2 && meetsFloors(entry.align, tuning))
-            if (bestAnchored && top.align.score < bestAnchored.align.score + tuning.CROSS_BOOK_MARGIN) {
+            if (bestAnchored && top.align.score < bestAnchored.align.score + tuning.CROSS_BOOK_MARGIN && !dominates(bestAnchored)) {
                 return this.emitInstead(bestAnchored, nowMs)
             }
             if (top.align.matchedInformative < tuning.CROSS_BOOK_MIN_INFORMATIVE) {
@@ -302,10 +344,15 @@ export class QuoteMatcher {
             if (this.tracker && nowMs - this.tracker.lastAdvanceMs <= tuning.TRACKER_TTL_MS) {
                 const trackerCandidate = candidates.find((entry) => entry.index.translationId === this.tracker!.translationId && entry.ordinal === this.tracker!.verseOrdinal)
                 const trackerScore = trackerCandidate?.align.score ?? 0
-                if (top.align.score < trackerScore + tuning.TRACKER_ESCAPE_MARGIN) return []
+                if (top.align.score < trackerScore + tuning.TRACKER_ESCAPE_MARGIN && !dominates(trackerCandidate)) return []
                 const escapes = this.escapeCandidate && this.escapeCandidate.key === key ? this.escapeCandidate.count + 1 : 1
                 this.escapeCandidate = { key, count: escapes }
-                if (escapes < 2) return []
+                if (escapes < 2) {
+                    // escape counting doubles as sustain credit, so the eventual emission is not
+                    // delayed a second time by the sustain wait it already served here
+                    this.previousTop = { key, count: this.previousTop?.key === key ? this.previousTop.count + 1 : 1 }
+                    return []
+                }
             }
         }
 
@@ -330,7 +377,24 @@ export class QuoteMatcher {
 
         if (!singleShot && !cued && sustained < tuning.SUSTAIN_SEGMENTS) return []
 
-        return [this.emit(top, confidence, "fresh", nowMs)]
+        // a stronger match for the SAME speech that fired the previous emission means more words
+        // narrowed the search - supersede that emission instead of standing next to it
+        const corrects = confidence === "high" ? this.correctionTarget(top) : null
+        const emission = this.emit(top, confidence, corrects ? "correction" : "fresh", nowMs)
+        if (corrects) emission.corrects = corrects
+        return [emission]
+    }
+
+    /** The earlier emission this candidate supersedes, or null when it is simply a new quote. */
+    private correctionTarget(candidate: Candidate): RefKey | null {
+        const last = this.lastEmitted
+        if (!last) return null
+        const ref = this.refOf(candidate)
+        if (refKey(ref) === refKey(last.ref)) return null
+        // same chapter is a reading advancing (or a refrain), never a mispick to retract
+        if (ref.book === last.ref.book && ref.chapter === last.ref.chapter) return null
+        const fromMs = this.ring[candidate.align.queryFrom]?.endMs
+        return fromMs !== undefined && fromMs <= last.queryToMs ? { ...last.ref } : null
     }
 
     /** The anchored candidate wins over a cross-book top - emit it if it qualifies on its own. */
@@ -352,14 +416,16 @@ export class QuoteMatcher {
     }
 
     private refOf(candidate: Candidate): RefKey {
-        const { index, ordinal, align } = candidate
-        // enough of the recitation spilled into the following verse: report the range
-        const spansNext = align.spillInformative >= 2 && ordinal + 1 < index.verseCount && index.book[ordinal + 1] === index.book[ordinal]
+        const { index, ordinal } = candidate
+        // always the single verse being read - a recitation flowing onward advances verse by verse
+        // through the continuation tracker. Showing verses combined is the speaker's explicit call
+        // (a spoken range reference), never the matcher's. Verses merged by the translation itself
+        // (verseEnd > verseStart in the index) stay one unit.
         return {
             book: index.book[ordinal],
             chapter: index.chapter[ordinal],
             verseStart: index.verseStart[ordinal],
-            verseEnd: spansNext ? index.verseEnd[ordinal + 1] : index.verseEnd[ordinal]
+            verseEnd: index.verseEnd[ordinal]
         }
     }
 
@@ -372,11 +438,12 @@ export class QuoteMatcher {
             translationId: candidate.index.translationId,
             book: ref.book,
             chapter: candidate.index.chapter[candidate.ordinal],
-            verseOrdinal: candidate.ordinal + (ref.verseEnd > candidate.index.verseEnd[candidate.ordinal] ? 1 : 0),
+            verseOrdinal: candidate.ordinal,
             lastAdvanceMs: nowMs
         }
         this.previousTop = null
         this.escapeCandidate = null
+        this.lastEmitted = { ref, queryToMs: this.ring[candidate.align.queryTo]?.endMs ?? nowMs }
 
         const quoteTokens = this.ring.slice(candidate.align.queryFrom, candidate.align.queryTo + 1).map((entry) => entry.token)
 
