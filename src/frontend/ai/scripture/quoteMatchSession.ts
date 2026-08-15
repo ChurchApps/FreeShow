@@ -11,7 +11,7 @@ import { get } from "svelte/store"
 import { stripMarkdown } from "json-bible/lib/markdown"
 import { stripText } from "json-bible/lib/util"
 import type { DetectedReference } from "../../../types/ai/AiScripture"
-import { ai, scriptures, scripturesCache } from "../../stores"
+import { ai, aiQuoteMatchActive, scriptures, scripturesCache } from "../../stores"
 import { buildTranslationIndex, type IndexableVerse, type TranslationIndex } from "./quoteMatchIndex"
 import { QuoteMatcher, type QuoteMatchEmission } from "./quoteMatcher"
 
@@ -56,8 +56,14 @@ export function startQuoteMatching(config: QuoteMatchSessionConfig): void {
         .then((indexes) => {
             if (token !== sessionToken) return // superseded by a newer start or a stop
             starting = false
-            if (!indexes.length) return // no local verse text available (e.g. API bibles only)
+            if (!indexes.length) {
+                // no local verse text available (e.g. API bibles only) - say so, or this is invisible
+                console.warn("[AiScripture] Quote matching inactive: none of the selected bibles have local verse text", config.bibleIds)
+                return
+            }
 
+            console.info(`[AiScripture] Quote matching active: ${indexes.length} translation${indexes.length === 1 ? "" : "s"} indexed`)
+            aiQuoteMatchActive.set(true)
             matcher = new QuoteMatcher(indexes)
             if (pendingAnchor) matcher.setAnchor(pendingAnchor)
 
@@ -76,6 +82,7 @@ export function startQuoteMatching(config: QuoteMatchSessionConfig): void {
 export function stopQuoteMatching(): void {
     sessionToken++
     starting = false
+    aiQuoteMatchActive.set(false)
     matcher = null
     gate = null
     onDetection = null

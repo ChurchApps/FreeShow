@@ -5,9 +5,8 @@
     import { getShortBibleName } from "../../components/drawer/bible/scripture"
     import T from "../../components/helpers/T.svelte"
     import MaterialButton from "../../components/inputs/MaterialButton.svelte"
-    import MaterialDropdown from "../../components/inputs/MaterialDropdown.svelte"
     import MaterialToggleSwitch from "../../components/inputs/MaterialToggleSwitch.svelte"
-    import { activePage, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, outLocked, scriptures, settingsTab } from "../../stores"
+    import { activePage, ai, aiQuoteMatchActive, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, outLocked, scriptures, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../scripture/aiScripture"
     import { audioLevelStore, SpeechToText } from "../stt/stt"
@@ -151,11 +150,6 @@
         })
     }
 
-    const modeOptions = [
-        { value: "confirm", label: translateText("ai_scripture.mode_confirm") },
-        { value: "auto", label: translateText("ai_scripture.mode_auto") }
-    ]
-
     // SUGGESTIONS
     // confident detections surface here so the operator can present them with one click
     // (auto mode projects on its own - the cards double as a record of what was heard)
@@ -183,24 +177,17 @@
     <div class="backdrop" on:mousedown|self={toggleExpand} transition:fade={{ duration: 250 }}></div>
 {/if}
 
-{#if !isOpen && (suggestions.length || $aiScriptureAutoPaused || $aiScriptureHasProjected || (isListening && latestSegment))}
+{#if !isOpen && (suggestions.length || $aiScriptureAutoPaused || (isListening && latestSegment))}
     <div class="ai-stack">
         {#if isListening && latestSegment}
             <button class="ticker" title={translateText("ai_scripture.transcript")} on:click={toggleExpand}>{latestSegment}</button>
         {/if}
 
-        {#if $aiScriptureAutoPaused || $aiScriptureHasProjected}
+        {#if $aiScriptureAutoPaused}
+            <!-- restore-previous intentionally only lives in the expanded view - the closed stack stays minimal -->
             <div class="chips" transition:fly={{ y: 20, duration: 250 }}>
-                {#if $aiScriptureAutoPaused}
-                    <span class="badge paused"><T id="ai_scripture.auto_paused" /></span>
-                    <MaterialButton icon="play" title="ai_scripture.resume_auto" on:click={() => resumeAutoProjection()} />
-                {/if}
-
-                <div class="fill" />
-
-                {#if $aiScriptureHasProjected}
-                    <MaterialButton icon="undo" title="ai_scripture.restore_previous" disabled={$outLocked} on:click={() => restorePrevious()} />
-                {/if}
+                <span class="badge paused"><T id="ai_scripture.auto_paused" /></span>
+                <MaterialButton icon="play" title="ai_scripture.resume_auto" on:click={() => resumeAutoProjection()} />
             </div>
         {/if}
 
@@ -263,8 +250,9 @@
                         {/if}
 
                         {#if sessionMode === "scripture" && isListening && $aiScriptureStatus.keyless}
-                            <span class="badge" data-title={translateText($ai.scripture?.quoteMatching !== false ? "ai_scripture.on_device_tip" : "ai_scripture.keyless_tip")}>
-                                <T id={$ai.scripture?.quoteMatching !== false ? "ai_scripture.on_device_only" : "ai_scripture.explicit_only"} />
+                            <!-- "on-device" only when the quote match indexes actually built - not just when the setting is on -->
+                            <span class="badge" data-title={translateText($aiQuoteMatchActive ? "ai_scripture.on_device_tip" : "ai_scripture.keyless_tip")}>
+                                <T id={$aiQuoteMatchActive ? "ai_scripture.on_device_only" : "ai_scripture.explicit_only"} />
                             </span>
                         {/if}
                     </div>
@@ -275,6 +263,9 @@
                         {/if}
                         {#if $aiScriptureHasProjected}
                             <MaterialButton icon="undo" title="ai_scripture.restore_previous" disabled={$outLocked} on:click={() => restorePrevious()} />
+                        {/if}
+                        {#if sessionMode === "scripture"}
+                            <MaterialButton icon="settings" title="ai_scripture.setup" on:click={openSetup} />
                         {/if}
                         <MaterialButton icon={isListening ? "stop" : "microphone"} title={isListening ? "ai_scripture.stop_listening" : "ai_scripture.start_listening"} isActive={isListening} disabled={isStarting || sessionMode === "off"} on:click={toggleListening} />
                         <MaterialButton class="popup-close" icon="close" iconSize={1.3} title="actions.close" style="padding: 10px;" on:click={toggleExpand} />
@@ -303,10 +294,10 @@
                 </div>
 
                 {#if sessionMode === "scripture"}
+                    <!-- quick settings: toggles only - a dropdown's option list would be clipped by the bubble's rounded overflow -->
                     <div class="card-footer">
-                        <MaterialDropdown label="ai_scripture.mode" options={modeOptions} value={$ai.scripture?.mode || "confirm"} defaultValue="confirm" on:change={(e) => updateScripture("mode", e.detail)} />
+                        <MaterialToggleSwitch label="ai_scripture.mode_auto" checked={($ai.scripture?.mode || "confirm") === "auto"} defaultValue={false} on:change={(e) => updateScripture("mode", e.detail ? "auto" : "confirm")} />
                         <MaterialToggleSwitch label="ai_scripture.voice_commands" checked={$ai.scripture?.voiceCommands === true} defaultValue={false} on:change={(e) => updateScripture("voiceCommands", e.detail)} />
-                        <MaterialButton icon="settings" title="ai_scripture.setup" on:click={openSetup} />
                     </div>
                 {/if}
             </div>
@@ -471,8 +462,8 @@
 
     .card-footer {
         display: flex;
-        align-items: center;
-        gap: 8px;
+        flex-direction: column;
+        gap: 2px;
         padding: 6px 10px;
         border-top: 1px solid #1e293b;
         background: var(--bg-dark);

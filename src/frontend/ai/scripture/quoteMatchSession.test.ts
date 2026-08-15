@@ -12,10 +12,11 @@ const h = vi.hoisted(() => {
     return {
         scriptures: makeStore({}),
         scripturesCache: makeStore({}),
-        ai: makeStore({})
+        ai: makeStore({}),
+        aiQuoteMatchActive: { ...makeStore(false), set: () => {} }
     }
 })
-vi.mock("../../stores", () => ({ scriptures: h.scriptures, scripturesCache: h.scripturesCache, ai: h.ai }))
+vi.mock("../../stores", () => ({ scriptures: h.scriptures, scripturesCache: h.scripturesCache, ai: h.ai, aiQuoteMatchActive: h.aiQuoteMatchActive }))
 
 import { handleQuoteMatchTranscript, noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching } from "./quoteMatchSession"
 

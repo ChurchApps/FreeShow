@@ -220,6 +220,7 @@ export const aiScriptureSuggestions: Writable<DetectedReference[]> = writable([]
 export const aiScriptureTranscript: Writable<{ text: string; startMs: number; endMs: number; language?: string; music?: boolean }[]> = writable([])
 export const aiScriptureAutoPaused: Writable<boolean> = writable(false)
 export const aiScriptureHasProjected: Writable<boolean> = writable(false)
+export const aiQuoteMatchActive: Writable<boolean> = writable(false) // indexes built & matching (false when e.g. only API bibles are selected)
 
 // ----- SAVED VARIABLES -----
 
