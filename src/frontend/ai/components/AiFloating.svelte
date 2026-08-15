@@ -5,7 +5,6 @@
     import { getShortBibleName } from "../../components/drawer/bible/scripture"
     import T from "../../components/helpers/T.svelte"
     import MaterialButton from "../../components/inputs/MaterialButton.svelte"
-    import MaterialToggleSwitch from "../../components/inputs/MaterialToggleSwitch.svelte"
     import { activePage, ai, aiQuoteMatchActive, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, outLocked, scriptures, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../scripture/aiScripture"
@@ -138,16 +137,6 @@
         isOpen = false
         settingsTab.set("ai")
         activePage.set("settings")
-    }
-
-    // QUICK SETTINGS (inside the popup)
-
-    function updateScripture(key: string, value: any) {
-        ai.update((a) => {
-            if (!a.scripture) a.scripture = {}
-            a.scripture[key] = value
-            return a
-        })
     }
 
     // SUGGESTIONS
@@ -293,13 +282,8 @@
                     {/if}
                 </div>
 
-                {#if sessionMode === "scripture"}
-                    <!-- quick settings: toggles only - a dropdown's option list would be clipped by the bubble's rounded overflow -->
-                    <div class="card-footer">
-                        <MaterialToggleSwitch label="ai_scripture.mode_auto" checked={($ai.scripture?.mode || "confirm") === "auto"} defaultValue={false} on:change={(e) => updateScripture("mode", e.detail ? "auto" : "confirm")} />
-                        <MaterialToggleSwitch label="ai_scripture.voice_commands" checked={$ai.scripture?.voiceCommands === true} defaultValue={false} on:change={(e) => updateScripture("voiceCommands", e.detail)} />
-                    </div>
-                {/if}
+                <!-- the bubble stays feature-agnostic (it reports anything the AI says/does) -
+                     feature specific settings live on the settings page, via the header gear -->
             </div>
         {/if}
     </AiRing>
@@ -348,7 +332,7 @@
         right: 50%;
         transform: translate(50%, 50%);
         width: 440px;
-        height: 360px;
+        height: 320px;
         max-width: 90vw;
     }
 
@@ -458,15 +442,6 @@
         justify-content: center;
         background: var(--card-bg);
         overflow-y: auto;
-    }
-
-    .card-footer {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        padding: 6px 10px;
-        border-top: 1px solid #1e293b;
-        background: var(--bg-dark);
     }
 
     .transcript-box {
