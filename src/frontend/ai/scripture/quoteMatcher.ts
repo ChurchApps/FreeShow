@@ -332,6 +332,13 @@ export class QuoteMatcher {
             if (candidate.align.queryFrom < top.align.queryFrom && meetsFloors(candidate.align, tuning)) top = candidate
         }
 
+        // a verse the reading already moved past keeps accumulating evidence (the window still
+        // holds its words, and its spill covers the verse now being read) - never jump the
+        // projection backwards while the recitation is live
+        if (this.tracker && nowMs - this.tracker.lastAdvanceMs <= tuning.TRACKER_TTL_MS && top.index.translationId === this.tracker.translationId && top.index.book[top.ordinal] === this.tracker.book && top.ordinal < this.tracker.verseOrdinal) {
+            return []
+        }
+
         const key = refKey(this.refOf(top))
 
         const confidence = classify(top.align, tuning)
@@ -354,7 +361,11 @@ export class QuoteMatcher {
                 return this.emitInstead(bestAnchored, nowMs)
             }
             if (top.align.matchedInformative < tuning.CROSS_BOOK_MIN_INFORMATIVE) {
-                return bestAnchored ? this.emitInstead(bestAnchored, nowMs) : []
+                if (bestAnchored) return this.emitInstead(bestAnchored, nowMs)
+                // not enough informative evidence for a cross-book jump YET - the wait still
+                // counts as sustain, so the emission lands right when the evidence does
+                this.previousTop = { key, count: this.previousTop?.key === key ? this.previousTop.count + 1 : 1 }
+                return []
             }
             if (this.tracker && nowMs - this.tracker.lastAdvanceMs <= tuning.TRACKER_TTL_MS) {
                 const trackerCandidate = candidates.find((entry) => entry.index.translationId === this.tracker!.translationId && entry.ordinal === this.tracker!.verseOrdinal)

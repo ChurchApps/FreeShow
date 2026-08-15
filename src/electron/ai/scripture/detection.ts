@@ -13,6 +13,12 @@ const TEEN_WORDS: { [word: string]: number } = { ten: 10, eleven: 11, twelve: 12
 const TENS_WORDS: { [word: string]: number } = { twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 }
 const ORDINAL_PREFIXES: { [word: string]: string } = { first: "1", second: "2", third: "3" }
 
+// whisper regularly mishears the word "verse" itself ("verse five" arrives as "best five" or
+// "this five") - accepted wherever a verse word is expected, which is safe because every use
+// site also requires the surrounding shape (book+chapter here, an imperative in commands)
+export const VERSE_WORD_MISHEARINGS = ["best", "this", "vers", "versus", "worse"]
+const VERSE_WORD = "(?:verses?|" + VERSE_WORD_MISHEARINGS.join("|") + ")"
+
 interface SpokenToken {
     prefix: string // leading punctuation
     core: string
@@ -149,7 +155,7 @@ function buildBookIndex(books: AiScriptureBook[]): BookIndex {
     // speakers often say just "matthew 5 1", and whisper's punctuation varies - accept every separator it
     // produces between chapter & verse: "5:1", "5 verse 1", "5 1", "5, 1", "5. 1", "5-1", "5–1"
     // ...and a comma/period right after the book name too: dictation-style pauses come out as "john, 1, 1."
-    const regex = patterns.length ? new RegExp("(^|[^a-z0-9])(" + patterns.join("|") + ")[,.]?\\s+(?:chapter\\s+)?(\\d{1,3})\\b(?:(?:\\s*(?::|verses?\\b)\\s*|\\s*[-–,.]\\s*|\\s+)(\\d{1,3})\\b(?:\\s*(?:-|–|to\\b|through\\b)\\s*(\\d{1,3})\\b)?)?", "g") : null
+    const regex = patterns.length ? new RegExp("(^|[^a-z0-9])(" + patterns.join("|") + ")[,.]?\\s+(?:chapter\\s+)?(\\d{1,3})\\b(?:(?:\\s*(?::|" + VERSE_WORD + "\\b)\\s*|\\s*[-–,.]\\s*|\\s+)(\\d{1,3})\\b(?:\\s*(?:-|–|to\\b|through\\b)\\s*(\\d{1,3})\\b)?)?", "g") : null
     return { regex, byToken, bookPattern: patterns.join("|") }
 }
 

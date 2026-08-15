@@ -3,7 +3,7 @@
 // ("go to the next verse", "give me verse five", "show chapter four", "give me NIV", "give me another translation")
 
 import type { AiScriptureCommandEvent, AiScriptureTranslation } from "../../../types/ai/AiScripture"
-import { normalizeSpokenNumbers } from "./detection"
+import { normalizeSpokenNumbers, VERSE_WORD_MISHEARINGS } from "./detection"
 
 export interface CommandGrammar {
     imperatives: string[]
@@ -148,6 +148,12 @@ export function detectScriptureCommand(text: string, language: string, translati
     const tail = normalizeSpokenNumbers(text).slice(-TAIL_CHARS)
     const grammar = mergeGrammar(language)
 
+    // whisper mishears the word "verse" itself in command position ("next verse" -> "next best",
+    // "verse five" -> "this five"). The misheard forms are real English words, so they only count
+    // in shapes narration can't produce: with an imperative, and for a number jump also at the
+    // very end of the utterance ("give me this 5" acts, "read this 5 times a day" keeps talking)
+    const misheard = "(?:" + alternation(VERSE_WORD_MISHEARINGS) + ")"
+
     const imp = "(?:" + alternation(grammar.imperatives) + ")"
     const art = "(?:(?:" + alternation(grammar.articles) + ")\\s+)?"
     const verse = "(?:" + alternation(grammar.verse) + ")"
@@ -156,7 +162,8 @@ export function detectScriptureCommand(text: string, language: string, translati
     const isWord = (word: string, words: string[]) => new RegExp("^(?:" + alternation(words) + ")$").test(word)
 
     // 1. relative movement: "go to the next verse" / "show the previous chapter" / plain "next chapter"
-    const relative = matchCommand(tail, imp, art + "(" + alternation([...grammar.next, ...grammar.previous]) + ")\\s+(" + alternation([...grammar.verse, ...grammar.chapter]) + ")\\b")
+    const relativeBody = (units: string) => art + "(" + alternation([...grammar.next, ...grammar.previous]) + ")\\s+(" + units + ")\\b"
+    const relative = matchCommand(tail, imp, relativeBody(alternation([...grammar.verse, ...grammar.chapter]))) || tail.match(new RegExp(LEAD + imp + "\\s+" + relativeBody(alternation(VERSE_WORD_MISHEARINGS))))
     if (relative) {
         const isPrevious = isWord(relative[1], grammar.previous)
         const phrase = phraseOf(relative)
@@ -166,7 +173,7 @@ export function detectScriptureCommand(text: string, language: string, translati
 
     // 2. verse jump: "give me verse 5". Imperative only - a bare "verse 5" is already resolved against the
     // live passage by tier 1 detection, and matching it here too would fight that with a second action.
-    const verseJump = tail.match(new RegExp(LEAD + imp + "\\s+" + art + verse + "\\s+(\\d{1,3})\\b"))
+    const verseJump = tail.match(new RegExp(LEAD + imp + "\\s+" + art + verse + "\\s+(\\d{1,3})\\b")) || tail.match(new RegExp(LEAD + imp + "\\s+" + art + misheard + "\\s+(\\d{1,3})\\b" + BARE_TAIL))
     if (verseJump) {
         const number = parseInt(verseJump[1], 10)
         if (number >= 1) return { type: "verse_jump", verse: number, phrase: phraseOf(verseJump) }
@@ -174,7 +181,7 @@ export function detectScriptureCommand(text: string, language: string, translati
 
     // 3. chapter jump: "show chapter 4" / "show chapter 4 verse 2". Imperative only - a bare "chapter 4" is
     // usually the tail of a spoken reference ("deuteronomy chapter 4"), which detection already handles.
-    const chapterJump = tail.match(new RegExp(LEAD + imp + "\\s+" + art + chapter + "\\s+(\\d{1,3})\\b(?:\\s+" + verse + "\\s+(\\d{1,3})\\b)?"))
+    const chapterJump = tail.match(new RegExp(LEAD + imp + "\\s+" + art + chapter + "\\s+(\\d{1,3})\\b(?:\\s+(?:" + verse + "|" + misheard + ")\\s+(\\d{1,3})\\b)?"))
     if (chapterJump) {
         const chapterNumber = parseInt(chapterJump[1], 10)
         const verseNumber = chapterJump[2] !== undefined ? parseInt(chapterJump[2], 10) : 0

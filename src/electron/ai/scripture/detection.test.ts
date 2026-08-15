@@ -98,6 +98,11 @@ describe("detectExplicitReferences", () => {
         expect(detectExplicitReferences("romans 8:28-30", BOOKS)).toEqual([{ bookNumber: 45, book: "Romans", chapter: 8, verseStart: 28, verseEnd: 30, confidence: "high" }])
     })
 
+    it("accepts whisper's mishearings of the word 'verse': 'john chapter 3 best 16'", () => {
+        expect(detectExplicitReferences("john chapter 3 best 16", BOOKS)[0]).toMatchObject({ bookNumber: 43, chapter: 3, verseStart: 16 })
+        expect(detectExplicitReferences("romans 8 this 28", BOOKS)[0]).toMatchObject({ bookNumber: 45, chapter: 8, verseStart: 28 })
+    })
+
     it("matches the longest book name first: '1 john' wins over 'john'", () => {
         expect(detectExplicitReferences("1 john 4:7", BOOKS)[0]).toMatchObject({ bookNumber: 62, book: "1 John", chapter: 4, verseStart: 7 })
         expect(detectExplicitReferences("john 4:7", BOOKS)[0]).toMatchObject({ bookNumber: 43, book: "John", chapter: 4, verseStart: 7 })

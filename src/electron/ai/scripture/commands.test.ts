@@ -67,6 +67,26 @@ describe("detectScriptureCommand", () => {
         })
     })
 
+    describe("misheard verse word (whisper hears 'best'/'this' for 'verse')", () => {
+        it("acts on a misheard verse jump: 'give me best five' / 'show me this 5'", () => {
+            expect(detect("give me best five")).toEqual({ type: "verse_jump", verse: 5, phrase: "give me best 5" })
+            expect(detect("show me this 5")).toEqual({ type: "verse_jump", verse: 5, phrase: "show me this 5" })
+        })
+
+        it("acts on misheard relative movement: 'go to the next best'", () => {
+            expect(detect("go to the next best")).toEqual({ type: "verse_next", phrase: "go to the next best" })
+        })
+
+        it("a misheard verse word never fires without an imperative", () => {
+            expect(detect("and that was truly the next best")).toBeNull()
+            expect(detect("this five")).toBeNull()
+        })
+
+        it("a misheard number jump has to end the utterance - narration keeps talking", () => {
+            expect(detect("read this five times every day")).toBeNull()
+        })
+    })
+
     describe("other languages", () => {
         it("detects spanish: 'dame el siguiente versículo'", () => {
             expect(detect("dame el siguiente versículo", "es")).toEqual({ type: "verse_next", phrase: "dame el siguiente versículo" })

@@ -216,6 +216,19 @@ describe("QuoteMatcher", () => {
         expect(all[2].kind).toBe("continuation")
     })
 
+    it("never jumps backwards to a verse the reading already passed", () => {
+        // single-shot lowered so every full verse emits immediately - isolates the direction rule
+        const matcher = new QuoteMatcher([buildTranslationIndex("kjv", CHAIN)], { SINGLE_SHOT_INFORMATIVE: 5, SINGLE_SHOT_WEIGHT: 10 })
+        const first = matcher.onSegment(seg("silver trumpets sounded from the harbor calling weary sailors homeward"))
+        expect(first.map((emission) => emission.verseStart)).toEqual([2])
+
+        // verse 1's words arrive late (window echo / spill contamination): the projection must not move back
+        expect(matcher.onSegment(seg("the watchman climbed the granite tower counting distant ships at anchor"))).toEqual([])
+
+        const third = matcher.onSegment(seg("lanterns flickered along the pier while merchants counted copper coins"))
+        expect(third.map((emission) => emission.verseStart)).toEqual([3])
+    })
+
     it("emits on the first floor-passing segment when earlier weak segments already pointed there (sustain credit)", () => {
         const matcher = new QuoteMatcher([kjvIndex()], noSingleShot)
         expect(matcher.onSegment(seg("for god so loved the world that he gave his only begotten"))).toEqual([])
