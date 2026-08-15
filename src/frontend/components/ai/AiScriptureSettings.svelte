@@ -77,6 +77,7 @@
     <p class="faded hint"><T id="ai_scripture.quote_matching_hint" /></p>
 
     <Title label="ai_scripture.search_bibles ({searchBibles.length})" icon="scripture" />
+    <p class="faded hint"><T id="ai_scripture.search_bibles_hint" /></p>
 
     {#if bibleList.length}
         <InputRow>
