@@ -148,8 +148,11 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     // local quote matching: recited verses are found by matching the transcript against the
     // selected bibles on this machine - free and keyless, so it runs unless turned off
     if (settings.quoteMatching !== false) {
+        // the active drawer translation is what gets projected - it always takes an index slot,
+        // even when a large selection would otherwise crowd it past the session's index cap
+        const quoteMatchIds = [...new Set([...expandBibleIds([activeSubTab]), ...searchBibleIds])]
         startQuoteMatching({
-            bibleIds: searchBibleIds,
+            bibleIds: quoteMatchIds,
             interpretationMode,
             listenLanguage,
             onDetection: handleDetection
