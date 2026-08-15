@@ -216,6 +216,41 @@ function createTranscriber(kind: "cli" | "server", onError = vi.fn()) {
     })
 }
 
+describe("vocabulary prompt plumbing", () => {
+    beforeEach(() => {
+        spawnMock.mockReset()
+    })
+
+    function cliArgs(transcriber: any): string[] {
+        const child = createFakeChild()
+        spawnMock.mockReturnValueOnce(child)
+        const promise: Promise<void> = transcriber.runCliProcess("/tmp/in.wav", "/tmp/out")
+        child.emit("exit", 0)
+        return promise.then(() => spawnMock.mock.calls[spawnMock.mock.calls.length - 1][1] as string[]) as any
+    }
+
+    it("passes --prompt to whisper-cli when a prompt is set", async () => {
+        const transcriber: any = createTranscriber("cli")
+        transcriber.options.prompt = "Thus saith the LORD concerning Amalekites"
+
+        const args = await cliArgs(transcriber)
+        expect(args[args.indexOf("--prompt") + 1]).toBe("Thus saith the LORD concerning Amalekites")
+    })
+
+    it("omits --prompt entirely when none is set", async () => {
+        const args = await cliArgs(createTranscriber("cli"))
+        expect(args).not.toContain("--prompt")
+    })
+
+    it("applies a live setPrompt() update to the next cli run", async () => {
+        const transcriber: any = createTranscriber("cli")
+        transcriber.setPrompt("names of Daniel: Nebuchadnezzar, Shadrach")
+
+        const args = await cliArgs(transcriber)
+        expect(args[args.indexOf("--prompt") + 1]).toContain("Nebuchadnezzar")
+    })
+})
+
 describe("runCliProcess timeout", () => {
     beforeEach(() => {
         spawnMock.mockReset()

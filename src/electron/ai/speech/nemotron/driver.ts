@@ -121,6 +121,13 @@ export class NemotronDriver implements TranscriptionDriver {
                 provider: "cpu",
                 debug: 0
             },
+            // greedy also rules out sherpa's hotword biasing (biblical names/KJV vocabulary), which
+            // needs modified_beam_search plus a bpe.model to tokenize the hotword list - and the
+            // pinned model revision ships no bpe.model (only encoder/decoder/joiner + tokens.txt).
+            // Pre-tokenizing hotwords against tokens.txt would be fragile, and beam search decodes
+            // materially slower than the partial-decode budget here assumes. Misheard biblical
+            // vocabulary is instead recovered downstream by the quote matcher's phonetic layer
+            // (frontend/ai/scripture/quoteMatchTokens.ts), which works for every engine
             decodingMethod: "greedy_search",
             // boundaries come from the VAD - see the file header
             enableEndpoint: false

@@ -6,6 +6,7 @@ import os from "os"
 import path from "path"
 import { appendTailWords, trimRepeatedLeadWords } from "../seam"
 import type { DriverCallbacks, TranscriberSegment as DriverSegment, TranscriptionDriver } from "../types"
+import { isPromptEcho } from "./prompt"
 
 // AI AUTO SCRIPTURE - streaming transcription over whisper.cpp
 // Receives 1s chunks of Int16 LE PCM @ 16kHz mono from the renderer (IPC),
@@ -52,6 +53,7 @@ interface TranscriberOptions extends DriverCallbacks {
     language: string
     declaredLanguages?: string[] // interpretation mode: the languages actually being spoken - a "-l auto" guess outside this set triggers a forced re-check
     primaryLanguage?: string // the scripture detection language - forced re-checks transcribe the window with this language
+    prompt?: string // decoder vocabulary biasing (biblical names/archaisms) - sent with every window, live-updatable via setPrompt()
 }
 
 interface PcmWindow {
@@ -83,6 +85,12 @@ export class Transcriber implements TranscriptionDriver {
 
     constructor(options: TranscriberOptions) {
         this.options = options
+    }
+
+    // both drivers read the prompt per window (cli args are rebuilt per run, the server takes a form
+    // field per request), so a passage-aware update simply applies from the next window on
+    setPrompt(prompt: string | undefined) {
+        this.options.prompt = prompt
     }
 
     async start(): Promise<void> {
@@ -188,7 +196,8 @@ export class Transcriber implements TranscriptionDriver {
 
             const parsed = parseWhisperJson(json, windowDurationMs)
             const absolute = parsed.map((segment) => Object.assign({}, segment, { startMs: windowStartMs + segment.startMs, endMs: windowStartMs + segment.endMs }))
-            const speech = absolute.filter((segment) => !isNoiseSegment(segment.text) && !isLowConfidence(segment))
+            const prompt = this.options.prompt
+            const speech = absolute.filter((segment) => !isNoiseSegment(segment.text) && !isLowConfidence(segment) && !(prompt && isPromptEcho(segment.text, prompt)))
             const fresh = dedupeOverlap(speech, Math.max(0, this.lastEmittedEndMs - OVERLAP_BACKTRACK_MS))
 
             for (const segment of fresh) {
@@ -279,6 +288,7 @@ export class Transcriber implements TranscriptionDriver {
             // -nf: temperature fallback re-decodes uncertain (usually quiet) audio at higher temperatures,
             // which is where whisper invents text - live captioning is better off skipping than guessing
             const args = ["-m", this.options.modelPath, "-l", language, "-f", wavPath, "-oj", "-of", outBase, "-np", "-t", WHISPER_THREADS, "-nf"]
+            if (this.options.prompt) args.push("--prompt", this.options.prompt)
             const child = spawn(this.options.binary.binaryPath, args, { stdio: ["ignore", "ignore", "pipe"], windowsHide: true })
             this.cliChild = child
 
@@ -469,6 +479,7 @@ export class Transcriber implements TranscriptionDriver {
         // no temperature fallback: re-decoding uncertain (usually quiet) audio at higher temperatures
         // is where whisper invents text - live captioning is better off skipping than guessing
         form.append("temperature_inc", "0.0")
+        if (this.options.prompt) form.append("prompt", this.options.prompt)
 
         const controller = new AbortController()
         const timer = setTimeout(() => controller.abort(), SERVER_INFERENCE_TIMEOUT)

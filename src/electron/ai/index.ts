@@ -35,7 +35,11 @@ export function startScriptureDetection(config: AiScriptureDetectionConfig): boo
         llm,
         getApiKey: getAiKey,
         cooldownSeconds: config.refCooldownSeconds,
-        onDetection: (ref) => sendToMain(ToMain.AI_SCRIPTURE_DETECTION, ref),
+        onDetection: (ref) => {
+            // whisper biases upcoming windows toward the detected book's names (no-op for other engines)
+            SpeechToText.setContextBook(ref.bookNumber)
+            sendToMain(ToMain.AI_SCRIPTURE_DETECTION, ref)
+        },
         onStatus: (state, extra) => {
             if (extra?.message) extra.message = sanitizeErrorMessage(extra.message)
             sendToMain(ToMain.AI_SCRIPTURE_STATUS, { state, ...extra })
@@ -81,6 +85,8 @@ export function stopScriptureDetection() {
 // the renderer reports the passage currently live on the output, so bare "verse N" mentions resolve against it
 export function updateScriptureDetectionContext(data: AiScriptureAnchor) {
     scriptureCoordinator?.updateContext(data)
+    // the live passage also covers quote matches the coordinator never saw (they emit in the renderer)
+    SpeechToText.setContextBook(data.bookNumber)
 }
 
 // error messages can contain provider response bodies / whisper stderr - never pass those to the renderer verbatim

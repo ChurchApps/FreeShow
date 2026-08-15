@@ -1,7 +1,7 @@
 export const whisperModels = [
     { value: "tiny", label: "Tiny", data: `${formatFileSize(75)} | Fastest` },
     { value: "base", label: "Base", data: `${formatFileSize(142)} | Recommended` },
-    { value: "small", label: "Small", data: `${formatFileSize(466)} | More accurate` },
+    { value: "small", label: "Small", data: `${formatFileSize(466)} | More accurate, best for Bible names` },
     { value: "medium", label: "Medium", data: `${formatFileSize(1500)} | Slow` },
     { value: "large-v3", label: "Large v3", data: `${formatFileSize(3100)} | Most accurate, slowest` }
 ]

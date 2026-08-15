@@ -68,6 +68,12 @@ export class SpeechToText {
         this.transcriberEngine?.pushAudio(buffer)
     }
 
+    // scripture detection reports the bible book being preached from - whisper biases its decoder
+    // toward that book's vocabulary (a no-op for other engines and outside a session)
+    static setContextBook(bookNumber: number) {
+        if (this.transcriberEngine instanceof WhisperTranscriber) this.transcriberEngine.setContextBook(bookNumber)
+    }
+
     private static async createEngine(engine: string, options: SttEngineOptions): Promise<{ transcriber: SttEngine } | { error: string }> {
         const onSegment = this.onSegment.bind(this)
         const onError = this.onError.bind(this)
