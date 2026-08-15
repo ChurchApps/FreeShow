@@ -16,7 +16,7 @@
 import type { PrefixPool, TranslationIndex } from "./quoteMatchIndex"
 import { postingsForKey, prefixIdf } from "./quoteMatchIndex"
 import { alignQuoteWindow, classify, meetsFloors, TUNING, type AlignResult, type QueryToken, type Tuning } from "./quoteMatchScore"
-import { canonKey, tokenizeTranscript } from "./quoteMatchTokens"
+import { cachedPhoneticKey, canonKey, tokenizeTranscript } from "./quoteMatchTokens"
 
 export interface QuoteMatchSegment {
     text: string
@@ -177,31 +177,46 @@ export class QuoteMatcher {
         const query = this.windowQuery()
         const out: Candidate[] = []
 
-        // resolve each distinct spoken token's prefix key to a pool id ONCE for all translations
-        // (a session builds every index over one shared pool - separately built indexes fall back
-        // to their own pool per index), so voting is pure typed-array reads
-        const keyCounts = new Map<string, number>()
+        // resolve each distinct spoken token's lookup routes ONCE for all translations (a session
+        // builds every index over one shared pool - separately built indexes fall back to their
+        // own pool per index), so voting is pure typed-array reads. A token has two routes: its
+        // canonical prefix key, and - only when that key finds nothing in an index - its phonetic
+        // skeleton, so a misheard rare word ("analekite") still votes and still counts toward
+        // keysHit, while a correctly heard word can never vote twice
+        const tokenCounts = new Map<string, number>()
         for (const entry of this.ring) {
-            const key = canonKey(entry.token)
-            keyCounts.set(key, (keyCounts.get(key) || 0) + 1)
+            tokenCounts.set(entry.token, (tokenCounts.get(entry.token) || 0) + 1)
         }
         const sharedPool = this.indexes.length && this.indexes.every((index) => index.pool === this.indexes[0].pool) ? this.indexes[0].pool : null
-        const sharedIdCounts = sharedPool ? resolvePrefixIds(sharedPool, keyCounts) : null
+        const sharedRoutes = sharedPool ? resolveTokenRoutes(sharedPool, tokenCounts) : null
 
         for (const index of this.indexes) {
-            const idCounts = sharedIdCounts || resolvePrefixIds(index.pool, keyCounts)
+            const routes = sharedRoutes || resolveTokenRoutes(index.pool, tokenCounts)
             const votes = new Map<number, number>()
             const keysHit = new Map<number, number>()
 
-            idCounts.forEach((count, prefixId) => {
-                const postings = postingsForKey(index, prefixId)
-                if (!postings) return
-                const weight = prefixIdf(index, prefixId) * Math.min(count, 2)
-                for (const ordinal of postings) {
-                    votes.set(ordinal, (votes.get(ordinal) || 0) + weight)
-                    keysHit.set(ordinal, (keysHit.get(ordinal) || 0) + 1)
-                }
-            })
+            // aggregate per resolved id (distinct ring tokens can share a key) - the phonetic
+            // fallback is decided per index, since each translation drops/keeps its own postings
+            const canonCounts = new Map<number, number>()
+            const phoneticCounts = new Map<number, number>()
+            for (const route of routes) {
+                if (postingsForKey(index, route.canonId)) canonCounts.set(route.canonId, (canonCounts.get(route.canonId) || 0) + route.count)
+                else if (route.phoneticId >= 0 && postingsForKey(index, route.phoneticId)) phoneticCounts.set(route.phoneticId, (phoneticCounts.get(route.phoneticId) || 0) + route.count)
+            }
+
+            const castVotes = (idCounts: Map<number, number>, discount: number) => {
+                idCounts.forEach((count, prefixId) => {
+                    const postings = postingsForKey(index, prefixId)
+                    if (!postings) return
+                    const weight = prefixIdf(index, prefixId) * Math.min(count, 2) * discount
+                    for (const ordinal of postings) {
+                        votes.set(ordinal, (votes.get(ordinal) || 0) + weight)
+                        keysHit.set(ordinal, (keysHit.get(ordinal) || 0) + 1)
+                    }
+                })
+            }
+            castVotes(canonCounts, 1)
+            castVotes(phoneticCounts, tuning.PHONETIC_VOTE_DISCOUNT)
 
             const voted = Array.from(votes.entries())
                 .filter(([ordinal, weight]) => weight >= tuning.MIN_VOTE_WEIGHT && (keysHit.get(ordinal) || 0) >= tuning.MIN_VOTE_KEYS)
@@ -451,14 +466,22 @@ export class QuoteMatcher {
     }
 }
 
-/** Distinct spoken-token counts, keyed by the pool's prefix ids (unknown keys drop out). */
-function resolvePrefixIds(pool: PrefixPool, keyCounts: Map<string, number>): Map<number, number> {
-    const idCounts = new Map<number, number>()
-    keyCounts.forEach((count, key) => {
-        const prefixId = pool.lookup(key)
-        if (prefixId >= 0) idCounts.set(prefixId, (idCounts.get(prefixId) || 0) + count)
+interface TokenRoute {
+    canonId: number // pool id of the token's canonical prefix key, -1 when never indexed
+    phoneticId: number // pool id of the token's "~"-namespaced phonetic skeleton, -1 when none
+    count: number
+}
+
+/** Both lookup routes per distinct spoken token (tokens resolving to neither drop out). */
+function resolveTokenRoutes(pool: PrefixPool, tokenCounts: Map<string, number>): TokenRoute[] {
+    const routes: TokenRoute[] = []
+    tokenCounts.forEach((count, token) => {
+        const canonId = pool.lookup(canonKey(token))
+        const skeleton = cachedPhoneticKey(token)
+        const phoneticId = skeleton ? pool.lookup("~" + skeleton) : -1
+        if (canonId >= 0 || phoneticId >= 0) routes.push({ canonId, phoneticId, count })
     })
-    return idCounts
+    return routes
 }
 
 function sameRef(a: Candidate, b: Candidate): boolean {

@@ -339,3 +339,20 @@ describe("QuoteMatcher verbatim continuation", () => {
         expect(after.find((emission) => emission.kind === "continuation")).toBeUndefined()
     })
 })
+
+describe("phonetic recovery end to end", () => {
+    // KJV corpus plus 1 Samuel 15:18, whose rare name is the target of the mangling
+    const SAMUEL_KJV: IndexableVerse[] = [...KJV, verse(9, 15, 18, "And the LORD sent thee on a journey, and said, Go and utterly destroy the sinners the Amalekites, and fight against them until they be consumed.")]
+
+    it("emits a recitation whose rare name arrived garbled", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("kjv", SAMUEL_KJV)])
+        const out = matcher.onSegment(seg("go and utterly destroy the sinners the analekite and fight against them until they be consumed"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 9, chapter: 15, verseStart: 18 })
+    })
+
+    it("does not emit ordinary speech that happens to contain the name", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("kjv", SAMUEL_KJV)])
+        expect(matcher.onSegment(seg("our study group discussed the analekites and their history for a while today"))).toEqual([])
+    })
+})

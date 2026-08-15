@@ -11,7 +11,7 @@
 // bible lands around 4-6 MB instead of the ~25 MB the object/Map layout used to cost, and a
 // voting pass resolves each spoken token's key to an id once for ALL translations.
 
-import { canonKey, tokenizeVerseText } from "./quoteMatchTokens"
+import { canonKey, phoneticKey, tokenizeVerseText } from "./quoteMatchTokens"
 
 export interface IndexableVerse {
     book: number
@@ -155,6 +155,29 @@ export function buildTranslationIndex(translationId: string, verses: IndexableVe
         if (idfByVocabId[id] > maxIdf) maxIdf = idfByVocabId[id]
     }
     const informativeIdf = Math.min(INFORMATIVE_IDF_ABSOLUTE, INFORMATIVE_IDF_FRACTION * maxIdf)
+
+    // phonetic postings: a second lookup route for informative tokens only (proper nouns, rare
+    // words), so a misheard name ("analekite") still finds its verses when the prefix key fails.
+    // Keys are namespaced with "~" - baseTokens can never produce that character - and live in the
+    // same pool and CSR as the prefix keys, so df/idf/postings machinery applies unchanged
+    // (including the df cap: a skeleton aggregating into a common bucket drops its postings)
+    const phoneticIdByVocabId = new Int32Array(vocab.length).fill(-1)
+    for (let id = 0; id < vocab.length; id++) {
+        if (idfByVocabId[id] < informativeIdf) continue
+        const key = phoneticKey(vocab[id])
+        if (key) phoneticIdByVocabId[id] = pool.intern("~" + key)
+    }
+    for (let ordinal = 0; ordinal < verseCount; ordinal++) {
+        let seenPhonetic: Set<number> | null = null
+        for (let i = tokenOffsets[ordinal]; i < tokenOffsets[ordinal + 1]; i++) {
+            const phoneticId = phoneticIdByVocabId[tokenIdsFlat[i]]
+            if (phoneticId < 0 || seenPhonetic?.has(phoneticId)) continue
+            ;(seenPhonetic ||= new Set()).add(phoneticId)
+            let list = ordinalsByPrefixId.get(phoneticId)
+            if (!list) ordinalsByPrefixId.set(phoneticId, (list = []))
+            list.push(ordinal)
+        }
+    }
 
     // CSR postings over the shared prefix-id space. The pool can keep growing while LATER
     // translations are built - lookups beyond this index's range just read df 0 / no postings.

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { buildTranslationIndex, postingsForKey, prefixIdf, PrefixPool, verseTokensAt, type IndexableVerse } from "./quoteMatchIndex"
+import { phoneticKey } from "./quoteMatchTokens"
 
 function verse(book: number, chapter: number, number: number, text: string, endNumber?: number): IndexableVerse {
     return { book, chapter, verseStart: number, verseEnd: endNumber ?? number, cleanText: text }
@@ -86,5 +87,41 @@ describe("shared PrefixPool", () => {
         const index = buildTranslationIndex("kjv", VERSES)
         expect(index.sizeBytes).toBeGreaterThan(0)
         expect(index.sizeBytes).toBeLessThan(100_000) // 4 verses must stay tiny
+    })
+})
+
+describe("phonetic postings", () => {
+    // "therefore" saturates every verse (non-informative); "amalekites" is informative and long
+    const CORPUS: IndexableVerse[] = [
+        verse(9, 15, 18, "Therefore go and utterly destroy the sinners the Amalekites and fight against them"),
+        verse(9, 15, 19, "Therefore wherefore then didst thou not obey the voice of the LORD"),
+        verse(9, 15, 20, "Therefore Saul said I have obeyed the voice of the LORD"),
+        verse(19, 23, 1, "Therefore the LORD is my shepherd I shall not want"),
+        verse(19, 23, 2, "Therefore he maketh me to lie down in green pastures"),
+        verse(43, 3, 16, "Therefore God so loved the world that he gave his only begotten Son"),
+        verse(43, 3, 17, "Therefore God sent not his Son into the world to condemn the world"),
+        verse(1, 1, 1, "Therefore in the beginning God created the heaven and the earth")
+    ]
+    const index = buildTranslationIndex("kjv", CORPUS)
+
+    it("posts an informative token's phonetic skeleton against its verses", () => {
+        const key = phoneticKey("amalekites")!
+        const id = index.pool.lookup("~" + key)
+        expect(id).toBeGreaterThanOrEqual(0)
+        expect(Array.from(postingsForKey(index, id) || [])).toEqual([0])
+    })
+
+    it("resolves a misheard name to the same postings", () => {
+        expect(phoneticKey("analekite")).toBe(phoneticKey("amalekites"))
+    })
+
+    it("creates no phonetic route for non-informative tokens, however long", () => {
+        expect(index.idfByVocabId[index.vocab.indexOf("therefore")]).toBeLessThan(index.informativeIdf)
+        expect(index.pool.lookup("~" + phoneticKey("therefore")!)).toBe(-1)
+    })
+
+    it("gives phonetic keys a real idf for voting weight", () => {
+        const id = index.pool.lookup("~" + phoneticKey("amalekites")!)
+        expect(prefixIdf(index, id)).toBeGreaterThan(0)
     })
 })

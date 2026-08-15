@@ -24,6 +24,8 @@ export const TUNING = {
     // keys - the weight floor still demands real idf mass, and the emission floors do the rest
     MIN_VOTE_KEYS: 2,
     MIN_VOTE_WEIGHT: 6,
+    // a phonetic-skeleton vote (misheard rare word) counts, but weaker than a prefix-key hit
+    PHONETIC_VOTE_DISCOUNT: 0.7,
 
     DENSITY_REF: 0.7,
     DENSITY_FLOOR: 0.55,
@@ -106,6 +108,11 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     const verseTokenAt = (j: number) => index.vocab[j < verseLength ? verseIds[j] : spillIds[j - verseLength]]
     const verseIdfAt = (j: number) => index.idfByVocabId[j < verseLength ? verseIds[j] : spillIds[j - verseLength]]
 
+    // phonetic recovery only against informative verse tokens (proper nouns, rare words) - common
+    // words never phonetic-merge. The flag must be computed identically in the DP fill and the
+    // backtrace below, or the backtrace desynchronizes from the table
+    const informativeIdf = index.informativeIdf
+
     // weighted LCS: dp[i][j] = best matched weight of query[0..i) vs verse[0..j)
     const width = n + 1
     const dp = new Float32Array((m + 1) * width)
@@ -113,8 +120,9 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
         const q = query[i - 1].token
         for (let j = 1; j <= n; j++) {
             const skip = Math.max(dp[(i - 1) * width + j], dp[i * width + j - 1])
-            const grade = tokenGrade(q, verseTokenAt(j - 1))
-            const take = grade > 0 ? dp[(i - 1) * width + j - 1] + grade * verseIdfAt(j - 1) : 0
+            const idf = verseIdfAt(j - 1)
+            const grade = tokenGrade(q, verseTokenAt(j - 1), idf >= informativeIdf)
+            const take = grade > 0 ? dp[(i - 1) * width + j - 1] + grade * idf : 0
             dp[i * width + j] = take > skip ? take : skip
         }
     }
@@ -129,11 +137,11 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     let i = m
     let j = n
     while (i > 0 && j > 0) {
-        const grade = tokenGrade(query[i - 1].token, verseTokenAt(j - 1))
-        if (grade > 0 && Math.abs(dp[i * width + j] - (dp[(i - 1) * width + j - 1] + grade * verseIdfAt(j - 1))) < 1e-6) {
+        const idf = verseIdfAt(j - 1)
+        const grade = tokenGrade(query[i - 1].token, verseTokenAt(j - 1), idf >= informativeIdf)
+        if (grade > 0 && Math.abs(dp[i * width + j] - (dp[(i - 1) * width + j - 1] + grade * idf)) < 1e-6) {
             matchedQ.push(i - 1)
             matchedV.push(j - 1)
-            const idf = verseIdfAt(j - 1)
             matchedWeight += grade * idf
             if (idf >= index.informativeIdf) {
                 matchedInformative++

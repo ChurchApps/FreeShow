@@ -89,3 +89,29 @@ describe("alignQuoteWindow", () => {
         expect(Math.abs(withPreamble.score - without.score)).toBeLessThan(0.08)
     })
 })
+
+describe("phonetic recovery in alignment", () => {
+    // 1 Samuel 15:18 joins the corpus so a rare name can be the make-or-break evidence
+    const SAMUEL = verse(9, 15, 18, "And the LORD sent thee on a journey, and said, Go and utterly destroy the sinners the Amalekites, and fight against them until they be consumed.")
+    const index = buildTranslationIndex("kjv", [...CORPUS, SAMUEL])
+    const ordinal = CORPUS.length
+
+    it("still clears the floors when the rare name arrives garbled", () => {
+        const garbled = alignQuoteWindow(query("go and utterly destroy the sinners the analekite and fight against them until they be consumed"), index, ordinal)!
+        expect(meetsFloors(garbled)).toBe(true)
+        expect(classify(garbled)).not.toBeNull()
+    })
+
+    it("credits the garbled name below an exact one", () => {
+        const garbled = alignQuoteWindow(query("go and utterly destroy the sinners the analekite and fight against them"), index, ordinal)!
+        const exact = alignQuoteWindow(query("go and utterly destroy the sinners the amalekites and fight against them"), index, ordinal)!
+        expect(garbled.matchedWeight).toBeLessThan(exact.matchedWeight)
+        expect(garbled.matchedInformative).toBe(exact.matchedInformative)
+    })
+
+    it("gains matched evidence over simply dropping the garbled word", () => {
+        const garbled = alignQuoteWindow(query("go and utterly destroy the sinners the analekite and fight against them"), index, ordinal)!
+        const missing = alignQuoteWindow(query("go and utterly destroy the sinners the and fight against them"), index, ordinal)!
+        expect(garbled.matchedInformative).toBeGreaterThan(missing.matchedInformative)
+    })
+})

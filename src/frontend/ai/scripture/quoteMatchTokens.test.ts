@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { canonKey, NUMBER_PLACEHOLDER, tokenGrade, tokenizeTranscript, tokenizeVerseText } from "./quoteMatchTokens"
+import { canonKey, NUMBER_PLACEHOLDER, phoneticKey, tokenGrade, tokenizeTranscript, tokenizeVerseText } from "./quoteMatchTokens"
 
 describe("tokenizeVerseText", () => {
     it("lowercases, strips punctuation and folds apostrophes", () => {
@@ -67,5 +67,55 @@ describe("tokenGrade", () => {
     it("never matches the number placeholder", () => {
         expect(tokenGrade(NUMBER_PLACEHOLDER, NUMBER_PLACEHOLDER)).toBe(0)
         expect(tokenGrade(NUMBER_PLACEHOLDER, "hundred")).toBe(0)
+    })
+})
+
+describe("phoneticKey", () => {
+    it("keys an ASR-mangled name together with the real one", () => {
+        expect(phoneticKey("analekite")).toBe(phoneticKey("amalekites"))
+        expect(phoneticKey("jehosaphat")).toBe(phoneticKey("jehoshaphat"))
+        expect(phoneticKey("mefibosheth")).toBe(phoneticKey("mephibosheth"))
+    })
+
+    it("keys cross-translation spelling variants together", () => {
+        expect(phoneticKey("melchizedek")).toBe(phoneticKey("melchisedec"))
+        expect(phoneticKey("nethaneel")).toBe(phoneticKey("nethanel"))
+    })
+
+    it("returns null for short tokens - they must never phonetic-merge", () => {
+        expect(phoneticKey("thy")).toBe(null)
+        expect(phoneticKey("thigh")).toBe(null)
+        expect(phoneticKey("wast")).toBe(null)
+    })
+
+    it("returns null for vowel-heavy tokens whose skeleton carries no signal", () => {
+        expect(phoneticKey("easier")).toBe(null)
+    })
+
+    it("separates words that merely share letters", () => {
+        expect(phoneticKey("believe")).not.toBe(phoneticKey("beloved"))
+        expect(phoneticKey("kingdom")).not.toBe(phoneticKey("kindred"))
+    })
+})
+
+describe("tokenGrade phonetic path", () => {
+    it("grades a same-skeleton pair 0.7 only when the caller allows it", () => {
+        expect(tokenGrade("analekite", "amalekites", true)).toBe(0.7)
+        expect(tokenGrade("analekite", "amalekites")).toBe(0)
+        expect(tokenGrade("analekite", "amalekites", false)).toBe(0)
+    })
+
+    it("rejects pairs with too different lengths even when the skeletons agree", () => {
+        // synthetic pair: same skeleton, no shared prefix, 8-char length gap
+        expect(phoneticKey("unalekite")).toBe(phoneticKey("annaalleekkiittee"))
+        expect(tokenGrade("unalekite", "annaalleekkiittee", true)).toBe(0)
+    })
+
+    it("never phonetic-merges short tokens", () => {
+        expect(tokenGrade("thigh", "thy", true)).toBe(0)
+    })
+
+    it("prefers the prefix grades when both would apply", () => {
+        expect(tokenGrade("believe", "believeth", true)).toBe(0.9)
     })
 })
