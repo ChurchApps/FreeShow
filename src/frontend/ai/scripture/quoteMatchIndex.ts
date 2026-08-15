@@ -4,6 +4,12 @@
 // lookup). Common keys above the document-frequency cap keep their df but drop their postings -
 // they are useless for finding a verse, while their idf weight still lets them glue an alignment
 // together once a candidate is being scored.
+//
+// Everything is columnar: token sequences live in one flat buffer per translation (CSR), and
+// prefix keys are interned once per session in a PrefixPool shared by every translation's index -
+// the per-translation data is typed arrays over the shared prefix-id space. A full 31k-verse
+// bible lands around 4-6 MB instead of the ~25 MB the object/Map layout used to cost, and a
+// voting pass resolves each spoken token's key to an id once for ALL translations.
 
 import { canonKey, tokenizeVerseText } from "./quoteMatchTokens"
 
@@ -15,8 +21,43 @@ export interface IndexableVerse {
     cleanText: string // already through stripMarkdown/stripText
 }
 
+/** Session-wide prefix-key interning - all indexes of one session share the same id space. */
+export class PrefixPool {
+    keys: string[] = []
+    private idByKey = new Map<string, number>()
+
+    /** Build time: id for the key, growing the pool. */
+    intern(key: string): number {
+        let id = this.idByKey.get(key)
+        if (id === undefined) {
+            id = this.keys.length
+            this.keys.push(key)
+            this.idByKey.set(key, id)
+        }
+        return id
+    }
+
+    /** Query time: id for the key, -1 when no indexed translation ever saw it. */
+    lookup(key: string): number {
+        const id = this.idByKey.get(key)
+        return id === undefined ? -1 : id
+    }
+
+    get size(): number {
+        return this.keys.length
+    }
+
+    /** Rough heap cost of the pool itself (strings + map entries). */
+    get sizeBytes(): number {
+        let bytes = 0
+        for (const key of this.keys) bytes += key.length * 2 + 16
+        return bytes + this.keys.length * 64
+    }
+}
+
 export interface TranslationIndex {
     translationId: string
+    pool: PrefixPool // shared by every index built in the same session
     verseCount: number
     // per-ordinal packed metadata, ordinals follow book/chapter/verse traversal order
     book: Uint8Array
@@ -25,13 +66,16 @@ export interface TranslationIndex {
     verseEnd: Uint8Array
     chapterBreak: Uint8Array // 1 when this ordinal starts a new chapter
     vocab: string[]
-    vocabIdByToken: Map<string, number>
     idfByVocabId: Float32Array
     informativeIdf: number // tokens at/above this idf count as informative match evidence
-    prefixBuckets: Map<string, number[]> // canonKey -> vocab ids sharing the prefix
-    postings: Map<string, Uint32Array> // canonKey -> sorted verse ordinals; absent above the df cap
-    prefixDf: Map<string, number> // canonKey -> verse df (kept even when postings are dropped)
-    verseTokens: Uint16Array[] // per-ordinal vocab-id sequence in text order
+    // all verse token-id sequences in one flat buffer (verseTokensAt() returns the per-ordinal view)
+    tokenData: Uint16Array | Uint32Array
+    tokenOffsets: Uint32Array // verseCount + 1
+    // by shared prefix id: verse df, and CSR postings (dropped above the df cap: start === end while df > 0)
+    prefixDf: Uint32Array
+    postingStarts: Uint32Array // pool.size + 1
+    postingData: Uint32Array
+    sizeBytes: number // rough heap cost of this index (the shared pool is accounted once per session)
 }
 
 export const IDF_CAP = 6
@@ -44,7 +88,7 @@ export const DF_VOTE_MAX_FRACTION = 1 / 16
 const INFORMATIVE_IDF_ABSOLUTE = 2.5
 const INFORMATIVE_IDF_FRACTION = 0.42
 
-export function buildTranslationIndex(translationId: string, verses: IndexableVerse[]): TranslationIndex {
+export function buildTranslationIndex(translationId: string, verses: IndexableVerse[], pool: PrefixPool = new PrefixPool()): TranslationIndex {
     const verseCount = verses.length
     const book = new Uint8Array(verseCount)
     const chapter = new Uint8Array(verseCount)
@@ -55,10 +99,12 @@ export function buildTranslationIndex(translationId: string, verses: IndexableVe
     const vocab: string[] = []
     const vocabIdByToken = new Map<string, number>()
     const dfByVocabId: number[] = []
-    const verseTokens: Uint16Array[] = new Array(verseCount)
 
-    const prefixDf = new Map<string, number>()
-    const prefixOrdinals = new Map<string, number[]>()
+    const tokenOffsets = new Uint32Array(verseCount + 1)
+    const tokenIdsFlat: number[] = []
+
+    // raw postings per pool prefix id - materialized into CSR once every verse is tokenized
+    const ordinalsByPrefixId = new Map<number, number[]>()
 
     for (let ordinal = 0; ordinal < verseCount; ordinal++) {
         const verse = verses[ordinal]
@@ -69,9 +115,8 @@ export function buildTranslationIndex(translationId: string, verses: IndexableVe
         chapterBreak[ordinal] = ordinal === 0 || verses[ordinal - 1].book !== verse.book || verses[ordinal - 1].chapter !== verse.chapter ? 1 : 0
 
         const tokens = tokenizeVerseText(verse.cleanText)
-        const ids = new Uint16Array(tokens.length)
         const seenTokenIds = new Set<number>()
-        const seenKeys = new Set<string>()
+        const seenPrefixIds = new Set<number>()
 
         for (let i = 0; i < tokens.length; i++) {
             let id = vocabIdByToken.get(tokens[i])
@@ -81,24 +126,27 @@ export function buildTranslationIndex(translationId: string, verses: IndexableVe
                 vocabIdByToken.set(tokens[i], id)
                 dfByVocabId.push(0)
             }
-            ids[i] = id
+            tokenIdsFlat.push(id)
 
             if (!seenTokenIds.has(id)) {
                 seenTokenIds.add(id)
                 dfByVocabId[id]++
             }
 
-            const key = canonKey(tokens[i])
-            if (!seenKeys.has(key)) {
-                seenKeys.add(key)
-                prefixDf.set(key, (prefixDf.get(key) || 0) + 1)
-                let list = prefixOrdinals.get(key)
-                if (!list) prefixOrdinals.set(key, (list = []))
+            const prefixId = pool.intern(canonKey(tokens[i]))
+            if (!seenPrefixIds.has(prefixId)) {
+                seenPrefixIds.add(prefixId)
+                let list = ordinalsByPrefixId.get(prefixId)
+                if (!list) ordinalsByPrefixId.set(prefixId, (list = []))
                 list.push(ordinal)
             }
         }
-        verseTokens[ordinal] = ids
+        tokenOffsets[ordinal + 1] = tokenIdsFlat.length
     }
+
+    // vocab ids of a single translation stay well under 65k - fall back to 32 bit if one ever does not
+    if (vocab.length > 0xffff) console.warn(`[AiScripture] Unusually large vocabulary in ${translationId}: ${vocab.length} tokens`)
+    const tokenData = vocab.length > 0xffff ? Uint32Array.from(tokenIdsFlat) : Uint16Array.from(tokenIdsFlat)
 
     const idfByVocabId = new Float32Array(vocab.length)
     let maxIdf = 0
@@ -108,27 +156,55 @@ export function buildTranslationIndex(translationId: string, verses: IndexableVe
     }
     const informativeIdf = Math.min(INFORMATIVE_IDF_ABSOLUTE, INFORMATIVE_IDF_FRACTION * maxIdf)
 
-    const prefixBuckets = new Map<string, number[]>()
-    for (let id = 0; id < vocab.length; id++) {
-        const key = canonKey(vocab[id])
-        let bucket = prefixBuckets.get(key)
-        if (!bucket) prefixBuckets.set(key, (bucket = []))
-        bucket.push(id)
-    }
-
+    // CSR postings over the shared prefix-id space. The pool can keep growing while LATER
+    // translations are built - lookups beyond this index's range just read df 0 / no postings.
     // absolute floor keeps small corpora (tests, tiny translations) from dropping every posting
     const dfCap = Math.max(2, verseCount * DF_VOTE_MAX_FRACTION)
-    const postings = new Map<string, Uint32Array>()
-    prefixOrdinals.forEach((ordinals, key) => {
-        if (ordinals.length <= dfCap) postings.set(key, Uint32Array.from(ordinals))
+    const poolSize = pool.size
+    const prefixDf = new Uint32Array(poolSize)
+    const postingStarts = new Uint32Array(poolSize + 1)
+
+    let postingTotal = 0
+    ordinalsByPrefixId.forEach((ordinals, prefixId) => {
+        prefixDf[prefixId] = ordinals.length
+        if (ordinals.length <= dfCap) postingTotal += ordinals.length
     })
 
-    return { translationId, verseCount, book, chapter, verseStart, verseEnd, chapterBreak, vocab, vocabIdByToken, idfByVocabId, informativeIdf, prefixBuckets, postings, prefixDf, verseTokens }
+    const postingData = new Uint32Array(postingTotal)
+    let cursor = 0
+    for (let prefixId = 0; prefixId < poolSize; prefixId++) {
+        postingStarts[prefixId] = cursor
+        const ordinals = ordinalsByPrefixId.get(prefixId)
+        if (ordinals && ordinals.length <= dfCap) {
+            for (const ordinal of ordinals) postingData[cursor++] = ordinal
+        }
+    }
+    postingStarts[poolSize] = cursor
+
+    let sizeBytes = book.byteLength + chapter.byteLength + verseStart.byteLength + verseEnd.byteLength + chapterBreak.byteLength
+    sizeBytes += tokenData.byteLength + tokenOffsets.byteLength + idfByVocabId.byteLength
+    sizeBytes += prefixDf.byteLength + postingStarts.byteLength + postingData.byteLength
+    for (const token of vocab) sizeBytes += token.length * 2 + 16
+
+    return { translationId, pool, verseCount, book, chapter, verseStart, verseEnd, chapterBreak, vocab, idfByVocabId, informativeIdf, tokenData, tokenOffsets, prefixDf, postingStarts, postingData, sizeBytes }
 }
 
-/** idf of a prefix key over the verse corpus (for candidate voting weight). */
-export function prefixIdf(index: TranslationIndex, key: string): number {
-    const df = index.prefixDf.get(key)
+/** The verse's token-id sequence, as a zero-copy view into the flat buffer. */
+export function verseTokensAt(index: TranslationIndex, ordinal: number): Uint16Array | Uint32Array {
+    return index.tokenData.subarray(index.tokenOffsets[ordinal], index.tokenOffsets[ordinal + 1])
+}
+
+/** Sorted verse ordinals for a prefix id - null when this translation never saw it or dropped it above the df cap. */
+export function postingsForKey(index: TranslationIndex, prefixId: number): Uint32Array | null {
+    if (prefixId < 0 || prefixId >= index.postingStarts.length - 1) return null
+    const start = index.postingStarts[prefixId]
+    const end = index.postingStarts[prefixId + 1]
+    return end > start ? index.postingData.subarray(start, end) : null
+}
+
+/** idf of a prefix id over the verse corpus (for candidate voting weight). */
+export function prefixIdf(index: TranslationIndex, prefixId: number): number {
+    const df = prefixId >= 0 && prefixId < index.prefixDf.length ? index.prefixDf[prefixId] : 0
     if (!df) return 0
     return Math.min(IDF_CAP, Math.log(1 + index.verseCount / df))
 }

@@ -6,7 +6,7 @@
 // query span (denting density). That kills bag-of-words coincidences without a tuned gap cost.
 
 import { tokenGrade } from "./quoteMatchTokens"
-import type { TranslationIndex } from "./quoteMatchIndex"
+import { verseTokensAt, type TranslationIndex } from "./quoteMatchIndex"
 
 export const TUNING = {
     WINDOW_TOKENS: 48, // rolling transcript query size (~2 average verses of speech)
@@ -80,12 +80,12 @@ export interface AlignResult {
  * Returns null when nothing aligned.
  */
 export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, ordinal: number, tuning: Tuning = TUNING): AlignResult | null {
-    const verseIds = index.verseTokens[ordinal]
-    if (!verseIds || !query.length) return null
+    if (ordinal < 0 || ordinal >= index.verseCount || !query.length) return null
+    const verseIds = verseTokensAt(index, ordinal)
 
     const verseLength = verseIds.length
     const next = ordinal + 1
-    const spillIds = next < index.verseCount && index.book[next] === index.book[ordinal] ? index.verseTokens[next].slice(0, tuning.SPILL_TOKENS) : new Uint16Array(0)
+    const spillIds = next < index.verseCount && index.book[next] === index.book[ordinal] ? verseTokensAt(index, next).subarray(0, tuning.SPILL_TOKENS) : new Uint16Array(0)
 
     const m = query.length
     const n = verseLength + spillIds.length

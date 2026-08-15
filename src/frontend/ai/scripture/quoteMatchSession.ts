@@ -12,7 +12,7 @@ import { stripMarkdown } from "json-bible/lib/markdown"
 import { stripText } from "json-bible/lib/util"
 import type { DetectedReference } from "../../../types/ai/AiScripture"
 import { ai, aiQuoteMatchActive, scriptures, scripturesCache } from "../../stores"
-import { buildTranslationIndex, type IndexableVerse, type TranslationIndex } from "./quoteMatchIndex"
+import { buildTranslationIndex, PrefixPool, type IndexableVerse, type TranslationIndex } from "./quoteMatchIndex"
 import { QuoteMatcher, type QuoteMatchEmission } from "./quoteMatcher"
 
 export interface QuoteMatchSessionConfig {
@@ -41,8 +41,9 @@ let sessionToken = 0
 let idCounter = 0
 
 const PENDING_SEGMENT_CAP = 50
-// building indexes for very many translations would hold tens of MB for the whole session
-const MAX_INDEXED_TRANSLATIONS = 10
+// indexes are compact (~4-6 MB per full bible) but a huge library still adds up - stop
+// indexing further translations once the session's indexes reach this budget
+const INDEX_MEMORY_BUDGET_BYTES = 256 * 1024 * 1024
 
 export function startQuoteMatching(config: QuoteMatchSessionConfig): void {
     stopQuoteMatching()
@@ -62,7 +63,8 @@ export function startQuoteMatching(config: QuoteMatchSessionConfig): void {
                 return
             }
 
-            console.info(`[AiScripture] Quote matching active: ${indexes.length} translation${indexes.length === 1 ? "" : "s"} indexed`)
+            const totalBytes = indexes.reduce((sum, index) => sum + index.sizeBytes, 0) + indexes[0].pool.sizeBytes
+            console.info(`[AiScripture] Quote matching active: ${indexes.length} translation${indexes.length === 1 ? "" : "s"} indexed (${(totalBytes / 1024 / 1024).toFixed(1)} MB)`)
             aiQuoteMatchActive.set(true)
             matcher = new QuoteMatcher(indexes)
             if (pendingAnchor) matcher.setAnchor(pendingAnchor)
@@ -160,8 +162,14 @@ function bookNameFor(bibleId: string, bookNumber: number): string {
 
 async function buildIndexes(bibleIds: string[]): Promise<TranslationIndex[]> {
     const indexes: TranslationIndex[] = []
+    // one prefix pool per session: every translation's index shares the same key-id space,
+    // so the strings exist once and a voting pass resolves each spoken key once for all indexes
+    const pool = new PrefixPool()
+    let budgetBytes = INDEX_MEMORY_BUDGET_BYTES
 
-    for (const id of bibleIds.slice(0, MAX_INDEXED_TRANSLATIONS)) {
+    for (const id of bibleIds) {
+        if (budgetBytes <= 0 && indexes.length) break
+
         // API bibles have no local verse text; anything else was already loaded into the cache
         // by the session's book-table build (loadJsonBible fills scripturesCache)
         if (get(scriptures)[id]?.api) continue
@@ -181,11 +189,14 @@ async function buildIndexes(bibleIds: string[]): Promise<TranslationIndex[]> {
                     })
                 }
             }
-            // the build is CPU heavy (~200ms per translation) - yield between books so the UI stays live
+            // the build is CPU heavy - yield between books so the UI stays live
             await new Promise((resolve) => setTimeout(resolve))
         }
 
-        if (verses.length) indexes.push(buildTranslationIndex(id, verses))
+        if (!verses.length) continue
+        const index = buildTranslationIndex(id, verses, pool)
+        indexes.push(index)
+        budgetBytes -= index.sizeBytes
     }
 
     return indexes

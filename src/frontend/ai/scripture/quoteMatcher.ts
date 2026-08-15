@@ -10,8 +10,8 @@
 //
 // The whole machine is pure: segments in, emissions out, time taken from segment timestamps.
 
-import type { TranslationIndex } from "./quoteMatchIndex"
-import { prefixIdf } from "./quoteMatchIndex"
+import type { PrefixPool, TranslationIndex } from "./quoteMatchIndex"
+import { postingsForKey, prefixIdf } from "./quoteMatchIndex"
 import { alignQuoteWindow, classify, meetsFloors, TUNING, type AlignResult, type Tuning } from "./quoteMatchScore"
 import { canonKey, tokenizeTranscript } from "./quoteMatchTokens"
 
@@ -165,19 +165,26 @@ export class QuoteMatcher {
         const query = this.ring.map((entry) => ({ token: entry.token, endMs: entry.endMs }))
         const out: Candidate[] = []
 
+        // resolve each distinct spoken token's prefix key to a pool id ONCE for all translations
+        // (a session builds every index over one shared pool - separately built indexes fall back
+        // to their own pool per index), so voting is pure typed-array reads
+        const keyCounts = new Map<string, number>()
+        for (const entry of this.ring) {
+            const key = canonKey(entry.token)
+            keyCounts.set(key, (keyCounts.get(key) || 0) + 1)
+        }
+        const sharedPool = this.indexes.length && this.indexes.every((index) => index.pool === this.indexes[0].pool) ? this.indexes[0].pool : null
+        const sharedIdCounts = sharedPool ? resolvePrefixIds(sharedPool, keyCounts) : null
+
         for (const index of this.indexes) {
+            const idCounts = sharedIdCounts || resolvePrefixIds(index.pool, keyCounts)
             const votes = new Map<number, number>()
             const keysHit = new Map<number, number>()
-            const keyCounts = new Map<string, number>()
-            for (const entry of this.ring) {
-                const key = canonKey(entry.token)
-                keyCounts.set(key, (keyCounts.get(key) || 0) + 1)
-            }
 
-            keyCounts.forEach((count, key) => {
-                const postings = index.postings.get(key)
+            idCounts.forEach((count, prefixId) => {
+                const postings = postingsForKey(index, prefixId)
                 if (!postings) return
-                const weight = prefixIdf(index, key) * Math.min(count, 2)
+                const weight = prefixIdf(index, prefixId) * Math.min(count, 2)
                 for (const ordinal of postings) {
                     votes.set(ordinal, (votes.get(ordinal) || 0) + weight)
                     keysHit.set(ordinal, (keysHit.get(ordinal) || 0) + 1)
@@ -375,6 +382,16 @@ export class QuoteMatcher {
 
         return { ...ref, confidence, translationId: candidate.index.translationId, quoteText: quoteTokens.join(" "), kind }
     }
+}
+
+/** Distinct spoken-token counts, keyed by the pool's prefix ids (unknown keys drop out). */
+function resolvePrefixIds(pool: PrefixPool, keyCounts: Map<string, number>): Map<number, number> {
+    const idCounts = new Map<number, number>()
+    keyCounts.forEach((count, key) => {
+        const prefixId = pool.lookup(key)
+        if (prefixId >= 0) idCounts.set(prefixId, (idCounts.get(prefixId) || 0) + count)
+    })
+    return idCounts
 }
 
 function sameRef(a: Candidate, b: Candidate): boolean {

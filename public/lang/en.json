@@ -1803,8 +1803,8 @@
         "mode_auto": "Show it immediately",
         "mode_auto_warning": "Detected scriptures will appear on the live output instantly, without asking!",
         "auto_project_quoted": "Also show quoted verses automatically",
-        "auto_cooldown": "Auto projection cooldown (seconds)",
-        "ref_cooldown": "Same reference cooldown (seconds)",
+        "auto_cooldown": "Auto-project cooldown (s)",
+        "ref_cooldown": "Same reference cooldown (s)",
         "max_verses": "Max verses",
         "privacy": "Privacy",
         "privacy_local": "Speech is transcribed locally on your computer - audio never leaves the device.",
@@ -1844,7 +1844,7 @@
         "on_device_tip": "No AI key configured - spoken references and word-for-word quotes are detected on this computer. Add an AI key to also catch paraphrased verses.",
         "privacy_matching": "Quoted verses are matched against your installed Bibles on this computer - nothing is sent anywhere.",
         "auto_min_confidence": "Show automatically from confidence",
-        "search_bibles_hint": "Spoken quotes are matched against these translations, their book names feed reference detection, and voice commands can switch between them. With none selected, the active drawer translation is used. Quote matching indexes at most 10 translations (about 25 MB of memory each) - the drawer translation always gets a slot."
+        "search_bibles_hint": "Spoken quotes are matched against these translations, their book names feed reference detection, and voice commands can switch between them. With none selected, the active drawer translation is used. Indexing stops once the selection reaches the memory budget - the drawer translation always gets a slot."
     },
     "ai": {
         "transcription": "Transcription",
