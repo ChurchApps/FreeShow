@@ -103,6 +103,15 @@ describe("detectExplicitReferences", () => {
         expect(detectExplicitReferences("romans 8 this 28", BOOKS)[0]).toMatchObject({ bookNumber: 45, chapter: 8, verseStart: 28 })
     })
 
+    it("accepts a homophone verse number when the utterance ends there: 'john 3 for'", () => {
+        expect(detectExplicitReferences("john 3 for", BOOKS)[0]).toMatchObject({ bookNumber: 43, chapter: 3, verseStart: 4 })
+        expect(detectExplicitReferences("john chapter 3 verse for.", BOOKS)[0]).toMatchObject({ bookNumber: 43, chapter: 3, verseStart: 4 })
+    })
+
+    it("a homophone mid-sentence is never a verse number: 'john 3 for god so loved'", () => {
+        expect(detectExplicitReferences("john 3 for god so loved the world", BOOKS)[0]).toMatchObject({ bookNumber: 43, chapter: 3, verseStart: 1 })
+    })
+
     it("matches the longest book name first: '1 john' wins over 'john'", () => {
         expect(detectExplicitReferences("1 john 4:7", BOOKS)[0]).toMatchObject({ bookNumber: 62, book: "1 John", chapter: 4, verseStart: 7 })
         expect(detectExplicitReferences("john 4:7", BOOKS)[0]).toMatchObject({ bookNumber: 43, book: "John", chapter: 4, verseStart: 7 })

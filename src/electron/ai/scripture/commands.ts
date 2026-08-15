@@ -3,7 +3,7 @@
 // ("go to the next verse", "give me verse five", "show chapter four", "give me NIV", "give me another translation")
 
 import type { AiScriptureCommandEvent, AiScriptureTranslation } from "../../../types/ai/AiScripture"
-import { normalizeSpokenNumbers, VERSE_WORD_MISHEARINGS } from "./detection"
+import { normalizeSpokenNumbers, NUMBER_HOMOPHONES, parseNumberToken, VERSE_WORD_MISHEARINGS } from "./detection"
 
 export interface CommandGrammar {
     imperatives: string[]
@@ -173,9 +173,11 @@ export function detectScriptureCommand(text: string, language: string, translati
 
     // 2. verse jump: "give me verse 5". Imperative only - a bare "verse 5" is already resolved against the
     // live passage by tier 1 detection, and matching it here too would fight that with a second action.
-    const verseJump = tail.match(new RegExp(LEAD + imp + "\\s+" + art + verse + "\\s+(\\d{1,3})\\b")) || tail.match(new RegExp(LEAD + imp + "\\s+" + art + misheard + "\\s+(\\d{1,3})\\b" + BARE_TAIL))
+    // The number itself also arrives as a homophone ("give me verse for") - end of utterance only
+    const homophone = "(" + Object.keys(NUMBER_HOMOPHONES).join("|") + ")"
+    const verseJump = tail.match(new RegExp(LEAD + imp + "\\s+" + art + verse + "\\s+(\\d{1,3})\\b")) || tail.match(new RegExp(LEAD + imp + "\\s+" + art + misheard + "\\s+(\\d{1,3})\\b" + BARE_TAIL)) || tail.match(new RegExp(LEAD + imp + "\\s+" + art + "(?:" + verse + "|" + misheard + ")\\s+" + homophone + BARE_TAIL))
     if (verseJump) {
-        const number = parseInt(verseJump[1], 10)
+        const number = parseNumberToken(verseJump[1])
         if (number >= 1) return { type: "verse_jump", verse: number, phrase: phraseOf(verseJump) }
     }
 

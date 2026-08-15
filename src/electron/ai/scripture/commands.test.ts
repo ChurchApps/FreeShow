@@ -85,6 +85,14 @@ describe("detectScriptureCommand", () => {
         it("a misheard number jump has to end the utterance - narration keeps talking", () => {
             expect(detect("read this five times every day")).toBeNull()
         })
+
+        it("acts on a homophone verse number: 'give me verse for'", () => {
+            expect(detect("give me verse for")).toEqual({ type: "verse_jump", verse: 4, phrase: "give me verse for" })
+        })
+
+        it("a homophone number mid-sentence never jumps: 'give me verse for the day'", () => {
+            expect(detect("give me verse for the day")).toBeNull()
+        })
     })
 
     describe("other languages", () => {

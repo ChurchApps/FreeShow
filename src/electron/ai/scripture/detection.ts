@@ -19,6 +19,17 @@ const ORDINAL_PREFIXES: { [word: string]: string } = { first: "1", second: "2", 
 export const VERSE_WORD_MISHEARINGS = ["best", "this", "vers", "versus", "worse"]
 const VERSE_WORD = "(?:verses?|" + VERSE_WORD_MISHEARINGS.join("|") + ")"
 
+// ...and spoken verse numbers arrive as their homophones ("Matthew 4 four" -> "Matthew 4 for").
+// These are everyday function words, so they only count in the verse slot AND when the utterance
+// ends right there - "matthew 4 for" is a reference, "matthew 4 for our reading today" keeps talking
+export const NUMBER_HOMOPHONES: { [word: string]: number } = { for: 4, won: 1, tree: 3, ate: 8 }
+const HOMOPHONE_ALT = "(?:" + Object.keys(NUMBER_HOMOPHONES).join("|") + ")(?=[\\s.,!?]*$)"
+
+/** A captured verse-slot token: a digit run, or one of the accepted end-of-utterance homophones. */
+export function parseNumberToken(raw: string): number {
+    return NUMBER_HOMOPHONES[raw] ?? parseInt(raw, 10)
+}
+
 interface SpokenToken {
     prefix: string // leading punctuation
     core: string
@@ -155,7 +166,7 @@ function buildBookIndex(books: AiScriptureBook[]): BookIndex {
     // speakers often say just "matthew 5 1", and whisper's punctuation varies - accept every separator it
     // produces between chapter & verse: "5:1", "5 verse 1", "5 1", "5, 1", "5. 1", "5-1", "5–1"
     // ...and a comma/period right after the book name too: dictation-style pauses come out as "john, 1, 1."
-    const regex = patterns.length ? new RegExp("(^|[^a-z0-9])(" + patterns.join("|") + ")[,.]?\\s+(?:chapter\\s+)?(\\d{1,3})\\b(?:(?:\\s*(?::|" + VERSE_WORD + "\\b)\\s*|\\s*[-–,.]\\s*|\\s+)(\\d{1,3})\\b(?:\\s*(?:-|–|to\\b|through\\b)\\s*(\\d{1,3})\\b)?)?", "g") : null
+    const regex = patterns.length ? new RegExp("(^|[^a-z0-9])(" + patterns.join("|") + ")[,.]?\\s+(?:chapter\\s+)?(\\d{1,3})\\b(?:(?:\\s*(?::|" + VERSE_WORD + "\\b)\\s*|\\s*[-–,.]\\s*|\\s+)(\\d{1,3}\\b|" + HOMOPHONE_ALT + ")(?:\\s*(?:-|–|to\\b|through\\b)\\s*(\\d{1,3})\\b)?)?", "g") : null
     return { regex, byToken, bookPattern: patterns.join("|") }
 }
 
@@ -190,7 +201,7 @@ function matchReferences(text: string, index: BookIndex): ReferenceMatch[] {
         let verseEnd = 1
         let unglued = false
         if (hasVerse) {
-            verseStart = parseInt(match[4], 10)
+            verseStart = parseNumberToken(match[4])
             if (!(verseStart >= 1)) continue
             verseEnd = match[5] !== undefined ? parseInt(match[5], 10) : verseStart
             if (verseEnd < verseStart) verseEnd = verseStart
