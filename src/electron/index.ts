@@ -67,8 +67,13 @@ setGlobalMenu()
 autoErrorReport()
 
 // hardware acceleration
-const disableHWA = config.get("disableHardwareAcceleration")
-if (disableHWA === true) {
+// Snapshot of the ACTUAL runtime decision (app.disableHardwareAcceleration() only applies for this
+// process and a config change requires a restart). Capture/convert paths MUST gate on this snapshot, not
+// the live config value — otherwise toggling the setting without restarting mismatches the real compositor
+// mode (e.g. setting turned off but still really disabled -> shared-texture handler on a CPU compositor ->
+// dead output). See OutputLifecycle.isHardwareAccelerationDisabled.
+export const hardwareAccelerationDisabled = config.get("disableHardwareAcceleration") === true
+if (hardwareAccelerationDisabled) {
     // Video did flicker sometime with HWA, especially on ARM Mac.
     // CPU usage is often lower with HWA enabled.
     // https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering

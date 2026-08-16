@@ -52,6 +52,9 @@ export class RenderGroups {
         const members = (this.groups[key] ||= [])
         if (!members.includes(id)) members.push(id)
         const rendererId = members[0]
+        // FS_CAP_STATS: print the full render-group key so we can see exactly which field stops two
+        // supposedly-identical outputs from sharing one render. Off by default; remove before shipping.
+        if (process.env.FS_CAP_STATS) console.info(`[GROUP] add ${id} -> renderer=${rendererId} members=${members.length} key=${key}`)
         return { isRenderer: rendererId === id, rendererId }
     }
 

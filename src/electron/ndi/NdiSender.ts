@@ -88,8 +88,9 @@ export class NdiSender {
             // off-main capture: the GPU has consumed the shared texture -> release it (frees the frame pool)
             this.releaseTextureCallbacks[msg.id]?.(msg.seq)
         } else if (msg.type === "captureDone") {
-            // off-main capture fully done -> a pipeline slot frees (the lifecycle may forward the next frame)
-            this.captureDoneCallbacks[msg.id]?.(msg.seq)
+            // off-main capture fully done -> a pipeline slot frees (the lifecycle may forward the next frame).
+            // msg.tl = FS_CAP_STATS per-frame worker timeline (hop timestamps) for the [TIMELINE] attribution.
+            this.captureDoneCallbacks[msg.id]?.(msg.seq, msg.tl)
         } else if (msg.type === "scaledFrame") {
             // the worker GPU-downscaled the 4K readback to a small BGRA (server/stage) and copied it here;
             // main wraps the small image once and fans it out to every group member's server/stage consumers
@@ -145,9 +146,12 @@ export class NdiSender {
     // Off-main capture (NDI-only outputs): forward just the shared-texture handle to the worker, which does the
     // readback AND the send itself so the main process never touches 4K pixel data. The worker replies with
     // "captureDone" (relayed via captureDoneCallbacks) so the capture lifecycle can release the texture.
-    static captureDoneCallbacks: { [id: string]: (seq: number) => void } = {}
+    // tl (FS_CAP_STATS only): worker-side per-frame hop timestamps — recv (message handled), cS/cE (around
+    // readbackConsume), fS/fE (around readbackFinish), enq (pacer enqueue complete; 0/absent on error paths).
+    static captureDoneCallbacks: { [id: string]: (seq: number, tl?: { recv: number; cS: number; cE: number; fS: number; fE: number; enq: number } | null) => void } = {}
     static releaseTextureCallbacks: { [id: string]: (seq: number) => void } = {}
-    static captureFrameNDI(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; format: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[] }) {
+    // opts.depth = the renderer's derived in-flight depth_r (OutputLifecycle) — sizes the worker's pace queue
+    static captureFrameNDI(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; format: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number }) {
         const data = this.NDI[id]
         if (!data?.sender || !this.worker) return false
         this.worker.postMessage({ type: "captureFrame", id, source, opts })
