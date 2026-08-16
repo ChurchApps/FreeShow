@@ -166,12 +166,13 @@
     <div class="backdrop" on:mousedown|self={toggleExpand} transition:fade={{ duration: 250 }}></div>
 {/if}
 
-{#if !isOpen && (suggestions.length || $aiScriptureAutoPaused || (isListening && latestSegment))}
-    <div class="ai-stack">
-        {#if isListening && latestSegment}
-            <button class="ticker" title={translateText("ai_scripture.transcript")} on:click={toggleExpand}>{latestSegment}</button>
-        {/if}
+{#if !isOpen && isListening && latestSegment}
+    <!-- the live ticker sits on the bubble's own row, to its left - the stack above stays for cards -->
+    <button class="ticker" title={translateText("ai_scripture.transcript")} on:click={toggleExpand}>{latestSegment}</button>
+{/if}
 
+{#if !isOpen && (suggestions.length || $aiScriptureAutoPaused)}
+    <div class="ai-stack">
         {#if $aiScriptureAutoPaused}
             <!-- restore-previous intentionally only lives in the expanded view - the closed stack stays minimal -->
             <div class="chips" transition:fly={{ y: 20, duration: 250 }}>
@@ -522,7 +523,13 @@
         max-width: 90vw;
     }
 
+    /* on the closed bubble's row, to its left (bubble: 62px at 45px/45px) */
     .ticker {
+        position: fixed;
+        right: 117px;
+        bottom: 45px;
+        z-index: 9999;
+        max-width: min(340px, calc(90vw - 80px));
         border: none;
         text-align: end;
         background: rgba(17, 24, 39, 0.85);
@@ -538,8 +545,7 @@
         -webkit-line-clamp: 2;
         line-clamp: 2;
         -webkit-box-orient: vertical;
-        align-self: flex-end;
-        max-width: 100%;
+        margin-bottom: 11px;
     }
 
     .chips {
