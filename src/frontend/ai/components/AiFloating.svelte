@@ -180,7 +180,8 @@
             </div>
         {/if}
 
-        {#each suggestions as suggestion (suggestion.id)}
+        <!-- only the newest three stack on the closed bubble - older ones live on in the popup -->
+        {#each suggestions.slice(0, 3) as suggestion (suggestion.id)}
             <div class="suggestion" transition:fly={{ y: 20, duration: 250 }}>
                 <div class="suggestionHeader">
                     <span class="reference">{getReferenceLabel(suggestion, $scriptures)}</span>
@@ -281,6 +282,30 @@
                         <p class="placeholder"><T id="ai_scripture.waiting_for_audio" /></p>
                     {/if}
                 </div>
+
+                {#if suggestions.length}
+                    <!-- compact two-line cards: actions ride the header row, the quote stays one line -->
+                    <div class="suggestions-panel">
+                        {#each suggestions as suggestion (suggestion.id)}
+                            <div class="suggestion compact">
+                                <div class="suggestionHeader">
+                                    <span class="reference">{getReferenceLabel(suggestion, $scriptures)}</span>
+                                    <span class="confidence {suggestion.confidence}"><T id="ai_scripture.confidence_{suggestion.confidence}" /></span>
+
+                                    <div class="fill" />
+
+                                    <MaterialButton small icon="play" disabled={$outLocked} title="ai_scripture.project" on:click={() => projectDetection(suggestion, true)} />
+                                    <MaterialButton small icon="scripture" title="ai_scripture.show_in_drawer" on:click={() => showInDrawer(suggestion)} />
+                                    <MaterialButton small icon="close" title="ai_scripture.dismiss" on:click={() => dismissSuggestion(suggestion.id)} />
+                                </div>
+
+                                {#if suggestion.quote}
+                                    <p class="quote">"{suggestion.quote}"</p>
+                                {/if}
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
 
                 <!-- the bubble stays feature-agnostic (it reports anything the AI says/does) -
                      feature specific settings live on the settings page, via the header gear -->
@@ -550,6 +575,27 @@
         border-radius: 12px;
         padding: 8px 12px;
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    /* the popup shows the whole suggestion list (the closed stack only keeps the newest three) */
+    .suggestions-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-height: 200px;
+        overflow-y: auto;
+        flex-shrink: 0;
+    }
+
+    .suggestion.compact {
+        gap: 1px;
+        padding: 5px 10px;
+        box-shadow: none;
+    }
+    .suggestion.compact .quote {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .fill {

@@ -480,6 +480,16 @@ function queueAutoProjection(ref: DetectedReference) {
     const refCooldownMs = (settings.refCooldownSeconds ?? 90) * 1000
     if (lastAutoProjectedRef && Date.now() - lastAutoProjectionAt < refCooldownMs && isSameReference(lastAutoProjectedRef, ref)) return
 
+    // HIGH means the speaker explicitly asked or the match is decisive - it acts NOW. Only
+    // medium waits out the minimum display time of what is currently showing
+    if (ref.confidence === "high") {
+        if (autoTimer) clearTimeout(autoTimer)
+        autoTimer = null
+        pendingAutoRef = null
+        projectDetection(ref)
+        return
+    }
+
     // respect the minimum display time of the current projection
     const cooldownMs = (settings.autoCooldownSeconds ?? 10) * 1000
     const elapsed = Date.now() - lastAutoProjectionAt
