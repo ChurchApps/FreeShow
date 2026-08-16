@@ -65,21 +65,25 @@
     $: if (mirror && !styleBackground && $videosData[outputId]?.paused) videoData.paused = true
     $: if (mirror && !styleBackground && $videosData[outputId]?.paused === false) videoData.paused = false
 
+    // mirror the output's loop state so the preview video loops natively instead of freezing on its last frame at the loop point
+    $: if (mirror && !styleBackground && !fadingOut && $videosData[outputId]?.loop !== undefined && videoData.loop !== $videosData[outputId].loop) videoData.loop = $videosData[outputId].loop
+
+    // native loop is disabled while soft looping (Video.svelte cross-fade seeks instead of wrapping)
+    $: mirrorLoopsNatively = videoData.loop && !(Number(mediaStyle.softLoop) > 0)
+
     $: if (mirror && !styleBackground && $videosTime[outputId] !== undefined) setPreviewVideoTime()
     function setPreviewVideoTime() {
         // timeout in case video is going to fade out
         setTimeout(() => {
             if (fadingOut || (!videoData.paused && videoTime < 2)) return
 
-            const diff = Math.abs($videosTime[outputId] - videoTime)
+            let diff = Math.abs($videosTime[outputId] - videoTime)
+            // a normal loop wrap (output just restarted while the mirror is still near the end) is not real drift
+            if (mirrorLoopsNatively && videoData.duration) diff = Math.min(diff, videoData.duration - diff)
+
             if (diff > 0.5) {
                 videoTime = $videosTime[outputId]
-
-                if (videoTime < 0.6) {
-                    videoData.paused = true // quick fix for preview stutter when video loops (should be a better fix)
-                } else {
-                    videoData.paused = $videosData[outputId]?.paused
-                }
+                videoData.paused = $videosData[outputId]?.paused ?? videoData.paused
             }
         }, 50)
     }
