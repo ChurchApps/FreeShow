@@ -19,9 +19,12 @@ const SAMPLE_RATE = 16000
 const RING_SECONDS = 30
 const WINDOW_SECONDS = 5
 const STEP_SECONDS = 3
+// on machines where a window decodes slower than the step, the step stretches up to this instead
+// of skipping windows - a laggier transcript that stays CONTIGUOUS beats dropped words. The cap
+// keeps at least 500ms of window overlap for the seam trim's backtrack
+const STEP_MAX_SECONDS = 4.5
 
 const WINDOW_SAMPLES = WINDOW_SECONDS * SAMPLE_RATE
-const STEP_SAMPLES = STEP_SECONDS * SAMPLE_RATE
 
 // the time-based overlap trim re-emits from slightly BEFORE the previous window's edge, so a word cut
 // mid-transcription at that edge comes out whole in the next window (the seam stitch drops true repeats)
@@ -74,6 +77,8 @@ export class Transcriber implements TranscriptionDriver {
     private lastEmittedTailWords: string[] = []
     private consecutiveFailures = 0
     private windowCount = 0
+    private stepSeconds = STEP_SECONDS
+    private slowWindows = 0
 
     private stopped = false
     private cliChild: ChildProcess | null = null
@@ -137,7 +142,8 @@ export class Transcriber implements TranscriptionDriver {
 
         while (this.totalSamples >= this.nextWindowAt) {
             const endSample = this.nextWindowAt
-            this.nextWindowAt += STEP_SAMPLES
+            const stepSamples = Math.round(this.stepSeconds * SAMPLE_RATE)
+            this.nextWindowAt += stepSamples
 
             const samples = this.readRange(endSample - WINDOW_SAMPLES, endSample)
             if (computeRms(samples) < SILENCE_RMS_THRESHOLD) continue // whole window is silence - skip
@@ -145,7 +151,7 @@ export class Transcriber implements TranscriptionDriver {
             // the step's worth of NEW audio is all this window adds - when that part is silent, any
             // speech in the window was already covered by the previous one, and transcribing a mostly
             // silent window is whisper's favorite place to hallucinate ("thank you", subtitle dashes)
-            const fresh = samples.subarray(Math.max(0, samples.length - STEP_SAMPLES))
+            const fresh = samples.subarray(Math.max(0, samples.length - stepSamples))
             if (computeRms(fresh) < SILENCE_RMS_THRESHOLD) continue
 
             this.enqueueWindow({ samples, startSample: endSample - samples.length })
@@ -191,8 +197,10 @@ export class Transcriber implements TranscriptionDriver {
             const windowDurationMs = Math.round((window.samples.length / SAMPLE_RATE) * 1000)
             const wav = buildWavBuffer(window.samples)
 
+            const decodeStartedAt = Date.now()
             const json = this.options.binary.kind === "cli" ? await this.transcribeCli(wav, windowDurationMs) : await this.transcribeServer(wav)
             if (this.stopped) return
+            this.trackDecodePace(Date.now() - decodeStartedAt)
 
             const parsed = parseWhisperJson(json, windowDurationMs)
             const absolute = parsed.map((segment) => Object.assign({}, segment, { startMs: windowStartMs + segment.startMs, endMs: windowStartMs + segment.endMs }))
@@ -228,6 +236,18 @@ export class Transcriber implements TranscriptionDriver {
             this.pendingWindow = null
             if (next && !this.stopped) this.runWindow(next)
         }
+    }
+
+    // a window decoding slower than the step means the NEXT window would be skipped and its words
+    // dropped - stretch the step instead (contiguous but laggier), recover when decodes speed up
+    private trackDecodePace(decodeMs: number) {
+        if (decodeMs > this.stepSeconds * 1000) {
+            this.slowWindows++
+            if (this.slowWindows === 1 || this.slowWindows % 10 === 0) {
+                console.warn(`[AiScripture] Whisper window decoded in ${decodeMs}ms (step ${this.stepSeconds}s) - the transcript will lag on this machine/model`)
+            }
+        }
+        this.stepSeconds = adaptStepSeconds(this.stepSeconds, decodeMs)
     }
 
     // CLI DRIVER - one whisper.cpp cli process per window, JSON output to a temp file
@@ -517,6 +537,17 @@ export class Transcriber implements TranscriptionDriver {
 }
 
 // PURE HELPERS (exported for tests)
+
+/**
+ * Next step length after a window decoded in `decodeMs`: an overrun stretches the step (a half
+ * second at a time, capped so the 5s window keeps overlap for the seam trim), a comfortably fast
+ * decode walks it back toward the latency floor.
+ */
+export function adaptStepSeconds(current: number, decodeMs: number): number {
+    if (decodeMs > current * 1000) return Math.min(STEP_MAX_SECONDS, current + 0.5)
+    if (decodeMs < current * 600) return Math.max(STEP_SECONDS, current - 0.5)
+    return current
+}
 
 // in-memory WAV: 44 byte header + Int16 LE PCM data (16kHz mono 16-bit)
 export function buildWavBuffer(samples: Int16Array, sampleRate: number = SAMPLE_RATE): Uint8Array {

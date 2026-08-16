@@ -13,7 +13,7 @@ vi.mock("child_process", () => ({
 
 import fs from "fs"
 
-import { buildWavBuffer, computeRms, dedupeOverlap, isLowConfidence, isNoiseSegment, parseWhisperJson, shouldRerunWindow, Transcriber } from "./transcriber"
+import { adaptStepSeconds, buildWavBuffer, computeRms, dedupeOverlap, isLowConfidence, isNoiseSegment, parseWhisperJson, shouldRerunWindow, Transcriber } from "./transcriber"
 
 describe("buildWavBuffer", () => {
     const samples = new Int16Array([0, 1000, -1000, 32767, -32768])
@@ -527,5 +527,25 @@ describe("cli declared-language re-run", () => {
 
         expect(spawnMock).toHaveBeenCalledTimes(1)
         expect(fs.existsSync(spawnedWavPath(0))).toBe(false)
+    })
+})
+
+describe("adaptStepSeconds", () => {
+    it("stretches the step when a window decodes slower than it", () => {
+        expect(adaptStepSeconds(3, 3500)).toBe(3.5)
+        expect(adaptStepSeconds(3.5, 4000)).toBe(4)
+    })
+
+    it("caps the stretch so the 5s window keeps overlap for the seam trim", () => {
+        expect(adaptStepSeconds(4.5, 9000)).toBe(4.5)
+    })
+
+    it("recovers toward the latency floor when decodes run fast again", () => {
+        expect(adaptStepSeconds(4.5, 1000)).toBe(4)
+        expect(adaptStepSeconds(3, 500)).toBe(3) // never below the floor
+    })
+
+    it("holds steady in the comfortable band", () => {
+        expect(adaptStepSeconds(3.5, 3000)).toBe(3.5)
     })
 })
