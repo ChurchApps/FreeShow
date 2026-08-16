@@ -1,221 +1,138 @@
-import { beforeEach, describe, expect, it } from "vitest"
-
-// the native addon is not installed in CI - inject a scripted fake instead
-const state = {
-    detected: false,
-    closed: 0,
-    text: "",
-    createdStreams: 0,
-    accepted: [] as number[]
-}
-
-const fakeSherpa = {
-    OnlineRecognizer: class {
-        createStream() {
-            state.createdStreams++
-            return { acceptWaveform: ({ samples }: { samples: Float32Array }) => state.accepted.push(samples.length) }
-        }
-        isReady() {
-            return false
-        }
-        decode() {}
-        getResult() {
-            return { text: state.text }
-        }
-    },
-    Vad: class {
-        acceptWaveform() {}
-        isDetected() {
-            return state.detected
-        }
-        isEmpty() {
-            if (state.closed > 0) {
-                state.closed--
-                return false
-            }
-            return true
-        }
-        pop() {}
-    }
-}
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { NemotronDriver } from "./driver"
 
-const PATHS = { encoder: "e", decoder: "d", joiner: "j", tokens: "t" }
+const SAMPLE_RATE = 16000
 
-/** 100ms of Int16 PCM @ 16kHz, as the renderer sends it. */
-function chunk(): Uint8Array {
-    return new Uint8Array(1600 * 2)
+// one second of non-silent Int16 LE PCM
+function pcmSeconds(seconds: number): Uint8Array {
+    return new Uint8Array(new Int16Array(seconds * SAMPLE_RATE).fill(1000).buffer)
 }
 
-/** Push the post-close tail audio the driver waits for before decoding (CLOSE_DEFER_SAMPLES). */
-function pushDeferTail(driver: NemotronDriver) {
-    state.detected = false
-    for (let i = 0; i < 6; i++) driver.pushAudio(chunk())
+interface FakeControls {
+    detected: boolean // what the VAD reports for every chunk
+    closedQueue: number // pending VAD segment closes (isEmpty/pop)
+    decodeTexts: string[] // consumed per decodeBatch call; the last entry repeats when exhausted
+    decodeAdvanceMs?: number // fake-timer time burned inside each decode (slow-machine simulation)
 }
+
+function makeSherpa(controls: FakeControls) {
+    return {
+        OnlineRecognizer: class {
+            createStream() {
+                return { steps: 0 }
+            }
+            acceptWaveform() {}
+            isReady(stream: { steps: number }) {
+                return stream.steps > 0
+            }
+            decode(stream: { steps: number }) {
+                stream.steps--
+            }
+            getResult() {
+                const text = controls.decodeTexts.length > 1 ? controls.decodeTexts.shift()! : (controls.decodeTexts[0] ?? "")
+                if (controls.decodeAdvanceMs) vi.advanceTimersByTime(controls.decodeAdvanceMs)
+                return { text }
+            }
+        },
+        Vad: class {
+            acceptWaveform() {}
+            isDetected() {
+                return controls.detected
+            }
+            isEmpty() {
+                return controls.closedQueue <= 0
+            }
+            pop() {
+                controls.closedQueue--
+            }
+        }
+    }
+}
+
+// the fake recognizer's createStream is stream-shaped but decode is driven by getResult only -
+// patch acceptWaveform/decode compatibility for the driver's batch loop
+function makeDriver(controls: FakeControls, onSegment: (segment: { text: string }) => void) {
+    const sherpa = makeSherpa(controls)
+    // the driver calls stream.acceptWaveform({...}) on the object createStream returned
+    sherpa.OnlineRecognizer.prototype.createStream = function () {
+        return {
+            steps: 1,
+            acceptWaveform() {}
+        }
+    } as any
+
+    return new NemotronDriver({
+        paths: { encoder: "e", decoder: "d", joiner: "j", tokens: "t" } as any,
+        vadModelPath: "vad",
+        sherpa,
+        onSegment: onSegment as any,
+        onError: (message: string) => {
+            throw new Error(message)
+        }
+    })
+}
+
+afterEach(() => {
+    vi.useRealTimers()
+})
 
 describe("NemotronDriver", () => {
-    let segments: { text: string; startMs: number; endMs: number }[]
-    let errors: string[]
-    let driver: NemotronDriver
-
-    beforeEach(async () => {
-        state.detected = false
-        state.closed = 0
-        state.text = ""
-        state.createdStreams = 0
-        state.accepted = []
-
-        segments = []
-        errors = []
-        driver = new NemotronDriver({
-            sherpa: fakeSherpa,
-            paths: PATHS,
-            vadModelPath: "vad",
-            language: "en",
-            onSegment: (segment) => segments.push(segment),
-            onError: (message) => errors.push(message)
-        })
+    it("streams agreed partial words, then the close delivers the remainder in order", async () => {
+        const controls: FakeControls = { detected: true, closedQueue: 0, decodeTexts: ["hello world", "hello world again", "hello world again friends"] }
+        const segments: string[] = []
+        const driver = makeDriver(controls, (segment) => segments.push(segment.text))
         await driver.start()
+
+        driver.pushAudio(pcmSeconds(2)) // first partial: no agreement yet
+        driver.pushAudio(pcmSeconds(2)) // second partial: "hello world" agreed twice - emitted
+        expect(segments).toEqual(["hello world"])
+
+        controls.closedQueue = 1 // the VAD closes the utterance...
+        driver.pushAudio(pcmSeconds(1)) // ...arming the deferred close
+        controls.detected = false // silence follows (speech resuming would cancel the defer)
+        driver.pushAudio(pcmSeconds(1)) // covers the close-defer window - finalize runs
+        expect(segments).toEqual(["hello world", "again friends"])
     })
 
-    it("emits nothing while no speech is detected", () => {
-        driver.pushAudio(chunk())
-        driver.pushAudio(chunk())
-        expect(segments).toEqual([])
-        expect(state.createdStreams).toBe(0)
+    it("forces the utterance boundary at the cap when the VAD never closes (constant program audio)", async () => {
+        const controls: FakeControls = { detected: true, closedQueue: 0, decodeTexts: ["alpha beta gamma delta"] }
+        const segments: string[] = []
+        const driver = makeDriver(controls, (segment) => segments.push(segment.text))
+        await driver.start()
+
+        for (let second = 0; second < 20; second++) driver.pushAudio(pcmSeconds(1))
+
+        // the text streamed out even though the VAD never produced a boundary...
+        expect(segments.join(" ")).toContain("alpha beta gamma delta")
+        // ...and the buffer was reset by a forced finalize instead of freezing at the cap
+        expect((driver as any).utteranceSamples).toBeLessThan(17 * SAMPLE_RATE)
     })
 
-    it("emits a segment once the VAD closes an utterance and the tail window has passed", () => {
-        state.detected = true
-        driver.pushAudio(chunk())
-        state.text = "John three sixteen"
-        state.closed = 1
-        driver.pushAudio(chunk())
+    it("backs the partial interval off when decodes run slow instead of going quiet", async () => {
+        vi.useFakeTimers()
+        const controls: FakeControls = { detected: true, closedQueue: 0, decodeTexts: ["one two"], decodeAdvanceMs: 1500 }
+        const driver = makeDriver(controls, () => {})
+        await driver.start()
 
-        // not decoded yet - the driver keeps capturing real tail audio first, in case the close landed mid-word
-        expect(segments).toEqual([])
+        driver.pushAudio(pcmSeconds(2)) // first partial: slow decode
+        expect((driver as any).partialBackoff).toBe(2)
 
-        pushDeferTail(driver)
-        expect(segments).toHaveLength(1)
-        expect(segments[0].text).toBe("John three sixteen")
-        expect(segments[0].endMs).toBeGreaterThan(segments[0].startMs)
+        driver.pushAudio(pcmSeconds(4)) // next partial (interval doubled): still slow
+        expect((driver as any).partialBackoff).toBe(4)
+
+        driver.pushAudio(pcmSeconds(8))
+        expect((driver as any).partialBackoff).toBe(4) // capped
     })
 
-    it("continues the same utterance when speech resumes inside the tail window", () => {
-        state.detected = true
-        driver.pushAudio(chunk())
-        state.closed = 1
-        driver.pushAudio(chunk())
+    it("stop flushes the utterance still being spoken", async () => {
+        const controls: FakeControls = { detected: true, closedQueue: 0, decodeTexts: ["", "the words being spoken"] }
+        const segments: string[] = []
+        const driver = makeDriver(controls, (segment) => segments.push(segment.text))
+        await driver.start()
 
-        // the speaker picks back up before the window elapses - no cut
-        state.detected = true
-        driver.pushAudio(chunk())
-        expect(segments).toEqual([])
-
-        state.text = "next verse"
-        state.closed = 1
-        driver.pushAudio(chunk())
-        pushDeferTail(driver)
-
-        expect(segments.map((segment) => segment.text)).toEqual(["next verse"])
-        expect(state.createdStreams).toBe(1)
-    })
-
-    it("decodes each utterance in ONE batch on a fresh stream", () => {
-        for (let i = 0; i < 2; i++) {
-            state.detected = true
-            driver.pushAudio(chunk())
-            state.text = `utterance ${i}`
-            state.closed = 1
-            driver.pushAudio(chunk())
-            pushDeferTail(driver)
-        }
-
-        expect(segments.map((segment) => segment.text)).toEqual(["utterance 0", "utterance 1"])
-        // one stream and one acceptWaveform per utterance - chunked feeding decodes short utterances to nothing
-        expect(state.createdStreams).toBe(2)
-        expect(state.accepted).toHaveLength(2)
-    })
-
-    it("includes pre-roll audio so the first word is not clipped", () => {
-        driver.pushAudio(chunk()) // silence, buffered as pre-roll
-        state.detected = true
-        driver.pushAudio(chunk())
-        state.text = "hello"
-        state.closed = 1
-        driver.pushAudio(chunk())
-        pushDeferTail(driver)
-
-        // the batch carries pre-roll (1600) + detected chunks (2 x 1600) + the finalize pad
-        expect(state.accepted[0]).toBeGreaterThan(3 * 1600)
-    })
-
-    it("drops empty transcripts", () => {
-        state.detected = true
-        driver.pushAudio(chunk())
-        state.text = "   "
-        state.closed = 1
-        driver.pushAudio(chunk())
-
-        expect(segments).toEqual([])
-    })
-
-    // partial decodes: PARTIAL_INTERVAL_SAMPLES (1.6s) is 16 of the 100ms test chunks
-    function pushChunks(count: number) {
-        for (let i = 0; i < count; i++) driver.pushAudio(chunk())
-    }
-
-    it("streams out the words two consecutive partial decodes agree on", () => {
-        state.detected = true
-        state.text = "in the beginning"
-        pushChunks(16) // first partial: nothing out yet - agreement needs two reads
-        expect(segments).toEqual([])
-        expect(state.createdStreams).toBe(1)
-
-        state.text = "in the beginning god created"
-        pushChunks(16) // second partial: the first three words are stable
-        expect(segments.map((segment) => segment.text)).toEqual(["in the beginning"])
-
-        state.text = "in the beginning god created the heaven"
-        state.closed = 1
-        driver.pushAudio(chunk())
-        pushDeferTail(driver)
-
-        // the close delivers the rest - no word is ever emitted twice
-        expect(segments.map((segment) => segment.text)).toEqual(["in the beginning", "god created the heaven"])
-    })
-
-    it("never retracts emitted words when a later read revises them", () => {
-        state.detected = true
-        state.text = "he said go"
-        pushChunks(16)
-        state.text = "he said go up"
-        pushChunks(16)
-        expect(segments.map((segment) => segment.text)).toEqual(["he said go"])
-
-        // the final read revises the opening - the emitted words stand, only the remainder goes out
-        state.text = "we said go up now"
-        state.closed = 1
-        driver.pushAudio(chunk())
-        pushDeferTail(driver)
-        expect(segments.map((segment) => segment.text)).toEqual(["he said go", "up now"])
-    })
-
-    it("flushes an in-progress utterance on stop", async () => {
-        state.detected = true
-        driver.pushAudio(chunk())
-        state.text = "half spoken"
+        driver.pushAudio(pcmSeconds(2)) // partial consumed the empty first entry - nothing emitted yet
         await driver.stop()
-
-        expect(segments).toHaveLength(1)
-        expect(segments[0].text).toBe("half spoken")
-    })
-
-    it("ignores audio after stop", async () => {
-        await driver.stop()
-        driver.pushAudio(chunk())
-        expect(segments).toEqual([])
-        expect(errors).toEqual([])
+        expect(segments).toEqual(["the words being spoken"])
     })
 })

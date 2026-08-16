@@ -47,9 +47,10 @@ const PARTIAL_INTERVAL_SAMPLES = 1.6 * SAMPLE_RATE
 // a re-decode can merge/split words, shifting positions - re-cover this many already emitted words
 // across every decode seam and let the seam stitch drop the ones that really did come out already
 const SEAM_BACKTRACK_WORDS = 2
-// a partial decode this slow means the utterance has grown too heavy for live re-decoding on this
-// machine - stop partials for the rest of the utterance and let the close deliver the remainder
-const PARTIAL_MAX_DECODE_MS = 1000
+// a partial decode slower than this means the utterance has grown heavy for this machine - back the
+// re-decode interval off (doubling, capped) instead of going quiet until the close
+const PARTIAL_SLOW_DECODE_MS = 1000
+const PARTIAL_BACKOFF_MAX = 4
 
 // audio kept from just before the VAD triggers - long enough that the batch has lead-in for the encoder to
 // warm up on before the first word, or the utterance's opening syllables decode garbled
@@ -91,7 +92,7 @@ export class NemotronDriver implements TranscriptionDriver {
 
     // partial decode state for the open utterance
     private nextPartialAtSamples = 0
-    private partialsDisabled = false
+    private partialBackoff = 1 // interval multiplier, doubled while decodes run slow on this machine
     private lastPartialWords: string[] = []
     private emittedWords = 0 // words of the open utterance already emitted
     private emittedTailWords: string[] = [] // what those words actually were, for the seam stitch
@@ -192,7 +193,7 @@ export class NemotronDriver implements TranscriptionDriver {
                     this.prerollSamples = 0
 
                     this.nextPartialAtSamples = this.utteranceSamples + PARTIAL_INTERVAL_SAMPLES
-                    this.partialsDisabled = false
+                    this.partialBackoff = 1
                     this.lastPartialWords = []
                     this.emittedWords = 0
                     this.nextEmitStartMs = Math.round((this.utteranceStartSample / SAMPLE_RATE) * 1000)
@@ -205,6 +206,10 @@ export class NemotronDriver implements TranscriptionDriver {
                 if (this.utteranceSamples < MAX_UTTERANCE_SAMPLES) {
                     this.utterance.push(samples)
                     this.utteranceSamples += samples.length
+                } else if (!this.finalizeAtSample) {
+                    // the VAD never closed (constant program audio can defeat it) - force the boundary
+                    // NOW instead of silently discarding everything after the cap until it does
+                    this.finalizeAtSample = this.totalSamples
                 }
             } else {
                 this.bufferPreroll(samples)
@@ -221,8 +226,8 @@ export class NemotronDriver implements TranscriptionDriver {
             if (closed && this.inUtterance) this.finalizeAtSample = this.totalSamples + CLOSE_DEFER_SAMPLES
 
             // stream the open utterance out early - unless the close is already pending (the full decode is imminent)
-            if (this.inUtterance && !this.finalizeAtSample && !this.partialsDisabled && this.utteranceSamples >= this.nextPartialAtSamples) {
-                this.nextPartialAtSamples = this.utteranceSamples + PARTIAL_INTERVAL_SAMPLES
+            if (this.inUtterance && !this.finalizeAtSample && this.utteranceSamples >= this.nextPartialAtSamples) {
+                this.nextPartialAtSamples = this.utteranceSamples + PARTIAL_INTERVAL_SAMPLES * this.partialBackoff
                 this.decodePartial()
             }
 
@@ -258,7 +263,8 @@ export class NemotronDriver implements TranscriptionDriver {
     private decodePartial() {
         const startedAt = Date.now()
         const text = this.decodeBatch(false)
-        if (Date.now() - startedAt > PARTIAL_MAX_DECODE_MS) this.partialsDisabled = true
+        // the utterance has grown heavy for this machine: re-decode less often, but keep streaming
+        if (Date.now() - startedAt > PARTIAL_SLOW_DECODE_MS) this.partialBackoff = Math.min(PARTIAL_BACKOFF_MAX, this.partialBackoff * 2)
 
         const words = text ? text.split(/\s+/) : []
         let agreed = 0
@@ -284,7 +290,7 @@ export class NemotronDriver implements TranscriptionDriver {
 
         this.lastPartialWords = []
         this.emittedWords = 0
-        this.partialsDisabled = false
+        this.partialBackoff = 1
     }
 
     private emitText(text: string) {
