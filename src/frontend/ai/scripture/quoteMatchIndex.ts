@@ -75,7 +75,13 @@ export interface TranslationIndex {
     prefixDf: Uint32Array
     postingStarts: Uint32Array // pool.size + 1
     postingData: Uint32Array
-    sizeBytes: number // rough heap cost of this index (the shared pool is accounted once per session)
+    // bigram candidate route (bigrams: true builds only): SPARSE postings by bigram-pool id,
+    // binary searched - a dense array over the bigram pool would dwarf the index itself
+    bigramPool?: PrefixPool
+    bigramIds?: Uint32Array // sorted bigram-pool ids present in this translation
+    bigramStarts?: Uint32Array // bigramIds.length + 1
+    bigramData?: Uint32Array
+    sizeBytes: number // rough heap cost of this index (the shared pools are accounted once per session)
 }
 
 export const IDF_CAP = 6
@@ -88,7 +94,15 @@ export const DF_VOTE_MAX_FRACTION = 1 / 16
 const INFORMATIVE_IDF_ABSOLUTE = 2.5
 const INFORMATIVE_IDF_FRACTION = 0.42
 
-export function buildTranslationIndex(translationId: string, verses: IndexableVerse[], pool: PrefixPool = new PrefixPool()): TranslationIndex {
+export interface IndexBuildOptions {
+    // build the bigram candidate route on this index (the session gives it to the drawer
+    // translation): adjacent word PAIRS pinpoint verses whose individual words are all too
+    // common to vote - "was light" finds Genesis 1:3 the way typing it into search would
+    bigrams?: boolean
+    bigramPool?: PrefixPool
+}
+
+export function buildTranslationIndex(translationId: string, verses: IndexableVerse[], pool: PrefixPool = new PrefixPool(), options: IndexBuildOptions = {}): TranslationIndex {
     const verseCount = verses.length
     const book = new Uint8Array(verseCount)
     const chapter = new Uint8Array(verseCount)
@@ -204,12 +218,97 @@ export function buildTranslationIndex(translationId: string, verses: IndexableVe
     }
     postingStarts[poolSize] = cursor
 
+    const index: TranslationIndex = { translationId, pool, verseCount, book, chapter, verseStart, verseEnd, chapterBreak, vocab, idfByVocabId, informativeIdf, tokenData, tokenOffsets, prefixDf, postingStarts, postingData, sizeBytes: 0 }
+
+    if (options.bigrams) {
+        const droppedPrefix = (prefixId: number) => (ordinalsByPrefixId.get(prefixId)?.length || 0) > dfCap
+        buildBigramRoute(index, options.bigramPool || new PrefixPool(), dfCap, droppedPrefix)
+    }
+
     let sizeBytes = book.byteLength + chapter.byteLength + verseStart.byteLength + verseEnd.byteLength + chapterBreak.byteLength
     sizeBytes += tokenData.byteLength + tokenOffsets.byteLength + idfByVocabId.byteLength
     sizeBytes += prefixDf.byteLength + postingStarts.byteLength + postingData.byteLength
+    sizeBytes += (index.bigramIds?.byteLength || 0) + (index.bigramStarts?.byteLength || 0) + (index.bigramData?.byteLength || 0)
     for (const token of vocab) sizeBytes += token.length * 2 + 16
+    index.sizeBytes = sizeBytes
 
-    return { translationId, pool, verseCount, book, chapter, verseStart, verseEnd, chapterBreak, vocab, idfByVocabId, informativeIdf, tokenData, tokenOffsets, prefixDf, postingStarts, postingData, sizeBytes }
+    return index
+}
+
+// voting weight of a bigram hit. Every stored bigram is rare (df-capped at build), so a flat
+// weight stands in for its idf - storing per-bigram df would double the route's footprint for
+// a number the alignment never uses
+export const BIGRAM_VOTE_IDF = 5
+
+export const bigramKey = (a: string, b: string) => a + "|" + b
+
+/**
+ * Adjacent-pair postings for the verse fragments unigram voting is blind to: a pair is stored
+ * when at least one side's prefix postings were dropped above the df cap (that side can never
+ * vote alone), and the pair itself is rare enough to discriminate. Sparse by bigram-pool id.
+ */
+function buildBigramRoute(index: TranslationIndex, bigramPool: PrefixPool, dfCap: number, droppedPrefix: (prefixId: number) => boolean): void {
+    const { pool, vocab, tokenData, tokenOffsets, verseCount } = index
+
+    const canonByVocabId = vocab.map((token) => canonKey(token))
+    const droppedByVocabId = canonByVocabId.map((key) => droppedPrefix(pool.lookup(key)))
+
+    const ordinalsByBigramId = new Map<number, number[]>()
+    for (let ordinal = 0; ordinal < verseCount; ordinal++) {
+        let seen: Set<number> | null = null
+        for (let i = tokenOffsets[ordinal] + 1; i < tokenOffsets[ordinal + 1]; i++) {
+            const left = tokenData[i - 1]
+            const right = tokenData[i]
+            if (!droppedByVocabId[left] && !droppedByVocabId[right]) continue // both sides vote alone already
+
+            const bigramId = bigramPool.intern(bigramKey(canonByVocabId[left], canonByVocabId[right]))
+            if (seen?.has(bigramId)) continue
+            ;(seen ||= new Set()).add(bigramId)
+            let list = ordinalsByBigramId.get(bigramId)
+            if (!list) ordinalsByBigramId.set(bigramId, (list = []))
+            list.push(ordinal)
+        }
+    }
+
+    const keptIds: number[] = []
+    let postingTotal = 0
+    ordinalsByBigramId.forEach((ordinals, bigramId) => {
+        if (ordinals.length > dfCap) return // "of the" discriminates nothing
+        keptIds.push(bigramId)
+        postingTotal += ordinals.length
+    })
+    keptIds.sort((a, b) => a - b)
+
+    const bigramIds = Uint32Array.from(keptIds)
+    const bigramStarts = new Uint32Array(keptIds.length + 1)
+    const bigramData = new Uint32Array(postingTotal)
+    let cursor = 0
+    for (let i = 0; i < keptIds.length; i++) {
+        bigramStarts[i] = cursor
+        for (const ordinal of ordinalsByBigramId.get(keptIds[i])!) bigramData[cursor++] = ordinal
+    }
+    bigramStarts[keptIds.length] = cursor
+
+    index.bigramPool = bigramPool
+    index.bigramIds = bigramIds
+    index.bigramStarts = bigramStarts
+    index.bigramData = bigramData
+}
+
+/** Sorted verse ordinals for a bigram-pool id - null when this index has no bigram route or never kept the pair. */
+export function bigramPostings(index: TranslationIndex, bigramId: number): Uint32Array | null {
+    const ids = index.bigramIds
+    if (!ids || bigramId < 0) return null
+
+    let low = 0
+    let high = ids.length - 1
+    while (low <= high) {
+        const mid = (low + high) >> 1
+        if (ids[mid] === bigramId) return index.bigramData!.subarray(index.bigramStarts![mid], index.bigramStarts![mid + 1])
+        if (ids[mid] < bigramId) low = mid + 1
+        else high = mid - 1
+    }
+    return null
 }
 
 /** The verse's token-id sequence, as a zero-copy view into the flat buffer. */

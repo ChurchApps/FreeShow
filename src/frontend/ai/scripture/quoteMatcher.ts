@@ -14,8 +14,8 @@
 // taken from segment timestamps.
 
 import type { PrefixPool, TranslationIndex } from "./quoteMatchIndex"
-import { postingsForKey, prefixIdf } from "./quoteMatchIndex"
-import { alignQuoteWindow, classify, meetsFloors, TUNING, type AlignResult, type QueryToken, type Tuning } from "./quoteMatchScore"
+import { BIGRAM_VOTE_IDF, bigramKey, bigramPostings, postingsForKey, prefixIdf } from "./quoteMatchIndex"
+import { alignQuoteWindow, classify, meetsFloors, phraseEvidence, TUNING, type AlignResult, type QueryToken, type Tuning } from "./quoteMatchScore"
 import { cachedPhoneticKey, canonKey, tokenizeTranscript } from "./quoteMatchTokens"
 
 export interface QuoteMatchSegment {
@@ -50,6 +50,7 @@ interface Candidate {
     effectiveScore: number // raw score + anchor/consensus bonuses (threshold comparisons only)
     zone: number // 0 same chapter, 1 +-1 chapter, 2 same book, 3 cross book (relative to anchor/tracker)
     injected: boolean
+    substantial: boolean // clears the evidence floors or carries phrase evidence - junk alignments score 1.0 too (span-relative), this is what separates them
 }
 
 interface ActiveTracker {
@@ -218,6 +219,26 @@ export class QuoteMatcher {
             castVotes(canonCounts, 1)
             castVotes(phoneticCounts, tuning.PHONETIC_VOTE_DISCOUNT)
 
+            // bigram route (indexes that carry one - the drawer translation): adjacent word pairs
+            // find the verses their individual words are too common to vote for ("was light" ->
+            // Genesis 1:3), the way typing the fragment into bible search would
+            if (index.bigramIds && index.bigramPool) {
+                const bigramSeen = new Map<number, number>()
+                for (let i = 1; i < this.ring.length; i++) {
+                    const bigramId = index.bigramPool.lookup(bigramKey(canonKey(this.ring[i - 1].token), canonKey(this.ring[i].token)))
+                    if (bigramId >= 0) bigramSeen.set(bigramId, (bigramSeen.get(bigramId) || 0) + 1)
+                }
+                bigramSeen.forEach((count, bigramId) => {
+                    const postings = bigramPostings(index, bigramId)
+                    if (!postings) return
+                    const weight = BIGRAM_VOTE_IDF * Math.min(count, 2)
+                    for (const ordinal of postings) {
+                        votes.set(ordinal, (votes.get(ordinal) || 0) + weight)
+                        keysHit.set(ordinal, (keysHit.get(ordinal) || 0) + 1)
+                    }
+                })
+            }
+
             const voted = Array.from(votes.entries())
                 .filter(([ordinal, weight]) => weight >= tuning.MIN_VOTE_WEIGHT && (keysHit.get(ordinal) || 0) >= tuning.MIN_VOTE_KEYS)
                 .sort((a, b) => b[1] - a[1])
@@ -244,17 +265,27 @@ export class QuoteMatcher {
 
             const ordinals = new Set<number>([...voted, ...injected])
             ordinals.forEach((ordinal) => {
-                const align = alignQuoteWindow(query, index, ordinal, tuning)
+                let align = alignQuoteWindow(query, index, ordinal, tuning)
                 if (!align) return
-                out.push({ index, ordinal, align, effectiveScore: 0, zone: 3, injected: injected.has(ordinal) })
+                // matches leaking into the spill stretch the span and dilute coverage (the spill's
+                // job is recitations that CROSS the verse boundary) - when a spill-free reading
+                // scores better, the recitation lives inside the verse, so use that reading
+                if (align.verseTo >= align.verseLength) {
+                    const bare = alignQuoteWindow(query, index, ordinal, { ...tuning, SPILL_TOKENS: 0 })
+                    if (bare && bare.score > align.score) align = bare
+                }
+                out.push({ index, ordinal, align, effectiveScore: 0, zone: 3, injected: injected.has(ordinal), substantial: false })
             })
         }
 
-        // zones + bonuses
+        // zones + bonuses. A junk alignment (one common word over its own tiny span) scores 1.0
+        // just like a matched phrase - only candidates with real evidence earn the anchor bonus,
+        // or an anchor-injected coincidence outranks a genuine match elsewhere forever
         for (const candidate of out) {
             candidate.zone = this.zoneOf(candidate)
+            candidate.substantial = meetsFloors(candidate.align, this.tuning) || phraseEvidence(candidate.align, this.tuning)
             const bonus = candidate.zone === 0 ? this.tuning.ANCHOR_BONUS_Z0 : candidate.zone === 1 ? this.tuning.ANCHOR_BONUS_Z1 : candidate.zone === 2 ? this.tuning.ANCHOR_BONUS_Z2 : 0
-            candidate.effectiveScore = candidate.align.score + bonus
+            candidate.effectiveScore = candidate.align.score + (candidate.substantial ? bonus : 0)
         }
 
         // consensus: another translation independently placing the same canonical ref above floors
@@ -264,7 +295,9 @@ export class QuoteMatcher {
         }
 
         void nowMs
-        return out.sort((a, b) => b.effectiveScore - a.effectiveScore)
+        // substance first: a junk coincidence scores 1.0 like a real match (span-relative), but it
+        // must never outrank one - then by score within each class
+        return out.sort((a, b) => (b.substantial ? 1 : 0) - (a.substantial ? 1 : 0) || b.effectiveScore - a.effectiveScore)
     }
 
     private zoneOf(candidate: Candidate): number {
@@ -323,13 +356,19 @@ export class QuoteMatcher {
         let top = candidates[0]
         if (!top) return []
 
-        // near-tied candidates are usually a verse and the neighbor one reading flowed into (the
-        // span-relative score can't separate them): the one matching the earliest transcript
-        // stretch is where the reading started, so it emits first and continuation advances
+        // near-tied candidates need more than the span-relative score to rank: real evidence
+        // (floors/phrase) beats a junk coincidence outright, and among substantial candidates the
+        // one matching the EARLIEST transcript stretch wins - a verse and the neighbor a reading
+        // flowed into tie at ~1.0, and the earlier stretch is where the reading started
+        const bandTop = candidates[0].effectiveScore
         for (const candidate of candidates) {
             if (candidate === top) continue
-            if (top.effectiveScore - candidate.effectiveScore > tuning.TOP_TIE_BAND) break // sorted desc
-            if (candidate.align.queryFrom < top.align.queryFrom && meetsFloors(candidate.align, tuning)) top = candidate
+            if (bandTop - candidate.effectiveScore > tuning.TOP_TIE_BAND) break // sorted desc
+            if (candidate.substantial && !top.substantial) {
+                top = candidate
+                continue
+            }
+            if (candidate.substantial === top.substantial && candidate.substantial && candidate.align.queryFrom < top.align.queryFrom) top = candidate
         }
 
         // a verse the reading already moved past keeps accumulating evidence (the window still
@@ -341,7 +380,13 @@ export class QuoteMatcher {
 
         const key = refKey(this.refOf(top))
 
-        const confidence = classify(top.align, tuning)
+        // a distinctive contiguous fragment is evidence in itself ("and there was light") - the
+        // speaker quotes a phrase and reads the REST from the projection, so the full-recitation
+        // floors must not be the only way in
+        const phrase = phraseEvidence(top.align, tuning)
+
+        let confidence = classify(top.align, tuning)
+        if (!confidence && phrase) confidence = top.align.bestRunWeight >= tuning.PHRASE_HIGH_WEIGHT ? "high" : "medium"
         if (!confidence) {
             // the top ref earns sustain credit while its evidence is still building - the floors
             // stay the safety bar, sustain only proves the window keeps pointing at the same verse
@@ -360,7 +405,7 @@ export class QuoteMatcher {
             if (bestAnchored && top.align.score < bestAnchored.align.score + tuning.CROSS_BOOK_MARGIN && !dominates(bestAnchored)) {
                 return this.emitInstead(bestAnchored, nowMs)
             }
-            if (top.align.matchedInformative < tuning.CROSS_BOOK_MIN_INFORMATIVE) {
+            if (top.align.matchedInformative < tuning.CROSS_BOOK_MIN_INFORMATIVE && !phrase) {
                 if (bestAnchored) return this.emitInstead(bestAnchored, nowMs)
                 // not enough informative evidence for a cross-book jump YET - the wait still
                 // counts as sustain, so the emission lands right when the evidence does
@@ -395,13 +440,16 @@ export class QuoteMatcher {
         }
 
         // strong single-shot: one utterance carrying a whole verse emits immediately. A spoken quote
-        // cue ("the Bible says...") also skips the sustain wait - the floors still had to pass
+        // cue ("the Bible says...") also skips the sustain wait - the floors still had to pass.
+        // A distinctive fragment emits immediately too, UNLESS another verse shares the same phrase
+        // (parallel passages, liturgical formulas) - ambiguity waits for the sustain to settle it
         const singleShot = top.align.matchedInformative >= tuning.SINGLE_SHOT_INFORMATIVE && top.align.matchedWeight >= tuning.SINGLE_SHOT_WEIGHT && top.align.score >= tuning.EMIT_HIGH
+        const phraseShot = phrase && !candidates.some((candidate) => candidate !== top && !sameRef(candidate, top) && phraseEvidence(candidate.align, tuning) && candidate.align.bestRunWeight >= top.align.bestRunWeight - tuning.PHRASE_RIVAL_MARGIN)
         const cued = nowMs <= this.cueUntilMs
         const sustained = this.previousTop?.key === key ? this.previousTop.count + 1 : 1
         this.previousTop = { key, count: sustained }
 
-        if (!singleShot && !cued && sustained < tuning.SUSTAIN_SEGMENTS) return []
+        if (!singleShot && !cued && !phraseShot && sustained < tuning.SUSTAIN_SEGMENTS) return []
 
         // a stronger match for the SAME speech that fired the previous emission means more words
         // narrowed the search - supersede that emission instead of standing next to it

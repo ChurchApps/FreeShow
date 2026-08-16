@@ -31,9 +31,12 @@ describe("quote match payloads", () => {
         expect(indexes).toHaveLength(1)
         expect(totalBytes).toBeGreaterThan(0)
 
+        // the first payload carries the bigram fragment route - mirror it for the comparison
         const direct = buildTranslationIndex(
             "kjv",
-            BIBLE.books.flatMap((book) => book.chapters.flatMap((chapter) => chapter.verses.map((verse): IndexableVerse => ({ book: book.number, chapter: chapter.number, verseStart: verse.number, verseEnd: verse.number, cleanText: verse.text }))))
+            BIBLE.books.flatMap((book) => book.chapters.flatMap((chapter) => chapter.verses.map((verse): IndexableVerse => ({ book: book.number, chapter: chapter.number, verseStart: verse.number, verseEnd: verse.number, cleanText: verse.text })))),
+            undefined,
+            { bigrams: true }
         )
 
         expect(indexes[0].verseCount).toBe(direct.verseCount)

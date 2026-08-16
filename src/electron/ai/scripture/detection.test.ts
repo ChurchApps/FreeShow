@@ -64,6 +64,11 @@ describe("detectExplicitReferences", () => {
         expect(refs).toEqual([{ bookNumber: 43, book: "John", chapter: 1, verseStart: 1, verseEnd: 1, confidence: "high" }])
     })
 
+    it("accepts a comma between chapter and the verse word: 'john, chapter 3, verse 16'", () => {
+        // whisper hears the dictation pause as a comma - heard live in the e2e sermon harness
+        expect(detectExplicitReferences("of john, chapter 3, verse 16.", BOOKS)).toEqual([{ bookNumber: 43, book: "John", chapter: 3, verseStart: 16, verseEnd: 16, confidence: "high" }])
+    })
+
     it("accepts a comma after the book name before a chapter cue: 'john, chapter three verse sixteen'", () => {
         const refs = detectExplicitReferences(normalizeSpokenNumbers("turn to John, chapter three verse sixteen"), BOOKS)
         expect(refs).toEqual([{ bookNumber: 43, book: "John", chapter: 3, verseStart: 16, verseEnd: 16, confidence: "high" }])

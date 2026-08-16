@@ -167,7 +167,8 @@ function buildBookIndex(books: AiScriptureBook[]): BookIndex {
     // speakers often say just "matthew 5 1", and whisper's punctuation varies - accept every separator it
     // produces between chapter & verse: "5:1", "5 verse 1", "5 1", "5, 1", "5. 1", "5-1", "5–1"
     // ...and a comma/period right after the book name too: dictation-style pauses come out as "john, 1, 1."
-    const regex = patterns.length ? new RegExp("(^|[^a-z0-9])(" + patterns.join("|") + ")[,.]?\\s+(?:chapter\\s+)?(\\d{1,3})\\b(?:(?:\\s*(?::|" + VERSE_WORD + "\\b)\\s*|\\s*[-–,.]\\s*|\\s+)(\\d{1,3}\\b|" + HOMOPHONE_ALT + ")(?:\\s*(?:-|–|to\\b|through\\b)\\s*(\\d{1,3})\\b)?)?", "g") : null
+    // the verse word may follow dictation punctuation ("chapter 3, verse 16" - whisper hears the pause as a comma)
+    const regex = patterns.length ? new RegExp("(^|[^a-z0-9])(" + patterns.join("|") + ")[,.]?\\s+(?:chapter\\s+)?(\\d{1,3})\\b(?:(?:\\s*[,.]?\\s*(?::|" + VERSE_WORD + "\\b)\\s*|\\s*[-–,.]\\s*|\\s+)(\\d{1,3}\\b|" + HOMOPHONE_ALT + ")(?:\\s*(?:-|–|to\\b|through\\b)\\s*(\\d{1,3})\\b)?)?", "g") : null
 
     // words long enough to recover from a mishearing ("corinians" -> "corinthians"); short names
     // ("john", "kings") stay exact-only, their skeletons collide with everyday words too easily

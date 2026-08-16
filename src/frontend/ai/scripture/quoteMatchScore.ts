@@ -43,6 +43,28 @@ export const TUNING = {
     SUSTAIN_SEGMENTS: 2, // otherwise: same ref on top for this many consecutive segments
     CUE_WINDOW_MS: 12000, // after "the Bible says" / "Jesus said" etc, the sustain wait is skipped
 
+    // short-fragment path: a CONTIGUOUS ordered run shared with a verse is evidence in itself -
+    // "let there be light" is four common words, but as a sequence it is nearly unique in the
+    // whole bible. Each adjacency multiplies specificity, captured as a flat idf-equivalent
+    // bonus; the peak floor demands one genuinely uncommon word in the run, which is what
+    // separates a quoted fragment from liturgical filler ("in the name of jesus")
+    PHRASE_MIN_RUN: 3,
+    PHRASE_ADJACENCY_IDF: 2.2,
+    // 16 is measured, not guessed: real sermon chatter produces runs up to ~15 ("makes it
+    // plain" -> Habakkuk 2:2, "week and we give" -> Genesis 29:27), while wanted fragments
+    // ("and there was light" 17.4, "for god so loved" 19+) clear it
+    PHRASE_MIN_WEIGHT: 16,
+    PHRASE_HIGH_WEIGHT: 22,
+    PHRASE_MIN_PEAK_IDF: 4,
+    // a run only records its best on a non-trivial token: liturgical fragments diverge from the
+    // verse right after the shared words ("glory to god IN..."), so a weak trailing extension
+    // must not carry a run over the floor
+    PHRASE_EDGE_MIN_IDF: 1.5,
+    // another verse is a real phrase RIVAL (ambiguity - wait for sustain) only when its run
+    // carries comparable weight; "the shadow of death" in Job must not hold back "the VALLEY of
+    // the shadow of death" in Psalm 23
+    PHRASE_RIVAL_MARGIN: 4,
+
     CONT_MIN_INFORMATIVE: 4, // relaxed continuation floors (sequential prior)
     CONT_MIN_WEIGHT: 10,
     CONT_DENSITY: 0.6,
@@ -89,6 +111,10 @@ export interface AlignResult {
     verseTo: number
     spillInformative: number // informative matches landing in the spill region
     verseLength: number // tokens in the verse itself (spill excluded)
+    // best contiguous ordered run (adjacent in BOTH query and verse): the short-fragment evidence
+    bestRunLength: number
+    bestRunWeight: number // matched weight of the run + an adjacency bonus per consecutive pair
+    bestRunPeakIdf: number // highest token idf inside that run
 }
 
 /**
@@ -162,6 +188,46 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     const verseFrom = matchedV[0]
     const verseTo = matchedV[matchedV.length - 1]
 
+    // best contiguous ordered run: consecutive matched pairs advancing by exactly one on BOTH
+    // sides. Common words carry little idf alone, but every adjacency multiplies specificity -
+    // the flat bonus is the log of that multiplication, coarse but tunable. Spill matches never
+    // count: a phrase found in the spill is evidence for the NEXT verse, which has its own
+    // candidate - counting it here would make every verse rival its successor
+    let bestRunLength = 0
+    let bestRunWeight = 0
+    let bestRunPeakIdf = 0
+    let runLength = 0
+    let runWeight = 0
+    let runPeakIdf = 0
+    for (let k = 0; k < matchedQ.length; k++) {
+        if (matchedV[k] >= verseLength) {
+            runLength = 0
+            runWeight = 0
+            runPeakIdf = 0
+            continue
+        }
+        const idf = verseIdfAt(matchedV[k])
+        const grade = tokenGrade(query[matchedQ[k]].token, verseTokenAt(matchedV[k]), idf >= informativeIdf)
+        const weight = grade * idf
+        // the run's PEAK must be a word actually heard (exact/prefix match) - a phonetic fuzz is
+        // fine as run glue, but a misheard word must never be the distinctiveness evidence itself
+        const peak = grade >= 0.9 ? idf : 0
+        if (runLength > 0 && matchedQ[k] === matchedQ[k - 1] + 1 && matchedV[k] === matchedV[k - 1] + 1) {
+            runLength++
+            runWeight += weight + tuning.PHRASE_ADJACENCY_IDF
+            if (peak > runPeakIdf) runPeakIdf = peak
+        } else {
+            runLength = 1
+            runWeight = weight
+            runPeakIdf = peak
+        }
+        if (idf >= tuning.PHRASE_EDGE_MIN_IDF && runWeight > bestRunWeight) {
+            bestRunLength = runLength
+            bestRunWeight = runWeight
+            bestRunPeakIdf = runPeakIdf
+        }
+    }
+
     // coverage: matched weight over ALL verse-window weight inside the matched verse span
     // (a mid-verse start is not punished - unmatched text before/after the recited stretch is outside the span)
     let spanWeight = 0
@@ -172,7 +238,12 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     const density = matchedQ.length / querySpan
     const score = coverage * Math.min(1, density / tuning.DENSITY_REF)
 
-    return { score, coverage, density, matched: matchedQ.length, matchedInformative, matchedWeight, queryFrom, queryTo, verseFrom, verseTo, spillInformative, verseLength }
+    return { score, coverage, density, matched: matchedQ.length, matchedInformative, matchedWeight, queryFrom, queryTo, verseFrom, verseTo, spillInformative, verseLength, bestRunLength, bestRunWeight, bestRunPeakIdf }
+}
+
+/** The short-fragment gate: a distinctive contiguous phrase is enough evidence on its own. */
+export function phraseEvidence(a: AlignResult, tuning: Tuning = TUNING): boolean {
+    return a.bestRunLength >= tuning.PHRASE_MIN_RUN && a.bestRunWeight >= tuning.PHRASE_MIN_WEIGHT && a.bestRunPeakIdf >= tuning.PHRASE_MIN_PEAK_IDF
 }
 
 /** The minimum-evidence floors every emission must clear (coincidental overlap dies here). */

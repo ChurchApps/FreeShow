@@ -86,6 +86,10 @@ export function payloadTransferables(payloads: TranslationPayload[]): ArrayBuffe
 export async function buildIndexesFromPayloads(payloads: TranslationPayload[]): Promise<{ indexes: TranslationIndex[]; totalBytes: number }> {
     const indexes: TranslationIndex[] = []
     const pool = new PrefixPool()
+    // the first payload is the drawer translation (the session orders it first): it alone carries
+    // the bigram fragment route - one is enough for a fragment to surface its verse, and a route
+    // per translation would eat most of the memory budget
+    const bigramPool = new PrefixPool()
     let budgetBytes = INDEX_MEMORY_BUDGET_BYTES
 
     for (const payload of payloads) {
@@ -104,13 +108,13 @@ export async function buildIndexesFromPayloads(payloads: TranslationPayload[]): 
         }
         if (!verses.length) continue
 
-        const index = buildTranslationIndex(payload.translationId, verses, pool)
+        const index = buildTranslationIndex(payload.translationId, verses, pool, indexes.length === 0 ? { bigrams: true, bigramPool } : {})
         indexes.push(index)
         budgetBytes -= index.sizeBytes
 
         await new Promise((resolve) => setTimeout(resolve))
     }
 
-    const totalBytes = indexes.reduce((sum, index) => sum + index.sizeBytes, 0) + (indexes.length ? pool.sizeBytes : 0)
+    const totalBytes = indexes.reduce((sum, index) => sum + index.sizeBytes, 0) + (indexes.length ? pool.sizeBytes + bigramPool.sizeBytes : 0)
     return { indexes, totalBytes }
 }

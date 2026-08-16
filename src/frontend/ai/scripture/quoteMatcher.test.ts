@@ -267,6 +267,41 @@ describe("QuoteMatcher", () => {
     })
 })
 
+describe("QuoteMatcher short fragments", () => {
+    // the production phrase floors are calibrated against a full bible's idf range - fixture
+    // corpora scale them down so every mechanism (run detection, peak floor, rival wait,
+    // bigram surfacing) is still exercised
+    const FRAG = { PHRASE_MIN_WEIGHT: 9, PHRASE_MIN_PEAK_IDF: 1.6, PHRASE_HIGH_WEIGHT: 14 }
+
+    it("a short distinctive fragment fires without the rest of the verse", () => {
+        const matcher = new QuoteMatcher([kjvIndex()], FRAG)
+        const out = matcher.onSegment(seg("that whosoever believeth in him should not perish"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 43, chapter: 3, verseStart: 16 })
+    })
+
+    it("a fragment two verses share waits instead of guessing", () => {
+        const matcher = new QuoteMatcher([kjvIndex()], FRAG)
+        // near-identical in Matthew 9:6 and Mark 2:11 - ambiguous, so one segment must not emit
+        expect(matcher.onSegment(seg("arise take up thy bed"))).toEqual([])
+    })
+
+    it("all-common words with no distinctive peak stay silent", () => {
+        const PLAIN: IndexableVerse[] = [verse(1, 1, 1, "and he said it was good and it was so"), verse(1, 2, 1, "he said the work was good and so it stood"), verse(1, 3, 1, "it was said among them that all he made was good"), verse(1, 4, 1, "and so it was that he said all of it was good"), verse(1, 5, 1, "they said it was so and he saw all was good")]
+        const matcher = new QuoteMatcher([buildTranslationIndex("kjv", PLAIN)], FRAG)
+        expect(matcher.onSegment(seg("and he said it was good"))).toEqual([])
+    })
+
+    it("word PAIRS surface a verse whose words are all too common to vote alone (bigram route)", () => {
+        const COMMON: IndexableVerse[] = [verse(1, 1, 1, "and the light was good and the day came"), verse(1, 1, 2, "and the day was long and the light stayed"), verse(1, 1, 3, "and the light was called day by them all"), verse(1, 1, 4, "and the day was ending when the light left"), verse(1, 1, 5, "and the light was there when the day broke"), verse(1, 1, 6, "so the day and the light belong together")]
+        const index = buildTranslationIndex("kjv", COMMON, undefined, { bigrams: true })
+        const matcher = new QuoteMatcher([index], { ...FRAG, PHRASE_MIN_WEIGHT: 6, PHRASE_MIN_PEAK_IDF: 1 })
+        const out = matcher.onSegment(seg("the day was ending when"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 1, chapter: 1, verseStart: 4 })
+    })
+})
+
 describe("QuoteMatcher corrections", () => {
     // an invented cross-book twin pair: identical opening, diverging tails (the similar-passage
     // trap), with filler corpus so idf weights behave

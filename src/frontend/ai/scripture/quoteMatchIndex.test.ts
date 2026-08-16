@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { buildTranslationIndex, postingsForKey, prefixIdf, PrefixPool, verseTokensAt, type IndexableVerse } from "./quoteMatchIndex"
+import { bigramPostings, buildTranslationIndex, postingsForKey, prefixIdf, PrefixPool, verseTokensAt, type IndexableVerse } from "./quoteMatchIndex"
 import { phoneticKey } from "./quoteMatchTokens"
 
 function verse(book: number, chapter: number, number: number, text: string, endNumber?: number): IndexableVerse {
@@ -61,6 +61,31 @@ describe("buildTranslationIndex", () => {
         expect(index.pool.lookup("zzzz")).toBe(-1)
         expect(postingsForKey(index, -1)).toBe(null)
         expect(prefixIdf(index, -1)).toBe(0)
+    })
+})
+
+describe("bigram fragment route", () => {
+    // "the day was warm" etc: words common enough (df > cap) to lose their unigram postings
+    const COMMON: IndexableVerse[] = [verse(1, 1, 1, "and the light was good and the day came"), verse(1, 1, 2, "and the day was long and the light stayed"), verse(1, 1, 3, "and the light was called day by them all"), verse(1, 1, 4, "and the day was ending when the light left"), verse(1, 1, 5, "and the light was there when the day broke"), verse(1, 1, 6, "so the day and the light belong together"), verse(19, 5, 9, "a completely different verse about singing praises loudly")]
+
+    it("stores pairs whose words lost their unigram postings & finds their verses", () => {
+        const index = buildTranslationIndex("kjv", COMMON, new PrefixPool(), { bigrams: true })
+        // "was called" occurs in 1:3 alone - the pair pinpoints the verse its words never could
+        const called = index.bigramPool!.lookup("was|call")
+        expect(called).toBeGreaterThanOrEqual(0)
+        expect(Array.from(bigramPostings(index, called) || [])).toEqual([2])
+        // "light was" occurs in 3 of 7 verses - over this corpus's df cap, so its postings are dropped
+        expect(bigramPostings(index, index.bigramPool!.lookup("ligh|was"))).toBe(null)
+    })
+
+    it("skips pairs whose words both vote alone, and builds nothing when the option is off", () => {
+        const index = buildTranslationIndex("kjv", COMMON, new PrefixPool(), { bigrams: true })
+        // "singing praises": both words are rare (df 1) - unigram voting already finds the verse
+        expect(index.bigramPool!.lookup("sing|prai")).toBe(-1)
+
+        const plain = buildTranslationIndex("kjv", COMMON)
+        expect(plain.bigramIds).toBeUndefined()
+        expect(bigramPostings(plain, 0)).toBe(null)
     })
 })
 

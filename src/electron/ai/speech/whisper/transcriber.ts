@@ -655,6 +655,11 @@ export function parseWhisperJson(json: any, windowDurationMs: number): WhisperSe
     let language = typeof json.result?.language === "string" ? json.result.language.trim().toLowerCase() : undefined
     if (language === "auto" || language === "") language = undefined
 
+    // whisper sometimes hallucinates timestamps far past the audio it was given - a single
+    // runaway end time would poison the overlap dedupe for the whole session, so every
+    // offset is clamped to the window it came from
+    const clamp = (ms: number) => Math.max(0, Math.min(ms, windowDurationMs))
+
     if (Array.isArray(json.transcription)) {
         for (const entry of json.transcription) {
             if (!entry || typeof entry.text !== "string") continue
@@ -662,8 +667,8 @@ export function parseWhisperJson(json: any, windowDurationMs: number): WhisperSe
             const to = Number(entry.offsets?.to)
             segments.push({
                 text: entry.text,
-                startMs: isFinite(from) ? from : 0,
-                endMs: isFinite(to) ? to : windowDurationMs,
+                startMs: isFinite(from) ? clamp(from) : 0,
+                endMs: isFinite(to) ? clamp(to) : windowDurationMs,
                 noSpeechProb: asNumber(entry.no_speech_prob),
                 avgLogprob: asNumber(entry.avg_logprob),
                 language
@@ -679,8 +684,8 @@ export function parseWhisperJson(json: any, windowDurationMs: number): WhisperSe
             const end = Number(entry.end)
             segments.push({
                 text: entry.text,
-                startMs: isFinite(start) ? Math.round(start * 1000) : 0,
-                endMs: isFinite(end) ? Math.round(end * 1000) : windowDurationMs,
+                startMs: isFinite(start) ? clamp(Math.round(start * 1000)) : 0,
+                endMs: isFinite(end) ? clamp(Math.round(end * 1000)) : windowDurationMs,
                 noSpeechProb: asNumber(entry.no_speech_prob),
                 avgLogprob: asNumber(entry.avg_logprob),
                 language
