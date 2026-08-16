@@ -14,6 +14,8 @@ const BOOKS = [
     { number: 43, canonNumber: 43, names: ["John", "Jn", "Johannes"] },
     { number: 44, canonNumber: 44, names: ["Acts"] },
     { number: 45, canonNumber: 45, names: ["Romans"] },
+    { number: 46, canonNumber: 46, names: ["1 Corinthians", "1 Cor"] },
+    { number: 50, canonNumber: 50, names: ["Philippians", "Php"] },
     { number: 62, canonNumber: 62, names: ["1 John", "1 Jn"] }
 ]
 
@@ -110,6 +112,16 @@ describe("detectExplicitReferences", () => {
 
     it("a homophone mid-sentence is never a verse number: 'john 3 for god so loved'", () => {
         expect(detectExplicitReferences("john 3 for god so loved the world", BOOKS)[0]).toMatchObject({ bookNumber: 43, chapter: 3, verseStart: 1 })
+    })
+
+    it("recovers misheard book names: 'now 1 corinians 13' / 'philippines 4 13'", () => {
+        expect(detectExplicitReferences("now 1 corinians 13", BOOKS)[0]).toMatchObject({ bookNumber: 46, chapter: 13 })
+        expect(detectExplicitReferences("turn to philippines 4 13", BOOKS)[0]).toMatchObject({ bookNumber: 50, chapter: 4, verseStart: 13 })
+    })
+
+    it("never bends an everyday word into a book name: 'the remains 5'", () => {
+        // "remains" is 2 edits from "romans" - over the cap for a 7 letter word
+        expect(detectExplicitReferences("all that remains 5 minutes from now", BOOKS)).toEqual([])
     })
 
     it("matches the longest book name first: '1 john' wins over 'john'", () => {

@@ -118,6 +118,7 @@ interface BookIndex {
     regex: RegExp | null
     byToken: Map<string, { name: string; number: number; chapterCount: number }>
     bookPattern: string // alternation of all book name patterns ("" when no books)
+    bookWords: string[] // distinct book-name words long enough for mishearing recovery
 }
 
 // a spoken "8 18" often reaches us as "818". Recover the pair when the number cannot be a chapter of this book,
@@ -167,7 +168,66 @@ function buildBookIndex(books: AiScriptureBook[]): BookIndex {
     // produces between chapter & verse: "5:1", "5 verse 1", "5 1", "5, 1", "5. 1", "5-1", "5–1"
     // ...and a comma/period right after the book name too: dictation-style pauses come out as "john, 1, 1."
     const regex = patterns.length ? new RegExp("(^|[^a-z0-9])(" + patterns.join("|") + ")[,.]?\\s+(?:chapter\\s+)?(\\d{1,3})\\b(?:(?:\\s*(?::|" + VERSE_WORD + "\\b)\\s*|\\s*[-–,.]\\s*|\\s+)(\\d{1,3}\\b|" + HOMOPHONE_ALT + ")(?:\\s*(?:-|–|to\\b|through\\b)\\s*(\\d{1,3})\\b)?)?", "g") : null
-    return { regex, byToken, bookPattern: patterns.join("|") }
+
+    // words long enough to recover from a mishearing ("corinians" -> "corinthians"); short names
+    // ("john", "kings") stay exact-only, their skeletons collide with everyday words too easily
+    const bookWords = new Set<string>()
+    for (const token of tokens) for (const word of token.split(" ")) if (word.length >= FUZZY_MIN_LEN) bookWords.add(word)
+
+    return { regex, byToken, bookPattern: patterns.join("|"), bookWords: Array.from(bookWords) }
+}
+
+// BOOK-NAME MISHEARINGS
+// whisper mangles long book names mid-word ("Corinthians" arrives as "Corinians", "Philippians"
+// as "Philippines"), which breaks the exact-name regex above. A token close enough to exactly one
+// book word is rewritten to it BEFORE the regex pass - the regex then demands the full reference
+// shape (ordinal prefix, chapter number...) around it, so a rewrite alone never creates a match.
+
+const FUZZY_MIN_LEN = 6
+
+/** Edit distance when it is <= cap, otherwise null. Distance caps keep everyday words out. */
+export function editDistanceWithin(a: string, b: string, cap: number): number | null {
+    if (Math.abs(a.length - b.length) > cap) return null
+
+    let previous = Array.from({ length: b.length + 1 }, (_, i) => i)
+    for (let i = 1; i <= a.length; i++) {
+        const current = [i]
+        let rowMin = i
+        for (let j = 1; j <= b.length; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1
+            current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + cost)
+            if (current[j] < rowMin) rowMin = current[j]
+        }
+        if (rowMin > cap) return null // no path back under the cap
+        previous = current
+    }
+    return previous[b.length] <= cap ? previous[b.length] : null
+}
+
+/** Rewrite tokens that are unambiguously a misheard book word - everything else passes through. */
+export function correctBookMishearings(normalized: string, bookWords: string[]): string {
+    if (!bookWords.length) return normalized
+
+    return normalized.replace(/[a-z]{6,}/g, (token) => {
+        if (bookWords.includes(token)) return token // heard correctly
+
+        const cap = token.length >= 9 ? 2 : 1
+        let best: string | null = null
+        let bestDistance = cap + 1
+        let tied = false
+        for (const word of bookWords) {
+            const distance = editDistanceWithin(token, word, cap)
+            if (distance === null) continue
+            if (distance < bestDistance) {
+                best = word
+                bestDistance = distance
+                tied = false
+            } else if (distance === bestDistance) tied = true
+        }
+
+        // ambiguity between two different book words means the mishearing is not recoverable
+        return best && !tied ? best : token
+    })
 }
 
 interface ReferenceMatch {
@@ -183,7 +243,7 @@ interface ReferenceMatch {
 function matchReferences(text: string, index: BookIndex): ReferenceMatch[] {
     if (!index.regex) return []
 
-    const normalized = normalizeSpokenNumbers(text)
+    const normalized = correctBookMishearings(normalizeSpokenNumbers(text), index.bookWords)
     const results: ReferenceMatch[] = []
 
     index.regex.lastIndex = 0
