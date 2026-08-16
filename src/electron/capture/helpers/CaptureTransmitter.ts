@@ -103,6 +103,9 @@ export class CaptureTransmitter {
         }
         // SDI carries no alpha (key is a separate signal) -> UYVY, and only when the card config matches.
         if (only === "blackmagic" && size && BlackmagicSender.canAcceptRawUyvy(captureId, size)) return 1
+        // WebRTC's host renderer wants RGBA (ImageData) -> GPU-swizzle during readback so the main thread never
+        // does the BGRA->RGBA convert. Same size as BGRA, so no extra PCIe cost.
+        if (only === "webrtc") return 3
         return 0
     }
 
@@ -385,7 +388,7 @@ export class CaptureTransmitter {
                 this.sendRawToNdi(captureId, buffer, size, format)
                 break
             case "webrtc":
-                this.sendRawToWebRtc(captureId, buffer, size)
+                this.sendRawToWebRtc(captureId, buffer, size, format)
                 break
             case "rtmp":
                 this.sendRawToRtmp(captureId, buffer, size)
@@ -429,10 +432,16 @@ export class CaptureTransmitter {
     }
 
 
-    private static sendRawToWebRtc(captureId: string, buffer: Buffer, size: Size) {
+    private static sendRawToWebRtc(captureId: string, buffer: Buffer, size: Size, format = 0) {
         if (!WebRtcHost.isRunning()) return
         if (this.shouldSkipUnchangedNonBlackmagicFrame("webrtc", captureId, buffer, size)) return
-        // convertToRGBA mutates in place -> operate on an owned copy so the shared buffer stays reusable
+        // format 3 = the GPU already produced RGBA during readback -> no main-thread convert or copy needed
+        // (webContents.send serializes the buffer synchronously, so the shared readback buffer stays reusable).
+        if (format === 3) {
+            WebRtcHost.sendFrame(captureId, buffer, size)
+            return
+        }
+        // BGRA (non-Windows / shared with another consumer): convert in place on an owned copy
         const owned = Buffer.from(buffer)
         this.convertToRGBA(owned)
         WebRtcHost.sendFrame(captureId, owned, size)
