@@ -154,13 +154,23 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
 }
 
 export function cut(clip: Clipboard | null = null) {
-    // Handle text directly
-    if (window.getSelection()?.toString()) {
-        const selection = window.getSelection()!
-        navigator.clipboard.writeText(selection.toString())
-        selection.deleteFromDocument()
-        console.info("CUTTED TEXT", selection.toString())
-        return
+    // Handle text cut in editable or selectable elements
+    const activeEl = document.activeElement as HTMLElement | null
+    const isEditable = activeEl?.tagName === "INPUT" || activeEl?.tagName === "TEXTAREA" || activeEl?.isContentEditable || activeEl?.classList.contains("edit")
+    const hasSelection = Boolean(window.getSelection()?.toString()) || (activeEl instanceof HTMLInputElement && activeEl.selectionStart !== activeEl.selectionEnd) || (activeEl instanceof HTMLTextAreaElement && activeEl.selectionStart !== activeEl.selectionEnd)
+
+    if (hasSelection || isEditable) {
+        if (document.execCommand("cut")) {
+            return
+        }
+        if (window.getSelection()?.toString()) {
+            const selection = window.getSelection()!
+            const text = selection.toString()
+            navigator.clipboard.writeText(text)
+            selection.deleteFromDocument()
+            console.info("CUTTED TEXT", text)
+            return
+        }
     }
 
     // Handle other types
