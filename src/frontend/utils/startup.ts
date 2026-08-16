@@ -107,8 +107,7 @@ function autoBackup() {
     const minTimeToBackup = getTimeFromInterval(interval)
 
     if (now - lastBackup > minTimeToBackup) {
-        // 20% chance of backing up all shows as well (just in case)
-        save(false, { backup: true, isAutoBackup: true, backupShows: Math.random() < 0.2 })
+        save(false, { backup: true, isAutoBackup: true })
     }
 }
 

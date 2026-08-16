@@ -336,8 +336,9 @@
     let addTrigger = false
 
     // set show when selected
-    $: if (action.triggers?.find((a) => a === "start_show") && $popupData.showId) {
-        let setShow = { id: "start_show", actionValue: { id: $popupData.showId } }
+    $: if (action.triggers?.find((a) => a === "start_show" || a === "id_select_show") && $popupData.showId) {
+        let triggerId = action.triggers?.find((a) => a === "start_show" || a === "id_select_show") || "id_select_show"
+        let setShow = { id: triggerId, actionValue: { id: $popupData.showId } }
         changeAction({ detail: setShow }, $popupData.actionIndex)
     }
 

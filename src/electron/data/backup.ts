@@ -35,7 +35,7 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
     }
 
     // SHOWS
-    if (!isAutoBackup || customTriggers?.backupShows) await syncAllShows()
+    await syncAllShows()
 
     if (isCloudSync) return { entries }
 
@@ -57,13 +57,7 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
 
     function syncStores(id: keyof typeof _store) {
         const store = _store[id]
-        if (!store) return
-
-        // a store that was never written has no file yet (electron-store creates it on first write) -
-        // handing the path to yazl anyway makes its async fs.stat crash the whole main process
-        if (!fs.existsSync(store.path)) return
-
-        entries.push({ name: id + ".json", filePath: store.path })
+        if (store) entries.push({ name: id + ".json", filePath: store.path })
     }
 
     async function syncBibles() {

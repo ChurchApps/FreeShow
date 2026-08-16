@@ -33,11 +33,6 @@ export function compressToZip(entries: { name: string; content?: Buffer | string
         // yazl reads added files lazily and reports failures on the ZipFile itself.
         zipfile.on("error", (err: Error) => fail(err))
 
-        // yazl reports problems (like addFile's async fs.stat failing) through this event - with no
-        // listener, the emit becomes an uncaught exception that takes down the whole main process
-        zipfile.on("error", reject)
-        zipfile.outputStream.on("error", reject)
-
         entries.forEach((entry) => {
             try {
                 if (entry.filePath) {

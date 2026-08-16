@@ -131,15 +131,7 @@ export function getGroupName({ show, showId }: { show: Show | null; showId: stri
     if (!name?.length) name = layoutNumber ? "—" : ""
     if (!get(groupNumbers)) return name
 
-    // sort by order when just one layout
-    let slides = keysToID(clone(show.slides || {}))
-    if (Object.keys(show.layouts || {}).length < 2) {
-        const layoutSlides =
-            Object.values(show.layouts || {})[0]
-                ?.slides?.filter(Boolean)
-                ?.map(({ id }) => id) || []
-        slides = slides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
-    }
+    let slides = getSortedLayoutSlides(show)
 
     // different slides with same name
     const currentSlide = show.slides?.[slideID] || {}
@@ -157,6 +149,27 @@ export function getGroupName({ show, showId }: { show: Show | null; showId: stri
     if (layoutNumber) name += addHTML ? currentLayoutNumberHTML : currentLayoutNumber
 
     return name
+}
+
+// sort by order when just one layout
+function getSortedLayoutSlides(show: Show) {
+    let slides = keysToID(clone(show.slides || {}))
+    if (Object.keys(show.layouts || {}).length > 1) return slides
+
+    const layoutSlides = (Object.values(show.layouts || {})[0]?.slides || []).filter(Boolean).map(({ id }) => id)
+    if (!layoutSlides.length) return slides
+
+    slides = slides.sort((a, b) => {
+        const idxA = layoutSlides.indexOf(a.id)
+        const idxB = layoutSlides.indexOf(b.id)
+
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB
+        if (idxA !== -1) return -1
+        if (idxB !== -1) return 1
+        return 0
+    })
+
+    return slides
 }
 
 // meta
@@ -288,15 +301,7 @@ export function updateCachedShow(showId: string, show: Show, layoutId = "") {
         slidesUpdated: cachedShowsData[customId]?.template?.slidesUpdated || false
     }
 
-    // sort by order when just one layout
-    let showSlides = keysToID(clone(show.slides || {}))
-    if (Object.keys(show.layouts || {}).length < 2) {
-        const layoutSlides =
-            Object.values(show.layouts || {})[0]
-                ?.slides?.filter(Boolean)
-                ?.map(({ id }) => id) || []
-        showSlides = showSlides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
-    }
+    let showSlides = getSortedLayoutSlides(show)
 
     // create groups
     const addedGroups: { [key: string]: number } = {}

@@ -142,6 +142,13 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         })
     }
 
+    // strip runtime state that should not save
+    const sanitizedOutputs = clone(get(outputs))
+    Object.values(sanitizedOutputs).forEach((out: any) => {
+        if (out.webrtcData) out.webrtcData.streaming = false
+        if (out.rtmpData) out.rtmpData.streaming = false
+    })
+
     const settings: { [key in SaveListSettings]: any } = {
         initialized: true,
         activeProject: get(activeProject),
@@ -169,7 +176,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         mediaOptions: get(mediaOptions),
         openedFolders: get(openedFolders),
         outLocked: get(outLocked),
-        outputs: get(outputs),
+        outputs: sanitizedOutputs,
         sorted: get(sorted),
         remotePassword: get(remotePassword),
         resized: get(resized),

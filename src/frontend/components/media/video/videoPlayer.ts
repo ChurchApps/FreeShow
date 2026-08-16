@@ -11,7 +11,7 @@ import { playFolder } from "../../../utils/shortcuts"
 import { customActionActivation } from "../../actions/actions"
 import { getVimeoData, getYouTubeData } from "../../drawer/player/playerHelper"
 import { clone } from "../../helpers/array"
-import { encodeFilePath, getExtension, getMediaType, locateMediaFile } from "../../helpers/media"
+import { downloadOnlineMedia, encodeFilePath, getExtension, getMediaType, locateMediaFile } from "../../helpers/media"
 import { getAllOutputs } from "../../helpers/output"
 import { checkNextAfterMedia } from "../../helpers/showActions"
 import { clearBackground } from "../../output/clear"
@@ -55,6 +55,7 @@ export type PlayingVideoState = {
     softLoop?: number
     softLoopOpacity?: number
     type?: "background" | "item"
+    isFadingOut?: boolean
 }
 
 export class VideoPlayer {
@@ -62,6 +63,8 @@ export class VideoPlayer {
 
     private static isStarting = new Set<string>()
     static async start(id: string, options: VideoOptions = {}, linkedOutputIds?: string[]): Promise<boolean> {
+        if (!id) return false
+
         const ref = `${id}_${linkedOutputIds?.join(",")}`
         if (this.isStarting.has(ref)) return true
         this.isStarting.add(ref)
@@ -78,14 +81,20 @@ export class VideoPlayer {
             return false
         }
 
+        let audioPath = id
         if (!options.isOnline) {
-            const located = await locateMediaFile(id)
-            if (!located) {
-                this.isStarting.delete(ref)
-                return false
-            }
+            if (audioPath.startsWith("http")) {
+                audioPath = (await downloadOnlineMedia(audioPath)) || audioPath
+            } else {
+                const located = await locateMediaFile(audioPath)
+                if (!located) {
+                    this.isStarting.delete(ref)
+                    return false
+                }
 
-            id = located.path
+                audioPath = located.path
+                id = located.path
+            }
         }
 
         // check if already playing
@@ -104,7 +113,7 @@ export class VideoPlayer {
             }
         }
 
-        const audio = await this.createAudio(id, linkedOutputIds, options.isOnline)
+        const audio = await this.createAudio(audioPath, id, linkedOutputIds, options.isOnline)
         if (!audio) {
             this.isStarting.delete(ref)
             return false
@@ -149,19 +158,24 @@ export class VideoPlayer {
 
         this.updateVolume(id)
 
-        if (!options.paused) this.play(id, linkedOutputIds?.[0])
+        const mediaTransition = get(transitionData)?.media
+        const durationMs = mediaTransition?.duration ?? 800
+        const delayMs = durationMs > 0 ? durationMs / 4 + 20 : 0
 
-        if (audio instanceof HTMLAudioElement) this.attachToAnalyser(id, audio, linkedOutputIds || [])
+        const startPlayback = () => {
+            if (!options.paused) this.play(id, linkedOutputIds?.[0])
 
-        if (!audio.muted && audio instanceof HTMLAudioElement) {
-            const mediaTransition = get(transitionData)?.media
-            const durationMs = mediaTransition?.duration ?? 800
-            if (durationMs > 0) {
+            if (audio instanceof HTMLAudioElement) this.attachToAnalyser(id, audio, linkedOutputIds || [])
+
+            if (!audio.muted && audio instanceof HTMLAudioElement && durationMs > 0) {
                 this.fadeIn(id, audio, durationMs)
             }
+
+            this.initSyncClock()
         }
 
-        this.initSyncClock()
+        if (delayMs > 0) setTimeout(startPlayback, delayMs)
+        else startPlayback()
 
         const type = options.muted && options.loop ? "background" : !options.muted && !options.loop ? "foreground" : null
         videoStarting(type)
@@ -210,9 +224,9 @@ export class VideoPlayer {
         })
     }
 
-    private static async createAudio(id: string, outputIds?: string[], isOnline?: boolean): Promise<HTMLAudioElement | VirtualAudioElement | null> {
+    private static async createAudio(audioPath: string, originalId: string, outputIds?: string[], isOnline?: boolean): Promise<HTMLAudioElement | VirtualAudioElement | null> {
         if (isOnline) {
-            const playerData = get(playerVideos)[id]
+            const playerData = get(playerVideos)[originalId]
             const path = playerData?.id || ""
             const data = await (playerData?.type === "youtube" ? getYouTubeData(path) : playerData?.type === "vimeo" ? getVimeoData(path) : null)
 
@@ -226,20 +240,20 @@ export class VideoPlayer {
             }
         }
 
-        const audio = new Audio(encodeFilePath(id))
+        const audio = new Audio(encodeFilePath(audioPath))
         audio.addEventListener("ended", () => {
-            const playing = this.getPlaying(id, outputIds || [])
-            if (playing?.loop || this.getGlobalOptions(id)?.loop) {
-                const startTime = this.getStartTime(id)
+            const playing = this.getPlaying(originalId, outputIds || [])
+            if (playing?.loop || this.getGlobalOptions(originalId)?.loop) {
+                const startTime = this.getStartTime(originalId)
                 audio.currentTime = startTime
                 if ("timeTick" in audio) (audio as any).timeTick.update(startTime)
                 if (audio.paused) audio.play().catch(() => {})
                 return
             }
             // absolute end
-            this.checkIfEnding(id, outputIds, true)
+            this.checkIfEnding(originalId, outputIds, true)
         })
-        return await this.waitForAudio(id, audio)
+        return await this.waitForAudio(originalId, audio)
     }
 
     private static waitForAudio(pathOrId: string, audio: HTMLAudioElement): Promise<HTMLAudioElement | null> {
@@ -701,7 +715,8 @@ export class VideoPlayer {
                         muted: activeAudio.muted,
                         softLoop,
                         softLoopOpacity,
-                        type: video.type || "background"
+                        type: video.type || "background",
+                        isFadingOut: this.isFadingOut.includes(video.path)
                     }
                 })
 

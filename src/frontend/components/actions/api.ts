@@ -63,6 +63,7 @@ import {
     selectProjectById,
     selectProjectByIndex,
     selectProjectByName,
+    selectShowById,
     selectShowByName,
     selectSlideByIndex,
     selectSlideByName,
@@ -209,6 +210,7 @@ export const API_ACTIONS = {
     mark_active_as_played: (data: API_toggle_specific) => markItemsAsPlayed("active", data.value),
 
     // SHOWS
+    id_select_show: (data: API_id) => selectShowById(data.id),
     name_select_show: (data: API_strval) => selectShowByName(data.value), // BC
     start_show: (data: API_id) => startShowSync(data.id),
     change_layout: (data: API_layout) => changeShowLayout(data),

@@ -38,8 +38,13 @@ const lastSyncRecords = new WeakMap<HTMLVideoElement, SyncRecord>()
 export function clampPlaybackRate(rate: number): number {
     return Math.min(16, Math.max(0.1, rate || 1))
 }
-export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1): void {
+export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1, isFadingOut = false): void {
     if (!vid || targetTime === undefined || vid.readyState < 2 || vid.seeking) return
+
+    if (isFadingOut) {
+        vid.playbackRate = clampPlaybackRate(targetPlaybackRate)
+        return
+    }
 
     const now = performance.now()
     const rate = clampPlaybackRate(targetPlaybackRate)
@@ -54,12 +59,17 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
 
     const isFirstSync = lastSyncedTime === null || lastSyncedTime === undefined || !prevRecord
 
-    let isExplicitSeek = false
     if (isFirstSync) {
+        // Set initial video position to targetTime smoothly on first mount
+        lastSeekTimestamps.set(vid, now)
+        if (absDiff > 0.05) vid.currentTime = targetTime
+        return
+    }
+
+    let isExplicitSeek = false
+    if (isSoftLoop && lastSyncedTime > targetTime + 0.1) {
         isExplicitSeek = true
-    } else if (isSoftLoop && lastSyncedTime > targetTime + 0.1) {
-        isExplicitSeek = true
-    } else {
+    } else if (prevRecord) {
         const elapsedSec = Math.max(0, (now - prevRecord.timestamp) / 1000)
         const targetDelta = targetTime - lastSyncedTime
 
@@ -86,19 +96,18 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     }
 
     // 3. Determine threshold
-    // For playing videos, hard seek only if drift is large (> 0.8s) to prevent decoder stutter.
-    const hardSeekThreshold = isExplicitSeek ? 0.5 * rate : 0.8 * rate
+    let shouldHardSeek = isExplicitSeek || (vid.paused && absDiff > 0.05) || absDiff > 0.8 * rate
 
     // 4. Perform Hard Seek
-    if (isExplicitSeek || (vid.paused && absDiff > 0.05) || absDiff > hardSeekThreshold) {
+    if (shouldHardSeek) {
         // DEBUG
         // console.warn(`[VideoSync] HARD SEEK TRIGGERED`, {
-        //     reason: isExplicitSeek ? (isFirstSync ? "initial_mount" : "explicit_seek") : vid.paused ? "paused_drift" : "large_drift",
+        //     reason: isExplicitSeek ? "explicit_seek" : vid.paused ? "paused_drift" : "large_drift",
         //     vidTime: vid.currentTime.toFixed(3),
         //     targetTime: targetTime.toFixed(3),
         //     driftMs: (diff * 1000).toFixed(1),
         //     lastSyncedTime: lastSyncedTime?.toFixed(3),
-        //     threshold: hardSeekThreshold.toFixed(3),
+        //     threshold: (isExplicitSeek ? 0.5 * rate : 0.8 * rate).toFixed(3),
         //     playbackRate: rate
         // })
 
