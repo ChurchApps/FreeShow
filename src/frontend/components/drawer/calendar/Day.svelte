@@ -22,7 +22,8 @@
         let tempEvents: any[] = []
 
         Object.entries($events).forEach(([id, a]) => {
-            if (isBetween(new Date(a.from), new Date(a.to), copyDate(current))) tempEvents.push({ id, ...a })
+            const toDate = a.to ? new Date(a.to) : new Date(a.from)
+            if (isBetween(new Date(a.from), toDate, copyDate(current))) tempEvents.push({ ...a, id })
         })
 
         // sort
@@ -68,7 +69,7 @@
                                 {#if isSameDay(new Date(event.from), current)}
                                     {getTime(new Date(event.from))}
                                 {/if}
-                                {#if !isSameDay(new Date(event.from), current) || new Date(event.from).getTime() - new Date(event.to).getTime() > 0}
+                                {#if !isSameDay(new Date(event.from), current) || new Date(event.to).getTime() > new Date(event.from).getTime()}
                                     {#if isSameDay(new Date(event.to), current)}
                                         {#if isSameDay(new Date(event.from), current)}
                                             -

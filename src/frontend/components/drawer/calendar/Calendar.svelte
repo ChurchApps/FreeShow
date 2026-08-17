@@ -73,10 +73,10 @@
             let to = new Date(event.to)?.getTime() || 0
 
             let startOrEndIsInMonth = from > first || from < last || to > first || to < last
-            if (startOrEndIsInMonth) tempEvents.push({ id, ...event })
+            if (startOrEndIsInMonth) tempEvents.push({ ...event, id })
         })
 
-        return tempEvents.sort((a, b) => a.from - b.from)
+        return tempEvents.sort(sortByTime)
     }
 
     let weekdays: string[] = []

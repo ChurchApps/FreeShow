@@ -15,7 +15,11 @@ export const MILLISECONDS_IN_A_DAY = 86400000
 
 export const copyDate = (date: Date, add = 0) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + add)
 export const isSameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-export const isBetween = (from: Date, to: Date, date: Date) => date >= copyDate(from) && date <= copyDate(to)
+export const isBetween = (from: Date, to: Date, date: Date) => {
+    if (isNaN(from.getTime())) return false
+    if (isNaN(to.getTime()) || to < from) to = from
+    return date >= copyDate(from) && date <= copyDate(to)
+}
 export const getDaysInMonth = (year: number, month: number) => new Date(year, getMonthIndex(month), 0).getDate()
 const getMonthIndex = (month: number) => (month + 1 > 12 ? month + 1 : 0)
 
@@ -77,7 +81,7 @@ export async function createSlides(currentEvents: any[], showId = "") {
         let textLength = 0
         const values: any[][] = [[{ value: textDay, style: titleStyle }]]
 
-        day.events = day.events.sort((a: any, b: any) => a.from - b.from)
+        day.events = day.events.sort(sortByTime)
         day.events.forEach((event: any) => {
             if (!event.name) return
 
@@ -244,12 +248,14 @@ export function getSelectedEvents(selectedDays: number[] = get(activeDays)) {
         const thisDay = new Date(day)
 
         Object.entries(get(events)).forEach(([id, a]) => {
-            const startingAtSameDate = isSameDay(new Date(a.from), copyDate(thisDay))
+            const fromDate = new Date(a.from)
+            const toDate = a.to ? new Date(a.to) : fromDate
+            const startingAtSameDate = isSameDay(fromDate, copyDate(thisDay))
             if (!startingAtSameDate) return
 
-            const endingAtSameDate = isSameDay(new Date(a.to), copyDate(thisDay))
-            if (endingAtSameDate) tempEvents[tempEvents.length - 1].events.push({ id, ...a })
-            else tempEvents.push({ date: day, events: [{ id, ...a }] })
+            const endingAtSameDate = isSameDay(toDate, copyDate(thisDay))
+            if (endingAtSameDate) tempEvents[tempEvents.length - 1].events.push({ ...a, id })
+            else tempEvents.push({ date: day, events: [{ ...a, id }] })
         })
     })
 

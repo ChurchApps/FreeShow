@@ -1,6 +1,6 @@
 import { uid } from "uid"
 import type { Event } from "../../types/Calendar"
-import { splitDate } from "../components/helpers/time"
+import { addZero } from "../components/helpers/time"
 import { events } from "../stores"
 import { createRepeatedEvents } from "../components/drawer/calendar/event"
 import { clone } from "../components/helpers/array"
@@ -16,23 +16,50 @@ interface IcalObject {
 
 interface VEvent {
     CLASS?: string
-    CREATED: string
-    DESCRIPTION: string
+    CREATED?: string
+    DESCRIPTION?: string
     "DTEND;VALUE=DATE"?: string
     "DTEND;TZID=Europe/Oslo"?: string
     DTEND?: string
     RRULE?: string // FREQ=WEEKLY;WKST=MO;UNTIL={DATE};INTERVAL={NUMBER};BYDAY={WEEKDAY}
     EXDATE?: string
-    DTSTAMP: string
+    DTSTAMP?: string
     DTSTART?: string
     "DTSTART;VALUE=DATE"?: string
-    "LAST-MODIFIED": string
-    LOCATION: string
-    SEQUENCE: string
-    STATUS: string
-    SUMMARY: string
-    TRANSP: string
-    UID: string
+    "LAST-MODIFIED"?: string
+    LOCATION?: string
+    SEQUENCE?: string
+    STATUS?: string
+    SUMMARY?: string
+    TRANSP?: string
+    UID?: string
+}
+
+function parseIcsDate(dateStr: string): { iso: string; hasTime: boolean } {
+    if (!dateStr) return { iso: "", hasTime: false }
+    const clean = dateStr.trim()
+    if (clean.includes("-")) {
+        return { iso: clean, hasTime: clean.includes("T") }
+    }
+    // Match YYYYMMDDTHHMMSS or YYYYMMDDTHHMMSSZ or YYYYMMDDTHHMM
+    const dateTimeMatch = clean.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?(Z)?$/)
+    if (dateTimeMatch) {
+        const [, y, m, d, hh, mm, ss = "00", z = ""] = dateTimeMatch
+        return {
+            iso: `${y}-${m}-${d}T${hh}:${mm}:${ss}${z}`,
+            hasTime: true
+        }
+    }
+    // Match YYYYMMDD
+    const dateMatch = clean.match(/^(\d{4})(\d{2})(\d{2})$/)
+    if (dateMatch) {
+        const [, y, m, d] = dateMatch
+        return {
+            iso: `${y}-${m}-${d}`,
+            hasTime: false
+        }
+    }
+    return { iso: clean, hasTime: clean.includes("T") }
 }
 
 export function convertCalendar(data: any) {
@@ -44,34 +71,28 @@ export function convertCalendar(data: any) {
         if (!icaEvents.length) return
 
         const newEvents: Event[] = []
+        const repeatingEventsQueue: { event: Event; exdates: string[] }[] = []
+
         icaEvents.forEach((event) => {
-            let fullDay = false
-            const startKey: string = Object.keys(event).find((a) => a.includes("DTSTART")) || ""
-            const endKey: string = Object.keys(event).find((a) => a.includes("DTEND")) || ""
+            const startKey: string = Object.keys(event).find((a) => a.startsWith("DTSTART")) || Object.keys(event).find((a) => a.includes("DTSTART")) || ""
+            const endKey: string = Object.keys(event).find((a) => a.startsWith("DTEND")) || Object.keys(event).find((a) => a.includes("DTEND")) || ""
 
-            let startDate: string = event[startKey] || ""
-            let endDate: string = event[endKey] || ""
+            const rawStartDate: string = (event as any)[startKey] || ""
+            const rawEndDate: string = (event as any)[endKey] || ""
 
-            // YYYY-MM-DDTHH:mm:ss.sssZ
-            if (startDate.length >= 8) {
-                if (startDate.length >= 15) {
-                    fullDay = true
-                    startDate = addCharAtPos(startDate, ":", 11)
-                    startDate = addCharAtPos(startDate, ":", 14)
-                    endDate = addCharAtPos(endDate, ":", 11)
-                    endDate = addCharAtPos(endDate, ":", 14)
-                }
-                startDate = addCharAtPos(startDate, "-", 6)
-                startDate = addCharAtPos(startDate, "-", 4)
-                endDate = addCharAtPos(endDate, "-", 6)
-                endDate = addCharAtPos(endDate, "-", 4)
+            const parsedStart = parseIcsDate(rawStartDate)
+            let parsedEnd = parseIcsDate(rawEndDate)
+
+            if (!parsedEnd.iso) {
+                parsedEnd = parsedStart
             }
 
-            const from = splitDate(new Date(startDate))
-            const to = splitDate(new Date(endDate))
+            const startDate = parsedStart.iso
+            const endDate = parsedEnd.iso
+            const hasTime = parsedStart.hasTime
 
-            const exdateKey: string = Object.keys(event).find((a) => a.includes("EXDATE")) || ""
-            const exdateVal: string = event[exdateKey] || ""
+            const exdateKey: string = Object.keys(event).find((a) => a.startsWith("EXDATE") || a.includes("EXDATE")) || ""
+            const exdateVal: string = (event as any)[exdateKey] || ""
             const exdates = exdateVal
                 ? exdateVal
                       .split(",")
@@ -82,22 +103,33 @@ export function convertCalendar(data: any) {
                       .filter(Boolean)
                 : []
 
+            const eventId = event.UID || uid()
+            const group = eventId
+
             const newEvent: Event = {
                 type: "event",
-                name: event.SUMMARY,
+                name: event.SUMMARY || "",
                 color: "#FF5733",
                 from: startDate,
                 to: endDate,
-                time: startDate.length > 10 || fullDay,
+                time: hasTime,
                 repeat: false,
                 notes: event.DESCRIPTION?.trim() || "",
                 location: event.LOCATION || "",
-                id: event.UID,
+                id: eventId,
+                group,
                 origin: name
             }
-            if (!fullDay) {
-                newEvent.fromTime = from.hours.toString() + ":" + from.minutes.toString()
-                newEvent.toTime = to.hours.toString() + ":" + to.minutes.toString()
+
+            if (hasTime) {
+                const fromDate = new Date(startDate)
+                const toDate = new Date(endDate)
+                if (!isNaN(fromDate.getTime())) {
+                    newEvent.fromTime = addZero(fromDate.getHours()) + ":" + addZero(fromDate.getMinutes())
+                }
+                if (!isNaN(toDate.getTime())) {
+                    newEvent.toTime = addZero(toDate.getHours()) + ":" + addZero(toDate.getMinutes())
+                }
             }
 
             // get repeats
@@ -110,10 +142,8 @@ export function convertCalendar(data: any) {
 
                 let date: any = repeatData.UNTIL
                 if (date) {
-                    date = date.slice(0, 8)
-                    date = addCharAtPos(date, "-", 6)
-                    date = addCharAtPos(date, "-", 4)
-                    date = new Date(date).toISOString().substring(0, 10)
+                    const parsedUntil = parseIcsDate(date)
+                    date = parsedUntil.iso.substring(0, 10)
                 }
 
                 const types = { DAILY: "day", WEEKLY: "week", MONTHLY: "month", YEARLY: "year" }
@@ -156,12 +186,7 @@ export function convertCalendar(data: any) {
                         }
 
                         newEvents.push(ev)
-
-                        // create repeated events
-                        // WIP this does not account for "deleted" repeating events
-                        setTimeout(() => {
-                            createRepeatedEvents(clone(ev), true, exdates)
-                        }, 100)
+                        repeatingEventsQueue.push({ event: clone(ev), exdates })
                     })
                 } else {
                     newEvents.push(newEvent)
@@ -171,21 +196,31 @@ export function convertCalendar(data: any) {
             }
         })
 
-        // add events
-        // TODO: history ?
+        // add events & overwrite existing events from the same origin to avoid duplicate imports
         events.update((a) => {
+            if (name) {
+                Object.keys(a).forEach((id) => {
+                    if (a[id]?.origin === name) {
+                        delete a[id]
+                    }
+                })
+            }
             newEvents.forEach((event) => {
-                const id: string = event.id || uid()
+                let id: string = event.id || uid()
+                if (a[id]) {
+                    id = uid()
+                }
                 delete event.id
                 a[id] = event
             })
             return a
         })
-    })
-}
 
-function addCharAtPos(value: string, char: string, pos: number) {
-    return [value.slice(0, pos), char, value.slice(pos)].join("")
+        // create repeated events instances
+        repeatingEventsQueue.forEach(({ event, exdates }) => {
+            createRepeatedEvents(clone(event), true, exdates)
+        })
+    })
 }
 
 function convertToJSON(source: string): IcalObject {
@@ -201,8 +236,8 @@ function convertToJSON(source: string): IcalObject {
     for (const line of lines) {
         let currentValue = ""
 
-        if (line.charAt(0) === SPACE) {
-            currentObj[currentKey] += line.substr(1)
+        if (line.charAt(0) === SPACE || line.charAt(0) === "\t") {
+            currentObj[currentKey] += line.substring(1)
         } else {
             const splitAt = line.indexOf(COLON)
 
