@@ -21,10 +21,13 @@ const NUMBER_TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "sev
 /** Placeholder for numbers too large to appear in verse text - occupies a query position but can never match. */
 export const NUMBER_PLACEHOLDER = "#num"
 
-// lowercase, strip html, keep letters/numbers/apostrophes, then fold apostrophes away (ASR rarely produces them)
+// lowercase, strip html, fold diacritics (both sides normalize identically, so "señor" spoken or
+// written matches either way), keep letters/numbers/apostrophes, then fold apostrophes away
 function baseTokens(text: string): string[] {
     return text
         .toLowerCase()
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
         .replace(/<[^>]*>/g, " ")
         .replace(/[^\p{L}\p{N}\s']/gu, " ")
         .replace(/'/g, "")
@@ -157,6 +160,12 @@ export function tokenGrade(a: string, b: string, allowPhonetic = false): number 
         if (cpl === a.length || cpl === b.length) return 0.9
         if (a.length - cpl <= 4 && b.length - cpl <= 4) return 0.75
     }
+
+    // short stems with an archaic tail: one token IS the other's first three letters with at most
+    // two beyond ("has"/"hast", "was"/"wast") - live speech drops KJV endings constantly, and the
+    // bible search's substring matching treats these as equal. Kept below 0.9 so such a pair can
+    // never be a phrase run's distinctiveness peak
+    if (cpl === 3 && (cpl === a.length || cpl === b.length) && Math.max(a.length, b.length) - cpl <= 2) return 0.8
 
     if (allowPhonetic && a.length >= PHONETIC_MIN_LEN && b.length >= PHONETIC_MIN_LEN && Math.abs(a.length - b.length) <= 3) {
         const keyA = cachedPhoneticKey(a)

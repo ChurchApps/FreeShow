@@ -59,9 +59,11 @@ describe("tokenGrade", () => {
     })
 
     it("rejects incompatible tokens", () => {
-        expect(tokenGrade("world", "worship")).toBe(0)
+        expect(tokenGrade("world", "worship")).toBe(0) // shared 3 letters but neither IS the stem
         expect(tokenGrade("god", "good")).toBe(0)
-        expect(tokenGrade("the", "them")).toBe(0) // short tokens must match exactly
+        // "the"/"thee" fold under the short-stem rule (whisper writes "the" for spoken "thee") -
+        // their idf is near zero, so the grade carries almost no weight either way
+        expect(tokenGrade("the", "thee")).toBe(0.8)
     })
 
     it("never matches the number placeholder", () => {
@@ -117,5 +119,25 @@ describe("tokenGrade phonetic path", () => {
 
     it("prefers the prefix grades when both would apply", () => {
         expect(tokenGrade("believe", "believeth", true)).toBe(0.9)
+    })
+})
+
+describe("archaic short stems", () => {
+    it("grades a dropped KJV ending: 'has'/'hast', 'was'/'wast'", () => {
+        expect(tokenGrade("has", "hast")).toBe(0.8)
+        expect(tokenGrade("was", "wast")).toBe(0.8)
+        expect(tokenGrade("didst", "did")).toBe(0.8) // symmetric
+    })
+
+    it("stays below the phrase-peak grade and rejects short/distant pairs", () => {
+        expect(tokenGrade("has", "hast")).toBeLessThan(0.9)
+        expect(tokenGrade("no", "not")).toBe(0) // two shared letters is nothing
+        expect(tokenGrade("has", "hasten")).toBe(0) // tail too long
+    })
+})
+
+describe("diacritic folding", () => {
+    it("both sides normalize identically", () => {
+        expect(tokenizeVerseText("Señor está aquí")).toEqual(tokenizeVerseText("Senor esta aqui"))
     })
 })
