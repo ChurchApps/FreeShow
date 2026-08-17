@@ -31,7 +31,7 @@
     onMount(() => {
         // set default
         if (inputId === "metronome" && !value) updateValue("", { tempo: 120, beats: 4 })
-        else if (inputId === "index" && value?.index === undefined) updateValue("index", 0)
+        else if ((inputId === "index" || inputId === "disable_slide") && value?.index === undefined) updateValue("index", 0)
         else if (inputId === "volume" && value?.volume === undefined) updateValue("volume", 1)
     })
 
@@ -222,6 +222,10 @@
 {:else if inputId === "percentage"}
     <MaterialNumberInput label="variables.value" value={(value?.value ?? 1) * 100} min={-1000} on:change={(e) => updateValue("value", e.detail / 100)} />
 {:else if inputId === "toggle"}
+    <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
+{:else if inputId === "disable_slide"}
+    <MaterialDropdown label="formats.show" options={[{ value: "", label: translateText("actions.active_show") }, ...convertToOptions($shows)]} value={value?.showId || ""} on:change={(e) => updateValue("showId", e.detail)} />
+    <MaterialNumberInput label="edit.slide_index" value={value?.index ?? 0} on:change={(e) => updateValue("index", e)} />
     <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
 {:else if inputId === "output_lock"}
     <MaterialDropdown label="stage.output" options={getOptions.output_lock()} value={value?.outputId || ""} on:change={(e) => updateValue("outputId", e.detail)} />

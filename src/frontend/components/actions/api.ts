@@ -39,6 +39,7 @@ import {
     changeVariable,
     createProject,
     deleteProject,
+    disableSlide,
     editTimer,
     getClearedState,
     getMediaLoopState,
@@ -121,6 +122,12 @@ type API_volume = { volume?: number } // no values will mute/unmute
 export type API_id_index = { id: string; index: number }
 export type API_slide = { showId?: string | "active"; slideId?: string }
 export type API_slide_index = { showId?: string; layoutId?: string; index: number }
+export type API_disable_slide = {
+    showId?: string
+    layoutId?: string
+    index: number
+    value?: boolean // unset = toggle
+}
 export type API_id_value = { id: string; value: string }
 export type API_rearrange = { showId: string; from: number; to: number }
 export type API_group = { showId: string; groupId: string }
@@ -231,6 +238,7 @@ export const API_ACTIONS = {
     index_select_slide: (data: API_slide_index) => selectSlideByIndex(data), // BC
     name_select_slide: (data: API_strval) => selectSlideByName(data.value), // BC
     id_select_group: (data: API_id) => gotoGroup(data.id), // BC
+    disable_slide: (data: API_disable_slide) => disableSlide(data),
 
     // CLEAR
     restore_output: () => restoreOutput(), // BC

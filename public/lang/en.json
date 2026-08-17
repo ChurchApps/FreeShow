@@ -842,6 +842,8 @@
         "random_slide": "Play random slide",
         "index_select_slide": "Play slide at index",
         "name_select_slide": "Play slide with name",
+        "disable_slide": "Disable slide",
+        "active_show": "Active show",
         "toggle_output_lock": "Toggle output lock",
         "toggle_output_window": "Toggle output window",
         "toggle_output_windows": "Toggle output windows",
