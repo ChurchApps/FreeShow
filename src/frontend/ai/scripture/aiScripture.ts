@@ -50,6 +50,7 @@ let suggestionPruneTimer: NodeJS.Timeout | null = null
 
 let lastAutoProjectionAt = 0
 let lastAutoProjectedRef: DetectedReference | null = null
+let lastAutoProjectedBibleId = "" // which translation's wording is on the output right now
 let pendingAutoRef: DetectedReference | null = null
 let autoTimer: NodeJS.Timeout | null = null
 
@@ -351,9 +352,10 @@ export async function handleDetection(ref: DetectedReference): Promise<void> {
     if (get(aiScriptureAutoPaused) || get(outLocked)) return
     if (confidencePercent(ref.confidence) < (typeof settings.autoMinConfidence === "number" ? settings.autoMinConfidence : 80)) return
     // quoted verses are separately gated - except follow-along continuations, which only ever
-    // advance the passage already live on the output within its own chapter, and corrections
-    // replacing the very verse this feature just projected
-    if (ref.type === "quoted" && !settings.autoProjectQuoted && !ref.continuation && !correctsLiveProjection(ref)) return
+    // advance the passage already live on the output within its own chapter, corrections
+    // replacing the very verse this feature just projected, and re-projections of the live
+    // passage in the translation the speaker turns out to be reading from
+    if (ref.type === "quoted" && !settings.autoProjectQuoted && !ref.continuation && !correctsLiveProjection(ref) && !refinesLiveTranslation(ref)) return
 
     queueAutoProjection(ref)
 }
@@ -463,12 +465,24 @@ function correctsLiveProjection(ref: DetectedReference): boolean {
     return !!(ref.corrects && lastAutoProjectedRef && isSameReference(lastAutoProjectedRef, ref.corrects))
 }
 
+/**
+ * The speaker announced the reference (projected in the drawer translation) and is now READING it
+ * in another version: with display translation "matched", the same passage re-projects in the
+ * wording actually being read instead of being suppressed as a repeat.
+ */
+function refinesLiveTranslation(ref: DetectedReference): boolean {
+    if (getSettings().displayTranslation !== "matched") return false
+    if (!ref.matchedBibleId || ref.matchedBibleId === lastAutoProjectedBibleId) return false
+    return !!(lastAutoProjectedRef && isSameReference(lastAutoProjectedRef, ref))
+}
+
 function queueAutoProjection(ref: DetectedReference) {
     const settings = getSettings()
 
     // a correction replacing what is live doesn't wait out the display cooldown - the point is
-    // to take the wrong verse DOWN as fast as the right one goes up
-    if (correctsLiveProjection(ref)) {
+    // to take the wrong verse DOWN as fast as the right one goes up. The same goes for switching
+    // the live passage to the translation the speaker turns out to be reading from
+    if (correctsLiveProjection(ref) || refinesLiveTranslation(ref)) {
         if (autoTimer) clearTimeout(autoTimer)
         autoTimer = null
         pendingAutoRef = null
@@ -528,6 +542,7 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
     const drawerTabId = get(drawerTabsData).scripture?.activeSubTab || ""
     const targetId = settings.displayTranslation === "matched" && detection.matchedBibleId ? detection.matchedBibleId : drawerTabId
     if (!targetId) return false
+    lastAutoProjectedBibleId = targetId
 
     // collections load one version at a time - validate against the first one
     const parseId = get(scriptures)[targetId]?.collection?.versions?.[0] || targetId
