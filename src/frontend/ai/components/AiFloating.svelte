@@ -331,7 +331,7 @@
 
     .speech-widget {
         position: fixed;
-        z-index: 9999;
+        z-index: 9998;
         font-family:
             system-ui,
             -apple-system,
@@ -515,7 +515,7 @@
         position: fixed;
         bottom: 120px;
         right: 45px;
-        z-index: 9999;
+        z-index: 9998;
         display: flex;
         flex-direction: column-reverse;
         gap: 8px;
@@ -528,7 +528,7 @@
         position: fixed;
         right: 117px;
         bottom: 45px;
-        z-index: 9999;
+        z-index: 9998;
         max-width: min(340px, calc(90vw - 80px));
         border: none;
         text-align: end;
