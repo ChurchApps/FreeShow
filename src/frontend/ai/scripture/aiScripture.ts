@@ -491,7 +491,7 @@ function queueAutoProjection(ref: DetectedReference) {
     }
 
     // respect the minimum display time of the current projection
-    const cooldownMs = (settings.autoCooldownSeconds ?? 10) * 1000
+    const cooldownMs = (settings.autoCooldownSeconds ?? 5) * 1000
     const elapsed = Date.now() - lastAutoProjectionAt
     if (!lastAutoProjectionAt || elapsed >= cooldownMs) {
         projectDetection(ref)
