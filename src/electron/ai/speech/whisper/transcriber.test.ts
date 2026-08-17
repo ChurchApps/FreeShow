@@ -13,7 +13,7 @@ vi.mock("child_process", () => ({
 
 import fs from "fs"
 
-import { adaptStepSeconds, buildWavBuffer, computeRms, dedupeOverlap, isLowConfidence, isNoiseSegment, parseWhisperJson, shouldRerunWindow, Transcriber } from "./transcriber"
+import { adaptStepSeconds, buildWavBuffer, computeRms, dedupeOverlap, isLowConfidence, isNoiseSegment, isRepetitionLoop, parseWhisperJson, segmentRepeatKey, shouldRerunWindow, Transcriber } from "./transcriber"
 
 describe("buildWavBuffer", () => {
     const samples = new Int16Array([0, 1000, -1000, 32767, -32768])
@@ -547,5 +547,27 @@ describe("adaptStepSeconds", () => {
 
     it("holds steady in the comfortable band", () => {
         expect(adaptStepSeconds(3.5, 3000)).toBe(3.5)
+    })
+})
+
+describe("isRepetitionLoop", () => {
+    it("catches whisper's decode loops", () => {
+        expect(isRepetitionLoop("heh, heh, heh, heh, heh, heh, heh, heh,")).toBe(true)
+        expect(isRepetitionLoop("you you you you you you")).toBe(true)
+        expect(isRepetitionLoop("the the the the the the the the")).toBe(true)
+    })
+
+    it("keeps real speech, including natural emphasis", () => {
+        expect(isRepetitionLoop("for god so loved the world that he gave his only begotten son")).toBe(false)
+        expect(isRepetitionLoop("very very very good this morning")).toBe(false)
+        expect(isRepetitionLoop("holy holy holy is the lord of hosts")).toBe(false)
+        expect(isRepetitionLoop("amen")).toBe(false) // short segments never count
+    })
+})
+
+describe("segmentRepeatKey", () => {
+    it("matches the same line through punctuation and case shifts", () => {
+        expect(segmentRepeatKey("Thank you for watching!")).toBe(segmentRepeatKey("thank you for watching."))
+        expect(segmentRepeatKey("Turn to John 3:16")).not.toBe(segmentRepeatKey("Turn to John 3:17"))
     })
 })

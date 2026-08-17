@@ -75,6 +75,7 @@ export class Transcriber implements TranscriptionDriver {
     private pendingWindow: PcmWindow | null = null
     private lastEmittedEndMs = 0
     private lastEmittedTailWords: string[] = []
+    private lastEmittedKey = ""
     private consecutiveFailures = 0
     private windowCount = 0
     private stepSeconds = STEP_SECONDS
@@ -205,7 +206,7 @@ export class Transcriber implements TranscriptionDriver {
             const parsed = parseWhisperJson(json, windowDurationMs)
             const absolute = parsed.map((segment) => Object.assign({}, segment, { startMs: windowStartMs + segment.startMs, endMs: windowStartMs + segment.endMs }))
             const prompt = this.options.prompt
-            const speech = absolute.filter((segment) => !isNoiseSegment(segment.text) && !isLowConfidence(segment) && !(prompt && isPromptEcho(segment.text, prompt)))
+            const speech = absolute.filter((segment) => !isNoiseSegment(segment.text) && !isRepetitionLoop(segment.text) && !isLowConfidence(segment) && !(prompt && isPromptEcho(segment.text, prompt)))
             const fresh = dedupeOverlap(speech, Math.max(0, this.lastEmittedEndMs - OVERLAP_BACKTRACK_MS))
 
             for (const segment of fresh) {
@@ -214,6 +215,12 @@ export class Transcriber implements TranscriptionDriver {
                 // timings shift between windows, so the seam can survive the time-based trim - drop exact word repeats
                 const text = trimRepeatedLeadWords(this.lastEmittedTailWords, segment.text.trim())
                 if (!text) continue
+
+                // the loop failure also repeats whole lines across windows ("thank you for watching"
+                // forever) - an exact repeat of the previous emitted line is never real speech
+                const repeatKey = segmentRepeatKey(text)
+                if (repeatKey && repeatKey === this.lastEmittedKey) continue
+                this.lastEmittedKey = repeatKey
 
                 this.lastEmittedTailWords = appendTailWords(this.lastEmittedTailWords, text)
                 this.options.onSegment({ text, startMs: segment.startMs, endMs: segment.endMs, language: segment.language, music: isMusicSegment(text) || undefined })
@@ -596,6 +603,34 @@ export function isNoiseSegment(text: string): boolean {
 // so music segments are shown in the transcript but must never feed scripture detection
 export function isMusicSegment(text: string): boolean {
     return /[♪♫]/.test(text)
+}
+
+// whisper's repetition-loop failure: on laughter/breath/noise the decoder locks into a cycle
+// ("heh, heh, heh, heh...") - real speech never has one token carrying most of a segment
+export function isRepetitionLoop(text: string): boolean {
+    const tokens = text
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s']/gu, " ")
+        .split(/\s+/)
+        .filter(Boolean)
+    if (tokens.length < 5) return false
+
+    const counts = new Map<string, number>()
+    let topCount = 0
+    for (const token of tokens) {
+        const count = (counts.get(token) || 0) + 1
+        counts.set(token, count)
+        if (count > topCount) topCount = count
+    }
+    return topCount / tokens.length >= 0.6
+}
+
+/** Case/punctuation-blind segment identity - the loop also repeats whole lines across windows. */
+export function segmentRepeatKey(text: string): string {
+    return text
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}]+/gu, " ")
+        .trim()
 }
 
 // interpretation mode: a "-l auto" guess outside the declared spoken languages warrants a forced re-check.
