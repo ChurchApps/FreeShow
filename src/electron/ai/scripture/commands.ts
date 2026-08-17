@@ -171,6 +171,19 @@ export function detectScriptureCommand(text: string, language: string, translati
         return { type: isPrevious ? "verse_previous" : "verse_next", phrase }
     }
 
+    // 1b. announcing the advance while reading: "the next verse says..." - and whisper often drops
+    // the word "verse" entirely, so "the next says..." counts too; the says-verb right after
+    // "next (verse)" is what carries the intent. Narration inserts a subject ("in the next verse
+    // PAUL says") which breaks the adjacency, and a leading preposition is checked as well
+    const saysVerb = "(?:says?|said|reads?|goes|continues|tells\\s+us)"
+    const advanceUnits = alternation([...grammar.verse, ...VERSE_WORD_MISHEARINGS, ...grammar.chapter])
+    const advance = tail.match(new RegExp(LEAD + "(?:and\\s+)?(?:the\\s+)?next\\s+(?:(" + advanceUnits + ")\\s+)?" + saysVerb + "\\b"))
+    if (advance && advance.index !== undefined && !NARRATION_BEFORE.test(tail.slice(0, advance.index))) {
+        const phrase = phraseOf(advance)
+        if (advance[1] && isWord(advance[1], grammar.chapter)) return { type: "chapter_next", phrase }
+        return { type: "verse_next", phrase }
+    }
+
     // 2. verse jump: "give me verse 5". Imperative only - a bare "verse 5" is already resolved against the
     // live passage by tier 1 detection, and matching it here too would fight that with a second action.
     // The number itself also arrives as a homophone ("give me verse for") - end of utterance only
@@ -222,16 +235,39 @@ export function detectScriptureCommand(text: string, language: string, translati
 // NEWEST segment completes it, so text that already fired (or failed) never re-fires from later joins.
 const SEGMENT_JOIN_MS = 4000
 
+// "another one" only means "cycle again" for a short while after a translation command
+const FOLLOW_UP_WINDOW_MS = 30000
+
+export interface CommandContext {
+    // a passage is live on the output (reading in progress) - required before a LONE "next" acts
+    anchored?: boolean
+}
+
 export class CommandStream {
     private segments: { text: string; endMs: number }[] = []
+    private lastCommandType = ""
+    private lastCommandAtMs = 0
 
-    detect(segment: { text: string; endMs: number }, language: string, translations: AiScriptureTranslation[]): AiScriptureCommandEvent | null {
+    detect(segment: { text: string; endMs: number }, language: string, translations: AiScriptureTranslation[], context: CommandContext = {}): AiScriptureCommandEvent | null {
         this.segments.push(segment)
         while (this.segments.length > 1 && segment.endMs - this.segments[0].endMs > SEGMENT_JOIN_MS) this.segments.shift()
 
+        // a whole utterance of just "next" while a passage is live is the preacher advancing -
+        // inside a sentence the word never stands alone, so this cannot fire from narration
+        if (context.anchored && /^[^a-z0-9]*(?:and\s+|okay\s+|ok\s+)?next[^a-z0-9]*$/i.test(segment.text)) {
+            return this.record({ type: "verse_next", phrase: segment.text.trim() }, segment.endMs)
+        }
+
         const joined = this.segments.map((entry) => entry.text).join(" ")
         const command = detectScriptureCommand(joined, language, translations)
-        if (!command) return null
+        if (!command) {
+            // "another one" / "one more" right after a translation command cycles again
+            const followUp = /(?:^|[^a-z0-9])(?:and\s+)?(?:another one|one more|another)\s*[.,!?]*\s*$/i.exec(joined)
+            if (followUp && this.lastCommandType.startsWith("translation") && segment.endMs - this.lastCommandAtMs <= FOLLOW_UP_WINDOW_MS) {
+                return this.record({ type: "translation_cycle", phrase: followUp[0].replace(/^[^a-z0-9]+/i, "").replace(/[\s.,!?]+$/, "") }, segment.endMs)
+            }
+            return null
+        }
 
         // the matched phrase must reach into the newest segment - an instruction wholly inside older text already
         // had its chance when that text was newest (normalization is word-by-word, so lengths compose across the join)
@@ -243,6 +279,12 @@ export class CommandStream {
         const at = normalizeSpokenNumbers(joined).lastIndexOf(command.phrase)
         if (at >= 0 && at + command.phrase.length <= boundary) return null
 
+        return this.record(command, segment.endMs)
+    }
+
+    private record(command: AiScriptureCommandEvent, atMs: number): AiScriptureCommandEvent {
+        this.lastCommandType = command.type
+        this.lastCommandAtMs = atMs
         return command
     }
 }

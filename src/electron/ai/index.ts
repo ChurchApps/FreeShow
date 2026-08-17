@@ -21,6 +21,9 @@ const commandCooldowns = new Map<string, number>()
 
 let scriptureCoordinator: DetectionCoordinator | null = null
 let scriptureSegmentListener: ((segment: TranscriberSegment) => void) | null = null
+// when the renderer last reported a live passage - "reading in progress" context for voice commands
+let lastAnchorAtMs = 0
+const ANCHOR_FRESH_MS = 120000
 
 export function startScriptureDetection(config: AiScriptureDetectionConfig): boolean {
     stopScriptureDetection()
@@ -58,7 +61,7 @@ export function startScriptureDetection(config: AiScriptureDetectionConfig): boo
 
         if (!config.voiceCommands) return
         // joined across recent segments: the streaming engine can split a spoken command over utterances ("next" / "verse")
-        const command = commandStream.detect({ text: segment.text, endMs: segment.endMs }, config.language || "en", config.translations || [])
+        const command = commandStream.detect({ text: segment.text, endMs: segment.endMs }, config.language || "en", config.translations || [], { anchored: Date.now() - lastAnchorAtMs < ANCHOR_FRESH_MS })
         if (!command) return
 
         const now = Date.now()
@@ -80,10 +83,12 @@ export function stopScriptureDetection() {
     scriptureCoordinator?.stop()
     scriptureCoordinator = null
     commandCooldowns.clear()
+    lastAnchorAtMs = 0
 }
 
 // the renderer reports the passage currently live on the output, so bare "verse N" mentions resolve against it
 export function updateScriptureDetectionContext(data: AiScriptureAnchor) {
+    lastAnchorAtMs = Date.now()
     scriptureCoordinator?.updateContext(data)
     // the live passage also covers quote matches the coordinator never saw (they emit in the renderer)
     SpeechToText.setContextBook(data.bookNumber)

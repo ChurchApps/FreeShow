@@ -728,12 +728,40 @@ export async function executeScriptureCommand(cmd: AiScriptureCommandEvent): Pro
     }
 }
 
+// "another translation" visits the familiar ones first - however the search selection is ordered.
+// Each entry lists the abbreviation AND full-name phrasings, since libraries store either
+// ("NASB" / "New American Standard Bible"). NKJV ranks before KJV so its full name is not
+// swallowed by the "KING JAMES" alias
+const CYCLE_PREFERENCE: string[][] = [
+    ["NASB", "NEW AMERICAN STANDARD BIBLE"],
+    ["NLT", "NEW LIVING TRANSLATION"],
+    ["AMP", "AMPLIFIED BIBLE"],
+    ["AMPC", "AMPLIFIED BIBLE CLASSIC"],
+    ["MSG", "THE MESSAGE BIBLE"],
+    ["CEV", "CONTEMPORARY ENGLISH VERSION"],
+    ["CEB", "COMMON ENGLISH BIBLE"],
+    ["NIV", "NEW INTERNATIONAL VERSION"],
+    ["NIRV", "NEW INTERNATIONAL READERS' VERSION"],
+    ["ERV", "EASY-TO-READ VERSION", "EASY TO READ VERSION"],
+    ["ESV", "ENGLISH STANDARD VERSION"],
+    ["GNT", "GOOD NEWS TRANSLATION"],
+    ["NKJV", "NEW KING JAMES VERSION"],
+    ["KJV", "KING JAMES VERSION"]
+]
+
+function cycleRank(id: string): number {
+    const bible = get(scriptures)[id]
+    const names = [bible?.customName, bible?.name, getShortBibleName(bible?.name || "")].map((name) => (name || "").toUpperCase())
+    const rank = CYCLE_PREFERENCE.findIndex((aliases) => aliases.some((alias) => names.some((name) => name === alias || name.includes(alias))))
+    return rank < 0 ? CYCLE_PREFERENCE.length : rank
+}
+
 async function switchTranslation(cmd: Extract<AiScriptureCommandEvent, { type: "translation" | "translation_cycle" }>, from: { currentId: string; bible: BibleInstance; bookName: string; book: number | string; chapter: number; verses: number[] }): Promise<void> {
     let targetId = ""
     if (cmd.type === "translation") targetId = cmd.bibleId
     else {
-        // cycle to the next selected translation
-        const ids = searchBibleIds.length ? searchBibleIds : [from.currentId]
+        // cycle to the next selected translation, common ones before obscure ones
+        const ids = [...(searchBibleIds.length ? searchBibleIds : [from.currentId])].sort((a, b) => cycleRank(a) - cycleRank(b))
         targetId = ids[(ids.indexOf(from.currentId) + 1) % ids.length] || ""
     }
     if (!targetId || targetId === from.currentId) return
