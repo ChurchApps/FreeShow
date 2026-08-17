@@ -1,9 +1,11 @@
+import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Event } from "../../types/Calendar"
-import { addZero } from "../components/helpers/time"
-import { events } from "../stores"
+import { getAvailableColor } from "../components/drawer/calendar/calendars"
 import { createRepeatedEvents } from "../components/drawer/calendar/event"
 import { clone } from "../components/helpers/array"
+import { addZero } from "../components/helpers/time"
+import { events, special } from "../stores"
 
 // https://github.com/adrianlee44/ical2json/blob/main/src/ical2json.ts
 const NEW_LINE = /\r\n|\n|\r/
@@ -63,12 +65,49 @@ function parseIcsDate(dateStr: string): { iso: string; hasTime: boolean } {
 }
 
 export function convertCalendar(data: any) {
-    data.forEach(({ content, name }: any) => {
+    const assignedColors = new Map<string, string>()
+    const currentEvents = get(events)
+
+    data.forEach(({ content, name, id, color }: any) => {
         const object: any = convertToJSON(content)
         // TODO: convert timezone
 
         const icaEvents: VEvent[] = object.VCALENDAR?.[0]?.VEVENT || []
         if (!icaEvents.length) return
+
+        const currentSpecial = get(special)
+        const calName = name ? name.replace(/\.ics$/i, "").trim() : "Calendar"
+        let calId = id
+        let existingCal: any = null
+        if (calId && currentSpecial?.calendars?.[calId]) {
+            existingCal = currentSpecial.calendars[calId]
+        } else {
+            existingCal = Object.values(currentSpecial?.calendars || {}).find((c: any) => (calId && c.id === calId) || (c.name && c.name.toLowerCase() === calName.toLowerCase()) || (name && c.name && c.name.toLowerCase() === name.toLowerCase()))
+            if (existingCal) {
+                calId = existingCal.id
+            }
+        }
+
+        if (!calId) {
+            calId = uid()
+        }
+
+        const calendarColor = color || existingCal?.color || getAvailableColor(calId, currentEvents, assignedColors)
+
+        special.update((a) => {
+            if (!a.calendars) a.calendars = {}
+            if (!a.calendars[calId]) {
+                a.calendars[calId] = {
+                    id: calId,
+                    name: calName,
+                    color: calendarColor
+                }
+            } else {
+                if (color) a.calendars[calId].color = color
+                if (name && !a.calendars[calId].name) a.calendars[calId].name = calName
+            }
+            return a
+        })
 
         const newEvents: Event[] = []
         const repeatingEventsQueue: { event: Event; exdates: string[] }[] = []
@@ -109,7 +148,7 @@ export function convertCalendar(data: any) {
             const newEvent: Event = {
                 type: "event",
                 name: event.SUMMARY || "",
-                color: "#FF5733",
+                color: calendarColor,
                 from: startDate,
                 to: endDate,
                 time: hasTime,
@@ -118,7 +157,7 @@ export function convertCalendar(data: any) {
                 location: event.LOCATION || "",
                 id: eventId,
                 group,
-                origin: name
+                origin: calId
             }
 
             if (hasTime) {
@@ -198,20 +237,19 @@ export function convertCalendar(data: any) {
 
         // add events & overwrite existing events from the same origin to avoid duplicate imports
         events.update((a) => {
-            if (name) {
-                Object.keys(a).forEach((id) => {
-                    if (a[id]?.origin === name) {
-                        delete a[id]
-                    }
-                })
-            }
-            newEvents.forEach((event) => {
-                let id: string = event.id || uid()
-                if (a[id]) {
-                    id = uid()
+            Object.keys(a).forEach((k) => {
+                const ev = a[k]
+                if (!ev) return
+                const matches = ev.origin === calId || (existingCal?.id && ev.origin === existingCal.id) || (calName && ev.origin === calName) || (name && ev.origin === name)
+                if (matches) {
+                    delete a[k]
                 }
+            })
+
+            newEvents.forEach((event) => {
+                const eventUid: string = event.id || uid()
                 delete event.id
-                a[id] = event
+                a[eventUid] = event
             })
             return a
         })

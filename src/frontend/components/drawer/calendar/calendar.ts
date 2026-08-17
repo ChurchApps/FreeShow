@@ -3,13 +3,14 @@ import { uid } from "uid"
 import type { Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
-import { activeDays, calendarAddShow, events, showsCache } from "../../../stores"
+import { activeDays, calendarAddShow, events, showsCache, special } from "../../../stores"
 import { translateText } from "../../../utils/language"
 import { getItemText } from "../../edit/scripts/textStyle"
 import { clone, removeDuplicates, sortByTime } from "../../helpers/array"
 import { loadShows } from "../../helpers/setShow"
 import { checkName, getLayoutRef } from "../../helpers/show"
 import { _show } from "../../helpers/shows"
+import { isCalendarHidden } from "./calendars"
 
 export const MILLISECONDS_IN_A_DAY = 86400000
 
@@ -243,11 +244,15 @@ export function getSelectedEvents(selectedDays: number[] = get(activeDays)) {
 
     if (!selectedDays.length) return []
 
+    const currentSpecial = get(special)
+
     selectedDays.forEach((day: number) => {
         tempEvents.push({ date: day, events: [] })
         const thisDay = new Date(day)
 
         Object.entries(get(events)).forEach(([id, a]) => {
+            if (isCalendarHidden(currentSpecial?.calendars, currentSpecial?.hideUnlabeledCalendar, a.origin)) return
+
             const fromDate = new Date(a.from)
             const toDate = a.to ? new Date(a.to) : fromDate
             const startingAtSameDate = isSameDay(fromDate, copyDate(thisDay))

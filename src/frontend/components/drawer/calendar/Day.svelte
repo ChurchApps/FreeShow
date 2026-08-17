@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeDays, activePopup, eventEdit, events } from "../../../stores"
+    import { activeDays, activePopup, eventEdit, events, special } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { translateText } from "../../../utils/language"
     import { actionData } from "../../actions/actionData"
@@ -9,19 +9,21 @@
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
     import { copyDate, getTime, isBetween, isSameDay } from "./calendar"
+    import { isCalendarHidden } from "./calendars"
 
     export let type = "event"
 
     let current = new Date($activeDays[0])
     let currentEvents: any[] = []
 
-    $: updateEvents({ type, $activeDays, $events })
+    $: updateEvents({ type, $activeDays, $events, calendars: $special?.calendars, hideUnlabeled: $special?.hideUnlabeledCalendar })
 
     function updateEvents(_updater: any) {
         current = new Date($activeDays[0])
         let tempEvents: any[] = []
 
         Object.entries($events).forEach(([id, a]) => {
+            if (isCalendarHidden($special?.calendars, $special?.hideUnlabeledCalendar, a.origin)) return
             const toDate = a.to ? new Date(a.to) : new Date(a.from)
             if (isBetween(new Date(a.from), toDate, copyDate(current))) tempEvents.push({ ...a, id })
         })

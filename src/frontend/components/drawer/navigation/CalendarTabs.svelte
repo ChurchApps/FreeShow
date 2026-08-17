@@ -1,7 +1,5 @@
 <script lang="ts">
-    import { Main } from "../../../../types/IPC/Main"
-    import { sendMain } from "../../../IPC/main"
-    import { drawerTabsData, labelsDisabled } from "../../../stores"
+    import { activePopup, drawerTabsData, labelsDisabled } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -24,7 +22,7 @@
     ]
 
     function importCalendar() {
-        sendMain(Main.IMPORT, { channel: "calendar", format: { name: "Calendar", extensions: ["ics"] } })
+        activePopup.set("import_calendar")
     }
 </script>
 

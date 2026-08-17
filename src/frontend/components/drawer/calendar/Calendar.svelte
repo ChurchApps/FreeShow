@@ -8,6 +8,7 @@
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import { MILLISECONDS_IN_A_DAY, copyDate, getDaysInMonth, getWeekNumber, isBetween, isSameDay } from "./calendar"
+    import { isCalendarHidden } from "./calendars"
 
     export let active: string | null
     export let searchValue = ""
@@ -59,9 +60,9 @@
         return before
     }
 
-    $: currentEvents = getMonthEvents($events, days)
+    $: currentEvents = getMonthEvents($events, days, $special?.calendars, $special?.hideUnlabeledCalendar)
 
-    function getMonthEvents(allEvents: any, daysList: Date[][]) {
+    function getMonthEvents(allEvents: any, daysList: Date[][], calendars: Record<string, any> = {}, hideUnlabeled = false) {
         if (!daysList || !daysList[0]) return []
 
         let tempEvents: any[] = []
@@ -69,6 +70,8 @@
         let last = daysList[5][daysList[5].length - 1].getTime()
 
         Object.entries(allEvents).forEach(([id, event]: any) => {
+            if (isCalendarHidden(calendars, hideUnlabeled, event.origin)) return
+
             let from = new Date(event.from).getTime()
             let to = new Date(event.to)?.getTime() || 0
 

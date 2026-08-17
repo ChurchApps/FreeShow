@@ -95,7 +95,7 @@
     let importType = ""
     const importTypes = [
         { id: "api", name: "API", icon: "web" }, // translate | scripture_alt
-        { id: "local", name: translateText("cloud.local"), icon: "scripture" }
+        { id: "local", name: translateText("cloud.local"), icon: "folder" } // scripture
     ]
 
     let localBibles: { path: string; name: string }[] = []
