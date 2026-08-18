@@ -141,6 +141,18 @@ describe("Gemini Provider Connection", () => {
         post.mockResolvedValueOnce({ data: { candidates: [{ finishReason: "STOP", content: { parts: [{ text: "ok" }] } }] } } as any)
         await geminiProvider.complete("g-key", "gemini-2.0-flash", { prompt: "hi", signal })
         expect((post.mock.calls[2] as any[])[1].generationConfig.thinkingConfig).toBeUndefined()
+
+        // 3.x thinking knobs vary per model - no thinkingConfig, but a cap thinking cannot eat
+        post.mockResolvedValueOnce({ data: { candidates: [{ finishReason: "STOP", content: { parts: [{ text: "ok" }] } }] } } as any)
+        await geminiProvider.complete("g-key", "gemini-3.1-flash-lite", { prompt: "hi", signal })
+        expect((post.mock.calls[3] as any[])[1].generationConfig.thinkingConfig).toBeUndefined()
+        expect((post.mock.calls[3] as any[])[1].generationConfig.maxOutputTokens).toBe(4096)
+    })
+
+    it("substitutes the fallback model for an empty id", async () => {
+        post.mockResolvedValueOnce({ data: { candidates: [{ finishReason: "STOP", content: { parts: [{ text: "ok" }] } }] } } as any)
+        await geminiProvider.complete("g-key", "", { prompt: "hi", signal })
+        expect((post.mock.calls[0] as any[])[0]).toContain("gemini-3.1-flash-lite:generateContent")
     })
 
     it("names an answer-less MAX_TOKENS response instead of returning empty text", async () => {

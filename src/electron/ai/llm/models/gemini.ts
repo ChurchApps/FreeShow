@@ -15,7 +15,7 @@ const geminiQuirks: ProviderQuirks = (status, data) => {
 
 export class GeminiProvider extends APIModel {
     readonly id = "gemini"
-    readonly fallbackModel = "gemini-2.5-flash"
+    readonly fallbackModel = "gemini-3.1-flash-lite"
     protected testQuirks = geminiQuirks
 
     private getHeaders(apiKey: string) {
@@ -41,14 +41,16 @@ export class GeminiProvider extends APIModel {
 
     async complete(apiKey: string, model: string, options: LLMCompletionOptions): Promise<string> {
         if (!model) model = this.fallbackModel
+        // gemini "thinks" by default and the thinking tokens count against maxOutputTokens -
+        // unbudgeted, a small cap is eaten by thinking before any answer exists and the response
+        // comes back with no parts at all. 2.5 accepts an explicit budget (0 for flash, 128 pro
+        // minimum); the 3.x generation gets a cap large enough that thinking plus the (small)
+        // structured answer always fit, since its thinking knobs vary per model
+        const modern = !/^gemini-[12]\./.test(model)
         const generationConfig: any = {
             temperature: options.temperature ?? 0,
-            maxOutputTokens: options.maxTokens ?? 1024
+            maxOutputTokens: options.maxTokens ?? (modern ? 4096 : 1024)
         }
-        // gemini 2.5 "thinks" by default and the thinking tokens count against maxOutputTokens -
-        // unbudgeted, a small cap is eaten by thinking before any answer exists and the response
-        // comes back with no parts at all. Flash/Flash-Lite accept a zero budget; Pro's minimum
-        // is 128, so it gets the smallest budget it allows
         if (/^gemini-2\.5/.test(model)) generationConfig.thinkingConfig = { thinkingBudget: /pro/.test(model) ? 128 : 0 }
         if (options.jsonSchema) {
             generationConfig.responseMimeType = "application/json"

@@ -35,13 +35,17 @@ export const AI_PROVIDER_MODELS: { [id in AIProviderId]: { models: { id: string;
         defaultModel: "gpt-4o-mini"
     },
     gemini: {
-        // verified against ai.google.dev/gemini-api/docs (2026-08): gemini-2.0-flash was shut down 2026-06-01 and "gemini-2.0-pro" never existed
+        // verified against ai.google.dev/gemini-api/docs availability table (2026-08): the 2.5
+        // generation retires 2026-10-20, so only 3.x models are offered - 3.1 Flash-Lite carries
+        // the longest runway (May 2027+) and is fast enough for live detection
         models: [
-            { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (fast)", recommended: true },
-            { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (best accuracy)" },
-            { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash Lite (fastest)" }
+            { id: "gemini-3.1-flash-lite", name: "Gemini 3.1 Flash Lite (fast)", recommended: true },
+            { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash" },
+            { id: "gemini-3.5-flash-lite", name: "Gemini 3.5 Flash Lite" },
+            { id: "gemini-3.6-flash", name: "Gemini 3.6 Flash" },
+            { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (best accuracy)" }
         ],
-        defaultModel: "gemini-2.5-flash"
+        defaultModel: "gemini-3.1-flash-lite"
     },
     ollama: {
         // local models served by Ollama - ids verified against ollama.com/library (2026-08)
