@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { midiInListen } from "../components/actions/midi"
+import { hidInListen } from "../components/actions/hid"
 import { getAllActiveOutputIds, getAllNormalOutputs, updateSyncedOutputs } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { getShowCacheId, syncCachedShows, updateCachedShow, updateCachedShows, updateShowsList } from "../components/helpers/show"
@@ -405,6 +406,7 @@ export function storeSubscriber() {
 
     actions.subscribe((data) => {
         midiInListen()
+        hidInListen()
 
         // REMOTE
         send(REMOTE, ["ACTIONS"], data)
