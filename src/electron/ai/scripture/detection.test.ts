@@ -201,6 +201,12 @@ describe("detectExplicitReferences", () => {
         expect(detectExplicitReferences(normalizeSpokenNumbers("the ninth verse of Ezra chapter eight"), EZRA_BOOKS)).toEqual(expected)
     })
 
+    it("AlloDel's loud-failure case: 'verse sixteen of John chapter three' is 3:16, never 3:1", () => {
+        // the embedded "john chapter three" must not surface as its own John 3:1 - a real but
+        // WRONG verse on the screen is the worst failure mode a reference parser has
+        expect(detectExplicitReferences(normalizeSpokenNumbers("verse sixteen of John chapter three"), BOOKS)).toEqual([{ bookNumber: 43, book: "John", chapter: 3, verseStart: 16, verseEnd: 16, confidence: "high" }])
+    })
+
     it("collapses a book name glued with its own echo: 'ezrazra 9 verse 8'", () => {
         expect(detectExplicitReferences("now, ezrazra 9 verse 8 for a brief moment", EZRA_BOOKS)[0]).toMatchObject({ bookNumber: 15, chapter: 9, verseStart: 8, confidence: "high" })
         // the collapse never bends unrelated words - "romansions" is not romans + a tail of romans
