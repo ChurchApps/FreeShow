@@ -10,7 +10,7 @@ import type { TranscriberSegment } from "../types"
 
 export type NemotronWorkerRequest = { type: "start"; paths: NemotronModelPaths; vadModelPath: string; language?: string } | { type: "audio"; data: Uint8Array } | { type: "stop" }
 
-export type NemotronWorkerResponse = { type: "ready" } | { type: "segment"; segment: TranscriberSegment } | { type: "interim"; text: string } | { type: "error"; message: string } | { type: "stopped" }
+export type NemotronWorkerResponse = { type: "ready" } | { type: "segment"; segment: TranscriberSegment } | { type: "interim"; text: string } | { type: "error"; message: string } | { type: "stopped" } | { type: "alive" }
 
 // present only when this file runs as a utilityProcess entry (the type import above is free)
 const parentPort = (process as NodeJS.Process & { parentPort?: { postMessage(message: unknown): void; on(event: "message", listener: (event: { data: NemotronWorkerRequest }) => void): void } }).parentPort
@@ -18,6 +18,10 @@ const parentPort = (process as NodeJS.Process & { parentPort?: { postMessage(mes
 if (parentPort) {
     let driver: NemotronDriver | null = null
     const post = (message: NemotronWorkerResponse) => parentPort.postMessage(message)
+
+    // liveness heartbeat: a decode that never returns (native hang) silences this too - which is
+    // exactly what lets the host tell a hung worker from a merely quiet room and restart it
+    setInterval(() => post({ type: "alive" }), 5000).unref?.()
 
     const handle = async (message: NemotronWorkerRequest) => {
         try {

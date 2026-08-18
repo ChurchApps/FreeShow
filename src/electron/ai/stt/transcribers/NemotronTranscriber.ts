@@ -14,6 +14,10 @@ interface NemotronTranscriberOptions extends SttEngineOptions {
 const WORKER_START_TIMEOUT = 30000
 // stop() waits this long for the worker to flush the utterance still being spoken
 const WORKER_FLUSH_TIMEOUT = 3000
+// the worker heartbeats every 5s - this much silence means it hung (a native decode that never
+// returns leaves no exit event, just a process that stops answering) and gets restarted
+const WORKER_STALL_TIMEOUT = 20000
+const WORKER_STALL_CHECK_INTERVAL = 5000
 
 /**
  * Runs the Nemotron engine in an Electron utilityProcess, so its synchronous native decodes can
@@ -33,6 +37,10 @@ export class NemotronTranscriber {
     private readyResolve: ((ok: boolean) => void) | null = null
     private stoppedResolve: (() => void) | null = null
     private startErrorMessage = ""
+
+    private lastWorkerMessageAt = 0
+    private stallTimer: NodeJS.Timeout | null = null
+    private restarting = false
 
     constructor(options: NemotronTranscriberOptions, onSegment: (segment: TranscriberSegment) => void, onError: (message: string) => void, onInterim?: (text: string) => void) {
         this.options = options
@@ -61,6 +69,10 @@ export class NemotronTranscriber {
 
     async stop() {
         this.stopped = true
+        if (this.stallTimer) {
+            clearInterval(this.stallTimer)
+            this.stallTimer = null
+        }
 
         const child = this.child
         this.child = null
@@ -114,6 +126,8 @@ export class NemotronTranscriber {
         }
 
         this.child = child
+        this.lastWorkerMessageAt = Date.now()
+        this.armStallWatchdog()
         child.on("message", (message: NemotronWorkerResponse) => this.handleWorkerMessage(message))
         child.on("exit", (code) => {
             if (this.child !== child) return
@@ -149,7 +163,9 @@ export class NemotronTranscriber {
 
     private handleWorkerMessage(message: NemotronWorkerResponse) {
         if (!message || typeof message !== "object") return
+        this.lastWorkerMessageAt = Date.now()
 
+        if (message.type === "alive") return // heartbeat - the timestamp above is its whole job
         if (message.type === "segment") this.onSegment(message.segment)
         else if (message.type === "interim") this.onInterim?.(message.text)
         else if (message.type === "ready") this.readyResolve?.(true)
@@ -169,6 +185,37 @@ export class NemotronTranscriber {
             child.postMessage(message)
         } catch (err) {
             console.error("[nemotron] Failed to reach the decode process:", err)
+        }
+    }
+
+    // a hung worker (a native decode that never returns) emits no exit event - it just goes
+    // silent. The heartbeat exposes that, and a silent worker is killed and replaced so the
+    // session continues with a gap instead of freezing until someone restarts the app
+    private armStallWatchdog() {
+        if (this.stallTimer) clearInterval(this.stallTimer)
+        this.stallTimer = setInterval(() => void this.checkStall(), WORKER_STALL_CHECK_INTERVAL)
+        this.stallTimer.unref?.()
+    }
+
+    private async checkStall() {
+        if (this.stopped || this.restarting || !this.child) return
+        if (Date.now() - this.lastWorkerMessageAt < WORKER_STALL_TIMEOUT) return
+
+        this.restarting = true
+        console.error(`[nemotron] Decode process went silent for ${Math.round((Date.now() - this.lastWorkerMessageAt) / 1000)}s - restarting it (transcript will have a gap)`)
+
+        const child = this.child
+        this.child = null
+        try {
+            child.kill()
+        } catch {}
+        this.onInterim?.("") // whatever tail was showing died with the worker
+
+        try {
+            const ok = await this.startWorker()
+            if (!ok && !this.stopped) this.onError(this.startErrorMessage || "Nemotron transcription process could not be restarted")
+        } finally {
+            this.restarting = false
         }
     }
 }

@@ -122,7 +122,8 @@ describe("NemotronDriver", () => {
         expect((driver as any).partialBackoff).toBe(4)
 
         driver.pushAudio(pcmSeconds(8))
-        expect((driver as any).partialBackoff).toBe(4) // capped
+        expect((driver as any).partialBackoff).toBe(8) // the cap - near-finalize-only pacing
+        // (a further slow partial cannot fit before the utterance cap finalizes & resets the backoff)
     })
 
     it("stop flushes the utterance still being spoken", async () => {

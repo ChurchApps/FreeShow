@@ -50,9 +50,11 @@ const PARTIAL_INTERVAL_SAMPLES = 1.2 * SAMPLE_RATE
 // across every decode seam and let the seam stitch drop the ones that really did come out already
 const SEAM_BACKTRACK_WORDS = 2
 // a partial decode slower than this means the utterance has grown heavy for this machine - back the
-// re-decode interval off (doubling, capped) instead of going quiet until the close
+// re-decode interval off (doubling, capped) instead of going quiet until the close. The cap is
+// deep on purpose: a machine drowning in decode work must be able to fall back to near-finalize-only
+// pacing, or the worker's queue grows without bound and the transcript freezes
 const PARTIAL_SLOW_DECODE_MS = 1000
-const PARTIAL_BACKOFF_MAX = 4
+const PARTIAL_BACKOFF_MAX = 8
 
 // audio kept from just before the VAD triggers - long enough that the batch has lead-in for the encoder to
 // warm up on before the first word, or the utterance's opening syllables decode garbled
