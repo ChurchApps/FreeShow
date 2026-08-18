@@ -307,7 +307,6 @@ export class VideoPlayer {
             return finish()
         }
 
-        const outputId = outputIds?.[0] || ""
         const background = get(outputs)[outputIds?.[0] || ""]?.out?.background
         // project media folder
         if (background?.folderPath) {
@@ -318,18 +317,20 @@ export class VideoPlayer {
         const localLoop = playing.loop
 
         // check and execute next after media regardless of loop
-        if ((await checkNextAfterMedia(path, "media", outputId)) || localLoop) return finish()
+        if ((await checkNextAfterMedia(path, "media", outputIds)) || localLoop) return finish()
 
         if (get(special).clearMediaOnFinish === false) return finish()
 
         setTimeout(() => {
-            // double check that output is still the same
-            const outputState = get(outputs)[outputId]?.out?.background
-            const newVideoPath: string = outputState?.path || outputState?.id || ""
-            if (newVideoPath !== path) return finish()
+            const checkOutputIds = outputIds?.length ? outputIds : [outputIds?.[0] || ""]
+            checkOutputIds.forEach((outputId) => {
+                if (!outputId) return
 
-            clearBackground(outputId)
-            // this.stop(path, outputIds ? outputIds[0] : undefined, true)
+                // double check that output is still the same
+                const outputState = get(outputs)[outputId]?.out?.background
+                const newVideoPath: string = outputState?.path || outputState?.id || ""
+                if (newVideoPath === path) clearBackground(outputId)
+            })
 
             finish()
         }, 200) // WAIT FOR NEXT AFTER MEDIA TO FINISH

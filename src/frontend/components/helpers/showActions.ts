@@ -61,7 +61,7 @@ import {
 } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { defaultLayers, getActiveOutputs, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
+import { defaultLayers, getActiveOutputs, getAllActiveOutputIds, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
 import { OutputHelper } from "./OutputHelper"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
@@ -640,55 +640,58 @@ export function playPreviousGroup(globalGroupIds: string[], { showRef, outSlide,
 
 // go to next slide if current output slide has nextAfterMedia action
 const nextActive: string[] = []
-export async function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "timer" = "media", outputId = "") {
-    if (nextActive.includes(outputId)) return false
+export async function checkNextAfterMedia(endedId: string, type: "media" | "audio" | "timer" = "media", outputIds: string | string[] = "") {
+    const targetOutputIds = Array.isArray(outputIds) ? (outputIds.length ? outputIds : getAllActiveOutputIds()) : outputIds ? [outputIds] : getAllActiveOutputIds()
+    if (!targetOutputIds.length) return false
 
-    nextActive.push(outputId)
-    setTimeout(() => {
-        nextActive.splice(nextActive.indexOf(outputId), 1)
-    }, 600) // MAKE SURE NEXT SLIDE HAS TRANSITIONED
+    let didAdvance = false
+    for (const outputId of targetOutputIds) {
+        if (!outputId || nextActive.includes(outputId)) continue
 
-    if (!outputId) outputId = getFirstActiveOutput()?.id || ""
-    if (!outputId) return false
+        const currentOutput = get(outputs)[outputId]
+        if (!currentOutput) continue
 
-    const currentOutput = get(outputs)[outputId]
-    if (!currentOutput) return false
+        const slideOut = currentOutput.out?.slide
+        if (!slideOut) continue
 
-    const slideOut = currentOutput.out?.slide
-    if (!slideOut) return false
+        const layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0]?.[slideOut.index ?? -1]
+        if (!layoutSlide) continue
 
-    const layoutSlide = _show(slideOut.id).layouts([slideOut.layout]).ref()[0]?.[slideOut.index ?? -1]
-    if (!layoutSlide) return false
+        // check that current slide has the ended media!
+        if (type === "media" || type === "audio") {
+            const showMedia = _show(slideOut.id).media().get()
+            // find all matching paths because some slides with same background might have different media ids
+            let allMediaIds: string[] = []
+            for (const m of showMedia) {
+                const localPath = await downloadOnlineMedia(m.path)
+                if (localPath === endedId || m.path === endedId || m.key === endedId) allMediaIds.push(m.key)
+            }
 
-    // check that current slide has the ended media!
-    if (type === "media" || type === "audio") {
-        const showMedia = _show(slideOut.id).media().get()
-        // find all matching paths because some slides with same background might have different media ids
-        let allMediaIds: string[] = []
-        for (const m of showMedia) {
-            const localPath = await downloadOnlineMedia(m.path)
-            if (localPath === endedId) allMediaIds.push(m.key)
+            // don't go to next if current slide don't has outputted media
+            if (type === "media") {
+                if (!allMediaIds.includes(layoutSlide.data?.background || "") && layoutSlide.data?.background !== endedId) continue
+            } else if (type === "audio") {
+                if (!layoutSlide.data?.audio?.find((id) => allMediaIds.includes(id))) continue
+            }
+        } else if (type === "timer") {
+            const slide = _show(slideOut.id).get("slides")?.[layoutSlide.id]
+            const slideTimer = slide?.items?.find((a) => a.type === "timer" && (a.timer?.id || a.timerId) === endedId)
+            if (!slideTimer) continue
         }
 
-        // don't go to next if current slide don't has outputted media
-        if (type === "media") {
-            if (!allMediaIds.includes(layoutSlide.data?.background || "")) return false
-        } else if (type === "audio") {
-            if (!layoutSlide.data?.audio?.find((id) => allMediaIds.includes(id))) return false
-        }
-    } else if (type === "timer") {
-        const slide = _show(slideOut.id).get("slides")?.[layoutSlide.id]
-        const slideTimer = slide?.items?.find((a) => a.type === "timer" && (a.timer?.id || a.timerId) === endedId)
-        if (!slideTimer) return false
+        const nextAfterMedia = layoutSlide?.data?.actions?.nextAfterMedia
+        if (!nextAfterMedia) continue
+
+        nextActive.push(outputId)
+        setTimeout(() => {
+            nextActive.splice(nextActive.indexOf(outputId), 1)
+        }, 600) // MAKE SURE NEXT SLIDE HAS TRANSITIONED
+
+        OutputHelper.advanceOutput(outputId, "", { playNext: true })
+        didAdvance = true
     }
 
-    const nextAfterMedia = layoutSlide?.data?.actions?.nextAfterMedia
-    if (!nextAfterMedia) return false
-
-    // WIP PAUSE PLAYING VIDEO WHEN ENDED, so it does not loop to start
-    OutputHelper.advanceOutput(outputId, "", { playNext: true })
-
-    return true
+    return didAdvance
 }
 
 export function playSlideTimers({ showId = "active", slideId = "", overlayIds = [] as string[] }) {
