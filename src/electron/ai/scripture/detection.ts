@@ -13,18 +13,48 @@ import { getLLMScriptureProvider } from "./llmTalkScripture"
 // before it counts, so normal speech ("he acts his age", "look at this") cannot trigger.
 // Aliases are only added for books the loaded bible actually has.
 const ASR_BOOK_ALIASES: { alias: string; canonNumber: number; requireVerse: boolean }[] = [
+    // AlloDel's live-observed set
     { alias: "palm", canonNumber: 19, requireVerse: false }, // Psalms
     { alias: "palms", canonNumber: 19, requireVerse: false },
     { alias: "genes", canonNumber: 1, requireVerse: false }, // Genesis, cut off mid word
     { alias: "joan", canonNumber: 43, requireVerse: true }, // John
     { alias: "jon", canonNumber: 43, requireVerse: true },
     { alias: "axe", canonNumber: 44, requireVerse: true }, // Acts
+    { alias: "ax", canonNumber: 44, requireVerse: true },
     { alias: "ask", canonNumber: 44, requireVerse: true },
     { alias: "look", canonNumber: 42, requireVerse: true }, // Luke
     { alias: "games", canonNumber: 59, requireVerse: true }, // James
     { alias: "roof", canonNumber: 8, requireVerse: true }, // Ruth
     { alias: "dude", canonNumber: 65, requireVerse: true }, // Jude
-    { alias: "juice", canonNumber: 65, requireVerse: true }
+    { alias: "juice", canonNumber: 65, requireVerse: true },
+    // extended: what a streaming model outputs is real English words/names, so each alias is
+    // the actual word it substitutes. Anything that could be normal speech is verse-gated
+    { alias: "genius", canonNumber: 1, requireVerse: true }, // Genesis
+    { alias: "exit", canonNumber: 2, requireVerse: true }, // Exodus
+    { alias: "josh", canonNumber: 6, requireVerse: true }, // Joshua
+    { alias: "judge", canonNumber: 7, requireVerse: true }, // Judges
+    { alias: "root", canonNumber: 8, requireVerse: true }, // Ruth
+    { alias: "ester", canonNumber: 17, requireVerse: true }, // Esther
+    { alias: "proverb", canonNumber: 20, requireVerse: true }, // Proverbs
+    { alias: "jeremy", canonNumber: 24, requireVerse: true }, // Jeremiah
+    { alias: "lamentation", canonNumber: 25, requireVerse: true }, // Lamentations
+    { alias: "jose", canonNumber: 28, requireVerse: true }, // Hosea
+    { alias: "hose", canonNumber: 28, requireVerse: true },
+    { alias: "jewel", canonNumber: 29, requireVerse: true }, // Joel
+    { alias: "mica", canonNumber: 33, requireVerse: true }, // Micah
+    { alias: "matt", canonNumber: 40, requireVerse: true }, // Matthew
+    { alias: "duke", canonNumber: 42, requireVerse: true }, // Luke
+    { alias: "romance", canonNumber: 45, requireVerse: true }, // Romans
+    { alias: "roman", canonNumber: 45, requireVerse: true },
+    { alias: "corinthian", canonNumber: 46, requireVerse: true }, // 1 Corinthians (spoken bare)
+    { alias: "galatian", canonNumber: 48, requireVerse: true }, // Galatians
+    { alias: "ephesian", canonNumber: 49, requireVerse: true }, // Ephesians
+    { alias: "colossian", canonNumber: 51, requireVerse: true }, // Colossians
+    { alias: "collisions", canonNumber: 51, requireVerse: true },
+    { alias: "hebrew", canonNumber: 58, requireVerse: true }, // Hebrews
+    { alias: "revelations", canonNumber: 66, requireVerse: false }, // how the book is genuinely often said
+    { alias: "revolution", canonNumber: 66, requireVerse: true }, // Revelation
+    { alias: "revolutions", canonNumber: 66, requireVerse: true }
 ]
 
 // SPOKEN NUMBERS

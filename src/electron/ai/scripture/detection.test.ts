@@ -253,6 +253,17 @@ describe("detectExplicitReferences", () => {
             const onlyGenesis = [{ number: 1, canonNumber: 1, names: ["Genesis"] }]
             expect(detectExplicitReferences("dude verse 3", onlyGenesis)).toEqual([])
         })
+
+        it("covers the extended mishearings, still verse-gated", () => {
+            const EXT_BOOKS = [...ALIAS_BOOKS, { number: 45, canonNumber: 45, names: ["Romans"] }, { number: 58, canonNumber: 58, names: ["Hebrews"] }, { number: 66, canonNumber: 66, names: ["Revelation"] }]
+            expect(detectExplicitReferences("romance chapter 8 verse 28", EXT_BOOKS)[0]).toMatchObject({ bookNumber: 45, chapter: 8, verseStart: 28 })
+            expect(detectExplicitReferences("hebrew 11 verse 1", EXT_BOOKS)[0]).toMatchObject({ bookNumber: 58, chapter: 11, verseStart: 1 })
+            // "revelations" is how the book is genuinely said - no verse needed
+            expect(detectExplicitReferences("turn to revelations 21", EXT_BOOKS)[0]).toMatchObject({ bookNumber: 66, chapter: 21 })
+            // gated words stay ordinary speech without the full shape
+            expect(detectExplicitReferences("that romance 5 years ago", EXT_BOOKS)).toEqual([])
+            expect(detectExplicitReferences("the hebrew 12 tribes", EXT_BOOKS)).toEqual([])
+        })
     })
 
     describe("single-chapter books (AlloDel #4)", () => {
