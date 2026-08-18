@@ -5,8 +5,9 @@ import { Main } from "../../types/IPC/Main"
 import { customActionActivation } from "../components/actions/actions"
 import { encodeFilePath, getFileName, locateMediaFile, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
+import { VideoPlayer } from "../components/media/video/videoPlayer"
 import { requestMain, sendMain } from "../IPC/main"
-import { activePlaylist, dictionary, media, outLocked, playingAudio, playingAudioPaths, playingVideos, special } from "../stores"
+import { activePlaylist, dictionary, media, outLocked, playingAudio, playingAudioPaths, special } from "../stores"
 import { addToMediaFolder } from "../utils/cloudSync"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
@@ -295,7 +296,7 @@ export class AudioPlayer {
             AudioRoutingManager.getInstance().updateRoutingNodes()
             this.applyProcessing(id)
 
-            if (get(special).muteAudioWhenVideoPlays && get(playingVideos).some((v) => !v.audio.paused)) {
+            if (get(special).muteAudioWhenVideoPlays && VideoPlayer.hasAudibleVideo()) {
                 fadeoutAllPlayingAudio()
             }
         }
