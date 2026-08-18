@@ -101,7 +101,13 @@ export const TUNING = {
     CORRECTION_WEIGHT_RATIO: 1.6,
     TRACKER_TTL_MS: 20000,
 
-    CONSENSUS_BONUS: 0.04 // two translations independently agree on the ref
+    CONSENSUS_BONUS: 0.04, // two translations independently agree on the ref
+
+    // passage memory: chapters the session recently detected keep guiding candidate ranking
+    // (anchor-style zones) after the tracker/anchor expire - a sermon lives in a passage for
+    // minutes, and without this the matcher "jumps all over the place" between look-alikes
+    PASSAGE_MEMORY_MS: 240000,
+    PASSAGE_MEMORY_MAX: 5
 }
 
 export type Tuning = typeof TUNING

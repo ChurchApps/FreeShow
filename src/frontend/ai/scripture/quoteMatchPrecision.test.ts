@@ -163,6 +163,36 @@ describe("continuation confidence follows its seed", () => {
     })
 })
 
+describe("grounded main translation & passage memory", () => {
+    // the second translation shares most verses word-for-word, but words ITS Hebrews verse differently
+    const ALT_CORPUS: IndexableVerse[] = CORPUS.map((entry) => (entry.book === 58 && entry.verseStart === 14 ? verse(58, 1, 14, "the angels serve as couriers dispatched toward the heirs awaiting rescue soon arriving") : entry))
+
+    it("a wording both translations share stays grounded in the main (first-indexed) translation", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("main", CORPUS), buildTranslationIndex("alt", CORPUS)], FRAGP)
+        const out = matcher.onSegment(seg("the angels are spirits sent to serve those who are going to inherit salvation"))
+        expect(out).toHaveLength(1)
+        expect(out[0].translationId).toBe("main")
+    })
+
+    it("a wording only the other translation carries surfaces that translation", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("main", CORPUS), buildTranslationIndex("alt", ALT_CORPUS)], FRAGP)
+        const out = matcher.onSegment(seg("the angels serve as couriers dispatched toward the heirs awaiting rescue soon arriving"))
+        expect(out).toHaveLength(1)
+        expect(out[0].translationId).toBe("alt")
+    })
+
+    it("emissions and spoken references feed the passage memory", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("test", CORPUS)], FRAGP)
+        matcher.onSegment(seg("the angels are spirits sent to serve those who are going to inherit salvation"))
+        expect((matcher as any).passageMemory[0]).toMatchObject({ book: 58, chapter: 1 })
+
+        matcher.noteExplicitReference({ bookNumber: 19, chapter: 23, verseStart: 1 })
+        expect((matcher as any).passageMemory[0]).toMatchObject({ book: 19, chapter: 23 })
+        // both stay remembered - the memory holds several recent passages
+        expect((matcher as any).passageMemory).toHaveLength(2)
+    })
+})
+
 describe("token-level precision", () => {
     it("rejects 3-char debris tails", () => {
         expect(tokenGrade("its", "itsly")).toBe(0) // "ly" is not a stem tail - transcription debris

@@ -92,6 +92,11 @@ export class QuoteMatcher {
     private anchor: QuoteMatchAnchor | null = null
     private seededOrdinals: { index: TranslationIndex; ordinal: number }[] = []
     private tracker: ActiveTracker | null = null
+    // chapters this session recently detected (transcript clock) - long-lived soft anchors
+    private passageMemory: { book: number; chapter: number; atMs: number }[] = []
+    // the translation of the last emission (seeded with the drawer's - the first index) - ties
+    // between translations break toward it, so cards stop hopping versions mid-reading
+    private stickyTranslationId: string | null = null
 
     // canonical refs already emitted (with confidence, for the single medium->high upgrade)
     private emitted = new Map<string, { confidence: "high" | "medium"; upgraded: boolean }>()
@@ -107,6 +112,7 @@ export class QuoteMatcher {
     constructor(indexes: TranslationIndex[], tuning?: Partial<Tuning>) {
         this.indexes = indexes
         this.tuning = { ...TUNING, ...tuning }
+        this.stickyTranslationId = indexes[0]?.translationId ?? null // the drawer translation is indexed first
     }
 
     setAnchor(anchor: QuoteMatchAnchor | null): void {
@@ -122,6 +128,16 @@ export class QuoteMatcher {
             const ordinal = findOrdinal(index, ref.bookNumber, ref.chapter, ref.verseStart)
             if (ordinal >= 0) this.seededOrdinals.push({ index, ordinal })
         }
+        // a spoken reference declares the passage as surely as a matched quote does
+        this.rememberPassage(ref.bookNumber, ref.chapter, this.lastSegmentEndMs)
+    }
+
+    private rememberPassage(book: number, chapter: number, atMs: number): void {
+        this.passageMemory = [{ book, chapter, atMs }, ...this.passageMemory.filter((entry) => entry.book !== book || entry.chapter !== chapter)].slice(0, this.tuning.PASSAGE_MEMORY_MAX)
+    }
+
+    private rememberedPassages(nowMs: number): { book: number; chapter: number }[] {
+        return this.passageMemory.filter((entry) => nowMs - entry.atMs <= this.tuning.PASSAGE_MEMORY_MS)
     }
 
     reset(): void {
@@ -134,6 +150,8 @@ export class QuoteMatcher {
         this.cueUntilMs = 0
         this.emitted.clear()
         this.lastEmitted = null
+        this.passageMemory = []
+        this.stickyTranslationId = this.indexes[0]?.translationId ?? null
     }
 
     onSegment(segment: QuoteMatchSegment): QuoteMatchEmission[] {
@@ -293,7 +311,7 @@ export class QuoteMatcher {
         // just like a matched phrase - only candidates with real evidence earn the anchor bonus,
         // or an anchor-injected coincidence outranks a genuine match elsewhere forever
         for (const candidate of out) {
-            candidate.zone = this.zoneOf(candidate)
+            candidate.zone = this.zoneOf(candidate, nowMs)
             candidate.substantial = meetsFloors(candidate.align, this.tuning) || phraseEvidence(candidate.align, this.tuning)
             const bonus = candidate.zone === 0 ? this.tuning.ANCHOR_BONUS_Z0 : candidate.zone === 1 ? this.tuning.ANCHOR_BONUS_Z1 : candidate.zone === 2 ? this.tuning.ANCHOR_BONUS_Z2 : 0
             candidate.effectiveScore = candidate.align.score + (candidate.substantial ? bonus : 0)
@@ -305,19 +323,21 @@ export class QuoteMatcher {
             if (agrees) candidate.effectiveScore += this.tuning.CONSENSUS_BONUS
         }
 
-        void nowMs
         // substance first: a junk coincidence scores 1.0 like a real match (span-relative), but it
         // must never outrank one - then by score within each class
         return out.sort((a, b) => (b.substantial ? 1 : 0) - (a.substantial ? 1 : 0) || b.effectiveScore - a.effectiveScore)
     }
 
-    private zoneOf(candidate: Candidate): number {
+    private zoneOf(candidate: Candidate, nowMs: number): number {
         const book = candidate.index.book[candidate.ordinal]
         const chapter = candidate.index.chapter[candidate.ordinal]
 
         const bases: { book: number; chapter: number }[] = []
         if (this.anchor) bases.push({ book: this.anchor.bookNumber, chapter: this.anchor.chapter })
         if (this.tracker) bases.push({ book: this.tracker.book, chapter: this.tracker.chapter })
+        // the passage memory keeps guiding after the anchor/tracker expire - a sermon lives in
+        // its chapters for minutes, and candidates near them must outrank look-alikes elsewhere
+        for (const passage of this.rememberedPassages(nowMs)) bases.push({ book: passage.book, chapter: passage.chapter })
         if (!bases.length) return 3
 
         let best = 3
@@ -347,7 +367,7 @@ export class QuoteMatcher {
 
         // the seed confidence carries: a MEDIUM suggestion's relaxed-floor continuations must not
         // chain into auto-projected HIGHs the original evidence never earned
-        const emission = this.emit(candidate, this.tracker.seedConfidence, "continuation", nowMs)
+        const emission = this.emit(candidate, this.tracker.seedConfidence, "continuation", nowMs, false, candidates)
         return emission
     }
 
@@ -390,7 +410,16 @@ export class QuoteMatcher {
                 top = candidate
                 continue
             }
-            if (candidateClassified === topClassified && candidate.align.queryFrom < top.align.queryFrom) top = candidate
+            if (candidateClassified !== topClassified) continue
+            // equally evidenced: stay with the translation being read/projected - near-identical
+            // versions tie constantly, and hopping between them per verse reads as instability
+            const candidateSticky = candidate.index.translationId === this.stickyTranslationId
+            const topSticky = top.index.translationId === this.stickyTranslationId
+            if (candidateSticky && !topSticky) {
+                top = candidate
+                continue
+            }
+            if (candidateSticky === topSticky && candidate.align.queryFrom < top.align.queryFrom) top = candidate
         }
 
         // a verse the reading already moved past keeps accumulating evidence (the window still
@@ -427,7 +456,7 @@ export class QuoteMatcher {
                     // the formula's echo may be drowning a verse the words actually RECITE - a
                     // candidate clearing the full floors still gets its (sustain-gated) shot
                     const recited = candidates.find((candidate) => candidate !== top && !sameRef(candidate, top) && classify(candidate.align, tuning))
-                    if (recited) return this.emitInstead(recited, nowMs)
+                    if (recited) return this.emitInstead(recited, nowMs, candidates)
                     return []
                 }
             }
@@ -445,14 +474,14 @@ export class QuoteMatcher {
         // is a score margin OR weight dominance - parallel passages tie on both, while a candidate
         // the window's later words genuinely narrowed to pulls far ahead on matched weight.
         // With no anchor and no tracker there is nothing to be "cross" to - the floors alone gate
-        if (top.zone === 3 && (this.anchor || this.tracker)) {
+        if (top.zone === 3 && (this.anchor || this.tracker || this.rememberedPassages(nowMs).length)) {
             const dominates = (other: Candidate | undefined) => !other || top.align.matchedWeight >= other.align.matchedWeight * tuning.CORRECTION_WEIGHT_RATIO
             const bestAnchored = candidates.find((entry) => entry.zone <= 2 && meetsFloors(entry.align, tuning))
             if (bestAnchored && top.align.score < bestAnchored.align.score + tuning.CROSS_BOOK_MARGIN && !dominates(bestAnchored)) {
-                return this.emitInstead(bestAnchored, nowMs)
+                return this.emitInstead(bestAnchored, nowMs, candidates)
             }
             if (top.align.matchedInformative < tuning.CROSS_BOOK_MIN_INFORMATIVE && !phrase) {
-                if (bestAnchored) return this.emitInstead(bestAnchored, nowMs)
+                if (bestAnchored) return this.emitInstead(bestAnchored, nowMs, candidates)
                 // not enough informative evidence for a cross-book jump YET - the wait still
                 // counts as sustain, so the emission lands right when the evidence does
                 this.bumpPreviousTop(key)
@@ -479,7 +508,7 @@ export class QuoteMatcher {
             if (already.confidence === "medium" && confidence === "high" && !already.upgraded) {
                 already.confidence = "high"
                 already.upgraded = true
-                return [this.emit(top, "high", "upgrade", nowMs, true)]
+                return [this.emit(top, "high", "upgrade", nowMs, true, candidates)]
             }
             this.bumpPreviousTop(key)
             return []
@@ -498,7 +527,7 @@ export class QuoteMatcher {
         // a stronger match for the SAME speech that fired the previous emission means more words
         // narrowed the search - supersede that emission instead of standing next to it
         const corrects = confidence === "high" ? this.correctionTarget(top) : null
-        const emission = this.emit(top, confidence, corrects ? "correction" : "fresh", nowMs)
+        const emission = this.emit(top, confidence, corrects ? "correction" : "fresh", nowMs, false, candidates)
         if (corrects) emission.corrects = corrects
         return [emission]
     }
@@ -516,7 +545,7 @@ export class QuoteMatcher {
     }
 
     /** The anchored candidate wins over a cross-book top - emit it if it qualifies on its own. */
-    private emitInstead(candidate: Candidate, nowMs: number): QuoteMatchEmission[] {
+    private emitInstead(candidate: Candidate, nowMs: number, pool: Candidate[] = []): QuoteMatchEmission[] {
         const tuning = this.tuning
         const confidence = classify(candidate.align, tuning)
         if (!confidence) return []
@@ -529,7 +558,7 @@ export class QuoteMatcher {
         const sustained = this.bumpPreviousTop(key)
         if (!singleShot && !cued && sustained < tuning.SUSTAIN_SEGMENTS) return []
 
-        return [this.emit(candidate, confidence, "fresh", nowMs)]
+        return [this.emit(candidate, confidence, "fresh", nowMs, false, pool)]
     }
 
     /**
@@ -558,10 +587,26 @@ export class QuoteMatcher {
         }
     }
 
-    private emit(candidate: Candidate, confidence: "high" | "medium", kind: QuoteMatchEmission["kind"], nowMs: number, skipLedger = false): QuoteMatchEmission {
+    /**
+     * Grounded in the main translation: when the SAME verse also qualifies there (within the tie
+     * band), the emission stays in it - another translation only surfaces when the spoken wording
+     * decisively lives in that translation alone.
+     */
+    private preferGrounded(pool: Candidate[], chosen: Candidate): Candidate {
+        if (!this.stickyTranslationId || chosen.index.translationId === this.stickyTranslationId) return chosen
+        const grounded = pool.find((candidate) => candidate.index.translationId === this.stickyTranslationId && sameRef(candidate, chosen))
+        if (!grounded) return chosen
+        const qualifies = meetsFloors(grounded.align, this.tuning) || phraseEvidence(grounded.align, this.tuning)
+        return qualifies && grounded.effectiveScore >= chosen.effectiveScore - this.tuning.TOP_TIE_BAND ? grounded : chosen
+    }
+
+    private emit(chosen: Candidate, confidence: "high" | "medium", kind: QuoteMatchEmission["kind"], nowMs: number, skipLedger = false, pool: Candidate[] = []): QuoteMatchEmission {
+        const candidate = this.preferGrounded(pool, chosen)
         const ref = this.refOf(candidate)
         const key = refKey(ref)
         if (!skipLedger) this.emitted.set(key, { confidence, upgraded: false })
+        this.rememberPassage(ref.book, candidate.index.chapter[candidate.ordinal], nowMs)
+        this.stickyTranslationId = candidate.index.translationId
 
         this.tracker = {
             translationId: candidate.index.translationId,
