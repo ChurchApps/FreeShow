@@ -285,8 +285,11 @@ export class Transcriber implements TranscriptionDriver {
             }
         }
 
-        // drop words whose midpoint was already emitted (the window reaches back over the seam)
-        const fresh = words.filter((word) => (word.startMs + word.endMs) / 2 >= this.lastEmittedEndMs)
+        // drop words whose midpoint was already emitted (the window reaches back over the seam).
+        // Whisper timestamps jitter between decodes, so the cutoff keeps a backtrack of grace -
+        // a borderline word re-emits and the fuzzy seam stitch removes it, while a sharp cutoff
+        // would LOSE the word whenever its re-decode timestamp drifted a little earlier
+        const fresh = words.filter((word) => (word.startMs + word.endMs) / 2 >= this.lastEmittedEndMs - OVERLAP_BACKTRACK_MS)
 
         // hold back words ending near a non-silent cut - the cut may sit mid-word, and the next
         // window re-decodes that audio whole. Held words stream as interim (greyed) text
