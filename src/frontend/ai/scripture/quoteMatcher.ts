@@ -481,7 +481,11 @@ export class QuoteMatcher {
         if (top.zone === 3 && (this.anchor || this.tracker || this.rememberedPassages(nowMs).length)) {
             const dominates = (other: Candidate | undefined) => !other || top.align.matchedWeight >= other.align.matchedWeight * tuning.CORRECTION_WEIGHT_RATIO
             const bestAnchored = candidates.find((entry) => entry.zone <= 2 && meetsFloors(entry.align, tuning))
-            if (bestAnchored && top.align.score < bestAnchored.align.score + tuning.CROSS_BOOK_MARGIN && !dominates(bestAnchored)) {
+            // a cross-book reading that FULLY classifies high outranks an anchored candidate that
+            // does not - the previous passage's words linger in the window and its verses keep
+            // passing the floors on residue, which must never bury a decisive new reading
+            const anchoredOutclassed = bestAnchored && classify(top.align, tuning) === "high" && classify(bestAnchored.align, tuning) !== "high"
+            if (bestAnchored && !anchoredOutclassed && top.align.score < bestAnchored.align.score + tuning.CROSS_BOOK_MARGIN && !dominates(bestAnchored)) {
                 return this.emitInstead(bestAnchored, nowMs, candidates)
             }
             if (top.align.matchedInformative < tuning.CROSS_BOOK_MIN_INFORMATIVE && !phrase) {

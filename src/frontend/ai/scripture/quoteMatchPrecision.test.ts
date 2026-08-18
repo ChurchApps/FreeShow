@@ -224,6 +224,26 @@ describe("sound-alike words still find their verse", () => {
     })
 })
 
+describe("a decisive cross-book reading beats anchored residue", () => {
+    // twins: the anchored book's verse shares the reading's opening, the real verse continues
+    // distinctively - the previous passage's words linger in the window and keep its verses
+    // floors-passing, which must never bury a new reading that fully classifies
+    const TWIN_CORPUS: IndexableVerse[] = [
+        ...CORPUS,
+        verse(4, 1, 60, "the faithful servant rises before dawn and gathers stones for the wall by the eastern gate"),
+        verse(19, 5, 9, "the faithful servant rises before dawn and gathers scattered wisdom beside the temple lampstand until the morning watch returns"),
+        ...Array.from({ length: 400 }, (_, i) => verse(4, (i % 36) + 1, Math.floor(i / 36) + 2, `wilderness marker${i} rests in the shade of the ancient wells and every flock${i} we tend draws steady water in the heat of the day`))
+    ]
+
+    it("emits the fully-recited verse, not the anchored look-alike", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("test", TWIN_CORPUS)])
+        matcher.setAnchor({ bookNumber: 4, chapter: 1, verseStart: 60, verseEnd: 60 })
+        const out = matcher.onSegment(seg("the faithful servant rises before dawn and gathers scattered wisdom beside the temple lampstand until the morning watch returns"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 19, chapter: 5, verseStart: 9 })
+    })
+})
+
 describe("token-level precision", () => {
     it("rejects 3-char debris tails", () => {
         expect(tokenGrade("its", "itsly")).toBe(0) // "ly" is not a stem tail - transcription debris

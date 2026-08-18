@@ -603,6 +603,9 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
             const Book = await bible.getBook(book)
             const chapterCount = Book.data.chapters?.length || 0
             if (chapterCount) chapter = Math.min(Math.max(1, chapter), chapterCount)
+            // a clamp here means the target bible disagrees about the book's structure - the
+            // projected label would no longer match the detected reference, so say it loudly
+            if (chapter !== detection.chapter) console.warn(`[AiScripture] ${detection.book} ${detection.chapter} clamped to chapter ${chapter} in "${parseId}" (${chapterCount} chapters found) - the projected label will not match the detection`)
 
             const Chapter = await Book.getChapter(chapter)
             const chapterVerses = Chapter.data.verses || []
@@ -628,6 +631,8 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
     const verses: number[] = []
     for (let v = verseStart; v <= verseEnd; v++) verses.push(v)
 
+    // one line per projection makes "why did THIS fire" reports diagnosable after the fact
+    console.info(`[AiScripture] Projecting ${detection.book} ${chapter}:${verseStart}${verseEnd > verseStart ? "-" + verseEnd : ""} in "${targetId}" [${detection.type}/${detection.confidence}${manual ? "/manual" : ""}${detection.matchedBibleId ? " matched:" + detection.matchedBibleId : ""}]`)
     await projectResolved(targetId, book, chapter, verses)
 
     // follow along in the drawer so the operator tracks the passage - without ever yanking
