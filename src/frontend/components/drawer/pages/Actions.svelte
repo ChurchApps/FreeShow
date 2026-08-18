@@ -151,6 +151,15 @@
                                                     — {action.midi.type}{/if}
                                             </span>
                                         {/if}
+
+                                        {#if action.customActivation === "hid_input" && action.hid}
+                                            <span>
+                                                {action.hid.deviceName || action.hid.device || ""}
+                                                {#if action.hid.data?.length}
+                                                    [{action.hid.data.join(", ")}]
+                                                {/if}
+                                            </span>
+                                        {/if}
                                     </p>
                                 {/if}
                             </span>

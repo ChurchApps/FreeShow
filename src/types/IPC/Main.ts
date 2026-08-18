@@ -122,6 +122,9 @@ export enum Main {
     SEND_MIDI = "SEND_MIDI",
     RECEIVE_MIDI = "RECEIVE_MIDI",
     CLOSE_MIDI = "CLOSE_MIDI",
+    GET_HID_DEVICES = "GET_HID_DEVICES",
+    RECEIVE_HID = "RECEIVE_HID",
+    CLOSE_HID = "CLOSE_HID",
     GET_LYRICS = "GET_LYRICS",
     SEARCH_LYRICS = "SEARCH_LYRICS",
     RECORDER = "RECORDER",
@@ -229,6 +232,9 @@ export interface MainSendPayloads {
     [Main.SEND_MIDI]: any
     [Main.RECEIVE_MIDI]: any
     [Main.CLOSE_MIDI]: { id: string }
+    [Main.GET_HID_DEVICES]: undefined
+    [Main.RECEIVE_HID]: { path: string }
+    [Main.CLOSE_HID]: { path: string }
     [Main.GET_LYRICS]: { song: LyricSearchResult }
     [Main.SEARCH_LYRICS]: { artist: string; title: string }
     [Main.RESTORE]?: { path: string }
@@ -341,6 +347,7 @@ export interface MainReturnPayloads {
     [Main.SLIDESHOW_GET_APPS]: string[]
     [Main.GET_MIDI_OUTPUTS]: { name: string }[]
     [Main.GET_MIDI_INPUTS]: { name: string }[]
+    [Main.GET_HID_DEVICES]: Promise<any[]>
     [Main.GET_LYRICS]: Promise<{ lyrics: string; source: string; title: string; artist: string }>
     [Main.SEARCH_LYRICS]: Promise<LyricSearchResult[]>
     [Main.GET_SIMILAR]: { path: string; name: string }[]

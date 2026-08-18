@@ -898,6 +898,7 @@
         "activate_show_created": "Activate when show is created",
         "activate_show_opened": "Activate when show is opened",
         "activate_audio_playlist_ended": "Activate when audio playlist has ended",
+        "activate_on_hid_input": "Activate on HID input",
         "mark_played": "Mark as played",
         "mark_not_played": "Mark as not played"
     },
@@ -1278,6 +1279,10 @@
         "tip_velocity": "Set velocity to -1 to disable.",
         "tip_action": "To activate specific slides, right click any slide and choose the midi in action.",
         "tip_index_by_velocity": "Index is determined by the received velocity, starting at 0."
+    },
+    "hid": {
+        "data_bytes": "Data bytes",
+        "auto_values": "Update values on HID input"
     },
     "emitters": {
         "emitter": "Emitter",

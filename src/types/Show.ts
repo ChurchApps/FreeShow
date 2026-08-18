@@ -472,6 +472,7 @@ export interface Action {
     enabled?: boolean // should customActivation trigger
     midiEnabled?: boolean
     midi?: MidiValues
+    hid?: HidValues
 
     // deprecated values
     startupEnabled?: boolean
@@ -491,6 +492,12 @@ export interface MidiValues {
         controller?: number
         value?: number
     }
+}
+
+export interface HidValues {
+    device?: string
+    deviceName?: string
+    data?: number[]
 }
 
 export type EmitterTypes = "osc" | "http" | "midi"

@@ -34,6 +34,7 @@ import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoo
 import { getMachineId } from "../utils/helpers"
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
+import { getHidDevices, hidAwaitInput, hidClose } from "../utils/hid"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
 import { correctSpelling } from "../utils/spellcheck"
 import { executeSpotifyCommand, getSpotifyState } from "../utils/spotify"
@@ -153,6 +154,10 @@ export const mainResponses: MainResponses = {
     },
     [Main.RECEIVE_MIDI]: (data) => receiveMidi(data),
     [Main.CLOSE_MIDI]: (data) => closeMidiInPorts(data.id),
+    // HID
+    [Main.GET_HID_DEVICES]: () => getHidDevices(),
+    [Main.RECEIVE_HID]: (data) => hidAwaitInput(data),
+    [Main.CLOSE_HID]: (data) => hidClose(data),
     // LYRICS
     [Main.GET_LYRICS]: (data) => getLyrics(data),
     [Main.SEARCH_LYRICS]: (data) => searchLyrics(data),

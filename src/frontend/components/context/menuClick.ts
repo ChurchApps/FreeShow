@@ -93,6 +93,7 @@ import { updateThemeValues } from "../../utils/updateSettings"
 import { getActionTriggerId } from "../actions/actions"
 import { moveStageConnection } from "../actions/apiHelper"
 import { midiInListen } from "../actions/midi"
+import { hidInListen } from "../actions/hid"
 import { createScriptureShow, openActiveInRouteBible } from "../drawer/bible/scripture"
 import { deleteCalendarEvents } from "../drawer/calendar/calendars"
 import { stopMediaRecorder } from "../drawer/live/recorder"
@@ -1202,6 +1203,7 @@ const clickActions = {
                 return a
             })
             midiInListen()
+            hidInListen()
             return
         }
     },

@@ -6,6 +6,7 @@ import type { Project } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
+import { receivedHid } from "../components/actions/hid"
 import { menuClick } from "../components/context/menuClick"
 import { generateScriptureShowFromReference } from "../components/drawer/bible/scripture"
 import { getCurrentTimerValue } from "../components/drawer/timers/timers"
@@ -173,6 +174,7 @@ export const mainResponses: MainResponses = {
     [ToMain.SPELL_CHECK]: (a) => spellcheck.set(a),
     [Main.CLOSE]: (a) => initializeClosing(a ?? false),
     [ToMain.RECEIVE_MIDI2]: (a) => receivedMidi(a),
+    [ToMain.HID_DATA]: (a) => receivedHid(a),
     [Main.DELETE_SHOWS]: (a) => {
         if (!a.deleted.length) {
             newToast("toast.delete_shows_empty")
