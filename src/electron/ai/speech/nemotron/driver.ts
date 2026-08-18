@@ -10,12 +10,15 @@
 // 1. Utterance boundaries come from Silero VAD, not from the recognizer's own
 //    endpointing. Energy gates fail in rooms with constant background noise, where
 //    speech sits only a few dB above the ambient level.
-// 2. Each utterance is decoded with ONE acceptWaveform call on a FRESH stream.
-//    Feeding the same audio in small chunks - fresh stream, reused stream or one
-//    persistent stream - leaves the NeMo decoder intermittently deaf: short utterances
-//    ("next verse") accept the audio and decode to nothing. Batch decoding the exact
-//    same samples returns the full text every time, and matches how sherpa's own
-//    VAD-segmented examples drive their recognizers.
+// 2. Each utterance is decoded with ONE acceptWaveform call on a FRESH stream, framed by
+//    a fixed pre-roll and a trailing pad. Live sessions showed short utterances ("next
+//    verse") intermittently decoding to nothing; AlloDel's controlled measurement (30
+//    chunked-vs-batch runs on synthetic audio, byte-identical output) later showed the
+//    decoder is NOT sensitive to how samples are fed but IS sensitive to the silence in
+//    front of them - the same clip decodes with 0s or 1s of leading silence and returns
+//    empty with 0.5s, pointing at frame alignment/encoder warm-up. The batch call plus the
+//    fixed PREROLL/FINALIZE pads remove that variance either way, and match how sherpa's
+//    own VAD-segmented examples drive their recognizers.
 //
 // Long continuous speech does NOT wait for the VAD boundary: while an utterance is open,
 // the audio so far is periodically re-decoded (still one batch on a fresh stream), and the
