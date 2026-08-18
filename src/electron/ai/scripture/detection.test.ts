@@ -20,7 +20,7 @@ const BOOKS = [
 ]
 
 // Ezra: a 4-letter book name - too short for fuzzy mishearing recovery, covered by the stutter collapse
-const EZRA_BOOKS = [...BOOKS, { number: 15, canonNumber: 15, names: ["Ezra"] }]
+const EZRA_BOOKS = [...BOOKS, { number: 15, canonNumber: 15, names: ["Ezra"] }, { number: 16, canonNumber: 16, names: ["Nehemiah"] }]
 
 describe("normalizeSpokenNumbers", () => {
     it("converts unit/teen/tens words to digits and lowercases", () => {
@@ -170,6 +170,13 @@ describe("detectExplicitReferences", () => {
         expect(detectExplicitReferences("we saw john 3. 16 earlier", BOOKS)).toEqual(expected(43, "John", 3, 16))
         expect(detectExplicitReferences("mark twelve four together", BOOKS)).toEqual(expected(41, "Mark", 12, 4))
         expect(detectExplicitReferences("mark 12 4-6 today", BOOKS)).toEqual(expected(41, "Mark", 12, 4, 6))
+    })
+
+    it("reads a bare 'and' pair when an imperative opened the reference: 'give me nehemiah 8 and 6'", () => {
+        expect(detectExplicitReferences("give me nehemiah 8 and 6 bless the lord", EZRA_BOOKS)[0]).toMatchObject({ bookNumber: 16, chapter: 8, verseStart: 6, confidence: "high" })
+        expect(detectExplicitReferences("turn to nehemiah 8 and 6", EZRA_BOOKS)[0]).toMatchObject({ bookNumber: 16, chapter: 8, verseStart: 6, confidence: "high" })
+        // without the imperative, "N and M" stays ambiguous narration - chapter only
+        expect(detectExplicitReferences("we talked about nehemiah 8 and 6 people stood", EZRA_BOOKS)[0]).toMatchObject({ bookNumber: 16, chapter: 8, verseStart: 1, confidence: "medium" })
     })
 
     it("accepts a spoken 'and' between chapter and the verse word: 'ezra 9 and verse 8'", () => {

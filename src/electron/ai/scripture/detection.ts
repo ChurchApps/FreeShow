@@ -221,14 +221,26 @@ function buildBookIndex(books: AiScriptureBook[]): BookIndex {
     //       "3-16"/"3;16"/"3 16" land here with the conservative range set (-, to, through)
     const rangeWord = "(?:\\s*(?:-|–|(?:down\\s+|up\\s+)?to\\b|through\\b|thru\\b|till\\b|until\\b|and\\b)\\s*(?<e1>\\d{1,3})\\b)?"
     const rangePlain = (name: string) => "(?:\\s*(?:-|–|to\\b|through\\b)\\s*(?<" + name + ">\\d{1,3})\\b)?"
-    const verseTail = "(?:" + ("\\s*[,.]?\\s*(?:and\\s+)?(?:the\\s+)?(?:starting\\s+|beginning\\s+|reading\\s+)?(?:from\\s+|at\\s+)?(?::|" + VERSE_WORD + "\\b)(?:\\s+numbers?\\b)?\\s*(?<v1>\\d{1,3}\\b|" + HOMOPHONE_ALT + ")" + rangeWord) + ("|\\s*[,.]?\\s*(?:and\\s+)?(?:the\\s+)?(?<v2>\\d{1,3})(?:st|nd|rd|th)\\s+" + VERSE_WORD + "\\b") + ("|\\s*[-–,.;/]\\s*(?<v3>\\d{1,3}\\b|" + HOMOPHONE_ALT + ")" + rangePlain("e3")) + ("|\\s+(?<v4>\\d{1,3}\\b|" + HOMOPHONE_ALT + ")" + rangePlain("e4")) + ")?"
+    // the trailing "and N" branch (v5) is only honored when a spoken imperative opened the
+    // reference ("give me nehemiah 8 and 6"); narration ("he acts 15 and 3 others") never has one
+    const verseTail =
+        "(?:" +
+        ("\\s*[,.]?\\s*(?:and\\s+)?(?:the\\s+)?(?:starting\\s+|beginning\\s+|reading\\s+)?(?:from\\s+|at\\s+)?(?::|" + VERSE_WORD + "\\b)(?:\\s+numbers?\\b)?\\s*(?<v1>\\d{1,3}\\b|" + HOMOPHONE_ALT + ")" + rangeWord) +
+        ("|\\s*[,.]?\\s*(?:and\\s+)?(?:the\\s+)?(?<v2>\\d{1,3})(?:st|nd|rd|th)\\s+" + VERSE_WORD + "\\b") +
+        ("|\\s*[-–,.;/]\\s*(?<v3>\\d{1,3}\\b|" + HOMOPHONE_ALT + ")" + rangePlain("e3")) +
+        ("|\\s+(?<v4>\\d{1,3}\\b|" + HOMOPHONE_ALT + ")" + rangePlain("e4")) +
+        ("|\\s+and\\s+(?<v5>\\d{1,3}\\b|" + HOMOPHONE_ALT + ")") +
+        ")?"
     const bookAlt = patterns.join("|")
 
     // book first: "john 3...", "john chapter 3...", "john chapter number 3...", "john the 3rd chapter..."
     // (the bare "the N" intro requires the ordinal suffix AND the chapter word, so "give john the
-    // 5 loaves" can never bind a chapter)
+    // 5 loaves" can never bind a chapter). A leading imperative ("give me nehemiah...") is captured
+    // because it unlocks the bare "8 and 6" verse reading below
+    // the imperative rides inside the LEAD group, so the reported quote still starts at the book
+    const imperativeIntro = "(?:(?<imp>give\\s+me|turn\\s+(?:with\\s+me\\s+)?to|go\\s+to|open(?:\\s+(?:up\\s+)?(?:to|at))?|show\\s+me|read|take\\s+me\\s+to|let'?s\\s+(?:go\\s+to|read|open))\\s+(?:the\\s+)?(?:book\\s+of\\s+)?)?"
     const chapterIntro = "(?:chapter\\s+(?:number\\s+)?(?<cA>\\d{1,3})\\b|(?:the\\s+)?(?<cB>\\d{1,3})(?:st|nd|rd|th)\\s+chapter\\b|(?<cC>\\d{1,3})\\b)"
-    const regex = patterns.length ? new RegExp("(^|[^a-z0-9])(?<book>" + bookAlt + ")[,.]?\\s+" + chapterIntro + verseTail, "g") : null
+    const regex = patterns.length ? new RegExp("((?:^|[^a-z0-9])" + imperativeIntro + ")(?<book>" + bookAlt + ")[,.]?\\s+" + chapterIntro + verseTail, "g") : null
 
     // reversed spoken forms - each carries the word "chapter"/"verse"/"psalm" by construction,
     // so they always count as deliberate (cued) references downstream
@@ -338,6 +350,7 @@ interface ReferenceMatch {
 // named groups shared by every reference regex: book, cA/cB/cC (chapter routes),
 // vA/vB (reversed-form verse routes), v1..v4 (verse-tail routes), e1/e3/e4 (range ends)
 interface ReferenceGroups {
+    imp?: string
     book?: string
     cA?: string
     cB?: string
@@ -348,6 +361,7 @@ interface ReferenceGroups {
     v2?: string
     v3?: string
     v4?: string
+    v5?: string
     e1?: string
     e3?: string
     e4?: string
@@ -374,7 +388,7 @@ function matchReferences(text: string, index: BookIndex): ReferenceMatch[] {
         if (!(chapter >= 1) && options.verseOverride !== undefined && book.chapterCount === 1) chapter = 1
         if (!(chapter >= 1)) return
 
-        const verseRaw = options.verseOverride ?? groups.v1 ?? groups.v2 ?? groups.v3 ?? groups.v4
+        const verseRaw = options.verseOverride ?? groups.v1 ?? groups.v2 ?? groups.v3 ?? groups.v4 ?? (groups.imp !== undefined ? groups.v5 : undefined)
         const hasVerse = verseRaw !== undefined
         let verseStart = 1
         let verseEnd = 1
