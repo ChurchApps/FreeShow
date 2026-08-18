@@ -26,10 +26,12 @@ export class OpenAIProvider extends APIModel {
     }
 
     async testConnection(apiKey: string, model: string) {
+        if (!model) model = this.fallbackModel
         return this.testEndpoint(`${MODELS_URL}/${encodeURIComponent(model)}`, this.getHeaders(apiKey), "GET")
     }
 
     async complete(apiKey: string, model: string, options: LLMCompletionOptions): Promise<string> {
+        if (!model) model = this.fallbackModel
         const messages: any[] = []
         if (options.systemPrompt) messages.push({ role: "system", content: options.systemPrompt })
         messages.push({ role: "user", content: options.prompt })

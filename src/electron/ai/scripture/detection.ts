@@ -727,7 +727,9 @@ export class DetectionCoordinator {
             console.error(`[AiScripture] LLM ${String(code)}:`, err?.message || "")
             if (this.llmPermanentFailures >= 2) {
                 this.llmStopped = true
-                this.opts.onStatus("llm_paused", { message: err?.message || String(code) })
+                // name the provider & model - a bare code ("model_not_found") is undiagnosable
+                const target = this.opts.llm ? ` (${this.opts.llm.provider}: ${this.opts.llm.model || "default model"})` : ""
+                this.opts.onStatus("llm_paused", { message: (err?.message || String(code)) + target })
             }
             return
         }

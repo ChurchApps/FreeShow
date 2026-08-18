@@ -494,7 +494,9 @@ describe("DetectionCoordinator", () => {
 
                 coordinator.onTranscriptSegment(seg(words(16), 6000))
                 await vi.advanceTimersByTimeAsync(0)
-                expect(onStatus).toHaveBeenCalledWith("llm_paused", { message: "the model does not exist" })
+                // the pause message names the provider & model - a bare code is undiagnosable
+                expect(onStatus).toHaveBeenCalledWith("llm_paused", { message: expect.stringContaining("the model does not exist") })
+                expect(onStatus.mock.calls.find(([state]: any[]) => state === "llm_paused")?.[1]?.message).toMatch(/\(.+\)/)
 
                 // no further LLM calls for the rest of the session
                 coordinator.onTranscriptSegment(seg(words(16), 12_000))

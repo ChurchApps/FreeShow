@@ -35,10 +35,12 @@ export class GeminiProvider extends APIModel {
     }
 
     async testConnection(apiKey: string, model: string) {
+        if (!model) model = this.fallbackModel
         return this.testEndpoint(`${API_BASE}/${encodeURIComponent(model)}`, this.getHeaders(apiKey), "GET")
     }
 
     async complete(apiKey: string, model: string, options: LLMCompletionOptions): Promise<string> {
+        if (!model) model = this.fallbackModel
         const generationConfig: any = {
             temperature: options.temperature ?? 0,
             maxOutputTokens: options.maxTokens ?? 1024

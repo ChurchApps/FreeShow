@@ -36,9 +36,13 @@ async function resolveSessionLlm(): Promise<AiScriptureDetectionConfig["llm"]> {
     const status = await requestMain(Main.AI_GET_STATUS, { engineId: provider })
     if (!status?.[provider]?.ready) return null
 
-    // legacy "model" values are shared across providers - only use one that belongs to this provider
-    const legacyModel = settings.model && AI_PROVIDER_MODELS[provider].models.some((a) => a.id === settings.model) ? settings.model : ""
-    const model = get(ai).llm?.model || settings.customModel || settings.models?.[provider] || legacyModel || "" // providers default internally on empty
+    // only a model the provider CURRENTLY lists may travel - a stale stored id (a retired model
+    // kept in settings) 404s live while the popup's Test, which validates against the list,
+    // passes. Anything unlisted falls through; an empty model means the provider's own default
+    const listed = (id: string | undefined) => (id && AI_PROVIDER_MODELS[provider].models.some((entry) => entry.id === id) ? id : "")
+    const model = listed(get(ai).llm?.model) || listed(settings.customModel) || listed(settings.models?.[provider]) || listed(settings.model) || ""
+    const stored = get(ai).llm?.model || settings.customModel || settings.models?.[provider] || settings.model
+    if (stored && !model) console.info(`[AiScripture] Stored ${provider} model "${stored}" is no longer offered - using the provider default`)
     return { provider, model }
 }
 
