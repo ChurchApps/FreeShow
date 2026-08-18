@@ -24,6 +24,7 @@ export class NemotronTranscriber {
     private options: NemotronTranscriberOptions
     private onSegment: (segment: TranscriberSegment) => void
     private onError: (message: string) => void
+    private onInterim?: (text: string) => void
 
     private child: Electron.UtilityProcess | null = null
     private fallback: NemotronDriver | null = null
@@ -33,10 +34,11 @@ export class NemotronTranscriber {
     private stoppedResolve: (() => void) | null = null
     private startErrorMessage = ""
 
-    constructor(options: NemotronTranscriberOptions, onSegment: (segment: TranscriberSegment) => void, onError: (message: string) => void) {
+    constructor(options: NemotronTranscriberOptions, onSegment: (segment: TranscriberSegment) => void, onError: (message: string) => void, onInterim?: (text: string) => void) {
         this.options = options
         this.onSegment = onSegment
         this.onError = onError
+        this.onInterim = onInterim
     }
 
     async start() {
@@ -50,6 +52,7 @@ export class NemotronTranscriber {
             vadModelPath: this.options.vadModelPath,
             language: this.options.language || "en",
             onSegment: this.onSegment,
+            onInterim: this.onInterim,
             onError: this.onError
         })
         await this.fallback.start()
@@ -148,6 +151,7 @@ export class NemotronTranscriber {
         if (!message || typeof message !== "object") return
 
         if (message.type === "segment") this.onSegment(message.segment)
+        else if (message.type === "interim") this.onInterim?.(message.text)
         else if (message.type === "ready") this.readyResolve?.(true)
         else if (message.type === "stopped") this.stoppedResolve?.()
         else if (message.type === "error") {

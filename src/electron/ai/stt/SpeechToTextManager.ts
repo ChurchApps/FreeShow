@@ -60,6 +60,9 @@ export class SpeechToText {
         if (!active) return
 
         Promise.resolve(active.stop()).catch((err) => console.error("Error stopping STT engine:", err))
+        // whatever interim tail was showing is dead now - a crashed/killed worker never gets to
+        // clear it itself, so the authoritative clear lives here on every engine stop
+        sendToMain(ToMain.AI_TRANSCRIPT_INTERIM, { text: "" })
         if (emitStatus) sendToMain(ToMain.AI_STATUS, { state: "stopped" })
     }
 
@@ -102,7 +105,7 @@ export class SpeechToText {
             const vadModelPath = getVadModelPath()
             if (!nemotron || !vadModelPath) return { error: "nemotron_model_missing" }
 
-            return { transcriber: new NemotronTranscriber({ ...options, nemotron, vadModelPath }, onSegment, onError) }
+            return { transcriber: new NemotronTranscriber({ ...options, nemotron, vadModelPath }, onSegment, onError, this.onInterim.bind(this)) }
         }
 
         console.error(`Unknown STT engine: ${engine}`)
@@ -121,6 +124,11 @@ export class SpeechToText {
         // the full transcript always reaches the renderer - detection only listens to the selected language
         sendToMain(ToMain.AI_TRANSCRIPT, segment)
         this.segmentListeners.forEach((listener) => listener(segment))
+    }
+
+    // the open utterance's unstable tail - display only (shown greyed), detection never sees it
+    private static onInterim(text: string) {
+        sendToMain(ToMain.AI_TRANSCRIPT_INTERIM, { text })
     }
 
     private static onError(message: string) {

@@ -42,8 +42,10 @@ const VAD_MIN_SPEECH = 0.15
 // this cap mostly bounds how much audio a single (synchronous) batch decode can ever cover
 const VAD_MAX_SPEECH = 12
 
-// partial decodes: how much new audio accumulates before the open utterance is re-decoded
-const PARTIAL_INTERVAL_SAMPLES = 1.6 * SAMPLE_RATE
+// partial decodes: how much new audio accumulates before the open utterance is re-decoded.
+// 1.2s: with soft splits capping utterance length the re-decodes stay cheap, and the backoff
+// below still doubles the interval on machines where they run slow
+const PARTIAL_INTERVAL_SAMPLES = 1.2 * SAMPLE_RATE
 // a re-decode can merge/split words, shifting positions - re-cover this many already emitted words
 // across every decode seam and let the seam stitch drop the ones that really did come out already
 const SEAM_BACKTRACK_WORDS = 2
@@ -61,8 +63,19 @@ const FINALIZE_PAD_SAMPLES = 16000
 // countdown run DURING the word, so the close can land mid-word - this keeps the word's tail in the batch.
 // If speech resumes inside this window the utterance just continues (it was a pause, not an end).
 const CLOSE_DEFER_SAMPLES = 8000
+// audio re-heard at the start of the next utterance when a boundary was forced mid-speech (the VAD's
+// max-speech cap / the buffer cap) - the sliced word decodes whole the second time & the seam stitch
+// drops the half that already came out
+const SPLIT_OVERLAP_SAMPLES = 16000
 // hard cap on buffered utterance audio (the VAD forces a boundary well before this)
 const MAX_UTTERANCE_SAMPLES = (VAD_MAX_SPEECH + 5) * SAMPLE_RATE
+// long continuous speech: past this length, split at the next between-words dip instead of riding
+// to the hard cap - the boundary lands in near-silence (nothing to slice), the batch stays shorter
+// (the quantized decoder merges fast repeated words on very long sequences: "churchurch"), and the
+// finalize decode returns sooner. The dip is one quiet 100ms chunk - far shorter than the 0.8s of
+// silence the VAD needs to close on its own
+const SOFT_SPLIT_SAMPLES = 9 * SAMPLE_RATE
+const SOFT_SPLIT_RMS = 0.015
 
 interface NemotronOptions extends DriverCallbacks {
     paths: NemotronModelPaths
@@ -89,6 +102,11 @@ export class NemotronDriver implements TranscriptionDriver {
     private inUtterance = false
     // set when the VAD closed - the decode waits for CLOSE_DEFER_SAMPLES of real tail audio first
     private finalizeAtSample = 0
+
+    // why the pending finalize was armed: "hard" = the buffer cap sliced mid-speech (the last
+    // word may be cut), "soft" = a between-words dip (the last word is complete), null = a real
+    // VAD pause
+    private pendingSplitKind: "hard" | "soft" | null = null
 
     // partial decode state for the open utterance
     private nextPartialAtSamples = 0
@@ -196,20 +214,30 @@ export class NemotronDriver implements TranscriptionDriver {
                     this.partialBackoff = 1
                     this.lastPartialWords = []
                     this.emittedWords = 0
-                    this.nextEmitStartMs = Math.round((this.utteranceStartSample / SAMPLE_RATE) * 1000)
+                    // overlap seeded by a forced split starts before the last emit - times never go backwards
+                    this.nextEmitStartMs = Math.max(this.nextEmitStartMs, Math.round((this.utteranceStartSample / SAMPLE_RATE) * 1000))
                 }
                 // speech resumed inside the defer window - it was a pause, the utterance continues
                 this.finalizeAtSample = 0
+                this.pendingSplitKind = null
             }
 
             if (this.inUtterance) {
-                if (this.utteranceSamples < MAX_UTTERANCE_SAMPLES) {
-                    this.utterance.push(samples)
-                    this.utteranceSamples += samples.length
-                } else if (!this.finalizeAtSample) {
-                    // the VAD never closed (constant program audio can defeat it) - force the boundary
-                    // NOW instead of silently discarding everything after the cap until it does
-                    this.finalizeAtSample = this.totalSamples
+                // always append - dropping the cap-crossing chunk would splice a 100ms hole exactly
+                // where a word is mid-syllable, and both the finalize batch and the seeded overlap
+                // would then decode spliced audio ("against afflictions" -> "againstictions")
+                this.utterance.push(samples)
+                this.utteranceSamples += samples.length
+                if (this.utteranceSamples >= MAX_UTTERANCE_SAMPLES && !this.finalizeAtSample) {
+                    // the VAD's own max-speech close gets cancelled while speech continues (the
+                    // "speech resumed" branch above) - so the cap here IS the working boundary
+                    // during long continuous speech; force the decode NOW
+                    this.finalizeAtSample = this.totalSamples + samples.length
+                    this.pendingSplitKind = "hard"
+                } else if (this.utteranceSamples >= SOFT_SPLIT_SAMPLES && !this.finalizeAtSample && computeChunkRms(samples) < SOFT_SPLIT_RMS) {
+                    // a between-words dip - split here while the boundary is quiet
+                    this.finalizeAtSample = this.totalSamples + samples.length
+                    this.pendingSplitKind = "soft"
                 }
             } else {
                 this.bufferPreroll(samples)
@@ -234,7 +262,9 @@ export class NemotronDriver implements TranscriptionDriver {
             if (this.finalizeAtSample && this.totalSamples >= this.finalizeAtSample) {
                 this.finalizeAtSample = 0
                 this.inUtterance = false
-                this.finalizeUtterance()
+                const splitKind = this.pendingSplitKind
+                this.pendingSplitKind = null
+                this.finalizeUtterance(splitKind)
             }
         } catch (err) {
             this.options.onError(String((err as Error)?.message || err))
@@ -272,35 +302,65 @@ export class NemotronDriver implements TranscriptionDriver {
         this.lastPartialWords = words
 
         // emitted words are never retracted - a revision earlier in the text only holds further emission back
-        if (agreed <= this.emittedWords) return
-        const candidate = words.slice(Math.max(0, this.emittedWords - SEAM_BACKTRACK_WORDS), agreed).join(" ")
-        this.emittedWords = agreed
-        this.emitText(trimRepeatedLeadWords(this.emittedTailWords, candidate))
+        if (agreed > this.emittedWords) {
+            const candidate = words.slice(Math.max(0, this.emittedWords - SEAM_BACKTRACK_WORDS), agreed).join(" ")
+            this.emittedWords = agreed
+            this.emitText(trimRepeatedLeadWords(this.emittedTailWords, candidate))
+        }
+
+        // the unstable tail goes to the display only (shown greyed) - it may still change, so it
+        // never reaches detection & the next decode replaces it wholesale
+        this.options.onInterim?.(words.slice(this.emittedWords).join(" "))
     }
 
-    private finalizeUtterance() {
+    private finalizeUtterance(splitKind: "hard" | "soft" | null = null) {
         const text = this.decodeBatch(true)
+
+        // a mid-speech boundary seeds the next utterance with the tail audio, so anything the cut
+        // touched is re-heard whole and the seam stitch drops what already came out
+        if (splitKind) {
+            this.preroll = tailOf(this.utterance, SPLIT_OVERLAP_SAMPLES)
+            this.prerollSamples = this.preroll.reduce((sum, part) => sum + part.length, 0)
+        }
+
         this.utterance = []
         this.utteranceSamples = 0
 
-        // the final read delivers whatever follows the words already emitted by the partial decodes
+        // the final read delivers whatever follows the words already emitted by the partial decodes.
+        // Only a HARD cap can slice its last word ("depl", "right") - that one is held back for the
+        // overlap's re-decode. A soft split lands in a quiet dip, so its last word is complete and
+        // holding it back would DROP a word the greyed interim already showed
         const words = text ? text.split(/\s+/) : []
-        const candidate = words.slice(Math.max(0, Math.min(this.emittedWords, words.length) - SEAM_BACKTRACK_WORDS)).join(" ")
-        this.emitText(trimRepeatedLeadWords(this.emittedTailWords, candidate))
+        const wordsEnd = splitKind === "hard" ? Math.max(this.emittedWords, words.length - 1) : words.length
+        const candidate = words.slice(Math.max(0, Math.min(this.emittedWords, wordsEnd) - SEAM_BACKTRACK_WORDS), wordsEnd).join(" ")
+        const trimmed = trimRepeatedLeadWords(this.emittedTailWords, candidate)
+        if (trimmed) this.emitText(trimmed, true)
+        else if (this.emittedWords > 0) this.emitBoundary() // the boundary must reach the display even textless
+        this.options.onInterim?.("")
 
         this.lastPartialWords = []
         this.emittedWords = 0
         this.partialBackoff = 1
     }
 
-    private emitText(text: string) {
+    private emitText(text: string, utteranceEnd = false) {
         if (!text) return
 
         const endMs = Math.round((this.totalSamples / SAMPLE_RATE) * 1000)
         const segment: TranscriberSegment = { text, startMs: this.nextEmitStartMs, endMs }
+        if (utteranceEnd) segment.utteranceEnd = true
         this.nextEmitStartMs = endMs
         this.emittedTailWords = appendTailWords(this.emittedTailWords, text)
 
+        if (this.options.language) segment.language = this.options.language
+        this.options.onSegment(segment)
+    }
+
+    /** An utterance that ends with no new words still ends - the display closes its line on this marker. */
+    private emitBoundary() {
+        const endMs = Math.round((this.totalSamples / SAMPLE_RATE) * 1000)
+        const segment: TranscriberSegment = { text: "", startMs: this.nextEmitStartMs, endMs, utteranceEnd: true }
+        this.nextEmitStartMs = endMs
         if (this.options.language) segment.language = this.options.language
         this.options.onSegment(segment)
     }
@@ -312,6 +372,26 @@ export class NemotronDriver implements TranscriptionDriver {
             this.prerollSamples -= this.preroll.shift()!.length
         }
     }
+}
+
+/** RMS of one audio chunk - cheap enough to run per 100ms message once an utterance grows long. */
+function computeChunkRms(samples: Float32Array): number {
+    if (!samples.length) return 0
+    let sum = 0
+    for (let i = 0; i < samples.length; i++) sum += samples[i] * samples[i]
+    return Math.sqrt(sum / samples.length)
+}
+
+/** The last `maxSamples` of the buffered parts - the first kept part is cut with a subarray view. */
+function tailOf(parts: Float32Array[], maxSamples: number): Float32Array[] {
+    const tail: Float32Array[] = []
+    let total = 0
+    for (let i = parts.length - 1; i >= 0 && total < maxSamples; i--) {
+        tail.unshift(parts[i])
+        total += parts[i].length
+    }
+    if (total > maxSamples && tail.length) tail[0] = tail[0].subarray(total - maxSamples)
+    return tail
 }
 
 /** Int16 LE PCM bytes (as sent over IPC) to the Float32 samples sherpa expects. */

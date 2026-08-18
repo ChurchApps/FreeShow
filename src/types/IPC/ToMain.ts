@@ -23,6 +23,7 @@ export enum ToMain {
     // AI
     AI_STATUS = "AI_STATUS",
     AI_TRANSCRIPT = "AI_TRANSCRIPT",
+    AI_TRANSCRIPT_INTERIM = "AI_TRANSCRIPT_INTERIM",
     AI_SCRIPTURE_DETECTION = "AI_SCRIPTURE_DETECTION",
     AI_SCRIPTURE_STATUS = "AI_SCRIPTURE_STATUS",
     AI_SCRIPTURE_COMMAND = "AI_SCRIPTURE_COMMAND",
@@ -77,7 +78,8 @@ export interface ToMainSendPayloads {
     [ToMain.RECEIVE_MIDI2]: { id: string; values: any; type: "noteon" | "noteoff" | "control" }
     // AI (WIP)
     [ToMain.AI_STATUS]: { state: "listening" | "stopped" | "error"; message?: string }
-    [ToMain.AI_TRANSCRIPT]: { text: string; startMs: number; endMs: number; language?: string; music?: boolean }
+    [ToMain.AI_TRANSCRIPT]: { text: string; startMs: number; endMs: number; language?: string; music?: boolean; utteranceEnd?: boolean }
+    [ToMain.AI_TRANSCRIPT_INTERIM]: { text: string }
     [ToMain.AI_SCRIPTURE_DETECTION]: DetectedReference
     [ToMain.AI_SCRIPTURE_STATUS]: { state: AiScriptureState; message?: string; keyless?: boolean }
     [ToMain.AI_SCRIPTURE_COMMAND]: AiScriptureCommandEvent

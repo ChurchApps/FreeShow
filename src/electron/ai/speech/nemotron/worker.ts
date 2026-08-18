@@ -10,7 +10,7 @@ import type { TranscriberSegment } from "../types"
 
 export type NemotronWorkerRequest = { type: "start"; paths: NemotronModelPaths; vadModelPath: string; language?: string } | { type: "audio"; data: Uint8Array } | { type: "stop" }
 
-export type NemotronWorkerResponse = { type: "ready" } | { type: "segment"; segment: TranscriberSegment } | { type: "error"; message: string } | { type: "stopped" }
+export type NemotronWorkerResponse = { type: "ready" } | { type: "segment"; segment: TranscriberSegment } | { type: "interim"; text: string } | { type: "error"; message: string } | { type: "stopped" }
 
 // present only when this file runs as a utilityProcess entry (the type import above is free)
 const parentPort = (process as NodeJS.Process & { parentPort?: { postMessage(message: unknown): void; on(event: "message", listener: (event: { data: NemotronWorkerRequest }) => void): void } }).parentPort
@@ -27,6 +27,7 @@ if (parentPort) {
                     vadModelPath: message.vadModelPath,
                     language: message.language,
                     onSegment: (segment) => post({ type: "segment", segment }),
+                    onInterim: (text) => post({ type: "interim", text }),
                     onError: (errorMessage) => post({ type: "error", message: errorMessage })
                 })
                 await driver.start()

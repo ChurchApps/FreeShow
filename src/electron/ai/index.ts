@@ -53,6 +53,8 @@ export function startScriptureDetection(config: AiScriptureDetectionConfig): boo
     scriptureSegmentListener = (segment: TranscriberSegment) => {
         // music lyrics are hallucination territory - never let them trigger detections or commands
         if (segment.music) return
+        // textless utterance-boundary markers only exist for the display's line grouping
+        if (!segment.text) return
 
         const detectable = !config.interpretationMode || !segment.language || !config.listenLanguage || segment.language === config.listenLanguage
         if (!detectable) return

@@ -9,6 +9,7 @@ export interface TranscriberSegment {
     endMs: number
     language?: string // detected language of the window (whisper cli -oj with "-l auto" only)
     music?: boolean // marked as sung content - lyrics are unreliable & never feed detection
+    utteranceEnd?: boolean // last segment of a spoken utterance (streaming engine) - the display groups lines on it
 }
 
 export interface TranscriptionDriver {
@@ -23,4 +24,6 @@ export interface TranscriptionDriver {
 export interface DriverCallbacks {
     onSegment: (segment: TranscriberSegment) => void
     onError: (message: string) => void
+    /** The open utterance's unstable tail - display-only text, replaced on every partial decode & cleared on finalize. */
+    onInterim?: (text: string) => void
 }
