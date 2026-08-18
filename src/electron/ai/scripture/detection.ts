@@ -3,8 +3,29 @@
 // tier 2: LLM detection over the rolling transcript for paraphrased/quoted references (optional, needs an API key)
 
 import type { AiScriptureBook, AiScriptureState, DetectedReference } from "../../../types/ai/AiScripture"
+import { maxVerseInChapter } from "./chapterVerseCounts"
 import { LLM_API_TIMEOUT } from "../llm/models/APIModel"
 import { getLLMScriptureProvider } from "./llmTalkScripture"
+
+// ASR BOOK NAME CONFUSIONS (from AlloDel's live-service observations)
+// A streaming model finalizes a book name before it is finished, or hears a common word
+// instead of it. An alias whose word is also ordinary English needs an explicit verse
+// before it counts, so normal speech ("he acts his age", "look at this") cannot trigger.
+// Aliases are only added for books the loaded bible actually has.
+const ASR_BOOK_ALIASES: { alias: string; canonNumber: number; requireVerse: boolean }[] = [
+    { alias: "palm", canonNumber: 19, requireVerse: false }, // Psalms
+    { alias: "palms", canonNumber: 19, requireVerse: false },
+    { alias: "genes", canonNumber: 1, requireVerse: false }, // Genesis, cut off mid word
+    { alias: "joan", canonNumber: 43, requireVerse: true }, // John
+    { alias: "jon", canonNumber: 43, requireVerse: true },
+    { alias: "axe", canonNumber: 44, requireVerse: true }, // Acts
+    { alias: "ask", canonNumber: 44, requireVerse: true },
+    { alias: "look", canonNumber: 42, requireVerse: true }, // Luke
+    { alias: "games", canonNumber: 59, requireVerse: true }, // James
+    { alias: "roof", canonNumber: 8, requireVerse: true }, // Ruth
+    { alias: "dude", canonNumber: 65, requireVerse: true }, // Jude
+    { alias: "juice", canonNumber: 65, requireVerse: true }
+]
 
 // SPOKEN NUMBERS
 
@@ -108,6 +129,14 @@ export function normalizeSpokenNumbers(text: string): string {
                 continue
             }
         }
+        // spaced compounds too: "twenty third psalm" -> "23rd psalm"
+        const after = tokens[i + 2]
+        if (!token.suffix && next && !next.prefix && !next.suffix && TENS_WORDS[token.core] !== undefined && ORDINAL_UNIT_WORDS[next.core] !== undefined && after && !after.prefix && /^(?:chapter|verses?|psalms?)$/.test(after.core)) {
+            const value = TENS_WORDS[token.core] + ORDINAL_UNIT_WORDS[next.core]
+            out.push(token.prefix + String(value) + ordinalSuffix(value))
+            i += 2
+            continue
+        }
 
         // ordinal book prefixes: only converted when followed by another word ("first john" -> "1 john",
         // "1st john" -> "1 john" - whisper writes spoken ordinals either way). Before "chapter"/
@@ -161,7 +190,8 @@ interface BookIndex {
     chapterFirstRegex: RegExp | null // "the 8th chapter of (the book of) ezra (and the verse number 10)"
     verseFirstRegex: RegExp | null // "the 9th verse of (the 8th chapter of) ezra ((chapter) 8)"
     psalmOrdinalRegex: RegExp | null // "the 23rd psalm (verse 1)" - the ordinal-as-chapter idiom
-    byToken: Map<string, { name: string; number: number; chapterCount: number }>
+    singleChapterVerseRegex: RegExp | null // "jude verse 3" - one-chapter books are spoken without their chapter
+    byToken: Map<string, { name: string; number: number; chapterCount: number; requireVerse?: boolean }>
     bookPattern: string // alternation of all book name patterns ("" when no books)
     bookWords: string[] // distinct book-name words long enough for mishearing recovery
     allBookWords: string[] // distinct book-name words >= 4 chars, for the stutter collapse
@@ -191,9 +221,10 @@ function escapeRegex(value: string): string {
 }
 
 function buildBookIndex(books: AiScriptureBook[]): BookIndex {
-    const byToken = new Map<string, { name: string; number: number; chapterCount: number }>()
+    const byToken = new Map<string, { name: string; number: number; chapterCount: number; requireVerse?: boolean }>()
     const tokens: string[] = []
 
+    const canonNames = new Map<number, string>()
     books.forEach((book) => {
         // only a canon book has a known chapter count - without one a glued chapter+verse cannot be told apart from a chapter
         const chapterCount = book.canonNumber ? CANON_CHAPTER_COUNTS[book.canonNumber] || 0 : 0
@@ -204,6 +235,16 @@ function buildBookIndex(books: AiScriptureBook[]): BookIndex {
             byToken.set(token, { name: name.trim(), number: book.canonNumber ?? book.number, chapterCount })
             tokens.push(token)
         })
+        if (book.canonNumber && !canonNames.has(book.canonNumber)) canonNames.set(book.canonNumber, book.names[0]?.trim() || "")
+    })
+
+    // the misheard forms, but only for books this bible actually has
+    ASR_BOOK_ALIASES.forEach((entry) => {
+        if (byToken.has(entry.alias)) return
+        const name = canonNames.get(entry.canonNumber)
+        if (!name) return
+        byToken.set(entry.alias, { name, number: entry.canonNumber, chapterCount: CANON_CHAPTER_COUNTS[entry.canonNumber] || 0, requireVerse: entry.requireVerse })
+        tokens.push(entry.alias)
     })
 
     // longest names first so "1 john" wins over "john"
@@ -251,9 +292,14 @@ function buildBookIndex(books: AiScriptureBook[]): BookIndex {
     // with no chapter spoken anywhere, a single-chapter book (jude, philemon...) resolves to chapter 1
     const verseFirstRegex = patterns.length ? new RegExp("(^|[^a-z0-9])(?:the\\s+)?(?:(?<vA>\\d{1,3})(?:st|nd|rd|th)?\\s+" + VERSE_WORD + "\\b|" + VERSE_WORD + "\\s+(?:number\\s+)?(?<vB>\\d{1,3})\\b)\\s+of\\s+(?:(?:the\\s+)?(?<cA>\\d{1,3})(?:st|nd|rd|th)?\\s+chapter\\s+of\\s+)?(?:the\\s+)?(?:book\\s+of\\s+)?(?<book>" + bookAlt + ")\\b(?:[,.]?\\s+(?:chapter\\s+)?(?<cB>\\d{1,3})\\b)?", "g") : null
     // "the 23rd psalm (verse 1)" - the ordinal IS the chapter. Only the psalms idiom works this
-    // way, so the form is built solely from the psalm book tokens when they are selected
-    const psalmTokens = tokens.filter((token) => /^psalms?$/.test(token))
+    // way, so the form is built solely from the psalm book tokens (including the "palm" alias)
+    const psalmTokens = tokens.filter((token) => /^psalms?$/.test(token) || byToken.get(token)?.number === 19)
     const psalmOrdinalRegex = psalmTokens.length ? new RegExp("(^|[^a-z0-9])the\\s+(?<cA>\\d{1,3})(?:st|nd|rd|th)\\s+(?<book>" + psalmTokens.map((token) => escapeRegex(token)).join("|") + ")\\b" + verseTail, "g") : null
+
+    // "jude verse 3" / "the book of philemon verse six" - a one-chapter book is spoken without
+    // its chapter. The regex matches any book; only chapterCount === 1 entries resolve (in
+    // pushMatch), so "john verse 16" stays untouched for the anchored bare-verse path
+    const singleChapterVerseRegex = patterns.length ? new RegExp("(^|[^a-z0-9])(?:the\\s+)?(?:book\\s+of\\s+)?(?<book>" + bookAlt + ")[,.]?\\s+" + VERSE_WORD + "\\s+(?:number\\s+)?(?<vB>\\d{1,3})\\b" + rangePlain("e4"), "g") : null
 
     // words long enough to recover from a mishearing ("corinians" -> "corinthians"); short names
     // ("john", "kings") stay exact-only, their skeletons collide with everyday words too easily
@@ -265,7 +311,7 @@ function buildBookIndex(books: AiScriptureBook[]): BookIndex {
     const allBookWords = new Set<string>()
     for (const token of tokens) for (const word of token.split(" ")) if (word.length >= 4) allBookWords.add(word)
 
-    return { regex, chapterFirstRegex, verseFirstRegex, psalmOrdinalRegex, byToken, bookPattern: patterns.join("|"), bookWords: Array.from(bookWords), allBookWords: Array.from(allBookWords) }
+    return { regex, chapterFirstRegex, verseFirstRegex, psalmOrdinalRegex, singleChapterVerseRegex, byToken, bookPattern: patterns.join("|"), bookWords: Array.from(bookWords), allBookWords: Array.from(allBookWords) }
 }
 
 // BOOK-NAME MISHEARINGS
@@ -410,6 +456,21 @@ function matchReferences(text: string, index: BookIndex): ReferenceMatch[] {
             }
         }
 
+        // an ordinary-English alias ("look", "dude") only counts inside a full reference
+        if (book.requireVerse && !hasVerse && !unglued) return
+
+        // verse bounds (from AlloDel's #3): a verse the chapter does not have is a misheard
+        // number, not a reference - drop it rather than project the wrong text. A range that
+        // overruns is clamped, because its start is real. Non-canon books (chapterCount 0)
+        // skip the check entirely
+        if ((hasVerse || unglued) && book.chapterCount > 0) {
+            const chapterLength = maxVerseInChapter(book.number, chapter)
+            if (chapterLength > 0) {
+                if (verseStart > chapterLength) return
+                if (verseEnd > chapterLength) verseEnd = chapterLength
+            }
+        }
+
         const quote = match[0].slice(match[1].length)
 
         // CUE RULE: "high" only with an explicit cue in the spoken text - the word "chapter"/"verse", an ordinal/numbered
@@ -447,6 +508,14 @@ function matchReferences(text: string, index: BookIndex): ReferenceMatch[] {
         const bookAt = match.index
         if (claimedSpans.some((span) => bookAt >= span.from && bookAt < span.to)) return
         pushMatch(match, { claimSpan: true, alwaysCued: true })
+    })
+    scan(index.singleChapterVerseRegex, (match) => {
+        const bookAt = match.index
+        if (claimedSpans.some((span) => bookAt >= span.from && bookAt < span.to)) return
+        const groups = (match.groups || {}) as ReferenceGroups
+        // only chapterCount === 1 books resolve here (pushMatch fills chapter 1) - "john verse 16"
+        // falls through untouched for the anchored bare-verse path
+        pushMatch(match, { claimSpan: true, verseOverride: groups.vB })
     })
     scan(index.regex, (match) => {
         const bookAt = match.index + match[1].length

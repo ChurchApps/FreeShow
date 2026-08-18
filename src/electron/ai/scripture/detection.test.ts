@@ -211,6 +211,68 @@ describe("detectExplicitReferences", () => {
         expect(detectExplicitReferences("hello world, welcome to the service", BOOKS)).toEqual([])
     })
 
+    // ported from AlloDel's PRs #3/#4, adapted to the reworked parser
+    describe("verse bounds (AlloDel #3)", () => {
+        const GENESIS_BOOKS = [...BOOKS, { number: 1, canonNumber: 1, names: ["Genesis", "Gen"] }]
+
+        it("rejects a verse the chapter does not have", () => {
+            expect(detectExplicitReferences("genesis chapter 3 verse 50", GENESIS_BOOKS)).toEqual([])
+            expect(detectExplicitReferences("genesis 1:40", GENESIS_BOOKS)).toEqual([])
+            expect(detectExplicitReferences("psalm 23 verse 99", BOOKS)).toEqual([])
+        })
+
+        it("keeps the last verse of a chapter", () => {
+            expect(detectExplicitReferences("genesis chapter 1 verse 31", GENESIS_BOOKS)[0]).toMatchObject({ bookNumber: 1, chapter: 1, verseStart: 31 })
+        })
+
+        it("clamps a range that overruns the chapter", () => {
+            expect(detectExplicitReferences("genesis 1 verses 30 to 45", GENESIS_BOOKS)[0]).toMatchObject({ bookNumber: 1, chapter: 1, verseStart: 30, verseEnd: 31 })
+        })
+
+        it("skips the check for a bible outside the 66 book canon", () => {
+            const NON_CANON = [{ number: 1, names: ["Genesis"] }]
+            expect(detectExplicitReferences("genesis chapter 3 verse 50", NON_CANON)[0]).toMatchObject({ chapter: 3, verseStart: 50 })
+        })
+    })
+
+    describe("misheard book aliases (AlloDel #3)", () => {
+        const ALIAS_BOOKS = [...BOOKS, { number: 1, canonNumber: 1, names: ["Genesis"] }, { number: 42, canonNumber: 42, names: ["Luke"] }, { number: 65, canonNumber: 65, names: ["Jude"] }]
+
+        it("accepts a name the model cut short or misheard", () => {
+            expect(detectExplicitReferences("turn to genes chapter 3 verse 15", ALIAS_BOOKS)[0]).toMatchObject({ bookNumber: 1, chapter: 3, verseStart: 15 })
+            expect(detectExplicitReferences("palm 23 verse 1", ALIAS_BOOKS)[0]).toMatchObject({ bookNumber: 19, chapter: 23, verseStart: 1 })
+        })
+
+        it("an ordinary-English alias needs a full reference before it counts", () => {
+            expect(detectExplicitReferences("look 15 minutes from now", ALIAS_BOOKS)).toEqual([])
+            expect(detectExplicitReferences("dude 3 days ago", ALIAS_BOOKS)).toEqual([])
+            expect(detectExplicitReferences("look chapter 15 verse 7", ALIAS_BOOKS)[0]).toMatchObject({ bookNumber: 42, chapter: 15, verseStart: 7 })
+        })
+
+        it("never adds an alias for a book the bible does not have", () => {
+            const onlyGenesis = [{ number: 1, canonNumber: 1, names: ["Genesis"] }]
+            expect(detectExplicitReferences("dude verse 3", onlyGenesis)).toEqual([])
+        })
+    })
+
+    describe("single-chapter books (AlloDel #4)", () => {
+        const ONE_CHAPTER_BOOKS = [...BOOKS, { number: 65, canonNumber: 65, names: ["Jude"] }, { number: 57, canonNumber: 57, names: ["Philemon"] }]
+
+        it("fills in the missing chapter for a one-chapter book", () => {
+            expect(detectExplicitReferences("the book of jude verse 3", ONE_CHAPTER_BOOKS)[0]).toMatchObject({ bookNumber: 65, chapter: 1, verseStart: 3, confidence: "high" })
+            expect(detectExplicitReferences(normalizeSpokenNumbers("Philemon verse six"), ONE_CHAPTER_BOOKS)[0]).toMatchObject({ bookNumber: 57, chapter: 1, verseStart: 6 })
+        })
+
+        it("leaves a multi-chapter book's bare verse for the anchored path", () => {
+            expect(detectExplicitReferences("john verse 16", ONE_CHAPTER_BOOKS)).toEqual([])
+        })
+    })
+
+    it("composes spaced ordinal words: 'the twenty third psalm'", () => {
+        expect(normalizeSpokenNumbers("the twenty third psalm")).toBe("the 23rd psalm")
+        expect(detectExplicitReferences(normalizeSpokenNumbers("the twenty third Psalm"), BOOKS)[0]).toMatchObject({ bookNumber: 19, chapter: 23, verseStart: 1 })
+    })
+
     describe("spoken phrasing variations", () => {
         const ref = (bookNumber: number, book: string, chapter: number, verseStart: number, verseEnd = verseStart, confidence = "high") => [{ bookNumber, book, chapter, verseStart, verseEnd, confidence }]
 
