@@ -184,6 +184,7 @@
     }
 
     $: if (currentOutput?.rtmp && encoderOptions.length === 1) loadEncoders()
+    $: if (currentOutput?.rtmp && !currentOutput?.rtmpData?.destinations?.length) addDestination()
 
     // RTMP destinations
 
@@ -459,7 +460,7 @@
 
             <div class="destination">
                 <div style="display: flex;align-items: center;gap: 10px;padding-bottom: 4px;text-transform: uppercase;">
-                    <span class="dot {status?.state || 'idle'}" title={status?.error || status?.state || "idle"}></span>
+                    <span class="dot {status?.state || 'idle'}" data-title={status?.error || status?.state || "idle"}></span>
                     <div style="font-size: 0.8em; opacity: 0.5;">{extractPlatformName(destination.url) || ""}</div>
                 </div>
 
