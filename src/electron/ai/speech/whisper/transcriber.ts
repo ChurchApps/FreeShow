@@ -9,28 +9,44 @@ import type { DriverCallbacks, TranscriberSegment as DriverSegment, Transcriptio
 import { isPromptEcho } from "./prompt"
 
 // AI AUTO SCRIPTURE - streaming transcription over whisper.cpp
-// Receives 1s chunks of Int16 LE PCM @ 16kHz mono from the renderer (IPC),
-// keeps them in a ring buffer, and every 3s transcribes the last 5s (2s overlap)
-// with either the whisper.cpp cli (one process per window) or the whisper.cpp server (spawned once).
-// The step is the floor for speech-to-detection latency, so it is kept short - when a window
-// takes longer than the step to transcribe, the queue skips to the newest window (backpressure).
+// Receives 100ms chunks of Int16 LE PCM @ 16kHz mono from the renderer (IPC) into a ring buffer.
+// Windows are cut COVERAGE-DRIVEN: each starts just before where the last one's emissions ended,
+// so no audio is ever skipped - when decodes lag, the next window GROWS (up to a cap) instead of
+// audio being dropped. Words are emitted with their timestamps; the trailing bit of a window that
+// does not end in silence is held back (shown as interim) and re-decoded whole in the next window,
+// so a word can never be emitted cut in half.
 
 const SAMPLE_RATE = 16000
 const RING_SECONDS = 30
-const WINDOW_SECONDS = 5
+// minimum fresh (uncovered) audio before a window is cut - the latency floor
 const STEP_SECONDS = 3
-// on machines where a window decodes slower than the step, the step stretches up to this instead
-// of skipping windows - a laggier transcript that stays CONTIGUOUS beats dropped words. The cap
-// keeps at least 500ms of window overlap for the seam trim's backtrack
-const STEP_MAX_SECONDS = 4.5
+// windows grow under decode lag instead of skipping audio, up to this length
+const MAX_WINDOW_SECONDS = 10
+// backlog beyond this gets a forced, LOGGED jump - a visible hole beats an ever-growing lag
+const MAX_LAG_SECONDS = 15
+// never cut a window that reaches into audio the ring is about to overwrite
+const RING_GUARD_SECONDS = 2
 
-const WINDOW_SAMPLES = WINDOW_SECONDS * SAMPLE_RATE
+const STEP_SAMPLES = STEP_SECONDS * SAMPLE_RATE
+const MAX_WINDOW_SAMPLES = MAX_WINDOW_SECONDS * SAMPLE_RATE
+const MAX_LAG_SAMPLES = MAX_LAG_SECONDS * SAMPLE_RATE
 
-// the time-based overlap trim re-emits from slightly BEFORE the previous window's edge, so a word cut
-// mid-transcription at that edge comes out whole in the next window (the seam stitch drops true repeats)
+// the window starts slightly BEFORE the covered edge, so a word whose tail was held back at that
+// edge re-decodes whole (the timestamp drop + seam stitch remove true repeats)
 const OVERLAP_BACKTRACK_MS = 300
 
-// RMS (normalized 0-1) below this over a whole window counts as silence - no whisper call
+// words ending in the final stretch of a window that is NOT silence-snapped are withheld (the cut
+// may sit mid-word) - they surface as interim text and re-decode whole in the next window
+const HOLDBACK_MS = 800
+
+// window ends snap to a quiet dip in this trailing stretch - a boundary in silence cuts nothing
+const SILENCE_SNAP_SEARCH_MS = 1200
+const SILENCE_SNAP_FRAME_MS = 100
+const SILENCE_SNAP_HOP_MS = 50
+// a snapped window must still cover this much fresh audio, or the snap is ignored
+const SNAP_MIN_FRESH_MS = 1000
+
+// RMS (normalized 0-1) below this counts as silence
 const SILENCE_RMS_THRESHOLD = 0.01
 
 // confidence gates (only applied when the whisper JSON provides the values)
@@ -45,9 +61,16 @@ const KILL_TIMEOUT = 2000
 // whisper.cpp defaults to 4 threads - short windows on a short step want the inference as fast as the machine allows
 const WHISPER_THREADS = String(Math.max(4, Math.min(8, os.cpus().length - 2)))
 
+interface WhisperWord {
+    text: string
+    startMs: number
+    endMs: number
+}
+
 interface WhisperSegment extends DriverSegment {
     noSpeechProb?: number
     avgLogprob?: number
+    words?: WhisperWord[] // token-level timing (cli -ojf) - segments without it fall back to even spacing
 }
 
 interface TranscriberOptions extends DriverCallbacks {
@@ -62,6 +85,7 @@ interface TranscriberOptions extends DriverCallbacks {
 interface PcmWindow {
     samples: Int16Array
     startSample: number
+    endsInSilence: boolean // the end was snapped to a quiet dip - nothing to hold back
 }
 
 export class Transcriber implements TranscriptionDriver {
@@ -69,16 +93,15 @@ export class Transcriber implements TranscriptionDriver {
 
     private ring = new Int16Array(RING_SECONDS * SAMPLE_RATE)
     private totalSamples = 0
-    private nextWindowAt = WINDOW_SAMPLES
+    // audio up to here has been decoded and resolved (emitted, withheld-for-redecode, or silence)
+    private coveredUntilSample = 0
 
     private processing = false
-    private pendingWindow: PcmWindow | null = null
     private lastEmittedEndMs = 0
     private lastEmittedTailWords: string[] = []
     private lastEmittedKey = ""
     private consecutiveFailures = 0
     private windowCount = 0
-    private stepSeconds = STEP_SECONDS
     private slowWindows = 0
 
     private stopped = false
@@ -123,7 +146,6 @@ export class Transcriber implements TranscriptionDriver {
     async stop(): Promise<void> {
         if (this.stopped) return
         this.stopped = true
-        this.pendingWindow = null
 
         const children: ChildProcess[] = []
         if (this.cliChild) children.push(this.cliChild)
@@ -135,28 +157,12 @@ export class Transcriber implements TranscriptionDriver {
         this.cleanupTempFiles()
     }
 
-    // 1s chunks of Int16 LE PCM @ 16kHz mono, sent over IPC
+    // 100ms chunks of Int16 LE PCM @ 16kHz mono, sent over IPC
     pushAudio(buffer: Uint8Array): void {
         if (this.stopped || !buffer?.byteLength) return
 
         this.writeToRing(decodePcm16(buffer))
-
-        while (this.totalSamples >= this.nextWindowAt) {
-            const endSample = this.nextWindowAt
-            const stepSamples = Math.round(this.stepSeconds * SAMPLE_RATE)
-            this.nextWindowAt += stepSamples
-
-            const samples = this.readRange(endSample - WINDOW_SAMPLES, endSample)
-            if (computeRms(samples) < SILENCE_RMS_THRESHOLD) continue // whole window is silence - skip
-
-            // the step's worth of NEW audio is all this window adds - when that part is silent, any
-            // speech in the window was already covered by the previous one, and transcribing a mostly
-            // silent window is whisper's favorite place to hallucinate ("thank you", subtitle dashes)
-            const fresh = samples.subarray(Math.max(0, samples.length - stepSamples))
-            if (computeRms(fresh) < SILENCE_RMS_THRESHOLD) continue
-
-            this.enqueueWindow({ samples, startSample: endSample - samples.length })
-        }
+        this.scheduleWindow()
     }
 
     // RING BUFFER
@@ -179,14 +185,53 @@ export class Transcriber implements TranscriptionDriver {
         return result
     }
 
-    // WINDOW QUEUE - never more than one whisper call at a time, keep only the newest pending window
+    // WINDOW SCHEDULING - coverage-driven: one whisper call at a time, each window starting where
+    // coverage ends. When decodes lag, the next window GROWS instead of audio being skipped
 
-    private enqueueWindow(window: PcmWindow) {
-        if (this.processing) {
-            this.pendingWindow = window
+    private scheduleWindow(): void {
+        if (this.processing || this.stopped) return
+
+        // silence advances coverage without a decode (whisper's favorite hallucination surface),
+        // so the loop may resolve several silent stretches before finding one worth decoding
+        while (!this.processing) {
+            const head = this.totalSamples
+            const oldestSafe = Math.max(0, head - this.ring.length + RING_GUARD_SECONDS * SAMPLE_RATE)
+
+            // pathological lag: a LOGGED jump with a visible hole beats an ever-growing delay
+            if (head - this.coveredUntilSample > MAX_LAG_SAMPLES || this.coveredUntilSample < oldestSafe - STEP_SAMPLES) {
+                console.warn(`[AiScripture] Whisper fell ${Math.round((head - this.coveredUntilSample) / SAMPLE_RATE)}s behind - jumping to live audio (words in the gap are lost)`)
+                this.coveredUntilSample = head - STEP_SAMPLES
+                this.lastEmittedEndMs = Math.round((this.coveredUntilSample / SAMPLE_RATE) * 1000)
+                this.lastEmittedTailWords = []
+            }
+
+            if (head - this.coveredUntilSample < STEP_SAMPLES) return
+
+            const windowStart = Math.max(0, oldestSafe, this.coveredUntilSample - Math.round((OVERLAP_BACKTRACK_MS / 1000) * SAMPLE_RATE))
+            let windowEnd = Math.min(head, windowStart + MAX_WINDOW_SAMPLES)
+
+            // a silent fresh region needs no decode - cover it and look again
+            const freshRegion = this.readRange(this.coveredUntilSample, windowEnd)
+            if (computeRms(freshRegion) < SILENCE_RMS_THRESHOLD) {
+                this.coveredUntilSample = windowEnd
+                continue
+            }
+
+            // snap the end to a quiet dip so the boundary cuts nothing - most preaching pauses land here
+            let endsInSilence = false
+            const samples = this.readRange(windowStart, windowEnd)
+            const valley = findSilenceValley(samples, Math.round((SILENCE_SNAP_SEARCH_MS / 1000) * SAMPLE_RATE))
+            if (valley !== null) {
+                const snappedEnd = windowStart + valley
+                if (snappedEnd - this.coveredUntilSample >= Math.round((SNAP_MIN_FRESH_MS / 1000) * SAMPLE_RATE)) {
+                    windowEnd = snappedEnd
+                    endsInSilence = true
+                }
+            }
+
+            void this.runWindow({ samples: endsInSilence ? samples.subarray(0, windowEnd - windowStart) : samples, startSample: windowStart, endsInSilence })
             return
         }
-        this.runWindow(window)
     }
 
     private async runWindow(window: PcmWindow): Promise<void> {
@@ -201,60 +246,95 @@ export class Transcriber implements TranscriptionDriver {
             const decodeStartedAt = Date.now()
             const json = this.options.binary.kind === "cli" ? await this.transcribeCli(wav, windowDurationMs) : await this.transcribeServer(wav)
             if (this.stopped) return
-            this.trackDecodePace(Date.now() - decodeStartedAt)
+            this.trackDecodePace(Date.now() - decodeStartedAt, windowDurationMs)
 
-            const parsed = parseWhisperJson(json, windowDurationMs)
-            const absolute = parsed.map((segment) => Object.assign({}, segment, { startMs: windowStartMs + segment.startMs, endMs: windowStartMs + segment.endMs }))
-            const prompt = this.options.prompt
-            const speech = absolute.filter((segment) => !isNoiseSegment(segment.text) && !isRepetitionLoop(segment.text) && !isLowConfidence(segment) && !(prompt && isPromptEcho(segment.text, prompt)))
-            const fresh = dedupeOverlap(speech, Math.max(0, this.lastEmittedEndMs - OVERLAP_BACKTRACK_MS))
-
-            for (const segment of fresh) {
-                if (segment.endMs > this.lastEmittedEndMs) this.lastEmittedEndMs = segment.endMs
-
-                // timings shift between windows, so the seam can survive the time-based trim - drop exact word repeats
-                const text = trimRepeatedLeadWords(this.lastEmittedTailWords, segment.text.trim())
-                if (!text) continue
-
-                // the loop failure also repeats whole lines across windows ("thank you for watching"
-                // forever) - an exact repeat of the previous emitted line is never real speech
-                const repeatKey = segmentRepeatKey(text)
-                if (repeatKey && repeatKey === this.lastEmittedKey) continue
-                this.lastEmittedKey = repeatKey
-
-                this.lastEmittedTailWords = appendTailWords(this.lastEmittedTailWords, text)
-                this.options.onSegment({ text, startMs: segment.startMs, endMs: segment.endMs, language: segment.language, music: isMusicSegment(text) || undefined })
-            }
-
+            this.emitWindow(parseWhisperJson(json, windowDurationMs), window, windowStartMs, windowDurationMs)
             this.consecutiveFailures = 0
         } catch (err) {
             if (this.stopped) return
             const message = String((err as Error)?.message || err)
             console.error("[AiScripture] Transcription window failed:", message)
-            // failures while the server is respawning are expected - don't count them, only surface repeated real failures
+            // coverage does NOT advance on a failure: the same audio re-decodes in a grown window
+            // once the engine recovers (the lag jump above bounds how far that can stack up).
+            // failures while the server is respawning are expected - don't count them
             if (!this.serverRespawning) {
                 this.consecutiveFailures++
                 if (this.consecutiveFailures >= 2) this.options.onError(message)
             }
         } finally {
             this.processing = false
-
-            const next = this.pendingWindow
-            this.pendingWindow = null
-            if (next && !this.stopped) this.runWindow(next)
+            if (!this.stopped) this.scheduleWindow() // fresh audio may already be waiting
         }
     }
 
-    // a window decoding slower than the step means the NEXT window would be skipped and its words
-    // dropped - stretch the step instead (contiguous but laggier), recover when decodes speed up
-    private trackDecodePace(decodeMs: number) {
-        if (decodeMs > this.stepSeconds * 1000) {
-            this.slowWindows++
-            if (this.slowWindows === 1 || this.slowWindows % 10 === 0) {
-                console.warn(`[AiScripture] Whisper window decoded in ${decodeMs}ms (step ${this.stepSeconds}s) - the transcript will lag on this machine/model`)
+    // WORD-LEVEL EMISSION - drop already-emitted words by timestamp, hold back the unsettled tail
+
+    private emitWindow(parsed: WhisperSegment[], window: PcmWindow, windowStartMs: number, windowDurationMs: number) {
+        const prompt = this.options.prompt
+
+        // segment-level filters. Music stays (shown faded, never fed to detection) - it only flags
+        const speech = parsed.filter((segment) => !isNoiseSegment(segment.text) && !isLowConfidence(segment))
+        const music = speech.some((segment) => isMusicSegment(segment.text))
+        const language = speech.find((segment) => segment.language)?.language
+
+        // flatten to absolute-time words (token timing when available, even spacing as fallback)
+        const words: WhisperWord[] = []
+        for (const segment of speech) {
+            for (const word of segment.words?.length ? segment.words : evenlySpacedWords(segment)) {
+                words.push({ text: word.text, startMs: windowStartMs + word.startMs, endMs: windowStartMs + word.endMs })
             }
         }
-        this.stepSeconds = adaptStepSeconds(this.stepSeconds, decodeMs)
+
+        // drop words whose midpoint was already emitted (the window reaches back over the seam)
+        const fresh = words.filter((word) => (word.startMs + word.endMs) / 2 >= this.lastEmittedEndMs)
+
+        // hold back words ending near a non-silent cut - the cut may sit mid-word, and the next
+        // window re-decodes that audio whole. Held words stream as interim (greyed) text
+        const windowEndMs = windowStartMs + windowDurationMs
+        const cutoffMs = window.endsInSilence ? Infinity : windowEndMs - HOLDBACK_MS
+        const emitted = fresh.filter((word) => word.endMs <= cutoffMs)
+        const withheld = fresh.filter((word) => word.endMs > cutoffMs)
+        this.options.onInterim?.(withheld.map((word) => word.text).join(" "))
+
+        // coverage: everything before the first withheld word is resolved; at least 1s of progress
+        // per decode so a pathological long word can never stall the pipeline
+        const coverEndMs = withheld.length ? Math.min(cutoffMs, withheld[0].startMs) : Math.min(windowEndMs, cutoffMs)
+        const previousCovered = this.coveredUntilSample
+        const coverSample = window.startSample + Math.round(((coverEndMs - windowStartMs) / 1000) * SAMPLE_RATE)
+        this.coveredUntilSample = Math.max(previousCovered + SAMPLE_RATE, Math.min(coverSample, window.startSample + window.samples.length))
+
+        if (!emitted.length) return
+
+        // window-level guards on the joined text (server word-segments are too short to judge alone)
+        const joined = emitted
+            .map((word) => word.text)
+            .join(" ")
+            .trim()
+        if (!joined || isRepetitionLoop(joined) || (prompt && isPromptEcho(joined, prompt))) return
+
+        // timings shift between decodes, so a seam word can survive the timestamp drop - the fuzzy
+        // stitch removes repeats and re-transcription variants
+        const text = trimRepeatedLeadWords(this.lastEmittedTailWords, joined)
+        if (!text) return
+
+        // the loop failure also repeats whole lines across windows - an exact repeat is never speech
+        const repeatKey = segmentRepeatKey(text)
+        if (repeatKey && repeatKey === this.lastEmittedKey) return
+        this.lastEmittedKey = repeatKey
+
+        const endMs = emitted[emitted.length - 1].endMs
+        if (endMs > this.lastEmittedEndMs) this.lastEmittedEndMs = endMs
+        this.lastEmittedTailWords = appendTailWords(this.lastEmittedTailWords, text)
+        this.options.onSegment({ text, startMs: emitted[0].startMs, endMs, language, music: music || undefined, utteranceEnd: window.endsInSilence || undefined })
+    }
+
+    private trackDecodePace(decodeMs: number, windowDurationMs: number) {
+        if (decodeMs > windowDurationMs) {
+            this.slowWindows++
+            if (this.slowWindows === 1 || this.slowWindows % 10 === 0) {
+                console.warn(`[AiScripture] Whisper decoded ${windowDurationMs}ms of audio in ${decodeMs}ms - the transcript will lag on this machine/model`)
+            }
+        }
     }
 
     // CLI DRIVER - one whisper.cpp cli process per window, JSON output to a temp file
@@ -313,8 +393,10 @@ export class Transcriber implements TranscriptionDriver {
             if (this.stopped) return reject(new Error("Transcriber stopped"))
 
             // -nf: temperature fallback re-decodes uncertain (usually quiet) audio at higher temperatures,
-            // which is where whisper invents text - live captioning is better off skipping than guessing
-            const args = ["-m", this.options.modelPath, "-l", language, "-f", wavPath, "-oj", "-of", outBase, "-np", "-t", WHISPER_THREADS, "-nf"]
+            // which is where whisper invents text - live captioning is better off skipping than guessing.
+            // -ojf: full JSON with per-token probabilities & offsets - word timing for the seam drop,
+            // and a computable avg-logprob so the confidence gate works on this path
+            const args = ["-m", this.options.modelPath, "-l", language, "-f", wavPath, "-ojf", "-of", outBase, "-np", "-t", WHISPER_THREADS, "-nf"]
             if (this.options.prompt) args.push("--prompt", this.options.prompt)
             const child = spawn(this.options.binary.binaryPath, args, { stdio: ["ignore", "ignore", "pipe"], windowsHide: true })
             this.cliChild = child
@@ -499,9 +581,14 @@ export class Transcriber implements TranscriptionDriver {
         const form = new FormData()
         const viewForBlob = new Uint8Array(wav.buffer as ArrayBuffer, wav.byteOffset, wav.byteLength)
         form.append("file", new Blob([viewForBlob], { type: "audio/wav" }), "window.wav")
-        // verbose: per-segment timestamps make the overlap trim exact (plain "json" is a single
-        // untimed text blob, which forces the trim to guess word positions proportionally)
+        // verbose: per-segment timestamps make the overlap drop exact; word-level segments
+        // (max_len=1 + split_on_word) give each word its own timing & confidence. An older server
+        // that ignores the fields returns multi-word segments - the even-spacing fallback covers it
         form.append("response_format", "verbose_json")
+        form.append("max_len", "1")
+        form.append("split_on_word", "true")
+        // each request is a fresh window - never let text from the previous one condition this decode
+        form.append("no_context", "true")
         form.append("temperature", "0.0")
         // no temperature fallback: re-decoding uncertain (usually quiet) audio at higher temperatures
         // is where whisper invents text - live captioning is better off skipping than guessing
@@ -546,14 +633,32 @@ export class Transcriber implements TranscriptionDriver {
 // PURE HELPERS (exported for tests)
 
 /**
- * Next step length after a window decoded in `decodeMs`: an overrun stretches the step (a half
- * second at a time, capped so the 5s window keeps overlap for the seam trim), a comfortably fast
- * decode walks it back toward the latency floor.
+ * Offset (in samples) of the center of the quietest sub-STEP frame inside the trailing
+ * `searchSamples` of the window, or null when no frame is quiet enough to count as a dip.
+ * A window end snapped there cuts between words, never through one.
  */
-export function adaptStepSeconds(current: number, decodeMs: number): number {
-    if (decodeMs > current * 1000) return Math.min(STEP_MAX_SECONDS, current + 0.5)
-    if (decodeMs < current * 600) return Math.max(STEP_SECONDS, current - 0.5)
-    return current
+export function findSilenceValley(samples: Int16Array, searchSamples: number): number | null {
+    const frame = Math.round((SILENCE_SNAP_FRAME_MS / 1000) * SAMPLE_RATE)
+    const hop = Math.round((SILENCE_SNAP_HOP_MS / 1000) * SAMPLE_RATE)
+    const from = Math.max(0, samples.length - searchSamples)
+    if (samples.length - from < frame) return null
+
+    let best: { offset: number; rms: number } | null = null
+    for (let start = from; start + frame <= samples.length; start += hop) {
+        const rms = computeRms(samples.subarray(start, start + frame))
+        if (rms < SILENCE_RMS_THRESHOLD && (!best || rms < best.rms)) best = { offset: start + Math.floor(frame / 2), rms }
+    }
+    return best ? best.offset : null
+}
+
+/** Fallback word timing for segments without token offsets: spread words evenly across the segment. */
+export function evenlySpacedWords(segment: { text: string; startMs: number; endMs: number }): WhisperWord[] {
+    const words = segment.text.split(/\s+/).filter(Boolean)
+    if (!words.length) return []
+
+    const duration = Math.max(0, segment.endMs - segment.startMs)
+    const per = duration / words.length
+    return words.map((text, i) => ({ text, startMs: Math.round(segment.startMs + i * per), endMs: Math.round(segment.startMs + (i + 1) * per) }))
 }
 
 // in-memory WAV: 44 byte header + Int16 LE PCM data (16kHz mono 16-bit)
@@ -649,44 +754,15 @@ export function isLowConfidence(segment: { noSpeechProb?: number; avgLogprob?: n
     return false
 }
 
-// the first 1s of each window overlaps the previous one - drop/trim segments already emitted.
-// trimming clamps the start timestamp AND drops the proportional share of leading words, so the overlap words are not re-emitted
-export function dedupeOverlap<T extends { text: string; startMs: number; endMs: number }>(segments: T[], previousEndMs: number): T[] {
-    const result: T[] = []
-    for (const segment of segments) {
-        if (segment.endMs <= previousEndMs) continue // fully emitted already
-        if (segment.startMs >= previousEndMs) {
-            result.push(segment)
-            continue
-        }
-
-        const text = trimOverlapText(segment.text, segment.startMs, segment.endMs, previousEndMs)
-        if (!text) continue // every word falls inside the already emitted part
-        result.push(Object.assign({}, segment, { text, startMs: previousEndMs }))
-    }
-    return result
-}
-
-// drop the leading words that (proportionally by time) fall before previousEndMs
-function trimOverlapText(text: string, startMs: number, endMs: number, previousEndMs: number): string {
-    const words = text.split(/\s+/).filter(Boolean)
-    const durationMs = endMs - startMs
-    if (!words.length || durationMs <= 0) return ""
-
-    const dropCount = Math.round((words.length * (previousEndMs - startMs)) / durationMs)
-    if (dropCount <= 0) return text
-    return words.slice(dropCount).join(" ")
-}
-
 // tolerant parser for the different whisper.cpp JSON shapes:
-// - cli -oj: { result: { language }, transcription: [{ text, offsets: { from, to } }] } (ms offsets)
+// - cli -ojf: { result: { language }, transcription: [{ text, offsets, tokens: [{ text, p, offsets }] }] } (ms offsets)
 // - server response_format=json: { text } (no timestamps - spans the whole window)
 // - verbose/OpenAI style: { segments: [{ text, start, end, no_speech_prob, avg_logprob }] } (seconds)
 export function parseWhisperJson(json: any, windowDurationMs: number): WhisperSegment[] {
     if (!json || typeof json !== "object") return []
     const segments: WhisperSegment[] = []
 
-    // overall detected language of the window (cli -oj) - "auto" would mean whisper never resolved it
+    // overall detected language of the window (cli) - "auto" would mean whisper never resolved it
     let language = typeof json.result?.language === "string" ? json.result.language.trim().toLowerCase() : undefined
     if (language === "auto" || language === "") language = undefined
 
@@ -700,12 +776,16 @@ export function parseWhisperJson(json: any, windowDurationMs: number): WhisperSe
             if (!entry || typeof entry.text !== "string") continue
             const from = Number(entry.offsets?.from)
             const to = Number(entry.offsets?.to)
+            const tokens = parseSegmentTokens(entry.tokens, clamp)
             segments.push({
                 text: entry.text,
                 startMs: isFinite(from) ? clamp(from) : 0,
                 endMs: isFinite(to) ? clamp(to) : windowDurationMs,
                 noSpeechProb: asNumber(entry.no_speech_prob),
-                avgLogprob: asNumber(entry.avg_logprob),
+                // -ojf carries no avg_logprob - compute it from the token probabilities, which is
+                // what finally arms the confidence gate on the cli path
+                avgLogprob: asNumber(entry.avg_logprob) ?? tokens?.avgLogprob,
+                words: tokens?.words,
                 language
             })
         }
@@ -737,6 +817,48 @@ export function parseWhisperJson(json: any, windowDurationMs: number): WhisperSe
 }
 
 // INTERNAL HELPERS
+
+// fold a cli -ojf token stream into words: whisper marks a word start with a leading space on the
+// token, special markers ("[_BEG_]", timestamps) are skipped, and the mean log-probability over
+// the real tokens stands in for the missing avg_logprob
+function parseSegmentTokens(tokens: any, clamp: (ms: number) => number): { words: WhisperWord[]; avgLogprob?: number } | null {
+    if (!Array.isArray(tokens) || !tokens.length) return null
+
+    const words: WhisperWord[] = []
+    let logprobSum = 0
+    let logprobCount = 0
+
+    for (const token of tokens) {
+        if (!token || typeof token.text !== "string") continue
+        if (/^\s*\[_[A-Z_]+_\]\s*$/.test(token.text)) continue // special markers carry no speech
+
+        const from = Number(token.offsets?.from)
+        const to = Number(token.offsets?.to)
+        const p = asNumber(token.p)
+        if (p !== undefined && p > 0) {
+            logprobSum += Math.log(p)
+            logprobCount++
+        }
+
+        const startsWord = /^\s/.test(token.text) || !words.length
+        const text = token.text.trim()
+        const startMs = isFinite(from) ? clamp(from) : 0
+        const endMs = isFinite(to) ? clamp(to) : startMs
+
+        if (startsWord) {
+            if (text) words.push({ text, startMs, endMs })
+            continue
+        }
+        const last = words[words.length - 1]
+        if (last) {
+            last.text += text
+            if (endMs > last.endMs) last.endMs = endMs
+        } else if (text) words.push({ text, startMs, endMs })
+    }
+
+    if (!words.length) return null
+    return { words, avgLogprob: logprobCount ? logprobSum / logprobCount : undefined }
+}
 
 function asNumber(value: any): number | undefined {
     return typeof value === "number" && isFinite(value) ? value : undefined

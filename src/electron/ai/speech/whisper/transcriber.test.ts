@@ -13,7 +13,7 @@ vi.mock("child_process", () => ({
 
 import fs from "fs"
 
-import { adaptStepSeconds, buildWavBuffer, computeRms, dedupeOverlap, isLowConfidence, isNoiseSegment, isRepetitionLoop, parseWhisperJson, segmentRepeatKey, shouldRerunWindow, Transcriber } from "./transcriber"
+import { buildWavBuffer, computeRms, evenlySpacedWords, findSilenceValley, isLowConfidence, isNoiseSegment, isRepetitionLoop, parseWhisperJson, segmentRepeatKey, shouldRerunWindow, Transcriber } from "./transcriber"
 
 describe("buildWavBuffer", () => {
     const samples = new Int16Array([0, 1000, -1000, 32767, -32768])
@@ -71,44 +71,41 @@ describe("computeRms", () => {
     })
 })
 
-describe("dedupeOverlap", () => {
-    it("keeps everything when nothing was emitted yet", () => {
-        const segments = [{ text: "a", startMs: 0, endMs: 2000 }]
-        expect(dedupeOverlap(segments, 0)).toEqual(segments)
+describe("findSilenceValley", () => {
+    const RATE = 16000
+    const loud = (seconds: number) => Int16Array.from({ length: Math.round(seconds * RATE) }, (_, i) => (i % 2 ? 8000 : -8000))
+    const quiet = (seconds: number) => new Int16Array(Math.round(seconds * RATE))
+
+    it("finds the quiet dip inside the trailing search stretch", () => {
+        const samples = new Int16Array(4 * RATE)
+        samples.set(loud(3.2), 0)
+        // 3.2s-3.5s is silence, then loud again to the end
+        samples.set(loud(0.5), Math.round(3.5 * RATE))
+        const valley = findSilenceValley(samples, Math.round(1.2 * RATE))
+        expect(valley).not.toBeNull()
+        expect(valley!).toBeGreaterThan(3.2 * RATE)
+        expect(valley!).toBeLessThan(3.5 * RATE)
     })
 
-    it("drops segments that end before the previously emitted end", () => {
-        const segments = [
-            { text: "old", startMs: 6000, endMs: 6900 },
-            { text: "new", startMs: 7000, endMs: 9000 }
-        ]
-        expect(dedupeOverlap(segments, 7000)).toEqual([{ text: "new", startMs: 7000, endMs: 9000 }])
+    it("returns null when the trailing stretch never goes quiet", () => {
+        expect(findSilenceValley(loud(4), Math.round(1.2 * RATE))).toBeNull()
     })
 
-    it("trims a segment straddling the previously emitted end to start at it", () => {
-        const segments = [{ text: "straddling", startMs: 6500, endMs: 8000 }]
-        expect(dedupeOverlap(segments, 7000)).toEqual([{ text: "straddling", startMs: 7000, endMs: 8000 }])
+    it("returns null when the window is shorter than one frame", () => {
+        expect(findSilenceValley(quiet(0.05), Math.round(1.2 * RATE))).toBeNull()
+    })
+})
+
+describe("evenlySpacedWords", () => {
+    it("spreads words across the segment duration", () => {
+        const words = evenlySpacedWords({ text: "one two three four", startMs: 1000, endMs: 3000 })
+        expect(words.map((word) => word.text)).toEqual(["one", "two", "three", "four"])
+        expect(words[0]).toEqual({ text: "one", startMs: 1000, endMs: 1500 })
+        expect(words[3]).toEqual({ text: "four", startMs: 2500, endMs: 3000 })
     })
 
-    it("drops a segment ending exactly at the previously emitted end", () => {
-        expect(dedupeOverlap([{ text: "dup", startMs: 6000, endMs: 7000 }], 7000)).toEqual([])
-    })
-
-    it("drops the proportional share of leading words when trimming a straddling segment", () => {
-        // 10 words over 5000ms, the first 2000ms were already emitted -> 4 leading words dropped
-        const segments = [{ text: "one two three four five six seven eight nine ten", startMs: 5000, endMs: 10000 }]
-        expect(dedupeOverlap(segments, 7000)).toEqual([{ text: "five six seven eight nine ten", startMs: 7000, endMs: 10000 }])
-    })
-
-    it("removes the re-transcribed overlap words from a whole-window server segment", () => {
-        // server mode: one segment spanning the whole 7s window, the first 1s was emitted by the previous window
-        const segments = [{ text: "a b c d e f g", startMs: 6000, endMs: 13000 }]
-        expect(dedupeOverlap(segments, 7000)).toEqual([{ text: "b c d e f g", startMs: 7000, endMs: 13000 }])
-    })
-
-    it("drops a straddling segment entirely when all its words fall inside the overlap", () => {
-        // 1 word, ~91% overlapped -> the single word is dropped and nothing remains
-        expect(dedupeOverlap([{ text: "word", startMs: 6000, endMs: 7100 }], 7000)).toEqual([])
+    it("returns nothing for an empty segment", () => {
+        expect(evenlySpacedWords({ text: "   ", startMs: 0, endMs: 1000 })).toEqual([])
     })
 })
 
@@ -530,23 +527,89 @@ describe("cli declared-language re-run", () => {
     })
 })
 
-describe("adaptStepSeconds", () => {
-    it("stretches the step when a window decodes slower than it", () => {
-        expect(adaptStepSeconds(3, 3500)).toBe(3.5)
-        expect(adaptStepSeconds(3.5, 4000)).toBe(4)
+describe("parseWhisperJson token words (-ojf)", () => {
+    it("folds the token stream into words with timing and a computed avg-logprob", () => {
+        const json = {
+            result: { language: "en" },
+            transcription: [
+                {
+                    text: " come over here",
+                    offsets: { from: 0, to: 1500 },
+                    tokens: [
+                        { text: "[_BEG_]", p: 0.99, offsets: { from: 0, to: 0 } },
+                        { text: " come", p: 0.9, offsets: { from: 0, to: 400 } },
+                        { text: " o", p: 0.8, offsets: { from: 450, to: 600 } },
+                        { text: "ver", p: 0.7, offsets: { from: 600, to: 800 } },
+                        { text: " here", p: 0.95, offsets: { from: 900, to: 1400 } }
+                    ]
+                }
+            ]
+        }
+        const [segment] = parseWhisperJson(json, 2000)
+        expect(segment.words).toEqual([
+            { text: "come", startMs: 0, endMs: 400 },
+            { text: "over", startMs: 450, endMs: 800 },
+            { text: "here", startMs: 900, endMs: 1400 }
+        ])
+        // mean(ln p) over the real tokens - the confidence gate finally works on the cli path
+        const expected = (Math.log(0.9) + Math.log(0.8) + Math.log(0.7) + Math.log(0.95)) / 4
+        expect(segment.avgLogprob).toBeCloseTo(expected, 5)
     })
 
-    it("caps the stretch so the 5s window keeps overlap for the seam trim", () => {
-        expect(adaptStepSeconds(4.5, 9000)).toBe(4.5)
+    it("keeps a provided avg_logprob over the computed one and survives missing tokens", () => {
+        const json = { transcription: [{ text: "plain", offsets: { from: 0, to: 500 }, avg_logprob: -0.25 }] }
+        const [segment] = parseWhisperJson(json, 1000)
+        expect(segment.avgLogprob).toBe(-0.25)
+        expect(segment.words).toBeUndefined()
     })
+})
 
-    it("recovers toward the latency floor when decodes run fast again", () => {
-        expect(adaptStepSeconds(4.5, 1000)).toBe(4)
-        expect(adaptStepSeconds(3, 500)).toBe(3) // never below the floor
-    })
+describe("coverage-driven windowing", () => {
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-    it("holds steady in the comfortable band", () => {
-        expect(adaptStepSeconds(3.5, 3000)).toBe(3.5)
+    it("keeps windows contiguous when decodes are slow - no audio is ever skipped", async () => {
+        // every decode takes real wall time, so fresh audio piles up while one runs -
+        // the old queue dropped that audio, the coverage design must grow into it instead
+        spawnMock.mockImplementation((_binary: string, args: string[]) => {
+            const child = createFakeChild()
+            const outBase = args[args.indexOf("-of") + 1]
+            setTimeout(() => {
+                fs.writeFileSync(outBase + ".json", JSON.stringify({ transcription: [{ text: " steady speech continues", offsets: { from: 0, to: 2000 } }] }))
+                child.exitCode = 0
+                child.emit("exit", 0)
+            }, 60)
+            return child
+        })
+
+        const transcriber = new Transcriber({ binary: { kind: "cli", binaryPath: "/bin/whisper" }, modelPath: "model.bin", language: "en", onSegment: () => {}, onError: () => {} }) as any
+        await transcriber.start()
+
+        const ranges: [number, number][] = []
+        const originalRun = transcriber.runWindow.bind(transcriber)
+        transcriber.runWindow = (window: any) => {
+            ranges.push([window.startSample, window.startSample + window.samples.length])
+            return originalRun(window)
+        }
+
+        // ~14s of loud audio in 100ms chunks (no silence - snapping and skipping stay out of play)
+        const chunk = new Int16Array(1600).fill(8000)
+        const bytes = new Uint8Array(chunk.buffer.slice(0))
+        for (let i = 0; i < 140; i++) {
+            transcriber.pushAudio(bytes)
+            if (i % 20 === 19) await delay(15) // let decodes interleave with the feed
+        }
+        // drain: decodes keep chaining off the backlog until less than a step remains
+        for (let i = 0; i < 100 && (transcriber.processing || transcriber.totalSamples - transcriber.coveredUntilSample >= 3 * 16000); i++) await delay(25)
+        await transcriber.stop()
+
+        expect(ranges.length).toBeGreaterThan(1)
+        // the invariant the old queue violated: every window begins AT OR BEFORE the previous
+        // window's end - decode lag grows windows, it never punches holes in the audio
+        for (let i = 1; i < ranges.length; i++) {
+            expect(ranges[i][0]).toBeLessThanOrEqual(ranges[i - 1][1])
+        }
+        // and the pipeline actually made progress through the backlog
+        expect(transcriber.coveredUntilSample).toBeGreaterThan(6 * 16000)
     })
 })
 

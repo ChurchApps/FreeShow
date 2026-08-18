@@ -93,7 +93,7 @@ export class SpeechToText {
             if (options.interpretationMode) model = model.replace(".en", "")
             if (!customModel && !isModelReady(model)) return { error: "whisper_model_missing" }
 
-            return { transcriber: new WhisperTranscriber({ ...options, customModelPath: customModel, model, whisper }, onSegment, onError) }
+            return { transcriber: new WhisperTranscriber({ ...options, customModelPath: customModel, model, whisper }, onSegment, onError, this.onInterim.bind(this)) }
         }
 
         if (engine === "nemotron") {

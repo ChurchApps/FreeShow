@@ -18,7 +18,7 @@ export class WhisperTranscriber {
     private promptEnabled = false
     private contextBooks: number[] = []
 
-    constructor(_options: WhisperTranscriberOptions, onSegment: (segment: TranscriberSegment) => void, onError: (message: string) => void) {
+    constructor(_options: WhisperTranscriberOptions, onSegment: (segment: TranscriberSegment) => void, onError: (message: string) => void, onInterim?: (text: string) => void) {
         const interpretation = !!_options.interpretationMode
         this.promptEnabled = !interpretation && (_options.language || "en").startsWith("en")
         const options = {
@@ -31,7 +31,8 @@ export class WhisperTranscriber {
             primaryLanguage: _options.listenLanguage,
             prompt: this.promptEnabled ? composeBiblePrompt() : undefined,
             onSegment,
-            onError
+            onError,
+            onInterim
         }
         this.transcriber = new Transcriber(options)
     }

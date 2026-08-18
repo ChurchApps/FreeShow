@@ -5,13 +5,13 @@ import { composeBiblePrompt, isPromptEcho } from "./prompt"
 describe("composeBiblePrompt", () => {
     it("carries the KJV style vocabulary and a list of biblical names", () => {
         const prompt = composeBiblePrompt()
-        for (const word of ["thou", "whence", "wast", "hearken", "believeth", "unto"]) expect(prompt.toLowerCase()).toContain(word)
+        for (const word of ["thou", "whence", "knowest", "camest", "unto"]) expect(prompt.toLowerCase()).toContain(word)
         expect(prompt).toContain(BIBLE_NAMES_RANKED[0])
     })
 
-    it("stays within the character budget whisper can tokenize into its prompt window", () => {
-        expect(composeBiblePrompt().length).toBeLessThanOrEqual(700)
-        expect(composeBiblePrompt([9, 1]).length).toBeLessThanOrEqual(700)
+    it("stays within the slim character budget - a heavy prompt is hallucination pressure", () => {
+        expect(composeBiblePrompt().length).toBeLessThanOrEqual(300)
+        expect(composeBiblePrompt([9, 1]).length).toBeLessThanOrEqual(300)
     })
 
     it("puts the active book's names ahead of the global ranking", () => {
@@ -35,13 +35,13 @@ describe("isPromptEcho", () => {
     const prompt = composeBiblePrompt()
 
     it("drops a verbatim echo of a prompt stretch", () => {
-        expect(isPromptEcho("hearken, O ye children, unto thy God which hath spoken", prompt)).toBe(true)
+        expect(isPromptEcho("verily thou knowest whence thou camest and whither thou goest", prompt)).toBe(true)
         const names = BIBLE_NAMES_RANKED.slice(0, 6).join(", ")
         expect(isPromptEcho(names, prompt)).toBe(true)
     })
 
     it("survives punctuation and casing differences in the echo", () => {
-        expect(isPromptEcho("Hearken! O ye children... unto thy God, which hath spoken.", prompt)).toBe(true)
+        expect(isPromptEcho("Verily! Thou knowest... whence thou camest, and whither thou goest.", prompt)).toBe(true)
     })
 
     it("keeps genuine speech that merely overlaps prompt vocabulary", () => {

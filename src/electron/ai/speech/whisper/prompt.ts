@@ -6,22 +6,28 @@
 
 import { BIBLE_NAMES_BY_BOOK, BIBLE_NAMES_RANKED } from "./bibleVocabulary"
 
-// whisper truncates prompts around 224 tokens (half its text context). Rare names tokenize at
-// 3-4 BPE tokens each, so budget by characters with a conservative chars-per-token estimate.
-const PROMPT_CHAR_BUDGET = 700
+// whisper truncates prompts around 224 tokens (half its text context) - but long before that
+// limit, a heavy prompt becomes hallucination PRESSURE: on degraded audio the decoder happily
+// emits the rare names it was conditioned on. The budget is deliberately small: enough to bias,
+// not enough to put words in whisper's mouth.
+const PROMPT_CHAR_BUDGET = 300
 
-// a SYNTHETIC King James style sentence - archaic pronouns, inflections and function words that
-// bias the decoder toward "thou knowest"/"whence"/"wast" instead of modern near-homophones.
-// Deliberately not a real verse: the echo guard below drops segments that quote the prompt
-// verbatim, which must never swallow a genuine recitation.
-const STYLE_SENTENCE = "And he spake unto the people, saying, Verily thou knowest whence thou camest and whither thou goest; " + "hearken, O ye children, unto thy God which hath spoken, for whosoever believeth shall be made whole, and thou wast lost, and art found."
+// how many names from the global hardest-to-transcribe ranking may fill the prompt when no
+// passage is being preached from - the deep vocabulary arrives via the context books instead
+const GLOBAL_NAMES_MAX = 12
+
+// a SYNTHETIC King James style clause - archaic pronouns and inflections that bias the decoder
+// toward "thou knowest"/"whence" instead of modern near-homophones. Deliberately not a real
+// verse: the echo guard below drops segments that quote the prompt verbatim, which must never
+// swallow a genuine recitation.
+const STYLE_SENTENCE = "And he spake unto the people, saying, Verily thou knowest whence thou camest and whither thou goest."
 
 const NAMES_LEAD_IN = " Thus saith the LORD concerning "
 
 /**
- * Compose the decoder-conditioning prompt: the KJV style sentence plus as many biblical names as
- * the budget allows. Names from the books currently being preached from come first - that is how
- * the long tail of ~5000 names gets covered despite the token cap.
+ * Compose the decoder-conditioning prompt: the KJV style clause plus biblical names. Names from
+ * the books currently being preached from come first and may fill the whole budget - the global
+ * ranking only contributes a small fixed number, so an idle prompt stays light.
  */
 export function composeBiblePrompt(activeBooks: number[] = []): string {
     const names: string[] = []
@@ -34,7 +40,13 @@ export function composeBiblePrompt(activeBooks: number[] = []): string {
     }
 
     for (const book of activeBooks) for (const name of BIBLE_NAMES_BY_BOOK[book] || []) push(name)
-    for (const name of BIBLE_NAMES_RANKED) push(name)
+    let globalNames = 0
+    for (const name of BIBLE_NAMES_RANKED) {
+        if (globalNames >= GLOBAL_NAMES_MAX) break
+        const before = names.length
+        push(name)
+        if (names.length > before) globalNames++
+    }
 
     let prompt = STYLE_SENTENCE + NAMES_LEAD_IN
     let count = 0
