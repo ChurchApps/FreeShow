@@ -5,13 +5,12 @@ import { Main } from "../../types/IPC/Main"
 import { customActionActivation } from "../components/actions/actions"
 import { encodeFilePath, getFileName, locateMediaFile, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
-import { VideoPlayer } from "../components/media/video/videoPlayer"
 import { requestMain, sendMain } from "../IPC/main"
 import { activePlaylist, dictionary, media, outLocked, playingAudio, playingAudioPaths, special } from "../stores"
 import { addToMediaFolder } from "../utils/cloudSync"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
-import { clearAudio, clearing, fadeInAudio, fadeoutAllPlayingAudio, fadeOutAudio } from "./audioFading"
+import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
 import { AudioMultichannel } from "./audioMultichannel"
 import { AudioPlaylist } from "./audioPlaylist"
 import { AudioRoutingManager } from "./routing/audioRoutingManager"
@@ -295,10 +294,6 @@ export class AudioPlayer {
             await AudioAnalyser.attach(id, playing.stream || audio)
             AudioRoutingManager.getInstance().updateRoutingNodes()
             this.applyProcessing(id)
-
-            if (get(special).muteAudioWhenVideoPlays && VideoPlayer.hasAudibleVideo()) {
-                fadeoutAllPlayingAudio()
-            }
         }
 
         if (waitToPlay > 0) {
@@ -321,8 +316,13 @@ export class AudioPlayer {
     static play(id: string) {
         if (!this.audioExists(id)) return
 
+        const audio = this.getAudio(id)
+
+        // reset volume in case it's played again while "Mute when video plays" is active
+        if (audio && audio.volume === 0) this.updateVolume(id)
+
         updatePlayingStore(id, "paused", false)
-        this.getAudio(id)?.play()
+        audio?.play()
 
         AudioAnalyserMerger.init()
     }
