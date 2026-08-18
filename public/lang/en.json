@@ -1819,6 +1819,8 @@
         "state_stopped": "Stopped",
         "state_error": "Error",
         "state_llm_paused": "AI paused",
+        "llm_paused_badge": "AI provider paused",
+        "llm_paused_tip": "The AI provider stopped responding and paraphrase detection is off for this session - transcription, spoken references and word-for-word quotes keep working. Provider message: ",
         "explicit_only": "Explicit only",
         "keyless_tip": "No AI key configured, and quote detection is turned off - only spoken references like \"John 3:16\" are detected",
         "auto_paused": "Auto paused",

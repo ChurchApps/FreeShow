@@ -293,9 +293,16 @@
                 <div class="card-header">
                     <div class="ai-badge">
                         {#if sessionMode === "scripture"}
-                            <p style="font-weight: bold;"><T id="ai_scripture.state_{scriptureState}" /></p>
+                            <!-- an LLM pause only stops paraphrase detection - the session IS still listening -->
+                            <p style="font-weight: bold;"><T id="ai_scripture.state_{scriptureState === 'llm_paused' ? 'listening' : scriptureState}" /></p>
                         {:else}
                             <p style="font-weight: bold;">{state.toUpperCase()}</p>
+                        {/if}
+
+                        {#if sessionMode === "scripture" && scriptureState === "llm_paused"}
+                            <span class="badge" data-title={translateText("ai_scripture.llm_paused_tip") + ($aiScriptureStatus.message || "")}>
+                                <T id="ai_scripture.llm_paused_badge" />
+                            </span>
                         {/if}
 
                         {#if sessionMode === "scripture" && isListening && $aiScriptureStatus.keyless}
