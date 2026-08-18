@@ -28,15 +28,21 @@ export const TUNING = {
     PHONETIC_VOTE_DISCOUNT: 0.7,
 
     DENSITY_REF: 0.7,
-    DENSITY_FLOOR: 0.55,
+    DENSITY_FLOOR: 0.6,
     MIN_INFORMATIVE: 5,
     MIN_WEIGHT: 14,
     MIN_QUERY_SPAN: 6,
+    // fuzzy grades (0.8 stems / 0.75 shared-prefix / 0.7 phonetic) exist to forgive 1-2 mangled
+    // words inside a real recitation - an alignment BUILT of partial credits is transcription
+    // debris, and this caps how much of one may be fuzzy
+    FUZZY_MAX_FRACTION: 0.34,
 
-    EMIT_MEDIUM: 0.48,
-    EMIT_HIGH: 0.62,
+    EMIT_MEDIUM: 0.52,
+    EMIT_HIGH: 0.66,
     HIGH_MIN_INFORMATIVE: 6,
-    HIGH_MIN_WEIGHT: 18,
+    // high auto-projects - it must mean a solidly recited stretch, not a window of thematic
+    // vocabulary plus a truncated rare word
+    HIGH_MIN_WEIGHT: 22,
 
     SINGLE_SHOT_INFORMATIVE: 8, // immediate emission from one segment
     SINGLE_SHOT_WEIGHT: 24,
@@ -49,6 +55,13 @@ export const TUNING = {
     // bonus; the peak floor demands one genuinely uncommon word in the run, which is what
     // separates a quoted fragment from liturgical filler ("in the name of jesus")
     PHRASE_MIN_RUN: 3,
+    // an isolated (uncued, unanchored) run must be at least this long to emit on sight - shorter
+    // runs are everyday collocations often enough ("are going to inherit", "dont know whether")
+    // that they need context: a cue, the anchored passage, or growth as the speaker keeps quoting
+    PHRASE_SHOT_MIN_RUN: 5,
+    // a held short run emits once its weight grows by this much on a later segment (one more
+    // matched word adds ~3 with its adjacency bonus; a static junk run re-scores identically)
+    PHRASE_GROWTH_MIN: 2,
     PHRASE_ADJACENCY_IDF: 2.2,
     // 16 is measured, not guessed: real sermon chatter produces runs up to ~15 ("makes it
     // plain" -> Habakkuk 2:2, "week and we give" -> Genesis 29:27), while wanted fragments
@@ -105,6 +118,7 @@ export interface AlignResult {
     matched: number
     matchedInformative: number
     matchedWeight: number
+    matchedFuzzy: number // matches below the prefix grade (0.8/0.75/0.7) - partial-credit forgiveness
     queryFrom: number // first/last matched positions in the query window
     queryTo: number
     verseFrom: number // first/last matched positions in the verse window (verse + spill)
@@ -115,6 +129,8 @@ export interface AlignResult {
     bestRunLength: number
     bestRunWeight: number // matched weight of the run + an adjacency bonus per consecutive pair
     bestRunPeakIdf: number // highest token idf inside that run
+    bestRunQueryFrom: number // the run's query span, so a phrase emission can quote the run itself (-1 when no run)
+    bestRunQueryTo: number
 }
 
 /**
@@ -159,6 +175,7 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     const matchedV: number[] = []
     let matchedWeight = 0
     let matchedInformative = 0
+    let matchedFuzzy = 0
     let spillInformative = 0
     let i = m
     let j = n
@@ -169,6 +186,7 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
             matchedQ.push(i - 1)
             matchedV.push(j - 1)
             matchedWeight += grade * idf
+            if (grade < 0.9) matchedFuzzy++
             if (idf >= index.informativeIdf) {
                 matchedInformative++
                 if (j - 1 >= verseLength) spillInformative++
@@ -196,14 +214,18 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     let bestRunLength = 0
     let bestRunWeight = 0
     let bestRunPeakIdf = 0
+    let bestRunQueryFrom = -1
+    let bestRunQueryTo = -1
     let runLength = 0
     let runWeight = 0
     let runPeakIdf = 0
+    let runQueryFrom = -1
     for (let k = 0; k < matchedQ.length; k++) {
         if (matchedV[k] >= verseLength) {
             runLength = 0
             runWeight = 0
             runPeakIdf = 0
+            runQueryFrom = -1
             continue
         }
         const idf = verseIdfAt(matchedV[k])
@@ -220,11 +242,14 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
             runLength = 1
             runWeight = weight
             runPeakIdf = peak
+            runQueryFrom = matchedQ[k]
         }
         if (idf >= tuning.PHRASE_EDGE_MIN_IDF && runWeight > bestRunWeight) {
             bestRunLength = runLength
             bestRunWeight = runWeight
             bestRunPeakIdf = runPeakIdf
+            bestRunQueryFrom = runQueryFrom
+            bestRunQueryTo = matchedQ[k]
         }
     }
 
@@ -238,7 +263,7 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     const density = matchedQ.length / querySpan
     const score = coverage * Math.min(1, density / tuning.DENSITY_REF)
 
-    return { score, coverage, density, matched: matchedQ.length, matchedInformative, matchedWeight, queryFrom, queryTo, verseFrom, verseTo, spillInformative, verseLength, bestRunLength, bestRunWeight, bestRunPeakIdf }
+    return { score, coverage, density, matched: matchedQ.length, matchedInformative, matchedWeight, matchedFuzzy, queryFrom, queryTo, verseFrom, verseTo, spillInformative, verseLength, bestRunLength, bestRunWeight, bestRunPeakIdf, bestRunQueryFrom, bestRunQueryTo }
 }
 
 /** The short-fragment gate: a distinctive contiguous phrase is enough evidence on its own. */
@@ -248,6 +273,7 @@ export function phraseEvidence(a: AlignResult, tuning: Tuning = TUNING): boolean
 
 /** The minimum-evidence floors every emission must clear (coincidental overlap dies here). */
 export function meetsFloors(a: AlignResult, tuning: Tuning = TUNING): boolean {
+    if (a.matchedFuzzy > Math.floor(a.matched * tuning.FUZZY_MAX_FRACTION)) return false
     return a.matchedInformative >= tuning.MIN_INFORMATIVE && a.matchedWeight >= tuning.MIN_WEIGHT && a.queryTo - a.queryFrom + 1 >= tuning.MIN_QUERY_SPAN && a.density >= tuning.DENSITY_FLOOR
 }
 

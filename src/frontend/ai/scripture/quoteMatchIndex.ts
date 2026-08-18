@@ -89,10 +89,13 @@ export const IDF_CAP = 6
 export const DF_VOTE_MAX_FRACTION = 1 / 16
 
 // a token counts as "informative" evidence at/above this idf. Expressed relative to the corpus's
-// observed idf ceiling so the floor means the same thing for a full bible (ceiling 6 -> 2.5) and
-// for the small corpora used in tests, where idf never gets near the cap.
-const INFORMATIVE_IDF_ABSOLUTE = 2.5
-const INFORMATIVE_IDF_FRACTION = 0.42
+// observed idf ceiling so the floor means the same thing for a full bible (ceiling 6 -> 3.0, i.e.
+// df ~1,500 of ~31k verses: "believeth"/"shepherd" clear it, "children"/"know"/"going" do not -
+// everyday words counting as informative is what let conversational speech reach the floors) and
+// for the small corpora used in tests, where idf never gets near the cap. The fraction must agree
+// with the absolute at the cap (0.5 * 6 = 3.0), or the min() silently reintroduces the lower bar
+const INFORMATIVE_IDF_ABSOLUTE = 3.0
+const INFORMATIVE_IDF_FRACTION = 0.5
 
 export interface IndexBuildOptions {
     // build the bigram candidate route on this index (the session gives it to the drawer

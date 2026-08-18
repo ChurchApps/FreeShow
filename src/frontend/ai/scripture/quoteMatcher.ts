@@ -16,7 +16,7 @@
 import type { PrefixPool, TranslationIndex } from "./quoteMatchIndex"
 import { BIGRAM_VOTE_IDF, bigramKey, bigramPostings, postingsForKey, prefixIdf } from "./quoteMatchIndex"
 import { alignQuoteWindow, classify, meetsFloors, phraseEvidence, TUNING, type AlignResult, type QueryToken, type Tuning } from "./quoteMatchScore"
-import { cachedPhoneticKey, canonKey, tokenizeTranscript } from "./quoteMatchTokens"
+import { cachedPhoneticKey, canonKey, tokenizeTranscriptWithSpans } from "./quoteMatchTokens"
 
 export interface QuoteMatchSegment {
     text: string
@@ -59,6 +59,9 @@ interface ActiveTracker {
     chapter: number
     verseOrdinal: number // ordinal of the last emitted verse in its translation index
     lastAdvanceMs: number
+    // confidence of the emission that armed this tracker: continuations of a HIGH reading stay
+    // high (auto-project), continuations of a MEDIUM suggestion stay suggestions
+    seedConfidence: "high" | "medium"
 }
 
 export interface RefKey {
@@ -79,7 +82,10 @@ export class QuoteMatcher {
     private indexes: TranslationIndex[]
     private tuning: Tuning
 
-    private ring: { token: string; endMs: number }[] = []
+    private ring: { token: string; endMs: number; seg: number; from: number; to: number }[] = []
+    // raw segment texts still referenced by the ring, so emissions can quote the words as spoken
+    private segmentTexts = new Map<number, string>()
+    private segmentOrdinal = 0
     private lastSegmentEndMs = 0
     private cueUntilMs = 0 // a spoken quote cue is active until this transcript time
 
@@ -92,8 +98,9 @@ export class QuoteMatcher {
     // the last emission and WHEN its matched speech ended - a different ref built from the same
     // speech stretch is a reinterpretation (more words narrowed the search), not a second quote
     private lastEmitted: { ref: RefKey; queryToMs: number } | null = null
-    // sustained-path memory: the top ref of the previous segment
-    private previousTop: { key: string; count: number } | null = null
+    // sustained-path memory: the top ref of the previous segment. phraseWeight is the baseline a
+    // held short phrase run must GROW from before it may emit (see the phrase gate in tryFresh)
+    private previousTop: { key: string; count: number; phraseWeight?: number } | null = null
     // cross-book escape hatch memory
     private escapeCandidate: { key: string; count: number } | null = null
 
@@ -119,6 +126,7 @@ export class QuoteMatcher {
 
     reset(): void {
         this.ring = []
+        this.segmentTexts.clear()
         this.tracker = null
         this.previousTop = null
         this.escapeCandidate = null
@@ -140,10 +148,13 @@ export class QuoteMatcher {
 
         if (QUOTE_CUE_REGEX.test(segment.text.toLowerCase())) this.cueUntilMs = segment.endMs + tuning.CUE_WINDOW_MS
 
-        const tokens = tokenizeTranscript(segment.text).slice(0, tuning.SEGMENT_TOKEN_CAP)
-        for (const token of tokens) this.ring.push({ token, endMs: segment.endMs })
+        const tokens = tokenizeTranscriptWithSpans(segment.text).slice(0, tuning.SEGMENT_TOKEN_CAP)
+        const seg = this.segmentOrdinal++
+        if (tokens.length) this.segmentTexts.set(seg, segment.text)
+        for (const token of tokens) this.ring.push({ token: token.token, endMs: segment.endMs, seg, from: token.from, to: token.to })
         this.ring = this.ring.filter((entry) => segment.endMs - entry.endMs <= tuning.WINDOW_MAX_AGE_MS)
         if (this.ring.length > tuning.WINDOW_TOKENS) this.ring = this.ring.slice(-tuning.WINDOW_TOKENS)
+        this.pruneSegmentTexts()
         if (!tokens.length) return []
 
         // tracker expiry (measured on transcript time, so tests can drive the clock)
@@ -334,7 +345,9 @@ export class QuoteMatcher {
         const informativeOk = a.density >= tuning.CONT_DENSITY && a.coverage >= tuning.CONT_COVERAGE && a.matchedInformative >= tuning.CONT_MIN_INFORMATIVE && a.matchedWeight >= tuning.CONT_MIN_WEIGHT
         if (!informativeOk && !this.verbatimContinuation(candidate)) return null
 
-        const emission = this.emit(candidate, "high", "continuation", nowMs)
+        // the seed confidence carries: a MEDIUM suggestion's relaxed-floor continuations must not
+        // chain into auto-projected HIGHs the original evidence never earned
+        const emission = this.emit(candidate, this.tracker.seedConfidence, "continuation", nowMs)
         return emission
     }
 
@@ -379,6 +392,7 @@ export class QuoteMatcher {
         }
 
         const key = refKey(this.refOf(top))
+        const cued = nowMs <= this.cueUntilMs
 
         // a distinctive contiguous fragment is evidence in itself ("and there was light") - the
         // speaker quotes a phrase and reads the REST from the projection, so the full-recitation
@@ -386,11 +400,26 @@ export class QuoteMatcher {
         const phrase = phraseEvidence(top.align, tuning)
 
         let confidence = classify(top.align, tuning)
-        if (!confidence && phrase) confidence = top.align.bestRunWeight >= tuning.PHRASE_HIGH_WEIGHT ? "high" : "medium"
+        if (!confidence && phrase) {
+            // a 3-4 word run is often just conversational collocation ("are going to inherit",
+            // "dont know whether ... see") - alone it proves nothing. It emits only in context:
+            // announced by a cue, spoken inside the anchored passage, or GROWING as the speaker
+            // keeps quoting the verse. Junk runs re-score identically and quietly age out
+            const shortRun = top.align.bestRunLength < tuning.PHRASE_SHOT_MIN_RUN
+            if (shortRun && !cued && top.zone > 1) {
+                const held = this.previousTop?.key === key ? this.previousTop : null
+                const grown = held?.phraseWeight !== undefined && top.align.bestRunWeight >= held.phraseWeight + tuning.PHRASE_GROWTH_MIN
+                if (!grown) {
+                    this.previousTop = { key, count: held ? held.count + 1 : 1, phraseWeight: held?.phraseWeight !== undefined ? held.phraseWeight : top.align.bestRunWeight }
+                    return []
+                }
+            }
+            confidence = top.align.bestRunWeight >= tuning.PHRASE_HIGH_WEIGHT ? "high" : "medium"
+        }
         if (!confidence) {
             // the top ref earns sustain credit while its evidence is still building - the floors
             // stay the safety bar, sustain only proves the window keeps pointing at the same verse
-            this.previousTop = { key, count: this.previousTop?.key === key ? this.previousTop.count + 1 : 1 }
+            this.bumpPreviousTop(key)
             return []
         }
 
@@ -409,7 +438,7 @@ export class QuoteMatcher {
                 if (bestAnchored) return this.emitInstead(bestAnchored, nowMs)
                 // not enough informative evidence for a cross-book jump YET - the wait still
                 // counts as sustain, so the emission lands right when the evidence does
-                this.previousTop = { key, count: this.previousTop?.key === key ? this.previousTop.count + 1 : 1 }
+                this.bumpPreviousTop(key)
                 return []
             }
             if (this.tracker && nowMs - this.tracker.lastAdvanceMs <= tuning.TRACKER_TTL_MS) {
@@ -421,7 +450,7 @@ export class QuoteMatcher {
                 if (escapes < 2) {
                     // escape counting doubles as sustain credit, so the eventual emission is not
                     // delayed a second time by the sustain wait it already served here
-                    this.previousTop = { key, count: this.previousTop?.key === key ? this.previousTop.count + 1 : 1 }
+                    this.bumpPreviousTop(key)
                     return []
                 }
             }
@@ -435,7 +464,7 @@ export class QuoteMatcher {
                 already.upgraded = true
                 return [this.emit(top, "high", "upgrade", nowMs, true)]
             }
-            this.previousTop = { key, count: (this.previousTop?.key === key ? this.previousTop.count : 0) + 1 }
+            this.bumpPreviousTop(key)
             return []
         }
 
@@ -445,9 +474,7 @@ export class QuoteMatcher {
         // (parallel passages, liturgical formulas) - ambiguity waits for the sustain to settle it
         const singleShot = top.align.matchedInformative >= tuning.SINGLE_SHOT_INFORMATIVE && top.align.matchedWeight >= tuning.SINGLE_SHOT_WEIGHT && top.align.score >= tuning.EMIT_HIGH
         const phraseShot = phrase && !candidates.some((candidate) => candidate !== top && !sameRef(candidate, top) && phraseEvidence(candidate.align, tuning) && candidate.align.bestRunWeight >= top.align.bestRunWeight - tuning.PHRASE_RIVAL_MARGIN)
-        const cued = nowMs <= this.cueUntilMs
-        const sustained = this.previousTop?.key === key ? this.previousTop.count + 1 : 1
-        this.previousTop = { key, count: sustained }
+        const sustained = this.bumpPreviousTop(key)
 
         if (!singleShot && !cued && !phraseShot && sustained < tuning.SUSTAIN_SEGMENTS) return []
 
@@ -482,11 +509,22 @@ export class QuoteMatcher {
 
         const singleShot = candidate.align.matchedInformative >= tuning.SINGLE_SHOT_INFORMATIVE && candidate.align.matchedWeight >= tuning.SINGLE_SHOT_WEIGHT && candidate.align.score >= tuning.EMIT_HIGH
         const cued = nowMs <= this.cueUntilMs
-        const sustained = this.previousTop?.key === key ? this.previousTop.count + 1 : 1
-        this.previousTop = { key, count: sustained }
+        const sustained = this.bumpPreviousTop(key)
         if (!singleShot && !cued && sustained < tuning.SUSTAIN_SEGMENTS) return []
 
         return [this.emit(candidate, confidence, "fresh", nowMs)]
+    }
+
+    /**
+     * Sustain bookkeeping: bump the consecutive-top count for a ref, PRESERVING any held phrase
+     * baseline - the growth gate reads previousTop.phraseWeight on a later segment, and a write
+     * that drops it would re-baseline a held fragment at its already-grown weight (deadlock).
+     */
+    private bumpPreviousTop(key: string): number {
+        const held = this.previousTop?.key === key ? this.previousTop : null
+        const count = held ? held.count + 1 : 1
+        this.previousTop = { key, count, phraseWeight: held?.phraseWeight }
+        return count
     }
 
     private refOf(candidate: Candidate): RefKey {
@@ -513,15 +551,51 @@ export class QuoteMatcher {
             book: ref.book,
             chapter: candidate.index.chapter[candidate.ordinal],
             verseOrdinal: candidate.ordinal,
-            lastAdvanceMs: nowMs
+            lastAdvanceMs: nowMs,
+            seedConfidence: confidence
         }
         this.previousTop = null
         this.escapeCandidate = null
         this.lastEmitted = { ref, queryToMs: this.ring[candidate.align.queryTo]?.endMs ?? nowMs }
 
-        const quoteTokens = this.ring.slice(candidate.align.queryFrom, candidate.align.queryTo + 1).map((entry) => entry.token)
+        // a phrase-only emission quotes the run itself - the full alignment span is stretched by
+        // scattered common-word matches and would show unrelated speech around the fragment
+        const a = candidate.align
+        const phraseOnly = a.bestRunQueryFrom >= 0 && !classify(a, this.tuning) && phraseEvidence(a, this.tuning)
+        const quoteText = phraseOnly ? this.quoteTextFor(a.bestRunQueryFrom, a.bestRunQueryTo) : this.quoteTextFor(a.queryFrom, a.queryTo)
 
-        return { ...ref, confidence, translationId: candidate.index.translationId, quoteText: quoteTokens.join(" "), kind }
+        return { ...ref, confidence, translationId: candidate.index.translationId, quoteText, kind }
+    }
+
+    /** The words as actually spoken (casing/punctuation intact), sliced from the raw segment texts. */
+    private quoteTextFor(from: number, to: number): string {
+        const entries = this.ring.slice(from, to + 1)
+        if (!entries.length) return ""
+
+        const parts: string[] = []
+        let currentSeg = -1
+        let sliceFrom = 0
+        let sliceTo = 0
+        for (const entry of entries) {
+            if (entry.seg !== currentSeg) {
+                if (currentSeg >= 0) parts.push((this.segmentTexts.get(currentSeg) || "").slice(sliceFrom, sliceTo))
+                currentSeg = entry.seg
+                sliceFrom = entry.from
+            }
+            sliceTo = entry.to
+        }
+        if (currentSeg >= 0) parts.push((this.segmentTexts.get(currentSeg) || "").slice(sliceFrom, sliceTo))
+
+        // raw text can only be missing on stale state - normalized tokens beat an empty quote
+        return parts.filter((part) => part.length).join(" ") || entries.map((entry) => entry.token).join(" ")
+    }
+
+    // the ring holds at most WINDOW_TOKENS entries - drop the raw texts nothing references anymore
+    private pruneSegmentTexts(): void {
+        const oldest = this.ring.length ? this.ring[0].seg : this.segmentOrdinal
+        for (const seg of this.segmentTexts.keys()) {
+            if (seg < oldest) this.segmentTexts.delete(seg)
+        }
     }
 }
 

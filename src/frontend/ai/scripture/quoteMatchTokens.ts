@@ -40,32 +40,60 @@ export function tokenizeVerseText(cleanText: string): string[] {
     return baseTokens(cleanText)
 }
 
+/** A normalized transcript token plus the character span it came from in the raw segment text. */
+export interface SpannedToken {
+    token: string
+    from: number
+    to: number
+}
+
 /**
- * Tokenize a transcript segment. Digits 1-99 are spelled out so a spoken quantity matches the
- * written verse ("5 barley loaves" -> "five"); anything larger becomes a placeholder that keeps
- * its position in the stream (an honest span breaker) but never matches verse text.
+ * Tokenize a transcript segment, keeping each token's source span so the UI can show the raw
+ * spoken words (casing and punctuation intact) instead of normalized token soup. Digits 1-99 are
+ * spelled out so a spoken quantity matches the written verse ("5 barley loaves" -> "five");
+ * anything larger becomes a placeholder that keeps its position in the stream (an honest span
+ * breaker) but never matches verse text. Spelled-out digit parts share their source span.
  */
-export function tokenizeTranscript(text: string): string[] {
-    const out: string[] = []
-    for (const token of baseTokens(text)) {
+export function tokenizeTranscriptWithSpans(text: string): SpannedToken[] {
+    const out: SpannedToken[] = []
+    const push = (token: string, from: number, to: number) => out.push({ token, from, to })
+
+    // word runs are matched on the RAW text so spans stay valid against it - each run then
+    // normalizes through the same steps as baseTokens (marks are kept in the run so a
+    // diacritic-carrying word stays one chunk before the fold)
+    for (const match of text.matchAll(/[\p{L}\p{M}\p{N}']+/gu)) {
+        const from = match.index ?? 0
+        const to = from + match[0].length
+        const token = match[0]
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, "")
+            .replace(/'/g, "")
+        if (token.length < 1 || (token.length === 1 && !/^\d$/.test(token))) continue
+
         if (!/^\d+$/.test(token)) {
-            out.push(token)
+            push(token, from, to)
             continue
         }
 
         const value = parseInt(token, 10)
         if (value < 1 || value > 99) {
-            out.push(NUMBER_PLACEHOLDER)
+            push(NUMBER_PLACEHOLDER, from, to)
             continue
         }
-        if (value < 10) out.push(NUMBER_UNITS[value])
-        else if (value < 20) out.push(NUMBER_TEENS[value - 10])
+        if (value < 10) push(NUMBER_UNITS[value], from, to)
+        else if (value < 20) push(NUMBER_TEENS[value - 10], from, to)
         else {
-            out.push(NUMBER_TENS[Math.floor(value / 10)])
-            if (value % 10) out.push(NUMBER_UNITS[value % 10])
+            push(NUMBER_TENS[Math.floor(value / 10)], from, to)
+            if (value % 10) push(NUMBER_UNITS[value % 10], from, to)
         }
     }
     return out
+}
+
+/** Tokenize a transcript segment (span-free view of tokenizeTranscriptWithSpans). */
+export function tokenizeTranscript(text: string): string[] {
+    return tokenizeTranscriptWithSpans(text).map((entry) => entry.token)
 }
 
 /** Canonical candidate-lookup key: the first 4 characters (shorter tokens are their own key). */
@@ -134,6 +162,9 @@ export function cachedPhoneticKey(token: string): string | null {
     return key
 }
 
+// the tails the 3-char stem rule accepts: archaic verb/pronoun endings & plain inflections
+const STEM_TAILS = new Set(["e", "s", "t", "st", "th", "es", "ed", "ee"])
+
 function commonPrefixLength(a: string, b: string): number {
     const max = Math.min(a.length, b.length)
     let i = 0
@@ -161,11 +192,16 @@ export function tokenGrade(a: string, b: string, allowPhonetic = false): number 
         if (a.length - cpl <= 4 && b.length - cpl <= 4) return 0.75
     }
 
-    // short stems with an archaic tail: one token IS the other's first three letters with at most
-    // two beyond ("has"/"hast", "was"/"wast") - live speech drops KJV endings constantly, and the
-    // bible search's substring matching treats these as equal. Kept below 0.9 so such a pair can
-    // never be a phrase run's distinctiveness peak
-    if (cpl === 3 && (cpl === a.length || cpl === b.length) && Math.max(a.length, b.length) - cpl <= 2) return 0.8
+    // short stems with an archaic/inflection tail: one token IS the other's first three letters
+    // ("has"/"hast", "the"/"thee", "day"/"days") - live speech drops KJV endings constantly, and
+    // the bible search's substring matching treats these as equal. The tail itself must be a real
+    // English/KJV ending: an arbitrary 3-char ASR fragment sharing three letters ("its"/"itsly")
+    // is transcription debris, not a stem. Kept below 0.9 so such a pair can never be a phrase
+    // run's distinctiveness peak
+    if (cpl === 3 && (cpl === a.length || cpl === b.length) && Math.max(a.length, b.length) - cpl <= 2) {
+        const tail = (a.length > b.length ? a : b).slice(cpl)
+        if (STEM_TAILS.has(tail)) return 0.8
+    }
 
     if (allowPhonetic && a.length >= PHONETIC_MIN_LEN && b.length >= PHONETIC_MIN_LEN && Math.abs(a.length - b.length) <= 3) {
         const keyA = cachedPhoneticKey(a)
