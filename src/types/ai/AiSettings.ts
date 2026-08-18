@@ -42,6 +42,7 @@ interface AiScriptureSettings {
     autoProjectQuoted?: boolean
     searchBibles?: string[]
     displayTranslation?: "drawer" | "matched"
+    followInDrawer?: boolean // projections also navigate the drawer's scripture view (default on)
     micDeviceId?: string
     provider?: string
     model?: string // legacy single model value (kept as fallback)

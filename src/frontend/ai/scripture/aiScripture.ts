@@ -27,6 +27,34 @@ function getSettings() {
     return get(ai).scripture || {}
 }
 
+/** The tier-2 LLM config as it stands right now: a chosen provider whose key is saved, or null. */
+async function resolveSessionLlm(): Promise<AiScriptureDetectionConfig["llm"]> {
+    const settings = getSettings()
+    const provider = get(ai).llm?.provider || settings.provider || "none"
+    if (provider === "none") return null
+
+    const status = await requestMain(Main.AI_GET_STATUS, { engineId: provider })
+    if (!status?.[provider]?.ready) return null
+
+    // legacy "model" values are shared across providers - only use one that belongs to this provider
+    const legacyModel = settings.model && AI_PROVIDER_MODELS[provider].models.some((a) => a.id === settings.model) ? settings.model : ""
+    const model = get(ai).llm?.model || settings.customModel || settings.models?.[provider] || legacyModel || "" // providers default internally on empty
+    return { provider, model }
+}
+
+/**
+ * The AI provider was configured mid-session (key saved, provider/model picked) - arm or update
+ * tier 2 in the running session instead of making the user restart listening. No-op otherwise.
+ */
+export async function refreshSessionLlm(): Promise<void> {
+    if (!sessionActive) return
+    const llm = await resolveSessionLlm()
+    if (!sessionActive) return
+
+    sendMain(Main.AI_SCRIPTURE_LLM, { llm })
+    aiScriptureStatus.update((status) => (status.state === "listening" || status.state === "llm_paused" ? { ...status, state: "listening", keyless: !llm } : status))
+}
+
 // engine/session error codes -> locale keys (unknown codes pass through as-is)
 const ERROR_LANG_KEYS: { [code: string]: string } = {
     no_scripture: "ai_scripture.error_no_scripture",
@@ -106,17 +134,7 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
 
     // "none" is the explicit STT-only choice - and even a chosen provider only travels when its
     // key is saved (raw keys never leave the electron process)
-    const provider = get(ai).llm?.provider || settings.provider || "none"
-    let llm: AiScriptureDetectionConfig["llm"] = null
-    if (provider !== "none") {
-        const status = await requestMain(Main.AI_GET_STATUS, { engineId: provider })
-        if (status?.[provider]?.ready) {
-            // legacy "model" values are shared across providers - only use one that belongs to this provider
-            const legacyModel = settings.model && AI_PROVIDER_MODELS[provider].models.some((a) => a.id === settings.model) ? settings.model : ""
-            const model = get(ai).llm?.model || settings.customModel || settings.models?.[provider] || legacyModel || "" // providers default internally on empty
-            llm = { provider, model }
-        }
-    }
+    const llm = await resolveSessionLlm()
 
     const detectionConfig: AiScriptureDetectionConfig = {
         books,
@@ -228,6 +246,16 @@ function stopSession(): void {
     aiScriptureAutoPaused.set(false)
     aiScriptureStatus.set({ state: "stopped" })
 }
+
+// a provider/model change in settings re-arms the running session's tier 2 on the spot
+// (key saves don't touch this store - LlmOptions calls refreshSessionLlm directly)
+let lastLlmConfigKey = ""
+ai.subscribe((value) => {
+    const key = `${value?.llm?.provider || ""}|${value?.llm?.model || ""}`
+    if (key === lastLlmConfigKey) return
+    lastLlmConfigKey = key
+    if (sessionActive) void refreshSessionLlm()
+})
 
 // a runtime engine failure in the electron process ends the whole session
 aiStatus.subscribe((status) => {
@@ -597,6 +625,11 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
     for (let v = verseStart; v <= verseEnd; v++) verses.push(v)
 
     await projectResolved(targetId, book, chapter, verses)
+
+    // follow along in the drawer so the operator tracks the passage - without ever yanking
+    // them off whatever drawer tab they are actually working in
+    if (settings.followInDrawer !== false) void showInDrawer(detection, false)
+
     return true
 }
 
@@ -842,7 +875,7 @@ export function resumeAutoProjection(): void {
     aiScriptureAutoPaused.set(false)
 }
 
-export async function showInDrawer(detection: DetectedReference): Promise<void> {
+export async function showInDrawer(detection: DetectedReference, focusTab = true): Promise<void> {
     const verses: number[] = []
     for (let v = detection.verseStart; v <= Math.max(detection.verseStart, detection.verseEnd); v++) verses.push(v)
 
@@ -865,7 +898,9 @@ export async function showInDrawer(detection: DetectedReference): Promise<void> 
     }
 
     openScripture.set({ book, chapter: detection.chapter, verses: [verses], play: false })
-    activeDrawerTab.set("scripture")
+    // the automatic follow must never yank the operator away from another drawer tab -
+    // only the explicit "show in drawer" button switches tabs
+    if (focusTab) activeDrawerTab.set("scripture")
 }
 
 // MANUAL OVERRIDE WATCHER

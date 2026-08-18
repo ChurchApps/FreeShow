@@ -501,6 +501,13 @@ describe("DetectionCoordinator", () => {
                 await vi.advanceTimersByTimeAsync(0)
                 expect(mockDetectScripture).toHaveBeenCalledTimes(2)
 
+                // reconfiguring the provider mid-session re-arms tier 2 on the spot
+                mockDetectScripture.mockResolvedValue({ references: [] })
+                coordinator.updateLlm({ provider: "gemini", model: "gemini-2.5-flash" })
+                coordinator.onTranscriptSegment(seg(words(16), 18_000))
+                await vi.advanceTimersByTimeAsync(0)
+                expect(mockDetectScripture).toHaveBeenCalledTimes(3)
+
                 coordinator.stop()
             }
         })

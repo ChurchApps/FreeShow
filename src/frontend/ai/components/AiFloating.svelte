@@ -5,7 +5,7 @@
     import { getShortBibleName } from "../../components/drawer/bible/scripture"
     import T from "../../components/helpers/T.svelte"
     import MaterialButton from "../../components/inputs/MaterialButton.svelte"
-    import { activePage, ai, aiQuoteMatchActive, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureInterim, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, language, outLocked, scriptures, settingsTab } from "../../stores"
+    import { activePage, ai, aiQuoteMatchActive, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureInterim, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, drawerTabsData, language, outLocked, scriptures, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../scripture/aiScripture"
     import { audioLevelStore, resolveSttEngine, SpeechToText } from "../stt/stt"
@@ -197,11 +197,15 @@
 
     $: suggestions = scriptureEnabled ? $aiScriptureSuggestions : []
 
+    // spoken references carry no matchedBibleId (nothing was matched against a text) - the tag
+    // then names the drawer translation, which is what the detection will project in
+    $: drawerBibleId = $drawerTabsData.scripture?.activeSubTab || ""
     function getReferenceLabel(suggestion: DetectedReference, _updater: any = null) {
         let label = `${suggestion.book} ${suggestion.chapter}:${suggestion.verseStart}`
         if (suggestion.verseEnd > suggestion.verseStart) label += `-${suggestion.verseEnd}`
 
-        const bible = suggestion.matchedBibleId ? $scriptures[suggestion.matchedBibleId] : null
+        const bibleId = suggestion.matchedBibleId || drawerBibleId
+        const bible = bibleId ? $scriptures[bibleId] : null
         if (bible) label += ` (${getShortBibleName(bible.customName || bible.name || "")})`
 
         return label

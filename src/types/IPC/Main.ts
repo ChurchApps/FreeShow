@@ -189,6 +189,7 @@ export enum Main {
     AI_SCRIPTURE_START = "AI_SCRIPTURE_START",
     AI_SCRIPTURE_STOP = "AI_SCRIPTURE_STOP",
     AI_SCRIPTURE_CONTEXT = "AI_SCRIPTURE_CONTEXT",
+    AI_SCRIPTURE_LLM = "AI_SCRIPTURE_LLM",
     AI_SET_KEY = "AI_SET_KEY",
     AI_TEST_CONNECTION = "AI_TEST_CONNECTION"
 }
@@ -303,6 +304,7 @@ export interface MainSendPayloads {
     [Main.AI_SCRIPTURE_START]: AiScriptureDetectionConfig
     [Main.AI_SCRIPTURE_STOP]: undefined
     [Main.AI_SCRIPTURE_CONTEXT]: { book: string; bookNumber: number; chapter: number; verseStart: number; verseEnd: number }
+    [Main.AI_SCRIPTURE_LLM]: { llm: AiScriptureDetectionConfig["llm"] }
     [Main.AI_SET_KEY]: { providerId: string; key: string }
     [Main.AI_TEST_CONNECTION]: { providerId: string; model: string }
 }

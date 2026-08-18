@@ -123,6 +123,8 @@
     {/if}
 
     <MaterialToggleSwitch label="ai_scripture.auto_project_quoted" checked={settings.autoProjectQuoted === true} defaultValue={false} on:change={(e) => update("autoProjectQuoted", e.detail)} />
+
+    <MaterialToggleSwitch label="ai_scripture.follow_in_drawer" checked={settings.followInDrawer !== false} defaultValue={true} on:change={(e) => update("followInDrawer", e.detail)} />
     <p class="faded hint"><T id="ai_scripture.auto_project_quoted_hint" /></p>
 
     <MaterialToggleSwitch label="ai_scripture.voice_commands" checked={settings.voiceCommands === true} defaultValue={false} on:change={(e) => update("voiceCommands", e.detail)} />

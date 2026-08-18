@@ -12,6 +12,7 @@
     import { ai } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { AI_PROVIDER_MODELS, aiErrorText } from "../../models"
+    import { refreshSessionLlm } from "../../scripture/aiScripture"
 
     $: llmOptions = $ai.llm || {}
 
@@ -66,13 +67,20 @@
         sendMain(Main.AI_SET_KEY, { providerId: provider, key: keyInput })
         keyInput = ""
         testResult = null
-        setTimeout(getStatus, 200)
+        // a listening session picks the key up right away - no restart needed
+        setTimeout(() => {
+            getStatus()
+            refreshSessionLlm()
+        }, 200)
     }
 
     function removeKey() {
         sendMain(Main.AI_SET_KEY, { providerId: provider, key: "" })
         testResult = null
-        setTimeout(getStatus, 200)
+        setTimeout(() => {
+            getStatus()
+            refreshSessionLlm()
+        }, 200)
     }
 
     // local ollama needs no API key - just the selected model pulled

@@ -88,6 +88,12 @@ export function stopScriptureDetection() {
     lastAnchorAtMs = 0
 }
 
+// the AI provider was configured mid-session (key saved, provider/model picked) - arm or update
+// tier 2 without restarting the listening session
+export function updateScriptureLlm(llm: AiScriptureDetectionConfig["llm"]) {
+    scriptureCoordinator?.updateLlm(llm)
+}
+
 // the renderer reports the passage currently live on the output, so bare "verse N" mentions resolve against it
 export function updateScriptureDetectionContext(data: AiScriptureAnchor) {
     lastAnchorAtMs = Date.now()

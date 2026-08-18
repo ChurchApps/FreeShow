@@ -550,6 +550,14 @@ export class DetectionCoordinator {
     }
 
     // replace the anchor passage (what is live on the output right now)
+    /** The provider was (re)configured mid-session - arm tier 2 fresh, clearing any pause/backoff. */
+    updateLlm(llm: DetectionCoordinatorOptions["llm"]): void {
+        this.opts.llm = llm
+        this.llmStopped = false
+        this.llmPermanentFailures = 0
+        this.llmCooldownUntil = 0
+    }
+
     updateContext(ctx: AiScriptureAnchor): void {
         this.anchor = ctx
     }
