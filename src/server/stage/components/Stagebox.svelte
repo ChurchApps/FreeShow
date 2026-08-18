@@ -9,6 +9,7 @@
     import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
     import { getItemText } from "../helpers/textStyle"
     import Clock from "../items/Clock.svelte"
+    import MetronomeVisualizer from "../items/MetronomeVisualizer.svelte"
     import SlideNotes from "../items/SlideNotes.svelte"
     import SlideProgress from "../items/SlideProgress.svelte"
     import SlideText from "../items/SlideText.svelte"
@@ -206,6 +207,8 @@
                 <Clock autoSize={item.auto !== false ? autoSize : fontSize} style={false} {...item.clock} />
             {:else if item.type === "timer"}
                 <Timer {item} id={item.timer?.id || item.timerId || firstTimerId || ""} {today} style={item.auto === false ? "" : `font-size: ${item.auto !== false ? autoSize : fontSize}px;`} />
+            {:else if item.type === "metronome" || id.includes("metronome")}
+                <MetronomeVisualizer isItem />
             {:else if item.type === "media"}
                 <MediaOutput path={$media[item.src] || item.src} />
             {:else if item.type === "camera"}

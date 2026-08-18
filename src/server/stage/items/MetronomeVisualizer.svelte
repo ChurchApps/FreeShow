@@ -1,19 +1,19 @@
 <script lang="ts">
-    import { metronome, metronomeTimer } from "../../../stores"
+    import { metronome, metronomeTimer } from "../util/stores"
 
     export let isItem: boolean = false
 
     $: data = $metronome
     $: values = $metronomeTimer
 
-    $: beat = values.beat || 0
+    $: beat = values?.beat || 0
     $: beats = data?.beats || 4
 
     $: beatsPerSecond = 60 / (data?.tempo || 120)
 
-    $: timeUntilNext = values.timeToNext || 0 // seconds
-    $: nextTime = timeUntilNext + beatsPerSecond - preScheduleTime
+    $: timeUntilNext = values?.timeToNext || 0 // seconds
     const preScheduleTime = 0.1
+    $: nextTime = timeUntilNext + beatsPerSecond - preScheduleTime
 </script>
 
 <section class:isItem>
@@ -77,9 +77,6 @@
     }
     .beats .bar.active {
         background-color: var(--primary);
-
-        /* background-color: var(--secondary);
-        color: var(--secondary-text); */
     }
 
     section.isItem .beats .bar {
