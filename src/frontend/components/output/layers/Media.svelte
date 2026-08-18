@@ -23,7 +23,7 @@
     $: type = data.type || getMediaType(extension)
 
     let currentSyncPath = ""
-    $: if (path) {
+    $: if (typeof path === "string") {
         if (path.startsWith("http")) currentSyncPath = path
         else currentSyncPath = path
     }
