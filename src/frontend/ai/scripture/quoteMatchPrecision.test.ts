@@ -83,6 +83,43 @@ describe("isolated short collocations never emit (the false-detection cards)", (
     })
 })
 
+describe("liturgical formulas never emit on repetition", () => {
+    // the formula corpus: the same prayer phrase lives in THREE verses (as it does in acts),
+    // plus a verse it uniquely continues into. Shaped like a real bible so these tests run
+    // PRODUCTION tuning: heavy filler stretches the idf range (informative bar at the absolute
+    // 3.0) and carries the common function words (in/of/we/every stay stopwords); the formula
+    // verses sit in canon order with benign neighbors, so no spill window contains another
+    // formula verse's text
+    const FORMULA_CORPUS: IndexableVerse[] = [
+        ...CORPUS,
+        verse(44, 3, 6, "in the name of jesus christ of nazareth rise up and walk among the people rejoicing"),
+        verse(44, 3, 7, "and he took him by the right hand and lifted him and his feet received strength"),
+        verse(44, 4, 10, "know this by the name of jesus christ the nazarene whom you crucified this man stands healed"),
+        verse(44, 4, 11, "he is the stone that was rejected by you the builders which has become the cornerstone"),
+        verse(44, 10, 48, "so he commanded them to be baptized in the name of jesus christ then they asked him to stay"),
+        verse(44, 10, 49, "and they remained there together for certain days sharing every meal we could offer them"),
+        ...Array.from({ length: 400 }, (_, i) => verse(4, (i % 36) + 1, Math.floor(i / 36) + 2, `wilderness marker${i} rests in the shade of the ancient wells and every flock${i} we tend draws steady water in the heat of the day`))
+    ]
+
+    it("holds 'in the name of jesus christ' however often the prayer repeats it", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("test", FORMULA_CORPUS)])
+        expect(matcher.onSegment(seg("we break every chain in the name of jesus christ"))).toEqual([])
+        expect(matcher.onSegment(seg("we declare victory in the name of jesus christ amen"))).toEqual([])
+        expect(matcher.onSegment(seg("in the name of jesus christ we pray"))).toEqual([])
+    })
+
+    it("emits once the speaker continues into one specific verse (one confirming segment later)", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("test", FORMULA_CORPUS)])
+        expect(matcher.onSegment(seg("in the name of jesus christ"))).toEqual([])
+        // the recitation begins - held one segment (the speaker was praying moments ago)...
+        expect(matcher.onSegment(seg("in the name of jesus christ of nazareth rise up and walk"))).toEqual([])
+        // ...and lands as it continues
+        const out = matcher.onSegment(seg("rise up and walk among the people rejoicing"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 44, chapter: 3, verseStart: 6 })
+    })
+})
+
 describe("genuine fragments still emit (the recall contract)", () => {
     it("emits an announced fragment immediately (cue path)", () => {
         const matcher = new QuoteMatcher([index()], FRAGP)

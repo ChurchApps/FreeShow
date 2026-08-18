@@ -370,9 +370,11 @@ export class QuoteMatcher {
         if (!top) return []
 
         // near-tied candidates need more than the span-relative score to rank: real evidence
-        // (floors/phrase) beats a junk coincidence outright, and among substantial candidates the
-        // one matching the EARLIEST transcript stretch wins - a verse and the neighbor a reading
-        // flowed into tie at ~1.0, and the earlier stretch is where the reading started
+        // (floors/phrase) beats a junk coincidence outright; a candidate clearing the FULL floors
+        // beats one carrying only phrase evidence (the speech recites 3:6 whole while 10:48 merely
+        // shares its opening formula); and among equals the one matching the EARLIEST transcript
+        // stretch wins - a verse and the neighbor a reading flowed into tie at ~1.0, and the
+        // earlier stretch is where the reading started
         const bandTop = candidates[0].effectiveScore
         for (const candidate of candidates) {
             if (candidate === top) continue
@@ -381,7 +383,14 @@ export class QuoteMatcher {
                 top = candidate
                 continue
             }
-            if (candidate.substantial === top.substantial && candidate.substantial && candidate.align.queryFrom < top.align.queryFrom) top = candidate
+            if (!candidate.substantial || !top.substantial) continue
+            const candidateClassified = classify(candidate.align, tuning) !== null
+            const topClassified = classify(top.align, tuning) !== null
+            if (candidateClassified && !topClassified) {
+                top = candidate
+                continue
+            }
+            if (candidateClassified === topClassified && candidate.align.queryFrom < top.align.queryFrom) top = candidate
         }
 
         // a verse the reading already moved past keeps accumulating evidence (the window still
@@ -402,15 +411,23 @@ export class QuoteMatcher {
         let confidence = classify(top.align, tuning)
         if (!confidence && phrase) {
             // a 3-4 word run is often just conversational collocation ("are going to inherit",
-            // "dont know whether ... see") - alone it proves nothing. It emits only in context:
-            // announced by a cue, spoken inside the anchored passage, or GROWING as the speaker
-            // keeps quoting the verse. Junk runs re-score identically and quietly age out
+            // "dont know whether ... see") - alone it proves nothing. And a run of ANY length that
+            // several verses share is a liturgical formula ("in the name of jesus christ" - the
+            // speaker is praying, not quoting one verse), which repetition can never disambiguate.
+            // Either emits only in context: announced by a cue, spoken inside the anchored passage,
+            // or GROWING as the speaker continues into one specific verse. Junk and formulas
+            // re-score identically every segment and quietly age out
             const shortRun = top.align.bestRunLength < tuning.PHRASE_SHOT_MIN_RUN
-            if (shortRun && !cued && top.zone > 1) {
+            const rivaled = candidates.some((candidate) => candidate !== top && !sameRef(candidate, top) && phraseEvidence(candidate.align, tuning) && candidate.align.bestRunWeight >= top.align.bestRunWeight - tuning.PHRASE_RIVAL_MARGIN)
+            if ((shortRun || rivaled) && !cued && top.zone > 1) {
                 const held = this.previousTop?.key === key ? this.previousTop : null
                 const grown = held?.phraseWeight !== undefined && top.align.bestRunWeight >= held.phraseWeight + tuning.PHRASE_GROWTH_MIN
                 if (!grown) {
                     this.previousTop = { key, count: held ? held.count + 1 : 1, phraseWeight: held?.phraseWeight !== undefined ? held.phraseWeight : top.align.bestRunWeight }
+                    // the formula's echo may be drowning a verse the words actually RECITE - a
+                    // candidate clearing the full floors still gets its (sustain-gated) shot
+                    const recited = candidates.find((candidate) => candidate !== top && !sameRef(candidate, top) && classify(candidate.align, tuning))
+                    if (recited) return this.emitInstead(recited, nowMs)
                     return []
                 }
             }
