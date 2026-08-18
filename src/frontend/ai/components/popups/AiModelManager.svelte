@@ -3,6 +3,7 @@
     import MaterialDropdown from "../../../components/inputs/MaterialDropdown.svelte"
     import { ai, language } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { resolveSttEngine } from "../../stt/stt"
     import LlmOptions from "./LlmOptions.svelte"
     import NemotronOptions from "./NemotronOptions.svelte"
     import WhisperOptions from "./WhisperOptions.svelte"
@@ -25,11 +26,11 @@
     }
 
     const sttEngines = [
-        { value: "whisper", label: "Whisper", data: translateText("ai.engine_whisper_hint") },
         // only show if any English language is selected, as this only supports English:
-        ...($language?.includes("en") || $ai.stt?.engine === "nemotron" ? [{ value: "nemotron", label: "Nemotron", data: translateText("ai.engine_nemotron_hint") }] : [])
+        ...($language?.includes("en") || $ai.stt?.engine === "nemotron" ? [{ value: "nemotron", label: "Nemotron", data: translateText("ai.engine_nemotron_hint") }] : []),
+        { value: "whisper", label: "Whisper", data: translateText("ai.engine_whisper_hint") }
     ]
-    $: selectedSttEngine = sttOptions.engine || sttEngines[0].value
+    $: selectedSttEngine = sttOptions.engine || resolveSttEngine()
 </script>
 
 <!-- Speech to text -->

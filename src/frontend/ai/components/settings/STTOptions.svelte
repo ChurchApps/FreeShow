@@ -8,7 +8,7 @@
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../../components/inputs/MaterialDropdown.svelte"
     import { activePopup, ai } from "../../../stores"
-    import { SpeechToText } from "../../stt/stt"
+    import { resolveSttEngine, SpeechToText } from "../../stt/stt"
 
     $: options = $ai.stt || {}
 
@@ -48,10 +48,10 @@
     }
 
     const engineOptions = [
-        { value: "whisper", label: "Whisper" },
-        { value: "nemotron", label: "Nemotron" }
+        { value: "nemotron", label: "Nemotron" },
+        { value: "whisper", label: "Whisper" }
     ]
-    $: selectedEngine = options.engine || engineOptions[0].value
+    $: selectedEngine = $ai.stt?.engine || resolveSttEngine()
 </script>
 
 <Title label="ai.transcription" icon="microphone" />

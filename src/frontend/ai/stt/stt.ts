@@ -1,10 +1,23 @@
 import { get, writable } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
 import { requestMain, sendMain } from "../../IPC/main"
-import { ai } from "../../stores"
+import { ai, language } from "../../stores"
 import audioProcessor from "./audioProcessor.ts?worker&url"
 
 export const audioLevelStore = writable<number>(0.0)
+
+// nemotron (english-only) is the default engine on english UIs - whisper otherwise, when
+// interpretation mode is enabled (a whisper-only feature: per-window language detection), or
+// when whisper was configured for non-english speech the streaming model cannot transcribe
+export function resolveSttEngine(): string {
+    const stt = get(ai)?.stt || {}
+    if (stt.engine) return stt.engine
+
+    const whisperOptions = stt.engineOptions?.whisper || {}
+    const interpretation = whisperOptions.interpretationMode === true
+    const englishSpeech = !whisperOptions.language || String(whisperOptions.language).startsWith("en")
+    return get(language)?.includes("en") && !interpretation && englishSpeech ? "nemotron" : "whisper"
+}
 
 type AudioLevelCallback = (level: number) => void
 
@@ -29,11 +42,24 @@ export class SpeechToText {
     // (re)start only the engine - switching whisper <-> nemotron mid-session goes through here,
     // so the capture keeps running and the electron manager just swaps the transcriber
     static async restartEngine(): Promise<{ ok: boolean; error?: string }> {
-        const engine = get(ai)?.stt?.engine || "whisper"
+        const engine = resolveSttEngine()
         const engineOptions = get(ai)?.stt?.engineOptions?.[engine] || {}
         // whisper might need a moment to spin up on first start
         const result = await requestMain(Main.AI_LISTEN_START, { engine, engineOptions }, undefined, 60000)
-        if (!result?.started) return { ok: false, error: result?.error || "start_failed" }
+        if (!result?.started) {
+            // the defaulted pick can be unsupported (sherpa-onnx missing) or simply not downloaded
+            // (the ~660MB model is a manual download) - only an explicit nemotron choice should
+            // surface those errors instead of falling back to whisper
+            const fallbackErrors = ["nemotron_unsupported", "nemotron_model_missing"]
+            if (!get(ai)?.stt?.engine && engine === "nemotron" && fallbackErrors.includes(result?.error || "")) {
+                console.info(`[AI STT] defaulted nemotron unavailable (${result?.error}) - falling back to whisper`)
+                const retry = await requestMain(Main.AI_LISTEN_START, { engine: "whisper", engineOptions: get(ai)?.stt?.engineOptions?.whisper || {} }, undefined, 60000)
+                if (retry?.started) return { ok: true }
+                return { ok: false, error: retry?.error || "start_failed" }
+            }
+
+            return { ok: false, error: result?.error || "start_failed" }
+        }
 
         return { ok: true }
     }
@@ -90,18 +116,21 @@ export class SpeechToText {
     }
 
     static async getMicStream(deviceId: string = ""): Promise<MediaStream | null> {
-        // gain control & noise suppression for better results
+        // capture the feed raw: chromium's telephony-tuned noise suppression eats low-energy
+        // consonants & word tails, and gain control pumps levels - the engines were trained
+        // on unprocessed audio, so with all three off the WebRTC processing chain is bypassed
         const audioConstraints: MediaTrackConstraints = {
             deviceId: deviceId ? { exact: deviceId } : undefined,
             echoCancellation: false,
-            noiseSuppression: true,
-            autoGainControl: true,
-            channelCount: 1,
-            sampleRate: 48000
+            noiseSuppression: false,
+            autoGainControl: false,
+            channelCount: 1
         }
 
         try {
-            return await navigator.mediaDevices.getUserMedia({ audio: audioConstraints })
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints })
+            console.info("[AI STT] mic settings:", stream.getAudioTracks()[0]?.getSettings())
+            return stream
         } catch (err) {
             if (err?.name === "NotReadableError") {
                 sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
@@ -126,7 +155,10 @@ export class SpeechToText {
 
     static async captureAudioContext(stream: MediaStream): Promise<AudioContext | null> {
         try {
-            const ac = new AudioContext({ sampleRate: 48000 })
+            // the context runs at the engines' target rate, so chromium's high-quality sinc
+            // resampler does device rate -> 16kHz upstream (any device rate, 44.1k included)
+            // & the worklet only converts/frames samples - it either honors 16000 or throws
+            const ac = new AudioContext({ sampleRate: 16000 })
             this.ac = ac
 
             // 1. Create source node
@@ -141,17 +173,38 @@ export class SpeechToText {
 
             const dataArray = new Uint8Array(analyserNode.frequencyBinCount)
 
+            // with gain control off the board owns the level - clipping mangles decodes in ways
+            // that read as transcription bugs, so a sustained hot feed gets called out loudly
+            let clippedFrames = 0
+            let clipCheckedFrames = 0
+            let lastClipWarnAt = 0
+
             const updateLevel = () => {
                 if (!this.analyserNode || !this.ac || this.ac !== ac || ac.state === "closed") return
 
                 analyserNode.getByteTimeDomainData(dataArray)
                 let sum = 0
+                let clipped = false
                 for (let i = 0; i < dataArray.length; i++) {
+                    if (dataArray[i] === 0 || dataArray[i] === 255) clipped = true
                     const sample = (dataArray[i] - 128) / 128
                     sum += sample * sample
                 }
                 const rms = Math.sqrt(sum / dataArray.length)
                 this.emitAudioLevel(Math.min(1.0, Math.round(rms * 4.5 * 100) / 100))
+
+                clipCheckedFrames++
+                if (clipped) clippedFrames++
+                if (clipCheckedFrames >= 120) {
+                    // ~2s of frames: >5% carrying full-scale samples means the input is genuinely hot
+                    const now = Date.now()
+                    if (clippedFrames > clipCheckedFrames * 0.05 && now - lastClipWarnAt > 30000) {
+                        lastClipWarnAt = now
+                        console.warn("[AI STT] input is clipping - reduce the microphone/board gain (clipped audio garbles transcription)")
+                    }
+                    clippedFrames = 0
+                    clipCheckedFrames = 0
+                }
 
                 this.animFrameId = requestAnimationFrame(updateLevel)
             }
