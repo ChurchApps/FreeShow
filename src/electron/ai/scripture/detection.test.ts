@@ -19,6 +19,9 @@ const BOOKS = [
     { number: 62, canonNumber: 62, names: ["1 John", "1 Jn"] }
 ]
 
+// Ezra: a 4-letter book name - too short for fuzzy mishearing recovery, covered by the stutter collapse
+const EZRA_BOOKS = [...BOOKS, { number: 15, canonNumber: 15, names: ["Ezra"] }]
+
 describe("normalizeSpokenNumbers", () => {
     it("converts unit/teen/tens words to digits and lowercases", () => {
         expect(normalizeSpokenNumbers("John three sixteen")).toBe("john 3 16")
@@ -44,6 +47,21 @@ describe("normalizeSpokenNumbers", () => {
 
     it("leaves trailing ordinals alone", () => {
         expect(normalizeSpokenNumbers("he came third")).toBe("he came third")
+    })
+
+    it("converts ordinals right before chapter/verse/psalm: 'eighth chapter' -> '8th chapter'", () => {
+        expect(normalizeSpokenNumbers("the eighth chapter of Ezra")).toBe("the 8th chapter of ezra")
+        expect(normalizeSpokenNumbers("the ninth verse of Ezra")).toBe("the 9th verse of ezra")
+        expect(normalizeSpokenNumbers("the twenty-third psalm")).toBe("the 23rd psalm")
+        expect(normalizeSpokenNumbers("the twelfth verse")).toBe("the 12th verse")
+        // a bare ordinal before other words stays a word
+        expect(normalizeSpokenNumbers("the eighth day")).toBe("the eighth day")
+    })
+
+    it("converts digit-ordinal book prefixes: '1st John' -> '1 john'", () => {
+        expect(normalizeSpokenNumbers("1st John 4:7")).toBe("1 john 4:7")
+        // ...but keeps the ordinal whole before chapter/verse ("the 1st chapter")
+        expect(normalizeSpokenNumbers("the 1st chapter of John")).toBe("the 1st chapter of john")
     })
 })
 
@@ -154,8 +172,106 @@ describe("detectExplicitReferences", () => {
         expect(detectExplicitReferences("mark 12 4-6 today", BOOKS)).toEqual(expected(41, "Mark", 12, 4, 6))
     })
 
+    it("accepts a spoken 'and' between chapter and the verse word: 'ezra 9 and verse 8'", () => {
+        expect(detectExplicitReferences("now give me ezra 9 and verse 8 in that translation", EZRA_BOOKS)[0]).toMatchObject({ bookNumber: 15, chapter: 9, verseStart: 8, confidence: "high" })
+        expect(detectExplicitReferences("ezra 8 and the verse number 7", EZRA_BOOKS)[0]).toMatchObject({ bookNumber: 15, chapter: 8, verseStart: 7, confidence: "high" })
+        // ...but never treats a bare "N and M" as chapter and verse - the verse word is required
+        expect(detectExplicitReferences("he acts 15 and 3 others left", BOOKS)).toEqual([{ bookNumber: 44, book: "Acts", chapter: 15, verseStart: 1, verseEnd: 1, confidence: "medium" }])
+    })
+
+    it("reads the chapter-first form: 'the 8th chapter of ezra and the verse number 10'", () => {
+        expect(detectExplicitReferences("the 8th chapter of ezra and the verse number 10", EZRA_BOOKS)).toEqual([{ bookNumber: 15, book: "Ezra", chapter: 8, verseStart: 10, verseEnd: 10, confidence: "high" }])
+        expect(detectExplicitReferences("turn to chapter 8 of ezra", EZRA_BOOKS)).toEqual([{ bookNumber: 15, book: "Ezra", chapter: 8, verseStart: 1, verseEnd: 1, confidence: "high" }])
+        expect(detectExplicitReferences(normalizeSpokenNumbers("the eighth chapter of Ezra"), EZRA_BOOKS)).toEqual([{ bookNumber: 15, book: "Ezra", chapter: 8, verseStart: 1, verseEnd: 1, confidence: "high" }])
+    })
+
+    it("reads the verse-first form: 'the 9th verse of ezra chapter 8' / 'verse 9 of ezra 8'", () => {
+        const expected = [{ bookNumber: 15, book: "Ezra", chapter: 8, verseStart: 9, verseEnd: 9, confidence: "high" }]
+        // one single result - the embedded "ezra chapter 8" must not also surface as its own chapter-only match
+        expect(detectExplicitReferences("the 9th verse of ezra chapter 8", EZRA_BOOKS)).toEqual(expected)
+        expect(detectExplicitReferences("the 9th verse of ezra 8", EZRA_BOOKS)).toEqual(expected)
+        expect(detectExplicitReferences("verse 9 of ezra 8", EZRA_BOOKS)).toEqual(expected)
+        expect(detectExplicitReferences(normalizeSpokenNumbers("the ninth verse of Ezra chapter eight"), EZRA_BOOKS)).toEqual(expected)
+    })
+
+    it("collapses a book name glued with its own echo: 'ezrazra 9 verse 8'", () => {
+        expect(detectExplicitReferences("now, ezrazra 9 verse 8 for a brief moment", EZRA_BOOKS)[0]).toMatchObject({ bookNumber: 15, chapter: 9, verseStart: 8, confidence: "high" })
+        // the collapse never bends unrelated words - "romansions" is not romans + a tail of romans
+        expect(detectExplicitReferences("the romansions 5 of this", BOOKS)).toEqual([])
+    })
+
     it("detects nothing in plain speech", () => {
         expect(detectExplicitReferences("hello world, welcome to the service", BOOKS)).toEqual([])
+    })
+
+    describe("spoken phrasing variations", () => {
+        const ref = (bookNumber: number, book: string, chapter: number, verseStart: number, verseEnd = verseStart, confidence = "high") => [{ bookNumber, book, chapter, verseStart, verseEnd, confidence }]
+
+        it("'the 23rd psalm' - the ordinal IS the chapter (psalms idiom)", () => {
+            // the spoken singular resolves through the "Psalm" name variant
+            expect(detectExplicitReferences(normalizeSpokenNumbers("the twenty-third Psalm"), BOOKS)).toEqual(ref(19, "Psalm", 23, 1))
+            expect(detectExplicitReferences("the 23rd psalm verse 4", BOOKS)).toEqual(ref(19, "Psalm", 23, 4))
+            expect(detectExplicitReferences(normalizeSpokenNumbers("reading from the hundred and nineteenth psalm"), BOOKS)).toEqual([]) // >99th: rare, stays unparsed rather than misread
+        })
+
+        it("'john chapter 3, the 16th verse' - verse ordinal before the verse word", () => {
+            expect(detectExplicitReferences("john chapter 3, the 16th verse", BOOKS)).toEqual(ref(43, "John", 3, 16))
+            expect(detectExplicitReferences("john chapter 3 and the 16th verse", BOOKS)).toEqual(ref(43, "John", 3, 16))
+            // no ordinal suffix, no verse binding: "16 verses later" is a count, not a reference
+            expect(detectExplicitReferences("john 3, 16 verses later we see it", BOOKS)).toEqual(ref(43, "John", 3, 16, 16))
+        })
+
+        it("'ezra the 8th chapter' - ordinal chapter after the book", () => {
+            expect(detectExplicitReferences("ezra the 8th chapter", EZRA_BOOKS)).toEqual([{ bookNumber: 15, book: "Ezra", chapter: 8, verseStart: 1, verseEnd: 1, confidence: "high" }])
+            expect(detectExplicitReferences("ezra the 8th chapter and the 9th verse", EZRA_BOOKS)).toEqual([{ bookNumber: 15, book: "Ezra", chapter: 8, verseStart: 9, verseEnd: 9, confidence: "high" }])
+            // "the N" without the ordinal+chapter shape never binds a chapter
+            expect(detectExplicitReferences("give john the 5 loaves today", BOOKS)).toEqual([])
+        })
+
+        it("'chapter 8 of john' and 'the book of' interposer", () => {
+            expect(detectExplicitReferences("chapter 8 of john", BOOKS)).toEqual(ref(43, "John", 8, 1))
+            expect(detectExplicitReferences("the 8th chapter of the book of ezra", EZRA_BOOKS)).toEqual([{ bookNumber: 15, book: "Ezra", chapter: 8, verseStart: 1, verseEnd: 1, confidence: "high" }])
+            expect(detectExplicitReferences("chapter number 8 of ezra verse 3", EZRA_BOOKS)).toEqual([{ bookNumber: 15, book: "Ezra", chapter: 8, verseStart: 3, verseEnd: 3, confidence: "high" }])
+        })
+
+        it("'the 9th verse of the 8th chapter of ezra' - fully chained reversed form", () => {
+            expect(detectExplicitReferences("the 9th verse of the 8th chapter of ezra", EZRA_BOOKS)).toEqual([{ bookNumber: 15, book: "Ezra", chapter: 8, verseStart: 9, verseEnd: 9, confidence: "high" }])
+        })
+
+        it("'chapter number 8' and 'verse number 7' wordings", () => {
+            expect(detectExplicitReferences("john chapter number 8 verse number 7", BOOKS)).toEqual(ref(43, "John", 8, 7))
+        })
+
+        it("spoken range words - only with the verse word present", () => {
+            expect(detectExplicitReferences("romans 8 verses 28 and 29", BOOKS)).toEqual(ref(45, "Romans", 8, 28, 29))
+            expect(detectExplicitReferences("romans 8 verse 28 down to 30", BOOKS)).toEqual(ref(45, "Romans", 8, 28, 30))
+            expect(detectExplicitReferences("romans 8 verses 28 till 30", BOOKS)).toEqual(ref(45, "Romans", 8, 28, 30))
+            expect(detectExplicitReferences("romans 8 verses 28 until 30", BOOKS)).toEqual(ref(45, "Romans", 8, 28, 30))
+            // plain numbers never take "and" as a range - "mark 12 4 and 6 others" is not 12:4-6
+            expect(detectExplicitReferences("mark 12 4 and 6 others came", BOOKS)).toEqual(ref(41, "Mark", 12, 4))
+        })
+
+        it("'starting from verse 16' filler before the verse word", () => {
+            expect(detectExplicitReferences("john 3 starting from verse 16", BOOKS)).toEqual(ref(43, "John", 3, 16))
+            expect(detectExplicitReferences("john chapter 3 reading from verse 16", BOOKS)).toEqual(ref(43, "John", 3, 16))
+            expect(detectExplicitReferences("john 3 from verse 16", BOOKS)).toEqual(ref(43, "John", 3, 16))
+        })
+
+        it("'the 5th verse of jude' - single-chapter book with no chapter spoken", () => {
+            const JUDE_BOOKS = [...BOOKS, { number: 65, canonNumber: 65, names: ["Jude"] }]
+            expect(detectExplicitReferences("the 5th verse of jude", JUDE_BOOKS)).toEqual([{ bookNumber: 65, book: "Jude", chapter: 1, verseStart: 5, verseEnd: 5, confidence: "high" }])
+            // a multi-chapter book with no chapter cannot resolve - never guess
+            expect(detectExplicitReferences("the 5th verse of john", BOOKS)).toEqual([])
+        })
+
+        it("'1st john' digit-ordinal book prefix", () => {
+            expect(detectExplicitReferences(normalizeSpokenNumbers("1st John 4:7"), BOOKS)[0]).toMatchObject({ bookNumber: 62, book: "1 John", chapter: 4, verseStart: 7 })
+        })
+
+        it("whisper punctuation between chapter and verse: semicolon & slash", () => {
+            expect(detectExplicitReferences("john 3;16", BOOKS)).toEqual(ref(43, "John", 3, 16))
+            expect(detectExplicitReferences("john 3/16", BOOKS)).toEqual(ref(43, "John", 3, 16))
+        })
     })
 })
 

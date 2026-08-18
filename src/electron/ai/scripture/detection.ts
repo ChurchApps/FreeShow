@@ -13,6 +13,28 @@ const TEEN_WORDS: { [word: string]: number } = { ten: 10, eleven: 11, twelve: 12
 const TENS_WORDS: { [word: string]: number } = { twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 }
 const ORDINAL_PREFIXES: { [word: string]: string } = { first: "1", second: "2", third: "3" }
 
+// spoken ordinals directly before "chapter"/"verse" ("the eighth chapter of ezra", "ninth verse of...")
+const ORDINAL_UNIT_WORDS: { [word: string]: number } = { first: 1, second: 2, third: 3, fourth: 4, fifth: 5, sixth: 6, seventh: 7, eighth: 8, ninth: 9 }
+const ORDINAL_TEEN_WORDS: { [word: string]: number } = { tenth: 10, eleventh: 11, twelfth: 12, thirteenth: 13, fourteenth: 14, fifteenth: 15, sixteenth: 16, seventeenth: 17, eighteenth: 18, nineteenth: 19 }
+const ORDINAL_TENS_WORDS: { [word: string]: number } = { twentieth: 20, thirtieth: 30, fortieth: 40, fiftieth: 50, sixtieth: 60, seventieth: 70, eightieth: 80, ninetieth: 90 }
+
+/** An ordinal number word 1st-99th ("ninth", "twenty-third"), or null when `core` is not one. */
+function readOrdinalWord(core: string): number | null {
+    if (ORDINAL_UNIT_WORDS[core] !== undefined) return ORDINAL_UNIT_WORDS[core]
+    if (ORDINAL_TEEN_WORDS[core] !== undefined) return ORDINAL_TEEN_WORDS[core]
+    if (ORDINAL_TENS_WORDS[core] !== undefined) return ORDINAL_TENS_WORDS[core]
+    const parts = core.split("-")
+    if (parts.length === 2 && TENS_WORDS[parts[0]] !== undefined && ORDINAL_UNIT_WORDS[parts[1]] !== undefined) return TENS_WORDS[parts[0]] + ORDINAL_UNIT_WORDS[parts[1]]
+    return null
+}
+
+/** "8" -> "th", "21" -> "st" - the ordinal shape survives normalization as a parsing signal. */
+function ordinalSuffix(value: number): string {
+    if (Math.floor(value / 10) % 10 === 1) return "th"
+    const unit = value % 10
+    return unit === 1 ? "st" : unit === 2 ? "nd" : unit === 3 ? "rd" : "th"
+}
+
 // whisper regularly mishears the word "verse" itself ("verse five" arrives as "best five" or
 // "this five") - accepted wherever a verse word is expected, which is safe because every use
 // site also requires the surrounding shape (book+chapter here, an imperative in commands)
@@ -75,7 +97,27 @@ export function normalizeSpokenNumbers(text: string): string {
         const token = tokens[i]
         const next = tokens[i + 1]
 
-        // ordinal book prefixes: only converted when followed by another word ("first john" -> "1 john")
+        // spoken ordinals right before "chapter"/"verse"/"psalm" become digit ordinals ("eighth
+        // chapter" -> "8th chapter", "twenty-third psalm" -> "23rd psalm") - the suffix survives
+        // as a parsing signal, and a bare ordinal stays a word ("he came third")
+        if (!token.suffix && next && !next.prefix && /^(?:chapter|verses?|psalms?)$/.test(next.core)) {
+            const ordinal = readOrdinalWord(token.core)
+            if (ordinal !== null) {
+                out.push(token.prefix + String(ordinal) + ordinalSuffix(ordinal))
+                i++
+                continue
+            }
+        }
+
+        // ordinal book prefixes: only converted when followed by another word ("first john" -> "1 john",
+        // "1st john" -> "1 john" - whisper writes spoken ordinals either way). Before "chapter"/
+        // "verse"/"psalm" the digit ordinal stays whole - the suffix is a parsing signal there
+        const digitOrdinal = /^([1-3])(?:st|nd|rd)$/.exec(token.core)
+        if (digitOrdinal && !token.suffix && next && !next.prefix && /^[a-z]/.test(next.core) && !/^(?:chapter|verses?|psalms?)$/.test(next.core)) {
+            out.push(token.prefix + digitOrdinal[1])
+            i++
+            continue
+        }
         if (ORDINAL_PREFIXES[token.core] !== undefined && !token.suffix && next && !next.prefix && /^[a-z]/.test(next.core)) {
             out.push(token.prefix + ORDINAL_PREFIXES[token.core])
             i++
@@ -116,9 +158,13 @@ export function normalizeSpokenNumbers(text: string): string {
 
 interface BookIndex {
     regex: RegExp | null
+    chapterFirstRegex: RegExp | null // "the 8th chapter of (the book of) ezra (and the verse number 10)"
+    verseFirstRegex: RegExp | null // "the 9th verse of (the 8th chapter of) ezra ((chapter) 8)"
+    psalmOrdinalRegex: RegExp | null // "the 23rd psalm (verse 1)" - the ordinal-as-chapter idiom
     byToken: Map<string, { name: string; number: number; chapterCount: number }>
     bookPattern: string // alternation of all book name patterns ("" when no books)
     bookWords: string[] // distinct book-name words long enough for mishearing recovery
+    allBookWords: string[] // distinct book-name words >= 4 chars, for the stutter collapse
 }
 
 // a spoken "8 18" often reaches us as "818". Recover the pair when the number cannot be a chapter of this book,
@@ -164,18 +210,50 @@ function buildBookIndex(books: AiScriptureBook[]): BookIndex {
     tokens.sort((a, b) => b.length - a.length)
     const patterns = tokens.map((token) => escapeRegex(token).replace(/ /g, "\\s+"))
 
-    // speakers often say just "matthew 5 1", and whisper's punctuation varies - accept every separator it
-    // produces between chapter & verse: "5:1", "5 verse 1", "5 1", "5, 1", "5. 1", "5-1", "5–1"
-    // ...and a comma/period right after the book name too: dictation-style pauses come out as "john, 1, 1."
-    // the verse word may follow dictation punctuation ("chapter 3, verse 16" - whisper hears the pause as a comma)
-    const regex = patterns.length ? new RegExp("(^|[^a-z0-9])(" + patterns.join("|") + ")[,.]?\\s+(?:chapter\\s+)?(\\d{1,3})\\b(?:(?:\\s*[,.]?\\s*(?::|" + VERSE_WORD + "\\b)\\s*|\\s*[-–,.]\\s*|\\s+)(\\d{1,3}\\b|" + HOMOPHONE_ALT + ")(?:\\s*(?:-|–|to\\b|through\\b)\\s*(\\d{1,3})\\b)?)?", "g") : null
+    // THE VERSE TAIL - what may follow a resolved book+chapter. Four branches, named groups:
+    //   v1: the verse-word route: "verse 16", ": 16", "and the verse number 16", "starting from
+    //       verse 16" - spoken fillers only ride along WITH the verse word, so a bare "15 and 3"
+    //       never reads as chapter-and-verse. Only this route accepts the spoken range words
+    //       ("verses 16 and 17", "16 till 18", "16 down to 20") for the same reason
+    //   v2: the ordinal-first route: "chapter 3, the 16th verse" - the digit ordinal suffix is
+    //       required, so "3, 16 verses later" can never bind
+    //   v3/v4: whisper's punctuation/plain separators: "3:16" is v1 (colon), "3, 16"/"3. 16"/
+    //       "3-16"/"3;16"/"3 16" land here with the conservative range set (-, to, through)
+    const rangeWord = "(?:\\s*(?:-|–|(?:down\\s+|up\\s+)?to\\b|through\\b|thru\\b|till\\b|until\\b|and\\b)\\s*(?<e1>\\d{1,3})\\b)?"
+    const rangePlain = (name: string) => "(?:\\s*(?:-|–|to\\b|through\\b)\\s*(?<" + name + ">\\d{1,3})\\b)?"
+    const verseTail = "(?:" + ("\\s*[,.]?\\s*(?:and\\s+)?(?:the\\s+)?(?:starting\\s+|beginning\\s+|reading\\s+)?(?:from\\s+|at\\s+)?(?::|" + VERSE_WORD + "\\b)(?:\\s+numbers?\\b)?\\s*(?<v1>\\d{1,3}\\b|" + HOMOPHONE_ALT + ")" + rangeWord) + ("|\\s*[,.]?\\s*(?:and\\s+)?(?:the\\s+)?(?<v2>\\d{1,3})(?:st|nd|rd|th)\\s+" + VERSE_WORD + "\\b") + ("|\\s*[-–,.;/]\\s*(?<v3>\\d{1,3}\\b|" + HOMOPHONE_ALT + ")" + rangePlain("e3")) + ("|\\s+(?<v4>\\d{1,3}\\b|" + HOMOPHONE_ALT + ")" + rangePlain("e4")) + ")?"
+    const bookAlt = patterns.join("|")
+
+    // book first: "john 3...", "john chapter 3...", "john chapter number 3...", "john the 3rd chapter..."
+    // (the bare "the N" intro requires the ordinal suffix AND the chapter word, so "give john the
+    // 5 loaves" can never bind a chapter)
+    const chapterIntro = "(?:chapter\\s+(?:number\\s+)?(?<cA>\\d{1,3})\\b|(?:the\\s+)?(?<cB>\\d{1,3})(?:st|nd|rd|th)\\s+chapter\\b|(?<cC>\\d{1,3})\\b)"
+    const regex = patterns.length ? new RegExp("(^|[^a-z0-9])(?<book>" + bookAlt + ")[,.]?\\s+" + chapterIntro + verseTail, "g") : null
+
+    // reversed spoken forms - each carries the word "chapter"/"verse"/"psalm" by construction,
+    // so they always count as deliberate (cued) references downstream
+    const ofBook = "\\s+of\\s+(?:the\\s+)?(?:book\\s+of\\s+)?(?<book>" + bookAlt + ")\\b"
+    // "the 8th chapter of (the book of) ezra ..." / "chapter (number) 8 of ezra ..."
+    const chapterFirstRegex = patterns.length ? new RegExp("(^|[^a-z0-9])(?:the\\s+)?(?:(?<cA>\\d{1,3})(?:st|nd|rd|th)?\\s+chapter|chapter\\s+(?:number\\s+)?(?<cB>\\d{1,3}))" + ofBook + verseTail, "g") : null
+    // "the 9th verse of (the 8th chapter of) ezra ((chapter) 8)" / "verse (number) 9 of ezra 8" -
+    // with no chapter spoken anywhere, a single-chapter book (jude, philemon...) resolves to chapter 1
+    const verseFirstRegex = patterns.length ? new RegExp("(^|[^a-z0-9])(?:the\\s+)?(?:(?<vA>\\d{1,3})(?:st|nd|rd|th)?\\s+" + VERSE_WORD + "\\b|" + VERSE_WORD + "\\s+(?:number\\s+)?(?<vB>\\d{1,3})\\b)\\s+of\\s+(?:(?:the\\s+)?(?<cA>\\d{1,3})(?:st|nd|rd|th)?\\s+chapter\\s+of\\s+)?(?:the\\s+)?(?:book\\s+of\\s+)?(?<book>" + bookAlt + ")\\b(?:[,.]?\\s+(?:chapter\\s+)?(?<cB>\\d{1,3})\\b)?", "g") : null
+    // "the 23rd psalm (verse 1)" - the ordinal IS the chapter. Only the psalms idiom works this
+    // way, so the form is built solely from the psalm book tokens when they are selected
+    const psalmTokens = tokens.filter((token) => /^psalms?$/.test(token))
+    const psalmOrdinalRegex = psalmTokens.length ? new RegExp("(^|[^a-z0-9])the\\s+(?<cA>\\d{1,3})(?:st|nd|rd|th)\\s+(?<book>" + psalmTokens.map((token) => escapeRegex(token)).join("|") + ")\\b" + verseTail, "g") : null
 
     // words long enough to recover from a mishearing ("corinians" -> "corinthians"); short names
     // ("john", "kings") stay exact-only, their skeletons collide with everyday words too easily
     const bookWords = new Set<string>()
     for (const token of tokens) for (const word of token.split(" ")) if (word.length >= FUZZY_MIN_LEN) bookWords.add(word)
 
-    return { regex, byToken, bookPattern: patterns.join("|"), bookWords: Array.from(bookWords) }
+    // every book word down to 4 chars, for the stutter collapse - a repeated name merged by the
+    // decoder ("Ezra... Ezra" -> "ezrazra") is recoverable even for names too short to fuzzy-match
+    const allBookWords = new Set<string>()
+    for (const token of tokens) for (const word of token.split(" ")) if (word.length >= 4) allBookWords.add(word)
+
+    return { regex, chapterFirstRegex, verseFirstRegex, psalmOrdinalRegex, byToken, bookPattern: patterns.join("|"), bookWords: Array.from(bookWords), allBookWords: Array.from(allBookWords) }
 }
 
 // BOOK-NAME MISHEARINGS
@@ -203,6 +281,22 @@ export function editDistanceWithin(a: string, b: string, cap: number): number | 
         previous = current
     }
     return previous[b.length] <= cap ? previous[b.length] : null
+}
+
+/**
+ * Collapse a book name merged with its own echo - fast repeated names glue in the decoder
+ * ("Ezra... Ezra" arrives as "ezrazra"). Only a token that IS a book word followed by a tail
+ * of that same word collapses, so everyday words pass through untouched.
+ */
+export function collapseStutteredBookNames(normalized: string, allBookWords: string[]): string {
+    if (!allBookWords.length) return normalized
+
+    return normalized.replace(/[a-z]{5,}/g, (token) => {
+        for (const word of allBookWords) {
+            if (token.length > word.length && token.startsWith(word) && word.endsWith(token.slice(word.length))) return word
+        }
+        return token
+    })
 }
 
 /** Rewrite tokens that are unambiguously a misheard book word - everything else passes through. */
@@ -241,33 +335,58 @@ interface ReferenceMatch {
     quote: string
 }
 
+// named groups shared by every reference regex: book, cA/cB/cC (chapter routes),
+// vA/vB (reversed-form verse routes), v1..v4 (verse-tail routes), e1/e3/e4 (range ends)
+interface ReferenceGroups {
+    book?: string
+    cA?: string
+    cB?: string
+    cC?: string
+    vA?: string
+    vB?: string
+    v1?: string
+    v2?: string
+    v3?: string
+    v4?: string
+    e1?: string
+    e3?: string
+    e4?: string
+}
+
 function matchReferences(text: string, index: BookIndex): ReferenceMatch[] {
     if (!index.regex) return []
 
-    const normalized = correctBookMishearings(normalizeSpokenNumbers(text), index.bookWords)
+    const normalized = correctBookMishearings(collapseStutteredBookNames(normalizeSpokenNumbers(text), index.allBookWords), index.bookWords)
     const results: ReferenceMatch[] = []
 
-    index.regex.lastIndex = 0
-    let match: RegExpExecArray | null
-    while ((match = index.regex.exec(normalized)) !== null) {
-        const bookToken = match[2].replace(/\s+/g, " ")
+    // the specific spoken forms scan first - their spans are excluded from the general book-first
+    // scan, or "9th verse of ezra chapter 8" would also surface a chapter-only "ezra chapter 8" echo
+    const claimedSpans: { from: number; to: number }[] = []
+
+    const pushMatch = (match: RegExpExecArray, options: { claimSpan?: boolean; alwaysCued?: boolean; verseOverride?: string } = {}) => {
+        const groups = (match.groups || {}) as ReferenceGroups
+        const bookToken = (groups.book || "").replace(/\s+/g, " ")
         const book = index.byToken.get(bookToken)
-        if (!book) continue
+        if (!book) return
 
-        let chapter = parseInt(match[3], 10)
-        if (!(chapter >= 1)) continue
+        let chapter = parseInt(groups.cA ?? groups.cB ?? groups.cC ?? "", 10)
+        // a verse-first form with no chapter anywhere still resolves for a single-chapter book
+        if (!(chapter >= 1) && options.verseOverride !== undefined && book.chapterCount === 1) chapter = 1
+        if (!(chapter >= 1)) return
 
-        const hasVerse = match[4] !== undefined
+        const verseRaw = options.verseOverride ?? groups.v1 ?? groups.v2 ?? groups.v3 ?? groups.v4
+        const hasVerse = verseRaw !== undefined
         let verseStart = 1
         let verseEnd = 1
         let unglued = false
         if (hasVerse) {
-            verseStart = parseNumberToken(match[4])
-            if (!(verseStart >= 1)) continue
-            verseEnd = match[5] !== undefined ? parseInt(match[5], 10) : verseStart
+            verseStart = parseNumberToken(verseRaw)
+            if (!(verseStart >= 1)) return
+            const endRaw = groups.e1 ?? groups.e3 ?? groups.e4
+            verseEnd = endRaw !== undefined ? parseInt(endRaw, 10) : verseStart
             if (verseEnd < verseStart) verseEnd = verseStart
-        } else {
-            // no separator was spoken/transcribed - the single number may be a chapter and verse run together
+        } else if (groups.cC !== undefined) {
+            // a plain "book N" with no separator - the single number may be chapter+verse run together
             const split = splitGluedReference(chapter, book.chapterCount)
             if (split) {
                 chapter = split.chapter
@@ -281,8 +400,9 @@ function matchReferences(text: string, index: BookIndex): ReferenceMatch[] {
 
         // CUE RULE: "high" only with an explicit cue in the spoken text - the word "chapter"/"verse", an ordinal/numbered
         // book prefix ("first john"/"1 john") or a digit:digit shape ("3:16"). normalizeSpokenNumbers() never introduces any
-        // of these words/shapes, so checking the normalized snippet reflects the original text.
-        const hasCue = /\bchapter\b|\bverses?\b/.test(quote) || /\d:\d/.test(quote) || /^[1-3]\b/.test(bookToken)
+        // of these words (its digit ordinals land only where the shape already carried the cue), so checking the
+        // normalized snippet reflects the original text.
+        const hasCue = options.alwaysCued || /\bchapter\b|\bverses?\b/.test(quote) || /\d:\d/.test(quote) || /^[1-3]\b/.test(bookToken)
 
         // book + chapter + verse ("matthew 12 4"), the same pair run together ("deuteronomy 818") or a cued
         // chapter ("turn to matthew chapter 5") is deliberate spoken intent - "high" so auto mode projects it.
@@ -290,7 +410,35 @@ function matchReferences(text: string, index: BookIndex): ReferenceMatch[] {
         const confidence: "high" | "medium" | "low" = hasVerse || unglued || hasCue ? "high" : "medium"
 
         results.push({ bookNumber: book.number, book: book.name, chapter, verseStart, verseEnd, confidence, quote })
+        if (options.claimSpan) claimedSpans.push({ from: match.index, to: match.index + match[0].length })
     }
+
+    const scan = (regex: RegExp | null, handle: (match: RegExpExecArray) => void) => {
+        if (!regex) return
+        regex.lastIndex = 0
+        let match: RegExpExecArray | null
+        while ((match = regex.exec(normalized)) !== null) handle(match)
+    }
+
+    scan(index.verseFirstRegex, (match) => {
+        const groups = (match.groups || {}) as ReferenceGroups
+        pushMatch(match, { claimSpan: true, alwaysCued: true, verseOverride: groups.vA ?? groups.vB })
+    })
+    scan(index.chapterFirstRegex, (match) => {
+        const bookAt = match.index
+        if (claimedSpans.some((span) => bookAt >= span.from && bookAt < span.to)) return
+        pushMatch(match, { claimSpan: true, alwaysCued: true })
+    })
+    scan(index.psalmOrdinalRegex, (match) => {
+        const bookAt = match.index
+        if (claimedSpans.some((span) => bookAt >= span.from && bookAt < span.to)) return
+        pushMatch(match, { claimSpan: true, alwaysCued: true })
+    })
+    scan(index.regex, (match) => {
+        const bookAt = match.index + match[1].length
+        if (claimedSpans.some((span) => bookAt >= span.from && bookAt < span.to)) return
+        pushMatch(match)
+    })
 
     return results
 }
@@ -311,7 +459,9 @@ export interface AiScriptureAnchor {
 }
 
 // cue-gated: the word "verse(s)" with the number AFTER it is required, so "he has fifteen verses" never fires
-const BARE_VERSE_REGEX = /(^|[^a-z0-9])(verses?\s+(\d{1,3})\b(?:\s*(?:-|to\b|through\b)\s*(\d{1,3})\b)?)/g
+// "verse 5", "verse number 5", "the 5th verse" - a range may follow ("verses 3 to 5", "3 and 4");
+// "and" as a range word is safe here because the verse word is present by construction
+const BARE_VERSE_REGEX = /(^|[^a-z0-9])((?:the\s+)?(?:verses?\s+(?:number\s+)?(?<n1>\d{1,3})\b|(?<n2>\d{1,3})(?:st|nd|rd|th)\s+verses?\b)(?:\s*(?:-|–|to\b|through\b|and\b|till\b|until\b)\s*(?<end>\d{1,3})\b)?)/g
 
 interface TranscriptSegment {
     text: string
@@ -450,9 +600,10 @@ export class DetectionCoordinator {
             // a book name directly before makes it a partial explicit reference ("john verse 7"), not an anchor-relative one
             if (this.anchorBookPrefix?.test(normalized.slice(0, start))) continue
 
-            const verseStart = parseInt(match[3], 10)
+            const groups = (match.groups || {}) as { n1?: string; n2?: string; end?: string }
+            const verseStart = parseInt(groups.n1 ?? groups.n2 ?? "", 10)
             if (!(verseStart >= 1)) continue
-            let verseEnd = match[4] !== undefined ? parseInt(match[4], 10) : verseStart
+            let verseEnd = groups.end !== undefined ? parseInt(groups.end, 10) : verseStart
             if (verseEnd < verseStart) verseEnd = verseStart
 
             // the anchor is the chapter live on screen, so a bare verse mention is context-certain
