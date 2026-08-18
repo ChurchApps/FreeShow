@@ -165,6 +165,156 @@ export function cachedPhoneticKey(token: string): string | null {
 // the tails the 3-char stem rule accepts: archaic verb/pronoun endings & plain inflections
 const STEM_TAILS = new Set(["e", "s", "t", "st", "th", "es", "ed", "ee"])
 
+// ASR-CONFUSABLE LEXICON
+// Sound-alike words the prefix and skeleton rules cannot reach: live speech arrives as "pray
+// without SEASON" for "pray without CEASING" - different first letter, different skeleton.
+// Curated (true homophones + preaching-frequent near-misses), because algorithmic phonetics
+// both misses this class and widens junk matching. Grown one line per observed confusion.
+//
+// Deliberately EXCLUDED: anything under 4 chars and the short/common homophones (son/sun,
+// no/know, one/won, not/knot, new/knew, hour/our, would/wood, you/ewe, him/hymn), "great"
+// (far too frequent in speech to glue onto "gates"), and name pairs whose merge would
+// misattribute people (judas/judah).
+const ASR_CONFUSABLE_SETS: string[][] = [
+    // observed & scripture-frequent
+    ["season", "seasons", "ceasing"],
+    ["altar", "alter"],
+    ["prophet", "prophets", "profit", "profits"],
+    ["morning", "mourning"],
+    ["immortality", "immorality"],
+    ["praise", "praises", "prays", "preys"],
+    ["soul", "souls", "sole"],
+    ["whole", "hole", "wholly", "holy"],
+    ["weak", "week"],
+    ["peace", "piece"],
+    ["meet", "meat", "mete"],
+    ["heir", "heirs", "air"],
+    ["vain", "vein", "vane"],
+    ["waist", "waste"],
+    ["wait", "weight"],
+    ["tale", "tail"],
+    ["rite", "right", "write"],
+    ["role", "roll"],
+    ["seas", "sees", "seize"],
+    ["made", "maid"],
+    ["bread", "bred"],
+    ["flour", "flower"],
+    ["sword", "soared"],
+    ["reign", "rain", "rein"],
+    ["throne", "thrown"],
+    ["heal", "heel"],
+    ["idle", "idol", "idols"],
+    ["fast", "vast"],
+    ["bury", "berry"],
+    // KJV / biblical vocabulary
+    ["psalm", "psalms", "palm", "palms"],
+    ["manna", "manner", "manor"],
+    ["leaven", "eleven"],
+    ["pilate", "pilot"],
+    ["hart", "harts", "heart"],
+    ["fowl", "fowls", "foul"],
+    ["strait", "straight"],
+    ["vale", "veil", "vail"],
+    ["plumb", "plum"],
+    ["loins", "lions"],
+    ["leper", "lepers", "leaper"],
+    ["tithes", "tides"],
+    ["gait", "gate", "gates"],
+    ["hallowed", "hollowed"],
+    ["cain", "cane"],
+    ["spake", "spoke", "speak"],
+    ["saith", "sayeth"],
+    ["zeal", "seal", "seals"],
+    ["alms", "arms"],
+    // general homophones plausible in preaching
+    ["pray", "prey"],
+    ["knead", "need"],
+    ["counsel", "council"],
+    ["principal", "principle"],
+    ["presence", "presents"],
+    ["bear", "bare"],
+    ["dear", "deer"],
+    ["fair", "fare"],
+    ["gilt", "guilt"],
+    ["groan", "grown"],
+    ["heard", "herd"],
+    ["hoard", "horde"],
+    ["days", "daze"],
+    ["lessen", "lesson"],
+    ["mail", "male"],
+    ["main", "mane"],
+    ["pain", "pane"],
+    ["pair", "pear", "pare"],
+    ["pour", "pore", "poor"],
+    ["wrap", "rap"],
+    ["wretch", "retch"],
+    ["ring", "wring"],
+    ["road", "rode", "rowed"],
+    ["sail", "sale"],
+    ["stake", "steak"],
+    ["steal", "steel"],
+    ["tears", "tiers"],
+    ["wail", "whale"],
+    ["wares", "wears"],
+    ["weary", "wary"],
+    ["wine", "whine"],
+    ["dies", "dyes"],
+    ["feat", "feet"],
+    ["flee", "flea"],
+    ["hail", "hale"],
+    ["knight", "night"],
+    ["earn", "urn"],
+    ["sight", "site", "cite"],
+    ["scent", "sent", "cent"],
+    ["vice", "vise"],
+    ["muscle", "mussel"],
+    ["naval", "navel"],
+    ["petal", "pedal"],
+    ["plain", "plane"],
+    ["root", "route"],
+    // ASR-typical near-misses (not strict homophones)
+    ["anointing", "annoying"],
+    ["manger", "major"],
+    ["epistle", "pistol"],
+    ["publican", "publicans", "republican"],
+    ["gentile", "gentiles", "gentle"],
+    ["martyr", "mortar"],
+    ["faith", "fate"],
+    ["esther", "ester"],
+    ["dissent", "descent"],
+    ["ascent", "ascend"]
+]
+
+// token -> its group's canonical member / canonical member -> full group. A token appearing in
+// two sets unions them, so overlapping entries are safe
+const CONFUSABLE_CANON = new Map<string, string>()
+const CONFUSABLE_GROUPS = new Map<string, string[]>()
+for (const set of ASR_CONFUSABLE_SETS) {
+    const touched = new Set<string>()
+    for (const token of set) {
+        const existing = CONFUSABLE_CANON.get(token)
+        if (existing !== undefined) touched.add(existing)
+    }
+    const canon = touched.size ? [...touched][0] : set[0]
+    const members = new Set<string>(CONFUSABLE_GROUPS.get(canon) ?? [])
+    for (const other of touched) {
+        if (other === canon) continue
+        for (const member of CONFUSABLE_GROUPS.get(other) ?? []) members.add(member)
+        CONFUSABLE_GROUPS.delete(other)
+    }
+    for (const token of set) members.add(token)
+    const list = [...members]
+    CONFUSABLE_GROUPS.set(canon, list)
+    for (const member of list) CONFUSABLE_CANON.set(member, canon)
+}
+
+/** Sound-alike alternates of a spoken token ([] when it has none) - candidate lookup votes with these too. */
+export function confusableAlternates(token: string): string[] {
+    const canon = CONFUSABLE_CANON.get(token)
+    if (canon === undefined) return []
+    return (CONFUSABLE_GROUPS.get(canon) ?? []).filter((member) => member !== token)
+}
+
 function commonPrefixLength(a: string, b: string): number {
     const max = Math.min(a.length, b.length)
     let i = 0
@@ -201,6 +351,13 @@ export function tokenGrade(a: string, b: string, allowPhonetic = false): number 
     if (cpl === 3 && (cpl === a.length || cpl === b.length) && Math.max(a.length, b.length) - cpl <= 2) {
         const tail = (a.length > b.length ? a : b).slice(cpl)
         if (STEM_TAILS.has(tail)) return 0.8
+    }
+
+    // curated sound-alikes ("season"/"ceasing") - like the phonetic path, only ever consulted
+    // for informative verse tokens, and below 0.9 so a sound-alike is never a run's peak
+    if (allowPhonetic) {
+        const canonA = CONFUSABLE_CANON.get(a)
+        if (canonA !== undefined && canonA === CONFUSABLE_CANON.get(b)) return 0.85
     }
 
     if (allowPhonetic && a.length >= PHONETIC_MIN_LEN && b.length >= PHONETIC_MIN_LEN && Math.abs(a.length - b.length) <= 3) {

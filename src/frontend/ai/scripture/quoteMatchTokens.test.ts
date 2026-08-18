@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { canonKey, NUMBER_PLACEHOLDER, phoneticKey, tokenGrade, tokenizeTranscript, tokenizeVerseText } from "./quoteMatchTokens"
+import { canonKey, confusableAlternates, NUMBER_PLACEHOLDER, phoneticKey, tokenGrade, tokenizeTranscript, tokenizeVerseText } from "./quoteMatchTokens"
 
 describe("tokenizeVerseText", () => {
     it("lowercases, strips punctuation and folds apostrophes", () => {
@@ -133,6 +133,27 @@ describe("archaic short stems", () => {
         expect(tokenGrade("has", "hast")).toBeLessThan(0.9)
         expect(tokenGrade("no", "not")).toBe(0) // two shared letters is nothing
         expect(tokenGrade("has", "hasten")).toBe(0) // tail too long
+    })
+})
+
+describe("ASR-confusable lexicon", () => {
+    it("grades curated sound-alikes at 0.85 - only against informative verse tokens", () => {
+        expect(tokenGrade("season", "ceasing", true)).toBe(0.85)
+        expect(tokenGrade("altar", "alter", true)).toBe(0.85)
+        expect(tokenGrade("prophet", "profit", true)).toBe(0.85)
+        expect(tokenGrade("psalm", "palm", true)).toBe(0.85)
+        // the informative gate: common verse tokens never lexicon-merge
+        expect(tokenGrade("season", "ceasing", false)).toBe(0)
+    })
+
+    it("stays below the prefix grade so a sound-alike is never a run's peak", () => {
+        expect(tokenGrade("season", "ceasing", true)).toBeLessThan(0.9)
+    })
+
+    it("lists a token's alternates for the candidate vote", () => {
+        expect(confusableAlternates("season").sort()).toEqual(["ceasing", "seasons"])
+        expect(confusableAlternates("ceasing").sort()).toEqual(["season", "seasons"])
+        expect(confusableAlternates("banana")).toEqual([])
     })
 })
 

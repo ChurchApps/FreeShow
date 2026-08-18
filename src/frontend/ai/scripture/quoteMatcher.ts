@@ -16,7 +16,7 @@
 import type { PrefixPool, TranslationIndex } from "./quoteMatchIndex"
 import { BIGRAM_VOTE_IDF, bigramKey, bigramPostings, postingsForKey, prefixIdf } from "./quoteMatchIndex"
 import { alignQuoteWindow, classify, meetsFloors, phraseEvidence, TUNING, type AlignResult, type QueryToken, type Tuning } from "./quoteMatchScore"
-import { cachedPhoneticKey, canonKey, tokenizeTranscriptWithSpans } from "./quoteMatchTokens"
+import { cachedPhoneticKey, canonKey, confusableAlternates, tokenizeTranscriptWithSpans } from "./quoteMatchTokens"
 
 export interface QuoteMatchSegment {
     text: string
@@ -232,6 +232,10 @@ export class QuoteMatcher {
             for (const route of routes) {
                 if (postingsForKey(index, route.canonId)) canonCounts.set(route.canonId, (canonCounts.get(route.canonId) || 0) + route.count)
                 else if (route.phoneticId >= 0 && postingsForKey(index, route.phoneticId)) phoneticCounts.set(route.phoneticId, (phoneticCounts.get(route.phoneticId) || 0) + route.count)
+                // sound-alike routes are additive - "season" votes for "seasons" verses AND "ceasing" verses
+                for (const alternateId of route.alternateIds) {
+                    if (postingsForKey(index, alternateId)) canonCounts.set(alternateId, (canonCounts.get(alternateId) || 0) + route.count)
+                }
             }
 
             const castVotes = (idCounts: Map<number, number>, discount: number) => {
@@ -664,17 +668,28 @@ export class QuoteMatcher {
 interface TokenRoute {
     canonId: number // pool id of the token's canonical prefix key, -1 when never indexed
     phoneticId: number // pool id of the token's "~"-namespaced phonetic skeleton, -1 when none
+    alternateIds: number[] // pool ids of the token's sound-alikes ("season" also votes as "ceasing")
     count: number
 }
 
-/** Both lookup routes per distinct spoken token (tokens resolving to neither drop out). */
+/** The lookup routes per distinct spoken token (tokens resolving to none drop out). */
 function resolveTokenRoutes(pool: PrefixPool, tokenCounts: Map<string, number>): TokenRoute[] {
     const routes: TokenRoute[] = []
     tokenCounts.forEach((count, token) => {
         const canonId = pool.lookup(canonKey(token))
         const skeleton = cachedPhoneticKey(token)
         const phoneticId = skeleton ? pool.lookup("~" + skeleton) : -1
-        if (canonId >= 0 || phoneticId >= 0) routes.push({ canonId, phoneticId, count })
+
+        // sound-alike alternates vote alongside the canon key, or a verse findable only through
+        // the word the speaker MEANT never becomes a candidate (the grade stage discounts the
+        // actual match to 0.85)
+        const alternateIds: number[] = []
+        for (const alternate of confusableAlternates(token)) {
+            const id = pool.lookup(canonKey(alternate))
+            if (id >= 0 && id !== canonId && !alternateIds.includes(id)) alternateIds.push(id)
+        }
+
+        if (canonId >= 0 || phoneticId >= 0 || alternateIds.length) routes.push({ canonId, phoneticId, alternateIds, count })
     })
     return routes
 }

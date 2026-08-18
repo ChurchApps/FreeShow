@@ -193,6 +193,37 @@ describe("grounded main translation & passage memory", () => {
     })
 })
 
+describe("sound-alike words still find their verse", () => {
+    // bible-shaped corpus (production tuning): the idf-stretching filler from the formula tests
+    const HOMOPHONE_CORPUS: IndexableVerse[] = [
+        ...CORPUS,
+        verse(52, 5, 16, "rejoice evermore and again in everything i say rejoice always"),
+        verse(52, 5, 17, "pray without ceasing for this is the will of god concerning all of you"),
+        verse(19, 23, 5, "thou preparest a table before me in the presence of mine enemies my cup runneth over"),
+        ...Array.from({ length: 400 }, (_, i) => verse(4, (i % 36) + 1, Math.floor(i / 36) + 2, `wilderness marker${i} rests in the shade of the ancient wells and every flock${i} we tend draws steady water in the heat of the day`))
+    ]
+
+    it("matches 'pray without season' to 'pray without ceasing' (cued)", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("test", HOMOPHONE_CORPUS)])
+        const out = matcher.onSegment(seg("the bible says to pray without season"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 52, chapter: 5, verseStart: 17 })
+    })
+
+    it("never lets conversational 'season' talk match anything", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("test", HOMOPHONE_CORPUS)])
+        expect(matcher.onSegment(seg("the season of harvest is upon us and we rejoice in it"))).toEqual([])
+    })
+
+    it("matches a modern-pronoun recitation of KJV wording (psalm 23:5)", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("test", HOMOPHONE_CORPUS)])
+        // you/thou and my/mine break the run's edges - the long middle run must carry it
+        const out = matcher.onSegment(seg("you prepare a table before me in the presence of my enemies"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 19, chapter: 23, verseStart: 5 })
+    })
+})
+
 describe("token-level precision", () => {
     it("rejects 3-char debris tails", () => {
         expect(tokenGrade("its", "itsly")).toBe(0) // "ly" is not a stem tail - transcription debris
