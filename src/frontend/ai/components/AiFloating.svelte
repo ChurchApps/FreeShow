@@ -5,10 +5,10 @@
     import { getShortBibleName } from "../../components/drawer/bible/scripture"
     import T from "../../components/helpers/T.svelte"
     import MaterialButton from "../../components/inputs/MaterialButton.svelte"
-    import { activePage, ai, aiQuoteMatchActive, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, outLocked, scriptures, settingsTab } from "../../stores"
+    import { activePage, ai, aiQuoteMatchActive, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureInterim, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, language, outLocked, scriptures, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../scripture/aiScripture"
-    import { audioLevelStore, SpeechToText } from "../stt/stt"
+    import { audioLevelStore, resolveSttEngine, SpeechToText } from "../stt/stt"
     import AiRing from "./AiRing.svelte"
 
     let state: "inactive" | "error" | "listening" | "processing" = "inactive"
@@ -18,11 +18,59 @@
         isOpen = !isOpen
     }
 
-    // the transcript follows the speech - newest segment stays in view
+    // the transcript follows the speech while pinned to the bottom - scrolling up to read
+    // history stops the auto-jump until the user returns to the bottom
     let transcriptElem: HTMLElement | undefined
-    $: if (isOpen && $aiScriptureTranscript.length && transcriptElem) scrollToBottom()
+    let transcriptPinned = true
+    let autoScrollTimer: NodeJS.Timeout | null = null
+    $: if (isOpen && transcriptPinned && (transcriptLines.length || $aiScriptureInterim) && transcriptElem) scrollToBottom()
+    $: if (!isOpen) transcriptPinned = true
     function scrollToBottom() {
-        setTimeout(() => transcriptElem?.scrollTo(0, transcriptElem.scrollHeight))
+        setTimeout(() => {
+            if (!transcriptElem) return
+            // already at the bottom: no scroll, and crucially no guard window that would swallow
+            // a genuine user scroll gesture arriving between updates
+            if (transcriptElem.scrollHeight - transcriptElem.scrollTop - transcriptElem.clientHeight < 2) return
+            // the jump is instant (no smooth animation), so its single scroll event stays inside
+            // this short guard instead of reading as a user unpin
+            if (autoScrollTimer) clearTimeout(autoScrollTimer)
+            autoScrollTimer = setTimeout(() => (autoScrollTimer = null), 150)
+            transcriptElem.scrollTo(0, transcriptElem.scrollHeight)
+        })
+    }
+    function onTranscriptScroll() {
+        if (!transcriptElem || autoScrollTimer) return
+        transcriptPinned = transcriptElem.scrollHeight - transcriptElem.scrollTop - transcriptElem.clientHeight < 40
+    }
+
+    // nemotron emits an utterance in fragments - group them into one line per utterance
+    // (whisper sets no utteranceEnd flags, so it falls back to grouping on pause gaps)
+    const LINE_GAP_MS = 2000
+    $: transcriptLines = groupTranscriptLines($aiScriptureTranscript)
+    function groupTranscriptLines(segments: { text: string; startMs: number; endMs: number; music?: boolean; utteranceEnd?: boolean }[]) {
+        const lines: { text: string; music: boolean; endMs: number; done: boolean; open?: boolean }[] = []
+        for (const segment of segments) {
+            const last = lines[lines.length - 1]
+            // a textless marker means an utterance ended with no new words - it only closes the line
+            if (!segment.text) {
+                if (last && segment.utteranceEnd) {
+                    last.done = true
+                    last.endMs = segment.endMs
+                }
+                continue
+            }
+            const startNew = !last || last.done || !!segment.music !== last.music || segment.startMs - last.endMs > LINE_GAP_MS
+            if (startNew) lines.push({ text: segment.text, music: !!segment.music, endMs: segment.endMs, done: !!segment.utteranceEnd })
+            else {
+                last.text += " " + segment.text
+                last.endMs = segment.endMs
+                last.done = !!segment.utteranceEnd
+            }
+        }
+        // the greyed interim continues this line while its utterance is still being spoken
+        const last = lines[lines.length - 1]
+        if (last && !last.done) last.open = true
+        return lines
     }
 
     // STATE
@@ -39,7 +87,11 @@
     let lastMic = ""
     let lastEngine = ""
 
-    $: engineId = $ai.stt?.engine || "whisper"
+    $: engineId = resolveEngineId($ai.stt?.engine, $language)
+    // the locale param only makes the default re-resolve when the UI language changes
+    function resolveEngineId(explicit: string | undefined, _locale: string): string {
+        return explicit || resolveSttEngine()
+    }
 
     $: syncSession(isEnabled, scriptureEnabled, micDeviceId, engineId)
     async function syncSession(enabled: boolean | undefined, scripture: boolean, mic: string | undefined, engine: string) {
@@ -157,7 +209,11 @@
 
     // TICKER - the latest transcript line, visible without opening the bubble
 
-    $: latestSegment = $aiScriptureTranscript[$aiScriptureTranscript.length - 1]?.text || ""
+    $: latestSegment = lastNonEmptyText($aiScriptureTranscript)
+    function lastNonEmptyText(segments: { text: string }[]): string {
+        for (let i = segments.length - 1; i >= 0; i--) if (segments[i].text) return segments[i].text
+        return ""
+    }
 </script>
 
 <svelte:window on:keydown={(e) => isOpen && e.key === "Escape" && toggleExpand()} />
@@ -166,9 +222,11 @@
     <div class="backdrop" on:mousedown|self={toggleExpand} transition:fade={{ duration: 250 }}></div>
 {/if}
 
-{#if !isOpen && isListening && latestSegment}
+{#if !isOpen && isListening && (latestSegment || $aiScriptureInterim)}
     <!-- the live ticker sits on the bubble's own row, to its left - the stack above stays for cards -->
-    <button class="ticker" title={translateText("ai_scripture.transcript")} on:click={toggleExpand}>{latestSegment}</button>
+    <button class="ticker" title={translateText("ai_scripture.transcript")} on:click={toggleExpand}>
+        {latestSegment}{#if $aiScriptureInterim}{" "}<span class="interim">{$aiScriptureInterim}</span>{/if}
+    </button>
 {/if}
 
 {#if !isOpen && (suggestions.length || $aiScriptureAutoPaused)}
@@ -273,11 +331,16 @@
                             <div class="spinner large"></div>
                             <p><T id="ai.processing" /></p>
                         </div>
-                    {:else if $aiScriptureTranscript.length}
-                        <div class="transcript-box" bind:this={transcriptElem}>
-                            {#each $aiScriptureTranscript as segment}
-                                <p class:music={segment.music}>{segment.text}</p>
+                    {:else if transcriptLines.length || $aiScriptureInterim}
+                        <div class="transcript-box" bind:this={transcriptElem} on:scroll={onTranscriptScroll}>
+                            {#each transcriptLines as line}
+                                <p class:music={line.music}>
+                                    {line.text}{#if line.open && $aiScriptureInterim}{" "}<span class="interim">{$aiScriptureInterim}</span>{/if}
+                                </p>
                             {/each}
+                            {#if $aiScriptureInterim && !transcriptLines[transcriptLines.length - 1]?.open}
+                                <p><span class="interim">{$aiScriptureInterim}</span></p>
+                            {/if}
                         </div>
                     {:else}
                         <p class="placeholder"><T id="ai_scripture.waiting_for_audio" /></p>
@@ -357,9 +420,10 @@
         bottom: 50%;
         right: 50%;
         transform: translate(50%, 50%);
-        width: 440px;
-        height: 320px;
+        width: 560px;
+        height: 400px;
         max-width: 90vw;
+        max-height: 85vh;
     }
 
     .floating-trigger {
@@ -474,7 +538,8 @@
         width: 100%;
         max-height: 100%;
         overflow-y: auto;
-        scroll-behavior: smooth;
+        /* no smooth scrolling: the follow-the-speech jump must not animate past its guard
+           window, or its trailing scroll events read as the user unpinning the view */
         font-size: 0.95rem;
         line-height: 1.5;
     }
@@ -490,6 +555,11 @@
     .transcript-box .music {
         opacity: 0.45;
         font-style: italic;
+    }
+
+    /* the open utterance's unstable tail - visible right away, solidifies once confirmed */
+    .interim {
+        opacity: 0.45;
     }
 
     .placeholder {

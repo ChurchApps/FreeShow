@@ -13,9 +13,9 @@ import { setDrawerTabData } from "../../components/helpers/historyHelpers"
 import { getFirstActiveOutput, setOutput } from "../../components/helpers/output"
 import { clearSlide } from "../../components/output/clear"
 import { requestMain, sendMain } from "../../IPC/main"
-import { activeDrawerTab, activeScripture, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, drawerTabsData, openScripture, outLocked, outputs, scriptures, scripturesCache } from "../../stores"
+import { activeDrawerTab, activeScripture, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureInterim, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, drawerTabsData, openScripture, outLocked, outputs, scriptures, scripturesCache } from "../../stores"
 import { AI_PROVIDER_MODELS } from "../models"
-import { SpeechToText } from "../stt/stt"
+import { resolveSttEngine, SpeechToText } from "../stt/stt"
 import { noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching } from "./quoteMatchSession"
 
 const SUGGESTION_MAX_AGE = 3 * 60 * 1000
@@ -96,7 +96,7 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     seedSttSettingsFromLegacy()
 
     const sttSettings = get(ai).stt || {}
-    const engine = sttSettings.engine || "whisper"
+    const engine = resolveSttEngine()
     const engineOptions = sttSettings.engineOptions?.[engine] || {}
 
     // the streaming engine transcribes English only, so its transcript language is fixed regardless of the whisper setting
@@ -130,6 +130,7 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     }
 
     aiScriptureTranscript.set([])
+    aiScriptureInterim.set("")
     aiScriptureSuggestions.set([])
     aiScriptureAutoPaused.set(false)
 
@@ -223,6 +224,7 @@ function stopSession(): void {
     sendMain(Main.AI_SCRIPTURE_STOP)
     SpeechToText.disable()
 
+    aiScriptureInterim.set("")
     aiScriptureAutoPaused.set(false)
     aiScriptureStatus.set({ state: "stopped" })
 }
