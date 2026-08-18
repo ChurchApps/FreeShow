@@ -61,6 +61,23 @@ describe("detectScriptureCommand", () => {
             expect(detect("give me niv")).toEqual({ type: "translation", bibleId: "niv-id", phrase: "give me niv" })
         })
 
+        it("detects an announced translation: 'the NIV says' / 'king james puts it this way'", () => {
+            expect(detect("the niv says blessed are the meek")).toEqual({ type: "translation", bibleId: "niv-id", phrase: "the niv says" })
+            expect(detect("but king james puts it this way")).toEqual({ type: "translation", bibleId: "kjv-id", phrase: "king james puts it this way" })
+            expect(detect("the new international version reads")).toEqual({ type: "translation", bibleId: "niv-id", phrase: "the new international version reads" })
+            expect(detect("the king james version renders it")).toEqual({ type: "translation", bibleId: "kjv-id", phrase: "the king james version renders it" })
+            expect(detect("according to the niv")).toMatchObject({ type: "translation", bibleId: "niv-id" })
+            expect(detect("reading from the king james, he restores my soul")).toMatchObject({ type: "translation", bibleId: "kjv-id" })
+            expect(detect("in the niv, it says blessed are the meek")).toMatchObject({ type: "translation", bibleId: "niv-id" })
+            expect(detect("in the king james version it reads")).toMatchObject({ type: "translation", bibleId: "kjv-id" })
+            expect(detect("in the niv we read that god is love")).toMatchObject({ type: "translation", bibleId: "niv-id" })
+        })
+
+        it("a bare translation name mid-sentence stays narration", () => {
+            expect(detect("the niv is my favorite for study")).toBeNull()
+            expect(detect("i grew up on the king james bible at home")).toBeNull()
+        })
+
         it("matches the translation name before or without a translation word", () => {
             expect(detect("switch to the niv version")).toEqual({ type: "translation", bibleId: "niv-id", phrase: "switch to the niv version" })
             expect(detect("give me the king james")).toEqual({ type: "translation", bibleId: "kjv-id", phrase: "give me the king james" })

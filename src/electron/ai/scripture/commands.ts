@@ -223,6 +223,18 @@ export function detectScriptureCommand(text: string, language: string, translati
             const bibleId = byToken.get(named[1].replace(/\s+/g, " "))
             if (bibleId) return { type: "translation", bibleId, phrase: phraseOf(named) }
         }
+
+        // 5b. announcing the wording being read - no imperative, the reading verb right after the
+        // name (or a reading lead-in right before it) carries the intent: "god's word translation
+        // says...", "the ERV reads...", "new living translation puts it this way", "in the NIV,
+        // it says...", "according to the NIV", "reading from the message". A dictation pause and
+        // a subject pronoun may sit between name and verb; a bare name mention stays narration
+        const readsVerb = "(?:says?|said|reads?|goes|continues|renders?\\s+it|translates?\\s+it|puts?\\s+it(?:\\s+(?:this|that)\\s+way|\\s+like\\s+this)?|has\\s+it|tells\\s+us)"
+        const announced = tail.match(new RegExp(LEAD + art + nameAlt + "(?:\\s+" + transWord + ")?\\s*[,.]?\\s*(?:it\\s+|we\\s+)?" + readsVerb + "\\b")) || tail.match(new RegExp(LEAD + "(?:according\\s+to|reading\\s+from)\\s+" + art + nameAlt + "(?:\\s+" + transWord + ")?(?![a-z0-9])"))
+        if (announced) {
+            const bibleId = byToken.get(announced[1].replace(/\s+/g, " "))
+            if (bibleId) return { type: "translation", bibleId, phrase: phraseOf(announced) }
+        }
     }
 
     return null
