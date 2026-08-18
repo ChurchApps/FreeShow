@@ -128,6 +128,26 @@ describe("Gemini Provider Connection", () => {
         expect(config.signal).toBe(signal)
     })
 
+    it("budgets gemini 2.5 thinking so the output cap is not eaten before the answer", async () => {
+        post.mockResolvedValueOnce({ data: { candidates: [{ finishReason: "STOP", content: { parts: [{ text: "ok" }] } }] } } as any)
+        await geminiProvider.complete("g-key", "gemini-2.5-flash", { prompt: "hi", signal })
+        expect((post.mock.calls[0] as any[])[1].generationConfig.thinkingConfig).toEqual({ thinkingBudget: 0 })
+
+        post.mockResolvedValueOnce({ data: { candidates: [{ finishReason: "STOP", content: { parts: [{ text: "ok" }] } }] } } as any)
+        await geminiProvider.complete("g-key", "gemini-2.5-pro", { prompt: "hi", signal })
+        expect((post.mock.calls[1] as any[])[1].generationConfig.thinkingConfig).toEqual({ thinkingBudget: 128 }) // pro's minimum
+
+        // pre-2.5 models know no thinkingConfig - sending one would 400
+        post.mockResolvedValueOnce({ data: { candidates: [{ finishReason: "STOP", content: { parts: [{ text: "ok" }] } }] } } as any)
+        await geminiProvider.complete("g-key", "gemini-2.0-flash", { prompt: "hi", signal })
+        expect((post.mock.calls[2] as any[])[1].generationConfig.thinkingConfig).toBeUndefined()
+    })
+
+    it("names an answer-less MAX_TOKENS response instead of returning empty text", async () => {
+        post.mockResolvedValueOnce({ data: { candidates: [{ finishReason: "MAX_TOKENS" }] } } as any)
+        await expect(geminiProvider.complete("g-key", "gemini-2.5-flash", { prompt: "hi", signal })).rejects.toMatchObject({ code: "bad_response" })
+    })
+
     it("testConnection fetches the model metadata & returns ok on 200", async () => {
         get.mockResolvedValueOnce({ data: { name: "models/gemini-2.0-flash" } } as any)
 

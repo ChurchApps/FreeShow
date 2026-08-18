@@ -539,6 +539,7 @@ export class DetectionCoordinator {
     private llmCallStartedAt = 0
     private llmRerunPending = false // new speech arrived while a call was in flight: re-run once it settles
     private llmStopped = false
+    private llmPermanentFailures = 0 // consecutive permanent-class errors - two stop tier 2
     private llmCooldownUntil = 0
 
     constructor(opts: DetectionCoordinatorOptions) {
@@ -662,6 +663,7 @@ export class DetectionCoordinator {
                 (result: any) => {
                     if (this.llmController !== controller) return // aborted/superseded
                     this.llmController = null
+                    this.llmPermanentFailures = 0 // a working provider clears the strike count
                     this.handleLlmReferences(Array.isArray(result?.references) ? result.references : [])
                     this.runPendingRerun()
                 },
@@ -708,11 +710,17 @@ export class DetectionCoordinator {
     private handleLlmError(err: any) {
         const code = err?.code
 
-        // permanent errors will not fix themselves - bad key, unknown model, malformed request:
-        // stop tier 2 for the rest of the session & tell the user (tier 1 keeps running)
+        // permanent-class errors will not fix themselves - bad key, unknown model, malformed
+        // request. But providers occasionally return one as a transient blip, and a single
+        // misclassified error must not kill tier 2 for a whole service - it takes TWO in a row
+        // (a genuinely broken setup repeats on the very next window anyway). Tier 1 keeps running
         if (code === "invalid_key" || code === "forbidden" || code === "model_not_found" || code === "invalid_request") {
-            this.llmStopped = true
-            this.opts.onStatus("llm_paused", { message: err?.message || String(code) })
+            this.llmPermanentFailures++
+            console.error(`[AiScripture] LLM ${String(code)}:`, err?.message || "")
+            if (this.llmPermanentFailures >= 2) {
+                this.llmStopped = true
+                this.opts.onStatus("llm_paused", { message: err?.message || String(code) })
+            }
             return
         }
 

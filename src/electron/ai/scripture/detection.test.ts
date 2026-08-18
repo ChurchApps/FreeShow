@@ -480,21 +480,26 @@ describe("DetectionCoordinator", () => {
             coordinator.stop()
         })
 
-        it("pauses tier 2 for the session on permanent errors (model_not_found / invalid_request)", async () => {
+        it("pauses tier 2 after TWO consecutive permanent errors (model_not_found / invalid_request)", async () => {
             for (const code of ["model_not_found", "invalid_request"]) {
                 mockDetectScripture.mockClear()
-                mockDetectScripture.mockRejectedValueOnce({ code, message: "the model does not exist" })
+                mockDetectScripture.mockRejectedValue({ code, message: "the model does not exist" })
 
                 const onStatus = vi.fn()
                 const coordinator = llmCoordinator(vi.fn(), onStatus)
                 coordinator.onTranscriptSegment(seg(words(16), 0))
                 await vi.advanceTimersByTimeAsync(0)
+                // one permanent-class error can be a provider blip - the session keeps tier 2
+                expect(onStatus).not.toHaveBeenCalledWith("llm_paused", expect.anything())
+
+                coordinator.onTranscriptSegment(seg(words(16), 6000))
+                await vi.advanceTimersByTimeAsync(0)
                 expect(onStatus).toHaveBeenCalledWith("llm_paused", { message: "the model does not exist" })
 
                 // no further LLM calls for the rest of the session
-                coordinator.onTranscriptSegment(seg(words(16), 6000))
+                coordinator.onTranscriptSegment(seg(words(16), 12_000))
                 await vi.advanceTimersByTimeAsync(0)
-                expect(mockDetectScripture).toHaveBeenCalledTimes(1)
+                expect(mockDetectScripture).toHaveBeenCalledTimes(2)
 
                 coordinator.stop()
             }
