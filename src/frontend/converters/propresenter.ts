@@ -425,14 +425,61 @@ function splitTextToLines(text: string): Line[] {
         }))
 }
 
-// Replace all RTF hex codes (e.g., \'e5) with their latin1 character (e.g., å).
-function decodeLatin1HexRTF(input: string): string {
-    return input.replace(/\\'([0-9a-fA-F]{2})/g, (_, hex) => {
-        const byte = parseInt(hex, 16)
-        if (typeof TextDecoder !== "undefined") {
-            return new TextDecoder("latin1").decode(Uint8Array.from([byte]))
+const CHARSET_TO_ENCODING: Record<number, string> = {
+    0: "windows-1252",
+    128: "shift_jis",
+    129: "windows-949",
+    134: "gbk",
+    136: "big5",
+    161: "windows-1253",
+    162: "windows-1254",
+    177: "windows-1255",
+    178: "windows-1256",
+    186: "windows-1257",
+    204: "windows-1251",
+    238: "windows-1250"
+}
+
+function getRTFEncoding(input: string): string {
+    const cpgMatch = input.match(/\\ansicpg(\d+)/)
+    if (cpgMatch) {
+        const cpg = parseInt(cpgMatch[1], 10)
+        if (cpg === 65001) return "utf-8"
+        if (cpg === 949) return "windows-949"
+        if (cpg === 936) return "gbk"
+        if (cpg === 932) return "shift_jis"
+        if (cpg === 950) return "big5"
+        if (cpg >= 1250 && cpg <= 1258) return `windows-${cpg}`
+    }
+
+    const charsetMatch = input.match(/\\fcharset(\d+)/)
+    if (charsetMatch) {
+        const charset = parseInt(charsetMatch[1], 10)
+        if (CHARSET_TO_ENCODING[charset]) return CHARSET_TO_ENCODING[charset]
+    }
+
+    if (input.includes("\\mac")) return "macintosh"
+
+    return "windows-1252"
+}
+
+// Replace RTF hex codes (e.g., \'e5 or multi-byte sequences like \'b0\'c5) using the document encoding.
+function decodeHexRTF(input: string, encoding = "windows-1252"): string {
+    let decoder: TextDecoder
+    try {
+        decoder = new TextDecoder(encoding)
+    } catch {
+        decoder = new TextDecoder("windows-1252")
+    }
+
+    return input.replace(/(?:\\'([0-9a-fA-F]{2}))+/g, (match) => {
+        const hexes = match.match(/[0-9a-fA-F]{2}/g) || []
+        const bytes = new Uint8Array(hexes.map((hex) => parseInt(hex, 16)))
+        try {
+            return decoder.decode(bytes)
+        } catch {
+            return match
         }
-        return String.fromCharCode(byte)
     })
 }
 
@@ -448,7 +495,8 @@ function decodeBase64(text: string): string {
     // Normalize curly quotes to a straight apostrophe.
     r = r.replaceAll("‘", "'").replaceAll("’", "'")
 
-    r = decodeLatin1HexRTF(r)
+    const encoding = getRTFEncoding(r)
+    r = decodeHexRTF(r, encoding)
     r = decodeUnicodeEscapes(r)
     return r
 }
@@ -470,24 +518,17 @@ function decodeBase64Chars(text: string): string {
 
 // https://unicodelookup.com/ — decode \uNNNN ? sequences into their character.
 function decodeUnicodeEscapes(input: string): string {
-    let result = input
-    let position = result.indexOf("\\u")
-    while (position > -1) {
-        const end = result.indexOf(" ?", position) + 2
-
-        if (end > 1 && end - position <= 10) {
-            const decoded = String.fromCharCode(Number(result.slice(position, end).replace(/[^\d-]/g, "")))
-            if (!decoded.includes("\\x")) result = result.slice(0, position) + decoded + result.slice(end)
-        }
-
-        position = result.indexOf("\\u", position + 1)
-    }
-    return result
+    return input.replace(/\\u(-?\d+)(?:[ ](?:\\[\''][0-9a-fA-F]{2}|\?)|\?|(?:\\[\''][0-9a-fA-F]{2})|[ ])?/g, (_match, num) => {
+        const code = parseInt(num, 10)
+        const charCode = code < 0 ? code + 65536 : code
+        if (charCode === 8232) return "\n"
+        return String.fromCharCode(charCode)
+    })
 }
 
 function RTFToText(input: string): string {
     // Handle the binary ending characters that sometimes appear
-    const binaryEndPos = input.search(/[ÿ¿\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\xFF]+$/)
+    const binaryEndPos = input.search(/[\x00-\x08\x0B\x0C\x0E-\x1F]+$/)
     if (binaryEndPos > -1) input = input.slice(0, binaryEndPos)
 
     // Remove the last } if it exists
@@ -526,8 +567,8 @@ function RTFToText(input: string): string {
 }
 
 function decodeHex(input: string): string {
-    // If input looks like RTF but doesn't contain hex encodings, use RTF parser.
-    if (input.includes("\\rtf") && !input.includes("\\'")) return RTFToText(input)
+    // If input looks like RTF, use RTF parser.
+    if (input.includes("\\rtf")) return RTFToText(input)
 
     input = stripRTFHeader(input)
     input = input.replaceAll("\\\n", "<br>")
