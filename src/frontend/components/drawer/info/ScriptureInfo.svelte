@@ -23,7 +23,7 @@
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { createScriptureShow, getActiveScripturesContent, getMergedAttribution, getScriptureSlidesNew, textKeys, useOldScriptureSystem } from "../bible/scripture"
-    import AiScriptureSettings from "../../ai/AiScriptureSettings.svelte"
+    import AiScriptureSettings from "../../../ai/components/settings/AiScriptureSettings.svelte"
 
     export let optionsOpen: boolean
 
