@@ -1,20 +1,14 @@
 <script lang="ts">
     import MaterialToggleSwitch from "../../../components/inputs/MaterialToggleSwitch.svelte"
     import T from "../../../components/helpers/T.svelte"
+    import { setAiEnabled } from "../../aiState"
     import { ai } from "../../../stores"
     import STTOptions from "./STTOptions.svelte"
 
     $: isEnabled = $ai.enabled
-
-    function updateValue(key: string, value: any) {
-        ai.update((a) => {
-            a[key] = value
-            return a
-        })
-    }
 </script>
 
-<MaterialToggleSwitch label="ai.enable" checked={isEnabled} on:change={(e) => updateValue("enabled", e.detail)} />
+<MaterialToggleSwitch label="ai.enable" checked={isEnabled} on:change={(e) => setAiEnabled(!!e.detail)} />
 
 {#if isEnabled}
     <STTOptions />

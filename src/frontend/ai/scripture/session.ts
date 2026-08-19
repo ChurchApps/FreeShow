@@ -151,6 +151,19 @@ export function stopAiScriptureListening(): void {
     stopSession()
 }
 
+export function setAiScriptureEnabled(enabled: boolean): void {
+    // turning the feature off must also end an active listening session
+    if (!enabled) stopAiScriptureListening()
+
+    ai.update((a) => {
+        if (!a.scripture) a.scripture = {}
+        a.scripture.enabled = enabled
+        // the feature needs the AI layer - enabling it flips the main AI switch on (never off)
+        if (enabled && !a.enabled) a.enabled = true
+        return a
+    })
+}
+
 function stopSession(): void {
     scriptureState.sessionActive = false
     aiScriptureHasProjected.set(false)

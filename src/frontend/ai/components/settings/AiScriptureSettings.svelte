@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { stopAiScriptureListening } from "../../scripture/aiScripture"
+    import { setAiScriptureEnabled } from "../../scripture/aiScripture"
     import { ai, scriptures } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { keysToID, sortByName } from "../../../components/helpers/array"
@@ -52,17 +52,8 @@
     function setAutoMinConfidence(e: any) {
         update("autoMinConfidence", Number(e.target?.value ?? 80))
     }
-    // stop any active listening session when the feature is turned off (the session controller follows this toggle)
     function toggleEnabled(e: any) {
-        const enabled = !!e.detail
-        if (!enabled) stopAiScriptureListening()
-        ai.update((a) => {
-            if (!a.scripture) a.scripture = {}
-            a.scripture.enabled = enabled
-            // the feature needs the AI layer - enabling it flips the main AI switch on (never off)
-            if (enabled && !a.enabled) a.enabled = true
-            return a
-        })
+        setAiScriptureEnabled(!!e.detail)
         settings = $ai.scripture || {}
     }
 </script>
