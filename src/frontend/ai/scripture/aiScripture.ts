@@ -728,6 +728,8 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
         return false
     }
 
+    // guard against misheard giant ranges ("verse 1 to 176") - the projected selection still
+    // splits across slides through the normal scripture settings, this only caps the range
     const maxVerses = settings.maxVerses ?? 6
     if (maxVerses > 0) verseEnd = Math.min(verseEnd, verseStart + maxVerses - 1)
 

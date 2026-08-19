@@ -58,6 +58,6 @@ interface AiScriptureSettings {
     spokenLanguages?: string[]
     autoCooldownSeconds?: number
     refCooldownSeconds?: number
-    maxVerses?: number
+    maxVerses?: number // caps how many verses of a spoken range project at once (layout stays with the scripture settings)
     voiceCommands?: boolean
 }

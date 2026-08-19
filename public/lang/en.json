@@ -1804,7 +1804,7 @@
         "mode_auto_warning": "Detected scriptures will appear on the live output instantly, without asking!",
         "auto_cooldown": "Auto-project cooldown (s)",
         "ref_cooldown": "Same reference cooldown (s)",
-        "max_verses": "Max verses",
+        "max_verses": "Max verses per projection",
         "privacy": "Privacy",
         "privacy_local": "Speech is transcribed locally on your computer - audio never leaves the device.",
         "privacy_llm": "With an API key set, transcript text is sent to your chosen AI provider while listening to also catch paraphrased references - nothing else.",

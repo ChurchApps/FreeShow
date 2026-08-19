@@ -110,11 +110,12 @@
         <p class="faded"><T id="ai_scripture.voice_commands_hint" /></p>
     {/if}
 
+    <!-- the two cooldowns pair up on one row; max verses is no cooldown, so it gets its own line -->
     <InputRow>
         <MaterialNumberInput label="ai_scripture.auto_cooldown" value={Number(settings.autoCooldownSeconds ?? 5)} defaultValue={5} min={0} max={300} on:change={(e) => update("autoCooldownSeconds", e.detail)} />
         <MaterialNumberInput label="ai_scripture.ref_cooldown" value={Number(settings.refCooldownSeconds ?? 90)} defaultValue={90} min={0} max={600} on:change={(e) => update("refCooldownSeconds", e.detail)} />
-        <MaterialNumberInput label="ai_scripture.max_verses" value={Number(settings.maxVerses ?? 6)} defaultValue={6} min={1} max={20} on:change={(e) => update("maxVerses", e.detail)} />
     </InputRow>
+    <MaterialNumberInput label="ai_scripture.max_verses" value={Number(settings.maxVerses ?? 6)} defaultValue={6} min={1} max={20} on:change={(e) => update("maxVerses", e.detail)} />
 
     <div class="privacy">
         <div class="privacyTitle">
