@@ -6,7 +6,8 @@ vi.mock("./llmTalkScripture", () => ({
     getLLMScriptureProvider: () => ({ detectScripture: mockDetectScripture })
 }))
 
-import { DetectionCoordinator, detectExplicitReferences, normalizeSpokenNumbers } from "./detection"
+import { normalizeSpokenNumbers } from "../commands/spokenNumbers"
+import { DetectionCoordinator, detectExplicitReferences } from "./detection"
 
 const BOOKS = [
     { number: 19, canonNumber: 19, names: ["Psalms", "Psalm"] },

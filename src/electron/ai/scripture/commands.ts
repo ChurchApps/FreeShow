@@ -3,7 +3,8 @@
 // ("go to the next verse", "give me verse five", "show chapter four", "give me NIV", "give me another translation")
 
 import type { AiScriptureCommandEvent, AiScriptureTranslation } from "../../../types/ai/AiScripture"
-import { normalizeSpokenNumbers, NUMBER_HOMOPHONES, parseNumberToken, VERSE_WORD_MISHEARINGS } from "./detection"
+import { normalizeSpokenNumbers, NUMBER_HOMOPHONES, parseNumberToken } from "../commands/spokenNumbers"
+import { VERSE_WORD_MISHEARINGS } from "./vocabulary"
 
 export interface CommandGrammar {
     imperatives: string[]
