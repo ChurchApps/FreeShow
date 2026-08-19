@@ -1,6 +1,7 @@
 import type { ICommonTagsResult } from "music-metadata"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
-import type { AiScriptureCommandEvent, AiScriptureState, DetectedReference } from "../ai/AiScripture"
+import type { AiCommandEnvelope } from "../ai/AiCommands"
+import type { AiScriptureState, DetectedReference } from "../ai/AiScripture"
 import type { RtmpStatus } from "../Output"
 import type { TrimmedShows } from "../Show"
 
@@ -26,7 +27,7 @@ export enum ToMain {
     AI_TRANSCRIPT_INTERIM = "AI_TRANSCRIPT_INTERIM",
     AI_SCRIPTURE_DETECTION = "AI_SCRIPTURE_DETECTION",
     AI_SCRIPTURE_STATUS = "AI_SCRIPTURE_STATUS",
-    AI_SCRIPTURE_COMMAND = "AI_SCRIPTURE_COMMAND",
+    AI_COMMAND = "AI_COMMAND",
     // Unified provider callbacks
     PROVIDER_CONNECT = "PROVIDER_CONNECT",
     PROVIDER_PROJECTS = "PROVIDER_PROJECTS",
@@ -82,7 +83,7 @@ export interface ToMainSendPayloads {
     [ToMain.AI_TRANSCRIPT_INTERIM]: { text: string }
     [ToMain.AI_SCRIPTURE_DETECTION]: DetectedReference
     [ToMain.AI_SCRIPTURE_STATUS]: { state: AiScriptureState; message?: string; keyless?: boolean }
-    [ToMain.AI_SCRIPTURE_COMMAND]: AiScriptureCommandEvent
+    [ToMain.AI_COMMAND]: AiCommandEnvelope
 }
 
 export interface ToMainReturnPayloads {

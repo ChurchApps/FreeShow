@@ -71,7 +71,8 @@ export function startScriptureDetection(config: AiScriptureDetectionConfig): boo
         const now = Date.now()
         if (now - (commandCooldowns.get(command.type) || 0) < COMMAND_COOLDOWN_MS) return
         commandCooldowns.set(command.type, now)
-        sendToMain(ToMain.AI_SCRIPTURE_COMMAND, command)
+        const { phrase, ...rest } = command
+        sendToMain(ToMain.AI_COMMAND, { feature: "scripture", command: rest, phrase })
     }
     SpeechToText.addSegmentListener(scriptureSegmentListener)
 

@@ -4,7 +4,8 @@ import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
-import { executeScriptureCommand, handleDetection } from "../ai/scripture/aiScripture"
+import { dispatchAiCommand } from "../ai/commands/commandRegistry"
+import { handleDetection } from "../ai/scripture/aiScripture"
 import { handleQuoteMatchTranscript } from "../ai/scripture/quoteMatch/quoteMatchSession"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
@@ -295,8 +296,8 @@ export const mainResponses: MainResponses = {
     [ToMain.AI_SCRIPTURE_DETECTION]: (data) => {
         handleDetection(data)
     },
-    [ToMain.AI_SCRIPTURE_COMMAND]: (data) => {
-        executeScriptureCommand(data)
+    [ToMain.AI_COMMAND]: (data) => {
+        dispatchAiCommand(data)
     },
 
     // Companion dynamic value variables
