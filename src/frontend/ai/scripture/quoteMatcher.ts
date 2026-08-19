@@ -96,6 +96,7 @@ const IN = "(?:in|from|somewhere in|back in)"
 type ScopeCue = { pattern: RegExp } & ({ from: number; to: number; extra?: number[] } | { chapters: { book: number; from: number; to: number }[] })
 const at = (book: number, from: number, to = from) => ({ book, from, to })
 const parable = (names: string, ...chapters: { book: number; from: number; to: number }[]): ScopeCue => ({ pattern: new RegExp("\\b(?:parable|story) of (?:the |a )?(?:" + names + ")\\b"), chapters })
+const story = (names: string, ...chapters: { book: number; from: number; to: number }[]): ScopeCue => ({ pattern: new RegExp("\\b(?:story|life|account) of (?:the )?(?:" + names + ")\\b"), chapters })
 
 const SCOPE_CUES: ScopeCue[] = [
     // named parables (chapter-level: 40 Matthew, 41 Mark, 42 Luke, 43 John)
@@ -148,6 +149,24 @@ const SCOPE_CUES: ScopeCue[] = [
     { pattern: /\b(?:lions'? den|den of lions)\b/, chapters: [at(27, 6)] },
     { pattern: /\bvalley of (?:the )?dry bones\b/, chapters: [at(26, 37)] },
     { pattern: /\bshepherd'?s? psalm\b/, chapters: [at(19, 23)] },
+    { pattern: /\b(?:psalms?|songs?) of ascents?\b/, chapters: [at(19, 120, 134)] },
+    // character stories - "the story of joseph" scopes to where the story lives
+    story("joseph", at(1, 37, 50)),
+    story("abraham", at(1, 12, 25)),
+    story("jacob", at(1, 25, 35)),
+    story("moses", at(2, 1, 20)),
+    story("samson", at(7, 13, 16)),
+    story("gideon", at(7, 6, 8)),
+    story("ruth", at(8, 1, 4)),
+    story("david", at(9, 16, 31), at(10, 1, 24), at(11, 1, 2)),
+    story("elijah", at(11, 17, 22), at(12, 1, 2)),
+    story("elisha", at(12, 2, 13)),
+    story("esther", at(17, 1, 10)),
+    story("job", at(18, 1, 42)),
+    story("daniel", at(27, 1, 6)),
+    story("jonah", at(32, 1, 4)),
+    // red letters: the words of jesus live in the gospels (& acts)
+    { pattern: /\b(?:words of jesus|jesus'? own words|red letters?)\b/, from: 40, to: 44 },
     // testaments, book groups, authors & speakers
     { pattern: new RegExp("\\b" + IN + " the old testament\\b"), from: 1, to: 39 },
     { pattern: new RegExp("\\b" + IN + " the new testament\\b"), from: 40, to: 66 },

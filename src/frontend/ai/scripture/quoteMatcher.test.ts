@@ -277,6 +277,7 @@ describe("spoken search scopes", () => {
         verse(45, 8, 28, "all things work for the good of those the maker called according to his purpose in love"),
         verse(40, 13, 44, "the kingdom is like treasure hidden in a field which a man found and covered with joy"),
         verse(23, 1, 18, "come let us reason together though your sins are like scarlet they shall become white as snow"),
+        verse(1, 37, 3, "now israel loved joseph more than all the sons and made him a robe of many colors"),
         verse(5, 1, 1, "these are the words spoken beside the river in the plains and the season was dry"),
         verse(5, 1, 2, "eleven days journey by the way of the mountain road leads to the border town"),
         verse(5, 1, 3, "and it came about in the fortieth year that the leader spoke to all the people"),
@@ -349,6 +350,17 @@ describe("spoken search scopes", () => {
         const out = matcher.onSegment(seg("sins are like scarlet friends"))
         expect(out).toHaveLength(1)
         expect(out[0]).toMatchObject({ book: 23, chapter: 1, verseStart: 18 })
+    })
+
+    it("a character story scopes to where it lives: 'the story of joseph'", () => {
+        const plain = new QuoteMatcher([scopedIndex()], FRAGS)
+        expect(plain.onSegment(seg("a robe of many colors right"))).toEqual([])
+
+        const matcher = new QuoteMatcher([scopedIndex()], FRAGS)
+        matcher.onSegment(seg("remember the story of joseph"))
+        const out = matcher.onSegment(seg("a robe of many colors right"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 1, chapter: 37, verseStart: 3 })
     })
 
     it("'in the same psalm' scopes to the last touched passage - even after the soft memory expired", () => {
