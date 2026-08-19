@@ -103,6 +103,7 @@
     {/if}
 
     <MaterialToggleSwitch label="ai_scripture.follow_in_drawer" checked={settings.followInDrawer !== false} defaultValue={true} on:change={(e) => update("followInDrawer", e.detail)} />
+    <p class="faded hint"><T id="ai_scripture.follow_in_drawer_hint" /></p>
 
     <MaterialToggleSwitch label="ai_scripture.voice_commands" checked={settings.voiceCommands === true} defaultValue={false} on:change={(e) => update("voiceCommands", e.detail)} />
     {#if settings.voiceCommands}
