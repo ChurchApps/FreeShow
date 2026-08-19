@@ -1,0 +1,51 @@
+// AI AUTO SCRIPTURE - TRANSLATION PREFERENCE
+// which translation leads: the favourites are the priority pool, the main translation (or the
+// first favourite) is the projection/grounding target, and the spoken cycle ranking orders both
+
+import { get } from "svelte/store"
+import { getShortBibleName } from "../../components/drawer/bible/scripture"
+import { drawerTabsData, scriptures } from "../../stores"
+import { getSettings } from "./scriptureState"
+
+// "another translation" visits the familiar ones first - however the search selection is ordered.
+// Each entry lists the abbreviation AND full-name phrasings, since libraries store either
+// ("NASB" / "New American Standard Bible"). NKJV ranks before KJV so its full name is not
+// swallowed by the "KING JAMES" alias
+const CYCLE_PREFERENCE: string[][] = [
+    ["NASB", "NEW AMERICAN STANDARD BIBLE"],
+    ["NLT", "NEW LIVING TRANSLATION"],
+    ["AMP", "AMPLIFIED BIBLE"],
+    ["AMPC", "AMPLIFIED BIBLE CLASSIC"],
+    ["MSG", "THE MESSAGE BIBLE"],
+    ["CEV", "CONTEMPORARY ENGLISH VERSION"],
+    ["CEB", "COMMON ENGLISH BIBLE"],
+    ["NIV", "NEW INTERNATIONAL VERSION"],
+    ["NIRV", "NEW INTERNATIONAL READERS' VERSION"],
+    ["ERV", "EASY-TO-READ VERSION", "EASY TO READ VERSION"],
+    ["ESV", "ENGLISH STANDARD VERSION"],
+    ["GNT", "GOOD NEWS TRANSLATION"],
+    ["NKJV", "NEW KING JAMES VERSION"],
+    ["KJV", "KING JAMES VERSION"]
+]
+
+export function cycleRank(id: string): number {
+    const bible = get(scriptures)[id]
+    const names = [bible?.customName, bible?.name, getShortBibleName(bible?.name || "")].map((name) => (name || "").toUpperCase())
+    const rank = CYCLE_PREFERENCE.findIndex((aliases) => aliases.some((alias) => names.some((name) => name === alias || name.includes(alias))))
+    return rank < 0 ? CYCLE_PREFERENCE.length : rank
+}
+
+/** The favourited translations, common ones first (the existing cycle ranking), then by name. */
+export function favoriteTranslationIds(): string[] {
+    return Object.entries(get(scriptures))
+        .filter(([, bible]) => !!bible?.favorite)
+        .sort(([idA, a], [idB, b]) => cycleRank(idA) - cycleRank(idB) || (a.customName || a.name || "").localeCompare(b.customName || b.name || ""))
+        .map(([id]) => id)
+}
+
+/** The translation detections project in (unless display is "matched") and matching grounds to. */
+export function preferredTranslationId(): string {
+    const main = getSettings().mainTranslation
+    if (main && get(scriptures)[main]) return main
+    return favoriteTranslationIds()[0] || get(drawerTabsData).scripture?.activeSubTab || ""
+}
