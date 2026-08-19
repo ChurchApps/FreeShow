@@ -142,6 +142,7 @@ describe("ASR-confusable lexicon", () => {
         expect(tokenGrade("altar", "alter", true)).toBe(0.85)
         expect(tokenGrade("prophet", "profit", true)).toBe(0.85)
         expect(tokenGrade("psalm", "palm", true)).toBe(0.85)
+        expect(tokenGrade("junior", "junia", true)).toBe(0.85) // Romans 16:7, heard live
         // the informative gate: common verse tokens never lexicon-merge
         expect(tokenGrade("season", "ceasing", false)).toBe(0)
     })

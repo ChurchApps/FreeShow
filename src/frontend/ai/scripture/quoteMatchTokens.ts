@@ -178,6 +178,7 @@ const STEM_TAILS = new Set(["e", "s", "t", "st", "th", "es", "ed", "ee"])
 const ASR_CONFUSABLE_SETS: string[][] = [
     // observed & scripture-frequent
     ["season", "seasons", "ceasing"],
+    ["junia", "junior"], // Romans 16:7, heard live
     ["altar", "alter"],
     ["prophet", "prophets", "profit", "profits"],
     ["morning", "mourning"],
