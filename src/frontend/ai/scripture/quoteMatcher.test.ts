@@ -267,6 +267,22 @@ describe("QuoteMatcher", () => {
     })
 })
 
+describe("QuoteMatcher live translation updates", () => {
+    it("an added translation starts matching; a removed one stops", () => {
+        const matcher = new QuoteMatcher([kjvIndex()])
+        // sim-only wording is invisible while only the kjv is indexed
+        expect(matcher.onSegment(seg("because god treasured the planet deeply he offered his single cherished child"))).toEqual([])
+
+        matcher.addIndexes([simIndex()])
+        const out = matcher.onSegment(seg("because god treasured the planet deeply he offered his single cherished child so each person trusting him escapes ruin and receives unending existence"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 43, chapter: 3, verseStart: 16, translationId: "sim" })
+
+        matcher.removeTranslations(["sim"])
+        expect(matcher.onSegment(seg("at the outset god shaped the skies and the ground below them", 30000))).toEqual([])
+    })
+})
+
 describe("QuoteMatcher short fragments", () => {
     // the production phrase floors are calibrated against a full bible's idf range - fixture
     // corpora scale them down so every mechanism (run detection, peak floor, rival wait,

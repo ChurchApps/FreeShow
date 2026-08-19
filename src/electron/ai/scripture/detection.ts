@@ -657,6 +657,13 @@ export class DetectionCoordinator {
         this.llmCooldownUntil = 0
     }
 
+    /** The Search Bibles selection changed mid-session - the spoken book-name index follows it. */
+    updateBooks(books: AiScriptureBook[]): void {
+        this.opts.books = books
+        this.bookIndex = buildBookIndex(books)
+        this.anchorBookPrefix = this.bookIndex.bookPattern ? new RegExp("(?:^|[^a-z0-9])(?:" + this.bookIndex.bookPattern + ")[,.]?\\s+$") : null
+    }
+
     updateContext(ctx: AiScriptureAnchor): void {
         this.anchor = ctx
     }

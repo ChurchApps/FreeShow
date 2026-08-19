@@ -18,7 +18,53 @@ const h = vi.hoisted(() => {
 })
 vi.mock("../../stores", () => ({ scriptures: h.scriptures, scripturesCache: h.scripturesCache, ai: h.ai, aiQuoteMatchActive: h.aiQuoteMatchActive }))
 
-import { bookNameFor, handleQuoteMatchTranscript, noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching } from "./quoteMatchSession"
+import { bookNameFor, handleQuoteMatchTranscript, noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching, updateQuoteMatchBibles } from "./quoteMatchSession"
+
+// a second bible with invented wording, for the mid-session Search Bibles update tests
+const ALT_BIBLE = {
+    name: "ALT",
+    books: [
+        {
+            number: 19,
+            name: "Psalms",
+            chapters: [
+                {
+                    number: 100,
+                    verses: [
+                        { number: 1, text: "Shout with gladness to the maker all you lands and serve with bright singing today." },
+                        { number: 2, text: "Enter the gates carrying thankful praise and bless the famous name forever more." },
+                        { number: 3, text: "Know that the maker formed us and we belong like sheep inside the pasture walls." }
+                    ]
+                }
+            ]
+        },
+        {
+            number: 66,
+            name: "Revelation",
+            chapters: [{ number: 21, verses: [{ number: 4, text: "Every tear will be wiped away and death will exist no longer nor sorrow nor crying nor pain anymore." }] }]
+        },
+        {
+            // filler so the fixture's idf weights behave like a real translation
+            number: 20,
+            name: "Proverbs",
+            chapters: [
+                {
+                    number: 3,
+                    verses: [
+                        { number: 1, text: "My child do not forget my teaching but keep my commands within your heart always." },
+                        { number: 2, text: "For length of days and years of life and abundant peace they will add to you." },
+                        { number: 3, text: "Never let kindness and truth leave you but bind them around your neck and write them deep." },
+                        { number: 4, text: "So you will find favor and good standing in the sight of heaven and of people." },
+                        { number: 5, text: "Trust in the eternal one with all your heart and lean not on your own understanding." },
+                        { number: 6, text: "In all your ways acknowledge him and he will make your paths straight before you." },
+                        { number: 7, text: "Do not be wise in your own eyes but fear the eternal one and turn away from evil." },
+                        { number: 8, text: "It will bring healing to your body and refreshment to your bones through every season." }
+                    ]
+                }
+            ]
+        }
+    ]
+}
 
 const BIBLE = {
     name: "KJV",
@@ -173,6 +219,24 @@ describe("quoteMatchSession", () => {
         await flush()
         handleQuoteMatchTranscript(seg(JOHN_316))
         expect(detections).toHaveLength(0)
+    })
+
+    it("updates the indexed set mid-session: added bibles match, removed ones stop", async () => {
+        h.scriptures._set({ kjv: { name: "KJV" }, alt: { name: "ALT" } })
+        h.scripturesCache._set({ kjv: BIBLE, alt: ALT_BIBLE })
+        start()
+        await flush()
+
+        updateQuoteMatchBibles(["kjv", "alt"])
+        await flush()
+        handleQuoteMatchTranscript(seg("shout with gladness to the maker all you lands and serve with bright singing today"))
+        expect(detections).toHaveLength(1)
+        expect(detections[0]).toMatchObject({ bookNumber: 19, chapter: 100, verseStart: 1, matchedBibleId: "alt" })
+
+        updateQuoteMatchBibles(["kjv"])
+        await flush()
+        handleQuoteMatchTranscript(seg("every tear will be wiped away and death will exist no longer nor sorrow nor crying nor pain anymore"))
+        expect(detections).toHaveLength(1)
     })
 
     it("routes the anchor and explicit-reference seeds without a session error", async () => {

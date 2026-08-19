@@ -25,6 +25,7 @@ export function createWorkerHost(): MatcherHost {
         const message = event.data
         if (!message || !callbacks) return
         if (message.type === "ready") callbacks.onReady({ count: message.count, totalBytes: message.totalBytes })
+        else if (message.type === "updated") callbacks.onUpdated?.({ count: message.count, added: message.added, removed: message.removed, totalBytes: message.totalBytes })
         else if (message.type === "emissions") callbacks.onEmissions(message.emissions)
         else if (message.type === "error") callbacks.onError(message.message)
     }
@@ -37,6 +38,9 @@ export function createWorkerHost(): MatcherHost {
         start(payloads: TranslationPayload[], hostCallbacks) {
             callbacks = hostCallbacks
             send({ type: "start", translations: payloads }, payloadTransferables(payloads))
+        },
+        update(add: TranslationPayload[], remove: string[]) {
+            send({ type: "update", add, remove }, payloadTransferables(add))
         },
         segment(segment) {
             send({ type: "segment", segment })

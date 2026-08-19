@@ -40,6 +40,10 @@ let pendingAnchor: { bookNumber: number; chapter: number; verseStart: number; ve
 // bumped on every start/stop so a slow build that got superseded discards itself
 let sessionToken = 0
 let idCounter = 0
+// the translations currently indexed (payloads actually shipped), so a mid-session change only
+// touches the difference; updates run one at a time so concurrent diffs cannot double-add
+let currentBibleIds: string[] = []
+let updateChain: Promise<void> = Promise.resolve()
 
 const PENDING_SEGMENT_CAP = 50
 
@@ -64,6 +68,41 @@ export function stopQuoteMatching(): void {
     onDetection = null
     pendingSegments = []
     pendingAnchor = null
+    currentBibleIds = []
+}
+
+/**
+ * The Search Bibles selection changed mid-session: only the DIFFERENCE is applied - added
+ * translations are indexed into the running matcher, removed ones are dropped. The matcher, its
+ * transcript window, anchor and passage memory all stay live. Before the matcher is ready
+ * (or when matching never started) the full start IS the update.
+ */
+export function updateQuoteMatchBibles(bibleIds: string[]): void {
+    if (get(ai).scripture?.quoteMatching === false) return
+
+    if (!host || starting) {
+        if (gate && onDetection) startQuoteMatching({ bibleIds, interpretationMode: gate.interpretationMode, listenLanguage: gate.listenLanguage, onDetection })
+        return
+    }
+
+    const token = sessionToken
+    updateChain = updateChain.then(() => updateSession(token, bibleIds)).catch(() => undefined)
+}
+
+async function updateSession(token: number, bibleIds: string[]): Promise<void> {
+    if (token !== sessionToken) return
+
+    const removed = currentBibleIds.filter((id) => !bibleIds.includes(id))
+    const addedIds = bibleIds.filter((id) => !currentBibleIds.includes(id))
+    if (!removed.length && !addedIds.length) return
+
+    const addPayloads = await buildPayloads(addedIds)
+    if (token !== sessionToken) return
+    if (!removed.length && !addPayloads.length) return
+
+    console.info(`[AiScripture] Search bibles changed - updating quote match indexes (+${addPayloads.length} / -${removed.length})`)
+    currentBibleIds = [...currentBibleIds.filter((id) => !removed.includes(id)), ...addPayloads.map((payload) => payload.translationId)]
+    host?.update(addPayloads, removed)
 }
 
 export function handleQuoteMatchTranscript(segment: TranscriptSegment): void {
@@ -118,6 +157,7 @@ async function startSession(token: number, bibleIds: string[]): Promise<void> {
         }
 
         host = created
+        currentBibleIds = payloads.map((payload) => payload.translationId)
         host.start(payloads, callbacksFor(token, payloads))
     } catch (err) {
         if (token !== sessionToken) return
@@ -139,6 +179,10 @@ function callbacksFor(token: number, fallbackPayloads: TranslationPayload[] | nu
             const buffered = pendingSegments
             pendingSegments = []
             for (const segment of buffered) feedSegment(segment)
+        },
+        onUpdated: (info) => {
+            if (token !== sessionToken) return
+            console.info(`[AiScripture] Quote match indexes updated: ${info.count} translation${info.count === 1 ? "" : "s"} indexed (+${info.added} / -${info.removed}, ${(info.totalBytes / 1024 / 1024).toFixed(1)} MB)`)
         },
         onEmissions: (emissions) => {
             if (token !== sessionToken || !onDetection) return

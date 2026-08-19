@@ -8,7 +8,7 @@ import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
-import { startScriptureDetection, stopScriptureDetection, testAiConnection, updateScriptureDetectionContext, updateScriptureLlm } from "../ai"
+import { startScriptureDetection, stopScriptureDetection, testAiConnection, updateScriptureDetectionContext, updateScriptureLlm, updateScriptureTables } from "../ai"
 import { aiHandleLocalSetup } from "../ai/setup/LocalModelManager"
 import { aiGetModelStatus } from "../ai/setup/status"
 import { SpeechToText } from "../ai/stt/SpeechToTextManager"
@@ -282,6 +282,7 @@ export const mainResponses: MainResponses = {
     [Main.AI_SCRIPTURE_START]: (data) => startScriptureDetection(data),
     [Main.AI_SCRIPTURE_STOP]: () => stopScriptureDetection(),
     [Main.AI_SCRIPTURE_LLM]: (data) => updateScriptureLlm(data.llm),
+    [Main.AI_SCRIPTURE_TABLES]: (data) => updateScriptureTables(data),
     [Main.AI_SCRIPTURE_CONTEXT]: (data) => updateScriptureDetectionContext(data),
     [Main.AI_SET_KEY]: (data) => setAiKey(data),
     [Main.AI_TEST_CONNECTION]: (data) => testAiConnection(data)

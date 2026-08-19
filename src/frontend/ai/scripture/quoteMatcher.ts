@@ -121,6 +121,25 @@ export class QuoteMatcher {
         this.anchor = anchor
     }
 
+    get translationCount(): number {
+        return this.indexes.length
+    }
+
+    /** Translations ticked mid-session join the running matcher (built on the same shared pool). */
+    addIndexes(indexes: TranslationIndex[]): void {
+        this.indexes.push(...indexes)
+    }
+
+    /** Translations unticked mid-session leave; only state that points at them is dropped. */
+    removeTranslations(translationIds: string[]): void {
+        const removed = new Set(translationIds)
+        this.indexes = this.indexes.filter((index) => !removed.has(index.translationId))
+        this.seededOrdinals = this.seededOrdinals.filter((seed) => !removed.has(seed.index.translationId))
+        if (this.tracker && removed.has(this.tracker.translationId)) this.tracker = null
+        // the drawer translation is indexed first and can never be unticked away
+        if (this.stickyTranslationId && removed.has(this.stickyTranslationId)) this.stickyTranslationId = this.indexes[0]?.translationId ?? null
+    }
+
     /** A tier-1 explicit reference was just spoken - its verse becomes a guaranteed candidate. */
     noteExplicitReference(ref: { bookNumber: number; chapter: number; verseStart: number }): void {
         this.seededOrdinals = []

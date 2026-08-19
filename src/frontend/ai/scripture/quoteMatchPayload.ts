@@ -79,21 +79,34 @@ export function payloadTransferables(payloads: TranslationPayload[]): ArrayBuffe
 }
 
 /**
- * Build the session's indexes (one shared PrefixPool) from payloads, honoring the memory budget.
- * Yields between translations so the hosting thread stays responsive during the ~seconds-long
- * build - the worker keeps answering messages, the fallback keeps the UI alive.
+ * The session-lived build state: the shared PrefixPool every index resolves against (grow-only,
+ * so ids handed to earlier indexes stay valid), the drawer's bigram pool, and how much of the
+ * memory budget the session has already spent. Translations ticked mid-session build into the
+ * SAME context, which keeps the matcher's shared-pool fast path and the budget honest.
  */
-export async function buildIndexesFromPayloads(payloads: TranslationPayload[]): Promise<{ indexes: TranslationIndex[]; totalBytes: number }> {
+export interface IndexBuildContext {
+    pool: PrefixPool
+    bigramPool: PrefixPool
+    usedBytes: number
+    count: number // indexes built so far in this context (the first one carries the bigram route)
+}
+
+export function createIndexBuildContext(): IndexBuildContext {
+    return { pool: new PrefixPool(), bigramPool: new PrefixPool(), usedBytes: 0, count: 0 }
+}
+
+/**
+ * Build indexes (one shared PrefixPool) from payloads, honoring the memory budget. Yields
+ * between translations so the hosting thread stays responsive during the ~seconds-long build -
+ * the worker keeps answering messages, the fallback keeps the UI alive. Passing an existing
+ * context continues a session's build incrementally instead of starting a new one.
+ */
+export async function buildIndexesFromPayloads(payloads: TranslationPayload[], context: IndexBuildContext = createIndexBuildContext()): Promise<{ indexes: TranslationIndex[]; totalBytes: number }> {
     const indexes: TranslationIndex[] = []
-    const pool = new PrefixPool()
-    // the first payload is the drawer translation (the session orders it first): it alone carries
-    // the bigram fragment route - one is enough for a fragment to surface its verse, and a route
-    // per translation would eat most of the memory budget
-    const bigramPool = new PrefixPool()
-    let budgetBytes = INDEX_MEMORY_BUDGET_BYTES
+    let budgetBytes = INDEX_MEMORY_BUDGET_BYTES - context.usedBytes
 
     for (const payload of payloads) {
-        if (budgetBytes <= 0 && indexes.length) break
+        if (budgetBytes <= 0 && context.count) break
 
         const verses: IndexableVerse[] = []
         const verseCount = payload.textOffsets.length - 1
@@ -108,13 +121,18 @@ export async function buildIndexesFromPayloads(payloads: TranslationPayload[]): 
         }
         if (!verses.length) continue
 
-        const index = buildTranslationIndex(payload.translationId, verses, pool, indexes.length === 0 ? { bigrams: true, bigramPool } : {})
+        // the first payload of the session is the drawer translation (the session orders it
+        // first): it alone carries the bigram fragment route - one is enough for a fragment to
+        // surface its verse, and a route per translation would eat most of the memory budget
+        const index = buildTranslationIndex(payload.translationId, verses, context.pool, context.count === 0 ? { bigrams: true, bigramPool: context.bigramPool } : {})
         indexes.push(index)
+        context.count++
+        context.usedBytes += index.sizeBytes
         budgetBytes -= index.sizeBytes
 
         await new Promise((resolve) => setTimeout(resolve))
     }
 
-    const totalBytes = indexes.reduce((sum, index) => sum + index.sizeBytes, 0) + (indexes.length ? pool.sizeBytes + bigramPool.sizeBytes : 0)
+    const totalBytes = context.usedBytes + (context.count ? context.pool.sizeBytes + context.bigramPool.sizeBytes : 0)
     return { indexes, totalBytes }
 }

@@ -7,16 +7,19 @@
 
 import type { QuoteMatchAnchor, QuoteMatchEmission } from "./quoteMatcher"
 import { QuoteMatcher } from "./quoteMatcher"
-import { buildIndexesFromPayloads, type TranslationPayload } from "./quoteMatchPayload"
+import { buildIndexesFromPayloads, createIndexBuildContext, type TranslationPayload } from "./quoteMatchPayload"
 
 export interface MatcherHostCallbacks {
     onReady: (info: { count: number; totalBytes: number }) => void
+    onUpdated?: (info: { count: number; added: number; removed: number; totalBytes: number }) => void
     onEmissions: (emissions: QuoteMatchEmission[]) => void
     onError: (message: string) => void
 }
 
 export interface MatcherHost {
     start(payloads: TranslationPayload[], callbacks: MatcherHostCallbacks): void
+    /** Incrementally index added translations and drop removed ones - the matcher keeps running. */
+    update(add: TranslationPayload[], remove: string[]): void
     segment(segment: { text: string; startMs: number; endMs: number }): void
     setAnchor(anchor: QuoteMatchAnchor): void
     noteExplicit(ref: { bookNumber: number; chapter: number; verseStart: number }): void
@@ -41,11 +44,14 @@ export function createDirectHost(): MatcherHost {
     let matcher: QuoteMatcher | null = null
     let callbacks: MatcherHostCallbacks | null = null
     let stopped = false
+    // survives for the whole session so mid-session additions build into the same shared pool
+    let buildContext = createIndexBuildContext()
 
     return {
         start(payloads, hostCallbacks) {
             callbacks = hostCallbacks
-            buildIndexesFromPayloads(payloads)
+            buildContext = createIndexBuildContext()
+            buildIndexesFromPayloads(payloads, buildContext)
                 .then(({ indexes, totalBytes }) => {
                     if (stopped) return
                     matcher = new QuoteMatcher(indexes)
@@ -53,6 +59,20 @@ export function createDirectHost(): MatcherHost {
                 })
                 .catch((err) => {
                     if (!stopped) hostCallbacks.onError(String((err as Error)?.message || err))
+                })
+        },
+        update(add, remove) {
+            const active = matcher
+            if (!active || !callbacks) return
+            active.removeTranslations(remove)
+            buildIndexesFromPayloads(add, buildContext)
+                .then(({ indexes, totalBytes }) => {
+                    if (stopped) return
+                    active.addIndexes(indexes)
+                    callbacks?.onUpdated?.({ count: active.translationCount, added: indexes.length, removed: remove.length, totalBytes })
+                })
+                .catch((err) => {
+                    if (!stopped) callbacks?.onError(String((err as Error)?.message || err))
                 })
         },
         segment(segment) {

@@ -20,6 +20,7 @@ const COMMAND_COOLDOWN_MS = 3000
 const commandCooldowns = new Map<string, number>()
 
 let scriptureCoordinator: DetectionCoordinator | null = null
+let scriptureConfig: AiScriptureDetectionConfig | null = null
 let scriptureSegmentListener: ((segment: TranscriberSegment) => void) | null = null
 // when the renderer last reported a live passage - "reading in progress" context for voice commands
 let lastAnchorAtMs = 0
@@ -49,6 +50,7 @@ export function startScriptureDetection(config: AiScriptureDetectionConfig): boo
         }
     })
     scriptureCoordinator = coordinator
+    scriptureConfig = config
 
     scriptureSegmentListener = (segment: TranscriberSegment) => {
         // music lyrics are hallucination territory - never let them trigger detections or commands
@@ -84,8 +86,19 @@ export function stopScriptureDetection() {
 
     scriptureCoordinator?.stop()
     scriptureCoordinator = null
+    scriptureConfig = null
     commandCooldowns.clear()
     lastAnchorAtMs = 0
+}
+
+// the Search Bibles selection changed mid-session - the spoken book-name index and the
+// translation cue table follow the newly indexed set without restarting the session
+export function updateScriptureTables(data: { books: AiScriptureDetectionConfig["books"]; translations: AiScriptureDetectionConfig["translations"] }) {
+    if (!scriptureConfig || !scriptureCoordinator) return
+    scriptureConfig.books = data.books
+    scriptureConfig.translations = data.translations // the segment listener reads this per segment
+    scriptureCoordinator.updateBooks(data.books)
+    console.info(`[AiScripture] Detection tables refreshed: ${data.books.length} book names, ${data.translations?.length || 0} translation cues`)
 }
 
 // the AI provider was configured mid-session (key saved, provider/model picked) - arm or update

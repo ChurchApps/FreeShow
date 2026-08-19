@@ -16,7 +16,7 @@ import { requestMain, sendMain } from "../../IPC/main"
 import { activeDrawerTab, activeScripture, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureInterim, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, drawerTabsData, openScripture, outLocked, outputs, scriptures, scripturesCache } from "../../stores"
 import { AI_PROVIDER_MODELS } from "../models"
 import { resolveSttEngine, SpeechToText } from "../stt/stt"
-import { noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching } from "./quoteMatchSession"
+import { noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching, updateQuoteMatchBibles } from "./quoteMatchSession"
 
 const SUGGESTION_MAX_AGE = 3 * 60 * 1000
 const SUGGESTION_LIMIT = 5
@@ -79,7 +79,6 @@ let searchBibleIds: string[] = []
 let selfProjecting = false
 let startInFlight: Promise<{ ok: boolean; error?: string }> | null = null
 let suggestionPruneTimer: NodeJS.Timeout | null = null
-let sessionGate = { interpretationMode: false, listenLanguage: "en" }
 let searchBiblesRefreshTimer: NodeJS.Timeout | null = null
 let searchBiblesRefreshToken = 0
 let lastQuoteMatchAnchor: { bookNumber: number; chapter: number; verseStart: number; verseEnd: number } | null = null
@@ -139,7 +138,6 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     const language = engine === "nemotron" ? "en" : engineOptions.language || "en"
     const interpretationMode = engine === "whisper" && engineOptions.interpretationMode === true
     const listenLanguage = engineOptions.listenLanguage || language
-    sessionGate = { interpretationMode, listenLanguage } // a mid-session quote match rebuild reuses the session's gating
 
     // "none" is the explicit STT-only choice - and even a chosen provider only travels when its
     // key is saved (raw keys never leave the electron process)
@@ -302,29 +300,19 @@ async function refreshSearchBibles(): Promise<void> {
     const settings = getSettings()
     const activeSubTab = get(drawerTabsData).scripture?.activeSubTab || ""
     searchBibleIds = expandBibleIds(settings.searchBibles?.length ? settings.searchBibles : [activeSubTab])
-    if (settings.quoteMatching === false) return
 
-    const quoteMatchIds = [...new Set([...expandBibleIds([activeSubTab]), ...searchBibleIds])]
-    console.info(`[AiScripture] Search bibles changed - rebuilding quote match indexes for ${quoteMatchIds.length} translation${quoteMatchIds.length === 1 ? "" : "s"}`)
-
-    // newly ticked bibles may not be loaded yet - the index build reads verse text from the cache
-    for (const id of quoteMatchIds) {
-        try {
-            await loadJsonBible(id)
-        } catch (err) {
-            console.error("Error loading Bible for quote match refresh:", id, err)
-        }
-    }
-    // a slow load can outlive the session or a newer tick - only the latest refresh may (re)start
+    // the electron tier-1 tables (spoken book names, translation cues) follow the same set - the
+    // book table build also loads any newly ticked bibles into the cache, which the quote match
+    // index build reads verse text from
+    const books = await buildBookTable(searchBibleIds)
+    // a slow load can outlive the session or a newer tick - only the latest refresh may apply
     if (!sessionActive || token !== searchBiblesRefreshToken) return
+    sendMain(Main.AI_SCRIPTURE_TABLES, { books, translations: buildTranslationTable(searchBibleIds) })
 
-    startQuoteMatching({
-        bibleIds: quoteMatchIds,
-        interpretationMode: sessionGate.interpretationMode,
-        listenLanguage: sessionGate.listenLanguage,
-        onDetection: handleDetection
-    })
-    // the restart wipes the matcher's anchor - re-seed the passage that is live on the output
+    if (settings.quoteMatching === false) return
+    const quoteMatchIds = [...new Set([...expandBibleIds([activeSubTab]), ...searchBibleIds])]
+    updateQuoteMatchBibles(quoteMatchIds)
+    // only the full-start fallback (matcher not ready yet) loses the anchor - re-seed it
     if (lastQuoteMatchAnchor) setQuoteMatchAnchor(lastQuoteMatchAnchor)
 }
 
