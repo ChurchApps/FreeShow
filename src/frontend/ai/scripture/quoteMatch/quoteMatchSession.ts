@@ -10,8 +10,8 @@
 // (no aiScripture <-> quoteMatchSession import cycle).
 
 import { get } from "svelte/store"
-import type { DetectedReference } from "../../../types/ai/AiScripture"
-import { aiQuoteMatchActive, scriptures, scripturesCache } from "../../stores"
+import type { DetectedReference } from "../../../../types/ai/AiScripture"
+import { aiQuoteMatchActive, scriptures, scripturesCache } from "../../../stores"
 import { createDirectHost, createMatcherHost, type MatcherHost, type MatcherHostCallbacks } from "./quoteMatchHost"
 import { buildTranslationPayload, type TranslationPayload } from "./quoteMatchPayload"
 import type { QuoteMatchEmission } from "./quoteMatcher"

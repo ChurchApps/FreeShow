@@ -16,7 +16,7 @@ const h = vi.hoisted(() => {
         aiQuoteMatchActive: { ...makeStore(false), set: () => {} }
     }
 })
-vi.mock("../../stores", () => ({ scriptures: h.scriptures, scripturesCache: h.scripturesCache, ai: h.ai, aiQuoteMatchActive: h.aiQuoteMatchActive }))
+vi.mock("../../../stores", () => ({ scriptures: h.scriptures, scripturesCache: h.scripturesCache, ai: h.ai, aiQuoteMatchActive: h.aiQuoteMatchActive }))
 
 import { bookNameFor, handleQuoteMatchTranscript, noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching, updateQuoteMatchBibles } from "./quoteMatchSession"
 

@@ -16,7 +16,7 @@ import { requestMain, sendMain } from "../../IPC/main"
 import { activeDrawerTab, activeScripture, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureInterim, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, drawerTabsData, openScripture, outLocked, outputs, scriptureHistory, scriptures, scripturesCache } from "../../stores"
 import { AI_PROVIDER_MODELS } from "../models"
 import { resolveSttEngine, SpeechToText } from "../stt/stt"
-import { noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching, updateQuoteMatchBibles } from "./quoteMatchSession"
+import { noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching, updateQuoteMatchBibles } from "./quoteMatch/quoteMatchSession"
 
 const SUGGESTION_MAX_AGE = 3 * 60 * 1000
 const SUGGESTION_LIMIT = 5

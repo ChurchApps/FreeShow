@@ -151,7 +151,7 @@ export class NemotronDriver implements TranscriptionDriver {
             // Pre-tokenizing hotwords against tokens.txt would be fragile, and beam search decodes
             // materially slower than the partial-decode budget here assumes. Misheard biblical
             // vocabulary is instead recovered downstream by the quote matcher's phonetic layer
-            // (frontend/ai/scripture/quoteMatchTokens.ts), which works for every engine
+            // (frontend/ai/scripture/quoteMatch/quoteMatchTokens.ts), which works for every engine
             decodingMethod: "greedy_search",
             // boundaries come from the VAD - see the file header
             enableEndpoint: false
