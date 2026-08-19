@@ -12,6 +12,12 @@ export interface AiSetupOptions {
     customPath?: string
 }
 
+// the user's provider/model pick - armed once, then any feature may run completions against it
+export interface LlmSelection {
+    provider: string
+    model: string
+}
+
 export interface LLMCompletionOptions {
     systemPrompt?: string
     prompt: string

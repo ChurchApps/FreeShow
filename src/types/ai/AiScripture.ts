@@ -1,3 +1,5 @@
+import type { LlmSelection } from "./AiModels"
+
 export interface DetectedReference {
     id: string
     book: string // canonical English book name (LLM) / matched book name (local)
@@ -26,7 +28,7 @@ export interface AiScriptureBook {
 // live in the generic STT layer (AiSettings.stt), so only detection concerns travel here
 export interface AiScriptureDetectionConfig {
     books: AiScriptureBook[]
-    llm: { provider: string; model: string } | null
+    llm: LlmSelection | null
     refCooldownSeconds?: number // suppress re-emitting an intersecting reference within this window
     voiceCommands?: boolean
     translations?: AiScriptureTranslation[] // selected translations, for spoken translation switching

@@ -56,7 +56,7 @@ export async function refreshSessionLlm(): Promise<void> {
     const llm = await resolveSessionLlm()
     if (!sessionActive) return
 
-    sendMain(Main.AI_SCRIPTURE_LLM, { llm })
+    sendMain(Main.AI_SET_LLM, { llm })
     aiScriptureStatus.update((status) => (status.state === "listening" || status.state === "llm_paused" ? { ...status, state: "listening", keyless: !llm } : status))
 }
 
