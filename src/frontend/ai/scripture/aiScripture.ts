@@ -79,8 +79,8 @@ let searchBibleIds: string[] = []
 let selfProjecting = false
 let startInFlight: Promise<{ ok: boolean; error?: string }> | null = null
 let suggestionPruneTimer: NodeJS.Timeout | null = null
-let searchBiblesRefreshTimer: NodeJS.Timeout | null = null
-let searchBiblesRefreshToken = 0
+let sessionBiblesRefreshTimer: NodeJS.Timeout | null = null
+let sessionBiblesRefreshToken = 0
 let lastQuoteMatchAnchor: { bookNumber: number; chapter: number; verseStart: number; verseEnd: number } | null = null
 
 let lastAutoProjectionAt = 0
@@ -113,18 +113,60 @@ function startError(code: string): { ok: boolean; error: string } {
     return { ok: false, error: code }
 }
 
+// SESSION BIBLES
+// every installed local translation is searched - no list to configure. The starred translations
+// (up to 3, most preferred first) lead: they take the priority index slots, ground the matching,
+// and star 1 is the translation detections project in. Only when nothing is starred does the
+// drawer's open translation fill that role, so an accidental drawer tab can never outrank a star.
+
+/** The starred translation ids (most preferred first), filtered to what is still installed. */
+function starredTranslationIds(): string[] {
+    return (getSettings().starred || []).filter((id) => !!get(scriptures)[id]).slice(0, 3)
+}
+
+/** The translation detections project in (unless display is "matched"): star 1, else the drawer choice. */
+function preferredTranslationId(): string {
+    return starredTranslationIds()[0] || get(drawerTabsData).scripture?.activeSubTab || ""
+}
+
+/** All installed local translations in priority order: the stars (or drawer fallback) first, then the rest by name. */
+function sessionBibleIds(): string[] {
+    const starred = expandBibleIds(starredTranslationIds())
+    const lead = starred.length ? starred : expandBibleIds([get(drawerTabsData).scripture?.activeSubTab || ""].filter(Boolean))
+    const rest = Object.entries(get(scriptures))
+        .filter(([id, bible]) => !!bible && !bible.api && !bible.collection && !lead.includes(id))
+        .sort(([, a], [, b]) => (a.customName || a.name || "").localeCompare(b.customName || b.name || ""))
+        .map(([id]) => id)
+    return [...lead, ...rest]
+}
+
+/** Every installed bible (api & collections included) for the spoken-cue table, priority first. */
+function cueTranslationIds(): string[] {
+    return [...searchBibleIds, ...Object.keys(get(scriptures)).filter((id) => !searchBibleIds.includes(id))]
+}
+
+/**
+ * Ids whose book names feed tier-1 reference detection: the searched locals plus every API
+ * bible - API bibles cannot be quote-matched (no local verse text to index) but their book
+ * names must still be recognized when spoken, and they project on demand.
+ */
+function bookTableIds(): string[] {
+    const api = Object.entries(get(scriptures))
+        .filter(([, bible]) => !!bible?.api)
+        .map(([id]) => id)
+    return [...new Set([...searchBibleIds, ...api])]
+}
+
 async function startSession(): Promise<{ ok: boolean; error?: string }> {
     stopSession()
     aiScriptureStatus.set({ state: "starting" }) // set synchronously so the panel toggle is disabled right away
 
     const settings = getSettings()
 
-    const activeSubTab = get(drawerTabsData).scripture?.activeSubTab || ""
-    if (!activeSubTab) return startError("no_scripture")
+    searchBibleIds = sessionBibleIds()
+    if (!bookTableIds().length) return startError("no_scripture")
 
-    searchBibleIds = expandBibleIds(settings.searchBibles?.length ? settings.searchBibles : [activeSubTab])
-
-    const books = await buildBookTable(searchBibleIds)
+    const books = await buildBookTable(bookTableIds())
     if (!books.length) return startError("no_scripture")
 
     // engine/model/mic settings live in the generic STT layer - seed it once from the legacy scripture fields
@@ -148,7 +190,7 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
         llm,
         refCooldownSeconds: settings.refCooldownSeconds,
         voiceCommands: !!settings.voiceCommands,
-        translations: buildTranslationTable(searchBibleIds),
+        translations: buildTranslationTable(cueTranslationIds()),
         language,
         interpretationMode,
         listenLanguage
@@ -172,14 +214,13 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     sessionActive = true
     aiScriptureStatus.set({ state: "listening", keyless: !llm })
 
-    // local quote matching: recited verses are found by matching the transcript against the
-    // selected bibles on this machine - free and keyless, so it runs unless turned off
+    // local quote matching: recited verses are found by matching the transcript against every
+    // local bible on this machine - free and keyless, so it runs unless turned off. The priority
+    // order means the stars always get index slots, even when a large library would otherwise
+    // crowd them past the session's memory budget
     if (settings.quoteMatching !== false) {
-        // the active drawer translation is what gets projected - it always takes an index slot,
-        // even when a large selection would otherwise crowd it past the session's index cap
-        const quoteMatchIds = [...new Set([...expandBibleIds([activeSubTab]), ...searchBibleIds])]
         startQuoteMatching({
-            bibleIds: quoteMatchIds,
+            bibleIds: searchBibleIds,
             interpretationMode,
             listenLanguage,
             onDetection: handleDetection
@@ -233,9 +274,9 @@ function stopSession(): void {
     sessionActive = false
     aiScriptureHasProjected.set(false)
     stopQuoteMatching()
-    if (searchBiblesRefreshTimer) {
-        clearTimeout(searchBiblesRefreshTimer)
-        searchBiblesRefreshTimer = null
+    if (sessionBiblesRefreshTimer) {
+        clearTimeout(sessionBiblesRefreshTimer)
+        sessionBiblesRefreshTimer = null
     }
     lastQuoteMatchAnchor = null
 
@@ -262,7 +303,7 @@ function stopSession(): void {
 // a provider/model change in settings re-arms the running session's tier 2 on the spot
 // (key saves don't touch this store - LlmOptions calls refreshSessionLlm directly)
 let lastLlmConfigKey = ""
-let lastSearchBiblesKey: string | null = null
+let lastStarsKey: string | null = null
 ai.subscribe((value) => {
     const key = `${value?.llm?.provider || ""}|${value?.llm?.model || ""}`
     if (key !== lastLlmConfigKey) {
@@ -270,48 +311,57 @@ ai.subscribe((value) => {
         if (sessionActive) void refreshSessionLlm()
     }
 
-    // ticking translations in the Search Bibles list mid-session rebuilds the quote match
-    // indexes, so the searched set is always current without restarting the listening session
-    const biblesKey = (value?.scripture?.searchBibles || []).join("|")
-    if (biblesKey !== lastSearchBiblesKey) {
-        const initial = lastSearchBiblesKey === null
-        lastSearchBiblesKey = biblesKey
-        if (!initial && sessionActive) scheduleSearchBiblesRefresh()
+    // starring changes re-prioritize the running session's matching & projection on the spot
+    const starsKey = (value?.scripture?.starred || []).join("|")
+    if (starsKey !== lastStarsKey) {
+        const initial = lastStarsKey === null
+        lastStarsKey = starsKey
+        if (!initial && sessionActive) scheduleSessionBiblesRefresh()
     }
 })
 
-// SEARCH BIBLES LIVE REFRESH
+// installing, deleting or renaming a bible mid-session updates the searched set & the cue table
+let lastLibraryKey: string | null = null
+scriptures.subscribe((value) => {
+    const key = Object.entries(value || {})
+        .map(([id, bible]) => `${id}:${bible?.customName || bible?.name || ""}`)
+        .sort()
+        .join("|")
+    if (key === lastLibraryKey) return
+    const initial = lastLibraryKey === null
+    lastLibraryKey = key
+    if (!initial && sessionActive) scheduleSessionBiblesRefresh()
+})
 
-// the user usually ticks several boxes in a row - one rebuild after the last tick settles
-const SEARCH_BIBLES_REFRESH_DELAY = 1200
+// SESSION BIBLES LIVE REFRESH
 
-function scheduleSearchBiblesRefresh(): void {
-    if (searchBiblesRefreshTimer) clearTimeout(searchBiblesRefreshTimer)
-    searchBiblesRefreshTimer = setTimeout(() => {
-        searchBiblesRefreshTimer = null
-        void refreshSearchBibles()
-    }, SEARCH_BIBLES_REFRESH_DELAY)
+// several changes usually land in a row (starring, imports) - one refresh after they settle
+const SESSION_BIBLES_REFRESH_DELAY = 1200
+
+function scheduleSessionBiblesRefresh(): void {
+    if (sessionBiblesRefreshTimer) clearTimeout(sessionBiblesRefreshTimer)
+    sessionBiblesRefreshTimer = setTimeout(() => {
+        sessionBiblesRefreshTimer = null
+        void refreshSessionBibles()
+    }, SESSION_BIBLES_REFRESH_DELAY)
 }
 
-async function refreshSearchBibles(): Promise<void> {
+async function refreshSessionBibles(): Promise<void> {
     if (!sessionActive) return
-    const token = ++searchBiblesRefreshToken
+    const token = ++sessionBiblesRefreshToken
 
-    const settings = getSettings()
-    const activeSubTab = get(drawerTabsData).scripture?.activeSubTab || ""
-    searchBibleIds = expandBibleIds(settings.searchBibles?.length ? settings.searchBibles : [activeSubTab])
+    searchBibleIds = sessionBibleIds()
 
     // the electron tier-1 tables (spoken book names, translation cues) follow the same set - the
-    // book table build also loads any newly ticked bibles into the cache, which the quote match
-    // index build reads verse text from
-    const books = await buildBookTable(searchBibleIds)
-    // a slow load can outlive the session or a newer tick - only the latest refresh may apply
-    if (!sessionActive || token !== searchBiblesRefreshToken) return
-    sendMain(Main.AI_SCRIPTURE_TABLES, { books, translations: buildTranslationTable(searchBibleIds) })
+    // book table build also loads any newly installed bibles into the cache, which the quote
+    // match index build reads verse text from
+    const books = await buildBookTable(bookTableIds())
+    // a slow load can outlive the session or a newer change - only the latest refresh may apply
+    if (!sessionActive || token !== sessionBiblesRefreshToken) return
+    sendMain(Main.AI_SCRIPTURE_TABLES, { books, translations: buildTranslationTable(cueTranslationIds()) })
 
-    if (settings.quoteMatching === false) return
-    const quoteMatchIds = [...new Set([...expandBibleIds([activeSubTab]), ...searchBibleIds])]
-    updateQuoteMatchBibles(quoteMatchIds)
+    if (getSettings().quoteMatching === false) return
+    updateQuoteMatchBibles(searchBibleIds)
     // only the full-start fallback (matcher not ready yet) loses the anchor - re-seed it
     if (lastQuoteMatchAnchor) setQuoteMatchAnchor(lastQuoteMatchAnchor)
 }
@@ -628,8 +678,7 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
         lastAutoProjectedRef = detection
     }
 
-    const drawerTabId = get(drawerTabsData).scripture?.activeSubTab || ""
-    const targetId = settings.displayTranslation === "matched" && detection.matchedBibleId ? detection.matchedBibleId : drawerTabId
+    const targetId = settings.displayTranslation === "matched" && detection.matchedBibleId ? detection.matchedBibleId : preferredTranslationId()
     if (!targetId) return false
     lastAutoProjectedBibleId = targetId
 
@@ -680,8 +729,8 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
     const maxVerses = settings.maxVerses ?? 6
     if (maxVerses > 0) verseEnd = Math.min(verseEnd, verseStart + maxVerses - 1)
 
-    // "matched" display mode projects from the matched translation
-    if (targetId !== drawerTabId) setDrawerTabData("scripture", targetId)
+    // navigate the drawer's scripture view to the projected translation (star 1 or the match)
+    if (targetId !== (get(drawerTabsData).scripture?.activeSubTab || "")) setDrawerTabData("scripture", targetId)
 
     const verses: number[] = []
     for (let v = verseStart; v <= verseEnd; v++) verses.push(v)
@@ -886,8 +935,13 @@ async function switchTranslation(cmd: Extract<AiScriptureCommandEvent, { type: "
     let targetId = ""
     if (cmd.type === "translation") targetId = cmd.bibleId
     else {
-        // cycle to the next selected translation, common ones before obscure ones
-        const ids = [...(searchBibleIds.length ? searchBibleIds : [from.currentId])].sort((a, b) => cycleRank(a) - cycleRank(b))
+        // cycle to the next translation: the starred ones first, then common ones before obscure ones
+        const starred = starredTranslationIds()
+        const starRank = (id: string) => {
+            const rank = starred.indexOf(id)
+            return rank < 0 ? starred.length : rank
+        }
+        const ids = [...(searchBibleIds.length ? searchBibleIds : [from.currentId])].sort((a, b) => starRank(a) - starRank(b) || cycleRank(a) - cycleRank(b))
         targetId = ids[(ids.indexOf(from.currentId) + 1) % ids.length] || ""
     }
     if (!targetId || targetId === from.currentId) return

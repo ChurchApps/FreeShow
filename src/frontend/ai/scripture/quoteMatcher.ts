@@ -130,7 +130,17 @@ export class QuoteMatcher {
         this.indexes.push(...indexes)
     }
 
-    /** Translations unticked mid-session leave; only state that points at them is dropped. */
+    /**
+     * The priority changed (starring): stable-sort the indexes into the given order - earlier
+     * indexes win candidate ties, so the order IS the preference. The drawer bigram route stays
+     * on the index it was built for (one route is enough for fragments to surface their verse).
+     */
+    reorderTranslations(order: string[]): void {
+        const rank = new Map(order.map((id, position) => [id, position]))
+        this.indexes = [...this.indexes].sort((a, b) => (rank.get(a.translationId) ?? order.length) - (rank.get(b.translationId) ?? order.length))
+    }
+
+    /** Translations removed mid-session leave; only state that points at them is dropped. */
     removeTranslations(translationIds: string[]): void {
         const removed = new Set(translationIds)
         this.indexes = this.indexes.filter((index) => !removed.has(index.translationId))

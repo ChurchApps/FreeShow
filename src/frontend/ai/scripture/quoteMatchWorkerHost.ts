@@ -39,8 +39,8 @@ export function createWorkerHost(): MatcherHost {
             callbacks = hostCallbacks
             send({ type: "start", translations: payloads }, payloadTransferables(payloads))
         },
-        update(add: TranslationPayload[], remove: string[]) {
-            send({ type: "update", add, remove }, payloadTransferables(add))
+        update(add: TranslationPayload[], remove: string[], order?: string[]) {
+            send({ type: "update", add, remove, order }, payloadTransferables(add))
         },
         segment(segment) {
             send({ type: "segment", segment })

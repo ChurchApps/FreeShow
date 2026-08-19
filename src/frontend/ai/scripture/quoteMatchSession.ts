@@ -94,15 +94,19 @@ async function updateSession(token: number, bibleIds: string[]): Promise<void> {
 
     const removed = currentBibleIds.filter((id) => !bibleIds.includes(id))
     const addedIds = bibleIds.filter((id) => !currentBibleIds.includes(id))
-    if (!removed.length && !addedIds.length) return
 
-    const addPayloads = await buildPayloads(addedIds)
+    const addPayloads = addedIds.length ? await buildPayloads(addedIds) : []
     if (token !== sessionToken) return
-    if (!removed.length && !addPayloads.length) return
 
-    console.info(`[AiScripture] Search bibles changed - updating quote match indexes (+${addPayloads.length} / -${removed.length})`)
-    currentBibleIds = [...currentBibleIds.filter((id) => !removed.includes(id)), ...addPayloads.map((payload) => payload.translationId)]
-    host?.update(addPayloads, removed)
+    // bibleIds is also the desired PRIORITY order (starred translations first) - a pure
+    // re-starring changes nothing in the set but still must reorder the indexes
+    const rank = new Map(bibleIds.map((id, position) => [id, position]))
+    const nextIds = [...currentBibleIds.filter((id) => !removed.includes(id)), ...addPayloads.map((payload) => payload.translationId)].sort((a, b) => (rank.get(a) ?? bibleIds.length) - (rank.get(b) ?? bibleIds.length))
+    if (!removed.length && !addPayloads.length && nextIds.join("|") === currentBibleIds.join("|")) return
+
+    console.info(`[AiScripture] Session bibles changed - updating quote match indexes (+${addPayloads.length} / -${removed.length})`)
+    currentBibleIds = nextIds
+    host?.update(addPayloads, removed, nextIds)
 }
 
 export function handleQuoteMatchTranscript(segment: TranscriptSegment): void {

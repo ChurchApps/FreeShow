@@ -18,8 +18,8 @@ export interface MatcherHostCallbacks {
 
 export interface MatcherHost {
     start(payloads: TranslationPayload[], callbacks: MatcherHostCallbacks): void
-    /** Incrementally index added translations and drop removed ones - the matcher keeps running. */
-    update(add: TranslationPayload[], remove: string[]): void
+    /** Incrementally index added translations, drop removed ones, and (re)apply the priority order - the matcher keeps running. */
+    update(add: TranslationPayload[], remove: string[], order?: string[]): void
     segment(segment: { text: string; startMs: number; endMs: number }): void
     setAnchor(anchor: QuoteMatchAnchor): void
     noteExplicit(ref: { bookNumber: number; chapter: number; verseStart: number }): void
@@ -61,7 +61,7 @@ export function createDirectHost(): MatcherHost {
                     if (!stopped) hostCallbacks.onError(String((err as Error)?.message || err))
                 })
         },
-        update(add, remove) {
+        update(add, remove, order) {
             const active = matcher
             if (!active || !callbacks) return
             active.removeTranslations(remove)
@@ -69,6 +69,7 @@ export function createDirectHost(): MatcherHost {
                 .then(({ indexes, totalBytes }) => {
                     if (stopped) return
                     active.addIndexes(indexes)
+                    if (order) active.reorderTranslations(order)
                     callbacks?.onUpdated?.({ count: active.translationCount, added: indexes.length, removed: remove.length, totalBytes })
                 })
                 .catch((err) => {

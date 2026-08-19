@@ -7,7 +7,7 @@
 import { QuoteMatcher } from "./quoteMatcher"
 import { buildIndexesFromPayloads, createIndexBuildContext, type TranslationPayload } from "./quoteMatchPayload"
 
-export type QuoteMatchWorkerRequest = { type: "start"; translations: TranslationPayload[] } | { type: "update"; add: TranslationPayload[]; remove: string[] } | { type: "segment"; segment: { text: string; startMs: number; endMs: number } } | { type: "anchor"; anchor: { bookNumber: number; chapter: number; verseStart: number; verseEnd: number } } | { type: "explicit"; ref: { bookNumber: number; chapter: number; verseStart: number } }
+export type QuoteMatchWorkerRequest = { type: "start"; translations: TranslationPayload[] } | { type: "update"; add: TranslationPayload[]; remove: string[]; order?: string[] } | { type: "segment"; segment: { text: string; startMs: number; endMs: number } } | { type: "anchor"; anchor: { bookNumber: number; chapter: number; verseStart: number; verseEnd: number } } | { type: "explicit"; ref: { bookNumber: number; chapter: number; verseStart: number } }
 
 export type QuoteMatchWorkerResponse = { type: "ready"; count: number; totalBytes: number } | { type: "updated"; count: number; added: number; removed: number; totalBytes: number } | { type: "emissions"; emissions: ReturnType<QuoteMatcher["onSegment"]> } | { type: "error"; message: string }
 
@@ -39,6 +39,7 @@ scope.onmessage = (event) => {
             void buildIndexesFromPayloads(message.add, buildContext)
                 .then(({ indexes, totalBytes }) => {
                     active.addIndexes(indexes)
+                    if (message.order) active.reorderTranslations(message.order)
                     post({ type: "updated", count: active.translationCount, added: indexes.length, removed: message.remove.length, totalBytes })
                 })
                 .catch((err) => post({ type: "error", message: String((err as Error)?.message || err) }))
