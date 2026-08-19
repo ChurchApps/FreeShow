@@ -1,9 +1,9 @@
 import { Main } from "../../../types/IPC/Main"
 import type { MidiValues, TransitionType } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
+import { AudioMicrophone } from "../../audio/audioMicrophone"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { AudioMicrophone } from "../../audio/audioMicrophone"
 import { markItemsAsPlayed } from "../../converters/project"
 import { convertText } from "../../converters/txt"
 import { sendMain } from "../../IPC/main"
@@ -29,7 +29,7 @@ import { formatText } from "../show/formatTextEditor"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { pauseTimeline, setTimelineTime, startTimeline, stopTimeline } from "../timeline/TimelinePlayback"
 import { runActionByName, runActionId, toggleAction } from "./actions"
-import { getOutput, getOutputGroupName, getOutputSlideText, getPlayingAudioData, getPlayingAudioDuration, getPlayingAudioTime, getPlayingPlaylist, getPlayingVideoDuration, getPlayingVideoState, getPlayingVideoTime, getPlaylists, getProject, getProjects, getShow, getShowLayout, getShows, getSlide, getVariable, getVariables } from "./apiGet"
+import { getActions, getOutput, getOutputGroupName, getOutputSlideText, getPlayingAudioData, getPlayingAudioDuration, getPlayingAudioTime, getPlayingPlaylist, getPlayingVideoDuration, getPlayingVideoState, getPlayingVideoTime, getPlaylists, getProject, getProjects, getShow, getShowLayout, getShows, getSlide, getVariable, getVariables } from "./apiGet"
 import {
     addGroup,
     addToProject,
@@ -411,6 +411,8 @@ export const API_ACTIONS = {
     get_variable: (data: { id?: string; name?: string }) => getVariable(data),
 
     get_timers: () => getTimersDetailed(),
+
+    get_actions: () => getActions(),
 
     get_playlists: () => getPlaylists(),
     get_playlist: (data: API_id_optional) => getPlayingPlaylist(data),
