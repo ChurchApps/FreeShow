@@ -18,7 +18,7 @@ const h = vi.hoisted(() => {
 })
 vi.mock("../../stores", () => ({ scriptures: h.scriptures, scripturesCache: h.scripturesCache, ai: h.ai, aiQuoteMatchActive: h.aiQuoteMatchActive }))
 
-import { handleQuoteMatchTranscript, noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching } from "./quoteMatchSession"
+import { bookNameFor, handleQuoteMatchTranscript, noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching } from "./quoteMatchSession"
 
 const BIBLE = {
     name: "KJV",
@@ -185,5 +185,21 @@ describe("quoteMatchSession", () => {
         handleQuoteMatchTranscript(seg("to them that are the called according to his purpose"))
         expect(detections.length).toBeGreaterThanOrEqual(1)
         expect(detections[0]).toMatchObject({ bookNumber: 45, chapter: 8, verseStart: 28 })
+    })
+})
+
+describe("bookNameFor", () => {
+    it("prefers the cached translation's own book name", () => {
+        h.scripturesCache._set({ kjv: BIBLE })
+        expect(bookNameFor("kjv", 43)).toBe("John")
+    })
+
+    it("falls back to the canon name when the translation's book list is not cached", () => {
+        // a bare "40" as the book NAME sent a Matthew match through a fuzzy book search
+        // downstream and projected Proverbs - the name must stay a NAME
+        h.scripturesCache._set({})
+        expect(bookNameFor("msg", 40)).toBe("Matthew")
+        expect(bookNameFor("msg", 53)).toBe("2 Thessalonians")
+        expect(bookNameFor("msg", 66)).toBe("Revelation")
     })
 })

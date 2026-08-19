@@ -693,15 +693,26 @@ async function sendAnchorContext(targetId: string, book: number | string, chapte
 function resolveBookNumber(bible: BibleInstance, ref: DetectedReference): number {
     const books = bible.data.books || []
 
-    // 66 book bibles use the standard Protestant canon numbering
+    // 66 book bibles use the standard Protestant canon numbering, and with no book list at all
+    // the canon number is the only sensible read
     if (books.length === 66) return ref.bookNumber
+    if (!books.length) return ref.bookNumber
 
     const nameLower = (ref.book || "").toLowerCase()
     const match = books.find((a) => a.name?.toLowerCase() === nameLower || a.abbreviation?.toLowerCase() === nameLower || a.id?.toLowerCase() === nameLower)
     if (match) return match.number
 
-    const searched = bible.bookSearch(`${ref.book} ${ref.chapter}`)
-    return searched?.book || 0
+    // a fuzzy search is a last resort, and NEVER on a numeric "name" - searching "40 26" once
+    // resolved a Matthew match to Proverbs and projected the wrong book entirely. The search is
+    // by name alone (a chapter number only muddies it), and the result counts only when it
+    // plausibly IS the asked-for book
+    if (!nameLower || /^\d+$/.test(nameLower)) return 0
+    const searched = bible.bookSearch(ref.book)
+    const foundName = (searched?.book ? books.find((a) => a.number === searched.book)?.name || "" : "").toLowerCase()
+    if (foundName && (foundName.startsWith(nameLower.slice(0, 4)) || nameLower.startsWith(foundName.slice(0, 4)))) return searched!.book
+
+    console.warn(`[AiScripture] Could not resolve book "${ref.book}" in this bible - skipping the projection instead of guessing`)
+    return 0
 }
 
 // VOICE COMMANDS
