@@ -9,6 +9,7 @@
     import { translateText } from "../../utils/language"
     import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../scripture/aiScripture"
     import { audioLevelStore, resolveSttEngine, SpeechToText } from "../stt/stt"
+    import { copyTranscript, groupTranscriptLines } from "../transcript"
     import AiRing from "./AiRing.svelte"
 
     let state: "inactive" | "error" | "listening" | "processing" = "inactive"
@@ -45,33 +46,7 @@
 
     // nemotron emits an utterance in fragments - group them into one line per utterance
     // (whisper sets no utteranceEnd flags, so it falls back to grouping on pause gaps)
-    const LINE_GAP_MS = 2000
     $: transcriptLines = groupTranscriptLines($aiTranscript)
-    function groupTranscriptLines(segments: { text: string; startMs: number; endMs: number; music?: boolean; utteranceEnd?: boolean }[]) {
-        const lines: { text: string; music: boolean; endMs: number; done: boolean; open?: boolean }[] = []
-        for (const segment of segments) {
-            const last = lines[lines.length - 1]
-            // a textless marker means an utterance ended with no new words - it only closes the line
-            if (!segment.text) {
-                if (last && segment.utteranceEnd) {
-                    last.done = true
-                    last.endMs = segment.endMs
-                }
-                continue
-            }
-            const startNew = !last || last.done || !!segment.music !== last.music || segment.startMs - last.endMs > LINE_GAP_MS
-            if (startNew) lines.push({ text: segment.text, music: !!segment.music, endMs: segment.endMs, done: !!segment.utteranceEnd })
-            else {
-                last.text += " " + segment.text
-                last.endMs = segment.endMs
-                last.done = !!segment.utteranceEnd
-            }
-        }
-        // the greyed interim continues this line while its utterance is still being spoken
-        const last = lines[lines.length - 1]
-        if (last && !last.done) last.open = true
-        return lines
-    }
 
     // STATE
 
@@ -324,6 +299,9 @@
                     </div>
 
                     <div class="headerActions">
+                        {#if transcriptLines.length}
+                            <MaterialButton icon="copy" title="ai.copy_transcript" on:click={copyTranscript} />
+                        {/if}
                         {#if $aiScriptureAutoPaused}
                             <MaterialButton icon="play" title="ai.resume_auto" on:click={() => resumeAutoProjection()} />
                         {/if}
@@ -349,7 +327,8 @@
                             <p><T id="ai.processing" /></p>
                         </div>
                     {:else if transcriptLines.length || $aiInterim}
-                        <div class="transcript-box" bind:this={transcriptElem} on:scroll={onTranscriptScroll}>
+                        <!-- "context #ai_transcript" wires the right-click menu (copy selection / copy transcript) -->
+                        <div class="transcript-box context #ai_transcript" bind:this={transcriptElem} on:scroll={onTranscriptScroll}>
                             {#each transcriptLines as line}
                                 <p class:music={line.music}>
                                     {line.text}{#if line.open && $aiInterim}{" "}<span class="interim">{$aiInterim}</span>{/if}
@@ -559,6 +538,16 @@
            window, or its trailing scroll events read as the user unpinning the view */
         font-size: 0.95rem;
         line-height: 1.5;
+        cursor: text;
+    }
+
+    /* the global stylesheet disables selection everywhere - the transcript is one of the few
+       places the user genuinely copies text from (the * rule hits every child, so both levels
+       need the override) */
+    .transcript-box,
+    .transcript-box p,
+    .transcript-box span {
+        user-select: text;
     }
 
     /* the app's global styles ellipsize paragraphs - transcript lines must wrap instead */

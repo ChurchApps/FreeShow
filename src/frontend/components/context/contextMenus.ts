@@ -27,6 +27,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     cut: { label: "actions.cut", icon: "cut", iconColor: "#97c7ff", shortcuts: ["Ctrl+X"] },
     copy: { label: "actions.copy", icon: "copy", iconColor: "#97c7ff", shortcuts: ["Ctrl+C"] },
     copy_id: { label: "actions.copy_id", icon: "copy", iconColor: "#97c7ff" },
+    copy_text_selection: { label: "actions.copy", icon: "copy", iconColor: "#97c7ff", shortcuts: ["Ctrl+C"] },
+    ai_copy_transcript: { label: "ai.copy_transcript", icon: "copy", iconColor: "#97c7ff" },
     paste: { label: "actions.paste", icon: "paste", iconColor: "#97c7ff", shortcuts: ["Ctrl+V"] },
     docs: { label: "main.docs", icon: "document", external: true },
     quick_search: { label: "main.quick_search", icon: "search", shortcuts: ["Ctrl+G"] },
@@ -243,6 +245,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     close: ["close"],
     output_window: ["close"],
     input: ["copy", "paste"],
+    // the live AI transcript (expanded bubble): copy the mouse selection or the whole session
+    ai_transcript: ["copy_text_selection", "ai_copy_transcript"],
 
     // TOP
     output: ["force_output", "SEPARATOR", "align_with_screen", "choose_screen"], // , "SEPARATOR", "edit"

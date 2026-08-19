@@ -1887,6 +1887,7 @@
         "error_microphone": "Microphone access failed - check system permissions",
         "error_model_missing": "The selected Whisper model is not downloaded",
         "on_device_only": "On-device detection",
-        "auto_min_confidence": "Show automatically from confidence"
+        "auto_min_confidence": "Show automatically from confidence",
+        "copy_transcript": "Copy transcript"
     }
 }
