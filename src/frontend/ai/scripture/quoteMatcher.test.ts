@@ -275,6 +275,8 @@ describe("spoken search scopes", () => {
         verse(19, 111, 10, "the fear of the maker is the beginning of wisdom his praise endures beyond the silver mountains"),
         verse(20, 9, 10, "the fear of the maker is the beginning of wisdom and knowing the holy one brings understanding"),
         verse(45, 8, 28, "all things work for the good of those the maker called according to his purpose in love"),
+        verse(40, 13, 44, "the kingdom is like treasure hidden in a field which a man found and covered with joy"),
+        verse(23, 1, 18, "come let us reason together though your sins are like scarlet they shall become white as snow"),
         verse(5, 1, 1, "these are the words spoken beside the river in the plains and the season was dry"),
         verse(5, 1, 2, "eleven days journey by the way of the mountain road leads to the border town"),
         verse(5, 1, 3, "and it came about in the fortieth year that the leader spoke to all the people"),
@@ -325,6 +327,41 @@ describe("spoken search scopes", () => {
         const expired = new QuoteMatcher([scopedIndex()], FRAGS)
         expired.onSegment(seg("somewhere in the psalms it says"))
         expect(expired.onSegment(seg("beyond the silver mountains tonight friends", 40000))).toEqual([])
+    })
+
+    it("a named parable scopes to its chapters: 'the parable of the hidden treasure'", () => {
+        const plain = new QuoteMatcher([scopedIndex()], FRAGS)
+        expect(plain.onSegment(seg("treasure hidden in a field friends"))).toEqual([])
+
+        const matcher = new QuoteMatcher([scopedIndex()], FRAGS)
+        matcher.onSegment(seg("think of the parable of the hidden treasure"))
+        const out = matcher.onSegment(seg("treasure hidden in a field friends"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 40, chapter: 13, verseStart: 44 })
+    })
+
+    it("author verbs go beyond 'said': 'isaiah rebuked the israelites'", () => {
+        const plain = new QuoteMatcher([scopedIndex()], FRAGS)
+        expect(plain.onSegment(seg("sins are like scarlet friends"))).toEqual([])
+
+        const matcher = new QuoteMatcher([scopedIndex()], FRAGS)
+        matcher.onSegment(seg("isaiah rebuked the israelites"))
+        const out = matcher.onSegment(seg("sins are like scarlet friends"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 23, chapter: 1, verseStart: 18 })
+    })
+
+    it("'in the same psalm' scopes to the last touched passage - even after the soft memory expired", () => {
+        const plain = new QuoteMatcher([scopedIndex()], FRAGS)
+        plain.noteExplicitReference({ bookNumber: 19, chapter: 111, verseStart: 10 })
+        expect(plain.onSegment(seg("beyond the silver mountains tonight friends", 310000))).toEqual([])
+
+        const matcher = new QuoteMatcher([scopedIndex()], FRAGS)
+        matcher.noteExplicitReference({ bookNumber: 19, chapter: 111, verseStart: 10 })
+        matcher.onSegment(seg("in the same psalm it says", 310000))
+        const out = matcher.onSegment(seg("beyond the silver mountains tonight friends"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 19, chapter: 111, verseStart: 10 })
     })
 })
 

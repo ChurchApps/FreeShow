@@ -80,15 +80,75 @@ const QUOTE_CUE_REGEX = /\b(?:bible|scriptures?|word(?: of god)?|jesus|christ|lo
 
 // SPOKEN SEARCH SCOPES
 // the speaker can't recall the wording but names WHERE it lives: "somewhere in the new
-// testament it says...", "paul writes...", "in the psalms...". The named books become a SCOPED
-// cue: inside them the announced-quote relaxations apply and only in-scope rivals can hold an
-// emission back; outside them every gate stays exactly as it is. A scoped author phrase beats
-// the generic cue for the same words - "jesus said" now searches the gospels, not the whole bible
+// testament it says...", "paul writes...", "in the parable of the sower...". The named books
+// (or chapters) become a SCOPED cue: inside them the announced-quote relaxations apply and only
+// in-scope rivals can hold an emission back; outside them every gate stays exactly as it is.
+// A scoped author phrase beats the generic cue - "jesus said" searches the gospels, not the bible.
+// Cost: a handful of small regex tests per SEGMENT (not per candidate) - matching speed unchanged
 const SCOPE_WINDOW_MS = 30000
 
-const SAID = "(?:says?|said|tells? us|told us|wrote|writes|declares?|reminds? us|puts? it)"
+// what a named person may DO to their words - "isaiah rebuked the israelites" announces
+// a Isaiah quote as surely as "isaiah said" does
+const SAID =
+    "(?:says?|said|mentions?|mentioned|illustrat(?:es|ed)|teaches|taught|preach(?:es|ed)|pray(?:s|ed)|warn(?:s|ed)|rebuk(?:es|ed)|declar(?:es|ed)|proclaim(?:s|ed)|explain(?:s|ed)|command(?:s|ed)|promis(?:es|ed)|prophesi(?:es|ed)|encourag(?:es|ed)|instruct(?:s|ed)|admonish(?:es|ed)|urg(?:es|ed)|exhort(?:s|ed)|asks?|asked|answer(?:s|ed)|tells? us|told us|wrote|writes|reminds? us|puts? it|gave (?:us |them )?(?:a |the )?(?:parables?|warnings?|commands?|commandments?|promises?|instructions?|charge|rebuke|words?))"
 const IN = "(?:in|from|somewhere in|back in)"
-const SCOPE_CUES: { pattern: RegExp; from: number; to: number; extra?: number[] }[] = [
+
+type ScopeCue = { pattern: RegExp } & ({ from: number; to: number; extra?: number[] } | { chapters: { book: number; from: number; to: number }[] })
+const at = (book: number, from: number, to = from) => ({ book, from, to })
+const parable = (names: string, ...chapters: { book: number; from: number; to: number }[]): ScopeCue => ({ pattern: new RegExp("\\b(?:parable|story) of (?:the |a )?(?:" + names + ")\\b"), chapters })
+
+const SCOPE_CUES: ScopeCue[] = [
+    // named parables (chapter-level: 40 Matthew, 41 Mark, 42 Luke, 43 John)
+    parable("sower|seed and the soils", at(40, 13), at(41, 4), at(42, 8)),
+    parable("wheat and (?:the )?tares|weeds", at(40, 13)),
+    parable("mustard seed", at(40, 13), at(41, 4), at(42, 13)),
+    parable("leaven|yeast", at(40, 13), at(42, 13)),
+    parable("hidden treasure|pearl(?: of great price)?", at(40, 13)),
+    parable("(?:drag)?net", at(40, 13)),
+    parable("lost sheep", at(40, 18), at(42, 15)),
+    parable("lost coin", at(42, 15)),
+    parable("prodigal son|lost son", at(42, 15)),
+    parable("good samaritan", at(42, 10)),
+    parable("talents", at(40, 25)),
+    parable("minas|pounds", at(42, 19)),
+    parable("ten virgins|wise and foolish virgins", at(40, 25)),
+    parable("sheep and (?:the )?goats", at(40, 25)),
+    parable("rich fool", at(42, 12)),
+    parable("rich man and lazarus", at(42, 16)),
+    parable("(?:unforgiving|unmerciful) servant", at(40, 18)),
+    parable("(?:workers|laborers|labourers) in the vineyard", at(40, 20)),
+    parable("wedding (?:banquet|feast)", at(40, 22)),
+    parable("great (?:banquet|supper)", at(42, 14)),
+    parable("persistent widow|unjust judge", at(42, 18)),
+    parable("pharisee and (?:the )?(?:tax collector|publican)", at(42, 18)),
+    parable("two sons", at(40, 21)),
+    parable("wicked (?:tenants|vinedressers|husbandmen)|vineyard owner", at(40, 21), at(41, 12), at(42, 20)),
+    parable("(?:wise and foolish|two) builders|house (?:built )?on the rock", at(40, 7), at(42, 6)),
+    parable("barren fig tree", at(42, 13)),
+    parable("fig tree", at(40, 24), at(41, 13), at(42, 21)),
+    parable("good shepherd", { book: 43, from: 10, to: 10 }),
+    parable("vine and (?:the )?branches", { book: 43, from: 15, to: 15 }),
+    // named passages & events
+    { pattern: /\bsermon on the mount\b/, chapters: [at(40, 5, 7)] },
+    { pattern: /\bbeatitudes\b/, chapters: [at(40, 5), at(42, 6)] },
+    { pattern: /\blord'?s prayer\b/, chapters: [at(40, 6), at(42, 11)] },
+    { pattern: /\bten commandments\b/, chapters: [at(2, 20), at(5, 5)] },
+    { pattern: /\bcreation (?:account|story)\b/, chapters: [at(1, 1, 2)] },
+    { pattern: /\b(?:the great flood|noah'?s (?:ark|flood|day)|days of noah)\b/, chapters: [at(1, 6, 9)] },
+    { pattern: /\bten plagues|plagues of egypt\b/, chapters: [at(2, 7, 12)] },
+    { pattern: /\barmou?r of god\b/, chapters: [at(49, 6)] },
+    { pattern: /\blove chapter\b/, chapters: [at(46, 13)] },
+    { pattern: /\bresurrection chapter\b/, chapters: [at(46, 15)] },
+    { pattern: /\b(?:hall|chapter) of faith|faith chapter\b/, chapters: [at(58, 11)] },
+    { pattern: /\bfruit of the spirit\b/, chapters: [at(48, 5)] },
+    { pattern: /\bgreat commission\b/, chapters: [at(40, 28)] },
+    { pattern: /\b(?:last supper|upper room)\b/, chapters: [at(40, 26), at(41, 14), at(42, 22), at(43, 13, 17)] },
+    { pattern: /\bdavid and goliath\b/, chapters: [at(9, 17)] },
+    { pattern: /\bfiery furnace\b/, chapters: [at(27, 3)] },
+    { pattern: /\b(?:lions'? den|den of lions)\b/, chapters: [at(27, 6)] },
+    { pattern: /\bvalley of (?:the )?dry bones\b/, chapters: [at(26, 37)] },
+    { pattern: /\bshepherd'?s? psalm\b/, chapters: [at(19, 23)] },
+    // testaments, book groups, authors & speakers
     { pattern: new RegExp("\\b" + IN + " the old testament\\b"), from: 1, to: 39 },
     { pattern: new RegExp("\\b" + IN + " the new testament\\b"), from: 40, to: 66 },
     // jesus speaks in the gospels & acts; his words quoted elsewhere are usually quoted FROM there
@@ -109,6 +169,10 @@ const SCOPE_CUES: { pattern: RegExp; from: number; to: number; extra?: number[] 
     { pattern: new RegExp("\\bdaniel " + SAID + "\\b"), from: 27, to: 27 }
 ]
 
+// "in the same psalm/parable/passage..." refers back to the passage this session most recently
+// touched - resolvable long after the soft passage memory expired, since the raw list persists
+const SAME_SCOPE_REGEX = /\b(?:in|from) (?:the|this|that) same (psalm|chapter|passage|parable|story|verse|book|letter|epistle|gospel)\b/
+
 export class QuoteMatcher {
     private indexes: TranslationIndex[]
     private tuning: Tuning
@@ -119,8 +183,9 @@ export class QuoteMatcher {
     private segmentOrdinal = 0
     private lastSegmentEndMs = 0
     private cueUntilMs = 0 // a spoken quote cue is active until this transcript time
-    // a spoken search scope ("in the psalms...", "paul writes...") - the named canon books
+    // a spoken search scope ("in the psalms...", "paul writes...", "the parable of the sower")
     private scopeBooks: Set<number> | null = null
+    private scopeChapters: { book: number; from: number; to: number }[] | null = null
     private scopeUntilMs = 0
 
     private anchor: QuoteMatchAnchor | null = null
@@ -204,10 +269,15 @@ export class QuoteMatcher {
         return this.passageMemory.filter((entry) => nowMs - entry.atMs <= this.tuning.PASSAGE_MEMORY_MS)
     }
 
-    /** Whether a candidate's book falls inside the currently spoken search scope (if any). */
+    /** Whether a candidate falls inside the currently spoken search scope (if any) - O(1). */
     private inScope(candidate: Candidate, nowMs: number): boolean {
-        if (!this.scopeBooks || nowMs > this.scopeUntilMs) return false
-        return this.scopeBooks.has(candidate.index.book[candidate.ordinal])
+        if (nowMs > this.scopeUntilMs) return false
+        const book = candidate.index.book[candidate.ordinal]
+        if (this.scopeChapters) {
+            const chapter = candidate.index.chapter[candidate.ordinal]
+            return this.scopeChapters.some((range) => range.book === book && chapter >= range.from && chapter <= range.to)
+        }
+        return !!this.scopeBooks?.has(book)
     }
 
     reset(): void {
@@ -219,6 +289,7 @@ export class QuoteMatcher {
         this.seededOrdinals = []
         this.cueUntilMs = 0
         this.scopeBooks = null
+        this.scopeChapters = null
         this.scopeUntilMs = 0
         this.emitted.clear()
         this.lastEmitted = null
@@ -236,15 +307,31 @@ export class QuoteMatcher {
         }
         this.lastSegmentEndMs = segment.endMs
 
-        // a scope phrase names the books being quoted from and beats the generic cue for the
-        // same words ("paul said" searches paul, not the whole bible)
+        // a scope phrase names the books (or chapters) being quoted from and beats the generic
+        // cue for the same words ("paul said" searches paul, not the whole bible)
         const spoken = segment.text.toLowerCase()
-        const scopeCue = SCOPE_CUES.find((cue) => cue.pattern.test(spoken))
-        if (scopeCue) {
-            const books = new Set<number>()
-            for (let book = scopeCue.from; book <= scopeCue.to; book++) books.add(book)
-            for (const book of scopeCue.extra || []) books.add(book)
-            this.scopeBooks = books
+        const sameScope = SAME_SCOPE_REGEX.exec(spoken)
+        const scopeCue = sameScope ? null : SCOPE_CUES.find((cue) => cue.pattern.test(spoken))
+        if (sameScope) {
+            // "in the same psalm..." - the passage this session most recently touched
+            const referent = this.anchor ? { book: this.anchor.bookNumber, chapter: this.anchor.chapter } : this.passageMemory[0]
+            if (referent) {
+                const wholeBook = /book|letter|epistle|gospel/.test(sameScope[1])
+                this.scopeChapters = wholeBook ? null : [{ book: referent.book, from: referent.chapter, to: referent.chapter }]
+                this.scopeBooks = wholeBook ? new Set([referent.book]) : null
+                this.scopeUntilMs = segment.endMs + SCOPE_WINDOW_MS
+            }
+        } else if (scopeCue) {
+            if ("chapters" in scopeCue) {
+                this.scopeChapters = scopeCue.chapters
+                this.scopeBooks = null
+            } else {
+                const books = new Set<number>()
+                for (let book = scopeCue.from; book <= scopeCue.to; book++) books.add(book)
+                for (const book of scopeCue.extra || []) books.add(book)
+                this.scopeBooks = books
+                this.scopeChapters = null
+            }
             this.scopeUntilMs = segment.endMs + SCOPE_WINDOW_MS
         } else if (QUOTE_CUE_REGEX.test(spoken)) this.cueUntilMs = segment.endMs + tuning.CUE_WINDOW_MS
 
