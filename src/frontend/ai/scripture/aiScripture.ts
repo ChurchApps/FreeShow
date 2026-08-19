@@ -79,6 +79,10 @@ let searchBibleIds: string[] = []
 let selfProjecting = false
 let startInFlight: Promise<{ ok: boolean; error?: string }> | null = null
 let suggestionPruneTimer: NodeJS.Timeout | null = null
+let sessionGate = { interpretationMode: false, listenLanguage: "en" }
+let searchBiblesRefreshTimer: NodeJS.Timeout | null = null
+let searchBiblesRefreshToken = 0
+let lastQuoteMatchAnchor: { bookNumber: number; chapter: number; verseStart: number; verseEnd: number } | null = null
 
 let lastAutoProjectionAt = 0
 let lastAutoProjectedRef: DetectedReference | null = null
@@ -135,6 +139,7 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     const language = engine === "nemotron" ? "en" : engineOptions.language || "en"
     const interpretationMode = engine === "whisper" && engineOptions.interpretationMode === true
     const listenLanguage = engineOptions.listenLanguage || language
+    sessionGate = { interpretationMode, listenLanguage } // a mid-session quote match rebuild reuses the session's gating
 
     // "none" is the explicit STT-only choice - and even a chosen provider only travels when its
     // key is saved (raw keys never leave the electron process)
@@ -230,6 +235,11 @@ function stopSession(): void {
     sessionActive = false
     aiScriptureHasProjected.set(false)
     stopQuoteMatching()
+    if (searchBiblesRefreshTimer) {
+        clearTimeout(searchBiblesRefreshTimer)
+        searchBiblesRefreshTimer = null
+    }
+    lastQuoteMatchAnchor = null
 
     if (autoTimer) {
         clearTimeout(autoTimer)
@@ -254,12 +264,69 @@ function stopSession(): void {
 // a provider/model change in settings re-arms the running session's tier 2 on the spot
 // (key saves don't touch this store - LlmOptions calls refreshSessionLlm directly)
 let lastLlmConfigKey = ""
+let lastSearchBiblesKey: string | null = null
 ai.subscribe((value) => {
     const key = `${value?.llm?.provider || ""}|${value?.llm?.model || ""}`
-    if (key === lastLlmConfigKey) return
-    lastLlmConfigKey = key
-    if (sessionActive) void refreshSessionLlm()
+    if (key !== lastLlmConfigKey) {
+        lastLlmConfigKey = key
+        if (sessionActive) void refreshSessionLlm()
+    }
+
+    // ticking translations in the Search Bibles list mid-session rebuilds the quote match
+    // indexes, so the searched set is always current without restarting the listening session
+    const biblesKey = (value?.scripture?.searchBibles || []).join("|")
+    if (biblesKey !== lastSearchBiblesKey) {
+        const initial = lastSearchBiblesKey === null
+        lastSearchBiblesKey = biblesKey
+        if (!initial && sessionActive) scheduleSearchBiblesRefresh()
+    }
 })
+
+// SEARCH BIBLES LIVE REFRESH
+
+// the user usually ticks several boxes in a row - one rebuild after the last tick settles
+const SEARCH_BIBLES_REFRESH_DELAY = 1200
+
+function scheduleSearchBiblesRefresh(): void {
+    if (searchBiblesRefreshTimer) clearTimeout(searchBiblesRefreshTimer)
+    searchBiblesRefreshTimer = setTimeout(() => {
+        searchBiblesRefreshTimer = null
+        void refreshSearchBibles()
+    }, SEARCH_BIBLES_REFRESH_DELAY)
+}
+
+async function refreshSearchBibles(): Promise<void> {
+    if (!sessionActive) return
+    const token = ++searchBiblesRefreshToken
+
+    const settings = getSettings()
+    const activeSubTab = get(drawerTabsData).scripture?.activeSubTab || ""
+    searchBibleIds = expandBibleIds(settings.searchBibles?.length ? settings.searchBibles : [activeSubTab])
+    if (settings.quoteMatching === false) return
+
+    const quoteMatchIds = [...new Set([...expandBibleIds([activeSubTab]), ...searchBibleIds])]
+    console.info(`[AiScripture] Search bibles changed - rebuilding quote match indexes for ${quoteMatchIds.length} translation${quoteMatchIds.length === 1 ? "" : "s"}`)
+
+    // newly ticked bibles may not be loaded yet - the index build reads verse text from the cache
+    for (const id of quoteMatchIds) {
+        try {
+            await loadJsonBible(id)
+        } catch (err) {
+            console.error("Error loading Bible for quote match refresh:", id, err)
+        }
+    }
+    // a slow load can outlive the session or a newer tick - only the latest refresh may (re)start
+    if (!sessionActive || token !== searchBiblesRefreshToken) return
+
+    startQuoteMatching({
+        bibleIds: quoteMatchIds,
+        interpretationMode: sessionGate.interpretationMode,
+        listenLanguage: sessionGate.listenLanguage,
+        onDetection: handleDetection
+    })
+    // the restart wipes the matcher's anchor - re-seed the passage that is live on the output
+    if (lastQuoteMatchAnchor) setQuoteMatchAnchor(lastQuoteMatchAnchor)
+}
 
 // a runtime engine failure in the electron process ends the whole session
 aiStatus.subscribe((status) => {
@@ -685,6 +752,7 @@ async function sendAnchorContext(targetId: string, book: number | string, chapte
         const anchor = { book: name, bookNumber, chapter, verseStart: Math.min(...verses), verseEnd: Math.max(...verses) }
         sendMain(Main.AI_SCRIPTURE_CONTEXT, anchor)
         setQuoteMatchAnchor(anchor)
+        lastQuoteMatchAnchor = anchor
     } catch (err) {
         // the anchor is best effort - a failed load just leaves the previous anchor in place
     }
