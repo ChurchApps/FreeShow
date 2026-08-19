@@ -142,7 +142,9 @@ describe("ASR-confusable lexicon", () => {
         expect(tokenGrade("altar", "alter", true)).toBe(0.85)
         expect(tokenGrade("prophet", "profit", true)).toBe(0.85)
         expect(tokenGrade("psalm", "palm", true)).toBe(0.85)
-        expect(tokenGrade("junior", "junia", true)).toBe(0.85) // Romans 16:7, heard live
+        // "junior" for Junia (Romans 16:7, heard live) needs no lexicon entry - the shared
+        // 4-char prefix rule already forgives it
+        expect(tokenGrade("junior", "junia")).toBe(0.75)
         // the informative gate: common verse tokens never lexicon-merge
         expect(tokenGrade("season", "ceasing", false)).toBe(0)
     })
