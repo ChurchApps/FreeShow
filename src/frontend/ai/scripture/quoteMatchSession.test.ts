@@ -197,14 +197,6 @@ describe("quoteMatchSession", () => {
         expect(detections).toHaveLength(1)
     })
 
-    it("stops matching when the setting is turned off mid-session", async () => {
-        start()
-        await flush()
-        h.ai._set({ scripture: { quoteMatching: false } })
-        handleQuoteMatchTranscript(seg(JOHN_316))
-        expect(detections).toHaveLength(0)
-    })
-
     it("does nothing when only API bibles are selected", async () => {
         h.scriptures._set({ kjv: { name: "KJV", api: true } })
         start()

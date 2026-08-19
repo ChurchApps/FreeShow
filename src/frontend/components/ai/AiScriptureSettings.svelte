@@ -56,7 +56,14 @@
     function toggleEnabled(e: any) {
         const enabled = !!e.detail
         if (!enabled) stopAiScriptureListening()
-        update("enabled", enabled)
+        ai.update((a) => {
+            if (!a.scripture) a.scripture = {}
+            a.scripture.enabled = enabled
+            // the feature needs the AI layer - enabling it flips the main AI switch on (never off)
+            if (enabled && !a.enabled) a.enabled = true
+            return a
+        })
+        settings = $ai.scripture || {}
     }
 </script>
 
@@ -65,12 +72,7 @@
 {#if !settings.enabled}
     <p class="faded" style="padding: 10px 5px;"><T id="ai_scripture.privacy_notice" /></p>
 {:else}
-    <Title label="ai_scripture.detection" icon="search" />
-
-    <!-- on-device quote matching needs no key or provider - the AI provider (model manager popup) is the optional upgrade for paraphrased wording -->
-    <MaterialToggleSwitch label="ai_scripture.quote_matching" checked={settings.quoteMatching !== false} defaultValue={true} on:change={(e) => update("quoteMatching", e.detail)} />
-    <p class="faded hint"><T id="ai_scripture.quote_matching_hint" /></p>
-
+    <!-- on-device quote matching always runs - free, offline and keyless. The AI provider (model manager popup) only ADDS paraphrase detection on top -->
     <Title label="ai_scripture.main_translation" icon="star" />
     <p class="faded hint"><T id="ai_scripture.main_translation_hint" /></p>
 

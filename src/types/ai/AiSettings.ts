@@ -61,5 +61,4 @@ interface AiScriptureSettings {
     refCooldownSeconds?: number
     maxVerses?: number
     voiceCommands?: boolean
-    quoteMatching?: boolean // on-device recited-verse detection - default ON (read as !== false)
 }

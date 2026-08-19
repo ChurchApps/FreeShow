@@ -11,7 +11,7 @@
 
 import { get } from "svelte/store"
 import type { DetectedReference } from "../../../types/ai/AiScripture"
-import { ai, aiQuoteMatchActive, scriptures, scripturesCache } from "../../stores"
+import { aiQuoteMatchActive, scriptures, scripturesCache } from "../../stores"
 import { createDirectHost, createMatcherHost, type MatcherHost, type MatcherHostCallbacks } from "./quoteMatchHost"
 import { buildTranslationPayload, type TranslationPayload } from "./quoteMatchPayload"
 import type { QuoteMatchEmission } from "./quoteMatcher"
@@ -72,14 +72,12 @@ export function stopQuoteMatching(): void {
 }
 
 /**
- * The Search Bibles selection changed mid-session: only the DIFFERENCE is applied - added
- * translations are indexed into the running matcher, removed ones are dropped. The matcher, its
- * transcript window, anchor and passage memory all stay live. Before the matcher is ready
- * (or when matching never started) the full start IS the update.
+ * The session's bible set or priority changed mid-session: only the DIFFERENCE is applied -
+ * added translations are indexed into the running matcher, removed ones are dropped. The
+ * matcher, its transcript window, anchor and passage memory all stay live. Before the matcher
+ * is ready (or when matching never started) the full start IS the update.
  */
 export function updateQuoteMatchBibles(bibleIds: string[]): void {
-    if (get(ai).scripture?.quoteMatching === false) return
-
     if (!host || starting) {
         if (gate && onDetection) startQuoteMatching({ bibleIds, interpretationMode: gate.interpretationMode, listenLanguage: gate.listenLanguage, onDetection })
         return
@@ -111,8 +109,6 @@ async function updateSession(token: number, bibleIds: string[]): Promise<void> {
 
 export function handleQuoteMatchTranscript(segment: TranscriptSegment): void {
     if (!host && !starting) return
-    // live kill switch: turning the setting off mid session stops matching without a restart
-    if (get(ai).scripture?.quoteMatching === false) return
 
     // mirror the main process's detection gating (electron/ai/index.ts): music lyrics are
     // hallucination territory, and in interpretation mode only the listen language is detectable

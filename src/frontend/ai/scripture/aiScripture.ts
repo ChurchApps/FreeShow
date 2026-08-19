@@ -221,17 +221,16 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     aiScriptureStatus.set({ state: "listening", keyless: !llm })
 
     // local quote matching: recited verses are found by matching the transcript against every
-    // local bible on this machine - free and keyless, so it runs unless turned off. The priority
-    // order means the stars always get index slots, even when a large library would otherwise
+    // local bible on this machine - free, keyless and private, so it always runs (an optional
+    // AI provider only ADDS paraphrase detection on top). The priority order means the main &
+    // favourite translations always get index slots, even when a large library would otherwise
     // crowd them past the session's memory budget
-    if (settings.quoteMatching !== false) {
-        startQuoteMatching({
-            bibleIds: searchBibleIds,
-            interpretationMode,
-            listenLanguage,
-            onDetection: handleDetection
-        })
-    }
+    startQuoteMatching({
+        bibleIds: searchBibleIds,
+        interpretationMode,
+        listenLanguage,
+        onDetection: handleDetection
+    })
 
     // prune suggestions that are too old to still be relevant
     suggestionPruneTimer = setInterval(pruneSuggestions, 15000)
@@ -367,7 +366,6 @@ async function refreshSessionBibles(): Promise<void> {
     if (!sessionActive || token !== sessionBiblesRefreshToken) return
     sendMain(Main.AI_SCRIPTURE_TABLES, { books, translations: buildTranslationTable(cueTranslationIds()) })
 
-    if (getSettings().quoteMatching === false) return
     updateQuoteMatchBibles(searchBibleIds)
     // only the full-start fallback (matcher not ready yet) loses the anchor - re-seed it
     if (lastQuoteMatchAnchor) setQuoteMatchAnchor(lastQuoteMatchAnchor)
@@ -942,7 +940,8 @@ async function switchTranslation(cmd: Extract<AiScriptureCommandEvent, { type: "
     let targetId = ""
     if (cmd.type === "translation") targetId = cmd.bibleId
     else {
-        // cycle to the next translation: the main one, then the favourites, then common before obscure
+        // cycle to the next translation: the main one, then the favourites, then common before
+        // obscure. API bibles are part of the pool - they project on demand
         const main = preferredTranslationId()
         const favorites = favoriteTranslationIds()
         const priorityRank = (id: string) => {
@@ -950,7 +949,10 @@ async function switchTranslation(cmd: Extract<AiScriptureCommandEvent, { type: "
             const rank = favorites.indexOf(id)
             return rank < 0 ? favorites.length : rank
         }
-        const ids = [...(searchBibleIds.length ? searchBibleIds : [from.currentId])].sort((a, b) => priorityRank(a) - priorityRank(b) || cycleRank(a) - cycleRank(b))
+        const apiIds = Object.entries(get(scriptures))
+            .filter(([, bible]) => !!bible?.api)
+            .map(([id]) => id)
+        const ids = [...new Set([...(searchBibleIds.length ? searchBibleIds : [from.currentId]), ...apiIds])].sort((a, b) => priorityRank(a) - priorityRank(b) || cycleRank(a) - cycleRank(b))
         targetId = ids[(ids.indexOf(from.currentId) + 1) % ids.length] || ""
     }
     if (!targetId || targetId === from.currentId) return
