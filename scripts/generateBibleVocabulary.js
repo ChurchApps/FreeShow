@@ -6,6 +6,7 @@
 //
 // Usage: node scripts/generateBibleVocabulary.js [biblesFolder]
 //   biblesFolder defaults to ~/Documents/FreeShow/Bibles
+//   then: npx prettier --config config/formatting/.prettierrc.yaml --write src/electron/ai/speech/whisper/bibleVocabulary.ts
 //
 // A word counts as a proper noun when it appears capitalized mid-sentence at least twice and is
 // capitalized in at least 90% of its occurrences. Translations are merged so spelling variants
@@ -18,14 +19,20 @@ const os = require("os")
 const biblesFolder = process.argv[2] || join(os.homedir(), "Documents", "FreeShow", "Bibles")
 const outputPath = join(__dirname, "..", "src", "electron", "ai", "speech", "whisper", "bibleVocabulary.ts")
 
-const GLOBAL_RANKED_COUNT = 500
-const PER_BOOK_COUNT = 15
+// every proper noun that survives the filters is kept - the runtime prompt composer applies its
+// own character budget, and a name missing here (Junia, Andronicus - each spoken once, in
+// Romans 16:7) can never be biased at all
+const GLOBAL_RANKED_COUNT = Infinity
+const PER_BOOK_COUNT = 30
 // names this common are known to every STT model and would crowd every per-book list
 const PER_BOOK_GLOBAL_EXCLUDE = 25
 const MIN_NAME_LENGTH = 4
 // single-translation words are usually artifacts unless clearly established by frequency
 const MIN_TRANSLATIONS = 2
 const MIN_SINGLE_TRANSLATION_FREQ = 50
+// hyphenated compounds need broader support - sibling paraphrases (MSG + MSG 18) sharing a
+// coinage must not count as independent confirmation
+const MIN_HYPHENATED_TRANSLATIONS = 3
 
 // hyphen-compound parts that mark a paraphrase construction ("All-Powerful", "Grain-Offering") rather than a name
 const COMPOUND_STOP_PARTS = new Set(["all", "powerful", "offering", "offerings", "grain", "absolution", "burnt", "whole", "high", "strong", "most"])
@@ -182,12 +189,20 @@ function collectProperNouns(words) {
         if (entry.cap / (entry.cap + entry.low) < 0.9) continue
         if (entry.translations < MIN_TRANSLATIONS && entry.cap < MIN_SINGLE_TRANSLATION_FREQ) continue
         if (lower.includes("-")) {
-            // real hyphenated names (Ben-hadad) span translations; single-translation compounds are paraphrase coinages
-            if (entry.translations < MIN_TRANSLATIONS) continue
+            // real hyphenated names (Ben-hadad) appear across the classic translations, while
+            // paraphrase coinages ("God-bashers", "Band-Aid") live in one loose family and are
+            // built from everyday words - words the corpus mostly saw in lowercase
+            if (entry.translations < MIN_HYPHENATED_TRANSLATIONS) continue
             if (lower.split("-").some((part) => COMPOUND_STOP_PARTS.has(part))) continue
+            const everydayPart = lower.split("-").some((part) => {
+                const partEntry = words.get(part)
+                return partEntry && partEntry.low > partEntry.cap
+            })
+            if (everydayPart) continue
         }
 
-        // most frequent surface form wins (proper capitalization for the STT prompt)
+        // most frequent surface form wins (proper capitalization for the STT prompt); stylized
+        // all-caps renderings (UPHARSIN) fold back to title case
         let bestForm = ""
         let bestCount = 0
         for (const [form, count] of entry.forms) {
@@ -196,10 +211,24 @@ function collectProperNouns(words) {
                 bestCount = count
             }
         }
+        if (bestForm.length > 3 && bestForm === bestForm.toUpperCase()) bestForm = bestForm[0] + bestForm.slice(1).toLowerCase()
 
         names.push({ name: bestForm, lower, freq: entry.cap, byBook: entry.byBook })
     }
-    return names
+    return dropTruncationDebris(names)
+}
+
+// hyphenation/footnote splits leave prefixes of real names behind ("Nebuchadnez", "Chalde",
+// "Azari") - a name that is a strict prefix of a far more frequent longer name is debris.
+// Genuine short variants survive because their frequencies are comparable (Junia/Junias)
+function dropTruncationDebris(names) {
+    const byPrefixable = [...names].sort((a, b) => a.lower.length - b.lower.length)
+    const kept = []
+    for (const entry of byPrefixable) {
+        const debris = names.some((other) => other.lower.length > entry.lower.length && other.lower.startsWith(entry.lower) && other.freq >= entry.freq * 20)
+        if (!debris) kept.push(entry)
+    }
+    return kept
 }
 
 // complexity first (long or hyphenated names are what STT garbles), frequency within each tier
@@ -226,9 +255,13 @@ function rankPerBook(names) {
 
     const byBook = {}
     for (let bookNumber = 1; bookNumber <= 66; bookNumber++) {
+        // rarest first: the book lists exist for the names STT has barely ever seen (Junia,
+        // Andronicus - Romans 16's greetings), while frequent hard names (Nebuchadnezzar) already
+        // arrive through the global ranking. A frequency-first sort filled every list with names
+        // whisper knows and dropped the once-mentioned ones - the very names that need biasing
         const inBook = names
             .filter((entry) => (entry.byBook.get(bookNumber) || 0) > 0 && !globallyCommon.has(entry.lower) && entry.name.length >= 5)
-            .sort((a, b) => (b.byBook.get(bookNumber) || 0) - (a.byBook.get(bookNumber) || 0))
+            .sort((a, b) => a.freq - b.freq || complexityTier(a.name) - complexityTier(b.name) || (b.byBook.get(bookNumber) || 0) - (a.byBook.get(bookNumber) || 0))
             .slice(0, PER_BOOK_COUNT)
             .map((entry) => entry.name)
         if (inBook.length) byBook[bookNumber] = inBook
