@@ -19,6 +19,9 @@ export interface CommandGrammar {
     and: string[] // "verse 1 AND 2"
     restore: string[] // full phrases: put back what was on the output before the AI projected
     back: string[] // full phrases: return to the previously shown passage
+    just: string[] // narrowing: "JUST verse 5"
+    main: string[] // "the MAIN translation"
+    accept: string[] // full phrases: project the newest suggestion ("yes show it")
 }
 
 // commands always match against the union of the spoken language & English,
@@ -26,7 +29,7 @@ export interface CommandGrammar {
 // the non-English tables are best-effort everyday church vocabulary - native-speaker corrections are very welcome!
 export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
     en: {
-        imperatives: ["give me", "go to", "show", "show me", "switch to", "read", "take me to", "put", "put up", "project", "display"],
+        imperatives: ["give me", "go to", "go back to", "come back to", "show", "show me", "switch to", "read", "take me to", "put", "put up", "project", "display"],
         addImperatives: ["add", "include"],
         articles: ["the"],
         verse: ["verse", "verses"],
@@ -38,7 +41,10 @@ export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
         rangeTo: ["to", "through", "thru", "till", "until"],
         and: ["and"],
         restore: ["bring it back", "put it back up", "put it back", "restore it", "restore that", "restore the previous"],
-        back: ["go back", "take us back", "take me back", "back to the previous passage", "back to the previous scripture", "the previous passage", "back to where we were"]
+        back: ["go back", "take us back", "take me back", "back to the previous passage", "back to the previous scripture", "the previous passage", "back to where we were"],
+        just: ["just", "only"],
+        main: ["main", "preferred", "primary"],
+        accept: ["yes show it", "yes put it up", "project it", "project that", "put it up", "put that up", "show that one", "show the suggestion"]
     },
     es: {
         imperatives: ["dame", "vamos a", "muestra", "cambia a"],
@@ -53,7 +59,10 @@ export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
         rangeTo: ["a", "al", "hasta"],
         and: ["y"],
         restore: ["restáuralo", "vuelve a lo anterior"],
-        back: ["regresa", "vuelve atrás"]
+        back: ["regresa", "vuelve atrás"],
+        just: ["solo", "solamente"],
+        main: ["principal", "preferida"],
+        accept: ["proyéctalo", "muéstralo entonces"]
     },
     pt: {
         imperatives: ["me dá", "vai para", "mostra", "muda para"],
@@ -68,7 +77,10 @@ export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
         rangeTo: ["a", "ao", "até"],
         and: ["e"],
         restore: ["restaura isso", "volta ao anterior"],
-        back: ["volta", "volta atrás"]
+        back: ["volta", "volta atrás"],
+        just: ["só", "somente", "apenas"],
+        main: ["principal", "preferida"],
+        accept: ["projeta isso", "mostra então"]
     },
     de: {
         imperatives: ["gib mir", "geh zu", "zeige", "zeig mir", "wechsle zu"],
@@ -83,7 +95,10 @@ export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
         rangeTo: ["bis"],
         and: ["und"],
         restore: ["stell es wieder her"],
-        back: ["geh zurück"]
+        back: ["geh zurück"],
+        just: ["nur"],
+        main: ["bevorzugte"],
+        accept: ["zeig es an", "projiziere es"]
     },
     fr: {
         imperatives: ["donne-moi", "va à", "montre", "montre-moi", "passe à"],
@@ -98,7 +113,10 @@ export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
         rangeTo: ["à", "jusqu'à", "au"],
         and: ["et"],
         restore: ["remets-le"],
-        back: ["reviens en arrière"]
+        back: ["reviens en arrière"],
+        just: ["juste", "seulement"],
+        main: ["principale", "préférée"],
+        accept: ["projette-le", "affiche-le donc"]
     },
     no: {
         imperatives: ["gi meg", "gå til", "vis", "bytt til"],
@@ -113,7 +131,10 @@ export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
         rangeTo: ["til"],
         and: ["og"],
         restore: ["ta det tilbake"],
-        back: ["gå tilbake"]
+        back: ["gå tilbake"],
+        just: ["bare", "kun"],
+        main: ["foretrukne"],
+        accept: ["vis det da", "projiser det"]
     }
 }
 
@@ -162,7 +183,10 @@ function mergeGrammar(language: string): CommandGrammar {
         rangeTo: merge(local.rangeTo, base.rangeTo),
         and: merge(local.and, base.and),
         restore: merge(local.restore, base.restore),
-        back: merge(local.back, base.back)
+        back: merge(local.back, base.back),
+        just: merge(local.just, base.just),
+        main: merge(local.main, base.main),
+        accept: merge(local.accept, base.accept)
     }
 }
 
@@ -199,7 +223,7 @@ function matchCommand(tail: string, imperative: string, body: string): RegExpMat
     return NARRATION_BEFORE.test(tail.slice(0, bare.index)) ? null : bare
 }
 
-export function detectScriptureCommand(text: string, language: string, translations: AiScriptureTranslation[]): AiScriptureCommandEvent | null {
+export function detectScriptureCommand(text: string, language: string, translations: AiScriptureTranslation[], books: { number: number; names: string[] }[] = []): AiScriptureCommandEvent | null {
     const tail = normalizeSpokenNumbers(text).slice(-TAIL_CHARS)
     const grammar = mergeGrammar(language)
 
@@ -271,6 +295,39 @@ export function detectScriptureCommand(text: string, language: string, translati
         return { type: "back", phrase: phraseOf(back) }
     }
 
+    // 1d. back to a NAMED book: "go back to ephesians" - the newest previously shown passage
+    // from that book. End of utterance only; a spoken reference ("go back to ephesians two")
+    // never reaches here because tier 1 detection resolves it first
+    if (books.length) {
+        const byBookName = new Map<string, number>()
+        books.forEach((book) =>
+            book.names.forEach((name) => {
+                const token = name.trim().toLowerCase().replace(/\s+/g, " ")
+                if (token.length > 2 && !byBookName.has(token)) byBookName.set(token, book.number)
+            })
+        )
+        const backToBook = tail.match(new RegExp(LEAD + "(?:go\\s+back|take\\s+(?:us|me)\\s+back|come\\s+back)\\s+to\\s+" + art + "(?:book\\s+of\\s+)?(" + alternation([...byBookName.keys()]) + ")" + BARE_TAIL))
+        if (backToBook) {
+            const bookNumber = byBookName.get(backToBook[1].replace(/\s+/g, " "))
+            if (bookNumber) return { type: "back", book: bookNumber, phrase: phraseOf(backToBook) }
+        }
+    }
+
+    // 1e. accepting the newest suggestion: "yes, show it" / "project it" - confirm mode by voice.
+    // Whole standalone phrases at the end of an utterance; the executor additionally requires a
+    // fresh suggestion to exist, so a stray match with nothing pending does nothing
+    const accept = tail.match(new RegExp(LEAD + "(?:" + alternation(grammar.accept) + ")" + BARE_TAIL))
+    if (accept && accept.index !== undefined && !NARRATION_BEFORE.test(tail.slice(0, accept.index)) && !CONDITIONAL_BEFORE.test(tail.slice(0, accept.index))) {
+        return { type: "accept", phrase: phraseOf(accept) }
+    }
+
+    // 1f. narrowing the live selection: "just verse 5" / "only verse 12" - end of utterance only
+    const narrow = tail.match(new RegExp(LEAD + "(?:" + alternation(grammar.just) + ")\\s+" + art + verse + "\\s+(\\d{1,3})\\b" + BARE_TAIL))
+    if (narrow && narrow.index !== undefined && !NARRATION_BEFORE.test(tail.slice(0, narrow.index))) {
+        const number = parseInt(narrow[1], 10)
+        if (number >= 1) return { type: "verse_jump", verse: number, phrase: phraseOf(narrow) }
+    }
+
     // 2. verse jump & ranges: "give me verse 5", "show verses 1 to 5", "put verses 1 and 2
     // together". Imperative only - a bare "verse 5" is already resolved against the live passage
     // by tier 1 detection, and matching it here too would fight that with a second action.
@@ -312,6 +369,14 @@ export function detectScriptureCommand(text: string, language: string, translati
     // 4. cycle: "give me another translation"
     const cycle = matchCommand(tail, imp, art + "(?:" + alternation(grammar.another) + ")\\s+" + transWord + "(?![a-z0-9])")
     if (cycle) return { type: "translation_cycle", phrase: phraseOf(cycle) }
+
+    // 4b. back to the preferred one: "give me the main translation", "back to our primary
+    // version", "our preferred bible" - translation/version/bible interchangeably, with
+    // possessives ("our", "my") welcome where an article would sit
+    const mainArt = "(?:(?:the|our|my|your)\\s+)?"
+    const mainBody = mainArt + "(?:" + alternation(grammar.main) + ")\\s+" + transWord + "(?![a-z0-9])"
+    const mainTranslation = matchCommand(tail, imp, mainBody) || tail.match(new RegExp(LEAD + "back\\s+to\\s+" + mainBody + BARE_TAIL))
+    if (mainTranslation) return { type: "translation_main", phrase: phraseOf(mainTranslation) }
 
     // 5. named translation: "give me NIV" / "switch to the King James version"
     const byToken = new Map<string, string>()
@@ -365,7 +430,7 @@ export class CommandStream {
     private lastCommandType = ""
     private lastCommandAtMs = 0
 
-    detect(segment: { text: string; endMs: number }, language: string, translations: AiScriptureTranslation[], context: CommandContext = {}): AiScriptureCommandEvent | null {
+    detect(segment: { text: string; endMs: number }, language: string, translations: AiScriptureTranslation[], context: CommandContext = {}, books: { number: number; names: string[] }[] = []): AiScriptureCommandEvent | null {
         this.segments.push(segment)
         while (this.segments.length > 1 && segment.endMs - this.segments[0].endMs > SEGMENT_JOIN_MS) this.segments.shift()
 
@@ -376,7 +441,7 @@ export class CommandStream {
         }
 
         const joined = this.segments.map((entry) => entry.text).join(" ")
-        const command = detectScriptureCommand(joined, language, translations)
+        const command = detectScriptureCommand(joined, language, translations, books)
         if (!command) {
             // "another one" / "one more" right after a translation command cycles again
             const followUp = /(?:^|[^a-z0-9])(?:and\s+)?(?:another one|one more|another)\s*[.,!?]*\s*$/i.exec(joined)

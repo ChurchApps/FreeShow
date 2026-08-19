@@ -55,7 +55,9 @@ export type AiScriptureCommand =
     | { type: "chapter_jump"; chapter: number; verse?: number; verseEnd?: number }
     | { type: "translation"; bibleId: string }
     | { type: "translation_cycle" }
+    | { type: "translation_main" } // "give me the main translation" - back to the preferred one
     | { type: "restore" } // put back what was on the output before the AI projected
-    | { type: "back" } // return to the previously shown passage (repeats step further back)
+    | { type: "back"; book?: number } // previously shown passage; book = "go back to ephesians"
+    | { type: "accept" } // "yes, show it" - project the newest suggestion (confirm mode by voice)
 
 export type AiScriptureCommandEvent = AiScriptureCommand & { phrase: string }

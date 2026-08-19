@@ -106,6 +106,39 @@ describe("detectScriptureCommand", () => {
             expect(detect("let's go back to genesis and see what it")).toBeNull()
         })
 
+        it("goes back to a NAMED book: 'go back to ephesians'", () => {
+            const books = [
+                { number: 49, names: ["Ephesians", "Eph"] },
+                { number: 45, names: ["Romans"] }
+            ]
+            expect(detectScriptureCommand("go back to ephesians", "en", TRANSLATIONS, books)).toEqual({ type: "back", book: 49, phrase: "go back to ephesians" })
+            expect(detectScriptureCommand("take us back to romans", "en", TRANSLATIONS, books)).toEqual({ type: "back", book: 45, phrase: "take us back to romans" })
+        })
+
+        it("'go back to verse 5' is a verse jump, not a history walk", () => {
+            expect(detect("go back to verse five")).toEqual({ type: "verse_jump", verse: 5, phrase: "go back to verse 5" })
+        })
+
+        it("narrows the selection: 'just verse 5' / 'only verse 12'", () => {
+            expect(detect("just verse five")).toEqual({ type: "verse_jump", verse: 5, phrase: "just verse 5" })
+            expect(detect("only verse 12")).toEqual({ type: "verse_jump", verse: 12, phrase: "only verse 12" })
+        })
+
+        it("returns to the preferred translation - version/bible interchangeably, possessives too", () => {
+            expect(detect("give me the main translation")).toEqual({ type: "translation_main", phrase: "give me the main translation" })
+            expect(detect("back to the main version")).toMatchObject({ type: "translation_main" })
+            expect(detect("switch to our primary version")).toEqual({ type: "translation_main", phrase: "switch to our primary version" })
+            expect(detect("show our preferred bible")).toEqual({ type: "translation_main", phrase: "show our preferred bible" })
+        })
+
+        it("accepts the newest suggestion by voice: 'yes show it' / 'project it'", () => {
+            expect(detect("yes show it")).toEqual({ type: "accept", phrase: "yes show it" })
+            expect(detect("project it")).toEqual({ type: "accept", phrase: "project it" })
+            expect(detect("put that up")).toEqual({ type: "accept", phrase: "put that up" })
+            // narration that merely ends in similar words stays silent
+            expect(detect("that is how you show it")).toBeNull()
+        })
+
         it("detects translation_cycle: 'give me another translation'", () => {
             expect(detect("give me another translation")).toEqual({ type: "translation_cycle", phrase: "give me another translation" })
             expect(detect("give me a different version")).toEqual({ type: "translation_cycle", phrase: "give me a different version" })

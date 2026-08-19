@@ -65,7 +65,7 @@ export function startScriptureDetection(config: AiScriptureDetectionConfig): boo
 
         if (!config.voiceCommands) return
         // joined across recent segments: the streaming engine can split a spoken command over utterances ("next" / "verse")
-        const command = commandStream.detect({ text: segment.text, endMs: segment.endMs }, config.language || "en", config.translations || [], { anchored: Date.now() - lastAnchorAtMs < ANCHOR_FRESH_MS })
+        const command = commandStream.detect({ text: segment.text, endMs: segment.endMs }, config.language || "en", config.translations || [], { anchored: Date.now() - lastAnchorAtMs < ANCHOR_FRESH_MS }, config.books || [])
         if (!command) return
 
         const now = Date.now()

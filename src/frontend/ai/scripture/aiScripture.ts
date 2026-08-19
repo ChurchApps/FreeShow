@@ -22,6 +22,7 @@ const SUGGESTION_MAX_AGE = 3 * 60 * 1000
 const SUGGESTION_LIMIT = 5
 const QUOTE_MATCH_SCORE = 0.55
 const QUOTE_DEMOTE_SCORE = 0.35
+const ACCEPT_SUGGESTION_WINDOW_MS = 45000 // "yes, show it" only accepts a suggestion this fresh
 
 function getSettings() {
     return get(ai).scripture || {}
@@ -841,6 +842,16 @@ export async function executeScriptureCommand(cmd: AiScriptureCommandEvent): Pro
     const settings = getSettings()
     if (!sessionActive || !settings.enabled || !settings.voiceCommands) return
     if (get(outLocked) || get(aiScriptureAutoPaused)) return
+
+    // accepting the newest suggestion is confirm mode by voice - it must work BEFORE anything
+    // is live on the output, and only while the suggestion is still fresh
+    if (cmd.type === "accept") {
+        const suggestion = get(aiScriptureSuggestions)[0]
+        if (!suggestion || Date.now() - suggestion.timestamp > ACCEPT_SUGGESTION_WINDOW_MS) return
+        await projectDetection(suggestion, true)
+        return
+    }
+
     if (!outputIsScripture()) return
 
     // output restore & passage back act on state of their own - no live reference needed
@@ -849,7 +860,7 @@ export async function executeScriptureCommand(cmd: AiScriptureCommandEvent): Pro
         return
     }
     if (cmd.type === "back") {
-        await projectPreviousPassage()
+        await projectPreviousPassage(cmd.book)
         return
     }
 
@@ -877,8 +888,10 @@ export async function executeScriptureCommand(cmd: AiScriptureCommandEvent): Pro
             return chapterVerses.length ? (chapterVerses[chapterVerses.length - 1]?.number ?? chapterVerses.length) : 0
         }
 
-        if (cmd.type === "translation" || cmd.type === "translation_cycle") {
-            await switchTranslation(cmd, { currentId, bible, bookName: Book.data.name || "", book: reference.book, chapter, verses: currentVerses })
+        if (cmd.type === "translation" || cmd.type === "translation_cycle" || cmd.type === "translation_main") {
+            const resolved = cmd.type === "translation_main" ? { type: "translation" as const, bibleId: preferredTranslationId(), phrase: cmd.phrase } : cmd
+            if (resolved.type === "translation" && !resolved.bibleId) return
+            await switchTranslation(resolved, { currentId, bible, bookName: Book.data.name || "", book: reference.book, chapter, verses: currentVerses })
             return
         }
 
@@ -1027,7 +1040,7 @@ async function switchTranslation(cmd: Extract<AiScriptureCommandEvent, { type: "
  * (translation-agnostic), so a verse shown in the NIV and again in the KJV is one stop, and
  * repeating the command steps one distinct passage further back each time.
  */
-async function projectPreviousPassage(): Promise<void> {
+async function projectPreviousPassage(bookNumber?: number): Promise<void> {
     const entries = get(scriptureHistory)
     if (!entries.length) return
 
@@ -1047,6 +1060,18 @@ async function projectPreviousPassage(): Promise<void> {
         seen.add(key)
         stops.push(entries[i])
     }
+
+    // "go back to ephesians": the newest previously shown passage from the named book
+    if (bookNumber) {
+        const target = stops.find((entry) => parseNumber(entry.book) === bookNumber)
+        if (!target) return
+        const verses = versesOf(target.verse)
+        if (!target.id || !verses.length) return
+        console.info(`[AiScripture] Voice command: going back to ${target.reference || keyOf(target)}`)
+        await projectResolved(target.id, target.book, parseNumber(target.chapter), verses)
+        return
+    }
+
     // stops[0] is what is showing right now - the walk starts one behind it
     const depth = backDepth
     const target = stops[depth + 1]
