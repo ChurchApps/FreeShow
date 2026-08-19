@@ -294,8 +294,12 @@ export async function playScripture() {
 
     // scripture usage history
     scriptureHistory.update((a) => {
+        const tabId = get(drawerTabsData).scripture?.activeSubTab || ""
+        const tabData = get(scriptures)[tabId]
         const newItem = {
             id: biblesContent[0].id,
+            tabId,
+            version: tabData?.customName || tabData?.name || biblesContent[0].version || "",
             book: biblesContent[0].bookId,
             chapter: biblesContent[0].chapters[0],
             verse: selectedVerses[0],

@@ -11,6 +11,7 @@
     import { translateText } from "../../../utils/language"
     import { clone } from "../../helpers/array"
     import { brightenDarkColor, fadeColor } from "../../helpers/color"
+    import { setDrawerTabData } from "../../helpers/historyHelpers"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
@@ -448,7 +449,41 @@
     /// HISTORY ///
 
     let historyOpened = false
-    $: currentHistory = clone($scriptureHistory.filter((a) => a.id === previewBibleId)).reverse()
+    $: currentHistory = clone($scriptureHistory).reverse()
+
+    function openHistoryEntry(verse) {
+        const targetTabId = getHistoryTabId(verse)
+
+        if (!targetTabId || targetTabId === activeScriptureId) {
+            // same translation (or tab no longer exists)
+            openBook(verse.book, [verse.chapter], [verse.verse])
+            playWhenLoaded = true
+            return
+        }
+
+        // if the entry's version is inside a collection, preview that version so
+        // the recorded book numbering matches the previewed bible
+        const collection = $scriptures[targetTabId]?.collection
+        const versionIndex = collection?.versions?.indexOf(verse.id) ?? -1
+        if (versionIndex > -1 && (collection?.previewIndex || 0) !== versionIndex) {
+            scriptures.update((a) => {
+                a[targetTabId].collection!.previewIndex = versionIndex
+                return a
+            })
+        }
+
+        // switch the drawer tab first, then navigate once the new translation is loaded
+        setDrawerTabData("scripture", targetTabId)
+        openScripture.set({ book: verse.book, chapter: verse.chapter, verses: verse.verse, play: true })
+    }
+
+    function getHistoryTabId(verse) {
+        if (verse.tabId && $scriptures[verse.tabId]) {
+            if (verse.tabId === verse.id || $scriptures[verse.tabId].collection?.versions?.includes(verse.id)) return verse.tabId
+        }
+        if ($scriptures[verse.id]) return verse.id
+        return Object.keys($scriptures).find((tabId) => $scriptures[tabId]?.collection?.versions?.includes(verse.id)) || ""
+    }
 
     /// AUTOSCROLL ///
 
@@ -1027,16 +1062,12 @@
             {#if currentHistory.length}
                 <div class="verses verseList">
                     {#each currentHistory as verse}
-                        <span
-                            class="verse"
-                            class:showAllText={$resized.rightPanelDrawer <= 5}
-                            on:dblclick={() => {
-                                openBook(verse.book, [verse.chapter], [verse.verse])
-                                playWhenLoaded = true
-                            }}
-                            data-title={formatBibleText(verse.text)}
-                        >
-                            <span style="width: 250px;text-align: start;color: var(--text);" class="v">{verse.reference}</span>{@html formatBibleText(verse.text, true)}
+                        {@const versionName = verse.version || $scriptures[verse.tabId || verse.id]?.customName || $scriptures[verse.tabId || verse.id]?.name || ""}
+                        <span class="verse" class:showAllText={$resized.rightPanelDrawer <= 5} on:dblclick={() => openHistoryEntry(verse)} data-title={formatBibleText(verse.text)}>
+                            <span style="width: 250px;text-align: start;color: var(--text);" class="v">
+                                {verse.reference}
+                                {#if versionName}<span class="history-version">{versionName}</span>{/if}
+                            </span>{@html formatBibleText(verse.text, true)}
                         </span>
                     {/each}
                 </div>
@@ -1436,6 +1467,16 @@
     }
 
     /* Version */
+
+    .history-version {
+        margin-inline-start: 8px;
+        padding: 1px 8px;
+        border-radius: 15px;
+        border: 1px solid var(--primary-lighter);
+        background-color: var(--primary-darkest);
+        color: var(--secondary);
+        font-size: 0.75em;
+    }
 
     .version {
         flex: 1;
