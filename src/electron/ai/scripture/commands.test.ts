@@ -89,6 +89,23 @@ describe("detectScriptureCommand", () => {
             expect(detect("give me verse 5 and 2 chronicles tells us more")).toMatchObject({ type: "verse_jump", verse: 5 })
         })
 
+        it("restores the pre-projection output: 'bring it back' / 'put it back up'", () => {
+            expect(detect("bring it back")).toEqual({ type: "restore", phrase: "bring it back" })
+            expect(detect("okay put it back up")).toEqual({ type: "restore", phrase: "put it back up" })
+        })
+
+        it("walks back to the previous passage: 'go back' / 'back to the previous passage'", () => {
+            expect(detect("go back")).toEqual({ type: "back", phrase: "go back" })
+            expect(detect("take us back")).toEqual({ type: "back", phrase: "take us back" })
+            expect(detect("back to the previous passage")).toEqual({ type: "back", phrase: "back to the previous passage" })
+        })
+
+        it("keeps narration and unfinished conditionals off restore/back", () => {
+            expect(detect("there is no turning back")).toBeNull()
+            expect(detect("if we go back")).toBeNull()
+            expect(detect("let's go back to genesis and see what it")).toBeNull()
+        })
+
         it("detects translation_cycle: 'give me another translation'", () => {
             expect(detect("give me another translation")).toEqual({ type: "translation_cycle", phrase: "give me another translation" })
             expect(detect("give me a different version")).toEqual({ type: "translation_cycle", phrase: "give me a different version" })

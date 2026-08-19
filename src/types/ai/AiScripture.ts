@@ -55,5 +55,7 @@ export type AiScriptureCommand =
     | { type: "chapter_jump"; chapter: number; verse?: number; verseEnd?: number }
     | { type: "translation"; bibleId: string }
     | { type: "translation_cycle" }
+    | { type: "restore" } // put back what was on the output before the AI projected
+    | { type: "back" } // return to the previously shown passage (repeats step further back)
 
 export type AiScriptureCommandEvent = AiScriptureCommand & { phrase: string }

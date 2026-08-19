@@ -17,6 +17,8 @@ export interface CommandGrammar {
     another: string[]
     rangeTo: string[] // "verses 1 TO 5"
     and: string[] // "verse 1 AND 2"
+    restore: string[] // full phrases: put back what was on the output before the AI projected
+    back: string[] // full phrases: return to the previously shown passage
 }
 
 // commands always match against the union of the spoken language & English,
@@ -34,7 +36,9 @@ export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
         translation: ["translation", "version", "bible"],
         another: ["another", "a different"],
         rangeTo: ["to", "through", "thru", "till", "until"],
-        and: ["and"]
+        and: ["and"],
+        restore: ["bring it back", "put it back up", "put it back", "restore it", "restore that", "restore the previous"],
+        back: ["go back", "take us back", "take me back", "back to the previous passage", "back to the previous scripture", "the previous passage", "back to where we were"]
     },
     es: {
         imperatives: ["dame", "vamos a", "muestra", "cambia a"],
@@ -47,7 +51,9 @@ export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
         translation: ["traducción", "versión"],
         another: ["otra", "otro"],
         rangeTo: ["a", "al", "hasta"],
-        and: ["y"]
+        and: ["y"],
+        restore: ["restáuralo", "vuelve a lo anterior"],
+        back: ["regresa", "vuelve atrás"]
     },
     pt: {
         imperatives: ["me dá", "vai para", "mostra", "muda para"],
@@ -60,7 +66,9 @@ export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
         translation: ["tradução", "versão"],
         another: ["outra", "outro"],
         rangeTo: ["a", "ao", "até"],
-        and: ["e"]
+        and: ["e"],
+        restore: ["restaura isso", "volta ao anterior"],
+        back: ["volta", "volta atrás"]
     },
     de: {
         imperatives: ["gib mir", "geh zu", "zeige", "zeig mir", "wechsle zu"],
@@ -73,7 +81,9 @@ export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
         translation: ["übersetzung", "version"],
         another: ["andere", "anderen"],
         rangeTo: ["bis"],
-        and: ["und"]
+        and: ["und"],
+        restore: ["stell es wieder her"],
+        back: ["geh zurück"]
     },
     fr: {
         imperatives: ["donne-moi", "va à", "montre", "montre-moi", "passe à"],
@@ -86,7 +96,9 @@ export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
         translation: ["traduction", "version"],
         another: ["autre"],
         rangeTo: ["à", "jusqu'à", "au"],
-        and: ["et"]
+        and: ["et"],
+        restore: ["remets-le"],
+        back: ["reviens en arrière"]
     },
     no: {
         imperatives: ["gi meg", "gå til", "vis", "bytt til"],
@@ -99,7 +111,9 @@ export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
         translation: ["oversettelse", "versjon"],
         another: ["en annen", "et annet"],
         rangeTo: ["til"],
-        and: ["og"]
+        and: ["og"],
+        restore: ["ta det tilbake"],
+        back: ["gå tilbake"]
     }
 }
 
@@ -146,7 +160,9 @@ function mergeGrammar(language: string): CommandGrammar {
         translation: merge(local.translation, base.translation),
         another: merge(local.another, base.another),
         rangeTo: merge(local.rangeTo, base.rangeTo),
-        and: merge(local.and, base.and)
+        and: merge(local.and, base.and),
+        restore: merge(local.restore, base.restore),
+        back: merge(local.back, base.back)
     }
 }
 
@@ -240,6 +256,19 @@ export function detectScriptureCommand(text: string, language: string, translati
         const phrase = phraseOf(advance)
         if (advance[1] && isWord(advance[1], grammar.chapter)) return { type: "chapter_next", phrase }
         return { type: "verse_next", phrase }
+    }
+
+    // 1c. output restore & passage back - whole standalone instructions, end of utterance only.
+    // Restore checks first so "put it back up" never reads as a bare "back" phrase; a leading
+    // conditional ("if we go back...") is a sentence being built, not an instruction
+    const CONDITIONAL_BEFORE = /\b(?:if|when|whenever|before|until|as|should)\s+(?:we|you|i|they|he|she)?\s*$/
+    const restore = tail.match(new RegExp(LEAD + "(?:" + alternation(grammar.restore) + ")" + BARE_TAIL))
+    if (restore && restore.index !== undefined && !NARRATION_BEFORE.test(tail.slice(0, restore.index)) && !CONDITIONAL_BEFORE.test(tail.slice(0, restore.index))) {
+        return { type: "restore", phrase: phraseOf(restore) }
+    }
+    const back = tail.match(new RegExp(LEAD + "(?:" + alternation(grammar.back) + ")" + BARE_TAIL))
+    if (back && back.index !== undefined && !NARRATION_BEFORE.test(tail.slice(0, back.index)) && !CONDITIONAL_BEFORE.test(tail.slice(0, back.index))) {
+        return { type: "back", phrase: phraseOf(back) }
     }
 
     // 2. verse jump & ranges: "give me verse 5", "show verses 1 to 5", "put verses 1 and 2

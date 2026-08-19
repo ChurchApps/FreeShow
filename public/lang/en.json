@@ -1809,7 +1809,7 @@
         "privacy_local": "Speech is transcribed locally on your computer - audio never leaves the device.",
         "privacy_llm": "With an API key set, transcript text is sent to your chosen AI provider while listening to also catch paraphrased references - nothing else.",
         "voice_commands": "Voice commands",
-        "voice_commands_hint": "While a scripture is live, spoken commands control it: \"go to the next verse\", \"give me verse five\", \"show chapter four\", \"give me NIV\", \"give me another translation\". Commands must be phrased as instructions.",
+        "voice_commands_hint": "While a scripture is live, spoken commands control it: \"go to the next verse\", \"give me verse five\", \"put verses 1 to 5 together\", \"add the next verse\", \"show chapter four\", \"give me NIV\", \"give me another translation\", \"go back\" (previous passage), \"bring it back\" (undo the projection). Commands must be phrased as instructions.",
         "enable": "Enable AI Scripture",
         "state_starting": "Starting...",
         "state_listening": "Listening",

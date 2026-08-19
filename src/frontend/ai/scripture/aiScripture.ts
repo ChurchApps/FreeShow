@@ -13,7 +13,7 @@ import { setDrawerTabData } from "../../components/helpers/historyHelpers"
 import { getFirstActiveOutput, setOutput } from "../../components/helpers/output"
 import { clearSlide } from "../../components/output/clear"
 import { requestMain, sendMain } from "../../IPC/main"
-import { activeDrawerTab, activeScripture, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureInterim, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, drawerTabsData, openScripture, outLocked, outputs, scriptures, scripturesCache } from "../../stores"
+import { activeDrawerTab, activeScripture, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureInterim, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, drawerTabsData, openScripture, outLocked, outputs, scriptureHistory, scriptures, scripturesCache } from "../../stores"
 import { AI_PROVIDER_MODELS } from "../models"
 import { resolveSttEngine, SpeechToText } from "../stt/stt"
 import { noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching, updateQuoteMatchBibles } from "./quoteMatchSession"
@@ -82,6 +82,7 @@ let suggestionPruneTimer: NodeJS.Timeout | null = null
 let sessionBiblesRefreshTimer: NodeJS.Timeout | null = null
 let sessionBiblesRefreshToken = 0
 let lastQuoteMatchAnchor: { bookNumber: number; chapter: number; verseStart: number; verseEnd: number } | null = null
+let backDepth = 0 // how many spoken "go back" steps have walked the scripture history
 
 let lastAutoProjectionAt = 0
 let lastAutoProjectedRef: DetectedReference | null = null
@@ -753,6 +754,8 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
 // shared by detection projections & voice command projections - the selfProjecting wrap
 // keeps the manual-override output watcher from treating our own projection as an operator action
 async function projectResolved(targetId: string, book: number | string, chapter: number, verses: number[]): Promise<void> {
+    // any fresh projection restarts the spoken "go back" walk (the walk itself re-bumps its depth)
+    backDepth = 0
     // snapshot the current state so the operator can restore it
     previousState = {
         activeScripture: clone(get(activeScripture)),
@@ -839,6 +842,16 @@ export async function executeScriptureCommand(cmd: AiScriptureCommandEvent): Pro
     if (!sessionActive || !settings.enabled || !settings.voiceCommands) return
     if (get(outLocked) || get(aiScriptureAutoPaused)) return
     if (!outputIsScripture()) return
+
+    // output restore & passage back act on state of their own - no live reference needed
+    if (cmd.type === "restore") {
+        restorePrevious()
+        return
+    }
+    if (cmd.type === "back") {
+        await projectPreviousPassage()
+        return
+    }
 
     const current = get(activeScripture)
     const currentId = current.id || get(drawerTabsData).scripture?.activeSubTab || ""
@@ -1006,6 +1019,45 @@ async function switchTranslation(cmd: Extract<AiScriptureCommandEvent, { type: "
 
     setDrawerTabData("scripture", targetId)
     await projectResolved(targetId, targetBook, targetChapter, verses)
+}
+
+/**
+ * The spoken "go back": walk the scripture usage history to the previously shown passage.
+ * The history records every projection per translation - the walk groups entries by PASSAGE
+ * (translation-agnostic), so a verse shown in the NIV and again in the KJV is one stop, and
+ * repeating the command steps one distinct passage further back each time.
+ */
+async function projectPreviousPassage(): Promise<void> {
+    const entries = get(scriptureHistory)
+    if (!entries.length) return
+
+    const versesOf = (verse: any): number[] =>
+        (Array.isArray(verse) ? verse : [verse])
+            .map((v) => parseInt(String(v), 10))
+            .filter((v) => v >= 1)
+            .sort((a, b) => a - b)
+    const keyOf = (entry: any) => `${parseNumber(entry.book)}.${parseNumber(entry.chapter)}.${versesOf(entry.verse).join(",")}`
+
+    // distinct passages, newest first (each entry's newest occurrence decides its translation)
+    const seen = new Set<string>()
+    const stops: any[] = []
+    for (let i = entries.length - 1; i >= 0; i--) {
+        const key = keyOf(entries[i])
+        if (seen.has(key)) continue
+        seen.add(key)
+        stops.push(entries[i])
+    }
+    // stops[0] is what is showing right now - the walk starts one behind it
+    const depth = backDepth
+    const target = stops[depth + 1]
+    if (!target) return
+
+    const verses = versesOf(target.verse)
+    if (!target.id || !verses.length) return
+
+    console.info(`[AiScripture] Voice command: going back to ${target.reference || keyOf(target)}`)
+    await projectResolved(target.id, target.book, parseNumber(target.chapter), verses)
+    backDepth = depth + 1 // projectResolved reset it - the walk continues from here
 }
 
 export function restorePrevious(): void {
