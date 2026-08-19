@@ -1811,7 +1811,8 @@
         "error_no_scripture": "No Bibles installed",
         "on_device_tip": "No AI key configured - spoken references and word-for-word quotes are detected on this computer. Add an AI key to also catch paraphrased verses.",
         "privacy_matching": "Quoted verses are matched against your installed Bibles on this computer - nothing is sent anywhere.",
-        "auto_min_confidence_hint": "Spoken references like \"John 3:16\" are always certain and show right away. A quoted verse (\"For God so loved the world...\") has to be worked out from its words, so it carries a confidence: at 80% or above only decisive matches show automatically - lower it to also show likely ones. Everything else still appears as a suggestion."
+        "auto_min_confidence_hint": "Spoken references like \"John 3:16\" are always certain and show right away. A quoted verse (\"For God so loved the world...\") has to be worked out from its words, so it carries a confidence: at 80% or above only decisive matches show automatically - lower it to also show likely ones. Everything else still appears as a suggestion.",
+        "disable": "Disable AI Scripture"
     },
     "ai": {
         "scripture_settings_moved": "AI Scripture settings live in the scripture drawer's options panel.",
@@ -1888,6 +1889,8 @@
         "error_model_missing": "The selected Whisper model is not downloaded",
         "on_device_only": "On-device detection",
         "auto_min_confidence": "Show automatically from confidence",
-        "copy_transcript": "Copy transcript"
+        "copy_transcript": "Copy transcript",
+        "scripture_settings": "AI Scripture settings",
+        "disable": "Disable AI features"
     }
 }

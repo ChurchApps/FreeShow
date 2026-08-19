@@ -1,5 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import { setAiEnabled } from "../../ai/aiState"
+import { setAiScriptureEnabled, startAiScriptureListening, stopAiScriptureListening } from "../../ai/scripture/aiScripture"
 import { sendMain } from "../../IPC/main"
 import {
     actions,
@@ -10,6 +12,8 @@ import {
     activeShow,
     activeStage,
     activeStyle,
+    ai,
+    aiScriptureStatus,
     alertMessage,
     audioFolders,
     audioPlaylists,
@@ -74,7 +78,7 @@ interface QuickSearchValue {
 const MAX_RESULTS_NORMAL = 5
 const MAX_RESULTS_LARGE = 10
 
-export type SearchCategory = "show" | "settings" | "stage" | "overlays" | "projects" | "actions" | "navigation" | "faq" | "shows" | "media" | "audio" | "bible" | "items"
+export type SearchCategory = "show" | "settings" | "stage" | "overlays" | "projects" | "actions" | "ai" | "navigation" | "faq" | "shows" | "media" | "audio" | "bible" | "items"
 export const quickSearchCategoryNames: Record<SearchCategory, string> = {
     show: "formats.show",
     settings: "menu.settings",
@@ -82,6 +86,7 @@ export const quickSearchCategoryNames: Record<SearchCategory, string> = {
     overlays: "tabs.overlays",
     projects: "guide_title.projects",
     actions: "tabs.actions",
+    ai: "settings.ai",
     navigation: "settings.general",
     faq: "FAQ",
     shows: "tabs.shows",
@@ -187,6 +192,12 @@ export async function quicksearch(searchValue: string, categoryFilter: null | Se
     if (isVisible("actions")) {
         const actionsList = trimValues(sort(keysToID(get(actions))), 2)
         addValues(actionsList, "action", "actions")
+    }
+
+    // --- AI ---
+    if (isVisible("ai")) {
+        // entries route to different handlers, so they are added one by one in ranked order
+        trimValues(sort(getAiValues()), MAX_RESULTS_LARGE).forEach((value) => addValues([value], value.type, "ai"))
     }
 
     // --- NAVIGATION ---
@@ -462,6 +473,22 @@ const triggerActions = {
         // let popup close first
         setTimeout(() => triggerFunction("open_connection_" + id), 110)
     },
+    ai_scripture_settings: () => {
+        openDrawer("scripture")
+        // let the drawer open first
+        setTimeout(() => triggerFunction("drawer_options"), 110)
+    },
+    ai_toggle: (id: string) => {
+        if (id === "scripture") setAiScriptureEnabled(!get(ai).scripture?.enabled)
+        else setAiEnabled(!get(ai).enabled)
+    },
+    ai_listening: (id: string) => {
+        // starting is not gated internally - never begin a session while the feature is off
+        if (!get(ai).enabled || !get(ai).scripture?.enabled) return
+
+        if (id === "start") startAiScriptureListening()
+        else stopAiScriptureListening()
+    },
     faq: (id: string) => {
         sendMain(Main.URL, id)
     },
@@ -687,6 +714,26 @@ const settings = [
 
 function getSettings() {
     return translateNames(settings)
+}
+
+function getAiValues() {
+    const aiSettings = get(ai)
+
+    const values: any[] = [
+        { type: "settings", id: "ai", name: "settings.ai", aliases: ["-Artificial intelligence", "-Transcription", "-Speech to text", "-Engine", "-Provider", "-LLM", "-API key", "-Ollama"] },
+        { type: "popups", id: "ai_model_manager", name: "popup.ai_model_manager", data: { settingsTab: "ai" }, aliases: ["-AI models", "-Whisper", "-Nemotron", "-Download"] },
+        { type: "ai_scripture_settings", id: "ai_scripture_settings", name: "ai.scripture_settings", aliases: ["-Auto scripture", "-Detection", "-Confidence", "-Auto project"] },
+        { type: "ai_toggle", id: "ai", name: aiSettings.enabled ? "ai.disable" : "ai.enable", aliases: ["-Turn on", "-Turn off"] },
+        { type: "ai_toggle", id: "scripture", name: aiSettings.scripture?.enabled ? "ai_scripture.disable" : "ai_scripture.enable", aliases: ["-Turn on", "-Turn off", "-Auto scripture"] }
+    ]
+
+    if (aiSettings.enabled && aiSettings.scripture?.enabled) {
+        // "starting" counts as live - stopping then still ends the in-flight start cleanly
+        const live = !["stopped", "error"].includes(get(aiScriptureStatus).state)
+        values.push({ type: "ai_listening", id: live ? "stop" : "start", name: live ? "ai.stop_listening" : "ai.start_listening", aliases: ["-AI", "-Voice", "-Microphone", "-Transcription", "-Speech to text", "-Dictation"] })
+    }
+
+    return translateNames(values)
 }
 
 const faq = [

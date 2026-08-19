@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeShow, focusMode, forceClock } from "../../../stores"
+    import { activeShow, activeTriggerFunction, focusMode, forceClock } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -19,6 +19,8 @@
     const hasOptions = ["shows", "media", "templates", "scripture", "calendar"]
     let optionsOpen = false
     $: if (id) optionsOpen = false
+    // quick search (or anything else) can reveal the active tab's options panel
+    $: if ($activeTriggerFunction === "drawer_options" && hasOptions.includes(id)) optionsOpen = true
 </script>
 
 <div class="main {id !== 'shows' || $activeShow !== null ? 'context #drawer_info' : ''}">
