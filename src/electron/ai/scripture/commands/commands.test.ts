@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest"
 
-import { CommandStream, detectScriptureCommand } from "./commands"
+import { CommandStream } from "../../commands/commandStream"
+import { detectScriptureCommand, scriptureCommandSpec } from "./matcher"
 
 const TRANSLATIONS = [
     { id: "niv-id", names: ["New International Version", "NIV"] },
     { id: "kjv-id", names: ["King James Version", "King James", "KJV"] }
 ]
+
+const newStream = () => new CommandStream(scriptureCommandSpec(() => ({ language: "en", translations: TRANSLATIONS, books: [] })))
 
 const detect = (text: string, language = "en") => detectScriptureCommand(text, language, TRANSLATIONS)
 
@@ -269,58 +272,58 @@ describe("advance announcements while reading", () => {
 })
 
 describe("CommandStream", () => {
-    const feed = (stream: CommandStream, text: string, endMs: number, context?: { anchored?: boolean }) => stream.detect({ text, endMs }, "en", TRANSLATIONS, context)
+    const feed = (stream: ReturnType<typeof newStream>, text: string, endMs: number, context?: { anchored?: boolean }) => stream.detect({ text, endMs }, context)
 
     it("matches a command split across two utterances ('next' / 'verse')", () => {
-        const stream = new CommandStream()
+        const stream = newStream()
         expect(feed(stream, "Next", 1000)).toBeNull()
         expect(feed(stream, "verse", 1800)).toEqual({ type: "verse_next", phrase: "next verse" })
     })
 
     it("does not re-fire from stale text when unrelated speech follows", () => {
-        const stream = new CommandStream()
+        const stream = newStream()
         expect(feed(stream, "next chapter", 1000)).toEqual({ type: "chapter_next", phrase: "next chapter" })
         expect(feed(stream, "as we keep reading", 2500)).toBeNull()
     })
 
     it("fires again when the command is genuinely spoken again", () => {
-        const stream = new CommandStream()
+        const stream = newStream()
         expect(feed(stream, "next verse", 1000)).toEqual({ type: "verse_next", phrase: "next verse" })
         expect(feed(stream, "next verse", 3000)).toEqual({ type: "verse_next", phrase: "next verse" })
     })
 
     it("drops fragments older than the join window", () => {
-        const stream = new CommandStream()
+        const stream = newStream()
         expect(feed(stream, "Next", 1000)).toBeNull()
         // "verse" arrives too late to belong to the same instruction
         expect(feed(stream, "verse", 9000)).toBeNull()
     })
 
     it("a lone 'next' advances while a passage is live - and only then", () => {
-        const anchored = new CommandStream()
+        const anchored = newStream()
         expect(feed(anchored, "Next.", 1000, { anchored: true })).toMatchObject({ type: "verse_next" })
 
-        const unanchored = new CommandStream()
+        const unanchored = newStream()
         expect(feed(unanchored, "Next.", 1000)).toBeNull()
     })
 
     it("'next' inside a sentence is never a command, even while reading", () => {
-        const stream = new CommandStream()
+        const stream = newStream()
         expect(feed(stream, "next week we gather again for the conference", 1000, { anchored: true })).toBeNull()
     })
 
     it("'another one' right after a translation command cycles again", () => {
-        const stream = new CommandStream()
+        const stream = newStream()
         expect(feed(stream, "give me another translation", 1000)).toMatchObject({ type: "translation_cycle" })
         expect(feed(stream, "another one", 8000)).toMatchObject({ type: "translation_cycle" })
         expect(feed(stream, "one more", 15000)).toMatchObject({ type: "translation_cycle" })
     })
 
     it("'another one' means nothing without a recent translation command", () => {
-        const cold = new CommandStream()
+        const cold = newStream()
         expect(feed(cold, "another one", 1000)).toBeNull()
 
-        const stale = new CommandStream()
+        const stale = newStream()
         expect(feed(stale, "give me another translation", 1000)).toMatchObject({ type: "translation_cycle" })
         expect(feed(stale, "another one", 45000)).toBeNull() // the follow-up window has passed
     })

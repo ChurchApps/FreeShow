@@ -1,232 +1,44 @@
 // AI AUTO SCRIPTURE - VOICE COMMANDS
 // detects imperative spoken phrases that control the live scripture projection
 // ("go to the next verse", "give me verse five", "show chapter four", "give me NIV", "give me another translation")
+// and declares scripture's spec (matcher + policies) for the generic command layer
 
-import type { AiScriptureCommandEvent, AiScriptureTranslation } from "../../../types/ai/AiScripture"
-import { normalizeSpokenNumbers, NUMBER_HOMOPHONES, parseNumberToken } from "../commands/spokenNumbers"
-import { VERSE_WORD_MISHEARINGS } from "./vocabulary"
+import type { AiScriptureCommandEvent, AiScriptureTranslation } from "../../../../types/ai/AiScripture"
+import type { FeatureCommandSpec } from "../../commands/commandStream"
+import { alternation, BARE_TAIL, CONDITIONAL_BEFORE, LEAD, matchCommand, mergeLocalizedGrammar, NARRATION_BEFORE, phraseOf, sequenceSpan, TAIL_CHARS } from "../../commands/grammar"
+import { normalizeSpokenNumbers, NUMBER_HOMOPHONES, parseNumberToken } from "../../commands/spokenNumbers"
+import { VERSE_WORD_MISHEARINGS } from "../vocabulary"
+import { COMMAND_GRAMMAR } from "./grammar"
 
-export interface CommandGrammar {
-    imperatives: string[]
-    addImperatives: string[] // extend the live selection ("add", "include")
-    articles: string[]
-    verse: string[]
-    chapter: string[]
-    next: string[]
-    previous: string[]
-    translation: string[]
-    another: string[]
-    rangeTo: string[] // "verses 1 TO 5"
-    and: string[] // "verse 1 AND 2"
-    restore: string[] // full phrases: put back what was on the output before the AI projected
-    back: string[] // full phrases: return to the previously shown passage
-    just: string[] // narrowing: "JUST verse 5"
-    main: string[] // "the MAIN translation"
-    accept: string[] // full phrases: project the newest suggestion ("yes show it")
-}
+// a whole utterance of just "next" while a passage is live is the preacher advancing -
+// inside a sentence the word never stands alone, so this cannot fire from narration
+const LONE_NEXT_WHILE_ANCHORED = /^[^a-z0-9]*(?:and\s+|okay\s+|ok\s+)?next[^a-z0-9]*$/i
 
-// commands always match against the union of the spoken language & English,
-// so English phrases keep working when whisper runs in another language.
-// the non-English tables are best-effort everyday church vocabulary - native-speaker corrections are very welcome!
-export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
-    en: {
-        imperatives: ["give me", "go to", "go back to", "come back to", "show", "show me", "switch to", "read", "take me to", "put", "put up", "project", "display"],
-        addImperatives: ["add", "include"],
-        articles: ["the"],
-        verse: ["verse", "verses"],
-        chapter: ["chapter"],
-        next: ["next"],
-        previous: ["previous", "last"],
-        translation: ["translation", "version", "bible"],
-        another: ["another", "a different"],
-        rangeTo: ["to", "through", "thru", "till", "until"],
-        and: ["and"],
-        restore: ["bring it back", "put it back up", "put it back", "restore it", "restore that", "restore the previous"],
-        back: ["go back", "take us back", "take me back", "back to the previous passage", "back to the previous scripture", "the previous passage", "back to where we were"],
-        just: ["just", "only"],
-        main: ["main", "preferred", "primary"],
-        accept: ["yes show it", "yes put it up", "project it", "project that", "put it up", "put that up", "show that one", "show the suggestion"]
-    },
-    es: {
-        imperatives: ["dame", "vamos a", "muestra", "cambia a"],
-        addImperatives: ["añade", "agrega"],
-        articles: ["el", "la", "los"],
-        verse: ["versículo", "versículos"],
-        chapter: ["capítulo"],
-        next: ["siguiente", "próximo"],
-        previous: ["anterior"],
-        translation: ["traducción", "versión"],
-        another: ["otra", "otro"],
-        rangeTo: ["a", "al", "hasta"],
-        and: ["y"],
-        restore: ["restáuralo", "vuelve a lo anterior"],
-        back: ["regresa", "vuelve atrás"],
-        just: ["solo", "solamente"],
-        main: ["principal", "preferida"],
-        accept: ["proyéctalo", "muéstralo entonces"]
-    },
-    pt: {
-        imperatives: ["me dá", "vai para", "mostra", "muda para"],
-        addImperatives: ["adiciona", "acrescenta"],
-        articles: ["o", "a", "os"],
-        verse: ["versículo", "versículos"],
-        chapter: ["capítulo"],
-        next: ["próximo", "seguinte"],
-        previous: ["anterior"],
-        translation: ["tradução", "versão"],
-        another: ["outra", "outro"],
-        rangeTo: ["a", "ao", "até"],
-        and: ["e"],
-        restore: ["restaura isso", "volta ao anterior"],
-        back: ["volta", "volta atrás"],
-        just: ["só", "somente", "apenas"],
-        main: ["principal", "preferida"],
-        accept: ["projeta isso", "mostra então"]
-    },
-    de: {
-        imperatives: ["gib mir", "geh zu", "zeige", "zeig mir", "wechsle zu"],
-        addImperatives: ["ergänze"],
-        articles: ["der", "die", "das", "den"],
-        verse: ["vers", "verse"],
-        chapter: ["kapitel"],
-        next: ["nächster", "nächste", "nächsten"],
-        previous: ["vorheriger", "vorherige", "vorherigen", "letzter", "letzten"],
-        translation: ["übersetzung", "version"],
-        another: ["andere", "anderen"],
-        rangeTo: ["bis"],
-        and: ["und"],
-        restore: ["stell es wieder her"],
-        back: ["geh zurück"],
-        just: ["nur"],
-        main: ["bevorzugte"],
-        accept: ["zeig es an", "projiziere es"]
-    },
-    fr: {
-        imperatives: ["donne-moi", "va à", "montre", "montre-moi", "passe à"],
-        addImperatives: ["ajoute"],
-        articles: ["le", "la", "les"],
-        verse: ["verset", "versets"],
-        chapter: ["chapitre"],
-        next: ["suivant", "prochain"],
-        previous: ["précédent", "dernier"],
-        translation: ["traduction", "version"],
-        another: ["autre"],
-        rangeTo: ["à", "jusqu'à", "au"],
-        and: ["et"],
-        restore: ["remets-le"],
-        back: ["reviens en arrière"],
-        just: ["juste", "seulement"],
-        main: ["principale", "préférée"],
-        accept: ["projette-le", "affiche-le donc"]
-    },
-    no: {
-        imperatives: ["gi meg", "gå til", "vis", "bytt til"],
-        addImperatives: ["legg til"],
-        articles: [],
-        verse: ["vers"],
-        chapter: ["kapittel"],
-        next: ["neste"],
-        previous: ["forrige"],
-        translation: ["oversettelse", "versjon"],
-        another: ["en annen", "et annet"],
-        rangeTo: ["til"],
-        and: ["og"],
-        restore: ["ta det tilbake"],
-        back: ["gå tilbake"],
-        just: ["bare", "kun"],
-        main: ["foretrukne"],
-        accept: ["vis det da", "projiser det"]
-    }
-}
+// "another one" / "one more" only means "cycle again" for a short while after a translation command
+const TRANSLATION_FOLLOW_UP = /(?:^|[^a-z0-9])(?:and\s+)?(?:another one|one more|another)\s*[.,!?]*\s*$/i
+const FOLLOW_UP_WINDOW_MS = 30000
 
-// commands are short & spoken just before they should act - only the newest speech is considered
-const TAIL_CHARS = 80
-
-// leading word boundary (\b fails before accented characters like "übersetzung")
-const LEAD = "(?:^|[^a-z0-9])"
-
-// a command does not have to be phrased as an order - speakers just say "next chapter". Without an imperative the
-// phrase has to END the utterance, which is what separates an instruction from narration that happens to contain
-// the same words ("in the next verse paul says something amazing" keeps talking, so it is never a command).
-const BARE_TAIL = "\\s*[.,!?]*\\s*$"
-
-// ...and these still read as narration even at the end of a sentence ("we will see that in the next chapter")
-const NARRATION_BEFORE = /\b(?:in|from|on|at|into|within|about|of)(?:\s+the)?\s*$/
-
-function escapeRegex(value: string): string {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-}
-
-// escaped alternation, longest words first so "show me" wins over "show"
-function alternation(words: string[]): string {
-    return [...new Set(words.filter((word) => word.trim().length))]
-        .sort((a, b) => b.length - a.length)
-        .map((word) => escapeRegex(word).replace(/ /g, "\\s+"))
-        .join("|")
-}
-
-function mergeGrammar(language: string): CommandGrammar {
-    const base = COMMAND_GRAMMAR.en
-    const local = COMMAND_GRAMMAR[(language || "").slice(0, 2).toLowerCase()]
-    if (!local || local === base) return base
-
-    const merge = (a: string[], b: string[]) => [...new Set([...a, ...b])]
+/**
+ * Scripture's registration with the generic command layer. The config getter is read per
+ * segment, so mid-session table updates (Search Bibles changes) reach the matcher live.
+ */
+export function scriptureCommandSpec(getConfig: () => { language: string; translations: AiScriptureTranslation[]; books: { number: number; names: string[] }[] }): FeatureCommandSpec<AiScriptureCommandEvent> {
     return {
-        imperatives: merge(local.imperatives, base.imperatives),
-        addImperatives: merge(local.addImperatives, base.addImperatives),
-        articles: merge(local.articles, base.articles),
-        verse: merge(local.verse, base.verse),
-        chapter: merge(local.chapter, base.chapter),
-        next: merge(local.next, base.next),
-        previous: merge(local.previous, base.previous),
-        translation: merge(local.translation, base.translation),
-        another: merge(local.another, base.another),
-        rangeTo: merge(local.rangeTo, base.rangeTo),
-        and: merge(local.and, base.and),
-        restore: merge(local.restore, base.restore),
-        back: merge(local.back, base.back),
-        just: merge(local.just, base.just),
-        main: merge(local.main, base.main),
-        accept: merge(local.accept, base.accept)
+        feature: "scripture",
+        cooldownMs: 3000,
+        normalize: normalizeSpokenNumbers,
+        match: (joinedText) => {
+            const config = getConfig()
+            return detectScriptureCommand(joinedText, config.language, config.translations, config.books)
+        },
+        contextShortcuts: [{ when: (context) => !!context.anchored, pattern: LONE_NEXT_WHILE_ANCHORED, command: (rawSegmentText) => ({ type: "verse_next", phrase: rawSegmentText.trim() }) }],
+        followUps: [{ appliesAfter: (lastCommandType) => lastCommandType.startsWith("translation"), windowMs: FOLLOW_UP_WINDOW_MS, pattern: TRANSLATION_FOLLOW_UP, command: (cleanedPhrase) => ({ type: "translation_cycle", phrase: cleanedPhrase }) }]
     }
-}
-
-function phraseOf(match: RegExpMatchArray): string {
-    return match[0].replace(/^[^a-z0-9]+/, "").replace(/[\s.,!?]+$/, "")
-}
-
-/**
- * A spoken number sequence ("1 to 5" / "1 and 2" / "1, 2 and 3") collapsed to its span. The
- * continuation only counts while the numbers ASCEND - "give me verse 5 and 2 chronicles says"
- * stops at 5, because a descending number is the start of something else, not part of the range.
- */
-function sequenceSpan(first: number, rest: string | undefined): { start: number; end: number } {
-    let end = first
-    for (const digits of (rest || "").matchAll(/\d{1,3}/g)) {
-        const number = parseInt(digits[0], 10)
-        if (number <= end) break
-        end = number
-    }
-    return { start: first, end }
-}
-
-/**
- * Match a command body either as an order ("show the next chapter", anywhere in the tail) or as a plain
- * instruction ("next chapter") that has to end the utterance. Returns null when neither reading applies.
- */
-function matchCommand(tail: string, imperative: string, body: string): RegExpMatchArray | null {
-    const ordered = tail.match(new RegExp(LEAD + imperative + "\\s+" + body))
-    if (ordered) return ordered
-
-    const bare = tail.match(new RegExp(LEAD + body + BARE_TAIL))
-    if (!bare || bare.index === undefined) return null
-
-    return NARRATION_BEFORE.test(tail.slice(0, bare.index)) ? null : bare
 }
 
 export function detectScriptureCommand(text: string, language: string, translations: AiScriptureTranslation[], books: { number: number; names: string[] }[] = []): AiScriptureCommandEvent | null {
     const tail = normalizeSpokenNumbers(text).slice(-TAIL_CHARS)
-    const grammar = mergeGrammar(language)
+    const grammar = mergeLocalizedGrammar(COMMAND_GRAMMAR, language)
 
     // whisper mishears the word "verse" itself in command position ("next verse" -> "next best",
     // "verse five" -> "this five"). The misheard forms are real English words, so they only count
@@ -286,7 +98,6 @@ export function detectScriptureCommand(text: string, language: string, translati
     // 1c. output restore & passage back - whole standalone instructions, end of utterance only.
     // Restore checks first so "put it back up" never reads as a bare "back" phrase; a leading
     // conditional ("if we go back...") is a sentence being built, not an instruction
-    const CONDITIONAL_BEFORE = /\b(?:if|when|whenever|before|until|as|should)\s+(?:we|you|i|they|he|she)?\s*$/
     const restore = tail.match(new RegExp(LEAD + "(?:" + alternation(grammar.restore) + ")" + BARE_TAIL))
     if (restore && restore.index !== undefined && !NARRATION_BEFORE.test(tail.slice(0, restore.index)) && !CONDITIONAL_BEFORE.test(tail.slice(0, restore.index))) {
         return { type: "restore", phrase: phraseOf(restore) }
@@ -409,65 +220,4 @@ export function detectScriptureCommand(text: string, language: string, translati
     }
 
     return null
-}
-
-// STREAMING SEGMENTS
-
-// the streaming engine emits one segment per utterance, and a pause mid-command splits it ("next" / "verse").
-// joining the recent tail lets the command match once its last word arrives - and a command only fires when the
-// NEWEST segment completes it, so text that already fired (or failed) never re-fires from later joins.
-const SEGMENT_JOIN_MS = 4000
-
-// "another one" only means "cycle again" for a short while after a translation command
-const FOLLOW_UP_WINDOW_MS = 30000
-
-export interface CommandContext {
-    // a passage is live on the output (reading in progress) - required before a LONE "next" acts
-    anchored?: boolean
-}
-
-export class CommandStream {
-    private segments: { text: string; endMs: number }[] = []
-    private lastCommandType = ""
-    private lastCommandAtMs = 0
-
-    detect(segment: { text: string; endMs: number }, language: string, translations: AiScriptureTranslation[], context: CommandContext = {}, books: { number: number; names: string[] }[] = []): AiScriptureCommandEvent | null {
-        this.segments.push(segment)
-        while (this.segments.length > 1 && segment.endMs - this.segments[0].endMs > SEGMENT_JOIN_MS) this.segments.shift()
-
-        // a whole utterance of just "next" while a passage is live is the preacher advancing -
-        // inside a sentence the word never stands alone, so this cannot fire from narration
-        if (context.anchored && /^[^a-z0-9]*(?:and\s+|okay\s+|ok\s+)?next[^a-z0-9]*$/i.test(segment.text)) {
-            return this.record({ type: "verse_next", phrase: segment.text.trim() }, segment.endMs)
-        }
-
-        const joined = this.segments.map((entry) => entry.text).join(" ")
-        const command = detectScriptureCommand(joined, language, translations, books)
-        if (!command) {
-            // "another one" / "one more" right after a translation command cycles again
-            const followUp = /(?:^|[^a-z0-9])(?:and\s+)?(?:another one|one more|another)\s*[.,!?]*\s*$/i.exec(joined)
-            if (followUp && this.lastCommandType.startsWith("translation") && segment.endMs - this.lastCommandAtMs <= FOLLOW_UP_WINDOW_MS) {
-                return this.record({ type: "translation_cycle", phrase: followUp[0].replace(/^[^a-z0-9]+/i, "").replace(/[\s.,!?]+$/, "") }, segment.endMs)
-            }
-            return null
-        }
-
-        // the matched phrase must reach into the newest segment - an instruction wholly inside older text already
-        // had its chance when that text was newest (normalization is word-by-word, so lengths compose across the join)
-        const withoutNewest = this.segments
-            .slice(0, -1)
-            .map((entry) => entry.text)
-            .join(" ")
-        const boundary = withoutNewest ? normalizeSpokenNumbers(withoutNewest).length : 0
-        const at = normalizeSpokenNumbers(joined).lastIndexOf(command.phrase)
-        if (at >= 0 && at + command.phrase.length <= boundary) return null
-
-        return this.record(command, segment.endMs)
-    }
-
-    private record(command: AiScriptureCommandEvent, atMs: number): AiScriptureCommandEvent {
-        this.lastCommandType = command.type
-        this.lastCommandAtMs = atMs
-        return command
-    }
 }

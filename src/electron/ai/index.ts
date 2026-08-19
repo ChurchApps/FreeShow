@@ -2,8 +2,9 @@ import { app } from "electron"
 import type { AiScriptureDetectionConfig } from "../../types/ai/AiScripture"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
+import { CommandDispatcher } from "./commands/commandDispatcher"
 import { getLLMProvider } from "./llm/llmProviders"
-import { CommandStream } from "./scripture/commands"
+import { scriptureCommandSpec } from "./scripture/commands/matcher"
 import type { AiScriptureAnchor } from "./scripture/detection/coordinator"
 import { DetectionCoordinator } from "./scripture/detection/coordinator"
 import { getAiKey } from "./setup/aiKeys"
@@ -15,9 +16,8 @@ import { SpeechToText } from "./stt/SpeechToTextManager"
 // is on, a detection coordinator (tier 1 regex + optional LLM) and the voice command matcher
 // subscribe to transcript segments - the STT engine itself is managed by SpeechToTextManager
 
-// voice commands: whisper segments can overlap, so the same spoken command may be detected twice - cooldown per command type
-const COMMAND_COOLDOWN_MS = 3000
-const commandCooldowns = new Map<string, number>()
+// voice commands run through the generic dispatcher - features register their matcher & policies
+const commandDispatcher = new CommandDispatcher()
 
 let scriptureCoordinator: DetectionCoordinator | null = null
 let scriptureConfig: AiScriptureDetectionConfig | null = null
@@ -32,7 +32,7 @@ export function startScriptureDetection(config: AiScriptureDetectionConfig): boo
     // ollama runs locally without any credentials - every other provider needs a saved key
     const llm = config.llm && (config.llm.provider === "ollama" || getAiKey(config.llm.provider)) ? config.llm : null
 
-    const commandStream = new CommandStream()
+    commandDispatcher.register(scriptureCommandSpec(() => ({ language: config.language || "en", translations: config.translations || [], books: config.books || [] })))
 
     const coordinator = new DetectionCoordinator({
         books: config.books,
@@ -64,15 +64,10 @@ export function startScriptureDetection(config: AiScriptureDetectionConfig): boo
         coordinator.onTranscriptSegment(segment)
 
         if (!config.voiceCommands) return
-        // joined across recent segments: the streaming engine can split a spoken command over utterances ("next" / "verse")
-        const command = commandStream.detect({ text: segment.text, endMs: segment.endMs }, config.language || "en", config.translations || [], { anchored: Date.now() - lastAnchorAtMs < ANCHOR_FRESH_MS }, config.books || [])
-        if (!command) return
-
-        const now = Date.now()
-        if (now - (commandCooldowns.get(command.type) || 0) < COMMAND_COOLDOWN_MS) return
-        commandCooldowns.set(command.type, now)
-        const { phrase, ...rest } = command
-        sendToMain(ToMain.AI_COMMAND, { feature: "scripture", command: rest, phrase })
+        // the dispatcher joins recent segments (the streaming engine can split a spoken command
+        // over utterances - "next" / "verse") and enforces scripture's declared cooldowns
+        const envelope = commandDispatcher.handleSegment("scripture", { text: segment.text, endMs: segment.endMs }, { anchored: Date.now() - lastAnchorAtMs < ANCHOR_FRESH_MS })
+        if (envelope) sendToMain(ToMain.AI_COMMAND, envelope)
     }
     SpeechToText.addSegmentListener(scriptureSegmentListener)
 
@@ -88,7 +83,7 @@ export function stopScriptureDetection() {
     scriptureCoordinator?.stop()
     scriptureCoordinator = null
     scriptureConfig = null
-    commandCooldowns.clear()
+    commandDispatcher.unregister("scripture")
     lastAnchorAtMs = 0
 }
 
