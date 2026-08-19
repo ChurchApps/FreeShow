@@ -380,17 +380,20 @@
         --card-bg: #111827;
     }
 
+    /* the AI surface floats above the app UI (<= 1001) but stays UNDER the modal tier -
+       popup backdrops sit at 4999, popups at 5000 and the context menu at 5001, so
+       right-click menus & dialogs always cover the bubble */
     .backdrop {
         position: fixed;
         inset: 0;
         background: rgba(0, 0, 0, 0.65);
         backdrop-filter: blur(8px);
-        z-index: 9998;
+        z-index: 4997;
     }
 
     .speech-widget {
         position: fixed;
-        z-index: 9998;
+        z-index: 4998;
         font-family:
             system-ui,
             -apple-system,
@@ -591,7 +594,7 @@
         position: fixed;
         bottom: 120px;
         right: 45px;
-        z-index: 9998;
+        z-index: 4998;
         display: flex;
         flex-direction: column-reverse;
         gap: 8px;
@@ -604,7 +607,7 @@
         position: fixed;
         right: 117px;
         bottom: 45px;
-        z-index: 9998;
+        z-index: 4998;
         max-width: min(340px, calc(90vw - 80px));
         margin-bottom: 11px;
         /* the ring's inner card is opaque; the drop shadow lifts it off whatever panel is behind */
