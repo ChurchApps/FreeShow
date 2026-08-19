@@ -114,25 +114,31 @@ function startError(code: string): { ok: boolean; error: string } {
 }
 
 // SESSION BIBLES
-// every installed local translation is searched - no list to configure. The starred translations
-// (up to 3, most preferred first) lead: they take the priority index slots, ground the matching,
-// and star 1 is the translation detections project in. Only when nothing is starred does the
-// drawer's open translation fill that role, so an accidental drawer tab can never outrank a star.
+// every installed local translation is searched - no list to configure. The favourited
+// translations are the priority pool: they take the leading index slots and head the spoken
+// cycle order. One of them (or any bible) can be picked as the MAIN translation - the
+// projection/grounding target. With nothing picked, the first favourite leads; only with no
+// favourites at all does the drawer's open translation fill that role, so an accidental drawer
+// tab can never outrank a deliberate choice.
 
-/** The starred translation ids (most preferred first), filtered to what is still installed. */
-function starredTranslationIds(): string[] {
-    return (getSettings().starred || []).filter((id) => !!get(scriptures)[id]).slice(0, 3)
+/** The favourited translations, common ones first (the existing cycle ranking), then by name. */
+function favoriteTranslationIds(): string[] {
+    return Object.entries(get(scriptures))
+        .filter(([, bible]) => !!bible?.favorite)
+        .sort(([idA, a], [idB, b]) => cycleRank(idA) - cycleRank(idB) || (a.customName || a.name || "").localeCompare(b.customName || b.name || ""))
+        .map(([id]) => id)
 }
 
-/** The translation detections project in (unless display is "matched"): star 1, else the drawer choice. */
+/** The translation detections project in (unless display is "matched") and matching grounds to. */
 function preferredTranslationId(): string {
-    return starredTranslationIds()[0] || get(drawerTabsData).scripture?.activeSubTab || ""
+    const main = getSettings().mainTranslation
+    if (main && get(scriptures)[main]) return main
+    return favoriteTranslationIds()[0] || get(drawerTabsData).scripture?.activeSubTab || ""
 }
 
-/** All installed local translations in priority order: the stars (or drawer fallback) first, then the rest by name. */
+/** All installed local translations in priority order: main & favourites first, then the rest by name. */
 function sessionBibleIds(): string[] {
-    const starred = expandBibleIds(starredTranslationIds())
-    const lead = starred.length ? starred : expandBibleIds([get(drawerTabsData).scripture?.activeSubTab || ""].filter(Boolean))
+    const lead = expandBibleIds([preferredTranslationId(), ...favoriteTranslationIds()].filter(Boolean))
     const rest = Object.entries(get(scriptures))
         .filter(([id, bible]) => !!bible && !bible.api && !bible.collection && !lead.includes(id))
         .sort(([, a], [, b]) => (a.customName || a.name || "").localeCompare(b.customName || b.name || ""))
@@ -303,7 +309,7 @@ function stopSession(): void {
 // a provider/model change in settings re-arms the running session's tier 2 on the spot
 // (key saves don't touch this store - LlmOptions calls refreshSessionLlm directly)
 let lastLlmConfigKey = ""
-let lastStarsKey: string | null = null
+let lastMainTranslationKey: string | null = null
 ai.subscribe((value) => {
     const key = `${value?.llm?.provider || ""}|${value?.llm?.model || ""}`
     if (key !== lastLlmConfigKey) {
@@ -311,20 +317,21 @@ ai.subscribe((value) => {
         if (sessionActive) void refreshSessionLlm()
     }
 
-    // starring changes re-prioritize the running session's matching & projection on the spot
-    const starsKey = (value?.scripture?.starred || []).join("|")
-    if (starsKey !== lastStarsKey) {
-        const initial = lastStarsKey === null
-        lastStarsKey = starsKey
+    // changing the main translation re-prioritizes the running session's matching & projection
+    const mainKey = value?.scripture?.mainTranslation || ""
+    if (mainKey !== lastMainTranslationKey) {
+        const initial = lastMainTranslationKey === null
+        lastMainTranslationKey = mainKey
         if (!initial && sessionActive) scheduleSessionBiblesRefresh()
     }
 })
 
-// installing, deleting or renaming a bible mid-session updates the searched set & the cue table
+// installing, deleting, renaming or (un)favouriting a bible mid-session updates the searched
+// set, its priority order & the cue table
 let lastLibraryKey: string | null = null
 scriptures.subscribe((value) => {
     const key = Object.entries(value || {})
-        .map(([id, bible]) => `${id}:${bible?.customName || bible?.name || ""}`)
+        .map(([id, bible]) => `${id}:${bible?.customName || bible?.name || ""}:${bible?.favorite ? 1 : 0}`)
         .sort()
         .join("|")
     if (key === lastLibraryKey) return
@@ -935,13 +942,15 @@ async function switchTranslation(cmd: Extract<AiScriptureCommandEvent, { type: "
     let targetId = ""
     if (cmd.type === "translation") targetId = cmd.bibleId
     else {
-        // cycle to the next translation: the starred ones first, then common ones before obscure ones
-        const starred = starredTranslationIds()
-        const starRank = (id: string) => {
-            const rank = starred.indexOf(id)
-            return rank < 0 ? starred.length : rank
+        // cycle to the next translation: the main one, then the favourites, then common before obscure
+        const main = preferredTranslationId()
+        const favorites = favoriteTranslationIds()
+        const priorityRank = (id: string) => {
+            if (id === main) return -1
+            const rank = favorites.indexOf(id)
+            return rank < 0 ? favorites.length : rank
         }
-        const ids = [...(searchBibleIds.length ? searchBibleIds : [from.currentId])].sort((a, b) => starRank(a) - starRank(b) || cycleRank(a) - cycleRank(b))
+        const ids = [...(searchBibleIds.length ? searchBibleIds : [from.currentId])].sort((a, b) => priorityRank(a) - priorityRank(b) || cycleRank(a) - cycleRank(b))
         targetId = ids[(ids.indexOf(from.currentId) + 1) % ids.length] || ""
     }
     if (!targetId || targetId === from.currentId) return

@@ -26,21 +26,13 @@
 
     // engine/model/mic settings live in the AI model manager popup - only scripture behavior lives here
 
-    // STARRED TRANSLATIONS
-    // every installed translation is searched automatically - the stars (up to 3, most preferred
-    // first) set the priority: star 1 is the projection target and grounds the quote matching
+    // MAIN TRANSLATION
+    // every installed translation is searched automatically. The favourited translations (the
+    // drawer's existing favourites) are the priority pool, and the main translation is the
+    // projection/grounding target - unset, the first favourite (or the drawer choice) leads
 
     $: bibleList = sortByName(keysToID($scriptures).map((bible) => ({ ...bible, name: bible.customName || bible.name })))
-    $: starOptions = [{ value: "", label: translateText("main.none") }, ...bibleList.map((bible) => ({ value: bible.id, label: bible.name }))]
-    $: starred = (((settings.starred as string[]) || []) as string[]).slice(0, 3)
-
-    function setStar(slot: number, id: string) {
-        const list = [...starred]
-        // a translation holds one star - picking it in another slot moves it there
-        for (let i = 0; i < list.length; i++) if (i !== slot && list[i] === id) list[i] = ""
-        list[slot] = id
-        update("starred", list.filter(Boolean).slice(0, 3))
-    }
+    $: mainOptions = [{ value: "", label: translateText("ai_scripture.main_auto") }, ...[...bibleList].sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0)).map((bible) => ({ value: bible.id, label: (bible.favorite ? "★ " : "") + bible.name }))]
 
     const displayTranslationOptions = [
         { value: "drawer", label: translateText("ai_scripture.display_drawer") },
@@ -79,15 +71,11 @@
     <MaterialToggleSwitch label="ai_scripture.quote_matching" checked={settings.quoteMatching !== false} defaultValue={true} on:change={(e) => update("quoteMatching", e.detail)} />
     <p class="faded hint"><T id="ai_scripture.quote_matching_hint" /></p>
 
-    <Title label="ai_scripture.starred" icon="star" />
-    <p class="faded hint"><T id="ai_scripture.starred_hint" /></p>
+    <Title label="ai_scripture.main_translation" icon="star" />
+    <p class="faded hint"><T id="ai_scripture.main_translation_hint" /></p>
 
     {#if bibleList.length}
-        {#each [0, 1, 2] as slot}
-            {#if slot === 0 || starred[slot - 1]}
-                <MaterialDropdown label="ai_scripture.star_{slot + 1}" options={starOptions} value={starred[slot] || ""} defaultValue="" on:change={(e) => setStar(slot, e.detail)} />
-            {/if}
-        {/each}
+        <MaterialDropdown label="ai_scripture.main_translation" options={mainOptions} value={settings.mainTranslation || ""} defaultValue="" on:change={(e) => update("mainTranslation", e.detail)} />
     {:else}
         <p class="faded"><T id="empty.general" /></p>
     {/if}

@@ -98,8 +98,8 @@ async function updateSession(token: number, bibleIds: string[]): Promise<void> {
     const addPayloads = addedIds.length ? await buildPayloads(addedIds) : []
     if (token !== sessionToken) return
 
-    // bibleIds is also the desired PRIORITY order (starred translations first) - a pure
-    // re-starring changes nothing in the set but still must reorder the indexes
+    // bibleIds is also the desired PRIORITY order (main & favourite translations first) - a
+    // pure re-prioritization changes nothing in the set but still must reorder the indexes
     const rank = new Map(bibleIds.map((id, position) => [id, position]))
     const nextIds = [...currentBibleIds.filter((id) => !removed.includes(id)), ...addPayloads.map((payload) => payload.translationId)].sort((a, b) => (rank.get(a) ?? bibleIds.length) - (rank.get(b) ?? bibleIds.length))
     if (!removed.length && !addPayloads.length && nextIds.join("|") === currentBibleIds.join("|")) return

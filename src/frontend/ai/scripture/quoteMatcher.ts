@@ -131,9 +131,10 @@ export class QuoteMatcher {
     }
 
     /**
-     * The priority changed (starring): stable-sort the indexes into the given order - earlier
-     * indexes win candidate ties, so the order IS the preference. The drawer bigram route stays
-     * on the index it was built for (one route is enough for fragments to surface their verse).
+     * The priority changed (favourites or the main translation): stable-sort the indexes into
+     * the given order - earlier indexes win candidate ties, so the order IS the preference. The
+     * bigram route stays on the index it was built for (one route is enough for fragments to
+     * surface their verse).
      */
     reorderTranslations(order: string[]): void {
         const rank = new Map(order.map((id, position) => [id, position]))

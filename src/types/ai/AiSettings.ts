@@ -41,8 +41,8 @@ interface AiScriptureSettings {
     autoMinConfidence?: number // auto mode only shows detections scoring at/above this percent (default 80 - "high" band)
     autoProjectQuoted?: boolean
     searchBibles?: string[] // legacy tick list - every installed translation is searched now
-    starred?: string[] // up to 3 translation ids, most preferred first - priority for matching & the projection target
-    displayTranslation?: "drawer" | "matched" // "drawer" = the preferred translation (star 1, else the drawer choice)
+    mainTranslation?: string // the projection/grounding target; empty = first favourite, else the drawer choice
+    displayTranslation?: "drawer" | "matched" // "drawer" = the main translation
     followInDrawer?: boolean // projections also navigate the drawer's scripture view (default on)
     micDeviceId?: string
     provider?: string
