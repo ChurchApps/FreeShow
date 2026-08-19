@@ -196,8 +196,9 @@ export async function quicksearch(searchValue: string, categoryFilter: null | Se
 
     // --- AI ---
     if (isVisible("ai")) {
-        // entries route to different handlers, so they are added one by one in ranked order
-        trimValues(sort(getAiValues()), MAX_RESULTS_LARGE).forEach((value) => addValues([value], value.type, "ai"))
+        // entries keep their curated order (the group is small & the toggles have fixed spots), and route to different handlers
+        const aiMatches = trimValues(sort(getAiValues()), MAX_RESULTS_LARGE).sort((a, b) => a.order - b.order)
+        aiMatches.forEach((value) => addValues([value], value.type, "ai"))
     }
 
     // --- NAVIGATION ---
@@ -720,17 +721,17 @@ function getAiValues() {
     const aiSettings = get(ai)
 
     const values: any[] = [
-        { type: "settings", id: "ai", name: "settings.ai", aliases: ["-Artificial intelligence", "-Transcription", "-Speech to text", "-Engine", "-Provider", "-LLM", "-API key", "-Ollama"] },
-        { type: "popups", id: "ai_model_manager", name: "popup.ai_model_manager", data: { settingsTab: "ai" }, aliases: ["-AI models", "-Whisper", "-Nemotron", "-Download"] },
-        { type: "ai_scripture_settings", id: "ai_scripture_settings", name: "ai.scripture_settings", aliases: ["-Auto scripture", "-Detection", "-Confidence", "-Auto project"] },
-        { type: "ai_toggle", id: "ai", name: aiSettings.enabled ? "ai.disable" : "ai.enable", aliases: ["-Turn on", "-Turn off"] },
-        { type: "ai_toggle", id: "scripture", name: aiSettings.scripture?.enabled ? "ai_scripture.disable" : "ai_scripture.enable", aliases: ["-Turn on", "-Turn off", "-Auto scripture"] }
+        { order: 1, type: "settings", id: "ai", name: "settings.ai", aliases: ["-Artificial intelligence", "-Transcription", "-Speech to text", "-Engine", "-Provider", "-LLM", "-API key", "-Ollama"] },
+        { order: 2, type: "popups", id: "ai_model_manager", name: "popup.ai_model_manager", data: { settingsTab: "ai" }, aliases: ["-AI models", "-Whisper", "-Nemotron", "-Download"] },
+        { order: 3, type: "ai_scripture_settings", id: "ai_scripture_settings", name: "ai.scripture_settings", aliases: ["-Auto scripture", "-Detection", "-Confidence", "-Auto project"] },
+        { order: 4, type: "ai_toggle", id: "scripture", name: aiSettings.scripture?.enabled ? "ai_scripture.disable" : "ai_scripture.enable", aliases: ["-Turn on", "-Turn off", "-Auto scripture"] },
+        { order: 5, type: "ai_toggle", id: "ai", name: aiSettings.enabled ? "ai.disable" : "ai.enable", aliases: ["-Turn on", "-Turn off"] }
     ]
 
     if (aiSettings.enabled && aiSettings.scripture?.enabled) {
         // "starting" counts as live - stopping then still ends the in-flight start cleanly
         const live = !["stopped", "error"].includes(get(aiScriptureStatus).state)
-        values.push({ type: "ai_listening", id: live ? "stop" : "start", name: live ? "ai.stop_listening" : "ai.start_listening", aliases: ["-AI", "-Voice", "-Microphone", "-Transcription", "-Speech to text", "-Dictation"] })
+        values.push({ order: 6, type: "ai_listening", id: live ? "stop" : "start", name: live ? "ai.stop_listening" : "ai.start_listening", aliases: ["-AI", "-Voice", "-Microphone", "-Transcription", "-Speech to text", "-Dictation"] })
     }
 
     return translateNames(values)

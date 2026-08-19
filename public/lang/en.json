@@ -1839,7 +1839,7 @@
         "remove_key": "Remove key",
         "test_connection": "Test",
         "privacy_keys": "API keys are stored locally on this computer and are never synced.",
-        "enable": "Enable AI features",
+        "enable": "Enable AI",
         "llm": "LLM",
         "select_mic": "Select a microphone input",
         "processing": "Processing speech...",
@@ -1891,6 +1891,6 @@
         "auto_min_confidence": "Show automatically from confidence",
         "copy_transcript": "Copy transcript",
         "scripture_settings": "AI Scripture settings",
-        "disable": "Disable AI features"
+        "disable": "Disable AI"
     }
 }

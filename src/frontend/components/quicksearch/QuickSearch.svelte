@@ -88,6 +88,13 @@
         scheduleSearch(value, activeCategory)
     }
 
+    // some entries follow the current state (e.g. AI toggles) - reopening must not show stale results
+    $: if ($quickSearchActive) refreshResults()
+    function refreshResults() {
+        const value = activeCategory ? actualSearchText : searchValue
+        if (value) scheduleSearch(value, activeCategory, true)
+    }
+
     function openCategory(category: SearchCategory) {
         if (activeCategory) return
         activeCategory = category
