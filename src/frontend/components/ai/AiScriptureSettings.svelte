@@ -90,18 +90,19 @@
     {#if (settings.mode || "confirm") === "auto"}
         <Tip type="warning" value="ai_scripture.mode_auto_warning" top={10} />
 
-        <!-- how sure a detection must be before it is shown automatically -->
+        <!-- how sure a detection must be before it is shown automatically - the single gate for
+        references and quotes alike. Stacked (label / slider+badge): the options column is narrow -->
         <div class="confidenceRow">
             <p class="confidenceLabel"><T id="ai_scripture.auto_min_confidence" /></p>
-            <Slider value={autoMinConfidence} min={0} max={100} step={5} style="flex: 1;" on:input={setAutoMinConfidence} />
-            <span class="confidence {confidenceBand}">{autoMinConfidence}% · <T id="ai_scripture.confidence_{confidenceBand}" /></span>
+            <div class="confidenceControls">
+                <Slider value={autoMinConfidence} min={0} max={100} step={5} style="flex: 1; min-width: 140px;" on:input={setAutoMinConfidence} />
+                <span class="confidence {confidenceBand}">{autoMinConfidence}% · <T id="ai_scripture.confidence_{confidenceBand}" /></span>
+            </div>
         </div>
+        <p class="faded hint"><T id="ai_scripture.auto_min_confidence_hint" /></p>
     {/if}
 
-    <MaterialToggleSwitch label="ai_scripture.auto_project_quoted" checked={settings.autoProjectQuoted === true} defaultValue={false} on:change={(e) => update("autoProjectQuoted", e.detail)} />
-
     <MaterialToggleSwitch label="ai_scripture.follow_in_drawer" checked={settings.followInDrawer !== false} defaultValue={true} on:change={(e) => update("followInDrawer", e.detail)} />
-    <p class="faded hint"><T id="ai_scripture.auto_project_quoted_hint" /></p>
 
     <MaterialToggleSwitch label="ai_scripture.voice_commands" checked={settings.voiceCommands === true} defaultValue={false} on:change={(e) => update("voiceCommands", e.detail)} />
     {#if settings.voiceCommands}
@@ -138,16 +139,23 @@
 
     .confidenceRow {
         display: flex;
-        align-items: center;
-        gap: 12px;
+        flex-direction: column;
+        gap: 10px;
         padding: 8px 10px;
         background-color: var(--primary-darker);
         border-radius: 4px;
         margin-top: 10px;
     }
+    .confidenceControls {
+        display: flex;
+        align-items: center;
+        gap: 8px 12px;
+        /* narrow column: the slider keeps a usable width and the badge wraps below it */
+        flex-wrap: wrap;
+    }
     .confidenceLabel {
         font-size: 0.9em;
-        white-space: nowrap;
+        white-space: normal;
     }
 
     .confidence {

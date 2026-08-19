@@ -494,12 +494,9 @@ export async function handleDetection(ref: DetectedReference): Promise<void> {
     // auto projection
     if (settings.mode !== "auto") return
     if (get(aiScriptureAutoPaused) || get(outLocked)) return
+    // one gate for references and quotes alike: spoken references score high by nature, and a
+    // quoted verse only reaches high when the match is decisive - the slider is the single lever
     if (confidencePercent(ref.confidence) < (typeof settings.autoMinConfidence === "number" ? settings.autoMinConfidence : 80)) return
-    // quoted verses are separately gated - except follow-along continuations, which only ever
-    // advance the passage already live on the output within its own chapter, corrections
-    // replacing the very verse this feature just projected, and re-projections of the live
-    // passage in the translation the speaker turns out to be reading from
-    if (ref.type === "quoted" && !settings.autoProjectQuoted && !ref.continuation && !correctsLiveProjection(ref) && !refinesLiveTranslation(ref)) return
 
     queueAutoProjection(ref)
 }

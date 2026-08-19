@@ -38,8 +38,7 @@ interface LlmSettings {
 interface AiScriptureSettings {
     enabled?: boolean
     mode?: "confirm" | "auto"
-    autoMinConfidence?: number // auto mode only shows detections scoring at/above this percent (default 80 - "high" band)
-    autoProjectQuoted?: boolean
+    autoMinConfidence?: number // auto mode only shows detections scoring at/above this percent (default 80 - "high" band); the single gate for references & quotes
     searchBibles?: string[] // legacy tick list - every installed translation is searched now
     mainTranslation?: string // the projection/grounding target; empty = first favourite, else the drawer choice
     displayTranslation?: "drawer" | "matched" // "drawer" = the main translation

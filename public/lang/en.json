@@ -1802,7 +1802,6 @@
         "mode_confirm": "Ask for confirmation",
         "mode_auto": "Show it immediately",
         "mode_auto_warning": "Detected scriptures will appear on the live output instantly, without asking!",
-        "auto_project_quoted": "Also show quoted verses automatically",
         "auto_cooldown": "Auto-project cooldown (s)",
         "ref_cooldown": "Same reference cooldown (s)",
         "max_verses": "Max verses",
@@ -1812,7 +1811,6 @@
         "voice_commands": "Voice commands",
         "voice_commands_hint": "While a scripture is live, spoken commands control it: \"go to the next verse\", \"give me verse five\", \"show chapter four\", \"give me NIV\", \"give me another translation\". Commands must be phrased as instructions.",
         "enable": "Enable AI Scripture",
-        "auto_project_quoted_hint": "Spoken references like \"John 3:16\" are always clear, so they can be shown right away. But when only the words of a verse are quoted (\"For God so loved the world...\"), FreeShow has to work out which verse it is - and it can be wrong. Leave this off to review those as suggestions first.",
         "state_starting": "Starting...",
         "state_listening": "Listening",
         "state_stopped": "Stopped",
@@ -1844,7 +1842,8 @@
         "on_device_only": "On-device detection",
         "on_device_tip": "No AI key configured - spoken references and word-for-word quotes are detected on this computer. Add an AI key to also catch paraphrased verses.",
         "privacy_matching": "Quoted verses are matched against your installed Bibles on this computer - nothing is sent anywhere.",
-        "auto_min_confidence": "Show automatically from confidence"
+        "auto_min_confidence": "Show automatically from confidence",
+        "auto_min_confidence_hint": "Spoken references like \"John 3:16\" are always certain and show right away. A quoted verse (\"For God so loved the world...\") has to be worked out from its words, so it carries a confidence: at 80% or above only decisive matches show automatically - lower it to also show likely ones. Everything else still appears as a suggestion."
     },
     "ai": {
         "scripture_settings_moved": "AI Scripture settings live in the scripture drawer's options panel.",
