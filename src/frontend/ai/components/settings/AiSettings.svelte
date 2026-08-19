@@ -1,6 +1,6 @@
 <script lang="ts">
-    import AiScriptureSettings from "../../../components/ai/AiScriptureSettings.svelte"
     import MaterialToggleSwitch from "../../../components/inputs/MaterialToggleSwitch.svelte"
+    import T from "../../../components/helpers/T.svelte"
     import { ai } from "../../../stores"
     import STTOptions from "./STTOptions.svelte"
 
@@ -19,8 +19,6 @@
 {#if isEnabled}
     <STTOptions />
 
-    <br />
-    <br />
-
-    <AiScriptureSettings />
+    <!-- feature-specific AI settings live with their feature -->
+    <p style="opacity: 0.6; font-size: 0.85em; white-space: initial; padding-top: 15px;"><T id="ai.scripture_settings_moved" /></p>
 {/if}

@@ -7,9 +7,7 @@
     import T from "../helpers/T.svelte"
     import InputRow from "../input/InputRow.svelte"
     import Title from "../input/Title.svelte"
-    import MaterialButton from "../inputs/MaterialButton.svelte"
     import Slider from "../inputs/Slider.svelte"
-    import MaterialCheckbox from "../inputs/MaterialCheckbox.svelte"
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
     import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
     import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
@@ -28,15 +26,20 @@
 
     // engine/model/mic settings live in the AI model manager popup - only scripture behavior lives here
 
-    // SEARCH BIBLES
+    // STARRED TRANSLATIONS
+    // every installed translation is searched automatically - the stars (up to 3, most preferred
+    // first) set the priority: star 1 is the projection target and grounds the quote matching
 
     $: bibleList = sortByName(keysToID($scriptures).map((bible) => ({ ...bible, name: bible.customName || bible.name })))
-    $: searchBibles = ((settings.searchBibles as string[]) || []) as string[]
+    $: starOptions = [{ value: "", label: translateText("main.none") }, ...bibleList.map((bible) => ({ value: bible.id, label: bible.name }))]
+    $: starred = (((settings.starred as string[]) || []) as string[]).slice(0, 3)
 
-    function toggleBible(id: string, checked: boolean) {
-        const list = searchBibles.filter((bibleId) => bibleId !== id)
-        if (checked) list.push(id)
-        update("searchBibles", list)
+    function setStar(slot: number, id: string) {
+        const list = [...starred]
+        // a translation holds one star - picking it in another slot moves it there
+        for (let i = 0; i < list.length; i++) if (i !== slot && list[i] === id) list[i] = ""
+        list[slot] = id
+        update("starred", list.filter(Boolean).slice(0, 3))
     }
 
     const displayTranslationOptions = [
@@ -76,32 +79,15 @@
     <MaterialToggleSwitch label="ai_scripture.quote_matching" checked={settings.quoteMatching !== false} defaultValue={true} on:change={(e) => update("quoteMatching", e.detail)} />
     <p class="faded hint"><T id="ai_scripture.quote_matching_hint" /></p>
 
-    <Title label="ai_scripture.search_bibles ({searchBibles.length})" icon="scripture" />
-    <p class="faded hint"><T id="ai_scripture.search_bibles_hint" /></p>
+    <Title label="ai_scripture.starred" icon="star" />
+    <p class="faded hint"><T id="ai_scripture.starred_hint" /></p>
 
     {#if bibleList.length}
-        <InputRow>
-            <MaterialButton
-                style="flex: 1;"
-                icon="check"
-                on:click={() =>
-                    update(
-                        "searchBibles",
-                        bibleList.map((bible) => bible.id)
-                    )}
-            >
-                <T id="ai_scripture.select_all" />
-            </MaterialButton>
-            <MaterialButton style="flex: 1;" icon="disable" on:click={() => update("searchBibles", [])}>
-                <T id="ai_scripture.deselect_all" />
-            </MaterialButton>
-        </InputRow>
-
-        <div class="bibleList">
-            {#each bibleList as bible}
-                <MaterialCheckbox label={bible.name} checked={searchBibles.includes(bible.id)} on:change={(e) => toggleBible(bible.id, e.detail)} />
-            {/each}
-        </div>
+        {#each [0, 1, 2] as slot}
+            {#if slot === 0 || starred[slot - 1]}
+                <MaterialDropdown label="ai_scripture.star_{slot + 1}" options={starOptions} value={starred[slot] || ""} defaultValue="" on:change={(e) => setStar(slot, e.detail)} />
+            {/if}
+        {/each}
     {:else}
         <p class="faded"><T id="empty.general" /></p>
     {/if}
@@ -158,15 +144,6 @@
     }
     .hint {
         padding: 5px 10px 10px;
-    }
-
-    .bibleList {
-        display: flex;
-        flex-direction: column;
-        max-height: 200px;
-        overflow-y: auto;
-        background-color: var(--primary-darker);
-        border-radius: 4px;
     }
 
     .confidenceRow {

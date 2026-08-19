@@ -23,6 +23,7 @@
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import { createScriptureShow, getActiveScripturesContent, getMergedAttribution, getScriptureSlidesNew, textKeys, useOldScriptureSystem } from "../bible/scripture"
+    import AiScriptureSettings from "../../ai/AiScriptureSettings.svelte"
 
     export let optionsOpen: boolean
 
@@ -251,6 +252,11 @@
             {#if $scriptureSettings.smartSplit === false}
                 <MaterialNumberInput label="scripture.max_verses" value={$scriptureSettings.versesPerSlide} defaultValue={3} min={1} max={100} on:change={(e) => update("versesPerSlide", e.detail)} hideWhenZero />
             {/if}
+
+            <!-- AI scripture lives with scripture - the AI settings page keeps only the generic AI options -->
+            <div class="aiSection">
+                <AiScriptureSettings />
+            </div>
         {:else}
             <!-- Template -->
             <InputRow style={templateBackground ? "" : "margin-bottom: 10px;"}>
@@ -314,6 +320,14 @@
         /* position: absolute; */
         width: 160%;
         inset-inline-end: 0;
+    }
+
+    .aiSection {
+        display: flex;
+        flex-direction: column;
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px solid var(--primary-lighter);
     }
 
     .attributionString {
