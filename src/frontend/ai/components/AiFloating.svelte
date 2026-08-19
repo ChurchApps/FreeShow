@@ -5,7 +5,7 @@
     import { getShortBibleName } from "../../components/drawer/bible/scripture"
     import T from "../../components/helpers/T.svelte"
     import MaterialButton from "../../components/inputs/MaterialButton.svelte"
-    import { activePage, ai, aiQuoteMatchActive, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureInterim, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, drawerTabsData, language, outLocked, scriptures, settingsTab } from "../../stores"
+    import { activePage, ai, aiQuoteMatchActive, aiScriptureAutoPaused, aiScriptureHasProjected, aiInterim, aiScriptureStatus, aiScriptureSuggestions, aiTranscript, aiStatus, drawerTabsData, language, outLocked, scriptures, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../scripture/aiScripture"
     import { audioLevelStore, resolveSttEngine, SpeechToText } from "../stt/stt"
@@ -23,7 +23,7 @@
     let transcriptElem: HTMLElement | undefined
     let transcriptPinned = true
     let autoScrollTimer: NodeJS.Timeout | null = null
-    $: if (isOpen && transcriptPinned && (transcriptLines.length || $aiScriptureInterim) && transcriptElem) scrollToBottom()
+    $: if (isOpen && transcriptPinned && (transcriptLines.length || $aiInterim) && transcriptElem) scrollToBottom()
     $: if (!isOpen) transcriptPinned = true
     function scrollToBottom() {
         setTimeout(() => {
@@ -46,7 +46,7 @@
     // nemotron emits an utterance in fragments - group them into one line per utterance
     // (whisper sets no utteranceEnd flags, so it falls back to grouping on pause gaps)
     const LINE_GAP_MS = 2000
-    $: transcriptLines = groupTranscriptLines($aiScriptureTranscript)
+    $: transcriptLines = groupTranscriptLines($aiTranscript)
     function groupTranscriptLines(segments: { text: string; startMs: number; endMs: number; music?: boolean; utteranceEnd?: boolean }[]) {
         const lines: { text: string; music: boolean; endMs: number; done: boolean; open?: boolean }[] = []
         for (const segment of segments) {
@@ -213,7 +213,7 @@
 
     // TICKER - the latest transcript line, visible without opening the bubble
 
-    $: latestSegment = lastNonEmptyText($aiScriptureTranscript)
+    $: latestSegment = lastNonEmptyText($aiTranscript)
     function lastNonEmptyText(segments: { text: string }[]): string {
         for (let i = segments.length - 1; i >= 0; i--) if (segments[i].text) return segments[i].text
         return ""
@@ -226,10 +226,10 @@
     <div class="backdrop" on:mousedown|self={toggleExpand} transition:fade={{ duration: 250 }}></div>
 {/if}
 
-{#if !isOpen && isListening && (latestSegment || $aiScriptureInterim)}
+{#if !isOpen && isListening && (latestSegment || $aiInterim)}
     <!-- the live ticker sits on the bubble's own row, to its left - the stack above stays for cards -->
     <button class="ticker" title={translateText("ai_scripture.transcript")} on:click={toggleExpand}>
-        {latestSegment}{#if $aiScriptureInterim}{" "}<span class="interim">{$aiScriptureInterim}</span>{/if}
+        {latestSegment}{#if $aiInterim}{" "}<span class="interim">{$aiInterim}</span>{/if}
     </button>
 {/if}
 
@@ -342,15 +342,15 @@
                             <div class="spinner large"></div>
                             <p><T id="ai.processing" /></p>
                         </div>
-                    {:else if transcriptLines.length || $aiScriptureInterim}
+                    {:else if transcriptLines.length || $aiInterim}
                         <div class="transcript-box" bind:this={transcriptElem} on:scroll={onTranscriptScroll}>
                             {#each transcriptLines as line}
                                 <p class:music={line.music}>
-                                    {line.text}{#if line.open && $aiScriptureInterim}{" "}<span class="interim">{$aiScriptureInterim}</span>{/if}
+                                    {line.text}{#if line.open && $aiInterim}{" "}<span class="interim">{$aiInterim}</span>{/if}
                                 </p>
                             {/each}
-                            {#if $aiScriptureInterim && !transcriptLines[transcriptLines.length - 1]?.open}
-                                <p><span class="interim">{$aiScriptureInterim}</span></p>
+                            {#if $aiInterim && !transcriptLines[transcriptLines.length - 1]?.open}
+                                <p><span class="interim">{$aiInterim}</span></p>
                             {/if}
                         </div>
                     {:else}

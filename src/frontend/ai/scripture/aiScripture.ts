@@ -13,7 +13,7 @@ import { setDrawerTabData } from "../../components/helpers/historyHelpers"
 import { getFirstActiveOutput, setOutput } from "../../components/helpers/output"
 import { clearSlide } from "../../components/output/clear"
 import { requestMain, sendMain } from "../../IPC/main"
-import { activeDrawerTab, activeScripture, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureInterim, aiScriptureStatus, aiScriptureSuggestions, aiScriptureTranscript, aiStatus, drawerTabsData, openScripture, outLocked, outputs, scriptureHistory, scriptures, scripturesCache } from "../../stores"
+import { activeDrawerTab, activeScripture, ai, aiScriptureAutoPaused, aiScriptureHasProjected, aiInterim, aiScriptureStatus, aiScriptureSuggestions, aiTranscript, aiStatus, drawerTabsData, openScripture, outLocked, outputs, scriptureHistory, scriptures, scripturesCache } from "../../stores"
 import { AI_PROVIDER_MODELS } from "../models"
 import { resolveSttEngine, SpeechToText } from "../stt/stt"
 import { noteExplicitDetection, setQuoteMatchAnchor, startQuoteMatching, stopQuoteMatching, updateQuoteMatchBibles } from "./quoteMatch/quoteMatchSession"
@@ -204,8 +204,8 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
         listenLanguage
     }
 
-    aiScriptureTranscript.set([])
-    aiScriptureInterim.set("")
+    aiTranscript.set([])
+    aiInterim.set("")
     aiScriptureSuggestions.set([])
     aiScriptureAutoPaused.set(false)
 
@@ -302,7 +302,7 @@ function stopSession(): void {
     sendMain(Main.AI_SCRIPTURE_STOP)
     SpeechToText.disable()
 
-    aiScriptureInterim.set("")
+    aiInterim.set("")
     aiScriptureAutoPaused.set(false)
     aiScriptureStatus.set({ state: "stopped" })
 }

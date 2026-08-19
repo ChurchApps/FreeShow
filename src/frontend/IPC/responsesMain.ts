@@ -52,8 +52,8 @@ import {
     activeShow,
     activeTimers,
     aiScriptureStatus,
-    aiScriptureInterim,
-    aiScriptureTranscript,
+    aiInterim,
+    aiTranscript,
     aiStatus,
     alertMessage,
     audioData,
@@ -288,10 +288,10 @@ export const mainResponses: MainResponses = {
     [ToMain.AI_STATUS]: (data) => aiStatus.set(data),
     [ToMain.AI_TRANSCRIPT]: (data) => {
         // the whole session stays scrollable - the cap only guards against unbounded growth
-        aiScriptureTranscript.update((a) => [...a, data].slice(-2000))
+        aiTranscript.update((a) => [...a, data].slice(-2000))
         handleQuoteMatchTranscript(data)
     },
-    [ToMain.AI_TRANSCRIPT_INTERIM]: (data) => aiScriptureInterim.set(data.text),
+    [ToMain.AI_TRANSCRIPT_INTERIM]: (data) => aiInterim.set(data.text),
     [ToMain.AI_SCRIPTURE_STATUS]: (data) => aiScriptureStatus.set(data),
     [ToMain.AI_SCRIPTURE_DETECTION]: (data) => {
         handleDetection(data)
