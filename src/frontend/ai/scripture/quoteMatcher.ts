@@ -451,8 +451,12 @@ export class QuoteMatcher {
             // or GROWING as the speaker continues into one specific verse. Junk and formulas
             // re-score identically every segment and quietly age out
             const shortRun = top.align.bestRunLength < tuning.PHRASE_SHOT_MIN_RUN
+            // loose translations (MSG/TPT) phrase verses in everyday English - "there is no such
+            // thing as" is a long run of stopwords around ONE mid-rare word ("thing"). One rare
+            // word in a run is coincidence; a genuine quoted fragment carries at least two
+            const thinRun = top.align.bestRunPeaks < tuning.PHRASE_SHOT_MIN_PEAKS
             const rivaled = candidates.some((candidate) => candidate !== top && !sameRef(candidate, top) && phraseEvidence(candidate.align, tuning) && candidate.align.bestRunWeight >= top.align.bestRunWeight - tuning.PHRASE_RIVAL_MARGIN)
-            if ((shortRun || rivaled) && !cued && top.zone > 1) {
+            if ((shortRun || thinRun || rivaled) && !cued && top.zone > 1) {
                 const held = this.previousTop?.key === key ? this.previousTop : null
                 const grown = held?.phraseWeight !== undefined && top.align.bestRunWeight >= held.phraseWeight + tuning.PHRASE_GROWTH_MIN
                 if (!grown) {

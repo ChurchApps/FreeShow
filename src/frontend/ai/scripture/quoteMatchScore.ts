@@ -59,6 +59,12 @@ export const TUNING = {
     // runs are everyday collocations often enough ("are going to inherit", "dont know whether")
     // that they need context: a cue, the anchored passage, or growth as the speaker keeps quoting
     PHRASE_SHOT_MIN_RUN: 5,
+    // ...and must carry at least this many peak-grade rare words (grade >= 0.9, idf >= the peak
+    // bar). Loose translations (MSG/TPT) phrase verses in everyday English, so ordinary speech
+    // matches them verbatim - "there is no such thing as", "hold on to the traditional" are long
+    // runs of stopwords around ONE mid-rare word, which is coincidence. A genuine quoted fragment
+    // carries several ("the VALLEY of the SHADOW of DEATH")
+    PHRASE_SHOT_MIN_PEAKS: 2,
     // a held short run emits once its weight grows by this much on a later segment (one more
     // matched word adds ~3 with its adjacency bonus; a static junk run re-scores identically)
     PHRASE_GROWTH_MIN: 2,
@@ -135,6 +141,7 @@ export interface AlignResult {
     bestRunLength: number
     bestRunWeight: number // matched weight of the run + an adjacency bonus per consecutive pair
     bestRunPeakIdf: number // highest token idf inside that run
+    bestRunPeaks: number // run words at peak grade AND peak idf - stopword runs carry at most one
     bestRunQueryFrom: number // the run's query span, so a phrase emission can quote the run itself (-1 when no run)
     bestRunQueryTo: number
 }
@@ -220,17 +227,20 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     let bestRunLength = 0
     let bestRunWeight = 0
     let bestRunPeakIdf = 0
+    let bestRunPeaks = 0
     let bestRunQueryFrom = -1
     let bestRunQueryTo = -1
     let runLength = 0
     let runWeight = 0
     let runPeakIdf = 0
+    let runPeaks = 0
     let runQueryFrom = -1
     for (let k = 0; k < matchedQ.length; k++) {
         if (matchedV[k] >= verseLength) {
             runLength = 0
             runWeight = 0
             runPeakIdf = 0
+            runPeaks = 0
             runQueryFrom = -1
             continue
         }
@@ -244,16 +254,19 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
             runLength++
             runWeight += weight + tuning.PHRASE_ADJACENCY_IDF
             if (peak > runPeakIdf) runPeakIdf = peak
+            if (peak >= tuning.PHRASE_MIN_PEAK_IDF) runPeaks++
         } else {
             runLength = 1
             runWeight = weight
             runPeakIdf = peak
+            runPeaks = peak >= tuning.PHRASE_MIN_PEAK_IDF ? 1 : 0
             runQueryFrom = matchedQ[k]
         }
         if (idf >= tuning.PHRASE_EDGE_MIN_IDF && runWeight > bestRunWeight) {
             bestRunLength = runLength
             bestRunWeight = runWeight
             bestRunPeakIdf = runPeakIdf
+            bestRunPeaks = runPeaks
             bestRunQueryFrom = runQueryFrom
             bestRunQueryTo = matchedQ[k]
         }
@@ -269,7 +282,7 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     const density = matchedQ.length / querySpan
     const score = coverage * Math.min(1, density / tuning.DENSITY_REF)
 
-    return { score, coverage, density, matched: matchedQ.length, matchedInformative, matchedWeight, matchedFuzzy, queryFrom, queryTo, verseFrom, verseTo, spillInformative, verseLength, bestRunLength, bestRunWeight, bestRunPeakIdf, bestRunQueryFrom, bestRunQueryTo }
+    return { score, coverage, density, matched: matchedQ.length, matchedInformative, matchedWeight, matchedFuzzy, queryFrom, queryTo, verseFrom, verseTo, spillInformative, verseLength, bestRunLength, bestRunWeight, bestRunPeakIdf, bestRunPeaks, bestRunQueryFrom, bestRunQueryTo }
 }
 
 /** The short-fragment gate: a distinctive contiguous phrase is enough evidence on its own. */

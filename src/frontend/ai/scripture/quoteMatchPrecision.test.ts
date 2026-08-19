@@ -120,6 +120,49 @@ describe("liturgical formulas never emit on repetition", () => {
     })
 })
 
+describe("loose-translation everyday phrasing never emits uncued (the MSG/TPT junk cards)", () => {
+    // loose translations phrase verses in plain conversational English, so ordinary preaching
+    // matches them VERBATIM - a long contiguous run of stopwords around one mid-rare word
+    // ("there is no such thing as", "hold on to the traditional"). Shaped like a real bible so
+    // these run PRODUCTION tuning: the filler carries the surrounding function words (there/is/
+    // no/such/as/hold/on stay stopwords), "stand"/"firm" are mid-frequency voting words below
+    // the peak bar, and "thing" is mid-rare AT the peak bar - exactly the live profile
+    const LOOSE_CORPUS: IndexableVerse[] = [
+        ...CORPUS,
+        verse(41, 4, 22, "there is no such thing as a secret in the end whatever is hidden is meant to be brought out into the open"),
+        verse(41, 4, 23, "whoever has ears to listen must hear what the voice is saying today"),
+        verse(53, 2, 15, "so brothers stand firm and hold on to the traditions we passed on to you whether by speech or by letter"),
+        verse(53, 2, 16, "now may the encourager himself who loved us give us eternal comfort and good hope"),
+        ...Array.from({ length: 400 }, (_, i) => verse(4, (i % 36) + 1, Math.floor(i / 36) + 2, `shepherd marker${i} walks there beside the wells as no flock${i} is lost on such a wide ${i % 100 === 0 ? "thing" : "plain"} and we ${i % 20 === 0 ? "stand firm" : "keep watch"} to hold the way in the heat of the day`))
+    ]
+
+    it("holds a stopword run around one rare word ('hold on to the traditional') on repetition", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("test", LOOSE_CORPUS)])
+        expect(matcher.onSegment(seg("we need to stand firm and hold on to the traditional values of our fathers"))).toEqual([])
+        expect(matcher.onSegment(seg("i said we must stand firm and hold on to the traditional values today"))).toEqual([])
+    })
+
+    it("holds 'there is no such thing as' spoken conversationally", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("test", LOOSE_CORPUS)])
+        expect(matcher.onSegment(seg("there is no such thing as being too far gone for grace"))).toEqual([])
+        expect(matcher.onSegment(seg("there is no such thing as a hopeless case with god"))).toEqual([])
+    })
+
+    it("still emits when the speaker actually reads the loose verse (a second rare word arrives)", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("test", LOOSE_CORPUS)])
+        const out = matcher.onSegment(seg("so brothers stand firm and hold on to the traditions we passed on to you"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 53, chapter: 2, verseStart: 15 })
+    })
+
+    it("still emits the loose verse read with its distinctive words", () => {
+        const matcher = new QuoteMatcher([buildTranslationIndex("test", LOOSE_CORPUS)])
+        const out = matcher.onSegment(seg("there is no such thing as a secret in the end whatever is hidden is meant to be brought out"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 41, chapter: 4, verseStart: 22 })
+    })
+})
+
 describe("genuine fragments still emit (the recall contract)", () => {
     it("emits an announced fragment immediately (cue path)", () => {
         const matcher = new QuoteMatcher([index()], FRAGP)

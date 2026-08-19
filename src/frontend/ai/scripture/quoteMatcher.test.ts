@@ -295,10 +295,11 @@ describe("QuoteMatcher short fragments", () => {
     it("word PAIRS surface a verse whose words are all too common to vote alone (bigram route)", () => {
         const COMMON: IndexableVerse[] = [verse(1, 1, 1, "and the light was good and the day came"), verse(1, 1, 2, "and the day was long and the light stayed"), verse(1, 1, 3, "and the light was called day by them all"), verse(1, 1, 4, "and the day was ending when the light left"), verse(1, 1, 5, "and the light was there when the day broke"), verse(1, 1, 6, "so the day and the light belong together")]
         const index = buildTranslationIndex("kjv", COMMON, undefined, { bigrams: true })
-        // PHRASE_SHOT_MIN_RUN scaled with the other phrase floors: "the" carries idf 0 in this
-        // corpus (present in every verse) so the aligned run is 4 - this test exercises the
-        // bigram VOTE route, not the isolated-short-run hold
-        const matcher = new QuoteMatcher([index], { ...FRAG, PHRASE_MIN_WEIGHT: 6, PHRASE_MIN_PEAK_IDF: 1, PHRASE_SHOT_MIN_RUN: 4 })
+        // phrase floors scaled down like the others: "the" carries idf 0 in this corpus
+        // (present in every verse) so the aligned run is 4, and the run's recorded stretch ends
+        // at "ending" (the only word above the edge idf) so it holds a single peak - this test
+        // exercises the bigram VOTE route, not the isolated/thin-run holds
+        const matcher = new QuoteMatcher([index], { ...FRAG, PHRASE_MIN_WEIGHT: 6, PHRASE_MIN_PEAK_IDF: 1, PHRASE_SHOT_MIN_RUN: 4, PHRASE_SHOT_MIN_PEAKS: 1 })
         const out = matcher.onSegment(seg("the day was ending when"))
         expect(out).toHaveLength(1)
         expect(out[0]).toMatchObject({ book: 1, chapter: 1, verseStart: 4 })
