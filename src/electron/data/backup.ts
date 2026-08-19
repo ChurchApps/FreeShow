@@ -6,7 +6,7 @@ import type { SaveActions } from "../../types/Save"
 import type { Show, Shows } from "../../types/Show"
 import { sendMain, sendToMain } from "../IPC/main"
 import { deleteFile, deleteFolder, doesPathExist, getDataFolderPath, getFileStats, getTimePointString, loadShows, makeDir, openInSystem, readFile, readFolder, selectFilesDialog, writeFile } from "../utils/files"
-import { _store, setStore, storeFilesData } from "./store"
+import { _store, getStore, setStore, storeFilesData } from "./store"
 import { compressToZip, decompressZip } from "./zip"
 
 export async function startBackup({ customTriggers, isCloudSync }: { customTriggers?: SaveActions; isCloudSync?: boolean } = {}): Promise<{ entries?: { name: string; content?: string | Buffer; filePath?: string }[]; path?: string } | void> {
@@ -51,7 +51,8 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
 
     sendToMain(ToMain.BACKUP, { finished: true, path: zipPath })
 
-    if (!isAutoBackup) openInSystem(zipPath, true)
+    if (isAutoBackup) pruneAutoBackups()
+    else openInSystem(zipPath, true)
 
     /// //
 
@@ -112,15 +113,40 @@ export function getBackups() {
     return backups
 }
 
+// nothing else removes old auto backups, so the folder would grow forever
+const DEFAULT_AUTO_BACKUPS_KEPT = 10
+const MIN_AUTO_BACKUPS_KEPT = 1
+const MAX_AUTO_BACKUPS_KEPT = 100
+
+export function pruneAutoBackups() {
+    const setting = Math.round(Number(getStore("SETTINGS").special?.autoBackupKeep))
+    const keep = setting > 0 ? Math.min(Math.max(setting, MIN_AUTO_BACKUPS_KEPT), MAX_AUTO_BACKUPS_KEPT) : DEFAULT_AUTO_BACKUPS_KEPT
+
+    // manual backups are never removed.
+    // names are "YYYY-MM-DD_HH-mm_auto", so sorting by name is chronological,
+    // and unlike the file date that survives copying or restoring the backups folder
+    const outdated = getBackups()
+        .filter((a) => a.name.endsWith("_auto"))
+        .sort((a, b) => b.name.localeCompare(a.name))
+        .slice(keep)
+    if (!outdated.length) return
+
+    outdated.forEach((backup) => removeBackup(backup.path))
+    console.info(`Removed ${outdated.length} old auto backup(s), keeping the ${keep} most recent`)
+}
+
 export function deleteBackup(data: { path: string }) {
     if (!data?.path) return
 
     const backupsFolder = getDataFolderPath("backups")
-    const folderPath = path.resolve(backupsFolder, data.path)
+    removeBackup(path.resolve(backupsFolder, data.path))
+}
 
-    const stats = getFileStats(folderPath)
-    if (stats?.folder) deleteFolder(folderPath)
-    else deleteFile(folderPath)
+// backups are zip files, but older ones are folders
+function removeBackup(fullPath: string) {
+    const stats = getFileStats(fullPath)
+    if (stats?.folder) deleteFolder(fullPath)
+    else deleteFile(fullPath)
 }
 
 // RESTORE

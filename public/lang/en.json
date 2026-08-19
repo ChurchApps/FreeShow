@@ -1459,6 +1459,8 @@
         "backup_finished": "Backup complete!",
         "restore_finished": "Restore complete!",
         "auto_backup": "Auto backup",
+        "auto_backup_keep": "Backups to keep",
+        "auto_backup_keep_info": "removes $1 older on next backup",
         "preview_frame_rate": "Preview frame rate",
         "auto": "Auto",
         "section_trigger_action": "Trigger action when navigating presentation to a section",
