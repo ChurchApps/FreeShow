@@ -78,6 +78,37 @@ const refKey = (r: RefKey) => `${r.book}.${r.chapter}.${r.verseStart}-${r.verseE
 // floors are untouched, so a cue can never turn sermon speech into a detection
 const QUOTE_CUE_REGEX = /\b(?:bible|scriptures?|word(?: of god)?|jesus|christ|lord|god|apostle \w+|prophet \w+|paul|peter|john|james|moses|david|isaiah|solomon)\s+(?:says?|said|tells? us|told us|wrote|writes|declares?|reminds? us)\b|\bit is written\b/
 
+// SPOKEN SEARCH SCOPES
+// the speaker can't recall the wording but names WHERE it lives: "somewhere in the new
+// testament it says...", "paul writes...", "in the psalms...". The named books become a SCOPED
+// cue: inside them the announced-quote relaxations apply and only in-scope rivals can hold an
+// emission back; outside them every gate stays exactly as it is. A scoped author phrase beats
+// the generic cue for the same words - "jesus said" now searches the gospels, not the whole bible
+const SCOPE_WINDOW_MS = 30000
+
+const SAID = "(?:says?|said|tells? us|told us|wrote|writes|declares?|reminds? us|puts? it)"
+const IN = "(?:in|from|somewhere in|back in)"
+const SCOPE_CUES: { pattern: RegExp; from: number; to: number; extra?: number[] }[] = [
+    { pattern: new RegExp("\\b" + IN + " the old testament\\b"), from: 1, to: 39 },
+    { pattern: new RegExp("\\b" + IN + " the new testament\\b"), from: 40, to: 66 },
+    // jesus speaks in the gospels & acts; his words quoted elsewhere are usually quoted FROM there
+    { pattern: new RegExp("\\b(?:" + IN + " (?:one of )?the gospels|jesus " + SAID + ")\\b"), from: 40, to: 44 },
+    { pattern: new RegExp("\\b(?:" + IN + " the (?:law|pentateuch|books? of moses)|moses " + SAID + ")\\b"), from: 1, to: 5 },
+    { pattern: new RegExp("\\b" + IN + " the minor prophets\\b"), from: 28, to: 39 },
+    { pattern: new RegExp("\\b" + IN + " the prophets\\b"), from: 23, to: 39 },
+    // paul's letters, plus acts where his spoken words live
+    { pattern: new RegExp("\\b(?:" + IN + " (?:the epistles|paul'?s (?:letters|epistles|writings))|(?:the apostle )?paul " + SAID + ")\\b"), from: 45, to: 57, extra: [44] },
+    { pattern: new RegExp("\\bpeter " + SAID + "\\b"), from: 60, to: 61, extra: [44] },
+    { pattern: new RegExp("\\bjames " + SAID + "\\b"), from: 59, to: 59 },
+    { pattern: new RegExp("\\bjude " + SAID + "\\b"), from: 65, to: 65 },
+    { pattern: new RegExp("\\bjohn " + SAID + "\\b"), from: 43, to: 43, extra: [62, 63, 64, 66] },
+    { pattern: new RegExp("\\b(?:" + IN + " (?:the )?(?:book of )?psalms|david " + SAID + ")\\b"), from: 19, to: 19 },
+    { pattern: new RegExp("\\b(?:" + IN + " (?:the )?(?:book of )?proverbs|solomon " + SAID + ")\\b"), from: 20, to: 22 },
+    { pattern: new RegExp("\\bisaiah " + SAID + "\\b"), from: 23, to: 23 },
+    { pattern: new RegExp("\\bjeremiah " + SAID + "\\b"), from: 24, to: 25 },
+    { pattern: new RegExp("\\bdaniel " + SAID + "\\b"), from: 27, to: 27 }
+]
+
 export class QuoteMatcher {
     private indexes: TranslationIndex[]
     private tuning: Tuning
@@ -88,6 +119,9 @@ export class QuoteMatcher {
     private segmentOrdinal = 0
     private lastSegmentEndMs = 0
     private cueUntilMs = 0 // a spoken quote cue is active until this transcript time
+    // a spoken search scope ("in the psalms...", "paul writes...") - the named canon books
+    private scopeBooks: Set<number> | null = null
+    private scopeUntilMs = 0
 
     private anchor: QuoteMatchAnchor | null = null
     private seededOrdinals: { index: TranslationIndex; ordinal: number }[] = []
@@ -170,6 +204,12 @@ export class QuoteMatcher {
         return this.passageMemory.filter((entry) => nowMs - entry.atMs <= this.tuning.PASSAGE_MEMORY_MS)
     }
 
+    /** Whether a candidate's book falls inside the currently spoken search scope (if any). */
+    private inScope(candidate: Candidate, nowMs: number): boolean {
+        if (!this.scopeBooks || nowMs > this.scopeUntilMs) return false
+        return this.scopeBooks.has(candidate.index.book[candidate.ordinal])
+    }
+
     reset(): void {
         this.ring = []
         this.segmentTexts.clear()
@@ -178,6 +218,8 @@ export class QuoteMatcher {
         this.escapeCandidate = null
         this.seededOrdinals = []
         this.cueUntilMs = 0
+        this.scopeBooks = null
+        this.scopeUntilMs = 0
         this.emitted.clear()
         this.lastEmitted = null
         this.passageMemory = []
@@ -194,7 +236,17 @@ export class QuoteMatcher {
         }
         this.lastSegmentEndMs = segment.endMs
 
-        if (QUOTE_CUE_REGEX.test(segment.text.toLowerCase())) this.cueUntilMs = segment.endMs + tuning.CUE_WINDOW_MS
+        // a scope phrase names the books being quoted from and beats the generic cue for the
+        // same words ("paul said" searches paul, not the whole bible)
+        const spoken = segment.text.toLowerCase()
+        const scopeCue = SCOPE_CUES.find((cue) => cue.pattern.test(spoken))
+        if (scopeCue) {
+            const books = new Set<number>()
+            for (let book = scopeCue.from; book <= scopeCue.to; book++) books.add(book)
+            for (const book of scopeCue.extra || []) books.add(book)
+            this.scopeBooks = books
+            this.scopeUntilMs = segment.endMs + SCOPE_WINDOW_MS
+        } else if (QUOTE_CUE_REGEX.test(spoken)) this.cueUntilMs = segment.endMs + tuning.CUE_WINDOW_MS
 
         const tokens = tokenizeTranscriptWithSpans(segment.text).slice(0, tuning.SEGMENT_TOKEN_CAP)
         const seg = this.segmentOrdinal++
@@ -445,6 +497,15 @@ export class QuoteMatcher {
                 continue
             }
             if (candidateClassified !== topClassified) continue
+            // the speaker named where the quote lives ("in the psalms...") - among equals the
+            // candidate inside that scope wins
+            const candidateScoped = this.inScope(candidate, nowMs)
+            const topScoped = this.inScope(top, nowMs)
+            if (candidateScoped && !topScoped) {
+                top = candidate
+                continue
+            }
+            if (candidateScoped !== topScoped) continue
             // equally evidenced: stay with the translation being read/projected - near-identical
             // versions tie constantly, and hopping between them per verse reads as instability
             const candidateSticky = candidate.index.translationId === this.stickyTranslationId
@@ -465,6 +526,9 @@ export class QuoteMatcher {
 
         const key = refKey(this.refOf(top))
         const cued = nowMs <= this.cueUntilMs
+        // the speaker named the quote's home ("somewhere in the psalms...", "paul writes...") -
+        // inside those books the announced-quote treatment applies throughout
+        const scoped = this.inScope(top, nowMs)
 
         // a distinctive contiguous fragment is evidence in itself ("and there was light") - the
         // speaker quotes a phrase and reads the REST from the projection, so the full-recitation
@@ -485,8 +549,10 @@ export class QuoteMatcher {
             // thing as" is a long run of stopwords around ONE mid-rare word ("thing"). One rare
             // word in a run is coincidence; a genuine quoted fragment carries at least two
             const thinRun = top.align.bestRunPeaks < tuning.PHRASE_SHOT_MIN_PEAKS
-            const rivaled = candidates.some((candidate) => candidate !== top && !sameRef(candidate, top) && phraseEvidence(candidate.align, tuning) && candidate.align.bestRunWeight >= top.align.bestRunWeight - tuning.PHRASE_RIVAL_MARGIN)
-            if ((shortRun || thinRun || rivaled) && !cued && top.zone > 1) {
+            // a same-phrase rival OUTSIDE the announced scope is the very ambiguity the speaker
+            // just resolved - it holds nothing back
+            const rivaled = candidates.some((candidate) => candidate !== top && !sameRef(candidate, top) && (!scoped || this.inScope(candidate, nowMs)) && phraseEvidence(candidate.align, tuning) && candidate.align.bestRunWeight >= top.align.bestRunWeight - tuning.PHRASE_RIVAL_MARGIN)
+            if ((shortRun || thinRun || rivaled) && !cued && !scoped && top.zone > 1) {
                 const held = this.previousTop?.key === key ? this.previousTop : null
                 const grown = held?.phraseWeight !== undefined && top.align.bestRunWeight >= held.phraseWeight + tuning.PHRASE_GROWTH_MIN
                 if (!grown) {
@@ -561,10 +627,11 @@ export class QuoteMatcher {
         // A distinctive fragment emits immediately too, UNLESS another verse shares the same phrase
         // (parallel passages, liturgical formulas) - ambiguity waits for the sustain to settle it
         const singleShot = top.align.matchedInformative >= tuning.SINGLE_SHOT_INFORMATIVE && top.align.matchedWeight >= tuning.SINGLE_SHOT_WEIGHT && top.align.score >= tuning.EMIT_HIGH
-        const phraseShot = phrase && !candidates.some((candidate) => candidate !== top && !sameRef(candidate, top) && phraseEvidence(candidate.align, tuning) && candidate.align.bestRunWeight >= top.align.bestRunWeight - tuning.PHRASE_RIVAL_MARGIN)
+        // rivals outside a spoken scope don't make the phrase ambiguous - the speaker named the book
+        const phraseShot = phrase && !candidates.some((candidate) => candidate !== top && !sameRef(candidate, top) && (!scoped || this.inScope(candidate, nowMs)) && phraseEvidence(candidate.align, tuning) && candidate.align.bestRunWeight >= top.align.bestRunWeight - tuning.PHRASE_RIVAL_MARGIN)
         const sustained = this.bumpPreviousTop(key)
 
-        if (!singleShot && !cued && !phraseShot && sustained < tuning.SUSTAIN_SEGMENTS) return []
+        if (!singleShot && !cued && !scoped && !phraseShot && sustained < tuning.SUSTAIN_SEGMENTS) return []
 
         // a stronger match for the SAME speech that fired the previous emission means more words
         // narrowed the search - supersede that emission instead of standing next to it

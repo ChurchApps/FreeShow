@@ -267,6 +267,67 @@ describe("QuoteMatcher", () => {
     })
 })
 
+describe("spoken search scopes", () => {
+    // the speaker can't recall the wording but names WHERE it lives - the named books get the
+    // announced-quote relaxations, everything else keeps every gate. Invented wording; the twin
+    // pair shares its opening across psalms & proverbs (the real Ps 111:10 / Prov 9:10 shape)
+    const SCOPED: IndexableVerse[] = [
+        verse(19, 111, 10, "the fear of the maker is the beginning of wisdom his praise endures beyond the silver mountains"),
+        verse(20, 9, 10, "the fear of the maker is the beginning of wisdom and knowing the holy one brings understanding"),
+        verse(45, 8, 28, "all things work for the good of those the maker called according to his purpose in love"),
+        verse(5, 1, 1, "these are the words spoken beside the river in the plains and the season was dry"),
+        verse(5, 1, 2, "eleven days journey by the way of the mountain road leads to the border town"),
+        verse(5, 1, 3, "and it came about in the fortieth year that the leader spoke to all the people"),
+        verse(5, 1, 4, "after he had defeated the two kings who lived across the eastern valley lands"),
+        verse(5, 1, 5, "beyond the river he began to explain this teaching to all who would hear it"),
+        verse(5, 1, 6, "the eternal spoke to us saying you have stayed long enough at this place"),
+        verse(5, 1, 7, "turn and set your journey to the hills and to all the neighboring towns"),
+        verse(5, 1, 8, "see i have placed the land before you go in and possess what was promised")
+    ]
+    const FRAGS = { PHRASE_MIN_WEIGHT: 9, PHRASE_MIN_PEAK_IDF: 1.6, PHRASE_HIGH_WEIGHT: 14 }
+    const scopedIndex = () => buildTranslationIndex("kjv", SCOPED)
+
+    it("a short fragment inside the announced scope fires; without the scope it waits", () => {
+        const plain = new QuoteMatcher([scopedIndex()], FRAGS)
+        expect(plain.onSegment(seg("beyond the silver mountains tonight friends"))).toEqual([])
+
+        const matcher = new QuoteMatcher([scopedIndex()], FRAGS)
+        expect(matcher.onSegment(seg("somewhere in the psalms it says"))).toEqual([])
+        const out = matcher.onSegment(seg("beyond the silver mountains tonight friends"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 19, chapter: 111, verseStart: 10 })
+    })
+
+    it("the scope resolves a cross-book twin the rival hold would otherwise wait on", () => {
+        const plain = new QuoteMatcher([scopedIndex()], FRAGS)
+        expect(plain.onSegment(seg("the fear of the maker is the beginning of wisdom"))).toEqual([])
+
+        const matcher = new QuoteMatcher([scopedIndex()], FRAGS)
+        matcher.onSegment(seg("somewhere in the psalms it says"))
+        const out = matcher.onSegment(seg("the fear of the maker is the beginning of wisdom"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 19, chapter: 111, verseStart: 10 })
+    })
+
+    it("an author names his books: 'paul writes...'", () => {
+        const matcher = new QuoteMatcher([scopedIndex()], FRAGS)
+        matcher.onSegment(seg("paul writes about this"))
+        const out = matcher.onSegment(seg("according to his purpose"))
+        expect(out).toHaveLength(1)
+        expect(out[0]).toMatchObject({ book: 45, chapter: 8, verseStart: 28 })
+    })
+
+    it("a fragment OUTSIDE the scope gets no relaxation, and the scope expires", () => {
+        const wrongScope = new QuoteMatcher([scopedIndex()], FRAGS)
+        wrongScope.onSegment(seg("somewhere in the new testament it says"))
+        expect(wrongScope.onSegment(seg("beyond the silver mountains tonight friends"))).toEqual([])
+
+        const expired = new QuoteMatcher([scopedIndex()], FRAGS)
+        expired.onSegment(seg("somewhere in the psalms it says"))
+        expect(expired.onSegment(seg("beyond the silver mountains tonight friends", 40000))).toEqual([])
+    })
+})
+
 describe("QuoteMatcher live translation updates", () => {
     it("an added translation starts matching; a removed one stops", () => {
         const matcher = new QuoteMatcher([kjvIndex()])
