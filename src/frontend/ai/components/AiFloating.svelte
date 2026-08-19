@@ -227,10 +227,16 @@
 {/if}
 
 {#if !isOpen && isListening && (latestSegment || $aiInterim)}
-    <!-- the live ticker sits on the bubble's own row, to its left - the stack above stays for cards -->
-    <button class="ticker" title={translateText("ai.transcript")} on:click={toggleExpand}>
-        {latestSegment}{#if $aiInterim}{" "}<span class="interim">{$aiInterim}</span>{/if}
-    </button>
+    <!-- the live ticker sits on the bubble's own row, to its left - the stack above stays for cards.
+         a thin AI ring marks it as the bubble's own voice & paints the solid card background that
+         keeps the transcript readable over whatever panel it happens to float above -->
+    <div class="ticker-wrap">
+        <AiRing {state} {audioLevel} borderRadius="12px" borderWidth="1.5px">
+            <button class="ticker" title={translateText("ai.transcript")} on:click={toggleExpand}>
+                {latestSegment}{#if $aiInterim}{" "}<span class="interim">{$aiInterim}</span>{/if}
+            </button>
+        </AiRing>
+    </div>
 {/if}
 
 {#if !isOpen && (suggestions.length || $aiScriptureAutoPaused)}
@@ -605,20 +611,25 @@
     }
 
     /* on the closed bubble's row, to its left (bubble: 62px at 45px/45px) */
-    .ticker {
+    .ticker-wrap {
         position: fixed;
         right: 117px;
         bottom: 45px;
         z-index: 9998;
         max-width: min(340px, calc(90vw - 80px));
+        margin-bottom: 11px;
+        /* the ring's inner card is opaque; the drop shadow lifts it off whatever panel is behind */
+        filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.5));
+    }
+
+    .ticker {
+        width: 100%;
         border: none;
         text-align: end;
-        background: rgba(17, 24, 39, 0.85);
+        background: transparent; /* the AI ring paints the solid card background */
         color: inherit;
-        border-radius: 12px;
         padding: 6px 12px;
         font-size: 0.85em;
-        opacity: 0.8;
         cursor: pointer;
         white-space: initial;
         overflow: hidden;
@@ -626,7 +637,6 @@
         -webkit-line-clamp: 2;
         line-clamp: 2;
         -webkit-box-orient: vertical;
-        margin-bottom: 11px;
     }
 
     .chips {
