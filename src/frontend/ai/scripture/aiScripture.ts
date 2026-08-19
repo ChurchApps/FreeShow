@@ -871,6 +871,7 @@ export async function executeScriptureCommand(cmd: AiScriptureCommandEvent): Pro
 
         let targetChapter = chapter
         let targetVerse = 1
+        let targetVerseEnd = 0 // set for spoken ranges ("verses 1 to 5") and selection extension
 
         if (cmd.type === "verse_next") {
             const last = Math.max(...currentVerses)
@@ -893,15 +894,34 @@ export async function executeScriptureCommand(cmd: AiScriptureCommandEvent): Pro
         } else if (cmd.type === "verse_jump") {
             const maxVerse = await maxVerseOf(chapter)
             targetVerse = maxVerse ? Math.min(Math.max(1, cmd.verse), maxVerse) : cmd.verse
+            if (cmd.verseEnd) targetVerseEnd = maxVerse ? Math.min(cmd.verseEnd, maxVerse) : cmd.verseEnd
+        } else if (cmd.type === "verse_add") {
+            // grow the live selection into a contiguous span: "add the next verse" / "add verse 3"
+            const maxVerse = await maxVerseOf(chapter)
+            let addTo = cmd.verse ?? Math.max(...currentVerses) + 1
+            if (maxVerse) addTo = Math.min(Math.max(1, addTo), maxVerse)
+            targetVerse = Math.min(Math.min(...currentVerses), addTo)
+            targetVerseEnd = Math.max(Math.max(...currentVerses), addTo)
+            // already showing exactly that span (e.g. "add the next verse" at the chapter's end)
+            if (currentVerses.length === targetVerseEnd - targetVerse + 1 && targetVerse === Math.min(...currentVerses) && targetVerseEnd === Math.max(...currentVerses)) return
         } else {
             // chapter_jump
             targetChapter = chapterCount ? Math.min(Math.max(1, cmd.chapter), chapterCount) : cmd.chapter
             const requestedVerse = cmd.verse ?? 1
             const maxVerse = await maxVerseOf(targetChapter)
             targetVerse = maxVerse ? Math.min(Math.max(1, requestedVerse), maxVerse) : requestedVerse
+            if (cmd.verseEnd) targetVerseEnd = maxVerse ? Math.min(cmd.verseEnd, maxVerse) : cmd.verseEnd
         }
 
-        await projectResolved(currentId, reference.book, targetChapter, [targetVerse])
+        let targetVerses = [targetVerse]
+        if (targetVerseEnd > targetVerse) {
+            targetVerses = []
+            for (let v = targetVerse; v <= targetVerseEnd; v++) targetVerses.push(v)
+            // the spoken-range guard applies to commands too ("verses 1 to 176")
+            const cap = getSettings().maxVerses ?? 6
+            if (cap > 0 && targetVerses.length > cap) targetVerses = targetVerses.slice(0, cap)
+        }
+        await projectResolved(currentId, reference.book, targetChapter, targetVerses)
     } catch (err) {
         console.error("Error executing AI scripture voice command:", err)
     }

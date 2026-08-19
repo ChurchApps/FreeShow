@@ -52,6 +52,43 @@ describe("detectScriptureCommand", () => {
             expect(detect("show chapter four verse two")).toEqual({ type: "chapter_jump", chapter: 4, verse: 2, phrase: "show chapter 4 verse 2" })
         })
 
+        it("detects verse ranges: 'give me verses 1 to 5' and the connector variants", () => {
+            expect(detect("give me verses one to five")).toEqual({ type: "verse_jump", verse: 1, verseEnd: 5, phrase: "give me verses 1 to 5" })
+            expect(detect("show verses ten through thirteen")).toEqual({ type: "verse_jump", verse: 10, verseEnd: 13, phrase: "show verses 10 through 13" })
+            expect(detect("read verse three till six")).toEqual({ type: "verse_jump", verse: 3, verseEnd: 6, phrase: "read verse 3 till 6" })
+        })
+
+        it("detects verse pairs and lists: 'show verse 1 and 2' / 'give me verses 1, 2 and 3'", () => {
+            expect(detect("show verse one and two")).toEqual({ type: "verse_jump", verse: 1, verseEnd: 2, phrase: "show verse 1 and 2" })
+            expect(detect("give me verses 1, 2 and 3")).toEqual({ type: "verse_jump", verse: 1, verseEnd: 3, phrase: "give me verses 1, 2 and 3" })
+        })
+
+        it("detects the 'put together' phrasings, politely too", () => {
+            expect(detect("put verses one to five together")).toEqual({ type: "verse_jump", verse: 1, verseEnd: 5, phrase: "put verses 1 to 5 together" })
+            expect(detect("can you project verses ten to thirteen together")).toMatchObject({ type: "verse_jump", verse: 10, verseEnd: 13 })
+        })
+
+        it("detects bare numbers ONLY with an imperative and a together/on-screen tail", () => {
+            expect(detect("project ten to thirteen together")).toMatchObject({ type: "verse_jump", verse: 10, verseEnd: 13 })
+            expect(detect("put 1 to 5 on the screen")).toMatchObject({ type: "verse_jump", verse: 1, verseEnd: 5 })
+            expect(detect("read 10 to 13")).toBeNull()
+        })
+
+        it("detects a chapter jump with a verse range: 'show chapter 4 verses 2 to 5'", () => {
+            expect(detect("show chapter four verses two to five")).toEqual({ type: "chapter_jump", chapter: 4, verse: 2, verseEnd: 5, phrase: "show chapter 4 verses 2 to 5" })
+        })
+
+        it("extends the live selection: 'add the next verse' / 'include verse six'", () => {
+            expect(detect("add the next verse")).toEqual({ type: "verse_add", phrase: "add the next verse" })
+            expect(detect("include verse six")).toEqual({ type: "verse_add", verse: 6, phrase: "include verse 6" })
+            expect(detect("add verses six and seven")).toEqual({ type: "verse_add", verse: 7, phrase: "add verses 6 and 7" })
+        })
+
+        it("an 'and' continuation only extends while ascending ('verse 5 and 2 chronicles' stays verse 5)", () => {
+            expect(detect("give me verse five and second")).toMatchObject({ type: "verse_jump", verse: 5 })
+            expect(detect("give me verse 5 and 2 chronicles tells us more")).toMatchObject({ type: "verse_jump", verse: 5 })
+        })
+
         it("detects translation_cycle: 'give me another translation'", () => {
             expect(detect("give me another translation")).toEqual({ type: "translation_cycle", phrase: "give me another translation" })
             expect(detect("give me a different version")).toEqual({ type: "translation_cycle", phrase: "give me a different version" })

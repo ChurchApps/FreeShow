@@ -45,6 +45,15 @@ export interface AiScriptureTranslation {
     names: string[]
 }
 
-export type AiScriptureCommand = { type: "verse_next" } | { type: "verse_previous" } | { type: "chapter_next" } | { type: "chapter_previous" } | { type: "verse_jump"; verse: number } | { type: "chapter_jump"; chapter: number; verse?: number } | { type: "translation"; bibleId: string } | { type: "translation_cycle" }
+export type AiScriptureCommand =
+    | { type: "verse_next" }
+    | { type: "verse_previous" }
+    | { type: "chapter_next" }
+    | { type: "chapter_previous" }
+    | { type: "verse_jump"; verse: number; verseEnd?: number } // verseEnd: spoken range ("verses 1 to 5")
+    | { type: "verse_add"; verse?: number } // extend the live selection ("add the next verse" / "add verse 6"); no verse = the next one
+    | { type: "chapter_jump"; chapter: number; verse?: number; verseEnd?: number }
+    | { type: "translation"; bibleId: string }
+    | { type: "translation_cycle" }
 
 export type AiScriptureCommandEvent = AiScriptureCommand & { phrase: string }

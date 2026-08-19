@@ -7,6 +7,7 @@ import { normalizeSpokenNumbers, NUMBER_HOMOPHONES, parseNumberToken, VERSE_WORD
 
 export interface CommandGrammar {
     imperatives: string[]
+    addImperatives: string[] // extend the live selection ("add", "include")
     articles: string[]
     verse: string[]
     chapter: string[]
@@ -14,6 +15,8 @@ export interface CommandGrammar {
     previous: string[]
     translation: string[]
     another: string[]
+    rangeTo: string[] // "verses 1 TO 5"
+    and: string[] // "verse 1 AND 2"
 }
 
 // commands always match against the union of the spoken language & English,
@@ -21,64 +24,82 @@ export interface CommandGrammar {
 // the non-English tables are best-effort everyday church vocabulary - native-speaker corrections are very welcome!
 export const COMMAND_GRAMMAR: { [lang: string]: CommandGrammar } = {
     en: {
-        imperatives: ["give me", "go to", "show", "show me", "switch to", "read", "take me to"],
+        imperatives: ["give me", "go to", "show", "show me", "switch to", "read", "take me to", "put", "put up", "project", "display"],
+        addImperatives: ["add", "include"],
         articles: ["the"],
-        verse: ["verse"],
+        verse: ["verse", "verses"],
         chapter: ["chapter"],
         next: ["next"],
         previous: ["previous", "last"],
         translation: ["translation", "version", "bible"],
-        another: ["another", "a different"]
+        another: ["another", "a different"],
+        rangeTo: ["to", "through", "thru", "till", "until"],
+        and: ["and"]
     },
     es: {
         imperatives: ["dame", "vamos a", "muestra", "cambia a"],
-        articles: ["el", "la"],
-        verse: ["versículo"],
+        addImperatives: ["añade", "agrega"],
+        articles: ["el", "la", "los"],
+        verse: ["versículo", "versículos"],
         chapter: ["capítulo"],
         next: ["siguiente", "próximo"],
         previous: ["anterior"],
         translation: ["traducción", "versión"],
-        another: ["otra", "otro"]
+        another: ["otra", "otro"],
+        rangeTo: ["a", "al", "hasta"],
+        and: ["y"]
     },
     pt: {
         imperatives: ["me dá", "vai para", "mostra", "muda para"],
-        articles: ["o", "a"],
-        verse: ["versículo"],
+        addImperatives: ["adiciona", "acrescenta"],
+        articles: ["o", "a", "os"],
+        verse: ["versículo", "versículos"],
         chapter: ["capítulo"],
         next: ["próximo", "seguinte"],
         previous: ["anterior"],
         translation: ["tradução", "versão"],
-        another: ["outra", "outro"]
+        another: ["outra", "outro"],
+        rangeTo: ["a", "ao", "até"],
+        and: ["e"]
     },
     de: {
         imperatives: ["gib mir", "geh zu", "zeige", "zeig mir", "wechsle zu"],
+        addImperatives: ["ergänze"],
         articles: ["der", "die", "das", "den"],
-        verse: ["vers"],
+        verse: ["vers", "verse"],
         chapter: ["kapitel"],
         next: ["nächster", "nächste", "nächsten"],
         previous: ["vorheriger", "vorherige", "vorherigen", "letzter", "letzten"],
         translation: ["übersetzung", "version"],
-        another: ["andere", "anderen"]
+        another: ["andere", "anderen"],
+        rangeTo: ["bis"],
+        and: ["und"]
     },
     fr: {
         imperatives: ["donne-moi", "va à", "montre", "montre-moi", "passe à"],
+        addImperatives: ["ajoute"],
         articles: ["le", "la", "les"],
-        verse: ["verset"],
+        verse: ["verset", "versets"],
         chapter: ["chapitre"],
         next: ["suivant", "prochain"],
         previous: ["précédent", "dernier"],
         translation: ["traduction", "version"],
-        another: ["autre"]
+        another: ["autre"],
+        rangeTo: ["à", "jusqu'à", "au"],
+        and: ["et"]
     },
     no: {
         imperatives: ["gi meg", "gå til", "vis", "bytt til"],
+        addImperatives: ["legg til"],
         articles: [],
         verse: ["vers"],
         chapter: ["kapittel"],
         next: ["neste"],
         previous: ["forrige"],
         translation: ["oversettelse", "versjon"],
-        another: ["en annen", "et annet"]
+        another: ["en annen", "et annet"],
+        rangeTo: ["til"],
+        and: ["og"]
     }
 }
 
@@ -116,18 +137,36 @@ function mergeGrammar(language: string): CommandGrammar {
     const merge = (a: string[], b: string[]) => [...new Set([...a, ...b])]
     return {
         imperatives: merge(local.imperatives, base.imperatives),
+        addImperatives: merge(local.addImperatives, base.addImperatives),
         articles: merge(local.articles, base.articles),
         verse: merge(local.verse, base.verse),
         chapter: merge(local.chapter, base.chapter),
         next: merge(local.next, base.next),
         previous: merge(local.previous, base.previous),
         translation: merge(local.translation, base.translation),
-        another: merge(local.another, base.another)
+        another: merge(local.another, base.another),
+        rangeTo: merge(local.rangeTo, base.rangeTo),
+        and: merge(local.and, base.and)
     }
 }
 
 function phraseOf(match: RegExpMatchArray): string {
     return match[0].replace(/^[^a-z0-9]+/, "").replace(/[\s.,!?]+$/, "")
+}
+
+/**
+ * A spoken number sequence ("1 to 5" / "1 and 2" / "1, 2 and 3") collapsed to its span. The
+ * continuation only counts while the numbers ASCEND - "give me verse 5 and 2 chronicles says"
+ * stops at 5, because a descending number is the start of something else, not part of the range.
+ */
+function sequenceSpan(first: number, rest: string | undefined): { start: number; end: number } {
+    let end = first
+    for (const digits of (rest || "").matchAll(/\d{1,3}/g)) {
+        const number = parseInt(digits[0], 10)
+        if (number <= end) break
+        end = number
+    }
+    return { start: first, end }
 }
 
 /**
@@ -154,12 +193,31 @@ export function detectScriptureCommand(text: string, language: string, translati
     // very end of the utterance ("give me this 5" acts, "read this 5 times a day" keeps talking)
     const misheard = "(?:" + alternation(VERSE_WORD_MISHEARINGS) + ")"
 
-    const imp = "(?:" + alternation(grammar.imperatives) + ")"
+    // a polite lead-in makes any imperative no less of an instruction ("can you project verses 10 to 13")
+    const imp = "(?:(?:can|could|would)\\s+you\\s+(?:please\\s+)?)?(?:" + alternation(grammar.imperatives) + ")"
     const art = "(?:(?:" + alternation(grammar.articles) + ")\\s+)?"
     const verse = "(?:" + alternation(grammar.verse) + ")"
     const chapter = "(?:" + alternation(grammar.chapter) + ")"
     const transWord = "(?:" + alternation(grammar.translation) + ")"
     const isWord = (word: string, words: string[]) => new RegExp("^(?:" + alternation(words) + ")$").test(word)
+
+    // a number sequence: "1", "1 to 5", "1 and 2", "1, 2 and 3", "1-5"
+    const conn = "(?:,|[-–—]|" + alternation([...grammar.rangeTo, ...grammar.and]) + ")"
+    const numberSeq = "(\\d{1,3})((?:\\s*" + conn + "\\s*\\d{1,3})*)\\b"
+    // decoration a "put these together" phrasing carries - never required next to a verse word
+    const decor = "(?:\\s+(?:together|on\\s+(?:the\\s+)?screen|up))?"
+
+    // 0. extending the live selection: "add the next verse" / "include verses 6 and 7". Checked
+    // first - "add the next verse" ends in "next verse", which the relative matcher below would
+    // otherwise read as a plain advance and REPLACE the selection instead of growing it
+    const addImp = "(?:" + alternation(grammar.addImperatives) + ")"
+    const addNext = tail.match(new RegExp(LEAD + addImp + "\\s+" + art + "(?:" + alternation(grammar.next) + ")(?:\\s+(?:" + verse + "|one))?\\b"))
+    if (addNext) return { type: "verse_add", phrase: phraseOf(addNext) }
+    const addVerse = tail.match(new RegExp(LEAD + addImp + "\\s+" + art + verse + "\\s+" + numberSeq))
+    if (addVerse) {
+        const span = sequenceSpan(parseInt(addVerse[1], 10), addVerse[2])
+        if (span.end >= 1) return { type: "verse_add", verse: span.end, phrase: phraseOf(addVerse) }
+    }
 
     // 1. relative movement: "go to the next verse" / "show the previous chapter" / plain "next chapter"
     const relativeBody = (units: string) => art + "(" + alternation([...grammar.next, ...grammar.previous]) + ")\\s+(" + units + ")\\b"
@@ -184,23 +242,41 @@ export function detectScriptureCommand(text: string, language: string, translati
         return { type: "verse_next", phrase }
     }
 
-    // 2. verse jump: "give me verse 5". Imperative only - a bare "verse 5" is already resolved against the
-    // live passage by tier 1 detection, and matching it here too would fight that with a second action.
+    // 2. verse jump & ranges: "give me verse 5", "show verses 1 to 5", "put verses 1 and 2
+    // together". Imperative only - a bare "verse 5" is already resolved against the live passage
+    // by tier 1 detection, and matching it here too would fight that with a second action.
     // The number itself also arrives as a homophone ("give me verse for") - end of utterance only
     const homophone = "(" + Object.keys(NUMBER_HOMOPHONES).join("|") + ")"
-    const verseJump = tail.match(new RegExp(LEAD + imp + "\\s+" + art + verse + "\\s+(\\d{1,3})\\b")) || tail.match(new RegExp(LEAD + imp + "\\s+" + art + misheard + "\\s+(\\d{1,3})\\b" + BARE_TAIL)) || tail.match(new RegExp(LEAD + imp + "\\s+" + art + "(?:" + verse + "|" + misheard + ")\\s+" + homophone + BARE_TAIL))
+    const verseJump = tail.match(new RegExp(LEAD + imp + "\\s+" + art + verse + "\\s+" + numberSeq + decor)) || tail.match(new RegExp(LEAD + imp + "\\s+" + art + misheard + "\\s+" + numberSeq + decor + BARE_TAIL)) || tail.match(new RegExp(LEAD + imp + "\\s+" + art + "(?:" + verse + "|" + misheard + ")\\s+" + homophone + BARE_TAIL))
     if (verseJump) {
         const number = parseNumberToken(verseJump[1])
-        if (number >= 1) return { type: "verse_jump", verse: number, phrase: phraseOf(verseJump) }
+        if (number >= 1) {
+            const span = sequenceSpan(number, verseJump[2])
+            if (span.end > span.start) return { type: "verse_jump", verse: span.start, verseEnd: span.end, phrase: phraseOf(verseJump) }
+            return { type: "verse_jump", verse: number, phrase: phraseOf(verseJump) }
+        }
     }
 
-    // 3. chapter jump: "show chapter 4" / "show chapter 4 verse 2". Imperative only - a bare "chapter 4" is
-    // usually the tail of a spoken reference ("deuteronomy chapter 4"), which detection already handles.
-    const chapterJump = tail.match(new RegExp(LEAD + imp + "\\s+" + art + chapter + "\\s+(\\d{1,3})\\b(?:\\s+(?:" + verse + "|" + misheard + ")\\s+(\\d{1,3})\\b)?"))
+    // 2b. a range without the word "verse" at all: "project 10 to 13 together". Bare numbers may
+    // only act when BOTH an imperative and the together/on-screen tail carry the intent
+    const bareRange = tail.match(new RegExp(LEAD + imp + "\\s+" + art + numberSeq + "\\s+(?:together|on\\s+(?:the\\s+)?screen)\\b"))
+    if (bareRange) {
+        const span = sequenceSpan(parseInt(bareRange[1], 10), bareRange[2])
+        if (span.end > span.start) return { type: "verse_jump", verse: span.start, verseEnd: span.end, phrase: phraseOf(bareRange) }
+    }
+
+    // 3. chapter jump: "show chapter 4" / "show chapter 4 verses 2 to 5". Imperative only - a bare
+    // "chapter 4" is usually the tail of a spoken reference ("deuteronomy chapter 4"), which
+    // detection already handles.
+    const chapterJump = tail.match(new RegExp(LEAD + imp + "\\s+" + art + chapter + "\\s+(\\d{1,3})\\b(?:\\s+(?:" + verse + "|" + misheard + ")\\s+" + numberSeq + ")?"))
     if (chapterJump) {
         const chapterNumber = parseInt(chapterJump[1], 10)
         const verseNumber = chapterJump[2] !== undefined ? parseInt(chapterJump[2], 10) : 0
-        if (chapterNumber >= 1 && verseNumber >= 1) return { type: "chapter_jump", chapter: chapterNumber, verse: verseNumber, phrase: phraseOf(chapterJump) }
+        if (chapterNumber >= 1 && verseNumber >= 1) {
+            const span = sequenceSpan(verseNumber, chapterJump[3])
+            if (span.end > span.start) return { type: "chapter_jump", chapter: chapterNumber, verse: span.start, verseEnd: span.end, phrase: phraseOf(chapterJump) }
+            return { type: "chapter_jump", chapter: chapterNumber, verse: verseNumber, phrase: phraseOf(chapterJump) }
+        }
         if (chapterNumber >= 1) return { type: "chapter_jump", chapter: chapterNumber, phrase: phraseOf(chapterJump) }
     }
 
