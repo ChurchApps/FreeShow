@@ -228,7 +228,7 @@
 
 {#if !isOpen && isListening && (latestSegment || $aiInterim)}
     <!-- the live ticker sits on the bubble's own row, to its left - the stack above stays for cards -->
-    <button class="ticker" title={translateText("ai_scripture.transcript")} on:click={toggleExpand}>
+    <button class="ticker" title={translateText("ai.transcript")} on:click={toggleExpand}>
         {latestSegment}{#if $aiInterim}{" "}<span class="interim">{$aiInterim}</span>{/if}
     </button>
 {/if}
@@ -238,8 +238,8 @@
         {#if $aiScriptureAutoPaused}
             <!-- restore-previous intentionally only lives in the expanded view - the closed stack stays minimal -->
             <div class="chips" transition:fly={{ y: 20, duration: 250 }}>
-                <span class="badge paused"><T id="ai_scripture.auto_paused" /></span>
-                <MaterialButton icon="play" title="ai_scripture.resume_auto" on:click={() => resumeAutoProjection()} />
+                <span class="badge paused"><T id="ai.auto_paused" /></span>
+                <MaterialButton icon="play" title="ai.resume_auto" on:click={() => resumeAutoProjection()} />
             </div>
         {/if}
 
@@ -248,11 +248,11 @@
             <div class="suggestion" transition:fly={{ y: 20, duration: 250 }}>
                 <div class="suggestionHeader">
                     <span class="reference">{getReferenceLabel(suggestion, $scriptures)}</span>
-                    <span class="confidence {suggestion.confidence}"><T id="ai_scripture.confidence_{suggestion.confidence}" /></span>
+                    <span class="confidence {suggestion.confidence}"><T id="ai.confidence_{suggestion.confidence}" /></span>
 
                     <div class="fill" />
 
-                    <MaterialButton icon="close" title="ai_scripture.dismiss" on:click={() => dismissSuggestion(suggestion.id)} />
+                    <MaterialButton icon="close" title="ai.dismiss" on:click={() => dismissSuggestion(suggestion.id)} />
                 </div>
 
                 {#if suggestion.quote}
@@ -260,11 +260,11 @@
                 {/if}
 
                 <div class="suggestionActions">
-                    <MaterialButton small icon="play" disabled={$outLocked} title="ai_scripture.project" on:click={() => projectDetection(suggestion, true)}>
-                        <T id="ai_scripture.project" />
+                    <MaterialButton small icon="play" disabled={$outLocked} title="ai.project" on:click={() => projectDetection(suggestion, true)}>
+                        <T id="ai.project" />
                     </MaterialButton>
-                    <MaterialButton small icon="scripture" title="ai_scripture.show_in_drawer" on:click={() => showInDrawer(suggestion)}>
-                        <T id="ai_scripture.show_in_drawer" />
+                    <MaterialButton small icon="scripture" title="ai.show_in_drawer" on:click={() => showInDrawer(suggestion)}>
+                        <T id="ai.show_in_drawer" />
                     </MaterialButton>
                 </div>
             </div>
@@ -298,36 +298,36 @@
                     <div class="ai-badge">
                         {#if sessionMode === "scripture"}
                             <!-- an LLM pause only stops paraphrase detection - the session IS still listening -->
-                            <p style="font-weight: bold;"><T id="ai_scripture.state_{scriptureState === 'llm_paused' ? 'listening' : scriptureState}" /></p>
+                            <p style="font-weight: bold;"><T id="ai.state_{scriptureState === 'llm_paused' ? 'listening' : scriptureState}" /></p>
                         {:else}
                             <p style="font-weight: bold;">{state.toUpperCase()}</p>
                         {/if}
 
                         {#if sessionMode === "scripture" && scriptureState === "llm_paused"}
                             <span class="badge" data-title={translateText("ai_scripture.llm_paused_tip") + ($aiScriptureStatus.message || "")}>
-                                <T id="ai_scripture.llm_paused_badge" />
+                                <T id="ai.llm_paused_badge" />
                             </span>
                         {/if}
 
                         {#if sessionMode === "scripture" && isListening && $aiScriptureStatus.keyless}
                             <!-- "on-device" only when the quote match indexes actually built - not just when the setting is on -->
                             <span class="badge" data-title={translateText($aiQuoteMatchActive ? "ai_scripture.on_device_tip" : "ai_scripture.keyless_tip")}>
-                                <T id={$aiQuoteMatchActive ? "ai_scripture.on_device_only" : "ai_scripture.explicit_only"} />
+                                <T id={$aiQuoteMatchActive ? "ai.on_device_only" : "ai.explicit_only"} />
                             </span>
                         {/if}
                     </div>
 
                     <div class="headerActions">
                         {#if $aiScriptureAutoPaused}
-                            <MaterialButton icon="play" title="ai_scripture.resume_auto" on:click={() => resumeAutoProjection()} />
+                            <MaterialButton icon="play" title="ai.resume_auto" on:click={() => resumeAutoProjection()} />
                         {/if}
                         {#if $aiScriptureHasProjected}
-                            <MaterialButton icon="undo" title="ai_scripture.restore_previous" disabled={$outLocked} on:click={() => restorePrevious()} />
+                            <MaterialButton icon="undo" title="ai.restore_previous" disabled={$outLocked} on:click={() => restorePrevious()} />
                         {/if}
                         {#if sessionMode === "scripture"}
                             <MaterialButton icon="settings" title="ai_scripture.setup" on:click={openSetup} />
                         {/if}
-                        <MaterialButton icon={isListening ? "stop" : "microphone"} title={isListening ? "ai_scripture.stop_listening" : "ai_scripture.start_listening"} isActive={isListening} disabled={isStarting || sessionMode === "off"} on:click={toggleListening} />
+                        <MaterialButton icon={isListening ? "stop" : "microphone"} title={isListening ? "ai.stop_listening" : "ai.start_listening"} isActive={isListening} disabled={isStarting || sessionMode === "off"} on:click={toggleListening} />
                         <MaterialButton class="popup-close" icon="close" iconSize={1.3} title="actions.close" style="padding: 10px;" on:click={toggleExpand} />
                     </div>
                 </div>
@@ -354,7 +354,7 @@
                             {/if}
                         </div>
                     {:else}
-                        <p class="placeholder"><T id="ai_scripture.waiting_for_audio" /></p>
+                        <p class="placeholder"><T id="ai.waiting_for_audio" /></p>
                     {/if}
                 </div>
 
@@ -365,13 +365,13 @@
                             <div class="suggestion compact">
                                 <div class="suggestionHeader">
                                     <span class="reference">{getReferenceLabel(suggestion, $scriptures)}</span>
-                                    <span class="confidence {suggestion.confidence}"><T id="ai_scripture.confidence_{suggestion.confidence}" /></span>
+                                    <span class="confidence {suggestion.confidence}"><T id="ai.confidence_{suggestion.confidence}" /></span>
 
                                     <div class="fill" />
 
-                                    <MaterialButton small icon="play" disabled={$outLocked} title="ai_scripture.project" on:click={() => projectDetection(suggestion, true)} />
-                                    <MaterialButton small icon="scripture" title="ai_scripture.show_in_drawer" on:click={() => showInDrawer(suggestion)} />
-                                    <MaterialButton small icon="close" title="ai_scripture.dismiss" on:click={() => dismissSuggestion(suggestion.id)} />
+                                    <MaterialButton small icon="play" disabled={$outLocked} title="ai.project" on:click={() => projectDetection(suggestion, true)} />
+                                    <MaterialButton small icon="scripture" title="ai.show_in_drawer" on:click={() => showInDrawer(suggestion)} />
+                                    <MaterialButton small icon="close" title="ai.dismiss" on:click={() => dismissSuggestion(suggestion.id)} />
                                 </div>
 
                                 {#if suggestion.quote}

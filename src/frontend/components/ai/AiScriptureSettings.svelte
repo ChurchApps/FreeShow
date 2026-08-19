@@ -42,8 +42,8 @@
     // BEHAVIOR
 
     const modeOptions = [
-        { value: "confirm", label: translateText("ai_scripture.mode_confirm") },
-        { value: "auto", label: translateText("ai_scripture.mode_auto") }
+        { value: "confirm", label: translateText("ai.mode_confirm") },
+        { value: "auto", label: translateText("ai.mode_auto") }
     ]
 
     // percent threshold for auto-show, with the band it lands in ("high" starts at 80, "medium" at 50)
@@ -84,7 +84,7 @@
     <MaterialDropdown label="ai_scripture.display_translation" options={displayTranslationOptions} value={settings.displayTranslation || "drawer"} defaultValue="drawer" on:change={(e) => update("displayTranslation", e.detail)} />
     <p class="faded hint"><T id="ai_scripture.main_translation_hint" /></p>
 
-    <Title label="ai_scripture.behavior" icon="options" />
+    <Title label="ai.behavior" icon="options" />
 
     <MaterialDropdown label="ai_scripture.mode" options={modeOptions} value={settings.mode || "confirm"} defaultValue="confirm" on:change={(e) => update("mode", e.detail)} />
     {#if (settings.mode || "confirm") === "auto"}
@@ -93,10 +93,10 @@
         <!-- how sure a detection must be before it is shown automatically - the single gate for
         references and quotes alike. Stacked (label / slider+badge): the options column is narrow -->
         <div class="confidenceRow">
-            <p class="confidenceLabel"><T id="ai_scripture.auto_min_confidence" /></p>
+            <p class="confidenceLabel"><T id="ai.auto_min_confidence" /></p>
             <div class="confidenceControls">
                 <Slider value={autoMinConfidence} min={0} max={100} step={5} style="flex: 1; min-width: 140px;" on:input={setAutoMinConfidence} />
-                <span class="confidence {confidenceBand}">{autoMinConfidence}% · <T id="ai_scripture.confidence_{confidenceBand}" /></span>
+                <span class="confidence {confidenceBand}">{autoMinConfidence}% · <T id="ai.confidence_{confidenceBand}" /></span>
             </div>
         </div>
         <p class="faded hint"><T id="ai_scripture.auto_min_confidence_hint" /></p>
@@ -105,14 +105,14 @@
     <MaterialToggleSwitch label="ai_scripture.follow_in_drawer" checked={settings.followInDrawer !== false} defaultValue={true} on:change={(e) => update("followInDrawer", e.detail)} />
     <p class="faded hint"><T id="ai_scripture.follow_in_drawer_hint" /></p>
 
-    <MaterialToggleSwitch label="ai_scripture.voice_commands" checked={settings.voiceCommands === true} defaultValue={false} on:change={(e) => update("voiceCommands", e.detail)} />
+    <MaterialToggleSwitch label="ai.voice_commands" checked={settings.voiceCommands === true} defaultValue={false} on:change={(e) => update("voiceCommands", e.detail)} />
     {#if settings.voiceCommands}
         <p class="faded"><T id="ai_scripture.voice_commands_hint" /></p>
     {/if}
 
     <!-- the two cooldowns pair up on one row; max verses is no cooldown, so it gets its own line -->
     <InputRow>
-        <MaterialNumberInput label="ai_scripture.auto_cooldown" value={Number(settings.autoCooldownSeconds ?? 5)} defaultValue={5} min={0} max={300} on:change={(e) => update("autoCooldownSeconds", e.detail)} />
+        <MaterialNumberInput label="ai.auto_cooldown" value={Number(settings.autoCooldownSeconds ?? 5)} defaultValue={5} min={0} max={300} on:change={(e) => update("autoCooldownSeconds", e.detail)} />
         <MaterialNumberInput label="ai_scripture.ref_cooldown" value={Number(settings.refCooldownSeconds ?? 90)} defaultValue={90} min={0} max={600} on:change={(e) => update("refCooldownSeconds", e.detail)} />
     </InputRow>
     <MaterialNumberInput label="ai_scripture.max_verses" value={Number(settings.maxVerses ?? 6)} defaultValue={6} min={1} max={20} on:change={(e) => update("maxVerses", e.detail)} />
@@ -120,11 +120,11 @@
     <div class="privacy">
         <div class="privacyTitle">
             <Icon id="info" size={1.1} white />
-            <T id="ai_scripture.privacy" />
+            <T id="ai.privacy" />
         </div>
-        <p><T id="ai_scripture.privacy_local" /></p>
+        <p><T id="ai.privacy_local" /></p>
         <p><T id="ai_scripture.privacy_matching" /></p>
-        <p><T id="ai_scripture.privacy_llm" /></p>
+        <p><T id="ai.privacy_llm" /></p>
         <p><T id="ai.privacy_keys" /></p>
     </div>
 {/if}
