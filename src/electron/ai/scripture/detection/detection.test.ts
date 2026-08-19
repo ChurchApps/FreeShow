@@ -2,12 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // llmTalkScripture composes real AI API providers - no test here should ever reach them
 const { mockDetectScripture } = vi.hoisted(() => ({ mockDetectScripture: vi.fn() }))
-vi.mock("./llmTalkScripture", () => ({
+vi.mock("../llmTalkScripture", () => ({
     getLLMScriptureProvider: () => ({ detectScripture: mockDetectScripture })
 }))
 
-import { normalizeSpokenNumbers } from "../commands/spokenNumbers"
-import { DetectionCoordinator, detectExplicitReferences } from "./detection"
+import { normalizeSpokenNumbers } from "../../commands/spokenNumbers"
+import { DetectionCoordinator } from "./coordinator"
+import { detectExplicitReferences } from "./references"
 
 const BOOKS = [
     { number: 19, canonNumber: 19, names: ["Psalms", "Psalm"] },
