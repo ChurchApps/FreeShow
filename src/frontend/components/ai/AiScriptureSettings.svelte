@@ -74,7 +74,6 @@
 {:else}
     <!-- on-device quote matching always runs - free, offline and keyless. The AI provider (model manager popup) only ADDS paraphrase detection on top -->
     <Title label="ai_scripture.main_translation" icon="star" />
-    <p class="faded hint"><T id="ai_scripture.main_translation_hint" /></p>
 
     {#if bibleList.length}
         <MaterialDropdown label="ai_scripture.main_translation" options={mainOptions} value={settings.mainTranslation || ""} defaultValue="" on:change={(e) => update("mainTranslation", e.detail)} />
@@ -83,6 +82,7 @@
     {/if}
 
     <MaterialDropdown label="ai_scripture.display_translation" options={displayTranslationOptions} value={settings.displayTranslation || "drawer"} defaultValue="drawer" on:change={(e) => update("displayTranslation", e.detail)} />
+    <p class="faded hint"><T id="ai_scripture.main_translation_hint" /></p>
 
     <Title label="ai_scripture.behavior" icon="options" />
 
