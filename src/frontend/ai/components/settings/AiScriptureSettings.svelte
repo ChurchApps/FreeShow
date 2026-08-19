@@ -13,7 +13,8 @@
     import MaterialToggleSwitch from "../../../components/inputs/MaterialToggleSwitch.svelte"
     import Tip from "../../../components/main/Tip.svelte"
 
-    let settings = $ai.scripture || {}
+    // reactive so changes from outside this panel (quick search, voice commands) show up too
+    $: settings = $ai.scripture || {}
 
     function update(key: string, value: any) {
         ai.update((a) => {
@@ -21,7 +22,6 @@
             a.scripture[key] = value
             return a
         })
-        settings = $ai.scripture || {}
     }
 
     // engine/model/mic settings live in the AI model manager popup - only scripture behavior lives here
@@ -54,7 +54,6 @@
     }
     function toggleEnabled(e: any) {
         setAiScriptureEnabled(!!e.detail)
-        settings = $ai.scripture || {}
     }
 </script>
 
