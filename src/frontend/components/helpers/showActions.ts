@@ -61,7 +61,7 @@ import {
 } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { defaultLayers, getActiveOutputs, getAllActiveOutputIds, getAllNormalOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
+import { defaultLayers, getActiveOutputs, getAllActiveOutputIds, getAllNormalOutputs, getAllStageOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
 import { OutputHelper } from "./OutputHelper"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
@@ -914,7 +914,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     const regex = /\{scripture(?:\d+)?_[^}]*\}/g
     if (regex.test(text) && !popup) text = text.replace(regex, "")
 
-    const customIds = ["slide_text", "active_layers", "active_styles", "output_windows_active", "log_song_usage"]
+    const customIds = ["slide_text", "active_project_name", "active_layers", "active_styles", "output_windows_active", "outputs_locked", "stage_output_layout", "log_song_usage"]
     ;[...getDynamicIds(false, mode), ...deprecatedDynamicValues, ...customIds].forEach((dynamicId) => {
         if (!exists(text, dynamicId) && !(dynamicId.startsWith("$") && exists(text, dynamicId.replace("$", "variable_")))) return
 
@@ -1061,7 +1061,10 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         // custom - only from external source (Companion)
         // or used to set variable value: https://github.com/ChurchApps/FreeShow/issues/1720
-        if (dynamicId === "active_layers") {
+        if (dynamicId === "active_project_name") {
+            const activeProjectId = get(activeProject) || ""
+            return get(projects)[activeProjectId]?.name || ""
+        } else if (dynamicId === "active_layers") {
             const backgroundActive = !isOutCleared("background")
             const slideActive = !isOutCleared("slide")
             const overlaysActive = !isOutCleared("overlays")
@@ -1074,6 +1077,12 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             return outputStyleNames.sort((a, b) => a.localeCompare(b)).join(", ")
         } else if (dynamicId === "output_windows_active") {
             return get(outputDisplay) ? "true" : "false"
+        } else if (dynamicId === "outputs_locked") {
+            return get(outLocked) ? "true" : "false"
+        } else if (dynamicId === "stage_output_layout") {
+            const stageOutputId = getAllStageOutputs()?.[0]?.stageOutput || ""
+            const stageLayoutName = get(stageShows)[stageOutputId]?.name || ""
+            return stageLayoutName
         } else if (dynamicId === "log_song_usage") {
             return get(special).logSongUsage ? "true" : "false"
         }
