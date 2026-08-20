@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Show } from "../../../../types/Show"
+    import type { Show } from "../../../../types/Show"
     import { activePopup, popupData, shows, showsCache } from "../../../stores"
     import { getTextLines } from "../../edit/scripts/textStyle"
     import { history } from "../../helpers/history"
