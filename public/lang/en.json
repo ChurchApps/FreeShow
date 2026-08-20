@@ -522,6 +522,7 @@
         "import_scripture": "Import scripture",
         "create_collection": "Create collection",
         "scripture_show": "Scripture show options",
+        "import_calendar": "Import calendar",
         "player": "Player",
         "edit_event": "Edit event",
         "edit_chart": "Edit chart",
@@ -844,6 +845,8 @@
         "random_slide": "Play random slide",
         "index_select_slide": "Play slide at index",
         "name_select_slide": "Play slide with name",
+        "disable_slide": "Disable slide",
+        "active_show": "Active show",
         "toggle_output_lock": "Toggle output lock",
         "toggle_output_window": "Toggle output window",
         "toggle_output_windows": "Toggle output windows",
@@ -1529,7 +1532,9 @@
         "ending_repeated": "repeated",
         "ending_times": "times",
         "save_all": "Save and update all",
-        "add_slides_from_show": "Include slides from show"
+        "add_slides_from_show": "Include slides from show",
+        "calendars": "Calendars",
+        "delete_confirmation": "Are you sure you want to delete all events from this calendar?"
     },
     "scripture": {
         "collections": "Collections",

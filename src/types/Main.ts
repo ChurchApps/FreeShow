@@ -115,6 +115,7 @@ export type SelectIds =
     | "audio_channel"
     | "tag"
     | "bible_book"
+    | "calendar"
 
 export interface Selected {
     id: null | SelectIds
@@ -410,6 +411,7 @@ export type Popups =
     | "media_fit"
     | "metadata_display"
     | "import_scripture"
+    | "import_calendar"
     | "create_collection"
     | "edit_event"
     | "edit_chart"

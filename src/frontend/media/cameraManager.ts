@@ -36,6 +36,7 @@ const DEFAULT_CAMERA_CONSTRAINTS: MediaTrackConstraints = {
 
 class CameraManager {
     private activeCameras: Map<string, ActiveCamera> = new Map()
+    private streamQueue: Promise<any> = Promise.resolve()
     private readonly MAX_RETRIES = 3
     private readonly RETRY_DELAY = 5000 // 5 seconds
 
@@ -133,6 +134,21 @@ class CameraManager {
         }
     }
 
+    private acquireMediaStream(constraints: MediaStreamConstraints): Promise<MediaStream> {
+        return new Promise((resolve, reject) => {
+            this.streamQueue = this.streamQueue
+                .catch(() => {})
+                .then(async () => {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia(constraints)
+                        resolve(stream)
+                    } catch (err) {
+                        reject(err)
+                    }
+                })
+        })
+    }
+
     failed: string[] = []
     private async warmUpCamera(camera: CameraData, { retryCount, lastError }: any = {}) {
         if (this.activeCameras.has(camera.id)) return
@@ -152,7 +168,7 @@ class CameraManager {
             }
 
             // const stream = await this.getCameraStream(camera.id, camera.group)
-            const stream = await navigator.mediaDevices.getUserMedia(cameraProperties)
+            const stream = await this.acquireMediaStream(cameraProperties)
 
             // Create a hidden video element to keep the stream active
             const videoElement = document.createElement("video")
@@ -237,10 +253,10 @@ class CameraManager {
         }
 
         try {
-            const stream = await navigator.mediaDevices.getUserMedia(cameraProperties)
+            const stream = await this.acquireMediaStream(cameraProperties)
             this.clearBadCamera(cameraId)
             return stream
-        } catch (err) {
+        } catch (err: any) {
             let msg: string = err?.message || String(err)
 
             if (err?.name === "NotReadableError") {

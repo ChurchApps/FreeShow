@@ -416,7 +416,7 @@
     {/if}
 
     {#if !$focusMode && !isLocked && !$slideNotesActive && !$special.slideTimelineActive}
-        <FloatingInputs side="left" bottom={notesVisible ? bottomHeight : 10} onlyOne={hasBackground}>
+        <FloatingInputs side="left" bottom={notesVisible ? bottomHeight : 10} onlyOne={$editMode !== "chords" && hasBackground}>
             {#if $editMode === "chords"}
                 <MaterialButton on:click={transposeUp} title="edit.transpose_up">
                     <Icon id="arrow_up" size={1.3} white />

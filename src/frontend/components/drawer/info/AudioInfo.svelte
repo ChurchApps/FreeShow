@@ -1,13 +1,13 @@
 <script lang="ts">
-    import { get } from "svelte/store"
-    import { activeAudioEffects, activePopup, playingVideos, special } from "../../../stores"
     import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio, isAllAudioFading } from "../../../audio/audioFading"
+    import { activeAudioEffects, activePopup, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
+    import { VideoPlayer } from "../../media/video/videoPlayer"
     import AudioEffects from "../audio/AudioEffects.svelte"
     import AudioMixers from "../audio/AudioMixers.svelte"
 
@@ -23,7 +23,7 @@
         // if (!value && key === "allowGaining") AudioPlayer.updateVolume()
 
         if (key === "muteAudioWhenVideoPlays") {
-            if (value && get(playingVideos).some((v) => !v.audio.paused)) {
+            if (value && VideoPlayer.hasAudibleVideo()) {
                 fadeoutAllPlayingAudio()
             } else if (!value && isAllAudioFading) {
                 fadeinAllPlayingAudio()

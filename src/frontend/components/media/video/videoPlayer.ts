@@ -205,7 +205,13 @@ export class VideoPlayer {
             return a
         })
 
-        if (data.volume !== undefined) this.updateVolume(path)
+        if (data.volume !== undefined) {
+            this.updateVolume(path)
+            if (get(special).muteAudioWhenVideoPlays) {
+                if (this.hasAudibleVideo()) fadeoutAllPlayingAudio()
+                else fadeinAllPlayingAudio()
+            }
+        }
         if (data.speed && audio instanceof HTMLAudioElement) this.setTempo(path, parseFloat(data.speed))
         if (data.pitch !== undefined) this.setPitch(path, data.pitch)
     }
@@ -301,7 +307,6 @@ export class VideoPlayer {
             return finish()
         }
 
-        const outputId = outputIds?.[0] || ""
         const background = get(outputs)[outputIds?.[0] || ""]?.out?.background
         // project media folder
         if (background?.folderPath) {
@@ -312,18 +317,20 @@ export class VideoPlayer {
         const localLoop = playing.loop
 
         // check and execute next after media regardless of loop
-        if ((await checkNextAfterMedia(path, "media", outputId)) || localLoop) return finish()
+        if ((await checkNextAfterMedia(path, "media", outputIds)) || localLoop) return finish()
 
         if (get(special).clearMediaOnFinish === false) return finish()
 
         setTimeout(() => {
-            // double check that output is still the same
-            const outputState = get(outputs)[outputId]?.out?.background
-            const newVideoPath: string = outputState?.path || outputState?.id || ""
-            if (newVideoPath !== path) return finish()
+            const checkOutputIds = outputIds?.length ? outputIds : [outputIds?.[0] || ""]
+            checkOutputIds.forEach((outputId) => {
+                if (!outputId) return
 
-            clearBackground(outputId)
-            // this.stop(path, outputIds ? outputIds[0] : undefined, true)
+                // double check that output is still the same
+                const outputState = get(outputs)[outputId]?.out?.background
+                const newVideoPath: string = outputState?.path || outputState?.id || ""
+                if (newVideoPath === path) clearBackground(outputId)
+            })
 
             finish()
         }, 200) // WAIT FOR NEXT AFTER MEDIA TO FINISH
@@ -354,7 +361,7 @@ export class VideoPlayer {
             audio.timeTick.play()
         }
 
-        if (get(special).muteAudioWhenVideoPlays) {
+        if (get(special).muteAudioWhenVideoPlays && this.hasAudibleVideo()) {
             fadeoutAllPlayingAudio()
         }
 
@@ -379,7 +386,7 @@ export class VideoPlayer {
             audio.timeTick.pause()
         }
 
-        if (get(special).muteAudioWhenVideoPlays && !get(playingVideos).some((v) => !v.audio.paused)) {
+        if (get(special).muteAudioWhenVideoPlays && !this.hasAudibleVideo()) {
             fadeinAllPlayingAudio()
         }
 
@@ -560,6 +567,22 @@ export class VideoPlayer {
 
     static toggleMute(path: string, outputId: string) {
         this.setAudioValue(path, outputId, "muted", !this.getAudio(path, outputId)?.muted)
+
+        if (get(special).muteAudioWhenVideoPlays) {
+            if (this.hasAudibleVideo()) fadeoutAllPlayingAudio()
+            else fadeinAllPlayingAudio()
+        }
+    }
+
+    static isAudible(video: VideoAudioData | null | undefined): boolean {
+        if (!video || !video.audio) return false
+        if (video.audio.paused || video.audio.muted) return false
+        if (this.getVolume(video.path) <= 0) return false
+        return true
+    }
+
+    static hasAudibleVideo(): boolean {
+        return get(playingVideos).some((v) => this.isAudible(v))
     }
 
     private static setAudioValue(path: string, outputId: string, key: string, value: any) {

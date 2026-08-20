@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
 import type { Shows } from "../../../types/Show"
-import { activePlaylist, audioPlaylists, outputs, playingAudio, playingVideos, playingVideoState, projects, shows, showsCache, variables } from "../../stores"
+import { actions, activePlaylist, audioPlaylists, outputs, playingAudio, playingVideos, playingVideoState, projects, shows, showsCache, variables } from "../../stores"
 import { getTextLines } from "../edit/scripts/textStyle"
-import { keysToID } from "../helpers/array"
+import { keysToID, sortByName } from "../helpers/array"
 import { getFirstActiveOutput } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
 import { getLayoutRef } from "../helpers/show"
@@ -144,4 +144,8 @@ export function getVariable(data: { id?: string; name?: string }) {
     }
 
     return null
+}
+
+export function getActions() {
+    return sortByName(keysToID(get(actions)).map((action) => ({ id: action.id, name: action.name })))
 }

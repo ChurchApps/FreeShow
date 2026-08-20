@@ -451,7 +451,7 @@ function createNew() {
     else if (selectId.includes("category_")) {
         // if (selectId.includes("media") || selectId.includes("audio")) sendMain(Main.OPEN_FOLDER, { channel: id, title, path })
         if (selectId.includes("scripture")) activePopup.set("import_scripture")
-        else if (selectId.includes("calendar")) sendMain(Main.IMPORT, { channel: "calendar", format: { name: "Calendar", extensions: ["ics"] } })
+        else if (selectId.includes("calendar")) activePopup.set("import_calendar")
         else history({ id: "UPDATE", location: { page: "drawer", id: selectId } })
     } else if (selectId === "overlay") history({ id: "UPDATE", location: { page: "drawer", id: "overlay" } })
     else if (selectId === "template") history({ id: "UPDATE", location: { page: "drawer", id: "template" } })

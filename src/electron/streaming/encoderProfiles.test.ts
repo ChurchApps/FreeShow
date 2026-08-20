@@ -92,7 +92,7 @@ describe("buildEncoderCommand", () => {
         const args = buildEncoderCommand({ ...baseOptions, bitrate: 6000 })
         expect(arg(args, "-b:v")).toBe("6000k")
         expect(arg(args, "-maxrate")).toBe("6000k")
-        expect(arg(args, "-bufsize")).toBe("12000k")
+        expect(arg(args, "-bufsize")).toBe("6000k")
     })
 
     it("declares the real input size, not the output size", () => {
@@ -108,10 +108,10 @@ describe("buildEncoderCommand", () => {
         expect(arg(native, "-vf")).not.toContain("scale=")
     })
 
-    it("outputs mpegts on stdout so relays can remux it", () => {
+    it("outputs flv on stdout so relays can remux it", () => {
         const args = buildEncoderCommand(baseOptions)
         expect(arg(args, "-f")).toBe("rawvideo") // first -f is the input
-        expect(args.slice(-3)).toEqual(["-f", "mpegts", "pipe:1"])
+        expect(args.slice(-5)).toEqual(["-f", "flv", "-flvflags", "no_sequence_end", "pipe:1"])
     })
 
     it("reads audio from fd 3 when enabled and synthesises silence otherwise", () => {
@@ -142,7 +142,7 @@ describe("buildEncoderCommand", () => {
 
 describe("buildVideoFilter", () => {
     it("orders scale before format conversion", () => {
-        expect(buildVideoFilter(getProfile("x264"), { width: 1280, height: 720 })).toBe("scale=1280:720,format=yuv420p")
+        expect(buildVideoFilter(getProfile("x264"), { width: 1280, height: 720 })).toBe("scale=1280:720:flags=bicubic,format=yuv420p")
     })
 
     it("puts hwupload last so it runs after the format conversion", () => {
@@ -155,10 +155,6 @@ describe("buildRelayCommand", () => {
         const args = buildRelayCommand("rtmp://a.rtmp.youtube.com/live2/KEY")
         expect(arg(args, "-c")).toBe("copy")
         expect(args).not.toContain("-c:v")
-    })
-
-    it("converts AAC from ADTS to ASC for flv", () => {
-        expect(arg(buildRelayCommand("rtmp://x/y"), "-bsf:a")).toBe("aac_adtstoasc")
     })
 
     it("targets the destination as an flv output", () => {
