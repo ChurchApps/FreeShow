@@ -5,6 +5,7 @@ import { Main } from "../../types/IPC/Main"
 import type { Output } from "../../types/Output"
 import type { SaveListSettings, SaveListSyncedSettings } from "../../types/Save"
 import type { Metadata, Themes } from "../../types/Settings"
+import { sanitizeAiSettings } from "../ai/aiState"
 import { initAudioRouting } from "../audio/routing/audioRoutingInit"
 import { clone, keysToID } from "../components/helpers/array"
 import { checkFFmpeg, checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
@@ -437,5 +438,5 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     effects: (a: any) => effects.set(a),
     deletedDefaults: (a: any) => deletedDefaults.set({ ...get(deletedDefaults), ...a }),
     audioRouting: (v: any) => initAudioRouting(v),
-    ai: (a: any) => ai.set(a)
+    ai: (a: any) => ai.set(sanitizeAiSettings(a))
 }
