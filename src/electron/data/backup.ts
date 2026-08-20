@@ -51,7 +51,8 @@ export async function startBackup({ customTriggers, isCloudSync }: { customTrigg
 
     sendToMain(ToMain.BACKUP, { finished: true, path: zipPath })
 
-    if (!isAutoBackup) openInSystem(zipPath, true)
+    if (isAutoBackup) pruneAutoBackups()
+    else openInSystem(zipPath, true)
 
     /// //
 
@@ -112,15 +113,53 @@ export function getBackups() {
     return backups
 }
 
+export function pruneAutoBackups(ignoreImplementationDate = false) {
+    // sort chronologically ascending (oldest first)
+    const autoBackups = getBackups()
+        .filter((a) => a.name.endsWith("_auto"))
+        .sort((a, b) => a.date - b.date)
+
+    // always keep at least 10 auto backups
+    const count = autoBackups.length
+    if (count <= 10) return
+
+    // timestamp 5 months ago
+    const fiveMonthsAgo = new Date()
+    fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5)
+    const cutoffTime = fiveMonthsAgo.getTime()
+
+    // because this system was not implemented to begin with we keep this fixed date to never auto delete anything before this system was implemented (for now)
+    const SAFETY_FLOOR_DATE = new Date("2026-03-20T00:00:00Z").getTime()
+
+    const toDelete = autoBackups.filter((backup, index) => {
+        // always keep the 3 oldest just in case
+        if (index < 3) return false
+        // always keep at least 10 auto backups
+        if (index >= count - 10) return false
+        // always keep files created before this auto delete system started
+        if (!ignoreImplementationDate && backup.date < SAFETY_FLOOR_DATE) return false
+        // always keep any newer than 5 months, otherwise mark for deletion
+        return backup.date < cutoffTime
+    })
+
+    if (!toDelete.length) return
+
+    toDelete.forEach((backup) => removeBackup(backup.path))
+    console.info(`Removed ${toDelete.length} old auto backups`)
+}
+
 export function deleteBackup(data: { path: string }) {
     if (!data?.path) return
 
     const backupsFolder = getDataFolderPath("backups")
-    const folderPath = path.resolve(backupsFolder, data.path)
+    removeBackup(path.resolve(backupsFolder, data.path))
+}
 
-    const stats = getFileStats(folderPath)
-    if (stats?.folder) deleteFolder(folderPath)
-    else deleteFile(folderPath)
+// backups can be zip files, or folders (old)
+function removeBackup(fullPath: string) {
+    const stats = getFileStats(fullPath)
+    if (stats?.folder) deleteFolder(fullPath)
+    else deleteFile(fullPath)
 }
 
 // RESTORE
