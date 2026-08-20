@@ -4,7 +4,7 @@ import { sortObjectNumbers } from "../components/helpers/array"
 import { similarity } from "../converters/txt"
 import { categories, drawerTabsData, textCache } from "../stores"
 
-export const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_'"´`~()]/g
+const specialChars = /[.,\/#!?$%\^&\*;:{}=\-_'"´`~()]/g
 export function formatSearch(value: string, removeSpaces = false) {
     if (typeof value !== "string") return ""
     let newValue = value

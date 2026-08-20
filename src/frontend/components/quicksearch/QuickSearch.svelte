@@ -4,7 +4,7 @@
     import { fade, fly } from "svelte/transition"
     import { quickSearchActive, special, theme, themes } from "../../stores"
     import { translateText } from "../../utils/language"
-    import { highlightText } from "../../utils/searchHighlight"
+    import { highlightText } from "./searchHighlight"
     import { hexToRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"

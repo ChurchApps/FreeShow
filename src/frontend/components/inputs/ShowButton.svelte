@@ -3,7 +3,9 @@
     import type { ClickEvent } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, effects, focusMode, globalTags, media, notFound, outLocked, outputs, overlayCategories, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, special, styles, textCache } from "../../stores"
+    import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
+    import { getTextSnippet, highlightText } from "../quicksearch/searchHighlight"
     import { customIconsColors } from "../../values/customIcons"
     import { historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
@@ -17,8 +19,6 @@
     import { clearBackground, clearSlide } from "../output/clear"
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
-    import { translateText } from "../../utils/language"
-    import { getTextSnippet, highlightText } from "../../utils/searchHighlight"
 
     export let id: string
     export let show: any // ShowList | ShowRef
@@ -37,7 +37,9 @@
     let profile = getAccess("shows")
     let readOnly = profile.global === "read" || profile[show.category] === "read"
 
-    // search: excerpt of the matching lyrics (only computed for the visible rows)
+    // search
+    $: searchStyle = match !== null ? `width: ${match}%;` : ""
+    // excerpt of the matching lyrics
     $: snippet = !isProject && match !== null && searchValue.length > 2 ? getTextSnippet($textCache[id] || "", searchValue) : ""
 
     function setNotFound(id: string) {
@@ -258,7 +260,7 @@
     $: showTemplateName = type === "show_placeholder" ? translateText("new.placeholder") : ""
 </script>
 
-<div id="show_{id}" class="main" class:played={show.played}>
+<div id="show_{id}" class="main" class:isProject class:played={show.played}>
     <MaterialButton on:click={click} on:dblclick={doubleClick} {isActive} showOutline={outline} class="context {$$props.class}{readOnly ? '_readonly' : ''}" style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{$$props.style || ''}" tab>
         <div class="row" style={type === "show_placeholder" ? "font-style: italic;" : ""}>
             <span class="cell" style={isProject ? `width: 100%;max-width: ${show.layoutInfo?.name || show.scheduleLength ? 92 : 100}%;` : `width: 75%;min-width: 120px;max-width: calc(100% ${showNumber ? "- var(--number-width)" : ""} - var(--modified-width, 0px));`}>
@@ -323,13 +325,6 @@
                         <span class="number">{showNumber || ""}</span>
                     {/if}
 
-                    {#if match !== null}
-                        <span class="match">
-                            <span class="match-track"><span class="match-fill" style="width: {match}%;"></span></span>
-                            <span class="match-value">{match}%</span>
-                        </span>
-                    {/if}
-
                     <span class="date">{data || ""}</span>
                 </span>
             {/if}
@@ -339,6 +334,12 @@
             <p class="snippet">{@html highlightText(snippet, searchValue)}</p>
         {/if}
     </MaterialButton>
+
+    {#if match !== null}
+        <span class="match-indicator" data-title="{match}%">
+            <span class="match-fill" style={searchStyle}></span>
+        </span>
+    {/if}
 </div>
 
 <style>
@@ -346,66 +347,20 @@
         width: 100%;
 
         display: flex;
+        flex-direction: column;
     }
 
     .main :global(button) {
         width: 100%;
         padding: 0.15em 0.8em;
 
-        /* a search match can add a lyrics snippet line under the name */
+        /* content under the name, like a search match snippet */
         flex-direction: column;
         align-items: stretch;
         gap: 0;
     }
-
-    /* .main p specificity so the button p margin doesn't win */
-    .main p.snippet {
-        font-size: 0.8em;
-        opacity: 0.6;
-        text-align: left;
-        /* same 5px inline margin as the name, tight under the name like quick search */
-        margin: -3px 5px 3px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .main p.snippet :global(mark) {
-        background: var(--secondary-opacity);
-        color: inherit;
-        padding: 0 2px;
-        border-radius: 4px;
-    }
-
-    /* match confidence bar (visible while searching) */
-    .match {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        flex-shrink: 0;
-        margin-inline-start: 10px;
-    }
-
-    .match-track {
-        width: 80px;
-        height: 6px;
-        border-radius: 3px;
-        background: var(--primary-lighter);
-        overflow: hidden;
-    }
-
-    .match-fill {
-        display: block;
-        height: 100%;
-        border-radius: 3px;
-        background: var(--secondary-opacity);
-    }
-
-    .match-value {
-        font-size: 0.75em;
-        opacity: 0.7;
-        min-width: 2.4em;
-        text-align: end;
+    .main:not(.isProject) :global(button) {
+        border-left: 0 !important;
     }
 
     .row {
@@ -533,5 +488,34 @@
 
         border-radius: 20px;
         border: 2px solid var(--color);
+    }
+
+    /* search */
+
+    .main p.snippet {
+        font-size: 0.8em;
+        opacity: 0.6;
+        text-align: left;
+        margin: -2px 5px 3px;
+    }
+    .main p.snippet :global(mark) {
+        background: var(--secondary-opacity);
+        color: inherit;
+        padding: 0 2px;
+        border-radius: 4px;
+    }
+
+    .match-indicator {
+        position: relative;
+        display: block;
+        width: 100%;
+        height: 2px;
+        background: rgb(255 255 255 / 0.08);
+        overflow: hidden;
+    }
+    .match-fill {
+        display: block;
+        height: 100%;
+        background: var(--secondary-opacity);
     }
 </style>
