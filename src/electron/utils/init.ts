@@ -1,9 +1,8 @@
 import { app, screen, type BrowserWindow } from "electron"
-import path from "path"
 import { isProd, isWindows, setAutoProfile } from ".."
 import { catchErrors } from "../IPC/responsesMain"
 import { OutputHelper } from "../output/OutputHelper"
-import { detectNewFiles, doesPathExist } from "./files"
+import { detectNewFiles } from "./files"
 import { initSpotify } from "./spotify"
 
 export function parseCommandLineArgs() {
@@ -49,43 +48,6 @@ export function openDevTools(window: BrowserWindow) {
     window.webContents.openDevTools()
     // ERROR:CONSOLE(1)] "Request Autofill.enable failed. - can be ignored:
     // https://github.com/electron/electron/issues/41614
-}
-
-// wait until the main bundle exists or dev server is ready
-export function waitForBundle() {
-    const BUNDLE_PATH = path.resolve(__dirname, "..", "..", "..", "public/build/bundle.js")
-    const CHECK_INTERVAL = 2 // every 2 seconds
-    let tries = 0
-
-    return new Promise((resolve) => {
-        const interval = setInterval(() => {
-            // Check if bundle file exists - old Rollup code, only production build for Vite
-            if (doesPathExist(BUNDLE_PATH)) {
-                console.info("Main bundle found! Loading interface...")
-                clearInterval(interval)
-                resolve(true)
-                return
-            }
-
-            // For development, just wait a short time and assume Vite is ready
-            // console.log(`Development mode: waiting for Vite to be ready... (attempt ${tries + 1})`)
-            // if resolved before ready app will never load!
-            if (tries >= 3) {
-                // console.info("Assuming Vite dev server is ready! Loading interface...")
-                clearInterval(interval)
-                resolve(true)
-                return
-            }
-
-            tries += 1
-            if (tries >= 60) {
-                // 60 * 2 seconds = 120 seconds total timeout
-                clearInterval(interval)
-                app.quit()
-                throw new Error("Could not load app content. Please check console for any errors!")
-            }
-        }, CHECK_INTERVAL * 1000)
-    })
 }
 
 export function isWithinDisplayBounds(pos: { x: number; y: number }) {

@@ -211,6 +211,14 @@ export interface MediaStyle {
 
 export type AudioType = "music" | "effect"
 
+// media codec
+export interface MediaCodecInfo {
+    path: string
+    codecs: string[]
+    mimeType: string
+    mimeCodec: string
+}
+
 // subtitles/captions
 export interface Subtitle {
     lang: string // id

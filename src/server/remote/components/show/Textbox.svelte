@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import autosize, { AutosizeTypes } from "../../../common/util/autosize"
+    import autosize, { type AutosizeTypes } from "../../../common/util/autosize"
     import { createVirtualBreaks } from "../../../common/util/show"
     import { getStyles } from "../../../common/util/style"
     import { mediaCache } from "../../util/stores"

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Item } from "../../../../types/Show"
+    import type { Item } from "../../../../types/Show"
     import type { StageItem } from "../../../../types/Stage"
     import { activeStage, dictionary, selected, stageShows, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
