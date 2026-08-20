@@ -722,10 +722,10 @@ function getAiValues() {
 
     const values: any[] = [
         { order: 1, type: "settings", id: "ai", name: "settings.ai", aliases: ["-Artificial intelligence", "-Transcription", "-Speech to text", "-Engine", "-Provider", "-LLM", "-API key", "-Ollama"] },
-        { order: 2, type: "popups", id: "ai_model_manager", name: "popup.ai_model_manager", data: { settingsTab: "ai" }, aliases: ["-AI models", "-Whisper", "-Nemotron", "-Download"] },
-        { order: 3, type: "ai_scripture_settings", id: "ai_scripture_settings", name: "ai.scripture_settings", aliases: ["-Auto scripture", "-Detection", "-Confidence", "-Auto project"] },
+        { order: 2, type: "ai_toggle", id: "ai", name: aiSettings.enabled ? "ai.disable" : "ai.enable", aliases: ["-Turn on", "-Turn off"] },
+        { order: 3, type: "popups", id: "ai_model_manager", name: "popup.ai_model_manager", data: { settingsTab: "ai" }, aliases: ["-AI models", "-Whisper", "-Nemotron", "-Download"] },
         { order: 4, type: "ai_toggle", id: "scripture", name: aiSettings.scripture?.enabled ? "ai_scripture.disable" : "ai_scripture.enable", aliases: ["-Turn on", "-Turn off", "-Auto scripture"] },
-        { order: 5, type: "ai_toggle", id: "ai", name: aiSettings.enabled ? "ai.disable" : "ai.enable", aliases: ["-Turn on", "-Turn off"] }
+        { order: 5, type: "ai_scripture_settings", id: "ai_scripture_settings", name: "ai.scripture_settings", aliases: ["-Auto scripture", "-Detection", "-Confidence", "-Auto project"] }
     ]
 
     if (aiSettings.enabled && aiSettings.scripture?.enabled) {
