@@ -19,7 +19,7 @@ import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { setRtmpNoticeListener, setRtmpStatusListener } from "./streaming/RtmpStreamer"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
-import { isDraggableAreaVisible, isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs, waitForBundle } from "./utils/init"
+import { isDraggableAreaVisible, isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs } from "./utils/init"
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
@@ -55,7 +55,7 @@ if (!config.get("loaded")) console.error("Could not get stored data!")
 
 // info
 console.info("Starting FreeShow...")
-if (!isProd) console.info("Building app! (This may take 20-90 seconds)")
+if (!isProd) console.info("Building app! (This may take 5-40 seconds)")
 
 // set application menu
 setGlobalMenu()
@@ -222,10 +222,7 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     if (isProd) window.loadFile("public/index.html").catch(loadingFailed)
     else {
         // load development environment
-        if (mainOutput) {
-            await waitForBundle()
-            openDevTools(window)
-        }
+        if (mainOutput) openDevTools(window)
         window.loadURL("http://localhost:3000").catch(loadingFailed)
     }
 
