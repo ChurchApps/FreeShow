@@ -43,7 +43,8 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         platforms: ["darwin"],
         pixelFormat: "nv12",
         // prio_speed minimizes latency; avoid -realtime 1 to prevent internal frame drops from pipe jitter
-        args: (bitrate, gop) => ["-prio_speed", "1", "-allow_sw", "1", "-profile:v", "high", "-b:v", `${bitrate}k`, "-maxrate", `${bitrate}k`, "-g", `${gop}`]
+        // use the shared rateControl helper so -bufsize is set consistently for better CBR behavior
+        args: (bitrate, gop) => ["-prio_speed", "1", "-allow_sw", "1", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`, "-rtbufsize", "100M"]
     },
     nvenc: {
         id: "nvenc",
@@ -146,13 +147,15 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
     if (opts.enableAudio) {
         const ar = opts.sampleRate || SAMPLE_RATE
         // AUDIO INPUT PIPE
-        args.push("-thread_queue_size", "512", "-fflags", "+nobuffer", "-f", "s16le", "-ar", `${ar}`, "-ac", `${AUDIO_CHANNELS}`, "-probesize", "32", "-analyzeduration", "0", "-i", "pipe:3")
+        args.push("-thread_queue_size", "512", "-fflags", "+nobuffer", "-f", "s16le", "-ar", `${ar}`, "-ac", `${AUDIO_CHANNELS}`, "-channel_layout", "stereo", "-probesize", "32", "-analyzeduration", "0", "-i", "pipe:3")
     } else {
         args.push("-f", "lavfi", "-i", `anullsrc=channel_layout=stereo:sample_rate=${SAMPLE_RATE}`)
     }
 
     const baseFilter = buildVideoFilter(profile, scaleTo)
     args.push("-vf", `${baseFilter},fps=${opts.fps}`)
+    // prefer passthrough fps mode and generate PTS to avoid ffmpeg inserting extra buffering
+    args.push("-fps_mode", "passthrough", "-fflags", "+genpts")
     args.push("-c:v", profile.codec, ...profile.args(opts.bitrate, opts.fps * 2))
 
     if (opts.enableAudio) {
