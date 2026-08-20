@@ -33,7 +33,7 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         hardware: false,
         platforms: ["darwin", "win32", "linux"],
         pixelFormat: "yuv420p",
-        args: (bitrate, gop) => ["-preset", "veryfast", "-tune", "zerolatency", ...rateControl(bitrate), "-g", `${gop}`]
+        args: (bitrate, gop) => ["-preset", "veryfast", "-tune", "zerolatency", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`]
     },
     videotoolbox: {
         id: "videotoolbox",
@@ -42,8 +42,8 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         hardware: true,
         platforms: ["darwin"],
         pixelFormat: "nv12",
-        // videotoolbox has no -tune/-preset and ignores -bufsize
-        args: (bitrate, gop) => ["-realtime", "1", "-profile:v", "high", "-b:v", `${bitrate}k`, "-maxrate", `${bitrate}k`, "-g", `${gop}`]
+        // prio_speed minimizes latency; avoid -realtime 1 to prevent internal frame drops from pipe jitter
+        args: (bitrate, gop) => ["-prio_speed", "1", "-allow_sw", "1", "-profile:v", "high", "-b:v", `${bitrate}k`, "-maxrate", `${bitrate}k`, "-g", `${gop}`]
     },
     nvenc: {
         id: "nvenc",
@@ -51,7 +51,7 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         label: "NVENC (NVIDIA)",
         hardware: true,
         platforms: ["win32", "linux"],
-        pixelFormat: "yuv420p",
+        pixelFormat: "nv12",
         // -no-scenecut only applies with rc_lookahead > 0 and -forced-idr only with -force_key_frames,
         // neither of which are set here, so both would be silent no-ops
         args: (bitrate, gop) => ["-preset", "p4", "-tune", "ll", "-rc", "cbr", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`]
@@ -63,7 +63,7 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         hardware: true,
         platforms: ["win32", "linux"],
         pixelFormat: "nv12",
-        args: (bitrate, gop) => ["-preset", "veryfast", "-profile:v", "high", "-low_delay_brc", "1", "-bf", "0", ...rateControl(bitrate), "-g", `${gop}`]
+        args: (bitrate, gop) => ["-preset", "veryfast", "-profile:v", "high", "-forced_idr", "1", "-low_delay_brc", "1", "-bf", "0", ...rateControl(bitrate), "-g", `${gop}`]
     },
     amf: {
         id: "amf",
@@ -72,7 +72,7 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         hardware: true,
         platforms: ["win32"],
         pixelFormat: "nv12",
-        args: (bitrate, gop) => ["-usage", "lowlatency", "-quality", "speed", "-rc", "cbr", "-profile:v", "high", "-bf", "0", ...rateControl(bitrate), "-g", `${gop}`]
+        args: (bitrate, gop) => ["-usage", "lowlatency", "-quality", "speed", "-rc", "cbr", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`]
     },
     vaapi: {
         id: "vaapi",
@@ -83,7 +83,7 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         pixelFormat: "nv12",
         preInput: ["-init_hw_device", `vaapi=va:${VAAPI_DEVICE}`, "-filter_hw_device", "va"],
         filterSuffix: "hwupload",
-        args: (bitrate, gop) => ["-rc_mode", "CBR", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`]
+        args: (bitrate, gop) => ["-rc_mode", "CBR", "-profile:v", "high", "-bf", "0", ...rateControl(bitrate), "-g", `${gop}`]
     }
 }
 
@@ -128,7 +128,7 @@ export interface EncoderCommandOptions {
     sampleRate?: number
 }
 
-/** Full arg list for the encoder process: raw BGRA + PCM in, mpegts out on stdout. */
+/** Full arg list for the encoder process: raw BGRA + PCM in, flv out on stdout. */
 // Inside buildEncoderCommand in encoderProfiles.ts:
 
 export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
