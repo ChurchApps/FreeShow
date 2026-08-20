@@ -10,6 +10,8 @@ export function setAiEnabled(enabled: boolean): void {
 
     ai.update((a) => {
         a.enabled = enabled
+        // features require the AI layer - turning AI off turns them off too (never the reverse)
+        if (!enabled && a.scripture?.enabled) a.scripture.enabled = false
         return a
     })
 }
