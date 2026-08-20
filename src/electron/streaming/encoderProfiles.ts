@@ -23,7 +23,7 @@ export interface EncoderProfile {
     args: (bitrate: number, gop: number) => string[]
 }
 
-const rateControl = (bitrate: number) => ["-b:v", `${bitrate}k`, "-maxrate", `${bitrate}k`, "-bufsize", `${bitrate * 2}k`]
+const rateControl = (bitrate: number) => ["-b:v", `${bitrate}k`, "-maxrate", `${bitrate}k`, "-bufsize", `${bitrate}k`]
 
 export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
     x264: {

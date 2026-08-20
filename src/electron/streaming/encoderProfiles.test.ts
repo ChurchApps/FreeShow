@@ -92,7 +92,7 @@ describe("buildEncoderCommand", () => {
         const args = buildEncoderCommand({ ...baseOptions, bitrate: 6000 })
         expect(arg(args, "-b:v")).toBe("6000k")
         expect(arg(args, "-maxrate")).toBe("6000k")
-        expect(arg(args, "-bufsize")).toBe("12000k")
+        expect(arg(args, "-bufsize")).toBe("6000k")
     })
 
     it("declares the real input size, not the output size", () => {

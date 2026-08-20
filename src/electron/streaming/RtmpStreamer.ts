@@ -19,8 +19,13 @@ export function setRtmpNoticeListener(listener: RtmpNoticeListener) {
     noticeListener = listener
 }
 
-/** a relay buffering more than this cannot keep up, so it gets restarted instead of stalling the encoder */
-const RELAY_BUFFER_CAP_BYTES = 2 * 1024 * 1024
+/** minimum relay buffer cap to tolerate network handshake / initial burst */
+const MIN_RELAY_BUFFER_CAP_BYTES = 4 * 1024 * 1024
+const RELAY_BUFFER_DURATION_SECS = 6
+function getRelayBufferCap(bitrateKbps: number): number {
+    return Math.max(MIN_RELAY_BUFFER_CAP_BYTES, Math.round(((bitrateKbps * 1000) / 8) * RELAY_BUFFER_DURATION_SECS))
+}
+
 const RELAY_LIVE_AFTER_MS = 2000
 const BACKOFF_START_MS = 1000
 const BACKOFF_MAX_MS = 15000
@@ -569,14 +574,15 @@ export class RtmpStreamer {
     }
 
     private static fanOut(streamer: StreamInstance, chunk: Buffer) {
+        const bufferCap = getRelayBufferCap(streamer.config.bitrate)
         for (const relay of streamer.relays.values()) {
             const stdin = relay.process?.stdin
             if (!stdin || stdin.destroyed) continue
 
             // dropping chunks would corrupt the bitstream, so a destination that cannot keep up is
-            // restarted instead; mpegts resyncs on the next PAT/PMT + keyframe
-            if (stdin.writableLength > RELAY_BUFFER_CAP_BYTES) {
-                console.warn(`[RtmpStreamer] Destination "${relay.destination.url}" is too slow, restarting relay`)
+            // restarted instead; flv resyncs on the next keyframe
+            if (stdin.writableLength > bufferCap) {
+                console.warn(`[RtmpStreamer] Destination "${relay.destination.url}" is too slow (buffered ${stdin.writableLength} bytes > cap ${bufferCap}), restarting relay`)
                 this.restartRelay(streamer, relay, "Destination could not keep up")
                 continue
             }
