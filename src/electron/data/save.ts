@@ -25,9 +25,7 @@ export async function save(data: SaveData) {
     // auto backup right after startup does not need to write again
     const isAutoBackupOnly = !!data.customTriggers?.backup && !!data.customTriggers?.isAutoBackup && !data.customTriggers?.autosave && !data.closeWhenFinished
     if (isAutoBackupOnly) {
-        // the renderer bumps special.autoBackupPrevious as part of this save, and that only reaches
-        // disk inside SETTINGS - skipping every store write left it stale, so the interval check
-        // fired a fresh backup on every startup
+        // write SETTINGS to disk on backup only to keep "special.autoBackupPrevious" up to date
         if (_store.SETTINGS && data.SETTINGS && isValidJSON(data.SETTINGS)) await safeStoreSet(_store.SETTINGS, data.SETTINGS, "SETTINGS")
 
         startBackup({ customTriggers: data.customTriggers }).catch((err) => console.error("Backup failed:", err))

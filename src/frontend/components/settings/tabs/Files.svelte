@@ -18,7 +18,6 @@
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialMediaPicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialFolderPicker from "../../inputs/MaterialFolderPicker.svelte"
-    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
@@ -88,9 +87,6 @@
         updater = setInterval(checkTimes, 1000)
 
         if ($cloudSyncData.enabled && $special.cloudSyncMediaFolder) mediaFolderPath = (await requestMain(Main.GET_MEDIA_FOLDER_PATH)) || ""
-
-        const backups = (await requestMain(Main.BACKUPS)) || []
-        autoBackupCount = backups.filter((a) => a.name.endsWith("_auto")).length
     })
     onDestroy(() => {
         if (updater) clearInterval(updater)
@@ -161,16 +157,9 @@
     }
 
     const infoStyle = "color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.8em;margin-left: 10px;"
-    const warningStyle = "color: var(--text);opacity: 0.6;font-weight: normal;font-size: 0.8em;margin-left: 10px;"
     $: autosaveInfo = nextAutosave ? `<span style="${infoStyle}">${joinTimeBig(nextAutosave / 1000)}<span>` : ""
     $: autoBackupInfo = nextAutobackup ? `<span style="${infoStyle}">${joinTimeBig(nextAutobackup < 0 ? 0 : nextAutobackup / 1000)}<span>` : ""
     $: autoBackup = $special.autoBackup || "weekly"
-
-    // lowering this removes the oldest auto backups, so say so before it happens
-    let autoBackupCount = 0
-    $: autoBackupKeep = Number($special.autoBackupKeep) || 10
-    $: removedCount = autoBackup === "never" ? 0 : Math.max(0, autoBackupCount - autoBackupKeep)
-    $: autoBackupKeepInfo = removedCount ? `<span style="${warningStyle}">${translateText("settings.auto_backup_keep_info", null, [String(removedCount)])}</span>` : ""
 
     async function updateDataPath(e: any) {
         if (!$saved) {
@@ -279,7 +268,6 @@
 
 <MaterialDropdown label="settings.autosave{autosaveInfo}" value={$autosave} defaultValue="15min" options={autosaveList} on:change={updateAutosave} />
 <MaterialDropdown label="settings.auto_backup{autoBackupInfo}" value={autoBackup} defaultValue="weekly" options={autobackupList} on:change={(e) => updateSpecial(e.detail, "autoBackup")} />
-<MaterialNumberInput label="settings.auto_backup_keep{autoBackupKeepInfo}" value={$special.autoBackupKeep || 10} defaultValue={10} min={1} max={100} disabled={autoBackup === "never"} on:change={(e) => updateSpecial(e.detail, "autoBackupKeep")} />
 
 <MaterialFolderPicker label="settings.data_location" value={$dataPath} on:change={updateDataPath} />
 

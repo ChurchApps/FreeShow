@@ -6,7 +6,7 @@ import type { SaveActions } from "../../types/Save"
 import type { Show, Shows } from "../../types/Show"
 import { sendMain, sendToMain } from "../IPC/main"
 import { deleteFile, deleteFolder, doesPathExist, getDataFolderPath, getFileStats, getTimePointString, loadShows, makeDir, openInSystem, readFile, readFolder, selectFilesDialog, writeFile } from "../utils/files"
-import { _store, getStore, setStore, storeFilesData } from "./store"
+import { _store, setStore, storeFilesData } from "./store"
 import { compressToZip, decompressZip } from "./zip"
 
 export async function startBackup({ customTriggers, isCloudSync }: { customTriggers?: SaveActions; isCloudSync?: boolean } = {}): Promise<{ entries?: { name: string; content?: string | Buffer; filePath?: string }[]; path?: string } | void> {
@@ -113,26 +113,39 @@ export function getBackups() {
     return backups
 }
 
-// nothing else removes old auto backups, so the folder would grow forever
-const DEFAULT_AUTO_BACKUPS_KEPT = 10
-const MIN_AUTO_BACKUPS_KEPT = 1
-const MAX_AUTO_BACKUPS_KEPT = 100
-
-export function pruneAutoBackups() {
-    const setting = Math.round(Number(getStore("SETTINGS").special?.autoBackupKeep))
-    const keep = setting > 0 ? Math.min(Math.max(setting, MIN_AUTO_BACKUPS_KEPT), MAX_AUTO_BACKUPS_KEPT) : DEFAULT_AUTO_BACKUPS_KEPT
-
-    // manual backups are never removed.
-    // names are "YYYY-MM-DD_HH-mm_auto", so sorting by name is chronological,
-    // and unlike the file date that survives copying or restoring the backups folder
-    const outdated = getBackups()
+export function pruneAutoBackups(ignoreImplementationDate = false) {
+    // sort chronologically ascending (oldest first)
+    const autoBackups = getBackups()
         .filter((a) => a.name.endsWith("_auto"))
-        .sort((a, b) => b.name.localeCompare(a.name))
-        .slice(keep)
-    if (!outdated.length) return
+        .sort((a, b) => a.date - b.date)
 
-    outdated.forEach((backup) => removeBackup(backup.path))
-    console.info(`Removed ${outdated.length} old auto backup(s), keeping the ${keep} most recent`)
+    // always keep at least 10 auto backups
+    const count = autoBackups.length
+    if (count <= 10) return
+
+    // timestamp 5 months ago
+    const fiveMonthsAgo = new Date()
+    fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5)
+    const cutoffTime = fiveMonthsAgo.getTime()
+
+    // because this system was not implemented to begin with we keep this fixed date to never auto delete anything before this system was implemented (for now)
+    const SAFETY_FLOOR_DATE = new Date("2026-03-20T00:00:00Z").getTime()
+
+    const toDelete = autoBackups.filter((backup, index) => {
+        // always keep the 3 oldest just in case
+        if (index < 3) return false
+        // always keep at least 10 auto backups
+        if (index >= count - 10) return false
+        // always keep files created before this auto delete system started
+        if (!ignoreImplementationDate && backup.date < SAFETY_FLOOR_DATE) return false
+        // always keep any newer than 5 months, otherwise mark for deletion
+        return backup.date < cutoffTime
+    })
+
+    if (!toDelete.length) return
+
+    toDelete.forEach((backup) => removeBackup(backup.path))
+    console.info(`Removed ${toDelete.length} old auto backups`)
 }
 
 export function deleteBackup(data: { path: string }) {
@@ -142,7 +155,7 @@ export function deleteBackup(data: { path: string }) {
     removeBackup(path.resolve(backupsFolder, data.path))
 }
 
-// backups are zip files, but older ones are folders
+// backups can be zip files, or folders (old)
 function removeBackup(fullPath: string) {
     const stats = getFileStats(fullPath)
     if (stats?.folder) deleteFolder(fullPath)
