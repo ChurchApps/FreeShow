@@ -946,29 +946,32 @@ const deleteActions = {
         history({ id: "UPDATE", newData: { key: "shows", data: projectItems.filter((_a, i) => !indexes.includes(i)) }, oldData: { id: projectId }, location: { page: "show", id: isTemplate ? "project_template" : "project_key" } })
     },
     layout: (data: any) => {
-        if (data.length < _show().layouts().get().length) {
-            data.forEach((id: string) => {
-                history({ id: "UPDATE", newData: { id: get(activeShow)?.id }, oldData: { key: "layouts", subkey: id }, location: { page: "show", id: "show_layout" } })
-            })
+        if (!data.length) return
 
-            // remove from active project if any
-            projects.update((a) => {
-                if (!a[get(activeProject) || ""]?.shows) return a
-
-                data.forEach((layoutId: string) => {
-                    a[get(activeProject) || ""].shows.forEach((show) => {
-                        if (show.layout !== layoutId) return
-
-                        delete show.layout
-                        delete show.layoutInfo
-                    })
-                })
-
-                return a
-            })
-        } else {
-            newToast("error.keep_one_layout")
+        // keep at least one layout
+        if (data.length === _show().layouts().get().length) {
+            data = data.slice(0, -1)
         }
+
+        data.forEach((id: string) => {
+            history({ id: "UPDATE", newData: { id: get(activeShow)?.id }, oldData: { key: "layouts", subkey: id }, location: { page: "show", id: "show_layout" } })
+        })
+
+        // remove from active project if any
+        projects.update((a) => {
+            if (!a[get(activeProject) || ""]?.shows) return a
+
+            data.forEach((layoutId: string) => {
+                a[get(activeProject) || ""].shows.forEach((show) => {
+                    if (show.layout !== layoutId) return
+
+                    delete show.layout
+                    delete show.layoutInfo
+                })
+            })
+
+            return a
+        })
     },
     video_subtitle: (data: any) => {
         const index = data.index

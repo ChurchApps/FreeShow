@@ -42,9 +42,6 @@ export class NdiSender {
     private static readonly TIMECODE_DIVISOR = BigInt(100)
 
     static timeStart = BigInt(Date.now()) * BigInt(1e6) - process.hrtime.bigint()
-    static audioSamplesSent: bigint | null = null
-    static audioTimecodeStart: bigint | null = null
-
     static NDI: {
         [key: string]: {
             name: string
@@ -56,7 +53,7 @@ export class NdiSender {
             sendingVideo?: boolean
             pendingVideoFrame?: any
             sendingAudio?: boolean
-            pendingAudioFrame?: any
+            audioQueue?: any[]
             paddedVideoBuffer?: Buffer
             paddedVideoBufferStride?: number
             paddedVideoBufferHeight?: number
@@ -64,22 +61,23 @@ export class NdiSender {
     } = {}
 
     static stopSenderNDI(id: string) {
-        if (!this.NDI[id]?.timer) return
+        const senderData = this.NDI[id]
+        if (!senderData) return
 
-        console.info("NDI - stopping sender: " + this.NDI[id].name)
-        clearInterval(this.NDI[id].timer)
+        console.info("NDI - stopping sender: " + (senderData.name || id))
+        if (senderData.timer) {
+            clearInterval(senderData.timer)
+        }
 
-        try {
-            this.NDI[id].sender.destroy()
-        } catch (err) {
-            console.error("ERROR", err)
+        if (senderData.sender) {
+            try {
+                senderData.sender.destroy()
+            } catch (err) {
+                console.error("ERROR", err)
+            }
         }
 
         delete this.NDI[id]
-        if (Object.keys(this.NDI).length === 0) {
-            this.audioSamplesSent = null
-            this.audioTimecodeStart = null
-        }
     }
 
     private static async sendQueuedVideoFrameNDI(id: string) {
@@ -108,19 +106,27 @@ export class NdiSender {
         const senderData = this.NDI[id]
         if (!senderData?.sender || senderData.sendingAudio) return
 
-        const frame = senderData.pendingAudioFrame
-        if (!frame) return
-
-        senderData.pendingAudioFrame = undefined
         senderData.sendingAudio = true
 
         try {
-            await senderData.sender.audio(frame)
+            while (senderData.audioQueue && senderData.audioQueue.length > 0) {
+                if (!this.NDI[id]?.sender) break
+
+                // Limit queue to prevent excessive memory/latency if sending is falling behind
+                if (senderData.audioQueue.length > 50) {
+                    senderData.audioQueue.splice(0, senderData.audioQueue.length - 20)
+                }
+
+                const frame = senderData.audioQueue.shift()
+                if (frame) {
+                    await senderData.sender.audio(frame)
+                }
+            }
         } catch (err) {
             console.error("Error sending NDI audio frame:", err)
         } finally {
             senderData.sendingAudio = false
-            if (senderData.pendingAudioFrame) {
+            if (this.NDI[id]?.sender && senderData.audioQueue && senderData.audioQueue.length > 0) {
                 void this.sendQueuedAudioFrameNDI(id)
             }
         }
@@ -131,7 +137,9 @@ export class NdiSender {
     }
 
     static async createSenderNDI(id: string, name = "", groups?: string) {
-        if (this.NDI[id]) return
+        if (this.NDI[id]) {
+            this.stopSenderNDI(id)
+        }
 
         this.NDI[id] = {
             name,
@@ -144,12 +152,22 @@ export class NdiSender {
             if (!grandiose) return
 
             /* eslint @typescript-eslint/await-thenable: 0 */
-            this.NDI[id].sender = await grandiose.send({
+            const sender = await grandiose.send({
                 name: this.NDI[id].name,
                 groups: this.NDI[id].groups,
                 clockVideo: false,
                 clockAudio: false
             })
+
+            // If stopSenderNDI was called while await grandiose.send was in progress
+            if (!this.NDI[id]) {
+                try {
+                    sender.destroy()
+                } catch {}
+                return
+            }
+
+            this.NDI[id].sender = sender
         } catch (err) {
             console.error("Could not create NDI sender:", err)
             delete this.NDI[id]
@@ -157,6 +175,7 @@ export class NdiSender {
         }
 
         this.NDI[id].timer = setInterval(() => {
+            if (!this.NDI[id]?.sender) return
             /*  poll NDI for connections  */
             const conns: number = this.NDI[id].sender?.connections() || 0
             this.NDI[id].status = conns > 0 ? "connected" : "unconnected"
@@ -179,7 +198,7 @@ export class NdiSender {
         const senderData = this.NDI[id]
         if (!senderData?.sender) return
 
-        const grandiose = await loadGrandiose()
+        const grandiose = grandioseModule || (await loadGrandiose())
         if (!grandiose) return
 
         // Convert buffer format for NDI
@@ -241,7 +260,7 @@ export class NdiSender {
         const senderData = this.NDI[id]
         if (!senderData?.sender || !buffer || buffer.length === 0) return
 
-        const grandiose = await loadGrandiose()
+        const grandiose = grandioseModule || (await loadGrandiose())
         if (!grandiose) return
 
         const noSamples = Math.trunc(buffer.length / (channelCount * this.BYTES_PER_FLOAT32))
@@ -256,7 +275,8 @@ export class NdiSender {
             data: buffer
         }
 
-        senderData.pendingAudioFrame = frame
+        if (!senderData.audioQueue) senderData.audioQueue = []
+        senderData.audioQueue.push(frame)
         void this.sendQueuedAudioFrameNDI(id)
     }
 
@@ -264,7 +284,7 @@ export class NdiSender {
         const hasSender = Object.values(this.NDI).some((s) => s?.sender)
         if (!hasSender || !buffer || buffer.length === 0) return
 
-        const grandiose = await loadGrandiose()
+        const grandiose = grandioseModule || (await loadGrandiose())
         if (!grandiose) return
 
         const noSamples = Math.trunc(buffer.length / (channelCount * this.BYTES_PER_FLOAT32))
@@ -283,8 +303,8 @@ export class NdiSender {
             const senderData = this.NDI[id]
             if (!senderData?.sender) return
 
-            // Clone frame object to prevent frame state collisions across multiple senders
-            senderData.pendingAudioFrame = { ...frame }
+            if (!senderData.audioQueue) senderData.audioQueue = []
+            senderData.audioQueue.push({ ...frame })
             void this.sendQueuedAudioFrameNDI(id)
         })
     }

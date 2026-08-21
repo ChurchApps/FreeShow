@@ -60,7 +60,10 @@ export class AudioSender {
             return
         }
 
-        if (!this.shouldBeActive()) return
+        if (!this.shouldBeActive()) {
+            this.deactivate()
+            return
+        }
         if (ac.state === "suspended") ac.resume().catch(() => {})
 
         this.isActive = true
@@ -120,38 +123,41 @@ export class AudioSender {
     }
 
     private static createProcessor(ac: AudioContext, targetId: string): AudioNode {
-        if (this.registeredContexts.has(ac) && ac.audioWorklet) {
-            const node = new AudioWorkletNode(ac, "pcm-sender-processor")
-
-            // request Main process to create a MessageChannelMain and send port2 back
-            const portResponseHandler = (ev: MessageEvent) => {
-                if (ev.data?.type === "AUDIO_PORT_RESPONSE" && ev.data?.targetId === targetId && ev.ports?.[0]) {
-                    window.removeEventListener("message", portResponseHandler)
-                    if (!(node as any)._destroyed) {
-                        node.port.postMessage(
-                            {
-                                type: "INIT_PORT",
-                                targetId,
-                                sampleRate: ac.sampleRate,
-                                icecastConfig: this.getIcecastConfig(targetId)
-                            },
-                            [ev.ports[0]]
-                        )
-                    }
-                }
-            }
-            window.addEventListener("message", portResponseHandler)
-            ;(node as any)._cleanupListener = () => window.removeEventListener("message", portResponseHandler)
-
-            send(AUDIO, ["INIT_PORT"], { id: targetId })
-
-            return node
+        if (!this.registeredContexts.has(ac) || !ac.audioWorklet) {
+            return this.createFallbackProcessor(ac, targetId)
         }
 
-        // Fallback ScriptProcessor
-        const FRAME_SIZE = 960
-        const bufL = new Float32Array(FRAME_SIZE)
-        const bufR = new Float32Array(FRAME_SIZE)
+        const node = new AudioWorkletNode(ac, "pcm-sender-processor")
+
+        // request Main process to create a MessageChannelMain and send port2 back
+        const portResponseHandler = (ev: MessageEvent) => {
+            if (ev.data?.type === "AUDIO_PORT_RESPONSE" && ev.data?.targetId === targetId && ev.ports?.[0]) {
+                window.removeEventListener("message", portResponseHandler)
+                if (!(node as any)._destroyed) {
+                    node.port.postMessage(
+                        {
+                            type: "INIT_PORT",
+                            targetId,
+                            sampleRate: ac.sampleRate,
+                            icecastConfig: this.getIcecastConfig(targetId)
+                        },
+                        [ev.ports[0]]
+                    )
+                }
+            }
+        }
+        window.addEventListener("message", portResponseHandler)
+        ;(node as any)._cleanupListener = () => window.removeEventListener("message", portResponseHandler)
+
+        send(AUDIO, ["INIT_PORT"], { id: targetId })
+
+        return node
+    }
+
+    private static createFallbackProcessor(ac: AudioContext, targetId: string): AudioNode {
+        const frameSize = Math.max(128, Math.round(ac.sampleRate * 0.02))
+        const bufL = new Float32Array(frameSize)
+        const bufR = new Float32Array(frameSize)
         let offset = 0
         const processor = ac.createScriptProcessor(2048, 2, 2)
         processor.onaudioprocess = (ev) => {
@@ -166,10 +172,10 @@ export class AudioSender {
                 bufR[offset] = right ? right[i] : 0.0
                 offset++
 
-                if (offset >= FRAME_SIZE) {
-                    const planar = new Float32Array(FRAME_SIZE * 2)
+                if (offset >= frameSize) {
+                    const planar = new Float32Array(frameSize * 2)
                     planar.set(bufL, 0)
-                    planar.set(bufR, FRAME_SIZE)
+                    planar.set(bufR, frameSize)
 
                     this.sendBuffer(targetId, ac.sampleRate, new Uint8Array(planar.buffer))
                     offset = 0
@@ -182,13 +188,14 @@ export class AudioSender {
     private static getIcecastConfig(targetId: string) {
         const spec = get(special)
         const isIcecast = targetId === "icecast"
+        const icecast = spec?.icecast || {}
         return isIcecast
             ? {
-                  enabled: true,
-                  host: spec.icecastHost,
-                  port: spec.icecastPort,
-                  mount: spec.icecastMount,
-                  password: spec.icecastPassword ?? "hackme"
+                  enabled: icecast.enabled ?? true,
+                  host: icecast.host || "localhost",
+                  port: icecast.port ?? 8000,
+                  mount: icecast.mount || "/stream.opus",
+                  password: icecast.password ?? "hackme"
               }
             : undefined
     }
@@ -202,7 +209,8 @@ export class AudioSender {
         const targets = new Set<string>()
 
         const connections = get(audioRouting)?.connections || []
-        if (connections.some((c) => c.to === "icecast")) {
+        const isIcecastEnabled = get(special)?.icecast?.enabled ?? true
+        if (isIcecastEnabled && connections.some((c) => c.to === "icecast")) {
             targets.add("icecast")
         }
 
@@ -230,6 +238,9 @@ export class AudioSender {
             }
 
             if ("port" in proc && (proc as any).port) {
+                try {
+                    ;(proc as any).port.postMessage({ type: "DESTROY" })
+                } catch {}
                 ;(proc as any).port.onmessage = null
                 ;(proc as any).port.close()
             }
@@ -246,6 +257,7 @@ export class AudioSender {
         } catch {}
 
         this.processors.delete(targetId)
+        send(AUDIO, ["CLOSE_PORT"], { id: targetId })
     }
 
     static resetTarget(targetId: string, ac: AudioContext, getDestinationNode: (targetId: string) => AudioNode) {
@@ -272,7 +284,8 @@ export class AudioSender {
         if (this.sendOutputShowAudio()) return true
 
         const connections = get(audioRouting)?.connections || []
-        if (connections.some((c) => c.to.includes("icecast"))) return true
+        const isIcecastEnabled = get(special)?.icecast?.enabled ?? true
+        if (isIcecastEnabled && connections.some((c) => c.to.includes("icecast"))) return true
 
         const outputList = keysToID(get(outputs) || {}).filter(Boolean)
         return outputList.some((a) => a?.enabled && (a.ndi || a.blackmagic || a.webrtcData?.streaming || a.rtmpData?.streaming))

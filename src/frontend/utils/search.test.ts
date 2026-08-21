@@ -71,8 +71,8 @@ describe("showSearchFilter", () => {
     it("scores an exact title match 100", () => {
         expect(showSearchFilter("Amazing Grace", shows[0])).toBe(100)
     })
-    it("scores a title starts-with match 100", () => {
-        expect(showSearchFilter("amaz", shows[0])).toBe(100)
+    it("scores a title starts-with match dynamically below 100", () => {
+        expect(showSearchFilter("amaz", shows[0])).toBe(85)
     })
     it("scores a song-number exact match 100", () => {
         expect(showSearchFilter("mp133", shows[3])).toBe(100)
@@ -93,42 +93,74 @@ describe("showSearchFilter", () => {
     })
     it("only matches words at word starts — 'here' never matches \"There's\"", () => {
         expect(showSearchFilter("here", { id: "nothingbetter", name: "There's Nothing Better" } as any)).toBe(0)
-        expect(showSearchFilter("here", { id: "anointinghere", name: "There's An Anointing Here" } as any)).toBe(80)
+        expect(showSearchFilter("here", { id: "anointinghere", name: "There's An Anointing Here" } as any)).toBe(84)
     })
     it("matches partially typed words at word starts (type-ahead)", () => {
-        expect(showSearchFilter("amaz grac", shows[0])).toBe(90)
+        expect(showSearchFilter("amaz grac", shows[0])).toBe(89)
+    })
+    it("ranks exact title at 100, whole-word prefix at 92, and partial-word prefix at 86", () => {
+        const songList = [
+            { id: "exact", name: "Grace" },
+            { id: "alone", name: "Grace Alone" },
+            { id: "graceful", name: "Graceful" }
+        ] as any
+        const res = showSearch("grace", songList)
+        expect(res[0].id).toBe("exact")
+        expect(res[0].match).toBe(100)
+        expect(res[1].id).toBe("alone")
+        expect(res[1].match).toBe(92)
+        expect(res[2].id).toBe("graceful")
+        expect(res[2].match).toBe(86)
     })
 })
 
 describe("absolute confidence bands", () => {
     beforeEach(() => h.textCache._set({}))
 
-    it("scores all words in the title, adjacent and in order, 90", () => {
-        expect(showSearchFilter("anointing here", { id: "a", name: "There's An Anointing Here" } as any)).toBe(90)
+    it("scores all words in the title, adjacent and in order, 89", () => {
+        expect(showSearchFilter("anointing here", { id: "a", name: "There's An Anointing Here" } as any)).toBe(89)
     })
-    it("scores all words in the title, scattered/reversed, 75", () => {
-        expect(showSearchFilter("grace amazing", shows[0])).toBe(75)
+    it("scores all words in the title, scattered/reversed, 86", () => {
+        expect(showSearchFilter("grace amazing", shows[0])).toBe(86)
     })
-    it("scores a single word in the title 80", () => {
-        expect(showSearchFilter("grace", shows[0])).toBe(80)
+    it("scores a single word in the title 85", () => {
+        expect(showSearchFilter("grace", shows[0])).toBe(85)
     })
-    it("scores words split between title and content 55-75", () => {
+    it("scores words split between title and content 55-78", () => {
         h.textCache._set({ aida: "the anointing is here today" })
         const score = showSearchFilter("anointing here", { id: "aida", name: "The Anointing - AIDA" } as any)
         expect(score).toBeGreaterThanOrEqual(55)
-        expect(score).toBeLessThanOrEqual(75)
+        expect(score).toBeLessThanOrEqual(78)
     })
-    it("scores content-only matches 40-60 (at or above the create-hint threshold)", () => {
+    it("scores content-only matches 35-60 (at or above the create-hint threshold)", () => {
         h.textCache._set({ great: "thou my everlasting portion more than friend or life to me" })
         const score = showSearchFilter("everlasting portion", shows[2])
-        expect(score).toBe(55) // 40 + full adjacency 10 + phrase bonus 5
-        expect(score).toBeGreaterThanOrEqual(40)
+        expect(score).toBe(53) // 35 + full adjacency 10 + decayed phrase bonus 4 + decayed word bonus 3.5 = 52.5 -> 53
+        expect(score).toBeGreaterThanOrEqual(35)
+        expect(score).toBeLessThanOrEqual(60)
+    })
+    it("applies exponential decay diminishing returns to repeated lyric matches", () => {
+        h.textCache._set({
+            once: "amazing grace how sweet the sound",
+            twice: "amazing grace how sweet the sound, amazing grace",
+            thrice: "amazing grace how sweet the sound, amazing grace, amazing grace"
+        })
+        const score1 = showSearchFilter("amazing grace", { id: "once", name: "Song A" } as any)
+        const score2 = showSearchFilter("amazing grace", { id: "twice", name: "Song B" } as any)
+        const score3 = showSearchFilter("amazing grace", { id: "thrice", name: "Song C" } as any)
+
+        expect(score1).toBeGreaterThanOrEqual(35)
+        expect(score2).toBeGreaterThan(score1)
+        expect(score3).toBeGreaterThan(score2)
+        // Check diminishing returns: difference from 1->2 is larger than or equal to 2->3
+        expect(score2 - score1).toBeGreaterThanOrEqual(score3 - score2)
+        expect(score3).toBeLessThanOrEqual(60)
     })
     it("keeps absolute scores in showSearch results (no renormalizing to the top hit)", () => {
         const res = showSearch("grace", shows)
-        expect(res[0].id).toBe("gracealone") // starts-with -> 100
-        expect(res[0].match).toBe(100)
-        expect(res.find((r) => r.id === "amazing")?.match).toBe(80) // absolute, not scaled up
+        expect(res[0].id).toBe("gracealone") // starts with "Grace" -> 92
+        expect(res[0].match).toBe(92)
+        expect(res.find((r) => r.id === "amazing")?.match).toBe(85) // absolute, not scaled up
     })
 })
 
@@ -170,8 +202,8 @@ describe("showSearch ranking", () => {
             { id: "aida", name: "The Anointing - AIDA" }
         ] as any)
         expect(ids(res)).toEqual(["anointinghere", "aida"])
-        expect(res[0].match).toBe(90)
-        expect(res[1].match).toBeLessThan(90)
+        expect(res[0].match).toBe(89)
+        expect(res[1].match).toBeLessThan(89)
     })
     it("does not flood results with unrelated shows (fuzzy similarity alone never matches)", () => {
         // regression: similarity() is non-zero for unrelated text; it must not include non-matching shows
@@ -181,7 +213,7 @@ describe("showSearch ranking", () => {
     it("still matches a close typo via fuzzy title similarity", () => {
         const res = showSearch("amzinggrace", shows)
         expect(res[0]?.id).toBe("amazing")
-        expect(res[0]?.match).toBeGreaterThanOrEqual(60) // typo band 60-85
+        expect(res[0]?.match).toBeGreaterThanOrEqual(65) // typo band 65-85
         expect(res[0]?.match).toBeLessThanOrEqual(85)
     })
 })

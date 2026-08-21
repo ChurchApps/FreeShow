@@ -62,6 +62,11 @@ export const receiver = {
 
         let outputId = data?.id
         if (outputId) send("REQUEST_PROGRESS", { outputId })
+
+        const slideId = data?.out?.slide?.id
+        if (slideId && slideId !== "temp" && !_get("showsCache")?.[slideId]) {
+            send("SHOW_DATA", { id: slideId })
+        }
     },
     OUT_SLIDE_CACHE: (data: any) => outputSlideCache.set(data),
     BACKGROUND: (data: any) => _set("background", data),

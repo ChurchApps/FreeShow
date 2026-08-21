@@ -1,18 +1,42 @@
 import { MessageChannelMain } from "electron"
 import type { Message } from "../../types/Socket"
+import { IcecastSender } from "./IcecastSender"
 import { processAudio } from "./processAudio"
 
 let latestIcecastConfig: any = null
-const activeAudioPorts = new Set<any>()
+const activeAudioPortsByTarget = new Map<string, any>()
 
 export function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
     const data = msg.data
 
     if (msg.channel === "RESET_DECODER") return
 
+    if (msg.channel === "CLOSE_PORT") {
+        const targetIdKey = data?.id ? String(data.id) : "default"
+        const existingPort = activeAudioPortsByTarget.get(targetIdKey)
+        if (existingPort) {
+            try {
+                existingPort.close()
+            } catch {}
+            activeAudioPortsByTarget.delete(targetIdKey)
+        }
+
+        if (targetIdKey === "icecast") IcecastSender.disconnect()
+        return
+    }
+
     if (msg.channel === "INIT_PORT") {
+        const targetIdKey = data?.id ? String(data.id) : "default"
+        const existingPort = activeAudioPortsByTarget.get(targetIdKey)
+        if (existingPort) {
+            try {
+                existingPort.close()
+            } catch {}
+            activeAudioPortsByTarget.delete(targetIdKey)
+        }
+
         const { port1, port2 } = new MessageChannelMain()
-        activeAudioPorts.add(port1)
+        activeAudioPortsByTarget.set(targetIdKey, port1)
 
         port1.on("message", (msgEvent) => {
             const { channel, payload } = msgEvent.data || {}
@@ -28,7 +52,11 @@ export function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
         })
 
         port1.on("close", () => {
-            activeAudioPorts.delete(port1)
+            if (activeAudioPortsByTarget.get(targetIdKey) === port1) {
+                activeAudioPortsByTarget.delete(targetIdKey)
+            }
+
+            if (targetIdKey === "icecast") IcecastSender.disconnect()
         })
 
         port1.start()

@@ -3,10 +3,11 @@ import { get } from "svelte/store"
 import { STAGE } from "../../../types/Channels"
 import type { History } from "../../../types/History"
 import type { DropData, Selected, Variable } from "../../../types/Main"
+import { isChannelRecording, startChannelRecording, stopAllChannelRecordings, stopChannelRecording, toggleChannelRecording } from "../../audio/audioChannelRecorder"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioPlaylists, audioRouting, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -27,7 +28,7 @@ import { resolveScriptureReference } from "../drawer/bible/scripture"
 import { clearBackground, clearSlide } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
-import type { API_add_to_project, API_create_project, API_disable_slide, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_toggle_specific, API_variable } from "./api"
+import type { API_add_to_project, API_create_project, API_disable_slide, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_toggle_id, API_toggle_specific, API_variable } from "./api"
 
 export function selectShowById(id: string) {
     if (typeof id !== "string" || !id) return
@@ -564,7 +565,8 @@ export async function getPlainText(showId: string) {
     return { id: showId, value: getPlainEditorText(showId) } as API_id_value
 }
 
-export function getShowGroups(id: string) {
+export async function getShowGroups(id: string) {
+    await loadShows([id])
     return { id, value: getSlideGroups(id) }
 }
 
@@ -855,6 +857,39 @@ export function timerSeekAdd(data: API_seek) {
             a[index].currentTime = (a[index].currentTime || 0) + time
             delete a[index].startTime
         }
+        return a
+    })
+}
+
+// AUDIO
+
+export function toggleAudioRecording(data: API_toggle_id = {}) {
+    if ((data.value as any) === "false") data.value = false
+    if ((data.value as any) === "true") data.value = true
+
+    const channelId = data.id || "main"
+    const channelName = get(audioRouting)?.channels?.find((c) => c.id === channelId)?.name
+    const isRecording = isChannelRecording(channelId)
+
+    if (data.value === true) {
+        if (!isRecording) startChannelRecording(channelId, channelName)
+    } else if (data.value === false) {
+        if (isRecording) stopChannelRecording(channelId)
+        else stopAllChannelRecordings()
+    } else {
+        toggleChannelRecording(channelId, channelName)
+    }
+}
+
+export function toggleIcecast(data: API_toggle_specific = {}) {
+    if ((data.value as any) === "false") data.value = false
+    if ((data.value as any) === "true") data.value = true
+
+    const current = get(special).icecast?.enabled ?? true
+    const newValue = data.value !== undefined ? !!data.value : !current
+    special.update((a) => {
+        if (!a.icecast) a.icecast = {}
+        a.icecast.enabled = newValue
         return a
     })
 }

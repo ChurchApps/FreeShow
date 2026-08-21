@@ -2182,7 +2182,7 @@ export async function removeSlide(initialData: any[], type: "delete" | "remove" 
 
     if (type === "delete") {
         const selectedInDifferentLayout = checkIfAddedToDifferentLayout(ref, data)
-        const prompt = translateText("confirm.statement_slide_exists_layout confirm.question_delete")
+        const prompt = translateText("confirm.statement_slide_exists_arrangement confirm.question_delete")
         if (selectedInDifferentLayout && !(await confirmCustom(prompt))) return
     }
 

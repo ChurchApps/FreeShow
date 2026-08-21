@@ -79,7 +79,7 @@
         ...Object.keys(API_ACTIONS)
             .map((id) => {
                 let data = actionData[id] || {}
-                let name = translateText(data.name || "") || id
+                let name = translateText(data.name || "", null, data.replace) || id
                 let icon = data.icon || "actions"
                 let common = !!data.common
 

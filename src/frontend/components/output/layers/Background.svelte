@@ -72,6 +72,17 @@
             return
         }
 
+        // Online player videos (YouTube/Vimeo) should not have dual overlapping iframes during transitions
+        const isPlayer = newData?.type === "player" || background1?.type === "player" || background2?.type === "player"
+        if (isPlayer) {
+            background1 = newData
+            background2 = null
+            transition1 = clone(transition)
+            firstActive = true
+            loading = false
+            return
+        }
+
         timeout = setTimeout(
             () => {
                 loading = true

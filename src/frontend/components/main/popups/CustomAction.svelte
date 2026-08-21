@@ -1,6 +1,8 @@
 <script lang="ts">
-    import { actions, activeShow, showsCache } from "../../../stores"
+    import { actions, activePopup, activeShow, popupData, showsCache } from "../../../stores"
     import { _show } from "../../helpers/shows"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import Tip from "../Tip.svelte"
 
@@ -20,8 +22,18 @@
 
         currentAction = id
     }
+
+    function editAction() {
+        popupData.set({ id: currentAction })
+        activePopup.set("action")
+    }
 </script>
 
 <Tip type="info" value="show.custom_action_tip" bottom={20} />
 
-<MaterialDropdown label="midi.start_action" options={actionOptions.map((a) => ({ label: a.name, value: a.id }))} value={currentAction} allowEmpty on:change={(e) => updateValue(e.detail)} />
+<InputRow>
+    <MaterialDropdown label="midi.start_action" options={actionOptions.map((a) => ({ label: a.name, value: a.id }))} value={currentAction} allowEmpty on:change={(e) => updateValue(e.detail)} />
+    {#if currentAction && $actions[currentAction]}
+        <MaterialButton title="titlebar.edit" icon="edit" on:click={editAction} />
+    {/if}
+</InputRow>

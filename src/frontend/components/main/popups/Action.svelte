@@ -212,7 +212,7 @@
 
         // auto name (if empty or not changed by user)
         if ((action.name || "") === autoActionName && action.triggers.length === 1) {
-            autoActionName = translateText(actionData[e.detail.id]?.name || "") || e.detail.id
+            autoActionName = translateText(actionData[e.detail.id]?.name || "", null, actionData[e.detail.id]?.replace || []) || e.detail.id
             if (autoActionName) action.name = autoActionName
         }
 

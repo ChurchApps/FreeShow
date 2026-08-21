@@ -91,7 +91,7 @@
     {/if}
 
     <FloatingInputs onlyOne>
-        <MaterialButton disabled={readOnly} icon="add" title="new.slide" on:click={addSlide}>
+        <MaterialButton disabled={readOnly} icon="add" title="show.new_layout" on:click={addSlide}>
             {#if !$labelsDisabled}<T id="show.new_layout" />{/if}
         </MaterialButton>
     </FloatingInputs>

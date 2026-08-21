@@ -1,6 +1,7 @@
 import express from "express"
 import http from "http"
 import OSC from "osc-js"
+import "./oscPatch"
 import { Server, type Socket } from "socket.io"
 import { uid } from "uid"
 import { ToMain } from "../../types/IPC/ToMain"
