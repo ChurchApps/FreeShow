@@ -63,6 +63,8 @@ export class AudioRoutingManager {
     private mergerEffectChains = new Map<string, { input: AudioNode; output: AudioNode; dispose: () => void; configHash: string }>()
     private destinationNodes = new Map<string, AudioNode>()
     private inputNodes = new Map<string, Set<AudioNode>>()
+    private channelRecorderDestinations = new Map<string, MediaStreamAudioDestinationNode>()
+    private channelOutputNodes = new Map<string, AudioNode>()
 
     private speakerSinks = new Map<string, SpeakerSink>()
     private speakerSubStreams = new Map<string, SpeakerSubStream>()
@@ -310,6 +312,7 @@ export class AudioRoutingManager {
 
                 this.mergerNodes.delete(id)
                 this.channelDelayNodes.delete(id)
+                this.channelOutputNodes.delete(id)
             }
         })
 
@@ -379,7 +382,18 @@ export class AudioRoutingManager {
                 outNode = delayNode
             }
 
+            this.channelOutputNodes.set(id, outNode)
+
             AudioInputCapture.getInstance().captureInput(id, outNode)
+
+            const recDest = this.channelRecorderDestinations.get(id)
+            if (recDest) {
+                try {
+                    outNode.connect(recDest)
+                } catch (e) {
+                    console.error(`[AudioRoutingManager] Could not connect outNode to channel recorder for ${id}:`, e)
+                }
+            }
 
             const conns = connectionsByFrom.get(id) || []
 
@@ -572,6 +586,34 @@ export class AudioRoutingManager {
         if (nodes.size === 0) {
             this.inputNodes.delete(inputId)
         }
+    }
+
+    public registerChannelRecorder(channelId: string, dest: MediaStreamAudioDestinationNode) {
+        this.channelRecorderDestinations.set(channelId, dest)
+        const outNode = this.getChannelOutputNode(channelId)
+        if (outNode) {
+            try {
+                outNode.connect(dest)
+            } catch {}
+        }
+    }
+
+    public unregisterChannelRecorder(channelId: string, dest?: MediaStreamAudioDestinationNode) {
+        const current = this.channelRecorderDestinations.get(channelId)
+        if (!current) return
+        if (!dest || current === dest) {
+            try {
+                const outNode = this.getChannelOutputNode(channelId)
+                if (outNode) {
+                    outNode.disconnect(current)
+                }
+            } catch {}
+            this.channelRecorderDestinations.delete(channelId)
+        }
+    }
+
+    public getChannelOutputNode(channelId: string): AudioNode | null {
+        return this.channelOutputNodes.get(channelId) || this.mergerNodes.get(channelId) || null
     }
 
     public static sortChannels(config: AudioRoutingConfig): AudioRoutingConfig {

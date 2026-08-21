@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { toggleChannelRecording } from "../../../audio/audioChannelRecorder"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { activeAudioEffects, audioChannelsData } from "../../../stores"
     import { dbToGain, gainToDb, gainToSlider, MIN_DB, sliderToGain } from "../../../audio/dBUtils"
+    import { activeAudioEffects, audioChannelsData, recordingChannels } from "../../../stores"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import Slider from "../../inputs/Slider.svelte"
@@ -44,6 +45,8 @@
     $: sliderPosition = gainToSlider(volumeValue)
     $: dbValue = Math.max(MIN_DB, Math.min(6, gainToDb(volumeValue)))
     $: muted = !!channelData.isMuted
+
+    $: isRecording = !!$recordingChannels[channelId]
 </script>
 
 <section>
@@ -62,6 +65,8 @@
         </div>
 
         <MaterialButton variant="outlined" style="padding: 8px;" icon={muted ? "muted" : "volume"} title="actions.{muted ? 'unmute' : 'mute'}" red={muted} on:click={() => updateData("isMuted", !muted)} />
+
+        <MaterialButton variant="outlined" style="padding: 8px;" icon={isRecording ? "stop" : "record"} title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" red={isRecording} on:click={() => toggleChannelRecording(channelId, label)} />
 
         <MaterialButton variant="outlined" style="padding: 8px;" icon="equalizer" title="tabs.effects" on:click={() => activeAudioEffects.set(channelId)} />
     </div>
