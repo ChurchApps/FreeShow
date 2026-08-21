@@ -152,9 +152,9 @@ export class AudioSender {
     }
 
     private static createFallbackProcessor(ac: AudioContext, targetId: string): AudioNode {
-        const FRAME_SIZE = 960
-        const bufL = new Float32Array(FRAME_SIZE)
-        const bufR = new Float32Array(FRAME_SIZE)
+        const frameSize = Math.max(128, Math.round(ac.sampleRate * 0.02))
+        const bufL = new Float32Array(frameSize)
+        const bufR = new Float32Array(frameSize)
         let offset = 0
         const processor = ac.createScriptProcessor(2048, 2, 2)
         processor.onaudioprocess = (ev) => {
@@ -169,10 +169,10 @@ export class AudioSender {
                 bufR[offset] = right ? right[i] : 0.0
                 offset++
 
-                if (offset >= FRAME_SIZE) {
-                    const planar = new Float32Array(FRAME_SIZE * 2)
+                if (offset >= frameSize) {
+                    const planar = new Float32Array(frameSize * 2)
                     planar.set(bufL, 0)
-                    planar.set(bufR, FRAME_SIZE)
+                    planar.set(bufR, frameSize)
 
                     this.sendBuffer(targetId, ac.sampleRate, new Uint8Array(planar.buffer))
                     offset = 0
