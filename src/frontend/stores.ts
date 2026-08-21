@@ -124,6 +124,7 @@ export const activePlaylist: Writable<any> = writable(null)
 export const playingMetronome: Writable<boolean> = writable(false)
 export const visualizerData: Writable<any> = writable(null)
 export const isFadingOut: Writable<any> = writable(false)
+export const recordingChannels: Writable<{ [channelId: string]: boolean }> = writable({})
 
 // DRAW
 export const drawTool: Writable<DrawTools> = writable("focus")

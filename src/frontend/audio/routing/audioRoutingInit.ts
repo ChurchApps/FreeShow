@@ -88,6 +88,24 @@ export async function resetAudioRouting() {
     }
 }
 
+// make sure at least one "active" output is connected to the main channel when creating a new output
+export function checkPrimaryOutputRouting() {
+    const outputsList = getAllOutputs()
+    const primaryOutputs = outputsList.filter((out) => out.enabled && !out.ndi && !out.webrtc && !out.rtmp && !out.stageOutput)
+    const outputInputs = primaryOutputs.map((out) => `output_win_sub_${out.id}`)
+    if (!outputInputs.length) return
+
+    const connections = get(audioRouting)?.connections || []
+    const hasMainConnection = connections.some((c) => outputInputs.includes(c.from) && c.to === "main")
+    if (hasMainConnection) return
+
+    audioRouting.update((a) => {
+        if (!a) return a
+        a.connections.push({ from: outputInputs[0], to: "main" })
+        return a
+    })
+}
+
 export function createOutputAudioChannel(outputId: string) {
     const output = get(outputs)[outputId]
     if (!output) return

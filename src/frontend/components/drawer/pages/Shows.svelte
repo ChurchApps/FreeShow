@@ -84,8 +84,8 @@
             filteredShows = showSearch(formattedSearch, filterByTags(filteredStored, $activeTagFilter))
             firstMatch = filteredShows[0] || null
 
-            // if nothing (fully) matches
-            if (active === "all" && !showLoading && searchValue.length > 5 && (firstMatch?.match || 0) < 40) {
+            // if nothing matches (or match confidence is very low on long search)
+            if (!showLoading && (!filteredShows.length || (active === "all" && searchValue.length > 5 && (firstMatch?.match || 0) < 48))) {
                 firstMatch = "SEARCH_CREATE"
                 createFromSearch = true
             } else {
@@ -261,7 +261,7 @@
                 <VirtualList items={filteredShows} let:item={show} activeIndex={searchValue.length ? -1 : filteredShows.findIndex((a) => a.id === $activeShow?.id)}>
                     <SelectElem id="show_drawer" data={{ id: show.id }} shiftRange={filteredShows} draggable>
                         {#if searchValue.length <= 1 || show.match}
-                            <ShowButton id={show.id} {show} data={dateToString(show.timestamps?.[sortType.replace("_old", "")] || show.timestamps?.modified || show.timestamps?.created || "", true)} class="#drawer_show_button" match={show.match || null} isFirst={firstMatch?.id === show.id && activeIsSearch} />
+                            <ShowButton id={show.id} {show} data={dateToString(show.timestamps?.[sortType.replace("_old", "")] || show.timestamps?.modified || show.timestamps?.created || "", true)} class="#drawer_show_button" match={show.match || null} {searchValue} isFirst={firstMatch?.id === show.id && activeIsSearch} />
                         {/if}
                     </SelectElem>
                 </VirtualList>

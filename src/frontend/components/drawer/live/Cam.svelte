@@ -49,8 +49,11 @@
 
         error = ""
 
-        const cameraStream = await cameraManager.getCameraStream(cam.id, cam.group, { preview: true })
-        if (isDestroyed) return
+        const cameraStream = await cameraManager.getCameraStream(cam.id, cam.group)
+        if (isDestroyed) {
+            if (typeof cameraStream !== "string") cameraManager.stopTracks(cameraStream)
+            return
+        }
 
         if (typeof cameraStream === "string") {
             error = cameraStream
@@ -64,6 +67,9 @@
             videoElem.srcObject = cameraStream
             loaded = true
             videoElem.play()
+
+            // pause preview after initial frame load
+            if (!item) setTimeout(() => videoElem?.pause(), 3000)
         }
     }
 
@@ -135,7 +141,19 @@
         </video>
     {/if}
 {:else}
-    <Card class="context #camera_card" {loaded} outlineColor={findMatchingOut(cam.id, $outputs)} active={findMatchingOut(cam.id, $outputs) !== null} on:click={click} label={cam.name} icon="camera" white={!cam.id.includes("cam")} {showPlayOnHover}>
+    <Card
+        class="context #camera_card"
+        {loaded}
+        outlineColor={findMatchingOut(cam.id, $outputs)}
+        active={findMatchingOut(cam.id, $outputs) !== null}
+        on:click={click}
+        on:mouseenter={() => videoElem?.play()}
+        on:mouseleave={() => videoElem?.pause()}
+        label={cam.name}
+        icon="camera"
+        white={!cam.id.includes("cam")}
+        {showPlayOnHover}
+    >
         <SelectElem id="camera" data={{ id: cam.id, type: "camera", name: cam.name, cameraGroup: cam.group }} draggable>
             <!-- icons -->
             <div class="icons">

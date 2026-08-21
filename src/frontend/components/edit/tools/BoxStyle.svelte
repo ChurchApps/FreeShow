@@ -492,7 +492,8 @@
         allItems = allItems.filter((index) => (allSlideItems[index]?.type || "text") === currentType)
 
         // font size on a partial selection is invisible while auto size is enabled, so disable auto size first
-        if (id === "text" && input.id === "style" && input.key === "font-size" && input.name !== "font_size" && (item?.auto || (item?.textFit || "none") !== "none") && isPartialTextSelection()) {
+        const hasScriptureNumber = item?.lines?.some((line) => line.text?.some((t) => /scripture(?:\d+)?_number/.test(t.value || "")))
+        if (id === "text" && input.id === "style" && input.key === "font-size" && input.name !== "font_size" && (item?.auto || (item?.textFit || "none") !== "none") && isPartialTextSelection() && !hasScriptureNumber) {
             disableAutoSize(allItems)
             newToast("toast.autosize_disabled")
         }

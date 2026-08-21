@@ -57,40 +57,39 @@ export class OutputVisibility {
         }
     }
 
-    static resolveOutputBounds(output: Partial<Output> & { bounds: Rectangle; boundsLocked?: boolean }, autoPosition = false): Rectangle {
+    static resolveOutputBounds(output: Partial<Output> & { bounds: Rectangle; boundsLocked?: boolean; screen?: string | null }, autoPosition = false): Rectangle {
         const displays = screen.getAllDisplays()
         const primaryBounds = displays.length ? displays[0].bounds : { x: 0, y: 0, width: 1920, height: 1080 }
-        const hasValidBounds = !!(output.bounds && output.bounds.width && output.bounds.height)
+        const hasValidBounds = !!(output.bounds?.width && output.bounds?.height)
+        const outputBounds = hasValidBounds ? output.bounds : primaryBounds
+
+        // position at any existing target display
+        if (displays.length > 0 && output.screen) {
+            const targetDisplay = displays.find((d) => d.id.toString() === output.screen)
+            if (targetDisplay) return { ...targetDisplay.bounds }
+        }
 
         // never auto position locked bounds
-        if (output.boundsLocked && hasValidBounds) return output.bounds
+        if (output.boundsLocked) return outputBounds
 
-        if (displays.length > 0) {
-            // 1. Check screen ID first (if screen position/offset has moved, follow the target screen)
-            if (output.screen) {
-                const targetDisplay = displays.find((d) => d.id.toString() === output.screen)
-                if (targetDisplay) return { ...targetDisplay.bounds }
-            }
+        // preserve valid input pos if already on an active display
+        if (displays.length > 0 && hasValidBounds && output.bounds) {
+            const isCenterOnDisplay = displays.some((d) => {
+                const centerX = output.bounds!.x + output.bounds!.width / 2
+                const centerY = output.bounds!.y + output.bounds!.height / 2
+                return centerX >= d.bounds.x && centerX < d.bounds.x + d.bounds.width && centerY >= d.bounds.y && centerY < d.bounds.y + d.bounds.height
+            })
 
-            // 2. If screen ID was not found, check if saved bounds center is currently on an active display
-            if (hasValidBounds) {
-                const isCenterOnDisplay = displays.some((d) => {
-                    const centerX = output.bounds.x + output.bounds.width / 2
-                    const centerY = output.bounds.y + output.bounds.height / 2
-                    return centerX >= d.bounds.x && centerX < d.bounds.x + d.bounds.width && centerY >= d.bounds.y && centerY < d.bounds.y + d.bounds.height
-                })
-
-                if (isCenterOnDisplay) return output.bounds
-            }
+            if (isCenterOnDisplay) return output.bounds
         }
 
-        // 3. Fallback to second display auto positioning if requested or if bounds are undefined
+        // fallback to second display auto positioning if not locked and autoPosition requested or bounds are undefined
         // (not on macOS due to window detection quirks)
-        if ((autoPosition || !hasValidBounds) && displays.length > 0 && process.platform !== "darwin") {
-            return this.getSecondDisplay(output.bounds || primaryBounds)
+        if ((autoPosition || !hasValidBounds) && displays.length > 1 && process.platform !== "darwin") {
+            return this.getSecondDisplay(outputBounds)
         }
 
-        return hasValidBounds ? output.bounds : primaryBounds
+        return outputBounds
     }
 
     static getSecondDisplay(bounds: Rectangle) {

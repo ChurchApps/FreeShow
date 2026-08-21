@@ -47,11 +47,13 @@
     $: if (loaded) updateTime()
     let timeInterval: NodeJS.Timeout | null = null
     function updateTime() {
-        // if (!preview) return
         if (timeInterval) clearInterval(timeInterval)
         timeInterval = setInterval(() => {
-            if (player.getPlayerState() === 1) actualVideoTime = player.getCurrentTime()
-        }, 500)
+            if (!player) return
+            try {
+                if (player.getPlayerState() === 1) actualVideoTime = player.getCurrentTime()
+            } catch {}
+        }, 250)
     }
     onDestroy(() => {
         if (timeInterval) clearInterval(timeInterval)
@@ -60,17 +62,12 @@
     let seeking = false
     $: if (!seeking && videoTime !== undefined) seekPlayer()
     function seekPlayer() {
-        if (!player || !loaded || player.getCurrentTime() === videoTime) return
+        if (!player || !loaded || Math.abs(player.getCurrentTime() - videoTime) < 2) return
 
         seeking = true
-
-        if (!videoData.paused) player.pauseVideo()
-        player.seekTo(videoTime)
+        player.seekTo(videoTime, true)
 
         setTimeout(() => {
-            if (!player.g) return
-
-            if (!videoData.paused) player.playVideo()
             seeking = false
         }, 500)
     }

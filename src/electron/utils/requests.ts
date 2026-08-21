@@ -92,7 +92,7 @@ export function httpsRequest(hostname: string, path: string, method: "POST" | "G
                     try {
                         fileStream.destroy()
                     } catch {}
-                    response.resume()
+                    if (typeof response.resume === "function") response.resume()
                     request.destroy()
                     cb(err, null)
                 }

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import { Unsubscriber } from "svelte/store"
+    import type { Unsubscriber } from "svelte/store"
     import type { Output } from "../../../../types/Output"
     import type { MediaType, ShowType } from "../../../../types/Show"
     import { activeFocus, activeShow, focusMode, outLocked, playerVideos } from "../../../stores"

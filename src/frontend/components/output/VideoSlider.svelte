@@ -13,9 +13,7 @@
     export let disabled = false
     export let changeValue = 0
 
-    $: if (changeValue) updateValue()
-    function updateValue() {
-        if (!videoData.paused) pauseAtMove()
+    $: if (changeValue) {
         finishDrag(changeValue)
         changeValue = 0
     }
@@ -58,6 +56,7 @@
     }
 
     let dragSeekTimeout: NodeJS.Timeout | null = null
+    let lastSeekedValue: number | null = null
 
     function onInput(e: any) {
         const val = getNumericValue(e) ?? latestValue
@@ -70,6 +69,7 @@
                 dragSeekTimeout = null
                 if (movePause && sliderValue !== null) {
                     videoTime = sliderValue
+                    lastSeekedValue = videoTime
                     if (path && outputId) VideoPlayer.seekTo(path, outputId, videoTime)
                 }
             }, 150)
@@ -82,15 +82,19 @@
             dragSeekTimeout = null
         }
 
+        const wasDragging = movePause
+        if (movePause) pauseAtMove(false)
+
         const val = getNumericValue(e) ?? sliderValue ?? latestValue
         if (val !== null) {
             latestValue = val
             sliderValue = val
             videoTime = val
-            if (path && outputId) VideoPlayer.seekTo(path, outputId, videoTime)
+            if (path && outputId && (wasDragging || lastSeekedValue !== val)) {
+                lastSeekedValue = val
+                VideoPlayer.seekTo(path, outputId, videoTime)
+            }
         }
-
-        if (movePause) pauseAtMove(false)
     }
 
     $: if (videoTime !== undefined && !movePause) sliderValue = videoTime

@@ -832,7 +832,7 @@ function getFaq() {
 const showActions = [
     // { id: "verse", name: "new.slide", icon: "add", data: { globalGroup: { group: "", color: null, globalGroup: "verse", settings: {}, notes: "", items: [] } } },
     { id: "slide", name: "new.slide", icon: "add", data: { menuClick: "newSlide" }, aliases: ["-Add", "-Add slide"] },
-    { id: "layout", name: "show.new_layout", icon: "add" },
+    { id: "layout", name: "show.new_arrangement", icon: "add" },
 
     { id: "groups", name: "tools.groups", icon: "groups", data: { toolsTab: "groups" } },
     // { id: "media", name: "tools.media", icon: "media", data: { toolsTab: "media" } },

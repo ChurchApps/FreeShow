@@ -63,8 +63,8 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
                     else if (c === "prev") client.previous()
                     else if (c === "seek") client.seekMs(v * 1000)
                     else if (c === "setVolume") {
-                        if (typeof client.setVolume === "function") client.setVolume(v)
-                        else client.appVolume = v
+                        if ("appVolume" in client) client.appVolume = Number(v)
+                        else if (typeof client.setVolume === "function") client.setVolume(v)
                     } else if (c === "pause") client.pause()
                 })
             }

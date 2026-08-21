@@ -16,14 +16,14 @@
 
     export let video: HTMLVideoElement | null = null
     // for previews that are not outputted
-    export let videoData: any = { paused: false, muted: true, duration: 0, loop: false }
+    export let videoData: any = { paused: false, muted: true, duration: 0, loop: data.loop === true }
     export let videoTime = 0
 
     $: extension = getExtension(path)
     $: type = data.type || getMediaType(extension)
 
     let currentSyncPath = ""
-    $: if (path) {
+    $: if (typeof path === "string") {
         if (path.startsWith("http")) currentSyncPath = path
         else currentSyncPath = path
     }

@@ -403,10 +403,11 @@ export function storeSubscriber() {
 
     metronome.subscribe((data) => {
         send(OUTPUT, ["METRONOME"], data)
+        send(STAGE, ["METRONOME"], data)
     })
     metronomeTimer.subscribe((data) => {
         send(OUTPUT, ["METRONOME_TIMER"], data)
-        // WIP send to stage
+        send(STAGE, ["METRONOME_TIMER"], data)
     })
 
     timeFormat.subscribe((a) => {

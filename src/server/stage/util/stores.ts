@@ -49,6 +49,8 @@ export let variables: Writable<any> = writable({})
 export let activeTimers: Writable<any[]> = writable([])
 export let timeFormat: Writable<"12" | "24"> = writable("24")
 export let progressData: Writable<any> = writable({})
+export let metronome: Writable<any> = writable({})
+export let metronomeTimer: Writable<{ beat: number; timeToNext: number }> = writable({ beat: 0, timeToNext: 0 })
 
 /////
 
@@ -76,7 +78,9 @@ export const _ = {
     layout,
     mediaCache,
     playingAudioData,
-    playingAudioTime
+    playingAudioTime,
+    metronome,
+    metronomeTimer
 }
 
 /////

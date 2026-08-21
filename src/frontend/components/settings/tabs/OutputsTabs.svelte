@@ -3,7 +3,7 @@
     import type { ClickEvent } from "../../../../types/Main"
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { createOutputAudioChannel } from "../../../audio/routing/audioRoutingInit"
+    import { checkPrimaryOutputRouting, createOutputAudioChannel } from "../../../audio/routing/audioRoutingInit"
     import { activeTriggerFunction, currentOutputSettings, outputs, popupData, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
@@ -141,6 +141,7 @@
             updateOutput("enabled", true, outputId)
 
             if (networkType) createOutputAudioChannel(outputId)
+            else checkPrimaryOutputRouting()
         }
     }
 

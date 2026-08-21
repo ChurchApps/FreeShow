@@ -7,9 +7,9 @@ body:
     attributes:
       value: |
         Before submitting, please:
-        - Search existing **open and closed** issues.
-        - Test on the latest stable version.
-        - Test on the latest beta version if possible.
+        - Search existing **open and closed** issues, if you find a related issue, please comment there even though it may be closed.
+        - Make sure you are on the latest version of FreeShow, either **stable** or **beta**. [See all releases](https://github.com/ChurchApps/FreeShow/releases)
+        - If there's a newer version available, including a beta, you must reproduce the issue on that version.
 
   - type: checkboxes
     id: checklist
@@ -18,9 +18,7 @@ body:
       options:
         - label: I searched existing open and closed issues.
           required: true
-        - label: I reproduced this on the latest stable version.
-          required: true
-        - label: I reproduced this on the latest beta version, or I am unable to test the beta.
+        - label: I reproduced this on the latest available version.
           required: true
 
   - type: textarea
@@ -30,15 +28,6 @@ body:
       placeholder: What happened?
     validations:
       required: true
-
-  - type: dropdown
-    id: reproducible
-    attributes:
-      label: How often does this happen?
-      options:
-        - Every time
-        - Sometimes
-        - Only once
 
   - type: textarea
     id: reproduce

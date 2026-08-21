@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { toggleChannelRecording } from "../../../audio/audioChannelRecorder"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { activeAudioEffects, audioChannelsData } from "../../../stores"
     import { dbToGain, gainToDb, gainToSlider, MIN_DB, sliderToGain } from "../../../audio/dBUtils"
+    import { activeAudioEffects, audioChannelsData, recordingChannels } from "../../../stores"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
     import Slider from "../../inputs/Slider.svelte"
@@ -44,6 +45,8 @@
     $: sliderPosition = gainToSlider(volumeValue)
     $: dbValue = Math.max(MIN_DB, Math.min(6, gainToDb(volumeValue)))
     $: muted = !!channelData.isMuted
+
+    $: isRecording = !!$recordingChannels[channelId]
 </script>
 
 <section>
@@ -57,11 +60,13 @@
         </div>
 
         <div class="input" style="position: relative;">
-            <NumberInput style="width: 70px;" value={dbValue} decimals={1} fixed={1} min={MIN_DB} max={allowGaining ? 6 : 0} step={0.5} on:change={setVolumeFromDb} buttons={false} />
+            <NumberInput style="width: 65px;" value={dbValue} decimals={1} fixed={1} min={MIN_DB} max={allowGaining ? 6 : 0} step={0.5} on:change={setVolumeFromDb} buttons={false} />
             <span style="position: absolute;right: 0;bottom: 5px;transform: translateX(-5px);pointer-events: none;color: var(--color);font-weight: bold;font-size: 0.7em;">dB</span>
         </div>
 
         <MaterialButton variant="outlined" style="padding: 8px;" icon={muted ? "muted" : "volume"} title="actions.{muted ? 'unmute' : 'mute'}" red={muted} on:click={() => updateData("isMuted", !muted)} />
+
+        <MaterialButton variant="outlined" style="padding: 8px;" icon={isRecording ? "stop" : "record"} title="actions.{isRecording ? 'stop_recording' : 'start_recording'}" red={isRecording} on:click={() => toggleChannelRecording(channelId, label)} />
 
         <MaterialButton variant="outlined" style="padding: 8px;" icon="equalizer" title="tabs.effects" on:click={() => activeAudioEffects.set(channelId)} />
     </div>
@@ -108,7 +113,7 @@
     }
 
     .input :global(input) {
-        padding-right: 14px;
+        padding-right: 22px;
     }
 
     section :global(input::-webkit-slider-thumb) {

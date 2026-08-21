@@ -9,7 +9,7 @@ import { getCurrentProjectIndexes, getProjectItems } from "../components/helpers
 import { getGroupName, getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
-import { actions, activeProject, activeShow, events, groups, media, outputs, projects, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
+import { actions, activeProject, activeShow, events, groups, media, metronome, metronomeTimer, outputs, projects, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
 import { connections } from "./../stores"
 import { translateText } from "./language"
 import { send } from "./request"
@@ -92,30 +92,29 @@ export const receiveSTAGE = {
             item.label = getCustomStageLabel(item.type || itemId, item)
         })
 
-        // if (show.disabled) return { id: connectionId, channel: "ERROR", data: "noShow" }
-
         // initial
-        sendData(STAGE, { channel: "OUT" })
-        sendData(STAGE, { channel: "SHOW_DATA" })
+        sendData(STAGE, { id: connectionId, channel: "OUT" })
+        sendData(STAGE, { id: connectionId, channel: "SHOW_DATA" })
         window.api.send(STAGE, { id: connectionId, channel: "TIMERS", data: get(timers) })
         window.api.send(STAGE, { id: connectionId, channel: "EVENTS", data: get(events) })
         window.api.send(STAGE, { id: connectionId, channel: "VARIABLES", data: get(variables) })
+        window.api.send(STAGE, { id: connectionId, channel: "METRONOME", data: get(metronome) })
+        window.api.send(STAGE, { id: connectionId, channel: "METRONOME_TIMER", data: get(metronomeTimer) })
         send(STAGE, ["DATA"], { timeFormat: get(timeFormat) })
 
         // send media items
         Object.values(layout.items).forEach(async (item) => {
             if (item.type === "media" && item.src) {
-                const data = await getBase64Path(item.src)
-                send(STAGE, ["MEDIA"], { path: item.src, value: data })
+                const mediaData = await getBase64Path(item.src)
+                send(STAGE, ["MEDIA"], { path: item.src, value: mediaData })
             }
         })
 
         return layout
     },
 
-    OUT: (data: any, connectionId: string) => {
-        let stageId = data?.id
-        if (!stageId) stageId = get(connections).STAGE?.[connectionId]?.active
+    OUT: (data: any, connectionId: string = "") => {
+        let stageId = data?.id || get(connections).STAGE?.[connectionId]?.active || Object.values(get(connections).STAGE || {}).find((c: any) => c?.active)?.active
         if (!stageId) return
 
         const stageLayout = get(stageShows)[stageId]
@@ -128,29 +127,32 @@ export const receiveSTAGE = {
         if (!output?.out) return
 
         const outSlideId = output.out.slide?.id
-        if (outSlideId) send(STAGE, ["SHOW_DATA"], { id: outSlideId, show: get(showsCache)[outSlideId] })
+        if (outSlideId && outSlideId !== "temp") {
+            const show = get(showsCache)[outSlideId] || _show(outSlideId).get()
+            if (show) send(STAGE, ["SHOW_DATA"], { id: outSlideId, show })
+        }
 
         sendBackgroundToStage(outputId)
         return output
     },
-    SHOW_DATA: (_data: any, connectionId: string) => {
-        const stageId = get(connections).STAGE?.[connectionId]?.active
-        if (!stageId) return
 
-        const stageLayout = get(stageShows)[stageId]
-        if (!stageLayout) return
+    SHOW_DATA: (data: any, connectionId: string = "") => {
+        let outSlideId = data?.id
+        if (!outSlideId) {
+            const stageId = get(connections).STAGE?.[connectionId]?.active || Object.values(get(connections).STAGE || {}).find((c: any) => c?.active)?.active
+            const sourceOutputId = stageId ? get(stageShows)[stageId]?.settings?.output : ""
+            const outputId = sourceOutputId && get(outputs)[sourceOutputId] ? sourceOutputId : getFirstOutput()?.id
+            outSlideId = get(outputs)[outputId || ""]?.out?.slide?.id || ""
+        }
+        if (!outSlideId || outSlideId === "temp") return
 
-        const sourceOutputId = stageLayout.settings?.output
-        const outputStores = get(outputs)
-        const outputId = sourceOutputId && outputStores[sourceOutputId] ? sourceOutputId : getFirstOutput()?.id
-        const outSlideId = get(outputs)[outputId]?.out?.slide?.id || ""
-        const show = get(showsCache)[outSlideId]
+        const show = get(showsCache)[outSlideId] || _show(outSlideId).get()
         if (!show) return
 
         // send media items
         Object.values(show.media || {}).forEach(async (media) => {
-            const data = await getBase64Path(media.path || "")
-            send(STAGE, ["MEDIA"], { path: media.path, value: data })
+            const mediaData = await getBase64Path(media.path || "")
+            send(STAGE, ["MEDIA"], { path: media.path, value: mediaData })
         })
 
         return { id: outSlideId, show }

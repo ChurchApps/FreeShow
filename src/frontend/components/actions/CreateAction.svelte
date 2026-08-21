@@ -79,7 +79,7 @@
         ...Object.keys(API_ACTIONS)
             .map((id) => {
                 let data = actionData[id] || {}
-                let name = translateText(data.name || "") || id
+                let name = translateText(data.name || "", null, data.replace) || id
                 let icon = data.icon || "actions"
                 let common = !!data.common
 
@@ -222,6 +222,11 @@
         if (id === "change_stage_output_layout") return `${actionValue.outputId ? ($outputs[actionValue.outputId]?.name || "—") + ": " : ""}${$stageShows[actionValue.stageLayoutId]?.name || ""}`
         if (id === "change_output_style") return `${actionValue.outputId ? ($outputs[actionValue.outputId]?.name || "—") + ": " : ""}${actionValue.styleId ? $styles[actionValue.styleId]?.name || "" : translateText("main.none")}`
         if (id === "set_next_slide_timer") return Number(actionValue.value) + "s"
+        if (id === "disable_slide") {
+            const showName = actionValue.showId ? $shows[actionValue.showId]?.name || "—" : ""
+            const slideIndex = actionValue.index ?? 0
+            return `${showName ? showName + " - " : ""}${slideIndex}`
+        }
 
         return ""
     }

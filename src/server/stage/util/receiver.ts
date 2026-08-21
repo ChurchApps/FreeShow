@@ -3,7 +3,7 @@ import type { Show } from "../../../types/Show"
 import type { StageLayout } from "../../../types/Stage"
 import { lastAttemptedLayoutId, lastAttemptedPassword, openLayout, setError, translate } from "./helpers"
 import { send } from "./socket"
-import { _, _get, _set, _update, activeTimers, events, outputSlideCache, progressData, stream, timeFormat, timers, variables } from "./stores"
+import { _, _get, _set, _update, activeTimers, events, metronome, metronomeTimer, outputSlideCache, progressData, stream, timeFormat, timers, variables } from "./stores"
 
 export type ReceiverKey = keyof typeof receiver
 export const receiver = {
@@ -62,6 +62,11 @@ export const receiver = {
 
         let outputId = data?.id
         if (outputId) send("REQUEST_PROGRESS", { outputId })
+
+        const slideId = data?.out?.slide?.id
+        if (slideId && slideId !== "temp" && !_get("showsCache")?.[slideId]) {
+            send("SHOW_DATA", { id: slideId })
+        }
     },
     OUT_SLIDE_CACHE: (data: any) => outputSlideCache.set(data),
     BACKGROUND: (data: any) => _set("background", data),
@@ -76,6 +81,8 @@ export const receiver = {
     TIMERS: (data: any) => timers.set(data),
     VARIABLES: (data: any) => variables.set(data),
     ACTIVE_TIMERS: (data: any) => activeTimers.set(data),
+    METRONOME: (data: any) => metronome.set(data),
+    METRONOME_TIMER: (data: any) => metronomeTimer.set(data),
     REQUEST_PROGRESS: (data: any) => progressData.set(data),
     DATA: (data: any) => {
         if (data.timeFormat) timeFormat.set(data.timeFormat)

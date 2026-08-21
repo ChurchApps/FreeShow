@@ -76,10 +76,10 @@ export function showSearch(searchValue: string, shows: ShowList[]): ShowList[] {
 
 // Scoring model (absolute confidence, 0-100 — the value shown by the match bar):
 //   100    exact song number / CCLI / title, or title starts-with
-//   75-90  every word in the title (adjacent words score highest)
-//   60-85  strong fuzzy title match (typo tolerance)
-//   55-75  words split between title and content
-//   40-60  every word in the content (lyrics) only
+//   80-94  every word in the title (adjacent words score highest)
+//   65-85  strong fuzzy title match (typo tolerance)
+//   55-78  words split between title and content
+//   35-60  every word in the content (lyrics) only (exponential decay for repeated hits)
 // A show only matches when EVERY search word matches at the start of a word in the
 // title or content, so adding words always narrows the results ("here" never
 // matches "There's"). A "quoted" query requires the exact phrase.
@@ -116,8 +116,6 @@ export function showSearchFilter(searchValue: string, show: ShowList, ctx?: Sear
 
     // Priority 1: title exact match
     if (q.despaced === showName || q.despaced === showNameWithNumber) return 100
-    // Priority 1.5: title starts-with match (guard empty/punctuation-only queries so they don't match everything)
-    if (q.despaced && showName.startsWith(q.despaced)) return 100
 
     if (!q.tokens.length) return 0
 
@@ -135,7 +133,7 @@ export function showSearchFilter(searchValue: string, show: ShowList, ctx?: Sear
         }
     }
 
-    if (!hasUnmatched) return strictScore(q.tokens, titleMatchedCount, titleText, contentText, q.fullPhrase)
+    if (!hasUnmatched) return strictScore(q, titleMatchedCount, titleText, showName, contentText)
 
     // typo tolerance (titles only): a strong fuzzy title match can still qualify.
     // IMPORTANT: similarity() is non-zero even for unrelated text, so only a strong
@@ -145,31 +143,64 @@ export function showSearchFilter(searchValue: string, show: ShowList, ctx?: Sear
         const maxLength = Math.max(showNameWithNumber.length, q.fuzzyNeedle.length)
         if (maxLength && Math.abs(showNameWithNumber.length - q.fuzzyNeedle.length) <= maxLength * 0.3) {
             const titleSimilarity = similarity(showNameWithNumber, q.fuzzyNeedle)
-            if (titleSimilarity >= 0.7) return Math.round(60 + ((titleSimilarity - 0.7) / 0.3) * 25)
+            if (titleSimilarity >= 0.7) return Math.round(65 + ((titleSimilarity - 0.7) / 0.3) * 20)
         }
     }
 
     return 0
 }
 
-// score a full strict match into the absolute confidence bands (40-90)
-function strictScore(tokens: string[], titleMatchedCount: number, titleText: string, contentText: string, fullPhrase: string): number {
+// exponential decay function for repeated matches: MaxBonus * (1 - factor^count)
+function decayBonus(count: number, maxBonus: number, factor = 0.5): number {
+    if (count <= 0) return 0
+    return maxBonus * (1 - Math.pow(factor, count))
+}
+
+// score a full strict match into the absolute confidence bands (35-94)
+function strictScore(q: ParsedQuery, titleMatchedCount: number, titleText: string, showName: string, contentText: string): number {
+    const tokens = q.tokens
     const wordCount = tokens.length
 
-    // every word in the title: 75-90 (adjacent words in order score highest)
+    // every word in the title: 75-94 (starts-with, exact-word vs prefix, adjacency, coverage)
     if (titleMatchedCount === wordCount) {
-        const adjacency = wordCount > 1 ? titleAdjacency(tokenize(titleText), tokens) : 0
-        return Math.round(75 + (wordCount > 1 ? adjacency * 15 : 5))
+        const titleTokens = tokenize(titleText)
+        const startsWithTitle = (titleTokens.length > 0 && titleTokens[0].startsWith(tokens[0])) || showName.startsWith(q.despaced)
+        const adjacency = wordCount > 1 ? titleAdjacency(titleTokens, tokens) : 0
+
+        let exactWordMatches = 0
+        for (let i = 0; i < wordCount; i++) {
+            if (titleTokens.includes(tokens[i])) exactWordMatches++
+        }
+        const exactWordRatio = exactWordMatches / wordCount
+        const lengthCoverage = Math.min(1, q.despaced.length / Math.max(1, showName.length))
+
+        const startBonus = startsWithTitle ? 6 : 0
+        const wordBonus = exactWordRatio * 6
+        const adjBonus = wordCount > 1 ? adjacency * 5 : 2
+        const coverageBonus = lengthCoverage * 5
+
+        return Math.round(75 + startBonus + wordBonus + adjBonus + coverageBonus)
     }
 
-    // words split between title and content: 55-75
+    // words split between title and content: 55-78
     if (titleMatchedCount > 0) {
-        return Math.round(55 + (titleMatchedCount / wordCount) * 15 + contentAdjacency(contentText, tokens) * 5)
+        const phraseHits = countBoundaryPhrase(contentText, q.fullPhrase)
+        const phraseBonus = decayBonus(phraseHits, 3)
+        return Math.round(55 + (titleMatchedCount / wordCount) * 15 + contentAdjacency(contentText, tokens) * 5 + phraseBonus)
     }
 
-    // content (lyrics) only: 40-60, rewarding adjacency and repeated phrase hits
-    const phraseBonus = Math.min(countBoundaryPhrase(contentText, fullPhrase) * 5, 10)
-    return Math.round(40 + contentAdjacency(contentText, tokens) * 10 + phraseBonus)
+    // content (lyrics) only: 35-60, rewarding adjacency and repeated phrase/word hits with exponential decay
+    const phraseHits = countBoundaryPhrase(contentText, q.fullPhrase)
+    const phraseBonus = decayBonus(phraseHits, 8)
+
+    let totalWordHits = 0
+    for (let i = 0; i < wordCount; i++) {
+        totalWordHits += countBoundaryPhrase(contentText, tokens[i])
+    }
+    const avgWordHits = totalWordHits / wordCount
+    const wordBonus = decayBonus(avgWordHits, 7)
+
+    return Math.round(35 + contentAdjacency(contentText, tokens) * 10 + phraseBonus + wordBonus)
 }
 
 // does any word in text start with `word`? (indexOf walk — no allocations)

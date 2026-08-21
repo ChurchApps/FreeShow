@@ -35,8 +35,9 @@
         getCurrentOutput(currentOutput.id)
     }
 
-    function updateBounds(type: "x" | "y" | "width" | "height", value: number) {
-        updateOutput("bounds", { ...currentOutput?.bounds, [type]: value })
+    function updateBounds(type: string | object, value?: number) {
+        const bounds = typeof type === "object" ? type : { [type]: value }
+        updateOutput("bounds", { ...currentOutput?.bounds, ...bounds })
         updateOutput("screen", null)
         setTimeout(() => send(OUTPUT, ["UPDATE_BOUNDS"], currentOutput), 10)
     }
@@ -59,9 +60,8 @@
 
         const previousResolution = `${currentOutput.bounds?.width}x${currentOutput.bounds?.height}`
 
-        let [width, height] = resolution.split("x").map((a) => Number(a))
-        updateBounds("width", width)
-        updateBounds("height", height)
+        const [width, height] = resolution.split("x").map(Number)
+        updateBounds({ width, height })
 
         // auto set bitrate
         setCommonBitrate(previousResolution, resolution)

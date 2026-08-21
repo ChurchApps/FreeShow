@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy } from "svelte"
     import { activeProject, activeShow, playerVideos, projects } from "../../stores"
     import Vimeo from "../drawer/player/Vimeo.svelte"
     import YouTube from "../drawer/player/YouTube.svelte"
@@ -27,15 +27,17 @@
     // TODO: looping player videos does not work!
 
     let actualVideoTime = 0
-    let previousTime = 0
-    onMount(() => {
-        // sync state listener
-        const unsubscribe = videoSync(id, outputId, (data) => {
+
+    let unsubscribe: (() => void) | null = null
+    $: if (id && outputId) {
+        unsubscribe?.()
+        actualVideoTime = 0
+        unsubscribe = videoSync(id, outputId, (data) => {
             if (!video) return
 
-            // more than 2s difference, update video time
-            if (data.currentTime !== undefined && (actualVideoTime !== previousTime || data.paused) && Math.abs(actualVideoTime - data.currentTime) > 2) {
-                previousTime = actualVideoTime
+            // update video time if significant difference
+            const seekOffset = data.paused ? 0.5 : 2
+            if (data.currentTime !== undefined && Math.abs(actualVideoTime - data.currentTime) > seekOffset) {
                 videoTime = data.currentTime
             }
 
@@ -43,26 +45,19 @@
             videoData.paused = data.paused
             videoData.muted = data.muted
         })
+    }
 
-        return () => {
-            unsubscribe?.()
-        }
+    onDestroy(() => {
+        unsubscribe?.()
     })
-
-    // YouTube needs to refresh properly when changing video
-    let shouldLoad = true
-    let previousId = ""
-    $: if (video?.id && previousId) {
-        shouldLoad = false
-        previousId = video.id
-        setTimeout(() => (shouldLoad = true), 3000)
-    } else previousId = video?.id || ""
 </script>
 
 {#if video?.type === "youtube"}
-    {#if shouldLoad}
+    {#key video.id}
         <YouTube id={video.id} bind:videoData bind:videoTime bind:actualVideoTime {preview} on:loaded on:ended />
-    {/if}
+    {/key}
 {:else if video?.type === "vimeo"}
-    <Vimeo id={video.id} bind:videoData bind:videoTime bind:actualVideoTime {preview} on:loaded />
+    {#key video.id}
+        <Vimeo id={video.id} bind:videoData bind:videoTime bind:actualVideoTime {preview} on:loaded />
+    {/key}
 {/if}

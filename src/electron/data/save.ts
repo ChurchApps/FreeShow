@@ -25,6 +25,9 @@ export async function save(data: SaveData) {
     // auto backup right after startup does not need to write again
     const isAutoBackupOnly = !!data.customTriggers?.backup && !!data.customTriggers?.isAutoBackup && !data.customTriggers?.autosave && !data.closeWhenFinished
     if (isAutoBackupOnly) {
+        // write SETTINGS to disk on backup only to keep "special.autoBackupPrevious" up to date
+        if (_store.SETTINGS && data.SETTINGS && isValidJSON(data.SETTINGS)) await safeStoreSet(_store.SETTINGS, data.SETTINGS, "SETTINGS")
+
         startBackup({ customTriggers: data.customTriggers }).catch((err) => console.error("Backup failed:", err))
         sendToMain(ToMain.SAVE2, { closeWhenFinished: false, customTriggers: data.customTriggers })
         isSaving = false

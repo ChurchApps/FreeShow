@@ -5,25 +5,13 @@ import type { ShowList } from "../../../types/Show"
 import { requestMain } from "../../IPC/main"
 import { drawerTabsData, scriptures, scripturesCache, textCache } from "../../stores"
 import { buildBibleIndex, fastBibleSearch } from "../../utils/searchFast"
+import { getTextSnippet } from "./searchHighlight"
 import { sortByClosestMatch } from "../actions/apiHelper"
 import { loadJsonBible } from "../drawer/bible/scripture"
 import { getExtension, getMediaType } from "../helpers/media"
 
 export function showResult(show: ShowList, rawSearchValue: string) {
-    const cache = get(textCache)[show.id] || ""
-    let description = ""
-    if (cache && rawSearchValue.length > 2) {
-        // Find a snippet containing the search term
-        const lowerCache = cache.toLowerCase()
-        const lowerSearch = rawSearchValue.toLowerCase()
-        const idx = lowerCache.indexOf(lowerSearch)
-        if (idx !== -1) {
-            const start = Math.max(0, idx - 30)
-            const end = Math.min(cache.length, idx + rawSearchValue.length + 50)
-            description = (start > 0 ? "..." : "") + cache.slice(start, end).trim() + (end < cache.length ? "..." : "")
-        }
-    }
-    return { ...show, description }
+    return { ...show, description: getTextSnippet(get(textCache)[show.id] || "", rawSearchValue) }
 }
 
 let mediaCache = new Map<string, any>()

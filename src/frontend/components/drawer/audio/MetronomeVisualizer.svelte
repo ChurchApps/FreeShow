@@ -9,7 +9,7 @@
     $: beat = values.beat || 0
     $: beats = data?.beats || 4
 
-    const beatsPerSecond = 60 / (data?.tempo || 120)
+    $: beatsPerSecond = 60 / (data?.tempo || 120)
 
     $: timeUntilNext = values.timeToNext || 0 // seconds
     $: nextTime = timeUntilNext + beatsPerSecond - preScheduleTime

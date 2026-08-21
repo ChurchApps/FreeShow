@@ -25,6 +25,7 @@ export const actionData = {
     index_select_slide: { name: "actions.index_select_slide", icon: "slide", input: "index", incompatible: ["next_slide", "previous_slide", "random_slide", "name_select_slide", "id_select_group"] },
     name_select_slide: { name: "actions.name_select_slide", icon: "groups", input: "strval", incompatible: ["next_slide", "previous_slide", "random_slide", "index_select_slide", "id_select_group"] },
     id_select_group: { name: "actions.id_select_group", icon: "groups", input: "id", incompatible: ["next_slide", "previous_slide", "random_slide", "index_select_slide", "name_select_slide"] },
+    disable_slide: { canAddMultiple: true, name: "actions.disable_slide", icon: "disable", input: "disable_slide" },
 
     // CLEAR
     restore_output: { SECTION: "clear.general", name: "preview.restore_output", icon: "reset", incompatible: ["clear_all", "clear_background", "clear_slide", "clear_overlays", "clear_audio", "clear_next_timer"] },
@@ -69,6 +70,8 @@ export const actionData = {
     // AUDIO
     change_volume: { SECTION: "tabs.audio", name: "actions.change_volume", icon: "volume", input: "volume" },
     start_audio_stream: { slideId: "audioStream", common: true, name: "actions.start_audio_stream", icon: "audio_stream", input: "id" },
+    toggle_audio_recording: { canAddMultiple: true, name: "actions.toggle_specific", replace: ["recording"], icon: "record", input: "toggle_channel_recording" },
+    toggle_icecast: { name: "actions.toggle_specific", replace: ["Icecast"], icon: "cloud", input: "toggle" },
     start_playlist: { common: true, name: "actions.start_playlist", icon: "playlist", input: "id", incompatible: ["playlist_next"] },
     playlist_next: { name: "actions.playlist_next", icon: "playlist", incompatible: ["start_playlist"] },
     start_metronome: { name: "actions.start_metronome", icon: "metronome", input: "metronome" },

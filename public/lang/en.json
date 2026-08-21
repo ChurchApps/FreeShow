@@ -67,9 +67,8 @@
     "tooltip": {
         "project": "Create a new project where you can add and arrange shows.",
         "show": "Create a new show where you can add song lyrics, presentations and media.",
-        "groups": "All the groups in the current show and all the global groups. Click or drag them to add them to the current layout.",
-        "layout": "Add transitions and next timers to slides in current layout.",
-        "media": "All media in current show. Show them, or drag them to current layout.",
+        "groups": "All the groups in the current show and all the global groups. Click or drag them to add them to the current arrangement.",
+        "media": "All media in current show. Show them, or drag them to current arrangement.",
         "metadata": "Edit metadata for current show.",
         "notes": "Write notes.",
         "text": "Edit the content of all selected items.",
@@ -340,7 +339,6 @@
     },
     "error": {
         "no_show": "Could not find show",
-        "no_layouts": "Could not find any layouts",
         "load": "Could not load",
         "media": "Could not find media",
         "bible": "Could not find local scripture",
@@ -348,7 +346,6 @@
         "bible_api": "Could not load scripture from API.Bible, do you have an internet connection?",
         "not_found": "Not found",
         "display": "Could not show output window on current display",
-        "keep_one_layout": "You have to have at least one layout",
         "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video.",
         "folder_exists": "This folder does already exist",
         "uri": "Could not parse the audio name, please rename the file",
@@ -521,6 +518,7 @@
         "import_scripture": "Import scripture",
         "create_collection": "Create collection",
         "scripture_show": "Scripture show options",
+        "import_calendar": "Import calendar",
         "player": "Player",
         "edit_event": "Edit event",
         "edit_chart": "Edit chart",
@@ -570,7 +568,7 @@
         "save_quit": "Save & Quit"
     },
     "confirm": {
-        "statement_slide_exists_layout": "Slide exists in a different layout!",
+        "statement_slide_exists_arrangement": "Slide exists in a different arrangement!",
         "question_delete": "Would you like to delete?"
     },
     "toast": {
@@ -640,6 +638,7 @@
     "show": {
         "name": "Name",
         "category": "Category",
+        "new_arrangement": "New arrangement",
         "new_layout": "New layout",
         "grid": "Grid view",
         "simple": "Simple view",
@@ -665,7 +664,7 @@
         "rename": "Rename",
         "recolor": "Change color",
         "remove": "Remove",
-        "remove_group": "Remove group from layout",
+        "remove_group": "Remove group from arrangement",
         "remove_group_short": "Remove group",
         "choose_group": "Choose group",
         "goto_group": "Go to group",
@@ -697,6 +696,7 @@
         "disable": "Disable",
         "enable": "Enable",
         "enable_specific": "Enable $1",
+        "toggle_specific": "Toggle $1",
         "undo": "Undo",
         "redo": "Redo",
         "cut": "Cut",
@@ -842,6 +842,8 @@
         "random_slide": "Play random slide",
         "index_select_slide": "Play slide at index",
         "name_select_slide": "Play slide with name",
+        "disable_slide": "Disable slide",
+        "active_show": "Active show",
         "toggle_output_lock": "Toggle output lock",
         "toggle_output_window": "Toggle output window",
         "toggle_output_windows": "Toggle output windows",
@@ -1013,7 +1015,6 @@
         "metadata": "Metadata",
         "media": "Media",
         "audio": "Audio",
-        "layout": "Layout",
         "item": "Item",
         "items": "Items",
         "slide": "Slide"
@@ -1526,7 +1527,9 @@
         "ending_repeated": "repeated",
         "ending_times": "times",
         "save_all": "Save and update all",
-        "add_slides_from_show": "Include slides from show"
+        "add_slides_from_show": "Include slides from show",
+        "calendars": "Calendars",
+        "delete_confirmation": "Are you sure you want to delete all events from this calendar?"
     },
     "scripture": {
         "collections": "Collections",

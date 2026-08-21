@@ -40,11 +40,11 @@
                 syncVideoToAudio(video, data.currentTime, lastSyncedTime, isSoftLoop, targetPlaybackRate, data.isFadingOut)
                 if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
 
-                videoData.loop = data.loop
-                videoData.paused = data.paused
+                if (videoData.loop !== data.loop) videoData.loop = data.loop
+                if (videoData.paused !== data.paused) videoData.paused = data.paused
 
-                if (data.softLoop !== undefined) videoData.softLoop = data.softLoop
-                if (data.softLoopOpacity !== undefined) softLoopOpacity = data.softLoopOpacity
+                if (data.softLoop !== undefined && videoData.softLoop !== data.softLoop) videoData.softLoop = data.softLoop
+                if (data.softLoopOpacity !== undefined && softLoopOpacity !== data.softLoopOpacity) softLoopOpacity = data.softLoopOpacity
                 softLoopAudioTime = data.currentTime
             })
         }
@@ -65,31 +65,15 @@
     }
 
     // ensure that video state matches the store state
-    let playPromise: Promise<void> | null = null
     $: if (video) {
-        if (!videoData.paused && video.paused) {
-            playPromise = video.play()
-            playPromise
-                .catch((err) => {
-                    // Ignore AbortErrors caused by quick pause/play toggles during transitions
-                    if (err.name !== "AbortError") {
-                        console.warn("[Video.svelte] Play failed:", err)
-                    }
-                })
-                .finally(() => {
-                    playPromise = null
-                })
+        if (!videoData.paused && video.paused && !video.error) {
+            video.play().catch((err) => {
+                if (err.name !== "AbortError") {
+                    console.warn("[Video.svelte] Play failed:", err)
+                }
+            })
         } else if (videoData.paused && !video.paused) {
-            if (playPromise) {
-                // Wait for the pending play request to resolve before calling pause()
-                playPromise
-                    .then(() => {
-                        video?.pause()
-                    })
-                    .catch(() => {})
-            } else {
-                video.pause()
-            }
+            video.pause()
         }
     }
 
@@ -190,7 +174,7 @@
     let blurVideo: HTMLVideoElement | null = null
     $: if (blurVideo && (videoTime < blurVideo.currentTime - 0.1 || videoTime > blurVideo.currentTime + 0.1)) blurVideo.currentTime = videoTime
     $: if (blurVideo) {
-        if (!videoData.paused && blurVideo.paused) {
+        if (!videoData.paused && blurVideo.paused && !blurVideo.error) {
             blurVideo.play().catch(() => {})
         } else if (videoData.paused && !blurVideo.paused) {
             blurVideo.pause()
