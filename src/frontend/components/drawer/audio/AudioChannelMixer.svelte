@@ -60,7 +60,7 @@
         </div>
 
         <div class="input" style="position: relative;">
-            <NumberInput style="width: 70px;" value={dbValue} decimals={1} fixed={1} min={MIN_DB} max={allowGaining ? 6 : 0} step={0.5} on:change={setVolumeFromDb} buttons={false} />
+            <NumberInput style="width: 65px;" value={dbValue} decimals={1} fixed={1} min={MIN_DB} max={allowGaining ? 6 : 0} step={0.5} on:change={setVolumeFromDb} buttons={false} />
             <span style="position: absolute;right: 0;bottom: 5px;transform: translateX(-5px);pointer-events: none;color: var(--color);font-weight: bold;font-size: 0.7em;">dB</span>
         </div>
 
@@ -113,7 +113,7 @@
     }
 
     .input :global(input) {
-        padding-right: 14px;
+        padding-right: 22px;
     }
 
     section :global(input::-webkit-slider-thumb) {

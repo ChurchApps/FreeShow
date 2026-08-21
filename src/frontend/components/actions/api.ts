@@ -79,6 +79,7 @@ import {
     stopTimerByName,
     timerSeekAdd,
     timerSeekTo,
+    toggleAudioRecording,
     toggleIcecast,
     toggleLock,
     toggleLogSongUsage,
@@ -139,6 +140,7 @@ export type API_media = { path: string; index?: number; data?: any }
 export type API_scripture = { id?: string; reference: string }
 export type API_toggle = { id: string; value?: boolean }
 export type API_toggle_specific = { value?: boolean }
+export type API_toggle_id = { id?: string; value?: boolean }
 export type API_stage_output_layout = { outputId?: string; stageLayoutId: string }
 export type API_output_style = { outputId?: string; styleId?: string }
 export type API_output_lock = { value?: boolean; outputId?: string }
@@ -299,6 +301,7 @@ export const API_ACTIONS = {
     audio_seekto: (data: API_seek) => audioSeekTo(data), // BC
     change_volume: (data: API_volume) => updateVolumeValues(data.volume), // BC
     start_audio_stream: (data: API_id) => AudioPlayer.start(data.id, { name: "" }),
+    toggle_audio_recording: (data: API_toggle_id = {}) => toggleAudioRecording(data),
     toggle_icecast: (data: API_toggle_specific = {}) => toggleIcecast(data),
     start_playlist: (data: API_id) => AudioPlaylist.start(data.id),
     name_start_playlist: (data: API_strval) => startPlaylistByName(data.value), // BC

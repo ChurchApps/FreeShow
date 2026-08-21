@@ -55,6 +55,14 @@ export function stopChannelRecording(channelId: string) {
     if (active.recorder.state !== "inactive") active.recorder.stop()
 }
 
+export function isChannelRecording(channelId = "main") {
+    return !!activeRecorders[channelId]
+}
+
+export function stopAllChannelRecordings() {
+    Object.keys(activeRecorders).forEach((channelId) => stopChannelRecording(channelId))
+}
+
 function formatTime() {
     const today = new Date()
     const s = String(today.getSeconds()).padStart(2, "0")
