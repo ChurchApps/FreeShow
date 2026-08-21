@@ -84,8 +84,8 @@
             filteredShows = showSearch(formattedSearch, filterByTags(filteredStored, $activeTagFilter))
             firstMatch = filteredShows[0] || null
 
-            // if nothing (fully) matches
-            if (active === "all" && !showLoading && searchValue.length > 5 && (firstMatch?.match || 0) < 40) {
+            // if nothing matches (or match confidence is very low on long search)
+            if (!showLoading && (!filteredShows.length || (active === "all" && searchValue.length > 5 && (firstMatch?.match || 0) < 48))) {
                 firstMatch = "SEARCH_CREATE"
                 createFromSearch = true
             } else {
