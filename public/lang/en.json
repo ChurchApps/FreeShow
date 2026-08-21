@@ -641,6 +641,7 @@
     "show": {
         "name": "Name",
         "category": "Category",
+        "new_arrangement": "New arrangement",
         "new_layout": "New layout",
         "grid": "Grid view",
         "simple": "Simple view",

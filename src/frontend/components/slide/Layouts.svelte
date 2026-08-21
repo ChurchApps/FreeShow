@@ -217,9 +217,9 @@
                 </span>
             {/if}
 
-            <MaterialButton disabled={!layoutSlides.length || isLocked || !layoutSlides?.some((a) => a && currentShow?.slides?.[a.id]?.group && currentShow?.slides?.[a.id]?.group !== ".")} on:click={addLayout} style="white-space: nowrap;" title="show.new_layout" center>
+            <MaterialButton disabled={!layoutSlides.length || isLocked || !layoutSlides?.some((a) => a && currentShow?.slides?.[a.id]?.group && currentShow?.slides?.[a.id]?.group !== ".")} on:click={addLayout} style="white-space: nowrap;" title="show.new_arrangement" center>
                 <Icon id="add" size={1.1} white={multipleLayouts} />
-                {#if !multipleLayouts && !$labelsDisabled}<T id="show.new_layout" />{/if}
+                {#if !multipleLayouts && !$labelsDisabled}<T id="show.new_arrangement" />{/if}
             </MaterialButton>
         {/if}
     </FloatingInputs>
