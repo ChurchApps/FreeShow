@@ -120,35 +120,38 @@ export class AudioSender {
     }
 
     private static createProcessor(ac: AudioContext, targetId: string): AudioNode {
-        if (this.registeredContexts.has(ac) && ac.audioWorklet) {
-            const node = new AudioWorkletNode(ac, "pcm-sender-processor")
-
-            // request Main process to create a MessageChannelMain and send port2 back
-            const portResponseHandler = (ev: MessageEvent) => {
-                if (ev.data?.type === "AUDIO_PORT_RESPONSE" && ev.data?.targetId === targetId && ev.ports?.[0]) {
-                    window.removeEventListener("message", portResponseHandler)
-                    if (!(node as any)._destroyed) {
-                        node.port.postMessage(
-                            {
-                                type: "INIT_PORT",
-                                targetId,
-                                sampleRate: ac.sampleRate,
-                                icecastConfig: this.getIcecastConfig(targetId)
-                            },
-                            [ev.ports[0]]
-                        )
-                    }
-                }
-            }
-            window.addEventListener("message", portResponseHandler)
-            ;(node as any)._cleanupListener = () => window.removeEventListener("message", portResponseHandler)
-
-            send(AUDIO, ["INIT_PORT"], { id: targetId })
-
-            return node
+        if (!this.registeredContexts.has(ac) || !ac.audioWorklet) {
+            return this.createFallbackProcessor(ac, targetId)
         }
 
-        // Fallback ScriptProcessor
+        const node = new AudioWorkletNode(ac, "pcm-sender-processor")
+
+        // request Main process to create a MessageChannelMain and send port2 back
+        const portResponseHandler = (ev: MessageEvent) => {
+            if (ev.data?.type === "AUDIO_PORT_RESPONSE" && ev.data?.targetId === targetId && ev.ports?.[0]) {
+                window.removeEventListener("message", portResponseHandler)
+                if (!(node as any)._destroyed) {
+                    node.port.postMessage(
+                        {
+                            type: "INIT_PORT",
+                            targetId,
+                            sampleRate: ac.sampleRate,
+                            icecastConfig: this.getIcecastConfig(targetId)
+                        },
+                        [ev.ports[0]]
+                    )
+                }
+            }
+        }
+        window.addEventListener("message", portResponseHandler)
+        ;(node as any)._cleanupListener = () => window.removeEventListener("message", portResponseHandler)
+
+        send(AUDIO, ["INIT_PORT"], { id: targetId })
+
+        return node
+    }
+
+    private static createFallbackProcessor(ac: AudioContext, targetId: string): AudioNode {
         const FRAME_SIZE = 960
         const bufL = new Float32Array(FRAME_SIZE)
         const bufR = new Float32Array(FRAME_SIZE)
@@ -230,6 +233,9 @@ export class AudioSender {
             }
 
             if ("port" in proc && (proc as any).port) {
+                try {
+                    ;(proc as any).port.postMessage({ type: "DESTROY" })
+                } catch {}
                 ;(proc as any).port.onmessage = null
                 ;(proc as any).port.close()
             }
@@ -246,6 +252,7 @@ export class AudioSender {
         } catch {}
 
         this.processors.delete(targetId)
+        send(AUDIO, ["CLOSE_PORT"], { id: targetId })
     }
 
     static resetTarget(targetId: string, ac: AudioContext, getDestinationNode: (targetId: string) => AudioNode) {

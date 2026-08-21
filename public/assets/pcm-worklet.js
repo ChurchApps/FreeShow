@@ -10,21 +10,37 @@ class PcmSenderProcessor extends AudioWorkletProcessor {
         this.targetId = null
         this.sampleRate = 48000
         this.icecastConfig = null
+        this.isDestroyed = false
 
         this.port.onmessage = (e) => {
             if (e.data?.type === "INIT_PORT") {
                 if (e.ports && e.ports[0]) {
+                    if (this.mainPort) {
+                        try {
+                            this.mainPort.close()
+                        } catch {}
+                    }
                     this.mainPort = e.ports[0]
                     if (this.mainPort.start) this.mainPort.start()
                 }
                 if (e.data.targetId) this.targetId = e.data.targetId
                 if (e.data.sampleRate) this.sampleRate = e.data.sampleRate
                 if (e.data.icecastConfig) this.icecastConfig = e.data.icecastConfig
+            } else if (e.data?.type === "DESTROY") {
+                this.isDestroyed = true
+                if (this.mainPort) {
+                    try {
+                        this.mainPort.close()
+                    } catch {}
+                    this.mainPort = null
+                }
             }
         }
     }
 
     process(inputs) {
+        if (this.isDestroyed) return false
+
         const input = inputs[0]
         const left = input && input.length > 0 ? input[0] : null
         const right = input && input.length > 1 && input[1] && input[1].length === (left ? left.length : 0) ? input[1] : left
