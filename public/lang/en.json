@@ -698,6 +698,7 @@
         "disable": "Disable",
         "enable": "Enable",
         "enable_specific": "Enable $1",
+        "toggle_specific": "Toggle $1",
         "undo": "Undo",
         "redo": "Redo",
         "cut": "Cut",

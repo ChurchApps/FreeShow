@@ -1,5 +1,6 @@
 import { MessageChannelMain } from "electron"
 import type { Message } from "../../types/Socket"
+import { IcecastSender } from "./IcecastSender"
 import { processAudio } from "./processAudio"
 
 let latestIcecastConfig: any = null
@@ -19,6 +20,8 @@ export function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
             } catch {}
             activeAudioPortsByTarget.delete(targetIdKey)
         }
+
+        if (targetIdKey === "icecast") IcecastSender.disconnect()
         return
     }
 
@@ -52,6 +55,8 @@ export function receiveAudio(_e: Electron.IpcMainEvent, msg: Message) {
             if (activeAudioPortsByTarget.get(targetIdKey) === port1) {
                 activeAudioPortsByTarget.delete(targetIdKey)
             }
+
+            if (targetIdKey === "icecast") IcecastSender.disconnect()
         })
 
         port1.start()

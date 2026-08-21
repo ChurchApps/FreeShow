@@ -862,6 +862,19 @@ export function timerSeekAdd(data: API_seek) {
 
 // OTHER
 
+export function toggleIcecast(data: API_toggle_specific = {}) {
+    if ((data.value as any) === "false") data.value = false // from Companion
+    if ((data.value as any) === "true") data.value = true
+
+    const current = get(special).icecast?.enabled ?? true
+    const newValue = data.value !== undefined ? !!data.value : !current
+    special.update((a) => {
+        if (!a.icecast) a.icecast = {}
+        a.icecast.enabled = newValue
+        return a
+    })
+}
+
 export function toggleLogSongUsage(data: API_toggle_specific) {
     if ((data.value as any) === "false") data.value = false // from Companion
 

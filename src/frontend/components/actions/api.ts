@@ -79,6 +79,7 @@ import {
     stopTimerByName,
     timerSeekAdd,
     timerSeekTo,
+    toggleIcecast,
     toggleLock,
     toggleLogSongUsage,
     toggleMediaLoop,
@@ -298,6 +299,7 @@ export const API_ACTIONS = {
     audio_seekto: (data: API_seek) => audioSeekTo(data), // BC
     change_volume: (data: API_volume) => updateVolumeValues(data.volume), // BC
     start_audio_stream: (data: API_id) => AudioPlayer.start(data.id, { name: "" }),
+    toggle_icecast: (data: API_toggle_specific = {}) => toggleIcecast(data),
     start_playlist: (data: API_id) => AudioPlaylist.start(data.id),
     name_start_playlist: (data: API_strval) => startPlaylistByName(data.value), // BC
     playlist_next: () => AudioPlaylist.next(), // BC

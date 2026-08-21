@@ -6,6 +6,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
     const popupInfo = $popupData
     const nodeId = popupInfo?.nodeId
@@ -22,9 +23,10 @@
 
     $: delayMs = Number(channelData.delay ?? 0)
 
-    function updateSpecial(value: any, key: string) {
+    function updateIcecast(key: string, value: any) {
         special.update((a) => {
-            a[key] = value
+            if (!a.icecast) a.icecast = {}
+            a.icecast[key] = value
             return a
         })
     }
@@ -41,12 +43,13 @@
 </script>
 
 {#if nodeId === "icecast"}
+    <MaterialToggleSwitch label="settings.enabled" checked={$special.icecast?.enabled ?? true} on:change={(e) => updateIcecast("enabled", e.detail)} />
     <InputRow>
-        <MaterialTextInput label="IP" value={$special.icecastHost || "localhost"} on:change={(e) => updateSpecial(e.detail, "icecastHost")} />
-        <MaterialNumberInput label="settings.port" value={$special.icecastPort ?? 8000} max={65535} min={1} step={1} on:change={(e) => updateSpecial(e.detail, "icecastPort")} />
+        <MaterialTextInput label="IP" value={$special.icecast?.host || "localhost"} on:change={(e) => updateIcecast("host", e.detail)} />
+        <MaterialNumberInput label="settings.port" value={$special.icecast?.port ?? 8000} max={65535} min={1} step={1} on:change={(e) => updateIcecast("port", e.detail)} />
     </InputRow>
-    <MaterialTextInput label="Mountpoint" value={$special.icecastMount || "/stream.opus"} on:change={(e) => updateSpecial(e.detail, "icecastMount")} />
-    <MaterialTextInput label="remote.password" type="password" value={$special.icecastPassword ?? "hackme"} defaultValue="hackme" on:change={(e) => updateSpecial(e.detail, "icecastPassword")} />
+    <MaterialTextInput label="Mountpoint" value={$special.icecast?.mount || "/stream.opus"} on:change={(e) => updateIcecast("mount", e.detail)} />
+    <MaterialTextInput label="remote.password" type="password" value={$special.icecast?.password ?? "hackme"} defaultValue="hackme" on:change={(e) => updateIcecast("password", e.detail)} />
 {:else if isChannelNode}
     <!-- this is the same options we find in the audio drawer -->
     <InputRow>

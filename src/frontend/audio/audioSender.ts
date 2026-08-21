@@ -60,7 +60,10 @@ export class AudioSender {
             return
         }
 
-        if (!this.shouldBeActive()) return
+        if (!this.shouldBeActive()) {
+            this.deactivate()
+            return
+        }
         if (ac.state === "suspended") ac.resume().catch(() => {})
 
         this.isActive = true
@@ -185,13 +188,14 @@ export class AudioSender {
     private static getIcecastConfig(targetId: string) {
         const spec = get(special)
         const isIcecast = targetId === "icecast"
+        const icecast = spec?.icecast || {}
         return isIcecast
             ? {
-                  enabled: true,
-                  host: spec.icecastHost,
-                  port: spec.icecastPort,
-                  mount: spec.icecastMount,
-                  password: spec.icecastPassword ?? "hackme"
+                  enabled: icecast.enabled ?? true,
+                  host: icecast.host || "localhost",
+                  port: icecast.port ?? 8000,
+                  mount: icecast.mount || "/stream.opus",
+                  password: icecast.password ?? "hackme"
               }
             : undefined
     }
@@ -205,7 +209,8 @@ export class AudioSender {
         const targets = new Set<string>()
 
         const connections = get(audioRouting)?.connections || []
-        if (connections.some((c) => c.to === "icecast")) {
+        const isIcecastEnabled = get(special)?.icecast?.enabled ?? true
+        if (isIcecastEnabled && connections.some((c) => c.to === "icecast")) {
             targets.add("icecast")
         }
 
@@ -279,7 +284,8 @@ export class AudioSender {
         if (this.sendOutputShowAudio()) return true
 
         const connections = get(audioRouting)?.connections || []
-        if (connections.some((c) => c.to.includes("icecast"))) return true
+        const isIcecastEnabled = get(special)?.icecast?.enabled ?? true
+        if (isIcecastEnabled && connections.some((c) => c.to.includes("icecast"))) return true
 
         const outputList = keysToID(get(outputs) || {}).filter(Boolean)
         return outputList.some((a) => a?.enabled && (a.ndi || a.blackmagic || a.webrtcData?.streaming || a.rtmpData?.streaming))

@@ -6,7 +6,7 @@
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { deduplicateConnections } from "../../../audio/routing/audioRoutingInit"
     import { AudioRoutingManager } from "../../../audio/routing/audioRoutingManager"
-    import { activePopup, audioChannelsData, audioPlaylists, audioRouting, outputs, selected } from "../../../stores"
+    import { activePopup, audioChannelsData, audioPlaylists, audioRouting, outputs, selected, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { keysToID } from "../../helpers/array"
     import { getAllOutputs } from "../../helpers/output"
@@ -180,8 +180,11 @@
                           ? networkOutputWindows
                           : []
 
+                const isEnabled = node.id === "icecast" ? ($special.icecast?.enabled ?? true) : true
+
                 return {
                     ...node,
+                    isEnabled,
                     isExpanded: expandedNodes.has(node.id) || node.id === "network_default",
                     hasSubNodes: subNodes.length > 0,
                     subNodes,
@@ -191,7 +194,7 @@
         }
     ] as RoutingColumn[]
 
-    $: if (config || expandedNodes || zoom || nonStageOutputs || networkOutputWindows || availablePlaylists) {
+    $: if (config || expandedNodes || zoom || nonStageOutputs || networkOutputWindows || availablePlaylists || columns || $special) {
         tick().then(requestUpdateConnectionLines)
     }
 

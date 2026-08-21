@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { AudioRoutingConfig } from "../../../types/AudioRouting"
 import { keysToID } from "../../components/helpers/array"
-import { audioChannelsData, audioEffects, audioRouting, disabledServers, outputs, serverData } from "../../stores"
+import { audioChannelsData, audioEffects, audioRouting, disabledServers, outputs, serverData, special } from "../../stores"
 import { AudioAnalyser } from "../audioAnalyser"
 import { AudioCompressor } from "../effects/audioCompressor"
 import { AudioDelay } from "../effects/audioDelay"
@@ -96,6 +96,7 @@ export class AudioRoutingManager {
 
         disabledServers.subscribe(triggerUpdate)
         serverData.subscribe(triggerUpdate)
+        special.subscribe(triggerUpdate)
     }
 
     public static getInstance(): AudioRoutingManager {

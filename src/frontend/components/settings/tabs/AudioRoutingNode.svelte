@@ -1,6 +1,6 @@
 <script lang="ts">
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
-    import { activePopup, playingAudio, popupData } from "../../../stores"
+    import { activePopup, playingAudio, popupData, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
     import Icon from "../../helpers/Icon.svelte"
@@ -76,7 +76,7 @@
     class:merger-card={isChannel}
     class:sub-card={isSubNode}
     class:hover-valid={hoverTargetId === id && hasValidPort}
-    class:disabled={!isEnabled && (!isInputCol || type === "output_window")}
+    class:disabled={!isEnabled && (!isInputCol || type === "output_window") && (!isOutputCol || type === "network")}
     class:invalid={isConnecting && !isValidHover && id !== dragStartId}
     data-node-id={id}
     on:mouseenter={onMouseEnter}
@@ -135,6 +135,21 @@
                 on:change={() => {
                     const micId = id.startsWith("mic_sub_") ? id.slice(8) : id
                     AudioMicrophone.start(micId, { name }, { pauseIfPlaying: true })
+                }}
+                small
+            />
+        {/if}
+
+        {#if type === "icecast" && $special.icecast?.enabled !== undefined}
+            <MaterialToggleSwitch
+                label=""
+                checked={$special.icecast?.enabled ?? true}
+                on:change={() => {
+                    special.update((a) => {
+                        if (!a.icecast) a.icecast = {}
+                        a.icecast.enabled = !a.icecast.enabled
+                        return a
+                    })
                 }}
                 small
             />
