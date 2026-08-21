@@ -59,11 +59,16 @@ export class IcecastSender {
 
         this.activeConfig = { enabled, host, port, mount, password }
 
-        if (enabled && !this.isConnected && !this.isConnecting) {
+        if (!enabled) {
+            this.disconnect()
+            return
+        }
+
+        if (!this.isConnected && !this.isConnecting) {
             this.connect()
         }
 
-        if (!enabled || !this.socket || !this.isConnected) return
+        if (!this.socket || !this.isConnected) return
 
         if (opusPacket && opusPacket.length > 0) {
             this.lastRealAudioTime = Date.now()
@@ -78,11 +83,11 @@ export class IcecastSender {
         return // DEBUG
         const now = Date.now()
         const elapsed = (now - this.lastStatsLog) / 1000
-        if (elapsed >= 5) {
+        if (elapsed >= 10) {
             const realRate = (this.realPacketsCount / elapsed).toFixed(1)
             const silentRate = (this.silentPacketsCount / elapsed).toFixed(1)
-            const durationSec = (Number(this.granulePosition) / 48000).toFixed(2)
-            console.log(`[IcecastSender Stats] Real pkts: ${this.realPacketsCount} (${realRate}/s), Silent pkts: ${this.silentPacketsCount} (${silentRate}/s), Stream Duration: ${durationSec}s, Serial: 0x${this.serial.toString(16)}`)
+            const durationSec = (Number(this.granulePosition) / 48000).toFixed(1)
+            console.log(`[IcecastSender Stats] Real: ${this.realPacketsCount} (${realRate}/s), Silent: ${this.silentPacketsCount} (${silentRate}/s) | Stream Duration: ${durationSec}s`)
             this.realPacketsCount = 0
             this.silentPacketsCount = 0
             this.lastStatsLog = now
@@ -142,7 +147,7 @@ export class IcecastSender {
                 return
             }
             if (resp.includes("401 Unauthorized") || resp.includes("403 Forbidden") || resp.includes("404 Not Found")) {
-                console.error(`[IcecastSender] Connection rejected by server. Check credentials/mount.`)
+                console.error(`[IcecastSender] Connection rejected by server. Check credentials/mount. Response: ${resp.trim().split("\r\n")[0]}`)
                 this.disconnect()
             }
         })
@@ -163,11 +168,12 @@ export class IcecastSender {
         this.lastRealAudioTime = Date.now()
 
         // Keep-alive timer fires every 20ms.
-        // If real audio starves for > 500ms, this maintains perfect 20ms Opus stream pacing.
+        // If real audio starves for > 1000ms, this maintains continuous 20ms Opus stream pacing with silence.
         this.paceTimer = setInterval(() => {
             if (!this.isConnected || !this.socket || this.socket.destroyed) return
 
-            if (Date.now() - this.lastRealAudioTime < 500) return
+            const now = Date.now()
+            if (now - this.lastRealAudioTime < 1000) return
 
             this.granulePosition += BigInt(960)
             this.silentPacketsCount++
@@ -178,7 +184,7 @@ export class IcecastSender {
 
     private static startStreamHeaders() {
         if (!this.socket || !this.isConnected) return
-        console.log(`[IcecastSender] Sending initial Ogg Opus headers (BOS, serial: 0x${this.serial.toString(16)})...`)
+        console.log(`[IcecastSender] Sending initial Ogg Opus headers (BOS, serial: 0x${this.serial.toString(16)}, title: "${this.currentSongTitle || "none"}")...`)
         // OpusHead: ver 1, channels 2, preskip 312, 48000Hz, gain 0, map 0
         const head = Buffer.from("4f707573486561640102380180bb0000000000", "hex")
 
@@ -192,21 +198,18 @@ export class IcecastSender {
     private static writeOggPage(packet: Buffer, headerType: number, granulePos: bigint) {
         if (!this.socket || !packet) return
 
-        const numSegments = Math.min(255, Math.ceil(packet.length / 255))
         const segmentLengths: number[] = []
         let remaining = packet.length
-
-        for (let i = 0; i < numSegments; i++) {
-            const len = Math.min(255, remaining)
-            segmentLengths.push(len)
-            remaining -= len
+        while (remaining >= 255) {
+            segmentLengths.push(255)
+            remaining -= 255
         }
+        segmentLengths.push(remaining)
+        const numSegments = segmentLengths.length
 
         const headerSize = 27 + numSegments
         const totalSize = headerSize + packet.length
 
-        // allocUnsafe skips zero-filling memory, significantly faster.
-        // Safe here because we explicitly overwrite every byte below.
         const ogg = Buffer.allocUnsafe(totalSize)
 
         ogg.write("OggS", 0)
@@ -252,7 +255,7 @@ export class IcecastSender {
             try {
                 if (this.granulePosition > BigInt(48000 * 2)) {
                     console.log(`[IcecastSender] Track metadata updated to "${this.currentSongTitle}". Chaining new Ogg stream.`)
-                    this.writeOggPage(Buffer.alloc(0), 4, this.granulePosition)
+                    this.writeOggPage(Buffer.alloc(0), 4, this.granulePosition) // EOS
 
                     this.serial = crypto.randomBytes(4).readUInt32LE(0)
                     this.pageSequence = 0
@@ -280,6 +283,7 @@ export class IcecastSender {
                 this.writeOggPage(Buffer.alloc(0), 4, this.granulePosition)
             } catch {}
         }
+        this.activeConfig = { ...this.activeConfig, enabled: false }
         this.isConnected = false
         this.isConnecting = false
         if (this.socket) {

@@ -2,13 +2,14 @@ class PcmSenderProcessor extends AudioWorkletProcessor {
     constructor() {
         super()
 
-        this.planar = new Float32Array(1920)
+        this.sampleRate = 48000
+        this.frameSize = 960
+        this.planar = new Float32Array(this.frameSize * 2)
         this.planarBytes = new Uint8Array(this.planar.buffer)
         this.offset = 0
 
         this.mainPort = null
         this.targetId = null
-        this.sampleRate = 48000
         this.icecastConfig = null
         this.isDestroyed = false
 
@@ -24,7 +25,13 @@ class PcmSenderProcessor extends AudioWorkletProcessor {
                     if (this.mainPort.start) this.mainPort.start()
                 }
                 if (e.data.targetId) this.targetId = e.data.targetId
-                if (e.data.sampleRate) this.sampleRate = e.data.sampleRate
+                if (e.data.sampleRate && e.data.sampleRate !== this.sampleRate) {
+                    this.sampleRate = e.data.sampleRate
+                    this.frameSize = Math.max(128, Math.round(this.sampleRate * 0.02))
+                    this.planar = new Float32Array(this.frameSize * 2)
+                    this.planarBytes = new Uint8Array(this.planar.buffer)
+                    this.offset = 0
+                }
                 if (e.data.icecastConfig) this.icecastConfig = e.data.icecastConfig
             } else if (e.data?.type === "DESTROY") {
                 this.isDestroyed = true
@@ -45,15 +52,16 @@ class PcmSenderProcessor extends AudioWorkletProcessor {
         const left = input && input.length > 0 ? input[0] : null
         const right = input && input.length > 1 && input[1] && input[1].length === (left ? left.length : 0) ? input[1] : left
         const len = left && left.length > 0 ? left.length : 128
+        const frameSize = this.frameSize
 
-        if (this.planar.byteLength === 0) {
-            this.planar = new Float32Array(1920)
+        if (this.planar.byteLength === 0 || this.planar.length !== frameSize * 2) {
+            this.planar = new Float32Array(frameSize * 2)
             this.planarBytes = new Uint8Array(this.planar.buffer)
         }
 
         let srcOffset = 0
         while (srcOffset < len) {
-            const copyLen = Math.min(len - srcOffset, 960 - this.offset)
+            const copyLen = Math.min(len - srcOffset, frameSize - this.offset)
 
             if (left) {
                 this.planar.set(left.subarray(srcOffset, srcOffset + copyLen), this.offset)
@@ -62,15 +70,15 @@ class PcmSenderProcessor extends AudioWorkletProcessor {
             }
 
             if (right) {
-                this.planar.set(right.subarray(srcOffset, srcOffset + copyLen), 960 + this.offset)
+                this.planar.set(right.subarray(srcOffset, srcOffset + copyLen), frameSize + this.offset)
             } else {
-                this.planar.fill(0, 960 + this.offset, 960 + this.offset + copyLen)
+                this.planar.fill(0, frameSize + this.offset, frameSize + this.offset + copyLen)
             }
 
             this.offset += copyLen
             srcOffset += copyLen
 
-            if (this.offset >= 960) {
+            if (this.offset >= frameSize) {
                 if (this.mainPort) {
                     this.mainPort.postMessage({
                         channel: "AUDIO",
