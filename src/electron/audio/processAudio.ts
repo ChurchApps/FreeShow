@@ -38,18 +38,23 @@ export async function processAudio(buffer: Buffer, sampleRate: number = 48000, t
         }
     }
 
+    const needsIcecast = !!(icecast && opusEncoder && (!tid || tid === "icecast"))
+    const needsLegacySinks = (!tid || tid !== "icecast") && (Object.keys(BlackmagicSender.playbackData || {}).length > 0 || !!getServerData("OUTPUT_STREAM")?.sendAudio || WebRtcHost.isRunning() || RtmpStreamer.anyRunning())
+
+    if (!needsIcecast && !needsLegacySinks) return
+
     // Convert Planar Float32 to Int16 LE Interleaved PCM for legacy audio sinks
     const int16Buffer = convertPlanarFloat32ToInt16Interleaved(buffer, channelCount2)
 
     // Only route to Icecast if targetId is "icecast" or not specified
-    if (icecast && opusEncoder && (!tid || tid === "icecast")) {
+    if (needsIcecast) {
         try {
             const pcm48k = sr === 48000 ? int16Buffer : resamplePcmInt16Stereo(int16Buffer, sr, 48000)
             const frameByteSize = 960 * 2 * 2 // 3840 bytes
 
             // Fast-path: Skip accumulator if perfectly sized
             if (icecastPcmAccumulator.length === 0 && pcm48k.length === frameByteSize) {
-                const opusFrame = opusEncoder.encode(pcm48k)
+                const opusFrame = opusEncoder!.encode(pcm48k)
                 enqueueOpusFrame(opusFrame, icecast)
             } else {
                 icecastPcmAccumulator = Buffer.concat([icecastPcmAccumulator, pcm48k])
@@ -58,7 +63,7 @@ export async function processAudio(buffer: Buffer, sampleRate: number = 48000, t
                     const chunk = icecastPcmAccumulator.subarray(0, frameByteSize)
                     icecastPcmAccumulator = Buffer.from(icecastPcmAccumulator.subarray(frameByteSize))
 
-                    const opusFrame = opusEncoder.encode(chunk)
+                    const opusFrame = opusEncoder!.encode(chunk)
                     enqueueOpusFrame(opusFrame, icecast)
                 }
             }
@@ -67,7 +72,7 @@ export async function processAudio(buffer: Buffer, sampleRate: number = 48000, t
         }
     }
 
-    if (!tid || tid !== "icecast") {
+    if (needsLegacySinks) {
         BlackmagicSender.sendAudioBuffer(int16Buffer, { sampleRate: sr, channelCount: channelCount2 })
         sendAudioToOutputServer(int16Buffer, { sampleRate: sr, channelCount: channelCount2 })
 

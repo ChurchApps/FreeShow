@@ -198,7 +198,7 @@ export class NdiSender {
         const senderData = this.NDI[id]
         if (!senderData?.sender) return
 
-        const grandiose = await loadGrandiose()
+        const grandiose = grandioseModule || (await loadGrandiose())
         if (!grandiose) return
 
         // Convert buffer format for NDI
@@ -260,7 +260,7 @@ export class NdiSender {
         const senderData = this.NDI[id]
         if (!senderData?.sender || !buffer || buffer.length === 0) return
 
-        const grandiose = await loadGrandiose()
+        const grandiose = grandioseModule || (await loadGrandiose())
         if (!grandiose) return
 
         const noSamples = Math.trunc(buffer.length / (channelCount * this.BYTES_PER_FLOAT32))
@@ -284,7 +284,7 @@ export class NdiSender {
         const hasSender = Object.values(this.NDI).some((s) => s?.sender)
         if (!hasSender || !buffer || buffer.length === 0) return
 
-        const grandiose = await loadGrandiose()
+        const grandiose = grandioseModule || (await loadGrandiose())
         if (!grandiose) return
 
         const noSamples = Math.trunc(buffer.length / (channelCount * this.BYTES_PER_FLOAT32))
