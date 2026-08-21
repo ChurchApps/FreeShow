@@ -564,7 +564,8 @@ export async function getPlainText(showId: string) {
     return { id: showId, value: getPlainEditorText(showId) } as API_id_value
 }
 
-export function getShowGroups(id: string) {
+export async function getShowGroups(id: string) {
+    await loadShows([id])
     return { id, value: getSlideGroups(id) }
 }
 
