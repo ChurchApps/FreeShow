@@ -17,7 +17,7 @@ export interface Effect {
 }
 
 // | "rain_screen"
-export type EffectType = "circle" | "rectangle" | "triangle" | "wave" | "bubbles" | "stars" | "galaxy" | "rain" | "snow" | "sun" | "lens_flare" | "spotlight" | "aurora" | "bloom" | "fog" | "city" | "rays" | "fireworks" | "cycle" | "grass" | "mountains" | "lightning" | "rainbow" | "asset"
+export type EffectType = "circle" | "rectangle" | "triangle" | "wave" | "bubbles" | "stars" | "galaxy" | "rain" | "snow" | "sun" | "lens_flare" | "spotlight" | "aurora" | "bloom" | "fog" | "city" | "rays" | "fireworks" | "cycle" | "grass" | "mountains" | "lightning" | "rainbow" | "mesh_gradient" | "asset"
 export interface EffectItem<T extends EffectType = EffectType> {
     type: T
     hidden?: boolean
@@ -163,6 +163,20 @@ export interface AuroraItem extends EffectItem<"aurora"> {
     speed: number
     opacity?: number
     offset?: number
+}
+
+export interface MeshGradientItem extends EffectItem<"mesh_gradient"> {
+    /** Control point colours, laid out on a square-ish grid (4, 9, 16, 25 or 36 work best). */
+    colors?: string[]
+    /** Seconds for one full loop. Every motion frequency is an integer harmonic of this,
+     *  so the last frame joins the first with no jump. */
+    duration?: number
+    /** Integer multiplier on the motion frequencies. Must stay whole or the loop breaks. */
+    speed?: number
+    /** How far the control points travel, as a fraction of the frame. */
+    motion?: number
+    /** Film-grain overlay, 0 disables it. */
+    grain?: number
 }
 
 export interface BloomItem extends EffectItem<"bloom"> {

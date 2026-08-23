@@ -124,6 +124,15 @@ export const effectSections: { [key: string]: EditBoxSection } = {
         ])
     },
 
+    mesh_gradient: {
+        inputs: splitIntoRows([
+            { id: "duration", type: "number", value: 24, values: { label: "effect.duration", min: 1, max: 300, showSlider: true, sliderValues: { min: 4, max: 60 } } },
+            { id: "speed", type: "number", value: 1, values: { label: "edit.speed", min: 1, max: 16, showSlider: true, sliderValues: { min: 1, max: 8 } } },
+            { id: "motion", type: "number", value: 0.07, multiplier: 1000, values: { label: "effect.motion", min: 0, max: 200, decimals: 3, showSlider: true, sliderValues: { min: 0, max: 140 } } },
+            { id: "grain", type: "number", value: 0, multiplier: 1000, values: { label: "effect.grain", min: 0, max: 200, decimals: 3, showSlider: true, sliderValues: { min: 0, max: 60 } } }
+        ])
+    },
+
     aurora: {
         inputs: splitIntoRows([
             { id: "bandCount", type: "number", value: 5, values: { label: "edit.count", min: 1, max: 20, showSlider: true, sliderValues: { max: 10 } } },

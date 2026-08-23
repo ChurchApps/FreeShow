@@ -1684,6 +1684,7 @@
         "spotlight": "Spotlight",
         "aurora": "Aurora",
         "bloom": "Bloom",
+        "mesh_gradient": "Mesh gradient",
         "fog": "Fog",
         "city": "City",
         "fireworks": "Fireworks",
@@ -1697,6 +1698,9 @@
         "arm_count": "Arm count",
         "drift": "Drift",
         "pulse_speed": "Pulse speed",
+        "duration": "Loop duration",
+        "motion": "Motion",
+        "grain": "Grain",
         "hollow": "Hollow"
     },
     "interaction": {
