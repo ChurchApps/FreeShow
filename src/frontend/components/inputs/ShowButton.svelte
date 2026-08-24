@@ -273,7 +273,7 @@
 
     // placeholder title with index
     // $: showTemplateName = type === "show_placeholder" ? `${translateText("new.placeholder: formats.show")} ${index !== null ? ($editingProjectTemplate ? $projectTemplates[$editingProjectTemplate] : $projects[$activeProject || ""])?.shows?.reduce((c, show, i) => (show.type === "show_placeholder" && i < index ? c + 1 : c), 1) : ""}` : ""
-    $: showTemplateName = type === "show_placeholder" ? show.name || translateText("new.placeholder") : ""
+    $: showTemplateName = type === "show_placeholder" ? (show.name && show.name !== "—" ? show.name : translateText("new.placeholder")) : ""
 </script>
 
 <div id="show_{id}" class="main" class:isProject class:played={show.played}>
