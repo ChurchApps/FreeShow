@@ -1,14 +1,15 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
     import { activeEdit, activeShow, openToolsTab, os, outputs, showsCache, special, templates, variables } from "../../../stores"
+    import { startResizing } from "../../../utils/cursor"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
-    import { isSlideLocked } from "../../helpers/show"
     import { isComposing } from "../../../utils/shortcuts"
     import { deleteAction } from "../../helpers/clipboard"
     import { history } from "../../helpers/history"
     import { getExtension, getFileName, getMediaType } from "../../helpers/media"
     import { getFirstActiveOutput, getOutputResolution, percentageStylePos } from "../../helpers/output"
+    import { isSlideLocked } from "../../helpers/show"
     import { createCSSVariables } from "../../helpers/showActions"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import SlideItems from "../../slide/SlideItems.svelte"
@@ -81,6 +82,12 @@
 
         let target = e.target.closest(".item")
         if (!target) return
+
+        const square = e.target.closest(".square")
+        if (square) {
+            const cursor = window.getComputedStyle(square).cursor || "nwse-resize"
+            startResizing(cursor)
+        }
 
         mouse = {
             x: e.clientX,

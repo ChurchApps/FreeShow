@@ -1,8 +1,10 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { Item } from "../../../../types/Show"
     import { activeShow } from "../../../stores"
-    import { history } from "../../helpers/history"
+    import { startResizing, stopResizing } from "../../../utils/cursor"
     import { clampCrop, clampPan, getCropCenter, getCropValues, isSameCrop, type CropValues } from "../../helpers/cropping"
+    import { history } from "../../helpers/history"
 
     type CropSide = "top" | "right" | "bottom" | "left" | "topLeft" | "topRight" | "bottomRight" | "bottomLeft"
 
@@ -65,7 +67,16 @@
         cropEditMode = false
         cropDragSide = null
         cropMoveActive = false
+        stopResizing()
         return true
+    }
+
+    function getCropCursor(side: CropSide) {
+        if (side === "top" || side === "bottom") return "ns-resize"
+        if (side === "left" || side === "right") return "ew-resize"
+        if (side === "topLeft" || side === "bottomRight") return "nwse-resize"
+        if (side === "topRight" || side === "bottomLeft") return "nesw-resize"
+        return "default"
     }
 
     function startCropDrag(side: CropSide, e: MouseEvent) {
@@ -74,6 +85,7 @@
         e.preventDefault()
         e.stopPropagation()
 
+        startResizing(getCropCursor(side))
         cropEditMode = true
         cropDragSide = side
         cropMoveActive = false
@@ -87,6 +99,7 @@
         e.preventDefault()
         e.stopPropagation()
 
+        startResizing("move")
         cropEditMode = true
         cropMoveActive = true
         cropDragSide = null
@@ -137,6 +150,7 @@
     function cropMouseup() {
         if (!cropDragSide && !cropMoveActive) return
 
+        stopResizing()
         cropDragSide = null
         cropMoveActive = false
 
@@ -184,7 +198,12 @@
         cropEditMode = false
         cropDragSide = null
         cropMoveActive = false
+        stopResizing()
     }
+
+    onDestroy(() => {
+        stopResizing()
+    })
 </script>
 
 <svelte:window on:mousemove={cropMousemove} on:mouseup={cropMouseup} />

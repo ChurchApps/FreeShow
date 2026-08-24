@@ -1,7 +1,9 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { DrawerTabIds } from "../../../types/Tabs"
     import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, activeTriggerFunction, dictionary, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, mediaOptions, os, previousShow, projects, quickTextCache, scriptureSettings, selected, showsCache } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
+    import { startResizing, stopResizing } from "../../utils/cursor"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { shouldOpenReplace } from "../../utils/shortcuts"
@@ -31,6 +33,8 @@
     let mouse: null | { x: number; y: number; offsetY: number } = null
     function mousedown(e: any) {
         if (e.target.closest(".search")) return
+
+        startResizing("ns-resize")
 
         maxHeight = window.innerHeight - topHeight - ($os.platform === "win32" ? MENU_BAR_HEIGHT - 0.3 : 0)
         mouse = {
@@ -98,9 +102,16 @@
     function mouseup(e: any) {
         if (!e.target.closest("input") && !e.target.closest(".contextMenu") && !searchValue.length) searchActive = false
 
-        mouse = null
+        if (mouse) {
+            stopResizing()
+            mouse = null
+        }
         if (!e.target.closest(".top")) move = false
     }
+
+    onDestroy(() => {
+        if (mouse) stopResizing()
+    })
 
     $: activeTab = $activeDrawerTab
     function openDrawerTab(tab: { id: string; name: string; icon: string }) {

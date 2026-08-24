@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { outputs } from "../../stores"
     import { throttle } from "../../utils/common"
+    import { stopResizing } from "../../utils/cursor"
     import { DEFAULT_BOUNDS, getActiveOutputs, getOutputResolution, getStageResolution } from "../helpers/output"
     import { getRadius, moveBox, resizeBox, rotateBox } from "./textbox"
 
@@ -100,10 +102,15 @@
     }
 
     function mouseup() {
+        stopResizing()
         mouse = null
         lines = []
         newStyles = {}
     }
+
+    onDestroy(() => {
+        stopResizing()
+    })
 </script>
 
 <svelte:window on:mousemove={mousemove} on:mouseup={mouseup} />
