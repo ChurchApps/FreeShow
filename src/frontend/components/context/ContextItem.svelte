@@ -36,7 +36,7 @@
             disabled = !!$shows[$selected.data[0]?.id]?.locked // hide
         },
         delete: () => {
-            hide = !!$shows[$selected.data[0]?.id]?.locked
+            hide = $selected.data?.every((a) => !!$shows[a?.id]?.locked)
         },
         private: () => {
             let show = $shows[$selected.data[0]?.id]
