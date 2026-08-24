@@ -189,7 +189,8 @@
             currentAutoSizeTimeout = null
         }, 20)
     }
-    $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
+    $: isAutoSized = item?.type?.includes("text") ? item?.auto || (item?.textFit && item?.textFit !== "none") : item?.auto !== false || (item?.textFit && item?.textFit !== "none")
+    $: autoSize = isAutoSized ? size : fontSize
 
     // SLIDE
     $: sourceOutputId = currentShow?.settings?.output

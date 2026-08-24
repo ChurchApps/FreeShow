@@ -253,20 +253,33 @@
 
     const dispatch = createEventDispatcher()
     const previousValue: { [key: string]: string } = {}
+    const textValueCache = new Map<string, string>()
+    let lastUpdater = 0
+
     function getTextValue(value: string, i: number, ti: number, _updater: number) {
-        if (dynamicValues && value.includes("{")) {
-            const newValue = replaceDynamicValues(value, { ...ref, slideIndex })
-
-            const id = i + "_" + ti
-            if (previousValue[id] !== newValue) {
-                if (updateDynamic > 2) dispatch("updateAutoSize")
-                previousValue[id] = newValue
-            }
-
-            return newValue
+        if (!dynamicValues || !value || typeof value !== "string" || !value.includes("{")) {
+            return value || ""
         }
 
-        return value
+        if (_updater !== lastUpdater) {
+            textValueCache.clear()
+            lastUpdater = _updater
+        }
+
+        const cacheKey = `${i}_${ti}_${value}`
+        const cached = textValueCache.get(cacheKey)
+        if (cached !== undefined) return cached
+
+        const newValue = replaceDynamicValues(value, { ...ref, slideIndex }, _updater)
+
+        const id = i + "_" + ti
+        if (previousValue[id] !== newValue) {
+            if (updateDynamic > 2) dispatch("updateAutoSize")
+            previousValue[id] = newValue
+        }
+
+        textValueCache.set(cacheKey, newValue)
+        return newValue
     }
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND

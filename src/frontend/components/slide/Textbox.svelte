@@ -119,7 +119,7 @@
     })
     onDestroy(() => {
         if (dateInterval) clearInterval(dateInterval)
-        if (loopStop) clearTimeout(loopStop)
+        if (debounceTimer) clearTimeout(debounceTimer)
         if (cssInterval) clearInterval(cssInterval)
     })
 
@@ -322,20 +322,29 @@
     let prevAutosizeSignature = ""
     $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${ratio}`
 
+    let debounceTimer: NodeJS.Timeout | null = null
+    function debouncedCalculateAutosize(delay = 50) {
+        if (debounceTimer) clearTimeout(debounceTimer)
+        debounceTimer = setTimeout(() => {
+            debounceTimer = null
+            calculateAutosize()
+        }, delay)
+    }
+
     // Trigger calculation only when Content, Style, Template, or Ratio actually changes
     $: if (itemElem && loaded && autosizeSignature !== prevAutosizeSignature) {
         prevAutosizeSignature = autosizeSignature
-        calculateAutosize()
+        debouncedCalculateAutosize(isStage ? 60 : 0)
     }
     $: isDynamicText = (stageItem ? getItemText(stageItem) : getItemText(item)).includes("{")
     $: if (itemElem && loaded && $variables && isDynamicText) {
-        setTimeout(calculateAutosize)
+        debouncedCalculateAutosize(50)
     }
 
     // recalculate auto size if output template is different than show template
     $: currentShowTemplateId = $showsCache[ref.showId || ""]?.settings?.template || ""
     $: outputSlide = getFirstActiveOutput($outputs)?.out?.slide
-    $: if (item?.type === "slide_tracker" && outputSlide) setTimeout(calculateAutosize) // overlay progress update
+    $: if (item?.type === "slide_tracker" && outputSlide) debouncedCalculateAutosize(50) // overlay progress update
     $: if ($currentWindow === "output" && outputStyle?.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
     // else outputTemplateAutoSize = false
 
@@ -370,8 +379,6 @@
     }
     $: customTypeRatio = deriveCustomTypeRatio()
 
-    let loopStop: NodeJS.Timeout | null = null
-    let newCall = false
     async function calculateAutosize() {
         if (item.type === "media" || item.type === "camera" || item.type === "icon") return
         if (isStage && !stageAutoSize) {
@@ -393,7 +400,7 @@
 
         // Immediate cache check: if we already have a cached size for the current element dimensions, return it immediately without waiting!
         const cacheKey = buildAutoSizeCacheKey()
-        const cacheSignature = buildAutoSizeSignature(elem.clientWidth, elem.clientHeight, chords)
+        const cacheSignature = buildAutoSizeSignature(undefined, undefined, chords)
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
 
         if (!isDynamic && !chords && !Number(outputStyle?.lines || 0) && cachedResult && cachedResult.signature === cacheSignature) {
@@ -407,56 +414,30 @@
             return
         }
 
-        if (loopStop) {
-            // is this new call necessary?
-            newCall = true
-            return
-        }
-        loopStop = setTimeout(() => {
-            loopStop = null
-            if (newCall) calculateAutosize()
-            newCall = false
-        }, 50)
-
         // Wait for DOM to update with new template styles before measuring
         await tick()
 
-        // Wait for web fonts to load before measuring (prevents wrong dimensions from fallback fonts)
-        try {
-            await document.fonts.ready
-        } catch (e) {
-            // Font loading check failed, continue anyway
-        }
-
-        // Wait for CSS styles to fully cascade and layout to stabilize before measuring
-        // This ONLY adds delay when element dimensions are still changing (unstable layout)
-        // Once dimensions stabilize, no additional waiting occurs
-        if (itemElem) {
+        // Wait for CSS styles to fully cascade and layout to stabilize before measuring (only needed for output window)
+        const isOutputContext = ratio < 0.5 && !preview && !fontPreview && !isStage
+        if (isOutputContext && itemElem) {
             let prevWidth = itemElem.clientWidth
             let prevHeight = itemElem.clientHeight
             let attempts = 0
             const maxAttempts = 20
             let totalWait = 0
-            const maxWait = 500 // Maximum 500ms - reasonable buffer for slow computers without painful delays
-
-            // Output window needs longer initial wait for CSS cascade in separate Electron window
-            const isOutputContext = ratio < 0.5 && !preview && !fontPreview && !isStage
+            const maxWait = 500
 
             while (attempts < maxAttempts && totalWait < maxWait) {
-                const waitTime = attempts === 0 ? (isOutputContext ? 150 : 100) : attempts === 1 ? 50 : 20
+                const waitTime = attempts === 0 ? 150 : attempts === 1 ? 50 : 20
                 await wait(waitTime)
                 totalWait += waitTime
 
-                // Check if element still exists after waiting
-                if (!itemElem) {
-                    return // Element destroyed, abort calculation
-                }
+                if (!itemElem) return
 
                 const newWidth = itemElem.clientWidth
                 const newHeight = itemElem.clientHeight
 
                 if (newWidth === prevWidth && newHeight === prevHeight) {
-                    // Dimensions stable - stop waiting
                     break
                 }
 
@@ -507,7 +488,7 @@
 
         // short-circuit expensive DOM work when we already measured identical content
         const finalCacheKey = buildAutoSizeCacheKey()
-        const finalCacheSignature = buildAutoSizeSignature(elem.clientWidth, elem.clientHeight, chords)
+        const finalCacheSignature = buildAutoSizeSignature(undefined, undefined, chords)
         const finalCachedResult = finalCacheKey ? readAutoSizeCache(finalCacheKey) : undefined
 
         if (!isDynamic && !chords && !Number(outputStyle?.lines || 0) && finalCachedResult && finalCachedResult.signature === finalCacheSignature) {
