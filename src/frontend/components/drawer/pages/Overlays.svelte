@@ -168,7 +168,7 @@
 
                                     <Zoomed {resolution} background={overlay.items.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={!!overlay.items.length}>
                                         {#each overlay.items as item}
-                                            <Textbox {item} ref={{ type: "overlay", id: overlay.id }} />
+                                            <Textbox {item} ref={{ type: "overlay", id: overlay.id }} preview />
                                         {/each}
                                     </Zoomed>
                                 {/if}

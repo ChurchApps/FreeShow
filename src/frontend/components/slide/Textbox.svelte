@@ -20,7 +20,6 @@
     export let itemIndex = -1
     export let slideIndex = 0
     export let preview = false
-    export let fontPreview = false
     export let isTemplatePreview = false
     export let mirror = true
     export let isOutputted = false
@@ -109,7 +108,7 @@
     // remember which item signature we already reset local font size for
     let lastRenderedSignature = ""
     onMount(() => {
-        if (preview || fontPreview) {
+        if (preview) {
             loaded = true
         } else {
             setTimeout(() => {
@@ -310,7 +309,7 @@
                 // Keep existing fontSize on stage to prevent flicker during drag
             } else if (willHide) {
                 fontSize = 0
-            } else if (preview || fontPreview) {
+            } else if (preview) {
                 fontSize = item?.previewAutoFontSize || item?.autoFontSize || 100
             } else {
                 fontSize = item?.autoFontSize || 0
@@ -418,7 +417,7 @@
         await tick()
 
         // Wait for CSS styles to fully cascade and layout to stabilize before measuring (only needed for output window)
-        const isOutputContext = ratio < 0.5 && !preview && !fontPreview && !isStage
+        const isOutputContext = ratio < 0.5 && !preview && !isStage
         if (isOutputContext && itemElem) {
             let prevWidth = itemElem.clientWidth
             let prevHeight = itemElem.clientHeight
@@ -538,7 +537,7 @@
             return
         }
         // Store in separate field for previews vs OUTPUT
-        if ((preview || fontPreview) && fontSize !== item.previewAutoFontSize) setItemPreviewAutoFontSize(fontSize)
+        if (preview && fontSize !== item.previewAutoFontSize) setItemPreviewAutoFontSize(fontSize)
         if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
         if (!isDynamic && finalCacheKey) writeAutoSizeCache(finalCacheKey, { signature: finalCacheSignature, fontSize })
 
@@ -567,7 +566,7 @@
         }
 
         // Fix for thumbnails getting stuck with wrong cache when dimensions change via CSS classes
-        if (preview || fontPreview) {
+        if (preview) {
             // Round measured width/height to nearest 5px to tolerate small container stretching fluctuations during load
             boxDimensions.measuredWidth = measuredWidth ? Math.round(measuredWidth / 5) * 5 : 0
             boxDimensions.measuredHeight = measuredHeight ? Math.round(measuredHeight / 5) * 5 : 0
@@ -575,7 +574,7 @@
 
         // Fix for OUTPUT getting stuck with wrong cache when output window dimensions change
         // Include container dimensions to invalidate cache when OUTPUT resolution/size changes
-        if (!preview && !fontPreview && !isStage && itemElem) {
+        if (!preview && !isStage && itemElem) {
             const container = itemElem.parentElement
             if (container) {
                 boxDimensions.containerWidth = container.clientWidth ? Math.round(container.clientWidth / 5) * 5 : 0
@@ -597,7 +596,7 @@
             outputStyle: outputStyle || null,
             styleIdOverride: styleIdOverride || "",
             mirror: !!mirror,
-            preview: !!(preview || fontPreview),
+            preview: !!preview,
             smallFontSize: !!smallFontSize,
             maxLines: maxLines || 0,
             maxLinesInvert: !!maxLinesInvert,
@@ -616,7 +615,7 @@
     }
 
     function shouldHideUntilAutoSizeCompletes() {
-        if (preview || fontPreview || isStage) return false
+        if (preview || isStage) return false
 
         const isTextItem = (item?.type || "text") === "text"
         const textFit = item?.textFit || (item?.auto ? (isTextItem ? "shrinkToFit" : "growToFit") : "none")
@@ -734,7 +733,7 @@
     }
 
     let updateTrigger = 0
-    const cssIntervalTime = preview || fontPreview || isTemplatePreview ? 3000 : 1000
+    const cssIntervalTime = preview || isTemplatePreview ? 3000 : 1000
     let cssInterval = setInterval(() => updateTrigger++, cssIntervalTime)
 
     // give CSS access to certain dynamic values
