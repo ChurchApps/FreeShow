@@ -10,6 +10,7 @@ import { OutputLifecycle } from "./helpers/OutputLifecycle"
 import { OutputSend } from "./helpers/OutputSend"
 import { OutputValues } from "./helpers/OutputValues"
 import { OutputVisibility } from "./helpers/OutputVisibility"
+import { RenderGroups } from "./helpers/RenderGroups"
 import type { Output as OutputData } from "./Output"
 
 export class OutputHelper {
@@ -39,10 +40,36 @@ export class OutputHelper {
             FOCUS: (data: { id: string }) => OutputHelper.Lifecycle.focusOutput(data.id)
         }
 
-        if (msg.channel.includes("MAIN")) return toApp(OUTPUT, msg)
+        if (msg.channel.includes("MAIN")) return toApp(OUTPUT, OutputHelper.expandToRenderGroupMembers(msg))
         if (msg.channel in outputResponses) return outputResponses[msg.channel as keyof typeof outputResponses](msg.data)
 
         OutputHelper.Send.sendToOutputWindow(msg)
+    }
+
+    // Shared-render: a FOLLOWER output has no window, so nothing ever emits the id-keyed video sync messages
+    // (MAIN_TIME / MAIN_DATA) under the follower's id — only the group RENDERER's window sends them, keyed by
+    // the renderer's id. The main window's preview mirror for the follower depends on exactly those messages:
+    // mirror videos never loop natively (BackgroundMedia skips updateValues for mirrors) and rely on the
+    // videosTime/videosData sync to snap back across a loop boundary — without it the follower's preview
+    // thumbnail plays the video ONCE and freezes on its last frame. Fan the renderer's entries out to every
+    // group member id so follower previews sync exactly like the renderer's.
+    private static expandToRenderGroupMembers(msg: Message): Message {
+        if (msg.channel !== "MAIN_TIME" && msg.channel !== "MAIN_DATA") return msg
+        const data = msg.data
+        if (!data || typeof data !== "object") return msg
+
+        let expanded: { [id: string]: unknown } | null = null
+        for (const id of Object.keys(data)) {
+            const members = RenderGroups.members(id)
+            if (members.length < 2) continue
+            const target: { [id: string]: unknown } = expanded || { ...data }
+            expanded = target
+            for (const memberId of members) {
+                if (!(memberId in target)) target[memberId] = data[id]
+            }
+        }
+
+        return expanded ? { ...msg, data: expanded } : msg
     }
 
     // static outputWindows: { [key: string]: BrowserWindow } = {}

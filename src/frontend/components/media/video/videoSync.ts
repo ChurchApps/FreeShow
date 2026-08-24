@@ -47,10 +47,19 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     const absDiff = Math.abs(diff)
     const prevRecord = lastSyncRecords.get(vid)
 
+    // Loop-wrap tolerance: when this element loops NATIVELY (mirror of a looping output; soft loop excluded —
+    // it cross-fade seeks instead of wrapping), a wrap is not real drift: the authoritative clock restarting
+    // while the mirror is still near the end (or vice versa) makes the linear diff look huge for an instant.
+    // Measure drift on the circular timeline (min of |a-b| and duration-|a-b|) so we let the native loop wrap
+    // on its own instead of hard-seeking across the loop point (which stuttered previews at every loop).
+    const loopDuration = !isSoftLoop && vid.loop && Number.isFinite(vid.duration) && vid.duration > 0 ? vid.duration : 0
+    const wrapDiff = loopDuration ? Math.min(absDiff, loopDuration - absDiff) : absDiff
+    const inWrapZone = wrapDiff < absDiff
+
     if (lastSyncedTime === null || lastSyncedTime === undefined || !prevRecord) {
         lastSyncRecords.set(vid, { targetTime, timestamp: now, isNudging: false })
         lastSeekTimestamps.set(vid, now)
-        if (absDiff > 0.05) vid.currentTime = targetTime
+        if (wrapDiff > 0.05) vid.currentTime = targetTime
         return
     }
 
@@ -59,9 +68,9 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     const jumpAmount = targetDelta - Math.max(0, (now - prevRecord.timestamp) / 1000) * rate
     const isExplicitSeek = isSoftLoop ? lastSyncedTime > targetTime + 0.1 : vid.paused ? Math.abs(targetDelta) > 0.05 : jumpAmount > 0.5 * rate || jumpAmount < -0.3 * rate || targetDelta < -0.3
 
-    // 2. Cooldown & Hard Seek
+    // 2. Cooldown & Hard Seek (drift measured circularly so a native loop wrap never triggers a seek)
     const inSeekCooldown = now - (lastSeekTimestamps.get(vid) || 0) < 500
-    const shouldHardSeek = (isExplicitSeek && absDiff > 0.05) || (vid.paused && absDiff > 0.05) || (!inSeekCooldown && absDiff > 1.5 * rate)
+    const shouldHardSeek = (isExplicitSeek && wrapDiff > 0.05) || (vid.paused && wrapDiff > 0.05) || (!inSeekCooldown && wrapDiff > 1.5 * rate)
 
     if (shouldHardSeek) {
         // DEBUG
@@ -92,7 +101,9 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     let isNudging = prevRecord.isNudging ?? false
     let targetRate = rate
 
-    if (!vid.paused) {
+    if (!vid.paused && !inWrapZone) {
+        // (skipped inside the wrap zone: the nudge direction from the linear diff is inverted across a
+        // loop wrap — hold the plain rate for the instant until both sides of the loop have wrapped)
         if (isNudging && absDiff <= 0.03 * rate) {
             isNudging = false
         } else if (isNudging || absDiff > 0.08 * rate) {

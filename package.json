@@ -18,6 +18,7 @@
     "scripts": {
         "postinstall": "electron-builder install-app-deps",
         "rebuild-opus": "electron-rebuild -f -w @discordjs/opus",
+        "rebuild-osr": "electron-rebuild -f -w osr-capture",
         "---DEVELOPMENT---": "",
         "start": "node scripts/start.js",
         "start:old": "npx cross-env NODE_ENV=development npm-run-all -p -r build:frontend:dev start:electron",
@@ -150,6 +151,7 @@
         "music-metadata": "^7.14.0",
         "node-machine-id": "^1.1.12",
         "osc-js": "^2.4.1",
+        "osr-capture": "github:schplay/osr-capture#6acea83a2efa2828ea6abafc2e87e036a7c27a72",
         "protobufjs": "^7.5.3",
         "pusher-js": "^8.5.0",
         "slideshow": "github:vassbo/slideshow#224d50f",

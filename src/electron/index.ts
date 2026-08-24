@@ -26,6 +26,11 @@ import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
 // ----- STARTUP -----
 
+// Enlarge the libuv thread pool early (before any worker inherits the env / before first async work). Both
+// osr-capture readbacks and grandiose NDI sends run as async work on this pool; the default of 4 threads
+// serializes multiple concurrent 4K outputs. Set as an OS env var so worker_threads inherit it. (multi-4K)
+if (!process.env.UV_THREADPOOL_SIZE) process.env.UV_THREADPOOL_SIZE = "32"
+
 // check if app's in production or not
 export const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
 
@@ -64,8 +69,13 @@ setGlobalMenu()
 autoErrorReport()
 
 // hardware acceleration
-const disableHWA = config.get("disableHardwareAcceleration")
-if (disableHWA === true) {
+// Snapshot of the ACTUAL runtime decision (app.disableHardwareAcceleration() only applies for this
+// process and a config change requires a restart). Capture/convert paths MUST gate on this snapshot, not
+// the live config value — otherwise toggling the setting without restarting mismatches the real compositor
+// mode (e.g. setting turned off but still really disabled -> shared-texture handler on a CPU compositor ->
+// dead output). See OutputLifecycle.isHardwareAccelerationDisabled.
+export const hardwareAccelerationDisabled = config.get("disableHardwareAcceleration") === true
+if (hardwareAccelerationDisabled) {
     // Video did flicker sometime with HWA, especially on ARM Mac.
     // CPU usage is often lower with HWA enabled.
     // https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
