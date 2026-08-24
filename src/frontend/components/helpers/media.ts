@@ -334,7 +334,7 @@ export async function isVideoSupported(path: string) {
     if (!info?.codecs) return true
 
     // HEVC (H.265) / Timecode
-    const unsupportedCodecs = /(hevc|hvc1|ap4h|tmcd)/i
+    const unsupportedCodecs = /(hevc|ap4h|tmcd)/i
     const isUnsupported = info.codecs.length && info.codecs.every((codec) => unsupportedCodecs.test(codec))
 
     // not reliable:
@@ -594,18 +594,21 @@ const capturing = new Set<string>()
 const retries: { [key: string]: number } = {}
 export function captureCanvas(data: { input: string; output: string; size: any; extension: string; config: any; id: string; seek?: number }) {
     let completed = false
+    let mediaElem: HTMLImageElement | HTMLVideoElement | null = null
+
     if (capturing.has(data.output)) return exit()
     capturing.add(data.output)
 
     const canvas = document.createElement("canvas")
 
     const isImage = imageExtensions.includes(data.extension)
-    const mediaElem = document.createElement(isImage ? "img" : "video")
+    mediaElem = document.createElement(isImage ? "img" : "video")
 
     // Only request CORS for non-local sources.
     if (!isLocalFile(data.input)) (mediaElem as any).crossOrigin = "anonymous"
 
     mediaElem.addEventListener(isImage ? "load" : "loadeddata", async () => {
+        if (!mediaElem) return
         const currentMediaSize = isImage ? { width: (mediaElem as HTMLImageElement).naturalWidth, height: (mediaElem as HTMLImageElement).naturalHeight } : { width: (mediaElem as HTMLVideoElement).videoWidth, height: (mediaElem as HTMLVideoElement).videoHeight }
         const newSize = getNewSize(currentMediaSize, data.size || {})
         canvas.width = newSize.width
@@ -618,10 +621,10 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
 
             await new Promise((resolve) => {
                 const handler = () => {
-                    mediaElem.removeEventListener("seeked", handler)
+                    mediaElem?.removeEventListener("seeked", handler)
                     resolve(null)
                 }
-                mediaElem.addEventListener("seeked", handler)
+                mediaElem?.addEventListener("seeked", handler)
             })
 
             await new Promise(requestAnimationFrame)
@@ -629,7 +632,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
         }
 
         // wait until loaded
-        const hasLoaded = await waitUntilValueIsDefined(() => (isImage ? (mediaElem as HTMLImageElement).complete : (mediaElem as HTMLVideoElement).readyState === 4), 20)
+        const hasLoaded = await waitUntilValueIsDefined(() => (isImage ? (mediaElem as HTMLImageElement)?.complete : (mediaElem as HTMLVideoElement)?.readyState === 4), 20)
         if (!hasLoaded) return exit()
 
         captureCanvasData(currentMediaSize)
@@ -637,14 +640,14 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
 
     // this should not get called becaues the file is checked existing, but here in case
     mediaElem.addEventListener("error", (err) => {
-        if (!mediaElem.src || completed) return
+        if (!mediaElem?.src || completed) return
 
         console.error("Could not load media:", data.input, err)
         if (!retries[data.input]) retries[data.input] = 0
         retries[data.input]++
 
         if (retries[data.input] > 2 || isLocalFile(data.input)) return exit()
-        else setTimeout(() => (isImage ? "" : (mediaElem as HTMLVideoElement).load()), 3000)
+        else setTimeout(() => (isImage ? "" : (mediaElem as HTMLVideoElement)?.load()), 3000)
     })
 
     mediaElem.src = encodeFilePath(data.input)
@@ -652,7 +655,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
 
     async function captureCanvasData(currentMediaSize) {
         const ctx = canvas.getContext("2d")
-        if (!ctx || completed) return exit()
+        if (!ctx || completed || !mediaElem) return exit()
 
         // ensure lessons are downloaded and loaded before capturing
         const isLessons = data.input.includes("Lessons")
@@ -671,7 +674,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
 
                         // unload
                         capturing.delete(data.output)
-                        mediaElem.src = ""
+                        if (mediaElem) mediaElem.src = ""
                     })
                     .catch(() => exit())
             })
@@ -690,9 +693,11 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
         capturing.delete(data.output)
 
         // unload
-        mediaElem.onload = null
-        mediaElem.onerror = null
-        mediaElem.src = ""
+        if (mediaElem) {
+            mediaElem.onload = null
+            mediaElem.onerror = null
+            mediaElem.src = ""
+        }
     }
 }
 

@@ -464,24 +464,13 @@ export function getFirstActiveOutput(_updater: any = null) {
 
 // DEPRECATED
 let sortedOutputs: (Output & { id: string })[] = []
-let cachedActiveOutputs = new Map<string, string[]>()
-let lastOutputsRefForActive: any = null
 
 export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive = true, removeKeyOutput = false, shouldRemoveStageOutput = false) {
-    if (updater !== lastOutputsRefForActive) {
-        cachedActiveOutputs.clear()
-        lastOutputsRefForActive = updater
-    }
-    const cacheKey = `${hasToBeActive}_${removeKeyOutput}_${shouldRemoveStageOutput}`
-    const cached = cachedActiveOutputs.get(cacheKey)
-    if (cached) return cached
-
-    const rawList = Object.entries(updater || {}).map(([id, val]) => ({ ...val, id }))
-    sortedOutputs = sortByName(rawList)
+    sortedOutputs = sortByName(keysToID(updater || {}))
 
     let enabled = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !(a as any).isKeyOutput : true) && (shouldRemoveStageOutput ? !a.stageOutput : true))
 
-    if (hasToBeActive && enabled.some((a) => a.active === true)) enabled = enabled.filter((a) => a.active === true)
+    if (hasToBeActive && enabled.filter((a) => a.active === true).length) enabled = enabled.filter((a) => a.active === true)
 
     let enabledIds = enabled.map((a) => a.id)
 
@@ -490,7 +479,6 @@ export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive 
         if (sortedOutputs[0]) enabledIds = [sortedOutputs[0].id]
     }
 
-    cachedActiveOutputs.set(cacheKey, enabledIds)
     return enabledIds
 }
 
@@ -610,14 +598,8 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
 }
 
 // this will get the first available stage output
-let cachedStageOutputId: string | null = null
-let lastOutputsForStageId: any = null
-
 export function getStageOutputId(_updater = get(outputs)) {
-    if (_updater === lastOutputsForStageId && cachedStageOutputId !== null) return cachedStageOutputId
-    lastOutputsForStageId = _updater
-    cachedStageOutputId = Object.values(_updater).find((a) => a.stageOutput && a.enabled)?.id || ""
-    return cachedStageOutputId
+    return Object.values(_updater).find((a) => a.stageOutput && a.enabled)?.id || ""
 }
 
 export function getStageResolution(outputId = "", _updater = get(outputs)): Resolution {
@@ -633,7 +615,7 @@ export function getOutputResolution(outputId: string, _updater = get(outputs), s
     const currentOutput = _updater[outputId]
     const cacheKey = `${outputId}_${scaled}_${styleIdOverride}_${currentOutput?.style || ""}_${currentOutput?.bounds?.width || 0}_${currentOutput?.bounds?.height || 0}`
     const cached = outputResolutionCache.get(cacheKey)
-    if (cached) return cached
+    if (cached) return { ...cached }
 
     const outputRes = clone(currentOutput?.bounds?.width ? currentOutput.bounds : DEFAULT_BOUNDS)
 
@@ -663,7 +645,7 @@ export function getOutputResolution(outputId: string, _updater = get(outputs), s
 
     if (outputResolutionCache.size > 200) outputResolutionCache.clear()
     outputResolutionCache.set(cacheKey, outputRes)
-    return outputRes
+    return { ...outputRes }
 }
 
 export function stylePosToPercentage(stylesData: { [key: string]: any }) {
