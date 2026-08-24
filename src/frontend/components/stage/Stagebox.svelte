@@ -25,7 +25,6 @@
     import Movebox from "../system/Movebox.svelte"
     import SlideNotes from "./items/SlideNotes.svelte"
     import SlideText from "./items/SlideText.svelte"
-    import VideoTime from "./items/VideoTime.svelte"
     import { getCustomStageLabel, getSlideTextItems, stageItemToItem } from "./stage"
     import StageLayout from "./StageLayout.svelte"
 
@@ -187,8 +186,10 @@
     $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     // SLIDE
-    $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($currentWindow === "output" ? $allOutputs : $outputs, false, true, true)[0]
-    $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
+    $: sourceOutputId = currentShow?.settings?.output
+    $: outputStores = $currentWindow === "output" ? $allOutputs : $outputs
+    $: stageOutputId = sourceOutputId && outputStores[sourceOutputId] ? sourceOutputId : getActiveOutputs(outputStores, false, true, true)[0]
+    $: currentOutput = outputStores[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide || (slideOffset !== 0 ? $outputSlideCache[stageOutputId] || null : null)
 
     $: outputWindowId = item?.currentOutput?.source || stageOutputId
@@ -247,12 +248,13 @@
         return style
     }
 
-    let video: HTMLVideoElement | undefined
-    function loaded() {
-        if (!video) return
-        video.pause()
-        video.currentTime = video.duration / 2
-    }
+    // pause video at middle
+    // let video: HTMLVideoElement | undefined
+    // function loaded() {
+    //     if (!video) return
+    //     video.pause()
+    //     video.currentTime = video.duration / 2
+    // }
 
     $: if ($refreshEditSlide) {
         setTimeout(() => {
@@ -390,7 +392,8 @@
                         <!-- WIP this only includes "next" slide background -->
                         {#if typeof slideBackground?.path === "string"}
                             <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
-                                <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror bind:video on:loaded={loaded} />
+                                <!-- bind:video on:loaded={loaded} -->
+                                <Media outputId={outputWindowId} path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror />
                             </div>
                         {/if}
                     {/if}
@@ -425,8 +428,6 @@
                             <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} outputId={stageOutputId} />
                         {:else if id.includes("clock")}
                             <Clock style={false} fontStyle={item.auto === false ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
-                        {:else if id.includes("video")}
-                            <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
                         {:else if id.includes("first_active_timer")}
                             <Timer item={stageItemToItem(item)} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                         {:else if id.includes("timers")}

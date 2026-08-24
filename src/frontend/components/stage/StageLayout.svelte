@@ -1,9 +1,8 @@
 <script lang="ts">
     import { onDestroy, setContext } from "svelte"
-    import { OUTPUT } from "../../../types/Channels"
-    import { activePage, activeStage, allOutputs, currentOutputSettings, currentWindow, outputs, settingsTab, stageShows, toggleOutputEnabled } from "../../stores"
+    import { activePage, activeStage, allOutputs, currentOutputSettings, outputs, settingsTab, stageShows, toggleOutputEnabled } from "../../stores"
     import { getAccess } from "../../utils/profile"
-    import { send } from "../../utils/request"
+    import ItemAddMenu from "../edit/ItemAddMenu.svelte"
     import { getSortedStageItems, shouldItemBeShown } from "../edit/scripts/itemHelpers"
     import { centerZoom } from "../edit/scripts/zoom"
     import { clone } from "../helpers/array"
@@ -20,7 +19,6 @@
     import Snaplines from "../system/Snaplines.svelte"
     import { getSlideTextItems, stageItemToItem, updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
-    import ItemAddMenu from "../edit/ItemAddMenu.svelte"
 
     export let outputId = ""
     export let stageId = ""
@@ -92,18 +90,6 @@
     $: stageLayoutId = stageId || $activeStage.id
     $: layout = $stageShows[stageLayoutId || ""] || {}
 
-    // get video time (pre 1.4.0)
-    $: if ($currentWindow === "output" && Object.keys(layout.items || {}).some((id) => id.includes("video"))) requestVideoData()
-    let interval: NodeJS.Timeout | null = null
-    function requestVideoData() {
-        if (interval) return
-        interval = setInterval(() => send(OUTPUT, ["MAIN_REQUEST_VIDEO_DATA"], { id: outputId }), 1000) // , stageId
-    }
-
-    onDestroy(() => {
-        if (interval) clearInterval(interval)
-    })
-
     // RESOLUTION
 
     let width = 0
@@ -129,8 +115,6 @@
 
     $: stageItems = getSortedStageItems(stageLayoutId, $stageShows)
 
-    // $: videoTime = $videosTime[outputId] || 0
-    // { $activeTimers, $variables, $playingAudio, $playingAudioPaths, videoTime }
     let conditionsUpdater = 0
     const updaterInterval = setInterval(() => {
         if (!Array.isArray(stageItems)) return

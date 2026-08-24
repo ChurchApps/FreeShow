@@ -33,10 +33,10 @@
     let thumbnailInterval: any = null
     let frameReceived = true
     $: if (draw && !thumbnailInterval) thumbnailInterval = setInterval(requestThumbnail, 800)
-        else if (thumbnailInterval) {
-            clearInterval(thumbnailInterval)
-            thumbnailInterval = null
-        } 
+    else if (thumbnailInterval) {
+        clearInterval(thumbnailInterval)
+        thumbnailInterval = null
+    }
 
     function requestThumbnail() {
         if (!outputId || !frameReceived) return
@@ -325,6 +325,70 @@
         overflow: hidden;
     }
 
+    .quart {
+        position: absolute;
+        /* height: 50%; */
+        height: 100%;
+        width: 50%;
+        /* transition: all 0.4s; */
+    }
+    .quart:nth-child(1) {
+        top: 0;
+        left: 0;
+        border-inline-end: 4px solid var(--primary);
+    }
+    .quart:nth-child(1) :global(svg) {
+        transform: translate(-40%);
+    }
+    .quart:nth-child(2) {
+        top: 0;
+        left: 50%;
+        border-inline-start: 4px solid var(--primary);
+    }
+    .quart:nth-child(2) :global(svg) {
+        transform: translate(40%);
+    }
+    /* .quart:nth-child(3) {
+    top: 50%;
+    left: 0;
+  }
+  .quart:nth-child(4) {
+    top: 50%;
+    left: 50%;
+  } */
+
+    .center {
+        height: 40%;
+        width: 40%;
+        position: absolute;
+        top: 30%;
+        inset-inline-start: 30%;
+        border-radius: 50%;
+        text-align: center;
+        border: 8px solid var(--primary);
+    }
+
+    button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: none;
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 5px;
+        background-color: var(--primary-darkest);
+
+        transition: background-color 0.1s;
+    }
+    button:active {
+        background: var(--primary-lighter);
+    }
+
+    button.red {
+        background-color: #4d0d15;
+    }
+
     @media only screen and (min-width: 800px) {
         .controller {
             height: 70vh;
@@ -393,79 +457,29 @@
     @media (max-height: 299px) {
         .controller {
             top: 50%;
-            height: 85vmin;
-            width: 85vmin;
+            height: 93vmin;
+            width: 93vmin;
         }
         .controller :global(svg) {
             width: 3rem !important;
             height: 3rem !important;
             min-width: 3rem !important;
         }
+        .quart:nth-child(1) {
+            border-inline-end: 3px solid var(--primary);
+        }
+        .quart:nth-child(2) {
+            border-inline-start: 3px solid var(--primary);
+        }
+        .center {
+            border: 6px solid var(--primary);
+        }
+
         .draw {
             top: 50%;
         }
-    }
-
-    .quart {
-        position: absolute;
-        /* height: 50%; */
-        height: 100%;
-        width: 50%;
-        /* transition: all 0.4s; */
-    }
-    .quart:nth-child(1) {
-        top: 0;
-        left: 0;
-        border-inline-end: 5px solid var(--primary);
-    }
-    .quart:nth-child(1) :global(svg) {
-        transform: translate(-40%);
-    }
-    .quart:nth-child(2) {
-        top: 0;
-        left: 50%;
-        border-inline-start: 5px solid var(--primary);
-    }
-    .quart:nth-child(2) :global(svg) {
-        transform: translate(40%);
-    }
-    /* .quart:nth-child(3) {
-    top: 50%;
-    left: 0;
-  }
-  .quart:nth-child(4) {
-    top: 50%;
-    left: 50%;
-  } */
-    .center {
-        height: 40%;
-        width: 40%;
-        position: absolute;
-        top: 30%;
-        inset-inline-start: 30%;
-        border-radius: 50%;
-        text-align: center;
-        border: 10px solid var(--primary);
-    }
-
-    button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        border: none;
-        cursor: pointer;
-        padding: 5px;
-        border-radius: 5px;
-        background-color: var(--primary-darkest);
-
-        transition: background-color 0.1s;
-    }
-    button:active {
-        background: var(--primary-lighter);
-    }
-
-    button.red {
-        background-color: #4d0d15;
+        .pad {
+            height: 75vh;
+        }
     }
 </style>

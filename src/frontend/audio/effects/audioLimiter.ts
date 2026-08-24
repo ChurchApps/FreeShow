@@ -117,18 +117,18 @@ let globalLimiter: AudioLimiter | null = null
 export function initializeLimiter(ac: AudioContext): AudioLimiter {
     if (globalLimiter) return globalLimiter
 
-    globalLimiter = new AudioLimiter(ac, getEffectConfig("limiter", DEFAULT_LIMITER_CONFIG))
-    subscribeEffect("limiter", (cfg: LimiterConfig) => globalLimiter?.updateConfig(cfg))
+    globalLimiter = new AudioLimiter(ac, getEffectConfig("limiter", DEFAULT_LIMITER_CONFIG, "main"))
+    subscribeEffect("limiter", (cfg: LimiterConfig) => globalLimiter?.updateConfig(cfg), "main")
 
     return globalLimiter
 }
 
-export function updateLimiterConfig(partial: Partial<LimiterConfig>) {
-    updateEffectInStore("limiter", DEFAULT_LIMITER_CONFIG, partial, globalLimiter)
+export function updateLimiterConfig(partial: Partial<LimiterConfig>, channelId?: string) {
+    updateEffectInStore("limiter", DEFAULT_LIMITER_CONFIG, partial, channelId)
 }
 
-export function setLimiterEnabled(enabled: boolean) {
-    setEffectEnabledInStore("limiter", DEFAULT_LIMITER_CONFIG, enabled, globalLimiter)
+export function setLimiterEnabled(enabled: boolean, channelId?: string) {
+    setEffectEnabledInStore("limiter", DEFAULT_LIMITER_CONFIG, enabled, channelId)
 }
 
 export function getLimiterReduction(): number {

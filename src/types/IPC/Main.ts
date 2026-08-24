@@ -1,4 +1,5 @@
 import type { Display } from "electron"
+import type { EncoderDetection } from "../../electron/streaming/encoderDetection"
 import type { ExifData } from "exif"
 import type { Stats } from "fs"
 import type { Bible } from "json-bible/lib/Bible"
@@ -7,7 +8,7 @@ import type { ContentFile, ContentLibraryCategory, ContentProviderId, MediaLicen
 import type { PCOFolderTreeNode } from "../../electron/contentProviders/planningCenter/request"
 import type { _store } from "../../electron/data/store"
 import type { TimecodeMode } from "../../electron/timecode/timecode"
-import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, SpotifyState, Subtitle } from "../Main"
+import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, MediaCodecInfo, OS, SpotifyState, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
 import type { Dictionary, Resolution, Themes } from "../Settings"
@@ -172,7 +173,10 @@ export enum Main {
     SPOTIFY_COMMAND = "SPOTIFY_COMMAND",
     // FFmpeg Download
     FFMPEG_CHECK = "FFMPEG_CHECK",
-    FFMPEG_DOWNLOAD = "FFMPEG_DOWNLOAD"
+    FFMPEG_DOWNLOAD = "FFMPEG_DOWNLOAD",
+    // Streaming encoder
+    ENCODER_DETECT = "ENCODER_DETECT",
+    SET_RTMP_ENCODER = "SET_RTMP_ENCODER"
 }
 
 export interface MainSendPayloads {
@@ -274,6 +278,9 @@ export interface MainSendPayloads {
     // FFmpeg
     [Main.FFMPEG_CHECK]: undefined
     [Main.FFMPEG_DOWNLOAD]: undefined
+    // Streaming encoder
+    [Main.ENCODER_DETECT]: { force?: boolean } | undefined
+    [Main.SET_RTMP_ENCODER]: { encoder: string }
 }
 
 export interface MainReturnPayloads {
@@ -325,7 +332,7 @@ export interface MainReturnPayloads {
     [Main.GET_THUMBNAIL]: Promise<{ output: string; input: string; size: number }>
     // [Main.PDF_TO_IMAGE]: Promise<string[]>
     [Main.READ_EXIF]: Promise<{ id: string; exif: ExifData | undefined }>
-    [Main.MEDIA_CODEC]: Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }>
+    [Main.MEDIA_CODEC]: Promise<MediaCodecInfo>
     [Main.MEDIA_TRACKS]: Promise<{ path: string; tracks: Subtitle[] }>
     [Main.MEDIA_IS_DOWNLOADED]: Promise<{ path: string; buffer: Buffer | null; protectedUrl?: string | null; isDownloading?: boolean } | null>
     // [Main.MEDIA_BASE64]: { id: string; content: string }[]
@@ -350,7 +357,7 @@ export interface MainReturnPayloads {
     [Main.GET_TEAMS]: Promise<{ id: string; churchId: string; name: string }[]>
     [Main.CLOUD_DATA]: Promise<boolean>
     [Main.CLOUD_CHANGED]: Promise<boolean>
-    [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles: any[] }>
+    [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles?: any[] }>
     [Main.GET_CONVERSATION_ID]: Promise<string | null>
     [Main.SEND_SOCKET_MESSAGE]: Promise<boolean>
     // Provider-based routing
@@ -372,8 +379,11 @@ export interface MainReturnPayloads {
     [Main.SPOTIFY_GET_STATE]: Promise<SpotifyState | null>
     [Main.SPOTIFY_COMMAND]: Promise<boolean>
     // FFmpeg
-    [Main.FFMPEG_CHECK]: { installed: boolean; path?: string }
+    [Main.FFMPEG_CHECK]: Promise<{ installed: boolean; path?: string }>
     [Main.FFMPEG_DOWNLOAD]: Promise<{ success: boolean; error?: string }>
+    // Streaming encoder
+    [Main.ENCODER_DETECT]: Promise<EncoderDetection>
+    [Main.SET_RTMP_ENCODER]: void
 }
 
 ///////////

@@ -94,6 +94,7 @@ import { getActionTriggerId } from "../actions/actions"
 import { moveStageConnection } from "../actions/apiHelper"
 import { midiInListen } from "../actions/midi"
 import { createScriptureShow, openActiveInRouteBible } from "../drawer/bible/scripture"
+import { deleteCalendarEvents } from "../drawer/calendar/calendars"
 import { stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
@@ -260,8 +261,14 @@ const clickActions = {
         if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
         else if (renameByIdDirect.includes(id)) activeRename.set(id + "_" + data)
         else if (id === "slide" || id === "group" || id === "audio_effect") activePopup.set("rename")
-        else if (obj.contextElem?.classList.contains("#bible_book_local")) {
+        else if (obj.contextElem?.classList?.contains("#audio_channel") || obj.contextElem?.classList?.contains("#audio_channel_main")) {
+            selected.set({ id: "audio_channel", data: [{ id: obj.contextElem?.id }] })
+            activePopup.set("rename")
+        } else if (obj.contextElem?.classList?.contains("#bible_book_local")) {
             selected.set({ id: "bible_book", data: [{ index: Number(obj.contextElem?.id) }] })
+            activePopup.set("rename")
+        } else if (obj.contextElem?.classList?.contains("#calendar_item")) {
+            selected.set({ id: "calendar", data: [{ id: obj.contextElem?.id }] })
             activePopup.set("rename")
         } else if (id === "show") activeRename.set("show_" + data.id + "#" + data.index)
         else if (obj.contextElem?.classList?.contains("#project_template")) activeRename.set("project_" + id)
@@ -306,7 +313,15 @@ const clickActions = {
 
         console.error("COULD NOT REMOVE", obj)
     },
-    recolor: () => {
+    recolor: (obj: ObjData) => {
+        if (obj.contextElem?.classList?.contains("#audio_channel") || obj.contextElem?.classList?.contains("#audio_channel_main")) {
+            selected.set({ id: "audio_channel", data: [{ id: obj.contextElem?.id }] })
+        } else if (obj.contextElem?.classList?.contains("#calendar_item")) {
+            const calendarName = obj.contextElem.id
+            const calColor = Object.values(get(events)).find((e) => e.origin === calendarName)?.color || "#FF5733"
+            selected.set({ id: "calendar", data: [{ id: calendarName, color: calColor }] })
+        }
+
         // "slide" || "group" || "overlay" || "template" || "output" || "effect"
         activePopup.set("color")
     },
@@ -329,6 +344,11 @@ const clickActions = {
 
         if (obj.sel && deleteAction(obj.sel)) return
 
+        if (obj.contextElem?.classList.value.includes("#audio_channel")) {
+            deleteAction({ id: "audio_channel", data: [{ id: obj.contextElem.id }] })
+            return
+        }
+
         if (obj.contextElem?.classList.value.includes("#timeline_node")) {
             triggerFunction("delete_selected_nodes")
             return
@@ -348,6 +368,10 @@ const clickActions = {
         }
         if (obj.contextElem?.classList.value.includes("#event")) {
             deleteAction({ id: "event", data: { id: obj.contextElem.id } })
+            return
+        }
+        if (obj.contextElem?.classList.value.includes("#calendar_item")) {
+            deleteCalendarEvents(obj.contextElem.id)
             return
         }
         if (obj.contextElem?.classList.value.includes("#interaction_input")) {
@@ -1408,7 +1432,7 @@ const clickActions = {
 
             if (get(activeEdit).id) {
                 const slideItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
-                const toggleState = !slideItems[items[0]][id]
+                const toggleState = !slideItems[items[0]]?.[id]
 
                 history({
                     id: "UPDATE",
@@ -2148,7 +2172,7 @@ export async function removeSlide(initialData: any[], type: "delete" | "remove" 
 
     if (type === "delete") {
         const selectedInDifferentLayout = checkIfAddedToDifferentLayout(ref, data)
-        const prompt = translateText("confirm.statement_slide_exists_layout confirm.question_delete")
+        const prompt = translateText("confirm.statement_slide_exists_arrangement confirm.question_delete")
         if (selectedInDifferentLayout && !(await confirmCustom(prompt))) return
     }
 
@@ -2218,7 +2242,7 @@ export async function format(id: string, obj: ObjData, data: any = null) {
     }
 
     const ref = getLayoutRef()
-    if (get(editMode) === "text") {
+    if (get(editMode) === "text_edit") {
         // select all slides
         slideIds = _show()
             .slides()

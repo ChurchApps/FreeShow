@@ -5,6 +5,10 @@ import { CANVA_API_URL } from "./CanvaProvider"
 
 const DEFAULT_SCOPE = "folder:read design:content:read design:meta:read" as const
 
+// The Canva "root" folder only contains content the user owns, so designs shared
+// with the user are listed separately through /v1/designs?ownership=shared
+export const SHARED_CATEGORY_KEY = "shared-with-me"
+
 type FolderItem = {
     type: "folder" | "design" | "image"
     folder?: { id: string; name?: string; title?: string; thumbnail?: { url?: string } }
@@ -14,6 +18,22 @@ type FolderItem = {
 
 type ListItemsResponse = {
     items?: FolderItem[]
+    continuation?: string
+}
+
+// Shape returned by /v1/designs (differs from the design object nested in folder items:
+// there is no top level url, and the design kind is a list rather than a single type)
+type DesignItem = {
+    id: string
+    title?: string
+    thumbnail?: { url?: string }
+    urls?: { view_url?: string; edit_url?: string }
+    design_types?: any[]
+    page_count?: number
+}
+
+type ListDesignsResponse = {
+    items?: DesignItem[]
     continuation?: string
 }
 
@@ -161,6 +181,55 @@ export class CanvaContentLibrary {
         return allItems
     }
 
+    /** Lists every design shared with the user (not owned by them), following pagination. */
+    private static async listSharedDesigns(): Promise<DesignItem[]> {
+        let continuation = ""
+        const allItems: DesignItem[] = []
+
+        do {
+            const continuationQuery = continuation ? `&continuation=${encodeURIComponent(continuation)}` : ""
+            const path = `/v1/designs?limit=100&ownership=shared&sort_by=modified_descending${continuationQuery}`
+            const response = (await this.request(path)) as ListDesignsResponse | null
+            if (!response) break
+
+            allItems.push(...(response.items || []))
+            continuation = response.continuation || ""
+        } while (continuation)
+
+        return allItems
+    }
+
+    private static async getSharedDesigns(): Promise<ContentFile[]> {
+        const items = await this.listSharedDesigns()
+
+        return items
+            .map((item): ContentFile | null => {
+                // designs listed this way only expose a thumbnail url
+                const url = item.thumbnail?.url
+                if (!url || !item.id) return null
+
+                this.urlToContentIdMap[url] = item.id
+
+                // design_types is documented as a list of names, but stay tolerant of object entries
+                const designTypes = (item.design_types || []).map((type: any) => (typeof type === "string" ? type : type?.name || type?.type || "")).filter(Boolean)
+                const isPresentation = designTypes.includes("presentation") || (typeof item.page_count === "number" && item.page_count > 1)
+
+                return {
+                    url,
+                    thumbnail: url,
+                    fileSize: 0,
+                    type: "image" as const,
+                    name: item.title || "Canva Design",
+                    mediaId: item.id,
+                    // @ts-ignore
+                    isPresentation,
+                    // @ts-ignore
+                    slideCount: item.page_count
+                } as ContentFile
+            })
+            .filter((file): file is ContentFile => !!file)
+    }
+
     public static async getContentLibrary(): Promise<ContentLibraryCategory[]> {
         if (this.contentLibraryCache) {
             return this.contentLibraryCache
@@ -175,7 +244,7 @@ export class CanvaContentLibrary {
                 key: item.folder!.id
             }))
 
-        const categories: ContentLibraryCategory[] = [{ name: "All Assets", key: "root" }, ...folders]
+        const categories: ContentLibraryCategory[] = [{ name: "All Assets", key: "root" }, { name: "Shared with me", key: SHARED_CATEGORY_KEY }, ...folders]
         this.contentLibraryCache = categories
 
         return categories
@@ -183,10 +252,15 @@ export class CanvaContentLibrary {
 
     /**
      * Returns content for a folder or a presentation (design).
+     * If folderId is the shared category key, list the designs shared with the user.
      * If folderId starts with 'presentation-export-batch:', fetch all pages with high-res exports.
      * If folderId starts with 'presentation:', treat as a presentation and fetch page metadata with thumbnails.
      */
     public static async getContent(folderId: string): Promise<ContentFile[]> {
+        if (folderId === SHARED_CATEGORY_KEY) {
+            return await this.getSharedDesigns()
+        }
+
         if (folderId.startsWith("presentation-export-batch:")) {
             const match = folderId.match(/^presentation-export-batch:(.*):(.+)$/)
             const designId = match?.[1] || ""

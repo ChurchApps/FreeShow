@@ -44,6 +44,7 @@ import Export from "../components/main/popups/export/Export.svelte"
 import FindReplace from "../components/main/popups/FindReplace.svelte"
 import History from "../components/main/popups/History.svelte"
 import Import from "../components/main/popups/Import.svelte"
+import ImportCalendar from "../components/main/popups/ImportCalendar.svelte"
 import ImportScripture from "../components/main/popups/ImportScripture.svelte"
 import Initialize from "../components/main/popups/Initialize.svelte"
 import InteractionInput from "../components/main/popups/InteractionInput.svelte"
@@ -85,6 +86,7 @@ import Transition from "../components/main/popups/Transition.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
 import UpdateManager from "../components/main/popups/UpdateManager.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
+import NodeOptions from "../components/main/popups/NodeOptions.svelte"
 import { activePopup, popupData } from "../stores"
 
 export const popups: { [key in Popups]: ComponentType } = {
@@ -127,6 +129,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     media_fit: MediaFit,
     metadata_display: MetadataDisplay,
     import_scripture: ImportScripture,
+    import_calendar: ImportCalendar,
     create_collection: CreateCollection,
     edit_event: EditEvent,
     edit_chart: EditChart,
@@ -171,7 +174,8 @@ export const popups: { [key in Popups]: ComponentType } = {
     template_info: TemplateInfo,
     cleaning_utility: CleaningUtility,
     pco_picker: PcoServicePicker,
-    sync_folders: SyncFolders
+    sync_folders: SyncFolders,
+    node_options: NodeOptions
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {
@@ -184,7 +188,7 @@ export function waitForPopupData(popupId: Popups): Promise<any> {
         }, 300)
 
         unsubscribe = popupData.subscribe((a) => {
-            if (a.id !== popupId) return
+            if (!a || a.id !== popupId) return
             activePopup.set(null)
             finish(a.value)
         })

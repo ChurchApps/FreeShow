@@ -1369,4 +1369,105 @@ describe("syncManager tests", () => {
             expect(settingsOld.background.brightness).toBe(1)
         })
     })
+
+    describe("All 4 Sync Methods (merge, read_only, upload, replace)", () => {
+        beforeEach(() => {
+            h.currentMachineId = "test-device-id"
+            resetSyncManagerModule()
+            createStores()
+        })
+
+        it("1. merge method: bi-directionally merges local and cloud state", async () => {
+            const now = Date.now()
+            const showsDir = getDataFolderPath("shows")
+
+            await createCloudState([
+                { name: "SHOWS/cloud-item.show", content: JSON.stringify(["cloud-item-id", { name: "Cloud Item", slides: [], timestamps: { modified: now } }]) }
+            ], {
+                devices: ["other-device-id"],
+                modified: { "other-device-id": now },
+                created: { "SHOWS_CONTENT_cloud-item.show": ["other-device-id"] }
+            })
+
+            await writeFileAsync(path.join(showsDir, "local-item.show"), JSON.stringify(["local-item-id", { name: "Local Item", slides: [], timestamps: { modified: now } }]))
+
+            const syncResult = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "merge" })
+            expect((syncResult as any).success).toBe(true)
+
+            expect(fs.existsSync(path.join(showsDir, "cloud-item.show"))).toBe(true)
+            expect(fs.existsSync(path.join(showsDir, "local-item.show"))).toBe(true)
+
+            const zipPath = mockProviderInstance.mockCloudZipPath
+            const extractPath = path.join(h.tempRoot, "inspect_merge_zip")
+            const files = await decompressZipStream(zipPath!, false, {
+                getOutputPath: (fileName: string) => path.join(extractPath, fileName)
+            })
+            expect(files.some((f) => f.name.includes("local-item.show"))).toBe(true)
+        })
+
+        it("2. read_only method: downloads cloud data locally without modifying the cloud", async () => {
+            const now = Date.now()
+            const showsDir = getDataFolderPath("shows")
+
+            await createCloudState([
+                { name: "SHOWS/cloud-readonly-item.show", content: JSON.stringify(["cloud-ro-id", { name: "Cloud RO Item", slides: [], timestamps: { modified: now } }]) }
+            ], {
+                devices: ["other-device-id"],
+                modified: { "other-device-id": now },
+                created: { "SHOWS_CONTENT_cloud-readonly-item.show": ["other-device-id"] }
+            })
+
+            const initialZipPath = mockProviderInstance.mockCloudZipPath
+
+            await writeFileAsync(path.join(showsDir, "local-ro-only.show"), JSON.stringify(["local-ro-id", { name: "Local RO Only", slides: [], timestamps: { modified: now } }]))
+
+            const syncResult = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "read_only" })
+            expect((syncResult as any).success).toBe(true)
+
+            // Local received cloud item
+            expect(fs.existsSync(path.join(showsDir, "cloud-readonly-item.show"))).toBe(true)
+
+            // Cloud zip was NOT updated with local-ro-only
+            const extractPath = path.join(h.tempRoot, "inspect_readonly_method_zip")
+            const files = await decompressZipStream(initialZipPath!, false, {
+                getOutputPath: (fileName: string) => path.join(extractPath, fileName)
+            })
+            expect(files.some((f) => f.name.includes("local-ro-only.show"))).toBe(false)
+        })
+
+        it("3. upload method: overwrites/updates cloud state with local state", async () => {
+            const now = Date.now()
+            const showsDir = getDataFolderPath("shows")
+
+            await writeFileAsync(path.join(showsDir, "upload-only-show.show"), JSON.stringify(["upload-id", { name: "Upload Only Show", slides: [], timestamps: { modified: now } }]))
+
+            const syncResult = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "upload" })
+            expect((syncResult as any).success).toBe(true)
+
+            const zipPath = mockProviderInstance.mockCloudZipPath
+            expect(zipPath).not.toBeNull()
+            const extractPath = path.join(h.tempRoot, "inspect_upload_zip")
+            const files = await decompressZipStream(zipPath!, false, {
+                getOutputPath: (fileName: string) => path.join(extractPath, fileName)
+            })
+            expect(files.some((f) => f.name.includes("upload-only-show.show"))).toBe(true)
+        })
+
+        it("4. replace method: wipes local state and replaces it entirely with cloud state", async () => {
+            const now = Date.now()
+            const showsDir = getDataFolderPath("shows")
+
+            await createCloudState([
+                { name: "SHOWS/cloud-replace-target.show", content: JSON.stringify(["replace-target-id", { name: "Replace Target", slides: [], timestamps: { modified: now } }]) }
+            ], { devices: ["test-device-id"], modified: { "test-device-id": now } })
+
+            await writeFileAsync(path.join(showsDir, "stale-local.show"), JSON.stringify(["stale-id", { name: "Stale Local", slides: [] }]))
+
+            const syncResult = await syncData({ id: "churchApps", churchId: "test-church", teamId: "test-team", method: "replace" })
+            expect((syncResult as any).success).toBe(true)
+
+            expect(fs.existsSync(path.join(showsDir, "cloud-replace-target.show"))).toBe(true)
+            expect(fs.existsSync(path.join(showsDir, "stale-local.show"))).toBe(false)
+        })
+    })
 })

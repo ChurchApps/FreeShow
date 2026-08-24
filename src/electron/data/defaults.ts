@@ -66,8 +66,6 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
         text: { type: "fade", duration: 500, easing: "sine" },
         media: { type: "fade", duration: 800, easing: "sine" }
     },
-    volume: 1,
-    gain: 1,
     audioChannelsData: {},
     cloudSyncData: {},
     driveData: { mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false },
@@ -165,5 +163,6 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     globalRegexes: {},
     customMetadata: { disabled: [], custom: [] },
     effects: {},
+    audioRouting: {},
     deletedDefaults: {}
 }

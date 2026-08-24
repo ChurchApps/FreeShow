@@ -78,4 +78,29 @@ describe("httpsRequest", () => {
         expect(cb).toHaveBeenCalledTimes(1)
         expect(cb.mock.calls[0][0].message).toMatch(/timed out/i)
     })
+
+    it("calls callback with error when file download response stream emits an error", async () => {
+        const cb = vi.fn()
+        httpsRequest("example.com", "/file.zip", "GET", {}, {}, cb, "/tmp/file.zip")
+
+        lastRequest.emit("__respond")
+        lastResponse.emit("error", new Error("stream connection broke"))
+
+        await new Promise((r) => setTimeout(r, 10))
+        expect(cb).toHaveBeenCalledTimes(1)
+        expect(cb.mock.calls[0][0].message).toMatch(/stream connection broke/i)
+    })
+
+    it("calls callback with error when file download response closes prematurely", async () => {
+        const cb = vi.fn()
+        httpsRequest("example.com", "/file.zip", "GET", {}, {}, cb, "/tmp/file.zip")
+
+        lastRequest.emit("__respond")
+        ;(lastResponse as any).complete = false
+        lastResponse.emit("close")
+
+        await new Promise((r) => setTimeout(r, 10))
+        expect(cb).toHaveBeenCalledTimes(1)
+        expect(cb.mock.calls[0][0].message).toMatch(/closed prematurely/i)
+    })
 })

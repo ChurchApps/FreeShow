@@ -1,5 +1,5 @@
 <script>
-    import { activeAudioEffects } from "../../../stores"
+    import { activeAudioEffects, audioRouting } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -13,6 +13,8 @@
     import AudioNoiseGate from "./effects/AudioNoiseGate.svelte"
     import AudioReverb from "./effects/AudioReverb.svelte"
     import AudioStereoShaper from "./effects/AudioStereoShaper.svelte"
+
+    $: channelName = $audioRouting?.channels?.find((m) => m.id === $activeAudioEffects)?.name || ($activeAudioEffects === "main" ? translateText("audio.main") : $activeAudioEffects)
 
     let expanded = {}
     function toggleSection(type) {
@@ -43,11 +45,9 @@
     <T id="actions.back" />
 </Button>
 
-<!-- name... -->
-<!-- {#if $activeAudioEffects === "main"}
-    {translateText("audio.main")}
-{:else}
-    {$outputs[$activeAudioEffects]?.name}
+<!-- channel name -->
+<!-- {#if channelName}
+    <h4 style="text-align: center;margin: 8px 0 4px 0;opacity: 0.8;font-weight: 500;">{channelName}</h4>
 {/if} -->
 
 <!-- EQ (Equalizer), compressor, and limiter -->

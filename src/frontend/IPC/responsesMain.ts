@@ -59,6 +59,7 @@ import {
     lessonsLoaded,
     media,
     mediaDownloads,
+    rtmpStatus,
     outputs,
     overlays,
     pdfImports,
@@ -222,6 +223,7 @@ export const mainResponses: MainResponses = {
     [ToMain.CAPTURE_CANVAS]: (data) => captureCanvas(data),
     [ToMain.LESSONS_DONE]: (data) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
     [ToMain.IMAGES_TO_SHOW]: (data) => createImageShow(data),
+    [ToMain.RTMP_STATUS]: (data) => rtmpStatus.update((a) => ({ ...a, [data.outputId]: data.destinations })),
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: (data) => {
         mediaDownloads.update((downloads) => {
             const newDownloads = new Map(downloads)

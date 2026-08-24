@@ -111,7 +111,7 @@
         {/if}
     </div>
 
-    <FloatingInputs>
+    <FloatingInputs side="left">
         <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
     </FloatingInputs>
 </div>

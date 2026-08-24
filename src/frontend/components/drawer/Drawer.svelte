@@ -156,27 +156,32 @@
         } else if ((e.ctrlKey || e.metaKey) && e.key === "d") {
             if (!$selected?.id && !$activeEdit.items.length) click(null)
         } else if (e.key === "Enter") {
-            if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || !$activeProject || $focusMode) return
+            if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || $focusMode) return
             if ($activeDrawerTab !== "shows") return
 
             let match = $activeShow?.data?.searchInput === true ? { id: $activeShow.id } : firstMatch
-
-            // play
-            if (e.ctrlKey || e.metaKey) {
-                const showId = match.id
-                await loadShows([showId])
-                let layoutRef = getLayoutRef(showId)
-                let firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
-                if (firstEnabledIndex === -1) return
-                updateOut("active", firstEnabledIndex, layoutRef)
-                setOutput("slide", { id: showId, layout: $showsCache[showId].settings.activeLayout, index: firstEnabledIndex })
-                return
-            }
 
             // create from search
             if (match === "SEARCH_CREATE") {
                 quickTextCache.set({ name: searchValue[0]?.toUpperCase() + searchValue.slice(1), text: "", fromSearch: true })
                 activePopup.set("show")
+                return
+            }
+
+            if (!$activeProject) return
+
+            // play
+            if (e.ctrlKey || e.metaKey) {
+                const showId = match.id
+                await loadShows([showId])
+                if (!$showsCache[showId]) return
+
+                let layoutRef = getLayoutRef(showId)
+                let firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
+                if (firstEnabledIndex === -1) return
+
+                updateOut("active", firstEnabledIndex, layoutRef)
+                setOutput("slide", { id: showId, layout: $showsCache[showId].settings.activeLayout, index: firstEnabledIndex })
                 return
             }
 

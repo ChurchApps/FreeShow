@@ -10,11 +10,13 @@
 
     onMount(() => createPlayer())
 
+    let currentPlayingId = ""
     // load new video if URL changes
-    $: play(videoId)
+    $: if (player && videoId && videoId !== currentPlayingId) play(videoId)
 
     function createPlayer() {
-        player = YoutubePlayer(playerElem, options)
+        currentPlayingId = videoId
+        player = YoutubePlayer(playerElem, { ...options, videoId })
 
         // EVENTS
         player.on("ready", onPlayerReady)
@@ -27,12 +29,13 @@
         return () => player.destroy()
     }
 
-    function play(videoId: string) {
-        if (!player || !videoId) return
+    function play(id: string) {
+        if (!player || !id) return
+        currentPlayingId = id
 
         // the loadVideoById function always starts playing, even if autoplay is set to 1, causing cueVideoById to never start autoplaying
-        if (options?.playerVars?.autoplay === 1) player.loadVideoById(videoId)
-        else player.cueVideoById(videoId)
+        if (options?.playerVars?.autoplay === 1) player.loadVideoById(id)
+        else player.cueVideoById(id)
     }
 
     /// EVENT HANDLING ///
@@ -41,7 +44,6 @@
     // https://developers.google.com/youtube/iframe_api_reference#onReady
     function onPlayerReady(e) {
         dispatch("ready", e)
-        play(videoId)
     }
 
     // https://developers.google.com/youtube/iframe_api_reference#onError

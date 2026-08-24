@@ -84,17 +84,28 @@ export class OutputBounds {
             if (output.invisible) return // capture-only outputs have no physical screen to align to (and are DPI-corrected)
             if (!output.window || output.window.isDestroyed()) return
 
+            const displays = screen.getAllDisplays()
+            if (displays.length === 0) return
+
             const wBounds = output.window.getBounds()
             const centerLeft = wBounds.x + wBounds.width / 2
             const centerTop = wBounds.y + wBounds.height / 2
 
             const point = { x: centerLeft, y: centerTop }
-            const closestScreen = screen.getDisplayNearestPoint(point)
+            let targetDisplay = screen.getDisplayNearestPoint(point)
 
-            if (JSON.stringify(wBounds) === JSON.stringify(closestScreen.bounds)) return
+            // If output window is currently on primary screen (0,0) and secondary screen exists, align to secondary screen
+            if (displays.length >= 2 && targetDisplay.id === displays[0].id && output.screen) {
+                const savedDisplay = displays.find((d) => d.id.toString() === output.screen)
+                if (savedDisplay) targetDisplay = savedDisplay
+            }
 
-            output.window.setBounds(closestScreen.bounds)
-            toApp(OUTPUT, { channel: "MOVE", data: { id: outputId, bounds: closestScreen.bounds } })
+            output.screen = targetDisplay.id.toString()
+
+            if (JSON.stringify(wBounds) !== JSON.stringify(targetDisplay.bounds)) {
+                output.window.setBounds(targetDisplay.bounds)
+            }
+            toApp(OUTPUT, { channel: "MOVE", data: { id: outputId, bounds: targetDisplay.bounds, screen: targetDisplay.id.toString() } })
         })
     }
 }

@@ -3,7 +3,7 @@
     import type { MediaStyle } from "../../../types/Main"
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
     import { removeTagsAndContent } from "../../show/slides"
-    import { activeEdit, activePage, activeTimers, editMode, effects, focusMode, fullColors, groups, media, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, slideNotesActive, slidesOptions, slideTimers, special, styles } from "../../stores"
+    import { activeEdit, activePage, activeTimers, editMode, effects, focusMode, fullColors, groups, media, outputs, overlays, playerVideos, refreshListBoxes, refreshSlideThumbnails, slideNotesActive, slidesOptions, slideTimers, special, styles } from "../../stores"
     import { wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -16,7 +16,7 @@
     import Icon from "../helpers/Icon.svelte"
     import { getMedia, getMediaCached, getMediaStyle, mediaSize } from "../helpers/media"
     import { allOutputsHasStyleTemplate, getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter, setTemplateStyle } from "../helpers/output"
-    import { getGroupName } from "../helpers/show"
+    import { getGroupName, isSlideLocked } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import Effect from "../output/effects/Effect.svelte"
     import SelectElem from "../system/SelectElem.svelte"
@@ -89,6 +89,15 @@
         mediaPath = bgPath
         thumbnailPath = ""
         // thumbnailPath = getThumbnailPath(mediaPath, ghostBackground ? ghostSize : mediaSize.slideSize)
+
+        if (bg?.type === "player" || $playerVideos[bgPath]) {
+            const playerVid = $playerVideos[bgPath] || (bg as any)?.data || bg
+            if (playerVid?.id) {
+                if (playerVid.type === "youtube") thumbnailPath = `https://i.ytimg.com/vi/${playerVid.id}/sddefault.jpg`
+                else if (playerVid.type === "vimeo") thumbnailPath = `https://vumbnail.com/${playerVid.id}_medium.jpg`
+                return
+            }
+        }
 
         // make sure it's downloaded
         if (isLessons) await wait(1000)
@@ -209,7 +218,7 @@
     }
 
     let profile = getAccess("shows")
-    $: isGroupLocked = !!slide?.locked // WIP get group slide
+    $: isGroupLocked = isSlideLocked(showId, layoutSlide.id, show)
     $: isLocked = show?.locked || isGroupLocked || profile.global === "read" || profile[show?.category || ""] === "read"
 
     // correct view order based on arranged order in Items.svelte (?.reverse())
@@ -427,7 +436,7 @@
                         <span class="text" style={name === null || name === "." ? "opacity: 0;" : ""}>{@html name === null || name === "." ? "-" : name || "—"}</span>
 
                         <!-- group is locked! -->
-                        {#if slide.locked || show?.slides?.[layoutSlide?.parent || ""]?.locked}
+                        {#if isGroupLocked}
                             <span class="lock"><Icon id="lock" size={0.7} style="color: var(--text);opacity: 0.3;" white /></span>
                         {/if}
 

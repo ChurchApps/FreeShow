@@ -1,5 +1,6 @@
 import fs from "fs"
 import path from "path"
+import type { Readable } from "stream"
 import yauzl from "yauzl"
 import yazl from "yazl"
 import { ToMain } from "../../types/IPC/ToMain"
@@ -12,15 +13,48 @@ import { createFolder, getExtension } from "../utils/files"
 export function compressToZip(entries: { name: string; content?: Buffer | string; filePath?: string }[], outputPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
         const zipfile = new yazl.ZipFile()
+        const writeStream = fs.createWriteStream(outputPath)
+        let settled = false
+
+        zipfile.outputStream.pipe(writeStream)
+
+        // "close" instead of "finish" so the file is fully closed before the caller uploads/opens it
+        writeStream.on("close", () => {
+            if (settled) return
+            settled = true
+            resolve()
+        })
+
+        writeStream.on("error", (err) => {
+            sendToMain(ToMain.ALERT, `Failed to create zip file: ${outputPath}`)
+            fail(err)
+        })
+
+        // yazl reads added files lazily and reports failures on the ZipFile itself.
+        zipfile.on("error", (err: Error) => fail(err))
 
         entries.forEach((entry) => {
             try {
                 if (entry.filePath) {
+                    // one unreadable file should not fail the entire zip,
+                    // this also catches folders, which yazl refuses to add
+                    const stats = fs.statSync(entry.filePath, { throwIfNoEntry: false })
+                    if (!stats?.isFile()) {
+                        console.error(`Skipped file in zip: ${entry.name} (${entry.filePath})`)
+                        return
+                    }
+
                     zipfile.addFile(entry.filePath, entry.name)
-                } else if (entry.content) {
+                    return
+                }
+
+                if (entry.content !== undefined && entry.content !== null) {
                     const buffer = typeof entry.content === "string" ? Buffer.from(entry.content, "utf-8") : entry.content
                     zipfile.addBuffer(buffer, entry.name)
+                    return
                 }
+
+                console.error(`Skipped empty zip entry: ${entry.name}`)
             } catch (err) {
                 console.error(`Error adding to zip: ${entry.name}`, err)
             }
@@ -28,24 +62,19 @@ export function compressToZip(entries: { name: string; content?: Buffer | string
 
         zipfile.end()
 
-        const writeStream = fs.createWriteStream(outputPath)
-
-        zipfile.outputStream.pipe(writeStream)
-
-        writeStream.on("finish", () => {
-            resolve()
-        })
-
-        writeStream.on("error", (err) => {
+        function fail(err: Error) {
+            if (settled) return
+            settled = true
             console.error(err)
-            sendToMain(ToMain.ALERT, `Failed to create zip file: ${outputPath}`)
-            reject(err)
-        })
 
-        zipfile.outputStream.on("error", (err) => {
-            console.error(err)
+            // stop yazl from pumping remaining entries
+            zipfile.outputStream.unpipe(writeStream)
+            ;(zipfile.outputStream as Readable).destroy()
+
+            // clean up output file and reject promise
+            fs.rmSync(outputPath, { force: true })
             reject(err)
-        })
+        }
     })
 }
 

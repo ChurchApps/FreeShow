@@ -43,82 +43,61 @@ export function trimPlayerId(id: string, type: "youtube" | "vimeo") {
     return id
 }
 
-let isLoadingNames: string[] = []
-export async function getYouTubeName(id: string) {
-    if (!id || id.length < 11) return ""
+let isLoadingIds: string[] = []
 
-    if (isLoadingNames.includes(id)) return ""
-    isLoadingNames.push(id)
+export async function getYouTubeData(id: string): Promise<{ name: string; duration: number }> {
+    if (!id || id.length < 11) return { name: "", duration: 0 }
+
+    if (isLoadingIds.includes(id)) return { name: "", duration: 0 }
+    isLoadingIds.push(id)
 
     try {
+        let name = ""
+        let duration = 0
+
         const response = await fetch(`https://www.youtube.com/oembed?url=http://www.youtube.com/watch?v=${id}&format=json`)
-        if (!response.ok) throw new Error("Failed to fetch video name")
-        const data = await response.json()
-        return data.title
+        if (response.ok) {
+            const data = await response.json()
+            name = data.title || ""
+        }
+
+        const watchResponse = await fetch(`https://www.youtube.com/watch?v=${id}`)
+        if (watchResponse.ok) {
+            const html = await watchResponse.text()
+            const match = html.match(/"lengthSeconds":"(\d+)"/)
+            if (match?.[1]) {
+                duration = parseInt(match[1], 10) || 0
+            }
+        }
+
+        return { name, duration }
     } catch (error) {
-        console.error("Error fetching YouTube video name:", error)
-        return ""
+        console.error("Error fetching YouTube video data:", error)
+        return { name: "", duration: 0 }
     } finally {
-        isLoadingNames = isLoadingNames.filter((loadingId) => loadingId !== id)
+        isLoadingIds = isLoadingIds.filter((loadingId) => loadingId !== id)
     }
-
-    // const elem = document.createElement("div")
-    // elem.style.display = "none"
-    // document.body.appendChild(elem)
-
-    // let player = YoutubePlayer(elem, {
-    //     playerVars: {
-    //         autoplay: 0,
-    //         controls: 0,
-    //         fs: 0,
-    //         rel: 0
-    //     }
-    // })
-
-    // player.on("stateChange", (e) => {
-    //     if (e.data === 5) {
-    //         // 5 corresponds to the 'CUED' state
-    //         console.log("Video cued and ready.")
-
-    //         let videoData = e.target.getVideoData()
-    //         console.log(videoData)
-    //         if (!videoData?.title) return
-
-    //         if (videoData?.title) data.name = videoData.title
-    //         player.destroy()
-
-    //         // remove the iframe element created by YouTube Player
-    //         const iframe = elem.querySelector("iframe")
-    //         if (iframe && document.body.contains(iframe)) document.body.removeChild(iframe)
-
-    //         player = null // Reset the player instance
-    //     }
-    // })
-
-    // // player.loadVideoById(id)
-    // player.cueVideoById(id)
 }
 
-export async function getVimeoName(id: string) {
-    if (!id || id.length < 8) return ""
+export async function getVimeoData(id: string): Promise<{ name: string; duration: number }> {
+    if (!id || id.length < 8) return { name: "", duration: 0 }
 
-    if (isLoadingNames.includes(id)) return ""
-    isLoadingNames.push(id)
+    if (isLoadingIds.includes(id)) return { name: "", duration: 0 }
+    isLoadingIds.push(id)
 
     try {
         const vimeoUrl = `https://vimeo.com/${id}`
         const response = await fetch(`https://vimeo.com/api/oembed.json?url=${vimeoUrl}`)
-        if (!response.ok) throw new Error("Failed to fetch video name")
+        if (!response.ok) throw new Error("Failed to fetch video data")
         const data = await response.json()
-        return data.title
+        return {
+            name: data.title || "",
+            duration: data.duration || 0
+        }
     } catch (error) {
-        console.error("Error fetching Vimeo video name:", error)
-        return ""
+        console.error("Error fetching Vimeo video data:", error)
+        return { name: "", duration: 0 }
     } finally {
-        isLoadingNames = isLoadingNames.filter((loadingId) => loadingId !== id)
+        isLoadingIds = isLoadingIds.filter((loadingId) => loadingId !== id)
     }
-
-    // player.getVideoTitle().then((t) => {
-    //     title = t
-    // })
 }

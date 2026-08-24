@@ -2,7 +2,7 @@
     import { EXPORT } from "../../../../../types/Channels"
     import { Main } from "../../../../../types/IPC/Main"
     import type { Project } from "../../../../../types/Projects"
-    import { Show } from "../../../../../types/Show"
+    import type { Show } from "../../../../../types/Show"
     import { sendMain } from "../../../../IPC/main"
     import { activePopup, activeProject, projects, shows, showsCache, special } from "../../../../stores"
     import { wait } from "../../../../utils/common"

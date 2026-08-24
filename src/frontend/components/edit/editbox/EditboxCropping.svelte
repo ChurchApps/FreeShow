@@ -26,18 +26,29 @@
     let cropStart = { x: 0, y: 0, crop: { top: 0, right: 0, bottom: 0, left: 0 } as CropValues }
 
     function persistMissingTypeAsClipIfNeeded() {
-        if (!item || !$activeShow || (ref?.type || "show") !== "show") return
+        const refType = ref?.type || "show"
+        if (!item || (refType === "show" && !$activeShow) || !["show", "overlay", "template"].includes(refType)) return
         if (!item.cropping || item.cropping.type) return
 
-        history({
-            id: "setItems",
-            newData: { style: { key: "cropping", values: [{ ...getCropValues(item.cropping), type: "clip" }] } },
-            location: { page: "edit", show: $activeShow, slide: ref.id, items: [index] }
-        })
+        if (refType === "show") {
+            history({
+                id: "setItems",
+                newData: { style: { key: "cropping", values: [{ ...getCropValues(item.cropping), type: "clip" }] } },
+                location: { page: "edit", show: $activeShow, slide: ref.id, items: [index] }
+            })
+        } else {
+            history({
+                id: "UPDATE",
+                newData: { key: "items", indexes: [index], subkey: "cropping", data: [{ ...getCropValues(item.cropping), type: "clip" }] },
+                oldData: { id: ref.id },
+                location: { page: "edit", id: `${refType}_items`, override: true }
+            })
+        }
     }
 
     export function handleDblclick(e: MouseEvent) {
-        if ((item?.type !== "media" && item?.type !== "camera") || isLocked || (ref?.type || "show") !== "show" || !$activeShow) return false
+        const refType = ref?.type || "show"
+        if ((item?.type !== "media" && item?.type !== "camera") || isLocked || (refType === "show" && !$activeShow) || !["show", "overlay", "template"].includes(refType)) return false
         if (e.target instanceof HTMLElement && (e.target.closest(".line") || e.target.closest(".square") || e.target.closest(".rotate") || e.target.closest(".radius") || e.target.closest(".editTools"))) return false
 
         const wasActive = cropEditMode
@@ -129,7 +140,8 @@
         cropDragSide = null
         cropMoveActive = false
 
-        if (!item || !$activeShow || (ref?.type || "show") !== "show") return
+        const refType = ref?.type || "show"
+        if (!item || (refType === "show" && !$activeShow) || !["show", "overlay", "template"].includes(refType)) return
 
         const nextCrop = clampCrop(cropPreview)
         const oldCrop = getCropValues(item.cropping)
@@ -137,11 +149,20 @@
         const needsTypeUpdate = !!item.cropping && !item.cropping.type
         if (!needsTypeUpdate && JSON.stringify(nextCrop) === JSON.stringify(oldCrop)) return
 
-        history({
-            id: "setItems",
-            newData: { style: { key: "cropping", values: [{ ...nextCrop, type: nextType }] } },
-            location: { page: "edit", show: $activeShow, slide: ref.id, items: [index] }
-        })
+        if (refType === "show") {
+            history({
+                id: "setItems",
+                newData: { style: { key: "cropping", values: [{ ...nextCrop, type: nextType }] } },
+                location: { page: "edit", show: $activeShow, slide: ref.id, items: [index] }
+            })
+        } else {
+            history({
+                id: "UPDATE",
+                newData: { key: "items", indexes: [index], subkey: "cropping", data: [{ ...nextCrop, type: nextType }] },
+                oldData: { id: ref.id },
+                location: { page: "edit", id: `${refType}_items`, override: true }
+            })
+        }
 
         cropPreview = nextCrop
     }

@@ -2,7 +2,7 @@
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import { fade } from "svelte/transition"
     import type { ProjectShowRef, Tree } from "../../../types/Projects"
-    import { ShowType } from "../../../types/Show"
+    import type { ShowType } from "../../../types/Show"
     import { addProjectItem, addToProject, updateRecentlyAddedFiles } from "../../converters/project"
     import { actions, activeFocus, activePopup, activeProject, activeShow, contextActive, drawer, drawerTabsData, editingProjectTemplate, focusMode, fullColors, playerVideos, popupData, projects, projectTemplates, projectView, recentFiles, selected, shows, special } from "../../stores"
     import { triggerFunction } from "../../utils/common"

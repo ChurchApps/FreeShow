@@ -1,21 +1,22 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
-    import { media } from "../../stores"
+    import { currentWindow, media } from "../../stores"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
-    import { SoftLoopManager } from "./softLoop"
-    import { AudioAnalyser } from "../../audio/audioAnalyser"
+    import { SoftLoopSync } from "./video/softLoop"
+    import { clampPlaybackRate, syncVideoToAudio, videoSync } from "./video/videoSync"
 
+    export let outputId: string
     export let path: string
+    export let syncPath: string = ""
     export let video: HTMLVideoElement | null = null
-    export let videoData: any
-    export let videoTime: number
+    export let videoData: any = { paused: false, loop: false, softLoop: 0 }
+    export let videoTime: number = 0
     export let startAt = 0
 
     export let mediaStyle: MediaStyle = {}
     export let animationStyle = ""
     export let mirror = false
-    export let volume = 1
 
     let dispatch = createEventDispatcher()
 
@@ -24,6 +25,30 @@
     let containerAspect: number | null = null
     let videoAspect: number | null = null
     let perfectFit = false
+
+    let softLoopVideo: HTMLVideoElement | null = null
+    let softLoopOpacity = 0
+
+    let unsubscribeSync: (() => void) | null = null
+    $: {
+        unsubscribeSync?.()
+        const targetPath = syncPath || path
+        if (targetPath && outputId) {
+            let lastSyncedTime: number | null = null
+            unsubscribeSync = videoSync(targetPath, outputId, (data) => {
+                const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
+                syncVideoToAudio(video, data.currentTime, lastSyncedTime, isSoftLoop, targetPlaybackRate, data.isFadingOut)
+                if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
+
+                if (videoData.loop !== data.loop) videoData.loop = data.loop
+                if (videoData.paused !== data.paused) videoData.paused = data.paused
+
+                if (data.softLoop !== undefined && videoData.softLoop !== data.softLoop) videoData.softLoop = data.softLoop
+                if (data.softLoopOpacity !== undefined && softLoopOpacity !== data.softLoopOpacity) softLoopOpacity = data.softLoopOpacity
+                softLoopAudioTime = data.currentTime
+            })
+        }
+    }
 
     onMount(() => {
         if (!container) return
@@ -39,10 +64,23 @@
         dispatch("loaded", true)
     }
 
+    // ensure that video state matches the store state
+    $: if (video) {
+        if (!videoData.paused && video.paused && !video.error) {
+            video.play().catch((err) => {
+                if (err.name !== "AbortError") {
+                    console.warn("[Video.svelte] Play failed:", err)
+                }
+            })
+        } else if (videoData.paused && !video.paused) {
+            video.pause()
+        }
+    }
+
     // Pingback after 30 playing seconds on videos where tracking is required
     let pingbackTime = 0
     let pingbackInterval: NodeJS.Timeout | null = null
-    $: if (path && !mirror) setupPingback()
+    $: if (path && !$currentWindow) setupPingback()
     function setupPingback() {
         pingbackTime = 0
         if (pingbackInterval) clearInterval(pingbackInterval)
@@ -70,7 +108,7 @@
     }
 
     onDestroy(() => {
-        if (endInterval) clearInterval(endInterval)
+        unsubscribeSync?.()
         if (pingbackInterval) clearInterval(pingbackInterval)
 
         const cleanupVideo = (el: HTMLVideoElement | null | undefined) => {
@@ -89,36 +127,30 @@
         cleanupVideo(softLoopVideo)
     })
 
-    // custom end time
-    $: endTime = (mediaStyle.toTime || 0) - (mediaStyle.fromTime || 0) > 0 ? mediaStyle.toTime : 0 // || videoData.duration
-    let endInterval: NodeJS.Timeout | null = null
-    $: if (endTime && !mirror && !endInterval) endInterval = setInterval(checkIfEnded, 1000 * playbackRate)
-    function checkIfEnded() {
-        if (!videoTime || !endTime) return
-        if (videoTime >= endTime) {
-            if (videoData.loop) {
-                if (!softLoopValue) videoTime = mediaStyle.fromTime || 0
-            } else dispatch("ended")
-        }
-    }
-
     function playing() {
         if (!hasLoaded || mirror) return
         hasLoaded = false
 
         // has custom start time
-        if ((Math.max(startAt, mediaStyle.fromTime || 0) || 0) === 0) return
+        const customStart = Math.max(startAt, mediaStyle.fromTime || 0) || 0
+        if (customStart === 0) return
 
         // go to custom start time
-        videoData.paused = true
-        setTimeout(() => {
-            videoTime = Math.max(startAt, mediaStyle.fromTime || 0) || 0
-            videoData.paused = false
-            startAt = 0
-        }, 50)
+        videoTime = customStart
+        startAt = 0
     }
 
-    $: playbackRate = Number(mediaStyle.speed) || 1
+    $: targetPlaybackRate = Number(mediaStyle.speed) || 1
+    // Apply the target rate reactively, but only when not mid-nudge (the sync function manages
+    // the actual video.playbackRate during nudging; setting it here only when the rate changes
+    // avoids fighting the nudge on every reactive tick).
+    $: safeTargetPlaybackRate = clampPlaybackRate(targetPlaybackRate)
+    let _lastAppliedRate = 1
+    $: if (video && safeTargetPlaybackRate !== _lastAppliedRate) {
+        // Only hard-apply if the difference is meaningful (not a nudge artifact)
+        _lastAppliedRate = safeTargetPlaybackRate
+        if (video.playbackRate !== safeTargetPlaybackRate) video.playbackRate = safeTargetPlaybackRate
+    }
     $: if (video) video.preservesPitch = true
 
     $: isVideoSupported(path)
@@ -141,86 +173,44 @@
 
     let blurVideo: HTMLVideoElement | null = null
     $: if (blurVideo && (videoTime < blurVideo.currentTime - 0.1 || videoTime > blurVideo.currentTime + 0.1)) blurVideo.currentTime = videoTime
-    $: if (!videoData.paused && blurVideo?.paused) blurVideo.play()
-    $: blurPausedState = videoData.paused
+    $: if (blurVideo) {
+        if (!videoData.paused && blurVideo.paused && !blurVideo.error) {
+            blurVideo.play().catch(() => {})
+        } else if (videoData.paused && !blurVideo.paused) {
+            blurVideo.pause()
+        }
+    }
+    $: if (blurVideo && blurVideo.playbackRate !== safeTargetPlaybackRate) blurVideo.playbackRate = safeTargetPlaybackRate
 
     // update computed aspects and determine whether the blurred video is necessary
     $: videoAspect = video && video.videoWidth && video.videoHeight ? video.videoWidth / video.videoHeight : null
     // 1% tolerance
     $: perfectFit = containerAspect && videoAspect ? Math.abs(containerAspect - videoAspect) <= 0.01 : false
 
-    // some videos don't like high playback speed (above 5.9)
-    // https://issues.chromium.org/issues/40167938
-
     // Soft loop
-    // WIP currently not working well in preview
-    const slManager = new SoftLoopManager()
-    const slUpdate = (res: any) => {
-        if (res.opacity !== undefined) softLoopOpacity = res.opacity
-        if (res.videoTime !== undefined) videoTime = res.videoTime
-        if (res.paused !== undefined) videoData.paused = res.paused
-    }
 
-    let softLoopVideo: HTMLVideoElement | null = null
-    let softLoopOpacity = 0
+    $: softLoopValue = videoData.softLoop ?? mediaStyle.softLoop ?? 0
+    $: fromTime = mediaStyle.fromTime || 0
+    $: toTime = mediaStyle.toTime || 0
 
-    $: softLoopValue = Number(mediaStyle.softLoop) > 0 ? Number(mediaStyle.softLoop) : 0
-    $: if (softLoopValue > 0 && softLoopVideo && playbackRate) softLoopVideo.playbackRate = playbackRate
-    $: actualEndTime = endTime || videoData.duration || 0
-    $: if (softLoopValue > 0) {
-        if (video) {
-            video.volume = Math.min(1, Math.max(0, volume * (1 - softLoopOpacity)))
-            AudioAnalyser.setSourceVolume(path, video.volume)
-        }
-        if (softLoopVideo) {
-            softLoopVideo.volume = Math.min(1, Math.max(0, volume * softLoopOpacity))
-            AudioAnalyser.setSourceVolume(path + "_softloop", softLoopVideo.volume)
-        }
-    } else {
-        if (video) {
-            const clampedVolume = Math.min(1, Math.max(0, volume))
-            video.volume = clampedVolume
-            AudioAnalyser.setSourceVolume(path, clampedVolume)
-        }
-        if (softLoopVideo) {
-            softLoopVideo.volume = 0
-            AudioAnalyser.setSourceVolume(path + "_softloop", 0)
-        }
-    }
+    const softLoopSync = new SoftLoopSync()
+    onDestroy(() => softLoopSync.destroy())
 
-    $: slParams = {
-        video,
-        softLoopVideo,
-        softLoopValue,
-        actualEndTime,
-        mirror,
-        fromTime: mediaStyle.fromTime || 0,
-        loop: videoData.loop,
-        paused: videoData.paused,
-        onUpdate: slUpdate
-    }
-
-    function handleTimeUpdate() {
-        if (video) slManager.update(slParams)
-    }
-    $: if (video) slManager.update(slParams)
-
-    function handleEnded() {
-        if (!slManager.handleEnded(slParams)) dispatch("ended")
-    }
+    let softLoopAudioTime: number | undefined
+    $: effectiveSoftLoopOpacity = softLoopSync.update(softLoopOpacity, videoTime, fromTime, softLoopValue, video, softLoopVideo, videoData.paused, toTime, softLoopAudioTime)
+    $: if (softLoopVideo && softLoopVideo.playbackRate !== safeTargetPlaybackRate) softLoopVideo.playbackRate = safeTargetPlaybackRate
 </script>
 
 <div bind:this={container} style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
     {#if mediaStyle.fit === "blur" && !perfectFit}
-        <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:playbackRate bind:this={blurVideo} bind:paused={blurPausedState} muted loop={videoData.loop || false} />
+        <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:this={blurVideo} muted loop={videoData.loop} />
     {/if}
-    <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:ended={handleEnded} on:error on:timeupdate={handleTimeUpdate} bind:playbackRate bind:currentTime={videoTime} bind:paused={videoData.paused} bind:duration={videoData.duration} muted={mirror ? true : (videoData.muted ?? true)} src={encodeFilePath(path)} autoplay loop={videoData.loop && !softLoopValue} volume={softLoopValue > 0 ? volume * (1 - softLoopOpacity) : volume}>
-        <!-- bind:volume={audioVolume} -->
+    <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:error bind:currentTime={videoTime} muted src={encodeFilePath(path)} loop={videoData.loop}>
         {#each tracks as track}
             <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
         {/each}
     </video>
     {#if softLoopValue > 0 && videoData.loop}
-        <video class="media" style="{mediaStyleString} position: absolute; top: 0; left: 0; opacity: {softLoopOpacity}; pointer-events: none;" bind:this={softLoopVideo} bind:paused={videoData.paused} src={encodeFilePath(path)} muted={mirror ? true : (videoData.muted ?? true)} bind:playbackRate volume={softLoopValue > 0 ? volume * softLoopOpacity : 0} />
+        <video class="media" style="{mediaStyleString} position: absolute;top: 0;left: 0;transition: 0.2s opacity;opacity: {effectiveSoftLoopOpacity};pointer-events: none;" bind:this={softLoopVideo} src={encodeFilePath(path)} muted loop={videoData.loop} />
     {/if}
 </div>

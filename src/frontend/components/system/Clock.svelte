@@ -14,6 +14,7 @@
     export let type: "digital" | "analog" | "custom" = "digital"
     export let dateFormat = "none"
     export let customFormat = "hh:mm a"
+    export let offsetDays = 0
     export let showTime = true
     export let seconds = true
 
@@ -71,13 +72,15 @@
 
         // .locale($language)
 
-        if (typeof format !== "string" || !format) return dayjs(date)
+        const targetDate = offsetDays ? dayjs(date).add(Number(offsetDays) || 0, "day") : dayjs(date)
+
+        if (typeof format !== "string" || !format) return targetDate.format()
 
         try {
-            return dayjs(date).format(format)
+            return targetDate.format(format)
         } catch (err) {
             console.error(err)
-            return dayjs(date)
+            return targetDate.format()
         }
     }
 

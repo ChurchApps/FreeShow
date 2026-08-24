@@ -1,8 +1,9 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
+    import { get } from "svelte/store"
     import { uid } from "uid"
     import { AudioEqualizer, type EQBand, EqualizerCalculations, setEqualizerEnabled, updateEqualizerBands } from "../../../../audio/effects/audioEqualizer"
-    import { audioEffects, eqPresets, special } from "../../../../stores"
+    import { activeAudioEffects, audioEffects, eqPresets, special } from "../../../../stores"
     import { translateText } from "../../../../utils/language"
     import { clone, keysToID } from "../../../helpers/array"
     import InputRow from "../../../input/InputRow.svelte"
@@ -63,9 +64,10 @@
 
         // Subscribe to config changes
         equalizerConfigUnsubscribe = audioEffects.subscribe((all) => {
-            const config = all.main?.equalizer
+            const target = get(activeAudioEffects) || "main"
+            const config = all[target]?.equalizer
             if (!config) return
-            bands = clone(config.bands)
+            bands = config.bands?.length ? clone(config.bands) : AudioEqualizer.getDefaultBands()
             enabled = config.enabled
         })
 

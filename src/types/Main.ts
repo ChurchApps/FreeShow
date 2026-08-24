@@ -112,8 +112,10 @@ export type SelectIds =
     | "style"
     | "output"
     | "profile"
+    | "audio_channel"
     | "tag"
     | "bible_book"
+    | "calendar"
 
 export interface Selected {
     id: null | SelectIds
@@ -202,11 +204,20 @@ export interface MediaStyle {
     licenseExpiresAt?: number // unix ms; content provider license is valid while Date.now() < licenseExpiresAt
     pingbackUrl?: string // URL for sending pingback after playback
     cropping?: Partial<Cropping>
+    style?: string // used to transfer styles from main item to cropped part (like border radius)
 
     ignoreLayer?: boolean // foreground background type
 }
 
 export type AudioType = "music" | "effect"
+
+// media codec
+export interface MediaCodecInfo {
+    path: string
+    codecs: string[]
+    mimeType: string
+    mimeCodec: string
+}
 
 // subtitles/captions
 export interface Subtitle {
@@ -408,6 +419,7 @@ export type Popups =
     | "media_fit"
     | "metadata_display"
     | "import_scripture"
+    | "import_calendar"
     | "create_collection"
     | "edit_event"
     | "edit_chart"
@@ -455,6 +467,7 @@ export type Popups =
     | "cleaning_utility"
     | "pco_picker"
     | "sync_folders"
+    | "node_options"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

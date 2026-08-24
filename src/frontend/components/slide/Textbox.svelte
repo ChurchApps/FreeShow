@@ -897,7 +897,7 @@
             {updateDynamicValues}
         />
     {:else}
-        <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {mirror} {ratio} {smallFontSize} {ref} {fontSize} {outputId} />
+        <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {ratio} {smallFontSize} {ref} {fontSize} {outputId} />
     {/if}
 </div>
 

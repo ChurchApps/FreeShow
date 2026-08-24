@@ -117,7 +117,10 @@
             wait = false
         }, 800)
 
-        if (findMatchingOut(path, $outputs)) {
+        const activeOutputs = getAllActiveOutputs()
+
+        const isActive = activeOutputs.some((a) => (a.out?.background?.path || a.out?.background?.id) === path)
+        if (isActive) {
             clearBackground()
             return
         }
@@ -128,7 +131,7 @@
         if (videoType === "foreground") clearSlide()
 
         // get style per output
-        getAllActiveOutputs().forEach((output) => {
+        activeOutputs.forEach((output) => {
             const currentOutputStyle = $styles[output.style || ""]
             const currentMediaStyle = getMediaStyle($media[path], currentOutputStyle)
             setOutput("background", { path, type, loop, muted, startAt: 0, ...currentMediaStyle, ignoreLayer: videoType === "foreground" }, false, output.id)

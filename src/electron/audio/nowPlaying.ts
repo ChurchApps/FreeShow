@@ -4,6 +4,7 @@ import { join } from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
 import { deleteFile, doesPathExist, getDataFolderPath, openInSystem, writeFile } from "../utils/files"
+import { IcecastSender } from "./IcecastSender"
 
 const fileNameText = "NowPlaying.txt"
 const fileNameImage = "NowPlayingCover.png"
@@ -22,9 +23,12 @@ export async function setPlayingState(data: NowPlayingData) {
 
     // get metadata
     const metadata = await getAudioMetadata(data.filePath)
-    // const artist = (metadata ? getArtist(metadata) : "") || data.unknownLang[0] || "Unknown Artist"
-    // const title = metadata?.title || data.name || data.unknownLang[1] || "Unknown Title"
-    // const album = metadata?.album || data.unknownLang[2] || "Unknown Album"
+
+    // send metadata to Icecast stream
+    const artist = (metadata ? getArtist(metadata) : "") || data.unknownLang[0] || "Unknown Artist"
+    const title = metadata?.title || data.name || data.unknownLang[1] || "Unknown Title"
+    const songName = artist && title ? `${artist} - ${title}` : title || artist
+    IcecastSender.updateMetadata(songName)
 
     // create album art cover BEFORE converting dynamic values
     const filePathCover = join(audioFolder, fileNameImage)

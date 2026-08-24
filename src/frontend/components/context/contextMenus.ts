@@ -269,6 +269,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     category_audio_button: ["GROUP_rename_only", "delete_remove", "SEPARATOR", "system_open"],
     category_scripture_button: ["GROUP_rename_only", "delete", "SEPARATOR", "favourite"],
     playlist: ["GROUP_rename_only", "delete"],
+    calendar_item: ["GROUP_rename_recolor", "delete"],
+    calendar_item_unlabeled: ["delete"],
     // CONTENT
     drawer_show: ["newShowPopup", "SEPARATOR", "manage_show_tags", "display_tags", "tag_filter", "sort_shows_by", "SEPARATOR", "selectAll"],
     // , "changeCategory" ? edit with rename & categories...
@@ -410,5 +412,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     profile_tab: ["GROUP_rename_recolor", "duplicate", "delete", "SEPARATOR", "reset"], // "GROUP_rename_color"
     profile_tab_admin: [],
     output_screen: ["GROUP_rename_recolor", "duplicate", "delete"], // , "SEPARATOR", "reset" // "GROUP_rename_color"
-    output_screen_stage: ["GROUP_rename_recolor", "duplicate", "delete"] // , "SEPARATOR", "reset" // "GROUP_rename_color"
+    output_screen_stage: ["GROUP_rename_recolor", "duplicate", "delete"], // , "SEPARATOR", "reset" // "GROUP_rename_color"
+    audio_channel: ["GROUP_rename_recolor", "delete"],
+    audio_channel_main: ["GROUP_rename_only"]
 }

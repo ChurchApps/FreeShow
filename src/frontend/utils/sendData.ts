@@ -151,7 +151,7 @@ function checkSent(id: Clients, msg: any): boolean {
 // send data per connection to all
 export function eachConnection(id: Clients, channel: any, callback: any) {
     Object.entries(get(connections)[id] || {}).forEach(async ([clientID, value]: any) => {
-        const data = await callback(value)
+        const data = await callback({ id: clientID, ...value })
         if (data) window.api.send(id, { id: clientID, channel, data })
     })
 }

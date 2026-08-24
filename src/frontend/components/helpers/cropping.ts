@@ -1,4 +1,5 @@
 import type { Cropping } from "../../../types/Settings"
+import { getStyles } from "./style"
 
 export type CropType = "clip" | "ppt"
 export type CropValues = { top: number; right: number; bottom: number; left: number }
@@ -72,7 +73,8 @@ export function getCropCenter(crop: CropValues) {
     }
 }
 
-function getMediaCropGeometry(crop: CropState["crop"], cropHasValues: boolean) {
+function getMediaCropGeometry(crop: CropState["crop"], cropHasValues: boolean, borderRadius?: string) {
+    const roundStr = borderRadius ? ` round ${borderRadius}` : ""
     if (cropHasValues && crop.type === "ppt") {
         const visibleWidth = Math.max(0.0001, 100 - crop.left - crop.right)
         const visibleHeight = Math.max(0.0001, 100 - crop.top - crop.bottom)
@@ -81,21 +83,23 @@ function getMediaCropGeometry(crop: CropState["crop"], cropHasValues: boolean) {
         const pptLeft = (-crop.left * 100) / visibleWidth
         const pptTop = (-crop.top * 100) / visibleHeight
 
-        return `width: ${pptWidth}%;height: ${pptHeight}%;left: ${pptLeft}%;top: ${pptTop}%;`
+        const clipPath = borderRadius ? `clip-path: inset(0 0 0 0${roundStr});-webkit-clip-path: inset(0 0 0 0${roundStr});` : ""
+        return `width: ${pptWidth}%;height: ${pptHeight}%;left: ${pptLeft}%;top: ${pptTop}%;${clipPath}`
     }
 
-    const clipPath = cropHasValues ? `inset(${crop.top}% ${crop.right}% ${crop.bottom}% ${crop.left}%)` : "inset(0 0 0 0)"
-    return `width: 100%;height: 100%;left: 0;top: 0;${cropHasValues ? `clip-path: ${clipPath};-webkit-clip-path: ${clipPath};` : ""}`
+    const clipPath = (cropHasValues || borderRadius) ? `clip-path: inset(${crop.top}% ${crop.right}% ${crop.bottom}% ${crop.left}%${roundStr});-webkit-clip-path: inset(${crop.top}% ${crop.right}% ${crop.bottom}% ${crop.left}%${roundStr});` : ""
+    return `width: 100%;height: 100%;left: 0;top: 0;${clipPath}`
 }
 
-export function getCropState(cropping: Partial<Cropping> | undefined, cropPreviewMode: boolean): CropState {
+export function getCropState(cropping: Partial<Cropping> | undefined, cropPreviewMode: boolean, itemStyle?: string): CropState {
     const crop = toCrop(cropping)
     const cropHasValues = !!(crop.top || crop.right || crop.bottom || crop.left)
+    const borderRadius = itemStyle ? getStyles(itemStyle)?.["border-radius"] : undefined
 
     return {
         crop,
         cropHasValues,
         showCropOverflowPreview: cropPreviewMode && cropHasValues && crop.type !== "ppt",
-        mediaCropGeometry: getMediaCropGeometry(crop, cropHasValues)
+        mediaCropGeometry: getMediaCropGeometry(crop, cropHasValues, borderRadius)
     }
 }

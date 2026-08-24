@@ -41,13 +41,13 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
         }
     }
 
-    let gotMatch = false
-
     if (e?.altKey || e?.shiftKey || e?.ctrlKey) lines = []
     else snapBox()
 
     function snapBox() {
         if (!itemElem.closest(".slide")) return
+
+        lines = []
 
         const slideWidth = Math.round(itemElem.closest(".slide").offsetWidth / ratio)
         const slideHeight = Math.round(itemElem.closest(".slide").offsetHeight / ratio)
@@ -65,19 +65,39 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
         function getItemLines(item: HTMLElement, i: number) {
             let id: number | string = i
             if (item.id) id = item.id
-            if (active.includes(id)) return
+            if (item.getAttribute("data-index")) id = Number(item.getAttribute("data-index"))
+            if (active.includes(id) || item === itemElem) return
 
-            const style = getStyles(item.getAttribute("style"))
-            const styleNumbers: { [key: string]: number } = {}
-            Object.entries(style).map((s) => (styleNumbers[s[0]] = Number(s[1].replace(/[^-0-9\.]+/g, ""))))
-            xLines.push(styleNumbers.left, styleNumbers.left + styleNumbers.width / 2, styleNumbers.left + styleNumbers.width)
-            yLines.push(styleNumbers.top, styleNumbers.top + styleNumbers.height / 2, styleNumbers.top + styleNumbers.height)
+            const left = item.offsetLeft
+            const top = item.offsetTop
+            const width = item.offsetWidth
+            const height = item.offsetHeight
+
+            if (!width || !height) return
+
+            xLines.push(left, left + width / 2, left + width)
+            yLines.push(top, top + height / 2, top + height)
+        }
+
+        if (isResizing) {
+            if (directionId.includes("e") && mouse.left < slideWidth / 2) {
+                xLines.push(slideWidth - mouse.left)
+            }
+            if (directionId.includes("w") && mouse.left + mouse.width > slideWidth / 2) {
+                xLines.push(slideWidth - (mouse.left + mouse.width))
+            }
+            if (directionId.includes("s") && mouse.top < slideHeight / 2) {
+                yLines.push(slideHeight - mouse.top)
+            }
+            if (directionId.includes("n") && mouse.top + mouse.height > slideHeight / 2) {
+                yLines.push(slideHeight - (mouse.top + mouse.height))
+            }
         }
 
         checkMatch(xLines, xItems, "x", snapDistance / ratio)
         checkMatch(yLines, yItems, "y", snapDistance / ratio)
 
-        if (isResizing && gotMatch) return
+        if (isResizing) return
 
         // center is easier to snap to
         checkMatch([slideWidth / 2], [itemElem.offsetWidth / 2], "xc", (snapDistance * 2) / ratio, true)
@@ -86,36 +106,46 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
 
     function checkMatch(allLines: number[], items: number[], id: string, margin: number, isCenter = false) {
         const side = id.includes("x") ? "left" : "top"
-
-        const mousePos = side === "left" ? (e.clientX - itemElem.closest(".slide")?.offsetLeft - (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft) / ratio : (e.clientY - itemElem.closest(".slide")?.offsetTop - (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetTop) / ratio
-
         const getNumber = (pos: any) => Number(pos?.toString().replace(/[^-0-9\.]+/g, ""))
         const boxPos = getNumber(styles[side])
 
+        if (isResizing) {
+            if (isCenter) return
+
+            const isX = side === "left"
+            const posProp = isX ? "left" : "top"
+            const sizeProp = isX ? "width" : "height"
+            const startHandle = isX ? "w" : "n"
+            const endHandle = isX ? "e" : "s"
+
+            const resizesStart = directionId.includes(startHandle)
+            const resizesEnd = directionId.includes(endHandle)
+            if (!resizesStart && !resizesEnd) return
+
+            const candidateStart = Number(styles[posProp])
+            const candidateEnd = candidateStart + Number(styles[sizeProp])
+            const fixedStart = mouse[posProp]
+            const fixedEnd = mouse[posProp] + mouse[sizeProp]
+
+            allLines.forEach((linePos: number) => {
+                if (resizesEnd && Math.abs(candidateEnd - linePos) < margin) {
+                    styles[sizeProp] = Math.max(16 / ratio, linePos - fixedStart)
+                    styles[posProp] = fixedStart
+                    if (!lines.some((m) => m[0] === id && m[1] === linePos)) lines.push([id, linePos])
+                } else if (resizesStart && Math.abs(candidateStart - linePos) < margin) {
+                    const newPos = Math.min(linePos, fixedEnd - 16 / ratio)
+                    styles[posProp] = newPos
+                    styles[sizeProp] = fixedEnd - newPos
+                    if (!lines.some((m) => m[0] === id && m[1] === linePos)) lines.push([id, linePos])
+                }
+            })
+            return
+        }
+
         allLines.forEach((linePos: number) => {
-            const mouseMatch = mousePos > linePos - margin && mousePos < linePos + margin
             const boxMatch: undefined | number = items.find((i) => boxPos > linePos - i - margin && boxPos < linePos - i + margin)
 
-            // snapping resize
-            if (isResizing && !isCenter && mouseMatch === true) {
-                gotMatch = true
-                if (side === "left") {
-                    if (directionId.includes("e")) styles.width = linePos - mouse.left
-                    else if (directionId.includes("w")) {
-                        styles.left = linePos
-                        styles.width = mouse.width - linePos + mouse.left
-                    }
-                } else if (side === "top") {
-                    if (directionId.includes("s")) styles.height = linePos - mouse.top
-                    else if (directionId.includes("n")) {
-                        styles.top = linePos
-                        styles.height = mouse.height - linePos + mouse.top
-                    }
-                }
-            }
-            // snapping move
-            if ((!isResizing || isCenter) && boxMatch !== undefined) {
-                gotMatch = true
+            if (boxMatch !== undefined) {
                 styles[side] = linePos - boxMatch
             }
 

@@ -50,19 +50,21 @@ export const mimeTypes: { [key: string]: string } = {
     webm: "video/webm",
     ogv: "video/ogg",
     mov: "video/quicktime",
-    m4v: "video/x-m4v",
+    m4v: "video/mp4",
     "3gp": "video/3gpp",
     "3g2": "video/3gpp2",
     avi: "video/x-msvideo",
     mkv: "video/x-matroska",
     flv: "video/x-flv",
     ts: "video/mp2t",
-    dvrms: "video/dvr-ms",
+    dvrms: "video/x-ms-dvr",
     mpeg: "video/mpeg",
     mpg: "video/mpeg",
 
     // image
     jpg: "image/jpeg",
     jpeg: "image/jpeg",
-    png: "image/png"
+    png: "image/png",
+    webp: "image/webp",
+    gif: "image/gif"
 }

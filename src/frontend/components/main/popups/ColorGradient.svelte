@@ -28,7 +28,7 @@
     $: if (activeType || activeShape || parsedValue) setNewValue()
 
     function change() {
-        $popupData.trigger(newValue)
+        if ($popupData.trigger) $popupData.trigger(newValue)
         popupData.set({})
         activePopup.set(null)
     }

@@ -2,8 +2,10 @@
     import { createEventDispatcher, onMount } from "svelte"
     import { Main } from "../../../types/IPC/Main"
     import { requestMain } from "../../IPC/main"
+    import { AudioMicrophone } from "../../audio/audioMicrophone"
+    import { AudioRoutingManager } from "../../audio/routing/audioRoutingManager"
     import { cameraManager } from "../../media/cameraManager"
-    import { actions, activePopup, audioPlaylists, audioStreams, effects, effectsLibrary, groups, interactions, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, variables } from "../../stores"
+    import { actions, activePopup, audioPlaylists, audioRouting, audioStreams, effects, effectsLibrary, groups, interactions, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
     import { obsGetScenes } from "../../utils/obsTalk"
     import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
@@ -30,7 +32,7 @@
     onMount(() => {
         // set default
         if (inputId === "metronome" && !value) updateValue("", { tempo: 120, beats: 4 })
-        else if (inputId === "index" && value?.index === undefined) updateValue("index", 0)
+        else if ((inputId === "index" || inputId === "disable_slide") && value?.index === undefined) updateValue("index", 0)
         else if (inputId === "volume" && value?.volume === undefined) updateValue("volume", 1)
     })
 
@@ -58,7 +60,7 @@
         updateValue("value", { detail: value })
     }
 
-    $: if (list && actionId === "start_show" && !value?.id) openSelectShow()
+    $: if (list && (actionId === "start_show" || actionId === "id_select_show") && !value?.id) openSelectShow()
     function openSelectShow() {
         popupData.set({ ...$popupData, action: "select_show", revert: $activePopup === "edit_event" ? "edit_event" : "action", active: value?.id, actionIndex })
         activePopup.set("select_show")
@@ -69,6 +71,13 @@
     async function getCameras() {
         const cameraList = await cameraManager.getCamerasList()
         cameras = sortByName(cameraList).map((a) => ({ label: a.name, id: a.id, groupId: a.group }))
+    }
+
+    let microphones: { name: string; id: string }[] = []
+    if (inputId === "microphone") getMicrophones()
+    async function getMicrophones() {
+        const micList = (await AudioMicrophone.getList()) || []
+        microphones = sortByName(micList.map((a) => ({ name: a.label || a.deviceId, id: a.deviceId })))
     }
 
     let screens: { name: string; id: string }[] = []
@@ -103,6 +112,13 @@
         output_lock: () => [{ value: "", label: translateText("preview.lock") }, { value: "all", label: translateText("actions.all_outputs") }, ...getOptions.normal_outputs().slice(1)],
         stage_outputs: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs).filter((a) => a.stageOutput)).map((a) => ({ value: a.id, label: a.name }), "label")],
         start_audio_stream: () => convertToOptions($audioStreams),
+        audio_channels: () => {
+            const config = AudioRoutingManager.sortChannels($audioRouting || { channels: [{ id: "main", name: translateText("audio.main") }], connections: [] })
+            return (config?.channels || [{ id: "main", name: translateText("audio.main") }]).map((c) => ({
+                value: c.id,
+                label: c.name || c.id
+            }))
+        },
         start_playlist: () => convertToOptions($audioPlaylists),
         start_audio_effect: () => $effectsLibrary.map((a) => ({ value: a.path, label: a.name })),
         id_select_output_style: () => [{ value: null, label: "—" }, ...convertToOptions($styles)],
@@ -144,6 +160,16 @@
             updateValue("", cam)
         }}
     />
+{:else if inputId === "microphone"}
+    <MaterialDropdown
+        label="settings.device"
+        options={microphones.map((a) => ({ value: a.id, label: a.name }))}
+        value={value?.id}
+        on:change={(e) => {
+            const mic = microphones.find((a) => a.id === e.detail)
+            updateValue("", mic)
+        }}
+    />
 {:else if inputId === "screen"}
     <MaterialDropdown
         label="items.screen"
@@ -166,6 +192,9 @@
     <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
 {:else if inputId === "toggle_output"}
     <MaterialDropdown label="stage.output" options={getOptions.toggle_output()} value={value?.id} on:change={(e) => updateValue("id", e.detail)} />
+    <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
+{:else if inputId === "toggle_channel_recording"}
+    <MaterialDropdown label="audio.channel" options={getOptions.audio_channels()} value={value?.id || "main"} on:change={(e) => updateValue("id", e.detail)} />
     <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
 {:else if inputId === "rest"}
     <!-- deprecated -->
@@ -204,6 +233,10 @@
 {:else if inputId === "percentage"}
     <MaterialNumberInput label="variables.value" value={(value?.value ?? 1) * 100} min={-1000} on:change={(e) => updateValue("value", e.detail / 100)} />
 {:else if inputId === "toggle"}
+    <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
+{:else if inputId === "disable_slide"}
+    <MaterialDropdown label="formats.show" options={[{ value: "", label: translateText("actions.active_show") }, ...convertToOptions($shows)]} value={value?.showId || ""} on:change={(e) => updateValue("showId", e.detail)} />
+    <MaterialNumberInput label="edit.slide_index" value={value?.index ?? 0} on:change={(e) => updateValue("index", e)} />
     <MaterialDropdown label="variables.value" options={stateOptions} value={typeof value?.value === "boolean" ? (value.value ? "on" : "off") : ""} on:change={textStateChange} />
 {:else if inputId === "output_lock"}
     <MaterialDropdown label="stage.output" options={getOptions.output_lock()} value={value?.outputId || ""} on:change={(e) => updateValue("outputId", e.detail)} />

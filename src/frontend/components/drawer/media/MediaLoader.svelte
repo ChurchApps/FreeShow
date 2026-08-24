@@ -176,7 +176,7 @@
                         <track kind="captions" />
                     </video>
                 {/if}
-                <video style={mediaStyleString} bind:this={videoElem} on:error={reload} src={encodeFilePath(path)} on:canplaythrough={getCurrentDuration}>
+                <video style={mediaStyleString} bind:this={videoElem} on:error={reload} src={encodeFilePath(path)} on:canplaythrough={getCurrentDuration} muted>
                     <track kind="captions" />
                 </video>
             {/if}

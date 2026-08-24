@@ -3,7 +3,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { OutData } from "../../../types/Output"
+    import type { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
     import type { AnimationData, Item, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
     import { allOutputs, colorbars, currentWindow, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
@@ -323,19 +323,22 @@
         const slideActive = layers.includes("slide")
         isSlideClearing = !slide || !slideActive
 
-        setTimeout(() => {
-            actualSlide = slideActive ? clone(slide) : null
-            actualSlideData = clone(slideData)
-            actualCurrentSlide = clone(currentSlide)
-            actualCurrentLineId = clone(currentLineId)
-        }, slide ? updateLinesTime : 0)
+        setTimeout(
+            () => {
+                actualSlide = slideActive ? clone(slide) : null
+                actualSlideData = clone(slideData)
+                actualCurrentSlide = clone(currentSlide)
+                actualCurrentLineId = clone(currentLineId)
+            },
+            slide ? updateLinesTime : 0
+        )
     }
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} checkered={(preview || mirror) && backgroundColor === "transparent"} backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} align={alignPosition} center {style} {resolution} {mirror} {drawZoom} {cropping} bind:ratio>
     <!-- always show style background (behind other backgrounds) -->
     {#if styleBackground && actualSlide?.type !== "pdf"}
-        <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} mirror styleBackground />
+        <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} mirror />
     {/if}
 
     <!-- background -->

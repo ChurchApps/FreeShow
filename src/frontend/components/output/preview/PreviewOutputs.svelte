@@ -59,7 +59,7 @@
 
 {#if outs.length > 1}
     <div class="outputTitles">
-        {#each outs as output}
+        {#each outs as output (output.id)}
             <MaterialButton id={output.id} title={output.stageOutput ? "" : "actions.toggle_output_lock"} active={output.active} style="width: 50%;font-weight: normal;border-radius: 0;padding: 0.2em 0.8em;{output.active ? 'border-bottom: 2px solid ' + output.color + ' !important;' : ''}" class="output_button context #output_active_button" on:click={(e) => toggleOutput(e, output.id)}>
                 <div class="indicator" class:locked={!output.active} class:invisible={output.invisible} class:ndi={$ndiData[output?.id || ""]?.connections > 0} class:active={$outputState.find((a) => a.id === output.id)?.active === true} data-title={translateText(getOutputStateTitle(output, { $outputState, $ndiData }), $dictionary)}></div>
                 {#if output.stageOutput}<Icon id="stage" size={0.8} white />{/if}

@@ -1,11 +1,12 @@
 <script lang="ts">
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeEdit, activeShow, media, outputs, styles } from "../../../stores"
+    import { activeEdit, activeShow, media, outputs, playingVideoState, styles } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import { getExtension, getMedia, getMediaStyle, getMediaType } from "../../helpers/media"
     import { getCurrentStyle, getFirstActiveOutput, getResolution } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import { VideoPlayer } from "../../media/video/videoPlayer"
     import Media from "../../output/layers/Media.svelte"
     import VideoSlider from "../../output/VideoSlider.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
@@ -20,6 +21,15 @@
     $: if (path) loadMedia()
     async function loadMedia() {
         mediaPath = path
+
+        VideoPlayer.getDuration(path).then((duration) => {
+            videoData.duration = duration
+
+            // get currentTime of outputted video initially (if any)
+            const id = `${path}_${output?.id}`
+            const currentTime = $playingVideoState[id]?.currentTime
+            if (currentTime) videoTime = currentTime
+        })
 
         const media = await getMedia(path)
         if (!media) return
@@ -38,7 +48,8 @@
     let videoTime = 0
     let videoData = { paused: false, muted: true, duration: 0, loop: true }
 
-    $: outputStyle = getCurrentStyle($styles, getFirstActiveOutput($outputs)?.style)
+    $: output = getFirstActiveOutput($outputs)
+    $: outputStyle = getCurrentStyle($styles, output?.style)
 
     // get styling
     let mediaStyle: MediaStyle = {}
@@ -59,7 +70,7 @@
 
             <div class="divider" />
 
-            <VideoSlider bind:videoData bind:videoTime big />
+            <VideoSlider path={mediaPath} bind:videoData bind:videoTime big />
 
             <div class="divider" />
 

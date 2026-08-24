@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { timers } from "../../../stores"
+    import { audioRouting, timers } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { clone, sortByName } from "../../helpers/array"
     import { getDynamicIds, getVariablesIds } from "../../helpers/showActions"
@@ -8,7 +8,6 @@
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import { newToast } from "../../../utils/common"
-    import { AudioMicrophone } from "../../../audio/audioMicrophone"
 
     export let input: { [key: string]: string }
 
@@ -69,19 +68,17 @@
     }
     const noData: string[] = ["isRunning"] // ["has_text"]
 
-    let micsList: { value: string; label: string }[] = []
-    $: if (elementId === "volume") {
-        AudioMicrophone.getList()?.then((devices) => {
-            micsList = devices?.map((d) => ({ value: d.deviceId, label: d.label })) || []
-        })
-    }
+    $: channelNodesList = ($audioRouting?.channels || [{ id: "main", name: translateText("audio.main") }]).map((c) => ({
+        value: c.id,
+        label: c.name || (c.id === "main" ? translateText("audio.main") : c.id)
+    }))
 
     $: elementOptions = {
         timer: [{ value: "", label: translateText("stage.first_active_timer") }, ...convertToOptions($timers)],
         variable: getVariables(),
         // , text.includes("{scripture") ? "scripture" : null
         dynamicValue: getDynamicIds(true).map((a) => ({ value: a, label: a })),
-        volume: [{ value: "main", label: translateText("audio.main") }, ...micsList]
+        volume: channelNodesList
     }
     export function convertToOptions(object) {
         const options = Object.keys(object).map((id) => ({ value: id, label: object[id].name }))
@@ -132,7 +129,7 @@
 
             {#if conditionId === "data"}
                 {#if value.value === "value"}
-                    <MaterialTextInput label="variables.value" placeholder={translateText("conditions.empty")} value={typeof input.value === "string" ? input.value : ""} on:change={(e) => setValue("value", e)} />
+                    <MaterialTextInput label="variables.value" placeholder={input.element === "volume" ? "-60 → 0" : translateText("conditions.empty")} value={typeof input.value === "string" ? input.value : ""} on:change={(e) => setValue("value", e)} />
                 {:else if value.value === "seconds"}
                     <MaterialNumberInput label="timer.seconds" value={typeof input.seconds === "number" ? input.seconds : 0} max={800000} on:change={(e) => setValue("seconds", e)} />
                 {/if}

@@ -36,8 +36,6 @@
     }
 
     const showItemRef = { outputId, type: "default" }
-    // $: videoTime = $videosTime[outputId] || 0
-    // $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
     let conditionsUpdater = 0
     let isMic = false
     $: isMic = JSON.stringify(currentItems.map((a) => a?.conditions) || "").includes('"element":"volume"')

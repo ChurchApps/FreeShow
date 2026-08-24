@@ -39,10 +39,7 @@ export class OutputVisibility {
             return "invisible"
         }
 
-        let bounds: Rectangle = output.bounds
-
-        // don't auto position on mac (because of virtual)
-        if (autoPosition && !force && process.platform !== "darwin") bounds = this.getSecondDisplay(bounds)
+        let bounds: Rectangle = this.resolveOutputBounds(output, autoPosition && !force)
         const windowNotCoveringMain = this.amountCovered(bounds, mainWindow!.getBounds()) < 0.5
 
         if (state === true && (force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
@@ -60,6 +57,41 @@ export class OutputVisibility {
         }
     }
 
+    static resolveOutputBounds(output: Partial<Output> & { bounds: Rectangle; boundsLocked?: boolean; screen?: string | null }, autoPosition = false): Rectangle {
+        const displays = screen.getAllDisplays()
+        const primaryBounds = displays.length ? displays[0].bounds : { x: 0, y: 0, width: 1920, height: 1080 }
+        const hasValidBounds = !!(output.bounds?.width && output.bounds?.height)
+        const outputBounds = hasValidBounds ? output.bounds : primaryBounds
+
+        // position at any existing target display
+        if (displays.length > 0 && output.screen) {
+            const targetDisplay = displays.find((d) => d.id.toString() === output.screen)
+            if (targetDisplay) return { ...targetDisplay.bounds }
+        }
+
+        // never auto position locked bounds
+        if (output.boundsLocked) return outputBounds
+
+        // preserve valid input pos if already on an active display
+        if (displays.length > 0 && hasValidBounds && output.bounds) {
+            const isCenterOnDisplay = displays.some((d) => {
+                const centerX = output.bounds!.x + output.bounds!.width / 2
+                const centerY = output.bounds!.y + output.bounds!.height / 2
+                return centerX >= d.bounds.x && centerX < d.bounds.x + d.bounds.width && centerY >= d.bounds.y && centerY < d.bounds.y + d.bounds.height
+            })
+
+            if (isCenterOnDisplay) return output.bounds
+        }
+
+        // fallback to second display auto positioning if not locked and autoPosition requested or bounds are undefined
+        // (not on macOS due to window detection quirks)
+        if ((autoPosition || !hasValidBounds) && displays.length > 1 && process.platform !== "darwin") {
+            return this.getSecondDisplay(outputBounds)
+        }
+
+        return outputBounds
+    }
+
     static getSecondDisplay(bounds: Rectangle) {
         const displays = screen.getAllDisplays()
         if (displays.length !== 2) return bounds
@@ -70,17 +102,7 @@ export class OutputVisibility {
         let secondDisplay = displays[1]
         if (amountCoveredByWindow > 0.5) secondDisplay = displays[0]
 
-        const newBounds = secondDisplay.bounds
-
-        // window zoomed (sometimes it's correct even with custom scaling, but not always)
-        // if windows overlap then something is wrong with the scaling
-        const scale = secondDisplay.scaleFactor || 1
-        if (scale !== 1 && this.amountCovered(displays[0].bounds, displays[1].bounds) > 0) {
-            newBounds.width /= scale
-            newBounds.height /= scale
-        }
-
-        return newBounds
+        return { ...secondDisplay.bounds }
     }
 
     static amountCovered(displayBounds: Rectangle, windowBounds: Rectangle) {
