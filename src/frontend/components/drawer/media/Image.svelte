@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { encodeFilePath } from "../../helpers/media"
+    import { encodeFilePath, isLocalFile } from "../../helpers/media"
 
     export let src: string
     export let updater = 0
@@ -21,7 +21,7 @@
     function reload(e: any) {
         e.target.style.display = "none"
 
-        if (retryCount > 5) {
+        if (retryCount > 5 || isLocalFile(src)) {
             loaded = true
             return
         }
@@ -39,9 +39,11 @@
     }
 </script>
 
-{#key retryCount}
-    <img style={$$props.style} src="{encodeFilePath(src)}{updater ? '?' + updater : ''}" {alt} draggable="false" class:loaded class:transition bind:this={image} on:load={hasLoaded} on:error={reload} />
-{/key}
+{#if src}
+    {#key retryCount}
+        <img style={$$props.style} src="{encodeFilePath(src)}{updater ? '?' + updater : ''}" {alt} draggable="false" class:loaded class:transition bind:this={image} on:load={hasLoaded} on:error={reload} />
+    {/key}
+{/if}
 
 <style>
     img {

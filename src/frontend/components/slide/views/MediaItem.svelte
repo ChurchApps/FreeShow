@@ -77,14 +77,14 @@
 
         if (typeof bgPath !== "string") return getCustomPath()
 
-        mediaPath = bgPath
-        let thumbnailPath = getThumbnailPath(mediaPath, mediaSize.slideSize)
-
         const media = await getMedia(bgPath, mediaSize.slideSize)
-        if (!media) return
+        if (!media) {
+            mediaPath = ""
+            return
+        }
 
         mediaPath = media.path
-        thumbnailPath = media.thumbnail
+        let thumbnailPath = media.thumbnail
 
         // only load thumbnails in main preview
         if (shouldAutoUpdate || $currentWindow || preview) return

@@ -166,9 +166,22 @@ async function toDataURL(url: string): Promise<string> {
 // download any online media
 // get located media path & generated thumbnail
 const replacedPaths = new Map<string, { path: string; altPath?: string; thumbnail: string }>()
+const locatedMediaCache = new Map<string, { path: string; hasChanged: boolean } | null>()
+const mediaExistsCache = new Map<string, boolean>()
 let currentlyGetting: string[] = []
+
+function clearMediaCaches() {
+    locatedMediaCache.clear()
+    replacedPaths.clear()
+    mediaExistsCache.clear()
+}
+
+audioFolders.subscribe(clearMediaCaches)
+mediaFolders.subscribe(clearMediaCaches)
+
 export async function getMedia(path: string, size: number = mediaSize.drawerSize) {
-    if (typeof path !== "string") return null
+    if (typeof path !== "string" || !path) return null
+    if (locatedMediaCache.get(path) === null) return null
 
     const mediaId = `${path}-${size}`
 
@@ -176,7 +189,7 @@ export async function getMedia(path: string, size: number = mediaSize.drawerSize
     if (replacedPaths.has(mediaId)) return { ...replacedPaths.get(mediaId)!, data: mediaData }
 
     if (currentlyGetting.includes(mediaId)) {
-        await waitUntilValueIsDefined(() => replacedPaths.has(mediaId), 50, 10000)
+        await waitUntilValueIsDefined(() => replacedPaths.has(mediaId) || locatedMediaCache.get(path) === null, 50, 10000)
         if (replacedPaths.has(mediaId)) return { ...replacedPaths.get(mediaId)!, data: mediaData }
         return null
     }
@@ -200,7 +213,7 @@ export async function getMedia(path: string, size: number = mediaSize.drawerSize
         // setTimeout(() => loadThumbnail(path, data.size), 1000)
 
         const located = await locateMediaFile(path)
-        if (!located) return finish()
+        if (!located) return null
 
         const newPath = located.path
         if (!located.hasChanged) addToMediaFolder(newPath)
@@ -222,8 +235,7 @@ export async function getMedia(path: string, size: number = mediaSize.drawerSize
         if (!path || !thumbnail) return null
         if (altPath) replacedPaths.set(mediaId, { path, altPath, thumbnail })
         else replacedPaths.set(mediaId, { path, thumbnail })
-        if (altPath) return { path, altPath, thumbnail, data: mediaData }
-        return { path, thumbnail, data: mediaData }
+        return { path, altPath, thumbnail, data: mediaData }
     }
 }
 
@@ -239,7 +251,7 @@ export async function getMediaCached(path: string, size: number = mediaSize.draw
     if (replacedPaths.has(mediaId)) return { ...replacedPaths.get(mediaId)!, data: mediaData }
 
     if (currentlyGetting.includes(mediaId)) {
-        await waitUntilValueIsDefined(() => replacedPaths.has(mediaId), 50, 10000)
+        await waitUntilValueIsDefined(() => replacedPaths.has(mediaId) || locatedMediaCache.get(path) === null, 50, 10000)
         if (replacedPaths.has(mediaId)) return { ...replacedPaths.get(mediaId)!, data: mediaData }
     }
 
@@ -247,54 +259,45 @@ export async function getMediaCached(path: string, size: number = mediaSize.draw
 }
 
 export async function locateMediaFile(path: string) {
-    if (path.startsWith("http") || path.startsWith("data:") || path.startsWith("blob:") || path.startsWith("freeshow-protected://")) return { path, hasChanged: false }
+    if (!path || typeof path !== "string") return null
+    if (!isLocalFile(path)) return { path, hasChanged: false }
+    if (locatedMediaCache.has(path)) return locatedMediaCache.get(path)!
 
     let folders: string[] = []
     if (get(special).autoLocateMedia !== false) {
         const mediaType = getMediaType(getExtension(path))
-        if (mediaType === "audio") folders = Object.values(get(audioFolders)).map((a) => a.path!)
-        else folders = Object.values(get(mediaFolders)).map((a) => a.path!)
+        folders = Object.values(get(mediaType === "audio" ? audioFolders : mediaFolders)).map((a) => a.path!)
     }
 
-    const result = await requestMain(Main.LOCATE_MEDIA_FILE, { filePath: path, folders })
-
-    // if (!result) newToast("error.media")
-    // else if (result.hasChanged) newToast("toast.media_replaced")
-
+    const result = (await requestMain(Main.LOCATE_MEDIA_FILE, { filePath: path, folders })) || null
+    locatedMediaCache.set(path, result)
     return result
 }
 
-const existingMedia: string[] = []
 export async function doesMediaExist(path: string, noCache = false) {
-    if (existingMedia.includes(path)) return true
+    if (!path || typeof path !== "string") return false
+    if (!isLocalFile(path)) return true
+    if (!noCache && mediaExistsCache.has(path)) return mediaExistsCache.get(path)!
 
     if (noCache) {
-        const existsDataNoCache = await requestMain(Main.DOES_MEDIA_EXIST, { path, noCache })
-        if (!existsDataNoCache?.exists) return false
-
-        existingMedia.push(path)
-        return true
+        const exists = !!(await requestMain(Main.DOES_MEDIA_EXIST, { path, noCache }))?.exists
+        mediaExistsCache.set(path, exists)
+        return exists
     }
 
     const creationTime = get(media)[path]?.creationTime || 0
     const existsData = await requestMain(Main.DOES_MEDIA_EXIST, { path, creationTime })
-    if (!existsData) return false
+    const exists = !!existsData?.exists
+    mediaExistsCache.set(path, exists)
 
-    // update "media"
-    if (!existsData.exists || !creationTime) {
+    if (existsData && (!exists || !creationTime)) {
         media.update((a) => {
-            if (existsData.exists && a[path]) {
-                a[path].creationTime = existsData.creationTime
-            } else {
-                a[path] = { creationTime: existsData.creationTime }
-            }
-
+            a[path] = { ...a[path], creationTime: existsData.creationTime }
             return a
         })
     }
 
-    if (existsData.exists) existingMedia.push(path)
-    return existsData.exists
+    return exists
 }
 
 export async function getMediaInfo(path: string): Promise<{ codecs: string[]; mimeType: string; mimeCodec: string } | null> {
@@ -640,7 +643,7 @@ export function captureCanvas(data: { input: string; output: string; size: any; 
         if (!retries[data.input]) retries[data.input] = 0
         retries[data.input]++
 
-        if (retries[data.input] > 2) return exit()
+        if (retries[data.input] > 2 || isLocalFile(data.input)) return exit()
         else setTimeout(() => (isImage ? "" : (mediaElem as HTMLVideoElement).load()), 3000)
     })
 
