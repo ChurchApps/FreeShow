@@ -487,7 +487,7 @@ async function paceSend(id: string, entry: { frame: any; pbuf: PacerBuf }, real:
 // the GPU during readback (format 1/2), so no CPU convert here. After readback (which copies the texture) we
 // tell main it can release the texture. This removes the ~16-25MB/frame main-thread copy entirely, which is
 // what caps multi-4K.
-async function captureAndSend(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; format: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number }) {
+async function captureAndSend(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number }) {
     // seq identifies this in-flight capture (main pipelines up to its derived global depth of them). The
     // osr-capture key is slotted so two concurrent readbacks for this output use independent pending/pool entries.
     const seq = opts.seq ?? 0
@@ -617,7 +617,20 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
             for (const m of activeMembers) {
                 const md = NDI[m]!
                 md.offMain = true
-                md.paceInterval = 1000 / Math.max(1, framerate)
+                // PER-MEMBER pace rate (§10 mixed-connection fix): each member's sender paces at ITS OWN
+                // resolved framerate (configured when connected, idle floor when not) — never the renderer's
+                // (an unconnected renderer's 1fps floor used to coalesce a connected follower's 60fps stream
+                // to 1fps). The frame metadata carries the member's rate too (receivers read frameRateN).
+                const mfr = Math.max(1, opts.memberFramerates?.[m] || framerate)
+                md.paceInterval = 1000 / mfr
+                // rate rose while the pacer runs (e.g. idle floor -> receiver connected): re-phase the tick
+                // to the new interval now instead of letting the old (long) due play out one last time
+                if (md.paceTimer && md.paceNextDue && md.paceNextDue > Date.now() + md.paceInterval) {
+                    clearTimeout(md.paceTimer)
+                    md.paceTimer = undefined
+                    startPacer(m)
+                }
+                const mFrame = mfr === framerate ? frame : { ...frame, frameRateN: mfr * 1000 }
                 // queue capacity = the renderer's DERIVED depth_r (passed from main) + 1 [UNIVERSAL headroom].
                 // Arrival clumps are ≤ depth by admission construction, so overflow means arrivals exceeded
                 // the cadence — drop the OLDEST (keep freshest, bound latency) and count it as coalescedReal
@@ -630,10 +643,10 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
                     md.coalescedReal = (md.coalescedReal || 0) + 1
                 }
                 pbuf.refs++ // queue entry's ref
-                queue.push({ frame, pbuf })
+                queue.push({ frame: mFrame, pbuf })
                 pbuf.refs++ // lastPace pin's ref (repeats only fire when the queue is empty, i.e. this
                 if (md.lastPace) releasePacerRef(md.lastPace.pbuf) // frame has already been sent or dropped)
-                md.lastPace = { frame, pbuf }
+                md.lastPace = { frame: mFrame, pbuf }
                 startPacer(m)
             }
         }

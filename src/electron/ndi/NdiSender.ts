@@ -150,8 +150,10 @@ export class NdiSender {
     // readbackConsume), fS/fE (around readbackFinish), enq (pacer enqueue complete; 0/absent on error paths).
     static captureDoneCallbacks: { [id: string]: (seq: number, tl?: { recv: number; cS: number; cE: number; fS: number; fE: number; enq: number } | null) => void } = {}
     static releaseTextureCallbacks: { [id: string]: (seq: number) => void } = {}
-    // opts.depth = the renderer's derived in-flight depth_r (OutputLifecycle) — sizes the worker's pace queue
-    static captureFrameNDI(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; format: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number }) {
+    // opts.depth = the renderer's derived in-flight depth_r (OutputLifecycle) — sizes the worker's pace queue.
+    // opts.memberFramerates = each group member's OWN resolved NDI framerate (configured when connected, idle
+    // floor when not) — the worker paces each member's sender at ITS rate, never the renderer's (§10 fix).
+    static captureFrameNDI(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number }) {
         const data = this.NDI[id]
         if (!data?.sender || !this.worker) return false
         this.worker.postMessage({ type: "captureFrame", id, source, opts })
