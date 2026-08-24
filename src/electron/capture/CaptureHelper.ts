@@ -94,8 +94,21 @@ export class CaptureHelper {
             const mo = OutputHelper.getOutput(m)
             if (mo?.captureOptions) fps = Math.max(fps, this.getMaxActiveFramerate(mo.captureOptions.framerates || {}, mo.captureOptions.options || {}))
         }
+        // REGRESSION FIX (READBACK_REWORK_PLAN §10): setFrameRate is NOT a decimator. Driving the OSR
+        // compositor BELOW its native cadence (e.g. a 30fps NDI target with 60fps content) makes Chromium
+        // deliver the throttled paints in CLUMPS (measured: 200-500ms pipe-idle, then 10-18-paint bursts;
+        // one of two contending surfaces degraded to ~half its set rate) — which starved the capture
+        // admission pipe and stuttered BOTH the in-app preview and the NDI output. So any renderer with a
+        // real-time consumer renders at the NATIVE rate — exactly like the release, whose (non-OSR) windows
+        // render at display cadence and are SAMPLED at the target rate by the capturePage timer — and each
+        // consumer's configured framerate is enforced by even admission-time decimation
+        // (OutputLifecycle.attachOsrSharedTexture tryAdmit / the send-interval throttle) + the worker's send
+        // pacer. The sub-native setting survives ONLY as the idle floor (no connected receiver —
+        // framerates.unconnected), where nobody sees the frames, evenness is moot, and the GPU saving is the
+        // point of the throttle.
+        const idle = fps <= this.framerates.unconnected
         try {
-            win.webContents.setFrameRate(Math.max(1, Math.min(60, Math.round(fps || 1))))
+            win.webContents.setFrameRate(idle ? Math.max(1, Math.round(fps || 1)) : OutputHelper.Lifecycle.OSR_RENDER_FPS)
         } catch {
             // ignore
         }
