@@ -120,7 +120,6 @@
     onDestroy(() => {
         if (dateInterval) clearInterval(dateInterval)
         if (loopStop) clearTimeout(loopStop)
-        if (paddingCorrTimeout) clearTimeout(paddingCorrTimeout)
         if (cssInterval) clearInterval(cssInterval)
     })
 
