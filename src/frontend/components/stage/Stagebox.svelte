@@ -309,10 +309,10 @@
     })()
 
     const getLayoutMounted = getContext<() => boolean>("layoutMounted")
-    $: evaluatedText = replaceDynamicValues(currentItemText, { type: "stage", id }, ($variables ? 0 : 0) + updateTrigger)
     let lastText = ""
     let flashTriggerId = 0
     $: if (item?.flash?.enabled) {
+        const evaluatedText = replaceDynamicValues(currentItemText, { type: "stage", id }, ($variables ? 0 : 0) + updateTrigger)
         const currentText = evaluatedText || ""
         const parentIsMounting = getLayoutMounted ? !getLayoutMounted() : false
 

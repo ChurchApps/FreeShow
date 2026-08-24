@@ -296,38 +296,27 @@
 
     let itemElem: HTMLElement | undefined
 
-    let previousItem = "{}"
-    $: newItem = JSON.stringify(item)
-    // Combine content and template to detect all layout-affecting changes
-    $: stateSignature = newItem + "|" + resolvedTemplateId
+    $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${item?.lines?.length || 0}`
 
     $: if (stateSignature !== lastRenderedSignature) {
+        lastRenderedSignature = stateSignature
         autoSizeReady = false
         const isTextItem = (item?.type || "text") === "text"
         const textFit = item?.textFit || (item?.auto ? (isTextItem ? "shrinkToFit" : "growToFit") : "none")
         const hasAutoSize = stageAutoSize || textFit !== "none"
         if (hasAutoSize) {
-            // Determine if we'll hide during autosize calculation
             const willHide = shouldHideUntilAutoSizeCompletes()
 
-            // CRITICAL: Start with fontSize=0 when hiding to prevent giant text flash:
-            // - STAGE: Always starts at 0 (computes for STAGE dimensions, not OUTPUT)
-            // - OUTPUT: Starts at 0 if cache is invalid (willHide=true), otherwise uses cache
-            // - PREVIEW: Uses own previewAutoFontSize cache, or OUTPUT cache as fallback, or 100px default
             if (isStage) {
-                fontSize = 0
+                // Keep existing fontSize on stage to prevent flicker during drag
             } else if (willHide) {
-                // Cache is invalid - start at 0 to avoid displaying wrong fontSize while recalculating
                 fontSize = 0
             } else if (preview || fontPreview) {
-                // Preview uses its own cache, fallback to OUTPUT cache, then default
                 fontSize = item?.previewAutoFontSize || item?.autoFontSize || 100
             } else {
-                // OUTPUT uses its cache
                 fontSize = item?.autoFontSize || 0
             }
 
-            lastRenderedSignature = stateSignature
             hideUntilAutosized = willHide
         }
     }
@@ -429,7 +418,6 @@
             if (newCall) calculateAutosize()
             newCall = false
         }, 50)
-        previousItem = newItem
 
         // Wait for DOM to update with new template styles before measuring
         await tick()
@@ -647,35 +635,20 @@
         if (hideUntilAutosized) requestAnimationFrame(() => (hideUntilAutosized = false))
     }
 
-    // determine whether we should keep the visible textbox hidden while autosize runs
     function shouldHideUntilAutoSizeCompletes() {
-        // NOTE: Stage uses its own loading mechanism in SlideText.svelte (.loading class)
-        // but for the first render, that mechanism shows nothing while the new content loads
-        // We need to hide content until autosize is ready for stage too
-        if (preview || fontPreview) return false
+        if (preview || fontPreview || isStage) return false
 
-        // Use detailed validation to ensure we catch all autosize candidates
-        // For STAGE: stageAutoSize controls autosize, slide items don't have auto/textFit set
         const isTextItem = (item?.type || "text") === "text"
         const textFit = item?.textFit || (item?.auto ? (isTextItem ? "shrinkToFit" : "growToFit") : "none")
-        const isExplicitNone = textFit === "none"
-
-        if (!stageAutoSize && isExplicitNone) {
-            return false
-        }
+        if (textFit === "none") return false
 
         // CHECK CACHE
         const cacheKey = buildAutoSizeCacheKey()
-        const cacheSignature = itemElem ? buildAutoSizeSignature(itemElem.clientWidth, itemElem.clientHeight, chords) : buildAutoSizeSignature(undefined, undefined, chords)
-        const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
+        if (!cacheKey) return true
+        const cacheSignature = buildAutoSizeSignature(itemElem?.clientWidth, itemElem?.clientHeight, chords)
+        const cachedResult = readAutoSizeCache(cacheKey)
 
-        const hasValidCache = cachedResult && cachedResult.signature === cacheSignature
-
-        if (hasValidCache) {
-            return false
-        }
-
-        return true
+        return !(cachedResult && cachedResult.signature === cacheSignature)
     }
 
     function setItemAutoFontSize(fontSize) {
@@ -752,25 +725,14 @@
         })
     }
 
-    // WIP padding can be checked by auto size if style is added to parent
-    let paddingCorrTimeout: NodeJS.Timeout | null = null
     function getPaddingCorrection(stageItem: any) {
-        let result = ""
-        if (typeof stageItem?.style !== "string") return ""
-        if (stageItem.style.indexOf("padding") > -1) {
-            let styles = stageItem.style.split(";")
-            styles.forEach((s: string) => {
-                if (s.indexOf("padding") === 0) {
-                    let padding = parseInt(s.split(":")[1].replace("px", "").trim(), 0) * 2
-                    if (padding > 0) result = "width: calc(100% - " + padding + "px); height: calc(100% - " + padding + "px);"
-                }
-            })
+        if (typeof stageItem?.style !== "string" || !stageItem.style.includes("padding")) return ""
+        const match = stageItem.style.match(/(?:^|;)\s*padding:\s*(\d+)px/)
+        if (match?.[1]) {
+            const padding = parseInt(match[1], 10) * 2
+            if (padding > 0) return `width: calc(100% - ${padding}px); height: calc(100% - ${padding}px);`
         }
-
-        if (paddingCorrTimeout) clearTimeout(paddingCorrTimeout)
-        paddingCorrTimeout = setTimeout(calculateAutosize, 150)
-
-        return result
+        return ""
     }
 
     $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false

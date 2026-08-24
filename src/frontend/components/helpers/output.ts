@@ -464,12 +464,24 @@ export function getFirstActiveOutput(_updater: any = null) {
 
 // DEPRECATED
 let sortedOutputs: (Output & { id: string })[] = []
+let cachedActiveOutputs = new Map<string, string[]>()
+let lastOutputsRefForActive: any = null
+
 export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive = true, removeKeyOutput = false, shouldRemoveStageOutput = false) {
-    sortedOutputs = sortByName(keysToID(updater || {}))
+    if (updater !== lastOutputsRefForActive) {
+        cachedActiveOutputs.clear()
+        lastOutputsRefForActive = updater
+    }
+    const cacheKey = `${hasToBeActive}_${removeKeyOutput}_${shouldRemoveStageOutput}`
+    const cached = cachedActiveOutputs.get(cacheKey)
+    if (cached) return cached
+
+    const rawList = Object.entries(updater || {}).map(([id, val]) => ({ ...val, id }))
+    sortedOutputs = sortByName(rawList)
 
     let enabled = sortedOutputs.filter((a) => a.enabled === true && (removeKeyOutput ? !(a as any).isKeyOutput : true) && (shouldRemoveStageOutput ? !a.stageOutput : true))
 
-    if (hasToBeActive && enabled.filter((a) => a.active === true).length) enabled = enabled.filter((a) => a.active === true)
+    if (hasToBeActive && enabled.some((a) => a.active === true)) enabled = enabled.filter((a) => a.active === true)
 
     let enabledIds = enabled.map((a) => a.id)
 
@@ -478,6 +490,7 @@ export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive 
         if (sortedOutputs[0]) enabledIds = [sortedOutputs[0].id]
     }
 
+    cachedActiveOutputs.set(cacheKey, enabledIds)
     return enabledIds
 }
 
@@ -666,6 +679,12 @@ const stylePosCache = new Map<string, string>()
 
 export function percentageStylePos(style: string, resolution: Resolution) {
     if (!style || !resolution?.width || !resolution?.height) return style || ""
+
+    // Fast-path: if resolution has the standard 16:9 ratio, percentage pos conversion is identity
+    if (Math.abs(resolution.width / resolution.height - DEFAULT_BOUNDS.width / DEFAULT_BOUNDS.height) < 0.001) {
+        return style
+    }
+
     const cacheKey = `${style}_${resolution.width}_${resolution.height}`
     const cached = stylePosCache.get(cacheKey)
     if (cached !== undefined) return cached
