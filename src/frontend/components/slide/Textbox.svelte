@@ -331,14 +331,21 @@
             hideUntilAutosized = willHide
         }
     }
-    // Trigger calculation if Content OR Template changes (resolvedTemplateId added to dependency list)
-    // All contexts (OUTPUT, STAGE, PREVIEW) calculate and cache their own autosize independently
-    $: if (itemElem && loaded && (stageAutoSize || newItem !== previousItem || resolvedTemplateId || chordLines || stageItem)) calculateAutosize()
-    $: if ($variables) setTimeout(calculateAutosize)
+    let prevAutosizeSignature = ""
+    $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${ratio}`
+
+    // Trigger calculation only when Content, Style, Template, or Ratio actually changes
+    $: if (itemElem && loaded && autosizeSignature !== prevAutosizeSignature) {
+        prevAutosizeSignature = autosizeSignature
+        calculateAutosize()
+    }
+    $: isDynamicText = (stageItem ? getItemText(stageItem) : getItemText(item)).includes("{")
+    $: if (itemElem && loaded && $variables && isDynamicText) {
+        setTimeout(calculateAutosize)
+    }
 
     // recalculate auto size if output template is different than show template
     $: currentShowTemplateId = $showsCache[ref.showId || ""]?.settings?.template || ""
-    // let outputTemplateAutoSize = false
     $: outputSlide = getFirstActiveOutput($outputs)?.out?.slide
     $: if (item?.type === "slide_tracker" && outputSlide) setTimeout(calculateAutosize) // overlay progress update
     $: if ($currentWindow === "output" && outputStyle?.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
@@ -421,7 +428,7 @@
             loopStop = null
             if (newCall) calculateAutosize()
             newCall = false
-        }, 200)
+        }, 50)
         previousItem = newItem
 
         // Wait for DOM to update with new template styles before measuring
@@ -581,7 +588,8 @@
     // capture the bits of state that influence autosize outcomes for cache invalidation
     function buildAutoSizeSignature(measuredWidth?: number, measuredHeight?: number, customChords?: boolean) {
         // Extract key dimensional properties from style to ensure cache invalidation
-        const styles = item?.style ? getStyles(item.style) : {}
+        const activeStyle = (isStage && stageItem?.style ? stageItem.style : item?.style) || ""
+        const styles = activeStyle ? getStyles(activeStyle) : {}
         const boxDimensions: any = {
             width: styles.width,
             height: styles.height,
@@ -609,7 +617,7 @@
 
         return JSON.stringify({
             lines: item?.lines || null,
-            style: item?.style || "",
+            style: activeStyle,
             boxDimensions, // Add explicit dimensions for better cache invalidation
             textFit: item?.textFit || "none",
             list: item?.list || null,

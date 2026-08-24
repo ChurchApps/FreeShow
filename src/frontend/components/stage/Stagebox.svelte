@@ -138,15 +138,11 @@
 
     let alignElem
     let size = 100
-    // Track previous slide to reset retry counter when slide changes
-    let prevSlideForAutoSize: any = undefined
-    // currentSlide & timeout to update auto size properly if slide notes
-    $: if (alignElem && item && currentSlide !== undefined && autoSizeEnabled) {
-        // Reset retry counter when slide changes
-        if (prevSlideForAutoSize !== currentSlide) {
-            autoSizeRetryCount = 0
-            prevSlideForAutoSize = currentSlide
-        }
+    let prevAutoSizeKey = ""
+    $: autoSizeKey = `${currentSlide?.id || ""}_${item?.style || ""}_${item?.textFit || ""}_${item?.auto ?? ""}_${currentItemText || ""}`
+    $: if (alignElem && autoSizeEnabled && autoSizeKey !== prevAutoSizeKey) {
+        prevAutoSizeKey = autoSizeKey
+        autoSizeRetryCount = 0
         updateAutoSize()
     }
     let currentAutoSizeTimeout: NodeJS.Timeout | null = null
@@ -297,7 +293,7 @@
     })
 
     $: currentItemText = item ? (item.type === "slide_text" ? getSlideTextItems(stageLayout!, item).map(getItemText).join("") : getItemText(stageItemToItem(item))) : ""
-    $: showItemState = edit ? isConditionMet(item?.conditions?.showItem, currentItemText, "stage", conditionsUpdater) : false
+    $: showItemState = edit && item?.conditions?.showItem ? isConditionMet(item.conditions.showItem, currentItemText, "stage", conditionsUpdater) : false
 
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""

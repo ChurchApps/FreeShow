@@ -66,7 +66,7 @@
     {#if sortedStageSlides.length}
         <Autoscroll {offset} bind:scrollElem timeout={150} smoothTimeout={0}>
             <div class="grid">
-                {#each sortedStageSlides as show}
+                {#each sortedStageSlides as show (show.id)}
                     <StageSlide
                         id={show.id}
                         layout={show}

@@ -66,9 +66,9 @@
         <div style="width: 100%;">
             <SelectElem id="stage" data={{ id }} {selectable}>
                 <Zoomed background={layout.items.length ? "black" : "transparent"} style="width: 100%;" {resolution} id={stageOutputId} isStage disableStyle center bind:ratio>
-                    {#each stageItems as item}
-                        {#if (item.type || item.enabled !== false) && shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, conditionsUpdater)}
-                            <Stagebox id={item.id} item={clone(item)} {ratio} stageLayout={layout} disableStagePreview={true} />
+                    {#each stageItems as item (item.id)}
+                        {#if (item.type || item.enabled !== false) && (!item.conditions?.showItem && !item.bindings?.length ? true : shouldItemBeShown(stageItemToItem(item), item.type === "slide_text" ? getSlideTextItems(layout, item, $outputs || $allOutputs) : [], { type: "stage" }, conditionsUpdater))}
+                            <Stagebox id={item.id} {item} {ratio} stageLayout={layout} disableStagePreview={true} />
                         {/if}
                     {/each}
                 </Zoomed>
