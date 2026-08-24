@@ -64,7 +64,7 @@
                         if (!$outLocked) setOutput("background", { id: show.id, type: show.type })
                     }}
                 >
-                    <Camera id={show.id} groupId={show.data?.groupId} class="media" />
+                    <Camera id={show.id} groupId={show.data?.groupId} class="media" preview />
                 </HoverButton>
             {:else if show.type === "screen"}
                 <HoverButton

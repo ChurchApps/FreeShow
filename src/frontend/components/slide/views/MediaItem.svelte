@@ -147,8 +147,8 @@
                 videoElem.pause()
                 videoBlurElem?.pause()
             } else if (!data.paused && videoElem.paused) {
-                videoElem.play()
-                videoBlurElem?.play()
+                videoElem.play()?.catch(() => {})
+                videoBlurElem?.play()?.catch(() => {})
             }
         })
     }

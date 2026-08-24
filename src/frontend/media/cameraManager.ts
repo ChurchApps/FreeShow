@@ -4,20 +4,16 @@ import { Main } from "../../types/IPC/Main"
 import { sendMain } from "../IPC/main"
 import { special } from "../stores"
 
-interface ActiveCamera {
-    id: string
-    name: string
-    groupId: string
-    stream: MediaStream | null
-    videoElement: HTMLVideoElement | null
-    retryCount: number
-    lastError: string | null
-}
-
 export interface CameraData {
     name: string
     id: string
     group: string
+}
+
+interface StreamEntry {
+    stream: MediaStream
+    refCount: number
+    isStartup?: boolean
 }
 
 const HALF_MINUTE = 30000
@@ -35,82 +31,18 @@ const DEFAULT_CAMERA_CONSTRAINTS: MediaTrackConstraints = {
 }
 
 class CameraManager {
-    private activeCameras: Map<string, ActiveCamera> = new Map()
-    private streamQueue: Promise<any> = Promise.resolve()
-    private readonly MAX_RETRIES = 3
-    private readonly RETRY_DELAY = 5000 // 5 seconds
+    private streams: Map<string, StreamEntry> = new Map()
+    private inFlight: Map<string, Promise<MediaStream | string>> = new Map()
+    private queue: Promise<any> = Promise.resolve()
+    private keepaliveTimer: NodeJS.Timeout | null = null
+    private deviceCache = { list: [] as CameraData[], timestamp: 0 }
 
-    // set startup cameras for faster activation
-    setStartupCameras(cameraIds: string[]) {
-        special.update((a) => {
-            a.startupCameras = cameraIds
-            return a
-        })
+    // --- Device Enumeration ---
 
-        this.initializeCameraWarming()
-    }
-
-    getStartupCameras(): string[] {
-        return get(special).startupCameras || []
-    }
-
-    private updateBadCameras(update: (cameraIds: string[]) => string[]) {
-        special.update((a) => {
-            const badCameras = Array.isArray(a.cameraBad) ? a.cameraBad : []
-            a.cameraBad = update(badCameras)
-            return a
-        })
-    }
-
-    markBadCamera(cameraId: string) {
-        if (!cameraId) return
-        this.updateBadCameras((badCameras) => (badCameras.includes(cameraId) ? badCameras : [...badCameras, cameraId]))
-    }
-
-    clearBadCamera(cameraId: string) {
-        if (!cameraId) return
-        this.updateBadCameras((badCameras) => badCameras.filter((id) => id !== cameraId))
-    }
-
-    private isTimeoutErrorMessage(message: string) {
-        return /timeout/i.test(message || "")
-    }
-
-    private async getCameraFromId(cameraId: string) {
-        const allCameras = await this.getCamerasList()
-        return allCameras.find((a) => a.id === cameraId)
-    }
-
-    async initializeCameraWarming() {
-        const allCameras = await this.getCamerasList()
-        const selectedCameraIds = this.getStartupCameras()
-
-        // cleanup removed cameras
-        for (const cameraId of this.activeCameras.keys()) {
-            if (!selectedCameraIds.includes(cameraId)) this.cleanupCamera(cameraId)
-        }
-
-        if (!selectedCameraIds.length) {
-            this.stopKeepaliveMonitor()
-            return
-        }
-
-        const camerasToWarm = allCameras.filter((camera) => selectedCameraIds.includes(camera.id))
-        await Promise.allSettled(camerasToWarm.map((camera) => this.warmUpCamera(camera)))
-
-        this.startKeepaliveMonitor()
-    }
-
-    private lastCameraListUpdate = 0
-    private storedCameraList: CameraData[] = []
     async getCamerasList(): Promise<CameraData[]> {
-        // refresh if not recently updated
-        if (this.lastCameraListUpdate && this.lastCameraListUpdate < Date.now() - HALF_MINUTE) {
-            this.storedCameraList = []
-            this.lastCameraListUpdate = 0
+        if (this.deviceCache.timestamp && this.deviceCache.timestamp > Date.now() - HALF_MINUTE) {
+            return this.deviceCache.list
         }
-
-        if (this.lastCameraListUpdate) return this.storedCameraList
 
         try {
             const devices = await navigator.mediaDevices.enumerateDevices()
@@ -122,21 +54,25 @@ class CameraManager {
                     group: device.groupId
                 }))
 
-            this.storedCameraList = cameraList
-            this.lastCameraListUpdate = Date.now()
+            this.deviceCache = { list: cameraList, timestamp: Date.now() }
             return cameraList
         } catch (error) {
             console.error("Failed to enumerate camera devices:", error)
-
-            this.storedCameraList = []
-            this.lastCameraListUpdate = Date.now()
+            this.deviceCache = { list: [], timestamp: Date.now() }
             return []
         }
     }
 
+    private async getCameraFromId(cameraId: string): Promise<CameraData | undefined> {
+        const allCameras = await this.getCamerasList()
+        return allCameras.find((a) => a.id === cameraId)
+    }
+
+    // --- Stream Acquisition & Pooling ---
+
     private acquireMediaStream(constraints: MediaStreamConstraints): Promise<MediaStream> {
         return new Promise((resolve, reject) => {
-            this.streamQueue = this.streamQueue
+            this.queue = this.queue
                 .catch(() => {})
                 .then(async () => {
                     try {
@@ -149,99 +85,24 @@ class CameraManager {
         })
     }
 
-    failed: string[] = []
-    private async warmUpCamera(camera: CameraData, { retryCount, lastError }: any = {}) {
-        if (this.activeCameras.has(camera.id)) return
-
-        const activeCamera: ActiveCamera = { id: camera.id, name: camera.name, groupId: camera.group, stream: null, videoElement: null, retryCount: retryCount || 0, lastError: lastError || null }
-        this.activeCameras.set(camera.id, activeCamera)
-
-        try {
-            console.info(`Warming up camera: ${camera.name}`)
-
-            const cameraProperties = {
-                video: {
-                    ...DEFAULT_CAMERA_CONSTRAINTS,
-                    deviceId: { exact: camera.id },
-                    groupId: camera.group
-                }
-            }
-
-            // const stream = await this.getCameraStream(camera.id, camera.group)
-            const stream = await this.acquireMediaStream(cameraProperties)
-
-            // Create a hidden video element to keep the stream active
-            const videoElement = document.createElement("video")
-            videoElement.style.position = "absolute"
-            videoElement.style.opacity = "0"
-            videoElement.style.pointerEvents = "none"
-            videoElement.style.zIndex = "-1"
-            videoElement.style.width = "1px"
-            videoElement.style.height = "1px"
-            videoElement.muted = true
-            videoElement.srcObject = stream
-            document.body.appendChild(videoElement)
-
-            await videoElement.play()
-
-            if (!this.activeCameras.has(camera.id)) return
-
-            activeCamera.stream = stream
-            activeCamera.videoElement = videoElement
-            this.activeCameras.set(camera.id, activeCamera)
-            console.info(`Camera ${camera.name} started`)
-
-            // Listen for stream end to retry
-            stream.getTracks().forEach((track) => {
-                track.addEventListener("ended", () => {
-                    console.warn(`Camera ${camera.name} stream ended, will retry...`)
-                    this.retryCameraWarming(camera)
-                })
-            })
-
-            const didFail = this.failed.indexOf(camera.id)
-            if (didFail > -1) this.failed.splice(didFail, 1)
-        } catch (error) {
-            if (!this.failed.includes(camera.id)) this.failed.push(camera.id)
-
-            console.error(`Failed to warm up camera ${camera.name}:`, error)
-            this.scheduleRetry(camera, error.message)
-        }
-    }
-
-    // Retry camera warming with exponential backoff
-    private scheduleRetry(camera: CameraData, errorMessage: string) {
-        if (!this.activeCameras.has(camera.id)) return
-
-        const existingCamera = this.activeCameras.get(camera.id)
-        const retryCount = existingCamera ? existingCamera.retryCount + 1 : 1
-
-        if (retryCount > this.MAX_RETRIES) {
-            console.error(`Max retries reached for camera ${camera.name}`)
-            return
-        }
-
-        const delay = this.RETRY_DELAY * Math.pow(2, retryCount - 1) // Exponential backoff
-        console.info(`Scheduling retry ${retryCount}/${this.MAX_RETRIES} for camera ${camera.name} in ${delay / 1000}s`)
-
-        setTimeout(() => {
-            this.retryCameraWarming(camera, retryCount, errorMessage)
-        }, delay)
-    }
-
-    private async retryCameraWarming(camera: CameraData, retryCount = 0, lastError = "") {
-        if (!this.activeCameras.has(camera.id)) return
-
-        this.cleanupCamera(camera.id)
-        await this.warmUpCamera(camera, { retryCount, lastError })
-    }
-
-    async getCameraStream(cameraId: string, groupId?: string) {
-        // get existing "warmed" camera
-        const warmStream = this.getWarmCamera(cameraId)
-        if (warmStream) {
+    async getCameraStream(cameraId: string, groupId?: string): Promise<MediaStream | string> {
+        // Return existing active pooled stream if valid
+        const existing = this.streams.get(cameraId)
+        if (existing?.stream?.active && existing.stream.getTracks().some((t) => t.readyState === "live")) {
+            existing.refCount++
             this.clearBadCamera(cameraId)
-            return warmStream
+            return existing.stream
+        } else if (existing) {
+            this.streams.delete(cameraId)
+        }
+
+        // Deduplicate in-flight requests for the same device
+        if (this.inFlight.has(cameraId)) {
+            const result = await this.inFlight.get(cameraId)!
+            if (typeof result !== "string" && this.streams.has(cameraId)) {
+                this.streams.get(cameraId)!.refCount++
+            }
+            return result
         }
 
         const cameraProperties = {
@@ -252,97 +113,248 @@ class CameraManager {
             }
         }
 
-        try {
-            const stream = await this.acquireMediaStream(cameraProperties)
-            this.clearBadCamera(cameraId)
-            return stream
-        } catch (err: any) {
-            let msg: string = err?.message || String(err)
+        const pendingPromise = (async () => {
+            try {
+                const stream = await this.acquireMediaStream(cameraProperties)
+                this.clearBadCamera(cameraId)
 
-            if (err?.name === "NotReadableError") {
-                msg += "<br />Maybe it's in use by another program."
-                sendMain(Main.ACCESS_CAMERA_PERMISSION)
+                stream.getTracks().forEach((track) => {
+                    track.addEventListener("ended", () => {
+                        this.streams.delete(cameraId)
+                    })
+                })
+
+                this.streams.set(cameraId, { stream, refCount: 1 })
+                return stream
+            } catch (err: any) {
+                let msg: string = err?.message || String(err)
+
+                if (err?.name === "NotReadableError") {
+                    msg += "<br />Maybe it's in use by another program."
+                    sendMain(Main.ACCESS_CAMERA_PERMISSION)
+                }
+
+                const error = err?.name + ":<br />" + msg
+                if (/timeout/i.test(error)) this.markBadCamera(cameraId)
+                return error
+            } finally {
+                this.inFlight.delete(cameraId)
             }
+        })()
 
-            const error = err?.name + ":<br />" + msg
-            if (this.isTimeoutErrorMessage(error)) this.markBadCamera(cameraId)
-            return error
-        }
+        this.inFlight.set(cameraId, pendingPromise)
+        return await pendingPromise
     }
 
-    private getWarmCamera(cameraId: string): MediaStream | null {
-        const camera = this.activeCameras.get(cameraId)
-        if (!camera?.stream) return null
+    // --- Component Lifecycle & Attachment API ---
 
-        // Return a clone to avoid conflicts
-        return camera.stream.clone()
+    play(videoElement: HTMLVideoElement | null | undefined): void {
+        if (!videoElement) return
+        videoElement.play()?.catch(() => {})
     }
 
-    cleanupAllCameras() {
-        for (const cameraId of this.activeCameras.keys()) {
-            this.cleanupCamera(cameraId)
+    pause(videoElement: HTMLVideoElement | null | undefined): void {
+        if (!videoElement) return
+        try {
+            videoElement.pause()
+        } catch {}
+    }
+
+    setupPreview(videoElement: HTMLVideoElement | null | undefined, isHovered?: () => boolean, isDestroyed?: () => boolean): void {
+        if (!videoElement) return
+
+        let paused = false
+        const pauseVideo = (delay = 200) => {
+            setTimeout(() => {
+                if (paused || isDestroyed?.() || !videoElement) return
+                paused = true
+                if (!isHovered?.()) this.pause(videoElement)
+            }, delay)
         }
-        this.activeCameras.clear()
+
+        if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
+            ;(videoElement as any).requestVideoFrameCallback(() => pauseVideo(200))
+        } else {
+            videoElement.addEventListener("loadeddata", () => pauseVideo(200), { once: true })
+        }
+
+        setTimeout(() => pauseVideo(0), 1200)
+    }
+
+    async attachCamera(
+        videoElement: HTMLVideoElement | null | undefined,
+        cameraId: string,
+        options?: {
+            groupId?: string
+            preview?: boolean
+            isHovered?: () => boolean
+            isDestroyed?: () => boolean
+            onLoaded?: () => void
+        }
+    ): Promise<MediaStream | string> {
+        if (!videoElement) return "Video element not available"
+
+        const cameraStream = await this.getCameraStream(cameraId, options?.groupId)
+        if (options?.isDestroyed?.()) {
+            if (typeof cameraStream !== "string") this.stopTracks(cameraStream, cameraId)
+            return "Component destroyed"
+        }
+
+        if (typeof cameraStream === "string") {
+            return cameraStream
+        }
+
+        videoElement.srcObject = cameraStream
+        this.play(videoElement)
+
+        if (options?.onLoaded) {
+            if (videoElement.readyState >= 1) {
+                options.onLoaded()
+            } else {
+                videoElement.addEventListener("loadedmetadata", () => options.onLoaded?.(), { once: true })
+            }
+        }
+
+        if (options?.preview) {
+            this.setupPreview(videoElement, options?.isHovered, options?.isDestroyed)
+        }
+
+        return cameraStream
+    }
+
+    detachCamera(videoElement: HTMLVideoElement | null | undefined, cameraId?: string): void {
+        if (!videoElement) return
+        this.stopTracks(videoElement.srcObject as MediaStream, cameraId)
+        videoElement.srcObject = null
+    }
+
+    // --- Cleanup & Teardown ---
+
+    stopTracks(cameraStream: MediaStream | null | undefined, cameraId?: string): void {
+        if (!cameraStream) return
+
+        if (cameraId && this.streams.has(cameraId)) {
+            const entry = this.streams.get(cameraId)!
+            entry.refCount--
+            if (entry.refCount <= 0 && !entry.isStartup) {
+                this.streams.delete(cameraId)
+                cameraStream.getTracks()?.forEach((track) => track.stop())
+            }
+            return
+        }
+
+        cameraStream.getTracks()?.forEach((track) => track.stop())
+    }
+
+    cleanupAllCameras(): void {
+        for (const entry of this.streams.values()) {
+            entry.stream.getTracks()?.forEach((track) => track.stop())
+        }
+        this.streams.clear()
         this.stopKeepaliveMonitor()
     }
 
-    private cleanupCamera(cameraId: string) {
-        const camera = this.activeCameras.get(cameraId)
-        if (!camera) return
+    // --- Startup Cameras & Background Warming ---
 
-        try {
-            this.stopTracks(camera.stream)
+    setStartupCameras(cameraIds: string[]): void {
+        special.update((a) => {
+            a.startupCameras = cameraIds
+            return a
+        })
 
-            // Remove video element from DOM
-            if (camera.videoElement && camera.videoElement.parentNode) {
-                camera.videoElement.srcObject = null
-                camera.videoElement.parentNode.removeChild(camera.videoElement)
+        this.initializeCameraWarming()
+    }
+
+    getStartupCameras(): string[] {
+        return get(special).startupCameras || []
+    }
+
+    private updateBadCameras(update: (cameraIds: string[]) => string[]): void {
+        special.update((a) => {
+            const badCameras = Array.isArray(a.cameraBad) ? a.cameraBad : []
+            a.cameraBad = update(badCameras)
+            return a
+        })
+    }
+
+    markBadCamera(cameraId: string): void {
+        if (!cameraId) return
+        this.updateBadCameras((badCameras) => (badCameras.includes(cameraId) ? badCameras : [...badCameras, cameraId]))
+    }
+
+    clearBadCamera(cameraId: string): void {
+        if (!cameraId) return
+        this.updateBadCameras((badCameras) => badCameras.filter((id) => id !== cameraId))
+    }
+
+    async initializeCameraWarming(): Promise<void> {
+        const allCameras = await this.getCamerasList()
+        const selectedCameraIds = this.getStartupCameras()
+
+        // Clean up removed startup cameras
+        for (const [id, entry] of this.streams.entries()) {
+            if (entry.isStartup && !selectedCameraIds.includes(id)) {
+                entry.isStartup = false
+                if (entry.refCount <= 0) {
+                    this.streams.delete(id)
+                    entry.stream.getTracks()?.forEach((t) => t.stop())
+                }
             }
-        } catch (err) {
-            console.error(`Error cleaning up camera ${camera.name}:`, err)
         }
 
-        this.activeCameras.delete(cameraId)
-
-        if (!this.activeCameras.size) {
+        if (!selectedCameraIds.length) {
             this.stopKeepaliveMonitor()
+            return
         }
+
+        // Warm startup cameras
+        for (const camera of allCameras.filter((c) => selectedCameraIds.includes(c.id))) {
+            if (!this.streams.has(camera.id)) {
+                const res = await this.getCameraStream(camera.id, camera.group)
+                if (typeof res !== "string" && this.streams.has(camera.id)) {
+                    this.streams.get(camera.id)!.isStartup = true
+                }
+            } else {
+                this.streams.get(camera.id)!.isStartup = true
+            }
+        }
+
+        this.startKeepaliveMonitor()
     }
 
-    stopTracks(cameraStream: MediaStream | null | undefined) {
-        cameraStream?.getTracks()?.forEach((track) => track.stop())
+    // --- Keepalive & Background Monitoring ---
+
+    private startKeepaliveMonitor(): void {
+        if (this.keepaliveTimer) return
+        this.keepaliveTimer = setInterval(() => this.checkAndRestartDeadCameras(), HALF_MINUTE)
     }
 
-    // Keep camera streams alive by periodically checking and restarting them
-    private keepaliveInterval: NodeJS.Timeout | null = null
-    private startKeepaliveMonitor() {
-        if (this.keepaliveInterval) return
-        this.keepaliveInterval = setInterval(() => this.checkAndRestartDeadCameras(), HALF_MINUTE)
+    private stopKeepaliveMonitor(): void {
+        if (!this.keepaliveTimer) return
+        clearInterval(this.keepaliveTimer)
+        this.keepaliveTimer = null
     }
 
-    private stopKeepaliveMonitor() {
-        if (!this.keepaliveInterval) return
-
-        clearInterval(this.keepaliveInterval)
-        this.keepaliveInterval = null
-    }
-
-    private async checkAndRestartDeadCameras() {
-        for (const camera of this.activeCameras.values()) {
-            if (this.failed.includes(camera.id)) return
-
-            if (!camera.stream || !camera.stream.active || camera.stream.getTracks().some((track) => track.readyState === "ended")) {
-                console.warn(`Camera ${camera.name} stream is not active, restarting...`)
-                await this.retryCameraWarming({ id: camera.id, name: camera.name, group: camera.groupId })
+    private async checkAndRestartDeadCameras(): Promise<void> {
+        const startupIds = this.getStartupCameras()
+        for (const id of startupIds) {
+            const entry = this.streams.get(id)
+            if (!entry || !entry.stream?.active || entry.stream.getTracks().some((t) => t.readyState === "ended")) {
+                this.streams.delete(id)
+                const camera = await this.getCameraFromId(id)
+                if (camera) {
+                    const res = await this.getCameraStream(camera.id, camera.group)
+                    if (typeof res !== "string" && this.streams.has(id)) {
+                        this.streams.get(id)!.isStartup = true
+                    }
+                }
             }
         }
     }
 }
 
-// Create singleton instance
 export const cameraManager = new CameraManager()
 
-// Cleanup on page unload
 window.addEventListener("beforeunload", () => {
     cameraManager.cleanupAllCameras()
 })
