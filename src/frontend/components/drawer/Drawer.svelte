@@ -47,16 +47,26 @@
     // open drawer if autoclosed
     $: if ($activePage === "show" && $drawer.autoclosed) setTimeout(() => drawer.set({ height: $drawer.stored ?? DEFAULT_DRAWER_HEIGHT, stored: null }), 100)
 
+    let animFrame: number | null = null
     function mousemove(e: any) {
         if (!mouse) return
 
-        drawer.set({ height: getHeight(window.innerHeight - e.clientY - mouse.offsetY), stored: null })
+        if ($selected?.id || $selected?.data?.length) selected.set({ id: null, data: [] })
 
-        selected.set({ id: null, data: [] })
+        if (animFrame) return
+        animFrame = requestAnimationFrame(() => {
+            animFrame = null
+            if (!mouse) return
 
-        const isClosed = $drawer.height <= minHeight
-        if (isClosed) drawerOpenedInEdit.set(false)
-        else if ($activePage === "edit") drawerOpenedInEdit.set(true)
+            const newHeight = getHeight(window.innerHeight - e.clientY - mouse.offsetY)
+            if (newHeight !== $drawer.height) {
+                drawer.set({ height: newHeight, stored: null })
+
+                const isClosed = newHeight <= minHeight
+                if (isClosed) drawerOpenedInEdit.set(false)
+                else if ($activePage === "edit") drawerOpenedInEdit.set(true)
+            }
+        })
     }
 
     function getHeight(height: number) {
@@ -102,6 +112,10 @@
     function mouseup(e: any) {
         if (!e.target.closest("input") && !e.target.closest(".contextMenu") && !searchValue.length) searchActive = false
 
+        if (animFrame) {
+            cancelAnimationFrame(animFrame)
+            animFrame = null
+        }
         if (mouse) {
             stopResizing()
             mouse = null
@@ -110,6 +124,7 @@
     }
 
     onDestroy(() => {
+        if (animFrame) cancelAnimationFrame(animFrame)
         if (mouse) stopResizing()
     })
 

@@ -3,6 +3,9 @@
     let sharedObserver: ResizeObserver | null = null
 
     function observeResize(node: Element, cb: (rect: DOMRectReadOnly) => void) {
+        let prevWidth = 0
+        let prevHeight = 0
+
         if (!sharedObserver && typeof ResizeObserver !== "undefined") {
             sharedObserver = new ResizeObserver((entries) => {
                 for (const entry of entries) {
@@ -10,7 +13,14 @@
                 }
             })
         }
-        sharedCallbacks.set(node, cb)
+
+        sharedCallbacks.set(node, (rect) => {
+            if (prevWidth !== rect.width || prevHeight !== rect.height) {
+                prevWidth = rect.width
+                prevHeight = rect.height
+                cb(rect)
+            }
+        })
         sharedObserver?.observe(node)
         return {
             destroy() {
