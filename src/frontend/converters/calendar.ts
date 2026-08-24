@@ -37,6 +37,46 @@ interface VEvent {
     UID?: string
 }
 
+const WEEKDAY_INDEX: Record<string, number> = {
+    SU: 0,
+    MO: 1,
+    TU: 2,
+    WE: 3,
+    TH: 4,
+    FR: 5,
+    SA: 6
+}
+
+function shiftDateToWeekdayOnOrAfter(date: Date, weekday: number, useUtc: boolean): Date {
+    const shifted = new Date(date)
+    const currentWeekday = useUtc ? shifted.getUTCDay() : shifted.getDay()
+    const offset = (weekday - currentWeekday + 7) % 7
+
+    if (useUtc) {
+        shifted.setUTCDate(shifted.getUTCDate() + offset)
+    } else {
+        shifted.setDate(shifted.getDate() + offset)
+    }
+
+    return shifted
+}
+
+function formatIsoDate(date: Date, hasTime: boolean, useUtc: boolean): string {
+    const year = useUtc ? date.getUTCFullYear() : date.getFullYear()
+    const month = addZero((useUtc ? date.getUTCMonth() : date.getMonth()) + 1)
+    const day = addZero(useUtc ? date.getUTCDate() : date.getDate())
+
+    if (!hasTime) {
+        return `${year}-${month}-${day}`
+    }
+
+    const hours = addZero(useUtc ? date.getUTCHours() : date.getHours())
+    const minutes = addZero(useUtc ? date.getUTCMinutes() : date.getMinutes())
+    const seconds = addZero(useUtc ? date.getUTCSeconds() : date.getSeconds())
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${useUtc ? "Z" : ""}`
+}
+
 function parseIcsDate(dateStr: string): { iso: string; hasTime: boolean } {
     if (!dateStr) return { iso: "", hasTime: false }
     const clean = dateStr.trim()
@@ -188,6 +228,17 @@ export function convertCalendar(data: any) {
                 const types = { DAILY: "day", WEEKLY: "week", MONTHLY: "month", YEARLY: "year" }
                 if (types[repeatData.FREQ || ""]) {
                     let repeatTypes = [types[repeatData.FREQ || ""]]
+                    const weeklyByDays =
+                        repeatData.FREQ === "WEEKLY" && repeatData.BYDAY
+                            ? Array.from(
+                                  new Set(
+                                      repeatData.BYDAY.split(",")
+                                          .map((token) => token.trim().toUpperCase())
+                                          .map((token) => token.match(/^(?:[-+]?\d)?(MO|TU|WE|TH|FR|SA|SU)$/)?.[1] || "")
+                                          .filter(Boolean)
+                                  )
+                              )
+                            : []
 
                     if (repeatData.FREQ === "MONTHLY" && repeatData.BYDAY) {
                         const map: Record<string, string> = {
@@ -210,14 +261,10 @@ export function convertCalendar(data: any) {
                         }
                     }
 
-                    repeatTypes.forEach((repType, idx) => {
-                        const ev = clone(newEvent)
-                        if (idx > 0) {
-                            ev.id = uid()
-                        }
+                    const enqueueRepeatedEvent = (ev: Event, repeatType: string) => {
                         ev.repeat = true
                         ev.repeatData = {
-                            type: repType,
+                            type: repeatType as "day" | "week" | "month" | "year",
                             ending: repeatData.UNTIL ? "date" : "after",
                             count: Number(repeatData.INTERVAL || 1),
                             endingDate: date || "",
@@ -226,7 +273,40 @@ export function convertCalendar(data: any) {
 
                         newEvents.push(ev)
                         repeatingEventsQueue.push({ event: clone(ev), exdates })
-                    })
+                    }
+
+                    if (repeatData.FREQ === "WEEKLY" && weeklyByDays.length > 0) {
+                        const start = new Date(newEvent.from)
+                        const end = new Date(newEvent.to)
+                        const duration = end.getTime() - start.getTime()
+                        const useUtc = newEvent.from.endsWith("Z")
+
+                        weeklyByDays.forEach((dayCode, idx) => {
+                            const weekday = WEEKDAY_INDEX[dayCode]
+                            if (typeof weekday !== "number") return
+
+                            const shiftedStart = shiftDateToWeekdayOnOrAfter(start, weekday, useUtc)
+                            const shiftedEnd = new Date(shiftedStart.getTime() + duration)
+
+                            const ev = clone(newEvent)
+                            if (idx > 0) {
+                                ev.id = uid()
+                            }
+
+                            ev.from = formatIsoDate(shiftedStart, hasTime, useUtc)
+                            ev.to = formatIsoDate(shiftedEnd, hasTime, useUtc)
+
+                            enqueueRepeatedEvent(ev, "week")
+                        })
+                    } else {
+                        repeatTypes.forEach((repType, idx) => {
+                            const ev = clone(newEvent)
+                            if (idx > 0) {
+                                ev.id = uid()
+                            }
+                            enqueueRepeatedEvent(ev, repType)
+                        })
+                    }
                 } else {
                     newEvents.push(newEvent)
                 }

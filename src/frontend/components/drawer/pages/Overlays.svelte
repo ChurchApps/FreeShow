@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy } from "svelte"
     import type { Overlay } from "../../../../types/Show"
     import { addProjectItem } from "../../../converters/project"
     import { activeEdit, activePage, activeShow, labelsDisabled, mediaOptions, outLocked, outputs, overlayCategories, overlays, styles, timelineRecordingAction } from "../../../stores"
@@ -11,7 +11,6 @@
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import Loader from "../../main/Loader.svelte"
     import Textbox from "../../slide/Textbox.svelte"
     import Zoomed from "../../slide/Zoomed.svelte"
     import Center from "../../system/Center.svelte"
@@ -56,9 +55,31 @@
         }, 500)
     }
 
-    // open drawer tab instantly before content has loaded
-    let preloader = true
-    onMount(() => setTimeout(() => (preloader = false), 20))
+    // lazy loader
+    let lazyLoader = 0
+    let timeout: NodeJS.Timeout | null = null
+    let loaded = false
+
+    onDestroy(() => {
+        if (timeout) clearTimeout(timeout)
+    })
+
+    $: if (active || searchValue !== undefined) {
+        loaded = false
+        lazyLoader = 0
+    }
+
+    $: if (!loaded && fullFilteredOverlays?.length) {
+        if (lazyLoader >= fullFilteredOverlays.length) {
+            loaded = true
+        } else {
+            if (timeout) clearTimeout(timeout)
+            timeout = setTimeout(() => {
+                const batch = lazyLoader === 0 ? 4 : Math.min(32, lazyLoader * 2)
+                lazyLoader += batch
+            }, lazyLoader === 0 ? 60 : 30)
+        }
+    }
 
     $: overlayWithNonExistentCategory = active === "unlabeled" && filteredOverlays.some((s) => s.category)
     function createNonExistentCategories() {
@@ -115,13 +136,9 @@
         <Effects {searchValue} />
     {:else}
         <DropArea id="overlays">
-            {#if preloader && fullFilteredOverlays.length > 10}
-                <Center>
-                    <Loader />
-                </Center>
-            {:else if fullFilteredOverlays.length}
+            {#if fullFilteredOverlays.length}
                 <div class="grid" style="--width: {100 / $mediaOptions.columns}%;">
-                    {#each fullFilteredOverlays as overlay}
+                    {#each fullFilteredOverlays as overlay, i (overlay.id)}
                         {@const isReadOnly = readOnly || profile[overlay.category || ""] === "read"}
                         {@const isActive = findMatchingOut(overlay.id, $outputs) !== null}
 
@@ -145,14 +162,16 @@
                                     addProjectItem({ id: overlay.id, name: overlay.name || "", type: "overlay" })
                                 }}
                             >
-                                <!-- icons -->
-                                <OverlayActions columns={$mediaOptions.columns} overlayId={overlay.id} />
+                                {#if loaded || i < lazyLoader}
+                                    <!-- icons -->
+                                    <OverlayActions columns={$mediaOptions.columns} overlayId={overlay.id} />
 
-                                <Zoomed {resolution} background={overlay.items.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={!!overlay.items.length}>
-                                    {#each overlay.items as item}
-                                        <Textbox {item} ref={{ type: "overlay", id: overlay.id }} />
-                                    {/each}
-                                </Zoomed>
+                                    <Zoomed {resolution} background={overlay.items.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={!!overlay.items.length}>
+                                        {#each overlay.items as item}
+                                            <Textbox {item} ref={{ type: "overlay", id: overlay.id }} preview />
+                                        {/each}
+                                    </Zoomed>
+                                {/if}
                             </Card>
                         </SelectElem>
                     {/each}

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy, onMount } from "svelte"
     import type { Resolution } from "../../../../types/Settings"
 
     export let background: string = "black"
@@ -13,14 +14,33 @@
     $: baseWidth = resolution?.width ?? 1920
     $: baseHeight = resolution?.height ?? 1080
     let slideHeight: number = 0
+    let slideWidth: number = 0
     // Fit to both width and height to avoid overflow on Safari
     $: ratio = Math.min(slideWidth / baseWidth, slideHeight / baseHeight)
 
-    let slideWidth: number = 0
+    let slideElem: HTMLElement | null = null
+    let resizeObserver: ResizeObserver | null = null
+
+    onMount(() => {
+        if (!slideElem || typeof ResizeObserver === "undefined") return
+        resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const { width, height } = entry.contentRect
+                if (slideWidth !== width || slideHeight !== height) {
+                    slideWidth = width
+                    slideHeight = height
+                }
+            }
+        })
+        resizeObserver.observe(slideElem)
+    })
+    onDestroy(() => {
+        if (resizeObserver) resizeObserver.disconnect()
+    })
 </script>
 
 <div class:center>
-    <div bind:offsetWidth={slideWidth} bind:offsetHeight={slideHeight} class="slide" class:hideOverflow class:checkered style="{$$props.style || ''}background-color: {background};aspect-ratio: {resolution.width}/{resolution.height};">
+    <div bind:this={slideElem} class="slide" class:hideOverflow class:checkered style="{$$props.style || ''}background-color: {background};aspect-ratio: {resolution.width}/{resolution.height};">
         <!-- Use transform scale for cross-browser support (Safari/Firefox do not support CSS zoom) -->
         <span style="display: inline-block; width: {baseWidth}px; height: {baseHeight}px; transform: scale({isFinite(ratio) && ratio > 0 ? ratio : 1}); transform-origin: top left; will-change: transform;">
             <slot />

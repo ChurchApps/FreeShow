@@ -9,70 +9,43 @@
 
     export let mic: { id: string; name: string }
 
-    // https://dobrian.github.io/cmp/topics/sample-recording-and-playback-with-web-audio-api/1.loading-and-playing-sound-files.html
-
-    // https://developers.google.com/web/fundamentals/media/recording-audio
-    // TODO: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Using_AudioWorklet
-    //   class MyAudioProcessor extends AudioWorklet {
-    //   constructor() {
-    //     super();
-    //   }
-
-    //   process(inputList, outputList, parameters) {
-    //     /* using the inputs (or not, as needed), write the output
-    //        into each of the outputs */
-
-    //     return true;
-    //   }
-    // };
-
-    // registerProcessor("processor", MyAudioProcessor);
-
     let soundLevel = 0
 
     let audioStream: MediaStream | undefined
     let context: AudioContext | undefined
     let source: MediaStreamAudioSourceNode | undefined
-    // let gainNode
-    let audio: HTMLAudioElement | undefined
+    let animationFrame: number | null = null
 
     const handleSuccess = function (stream: MediaStream) {
         audioStream = stream
         context = new AudioContext()
         source = context.createMediaStreamSource(stream)
 
-        var analyser = context.createAnalyser()
+        const analyser = context.createAnalyser()
         analyser.smoothingTimeConstant = 0.2
         analyser.fftSize = 1024
 
-        var node = context.createScriptProcessor(2048, 1, 1)
+        source.connect(analyser)
 
-        var values = 0
-        var average
-        node.onaudioprocess = function () {
-            // bitcount is fftsize / 2
-            var array = new Uint8Array(analyser.frequencyBinCount)
+        const array = new Uint8Array(analyser.frequencyBinCount)
+
+        const updateLevel = () => {
+            if (!context || context.state === "closed") return
             analyser.getByteFrequencyData(array)
 
-            var length = array.length
-            for (var i = 0; i < length; i++) {
+            let values = 0
+            const length = array.length
+            for (let i = 0; i < length; i++) {
                 values += array[i]
             }
 
-            average = values / length
+            const average = values / length
             soundLevel = Math.min(100, average)
 
-            average = values = 0
+            animationFrame = requestAnimationFrame(updateLevel)
         }
 
-        source.connect(analyser)
-        analyser.connect(node)
-        node.connect(context.destination)
-
-        audio = new Audio()
-        audio.srcObject = stream
-        audio.play()
-        audio.volume = 0
+        updateLevel()
     }
 
     let retryTimeout: NodeJS.Timeout | null = null
@@ -94,8 +67,10 @@
     }
 
     onDestroy(() => {
+        if (animationFrame) cancelAnimationFrame(animationFrame)
         audioStream?.getAudioTracks().forEach((track) => track.stop())
         if (retryTimeout) clearTimeout(retryTimeout)
+        context?.close().catch(() => {})
     })
 
     $: micId = "mic_sub_" + mic.id

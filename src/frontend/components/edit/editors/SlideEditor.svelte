@@ -370,7 +370,7 @@
                             {#each layoutSlide.overlays as id}
                                 {#if $overlays[id]}
                                     {#each $overlays[id]?.items || [] as item}
-                                        <Textbox {item} ref={{ type: "overlay", id }} />
+                                        <Textbox {item} ref={{ type: "overlay", id }} preview />
                                     {/each}
                                 {/if}
                             {/each}

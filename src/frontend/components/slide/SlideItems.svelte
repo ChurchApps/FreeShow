@@ -65,18 +65,14 @@
     // this only applies to the stage slide editor
     $: if (edit && item && itemElem && !noAutoSize && newItem !== previousItem) calculateAutosize()
     let autoSize = 0
-    let loopStop: NodeJS.Timeout | null = null
+    let autosizeTimeout: NodeJS.Timeout | null = null
     function calculateAutosize() {
-        if (loopStop) return
-        loopStop = setTimeout(() => {
-            loopStop = null
-        }, 200)
         previousItem = newItem
-
-        let textQuery = item.type === "slide_tracker" ? ".progress div" : ""
-        // timeout to update size after content change (e.g. Clock seconds)
-        setTimeout(() => {
-            // item.textFit || (always growToFit)
+        if (autosizeTimeout) clearTimeout(autosizeTimeout)
+        autosizeTimeout = setTimeout(() => {
+            autosizeTimeout = null
+            if (!itemElem) return
+            let textQuery = item.type === "slide_tracker" ? ".progress div" : ""
             autoSize = autosize(itemElem!, { type: "growToFit", textQuery })
         }, 50)
     }
@@ -96,7 +92,7 @@
     <Clock {item} fontStyle={noAutoSize ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} style={false} {...item.clock} />
 {:else if item.type === "camera"}
     {#if item.device}
-        <Cam cam={item.device} item style={cameraStyleString} disablePreview={isTemplatePreview} cropping={item.cropping} {cropPreviewMode} />
+        <Cam cam={item.device} item style={cameraStyleString} disablePreview={isTemplatePreview} cropping={item.cropping} {cropPreviewMode} preview={!outputId && (preview || isTemplatePreview)} />
     {/if}
 {:else if item.type === "slide_tracker"}
     <SlideProgress {item} tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : edit ? autoSize : fontSize} {outputId} />

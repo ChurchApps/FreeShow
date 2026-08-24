@@ -386,35 +386,35 @@
     $: textArray = Array.isArray(item?.lines?.[0]?.text) ? item.lines[0].text : []
     $: itemText = textArray.filter((a) => !a.customType?.includes("disableTemplate")) || []
     $: itemFontSize = Number(getStyles((ref.type === "stage" ? item : itemText[0])?.style, true)?.["font-size"] || "")
-    $: if (isAuto || itemFontSize || textChanged) getCustomAutoSize()
+    $: itemStyle = item?.style
+    $: if (itemStyle && (isAuto || itemFontSize || textChanged)) getCustomAutoSize()
 
     let autoSize = 0
     let alignElem: HTMLElement | undefined
-    let loopStop: NodeJS.Timeout | null = null
+    let autosizeTimeout: NodeJS.Timeout | null = null
     function getCustomAutoSize() {
         if (isTyping || !loaded || !alignElem || !isAuto) return
 
-        if (loopStop) return
-        loopStop = setTimeout(() => (loopStop = null), 200)
+        if (autosizeTimeout) clearTimeout(autosizeTimeout)
+        autosizeTimeout = setTimeout(() => {
+            autosizeTimeout = null
+            if (!alignElem) return
 
-        if (ref.type === "stage") {
-            itemFontSize = Number(getStyles(item?.style, true)?.["font-size"] || "")
-        }
+            if (ref.type === "stage") {
+                itemFontSize = Number(getStyles(item?.style, true)?.["font-size"] || "")
+            }
 
-        let type = item?.textFit || "shrinkToFit"
-        let defaultFontSize = itemFontSize
-        let maxFontSize
+            let type = item?.textFit || "shrinkToFit"
+            let defaultFontSize = itemFontSize
+            let maxFontSize
 
-        // if (ref.type === "stage") {
-        //     type = "growToFit"
-        // }
+            if (type === "growToFit") {
+                defaultFontSize = 100
+                maxFontSize = itemFontSize
+            }
 
-        if (type === "growToFit") {
-            defaultFontSize = 100
-            maxFontSize = itemFontSize
-        }
-
-        autoSize = autosize(alignElem, { type, textQuery: ".edit .break span", defaultFontSize, maxFontSize })
+            autoSize = autosize(alignElem, { type, textQuery: ".edit .break span", defaultFontSize, maxFontSize })
+        }, 50)
     }
 
     // UPDATE STYLE FROM LINES

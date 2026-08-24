@@ -7,29 +7,32 @@
 
     export let id: string
     export let groupId: string
-    let videoElem: HTMLVideoElement | undefined
+    export let preview = false
+    export let videoElem: HTMLVideoElement | undefined = undefined
 
-    $: if (id) updateCamera()
-    async function updateCamera() {
-        const cameraStream = await cameraManager.getCameraStream(id, groupId)
-        if (typeof cameraStream === "string" || !videoElem) return
-
-        videoElem.srcObject = cameraStream
-        videoElem.onloadedmetadata = loaded
-    }
-
-    onDestroy(stopStream)
-    function stopStream() {
-        if (!videoElem) return
-        ;(videoElem.srcObject as MediaStream)?.getTracks()?.forEach((track) => track.stop())
-        videoElem.srcObject = null
-    }
-
+    let isDestroyed = false
     let dispatch = createEventDispatcher()
-    function loaded() {
-        videoElem?.play()
-        dispatch("loaded", true)
+
+    let currentAttachedId = ""
+    $: if (id && videoElem && (id !== currentAttachedId || !videoElem.srcObject)) updateCamera()
+    async function updateCamera() {
+        if (!videoElem || !id) return
+        currentAttachedId = id
+        const res = await cameraManager.attachCamera(videoElem, id, {
+            groupId,
+            preview,
+            isDestroyed: () => isDestroyed || id !== currentAttachedId,
+            onLoaded: () => dispatch("loaded", true)
+        })
+        if (typeof res === "string") {
+            dispatch("loaded", true)
+        }
     }
+
+    onDestroy(() => {
+        isDestroyed = true
+        cameraManager.detachCamera(videoElem, id)
+    })
 
     $: mediaStyle = getMediaStyle($media[id], undefined)
     $: cropState = getCropState(mediaStyle.cropping, false, mediaStyle.style)
