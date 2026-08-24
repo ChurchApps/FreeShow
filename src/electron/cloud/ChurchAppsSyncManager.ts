@@ -112,7 +112,7 @@ class ChurchAppsSyncManager {
 
     async getWriteToken(teamId: string, fileName: string): Promise<any> {
         const path = `/content/files/postUrl`
-        const params: { [key: string]: string } = { fileName, contentType: "group", contentId: teamId }
+        const params: { [key: string]: string } = { fileName, contentType: "group", contentId: teamId, mimeType: ZIP_TYPE }
 
         const token = await this.provider.getToken(SCOPE)
         const headers = token ? { Authorization: `Bearer ${token}` } : {}
@@ -157,8 +157,8 @@ class ChurchAppsSyncManager {
             const blob = new Blob([new Uint8Array(fileBuffer)], { type: ZIP_TYPE })
 
             const formData = new FormData()
-            formData.append("acl", "public-read")
-            formData.append("Content-Type", ZIP_TYPE)
+            if (!presigned.fields?.["acl"]) formData.append("acl", "public-read")
+            if (!presigned.fields?.["Content-Type"]) formData.append("Content-Type", ZIP_TYPE)
 
             // Loop through all the presigned parameters returned and append them to this request
             for (const property in presigned.fields) formData.append(property, presigned.fields[property])
