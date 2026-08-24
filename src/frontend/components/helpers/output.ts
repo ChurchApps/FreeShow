@@ -597,18 +597,31 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
 }
 
 // this will get the first available stage output
+let cachedStageOutputId: string | null = null
+let lastOutputsForStageId: any = null
+
 export function getStageOutputId(_updater = get(outputs)) {
-    return keysToID(_updater).find((a) => a.stageOutput && a.enabled)?.id || ""
+    if (_updater === lastOutputsForStageId && cachedStageOutputId !== null) return cachedStageOutputId
+    lastOutputsForStageId = _updater
+    cachedStageOutputId = Object.values(_updater).find((a) => a.stageOutput && a.enabled)?.id || ""
+    return cachedStageOutputId
 }
+
 export function getStageResolution(outputId = "", _updater = get(outputs)): Resolution {
-    if (!outputId) outputId = getStageOutputId()
-    return getOutputResolution(outputId)
+    if (!outputId) outputId = getStageOutputId(_updater)
+    return getOutputResolution(outputId, _updater)
 }
 
 // calculate actual output resolution based on style aspect ratio
 export const DEFAULT_BOUNDS = { width: 1920, height: 1080 }
+const outputResolutionCache = new Map<string, Resolution>()
+
 export function getOutputResolution(outputId: string, _updater = get(outputs), scaled = false, styleIdOverride = "") {
     const currentOutput = _updater[outputId]
+    const cacheKey = `${outputId}_${scaled}_${styleIdOverride}_${currentOutput?.style || ""}_${currentOutput?.bounds?.width || 0}_${currentOutput?.bounds?.height || 0}`
+    const cached = outputResolutionCache.get(cacheKey)
+    if (cached) return cached
+
     const outputRes = clone(currentOutput?.bounds?.width ? currentOutput.bounds : DEFAULT_BOUNDS)
 
     const styleRatio = getResolution(null, null, false, outputId, styleIdOverride)
@@ -626,34 +639,17 @@ export function getOutputResolution(outputId: string, _updater = get(outputs), s
         outputRes.height = Math.round(DEFAULT_BOUNDS.width / outputAspectRatio)
     }
 
-    if (!scaled) return outputRes
-
-    // return styleRatio
-
-    // output window size is narrow
-    //  && outputAspectRatio > 1
-    if (styleAspectRatio < 1) {
-        outputRes.width = Math.round(outputRes.height * styleAspectRatio)
-    } else {
-        outputRes.height = Math.round(outputRes.width / styleAspectRatio)
+    if (scaled) {
+        // output window size is narrow
+        if (styleAspectRatio < 1) {
+            outputRes.width = Math.round(outputRes.height * styleAspectRatio)
+        } else {
+            outputRes.height = Math.round(outputRes.width / styleAspectRatio)
+        }
     }
 
-    // WIP: correct values....
-    // const outputRes2 = clone(currentOutput?.bounds || DEFAULT_BOUNDS)
-    // const newAspectRatio = outputRes.width / outputRes.height
-    // if (outputRes2.width < outputRes2.height) {
-    //     outputRes2.height = Math.round(newAspectRatio < 1 && styleAspectRatio > 1 ? outputRes2.width * newAspectRatio : outputRes2.width / newAspectRatio)
-    //     // outputRes2.width = outputRes2.width
-    // } else {
-    //     outputRes2.width = Math.round(newAspectRatio < 1 && styleAspectRatio > 1 ? outputRes2.height / newAspectRatio : outputRes2.height * newAspectRatio)
-    // }
-
-    // if (newStyleAspectRatio < 1) {
-    //     outputRes2.height = Math.round(outputRes.width / newStyleAspectRatio)
-    // } else {
-    //     outputRes2.width = Math.round(outputRes.height * newStyleAspectRatio)
-    // }
-
+    if (outputResolutionCache.size > 200) outputResolutionCache.clear()
+    outputResolutionCache.set(cacheKey, outputRes)
     return outputRes
 }
 
@@ -666,7 +662,14 @@ export function stylePosToPercentage(stylesData: { [key: string]: any }) {
     return stylesData
 }
 
+const stylePosCache = new Map<string, string>()
+
 export function percentageStylePos(style: string, resolution: Resolution) {
+    if (!style || !resolution?.width || !resolution?.height) return style || ""
+    const cacheKey = `${style}_${resolution.width}_${resolution.height}`
+    const cached = stylePosCache.get(cacheKey)
+    if (cached !== undefined) return cached
+
     let stylesData = getStyles(style, true)
     stylesData = stylePosToPercentage(stylesData)
 
@@ -674,13 +677,15 @@ export function percentageStylePos(style: string, resolution: Resolution) {
     const width = DEFAULT_BOUNDS.width
     const height = DEFAULT_BOUNDS.width / aspectRatio
 
-    style += ";"
-    if (stylesData.left) style += "left: " + width * (Number(stylesData.left) / 100) + "px;"
-    if (stylesData.top) style += "top: " + height * (Number(stylesData.top) / 100) + "px;"
-    if (stylesData.width) style += "width: " + width * (Number(stylesData.width) / 100) + "px;"
-    if (stylesData.height) style += "height: " + height * (Number(stylesData.height) / 100) + "px;"
+    let result = style + ";"
+    if (stylesData.left) result += "left: " + width * (Number(stylesData.left) / 100) + "px;"
+    if (stylesData.top) result += "top: " + height * (Number(stylesData.top) / 100) + "px;"
+    if (stylesData.width) result += "width: " + width * (Number(stylesData.width) / 100) + "px;"
+    if (stylesData.height) result += "height: " + height * (Number(stylesData.height) / 100) + "px;"
 
-    return style
+    if (stylePosCache.size > 500) stylePosCache.clear()
+    stylePosCache.set(cacheKey, result)
+    return result
 }
 
 export function percentageToAspectRatio(input: EditInput) {

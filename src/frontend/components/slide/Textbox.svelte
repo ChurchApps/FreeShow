@@ -784,7 +784,8 @@
     }
 
     let updateTrigger = 0
-    let cssInterval = setInterval(() => updateTrigger++, 1000)
+    const cssIntervalTime = preview || fontPreview || isTemplatePreview ? 3000 : 1000
+    let cssInterval = setInterval(() => updateTrigger++, cssIntervalTime)
 
     // give CSS access to certain dynamic values
     $: cssVariables = createCSSVariables($variables, $outputs, isStage ? "stage" : "default", updateTrigger)

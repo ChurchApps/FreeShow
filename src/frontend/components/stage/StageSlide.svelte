@@ -40,7 +40,7 @@
         })
     }
 
-    $: stageItems = getSortedStageItems(id, $stageShows)
+    $: stageItems = getSortedStageItems(id, $stageShows[id])
 
     let conditionsUpdater = 0
     const updaterInterval = setInterval(() => {

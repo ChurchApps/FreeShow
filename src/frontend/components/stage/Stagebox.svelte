@@ -85,12 +85,12 @@
 
     let isShiftPressed = false
     function keyup(e: KeyboardEvent) {
+        if (!edit) return
         if (e.key === "Shift") isShiftPressed = false
     }
     function keydown(e: KeyboardEvent) {
-        if (e.key === "Shift") isShiftPressed = true
-
         if (!edit) return
+        if (e.key === "Shift") isShiftPressed = true
 
         if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
             // selected timeline actions
@@ -107,9 +107,10 @@
     }
 
     function deselect(e: any) {
+        if (!edit) return
         if (e.target.closest(".stageTools") || e.target.closest(".contextMenu") || $activePopup) return
 
-        if ((edit && !e.shiftKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
+        if ((!e.shiftKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
             activeStage.update((ae) => {
                 ae.items = []
                 return ae
@@ -119,10 +120,13 @@
 
     // timer
     let today = new Date()
-    const dateInterval = setInterval(() => (today = new Date()), 1000)
+    let dateInterval: any = null
+    $: if ((item?.type === "timer" || id.includes("timer") || id.includes("clock")) && !dateInterval && !disableStagePreview) {
+        dateInterval = setInterval(() => (today = new Date()), 1000)
+    }
 
     onDestroy(() => {
-        clearInterval(dateInterval)
+        if (dateInterval) clearInterval(dateInterval)
         if (currentAutoSizeTimeout) clearTimeout(currentAutoSizeTimeout)
     })
 
@@ -215,10 +219,11 @@
     $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
 
     let firstTimerId = ""
-    $: if (!item?.timer?.id || id.includes("first_active_timer")) {
-        firstTimerId = $activeTimers[0]?.id
-        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
-    } else firstTimerId = ""
+    $: if (item?.type === "timer" || id.includes("first_active_timer")) {
+        firstTimerId = item?.timer?.id || $activeTimers[0]?.id || Object.values($timers).find((timer) => timer.type !== "counter")?.id || ""
+    } else {
+        firstTimerId = ""
+    }
 
     let itemStyle = ""
     let textStyle = ""
@@ -242,11 +247,8 @@
         })
     }
 
-    function getCustomStyle(style: string) {
-        let outputResolution = getStageResolution()
-        style = percentageStylePos(style, outputResolution)
-        return style
-    }
+    $: stageResolution = getStageResolution(stageOutputId, $outputs)
+    $: customStyle = percentageStylePos(itemStyle, stageResolution)
 
     // pause video at middle
     // let video: HTMLVideoElement | undefined
@@ -262,7 +264,7 @@
         }, 100)
     }
 
-    $: newItem = item ? clone({ ...item, timer: { ...(item.timer || {}), id: firstTimerId || item.timer?.id || "" } }) : null
+    $: newItem = item?.type === "timer" && firstTimerId && item.timer?.id !== firstTimerId ? { ...item, timer: { ...(item.timer || {}), id: firstTimerId } } : item
 
     // ACTIONS
 
@@ -280,11 +282,18 @@
 
     let conditionsUpdater = 0
     let updateTrigger = 0
-    const updaterInterval = setInterval(() => conditionsUpdater++, 3000)
-    const cssInterval = setInterval(() => updateTrigger++, 1000)
+    let updaterInterval: any = null
+    let cssInterval: any = null
+
+    const intervalTime = disableStagePreview || preview ? 5000 : 1000
+    const condIntervalTime = disableStagePreview || preview ? 5000 : 3000
+
+    updaterInterval = setInterval(() => conditionsUpdater++, condIntervalTime)
+    cssInterval = setInterval(() => updateTrigger++, intervalTime)
+
     onDestroy(() => {
-        clearInterval(updaterInterval)
-        clearInterval(cssInterval)
+        if (updaterInterval) clearInterval(updaterInterval)
+        if (cssInterval) clearInterval(cssInterval)
     })
 
     $: currentItemText = item ? (item.type === "slide_text" ? getSlideTextItems(stageLayout!, item).map(getItemText).join("") : getItemText(stageItemToItem(item))) : ""
@@ -327,7 +336,7 @@
     class:isDisabledVariable
     class:isOutput={!!$currentWindow}
     class:isShiftPressed
-    style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}"
+    style="{customStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}"
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id && item}
