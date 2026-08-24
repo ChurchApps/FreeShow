@@ -8,7 +8,7 @@ export const getStyles = (str: string | null | undefined, removeTxt = false): St
 
     const cacheKey = `${removeTxt ? 1 : 0}_${str}`
     const cached = cache.get(cacheKey)
-    if (cached) return cached
+    if (cached) return { ...cached }
 
     const styles: StringObject = {}
 
@@ -31,7 +31,7 @@ export const getStyles = (str: string | null | undefined, removeTxt = false): St
     if (cache.size > 1000) cache.clear()
     cache.set(cacheKey, styles)
 
-    return styles
+    return { ...styles }
 }
 
 export function getFilters(filter: string | undefined) {

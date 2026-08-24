@@ -667,12 +667,13 @@ export function getOutputResolution(outputId: string, _updater = get(outputs), s
 }
 
 export function stylePosToPercentage(stylesData: { [key: string]: any }) {
-    if (stylesData.left) stylesData.left = (Number(stylesData.left) / DEFAULT_BOUNDS.width) * 100
-    if (stylesData.top) stylesData.top = (Number(stylesData.top) / DEFAULT_BOUNDS.height) * 100
-    if (stylesData.width) stylesData.width = (Number(stylesData.width) / DEFAULT_BOUNDS.width) * 100
-    if (stylesData.height) stylesData.height = (Number(stylesData.height) / DEFAULT_BOUNDS.height) * 100
+    const res = { ...stylesData }
+    if (res.left) res.left = (Number(res.left) / DEFAULT_BOUNDS.width) * 100
+    if (res.top) res.top = (Number(res.top) / DEFAULT_BOUNDS.height) * 100
+    if (res.width) res.width = (Number(res.width) / DEFAULT_BOUNDS.width) * 100
+    if (res.height) res.height = (Number(res.height) / DEFAULT_BOUNDS.height) * 100
 
-    return stylesData
+    return res
 }
 
 const stylePosCache = new Map<string, string>()
