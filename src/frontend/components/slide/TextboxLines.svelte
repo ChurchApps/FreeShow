@@ -234,7 +234,7 @@
             // Dynamically reserve inline horizontal space per trailing chord with generous spacing
             chords.forEach((chord) => {
                 html += `<span class="chord end" data-autosize-ratio="${autosizeRatio}">${chord.key}</span>`
-                const widthEm = Math.max(1.5, (chord.key.length * 0.65 * autosizeRatio) + 0.8).toFixed(2)
+                const widthEm = Math.max(1.5, chord.key.length * 0.65 * autosizeRatio + 0.8).toFixed(2)
                 html += `<span class="invisible trailing-space" style="display: inline-block; width: ${widthEm}em; white-space: nowrap;"></span>`
             })
 
@@ -488,7 +488,8 @@
 
     .break {
         /* prevent line-breaks in HTML to affect content, like "text-align: justify;" */
-        display: table;
+        /* this breaks how the text works in specific scenarios, so fixing would be hard */
+        /* display: table; */
 
         width: 100%;
         /* line-height: normal; */
