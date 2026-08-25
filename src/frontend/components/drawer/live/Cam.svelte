@@ -131,9 +131,11 @@
                 <track kind="captions" />
             </video>
         {/if}
-        <video style="width: 100%;height: 100%;{style}" bind:this={videoElem}>
-            <track kind="captions" />
-        </video>
+        <div class="mediaContainer" style={cropState.mediaContainerStyle}>
+            <video style="width: 100%;height: 100%;{style}" bind:this={videoElem}>
+                <track kind="captions" />
+            </video>
+        </div>
     {/if}
 {:else}
     <Card

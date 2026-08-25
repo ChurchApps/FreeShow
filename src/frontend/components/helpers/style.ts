@@ -49,3 +49,17 @@ export function getFilters(filter: string | undefined) {
 export function removeText(value: string): string {
     return value ? value.replace(/[^0-9.-]/g, "") : ""
 }
+
+export function getItemStyle(style: string | undefined, isCropped = false): string {
+    if (!style) return ""
+    if (isCropped) {
+        return style
+            .split(";")
+            .filter((s) => {
+                const k = s.split(":")[0]?.trim()
+                return k && !k.startsWith("border") && k !== "box-shadow"
+            })
+            .join(";")
+    }
+    return style.includes("border-width:") && !style.includes("border-style:") ? `${style};border-style: solid;` : style
+}

@@ -39,9 +39,11 @@
     $: cameraStyleString = `${cropState.mediaCropGeometry}object-fit: ${mediaStyle.fit || "contain"};filter: ${mediaStyle.filter};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 </script>
 
-<video class={$$props.class} bind:this={videoElem} style={cameraStyleString}>
-    <track kind="captions" />
-</video>
+<div class="mediaContainer" style={cropState.mediaContainerStyle}>
+    <video class={$$props.class} bind:this={videoElem} style={cameraStyleString}>
+        <track kind="captions" />
+    </video>
+</div>
 
 <style>
     video {
