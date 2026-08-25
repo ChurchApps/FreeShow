@@ -8,7 +8,7 @@
     import { translateText } from "../../../utils/language"
     import { getKey } from "../../../values/keys"
     import Icon from "../../helpers/Icon.svelte"
-    import { getMediaLayerType, getMediaStyle, getMediaType, loadThumbnail } from "../../helpers/media"
+    import { getMediaStyle, getMediaType, getOutputMediaLayerType, loadThumbnail } from "../../helpers/media"
     import { findMatchingOut, getAllActiveOutputs, getFirstActiveOutput, setOutput } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
     import { clearBackground, clearSlide } from "../../output/clear"
@@ -125,7 +125,7 @@
             return
         }
 
-        let videoType = getMediaLayerType(path, mediaStyle)
+        let videoType = getOutputMediaLayerType(path, mediaStyle)
         let loop = contentProvider || videoType === "foreground" ? false : true
         let muted = videoType === "background" ? true : false
         if (videoType === "foreground") clearSlide()

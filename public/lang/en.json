@@ -1388,6 +1388,7 @@
         "auto_output": "Activate output screen on startup",
         "hide_cursor_in_output": "Hide cursor in output",
         "clear_media_when_finished": "Clear media when finished",
+        "default_media_type": "Default media type",
         "disable_presenter_controller_keys": "Disable presenter controller keys",
         "default_project_name": "Default project name",
         "audio_fade_duration": "Audio fade duration",

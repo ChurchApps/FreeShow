@@ -10,7 +10,7 @@
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortFilenames } from "../../helpers/array"
     import { splitPath } from "../../helpers/get"
-    import { countFolderMediaItems, getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, isMediaExtension, removeExtension } from "../../helpers/media"
+    import { countFolderMediaItems, getExtension, getFileName, getMediaStyle, getMediaType, getOutputMediaLayerType, isMediaExtension, removeExtension } from "../../helpers/media"
     import { getFirstActiveOutput, setOutput } from "../../helpers/output"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -417,13 +417,13 @@
                 const outputStyle = $styles[currentOutput?.style || ""]
                 const mediaStyle = getMediaStyle($media[file.path], outputStyle)
 
-                const videoType = getMediaLayerType(file.path, mediaStyle)
+                const videoType = getOutputMediaLayerType(file.path, mediaStyle)
 
                 // clear slide text
                 if (videoType === "foreground") clearSlide()
 
                 const type = getMediaType(getExtension(file.path))
-                setOutput("background", { path: file.path, ...mediaStyle, type, loop: false, muted: false })
+                setOutput("background", { path: file.path, ...mediaStyle, type, loop: false, muted: false, ignoreLayer: videoType === "foreground" })
                 return
             }
 

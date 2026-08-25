@@ -19,15 +19,8 @@ const defaultMedia = splitIntoRows([
         id: "videoType", // can be image as well
         type: "dropdown",
         value: "",
-        values: {
-            label: "clock.type",
-            defaultValue: "",
-            options: [
-                { value: "", label: "example.default" },
-                { value: "background", label: "preview.background" }, // muted, looping
-                { value: "foreground", label: "preview.foreground" } // unmuted, not looping, will display even when the "Background" layer is turned off.
-            ]
-        }
+        // "mediaTypes" is generated in EditValues, as the default option depends on the global default type
+        values: { label: "clock.type", defaultValue: "", options: "mediaTypes" }
     },
     { id: "fit", type: "dropdown", value: "", values: { label: "media.fit", defaultValue: "", options: [{ value: "", label: "themes.default" }, ...mediaFitOptions] } },
     { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },

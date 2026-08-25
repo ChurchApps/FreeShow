@@ -103,7 +103,7 @@ import { getItemText, getSelectionRange } from "../edit/scripts/textStyle"
 import { clone, removeDuplicates, sortObjectNumbers } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { history, redo, undo } from "../helpers/history"
-import { getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
+import { getExtension, getFileName, getMediaStyle, getMediaType, getOutputMediaLayerType, removeExtension, splitPath } from "../helpers/media"
 import { defaultOutput, getCurrentStyle, getFirstActiveOutput, setOutput, toggleOutput, toggleOutputs } from "../helpers/output"
 import { select } from "../helpers/select"
 import { bindSlidesToOutput, checkName, formatToFileName, getLayoutRef, openShow, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
@@ -1596,14 +1596,14 @@ const clickActions = {
         const outputStyle = get(styles)[currentOutput?.style || ""]
         const mediaStyle: MediaStyle = getMediaStyle(get(media)[path], outputStyle)
 
-        const videoType = getMediaLayerType(path, mediaStyle)
+        const videoType = getOutputMediaLayerType(path, mediaStyle)
 
         // clear slide text
         // if (get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === path)) clearSlide()
         if (videoType === "foreground") clearSlide()
 
         const type = getMediaType(getExtension(path))
-        setOutput("background", { path, ...mediaStyle, type, loop: false, muted: false })
+        setOutput("background", { path, ...mediaStyle, type, loop: false, muted: false, ignoreLayer: videoType === "foreground" })
     },
     play_no_audio: (obj: ObjData) => {
         if (get(outLocked)) return
@@ -1625,12 +1625,15 @@ const clickActions = {
         const path = obj.sel?.data[0]?.path || obj.sel?.data[0]?.id
         if (!path) return
 
-        const videoType = getMediaLayerType(path, get(media)[path])
+        const videoType = getOutputMediaLayerType(path, get(media)[path])
         const loop = videoType === "foreground" ? false : true
         const muted = videoType === "foreground" ? false : true
 
+        // clear slide text
+        if (videoType === "foreground") clearSlide()
+
         const type = getMediaType(getExtension(path))
-        setOutput("background", { path, type, loop, muted })
+        setOutput("background", { path, type, loop, muted, ignoreLayer: videoType === "foreground" })
     },
     favourite: (obj: ObjData) => {
         if (!obj.sel) return

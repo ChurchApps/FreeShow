@@ -2,12 +2,14 @@
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
     import { activeRecording, activeShow, cloudSyncData, drawerTabsData, special } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { videoExtensions } from "../../../values/extensions"
     import { formatBytes } from "../../helpers/bytes"
     import { getExtension, getFileName, getMediaInfo, removeExtension } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Center from "../../system/Center.svelte"
     import Clock from "../../system/Clock.svelte"
@@ -65,6 +67,12 @@
         })
     }
 
+    const mediaTypeOptions = [
+        { value: "", label: translateText("example.default") },
+        { value: "background", label: translateText("preview.background"), icon: "type_background" },
+        { value: "foreground", label: translateText("preview.foreground"), icon: "type_foreground" }
+    ]
+
     // bundle media files
     function bundleMediaFiles() {
         sendMain(Main.BUNDLE_MEDIA_FILES, { openFolder: true })
@@ -79,6 +87,8 @@
     <div class="scroll">
         {#if optionsOpen}
             <main style="overflow-x: hidden;padding: 10px;">
+                <MaterialDropdown label="settings.default_media_type" options={mediaTypeOptions} value={$special.defaultMediaType || ""} defaultValue="" on:change={(e) => updateSpecial(e.detail, "defaultMediaType")} />
+
                 <MaterialToggleSwitch label="settings.clear_media_when_finished" checked={$special.clearMediaOnFinish ?? true} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "clearMediaOnFinish", true)} />
                 <MaterialToggleSwitch label="settings.auto_locate_missing_media_files" checked={$special.autoLocateMedia ?? true} defaultValue={true} on:change={(e) => updateSpecial(e.detail, "autoLocateMedia", true)} />
 

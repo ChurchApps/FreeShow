@@ -5,7 +5,7 @@
     import { translateText } from "../../../utils/language"
     import Image from "../../drawer/media/Image.svelte"
     import Icon from "../../helpers/Icon.svelte"
-    import { getMedia, getMediaLayerType, getMediaStyle } from "../../helpers/media"
+    import { getMedia, getMediaStyle, getOutputMediaLayerType } from "../../helpers/media"
     import { getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
     import HoverButton from "../../inputs/HoverButton.svelte"
     import { clearSlide } from "../../output/clear"
@@ -66,10 +66,10 @@
                     on:click={() => {
                         if ($outLocked) return
 
-                        const type = getMediaLayerType(mediaPath, mediaStyle)
+                        const type = getOutputMediaLayerType(mediaPath, mediaStyle)
                         if (type === "foreground" || type !== "background") clearSlide()
 
-                        setOutput("background", { path: mediaPath, ...mediaStyle })
+                        setOutput("background", { path: mediaPath, ...mediaStyle, ignoreLayer: type === "foreground" })
                     }}
                 >
                     {#if mediaStyle.fit === "blur"}

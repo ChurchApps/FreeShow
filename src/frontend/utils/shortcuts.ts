@@ -11,7 +11,7 @@ import { addItem } from "../components/edit/scripts/itemHelpers"
 import { keysToID, sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
-import { getExtension, getMedia, getMediaLayerType, getMediaStyle, getMediaType } from "../components/helpers/media"
+import { getExtension, getMedia, getMediaStyle, getMediaType, getOutputMediaLayerType } from "../components/helpers/media"
 import { getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
 import { OutputHelper } from "../components/helpers/OutputHelper"
 import { VideoPlayer } from "../components/media/video/videoPlayer"
@@ -506,7 +506,7 @@ export async function togglePlayingMedia(e: Event | null = null, back = false, a
         const mediaData = get(media)[item.id] || {}
         const mediaStyle = getMediaStyle(mediaData, outputStyle)
 
-        const videoType = getMediaLayerType(item.id, mediaStyle)
+        const videoType = getOutputMediaLayerType(item.id, mediaStyle)
         const projectItem = item.index !== undefined ? get(projects)[get(activeProject) || ""]?.shows?.[item.index] : null
         const shouldLoop = typeof projectItem?.loop === "boolean" ? projectItem.loop : videoType === "background" ? true : false
         const shouldBeMuted = typeof projectItem?.muted === "boolean" ? projectItem.muted : videoType === "background" ? true : false
@@ -517,7 +517,7 @@ export async function togglePlayingMedia(e: Event | null = null, back = false, a
         const located = await getMedia(item.id)
         if (!located) return
 
-        setOutput("background", { type, path: located.path, muted: shouldBeMuted, loop: shouldLoop, ...mediaStyle })
+        setOutput("background", { type, path: located.path, muted: shouldBeMuted, loop: shouldLoop, ...mediaStyle, ignoreLayer: videoType === "foreground" })
     } else if (type === "audio") {
         AudioPlayer.start(item.id, { name: (item as any).name || "" }, { pauseIfPlaying: true })
     } else if (type === "folder") {
@@ -548,7 +548,8 @@ export async function playFolder(path: string, back = false) {
     const outputStyle = get(styles)[currentOutput?.style || ""]
     const mediaStyle = getMediaStyle(get(media)[newMedia.path], outputStyle)
 
-    setOutput("background", { type: newMedia.type, path: newMedia.path, muted: false, loop: false, ...mediaStyle, folderPath: path })
+    const videoType = getOutputMediaLayerType(newMedia.path, mediaStyle)
+    setOutput("background", { type: newMedia.type, path: newMedia.path, muted: false, loop: false, ...mediaStyle, folderPath: path, ignoreLayer: videoType === "foreground" })
 
     startFolderTimer(path, newMedia)
 }

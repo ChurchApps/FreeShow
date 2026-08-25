@@ -8,7 +8,7 @@ import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, LayoutRef, Media, OutSlide, Show, Slide, SlideData, Template, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
 import { requestMain, sendMain } from "../../IPC/main"
-import { actions, activeFocus, activeProject, activeRename, activeShow, activeTimers, allOutputs, categories, connections, currentOutputSettings, customMessageCredits, disabledServers, effects, focusMode, lockedOverlays, media, outputDisplay, outputs, outputSlideCache, outputState, overlays, overlayTimers, projects, scriptures, scriptureSettings, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, usageLog } from "../../stores"
+import { actions, activeFocus, activeProject, activeRename, activeShow, activeTimers, allOutputs, categories, connections, currentOutputSettings, customMessageCredits, disabledServers, effects, focusMode, lockedOverlays, outputDisplay, outputs, outputSlideCache, outputState, overlays, overlayTimers, projects, scriptures, scriptureSettings, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, usageLog } from "../../stores"
 import { trackScriptureUsage } from "../../utils/analytics"
 import { isMainWindow, isOutputWindow, newToast } from "../../utils/common"
 import { translateText } from "../../utils/language"
@@ -23,7 +23,7 @@ import type { EditInput } from "../edit/values/boxes"
 import { VideoPlayer } from "../media/video/videoPlayer"
 import { clearBackground, clearSlide } from "../output/clear"
 import { areObjectsEqual, clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
-import { getExtension, getFileName, getMediaLayerType, getMediaType, removeExtension } from "./media"
+import { getExtension, getFileName, getMediaType, removeExtension } from "./media"
 import { getLayoutRef } from "./show"
 import { getFewestOutputLines, getItemWithMostLines } from "./showActions"
 import { _show } from "./shows"
@@ -138,11 +138,11 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             if (overrideCategoryAction) resetActionTrigger = true
             else resetActionTrigger = false
 
-            // if current playing background is "foreground", clear it
+            // if current playing background is "foreground", clear it (revealing any style background)
+            // "ignoreLayer" is set when the media is outputted, don't get the type again here,
+            // as that would also clear backgrounds set by a show/style/template
             const currentBackground = get(outputs)[outs?.[0]]?.out?.background || {}
-            const mediaData = get(media)[currentBackground.path || ""] || {}
-            const mediaType = getMediaLayerType(currentBackground.path || "", mediaData)
-            if (mediaType === "foreground") clearBackground()
+            if (currentBackground.ignoreLayer) clearBackground()
         }
 
         let toggleState = false

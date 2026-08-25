@@ -9,7 +9,7 @@
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import { enableSubtitle, encodeFilePath, getExtension, getFileName, getMediaLayerType, removeExtension } from "../helpers/media"
+    import { enableSubtitle, encodeFilePath, getExtension, getFileName, getOutputMediaLayerType, removeExtension } from "../helpers/media"
     import { getFirstActiveOutput, setOutput } from "../helpers/output"
     import { joinTime, secondsToTime } from "../helpers/time"
     import FloatingInputs from "../input/FloatingInputs.svelte"
@@ -176,7 +176,7 @@
 
     let shouldLoop = false
     let shouldBeMuted = false
-    $: videoType = getMediaLayerType(mediaPath, mediaStyle)
+    $: videoType = getOutputMediaLayerType(mediaPath, mediaStyle)
     $: projectItem = $projects[$activeProject || ""]?.shows?.[show?.index]
     $: if (mediaPath) {
         shouldLoop = typeof projectItem?.loop === "boolean" ? projectItem.loop : videoType === "background" ? true : false

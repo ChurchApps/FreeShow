@@ -16,7 +16,7 @@ import { ondrop } from "../helpers/drop"
 import { dropActions } from "../helpers/dropActions"
 import { history } from "../helpers/history"
 import { setDrawerTabData } from "../helpers/historyHelpers"
-import { encodeFilePath, getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
+import { encodeFilePath, getExtension, getFileName, getMediaStyle, getMediaType, getOutputMediaLayerType, removeExtension } from "../helpers/media"
 import { getActiveOutputs, getAllEnabledOutputs, getCurrentStyle, getFirstActiveOutput, isOutCleared, setOutput } from "../helpers/output"
 import { setRandomValue } from "../helpers/randomValue"
 import { loadShows, setShow } from "../helpers/setShow"
@@ -159,11 +159,11 @@ export async function startProjectItemByName(name: string) {
         const mediaData = get(media)[item.id] || {}
         const mediaStyle = getMediaStyle(mediaData, outputStyle)
 
-        const videoType = getMediaLayerType(item.id, mediaStyle)
+        const videoType = getOutputMediaLayerType(item.id, mediaStyle)
         const shouldLoop = videoType === "background" ? item.loop || true : false
         const shouldBeMuted = videoType === "background" ? item.muted || true : false
 
-        let out = { path: item.id, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type: item.type, ...mediaStyle }
+        let out = { path: item.id, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type: item.type, ...mediaStyle, ignoreLayer: videoType === "foreground" }
 
         // clear slide
         if (videoType === "foreground" || (videoType !== "background" && (item.type === "image" || !shouldLoop))) clearSlide()

@@ -425,6 +425,14 @@ export function getMediaLayerType(path: string, style: MediaStyle | null): "" | 
     return folderData.mediaType || ""
 }
 
+// layer type for media the user is sending to output right now
+// media videoType -> media folder mediaType -> global default -> ""
+// don't use this for media that is already outputted or owned by a show, use "getMediaLayerType"
+export function getOutputMediaLayerType(path: string, style: MediaStyle | null): "" | "background" | "foreground" {
+    if (!path) return ""
+    return getMediaLayerType(path, style) || (get(special).defaultMediaType as "background" | "foreground") || ""
+}
+
 export const mediaSize = {
     big: 900, // stage & editor
     slideSize: 500, // slide + remote

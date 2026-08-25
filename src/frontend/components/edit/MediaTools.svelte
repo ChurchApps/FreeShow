@@ -2,7 +2,7 @@
     import type { TabsObj } from "../../../types/Tabs"
     import { activeEdit, activeShow, media } from "../../stores"
     import { clone } from "../helpers/array"
-    import { getExtension, getMediaType } from "../helpers/media"
+    import { getExtension, getMediaType, getOutputMediaLayerType } from "../helpers/media"
     import { getFirstActiveOutput, setOutput } from "../helpers/output"
     import { removeStore, updateStore } from "../helpers/update"
     import FloatingInputs from "../input/FloatingInputs.svelte"
@@ -96,6 +96,10 @@
         } else {
             bg[input.id] = value
         }
+
+        // the outputted layer is set from the type when the media is outputted
+        if (input.id === "videoType") bg.ignoreLayer = getOutputMediaLayerType(mediaId, { videoType: value }) === "foreground"
+
         setOutput("background", bg)
     }
 

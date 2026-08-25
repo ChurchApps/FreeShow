@@ -289,6 +289,13 @@
                 return sortByName(keysToID($actions)).map((a) => ({ value: a.id, label: a.name || "" }))
             } else if (options === "outputWindows") {
                 return sortByName(keysToID($outputs).filter((a) => a.stageOutput !== $activeStage.id)).map((a) => ({ value: a.id, label: a.name || "" }))
+            } else if (options === "mediaTypes") {
+                // "background" is muted & looping, "foreground" is unmuted, not looping, and will display even when the "Background" layer is turned off
+                return [
+                    { value: "", label: $special.defaultMediaType ? `example.default (preview.${$special.defaultMediaType})` : "example.default" },
+                    { value: "background", label: "preview.background" },
+                    { value: "foreground", label: "preview.foreground" }
+                ]
             } else if (options === "captionTranslateLanguages") {
                 return item?.captions?.googlekey ? [{ value: "", label: "—" }, ...getIsoLanguages()] : captionTranslateLanguages.map((a) => ({ value: a.id, label: a.name }))
             }

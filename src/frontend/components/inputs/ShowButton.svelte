@@ -8,7 +8,7 @@
     import { customIconsColors } from "../../values/customIcons"
     import { history, historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
-    import { encodeFilePath, getExtension, getFileName, getMedia, getMediaLayerType, getMediaStyle, getMediaType, getVideoDuration, mediaSize, removeExtension } from "../helpers/media"
+    import { encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, getOutputMediaLayerType, getVideoDuration, mediaSize, removeExtension } from "../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput, startFolderTimer } from "../helpers/output"
     import { loadShows } from "../helpers/setShow"
     import { checkName, getLayoutRef } from "../helpers/show"
@@ -163,14 +163,14 @@
             const mediaData = $media[id] || {}
             const mediaStyle = getMediaStyle(mediaData, outputStyle)
 
-            const videoType = getMediaLayerType(id, mediaStyle)
+            const videoType = getOutputMediaLayerType(id, mediaStyle)
             const shouldLoop = videoType === "background" ? show.loop || true : false
             const shouldBeMuted = videoType === "background" ? show.muted || true : false
 
             const located = await getMedia(id)
             if (!located) return
 
-            let out = { path: located.path, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type, ...mediaStyle }
+            let out = { path: located.path, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type, ...mediaStyle, ignoreLayer: videoType === "foreground" }
 
             // clear slide
             if (videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))) clearSlide()

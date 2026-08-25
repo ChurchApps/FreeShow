@@ -1,10 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { clearAudio } from "../../../audio/audioFading"
-    import { activeTimers, dictionary, isFadingOut, isTimelinePlaying, labelsDisabled, media, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, styles, timelineRecordingAction } from "../../../stores"
+    import { activeTimers, dictionary, isFadingOut, isTimelinePlaying, labelsDisabled, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, styles, timelineRecordingAction } from "../../../stores"
     import { presentationControllersKeysDisabled } from "../../../utils/shortcuts"
     import Icon from "../../helpers/Icon.svelte"
-    import { getMediaLayerType } from "../../helpers/media"
     import { getActiveOutputs, getOutputContent, isOutCleared } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -71,7 +70,6 @@
     $: canDisplayStyleBG = !outputStyle.clearStyleBackgroundOnText || (!output.out?.slide && !output.out?.background)
     $: styleBackground = backgroundCleared && !$outLocked && outputStyle.backgroundImage && canDisplayStyleBG
     $: outBackground = output.out?.background || {}
-    $: backgroundData = $media[outBackground.path || ""] || {}
 
     $: isScripture = outputContent?.id === "temp"
     $: isMetronome = $playingMetronome && !Object.keys($playingAudio).length
@@ -140,7 +138,8 @@
             </div>
         {/if}
 
-        {#if getMediaLayerType(outBackground.path || "", backgroundData) !== "foreground" || !slideCleared}
+        <!-- "ignoreLayer" is set when the media is outputted, don't get the type again here -->
+        {#if !outBackground.ignoreLayer || !slideCleared}
             <div class="combinedButton">
                 <MaterialButton style="padding: 0.3em 0.6em;" disabled={$outLocked || slideCleared} title="clear.slide  [F2]" on:click={() => clear("slide")} red>
                     <!-- PDFs are visually the background layer as it is toggled by the style "Background" layer, but it behaves as a slide in the code -->
