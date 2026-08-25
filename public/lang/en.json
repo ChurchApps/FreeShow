@@ -1343,6 +1343,7 @@
         "minutes": "minutes",
         "use24hClock": "Use 24-hour clock",
         "styles_hint": "Create different styles that can be applied to the output to change the look.",
+        "audio_hint": "Route audio inputs, through any channels, to audio outputs. A channel is used to control and tweak the audio signal.",
         "outputs_hint": "Create multiple output windows, position them on external screens, or send a screen capture.",
         "hide_output_hint": "Double click on the output window to hide it. Hold CTRL to enable dragging.",
         "output_locked": "The output position has been locked!",
