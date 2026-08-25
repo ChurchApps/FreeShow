@@ -21,7 +21,6 @@ export const effectItems = {
     bloom: { default: { blobCount: 25, blurAmount: 60, speed: 2 } },
     mesh_gradient: {
         default: {
-            duration: 24,
             speed: 1,
             motion: 0.07,
             grain: 0,

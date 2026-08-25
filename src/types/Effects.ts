@@ -168,10 +168,7 @@ export interface AuroraItem extends EffectItem<"aurora"> {
 export interface MeshGradientItem extends EffectItem<"mesh_gradient"> {
     /** Control point colours, laid out on a square-ish grid (4, 9, 16, 25 or 36 work best). */
     colors?: string[]
-    /** Seconds for one full loop. Every motion frequency is an integer harmonic of this,
-     *  so the last frame joins the first with no jump. */
-    duration?: number
-    /** Integer multiplier on the motion frequencies. Must stay whole or the loop breaks. */
+    /** Speed multiplier for the motion animation. */
     speed?: number
     /** How far the control points travel, as a fraction of the frame. */
     motion?: number

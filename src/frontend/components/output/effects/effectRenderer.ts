@@ -1524,43 +1524,23 @@ export class EffectRender {
     /// AURORA ///
 
     // MESH GRADIENT
-    // A grid of coloured control points drifting on closed paths, blended with normalised
-    // Gaussian weights. Every frequency is an integer harmonic of the loop, so the frame
-    // after the last one is exactly the first — the loop closes with no crossfade.
-    //
-    // The field is very smooth, so it is computed into a small offscreen buffer and scaled
-    // up, the same trick drawAurora uses. The Gaussian is separable, which lets the whole
-    // per-pixel exp() disappear into two small per-row/per-column tables.
-
-    private parseMeshColor(hex: string): [number, number, number] {
-        const value = (hex || "").trim()
-        if (value.startsWith("#")) {
-            const h = value.slice(1)
-            if (h.length === 3) return [parseInt(h[0] + h[0], 16), parseInt(h[1] + h[1], 16), parseInt(h[2] + h[2], 16)]
-            if (h.length >= 6) return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]
-        }
-        const rgb = value.match(/\d+(\.\d+)?/g)
-        if (rgb && rgb.length >= 3) return [Number(rgb[0]), Number(rgb[1]), Number(rgb[2])]
-        return [128, 128, 128]
-    }
-
-    private meshDefaults(): string[] {
-        // a calm dusk palette, replaced as soon as the user picks colours
-        return ["#101020", "#101020", "#131426", "#15162b", "#1a1b33", "#1d1e38", "#1b1c33", "#22243f", "#2b2d4d", "#3a3a5e", "#4a4468", "#6a5578", "#7c5f7a", "#a2757e", "#c98d80", "#e0a98c"]
-    }
+    private meshDefaults = [
+        "#101020", "#101020", "#131426", "#15162b", "#1a1b33", "#1d1e38", "#1b1c33", "#22243f",
+        "#2b2d4d", "#3a3a5e", "#4a4468", "#6a5578", "#7c5f7a", "#a2757e", "#c98d80", "#e0a98c"
+    ]
 
     initMeshGradient(item: MeshGradientItem) {
-        const list = item.colors?.length ? item.colors : this.meshDefaults()
+        const list = item.colors?.length ? item.colors : this.meshDefaults
         const count = list.length
         const cols = Math.max(2, Math.round(Math.sqrt(count)))
         const rows = Math.max(2, Math.ceil(count / cols))
 
         const colors = new Float32Array(cols * rows * 3)
         for (let k = 0; k < cols * rows; k++) {
-            const [r, g, b] = this.parseMeshColor(list[k % count])
-            colors[k * 3] = r
-            colors[k * 3 + 1] = g
-            colors[k * 3 + 2] = b
+            const rgb = this.hexToRgb(list[k % count]) || { r: 128, g: 128, b: 128 }
+            colors[k * 3] = rgb.r
+            colors[k * 3 + 1] = rgb.g
+            colors[k * 3 + 2] = rgb.b
         }
 
         const existing = this.effectData.get(item)
@@ -1569,9 +1549,6 @@ export class EffectRender {
             return
         }
 
-        // Fixed buffer size. The field's finest feature spans about a sixth of the frame,
-        // so this still gives roughly ten samples across it — the upscale below cannot tell
-        // the difference, and the per-pixel cost drops with the square of the size.
         const bw = 128
         const bh = 72
         const buffer = document.createElement("canvas")
@@ -1579,8 +1556,7 @@ export class EffectRender {
         buffer.height = bh
         const bufferCtx = buffer.getContext("2d")!
         const image = bufferCtx.createImageData(bw, bh)
-        const pixels = image.data
-        for (let i = 3; i < pixels.length; i += 4) pixels[i] = 255
+        for (let i = 3; i < image.data.length; i += 4) image.data[i] = 255
 
         this.effectData.set(item, {
             buffer,
@@ -1593,9 +1569,6 @@ export class EffectRender {
             colors,
             time: 0,
             grainPattern: null,
-            px: new Float32Array(cols * rows),
-            py: new Float32Array(cols * rows),
-            pw: new Float32Array(cols * rows),
             ex: new Float32Array(cols * rows * bw),
             ey: new Float32Array(cols * rows * bh)
         })
@@ -1623,15 +1596,12 @@ export class EffectRender {
         const data = this.effectData.get(item)
         if (!data) return
 
-        const { bw, bh, cols, rows, colors, image, px, py, pw, ex, ey } = data
+        const { bw, bh, cols, rows, colors, image, ex, ey } = data
         const n = cols * rows
-
-        const duration = Math.max(1, item.duration ?? 24)
-        const speed = Math.max(1, Math.round(item.speed ?? 1))
+        const speed = (item.speed ?? 1) * 0.05
         const motion = item.motion ?? 0.07
 
-        // deltaTime arrives in 16 ms units (see start()), so this is seconds over the loop
-        data.time = (data.time + (deltaTime * 16) / 1000 / duration) % 1
+        data.time += speed * 0.016 * deltaTime
         const t = data.time
 
         const sx = 0.15
@@ -1640,33 +1610,22 @@ export class EffectRender {
         for (let j = 0; j < rows; j++) {
             for (let i = 0; i < cols; i++) {
                 const k = j * cols + i
-                // integer harmonics keep the loop seamless; speed scales them all at once
-                const f1 = (1 + ((i + j) % 3)) * speed
-                const f2 = (1 + ((i * 2 + j) % 2)) * speed
-                const f3 = (1 + ((i + j * 2) % 3)) * speed
                 const phase = i * 1.7 + j * 3.1
+                const cx = (i + 0.5) / cols + motion * Math.sin(t * (1 + ((i + j) % 3)) + phase)
+                const cy = (j + 0.5) / rows + motion * Math.cos(t * (1 + ((i * 2 + j) % 2)) + phase * 1.3) * 0.62
+                const pw = Math.max(0, 1 + 0.28 * Math.sin(t * (1 + ((i + j * 2) % 3)) + phase * 0.7)) + 1e-5
 
-                px[k] = (i + 0.5) / cols + motion * Math.sin(this.doublePI * f1 * t + phase)
-                py[k] = (j + 0.5) / rows + motion * Math.cos(this.doublePI * f2 * t + phase * 1.3) * 0.62
-                pw[k] = Math.max(0, 1 + 0.28 * Math.sin(this.doublePI * f3 * t + phase * 0.7)) + 1e-5
-            }
-        }
+                const baseX = k * bw
+                for (let x = 0; x < bw; x++) {
+                    const d = ((x + 0.5) / bw - cx) / sx
+                    ex[baseX + x] = Math.exp(-0.5 * d * d)
+                }
 
-        // separable Gaussian: exp() only runs n*(bw+bh) times instead of n*bw*bh
-        for (let k = 0; k < n; k++) {
-            const base = k * bw
-            const cx = px[k]
-            for (let x = 0; x < bw; x++) {
-                const d = ((x + 0.5) / bw - cx) / sx
-                ex[base + x] = Math.exp(-0.5 * d * d)
-            }
-        }
-        for (let k = 0; k < n; k++) {
-            const base = k * bh
-            const cy = py[k]
-            for (let y = 0; y < bh; y++) {
-                const d = ((y + 0.5) / bh - cy) / sy
-                ey[base + y] = Math.exp(-0.5 * d * d) * pw[k]
+                const baseY = k * bh
+                for (let y = 0; y < bh; y++) {
+                    const d = ((y + 0.5) / bh - cy) / sy
+                    ey[baseY + y] = Math.exp(-0.5 * d * d) * pw
+                }
             }
         }
 
@@ -1694,34 +1653,26 @@ export class EffectRender {
         }
         data.bufferCtx.putImageData(image, 0, 0)
 
-        const ctx = this.ctx
         const p = this.pos(item)
-        ctx.save()
-        ctx.imageSmoothingEnabled = true
-        ctx.imageSmoothingQuality = "high"
-        ctx.drawImage(data.buffer, p.x, p.y, p.xEnd - p.x, p.yEnd - p.y)
+        this.ctx.save()
+        this.ctx.imageSmoothingEnabled = true
+        this.ctx.imageSmoothingQuality = "high"
+        this.ctx.drawImage(data.buffer, p.x, p.y, p.xEnd - p.x, p.yEnd - p.y)
 
         const grain = item.grain ?? 0
         if (grain > 0) {
             const pattern = this.meshGrain(data)
             if (pattern) {
-                // Film grain should sit still and be replaced, not slide. Stepping the
-                // offset smoothly made the noise crawl across the frame far faster than
-                // the gradient itself moved. Instead the tile jumps to a decorrelated
-                // offset a fixed number of times per loop, which reads as grain and stays
-                // loop safe because the step count divides the loop exactly.
-                const steps = 24
-                const step = Math.floor(t * steps) % steps
-                const ox = (Math.imul(step + 1, 2654435761) >>> 25) % 128
-                const oy = (Math.imul(step + 1, 1597334677) >>> 25) % 128
-                ctx.globalAlpha = Math.min(0.5, grain)
-                ctx.globalCompositeOperation = "overlay"
-                ctx.translate(-ox, -oy)
-                ctx.fillStyle = pattern
-                ctx.fillRect(p.x + ox, p.y + oy, p.xEnd - p.x, p.yEnd - p.y)
+                const ox = (Math.sin(t * 10) * 64 + 64) | 0
+                const oy = (Math.cos(t * 10) * 64 + 64) | 0
+                this.ctx.globalAlpha = Math.min(0.5, grain)
+                this.ctx.globalCompositeOperation = "overlay"
+                this.ctx.translate(-ox, -oy)
+                this.ctx.fillStyle = pattern
+                this.ctx.fillRect(p.x + ox, p.y + oy, p.xEnd - p.x, p.yEnd - p.y)
             }
         }
-        ctx.restore()
+        this.ctx.restore()
     }
 
     initAurora(item: AuroraItem) {
