@@ -167,9 +167,6 @@
         updateTimeout = setTimeout(resetAutoSize, 3000)
 
         function resetAutoSize() {
-            // the editbox re-fits live from the updated item style, this only clears the stored size used
-            // as a first paint value by the previews/output (they self invalidate through buildAutoSizeSignature)
-            // - don't refresh the edit slide, that remounts the editor and drops the caret
             showsCache.update((a) => {
                 if (!a[currentShowId]?.slides?.[slideId]?.items?.[activeItems[0] || 0]?.autoFontSize) return a
 

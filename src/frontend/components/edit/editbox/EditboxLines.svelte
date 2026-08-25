@@ -45,13 +45,11 @@
 
         setTimeout(() => {
             loaded = true
-            // instant first paint from the stored output size, then always verify against the editor DOM
-            // (that value is measured with different selectors/ratios, so it is only approximate here)
             autoSize = item?.autoFontSize || 0
 
             scheduleAutoSize(true)
 
-            // measuring before a webfont has loaded gives a wrong size, and nothing else would re-trigger it
+            // trigger auto size update after font has loaded
             document.fonts?.ready?.then(() => scheduleAutoSize(true))
         }, 50)
     })
@@ -373,8 +371,7 @@
     let autoSize = 0
     let alignElem: HTMLElement | undefined
 
-    // a measurement is a DOM clone + ~9 forced layouts (~0.3ms for a full slide of text),
-    // so cap it at one per frame while typing and drop to a trailing debounce if one ever gets expensive
+    // cap auto size at one per frame while typing and drop to a trailing debounce if one ever gets expensive
     const SLOW_MEASURE_MS = 6
     const DEBOUNCE_MS = 150
 
@@ -411,14 +408,10 @@
     }
 
     function cancelScheduledAutoSize() {
-        if (autoSizeFrame) {
-            cancelAnimationFrame(autoSizeFrame)
-            autoSizeFrame = 0
-        }
-        if (autosizeTimeout) {
-            clearTimeout(autosizeTimeout)
-            autosizeTimeout = null
-        }
+        if (autoSizeFrame) cancelAnimationFrame(autoSizeFrame)
+        if (autosizeTimeout) clearTimeout(autosizeTimeout)
+        autoSizeFrame = 0
+        autosizeTimeout = null
     }
 
     function runAutoSize() {
@@ -437,13 +430,8 @@
         if (signature === lastSignature) return
         lastSignature = signature
 
-        let defaultFontSize = itemFontSize
-        let maxFontSize
-
-        if (type === "growToFit") {
-            defaultFontSize = 100
-            maxFontSize = itemFontSize
-        }
+        const defaultFontSize = type === "growToFit" ? 100 : itemFontSize
+        const maxFontSize = type === "growToFit" ? itemFontSize : undefined
 
         const measureStart = performance.now()
         autoSize = autosize(alignElem, { type, textQuery: ".edit .break span", defaultFontSize, maxFontSize })
