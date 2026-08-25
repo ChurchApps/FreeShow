@@ -1,11 +1,12 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import type { Item, OutSlide, SlideData, TimelineAction, Transition } from "../../../../types/Show"
-    import { showsCache, slideTimelineSpeedMultiplier } from "../../../stores"
+    import { scriptureSettings, showsCache, slideTimelineSpeedMultiplier, templates } from "../../../stores"
     import { waitUntilValueIsDefined } from "../../../utils/common"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
     import { clone } from "../../helpers/array"
     import { loadCustomFonts } from "../../helpers/fonts"
+    import { getStyleTemplate, slideHasAutoSizeItem } from "../../helpers/output"
     import Textbox from "../../slide/Textbox.svelte"
     import { SlideTimeline } from "../../timeline/SlideTimeline"
     import SlideItemTransition from "../transitions/SlideItemTransition.svelte"
@@ -174,6 +175,18 @@
     // create a stable identifier for precompute + visible textbox coordination
     function createAutoSizeKey(item: Item, index: number) {
         return item?.id ? String(item.id) : `idx-${index}`
+    }
+
+    // the outgoing items hold for the auto size delay while the incoming content calculates its font size,
+    // only the incoming content knows if that is needed (e.g. going from scripture to a regular text slide)
+    $: incomingNeedsAutoSize = slideNeedsAutoSize(currentSlide, outSlide, currentStyle)
+    function slideNeedsAutoSize(slide: any, out: OutSlide, style: any) {
+        if (slide?.items?.some((a: Item) => a.auto && !a.autoFontSize)) return true
+
+        let customTemplate = getStyleTemplate(out, style)
+        if (!Object.keys(customTemplate).length && out?.id === "temp") customTemplate = $templates[$scriptureSettings.template] || {}
+
+        return Object.keys(customTemplate).length ? !!slideHasAutoSizeItem(customTemplate) : false
     }
 
     let isClearingToEmpty = false
@@ -436,7 +449,7 @@
             <!-- Transitioning item: render with animation wrapper inside {#key} -->
             {#key show}
                 {#if show}
-                    <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} globalTransition={transition} currentSlide={current.currentSlide} {item} outSlide={current.outSlide} lines={current.lines} currentStyle={current.currentStyle} let:customSlide let:customItem let:customLines let:customOut let:transition>
+                    <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} {isClearing} {incomingNeedsAutoSize} globalTransition={transition} currentSlide={current.currentSlide} {item} outSlide={current.outSlide} lines={current.lines} currentStyle={current.currentStyle} let:customSlide let:customItem let:customLines let:customOut let:transition>
                         <Textbox
                             backdropFilter={current.slideData?.["backdrop-filter"] || ""}
                             chords={customItem.chords?.enabled}

@@ -10,6 +10,10 @@
     export let globalTransition: Transition
     export let transitionEnabled = false
     export let transitioningBetween = false
+    export let isClearing = false
+    // the auto size delay holds the outgoing item while the incoming content calculates its font size,
+    // so it is only needed when the incoming content actually needs it (this only knows the outgoing item)
+    export let incomingNeedsAutoSize = true
     export let preview = false
     export let item: Item
     export let currentSlide: any = {}
@@ -20,6 +24,27 @@
     let currentlyTransitioning: { [key: string]: any } = {}
 
     $: if (item !== undefined || lines) startTransition()
+
+    // the out transition is set when the item is created, but when clearing there is no new content coming in:
+    // the auto size delay would just keep the item visible on top of any media taking over the output,
+    // and "globalTransition" might have been updated since (e.g. removed when "foreground" media is outputted)
+    $: clearingOutTransition = getClearingOutTransition(globalTransition, item)
+    function getClearingOutTransition(global: Transition, currentItem: Item): Transition {
+        const itemTransition = currentItem?.actions?.transition ? clone(currentItem.actions.transition) : null
+        const transition = itemTransition || global || ({} as Transition)
+        const out = clone(transition.out || transition) as Transition
+
+        if (out.type === "none") out.duration = 0
+
+        // keep a custom "hide" delay, but not the auto size delay
+        const hideDuration = $currentWindow === "output" || preview ? currentItem?.actions?.hideTimer || 0 : 0
+        out.delay = hideDuration ? hideDuration * 1000 : 0
+
+        // delay won't work if no transition
+        if (out.delay && (out.type === "none" || !out.duration)) return { ...out, type: "fade", duration: 1 }
+
+        return out
+    }
 
     // WIP item wait out time will not clear other items without wait time if between transition
     // WIP slide direction from top to bottom is a bit buggy
@@ -51,6 +76,7 @@
 
         let inDelay = 0
         let outDelay = 0
+        let autoSizeDelay = 0
 
         // ITEM IN/OUT DELAY
         let showDuration = $currentWindow === "output" || preview ? item?.actions?.showTimer || 0 : 0
@@ -70,7 +96,8 @@
             const itemNeedsAutoSize = item.auto && !item.autoFontSize
 
             if (templateNeedsAutoSize || itemNeedsAutoSize) {
-                outDelay = 500
+                autoSizeDelay = 500
+                outDelay = autoSizeDelay
                 if (!inDelay) inDelay = outDelay * 0.98
             }
         }
@@ -104,11 +131,17 @@
             currentSlide: clone(currentSlide),
             inTransition,
             outTransition,
-            transitionBetween
+            transitionBetween,
+            autoSizeDelay
         }
 
         currentlyTransitioning[stateId] = state
         currentlyTransitioning = currentlyTransitioning
+    }
+
+    function withoutAutoSizeDelay(out: Transition, autoSizeDelay: number): Transition {
+        if (!autoSizeDelay) return out
+        return { ...out, delay: Math.max(0, (out.delay || 0) - autoSizeDelay) }
     }
 
     // only update if new ID! Previous is removed, but output should not update until a new value is set
@@ -122,7 +155,7 @@
 </script>
 
 {#each Object.values(currentOut) as transitioning}
-    <OutputTransition inTransition={transitionEnabled ? transitioning.inTransition : null} outTransition={transitionEnabled ? (transitioningBetween ? transitioning.transitionBetween : transitioning.outTransition) : null}>
+    <OutputTransition inTransition={transitionEnabled ? transitioning.inTransition : null} outTransition={transitionEnabled ? (isClearing ? clearingOutTransition : withoutAutoSizeDelay(transitioningBetween ? transitioning.transitionBetween : transitioning.outTransition, incomingNeedsAutoSize ? 0 : transitioning.autoSizeDelay)) : null}>
         <slot customItem={transitioning.item} customLines={transitioning.lines} customOut={transitioning.outSlide} customSlide={transitioning.currentSlide} transition={transitionEnabled ? transitioning.inTransition : null} />
     </OutputTransition>
 {/each}
