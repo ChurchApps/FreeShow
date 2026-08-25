@@ -2,7 +2,7 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Event } from "../../../../types/Calendar"
-    import { activeDays, activePopup, drawerTabsData, eventEdit, events, popupData, special } from "../../../stores"
+    import { activeDays, activePopup, calendars, drawerTabsData, eventEdit, events, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import CreateAction from "../../actions/CreateAction.svelte"
     import { getTime, isSameDay } from "../../drawer/calendar/calendar"
@@ -280,8 +280,8 @@
 
     let showMore = false
 
-    $: customCalendars = Object.values($special?.calendars || {}).filter((cal: any) => !isCalendarImported(cal))
-    $: currentCal = editEvent.origin ? $special?.calendars?.[editEvent.origin] || Object.values($special?.calendars || {}).find((c: any) => c.name === editEvent.origin) : null
+    $: customCalendars = Object.values($calendars || {}).filter((cal: any) => !isCalendarImported(cal))
+    $: currentCal = editEvent.origin ? $calendars?.[editEvent.origin] || Object.values($calendars || {}).find((c: any) => c.name === editEvent.origin) : null
     $: isCurrentOriginImported = editEvent.origin ? (currentCal ? isCalendarImported(currentCal) : false) : false
 
     $: calendarOptions = isCurrentOriginImported
@@ -302,16 +302,16 @@
 
     function handleCalendarChange(calId: string) {
         editEvent.origin = calId || undefined
-        if (calId && $special?.calendars?.[calId]?.color) {
-            editEvent.color = $special.calendars[calId].color
+        if (calId && $calendars?.[calId]?.color) {
+            editEvent.color = $calendars[calId].color
         }
     }
 
     function handleCreateCalendar(name: string) {
         const newCalId = createCustomCalendar(name)
         editEvent.origin = newCalId
-        if ($special?.calendars?.[newCalId]?.color) {
-            editEvent.color = $special.calendars[newCalId].color
+        if ($calendars?.[newCalId]?.color) {
+            editEvent.color = $calendars[newCalId].color
         }
     }
 </script>

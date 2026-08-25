@@ -5,7 +5,7 @@ import { getAvailableColor } from "../components/drawer/calendar/calendars"
 import { createRepeatedEvents } from "../components/drawer/calendar/event"
 import { clone } from "../components/helpers/array"
 import { addZero } from "../components/helpers/time"
-import { events, special } from "../stores"
+import { calendars, events } from "../stores"
 
 // https://github.com/adrianlee44/ical2json/blob/main/src/ical2json.ts
 const NEW_LINE = /\r\n|\n|\r/
@@ -115,14 +115,14 @@ export function convertCalendar(data: any) {
         const icaEvents: VEvent[] = object.VCALENDAR?.[0]?.VEVENT || []
         if (!icaEvents.length) return
 
-        const currentSpecial = get(special)
+        const currentCalendars = get(calendars)
         const calName = name ? name.replace(/\.ics$/i, "").trim() : "Calendar"
         let calId = id
         let existingCal: any = null
-        if (calId && currentSpecial?.calendars?.[calId]) {
-            existingCal = currentSpecial.calendars[calId]
+        if (calId && currentCalendars?.[calId]) {
+            existingCal = currentCalendars[calId]
         } else {
-            existingCal = Object.values(currentSpecial?.calendars || {}).find((c: any) => (calId && c.id === calId) || (c.name && c.name.toLowerCase() === calName.toLowerCase()) || (name && c.name && c.name.toLowerCase() === name.toLowerCase()))
+            existingCal = Object.values(currentCalendars || {}).find((c: any) => (calId && c.id === calId) || (c.name && c.name.toLowerCase() === calName.toLowerCase()) || (name && c.name && c.name.toLowerCase() === name.toLowerCase()))
             if (existingCal) {
                 calId = existingCal.id
             }
@@ -134,18 +134,17 @@ export function convertCalendar(data: any) {
 
         const calendarColor = color || existingCal?.color || getAvailableColor(calId, currentEvents, assignedColors)
 
-        special.update((a) => {
-            if (!a.calendars) a.calendars = {}
-            if (!a.calendars[calId]) {
-                a.calendars[calId] = {
+        calendars.update((a) => {
+            if (!a[calId]) {
+                a[calId] = {
                     id: calId,
                     name: calName,
                     color: calendarColor,
                     custom: false
                 }
             } else {
-                if (color) a.calendars[calId].color = color
-                if (name && !a.calendars[calId].name) a.calendars[calId].name = calName
+                if (color) a[calId].color = color
+                if (name && !a[calId].name) a[calId].name = calName
             }
             return a
         })

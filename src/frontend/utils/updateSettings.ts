@@ -25,6 +25,7 @@ import {
     autoOutput,
     autosave,
     calendarAddShow,
+    calendars,
     categories,
     cloudSyncData,
     companion,
@@ -358,6 +359,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     emitters: (v: any) => emitters.set(v),
     midiIn: (v: any) => actions.set(v),
     videoMarkers: (v: any) => videoMarkers.set(v),
+    calendars: (v: any) => calendars.set(v),
     mediaTags: (v: any) => mediaTags.set(v),
     playerTags: (v: any) => playerTags.set(v),
     actionTags: (v: any) => actionTags.set(v),
@@ -422,6 +424,12 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
             delete v.deletedEffects
         }
         if (Object.keys(deletedDefaultsValue).length) deletedDefaults.set(deletedDefaultsValue)
+
+        // DEPRECATED (migrate) - only in 1.6.5-beta
+        if (v.calendars && !Object.keys(get(calendars)).length) {
+            calendars.set(v.calendars)
+            delete v.calendars
+        }
 
         special.set(v)
     },

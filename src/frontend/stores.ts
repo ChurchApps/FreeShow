@@ -291,6 +291,7 @@ export const templates: Writable<Templates> = writable({}) // {default}
 export const globalRegexes: Writable<{ [key: string]: { label: string; value: string } }> = writable({}) // {}
 
 // CALENDAR
+export const calendars: Writable<{ [key: string]: any }> = writable({}) // {}
 export const events: Writable<{ [key: string]: Event }> = writable({}) // {}
 export const calendarAddShow: Writable<string> = writable("") // ""
 
@@ -484,7 +485,8 @@ export const $ = {
     ports,
     maxConnections,
     remotePassword,
-    providerConnections
+    providerConnections,
+    calendars
 }
 
 // DEBUG STORE UPDATES

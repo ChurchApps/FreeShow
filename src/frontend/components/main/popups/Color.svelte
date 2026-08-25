@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import { activePopup, activeProject, activeShow, audioRouting, editingProjectTemplate, effects, globalTags, outputs, overlays, profiles, projects, projectTemplates, selected, showsCache, special, templates } from "../../../stores"
+    import { activePopup, activeProject, activeShow, audioRouting, calendars, editingProjectTemplate, effects, globalTags, outputs, overlays, profiles, projects, projectTemplates, selected, showsCache, special, templates } from "../../../stores"
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -33,7 +33,7 @@
         else if (selection.id === "tag") value = $globalTags[data.id]?.color || ""
         else if (selection.id === "show") value = ($editingProjectTemplate ? $projectTemplates[$editingProjectTemplate] : $projects[$activeProject || ""])?.shows?.[data.index]?.color || ""
         else if (selection.id === "audio_channel") value = $audioRouting?.channels?.find((a) => a.id === data.id)?.color || ""
-        else if (selection.id === "calendar") value = $special?.calendars?.[data.id]?.color || selection.data[0]?.color || ""
+        else if (selection.id === "calendar") value = $calendars?.[data.id]?.color || selection.data[0]?.color || ""
     })
 
     const actions = {

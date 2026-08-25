@@ -1,11 +1,11 @@
 <script lang="ts">
     import type { Line, SlideData } from "../../../../types/Show"
-    import { activePopup, activeShow, audioRouting, customScriptureBooks, drawerTabsData, effectsLibrary, scripturesCache, selected, showsCache, special } from "../../../stores"
+    import { activePopup, activeShow, audioRouting, calendars, customScriptureBooks, drawerTabsData, effectsLibrary, scripturesCache, selected, showsCache } from "../../../stores"
+    import { renameCalendar } from "../../drawer/calendar/calendars"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
-    import { renameCalendar } from "../../drawer/calendar/calendars"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
@@ -43,7 +43,7 @@
             groupName = channel?.name || ""
         } else if ($selected.id === "calendar") {
             const calId = selectionData[0]?.id
-            groupName = $special?.calendars?.[calId]?.name || ""
+            groupName = $calendars?.[calId]?.name || ""
         } else if (selectionData[0]?.name) {
             groupName = selectionData[0].name
         }
