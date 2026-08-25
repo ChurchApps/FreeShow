@@ -480,7 +480,7 @@
             customTypeRatio = verseItemSize / 100 || 1
 
             defaultFontSize = itemFontSize
-            if (textFit === "growToFit" && isTextItem && itemFontSize > 100) maxFontSize = itemFontSize
+            if (textFit === "growToFit" && isTextItem) maxFontSize = itemFontSize
         }
 
         elem = itemElem
