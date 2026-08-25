@@ -72,6 +72,7 @@
 
     $: bgPath = item?.src
     $: if (bgPath) loadMedia()
+    else mediaPath = ""
     async function loadMedia() {
         if (item.type !== "media") return
 
