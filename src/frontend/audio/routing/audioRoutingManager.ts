@@ -197,7 +197,17 @@ export class AudioRoutingManager {
 
         const targetGain = chData.isMuted ? 0 : Math.max(0, vol)
         try {
-            gainNode.gain.setValueAtTime(targetGain, this.audioCtx.currentTime)
+            const currentTime = this.audioCtx.currentTime
+            const currentGain = gainNode.gain.value
+
+            // when changing volume (or mute state) fade for 250ms instead of cutting
+            if (Math.abs(currentGain - targetGain) > 0.001) {
+                gainNode.gain.cancelScheduledValues(currentTime)
+                gainNode.gain.setValueAtTime(currentGain, currentTime)
+                gainNode.gain.linearRampToValueAtTime(targetGain, currentTime + 0.25)
+            } else {
+                gainNode.gain.setValueAtTime(targetGain, currentTime)
+            }
         } catch {}
 
         const delaySec = Math.max(0, Math.min(5, (chData.delay || 0) / 1000))
