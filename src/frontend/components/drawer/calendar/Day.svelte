@@ -71,7 +71,7 @@
                                 {#if isSameDay(new Date(event.from), current)}
                                     {getTime(new Date(event.from))}
                                 {/if}
-                                {#if !isSameDay(new Date(event.from), current) || new Date(event.to).getTime() > new Date(event.from).getTime()}
+                                {#if type !== "action" && (!isSameDay(new Date(event.from), current) || new Date(event.to).getTime() > new Date(event.from).getTime())}
                                     {#if isSameDay(new Date(event.to), current)}
                                         {#if isSameDay(new Date(event.from), current)}
                                             -
