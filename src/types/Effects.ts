@@ -172,6 +172,10 @@ export interface MeshGradientItem extends EffectItem<"mesh_gradient"> {
     speed?: number
     /** How far the control points travel, as a fraction of the frame. */
     motion?: number
+    /** Gaussian spread / softness multiplier. Higher = softer and smoother color blending. */
+    spread?: number
+    /** Grid density (number of control points along width and height, e.g. 4 for 4x4). */
+    density?: number
     /** Film-grain overlay, 0 disables it. */
     grain?: number
 }

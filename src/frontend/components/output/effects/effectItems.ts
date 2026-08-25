@@ -23,6 +23,8 @@ export const effectItems = {
         default: {
             speed: 1,
             motion: 0.07,
+            spread: 1,
+            density: 4,
             grain: 0,
             colors: ["#101020", "#111124", "#141530", "#181a3a", "#1e2044", "#24264e", "#2b2c58", "#3a3663", "#4d4270", "#65517d", "#7d5f83", "#9b7288", "#b98a8b", "#d2a48f", "#e4bd9b", "#f0d3ae"]
         }

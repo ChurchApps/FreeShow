@@ -1698,8 +1698,9 @@
         "arm_count": "Arm count",
         "drift": "Drift",
         "pulse_speed": "Pulse speed",
-        "duration": "Loop duration",
         "motion": "Motion",
+        "spread": "Spread",
+        "density": "Density",
         "grain": "Grain",
         "hollow": "Hollow"
     },

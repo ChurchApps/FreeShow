@@ -1532,8 +1532,13 @@ export class EffectRender {
     initMeshGradient(item: MeshGradientItem) {
         const list = item.colors?.length ? item.colors : this.meshDefaults
         const count = list.length
-        const cols = Math.max(2, Math.round(Math.sqrt(count)))
-        const rows = Math.max(2, Math.ceil(count / cols))
+        let cols = Math.max(2, Math.round(Math.sqrt(count)))
+        let rows = Math.max(2, Math.ceil(count / cols))
+
+        if (item.density && item.density >= 2) {
+            cols = Math.max(2, Math.min(10, Math.round(item.density)))
+            rows = cols
+        }
 
         const colors = new Float32Array(cols * rows * 3)
         for (let k = 0; k < cols * rows; k++) {
@@ -1600,12 +1605,13 @@ export class EffectRender {
         const n = cols * rows
         const speed = (item.speed ?? 1) * 0.05
         const motion = item.motion ?? 0.07
+        const spread = Math.max(0.1, item.spread ?? 1)
 
         data.time += speed * 0.016 * deltaTime
         const t = data.time
 
-        const sx = 0.15
-        const sy = 0.135
+        const sx = 0.15 * spread
+        const sy = 0.135 * spread
 
         for (let j = 0; j < rows; j++) {
             for (let i = 0; i < cols; i++) {
