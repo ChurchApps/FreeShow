@@ -172,7 +172,10 @@
             audioRouting.update((c) => {
                 const list = c?.channels || []
                 const channel = list.find((m) => m.id === channelId)
-                if (channel) channel.name = groupName
+                if (channel) {
+                    channel.name = groupName
+                    delete channel.outputLink
+                }
                 return { ...c, channels: list, connections: c?.connections || [] }
             })
         },

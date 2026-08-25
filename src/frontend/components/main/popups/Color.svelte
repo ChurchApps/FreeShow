@@ -112,7 +112,10 @@
             const id = selection.data[0]?.id
             audioRouting.update((a) => {
                 const index = (a?.channels || []).findIndex((c) => c.id === id)
-                if (index !== -1) a!.channels[index].color = value
+                if (index !== -1) {
+                    a!.channels[index].color = value
+                    delete a!.channels[index].outputLink
+                }
                 return a
             })
         },
