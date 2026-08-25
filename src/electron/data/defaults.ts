@@ -91,7 +91,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
 export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     categories: {
         song: { name: "category.song", icon: "song", default: true },
-        presentation: { name: "category.presentation", icon: "presentation", default: true }
+        presentation: { name: "category.presentation", icon: "presentation", default: true },
+        planning_center: { name: "category.planning_center", icon: "conversation", default: true }
     },
     drawSettings: {},
     overlayCategories: {
