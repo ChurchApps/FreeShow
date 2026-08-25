@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { MediaStyle } from "../../../../types/Main"
-    import { activeEdit, activePopup, activeShow, alertMessage, editMode, focusMode, media, outputs, overlays, playerVideos, refreshEditSlide, resized, showsCache, slideNotesActive, special, styles } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, alertMessage, editMode, focusMode, media, outputs, overlays, playerVideos, resized, showsCache, slideNotesActive, special, styles } from "../../../stores"
     import { transposeText } from "../../../utils/chordTranspose"
     import { DEFAULT_WIDTH } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
@@ -167,14 +167,15 @@
         updateTimeout = setTimeout(resetAutoSize, 3000)
 
         function resetAutoSize() {
+            // the editbox re-fits live from the updated item style, this only clears the stored size used
+            // as a first paint value by the previews/output (they self invalidate through buildAutoSizeSignature)
+            // - don't refresh the edit slide, that remounts the editor and drops the caret
             showsCache.update((a) => {
                 if (!a[currentShowId]?.slides?.[slideId]?.items?.[activeItems[0] || 0]?.autoFontSize) return a
 
                 delete a[currentShowId].slides[slideId].items[activeItems[0] || 0].autoFontSize
                 return a
             })
-
-            refreshEditSlide.set(true)
         }
     }
 

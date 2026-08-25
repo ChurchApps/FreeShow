@@ -36,86 +36,84 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
     const boxElem = virtualElem()
     if (!boxElem) return defaultFontSize
 
-    const boxWidth = boxElem.clientWidth
-    const boxHeight = boxElem.clientHeight
+    // the clone is measured up to once per frame while editing, always remove it (even on a throw)
+    try {
+        const boxWidth = boxElem.clientWidth
+        const boxHeight = boxElem.clientHeight
 
-    let textChildren: HTMLElement[] | HTMLCollection = []
-    if (textQuery) textChildren = boxElem.querySelectorAll(textQuery) as any
-    if (!textChildren.length) textChildren = boxElem.children.length ? boxElem.children : [boxElem]
+        let textChildren: HTMLElement[] | HTMLCollection = []
+        if (textQuery) textChildren = boxElem.querySelectorAll(textQuery) as any
+        if (!textChildren.length) textChildren = boxElem.children.length ? boxElem.children : [boxElem]
 
-    let fontSize = defaultFontSize // maxFontSize * 0.5
-    const styles: string[] = []
-    addStyleToElemText(fontSize)
-
-    if (type === "shrinkToFit") {
-        if (!textIsBiggerThanBox()) {
-            // don't change the font size
-            return finish(defaultFontSize)
-        }
-        // shrinkToFit is same as growToFit if text is larger
-    }
-
-    let lowestValue = minFontSize
-    let highestValue = maxFontSize
-    let previousSize = 0
-
-    size()
-
-    const finalResult = Math.min(maxFontSize, lowestValue)
-
-    // prefer lowest value (due to margin)
-    return finish(finalResult)
-
-    function finish(value: number) {
-        boxElem!.remove()
-        return value
-    }
-
-    function size() {
-        if (textIsBiggerThanBox()) highestValue = fontSize - 1
-        else lowestValue = fontSize
-
-        // if difference is less than 2px margin, return early
-        if (highestValue - lowestValue < PRECISION) return
-
-        // always double/half the amount for the quickest search
-        fontSize = (highestValue + lowestValue) * 0.5
-
-        // prevent loops
-        if (Math.abs(fontSize - previousSize) < 1) return
-        previousSize = fontSize
-
+        let fontSize = defaultFontSize // maxFontSize * 0.5
+        const styles: string[] = []
         addStyleToElemText(fontSize)
-        size()
-    }
 
-    function textIsBiggerThanBox() {
-        return boxElem!.scrollWidth > boxWidth || boxElem!.scrollHeight > boxHeight
-    }
-
-    function addStyleToElemText(currentFontSize: number) {
-        for (const elemWithChordSize of Array.from(boxElem!.querySelectorAll("[data-chord-size-ratio]"))) {
-            const htmlElem = elemWithChordSize as HTMLElement
-            const chordSizeRatio = Number(htmlElem.dataset.chordSizeRatio || "") || 0
-            if (!chordSizeRatio) continue
-
-            htmlElem.style.setProperty("--font-size", `${currentFontSize}px`)
-            htmlElem.style.setProperty("--chord-size", `${currentFontSize * chordSizeRatio}px`)
-        }
-
-        let i = 0
-        for (const textElem of Array.from(textChildren)) {
-            const htmlTextElem = textElem as HTMLElement
-            if (!styles[i]) styles[i] = htmlTextElem.getAttribute("style") || ""
-            const autosizeRatio = Number(htmlTextElem.dataset.autosizeRatio || "") || 1
-            if (styles[i].includes("var(--base-font-size)")) {
-                const newStyle = styles[i].replace(/--base-font-size:\s*[^;]+;?/gi, `--base-font-size: ${currentFontSize * autosizeRatio}px;`)
-                htmlTextElem.setAttribute("style", newStyle + ";overflow:visible;")
-            } else {
-                htmlTextElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${currentFontSize * autosizeRatio}px !important;`)
+        if (type === "shrinkToFit") {
+            if (!textIsBiggerThanBox()) {
+                // don't change the font size
+                return defaultFontSize
             }
-            i++
+            // shrinkToFit is same as growToFit if text is larger
         }
+
+        let lowestValue = minFontSize
+        let highestValue = maxFontSize
+        let previousSize = 0
+
+        size()
+
+        // prefer lowest value (due to margin)
+        return Math.min(maxFontSize, lowestValue)
+
+        function size() {
+            if (textIsBiggerThanBox()) highestValue = fontSize - 1
+            else lowestValue = fontSize
+
+            // if difference is less than 2px margin, return early
+            if (highestValue - lowestValue < PRECISION) return
+
+            // always double/half the amount for the quickest search
+            fontSize = (highestValue + lowestValue) * 0.5
+
+            // prevent loops
+            if (Math.abs(fontSize - previousSize) < 1) return
+            previousSize = fontSize
+
+            addStyleToElemText(fontSize)
+            size()
+        }
+
+        function textIsBiggerThanBox() {
+            return boxElem!.scrollWidth > boxWidth || boxElem!.scrollHeight > boxHeight
+        }
+
+        function addStyleToElemText(currentFontSize: number) {
+            for (const elemWithChordSize of Array.from(boxElem!.querySelectorAll("[data-chord-size-ratio]"))) {
+                const htmlElem = elemWithChordSize as HTMLElement
+                const chordSizeRatio = Number(htmlElem.dataset.chordSizeRatio || "") || 0
+                if (!chordSizeRatio) continue
+
+                htmlElem.style.setProperty("--font-size", `${currentFontSize}px`)
+                htmlElem.style.setProperty("--chord-size", `${currentFontSize * chordSizeRatio}px`)
+            }
+
+            let i = 0
+            for (const textElem of Array.from(textChildren)) {
+                const htmlTextElem = textElem as HTMLElement
+                if (!styles[i]) styles[i] = htmlTextElem.getAttribute("style") || ""
+                const autosizeRatio = Number(htmlTextElem.dataset.autosizeRatio || "") || 1
+                if (styles[i].includes("var(--base-font-size)")) {
+                    const newStyle = styles[i].replace(/--base-font-size:\s*[^;]+;?/gi, `--base-font-size: ${currentFontSize * autosizeRatio}px;`)
+                    htmlTextElem.setAttribute("style", newStyle + ";overflow:visible;")
+                } else {
+                    htmlTextElem.setAttribute("style", styles[i] + `;overflow:visible;font-size: ${currentFontSize * autosizeRatio}px !important;`)
+                }
+                i++
+            }
+        }
+    } finally {
+        boxElem.remove()
     }
 
     function virtualElem() {
@@ -126,6 +124,16 @@ export default function autosize(elem: HTMLElement, { type, textQuery, defaultFo
         cloned.style.position = "absolute"
         cloned.style.opacity = "0"
         // overflow = hidden...
+
+        // the editor clones a live contenteditable (measured up to once per frame while typing),
+        // don't let the browser treat the clone as editable/spellcheckable content
+        cloned.setAttribute("contenteditable", "false")
+        cloned.setAttribute("spellcheck", "false")
+        cloned.setAttribute("aria-hidden", "true")
+        for (const editableElem of Array.from(cloned.querySelectorAll("[contenteditable]"))) {
+            editableElem.setAttribute("contenteditable", "false")
+            editableElem.setAttribute("spellcheck", "false")
+        }
 
         // "include" paddings
         const computedStyle = getComputedStyle(elem)
