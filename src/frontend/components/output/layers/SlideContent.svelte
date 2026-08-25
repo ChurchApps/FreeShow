@@ -225,6 +225,26 @@
         let currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
         let waitToShow = currentTransitionDuration * ((currentTransition?.fadeInOffset ?? 50) / 100)
 
+        const isDifferentSlide = current.currentSlide?.id !== currentSlide?.id || current.outSlide?.index !== outSlide?.index || current.outSlide?.id !== outSlide?.id
+
+        // SAME SLIDE CONTENT REFRESH (e.g. slide edited & re-outputted):
+        // update the items in place without any out/in transition (prevents content blinking)
+        const itemsContentChanged = JSON.stringify(current.currentSlide?.items) !== JSON.stringify(currentSlide.items)
+        if (!isDifferentSlide && itemsContentChanged && show && currentItems.length && currentSlide.items.length) {
+            if (timeout) clearTimeout(timeout)
+            updateGeneration++
+            currentItems = clone(currentSlide.items || [])
+            current = {
+                outSlide: clone(outSlide),
+                slideData: clone(slideData),
+                currentSlide: clone(currentSlide),
+                lines: clone(lines),
+                currentStyle: clone(currentStyle)
+            }
+            transitioningBetween = false
+            return
+        }
+
         // Identify items that are unchanged and have no real transition (to skip redraw)
         const newPersistentIndexes: number[] = []
         const newPersistentItems: Item[] = []
@@ -261,7 +281,6 @@
         persistentItems = newPersistentItems
 
         // between
-        const isDifferentSlide = current.currentSlide?.id !== currentSlide?.id || current.outSlide?.index !== outSlide?.index || current.outSlide?.id !== outSlide?.id
         if (isDifferentSlide && currentItems.length && currentSlide.items.length) transitioningBetween = true
 
         if (timeout) clearTimeout(timeout)

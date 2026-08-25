@@ -28,9 +28,22 @@
     function startTransition() {
         // prevent stacking of the same item on update
         const lastStateId = Object.keys(currentlyTransitioning).pop()
-        if (lastStateId) {
-            const lastState = currentlyTransitioning[lastStateId]
+        const lastState = lastStateId ? currentlyTransitioning[lastStateId] : null
+        if (lastState) {
             if (JSON.stringify(lastState.item) === JSON.stringify(item) && JSON.stringify(lastState.lines) === JSON.stringify(lines) && JSON.stringify(lastState.outSlide) === JSON.stringify(outSlide) && JSON.stringify(lastState.currentSlide) === JSON.stringify(currentSlide)) {
+                return
+            }
+
+            // same slide with only updated item content (content refresh): swap the item in place with no transition
+            const sameSlide = lastState.outSlide?.id === outSlide?.id && lastState.outSlide?.index === outSlide?.index && lastState.currentSlide?.id === currentSlide?.id
+            const sameReveal = lastState.outSlide?.line === outSlide?.line && lastState.outSlide?.revealCount === outSlide?.revealCount && lastState.outSlide?.itemClickReveal === outSlide?.itemClickReveal
+            const sameLines = JSON.stringify(lastState.lines) === JSON.stringify(lines)
+            if (sameSlide && sameReveal && sameLines) {
+                Object.keys(currentlyTransitioning).forEach((id) => {
+                    currentlyTransitioning[id] = { ...currentlyTransitioning[id], item: clone(item), currentSlide: clone(currentSlide) }
+                })
+                currentlyTransitioning = currentlyTransitioning
+                currentOut = clone(currentlyTransitioning) // updateOut() only reacts to new state ids
                 return
             }
         }
