@@ -1524,13 +1524,8 @@ export class EffectRender {
     /// AURORA ///
 
     // MESH GRADIENT
-    private meshDefaults = [
-        "#101020", "#101020", "#131426", "#15162b", "#1a1b33", "#1d1e38", "#1b1c33", "#22243f",
-        "#2b2d4d", "#3a3a5e", "#4a4468", "#6a5578", "#7c5f7a", "#a2757e", "#c98d80", "#e0a98c"
-    ]
-
     initMeshGradient(item: MeshGradientItem) {
-        const list = item.colors?.length ? item.colors : this.meshDefaults
+        const list = item.colors?.length ? item.colors : ["#101020", "#2b2d4d", "#7c5f7a", "#e0a98c"]
         const count = list.length
         let cols = Math.max(2, Math.round(Math.sqrt(count)))
         let rows = Math.max(2, Math.ceil(count / cols))

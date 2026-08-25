@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
     import { translateText } from "../../utils/language"
+    import { hexToHSL, hslToHex } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
     import InputRow from "../input/InputRow.svelte"
     import MaterialButton from "./MaterialButton.svelte"
@@ -20,6 +21,37 @@
 
     let open = false
 
+    function getNextGradientColor(list: string[]): string {
+        if (!list.length) return "#ffffff"
+        if (list.length === 1) {
+            const hsl = hexToHSL(list[0])
+            return hslToHex((hsl.h + 30) % 360, hsl.s || 60, Math.min(85, Math.max(15, hsl.l + 10)))
+        }
+
+        const c1 = list[list.length - 2]
+        const c2 = list[list.length - 1]
+
+        const hsl1 = hexToHSL(c1)
+        const hsl2 = hexToHSL(c2)
+
+        let dh = hsl2.h - hsl1.h
+        if (dh > 180) dh -= 360
+        if (dh < -180) dh += 360
+
+        let ds = hsl2.s - hsl1.s
+        let dl = hsl2.l - hsl1.l
+
+        if (Math.abs(dh) < 1 && Math.abs(ds) < 1 && Math.abs(dl) < 1) {
+            dh = 30
+        }
+
+        const nextH = (hsl2.h + dh + 360) % 360
+        const nextS = Math.min(100, Math.max(5, hsl2.s + ds))
+        const nextL = Math.min(95, Math.max(5, hsl2.l + dl))
+
+        return hslToHex(nextH, nextS, nextL)
+    }
+
     function updateColor(index: number, newColor: string) {
         if (disabled) return
         colors[index] = newColor
@@ -30,8 +62,8 @@
 
     function addColor() {
         if (disabled || colors.length >= maxColors) return
-        const lastColor = colors[colors.length - 1] || "#ffffff"
-        colors = [...colors, lastColor]
+        const nextColor = getNextGradientColor(colors)
+        colors = [...colors, nextColor]
         value = [...colors]
         dispatch("input", value)
         dispatch("change", value)

@@ -195,10 +195,8 @@ function getDefaultEffects() {
         ] as any[]
     }
 
-    // Mesh gradient presets. The colours are the effect's control points, already
-    // solved against its blending kernel, so each renders as the artwork it was
-    // sampled from rather than a washed out average of it.
-    // placeUnderSlide, so they sit behind the slide like the other backgrounds here.
+    // MESH GRADIENT PRESETS
+    // motion backgrounds (placeUnderSlide to behave like backgrounds)
 
     a.gradient_bold = {
         name: "Bold",
