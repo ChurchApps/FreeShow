@@ -341,23 +341,18 @@ export function rotateBox(e: any, mouse: any, ratio: number) {
 const maxRadius = 500
 export const radiusSliderOffset = 20
 export const radiusSliderRatio = 0.8
+export const radiusHandleSize = 6
 export function getRadius(e: any, mouse: any, ratio: number) {
     const itemElem = mouse.e.target.closest(".item")
-    if (!itemElem?.closest(".slide")) return 0
+    const slideRect = itemElem?.closest(".slide")?.getBoundingClientRect()
+    if (!slideRect) return 0
 
-    const sliderStart = radiusSliderOffset
-    const sliderLength = maxRadius * radiusSliderRatio
+    const rot = getResizeRotation(itemElem, mouse)
+    const dx = (e.clientX - slideRect.left) / ratio - (mouse.left + mouse.width / 2)
+    const dy = (e.clientY - slideRect.top) / ratio - (mouse.top + mouse.height / 2)
 
-    const itemOffsetLeft: number = itemElem.offsetLeft || 0
-    const slideOffsetLeft: number = itemElem.closest(".slide").offsetLeft || 0
-    const editOffsetLeft: number = (itemElem.closest(".editArea") || itemElem.closest(".stageArea"))?.closest(".center")?.offsetLeft || 0
+    const localX = dx * Math.cos(rot) + dy * Math.sin(rot) + mouse.width / 2
+    const relativeX = localX - radiusSliderOffset - radiusHandleSize / (2 * ratio)
 
-    const itemPosX = itemOffsetLeft * ratio + slideOffsetLeft + editOffsetLeft
-    const sliderPosStart = itemPosX + sliderStart * ratio
-    // const sliderPosEnd = sliderPosStart + sliderLength * ratio
-
-    const relativeX = (e.clientX - sliderPosStart) / ratio
-    const percentage = Math.max(0, Math.min(sliderLength, relativeX)) / sliderLength
-
-    return maxRadius * percentage
+    return Math.max(0, Math.min(maxRadius, relativeX / radiusSliderRatio))
 }
