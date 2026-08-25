@@ -632,6 +632,7 @@
         "action": "New action",
         "event": "New event",
         "event_action": "New scheduled action",
+        "calendar": "New calendar",
         "effect": "New effect",
         "interaction": "New interaction"
     },
@@ -1500,6 +1501,7 @@
         "custom": "Custom"
     },
     "calendar": {
+        "calendar": "Calendar",
         "type": "Type",
         "event": "Event",
         "first_day": "First day of week",

@@ -140,7 +140,8 @@ export function convertCalendar(data: any) {
                 a.calendars[calId] = {
                     id: calId,
                     name: calName,
-                    color: calendarColor
+                    color: calendarColor,
+                    custom: false
                 }
             } else {
                 if (color) a.calendars[calId].color = color

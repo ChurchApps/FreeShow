@@ -13,6 +13,31 @@ export interface CalendarData {
     url?: string
     lastSynced?: number
     hidden?: boolean
+    custom?: boolean
+}
+
+export function isCalendarImported(cal?: CalendarData | null): boolean {
+    if (!cal) return false
+    return !!cal.url || !cal.custom
+}
+
+export function createCustomCalendar(name: string, color?: string): string {
+    const id = uid()
+    const calColor = color || getAvailableColor(id, get(events), new Map())
+    const trimmedName = name.trim() || translateText("calendar.calendar")
+
+    special.update((s) => {
+        s.calendars ??= {}
+        s.calendars[id] = {
+            id,
+            name: trimmedName,
+            color: calColor,
+            custom: true
+        }
+        return s
+    })
+
+    return id
 }
 
 export interface IcsCalendar extends CalendarData {
@@ -185,7 +210,8 @@ export async function fetchAndImportIcs(url: string, existingId?: string): Promi
             color: assignedColor,
             url: normalized,
             lastSynced: Date.now(),
-            hidden: existingCal?.hidden || false
+            hidden: existingCal?.hidden || false,
+            custom: false
         }
         return s
     })
