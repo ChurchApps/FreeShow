@@ -100,6 +100,7 @@ export const templateApplied: Writable<boolean> = writable(false)
 export const activeAudioEffects: Writable<string> = writable("")
 export const openedInteractionId: Writable<string> = writable("")
 export const activeInteractions: Writable<string[]> = writable([])
+export const openedMediaFolders: Writable<{ [key: string]: any }> = writable({})
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
