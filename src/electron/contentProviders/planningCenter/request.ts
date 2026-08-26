@@ -190,6 +190,7 @@ interface ProjectItem {
         item_type: string
         title?: string
         description?: string
+        html_details?: string | null
         length?: number
     }
     relationships: {
@@ -599,7 +600,7 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
         console.warn(`Planning Center: Song "${songData.attributes?.title}" has sequence but no matching sections. Sequence: ${sequence.join(", ")}`)
     }
 
-    const show = getShow(songData, song, sections)
+    const show = getShow(songData, song, sections, true)
     const showId = `pcosong_${songData.id}`
 
     return {
@@ -936,9 +937,67 @@ function expandRepeatedSectionLines(lines: ParsedSectionLine[]): ParsedSectionLi
     return expandedLines.filter((line) => !line.hidden)
 }
 
+function decodeHtmlEntities(text: string): string {
+    return text
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&lt;/gi, "<")
+        .replace(/&gt;/gi, ">")
+        .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+        .replace(/&amp;/gi, "&")
+}
+
+// Drops any line that is only the legacy "[===]" marker, without inserting a line break in its place
+// (some churches paste this in — it's not something Planning Center's API generates, since it never
+// appears in the plain "description" field, so left in place it would show up as literal text).
+function stripMarkerLines(text: string): string {
+    return text
+        .split("\n")
+        .filter((line) => !/^\[=+\]$/.test(line.trim()))
+        .join("\n")
+}
+
+// Interprets PCO's rich-text "html_details" as plain text, preserving its line-break structure.
+// PCO (and content pasted from Word) wraps EVERY line in its own <p>, so each <p> is treated as one
+// line — not a new slide — and only a genuinely blank line (an empty <p>, or two consecutive <br>s)
+// starts a new slide. A <p> containing only the "[===]" marker is dropped entirely, with no line
+// break inserted, so it doesn't split otherwise-adjacent lines onto separate slides.
+function stripHtmlToText(html: string): string {
+    const withLineBreaks = html.replace(/<br\s*\/?>/gi, "\n")
+
+    const lines: string[] = []
+    const paragraphRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi
+    let match: RegExpExecArray | null
+    let hasParagraphs = false
+
+    while ((match = paragraphRegex.exec(withLineBreaks))) {
+        hasParagraphs = true
+        const plain = decodeHtmlEntities(match[1].replace(/<[^>]+>/g, "")).trim()
+        if (/^\[=+\]$/.test(plain)) continue // a <p> that's only the marker — drop it, no line break inserted
+        lines.push(stripMarkerLines(plain))
+    }
+
+    const text = hasParagraphs ? lines.join("\n") : stripMarkerLines(decodeHtmlEntities(withLineBreaks.replace(/<[^>]+>/g, "")))
+
+    return text.replace(/\[=+\]/g, "").replace(/\n{3,}/g, "\n\n").replace(/[ \t]{2,}/g, " ")
+}
+
+// Splits plain text into paragraphs (blank-line separated), matching FreeShow's text-import convention (see converters/txt.ts)
+function buildParagraphSections(text: string): SongSection[] {
+    return text
+        .replaceAll("\r\n", "\n")
+        .replaceAll("\r", "\n")
+        .split(/\n\s*\n/)
+        .map((paragraph) => paragraph.trim())
+        .filter(Boolean)
+        .map((lyrics) => ({ label: "", lyrics }))
+}
+
 function processRegularItem(item: ProjectItem) {
     const showId = `pcosong_${item.id}`
-    const show = getShow(item, {}, [])
+    const sections = item.attributes.html_details ? buildParagraphSections(stripHtmlToText(item.attributes.html_details)) : []
+    const show = getShow(item, {}, sections)
 
     return {
         show: { id: showId, ...show },
@@ -1005,11 +1064,16 @@ function getDateTitle(dateString: string) {
 
 const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
 
-function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
+// Plain text has no chords/repeat markers to detect — keep each line as-is
+function parsePlainTextLines(text: string): ParsedSectionLine[] {
+    return text.split("\n").map((line) => ({ text: line }))
+}
+
+function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[], parseChords: boolean = false) {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
     SECTIONS.forEach((section) => {
-        const sectionLines = parseSectionLines(section.lyrics || "")
+        const sectionLines = parseChords ? parseSectionLines(section.lyrics || "") : parsePlainTextLines(section.lyrics || "")
         const wholeSectionRepeatCount = getWholeSectionRepeatCount(sectionLines)
         const parsedLines = wholeSectionRepeatCount > 1 ? sectionLines.filter((line) => !line.hidden) : expandRepeatedSectionLines(sectionLines)
 
