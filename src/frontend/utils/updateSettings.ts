@@ -6,6 +6,7 @@ import type { Output } from "../../types/Output"
 import type { SaveListSettings, SaveListSyncedSettings } from "../../types/Save"
 import type { Metadata, Themes } from "../../types/Settings"
 import { initAudioRouting } from "../audio/routing/audioRoutingInit"
+import { migrateAudioEffects } from "../audio/effects/audioEffectsHelpers"
 import { clone, keysToID } from "../components/helpers/array"
 import { checkFFmpeg, checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
 import { migrateOutputsRtmp } from "../components/helpers/rtmpDestinations"
@@ -125,6 +126,10 @@ export function updateSettings(data: any) {
     if (data.equalizerConfig && !data.audioEffects?.main) {
         data.audioEffects = { main: { equalizer: clone(data.equalizerConfig) } }
         delete data.equalizerConfig
+    }
+    // pre v1.6.5 (audioEffects was not in stack format)
+    if (data.audioEffects) {
+        data.audioEffects = migrateAudioEffects(data.audioEffects)
     }
 
     Object.entries(data).forEach(([key, value]: any) => {

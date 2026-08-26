@@ -14,7 +14,6 @@ import {
     activeShow,
     activeTimers,
     audioData,
-    audioEffects,
     cachedShowsData,
     categories,
     colorbars,
@@ -393,12 +392,6 @@ export function storeSubscriber() {
 
     playingVideoState.subscribe((data) => {
         send(OUTPUT, ["PLAYING_VIDEO_STATE"], data)
-    })
-
-    audioEffects.subscribe(async (data) => {
-        if (await hasNewerUpdate("AUDIO_EFFECTS_CACHE", 50)) return
-
-        send(OUTPUT, ["AUDIO_EFFECTS"], data)
     })
 
     metronome.subscribe((data) => {

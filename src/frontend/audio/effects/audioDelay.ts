@@ -1,21 +1,13 @@
-// Audio Delay Engine & Integration
-// Tap-delay echo effect using DelayNode with a feedback loop and wet/dry mix.
-
-import { getEffectConfig, setEffectEnabledInStore, subscribeEffect, updateEffectInStore } from "./audioEffectsHelpers"
+import { createEffectIntegration, safelyDisconnect } from "./audioEffectsHelpers"
 
 export interface DelayConfig {
     enabled: boolean
-    delayTime: number // 0.01 to 2 s,  default 0.5
-    feedback: number // 0 to 0.95,    default 0.3
-    wet: number // 0 to 1,       default 0.3
+    delayTime: number
+    feedback: number
+    wet: number
 }
 
-export const DEFAULT_DELAY_CONFIG: DelayConfig = {
-    enabled: false,
-    delayTime: 0.5,
-    feedback: 0.3,
-    wet: 0.3
-}
+export const DEFAULT_DELAY_CONFIG: DelayConfig = { enabled: false, delayTime: 0.5, feedback: 0.3, wet: 0.3 }
 
 export class AudioDelay {
     readonly input: GainNode
@@ -37,27 +29,21 @@ export class AudioDelay {
         this.dryGain = ac.createGain()
         this.wetGain = ac.createGain()
 
-        // Dry:      input → dry → output
-        // Wet:      input → delay → wet → output
-        // Feedback: delay → feedback → delay  (loop)
-        this.input.connect(this.dryGain)
-        this.dryGain.connect(this.output)
-        this.input.connect(this.delayNode)
-        this.delayNode.connect(this.wetGain)
-        this.wetGain.connect(this.output)
-        this.delayNode.connect(this.feedbackGain)
-        this.feedbackGain.connect(this.delayNode)
+        this.input.connect(this.dryGain).connect(this.output)
+        this.input.connect(this.delayNode).connect(this.wetGain).connect(this.output)
+        this.delayNode.connect(this.feedbackGain).connect(this.delayNode)
 
         this.applyParams()
     }
 
     private applyParams() {
         const t = this.ac.currentTime
-        const wet = this.config.enabled ? this.config.wet : 0
-        this.delayNode.delayTime.setValueAtTime(this.config.delayTime, t)
-        this.feedbackGain.gain.setValueAtTime(Math.min(0.95, this.config.feedback), t)
-        this.dryGain.gain.setValueAtTime(1, t)
-        this.wetGain.gain.setValueAtTime(wet, t)
+        const tc = 0.015
+
+        this.delayNode.delayTime.setTargetAtTime(Math.max(0, Math.min(2.0, this.config.delayTime)), t, tc)
+        this.feedbackGain.gain.setTargetAtTime(Math.min(0.95, Math.max(0, this.config.feedback)), t, tc)
+        this.dryGain.gain.setTargetAtTime(1, t, tc)
+        this.wetGain.gain.setTargetAtTime(this.config.enabled ? this.config.wet : 0, t, tc)
     }
 
     updateConfig(config: Partial<DelayConfig>) {
@@ -66,8 +52,7 @@ export class AudioDelay {
     }
 
     setEnabled(enabled: boolean) {
-        this.config.enabled = enabled
-        this.applyParams()
+        this.updateConfig({ enabled })
     }
 
     getConfig(): DelayConfig {
@@ -75,58 +60,11 @@ export class AudioDelay {
     }
 
     dispose() {
-        try {
-            this.input.disconnect()
-        } catch {
-            /* already disconnected */
-        }
-        try {
-            this.delayNode.disconnect()
-        } catch {
-            /* already disconnected */
-        }
-        try {
-            this.feedbackGain.disconnect()
-        } catch {
-            /* already disconnected */
-        }
-        try {
-            this.dryGain.disconnect()
-        } catch {
-            /* already disconnected */
-        }
-        try {
-            this.wetGain.disconnect()
-        } catch {
-            /* already disconnected */
-        }
-        try {
-            this.output.disconnect()
-        } catch {
-            /* already disconnected */
-        }
+        safelyDisconnect(this.input, this.delayNode, this.feedbackGain, this.dryGain, this.wetGain, this.output)
     }
 }
 
-// ============================================================================
-// INTEGRATION LAYER
-// ============================================================================
-
-let globalDelay: AudioDelay | null = null
-
-export function initializeDelay(ac: AudioContext): AudioDelay {
-    if (globalDelay) return globalDelay
-
-    globalDelay = new AudioDelay(ac, getEffectConfig("delay", DEFAULT_DELAY_CONFIG, "main"))
-    subscribeEffect("delay", (cfg: DelayConfig) => globalDelay?.updateConfig(cfg), "main")
-
-    return globalDelay
-}
-
-export function updateDelayConfig(partial: Partial<DelayConfig>, channelId?: string) {
-    updateEffectInStore("delay", DEFAULT_DELAY_CONFIG, partial, channelId)
-}
-
-export function setDelayEnabled(enabled: boolean, channelId?: string) {
-    setEffectEnabledInStore("delay", DEFAULT_DELAY_CONFIG, enabled, channelId)
-}
+const integration = createEffectIntegration("delay", DEFAULT_DELAY_CONFIG, AudioDelay)
+export const initializeDelay = integration.initialize
+export const updateDelayConfig = integration.updateConfig
+export const setDelayEnabled = integration.setEnabled

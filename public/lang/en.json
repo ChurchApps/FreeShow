@@ -485,6 +485,8 @@
         "interaction_input": "Input",
         "trigger": "Trigger",
         "audio_stream": "Audio stream",
+        "audio_effect": "Audio effect",
+        "add_audio_effect": "Add audio effect",
         "node_options": "Node options",
         "now_playing": "Now playing file",
         "aspect_ratio": "Change aspect ratio",

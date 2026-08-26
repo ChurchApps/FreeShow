@@ -1,14 +1,13 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
-    import { GAIN_FILTER_TYPES, type FilterConfig, type FilterType, setFilterEnabled, updateFilterConfig } from "../../../../audio/effects/audioFilter"
-    import { translateText } from "../../../../utils/language"
+    import { GAIN_FILTER_TYPES, updateFilterConfig, type FilterConfig, type FilterType } from "../../../../audio/effects/audioFilter"
     import InputRow from "../../../input/InputRow.svelte"
     import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
     import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
-    export let disabled: boolean = false
+    export let effectId: string = ""
+    export let channelId: string = ""
 
     let config: FilterConfig = {
         enabled: false,
@@ -21,25 +20,26 @@
     let unsubscribe: (() => void) | null = null
 
     onMount(() => {
-        unsubscribe = subscribeEffect("filter", (c: FilterConfig) => {
-            config = { ...c }
-        })
+        unsubscribe = subscribeEffect(
+            "filter",
+            (c: FilterConfig) => {
+                config = { ...c }
+            },
+            channelId,
+            effectId
+        )
     })
 
     onDestroy(() => {
         unsubscribe?.()
     })
 
-    function handleEnable(e: any) {
-        setFilterEnabled(e.detail)
-    }
-
     function handleTypeChange(e: any) {
-        updateFilterConfig({ type: e.detail as FilterType })
+        updateFilterConfig({ type: e.detail as FilterType }, channelId, effectId)
     }
 
     function handleChange(key: keyof FilterConfig, raw: number) {
-        updateFilterConfig({ [key]: raw })
+        updateFilterConfig({ [key]: raw }, channelId, effectId)
     }
 
     // ---- filter type options ----
@@ -95,7 +95,7 @@
             const phaseResp = new Float32Array(N)
             node.getFrequencyResponse(freqs, magResp, phaseResp)
 
-            const path = magResp
+            const path = Array.from(magResp)
                 .map((mag, i) => {
                     const safeMag = isNaN(mag) || mag <= 0 ? 0.00001 : mag
                     const db = 20 * Math.log10(safeMag)
@@ -119,13 +119,9 @@
     $: freqDisplay = config.frequency >= 1000 ? `${(config.frequency / 1000).toFixed(1)}kHz` : `${Math.round(config.frequency)}Hz`
 </script>
 
-<div class="filter-container" style="--accent: #ad8652;" class:disabled>
-    <MaterialToggleSwitch label="settings.enabled" checked={config.enabled} on:change={handleEnable} />
-
-    <div style="height: 5px;" />
-
+<div class="filter-container" style="--accent: #ad8652;">
     <!-- Frequency response visualisation -->
-    <div class="viz-wrap" class:viz-disabled={!config.enabled}>
+    <div class="viz-wrap">
         <div class="viz-svg-wrap" bind:clientWidth={canvasW}>
             <svg width={canvasW} height={canvasH} class="viz-svg">
                 <!-- dB grid lines -->
@@ -156,20 +152,20 @@
     <div style="height: 8px;" />
 
     <InputRow>
-        <MaterialDropdown label="audio.filter_type" value={config.type} options={filterTypeOptions} on:change={handleTypeChange} {disabled} />
+        <MaterialDropdown label="audio.filter_type" value={config.type} options={filterTypeOptions} on:change={handleTypeChange} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.frequency" value={config.frequency} min={20} max={20000} step={1} maxDecimals={0} showSlider sliderValues={{ min: 20, max: 20000, step: 1 }} {disabled} on:change={(e) => handleChange("frequency", e.detail)} />
+        <MaterialNumberInput label="audio.frequency" value={config.frequency} min={20} max={20000} step={1} maxDecimals={0} showSlider sliderValues={{ min: 20, max: 20000, step: 1 }} on:change={(e) => handleChange("frequency", e.detail)} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.q_factor" value={config.q} min={0.1} max={30} step={0.1} maxDecimals={1} showSlider sliderValues={{ min: 0.1, max: 30, step: 0.1 }} {disabled} on:change={(e) => handleChange("q", e.detail)} />
+        <MaterialNumberInput label="audio.q_factor" value={config.q} min={0.1} max={30} step={0.1} maxDecimals={1} showSlider sliderValues={{ min: 0.1, max: 30, step: 0.1 }} on:change={(e) => handleChange("q", e.detail)} />
     </InputRow>
 
     {#if showGain}
         <InputRow>
-            <MaterialNumberInput label="audio.gain" value={config.gain} min={-24} max={24} step={0.5} maxDecimals={1} showSlider sliderValues={{ min: -24, max: 24, step: 0.5 }} {disabled} on:change={(e) => handleChange("gain", e.detail)} />
+            <MaterialNumberInput label="audio.gain" value={config.gain} min={-24} max={24} step={0.5} maxDecimals={1} showSlider sliderValues={{ min: -24, max: 24, step: 0.5 }} on:change={(e) => handleChange("gain", e.detail)} />
         </InputRow>
     {/if}
 </div>
@@ -180,11 +176,6 @@
         user-select: none;
     }
 
-    .filter-container.disabled {
-        opacity: 0.5;
-        pointer-events: none;
-    }
-
     .viz-wrap {
         background: var(--primary-darker);
         border: 1px solid var(--primary-lighter);
@@ -192,10 +183,6 @@
         overflow: hidden;
         transition: opacity 0.2s ease;
         font-family: monospace;
-    }
-
-    .viz-wrap.viz-disabled {
-        opacity: 0.4;
     }
 
     .viz-svg-wrap {

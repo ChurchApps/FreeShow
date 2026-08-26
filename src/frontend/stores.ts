@@ -22,14 +22,7 @@ import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, T
 import type { Outputs, RtmpStatus } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
-import type { CompressorConfig } from "./audio/effects/audioCompressor"
-import type { DelayConfig } from "./audio/effects/audioDelay"
-import type { EQBand, EqualizerConfig } from "./audio/effects/audioEqualizer"
-import type { FilterConfig } from "./audio/effects/audioFilter"
-import type { LimiterConfig } from "./audio/effects/audioLimiter"
-import type { NoiseGateConfig } from "./audio/effects/audioNoiseGate"
-import type { ReverbConfig } from "./audio/effects/audioReverb"
-import type { StereoShaperConfig } from "./audio/effects/audioStereoShaper"
+import type { EQBand } from "./audio/effects/audioEqualizer"
 import type { PlayingVideoState, VideoAudioData } from "./components/media/video/videoPlayer"
 
 // ----- TEMPORARY VARIABLES -----
@@ -271,14 +264,13 @@ export const metronome: Writable<MetronomeSettings> = writable({}) // {}
 export const audioRouting: Writable<AudioRoutingConfig | null> = writable(null) // {init}
 export const effectsLibrary: Writable<{ path: string; name: string }[]> = writable([]) // []
 export interface AudioEffectsConfig {
-    equalizer: EqualizerConfig
-    filter: FilterConfig
-    noiseGate: NoiseGateConfig
-    compressor: CompressorConfig
-    limiter: LimiterConfig
-    reverb: ReverbConfig
-    delay: DelayConfig
-    stereoShaper: StereoShaperConfig
+    stack: AudioEffectInstance[]
+}
+export interface AudioEffectInstance {
+    id: string
+    type: "equalizer" | "filter" | "noiseGate" | "compressor" | "limiter" | "reverb" | "delay" | "stereoShaper"
+    enabled: boolean
+    config?: any
 }
 export const audioEffects = writable<Record<string, AudioEffectsConfig>>({}) // {}
 export const eqPresets: Writable<{ [key: string]: { name: string; bands: EQBand[] } }> = writable({}) // {}

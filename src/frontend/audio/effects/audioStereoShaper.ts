@@ -1,18 +1,11 @@
-// Audio Stereo Shaper Engine & Integration
-// Mid-side (M/S) stereo width control using AudioWorklet.
-// Falls back to passthrough until the worklet module is loaded.
-
-import { getEffectConfig, setEffectEnabledInStore, subscribeEffect, updateEffectInStore } from "./audioEffectsHelpers"
+import { createEffectIntegration, safelyDisconnect } from "./audioEffectsHelpers"
 
 export interface StereoShaperConfig {
     enabled: boolean
     width: number // 0–200; 100 = normal, 0 = mono, 200 = extra wide
 }
 
-export const DEFAULT_STEREO_SHAPER_CONFIG: StereoShaperConfig = {
-    enabled: false,
-    width: 100
-}
+export const DEFAULT_STEREO_SHAPER_CONFIG: StereoShaperConfig = { enabled: false, width: 100 }
 
 export class AudioStereoShaper {
     readonly input: GainNode
@@ -21,6 +14,7 @@ export class AudioStereoShaper {
     private passthrough: GainNode
     private ac: AudioContext
     private config: StereoShaperConfig
+    private isDisposed = false
 
     constructor(ac: AudioContext, config: StereoShaperConfig) {
         this.ac = ac
@@ -29,7 +23,6 @@ export class AudioStereoShaper {
         this.output = ac.createGain()
         this.passthrough = ac.createGain()
 
-        // Start as passthrough; switch to worklet once loaded
         this.input.connect(this.passthrough)
         this.passthrough.connect(this.output)
 
@@ -39,6 +32,7 @@ export class AudioStereoShaper {
     private async initWorklet() {
         try {
             await this.ac.audioWorklet.addModule("./assets/stereo-shaper-processor.js")
+            if (this.isDisposed) return
 
             this.workletNode = new AudioWorkletNode(this.ac, "stereo-shaper-processor", {
                 numberOfInputs: 1,
@@ -47,34 +41,32 @@ export class AudioStereoShaper {
                 channelCountMode: "explicit"
             })
 
-            this.input.disconnect(this.passthrough)
-            this.passthrough.disconnect(this.output)
+            safelyDisconnect(this.input, this.passthrough)
             this.input.connect(this.workletNode)
             this.workletNode.connect(this.output)
-
-            this.applyParams(this.config)
+            this.applyParams()
         } catch (err) {
             console.error("StereoShaper worklet init failed:", err)
-            // Passthrough remains active
         }
     }
 
-    private applyParams(config: StereoShaperConfig) {
-        if (!this.workletNode) return
+    private applyParams() {
+        if (!this.workletNode || this.isDisposed) return
         const t = this.ac.currentTime
+        const tc = 0.015
         const p = this.workletNode.parameters
-        p.get("width")?.setValueAtTime(config.width, t)
-        p.get("enabled")?.setValueAtTime(config.enabled ? 1 : 0, t)
+
+        p.get("width")?.setTargetAtTime(this.config.width, t, tc)
+        p.get("enabled")?.setTargetAtTime(this.config.enabled ? 1 : 0, t, tc)
     }
 
     updateConfig(config: Partial<StereoShaperConfig>) {
         this.config = { ...this.config, ...config }
-        this.applyParams(this.config)
+        this.applyParams()
     }
 
     setEnabled(enabled: boolean) {
-        this.config.enabled = enabled
-        this.applyParams(this.config)
+        this.updateConfig({ enabled })
     }
 
     getConfig(): StereoShaperConfig {
@@ -82,36 +74,12 @@ export class AudioStereoShaper {
     }
 
     dispose() {
-        for (const node of [this.input, this.workletNode, this.passthrough, this.output]) {
-            if (!node) continue
-            try {
-                node.disconnect()
-            } catch {
-                /* already disconnected */
-            }
-        }
+        this.isDisposed = true
+        safelyDisconnect(this.input, this.workletNode, this.passthrough, this.output)
     }
 }
 
-// ============================================================================
-// INTEGRATION LAYER
-// ============================================================================
-
-let globalStereoShaper: AudioStereoShaper | null = null
-
-export function initializeStereoShaper(ac: AudioContext): AudioStereoShaper {
-    if (globalStereoShaper) return globalStereoShaper
-
-    globalStereoShaper = new AudioStereoShaper(ac, getEffectConfig("stereoShaper", DEFAULT_STEREO_SHAPER_CONFIG, "main"))
-    subscribeEffect("stereoShaper", (cfg: StereoShaperConfig) => globalStereoShaper?.updateConfig(cfg), "main")
-
-    return globalStereoShaper
-}
-
-export function updateStereoShaperConfig(partial: Partial<StereoShaperConfig>, channelId?: string) {
-    updateEffectInStore("stereoShaper", DEFAULT_STEREO_SHAPER_CONFIG, partial, channelId)
-}
-
-export function setStereoShaperEnabled(enabled: boolean, channelId?: string) {
-    setEffectEnabledInStore("stereoShaper", DEFAULT_STEREO_SHAPER_CONFIG, enabled, channelId)
-}
+const integration = createEffectIntegration("stereoShaper", DEFAULT_STEREO_SHAPER_CONFIG, AudioStereoShaper)
+export const initializeStereoShaper = integration.initialize
+export const updateStereoShaperConfig = integration.updateConfig
+export const setStereoShaperEnabled = integration.setEnabled

@@ -1,28 +1,18 @@
-// Audio Filter Engine & Integration
-// Configurable BiquadFilter: lowpass, highpass, bandpass, notch, peaking, lowshelf, highshelf.
-// Uses a wet/dry split for clean bypass (dry=1/wet=0 when disabled).
-
-import { getEffectConfig, setEffectEnabledInStore, subscribeEffect, updateEffectInStore } from "./audioEffectsHelpers"
+import { createEffectIntegration, safelyDisconnect } from "./audioEffectsHelpers"
 
 export type FilterType = "lowpass" | "highpass" | "bandpass" | "notch" | "peaking" | "lowshelf" | "highshelf"
 
 export interface FilterConfig {
     enabled: boolean
     type: FilterType
-    frequency: number // 20–20 000 Hz, default 1000
-    q: number // 0.1–30,        default 1.0
-    gain: number // −24 to +24 dB, default 0  (peaking / shelf types only)
+    frequency: number
+    q: number
+    gain: number
 }
 
-export const DEFAULT_FILTER_CONFIG: FilterConfig = {
-    enabled: false,
-    type: "lowpass",
-    frequency: 1000,
-    q: 1.0,
-    gain: 0
-}
+export const DEFAULT_FILTER_CONFIG: FilterConfig = { enabled: false, type: "lowpass", frequency: 1000, q: 1.0, gain: 0 }
 
-/** Filter types that expose the gain parameter in the UI */
+// Required by AudioFilter.svelte to show/hide the gain slider reactively
 export const GAIN_FILTER_TYPES: FilterType[] = ["peaking", "lowshelf", "highshelf"]
 
 export class AudioFilter {
@@ -43,29 +33,27 @@ export class AudioFilter {
         this.wetGain = ac.createGain()
         this.filter = ac.createBiquadFilter()
 
-        // Dry path: input → dry → output
-        this.input.connect(this.dryGain)
-        this.dryGain.connect(this.output)
-
-        // Wet path: input → filter → wet → output
-        this.input.connect(this.filter)
-        this.filter.connect(this.wetGain)
-        this.wetGain.connect(this.output)
+        this.input.connect(this.dryGain).connect(this.output)
+        this.input.connect(this.filter).connect(this.wetGain).connect(this.output)
 
         this.applyParams()
     }
 
     private applyParams() {
         const t = this.ac.currentTime
+        const tc = 0.015 // 15ms smoothing constant to eliminate audio clicks during slider drags
         const { enabled, type, frequency, q, gain } = this.config
 
-        this.filter.type = type
-        this.filter.frequency.setValueAtTime(Math.max(20, Math.min(20000, frequency)), t)
-        this.filter.Q.setValueAtTime(Math.max(0.0001, q), t)
-        this.filter.gain.setValueAtTime(gain, t)
+        if (this.filter.type !== type) {
+            this.filter.type = type
+        }
 
-        this.dryGain.gain.setValueAtTime(enabled ? 0 : 1, t)
-        this.wetGain.gain.setValueAtTime(enabled ? 1 : 0, t)
+        this.filter.frequency.setTargetAtTime(Math.max(20, Math.min(20000, frequency)), t, tc)
+        this.filter.Q.setTargetAtTime(Math.max(0.0001, q), t, tc)
+        this.filter.gain.setTargetAtTime(gain, t, tc)
+
+        this.dryGain.gain.setTargetAtTime(enabled ? 0 : 1, t, tc)
+        this.wetGain.gain.setTargetAtTime(enabled ? 1 : 0, t, tc)
     }
 
     updateConfig(config: Partial<FilterConfig>) {
@@ -74,8 +62,7 @@ export class AudioFilter {
     }
 
     setEnabled(enabled: boolean) {
-        this.config.enabled = enabled
-        this.applyParams()
+        this.updateConfig({ enabled })
     }
 
     getConfig(): FilterConfig {
@@ -83,35 +70,11 @@ export class AudioFilter {
     }
 
     dispose() {
-        for (const node of [this.input, this.filter, this.dryGain, this.wetGain, this.output]) {
-            try {
-                node.disconnect()
-            } catch {
-                /* already disconnected */
-            }
-        }
+        safelyDisconnect(this.input, this.filter, this.dryGain, this.wetGain, this.output)
     }
 }
 
-// ============================================================================
-// INTEGRATION LAYER
-// ============================================================================
-
-let globalFilter: AudioFilter | null = null
-
-export function initializeFilter(ac: AudioContext): AudioFilter {
-    if (globalFilter) return globalFilter
-
-    globalFilter = new AudioFilter(ac, getEffectConfig("filter", DEFAULT_FILTER_CONFIG, "main"))
-    subscribeEffect("filter", (cfg: FilterConfig) => globalFilter?.updateConfig(cfg), "main")
-
-    return globalFilter
-}
-
-export function updateFilterConfig(partial: Partial<FilterConfig>, channelId?: string) {
-    updateEffectInStore("filter", DEFAULT_FILTER_CONFIG, partial, channelId)
-}
-
-export function setFilterEnabled(enabled: boolean, channelId?: string) {
-    setEffectEnabledInStore("filter", DEFAULT_FILTER_CONFIG, enabled, channelId)
-}
+const integration = createEffectIntegration("filter", DEFAULT_FILTER_CONFIG, AudioFilter)
+export const initializeFilter = integration.initialize
+export const updateFilterConfig = integration.updateConfig
+export const setFilterEnabled = integration.setEnabled

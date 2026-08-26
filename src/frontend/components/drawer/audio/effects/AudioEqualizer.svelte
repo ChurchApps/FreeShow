@@ -1,24 +1,23 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { get } from "svelte/store"
     import { uid } from "uid"
-    import { AudioEqualizer, type EQBand, EqualizerCalculations, setEqualizerEnabled, updateEqualizerBands } from "../../../../audio/effects/audioEqualizer"
-    import { activeAudioEffects, audioEffects, eqPresets, special } from "../../../../stores"
+    import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
+    import { AudioEqualizer, type EQBand, EqualizerCalculations, updateEqualizerBands } from "../../../../audio/effects/audioEqualizer"
+    import { eqPresets, special } from "../../../../stores"
     import { translateText } from "../../../../utils/language"
     import { clone, keysToID } from "../../../helpers/array"
     import InputRow from "../../../input/InputRow.svelte"
     import MaterialButton from "../../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
     import MaterialTextInput from "../../../inputs/MaterialTextInput.svelte"
-    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
-    export let disabled: boolean = false
+    export let effectId: string = ""
+    export let channelId: string = ""
 
     const originalBands = AudioEqualizer.getDefaultBands()
 
     // 6 band equalizer with frequencies optimized for audio
     let bands: EQBand[] = clone(originalBands)
-    let enabled: boolean = false
 
     // Subscribe to equalizer config changes
     let equalizerConfigUnsubscribe: (() => void) | null = null
@@ -34,26 +33,28 @@
     let widthChange = 0
     function updateCanvasWidth() {
         widthChange++
-        const rightPanelDrawer = document.querySelector("#rightPanelDrawer")
-        if (rightPanelDrawer) {
-            const drawerRect = rightPanelDrawer.getBoundingClientRect()
-            const padding = 20 // Account for container padding and margins
-            const newWidth = Math.max(100, drawerRect.width - padding) // Minimum width of 300px
+        if (containerElement) {
+            const containerRect = containerElement.getBoundingClientRect()
+            const parentWidth = containerElement.parentElement?.clientWidth || containerRect.width
+            const availableWidth = Math.max(containerRect.width, parentWidth)
+            const padding = 16
+            const newWidth = Math.max(100, Math.floor(availableWidth - padding))
 
-            if (newWidth !== canvasWidth) {
+            if (newWidth > 100 && newWidth !== canvasWidth) {
                 canvasWidth = newWidth
-                // Force reactivity to update calculations that depend on canvasWidth
                 bands = [...bands]
             }
-        } else if (containerElement) {
-            // Fallback to container element if rightPanelDrawer is not found
-            const containerRect = containerElement.getBoundingClientRect()
-            const padding = 32 // Account for container padding
-            const newWidth = Math.max(100, containerRect.width - padding)
+        } else {
+            const rightPanelDrawer = document.querySelector("#rightPanelDrawer")
+            if (rightPanelDrawer) {
+                const drawerRect = rightPanelDrawer.getBoundingClientRect()
+                const padding = 20
+                const newWidth = Math.max(100, drawerRect.width - padding)
 
-            if (newWidth !== canvasWidth) {
-                canvasWidth = newWidth
-                bands = [...bands]
+                if (newWidth !== canvasWidth) {
+                    canvasWidth = newWidth
+                    bands = [...bands]
+                }
             }
         }
     }
@@ -63,30 +64,36 @@
         // No need to initialize here to avoid audio interruption
 
         // Subscribe to config changes
-        equalizerConfigUnsubscribe = audioEffects.subscribe((all) => {
-            const target = get(activeAudioEffects) || "main"
-            const config = all[target]?.equalizer
-            if (!config) return
-            bands = config.bands?.length ? clone(config.bands) : AudioEqualizer.getDefaultBands()
-            enabled = config.enabled
-        })
+        equalizerConfigUnsubscribe = subscribeEffect<any>(
+            "equalizer",
+            (config) => {
+                if (!config) return
+                bands = config.bands?.length ? clone(config.bands) : AudioEqualizer.getDefaultBands()
+            },
+            channelId,
+            effectId
+        )
 
         // Set up initial canvas width and resize observer
         updateCanvasWidth()
 
         if (typeof ResizeObserver !== "undefined") {
-            const rightPanelDrawer = document.querySelector("#rightPanelDrawer")
-            if (rightPanelDrawer) {
-                resizeObserver = new ResizeObserver(() => {
-                    updateCanvasWidth()
-                })
-                resizeObserver.observe(rightPanelDrawer)
-            } else if (containerElement) {
-                // Fallback to container element if rightPanelDrawer is not found
+            if (containerElement) {
                 resizeObserver = new ResizeObserver(() => {
                     updateCanvasWidth()
                 })
                 resizeObserver.observe(containerElement)
+                if (containerElement.parentElement) {
+                    resizeObserver.observe(containerElement.parentElement)
+                }
+            } else {
+                const rightPanelDrawer = document.querySelector("#rightPanelDrawer")
+                if (rightPanelDrawer) {
+                    resizeObserver = new ResizeObserver(() => {
+                        updateCanvasWidth()
+                    })
+                    resizeObserver.observe(rightPanelDrawer)
+                }
             }
         }
 
@@ -159,7 +166,7 @@
     // }
 
     // // Reactive statement to trigger UI updates for frequency visualization
-    // $: spectrumBars = enabled && showSpectrum && spectrumAnalyzer?.isRunning() && spectrumUpdateTrigger >= 0 ? generateSpectrumBars() : []
+    // $: spectrumBars = showSpectrum && spectrumAnalyzer?.isRunning() && spectrumUpdateTrigger >= 0 ? generateSpectrumBars() : []
 
     // EQ
 
@@ -209,8 +216,6 @@
     ]
 
     function handleMouseDown(e: MouseEvent, bandIndex: number) {
-        if (disabled) return
-
         // Check for middle mouse button (wheel button) click to reset
         if (e.button === 1) {
             e.preventDefault()
@@ -315,7 +320,6 @@
     }
 
     function handleMouseEnter() {
-        if (disabled) return
         isHovering = true
     }
 
@@ -324,7 +328,7 @@
     }
 
     function handleMouseHover(e: MouseEvent) {
-        if (!isHovering || !eqVisualElement || disabled || isDragging) return
+        if (!isHovering || !eqVisualElement || isDragging) return
 
         const rect = eqVisualElement.getBoundingClientRect()
         const x = Math.max(0, Math.min(canvasWidth, e.clientX - rect.left))
@@ -343,8 +347,6 @@
     }
 
     function handleWheel(e: WheelEvent, bandIndex: number) {
-        if (disabled) return
-
         e.preventDefault()
 
         // 0 = pixels, 1 = lines, 2 = pages. Trackpads often deliver small pixel deltas.
@@ -357,15 +359,13 @@
         let step = Math.sign(raw) * Math.max(0.01, Math.min(0.5, Math.abs(raw) * baseSensitivity))
 
         // Apply and clamp Q between sensible bounds
-        bands[bandIndex].q = Math.max(0.1, Math.min(30, +(bands[bandIndex].q + step).toFixed(2)))
+        bands[bandIndex].q = Math.max(0.1, Math.min(30, +((bands[bandIndex].q ?? 1) + step).toFixed(2)))
         bands = [...bands] // Trigger reactivity
 
         updateBands()
     }
 
     function handleBandReset(bandIndex: number) {
-        if (disabled) return
-
         // Reset to original values for this band
         bands[bandIndex] = { ...originalBands[bandIndex] }
         bands = [...bands] // Trigger reactivity
@@ -375,7 +375,7 @@
 
     function updateBands() {
         // Update the audio equalizer system
-        updateEqualizerBands(bands)
+        updateEqualizerBands(bands, channelId, effectId)
     }
 
     function getGainY(gain: number): number {
@@ -395,7 +395,7 @@
 
         if (band.type === "peaking") {
             // For peaking, extend range based on Q factor for smooth decay
-            const octaveRange = Math.max(2, 6 / band.q) // Wider range for lower Q
+            const octaveRange = Math.max(2, 6 / (band.q ?? 1)) // Wider range for lower Q
             minWaveFreq = Math.max(minFreq, band.frequency / Math.pow(2, octaveRange))
             maxWaveFreq = Math.min(maxFreq, band.frequency * Math.pow(2, octaveRange))
         } else {
@@ -468,12 +468,6 @@
         return `${freq}`
     }
 
-    // Handle enable/disable toggle
-    function handleEnableChange(e: any) {
-        enabled = e.detail
-        setEqualizerEnabled(enabled)
-    }
-
     let selectedPreset = $special.selectedEQPreset || "default"
     $: presets = {
         ...$eqPresets,
@@ -536,10 +530,9 @@
     }
 </script>
 
-<div class="equalizer-container" style="--accent: #5295ad;" class:disabled bind:this={containerElement}>
-    <MaterialToggleSwitch label="settings.enabled" checked={enabled} on:change={handleEnableChange} />
+<div class="equalizer-container" style="--accent: #5295ad;" bind:this={containerElement}>
     <InputRow>
-        <MaterialDropdown label="audio.preset" value={selectedPreset} options={presetOptions} defaultValue="default" on:change={(e) => selectPreset(e.detail)} disabled={!enabled} />
+        <MaterialDropdown label="audio.preset" value={selectedPreset} options={presetOptions} defaultValue="default" on:change={(e) => selectPreset(e.detail)} />
 
         {#if selectedPreset === "custom"}
             <MaterialTextInput label="inputs.name" value={customName} on:change={(e) => (customName = e.detail)} />
@@ -552,7 +545,7 @@
     <div style="height: 5px;width: 100%;"></div>
 
     <!-- EQ Visual Display -->
-    <div class="eq-visual" class:eq-disabled={!enabled} bind:this={eqVisualElement} style="height: {canvasHeight}px;" on:mouseenter={handleMouseEnter} on:mouseleave={handleMouseLeave} on:mousemove={handleMouseHover}>
+    <div class="eq-visual" bind:this={eqVisualElement} style="height: {canvasHeight}px;" on:mouseenter={handleMouseEnter} on:mouseleave={handleMouseLeave} on:mousemove={handleMouseHover}>
         <!-- Background grid -->
         <svg class="eq-grid" width={canvasWidth} height={canvasHeight}>
             <!-- Spectrum Analyzer -->
@@ -622,7 +615,7 @@
             <path d={calculateFrequencyResponse(bands)} fill="none" stroke="var(--accent)" stroke-width="2" opacity="0.9" />
 
             <!-- Hover line and frequency display -->
-            {#if isHovering && !isDragging && enabled && !disabled}
+            {#if isHovering && !isDragging}
                 <line x1={hoverX} y1="0" x2={hoverX} y2={canvasHeight} stroke="#FFFFFF" stroke-width="1" opacity="0.1" stroke-dasharray="8,5" />
 
                 <!-- Frequency label background -->
@@ -660,27 +653,22 @@
     </div>
 
     <!-- Band Info - only show for currently dragged band -->
-    {#if draggedBandIndex !== null && bands[draggedBandIndex]}
-        <div class="band-info">
+    <div class="band-info" style="min-height: 18px;">
+        {#if draggedBandIndex !== null && bands[draggedBandIndex]}
             <div class="frequency">{formatFrequency(bands[draggedBandIndex].frequency)}Hz</div>
             <div class="gain-value">{bands[draggedBandIndex].gain > 0 ? "+" : ""}{bands[draggedBandIndex].gain.toFixed(1)}dB</div>
-            <div class="q-value">Q: {bands[draggedBandIndex].q.toFixed(1)}</div>
+            <div class="q-value">Q: {(bands[draggedBandIndex].q ?? 1).toFixed(1)}</div>
             <!-- <div class="filter-type">
                 {bands[draggedBandIndex].type === "highpass" ? "HP" : bands[draggedBandIndex].type === "lowpass" ? "LP" : "PK"}
             </div> -->
-        </div>
-    {/if}
+        {/if}
+    </div>
 </div>
 
 <style>
     .equalizer-container {
         border-radius: 8px;
         user-select: none;
-    }
-
-    .equalizer-container.disabled {
-        opacity: 0.5;
-        pointer-events: none;
     }
 
     .eq-visual {
@@ -694,10 +682,6 @@
         width: 100%;
 
         font-family: monospace;
-    }
-
-    .eq-visual.eq-disabled {
-        opacity: 0.4;
     }
 
     .eq-grid {

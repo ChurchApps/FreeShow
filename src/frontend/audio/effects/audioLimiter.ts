@@ -1,23 +1,12 @@
-// Audio Limiter Engine & Integration
-// Brick-wall limiter using the Web Audio API DynamicsCompressorNode
-// Fixed ratio (20:1) and attack (1 ms) — user controls ceiling and release only.
-
-import { getEffectConfig, setEffectEnabledInStore, subscribeEffect, updateEffectInStore } from "./audioEffectsHelpers"
+import { createEffectIntegration, safelyDisconnect } from "./audioEffectsHelpers"
 
 export interface LimiterConfig {
     enabled: boolean
-    ceiling: number // -30 to 0 dB, default -3 dB
-    release: number // 0 to 1 s, default 0.05 s
+    ceiling: number
+    release: number
 }
 
-export const DEFAULT_LIMITER_CONFIG: LimiterConfig = {
-    enabled: false,
-    ceiling: -3,
-    release: 0.05
-}
-
-const LIMITER_RATIO = 20 // max DynamicsCompressorNode ratio (effectively ∞)
-const LIMITER_ATTACK = 0.001 // 1 ms fixed attack
+export const DEFAULT_LIMITER_CONFIG: LimiterConfig = { enabled: false, ceiling: -3, release: 0.05 }
 
 export class AudioLimiter {
     readonly input: GainNode
@@ -29,56 +18,40 @@ export class AudioLimiter {
     constructor(ac: AudioContext, config: LimiterConfig) {
         this.ac = ac
         this.config = { ...config }
-
         this.input = ac.createGain()
         this.output = ac.createGain()
         this.compressor = ac.createDynamicsCompressor()
 
-        // Keep node always in chain; bypass = ratio:1, threshold:0
-        this.input.connect(this.compressor)
-        this.compressor.connect(this.output)
+        this.input.connect(this.compressor).connect(this.output)
+        this.applyParams()
+    }
 
-        if (config.enabled) {
-            this.applyParams(config)
+    private applyParams() {
+        const t = this.ac.currentTime
+        const tc = 0.015
+
+        if (this.config.enabled) {
+            this.compressor.threshold.setTargetAtTime(this.config.ceiling, t, tc)
+            this.compressor.knee.setTargetAtTime(0, t, tc)
+            this.compressor.ratio.setTargetAtTime(20, t, tc)
+            this.compressor.attack.setTargetAtTime(0.001, t, tc)
+            this.compressor.release.setTargetAtTime(Math.max(0.001, this.config.release), t, tc)
         } else {
-            this.applyBypass()
+            this.compressor.threshold.setTargetAtTime(0, t, tc)
+            this.compressor.knee.setTargetAtTime(0, t, tc)
+            this.compressor.ratio.setTargetAtTime(1, t, tc)
+            this.compressor.attack.setTargetAtTime(0, t, tc)
+            this.compressor.release.setTargetAtTime(0.25, t, tc)
         }
-    }
-
-    private applyParams(config: LimiterConfig) {
-        const t = this.ac.currentTime
-        this.compressor.threshold.setValueAtTime(config.ceiling, t)
-        this.compressor.knee.setValueAtTime(0, t)
-        this.compressor.ratio.setValueAtTime(LIMITER_RATIO, t)
-        this.compressor.attack.setValueAtTime(LIMITER_ATTACK, t)
-        this.compressor.release.setValueAtTime(Math.max(0.001, config.release), t)
-    }
-
-    private applyBypass() {
-        const t = this.ac.currentTime
-        this.compressor.threshold.setValueAtTime(0, t)
-        this.compressor.knee.setValueAtTime(0, t)
-        this.compressor.ratio.setValueAtTime(1, t)
-        this.compressor.attack.setValueAtTime(0, t)
-        this.compressor.release.setValueAtTime(0.25, t)
     }
 
     updateConfig(config: Partial<LimiterConfig>) {
         this.config = { ...this.config, ...config }
-        if (this.config.enabled) {
-            this.applyParams(this.config)
-        } else {
-            this.applyBypass()
-        }
+        this.applyParams()
     }
 
     setEnabled(enabled: boolean) {
-        this.config.enabled = enabled
-        if (enabled) {
-            this.applyParams(this.config)
-        } else {
-            this.applyBypass()
-        }
+        this.updateConfig({ enabled })
     }
 
     get reduction(): number {
@@ -90,47 +63,12 @@ export class AudioLimiter {
     }
 
     dispose() {
-        try {
-            this.input.disconnect()
-        } catch {
-            /* already disconnected */
-        }
-        try {
-            this.compressor.disconnect()
-        } catch {
-            /* already disconnected */
-        }
-        try {
-            this.output.disconnect()
-        } catch {
-            /* already disconnected */
-        }
+        safelyDisconnect(this.input, this.compressor, this.output)
     }
 }
 
-// ============================================================================
-// INTEGRATION LAYER
-// ============================================================================
-
-let globalLimiter: AudioLimiter | null = null
-
-export function initializeLimiter(ac: AudioContext): AudioLimiter {
-    if (globalLimiter) return globalLimiter
-
-    globalLimiter = new AudioLimiter(ac, getEffectConfig("limiter", DEFAULT_LIMITER_CONFIG, "main"))
-    subscribeEffect("limiter", (cfg: LimiterConfig) => globalLimiter?.updateConfig(cfg), "main")
-
-    return globalLimiter
-}
-
-export function updateLimiterConfig(partial: Partial<LimiterConfig>, channelId?: string) {
-    updateEffectInStore("limiter", DEFAULT_LIMITER_CONFIG, partial, channelId)
-}
-
-export function setLimiterEnabled(enabled: boolean, channelId?: string) {
-    setEffectEnabledInStore("limiter", DEFAULT_LIMITER_CONFIG, enabled, channelId)
-}
-
-export function getLimiterReduction(): number {
-    return globalLimiter?.reduction ?? 0
-}
+const integration = createEffectIntegration("limiter", DEFAULT_LIMITER_CONFIG, AudioLimiter)
+export const initializeLimiter = integration.initialize
+export const updateLimiterConfig = integration.updateConfig
+export const setLimiterEnabled = integration.setEnabled
+export const getLimiterReduction = () => integration.getInstance()?.reduction ?? 0

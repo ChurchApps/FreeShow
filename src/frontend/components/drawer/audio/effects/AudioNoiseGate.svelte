@@ -2,12 +2,12 @@
     import { onDestroy, onMount } from "svelte"
     import { AudioAnalyser } from "../../../../audio/audioAnalyser"
     import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
-    import { type NoiseGateConfig, setNoiseGateEnabled, updateNoiseGateConfig } from "../../../../audio/effects/audioNoiseGate"
+    import { type NoiseGateConfig, updateNoiseGateConfig } from "../../../../audio/effects/audioNoiseGate"
     import InputRow from "../../../input/InputRow.svelte"
     import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
-    export let disabled: boolean = false
+    export let effectId: string = ""
+    export let channelId: string = ""
 
     let config: NoiseGateConfig = {
         enabled: false,
@@ -22,9 +22,14 @@
     let unsubscribe: (() => void) | null = null
 
     onMount(() => {
-        unsubscribe = subscribeEffect("noiseGate", (c: NoiseGateConfig) => {
-            config = { ...c }
-        })
+        unsubscribe = subscribeEffect(
+            "noiseGate",
+            (c: NoiseGateConfig) => {
+                config = { ...c }
+            },
+            channelId,
+            effectId
+        )
 
         pollInterval = setInterval(() => {
             const channels = AudioAnalyser.getChannelsVolume()
@@ -40,12 +45,8 @@
         if (pollInterval !== null) clearInterval(pollInterval)
     })
 
-    function handleEnable(e: any) {
-        setNoiseGateEnabled(e.detail)
-    }
-
     function handleChange(key: keyof NoiseGateConfig, raw: number) {
-        updateNoiseGateConfig({ [key]: raw })
+        updateNoiseGateConfig({ [key]: raw }, channelId, effectId)
     }
 
     // ---- visualisation ----
@@ -69,13 +70,9 @@
     $: releaseMs = Math.round(config.release * 1000)
 </script>
 
-<div class="gate-container" style="--accent: #52ad7a;" class:disabled>
-    <MaterialToggleSwitch label="settings.enabled" checked={config.enabled} on:change={handleEnable} />
-
-    <div style="height: 5px;" />
-
+<div class="gate-container" style="--accent: #52ad7a;">
     <!-- Gate visualisation -->
-    <div class="viz-wrap" class:viz-disabled={!config.enabled}>
+    <div class="viz-wrap">
         <div class="viz-svg-wrap" bind:clientWidth={canvasW}>
             <svg width={canvasW} height={canvasH} class="viz-svg">
                 <!-- Blocked region (below hysteresis) -->
@@ -114,19 +111,19 @@
     <div style="height: 8px;" />
 
     <InputRow>
-        <MaterialNumberInput label="audio.threshold" value={config.threshold} min={-100} max={0} step={1} maxDecimals={0} showSlider sliderValues={{ min: -80, max: 0, step: 1 }} {disabled} on:change={(e) => handleChange("threshold", e.detail)} />
+        <MaterialNumberInput label="audio.threshold" value={config.threshold} min={-100} max={0} step={1} maxDecimals={0} showSlider sliderValues={{ min: -80, max: 0, step: 1 }} on:change={(e) => handleChange("threshold", e.detail)} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.hysteresis" value={config.hysteresis} min={0} max={24} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 24, step: 1 }} {disabled} on:change={(e) => handleChange("hysteresis", e.detail)} />
+        <MaterialNumberInput label="audio.hysteresis" value={config.hysteresis} min={0} max={24} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 24, step: 1 }} on:change={(e) => handleChange("hysteresis", e.detail)} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.attack" value={attackMs} min={0} max={500} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 200, step: 1 }} {disabled} on:change={(e) => handleChange("attack", e.detail / 1000)} />
+        <MaterialNumberInput label="audio.attack" value={attackMs} min={0} max={500} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 200, step: 1 }} on:change={(e) => handleChange("attack", e.detail / 1000)} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.release" value={releaseMs} min={1} max={2000} step={1} maxDecimals={0} showSlider sliderValues={{ min: 1, max: 1000, step: 1 }} {disabled} on:change={(e) => handleChange("release", e.detail / 1000)} />
+        <MaterialNumberInput label="audio.release" value={releaseMs} min={1} max={2000} step={1} maxDecimals={0} showSlider sliderValues={{ min: 1, max: 1000, step: 1 }} on:change={(e) => handleChange("release", e.detail / 1000)} />
     </InputRow>
 </div>
 
@@ -134,11 +131,6 @@
     .gate-container {
         border-radius: 8px;
         user-select: none;
-    }
-
-    .gate-container.disabled {
-        opacity: 0.5;
-        pointer-events: none;
     }
 
     .viz-wrap {
@@ -151,10 +143,6 @@
         overflow: hidden;
         transition: opacity 0.2s ease;
         font-family: monospace;
-    }
-
-    .viz-wrap.viz-disabled {
-        opacity: 0.4;
     }
 
     .viz-svg-wrap {
