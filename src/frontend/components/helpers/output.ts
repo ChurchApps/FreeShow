@@ -1616,7 +1616,7 @@ export function getStyleTemplate(outSlide: OutSlide | null, currentStyle: Styles
 }
 
 export function slideHasAutoSizeItem(slide: Slide | Template) {
-    return slide?.items?.find((a) => a.auto)
+    return slide?.items?.some((a) => (a.textFit || "none") !== "none" || a.auto)
 }
 
 export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles, items: Item[] | undefined, outputId: string, slideDynamicValues?: { [key: string]: any }) {
