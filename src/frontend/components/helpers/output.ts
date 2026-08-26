@@ -174,6 +174,10 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
                 else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[type] || []), ...data])
                 else outData = data
 
+                if (type === "effects" && (!toggle || !toggleState)) {
+                    outData = clearDuplicateFullscreenEffects(outData, data, id)
+                }
+
                 data.forEach((overlayId) => {
                     // timeout so output can update first
                     if (outData.includes(overlayId)) startOverlayTimer(id, overlayId, outData, type)
@@ -352,6 +356,29 @@ export function startCamera(cam: API_camera) {
 
 export function startScreen(screen: API_screen) {
     setOutput("background", { name: screen.name || "", id: screen.id, type: "screen" })
+}
+
+/// EFFECTS
+
+const FULLSCREEN_EFFECT_TYPES = ["mesh_gradient", "rays"]
+
+function getEffectFullscreenTypes(effectId: string): string[] {
+    const effect = get(effects)[effectId]
+    return effect?.items?.filter((item) => !item.hidden && FULLSCREEN_EFFECT_TYPES.includes(item.type)).map((item) => item.type) || []
+}
+
+// some effects take up the whole screen and would block each other, so clear out any other effects of same type to only keep one "fullscreen effect" active at once
+function clearDuplicateFullscreenEffects(activeEffectIds: string[], newEffectIds: string[], outputId: string): string[] {
+    const newTypes = newEffectIds.flatMap(getEffectFullscreenTypes)
+    if (!newTypes.length) return activeEffectIds
+
+    return activeEffectIds.filter((id) => {
+        if (newEffectIds.includes(id)) return true
+        const types = getEffectFullscreenTypes(id)
+        const hasConflict = types.some((t) => newTypes.includes(t))
+        if (hasConflict) clearOverlayTimer(outputId, id)
+        return !hasConflict
+    })
 }
 
 /// OVERLAY TIMERS
