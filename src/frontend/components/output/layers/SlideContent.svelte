@@ -6,7 +6,7 @@
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
     import { clone } from "../../helpers/array"
     import { loadCustomFonts } from "../../helpers/fonts"
-    import { getStyleTemplate, slideHasAutoSizeItem } from "../../helpers/output"
+    import { getStyleTemplate, itemNeedsAutoSize, slideHasAutoSizeItem } from "../../helpers/output"
     import Textbox from "../../slide/Textbox.svelte"
     import { SlideTimeline } from "../../timeline/SlideTimeline"
     import SlideItemTransition from "../transitions/SlideItemTransition.svelte"
@@ -180,7 +180,7 @@
     // outgoing items hold for auto size delay while incoming content calculates font size
     $: incomingNeedsAutoSize = slideNeedsAutoSize(currentSlide, outSlide, currentStyle)
     function slideNeedsAutoSize(slide: any, out: OutSlide, style: any) {
-        if (slide?.items?.some((a: Item) => a.auto && !a.autoFontSize)) return true
+        if (slide?.items?.some(itemNeedsAutoSize)) return true
 
         let customTemplate = getStyleTemplate(out, style)
         if (!Object.keys(customTemplate).length && out?.id === "temp") customTemplate = $templates[$scriptureSettings.template] || {}

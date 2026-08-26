@@ -1642,8 +1642,17 @@ export function getStyleTemplate(outSlide: OutSlide | null, currentStyle: Styles
     return template
 }
 
+function itemHasAutoSize(item: Item) {
+    return (item.textFit || "none") !== "none" || !!item.auto
+}
+
 export function slideHasAutoSizeItem(slide: Slide | Template) {
-    return slide?.items?.some((a) => (a.textFit || "none") !== "none" || a.auto)
+    return slide?.items?.some(itemHasAutoSize)
+}
+
+// the auto size text size has to be calculated if it is not stored yet
+export function itemNeedsAutoSize(item: Item) {
+    return itemHasAutoSize(item) && !item.autoFontSize
 }
 
 export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles, items: Item[] | undefined, outputId: string, slideDynamicValues?: { [key: string]: any }) {
