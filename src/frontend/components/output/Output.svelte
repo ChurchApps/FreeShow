@@ -305,11 +305,10 @@
     $: templateBackgroundData = { path: templateBackground, loop: true, ...($media[templateBackground] || {}) }
     $: backgroundData = templateBackground ? templateBackgroundData : background
 
-    // "foreground" media clears the slide as it is outputted, but it is drawn below the slide,
-    // so a fading out slide would be visible on top of the media - remove the transition in that case
+    // remove slide transition when replaced by "foreground" media (drawn below slide)
     const noTransition: Transition = { type: "none", duration: 0, easing: "" }
     $: textTransition = !slide && backgroundData?.ignoreLayer ? noTransition : transitions.text
-    // a PDF/PPT is cleared when a background is outputted, and it is drawn above the background as well
+    // remove PDF/PPT transition when background is outputted
     $: slideMediaTransition = !slide && backgroundData ? noTransition : transitions.media
 
     $: overlaysActive = !!(layers.includes("overlays") && clonedOverlays)

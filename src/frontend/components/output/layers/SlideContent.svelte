@@ -177,8 +177,7 @@
         return item?.id ? String(item.id) : `idx-${index}`
     }
 
-    // the outgoing items hold for the auto size delay while the incoming content calculates its font size,
-    // only the incoming content knows if that is needed (e.g. going from scripture to a regular text slide)
+    // outgoing items hold for auto size delay while incoming content calculates font size
     $: incomingNeedsAutoSize = slideNeedsAutoSize(currentSlide, outSlide, currentStyle)
     function slideNeedsAutoSize(slide: any, out: OutSlide, style: any) {
         if (slide?.items?.some((a: Item) => a.auto && !a.autoFontSize)) return true
@@ -186,7 +185,7 @@
         let customTemplate = getStyleTemplate(out, style)
         if (!Object.keys(customTemplate).length && out?.id === "temp") customTemplate = $templates[$scriptureSettings.template] || {}
 
-        return Object.keys(customTemplate).length ? !!slideHasAutoSizeItem(customTemplate) : false
+        return slideHasAutoSizeItem(customTemplate)
     }
 
     let isClearingToEmpty = false
