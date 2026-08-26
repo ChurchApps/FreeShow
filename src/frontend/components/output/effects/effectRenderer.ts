@@ -1527,13 +1527,9 @@ export class EffectRender {
     initMeshGradient(item: MeshGradientItem) {
         const list = item.colors?.length ? item.colors : ["#101020", "#2b2d4d", "#7c5f7a", "#e0a98c"]
         const count = list.length
-        let cols = Math.max(2, Math.round(Math.sqrt(count)))
-        let rows = Math.max(2, Math.ceil(count / cols))
-
-        if (item.density && item.density >= 2) {
-            cols = Math.max(2, Math.min(10, Math.round(item.density)))
-            rows = cols
-        }
+        const density = item.density ? Math.max(4, Math.min(10, Math.round(item.density))) : Math.max(4, Math.round(Math.sqrt(count)))
+        const cols = density
+        const rows = density
 
         const colors = new Float32Array(cols * rows * 3)
         for (let k = 0; k < cols * rows; k++) {

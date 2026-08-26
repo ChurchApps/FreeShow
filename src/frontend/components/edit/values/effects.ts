@@ -128,7 +128,7 @@ export const effectSections: { [key: string]: EditBoxSection } = {
             { id: "speed", type: "number", value: 1, values: { label: "edit.speed", min: 0, max: 10, decimals: 1, showSlider: true, sliderValues: { min: 0, max: 5 } } },
             { id: "motion", type: "number", value: 0.07, multiplier: 1000, values: { label: "effect.motion", min: 0, max: 200, decimals: 3, showSlider: true, sliderValues: { min: 0, max: 140 } } },
             { id: "spread", type: "number", value: 1, values: { label: "effect.spread", min: 0.1, max: 5, step: 0.1, decimals: 1, showSlider: true, sliderValues: { min: 0.2, max: 3 } } },
-            { id: "density", type: "number", value: 4, values: { label: "effect.density", min: 2, max: 10, showSlider: true, sliderValues: { min: 2, max: 8 } } },
+            { id: "density", type: "number", value: 4, values: { label: "effect.density", min: 4, max: 10, showSlider: true, sliderValues: { min: 4, max: 8 } } },
             { id: "grain", type: "number", value: 0, multiplier: 1000, values: { label: "effect.grain", min: 0, max: 200, decimals: 3, showSlider: true, sliderValues: { min: 0, max: 100 } } }
         ])
     },
