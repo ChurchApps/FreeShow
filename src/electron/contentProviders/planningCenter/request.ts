@@ -599,7 +599,7 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
         console.warn(`Planning Center: Song "${songData.attributes?.title}" has sequence but no matching sections. Sequence: ${sequence.join(", ")}`)
     }
 
-    const show = getShow(songData, song, sections)
+    const show = getShow(songData, song, sections, true)
     const showId = `pcosong_${songData.id}`
 
     return {
@@ -1005,7 +1005,7 @@ function getDateTitle(dateString: string) {
 
 const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
 
-function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
+function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[], isSong: boolean = false) {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
     SECTIONS.forEach((section) => {
@@ -1061,7 +1061,7 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
 
     const show: Show = {
         name: title,
-        category: "planning_center",
+        category: isSong ? "song" : "planning_center",
         timestamps: { created: new Date(SONG.created_at).getTime() || Date.now(), modified: new Date(SONG.updated_at).getTime() || null, used: null },
         meta: metadata,
         settings: {
