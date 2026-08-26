@@ -72,6 +72,7 @@
 
     $: bgPath = item?.src
     $: if (bgPath) loadMedia()
+    else mediaPath = ""
     async function loadMedia() {
         if (item.type !== "media") return
 
@@ -95,6 +96,7 @@
     $: cropState = getCropState(item?.cropping, cropPreviewMode, item?.style)
     $: showCropOverflowPreview = cropState.showCropOverflowPreview
     $: mediaCropGeometry = cropState.mediaCropGeometry
+    $: mediaContainerStyle = cropState.mediaContainerStyle
     $: flipX = item?.flipped ? -1 : 1
     $: flipY = item?.flippedY ? -1 : 1
     $: transformString = `scale(${flipX}, ${flipY})`
@@ -147,8 +149,8 @@
                 videoElem.pause()
                 videoBlurElem?.pause()
             } else if (!data.paused && videoElem.paused) {
-                videoElem.play()
-                videoBlurElem?.play()
+                videoElem.play()?.catch(() => {})
+                videoBlurElem?.play()?.catch(() => {})
             }
         })
     }
@@ -178,29 +180,30 @@
 </script>
 
 {#if mediaPath}
-    {#if ($currentWindow || preview) && getMediaType(getExtension(mediaPath)) === "video"}
-        {#if item.fit === "blur"}
-            <video bind:this={videoBlurElem} src={encodeFilePath(mediaPath)} style="{mediaStyleBlurString}{mediaStyleCombinedString}" muted autoplay loop={shouldLoop} />
-        {/if}
-        {@const mainVol = $audioChannelsData.main?.volume ?? 1}
-        <video bind:this={videoElem} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString}" muted volume={mainVol} autoplay loop={shouldLoop}>
-            <track kind="captions" />
-        </video>
-
-        {#if softLoopValue > 0 && shouldLoop}
-            <video bind:this={softLoopVideo} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString} position: absolute;top: 0;left: 0;transition: 0.2s opacity;opacity: {effectiveSoftLoopOpacity};pointer-events: none;" muted loop={shouldLoop} />
-        {/if}
-    {:else}
-        <!-- {#key updater} -->
-        <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
-        <!-- TODO: use custom transition... -->
-        {#if showCropOverflowPreview}
-            <Image style="{mediaStyleString}{mediaOverflowPreviewStyle}" src={mediaPath} {updater} alt="" transition={false} />
-        {/if}
-        {#if item.fit === "blur"}
-            <Image style="{mediaStyleBlurString}{mediaStyleCombinedString}" src={mediaPath} {updater} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
-        {/if}
-        <Image style="{mediaStyleString}{mediaStyleCombinedString}" src={mediaPath} {updater} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
-        <!-- {/key} -->
+    {#if showCropOverflowPreview}
+        <Image style="{mediaStyleString}{mediaOverflowPreviewStyle}" src={mediaPath} {updater} alt="" transition={false} />
     {/if}
+
+    <div class="mediaContainer" style={mediaContainerStyle}>
+        {#if ($currentWindow || preview) && getMediaType(getExtension(mediaPath)) === "video"}
+            {#if item.fit === "blur"}
+                <video bind:this={videoBlurElem} src={encodeFilePath(mediaPath)} style="{mediaStyleBlurString}{mediaStyleCombinedString}" muted autoplay loop={shouldLoop} />
+            {/if}
+            {@const mainVol = $audioChannelsData.main?.volume ?? 1}
+            <video bind:this={videoElem} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString}" muted volume={mainVol} autoplay loop={shouldLoop}>
+                <track kind="captions" />
+            </video>
+
+            {#if softLoopValue > 0 && shouldLoop}
+                <video bind:this={softLoopVideo} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString} position: absolute;top: 0;left: 0;transition: 0.2s opacity;opacity: {effectiveSoftLoopOpacity};pointer-events: none;" muted loop={shouldLoop} />
+            {/if}
+        {:else}
+            <!-- WIP image flashes when loading new image (when changing slides with the same image) -->
+            <!-- TODO: use custom transition... -->
+            {#if item.fit === "blur"}
+                <Image style="{mediaStyleBlurString}{mediaStyleCombinedString}" src={mediaPath} {updater} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
+            {/if}
+            <Image style="{mediaStyleString}{mediaStyleCombinedString}" src={mediaPath} {updater} alt="" transition={!edit && item.actions?.transition?.duration && item.actions?.transition?.type !== "none"} />
+        {/if}
+    </div>
 {/if}

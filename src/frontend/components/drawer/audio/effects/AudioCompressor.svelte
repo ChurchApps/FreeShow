@@ -1,13 +1,13 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { AudioAnalyser } from "../../../../audio/audioAnalyser"
-    import { getCompressorReduction, setCompressorEnabled, updateCompressorConfig, type CompressorConfig } from "../../../../audio/effects/audioCompressor"
+    import { getCompressorReduction, updateCompressorConfig, type CompressorConfig } from "../../../../audio/effects/audioCompressor"
     import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
     import InputRow from "../../../input/InputRow.svelte"
     import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
-    export let disabled: boolean = false
+    export let effectId: string = ""
+    export let channelId: string = ""
 
     let config: CompressorConfig = {
         enabled: false,
@@ -25,9 +25,14 @@
     let unsubscribe: (() => void) | null = null
 
     onMount(() => {
-        unsubscribe = subscribeEffect("compressor", (c: CompressorConfig) => {
-            config = { ...c }
-        })
+        unsubscribe = subscribeEffect(
+            "compressor",
+            (c: CompressorConfig) => {
+                config = { ...c }
+            },
+            channelId,
+            effectId
+        )
 
         // Poll gain reduction and audio level every 50 ms
         grInterval = setInterval(() => {
@@ -49,12 +54,8 @@
 
     // ---- handlers ----
 
-    function handleEnable(e: any) {
-        setCompressorEnabled(e.detail)
-    }
-
     function handleChange(key: keyof CompressorConfig, raw: number) {
-        updateCompressorConfig({ [key]: raw })
+        updateCompressorConfig({ [key]: raw }, channelId, effectId)
     }
 
     // ---- transfer-curve visualisation ----
@@ -126,13 +127,9 @@
     $: releaseMs = Math.round(config.release * 1000)
 </script>
 
-<div class="compressor-container" style="--accent: #ad6852;" class:disabled>
-    <MaterialToggleSwitch label="settings.enabled" checked={config.enabled} on:change={handleEnable} />
-
-    <div style="height: 5px;" />
-
+<div class="compressor-container" style="--accent: #ad6852;">
     <!-- Transfer curve visualisation -->
-    <div class="curve-wrap" class:curve-disabled={!config.enabled}>
+    <div class="curve-wrap">
         <div class="curve-svg-wrap" bind:clientWidth={canvasW}>
             <svg width={canvasW} height={canvasH} class="curve-svg">
                 <!-- Grid dB lines -->
@@ -177,23 +174,23 @@
 
     <!-- Parameter inputs -->
     <InputRow>
-        <MaterialNumberInput label="audio.threshold" value={config.threshold} min={-100} max={0} step={1} maxDecimals={0} showSlider sliderValues={{ min: -60, max: 0, step: 1 }} {disabled} on:change={(e) => handleChange("threshold", e.detail)} />
+        <MaterialNumberInput label="audio.threshold" value={config.threshold} min={-100} max={0} step={1} maxDecimals={0} showSlider sliderValues={{ min: -60, max: 0, step: 1 }} on:change={(e) => handleChange("threshold", e.detail)} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.ratio" value={config.ratio} min={1} max={20} step={0.5} maxDecimals={1} showSlider sliderValues={{ min: 1, max: 20, step: 0.5 }} {disabled} on:change={(e) => handleChange("ratio", e.detail)} />
+        <MaterialNumberInput label="audio.ratio" value={config.ratio} min={1} max={20} step={0.5} maxDecimals={1} showSlider sliderValues={{ min: 1, max: 20, step: 0.5 }} on:change={(e) => handleChange("ratio", e.detail)} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.knee" value={config.knee} min={0} max={40} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 40, step: 1 }} {disabled} on:change={(e) => handleChange("knee", e.detail)} />
+        <MaterialNumberInput label="audio.knee" value={config.knee} min={0} max={40} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 40, step: 1 }} on:change={(e) => handleChange("knee", e.detail)} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.attack" value={attackMs} min={0} max={1000} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 500, step: 1 }} {disabled} on:change={(e) => handleChange("attack", e.detail / 1000)} />
+        <MaterialNumberInput label="audio.attack" value={attackMs} min={0} max={1000} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 500, step: 1 }} on:change={(e) => handleChange("attack", e.detail / 1000)} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.release" value={releaseMs} min={1} max={1000} step={1} maxDecimals={0} showSlider sliderValues={{ min: 1, max: 1000, step: 1 }} {disabled} on:change={(e) => handleChange("release", e.detail / 1000)} />
+        <MaterialNumberInput label="audio.release" value={releaseMs} min={1} max={1000} step={1} maxDecimals={0} showSlider sliderValues={{ min: 1, max: 1000, step: 1 }} on:change={(e) => handleChange("release", e.detail / 1000)} />
     </InputRow>
 </div>
 
@@ -201,11 +198,6 @@
     .compressor-container {
         border-radius: 8px;
         user-select: none;
-    }
-
-    .compressor-container.disabled {
-        opacity: 0.5;
-        pointer-events: none;
     }
 
     .curve-wrap {
@@ -218,10 +210,6 @@
         overflow: hidden;
         transition: opacity 0.2s ease;
         font-family: monospace;
-    }
-
-    .curve-wrap.curve-disabled {
-        opacity: 0.4;
     }
 
     .curve-svg-wrap {

@@ -1,47 +1,65 @@
 import type { StringObject } from "../../../types/Main"
 
-export const getStyles = (str: string | null | undefined, removeTxt = false) => {
-    let styles: StringObject = {}
-    if (!str?.length) return styles
+const cache = new Map<string, StringObject>()
+const DONT_REPLACE = ["color", "background", "text-decoration", "text-transform", "text-shadow", "box-shadow", "font-family", "transform"]
+
+export const getStyles = (str: string | null | undefined, removeTxt = false): StringObject => {
+    if (!str) return {}
+
+    const cacheKey = `${removeTxt ? 1 : 0}_${str}`
+    const cached = cache.get(cacheKey)
+    if (cached) return { ...cached }
+
+    const styles: StringObject = {}
 
     str.split(";").forEach((s) => {
-        if (!s.length) return
+        const colon = s.indexOf(":")
+        if (colon === -1) return
 
-        const key: string = s.slice(0, s.indexOf(":")).trim()
-        let style: string = s.slice(s.indexOf(":") + 1, s.length).trim()
+        const key = s.slice(0, colon).trim()
+        let style = s.slice(colon + 1).trim()
 
-        const replaced: string = removeText(style)
+        if (removeTxt && !DONT_REPLACE.some((d) => key.includes(d))) {
+            const num = removeText(style)
+            if (num) style = num
+        }
 
-        const dontReplace: string[] = ["text-decoration", "text-transform", "text-shadow", "box-shadow", "font-family", "transform"]
-
-        // remove text
-        if (!key.includes("color") && !key.includes("background") && !dontReplace.includes(key) && removeTxt && style.length > replaced.length && replaced.length > 0) style = replaced
-
-        if (key === "transform") styles = { ...styles, ...getFilters(style) }
-
+        if (key === "transform") Object.assign(styles, getFilters(style))
         styles[key] = style
     })
 
-    return styles
+    if (cache.size > 1000) cache.clear()
+    cache.set(cacheKey, styles)
+
+    return { ...styles }
 }
 
 export function getFilters(filter: string | undefined) {
-    if (typeof filter !== "string") return {}
+    if (!filter) return {}
 
     const styles: StringObject = {}
     filter.split(" ").forEach((s) => {
-        if (s.length) {
-            const key: string = s.slice(0, s.indexOf("(")).trim()
-            let style: string = s.slice(s.indexOf("(") + 1, s.indexOf(")")).trim()
-            style = removeText(style)
-            styles[key] = style
-        }
+        const match = s.match(/^([^(]+)\(([^)]+)\)/)
+        if (match) styles[match[1].trim()] = removeText(match[2].trim())
     })
 
     return styles
 }
 
 export function removeText(value: string): string {
-    // .replace(/\D.+/g, "")
-    return value?.replace(/[^0-9.-]/g, "")
+    return value ? value.replace(/[^0-9.-]/g, "") : ""
+}
+
+export function getItemStyle(style: string | undefined, isCropped = false): string {
+    if (!style) return ""
+    if (isCropped) {
+        return style
+            .split(";")
+            .filter((s) => {
+                const k = s.split(":")[0]?.trim()
+                return k && !k.startsWith("border") && k !== "box-shadow"
+            })
+            .join(";")
+    }
+    return style.includes("border-width:") && !style.includes("border-style:") ? `${style};border-style: solid;` : style
 }

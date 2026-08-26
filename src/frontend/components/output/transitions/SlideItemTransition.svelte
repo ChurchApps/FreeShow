@@ -10,6 +10,9 @@
     export let globalTransition: Transition
     export let transitionEnabled = false
     export let transitioningBetween = false
+    export let isClearing = false
+    // outgoing items hold for auto size delay while incoming content calculates font size
+    export let incomingNeedsAutoSize = true
     export let preview = false
     export let item: Item
     export let currentSlide: any = {}
@@ -20,6 +23,24 @@
     let currentlyTransitioning: { [key: string]: any } = {}
 
     $: if (item !== undefined || lines) startTransition()
+
+    // update out transition if cleared without incoming content or transition changed
+    $: clearingOutTransition = getClearingOutTransition(globalTransition, item)
+    function getClearingOutTransition(global: Transition, currentItem: Item): Transition {
+        const transition = currentItem?.actions?.transition || global || ({} as Transition)
+        const out = clone(transition.out || transition) as Transition
+
+        if (out.type === "none") out.duration = 0
+
+        // keep custom "hide" delay, without auto size delay
+        const hideDuration = $currentWindow === "output" || preview ? currentItem?.actions?.hideTimer || 0 : 0
+        out.delay = hideDuration ? hideDuration * 1000 : 0
+
+        // delay won't work if no transition
+        if (out.delay && (out.type === "none" || !out.duration)) return { ...out, type: "fade", duration: 1 }
+
+        return out
+    }
 
     // WIP item wait out time will not clear other items without wait time if between transition
     // WIP slide direction from top to bottom is a bit buggy
@@ -51,6 +72,7 @@
 
         let inDelay = 0
         let outDelay = 0
+        let autoSizeDelay = 0
 
         // ITEM IN/OUT DELAY
         let showDuration = $currentWindow === "output" || preview ? item?.actions?.showTimer || 0 : 0
@@ -66,11 +88,12 @@
             if (!Object.keys(customTemplate).length && outSlide?.id === "temp") customTemplate = $templates[$scriptureSettings.template] || {}
 
             // only keep the legacy autosize delay when nothing has pre-populated a font size yet
-            const templateNeedsAutoSize = Object.keys(customTemplate).length ? slideHasAutoSizeItem(customTemplate) : false
+            const templateNeedsAutoSize = slideHasAutoSizeItem(customTemplate)
             const itemNeedsAutoSize = item.auto && !item.autoFontSize
 
             if (templateNeedsAutoSize || itemNeedsAutoSize) {
-                outDelay = 500
+                autoSizeDelay = 500
+                outDelay = autoSizeDelay
                 if (!inDelay) inDelay = outDelay * 0.98
             }
         }
@@ -104,11 +127,20 @@
             currentSlide: clone(currentSlide),
             inTransition,
             outTransition,
-            transitionBetween
+            transitionBetween,
+            autoSizeDelay
         }
 
         currentlyTransitioning[stateId] = state
         currentlyTransitioning = currentlyTransitioning
+    }
+
+    function getOutTransition(transitioning: any, incomingNeedsAutoSize: boolean, transitioningBetween: boolean): Transition {
+        const transition = transitioningBetween ? transitioning.transitionBetween : transitioning.outTransition
+        if (!incomingNeedsAutoSize && transitioning.autoSizeDelay) {
+            return { ...transition, delay: Math.max(0, (transition.delay || 0) - transitioning.autoSizeDelay) }
+        }
+        return transition
     }
 
     // only update if new ID! Previous is removed, but output should not update until a new value is set
@@ -122,7 +154,8 @@
 </script>
 
 {#each Object.values(currentOut) as transitioning}
-    <OutputTransition inTransition={transitionEnabled ? transitioning.inTransition : null} outTransition={transitionEnabled ? (transitioningBetween ? transitioning.transitionBetween : transitioning.outTransition) : null}>
+    {@const outTransition = !transitionEnabled ? null : isClearing ? clearingOutTransition : getOutTransition(transitioning, incomingNeedsAutoSize, transitioningBetween)}
+    <OutputTransition inTransition={transitionEnabled ? transitioning.inTransition : null} {outTransition}>
         <slot customItem={transitioning.item} customLines={transitioning.lines} customOut={transitioning.outSlide} customSlide={transitioning.currentSlide} transition={transitionEnabled ? transitioning.inTransition : null} />
     </OutputTransition>
 {/each}

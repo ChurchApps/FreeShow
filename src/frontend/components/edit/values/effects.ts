@@ -109,9 +109,7 @@ export const effectSections: { [key: string]: EditBoxSection } = {
     },
 
     rainbow: {
-        inputs: splitIntoRows([
-            { id: "bandWidth", type: "number", value: 30, values: { label: "edit.width", min: 5, max: 200, showSlider: true, sliderValues: { min: 10, max: 100 } } }
-        ])
+        inputs: splitIntoRows([{ id: "bandWidth", type: "number", value: 30, values: { label: "edit.width", min: 5, max: 200, showSlider: true, sliderValues: { min: 10, max: 100 } } }])
     },
 
     spotlight: {
@@ -124,15 +122,26 @@ export const effectSections: { [key: string]: EditBoxSection } = {
         ])
     },
 
+    mesh_gradient: {
+        inputs: splitIntoRows([
+            { id: "colors", type: "colors", value: [], values: { label: "settings.colors" } },
+            { id: "speed", type: "number", value: 1, values: { label: "edit.speed", min: 0, max: 10, decimals: 1, showSlider: true, sliderValues: { min: 0, max: 5 } } },
+            { id: "motion", type: "number", value: 0.07, multiplier: 1000, values: { label: "effect.motion", min: 0, max: 200, decimals: 3, showSlider: true, sliderValues: { min: 0, max: 140 } } },
+            { id: "spread", type: "number", value: 1, values: { label: "effect.spread", min: 0.1, max: 5, step: 0.1, decimals: 1, showSlider: true, sliderValues: { min: 0.2, max: 3 } } },
+            { id: "density", type: "number", value: 4, values: { label: "effect.density", min: 4, max: 10, showSlider: true, sliderValues: { min: 4, max: 8 } } },
+            { id: "grain", type: "number", value: 0, multiplier: 1000, values: { label: "effect.grain", min: 0, max: 200, decimals: 3, showSlider: true, sliderValues: { min: 0, max: 100 } } }
+        ])
+    },
+
     aurora: {
         inputs: splitIntoRows([
             { id: "bandCount", type: "number", value: 5, values: { label: "edit.count", min: 1, max: 20, showSlider: true, sliderValues: { max: 10 } } },
             { id: "amplitude", type: "number", value: 50, values: { label: "edit.height", min: 1, max: 500, step: 10, showSlider: true, sliderValues: { max: 200 } } },
             { id: "wavelength", type: "number", value: 500, values: { label: "edit.length", max: 2000, step: 100, showSlider: true, sliderValues: { max: 1000, step: 10 } } },
-            { id: "speed", type: "number", value: 1, multiplier: 10, values: { label: "edit.speed", min: -1000, max: 1000, decimals: 1, showSlider: true, sliderValues: { min: 0, max: 100 } } }
+            { id: "speed", type: "number", value: 1, multiplier: 10, values: { label: "edit.speed", min: -1000, max: 1000, decimals: 1, showSlider: true, sliderValues: { min: 0, max: 100 } } },
             // { name: "opacity", id: "opacity", input: "number", slider: true, value: 0.8, values: { min: 0, max: 1 } },
             // { name: "offset", id: "offset", input: "number", slider: true, value: 0, values: { min: 0, max: 1000 } }
-            // colorStops is an array, might need custom UI, omitted here
+            { id: "colorStops", type: "colors", value: ["#00ffcc", "#00ffb7", "#00ff88"], values: { label: "settings.colors" } }
         ])
     },
 

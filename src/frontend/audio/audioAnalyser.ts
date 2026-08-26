@@ -23,6 +23,7 @@ export class AudioAnalyser {
     private static sources: { [key: string]: AudioNode } = {}
     private static processors: { [key: string]: PitchShiftNode } = {}
     private static gainNodes: { [key: string]: GainNode } = {}
+    private static attachedInputIds: Map<string, string[]> = new Map()
 
     // Reusable static buffer to prevent GC allocations during level checks
     private static volumeBuffer = new Float32Array(256)
@@ -108,7 +109,7 @@ export class AudioAnalyser {
         // Start pipeline immediately
         AudioRoutingManager.getInstance().setAudioContext(this.getAudioContext())
         this.initAnalysers()
-        this.initRecorder()
+        this.recorderActivate()
 
         if (this.sources[key]) {
             if (!this.splitter) return
@@ -126,24 +127,18 @@ export class AudioAnalyser {
             this.sources[key].connect(sourceGain)
             sourceGain.connect(processor.input)
 
-            const playingAudioMap = get(playingAudio)
-            const audioPlaying = playingAudioMap[id]
-            const videoPlaying = get(playingVideos).some((v) => v.path === id)
-            const isMic = audio instanceof MediaStream || (audioPlaying && audioPlaying.isMic === true)
-            const isVideo = audio instanceof HTMLVideoElement || videoPlaying
-
             // Route audio to configured mergers
+            const nodeIds = this.getInputNodeIds(id, outputId)
+            this.attachedInputIds.set(key, nodeIds)
             this.connectToSinks(processor, id, outputId)
 
-            if (isMic || isVideo) {
-                if (this.ac.state === "suspended") {
-                    this.ac.resume().catch((err) => console.error("Could not resume AudioContext:", err))
-                }
-
-                setTimeout(() => {
-                    AudioRoutingManager.getInstance().updateRoutingNodes()
-                }, 100)
+            if (this.ac.state === "suspended") {
+                this.ac.resume().catch((err) => console.error("Could not resume AudioContext:", err))
             }
+
+            setTimeout(() => {
+                AudioRoutingManager.getInstance().updateRoutingNodes()
+            }, 100)
 
             const mediaData = get(media)[id]
             if (mediaData) {
@@ -207,34 +202,34 @@ export class AudioAnalyser {
         if (!source) return
 
         const processor = this.processors[key]
-        const audioPlaying = get(playingAudio)[id]
-        const isMic = audioPlaying?.isMic === true || id.startsWith("mic_sub_")
-        const nodeKey = isMic ? id : id === "metronome" ? "metronome" : "drawer_audio"
-        const specificInputId = outputId ? `output_win_sub_${outputId}` : null
+        const nodeIds = this.attachedInputIds.get(key) || this.getInputNodeIds(id, outputId)
+        this.attachedInputIds.delete(key)
 
         this.disconnectGain(processor || source, id, outputId)
 
-        if (nodeKey === "drawer_audio") {
-            const currentAudio = get(playingAudio)
-            const playingKeys = Object.keys(currentAudio)
-            let stillPlayingDrawer = false
-            for (let i = 0; i < playingKeys.length; i++) {
-                const k = playingKeys[i]
-                if (k !== id && currentAudio[k]?.isMic !== true) {
-                    stillPlayingDrawer = true
-                    break
-                }
+        const currentAudio = get(playingAudio)
+        const currentVideos = get(playingVideos)
+        const playingKeys = Object.keys(currentAudio)
+        let stillPlayingDrawer = false
+        let stillPlayingPlaylist = false
+
+        for (let i = 0; i < playingKeys.length; i++) {
+            const k = playingKeys[i]
+            if (k !== id && currentAudio[k]?.isMic !== true) {
+                if (currentAudio[k]?.playlistId) stillPlayingPlaylist = true
+                else stillPlayingDrawer = true
             }
-            if (!stillPlayingDrawer) {
-                AudioInputCapture.getInstance().removeInput(nodeKey)
-            }
-        } else {
-            AudioInputCapture.getInstance().removeInput(nodeKey)
         }
 
-        if (specificInputId) {
-            AudioInputCapture.getInstance().removeInput(specificInputId)
-        }
+        const stillPlayingVideo = currentVideos.some((v) => v.path !== id)
+
+        nodeIds.forEach((nodeId) => {
+            if (nodeId === "drawer_audio" && stillPlayingDrawer) return
+            if (nodeId === "playlists_default" && stillPlayingPlaylist) return
+            if (nodeId === "output_window" && stillPlayingVideo) return
+            AudioInputCapture.getInstance().removeInput(nodeId)
+        })
+
         this.recorderDeactivate()
 
         if (processor) {
@@ -409,64 +404,47 @@ export class AudioAnalyser {
         this.disconnectGain(source, id)
     }
 
-    static connectGain(source: AudioNode | PitchShiftNode, id?: string, outputId?: string) {
-        const node = source instanceof PitchShiftNode ? source.output : source
+    static getInputNodeIds(id?: string, outputId?: string): string[] {
+        if (!id) return ["drawer_audio"]
+        if (id === "metronome") return ["metronome"]
 
-        const audioPlaying = id ? get(playingAudio)[id] : null
-        const videoPlaying = id ? get(playingVideos).some((v) => v.path === id) : false
-        const isMic = audioPlaying?.isMic === true || (id && id.startsWith("mic_sub_"))
-        const isVideo = videoPlaying || (id && id.startsWith("output_win_sub_")) || !!outputId
+        const audioPlaying = get(playingAudio)[id]
+        const videoPlaying = get(playingVideos).some((v) => v.path === id)
+        const isMic = audioPlaying?.isMic === true || id.startsWith("mic_sub_")
+        const isVideo = videoPlaying || id.startsWith("output_win_sub_") || !!outputId
 
-        const playlistId = audioPlaying?.playlistId
-        const isPlaylist = !!playlistId
-        const playlistSubId = playlistId ? `playlist_sub_${playlistId}` : null
-
-        const nodeKey = id ? (isMic ? id : id === "metronome" ? "metronome" : isVideo ? "output_window" : isPlaylist ? playlistSubId! : "drawer_audio") : "drawer_audio"
-
-        const manager = AudioRoutingManager.getInstance()
-        manager.registerInputNode(nodeKey, node)
-
-        if (isMic) {
-            manager.registerInputNode("mic_default", node)
-        } else if (isVideo) {
-            manager.registerInputNode("output_window", node)
-            if (outputId) {
-                manager.registerInputNode(`output_win_sub_${outputId}`, node)
-            }
-        } else if (isPlaylist) {
-            manager.registerInputNode("playlists_default", node)
+        if (isMic) return [id, "mic_default"]
+        if (isVideo) {
+            const ids = ["output_window"]
+            if (outputId) ids.push(`output_win_sub_${outputId}`)
+            return ids
         }
 
+        const playlistId = audioPlaying?.playlistId
+        if (playlistId) {
+            return [`playlist_sub_${playlistId}`, "playlists_default"]
+        }
+
+        return ["drawer_audio"]
+    }
+
+    static connectGain(source: AudioNode | PitchShiftNode, id?: string, outputId?: string) {
+        const node = source instanceof PitchShiftNode ? source.output : source
+        const key = outputId ? `${id}_${outputId}` : id || ""
+        const nodeIds = (key && this.attachedInputIds.get(key)) || this.getInputNodeIds(id, outputId)
+
+        const manager = AudioRoutingManager.getInstance()
+        nodeIds.forEach((nodeId) => manager.registerInputNode(nodeId, node))
         manager.updateRoutingNodes()
     }
 
     static disconnectGain(source: AudioNode | PitchShiftNode, id?: string, outputId?: string) {
         const node = source instanceof PitchShiftNode ? source.output : source
-
-        const audioPlaying = id ? get(playingAudio)[id] : null
-        const videoPlaying = id ? get(playingVideos).some((v) => v.path === id) : false
-        const isMic = audioPlaying?.isMic === true || (id && id.startsWith("mic_sub_"))
-        const isVideo = videoPlaying || (id && id.startsWith("output_win_sub_")) || !!outputId
-
-        const playlistId = audioPlaying?.playlistId
-        const isPlaylist = !!playlistId
-        const playlistSubId = playlistId ? `playlist_sub_${playlistId}` : null
-
-        const nodeKey = id ? (isMic ? id : id === "metronome" ? "metronome" : isVideo ? "output_window" : isPlaylist ? playlistSubId! : "drawer_audio") : "drawer_audio"
+        const key = outputId ? `${id}_${outputId}` : id || ""
+        const nodeIds = (key && this.attachedInputIds.get(key)) || this.getInputNodeIds(id, outputId)
 
         const manager = AudioRoutingManager.getInstance()
-        manager.unregisterInputNode(nodeKey, node)
-
-        if (isMic) {
-            manager.unregisterInputNode("mic_default", node)
-        } else if (isVideo) {
-            manager.unregisterInputNode("output_window", node)
-            if (outputId) {
-                manager.unregisterInputNode(`output_win_sub_${outputId}`, node)
-            }
-        } else if (isPlaylist) {
-            manager.unregisterInputNode("playlists_default", node)
-        }
+        nodeIds.forEach((nodeId) => manager.unregisterInputNode(nodeId, node))
 
         try {
             node.disconnect()
@@ -486,10 +464,6 @@ export class AudioAnalyser {
     }
 
     // RECORDER & AUDIO SENDER DELEGATION
-    private static initRecorder() {
-        AudioSender.updateProcessors(this.getAudioContext(), (targetId) => this.getOrCreateDestinationNode(targetId))
-    }
-
     static recorderActivate() {
         AudioSender.activate(this.getAudioContext(), (targetId) => this.getOrCreateDestinationNode(targetId))
     }

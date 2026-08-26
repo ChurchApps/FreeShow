@@ -2,10 +2,11 @@
     import { onMount } from "svelte"
     import { uid } from "uid"
     import type { Event } from "../../../../types/Calendar"
-    import { activeDays, activePopup, drawerTabsData, eventEdit, events, popupData } from "../../../stores"
+    import { activeDays, activePopup, calendars, drawerTabsData, eventEdit, events, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import CreateAction from "../../actions/CreateAction.svelte"
     import { getTime, isSameDay } from "../../drawer/calendar/calendar"
+    import { createCustomCalendar, isCalendarImported } from "../../drawer/calendar/calendars"
     import { createRepeatedEvents, updateEventData } from "../../drawer/calendar/event"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -87,7 +88,8 @@
             location: "",
             repeat: false,
             repeatData: defaultRepeatData,
-            notes: ""
+            notes: "",
+            origin: undefined
         }
 
         // update action
@@ -277,6 +279,41 @@
     let actionSelector: any = null
 
     let showMore = false
+
+    $: customCalendars = Object.values($calendars || {}).filter((cal: any) => !isCalendarImported(cal))
+    $: currentCal = editEvent.origin ? $calendars?.[editEvent.origin] || Object.values($calendars || {}).find((c: any) => c.name === editEvent.origin) : null
+    $: isCurrentOriginImported = editEvent.origin ? (currentCal ? isCalendarImported(currentCal) : false) : false
+
+    $: calendarOptions = isCurrentOriginImported
+        ? [
+              {
+                  value: editEvent.origin || "",
+                  label: currentCal?.name || editEvent.origin,
+                  icon: "calendar",
+                  iconColor: currentCal?.color || editEvent.color
+              }
+          ]
+        : customCalendars.map((cal: any) => ({
+              value: cal.id,
+              label: cal.name,
+              icon: "calendar",
+              iconColor: cal.color
+          }))
+
+    function handleCalendarChange(calId: string) {
+        editEvent.origin = calId || undefined
+        if (calId && $calendars?.[calId]?.color) {
+            editEvent.color = $calendars[calId].color
+        }
+    }
+
+    function handleCreateCalendar(name: string) {
+        const newCalId = createCustomCalendar(name)
+        editEvent.origin = newCalId
+        if ($calendars?.[newCalId]?.color) {
+            editEvent.color = $calendars[newCalId].color
+        }
+    }
 </script>
 
 {#if selectedType === "event"}
@@ -286,6 +323,10 @@
     </InputRow>
 
     {#if showMore}
+        <InputRow>
+            <MaterialDropdown label="calendar.calendar" value={editEvent.origin || ""} options={calendarOptions} disabled={isCurrentOriginImported} allowEmpty addNew={isCurrentOriginImported ? null : "new.calendar"} on:change={(e) => handleCalendarChange(e.detail)} on:new={(e) => handleCreateCalendar(e.detail)} />
+        </InputRow>
+
         <MaterialTextInput label="calendar.location" value={editEvent.location || ""} on:input={(e) => (editEvent.location = e.detail)} />
         <MaterialTextInput label="calendar.notes" value={editEvent.notes || ""} on:input={(e) => (editEvent.notes = e.detail)} />
     {/if}

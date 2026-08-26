@@ -144,7 +144,11 @@ export function toggleAction(data: API_toggle) {
     })
 }
 
+let startupActionsTriggered = false
 export function checkStartupActions() {
+    if (startupActionsTriggered) return
+    startupActionsTriggered = true
+
     customActionActivation("startup")
 }
 

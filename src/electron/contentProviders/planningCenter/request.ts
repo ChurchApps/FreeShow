@@ -105,8 +105,8 @@ function parseChordChartIntoSections(chordChart: string): SongSection[] {
         if (isPlanningCenterKeywordLine(trimmed)) continue
 
         // Detect section headers (VERSE, CHORUS, BRIDGE, etc.)
-        // Order matters: longer patterns first (PRECORO before PRE, INSTRUMENTAL before INTRO)
-        const sectionMatch = trimmed.match(/^\[?(PRE-CHORUS|PRECHORUS|PRECORO|ESTRIBILLO|INSTRUMENTAL|PUENTE|VERSE|CHORUS|VERSO|CORO|BRIDGE|INTRO|OUTRO|FINAL|PRE|BREAK|TAG|VAMP|INTERLUDE|BREAKDOWN|TURNAROUND|REFRAIN)(\s*\d+)?\]?(?:\s|$)/i)
+        // Order matters: longer patterns first (PRECORO before PRE, INSTRUMENTAL before INTRO, VERSE before VERS)
+        const sectionMatch = trimmed.match(/^\[?(POST-CHORUS|POSTCHORUS|POST-CORO|POSTCORO|PRE-CHORUS|PRECHORUS|PRE-CORO|PRECORO|INSTRUMENTAL|ESTRIBILLO|BREAKDOWN|TURNAROUND|INTERLUDE|REFRENG|REFRAIN|ENDING|PUENTE|CHORUS|VERSE|VERSO|BRIDGE|INTRO|OUTRO|FINAL|BREAK|SOLO|HOOK|VAMP|POST|VERS|CORO|PRE|TAG)(\s*\d+)?\]?(?:\s|$)/i)
         if (sectionMatch) {
             // Save previous section if exists (including sections with only chords)
             if (currentSectionLabel) {

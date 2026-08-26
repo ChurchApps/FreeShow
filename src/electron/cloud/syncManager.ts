@@ -487,22 +487,28 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         try {
             console.log("Syncing backup data")
             const backupPath = await provider!.getBackup(data.churchId, data.teamId, EXTRACT_LOCATION)
+
+            // if no cloud backup exists, upload the newest local zip
             if (!backupPath) return await upload()
 
             const oneWeek = ONE_HOUR * 24 * 7
             const now = Date.now()
+
+            // return if no cloud backup is older than a week
             const stats = await getFileStatsAsync(backupPath)
-            if (!stats) return await upload()
+            if (stats && now - stats.mtime.getTime() < oneWeek) return false
 
-            const age = now - stats.mtime.getTime()
-            if (age > oneWeek) return await upload()
-
-            return false
+            return await upload()
 
             async function upload() {
                 const cloudZipsPath = getDataFolderPath("cloud")
                 const zipFiles = await getFilesSortedByDate(cloudZipsPath)
-                const backupZipPath = zipFiles[0]?.path
+
+                // find the newest local zip that is at least a week old
+                const newestWeekOldZip = zipFiles.find((file) => now - file.ctime >= oneWeek)
+
+                // upload the newest week old zip, or the second newest zip, or the current zip
+                const backupZipPath = newestWeekOldZip?.path || zipFiles[1]?.path || zipFiles[0]?.path
                 if (!backupZipPath) return false
 
                 return await provider!.uploadBackup(data.teamId, backupZipPath)
@@ -628,17 +634,18 @@ async function getFilesSortedByDate(folderPath: string) {
 // or any more than two weeks old, but keep the two newest zips
 const ONE_HOUR = 1000 * 60 * 60
 async function deleteUnusedZips(folderPath: string, excludeZip: string) {
-    const zipFiles = (await getFilesSortedByDate(folderPath)).filter((a) => a.path !== excludeZip) // .filter((file) => file.path.endsWith(".zip"))
+    const zipFiles = (await getFilesSortedByDate(folderPath)).filter((a) => a.path !== excludeZip)
 
     const now = Date.now()
     for (let i = 0; i < zipFiles.length; i++) {
         const file = zipFiles[i]
         const age = now - file.ctime
 
-        if (i < 2) continue // keep two newest regardless
+        // keep two newest regardless
+        if (i < 2) continue
 
-        // less than an hour old OR more than two weeks old
-        if (age < ONE_HOUR || age > ONE_HOUR * 24 * 14) {
+        // delete if more than two weeks old
+        if (age > ONE_HOUR * 24 * 14) {
             deleteFile(file.path)
         }
     }

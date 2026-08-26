@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { drawer, editColumns, localeDirection, os, resized } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
+    import { startResizing, stopResizing } from "../../utils/cursor"
     import Icon from "../helpers/Icon.svelte"
 
     export let id: string
@@ -47,6 +48,8 @@
 
     function mousedown(e: any) {
         if (!conditions[side](e)) return
+
+        startResizing(side === "left" || side === "right" ? "ew-resize" : "ns-resize")
 
         mouse = {
             x: e.clientX,
@@ -130,9 +133,16 @@
     }
 
     function mouseup(e: any) {
-        mouse = null
-        if (!e.target.closest(".panel")) move = false
+        if (mouse) {
+            stopResizing()
+            mouse = null
+        }
+        if (!e.target?.closest?.(".panel")) move = false
     }
+
+    onDestroy(() => {
+        if (mouse) stopResizing()
+    })
 </script>
 
 <svelte:window on:mouseup={mouseup} on:mousemove={mousemove} />

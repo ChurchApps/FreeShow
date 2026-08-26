@@ -305,7 +305,7 @@ export class TimelineActions {
 
             async function getData() {
                 if (id === "action") return { triggers: item.triggers || [], actionValues: item.actionValues || {} }
-                if (id === "slide") return { id: layoutRef[item.index]?.id, index: item.index }
+                if (id === "slide") return { id: layoutRef[item.index]?.id, index: item.index, ...(item.line !== undefined ? { line: item.line } : {}) }
                 if (id === "show") {
                     let show = get(showsCache)[item.id]
                     if (!show) {

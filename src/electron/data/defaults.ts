@@ -152,6 +152,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
         messiah: { name: "Messiah", type: "vimeo", id: "144160599" }
     },
     videoMarkers: {},
+    calendars: {},
     mediaTags: {},
     playerTags: {},
     actionTags: {},

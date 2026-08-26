@@ -228,12 +228,23 @@ function getSlidesText(show: Show) {
             if (!item.lines) return
 
             item.lines.forEach((line) => {
-                if (!Array.isArray(line?.text)) return
-
-                line.text.forEach((txt) => {
-                    text += txt.value
+                let tempText = ""
+                line.text?.forEach((txt) => {
+                    tempText += txt.value
                 })
-                text += "\n"
+
+                if (Array.isArray(line.chords) && line.chords.length) {
+                    const sortedChords = [...line.chords]
+                        .map((chord, originalIndex) => ({ chord, originalIndex }))
+                        .sort((a, b) => b.chord.pos - a.chord.pos || b.originalIndex - a.originalIndex)
+
+                    sortedChords.forEach(({ chord }) => {
+                        while (!tempText[chord.pos]) tempText += " "
+                        tempText = tempText.slice(0, chord.pos) + `[${chord.key}]` + tempText.slice(chord.pos)
+                    })
+                }
+
+                text += tempText + "\n"
             })
 
             text += "\n"

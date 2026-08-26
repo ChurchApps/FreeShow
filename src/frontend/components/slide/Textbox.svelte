@@ -11,7 +11,8 @@
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getAllActiveOutputs, getFirstActiveOutput, getOutputLines, getOutputResolution, percentageStylePos } from "../helpers/output"
     import { createCSSVariables } from "../helpers/showActions"
-    import { getStyles } from "../helpers/style"
+    import { isCroppedItem } from "../helpers/cropping"
+    import { getStyles, getItemStyle } from "../helpers/style"
     import SlideItems from "./SlideItems.svelte"
     import TextboxLines from "./TextboxLines.svelte"
     import { readAutoSizeCache, writeAutoSizeCache } from "./autosizeCache"
@@ -20,7 +21,6 @@
     export let itemIndex = -1
     export let slideIndex = 0
     export let preview = false
-    export let fontPreview = false
     export let isTemplatePreview = false
     export let mirror = true
     export let isOutputted = false
@@ -109,7 +109,7 @@
     // remember which item signature we already reset local font size for
     let lastRenderedSignature = ""
     onMount(() => {
-        if (preview || fontPreview) {
+        if (preview) {
             loaded = true
         } else {
             setTimeout(() => {
@@ -119,8 +119,7 @@
     })
     onDestroy(() => {
         if (dateInterval) clearInterval(dateInterval)
-        if (loopStop) clearTimeout(loopStop)
-        if (paddingCorrTimeout) clearTimeout(paddingCorrTimeout)
+        if (debounceTimer) clearTimeout(debounceTimer)
         if (cssInterval) clearInterval(cssInterval)
     })
 
@@ -296,51 +295,56 @@
 
     let itemElem: HTMLElement | undefined
 
-    let previousItem = "{}"
-    $: newItem = JSON.stringify(item)
-    // Combine content and template to detect all layout-affecting changes
-    $: stateSignature = newItem + "|" + resolvedTemplateId
+    $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${item?.lines?.length || 0}`
 
     $: if (stateSignature !== lastRenderedSignature) {
+        lastRenderedSignature = stateSignature
         autoSizeReady = false
         const isTextItem = (item?.type || "text") === "text"
         const textFit = item?.textFit || (item?.auto ? (isTextItem ? "shrinkToFit" : "growToFit") : "none")
         const hasAutoSize = stageAutoSize || textFit !== "none"
         if (hasAutoSize) {
-            // Determine if we'll hide during autosize calculation
             const willHide = shouldHideUntilAutoSizeCompletes()
 
-            // CRITICAL: Start with fontSize=0 when hiding to prevent giant text flash:
-            // - STAGE: Always starts at 0 (computes for STAGE dimensions, not OUTPUT)
-            // - OUTPUT: Starts at 0 if cache is invalid (willHide=true), otherwise uses cache
-            // - PREVIEW: Uses own previewAutoFontSize cache, or OUTPUT cache as fallback, or 100px default
             if (isStage) {
-                fontSize = 0
+                // Keep existing fontSize on stage to prevent flicker during drag
             } else if (willHide) {
-                // Cache is invalid - start at 0 to avoid displaying wrong fontSize while recalculating
                 fontSize = 0
-            } else if (preview || fontPreview) {
-                // Preview uses its own cache, fallback to OUTPUT cache, then default
+            } else if (preview) {
                 fontSize = item?.previewAutoFontSize || item?.autoFontSize || 100
             } else {
-                // OUTPUT uses its cache
                 fontSize = item?.autoFontSize || 0
             }
 
-            lastRenderedSignature = stateSignature
             hideUntilAutosized = willHide
         }
     }
-    // Trigger calculation if Content OR Template changes (resolvedTemplateId added to dependency list)
-    // All contexts (OUTPUT, STAGE, PREVIEW) calculate and cache their own autosize independently
-    $: if (itemElem && loaded && (stageAutoSize || newItem !== previousItem || resolvedTemplateId || chordLines || stageItem)) calculateAutosize()
-    $: if ($variables) setTimeout(calculateAutosize)
+    let prevAutosizeSignature = ""
+    $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${ratio}`
+
+    let debounceTimer: NodeJS.Timeout | null = null
+    function debouncedCalculateAutosize(delay = 50) {
+        if (debounceTimer) clearTimeout(debounceTimer)
+        debounceTimer = setTimeout(() => {
+            debounceTimer = null
+            calculateAutosize()
+        }, delay)
+    }
+
+    // Trigger calculation only when Content, Style, Template, or Ratio actually changes
+    $: if (itemElem && loaded && autosizeSignature !== prevAutosizeSignature) {
+        prevAutosizeSignature = autosizeSignature
+        debouncedCalculateAutosize(isStage ? 60 : 0)
+    }
+    $: isDynamicText = (stageItem ? getItemText(stageItem) : getItemText(item)).includes("{")
+    $: if (itemElem && loaded && $variables && isDynamicText) {
+        debouncedCalculateAutosize(50)
+    }
 
     // recalculate auto size if output template is different than show template
     $: currentShowTemplateId = $showsCache[ref.showId || ""]?.settings?.template || ""
-    // let outputTemplateAutoSize = false
     $: outputSlide = getFirstActiveOutput($outputs)?.out?.slide
-    $: if (item?.type === "slide_tracker" && outputSlide) setTimeout(calculateAutosize) // overlay progress update
+    $: if (item?.type === "slide_tracker" && outputSlide) debouncedCalculateAutosize(50) // overlay progress update
     $: if ($currentWindow === "output" && outputStyle?.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
     // else outputTemplateAutoSize = false
 
@@ -375,8 +379,6 @@
     }
     $: customTypeRatio = deriveCustomTypeRatio()
 
-    let loopStop: NodeJS.Timeout | null = null
-    let newCall = false
     async function calculateAutosize() {
         if (item.type === "media" || item.type === "camera" || item.type === "icon") return
         if (isStage && !stageAutoSize) {
@@ -398,7 +400,7 @@
 
         // Immediate cache check: if we already have a cached size for the current element dimensions, return it immediately without waiting!
         const cacheKey = buildAutoSizeCacheKey()
-        const cacheSignature = buildAutoSizeSignature(elem.clientWidth, elem.clientHeight, chords)
+        const cacheSignature = buildAutoSizeSignature(undefined, undefined, chords)
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
 
         if (!isDynamic && !chords && !Number(outputStyle?.lines || 0) && cachedResult && cachedResult.signature === cacheSignature) {
@@ -412,57 +414,30 @@
             return
         }
 
-        if (loopStop) {
-            // is this new call necessary?
-            newCall = true
-            return
-        }
-        loopStop = setTimeout(() => {
-            loopStop = null
-            if (newCall) calculateAutosize()
-            newCall = false
-        }, 200)
-        previousItem = newItem
-
         // Wait for DOM to update with new template styles before measuring
         await tick()
 
-        // Wait for web fonts to load before measuring (prevents wrong dimensions from fallback fonts)
-        try {
-            await document.fonts.ready
-        } catch (e) {
-            // Font loading check failed, continue anyway
-        }
-
-        // Wait for CSS styles to fully cascade and layout to stabilize before measuring
-        // This ONLY adds delay when element dimensions are still changing (unstable layout)
-        // Once dimensions stabilize, no additional waiting occurs
-        if (itemElem) {
+        // Wait for CSS styles to fully cascade and layout to stabilize before measuring (only needed for output window)
+        const isOutputContext = ratio < 0.5 && !preview && !isStage
+        if (isOutputContext && itemElem) {
             let prevWidth = itemElem.clientWidth
             let prevHeight = itemElem.clientHeight
             let attempts = 0
             const maxAttempts = 20
             let totalWait = 0
-            const maxWait = 500 // Maximum 500ms - reasonable buffer for slow computers without painful delays
-
-            // Output window needs longer initial wait for CSS cascade in separate Electron window
-            const isOutputContext = ratio < 0.5 && !preview && !fontPreview && !isStage
+            const maxWait = 500
 
             while (attempts < maxAttempts && totalWait < maxWait) {
-                const waitTime = attempts === 0 ? (isOutputContext ? 150 : 100) : attempts === 1 ? 50 : 20
+                const waitTime = attempts === 0 ? 150 : attempts === 1 ? 50 : 20
                 await wait(waitTime)
                 totalWait += waitTime
 
-                // Check if element still exists after waiting
-                if (!itemElem) {
-                    return // Element destroyed, abort calculation
-                }
+                if (!itemElem) return
 
                 const newWidth = itemElem.clientWidth
                 const newHeight = itemElem.clientHeight
 
                 if (newWidth === prevWidth && newHeight === prevHeight) {
-                    // Dimensions stable - stop waiting
                     break
                 }
 
@@ -505,7 +480,7 @@
             customTypeRatio = verseItemSize / 100 || 1
 
             defaultFontSize = itemFontSize
-            if (textFit === "growToFit" && isTextItem && itemFontSize > 100) maxFontSize = itemFontSize
+            if (textFit === "growToFit" && isTextItem) maxFontSize = itemFontSize
         }
 
         elem = itemElem
@@ -513,7 +488,7 @@
 
         // short-circuit expensive DOM work when we already measured identical content
         const finalCacheKey = buildAutoSizeCacheKey()
-        const finalCacheSignature = buildAutoSizeSignature(elem.clientWidth, elem.clientHeight, chords)
+        const finalCacheSignature = buildAutoSizeSignature(undefined, undefined, chords)
         const finalCachedResult = finalCacheKey ? readAutoSizeCache(finalCacheKey) : undefined
 
         if (!isDynamic && !chords && !Number(outputStyle?.lines || 0) && finalCachedResult && finalCachedResult.signature === finalCacheSignature) {
@@ -563,7 +538,7 @@
             return
         }
         // Store in separate field for previews vs OUTPUT
-        if ((preview || fontPreview) && fontSize !== item.previewAutoFontSize) setItemPreviewAutoFontSize(fontSize)
+        if (preview && fontSize !== item.previewAutoFontSize) setItemPreviewAutoFontSize(fontSize)
         if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
         if (!isDynamic && finalCacheKey) writeAutoSizeCache(finalCacheKey, { signature: finalCacheSignature, fontSize })
 
@@ -581,7 +556,8 @@
     // capture the bits of state that influence autosize outcomes for cache invalidation
     function buildAutoSizeSignature(measuredWidth?: number, measuredHeight?: number, customChords?: boolean) {
         // Extract key dimensional properties from style to ensure cache invalidation
-        const styles = item?.style ? getStyles(item.style) : {}
+        const activeStyle = (isStage && stageItem?.style ? stageItem.style : item?.style) || ""
+        const styles = activeStyle ? getStyles(activeStyle) : {}
         const boxDimensions: any = {
             width: styles.width,
             height: styles.height,
@@ -591,7 +567,7 @@
         }
 
         // Fix for thumbnails getting stuck with wrong cache when dimensions change via CSS classes
-        if (preview || fontPreview) {
+        if (preview) {
             // Round measured width/height to nearest 5px to tolerate small container stretching fluctuations during load
             boxDimensions.measuredWidth = measuredWidth ? Math.round(measuredWidth / 5) * 5 : 0
             boxDimensions.measuredHeight = measuredHeight ? Math.round(measuredHeight / 5) * 5 : 0
@@ -599,7 +575,7 @@
 
         // Fix for OUTPUT getting stuck with wrong cache when output window dimensions change
         // Include container dimensions to invalidate cache when OUTPUT resolution/size changes
-        if (!preview && !fontPreview && !isStage && itemElem) {
+        if (!preview && !isStage && itemElem) {
             const container = itemElem.parentElement
             if (container) {
                 boxDimensions.containerWidth = container.clientWidth ? Math.round(container.clientWidth / 5) * 5 : 0
@@ -609,7 +585,7 @@
 
         return JSON.stringify({
             lines: item?.lines || null,
-            style: item?.style || "",
+            style: activeStyle,
             boxDimensions, // Add explicit dimensions for better cache invalidation
             textFit: item?.textFit || "none",
             list: item?.list || null,
@@ -621,7 +597,7 @@
             outputStyle: outputStyle || null,
             styleIdOverride: styleIdOverride || "",
             mirror: !!mirror,
-            preview: !!(preview || fontPreview),
+            preview: !!preview,
             smallFontSize: !!smallFontSize,
             maxLines: maxLines || 0,
             maxLinesInvert: !!maxLinesInvert,
@@ -639,35 +615,20 @@
         if (hideUntilAutosized) requestAnimationFrame(() => (hideUntilAutosized = false))
     }
 
-    // determine whether we should keep the visible textbox hidden while autosize runs
     function shouldHideUntilAutoSizeCompletes() {
-        // NOTE: Stage uses its own loading mechanism in SlideText.svelte (.loading class)
-        // but for the first render, that mechanism shows nothing while the new content loads
-        // We need to hide content until autosize is ready for stage too
-        if (preview || fontPreview) return false
+        if (preview || isStage) return false
 
-        // Use detailed validation to ensure we catch all autosize candidates
-        // For STAGE: stageAutoSize controls autosize, slide items don't have auto/textFit set
         const isTextItem = (item?.type || "text") === "text"
         const textFit = item?.textFit || (item?.auto ? (isTextItem ? "shrinkToFit" : "growToFit") : "none")
-        const isExplicitNone = textFit === "none"
-
-        if (!stageAutoSize && isExplicitNone) {
-            return false
-        }
+        if (textFit === "none") return false
 
         // CHECK CACHE
         const cacheKey = buildAutoSizeCacheKey()
-        const cacheSignature = itemElem ? buildAutoSizeSignature(itemElem.clientWidth, itemElem.clientHeight, chords) : buildAutoSizeSignature(undefined, undefined, chords)
-        const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
+        if (!cacheKey) return true
+        const cacheSignature = buildAutoSizeSignature(itemElem?.clientWidth, itemElem?.clientHeight, chords)
+        const cachedResult = readAutoSizeCache(cacheKey)
 
-        const hasValidCache = cachedResult && cachedResult.signature === cacheSignature
-
-        if (hasValidCache) {
-            return false
-        }
-
-        return true
+        return !(cachedResult && cachedResult.signature === cacheSignature)
     }
 
     function setItemAutoFontSize(fontSize) {
@@ -744,25 +705,14 @@
         })
     }
 
-    // WIP padding can be checked by auto size if style is added to parent
-    let paddingCorrTimeout: NodeJS.Timeout | null = null
     function getPaddingCorrection(stageItem: any) {
-        let result = ""
-        if (typeof stageItem?.style !== "string") return ""
-        if (stageItem.style.indexOf("padding") > -1) {
-            let styles = stageItem.style.split(";")
-            styles.forEach((s: string) => {
-                if (s.indexOf("padding") === 0) {
-                    let padding = parseInt(s.split(":")[1].replace("px", "").trim(), 0) * 2
-                    if (padding > 0) result = "width: calc(100% - " + padding + "px); height: calc(100% - " + padding + "px);"
-                }
-            })
+        if (typeof stageItem?.style !== "string" || !stageItem.style.includes("padding")) return ""
+        const match = stageItem.style.match(/(?:^|;)\s*padding:\s*(\d+)px/)
+        if (match?.[1]) {
+            const padding = parseInt(match[1], 10) * 2
+            if (padding > 0) return `width: calc(100% - ${padding}px); height: calc(100% - ${padding}px);`
         }
-
-        if (paddingCorrTimeout) clearTimeout(paddingCorrTimeout)
-        paddingCorrTimeout = setTimeout(calculateAutosize, 150)
-
-        return result
+        return ""
     }
 
     $: isDisabledVariable = item?.type === "variable" && $variables[item?.variable?.id]?.enabled === false
@@ -784,7 +734,8 @@
     }
 
     let updateTrigger = 0
-    let cssInterval = setInterval(() => updateTrigger++, 1000)
+    const cssIntervalTime = preview || isTemplatePreview ? 3000 : 1000
+    let cssInterval = setInterval(() => updateTrigger++, cssIntervalTime)
 
     // give CSS access to certain dynamic values
     $: cssVariables = createCSSVariables($variables, $outputs, isStage ? "stage" : "default", updateTrigger)
@@ -849,7 +800,7 @@
 <!-- lyrics view must have "width: 100%;height: 100%;" set -->
 <div
     class="item"
-    style="{style ? getCustomStyle(item?.style, customOutputId, styleIdOverride, { $styles }) : 'width: 100%;height: 100%;'};{paddingCorrection}{foregroundFilters}{animationStyle.item || ''}{cssVariables}{fixedWidth}"
+    style="{style ? getCustomStyle(getItemStyle(item?.style, isCroppedItem(item)), customOutputId, styleIdOverride, { $styles }) : 'width: 100%;height: 100%;'};{paddingCorrection}{foregroundFilters}{animationStyle.item || ''}{cssVariables}{fixedWidth}"
     class:white={key && !lines?.length}
     class:key
     class:isStage

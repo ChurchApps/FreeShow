@@ -33,10 +33,14 @@
         view_list: () => ($slidesOptions.mode === "list" ? (enabled = true) : ""),
         view_lyrics: () => ($slidesOptions.mode === "lyrics" ? (enabled = true) : ""),
         rename: () => {
-            disabled = !!$shows[$selected.data[0]?.id]?.locked // hide
+            if ($selected.id === "show" || $selected.id === "show_drawer") {
+                disabled = !!$shows[$selected.data[0]?.id]?.locked // hide
+            }
         },
         delete: () => {
-            hide = !!$shows[$selected.data[0]?.id]?.locked
+            if ($selected.id === "show" || $selected.id === "show_drawer") {
+                hide = !!$selected.data?.length && $selected.data?.every((a) => !!$shows[a?.id]?.locked)
+            }
         },
         private: () => {
             let show = $shows[$selected.data[0]?.id]

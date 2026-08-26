@@ -4,7 +4,7 @@
     import { uid } from "uid"
     import type { AudioRoutingConfig } from "../../../../types/AudioRouting"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { deduplicateConnections } from "../../../audio/routing/audioRoutingInit"
+    import { deduplicateConnections, syncOutputAudioChannels } from "../../../audio/routing/audioRoutingInit"
     import { AudioRoutingManager } from "../../../audio/routing/audioRoutingManager"
     import { activePopup, audioChannelsData, audioPlaylists, audioRouting, outputs, selected, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -215,6 +215,7 @@
     }
 
     onMount(() => {
+        syncOutputAudioChannels()
         sortChannelsOnMount()
         refreshDevices()
 

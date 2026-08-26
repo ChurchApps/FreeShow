@@ -337,7 +337,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // "delete" removed as too many users thought it just removed the show from the project
     // "duplicate" removed as it was people did not get that it only duplicated the reference in project, and not the entire show (keyboard / menu bar shortcuts can be used)
     project_show: ["GROUP_rename_only", "remove", "SEPARATOR", "mark_played", "private"],
-    project_show_placeholder: ["remove"], // "GROUP_rename_only"
+    project_show_placeholder: ["remove"],
+    project_show_placeholder_template: ["GROUP_rename_only", "remove"],
     pco_item: ["unlink_pco"],
     project_section: ["GROUP_recolor", "remove"],
     project_overlay: ["remove"],
@@ -414,5 +415,6 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     output_screen: ["GROUP_rename_recolor", "duplicate", "delete"], // , "SEPARATOR", "reset" // "GROUP_rename_color"
     output_screen_stage: ["GROUP_rename_recolor", "duplicate", "delete"], // , "SEPARATOR", "reset" // "GROUP_rename_color"
     audio_channel: ["GROUP_rename_recolor", "delete"],
-    audio_channel_main: ["GROUP_rename_only"]
+    audio_channel_main: ["GROUP_rename_only"],
+    audio_effect_item: ["duplicate", "delete"]
 }

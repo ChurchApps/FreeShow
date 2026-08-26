@@ -67,8 +67,7 @@
     "tooltip": {
         "project": "Opprett ett nytt prosjekt hvor du kan legge til og organisere show.",
         "show": "Opprett ett nytt show hvor du kan legge til sangtekster, presentasjoner og medier.",
-        "groups": "Alle gruppene i valgt show og alle globale grupper. Klikk eller dra dem for å legge dem til i valgt oppsett.",
-        "layout": "Legg til overganger og tid til neste til lysbilder i valgt oppsett.",
+        "groups": "Alle gruppene i valgt show og alle globale grupper. Klikk eller dra dem for å legge dem til i oppsettet.",
         "media": "Alle medier i valgt show. Vis dem, eller dra dem til nåværende oppsett.",
         "metadata": "Rediger metadata for nåværende show.",
         "notes": "Skriv notater.",
@@ -232,6 +231,9 @@
     },
     "audio": {
         "settings": "Lydinnstillinger",
+        "inputs": "Innganger",
+        "outputs": "Utganger",
+        "channels": "Kanaler",
         "playlists": "Spillelister",
         "playlist_settings": "Innstillinger for spilleliste",
         "open_audio_folder": "Åpne relatert lyd-mappe",
@@ -337,7 +339,6 @@
     },
     "error": {
         "no_show": "Kunne ikke finne noen show",
-        "no_layouts": "Kunne ikke finne noen oppsett",
         "load": "Kunne ikke laste inn",
         "media": "Kunne ikke finne media",
         "bible": "Kunne ikke finne lokal bibel",
@@ -345,7 +346,6 @@
         "bible_api": "Kunne ikke laste inn bibel fra API.Bible, har du en internettforbindelse?",
         "not_found": "Ikke funnet",
         "display": "Kunne ikke vise utgangsvindu på nåværende skjerm",
-        "keep_one_layout": "Du må ha minst ett oppsett",
         "video_unavailable": "Er videoen utilgjengelig? Skaperen har slått av innebygging av videoen.",
         "folder_exists": "Denne mappen eksisterer allerede",
         "uri": "Kunne ikke lese navnet til lydfilen. Prøv å endre navnet",
@@ -518,6 +518,7 @@
         "import_scripture": "Importer en bibel",
         "create_collection": "Opprett samling",
         "scripture_show": "Alternativer for Bibel-show",
+        "import_calendar": "Importér kalender",
         "player": "Spiller",
         "edit_event": "Rediger hendelse",
         "edit_chart": "Rediger diagram",
@@ -567,7 +568,7 @@
         "save_quit": "Lagre og avslutt"
     },
     "confirm": {
-        "statement_slide_exists_layout": "Lysbilde eksisterer i et annet oppsett",
+        "statement_slide_exists_arrangement": "Lysbildet finnes i et annet oppsett!",
         "question_delete": "Vil du fortsatt slette?"
     },
     "toast": {
@@ -631,12 +632,14 @@
         "action": "Ny handling",
         "event": "Ny hendelse",
         "event_action": "Ny planlagt handling",
+        "calendar": "Ny kalender",
         "effect": "Ny effekt",
         "interaction": "Ny samhandling"
     },
     "show": {
         "name": "Navn",
         "category": "Kategori",
+        "new_arrangement": "Nytt oppsett",
         "new_layout": "Nytt oppsett",
         "grid": "Rutenett",
         "simple": "Enkel visning",
@@ -694,6 +697,7 @@
         "disable": "Deaktiver",
         "enable": "Aktiver",
         "enable_specific": "Aktiver $1",
+        "toggle_specific": "Veksle $1",
         "undo": "Angre",
         "redo": "Gjør om",
         "cut": "Klipp ut",
@@ -832,18 +836,23 @@
         "previous_project_item": "Forrige element i prosjekt",
         "index_select_project_item": "Åpne element i prosjekt fra indeks",
         "name_start_project_item": "Start prosjekt-element etter navn",
+        "id_select_show": "Åpne show",
         "name_select_show": "Åpne show fra navn",
         "set_template_active": "Sett mal på aktivt show",
         "change_slide_timeline_speed": "Endre hastighet på lysbilde-tidslinjen",
         "random_slide": "Spill av tilfeldig lysbilde",
         "index_select_slide": "Spill av lysbilde på indeks",
         "name_select_slide": "Spill av lysbilde med navn",
+        "disable_slide": "Deaktiver lysbilde",
+        "active_show": "Aktivt show",
         "toggle_output_lock": "Veksle lås av utgang",
         "toggle_output_window": "Veksle utgangsskjerm",
         "toggle_output_windows": "Veksle utgangsskjermer",
         "id_select_group": "Spill av spesifikk gruppe",
         "id_change_stage_layout": "Endre scene-oppsett for tilkoblet",
         "start_camera": "Start kamera",
+        "start_microphone": "Start mikrofon",
+        "stop_microphone": "Stopp mikrofon",
         "start_screen": "Start skjerm",
         "id_start_effect": "Start effekt",
         "id_select_overlay": "Start overlegg",
@@ -1007,7 +1016,6 @@
         "metadata": "Metadata",
         "media": "Medier",
         "audio": "Lyd",
-        "layout": "Oppsett",
         "item": "Element",
         "items": "Elementer",
         "slide": "Lysbilde"
@@ -1392,6 +1400,9 @@
         "cropping": "Beskjæring",
         "cropped": "Beskåret",
         "frame_rate": "Bildefrekvens",
+        "bitrate": "Bithastighet",
+        "video_encoder": "Videokoder",
+        "add_destination": "Legg til destinasjon",
         "device": "Enhet",
         "display_mode": "Visningsmodus",
         "pixel_format": "Pikselformat",
@@ -1490,6 +1501,7 @@
         "custom": "Egendefinert"
     },
     "calendar": {
+        "calendar": "Kalender",
         "type": "Type",
         "event": "Arrangement",
         "first_day": "Første ukedag",
@@ -1517,7 +1529,9 @@
         "ending_repeated": "gjentatt",
         "ending_times": "ganger",
         "save_all": "Lagre og oppdater alle",
-        "add_slides_from_show": "Inkluder lysbilder fra show"
+        "add_slides_from_show": "Inkluder lysbilder fra show",
+        "calendars": "Kalendere",
+        "delete_confirmation": "Er du sikker på at du vil slette alle hendelsene fra denne kalenderen?"
     },
     "scripture": {
         "collections": "Samlinger",

@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { onMount, tick } from "svelte"
+    import { onDestroy, onMount, tick } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
     import { splitCustomDynamicValues } from "../../../show/slides"
-    import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
+    import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, showsCache, special, stageShows, templates } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { getNormalizedKey, isComposing, isFormattingKey } from "../../../utils/shortcuts"
     import T from "../../helpers/T.svelte"
@@ -46,11 +46,15 @@
         setTimeout(() => {
             loaded = true
             autoSize = item?.autoFontSize || 0
-            if (autoSize) return
 
-            getCustomAutoSize()
+            scheduleAutoSize(true)
+
+            // trigger auto size update after font has loaded
+            document.fonts?.ready?.then(() => scheduleAutoSize(true))
         }, 50)
     })
+
+    onDestroy(cancelScheduledAutoSize)
 
     // prevent certain updates during IME composition to prevent text deselecting and double-insertion.
     let composing = false
@@ -354,67 +358,84 @@
 
     // AUTO SIZE
 
-    // text change
-    let textChanged = false
-    let previousText = ""
-    let changedTimeout: NodeJS.Timeout | null = null
-    $: if (html && textElem?.innerText !== previousText) checkText()
-    function checkText() {
-        textChanged = true
-        previousText = textElem?.innerText || ""
-        if (changedTimeout) clearTimeout(changedTimeout)
-        changedTimeout = setTimeout(() => (textChanged = false), 500)
-    }
-
-    let isTyping = false
-    $: if (isAuto && textChanged) checkTyping()
-    let typingTimeout: NodeJS.Timeout | null = null
-    function checkTyping() {
-        if (!loaded) return
-        isTyping = true
-
-        if (typingTimeout) clearTimeout(typingTimeout)
-        typingTimeout = setTimeout(() => {
-            isTyping = false
-            if (isAuto) getCustomAutoSize()
-        }, 800)
-    }
-
-    // update auto size
     let loaded = false
     $: isAuto = item?.auto || (item?.textFit || "none") !== "none"
     $: textArray = Array.isArray(item?.lines?.[0]?.text) ? item.lines[0].text : []
     $: itemText = textArray.filter((a) => !a.customType?.includes("disableTemplate")) || []
     $: itemFontSize = Number(getStyles((ref.type === "stage" ? item : itemText[0])?.style, true)?.["font-size"] || "")
-    $: if (isAuto || itemFontSize || textChanged) getCustomAutoSize()
+    $: itemStyle = item?.style
+    // html updates on every keystroke (bind:innerHTML), so this covers typing, pasting and style rebuilds,
+    // itemStyle covers resizing the textbox and lineGap the line spacing
+    $: if (html || itemStyle || isAuto || itemFontSize || lineGap) scheduleAutoSize()
 
     let autoSize = 0
     let alignElem: HTMLElement | undefined
-    let loopStop: NodeJS.Timeout | null = null
-    function getCustomAutoSize() {
-        if (isTyping || !loaded || !alignElem || !isAuto) return
 
-        if (loopStop) return
-        loopStop = setTimeout(() => (loopStop = null), 200)
+    // cap auto size at one per frame while typing and drop to a trailing debounce if one ever gets expensive
+    const SLOW_MEASURE_MS = 6
+    const DEBOUNCE_MS = 150
+
+    let autoSizeFrame = 0
+    let autosizeTimeout: NodeJS.Timeout | null = null
+    let lastMeasureDuration = 0
+    let lastSignature = ""
+
+    function scheduleAutoSize(immediate = false) {
+        // plain (list) view never renders --auto-size
+        if (plain || !loaded || !isAuto || !alignElem || composing) return
+
+        if (immediate) {
+            cancelScheduledAutoSize()
+            runAutoSize()
+            return
+        }
+
+        // chords rebuild one span per character whenever the size changes, so never run those per frame
+        if (chordsMode || lastMeasureDuration > SLOW_MEASURE_MS || $special.optimizedMode) {
+            if (autosizeTimeout) clearTimeout(autosizeTimeout)
+            autosizeTimeout = setTimeout(() => {
+                autosizeTimeout = null
+                runAutoSize()
+            }, DEBOUNCE_MS)
+            return
+        }
+
+        if (autoSizeFrame) return
+        autoSizeFrame = requestAnimationFrame(() => {
+            autoSizeFrame = 0
+            runAutoSize()
+        })
+    }
+
+    function cancelScheduledAutoSize() {
+        if (autoSizeFrame) cancelAnimationFrame(autoSizeFrame)
+        if (autosizeTimeout) clearTimeout(autosizeTimeout)
+        autoSizeFrame = 0
+        autosizeTimeout = null
+    }
+
+    function runAutoSize() {
+        if (plain || !loaded || !alignElem || !isAuto) return
+        // element is mid remount
+        if (!alignElem.clientHeight) return
 
         if (ref.type === "stage") {
             itemFontSize = Number(getStyles(item?.style, true)?.["font-size"] || "")
         }
 
-        let type = item?.textFit || "shrinkToFit"
-        let defaultFontSize = itemFontSize
-        let maxFontSize
+        const type = item?.textFit || "shrinkToFit"
 
-        // if (ref.type === "stage") {
-        //     type = "growToFit"
-        // }
+        // skip repeated triggers that can't change the result (e.g. a new item object with identical content)
+        const signature = `${alignElem.clientWidth}x${alignElem.clientHeight}|${itemFontSize}|${type}|${lineGap || 0}|${html}`
+        if (signature === lastSignature) return
+        lastSignature = signature
 
-        if (type === "growToFit") {
-            defaultFontSize = 100
-            maxFontSize = itemFontSize
-        }
+        const defaultFontSize = type === "growToFit" ? 100 : itemFontSize
+        const maxFontSize = type === "growToFit" ? itemFontSize : undefined
 
+        const measureStart = performance.now()
         autoSize = autosize(alignElem, { type, textQuery: ".edit .break span", defaultFontSize, maxFontSize })
+        lastMeasureDuration = performance.now() - measureStart
     }
 
     // UPDATE STYLE FROM LINES
@@ -723,16 +744,20 @@
                 on:mouseup={() => storeCurrentCaretPos()}
                 class="edit context {plain ? '#editbox_text' : '#edit_box__editbox_text'}"
                 class:hidden={chordsMode}
-                class:autoSize={item.auto && autoSize}
+                class:autoSize={isAuto && autoSize && !plain}
                 contenteditable
                 on:keydown={textElemKeydown}
+                on:input={() => scheduleAutoSize()}
                 on:compositionstart={() => (composing = true)}
-                on:compositionend={() => (composing = false)}
+                on:compositionend={() => {
+                    composing = false
+                    scheduleAutoSize(true)
+                }}
                 on:blur={() => (composing = false)}
                 on:copy={handleCopy}
                 on:cut={handleCut}
                 bind:innerHTML={html}
-                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain ? lineStyleBox : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}"
+                style="{isAuto && autoSize && !plain ? `--auto-size: ${autoSize}px;` : ''}{!plain ? lineStyleBox : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}"
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
                 class:tallLines={chordsMode}
             />

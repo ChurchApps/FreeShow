@@ -3,7 +3,7 @@ import { uid } from "uid"
 import type { Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
 import { createCategory } from "../../../converters/importHelpers"
-import { activeDays, calendarAddShow, events, showsCache, special } from "../../../stores"
+import { activeDays, calendarAddShow, calendars, events, showsCache, special } from "../../../stores"
 import { translateText } from "../../../utils/language"
 import { getItemText } from "../../edit/scripts/textStyle"
 import { clone, removeDuplicates, sortByTime } from "../../helpers/array"
@@ -251,7 +251,7 @@ export function getSelectedEvents(selectedDays: number[] = get(activeDays)) {
         const thisDay = new Date(day)
 
         Object.entries(get(events)).forEach(([id, a]) => {
-            if (isCalendarHidden(currentSpecial?.calendars, currentSpecial?.hideUnlabeledCalendar, a.origin)) return
+            if (isCalendarHidden(get(calendars), currentSpecial?.hideUnlabeledCalendar, a.origin)) return
 
             const fromDate = new Date(a.from)
             const toDate = a.to ? new Date(a.to) : fromDate

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import { activeActionTagFilter, activeDrawerTab, activeEdit, activeVariableTagFilter, activeTimerTagFilter, dictionary, drawerTabsData, labelsDisabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import MaterialDrawerTab from "../MaterialDrawerTab.svelte"
@@ -14,7 +15,13 @@
     export let sections: any[]
     export let active: string
 
-    $: if (sections.length && (!active || !sections.flat().find((a) => a.id === active))) {
+    let ready = false
+    onMount(() => {
+        // give time for any special sub tabs to load (like content providers)
+        setTimeout(() => (ready = true), 50)
+    })
+
+    $: if (ready && sections.length && (!active || !sections.flat().find((a) => a.id === active))) {
         const flat = sections.flat().filter((a) => a && a !== "SEPARATOR" && a.id !== "SEPARATOR" && a.id !== "TITLE")
         if (flat.length) setSubTab(flat[0].id)
     }
