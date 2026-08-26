@@ -5,6 +5,7 @@
     import T from "../../../helpers/T.svelte"
     import MaterialButton from "../../../inputs/MaterialButton.svelte"
     import MaterialCheckbox from "../../../inputs/MaterialCheckbox.svelte"
+    import MaterialColorInput from "../../../inputs/MaterialColorInput.svelte"
     import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
     import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
 
@@ -39,6 +40,7 @@
             showNotes: true,
             fontSize: 15,
             chordFontSize: 15,
+            chordColor: "#0066cc",
             margin: 20,
             spacing: 2,
             columnsPerPage: 2
@@ -102,6 +104,7 @@
             <h5 style="margin: 10px 0;text-align: center;color: var(--text);"><T id="edit.chords" /></h5>
 
             <MaterialNumberInput label="edit.font_size" value={pdfOptions.chordFontSize} min={6} max={20} on:change={(e) => (pdfOptions.chordFontSize = e.detail)} />
+            <MaterialColorInput label="edit.color" value={pdfOptions.chordColor || "#0066cc"} defaultValue="#0066cc" on:change={(e) => (pdfOptions.chordColor = e.detail)} on:input={(e) => (pdfOptions.chordColor = e.detail)} />
         {/if}
     </div>
 
