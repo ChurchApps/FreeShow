@@ -207,7 +207,7 @@ export function fadeoutAllPlayingAudio() {
     }
 }
 export function fadeinAllPlayingAudio() {
-    if (!isAllAudioFading || audioIsFading()) return
+    if (!isAllAudioFading) return
     isFadingOut.set(false)
 
     let fadeToVolume = 1

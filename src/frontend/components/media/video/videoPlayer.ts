@@ -577,6 +577,7 @@ export class VideoPlayer {
     static isAudible(video: VideoAudioData | null | undefined): boolean {
         if (!video || !video.audio) return false
         if (video.audio.paused || video.audio.muted) return false
+        if (this.isFadingOut.includes(video.path) || this.isStopping.has(video.path)) return false
         if (this.getVolume(video.path) <= 0) return false
         return true
     }
