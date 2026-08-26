@@ -1598,11 +1598,11 @@ export class EffectRender {
 
         const { bw, bh, cols, rows, colors, image, ex, ey } = data
         const n = cols * rows
-        const speed = (item.speed ?? 1) * 0.05
-        const motion = item.motion ?? 0.07
+        const speed = item.speed ?? 1
+        const motion = (item.motion ?? 0.07) * 1.1
         const spread = Math.max(0.1, item.spread ?? 1)
 
-        data.time += speed * 0.016 * deltaTime
+        data.time += speed * 0.005 * deltaTime
         const t = data.time
 
         const sx = 0.15 * spread
@@ -1613,8 +1613,8 @@ export class EffectRender {
                 const k = j * cols + i
                 const phase = i * 1.7 + j * 3.1
                 const cx = (i + 0.5) / cols + motion * Math.sin(t * (1 + ((i + j) % 3)) + phase)
-                const cy = (j + 0.5) / rows + motion * Math.cos(t * (1 + ((i * 2 + j) % 2)) + phase * 1.3) * 0.62
-                const pw = Math.max(0, 1 + 0.28 * Math.sin(t * (1 + ((i + j * 2) % 3)) + phase * 0.7)) + 1e-5
+                const cy = (j + 0.5) / rows + motion * Math.cos(t * (1 + ((i * 2 + j) % 2)) + phase * 1.3) * 0.75
+                const pw = Math.max(0, 1 + 0.25 * Math.sin(t * (1 + ((i + j * 2) % 3)) + phase * 0.7)) + 1e-5
 
                 const baseX = k * bw
                 for (let x = 0; x < bw; x++) {
