@@ -938,7 +938,7 @@ function expandRepeatedSectionLines(lines: ParsedSectionLine[]): ParsedSectionLi
 
 function processRegularItem(item: ProjectItem) {
     const showId = `pcosong_${item.id}`
-    const show = getShow(item, {}, [])
+    const show = getShow(item, {}, [], "generic")
 
     return {
         show: { id: showId, ...show },
@@ -1005,7 +1005,7 @@ function getDateTitle(dateString: string) {
 
 const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
 
-function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
+function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[], type: string = "") {
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
     SECTIONS.forEach((section) => {
@@ -1061,7 +1061,7 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[]) {
 
     const show: Show = {
         name: title,
-        category: "planning_center",
+        category: `planning_center${type ? `_${type}` : ""}`,
         timestamps: { created: new Date(SONG.created_at).getTime() || Date.now(), modified: new Date(SONG.updated_at).getTime() || null, used: null },
         meta: metadata,
         settings: {

@@ -336,6 +336,11 @@ export const mainResponses: MainResponses = {
     [ToMain.PROVIDER_PROJECTS]: async (data) => {
         if (!data.projects) return
 
+        // Planning Center items are seperated into multiple categories based on the type: Songs (default) & Regular items (generic)
+        if (data.providerId === "planningcenter" && data.shows.some((a) => a.category === "planning_center_generic")) {
+            createCategory("Planning Center (Generic)", "presentation")
+        }
+
         // CREATE CATEGORY
         createCategory(data.categoryName)
 
