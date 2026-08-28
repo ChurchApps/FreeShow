@@ -151,7 +151,7 @@ function matchTitleTypo(titleText: string, showNameWithNumber: string, queryToke
         if (titleSim >= 0.7) return Math.round(65 + ((titleSim - 0.7) / 0.3) * 20)
     }
 
-    // 2. Word-by-word token similarity (e.g. 'unnaku virothamai' for 'Unakku Virothamai Elumpum')
+    // 2. Word-by-word token similarity (e.g. 'amzing grac' for 'Amazing Grace How Sweet')
     const titleTokens = tokenize(titleText)
     if (titleTokens.length >= queryTokens.length && queryTokens.length > 0) {
         const used = new Set<number>()
