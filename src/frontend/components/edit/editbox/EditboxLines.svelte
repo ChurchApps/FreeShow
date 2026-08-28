@@ -247,6 +247,7 @@
 
         // updateItem = true
         if (!newLines?.length) newLines = getNewLines()
+        if (item) item.lines = newLines
 
         if ($activeEdit.type === "overlay") overlays.update(setNewLines)
         else if ($activeEdit.type === "template") templates.update(setNewLines)
@@ -297,48 +298,55 @@
                 })
             }
 
-            history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index], showId: ref.showId }, location: { page: "none", override: itemRef } })
-
             // update stored scripture custom dynamic values
-            if ($showsCache[ref.showId || ""]?.slides?.[ref.id]?.customDynamicValues) {
+            const showId = ref.showId || $activeShow?.id || ""
+            if (showId && $showsCache[showId]?.slides?.[ref.id]?.customDynamicValues) {
                 showsCache.update((a) => {
-                    const storage = a[ref.showId || ""]?.slides?.[ref.id]?.customDynamicValues
+                    const storage = a[showId]?.slides?.[ref.id]?.customDynamicValues
                     if (!storage) return a
 
                     const collected: Record<string, { [index: number]: string }> = {}
+                    let currentVerseIdx = 0
                     newLines.forEach((line) => {
                         line.text?.forEach((text) => {
-                            if (!text?.sourceDynamicKey?.includes("_text")) return
-                            const parts = text.sourceDynamicKey.split(":")
-                            const key = parts[0]
-                            const idx = Number(parts[1] || "0")
+                            if (!text || text.customType?.includes("disableTemplate")) return
+
+                            let [key, idxStr] = text.sourceDynamicKey?.split(":") || []
+                            let idx = idxStr !== undefined ? Number(idxStr) : currentVerseIdx
+                            if (text.sourceDynamicKey?.includes("_text")) currentVerseIdx = idx
+                            else key = index === 0 ? "scripture_text" : `scripture${index + 1}_text`
+
                             if (!collected[key]) collected[key] = {}
                             collected[key][idx] = (collected[key][idx] || "") + (text.value || "")
                         })
                     })
 
                     Object.keys(storage).forEach((key) => {
-                        if (Array.isArray(storage[key])) {
-                            const coll = collected[key] || (key === "scripture1_text" ? collected.scripture_text : key === "scripture_text" ? collected.scripture1_text : undefined)
-                            if (coll) {
-                                storage[key] = storage[key]
-                                    .map((item: any, idx: number) => {
-                                        if (!Array.isArray(item)) return item
-                                        const textVal = coll[idx]
-                                        if (textVal === undefined || !textVal.trim()) return null
-                                        return [item[0] || "0", textVal.trim()]
-                                    })
-                                    .filter(Boolean)
-                            }
-                        }
+                        if (!Array.isArray(storage[key])) return
+                        const coll = collected[key] || (key === "scripture1_text" ? collected.scripture_text : key === "scripture_text" ? collected.scripture1_text : undefined)
+                        if (!coll) return
+
+                        storage[key] = storage[key]
+                            .map((item: any, idx: number) => {
+                                if (!Array.isArray(item)) return item
+                                const verseNum = item[0] || "0"
+                                let textVal = (coll[idx] ?? "").trim()
+                                if (verseNum !== "0" && textVal.startsWith(verseNum)) {
+                                    textVal = textVal.slice(verseNum.length).trim()
+                                }
+                                return textVal ? [verseNum, textVal] : null
+                            })
+                            .filter(Boolean)
                     })
 
                     if (storage.scripture_text && !storage.scripture1_text) storage.scripture1_text = clone(storage.scripture_text)
-                    if (storage.scripture1_text && !storage.scripture_text) storage.scripture_text = clone(storage.scripture1_text)
+                    if (storage.scripture1_text && !storage.scripture_text) storage.scripture_text = clone(storage.scripture_text)
 
                     return a
                 })
             }
+
+            history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index], showId: ref.showId }, location: { page: "none", override: itemRef } })
 
             // refresh list view boxes
             if (plain) refreshListBoxes.set(editIndex)
@@ -700,7 +708,7 @@
 
     // paste
     let pasting = false
-    function paste(e: any, clipboardText = "", clipboardHtml = "") {
+    function paste(e: any, clipboardText?: string, clipboardHtml?: string) {
         EditboxPaste.paste(e, clipboardText, clipboardHtml, {
             item,
             ref,
