@@ -67,9 +67,8 @@
     "tooltip": {
         "project": "Créez un nouveau projet où vous pouvez ajouter et organiser des présentations.",
         "show": "Créer une nouvelle présentation où vous pouvez ajouter des paroles de chants, des diapositives et des médias. Maintenez Ctrl/Cmd enfoncé pour en créer une vide.",
-        "groups": "Tous les groupes dans la présentation actuelle et tous les groupes globaux. Cliquez ou faites-les glisser pour les ajouter au calque actuel.",
-        "layout": "Ajouter les transitions et les prochains minuteurs aux diapos dans le calque actuel.",
-        "media": "Tous les médias dans la présentation courante. Affichez-les, ou faites-les glisser vers le calque actuel.",
+        "groups": "Tous les groupes de la présentation en cours et tous les groupes globaux. Cliquer dessus ou les faire glisser pour les ajouter à l'arrangement actuel.",
+        "media": "Tous les médias de la présentation en cours. Les Afficher ou faire glisser vers l'arrangement actuel.",
         "metadata": "Modifier les métadonnées de la présentation courante.",
         "notes": "Écrire des notes.",
         "text": "Modifier le contenu de tous les éléments sélectionnés.",
@@ -232,6 +231,9 @@
     },
     "audio": {
         "settings": "Paramètres audio",
+        "inputs": "Entrées",
+        "outputs": "Sorties",
+        "channels": "Chaînes",
         "playlists": "Listes de lecture",
         "playlist_settings": "Paramètres de la liste de lecture",
         "open_audio_folder": "Ouvrir le dossier audio associé",
@@ -337,7 +339,6 @@
     },
     "error": {
         "no_show": "Aucune présentation n'a été trouvée",
-        "no_layouts": "Aucun calque n'a été trouvé",
         "load": "Chargement impossible",
         "media": "Impossible de trouver le média",
         "bible": "Aucune Bible n'a été trouvée en local",
@@ -345,7 +346,6 @@
         "bible_api": "Impossible de télécharger une Bible depuis API.Bible. Avez-vous une connexion internet valide ?",
         "not_found": "Non trouvé",
         "display": "Impossible d'afficher la fenêtre de sortie sur l'écran actuel",
-        "keep_one_layout": "Vous devez avoir au moins un calque sélectionné",
         "video_unavailable": "La vidéo n'est pas disponible ? Le créateur a désactivé le mode intégration de vidéo.",
         "folder_exists": "Ce dossier existe déjà",
         "uri": "Impossible d'analyser le nom du fichier audio, veuillez renommer le fichier",
@@ -518,6 +518,7 @@
         "import_scripture": "Importer une Bible",
         "create_collection": "Créer une collection",
         "scripture_show": "Options d'affichage des Écritures",
+        "import_calendar": "Importer calendrier",
         "player": "Lecteur",
         "edit_event": "Editer l'évenement",
         "edit_chart": "Modifier le graphique",
@@ -567,7 +568,7 @@
         "save_quit": "Sauvegarder & Quitter"
     },
     "confirm": {
-        "statement_slide_exists_layout": "La diapositive existe dans une mise en page différente!",
+        "statement_slide_exists_arrangement": "La diapositive existe dans un arrangement différent !",
         "question_delete": "Voulez-vous la supprimer?"
     },
     "toast": {
@@ -631,12 +632,14 @@
         "action": "Nouvelle action",
         "event": "Nouvel événement",
         "event_action": "Nouvelle action planifiée",
+        "calendar": "Nouveau calendrier",
         "effect": "Nouvel effet",
         "interaction": "Nouvelle interaction"
     },
     "show": {
         "name": "Nom",
         "category": "Catégorie",
+        "new_arrangement": "Nouvel arrangement",
         "new_layout": "Nouveau calque",
         "grid": "Vue grille",
         "simple": "Vue simplifiée",
@@ -662,7 +665,7 @@
         "rename": "Renommer",
         "recolor": "Modifier la couleur",
         "remove": "Retirer",
-        "remove_group": "Retirer le groupe de la mise en page",
+        "remove_group": "Retirer le groupe de l'arrangement",
         "remove_group_short": "Supprimer le groupe",
         "choose_group": "Choisir le groupe",
         "goto_group": "Aller au groupe",
@@ -694,6 +697,7 @@
         "disable": "Désactiver",
         "enable": "Activer",
         "enable_specific": "Activer $1",
+        "toggle_specific": "Basculer $1",
         "undo": "Annuler",
         "redo": "Rétablir",
         "cut": "Couper",
@@ -832,18 +836,23 @@
         "previous_project_item": "Élément de projet précédent",
         "index_select_project_item": "Ouvrir l'élément de projet à l'index",
         "name_start_project_item": "Démarrer l'élément de projet par nom",
+        "id_select_show": "Ouvrir présentation",
         "name_select_show": "Ouvrir le diaporama avec le nom",
         "set_template_active": "Définir le modèle sur la présentation active",
         "change_slide_timeline_speed": "Modifier la vitesse de chronologie de la diapositive",
         "random_slide": "Lire une diapositive aléatoire",
         "index_select_slide": "Sélectionner la diapositive via sa position",
         "name_select_slide": "Lire la diapositive avec le nom",
+        "disable_slide": "Désactiver diapositive",
+        "active_show": "Activer diapositive",
         "toggle_output_lock": "Activer/Désactiver le verrouillage de la sortie",
         "toggle_output_window": "Activer/Désactiver la fenêtre de sortie",
         "toggle_output_windows": "Activer/Désactiver les fenêtres de sortie",
         "id_select_group": "Lire un groupe spécifique",
         "id_change_stage_layout": "Modifier la disposition des connexions du moniteur de scène",
         "start_camera": "Démarrer la caméra",
+        "start_microphone": "Activer le microphone",
+        "stop_microphone": "Arrêter le microphone",
         "start_screen": "Écran de démarrage",
         "id_start_effect": "Démarrer l'effet",
         "id_select_overlay": "Démarrer la superposition",
@@ -1007,7 +1016,6 @@
         "metadata": "Métadonnées",
         "media": "Média",
         "audio": "Audio",
-        "layout": "Calque",
         "item": "Élément",
         "items": "Éléments",
         "slide": "Diapositive"
@@ -1392,6 +1400,9 @@
         "cropping": "Rogner",
         "cropped": "Tondu",
         "frame_rate": "Fréquence d'images",
+        "bitrate": "Débit binaire",
+        "video_encoder": "Encodeur vidéo",
+        "add_destination": "Ajouter une destination",
         "device": "Appareil",
         "display_mode": "Mode d'affichage",
         "pixel_format": "Format de pixel",
@@ -1490,6 +1501,7 @@
         "custom": "Personnalisé"
     },
     "calendar": {
+        "calendar": "Calendrier",
         "type": "Type",
         "event": "Événement",
         "first_day": "Premier jour",
@@ -1517,7 +1529,9 @@
         "ending_repeated": "répété",
         "ending_times": "fois",
         "save_all": "Sauvegardé et tout mettre à jour",
-        "add_slides_from_show": "Inclure les diapositives de la présentation"
+        "add_slides_from_show": "Inclure les diapositives de la présentation",
+        "calendars": "Calendriers",
+        "delete_confirmation": "Supprimer tous les événements de ce calendrier ?"
     },
     "scripture": {
         "collections": "Collections",
