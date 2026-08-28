@@ -107,11 +107,16 @@ export class CaptureHelper {
         // framerates.unconnected), where nobody sees the frames, evenness is moot, and the GPU saving is the
         // point of the throttle.
         const idle = fps <= this.framerates.unconnected
+        const target = idle ? Math.max(1, Math.round(fps || 1)) : OutputHelper.Lifecycle.OSR_RENDER_FPS
         try {
-            win.webContents.setFrameRate(idle ? Math.max(1, Math.round(fps || 1)) : OutputHelper.Lifecycle.OSR_RENDER_FPS)
+            win.webContents.setFrameRate(target)
         } catch {
             // ignore
         }
+        // Linux begin-frame drive (no-op elsewhere): keep the invalidate cadence in lockstep with the rate
+        // just applied — configured intent (native rate with a live consumer, derived idle floor otherwise).
+        // See the LINUX NOTE above OutputLifecycle.attachOsrCapture.
+        OutputHelper.Lifecycle.updateOsrPaintDrive(win, rendererId, target)
     }
 
     static getWindowScreen(window: BrowserWindow) {

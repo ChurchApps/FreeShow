@@ -266,6 +266,18 @@ export class OutputLifecycle {
     // (CaptureHelper.updateRenderRate), where no receiver is watching and evenness is moot.
     static readonly OSR_RENDER_FPS = 60
 
+    // LINUX NOTE (task #19 — IMPLEMENTED after the WSL diagnostic run): measured paints/s=0 (neither
+    // shared-texture nor CPU-bitmap) at the full render rate while the renderer was clearly rendering — Chromium's OSR begin-frame/vsync throttle: an offscreen window on
+    // Linux (especially a virtualized GPU / WSLg) lacks a real vsync/begin-frame source, so the offscreen
+    // compositor never ticks. Two-part Linux-gated fix, decided from that measured data:
+    //   1. compositor unthrottle switches at startup (src/electron/index.ts: disable-gpu-vsync,
+    //      disable-frame-rate-limit, run-all-compositor-stages-before-draw, CalculateNativeWinOcclusion off,
+    //      renderer/background unthrottling)
+    //   2. an explicit begin-frame drive (updateOsrPaintDrive below): startPainting() if painting isn't
+    //      active + invalidate() on the setFrameRate cadence, yielding to natural paints — because paints=0
+    //      (not merely low) means the compositor may schedule NO begin-frames at all without a poke.
+    // Both are gated to process.platform === "linux": Windows/mac paint correctly and must not be
+    // unthrottled or double-driven.
     private static attachOsrCapture(window: BrowserWindow, id: string) {
         try {
             window.webContents.setFrameRate(this.OSR_RENDER_FPS)
@@ -280,6 +292,66 @@ export class OutputLifecycle {
         const useSharedTexture = !!addon && !this.isHardwareAccelerationDisabled()
         if (useSharedTexture) this.attachOsrSharedTexture(window, id, addon)
         else this.attachOsrCpu(window, id)
+
+        // Linux begin-frame drive (see the LINUX NOTE above). Initial cadence mirrors the initial
+        // setFrameRate above; CaptureHelper.updateRenderRate re-drives it whenever the applied rate changes.
+        if (process.platform === "linux") {
+            window.on("closed", () => this.stopOsrPaintDrive(id))
+            this.updateOsrPaintDrive(window, id, this.OSR_RENDER_FPS)
+        }
+    }
+
+    // ---- Linux OSR begin-frame drive (task #19; see the LINUX NOTE above attachOsrCapture) ----
+    // On Linux an offscreen window can get NO begin-frames at all (WSL measured paints/s=0), so frames must
+    // be actively scheduled: ensure painting is running (startPainting) and invalidate() on the same cadence
+    // setFrameRate was given — the CONFIGURED rate (native render rate when a consumer is live, the derived
+    // idle floor otherwise; CaptureHelper.updateRenderRate passes the exact value it applied). invalidate()
+    // only marks the surface dirty/schedules a begin-frame — the paint rate stays capped by setFrameRate —
+    // and each tick YIELDS to natural paints (skips the poke when the compositor produced a paint on its own
+    // within the last half interval), so a healthy bare-metal compositor is never double-driven. No-op off
+    // Linux (Windows/mac begin-frame sources work; gate in the callers too).
+    private static osrPaintDrive = new Map<string, { timer: NodeJS.Timeout; fps: number }>()
+    private static lastOsrPaintAt = new Map<string, number>()
+
+    // record every paint arrival (both capture paths call this) so the drive can yield to natural paints
+    private static noteOsrPaint(id: string) {
+        if (process.platform === "linux") this.lastOsrPaintAt.set(id, Date.now())
+    }
+
+    static updateOsrPaintDrive(window: BrowserWindow, id: string, fps: number) {
+        if (process.platform !== "linux") return
+        const rate = Math.max(1, Math.round(fps))
+        const existing = this.osrPaintDrive.get(id)
+        if (existing?.fps === rate) return
+        if (existing) clearInterval(existing.timer)
+
+        const interval = Math.max(1, Math.round(1000 / rate))
+        const timer = setInterval(() => {
+            if (window.isDestroyed()) {
+                this.stopOsrPaintDrive(id)
+                return
+            }
+            try {
+                const wc = window.webContents
+                if (!wc.isPainting()) wc.startPainting()
+                // yield to a compositor that is producing frames by itself: a DRIVEN paint lands right after
+                // our previous tick (age ≈ interval at the next tick -> not skipped), while NATURAL paints at
+                // the target rate keep the age below interval/2 about half the time and back the poke off
+                const last = this.lastOsrPaintAt.get(id) || 0
+                if (Date.now() - last < interval / 2) return
+                wc.invalidate()
+            } catch {
+                // window tearing down between the isDestroyed check and the call
+            }
+        }, interval)
+        this.osrPaintDrive.set(id, { timer, fps: rate })
+    }
+
+    private static stopOsrPaintDrive(id: string) {
+        const drive = this.osrPaintDrive.get(id)
+        if (drive) clearInterval(drive.timer)
+        this.osrPaintDrive.delete(id)
+        this.lastOsrPaintAt.delete(id)
     }
 
     // Whether the user disabled hardware acceleration (Settings > Other). When true, app.disableHardwareAcceleration()
@@ -860,6 +932,7 @@ export class OutputLifecycle {
         }
 
         window.webContents.on("paint", (event: any) => {
+            OutputLifecycle.noteOsrPaint(id) // linux begin-frame drive yields to natural paints
             const tex = event?.texture
             const info = tex?.textureInfo
             if (!info) return
@@ -985,6 +1058,7 @@ export class OutputLifecycle {
     private static attachOsrCpu(window: BrowserWindow, id: string) {
         let lastImage: Electron.NativeImage | null = null
         window.webContents.on("paint", (_e: unknown, _dirty: unknown, image: Electron.NativeImage) => {
+            OutputLifecycle.noteOsrPaint(id) // linux begin-frame drive yields to natural paints
             lastImage = image
         })
         this.startOsrSendTimer(window, id, () => {

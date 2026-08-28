@@ -46,6 +46,26 @@ export const isWindows: boolean = process.platform === "win32"
 export const isMac: boolean = process.platform === "darwin"
 export const isLinux: boolean = process.platform === "linux"
 
+// ---- Linux OSR paint-throttle fix (render-overhaul task #19; see the LINUX NOTE in OutputLifecycle) ----
+// Measured on the WSL diagnostic run (abd372f9): the OSR windows render (CPU busy,
+// setFrameRate applied) but Chromium's offscreen compositor emits ZERO `paint` events — no begin-frame /
+// vsync source reaches an offscreen window on Linux (worst on a virtual GPU like WSLg; ~1fps was seen on
+// bare metal). These switches remove the compositor's vsync/frame-rate/occlusion throttles so OSR frames
+// are actually produced. LINUX-GATED: Windows/mac paint correctly today and must not be unthrottled
+// process-wide. Must run before app "ready". Safe with disableHardwareAcceleration (they gate compositor
+// SCHEDULING, not the GPU/CPU compositing mode — that choice stays with the HWA config below).
+if (process.platform === "linux") {
+    app.commandLine.appendSwitch("disable-gpu-vsync") // don't wait on a vsync signal OSR windows never get
+    app.commandLine.appendSwitch("disable-frame-rate-limit") // no synthetic frame-rate cap when unsynced (paints still paced by setFrameRate + the capture admission gate)
+    app.commandLine.appendSwitch("run-all-compositor-stages-before-draw") // don't let the compositor skip/defer stages while "idle" — forces full pipeline per begin-frame
+    app.commandLine.appendSwitch("disable-features", "CalculateNativeWinOcclusion") // never treat the hidden OSR windows as occluded (occlusion pauses rendering entirely)
+    // process-wide backing for the per-window backgroundThrottling:false (windowOptions.ts): keep renderers
+    // + timers of never-shown OSR windows at full rate
+    app.commandLine.appendSwitch("disable-renderer-backgrounding")
+    app.commandLine.appendSwitch("disable-background-timer-throttling")
+    app.commandLine.appendSwitch("disable-backgrounding-occluded-windows")
+}
+
 let autoProfile = ""
 export function setAutoProfile(profile: string) {
     if (profile) autoProfile = profile
