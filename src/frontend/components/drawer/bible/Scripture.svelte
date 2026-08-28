@@ -1074,7 +1074,7 @@
                                 {@const name = $scriptureMode === "grid" ? booksData[i]?.abbreviation : $customScriptureBooks[previewBibleId]?.[i] || book.name}
                                 {@const isActive = activeReference.book?.toString() === id}
 
-                                <span {id} class={isApi || isCollection || !Object.values(defaultBibleBookNames).includes(book.name) ? "" : "context #bible_book_local"} class:isActive style="{color ? `border-${$scriptureMode === 'grid' ? 'bottom' : 'left'}: 2px solid ${color};` : ''}{$scriptureMode === 'grid' ? `border-radius: 2px;background-color: ${fadeColor(color, 0.15)};color: ${brightenDarkColor(color)};` : ''}" on:click={() => openBook(id)} role="none">
+                                <span {id} class={isApi || isCollection || !Object.values(defaultBibleBookNames).includes(book.name) ? "" : "context #bible_book_local"} class:isActive style="{color ? `border-${$scriptureMode === 'grid' ? 'bottom' : 'left'}: 2px solid ${color};` : ''}{$scriptureMode === 'grid' ? `border-radius: 2px;background-color: ${fadeColor(color, isActive ? 0.35 : 0.15)};color: ${brightenDarkColor(color)};` : ''}" on:click={() => openBook(id)} role="none">
                                     {name}
                                 </span>
                             {/each}
