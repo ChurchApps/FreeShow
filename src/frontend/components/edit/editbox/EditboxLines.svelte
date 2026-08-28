@@ -308,17 +308,10 @@
                     const collected: Record<string, { [index: number]: string }> = {}
                     newLines.forEach((line) => {
                         line.text?.forEach((text) => {
-                            if (!text || text.customType?.includes("disableTemplate")) return
-                            let key = ""
-                            let idx = 0
-                            if (text.sourceDynamicKey?.includes("_text")) {
-                                const parts = text.sourceDynamicKey.split(":")
-                                key = parts[0]
-                                idx = Number(parts[1] || "0")
-                            } else {
-                                key = index === 0 ? "scripture_text" : `scripture${index + 1}_text`
-                                idx = 0
-                            }
+                            if (!text?.sourceDynamicKey?.includes("_text")) return
+                            const parts = text.sourceDynamicKey.split(":")
+                            const key = parts[0]
+                            const idx = Number(parts[1] || "0")
                             if (!collected[key]) collected[key] = {}
                             collected[key][idx] = (collected[key][idx] || "") + (text.value || "")
                         })
@@ -328,14 +321,20 @@
                         if (Array.isArray(storage[key])) {
                             const coll = collected[key] || (key === "scripture1_text" ? collected.scripture_text : key === "scripture_text" ? collected.scripture1_text : undefined)
                             if (coll) {
-                                storage[key].forEach((item: any, idx: number) => {
-                                    if (Array.isArray(item)) {
-                                        item[1] = (coll[idx] ?? "").trim()
-                                    }
-                                })
+                                storage[key] = storage[key]
+                                    .map((item: any, idx: number) => {
+                                        if (!Array.isArray(item)) return item
+                                        const textVal = coll[idx]
+                                        if (textVal === undefined || !textVal.trim()) return null
+                                        return [item[0] || "0", textVal.trim()]
+                                    })
+                                    .filter(Boolean)
                             }
                         }
                     })
+
+                    if (storage.scripture_text && !storage.scripture1_text) storage.scripture1_text = clone(storage.scripture_text)
+                    if (storage.scripture1_text && !storage.scripture_text) storage.scripture_text = clone(storage.scripture1_text)
 
                     return a
                 })
