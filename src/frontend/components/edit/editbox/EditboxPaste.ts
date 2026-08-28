@@ -177,7 +177,7 @@ export class EditboxPaste {
         return result
     }
 
-    static paste(e: any, clipboardText?: string, clipboardHtml?: string, ctx: EditboxPasteContext) {
+    static paste(e: any, clipboardText: string | undefined, clipboardHtml: string | undefined, ctx: EditboxPasteContext) {
         const htmlData = clipboardHtml !== undefined ? clipboardHtml : clipboardText !== undefined ? "" : e.clipboardData?.getData("text/html")
         let pastedElements = htmlData ? this.parseHtmlToTextElements(htmlData) : []
         let clipboard = pastedElements.map((el) => el.value).join("")
