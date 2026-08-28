@@ -1,4 +1,4 @@
-﻿import JsonBible from "json-bible"
+import JsonBible from "json-bible"
 import { ApiBiblesList, ApiBible as JsonBibleApi } from "json-bible/lib/api"
 import type { CustomBibleListContent } from "json-bible/lib/api/ApiBible"
 import { stripMarkdown } from "json-bible/lib/markdown"
@@ -1099,18 +1099,19 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                                         newLineText.push({
                                             ...keyTextObj,
                                             value: text,
+                                            sourceDynamicKey: `${valueName}:${i}`,
                                             ...(isJesusWords && { style: (keyTextObj.style || "") + redJesusStyle, customType: "disableTemplate_jw" })
                                         })
                                     }
                                 })
                             } else {
-                                newLineText.push({ ...keyTextObj, value: formatBibleText(verse.text) })
+                                newLineText.push({ ...keyTextObj, value: formatBibleText(verse.text), sourceDynamicKey: `${valueName}:${i}` })
                             }
 
                             // Separator between verses (don't break verses in multiple parts)
                             if (i < bibleVerses.length - 1) {
                                 const sep = getVerseSeparator(verse, bibleVerses[i + 1], versesOnIndividualLines)
-                                newLineText.push({ ...keyTextObj, value: sep })
+                                newLineText.push({ ...keyTextObj, value: sep, sourceDynamicKey: `${valueName}:${i}` })
                             }
                         })
 

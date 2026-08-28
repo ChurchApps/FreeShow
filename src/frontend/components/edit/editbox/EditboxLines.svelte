@@ -188,42 +188,18 @@
         newSlide.color = null
 
         // update scripture dynamic values based on current firstLines & secondLines
-        // WIP duplicate of splitItemInTwo (kinda)
         if (newSlide.customDynamicValues) {
-            const buildDV = (lines: Line[]) => {
-                const targetCDV = clone(newSlide.customDynamicValues!)
-                const collected: Record<string, Record<number, string>> = {}
-
-                lines.forEach((line) => {
-                    line.text?.forEach((text) => {
-                        if (!text.sourceDynamicKey) return
-                        const [key, indexStr] = text.sourceDynamicKey.split(":")
-                        const idx = Number(indexStr || "0")
-                        collected[key] = collected[key] || {}
-                        collected[key][idx] = (collected[key][idx] ? collected[key][idx] + " " : "") + text.value
-                    })
+            let firstItems = clone(_show().slides([ref.id]).get("items")[0]) || []
+            firstItems[editItemIndex] = { ...firstItems[editItemIndex], lines: firstLines }
+            const split = splitCustomDynamicValues(newSlide.customDynamicValues, firstItems, newSlide.items)
+            if (split) {
+                showsCache.update((a) => {
+                    const showId = ref.showId || $activeShow?.id || ""
+                    if (a[showId]?.slides?.[ref.id]) a[showId].slides[ref.id].customDynamicValues = split.firstDV
+                    return a
                 })
-
-                Object.keys(targetCDV).forEach((key) => {
-                    const val = targetCDV[key]
-                    if (Array.isArray(val)) {
-                        targetCDV[key] = val.map((item, idx) => (collected[key]?.[idx] !== undefined ? (Array.isArray(item) ? [item[0], collected[key][idx]] : collected[key][idx]) : null)).filter(Boolean)
-                    } else if (collected[key]?.[0] !== undefined) {
-                        targetCDV[key] = collected[key][0]
-                    }
-                })
-                return targetCDV
+                newSlide.customDynamicValues = split.secondDV
             }
-
-            const firstDV = buildDV(firstLines)
-            const secondDV = buildDV(secondLines)
-
-            showsCache.update((a) => {
-                const showId = ref.showId || $activeShow?.id || ""
-                if (a[showId]?.slides?.[ref.id]) a[showId].slides[ref.id].customDynamicValues = firstDV
-                return a
-            })
-            newSlide.customDynamicValues = secondDV
         }
 
         // add new slide
@@ -329,12 +305,14 @@
                     if (!a[ref.showId || ""]?.slides?.[ref.id]?.customDynamicValues) return a
                     newLines.forEach((line) => {
                         line.text?.forEach((text) => {
-                            if (text.sourceDynamicKey?.includes("scripture_text")) {
+                            if (text.sourceDynamicKey?.includes("_text")) {
                                 const key = text.sourceDynamicKey.split(":")[0]
                                 const index = text.sourceDynamicKey.split(":")[1] || "0"
                                 const storage = a[ref.showId!]?.slides?.[ref.id]?.customDynamicValues
                                 if (!storage?.[key]?.[index]) return
                                 storage[key][index][1] = text.value
+                                if (key === "scripture_text" && storage.scripture1_text?.[index]) storage.scripture1_text[index][1] = text.value
+                                if (key === "scripture1_text" && storage.scripture_text?.[index]) storage.scripture_text[index][1] = text.value
                             }
                         })
                     })
