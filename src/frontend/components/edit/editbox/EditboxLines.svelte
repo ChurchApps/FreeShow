@@ -302,20 +302,41 @@
             // update stored scripture custom dynamic values
             if ($showsCache[ref.showId || ""]?.slides?.[ref.id]?.customDynamicValues) {
                 showsCache.update((a) => {
-                    if (!a[ref.showId || ""]?.slides?.[ref.id]?.customDynamicValues) return a
+                    const storage = a[ref.showId || ""]?.slides?.[ref.id]?.customDynamicValues
+                    if (!storage) return a
+
+                    const collected: Record<string, { [index: number]: string }> = {}
                     newLines.forEach((line) => {
                         line.text?.forEach((text) => {
+                            if (!text || text.customType?.includes("disableTemplate")) return
+                            let key = ""
+                            let idx = 0
                             if (text.sourceDynamicKey?.includes("_text")) {
-                                const key = text.sourceDynamicKey.split(":")[0]
-                                const index = text.sourceDynamicKey.split(":")[1] || "0"
-                                const storage = a[ref.showId!]?.slides?.[ref.id]?.customDynamicValues
-                                if (!storage?.[key]?.[index]) return
-                                storage[key][index][1] = text.value
-                                if (key === "scripture_text" && storage.scripture1_text?.[index]) storage.scripture1_text[index][1] = text.value
-                                if (key === "scripture1_text" && storage.scripture_text?.[index]) storage.scripture_text[index][1] = text.value
+                                const parts = text.sourceDynamicKey.split(":")
+                                key = parts[0]
+                                idx = Number(parts[1] || "0")
+                            } else {
+                                key = index === 0 ? "scripture_text" : `scripture${index + 1}_text`
+                                idx = 0
                             }
+                            if (!collected[key]) collected[key] = {}
+                            collected[key][idx] = (collected[key][idx] || "") + (text.value || "")
                         })
                     })
+
+                    Object.keys(storage).forEach((key) => {
+                        if (Array.isArray(storage[key])) {
+                            const coll = collected[key] || (key === "scripture1_text" ? collected.scripture_text : key === "scripture_text" ? collected.scripture1_text : undefined)
+                            if (coll) {
+                                storage[key].forEach((item: any, idx: number) => {
+                                    if (Array.isArray(item)) {
+                                        item[1] = (coll[idx] ?? "").trim()
+                                    }
+                                })
+                            }
+                        }
+                    })
+
                     return a
                 })
             }

@@ -178,9 +178,8 @@ export class EditboxPaste {
         let clipboard = pastedElements.map((el) => el.value).join("")
 
         if (!pastedElements.length) {
-            clipboard = clipboardText || e.clipboardData?.getData("text/plain") || ""
-            if (!clipboard) return
-            pastedElements = [{ value: clipboard, style: "" }]
+            clipboard = typeof clipboardText === "string" ? clipboardText : e.clipboardData?.getData("text/plain") || ""
+            pastedElements = clipboard ? [{ value: clipboard, style: "" }] : []
         }
 
         ctx.setPasting(true)

@@ -703,7 +703,7 @@ export function splitCustomDynamicValues(originalDV: any, firstItems?: Item[], s
                             verseNum = (t.value || "").trim() || "0"
                             currentText = ""
                         } else if (t.value) {
-                            currentText += (currentText ? " " : "") + t.value
+                            currentText += t.value
                         }
                     })
                 })
