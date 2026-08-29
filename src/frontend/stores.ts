@@ -205,6 +205,8 @@ export const dynamicValueData: Writable<{ [key: string]: any }> = writable({})
 export const cachedDynamicValues: Writable<{ [key: string]: string }> = writable({})
 export const recentFiles: Writable<{ all: string[]; cleared: string[]; projectMedia: string[] }> = writable({ all: [], cleared: [], projectMedia: [] })
 export const statusIndicator: Writable<string> = writable("")
+export type SlideHighlight = { indexes: number[]; color?: string; icon?: string } | null
+export const slideDeleteHighlight: Writable<SlideHighlight> = writable(null)
 
 // ----- SAVED VARIABLES -----
 

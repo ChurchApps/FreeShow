@@ -1,13 +1,13 @@
 <script lang="ts">
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { cameraManager } from "../../media/cameraManager"
-    import { actions, activeEdit, activeProject, activeRecording, activeShow, categories, colorbars, dictionary, disabledServers, drawerTabsData, effects, effectsLibrary, events, forceClock, globalTags, livePrepare, media, mediaFolders, os, outputs, overlayCategories, overlays, projects, redoHistory, scriptures, selected, shows, showsCache, slidesOptions, special, spellcheck, stageShows, styles, templateCategories, timers, topContextActive, undoHistory } from "../../stores"
+    import { actions, activeEdit, activeProject, activeRecording, activeShow, categories, colorbars, dictionary, disabledServers, drawerTabsData, effects, effectsLibrary, events, forceClock, globalTags, livePrepare, media, mediaFolders, os, outputs, overlayCategories, overlays, projects, redoHistory, scriptures, selected, shows, showsCache, slideDeleteHighlight, slidesOptions, special, spellcheck, stageShows, styles, templateCategories, timers, topContextActive, undoHistory } from "../../stores"
     import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { keysToID } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, getMediaType } from "../helpers/media"
-    import { getLayoutRef } from "../helpers/show"
+    import { getLayoutRef, getSlideHighlightIndexes } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import T from "../helpers/T.svelte"
     import { type ContextMenuItem, contextMenuItems } from "./contextMenus"
@@ -415,6 +415,8 @@
     function contextItemClick() {
         if (disabled) return
 
+        slideDeleteHighlight.set(null)
+
         let actionItem: HTMLElement | null = contextElem?.classList.contains("_" + id) ? contextElem : contextElem?.querySelector("._" + id) || null
         let sel = $selected
 
@@ -432,6 +434,25 @@
         if (topBar) topContextActive.set(false)
         else closeContextMenu()
     }
+
+    // highlight interactable content (in this case what slides are being deleted/removed)
+    function updateHighlight(active = true) {
+        if (!active || disabled || hide) {
+            if (id === "remove_group" || id === "delete_slide" || id === "delete_group" || id === "delete") {
+                slideDeleteHighlight.set(null)
+            }
+            return
+        }
+
+        if (id === "remove_group" || id === "delete_slide" || id === "delete_group" || (id === "delete" && $selected.id === "slide")) {
+            const indexes = getSlideHighlightIndexes(id, $selected)
+            const color = menu?.iconColor || menu?.color || "#ff5454"
+            const icon = id.includes("remove") ? "remove" : menu?.icon || "delete"
+
+            slideDeleteHighlight.set(indexes.length ? { indexes, color: color, icon: icon } : null)
+        }
+    }
+    $: if (highlighted) updateHighlight(true)
 
     function keydown(e: KeyboardEvent) {
         if (e.key === "Enter" || e.key === " ") {
@@ -451,7 +472,7 @@
     $: customStyle = id === "uppercase" ? "text-transform: uppercase;" : id === "lowercase" ? "text-transform: lowercase;" : ""
 </script>
 
-<div on:click={contextItemClick} class:enabled class:disabled class:hide class:highlighted class:group data-title={translateText(menu?.tooltip || "")} style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};{menu?.style || ''}" tabindex={0} on:keydown={keydown} role="menuitem">
+<div on:click={contextItemClick} on:mouseenter={() => updateHighlight(true)} on:mouseleave={() => updateHighlight(false)} class:enabled class:disabled class:hide class:highlighted class:group data-title={translateText(menu?.tooltip || "")} style="color: {menu?.color || 'unset'};font-weight: {menu?.color ? '500' : 'normal'};{menu?.style || ''}" tabindex={0} on:keydown={keydown} role="menuitem">
     <span class="item" data-title={group && !menu?.tooltip ? `${shortcut}` : customTitle || ""}>
         <!-- white={menu.icon !== "edit"} -->
         {#if menu?.icon}<Icon style="opacity: 0.7;color: {(topBar ? '' : menu.iconColor) || 'var(--text)'};" id={menu.icon} size={group ? 1.4 : 1} white />{/if}
