@@ -59,17 +59,16 @@
         "assets": "使用的素材",
         "libraries": "使用的库",
         "thanks": "鸣谢：",
-        "new_update": "有更新可用...",
+        "new_update": "有可用版本更新",
         "download_latest": "下载最新版本",
-        "download_auto": "您已启用自动更新，请等待几分钟，更新将自动下载并安装，然后重启应用程序。",
-        "changes": "更新<br>"
+        "download_auto": "您已启用自动更新，请等待几分钟，更新文件将自动下载并安装，然后重启应用程序。",
+        "changes": "更新日志<br>"
     },
     "tooltip": {
         "project": "创建一个新项目，您可以在其中添加和安排节目。",
         "show": "创建一个新节目，您可以在其中添加歌词、演示文稿和媒体。",
-        "groups": "当前节目中的所有组和全局组。单击或拖动它们以添加到当前布局中。",
-        "layout": "在当前布局中为幻灯片添加转场动画和下一个计时器。",
-        "media": "当前节目中的所有媒体。显示它们，或将其拖动到当前布局。",
+        "groups": "当前节目中的所有分组及所有全局分组。点击或拖拽即可将其添加到当前节目编排中。",
+        "media": "当前节目中的所有媒体。点击显示，或拖拽至当前节目编排中。",
         "metadata": "编辑当前节目的元数据。",
         "notes": "写备注",
         "text": "编辑所有选定项的元素。",
@@ -102,12 +101,12 @@
         "restore_data": "还原之前的数据"
     },
     "example": {
-        "welcome": "欢迎",
+        "welcome": "欢迎使用",
         "meetings": "会议",
         "example": "示例",
         "example_note": "写备注",
         "watermark": "水印",
-        "recording": "录制",
+        "recording": "正在录制",
         "clock": "时间",
         "rounded": "圆角",
         "call": "视频电话",
@@ -232,6 +231,9 @@
     },
     "audio": {
         "settings": "音频设置",
+        "inputs": "输入设备",
+        "outputs": "输出设备",
+        "channels": "音频通道",
         "playlists": "播放列表",
         "playlist_settings": "播放列表设置",
         "open_audio_folder": "打开相关的音频文件夹",
@@ -337,7 +339,6 @@
     },
     "error": {
         "no_show": "找不到节目",
-        "no_layouts": "找不到任何布局",
         "load": "无法加载",
         "media": "找不到媒体",
         "bible": "找不到本地圣经",
@@ -345,7 +346,6 @@
         "bible_api": "无法从 API.Bible 获取经文，请检查您的网络连接。",
         "not_found": "没有找到",
         "display": "无法在当前显示器上显示输出窗口",
-        "keep_one_layout": "您至少需要一个布局",
         "video_unavailable": "视频不可用？该创作者已禁用视频的嵌入。",
         "folder_exists": "此文件夹已经存在",
         "uri": "无法解析音频名称，请重命名文件",
@@ -518,6 +518,7 @@
         "import_scripture": "导入圣经",
         "create_collection": "创建收藏夹",
         "scripture_show": "经文显示选项​",
+        "import_calendar": "导入日历",
         "player": "播放器",
         "edit_event": "编辑事件",
         "edit_chart": "编辑图表",
@@ -567,7 +568,7 @@
         "save_quit": "保存并退出"
     },
     "confirm": {
-        "statement_slide_exists_layout": "幻灯片存在于不同布局中",
+        "statement_slide_exists_arrangement": "该幻灯片已存在于另一节目编排中！",
         "question_delete": "是否确认删除？"
     },
     "toast": {
@@ -605,7 +606,7 @@
         "midi_no_velocity": "检测到 MIDI 信号，但缺少速度参数，使用默认的第一个索引。"
     },
     "new": {
-        "create": "创建新的",
+        "create": "新建",
         "show": "新建节目",
         "empty_show": "新建空白节目",
         "show_convert": "转换为节目",
@@ -631,12 +632,14 @@
         "action": "新建动作",
         "event": "新建事件",
         "event_action": "新建计划动作",
+        "calendar": "新建日历",
         "effect": "新建效果",
         "interaction": "新建交互"
     },
     "show": {
         "name": "名称",
         "category": "分类",
+        "new_arrangement": "新建节目编排",
         "new_layout": "新建布局",
         "grid": "网格视图",
         "simple": "简单视图",
@@ -662,7 +665,7 @@
         "rename": "重命名",
         "recolor": "修改颜色",
         "remove": "移除",
-        "remove_group": "从布局中移除分组",
+        "remove_group": "从节目编排中移除分组",
         "remove_group_short": "移除分组",
         "choose_group": "选择分组",
         "goto_group": "转到分组",
@@ -694,6 +697,7 @@
         "disable": "禁用",
         "enable": "启用",
         "enable_specific": "启用 $1",
+        "toggle_specific": "切换 $1",
         "undo": "撤销",
         "redo": "重做",
         "cut": "剪切",
@@ -832,18 +836,23 @@
         "previous_project_item": "上一个项目元素",
         "index_select_project_item": "打开项目，序号为",
         "name_start_project_item": "按名称启动项目项",
+        "id_select_show": "打开节目",
         "name_select_show": "打开节目，名称为",
         "set_template_active": "在活动节目中设置模板",
         "change_slide_timeline_speed": "调整幻灯片时间轴速度",
         "random_slide": "随机播放幻灯片",
         "index_select_slide": "播放幻灯片，序号为",
         "name_select_slide": "播放幻灯片，名称为",
+        "disable_slide": "禁用幻灯片",
+        "active_show": "激活节目",
         "toggle_output_lock": "切换输出锁定",
         "toggle_output_window": "切换输出窗口",
         "toggle_output_windows": "切换输出窗口",
         "id_select_group": "播放指定的分组",
         "id_change_stage_layout": "修改舞台连接布局",
         "start_camera": "启动相机",
+        "start_microphone": "启用麦克风",
+        "stop_microphone": "停用麦克风",
         "start_screen": "开始屏幕",
         "id_start_effect": "启动效果",
         "id_select_overlay": "启动叠加",
@@ -1007,7 +1016,6 @@
         "metadata": "元数据",
         "media": "媒体",
         "audio": "音频",
-        "layout": "布局",
         "item": "编辑元素",
         "items": "添加元素",
         "slide": "幻灯片"
@@ -1392,6 +1400,9 @@
         "cropping": "裁剪",
         "cropped": "已裁剪",
         "frame_rate": "帧率",
+        "bitrate": "比特率",
+        "video_encoder": "视频编码器",
+        "add_destination": "添加目标",
         "device": "设备",
         "display_mode": "显示模式",
         "pixel_format": "像素格式",
@@ -1490,6 +1501,7 @@
         "custom": "自定义"
     },
     "calendar": {
+        "calendar": "日历",
         "type": "类型",
         "event": "事件",
         "first_day": "一周的第一天",
@@ -1517,7 +1529,9 @@
         "ending_repeated": "已重复",
         "ending_times": "时间",
         "save_all": "保存并更新全部",
-        "add_slides_from_show": "包含节目中的幻灯片"
+        "add_slides_from_show": "包含节目中的幻灯片",
+        "calendars": "日历",
+        "delete_confirmation": "确定要从该日历中删除所有事件吗？"
     },
     "scripture": {
         "collections": "收藏夹",
