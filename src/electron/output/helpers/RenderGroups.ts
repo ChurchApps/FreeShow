@@ -1,15 +1,10 @@
 import type { Output } from "../../../types/Output"
 
-// Shared-render (opt-in via FS_SHARE_RENDER=1). Multiple FreeShow outputs frequently render PIXEL-IDENTICAL
-// frames — every "Normal" output shows the program feed, and every "Stage" output sharing a Stage Layout shows
-// the same template. Rendering each in its own offscreen window means the GPU decodes+composites the same 4K
-// content N times, which is what caps concurrent 4K. When outputs are provably identical we can render/capture
-// ONCE and fan the single readback out to every member's sender.
-//
-// SAFETY: identity is derived ONLY from config that affects the rendered pixels (never per-frame guessing), so
-// two outputs share a render iff their group key matches exactly; anything different renders independently.
-// The set was confirmed with the user: { stageOutput (layout), style, resolution, transparent, cropping,
-// blending }. If ANY differs, the key differs and they do NOT share — the conservative, correct fallback.
+// Shared-render: outputs that render pixel-identical frames (same program feed / same stage layout)
+// share one render + capture, and the single readback fans out to every member's sender — instead of
+// the GPU decoding+compositing the same content N times.
+// Identity is derived only from config that affects the rendered pixels (group key match); anything
+// different renders independently, the conservative fallback.
 export class RenderGroups {
     // On by default — outputs that render pixel-identically share one decode/capture (the big win for multiple
     // 4K outputs of the same content). Only ever groups provably-identical outputs; anything different renders

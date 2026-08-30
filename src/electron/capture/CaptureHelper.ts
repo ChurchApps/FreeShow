@@ -94,18 +94,11 @@ export class CaptureHelper {
             const mo = OutputHelper.getOutput(m)
             if (mo?.captureOptions) fps = Math.max(fps, this.getMaxActiveFramerate(mo.captureOptions.framerates || {}, mo.captureOptions.options || {}))
         }
-        // REGRESSION FIX (READBACK_REWORK_PLAN §10): setFrameRate is NOT a decimator. Driving the OSR
-        // compositor BELOW its native cadence (e.g. a 30fps NDI target with 60fps content) makes Chromium
-        // deliver the throttled paints in CLUMPS (measured: 200-500ms pipe-idle, then 10-18-paint bursts;
-        // one of two contending surfaces degraded to ~half its set rate) — which starved the capture
-        // admission pipe and stuttered BOTH the in-app preview and the NDI output. So any renderer with a
-        // real-time consumer renders at the NATIVE rate — exactly like the release, whose (non-OSR) windows
-        // render at display cadence and are SAMPLED at the target rate by the capturePage timer — and each
-        // consumer's configured framerate is enforced by even admission-time decimation
-        // (OutputLifecycle.attachOsrSharedTexture tryAdmit / the send-interval throttle) + the worker's send
-        // pacer. The sub-native setting survives ONLY as the idle floor (no connected receiver —
-        // framerates.unconnected), where nobody sees the frames, evenness is moot, and the GPU saving is the
-        // point of the throttle.
+        // setFrameRate is NOT a decimator: driving the OSR compositor below its native cadence makes
+        // Chromium deliver paints in clumps, starving the capture pipe and stuttering preview and
+        // output alike. Connected renderers render at the native rate; each consumer's configured
+        // framerate is enforced by admission-time decimation + the worker's send pacer. The sub-native
+        // setting survives only as the idle floor (no connected receiver — nobody sees the frames).
         const idle = fps <= this.framerates.unconnected
         const target = idle ? Math.max(1, Math.round(fps || 1)) : OutputHelper.Lifecycle.OSR_RENDER_FPS
         try {
@@ -113,9 +106,7 @@ export class CaptureHelper {
         } catch {
             // ignore
         }
-        // Linux begin-frame drive (no-op elsewhere): keep the invalidate cadence in lockstep with the rate
-        // just applied — configured intent (native rate with a live consumer, derived idle floor otherwise).
-        // See the LINUX NOTE above OutputLifecycle.attachOsrCapture.
+        // Linux begin-frame drive (no-op elsewhere): keep its cadence in lockstep with the applied rate
         OutputHelper.Lifecycle.updateOsrPaintDrive(win, rendererId, target)
     }
 

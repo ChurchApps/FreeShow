@@ -14,10 +14,8 @@ import { setOutputAlwaysOnTop } from "./OutputAlwaysOnTop"
 import { OutputVisibility } from "./OutputVisibility"
 import { RenderGroups } from "./RenderGroups"
 
-// the four SERIAL SERVICE segments of one off-main frame's round-trip (ms), split from the worker's tl
-// timestamps: consume = libuv queue + GPU convert + wait, finish = libuv queue + copy-out, enqueue = pacer
-// memcpy + fan-out on the worker JS thread, doneMain = worker→main captureDone message. The ≈0 hops
-// (fwdRecv/recvCons/phaseGap) are excluded — measured ≈0, they carry no service time (§10 collapse block).
+// serial service segments of one off-main frame round-trip (ms): consume = GPU convert,
+// finish = copy-out, enqueue = worker pacer/fan-out, doneMain = worker→main completion message
 type OffMainSegments = { consume: number; finish: number; enqueue: number; doneMain: number }
 
 type OffMainState = {
@@ -94,10 +92,8 @@ export class OutputLifecycle {
 
         this.clearPendingCaptureStart(id)
 
-        // Shared-render (FS_SHARE_RENDER): if this output renders pixel-identical to an already-created output
-        // in its group, don't create a second window (which would decode+composite the same content again).
-        // It becomes a FOLLOWER — no window — and is fed by the group's renderer capture. Only share-eligible
-        // (NDI, no blackmagic/webrtc/rtmp) capture outputs participate; everything else renders independently.
+        // shared-render: outputs with pixel-identical content share one window/capture — this one
+        // becomes a "follower" fed by the group renderer instead of decoding+compositing again
         const shareEligible = RenderGroups.enabled && this.canShareRender(output)
         const group = shareEligible ? RenderGroups.add(id, output) : { isRenderer: true, rendererId: id }
         if (!group.isRenderer) {
@@ -142,16 +138,14 @@ export class OutputLifecycle {
         if (output.blackmagic) initializeSender(output, outputWindow, id)
     }
 
-    // Only NDI capture outputs (optionally also feeding server/stage) share a render. blackmagic/webrtc/rtmp
-    // need dedicated per-output capture, and displayed (non-OSR) outputs need their own window, so none follow.
+    // only NDI capture outputs share a render; blackmagic/webrtc/rtmp need dedicated capture,
+    // and displayed (non-OSR) outputs need their own window
     private static canShareRender(output: Output): boolean {
         return !!output.ndi && !output.blackmagic && !output.webrtcData?.streaming && !output.rtmpData?.streaming && this.isOsrOutput(output)
     }
 
-    // A follower shares the group renderer's window + single capture (no second 4K decode). It registers its
-    // OWN NDI sender and capture channels so the renderer's fan-out (one readback -> every member's sender)
-    // reaches it, and the frontend's CAPTURE toggles drive its server/stage channels exactly like a normal
-    // output because it references a live window. It NEVER owns/creates/closes that window.
+    // a follower references the group renderer's window (never owns/closes it) but registers its own
+    // NDI sender and capture channels, so the renderer's single readback fans out to every member
     private static async createFollowerOutput(id: string, output: Output, rendererId: string, rendererWindow: BrowserWindow) {
         OutputHelper.setOutput(id, { window: rendererWindow, follower: true, renderGroupRenderer: rendererId, osr: true, invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: output.bounds, transparent: output.transparent })
 
@@ -196,16 +190,12 @@ export class OutputLifecycle {
     private static createOutputWindow(options: BrowserWindowConstructorOptions, id: string, name: string, extra: any) {
         options = { ...outputOptions, ...options }
 
-        // render-overhaul: network/device outputs render offscreen (OSR) and are captured via paint
-        // events instead of the main-thread capturePage poll.
+        // network/device outputs render offscreen (OSR), captured via paint events instead of a capturePage poll
         const osr = this.isOsrOutput(extra)
         if (osr) {
             options.show = false
-            // #16: use GPU shared-texture mode when the native readback addon is available (keeps the GPU->CPU
-            // readback off the main thread); otherwise fall back to CPU offscreen (macOS/Linux/unbuilt).
-            // MUST honor the "disable hardware acceleration" config: with HWA off, Chromium's compositor
-            // produces CPU frames (no GPU shared texture to read), so the entire GPU path — shared-texture
-            // capture AND the addon's GPU convert/downscale — is bypassed in favour of CPU offscreen.
+            // GPU shared-texture mode needs the native readback addon AND hardware acceleration:
+            // with HWA off the compositor produces CPU frames, so use CPU offscreen instead
             const useSharedTexture = !!this.getOsrCaptureAddon() && !this.isHardwareAccelerationDisabled()
             const wp: any = { ...outputOptions.webPreferences, offscreen: useSharedTexture ? { useSharedTexture: true } : true }
             options.webPreferences = wp
@@ -226,15 +216,9 @@ export class OutputLifecycle {
         // window.setAutoHideMenuBar(true) // hide menubar
 
         window.setSkipTaskbar(!!options.skipTaskbar) // hide from taskbar
-        // NEVER minimize an OSR window: it is created with show:false and is never ordered in, so on macOS
-        // miniaturize() PROMOTES it into a real entry in the window list (Dock minimized area, Window menu,
-        // App Exposé, capture-source pickers) — from where the user can restore it onto the screen. Windows
-        // is unaffected (this line is mac-only) and there skipTaskbar keeps the never-shown window out of the
-        // taskbar/Alt-Tab, but setSkipTaskbar() is a no-op on macOS so nothing else suppresses it. Nothing
-        // undoes it either: OutputVisibility's capture-only branch only hides when isVisible(), which is
-        // always false here, so the orderOut: that would drop it from the window list never runs.
-        // Do NOT "fix" this by adding a hide() next to the minimize(): minimize()+hide() in the same tick
-        // races the miniaturize and leaves the window fully VISIBLE on macOS.
+        // never minimize an OSR window: on macOS miniaturize() would promote the never-shown window into
+        // the Dock/window list. Don't add hide() next to minimize() either — it races the miniaturize
+        // and leaves the window visible.
         if (isMac && !osr) window.minimize() // hide on mac
 
         window.once("show", () => {
@@ -251,43 +235,23 @@ export class OutputLifecycle {
         return window
     }
 
-    // render-overhaul: network/device outputs (NDI/WebRTC/RTMP/Blackmagic) are capture-only — never shown
-    // on a monitor — so render them offscreen (OSR) and capture via paint events instead of the
-    // main-thread capturePage poll. These are persistent config flags (set when the output type is
-    // configured), stable across the streaming on/off toggle, so the window's OSR mode never has to change.
+    // network/device outputs are capture-only (never shown on a monitor) so they render offscreen.
+    // Deliberately reads the PERSISTENT config flags, not the runtime streaming state: OSR mode is
+    // fixed at window creation and must not flip when a stream starts/stops.
     private static isOsrOutput(output: { ndi?: boolean; webrtc?: boolean; rtmp?: boolean; blackmagic?: boolean }): boolean {
         return !!(output.ndi || output.webrtc || output.rtmp || output.blackmagic)
     }
 
-    // render-overhaul: OSR outputs render offscreen; `paint` provides the latest rendered frame (GPU
-    // readback happens off the main thread) while a timer emits that frame at the output's configured
-    // framerate. This decouples the SEND rate from the content-change rate, so the output holds a
-    // constant frame rate and honors the per-consumer FPS setting (matches the old capturePage cadence),
-    // instead of dropping to the paint rate (e.g. a 30fps video capping a 60fps NDI output).
-    // The NATIVE OSR render cadence. REGRESSION LESSON (plan §10, 30fps-target/60fps-content):
-    // webContents.setFrameRate() is NOT a decimator — driving the compositor BELOW its native cadence makes
-    // Chromium deliver the throttled paints in CLUMPS (measured: 200-500ms pipe-idle, then a 10-18-paint
-    // burst) and degraded one of two contending OSR surfaces to ~half its set rate. So any output with a
-    // real-time consumer RENDERS at this native rate (exactly like the release, whose windows render at
-    // display cadence and are sampled by capturePage), and each consumer's CONFIGURED framerate is met by
-    // even admission-time decimation (tryAdmit in attachOsrSharedTexture / the send-interval throttle on the
-    // fallback paths) + the worker's send pacer. setFrameRate carries only the idle/unconnected floor
-    // (CaptureHelper.updateRenderRate), where no receiver is watching and evenness is moot.
+    // Native OSR render cadence. Connected outputs always render at this rate and each consumer's
+    // configured framerate is met by even admission-time decimation — setFrameRate() is not a
+    // decimator (driving the compositor below its native cadence makes Chromium deliver paints in
+    // bursts) and only carries the idle/unconnected floor (CaptureHelper.updateRenderRate).
     static readonly OSR_RENDER_FPS = 60
 
-    // LINUX NOTE (task #19 — IMPLEMENTED after the WSL diagnostic run): measured paints/s=0 (neither
-    // shared-texture nor CPU-bitmap) at the full render rate while the renderer was clearly rendering — Chromium's OSR begin-frame/vsync throttle: an offscreen window on
-    // Linux (especially a virtualized GPU / WSLg) lacks a real vsync/begin-frame source, so the offscreen
-    // compositor never ticks. Two-part Linux-gated fix, decided from that measured data:
-    //   1. compositor unthrottle switches at startup (src/electron/index.ts: disable-gpu-vsync,
-    //      disable-frame-rate-limit, CalculateNativeWinOcclusion off, renderer/background unthrottling).
-    //      NOT run-all-compositor-stages-before-draw — that testing flag ran the whole compositor
-    //      synchronously and dropped the entire app to ~4fps on real NVIDIA hardware (see index.ts).
-    //   2. an explicit begin-frame drive (updateOsrPaintDrive below): startPainting() if painting isn't
-    //      active + invalidate() on the setFrameRate cadence, yielding to natural paints — because paints=0
-    //      (not merely low) means the compositor may schedule NO begin-frames at all without a poke.
-    // Both are gated to process.platform === "linux": Windows/mac paint correctly and must not be
-    // unthrottled or double-driven.
+    // On Linux an offscreen window can lack a begin-frame/vsync source entirely (compositor never
+    // ticks, zero paints), so besides the startup unthrottle switches (see index.ts) a Linux-only
+    // begin-frame drive (updateOsrPaintDrive) pokes the compositor. Windows/mac paint correctly and
+    // must not be unthrottled or double-driven.
     private static attachOsrCapture(window: BrowserWindow, id: string) {
         try {
             window.webContents.setFrameRate(this.OSR_RENDER_FPS)
@@ -295,53 +259,36 @@ export class OutputLifecycle {
             // ignore
         }
 
-        // MUST match the useSharedTexture condition used when the window was created (see createOutputWindow):
-        // with HWA disabled the window renders CPU offscreen frames (no GPU shared texture), so the shared-
-        // texture handler would get textureless paints and drop every frame. Attach the CPU handler instead.
+        // must match the useSharedTexture condition in createOutputWindow: with HWA off the paints are
+        // CPU frames, so attach the CPU handler instead of the shared-texture one
         const addon = this.getOsrCaptureAddon()
         const useSharedTexture = !!addon && !this.isHardwareAccelerationDisabled()
         if (useSharedTexture) this.attachOsrSharedTexture(window, id, addon)
         else this.attachOsrCpu(window, id)
 
-        // Linux begin-frame drive (see the LINUX NOTE above). Initial cadence mirrors the initial
-        // setFrameRate above; CaptureHelper.updateRenderRate re-drives it whenever the applied rate changes.
+        // Linux begin-frame drive; CaptureHelper.updateRenderRate re-drives it when the rate changes
         if (process.platform === "linux") {
             window.on("closed", () => this.stopOsrPaintDrive(id))
             this.updateOsrPaintDrive(window, id, this.OSR_RENDER_FPS)
         }
     }
 
-    // ---- Linux OSR begin-frame drive (task #19; see the LINUX NOTE above attachOsrCapture) ----
-    // On Linux an offscreen window can get NO begin-frames at all (WSL measured paints/s=0), so frames must
-    // be actively scheduled: ensure painting is running (startPainting) and invalidate() to poke a
-    // begin-frame. invalidate() only marks the surface dirty — the paint rate stays capped by setFrameRate —
-    // and the drive YIELDS to a healthy compositor: paints are attributed as DRIVEN (landing within half an
-    // interval of our own invalidate) or NATURAL (everything else), and while natural paints keep arriving
-    // (one within the last two intervals) the drive stays fully silent. Only when natural paints stop —
-    // the genuinely-throttled offscreen case this drive exists for — does it start poking. On real hardware
-    // where begin-frames flow, it converges to zero invalidates instead of double-driving. No-op off Linux.
-    //
-    // FRAME-COMPLETION DRIVE (bare-metal NVIDIA fix, task #43 follow-up): the previous drive fired invalidate()
-    // on a FIXED-RATE setInterval regardless of whether the prior poke's paint had come back. On the NVIDIA
-    // laptop that reproduced the symptom (drive invalidating ~60×/s but only ~1-4 paints/s returning, CPU idle)
-    // the leading hypothesis is compositor COALESCING: a second invalidate arriving before the previous
-    // begin-frame/paint completes makes NVIDIA drop the early one. So the drive is now ONE-IN-FLIGHT: after an
-    // invalidate it will NOT issue another until the resulting paint is observed (noteOsrPaint clears the
-    // in-flight marker) OR a SAFETY timeout of DRIVE_TIMEOUT_INTERVALS frame-intervals elapses (so a paint that
-    // never arrives can't deadlock the drive). The timer still ticks at the frame interval, which is the RATE
-    // CEILING — the drive can never exceed the target fps — but within that ceiling the next poke is gated on
-    // completion, not the clock. The natural-paint yield is preserved unchanged. Timeout is expressed in frame
-    // intervals (no absolute ms tuned to one machine).
+    // ---- Linux OSR begin-frame drive ----
+    // Ensures painting is running and invalidate()s to poke a begin-frame when the compositor schedules
+    // none itself. Yields to a healthy compositor: paints landing within half an interval of our own
+    // invalidate count as DRIVEN, anything else as NATURAL, and while natural paints keep arriving the
+    // drive stays silent (converges to zero invalidates on hardware where begin-frames flow).
+    // One-in-flight: after an invalidate, no re-poke until its paint is observed or a timeout of
+    // DRIVE_TIMEOUT_INTERVALS frame-intervals passes — some compositors drop an invalidate that arrives
+    // before the previous begin-frame completes. The timer interval is the rate ceiling.
     private static osrPaintDrive = new Map<string, { timer: NodeJS.Timeout; fps: number; interval: number }>()
     private static lastNaturalOsrPaintAt = new Map<string, number>()
     private static lastOsrInvalidateAt = new Map<string, number>()
-    // an invalidate has been issued and its paint not yet observed (one-in-flight gate). Cleared by
-    // noteOsrPaint when the driven paint lands, or by the safety timeout in the timer tick.
+    // invalidate issued, paint not yet observed; cleared by noteOsrPaint or the safety timeout
     private static osrInvalidateInFlight = new Map<string, boolean>()
-    // telemetry: invalidates issued this stats window, per id (read + reset by the CAP-STATS accessor)
+    // invalidates issued this stats window (read + reset by the CAP-STATS accessor)
     private static osrInvalidatesIssued = new Map<string, number>()
-    // safety net: if an in-flight invalidate's paint never arrives within this many frame intervals, release
-    // the gate and re-poke. Frame-intervals (not ms) so it self-scales to the configured rate on any machine.
+    // in frame-intervals so it scales with the configured rate
     private static readonly DRIVE_TIMEOUT_INTERVALS = 4
 
     // record every paint arrival (both capture paths call this) so the drive can yield to natural paints.
@@ -433,12 +380,10 @@ export class OutputLifecycle {
         return hardwareAccelerationDisabled
     }
 
-    // #16: lazily load the native shared-texture readback addon (Windows/D3D11). null when unavailable
-    // (non-Windows or not built) -> OSR falls back to CPU offscreen capture.
+    // lazily load the native shared-texture readback addon; null -> CPU offscreen capture fallback
     private static osrCaptureAddon: any = undefined
     private static getOsrCaptureAddon(): any {
         if (this.osrCaptureAddon !== undefined) return this.osrCaptureAddon
-        // null when the addon can't load (platform without a built backend / not installed) -> CPU offscreen.
         try {
             this.osrCaptureAddon = require("osr-capture")
         } catch {
@@ -448,77 +393,31 @@ export class OutputLifecycle {
         return this.osrCaptureAddon
     }
 
-    // #16: how many readbacks may be in flight per output at once. Kept at 1: the GPU->CPU readback is
-    // bandwidth-bound, so allowing 2+ concurrent copies PER OUTPUT multiplies the total across outputs (2
-    // outputs x 2 = 4 concurrent 4K copies) and contends for GPU/PCIe bandwidth, which measurably LOWERED
-    // throughput with concurrent 4K outputs rather than hiding latency. (A single GLOBAL cap across all
-    // outputs could pipeline safely — see HANDOFF_RENDER_OVERHAUL.md — but per-output overlap is a net loss.)
+    // readbacks in flight per output. Kept at 1: the GPU->CPU readback is bandwidth-bound, so
+    // per-output overlap multiplies concurrent copies across outputs and lowers total throughput
     private static readonly OSR_MAX_INFLIGHT_READBACKS = 1
 
-// ---- Off-main in-flight depth: DERIVED per renderer via Little's law (READBACK_REWORK_PLAN §11 CV#2) ----
-    // Replaces the fixed READBACK_BUDGET=6 / FS_INFLIGHT (banned constants/knobs).
-    // CORRECTED after the first multi-output hardware run (§10): depth is PER-RENDERER, not one global
-    // pool.   depth_r = ceil( targetFps_r × minRtt_r ) + 1.  A renderer forwards iff ITS OWN in-flight
-    // < depth_r, plus the global STRUCTURAL kMaxPool gate. This plain minRtt derivation is the SHIPPING
-    // depth — every alternative was measured and reverted (see the revert notes below).
-    // NOTE — the "operating-rtt" pipeRtt derivation (Σ of per-segment service mins, §10/§11 CORRECTED ×3)
-    // was TRIED and REVERTED on hardware evidence (§10 pipeRtt-measurement block): on a single output it is
-    // a provable NO-OP (the per-segment mins are ~1/3 of the segment MEANS — cons 5 + fin 3 + enq 3 +
-    // dMain 3 ≈ 14ms < minRtt ≈ 28ms, so the max(Σ, minRtt) floor always returned minRtt); in the one
-    // regime where it DID change depth (two shared 4K60s: minRtt 40-43ms under load → depth 4) it made
-    // throughput WORSE (sentReal ~27→~20 each, finish p95 to 92ms, mostly repeats on the wire) — deeper
-    // pipelining on a BANDWIDTH-SATURATED pipe adds concurrent copy-out contention (BAR/PCIe + memory vs
-    // the SpeedHQ compresses), the exact depth↑→rtt↑ spiral minRtt-only derivation exists to avoid. So the
-    // depth input is the UNCONTENDED whole-frame minRtt, and the pipeRtt/segMins computation is retained
-    // ONLY as [CAP-STATS] telemetry (the segment mins were diagnostically useful) — it feeds NOTHING.
-    // Why per-renderer, from the measurement:
-    // - The send stage is PER-SENDER serial: granting one renderer another's unused slots deepens ITS sender's
-    //   completion convoys (the single-output depth-6 coalesce regression). Depth's two jobs — cap the
-    //   per-sender convoy and keep the shared pipe fed across paint clumps — are both per-renderer properties.
-    // - One shared work-conserving pool is UNFAIR at paint-clump granularity: whichever renderer's clump fires
-    //   first takes every slot; the other's clump is dropped at admission (not queued) and it idles a full
-    //   clump period (measured: gap p95 271ms, done 16+16 on a pipe that serves ~43/s). Per-renderer windows
-    //   remove the shared slot structurally; the addon's FIFO chunk queue interleaves the pipe fairly.
-    // - The global Σ targetFps×minRtt formula DEFLATES under load: minRtt is UNCONTENDED service time, which
-    //   genuinely falls as the copy calibrator climbs (active_n 4→6 with 2 outputs → faster chunk-parallel
-    //   copies) — so adding an output did not grow the pool (measured: depth stayed 3 for two 4K60s).
-    // - targetFps_r = the group's configured consumer rate (user intent — the rate the admission gate
-    //   decimates to and the worker pacer sends at; NOT the render rate, which is the native OSR_RENDER_FPS
-    //   — see that constant's regression note); minRtt_r = min rtt over UNCONTENDED samples (admitted at
-    //   globalInFlight === 0 → near-pure service time) in the last RTT_WINDOW_SAMPLES. NO fallback to
-    //   min-over-all: contended minima include queuing that depth itself creates (depth↑→queue↑→min↑→depth↑
-    //   ratchet in the saturated multi regime) — with no uncontended evidence in the window the depth HOLDS.
-    //   Drains to 0 recur at clump boundaries and whenever content pauses (static slides stop paints), so
-    //   the estimator refreshes in practice.
-    // - Samples are tagged with the frame's pixel count and the window RESETS on a size change: service time
-    //   is a function of frame size, so mixing regimes corrupts the min (also flushes any small warmup frames
-    //   from before the window reached its real bounds, and handles live resolution changes).
-    // - +1 = UNIVERSAL integer headroom at the ceil boundary; 2-consecutive-evaluation integer hysteresis
-    //   [UNIVERSAL]; RTT_WINDOW_SAMPLES is a min-estimator stability count [UNIVERSAL] whose wall duration
-    //   self-scales with the forward rate.
-    // NOTE — the SELF-CALIBRATING DEPTH CONTROLLER (±1 probe knee-seeker above a minRtt floor, §10) was
-    // ALSO tried here and REVERTED on hardware evidence: (i) single output — the probing itself perturbed
-    // delivery (base oscillated 3↔4 with no convergence and no throughput gain: done at base 4 == base 3),
-    // costing jitter to re-confirm what the depth A/Bs already proved; (ii) two shared outputs — the
-    // depth↑→rtt↑→depth↑ spiral leaked in THROUGH THE FLOOR: a deeper pipe slows even the uncontended
-    // samples (minRtt 34-36→50-52ms), deriveFloorFor lifted the floor 4→5, the controller climbed to 6,
-    // and finish/wireGap regressed badly (finish 30-39→51-71ms, wireGap p95 98-100→104-149). The unique-rate
-    // objective did NOT capture that degradation, so the "self-limiting" premise failed in practice. rtt was
-    // never a controller input — but it IS the floor's input, which is spiral path enough. Do not re-add a
-    // calibration layer on this axis; the scheduling/pacer/admission axis is CLOSED by measurement (§11).
-    // The multi-output THROUGHPUT ceiling is the contended pipe (compress-CPU/bandwidth), not depth: this
-    // admission fix provides fairness/evenness and keeps the pipe from queuing on itself — not 60×N.
+    // ---- Off-main in-flight depth, derived per renderer via Little's law ----
+    // depth_r = ceil(targetFps_r × minRtt_r) + 1; a renderer forwards only while its own in-flight count
+    // is below depth_r (plus the global kMaxPool gate). Key properties, all confirmed by measurement:
+    // - PER-RENDERER, not a shared pool: the send stage is per-sender serial (extra slots deepen that
+    //   sender's completion convoys) and a shared pool is unfair at paint-clump granularity.
+    // - minRtt is taken from UNCONTENDED samples only (admitted at zero in-flight ≈ pure service time);
+    //   contended minima include queuing that depth itself creates, which would ratchet depth upward.
+    //   With no uncontended evidence in the window the depth holds; drains to zero recur at clump
+    //   boundaries and content pauses, so the estimator refreshes in practice.
+    // - Samples are tagged with pixel count and the window resets on size change (service time is a
+    //   function of frame size).
+    // - Deeper pipelining on a bandwidth-saturated pipe was measured to REDUCE throughput (concurrent
+    //   copy-out contention), so no adaptive/probing controller sits on top of this derivation.
     private static readonly RTT_WINDOW_SAMPLES = 300
-    // STRUCTURAL: mirror of the addon's kMaxPool (osr-capture readback_win.cc) — its hard cap on concurrent
-    // D3D readback contexts. Deriving past it would make AcquireContext block libuv threads (rtt inflation
-    // misread as congestion), so clamp here and LOG the hit (a clamped box is context-limited, never silent).
+    // mirror of the addon's kMaxPool (its hard cap on concurrent readback contexts); deriving past it
+    // would block libuv threads in AcquireContext, so clamp here and log the hit
     private static readonly ADDON_MAX_POOL = 16
     private static globalInFlight = 0
     private static lastClampLogged = 0
     private static lastGateLogged = 0
-    // per-renderer state; depth bootstraps at 1 (first forwards are uncontended by construction, so minRtt
-    // seeds itself within a few frames and the depth derives up). Each rtt sample carries the optional
-    // serial-segment split (worker tl payload; TELEMETRY ONLY — see the pipeRtt revert note).
+    // per-renderer state; depth bootstraps at 1 (first forwards are uncontended, so minRtt seeds itself)
     private static offMain = new Map<string, OffMainState>()
 
     // the renderer's configured paint rate: max active framerate across its shared-render group members
@@ -532,18 +431,14 @@ export class OutputLifecycle {
         return fps
     }
 
-    // kMaxPool headroom left for this renderer (the others' derived depths claim their contexts), ≥1
-    // progress floor. The globalInFlight gate at admission remains the HARD structural guarantee — this
-    // keeps the steady-state Σ inside the pool so the gate is a backstop, not the operating mechanism.
+    // kMaxPool headroom left for this renderer (other renderers' depths claim their contexts), ≥1
     private static capFor(id: string): number {
         let others = 0
         for (const [oid, ost] of this.offMain) if (oid !== id) others += ost.depth
         return Math.max(1, this.ADDON_MAX_POOL - others)
     }
 
-    // The ADMISSION depth: the plain minRtt-derived value, clamped to the structural kMaxPool headroom
-    // (cap wins — a hard resource bound). Consumed by BOTH the overBudget gate and captureFrameNDI
-    // (worker paceCap = depth+1).
+    // admission depth: the minRtt-derived value clamped to the kMaxPool headroom
     private static depthFor(id: string): number {
         const st = this.offMain.get(id)
         if (!st) return 1
@@ -556,13 +451,9 @@ export class OutputLifecycle {
         return sum
     }
 
-    // Uncontended-window minima over a renderer's sample window, all in one pass:
-    // - minRtt: min TOTAL rtt over uncontended samples — THE depth-derivation input.
-    // - seg / pipeRtt: per-segment mins + their minRtt-floored sum — [CAP-STATS] TELEMETRY ONLY since the
-    //   pipeRtt-depth revert (§10): measured single-output segMins sum ~14ms < minRtt ~28ms (floored no-op)
-    //   and the two-output depth-4 it produced was harmful. Kept because the per-segment service mins were
-    //   diagnostically useful; they must never feed the depth again without new evidence of a helping regime.
-    // All zeros when there is no uncontended evidence at all (→ depth HOLDS, never derived from contention).
+    // minima over the uncontended samples: minRtt is the depth-derivation input; seg/pipeRtt are
+    // CAP-STATS telemetry only (deriving depth from them was measured harmful — don't feed them back).
+    // All zeros when no uncontended evidence exists (depth holds, never derived from contention).
     private static uncontendedMins(st: { samples: { rtt: number; unc: boolean; seg?: OffMainSegments }[] }): { minRtt: number; seg: OffMainSegments | null; pipeRtt: number } {
         let minRtt = Infinity
         let consume = Infinity, finish = Infinity, enqueue = Infinity, doneMain = Infinity
@@ -590,8 +481,7 @@ export class OutputLifecycle {
         return this.uncontendedMins(st)
     }
 
-    // the frame's pixel count defines the service-time regime; on change, restart the estimator (old-regime
-    // samples are invalid — small warmup frames, live resolution changes). Depth HOLDS until re-derived.
+    // frame size defines the service-time regime; on change, restart the estimator (depth holds until re-derived)
     private static noteFrameSize(id: string, px: number) {
         const st = this.offMain.get(id)
         if (!st || st.px === px) return
@@ -610,15 +500,11 @@ export class OutputLifecycle {
     }
 
     private static deriveDepthFor(id: string, st: OffMainState) {
-        // UNCONTENDED-minRtt derivation (§11 CV#2; the pipeRtt "operating-rtt" variant and the calibrating
-        // knee-seeker layer were both REVERTED on hardware evidence — see the class comment): minRtt is
-        // uncontended service time, so the depth cannot feed its own queuing back in (spiral-free by
-        // construction).
+        // minRtt is uncontended service time, so the depth cannot feed its own queuing back into itself
         const { minRtt } = this.uncontendedMins(st)
-        if (!minRtt) return // no uncontended evidence in the window → HOLD (never derive from contended samples)
+        if (!minRtt) return // no uncontended evidence in the window — hold
         let derived = Math.max(1, Math.ceil((this.rendererTargetFps(id) * minRtt) / 1000) + 1)
-        // STRUCTURAL clamp: Σ granted depth across renderers ≤ the addon's context pool, with a ≥1 floor per
-        // renderer (progress guarantee). Hits are logged — a clamped box is context-limited, never silent.
+        // structural clamp: total granted depth across renderers stays within the addon's context pool
         const cap = this.capFor(id)
         if (derived > cap) {
             if (this.lastClampLogged !== derived) {
@@ -627,8 +513,7 @@ export class OutputLifecycle {
             }
             derived = cap
         }
-        // integer hysteresis [UNIVERSAL]: apply only when the same derived value holds for 2 consecutive
-        // evaluations (an integer-step rule, not a tuned margin) — the 300-sample min moves slowly anyway
+        // hysteresis: apply only when the same derived value holds for 2 consecutive evaluations
         if (derived === st.depth) {
             st.pendingDepth = 0
             st.depthStreak = 0
@@ -647,27 +532,20 @@ export class OutputLifecycle {
     }
 
     private static offMainRendererCount = 0
-    // Per-output teardown for the OSR shared-texture pipeline: releases any in-flight held textures and drops
-    // the per-output callbacks/budget. Registered in attachOsrSharedTexture, invoked on window close AND
-    // explicitly by stopCapture (see releaseOsrCaptureTextures) since capture teardown strips the window's
-    // own close handler and stops the NDI worker.
+    // per-output teardown: releases in-flight held textures + callbacks. Invoked on window close and
+    // explicitly by stopCapture (which strips the window's own close handler first).
     private static osrTextureCleanup: { [id: string]: () => void } = {}
 
-    // Explicitly release OSR shared textures held for an output. Safe to call for any id (no-op if the output
-    // isn't an off-main OSR renderer). Called by CaptureLifecycle.stopCapture before it strips the window's
-    // listeners, so in-flight textures can't be GC'd unreleased and drain Electron's OSR frame pool.
+    // release OSR shared textures held for an output (no-op for non-OSR ids). Called before capture
+    // teardown so in-flight textures can't leak and drain Electron's compositor frame pool.
     static releaseOsrCaptureTextures(id: string) {
         this.osrTextureCleanup[id]?.()
     }
 
-    // GPU shared-texture path (#16): read each paint texture back off the main thread and hand the RAW buffer
-    // to the transmit pipeline (no createFromBitmap here — buffer-consumers take it directly, #20). On Windows
-    // the addon can also GPU-convert straight to NDI/SDI's UYVY/UYVA during readback (getReadbackFormat).
-    // Readbacks are throttled to the send rate and pipelined (up to OSR_MAX_INFLIGHT_READBACKS); every texture
-    // is released so the compositor frame pool drains.
+    // GPU shared-texture path: each paint's texture is read back + format-converted off the main thread
+    // by the native addon and the raw buffer handed to the transmit pipeline. Every texture is released
+    // so the compositor frame pool drains.
     private static attachOsrSharedTexture(window: BrowserWindow, id: string, addon: any) {
-        // this renderer window runs its own off-main readback pipeline with its OWN admission window:
-        // depth_r = ceil(targetFps_r × minRtt_r)+1 (empty sample window until its first completions seed minRtt)
         this.offMainRendererCount++
         this.offMain.set(id, { samples: [], px: 0, depth: 1, pendingDepth: 0, depthStreak: 0 })
 
@@ -678,16 +556,12 @@ export class OutputLifecycle {
         let dispatchSeq = 0
         let appliedSeq = -1
 
-        // OFF-MAIN state: up to the DERIVED global depth textures forwarded to the worker at once (PIPELINED),
-        // each tracked by a monotonic seq so the GPU consume of the next frame overlaps the slow PCIe read of the
-        // previous one. The worker allocates a readback slot per in-flight capture on demand, so concurrent
-        // readbacks never collide. Each texture is released on releaseTexture (GPU consumed) or captureDone.
+        // off-main state: up to the derived depth textures forwarded to the worker at once, tracked by
+        // monotonic seq so the next frame's GPU consume overlaps the previous frame's readback
         let offMainInFlight = 0
         let offMainSeq = 0
         const heldTextures = new Map<number, any>()
-        // Release an Electron shared texture back to the compositor's frame pool. A silently-swallowed
-        // release failure permanently shrinks the pool (the compositor stops emitting paints when it
-        // drains), so a failure is LOGGED (once per renderer) — never ignored into an invisible leak.
+        // a swallowed release failure permanently shrinks the compositor frame pool, so log it (once)
         let releaseWarned = false
         const releaseTex = (t: any) => {
             try {
@@ -707,45 +581,22 @@ export class OutputLifecycle {
             }
         }
 
-        // --- optional capture stats (FS_CAP_STATS=1): per-renderer throughput, printed once/sec, to diagnose
-        // shared-render fan-out and pipelining behaviour against the receiver fps. Off by default; remove before
-        // shipping. `fwd` = readbacks forwarded to the worker, `done` = captures the worker finished (≈ the
-        // per-renderer send rate all its members see), `rtt` = avg forward→done round-trip (rises when the
-        // fan-out serialises sends), `dropBudget` = paints dropped by the in-flight cap (structurally ~0 since
-        // the even-admission fix — a full pipe HOLDS the pending frame instead of dropping), `dropInterval` =
-        // paints superseded in the one-deep pending slot (coalesced within a target interval — the EXPECTED
-        // decimation loss whenever the paint rate exceeds the configured target rate). Members>1 means
-        // shared-render is fanning one capture to several NDI senders.
+        // optional capture stats (FS_CAP_STATS=1), printed once/sec: paints/forwards/completions,
+        // drop + coalesce counters, delivery-gap spread, and per-frame hop timings from the worker
         const STATS = !!process.env.FS_CAP_STATS
         let sPaints = 0, sDropBudget = 0, sDropInterval = 0, sForward = 0, sDone = 0, sReadback = 0, sRttSum = 0, sRttCount = 0
-        // parkExp = pending frames released by the full-pipe park WATCHDOG (held a full target interval on a
-        // still-full pipe with no superseding paint — see tryAdmit). Nonzero is expected under saturation;
-        // it must never coincide with paints=0 for more than ~one window (that was the two-4k60 stall).
+        // pending frames released by the full-pipe park watchdog (expected under saturation)
         let sParkExpired = 0
-        // burst detection: how many paints arrived within 5ms of the previous paint (i.e. NOT evenly spaced at
-        // the target interval). High = the OSR compositor delivers paints in clumps, so an interval throttle
-        // discards clump members even though the overall paint rate looks like 60.
+        // paints arriving within 5ms of the previous one (the compositor delivering in clumps)
         let sBurstPaints = 0, lastPaintTime = 0
-        // delivery-evenness: inter-arrival gaps between consecutive completed unique frames (captureDone). Mean
-        // is just 1000/done; the SPREAD (stddev/p95/gaps>25ms) is what reads as jitter — a convoyed pipeline
-        // delivers frames in clumps so gaps swing from ~5ms to ~100ms+ even at a healthy mean fps.
+        // inter-arrival gaps between completed frames; the spread (not the mean) is what reads as jitter
         const sGaps: number[] = []
         let lastDoneTime = 0
-        // [TIMELINE] live per-frame hop attribution (FS_CAP_STATS): the worker posts hop timestamps back with
-        // captureDone (same-process clock), differenced here against the forward time. Purpose: the harness
-        // measured the ISOLATED readback at ~7ms/frame while the live rtt is ~53ms — these segments LOCATE the
-        // missing serial cost by measurement instead of attribution. Segments: fwdRecv (main→worker message),
-        // recvCons (worker JS before the consume dispatch), consume (libuv queue + GPU convert + wait),
-        // phaseGap (worker JS hop between the two phases), finish (libuv queue + copy-out), enqueue (pacer
-        // memcpy + fan-out on the worker JS thread), doneMain (worker→main captureDone message). pipeIdle =
-        // ms this window with ZERO frames in flight: a serial pipeline stage shows a busy pipe at flat done,
-        // admission starvation from paint clumps shows as idle — the two competing explanations separate here.
         const sTl: { [seg: string]: number[] } = { fwdRecv: [], recvCons: [], consume: [], phaseGap: [], finish: [], enqueue: [], doneMain: [] }
         let sIdleMs = 0
         let idleSince = STATS ? Date.now() : 0
-        // ALWAYS-ON (not stats-gated): per-forward timestamp + uncontended tag + size-regime tag — the
-        // samples feeding the depth estimator (recordRtt). Also the authoritative in-flight ledger: a seq
-        // is counted in globalInFlight iff it is in this map, so completion/teardown can never
+        // ALWAYS-ON (not stats-gated): the samples feeding the depth estimator, and the authoritative
+        // in-flight ledger — a seq is counted in globalInFlight iff it is in this map, so completion/teardown can never
         // double-decrement.
         const forwardAt = new Map<number, { t: number; unc: boolean; px: number }>()
         let statsTimer: any = null
@@ -754,9 +605,8 @@ export class OutputLifecycle {
                 const m = RenderGroups.members(id)
                 const rtt = sRttCount ? Math.round(sRttSum / sRttCount) : 0
                 const sendCap = Math.round(1000 / this.getOsrSendInterval(id))
-                // admit = the GROUP admission target (max configured rate across members — what tryAdmit
-                // paces to); ndiFramerate remains the RENDERER's OWN resolved rate (its idle floor when it
-                // has no receiver even though a connected follower keeps the group at full rate).
+                // admit = group admission target (max configured rate across members); ndiFramerate = the
+                // renderer's own resolved rate
                 const admitFps = Math.round(1000 / this.getOsrTargetInterval(id))
                 const ndiFps = OutputHelper.getOutput(id)?.captureOptions?.framerates?.ndi ?? "?"
                 // delivery-evenness stats from the inter-done gaps collected this window
@@ -768,10 +618,8 @@ export class OutputLifecycle {
                     gapP95 = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))]
                     gapBig = sGaps.filter((g) => g > 25).length
                 }
-                // [TIMELINE] per-hop attribution over this window's clean-path frames: each segment is the
-                // window MEAN, so the segment means sum to ≈ the mean rtt — the ~missing serial cost shows up
-                // as whichever segment carries it. p95 on the two dispatch segments (consume/finish) separates
-                // "every frame pays it" (serial stage) from "some frames wait" (queueing on a busy pool/loop).
+                // per-hop timing means (sum ≈ mean rtt); p95 on consume/finish separates a serial stage
+                // from queueing
                 let tlStr = ""
                 const nTl = sTl.consume.length
                 if (nTl) {
@@ -782,22 +630,17 @@ export class OutputLifecycle {
                     }
                     tlStr = ` tl(n=${nTl} fwdRecv=${mean(sTl.fwdRecv)} recvCons=${mean(sTl.recvCons)} consume=${mean(sTl.consume)}/p95=${p95(sTl.consume)} phaseGap=${mean(sTl.phaseGap)} finish=${mean(sTl.finish)}/p95=${p95(sTl.finish)} enqueue=${mean(sTl.enqueue)} doneMain=${mean(sTl.doneMain)})`
                 }
-                // pipeIdle: ms this window with ZERO frames in flight for this renderer. A serial pipeline
-                // stage keeps the pipe BUSY at flat done (idle ~0); paint-clump admission starvation shows as
-                // idle time — the two competing explanations for done≈40 separate on this number.
+                // pipeIdle: ms this window with zero frames in flight (busy pipe vs admission starvation)
                 let idleMs = sIdleMs
                 if (idleSince) {
                     const nowT = Date.now()
                     idleMs += nowT - idleSince
                     idleSince = nowT
                 }
-                // pipeRtt + its four uncontended segment mins: TELEMETRY ONLY since the pipeRtt-depth revert
-                // (the depth input is minRtt); printed because the service-segment mins stay diagnostic
                 const pr = this.pipeRttFor(id)
                 const segStr = pr.seg ? `segMins(cons=${pr.seg.consume} fin=${pr.seg.finish} enq=${pr.seg.enqueue} dMain=${pr.seg.doneMain})` : "segMins(none)"
-                // Linux begin-frame drive telemetry: invalidates ISSUED this window vs paints RECEIVED — the
-                // decisive laptop signal. Coalescing shows as invalidates >> paints; a healthy 1:1 track (or
-                // invalidates=0 when natural paints flow and the drive stays silent) means the poke lands.
+                // begin-frame drive telemetry: invalidates issued vs paints received (invalidates=0 when
+                // natural paints flow and the drive is silent)
                 const sInvalidates = process.platform === "linux" ? OutputLifecycle.readOsrInvalidatesIssued(id) : 0
                 console.info(`[CAP-STATS ${id}] members=[${m.join(",")}] paints=${sPaints} invalidates=${sInvalidates} burst=${sBurstPaints} fwd=${sForward} done=${sDone} readback=${sReadback} dropBudget=${sDropBudget} dropInterval=${sDropInterval} parkExp=${sParkExpired} inflight=${offMainInFlight}/${this.depthFor(id)} globalInflight=${this.globalInFlight} depth=${this.depthFor(id)} depthTotal=${this.totalDepth()} minRtt=${pr.minRtt}ms pipeRtt=${pr.pipeRtt}ms ${segStr} renderers=${this.offMainRendererCount} rtt=${rtt}ms gap(mean=${Math.round(gapMean)} std=${Math.round(gapStd)} p95=${gapP95} >25ms=${gapBig}) pipeIdle=${Math.round(idleMs)}ms${tlStr} admit=${admitFps}fps sendCap=${sendCap}fps ndiFramerate=${ndiFps}`)
                 sPaints = sDropBudget = sDropInterval = sParkExpired = sForward = sDone = sReadback = sRttSum = sRttCount = sBurstPaints = 0
@@ -807,70 +650,44 @@ export class OutputLifecycle {
             }, 1000)
         }
 
-        // ---- EVEN TARGET-RATE ADMISSION (plan §10 regression fix) ----
-        // The OSR surface renders at its NATIVE cadence (see OSR_RENDER_FPS), so when the configured target
-        // framerate is BELOW the content rate the paint stream must be decimated HERE — and drop-on-full was
-        // the measured regression: a paint clump filled the depth-deep pipe back-to-back, the clump remainder
-        // was DROPPED, then the pipe drained and IDLED until the next clump (30fps-target/60fps-content:
-        // dropBudget 8-17 WITH pipeIdle 199-510ms and inflight 0, done 11-20, gap p95 133-308ms — bursty
-        // uniques against a 30fps pacer = stutter in preview and on the wire alike). Instead, admit the
-        // LATEST paint once per target interval (1000/targetFps_r — configured intent, no tuned value):
-        // - Intra-interval paints COALESCE into this ONE-DEEP pending slot (latest wins; the superseded
-        //   texture is released immediately, so Electron's frame pool is never starved — at most
-        //   inflight+1 textures are ever held; deep paint buffering is the proven frame-pool-starvation
-        //   class and stays banned).
-        // - The pending frame is flushed exactly at the due boundary (one re-armed timer) or, when the pipe
-        //   was full at the boundary, the moment captureDone frees a slot — WORK-CONSERVING: an admission
-        //   boundary is only ever deferred, never wasted while fresh content exists.
-        // - The due uses the worker pacer's own drift-corrected absolute timeline (due += interval; resync
-        //   forward after a stall, NEVER burst to catch up — the reverted carried-tick lesson).
-        // Regime behavior, by construction:
-        // - target == content (60/60, 30/30): every interval boundary has a fresh paint, so the admission
-        //   rate is min(target, service rate) — the same offered load as forward-every-paint (the pipe stays
-        //   the bottleneck), just evenly spaced. The Stage-2 "clumped paints are UNIQUE" lesson holds: the
-        //   OLD interval THROTTLE dropped clump members and then had NOTHING to send at the next boundary;
-        //   coalesce+flush always has the freshest frame at every boundary.
-        // - target < content (30fps out / 60fps content — or 24, 25, any ratio): exactly one (the freshest)
-        //   paint is admitted per target interval, evenly — the release's fixed-rate latest-frame sampling
-        //   (capturePage on a timer), recreated at admission.
-        // - target > content: every paint admits immediately (the due is always past); the pacer pads with
-        //   repeats. The in-flight depth keeps its ONE job — stop the pipe queuing on itself.
+        // ---- even target-rate admission ----
+        // The OSR surface renders at its native cadence, so when the configured target rate is below the
+        // content rate the paint stream is decimated here: the latest paint is admitted once per target
+        // interval. Intra-interval paints coalesce into a ONE-DEEP pending slot (latest wins; superseded
+        // textures release immediately so the compositor frame pool is never starved). The pending frame
+        // flushes at the due boundary, or the moment a slot frees if the pipe was full — an admission
+        // boundary is deferred, never wasted while fresh content exists. The due advances on a
+        // drift-corrected absolute timeline (resync forward after a stall, never burst to catch up).
+        // Dropping instead of coalescing was measured to stutter: a paint clump filled the pipe, the
+        // remainder was dropped, and the pipe idled until the next clump.
         let pendingFrame: { tex: any; source: any; width: number; height: number } | null = null
         let admitNextDue = 0
         let admitTimer: NodeJS.Timeout | null = null
 
-        // forward one admitted frame to the worker (formerly inline in the paint handler). The group shape /
-        // format targets are recomputed at FORWARD time — a coalesced frame can be admitted a beat after its
-        // paint, and these are cheap lookups.
+        // forward one admitted frame to the worker; group shape / format targets are recomputed at
+        // forward time (a coalesced frame can be admitted a beat after its paint)
         const forwardOffMain = (rec: { tex: any; source: any; width: number; height: number }) => {
             const { tex, source, width, height } = rec
             const output = OutputHelper.getOutput(id)
             const framerate = output?.captureOptions?.framerates?.ndi || 30
             const ratio = height ? width / height : 16 / 9
             const transparent = output?.transparent === true
-            // NDI always gets GPU-converted UYVY/UYVA. For a mixed output also ask the addon to GPU-downscale
-            // a small BGRA (server/stage) in the same readback pass -> the worker posts it back for those.
+            // NDI gets GPU-converted UYVY/UYVA; a mixed output also gets a small BGRA GPU-downscale for
+            // server/stage in the same readback pass
             const fmt = transparent ? 2 : 1
             const members = NdiSender.NDI[id]?.sender ? RenderGroups.members(id) : []
-            // REGRESSION FIX (plan §10, mixed-connection shared group): the SEND pace rate is PER MEMBER.
-            // Sourcing one rate from the RENDERER's own framerates.ndi let an unconnected renderer's idle
-            // floor (1fps) pace a CONNECTED follower's sender at 1fps (measured: readback perfect at 60/60
-            // done, both senders sentReal=1 coalescedReal=59, wireGap 1000ms). Each member's sender must pace
-            // at ITS OWN resolved rate — its configured framerate when connected, its idle floor when not —
-            // resolved here at forward time (updateFramerate keeps each member's framerates.ndi current).
-            // `framerate` (the renderer's own) remains only the fallback for a member whose captureOptions
-            // don't exist yet (startCapture's 1200ms defer). Render rate + admission were already group-max
-            // (updateRenderRate / rendererTargetFps), so this closes the last renderer-sourced group value.
+            // send pace rate is PER MEMBER: each member's sender paces at its own resolved rate
+            // (configured framerate when connected, idle floor when not) — sourcing one rate from the
+            // renderer let an unconnected renderer's idle floor pace a connected follower at 1fps
             const memberFramerates: { [m: string]: number } = {}
             for (const m of members) memberFramerates[m] = OutputHelper.getOutput(m)?.captureOptions?.framerates?.ndi || framerate
             const groupInfo = members.length ? CaptureHelper.Transmitter.groupOffMainInfo(members) : null
             const mixed = !!groupInfo && groupInfo.eligible && groupInfo.needsScaled && typeof addon.readbackConsume === "function"
             const scaled = mixed ? CaptureHelper.Transmitter.getScaledTarget({ width, height }) : null
             const seq = ++offMainSeq
-            // depth = this renderer's derived depth_r — the worker's send pacer sizes its queue at depth+1
             if (NdiSender.captureFrameNDI(id, source, { size: { width, height }, ratio, framerate, memberFramerates, format: fmt, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members, depth: OutputLifecycle.depthFor(id) })) {
-                // tag BEFORE incrementing: uncontended = nothing in flight anywhere when this frame was
-                // admitted -> its rtt is (near-)pure service time, the minRtt estimator's ONLY valid samples
+                // uncontended = nothing in flight anywhere at admission → near-pure service time,
+                // the minRtt estimator's only valid samples
                 forwardAt.set(seq, { t: Date.now(), unc: OutputLifecycle.globalInFlight === 0, px: width * height })
                 OutputLifecycle.globalInFlight++
                 offMainInFlight++
@@ -913,19 +730,12 @@ export class OutputLifecycle {
                     OutputLifecycle.lastGateLogged = nowG
                 }
             }
-            // Pipe full at the boundary: HOLD the pending frame (not a drop) — the next captureDone flushes
-            // it, and a newer paint may supersede it in the meantime (counted as dropInterval, the coalesce).
-            // REGRESSION FIX (plan §10, two-4k60 capture stall): the park must be TIME-BOUNDED. Un-superseded,
-            // this hold used to last until a captureDone — UNBOUNDED under congestion, and the compositor
-            // throttles paint production against un-released pool textures, so a long park suppresses the very
-            // paints that would supersede it: a one-way spiral to paints=0 while the pacers repeat a frozen
-            // frame (the measured stall). So the full-pipe return re-arms the boundary timer as a WATCHDOG
-            // (one target interval — configured intent, no new constant): a frame still parked after a FULL
-            // interval on a still-full pipe is RELEASED (latest-wins would have superseded it if paints were
-            // flowing; its content is a full interval stale) — the capture side then holds ZERO textures and
-            // can never pin the compositor's frame pool shut. The due is NOT advanced by an expiry, so the
-            // next paint (or the captureDone flush of a re-park) admits immediately: the boundary is carried,
-            // never wasted, and this never bursts (one admission per serviced boundary, as before).
+            // Pipe full at the boundary: hold the pending frame (a newer paint may supersede it). The hold
+            // is TIME-BOUNDED by a watchdog of one target interval: the compositor throttles paint
+            // production against unreleased pool textures, so an unbounded park suppresses the very paints
+            // that would supersede it (a one-way spiral to zero paints). A frame still parked after a full
+            // interval on a still-full pipe is released; the due is not advanced by an expiry, so the next
+            // paint admits immediately.
             if (overBudget || overPool) {
                 const parked = pendingFrame
                 if (!admitTimer) {
@@ -951,8 +761,8 @@ export class OutputLifecycle {
                 clearTimeout(admitTimer)
                 admitTimer = null
             }
-            // drift-corrected absolute timeline (the worker pacer's own pattern): advance one interval; after
-            // a stall resync forward from now — NEVER burst to catch up (the reverted carried-tick lesson)
+            // drift-corrected absolute timeline: advance one interval; after a stall resync forward from
+            // now — never burst to catch up
             const interval = OutputLifecycle.getOsrTargetInterval(id)
             admitNextDue += interval
             if (admitNextDue < now) admitNextDue = now + interval
@@ -972,10 +782,8 @@ export class OutputLifecycle {
                 forwardAt.delete(seq)
                 offMainInFlight = Math.max(0, offMainInFlight - 1)
                 OutputLifecycle.globalInFlight = Math.max(0, OutputLifecycle.globalInFlight - 1)
-                // feed the derived-depth controller: rtt sample + uncontended tag + size regime + the serial
-                // segment split (ALWAYS-ON, not stats-gated — the depth derivation consumes these mins).
-                // Segments are clamped ≥0 (same-process Date.now() clocks, but never let a skewed frame
-                // inject a negative service time into the min estimator).
+                // feed the depth estimator (always-on, not stats-gated); segments clamped ≥0 so a skewed
+                // frame can't inject a negative service time into the min estimator
                 const seg = tl && tl.enq ? { consume: Math.max(0, tl.cE - tl.cS), finish: Math.max(0, tl.fE - tl.fS), enqueue: Math.max(0, tl.enq - tl.fE), doneMain: Math.max(0, now - tl.enq) } : undefined
                 OutputLifecycle.recordRtt(id, now - fwd.t, fwd.unc, fwd.px, seg)
                 if (STATS) {
@@ -1004,12 +812,10 @@ export class OutputLifecycle {
             }
         }
 
-        // DYNAMIC CPU FALLBACK (GPU-init-failure mismatch): this handler only attaches when HWA is enabled
-        // in CONFIG, but Chromium can still come up with SOFTWARE compositing (blocklisted/broken driver —
-        // the startup snapshot can't know). In that regime every paint arrives WITHOUT a shared texture and
-        // with the CPU bitmap instead — the old `if (!info) return` made that a permanently DEAD output.
-        // Now textureless paints feed the CPU capture path automatically (logged once; the GPU health check
-        // raises the matching user notification), so the app keeps working at reduced performance.
+        // dynamic CPU fallback: this handler attaches when HWA is enabled in config, but Chromium can
+        // still come up with software compositing (broken/blocklisted driver), delivering textureless
+        // paints. Feed those to the CPU capture path (logged once; the GPU health check notifies the
+        // user) instead of dropping them, which would leave a permanently dead output.
         let cpuFallback = false
         let lastCpuImage: Electron.NativeImage | null = null
 
@@ -1041,29 +847,18 @@ export class OutputLifecycle {
             // ask the addon to convert straight to NDI/SDI's UYVY/UYVA when a single such consumer is active
             const requestedFormat = CaptureHelper.Transmitter.getReadbackFormat(id, { width, height })
 
-            // OFF-MAIN capture: an output with an NDI sender whose only OTHER consumers are server/stage can run
-            // its ENTIRE per-frame pipeline in the worker — readback + BGRA->UYVY convert (NDI) + downscale
-            // (server/stage) — so the main process never touches 4K pixels. Forward just the 8-byte handle; the
-            // worker sends NDI and ships small downscaled buffers back for server/stage. One texture in flight,
-            // released on captureDone. NDI-only outputs take the GPU-converted UYVY/UYVA (format 1/2) directly;
-            // mixed outputs read back BGRA (format 0) so the worker can both convert and downscale from it.
-            // Off-main routing for the whole render GROUP (shared-render): the renderer captures ONCE and the
-            // readback fans out to every member's NDI sender (+ server/stage). `members` is [id] when sharing is
-            // off, so this reduces to the single-output path. Eligible iff every member's only non-NDI consumers
-            // are server/stage; needsScaled iff any member has a server/stage consumer (then the readback must
-            // also produce the GPU-downscaled BGRA — requires the Windows two-phase readback).
+            // off-main capture: when an NDI output's only other consumers are server/stage, the entire
+            // per-frame pipeline (readback + convert + downscale) runs in the worker — the main process
+            // only forwards the texture handle. With shared-render the renderer captures once and the
+            // readback fans out to every group member (`members` is [id] when sharing is off).
             const members = NdiSender.NDI[id]?.sender ? RenderGroups.members(id) : []
             const groupInfo = members.length ? CaptureHelper.Transmitter.groupOffMainInfo(members) : null
             const hasGpuDownscale = typeof addon.readbackConsume === "function"
             // (the mixed/scaled readback shape is recomputed in forwardOffMain at forward time)
             const canOffMain = !!groupInfo && groupInfo.eligible && (!groupInfo.needsScaled || hasGpuDownscale)
             if (canOffMain) {
-                // EVEN TARGET-RATE ADMISSION (see the block above tryAdmit): stage this paint as the pending
-                // frame — latest wins, superseded texture released NOW (frame-pool safety) — and let tryAdmit
-                // forward it at the configured target cadence, bounded by this renderer's DERIVED in-flight
-                // depth. Admission stays PER-RENDERER (each output owns its window — no shared slot a paint
-                // clump can monopolize; the measured multi regression, gap p95 271ms, was FCFS clump capture
-                // of one global pool) plus the STRUCTURAL kMaxPool gate on the total.
+                // stage this paint as the pending frame (latest wins; superseded texture released now)
+                // and let tryAdmit forward it at the configured target cadence
                 OutputLifecycle.noteFrameSize(id, width * height)
                 if (pendingFrame) {
                     if (STATS) sDropInterval++
@@ -1106,11 +901,9 @@ export class OutputLifecycle {
             else if (lastCpuImage) CaptureHelper.Transmitter.transmitFrame(id, lastCpuImage) // software-compositing fallback (see the paint handler)
         })
 
-        // Release every held shared texture and drop this output's callbacks + readback-budget slot. Runs on
-        // window close AND when stopCapture calls releaseOsrCaptureTextures — because stopCapture strips this
-        // window's listeners and stops the NDI worker, so without an explicit call any in-flight off-main
-        // texture would be GC'd unreleased and drain Electron's OSR frame pool (stalls capture / GPU reset).
-        // Idempotent so the two triggers can't double-release or double-decrement the renderer count.
+        // release every held texture + drop callbacks/state. Runs on window close AND via
+        // releaseOsrCaptureTextures from stopCapture (which strips this window's listeners first);
+        // idempotent so the two triggers can't double-release.
         let toreDown = false
         const teardown = () => {
             if (toreDown) return
@@ -1128,9 +921,7 @@ export class OutputLifecycle {
                 releaseTex(pendingFrame.tex)
                 pendingFrame = null
             }
-            // return this renderer's outstanding in-flight slots to the global counter (late captureDones for
-            // these seqs are ignored — the callbacks are deleted below), and drop its estimator state (other
-            // renderers' clamp headroom recomputes on their next derivation)
+            // return outstanding in-flight slots to the global counter and drop the estimator state
             OutputLifecycle.globalInFlight = Math.max(0, OutputLifecycle.globalInFlight - forwardAt.size)
             forwardAt.clear()
             offMainInFlight = 0
@@ -1158,11 +949,8 @@ export class OutputLifecycle {
         })
     }
 
-    // emit the latest frame at the output's configured framerate: decouples the send rate from the
-    // content-change rate so the per-consumer FPS is honored and static content still holds a constant rate.
-    // The send round-trip (post -> worker video() -> videoDone) is mostly main<->worker messaging latency and
-    // can exceed the frame interval; NdiSender allows a small number of sends in flight (MAX_INFLIGHT_SENDS)
-    // so this timer can post every interval without stalling on the previous send's (laggy) completion.
+    // emit the latest frame at the output's configured framerate, decoupling the send rate from the
+    // content-change rate (static content still holds a constant rate on the wire)
     private static startOsrSendTimer(window: BrowserWindow, id: string, emit: () => void) {
         let sendTimer: NodeJS.Timeout
         const tick = () => {
@@ -1184,11 +972,8 @@ export class OutputLifecycle {
         return Math.max(1, Math.round(1000 / Math.max(1, fps)))
     }
 
-    // the ADMISSION target interval (ms, unrounded): 1000 / the max active configured consumer framerate
-    // across the renderer's shared-render group (a follower may want a higher rate than the renderer's own).
-    // This is CONFIGURED intent (ndiFramerate etc.) — the legitimate rate the even admission decimates the
-    // native-cadence paint stream to. Re-read every admission so framerate changes (NDI connect) apply live;
-    // falls back to the native render cadence before capture channels exist (off-main can't run then anyway).
+    // admission target interval: 1000 / max configured consumer framerate across the shared-render
+    // group. Re-read every admission so framerate changes apply live.
     private static getOsrTargetInterval(id: string): number {
         return 1000 / Math.max(1, this.rendererTargetFps(id) || this.OSR_RENDER_FPS)
     }

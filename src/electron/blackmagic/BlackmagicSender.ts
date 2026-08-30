@@ -523,7 +523,7 @@ export class BlackmagicSender {
 
     // A shared-texture readback can hand us a frame already in the card's pixel format (osr-capture converts
     // BGRA->UYVY on the GPU on Windows, on the CPU elsewhere), letting us skip convertVideoFrameFormat. This
-    // is only safe for an exact-match config; canAcceptRawUyvy() is the gate. See the render-overhaul handoff.
+    // is only safe for an exact-match config; canAcceptRawUyvy() is the gate.
     static canAcceptRawUyvy(captureId: string, size: Size): boolean {
         const data = this.playbackData[captureId]
         if (!data) return false

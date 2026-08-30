@@ -1,26 +1,17 @@
 // ----- GPU device selection + runtime GPU health check -----
-// Productization of the Linux GPU investigation (rounds 1-8; see the REGRESSION LESSONS block in index.ts).
-// Three jobs:
-//   1. applyGraphicsDeviceSelection(): apply the persisted "Graphics device" setting as command-line
-//      switches BEFORE app "ready" (a change requires restart, like the hardware-acceleration toggle).
-//   2. listGraphicsDevices(): enumerate selectable devices for the Settings dropdown (IPC).
-//   3. scheduleGpuHealthCheck(): ~20s after ready (past the premature getGPUFeatureStatus window — proven
-//      that at-ready readings report disabled_software defaults), compare the ACTUAL GPU regime against the
-//      user's intent and raise ONE verbose in-app notification with concrete remediation on degradation.
+// - applyGraphicsDeviceSelection(): applies the persisted "Graphics device" setting as command-line
+//   switches before app "ready" (a change requires restart, like the hardware-acceleration toggle)
+// - listGraphicsDevices(): enumerates selectable devices for the Settings dropdown
+// - scheduleGpuHealthCheck(): ~20s after ready (getGPUFeatureStatus is premature at ready), compares
+//   the actual GPU state against the user's intent and raises one notification on degradation
 //
-// Per-platform selection mechanism (researched against the shipped Electron 37 / Chromium 138 binaries):
-//   Linux — `--render-node-override=/dev/dri/renderDxxx`: the switch stock Chromium itself uses to pin the
-//     GPU process to a DRM render node (verified working on the hybrid Intel+NVIDIA laptop where Electron
-//     otherwise probed the driverless NVIDIA node and collapsed to software). Nodes are enumerated from
-//     /dev/dri + named via sysfs PCI ids.
-//   macOS — `force_high_performance_gpu` / `force_low_power_gpu` (verified present in the Electron 37
-//     binary): a discrete-vs-integrated PREFERENCE on dual-GPU Macs, not per-device pinning. Only offered
-//     when getGPUInfo reports 2+ GPUs (single-GPU/Apple-Silicon Macs get no dead control).
-//   Windows — NO selector shipped. Chromium 138 has `--use-adapter-luid` (verified in the binary), but
-//     adapter LUIDs are assigned per BOOT SESSION — a persisted LUID is stale on every launch — and Node
-//     can't enumerate LUIDs without a native addon. The OS-sanctioned mechanism is Settings > System >
-//     Display > Graphics (per-app GPU preference), which users should use instead. Shipping a control that
-//     silently breaks after a reboot is worse than no control.
+// Per-platform selection mechanism:
+//   Linux — --render-node-override pins the GPU process to a DRM render node (the switch Chromium
+//     itself uses); nodes enumerated from /dev/dri, named via sysfs PCI ids.
+//   macOS — force_high_performance_gpu / force_low_power_gpu, a discrete-vs-integrated preference,
+//     offered only on dual-GPU machines.
+//   Windows — no selector: adapter LUIDs change every boot so a persisted value goes stale; the
+//     OS per-app GPU preference (Settings > Display > Graphics) is the right mechanism there.
 
 import { app } from "electron"
 import fs from "fs"
@@ -40,8 +31,7 @@ const PCI_VENDOR_NAMES: { [id: number]: string } = {
     0x5143: "Qualcomm"
 }
 
-// Suggested VA-API driver package per vendor (Ubuntu/Debian names — the distro family live ISOs ship
-// without them; the Ubuntu live ISO measurably shipped NO Intel VA driver at all).
+// suggested VA-API driver package per vendor (Ubuntu/Debian names)
 function vaPackagesFor(vendorName: string): string[] {
     if (vendorName === "Intel") return ["intel-media-va-driver-non-free"]
     if (vendorName === "AMD") return ["mesa-va-drivers"]
@@ -141,8 +131,7 @@ export function applyGraphicsDeviceSelection() {
 
 // ---- runtime health check -> verbose user notification ----
 
-// Linux VA-API driver scan: HW video decode needs a *_drv_video.so for the active GPU's vendor. The Ubuntu
-// live ISO ships none for Intel (the proven remediation was `apt install intel-media-va-driver-non-free`).
+// hardware video decode needs a *_drv_video.so VA driver; many installs (e.g. Ubuntu live ISOs) ship none
 const VA_DRIVER_DIRS = ["/usr/lib/x86_64-linux-gnu/dri", "/usr/lib/aarch64-linux-gnu/dri", "/usr/lib/dri", "/usr/lib64/dri", "/usr/local/lib/dri"]
 function findVaDrivers(): string[] {
     const found: string[] = []
@@ -168,8 +157,8 @@ export function scheduleGpuHealthCheck() {
     // deliberate user choice: with HWA disabled software rendering IS the intent — never nag about it
     if (hardwareAccelerationDisabled) return
 
-    // ~20s: safely past the premature at-ready window (t=10s readings were already accurate) while still
-    // early enough to be seen as a startup notice. Retries a few times if the frontend isn't loaded yet.
+    // ~20s: past the premature at-ready window but early enough to read as a startup notice;
+    // retries a few times if the frontend isn't loaded yet
     let attempts = 0
     const attempt = () => {
         const win = getMainWindow()
@@ -210,9 +199,8 @@ async function runGpuHealthCheck() {
         // vendor stays unknown; the notification still fires
     }
 
-    // compositing dead = GPU init failed entirely (the big degradation: CPU-composited outputs, OSR
-    // paints collapse). Otherwise compositing is fine but video decode is software — the video-heavy-app
-    // case (4K60 H.264 software decode measured ~3.1 cores; choppy playback, starved outputs).
+    // compositing dead = GPU init failed entirely; otherwise compositing is fine but video decode is
+    // software (a few CPU cores per 4K60 stream — choppy playback, starved outputs)
     const issue: "compositing" | "video-decode" = compositingHw ? "video-decode" : "compositing"
 
     let vaDriverMissing = false

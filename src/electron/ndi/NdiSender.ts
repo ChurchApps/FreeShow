@@ -9,7 +9,7 @@ import { CaptureHelper } from "../capture/CaptureHelper"
 // https://github.com/rse/grandiose
 // https://github.com/rse/vingester
 
-// render-overhaul #17: the actual NDI engine (grandiose sender lifecycle, colour-convert, 16-byte padding
+// The actual NDI engine (grandiose sender lifecycle, colour-convert, 16-byte padding
 // and send-dispatch) now runs in a worker_thread (./ndiWorker) so it stays OFF the main thread. This class
 // is a thin main-thread proxy: it forwards create/video/audio/destroy messages, keeps a lightweight mirror
 // of each sender (name/status/busy) so existing callers can check state cheaply, and relays connection
@@ -155,7 +155,7 @@ export class NdiSender {
     static releaseTextureCallbacks: { [id: string]: (seq: number) => void } = {}
     // opts.depth = the renderer's derived in-flight depth_r (OutputLifecycle) — sizes the worker's pace queue.
     // opts.memberFramerates = each group member's OWN resolved NDI framerate (configured when connected, idle
-    // floor when not) — the worker paces each member's sender at ITS rate, never the renderer's (§10 fix).
+    // floor when not) — the worker paces each member's sender at ITS rate, never the renderer's.
     static captureFrameNDI(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number }) {
         const data = this.NDI[id]
         if (!data?.sender || !this.worker) return false

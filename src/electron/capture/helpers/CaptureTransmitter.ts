@@ -341,7 +341,7 @@ export class CaptureTransmitter {
 
             // Non-buffer consumers (server/stage) build a NativeImage and RESIZE it on the MAIN thread. At 4K
             // that resize is ~200ms and, at full rate, pins the event loop (starving every other output). They
-            // are monitoring previews, so cap their rate for large frames. (Proper fix: GPU downscale, #26.)
+            // are monitoring previews, so cap their rate for large frames.
             const px = raw?.size ? raw.size.width * raw.size.height : image ? image.getSize().width * image.getSize().height : 0
             // server/stage now get a natively-downscaled small image (buildHeavyImage) instead of a 4K
             // NativeImage.resize, so they're ~10x cheaper per frame -> a modest rate cap is enough.

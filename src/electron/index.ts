@@ -27,9 +27,8 @@ import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
 // ----- STARTUP -----
 
-// Enlarge the libuv thread pool early (before any worker inherits the env / before first async work). Both
-// osr-capture readbacks and grandiose NDI sends run as async work on this pool; the default of 4 threads
-// serializes multiple concurrent 4K outputs. Set as an OS env var so worker_threads inherit it. (multi-4K)
+// enlarge the libuv thread pool before any worker inherits the env: capture readbacks and NDI sends
+// run as async work on this pool, and the default of 4 threads serializes concurrent 4K outputs
 if (!process.env.UV_THREADPOOL_SIZE) process.env.UV_THREADPOOL_SIZE = "32"
 
 // check if app's in production or not
@@ -47,23 +46,8 @@ export const isWindows: boolean = process.platform === "win32"
 export const isMac: boolean = process.platform === "darwin"
 export const isLinux: boolean = process.platform === "linux"
 
-// ---- Linux OSR paint-throttle fix (render-overhaul task #19; see the LINUX NOTE in OutputLifecycle) ----
-// Measured on the WSL diagnostic run (abd372f9): the OSR windows render (CPU busy,
-// setFrameRate applied) but Chromium's offscreen compositor emits ZERO `paint` events — no begin-frame /
-// vsync source reaches an offscreen window on Linux (worst on a virtual GPU like WSLg; ~1fps was seen on
-// bare metal). These switches remove the compositor's vsync/frame-rate/occlusion throttles so OSR frames
-// are actually produced. LINUX-GATED: Windows/mac paint correctly today and must not be unthrottled
-// process-wide. Must run before app "ready". Safe with disableHardwareAcceleration (they gate compositor
-// SCHEDULING, not the GPU/CPU compositing mode — that choice stays with the HWA config below).
-// REGRESSION LESSON (real NVIDIA bare metal): `run-all-compositor-stages-before-draw` used to be in this
-// block. It is a deterministic-pixel-TESTING flag that forces every compositor stage to run synchronously
-// before each draw, PROCESS-WIDE — it tanked the whole app (~4fps, including the plain <video> preview,
-// which never touches OSR) on a real GPU while appearing harmless on WSL's software compositor. Never
-// re-add it; the switches below plus the begin-frame drive in OutputLifecycle are sufficient for OSR.
-// Chromium treats a repeated `--enable-features` switch as a REPLACEMENT, not a union — a second
-// appendSwitch("enable-features", ...) silently clobbers whatever an earlier toggle set. Every block that
-// enables features MUST go through this helper, which merges (comma-joined, deduped) with any value already
-// on the command line.
+// Chromium treats a repeated --enable-features switch as a replacement, not a union, so every block
+// that enables features must go through this helper (merges with any value already on the command line)
 function appendEnableFeatures(features: string) {
     const existing = app.commandLine.getSwitchValue("enable-features")
     const merged = [...new Set([...existing.split(","), ...features.split(",")].filter(Boolean))].join(",")
@@ -71,47 +55,24 @@ function appendEnableFeatures(features: string) {
 }
 
 if (process.platform === "linux") {
-    app.commandLine.appendSwitch("disable-gpu-vsync") // don't wait on a vsync signal OSR windows never get (visible windows may tear; acceptable for a live-output app)
-    app.commandLine.appendSwitch("disable-frame-rate-limit") // no synthetic frame-rate cap when unsynced (paints still paced by setFrameRate + the capture admission gate)
-    app.commandLine.appendSwitch("disable-features", "CalculateNativeWinOcclusion") // never treat the hidden OSR windows as occluded (occlusion pauses rendering entirely; the feature is Windows-native but disabling is a harmless no-op elsewhere)
-    // process-wide backing for the per-window backgroundThrottling:false (windowOptions.ts): keep renderers
-    // + timers of never-shown OSR windows at full rate
+    // Offscreen windows on Linux can lack a begin-frame/vsync source entirely (the compositor never
+    // ticks and paint events stop), so remove the vsync/frame-rate/occlusion/backgrounding throttles.
+    // Linux-only: Windows/mac paint correctly and must not be unthrottled process-wide.
+    // Do NOT add `run-all-compositor-stages-before-draw` (a testing flag that runs the compositor
+    // synchronously process-wide — tanks the whole app on real GPUs) or any --use-gl/--use-angle
+    // forcing (parses to gl=none on Electron 37 and kills the GPU process).
+    app.commandLine.appendSwitch("disable-gpu-vsync")
+    app.commandLine.appendSwitch("disable-frame-rate-limit")
+    app.commandLine.appendSwitch("disable-features", "CalculateNativeWinOcclusion")
     app.commandLine.appendSwitch("disable-renderer-backgrounding")
     app.commandLine.appendSwitch("disable-background-timer-throttling")
     app.commandLine.appendSwitch("disable-backgrounding-occluded-windows")
 
-    // ---- REGRESSION LESSONS (Linux GPU investigation, rounds 1-8 — measured on real hardware; do NOT re-try) ----
-    // These switches/approaches were all tested against the bare-metal-laptop symptom (OSR ~1-4 paints/s /
-    // software compositing) and are CONFIRMED dead ends. Condensed here so they are never re-tried:
-    //   • `run-all-compositor-stages-before-draw` — deterministic-pixel-TESTING flag; ran the whole
-    //     compositor synchronously PROCESS-WIDE, tanked the entire app to ~4fps on real NVIDIA (harmless-
-    //     looking only on WSL's software compositor).
-    //   • `--use-gl=angle` + `--use-angle=<anything>` (incl. gl-egl / opengl combos) — on Electron 37 the
-    //     combo parses to `gl=none` and KILLS the GPU process ("Requested GL implementation not found");
-    //     `--use-angle=gl-egl` alone was additionally a confirmed NDI regression under X11. No ANGLE forcing.
-    //   • `--ignore-gpu-blocklist` (± `--enable-gpu-rasterization`) — measured no effect on the symptom.
-    //   • DRI_PRIME / __GLX_VENDOR_LIBRARY_NAME env pinning (the FORCE_INTEL_GL recipe) — Chromium filters
-    //     its sandboxed children's env; unreliable, superseded by `--render-node-override` (the mechanism
-    //     stock Chromium itself uses — see applyGraphicsDeviceSelection below).
-    //   • Showing the OSR window off-desktop (visible-offscreen experiment) — unnecessary once the real
-    //     cause (software video decode starving the app) was fixed; the begin-frame drive in OutputLifecycle
-    //     covers the genuine no-begin-frame case and self-silences on healthy compositors.
-    // The ACTUAL Linux fix (proven on hardware): VA-API hardware video decode (default-ON below) + the
-    // system VA driver package (e.g. intel-media-va-driver-non-free; the health check names it when absent).
-
-    // VA-API hardware video decode/encode — DEFAULT ON whenever hardware acceleration isn't disabled.
-    // Chromium ships desktop-Linux VA-API decode OFF by default (stock Chrome 151 flips it on; Electron 37 =
-    // Chromium 138 does not) — <video> decode then runs on the CPU, and software 4K60 H.264 alone costs
-    // ~3.1 cores, starving preview/OSR/NDI downstream (the round-8 root cause). Feature names VERIFIED
-    // against the shipped Electron 37 Linux binary (round 8, `strings`): AcceleratedVideoDecodeLinuxGL,
-    // AcceleratedVideoDecodeLinuxZeroCopyGL, AcceleratedVideoEncoder and VaapiIgnoreDriverChecks all exist;
-    // `AcceleratedVideoDecoder` does NOT (dead name).
-    //   AcceleratedVideoDecodeLinuxGL — the default-OFF gate for GL-backed VA-API decode. THE key feature.
-    //   AcceleratedVideoEncoder — VA-API encode; harmless and symmetric.
-    //   VaapiIgnoreDriverChecks — skips the VA driver allow-list so a blacklisted/unknown driver still gets
-    //     a chance (cheap insurance on live-ISO stacks).
-    // Kill-switch for debugging: FS_LINUX_VAAPI=0 disables; FS_LINUX_VAAPI=zero additionally opts into the
-    // zero-copy GL import (A/B). Respects disableHardwareAcceleration (no GPU process to host the decoder).
+    // VA-API hardware video decode/encode, default ON when hardware acceleration is enabled.
+    // Chromium ships desktop-Linux VA-API decode off by default, which forces <video> onto software
+    // decode (4K60 H.264 alone costs ~3 CPU cores and starves preview/capture/NDI downstream).
+    // VaapiIgnoreDriverChecks skips the VA driver allow-list so unknown drivers still get a chance.
+    // FS_LINUX_VAAPI=0 disables (debug); =zero additionally enables the zero-copy GL import.
     const linuxVaapi = process.env.FS_LINUX_VAAPI
     if (linuxVaapi !== "0" && config.get("disableHardwareAcceleration") !== true) {
         let vaapiFeatures = "AcceleratedVideoDecodeLinuxGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks"
@@ -122,12 +83,8 @@ if (process.platform === "linux") {
         console.info("[LINUX] FS_LINUX_VAAPI=0: VA-API hardware video decode DISABLED (debug kill-switch)")
     }
 
-    // OPT-IN Chromium media/VA-API verbose logging (round 8): when VA-API decode silently falls back to
-    // software, Chromium's vmodule logs name the EXACT decline reason (e.g. WSL round 8:
-    // `vaapi_wrapper.cc GetHandle(): ...failed to find a suitable render node` →
-    // `video_decoder_pipeline.cc Initialize(): Video configuration is not supported`). This toggle routes
-    // Chromium logging to stderr and turns those modules verbose so a laptop run prints the reason in
-    // plain text. DEFAULT OFF; gated behind FS_LINUX_MEDIA_LOG=1. Diagnostic only — no rendering effect.
+    // opt-in diagnostic: when VA-API decode silently falls back to software, Chromium's vmodule logs
+    // name the exact decline reason — this routes them to stderr
     if (process.env.FS_LINUX_MEDIA_LOG === "1") {
         app.commandLine.appendSwitch("enable-logging", "stderr")
         app.commandLine.appendSwitch("vmodule", "*vaapi*=2,*video_decoder*=2")
@@ -135,10 +92,8 @@ if (process.platform === "linux") {
     }
 }
 
-// ---- Graphics device selection (Settings > Other > "Graphics device"; default "Auto") ----
-// Applied BEFORE app "ready" (command-line switches must precede GPU process launch); a change in Settings
-// requires a restart, exactly like the hardware-acceleration toggle. Respects disableHardwareAcceleration
-// (no GPU process to pin). See utils/gpu.ts for enumeration + the per-platform mechanism notes.
+// graphics device selection (Settings > Other): must run before "ready" (command-line switches
+// precede GPU process launch); a change requires a restart, like the hardware-acceleration toggle
 applyGraphicsDeviceSelection()
 
 let autoProfile = ""
@@ -163,12 +118,9 @@ setGlobalMenu()
 // error reporting
 autoErrorReport()
 
-// hardware acceleration
-// Snapshot of the ACTUAL runtime decision (app.disableHardwareAcceleration() only applies for this
-// process and a config change requires a restart). Capture/convert paths MUST gate on this snapshot, not
-// the live config value — otherwise toggling the setting without restarting mismatches the real compositor
-// mode (e.g. setting turned off but still really disabled -> shared-texture handler on a CPU compositor ->
-// dead output). See OutputLifecycle.isHardwareAccelerationDisabled.
+// hardware acceleration: startup snapshot of the actual runtime decision. Capture/convert paths must
+// gate on this, not the live config value — a not-yet-applied toggle would otherwise mismatch the real
+// compositor mode and pick the wrong capture handler.
 export const hardwareAccelerationDisabled = config.get("disableHardwareAcceleration") === true
 if (hardwareAccelerationDisabled) {
     // Video did flicker sometime with HWA, especially on ARM Mac.
@@ -194,27 +146,20 @@ protocol.registerSchemesAsPrivileged([
 // start when ready
 if (RECORD_STARTUP_TIME) console.time("Full startup")
 app.on("ready", async () => {
-    // PROVEN (WSL): at app-ready the GPU process has NOT finished init — getGPUFeatureStatus() returns
-    // premature disabled_software defaults. The t=0 line is kept only as a marker of that early state;
-    // the delayed re-logs show the true steady-state (WSL flips to enabled well before 10s).
+    // getGPUFeatureStatus() at app-ready is premature (GPU process still initializing, reports
+    // disabled_software defaults) — only the delayed re-logs reflect the real state
     logGpuStatus("t=0")
     setTimeout(() => logGpuStatus("t=10s"), 10_000)
     setTimeout(() => logGpuStatus("t=25s"), 25_000)
-    // runtime GPU health check (utils/gpu.ts): compares the ACTUAL steady-state GPU regime against the
-    // user's intent and raises a verbose in-app notification on degradation. Scheduled well past the
-    // premature at-ready window (see the note above) — the same reason the t=10s/25s re-logs exist.
+    // compares the steady-state GPU regime against the user's intent, notifies on degradation
     scheduleGpuHealthCheck()
     await startApp()
     requestHeaders()
 })
 
-// One-shot diagnostic: dump Chromium's GPU feature status (same fields as chrome://gpu) plus the basic
-// GL vendor/renderer/driver strings. Tells us whether gpu_compositing / gpu_rasterization / webgl are on
-// real HARDWARE or a SOFTWARE fallback, and whether GL_RENDERER is llvmpipe/software vs a real NVIDIA
-// renderer — the crux of the Linux OSR paint-throttle investigation. Always-on on Linux, elsewhere gated
-// behind FS_CAP_STATS. Purely observational: reads status, changes no runtime behavior.
-// Called at ready ("t=0") and re-called at 10s/25s: the at-ready reading is PREMATURE (GPU process still
-// initializing — reports disabled_software defaults); only the delayed lines reflect the real regime.
+// diagnostic: dump Chromium's GPU feature status (same fields as chrome://gpu) plus GL
+// vendor/renderer strings — shows whether compositing/decode run on hardware or a software fallback.
+// Always on for Linux, elsewhere gated behind FS_CAP_STATS; observational only.
 function logGpuStatus(tag: string) {
     if (!isLinux && !process.env.FS_CAP_STATS) return
     try {
