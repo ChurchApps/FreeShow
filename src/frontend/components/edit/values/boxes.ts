@@ -54,7 +54,7 @@ export type EditInput = {
     key?: string
     valueIndex?: number // css key subvalue (e.g. box-shadow)
     type: string
-    value: string | number | boolean
+    value: any
     values: { [key: string]: any }
     hidden?: boolean
     disabled?: boolean

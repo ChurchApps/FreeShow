@@ -33,6 +33,8 @@ export function autoOpenLastUsedProfile() {
 
     activeProfile.set(lastUsedId)
 
+    // NOTE: don't run action on auto open because this profile is already active
+
     showChangeProfileMenu.set(true)
     setTimeout(() => showChangeProfileMenu.set(false), 5000)
 }
@@ -56,4 +58,3 @@ export function isGroupHidden(groupId: string): boolean {
     if (currentGlobalLevel === "none") return true
     return currentLocalLevel === "none"
 }
-

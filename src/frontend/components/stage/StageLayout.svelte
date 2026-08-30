@@ -154,9 +154,9 @@
                     <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} isStage />
                 {/if}
                 {#key stageLayoutId}
-                    {#each stageItems as item, index}
+                    {#each stageItems as item, index (item.id)}
                         {#if (item.type || item.enabled !== false) && (edit || checkVisibility(index, conditionsUpdater))}
-                            <Stagebox edit={edit && !readOnly} stageLayout={edit ? null : layout} id={item.id} item={clone(item)} {ratio} {preview} {disableStagePreview} bind:mouse />
+                            <Stagebox edit={edit && !readOnly} stageLayout={edit ? null : layout} id={item.id} {item} {ratio} {preview} {disableStagePreview} bind:mouse />
                         {/if}
                     {/each}
                 {/key}

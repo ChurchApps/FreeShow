@@ -1,12 +1,12 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
-    import { type ReverbConfig, setReverbEnabled, updateReverbConfig } from "../../../../audio/effects/audioReverb"
+    import { type ReverbConfig, updateReverbConfig } from "../../../../audio/effects/audioReverb"
     import InputRow from "../../../input/InputRow.svelte"
     import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
-    export let disabled: boolean = false
+    export let effectId: string = ""
+    export let channelId: string = ""
 
     let config: ReverbConfig = {
         enabled: false,
@@ -18,21 +18,22 @@
     let unsubscribe: (() => void) | null = null
 
     onMount(() => {
-        unsubscribe = subscribeEffect("reverb", (c: ReverbConfig) => {
-            config = { ...c }
-        })
+        unsubscribe = subscribeEffect(
+            "reverb",
+            (c: ReverbConfig) => {
+                config = { ...c }
+            },
+            channelId,
+            effectId
+        )
     })
 
     onDestroy(() => {
         unsubscribe?.()
     })
 
-    function handleEnable(e: any) {
-        setReverbEnabled(e.detail)
-    }
-
     function handleChange(key: keyof ReverbConfig, raw: number) {
-        updateReverbConfig({ [key]: raw })
+        updateReverbConfig({ [key]: raw }, channelId, effectId)
     }
 
     // ---- decay envelope visualisation ----
@@ -65,13 +66,9 @@
     $: wetPct = Math.round(config.wet * 100)
 </script>
 
-<div class="reverb-container" style="--accent: #9952ad;" class:disabled>
-    <MaterialToggleSwitch label="settings.enabled" checked={config.enabled} on:change={handleEnable} />
-
-    <div style="height: 5px;" />
-
+<div class="reverb-container" style="--accent: #9952ad;">
     <!-- Decay envelope visualisation -->
-    <div class="viz-wrap" class:viz-disabled={!config.enabled}>
+    <div class="viz-wrap">
         <div class="viz-svg-wrap" bind:clientWidth={canvasW}>
             <svg width={canvasW} height={canvasH} class="viz-svg">
                 <!-- Filled decay envelope -->
@@ -104,15 +101,15 @@
     <div style="height: 8px;" />
 
     <InputRow>
-        <MaterialNumberInput label="audio.room_size" value={Math.round(config.roomSize * 100)} min={0} max={100} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 100, step: 1 }} {disabled} on:change={(e) => handleChange("roomSize", e.detail / 100)} />
+        <MaterialNumberInput label="audio.room_size" value={Math.round(config.roomSize * 100)} min={0} max={100} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 100, step: 1 }} on:change={(e) => handleChange("roomSize", e.detail / 100)} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.dampening" value={Math.round(config.dampening * 100)} min={0} max={100} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 100, step: 1 }} {disabled} on:change={(e) => handleChange("dampening", e.detail / 100)} />
+        <MaterialNumberInput label="audio.dampening" value={Math.round(config.dampening * 100)} min={0} max={100} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 100, step: 1 }} on:change={(e) => handleChange("dampening", e.detail / 100)} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.wet" value={wetPct} min={0} max={100} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 100, step: 1 }} {disabled} on:change={(e) => handleChange("wet", e.detail / 100)} />
+        <MaterialNumberInput label="audio.wet" value={wetPct} min={0} max={100} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 100, step: 1 }} on:change={(e) => handleChange("wet", e.detail / 100)} />
     </InputRow>
 </div>
 
@@ -122,11 +119,6 @@
         user-select: none;
     }
 
-    .reverb-container.disabled {
-        opacity: 0.5;
-        pointer-events: none;
-    }
-
     .viz-wrap {
         background: var(--primary-darker);
         border: 1px solid var(--primary-lighter);
@@ -134,10 +126,6 @@
         overflow: hidden;
         transition: opacity 0.2s ease;
         font-family: monospace;
-    }
-
-    .viz-wrap.viz-disabled {
-        opacity: 0.4;
     }
 
     .viz-svg-wrap {

@@ -2,7 +2,6 @@ import { get } from "svelte/store"
 import { CLOUD, CONTROLLER, NDI, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { AudioMicrophone } from "../audio/audioMicrophone"
-import { setEqualizerEnabled, updateEqualizerBands } from "../audio/effects/audioEqualizer"
 import { runAction } from "../components/actions/actions"
 import { getDynamicValue } from "../components/edit/scripts/itemHelpers"
 import { clone } from "../components/helpers/array"
@@ -17,7 +16,6 @@ import {
     allOutputs,
     audioChannelsData,
     audioData,
-    audioEffects,
     cachedDynamicValues,
     categories,
     closeAd,
@@ -288,14 +286,6 @@ export const receiveOUTPUTasOUTPUT: any = {
     // AUDIO_CHANNELS_DATA: (a: any) => audioChannelsData.set(a),
 
     PLAYING_VIDEO_STATE: (a: any) => playingVideoState.set(a),
-    AUDIO_EFFECTS: (a: any) => {
-        audioEffects.set(a)
-
-        if (a.main?.equalizer) {
-            setEqualizerEnabled(a.main.equalizer.enabled)
-            updateEqualizerBands(a.main.equalizer.bands)
-        }
-    },
 
     METRONOME: (a: any) => metronome.set(a),
     METRONOME_TIMER: (a: any) => metronomeTimer.set(a),

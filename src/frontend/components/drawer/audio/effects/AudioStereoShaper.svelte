@@ -1,12 +1,12 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
-    import { type StereoShaperConfig, setStereoShaperEnabled, updateStereoShaperConfig } from "../../../../audio/effects/audioStereoShaper"
+    import { type StereoShaperConfig, updateStereoShaperConfig } from "../../../../audio/effects/audioStereoShaper"
     import InputRow from "../../../input/InputRow.svelte"
     import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
-    export let disabled: boolean = false
+    export let effectId: string = ""
+    export let channelId: string = ""
 
     let config: StereoShaperConfig = {
         enabled: false,
@@ -16,21 +16,22 @@
     let unsubscribe: (() => void) | null = null
 
     onMount(() => {
-        unsubscribe = subscribeEffect("stereoShaper", (c: StereoShaperConfig) => {
-            config = { ...c }
-        })
+        unsubscribe = subscribeEffect(
+            "stereoShaper",
+            (c: StereoShaperConfig) => {
+                config = { ...c }
+            },
+            channelId,
+            effectId
+        )
     })
 
     onDestroy(() => {
         unsubscribe?.()
     })
 
-    function handleEnable(e: any) {
-        setStereoShaperEnabled(e.detail)
-    }
-
     function handleChange(key: keyof StereoShaperConfig, raw: number) {
-        updateStereoShaperConfig({ [key]: raw })
+        updateStereoShaperConfig({ [key]: raw }, channelId, effectId)
     }
 
     // ---- stereo field visualisation ----
@@ -72,13 +73,9 @@
     $: widthLabel = config.width === 0 ? "Mono" : config.width === 100 ? "Stereo" : config.width < 100 ? `${config.width}% (narrow)` : `${config.width}% (wide)`
 </script>
 
-<div class="shaper-container" style="--accent: #52adad;" class:disabled>
-    <MaterialToggleSwitch label="settings.enabled" checked={config.enabled} on:change={handleEnable} />
-
-    <div style="height: 5px;" />
-
+<div class="shaper-container" style="--accent: #52adad;">
     <!-- Stereo field visualisation -->
-    <div class="viz-wrap" class:viz-disabled={!config.enabled}>
+    <div class="viz-wrap">
         <div class="viz-svg-wrap" bind:clientWidth={canvasW}>
             <svg width={canvasW} height={canvasH} class="viz-svg">
                 <!-- Background -->
@@ -108,7 +105,7 @@
     <div style="height: 8px;" />
 
     <InputRow>
-        <MaterialNumberInput label="audio.width" value={config.width} min={0} max={200} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 200, step: 1 }} {disabled} on:change={(e) => handleChange("width", e.detail)} />
+        <MaterialNumberInput label="audio.width" value={config.width} min={0} max={200} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 200, step: 1 }} on:change={(e) => handleChange("width", e.detail)} />
     </InputRow>
 </div>
 
@@ -118,11 +115,6 @@
         user-select: none;
     }
 
-    .shaper-container.disabled {
-        opacity: 0.5;
-        pointer-events: none;
-    }
-
     .viz-wrap {
         background: var(--primary-darker);
         border: 1px solid var(--primary-lighter);
@@ -130,10 +122,6 @@
         overflow: hidden;
         transition: opacity 0.2s ease;
         font-family: monospace;
-    }
-
-    .viz-wrap.viz-disabled {
-        opacity: 0.4;
     }
 
     .viz-svg-wrap {

@@ -28,6 +28,7 @@ export type SaveListSyncedSettings =
     | "emitters"
     | "playerVideos"
     | "videoMarkers"
+    | "calendars"
     | "mediaTags"
     | "playerTags"
     | "actionTags"

@@ -874,7 +874,7 @@ const createRegex = (id: string) => {
 }
 
 /** Check if the pattern exists **/
-const exists = (str: string, id: string) => createRegex(id).test(str)
+// const exists = (str: string, id: string) => createRegex(id).test(str)
 
 /** Get all numbers (e.g., [null, 2, 100, 5, null]) **/
 // const getNumbers = (str: string, id: string) => [...str.matchAll(createRegex(id))].map(m => m[1] ?? null)
@@ -894,7 +894,21 @@ const replaceTokens = (str: string, id: string, inputs: string[] = []) => {
     })
 }
 
+const dynamicIdsCache = new Map<string, Set<string>>()
+function getValidDynamicIds(mode = ""): Set<string> {
+    if (!dynamicIdsCache.has(mode)) {
+        const customIds = ["slide_text", "active_project_name", "active_layers", "active_styles", "output_windows_active", "outputs_locked", "stage_output_layout", "log_song_usage"]
+        const ids = [...getDynamicIds(false, mode as any), ...deprecatedDynamicValues, ...customIds]
+        const set = new Set(ids.flatMap((id) => [id, id.replace("$", "variable_"), id.replace(/[+-]\d+$/, "")]))
+        dynamicIdsCache.set(mode, set)
+        setTimeout(() => dynamicIdsCache.clear(), 3000)
+    }
+    return dynamicIdsCache.get(mode)!
+}
+
 export function replaceDynamicValues(text: string, { showId, layoutId, slideIndex, type, id, mode }: any, _updater = 0, popup = false) {
+    if (!text || typeof text !== "string" || !text.includes("{")) return text || ""
+
     const isOutputWin = isOutputWindow()
 
     if (type === "stage") {
@@ -914,9 +928,14 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     const regex = /\{scripture(?:\d+)?_[^}]*\}/g
     if (regex.test(text) && !popup) text = text.replace(regex, "")
 
-    const customIds = ["slide_text", "active_project_name", "active_layers", "active_styles", "output_windows_active", "outputs_locked", "stage_output_layout", "log_song_usage"]
-    ;[...getDynamicIds(false, mode), ...deprecatedDynamicValues, ...customIds].forEach((dynamicId) => {
-        if (!exists(text, dynamicId) && !(dynamicId.startsWith("$") && exists(text, dynamicId.replace("$", "variable_")))) return
+    const validIds = getValidDynamicIds(mode || "")
+    const matches = text.match(/\{([^}]+)\}/g) || []
+    const processed = new Set<string>()
+
+    for (const token of matches) {
+        const dynamicId = token.slice(1, -1).match(/^([^+\-#|?]+)/)?.[1] || ""
+        if (!dynamicId || processed.has(dynamicId) || !validIds.has(dynamicId)) continue
+        processed.add(dynamicId)
 
         // get offset from {dynamicId+num} or {dynamicId-num}
         const match = createRegex(dynamicId).exec(text)
@@ -927,7 +946,7 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         // $ = variable_
         if (dynamicId.startsWith("$")) text = replaceDynamicValueWithFallback(text, dynamicId.replace("$", "variable_"), newValue)
-    })
+    }
 
     return text
 
@@ -1096,10 +1115,6 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
         const rawValue = dynamicValues[dynamicId]({ show, ref, slideIndex, layout, projectRef, outSlide, bgPath, videoData, audioTime, audioDuration, audioPath, offset }) ?? ""
         const value = Array.isArray(rawValue) ? rawValue : rawValue.toString()
 
-        if (((dynamicId === "show_name" && offset) || dynamicId === "show_name_next") && !value && isOutputWin) {
-            send(OUTPUT, ["MAIN_SHOWS_DATA"])
-        }
-
         // send data to output
         const sendToOutput = ["audio_time", "audio_countdown", "audio_duration"]
         if (sendToOutput.includes(dynamicId) && isMainWindow()) {
@@ -1108,6 +1123,14 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
 
         return value
     }
+}
+
+let lastShowsDataRequest = 0
+function requestShowsData() {
+    const now = Date.now()
+    if (now - lastShowsDataRequest < 1000) return
+    lastShowsDataRequest = now
+    send(OUTPUT, ["MAIN_SHOWS_DATA"])
 }
 
 function requestDynamicValue(id: string) {
@@ -1151,9 +1174,15 @@ const dynamicValues = {
         let currentIndex = projectRef?.index ?? 0
         currentIndex -= projectItems.slice(0, currentIndex).reduce((count, a) => (a?.type === "section" ? count + 1 : count), 0)
         const filteredProjectItems = projectItems.filter((a) => a && a.type !== "section")
-        return get(shows)[filteredProjectItems[currentIndex + offset]?.id]?.name || ""
+        const targetShowId = filteredProjectItems[currentIndex + offset]?.id
+        if (targetShowId && !get(shows)[targetShowId] && isOutputWindow()) requestShowsData()
+        return get(shows)[targetShowId]?.name || ""
     },
-    show_name_next: ({ projectRef }) => get(shows)[get(projects)[projectRef.id]?.shows?.find((a, i) => a && a.type !== "section" && i > projectRef.index)?.id ?? -1]?.name || "", // DEPRECATED
+    show_name_next: ({ projectRef }) => {
+        const nextShowId = get(projects)[projectRef?.id]?.shows?.find((a, i) => a && a.type !== "section" && i > projectRef.index)?.id
+        if (nextShowId && !get(shows)[nextShowId] && isOutputWindow()) requestShowsData()
+        return get(shows)[nextShowId ?? -1]?.name || ""
+    }, // DEPRECATED
 
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",

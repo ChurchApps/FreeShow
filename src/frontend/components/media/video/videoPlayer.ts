@@ -577,6 +577,7 @@ export class VideoPlayer {
     static isAudible(video: VideoAudioData | null | undefined): boolean {
         if (!video || !video.audio) return false
         if (video.audio.paused || video.audio.muted) return false
+        if (this.isFadingOut.includes(video.path) || this.isStopping.has(video.path)) return false
         if (this.getVolume(video.path) <= 0) return false
         return true
     }
@@ -705,7 +706,7 @@ export class VideoPlayer {
     private static initSyncClock() {
         if (this.syncClockTimer) clearInterval(this.syncClockTimer)
         this.syncState() // update immediately
-        this.syncClockTimer = setInterval(() => this.syncState(), get(special).optimizedMode ? 1000 : 100)
+        this.syncClockTimer = setInterval(() => this.syncState(), get(special).optimizedMode ? 500 : 100)
     }
 
     private static syncState() {

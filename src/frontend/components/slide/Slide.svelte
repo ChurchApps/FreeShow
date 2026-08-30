@@ -328,7 +328,7 @@
                         {#each layoutSlide.overlays as id}
                             {#if $overlays[id]?.placeUnderSlide === true}
                                 {#each $overlays[id]?.items || [] as item}
-                                    <Textbox {item} ref={{ type: "overlay", id }} />
+                                    <Textbox {item} ref={{ type: "overlay", id }} preview />
                                 {/each}
                             {/if}
                         {/each}
@@ -360,7 +360,7 @@
                                     smallFontSize={viewMode === "lyrics" && !noQuickEdit}
                                     clickRevealed={!!output?.clickRevealed}
                                     {centerPreview}
-                                    fontPreview={true}
+                                    preview
                                     chords={item.chords?.enabled}
                                 />
                             {/if}
@@ -381,7 +381,7 @@
                         {#each layoutSlide.overlays as id}
                             {#if $overlays[id] && !$overlays[id]?.placeUnderSlide}
                                 {#each $overlays[id]?.items || [] as item}
-                                    <Textbox {item} ref={{ type: "overlay", id }} />
+                                    <Textbox {item} ref={{ type: "overlay", id }} preview />
                                 {/each}
                             {/if}
                         {/each}

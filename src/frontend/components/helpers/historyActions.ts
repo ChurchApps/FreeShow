@@ -276,6 +276,7 @@ async function handleShows(obj, _data, initializing) {
                 if (replace) {
                     if (initializing) obj.oldData.data[i].show = clone(a[id])
                     a[id] = { ...a[id], ...show }
+                    saveTextCache(id, a[id])
                     const oldName = get(shows)[id]?.name
                     if (show.name !== undefined && oldName && oldName !== show.name) rename[id] = { name: show.name || id, oldName }
                     return
@@ -309,7 +310,7 @@ async function handleShows(obj, _data, initializing) {
                 timestamps: show.timestamps || a[id]?.timestamps,
                 quickAccess: show.quickAccess || a[id]?.quickAccess
             }
-            if (show.origin) a[id].origin = ""
+            if (show.origin) a[id].origin = show.origin
             else if (a[id].origin) delete a[id].origin
             if (show.private) a[id].private = true
             else if (a[id].private) delete a[id].private

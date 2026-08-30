@@ -1,7 +1,7 @@
 <script lang="ts">
     import { openToolsTab } from "../../stores"
     import { getStyles } from "../helpers/style"
-    import { radiusSliderOffset, radiusSliderRatio } from "./textbox"
+    import { radiusHandleSize, radiusSliderOffset, radiusSliderRatio } from "./textbox"
 
     export let ratio = 1
     export let itemStyle = ""
@@ -102,7 +102,7 @@
         {/if}
     {/each}
     <div class="rotate" style="width: {8 / ratio}px;--line-width: {3 / ratio}px;" class:active></div>
-    <div class="radius" style="width: {6 / ratio}px;left: {(Number(styles['border-radius']) || 0) * radiusSliderRatio + radiusSliderOffset}px;" class:active></div>
+    <div class="radius" style="width: {radiusHandleSize / ratio}px;left: {(Number(styles['border-radius']) || 0) * radiusSliderRatio + radiusSliderOffset}px;" class:active></div>
 </section>
 
 <style>

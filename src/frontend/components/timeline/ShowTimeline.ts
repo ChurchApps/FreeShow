@@ -89,7 +89,8 @@ export class ShowTimeline {
             let layoutSlide = layoutRef[outSlide.index]
             if (!layoutSlide) return
 
-            let slideRef = { id: layoutSlide.id, index: outSlide.index }
+            let slideRef: { id: string; index: number; line?: number } = { id: layoutSlide.id, index: outSlide.index }
+            if (outSlide.line) slideRef.line = outSlide.line
 
             const newRef = JSON.stringify(slideRef)
             if (previousRef === newRef) return
@@ -130,7 +131,7 @@ export class ShowTimeline {
         }
     }
 
-    static playSlide(ref: { id?: string; index?: number }, showRef: { id: string; layoutId?: string }) {
+    static playSlide(ref: { id?: string; index?: number; line?: number }, showRef: { id: string; layoutId?: string }) {
         const layoutRef = _show(showRef.id).layouts([showRef.layoutId]).ref()[0] || []
 
         // check that slide exists
@@ -140,10 +141,11 @@ export class ShowTimeline {
         if (!slide) return
 
         const index = slide.layoutIndex
+        const line = ref.line || 0
         const outSlide = getFirstActiveOutput()?.out?.slide
-        if (outSlide?.id !== showRef.id || outSlide?.layout !== showRef.layoutId || outSlide?.index !== index) {
+        if (outSlide?.id !== showRef.id || outSlide?.layout !== showRef.layoutId || outSlide?.index !== index || (outSlide?.line || 0) !== line) {
+            setOutput("slide", { id: showRef.id, layout: showRef.layoutId, index, line })
             updateOut(showRef.id, index, layoutRef)
-            setOutput("slide", { id: showRef.id, layout: showRef.layoutId, index, line: 0 })
         }
     }
 }

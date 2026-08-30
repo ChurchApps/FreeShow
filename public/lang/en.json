@@ -485,6 +485,8 @@
         "interaction_input": "Input",
         "trigger": "Trigger",
         "audio_stream": "Audio stream",
+        "audio_effect": "Audio effect",
+        "add_audio_effect": "Add audio effect",
         "node_options": "Node options",
         "now_playing": "Now playing file",
         "aspect_ratio": "Change aspect ratio",
@@ -632,6 +634,7 @@
         "action": "New action",
         "event": "New event",
         "event_action": "New scheduled action",
+        "calendar": "New calendar",
         "effect": "New effect",
         "interaction": "New interaction"
     },
@@ -1342,6 +1345,7 @@
         "minutes": "minutes",
         "use24hClock": "Use 24-hour clock",
         "styles_hint": "Create different styles that can be applied to the output to change the look.",
+        "audio_hint": "Route audio inputs, through any channels, to audio outputs. A channel is used to control and tweak the audio signal.",
         "outputs_hint": "Create multiple output windows, position them on external screens, or send a screen capture.",
         "hide_output_hint": "Double click on the output window to hide it. Hold CTRL to enable dragging.",
         "output_locked": "The output position has been locked!",
@@ -1513,6 +1517,7 @@
         "custom": "Custom"
     },
     "calendar": {
+        "calendar": "Calendar",
         "type": "Type",
         "event": "Event",
         "first_day": "First day of week",
@@ -1697,6 +1702,7 @@
         "spotlight": "Spotlight",
         "aurora": "Aurora",
         "bloom": "Bloom",
+        "mesh_gradient": "Mesh gradient",
         "fog": "Fog",
         "city": "City",
         "fireworks": "Fireworks",
@@ -1710,6 +1716,10 @@
         "arm_count": "Arm count",
         "drift": "Drift",
         "pulse_speed": "Pulse speed",
+        "motion": "Motion",
+        "spread": "Spread",
+        "density": "Density",
+        "grain": "Grain",
         "hollow": "Hollow"
     },
     "interaction": {

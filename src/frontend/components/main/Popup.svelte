@@ -7,6 +7,7 @@
     import { disablePopupClose } from "../../utils/shortcuts"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
+    import { EFFECTS_LIST } from "../../audio/effects/audioEffectsHelpers"
 
     function mousedown(e: any) {
         // same logic for Escape in shortcuts.ts
@@ -55,6 +56,8 @@
                                         <T id="about.new_update" />: <span style="color: var(--secondary);">v{$popupData.latestVersion}</span>
                                     {:else if popupId === "pco_picker"}
                                         Planning Center
+                                    {:else if popupId === "audio_effect" && $popupData?.effect}
+                                        <T id={EFFECTS_LIST.find((a) => a.id === $popupData.effect)?.label || "popup.audio_effect"} />
                                     {:else}
                                         <T id="popup.{popupId}" />
                                     {/if}

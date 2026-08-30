@@ -18,7 +18,7 @@
     // }
 </script>
 
-{#each ids as id}
+{#each ids as id (id)}
     {@const effect = $effects[id]}
     {#if effect}
         <OutputTransition transition={mirror ? undefined : transition} inTransition={mirror ? null : transition.in || transition} outTransition={mirror ? null : transition.out || transition}>

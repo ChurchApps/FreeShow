@@ -10,10 +10,12 @@ import { markItemsAsPlayed } from "../../converters/project"
 import { sendMain } from "../../IPC/main"
 import { cameraManager } from "../../media/cameraManager"
 import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo, VIRTUAL_BREAK_CHAR } from "../../show/slides"
+import { duplicateEffectInStack, removeEffectFromStack } from "../../audio/effects/audioEffectsHelpers"
 import {
     $,
     actions,
     activeActionTagFilter,
+    activeAudioEffects,
     activeDrawerTab,
     activeEdit,
     activeFocus,
@@ -349,6 +351,15 @@ const clickActions = {
             return
         }
 
+        if (obj.contextElem?.classList.value.includes("#audio_effect_item")) {
+            const effectId = obj.contextElem.id
+            const channelId = obj.contextElem.dataset.channel || get(activeAudioEffects) || "main"
+            const idxStr = obj.contextElem.dataset.index
+            const index = idxStr !== undefined ? Number(idxStr) : -1
+            removeEffectFromStack(index >= 0 ? index : effectId, channelId)
+            return
+        }
+
         if (obj.contextElem?.classList.value.includes("#timeline_node")) {
             triggerFunction("delete_selected_nodes")
             return
@@ -410,6 +421,15 @@ const clickActions = {
     delete_col: () => window.dispatchEvent(new CustomEvent("delete-col")),
     duplicate: (obj: ObjData) => {
         if (duplicate(obj.sel)) return
+
+        if (obj.contextElem?.classList.value.includes("#audio_effect_item")) {
+            const effectId = obj.contextElem.id
+            const channelId = obj.contextElem.dataset.channel || get(activeAudioEffects) || "main"
+            const idxStr = obj.contextElem.dataset.index
+            const index = idxStr !== undefined ? Number(idxStr) : -1
+            duplicateEffectInStack(index >= 0 ? index : effectId, channelId)
+            return
+        }
 
         if (obj.contextElem?.classList.value.includes("#event")) {
             duplicate({ id: "event", data: { id: obj.contextElem.id } })

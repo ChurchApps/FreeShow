@@ -95,7 +95,7 @@ checkered={template.items?.length > 0 && transparentOutput} -->
     {#if overlay?.items}
         <div style={edit ? "opacity: 0.5;pointer-events: none;" : ""}>
             {#each overlay.items as item}
-                <Textbox {item} ref={{ type: "overlay", id: overlayId }} />
+                <Textbox {item} ref={{ type: "overlay", id: overlayId }} preview />
             {/each}
         </div>
     {/if}

@@ -3,7 +3,7 @@
     import type { ContentFile, ContentLibraryCategory, ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain } from "../../../IPC/main"
-    import { mediaOptions } from "../../../stores"
+    import { mediaOptions, openedMediaFolders } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -25,18 +25,57 @@
     let viewingContent = false
 
     onMount(() => {
+        const saved = $openedMediaFolders[providerId]
+        if (saved?.currentCategory) {
+            currentPath = saved.currentPath || []
+            currentCategory = saved.currentCategory
+            viewingContent = saved.viewingContent ?? !!saved.currentCategory.key
+            content = saved.content || []
+            if (!content.length && currentCategory?.key) loadContent(currentCategory.key)
+        }
+
         loadLibrary()
     })
 
+    let prevProviderId = providerId
+    $: if (providerId !== prevProviderId) {
+        prevProviderId = providerId
+        const saved = $openedMediaFolders[providerId]
+        if (saved?.currentCategory) {
+            currentPath = saved.currentPath || []
+            currentCategory = saved.currentCategory
+            viewingContent = saved.viewingContent ?? !!saved.currentCategory.key
+            content = saved.content || []
+            if (!content.length && currentCategory?.key) loadContent(currentCategory.key)
+        } else {
+            currentPath = []
+            currentCategory = null
+            content = []
+            viewingContent = false
+        }
+        library = []
+        loadLibrary()
+    }
+
+    function save() {
+        openedMediaFolders.update((a) => {
+            if (currentCategory) a[providerId] = { currentPath, currentCategory, viewingContent, content }
+            else delete a[providerId]
+            return a
+        })
+    }
+
     async function loadLibrary() {
-        loading = true
+        if (library.length) return
+
+        loading = !viewingContent && !currentCategory?.children?.length
         error = null
+
         try {
             requestMain(Main.GET_CONTENT_LIBRARY, { providerId }, (data) => {
                 if (!data) return
                 library = data
                 loading = false
-                viewingContent = false
             })
         } catch (e) {
             error = `Failed to load library: ${e}`
@@ -45,20 +84,13 @@
     }
 
     function navigateToCategory(category: ContentLibraryCategory) {
-        if (category.key) {
-            // This is a leaf node with content
-            currentPath = [...currentPath, currentCategory!].filter(Boolean)
-            currentCategory = category
-            content = [] // Clear content while loading
-            viewingContent = true // Mark that we're viewing content
-            loadContent(category.key)
-        } else if (category.children) {
-            // Navigate into this category
-            currentPath = [...currentPath, currentCategory!].filter(Boolean)
-            currentCategory = category
-            content = [] // Clear content
-            viewingContent = false // Show categories instead
-        }
+        currentPath = [...currentPath, currentCategory!].filter(Boolean)
+        currentCategory = category
+        content = []
+        viewingContent = !!category.key
+
+        save()
+        if (category.key) loadContent(category.key)
     }
 
     function navigateBack() {
@@ -70,9 +102,11 @@
             currentCategory = currentPath[currentPath.length - 1]
             currentPath = currentPath.slice(0, -1)
             content = []
-            viewingContent = currentCategory?.key ? true : false
+            viewingContent = !!currentCategory?.key
             if (currentCategory?.key) loadContent(currentCategory.key)
         }
+
+        save()
     }
 
     async function loadContent(key: string) {
@@ -88,8 +122,10 @@
                         loading = false
                         return
                     }
+
                     content = data
                     loading = false
+                    save()
                 },
                 60000
             )
@@ -98,12 +134,6 @@
             loading = false
         }
     }
-
-    // function goToRoot() {
-    //     currentPath = []
-    //     currentCategory = null
-    //     content = []
-    // }
 
     $: categories = viewingContent ? [] : currentCategory?.children || library
     $: showBackButton = currentPath.length > 0 || currentCategory !== null
@@ -142,7 +172,7 @@
             <p style="color: var(--error); opacity: 0.8;">{error}</p>
         </Center>
     {:else if content.length > 0}
-        <div class="grid" style="padding: 10px;" class:list={listMode}>
+        <div class="grid" style="padding: 5px;" class:list={listMode}>
             <!-- <div class="context #media" style="display: contents;">
                 <MediaGrid items={filteredContent} {columns} let:item>
                     <Media credits={{}} name={item.name || ""} path={item.url} thumbnailPath={item.thumbnail || ""} type={item.type} shiftRange={[]} active="online" contentProvider={providerId} contentFileData={item} />
@@ -151,11 +181,7 @@
             {#each filteredContent as item}
                 {@const category = getContentCategory(item)}
                 {#if category}
-                    <button
-                        class="category-card"
-                        style="width: {cardWidth};"
-                        on:click={() => navigateToCategory(category)}
-                    >
+                    <button class="category-card" style="width: {cardWidth};" on:click={() => navigateToCategory(category)}>
                         {#if item.thumbnail}
                             <img src={item.thumbnail} alt={item.name} />
                         {:else}
@@ -215,7 +241,7 @@
         flex-wrap: wrap;
 
         gap: 5px;
-        padding: 10px;
+        padding: 5px;
 
         overflow-y: auto;
         align-content: start;

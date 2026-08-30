@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeDays, activePopup, eventEdit, events, labelsDisabled, popupData, special } from "../../../stores"
+    import { activeDays, activePopup, calendars, eventEdit, events, labelsDisabled, popupData, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { actionData } from "../../actions/actionData"
     import { removeDuplicates, sortByTime } from "../../helpers/array"
@@ -60,7 +60,7 @@
         return before
     }
 
-    $: currentEvents = getMonthEvents($events, days, $special?.calendars, $special?.hideUnlabeledCalendar)
+    $: currentEvents = getMonthEvents($events, days, $calendars, $special?.hideUnlabeledCalendar)
 
     function getMonthEvents(allEvents: any, daysList: Date[][], calendars: Record<string, any> = {}, hideUnlabeled = false) {
         if (!daysList || !daysList[0]) return []

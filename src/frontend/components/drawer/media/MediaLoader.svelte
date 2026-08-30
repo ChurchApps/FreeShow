@@ -5,7 +5,7 @@
     import type { MediaType, ShowType } from "../../../../types/Show"
     import { outputs, styles } from "../../../stores"
     import { videoExtensions } from "../../../values/extensions"
-    import { cropImageToBase64, encodeFilePath, getExtension } from "../../helpers/media"
+    import { cropImageToBase64, encodeFilePath, getExtension, isLocalFile } from "../../helpers/media"
     import { getResolution } from "../../helpers/output"
     import Camera from "../../output/Camera.svelte"
     import { getStyleResolution } from "../../slide/getStyleResolution"
@@ -75,6 +75,10 @@
     $: customResolution = resolution || getResolution(null, { $outputs, $styles })
 
     $: if (mediaStyle.speed && videoElem) videoElem.playbackRate = Number(mediaStyle.speed || 0)
+    $: if (type === "camera" && videoElem) {
+        if (hover) videoElem.play()?.catch(() => {})
+        else videoElem.pause()
+    }
 
     $: if (!videoElem) duration = 0
     function getCurrentDuration() {
@@ -100,7 +104,7 @@
     function reload() {
         if (ghost || croppingActive) return
 
-        if (retryCount > MAX_RETRIES) {
+        if (retryCount > MAX_RETRIES || isLocalFile(path)) {
             loaded = true
             return
         }
@@ -153,7 +157,7 @@
     {#key path}
         {#if type === "camera"}
             <div bind:clientWidth={width} bind:clientHeight={height} style="height: 100%;">
-                <Camera id={path} groupId={cameraGroup} class="media" style="{getStyleResolution({ width: videoElem?.videoWidth || 0, height: videoElem?.videoHeight || 0 }, width, height, 'cover')};" bind:videoElem />
+                <Camera id={path} groupId={cameraGroup} class="media" style="{getStyleResolution({ width: videoElem?.videoWidth || 0, height: videoElem?.videoHeight || 0 }, width, height, 'cover')};" bind:videoElem preview />
             </div>
         {:else if type === "screen"}
             <Capture screen={{ id: path, name }} streams={[]} background />

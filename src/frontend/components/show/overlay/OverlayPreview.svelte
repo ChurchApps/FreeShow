@@ -22,7 +22,7 @@
         }}
     >
         <Zoomed background="transparent" checkered center mirror>
-            <Overlay overlay={$overlays[show.id]} id={show.id} {outputId} mirror transition={{ type: "none", duration: 0, easing: "" }} />
+            <Overlay overlay={$overlays[show.id]} id={show.id} {outputId} mirror transition={{ type: "none", duration: 0, easing: "" }} preview />
         </Zoomed>
     </HoverButton>
 </div>

@@ -59,7 +59,6 @@ import {
     lessonsLoaded,
     media,
     mediaDownloads,
-    rtmpStatus,
     outputs,
     overlays,
     pdfImports,
@@ -71,6 +70,7 @@ import {
     providerConnections,
     recentFiles,
     redoHistory,
+    rtmpStatus,
     shows,
     showsCache,
     spellcheck,
@@ -400,11 +400,15 @@ export const mainResponses: MainResponses = {
                 }
             }
 
+            const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : "the cloud"
+
             // first find any shows linked to the id
-            const linkedShow = linkKey && allShows.find(({ quickAccess }) => quickAccess?.[linkKey] === id)
+            const linkedShow = linkKey && allShows.find(({ quickAccess, id: showId }) => quickAccess?.[linkKey] === id || showId === id)
             if (linkedShow) {
                 replaceIds[id] = linkedShow.id
-                if (songOrigin === "local") continue
+
+                const useLocal = songOrigin === "online" ? false : songOrigin === "local" || (await confirmCustom(`This show already exists: ${linkedShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
+                if (useLocal) continue
 
                 // replace local show with provider song
                 Object.values<Slide>(show.slides).forEach((slide) => {
@@ -417,12 +421,12 @@ export const mainResponses: MainResponses = {
                 // set modified to now, so it will update properly in history
                 if (show.timestamps) show.timestamps.modified = Date.now()
 
+                delete show.id
                 tempShows.push({ id: linkedShow.id, show: { ...show, origin, name: checkName(show.name, linkedShow.id) } })
                 continue
             }
 
             // find existing show with same name and ask to replace
-            const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : "the cloud"
             const showName = show?.name?.toLowerCase() || ""
             const existingShow = allShows.find(({ id: existingId, name }) => existingId !== id && name?.toLowerCase() === showName)
             // const existingShowHasContent = existingShow && (await loadShows([existingShow.id])) && getSlidesText(get(showsCache)[existingShow.id].slides)
@@ -434,6 +438,9 @@ export const mainResponses: MainResponses = {
                     continue
                 }
             }
+
+            const targetId = existingShow?.id || id
+            replaceIds[id] = targetId
 
             if ((existingShow && songOrigin !== "local") || songOrigin === "online") {
                 // set link so we will automatically update from the provider in the future
@@ -451,8 +458,10 @@ export const mainResponses: MainResponses = {
                 if (globalGroup) slide.globalGroup = globalGroup
             })
 
+            if (show.timestamps) show.timestamps.modified = Date.now()
+
             delete show.id
-            tempShows.push({ id, show: { ...show, origin, name: checkName(show.name, id) } })
+            tempShows.push({ id: targetId, show: { ...show, origin, name: checkName(show.name, targetId) } })
         }
         setTempShows(tempShows)
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { events, special } from "../../../stores"
+    import { calendars, events, special } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
@@ -9,7 +9,7 @@
 
     let syncingCalendars: Record<string, boolean> = {}
 
-    $: icsCalendars = getIcsCalendars($events, $special?.calendars)
+    $: icsCalendars = getIcsCalendars($events, $calendars)
 
     async function syncCalendar(cal: IcsCalendar) {
         if (!cal.url || syncingCalendars[cal.id]) return
@@ -33,7 +33,7 @@
 
         <div class="calendar-list">
             {#each icsCalendars as cal}
-                {@const isHidden = isCalendarHidden($special?.calendars, $special?.hideUnlabeledCalendar, cal.unassigned ? undefined : cal.id)}
+                {@const isHidden = isCalendarHidden($calendars, $special?.hideUnlabeledCalendar, cal.unassigned ? undefined : cal.id)}
 
                 <div class="calendar-card context {cal.unassigned ? '#calendar_item_unlabeled' : '#calendar_item'}" id={cal.id}>
                     <div class="calendar-info">

@@ -1,14 +1,11 @@
-// Audio Noise Gate Engine & Integration
-// Real-time gate using AudioWorklet. Falls back to passthrough until worklet is loaded.
-
-import { getEffectConfig, setEffectEnabledInStore, subscribeEffect, updateEffectInStore } from "./audioEffectsHelpers"
+import { createEffectIntegration, safelyDisconnect } from "./audioEffectsHelpers"
 
 export interface NoiseGateConfig {
     enabled: boolean
-    threshold: number // -100 to 0 dB,  default -40
-    attack: number // 0 to 1 s,      default 0.003
-    release: number // 0 to 2 s,      default 0.1
-    hysteresis: number // 0 to 24 dB,    default 6
+    threshold: number // -100 to 0 dB, default -40
+    attack: number // 0 to 1 s, default 0.003
+    release: number // 0 to 2 s, default 0.1
+    hysteresis: number // 0 to 24 dB, default 6
 }
 
 export const DEFAULT_NOISE_GATE_CONFIG: NoiseGateConfig = {
@@ -26,6 +23,7 @@ export class AudioNoiseGate {
     private passthrough: GainNode
     private ac: AudioContext
     private config: NoiseGateConfig
+    private isDisposed = false
 
     constructor(ac: AudioContext, config: NoiseGateConfig) {
         this.ac = ac
@@ -34,7 +32,6 @@ export class AudioNoiseGate {
         this.output = ac.createGain()
         this.passthrough = ac.createGain()
 
-        // Start as passthrough; will switch to worklet once loaded
         this.input.connect(this.passthrough)
         this.passthrough.connect(this.output)
 
@@ -44,6 +41,7 @@ export class AudioNoiseGate {
     private async initWorklet() {
         try {
             await this.ac.audioWorklet.addModule("./assets/noise-gate-processor.js")
+            if (this.isDisposed) return
 
             this.workletNode = new AudioWorkletNode(this.ac, "noise-gate-processor", {
                 numberOfInputs: 1,
@@ -52,37 +50,34 @@ export class AudioNoiseGate {
                 channelCountMode: "explicit"
             })
 
-            this.input.disconnect(this.passthrough)
-            this.passthrough.disconnect(this.output)
+            safelyDisconnect(this.input, this.passthrough)
+
             this.input.connect(this.workletNode)
             this.workletNode.connect(this.output)
-
-            this.applyParams(this.config)
+            this.applyParams()
         } catch (err) {
             console.error("NoiseGate worklet init failed:", err)
-            // Passthrough remains active
         }
     }
 
-    private applyParams(config: NoiseGateConfig) {
-        if (!this.workletNode) return
+    private applyParams() {
+        if (!this.workletNode || this.isDisposed) return
         const t = this.ac.currentTime
         const p = this.workletNode.parameters
-        p.get("threshold")?.setValueAtTime(config.threshold, t)
-        p.get("attack")?.setValueAtTime(config.attack, t)
-        p.get("release")?.setValueAtTime(config.release, t)
-        p.get("hysteresis")?.setValueAtTime(config.hysteresis, t)
-        p.get("enabled")?.setValueAtTime(config.enabled ? 1 : 0, t)
+        p.get("threshold")?.setValueAtTime(this.config.threshold, t)
+        p.get("attack")?.setValueAtTime(this.config.attack, t)
+        p.get("release")?.setValueAtTime(this.config.release, t)
+        p.get("hysteresis")?.setValueAtTime(this.config.hysteresis, t)
+        p.get("enabled")?.setValueAtTime(this.config.enabled ? 1 : 0, t)
     }
 
     updateConfig(config: Partial<NoiseGateConfig>) {
         this.config = { ...this.config, ...config }
-        this.applyParams(this.config)
+        this.applyParams()
     }
 
     setEnabled(enabled: boolean) {
-        this.config.enabled = enabled
-        this.applyParams(this.config)
+        this.updateConfig({ enabled })
     }
 
     getConfig(): NoiseGateConfig {
@@ -90,48 +85,12 @@ export class AudioNoiseGate {
     }
 
     dispose() {
-        try {
-            this.input.disconnect()
-        } catch {
-            /* already disconnected */
-        }
-        try {
-            this.workletNode?.disconnect()
-        } catch {
-            /* already disconnected */
-        }
-        try {
-            this.passthrough.disconnect()
-        } catch {
-            /* already disconnected */
-        }
-        try {
-            this.output.disconnect()
-        } catch {
-            /* already disconnected */
-        }
+        this.isDisposed = true
+        safelyDisconnect(this.input, this.workletNode, this.passthrough, this.output)
     }
 }
 
-// ============================================================================
-// INTEGRATION LAYER
-// ============================================================================
-
-let globalNoiseGate: AudioNoiseGate | null = null
-
-export function initializeNoiseGate(ac: AudioContext): AudioNoiseGate {
-    if (globalNoiseGate) return globalNoiseGate
-
-    globalNoiseGate = new AudioNoiseGate(ac, getEffectConfig("noiseGate", DEFAULT_NOISE_GATE_CONFIG, "main"))
-    subscribeEffect("noiseGate", (cfg: NoiseGateConfig) => globalNoiseGate?.updateConfig(cfg), "main")
-
-    return globalNoiseGate
-}
-
-export function updateNoiseGateConfig(partial: Partial<NoiseGateConfig>, channelId?: string) {
-    updateEffectInStore("noiseGate", DEFAULT_NOISE_GATE_CONFIG, partial, channelId)
-}
-
-export function setNoiseGateEnabled(enabled: boolean, channelId?: string) {
-    setEffectEnabledInStore("noiseGate", DEFAULT_NOISE_GATE_CONFIG, enabled, channelId)
-}
+const integration = createEffectIntegration("noiseGate", DEFAULT_NOISE_GATE_CONFIG, AudioNoiseGate)
+export const initializeNoiseGate = integration.initialize
+export const updateNoiseGateConfig = integration.updateConfig
+export const setNoiseGateEnabled = integration.setEnabled

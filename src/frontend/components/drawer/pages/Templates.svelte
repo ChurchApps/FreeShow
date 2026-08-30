@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy } from "svelte"
     import type { Template } from "../../../../types/Show"
     import { activeEdit, activePage, activePopup, activeShow, alertMessage, categories, labelsDisabled, mediaOptions, outputs, selected, showsCache, special, styles, templateApplied, templateCategories, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -13,7 +13,6 @@
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import Loader from "../../main/Loader.svelte"
     import Actions from "../../slide/Actions.svelte"
     import Center from "../../system/Center.svelte"
     import DropArea from "../../system/DropArea.svelte"
@@ -63,9 +62,31 @@
         }, 500)
     }
 
-    // open drawer tab instantly before content has loaded
-    let preloader = true
-    onMount(() => setTimeout(() => (preloader = false), 20))
+    // lazy loader
+    let lazyLoader = 0
+    let timeout: NodeJS.Timeout | null = null
+    let loaded = false
+
+    onDestroy(() => {
+        if (timeout) clearTimeout(timeout)
+    })
+
+    $: if (active || searchValue !== undefined) {
+        loaded = false
+        lazyLoader = 0
+    }
+
+    $: if (!loaded && fullFilteredTemplates?.length) {
+        if (lazyLoader >= fullFilteredTemplates.length) {
+            loaded = true
+        } else {
+            if (timeout) clearTimeout(timeout)
+            timeout = setTimeout(() => {
+                const batch = lazyLoader === 0 ? 4 : Math.min(32, lazyLoader * 2)
+                lazyLoader += batch
+            }, lazyLoader === 0 ? 60 : 30)
+        }
+    }
 
     $: templateWithNonExistentCategory = active === "unlabeled" && filteredTemplates.some((s) => s.category)
     function createNonExistentCategories() {
@@ -181,24 +202,21 @@
 
 <div style="position: relative;height: 100%;overflow-y: auto;" class="context #drawer_templates" on:wheel={wheel}>
     <DropArea id="templates">
-        <!-- WIP lazy loading with skeleton instead -->
-        {#if preloader && fullFilteredTemplates.length > 10}
-            <Center>
-                <Loader />
-            </Center>
-        {:else if fullFilteredTemplates.length}
+        {#if fullFilteredTemplates.length}
             <div class="grid" style="--width: {100 / $mediaOptions.columns}%;">
-                {#each fullFilteredTemplates as template}
+                {#each fullFilteredTemplates as template, i (template.id)}
                     {@const isReadOnly = readOnly || profile[template.category || ""] === "read"}
 
                     <SelectElem id="template" data={template.id} class="context #template_card{template.isDefault && !isReadOnly ? '_default' : ''}{isReadOnly ? '_readonly' : ''}" draggable fill>
                         <Card width={100} preview={$activePage === "edit" && $activeEdit.type === "template" && $activeEdit.id === template.id} active={template.id === activeTemplate} label={template.name} renameId="template_{template.id}" icon={template.isDefault ? "protected" : null} color={template.color} {resolution} showApplyOnHover={isShowActive} on:click={(e) => templateClick(e, template.id)}>
-                            <!-- icons -->
-                            {#if template.settings?.actions?.length}
-                                <Actions columns={$mediaOptions.columns} templateId={template.id} actions={{ slideActions: template.settings?.actions }} />
-                            {/if}
+                            {#if loaded || i < lazyLoader}
+                                <!-- icons -->
+                                {#if template.settings?.actions?.length}
+                                    <Actions columns={$mediaOptions.columns} templateId={template.id} actions={{ slideActions: template.settings?.actions }} />
+                                {/if}
 
-                            <TemplateSlide templateId={template.id} {template} preview />
+                                <TemplateSlide templateId={template.id} {template} preview />
+                            {/if}
                         </Card>
                     </SelectElem>
                 {/each}

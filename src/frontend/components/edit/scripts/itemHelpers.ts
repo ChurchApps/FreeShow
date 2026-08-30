@@ -260,13 +260,22 @@ export function rearrangeStageItems(type: string, itemId: string = get(activeSta
 
 export function getSortedStageItems(stageId = get(activeStage).id, _updater: any = null) {
     if (!stageId) return []
-    const stageShow = clone(get(stageShows)[stageId])
-    if (!stageShow) return []
+    const allStageShows = _updater && !_updater.items ? _updater : get(stageShows)
+    const stageShow = (_updater && _updater.items ? _updater : allStageShows?.[stageId]) || null
+    if (!stageShow || !stageShow.items) return []
 
-    const itemOrder = stageShow.itemOrder || Object.keys(stageShow.items)
-    // if ((stageShow.itemOrder || [])?.length !== Object.keys(stageShow.items).length) {
-    if (!stageShow.itemOrder) {
+    const currentItemIds = Object.keys(stageShow.items)
+    let itemOrder = stageShow.itemOrder ? [...stageShow.itemOrder] : currentItemIds
+
+    // remove items not existing anymore
+    itemOrder = itemOrder.filter((id) => currentItemIds.includes(id))
+    // add any new items
+    const newItems = currentItemIds.filter((id) => !itemOrder.includes(id))
+    if (newItems.length) itemOrder.push(...newItems)
+
+    if (!stageShow.itemOrder || newItems.length) {
         stageShows.update((a) => {
+            if (!a[stageId]) return a
             a[stageId].itemOrder = itemOrder
             a[stageId].modified = Date.now()
             return a
@@ -304,23 +313,25 @@ export function updateSortedStageItems() {
 }
 
 export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId, type }: any = { type: "default" }, _updater: any = null, preview = false) {
+    if (!item) return false
+
+    const condition = item.conditions?.showItem
+    const hasBindings = !preview && item.bindings?.length && Array.isArray(item.bindings)
+
+    // Fast path: if no conditions and no bindings, item is always visible
+    if (!condition && !hasBindings) return true
+
     // check bindings
-    if (!preview && item.bindings?.length && Array.isArray(item.bindings) && !item.bindings.includes(outputId)) return false
+    if (hasBindings && !item.bindings!.includes(outputId)) return false
+    if (!condition) return true
 
     if (type === "stage") allItems = getTempItems(item, allItems)
 
     if (!allItems.length) allItems = [item]
     const slideItems = allItems.filter((a) => !a?.bindings?.length || (Array.isArray(a.bindings) && a.bindings.includes(outputId)))
     const itemsText = slideItems.reduce((value, currentItem) => (value += getItemText(currentItem)), "")
-    // set dynamic values
-    // const ref = { showId: get(activeShow)?.id, layoutId: _show().get("settings.activeLayout"), slideIndex: get(activeEdit).slide, type: get(activePage) === "stage" ? "stage" : get(activeEdit).type || "show", id: get(activeEdit).id }
-    // itemsText = replaceDynamicValues(itemsText, { ...ref, slideIndex })
 
-    // check conditions
-    const condition = item.conditions?.showItem
-    if (!isConditionMet(condition, itemsText, type)) return false
-
-    return true
+    return isConditionMet(condition, itemsText, type)
 }
 
 // get "temp" items (scripture) if stage
@@ -345,11 +356,20 @@ function getTempItems(item: Item, allItems: Item[]) {
     }
 }
 
+const conditionResultCache = new Map<string, { result: boolean; timestamp: number }>()
+
 export function isConditionMet(condition: Condition | undefined, itemsText: string, type: "default" | "stage", _updater: any = null) {
     if (!condition) return true
 
     if (!Array.isArray(condition)) {
         condition = (condition as any)?.values?.length ? [[[(condition as any).values]]] : []
+    }
+    if (!condition.length) return true
+
+    const cacheKey = `${type}_${itemsText}_${_updater || 0}_${JSON.stringify(condition)}`
+    const cached = conditionResultCache.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp < 200) {
+        return cached.result
     }
 
     // remove unused scripture dynamic values ({scripture_X} / {scriptureNUM_X})
@@ -366,6 +386,9 @@ export function isConditionMet(condition: Condition | undefined, itemsText: stri
             })
         })
     })
+
+    if (conditionResultCache.size > 200) conditionResultCache.clear()
+    conditionResultCache.set(cacheKey, { result: conditionMet, timestamp: Date.now() })
 
     return conditionMet
 }

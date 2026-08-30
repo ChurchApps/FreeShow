@@ -7,6 +7,8 @@ import ActionHistory from "../components/main/popups/ActionHistory.svelte"
 import Alert from "../components/main/popups/Alert.svelte"
 import AspectRatio from "../components/main/popups/AspectRatio.svelte"
 import AudioStream from "../components/main/popups/AudioStream.svelte"
+import AudioEffect from "../components/main/popups/AudioEffect.svelte"
+import AddAudioEffect from "../components/main/popups/AddAudioEffect.svelte"
 import CategoryAction from "../components/main/popups/CategoryAction.svelte"
 import ChangeIcon from "../components/main/popups/ChangeIcon.svelte"
 import ChangeOutputValues from "../components/main/popups/ChangeOutputValues.svelte"
@@ -122,6 +124,8 @@ export const popups: { [key in Popups]: ComponentType } = {
     variable: Variable,
     interaction_input: InteractionInput,
     audio_stream: AudioStream,
+    audio_effect: AudioEffect,
+    add_audio_effect: AddAudioEffect,
     now_playing: NowPlaying,
     aspect_ratio: AspectRatio,
     max_lines: MaxLines,

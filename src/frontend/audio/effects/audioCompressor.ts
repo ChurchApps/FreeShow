@@ -1,15 +1,12 @@
-// Audio Compressor Engine & Integration
-// Handles dynamics compression using the Web Audio API DynamicsCompressorNode
-
-import { getEffectConfig, setEffectEnabledInStore, updateEffectInStore } from "./audioEffectsHelpers"
+import { createEffectIntegration, safelyDisconnect } from "./audioEffectsHelpers"
 
 export interface CompressorConfig {
     enabled: boolean
-    threshold: number // -100 to 0 dB, default -24
-    knee: number // 0 to 40 dB, default 30
-    ratio: number // 1 to 20, default 12
-    attack: number // 0 to 1 s, default 0.003
-    release: number // 0 to 1 s, default 0.25
+    threshold: number
+    knee: number
+    ratio: number
+    attack: number
+    release: number
 }
 
 export const DEFAULT_COMPRESSOR_CONFIG: CompressorConfig = {
@@ -31,57 +28,42 @@ export class AudioCompressor {
     constructor(ac: AudioContext, config: CompressorConfig) {
         this.ac = ac
         this.config = { ...config }
-
         this.input = ac.createGain()
         this.output = ac.createGain()
         this.compressor = ac.createDynamicsCompressor()
 
-        this.applyParams(config)
-
-        // Always keep compressor in chain; use ratio=1 / threshold=0 for bypass
-        this.input.connect(this.compressor)
-        this.compressor.connect(this.output)
-
-        if (!config.enabled) this.applyBypass()
+        this.input.connect(this.compressor).connect(this.output)
+        this.applyParams()
     }
 
-    private applyParams(config: CompressorConfig) {
+    private applyParams() {
         const t = this.ac.currentTime
-        this.compressor.threshold.setValueAtTime(config.threshold, t)
-        this.compressor.knee.setValueAtTime(config.knee, t)
-        this.compressor.ratio.setValueAtTime(config.ratio, t)
-        this.compressor.attack.setValueAtTime(config.attack, t)
-        this.compressor.release.setValueAtTime(Math.max(0.001, config.release), t)
-    }
+        const tc = 0.015
 
-    private applyBypass() {
-        const t = this.ac.currentTime
-        this.compressor.threshold.setValueAtTime(0, t)
-        this.compressor.knee.setValueAtTime(0, t)
-        this.compressor.ratio.setValueAtTime(1, t)
-        this.compressor.attack.setValueAtTime(0, t)
-        this.compressor.release.setValueAtTime(0.25, t)
+        if (this.config.enabled) {
+            this.compressor.threshold.setTargetAtTime(this.config.threshold, t, tc)
+            this.compressor.knee.setTargetAtTime(this.config.knee, t, tc)
+            this.compressor.ratio.setTargetAtTime(this.config.ratio, t, tc)
+            this.compressor.attack.setTargetAtTime(this.config.attack, t, tc)
+            this.compressor.release.setTargetAtTime(Math.max(0.001, this.config.release), t, tc)
+        } else {
+            this.compressor.threshold.setTargetAtTime(0, t, tc)
+            this.compressor.knee.setTargetAtTime(0, t, tc)
+            this.compressor.ratio.setTargetAtTime(1, t, tc)
+            this.compressor.attack.setTargetAtTime(0, t, tc)
+            this.compressor.release.setTargetAtTime(0.25, t, tc)
+        }
     }
 
     updateConfig(config: Partial<CompressorConfig>) {
         this.config = { ...this.config, ...config }
-        if (this.config.enabled) {
-            this.applyParams(this.config)
-        } else {
-            this.applyBypass()
-        }
+        this.applyParams()
     }
 
     setEnabled(enabled: boolean) {
-        this.config.enabled = enabled
-        if (enabled) {
-            this.applyParams(this.config)
-        } else {
-            this.applyBypass()
-        }
+        this.updateConfig({ enabled })
     }
 
-    /** Instantaneous gain reduction in dB (always <= 0). Read-only from the Web Audio node. */
     get reduction(): number {
         return this.compressor.reduction
     }
@@ -91,55 +73,13 @@ export class AudioCompressor {
     }
 
     dispose() {
-        try {
-            this.input.disconnect()
-        } catch {
-            // already disconnected
-        }
-        try {
-            this.compressor.disconnect()
-        } catch {
-            // already disconnected
-        }
-        try {
-            this.output.disconnect()
-        } catch {
-            // already disconnected
-        }
+        safelyDisconnect(this.input, this.compressor, this.output)
     }
 }
 
-// ============================================================================
-// INTEGRATION LAYER
-// ============================================================================
-
-let globalCompressor: AudioCompressor | null = null
-
-/**
- * Create the global compressor instance for the given AudioContext.
- * Returns the input node — callers should connect their source to input
- * and connect output to the next node in the chain (e.g. ac.destination).
- */
-export function initializeCompressor(ac: AudioContext): AudioCompressor {
-    if (globalCompressor) {
-        globalCompressor.dispose()
-    }
-    globalCompressor = new AudioCompressor(ac, getEffectConfig("compressor", DEFAULT_COMPRESSOR_CONFIG))
-    return globalCompressor
-}
-
-export function getGlobalCompressor(): AudioCompressor | null {
-    return globalCompressor
-}
-
-export function updateCompressorConfig(partial: Partial<CompressorConfig>, channelId?: string) {
-    updateEffectInStore("compressor", DEFAULT_COMPRESSOR_CONFIG, partial, channelId)
-}
-
-export function setCompressorEnabled(enabled: boolean, channelId?: string) {
-    setEffectEnabledInStore("compressor", DEFAULT_COMPRESSOR_CONFIG, enabled, channelId)
-}
-
-export function getCompressorReduction(): number {
-    return globalCompressor?.reduction ?? 0
-}
+const integration = createEffectIntegration("compressor", DEFAULT_COMPRESSOR_CONFIG, AudioCompressor)
+export const initializeCompressor = integration.initialize
+export const getGlobalCompressor = integration.getInstance
+export const updateCompressorConfig = integration.updateConfig
+export const setCompressorEnabled = integration.setEnabled
+export const getCompressorReduction = () => integration.getInstance()?.reduction ?? 0

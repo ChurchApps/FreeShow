@@ -1,5 +1,37 @@
+<script context="module" lang="ts">
+    const sharedCallbacks = new WeakMap<Element, (rect: DOMRectReadOnly) => void>()
+    let sharedObserver: ResizeObserver | null = null
+
+    function observeResize(node: Element, cb: (rect: DOMRectReadOnly) => void) {
+        let prevWidth = 0
+        let prevHeight = 0
+
+        if (!sharedObserver && typeof ResizeObserver !== "undefined") {
+            sharedObserver = new ResizeObserver((entries) => {
+                for (const entry of entries) {
+                    sharedCallbacks.get(entry.target)?.(entry.contentRect)
+                }
+            })
+        }
+
+        sharedCallbacks.set(node, (rect) => {
+            if (prevWidth !== rect.width || prevHeight !== rect.height) {
+                prevWidth = rect.width
+                prevHeight = rect.height
+                cb(rect)
+            }
+        })
+        sharedObserver?.observe(node)
+        return {
+            destroy() {
+                sharedCallbacks.delete(node)
+                sharedObserver?.unobserve(node)
+            }
+        }
+    }
+</script>
+
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
     import type { Cropping, Resolution } from "../../../types/Settings"
     import { draw, outputs, styles } from "../../stores"
     import { DEFAULT_BOUNDS, getActiveOutputs, getOutputResolution, getResolution } from "../helpers/output"
@@ -37,29 +69,8 @@
 
     let elemWidth = 0
     let elemHeight = 0
-
     let slideWidth = 0
     let slideHeight = 0
-    let slideElem: HTMLDivElement | null = null
-
-    let resizeObserver: ResizeObserver | null = null
-    onMount(() => {
-        if (!slideElem) return
-
-        resizeObserver = new ResizeObserver((entries) => {
-            for (const entry of entries) {
-                const { width, height } = entry.contentRect
-                if (slideWidth !== width || slideHeight !== height) {
-                    slideWidth = width
-                    slideHeight = height
-                }
-            }
-        })
-        resizeObserver.observe(slideElem)
-    })
-    onDestroy(() => {
-        if (resizeObserver && slideElem) resizeObserver.unobserve(slideElem)
-    })
 
     export let ratio = 1
     $: shouldUseHeightRatio = outputRes.width < outputRes.height && stylesRatio.width > stylesRatio.height && styleAspectRatio === defaultRatio
@@ -98,22 +109,12 @@
     $: drawX = $draw ? ($draw.x / outputRes.width - 0.5) * (drawZoom - 1) * -1 * 100 : 0
     $: drawY = $draw ? ($draw.y / outputRes.height - 0.5) * (drawZoom - 1) * -1 * 100 : 0
 
-    // base draw on 1920x1080 or %, and not on the output resolution
-    // $: originalAspectRatio = 1920 / 1080
-    // $: currentAspectRatio = resolution.width / resolution.height
-    // $: isTaller = originalAspectRatio > currentAspectRatio
-    // $: isWider = originalAspectRatio < currentAspectRatio
-    // $: widthRatio = isWider ? originalAspectRatio / currentAspectRatio : 1
-    // $: heightRatio = isTaller ? currentAspectRatio / originalAspectRatio : 1 // ?
-    // $: drawX = $draw ? (($draw.x / 1920 - 0.5) * (drawZoom - 1) * -1 * 100) * widthRatio : 0
-    // $: drawY = $draw ? (($draw.y / 1080 - 0.5) * (drawZoom - 1) * -1 * 100) * heightRatio : 0
-
     $: canOverflow = false // $special.textCanOverflow !== false
 </script>
 
-<div id={outputId} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}{center ? 'display: flex;justify-content: safe center;align-items: safe center;overflow: visible;' : ''}" bind:offsetWidth={elemWidth} bind:offsetHeight={elemHeight}>
+<div id={outputId} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}{center ? 'display: flex;justify-content: safe center;align-items: safe center;overflow: visible;' : ''}" use:observeResize={(r) => { elemWidth = r.width; elemHeight = r.height }}>
     <div
-        bind:this={slideElem}
+        use:observeResize={(r) => { slideWidth = r.width; slideHeight = r.height }}
         class="slide"
         class:landscape={resolution.width / resolution.height > elemWidth / elemHeight}
         class:hideOverflow

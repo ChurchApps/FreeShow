@@ -36,6 +36,7 @@
     const hints = {
         display_settings: "settings.outputs_hint",
         styles: "settings.styles_hint",
+        audio: "settings.audio_hint",
         profiles: "profile.profiles_hint"
     }
 
