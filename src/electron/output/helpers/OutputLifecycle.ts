@@ -271,8 +271,9 @@ export class OutputLifecycle {
     // Linux (especially a virtualized GPU / WSLg) lacks a real vsync/begin-frame source, so the offscreen
     // compositor never ticks. Two-part Linux-gated fix, decided from that measured data:
     //   1. compositor unthrottle switches at startup (src/electron/index.ts: disable-gpu-vsync,
-    //      disable-frame-rate-limit, run-all-compositor-stages-before-draw, CalculateNativeWinOcclusion off,
-    //      renderer/background unthrottling)
+    //      disable-frame-rate-limit, CalculateNativeWinOcclusion off, renderer/background unthrottling).
+    //      NOT run-all-compositor-stages-before-draw — that testing flag ran the whole compositor
+    //      synchronously and dropped the entire app to ~4fps on real NVIDIA hardware (see index.ts).
     //   2. an explicit begin-frame drive (updateOsrPaintDrive below): startPainting() if painting isn't
     //      active + invalidate() on the setFrameRate cadence, yielding to natural paints — because paints=0
     //      (not merely low) means the compositor may schedule NO begin-frames at all without a poke.
@@ -303,19 +304,60 @@ export class OutputLifecycle {
 
     // ---- Linux OSR begin-frame drive (task #19; see the LINUX NOTE above attachOsrCapture) ----
     // On Linux an offscreen window can get NO begin-frames at all (WSL measured paints/s=0), so frames must
-    // be actively scheduled: ensure painting is running (startPainting) and invalidate() on the same cadence
-    // setFrameRate was given — the CONFIGURED rate (native render rate when a consumer is live, the derived
-    // idle floor otherwise; CaptureHelper.updateRenderRate passes the exact value it applied). invalidate()
-    // only marks the surface dirty/schedules a begin-frame — the paint rate stays capped by setFrameRate —
-    // and each tick YIELDS to natural paints (skips the poke when the compositor produced a paint on its own
-    // within the last half interval), so a healthy bare-metal compositor is never double-driven. No-op off
-    // Linux (Windows/mac begin-frame sources work; gate in the callers too).
-    private static osrPaintDrive = new Map<string, { timer: NodeJS.Timeout; fps: number }>()
-    private static lastOsrPaintAt = new Map<string, number>()
+    // be actively scheduled: ensure painting is running (startPainting) and invalidate() to poke a
+    // begin-frame. invalidate() only marks the surface dirty — the paint rate stays capped by setFrameRate —
+    // and the drive YIELDS to a healthy compositor: paints are attributed as DRIVEN (landing within half an
+    // interval of our own invalidate) or NATURAL (everything else), and while natural paints keep arriving
+    // (one within the last two intervals) the drive stays fully silent. Only when natural paints stop —
+    // the genuinely-throttled offscreen case this drive exists for — does it start poking. On real hardware
+    // where begin-frames flow, it converges to zero invalidates instead of double-driving. No-op off Linux.
+    //
+    // FRAME-COMPLETION DRIVE (bare-metal NVIDIA fix, task #43 follow-up): the previous drive fired invalidate()
+    // on a FIXED-RATE setInterval regardless of whether the prior poke's paint had come back. On the NVIDIA
+    // laptop that reproduced the symptom (drive invalidating ~60×/s but only ~1-4 paints/s returning, CPU idle)
+    // the leading hypothesis is compositor COALESCING: a second invalidate arriving before the previous
+    // begin-frame/paint completes makes NVIDIA drop the early one. So the drive is now ONE-IN-FLIGHT: after an
+    // invalidate it will NOT issue another until the resulting paint is observed (noteOsrPaint clears the
+    // in-flight marker) OR a SAFETY timeout of DRIVE_TIMEOUT_INTERVALS frame-intervals elapses (so a paint that
+    // never arrives can't deadlock the drive). The timer still ticks at the frame interval, which is the RATE
+    // CEILING — the drive can never exceed the target fps — but within that ceiling the next poke is gated on
+    // completion, not the clock. The natural-paint yield is preserved unchanged. Timeout is expressed in frame
+    // intervals (no absolute ms tuned to one machine).
+    private static osrPaintDrive = new Map<string, { timer: NodeJS.Timeout; fps: number; interval: number }>()
+    private static lastNaturalOsrPaintAt = new Map<string, number>()
+    private static lastOsrInvalidateAt = new Map<string, number>()
+    // an invalidate has been issued and its paint not yet observed (one-in-flight gate). Cleared by
+    // noteOsrPaint when the driven paint lands, or by the safety timeout in the timer tick.
+    private static osrInvalidateInFlight = new Map<string, boolean>()
+    // telemetry: invalidates issued this stats window, per id (read + reset by the CAP-STATS accessor)
+    private static osrInvalidatesIssued = new Map<string, number>()
+    // safety net: if an in-flight invalidate's paint never arrives within this many frame intervals, release
+    // the gate and re-poke. Frame-intervals (not ms) so it self-scales to the configured rate on any machine.
+    private static readonly DRIVE_TIMEOUT_INTERVALS = 4
 
-    // record every paint arrival (both capture paths call this) so the drive can yield to natural paints
+    // record every paint arrival (both capture paths call this) so the drive can yield to natural paints.
+    // Paints landing within half a drive interval of our own invalidate() are attributed to the drive: they
+    // CLEAR the one-in-flight gate (completion observed → next poke may fire) and are NOT recorded as natural
+    // (otherwise the drive's own output would suppress it while still throttled). Everything else is natural.
     private static noteOsrPaint(id: string) {
-        if (process.platform === "linux") this.lastOsrPaintAt.set(id, Date.now())
+        if (process.platform !== "linux") return
+        const now = Date.now()
+        const drive = this.osrPaintDrive.get(id)
+        const invalidatedAt = this.lastOsrInvalidateAt.get(id)
+        if (drive && invalidatedAt !== undefined && now - invalidatedAt < drive.interval / 2) {
+            // driven paint completed — release the one-in-flight gate so the next tick can poke again
+            this.osrInvalidateInFlight.set(id, false)
+            return
+        }
+        this.lastNaturalOsrPaintAt.set(id, now)
+    }
+
+    // telemetry accessor for the [CAP-STATS] line: invalidates issued since the last read, and reset. Only
+    // meaningful on Linux; returns 0 elsewhere. Reset-on-read so the caller's 1s window yields invalidates/sec.
+    static readOsrInvalidatesIssued(id: string): number {
+        const n = this.osrInvalidatesIssued.get(id) || 0
+        if (n) this.osrInvalidatesIssued.set(id, 0)
+        return n
     }
 
     static updateOsrPaintDrive(window: BrowserWindow, id: string, fps: number) {
@@ -334,24 +376,42 @@ export class OutputLifecycle {
             try {
                 const wc = window.webContents
                 if (!wc.isPainting()) wc.startPainting()
-                // yield to a compositor that is producing frames by itself: a DRIVEN paint lands right after
-                // our previous tick (age ≈ interval at the next tick -> not skipped), while NATURAL paints at
-                // the target rate keep the age below interval/2 about half the time and back the poke off
-                const last = this.lastOsrPaintAt.get(id) || 0
-                if (Date.now() - last < interval / 2) return
+                // fallback-only: stay silent while the compositor produces frames by itself. noteOsrPaint
+                // attributes paints — driven ones (right after our invalidate) never refresh this timestamp,
+                // so a throttled compositor keeps being driven, while a healthy one (any natural paint within
+                // the last two intervals) suppresses the poke entirely.
+                const lastNatural = this.lastNaturalOsrPaintAt.get(id) || 0
+                const now = Date.now()
+                if (now - lastNatural < interval * 2) return
+                // ONE-IN-FLIGHT gate: if a prior invalidate's paint hasn't come back yet, DON'T fire another
+                // (that early re-poke is exactly what NVIDIA coalesces/drops). Wait for noteOsrPaint to clear
+                // the gate — UNLESS the in-flight invalidate has gone unanswered for DRIVE_TIMEOUT_INTERVALS
+                // frame intervals (paint may never come), in which case release the gate and re-poke so the
+                // drive can't deadlock.
+                if (this.osrInvalidateInFlight.get(id)) {
+                    const invalidatedAt = this.lastOsrInvalidateAt.get(id) || 0
+                    if (now - invalidatedAt < interval * this.DRIVE_TIMEOUT_INTERVALS) return
+                    // safety timeout elapsed — fall through and re-poke
+                }
+                this.lastOsrInvalidateAt.set(id, now)
+                this.osrInvalidateInFlight.set(id, true)
+                this.osrInvalidatesIssued.set(id, (this.osrInvalidatesIssued.get(id) || 0) + 1)
                 wc.invalidate()
             } catch {
                 // window tearing down between the isDestroyed check and the call
             }
         }, interval)
-        this.osrPaintDrive.set(id, { timer, fps: rate })
+        this.osrPaintDrive.set(id, { timer, fps: rate, interval })
     }
 
     private static stopOsrPaintDrive(id: string) {
         const drive = this.osrPaintDrive.get(id)
         if (drive) clearInterval(drive.timer)
         this.osrPaintDrive.delete(id)
-        this.lastOsrPaintAt.delete(id)
+        this.lastNaturalOsrPaintAt.delete(id)
+        this.lastOsrInvalidateAt.delete(id)
+        this.osrInvalidateInFlight.delete(id)
+        this.osrInvalidatesIssued.delete(id)
     }
 
     // Whether the user disabled hardware acceleration (Settings > Other). When true, app.disableHardwareAcceleration()
@@ -726,7 +786,11 @@ export class OutputLifecycle {
                 // (the depth input is minRtt); printed because the service-segment mins stay diagnostic
                 const pr = this.pipeRttFor(id)
                 const segStr = pr.seg ? `segMins(cons=${pr.seg.consume} fin=${pr.seg.finish} enq=${pr.seg.enqueue} dMain=${pr.seg.doneMain})` : "segMins(none)"
-                console.info(`[CAP-STATS ${id}] members=[${m.join(",")}] paints=${sPaints} burst=${sBurstPaints} fwd=${sForward} done=${sDone} readback=${sReadback} dropBudget=${sDropBudget} dropInterval=${sDropInterval} parkExp=${sParkExpired} inflight=${offMainInFlight}/${this.depthFor(id)} globalInflight=${this.globalInFlight} depth=${this.depthFor(id)} depthTotal=${this.totalDepth()} minRtt=${pr.minRtt}ms pipeRtt=${pr.pipeRtt}ms ${segStr} renderers=${this.offMainRendererCount} rtt=${rtt}ms gap(mean=${Math.round(gapMean)} std=${Math.round(gapStd)} p95=${gapP95} >25ms=${gapBig}) pipeIdle=${Math.round(idleMs)}ms${tlStr} admit=${admitFps}fps sendCap=${sendCap}fps ndiFramerate=${ndiFps}`)
+                // Linux begin-frame drive telemetry: invalidates ISSUED this window vs paints RECEIVED — the
+                // decisive laptop signal. Coalescing shows as invalidates >> paints; a healthy 1:1 track (or
+                // invalidates=0 when natural paints flow and the drive stays silent) means the poke lands.
+                const sInvalidates = process.platform === "linux" ? OutputLifecycle.readOsrInvalidatesIssued(id) : 0
+                console.info(`[CAP-STATS ${id}] members=[${m.join(",")}] paints=${sPaints} invalidates=${sInvalidates} burst=${sBurstPaints} fwd=${sForward} done=${sDone} readback=${sReadback} dropBudget=${sDropBudget} dropInterval=${sDropInterval} parkExp=${sParkExpired} inflight=${offMainInFlight}/${this.depthFor(id)} globalInflight=${this.globalInFlight} depth=${this.depthFor(id)} depthTotal=${this.totalDepth()} minRtt=${pr.minRtt}ms pipeRtt=${pr.pipeRtt}ms ${segStr} renderers=${this.offMainRendererCount} rtt=${rtt}ms gap(mean=${Math.round(gapMean)} std=${Math.round(gapStd)} p95=${gapP95} >25ms=${gapBig}) pipeIdle=${Math.round(idleMs)}ms${tlStr} admit=${admitFps}fps sendCap=${sendCap}fps ndiFramerate=${ndiFps}`)
                 sPaints = sDropBudget = sDropInterval = sParkExpired = sForward = sDone = sReadback = sRttSum = sRttCount = sBurstPaints = 0
                 sGaps.length = 0
                 sIdleMs = 0
@@ -931,11 +995,29 @@ export class OutputLifecycle {
             }
         }
 
-        window.webContents.on("paint", (event: any) => {
+        // DYNAMIC CPU FALLBACK (GPU-init-failure mismatch): this handler only attaches when HWA is enabled
+        // in CONFIG, but Chromium can still come up with SOFTWARE compositing (blocklisted/broken driver —
+        // the startup snapshot can't know). In that regime every paint arrives WITHOUT a shared texture and
+        // with the CPU bitmap instead — the old `if (!info) return` made that a permanently DEAD output.
+        // Now textureless paints feed the CPU capture path automatically (logged once; the GPU health check
+        // raises the matching user notification), so the app keeps working at reduced performance.
+        let cpuFallback = false
+        let lastCpuImage: Electron.NativeImage | null = null
+
+        window.webContents.on("paint", (event: any, _dirty: unknown, image: Electron.NativeImage) => {
             OutputLifecycle.noteOsrPaint(id) // linux begin-frame drive yields to natural paints
             const tex = event?.texture
             const info = tex?.textureInfo
-            if (!info) return
+            if (!info) {
+                if (image && !image.isEmpty()) {
+                    if (!cpuFallback) {
+                        cpuFallback = true
+                        console.warn(`[OSR ${id}] paint carries no GPU shared texture (software compositing despite hardware acceleration enabled) — falling back to CPU capture`)
+                    }
+                    lastCpuImage = image
+                }
+                return
+            }
             if (STATS) {
                 sPaints++
                 const nowP = Date.now()
@@ -1012,6 +1094,7 @@ export class OutputLifecycle {
 
         this.startOsrSendTimer(window, id, () => {
             if (lastRaw) CaptureHelper.Transmitter.transmitFrame(id, null, undefined, lastRaw)
+            else if (lastCpuImage) CaptureHelper.Transmitter.transmitFrame(id, lastCpuImage) // software-compositing fallback (see the paint handler)
         })
 
         // Release every held shared texture and drop this output's callbacks + readback-budget slot. Runs on
