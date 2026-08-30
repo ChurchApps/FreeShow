@@ -226,7 +226,16 @@ export class OutputLifecycle {
         // window.setAutoHideMenuBar(true) // hide menubar
 
         window.setSkipTaskbar(!!options.skipTaskbar) // hide from taskbar
-        if (isMac) window.minimize() // hide on mac
+        // NEVER minimize an OSR window: it is created with show:false and is never ordered in, so on macOS
+        // miniaturize() PROMOTES it into a real entry in the window list (Dock minimized area, Window menu,
+        // App Exposé, capture-source pickers) — from where the user can restore it onto the screen. Windows
+        // is unaffected (this line is mac-only) and there skipTaskbar keeps the never-shown window out of the
+        // taskbar/Alt-Tab, but setSkipTaskbar() is a no-op on macOS so nothing else suppresses it. Nothing
+        // undoes it either: OutputVisibility's capture-only branch only hides when isVisible(), which is
+        // always false here, so the orderOut: that would drop it from the window list never runs.
+        // Do NOT "fix" this by adding a hide() next to the minimize(): minimize()+hide() in the same tick
+        // races the miniaturize and leaves the window fully VISIBLE on macOS.
+        if (isMac && !osr) window.minimize() // hide on mac
 
         window.once("show", () => {
             if (options.alwaysOnTop) setOutputAlwaysOnTop(window, true)
