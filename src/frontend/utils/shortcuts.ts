@@ -26,6 +26,7 @@ import { audioExtensions, imageExtensions, videoExtensions } from "../values/ext
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
 import { hideDisplay, isOutputWindow, togglePanels, triggerFunction } from "./common"
+import { getAccess } from "./profile"
 import { triggerPopupSubmit } from "./popup"
 import { send } from "./request"
 import { save } from "./save"
@@ -178,7 +179,10 @@ export function keydown(e: KeyboardEvent) {
     if (e.ctrlKey || e.metaKey) {
         const drawerMenus = Object.keys(drawerTabs) as DrawerTabIds[]
         if (document.activeElement === document.body && Object.keys(drawerMenus).includes((Number(e.key) - 1).toString())) {
-            activeDrawerTab.set(drawerMenus[Number(e.key) - 1])
+            const tabId = drawerMenus[Number(e.key) - 1]
+            if (getAccess(tabId).global === "none") return
+
+            activeDrawerTab.set(tabId)
             // open drawer
             if (get(drawer).height < 300) drawer.set({ height: get(drawer).stored || 300, stored: null })
             return
