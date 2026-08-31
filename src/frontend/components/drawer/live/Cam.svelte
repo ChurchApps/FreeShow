@@ -20,6 +20,7 @@
     export let disablePreview = false
     export let cropping: any = undefined
     export let cropPreviewMode = false
+    export let itemStyle: string | undefined = undefined
 
     let loaded = false
     // $: active = $outBackground?.type === "camera" && $outBackground.id === cam.id
@@ -29,7 +30,7 @@
     let error: null | string = null
     let retryTimeout: NodeJS.Timeout | null = null
 
-    $: cropState = getCropState(cropping, cropPreviewMode, mediaStyle.style)
+    $: cropState = getCropState(cropping, cropPreviewMode, itemStyle || mediaStyle.style)
     $: showCropOverflowPreview = cropState.showCropOverflowPreview
     $: mediaOverflowPreviewStyle = `position: absolute;width: 100%;height: 100%;left: 0;top: 0;opacity: 0.35;pointer-events: none;`
 
@@ -127,12 +128,12 @@
         </div>
     {:else if !error}
         {#if showCropOverflowPreview}
-            <video style="{mediaOverflowPreviewStyle}{style.replace(/clip-path:[^;]+;|-webkit-clip-path:[^;]+;/g, '')}" bind:this={videoOverflowElem}>
+            <video style="{mediaOverflowPreviewStyle}{style.replace(/position:[^;]+;|width:[^;]+;|height:[^;]+;|left:[^;]+;|top:[^;]+;/g, '')}" bind:this={videoOverflowElem}>
                 <track kind="captions" />
             </video>
         {/if}
         <div class="mediaContainer" style={cropState.mediaContainerStyle}>
-            <video style="width: 100%;height: 100%;{style}" bind:this={videoElem}>
+            <video style={style} bind:this={videoElem}>
                 <track kind="captions" />
             </video>
         </div>

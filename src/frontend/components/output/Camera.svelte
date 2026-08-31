@@ -36,7 +36,7 @@
 
     $: mediaStyle = getMediaStyle($media[id], undefined)
     $: cropState = getCropState(mediaStyle.cropping, false, mediaStyle.style)
-    $: cameraStyleString = `${cropState.mediaCropGeometry}object-fit: ${mediaStyle.fit || "contain"};filter: ${mediaStyle.filter};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: cameraStyleString = `${cropState.mediaCropGeometry}object-fit: ${cropState.cropHasValues ? (mediaStyle.fit === "cover" ? "cover" : "fill") : (mediaStyle.fit || "contain")};filter: ${mediaStyle.filter};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
 </script>
 
 <div class="mediaContainer" style={cropState.mediaContainerStyle}>
