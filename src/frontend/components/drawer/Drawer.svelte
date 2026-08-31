@@ -5,7 +5,7 @@
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
     import { startResizing, stopResizing } from "../../utils/cursor"
     import { translateText } from "../../utils/language"
-    import { getAccess, hiddenInFocusMode } from "../../utils/profile"
+    import { getAccess } from "../../utils/profile"
     import { getNormalizedKey, shouldOpenReplace } from "../../utils/shortcuts"
     import { isTypingTarget } from "../../utils/shortcutsHelper"
     import { drawerTabs } from "../../values/tabs"
@@ -241,6 +241,8 @@
         searchActive = false
         setTimeout(() => (searchActive = true))
     }
+
+    const hiddenInFocusMode = ["templates", "calendar"]
 </script>
 
 <svelte:window on:mouseup={mouseup} on:mousemove={mousemove} on:keydown={keydown} />

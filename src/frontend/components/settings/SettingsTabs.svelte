@@ -1,16 +1,16 @@
 <script lang="ts">
     import type { SettingsTabs } from "../../../types/Tabs"
     import { activePage, activeProfile, focusMode, profiles, settingsTab } from "../../stores"
+    import { settingsTabs } from "../../values/tabs"
+    import { clone } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
-    import { getAllowedSettingsTabs } from "../../utils/profile"
-    import { settingsTabs } from "../../values/tabs"
 
     let activeTabs: SettingsTabs[] = []
     $: profile = $profiles[$activeProfile || ""]
-    // recomputed on profile changes, getAllowedSettingsTabs() reads the current access itself
-    $: activeTabs = profile ? getAllowedSettingsTabs() : [...settingsTabs]
+    $: if (profile) activeTabs = clone(settingsTabs).filter((tabId) => profile.access.settings?.[tabId] !== "none")
+    else activeTabs = clone(settingsTabs)
 
     function keydown(e: KeyboardEvent) {
         if (e.target?.closest?.(".edit") || e.ctrlKey || e.metaKey) return

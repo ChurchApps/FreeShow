@@ -1,8 +1,7 @@
 <script lang="ts">
     import { resetAudioRouting } from "../../audio/routing/audioRoutingInit"
-    import { activeProfile, dictionary, settingsTab } from "../../stores"
+    import { dictionary, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
-    import { getAccess, getAllowedSettingsTabs } from "../../utils/profile"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tip from "../main/Tip.svelte"
@@ -27,14 +26,6 @@
     import ThemeTabs from "./tabs/ThemeTabs.svelte"
 
     $: tabId = $settingsTab
-
-    // the settings page can be reached without going through the (access filtered) tab list,
-    // so make sure a restricted tab is never rendered
-    $: if ($activeProfile !== null && $settingsTab) checkTabAccess()
-    function checkTabAccess() {
-        if (getAccess("settings")[$settingsTab] !== "none") return
-        settingsTab.set(getAllowedSettingsTabs()[0] || "profiles")
-    }
 
     let scrolled = false
     $: if (tabId === null) scrolled = false
