@@ -26,6 +26,7 @@ import { audioExtensions, imageExtensions, videoExtensions } from "../values/ext
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
 import { hideDisplay, isOutputWindow, togglePanels, triggerFunction } from "./common"
+import { triggerPopupSubmit } from "./popup"
 import { send } from "./request"
 import { save } from "./save"
 import { isTypingTarget } from "./shortcutsHelper"
@@ -237,6 +238,12 @@ export function keydown(e: KeyboardEvent) {
             e.preventDefault()
             altKeys[e.key](e)
         }
+        return
+    }
+
+    // Enter to submit popup
+    if (get(activePopup) && e.key === "Enter" && !e.repeat && triggerPopupSubmit(e)) {
+        e.preventDefault()
         return
     }
 

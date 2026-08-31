@@ -1,35 +1,13 @@
 <script lang="ts">
     import { fade, scale } from "svelte/transition"
     import type { Popups } from "../../../types/Main"
-    import { activePopup, alertMessage, os, popupData, popupSubmit, special } from "../../stores"
+    import { activePopup, alertMessage, os, popupData, special } from "../../stores"
     import { MENU_BAR_HEIGHT } from "../../utils/common"
-    import { popups } from "../../utils/popup"
-    import { disablePopupClose, isComposing } from "../../utils/shortcuts"
+    import { clearPopupSubmit, popups } from "../../utils/popup"
+    import { disablePopupClose } from "../../utils/shortcuts"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import { EFFECTS_LIST } from "../../audio/effects/audioEffectsHelpers"
-
-    // Enter triggers the primary action of popups that opted in with registerPopupSubmit().
-    // note: e.defaultPrevented is useless here, App.svelte registers shortcuts.keydown first
-    // and that already calls preventDefault() on plain Enter
-    function keydown(e: KeyboardEvent) {
-        if (e.key !== "Enter" || e.repeat || isComposing(e)) return
-        if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return
-        if (!$popupSubmit) return
-
-        const target = e.target as HTMLElement | null
-        // a focused widget already turns Enter into its own action, so submitting here would fire twice:
-        // <button> (MaterialButton), role=button (MaterialDropdown), role=checkbox/switch (MaterialCheckbox, MaterialToggleSwitch)
-        if (target?.closest("button, [role='button'], [role='checkbox'], [role='switch'], [role='option']")) return
-        // editboxes and textareas use Enter for new lines
-        if (target?.closest(".editItem")) return
-
-        const activeElem = document.activeElement as HTMLElement | null
-        if (activeElem?.nodeName === "TEXTAREA" || activeElem?.isContentEditable) return
-
-        e.preventDefault()
-        $popupSubmit()
-    }
 
     function mousedown(e: any) {
         // same logic for Escape in shortcuts.ts
@@ -47,7 +25,7 @@
         if (popupTimeout) return
 
         // the incoming popup registers its own after mounting (if it opted in)
-        if (popupId !== $activePopup) popupSubmit.set(null)
+        if (popupId !== $activePopup) clearPopupSubmit()
 
         popupId = $activePopup
         popupTimeout = setTimeout(() => {
@@ -66,8 +44,6 @@
 
     $: isOptimized = $special.optimizedMode
 </script>
-
-<svelte:window on:keydown={keydown} />
 
 {#if popupId !== null}
     {#key popupId}

@@ -3,9 +3,9 @@
     import { translateText } from "../../../utils/language"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
-    import { registerPopupSubmit } from "../../../utils/popupSubmit"
+    import { registerPopupSubmit } from "../../../utils/popup"
 
-    registerPopupSubmit(() => (!localType && !networkType ? null : confirm()))
+    registerPopupSubmit(confirm)
 
     const localTypes = [
         { id: "window", name: translateText("settings.window"), icon: "hdmi", tip: "HDMI, DisplayPort" },
@@ -22,6 +22,8 @@
     let networkType: string = ""
 
     function confirm() {
+        if (!localType && !networkType) return
+
         popupData.set({ id: "choose_output_type", value: { localType, networkType } })
     }
 </script>

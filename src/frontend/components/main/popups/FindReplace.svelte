@@ -7,9 +7,9 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
-    import { registerPopupSubmit } from "../../../utils/popupSubmit"
+    import { registerPopupSubmit } from "../../../utils/popup"
 
-    registerPopupSubmit(() => replace())
+    registerPopupSubmit(replace)
 
     let findValue = ""
     let replaceValue = ""
@@ -37,7 +37,6 @@
 {#if showMore}
     <MaterialToggleSwitch label="actions.case_sensitive" checked={caseSentitive} defaultValue={true} on:change={(e) => (caseSentitive = e.detail)} />
 {/if}
-<!-- on:input (not on:change), or Enter would submit before the field has committed its value -->
 <MaterialTextInput label="actions.find" value={findValue} on:input={(e) => (findValue = e.detail)} autofocus />
 <MaterialTextInput label="actions.replace" value={replaceValue} on:input={(e) => (replaceValue = e.detail)} />
 

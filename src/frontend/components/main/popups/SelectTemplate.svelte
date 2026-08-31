@@ -13,6 +13,12 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import Center from "../../system/Center.svelte"
     import Icon from "../../helpers/Icon.svelte"
+    import { registerPopupSubmit } from "../../../utils/popup"
+
+    registerPopupSubmit(() => {
+        if (!searchValue.length || !searchedTemplates.length) return
+        selectTemplate(searchedTemplates[0], true)
+    })
 
     let revert = $popupData.revert
     let allowEmpty = !!$popupData.allowEmpty
@@ -85,11 +91,6 @@
 
     let resolution = getResolution(null, { $outputs, $styles })
 
-    function chooseTemplate(e: any) {
-        if (e.key !== "Enter" || !searchValue.length || !searchedTemplates.length) return
-        selectTemplate(searchedTemplates[0], true)
-    }
-
     $: normalTemplates = searchedTemplates.filter((a) => a.category !== "scripture")
     $: scriptureTemplates = searchedTemplates.filter((a) => a.category === "scripture")
     $: templatesList = id.includes("scripture") ? [...trimScriptureTemplates(scriptureTemplates, selectedType), ...normalTemplates] : [...normalTemplates, ...scriptureTemplates]
@@ -144,8 +145,6 @@
         return templates
     }
 </script>
-
-<svelte:window on:keydown={chooseTemplate} />
 
 {#if revert}
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => activePopup.set(revert)} />

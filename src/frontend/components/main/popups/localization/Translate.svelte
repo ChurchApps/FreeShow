@@ -9,9 +9,9 @@
     import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
     import { isoLanguages } from "./isoLanguages"
     import { getIsoLanguages, removeTranslationFromShow, translateShow } from "./translation"
-    import { registerPopupSubmit } from "../../../../utils/popupSubmit"
+    import { registerPopupSubmit } from "../../../../utils/popup"
 
-    registerPopupSubmit(() => convert())
+    registerPopupSubmit(convert)
 
     let languageList = getIsoLanguages()
 

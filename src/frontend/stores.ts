@@ -181,8 +181,6 @@ export const notFound: Writable<{ show: string[]; bible: string[] }> = writable(
 export const toastMessages: Writable<string[]> = writable([])
 export const alertMessage: Writable<string> = writable("")
 export const popupData: Writable<any> = writable({})
-// a popup can register its primary action here to make Enter trigger it (see Popup.svelte)
-export const popupSubmit: Writable<null | (() => void)> = writable(null)
 export const shownTips: Writable<string[]> = writable([])
 export const previousShow: Writable<any> = writable(null)
 export const projectToolSize: Writable<number> = writable(150)

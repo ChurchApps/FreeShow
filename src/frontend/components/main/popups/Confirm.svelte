@@ -1,18 +1,17 @@
 <script lang="ts">
     import { activePopup, popupData } from "../../../stores"
+    import { registerPopupSubmit } from "../../../utils/popup"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
+    registerPopupSubmit(confirm)
+
     const prompt = $popupData.prompt || ""
     const inputType = $popupData.inputType || ""
     const message = $popupData.message || ""
-
-    function keydown(e: KeyboardEvent) {
-        if (e.key === "Enter") confirm()
-    }
 
     function close() {
         popupData.set({})
@@ -30,14 +29,12 @@
     }
 </script>
 
-<svelte:window on:keydown={keydown} />
-
 {#if inputType}
     {#if message}
         <p class="message">{@html message}</p>
     {/if}
 
-    <MaterialTextInput label={prompt} type={inputType} value="" on:input={(e) => (textValue = e.detail)} on:keydown={keydown} autofocus />
+    <MaterialTextInput label={prompt} type={inputType} value="" on:input={(e) => (textValue = e.detail)} autofocus />
 
     <MaterialButton variant="contained" style="margin-top: 20px;" on:click={confirm}>
         <T id="remote.submit" />
