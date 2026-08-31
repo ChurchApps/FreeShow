@@ -21,6 +21,8 @@
     })
 
     function keydown(e: KeyboardEvent) {
+        if (e.ctrlKey || e.metaKey) return
+
         if (e.altKey) {
             e.preventDefault()
             altKeyPressed = true

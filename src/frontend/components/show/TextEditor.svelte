@@ -4,6 +4,7 @@
     import { activePopup, textEditZoom } from "../../stores"
     import { transposeText } from "../../utils/chordTranspose"
     import { newToast } from "../../utils/common"
+    import { getNormalizedKey } from "../../utils/shortcuts"
     import Icon from "../helpers/Icon.svelte"
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
@@ -23,8 +24,11 @@
 
     // Ctrl+F in shortcuts.ts does not get triggered when a text input is active, so we trigger from here as well
     function keydown(e: any) {
-        if (!e.ctrlKey && !e.metaKey) return
-        if (e.key === "f") activePopup.set("find_replace")
+        if (e.shiftKey || e.altKey) return
+
+        const ctrlKey = e.ctrlKey || e.metaKey ? getNormalizedKey(e) : ""
+
+        if (ctrlKey === "f") activePopup.set("find_replace")
     }
 
     // transpose chords

@@ -93,6 +93,7 @@
 
     $: activeIndex = clonedHistory.findIndex((edited) => ($activeEdit.id ? $activeEdit.id === edited.id : currentShowId === edited.id))
     function handleKeyDown(e: KeyboardEvent) {
+        if (e.ctrlKey || e.metaKey) return
         if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return
 
         const showRecent = !($focusMode && currentShowId) && ($activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || $editMode === "text_edit")

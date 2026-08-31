@@ -85,7 +85,7 @@ import {
     toggleOutputEnabled,
     variables
 } from "../../stores"
-import { hideDisplay, isOutputWindow, newToast, triggerFunction, wait } from "../../utils/common"
+import { escapeRegExp, hideDisplay, isOutputWindow, newToast, triggerFunction, wait } from "../../utils/common"
 import { setExampleEffects, setExampleOverlays, setExampleTemplates } from "../../utils/createData"
 import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
@@ -2327,8 +2327,8 @@ const formatting = {
         let flags = "g"
         if (data.caseSentitive === false) flags += "i"
         try {
-            const regExp = new RegExp(data.findValue, flags)
-            return t.replace(regExp, data.replaceValue)
+            const regExp = new RegExp(escapeRegExp(data.findValue), flags)
+            return t.replace(regExp, () => data.replaceValue || "")
         } catch {
             return t
         }

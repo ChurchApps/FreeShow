@@ -462,11 +462,14 @@
     }
 
     let shortcut = ""
-    $: if (menu?.shortcuts) getShortcuts()
-    function getShortcuts() {
-        let s = menu.shortcuts![0]
-        if ($os.platform === "darwin") s = s.replaceAll("Ctrl", "Cmd") // .replaceAll("Alt", "Option")
-        shortcut = s
+    $: shortcut = getShortcuts(menu?.shortcuts)
+    function getShortcuts(shortcuts: string[] | undefined) {
+        if (!shortcuts?.length) return ""
+
+        let s = shortcuts[0]
+        if ($os.platform === "darwin") s = s.replaceAll("Ctrl", "Cmd").replaceAll("Alt", "Option")
+
+        return s
     }
 
     $: customStyle = id === "uppercase" ? "text-transform: uppercase;" : id === "lowercase" ? "text-transform: lowercase;" : ""

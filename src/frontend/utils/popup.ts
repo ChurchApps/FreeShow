@@ -1,4 +1,4 @@
-import type { ComponentType } from "svelte"
+import { onDestroy, type ComponentType } from "svelte"
 import { get } from "svelte/store"
 import type { Popups } from "../../types/Main"
 import About from "../components/main/popups/About.svelte"
@@ -222,4 +222,30 @@ export async function promptCustom(prompt: string, inputType: string = "text", m
     popupData.set({ prompt, inputType, message })
     const data = (await waitForPopupData("confirm")) || ""
     return data as string
+}
+
+// Enter to submit
+
+let activeSubmit: (() => void) | null = null
+
+export function registerPopupSubmit(submit: () => void) {
+    activeSubmit = submit
+
+    onDestroy(() => {
+        if (activeSubmit === submit) activeSubmit = null
+    })
+}
+
+export function triggerPopupSubmit(e?: KeyboardEvent): boolean {
+    if (!activeSubmit) return false
+
+    const target = e?.target as HTMLElement | null
+    if (target?.closest("textarea, [contenteditable='true'], button, [role], .editItem")) return false
+
+    activeSubmit()
+    return true
+}
+
+export function clearPopupSubmit() {
+    activeSubmit = null
 }
