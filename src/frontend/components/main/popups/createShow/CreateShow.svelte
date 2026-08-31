@@ -5,6 +5,7 @@
     import { activePopup, activeProject, activeShow, categories, drawerTabsData, formatNewShow, quickTextCache, shows, special, splitLines } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
     import { translateText } from "../../../../utils/language"
+    import { getNormalizedKey } from "../../../../utils/shortcuts"
     import { customIconsColors } from "../../../../values/customIcons"
     import { clone, sortObject } from "../../../helpers/array"
     import { history } from "../../../helpers/history"
@@ -162,7 +163,9 @@
 
     function keydown(e: KeyboardEvent) {
         const ctrl = e.ctrlKey || e.metaKey
-        if (e.key === "f" && ctrl) {
+        // normalized so this works on non-latin keyboard layouts, like the shortcuts in shortcuts.ts.
+        // the normalized key is case folded, so shift/alt combos have to be excluded explicitly
+        if (ctrl && !e.shiftKey && !e.altKey && getNormalizedKey(e).toLowerCase() === "f") {
             e.preventDefault()
             selectOption("web")
 
