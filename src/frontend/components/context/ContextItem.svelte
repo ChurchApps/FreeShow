@@ -461,17 +461,15 @@
         }
     }
 
-    // reassigned whenever menu changes, so a reused item can't keep a stale hint
-    $: shortcut = getShortcut(menu?.shortcuts)
-    function getShortcut(shortcuts: string[] | undefined) {
+    let shortcut = ""
+    $: shortcut = getShortcuts(menu?.shortcuts)
+    function getShortcuts(shortcuts: string[] | undefined) {
         if (!shortcuts?.length) return ""
 
-        // an optional second entry overrides the hint on macOS ("" hides it,
-        // e.g. F11 fullscreen is a no-op there - see shortcuts.ts)
-        if ($os.platform !== "darwin") return shortcuts[0]
-        if (shortcuts[1] !== undefined) return shortcuts[1]
+        let s = shortcuts[0]
+        if ($os.platform === "darwin") s = s.replaceAll("Ctrl", "Cmd").replaceAll("Alt", "Option")
 
-        return shortcuts[0].replaceAll("Ctrl", "Cmd").replaceAll("Alt", "Option")
+        return s
     }
 
     $: customStyle = id === "uppercase" ? "text-transform: uppercase;" : id === "lowercase" ? "text-transform: lowercase;" : ""

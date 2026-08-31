@@ -14,9 +14,8 @@
         "actions.toggle_drawer": `${ctrl} + d`,
         "actions.export": `${ctrl} + e`,
         "main.search": `${ctrl} + f`,
-        // same key, opens find & replace instead while editing a show
-        "actions.find_replace": `${ctrl} + f`,
-        "main.quick_search": `${ctrl} + g / f8`,
+        "actions.find_replace": `${ctrl} + f`, // only in editor
+        "main.quick_search": `${ctrl} + g`, // also F8
         "popup.history": `${ctrl} + h`,
         "edit._title_italic": `${ctrl} + i`,
         "actions.import": `${ctrl} + i`,
@@ -35,47 +34,58 @@
         "actions.paste": `${ctrl} + v`,
         // "": `${ctrl} + w`, // closing something
         "actions.cut": `${ctrl} + x`,
-        "actions.redo": `${ctrl} + y / ${ctrl} + shift + z`,
+        "actions.redo": `${ctrl} + y`, // or Ctrl+Shift+Z
         "actions.undo": `${ctrl} + z`,
         "popup.shortcuts": `${ctrl} + ?`,
 
         shift: "SEPARATOR",
 
-        "popup.next_timer": `${ctrl} + shift + d`,
         "actions.focus_mode": `${ctrl} + shift + f`,
-        "new.show": `${ctrl} + shift + n`,
-        "show.text": `${ctrl} + shift + t`,
+        // "new.show": `${ctrl} + shift + n`, // normally Ctrl+n
         "show.change_view": `${ctrl} + shift + v`,
+
+        ctrl_alt: "SEPARATOR",
+
+        "Show Import from Clipboard": `${ctrl} + ${alt} + i`,
 
         alt: "SEPARATOR",
 
         "actions.cut_in_half": `${alt} + enter`,
-        "Show Import from Clipboard": `${ctrl} + ${alt} + i`,
+        // "actions.delete": "del / backspace",
 
         clear: "SEPARATOR",
 
         "actions.remove_selection": "esc",
-        "clear.all": "esc / .",
+        "clear.all": "esc",
+        // "clear.all": ".",
         "clear.background": "f1",
         "actions.rename": "f2",
         "clear.slide": "f2",
         "clear.overlays": "f3",
         "clear.audio": "f4",
-        "actions.delete": "del / backspace",
-        // F11 is a no-op on macOS (shortcuts.ts), the context menu hides it there as well
+        // "preview._next_slide": "f5",
+        // "preview._next_slide": "Arrow Right",
+
+        // "clear.nextTimer": "f5",
+        // "from start": "f5",
+        // MAC: cmd + shift + f
+        // "main.quick_search": "f8",
+        // F11 does not mean fullscreen on macOS (shortcuts.ts)
         ...($os.platform === "darwin" ? {} : { "actions.fullscreen": "f11" }),
+
+        // presenterKeys: "SEPARATOR",
 
         num: "SEPARATOR",
 
         // arrow keys, space, tabs, enter, ...
         "actions.change_tab": "num",
         "actions.change_drawer_tab": `${ctrl} + num`,
-        "preview._next_slide": "space / → / page down / f5",
-        "preview._previous_slide": "← / page up",
+        "actions.change_slide": "← / →",
+        // "preview._next_slide": "→ / PgDn", // space / f5
+        // "preview._previous_slide": "← / PgUp",
         "actions.change_project_item": "↑ / ↓",
         "actions.change_drawer_item": `${ctrl} + ← / →`,
         "actions.change_drawer_category": `${ctrl} + ↑ / ↓`,
-        "actions.back": `${ctrl} + backspace`,
 
         "tabs.search_tip": "SEPARATOR",
 
