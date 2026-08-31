@@ -77,3 +77,16 @@ export function getShapeFloatSide(str: string | undefined): "left" | "right" {
     const leftVal = parseFloat(parsed[2])
     return Number.isFinite(leftVal) && leftVal < 50 ? "left" : "right"
 }
+
+export function calculateShapeVerticalOffset(elem: HTMLElement | null | undefined, alignStyle: string | undefined): number {
+    if (!elem) return 0
+    const alignY = getStyles(alignStyle)["align-items"] || "center"
+    if (alignY === "flex-start") return 0
+
+    let textH = 0
+    elem.querySelectorAll(".break").forEach((b) => (textH += (b as HTMLElement).offsetHeight || 0))
+    if (!textH) textH = elem.scrollHeight
+
+    const diff = elem.clientHeight - textH
+    return diff > 0 ? (alignY === "flex-end" ? Math.round(diff) : Math.round(diff / 2)) : 0
+}

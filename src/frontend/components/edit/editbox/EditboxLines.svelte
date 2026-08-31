@@ -13,7 +13,7 @@
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
-    import { getShapeFloatSide } from "../scripts/shapeOutside"
+    import { calculateShapeVerticalOffset, getShapeFloatSide } from "../scripts/shapeOutside"
     import autosize from "../scripts/autosize"
     import { getItemText, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
@@ -103,6 +103,11 @@
 
     $: shapeOutside = getStyles(item?.style)["shape-outside"]
     $: shapeFloatSide = getShapeFloatSide(shapeOutside)
+
+    let shapeOffsetTop = 0
+    $: if (shapeOutside && textElem && (html || item?.align)) {
+        setTimeout(() => (shapeOffsetTop = calculateShapeVerticalOffset(textElem, item?.align)))
+    }
 
     function getStyle() {
         if (composing) return
@@ -744,7 +749,7 @@
             </span>
         {/if}
         {#if isLocked}
-            <div class="edit" class:hasShapeOutside={!!shapeOutside} style={shapeOutside ? `--shape-outside: ${shapeOutside}; --shape-float: ${shapeFloatSide};` : ""}>{@html html}</div>
+            <div class="edit" class:hasShapeOutside={!!shapeOutside} style="{shapeOutside ? `--shape-outside: ${shapeOutside};--shape-float: ${shapeFloatSide};--shape-offset-top: ${shapeOffsetTop}px;` : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}">{@html html}</div>
         {:else}
             {#if chordsMode && textElem}
                 <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} {chordsAction} />
@@ -768,7 +773,7 @@
                 on:copy={handleCopy}
                 on:cut={handleCut}
                 bind:innerHTML={html}
-                style="{shapeOutside ? `--shape-outside: ${shapeOutside}; --shape-float: ${shapeFloatSide};` : ''}{isAuto && autoSize && !plain ? `--auto-size: ${autoSize}px;` : ''}{!plain ? lineStyleBox : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}"
+                style="{shapeOutside ? `--shape-outside: ${shapeOutside};--shape-float: ${shapeFloatSide};--shape-offset-top: ${shapeOffsetTop}px;` : ''}{isAuto && autoSize && !plain ? `--auto-size: ${autoSize}px;` : ''}{!plain ? lineStyleBox : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}"
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
                 class:tallLines={chordsMode}
             />
@@ -847,6 +852,8 @@
         display: block !important;
         height: 100% !important;
         width: 100% !important;
+        padding-top: var(--shape-offset-top, 0px) !important;
+        box-sizing: border-box !important;
     }
     .edit.hasShapeOutside :global(.break) {
         text-wrap: unset !important;
@@ -856,7 +863,8 @@
         /* it gives a warning, but float must be used with the shape-outside property */
         float: var(--shape-float, right);
         width: 100%;
-        height: 100%;
+        height: calc(100% + var(--shape-offset-top, 0px));
+        margin-top: calc(-1 * var(--shape-offset-top, 0px));
         shape-outside: var(--shape-outside);
         pointer-events: none;
     }
