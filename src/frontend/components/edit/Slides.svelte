@@ -21,6 +21,8 @@
     })
 
     function keydown(e: KeyboardEvent) {
+        if (e.ctrlKey || e.metaKey) return
+
         if (e.altKey) {
             e.preventDefault()
             altKeyPressed = true
@@ -28,8 +30,6 @@
 
         if (e.target instanceof HTMLTextAreaElement || e.target?.closest?.(".edit")) return
         if ($activeEdit.items.length) return
-        // Ctrl + Arrow changes the drawer sub tab (NavigationSections.svelte)
-        if (e.ctrlKey || e.metaKey) return
 
         if (e.key === "ArrowDown") {
             // Arrow Down

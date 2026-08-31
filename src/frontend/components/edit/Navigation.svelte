@@ -93,9 +93,8 @@
 
     $: activeIndex = clonedHistory.findIndex((edited) => ($activeEdit.id ? $activeEdit.id === edited.id : currentShowId === edited.id))
     function handleKeyDown(e: KeyboardEvent) {
-        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return
-        // Ctrl + Arrow changes the drawer sub tab (NavigationSections.svelte)
         if (e.ctrlKey || e.metaKey) return
+        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return
 
         const showRecent = !($focusMode && currentShowId) && ($activeEdit.id || ((!currentShowId || !$shows[currentShowId]) && $editHistory.length) || $editMode === "text_edit")
         if (!showRecent || clonedHistory.length === 0) return
