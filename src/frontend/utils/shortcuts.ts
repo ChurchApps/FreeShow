@@ -193,15 +193,10 @@ export function keydown(e: KeyboardEvent) {
 
         // use default input shortcuts on supported devices
         const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y", "x"]
-        // the app menu has no clipboard roles, so on macOS these reach our own copy/paste
-        // handlers instead of the native ones - don't block them without testing
-        // copy/cut/paste inside a text field on an actual Mac first
-        const macExeption = ["c", "v"]
-        const passthrough = get(os).platform === "darwin" ? [...exeption, ...macExeption] : exeption
+        const passthrough = get(os).platform === "darwin" ? [...exeption, "c", "v"] : exeption
 
         const activeElem = document.activeElement
         if (key === "i" && activeElem?.closest(".editItem")) return
-        // previously skipped entirely on macOS, which let every shortcut fire while typing
         if (isTypingTarget(activeElem) && !passthrough.includes(key)) return
 
         key = key.toLowerCase()
@@ -245,8 +240,6 @@ export function keydown(e: KeyboardEvent) {
         return
     }
 
-    // don't let global keys (Delete/Backspace/F2/Enter) through while typing.
-    // checking the "edit" class alone is not enough as not every text field has it
     if (isTypingTarget(document.activeElement) && e.key !== "Escape") return
 
     // change tab with number keys
