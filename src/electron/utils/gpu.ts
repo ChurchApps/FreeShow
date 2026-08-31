@@ -171,6 +171,38 @@ export function scheduleGpuHealthCheck() {
     setTimeout(attempt, 20_000)
 }
 
+// The authoritative "will video hardware-decode?" answer: mediaCapabilities.decodingInfo reports
+// powerEfficient from the GPU process's actual enumerated decoder profiles. This is the only signal
+// that survives our own VaapiIgnoreDriverChecks (which makes the video_decode FEATURE status read
+// "enabled" even on driverless systems) and driver files on disk that don't serve the active GPU
+// (e.g. Ubuntu's default mesa-va-drivers on an Intel iGPU that needs iHD). Returns null when the
+// probe itself fails, so the caller can fall back to the weaker signals instead of a false alarm.
+async function probeHardwareDecode(): Promise<boolean | null> {
+    const win = getMainWindow()
+    if (!win || win.webContents.isLoading()) return null
+    try {
+        const result = await win.webContents.executeJavaScript(
+            `navigator.mediaCapabilities.decodingInfo({
+                type: "file",
+                video: { contentType: 'video/mp4; codecs="avc1.640028"', width: 1920, height: 1080, bitrate: 8000000, framerate: 30 }
+            }).then((r) => !!r.powerEfficient).catch(() => null)`,
+            true
+        )
+        return typeof result === "boolean" ? result : null
+    } catch {
+        return null
+    }
+}
+
+// whether any installed VA driver actually serves this vendor's GPU (Gallium drivers for other
+// vendors don't count — Ubuntu ships several by default)
+function vendorVaDriverPresent(vendorName: string, drivers: string[]): boolean {
+    if (vendorName === "Intel") return drivers.some((d) => /^(iHD|i965)/.test(d))
+    if (vendorName === "AMD") return drivers.some((d) => /^(radeonsi|r600)/.test(d))
+    if (vendorName === "NVIDIA") return drivers.some((d) => /^(nvidia|vdpau)/.test(d))
+    return drivers.length > 0
+}
+
 async function runGpuHealthCheck() {
     if (healthNotified) return
 
@@ -183,22 +215,13 @@ async function runGpuHealthCheck() {
     }
 
     const compositingHw = isHardware(status.gpu_compositing)
-    const videoDecodeHw = isHardware(status.video_decode)
+    const statusDecodeHw = isHardware(status.video_decode)
+    const hwDecodeProbe = await probeHardwareDecode()
+    // probe verdict wins; when it couldn't run, fall back to the (optimistic) feature status
+    const videoDecodeHw = hwDecodeProbe !== null ? hwDecodeProbe : statusDecodeHw
 
-    // Linux: the feature status only says the VA-API path is ENABLED, not that decoding actually works —
-    // with VaapiIgnoreDriverChecks (default on, see index.ts) it reads "enabled" even when no VA driver
-    // is installed, while every <video> silently falls back to software decode. The driver file on disk
-    // is the ground truth, so require one before declaring video decode healthy.
-    let vaDrivers: string[] | null = null
-    let vaDriverMissing = false
-    if (isLinux) {
-        vaDrivers = findVaDrivers()
-        vaDriverMissing = vaDrivers.length === 0
-        console.info(`[GPU-HEALTH] VA drivers found: ${vaDrivers.length ? vaDrivers.join(", ") : "NONE"}`)
-    }
-
-    if (compositingHw && videoDecodeHw && !vaDriverMissing) {
-        console.info("[GPU-HEALTH] healthy: hardware compositing + hardware video decode")
+    if (compositingHw && videoDecodeHw) {
+        console.info(`[GPU-HEALTH] healthy: hardware compositing + hardware video decode (probe=${hwDecodeProbe ?? "unavailable"})`)
         return
     }
 
@@ -216,9 +239,17 @@ async function runGpuHealthCheck() {
     // software (a few CPU cores per 4K60 stream — choppy playback, starved outputs)
     const issue: "compositing" | "video-decode" = compositingHw ? "video-decode" : "compositing"
 
-    const packages: string[] = vaDriverMissing ? vaPackagesFor(vendorName) : []
+    // driver scan feeds the remediation message only (the probe already decided the verdict)
+    let vaDriverMissing = false
+    let packages: string[] = []
+    if (isLinux) {
+        const drivers = findVaDrivers()
+        vaDriverMissing = !vendorVaDriverPresent(vendorName, drivers)
+        if (vaDriverMissing) packages = vaPackagesFor(vendorName)
+        console.info(`[GPU-HEALTH] VA drivers found: ${drivers.length ? drivers.join(", ") : "NONE"} (vendor=${vendorName || "?"} match=${!vaDriverMissing})`)
+    }
 
     healthNotified = true
-    console.info(`[GPU-HEALTH] degraded: issue=${issue} gpu_compositing=${status.gpu_compositing} video_decode=${status.video_decode} vendor=${vendorName || "?"} vaDriverMissing=${vaDriverMissing}`)
+    console.info(`[GPU-HEALTH] degraded: issue=${issue} gpu_compositing=${status.gpu_compositing} video_decode=${status.video_decode} probe=${hwDecodeProbe ?? "unavailable"} vendor=${vendorName || "?"} vaDriverMissing=${vaDriverMissing}`)
     sendToMain(ToMain.GPU_HEALTH, { issue, platform: process.platform, vendorName, vaDriverMissing, packages })
 }
