@@ -17,6 +17,7 @@ import { receiveMain, sendMain, sendToMain } from "./IPC/main"
 import { autoErrorReport } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
+import { RenderGroups } from "./output/helpers/RenderGroups"
 import { setRtmpNoticeListener, setRtmpStatusListener } from "./streaming/RtmpStreamer"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
 import { applyGraphicsDeviceSelection, scheduleGpuHealthCheck } from "./utils/gpu"
@@ -53,6 +54,11 @@ function appendEnableFeatures(features: string) {
     const merged = [...new Set([...existing.split(","), ...features.split(",")].filter(Boolean))].join(",")
     app.commandLine.appendSwitch("enable-features", merged)
 }
+
+// Chromium may suspend MUTED media in hidden pages — the offscreen capture windows are exactly that
+// (hidden documents playing muted video), so disable the suspend preventively on all platforms
+// (same switch OBS uses for its offscreen browser sources).
+app.commandLine.appendSwitch("disable-background-media-suspend")
 
 if (process.platform === "linux") {
     // Offscreen windows on Linux can lack a begin-frame/vsync source entirely (the compositor never
@@ -311,6 +317,9 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
 
     window.webContents.on("did-finish-load", () => {
         window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile })
+        // render groups may have formed before this window could receive the change broadcast
+        // (outputs are recreated during startup) — sync the current state on every (re)load
+        if (mainOutput) toApp(OUTPUT, { channel: "RENDER_GROUPS", data: RenderGroups.snapshot() })
     })
 
     function loadingFailed(err: Error) {

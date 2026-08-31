@@ -56,6 +56,9 @@ export type PlayingVideoState = {
     softLoopOpacity?: number
     type?: "background" | "item"
     isFadingOut?: boolean
+    // true when the authoritative clock is the wall-clock ticker (video has no real audio element):
+    // nothing audible to lip-sync against, so followers may correct drift gently instead of hard-seeking
+    virtualClock?: boolean
 }
 
 export class VideoPlayer {
@@ -735,6 +738,7 @@ export class VideoPlayer {
                         currentTime: activeAudio.currentTime,
                         duration: activeAudio.duration,
                         paused: activeAudio.paused,
+                        virtualClock: "timeTick" in activeAudio,
                         loop: video.loop || false,
                         muted: activeAudio.muted,
                         softLoop,

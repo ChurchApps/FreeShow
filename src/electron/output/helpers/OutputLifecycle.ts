@@ -38,6 +38,10 @@ export class OutputLifecycle {
     }
 
     static initListeners() {
+        // keep the frontend's render-group view current (preview mirrors of follower outputs clone
+        // the group renderer's mirror instead of running a redundant decode)
+        RenderGroups.onChanged = () => toApp(OUTPUT, { channel: "RENDER_GROUPS", data: RenderGroups.snapshot() })
+
         screen.on("display-metrics-changed", () => {
             setTimeout(() => this.restoreAllOutputBounds(), 500)
         })
@@ -80,7 +84,7 @@ export class OutputLifecycle {
         })
     }
 
-    static async createOutput(output: Output) {
+    static async createOutput(output: Output, groupRetries = 0) {
         const id: string = output.id || ""
         if (!id) return
 
@@ -102,7 +106,18 @@ export class OutputLifecycle {
                 await this.createFollowerOutput(id, output, group.rendererId, rendererWin)
                 return
             }
-            // renderer window missing (removed/not ready): fall through and render independently this time
+            // Renderer window missing (mid-recreate — startup CREATE churn interleaves teardown and
+            // rebuild). Leave the group (stale membership would fan one capture out to a dead member)
+            // and retry shortly: the renderer's own create is usually in flight, and splitting into two
+            // independent renderers means decoding+compositing the same content twice — permanently.
+            RenderGroups.remove(id)
+            if (groupRetries < 5) {
+                setTimeout(() => {
+                    if (!OutputHelper.getOutput(id)) void this.createOutput(output, groupRetries + 1)
+                }, 300)
+                return
+            }
+            console.warn(`[GROUP] renderer window for ${group.rendererId} never became ready; ${id} rendering independently`)
         }
 
         // disable move/resize listeners during initialization
@@ -564,6 +579,7 @@ export class OutputLifecycle {
         // a swallowed release failure permanently shrinks the compositor frame pool, so log it (once)
         let releaseWarned = false
         const releaseTex = (t: any) => {
+            if (!t) return
             try {
                 t.release()
             } catch (err) {
@@ -675,7 +691,7 @@ export class OutputLifecycle {
             // NDI gets GPU-converted UYVY/UYVA; a mixed output also gets a small BGRA GPU-downscale for
             // server/stage in the same readback pass
             const fmt = transparent ? 2 : 1
-            const members = NdiSender.NDI[id]?.sender ? RenderGroups.members(id) : []
+            const members = NdiSender.NDI[id]?.sender ? RenderGroups.members(id).filter((m) => m === id || (OutputHelper.getOutput(m) as any)?.renderGroupRenderer === id) : []
             // send pace rate is PER MEMBER: each member's sender paces at its own resolved rate
             // (configured framerate when connected, idle floor when not) — sourcing one rate from the
             // renderer let an unconnected renderer's idle floor pace a connected follower at 1fps
@@ -851,7 +867,7 @@ export class OutputLifecycle {
             // per-frame pipeline (readback + convert + downscale) runs in the worker — the main process
             // only forwards the texture handle. With shared-render the renderer captures once and the
             // readback fans out to every group member (`members` is [id] when sharing is off).
-            const members = NdiSender.NDI[id]?.sender ? RenderGroups.members(id) : []
+            const members = NdiSender.NDI[id]?.sender ? RenderGroups.members(id).filter((m) => m === id || (OutputHelper.getOutput(m) as any)?.renderGroupRenderer === id) : []
             const groupInfo = members.length ? CaptureHelper.Transmitter.groupOffMainInfo(members) : null
             const hasGpuDownscale = typeof addon.readbackConsume === "function"
             // (the mixed/scaled readback shape is recomputed in forwardOffMain at forward time)
@@ -1005,9 +1021,15 @@ export class OutputLifecycle {
             // ignore
         }
 
-        // renderer removed with followers still present -> rebuild the survivors (the first becomes the new
-        // renderer with its own window; the rest re-follow it) so the shared group keeps running
-        if (groupInfo?.wasRenderer && groupInfo.members.length) this.rebuildGroupMembers(groupInfo.members)
+        // renderer removed with followers still present -> rebuild the survivors (the first becomes the
+        // new renderer with its own window; the rest re-follow it) so the shared group keeps running.
+        // When the renderer itself is being RECREATED, its reopen joins the same ordered batch (renderer
+        // first) — the reopen and the rebuild racing each other let followers attach to a mid-teardown
+        // window and degraded the group to independent renderers (duplicate decode/composite).
+        if (groupInfo?.wasRenderer && groupInfo.members.length) {
+            this.rebuildGroupMembers(groupInfo.members, reopen)
+            reopen = null
+        }
 
         const output = OutputHelper.getOutput(id)
         if (!output) return
@@ -1037,18 +1059,20 @@ export class OutputLifecycle {
     // window) and recreate them from their stored configs: RenderGroups already promoted the first survivor to
     // members[0], so createOutput gives it a fresh window (renderer) and the rest re-follow it. Recreation is
     // deferred so the old window finishes closing first.
-    private static rebuildGroupMembers(members: string[]) {
+    private static rebuildGroupMembers(members: string[], reopenRenderer: Output | null = null) {
         // don't resurrect a group mid-teardown (closing all outputs removes the renderer too)
         if (this.closingAllOutputs) return
         const configs = members.map((m) => RenderGroups.getConfig(m)).filter((c): c is Output => !!c)
+        if (reopenRenderer) configs.unshift(reopenRenderer)
         for (const m of members) {
             this.clearPendingCaptureStart(m)
             CaptureHelper.Lifecycle.stopCapture(m)
             NdiSender.stopSenderNDI(m)
             OutputHelper.deleteOutput(m)
         }
-        setTimeout(() => {
-            for (const config of configs) void this.createOutput(config)
+        // sequential: each member awaits the previous, so followers attach to a live renderer window
+        setTimeout(async () => {
+            for (const config of configs) await this.createOutput(config)
         }, 150)
     }
 

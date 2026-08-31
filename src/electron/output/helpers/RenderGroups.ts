@@ -22,6 +22,19 @@ export class RenderGroups {
         return this.configs[id]
     }
 
+    // set by OutputLifecycle (avoids an import cycle); fired on any membership change so the
+    // frontend can mirror group state (preview mirrors of followers clone the renderer's decode)
+    static onChanged: (() => void) | null = null
+
+    // renderer id -> member ids, for groups that actually share (2+ members)
+    static snapshot(): { [rendererId: string]: string[] } {
+        const out: { [rendererId: string]: string[] } = {}
+        for (const members of Object.values(this.groups)) {
+            if (members.length >= 2) out[members[0]] = [...members]
+        }
+        return out
+    }
+
     // Everything that affects the rendered image. Missing a field here would let two outputs that render
     // DIFFERENTLY share one capture (wrong content) — so include every render-affecting property.
     static computeKey(output: Output): string {
@@ -50,6 +63,7 @@ export class RenderGroups {
         // FS_CAP_STATS: print the full render-group key so we can see exactly which field stops two
         // supposedly-identical outputs from sharing one render. Off by default; remove before shipping.
         if (process.env.FS_CAP_STATS) console.info(`[GROUP] add ${id} -> renderer=${rendererId} members=${members.length} key=${key}`)
+        this.onChanged?.()
         return { isRenderer: rendererId === id, rendererId }
     }
 
@@ -67,6 +81,7 @@ export class RenderGroups {
         if (remaining.length) this.groups[key] = remaining
         else delete this.groups[key]
 
+        this.onChanged?.()
         return { wasRenderer, newRenderer: wasRenderer ? remaining[0] : undefined, members: remaining }
     }
 
