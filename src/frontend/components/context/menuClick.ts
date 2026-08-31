@@ -2327,10 +2327,7 @@ const formatting = {
         let flags = "g"
         if (data.caseSentitive === false) flags += "i"
         try {
-            // the input is a plain search term, not a pattern - without escaping, searching for
-            // "(" or "[" would silently do nothing and "." would replace every character
             const regExp = new RegExp(escapeRegExp(data.findValue), flags)
-            // a replacer function keeps "$&", "$1" etc. literal in the replacement
             return t.replace(regExp, () => data.replaceValue || "")
         } catch {
             return t
