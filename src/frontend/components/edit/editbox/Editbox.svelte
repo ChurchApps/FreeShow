@@ -6,13 +6,14 @@
     import { getAccess } from "../../../utils/profile"
     import { isComposing } from "../../../utils/shortcuts"
     import { deleteAction } from "../../helpers/clipboard"
-    import { history } from "../../helpers/history"
     import { isCroppedItem } from "../../helpers/cropping"
+    import { history } from "../../helpers/history"
     import { getExtension, getFileName, getMediaType } from "../../helpers/media"
     import { getFirstActiveOutput, getOutputResolution, percentageStylePos } from "../../helpers/output"
     import { isSlideLocked } from "../../helpers/show"
     import { createCSSVariables } from "../../helpers/showActions"
-    import { getItemStyle } from "../../helpers/style"
+    import { getItemStyle, getStyles } from "../../helpers/style"
+    import { getShapeGuideStyle } from "../scripts/shapeOutside"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import SlideItems from "../../slide/SlideItems.svelte"
     import EditboxCropping from "./EditboxCropping.svelte"
@@ -233,6 +234,9 @@
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
 
     $: noTextMode = ref?.type === "template" && $templates[ref?.id]?.settings?.mode === "item"
+
+    // Cutout Shape
+    $: shapeGuideStyle = getShapeGuideStyle(getStyles(item?.style)["shape-outside"])
 </script>
 
 <!-- on:mouseup={() => chordUp({ showRef: ref, itemIndex: index, item })} -->
@@ -271,6 +275,10 @@
     {/if}
 
     <EditboxCropping bind:this={cropElem} {item} {index} {ref} {itemElem} {plain} {isLocked} selected={$activeEdit.items.includes(index)} bind:cropActive bind:cropPreview />
+
+    {#if shapeGuideStyle && !plain}
+        <div class="shapeOutsideGuide" style={shapeGuideStyle} />
+    {/if}
 
     {#if mediaShouldBeBackground}
         <div class="tip">

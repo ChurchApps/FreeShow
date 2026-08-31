@@ -1,7 +1,7 @@
 import type { StringObject } from "../../../types/Main"
 
 const cache = new Map<string, StringObject>()
-const DONT_REPLACE = ["color", "background", "text-decoration", "text-transform", "text-shadow", "box-shadow", "font-family", "transform"]
+const DONT_REPLACE = ["color", "background", "text-decoration", "text-transform", "text-shadow", "box-shadow", "font-family", "transform", "shape-outside"]
 
 export const getStyles = (str: string | null | undefined, removeTxt = false): StringObject => {
     if (!str) return {}

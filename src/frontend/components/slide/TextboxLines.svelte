@@ -9,6 +9,7 @@
     import { getFirstActiveOutput } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
+    import { getShapeFloatSide } from "../edit/scripts/shapeOutside"
     import { applyStyleOverrides } from "./wordOverride"
 
     export let item: Item
@@ -63,6 +64,9 @@
 
     let renderedLines: any[] = []
     $: renderedLines = styleOverrides?.length ? applyStyleOverrides(lines, styleOverrides) : lines
+
+    $: shapeOutside = getStyles(item?.style)["shape-outside"]
+    $: shapeFloatSide = getShapeFloatSide(shapeOutside)
 
     function getCustomStyle(style: string) {
         if (!style) return ""
@@ -347,14 +351,18 @@
     $: baseFontSize = fontSize || (style ? resolveFontSize(renderedLines[0]?.text?.[0]?.style, outputStyle) : 100)
 </script>
 
-<div class="align" class:hidden={hideContent} class:isStage class:scrolling={!isStage && item?.scrolling?.type} style="--scrollSpeed: {(item?.scrolling?.speed ?? 30) * 1.5}s;{style ? item?.align : null};" use:measureScroll={"align"}>
+<div class="align" class:hasShapeOutside={!!shapeOutside} class:hidden={hideContent} class:isStage class:scrolling={!isStage && item?.scrolling?.type} style="--scrollSpeed: {(item?.scrolling?.speed ?? 30) * 1.5}s;{style ? item?.align : null};" use:measureScroll={"align"}>
     <!-- scrolling lines -->
     {#if !isStage && item?.scrolling?.type && item?.scrolling?.type !== "none"}
         <div class="scrollWrapper" style="--copyCountHorizontal: {copyCountHorizontal}; --copyCountVertical: {copyCountVertical};" class:topBottomContinuousScrolling={!isStage && item?.scrolling?.type === "top_bottom"} class:bottomTopContinuousScrolling={!isStage && item?.scrolling?.type === "bottom_top"} class:leftRightContinuousScrolling={!isStage && item?.scrolling?.type === "left_right"} class:rightLeftContinuousScrolling={!isStage && item?.scrolling?.type === "right_left"}>
             {#each Array.from({ length: item?.scrolling?.type === "top_bottom" || item?.scrolling?.type === "bottom_top" ? copyCountVertical : copyCountHorizontal }) as _}
                 <div class="scrollContent" style="{item?.scrolling?.type === 'top_bottom' || item?.scrolling?.type === 'bottom_top' ? 'margin-bottom' : 'margin-right'}: {item?.scrolling?.gap ?? 100}px;" use:measureScroll={"content"}>
                     <!-- WIP duplicate of "lines" down below -->
-                    <div class="lines" data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null} style="{style ? lineStyleBox : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
+                    <div class="lines" class:hasShapeOutside={!!shapeOutside} data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null} style="{style ? lineStyleBox : ''}{shapeOutside ? `--shape-outside: ${shapeOutside};` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
+                        {#if shapeOutside}
+                            <div class="shape-outside-float" style="shape-outside: {shapeOutside}; float: {shapeFloatSide};"></div>
+                        {/if}
+
                         {#each renderedLines as line, i}
                             <!-- set div height if chords, not last line, and no text content -->
                             {@const chordOnly = chords && chordOnlyLines[i]}
@@ -405,7 +413,11 @@
         </div>
     {:else}
         <!-- non scrolling lines -->
-        <div class="lines" data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null} style="{style ? lineStyleBox : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
+        <div class="lines" class:hasShapeOutside={!!shapeOutside} data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null} style="{style ? lineStyleBox : ''}{shapeOutside ? `--shape-outside: ${shapeOutside};` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
+            {#if shapeOutside}
+                <div class="shape-outside-float" style="shape-outside: {shapeOutside}; float: {shapeFloatSide};"></div>
+            {/if}
+
             {#each renderedLines as line, i}
                 <!-- set div height if chords, not last line, and no text content -->
                 {@const chordOnly = chords && chordOnlyLines[i]}
@@ -549,6 +561,28 @@
     /* .height {
         height: 1em;
     } */
+
+    /* Cutout Shape */
+    .align.hasShapeOutside {
+        display: block !important;
+        height: 100% !important;
+        width: 100% !important;
+    }
+    .lines.hasShapeOutside {
+        display: block !important;
+        height: 100% !important;
+        width: 100% !important;
+    }
+    .lines.hasShapeOutside .break {
+        text-wrap: unset !important;
+    }
+    .shape-outside-float {
+        /* it gives a warning, but float must be used with the shape-outside property */
+        float: left;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
 
     /* scrolling */
     .scrolling {

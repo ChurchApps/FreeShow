@@ -13,6 +13,7 @@
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
+    import { getShapeFloatSide } from "../scripts/shapeOutside"
     import autosize from "../scripts/autosize"
     import { getItemText, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
@@ -99,6 +100,9 @@
     $: lineStyleBox = lineGap ? `gap: ${lineGap}px;` : ""
     $: lineStyleRadius = lineRadius ? `border-radius: ${lineRadius}px;` : ""
     $: lineStyleBg = lineBg ? `background: ${lineBg};` : ""
+
+    $: shapeOutside = getStyles(item?.style)["shape-outside"]
+    $: shapeFloatSide = getShapeFloatSide(shapeOutside)
 
     function getStyle() {
         if (composing) return
@@ -740,7 +744,7 @@
             </span>
         {/if}
         {#if isLocked}
-            <div class="edit">{@html html}</div>
+            <div class="edit" class:hasShapeOutside={!!shapeOutside} style={shapeOutside ? `--shape-outside: ${shapeOutside}; --shape-float: ${shapeFloatSide};` : ""}>{@html html}</div>
         {:else}
             {#if chordsMode && textElem}
                 <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} {chordsAction} />
@@ -750,6 +754,7 @@
                 on:mouseup={() => storeCurrentCaretPos()}
                 class="edit context {plain ? '#editbox_text' : '#edit_box__editbox_text'}"
                 class:hidden={chordsMode}
+                class:hasShapeOutside={!!shapeOutside}
                 class:autoSize={isAuto && autoSize && !plain}
                 contenteditable
                 on:keydown={textElemKeydown}
@@ -763,7 +768,7 @@
                 on:copy={handleCopy}
                 on:cut={handleCut}
                 bind:innerHTML={html}
-                style="{isAuto && autoSize && !plain ? `--auto-size: ${autoSize}px;` : ''}{!plain ? lineStyleBox : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}"
+                style="{shapeOutside ? `--shape-outside: ${shapeOutside}; --shape-float: ${shapeFloatSide};` : ''}{isAuto && autoSize && !plain ? `--auto-size: ${autoSize}px;` : ''}{!plain ? lineStyleBox : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}"
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
                 class:tallLines={chordsMode}
             />
@@ -835,6 +840,25 @@
     }
     .edit.hidden {
         visibility: hidden;
+    }
+
+    /* Cutout Shape */
+    .edit.hasShapeOutside {
+        display: block !important;
+        height: 100% !important;
+        width: 100% !important;
+    }
+    .edit.hasShapeOutside :global(.break) {
+        text-wrap: unset !important;
+    }
+    .edit.hasShapeOutside::before {
+        content: "";
+        /* it gives a warning, but float must be used with the shape-outside property */
+        float: var(--shape-float, right);
+        width: 100%;
+        height: 100%;
+        shape-outside: var(--shape-outside);
+        pointer-events: none;
     }
 
     .edit :global(.break) {
