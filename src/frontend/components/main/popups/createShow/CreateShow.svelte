@@ -162,10 +162,12 @@
     // SHORTCUTS
 
     function keydown(e: KeyboardEvent) {
+        if (e.shiftKey || e.altKey) return
+
         const ctrl = e.ctrlKey || e.metaKey
-        // normalized so this works on non-latin keyboard layouts, like the shortcuts in shortcuts.ts.
-        // the normalized key is case folded, so shift/alt combos have to be excluded explicitly
-        if (ctrl && !e.shiftKey && !e.altKey && getNormalizedKey(e).toLowerCase() === "f") {
+
+        const ctrlKey = ctrl ? getNormalizedKey(e) : ""
+        if (ctrlKey === "f") {
             e.preventDefault()
             selectOption("web")
 
