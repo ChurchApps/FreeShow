@@ -27,7 +27,7 @@ import { audioExtensions, imageExtensions, videoExtensions } from "../values/ext
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
 import { hideDisplay, isOutputWindow, togglePanels, triggerFunction } from "./common"
-import { isTypingTarget } from "./dom"
+import { isTypingTarget } from "./shortcutsHelper"
 import { send } from "./request"
 import { save } from "./save"
 

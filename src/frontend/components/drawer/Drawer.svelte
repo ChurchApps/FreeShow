@@ -7,7 +7,7 @@
     import { translateText } from "../../utils/language"
     import { getAccess, hiddenInFocusMode } from "../../utils/profile"
     import { getNormalizedKey, shouldOpenReplace } from "../../utils/shortcuts"
-    import { isTypingTarget } from "../../utils/dom"
+    import { isTypingTarget } from "../../utils/shortcutsHelper"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
     import Navigation from "../drawer/Navigation.svelte"
