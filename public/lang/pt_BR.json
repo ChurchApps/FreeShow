@@ -67,9 +67,8 @@
     "tooltip": {
         "project": "Cria um novo projeto onde você pode adicionar e organizar Shows.",
         "show": "Cria um novo Show onde você pode adicionar letras, slides e mídias.",
-        "groups": "Todos os grupos no Show atual e todos os grupos globais. Clique ou arraste-os para adicioná-los ao layout atual.",
-        "layout": "Adiciona transições e temporizadores aos slides do layout atual.",
-        "media": "Mostra todas as mídias no Show atual. Clique na thumb para aplicar na saída.",
+        "groups": "Todos os grupos no Show atual e todos os grupos globais. Clique ou arraste-os para adicioná-los ao arranjo atual.",
+        "media": "Todas as mídias no Show atual. Clique para apresentar ou arraste-os para adicioná-los ao arranjo atual.",
         "metadata": "Edite os metadados do Show atual.",
         "notes": "Escreva notas.",
         "text": "Edite o conteúdo de todos os itens selecionados.",
@@ -232,6 +231,9 @@
     },
     "audio": {
         "settings": "Configurações de áudio",
+        "inputs": "Entradas",
+        "outputs": "Saídas",
+        "channels": "Canais",
         "playlists": "Playlists",
         "playlist_settings": "Configurações de listas de reprodução",
         "open_audio_folder": "Abrir pasta de áudio relacionada.",
@@ -337,7 +339,6 @@
     },
     "error": {
         "no_show": "Não foi possível encontrar a apresentação",
-        "no_layouts": "Não foi possível encontrar nenhum layout",
         "load": "Não foi possível carregar",
         "media": "Mídia indisponível",
         "bible": "Não foi possível encontrar a bíblia local",
@@ -345,7 +346,6 @@
         "bible_api": "Não foi possível carregar as escrituras da API.Bible, você está conectado com a internet?",
         "not_found": "Não encontrado",
         "display": "Não foi possível mostrar a janela de saída na tela atual",
-        "keep_one_layout": "Você tem que ter pelo menos um layout",
         "video_unavailable": "Obtendo \"Vídeo indisponível\"? O criador desativou as incorporações do vídeo.",
         "folder_exists": "Este diretório já existe",
         "uri": "Não foi possível analisar o nome do áudio, por favor renomeie o arquivo",
@@ -518,6 +518,7 @@
         "import_scripture": "Importar bíblia",
         "create_collection": "Criar coleção",
         "scripture_show": "Opções para mostrar versículos",
+        "import_calendar": "Importar calendário",
         "player": "Reprodutor",
         "edit_event": "Editar evento",
         "edit_chart": "Editar tabela",
@@ -567,7 +568,7 @@
         "save_quit": "Salvar e sair"
     },
     "confirm": {
-        "statement_slide_exists_layout": "Este slide existe em um layout diferente!",
+        "statement_slide_exists_arrangement": "Este slide existe em um arranjo diferente!",
         "question_delete": "Você gostaria de apagar?"
     },
     "toast": {
@@ -631,12 +632,14 @@
         "action": "Nova ação",
         "event": "Novo evento",
         "event_action": "Nova ação agendada",
+        "calendar": "Novo calendário",
         "effect": "Novo efeito",
         "interaction": "Nova interação"
     },
     "show": {
         "name": "Nome",
         "category": "Categoria",
+        "new_arrangement": "Novo arranjo",
         "new_layout": "Novo layout",
         "grid": "Visualização de grade",
         "simple": "Visualização simples",
@@ -662,7 +665,7 @@
         "rename": "Renomear",
         "recolor": "Alterar cor",
         "remove": "Remover",
-        "remove_group": "Remover grupo do layout",
+        "remove_group": "Remover grupo do arranjo",
         "remove_group_short": "Remover grupo",
         "choose_group": "Escolher grupo",
         "goto_group": "Ir até grupo",
@@ -694,6 +697,7 @@
         "disable": "Desabilitar",
         "enable": "Habilitar",
         "enable_specific": "Ativar $1",
+        "toggle_specific": "Alternar $1",
         "undo": "Desfazer",
         "redo": "Refazer",
         "cut": "Cortar",
@@ -832,18 +836,23 @@
         "previous_project_item": "Item anterior do projeto",
         "index_select_project_item": "Abrir item de projeto pelo índice",
         "name_start_project_item": "Iniciar item do projeto pelo nome",
+        "id_select_show": "Abrir Show",
         "name_select_show": "Abrir Show pelo nome",
         "set_template_active": "Aplicar modelo no Show ativo",
         "change_slide_timeline_speed": "Alterar a velocidade do slide da linha do tempo",
         "random_slide": "Reproduzir slide aleatório",
         "index_select_slide": "Reproduzir slide pelo índice",
         "name_select_slide": "Reproduzir slide pelo nome",
+        "disable_slide": "Desativar slide",
+        "active_show": "Ativar Show",
         "toggle_output_lock": "Bloquear saída",
         "toggle_output_window": "Alternar janela de saída",
         "toggle_output_windows": "Janela de saída",
         "id_select_group": "Reproduzir grupo específico",
         "id_change_stage_layout": "Mudar layout do palco",
         "start_camera": "Iniciar câmera",
+        "start_microphone": "Iniciar microfone",
+        "stop_microphone": "Parar microfone",
         "start_screen": "Iniciar tela",
         "id_start_effect": "Iniciar efeito",
         "id_select_overlay": "Iniciar sobreposição",
@@ -1007,7 +1016,6 @@
         "metadata": "Metadados",
         "media": "Mídia",
         "audio": "Áudio",
-        "layout": "Layout",
         "item": "Item",
         "items": "Itens",
         "slide": "Slide"
@@ -1392,6 +1400,9 @@
         "cropping": "Corte",
         "cropped": "Cortado",
         "frame_rate": "Taxa de atualização",
+        "bitrate": "Taxa de bits",
+        "video_encoder": "Codificador de vídeo",
+        "add_destination": "Adicionar destino",
         "device": "Dispositivo",
         "display_mode": "Modo de exibição",
         "pixel_format": "Formato de pixel",
@@ -1490,6 +1501,7 @@
         "custom": "Customizado"
     },
     "calendar": {
+        "calendar": "Calendário",
         "type": "Tipo",
         "event": "Evento",
         "first_day": "Primeiro dia da semana",
@@ -1517,7 +1529,9 @@
         "ending_repeated": "repetida",
         "ending_times": "vezes",
         "save_all": "Salve e atualize todos",
-        "add_slides_from_show": "Incluir slides do show"
+        "add_slides_from_show": "Incluir slides do show",
+        "calendars": "Calendários",
+        "delete_confirmation": "Tem certeza que quer excluir todos os eventos deste calendário?"
     },
     "scripture": {
         "collections": "Coleções",
