@@ -184,7 +184,20 @@ async function runGpuHealthCheck() {
 
     const compositingHw = isHardware(status.gpu_compositing)
     const videoDecodeHw = isHardware(status.video_decode)
-    if (compositingHw && videoDecodeHw) {
+
+    // Linux: the feature status only says the VA-API path is ENABLED, not that decoding actually works —
+    // with VaapiIgnoreDriverChecks (default on, see index.ts) it reads "enabled" even when no VA driver
+    // is installed, while every <video> silently falls back to software decode. The driver file on disk
+    // is the ground truth, so require one before declaring video decode healthy.
+    let vaDrivers: string[] | null = null
+    let vaDriverMissing = false
+    if (isLinux) {
+        vaDrivers = findVaDrivers()
+        vaDriverMissing = vaDrivers.length === 0
+        console.info(`[GPU-HEALTH] VA drivers found: ${vaDrivers.length ? vaDrivers.join(", ") : "NONE"}`)
+    }
+
+    if (compositingHw && videoDecodeHw && !vaDriverMissing) {
         console.info("[GPU-HEALTH] healthy: hardware compositing + hardware video decode")
         return
     }
@@ -203,14 +216,7 @@ async function runGpuHealthCheck() {
     // software (a few CPU cores per 4K60 stream — choppy playback, starved outputs)
     const issue: "compositing" | "video-decode" = compositingHw ? "video-decode" : "compositing"
 
-    let vaDriverMissing = false
-    let packages: string[] = []
-    if (isLinux) {
-        const drivers = findVaDrivers()
-        vaDriverMissing = drivers.length === 0
-        if (vaDriverMissing) packages = vaPackagesFor(vendorName)
-        console.info(`[GPU-HEALTH] VA drivers found: ${drivers.length ? drivers.join(", ") : "NONE"}`)
-    }
+    const packages: string[] = vaDriverMissing ? vaPackagesFor(vendorName) : []
 
     healthNotified = true
     console.info(`[GPU-HEALTH] degraded: issue=${issue} gpu_compositing=${status.gpu_compositing} video_decode=${status.video_decode} vendor=${vendorName || "?"} vaDriverMissing=${vaDriverMissing}`)
