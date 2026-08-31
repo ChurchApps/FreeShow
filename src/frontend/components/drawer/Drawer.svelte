@@ -165,14 +165,10 @@
     let firstMatch: null | any = null
     let searchElem: HTMLInputElement | undefined
     async function keydown(e: KeyboardEvent) {
-        // normalized so these work on non-latin keyboard layouts, like the shortcuts in shortcuts.ts.
-        // shift/alt combos are separate shortcuts (Ctrl+Shift+F is focus mode, Ctrl+Shift+D is the next timer),
-        // and the normalized key is case folded, so they have to be excluded explicitly
-        const isPlainCtrl = (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey
-        const ctrlKey = isPlainCtrl ? getNormalizedKey(e).toLowerCase() : ""
+        if (e.shiftKey || e.altKey) return
 
-        // this moves focus to the search box, so it has to work while typing elsewhere too
-        // (TextEditor.svelte exists for the same reason)
+        const ctrlKey = e.ctrlKey || e.metaKey ? getNormalizedKey(e) : ""
+
         if (ctrlKey === "f") {
             if ($activePopup === "show" || shouldOpenReplace()) return
             focusSearch()
@@ -189,7 +185,6 @@
                 })
             }
         } else if (ctrlKey === "d" && !isTypingTarget(document.activeElement)) {
-            // unlike the search shortcut, toggling the drawer while typing is unwanted
             if (!$selected?.id && !$activeEdit.items.length) click(null)
         } else if (e.key === "Enter") {
             if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || $focusMode) return

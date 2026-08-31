@@ -24,11 +24,11 @@
 
     // Ctrl+F in shortcuts.ts does not get triggered when a text input is active, so we trigger from here as well
     function keydown(e: any) {
-        if (!e.ctrlKey && !e.metaKey) return
-        // Ctrl+Shift+F is focus mode, and the normalized key is case folded, so exclude it explicitly
         if (e.shiftKey || e.altKey) return
-        // normalized so this works on non-latin keyboard layouts
-        if (getNormalizedKey(e).toLowerCase() === "f") activePopup.set("find_replace")
+
+        const ctrlKey = e.ctrlKey || e.metaKey ? getNormalizedKey(e) : ""
+
+        if (ctrlKey === "f") activePopup.set("find_replace")
     }
 
     // transpose chords

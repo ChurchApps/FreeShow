@@ -870,9 +870,7 @@
 
         if (!e.ctrlKey && !e.metaKey) return
 
-        // normalized so these work on non-latin keyboard layouts, like the shortcuts in shortcuts.ts.
-        // the normalized key is case folded, so shift/alt combos (separate shortcuts) have to be excluded explicitly
-        const ctrlKey = e.shiftKey || e.altKey ? "" : getNormalizedKey(e).toLowerCase()
+        const ctrlKey = e.shiftKey || e.altKey ? "" : getNormalizedKey(e)
 
         // Ctrl+N Converts to show (shortcuts.ts)
 
