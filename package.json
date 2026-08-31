@@ -151,7 +151,7 @@
         "music-metadata": "^7.14.0",
         "node-machine-id": "^1.1.12",
         "osc-js": "^2.4.1",
-        "osr-capture": "github:schplay/osr-capture#0a890c5185044feb83ee2c519f68482c6c7bafaa",
+        "osr-capture": "github:meros-co/osr-capture#0a890c5185044feb83ee2c519f68482c6c7bafaa",
         "protobufjs": "^7.5.3",
         "pusher-js": "^8.5.0",
         "slideshow": "github:vassbo/slideshow#224d50f",
