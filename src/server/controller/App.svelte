@@ -103,9 +103,8 @@
 
     // keyboard shortcuts
     function keydown(e: KeyboardEvent) {
-        // the tool <select> uses arrow keys, don't advance the slide from inside it.
-        // Escape clears the output and has to keep working from anywhere
-        if (e.key !== "Escape" && (e.target as HTMLElement)?.closest("textarea, input, select")) return
+        // don't trigger shortcuts when typing in an input or textarea
+        if ((e.target as HTMLElement)?.closest("textarea, input, select")) return
 
         if (e.key === " " || e.key.startsWith("Arrow") || e.key.startsWith("Page")) e.preventDefault()
 

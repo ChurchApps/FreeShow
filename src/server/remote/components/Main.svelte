@@ -47,9 +47,9 @@
 
     // keyboard shortcuts
     function keydown(e: KeyboardEvent) {
+        // don't trigger shortcuts when typing in an input or textarea
         if ((e.target as HTMLElement)?.closest("textarea, input, select")) return
 
-        // stop the focused list/page from scrolling as well as advancing the slide
         if (e.key === " " || e.key.startsWith("Arrow") || e.key.startsWith("Page")) e.preventDefault()
 
         // WIP keyboard shortcuts same as main app
