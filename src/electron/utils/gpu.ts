@@ -203,6 +203,29 @@ function vendorVaDriverPresent(vendorName: string, drivers: string[]): boolean {
     return drivers.length > 0
 }
 
+// PCI vendor name of a DRM render node via sysfs (same source as listLinuxRenderNodes)
+function linuxNodeVendor(nodePath: string): string {
+    try {
+        const node = path.basename(nodePath)
+        const vendorId = parseInt(fs.readFileSync(`/sys/class/drm/${node}/device/vendor`, "utf8").trim(), 16)
+        return PCI_VENDOR_NAMES[vendorId] || ""
+    } catch {
+        return ""
+    }
+}
+
+// vendors of every GPU with a render node — on multi-GPU systems (e.g. Intel iGPU + NVIDIA) video
+// decode can come from ANY of them, so remediation must consider all, not just the active one
+function allLinuxGpuVendors(): string[] {
+    let nodes: string[] = []
+    try {
+        nodes = fs.readdirSync("/dev/dri").filter((n) => /^renderD\d+$/.test(n))
+    } catch {
+        return []
+    }
+    return [...new Set(nodes.map((n) => linuxNodeVendor(`/dev/dri/${n}`)).filter(Boolean))]
+}
+
 async function runGpuHealthCheck() {
     if (healthNotified) return
 
@@ -239,14 +262,19 @@ async function runGpuHealthCheck() {
     // software (a few CPU cores per 4K60 stream — choppy playback, starved outputs)
     const issue: "compositing" | "video-decode" = compositingHw ? "video-decode" : "compositing"
 
-    // driver scan feeds the remediation message only (the probe already decided the verdict)
+    // driver scan feeds the remediation message only (the probe already decided the verdict).
+    // Target it at the GPU the user selected in Settings, or at EVERY GPU whose driver is missing
+    // when on auto — on dual-GPU machines the fix is often the iGPU's package, not the active GPU's.
     let vaDriverMissing = false
     let packages: string[] = []
     if (isLinux) {
         const drivers = findVaDrivers()
-        vaDriverMissing = !vendorVaDriverPresent(vendorName, drivers)
-        if (vaDriverMissing) packages = vaPackagesFor(vendorName)
-        console.info(`[GPU-HEALTH] VA drivers found: ${drivers.length ? drivers.join(", ") : "NONE"} (vendor=${vendorName || "?"} match=${!vaDriverMissing})`)
+        const configuredNode = (config.get("graphicsDevice") as string | null) || ""
+        const candidateVendors = configuredNode ? [linuxNodeVendor(configuredNode) || vendorName] : allLinuxGpuVendors()
+        const missingVendors = (candidateVendors.length ? candidateVendors : [vendorName]).filter((v) => !vendorVaDriverPresent(v, drivers))
+        vaDriverMissing = missingVendors.length > 0
+        packages = [...new Set(missingVendors.flatMap((v) => vaPackagesFor(v)))]
+        console.info(`[GPU-HEALTH] VA drivers found: ${drivers.length ? drivers.join(", ") : "NONE"} (gpus=${candidateVendors.join("+") || "?"} missing=${missingVendors.join("+") || "none"})`)
     }
 
     healthNotified = true

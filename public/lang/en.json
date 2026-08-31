@@ -1472,12 +1472,12 @@
     },
     "gpu": {
         "no_acceleration": "Graphics acceleration is unavailable",
-        "no_acceleration_info": "Rendering is running on the CPU, causing high CPU usage and choppy playback.",
+        "no_acceleration_info": "Rendering is running on the CPU (high usage, choppy playback).",
         "no_video_decode": "Hardware video decoding is unavailable",
-        "no_video_decode_info": "Videos are decoded on the CPU, causing high CPU usage and choppy 4K playback.",
-        "va_driver_missing": "No video driver for your graphics card. Install it, then restart FreeShow:",
+        "no_video_decode_info": "Videos are decoding on the CPU (high usage, choppy playback).",
+        "va_driver_missing": "A video driver is missing. To fix, run this and restart:",
         "update_drivers": "Installing or updating your graphics drivers may fix this.",
-        "disable_hint": "Hide this warning by disabling hardware acceleration in Settings > Other."
+        "disable_hint": "Disable hardware acceleration in Settings to hide this."
     },
     "output": {
         "state_inactive": "Inactive",
