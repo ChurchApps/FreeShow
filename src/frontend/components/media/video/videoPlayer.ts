@@ -732,8 +732,8 @@ export class VideoPlayer {
                     const activeAudio = video.audio
 
                     a[id] = {
-                        currentTime: activeAudio.currentTime,
-                        duration: activeAudio.duration,
+                        currentTime: Number.isFinite(activeAudio.currentTime) ? activeAudio.currentTime : 0,
+                        duration: Number.isFinite(activeAudio.duration) && activeAudio.duration > 0 ? activeAudio.duration : 0,
                         paused: activeAudio.paused,
                         loop: video.loop || false,
                         muted: activeAudio.muted,
