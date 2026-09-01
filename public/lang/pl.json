@@ -67,9 +67,8 @@
     "tooltip": {
         "project": "Stwórz nowy projekt gdzie możesz organizować swoje pokazy.",
         "show": "Utwórz nowy pokaz, do którego możesz dodać teksty piosenek, prezentacje i multimedia.",
-        "groups": "Wszystkie grupy w bieżącym pokazie oraz wszystkie globalne grupy. Naciśnij i przeciągnij pokaz aby dodać je do bieżącego układu.",
-        "layout": "Dodaj przejścia i timery do slajdów w bieżącym układzie.",
-        "media": "Wszystkie media w bieżącym pokazie. Wyświetlaj je, albo przeciągaj je do bieżącego układu.",
+        "groups": "Wszystkie grupy z bieżącej prezentacji oraz wszystkie grupy globalne. Kliknij je lub przeciągnij, aby dodać je do bieżącej kompozycji.",
+        "media": "Wszystkie pliki multimedialne w bieżącym pokazie. Wyświetl je lub przeciągnij do bieżącej kompozycji.",
         "metadata": "Edytuj metadane dla bieżącego pokazu.",
         "notes": "Stwórz notatki.",
         "text": "Edytuj zawartość dla wszystkich zaznaczonych pozycji.",
@@ -232,6 +231,9 @@
     },
     "audio": {
         "settings": "Ustawienia audio",
+        "inputs": "Wejścia",
+        "outputs": "Wyjścia",
+        "channels": "Kanały",
         "playlists": "Playlista",
         "playlist_settings": "Ustawienia playlisty",
         "open_audio_folder": "Otwórz powiązany folder audio",
@@ -337,7 +339,6 @@
     },
     "error": {
         "no_show": "Nie znaleziono pokazu",
-        "no_layouts": "Nie znaleziono żadnego układu",
         "load": "Nie można załadować",
         "media": "Nie znaleziono multimediów",
         "bible": "Nie znaleziono lokalnego Pisma",
@@ -345,7 +346,6 @@
         "bible_api": "Nie można załadować Pisma z API.Bible, czy masz połączenie z Internetem?",
         "not_found": "Nie znaleziono",
         "display": "Nie można wyświetlić okna wyjściowego na bieżącym ekranie",
-        "keep_one_layout": "Musisz mieć co najmniej jeden układ",
         "video_unavailable": "Film jest niedostępny? Twórca wyłączył możliwość zagnieżdżania tego filmu poza platformą.",
         "folder_exists": "Taki folder już istnieje",
         "uri": "Nie można przetworzyć nazwy audio, zmień nazwę pliku",
@@ -518,6 +518,7 @@
         "import_scripture": "Zaimportuj Pismo",
         "create_collection": "Stwórz kolekcję",
         "scripture_show": "Opcje pokazu Pisma",
+        "import_calendar": "Importuj kalendarz",
         "player": "Odtwarzacz",
         "edit_event": "Edytuj wydarzenie",
         "edit_chart": "Edytuj wykres",
@@ -567,7 +568,7 @@
         "save_quit": "Zapisz i wyjdź"
     },
     "confirm": {
-        "statement_slide_exists_layout": "Slajd ma inny układ!",
+        "statement_slide_exists_arrangement": "Slajd występuje w innym układzie!",
         "question_delete": "Czy na pewno chcesz usunąć?"
     },
     "toast": {
@@ -631,12 +632,14 @@
         "action": "Nowa akcja",
         "event": "Nowe wydarzenie",
         "event_action": "Nowe zaplanowane wydarzenie",
+        "calendar": "Nowy kalendarz",
         "effect": "Nowy efekt",
         "interaction": "Nowa interakcja"
     },
     "show": {
         "name": "Nazwa",
         "category": "Kategoria",
+        "new_arrangement": "Nowe rozmieszczenie",
         "new_layout": "Nowy układ",
         "grid": "Widok siatki",
         "simple": "Prosty widok",
@@ -694,6 +697,7 @@
         "disable": "Dezaktywuj",
         "enable": "Aktywuj",
         "enable_specific": "Włącz $1",
+        "toggle_specific": "Przełącz $1",
         "undo": "Cofnij",
         "redo": "Przywróć",
         "cut": "Wytnij",
@@ -832,18 +836,23 @@
         "previous_project_item": "Poprzedni element projektu",
         "index_select_project_item": "Otwórz element projektu na indeksie",
         "name_start_project_item": "Uruchom element projektu według nazwy",
+        "id_select_show": "Otwórz pokaz",
         "name_select_show": "Otwórz program z nazwą",
         "set_template_active": "Ustaw szablon na aktywnym pokazie",
         "change_slide_timeline_speed": "Zmień prędkość odtwarzania slajdów",
         "random_slide": "Odtwórz losowy slajd",
         "index_select_slide": "Odtwórz slajd na indeksie",
         "name_select_slide": "Odtwórz slajd z nazwą",
+        "disable_slide": "Wyłącz slajd",
+        "active_show": "Aktywny pokaz",
         "toggle_output_lock": "Blokada wyjścia",
         "toggle_output_window": "Przełącz okno wyjściowe",
         "toggle_output_windows": "Przełącz okna wyjściowe",
         "id_select_group": "Odtwarzaj wybraną grupę",
         "id_change_stage_layout": "Zmiana układu połączeń sceny",
         "start_camera": "Uruchom kamerę",
+        "start_microphone": "Włącz mikrofon",
+        "stop_microphone": "Wyłącz mikrofon",
         "start_screen": "Ekran startowy",
         "id_start_effect": "Efekt startowy",
         "id_select_overlay": "Uruchom nakładkę",
@@ -1007,7 +1016,6 @@
         "metadata": "Metadane",
         "media": "Media",
         "audio": "Audio",
-        "layout": "Układ",
         "item": "Element",
         "items": "Elementy",
         "slide": "Slajd"
@@ -1392,6 +1400,9 @@
         "cropping": "Kadrowanie",
         "cropped": "Przycięte",
         "frame_rate": "Klatkaż",
+        "bitrate": "Przepustowość",
+        "video_encoder": "Koder wideo",
+        "add_destination": "Dodaj miejsce docelowe",
         "device": "Urządzenie",
         "display_mode": "Tryb wyświetlania",
         "pixel_format": "Format pikseli",
@@ -1490,6 +1501,7 @@
         "custom": "Własne"
     },
     "calendar": {
+        "calendar": "Kalendarz",
         "type": "Typ",
         "event": "Wydarzenie",
         "first_day": "Pierwszy dzień tygodnia",
@@ -1517,7 +1529,9 @@
         "ending_repeated": "powtórzonych",
         "ending_times": "razy",
         "save_all": "Zapisz i zaktualizuj wszystko",
-        "add_slides_from_show": "Dodaj slajdy z pokazu"
+        "add_slides_from_show": "Dodaj slajdy z pokazu",
+        "calendars": "Kalendarze",
+        "delete_confirmation": "Czy na pewno chcesz usunąć wszystkie wydarzenia z tego kalendarza?"
     },
     "scripture": {
         "collections": "Kolekcje",
