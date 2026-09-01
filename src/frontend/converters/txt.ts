@@ -11,6 +11,7 @@ import { linesToTextboxes } from "../components/show/formatTextEditor"
 import { VIRTUAL_BREAK_CHAR } from "../show/slides"
 import { activePopup, activeProject, activeShow, alertMessage, dictionary, drawerTabsData, formatNewShow, groupNumbers, groups, special, splitLines } from "../stores"
 import { translateText } from "../utils/language"
+import { isHolychords, preprocessHolychords } from "./holychords"
 import { setTempShows } from "./importHelpers"
 
 export function getQuickExample() {
@@ -47,6 +48,17 @@ export function convertTexts(files: { content: string; name?: string; extension?
 // convert a plain text input into a show
 // , onlySlides: boolean = false, { existingSlides } = { existingSlides: {} }
 export function convertText({ name = "", origin = "", category = null, text, noFormatting = false, returnData = false, open = true }: any) {
+    if (isHolychords(text)) {
+        try {
+            const holychords = preprocessHolychords(text)
+            text = holychords.text
+            if (!name) name = holychords.name
+            if (!origin) origin = "holychords"
+        } catch (err) {
+            console.error("Failed to parse holychords.pro paste", err)
+        }
+    }
+
     // remove empty spaces (as groups [] should be used for empty slides)
     // in "Text edit" spaces can be used to create empty "child" slides
     text = text.replaceAll("\r", "").replaceAll("\n \n", "\n\n")
