@@ -23,11 +23,9 @@ interface SyncRecord {
 const lastSeekTimestamps = new WeakMap<HTMLVideoElement, number>()
 const lastSyncRecords = new WeakMap<HTMLVideoElement, SyncRecord>()
 
-// Seek latency compensation: a 4K hard seek can take seconds (pipeline flush + keyframe catch-up decode),
-// during which the authoritative clock keeps running — seeking to where the clock WAS re-creates the drift
-// and the next sync seeks again, re-incurring the cost forever. Track how long this element's seeks take
-// (EMA, measured on the first sync call after the seek resolves) and aim ahead by that much so a single
-// seek lands on the moving target.
+// Seek latency compensation: a 4K hard seek can take seconds while the clock keeps running, so
+// seeking to where the clock WAS re-creates the drift forever. Track each element's seek latency
+// (EMA) and aim ahead by that much so a single seek lands on the moving target.
 const pendingSeeks = new WeakMap<HTMLVideoElement, number>()
 const seekLatencyEMA = new WeakMap<HTMLVideoElement, number>()
 
@@ -44,8 +42,7 @@ export function clampPlaybackRate(rate: number): number {
 export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1, isFadingOut = false, isVirtualClock = false): void {
     if (!vid || targetTime === undefined || vid.readyState < 2 || vid.seeking) return
 
-    // a previously issued seek has resolved — record how long it took (upper bound: includes the
-    // sync-message interval, which safely overshoots; landing slightly ahead is trimmed by the nudge)
+    // a previously issued seek resolved — record its latency (slight overshoot is trimmed by the nudge)
     const pendingSince = pendingSeeks.get(vid)
     if (pendingSince !== undefined) {
         pendingSeeks.delete(vid)
@@ -84,22 +81,17 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
         return
     }
 
-    // 1. Explicit seek detection — wrap-aware: when the authoritative clock loops around (a backward jump
-    // of more than half the loop), it is the natural wrap of looping content, not a user seek. Without this
-    // remap every loop boundary read as an explicit seek and hard-seeked ALL synced elements at once
-    // (OSR capture window + every preview mirror); concurrent 4K seeks contend in the GPU media pipeline,
-    // each takes seconds, drift regrows meanwhile — a self-sustaining seek storm that froze capture output.
+    // 1. Explicit seek detection — wrap-aware: a backward jump of more than half the loop is the
+    // clock wrapping, not a user seek (treating it as one hard-seeked every synced element at once,
+    // a self-sustaining seek storm on 4K content).
     let targetDelta = targetTime - lastSyncedTime
     if (loopDuration && targetDelta < -loopDuration / 2) targetDelta += loopDuration
     const jumpAmount = targetDelta - Math.max(0, (now - prevRecord.timestamp) / 1000) * rate
     const isExplicitSeek = isSoftLoop ? lastSyncedTime > targetTime + 0.1 : vid.paused ? Math.abs(targetDelta) > 0.05 : jumpAmount > 0.5 * rate || jumpAmount < -0.3 * rate || targetDelta < -0.3
 
-    // 2. Cooldown & Hard Seek (drift measured circularly so a native loop wrap never triggers a seek)
-    // A mid-stream hard seek on 4K keyframe-sparse content costs a multi-second catch-up decode, during
-    // which the clock keeps running — chasing small drift with seeks makes things worse, not better.
-    // When the clock is virtual (video has no real audio → nothing to lip-sync against) and the content
-    // loops, tolerate several seconds of drift and let the rate nudge reel it in smoothly; content with
-    // real audio keeps the tight threshold, since audible desync beats a possible stutter.
+    // 2. Cooldown & Hard Seek (drift measured circularly so a native loop wrap never triggers a seek).
+    // Looping content on the virtual clock (no audio to lip-sync) tolerates more drift and recovers by
+    // rate nudge instead — a mid-stream 4K seek can cost a multi-second catch-up decode.
     const driftSeekThreshold = isVirtualClock && loopDuration ? 5 : 1.5
     const inSeekCooldown = now - (lastSeekTimestamps.get(vid) || 0) < 500
     const shouldHardSeek = (isExplicitSeek && wrapDiff > 0.05) || (vid.paused && wrapDiff > 0.05) || (!inSeekCooldown && wrapDiff > driftSeekThreshold * rate)
@@ -119,8 +111,7 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
         lastSeekTimestamps.set(vid, now)
         lastSyncRecords.set(vid, { targetTime, timestamp: now, isNudging: false })
 
-        // aim ahead by this element's measured seek latency (playing only — paused wants the exact frame);
-        // wrap the compensated target for looping content, clamp for linear content
+        // aim ahead by the measured seek latency (playing only — paused wants the exact frame)
         let seekTo = targetTime
         if (!vid.paused) {
             seekTo += Math.min(seekLatencyEMA.get(vid) ?? 0, 8) * rate

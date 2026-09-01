@@ -30,13 +30,9 @@
     let softLoopVideo: HTMLVideoElement | null = null
     let softLoopOpacity = 0
 
-    // ---- shared-render preview dedupe ----
-    // Outputs in one render group are pixel-identical, yet the preview pane mounts a live mirror per
-    // output — and concurrent 4K hardware-decode sessions in one renderer process degrade decode
-    // scheduling for every video in the app (measured: enough to starve the capture window's playback
-    // into permanent decoder underflow). Follower mirrors therefore paint the RENDERER mirror's frames
-    // onto a canvas instead of decoding their own copy. Main app window only: output/stage windows
-    // never host follower mirrors alongside their renderer.
+    // Shared-render preview dedupe: grouped outputs are pixel-identical, so follower mirrors paint
+    // the renderer mirror's frames onto a canvas instead of running a redundant decode session
+    // (main app window only).
     $: groupRendererId = mirror && !$currentWindow ? (Object.entries($renderGroups).find(([rendererId, members]) => rendererId !== outputId && members.includes(outputId))?.[0] ?? null) : null
     $: cloneSource = groupRendererId && $mirrorRegistryTick >= 0 ? getMirrorVideo(mirrorVideoKey(groupRendererId, path)) : null
 
@@ -47,8 +43,7 @@
         const key = mirror && !$currentWindow && video && !cloneSource ? mirrorVideoKey(outputId, path) : null
         if (key !== registeredKey || (key && video !== registeredEl)) {
             if (registeredKey) unregisterMirrorVideo(registeredKey, registeredEl)
-            // switching into clone mode unmounts our <video>; unload it explicitly so its decoder
-            // session is released now, not at GC time
+            // clone mode unmounts our <video>; unload it so its decoder is released now, not at GC
             if (!key && cloneSource && registeredEl) {
                 try {
                     registeredEl.pause()

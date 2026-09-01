@@ -1424,7 +1424,6 @@
         "auto_error_reporting": "Auto error reporting",
         "disable_hardware_acceleration": "Disable hardware acceleration",
         "graphics_device": "Graphics device",
-        "graphics_device_auto": "Auto (recommended)",
         "gpu_high_performance": "Prefer high-performance GPU",
         "gpu_low_power": "Prefer low-power GPU",
         "restart_for_change": "You have to restart the program for the change to take effect!",

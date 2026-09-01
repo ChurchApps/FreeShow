@@ -354,8 +354,7 @@ export const styles: Writable<{ [key: string]: Styles }> = writable({}) // {}
 
 // OUTPUTS
 export const outputs: Writable<Outputs> = writable({}) // {default}
-// shared-render groups from the electron side: renderer output id -> all member ids (renderer first);
-// preview mirrors of follower members clone the renderer's mirror instead of decoding their own copy
+// shared-render groups (renderer output id -> member ids); follower previews clone the renderer's mirror
 export const renderGroups: Writable<{ [rendererId: string]: string[] }> = writable({})
 export const outLocked: Writable<boolean> = writable(false) // false
 

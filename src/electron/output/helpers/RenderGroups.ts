@@ -22,8 +22,7 @@ export class RenderGroups {
         return this.configs[id]
     }
 
-    // set by OutputLifecycle (avoids an import cycle); fired on any membership change so the
-    // frontend can mirror group state (preview mirrors of followers clone the renderer's decode)
+    // set by OutputLifecycle (avoids an import cycle); fired on any membership change
     static onChanged: (() => void) | null = null
 
     // renderer id -> member ids, for groups that actually share (2+ members)

@@ -171,12 +171,9 @@ export function scheduleGpuHealthCheck() {
     setTimeout(attempt, 20_000)
 }
 
-// The authoritative "will video hardware-decode?" answer: mediaCapabilities.decodingInfo reports
-// powerEfficient from the GPU process's actual enumerated decoder profiles. This is the only signal
-// that survives our own VaapiIgnoreDriverChecks (which makes the video_decode FEATURE status read
-// "enabled" even on driverless systems) and driver files on disk that don't serve the active GPU
-// (e.g. Ubuntu's default mesa-va-drivers on an Intel iGPU that needs iHD). Returns null when the
-// probe itself fails, so the caller can fall back to the weaker signals instead of a false alarm.
+// The authoritative "will video hardware-decode?" answer: powerEfficient comes from the GPU
+// process's actual decoder profiles, so it can't be fooled by enabled-but-driverless VA-API or by
+// driver files that don't serve the active GPU. Returns null when the probe itself fails.
 async function probeHardwareDecode(): Promise<boolean | null> {
     const win = getMainWindow()
     if (!win || win.webContents.isLoading()) return null
@@ -194,8 +191,8 @@ async function probeHardwareDecode(): Promise<boolean | null> {
     }
 }
 
-// whether any installed VA driver actually serves this vendor's GPU (Gallium drivers for other
-// vendors don't count — Ubuntu ships several by default)
+// whether an installed VA driver actually serves this vendor's GPU (Ubuntu ships several
+// foreign-vendor Gallium drivers by default)
 function vendorVaDriverPresent(vendorName: string, drivers: string[]): boolean {
     if (vendorName === "Intel") return drivers.some((d) => /^(iHD|i965)/.test(d))
     if (vendorName === "AMD") return drivers.some((d) => /^(radeonsi|r600)/.test(d))
@@ -214,8 +211,7 @@ function linuxNodeVendor(nodePath: string): string {
     }
 }
 
-// vendors of every GPU with a render node — on multi-GPU systems (e.g. Intel iGPU + NVIDIA) video
-// decode can come from ANY of them, so remediation must consider all, not just the active one
+// vendors of every GPU with a render node (decode can come from any of them, not just the active one)
 function allLinuxGpuVendors(): string[] {
     let nodes: string[] = []
     try {
@@ -262,9 +258,8 @@ async function runGpuHealthCheck() {
     // software (a few CPU cores per 4K60 stream — choppy playback, starved outputs)
     const issue: "compositing" | "video-decode" = compositingHw ? "video-decode" : "compositing"
 
-    // driver scan feeds the remediation message only (the probe already decided the verdict).
-    // Target it at the GPU the user selected in Settings, or at EVERY GPU whose driver is missing
-    // when on auto — on dual-GPU machines the fix is often the iGPU's package, not the active GPU's.
+    // driver scan feeds the remediation message only: target the GPU selected in Settings, or on
+    // auto every GPU missing its vendor driver (on dual-GPU machines the fix is often the iGPU's)
     let vaDriverMissing = false
     let packages: string[] = []
     if (isLinux) {

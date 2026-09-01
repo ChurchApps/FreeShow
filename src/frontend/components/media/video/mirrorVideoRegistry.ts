@@ -1,11 +1,8 @@
 import { writable } from "svelte/store"
 
-// Shared-render preview dedupe: outputs in one render group are pixel-identical, but the main
-// window's preview pane mounts a live mirror per output — N pointless 4K decodes of the same file.
-// Concurrent hardware-decode sessions in one renderer process degrade the GPU process's decode
-// scheduling for ALL sessions app-wide (measured: 2 mirrors + 1 capture window = every video at
-// ~0.6x realtime, permanent decoder underflow). So only the group RENDERER's mirror decodes; it
-// registers its <video> element here and follower mirrors paint from it via canvas instead.
+// Shared-render preview dedupe: only the group renderer's mirror decodes; it registers its
+// <video> here and follower mirrors paint from it via canvas (extra decode sessions measurably
+// degrade every video in the app).
 
 const elements = new Map<string, HTMLVideoElement>()
 

@@ -106,10 +106,9 @@ export class OutputLifecycle {
                 await this.createFollowerOutput(id, output, group.rendererId, rendererWin)
                 return
             }
-            // Renderer window missing (mid-recreate — startup CREATE churn interleaves teardown and
-            // rebuild). Leave the group (stale membership would fan one capture out to a dead member)
-            // and retry shortly: the renderer's own create is usually in flight, and splitting into two
-            // independent renderers means decoding+compositing the same content twice — permanently.
+            // Renderer window missing (mid-recreate). Leave the group (stale membership would fan the
+            // capture out to a dead member) and retry: splitting into independent renderers would
+            // decode+composite the same content twice, permanently.
             RenderGroups.remove(id)
             if (groupRetries < 5) {
                 setTimeout(() => {
@@ -1021,11 +1020,9 @@ export class OutputLifecycle {
             // ignore
         }
 
-        // renderer removed with followers still present -> rebuild the survivors (the first becomes the
-        // new renderer with its own window; the rest re-follow it) so the shared group keeps running.
-        // When the renderer itself is being RECREATED, its reopen joins the same ordered batch (renderer
-        // first) — the reopen and the rebuild racing each other let followers attach to a mid-teardown
-        // window and degraded the group to independent renderers (duplicate decode/composite).
+        // renderer removed with followers present -> rebuild survivors (first one becomes the new
+        // renderer). A recreated renderer's reopen joins the same ordered batch — racing the rebuild
+        // let followers attach to a mid-teardown window and split the group.
         if (groupInfo?.wasRenderer && groupInfo.members.length) {
             this.rebuildGroupMembers(groupInfo.members, reopen)
             reopen = null

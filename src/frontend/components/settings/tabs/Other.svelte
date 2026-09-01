@@ -24,7 +24,7 @@
         // GPU preference instead — main returns an empty list)
         requestMain(Main.GET_GRAPHICS_DEVICES, undefined, (devices) => {
             graphicsDeviceOptions = [
-                { value: "", label: translateText("settings.graphics_device_auto") },
+                { value: "", label: translateText("settings.auto") },
                 ...(devices || []).map((d) => ({ value: d.value, label: d.label || translateText(d.value === "high-performance" ? "settings.gpu_high_performance" : "settings.gpu_low_power") }))
             ]
             graphicsDeviceSupported = (devices || []).length > 0
