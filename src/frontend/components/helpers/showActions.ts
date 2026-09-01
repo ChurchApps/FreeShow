@@ -728,7 +728,7 @@ export function sendMidi(data: any) {
 
 // DYNAMIC VALUES
 
-const commonOnly = ["time_str", "project_section_time", "show_name_next", "show_text_full", "slide_group_text", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
+const commonOnly = ["time_str", "project_section_notes", "project_section_time", "show_name_next", "show_text_full", "slide_group_text", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
 const deprecatedDynamicValues = ["show_name_next", "project_section_next", "project_section_time_next", "slide_group_next", "slide_group_next_color", "slide_notes_next", "slide_text_previous", "slide_text_current", "slide_text_next"]
 
 function insertOffsetVariants(idList: string[]): string[] {
@@ -1160,6 +1160,10 @@ const dynamicValues = {
         const active = getActiveProjectSection({ outSlide }, 1)
         return active?.name || ""
     }, // DEPRECATED
+    project_section_notes: ({ outSlide, offset }) => {
+        const active = getActiveProjectSection({ outSlide }, offset)
+        return active?.notes || ""
+    },
     project_section_time: ({ offset }) => getActiveProjectSection({}, offset)?.data?.time || "00:00",
     project_section_time_next: () => getActiveProjectSection({}, 1)?.data?.time || "00:00", // DEPRECATED
     project_section_time_until_next: ({ offset }) => {
