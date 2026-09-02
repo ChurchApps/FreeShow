@@ -190,6 +190,7 @@ interface ProjectItem {
         item_type: string
         title?: string
         description?: string
+        html_details?: string | null
         length?: number
     }
     relationships: {
@@ -560,12 +561,7 @@ async function processSongItem(item: ProjectItem, itemsEndpoint: string) {
     let sections: SongSection[] = []
 
     // Get sections from API first
-    const apiSections: SongSection[] = (
-        await pcoRequest({
-            scope: "services",
-            endpoint: `${arrangementEndpoint}/sections`
-        })
-    )[0]?.attributes.sections || []
+    const apiSections: SongSection[] = (await pcoRequest({ scope: "services", endpoint: `${arrangementEndpoint}/sections` }))[0]?.attributes.sections || []
 
     // Parse sections from chord chart if available (contains repeat markers etc.)
     const chordChartSections = song.chord_chart ? parseChordChartIntoSections(song.chord_chart) : []
@@ -936,9 +932,34 @@ function expandRepeatedSectionLines(lines: ParsedSectionLine[]): ParsedSectionLi
     return expandedLines.filter((line) => !line.hidden)
 }
 
+// don't parse generic item "html_details" with custom chords/groups
+function parsePlainTextLines(text: string): ParsedSectionLine[] {
+    return text.split(/\r?\n/).map((line) => ({ text: line.trim() }))
+}
+
+function htmlDetailsToSections(html: string): SongSection[] {
+    if (!html) return []
+
+    // change <br> into newline chars, and remove all HTML tags
+    let text = html.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "")
+
+    // OpenLP users typically included [===] to mark new slides, we use empty lines
+    text = text.replace(/^\s*\[=+\]/gm, "")
+
+    const sections = parseChordChartIntoSections(text)
+    if (sections.length) return sections
+
+    return text
+        .split(/\n{2,}/)
+        .map((b) => b.trim())
+        .filter(Boolean)
+        .map((lyrics) => ({ label: "", lyrics }))
+}
+
 function processRegularItem(item: ProjectItem) {
     const showId = `pcosong_${item.id}`
-    const show = getShow(item, {}, [], "generic")
+    const sections = item.attributes.html_details ? htmlDetailsToSections(item.attributes.html_details) : []
+    const show = getShow(item, {}, sections, "generic")
 
     return {
         show: { id: showId, ...show },
@@ -1009,7 +1030,7 @@ function getShow(SONG_DATA: any, SONG: any, SECTIONS: any[], type: string = "") 
     const slides: { [key: string]: Slide } = {}
     const layoutSlides: SlideData[] = []
     SECTIONS.forEach((section) => {
-        const sectionLines = parseSectionLines(section.lyrics || "")
+        const sectionLines = type === "generic" ? parsePlainTextLines(section.lyrics || "") : parseSectionLines(section.lyrics || "")
         const wholeSectionRepeatCount = getWholeSectionRepeatCount(sectionLines)
         const parsedLines = wholeSectionRepeatCount > 1 ? sectionLines.filter((line) => !line.hidden) : expandRepeatedSectionLines(sectionLines)
 
