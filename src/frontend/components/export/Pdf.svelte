@@ -414,7 +414,7 @@
                             </div>
                         {/if}
                         {#each layoutSlides[show.id || ""] as slide, i}
-                            <div class="slide" class:padding={options.type !== "slides" ? i === 0 : i < options.grid[0]} style={options.type !== "text" ? `height: calc(100vh / ${options.grid[1]} - 0.1px);` + (options.type !== "slides" ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}>
+                            <div class="slide" class:padding={options.type === "text" ? true : options.type !== "slides" ? i === 0 : i < options.grid[0]} class:no-break={options.type === "text"} style={options.type !== "text" ? `height: calc(100vh / ${options.grid[1]} - 0.1px);` + (options.type !== "slides" ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}>
                                 <!-- TODO: different slide heights! -->
                                 <!-- style={settings.slides ? `height: calc(842pt / ${settings.grid[1]});` : "" + settings.text ? "" : `width: calc(100% / ${settings.grid[0]});`} -->
                                 {#if options.groups}
@@ -477,12 +477,19 @@
                         {/if}
                     {/if}
                     {#if options.metadata}
-                        <div style="position: absolute;top: calc(100vh * {showPages} - 25px);width: 100%;">
-                            <p style="text-align: center;font-size: 12px;opacity: 0.8;">
-                                <!-- metaDisplay is only used here temporarily -->
+                        {#if options.type === "text"}
+                            <!-- text export flows freely, so its real height isn't a multiple of 100vh - render in normal flow instead of guessing an absolute offset -->
+                            <p style="text-align: center;font-size: 12px;opacity: 0.8;margin: 20px 0 0;">
                                 {show.metaDisplay}
                             </p>
-                        </div>
+                        {:else}
+                            <div style="position: absolute;top: calc(100vh * {showPages} - 25px);width: 100%;">
+                                <p style="text-align: center;font-size: 12px;opacity: 0.8;">
+                                    <!-- metaDisplay is only used here temporarily -->
+                                    {show.metaDisplay}
+                                </p>
+                            </div>
+                        {/if}
                     {/if}
                 </div>
             {/each}
@@ -552,6 +559,10 @@
     }
     .slide.padding {
         padding-top: 30px;
+    }
+    .slide.no-break {
+        break-inside: avoid;
+        page-break-inside: avoid;
     }
 
     .slide .group {
