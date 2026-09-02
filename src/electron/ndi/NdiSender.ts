@@ -109,7 +109,6 @@ export class NdiSender {
     }
 
     static async createSenderNDI(id: string, name = "", groups?: string) {
-        // upstream 1.6.5 recreate semantics: an existing sender is stopped and replaced (not skipped)
         if (this.NDI[id]) {
             this.stopSenderNDI(id)
         }
@@ -163,10 +162,8 @@ export class NdiSender {
         return true
     }
 
-    // Audio (upstream 1.6.5 contract): `buffer` arrives ALREADY as planar/float32/little-endian PCM — the
-    // renderer converts before processAudio, so no pcm conversion happens here. The worker queues frames per
-    // sender and sends them serially (see ndiWorker). Audio buffers are small; clone (do not transfer) to
-    // avoid detaching a possibly-pooled ArrayBuffer.
+    // `buffer` arrives already as planar/float32/little-endian PCM (the renderer converts). Audio buffers
+    // are small; clone (do not transfer) to avoid detaching a possibly-pooled ArrayBuffer.
     static async sendAudioBufferNDITarget(id: string, buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
         if (!this.NDI[id]?.sender || !this.worker || !buffer || buffer.length === 0) return
 

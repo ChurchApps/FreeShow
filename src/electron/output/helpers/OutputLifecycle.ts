@@ -422,8 +422,8 @@ export class OutputLifecycle {
     //   boundaries and content pauses, so the estimator refreshes in practice.
     // - Samples are tagged with pixel count and the window resets on size change (service time is a
     //   function of frame size).
-    // - Deeper pipelining on a bandwidth-saturated pipe was measured to REDUCE throughput (concurrent
-    //   copy-out contention), so no adaptive/probing controller sits on top of this derivation.
+    // - Deeper pipelining on a bandwidth-saturated pipe reduces throughput (concurrent copy-out
+    //   contention), so no adaptive/probing controller sits on top of this derivation.
     private static readonly RTT_WINDOW_SAMPLES = 300
     // mirror of the addon's kMaxPool (its hard cap on concurrent readback contexts); deriving past it
     // would block libuv threads in AcquireContext, so clamp here and log the hit
@@ -466,8 +466,7 @@ export class OutputLifecycle {
     }
 
     // minima over the uncontended samples: minRtt is the depth-derivation input; seg/pipeRtt are
-    // CAP-STATS telemetry only (deriving depth from them was measured harmful — don't feed them back).
-    // All zeros when no uncontended evidence exists (depth holds, never derived from contention).
+    // telemetry only (don't feed them back into depth). All zeros when no uncontended evidence exists.
     private static uncontendedMins(st: { samples: { rtt: number; unc: boolean; seg?: OffMainSegments }[] }): { minRtt: number; seg: OffMainSegments | null; pipeRtt: number } {
         let minRtt = Infinity
         let consume = Infinity, finish = Infinity, enqueue = Infinity, doneMain = Infinity
@@ -673,8 +672,7 @@ export class OutputLifecycle {
         // flushes at the due boundary, or the moment a slot frees if the pipe was full — an admission
         // boundary is deferred, never wasted while fresh content exists. The due advances on a
         // drift-corrected absolute timeline (resync forward after a stall, never burst to catch up).
-        // Dropping instead of coalescing was measured to stutter: a paint clump filled the pipe, the
-        // remainder was dropped, and the pipe idled until the next clump.
+        // Coalescing beats dropping: a dropped paint clump leaves the pipe idle until the next clump.
         let pendingFrame: { tex: any; source: any; width: number; height: number } | null = null
         let admitNextDue = 0
         let admitTimer: NodeJS.Timeout | null = null

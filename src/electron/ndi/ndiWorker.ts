@@ -64,8 +64,8 @@ type Sender = {
     paceInterval?: number // 1000/captureFramerate (configured intent, same source scheduleRepeat used)
     paceCap?: number // queue capacity = renderer's derived depth_r + 1 (measured/derived, not tuned)
     paceMisses?: number // FS_CAP_STATS: ticks with no queued real frame -> repeat sent
-    // a busy tick is simply skipped (the frame re-quantizes to the next tick) — re-running skipped
-    // ticks on send completion was measured to worsen jitter (self-feeding send churn)
+    // a busy tick is simply skipped (the frame re-quantizes to the next tick); re-running skipped
+    // ticks on send completion worsens jitter
     paceBusy?: number // FS_CAP_STATS: ticks skipped because the previous send was still in flight
     lastRealSendAt?: number // wire-side evenness: Date.now() of the previous REAL send call
     realGaps?: number[] // FS_CAP_STATS: gaps between consecutive REAL send calls this window (mean/p95 reported)
@@ -113,7 +113,7 @@ if (process.env.FS_CAP_STATS) {
 }
 
 async function createSender(id: string, name: string, groups?: string) {
-    // upstream 1.6.5 recreate semantics: replace an existing sender instead of skipping the create
+    // replace an existing sender instead of skipping the create
     if (NDI[id]) stopSender(id)
 
     NDI[id] = { name, groups }
@@ -130,8 +130,8 @@ async function createSender(id: string, name: string, groups?: string) {
         /* eslint @typescript-eslint/await-thenable: 0 */
         const sender = await grandiose.send({ name, groups, clockVideo: false, clockAudio: false })
 
-        // upstream 1.6.5 race fix: if stopSender was called while `await grandiose.send` was in progress,
-        // the entry is gone — destroy the freshly created sender instead of leaking it
+        // if stopSender was called while `await grandiose.send` was in progress, the entry is gone —
+        // destroy the freshly created sender instead of leaking it
         if (!NDI[id]) {
             try {
                 sender.destroy()
@@ -163,8 +163,8 @@ async function createSender(id: string, name: string, groups?: string) {
 }
 
 function stopSender(id: string) {
-    // upstream 1.6.5: tear down even when the timer/sender never got assigned (e.g. destroy arriving while
-    // createSender is still awaiting grandiose.send — deleting the entry makes createSender's race guard fire)
+    // tear down even when the timer/sender never got assigned (e.g. destroy arriving while createSender
+    // is still awaiting grandiose.send — deleting the entry makes createSender's race guard fire)
     if (!NDI[id]) return
     console.info("NDI - stopping sender: " + (NDI[id].name || id))
     if (NDI[id].timer) clearInterval(NDI[id].timer)
@@ -424,7 +424,6 @@ function paceTick(id: string) {
     if (!s?.sender) return
     if (s.sendingVideo) {
         // previous send still in flight — skip this tick; the frame re-quantizes to the next one
-        // (re-running skipped ticks on completion was measured to worsen jitter)
         s.paceBusy = (s.paceBusy || 0) + 1
         return
     }
@@ -504,8 +503,7 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
     const rbKey = `${id}#${slot}`
     senderData.offMain = true
     // prefer the two-phase path: its consume callback releases the Electron texture synchronously at
-    // the GPU-done boundary. readbackOnce's mid-Execute callback only schedules the release behind
-    // other worker-loop work, which was measured to starve the compositor frame pool.
+    // the GPU-done boundary, so the compositor frame pool never starves
     const twoPhase = typeof osr.readbackConsume === "function" && typeof osr.readbackFinish === "function"
     const singleDispatch = !twoPhase && typeof osr.readbackOnce === "function"
     let textureReleased = false
@@ -596,10 +594,9 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
             for (const m of activeMembers) {
                 const md = NDI[m]!
                 md.offMain = true
-                // per-member pace rate: each member's sender paces at its own
-                // resolved framerate (configured when connected, idle floor when not) — never the renderer's
-                // (an unconnected renderer's 1fps floor used to coalesce a connected follower's 60fps stream
-                // to 1fps). The frame metadata carries the member's rate too (receivers read frameRateN).
+                // per-member pace rate: each member's sender paces at its own resolved framerate
+                // (configured when connected, idle floor when not) — never the renderer's, whose idle
+                // floor would throttle a connected follower
                 const mfr = Math.max(1, opts.memberFramerates?.[m] || framerate)
                 md.paceInterval = 1000 / mfr
                 // rate rose while the pacer runs (e.g. idle floor -> receiver connected): re-phase the tick
@@ -640,10 +637,9 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
     }
 }
 
-// ---- audio (upstream 1.6.5 port) -------------------------------------------------------------------------
-// Buffers arrive ALREADY as planar/float32/little-endian PCM (the renderer converts before processAudio; the
-// old pcm-convert step and the audioSamplesSent timecode-drift logic are gone upstream — frames carry no
-// timecode and NDI stamps them at send time). Each sender has its own FIFO audioQueue drained by a serial
+// ---- audio -----------------------------------------------------------------------------------------------
+// Buffers arrive already as planar/float32/little-endian PCM (the renderer converts); frames carry no
+// timecode and NDI stamps them at send time. Each sender has its own FIFO audioQueue drained by a serial
 // send loop, with a hard cap so a stalled sender can't accumulate unbounded memory/latency.
 async function sendQueuedAudioFrame(id: string) {
     const senderData = NDI[id]
