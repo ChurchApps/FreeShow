@@ -3,7 +3,7 @@
     import type { MediaStyle } from "../../../types/Main"
     import { currentWindow, media, renderGroups } from "../../stores"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
-    import { getMirrorVideo, mirrorRegistryTick, mirrorVideoKey, registerMirrorVideo, unregisterMirrorVideo } from "./video/mirrorVideoRegistry"
+    import { findGroupRendererId, getMirrorVideo, MirrorCloneDrawer, MirrorRegistration, mirrorRegistryTick, mirrorVideoKey } from "./video/mirrorVideoRegistry"
     import { SoftLoopSync } from "./video/softLoop"
     import { clampPlaybackRate, syncVideoToAudio, videoSync } from "./video/videoSync"
 
@@ -32,81 +32,23 @@
 
     // Shared-render preview dedupe: grouped outputs are pixel-identical, so follower mirrors paint
     // the renderer mirror's frames onto a canvas instead of running a redundant decode session
-    // (main app window only).
-    $: groupRendererId = mirror && !$currentWindow ? (Object.entries($renderGroups).find(([rendererId, members]) => rendererId !== outputId && members.includes(outputId))?.[0] ?? null) : null
+    // (main app window only). See mirrorVideoRegistry.ts.
+    $: groupRendererId = mirror && !$currentWindow ? findGroupRendererId($renderGroups, outputId) : null
     $: cloneSource = groupRendererId && $mirrorRegistryTick >= 0 ? getMirrorVideo(mirrorVideoKey(groupRendererId, path)) : null
 
     // the decoding mirror registers its element so follower mirrors can find it
-    let registeredKey: string | null = null
-    let registeredEl: HTMLVideoElement | null = null
-    $: {
-        const key = mirror && !$currentWindow && video && !cloneSource ? mirrorVideoKey(outputId, path) : null
-        if (key !== registeredKey || (key && video !== registeredEl)) {
-            if (registeredKey) unregisterMirrorVideo(registeredKey, registeredEl)
-            // clone mode unmounts our <video>; unload it so its decoder is released now, not at GC
-            if (!key && cloneSource && registeredEl) {
-                try {
-                    registeredEl.pause()
-                    registeredEl.removeAttribute("src")
-                    registeredEl.load()
-                } catch {
-                    // already detached
-                }
-            }
-            registeredKey = key
-            registeredEl = key ? video : null
-            if (key && video) registerMirrorVideo(key, video)
-        }
-    }
-    onDestroy(() => {
-        if (registeredKey) unregisterMirrorVideo(registeredKey, registeredEl)
-    })
+    const mirrorRegistration = new MirrorRegistration()
+    $: mirrorRegistration.update(mirror && !$currentWindow && video && !cloneSource ? mirrorVideoKey(outputId, path) : null, video, !!cloneSource)
+    onDestroy(() => mirrorRegistration.destroy())
 
     let cloneCanvas: HTMLCanvasElement | null = null
-    let cloneRaf = 0
-    $: if (cloneCanvas && cloneSource) startCloneLoop()
-    else stopCloneLoop()
-    function startCloneLoop() {
-        stopCloneLoop()
-        const step = () => {
-            drawClone()
-            cloneRaf = requestAnimationFrame(step)
-        }
-        cloneRaf = requestAnimationFrame(step)
+    const cloneDrawer = new MirrorCloneDrawer()
+    $: cloneDrawer.setFit(mediaStyle.fit)
+    $: if (cloneCanvas && cloneSource) {
+        cloneDrawer.start(cloneCanvas, cloneSource)
         loaded()
-    }
-    function stopCloneLoop() {
-        if (cloneRaf) cancelAnimationFrame(cloneRaf)
-        cloneRaf = 0
-    }
-    onDestroy(stopCloneLoop)
-    function drawClone() {
-        const src = cloneSource
-        const c = cloneCanvas
-        if (!src || !c || src.readyState < 2) return
-        const cw = c.clientWidth
-        const ch = c.clientHeight
-        const vw = src.videoWidth
-        const vh = src.videoHeight
-        if (!cw || !ch || !vw || !vh) return
-        if (c.width !== cw || c.height !== ch) {
-            c.width = cw
-            c.height = ch
-        }
-        const ctx = c.getContext("2d")
-        if (!ctx) return
-        // honor the fit like the video's object-fit would ("blur"/others render as contain here)
-        const fit = mediaStyle.fit === "fill" ? "fill" : mediaStyle.fit === "cover" ? "cover" : "contain"
-        let dw = cw
-        let dh = ch
-        if (fit !== "fill") {
-            const scale = fit === "cover" ? Math.max(cw / vw, ch / vh) : Math.min(cw / vw, ch / vh)
-            dw = vw * scale
-            dh = vh * scale
-            ctx.clearRect(0, 0, cw, ch)
-        }
-        ctx.drawImage(src, (cw - dw) / 2, (ch - dh) / 2, dw, dh)
-    }
+    } else cloneDrawer.stop()
+    onDestroy(() => cloneDrawer.stop())
 
     let unsubscribeSync: (() => void) | null = null
     $: {
