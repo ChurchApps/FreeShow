@@ -34,7 +34,7 @@ export function selectShowById(id: string) {
     if (typeof id !== "string" || !id) return
     if (!get(shows)[id]) return
 
-    activeShow.set({ id, type: "show" })
+    setActiveShowById(id)
     if (get(activeEdit).id) activeEdit.set({ type: "show", slide: 0, items: [] })
     if (get(activePage) === "edit") refreshEditSlide.set(true)
 }
@@ -49,9 +49,17 @@ export function selectShowByName(name: string) {
     const showId = sortedShows[0]?.id
     if (!showId) return
 
-    activeShow.set({ id: showId, type: "show" })
+    setActiveShowById(showId)
     if (get(activeEdit).id) activeEdit.set({ type: "show", slide: 0, items: [] })
     if (get(activePage) === "edit") refreshEditSlide.set(true)
+}
+
+function setActiveShowById(showId: string) {
+    const activeProjectId = get(activeProject)
+    const projectShows = activeProjectId ? get(projects)[activeProjectId]?.shows || [] : []
+    const projectIndex = projectShows.findIndex((item) => item.id === showId)
+
+    activeShow.set(projectIndex >= 0 ? { ...projectShows[projectIndex], index: projectIndex } : { id: showId, type: "show" })
 }
 
 // WIP duplicate of Preview.svelte checkGroupShortcuts()

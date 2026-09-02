@@ -201,17 +201,41 @@ const triggerActionsBeforeOutput = {
         const layers = get(styles)[actionValue?.outputStyle]?.layers
         if (!Array.isArray(layers)) return false
         return !layers.includes("background")
-    }
+    },
+    clear_background: () => true,
+    clear_overlays: () => true
 }
 function shouldTriggerBefore(action: any) {
     return action?.triggers?.find((trigger) => triggerActionsBeforeOutput[trigger]?.(action.actionValues?.[trigger]))
 }
+
+const perOutputActions: Record<string, (outputId: string) => void> = {
+    clear_background: (outputId) => setOutput("background", null, false, outputId),
+    clear_overlays: (outputId) => clearOverlays(outputId)
+}
+function runPerOutputAction(trigger: string, outputIds: string[]) {
+    const action = perOutputActions[trigger]
+    if (!action) return
+
+    outputIds.forEach((outputId) => action(outputId))
+}
+
 export function checkActionTrigger(layoutData: SlideData, slideIndex = 0) {
-    if (Array.isArray(layoutData?.actions?.slideActions)) {
-        layoutData.actions.slideActions.forEach((a) => {
-            if (shouldTriggerBefore(a)) runAction(a, { slideIndex, source: "slide" })
-        })
-    }
+    if (!Array.isArray(layoutData?.actions?.slideActions)) return
+
+    const outputIds = getActiveOutputs(get(outputs), true, false, true)
+
+    layoutData.actions.slideActions.forEach((a) => {
+        if (!shouldTriggerBefore(a)) return
+
+        const trigger = a?.triggers?.[0]
+        if (trigger && trigger in perOutputActions) {
+            runPerOutputAction(trigger, outputIds)
+            return
+        }
+
+        runAction(a, { slideIndex, source: "slide" })
+    })
 }
 
 export async function playPdf(data: OutSlide | null, next: boolean, loop = false) {
@@ -481,20 +505,16 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
     }
 }
 
-const runPerOutput = ["clear_background", "clear_overlays"]
 function playSlideActions(slideActions: SlideAction[], outputIds: string[] = [], slideIndex = -1) {
     slideActions = clone(slideActions)
 
     // run these actions on each active output
     if (outputIds.length > 1) {
-        runPerOutput.forEach((id) => {
+        Object.keys(perOutputActions).forEach((id) => {
             const existingIndex = slideActions.findIndex((a) => a && a.triggers?.[0] === id)
             if (existingIndex < 0) return
 
-            outputIds.forEach((outputId) => {
-                if (id.includes("background")) setOutput("background", null, false, outputId)
-                else if (id.includes("overlays")) clearOverlays(outputId)
-            })
+            runPerOutputAction(id, outputIds)
             slideActions.splice(existingIndex, 1)
         })
     }
@@ -543,6 +563,9 @@ export async function startShow(showId: string) {
     let index = 0
     while (slideRef[index] && slideRef[index]?.data?.disabled) index++
     if (!slideRef[index]) return
+
+    const slideData = slideRef[index]?.data
+    checkActionTrigger(slideData, index)
 
     setOutput("slide", { id: showId, layout: activeLayout, index, line: 0 })
     // timeout has to be 1200 to let output data update properly (in case slide has special actions)
