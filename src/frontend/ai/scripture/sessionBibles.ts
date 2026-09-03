@@ -8,12 +8,11 @@
 
 import { get } from "svelte/store"
 import type { AiScriptureBook, AiScriptureTranslation } from "../../../types/ai/AiScripture"
-import { Main } from "../../../types/IPC/Main"
 import { getShortBibleName, loadJsonBible } from "../../components/drawer/bible/scripture"
-import { sendMain } from "../../IPC/main"
 import { scriptures, scripturesCache } from "../../stores"
 import { setQuoteMatchAnchor, updateQuoteMatchBibles } from "./quoteMatch/quoteMatchSession"
 import { scriptureState } from "./scriptureState"
+import { updateScriptureCoordinatorBooks } from "./session"
 import { preferredTranslationId } from "./translationPreference"
 
 function expandBibleIds(ids: string[]): string[] {
@@ -83,13 +82,13 @@ async function refreshSessionBibles(): Promise<void> {
 
     scriptureState.searchBibleIds = sessionBibleIds()
 
-    // the electron tier-1 tables (spoken book names, translation cues) follow the same set - the
+    // the frontend tier-1 tables (spoken book names, translation cues) follow the same set - the
     // book table build also loads any newly installed bibles into the cache, which the quote
     // match index build reads verse text from
     const books = await buildBookTable(bookTableIds())
     // a slow load can outlive the session or a newer change - only the latest refresh may apply
     if (!scriptureState.sessionActive || token !== sessionBiblesRefreshToken) return
-    sendMain(Main.AI_SCRIPTURE_TABLES, { books, translations: buildTranslationTable(cueTranslationIds()) })
+    updateScriptureCoordinatorBooks(books, buildTranslationTable(cueTranslationIds()))
 
     updateQuoteMatchBibles(scriptureState.searchBibleIds)
     // only the full-start fallback (matcher not ready yet) loses the anchor - re-seed it

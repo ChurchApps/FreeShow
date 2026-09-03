@@ -1,5 +1,5 @@
-import { getLLMProvider, type llmProviders } from "../llm/llmProviders"
-import { codedError } from "../llm/models/APIModel"
+import { Main } from "../../../types/IPC/Main"
+import { requestMain } from "../../IPC/main"
 
 export interface RawDetection {
     book: string
@@ -114,24 +114,43 @@ function isPositiveInteger(value: any): boolean {
     return typeof value === "number" && Number.isInteger(value) && value > 0
 }
 
-export function getLLMScriptureProvider(id: keyof typeof llmProviders) {
-    const provider = getLLMProvider(id)
-
+export function getLLMScriptureProvider(providerId: string) {
     return {
-        id: provider.id,
-        detectScripture: async (apiKey: string, model: string, req: AIDetectionRequest, signal: AbortSignal) => {
-            const rawResponse = await provider.complete(apiKey, model, {
-                systemPrompt: DETECTION_PROMPT,
-                prompt: buildUserContent(req),
-                jsonSchema: DETECTION_SCHEMA,
-                signal
+        id: providerId,
+        detectScripture: async (model: string, req: AIDetectionRequest, signal?: AbortSignal) => {
+            if (signal?.aborted) throw new Error("Aborted")
+
+            const response = await requestMain(Main.AI_LLM_COMPLETE, {
+                providerId,
+                model,
+                options: {
+                    systemPrompt: DETECTION_PROMPT,
+                    prompt: buildUserContent(req),
+                    jsonSchema: DETECTION_SCHEMA
+                }
             })
 
-            // an unparsable answer is a transient bad_response - the coordinator skips the window & keeps going
+            if (signal?.aborted) throw new Error("Aborted")
+
+            if (!response) {
+                const err: any = new Error("IPC request timed out")
+                err.code = "timeout"
+                throw err
+            }
+
+            if (response.error) {
+                const err: any = new Error(response.error)
+                err.code = response.code || "server_error"
+                if (response.retryAfter) err.retryAfter = response.retryAfter
+                throw err
+            }
+
             try {
-                return { references: parseDetectionResponse(rawResponse) }
-            } catch (err) {
-                throw codedError("bad_response", (err as Error)?.message)
+                return { references: parseDetectionResponse(response.text) }
+            } catch (err: any) {
+                const error: any = new Error(err?.message || "bad_response")
+                error.code = "bad_response"
+                throw error
             }
         }
     }

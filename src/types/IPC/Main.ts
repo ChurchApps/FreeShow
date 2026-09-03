@@ -8,8 +8,7 @@ import type { PCOFolderTreeNode } from "../../electron/contentProviders/planning
 import type { _store } from "../../electron/data/store"
 import type { EncoderDetection } from "../../electron/streaming/encoderDetection"
 import type { TimecodeMode } from "../../electron/timecode/timecode"
-import type { AiSetupOptions, EngineStatus, LlmSelection } from "../ai/AiModels"
-import type { AiScriptureDetectionConfig } from "../ai/AiScripture"
+import type { AiSetupOptions, EngineStatus } from "../ai/AiModels"
 import type { SttEngineOptions } from "../ai/AiSettings"
 import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, MediaCodecInfo, OS, SpotifyState, Subtitle } from "../Main"
 import type { Output } from "../Output"
@@ -187,13 +186,9 @@ export enum Main {
     AI_AUDIO_DATA = "AI_AUDIO_DATA",
     AI_GET_STATUS = "AI_GET_STATUS",
     AI_SETUP = "AI_SETUP",
-    AI_SCRIPTURE_START = "AI_SCRIPTURE_START",
-    AI_SCRIPTURE_STOP = "AI_SCRIPTURE_STOP",
-    AI_SCRIPTURE_CONTEXT = "AI_SCRIPTURE_CONTEXT",
-    AI_SET_LLM = "AI_SET_LLM",
-    AI_SCRIPTURE_TABLES = "AI_SCRIPTURE_TABLES",
     AI_SET_KEY = "AI_SET_KEY",
-    AI_TEST_CONNECTION = "AI_TEST_CONNECTION"
+    AI_TEST_CONNECTION = "AI_TEST_CONNECTION",
+    AI_LLM_COMPLETE = "AI_LLM_COMPLETE"
 }
 
 export interface MainSendPayloads {
@@ -303,13 +298,9 @@ export interface MainSendPayloads {
     [Main.AI_AUDIO_DATA]: { buffer: Uint8Array }
     [Main.AI_GET_STATUS]: { engineId?: string; modelId?: string; customPath?: string } | undefined
     [Main.AI_SETUP]: AiSetupOptions
-    [Main.AI_SCRIPTURE_START]: AiScriptureDetectionConfig
-    [Main.AI_SCRIPTURE_STOP]: undefined
-    [Main.AI_SCRIPTURE_CONTEXT]: { book: string; bookNumber: number; chapter: number; verseStart: number; verseEnd: number }
-    [Main.AI_SET_LLM]: { llm: LlmSelection | null }
-    [Main.AI_SCRIPTURE_TABLES]: { books: AiScriptureDetectionConfig["books"]; translations: AiScriptureDetectionConfig["translations"] }
     [Main.AI_SET_KEY]: { providerId: string; key: string }
     [Main.AI_TEST_CONNECTION]: { providerId: string; model: string }
+    [Main.AI_LLM_COMPLETE]: { providerId: string; model: string; options: { systemPrompt?: string; prompt: string; jsonSchema?: any; temperature?: number; maxTokens?: number } }
 }
 
 export interface MainReturnPayloads {
@@ -419,6 +410,7 @@ export interface MainReturnPayloads {
     [Main.AI_GET_STATUS]: Promise<{ [key: string]: EngineStatus }>
     [Main.AI_SETUP]: Promise<boolean>
     [Main.AI_TEST_CONNECTION]: Promise<{ ok: boolean; error?: string }>
+    [Main.AI_LLM_COMPLETE]: Promise<{ text: string; error?: string; code?: string; retryAfter?: number }>
 }
 
 ///////////

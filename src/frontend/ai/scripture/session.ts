@@ -3,11 +3,14 @@
 // engine errors) and the status filtering that keeps stale async updates out of the store
 
 import { get } from "svelte/store"
-import type { AiScriptureDetectionConfig } from "../../../types/ai/AiScripture"
-import { Main } from "../../../types/IPC/Main"
-import { sendMain } from "../../IPC/main"
-import { ai, aiInterim, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiStatus, aiTranscript, scriptures } from "../../stores"
+import type { AiScriptureBook, AiScriptureTranslation } from "../../../types/ai/AiScripture"
+import { ai, aiInterim, aiScriptureHasProjected, aiScriptureStatus, aiStatus, aiSuggestions, aiTranscript, scriptures } from "../../stores"
+import { CommandDispatcher } from "../commands/commandDispatcher"
+import { dispatchAiCommand } from "../commands/commandRegistry"
 import { resolveSttEngine, SpeechToText } from "../stt/stt"
+import { scriptureCommandSpec } from "./commands/matcher"
+import type { AiScriptureAnchor } from "./detection/coordinator"
+import { DetectionCoordinator } from "./detection/coordinator"
 import { cancelPendingAutoProjection, handleDetection, pruneSuggestions } from "./detections"
 import { startQuoteMatching, stopQuoteMatching } from "./quoteMatch/quoteMatchSession"
 import { getSettings, scriptureState } from "./scriptureState"
@@ -16,6 +19,13 @@ import { refreshSessionLlm, resolveSessionLlm } from "./sessionLlm"
 
 let startInFlight: Promise<{ ok: boolean; error?: string }> | null = null
 let suggestionPruneTimer: NodeJS.Timeout | null = null
+
+// Coordinator and command dispatcher instances running in the frontend session
+let scriptureCoordinator: DetectionCoordinator | null = null
+let scriptureCommandDispatcher: CommandDispatcher | null = null
+let scriptureConfig: { language: string; translations: AiScriptureTranslation[]; books: AiScriptureBook[]; voiceCommands: boolean; interpretationMode: boolean; listenLanguage: string } | null = null
+let lastAnchorAtMs = 0
+const ANCHOR_FRESH_MS = 120000
 
 // START / STOP
 
@@ -67,27 +77,47 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     // key is saved (raw keys never leave the electron process)
     const llm = await resolveSessionLlm()
 
-    const detectionConfig: AiScriptureDetectionConfig = {
+    const translations = buildTranslationTable(cueTranslationIds())
+    scriptureConfig = {
         books,
-        llm,
-        voiceCommands: !!settings.voiceCommands,
-        translations: buildTranslationTable(cueTranslationIds()),
+        translations,
         language,
+        voiceCommands: !!settings.voiceCommands,
         interpretationMode,
         listenLanguage
     }
 
+    const dispatcher = new CommandDispatcher()
+    dispatcher.register(
+        scriptureCommandSpec(() => ({
+            language: scriptureConfig?.language || "en",
+            translations: scriptureConfig?.translations || [],
+            books: scriptureConfig?.books || []
+        }))
+    )
+    scriptureCommandDispatcher = dispatcher
+
+    const coordinator = new DetectionCoordinator({
+        books,
+        llm,
+        onDetection: (ref) => {
+            handleDetection(ref)
+        },
+        onStatus: (state, extra) => {
+            const message = extra?.message ? extra.message.replace(/\s+/g, " ").trim().slice(0, 200) : undefined
+            aiScriptureStatus.set({ state, ...extra, ...(message ? { message } : {}) })
+        }
+    })
+    scriptureCoordinator = coordinator
+
     aiTranscript.set([])
     aiInterim.set("")
-    aiScriptureSuggestions.set([])
-
-    // detection must be subscribed in the electron process before the first transcript segment arrives
-    sendMain(Main.AI_SCRIPTURE_START, detectionConfig)
+    aiSuggestions.set([])
 
     // the generic layer resolves the mic & starts the engine (whisper might need a moment on first start)
     const result = await SpeechToText.enable()
     if (!result.ok) {
-        sendMain(Main.AI_SCRIPTURE_STOP)
+        stopSession()
         return startError(result.error || "start_failed")
     }
 
@@ -110,6 +140,42 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     suggestionPruneTimer = setInterval(pruneSuggestions, 15000)
 
     return { ok: true }
+}
+
+export function handleScriptureTranscript(segment: { text: string; startMs: number; endMs: number; language?: string; music?: boolean }): void {
+    if (!scriptureState.sessionActive || !scriptureCoordinator) return
+
+    // music lyrics are hallucination territory - never let them trigger detections or commands
+    if (segment.music) return
+    // textless utterance-boundary markers only exist for the display's line grouping
+    if (!segment.text) return
+
+    const config = scriptureConfig
+    const detectable = !config?.interpretationMode || !segment.language || !config?.listenLanguage || segment.language === config.listenLanguage
+    if (!detectable) return
+
+    scriptureCoordinator.onTranscriptSegment(segment)
+
+    if (!config?.voiceCommands || !scriptureCommandDispatcher) return
+    const envelope = scriptureCommandDispatcher.handleSegment("scripture", { text: segment.text, endMs: segment.endMs }, { anchored: Date.now() - lastAnchorAtMs < ANCHOR_FRESH_MS })
+    if (envelope) dispatchAiCommand(envelope)
+}
+
+export function updateScriptureCoordinatorBooks(books: AiScriptureBook[], translations: AiScriptureTranslation[]): void {
+    if (scriptureConfig) {
+        scriptureConfig.books = books
+        scriptureConfig.translations = translations
+    }
+    scriptureCoordinator?.updateBooks(books)
+}
+
+export function updateScriptureCoordinatorLlm(llm: { provider: string; model: string } | null): void {
+    scriptureCoordinator?.updateLlm(llm)
+}
+
+export function updateScriptureCoordinatorContext(anchor: AiScriptureAnchor): void {
+    lastAnchorAtMs = Date.now()
+    scriptureCoordinator?.updateContext(anchor)
 }
 
 // settings from before the generic STT layer existed lived under ai.scripture - copy them over
@@ -162,9 +228,15 @@ function stopSession(): void {
         clearInterval(suggestionPruneTimer)
         suggestionPruneTimer = null
     }
-    aiScriptureSuggestions.set([])
+    aiSuggestions.set([])
 
-    sendMain(Main.AI_SCRIPTURE_STOP)
+    scriptureCoordinator?.stop()
+    scriptureCoordinator = null
+    scriptureCommandDispatcher?.unregister("scripture")
+    scriptureCommandDispatcher = null
+    scriptureConfig = null
+    lastAnchorAtMs = 0
+
     SpeechToText.disable()
 
     aiInterim.set("")
@@ -177,6 +249,9 @@ function stopSession(): void {
 // (key saves don't touch this store - LlmOptions calls refreshSessionLlm directly)
 let lastLlmConfigKey = ""
 ai.subscribe((value) => {
+    if (scriptureConfig) {
+        scriptureConfig.voiceCommands = !!value?.scripture?.voiceCommands
+    }
     const key = `${value?.llm?.provider || ""}|${value?.llm?.model || ""}`
     if (key !== lastLlmConfigKey) {
         lastLlmConfigKey = key
@@ -208,7 +283,7 @@ aiStatus.subscribe((status) => {
 })
 
 // STATUS FILTERING
-// main writes status events directly to the store (responsesMain) - reject updates that should not apply:
+// status filtering that keeps stale async updates out of the store:
 // an async "stopped" overwriting a just set local error, & any active status while the feature is disabled
 
 let suppressStoppedUntil = 0

@@ -5,7 +5,7 @@
 import { get } from "svelte/store"
 import type { DetectedReference } from "../../../types/ai/AiScripture"
 import { getShortBibleName, loadJsonBible } from "../../components/drawer/bible/scripture"
-import { ai, aiScriptureSuggestions, aiSuggestions, drawerTabsData, outLocked, scriptures } from "../../stores"
+import { ai, aiSuggestions, drawerTabsData, outLocked, scriptures } from "../../stores"
 import AiScriptureSettings from "../components/settings/AiScriptureSettings.svelte"
 import { projectDetection, resolveBookNumber } from "./projection"
 import { noteExplicitDetection } from "./quoteMatch/quoteMatchSession"
@@ -123,31 +123,6 @@ function addSuggestion(ref: DetectedReference) {
     const confidence = confidencePercent(ref.confidence)
     if (confidence < 50) return
 
-    aiSuggestions.update((a) => {
-        a.push({
-            id: ref.id,
-            action: "present",
-            content: getReferenceLabel(ref),
-            timestamp: ref.timestamp,
-            confidence: confidence,
-            trigger: () => projectDetection(ref, true)
-        })
-        return a
-    })
-
-    aiScriptureSuggestions.update((list) => {
-        const now = Date.now()
-        let active = list.filter((a) => now - a.timestamp < SUGGESTION_MAX_AGE)
-
-        // a correction supersedes an earlier similar-passage suggestion - replace, don't stack
-        if (ref.corrects) active = active.filter((a) => !isSameReference(a, ref.corrects!))
-
-        // skip near-duplicates of an existing suggestion
-        if (active.some((a) => isSameReference(a, ref))) return active
-
-        return [ref, ...active].slice(0, SUGGESTION_LIMIT)
-    })
-
     function getReferenceLabel(suggestion: DetectedReference, _updater: any = null) {
         const drawerBibleId = get(drawerTabsData).scripture?.activeSubTab || ""
 
@@ -162,6 +137,29 @@ function addSuggestion(ref: DetectedReference) {
 
         return label
     }
+
+    aiSuggestions.update((list) => {
+        const now = Date.now()
+        let active = list.filter((a) => now - a.timestamp < SUGGESTION_MAX_AGE)
+
+        // a correction supersedes an earlier similar suggestion
+        if (ref.corrects) active = active.filter((a) => a.id !== ref.corrects?.id)
+
+        // skip duplicate IDs or identical content
+        const label = getReferenceLabel(ref)
+        if (active.some((a) => a.id === ref.id || a.content === label)) return active
+
+        const newSuggestion = {
+            id: ref.id,
+            action: "present",
+            content: label,
+            timestamp: ref.timestamp,
+            confidence,
+            trigger: () => projectDetection(ref, true)
+        }
+
+        return [newSuggestion, ...active].slice(0, SUGGESTION_LIMIT)
+    })
 }
 
 export function pruneSuggestions() {
@@ -170,18 +168,10 @@ export function pruneSuggestions() {
         const active = a.filter((a) => now - a.timestamp < SUGGESTION_MAX_AGE)
         return active.length === a.length ? a : active
     })
-
-    aiScriptureSuggestions.update((list) => {
-        const now = Date.now()
-        const active = list.filter((a) => now - a.timestamp < SUGGESTION_MAX_AGE)
-        return active.length === list.length ? list : active
-    })
 }
 
 export function dismissSuggestion(id: string): void {
     aiSuggestions.update((a) => a.filter((a) => a.id !== id))
-
-    aiScriptureSuggestions.update((list) => list.filter((a) => a.id !== id))
 }
 
 // AUTO PROJECTION

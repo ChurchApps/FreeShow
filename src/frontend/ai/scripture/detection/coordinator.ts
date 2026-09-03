@@ -4,10 +4,11 @@
 
 import type { AiScriptureBook, AiScriptureState, DetectedReference } from "../../../../types/ai/AiScripture"
 import { normalizeSpokenNumbers } from "../../commands/spokenNumbers"
-import { LLM_API_TIMEOUT } from "../../llm/models/APIModel"
 import { getLLMScriptureProvider } from "../llmTalkScripture"
 import type { BookIndex } from "./references"
 import { buildBookIndex, matchReferences } from "./references"
+
+const LLM_API_TIMEOUT = 12000
 
 // COORDINATOR
 
@@ -53,7 +54,6 @@ interface DetectionCandidate {
 interface DetectionCoordinatorOptions {
     books: AiScriptureBook[]
     llm: { provider: string; model: string } | null
-    getApiKey: (providerId: string) => string
     onDetection: (ref: DetectedReference) => void
     onStatus: (state: AiScriptureState, extra?: { message?: string; keyless?: boolean }) => void
     cooldownSeconds?: number
@@ -210,9 +210,6 @@ export class DetectionCoordinator {
         if (Date.now() < this.llmCooldownUntil) return
         if (this.totalWords - this.wordsAtLastLlmCall < LLM_MIN_NEW_WORDS) return
 
-        const apiKey = this.opts.getApiKey(llm.provider)
-        if (!apiKey) return
-
         this.wordsAtLastLlmCall = this.totalWords
         const controller = new AbortController()
         this.llmController = controller
@@ -221,7 +218,7 @@ export class DetectionCoordinator {
         const transcript = this.segments.map((segment) => segment.text).join(" ")
         const liveContext = this.anchor ? "Live on screen: " + this.anchor.book + " " + this.anchor.chapter + ":" + this.anchor.verseStart + "-" + this.anchor.verseEnd + ". Bare verse mentions likely refer to this passage." : undefined
         Promise.resolve()
-            .then(() => getLLMScriptureProvider(llm.provider as any).detectScripture(apiKey, llm.model, { transcript, alreadyDetected: this.recentDetectionStrings(), liveContext }, controller.signal))
+            .then(() => getLLMScriptureProvider(llm.provider).detectScripture(llm.model, { transcript, alreadyDetected: this.recentDetectionStrings(), liveContext }, controller.signal))
             .then(
                 (result: any) => {
                     if (this.llmController !== controller) return // aborted/superseded

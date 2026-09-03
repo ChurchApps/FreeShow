@@ -13,7 +13,7 @@ export interface DetectedReference {
     quote?: string // the transcript text that triggered the detection
     matchedBibleId?: string // set when quoted verse text matched a specific translation
     continuation?: boolean // a recitation flowing into the next verse of the live passage (follow-along)
-    corrects?: { bookNumber: number; chapter: number; verseStart: number; verseEnd: number } // this detection supersedes an earlier similar-passage match (later words narrowed the search)
+    corrects?: { id: string; bookNumber: number; chapter: number; verseStart: number; verseEnd: number } // this detection supersedes an earlier similar-passage match (later words narrowed the search)
     timestamp: number
 }
 

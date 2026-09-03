@@ -1826,7 +1826,9 @@
         "disable": "Disable AI Scripture"
     },
     "ai": {
-        "hint": "Listens to your microphone, transcribes speech to text, and suggests relevant actions based on what is said. Can also be linked to LLM models for better understanding and context.",
+        "hint": "Listens to your microphone, transcribes speech to text, and suggests relevant actions based on what is heard. Can also be linked to LLM models for better understanding and context.",
+        "privacy_details": "Everything remains locally on this device unless explicitly mentioned otherwise.",
+        "privacy_cloud": "Transcribed text data will be uploaded and processed in the cloud.",
         "transcription": "Transcription",
         "engine": "Engine",
         "model": "Model",
@@ -1869,7 +1871,6 @@
         "mode_confirm": "Ask for confirmation",
         "mode_auto": "Show it immediately",
         "auto_cooldown": "Auto-project cooldown (s)",
-        "privacy": "Privacy",
         "voice_commands": "Voice commands",
         "state_starting": "Starting...",
         "state_listening": "Listening",

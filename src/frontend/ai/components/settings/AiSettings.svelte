@@ -55,4 +55,5 @@
     <AiScriptureSettings />
 {:else}
     <Tip type="info" value="ai.hint" top={20} />
+    <Tip type="warning" value="ai.privacy_details" top={10} />
 {/if}

@@ -6,6 +6,7 @@ import type { Project } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
 import { dispatchAiCommand } from "../ai/commands/commandRegistry"
 import { handleQuoteMatchTranscript } from "../ai/scripture/quoteMatch/quoteMatchSession"
+import { handleScriptureTranscript } from "../ai/scripture/session"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
@@ -50,10 +51,9 @@ import {
     activeProject,
     activeShow,
     activeTimers,
-    aiScriptureStatus,
     aiInterim,
-    aiTranscript,
     aiStatus,
+    aiTranscript,
     alertMessage,
     audioData,
     contentProviderData,
@@ -92,8 +92,8 @@ import {
     windowState
 } from "../stores"
 import { setupCloudSync } from "../utils/cloudSync"
-import { translateText } from "../utils/language"
 import { newToast } from "../utils/common"
+import { translateText } from "../utils/language"
 import { confirmCustom } from "../utils/popup"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { invalidateSearchIndex } from "../utils/searchFast"
@@ -101,7 +101,6 @@ import { updateSettings, updateSyncedSettings, updateThemeValues } from "../util
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
 import { sendMain } from "./main"
-import { handleDetection } from "../ai/scripture/detections"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -306,12 +305,9 @@ export const mainResponses: MainResponses = {
         // the whole session stays scrollable - the cap only guards against unbounded growth
         aiTranscript.update((a) => [...a, data].slice(-2000))
         handleQuoteMatchTranscript(data)
+        handleScriptureTranscript(data)
     },
     [ToMain.AI_TRANSCRIPT_INTERIM]: (data) => aiInterim.set(data.text),
-    [ToMain.AI_SCRIPTURE_STATUS]: (data) => aiScriptureStatus.set(data),
-    [ToMain.AI_SCRIPTURE_DETECTION]: (data) => {
-        handleDetection(data)
-    },
     [ToMain.AI_COMMAND]: (data) => {
         dispatchAiCommand(data)
     },

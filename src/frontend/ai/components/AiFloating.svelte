@@ -1,22 +1,16 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { fade, fly } from "svelte/transition"
-    import type { DetectedReference } from "../../../types/ai/AiScripture"
-    import { getShortBibleName } from "../../components/drawer/bible/scripture"
     import Icon from "../../components/helpers/Icon.svelte"
     import T from "../../components/helpers/T.svelte"
     import MaterialButton from "../../components/inputs/MaterialButton.svelte"
     import Center from "../../components/system/Center.svelte"
-    import { activePage, ai, aiInterim, aiScriptureStatus, aiScriptureSuggestions, aiStatus, aiSuggestions, aiTranscript, drawerTabsData, language, outLocked, scriptures, settingsTab } from "../../stores"
+    import { activePage, ai, aiInterim, aiStatus, aiSuggestions, aiTranscript, language, outLocked, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import { audioLevelStore, resolveSttEngine, SpeechToText } from "../stt/stt"
-    import { copyTranscript, groupTranscriptLines } from "../transcript"
+    import { copyTranscript, dismissAiSuggestion, groupTranscriptLines } from "../transcript"
     import AiRing from "./AiRing.svelte"
     import ConfidenceMeter from "./ConfidenceMeter.svelte"
-    import { startAiScriptureListening, stopAiScriptureListening } from "../scripture/session"
-    import { dismissSuggestion } from "../scripture/detections"
-    import { aiScriptureErrorText } from "../scripture/errors"
-    import { projectDetection, showInDrawer } from "../scripture/projection"
 
     let state: "inactive" | "error" | "listening" | "processing" = "inactive"
 
@@ -66,10 +60,9 @@
     $: micDeviceId = $ai.stt?.micDeviceId
 
     // SESSION
-    // the scripture feature session (STT + detection) runs while its toggle is on -
-    // otherwise plain transcription runs when a mic is configured
+    // transcription runs when AI is enabled and a mic is configured
 
-    let sessionMode: "off" | "stt" | "scripture" = "off"
+    let sessionMode: "off" | "stt" = "off"
     let lastMic = ""
     let lastEngine = ""
 
@@ -88,8 +81,7 @@
         if (mode === sessionMode) {
             if (mode === "off" || (!micChanged && !engineChanged)) return
 
-            // switching the input or the engine mid-session only swaps that piece -
-            // the rest of the pipeline (and scripture detection) keeps running
+            // switching the input or the engine mid-session only swaps that piece
             lastMic = mic || ""
             lastEngine = engine
             const capture = micChanged ? await SpeechToText.restartCapture() : { ok: true }
@@ -103,8 +95,7 @@
         lastMic = mic || ""
         lastEngine = engine
 
-        if (previousMode === "scripture") stopAiScriptureListening()
-        else if (previousMode === "stt" && mode !== "stt") SpeechToText.disable()
+        if (previousMode === "stt" && mode !== "stt") SpeechToText.disable()
 
         if (mode === "stt") {
             const result = await SpeechToText.enable()
@@ -113,16 +104,6 @@
         } else {
             state = "inactive"
         }
-    }
-
-    // the scripture session state is richer (starting/llm_paused/error) - mirror it onto the bubble
-    $: scriptureState = $aiScriptureStatus.state
-    $: if (sessionMode === "scripture") state = mapScriptureState(scriptureState)
-    function mapScriptureState(currentState: string): typeof state {
-        if (currentState === "listening" || currentState === "llm_paused") return "listening"
-        if (currentState === "starting") return "processing"
-        if (currentState === "error") return "error"
-        return "inactive"
     }
 
     // a runtime engine failure in the electron process ends the plain transcription session
@@ -134,8 +115,7 @@
     $: audioLevel = $audioLevelStore
 
     onDestroy(() => {
-        if (sessionMode === "scripture") stopAiScriptureListening()
-        else if (sessionMode === "stt") SpeechToText.disable()
+        if (sessionMode === "stt") SpeechToText.disable()
         sessionMode = "off"
     })
 
@@ -148,12 +128,6 @@
         if (isStarting || sessionMode === "off") return
         if (isListening) return
 
-        if (sessionMode === "scripture") {
-            state = "processing"
-            await startAiScriptureListening()
-            return
-        }
-
         const result = await SpeechToText.enable()
         if (sessionMode === "stt") state = result.ok ? "listening" : "error"
     }
@@ -165,33 +139,9 @@
     }
 
     // SUGGESTIONS
-    // confident detections surface here so the operator can present them with one click
-    // (auto mode projects on its own - the cards double as a record of what was heard)
+    // confident suggestions surface here so the operator can present them with one click
 
-    $: suggestions = $aiScriptureSuggestions
-
-    // spoken references carry no matchedBibleId (nothing was matched against a text) - the tag
-    // then names the drawer translation, which is what the detection will project in
-    $: drawerBibleId = $drawerTabsData.scripture?.activeSubTab || ""
-    function getReferenceLabel(suggestion: DetectedReference, _updater: any = null) {
-        let label = `${suggestion.book} ${suggestion.chapter}:${suggestion.verseStart}`
-        if (suggestion.verseEnd > suggestion.verseStart) label += `-${suggestion.verseEnd}`
-
-        const bibleId = suggestion.matchedBibleId || drawerBibleId
-        if (bibleId === drawerBibleId) return label
-
-        const bible = bibleId ? $scriptures[bibleId] : null
-        if (bible) label += ` (${getShortBibleName(bible.customName || bible.name || "")})`
-
-        return label
-    }
-
-    // $: latestSegment = lastNonEmptyText($aiTranscript)
-    // function lastNonEmptyText(segments: { text: string }[]): string {
-    //     for (let i = segments.length - 1; i >= 0; i--) if (segments[i].text) return segments[i].text
-    //     return ""
-    // }
-
+    $: suggestions = $aiSuggestions
     $: latestSuggestion = $aiSuggestions.at(-1) || null
 </script>
 
@@ -219,7 +169,7 @@
             style="padding: 0;border-radius: 50px;"
             on:click={() => {
                 latestSuggestion.trigger()
-                setTimeout(() => dismissSuggestion(latestSuggestion.id), 500)
+                setTimeout(() => dismissAiSuggestion(latestSuggestion.id), 500)
             }}
         >
             <!-- borderRadius="20px 10px 10px 20px" -->
@@ -265,12 +215,7 @@
             <div class="modal-view">
                 <div class="card-header">
                     <div class="ai-badge">
-                        {#if sessionMode === "scripture"}
-                            <!-- an LLM pause only stops paraphrase detection - the session IS still listening -->
-                            <p style="font-weight: bold;"><T id="ai.state_{scriptureState === 'llm_paused' ? 'listening' : scriptureState}" /></p>
-                        {:else}
-                            <p style="font-weight: bold;">{state.toUpperCase()}</p>
-                        {/if}
+                        <p style="font-weight: bold;">{state.toUpperCase()}</p>
                     </div>
 
                     <div class="headerActions">
@@ -289,7 +234,7 @@
                             <T id="remote.loading" />
                         </Center>
                     {:else if state === "error"}
-                        <p class="placeholder error">{translateText(aiScriptureErrorText((sessionMode === "scripture" ? $aiScriptureStatus.message : $aiStatus.message) || "start_failed"))}</p>
+                        <p class="placeholder error">{translateText($aiStatus.message || "ai.error_start_failed")}</p>
                     {:else if state === "processing"}
                         <div class="processing-view">
                             <div class="spinner large"></div>
@@ -315,24 +260,29 @@
                 </div>
 
                 {#if suggestions.length}
-                    <!-- compact two-line cards: actions ride the header row, the quote stays one line -->
                     <div class="suggestions-panel">
                         {#each suggestions as suggestion (suggestion.id)}
                             <div class="suggestion compact">
                                 <div class="suggestionHeader">
-                                    <span class="reference">{getReferenceLabel(suggestion, $scriptures)}</span>
-                                    <span class="confidence {suggestion.confidence}"><T id="ai.confidence_{suggestion.confidence}" /></span>
+                                    <span class="reference">{suggestion.content}</span>
+                                    {#if suggestion.confidence}
+                                        <ConfidenceMeter confidence={suggestion.confidence} />
+                                    {/if}
 
                                     <div class="fill" />
 
-                                    <MaterialButton small icon="play" disabled={$outLocked} title="ai.project" on:click={() => projectDetection(suggestion, true)} />
-                                    <MaterialButton small icon="scripture" title="ai.show_in_drawer" on:click={() => showInDrawer(suggestion)} />
-                                    <MaterialButton small icon="close" title="ai.dismiss" on:click={() => dismissSuggestion(suggestion.id)} />
+                                    <MaterialButton
+                                        small
+                                        icon="play"
+                                        disabled={$outLocked}
+                                        title="ai.project"
+                                        on:click={() => {
+                                            suggestion.trigger?.()
+                                            dismissAiSuggestion(suggestion.id)
+                                        }}
+                                    />
+                                    <MaterialButton small icon="close" title="ai.dismiss" on:click={() => dismissAiSuggestion(suggestion.id)} />
                                 </div>
-
-                                {#if suggestion.quote}
-                                    <p class="quote">"{suggestion.quote}"</p>
-                                {/if}
                             </div>
                         {/each}
                     </div>
@@ -637,36 +587,6 @@
         filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.5));
     }
 
-    .ticker {
-        width: 100%;
-        border: none;
-        text-align: end;
-        background: transparent; /* the AI ring paints the solid card background */
-        color: inherit;
-        padding: 6px 12px;
-        font-size: 0.85em;
-        cursor: pointer;
-        white-space: initial;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        -webkit-box-orient: vertical;
-    }
-
-    .badge {
-        background-color: rgba(9, 13, 22, 0.9);
-        border-radius: 12px;
-        padding: 1px 8px;
-        font-size: 0.7em;
-        text-transform: uppercase;
-        white-space: nowrap;
-        opacity: 0.9;
-    }
-    .badge.paused {
-        color: #ffa500;
-    }
-
     .suggestion {
         display: flex;
         align-items: center;
@@ -690,11 +610,6 @@
         padding: 5px 10px;
         box-shadow: none;
     }
-    .suggestion.compact .quote {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
 
     .fill {
         flex: 1;
@@ -709,38 +624,6 @@
         font-weight: 600;
         color: var(--secondary);
         white-space: nowrap;
-    }
-
-    .confidence {
-        font-size: 0.7em;
-        text-transform: uppercase;
-        padding: 1px 6px;
-        border-radius: 10px;
-        white-space: nowrap;
-    }
-    .confidence.high {
-        background-color: rgb(39 168 39 / 0.25);
-        color: #6fdc6f;
-    }
-    .confidence.medium {
-        background-color: rgb(255 165 0 / 0.25);
-        color: #ffc966;
-    }
-    .confidence.low {
-        background-color: rgb(255 80 80 / 0.25);
-        color: #ff9090;
-    }
-
-    .quote {
-        font-style: italic;
-        font-size: 0.85em;
-        opacity: 0.7;
-        white-space: initial;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        -webkit-box-orient: vertical;
     }
 
     /* Animations */

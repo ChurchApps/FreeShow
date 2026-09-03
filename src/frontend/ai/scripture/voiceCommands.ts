@@ -6,8 +6,8 @@ import type { AiScriptureCommandEvent } from "../../../types/ai/AiScripture"
 import type { BibleInstance } from "../../components/drawer/bible/scripture"
 import { loadJsonBible, outputIsScripture } from "../../components/drawer/bible/scripture"
 import { setDrawerTabData } from "../../components/helpers/historyHelpers"
-import { activeScripture, ai, aiScriptureSuggestions, drawerTabsData, outLocked, scriptureHistory, scriptures } from "../../stores"
-import { parseNumber, projectDetection, projectResolved, restorePrevious } from "./projection"
+import { activeScripture, ai, aiSuggestions, drawerTabsData, outLocked, scriptureHistory, scriptures } from "../../stores"
+import { parseNumber, projectResolved, restorePrevious } from "./projection"
 import { getSettings, scriptureState } from "./scriptureState"
 import { cycleRank, preferredTranslationId } from "./translationPreference"
 
@@ -23,9 +23,9 @@ export async function executeScriptureCommand(cmd: AiScriptureCommandEvent): Pro
     // accepting the newest suggestion is confirm mode by voice - it must work BEFORE anything
     // is live on the output, and only while the suggestion is still fresh
     if (cmd.type === "accept") {
-        const suggestion = get(aiScriptureSuggestions)[0]
+        const suggestion = get(aiSuggestions)[0]
         if (!suggestion || Date.now() - suggestion.timestamp > ACCEPT_SUGGESTION_WINDOW_MS) return
-        await projectDetection(suggestion, true)
+        suggestion.trigger?.()
         return
     }
 

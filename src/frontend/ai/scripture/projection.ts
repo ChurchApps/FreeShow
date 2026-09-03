@@ -5,17 +5,16 @@
 
 import { get } from "svelte/store"
 import type { DetectedReference } from "../../../types/ai/AiScripture"
-import { Main } from "../../../types/IPC/Main"
 import type { BibleInstance } from "../../components/drawer/bible/scripture"
 import { loadJsonBible, playScripture } from "../../components/drawer/bible/scripture"
 import { clone } from "../../components/helpers/array"
 import { setDrawerTabData } from "../../components/helpers/historyHelpers"
 import { getFirstActiveOutput, setOutput } from "../../components/helpers/output"
 import { clearSlide } from "../../components/output/clear"
-import { sendMain } from "../../IPC/main"
 import { activeDrawerTab, activeScripture, aiScriptureHasProjected, drawerTabsData, openScripture, outLocked, scriptures, scripturesCache } from "../../stores"
 import { setQuoteMatchAnchor } from "./quoteMatch/quoteMatchSession"
 import { scriptureState } from "./scriptureState"
+import { updateScriptureCoordinatorContext } from "./session"
 import { preferredTranslationId } from "./translationPreference"
 
 // chapter/verse values can be strings, including split ids like "12_1" - parseInt reads the leading number
@@ -150,7 +149,7 @@ async function sendAnchorContext(targetId: string, book: number | string, chapte
         if (!name || !Number.isFinite(bookNumber) || bookNumber < 1) return
 
         const anchor = { book: name, bookNumber, chapter, verseStart: Math.min(...verses), verseEnd: Math.max(...verses) }
-        sendMain(Main.AI_SCRIPTURE_CONTEXT, anchor)
+        updateScriptureCoordinatorContext(anchor)
         setQuoteMatchAnchor(anchor)
         scriptureState.lastQuoteMatchAnchor = anchor
     } catch (err) {

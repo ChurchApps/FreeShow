@@ -8,6 +8,7 @@
     import MaterialDropdown from "../../../components/inputs/MaterialDropdown.svelte"
     import MaterialTextInput from "../../../components/inputs/MaterialTextInput.svelte"
     import Loader from "../../../components/main/Loader.svelte"
+    import Tip from "../../../components/main/Tip.svelte"
     import { requestMain, sendMain } from "../../../IPC/main"
     import { ai } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -27,10 +28,10 @@
     const providerOptions = [
         // explicitly no LLM: detection runs on speech-to-text alone (tier-1 references + on-device quote matching)
         { value: "none", label: translateText("main.none") },
+        { value: "ollama", label: "Local (Ollama - Gemma)" },
         { value: "anthropic", label: "Anthropic (Claude)" },
         { value: "openai", label: "OpenAI (GPT)" },
-        { value: "gemini", label: "Google (Gemini)" },
-        { value: "ollama", label: "Local (Ollama - Gemma)" }
+        { value: "gemini", label: "Google (Gemini)" }
     ]
 
     // legacy values lived under the scripture settings - read them as fallback until a new choice is saved
@@ -119,6 +120,8 @@
         <T id="ai.test_connection" />
     </MaterialButton>
 {:else}
+    <Tip type="warning" value="ai.privacy_cloud" top={10} bottom={10} />
+
     <InputRow>
         <MaterialTextInput label="ai.api_key" value={keyInput} type="password" pasteBtn on:input={(e) => (keyInput = e.detail)} />
         <MaterialButton icon="save" disabled={!keyInput} on:click={saveKey}>

@@ -3,7 +3,7 @@
 // bubble UI and the context menu
 
 import { get } from "svelte/store"
-import { aiTranscript } from "../stores"
+import { aiSuggestions, aiTranscript } from "../stores"
 import { newToast } from "../utils/common"
 
 // segments closer than this continue the same display line
@@ -52,4 +52,8 @@ export function copyTranscript(): void {
 
     navigator.clipboard.writeText(text)
     newToast("actions.copied")
+}
+
+export function dismissAiSuggestion(id: string): void {
+    aiSuggestions.update((list) => list.filter((item) => item.id !== id))
 }

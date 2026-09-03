@@ -1,13 +1,11 @@
-// AI AUTO SCRIPTURE - SESSION LLM
-// resolves the tier-2 provider/model pick and re-arms a running session when it changes
-
 import { get } from "svelte/store"
 import type { AiScriptureDetectionConfig } from "../../../types/ai/AiScripture"
 import { Main } from "../../../types/IPC/Main"
-import { requestMain, sendMain } from "../../IPC/main"
+import { requestMain } from "../../IPC/main"
 import { ai, aiScriptureStatus } from "../../stores"
 import { AI_PROVIDER_MODELS } from "../models"
 import { getSettings, scriptureState } from "./scriptureState"
+import { updateScriptureCoordinatorLlm } from "./session"
 
 /** The tier-2 LLM config as it stands right now: a chosen provider whose key is saved, or null. */
 export async function resolveSessionLlm(): Promise<AiScriptureDetectionConfig["llm"]> {
@@ -37,6 +35,7 @@ export async function refreshSessionLlm(): Promise<void> {
     const llm = await resolveSessionLlm()
     if (!scriptureState.sessionActive) return
 
-    sendMain(Main.AI_SET_LLM, { llm })
+    updateScriptureCoordinatorLlm(llm)
     aiScriptureStatus.update((status) => (status.state === "listening" || status.state === "llm_paused" ? { ...status, state: "listening", keyless: !llm } : status))
 }
+
