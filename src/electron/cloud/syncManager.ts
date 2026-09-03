@@ -453,7 +453,8 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
     const uploadResult = await uploadLocalData()
 
-    if (!DEBUG_MODE && !process.env.VITEST) {
+    const willRunBackup = !DEBUG_MODE && !process.env.VITEST
+    if (willRunBackup) {
         // silently backup in the background, this is skipped when the program is being closed
         setTimeout(async () => {
             try {
@@ -467,7 +468,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         }, 1000)
     }
 
-    return await finish(uploadResult.success, uploadResult.error)
+    return await finish(uploadResult.success, uploadResult.error, willRunBackup)
 
     async function uploadLocalData(): Promise<{ success: boolean; error?: string }> {
         let success = false
@@ -519,8 +520,8 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         }
     }
 
-    async function finish(success = true, error?: string) {
-        if (!DEBUG_MODE) await deleteFolderAsync(EXTRACT_LOCATION)
+    async function finish(success = true, error?: string, skipCleanup = false) {
+        if (!DEBUG_MODE && !skipCleanup) await deleteFolderAsync(EXTRACT_LOCATION)
         console.log("Sync completed!")
         isNewDevice = false
         return { success, error, changedFiles }
