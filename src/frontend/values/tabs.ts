@@ -1,6 +1,6 @@
 import type { SettingsTabs } from "../../types/Tabs"
 
-export const settingsTabs: SettingsTabs[] = ["general", "display_settings", "styles", "audio", "connection", "files", "profiles", "theme", "other"]
+export const settingsTabs: SettingsTabs[] = ["general", "display_settings", "styles", "audio", "connection", "files", "profiles", "theme", "ai", "other"]
 
 export const drawerTabs = {
     shows: { name: "tabs.shows", icon: "shows", title: "tabs.shows_info" },

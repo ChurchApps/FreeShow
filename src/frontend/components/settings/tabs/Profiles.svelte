@@ -1,10 +1,10 @@
 <script lang="ts">
     import type { AccessType, Profile } from "../../../../types/Main"
-    import type { SettingsTabs } from "../../../../types/Tabs"
     import { actions, actionTags, activePopup, activeProfile, categories, folders, groups, overlayCategories, popupData, profiles, selectedProfile, stageShows, templateCategories, timerTags, variableTags } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { encodePassword } from "../../../utils/profile"
     import { customIconsColors } from "../../../values/customIcons"
+    import { settingsTabs } from "../../../values/tabs"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -150,8 +150,7 @@
     $: groupsAccess = currentProfile.access.groups || {}
 
     // "display_settings" (can change position still), "connection" (can use still)
-    const tabs: SettingsTabs[] = ["general", "display_settings", "styles", "audio", "connection", "files", "profiles", "theme", "ai", "other"]
-    $: settingsList = tabs.map((id) => ({ id, name: `settings.${id}`, icon: id }))
+    $: settingsList = settingsTabs.map((id) => ({ id, name: `settings.${id}`, icon: id }))
     $: settingsAccess = currentProfile.access.settings || {}
 
     ///
