@@ -58,8 +58,8 @@
                 syncVideoToAudio(video, data.currentTime, lastSyncedTime, isSoftLoop, targetPlaybackRate, data.isFadingOut, data.virtualClock)
                 if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
 
-                if (videoData.loop !== data.loop) videoData.loop = data.loop
-                if (videoData.paused !== data.paused) videoData.paused = data.paused
+                if (!data.isFadingOut && videoData.loop !== data.loop) videoData.loop = data.loop
+                if (!data.isFadingOut && videoData.paused !== data.paused) videoData.paused = data.paused
 
                 if (data.softLoop !== undefined && videoData.softLoop !== data.softLoop) videoData.softLoop = data.softLoop
                 if (data.softLoopOpacity !== undefined && softLoopOpacity !== data.softLoopOpacity) softLoopOpacity = data.softLoopOpacity
