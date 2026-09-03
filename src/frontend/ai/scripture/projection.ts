@@ -15,7 +15,7 @@ import { clearSlide } from "../../components/output/clear"
 import { sendMain } from "../../IPC/main"
 import { activeDrawerTab, activeScripture, aiScriptureHasProjected, drawerTabsData, openScripture, outLocked, scriptures, scripturesCache } from "../../stores"
 import { setQuoteMatchAnchor } from "./quoteMatch/quoteMatchSession"
-import { getSettings, scriptureState } from "./scriptureState"
+import { scriptureState } from "./scriptureState"
 import { preferredTranslationId } from "./translationPreference"
 
 // chapter/verse values can be strings, including split ids like "12_1" - parseInt reads the leading number
@@ -26,15 +26,19 @@ export function parseNumber(value: number | string | undefined): number {
 }
 
 export async function projectDetection(detection: DetectedReference, manual?: boolean): Promise<boolean> {
-    const settings = getSettings()
-
     // arm the cooldown before any awaits so parallel detections can't project concurrently
     if (!manual) {
         scriptureState.lastAutoProjectionAt = Date.now()
         scriptureState.lastAutoProjectedRef = detection
     }
 
-    const targetId = settings.displayTranslation === "matched" && detection.matchedBibleId ? detection.matchedBibleId : preferredTranslationId()
+    const openedTranslation = preferredTranslationId()
+    if (detection.matchedBibleId && detection.matchedBibleId !== openedTranslation) {
+        // WIP request to change
+        return false
+    }
+
+    const targetId = openedTranslation
     if (!targetId) return false
     scriptureState.lastAutoProjectedBibleId = targetId
 
@@ -84,8 +88,8 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
 
     // guard against misheard giant ranges ("verse 1 to 176") - the projected selection still
     // splits across slides through the normal scripture settings, this only caps the range
-    const maxVerses = settings.maxVerses ?? 6
-    if (maxVerses > 0) verseEnd = Math.min(verseEnd, verseStart + maxVerses - 1)
+    const maxVerses = 10
+    verseEnd = Math.min(verseEnd, verseStart + maxVerses - 1)
 
     // navigate the drawer's scripture view to the projected translation (star 1 or the match)
     if (targetId !== (get(drawerTabsData).scripture?.activeSubTab || "")) setDrawerTabData("scripture", targetId)
@@ -97,9 +101,8 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
     console.info(`[AiScripture] Projecting ${detection.book} ${chapter}:${verseStart}${verseEnd > verseStart ? "-" + verseEnd : ""} in "${targetId}" [${detection.type}/${detection.confidence}${manual ? "/manual" : ""}${detection.matchedBibleId ? " matched:" + detection.matchedBibleId : ""}]`)
     await projectResolved(targetId, book, chapter, verses)
 
-    // follow along in the drawer so the operator tracks the passage - without ever yanking
-    // them off whatever drawer tab they are actually working in
-    if (settings.followInDrawer !== false) void showInDrawer(detection, false)
+    // follow along in the drawer so the operator tracks the passage (if scripture drawer is active)
+    showInDrawer(detection, false)
 
     return true
 }

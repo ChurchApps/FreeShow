@@ -5,7 +5,6 @@
 import { get } from "svelte/store"
 import { getShortBibleName } from "../../components/drawer/bible/scripture"
 import { drawerTabsData, scriptures } from "../../stores"
-import { getSettings } from "./scriptureState"
 
 // "another translation" visits the familiar ones first - however the search selection is ordered.
 // Each entry lists the abbreviation AND full-name phrasings, since libraries store either
@@ -35,17 +34,7 @@ export function cycleRank(id: string): number {
     return rank < 0 ? CYCLE_PREFERENCE.length : rank
 }
 
-/** The favourited translations, common ones first (the existing cycle ranking), then by name. */
-export function favoriteTranslationIds(): string[] {
-    return Object.entries(get(scriptures))
-        .filter(([, bible]) => !!bible?.favorite)
-        .sort(([idA, a], [idB, b]) => cycleRank(idA) - cycleRank(idB) || (a.customName || a.name || "").localeCompare(b.customName || b.name || ""))
-        .map(([id]) => id)
-}
-
 /** The translation detections project in (unless display is "matched") and matching grounds to. */
 export function preferredTranslationId(): string {
-    const main = getSettings().mainTranslation
-    if (main && get(scriptures)[main]) return main
-    return favoriteTranslationIds()[0] || get(drawerTabsData).scripture?.activeSubTab || ""
+    return get(drawerTabsData).scripture?.activeSubTab || ""
 }

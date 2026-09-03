@@ -4,7 +4,7 @@
 // compile error - and the static imports keep module load order identical to a direct import
 
 import type { AiCommandEnvelope } from "../../../types/ai/AiCommands"
-import { executeScriptureCommand } from "../scripture/aiScripture"
+import { executeScriptureCommand } from "../scripture/voiceCommands"
 
 const executors: { [F in AiCommandEnvelope["feature"]]: (envelope: Extract<AiCommandEnvelope, { feature: F }>) => void } = {
     scripture: (envelope) => void executeScriptureCommand({ ...envelope.command, phrase: envelope.phrase })

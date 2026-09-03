@@ -38,7 +38,6 @@ export function startScriptureDetection(config: AiScriptureDetectionConfig): boo
         books: config.books,
         llm,
         getApiKey: getAiKey,
-        cooldownSeconds: config.refCooldownSeconds,
         onDetection: (ref) => {
             // whisper biases upcoming windows toward the detected book's names (no-op for other engines)
             SpeechToText.setContextBook(ref.bookNumber)

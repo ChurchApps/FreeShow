@@ -1,18 +1,58 @@
 <script lang="ts">
+    import Title from "../../../components/input/Title.svelte"
+    import MaterialDropdown from "../../../components/inputs/MaterialDropdown.svelte"
     import MaterialToggleSwitch from "../../../components/inputs/MaterialToggleSwitch.svelte"
-    import T from "../../../components/helpers/T.svelte"
-    import { setAiEnabled } from "../../aiState"
+    import Tip from "../../../components/main/Tip.svelte"
     import { ai } from "../../../stores"
+    import { translateText } from "../../../utils/language"
+    import AiScriptureSettings from "./AiScriptureSettings.svelte"
     import STTOptions from "./STTOptions.svelte"
 
     $: isEnabled = $ai.enabled
+
+    function updateValue(key: string, value: any) {
+        ai.update((a) => {
+            a[key] = value
+            return a
+        })
+    }
+
+    // scripture
+
+    $: settings = $ai.scripture || {}
+
+    function updateScripture(key: string, value: any) {
+        ai.update((a) => {
+            if (!a.scripture) a.scripture = {}
+            a.scripture[key] = value
+            return a
+        })
+    }
+
+    const confidenceOptions = [
+        { value: "ask", label: "Always ask" },
+        { value: "highest", label: "If confident", data: "> 95%" },
+        { value: "high", label: "If high confidence", data: "> 75%" },
+        { value: "medium", label: "If medium confidence", data: "> 50%" }
+    ]
 </script>
 
-<MaterialToggleSwitch label="ai.enable" checked={isEnabled} on:change={(e) => setAiEnabled(!!e.detail)} />
+<MaterialToggleSwitch label={translateText("actions.enable_specific", null, ["settings.ai"])} checked={isEnabled} on:change={(e) => updateValue("enabled", e.detail)} />
 
 {#if isEnabled}
     <STTOptions />
 
-    <!-- feature-specific AI settings live with their feature -->
-    <p style="opacity: 0.6; font-size: 0.85em; white-space: initial; padding-top: 15px;"><T id="ai.scripture_settings_moved" /></p>
+    <Title label="tabs.scripture" icon="scripture" />
+
+    <MaterialDropdown label="Auto present" options={confidenceOptions} value={settings.confidence || "ask"} on:change={(e) => updateScripture("confidence", e.detail)} />
+
+    <!-- TODO: auto lyrics & more -->
+
+    <br />
+    <br />
+
+    <!-- WIP this is being deprecated: -->
+    <AiScriptureSettings />
+{:else}
+    <Tip type="info" value="ai.hint" top={20} />
 {/if}

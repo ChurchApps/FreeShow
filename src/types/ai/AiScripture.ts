@@ -29,7 +29,6 @@ export interface AiScriptureBook {
 export interface AiScriptureDetectionConfig {
     books: AiScriptureBook[]
     llm: LlmSelection | null
-    refCooldownSeconds?: number // suppress re-emitting an intersecting reference within this window
     voiceCommands?: boolean
     translations?: AiScriptureTranslation[] // selected translations, for spoken translation switching
     language?: string // spoken language code, for voice command matching

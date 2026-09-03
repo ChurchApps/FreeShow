@@ -6,7 +6,7 @@ import { get } from "svelte/store"
 import type { AiScriptureDetectionConfig } from "../../../types/ai/AiScripture"
 import { Main } from "../../../types/IPC/Main"
 import { sendMain } from "../../IPC/main"
-import { ai, aiInterim, aiScriptureAutoPaused, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiStatus, aiTranscript, scriptures } from "../../stores"
+import { ai, aiInterim, aiScriptureHasProjected, aiScriptureStatus, aiScriptureSuggestions, aiStatus, aiTranscript, scriptures } from "../../stores"
 import { resolveSttEngine, SpeechToText } from "../stt/stt"
 import { cancelPendingAutoProjection, handleDetection, pruneSuggestions } from "./detections"
 import { startQuoteMatching, stopQuoteMatching } from "./quoteMatch/quoteMatchSession"
@@ -70,7 +70,6 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     const detectionConfig: AiScriptureDetectionConfig = {
         books,
         llm,
-        refCooldownSeconds: settings.refCooldownSeconds,
         voiceCommands: !!settings.voiceCommands,
         translations: buildTranslationTable(cueTranslationIds()),
         language,
@@ -81,7 +80,6 @@ async function startSession(): Promise<{ ok: boolean; error?: string }> {
     aiTranscript.set([])
     aiInterim.set("")
     aiScriptureSuggestions.set([])
-    aiScriptureAutoPaused.set(false)
 
     // detection must be subscribed in the electron process before the first transcript segment arrives
     sendMain(Main.AI_SCRIPTURE_START, detectionConfig)
@@ -151,19 +149,6 @@ export function stopAiScriptureListening(): void {
     stopSession()
 }
 
-export function setAiScriptureEnabled(enabled: boolean): void {
-    // turning the feature off must also end an active listening session
-    if (!enabled) stopAiScriptureListening()
-
-    ai.update((a) => {
-        if (!a.scripture) a.scripture = {}
-        a.scripture.enabled = enabled
-        // the feature needs the AI layer - enabling it flips the main AI switch on (never off)
-        if (enabled && !a.enabled) a.enabled = true
-        return a
-    })
-}
-
 function stopSession(): void {
     scriptureState.sessionActive = false
     aiScriptureHasProjected.set(false)
@@ -183,7 +168,6 @@ function stopSession(): void {
     SpeechToText.disable()
 
     aiInterim.set("")
-    aiScriptureAutoPaused.set(false)
     aiScriptureStatus.set({ state: "stopped" })
 }
 
@@ -192,20 +176,11 @@ function stopSession(): void {
 // a provider/model change in settings re-arms the running session's tier 2 on the spot
 // (key saves don't touch this store - LlmOptions calls refreshSessionLlm directly)
 let lastLlmConfigKey = ""
-let lastMainTranslationKey: string | null = null
 ai.subscribe((value) => {
     const key = `${value?.llm?.provider || ""}|${value?.llm?.model || ""}`
     if (key !== lastLlmConfigKey) {
         lastLlmConfigKey = key
         if (scriptureState.sessionActive) void refreshSessionLlm()
-    }
-
-    // changing the main translation re-prioritizes the running session's matching & projection
-    const mainKey = value?.scripture?.mainTranslation || ""
-    if (mainKey !== lastMainTranslationKey) {
-        const initial = lastMainTranslationKey === null
-        lastMainTranslationKey = mainKey
-        if (!initial && scriptureState.sessionActive) scheduleSessionBiblesRefresh()
     }
 })
 
@@ -242,7 +217,7 @@ let restoringStatus = false
 aiScriptureStatus.subscribe((status) => {
     if (restoringStatus) return
 
-    const ignoreDisabled = status.state !== "stopped" && !getSettings().enabled
+    const ignoreDisabled = status.state !== "stopped" && !get(ai).enabled
     const ignoreStopped = status.state === "stopped" && Date.now() < suppressStoppedUntil
     if (!ignoreDisabled && !ignoreStopped) {
         lastAcceptedStatus = status

@@ -4,8 +4,9 @@
 
 import { get } from "svelte/store"
 import type { DetectedReference } from "../../../types/ai/AiScripture"
-import { loadJsonBible } from "../../components/drawer/bible/scripture"
-import { aiScriptureAutoPaused, aiScriptureSuggestions, outLocked } from "../../stores"
+import { getShortBibleName, loadJsonBible } from "../../components/drawer/bible/scripture"
+import { ai, aiScriptureSuggestions, aiSuggestions, drawerTabsData, outLocked, scriptures } from "../../stores"
+import AiScriptureSettings from "../components/settings/AiScriptureSettings.svelte"
 import { projectDetection, resolveBookNumber } from "./projection"
 import { noteExplicitDetection } from "./quoteMatch/quoteMatchSession"
 import { getSettings, scriptureState } from "./scriptureState"
@@ -16,8 +17,10 @@ const QUOTE_MATCH_SCORE = 0.55
 const QUOTE_DEMOTE_SCORE = 0.35
 
 export async function handleDetection(ref: DetectedReference): Promise<void> {
+    if (!get(ai).enabled) return
+
     const settings = getSettings()
-    if (!scriptureState.sessionActive || !settings.enabled) return
+    if (!scriptureState.sessionActive) return
 
     // a spoken reference primes the quote matcher: the recitation that follows resolves faster
     if (ref.type === "explicit") noteExplicitDetection(ref)
@@ -28,12 +31,14 @@ export async function handleDetection(ref: DetectedReference): Promise<void> {
 
     addSuggestion(ref)
 
+    const confidence = settings.confidence || "ask"
+
     // auto projection
-    if (settings.mode !== "auto") return
-    if (get(aiScriptureAutoPaused) || get(outLocked)) return
+    if (confidence === "ask") return
+    if (get(outLocked)) return
     // one gate for references and quotes alike: spoken references score high by nature, and a
     // quoted verse only reaches high when the match is decisive - the slider is the single lever
-    if (confidencePercent(ref.confidence) < (typeof settings.autoMinConfidence === "number" ? settings.autoMinConfidence : 80)) return
+    if (confidencePercent(ref.confidence) < confidencePercent(confidence)) return
 
     queueAutoProjection(ref)
 }
@@ -96,10 +101,13 @@ function tokenOverlapSimilarity(verseText: string, quote: string): number {
 
 // detection confidence is categorical - map the bands onto the percent scale the
 // auto-show threshold uses (the settings slider shows which band a percent lands in)
-function confidencePercent(confidence: DetectedReference["confidence"]): number {
-    if (confidence === "high") return 90
-    if (confidence === "medium") return 65
-    return 35
+function confidencePercent(confidence: AiScriptureSettings["confidence"]): number {
+    // if (confidence === "ask") return 100
+
+    if (confidence === "highest") return 95
+    if (confidence === "high") return 75
+    if (confidence === "medium") return 50
+    return 0
 }
 
 // same book/chapter with an overlapping verse range
@@ -112,6 +120,21 @@ function isSameReference(a: RefRange, b: RefRange) {
 // SUGGESTIONS
 
 function addSuggestion(ref: DetectedReference) {
+    const confidence = confidencePercent(ref.confidence)
+    if (confidence < 50) return
+
+    aiSuggestions.update((a) => {
+        a.push({
+            id: ref.id,
+            action: "present",
+            content: getReferenceLabel(ref),
+            timestamp: ref.timestamp,
+            confidence: confidence,
+            trigger: () => projectDetection(ref, true)
+        })
+        return a
+    })
+
     aiScriptureSuggestions.update((list) => {
         const now = Date.now()
         let active = list.filter((a) => now - a.timestamp < SUGGESTION_MAX_AGE)
@@ -124,9 +147,30 @@ function addSuggestion(ref: DetectedReference) {
 
         return [ref, ...active].slice(0, SUGGESTION_LIMIT)
     })
+
+    function getReferenceLabel(suggestion: DetectedReference, _updater: any = null) {
+        const drawerBibleId = get(drawerTabsData).scripture?.activeSubTab || ""
+
+        let label = `${suggestion.book} ${suggestion.chapter}:${suggestion.verseStart}`
+        if (suggestion.verseEnd > suggestion.verseStart) label += `-${suggestion.verseEnd}`
+
+        const bibleId = suggestion.matchedBibleId || drawerBibleId
+        if (bibleId === drawerBibleId) return label
+
+        const bible = bibleId ? get(scriptures)[bibleId] : null
+        if (bible) label += ` (${getShortBibleName(bible.customName || bible.name || "")})`
+
+        return label
+    }
 }
 
 export function pruneSuggestions() {
+    aiSuggestions.update((a) => {
+        const now = Date.now()
+        const active = a.filter((a) => now - a.timestamp < SUGGESTION_MAX_AGE)
+        return active.length === a.length ? a : active
+    })
+
     aiScriptureSuggestions.update((list) => {
         const now = Date.now()
         const active = list.filter((a) => now - a.timestamp < SUGGESTION_MAX_AGE)
@@ -135,6 +179,8 @@ export function pruneSuggestions() {
 }
 
 export function dismissSuggestion(id: string): void {
+    aiSuggestions.update((a) => a.filter((a) => a.id !== id))
+
     aiScriptureSuggestions.update((list) => list.filter((a) => a.id !== id))
 }
 
@@ -163,14 +209,11 @@ function correctsLiveProjection(ref: DetectedReference): boolean {
  * wording actually being read instead of being suppressed as a repeat.
  */
 function refinesLiveTranslation(ref: DetectedReference): boolean {
-    if (getSettings().displayTranslation !== "matched") return false
     if (!ref.matchedBibleId || ref.matchedBibleId === scriptureState.lastAutoProjectedBibleId) return false
     return !!(scriptureState.lastAutoProjectedRef && isSameReference(scriptureState.lastAutoProjectedRef, ref))
 }
 
 function queueAutoProjection(ref: DetectedReference) {
-    const settings = getSettings()
-
     // a correction replacing what is live doesn't wait out the display cooldown - the point is
     // to take the wrong verse DOWN as fast as the right one goes up. The same goes for switching
     // the live passage to the translation the speaker turns out to be reading from
@@ -180,8 +223,8 @@ function queueAutoProjection(ref: DetectedReference) {
         return
     }
 
-    // don't re-project a reference that was just auto projected
-    const refCooldownMs = (settings.refCooldownSeconds ?? 90) * 1000
+    // don't re-project a reference that was just auto projected less than 30s ago
+    const refCooldownMs = 30 * 1000
     if (scriptureState.lastAutoProjectedRef && Date.now() - scriptureState.lastAutoProjectionAt < refCooldownMs && isSameReference(scriptureState.lastAutoProjectedRef, ref)) return
 
     // HIGH means the speaker explicitly asked or the match is decisive - it acts NOW. Only
@@ -193,7 +236,7 @@ function queueAutoProjection(ref: DetectedReference) {
     }
 
     // respect the minimum display time of the current projection
-    const cooldownMs = (settings.autoCooldownSeconds ?? 5) * 1000
+    const cooldownMs = 3000
     const elapsed = Date.now() - scriptureState.lastAutoProjectionAt
     if (!scriptureState.lastAutoProjectionAt || elapsed >= cooldownMs) {
         projectDetection(ref)
@@ -209,8 +252,12 @@ function queueAutoProjection(ref: DetectedReference) {
         pendingAutoRef = null
 
         if (!pending || !scriptureState.sessionActive) return
-        if (getSettings().mode !== "auto") return
-        if (get(aiScriptureAutoPaused) || get(outLocked)) return
+
+        const settings = getSettings()
+        const confidence = settings.confidence || "ask"
+        if (confidence === "ask") return
+
+        if (get(outLocked)) return
 
         projectDetection(pending)
     }, cooldownMs - elapsed)

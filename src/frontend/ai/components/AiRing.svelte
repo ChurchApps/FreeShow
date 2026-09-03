@@ -4,10 +4,11 @@
     export let audioLevel = 0.0
     export let borderRadius = "20px"
     export let borderWidth = "3px"
+    export let opacity = 1
     export let fill = false // stretch to the parent's size (the floating bubble) instead of the content's natural height
 </script>
 
-<div class="card-border-wrapper state-{state}" class:fill style="--audio-level: {audioLevel};--ring-radius: {borderRadius};--ring-width: {borderWidth};">
+<div class="card-border-wrapper state-{state}" class:fill style="{$$props.style};--audio-level: {audioLevel};--ring-radius: {borderRadius};--ring-width: {borderWidth};--opacity: {opacity};">
     <div class="inner-content">
         <slot />
     </div>
@@ -41,13 +42,14 @@
     }
 
     .card-border-wrapper.state-listening {
-        box-shadow: 0 0 calc(8px + var(--audio-level) * 16px) rgba(255, 0, 127, calc(0.3 + var(--audio-level) * 0.4));
+        /* box-shadow: 0 0 calc(8px + var(--audio-level) * 16px) rgba(255, 0, 127, calc(0.3 + var(--audio-level) * 0.4)); */
+        box-shadow: 0 0 calc(20px + var(--audio-level) * 30px) rgba(255, 0, 127, calc(0.2 + var(--audio-level) * 0.4));
     }
 
     .inner-content {
         width: 100%;
         height: 100%;
-        background: var(--card-bg, #111827);
+        background: rgb(17 24 39 / var(--opacity, 1));
         border-radius: inherit;
         overflow: hidden;
         position: relative;

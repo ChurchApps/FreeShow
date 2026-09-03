@@ -20,6 +20,7 @@ import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowTy
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
+import { AiSuggestion } from "./../types/ai/Ai"
 import type { AiSettings } from "./../types/ai/AiSettings"
 import type { Outputs, RtmpStatus } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
@@ -213,10 +214,10 @@ export const slideDeleteHighlight: Writable<SlideHighlight> = writable(null)
 // AI
 export const aiStatus: Writable<{ state: "inactive" | "listening" | "stopped" | "error"; message?: string }> = writable({ state: "inactive" })
 export const aiScriptureStatus: Writable<{ state: AiScriptureState; message?: string; keyless?: boolean }> = writable({ state: "stopped" })
+export const aiSuggestions: Writable<AiSuggestion[]> = writable([])
 export const aiScriptureSuggestions: Writable<DetectedReference[]> = writable([])
 export const aiTranscript: Writable<{ text: string; startMs: number; endMs: number; language?: string; music?: boolean; utteranceEnd?: boolean }[]> = writable([])
 export const aiInterim: Writable<string> = writable("") // the open utterance's unstable tail - display only, shown greyed
-export const aiScriptureAutoPaused: Writable<boolean> = writable(false)
 export const aiScriptureHasProjected: Writable<boolean> = writable(false)
 export const aiQuoteMatchActive: Writable<boolean> = writable(false) // indexes built & matching (false when e.g. only API bibles are selected)
 

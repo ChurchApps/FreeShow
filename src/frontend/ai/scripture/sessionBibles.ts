@@ -14,7 +14,7 @@ import { sendMain } from "../../IPC/main"
 import { scriptures, scripturesCache } from "../../stores"
 import { setQuoteMatchAnchor, updateQuoteMatchBibles } from "./quoteMatch/quoteMatchSession"
 import { scriptureState } from "./scriptureState"
-import { favoriteTranslationIds, preferredTranslationId } from "./translationPreference"
+import { preferredTranslationId } from "./translationPreference"
 
 function expandBibleIds(ids: string[]): string[] {
     const expanded: string[] = []
@@ -28,9 +28,9 @@ function expandBibleIds(ids: string[]): string[] {
     return expanded
 }
 
-/** All installed local translations in priority order: main & favourites first, then the rest by name. */
+/** All installed local translations in priority order: main first, then the rest by name. */
 export function sessionBibleIds(): string[] {
-    const lead = expandBibleIds([preferredTranslationId(), ...favoriteTranslationIds()].filter(Boolean))
+    const lead = expandBibleIds([preferredTranslationId()].filter(Boolean))
     const rest = Object.entries(get(scriptures))
         .filter(([id, bible]) => !!bible && !bible.api && !bible.collection && !lead.includes(id))
         .sort(([, a], [, b]) => (a.customName || a.name || "").localeCompare(b.customName || b.name || ""))

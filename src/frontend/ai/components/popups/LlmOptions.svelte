@@ -12,7 +12,7 @@
     import { ai } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { AI_PROVIDER_MODELS, aiErrorText } from "../../models"
-    import { refreshSessionLlm } from "../../scripture/aiScripture"
+    import { refreshSessionLlm } from "../../scripture/sessionLlm"
 
     $: llmOptions = $ai.llm || {}
 
@@ -108,7 +108,6 @@
 
 {#if provider === "none"}
     <!-- explicitly no LLM - detection runs on speech-to-text alone -->
-    <p class="faded hint"><T id="ai.provider_none_hint" /></p>
 {:else if provider === "ollama"}
     <!-- no API key: everything runs on the local ollama server - just make sure the model is pulled -->
     <p class="faded hint"><T id="ai.ollama_hint" /></p>

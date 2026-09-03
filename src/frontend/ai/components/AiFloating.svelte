@@ -3,20 +3,32 @@
     import { fade, fly } from "svelte/transition"
     import type { DetectedReference } from "../../../types/ai/AiScripture"
     import { getShortBibleName } from "../../components/drawer/bible/scripture"
+    import Icon from "../../components/helpers/Icon.svelte"
     import T from "../../components/helpers/T.svelte"
     import MaterialButton from "../../components/inputs/MaterialButton.svelte"
-    import { activePage, ai, aiQuoteMatchActive, aiScriptureAutoPaused, aiScriptureHasProjected, aiInterim, aiScriptureStatus, aiScriptureSuggestions, aiTranscript, aiStatus, drawerTabsData, language, outLocked, scriptures, settingsTab } from "../../stores"
+    import Center from "../../components/system/Center.svelte"
+    import { activePage, ai, aiInterim, aiScriptureStatus, aiScriptureSuggestions, aiStatus, aiSuggestions, aiTranscript, drawerTabsData, language, outLocked, scriptures, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
-    import { aiScriptureErrorText, dismissSuggestion, projectDetection, restorePrevious, resumeAutoProjection, showInDrawer, startAiScriptureListening, stopAiScriptureListening } from "../scripture/aiScripture"
     import { audioLevelStore, resolveSttEngine, SpeechToText } from "../stt/stt"
     import { copyTranscript, groupTranscriptLines } from "../transcript"
     import AiRing from "./AiRing.svelte"
+    import ConfidenceMeter from "./ConfidenceMeter.svelte"
+    import { startAiScriptureListening, stopAiScriptureListening } from "../scripture/session"
+    import { dismissSuggestion } from "../scripture/detections"
+    import { aiScriptureErrorText } from "../scripture/errors"
+    import { projectDetection, showInDrawer } from "../scripture/projection"
 
     let state: "inactive" | "error" | "listening" | "processing" = "inactive"
 
     let isOpen = false
     function toggleExpand() {
-        isOpen = !isOpen
+        // close any opened suggestions
+        // WIP only remove in closed state, not in popups
+        // dismissSuggestion(latestSuggestion?.id)
+
+        setTimeout(() => (isOpen = !isOpen))
+
+        enableListening()
     }
 
     // the transcript follows the speech while pinned to the bottom - scrolling up to read
@@ -52,7 +64,6 @@
 
     $: isEnabled = $ai.enabled
     $: micDeviceId = $ai.stt?.micDeviceId
-    $: scriptureEnabled = $ai.scripture?.enabled === true
 
     // SESSION
     // the scripture feature session (STT + detection) runs while its toggle is on -
@@ -68,9 +79,9 @@
         return explicit || resolveSttEngine()
     }
 
-    $: syncSession(isEnabled, scriptureEnabled, micDeviceId, engineId)
-    async function syncSession(enabled: boolean | undefined, scripture: boolean, mic: string | undefined, engine: string) {
-        const mode = enabled && scripture ? "scripture" : enabled && mic ? "stt" : "off"
+    $: syncSession(isEnabled, micDeviceId, engineId)
+    async function syncSession(enabled: boolean | undefined, mic: string | undefined, engine: string) {
+        const mode = enabled && mic ? "stt" : "off"
         const micChanged = (mic || "") !== lastMic
         const engineChanged = engine !== lastEngine
 
@@ -95,12 +106,7 @@
         if (previousMode === "scripture") stopAiScriptureListening()
         else if (previousMode === "stt" && mode !== "stt") SpeechToText.disable()
 
-        if (mode === "scripture") {
-            state = "processing"
-            const result = await startAiScriptureListening()
-            if (sessionMode !== "scripture") return
-            state = result.ok ? "listening" : "error"
-        } else if (mode === "stt") {
+        if (mode === "stt") {
             const result = await SpeechToText.enable()
             if (sessionMode !== "stt") return
             state = result.ok ? "listening" : "error"
@@ -138,29 +144,21 @@
 
     $: isListening = state === "listening"
     $: isStarting = state === "processing"
-    async function toggleListening() {
+    async function enableListening() {
         if (isStarting || sessionMode === "off") return
+        if (isListening) return
 
         if (sessionMode === "scripture") {
-            if (isListening) {
-                stopAiScriptureListening()
-                return
-            }
             state = "processing"
             await startAiScriptureListening()
             return
         }
 
-        if (isListening) {
-            SpeechToText.disable()
-            state = "inactive"
-        } else {
-            const result = await SpeechToText.enable()
-            if (sessionMode === "stt") state = result.ok ? "listening" : "error"
-        }
+        const result = await SpeechToText.enable()
+        if (sessionMode === "stt") state = result.ok ? "listening" : "error"
     }
 
-    function openSetup() {
+    function openSettings() {
         isOpen = false
         settingsTab.set("ai")
         activePage.set("settings")
@@ -170,7 +168,7 @@
     // confident detections surface here so the operator can present them with one click
     // (auto mode projects on its own - the cards double as a record of what was heard)
 
-    $: suggestions = scriptureEnabled ? $aiScriptureSuggestions : []
+    $: suggestions = $aiScriptureSuggestions
 
     // spoken references carry no matchedBibleId (nothing was matched against a text) - the tag
     // then names the drawer translation, which is what the detection will project in
@@ -180,19 +178,21 @@
         if (suggestion.verseEnd > suggestion.verseStart) label += `-${suggestion.verseEnd}`
 
         const bibleId = suggestion.matchedBibleId || drawerBibleId
+        if (bibleId === drawerBibleId) return label
+
         const bible = bibleId ? $scriptures[bibleId] : null
         if (bible) label += ` (${getShortBibleName(bible.customName || bible.name || "")})`
 
         return label
     }
 
-    // TICKER - the latest transcript line, visible without opening the bubble
+    // $: latestSegment = lastNonEmptyText($aiTranscript)
+    // function lastNonEmptyText(segments: { text: string }[]): string {
+    //     for (let i = segments.length - 1; i >= 0; i--) if (segments[i].text) return segments[i].text
+    //     return ""
+    // }
 
-    $: latestSegment = lastNonEmptyText($aiTranscript)
-    function lastNonEmptyText(segments: { text: string }[]): string {
-        for (let i = segments.length - 1; i >= 0; i--) if (segments[i].text) return segments[i].text
-        return ""
-    }
+    $: latestSuggestion = $aiSuggestions.at(-1) || null
 </script>
 
 <svelte:window on:keydown={(e) => isOpen && e.key === "Escape" && toggleExpand()} />
@@ -201,60 +201,47 @@
     <div class="backdrop" on:mousedown|self={toggleExpand} transition:fade={{ duration: 250 }}></div>
 {/if}
 
-{#if !isOpen && isListening && (latestSegment || $aiInterim)}
-    <!-- the live ticker sits on the bubble's own row, to its left - the stack above stays for cards.
-         a thin AI ring marks it as the bubble's own voice & paints the solid card background that
-         keeps the transcript readable over whatever panel it happens to float above -->
+<!-- this will show the latest transcript segment (& interim) -->
+<!-- {#if !isOpen && isListening && (latestSegment || $aiInterim)}
     <div class="ticker-wrap">
         <AiRing {state} {audioLevel} borderRadius="12px" borderWidth="1.5px">
-            <button class="ticker" title={translateText("ai.transcript")} on:click={toggleExpand}>
+            <button class="ticker" on:click={toggleExpand}>
                 {latestSegment}{#if $aiInterim}{" "}<span class="interim">{$aiInterim}</span>{/if}
             </button>
         </AiRing>
     </div>
-{/if}
+{/if} -->
 
-{#if !isOpen && (suggestions.length || $aiScriptureAutoPaused)}
-    <div class="ai-stack">
-        {#if $aiScriptureAutoPaused}
-            <!-- restore-previous intentionally only lives in the expanded view - the closed stack stays minimal -->
-            <div class="chips" transition:fly={{ y: 20, duration: 250 }}>
-                <span class="badge paused"><T id="ai.auto_paused" /></span>
-                <MaterialButton icon="play" title="ai.resume_auto" on:click={() => resumeAutoProjection()} />
-            </div>
-        {/if}
+{#if !isOpen && latestSuggestion && state !== "inactive"}
+    <div class="ticker-wrap" transition:fly={{ x: 45 + 62 / 2, duration: 200 }}>
+        <!-- border-radius: 50px 10px 10px 50px; -->
+        <MaterialButton
+            style="padding: 0;border-radius: 50px;"
+            on:click={() => {
+                latestSuggestion.trigger()
+                setTimeout(() => dismissSuggestion(latestSuggestion.id), 500)
+            }}
+        >
+            <!-- borderRadius="20px 10px 10px 20px" -->
+            <AiRing opacity={0.85}>
+                <div class="suggestion" style="margin-right: calc((62px / 2) - 4px);">
+                    {#if latestSuggestion?.action === "present"}
+                        <Icon id="play" white />
+                        <p>Click to present:</p>
+                        <span style="font-weight: bold;">{latestSuggestion.content}</span>
+                    {/if}
 
-        <!-- only the newest three stack on the closed bubble - older ones live on in the popup -->
-        {#each suggestions.slice(0, 3) as suggestion (suggestion.id)}
-            <div class="suggestion" transition:fly={{ y: 20, duration: 250 }}>
-                <div class="suggestionHeader">
-                    <span class="reference">{getReferenceLabel(suggestion, $scriptures)}</span>
-                    <span class="confidence {suggestion.confidence}"><T id="ai.confidence_{suggestion.confidence}" /></span>
-
-                    <div class="fill" />
-
-                    <MaterialButton icon="close" title="ai.dismiss" on:click={() => dismissSuggestion(suggestion.id)} />
+                    {#if latestSuggestion?.confidence}
+                        <ConfidenceMeter confidence={latestSuggestion.confidence} />
+                    {/if}
                 </div>
-
-                {#if suggestion.quote}
-                    <p class="quote">"{suggestion.quote}"</p>
-                {/if}
-
-                <div class="suggestionActions">
-                    <MaterialButton small icon="play" disabled={$outLocked} title="ai.project" on:click={() => projectDetection(suggestion, true)}>
-                        <T id="ai.project" />
-                    </MaterialButton>
-                    <MaterialButton small icon="scripture" title="ai.show_in_drawer" on:click={() => showInDrawer(suggestion)}>
-                        <T id="ai.show_in_drawer" />
-                    </MaterialButton>
-                </div>
-            </div>
-        {/each}
+            </AiRing>
+        </MaterialButton>
     </div>
 {/if}
 
 <div class="speech-widget {isOpen ? 'is-open' : 'is-closed'}">
-    <AiRing {state} {audioLevel} borderRadius={isOpen ? "20px" : "50%"} fill>
+    <AiRing {state} {audioLevel} borderRadius={isOpen ? "20px" : "50%"} opacity={isOpen ? 0.8 : 0.4} fill>
         {#if !isOpen}
             <button class="floating-trigger" on:click={toggleExpand} aria-label="Expand Speech Recognition Modal">
                 {#if state === "inactive" || state === "error"}
@@ -264,10 +251,11 @@
                         <line x1="12" y1="19" x2="12" y2="22" />
                     </svg>
                 {:else if state === "listening"}
-                    <div class="fluid-audio-visualizer" style="--audio-level: {audioLevel}">
-                        <div class="wave-ring ring-1"></div>
-                        <div class="wave-ring ring-2"></div>
-                        <div class="center-core"></div>
+                    <div class="smoky-audio-visualizer" style="--audio-level: {Math.min(audioLevel * 8, 1)}">
+                        <div class="smoke-layer layer-4"></div>
+                        <div class="smoke-layer layer-3"></div>
+                        <div class="smoke-layer layer-2"></div>
+                        <div class="smoke-layer layer-1"></div>
                     </div>
                 {:else if state === "processing"}
                     <div class="spinner"></div>
@@ -283,42 +271,23 @@
                         {:else}
                             <p style="font-weight: bold;">{state.toUpperCase()}</p>
                         {/if}
-
-                        {#if sessionMode === "scripture" && scriptureState === "llm_paused"}
-                            <span class="badge" data-title={translateText("ai_scripture.llm_paused_tip") + ($aiScriptureStatus.message || "")}>
-                                <T id="ai.llm_paused_badge" />
-                            </span>
-                        {/if}
-
-                        {#if sessionMode === "scripture" && isListening && $aiScriptureStatus.keyless}
-                            <!-- "on-device" only when the quote match indexes actually built - not just when the setting is on -->
-                            <span class="badge" data-title={translateText($aiQuoteMatchActive ? "ai_scripture.on_device_tip" : "ai_scripture.keyless_tip")}>
-                                <T id={$aiQuoteMatchActive ? "ai.on_device_only" : "ai.explicit_only"} />
-                            </span>
-                        {/if}
                     </div>
 
                     <div class="headerActions">
                         {#if transcriptLines.length}
                             <MaterialButton icon="copy" title="ai.copy_transcript" on:click={copyTranscript} />
                         {/if}
-                        {#if $aiScriptureAutoPaused}
-                            <MaterialButton icon="play" title="ai.resume_auto" on:click={() => resumeAutoProjection()} />
-                        {/if}
-                        {#if $aiScriptureHasProjected}
-                            <MaterialButton icon="undo" title="ai.restore_previous" disabled={$outLocked} on:click={() => restorePrevious()} />
-                        {/if}
-                        {#if sessionMode === "scripture"}
-                            <MaterialButton icon="settings" title="ai_scripture.setup" on:click={openSetup} />
-                        {/if}
-                        <MaterialButton icon={isListening ? "stop" : "microphone"} title={isListening ? "ai.stop_listening" : "ai.start_listening"} isActive={isListening} disabled={isStarting || sessionMode === "off"} on:click={toggleListening} />
+                        <MaterialButton icon="settings" title="menu.settings" on:click={openSettings} />
+
                         <MaterialButton class="popup-close" icon="close" iconSize={1.3} title="actions.close" style="padding: 10px;" on:click={toggleExpand} />
                     </div>
                 </div>
 
                 <div class="card-body">
                     {#if state === "inactive"}
-                        <p class="placeholder"><T id="ai.select_mic" /></p>
+                        <Center faded>
+                            <T id="remote.loading" />
+                        </Center>
                     {:else if state === "error"}
                         <p class="placeholder error">{translateText(aiScriptureErrorText((sessionMode === "scripture" ? $aiScriptureStatus.message : $aiStatus.message) || "start_failed"))}</p>
                     {:else if state === "processing"}
@@ -339,7 +308,9 @@
                             {/if}
                         </div>
                     {:else}
-                        <p class="placeholder"><T id="ai.waiting_for_audio" /></p>
+                        <Center faded>
+                            <T id="ai.waiting_for_audio" />
+                        </Center>
                     {/if}
                 </div>
 
@@ -435,6 +406,10 @@
         align-items: center;
         justify-content: center;
         padding: 0;
+
+        /* Clips all burst and smoke transformations to the bubble's circular bounds */
+        border-radius: 50%;
+        overflow: hidden;
     }
 
     .mic-icon {
@@ -446,51 +421,108 @@
         stroke: #ff2626;
     }
 
-    /* Dynamic Fluid Audio Visualizer */
-    .fluid-audio-visualizer {
+    /* Dynamic Ambient Smoky Visualizer */
+    .smoky-audio-visualizer {
         position: relative;
         width: 100%;
         height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-    }
-
-    .center-core {
-        width: 16px;
-        height: 16px;
         border-radius: 50%;
-        background: var(--ai-gradient);
-        transform: scale(calc(1 + var(--audio-level) * 0.6));
-        transition: transform 0.08s ease-out;
-        z-index: 2;
+        overflow: hidden;
     }
 
-    .wave-ring {
+    .smoke-layer {
         position: absolute;
+        /* Soft-edge gradient that bleeds to transparent to eliminate hard circles */
+        background: radial-gradient(circle at center, rgba(0, 255, 255, 0.9) 0%, rgba(255, 0, 127, 0.7) 40%, rgba(121, 40, 202, 0.4) 75%, rgba(0, 0, 0, 0) 100%);
+        mix-blend-mode: screen;
+        pointer-events: none;
         border-radius: 50%;
-        background: var(--ai-gradient);
-        opacity: 0.4;
-        z-index: 1;
+
+        /* Fast spring transition for instant reaction to audio peaks */
         transition:
-            transform 0.08s ease-out,
-            opacity 0.08s ease-out;
+            transform 0.05s cubic-bezier(0, 0.95, 0.1, 1),
+            opacity 0.05s ease-out,
+            filter 0.05s ease-out;
     }
 
-    .wave-ring.ring-1 {
-        width: 24px;
-        height: 24px;
-        transform: scale(calc(1 + var(--audio-level) * 1.2));
-        opacity: calc(0.2 + var(--audio-level) * 0.5);
-        filter: blur(2px);
+    /* Layer 1 (Inner soft mist cloud) */
+    .smoke-layer.layer-1 {
+        width: 14px;
+        height: 14px;
+        z-index: 4;
+        /* Elevated idle opacity from 0.3 -> 0.6 */
+        opacity: calc(0.6 + var(--audio-level) * 0.4);
+        filter: blur(5px);
+        animation: idleFloat1 5s ease-in-out infinite alternate;
+        transform: scale(calc(1.8 + var(--audio-level) * 5)) rotate(calc(var(--audio-level) * 200deg));
     }
 
-    .wave-ring.ring-2 {
-        width: 36px;
-        height: 36px;
-        transform: scale(calc(1 + var(--audio-level) * 0.8));
-        opacity: calc(0.1 + var(--audio-level) * 0.3);
-        filter: blur(4px);
+    /* Layer 2 (Mid blooming cloud) */
+    .smoke-layer.layer-2 {
+        width: 18px;
+        height: 18px;
+        z-index: 3;
+        /* Elevated idle opacity from 0.2 -> 0.45 */
+        opacity: calc(0.45 + var(--audio-level) * 0.5);
+        filter: blur(8px);
+        animation: idleFloat2 7s ease-in-out infinite alternate;
+        transform: scale(calc(2.2 + var(--audio-level) * 7)) rotate(calc(var(--audio-level) * -280deg));
+    }
+
+    /* Layer 3 (Outer plume) */
+    .smoke-layer.layer-3 {
+        width: 22px;
+        height: 22px;
+        z-index: 2;
+        /* Elevated idle opacity from 0.1 -> 0.3 */
+        opacity: calc(0.3 + var(--audio-level) * 0.6);
+        filter: blur(12px);
+        animation: idleFloat1 10s ease-in-out infinite reverse;
+        transform: scale(calc(2.6 + var(--audio-level) * 9)) rotate(calc(var(--audio-level) * 360deg));
+    }
+
+    /* Layer 4 (Deep dissipation haze) */
+    .smoke-layer.layer-4 {
+        width: 26px;
+        height: 26px;
+        z-index: 1;
+        /* Elevated idle opacity from 0.05 -> 0.2 */
+        opacity: calc(0.2 + var(--audio-level) * 0.7);
+        filter: blur(15px);
+        animation: idleFloat2 13s ease-in-out infinite reverse;
+        transform: scale(calc(3 + var(--audio-level) * 11)) rotate(calc(var(--audio-level) * -440deg));
+    }
+
+    /* Gentle ambient idle motion when silent */
+    @keyframes idleFloat1 {
+        0% {
+            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            transform: rotate(0deg) scale(0.95);
+        }
+        50% {
+            border-radius: 60% 30% 50% 70% / 50% 60% 30% 60%;
+        }
+        100% {
+            border-radius: 30% 60% 40% 70% / 60% 40% 70% 30%;
+            transform: rotate(180deg) scale(1.05);
+        }
+    }
+
+    @keyframes idleFloat2 {
+        0% {
+            border-radius: 60% 40% 30% 70% / 50% 30% 70% 50%;
+            transform: rotate(0deg) scale(1.05);
+        }
+        50% {
+            border-radius: 30% 60% 70% 40% / 60% 40% 50% 60%;
+        }
+        100% {
+            border-radius: 50% 30% 60% 40% / 40% 70% 30% 60%;
+            transform: rotate(-180deg) scale(0.95);
+        }
     }
 
     /* Modal Layout Elements */
@@ -506,7 +538,7 @@
         justify-content: space-between;
         align-items: center;
         border-bottom: 1px solid #1e293b;
-        background: var(--bg-dark);
+        background-color: rgb(0 0 0 / 0.1);
     }
 
     .ai-badge {
@@ -525,11 +557,10 @@
 
     .card-body {
         flex: 1;
-        padding: 20px;
+        padding: 5px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--card-bg);
         overflow-y: auto;
     }
 
@@ -537,6 +568,7 @@
         width: 100%;
         max-height: 100%;
         overflow-y: auto;
+        padding: 15px;
         /* no smooth scrolling: the follow-the-speech jump must not animate past its guard
            window, or its trailing scroll events read as the user unpinning the view */
         font-size: 0.95rem;
@@ -589,27 +621,18 @@
         color: #00dfd8;
     }
 
-    /* Floating stack above the closed bubble: ticker, action chips & suggestion cards */
-    .ai-stack {
-        position: fixed;
-        bottom: 120px;
-        right: 45px;
-        z-index: 4998;
-        display: flex;
-        flex-direction: column-reverse;
-        gap: 8px;
-        width: 340px;
-        max-width: 90vw;
-    }
-
     /* on the closed bubble's row, to its left (bubble: 62px at 45px/45px) */
     .ticker-wrap {
+        display: flex;
+        max-width: 60vw;
+
         position: fixed;
-        right: 117px;
-        bottom: 45px;
+        /* right: 112px; */
+        right: calc(45px + (62px / 2));
+        bottom: calc(45px + (62px / 2));
+        transform: translateY(50%);
         z-index: 4998;
-        max-width: min(340px, calc(90vw - 80px));
-        margin-bottom: 11px;
+
         /* the ring's inner card is opaque; the drop shadow lifts it off whatever panel is behind */
         filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.5));
     }
@@ -631,17 +654,6 @@
         -webkit-box-orient: vertical;
     }
 
-    .chips {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: var(--card-bg, #111827);
-        border: 1px solid #1e293b;
-        border-radius: 12px;
-        padding: 4px 8px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-    }
-
     .badge {
         background-color: rgba(9, 13, 22, 0.9);
         border-radius: 12px;
@@ -657,13 +669,10 @@
 
     .suggestion {
         display: flex;
-        flex-direction: column;
-        gap: 3px;
-        background: var(--card-bg, #111827);
-        border: 1px solid #1e293b;
-        border-radius: 12px;
+        align-items: center;
+        gap: 8px;
+
         padding: 8px 12px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
     }
 
     /* the popup shows the whole suggestion list (the closed stack only keeps the newest three) */
@@ -732,11 +741,6 @@
         -webkit-line-clamp: 2;
         line-clamp: 2;
         -webkit-box-orient: vertical;
-    }
-
-    .suggestionActions {
-        display: flex;
-        gap: 5px;
     }
 
     /* Animations */

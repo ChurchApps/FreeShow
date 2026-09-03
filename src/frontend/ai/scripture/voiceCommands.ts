@@ -6,17 +6,19 @@ import type { AiScriptureCommandEvent } from "../../../types/ai/AiScripture"
 import type { BibleInstance } from "../../components/drawer/bible/scripture"
 import { loadJsonBible, outputIsScripture } from "../../components/drawer/bible/scripture"
 import { setDrawerTabData } from "../../components/helpers/historyHelpers"
-import { activeScripture, aiScriptureAutoPaused, aiScriptureSuggestions, drawerTabsData, outLocked, scriptureHistory, scriptures } from "../../stores"
+import { activeScripture, ai, aiScriptureSuggestions, drawerTabsData, outLocked, scriptureHistory, scriptures } from "../../stores"
 import { parseNumber, projectDetection, projectResolved, restorePrevious } from "./projection"
 import { getSettings, scriptureState } from "./scriptureState"
-import { cycleRank, favoriteTranslationIds, preferredTranslationId } from "./translationPreference"
+import { cycleRank, preferredTranslationId } from "./translationPreference"
 
 const ACCEPT_SUGGESTION_WINDOW_MS = 45000 // "yes, show it" only accepts a suggestion this fresh
 
 export async function executeScriptureCommand(cmd: AiScriptureCommandEvent): Promise<void> {
+    if (!get(ai).enabled) return
+
     const settings = getSettings()
-    if (!scriptureState.sessionActive || !settings.enabled || !settings.voiceCommands) return
-    if (get(outLocked) || get(aiScriptureAutoPaused)) return
+    if (!scriptureState.sessionActive || !settings.voiceCommands) return
+    if (get(outLocked)) return
 
     // accepting the newest suggestion is confirm mode by voice - it must work BEFORE anything
     // is live on the output, and only while the suggestion is still fresh
@@ -119,8 +121,8 @@ export async function executeScriptureCommand(cmd: AiScriptureCommandEvent): Pro
             targetVerses = []
             for (let v = targetVerse; v <= targetVerseEnd; v++) targetVerses.push(v)
             // the spoken-range guard applies to commands too ("verses 1 to 176")
-            const cap = getSettings().maxVerses ?? 6
-            if (cap > 0 && targetVerses.length > cap) targetVerses = targetVerses.slice(0, cap)
+            const cap = 10
+            if (targetVerses.length > cap) targetVerses = targetVerses.slice(0, cap)
         }
         await projectResolved(currentId, reference.book, targetChapter, targetVerses)
     } catch (err) {
@@ -135,12 +137,7 @@ async function switchTranslation(cmd: Extract<AiScriptureCommandEvent, { type: "
         // cycle to the next translation: the main one, then the favourites, then common before
         // obscure. API bibles are part of the pool - they project on demand
         const main = preferredTranslationId()
-        const favorites = favoriteTranslationIds()
-        const priorityRank = (id: string) => {
-            if (id === main) return -1
-            const rank = favorites.indexOf(id)
-            return rank < 0 ? favorites.length : rank
-        }
+        const priorityRank = (id: string) => (id === main ? -1 : 0)
         const apiIds = Object.entries(get(scriptures))
             .filter(([, bible]) => !!bible?.api)
             .map(([id]) => id)

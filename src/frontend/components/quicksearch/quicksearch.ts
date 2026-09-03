@@ -1,7 +1,5 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { setAiEnabled } from "../../ai/aiState"
-import { setAiScriptureEnabled, startAiScriptureListening, stopAiScriptureListening } from "../../ai/scripture/aiScripture"
 import { sendMain } from "../../IPC/main"
 import {
     actions,
@@ -12,8 +10,6 @@ import {
     activeShow,
     activeStage,
     activeStyle,
-    ai,
-    aiScriptureStatus,
     alertMessage,
     audioFolders,
     audioPlaylists,
@@ -192,13 +188,6 @@ export async function quicksearch(searchValue: string, categoryFilter: null | Se
     if (isVisible("actions")) {
         const actionsList = trimValues(sort(keysToID(get(actions))), 2)
         addValues(actionsList, "action", "actions")
-    }
-
-    // --- AI ---
-    if (isVisible("ai")) {
-        // entries keep their curated order (the group is small & the toggles have fixed spots), and route to different handlers
-        const aiMatches = trimValues(sort(getAiValues()), MAX_RESULTS_LARGE).sort((a, b) => a.order - b.order)
-        aiMatches.forEach((value) => addValues([value], value.type, "ai"))
     }
 
     // --- NAVIGATION ---
@@ -474,22 +463,6 @@ const triggerActions = {
         // let popup close first
         setTimeout(() => triggerFunction("open_connection_" + id), 110)
     },
-    ai_scripture_settings: () => {
-        openDrawer("scripture")
-        // let the drawer open first
-        setTimeout(() => triggerFunction("drawer_options"), 110)
-    },
-    ai_toggle: (id: string) => {
-        if (id === "scripture") setAiScriptureEnabled(!get(ai).scripture?.enabled)
-        else setAiEnabled(!get(ai).enabled)
-    },
-    ai_listening: (id: string) => {
-        // starting is not gated internally - never begin a session while the feature is off
-        if (!get(ai).enabled || !get(ai).scripture?.enabled) return
-
-        if (id === "start") startAiScriptureListening()
-        else stopAiScriptureListening()
-    },
     faq: (id: string) => {
         sendMain(Main.URL, id)
     },
@@ -715,26 +688,6 @@ const settings = [
 
 function getSettings() {
     return translateNames(settings)
-}
-
-function getAiValues() {
-    const aiSettings = get(ai)
-
-    const values: any[] = [
-        { order: 1, type: "settings", id: "ai", name: "settings.ai", aliases: ["-Artificial intelligence", "-Transcription", "-Speech to text", "-Engine", "-Provider", "-LLM", "-API key", "-Ollama"] },
-        { order: 2, type: "ai_toggle", id: "ai", name: aiSettings.enabled ? "ai.disable" : "ai.enable", aliases: ["-Turn on", "-Turn off"] },
-        { order: 3, type: "popups", id: "ai_model_manager", name: "popup.ai_model_manager", data: { settingsTab: "ai" }, aliases: ["-AI models", "-Whisper", "-Nemotron", "-Download"] },
-        { order: 4, type: "ai_toggle", id: "scripture", name: aiSettings.scripture?.enabled ? "ai_scripture.disable" : "ai_scripture.enable", aliases: ["-Turn on", "-Turn off", "-Auto scripture"] },
-        { order: 5, type: "ai_scripture_settings", id: "ai_scripture_settings", name: "ai.scripture_settings", aliases: ["-Auto scripture", "-Detection", "-Confidence", "-Auto project"] }
-    ]
-
-    if (aiSettings.enabled && aiSettings.scripture?.enabled) {
-        // "starting" counts as live - stopping then still ends the in-flight start cleanly
-        const live = !["stopped", "error"].includes(get(aiScriptureStatus).state)
-        values.push({ order: 6, type: "ai_listening", id: live ? "stop" : "start", name: live ? "ai.stop_listening" : "ai.start_listening", aliases: ["-AI", "-Voice", "-Microphone", "-Transcription", "-Speech to text", "-Dictation"] })
-    }
-
-    return translateNames(values)
 }
 
 const faq = [

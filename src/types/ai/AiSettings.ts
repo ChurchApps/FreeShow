@@ -36,13 +36,9 @@ interface LlmSettings {
 }
 
 interface AiScriptureSettings {
-    enabled?: boolean
-    mode?: "confirm" | "auto"
-    autoMinConfidence?: number // auto mode only shows detections scoring at/above this percent (default 80 - "high" band); the single gate for references & quotes
+    // enabled?: boolean // keep enabled all the time
+    confidence?: "ask" | "highest" | "high" | "medium"
     searchBibles?: string[] // legacy tick list - every installed translation is searched now
-    mainTranslation?: string // the projection/grounding target; empty = first favourite, else the drawer choice
-    displayTranslation?: "drawer" | "matched" // "drawer" = the main translation
-    followInDrawer?: boolean // projections also navigate the drawer's scripture view (default on)
     micDeviceId?: string
     provider?: string
     model?: string // legacy single model value (kept as fallback)
@@ -56,8 +52,5 @@ interface AiScriptureSettings {
     interpretationMode?: boolean
     listenLanguage?: string
     spokenLanguages?: string[]
-    autoCooldownSeconds?: number
-    refCooldownSeconds?: number
-    maxVerses?: number // caps how many verses of a spoken range project at once (layout stays with the scripture settings)
     voiceCommands?: boolean
 }

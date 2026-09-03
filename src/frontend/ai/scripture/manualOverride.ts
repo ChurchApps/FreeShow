@@ -1,13 +1,11 @@
 // AI AUTO SCRIPTURE - MANUAL OVERRIDE WATCHER
 // pause auto projection when the operator manually projects something else
 
-import { get } from "svelte/store"
-import { aiScriptureAutoPaused, outputs } from "../../stores"
+import { outputs } from "../../stores"
 import { updateAnchorFromActiveScripture } from "./projection"
 import { getSettings, scriptureState } from "./scriptureState"
 
 let lastActiveSlideKey: string | null = null
-const AUTO_RESUME_MS = 60 * 1000
 let autoResumeTimer: NodeJS.Timeout | null = null
 let ourLiveSlideKey: string | null = null // fingerprint of the slide the AI itself projected
 
@@ -33,24 +31,15 @@ outputs.subscribe((allOutputs) => {
     // an operator-initiated scripture play moves the sermon anchor too
     if (key !== null && slide?.id === "temp") updateAnchorFromActiveScripture()
 
-    if (getSettings().mode !== "auto") return // nothing to pause in confirm mode
+    const settings = getSettings()
+    const confidence = settings.confidence || "ask"
+    if (confidence === "ask") return
 
     // ordinary output use (songs, slides, clearing) must NOT pause auto projection -
     // only the operator replacing/clearing a scripture the AI itself projected counts as an override
     if (!previousKey || previousKey !== ourLiveSlideKey) return
     ourLiveSlideKey = null
 
-    aiScriptureAutoPaused.set(true)
-
     // the override is temporary - resume on its own so a missed chip can't silently disable auto mode for the rest of the service
     if (autoResumeTimer) clearTimeout(autoResumeTimer)
-    autoResumeTimer = setTimeout(() => aiScriptureAutoPaused.set(false), AUTO_RESUME_MS)
 })
-
-export function resumeAutoProjection(): void {
-    if (autoResumeTimer) {
-        clearTimeout(autoResumeTimer)
-        autoResumeTimer = null
-    }
-    aiScriptureAutoPaused.set(false)
-}
