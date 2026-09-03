@@ -68,11 +68,7 @@
             }
 
             if (out.enabled) {
-                // transparent/invisible are window-creation options, and the capture-type flags
-                // (ndi/webrtc/rtmp/blackmagic) flip the window's offscreen (OSR) mode, which is fixed at
-                // creation — none can change on a live window, so these need a full recreate (CREATE on an
-                // existing id tears the window down and rebuilds it with the new config, including the
-                // sender/capture lifecycle). alwaysOnTop applies live via SET_VALUE.
+                // Recreate window for options fixed at creation (transparency, invisibility, capture/OSR mode)
                 const recreateKeys = ["transparent", "invisible", "ndi", "webrtc", "rtmp", "blackmagic"]
                 if (recreateKeys.includes(key)) {
                     send(OUTPUT, ["CREATE"], { id: outputId, ...out })

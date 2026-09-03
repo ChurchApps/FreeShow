@@ -19,14 +19,9 @@
         requestMain(Main.GET_STORE_VALUE, { file: "config", key: "graphicsDevice" }, (value) => {
             graphicsDevice = value || ""
         })
-        // only shown when the platform has a real selection mechanism AND there is something to choose
-        // (Linux: 2+ DRM render nodes; macOS: dual-GPU power preference; Windows: use the OS per-app
-        // GPU preference instead — main returns an empty list)
+        // Only shown when platform supports multi-GPU selection (e.g. Linux DRM nodes, macOS power preference)
         requestMain(Main.GET_GRAPHICS_DEVICES, undefined, (devices) => {
-            graphicsDeviceOptions = [
-                { value: "", label: translateText("settings.auto") },
-                ...(devices || []).map((d) => ({ value: d.value, label: d.label || translateText(d.value === "high-performance" ? "settings.gpu_high_performance" : "settings.gpu_low_power") }))
-            ]
+            graphicsDeviceOptions = [{ value: "", label: translateText("settings.auto") }, ...(devices || []).map((d) => ({ value: d.value, label: d.label || translateText(d.value === "high-performance" ? "settings.gpu_high_performance" : "settings.gpu_low_power") }))]
             graphicsDeviceSupported = (devices || []).length > 0
         })
     })

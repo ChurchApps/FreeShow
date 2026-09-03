@@ -30,13 +30,10 @@
     let softLoopVideo: HTMLVideoElement | null = null
     let softLoopOpacity = 0
 
-    // Shared-render preview dedupe: grouped outputs are pixel-identical, so follower mirrors paint
-    // the renderer mirror's frames onto a canvas instead of running a redundant decode session
-    // (main app window only). See mirrorVideoRegistry.ts.
+    // Follower mirrors paint renderer frames to canvas instead of redundant decoding
     $: groupRendererId = mirror && !$currentWindow ? findGroupRendererId($renderGroups, outputId) : null
     $: cloneSource = groupRendererId && $mirrorRegistryTick >= 0 ? getMirrorVideo(mirrorVideoKey(groupRendererId, path)) : null
 
-    // the decoding mirror registers its element so follower mirrors can find it
     const mirrorRegistration = new MirrorRegistration()
     $: mirrorRegistration.update(mirror && !$currentWindow && video && !cloneSource ? mirrorVideoKey(outputId, path) : null, video, !!cloneSource)
     onDestroy(() => mirrorRegistration.destroy())

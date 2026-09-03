@@ -1,9 +1,6 @@
 import { writable } from "svelte/store"
 
-// Shared-render preview dedupe: only the group renderer's mirror decodes; it registers its
-// <video> here and follower mirrors paint from it via canvas (extra decode sessions measurably
-// degrade every video in the app).
-
+// Preview deduplication: group renderer decodes once, follower mirrors paint from it via canvas
 const elements = new Map<string, HTMLVideoElement>()
 
 // bumped on every register/unregister so Svelte components re-query reactively

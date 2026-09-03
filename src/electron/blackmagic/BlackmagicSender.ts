@@ -628,9 +628,7 @@ export class BlackmagicSender {
                     const now = Date.now()
                     let convertedFrame
                     if (preConverted) {
-                        // Frame already in the card's pixel format (GPU/CPU-converted UYVY at the display mode,
-                        // via osr-capture) -> schedule without conversion. Drop on any size mismatch rather
-                        // than risk a bad native schedule. canAcceptRawUyvy already gated format/size/keying.
+                        // Frame already converted to target pixel format (e.g. UYVY via osr-capture)
                         if (videoFrame.length !== data.expectedVideoFrameSize) {
                             if (now - (data.lastVideoSizeWarningTime || 0) > 5000) {
                                 data.lastVideoSizeWarningTime = now

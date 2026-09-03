@@ -219,13 +219,7 @@ export class CaptureLifecycle {
 
         console.info("Capture - stopping: " + id)
 
-        // Release any in-flight OSR shared textures for this output BEFORE stripping the window's listeners:
-        // cleanupListeners removes the window's own release-on-close handler, and the NDI worker is stopped
-        // above, so otherwise held textures would be GC'd unreleased and drain Electron's OSR frame pool.
         OutputHelper.Lifecycle.releaseOsrCaptureTextures(id)
-
-        // A shared-render FOLLOWER's capture.window is the RENDERER's window — never strip its listeners (that
-        // would kill the renderer's paint handler). The renderer's own stopCapture handles cleanup.
         if (!(output as any).follower) this.cleanupListeners(capture.window)
         delete output.captureOptions
         this.updateWebRtcHostState()

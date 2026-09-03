@@ -1,31 +1,22 @@
 import type { Output } from "../../../types/Output"
 
-// Shared-render: outputs that render pixel-identical frames (same program feed / same stage layout)
-// share one render + capture, and the single readback fans out to every member's sender — instead of
-// the GPU decoding+compositing the same content N times.
-// Identity is derived only from config that affects the rendered pixels (group key match); anything
-// different renders independently, the conservative fallback.
+// Shared-render: outputs with identical content share one render window and capture,
+// and the single readback fans out to every member's sender.
 export class RenderGroups {
-    // On by default — outputs that render pixel-identically share one decode/capture (the big win for multiple
-    // 4K outputs of the same content). Only ever groups provably-identical outputs; anything different renders
-    // independently, so it's safe. Opt out with FS_SHARE_RENDER=0 if a problem is ever traced to it.
     static enabled = process.env.FS_SHARE_RENDER !== "0"
 
-    // output id -> its current group key
     private static keys: { [id: string]: string } = {}
-    // group key -> ordered member ids; members[0] is the RENDERER (owns the window), the rest are FOLLOWERS
+    // group key -> member ids; members[0] is the renderer (owns the window), rest are followers
     private static groups: { [key: string]: string[] } = {}
-    // output id -> its source config, kept so a follower can be recreated (promoted) if its renderer is removed
     private static configs: { [id: string]: Output } = {}
 
     static getConfig(id: string): Output | undefined {
         return this.configs[id]
     }
 
-    // set by OutputLifecycle (avoids an import cycle); fired on any membership change
     static onChanged: (() => void) | null = null
 
-    // renderer id -> member ids, for groups that actually share (2+ members)
+    // renderer id -> member ids for groups with 2+ members
     static snapshot(): { [rendererId: string]: string[] } {
         const out: { [rendererId: string]: string[] } = {}
         for (const members of Object.values(this.groups)) {
@@ -34,8 +25,7 @@ export class RenderGroups {
         return out
     }
 
-    // Everything that affects the rendered image. Missing a field here would let two outputs that render
-    // DIFFERENTLY share one capture (wrong content) — so include every render-affecting property.
+    // Properties affecting the rendered image
     static computeKey(output: Output): string {
         return JSON.stringify({
             stage: output.stageOutput || "",
@@ -49,7 +39,6 @@ export class RenderGroups {
         })
     }
 
-    // Register an output. Returns whether it owns the render (renderer) and who the renderer is.
     static add(id: string, output: Output): { isRenderer: boolean; rendererId: string } {
         if (!this.enabled) return { isRenderer: true, rendererId: id }
 
@@ -59,15 +48,12 @@ export class RenderGroups {
         const members = (this.groups[key] ||= [])
         if (!members.includes(id)) members.push(id)
         const rendererId = members[0]
-        // FS_CAP_STATS: print the full render-group key so we can see exactly which field stops two
-        // supposedly-identical outputs from sharing one render. Off by default; remove before shipping.
         if (process.env.FS_CAP_STATS) console.info(`[GROUP] add ${id} -> renderer=${rendererId} members=${members.length} key=${key}`)
         this.onChanged?.()
         return { isRenderer: rendererId === id, rendererId }
     }
 
-    // Remove an output. If it was the renderer and followers remain, the first follower is promoted (the caller
-    // must then create a window for `newRenderer`). Returns the remaining members (may be empty).
+    // Remove an output and promote the first follower if the renderer was removed
     static remove(id: string): { wasRenderer: boolean; newRenderer?: string; members: string[] } {
         const key = this.keys[id]
         delete this.keys[id]
@@ -84,7 +70,6 @@ export class RenderGroups {
         return { wasRenderer, newRenderer: wasRenderer ? remaining[0] : undefined, members: remaining }
     }
 
-    // All member ids that share this output's render (renderer first), or just [id] when sharing is off/unknown.
     static members(id: string): string[] {
         if (!this.enabled) return [id]
         const key = this.keys[id]

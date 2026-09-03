@@ -1,18 +1,4 @@
-// ----- GPU device selection + runtime GPU health check -----
-// - applyGraphicsDeviceSelection(): applies the persisted "Graphics device" setting as command-line
-//   switches before app "ready" (a change requires restart, like the hardware-acceleration toggle)
-// - listGraphicsDevices(): enumerates selectable devices for the Settings dropdown
-// - scheduleGpuHealthCheck(): ~20s after ready (getGPUFeatureStatus is premature at ready), compares
-//   the actual GPU state against the user's intent and raises one notification on degradation
-//
-// Per-platform selection mechanism:
-//   Linux — --render-node-override pins the GPU process to a DRM render node (the switch Chromium
-//     itself uses); nodes enumerated from /dev/dri, named via sysfs PCI ids.
-//   macOS — force_high_performance_gpu / force_low_power_gpu, a discrete-vs-integrated preference,
-//     offered only on dual-GPU machines.
-//   Windows — no selector: adapter LUIDs change every boot so a persisted value goes stale; the
-//     OS per-app GPU preference (Settings > Display > Graphics) is the right mechanism there.
-
+// GPU device selection and runtime GPU health checks
 import { app } from "electron"
 import fs from "fs"
 import path from "path"
@@ -21,7 +7,7 @@ import { config } from "../data/store"
 import { getMainWindow, hardwareAccelerationDisabled, isLinux, isMac } from "../index"
 import { sendToMain } from "../IPC/main"
 
-// Universal PCI vendor ids (not machine-specific — these are the registry-assigned constants)
+// Universal PCI vendor ids
 const PCI_VENDOR_NAMES: { [id: number]: string } = {
     0x8086: "Intel",
     0x10de: "NVIDIA",
@@ -31,7 +17,6 @@ const PCI_VENDOR_NAMES: { [id: number]: string } = {
     0x5143: "Qualcomm"
 }
 
-// suggested VA-API driver package per vendor (Ubuntu/Debian names)
 function vaPackagesFor(vendorName: string): string[] {
     if (vendorName === "Intel") return ["intel-media-va-driver-non-free"]
     if (vendorName === "AMD") return ["mesa-va-drivers"]
@@ -41,10 +26,7 @@ function vaPackagesFor(vendorName: string): string[] {
 
 export type GraphicsDeviceOption = { value: string; label: string }
 
-// ---- enumeration (Settings dropdown; called over IPC after the app is fully up) ----
-
-// Linux: /dev/dri/renderD* -> human name via sysfs PCI vendor/device ids. Returns [] when there is nothing
-// meaningful to choose (0-1 nodes) so the frontend hides the selector instead of shipping a dead control.
+// Linux: /dev/dri/renderD* -> name via sysfs PCI vendor/device ids
 function listLinuxRenderNodes(): GraphicsDeviceOption[] {
     let nodes: string[] = []
     try {
@@ -145,20 +127,16 @@ function findVaDrivers(): string[] {
     return found
 }
 
-// "enabled..." / "hardware..." = real hardware; everything else (disabled_software, unavailable_off,
-// disabled_off_ok, ...) is a software fallback or off.
+// "enabled..." / "hardware..." = hardware acceleration active
 function isHardware(status: string | undefined): boolean {
     return !!status && /^(enabled|hardware)/.test(status)
 }
 
-let healthNotified = false // at most one notification per session
+let healthNotified = false
 
 export function scheduleGpuHealthCheck() {
-    // deliberate user choice: with HWA disabled software rendering IS the intent — never nag about it
     if (hardwareAccelerationDisabled) return
 
-    // ~20s: past the premature at-ready window but early enough to read as a startup notice;
-    // retries a few times if the frontend isn't loaded yet
     let attempts = 0
     const attempt = () => {
         const win = getMainWindow()
@@ -171,9 +149,7 @@ export function scheduleGpuHealthCheck() {
     setTimeout(attempt, 20_000)
 }
 
-// The authoritative "will video hardware-decode?" answer: powerEfficient comes from the GPU
-// process's actual decoder profiles, so it can't be fooled by enabled-but-driverless VA-API or by
-// driver files that don't serve the active GPU. Returns null when the probe itself fails.
+// Probes whether video hardware-decodes in the active renderer
 async function probeHardwareDecode(): Promise<boolean | null> {
     const win = getMainWindow()
     if (!win || win.webContents.isLoading()) return null
