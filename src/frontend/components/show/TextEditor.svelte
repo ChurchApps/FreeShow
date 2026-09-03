@@ -77,15 +77,15 @@
 
 {#if maxTextboxes > 1}
     <FloatingInputs side="right">
-        <MaterialButton disabled={itemIndex <= 0} on:click={decreaseItemIndex} title="actions.previous">
+        <MaterialButton disabled={itemIndex <= 0} on:click={decreaseItemIndex} title="media.previous">
             <Icon id="remove" size={1.1} white />
         </MaterialButton>
-        <MaterialButton on:click={() => (itemIndex = 0)} title="actions.reset" style="min-width: 45px;">
+        <MaterialButton on:click={() => (itemIndex = 0)} title={itemIndex > 0 ? "actions.reset" : ""} style="min-width: 45px;">
             <span style="font-size: 0.85em;opacity: 0.8;font-weight: 500;">
                 {itemIndex === 0 ? translateText("category.all") : `#${itemIndex}`}
             </span>
         </MaterialButton>
-        <MaterialButton disabled={itemIndex >= maxTextboxes} on:click={increaseItemIndex} title="actions.next">
+        <MaterialButton disabled={itemIndex >= maxTextboxes} on:click={increaseItemIndex} title="media.next">
             <Icon id="add" size={1.1} white />
         </MaterialButton>
     </FloatingInputs>
