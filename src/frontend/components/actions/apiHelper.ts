@@ -183,7 +183,6 @@ export async function startProjectItemByName(name: string) {
         const loadingTask = getDocument(encodeFilePath(item.id))
         const pdfDoc = await loadingTask.promise
         const pages = pdfDoc.numPages
-        loadingTask.destroy()
 
         let name = item.name || removeExtension(getFileName(item.id))
         setOutput("slide", { type: "pdf", id: item.id, page: 0, pages, name })

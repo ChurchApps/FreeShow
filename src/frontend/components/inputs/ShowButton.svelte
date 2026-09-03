@@ -183,7 +183,6 @@
             const loadingTask = getDocument(encodeFilePath(id))
             const pdfDoc = await loadingTask.promise
             const pages = pdfDoc.numPages
-            loadingTask.destroy()
 
             let name = show.name || removeExtension(getFileName(id))
             setOutput("slide", { type: "pdf", id, page: 0, pages, name })

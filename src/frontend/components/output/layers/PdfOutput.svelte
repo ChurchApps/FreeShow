@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getDocument, GlobalWorkerOptions, type PDFDocumentLoadingTask, type PDFDocumentProxy } from "pdfjs-dist"
+    import { getDocument, GlobalWorkerOptions, type PDFDocumentLoadingTask, type PDFDocumentProxy, type RenderTask } from "pdfjs-dist"
     import type { Transition } from "../../../../types/Show"
     import OutputTransition from "../transitions/OutputTransition.svelte"
     import { onDestroy } from "svelte"
@@ -16,29 +16,35 @@
 
     let canvasElem: HTMLCanvasElement | undefined
 
-    $: pageNum = slide.page + 1
-    $: canvasElemExists = !!canvasElem
-    $: if (path && canvasElemExists) loadPage(pageNum)
-
-    onDestroy(() => loadingTask?.destroy())
+    $: pageNum = (slide.page || 0) + 1
+    $: loadPage(pageNum, path, canvasElem)
 
     let loadingTask: PDFDocumentLoadingTask | null = null
     let loadedDoc: PDFDocumentProxy | null = null
     let loadedPath = ""
-    async function loadPage(pageNumber: number) {
-        if (!canvasElem) return
+    let renderTask: RenderTask | null = null
 
-        if (loadedPath !== path) {
-            if (loadingTask) loadingTask.destroy()
-            loadingTask = getDocument(encodeFilePath(path))
+    onDestroy(() => {
+        renderTask?.cancel()
+        loadingTask?.destroy()
+    })
+
+    async function loadPage(pageNumber: number, currentPath: string, canvas: HTMLCanvasElement | undefined) {
+        if (!canvas || !currentPath) return
+
+        renderTask?.cancel()
+
+        if (loadedPath !== currentPath || !loadedDoc) {
+            loadingTask?.destroy()
+            loadingTask = getDocument(encodeFilePath(currentPath))
             loadedDoc = await loadingTask.promise
+            loadedPath = currentPath
         }
-        if (!loadedDoc) return
+        if (!loadedDoc || canvas !== canvasElem) return
 
         const page = await loadedDoc.getPage(pageNumber)
-
-        const context = canvasElem?.getContext("2d")
-        if (!context) return
+        const context = canvas?.getContext("2d")
+        if (!context || canvas !== canvasElem) return
 
         const viewportAtScale1 = page.getViewport({ scale: 1 })
         const scaleW = (window.innerWidth * window.devicePixelRatio) / viewportAtScale1.width
@@ -46,14 +52,24 @@
         const scale = Math.min(scaleW, scaleH)
 
         const viewport = page.getViewport({ scale })
-        canvasElem.height = viewport.height
-        canvasElem.width = viewport.width
+        canvas.height = viewport.height
+        canvas.width = viewport.width
 
-        page.render({ canvas: canvasElem, canvasContext: context, viewport })
+        renderTask = page.render({ canvas, canvasContext: context, viewport })
+        try {
+            await renderTask.promise
+        } catch {}
     }
 
     let update = 0
-    $: if (pageNum || path) update++
+    let prevSlide = ""
+    $: {
+        const slideKey = `${slide?.id}_${slide?.page}`
+        if (prevSlide !== slideKey) {
+            prevSlide = slideKey
+            update++
+        }
+    }
 </script>
 
 {#key update}

@@ -245,7 +245,6 @@ export async function playPdf(data: OutSlide | null, next: boolean, loop = false
     const loadingTask = getDocument(encodeFilePath(data.id))
     const pdfDoc = await loadingTask.promise
     const pages = pdfDoc.numPages
-    loadingTask.destroy()
 
     let nextPage = data.page
     if (nextPage === undefined) nextPage = next ? -1 : pages
