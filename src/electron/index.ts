@@ -17,14 +17,21 @@ import { receiveMain, sendMain, sendToMain } from "./IPC/main"
 import { autoErrorReport } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { OutputHelper } from "./output/OutputHelper"
+import { RenderGroups } from "./output/helpers/RenderGroups"
 import { setRtmpNoticeListener, setRtmpStatusListener } from "./streaming/RtmpStreamer"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
+import { applyCommandLineSwitches } from "./utils/commandLineSwitches"
+import { applyGraphicsDeviceSelection, scheduleGpuHealthCheck } from "./utils/gpu"
 import { isDraggableAreaVisible, isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs } from "./utils/init"
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
 import { loadingOptions, mainOptions } from "./utils/windowOptions"
 
 // ----- STARTUP -----
+
+// enlarge the libuv thread pool before any worker inherits the env: capture readbacks and NDI sends
+// run as async work on this pool, and the default of 4 threads serializes concurrent 4K outputs
+if (!process.env.UV_THREADPOOL_SIZE) process.env.UV_THREADPOOL_SIZE = "32"
 
 // check if app's in production or not
 export const isProd: boolean = process.env.NODE_ENV === "production" || !/[\\/]electron/.exec(process.execPath)
@@ -40,6 +47,13 @@ const RECORD_STARTUP_TIME = false
 export const isWindows: boolean = process.platform === "win32"
 export const isMac: boolean = process.platform === "darwin"
 export const isLinux: boolean = process.platform === "linux"
+
+// Chromium command-line switches must precede app "ready" (they configure the GPU process launch)
+applyCommandLineSwitches()
+
+// graphics device selection (Settings > Other): must run before "ready" (command-line switches
+// precede GPU process launch); a change requires a restart, like the hardware-acceleration toggle
+applyGraphicsDeviceSelection()
 
 let autoProfile = ""
 export function setAutoProfile(profile: string) {
@@ -63,9 +77,11 @@ setGlobalMenu()
 // error reporting
 autoErrorReport()
 
-// hardware acceleration
-const disableHWA = config.get("disableHardwareAcceleration")
-if (disableHWA === true) {
+// hardware acceleration: startup snapshot of the actual runtime decision. Capture/convert paths must
+// gate on this, not the live config value — a not-yet-applied toggle would otherwise mismatch the real
+// compositor mode and pick the wrong capture handler.
+export const hardwareAccelerationDisabled = config.get("disableHardwareAcceleration") === true
+if (hardwareAccelerationDisabled) {
     // Video did flicker sometime with HWA, especially on ARM Mac.
     // CPU usage is often lower with HWA enabled.
     // https://www.electronjs.org/docs/latest/tutorial/offscreen-rendering
@@ -89,9 +105,35 @@ protocol.registerSchemesAsPrivileged([
 // start when ready
 if (RECORD_STARTUP_TIME) console.time("Full startup")
 app.on("ready", async () => {
+    // getGPUFeatureStatus() at app-ready is premature (GPU process still initializing, reports
+    // disabled_software defaults) — only the delayed re-logs reflect the real state
+    logGpuStatus("t=0")
+    setTimeout(() => logGpuStatus("t=10s"), 10_000)
+    setTimeout(() => logGpuStatus("t=25s"), 25_000)
+    // compares the steady-state GPU regime against the user's intent, notifies on degradation
+    scheduleGpuHealthCheck()
     await startApp()
     requestHeaders()
 })
+
+// diagnostic: dump Chromium's GPU feature status (same fields as chrome://gpu) plus GL
+// vendor/renderer strings — shows whether compositing/decode run on hardware or a software fallback.
+// Always on for Linux, elsewhere gated behind FS_CAP_STATS; observational only.
+function logGpuStatus(tag: string) {
+    if (!isLinux && !process.env.FS_CAP_STATS) return
+    try {
+        const s = app.getGPUFeatureStatus() as unknown as Record<string, string>
+        console.info(`[GPU-STATUS ${tag}] gpu_compositing=${s.gpu_compositing} gpu_rasterization=${s.rasterization ?? s.gpu_rasterization} webgl=${s.webgl} webgl2=${s.webgl2} video_decode=${s.video_decode}`)
+    } catch (err) {
+        console.warn(`[GPU-STATUS ${tag}] getGPUFeatureStatus failed:`, err)
+    }
+    app.getGPUInfo("basic")
+        .then((info: any) => {
+            const d = info?.gpuDevice?.find((g: any) => g.active) ?? info?.gpuDevice?.[0] ?? {}
+            console.info(`[GPU-STATUS ${tag}] vendor=${info?.auxAttributes?.glVendor ?? d.vendorId} renderer=${info?.auxAttributes?.glRenderer ?? "?"} driver=${info?.auxAttributes?.glVersion ?? d.driverVersion ?? "?"}`)
+        })
+        .catch((err: Error) => console.warn(`[GPU-STATUS ${tag}] getGPUInfo failed:`, err))
+}
 
 export let powerSaveBlockerId: number | null = null
 async function startApp() {
@@ -228,6 +270,9 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
 
     window.webContents.on("did-finish-load", () => {
         window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile })
+        // render groups may have formed before this window could receive the change broadcast
+        // (outputs are recreated during startup) — sync the current state on every (re)load
+        if (mainOutput) toApp(OUTPUT, { channel: "RENDER_GROUPS", data: RenderGroups.snapshot() })
     })
 
     function loadingFailed(err: Error) {

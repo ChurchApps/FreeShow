@@ -39,6 +39,7 @@ import {
     ndiData,
     outputDisplay,
     outputs,
+    renderGroups,
     outputSlideCache,
     outputState,
     overlays,
@@ -109,6 +110,7 @@ const receiveOUTPUTasMAIN: any = {
         })
     },
     OUTPUTS: (a: any) => outputs.set(a),
+    RENDER_GROUPS: (a: any) => renderGroups.set(a || {}),
     RESTART: ({ id }) => restartOutputs(id),
     // DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     OUTPUT_STATE: (newStates: { id: string; active: boolean | "invisible" }[]) => {

@@ -1,8 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
-    import { currentWindow, media } from "../../stores"
+    import { currentWindow, media, renderGroups } from "../../stores"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
+    import { findGroupRendererId, getMirrorVideo, MirrorCloneDrawer, MirrorRegistration, mirrorRegistryTick, mirrorVideoKey } from "./video/mirrorVideoRegistry"
     import { SoftLoopSync } from "./video/softLoop"
     import { clampPlaybackRate, syncVideoToAudio, videoSync } from "./video/videoSync"
 
@@ -29,6 +30,26 @@
     let softLoopVideo: HTMLVideoElement | null = null
     let softLoopOpacity = 0
 
+    // Shared-render preview dedupe: grouped outputs are pixel-identical, so follower mirrors paint
+    // the renderer mirror's frames onto a canvas instead of running a redundant decode session
+    // (main app window only). See mirrorVideoRegistry.ts.
+    $: groupRendererId = mirror && !$currentWindow ? findGroupRendererId($renderGroups, outputId) : null
+    $: cloneSource = groupRendererId && $mirrorRegistryTick >= 0 ? getMirrorVideo(mirrorVideoKey(groupRendererId, path)) : null
+
+    // the decoding mirror registers its element so follower mirrors can find it
+    const mirrorRegistration = new MirrorRegistration()
+    $: mirrorRegistration.update(mirror && !$currentWindow && video && !cloneSource ? mirrorVideoKey(outputId, path) : null, video, !!cloneSource)
+    onDestroy(() => mirrorRegistration.destroy())
+
+    let cloneCanvas: HTMLCanvasElement | null = null
+    const cloneDrawer = new MirrorCloneDrawer()
+    $: cloneDrawer.setFit(mediaStyle.fit)
+    $: if (cloneCanvas && cloneSource) {
+        cloneDrawer.start(cloneCanvas, cloneSource)
+        loaded()
+    } else cloneDrawer.stop()
+    onDestroy(() => cloneDrawer.stop())
+
     let unsubscribeSync: (() => void) | null = null
     $: {
         unsubscribeSync?.()
@@ -37,7 +58,7 @@
             let lastSyncedTime: number | null = null
             unsubscribeSync = videoSync(targetPath, outputId, (data) => {
                 const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
-                syncVideoToAudio(video, data.currentTime, lastSyncedTime, isSoftLoop, targetPlaybackRate, data.isFadingOut)
+                syncVideoToAudio(video, data.currentTime, lastSyncedTime, isSoftLoop, targetPlaybackRate, data.isFadingOut, data.virtualClock)
                 if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
 
                 if (videoData.loop !== data.loop) videoData.loop = data.loop
@@ -202,15 +223,19 @@
 </script>
 
 <div bind:this={container} style="display: flex;width: 100%;height: 100%;place-content: center;{animationStyle}">
-    {#if mediaStyle.fit === "blur" && !perfectFit}
-        <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:this={blurVideo} muted loop={videoData.loop} />
-    {/if}
-    <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:error bind:currentTime={videoTime} muted src={encodeFilePath(path)} loop={videoData.loop}>
-        {#each tracks as track}
-            <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
-        {/each}
-    </video>
-    {#if softLoopValue > 0 && videoData.loop}
-        <video class="media" style="{mediaStyleString} position: absolute;top: 0;left: 0;transition: 0.2s opacity;opacity: {effectiveSoftLoopOpacity};pointer-events: none;" bind:this={softLoopVideo} src={encodeFilePath(path)} muted loop={videoData.loop} />
+    {#if cloneSource}
+        <canvas class="media" style="width: 100%;height: 100%;filter: {mediaStyle.filter || ''};transform: scale({mediaStyle.flipped ? '-1' : '1'}, {mediaStyle.flippedY ? '-1' : '1'});" bind:this={cloneCanvas} />
+    {:else}
+        {#if mediaStyle.fit === "blur" && !perfectFit}
+            <video class="media" style={mediaStyleBlurString} src={encodeFilePath(path)} bind:this={blurVideo} muted loop={videoData.loop} />
+        {/if}
+        <video class="media" style={mediaStyleString} bind:this={video} on:loadedmetadata={loaded} on:playing={playing} on:error bind:currentTime={videoTime} muted src={encodeFilePath(path)} loop={videoData.loop}>
+            {#each tracks as track}
+                <track label={track.name} srclang={track.lang} kind="subtitles" src="data:text/vtt;charset=utf-8,{encodeURI(track.vtt)}" />
+            {/each}
+        </video>
+        {#if softLoopValue > 0 && videoData.loop}
+            <video class="media" style="{mediaStyleString} position: absolute;top: 0;left: 0;transition: 0.2s opacity;opacity: {effectiveSoftLoopOpacity};pointer-events: none;" bind:this={softLoopVideo} src={encodeFilePath(path)} muted loop={videoData.loop} />
+        {/if}
     {/if}
 </div>

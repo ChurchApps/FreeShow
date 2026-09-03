@@ -1424,6 +1424,9 @@
         "log_song_usage": "Log song usage to a file",
         "auto_error_reporting": "Auto error reporting",
         "disable_hardware_acceleration": "Disable hardware acceleration",
+        "graphics_device": "Graphics device",
+        "gpu_high_performance": "Prefer high-performance GPU",
+        "gpu_low_power": "Prefer low-power GPU",
         "restart_for_change": "You have to restart the program for the change to take effect!",
         "font": "Font",
         "font_family": "Font family",
@@ -1466,6 +1469,15 @@
         "auto": "Auto",
         "section_trigger_action": "Trigger action when navigating presentation to a section",
         "rss": "RSS"
+    },
+    "gpu": {
+        "no_acceleration": "Graphics acceleration is unavailable",
+        "no_acceleration_info": "Rendering is running on the CPU (high usage, choppy playback).",
+        "no_video_decode": "Hardware video decoding is unavailable",
+        "no_video_decode_info": "Videos are decoding on the CPU (high usage, choppy playback).",
+        "va_driver_missing": "A video driver is missing. To fix, run this and restart:",
+        "update_drivers": "Installing or updating your graphics drivers may fix this.",
+        "disable_hint": "Disable hardware acceleration in Settings to hide this."
     },
     "output": {
         "state_inactive": "Inactive",

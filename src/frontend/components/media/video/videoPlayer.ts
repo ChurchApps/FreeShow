@@ -56,6 +56,9 @@ export type PlayingVideoState = {
     softLoopOpacity?: number
     type?: "background" | "item"
     isFadingOut?: boolean
+    // true when the authoritative clock is the wall-clock ticker (video has no real audio element):
+    // nothing audible to lip-sync against, so followers may correct drift gently instead of hard-seeking
+    virtualClock?: boolean
 }
 
 export class VideoPlayer {
@@ -247,6 +250,11 @@ export class VideoPlayer {
         }
 
         const audio = new Audio(encodeFilePath(audioPath))
+
+        // a real audio track has decoded bytes by canplay; none means this is a video-only file
+        audio.addEventListener("canplay", () => {
+            if (((audio as any).webkitAudioDecodedByteCount ?? 1) === 0) (audio as any).__noAudioTrack = true
+        })
         audio.addEventListener("ended", () => {
             const playing = this.getPlaying(originalId, outputIds || [])
             if (playing?.loop || this.getGlobalOptions(originalId)?.loop) {
@@ -259,7 +267,26 @@ export class VideoPlayer {
             // absolute end
             this.checkIfEnding(originalId, outputIds, true)
         })
-        return await this.waitForAudio(originalId, audio)
+        const loaded = await this.waitForAudio(originalId, audio)
+        if (!loaded) return null
+
+        // Video-only files: an <audio> element has no audio track to pace against and (with webm)
+        // free-runs at demux speed, "ending" a full video within a second — which the end check then
+        // treats as media finished and clears the background right after it starts. Nothing is
+        // audible either way, so clock silent videos with the wall-clock ticker instead (same as
+        // online media); the probe element is discarded once it has yielded the duration.
+        if ((loaded as any).__noAudioTrack === true) {
+            const duration = loaded.duration
+            try {
+                loaded.removeAttribute("src")
+                loaded.load()
+            } catch {
+                // probe element already unloaded
+            }
+            return { currentTime: 0, timeTick: new TimeInterpolator(), duration, paused: true, loop: false, muted: true }
+        }
+
+        return loaded
     }
 
     private static waitForAudio(pathOrId: string, audio: HTMLAudioElement): Promise<HTMLAudioElement | null> {
@@ -355,7 +382,7 @@ export class VideoPlayer {
         if (!audio) return
 
         if (audio instanceof HTMLAudioElement) {
-            audio.play()
+            audio.play().catch((err) => console.warn("[VideoPlayer] play failed:", err?.name))
         } else if ("timeTick" in audio) {
             audio.paused = false
             audio.timeTick.play()
@@ -735,6 +762,7 @@ export class VideoPlayer {
                         currentTime: Number.isFinite(activeAudio.currentTime) ? activeAudio.currentTime : 0,
                         duration: Number.isFinite(activeAudio.duration) && activeAudio.duration > 0 ? activeAudio.duration : 0,
                         paused: activeAudio.paused,
+                        virtualClock: "timeTick" in activeAudio,
                         loop: video.loop || false,
                         muted: activeAudio.muted,
                         softLoop,

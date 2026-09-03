@@ -4,6 +4,11 @@ import type { CaptureOptions } from "../capture/CaptureOptions"
 
 export class Output {
     window!: BrowserWindow
+    osr?: boolean // captured via offscreen paint events instead of the capturePage poll
+    // shared-render (FS_SHARE_RENDER): this output is a FOLLOWER sharing `renderGroupRenderer`'s window +
+    // capture (pixel-identical content). It owns no window and is fed by the renderer's fan-out.
+    follower?: boolean
+    renderGroupRenderer?: string
     invisible?: boolean
     boundsLocked?: boolean
     screen?: string | null

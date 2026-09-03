@@ -68,11 +68,16 @@
             }
 
             if (out.enabled) {
-                const ipcKeys = ["alwaysOnTop", "transparent", "invisible", "ndi", "webrtc", "rtmp"]
-                if (key === "transparent") {
+                // transparent/invisible are window-creation options, and the capture-type flags
+                // (ndi/webrtc/rtmp/blackmagic) flip the window's offscreen (OSR) mode, which is fixed at
+                // creation — none can change on a live window, so these need a full recreate (CREATE on an
+                // existing id tears the window down and rebuilds it with the new config, including the
+                // sender/capture lifecycle). alwaysOnTop applies live via SET_VALUE.
+                const recreateKeys = ["transparent", "invisible", "ndi", "webrtc", "rtmp", "blackmagic"]
+                if (recreateKeys.includes(key)) {
                     send(OUTPUT, ["CREATE"], { id: outputId, ...out })
-                } else if (key === "blackmagic" || ipcKeys.includes(key)) {
-                    send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value: key === "blackmagic" ? out : value })
+                } else if (key === "alwaysOnTop") {
+                    send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
                 }
             }
 

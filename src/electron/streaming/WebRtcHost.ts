@@ -188,9 +188,36 @@ console.error = (...args) => sendLog("error", ...args);
 // Map<outputId, { canvas, ctx, mediaStream, pc, url, token, resolvePost, rejectPost, resourceUrl, audioCtx, audioDest, nextPlayTime } >
 const streams = {};
 
+// Outputs with a WHIP negotiation currently in flight — dedupes overlapping START_WHIP (startup fires
+// it more than once), which otherwise POSTs twice to the same publisher path and hangs the server.
+const startingStreams = new Set();
+
 const RTC_CONFIG = {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 };
+
+// WHIP is non-trickle (vanilla ICE): the offer we POST must already carry the ICE candidates.
+// Wait for gathering to complete before sending, otherwise the server receives an offer with
+// missing host candidates and no valid candidate pair can form (connection never establishes).
+// Bounded by a timeout so a blocked/slow STUN server can't hang the start forever.
+function waitForIceGathering(pc, timeoutMs) {
+    if (pc.iceGatheringState === "complete") return Promise.resolve();
+    return new Promise((resolve) => {
+        let done = false;
+        const finish = () => {
+            if (done) return;
+            done = true;
+            pc.removeEventListener("icegatheringstatechange", check);
+            resolve();
+        };
+        const check = () => {
+            if (pc.iceGatheringState === "complete") finish();
+        };
+        pc.addEventListener("icegatheringstatechange", check);
+        // Fallback: some networks never reach "complete" (e.g. blocked STUN); send what we have.
+        setTimeout(finish, timeoutMs);
+    });
+}
 
 ipcRenderer.on("WEBRTC_FRAME", (_event, { outputId, buffer, size }) => {
     const stream = streams[outputId];
@@ -203,6 +230,9 @@ ipcRenderer.on("WEBRTC_FRAME", (_event, { outputId, buffer, size }) => {
     try {
         const imageData = new ImageData(new Uint8ClampedArray(buffer), size.width, size.height);
         ctx.putImageData(imageData, 0, 0);
+        // Remember the last real frame so the keep-alive heartbeat can redraw it during gaps.
+        stream.lastImageData = imageData;
+        stream.lastPaintTime = Date.now();
     } catch (err) {
         console.error("Frame paint error:", err.message);
     }
@@ -295,6 +325,12 @@ ipcRenderer.on("WHIP_POST_ERROR", (_event, { outputId, error }) => {
 });
 
 ipcRenderer.on("START_WHIP", async (_event, { outputId, url, token, fps, bitrate }) => {
+    // Ignore a duplicate/overlapping start for the same output while one is already negotiating.
+    if (startingStreams.has(outputId)) {
+        console.info("WHIP start ignored for " + outputId + " (a start is already in progress).");
+        return;
+    }
+    startingStreams.add(outputId);
     try {
         await stopStream(outputId);
 
@@ -303,6 +339,13 @@ ipcRenderer.on("START_WHIP", async (_event, { outputId, url, token, fps, bitrate
         // Set an initial size
         canvas.width = 640;
         canvas.height = 360;
+
+        // Paint an initial frame so captureStream produces RTP immediately. Without a first paint the
+        // encoder has nothing to encode and the track emits nothing until real capture frames arrive —
+        // at startup that's too late, and the WHIP server closes the session with "deadline exceeded
+        // while waiting tracks". A black kick-start keeps the track alive until real frames replace it.
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         const targetFps = fps ? Number(fps) : 30;
         const mediaStream = canvas.captureStream(targetFps);
@@ -320,7 +363,17 @@ ipcRenderer.on("START_WHIP", async (_event, { outputId, url, token, fps, bitrate
         }
 
         const pc = new RTCPeerConnection(RTC_CONFIG);
-        
+
+        pc.addEventListener("iceconnectionstatechange", () => {
+            console.info("ICE connection state for " + outputId + ": " + pc.iceConnectionState);
+        });
+        pc.addEventListener("connectionstatechange", () => {
+            console.info("Peer connection state for " + outputId + ": " + pc.connectionState);
+            if (pc.connectionState === "failed") {
+                console.error("WebRTC connection failed for " + outputId + " (ICE/DTLS could not establish a path).");
+            }
+        });
+
         mediaStream.getTracks().forEach((track) => {
             pc.addTransceiver(track, { direction: "sendonly", streams: [mediaStream] });
         });
@@ -346,7 +399,22 @@ ipcRenderer.on("START_WHIP", async (_event, { outputId, url, token, fps, bitrate
             }
         }
 
-        streams[outputId] = { canvas, ctx, mediaStream, pc, url, token, resourceUrl: "", audioCtx, audioDest, nextPlayTime: 0 };
+        streams[outputId] = { canvas, ctx, mediaStream, pc, url, token, resourceUrl: "", audioCtx, audioDest, nextPlayTime: 0, lastImageData: null, lastPaintTime: 0, keepAlive: null };
+
+        // Keep-alive heartbeat: canvas.captureStream(fps) only emits a frame when the canvas is drawn to,
+        // so if real capture frames aren't flowing (e.g. at startup, or whenever the output has no
+        // content) the track goes silent and the WHIP server drops the session ("waiting tracks"). This
+        // redraws the last frame (or black) during any gap so the track always produces RTP and the
+        // stream stays connected until real content appears. Real frames drive it directly when flowing.
+        streams[outputId].keepAlive = setInterval(() => {
+            const s = streams[outputId];
+            if (!s) return;
+            if (Date.now() - (s.lastPaintTime || 0) < 200) return; // real frames are flowing; leave it
+            try {
+                if (s.lastImageData) s.ctx.putImageData(s.lastImageData, 0, 0);
+                else { s.ctx.fillStyle = "black"; s.ctx.fillRect(0, 0, s.canvas.width, s.canvas.height); }
+            } catch (e) {}
+        }, 200);
 
         // Enforce sendonly direction on the SDP offer
         const offer = await pc.createOffer();
@@ -358,12 +426,25 @@ ipcRenderer.on("START_WHIP", async (_event, { outputId, url, token, fps, bitrate
             sdp: sdp
         }));
 
+        // Wait for ICE gathering to complete so the POSTed offer carries the candidates, then send the
+        // gathered localDescription (not the pre-gathering offer string). Without this, the server gets
+        // an offer with no host candidates and the connection can never establish.
+        await waitForIceGathering(pc, 3000);
+        const gatheredSdp = (pc.localDescription && pc.localDescription.sdp) ? pc.localDescription.sdp : sdp;
+
         // Perform signaling POST request from NodeJS Main process to bypass all CORS / origin security constraints
         const answerSdp = await new Promise((resolve, reject) => {
             streams[outputId].resolvePost = resolve;
             streams[outputId].rejectPost = reject;
-            ipcRenderer.send("DO_WHIP_POST", { outputId, url, token, sdp: sdp });
+            ipcRenderer.send("DO_WHIP_POST", { outputId, url, token, sdp: gatheredSdp });
         });
+
+        // Guard against a teardown race: if this connection was stopped/replaced while we were awaiting
+        // ICE gathering or the signaling POST, don't apply the answer to a closed pc (throws) — just bail.
+        if (!streams[outputId] || streams[outputId].pc !== pc || pc.signalingState === "closed") {
+            console.info("WHIP start aborted for " + outputId + " (connection was closed during negotiation).");
+            return;
+        }
 
         await pc.setRemoteDescription(new RTCSessionDescription({
             type: "answer",
@@ -374,6 +455,8 @@ ipcRenderer.on("START_WHIP", async (_event, { outputId, url, token, fps, bitrate
     } catch (err) {
         console.error("Failed to start WHIP stream for " + outputId + ": " + err.message);
         await stopStream(outputId);
+    } finally {
+        startingStreams.delete(outputId);
     }
 });
 
@@ -386,7 +469,12 @@ async function stopStream(outputId) {
     if (!stream) return;
 
     console.info("Stopping stream for " + outputId);
-    
+
+    if (stream.keepAlive) {
+        clearInterval(stream.keepAlive);
+        stream.keepAlive = null;
+    }
+
     // Gracefully terminate WHIP session on the server via HTTP DELETE
     if (stream.resourceUrl) {
         console.info("Sending WHIP DELETE request to resource URL: " + stream.resourceUrl);

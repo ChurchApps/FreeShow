@@ -16,8 +16,10 @@
         "tar": "^7.5.20"
     },
     "scripts": {
+        "preinstall": "node -e \"const [a,b]=process.versions.node.split('.').map(Number); if(a<22||(a===22&&b<12)){console.error('FreeShow requires Node >= 22.12 (found '+process.version+')');process.exit(1)}\"",
         "postinstall": "electron-builder install-app-deps",
         "rebuild-opus": "electron-rebuild -f -w @discordjs/opus",
+        "rebuild-osr": "electron-rebuild -f -w osr-capture",
         "---DEVELOPMENT---": "",
         "start": "node scripts/start.js",
         "start:old": "npx cross-env NODE_ENV=development npm-run-all -p -r build:frontend:dev start:electron",
@@ -151,6 +153,7 @@
         "music-metadata": "^7.14.0",
         "node-machine-id": "^1.1.12",
         "osc-js": "^2.4.1",
+        "osr-capture": "github:meros-co/osr-capture#1cbeae874891839d2d1d6b511b512d704a4eda26",
         "protobufjs": "^7.5.3",
         "slideshow": "github:vassbo/slideshow#224d50f",
         "socket.io": "^4.8.1",

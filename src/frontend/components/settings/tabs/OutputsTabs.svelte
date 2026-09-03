@@ -69,10 +69,13 @@
             }
 
             const captureTypeKeys = ["blackmagic", "ndi", "webrtc", "rtmp"]
-            const ipcKeys = ["alwaysOnTop", "transparent", "invisible"]
-            if (out.enabled && (captureTypeKeys.includes(key) || ipcKeys.includes(key))) {
+            if (out.enabled && (captureTypeKeys.includes(key) || key === "transparent" || key === "invisible")) {
                 if (value && captureTypeKeys.includes(key)) newToast("toast.output_capture_enabled")
-                send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value: key === "blackmagic" ? out : value })
+                // these keys change window-creation options / the window's fixed offscreen (OSR) mode,
+                // so the window must be recreated with the new config (see Outputs.svelte updateOutput)
+                send(OUTPUT, ["CREATE"], { id: outputId, ...out })
+            } else if (out.enabled && key === "alwaysOnTop") {
+                send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
             }
 
             return a
