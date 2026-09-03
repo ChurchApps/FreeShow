@@ -12,6 +12,9 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import Center from "../../system/Center.svelte"
+    import { registerPopupSubmit } from "../../../utils/popup"
+
+    registerPopupSubmit(() => applyValue())
 
     const obj = $popupData.obj || {}
     const caret = $popupData.caret || {}
@@ -113,9 +116,9 @@
         // previousSearchValue = searchValue
     }
 
-    function applyValue(e: any, id = "") {
+    function applyValue(e?: any, id = "") {
         if (!id) {
-            if (e.key !== "Enter" || searchValue.length < 2) return
+            if (searchValue.length < 2) return
             id = Object.values(searchedValues)[0]?.[0]?.id
         }
         if (!id) return
@@ -208,7 +211,7 @@
         }
 
         function finish() {
-            if (e.ctrlKey) {
+            if (e?.ctrlKey) {
                 resetInput = true
                 setTimeout(() => (resetInput = false))
                 searchValue = ""
@@ -229,8 +232,6 @@
     }, 1000)
     onDestroy(() => clearInterval(dynamicInterval))
 </script>
-
-<svelte:window on:keydown={applyValue} />
 
 <MaterialButton class="popup-reset" icon="edit" iconSize={1.1} title="create_show.more_options" on:click={() => activePopup.set("manage_dynamic_values")} white />
 

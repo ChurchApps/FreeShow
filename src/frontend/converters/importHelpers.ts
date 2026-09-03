@@ -18,7 +18,8 @@ export function createCategory(name: string, icon = "song", { isDefault, isArchi
         if (!categoryCount) return selectedCategory
     }
 
-    const id = name.toLowerCase().replaceAll(" ", "_")
+    // remove parentheses and replace spaces with underscores to convert name to id
+    const id = name.toLowerCase().replace(/[()]/g, "").trim().replace(/\s+/g, "_")
     if (get(categories)[id]) return id
     if (isDefault) name = "category." + name
 

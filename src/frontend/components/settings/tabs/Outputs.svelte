@@ -68,11 +68,12 @@
             }
 
             if (out.enabled) {
-                const ipcKeys = ["alwaysOnTop", "transparent", "invisible", "ndi", "webrtc", "rtmp"]
-                if (key === "transparent") {
+                // Recreate window for options fixed at creation (transparency, invisibility, capture/OSR mode)
+                const recreateKeys = ["transparent", "invisible", "ndi", "webrtc", "rtmp", "blackmagic"]
+                if (recreateKeys.includes(key)) {
                     send(OUTPUT, ["CREATE"], { id: outputId, ...out })
-                } else if (key === "blackmagic" || ipcKeys.includes(key)) {
-                    send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value: key === "blackmagic" ? out : value })
+                } else if (key === "alwaysOnTop") {
+                    send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
                 }
             }
 

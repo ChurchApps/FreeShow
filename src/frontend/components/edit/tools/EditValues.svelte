@@ -18,6 +18,7 @@
     import { getIsoLanguages } from "../../main/popups/localization/translation"
     import { SlideTimeline } from "../../timeline/SlideTimeline"
     import { parseShadowValue } from "../scripts/edit"
+    import { getShapeOutsideStyle, parseShapeOutsideValue } from "../scripts/shapeOutside"
     import { filterItemStyle, mergeWithStyle } from "../scripts/itemClipboard"
     import type { EditBoxSection, EditInput } from "../values/boxes"
     import { captionTranslateLanguages } from "../values/captionLanguages"
@@ -48,6 +49,9 @@
             } else if (input.valueIndex !== undefined) {
                 if (input.key === "box-shadow" || input.key === "text-shadow") {
                     const arr = parseShadowValue(value)
+                    value = arr[input.valueIndex]
+                } else if (input.key === "shape-outside") {
+                    const arr = parseShapeOutsideValue(value)
                     value = arr[input.valueIndex]
                 } else {
                     value = value?.split(" ")[input.valueIndex]
@@ -149,6 +153,7 @@
                 const isInset = (input.key === "box-shadow" || input.key === "text-shadow") && currentValue.includes("inset")
                 let arr
                 if (input.key === "box-shadow" || input.key === "text-shadow") arr = parseShadowValue(currentValue)
+                else if (input.key === "shape-outside") arr = parseShapeOutsideValue(currentValue)
                 else arr = currentValue.split(" ").filter(Boolean)
                 arr[input.valueIndex] = value
 
@@ -161,8 +166,12 @@
                     }
                 }
 
-                value = arr.join(" ")
-                if (isInset) value = "inset " + value
+                if (input.key === "shape-outside") {
+                    value = getShapeOutsideStyle(arr[0], arr[1], arr[2], arr[3], item?.style)
+                } else {
+                    value = arr.join(" ")
+                    if (isInset) value = "inset " + value
+                }
             } else {
                 // reset
                 value = ""
@@ -212,7 +221,7 @@
             allInputsToCheck.push(input)
         })
 
-        const hasChanged = !!allInputsToCheck.find((a, i) => !isDefaultValue(a, sections[id].defaultValues?.[i]))
+        const hasChanged = allInputsToCheck.some((a, i) => !isDefaultValue(a, sections[id].defaultValues?.[i]))
         if (hasChanged && !openedSections.includes(id)) openedSections.push(id)
         return hasChanged
     }
@@ -265,6 +274,12 @@
                         delete input.extension
                     }
 
+                    // custom default expand value for this special style
+                    if (key === "shape-outside") {
+                        const [size = 45, top = 0, left = 100, radius = 0] = typeof value === "string" ? value.split(/\s+/) : []
+                        value = getShapeOutsideStyle(size, top, left, radius, item?.style)
+                    }
+
                     changed({ detail: value }, input, id)
                 })
             }
@@ -281,18 +296,23 @@
 
     ///
 
-    $: optionsLists = {
-        timers: getSortedTimers($timers, { showHours: item?.timer?.showHours !== false, firstActive: isStage }).map((a) => ({ value: a.id, label: a.name, data: a.extraInfo })),
-        actions: sortByName(keysToID($actions)).map((a) => ({ value: a.id, label: a.name || "" })),
-        outputWindows: sortByName(keysToID($outputs).filter((a) => a.stageOutput !== $activeStage.id)).map((a) => ({ value: a.id, label: a.name || "" })),
-        captionTranslateLanguages: item?.captions?.googlekey ? [{ value: "", label: "—" }, ...getIsoLanguages()] : captionTranslateLanguages.map((a) => ({ value: a.id, label: a.name }))
-    }
     function getOptions(options: string | any[]): any[] {
-        if (typeof options === "string") return optionsLists[options] || []
+        if (typeof options === "string") {
+            if (options === "timers") {
+                return getSortedTimers($timers, { showHours: item?.timer?.showHours !== false, firstActive: isStage }).map((a) => ({ value: a.id, label: a.name, data: a.extraInfo }))
+            } else if (options === "actions") {
+                return sortByName(keysToID($actions)).map((a) => ({ value: a.id, label: a.name || "" }))
+            } else if (options === "outputWindows") {
+                return sortByName(keysToID($outputs).filter((a) => a.stageOutput !== $activeStage.id)).map((a) => ({ value: a.id, label: a.name || "" }))
+            } else if (options === "captionTranslateLanguages") {
+                return item?.captions?.googlekey ? [{ value: "", label: "—" }, ...getIsoLanguages()] : captionTranslateLanguages.map((a) => ({ value: a.id, label: a.name }))
+            }
+            return []
+        }
         return options
     }
 
-    function getValues(input: any, _optionsLists?: any) {
+    function getValues(input: any) {
         const values = clone(input.values)
         if (input.type === "dropdown") {
             if (values.options === "timers") values.addNew = "new.timer"
@@ -303,8 +323,13 @@
 
     // TIMELINE Updater
     let timelineUpdater = 0
-    const updaterInterval = setInterval(() => timelineUpdater++, 100)
-    onDestroy(() => clearInterval(updaterInterval))
+    let updaterInterval: any = null
+    $: if (sections?.timeline && !updaterInterval) {
+        updaterInterval = setInterval(() => timelineUpdater++, 100)
+    }
+    onDestroy(() => {
+        if (updaterInterval) clearInterval(updaterInterval)
+    })
 </script>
 
 <div class="tools">
@@ -344,7 +369,7 @@
                         {#each inputRow as input}
                             {#if !input.hidden}
                                 {@const value = getValue(input, { styles, item, customValues })}
-                                {@const values = getValues(input, optionsLists)}
+                                {@const values = getValues(input)}
                                 {@const hasTimelineAction = $special.slideTimelineActive && $activePage === "edit" && ($activeEdit.type || "show") === "show" && SlideTimeline.hasActionAtTime(input.key || "", type, $activeEdit?.items?.length ? $activeEdit.items : [0], timelineUpdater)}
 
                                 {#if input.type === "fontDropdown"}

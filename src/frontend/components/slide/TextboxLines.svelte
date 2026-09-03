@@ -9,6 +9,7 @@
     import { getFirstActiveOutput } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
+    import { calculateShapeVerticalOffset, getShapeFloatSide } from "../edit/scripts/shapeOutside"
     import { applyStyleOverrides } from "./wordOverride"
 
     export let item: Item
@@ -64,6 +65,15 @@
     let renderedLines: any[] = []
     $: renderedLines = styleOverrides?.length ? applyStyleOverrides(lines, styleOverrides) : lines
 
+    $: shapeOutside = getStyles(item?.style)["shape-outside"]
+    $: shapeFloatSide = getShapeFloatSide(shapeOutside)
+
+    let linesElem: HTMLElement | undefined
+    let shapeOffsetTop = 0
+    $: if (shapeOutside && linesElem && (renderedLines || item?.align)) {
+        setTimeout(() => (shapeOffsetTop = calculateShapeVerticalOffset(linesElem, item?.align)))
+    }
+
     function getCustomStyle(style: string) {
         if (!style) return ""
 
@@ -99,8 +109,31 @@
     let contentHeight = 0
     let alignHeight = 0
 
+    $: isScrolling = !isStage && !!item?.scrolling?.type && item.scrolling.type !== "none"
     $: copyCountHorizontal = contentWidth > 0 ? Math.ceil(alignWidth / (contentWidth + (item?.scrolling?.gap ?? 0))) + 2 : 2
     $: copyCountVertical = contentHeight > 0 ? Math.ceil(alignHeight / (contentHeight + (item?.scrolling?.gap ?? 0))) + 2 : 2
+
+    function measureScroll(node: HTMLElement, type: "align" | "content") {
+        if (!isScrolling) return
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const { width, height } = entry.contentRect
+                if (type === "align") {
+                    alignWidth = width
+                    alignHeight = height
+                } else {
+                    contentWidth = width
+                    contentHeight = height
+                }
+            }
+        })
+        observer.observe(node)
+        return {
+            destroy() {
+                observer.disconnect()
+            }
+        }
+    }
 
     function getColor(style: string | undefined) {
         if (!isStage || !useOriginalTextColor || !style) return ""
@@ -211,7 +244,7 @@
             // Dynamically reserve inline horizontal space per trailing chord with generous spacing
             chords.forEach((chord) => {
                 html += `<span class="chord end" data-autosize-ratio="${autosizeRatio}">${chord.key}</span>`
-                const widthEm = Math.max(1.5, (chord.key.length * 0.65 * autosizeRatio) + 0.8).toFixed(2)
+                const widthEm = Math.max(1.5, chord.key.length * 0.65 * autosizeRatio + 0.8).toFixed(2)
                 html += `<span class="invisible trailing-space" style="display: inline-block; width: ${widthEm}em; white-space: nowrap;"></span>`
             })
 
@@ -253,20 +286,33 @@
 
     const dispatch = createEventDispatcher()
     const previousValue: { [key: string]: string } = {}
+    const textValueCache = new Map<string, string>()
+    let lastUpdater = 0
+
     function getTextValue(value: string, i: number, ti: number, _updater: number) {
-        if (dynamicValues && value.includes("{")) {
-            const newValue = replaceDynamicValues(value, { ...ref, slideIndex })
-
-            const id = i + "_" + ti
-            if (previousValue[id] !== newValue) {
-                if (updateDynamic > 2) dispatch("updateAutoSize")
-                previousValue[id] = newValue
-            }
-
-            return newValue
+        if (!dynamicValues || !value || typeof value !== "string" || !value.includes("{")) {
+            return value || ""
         }
 
-        return value
+        if (_updater !== lastUpdater) {
+            textValueCache.clear()
+            lastUpdater = _updater
+        }
+
+        const cacheKey = `${i}_${ti}_${value}`
+        const cached = textValueCache.get(cacheKey)
+        if (cached !== undefined) return cached
+
+        const newValue = replaceDynamicValues(value, { ...ref, slideIndex }, _updater)
+
+        const id = i + "_" + ti
+        if (previousValue[id] !== newValue) {
+            if (updateDynamic > 2) dispatch("updateAutoSize")
+            previousValue[id] = newValue
+        }
+
+        textValueCache.set(cacheKey, newValue)
+        return newValue
     }
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
@@ -311,14 +357,23 @@
     $: baseFontSize = fontSize || (style ? resolveFontSize(renderedLines[0]?.text?.[0]?.style, outputStyle) : 100)
 </script>
 
-<div class="align" class:hidden={hideContent} class:isStage class:scrolling={!isStage && item?.scrolling?.type} style="--scrollSpeed: {(item?.scrolling?.speed ?? 30) * 1.5}s;{style ? item?.align : null};" bind:clientWidth={alignWidth} bind:clientHeight={alignHeight}>
+<div class="align" class:hasShapeOutside={!!shapeOutside} class:hidden={hideContent} class:isStage class:scrolling={!isStage && item?.scrolling?.type} style="--scrollSpeed: {(item?.scrolling?.speed ?? 30) * 1.5}s;{style ? item?.align : null};" use:measureScroll={"align"}>
     <!-- scrolling lines -->
     {#if !isStage && item?.scrolling?.type && item?.scrolling?.type !== "none"}
-        <div class="scrollWrapper" style="--copyCountHorizontal: {copyCountHorizontal}; --copyCountVertical: {copyCountVertical};" class:topBottomContinuousScrolling={!isStage && item?.scrolling?.type === "top_bottom"} class:bottomTopContinuousScrolling={!isStage && item?.scrolling?.type === "bottom_top"} class:leftRightContinuousScrolling={!isStage && item?.scrolling?.type === "left_right"} class:rightLeftContinuousScrolling={!isStage && item?.scrolling?.type === "right_left"}>
+        <div class="scrollWrapper" style="--copyCountHorizontal: {copyCountHorizontal};--copyCountVertical: {copyCountVertical};" class:topBottomContinuousScrolling={!isStage && item?.scrolling?.type === "top_bottom"} class:bottomTopContinuousScrolling={!isStage && item?.scrolling?.type === "bottom_top"} class:leftRightContinuousScrolling={!isStage && item?.scrolling?.type === "left_right"} class:rightLeftContinuousScrolling={!isStage && item?.scrolling?.type === "right_left"}>
             {#each Array.from({ length: item?.scrolling?.type === "top_bottom" || item?.scrolling?.type === "bottom_top" ? copyCountVertical : copyCountHorizontal }) as _}
-                <div class="scrollContent" style="{item?.scrolling?.type === 'top_bottom' || item?.scrolling?.type === 'bottom_top' ? 'margin-bottom' : 'margin-right'}: {item?.scrolling?.gap ?? 100}px;" bind:clientHeight={contentHeight} bind:clientWidth={contentWidth}>
+                <div class="scrollContent" style="{item?.scrolling?.type === 'top_bottom' || item?.scrolling?.type === 'bottom_top' ? 'margin-bottom' : 'margin-right'}: {item?.scrolling?.gap ?? 100}px;" use:measureScroll={"content"}>
                     <!-- WIP duplicate of "lines" down below -->
-                    <div class="lines" data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null} style="{style ? lineStyleBox : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
+                    <div
+                        class="lines"
+                        class:hasShapeOutside={!!shapeOutside}
+                        data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null}
+                        style="{style ? lineStyleBox : ''}{shapeOutside ? `--shape-outside: ${shapeOutside};` : ''}{shapeOutside && typeof item?.align === 'string' ? item.align.replace(/align-items/g, 'align-content') + ';' : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}"
+                    >
+                        {#if shapeOutside}
+                            <div class="shape-outside-float" style="shape-outside: {shapeOutside}; float: {shapeFloatSide};"></div>
+                        {/if}
+
                         {#each renderedLines as line, i}
                             <!-- set div height if chords, not last line, and no text content -->
                             {@const chordOnly = chords && chordOnlyLines[i]}
@@ -369,7 +424,11 @@
         </div>
     {:else}
         <!-- non scrolling lines -->
-        <div class="lines" data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null} style="{style ? lineStyleBox : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
+        <div bind:this={linesElem} class="lines" class:hasShapeOutside={!!shapeOutside} data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null} style="{style ? lineStyleBox : ''}{shapeOutside ? `--shape-outside: ${shapeOutside};--shape-offset-top: ${shapeOffsetTop}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
+            {#if shapeOutside}
+                <div class="shape-outside-float" style="shape-outside: {shapeOutside}; float: {shapeFloatSide};"></div>
+            {/if}
+
             {#each renderedLines as line, i}
                 <!-- set div height if chords, not last line, and no text content -->
                 {@const chordOnly = chords && chordOnlyLines[i]}
@@ -452,7 +511,8 @@
 
     .break {
         /* prevent line-breaks in HTML to affect content, like "text-align: justify;" */
-        display: table;
+        /* this breaks how the text works in specific scenarios, so fixing would be hard */
+        /* display: table; */
 
         width: 100%;
         /* line-height: normal; */
@@ -512,6 +572,31 @@
     /* .height {
         height: 1em;
     } */
+
+    /* Cutout Shape */
+    .align.hasShapeOutside {
+        display: block !important;
+        height: 100% !important;
+        width: 100% !important;
+    }
+    .lines.hasShapeOutside {
+        display: block !important;
+        height: 100% !important;
+        width: 100% !important;
+        padding-top: var(--shape-offset-top, 0px) !important;
+        box-sizing: border-box !important;
+    }
+    .lines.hasShapeOutside .break {
+        text-wrap: unset !important;
+    }
+    .shape-outside-float {
+        /* it gives a warning, but float must be used with the shape-outside property */
+        float: left;
+        width: 100%;
+        height: calc(100% + var(--shape-offset-top, 0px));
+        margin-top: calc(-1 * var(--shape-offset-top, 0px));
+        pointer-events: none;
+    }
 
     /* scrolling */
     .scrolling {

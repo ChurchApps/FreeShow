@@ -8,6 +8,7 @@ export interface Config {
     bounds: Electron.Rectangle
     dataPath: string | null
     disableHardwareAcceleration: boolean | null
+    graphicsDevice: string | null
     autoErrorReporting?: boolean
     mediaFolderPath?: string
 }
@@ -412,6 +413,8 @@ export type Popups =
     | "variable"
     | "interaction_input"
     | "audio_stream"
+    | "audio_effect"
+    | "add_audio_effect"
     | "now_playing"
     | "aspect_ratio"
     | "max_lines"

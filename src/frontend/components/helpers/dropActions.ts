@@ -8,7 +8,7 @@ import type { DropData, Selected } from "../../../types/Main"
 import type { Item, Slide, SlideAction } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, scriptureSettings, shows, showsCache, templates, timers } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, scriptureSettings, shows, showsCache, slidesOptions, templates, timers } from "../../stores"
 import { newToast } from "../../utils/common"
 import { getAccess } from "../../utils/profile"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
@@ -773,6 +773,26 @@ const slideDrop = {
 
         const oldLayout = _show(showId).layouts("active").get()[0]?.slides || []
         history.oldData = clone({ layout: oldLayout, slides })
+
+        // in "Groups view", never place groups as children in between. Always place right before or after a parent group.
+        if (get(slidesOptions)?.mode === "groups" && drop.data?.index !== undefined) {
+            const targetRef = ref[drop.data.index]
+            if (drop.trigger?.includes("end")) {
+                if (targetRef?.type === "parent") {
+                    drop.index = drop.data.index + 1 + (targetRef.children?.length || 0)
+                } else if (targetRef?.type === "child" && targetRef.parent) {
+                    const parentRef = ref[targetRef.parent.layoutIndex] || ref.find((a) => a.id === targetRef.parent?.id && a.type === "parent")
+                    if (parentRef) drop.index = parentRef.layoutIndex + 1 + (parentRef.children?.length || 0)
+                }
+            } else {
+                if (targetRef?.type === "child" && targetRef.parent) {
+                    const parentRef = ref[targetRef.parent.layoutIndex] || ref.find((a) => a.id === targetRef.parent?.id && a.type === "parent")
+                    if (parentRef) drop.index = parentRef.layoutIndex
+                } else if (targetRef?.type === "parent") {
+                    drop.index = drop.data.index
+                }
+            }
+        }
 
         // end of layout
         if (drop.index === undefined) drop.index = ref.length

@@ -353,7 +353,7 @@ export class TimelinePlayback {
         if (this.onTimeCallback) this.onTimeCallback(this.currentTime)
     }
 
-    private previousSlide: { id?: string; index?: number } = {}
+    private previousSlide: { id?: string; index?: number; line?: number } = {}
     private playAction(action: TimelineAction, ref: typeof this.ref) {
         if (action.type === "action") {
             runAction({ id: action.id, ...action.data }, { source: "timeline" })
@@ -361,7 +361,7 @@ export class TimelinePlayback {
             this.previousSlide = action.data
             ShowTimeline.playSlide(action.data, ref)
 
-            const triggerId = `${action.data.id}-${action.data.index}`
+            const triggerId = `${action.data.id}-${action.data.index}-${action.data.line || 0}`
             this.lastSlideTrigger = triggerId
         } else {
             console.log("Unknown Timeline Action:", action)
@@ -610,7 +610,7 @@ export class TimelinePlayback {
         const isLastAction = lastAction?.id === closestSlide.id
         if (isLastAction) return
 
-        const triggerId = `${closestSlide.data.id}-${closestSlide.data.index}`
+        const triggerId = `${closestSlide.data.id}-${closestSlide.data.index}-${closestSlide.data.line || 0}`
         if (this.lastSlideTrigger === triggerId) return
 
         this.playAction(closestSlide, this.ref)
@@ -719,14 +719,14 @@ export class TimelinePlayback {
                 const layoutRef = _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []
                 let layoutSlide = layoutRef[outSlide.index]
                 if (!layoutSlide) return
-                if (this.previousSlide.id === layoutSlide.id && this.previousSlide.index === outSlide.index) return
+                if (this.previousSlide.id === layoutSlide.id && this.previousSlide.index === outSlide.index && (this.previousSlide.line || 0) === (outSlide.line || 0)) return
 
                 const slideActions = this.actions.filter((a) => a.type === "slide")
 
                 // find next matching
                 if (
                     slideActions.some((action) => {
-                        if (action.time >= this.currentTime && action.data.id === layoutSlide.id && action.data.index === outSlide.index) {
+                        if (action.time >= this.currentTime && action.data.id === layoutSlide.id && action.data.index === outSlide.index && (action.data.line || 0) === (outSlide.line || 0)) {
                             this.setTime(action.time)
                             return true
                         }
@@ -737,7 +737,7 @@ export class TimelinePlayback {
 
                 // find any matching
                 slideActions.some((action) => {
-                    if (action.data.id === layoutSlide.id && action.data.index === outSlide.index) {
+                    if (action.data.id === layoutSlide.id && action.data.index === outSlide.index && (action.data.line || 0) === (outSlide.line || 0)) {
                         this.setTime(action.time)
                         return true
                     }

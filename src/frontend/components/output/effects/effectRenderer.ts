@@ -1,7 +1,7 @@
-import type { AssetItem, AuroraItem, BloomItem, BubbleItem, CircleItem, CityItem, CycleItem, EffectDefinition, EffectFunction, EffectInit, EffectItem, EffectType, FireworkItem, FogItem, GalaxyItem, GrassItem, LensFlareItem, LightningItem, RainbowItem, RainItem, RayItem, RectangleItem, ShapeItem, Side, SnowItem, SpotlightItem, StarItem, SunItem, TriangleItem, WaveItem } from "../../../../types/Effects"
+import type { AssetItem, AuroraItem, MeshGradientItem, BloomItem, BubbleItem, CircleItem, CityItem, CycleItem, EffectDefinition, EffectFunction, EffectInit, EffectItem, EffectType, FireworkItem, FogItem, GalaxyItem, GrassItem, LensFlareItem, LightningItem, RainbowItem, RainItem, RayItem, RectangleItem, ShapeItem, Side, SnowItem, SpotlightItem, StarItem, SunItem, TriangleItem, WaveItem } from "../../../../types/Effects"
 import { createNoise2D } from "./simplex-noise"
 
-const effectTypes: readonly EffectType[] = ["circle", "rectangle", "triangle", "wave", "bubbles", "stars", "galaxy", "rain", "snow", "sun", "lens_flare", "spotlight", "aurora", "bloom", "fog", "city", "rays", "fireworks", "cycle", "grass", "lightning", "rainbow", "asset"] as const
+const effectTypes: readonly EffectType[] = ["circle", "rectangle", "triangle", "wave", "bubbles", "stars", "galaxy", "rain", "snow", "sun", "lens_flare", "spotlight", "aurora", "bloom", "fog", "city", "rays", "fireworks", "cycle", "grass", "lightning", "rainbow", "mesh_gradient", "asset"] as const
 // type EffectType = (typeof effectTypes)[number]
 
 export class EffectRender {
@@ -1522,6 +1522,155 @@ export class EffectRender {
     }
 
     /// AURORA ///
+
+    // MESH GRADIENT
+    initMeshGradient(item: MeshGradientItem) {
+        const list = item.colors?.length ? item.colors : ["#101020", "#2b2d4d", "#7c5f7a", "#e0a98c"]
+        const count = list.length
+        const density = item.density ? Math.max(4, Math.min(10, Math.round(item.density))) : Math.max(4, Math.round(Math.sqrt(count)))
+        const cols = density
+        const rows = density
+
+        const colors = new Float32Array(cols * rows * 3)
+        for (let k = 0; k < cols * rows; k++) {
+            const rgb = this.hexToRgb(list[k % count]) || { r: 128, g: 128, b: 128 }
+            colors[k * 3] = rgb.r
+            colors[k * 3 + 1] = rgb.g
+            colors[k * 3 + 2] = rgb.b
+        }
+
+        const existing = this.effectData.get(item)
+        if (existing && existing.cols === cols && existing.rows === rows) {
+            existing.colors = colors
+            return
+        }
+
+        const bw = 128
+        const bh = 72
+        const buffer = document.createElement("canvas")
+        buffer.width = bw
+        buffer.height = bh
+        const bufferCtx = buffer.getContext("2d")!
+        const image = bufferCtx.createImageData(bw, bh)
+        for (let i = 3; i < image.data.length; i += 4) image.data[i] = 255
+
+        this.effectData.set(item, {
+            buffer,
+            bufferCtx,
+            image,
+            bw,
+            bh,
+            cols,
+            rows,
+            colors,
+            time: 0,
+            grainPattern: null,
+            ex: new Float32Array(cols * rows * bw),
+            ey: new Float32Array(cols * rows * bh)
+        })
+    }
+
+    private meshGrain(data: any) {
+        if (data.grainPattern) return data.grainPattern
+        const size = 128
+        const noise = document.createElement("canvas")
+        noise.width = size
+        noise.height = size
+        const nctx = noise.getContext("2d")!
+        const img = nctx.createImageData(size, size)
+        for (let i = 0; i < img.data.length; i += 4) {
+            const v = (Math.random() * 255) | 0
+            img.data[i] = img.data[i + 1] = img.data[i + 2] = v
+            img.data[i + 3] = 255
+        }
+        nctx.putImageData(img, 0, 0)
+        data.grainPattern = this.ctx.createPattern(noise, "repeat")
+        return data.grainPattern
+    }
+
+    drawMeshGradient(item: MeshGradientItem, deltaTime: number) {
+        const data = this.effectData.get(item)
+        if (!data) return
+
+        const { bw, bh, cols, rows, colors, image, ex, ey } = data
+        const n = cols * rows
+        const speed = item.speed ?? 1
+        const motion = (item.motion ?? 0.07) * 1.1
+        const spread = Math.max(0.1, item.spread ?? 1)
+
+        data.time += speed * 0.005 * deltaTime
+        const t = data.time
+
+        const sx = 0.15 * spread
+        const sy = 0.135 * spread
+
+        for (let j = 0; j < rows; j++) {
+            for (let i = 0; i < cols; i++) {
+                const k = j * cols + i
+                const phase = i * 1.7 + j * 3.1
+                const cx = (i + 0.5) / cols + motion * Math.sin(t * (1 + ((i + j) % 3)) + phase)
+                const cy = (j + 0.5) / rows + motion * Math.cos(t * (1 + ((i * 2 + j) % 2)) + phase * 1.3) * 0.75
+                const pw = Math.max(0, 1 + 0.25 * Math.sin(t * (1 + ((i + j * 2) % 3)) + phase * 0.7)) + 1e-5
+
+                const baseX = k * bw
+                for (let x = 0; x < bw; x++) {
+                    const d = ((x + 0.5) / bw - cx) / sx
+                    ex[baseX + x] = Math.exp(-0.5 * d * d)
+                }
+
+                const baseY = k * bh
+                for (let y = 0; y < bh; y++) {
+                    const d = ((y + 0.5) / bh - cy) / sy
+                    ey[baseY + y] = Math.exp(-0.5 * d * d) * pw
+                }
+            }
+        }
+
+        const out = image.data
+        for (let y = 0; y < bh; y++) {
+            const rowOffset = y * bw * 4
+            for (let x = 0; x < bw; x++) {
+                let r = 0
+                let g = 0
+                let b = 0
+                let sum = 0
+                for (let k = 0; k < n; k++) {
+                    const w = ex[k * bw + x] * ey[k * bh + y]
+                    sum += w
+                    const c = k * 3
+                    r += colors[c] * w
+                    g += colors[c + 1] * w
+                    b += colors[c + 2] * w
+                }
+                const o = rowOffset + x * 4
+                out[o] = r / sum
+                out[o + 1] = g / sum
+                out[o + 2] = b / sum
+            }
+        }
+        data.bufferCtx.putImageData(image, 0, 0)
+
+        const p = this.pos(item)
+        this.ctx.save()
+        this.ctx.imageSmoothingEnabled = true
+        this.ctx.imageSmoothingQuality = "high"
+        this.ctx.drawImage(data.buffer, p.x, p.y, p.xEnd - p.x, p.yEnd - p.y)
+
+        const grain = item.grain ?? 0
+        if (grain > 0) {
+            const pattern = this.meshGrain(data)
+            if (pattern) {
+                const ox = (Math.sin(t * 10) * 64 + 64) | 0
+                const oy = (Math.cos(t * 10) * 64 + 64) | 0
+                this.ctx.globalAlpha = Math.min(0.5, grain)
+                this.ctx.globalCompositeOperation = "overlay"
+                this.ctx.translate(-ox, -oy)
+                this.ctx.fillStyle = pattern
+                this.ctx.fillRect(p.x + ox, p.y + oy, p.xEnd - p.x, p.yEnd - p.y)
+            }
+        }
+        this.ctx.restore()
+    }
 
     initAurora(item: AuroraItem) {
         const bandCount = item.bandCount

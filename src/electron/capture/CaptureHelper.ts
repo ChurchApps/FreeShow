@@ -2,6 +2,7 @@ import type { BrowserWindow, Display, NativeImage, Size } from "electron"
 import electron from "electron"
 import { NdiSender } from "../ndi/NdiSender"
 import { OutputHelper } from "../output/OutputHelper"
+import { RenderGroups } from "../output/helpers/RenderGroups"
 import type { CaptureOptions } from "./CaptureOptions"
 import { CaptureLifecycle } from "./helpers/CaptureLifecycle"
 import { CaptureTransmitter } from "./helpers/CaptureTransmitter"
@@ -72,6 +73,41 @@ export class CaptureHelper {
                 CaptureTransmitter.startChannel(id, "ndi")
             }
         }
+
+        // GPU budget: rendering several 4K OSR surfaces at 60fps saturates the GPU and balloons every
+        // readback (~20ms -> ~100ms) -> the received output only gets a few NEW frames/sec. So render each OSR
+        // output at the rate it actually needs: full rate when a receiver is connected, a low rate when not.
+        // Reacts within CONNECTION_POLL_INTERVAL_MS (250ms), so a connecting output ramps to 60 quickly.
+        // The OSR window's render rate is owned by the group RENDERER. A follower must never set it (its window
+        // is the renderer's), and the renderer renders at the MAX rate ANY member needs — so one member with a
+        // connected 60fps receiver keeps the shared render at 60 even if others are idle.
+        this.updateRenderRate(RenderGroups.rendererOf(id))
+    }
+
+    static updateRenderRate(rendererId: string) {
+        const output = OutputHelper.getOutput(rendererId)
+        const win = (output as any)?.window as BrowserWindow | undefined
+        if (!(output as any)?.osr || (output as any)?.follower || !win || win.isDestroyed()) return
+
+        let fps = 0
+        for (const m of RenderGroups.members(rendererId)) {
+            const mo = OutputHelper.getOutput(m)
+            if (mo?.captureOptions) fps = Math.max(fps, this.getMaxActiveFramerate(mo.captureOptions.framerates || {}, mo.captureOptions.options || {}))
+        }
+        // setFrameRate is NOT a decimator: driving the OSR compositor below its native cadence makes
+        // Chromium deliver paints in clumps, starving the capture pipe and stuttering preview and
+        // output alike. Connected renderers render at the native rate; each consumer's configured
+        // framerate is enforced by admission-time decimation + the worker's send pacer. The sub-native
+        // setting survives only as the idle floor (no connected receiver — nobody sees the frames).
+        const idle = fps <= this.framerates.unconnected
+        const target = idle ? Math.max(1, Math.round(fps || 1)) : OutputHelper.Lifecycle.OSR_RENDER_FPS
+        try {
+            win.webContents.setFrameRate(target)
+        } catch {
+            // ignore
+        }
+        // Linux begin-frame drive (no-op elsewhere): keep its cadence in lockstep with the applied rate
+        OutputHelper.Lifecycle.updateOsrPaintDrive(win, rendererId, target)
     }
 
     static getWindowScreen(window: BrowserWindow) {

@@ -21,6 +21,7 @@ export enum ToMain {
     MEDIA_DOWNLOAD_PROGRESS = "MEDIA_DOWNLOAD_PROGRESS",
     PDF_IMPORT_PROGRESS = "PDF_IMPORT_PROGRESS",
     RTMP_STATUS = "RTMP_STATUS",
+    GPU_HEALTH = "GPU_HEALTH",
     // AI
     AI_STATUS = "AI_STATUS",
     AI_TRANSCRIPT = "AI_TRANSCRIPT",
@@ -61,6 +62,7 @@ export interface ToMainSendPayloads {
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: { url: string; progress: number; total: number; status: "downloading" | "complete" | "error"; name?: string }
     [ToMain.PDF_IMPORT_PROGRESS]: { filePath: string; name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }
     [ToMain.RTMP_STATUS]: { outputId: string; destinations: RtmpStatus }
+    [ToMain.GPU_HEALTH]: { issue: "compositing" | "video-decode"; platform: string; vendorName: string; vaDriverMissing: boolean; packages: string[] }
     // Unified provider callbacks
     [ToMain.PROVIDER_CONNECT]: { providerId: ContentProviderId; success: boolean; isFirstConnection?: boolean }
     [ToMain.PROVIDER_PROJECTS]: { providerId: ContentProviderId; categoryName: string; shows: any; projects: any; pcoPlans?: { planId: string; serviceTypeId: string; name: string; date: string }[] }

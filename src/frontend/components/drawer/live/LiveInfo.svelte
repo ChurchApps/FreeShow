@@ -19,7 +19,7 @@
     }
 
     let paused = false
-    $: paused ? videoElem?.pause() : videoElem?.play()
+    $: paused ? videoElem?.pause() : videoElem?.play()?.catch(() => {})
 
     function updateSpecial(key: string, value: any) {
         special.update((a) => {

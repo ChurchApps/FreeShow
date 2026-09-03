@@ -618,11 +618,13 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number | number[]
                 if (pos > 0) {
                     if (!firstLines.length) firstLines.push({ align: line.align, text: [] })
                     firstLines[firstLines.length - 1].text.push({
+                        ...text,
                         style: text.style,
                         value: value.slice(0, pos)
                     })
                 }
                 secondLines[secondLines.length - 1].text.push({
+                    ...text,
                     style: text.style,
                     value: value.slice(0, value.length)
                 })
@@ -661,7 +663,7 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number | number[]
     slides[slideId] = newSlide
 
     // update scripture dynamic values
-    const split = splitCustomDynamicValues(slides[slideRef.id].customDynamicValues)
+    const split = splitCustomDynamicValues(slides[slideRef.id].customDynamicValues, slides[slideRef.id].items, newSlide.items)
     if (split) {
         slides[slideRef.id].customDynamicValues = split.firstDV
         slides[slideId].customDynamicValues = split.secondDV
@@ -680,19 +682,59 @@ export function splitItemInTwo(slideRef: LayoutRef, itemIndex: number | number[]
     refreshEditSlide.set(true)
 }
 
-export function splitCustomDynamicValues(originalDV: any): { firstDV: any; secondDV: any } | null {
+export function splitCustomDynamicValues(originalDV: any, firstItems?: Item[], secondItems?: Item[]): { firstDV: any; secondDV: any } | null {
     if (!originalDV) return null
-    const firstDV: any = {}
-    const secondDV: any = {}
+    const firstDV = clone(originalDV)
+    const secondDV = clone(originalDV)
+
+    if (firstItems?.length || secondItems?.length) {
+        const extractVerses = (items: Item[] = [], isFirst: boolean) => {
+            const result: Record<string, [string, string][]> = {}
+            items.forEach((item, itemIdx) => {
+                const key = itemIdx === 0 ? "scripture_text" : `scripture${itemIdx + 1}_text`
+                let verseNum = isFirst ? originalDV[key]?.[0]?.[0] || "0" : "0"
+                let currentText = ""
+                const verses: [string, string][] = []
+
+                item.lines?.forEach((line) => {
+                    line.text?.forEach((t) => {
+                        if (t.customType?.includes("disableTemplate")) {
+                            if (currentText.trim()) verses.push([verseNum, currentText.trim()])
+                            verseNum = (t.value || "").trim() || "0"
+                            currentText = ""
+                        } else if (t.value) {
+                            currentText += t.value
+                        }
+                    })
+                })
+                if (currentText.trim()) verses.push([verseNum, currentText.trim()])
+                if (verses.length) result[key] = verses
+            })
+            if (result.scripture_text) result.scripture1_text = result.scripture_text
+            return result
+        }
+
+        const firstVerses = extractVerses(firstItems, true)
+        const secondVerses = extractVerses(secondItems, false)
+
+        Object.keys(originalDV).forEach((key) => {
+            if (Array.isArray(originalDV[key])) {
+                if (firstVerses[key]) firstDV[key] = firstVerses[key]
+                if (secondVerses[key]) secondDV[key] = secondVerses[key]
+            }
+        })
+
+        firstDV.scripture_reference_last = ""
+        secondDV.scripture_reference_last = originalDV.scripture_reference_last || ""
+        return { firstDV, secondDV }
+    }
+
     Object.keys(originalDV).forEach((key) => {
         const val = originalDV[key]
         if (Array.isArray(val)) {
             const center = Math.ceil(val.length / 2)
             firstDV[key] = val.slice(0, center)
             secondDV[key] = val.slice(center)
-        } else {
-            firstDV[key] = val
-            secondDV[key] = val
         }
     })
     return { firstDV, secondDV }

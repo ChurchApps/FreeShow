@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Event } from "../../../../types/Calendar"
 import { convertCalendar } from "../../../converters/calendar"
-import { alertMessage, events, special } from "../../../stores"
+import { alertMessage, calendars, events, special } from "../../../stores"
 import { translateText } from "../../../utils/language"
 import { confirmCustom } from "../../../utils/popup"
 
@@ -13,6 +13,30 @@ export interface CalendarData {
     url?: string
     lastSynced?: number
     hidden?: boolean
+    custom?: boolean
+}
+
+export function isCalendarImported(cal?: CalendarData | null): boolean {
+    if (!cal) return false
+    return !!cal.url || !cal.custom
+}
+
+export function createCustomCalendar(name: string, color?: string): string {
+    const id = uid()
+    const calColor = color || getAvailableColor(id, get(events), new Map())
+    const trimmedName = name.trim() || translateText("calendar.calendar")
+
+    calendars.update((s) => {
+        s[id] = {
+            id,
+            name: trimmedName,
+            color: calColor,
+            custom: true
+        }
+        return s
+    })
+
+    return id
 }
 
 export interface IcsCalendar extends CalendarData {
@@ -37,10 +61,10 @@ export const CALENDAR_COLORS = [
 export function getAvailableColor(calId: string, allEvents: Record<string, Event>, assignedInBatch: Map<string, string>): string {
     if (assignedInBatch.has(calId)) return assignedInBatch.get(calId)!
 
-    const currentSpecial = get(special)
+    const currentCalendars = get(calendars)
 
-    // Check existing explicit assignments (Special config or existing events)
-    const existingColor = currentSpecial?.calendars?.[calId]?.color || Object.values(allEvents).find((ev) => ev.origin === calId && ev.color)?.color
+    // Check existing explicit assignments (Calendars config or existing events)
+    const existingColor = currentCalendars?.[calId]?.color || Object.values(allEvents).find((ev) => ev.origin === calId && ev.color)?.color
 
     if (existingColor) {
         assignedInBatch.set(calId, existingColor)
@@ -50,7 +74,7 @@ export function getAvailableColor(calId: string, allEvents: Record<string, Event
     // Collect all currently used colors across sources
     const usedColors = new Set<string>([
         ...assignedInBatch.values(),
-        ...Object.values(currentSpecial?.calendars || {})
+        ...Object.values(currentCalendars || {})
             .map((c: any) => c.color)
             .filter(Boolean),
         ...Object.values(allEvents)
@@ -70,14 +94,17 @@ export function isCalendarHidden(calendarsMap: Record<string, any> = {}, hideUnl
 }
 
 export function toggleCalendarHidden(id: string) {
-    special.update((state) => {
-        if (id === "unlabeled") {
+    if (id === "unlabeled") {
+        special.update((state) => {
             state.hideUnlabeledCalendar = !state.hideUnlabeledCalendar
-        } else if (state.calendars?.[id]) {
-            state.calendars[id].hidden = !state.calendars[id].hidden
-        }
-        return state
-    })
+            return state
+        })
+    } else {
+        calendars.update((state) => {
+            if (state[id]) state[id].hidden = !state[id].hidden
+            return state
+        })
+    }
 }
 
 export function getIcsCalendars(allEvents: Record<string, any>, calendarsMap: Record<string, any> = {}): IcsCalendar[] {
@@ -116,8 +143,8 @@ export function getIcsCalendars(allEvents: Record<string, any>, calendarsMap: Re
 
 export function setCalendarColor(id: string, color: string) {
     if (!id) return
-    special.update((s) => {
-        if (s.calendars?.[id]) s.calendars[id].color = color
+    calendars.update((s) => {
+        if (s[id]) s[id].color = color
         return s
     })
     events.update((e) => {
@@ -130,8 +157,8 @@ export function setCalendarColor(id: string, color: string) {
 
 export function renameCalendar(id: string, newName: string) {
     if (!id || !newName) return
-    special.update((s) => {
-        if (s.calendars?.[id]) s.calendars[id].name = newName
+    calendars.update((s) => {
+        if (s[id]) s[id].name = newName
         return s
     })
 }
@@ -170,22 +197,22 @@ export async function fetchAndImportIcs(url: string, existingId?: string): Promi
         return false
     }
 
-    const currentSpecial = get(special)
-    const existingCal = existingId ? currentSpecial?.calendars?.[existingId] : (Object.values(currentSpecial?.calendars || {}).find((c: any) => c.url === normalized) as any)
+    const currentCalendars = get(calendars)
+    const existingCal = existingId ? currentCalendars?.[existingId] : (Object.values(currentCalendars || {}).find((c: any) => c.url === normalized) as any)
 
     const calId = existingCal?.id || uid()
     const resolvedName = existingCal?.name || parseCalendarName(content, normalized)
     const assignedColor = existingCal?.color || getAvailableColor(calId, get(events), new Map())
 
-    special.update((s) => {
-        s.calendars ??= {}
-        s.calendars[calId] = {
+    calendars.update((s) => {
+        s[calId] = {
             id: calId,
             name: resolvedName,
             color: assignedColor,
             url: normalized,
             lastSynced: Date.now(),
-            hidden: existingCal?.hidden || false
+            hidden: existingCal?.hidden || false,
+            custom: false
         }
         return s
     })
@@ -198,7 +225,7 @@ export async function deleteCalendarEvents(id: string): Promise<boolean> {
     if (!(await confirmCustom(translateText("calendar.delete_confirmation")))) return false
 
     const isUnlabeled = id === "unlabeled"
-    const currentCal = get(special)?.calendars?.[id]
+    const currentCal = get(calendars)?.[id]
 
     events.update((evs) => {
         return Object.fromEntries(
@@ -210,8 +237,8 @@ export async function deleteCalendarEvents(id: string): Promise<boolean> {
     })
 
     if (!isUnlabeled) {
-        special.update((s) => {
-            delete s.calendars?.[id]
+        calendars.update((s) => {
+            delete s[id]
             return s
         })
     }

@@ -2,6 +2,7 @@ import type { Input } from "../../../types/Input"
 import MidiValues from "../actions/MidiValues.svelte"
 import RestValues from "../actions/RestValues.svelte"
 import MaterialColorInput from "../inputs/MaterialColorInput.svelte"
+import MaterialColorsInput from "../inputs/MaterialColorsInput.svelte"
 import MaterialDatePicker from "../inputs/MaterialDatePicker.svelte"
 import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
 import MaterialNumberInput from "../inputs/MaterialNumberInput.svelte"
@@ -15,6 +16,7 @@ export const commonInputs = {
     number: MaterialNumberInput,
     dropdown: MaterialDropdown,
     color: MaterialColorInput,
+    colors: MaterialColorsInput,
     date: MaterialDatePicker,
     time: MaterialTimePicker,
 

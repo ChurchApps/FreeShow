@@ -26,8 +26,11 @@ interface SpeakerSubStream {
 }
 
 interface EffectChainSegment {
+    id: string
+    type: string
     input: AudioNode
     output: AudioNode
+    instance: any
     dispose?: () => void
 }
 
@@ -37,20 +40,15 @@ interface Connection {
     channelIndex?: number
 }
 
-const EFFECT_CONSTRUCTORS: Record<string, (ctx: AudioContext, cfg: any) => EffectChainSegment | null> = {
-    equalizer: (ctx, cfg) => {
-        const eq = new AudioEqualizer(cfg)
-        eq.initialize(ctx)
-        const nodes = eq.getNodes()
-        return nodes ? { ...nodes, dispose: () => eq.dispose() } : null
-    },
-    filter: (ctx, cfg) => new AudioFilter(ctx, cfg),
-    noiseGate: (ctx, cfg) => new AudioNoiseGate(ctx, cfg),
-    compressor: (ctx, cfg) => new AudioCompressor(ctx, cfg),
-    reverb: (ctx, cfg) => new AudioReverb(ctx, cfg),
-    delay: (ctx, cfg) => new AudioDelay(ctx, cfg),
-    limiter: (ctx, cfg) => new AudioLimiter(ctx, cfg),
-    stereoShaper: (ctx, cfg) => new AudioStereoShaper(ctx, cfg)
+const EFFECT_CLASSES: Record<string, any> = {
+    equalizer: AudioEqualizer,
+    filter: AudioFilter,
+    noiseGate: AudioNoiseGate,
+    compressor: AudioCompressor,
+    reverb: AudioReverb,
+    delay: AudioDelay,
+    limiter: AudioLimiter,
+    stereoShaper: AudioStereoShaper
 }
 
 export class AudioRoutingManager {
@@ -60,7 +58,7 @@ export class AudioRoutingManager {
 
     private mergerNodes = new Map<string, GainNode>()
     private channelDelayNodes = new Map<string, DelayNode>()
-    private mergerEffectChains = new Map<string, { input: AudioNode; output: AudioNode; dispose: () => void; configHash: string }>()
+    private mergerEffectChains = new Map<string, { firstInput: AudioNode; output: AudioNode; segments: EffectChainSegment[]; topologyHash: string; dispose: () => void }>()
     private destinationNodes = new Map<string, AudioNode>()
     private inputNodes = new Map<string, Set<AudioNode>>()
     private channelRecorderDestinations = new Map<string, MediaStreamAudioDestinationNode>()
@@ -88,7 +86,6 @@ export class AudioRoutingManager {
         })
 
         audioChannelsData.subscribe((data) => data && this.updateAllGains())
-
         audioEffects.subscribe(() => this.audioCtx && this.updateRoutingNodes())
 
         const triggerUpdate = () => {
@@ -163,9 +160,10 @@ export class AudioRoutingManager {
         this.speakerSinks.forEach((sink, deviceId) => {
             if (!activeDeviceIds.has(deviceId)) {
                 try {
-                    sink.ctx.close()
                     sink.element.pause()
                     sink.element.srcObject = null
+                    sink.element.removeAttribute("src")
+                    sink.ctx.close()
                 } catch {}
                 this.speakerSinks.delete(deviceId)
             }
@@ -197,7 +195,17 @@ export class AudioRoutingManager {
 
         const targetGain = chData.isMuted ? 0 : Math.max(0, vol)
         try {
-            gainNode.gain.setValueAtTime(targetGain, this.audioCtx.currentTime)
+            const currentTime = this.audioCtx.currentTime
+            const currentGain = gainNode.gain.value
+
+            // when changing volume (or mute state) fade for 250ms instead of cutting
+            if (Math.abs(currentGain - targetGain) > 0.001) {
+                gainNode.gain.cancelScheduledValues(currentTime)
+                gainNode.gain.setValueAtTime(currentGain, currentTime)
+                gainNode.gain.linearRampToValueAtTime(targetGain, currentTime + 0.25)
+            } else {
+                gainNode.gain.setValueAtTime(targetGain, currentTime)
+            }
         } catch {}
 
         const delaySec = Math.max(0, Math.min(5, (chData.delay || 0) / 1000))
@@ -217,32 +225,61 @@ export class AudioRoutingManager {
         this.mergerNodes.forEach((node, id) => this.applyMergerGain(id, node))
     }
 
-    /**
-     * Builds or reuses an existing effect chain for a channel.
-     * Caches native Web Audio nodes to avoid recreating them on every routing update.
-     */
+    private getChainTopologyHash(channelEffects: any): string {
+        const stack = channelEffects?.stack || []
+        if (!stack.length) return ""
+
+        const parts: string[] = []
+        for (const item of stack) {
+            if (item?.enabled !== false) {
+                parts.push(`${item.id}:${item.type}`)
+            }
+        }
+        return parts.join("|")
+    }
+
     private buildMergerEffectChain(id: string, node: GainNode, channelEffects: any): AudioNode {
         if (!this.audioCtx) return node
 
-        const configHash = JSON.stringify(channelEffects || {})
+        const topologyHash = this.getChainTopologyHash(channelEffects)
         const existingChain = this.mergerEffectChains.get(id)
 
         if (existingChain) {
-            if (existingChain.configHash === configHash) {
+            if (existingChain.topologyHash === topologyHash) {
+                const stack = channelEffects?.stack || []
+                for (const seg of existingChain.segments) {
+                    const item = stack.find((s: any) => s.id === seg.id)
+                    if (item?.config && seg.instance?.updateConfig) {
+                        seg.instance.updateConfig(item.config)
+                    }
+                }
+                node.connect(existingChain.firstInput)
                 return existingChain.output
             }
             existingChain.dispose()
             this.mergerEffectChains.delete(id)
         }
 
-        if (!channelEffects) return node
+        if (!channelEffects || topologyHash === "") return node
 
         const chain: EffectChainSegment[] = []
-        for (const [key, constructor] of Object.entries(EFFECT_CONSTRUCTORS)) {
-            const cfg = channelEffects[key]
-            if (cfg?.enabled) {
-                const seg = constructor(this.audioCtx, cfg)
-                if (seg) chain.push(seg)
+        const stack = channelEffects?.stack || []
+        for (const item of stack) {
+            if (item?.enabled === false) continue
+
+            const EffectClass = EFFECT_CLASSES[item.type]
+            if (EffectClass && item.config) {
+                const instance = new EffectClass(this.audioCtx, item.config)
+                if (instance.input && instance.output) {
+                    chain.push({
+                        id: item.id,
+                        type: item.type,
+                        input: instance.input,
+                        output: instance.output,
+                        instance,
+                        dispose: () => instance.dispose?.()
+                    })
+                }
             }
         }
 
@@ -255,9 +292,10 @@ export class AudioRoutingManager {
         }
 
         this.mergerEffectChains.set(id, {
-            input: node,
+            firstInput: chain[0].input,
             output: prev,
-            configHash,
+            segments: chain,
+            topologyHash,
             dispose: () => {
                 chain.forEach((seg) => {
                     this.safelyDisconnect(seg.output)
@@ -296,7 +334,7 @@ export class AudioRoutingManager {
             this.applyMergerGain(m.id, gainNode)
         })
 
-        // 2. Clean up removed channels and their cached effect chains
+        // 2. Clean up removed channels and their cached effect chains & recorder destinations
         const currentChannelIds = new Set(channels.map((m) => m.id))
         this.mergerNodes.forEach((node, id) => {
             if (!currentChannelIds.has(id)) {
@@ -310,13 +348,14 @@ export class AudioRoutingManager {
                     this.mergerEffectChains.delete(id)
                 }
 
+                this.channelRecorderDestinations.delete(id)
                 this.mergerNodes.delete(id)
                 this.channelDelayNodes.delete(id)
                 this.channelOutputNodes.delete(id)
             }
         })
 
-        // 3. Pre-index active connections to avoid O(N^2) array filtering in loops
+        // 3. Pre-index active connections
         const activeNodeIds = new Set(["drawer_audio", "playlists_default", "output_window", "mic_default", ...this.inputNodes.keys(), ...this.mergerNodes.keys()])
         const activeSubDeviceIds = new Set<string>()
         const connectionsByFrom = new Map<string, Connection[]>()
@@ -365,6 +404,7 @@ export class AudioRoutingManager {
         this.mergerNodes.forEach((node, id) => {
             this.safelyDisconnect(node)
             let outNode = this.buildMergerEffectChain(id, node, allEffects[id])
+            if (outNode !== node) this.safelyDisconnect(outNode)
 
             const chData = allChannelData[id] || {}
             const delaySec = Math.max(0, Math.min(5, (chData.delay || 0) / 1000))
@@ -383,7 +423,6 @@ export class AudioRoutingManager {
             }
 
             this.channelOutputNodes.set(id, outNode)
-
             AudioInputCapture.getInstance().captureInput(id, outNode)
 
             const recDest = this.channelRecorderDestinations.get(id)
@@ -407,19 +446,18 @@ export class AudioRoutingManager {
                 }
             }
 
-            // Connect to speaker sub-mergers
-            let splitter: ChannelSplitterNode | null = null
+            // Dedicated splitter per target speaker sub-merger
             speakerSubMergers.forEach(({ mergerNode }, targetId) => {
                 const subConns = conns.filter((c) => c.to === targetId)
 
                 if (subConns.length === 1) {
                     outNode.connect(mergerNode, 0, subConns[0].channelIndex ?? 0)
                 } else if (subConns.length > 1) {
-                    splitter ??= this.audioCtx!.createChannelSplitter(2)
+                    const splitter = this.audioCtx!.createChannelSplitter(2)
                     outNode.connect(splitter)
                     subConns.forEach((c) => {
                         const chIdx = c.channelIndex ?? 0
-                        splitter!.connect(mergerNode, Math.min(chIdx, 1), chIdx)
+                        splitter.connect(mergerNode, Math.min(chIdx, 1), chIdx)
                     })
                 }
             })

@@ -1,10 +1,13 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { DrawerTabIds } from "../../../types/Tabs"
     import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, activeTriggerFunction, dictionary, drawer, drawerOpenedInEdit, drawerTabsData, focusMode, labelsDisabled, mediaOptions, os, previousShow, projects, quickTextCache, scriptureSettings, selected, showsCache } from "../../stores"
     import { DEFAULT_DRAWER_HEIGHT, DEFAULT_WIDTH, MENU_BAR_HEIGHT } from "../../utils/common"
+    import { startResizing, stopResizing } from "../../utils/cursor"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
-    import { shouldOpenReplace } from "../../utils/shortcuts"
+    import { getNormalizedKey, shouldOpenReplace } from "../../utils/shortcuts"
+    import { isTypingTarget } from "../../utils/shortcutsHelper"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
     import Navigation from "../drawer/Navigation.svelte"
@@ -32,6 +35,8 @@
     function mousedown(e: any) {
         if (e.target.closest(".search")) return
 
+        startResizing("ns-resize")
+
         maxHeight = window.innerHeight - topHeight - ($os.platform === "win32" ? MENU_BAR_HEIGHT - 0.3 : 0)
         mouse = {
             x: e.clientX,
@@ -43,16 +48,26 @@
     // open drawer if autoclosed
     $: if ($activePage === "show" && $drawer.autoclosed) setTimeout(() => drawer.set({ height: $drawer.stored ?? DEFAULT_DRAWER_HEIGHT, stored: null }), 100)
 
+    let animFrame: number | null = null
     function mousemove(e: any) {
         if (!mouse) return
 
-        drawer.set({ height: getHeight(window.innerHeight - e.clientY - mouse.offsetY), stored: null })
+        if ($selected?.id || $selected?.data?.length) selected.set({ id: null, data: [] })
 
-        selected.set({ id: null, data: [] })
+        if (animFrame) return
+        animFrame = requestAnimationFrame(() => {
+            animFrame = null
+            if (!mouse) return
 
-        const isClosed = $drawer.height <= minHeight
-        if (isClosed) drawerOpenedInEdit.set(false)
-        else if ($activePage === "edit") drawerOpenedInEdit.set(true)
+            const newHeight = getHeight(window.innerHeight - e.clientY - mouse.offsetY)
+            if (newHeight !== $drawer.height) {
+                drawer.set({ height: newHeight, stored: null })
+
+                const isClosed = newHeight <= minHeight
+                if (isClosed) drawerOpenedInEdit.set(false)
+                else if ($activePage === "edit") drawerOpenedInEdit.set(true)
+            }
+        })
     }
 
     function getHeight(height: number) {
@@ -98,9 +113,21 @@
     function mouseup(e: any) {
         if (!e.target.closest("input") && !e.target.closest(".contextMenu") && !searchValue.length) searchActive = false
 
-        mouse = null
+        if (animFrame) {
+            cancelAnimationFrame(animFrame)
+            animFrame = null
+        }
+        if (mouse) {
+            stopResizing()
+            mouse = null
+        }
         if (!e.target.closest(".top")) move = false
     }
+
+    onDestroy(() => {
+        if (animFrame) cancelAnimationFrame(animFrame)
+        if (mouse) stopResizing()
+    })
 
     $: activeTab = $activeDrawerTab
     function openDrawerTab(tab: { id: string; name: string; icon: string }) {
@@ -138,7 +165,11 @@
     let firstMatch: null | any = null
     let searchElem: HTMLInputElement | undefined
     async function keydown(e: KeyboardEvent) {
-        if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+        if (e.shiftKey || e.altKey) return
+
+        const ctrlKey = e.ctrlKey || e.metaKey ? getNormalizedKey(e) : ""
+
+        if (ctrlKey === "f") {
             if ($activePopup === "show" || shouldOpenReplace()) return
             focusSearch()
 
@@ -153,7 +184,7 @@
                     return a
                 })
             }
-        } else if ((e.ctrlKey || e.metaKey) && e.key === "d") {
+        } else if (ctrlKey === "d" && !isTypingTarget(document.activeElement)) {
             if (!$selected?.id && !$activeEdit.items.length) click(null)
         } else if (e.key === "Enter") {
             if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || $focusMode) return

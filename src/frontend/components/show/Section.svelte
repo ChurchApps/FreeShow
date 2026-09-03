@@ -24,7 +24,7 @@
     $: if ($activeShow !== null || section) updateNote()
 
     function updateNote() {
-        note = $projects[projectId || ""]?.shows?.[section.index]?.notes || ""
+        note = currentProject?.shows?.[section.index]?.notes || section?.notes || ""
     }
 
     function edit(e: any) {
@@ -107,11 +107,11 @@
     {#key section}
         <InputRow>
             <h4 id="sectionTitle" class:empty={!sectionUpdated?.name} style="flex: 6;border-bottom: 1.2px solid {sectionUpdated.color || 'var(--primary-lighter)'};">
-                <TextInput value={section?.name || ""} placeholder={translateText("main.unnamed")} disabled={isLocked} on:input={updateName} on:keydown={keydown} />
+                <TextInput value={sectionUpdated?.name || ""} placeholder={translateText("main.unnamed")} disabled={isLocked} on:input={updateName} on:keydown={keydown} />
             </h4>
             <!-- WIP suggest titles based on previous titles? (maybe not needed as we have project templates) -->
 
-            <MaterialTimePicker label="calendar.time" value={section?.data?.time} disabled={isLocked} style="flex: 1;height: 100%;" on:change={(e) => updateSectionData("time", e.detail)} />
+            <MaterialTimePicker label="calendar.time" value={sectionUpdated?.data?.time} disabled={isLocked} style="flex: 1;height: 100%;" on:change={(e) => updateSectionData("time", e.detail)} />
         </InputRow>
 
         <Notes value={note} disabled={isLocked} on:edit={edit} />

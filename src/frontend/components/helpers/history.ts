@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { History, HistoryNew, HistoryTypes } from "../../../types/History"
-import { activePage, historyCacheCount, isDev, undoHistory } from "../../stores"
+import { activePage, activeProject, activeShow, historyCacheCount, isDev, projects, undoHistory } from "../../stores"
 import { redoHistory } from "./../../stores"
 import { areObjectsEqual, clone } from "./array"
 import { historyActions } from "./historyActions"
@@ -240,6 +240,18 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
 
             return uh
         })
+    }
+
+    // restore correct opened project item when undoing (currently directed at undoing a Placeholder replacement)
+    if (obj.id === "UPDATE" && obj.location?.page === "show" && (obj.newData?.key === "shows" || obj.oldData?.key === "shows")) {
+        const projectId = obj.oldData?.id || obj.newData?.id || get(activeProject)
+        if (projectId && get(activeProject) === projectId) {
+            const showIndex = get(activeShow)?.index
+            const item = get(projects)[projectId]?.shows?.[showIndex ?? -1]
+            if (showIndex !== undefined && showIndex !== null && item?.type === "show_placeholder") {
+                activeShow.set({ id: item.id, type: "show_placeholder", index: showIndex })
+            }
+        }
     }
 
     // deselect selected

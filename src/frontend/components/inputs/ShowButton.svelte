@@ -2,12 +2,11 @@
     import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
     import type { ClickEvent } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, effects, focusMode, globalTags, media, notFound, outLocked, outputs, overlayCategories, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, special, styles, textCache } from "../../stores"
+    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, editingProjectTemplate, effects, focusMode, globalTags, media, notFound, outLocked, outputs, overlayCategories, overlays, playerVideos, playingAudio, projects, projectTemplates, refreshEditSlide, shows, showsCache, special, styles, textCache } from "../../stores"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
-    import { getTextSnippet, highlightText } from "../quicksearch/searchHighlight"
     import { customIconsColors } from "../../values/customIcons"
-    import { historyAwait } from "../helpers/history"
+    import { history, historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { encodeFilePath, getExtension, getFileName, getMedia, getMediaLayerType, getMediaStyle, getMediaType, getVideoDuration, mediaSize, removeExtension } from "../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput, startFolderTimer } from "../helpers/output"
@@ -17,6 +16,7 @@
     import T from "../helpers/T.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
     import { clearBackground, clearSlide } from "../output/clear"
+    import { getTextSnippet, highlightText } from "../quicksearch/searchHighlight"
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
 
@@ -183,7 +183,6 @@
             const loadingTask = getDocument(encodeFilePath(id))
             const pdfDoc = await loadingTask.promise
             const pages = pdfDoc.numPages
-            loadingTask.destroy()
 
             let name = show.name || removeExtension(getFileName(id))
             setOutput("slide", { type: "pdf", id, page: 0, pages, name })
@@ -199,7 +198,23 @@
     function rename(e: any) {
         if (readOnly) return
 
-        const name = checkName(e.detail.value, id)
+        const value = e.detail.value.trim()
+
+        if (type === "show_placeholder") {
+            const projectId = $editingProjectTemplate
+            if (!projectId) return
+
+            const project = $projectTemplates[projectId]
+            if (!project?.shows || index === null || !project.shows[index]) return
+
+            const newShows = [...project.shows]
+            newShows[index] = { ...newShows[index], name: value }
+
+            history({ id: "UPDATE", newData: { key: "shows", data: newShows }, oldData: { id: projectId }, location: { page: "show", id: "project_template" } })
+            return
+        }
+
+        const name = checkName(value, id)
         historyAwait([id], { id: "SHOWS", newData: { data: [{ id, show: { name } }], replace: true }, location: { page: "drawer" } })
     }
 
@@ -257,7 +272,7 @@
 
     // placeholder title with index
     // $: showTemplateName = type === "show_placeholder" ? `${translateText("new.placeholder: formats.show")} ${index !== null ? ($editingProjectTemplate ? $projectTemplates[$editingProjectTemplate] : $projects[$activeProject || ""])?.shows?.reduce((c, show, i) => (show.type === "show_placeholder" && i < index ? c + 1 : c), 1) : ""}` : ""
-    $: showTemplateName = type === "show_placeholder" ? translateText("new.placeholder") : ""
+    $: showTemplateName = type === "show_placeholder" ? (show.name && show.name !== "—" ? show.name : translateText("new.placeholder")) : ""
 </script>
 
 <div id="show_{id}" class="main" class:isProject class:played={show.played}>
@@ -281,7 +296,7 @@
                     {/if}
                 </div>
 
-                <HiddenInput value={type === "show_placeholder" ? showTemplateName : newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={(!show.type || show.type === "show") && !readOnly && type !== "show_placeholder"} />
+                <HiddenInput value={type === "show_placeholder" ? showTemplateName : newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={!readOnly && ((type === "show_placeholder" && !!$editingProjectTemplate) || !show.type || show.type === "show")} />
 
                 {#if isProject}
                     {#if show.layoutInfo?.name}

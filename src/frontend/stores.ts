@@ -24,14 +24,7 @@ import type { AiSettings } from "./../types/ai/AiSettings"
 import type { Outputs, RtmpStatus } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
-import type { CompressorConfig } from "./audio/effects/audioCompressor"
-import type { DelayConfig } from "./audio/effects/audioDelay"
-import type { EQBand, EqualizerConfig } from "./audio/effects/audioEqualizer"
-import type { FilterConfig } from "./audio/effects/audioFilter"
-import type { LimiterConfig } from "./audio/effects/audioLimiter"
-import type { NoiseGateConfig } from "./audio/effects/audioNoiseGate"
-import type { ReverbConfig } from "./audio/effects/audioReverb"
-import type { StereoShaperConfig } from "./audio/effects/audioStereoShaper"
+import type { EQBand } from "./audio/effects/audioEqualizer"
 import type { PlayingVideoState, VideoAudioData } from "./components/media/video/videoPlayer"
 
 // ----- TEMPORARY VARIABLES -----
@@ -102,6 +95,7 @@ export const templateApplied: Writable<boolean> = writable(false)
 export const activeAudioEffects: Writable<string> = writable("")
 export const openedInteractionId: Writable<string> = writable("")
 export const activeInteractions: Writable<string[]> = writable([])
+export const openedMediaFolders: Writable<{ [key: string]: any }> = writable({})
 
 // TAGS
 export const activeTagFilter: Writable<string[]> = writable([])
@@ -213,6 +207,8 @@ export const dynamicValueData: Writable<{ [key: string]: any }> = writable({})
 export const cachedDynamicValues: Writable<{ [key: string]: string }> = writable({})
 export const recentFiles: Writable<{ all: string[]; cleared: string[]; projectMedia: string[] }> = writable({ all: [], cleared: [], projectMedia: [] })
 export const statusIndicator: Writable<string> = writable("")
+export type SlideHighlight = { indexes: number[]; color?: string; icon?: string } | null
+export const slideDeleteHighlight: Writable<SlideHighlight> = writable(null)
 
 // AI
 export const aiStatus: Writable<{ state: "inactive" | "listening" | "stopped" | "error"; message?: string }> = writable({ state: "inactive" })
@@ -282,14 +278,13 @@ export const metronome: Writable<MetronomeSettings> = writable({}) // {}
 export const audioRouting: Writable<AudioRoutingConfig | null> = writable(null) // {init}
 export const effectsLibrary: Writable<{ path: string; name: string }[]> = writable([]) // []
 export interface AudioEffectsConfig {
-    equalizer: EqualizerConfig
-    filter: FilterConfig
-    noiseGate: NoiseGateConfig
-    compressor: CompressorConfig
-    limiter: LimiterConfig
-    reverb: ReverbConfig
-    delay: DelayConfig
-    stereoShaper: StereoShaperConfig
+    stack: AudioEffectInstance[]
+}
+export interface AudioEffectInstance {
+    id: string
+    type: "equalizer" | "filter" | "noiseGate" | "compressor" | "limiter" | "reverb" | "delay" | "stereoShaper"
+    enabled: boolean
+    config?: any
 }
 export const audioEffects = writable<Record<string, AudioEffectsConfig>>({}) // {}
 export const eqPresets: Writable<{ [key: string]: { name: string; bands: EQBand[] } }> = writable({}) // {}
@@ -303,6 +298,7 @@ export const templates: Writable<Templates> = writable({}) // {default}
 export const globalRegexes: Writable<{ [key: string]: { label: string; value: string } }> = writable({}) // {}
 
 // CALENDAR
+export const calendars: Writable<{ [key: string]: any }> = writable({}) // {}
 export const events: Writable<{ [key: string]: Event }> = writable({}) // {}
 export const calendarAddShow: Writable<string> = writable("") // ""
 
@@ -372,6 +368,8 @@ export const styles: Writable<{ [key: string]: Styles }> = writable({}) // {}
 
 // OUTPUTS
 export const outputs: Writable<Outputs> = writable({}) // {default}
+// shared-render groups (renderer output id -> member ids); follower previews clone the renderer's mirror
+export const renderGroups: Writable<{ [rendererId: string]: string[] }> = writable({})
 export const outLocked: Writable<boolean> = writable(false) // false
 
 // PROFILES
@@ -499,7 +497,8 @@ export const $ = {
     ports,
     maxConnections,
     remotePassword,
-    providerConnections
+    providerConnections,
+    calendars
 }
 
 // DEBUG STORE UPDATES

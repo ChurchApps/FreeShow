@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { onMount, tick } from "svelte"
+    import { onDestroy, onMount, tick } from "svelte"
     import { uid } from "uid"
     import type { Item, Line } from "../../../../types/Show"
     import { splitCustomDynamicValues } from "../../../show/slides"
-    import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, showsCache, stageShows, templates } from "../../../stores"
+    import { activeEdit, activeShow, activeStage, overlays, redoHistory, refreshListBoxes, showsCache, special, stageShows, templates } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { getNormalizedKey, isComposing, isFormattingKey } from "../../../utils/shortcuts"
     import T from "../../helpers/T.svelte"
@@ -13,6 +13,7 @@
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
+    import { calculateShapeVerticalOffset, getShapeFloatSide } from "../scripts/shapeOutside"
     import autosize from "../scripts/autosize"
     import { getItemText, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
@@ -46,11 +47,15 @@
         setTimeout(() => {
             loaded = true
             autoSize = item?.autoFontSize || 0
-            if (autoSize) return
 
-            getCustomAutoSize()
+            scheduleAutoSize(true)
+
+            // trigger auto size update after font has loaded
+            document.fonts?.ready?.then(() => scheduleAutoSize(true))
         }, 50)
     })
+
+    onDestroy(cancelScheduledAutoSize)
 
     // prevent certain updates during IME composition to prevent text deselecting and double-insertion.
     let composing = false
@@ -95,6 +100,14 @@
     $: lineStyleBox = lineGap ? `gap: ${lineGap}px;` : ""
     $: lineStyleRadius = lineRadius ? `border-radius: ${lineRadius}px;` : ""
     $: lineStyleBg = lineBg ? `background: ${lineBg};` : ""
+
+    $: shapeOutside = getStyles(item?.style)["shape-outside"]
+    $: shapeFloatSide = getShapeFloatSide(shapeOutside)
+
+    let shapeOffsetTop = 0
+    $: if (shapeOutside && textElem && (html || item?.align)) {
+        setTimeout(() => (shapeOffsetTop = calculateShapeVerticalOffset(textElem, item?.align)))
+    }
 
     function getStyle() {
         if (composing) return
@@ -184,42 +197,18 @@
         newSlide.color = null
 
         // update scripture dynamic values based on current firstLines & secondLines
-        // WIP duplicate of splitItemInTwo (kinda)
         if (newSlide.customDynamicValues) {
-            const buildDV = (lines: Line[]) => {
-                const targetCDV = clone(newSlide.customDynamicValues!)
-                const collected: Record<string, Record<number, string>> = {}
-
-                lines.forEach((line) => {
-                    line.text?.forEach((text) => {
-                        if (!text.sourceDynamicKey) return
-                        const [key, indexStr] = text.sourceDynamicKey.split(":")
-                        const idx = Number(indexStr || "0")
-                        collected[key] = collected[key] || {}
-                        collected[key][idx] = (collected[key][idx] ? collected[key][idx] + " " : "") + text.value
-                    })
+            let firstItems = clone(_show().slides([ref.id]).get("items")[0]) || []
+            firstItems[editItemIndex] = { ...firstItems[editItemIndex], lines: firstLines }
+            const split = splitCustomDynamicValues(newSlide.customDynamicValues, firstItems, newSlide.items)
+            if (split) {
+                showsCache.update((a) => {
+                    const showId = ref.showId || $activeShow?.id || ""
+                    if (a[showId]?.slides?.[ref.id]) a[showId].slides[ref.id].customDynamicValues = split.firstDV
+                    return a
                 })
-
-                Object.keys(targetCDV).forEach((key) => {
-                    const val = targetCDV[key]
-                    if (Array.isArray(val)) {
-                        targetCDV[key] = val.map((item, idx) => (collected[key]?.[idx] !== undefined ? (Array.isArray(item) ? [item[0], collected[key][idx]] : collected[key][idx]) : null)).filter(Boolean)
-                    } else if (collected[key]?.[0] !== undefined) {
-                        targetCDV[key] = collected[key][0]
-                    }
-                })
-                return targetCDV
+                newSlide.customDynamicValues = split.secondDV
             }
-
-            const firstDV = buildDV(firstLines)
-            const secondDV = buildDV(secondLines)
-
-            showsCache.update((a) => {
-                const showId = ref.showId || $activeShow?.id || ""
-                if (a[showId]?.slides?.[ref.id]) a[showId].slides[ref.id].customDynamicValues = firstDV
-                return a
-            })
-            newSlide.customDynamicValues = secondDV
         }
 
         // add new slide
@@ -267,6 +256,7 @@
 
         // updateItem = true
         if (!newLines?.length) newLines = getNewLines()
+        if (item) item.lines = newLines
 
         if ($activeEdit.type === "overlay") overlays.update(setNewLines)
         else if ($activeEdit.type === "template") templates.update(setNewLines)
@@ -317,26 +307,55 @@
                 })
             }
 
-            history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index], showId: ref.showId }, location: { page: "none", override: itemRef } })
-
             // update stored scripture custom dynamic values
-            if ($showsCache[ref.showId || ""]?.slides?.[ref.id]?.customDynamicValues) {
+            const showId = ref.showId || $activeShow?.id || ""
+            if (showId && $showsCache[showId]?.slides?.[ref.id]?.customDynamicValues) {
                 showsCache.update((a) => {
-                    if (!a[ref.showId || ""]?.slides?.[ref.id]?.customDynamicValues) return a
+                    const storage = a[showId]?.slides?.[ref.id]?.customDynamicValues
+                    if (!storage) return a
+
+                    const collected: Record<string, { [index: number]: string }> = {}
+                    let currentVerseIdx = 0
                     newLines.forEach((line) => {
                         line.text?.forEach((text) => {
-                            if (text.sourceDynamicKey?.includes("scripture_text")) {
-                                const key = text.sourceDynamicKey.split(":")[0]
-                                const index = text.sourceDynamicKey.split(":")[1] || "0"
-                                const storage = a[ref.showId!]?.slides?.[ref.id]?.customDynamicValues
-                                if (!storage?.[key]?.[index]) return
-                                storage[key][index][1] = text.value
-                            }
+                            if (!text || text.customType?.includes("disableTemplate")) return
+
+                            let [key, idxStr] = text.sourceDynamicKey?.split(":") || []
+                            let idx = idxStr !== undefined ? Number(idxStr) : currentVerseIdx
+                            if (text.sourceDynamicKey?.includes("_text")) currentVerseIdx = idx
+                            else key = index === 0 ? "scripture_text" : `scripture${index + 1}_text`
+
+                            if (!collected[key]) collected[key] = {}
+                            collected[key][idx] = (collected[key][idx] || "") + (text.value || "")
                         })
                     })
+
+                    Object.keys(storage).forEach((key) => {
+                        if (!Array.isArray(storage[key])) return
+                        const coll = collected[key] || (key === "scripture1_text" ? collected.scripture_text : key === "scripture_text" ? collected.scripture1_text : undefined)
+                        if (!coll) return
+
+                        storage[key] = storage[key]
+                            .map((item: any, idx: number) => {
+                                if (!Array.isArray(item)) return item
+                                const verseNum = item[0] || "0"
+                                let textVal = (coll[idx] ?? "").trim()
+                                if (verseNum !== "0" && textVal.startsWith(verseNum)) {
+                                    textVal = textVal.slice(verseNum.length).trim()
+                                }
+                                return textVal ? [verseNum, textVal] : null
+                            })
+                            .filter(Boolean)
+                    })
+
+                    if (storage.scripture_text && !storage.scripture1_text) storage.scripture1_text = clone(storage.scripture_text)
+                    if (storage.scripture1_text && !storage.scripture_text) storage.scripture_text = clone(storage.scripture_text)
+
                     return a
                 })
             }
+
+            history({ id: "SHOW_ITEMS", newData: { key: "lines", data: clone([newLines]), slides: [ref.id], items: [index], showId: ref.showId }, location: { page: "none", override: itemRef } })
 
             // refresh list view boxes
             if (plain) refreshListBoxes.set(editIndex)
@@ -354,67 +373,84 @@
 
     // AUTO SIZE
 
-    // text change
-    let textChanged = false
-    let previousText = ""
-    let changedTimeout: NodeJS.Timeout | null = null
-    $: if (html && textElem?.innerText !== previousText) checkText()
-    function checkText() {
-        textChanged = true
-        previousText = textElem?.innerText || ""
-        if (changedTimeout) clearTimeout(changedTimeout)
-        changedTimeout = setTimeout(() => (textChanged = false), 500)
-    }
-
-    let isTyping = false
-    $: if (isAuto && textChanged) checkTyping()
-    let typingTimeout: NodeJS.Timeout | null = null
-    function checkTyping() {
-        if (!loaded) return
-        isTyping = true
-
-        if (typingTimeout) clearTimeout(typingTimeout)
-        typingTimeout = setTimeout(() => {
-            isTyping = false
-            if (isAuto) getCustomAutoSize()
-        }, 800)
-    }
-
-    // update auto size
     let loaded = false
     $: isAuto = item?.auto || (item?.textFit || "none") !== "none"
     $: textArray = Array.isArray(item?.lines?.[0]?.text) ? item.lines[0].text : []
     $: itemText = textArray.filter((a) => !a.customType?.includes("disableTemplate")) || []
     $: itemFontSize = Number(getStyles((ref.type === "stage" ? item : itemText[0])?.style, true)?.["font-size"] || "")
-    $: if (isAuto || itemFontSize || textChanged) getCustomAutoSize()
+    $: itemStyle = item?.style
+    // html updates on every keystroke (bind:innerHTML), so this covers typing, pasting and style rebuilds,
+    // itemStyle covers resizing the textbox and lineGap the line spacing
+    $: if (html || itemStyle || isAuto || itemFontSize || lineGap) scheduleAutoSize()
 
     let autoSize = 0
     let alignElem: HTMLElement | undefined
-    let loopStop: NodeJS.Timeout | null = null
-    function getCustomAutoSize() {
-        if (isTyping || !loaded || !alignElem || !isAuto) return
 
-        if (loopStop) return
-        loopStop = setTimeout(() => (loopStop = null), 200)
+    // cap auto size at one per frame while typing and drop to a trailing debounce if one ever gets expensive
+    const SLOW_MEASURE_MS = 6
+    const DEBOUNCE_MS = 150
+
+    let autoSizeFrame = 0
+    let autosizeTimeout: NodeJS.Timeout | null = null
+    let lastMeasureDuration = 0
+    let lastSignature = ""
+
+    function scheduleAutoSize(immediate = false) {
+        // plain (list) view never renders --auto-size
+        if (plain || !loaded || !isAuto || !alignElem || composing) return
+
+        if (immediate) {
+            cancelScheduledAutoSize()
+            runAutoSize()
+            return
+        }
+
+        // chords rebuild one span per character whenever the size changes, so never run those per frame
+        if (chordsMode || lastMeasureDuration > SLOW_MEASURE_MS || $special.optimizedMode) {
+            if (autosizeTimeout) clearTimeout(autosizeTimeout)
+            autosizeTimeout = setTimeout(() => {
+                autosizeTimeout = null
+                runAutoSize()
+            }, DEBOUNCE_MS)
+            return
+        }
+
+        if (autoSizeFrame) return
+        autoSizeFrame = requestAnimationFrame(() => {
+            autoSizeFrame = 0
+            runAutoSize()
+        })
+    }
+
+    function cancelScheduledAutoSize() {
+        if (autoSizeFrame) cancelAnimationFrame(autoSizeFrame)
+        if (autosizeTimeout) clearTimeout(autosizeTimeout)
+        autoSizeFrame = 0
+        autosizeTimeout = null
+    }
+
+    function runAutoSize() {
+        if (plain || !loaded || !alignElem || !isAuto) return
+        // element is mid remount
+        if (!alignElem.clientHeight) return
 
         if (ref.type === "stage") {
             itemFontSize = Number(getStyles(item?.style, true)?.["font-size"] || "")
         }
 
-        let type = item?.textFit || "shrinkToFit"
-        let defaultFontSize = itemFontSize
-        let maxFontSize
+        const type = item?.textFit || "shrinkToFit"
 
-        // if (ref.type === "stage") {
-        //     type = "growToFit"
-        // }
+        // skip repeated triggers that can't change the result (e.g. a new item object with identical content)
+        const signature = `${alignElem.clientWidth}x${alignElem.clientHeight}|${itemFontSize}|${type}|${lineGap || 0}|${html}`
+        if (signature === lastSignature) return
+        lastSignature = signature
 
-        if (type === "growToFit") {
-            defaultFontSize = 100
-            maxFontSize = itemFontSize
-        }
+        const defaultFontSize = type === "growToFit" ? 100 : itemFontSize
+        const maxFontSize = type === "growToFit" ? itemFontSize : undefined
 
+        const measureStart = performance.now()
         autoSize = autosize(alignElem, { type, textQuery: ".edit .break span", defaultFontSize, maxFontSize })
+        lastMeasureDuration = performance.now() - measureStart
     }
 
     // UPDATE STYLE FROM LINES
@@ -681,7 +717,7 @@
 
     // paste
     let pasting = false
-    function paste(e: any, clipboardText = "", clipboardHtml = "") {
+    function paste(e: any, clipboardText?: string, clipboardHtml?: string) {
         EditboxPaste.paste(e, clipboardText, clipboardHtml, {
             item,
             ref,
@@ -713,7 +749,7 @@
             </span>
         {/if}
         {#if isLocked}
-            <div class="edit">{@html html}</div>
+            <div class="edit" class:hasShapeOutside={!!shapeOutside} style="{shapeOutside ? `--shape-outside: ${shapeOutside};--shape-float: ${shapeFloatSide};--shape-offset-top: ${shapeOffsetTop}px;` : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}">{@html html}</div>
         {:else}
             {#if chordsMode && textElem}
                 <EditboxChords {item} {autoSize} {index} {ref} {chordsMode} {chordsAction} />
@@ -723,16 +759,21 @@
                 on:mouseup={() => storeCurrentCaretPos()}
                 class="edit context {plain ? '#editbox_text' : '#edit_box__editbox_text'}"
                 class:hidden={chordsMode}
-                class:autoSize={item.auto && autoSize}
+                class:hasShapeOutside={!!shapeOutside}
+                class:autoSize={isAuto && autoSize && !plain}
                 contenteditable
                 on:keydown={textElemKeydown}
+                on:input={() => scheduleAutoSize()}
                 on:compositionstart={() => (composing = true)}
-                on:compositionend={() => (composing = false)}
+                on:compositionend={() => {
+                    composing = false
+                    scheduleAutoSize(true)
+                }}
                 on:blur={() => (composing = false)}
                 on:copy={handleCopy}
                 on:cut={handleCut}
                 bind:innerHTML={html}
-                style="{plain || !item.auto ? '' : `--auto-size: ${autoSize}px;`}{!plain ? lineStyleBox : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}"
+                style="{shapeOutside ? `--shape-outside: ${shapeOutside};--shape-float: ${shapeFloatSide};--shape-offset-top: ${shapeOffsetTop}px;` : ''}{isAuto && autoSize && !plain ? `--auto-size: ${autoSize}px;` : ''}{!plain ? lineStyleBox : ''}{plain ? '' : typeof item.align === 'string' ? item.align.replace('align-items', 'justify-content') : ''}"
                 class:height={item.lines?.length < 2 && !item.lines?.[0]?.text[0]?.value.length}
                 class:tallLines={chordsMode}
             />
@@ -804,6 +845,28 @@
     }
     .edit.hidden {
         visibility: hidden;
+    }
+
+    /* Cutout Shape */
+    .edit.hasShapeOutside {
+        display: block !important;
+        height: 100% !important;
+        width: 100% !important;
+        padding-top: var(--shape-offset-top, 0px) !important;
+        box-sizing: border-box !important;
+    }
+    .edit.hasShapeOutside :global(.break) {
+        text-wrap: unset !important;
+    }
+    .edit.hasShapeOutside::before {
+        content: "";
+        /* it gives a warning, but float must be used with the shape-outside property */
+        float: var(--shape-float, right);
+        width: 100%;
+        height: calc(100% + var(--shape-offset-top, 0px));
+        margin-top: calc(-1 * var(--shape-offset-top, 0px));
+        shape-outside: var(--shape-outside);
+        pointer-events: none;
     }
 
     .edit :global(.break) {

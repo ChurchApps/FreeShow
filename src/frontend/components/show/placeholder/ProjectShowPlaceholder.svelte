@@ -1,6 +1,7 @@
 <script lang="ts">
     import { activePopup, activeProject, activeShow, popupData, projects } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { history } from "../../helpers/history"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
     import DropArea from "../../system/DropArea.svelte"
@@ -15,12 +16,14 @@
                 const showTemplateIndex = project.shows?.findIndex((s, i) => s.id === $activeShow?.id && (($activeShow?.index ?? -1) > -1 ? i === $activeShow?.index : true))
                 if (showTemplateIndex < 0) return
 
-                projects.update((a) => {
-                    if (!a[projectId]) return a
+                const newShows = [...(project?.shows || [])]
+                newShows[showTemplateIndex] = { id: showId, type: "show" }
 
-                    a[projectId].shows[showTemplateIndex] = { id: showId, type: "show" }
-
-                    return a
+                history({
+                    id: "UPDATE",
+                    newData: { key: "shows", data: newShows },
+                    oldData: { id: projectId },
+                    location: { page: "show", id: "project_key" }
                 })
 
                 activeShow.set({ id: showId, type: "show", index: showTemplateIndex })

@@ -216,6 +216,16 @@ describe("showSearch ranking", () => {
         expect(res[0]?.match).toBeGreaterThanOrEqual(65) // typo band 65-85
         expect(res[0]?.match).toBeLessThanOrEqual(85)
     })
+    it("matches single-word transposed typo such as 'Haelujah' for 'Hallelujah'", () => {
+        const res = showSearch("Haelujah", [{ id: "hallelujah", name: "Hallelujah" }] as any)
+        expect(res[0]?.id).toBe("hallelujah")
+        expect(res[0]?.match).toBeGreaterThanOrEqual(65)
+    })
+    it("matches multi-word typo queries against longer show titles", () => {
+        const res = showSearch("amzing grace", [{ id: "song", name: "Amazing Grace How Sweet" }] as any)
+        expect(res[0]?.id).toBe("song")
+        expect(res[0]?.match).toBeGreaterThanOrEqual(65)
+    })
 })
 
 describe("exact phrase (quoted) search", () => {

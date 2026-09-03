@@ -1,41 +1,44 @@
-<script>
-    import { activeAudioEffects, audioRouting } from "../../../stores"
+<script lang="ts">
+    import { EFFECTS_LIST, getEffectStack, moveEffectInStack, toggleEffectInStack } from "../../../audio/effects/audioEffectsHelpers"
+    import { activeAudioEffects, activePopup, audioEffects, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Button from "../../inputs/Button.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import AudioCompressor from "./effects/AudioCompressor.svelte"
-    import AudioDelay from "./effects/AudioDelay.svelte"
-    import AudioEqualizer from "./effects/AudioEqualizer.svelte"
-    import AudioFilter from "./effects/AudioFilter.svelte"
-    import AudioLimiter from "./effects/AudioLimiter.svelte"
-    import AudioNoiseGate from "./effects/AudioNoiseGate.svelte"
-    import AudioReverb from "./effects/AudioReverb.svelte"
-    import AudioStereoShaper from "./effects/AudioStereoShaper.svelte"
+    import Center from "../../system/Center.svelte"
 
-    $: channelName = $audioRouting?.channels?.find((m) => m.id === $activeAudioEffects)?.name || ($activeAudioEffects === "main" ? translateText("audio.main") : $activeAudioEffects)
+    $: channelId = $activeAudioEffects || "main"
+    $: stack = getEffectStack($audioEffects, channelId)
 
-    let expanded = {}
-    function toggleSection(type) {
-        expanded[type] = !expanded[type]
+    function openEffectPopup(effectItem: any) {
+        popupData.set({
+            channelId,
+            effectId: effectItem.id,
+            effect: effectItem.type
+        })
+        activePopup.set("audio_effect")
     }
 
-    function resetSection(type) {
-        console.log("RESET", type)
-        // WIP
+    function openAddPopup() {
+        popupData.set({ channelId })
+        activePopup.set("add_audio_effect")
     }
 
-    // WIP
-    $: hasChanged = {
-        equalizer: false,
-        filter: false,
-        noiseGate: false,
-        compressor: false,
-        reverb: false,
-        delay: false,
-        limiter: false,
-        stereoShaper: false
+    function handleToggle(item: any) {
+        toggleEffectInStack(item.id, channelId)
+    }
+
+    function handleUp(index: number) {
+        if (index > 0) {
+            moveEffectInStack(index, index - 1, channelId)
+        }
+    }
+
+    function handleDown(index: number) {
+        if (index < stack.length - 1) {
+            moveEffectInStack(index, index + 1, channelId)
+        }
     }
 </script>
 
@@ -45,234 +48,126 @@
     <T id="actions.back" />
 </Button>
 
-<!-- channel name -->
-<!-- {#if channelName}
-    <h4 style="text-align: center;margin: 8px 0 4px 0;opacity: 0.8;font-weight: 500;">{channelName}</h4>
-{/if} -->
+<div class="stack-list">
+    {#each stack as effectItem, i (effectItem.id || `${effectItem.type}_${i}`)}
+        {@const meta = EFFECTS_LIST.find((e) => e.id === effectItem.type) || { label: effectItem.type, color: "var(--secondary)" }}
+        {@const isEnabled = effectItem.enabled !== false}
 
-<!-- EQ (Equalizer), compressor, and limiter -->
+        <div
+            class="effect-card context #audio_effect_item"
+            id={effectItem.id}
+            data-index={i}
+            data-channel={channelId}
+            class:bypassed={!isEnabled}
+            style="--accent-color: {meta.color};"
+            on:click={() => openEffectPopup(effectItem)}
+            role="button"
+            tabindex={0}
+            on:keydown={(e) => {
+                if (e.key === "Enter" || e.key === " ") openEffectPopup(effectItem)
+            }}
+        >
+            <div class="effect-info">
+                <span class="slot-number">{i + 1}</span>
+                <span class="effect-name">{translateText(meta.label)}</span>
+            </div>
 
-<div class="sections">
-    <!-- Equalizer (EQ) -->
-    <div class="section">
-        <div class="title">
-            <MaterialButton style="width: 100%;{hasChanged.equalizer ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.equalizer} on:click={() => toggleSection("equalizer")}>
-                <span style="display: flex;gap: 8px;align-items: center;">
-                    <p>{translateText("audio.equalizer")}</p>
-                </span>
+            <!-- stopPropagation prevents popup from opening -->
+            <div class="effect-actions" role="none" on:click|stopPropagation={() => {}}>
+                <!-- rearrange -->
+                <MaterialButton disabled={i === stack.length - 1} title="actions.backward" style="padding: 6px;" on:click={() => handleDown(i)}>
+                    <Icon id="down" size={0.8} white />
+                </MaterialButton>
+                <MaterialButton disabled={i === 0} title="actions.forward" style="padding: 6px;" on:click={() => handleUp(i)}>
+                    <Icon id="up" size={0.8} white />
+                </MaterialButton>
 
-                {#if hasChanged.equalizer}
-                    <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection("equalizer")}>
-                        <Icon id="reset" size={0.8} white />
-                    </MaterialButton>
-                {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['equalizer'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
-                {/if}
-            </MaterialButton>
+                <!-- power button -->
+                <MaterialButton style="padding: 3px;margin: 4px;min-height: initial;border: 1px solid var(--primary-lighter);background-color: {isEnabled ? 'var(--connected)' : 'var(--primary-lighter)'} !important;" title="actions.{isEnabled ? 'disable' : 'enable'}" on:click={() => handleToggle(effectItem)}></MaterialButton>
+            </div>
         </div>
+    {/each}
 
-        {#if expanded["equalizer"]}
-            <AudioEqualizer />
-        {/if}
-    </div>
+    {#if stack.length === 0}
+        <Center padding={10} faded>
+            <T id="empty.general" />
+        </Center>
+    {/if}
+</div>
 
-    <!-- Filter -->
-    <div class="section">
-        <div class="title">
-            <MaterialButton style="width: 100%;{hasChanged.filter ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.filter} on:click={() => toggleSection("filter")}>
-                <span style="display: flex;gap: 8px;align-items: center;">
-                    <p>{translateText("audio.filter")}</p>
-                </span>
-
-                {#if hasChanged.filter}
-                    <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection("filter")}>
-                        <Icon id="reset" size={0.8} white />
-                    </MaterialButton>
-                {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['filter'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
-                {/if}
-            </MaterialButton>
-        </div>
-
-        {#if expanded["filter"]}
-            <AudioFilter />
-        {/if}
-    </div>
-
-    <!-- Noise Gate -->
-    <div class="section">
-        <div class="title">
-            <MaterialButton style="width: 100%;{hasChanged.noiseGate ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.noiseGate} on:click={() => toggleSection("noiseGate")}>
-                <span style="display: flex;gap: 8px;align-items: center;">
-                    <p>{translateText("audio.gate")}</p>
-                </span>
-
-                {#if hasChanged.noiseGate}
-                    <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection("noiseGate")}>
-                        <Icon id="reset" size={0.8} white />
-                    </MaterialButton>
-                {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['noiseGate'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
-                {/if}
-            </MaterialButton>
-        </div>
-
-        {#if expanded["noiseGate"]}
-            <AudioNoiseGate />
-        {/if}
-    </div>
-
-    <!-- Compressor -->
-    <div class="section">
-        <div class="title">
-            <MaterialButton style="width: 100%;{hasChanged.compressor ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.compressor} on:click={() => toggleSection("compressor")}>
-                <span style="display: flex;gap: 8px;align-items: center;">
-                    <p>{translateText("audio.compressor")}</p>
-                </span>
-
-                {#if hasChanged.compressor}
-                    <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection("compressor")}>
-                        <Icon id="reset" size={0.8} white />
-                    </MaterialButton>
-                {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['compressor'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
-                {/if}
-            </MaterialButton>
-        </div>
-
-        {#if expanded["compressor"]}
-            <AudioCompressor />
-        {/if}
-    </div>
-
-    <!-- Limiter -->
-    <div class="section">
-        <div class="title">
-            <MaterialButton style="width: 100%;{hasChanged.limiter ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.limiter} on:click={() => toggleSection("limiter")}>
-                <span style="display: flex;gap: 8px;align-items: center;">
-                    <p>{translateText("audio.limiter")}</p>
-                </span>
-
-                {#if hasChanged.limiter}
-                    <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection("limiter")}>
-                        <Icon id="reset" size={0.8} white />
-                    </MaterialButton>
-                {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['limiter'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
-                {/if}
-            </MaterialButton>
-        </div>
-
-        {#if expanded["limiter"]}
-            <AudioLimiter />
-        {/if}
-    </div>
-
-    <!-- Reverb -->
-    <div class="section">
-        <div class="title">
-            <MaterialButton style="width: 100%;{hasChanged.reverb ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.reverb} on:click={() => toggleSection("reverb")}>
-                <span style="display: flex;gap: 8px;align-items: center;">
-                    <p>{translateText("audio.reverb")}</p>
-                </span>
-
-                {#if hasChanged.reverb}
-                    <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection("reverb")}>
-                        <Icon id="reset" size={0.8} white />
-                    </MaterialButton>
-                {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['reverb'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
-                {/if}
-            </MaterialButton>
-        </div>
-
-        {#if expanded["reverb"]}
-            <AudioReverb />
-        {/if}
-    </div>
-
-    <!-- Delay -->
-    <div class="section">
-        <div class="title">
-            <MaterialButton style="width: 100%;{hasChanged.delay ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.delay} on:click={() => toggleSection("delay")}>
-                <span style="display: flex;gap: 8px;align-items: center;">
-                    <p>{translateText("audio.delay")}</p>
-                </span>
-
-                {#if hasChanged.delay}
-                    <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection("delay")}>
-                        <Icon id="reset" size={0.8} white />
-                    </MaterialButton>
-                {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['delay'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
-                {/if}
-            </MaterialButton>
-        </div>
-
-        {#if expanded["delay"]}
-            <AudioDelay />
-        {/if}
-    </div>
-
-    <!-- Stereo Shaper -->
-    <div class="section">
-        <div class="title">
-            <MaterialButton style="width: 100%;{hasChanged.stereoShaper ? 'padding: 4px 12px;' : 'padding: 8px 12px;'}" disabled={hasChanged.stereoShaper} on:click={() => toggleSection("stereoShaper")}>
-                <span style="display: flex;gap: 8px;align-items: center;">
-                    <p>{translateText("audio.stereo_shaper")}</p>
-                </span>
-
-                {#if hasChanged.stereoShaper}
-                    <MaterialButton title="actions.reset" style="pointer-events: all;padding: 4px;" on:click={() => resetSection("stereoShaper")}>
-                        <Icon id="reset" size={0.8} white />
-                    </MaterialButton>
-                {:else}
-                    <Icon id="arrow_back_modern" class="arrow {expanded['stereoShaper'] ? 'open' : ''}" size={0.6} style="opacity: 0.5;" white />
-                {/if}
-            </MaterialButton>
-        </div>
-
-        {#if expanded["stereoShaper"]}
-            <AudioStereoShaper />
-        {/if}
-    </div>
+<!-- Add Effect Button -->
+<div class="add-section">
+    <MaterialButton variant="outlined" style="width: 100%;padding: 8px;" on:click={openAddPopup}>
+        <Icon id="add" size={0.9} />
+        <span><T id="new.effect" /></span>
+    </MaterialButton>
 </div>
 
 <style>
-    .sections {
+    .stack-list {
         display: flex;
         flex-direction: column;
-        gap: 5px;
+
         padding: 10px;
+        padding-bottom: 0;
+        /* border-radius: 8px; */
     }
 
-    .title {
-        background-color: var(--primary-darker);
-        border-bottom: 1px solid var(--primary-lighter);
-
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
-        overflow: hidden;
-    }
-    .title p {
-        font-weight: 500;
-        font-size: 0.8rem;
-        opacity: 0.8;
-    }
-
-    .title :global(button) {
+    .effect-card {
         display: flex;
+        align-items: center;
         justify-content: space-between;
-
-        /* when disabled */
-        opacity: 1;
+        padding: 2px 4px;
+        background-color: var(--primary-darker);
+        border: 1px solid var(--primary-lighter);
+        border-left: 4px solid var(--accent-color);
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        user-select: none;
     }
 
-    .title :global(svg.arrow) {
-        transition: 0.1s transform ease;
-        transform: rotate(180deg);
+    .effect-card:hover {
+        background-color: var(--primary);
     }
-    .title :global(svg.arrow.open) {
-        transform: rotate(-90deg);
+
+    .effect-card.bypassed {
+        border-left-color: #555555;
+    }
+
+    .effect-info {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .slot-number {
+        font-size: 0.6em;
+        opacity: 0.5;
+        min-width: 16px;
+        text-align: center;
+    }
+
+    .effect-name {
+        font-size: 0.88em;
+        font-weight: 500;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .effect-actions {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        flex-shrink: 0;
+    }
+
+    .add-section {
+        padding: 0 10px;
+        padding-top: 4px;
     }
 </style>

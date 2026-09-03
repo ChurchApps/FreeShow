@@ -26,8 +26,11 @@ import { audioExtensions, imageExtensions, videoExtensions } from "../values/ext
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
 import { hideDisplay, isOutputWindow, togglePanels, triggerFunction } from "./common"
+import { getAccess } from "./profile"
+import { triggerPopupSubmit } from "./popup"
 import { send } from "./request"
 import { save } from "./save"
+import { isTypingTarget } from "./shortcutsHelper"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -122,6 +125,8 @@ const keys = {
         }, 20)
     },
     Enter: () => {
+        if (get(activePopup)) return
+
         // open last used project if Enter pressed "first" on startup
         if (get(showRecentlyUsedProjects) && !get(activeShow) && get(activePage) === "show") {
             const lastUsedProject = getRecentlyUsedProjects()[0]
@@ -174,7 +179,10 @@ export function keydown(e: KeyboardEvent) {
     if (e.ctrlKey || e.metaKey) {
         const drawerMenus = Object.keys(drawerTabs) as DrawerTabIds[]
         if (document.activeElement === document.body && Object.keys(drawerMenus).includes((Number(e.key) - 1).toString())) {
-            activeDrawerTab.set(drawerMenus[Number(e.key) - 1])
+            const tabId = drawerMenus[Number(e.key) - 1]
+            if (getAccess(tabId).global === "none") return
+
+            activeDrawerTab.set(tabId)
             // open drawer
             if (get(drawer).height < 300) drawer.set({ height: get(drawer).stored || 300, stored: null })
             return
@@ -190,10 +198,11 @@ export function keydown(e: KeyboardEvent) {
 
         // use default input shortcuts on supported devices
         const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y", "x"]
-        const macShortcutDebug = false
-        if ((key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(key) && get(os).platform !== "darwin" && !macShortcutDebug)) {
-            return
-        }
+        const passthrough = get(os).platform === "darwin" ? [...exeption, "c", "v"] : exeption
+
+        const activeElem = document.activeElement
+        if (key === "i" && activeElem?.closest(".editItem")) return
+        if (isTypingTarget(activeElem) && !passthrough.includes(key)) return
 
         key = key.toLowerCase()
 
@@ -211,7 +220,7 @@ export function keydown(e: KeyboardEvent) {
             if (!handler) return false
             handler(e)
 
-            if (preventDefaults.includes(k) || macShortcutDebug) {
+            if (preventDefaults.includes(k)) {
                 e.preventDefault()
                 if (get(activePage) === "edit") refreshEditSlide.set(true)
             }
@@ -236,11 +245,17 @@ export function keydown(e: KeyboardEvent) {
         return
     }
 
-    if (document.activeElement?.classList.contains("edit") && e.key !== "Escape") return
+    // Enter to submit popup
+    if (get(activePopup) && e.key === "Enter" && !e.repeat && triggerPopupSubmit(e)) {
+        e.preventDefault()
+        return
+    }
+
+    if (isTypingTarget(document.activeElement) && e.key !== "Escape") return
 
     // change tab with number keys
-    if (document.activeElement === document.body && !get(special).numberKeys && Object.keys(menus).includes((Number(e.key) - 1).toString())) {
-        const menu = menus[Number(e.key) - 1]
+    const menu = menus[Number(e.key) - 1]
+    if (document.activeElement === document.body && !get(special).numberKeys && menu) {
         activePage.set(menu)
 
         // open edit

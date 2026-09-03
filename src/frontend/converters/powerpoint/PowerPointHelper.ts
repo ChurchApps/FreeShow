@@ -630,22 +630,25 @@ export class PowerPointPackage {
             //     // const shadowAttrs = getAttrs(shadow[0]) || {}
             // }
 
-            const effects = getValue(rPr, "a:effectLst")
+            let effects = getValue(rPr, "a:effectLst")
+            if (!effects.length) effects = getValue(pPrL, "a:defRPr", "a:effectLst")
+            if (!effects.length) effects = getValue(pPrM, "a:defRPr", "a:effectLst")
+            if (!effects.length) effects = getValue(tx, "a:defRPr", "a:effectLst")
             const glow = getValue(effects, "a:glow")
             const outerShadow = getValue(effects, "a:outerShdw")
             if (outerShadow.length) {
-                const shadowColor = resolveColor(outerShadow, ctx.colors) || "rgb(0 0 0)"
-                const blur = emuToPixels(getAttribute(effects, "blurRad", "a:outerShdw")) || 0
-                const dist = emuToPixels(getAttribute(effects, "dist", "a:outerShdw")) || 0
-                const dirRaw = Number(getAttribute(effects, "dir", "a:outerShdw") || "0")
-                const dir = dirRaw / 60000 // convert from 60000ths of a degree to degrees
-                const angle = ((90 - dir) * Math.PI) / 180
+                const color = resolveColor(outerShadow, ctx.colors)
+                const rgb = hexToRgb(color || "#000000")
+                const shadowColor = color?.startsWith("rgba") ? color : `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`
+                const blur = round((emuToPixels(getAttribute(outerShadow, "blurRad")) || 0) * 1.5 * ctx.scale.factor)
+                const dist = (emuToPixels(getAttribute(outerShadow, "dist")) || 0) * ctx.scale.factor
+                const angle = ((Number(getAttribute(outerShadow, "dir") || "0") / 60000) * Math.PI) / 180
                 const x = round(Math.cos(angle) * dist)
                 const y = round(Math.sin(angle) * dist)
                 shadowVal = `text-shadow: ${x}px ${y}px ${blur}px ${shadowColor};`
             } else if (glow.length) {
                 const glowColor = resolveColor(glow, ctx.colors) || "rgb(255 255 255)"
-                const glowSize = ptsToPx(getAttribute(effects, "rad", "a:glow")) / 100
+                const glowSize = round((emuToPixels(getAttribute(glow, "rad")) || 0) * ctx.scale.factor)
                 shadowVal = `text-shadow: 0 0 ${glowSize}px ${glowColor};`
             }
 
@@ -695,6 +698,21 @@ export class PowerPointPackage {
                 if (lnPx > 0) style += `line-height: ${lnPx}px;`
             }
 
+            // paragraph space before / after
+            function getSpace(tag: "a:spcBef" | "a:spcAft") {
+                const spc = getValue(pPr, tag).length ? getValue(pPr, tag) : getValue(pPrL, tag).length ? getValue(pPrL, tag) : getValue(pPrM, tag)
+                if (getAttribute(spc, "val", "a:spcPct")) {
+                    const pct = (Number(getAttribute(spc, "val", "a:spcPct") || "0") / 100000) * 1.2
+                    return pct > 0 ? `${round(pct, 2)}em` : ""
+                }
+                const pts = ptsToPx(getAttribute(spc, "val", "a:spcPts"))
+                return pts > 0 ? `${pts}px` : ""
+            }
+            const spcBef = getSpace("a:spcBef")
+            const spcAft = getSpace("a:spcAft")
+            if (spcBef) style += `margin-top: ${spcBef};`
+            if (spcAft) style += `margin-bottom: ${spcAft};`
+
             return style
         }
 
@@ -733,10 +751,14 @@ export class PowerPointPackage {
                     const buClr = resolveColor(getValue(pPr, "a:buClr"), ctx.colors) || resolveColor(getValue(pPrL, "a:buClr"), ctx.colors) || resolveColor(getValue(pPrM, "a:buClr"), ctx.colors)
                     const buChar = getAttribute(pPr, "char", "a:buChar") || getAttribute(pPrL, "char", "a:buChar") || getAttribute(pPrM, "char", "a:buChar")
                     const autoNum = getAttribute(pPr, "type", "a:buAutoNum") || getAttribute(pPrL, "type", "a:buAutoNum") || getAttribute(pPrM, "type", "a:buAutoNum")
-                    // const blip = getAttribute(pPr, "embed", "a:buBlip")
-                    // let bulletPadding = `margin-left: ${marL - indent - 5}px;margin-right: ${indent}px;`
-                    let bulletPadding = "padding-left: 38px;padding-right: 45px;"
-                    let bullet = buChar || autoNum ? { value: buChar, style: `text-shadow: 0 0 0 rgb(0 0 0 / 0);font-family: ${buFont};font-size: ${ptsToPx(buSize) || 24}px;color: ${buClr || "#000000"};${bulletPadding}` } : null
+                    let marL = Number(getAttribute(pPr, "marL") || getAttribute(pPrL, "marL") || getAttribute(pPrM, "marL") || "0")
+                    let indent = Number(getAttribute(pPr, "indent") || getAttribute(pPrL, "indent") || getAttribute(pPrM, "indent") || "0")
+                    let padLeft = marL ? round(emuToPixels(Math.max(0, marL + indent)) * (ctx.scale.x ?? 1)) : 0
+                    let padRight = indent < 0 ? round(emuToPixels(Math.abs(indent)) * (ctx.scale.x ?? 1)) : 16
+                    if (!padRight || padRight < 8) padRight = 16
+                    let bulletPadding = `padding-left: ${padLeft}px;padding-right: ${padRight}px;`
+                    const startAt = Number(getAttribute(pPr, "startAt", "a:buAutoNum") || getAttribute(pPrL, "startAt", "a:buAutoNum") || getAttribute(pPrM, "startAt", "a:buAutoNum") || "1")
+                    let bullet = buChar || autoNum ? { value: buChar, style: `font-family: ${buFont};font-size: ${ptsToPx(buSize) || 24}px;color: ${buClr || "#000000"};${bulletPadding}` } : null
 
                     // WIP split "a:br" properly as it breaks when style is changed
 
@@ -786,7 +808,7 @@ export class PowerPointPackage {
                           : []
 
                     if (text.length && bullet) {
-                        text = [autoNum ? { ...bullet, value: getBulletValue(autoNum, bulletNum) } : bullet, ...text]
+                        text = [autoNum ? { ...bullet, value: getBulletValue(autoNum, bulletNum + startAt - 1) } : bullet, ...text]
                         bulletNum++
 
                         function getBulletValue(type: string, index: number) {
@@ -1154,14 +1176,15 @@ export class PowerPointPackage {
 
         if (shape.isDecoration) item.decoration = true
 
-        // WIP get correct padding
-        const fallbackPadding = 0 // shape.name === "p:sp" && !svgShape ? 12 : 0
-        // padding: 0 30px;
-        const paddingL = Number(getAttribute(shape.shape, "lIns", "p:txBody")) || Number(getAttribute(getValue(shape.layoutShape, "p:txBody"), "lIns", "a:bodyPr")) || Number(getAttribute(getValue(shape.masterShape, "p:txBody"), "lIns", "a:bodyPr")) || 0
-        const paddingT = Number(getAttribute(shape.shape, "tIns", "p:txBody")) || Number(getAttribute(getValue(shape.layoutShape, "p:txBody"), "tIns", "a:bodyPr")) || Number(getAttribute(getValue(shape.masterShape, "p:txBody"), "tIns", "a:bodyPr")) || 0
-        const paddingR = Number(getAttribute(shape.shape, "rIns", "p:txBody")) || Number(getAttribute(getValue(shape.layoutShape, "p:txBody"), "rIns", "a:bodyPr")) || Number(getAttribute(getValue(shape.masterShape, "p:txBody"), "rIns", "a:bodyPr")) || 0
-        const paddingB = Number(getAttribute(shape.shape, "bIns", "p:txBody")) || Number(getAttribute(getValue(shape.layoutShape, "p:txBody"), "bIns", "a:bodyPr")) || Number(getAttribute(getValue(shape.masterShape, "p:txBody"), "bIns", "a:bodyPr")) || 0
-        item.style += `padding: ${round(emuToPixels(paddingT) || fallbackPadding)}px ${round(emuToPixels(paddingR) || fallbackPadding)}px ${round(emuToPixels(paddingB) || fallbackPadding)}px ${round(emuToPixels(paddingL) || fallbackPadding)}px;`
+        // padding: default 72000 EMU (0.1 in) left/right, 36000 EMU (0.05 in) top/bottom for text shapes
+        const bodyPrs = [getValue(shape.shape, "p:txBody", "a:bodyPr"), getValue(shape.layoutShape, "p:txBody", "a:bodyPr"), getValue(shape.masterShape, "p:txBody", "a:bodyPr")]
+        const isText = shape.name === "p:sp" && !svgShape
+        const getPad = (key: string, defEmu: number, scale = 1) => {
+            const raw = bodyPrs.map((b) => getAttribute(b, key)).find((v) => v !== "")
+            const emu = raw != null && !isNaN(Number(raw)) ? Number(raw) : isText ? defEmu : 0
+            return round(emuToPixels(emu) * scale)
+        }
+        item.style += `padding: ${getPad("tIns", 36000, ctx.scale.y)}px ${getPad("rIns", 72000, ctx.scale.x)}px ${getPad("bIns", 36000, ctx.scale.y)}px ${getPad("lIns", 72000, ctx.scale.x)}px;`
 
         if (bgColor && !svgShape && !svgText) item.style += `background-color: ${bgColor};`
 
@@ -1649,14 +1672,15 @@ function resolveColor(solidFill: any[], colors: { [key: string]: any }[], { lumM
 
         const lumMod = getAttribute(getValue(solidFill, "a:schemeClr"), "val", "a:lumMod")
         const lumOff = getAttribute(getValue(solidFill, "a:schemeClr"), "val", "a:lumOff")
-        return resolveColor(themeClr, colors, { lumMod, lumOff })
+        const color = resolveColor(themeClr, colors, { lumMod, lumOff })
 
-        // const alpha = getAttribute(scheme, "val", "a:alpha")
-        // const opacity = alpha ? parseInt(alpha, 10) / 100000 : 1
-        // if (alpha) {
-        //     const rgb = hexToRgb(hex)
-        //     return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`
-        // }
+        const alpha = getAttribute(getValue(solidFill, "a:schemeClr"), "val", "a:alpha")
+        if (alpha && color) {
+            const opacity = parseInt(alpha, 10) / 100000
+            const rgb = hexToRgb(color)
+            if (rgb) return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`
+        }
+        return color
     }
 
     return ""

@@ -93,11 +93,11 @@ export class ChurchAppsConnect {
             const headers = token ? { Authorization: `Bearer ${token}` } : {}
             httpsRequest(apiUrl, fullEndpoint, data.method || "GET", headers, data.data || {}, (err, result) => {
                 if (err) {
-                    console.error("Could not get data", apiUrl, fullEndpoint)
                     // ignore if checking for missing songs
                     if (fullEndpoint.includes("/missing")) return resolve(null)
 
-                    // sendToMain(ToMain.ALERT, "Could not get data! " + err.message + "\n" + apiUrl + fullEndpoint)
+                    // log as warning — these failures are expected when offline or API is unavailable
+                    console.warn("Could not get data", apiUrl + fullEndpoint, err?.statusCode || err?.code || err?.message)
                     return resolve(null)
                 } else resolve(result)
             })

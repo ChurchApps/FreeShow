@@ -62,8 +62,6 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
     // stop any active break slide recording when the slide changes
     if (type === "slide") _stopBreakRecording()
 
-    customActionActivation("output_changed")
-
     const bindings = data?.bindings || (data?.layout ? ref[data.index]?.data?.bindings || [] : [])
     const allOutputIds = bindings.length ? bindings : getActiveOutputs(get(outputs), true, false, true)
     const outs = outputId ? [outputId] : allOutputIds
@@ -90,10 +88,12 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
         if (data.type === "pdf") {
             const out = get(outputs)[outs[0]]?.out?.slide
-            if (out?.type !== "pdf") customActionActivation("pdf_start")
+            // timeout to activate after output has updated
+            if (out?.type !== "pdf") setTimeout(() => customActionActivation("pdf_start"))
         } else {
             const groupId = slide.globalGroup
-            if (groupId) customActionActivation("group_start", groupId)
+            // timeout to activate after output has updated
+            if (groupId) setTimeout(() => customActionActivation("group_start", groupId))
 
             // start recording time on break slides (no items, globalGroup === "break")
             const layoutSlideIndex = ref[data.index]?.type === "parent" ? (ref[data.index]?.index ?? -1) : -1
@@ -174,6 +174,10 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
                 else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[type] || []), ...data])
                 else outData = data
 
+                if (type === "effects" && (!toggle || !toggleState)) {
+                    outData = clearDuplicateFullscreenEffects(outData, data, id)
+                }
+
                 data.forEach((overlayId) => {
                     // timeout so output can update first
                     if (outData.includes(overlayId)) startOverlayTimer(id, overlayId, outData, type)
@@ -196,6 +200,8 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
         return a
     })
+
+    customActionActivation("output_changed")
 }
 
 // setup video manager (and audio analyser)
@@ -354,6 +360,29 @@ export function startScreen(screen: API_screen) {
     setOutput("background", { name: screen.name || "", id: screen.id, type: "screen" })
 }
 
+/// EFFECTS
+
+const FULLSCREEN_EFFECT_TYPES = ["mesh_gradient", "rays"]
+
+function getEffectFullscreenTypes(effectId: string): string[] {
+    const effect = get(effects)[effectId]
+    return effect?.items?.filter((item) => !item.hidden && FULLSCREEN_EFFECT_TYPES.includes(item.type)).map((item) => item.type) || []
+}
+
+// some effects take up the whole screen and would block each other, so clear out any other effects of same type to only keep one "fullscreen effect" active at once
+function clearDuplicateFullscreenEffects(activeEffectIds: string[], newEffectIds: string[], outputId: string): string[] {
+    const newTypes = newEffectIds.flatMap(getEffectFullscreenTypes)
+    if (!newTypes.length) return activeEffectIds
+
+    return activeEffectIds.filter((id) => {
+        if (newEffectIds.includes(id)) return true
+        const types = getEffectFullscreenTypes(id)
+        const hasConflict = types.some((t) => newTypes.includes(t))
+        if (hasConflict) clearOverlayTimer(outputId, id)
+        return !hasConflict
+    })
+}
+
 /// OVERLAY TIMERS
 
 function startOverlayTimer(outputId: string, overlayId: string, outData: string[] = [], type: "overlays" | "effects" = "overlays") {
@@ -464,6 +493,7 @@ export function getFirstActiveOutput(_updater: any = null) {
 
 // DEPRECATED
 let sortedOutputs: (Output & { id: string })[] = []
+
 export function getActiveOutputs(updater: Outputs = get(outputs), hasToBeActive = true, removeKeyOutput = false, shouldRemoveStageOutput = false) {
     sortedOutputs = sortByName(keysToID(updater || {}))
 
@@ -598,17 +628,24 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
 
 // this will get the first available stage output
 export function getStageOutputId(_updater = get(outputs)) {
-    return keysToID(_updater).find((a) => a.stageOutput && a.enabled)?.id || ""
+    return Object.values(_updater).find((a) => a.stageOutput && a.enabled)?.id || ""
 }
+
 export function getStageResolution(outputId = "", _updater = get(outputs)): Resolution {
-    if (!outputId) outputId = getStageOutputId()
-    return getOutputResolution(outputId)
+    if (!outputId) outputId = getStageOutputId(_updater)
+    return getOutputResolution(outputId, _updater)
 }
 
 // calculate actual output resolution based on style aspect ratio
 export const DEFAULT_BOUNDS = { width: 1920, height: 1080 }
+const outputResolutionCache = new Map<string, Resolution>()
+
 export function getOutputResolution(outputId: string, _updater = get(outputs), scaled = false, styleIdOverride = "") {
     const currentOutput = _updater[outputId]
+    const cacheKey = `${outputId}_${scaled}_${styleIdOverride}_${currentOutput?.style || ""}_${currentOutput?.bounds?.width || 0}_${currentOutput?.bounds?.height || 0}`
+    const cached = outputResolutionCache.get(cacheKey)
+    if (cached) return { ...cached }
+
     const outputRes = clone(currentOutput?.bounds?.width ? currentOutput.bounds : DEFAULT_BOUNDS)
 
     const styleRatio = getResolution(null, null, false, outputId, styleIdOverride)
@@ -626,47 +663,44 @@ export function getOutputResolution(outputId: string, _updater = get(outputs), s
         outputRes.height = Math.round(DEFAULT_BOUNDS.width / outputAspectRatio)
     }
 
-    if (!scaled) return outputRes
-
-    // return styleRatio
-
-    // output window size is narrow
-    //  && outputAspectRatio > 1
-    if (styleAspectRatio < 1) {
-        outputRes.width = Math.round(outputRes.height * styleAspectRatio)
-    } else {
-        outputRes.height = Math.round(outputRes.width / styleAspectRatio)
+    if (scaled) {
+        // output window size is narrow
+        if (styleAspectRatio < 1) {
+            outputRes.width = Math.round(outputRes.height * styleAspectRatio)
+        } else {
+            outputRes.height = Math.round(outputRes.width / styleAspectRatio)
+        }
     }
 
-    // WIP: correct values....
-    // const outputRes2 = clone(currentOutput?.bounds || DEFAULT_BOUNDS)
-    // const newAspectRatio = outputRes.width / outputRes.height
-    // if (outputRes2.width < outputRes2.height) {
-    //     outputRes2.height = Math.round(newAspectRatio < 1 && styleAspectRatio > 1 ? outputRes2.width * newAspectRatio : outputRes2.width / newAspectRatio)
-    //     // outputRes2.width = outputRes2.width
-    // } else {
-    //     outputRes2.width = Math.round(newAspectRatio < 1 && styleAspectRatio > 1 ? outputRes2.height / newAspectRatio : outputRes2.height * newAspectRatio)
-    // }
-
-    // if (newStyleAspectRatio < 1) {
-    //     outputRes2.height = Math.round(outputRes.width / newStyleAspectRatio)
-    // } else {
-    //     outputRes2.width = Math.round(outputRes.height * newStyleAspectRatio)
-    // }
-
-    return outputRes
+    if (outputResolutionCache.size > 200) outputResolutionCache.clear()
+    outputResolutionCache.set(cacheKey, outputRes)
+    return { ...outputRes }
 }
 
 export function stylePosToPercentage(stylesData: { [key: string]: any }) {
-    if (stylesData.left) stylesData.left = (Number(stylesData.left) / DEFAULT_BOUNDS.width) * 100
-    if (stylesData.top) stylesData.top = (Number(stylesData.top) / DEFAULT_BOUNDS.height) * 100
-    if (stylesData.width) stylesData.width = (Number(stylesData.width) / DEFAULT_BOUNDS.width) * 100
-    if (stylesData.height) stylesData.height = (Number(stylesData.height) / DEFAULT_BOUNDS.height) * 100
+    const res = { ...stylesData }
+    if (res.left) res.left = (Number(res.left) / DEFAULT_BOUNDS.width) * 100
+    if (res.top) res.top = (Number(res.top) / DEFAULT_BOUNDS.height) * 100
+    if (res.width) res.width = (Number(res.width) / DEFAULT_BOUNDS.width) * 100
+    if (res.height) res.height = (Number(res.height) / DEFAULT_BOUNDS.height) * 100
 
-    return stylesData
+    return res
 }
 
+const stylePosCache = new Map<string, string>()
+
 export function percentageStylePos(style: string, resolution: Resolution) {
+    if (!style || !resolution?.width || !resolution?.height) return style || ""
+
+    // Fast-path: if resolution has the standard 16:9 ratio, percentage pos conversion is identity
+    if (Math.abs(resolution.width / resolution.height - DEFAULT_BOUNDS.width / DEFAULT_BOUNDS.height) < 0.001) {
+        return style
+    }
+
+    const cacheKey = `${style}_${resolution.width}_${resolution.height}`
+    const cached = stylePosCache.get(cacheKey)
+    if (cached !== undefined) return cached
+
     let stylesData = getStyles(style, true)
     stylesData = stylePosToPercentage(stylesData)
 
@@ -674,13 +708,15 @@ export function percentageStylePos(style: string, resolution: Resolution) {
     const width = DEFAULT_BOUNDS.width
     const height = DEFAULT_BOUNDS.width / aspectRatio
 
-    style += ";"
-    if (stylesData.left) style += "left: " + width * (Number(stylesData.left) / 100) + "px;"
-    if (stylesData.top) style += "top: " + height * (Number(stylesData.top) / 100) + "px;"
-    if (stylesData.width) style += "width: " + width * (Number(stylesData.width) / 100) + "px;"
-    if (stylesData.height) style += "height: " + height * (Number(stylesData.height) / 100) + "px;"
+    let result = style + ";"
+    if (stylesData.left) result += "left: " + width * (Number(stylesData.left) / 100) + "px;"
+    if (stylesData.top) result += "top: " + height * (Number(stylesData.top) / 100) + "px;"
+    if (stylesData.width) result += "width: " + width * (Number(stylesData.width) / 100) + "px;"
+    if (stylesData.height) result += "height: " + height * (Number(stylesData.height) / 100) + "px;"
 
-    return style
+    if (stylePosCache.size > 500) stylePosCache.clear()
+    stylePosCache.set(cacheKey, result)
+    return result
 }
 
 export function percentageToAspectRatio(input: EditInput) {
@@ -1608,8 +1644,17 @@ export function getStyleTemplate(outSlide: OutSlide | null, currentStyle: Styles
     return template
 }
 
+function itemHasAutoSize(item: Item) {
+    return (item.textFit || "none") !== "none" || !!item.auto
+}
+
 export function slideHasAutoSizeItem(slide: Slide | Template) {
-    return slide?.items?.find((a) => a.auto)
+    return slide?.items?.some(itemHasAutoSize)
+}
+
+// the auto size text size has to be calculated if it is not stored yet
+export function itemNeedsAutoSize(item: Item) {
+    return itemHasAutoSize(item) && !item.autoFontSize
 }
 
 export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles, items: Item[] | undefined, outputId: string, slideDynamicValues?: { [key: string]: any }) {

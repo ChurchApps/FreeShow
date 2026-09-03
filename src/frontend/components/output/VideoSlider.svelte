@@ -32,7 +32,8 @@
         if (percentage < 0) percentage = 0
         else if (percentage > 1) percentage = 1
 
-        time = joinTime(secondsToTime((videoData.duration || 0) * percentage))
+        const dur = Number.isFinite(videoData?.duration) && videoData.duration > 0 ? videoData.duration : 0
+        time = joinTime(secondsToTime(dur * percentage))
     }
 
     let latestValue: number | null = null
@@ -117,8 +118,10 @@
     }
 
     let fullLength = false
-    $: displayTime = Math.max(0, videoData?.duration ? Math.min(videoTime || 0, videoData.duration) : videoTime || 0)
-    $: remainingTime = Math.max(0, (videoData?.duration || 0) - Math.floor(displayTime))
+    $: validDuration = Number.isFinite(videoData?.duration) && videoData.duration > 0 ? videoData.duration : 0
+    $: validTime = Number.isFinite(videoTime) && videoTime > 0 ? videoTime : 0
+    $: displayTime = Math.max(0, validDuration ? Math.min(validTime, validDuration) : validTime)
+    $: remainingTime = Math.max(0, validDuration - Math.floor(displayTime))
 </script>
 
 <svelte:window
@@ -144,7 +147,7 @@
             on:mouseleave={() => (hover = false)}
             value={sliderValue}
             step={1}
-            max={videoData.duration}
+            max={validDuration}
             on:mousedown={() => {
                 pauseAtMove(true)
             }}
@@ -155,7 +158,7 @@
     </div>
     <span style={fullLength ? "" : "color: var(--secondary)"} on:click={() => (fullLength = !fullLength)} on:keydown={triggerClickOnEnterSpace} role="button" tabindex="0" aria-label="Toggle time display format">
         {#if fullLength}
-            {joinTime(secondsToTime(videoData.duration || 0))}
+            {joinTime(secondsToTime(validDuration))}
         {:else}
             {joinTime(secondsToTime(remainingTime))}
         {/if}

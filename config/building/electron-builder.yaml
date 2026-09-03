@@ -12,11 +12,12 @@ files:
     - build/types/**
     - public/**
     - "!node_modules/@napi-rs"
-    - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,test,tests}"
+    - "!**/node_modules/*/{CHANGELOG*,README*,test*,example*,docs}"
     - "!**/node_modules/*/{*.d.ts,*.ts,*.map}"
     - "!**/node_modules/{@types,typescript}/**"
-    - "!**/node_modules/**/*.pdb"
-    - "!**/node_modules/**/obj/**"
+    - "!**/node_modules/**/*.{pdb,iobj,ipdb,obj,lib,exp,a,o,c,cc,cpp,h,hpp,gyp*,vcxproj*,filters,sln}"
+    - "!**/node_modules/**/prebuild/node-v*"
+    - "!**/node_modules/grandiose/ndi/**"
 
 extraResources:
     - from: node_modules/slideshow/

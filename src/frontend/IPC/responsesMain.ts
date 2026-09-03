@@ -66,7 +66,6 @@ import {
     lessonsLoaded,
     media,
     mediaDownloads,
-    rtmpStatus,
     outputs,
     overlays,
     pdfImports,
@@ -78,6 +77,7 @@ import {
     providerConnections,
     recentFiles,
     redoHistory,
+    rtmpStatus,
     shows,
     showsCache,
     spellcheck,
@@ -93,6 +93,7 @@ import {
     windowState
 } from "../stores"
 import { setupCloudSync } from "../utils/cloudSync"
+import { translateText } from "../utils/language"
 import { newToast } from "../utils/common"
 import { confirmCustom } from "../utils/popup"
 import { initializeClosing, saveComplete } from "../utils/save"
@@ -177,6 +178,21 @@ export const mainResponses: MainResponses = {
         activePopup.set("alert")
     },
     [ToMain.TOAST]: (a) => newToast(a),
+    // GPU health degradation notice (electron utils/gpu.ts, ~20s after start): verbose alert with what
+    // happened, the implications, and concrete remediation. Composed here so every string is i18n'd.
+    [ToMain.GPU_HEALTH]: (a) => {
+        const compositing = a.issue === "compositing"
+        let html = `<h3>${translateText(compositing ? "gpu.no_acceleration" : "gpu.no_video_decode")}</h3><p>${translateText(compositing ? "gpu.no_acceleration_info" : "gpu.no_video_decode_info")}</p>`
+        if (a.vaDriverMissing && a.packages?.length) {
+            // Linux with no VA-API driver installed at all: name the exact package(s) for the GPU vendor
+            html += `<p>${translateText("gpu.va_driver_missing")}</p><pre style="user-select: text;">sudo apt install ${a.packages.join(" ")}</pre>`
+        } else {
+            html += `<p>${translateText("gpu.update_drivers")}${a.vendorName ? ` (${a.vendorName})` : ""}</p>`
+        }
+        html += `<p style="opacity: 0.7;">${translateText("gpu.disable_hint")}</p>`
+        alertMessage.set(html)
+        activePopup.set("alert")
+    },
     [ToMain.SPELL_CHECK]: (a) => spellcheck.set(a),
     [Main.CLOSE]: (a) => initializeClosing(a ?? false),
     [ToMain.RECEIVE_MIDI2]: (a) => receivedMidi(a),
@@ -359,6 +375,11 @@ export const mainResponses: MainResponses = {
     [ToMain.PROVIDER_PROJECTS]: async (data) => {
         if (!data.projects) return
 
+        // Planning Center items are seperated into multiple categories based on the type: Songs (default) & Regular items (generic)
+        if (data.providerId === "planningcenter" && data.shows.some((a) => a.category === "planning_center_generic")) {
+            createCategory("Planning Center (Generic)", "presentation")
+        }
+
         // CREATE CATEGORY
         createCategory(data.categoryName)
 
@@ -407,11 +428,15 @@ export const mainResponses: MainResponses = {
                 }
             }
 
+            const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : "the cloud"
+
             // first find any shows linked to the id
-            const linkedShow = linkKey && allShows.find(({ quickAccess }) => quickAccess?.[linkKey] === id)
+            const linkedShow = linkKey && allShows.find(({ quickAccess, id: showId }) => quickAccess?.[linkKey] === id || showId === id)
             if (linkedShow) {
                 replaceIds[id] = linkedShow.id
-                if (songOrigin === "local") continue
+
+                const useLocal = songOrigin === "online" ? false : songOrigin === "local" || (await confirmCustom(`This show already exists: ${linkedShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
+                if (useLocal) continue
 
                 // replace local show with provider song
                 Object.values<Slide>(show.slides).forEach((slide) => {
@@ -424,12 +449,12 @@ export const mainResponses: MainResponses = {
                 // set modified to now, so it will update properly in history
                 if (show.timestamps) show.timestamps.modified = Date.now()
 
+                delete show.id
                 tempShows.push({ id: linkedShow.id, show: { ...show, origin, name: checkName(show.name, linkedShow.id) } })
                 continue
             }
 
             // find existing show with same name and ask to replace
-            const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : "the cloud"
             const showName = show?.name?.toLowerCase() || ""
             const existingShow = allShows.find(({ id: existingId, name }) => existingId !== id && name?.toLowerCase() === showName)
             // const existingShowHasContent = existingShow && (await loadShows([existingShow.id])) && getSlidesText(get(showsCache)[existingShow.id].slides)
@@ -441,6 +466,9 @@ export const mainResponses: MainResponses = {
                     continue
                 }
             }
+
+            const targetId = existingShow?.id || id
+            replaceIds[id] = targetId
 
             if ((existingShow && songOrigin !== "local") || songOrigin === "online") {
                 // set link so we will automatically update from the provider in the future
@@ -458,8 +486,10 @@ export const mainResponses: MainResponses = {
                 if (globalGroup) slide.globalGroup = globalGroup
             })
 
+            if (show.timestamps) show.timestamps.modified = Date.now()
+
             delete show.id
-            tempShows.push({ id, show: { ...show, origin, name: checkName(show.name, id) } })
+            tempShows.push({ id: targetId, show: { ...show, origin, name: checkName(show.name, targetId) } })
         }
         setTempShows(tempShows)
 

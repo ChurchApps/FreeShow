@@ -3,10 +3,11 @@
     import type { Popups } from "../../../types/Main"
     import { activePopup, alertMessage, os, popupData, special } from "../../stores"
     import { MENU_BAR_HEIGHT } from "../../utils/common"
-    import { popups } from "../../utils/popup"
+    import { clearPopupSubmit, popups } from "../../utils/popup"
     import { disablePopupClose } from "../../utils/shortcuts"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
+    import { EFFECTS_LIST } from "../../audio/effects/audioEffectsHelpers"
 
     function mousedown(e: any) {
         // same logic for Escape in shortcuts.ts
@@ -22,6 +23,9 @@
     $: if ($activePopup !== undefined) updatePopup()
     function updatePopup() {
         if (popupTimeout) return
+
+        // the incoming popup registers its own after mounting (if it opted in)
+        if (popupId !== $activePopup) clearPopupSubmit()
 
         popupId = $activePopup
         popupTimeout = setTimeout(() => {
@@ -55,6 +59,8 @@
                                         <T id="about.new_update" />: <span style="color: var(--secondary);">v{$popupData.latestVersion}</span>
                                     {:else if popupId === "pco_picker"}
                                         Planning Center
+                                    {:else if popupId === "audio_effect" && $popupData?.effect}
+                                        <T id={EFFECTS_LIST.find((a) => a.id === $popupData.effect)?.label || "popup.audio_effect"} />
                                     {:else}
                                         <T id="popup.{popupId}" />
                                     {/if}

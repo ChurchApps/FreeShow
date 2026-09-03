@@ -1,6 +1,7 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { fade } from "svelte/transition"
-    import { activePage, activePopup, companion, contextActive, contextData, currentWindow, dictionary, localeDirection, os, special, spellcheck, theme, themes } from "../../stores"
+    import { activePage, activePopup, companion, contextActive, contextData, currentWindow, dictionary, localeDirection, os, slideDeleteHighlight, special, spellcheck, theme, themes } from "../../stores"
     import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { getEditItems } from "../edit/scripts/itemHelpers"
@@ -117,7 +118,13 @@
 
     // prevent duplicated menus (due to Svelte transition bug)
     let closingMenuTimeout: NodeJS.Timeout | null = null
-    $: if ($contextActive === false) startCloseTimer()
+    $: if ($contextActive === false) {
+        startCloseTimer()
+        slideDeleteHighlight.set(null)
+    }
+    onDestroy(() => {
+        slideDeleteHighlight.set(null)
+    })
     function startCloseTimer() {
         if (!highlighted.id) return
         if (contextElem) {

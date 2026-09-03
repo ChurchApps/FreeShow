@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy } from "svelte"
     import { activePopup, activeStyle, drawerTabsData, outputs, popupData, scriptures, styles, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { formatSearch } from "../../../utils/search"
@@ -12,8 +12,13 @@
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import Center from "../../system/Center.svelte"
-    import Loader from "../Loader.svelte"
     import Icon from "../../helpers/Icon.svelte"
+    import { registerPopupSubmit } from "../../../utils/popup"
+
+    registerPopupSubmit(() => {
+        if (!searchValue.length || !searchedTemplates.length) return
+        selectTemplate(searchedTemplates[0], true)
+    })
 
     let revert = $popupData.revert
     let allowEmpty = !!$popupData.allowEmpty
@@ -55,9 +60,6 @@
     let searchValue = ""
     // let previousSearchValue = ""
     function search(value: string | null = null) {
-        // preloader = true
-        // setTimeout(() => (preloader = false), 20)
-
         searchValue = formatSearch(value || "")
 
         if (searchValue.length < 2) {
@@ -66,17 +68,10 @@
         }
 
         let currentTemplatesList = clone(defaultTemplates) // searchedTemplates
-        // reset if search value changed
-        // if (!searchValue.includes(previousSearchValue)) currentTemplatesList = clone(defaultTemplates)
-
         searchedTemplates = currentTemplatesList.filter((a) => formatSearch(a.name || "").includes(searchValue))
-
-        // previousSearchValue = searchValue
     }
 
     function selectTemplate(template: any, keyboard = false) {
-        // if ($popupData.action !== "select_template") return
-
         let previousValue = value
         // update before closing
         value = template.id
@@ -85,8 +80,6 @@
             if ($popupData.trigger) {
                 if (selectedType) $popupData.trigger({ value, type: selectedType })
                 else $popupData.trigger(value)
-                // } else {
-                //     popupData.set({ ...$popupData, templateId: value })
             }
 
             if ($popupData.doubleClick && !keyboard && previousValue !== template.id) return
@@ -98,18 +91,35 @@
 
     let resolution = getResolution(null, { $outputs, $styles })
 
-    function chooseTemplate(e: any) {
-        if (e.key !== "Enter" || !searchValue.length || !searchedTemplates.length) return
-        selectTemplate(searchedTemplates[0], true)
-    }
-
-    // open drawer tab instantly before content has loaded
-    let preloader = true
-    onMount(() => setTimeout(() => (preloader = false), 20))
-
     $: normalTemplates = searchedTemplates.filter((a) => a.category !== "scripture")
     $: scriptureTemplates = searchedTemplates.filter((a) => a.category === "scripture")
     $: templatesList = id.includes("scripture") ? [...trimScriptureTemplates(scriptureTemplates, selectedType), ...normalTemplates] : [...normalTemplates, ...scriptureTemplates]
+
+    // lazy loader
+    let lazyLoader = 0
+    let timeout: NodeJS.Timeout | null = null
+    let loaded = false
+
+    onDestroy(() => {
+        if (timeout) clearTimeout(timeout)
+    })
+
+    $: if (searchValue !== undefined || selectedType) {
+        loaded = false
+        lazyLoader = 0
+    }
+
+    $: if (!loaded && templatesList?.length) {
+        if (lazyLoader >= templatesList.length) {
+            loaded = true
+        } else {
+            if (timeout) clearTimeout(timeout)
+            timeout = setTimeout(() => {
+                const batch = lazyLoader === 0 ? 4 : Math.min(32, lazyLoader * 2)
+                lazyLoader += batch
+            }, lazyLoader === 0 ? 60 : 30)
+        }
+    }
 
     function trimScriptureTemplates(templates: any[], _updater: any) {
         let countId = ""
@@ -136,8 +146,6 @@
     }
 </script>
 
-<svelte:window on:keydown={chooseTemplate} />
-
 {#if revert}
     <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => activePopup.set(revert)} />
 {/if}
@@ -149,11 +157,7 @@
 {/if}
 
 <div style="position: relative;height: 100%;width: calc(100vw - (var(--navigation-width) + 20px) * 2);margin-top: 10px;overflow-y: auto;">
-    {#if preloader && sortedTemplates.length > 10}
-        <Center style="height: 100px;padding-top: 20px;">
-            <Loader />
-        </Center>
-    {:else if templatesList.length}
+    {#if templatesList.length}
         <div class="grid">
             {#if allowEmpty || (customTypes && selectedType !== types[0]?.value)}
                 <Card active={!value} label={translateText(allowEmpty ? "main.none" : "example.default")} icon="templates" {resolution} on:click={() => selectTemplate("")}>
@@ -163,9 +167,11 @@
                 </Card>
             {/if}
 
-            {#each templatesList as template, i}
+            {#each templatesList as template, i (template.id)}
                 <Card preview={!!(searchValue.length && i === 0)} active={value === template.id} label={template.name} color={template.color} {resolution} on:click={() => selectTemplate(template)}>
-                    <TemplateSlide templateId={template.id} {template} preview />
+                    {#if loaded || i < lazyLoader}
+                        <TemplateSlide templateId={template.id} {template} preview />
+                    {/if}
                 </Card>
             {/each}
         </div>

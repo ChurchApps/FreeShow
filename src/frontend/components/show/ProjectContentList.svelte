@@ -79,6 +79,7 @@
     function getContextMenuId(type: ShowType | undefined) {
         if ((type || "show") === "show") return "show"
         if (type === "video" || type === "image") return "media"
+        if (type === "show_placeholder") return isTemplate ? "show_placeholder_template" : "show_placeholder"
         return type
     }
 

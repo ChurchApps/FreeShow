@@ -2,13 +2,13 @@
     import { getContext, onDestroy } from "svelte"
     import type { StageItem, StageLayout as TStageLayout } from "../../../types/Stage"
     import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, refreshEditSlide, stageShows, timers, variables } from "../../stores"
+    import { startResizing } from "../../utils/cursor"
     import { translateText } from "../../utils/language"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
     import { isConditionMet } from "../edit/scripts/itemHelpers"
     import { getItemText } from "../edit/scripts/textStyle"
-    import { clone, keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { createCSSVariables, replaceDynamicValues } from "../helpers/showActions"
@@ -65,6 +65,12 @@
         let target = e.target.closest(".stage_item")
         if (!target) return
 
+        const square = e.target.closest(".square")
+        if (square) {
+            const cursor = window.getComputedStyle(square).cursor || "nwse-resize"
+            startResizing(cursor)
+        }
+
         mouse = {
             x: e.clientX,
             y: e.clientY,
@@ -85,12 +91,12 @@
 
     let isShiftPressed = false
     function keyup(e: KeyboardEvent) {
+        if (!edit) return
         if (e.key === "Shift") isShiftPressed = false
     }
     function keydown(e: KeyboardEvent) {
-        if (e.key === "Shift") isShiftPressed = true
-
         if (!edit) return
+        if (e.key === "Shift") isShiftPressed = true
 
         if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
             // selected timeline actions
@@ -107,9 +113,10 @@
     }
 
     function deselect(e: any) {
+        if (!edit) return
         if (e.target.closest(".stageTools") || e.target.closest(".contextMenu") || $activePopup) return
 
-        if ((edit && !e.shiftKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
+        if ((!e.shiftKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
             activeStage.update((ae) => {
                 ae.items = []
                 return ae
@@ -119,10 +126,13 @@
 
     // timer
     let today = new Date()
-    const dateInterval = setInterval(() => (today = new Date()), 1000)
+    let dateInterval: any = null
+    $: if ((item?.type === "timer" || id.includes("timer") || id.includes("clock")) && !dateInterval && !disableStagePreview) {
+        dateInterval = setInterval(() => (today = new Date()), 1000)
+    }
 
     onDestroy(() => {
-        clearInterval(dateInterval)
+        if (dateInterval) clearInterval(dateInterval)
         if (currentAutoSizeTimeout) clearTimeout(currentAutoSizeTimeout)
     })
 
@@ -134,15 +144,11 @@
 
     let alignElem
     let size = 100
-    // Track previous slide to reset retry counter when slide changes
-    let prevSlideForAutoSize: any = undefined
-    // currentSlide & timeout to update auto size properly if slide notes
-    $: if (alignElem && item && currentSlide !== undefined && autoSizeEnabled) {
-        // Reset retry counter when slide changes
-        if (prevSlideForAutoSize !== currentSlide) {
-            autoSizeRetryCount = 0
-            prevSlideForAutoSize = currentSlide
-        }
+    let prevAutoSizeKey = ""
+    $: autoSizeKey = `${currentSlide?.id || ""}_${item?.style || ""}_${item?.textFit || ""}_${item?.auto ?? ""}_${currentItemText || ""}`
+    $: if (alignElem && autoSizeEnabled && autoSizeKey !== prevAutoSizeKey) {
+        prevAutoSizeKey = autoSizeKey
+        autoSizeRetryCount = 0
         updateAutoSize()
     }
     let currentAutoSizeTimeout: NodeJS.Timeout | null = null
@@ -183,7 +189,8 @@
             currentAutoSizeTimeout = null
         }, 20)
     }
-    $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
+    $: isAutoSized = item?.type?.includes("text") ? item?.auto || (item?.textFit && item?.textFit !== "none") : item?.auto !== false || (item?.textFit && item?.textFit !== "none")
+    $: autoSize = isAutoSized ? size : fontSize
 
     // SLIDE
     $: sourceOutputId = currentShow?.settings?.output
@@ -215,10 +222,11 @@
     $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
 
     let firstTimerId = ""
-    $: if (!item?.timer?.id || id.includes("first_active_timer")) {
-        firstTimerId = $activeTimers[0]?.id
-        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
-    } else firstTimerId = ""
+    $: if (item?.type === "timer" || id.includes("first_active_timer")) {
+        firstTimerId = item?.timer?.id || $activeTimers[0]?.id || Object.values($timers).find((timer) => timer.type !== "counter")?.id || ""
+    } else {
+        firstTimerId = ""
+    }
 
     let itemStyle = ""
     let textStyle = ""
@@ -242,11 +250,8 @@
         })
     }
 
-    function getCustomStyle(style: string) {
-        let outputResolution = getStageResolution()
-        style = percentageStylePos(style, outputResolution)
-        return style
-    }
+    $: stageResolution = getStageResolution(stageOutputId, $outputs)
+    $: customStyle = percentageStylePos(itemStyle, stageResolution)
 
     // pause video at middle
     // let video: HTMLVideoElement | undefined
@@ -262,7 +267,7 @@
         }, 100)
     }
 
-    $: newItem = item ? clone({ ...item, timer: { ...(item.timer || {}), id: firstTimerId || item.timer?.id || "" } }) : null
+    $: newItem = item?.type === "timer" && firstTimerId && item.timer?.id !== firstTimerId ? { ...item, timer: { ...(item.timer || {}), id: firstTimerId } } : item
 
     // ACTIONS
 
@@ -280,15 +285,22 @@
 
     let conditionsUpdater = 0
     let updateTrigger = 0
-    const updaterInterval = setInterval(() => conditionsUpdater++, 3000)
-    const cssInterval = setInterval(() => updateTrigger++, 1000)
+    let updaterInterval: any = null
+    let cssInterval: any = null
+
+    const intervalTime = disableStagePreview || preview ? 5000 : 1000
+    const condIntervalTime = disableStagePreview || preview ? 5000 : 3000
+
+    updaterInterval = setInterval(() => conditionsUpdater++, condIntervalTime)
+    cssInterval = setInterval(() => updateTrigger++, intervalTime)
+
     onDestroy(() => {
-        clearInterval(updaterInterval)
-        clearInterval(cssInterval)
+        if (updaterInterval) clearInterval(updaterInterval)
+        if (cssInterval) clearInterval(cssInterval)
     })
 
     $: currentItemText = item ? (item.type === "slide_text" ? getSlideTextItems(stageLayout!, item).map(getItemText).join("") : getItemText(stageItemToItem(item))) : ""
-    $: showItemState = edit ? isConditionMet(item?.conditions?.showItem, currentItemText, "stage", conditionsUpdater) : false
+    $: showItemState = edit && item?.conditions?.showItem ? isConditionMet(item.conditions.showItem, currentItemText, "stage", conditionsUpdater) : false
 
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
@@ -304,10 +316,10 @@
     })()
 
     const getLayoutMounted = getContext<() => boolean>("layoutMounted")
-    $: evaluatedText = replaceDynamicValues(currentItemText, { type: "stage", id }, ($variables ? 0 : 0) + updateTrigger)
     let lastText = ""
     let flashTriggerId = 0
     $: if (item?.flash?.enabled) {
+        const evaluatedText = replaceDynamicValues(currentItemText, { type: "stage", id }, ($variables ? 0 : 0) + updateTrigger)
         const currentText = evaluatedText || ""
         const parentIsMounting = getLayoutMounted ? !getLayoutMounted() : false
 
@@ -327,7 +339,7 @@
     class:isDisabledVariable
     class:isOutput={!!$currentWindow}
     class:isShiftPressed
-    style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}"
+    style="{customStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}"
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id && item}

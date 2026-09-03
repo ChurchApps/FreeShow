@@ -342,6 +342,8 @@ export class AudioPlayer {
         if (!this.audioExists(id)) return
 
         this.pause(id)
+        AudioAnalyser.detach(id)
+
         playingAudio.update((a) => {
             const item = a[id]
             if (item?.audio) {
@@ -359,7 +361,6 @@ export class AudioPlayer {
             return a
         })
 
-        AudioAnalyser.detach(id)
         if (!AudioPlayer.getAllPlaying().length) sendMain(Main.NOW_PLAYING_UNSET)
     }
 

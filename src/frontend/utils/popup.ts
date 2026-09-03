@@ -1,4 +1,4 @@
-import type { ComponentType } from "svelte"
+import { onDestroy, type ComponentType } from "svelte"
 import { get } from "svelte/store"
 import type { Popups } from "../../types/Main"
 import About from "../components/main/popups/About.svelte"
@@ -7,6 +7,8 @@ import ActionHistory from "../components/main/popups/ActionHistory.svelte"
 import Alert from "../components/main/popups/Alert.svelte"
 import AspectRatio from "../components/main/popups/AspectRatio.svelte"
 import AudioStream from "../components/main/popups/AudioStream.svelte"
+import AudioEffect from "../components/main/popups/AudioEffect.svelte"
+import AddAudioEffect from "../components/main/popups/AddAudioEffect.svelte"
 import CategoryAction from "../components/main/popups/CategoryAction.svelte"
 import ChangeIcon from "../components/main/popups/ChangeIcon.svelte"
 import ChangeOutputValues from "../components/main/popups/ChangeOutputValues.svelte"
@@ -123,6 +125,8 @@ export const popups: { [key in Popups]: ComponentType } = {
     variable: Variable,
     interaction_input: InteractionInput,
     audio_stream: AudioStream,
+    audio_effect: AudioEffect,
+    add_audio_effect: AddAudioEffect,
     now_playing: NowPlaying,
     aspect_ratio: AspectRatio,
     max_lines: MaxLines,
@@ -220,4 +224,30 @@ export async function promptCustom(prompt: string, inputType: string = "text", m
     popupData.set({ prompt, inputType, message })
     const data = (await waitForPopupData("confirm")) || ""
     return data as string
+}
+
+// Enter to submit
+
+let activeSubmit: (() => void) | null = null
+
+export function registerPopupSubmit(submit: () => void) {
+    activeSubmit = submit
+
+    onDestroy(() => {
+        if (activeSubmit === submit) activeSubmit = null
+    })
+}
+
+export function triggerPopupSubmit(e?: KeyboardEvent): boolean {
+    if (!activeSubmit) return false
+
+    const target = e?.target as HTMLElement | null
+    if (target?.closest("textarea, [contenteditable='true'], button, [role], .editItem")) return false
+
+    activeSubmit()
+    return true
+}
+
+export function clearPopupSubmit() {
+    activeSubmit = null
 }

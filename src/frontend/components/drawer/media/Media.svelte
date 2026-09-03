@@ -5,7 +5,7 @@
     import type { ClickEvent, FileFolder } from "../../../../types/Main"
     import { requestMain } from "../../../IPC/main"
     import { addProjectItem } from "../../../converters/project"
-    import { activeDrawerTab, activeEdit, activeFocus, activeMediaTagFilter, activePopup, activeShow, audioFolders, cloudSyncData, drawerTabsData, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, outLocked, outputs, popupData, providerConnections, selectAllMedia, selected, sorted, special, styles } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activeFocus, activeMediaTagFilter, activePopup, activeShow, audioFolders, cloudSyncData, drawerTabsData, focusMode, labelsDisabled, media, mediaFolders, mediaOptions, openedMediaFolders, outLocked, outputs, popupData, providerConnections, selectAllMedia, selected, sorted, special, styles } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortFilenames } from "../../helpers/array"
@@ -42,6 +42,12 @@
     let prevActiveSubTab = active
     $: if (active !== prevActiveSubTab) {
         if (active !== "online") setView("all")
+        if (prevActiveSubTab) {
+            openedMediaFolders.update((a) => {
+                delete a[prevActiveSubTab!]
+                return a
+            })
+        }
         prevActiveSubTab = active
     }
 
@@ -51,8 +57,28 @@
     let specialTabs = ["online", "inputs"]
     $: isProviderSection = contentProviders.some((p) => p.providerId === active)
     $: notFolders = ["all", ...specialTabs, ...contentProviders.map((p) => p.providerId)]
-    $: rootPath = notFolders.includes(active || "") ? "" : active !== null ? $mediaFolders[active]?.path || "" : ""
-    $: path = notFolders.includes(active || "") ? "" : rootPath
+    $: isLocalFolder = !!(active && $mediaFolders[active])
+    $: rootPath = isLocalFolder ? $mediaFolders[active!]?.path || "" : ""
+
+    let path = ""
+    let prevActiveFolder = ""
+    $: if (active !== prevActiveFolder || rootPath) {
+        prevActiveFolder = active || ""
+        if (!isLocalFolder) {
+            path = ""
+        } else {
+            const saved = active ? $openedMediaFolders[active] : ""
+            path = saved && rootPath && saved.startsWith(rootPath) ? saved : rootPath
+        }
+    }
+
+    $: if (isLocalFolder && active) {
+        openedMediaFolders.update((a) => {
+            if (path && rootPath && path !== rootPath && path.startsWith(rootPath)) a[active!] = path
+            else if (a[active!]) delete a[active!]
+            return a
+        })
+    }
 
     $: folderName = active === "all" ? "category.all" : active === "favourites" ? "category.favourites" : rootPath === path ? (active !== null ? $mediaFolders[active]?.name || "" : "") : splitPath(path).name
 
@@ -548,7 +574,7 @@
 
                             if ($outLocked || e.ctrlKey || e.metaKey) return
                             if (currentOutput?.out?.background?.id === cam.id) clearBackground()
-                            else setOutput("background", { name: cam.name, id: cam.id, cameraGroup: cam.cameraGroup, type: "camera" })
+                            else setOutput("background", { name: cam.name, id: cam.id, cameraGroup: cam.group || cam.cameraGroup, type: "camera" })
                         }}
                     />
                 {:else if inputsTab === "screens"}

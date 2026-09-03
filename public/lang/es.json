@@ -67,9 +67,8 @@
     "tooltip": {
         "project": "Crear un nuevo proyecto que permita añadir y organizar presentaciones.",
         "show": "Crear una nueva presentación que permita agregar letras de canciones, presentaciones y multimedia. ",
-        "groups": "Todos los grupos en la presentación actual y todos los grupos en general. Seleccionarlos o arrastrarlos para añadirlos al diseño actual.",
-        "layout": "Añadir transiciones y temporizadores a la diapositiva del diseño actual.",
-        "media": "Todos los archivos multimedia en la presentación actual. Mostrarlos o arrastrarlos al diseño actual.",
+        "groups": "Todos los grupos de la presentación actual y todos los grupos globales. Hacer clic en ellos o arrastrarlos para añadirlos al arreglo actual.",
+        "media": "Todos los archivos multimedia de la presentación actual. Mostrarlos o arrastrarlos al arreglo actual.",
         "metadata": "Editar metadatos de la presentación actual.",
         "notes": "Escribir notas.",
         "text": "Editar el contenido de todos los temas seleccionados.",
@@ -232,6 +231,9 @@
     },
     "audio": {
         "settings": "Configuración de Audio",
+        "inputs": "Entradas",
+        "outputs": "Salidas",
+        "channels": "Canales",
         "playlists": "Listas de Reproducción",
         "playlist_settings": "Ajuste de Lista de Reproducción",
         "open_audio_folder": "Abrir la carpeta de audio relacionada",
@@ -337,7 +339,6 @@
     },
     "error": {
         "no_show": "No se pudo encontrar la presentación",
-        "no_layouts": "No se pudo encontrar ningún diseño",
         "load": "No se pudo cargar",
         "media": "No se pudo encuentar multimedia",
         "bible": "No se pudo encontrar la escritura local",
@@ -345,7 +346,6 @@
         "bible_api": "No se pudo cargar la escritura desde la API. Biblia, ¿tiene conexión a Internet?",
         "not_found": "No encontrado",
         "display": "No se pudo mostrar la ventana de salida en la pantalla actual",
-        "keep_one_layout": "Se debe tener al menos un diseño",
         "video_unavailable": "¿El video no está disponible? El creador ha deshabilitado las incrustaciones en el video.",
         "folder_exists": "Esta carpeta ya existe",
         "uri": "No se pudo analizar el nombre del audio. Por favor, cambiar el nombre del archivo",
@@ -518,6 +518,7 @@
         "import_scripture": "Importar Escrituras",
         "create_collection": "Crear Colección",
         "scripture_show": "Opciones para mostrar las Escrituras",
+        "import_calendar": "Importar calendario",
         "player": "Reproductor",
         "edit_event": "Editar evento",
         "edit_chart": "Editar gráfico",
@@ -567,7 +568,7 @@
         "save_quit": "Guardar y Salir"
     },
     "confirm": {
-        "statement_slide_exists_layout": "¡La diapositiva existe en un diseño diferente!",
+        "statement_slide_exists_arrangement": "¡La diapositiva existe en un arreglo diferente!",
         "question_delete": "¿Quiere eliminarlo?"
     },
     "toast": {
@@ -631,12 +632,14 @@
         "action": "Nueva acción",
         "event": "Nuevo evento",
         "event_action": "Nueva acción programada",
+        "calendar": "Nuevo calendario",
         "effect": "Nuevo efecto",
         "interaction": "Nueva interacción"
     },
     "show": {
         "name": "Nombre",
         "category": "Categoría",
+        "new_arrangement": "Nuevo arreglo",
         "new_layout": "Nuevo diseño",
         "grid": "Ver cuadrícula",
         "simple": "Vista simple",
@@ -662,7 +665,7 @@
         "rename": "Renombrar",
         "recolor": "Cambiar color",
         "remove": "Suprimir",
-        "remove_group": "Eliminar grupo del diseño",
+        "remove_group": "Eliminar grupo del arreglo",
         "remove_group_short": "Eliminar grupo",
         "choose_group": "Elegir grupo",
         "goto_group": "Ir al grupo",
@@ -694,6 +697,7 @@
         "disable": "Desactivar",
         "enable": "Habilitar",
         "enable_specific": "Habilitar $1",
+        "toggle_specific": "Alternar $1",
         "undo": "Deshacer",
         "redo": "Rehacer",
         "cut": "Cortar",
@@ -832,18 +836,23 @@
         "previous_project_item": "Anterior elemento del proyecto",
         "index_select_project_item": "Abrir elemento de proyecto en el índice",
         "name_start_project_item": "Iniciar elemento del proyecto por nombre",
+        "id_select_show": "Abrir presentación",
         "name_select_show": "Abrir presentación con nombre",
         "set_template_active": "Establecer plantilla en la presentación activa",
         "change_slide_timeline_speed": "Cambiar la velocidad de la línea de tiempo de la diapositiva",
         "random_slide": "Reproducir diapositiva aleatoria",
         "index_select_slide": "Reproducir diapositiva en el índice",
         "name_select_slide": "Reproducir diapositiva con el nombre",
+        "disable_slide": "Desactivar diapositiva",
+        "active_show": "Activar diapositiva",
         "toggle_output_lock": "Alternar bloqueo de pantalla",
         "toggle_output_window": "Alternar ventana de salida",
         "toggle_output_windows": "Alternar ventanas de salida",
         "id_select_group": "Reproducir grupo específico",
         "id_change_stage_layout": "Cambiar diseño de las conexiones de la pantalla de escenario",
         "start_camera": "Iniciar camara",
+        "start_microphone": "Activar micrófono",
+        "stop_microphone": "Detener micrófono",
         "start_screen": "Iniciar pantalla",
         "id_start_effect": "Iniciar efecto",
         "id_select_overlay": "Iniciar superposición",
@@ -1007,7 +1016,6 @@
         "metadata": "Metadatos",
         "media": "Multimedia",
         "audio": "Audio",
-        "layout": "Diseño",
         "item": "Elemento",
         "items": "Elementos",
         "slide": "Diapositiva"
@@ -1392,6 +1400,9 @@
         "cropping": "Recorte",
         "cropped": "Recortado",
         "frame_rate": "Tasa de fotogramas",
+        "bitrate": "Tasa de bits",
+        "video_encoder": "Codificador de vídeo",
+        "add_destination": "Añadir destino",
         "device": "Dispositivo",
         "display_mode": "Modo de visualización",
         "pixel_format": "Formato de píxel",
@@ -1490,6 +1501,7 @@
         "custom": "Personalizado"
     },
     "calendar": {
+        "calendar": "Calendario",
         "type": "Tipo",
         "event": "Evento",
         "first_day": "Primer día de la semana",
@@ -1517,7 +1529,9 @@
         "ending_repeated": "repetirlo",
         "ending_times": "veces",
         "save_all": "Guardar y actualizar todo",
-        "add_slides_from_show": "Incluir diapositivas de la presentación"
+        "add_slides_from_show": "Incluir diapositivas de la presentación",
+        "calendars": "Calendarios",
+        "delete_confirmation": "¿Eliminar todos los eventos de este calendario?"
     },
     "scripture": {
         "collections": "Colecciones",

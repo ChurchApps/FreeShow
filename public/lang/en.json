@@ -343,7 +343,7 @@
         "media": "Could not find media",
         "bible": "Could not find local scripture",
         "import": "Could not import",
-        "bible_api": "Could not load scripture from API.Bible, do you have an internet connection?",
+        "bible_api": "Could not load API scripture. Make sure you have an internet connection.",
         "not_found": "Not found",
         "display": "Could not show output window on current display",
         "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video.",
@@ -486,6 +486,8 @@
         "interaction_input": "Input",
         "trigger": "Trigger",
         "audio_stream": "Audio stream",
+        "audio_effect": "Audio effect",
+        "add_audio_effect": "Add audio effect",
         "node_options": "Node options",
         "now_playing": "Now playing file",
         "aspect_ratio": "Change aspect ratio",
@@ -634,6 +636,7 @@
         "action": "New action",
         "event": "New event",
         "event_action": "New scheduled action",
+        "calendar": "New calendar",
         "effect": "New effect",
         "interaction": "New interaction"
     },
@@ -1096,6 +1099,7 @@
         "outline": "Outline",
         "shadow": "Shadow",
         "shadow_inset": "Shadow inset",
+        "shape_outside": "Cutout",
         "offset": "Offset",
         "offsetX": "Offset X",
         "offsetY": "Offset Y",
@@ -1345,6 +1349,7 @@
         "minutes": "minutes",
         "use24hClock": "Use 24-hour clock",
         "styles_hint": "Create different styles that can be applied to the output to change the look.",
+        "audio_hint": "Route audio inputs, through any channels, to audio outputs. A channel is used to control and tweak the audio signal.",
         "outputs_hint": "Create multiple output windows, position them on external screens, or send a screen capture.",
         "hide_output_hint": "Double click on the output window to hide it. Hold CTRL to enable dragging.",
         "output_locked": "The output position has been locked!",
@@ -1422,6 +1427,9 @@
         "log_song_usage": "Log song usage to a file",
         "auto_error_reporting": "Auto error reporting",
         "disable_hardware_acceleration": "Disable hardware acceleration",
+        "graphics_device": "Graphics device",
+        "gpu_high_performance": "Prefer high-performance GPU",
+        "gpu_low_power": "Prefer low-power GPU",
         "restart_for_change": "You have to restart the program for the change to take effect!",
         "font": "Font",
         "font_family": "Font family",
@@ -1465,6 +1473,15 @@
         "section_trigger_action": "Trigger action when navigating presentation to a section",
         "rss": "RSS"
     },
+    "gpu": {
+        "no_acceleration": "Graphics acceleration is unavailable",
+        "no_acceleration_info": "Rendering is running on the CPU (high usage, choppy playback).",
+        "no_video_decode": "Hardware video decoding is unavailable",
+        "no_video_decode_info": "Videos are decoding on the CPU (high usage, choppy playback).",
+        "va_driver_missing": "A video driver is missing. To fix, run this and restart:",
+        "update_drivers": "Installing or updating your graphics drivers may fix this.",
+        "disable_hint": "Disable hardware acceleration in Settings to hide this."
+    },
     "output": {
         "state_inactive": "Inactive",
         "state_locked": "Locked",
@@ -1503,6 +1520,7 @@
         "custom": "Custom"
     },
     "calendar": {
+        "calendar": "Calendar",
         "type": "Type",
         "event": "Event",
         "first_day": "First day of week",
@@ -1537,7 +1555,6 @@
     "scripture": {
         "collections": "Collections",
         "bibles_section": "Bibles",
-        "bibles": "Bibles from API.Bible",
         "local": "Import local file",
         "supported_formats": "Supported formats:",
         "max_verses": "Max verses per slide",
@@ -1687,6 +1704,7 @@
         "spotlight": "Spotlight",
         "aurora": "Aurora",
         "bloom": "Bloom",
+        "mesh_gradient": "Mesh gradient",
         "fog": "Fog",
         "city": "City",
         "fireworks": "Fireworks",
@@ -1700,6 +1718,10 @@
         "arm_count": "Arm count",
         "drift": "Drift",
         "pulse_speed": "Pulse speed",
+        "motion": "Motion",
+        "spread": "Spread",
+        "density": "Density",
+        "grain": "Grain",
         "hollow": "Hollow"
     },
     "interaction": {

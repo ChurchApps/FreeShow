@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeDays, activePopup, eventEdit, events, special } from "../../../stores"
+    import { activeDays, activePopup, calendars, eventEdit, events, special } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { translateText } from "../../../utils/language"
     import { actionData } from "../../actions/actionData"
@@ -16,14 +16,14 @@
     let current = new Date($activeDays[0])
     let currentEvents: any[] = []
 
-    $: updateEvents({ type, $activeDays, $events, calendars: $special?.calendars, hideUnlabeled: $special?.hideUnlabeledCalendar })
+    $: updateEvents({ type, $activeDays, $events, calendars: $calendars, hideUnlabeled: $special?.hideUnlabeledCalendar })
 
     function updateEvents(_updater: any) {
         current = new Date($activeDays[0])
         let tempEvents: any[] = []
 
         Object.entries($events).forEach(([id, a]) => {
-            if (isCalendarHidden($special?.calendars, $special?.hideUnlabeledCalendar, a.origin)) return
+            if (isCalendarHidden($calendars, $special?.hideUnlabeledCalendar, a.origin)) return
             const toDate = a.to ? new Date(a.to) : new Date(a.from)
             if (isBetween(new Date(a.from), toDate, copyDate(current))) tempEvents.push({ ...a, id })
         })
@@ -71,7 +71,7 @@
                                 {#if isSameDay(new Date(event.from), current)}
                                     {getTime(new Date(event.from))}
                                 {/if}
-                                {#if !isSameDay(new Date(event.from), current) || new Date(event.to).getTime() > new Date(event.from).getTime()}
+                                {#if type !== "action" && (!isSameDay(new Date(event.from), current) || new Date(event.to).getTime() > new Date(event.from).getTime())}
                                     {#if isSameDay(new Date(event.to), current)}
                                         {#if isSameDay(new Date(event.from), current)}
                                             -
