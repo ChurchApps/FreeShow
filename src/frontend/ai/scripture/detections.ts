@@ -14,10 +14,19 @@ const SUGGESTION_LIMIT = 5
 const QUOTE_MATCH_SCORE = 0.55
 const QUOTE_DEMOTE_SCORE = 0.35
 
+function getConfiguredConfidence(): string {
+    return get(ai).scripture?.confidence || "ask"
+}
+
+function canAutoProjectFor(refConfidence: number): boolean {
+    const confidence = getConfiguredConfidence()
+    if (confidence === "ask") return false
+    if (get(outLocked)) return false
+    return confidencePercent(refConfidence) >= confidencePercent(confidence)
+}
+
 export async function handleDetection(ref: DetectedReference): Promise<void> {
     if (!get(ai).enabled) return
-
-    const settings = get(ai).scripture || {}
     if (!scriptureState.sessionActive) return
 
     // LLM quotes are verified against the actual verse text; local quote matches arrive with
@@ -26,14 +35,9 @@ export async function handleDetection(ref: DetectedReference): Promise<void> {
 
     addSuggestion(ref)
 
-    const confidence = settings.confidence || "ask"
-
-    // auto projection
-    if (confidence === "ask") return
-    if (get(outLocked)) return
     // one gate for references and quotes alike: spoken references score high by nature, and a
     // quoted verse only reaches high when the match is decisive - the slider is the single lever
-    if (confidencePercent(ref.confidence) < confidencePercent(confidence)) return
+    if (!canAutoProjectFor(ref.confidence)) return
 
     queueAutoProjection(ref)
 }
@@ -111,26 +115,25 @@ function isSameReference(a: RefRange, b: RefRange) {
     return a.bookNumber === b.bookNumber && a.chapter === b.chapter && a.verseStart <= b.verseEnd && b.verseStart <= a.verseEnd
 }
 
+function getReferenceLabel(suggestion: DetectedReference, drawerBibleId: string): string {
+    let label = `${suggestion.book} ${suggestion.chapter}:${suggestion.verseStart}`
+    if (suggestion.verseEnd > suggestion.verseStart) label += `-${suggestion.verseEnd}`
+
+    const bibleId = suggestion.matchedBibleId || drawerBibleId
+    if (bibleId === drawerBibleId) return label
+
+    const bible = bibleId ? get(scriptures)[bibleId] : null
+    if (bible) label += ` (${getShortBibleName(bible.customName || bible.name || "")})`
+
+    return label
+}
+
 // SUGGESTIONS
 
 function addSuggestion(ref: DetectedReference) {
     const confidence = confidencePercent(ref.confidence)
     if (confidence < 50) return
-
-    function getReferenceLabel(suggestion: DetectedReference, _updater: any = null) {
-        const drawerBibleId = get(drawerTabsData).scripture?.activeSubTab || ""
-
-        let label = `${suggestion.book} ${suggestion.chapter}:${suggestion.verseStart}`
-        if (suggestion.verseEnd > suggestion.verseStart) label += `-${suggestion.verseEnd}`
-
-        const bibleId = suggestion.matchedBibleId || drawerBibleId
-        if (bibleId === drawerBibleId) return label
-
-        const bible = bibleId ? get(scriptures)[bibleId] : null
-        if (bible) label += ` (${getShortBibleName(bible.customName || bible.name || "")})`
-
-        return label
-    }
+    const drawerBibleId = get(drawerTabsData).scripture?.activeSubTab || ""
 
     aiSuggestions.update((list) => {
         const now = Date.now()
@@ -140,7 +143,7 @@ function addSuggestion(ref: DetectedReference) {
         if (ref.corrects) active = active.filter((a) => a.id !== ref.corrects?.id)
 
         // skip duplicate IDs or identical content
-        const label = getReferenceLabel(ref)
+        const label = getReferenceLabel(ref, drawerBibleId)
         if (active.some((a) => a.id === ref.id || a.content === label)) return active
 
         const newSuggestion = {
@@ -237,11 +240,7 @@ function queueAutoProjection(ref: DetectedReference) {
 
         if (!pending || !scriptureState.sessionActive) return
 
-        const settings = get(ai).scripture || {}
-        const confidence = settings.confidence || "ask"
-        if (confidence === "ask") return
-
-        if (get(outLocked)) return
+        if (!canAutoProjectFor(pending.confidence)) return
 
         projectDetection(pending)
     }, cooldownMs - elapsed)

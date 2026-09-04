@@ -27,10 +27,18 @@ const CYCLE_PREFERENCE: string[][] = [
     ["KJV", "KING JAMES VERSION"]
 ]
 
+function toUpperTrimmed(value: string | undefined): string {
+    return (value || "").toUpperCase().trim()
+}
+
+function matchesAlias(names: string[], alias: string): boolean {
+    return names.some((name) => name === alias || name.includes(alias))
+}
+
 export function cycleRank(id: string): number {
     const bible = get(scriptures)[id]
-    const names = [bible?.customName, bible?.name, getShortBibleName(bible?.name || "")].map((name) => (name || "").toUpperCase())
-    const rank = CYCLE_PREFERENCE.findIndex((aliases) => aliases.some((alias) => names.some((name) => name === alias || name.includes(alias))))
+    const names = [bible?.customName, bible?.name, getShortBibleName(bible?.name || "")].map(toUpperTrimmed).filter(Boolean)
+    const rank = CYCLE_PREFERENCE.findIndex((aliases) => aliases.some((alias) => matchesAlias(names, alias)))
     return rank < 0 ? CYCLE_PREFERENCE.length : rank
 }
 

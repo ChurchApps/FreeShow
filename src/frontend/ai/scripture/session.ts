@@ -2,7 +2,7 @@
 // coordinates detection, quote matching, and watches for LLM & library changes
 
 import { get } from "svelte/store"
-import type { AiScriptureBook, AiScriptureTranslation } from "../../../types/ai/AiScripture"
+import type { AiScriptureBook } from "../../../types/ai/AiScripture"
 import { ai, aiInterim, aiScriptureHasProjected, aiScriptureStatus, aiStatus, aiSuggestions, scriptures } from "../../stores"
 import type { AIProviderId } from "../models"
 import { resolveSttEngine } from "../stt/stt"
@@ -11,14 +11,18 @@ import { DetectionCoordinator } from "./detection/coordinator"
 import { cancelPendingAutoProjection, handleDetection, pruneSuggestions } from "./detections"
 import { startQuoteMatching, stopQuoteMatching } from "./quoteMatch/quoteMatcherEngine"
 import { scriptureState } from "./scriptureState"
-import { bookTableIds, buildBookTable, buildTranslationTable, cancelSessionBiblesRefresh, cueTranslationIds, scheduleSessionBiblesRefresh, sessionBibleIds } from "./sessionBibles"
+import { bookTableIds, buildBookTable, cancelSessionBiblesRefresh, scheduleSessionBiblesRefresh, sessionBibleIds } from "./sessionBibles"
 import { refreshSessionLlm, resolveSessionLlm } from "./sessionLlm"
 
 let suggestionPruneTimer: NodeJS.Timeout | null = null
 
+function isListeningStatus(state: string | undefined): boolean {
+    return state === "listening" || state === "llm_paused"
+}
+
 // Coordinator instance running in the frontend session
 let scriptureCoordinator: DetectionCoordinator | null = null
-let scriptureConfig: { language: string; translations: AiScriptureTranslation[]; books: AiScriptureBook[]; interpretationMode: boolean; listenLanguage: string } | null = null
+let scriptureConfig: { interpretationMode: boolean; listenLanguage: string } | null = null
 
 // START / STOP
 
@@ -26,9 +30,10 @@ export async function startScriptureSession(): Promise<{ ok: boolean; error?: st
     stopScriptureSession()
 
     scriptureState.searchBibleIds = sessionBibleIds()
-    if (!bookTableIds().length) return { ok: false, error: "no_scripture" }
+    const tableIds = bookTableIds()
+    if (!tableIds.length) return { ok: false, error: "no_scripture" }
 
-    const books = await buildBookTable(bookTableIds())
+    const books = await buildBookTable(tableIds)
     if (!books.length) return { ok: false, error: "no_scripture" }
 
     const sttSettings = get(ai).stt || {}
@@ -44,11 +49,7 @@ export async function startScriptureSession(): Promise<{ ok: boolean; error?: st
     // key is saved (raw keys never leave the electron process)
     const llm = await resolveSessionLlm()
 
-    const translations = buildTranslationTable(cueTranslationIds())
     scriptureConfig = {
-        books,
-        translations,
-        language,
         interpretationMode,
         listenLanguage
     }
@@ -123,11 +124,7 @@ export function handleScriptureTranscript(segment: { text: string; startMs: numb
     scriptureCoordinator.onTranscriptSegment(segment)
 }
 
-export function updateScriptureCoordinatorBooks(books: AiScriptureBook[], translations: AiScriptureTranslation[]): void {
-    if (scriptureConfig) {
-        scriptureConfig.books = books
-        scriptureConfig.translations = translations
-    }
+export function updateScriptureCoordinatorBooks(books: AiScriptureBook[]): void {
     scriptureCoordinator?.updateBooks(books)
 }
 
@@ -144,7 +141,7 @@ export function updateScriptureCoordinatorContext(anchor: AiScriptureAnchor): vo
 // Synchronize scripture session lifecycle with STT status and AI enabled setting
 aiStatus.subscribe((status) => {
     const isAiEnabled = get(ai).enabled
-    if (isAiEnabled && status.state === "listening") {
+    if (isAiEnabled && isListeningStatus(status.state)) {
         if (!scriptureState.sessionActive) {
             void startScriptureSession()
         }

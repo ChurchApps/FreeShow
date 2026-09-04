@@ -78,25 +78,24 @@ export function parseDetectionResponse(text: any): RawDetection[] {
 
     if (!Array.isArray(parsed?.references)) throw new Error("Response is missing the references array")
 
-    const references: RawDetection[] = []
-    parsed.references.forEach((entry: any) => {
-        if (!isValidDetection(entry)) return
+    return parsed.references.map(toRawDetection).filter(Boolean) as RawDetection[]
+}
 
-        const detection: RawDetection = {
-            book: entry.book,
-            bookNumber: entry.bookNumber,
-            chapter: entry.chapter,
-            verseStart: entry.verseStart,
-            verseEnd: entry.verseEnd,
-            confidence: entry.confidence,
-            type: entry.type
-        }
-        if (typeof entry.quote === "string" && entry.quote) detection.quote = entry.quote
+function toRawDetection(entry: any): RawDetection | null {
+    if (!isValidDetection(entry)) return null
 
-        references.push(detection)
-    })
+    const detection: RawDetection = {
+        book: entry.book,
+        bookNumber: entry.bookNumber,
+        chapter: entry.chapter,
+        verseStart: entry.verseStart,
+        verseEnd: entry.verseEnd,
+        confidence: entry.confidence,
+        type: entry.type
+    }
+    if (typeof entry.quote === "string" && entry.quote) detection.quote = entry.quote
 
-    return references
+    return detection
 }
 
 function isValidDetection(entry: any): boolean {

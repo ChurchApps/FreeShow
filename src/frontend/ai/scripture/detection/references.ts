@@ -21,7 +21,7 @@ export interface BookIndex {
 
 // a spoken "8 18" often reaches us as "818". Recover the pair when the number cannot be a chapter of this book,
 // and only when exactly one split works - an ambiguous number keeps its literal reading and waits for confirmation.
-export function splitGluedReference(value: number, chapterCount: number): { chapter: number; verse: number } | null {
+function splitGluedReference(value: number, chapterCount: number): { chapter: number; verse: number } | null {
     if (!chapterCount || value <= chapterCount) return null
 
     const digits = String(value)
@@ -175,6 +175,7 @@ export function matchReferences(text: string, index: BookIndex): ReferenceMatch[
     // the specific spoken forms scan first - their spans are excluded from the general book-first
     // scan, or "9th verse of ezra chapter 8" would also surface a chapter-only "ezra chapter 8" echo
     const claimedSpans: { from: number; to: number }[] = []
+    const isClaimed = (position: number) => claimedSpans.some((span) => position >= span.from && position < span.to)
 
     const pushMatch = (match: RegExpExecArray, options: { claimSpan?: boolean; alwaysCued?: boolean; verseOverride?: string } = {}) => {
         const groups = (match.groups || {}) as ReferenceGroups
@@ -253,17 +254,17 @@ export function matchReferences(text: string, index: BookIndex): ReferenceMatch[
     })
     scan(index.chapterFirstRegex, (match) => {
         const bookAt = match.index
-        if (claimedSpans.some((span) => bookAt >= span.from && bookAt < span.to)) return
+        if (isClaimed(bookAt)) return
         pushMatch(match, { claimSpan: true, alwaysCued: true })
     })
     scan(index.psalmOrdinalRegex, (match) => {
         const bookAt = match.index
-        if (claimedSpans.some((span) => bookAt >= span.from && bookAt < span.to)) return
+        if (isClaimed(bookAt)) return
         pushMatch(match, { claimSpan: true, alwaysCued: true })
     })
     scan(index.singleChapterVerseRegex, (match) => {
         const bookAt = match.index
-        if (claimedSpans.some((span) => bookAt >= span.from && bookAt < span.to)) return
+        if (isClaimed(bookAt)) return
         const groups = (match.groups || {}) as ReferenceGroups
         // only chapterCount === 1 books resolve here (pushMatch fills chapter 1) - "john verse 16"
         // falls through untouched for the anchored bare-verse path
@@ -271,13 +272,9 @@ export function matchReferences(text: string, index: BookIndex): ReferenceMatch[
     })
     scan(index.regex, (match) => {
         const bookAt = match.index + match[1].length
-        if (claimedSpans.some((span) => bookAt >= span.from && bookAt < span.to)) return
+        if (isClaimed(bookAt)) return
         pushMatch(match)
     })
 
     return results
-}
-
-export function detectExplicitReferences(text: string, books: AiScriptureBook[]): { bookNumber: number; book: string; chapter: number; verseStart: number; verseEnd: number; confidence: number }[] {
-    return matchReferences(text, buildBookIndex(books)).map((match) => ({ bookNumber: match.bookNumber, book: match.book, chapter: match.chapter, verseStart: match.verseStart, verseEnd: match.verseEnd, confidence: match.confidence }))
 }

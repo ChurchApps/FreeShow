@@ -17,8 +17,12 @@ import { scriptureState } from "./scriptureState"
 import { updateScriptureCoordinatorContext } from "./session"
 import { preferredTranslationId } from "./translationPreference"
 
+function resolvePrimaryBibleId(id: string): string {
+    return get(scriptures)[id]?.collection?.versions?.[0] || id
+}
+
 // chapter/verse values can be strings, including split ids like "12_1" - parseInt reads the leading number
-export function parseNumber(value: number | string | undefined): number {
+function parseNumber(value: number | string | undefined): number {
     if (typeof value === "number") return value
     const parsed = parseInt(String(value ?? ""), 10)
     return Number.isFinite(parsed) ? parsed : 0
@@ -42,7 +46,7 @@ export async function projectDetection(detection: DetectedReference, manual?: bo
     scriptureState.lastAutoProjectedBibleId = targetId
 
     // collections load one version at a time - validate against the first one
-    const parseId = get(scriptures)[targetId]?.collection?.versions?.[0] || targetId
+    const parseId = resolvePrimaryBibleId(targetId)
 
     let book: number | string = detection.bookNumber
     let chapter = detection.chapter
@@ -138,7 +142,7 @@ async function sendAnchorContext(targetId: string, book: number | string, chapte
     if (!verses.length) return
 
     try {
-        const parseId = get(scriptures)[targetId]?.collection?.versions?.[0] || targetId
+        const parseId = resolvePrimaryBibleId(targetId)
         const bible = await loadJsonBible(parseId)
         if (!bible) return
 
@@ -209,7 +213,7 @@ export async function showInDrawer(detection: DetectedReference, focusTab = true
     let book: number = detection.bookNumber
     const drawerTabId = get(drawerTabsData).scripture?.activeSubTab || ""
     if (drawerTabId) {
-        const parseId = get(scriptures)[drawerTabId]?.collection?.versions?.[0] || drawerTabId
+        const parseId = resolvePrimaryBibleId(drawerTabId)
 
         // 66 book bibles use the standard Protestant canon numbering - skip loading in that case
         const cachedBooks = get(scripturesCache)[parseId]?.books

@@ -11,6 +11,7 @@ const ORDINAL_PREFIXES: { [word: string]: string } = { first: "1", second: "2", 
 const ORDINAL_UNIT_WORDS: { [word: string]: number } = { first: 1, second: 2, third: 3, fourth: 4, fifth: 5, sixth: 6, seventh: 7, eighth: 8, ninth: 9 }
 const ORDINAL_TEEN_WORDS: { [word: string]: number } = { tenth: 10, eleventh: 11, twelfth: 12, thirteenth: 13, fourteenth: 14, fifteenth: 15, sixteenth: 16, seventeenth: 17, eighteenth: 18, nineteenth: 19 }
 const ORDINAL_TENS_WORDS: { [word: string]: number } = { twentieth: 20, thirtieth: 30, fortieth: 40, fiftieth: 50, sixtieth: 60, seventieth: 70, eightieth: 80, ninetieth: 90 }
+const CHAPTER_VERSE_PSALM_REGEX = /^(?:chapter|verses?|psalms?)$/
 
 /** An ordinal number word 1st-99th ("ninth", "twenty-third"), or null when `core` is not one. */
 function readOrdinalWord(core: string): number | null {
@@ -44,6 +45,16 @@ interface SpokenToken {
     prefix: string // leading punctuation
     core: string
     suffix: string // trailing punctuation
+}
+
+function isCueWordToken(token: SpokenToken | undefined): boolean {
+    return !!token && CHAPTER_VERSE_PSALM_REGEX.test(token.core)
+}
+
+function shouldConvertOrdinalBookPrefix(token: SpokenToken, next: SpokenToken | undefined): boolean {
+    if (token.suffix || !next || next.prefix) return false
+    if (!/^[a-z]/.test(next.core)) return false
+    return !isCueWordToken(next)
 }
 
 function toToken(raw: string): SpokenToken {
@@ -88,7 +99,7 @@ export function normalizeSpokenNumbers(text: string): string {
         // spoken ordinals right before "chapter"/"verse"/"psalm" become digit ordinals ("eighth
         // chapter" -> "8th chapter", "twenty-third psalm" -> "23rd psalm") - the suffix survives
         // as a parsing signal, and a bare ordinal stays a word ("he came third")
-        if (!token.suffix && next && !next.prefix && /^(?:chapter|verses?|psalms?)$/.test(next.core)) {
+        if (!token.suffix && next && !next.prefix && isCueWordToken(next)) {
             const ordinal = readOrdinalWord(token.core)
             if (ordinal !== null) {
                 out.push(token.prefix + String(ordinal) + ordinalSuffix(ordinal))
@@ -98,7 +109,7 @@ export function normalizeSpokenNumbers(text: string): string {
         }
         // spaced compounds too: "twenty third psalm" -> "23rd psalm"
         const after = tokens[i + 2]
-        if (!token.suffix && next && !next.prefix && !next.suffix && TENS_WORDS[token.core] !== undefined && ORDINAL_UNIT_WORDS[next.core] !== undefined && after && !after.prefix && /^(?:chapter|verses?|psalms?)$/.test(after.core)) {
+        if (!token.suffix && next && !next.prefix && !next.suffix && TENS_WORDS[token.core] !== undefined && ORDINAL_UNIT_WORDS[next.core] !== undefined && after && !after.prefix && isCueWordToken(after)) {
             const value = TENS_WORDS[token.core] + ORDINAL_UNIT_WORDS[next.core]
             out.push(token.prefix + String(value) + ordinalSuffix(value))
             i += 2
@@ -109,12 +120,12 @@ export function normalizeSpokenNumbers(text: string): string {
         // "1st john" -> "1 john" - whisper writes spoken ordinals either way). Before "chapter"/
         // "verse"/"psalm" the digit ordinal stays whole - the suffix is a parsing signal there
         const digitOrdinal = /^([1-3])(?:st|nd|rd)$/.exec(token.core)
-        if (digitOrdinal && !token.suffix && next && !next.prefix && /^[a-z]/.test(next.core) && !/^(?:chapter|verses?|psalms?)$/.test(next.core)) {
+        if (digitOrdinal && shouldConvertOrdinalBookPrefix(token, next)) {
             out.push(token.prefix + digitOrdinal[1])
             i++
             continue
         }
-        if (ORDINAL_PREFIXES[token.core] !== undefined && !token.suffix && next && !next.prefix && /^[a-z]/.test(next.core)) {
+        if (ORDINAL_PREFIXES[token.core] !== undefined && shouldConvertOrdinalBookPrefix(token, next)) {
             out.push(token.prefix + ORDINAL_PREFIXES[token.core])
             i++
             continue

@@ -7,8 +7,8 @@
 // tab can never outrank a deliberate choice.
 
 import { get } from "svelte/store"
-import type { AiScriptureBook, AiScriptureTranslation } from "../../../types/ai/AiScripture"
-import { getShortBibleName, loadJsonBible } from "../../components/drawer/bible/scripture"
+import type { AiScriptureBook } from "../../../types/ai/AiScripture"
+import { loadJsonBible } from "../../components/drawer/bible/scripture"
 import { scriptures, scripturesCache } from "../../stores"
 import { scriptureState } from "./scriptureState"
 import { updateScriptureCoordinatorBooks } from "./session"
@@ -16,12 +16,15 @@ import { preferredTranslationId } from "./translationPreference"
 import { setQuoteMatchAnchor, updateQuoteMatchBibles } from "./quoteMatch/quoteMatcherEngine"
 
 function expandBibleIds(ids: string[]): string[] {
+    const seen = new Set<string>()
     const expanded: string[] = []
     ids.forEach((id) => {
         const versions = get(scriptures)[id]?.collection?.versions
         const list = versions?.length ? versions : [id]
         list.forEach((a) => {
-            if (a && !expanded.includes(a)) expanded.push(a)
+            if (!a || seen.has(a)) return
+            seen.add(a)
+            expanded.push(a)
         })
     })
     return expanded
@@ -30,16 +33,12 @@ function expandBibleIds(ids: string[]): string[] {
 /** All installed local translations in priority order: main first, then the rest by name. */
 export function sessionBibleIds(): string[] {
     const lead = expandBibleIds([preferredTranslationId()].filter(Boolean))
+    const leadSet = new Set(lead)
     const rest = Object.entries(get(scriptures))
-        .filter(([id, bible]) => !!bible && !bible.api && !bible.collection && !lead.includes(id))
+        .filter(([id, bible]) => !!bible && !bible.api && !bible.collection && !leadSet.has(id))
         .sort(([, a], [, b]) => (a.customName || a.name || "").localeCompare(b.customName || b.name || ""))
         .map(([id]) => id)
     return [...lead, ...rest]
-}
-
-/** Every installed bible (api & collections included) for the spoken-cue table, priority first. */
-export function cueTranslationIds(): string[] {
-    return [...scriptureState.searchBibleIds, ...Object.keys(get(scriptures)).filter((id) => !scriptureState.searchBibleIds.includes(id))]
 }
 
 /**
@@ -88,7 +87,7 @@ async function refreshSessionBibles(): Promise<void> {
     const books = await buildBookTable(bookTableIds())
     // a slow load can outlive the session or a newer change - only the latest refresh may apply
     if (!scriptureState.sessionActive || token !== sessionBiblesRefreshToken) return
-    updateScriptureCoordinatorBooks(books, buildTranslationTable(cueTranslationIds()))
+    updateScriptureCoordinatorBooks(books)
 
     updateQuoteMatchBibles(scriptureState.searchBibleIds)
     // only the full-start fallback (matcher not ready yet) loses the anchor - re-seed it
@@ -101,10 +100,11 @@ export async function buildBookTable(bibleIds: string[]): Promise<AiScriptureBoo
     const namesByNumber: Map<number, string[]> = new Map()
     const canonNumbers: Set<number> = new Set() // book numbers matching the 66 book Protestant canon
     const addName = (number: number, name: string | undefined) => {
-        const trimmed = (name || "").trim()
-        if (!number || !trimmed) return
+        if (!number) return
         const list = namesByNumber.get(number) || []
-        if (!list.some((a) => a.toLowerCase() === trimmed.toLowerCase())) list.push(trimmed)
+        const trimmed = (name || "").trim()
+        if (!trimmed) return
+        if (!list.some((entry) => entry.toLowerCase() === trimmed.toLowerCase())) list.push(trimmed)
         namesByNumber.set(number, list)
     }
 
@@ -136,23 +136,4 @@ export async function buildBookTable(bibleIds: string[]): Promise<AiScriptureBoo
     return Array.from(namesByNumber.entries())
         .sort((a, b) => a[0] - b[0])
         .map(([number, names]) => ({ number, names, canonNumber: canonNumbers.has(number) ? number : undefined }))
-}
-
-// installed translation names for spoken translation switching ("give me NIV")
-export function buildTranslationTable(bibleIds: string[]): AiScriptureTranslation[] {
-    const translationTable: AiScriptureTranslation[] = []
-    bibleIds.forEach((id) => {
-        const bible = get(scriptures)[id]
-        if (!bible) return
-
-        const names: string[] = []
-        const candidates = [bible.name, bible.customName, getShortBibleName(bible.name)]
-        candidates.forEach((name) => {
-            const trimmed = (name || "").trim()
-            if (trimmed && !names.some((a) => a.toLowerCase() === trimmed.toLowerCase())) names.push(trimmed)
-        })
-
-        if (names.length) translationTable.push({ id, names })
-    })
-    return translationTable
 }
