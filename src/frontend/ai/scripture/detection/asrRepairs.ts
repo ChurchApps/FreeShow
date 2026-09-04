@@ -42,7 +42,7 @@ export const ASR_BOOK_ALIASES: { alias: string; canonNumber: number }[] = [
 
 export const FUZZY_MIN_LEN = 6
 
-export function editDistanceWithin(a: string, b: string, cap: number): number | null {
+function editDistanceWithin(a: string, b: string, cap: number): number | null {
     if (Math.abs(a.length - b.length) > cap) return null
 
     let previous = Array.from({ length: b.length + 1 }, (_, i) => i)

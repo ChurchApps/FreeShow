@@ -20,11 +20,3 @@ export interface AiScriptureBook {
     canonNumber?: number // position in the 66 book Protestant canon - set by the renderer for 66 book bibles (equal to number), undefined otherwise
     names: string[] // name/customName/abbreviations across the selected bibles
 }
-
-// VOICE COMMANDS
-
-// installed translations handed from the renderer at start, so spoken names ("NIV") can be resolved in the electron process
-export interface AiScriptureTranslation {
-    id: string
-    names: string[]
-}

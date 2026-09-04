@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { EngineStatus } from "../../../../types/ai/AiModels"
+    import type { EngineStatus } from "../../../../types/ai/Ai"
     import { Main } from "../../../../types/IPC/Main"
     import Icon from "../../../components/helpers/Icon.svelte"
     import T from "../../../components/helpers/T.svelte"

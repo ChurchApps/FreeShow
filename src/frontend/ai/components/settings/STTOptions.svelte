@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Main } from "../../../../types/IPC/Main"
-    import type { EngineStatus } from "../../../../types/ai/AiModels"
+    import type { EngineStatus } from "../../../../types/ai/Ai"
     import { requestMain } from "../../../IPC/main"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import InputRow from "../../../components/input/InputRow.svelte"

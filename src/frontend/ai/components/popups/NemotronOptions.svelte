@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte"
-    import type { EngineStatus } from "../../../../types/ai/AiModels"
+    import type { EngineStatus } from "../../../../types/ai/Ai"
     import { Main } from "../../../../types/IPC/Main"
     import T from "../../../components/helpers/T.svelte"
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"

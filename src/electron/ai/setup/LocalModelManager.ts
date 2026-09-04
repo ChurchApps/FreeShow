@@ -1,7 +1,7 @@
 import { app } from "electron"
 import fs from "fs"
 import path from "path"
-import type { AiSetupOptions, EngineStatus } from "../../../types/ai/AiModels"
+import type { AiSetupOptions, EngineStatus } from "../../../types/ai/Ai"
 import { createFolder } from "../../utils/files"
 
 export async function aiHandleLocalSetup(data: AiSetupOptions): Promise<boolean> {

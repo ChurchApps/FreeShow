@@ -1,7 +1,7 @@
 import { createLLMTalk } from "../llm/llmTalk"
 import type { AIProviderId } from "../llm/llmModels"
 
-export interface RawDetection {
+interface RawDetection {
     book: string
     bookNumber: number
     chapter: number
@@ -18,7 +18,7 @@ export interface AIDetectionRequest {
     liveContext?: string
 }
 
-export const DETECTION_PROMPT = `You detect Bible references in a live, imperfect speech transcript from a sermon. The transcript comes from automatic speech recognition and contains errors, missing punctuation, and mid-sentence cuts.
+const DETECTION_PROMPT = `You detect Bible references in a live, imperfect speech transcript from a sermon. The transcript comes from automatic speech recognition and contains errors, missing punctuation, and mid-sentence cuts.
 
 Report a reference only in these two cases:
 1. "explicit" - the speaker names a passage (e.g. "John chapter 3 verse 16", "verses 28 through 30 of Romans 8", "back to our text in First Corinthians 13"). Spoken forms vary: "first/second/third" for numbered books, chapter-only mentions, verse ranges, references split across sentences, and bare number pairs - "Matthew 12 4", "Matthew 12, 4" or "Matthew 12-4" all mean Matthew 12:4. If only a chapter is named with no verse, report verseStart 1 and verseEnd 1 - with confidence 90+ when the speaker clearly directs listeners to it ("turn to", "open your bibles to"), otherwise 40-50.
@@ -33,7 +33,7 @@ Rules:
 - confidence: a percentage number from 1 to 100. 85-100 = unambiguous explicit reference or verbatim quote; 50-84 = clear but with minor ASR garbling or slight paraphrase; 1-49 = plausible but uncertain.
 - If there are no references, return an empty references array.`
 
-export const DETECTION_SCHEMA = {
+const DETECTION_SCHEMA = {
     type: "object",
     properties: {
         references: {
@@ -63,21 +63,6 @@ export function buildUserContent(req: AIDetectionRequest): string {
     const alreadyDetected = req.alreadyDetected.length ? req.alreadyDetected.join(", ") : "none"
     const liveContext = req.liveContext ? `${req.liveContext}\n\n` : ""
     return `${liveContext}Already detected (do not repeat): ${alreadyDetected}\n\n\`\`\`\n${req.transcript}\n\`\`\``
-}
-
-export function parseDetectionResponse(text: any): RawDetection[] {
-    if (typeof text !== "string") throw new Error("No text content in the response")
-
-    let parsed: any
-    try {
-        parsed = JSON.parse(text)
-    } catch {
-        throw new Error("Response is not valid JSON")
-    }
-
-    if (!Array.isArray(parsed?.references)) throw new Error("Response is missing the references array")
-
-    return parsed.references.map(toRawDetection).filter(Boolean) as RawDetection[]
 }
 
 function toRawDetection(entry: any): RawDetection | null {

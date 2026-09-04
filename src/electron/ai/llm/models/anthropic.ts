@@ -1,5 +1,5 @@
 import axios from "axios"
-import type { LLMCompletionOptions } from "../../../../types/ai/AiModels"
+import type { LLMCompletionOptions } from "../../../../types/ai/Ai"
 import { APIModel } from "./APIModel"
 
 const API_URL = "https://api.anthropic.com/v1/messages"

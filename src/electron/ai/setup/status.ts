@@ -1,4 +1,4 @@
-import type { EngineStatus } from "../../../types/ai/AiModels"
+import type { EngineStatus } from "../../../types/ai/Ai"
 import { type AIProviderId, getLLMProvider } from "../llm/llmProviders"
 import { getAiKey } from "./aiKeys"
 import { LocalModelManager } from "./LocalModelManager"

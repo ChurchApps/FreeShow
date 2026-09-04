@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { DetectedReference } from "../../../../types/ai/AiScripture"
-import { aiQuoteMatchActive, scriptures, scripturesCache } from "../../../stores"
+import { scriptures, scripturesCache } from "../../../stores"
 
 // Inline text utility fallbacks
 function stripMarkdown(text: string): string {
@@ -1342,7 +1342,6 @@ export function startQuoteMatching(config: QuoteMatchSessionConfig): void {
 export function stopQuoteMatching(): void {
     sessionToken++
     starting = false
-    aiQuoteMatchActive.set(false)
     host?.stop()
     host = null
     gate = null
@@ -1431,7 +1430,6 @@ function callbacksFor(token: number, fallbackPayloads: TranslationPayload[] | nu
             if (token !== sessionToken) return
             starting = false
             console.info(`[AiScripture] Quote matching active: ${info.count} translation${info.count === 1 ? "" : "s"} indexed (${(info.totalBytes / 1024 / 1024).toFixed(1)} MB)`)
-            aiQuoteMatchActive.set(true)
             if (pendingAnchor) host?.setAnchor(pendingAnchor)
 
             const buffered = pendingSegments

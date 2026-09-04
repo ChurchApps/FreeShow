@@ -1,5 +1,5 @@
 import axios from "axios"
-import type { LLMCompletionOptions } from "../../../../types/ai/AiModels"
+import type { LLMCompletionOptions } from "../../../../types/ai/Ai"
 
 export const LLM_API_TIMEOUT = 12000
 

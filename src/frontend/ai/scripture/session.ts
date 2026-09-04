@@ -1,12 +1,12 @@
 import { get } from "svelte/store"
 import type { AiScriptureBook } from "../../../types/ai/AiScripture"
-import { ai, aiInterim, aiLlmStatus, aiScriptureHasProjected, aiSmartAction, aiSttStatus, aiSuggestions, scriptures } from "../../stores"
+import { ai, aiInterim, aiLlmStatus, aiSmartAction, aiSttStatus, aiSuggestions, scriptures } from "../../stores"
 import type { AIProviderId } from "../llm/llmModels"
+import { llmSession } from "../llm/llmSession"
 import { resolveSttEngine } from "../stt/stt"
 import type { AiScriptureAnchor } from "./detection/coordinator"
 import { DetectionCoordinator } from "./detection/coordinator"
-import { cancelPendingAutoProjection, handleDetection, pruneSuggestions } from "./detections"
-import { llmSession } from "../llm/llmSession"
+import { handleDetection } from "./detections"
 import { startQuoteMatching, stopQuoteMatching } from "./quoteMatch/quoteMatcherEngine"
 import { scriptureState } from "./scriptureState"
 import { bookTableIds, buildBookTable, cancelSessionBiblesRefresh, scheduleSessionBiblesRefresh, sessionBibleIds } from "./sessionBibles"
@@ -19,7 +19,7 @@ function isListeningStatus(state?: string): boolean {
     return state === "listening" || state === "llm_paused"
 }
 
-export async function startScriptureSession(): Promise<{ ok: boolean; error?: string }> {
+async function startScriptureSession(): Promise<{ ok: boolean; error?: string }> {
     stopScriptureSession()
 
     scriptureState.searchBibleIds = sessionBibleIds()
@@ -62,18 +62,14 @@ export async function startScriptureSession(): Promise<{ ok: boolean; error?: st
         onDetection: handleDetection
     })
 
-    suggestionPruneTimer = setInterval(pruneSuggestions, 15000)
     return { ok: true }
 }
 
 export function stopScriptureSession(): void {
     scriptureState.sessionActive = false
-    aiScriptureHasProjected.set(false)
     stopQuoteMatching()
     cancelSessionBiblesRefresh()
     scriptureState.lastQuoteMatchAnchor = null
-
-    cancelPendingAutoProjection()
 
     if (suggestionPruneTimer) {
         clearInterval(suggestionPruneTimer)

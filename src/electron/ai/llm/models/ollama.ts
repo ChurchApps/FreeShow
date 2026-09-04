@@ -1,5 +1,5 @@
 import axios from "axios"
-import type { LLMCompletionOptions } from "../../../../types/ai/AiModels"
+import type { LLMCompletionOptions } from "../../../../types/ai/Ai"
 import { APIModel, buildMessages } from "./APIModel"
 
 const API_URL = "http://127.0.0.1:11434"

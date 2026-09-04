@@ -9,7 +9,7 @@ import type { PCOFolderTreeNode } from "../../electron/contentProviders/planning
 import type { _store } from "../../electron/data/store"
 import type { EncoderDetection } from "../../electron/streaming/encoderDetection"
 import type { TimecodeMode } from "../../electron/timecode/timecode"
-import type { AiSetupOptions, EngineStatus } from "../ai/AiModels"
+import type { AiSetupOptions, EngineStatus } from "../ai/Ai"
 import type { SttEngineOptions } from "../ai/AiSettings"
 import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, MediaCodecInfo, OS, SpotifyState, Subtitle } from "../Main"
 import type { Output } from "../Output"
