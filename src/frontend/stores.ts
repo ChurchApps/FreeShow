@@ -6,7 +6,7 @@ import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { ContentProviderId } from "../electron/contentProviders/base/types"
 import type { TimecodeMode } from "../electron/timecode/timecode"
-import { AiScriptureState } from "../types/ai/AiScripture"
+import type { AiFeatureStatus } from "../types/ai/Ai"
 import type { AudioChannelData, AudioStream, MetronomeSettings, Playlist } from "../types/Audio"
 import type { AudioRoutingConfig } from "../types/AudioRouting"
 import type { Event } from "../types/Calendar"
@@ -212,8 +212,8 @@ export type SlideHighlight = { indexes: number[]; color?: string; icon?: string 
 export const slideDeleteHighlight: Writable<SlideHighlight> = writable(null)
 
 // AI
-export const aiStatus: Writable<{ state: "inactive" | "listening" | "stopped" | "error"; message?: string }> = writable({ state: "inactive" })
-export const aiScriptureStatus: Writable<{ state: AiScriptureState; message?: string; keyless?: boolean }> = writable({ state: "stopped" })
+export const aiSttStatus: Writable<{ state: "inactive" | "listening" | "stopped" | "error"; message?: string }> = writable({ state: "inactive" })
+export const aiLlmStatus: Writable<AiFeatureStatus> = writable({ state: "stopped" })
 export const aiSuggestions: Writable<AiSuggestion[]> = writable([])
 export const aiTranscript: Writable<{ text: string; startMs: number; endMs: number; language?: string; music?: boolean; utteranceEnd?: boolean }[]> = writable([])
 export const aiInterim: Writable<string> = writable("") // the open utterance's unstable tail - display only, shown greyed

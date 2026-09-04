@@ -4,7 +4,7 @@ import path from "path"
 import type { AiSetupOptions, EngineStatus } from "../../../types/ai/AiModels"
 import { createFolder } from "../../utils/files"
 
-export async function aiHandleLocalSetup(data: AiSetupOptions): Promise<unknown> {
+export async function aiHandleLocalSetup(data: AiSetupOptions): Promise<boolean> {
     const { action, engineId, modelId, customPath } = data
 
     if (action === "verify") {

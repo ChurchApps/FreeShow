@@ -15,14 +15,11 @@ export interface DetectedReference {
     timestamp: number
 }
 
-// book table handed from the renderer at start (merged from all selected translations)
 export interface AiScriptureBook {
     number: number // book number as stored in the bible the names came from
     canonNumber?: number // position in the 66 book Protestant canon - set by the renderer for 66 book bibles (equal to number), undefined otherwise
     names: string[] // name/customName/abbreviations across the selected bibles
 }
-
-export type AiScriptureState = "starting" | "listening" | "stopped" | "error" | "llm_paused"
 
 // VOICE COMMANDS
 

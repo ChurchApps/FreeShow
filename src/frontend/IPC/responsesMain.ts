@@ -50,7 +50,7 @@ import {
     activeShow,
     activeTimers,
     aiInterim,
-    aiStatus,
+    aiSttStatus,
     aiTranscript,
     alertMessage,
     audioData,
@@ -299,7 +299,7 @@ export const mainResponses: MainResponses = {
     },
 
     // AI
-    [ToMain.AI_STATUS]: (data) => aiStatus.set(data),
+    [ToMain.AI_STATUS]: (data) => aiSttStatus.set(data),
     [ToMain.AI_TRANSCRIPT]: (data) => {
         // the whole session stays scrollable - the cap only guards against unbounded growth
         aiTranscript.update((a) => [...a, data].slice(-2000))

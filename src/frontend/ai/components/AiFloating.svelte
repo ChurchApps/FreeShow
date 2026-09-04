@@ -5,7 +5,7 @@
     import T from "../../components/helpers/T.svelte"
     import MaterialButton from "../../components/inputs/MaterialButton.svelte"
     import Center from "../../components/system/Center.svelte"
-    import { activePage, ai, aiInterim, aiStatus, aiSuggestions, aiTranscript, language, outLocked, settingsTab } from "../../stores"
+    import { activePage, ai, aiInterim, aiSttStatus, aiSuggestions, aiTranscript, language, outLocked, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import { audioLevelStore, resolveSttEngine, SpeechToText } from "../stt/stt"
     import { copyTranscript, dismissAiSuggestion, groupTranscriptLines } from "../transcript"
@@ -107,7 +107,7 @@
     }
 
     // a runtime engine failure in the electron process ends the plain transcription session
-    $: if (sessionMode === "stt" && $aiStatus.state === "error" && state === "listening") {
+    $: if (sessionMode === "stt" && $aiSttStatus.state === "error" && state === "listening") {
         state = "error"
         SpeechToText.stopCapture()
     }
@@ -234,7 +234,7 @@
                             <T id="remote.loading" />
                         </Center>
                     {:else if state === "error"}
-                        <p class="placeholder error">{translateText($aiStatus.message || "ai.error_start_failed")}</p>
+                        <p class="placeholder error">{translateText($aiSttStatus.message || "ai.error_start_failed")}</p>
                     {:else if state === "processing"}
                         <div class="processing-view">
                             <div class="spinner large"></div>

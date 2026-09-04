@@ -12,8 +12,8 @@
     import { requestMain, sendMain } from "../../../IPC/main"
     import { ai } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import { AI_PROVIDER_MODELS, aiErrorText } from "../../models"
-    import { refreshSessionLlm } from "../../scripture/sessionLlm"
+    import { llmSession } from "../../llm/llmSession"
+    import { AI_PROVIDER_MODELS, type AIProviderId } from "../../models"
 
     $: llmOptions = $ai.llm || {}
 
@@ -34,7 +34,7 @@
         { value: "gemini", label: "Google (Gemini)" }
     ]
 
-    $: provider = llmOptions.provider || "none"
+    $: provider = (llmOptions.provider || "none") as AIProviderId | "none"
     $: providerData = provider === "none" ? null : AI_PROVIDER_MODELS[provider]
     $: modelOptions = providerData ? providerData.models.map((model) => ({ value: model.id, label: model.name })) : []
     $: storedModel = llmOptions.model || ""
@@ -62,7 +62,7 @@
 
     let keyInput = ""
     function saveKey() {
-        if (!keyInput) return
+        if (!keyInput || provider === "none") return
 
         sendMain(Main.AI_SET_KEY, { providerId: provider, key: keyInput })
         keyInput = ""
@@ -70,16 +70,17 @@
         // a listening session picks the key up right away - no restart needed
         setTimeout(() => {
             getStatus()
-            refreshSessionLlm()
+            void llmSession.refreshConfig()
         }, 200)
     }
 
     function removeKey() {
+        if (provider === "none") return
         sendMain(Main.AI_SET_KEY, { providerId: provider, key: "" })
         testResult = null
         setTimeout(() => {
             getStatus()
-            refreshSessionLlm()
+            void llmSession.refreshConfig()
         }, 200)
     }
 
@@ -95,7 +96,7 @@
     let testing = false
     let testResult: { ok: boolean; error?: string } | null = null
     async function testConnection() {
-        if (testing) return
+        if (testing || provider === "none") return
         testing = true
         testResult = null
 
@@ -156,7 +157,7 @@
                 <Icon id="warning" size={0.9} white />
                 <T id="ai.test_failed" />
                 {#if testResult.error}
-                    <span class="path">{translateText(aiErrorText(testResult.error))}</span>
+                    <span class="path">{testResult.error}</span>
                 {/if}
             </div>
         {/if}

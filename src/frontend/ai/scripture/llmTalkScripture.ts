@@ -1,5 +1,4 @@
-import { Main } from "../../../types/IPC/Main"
-import { requestMain } from "../../IPC/main"
+import { createLLMTalk } from "../llm/llmTalk"
 import type { AIProviderId } from "../models"
 
 export interface RawDetection {
@@ -8,7 +7,7 @@ export interface RawDetection {
     chapter: number
     verseStart: number
     verseEnd: number
-    confidence: number // 1-100: confidence score for the detection
+    confidence: number
     type: "explicit" | "quoted"
     quote?: string
 }
@@ -62,8 +61,8 @@ export const DETECTION_SCHEMA = {
 
 export function buildUserContent(req: AIDetectionRequest): string {
     const alreadyDetected = req.alreadyDetected.length ? req.alreadyDetected.join(", ") : "none"
-    const liveContext = req.liveContext ? req.liveContext + "\n\n" : ""
-    return liveContext + "Already detected (do not repeat): " + alreadyDetected + "\n\n```\n" + req.transcript + "\n```"
+    const liveContext = req.liveContext ? `${req.liveContext}\n\n` : ""
+    return `${liveContext}Already detected (do not repeat): ${alreadyDetected}\n\n\`\`\`\n${req.transcript}\n\`\`\``
 }
 
 export function parseDetectionResponse(text: any): RawDetection[] {
@@ -84,34 +83,25 @@ export function parseDetectionResponse(text: any): RawDetection[] {
 function toRawDetection(entry: any): RawDetection | null {
     if (!isValidDetection(entry)) return null
 
-    const detection: RawDetection = {
+    return {
         book: entry.book,
         bookNumber: entry.bookNumber,
         chapter: entry.chapter,
         verseStart: entry.verseStart,
         verseEnd: entry.verseEnd,
         confidence: entry.confidence,
-        type: entry.type
+        type: entry.type,
+        ...(typeof entry.quote === "string" && entry.quote ? { quote: entry.quote } : {})
     }
-    if (typeof entry.quote === "string" && entry.quote) detection.quote = entry.quote
+}
 
-    return detection
+function isPositiveInteger(value: any): boolean {
+    return Number.isInteger(value) && value > 0
 }
 
 function isValidDetection(entry: any): boolean {
     if (!entry || typeof entry !== "object") return false
-    if (typeof entry.book !== "string" || !entry.book) return false
-    if (!isPositiveInteger(entry.bookNumber) || entry.bookNumber > 66) return false
-    if (!isPositiveInteger(entry.chapter)) return false
-    if (!isPositiveInteger(entry.verseStart)) return false
-    if (!isPositiveInteger(entry.verseEnd)) return false
-    if (entry.confidence < 1 || entry.confidence > 100 || !Number.isInteger(entry.confidence)) return false
-    if (entry.type !== "explicit" && entry.type !== "quoted") return false
-    return true
-}
-
-function isPositiveInteger(value: any): boolean {
-    return typeof value === "number" && Number.isInteger(value) && value > 0
+    return typeof entry.book === "string" && !!entry.book && isPositiveInteger(entry.bookNumber) && entry.bookNumber <= 66 && isPositiveInteger(entry.chapter) && isPositiveInteger(entry.verseStart) && isPositiveInteger(entry.verseEnd) && Number.isInteger(entry.confidence) && entry.confidence >= 1 && entry.confidence <= 100 && (entry.type === "explicit" || entry.type === "quoted")
 }
 
 export function getLLMScriptureProvider(providerId: AIProviderId) {
@@ -120,38 +110,24 @@ export function getLLMScriptureProvider(providerId: AIProviderId) {
         detectScripture: async (model: string, req: AIDetectionRequest, signal?: AbortSignal) => {
             if (signal?.aborted) throw new Error("Aborted")
 
-            const response = await requestMain(Main.AI_LLM_COMPLETE, {
-                providerId,
-                model,
-                options: {
+            const llm = createLLMTalk(providerId, model)
+
+            const response = await llm.completeJson<{ references: RawDetection[] }>(
+                {
                     systemPrompt: DETECTION_PROMPT,
                     prompt: buildUserContent(req),
                     jsonSchema: DETECTION_SCHEMA
-                }
-            })
+                },
+                (json) => ({
+                    references: (Array.isArray(json?.references) ? json.references : []).map(toRawDetection).filter(Boolean) as RawDetection[]
+                }),
+                signal
+            )
 
             if (signal?.aborted) throw new Error("Aborted")
+            if (response.error) throw new Error(response.error)
 
-            if (!response) {
-                const err: any = new Error("IPC request timed out")
-                err.code = "timeout"
-                throw err
-            }
-
-            if (response.error) {
-                const err: any = new Error(response.error)
-                err.code = response.code || "server_error"
-                if (response.retryAfter) err.retryAfter = response.retryAfter
-                throw err
-            }
-
-            try {
-                return { references: parseDetectionResponse(response.text) }
-            } catch (err: any) {
-                const error: any = new Error(err?.message || "bad_response")
-                error.code = "bad_response"
-                throw error
-            }
+            return { references: response.parsed?.references || [] }
         }
     }
 }
