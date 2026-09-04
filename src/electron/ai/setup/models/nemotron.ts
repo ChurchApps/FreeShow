@@ -4,9 +4,6 @@ import { ToMain } from "../../../../types/IPC/ToMain"
 import { sendToMain } from "../../../IPC/main"
 import { DownloadManager } from "../DownloadManager"
 
-// int8 export of NVIDIA's streaming Nemotron transducer, converted for sherpa-onnx.
-// pinned to a specific repo revision (not "main") and to per-file SHA-256 hashes, so exactly these bytes land
-// or nothing does - the hashes are the LFS checksums Hugging Face publishes for this revision
 const MODEL_BASE_URL = "https://huggingface.co/csukuangfj/sherpa-onnx-nemotron-speech-streaming-en-0.6b-int8-2026-01-14/resolve/f13b0c6a48186fdd9fdd8d203b9527b0b709b09f"
 export const NEMOTRON_MODEL_FILES = {
     encoder: { file: "encoder.int8.onnx", sha256: "2f6ae81fe4ccd69ef04cdf048ecd49628e2d3148a6195e152a91b4d2497952dc" },
@@ -16,7 +13,6 @@ export const NEMOTRON_MODEL_FILES = {
 }
 export const NEMOTRON_MODEL_BYTES = 661_920_000
 
-// speech gating, shared by any streaming driver (~630 KB)
 const VAD_MODEL_URL = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx"
 export const NEMOTRON_VAD_FILE = "silero_vad.onnx"
 const NEMOTRON_VAD_SHA256 = "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6"
@@ -26,7 +22,7 @@ export class NemotronSetupManager {
         return process.platform === "win32" ? "nemotron-cli.exe" : "nemotron-cli"
     }
 
-    static engineDLM: DownloadManager | null = null
+    private static engineDLM: DownloadManager | null = null
     static getDownloadManager() {
         if (!this.engineDLM) this.engineDLM = new DownloadManager("nemotron", "Nemotron model")
         return this.engineDLM
@@ -37,32 +33,34 @@ export class NemotronSetupManager {
 
         const jobs = [...Object.values(NEMOTRON_MODEL_FILES).map((entry) => ({ url: `${MODEL_BASE_URL}/${entry.file}`, file: entry.file, sha256: entry.sha256 })), { url: VAD_MODEL_URL, file: NEMOTRON_VAD_FILE, sha256: NEMOTRON_VAD_SHA256 }]
 
-        // one download spans several files, so progress is reported against the known total rather than per file
         let completedBytes = 0
         for (const job of jobs) {
             const target = path.join(outputFolder, job.file)
 
-            // a file from an earlier run only counts when its checksum proves it is exactly the pinned content
             if (await this.verifyEngine(target)) {
                 if ((await dlm.computeSha256(target)) === job.sha256) {
                     completedBytes += fs.statSync(target).size
                     continue
                 }
-                fs.unlinkSync(target)
+                dlm.safeUnlink(target)
             }
 
             const base = completedBytes
             try {
                 await dlm.downloadFile(job.url, target, {
-                    // one stable key for the whole multi-file download, so the renderer shows a single progress entry
                     onProgress: (bytes) => {
-                        sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: dlm.key, name: dlm.name, progress: base + bytes, total: NEMOTRON_MODEL_BYTES, status: "downloading" })
+                        sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, {
+                            url: dlm.key,
+                            name: dlm.name,
+                            progress: base + bytes,
+                            total: NEMOTRON_MODEL_BYTES,
+                            status: "downloading"
+                        })
                     }
                 })
 
-                // integrity check against the pinned hash - a corrupt or substituted file must never land
                 if ((await dlm.computeSha256(target)) !== job.sha256) {
-                    fs.unlinkSync(target)
+                    dlm.safeUnlink(target)
                     throw new Error(`Downloaded ${job.file} failed checksum verification`)
                 }
             } catch (err) {
@@ -76,15 +74,12 @@ export class NemotronSetupManager {
     }
 
     static cancelEngineDownload() {
-        const dlm = this.getDownloadManager()
-        if (dlm.isDownloading()) dlm.cancel()
+        this.getDownloadManager().cancel()
     }
 
     static async verifyEngine(binaryPath: string) {
-        if (!binaryPath) return false
-
         try {
-            return fs.existsSync(binaryPath) && fs.statSync(binaryPath).size > 1024
+            return Boolean(binaryPath && fs.existsSync(binaryPath) && fs.statSync(binaryPath).size > 1024)
         } catch {
             return false
         }

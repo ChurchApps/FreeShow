@@ -8,6 +8,7 @@ import type { SttEngineOptions } from "../../../../types/ai/AiSettings"
 import { LocalModelManager } from "../../setup/LocalModelManager"
 import type { DriverCallbacks, TranscriberSegment as DriverSegment, TranscriptionDriver } from "../sttHelper"
 import { appendTailWords, trimRepeatedLeadWords } from "../sttHelper"
+import { int16ToFloat32 } from "./nemotronWorker"
 
 const SAMPLE_RATE = 16000
 const RING_SECONDS = 30
@@ -121,13 +122,11 @@ export class Transcriber implements TranscriptionDriver {
         if (this.stopped) return
         this.stopped = true
 
-        const children: ChildProcess[] = []
-        if (this.cliChild) children.push(this.cliChild)
-        if (this.serverChild) children.push(this.serverChild)
+        const children = [this.cliChild, this.serverChild].filter((child): child is ChildProcess => child !== null)
         this.cliChild = null
         this.serverChild = null
 
-        await Promise.all(children.map((child) => killProcess(child)))
+        await Promise.all(children.map(killProcess))
         this.cleanupTempFiles()
     }
 
@@ -350,17 +349,19 @@ export class Transcriber implements TranscriptionDriver {
                 if (stderr.length < 4000) stderr += String(chunk)
             })
 
-            child.on("error", (err) => {
+            const clearTimers = () => {
                 clearTimeout(termTimer)
                 clearTimeout(killTimer)
                 this.cliChild = null
+            }
+
+            child.on("error", (err) => {
+                clearTimers()
                 reject(err)
             })
 
             child.on("exit", (code) => {
-                clearTimeout(termTimer)
-                clearTimeout(killTimer)
-                this.cliChild = null
+                clearTimers()
                 if (timedOut) return reject(new Error(`Whisper timed out after ${CLI_INFERENCE_TIMEOUT / 1000}s`))
                 if (this.stopped) return reject(new Error("Transcriber stopped"))
                 if (code === 0) return resolve()
@@ -380,9 +381,9 @@ export class Transcriber implements TranscriptionDriver {
                 return
             } catch (err) {
                 lastError = err as Error
-                const child = this.serverChild
+                const { serverChild } = this
                 this.serverChild = null
-                if (child) await killProcess(child)
+                if (serverChild) await killProcess(serverChild)
                 if (this.stopped) throw new Error("Transcriber stopped")
             }
         }
@@ -449,13 +450,13 @@ export class Transcriber implements TranscriptionDriver {
             const response = await fetch(`http://127.0.0.1:${port}/inference`, { method: "POST", body: form, signal: controller.signal })
 
             const bodyText = await response.text()
-            if (bodyText && typeof bodyText === "string") {
+            if (bodyText) {
                 try {
                     const json = JSON.parse(bodyText)
                     if (json && typeof json === "object" && (typeof json.error === "string" || typeof json.text === "string")) return true
                 } catch {}
 
-                if (/no \'file\' field|no 'file' field|invalid request/i.test(bodyText)) return true
+                if (/no 'file' field|invalid request/i.test(bodyText)) return true
             }
 
             return false
@@ -594,8 +595,7 @@ export function computeRms(samples: Int16Array): number {
 }
 
 export function isNoiseSegment(text: string): boolean {
-    const leftover = text.replace(/\[[^\]]*\]|\([^)]*\)|\*[^*]*\*/g, "").replace(/[♪♫\s.,!?\-–—_]+/g, "")
-    return leftover === ""
+    return text.replace(/\[[^\]]*\]|\([^)]*\)|\*[^*]*\*/g, "").replace(/[♪♫\s.,!?\-–—_]+/g, "") === ""
 }
 
 export function isMusicSegment(text: string): boolean {
@@ -629,8 +629,7 @@ export function segmentRepeatKey(text: string): string {
 
 export function shouldRerunWindow(detected: string | undefined, declared: string[] | undefined): boolean {
     const language = (detected || "").trim().toLowerCase()
-    if (!language || language === "auto") return false
-    if (!declared?.length) return false
+    if (!language || language === "auto" || !declared?.length) return false
     return !declared.some((code) => code.trim().toLowerCase() === language)
 }
 
@@ -700,8 +699,7 @@ function parseSegmentTokens(tokens: any, clamp: (ms: number) => number): { words
     let logprobCount = 0
 
     for (const token of tokens) {
-        if (!token || typeof token.text !== "string") continue
-        if (/^\s*\[_[A-Z_]+_\]\s*$/.test(token.text)) continue
+        if (!token || typeof token.text !== "string" || /^\s*\[_[A-Z_]+_\]\s*$/.test(token.text)) continue
 
         const from = Number(token.offsets?.from)
         const to = Number(token.offsets?.to)
@@ -739,10 +737,11 @@ function asNumber(value: any): number | undefined {
 }
 
 function decodePcm16(buffer: Uint8Array): Int16Array {
-    const byteLength = buffer.byteLength - (buffer.byteLength % 2)
-    const view = new DataView(buffer.buffer, buffer.byteOffset, byteLength)
-    const samples = new Int16Array(byteLength / 2)
-    for (let i = 0; i < samples.length; i++) samples[i] = view.getInt16(i * 2, true)
+    const floatSamples = int16ToFloat32(buffer)
+    const samples = new Int16Array(floatSamples.length)
+    for (let i = 0; i < floatSamples.length; i++) {
+        samples[i] = Math.max(-32768, Math.min(32767, floatSamples[i] * 32768))
+    }
     return samples
 }
 
@@ -802,8 +801,8 @@ export class WhisperTranscriber {
     transcriber: Transcriber | null = null
 
     constructor(_options: WhisperTranscriberOptions, onSegment: (segment: TranscriberSegment) => void, onError: (message: string) => void, onInterim?: (text: string) => void) {
-        const interpretation = !!_options.interpretationMode
-        const options = {
+        const interpretation = Boolean(_options.interpretationMode)
+        this.transcriber = new Transcriber({
             binary: _options.whisper,
             modelPath: _options.customModelPath || LocalModelManager.getModelPath("whisper", _options.model),
             language: interpretation ? "auto" : _options.language || "en",
@@ -813,8 +812,7 @@ export class WhisperTranscriber {
             onSegment,
             onError,
             onInterim
-        }
-        this.transcriber = new Transcriber(options)
+        })
     }
 
     setPrompt(prompt: string | undefined) {

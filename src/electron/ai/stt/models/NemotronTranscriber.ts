@@ -54,13 +54,11 @@ export class NemotronTranscriber {
 
     async stop() {
         this.stopped = true
-        if (this.stallTimer) {
-            clearInterval(this.stallTimer)
-            this.stallTimer = null
-        }
+        this.clearStallTimer()
 
-        const child = this.child
+        const { child } = this
         this.child = null
+
         if (child) {
             try {
                 this.post(child, { type: "stop" })
@@ -97,7 +95,6 @@ export class NemotronTranscriber {
     private async startWorker(): Promise<boolean> {
         let child: Electron.UtilityProcess
         try {
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
             const { utilityProcess } = require("electron") as typeof import("electron")
             if (!utilityProcess?.fork) return false
             child = utilityProcess.fork(path.join(__dirname, "./nemotronWorker.js"), [], { serviceName: "FreeShow AI transcription" })
@@ -180,8 +177,15 @@ export class NemotronTranscriber {
         }
     }
 
+    private clearStallTimer() {
+        if (this.stallTimer) {
+            clearInterval(this.stallTimer)
+            this.stallTimer = null
+        }
+    }
+
     private armStallWatchdog() {
-        if (this.stallTimer) clearInterval(this.stallTimer)
+        this.clearStallTimer()
         this.stallTimer = setInterval(() => void this.checkStall(), WORKER_STALL_CHECK_INTERVAL)
         this.stallTimer.unref?.()
     }
@@ -193,10 +197,10 @@ export class NemotronTranscriber {
         this.restarting = true
         console.error(`[nemotron] Decode process went silent for ${Math.round((Date.now() - this.lastWorkerMessageAt) / 1000)}s - restarting process`)
 
-        const child = this.child
+        const { child } = this
         this.child = null
         try {
-            child.kill()
+            child?.kill()
         } catch {}
         this.onInterim?.("")
 

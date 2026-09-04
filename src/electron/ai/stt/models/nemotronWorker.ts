@@ -11,7 +11,6 @@ const NEMOTRON_FILES = {
 } as const
 
 export type NemotronWorkerRequest = { type: "start"; language?: string; modelDir?: string } | { type: "audio"; data: Uint8Array } | { type: "stop" }
-
 export type NemotronWorkerResponse = { type: "ready" } | { type: "segment"; segment: TranscriberSegment } | { type: "interim"; text: string } | { type: "error"; message: string } | { type: "stopped" } | { type: "alive" }
 
 const SAMPLE_RATE = 16000
@@ -47,8 +46,7 @@ export class NemotronDriver implements TranscriptionDriver {
         if (this.stopped) throw new Error("Driver already stopped")
 
         const sherpa = this.options.sherpa || require("sherpa-onnx-node")
-        const modelDir = this.options.modelDir
-
+        const { modelDir } = this.options
         if (!modelDir) throw new Error("Nemotron model files are missing")
 
         const paths = {
@@ -60,12 +58,7 @@ export class NemotronDriver implements TranscriptionDriver {
 
         this.recognizer = new sherpa.OnlineRecognizer({
             featConfig: { sampleRate: SAMPLE_RATE, featureDim: 80 },
-            modelConfig: {
-                transducer: paths,
-                tokens: paths.tokens,
-                numThreads: 2,
-                provider: "cpu"
-            },
+            modelConfig: { transducer: paths, tokens: paths.tokens, numThreads: 2, provider: "cpu" },
             decodingMethod: "greedy_search",
             enableEndpoint: false
         })
@@ -92,10 +85,7 @@ export class NemotronDriver implements TranscriptionDriver {
         if (this.stopped) return
         this.stopped = true
 
-        if (this.inUtterance) {
-            this.finalizeUtterance()
-        }
-
+        if (this.inUtterance) this.finalizeUtterance()
         this.recognizer = null
         this.vad = null
         this.utterance = []
@@ -137,9 +127,7 @@ export class NemotronDriver implements TranscriptionDriver {
 
             while (!this.vad.isEmpty()) {
                 this.vad.pop()
-                if (this.inUtterance) {
-                    this.finalizeAtSample = this.totalSamples + CLOSE_DEFER_SAMPLES
-                }
+                if (this.inUtterance) this.finalizeAtSample = this.totalSamples + CLOSE_DEFER_SAMPLES
             }
 
             if (this.finalizeAtSample && this.totalSamples >= this.finalizeAtSample) {
@@ -177,10 +165,7 @@ export class NemotronDriver implements TranscriptionDriver {
         const candidate = words.slice(Math.max(0, this.emittedWords - 2)).join(" ")
         const trimmed = trimRepeatedLeadWords(this.emittedTailWords, candidate)
 
-        if (trimmed) {
-            this.emitText(trimmed, true)
-        }
-
+        if (trimmed) this.emitText(trimmed, true)
         this.options.onInterim?.("")
         this.emittedWords = 0
     }
@@ -211,10 +196,10 @@ export class NemotronDriver implements TranscriptionDriver {
     }
 }
 
-function int16ToFloat32(buffer: Uint8Array): Float32Array {
-    const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength)
+export function int16ToFloat32(buffer: Uint8Array): Float32Array {
     const count = Math.floor(buffer.byteLength / 2)
     const samples = new Float32Array(count)
+    const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength)
     for (let i = 0; i < count; i++) {
         samples[i] = view.getInt16(i * 2, true) / 32768
     }

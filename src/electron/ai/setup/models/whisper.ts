@@ -27,7 +27,7 @@ export class WhisperSetupManager {
         return process.platform === "win32" ? "whisper-cli.exe" : "whisper-cli"
     }
 
-    static engineDLM: DownloadManager | null = null
+    private static engineDLM: DownloadManager | null = null
     static getDownloadManager() {
         if (!this.engineDLM) this.engineDLM = new DownloadManager("whisper")
         return this.engineDLM
@@ -39,65 +39,55 @@ export class WhisperSetupManager {
         if (process.platform !== "win32" || process.arch !== "x64") {
             return dlm.reportError("Whisper download is only supported on 64-bit Windows.")
         }
-        if (dlm.isDownloading()) {
-            return dlm.reportError("A download is already in progress.")
-        }
+        if (dlm.isDownloading()) return dlm.reportError("A download is already in progress.")
 
         const zipPath = path.join(outputFolder, "whisper_download.zip")
 
         try {
             await dlm.downloadFile(WHISPER_BINARY_URL, zipPath)
 
-            const checksum = await dlm.computeSha256(zipPath)
-            if (checksum !== WHISPER_WIN_X64_SHA256) throw new Error(`Downloaded ${WHISPER_WIN_X64_ASSET} failed checksum verification`)
+            if ((await dlm.computeSha256(zipPath)) !== WHISPER_WIN_X64_SHA256) {
+                throw new Error(`Downloaded ${WHISPER_WIN_X64_ASSET} failed checksum verification`)
+            }
 
             await decompressZipStream(zipPath, false, { getOutputPath: (fileName) => path.join(outputFolder, fileName) })
         } catch (err) {
-            if (dlm.isAbortError(err)) return false // cancelled
+            if (dlm.isAbortError(err)) return false
             return dlm.reportError(`Failed to download Whisper binary: ${dlm.errorMessage(err)}`)
         } finally {
-            try {
-                fs.unlinkSync(zipPath)
-            } catch {}
+            dlm.safeUnlink(zipPath)
         }
 
         return dlm.reportComplete()
     }
 
     static cancelEngineDownload() {
-        const dlm = this.getDownloadManager()
-        if (dlm.isDownloading()) dlm.cancel()
+        this.getDownloadManager().cancel()
     }
 
     static async verifyEngine(binaryPath: string): Promise<boolean> {
-        if (!binaryPath) return false
-
+        if (!binaryPath || !fs.existsSync(binaryPath) || !fs.statSync(binaryPath).isFile()) return false
         try {
-            if (!fs.existsSync(binaryPath) || !fs.statSync(binaryPath).isFile()) return false
             await execFileAsync(binaryPath, ["--help"], { windowsHide: true, timeout: 10000 })
             return true
         } catch (err) {
-            console.warn(`[whisperManager] Incompatible or broken whisper binary at ${binaryPath}:`, (err as Error)?.message || err)
+            console.warn(`[whisperManager] Incompatible binary at ${binaryPath}:`, dlmErrorMessage(err))
             return false
         }
     }
 
-    private static modelDLMs: { [modelId: string]: DownloadManager } = {}
+    private static modelDLMs: Record<string, DownloadManager> = {}
     static getModelDownloadManager(modelId: string) {
-        if (!this.modelDLMs[modelId]) this.modelDLMs[modelId] = new DownloadManager(modelId, `Whisper model (${modelId})`)
-        return this.modelDLMs[modelId]
+        return (this.modelDLMs[modelId] ??= new DownloadManager(modelId, `Whisper model (${modelId})`))
     }
+
     static async downloadModel(modelId: string, outputPath: string) {
-        // modelIds arrive over IPC as plain strings - reject anything not in the known list before it reaches a URL or file path (path traversal / arbitrary download target)
         if (!WHISPER_MODELS.includes(modelId)) {
             return { ok: false as const, error: `Unknown Whisper model: ${String(modelId)}` }
         }
 
         const dlm = this.getModelDownloadManager(modelId)
-
-        if (dlm.isDownloading()) {
-            return dlm.reportError("A download is already in progress.")
-        }
+        if (dlm.isDownloading()) return dlm.reportError("A download is already in progress.")
 
         try {
             await dlm.downloadFile(`${WHISPER_MODEL_BASE_URL}/ggml-${modelId}.bin`, outputPath)
@@ -106,10 +96,8 @@ export class WhisperSetupManager {
             return dlm.reportError(`Failed to download Whisper model: ${dlm.errorMessage(err)}`)
         }
 
-        if (!(await WhisperSetupManager.verifyModel(outputPath))) {
-            try {
-                fs.unlinkSync(outputPath)
-            } catch {}
+        if (!(await this.verifyModel(outputPath))) {
+            dlm.safeUnlink(outputPath)
             return dlm.reportError("Downloaded model file is not a valid ggml model.")
         }
 
@@ -117,8 +105,7 @@ export class WhisperSetupManager {
     }
 
     static cancelModelDownload(modelId: string) {
-        const dlm = this.getModelDownloadManager(modelId)
-        if (dlm.isDownloading()) dlm.cancel()
+        this.getModelDownloadManager(modelId).cancel()
     }
 
     static async verifyModel(filePath: string): Promise<boolean> {
@@ -144,4 +131,8 @@ export class WhisperSetupManager {
             return false
         }
     }
+}
+
+function dlmErrorMessage(err: unknown): string {
+    return (err as Error)?.message || String(err)
 }

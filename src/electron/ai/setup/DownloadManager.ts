@@ -1,11 +1,11 @@
 import crypto from "crypto"
 import { net } from "electron"
 import fs from "fs"
-import { pipeline } from "stream/promises"
 import path from "path"
 import { Readable } from "stream"
-import { sendToMain } from "../../IPC/main"
+import { pipeline } from "stream/promises"
 import { ToMain } from "../../../types/IPC/ToMain"
+import { sendToMain } from "../../IPC/main"
 
 export interface AiDownloadOptions {
     totalBytes?: number
@@ -54,8 +54,6 @@ export class DownloadManager {
 
     async downloadFile(url: string, destPath: string, options: AiDownloadOptions = {}): Promise<void> {
         const partPath = `${destPath}.part`
-
-        // arm the abort state before the first await, so a cancel arriving right after start is not dropped
         const controller = new AbortController()
         this.activeDownload = { controller, partPath }
 
@@ -112,13 +110,9 @@ export class DownloadManager {
                 await fs.promises.rename(partPath, destPath)
                 return
             }
-        } catch (err) {
-            this.safeUnlink(partPath)
-            throw err
         } finally {
-            if (this.activeDownload?.controller === controller) {
-                this.activeDownload = null
-            }
+            this.safeUnlink(partPath)
+            if (this.activeDownload?.controller === controller) this.activeDownload = null
         }
     }
 
@@ -140,7 +134,7 @@ export class DownloadManager {
         sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: this.key, name: this.name, progress, total, status })
     }
 
-    private safeUnlink(filePath: string): void {
+    safeUnlink(filePath: string): void {
         try {
             fs.unlinkSync(filePath)
         } catch {}
