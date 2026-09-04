@@ -5,7 +5,6 @@ import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
 import { dispatchAiCommand } from "../ai/commands/commandDispatcher"
-import { handleQuoteMatchTranscript } from "../ai/scripture/quoteMatch/quoteMatchSession"
 import { handleScriptureTranscript } from "../ai/scripture/session"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
@@ -101,6 +100,7 @@ import { updateSettings, updateSyncedSettings, updateThemeValues } from "../util
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
 import { sendMain } from "./main"
+import { handleQuoteMatchTranscript } from "../ai/scripture/quoteMatch/quoteMatcherEngine"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {

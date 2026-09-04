@@ -5,7 +5,7 @@ export interface DetectedReference {
     chapter: number
     verseStart: number
     verseEnd: number
-    confidence: "high" | "medium" | "low"
+    confidence: "highest" | "high" | "medium"
     type: "explicit" | "quoted"
     source: "regex" | "llm" | "local" // "local" = the renderer's quote matcher (no LLM involved)
     quote?: string // the transcript text that triggered the detection

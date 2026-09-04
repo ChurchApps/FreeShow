@@ -7,7 +7,6 @@ import type { DetectedReference } from "../../../types/ai/AiScripture"
 import { getShortBibleName, loadJsonBible } from "../../components/drawer/bible/scripture"
 import { ai, aiSuggestions, drawerTabsData, outLocked, scriptures } from "../../stores"
 import { projectDetection, resolveBookNumber } from "./projection"
-import { noteExplicitDetection } from "./quoteMatch/quoteMatchSession"
 import { scriptureState } from "./scriptureState"
 
 const SUGGESTION_MAX_AGE = 3 * 60 * 1000
@@ -20,9 +19,6 @@ export async function handleDetection(ref: DetectedReference): Promise<void> {
 
     const settings = get(ai).scripture || {}
     if (!scriptureState.sessionActive) return
-
-    // a spoken reference primes the quote matcher: the recitation that follows resolves faster
-    if (ref.type === "explicit") noteExplicitDetection(ref)
 
     // LLM quotes are verified against the actual verse text; local quote matches arrive with
     // matchedBibleId already set because they WERE matched against it - never re-verify those

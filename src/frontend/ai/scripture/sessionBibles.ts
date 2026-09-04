@@ -10,10 +10,10 @@ import { get } from "svelte/store"
 import type { AiScriptureBook, AiScriptureTranslation } from "../../../types/ai/AiScripture"
 import { getShortBibleName, loadJsonBible } from "../../components/drawer/bible/scripture"
 import { scriptures, scripturesCache } from "../../stores"
-import { setQuoteMatchAnchor, updateQuoteMatchBibles } from "./quoteMatch/quoteMatchSession"
 import { scriptureState } from "./scriptureState"
 import { updateScriptureCoordinatorBooks } from "./session"
 import { preferredTranslationId } from "./translationPreference"
+import { setQuoteMatchAnchor, updateQuoteMatchBibles } from "./quoteMatch/quoteMatcherEngine"
 
 function expandBibleIds(ids: string[]): string[] {
     const expanded: string[] = []

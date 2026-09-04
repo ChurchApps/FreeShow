@@ -11,10 +11,10 @@ import { scriptureCommandSpec } from "./commands/matcher"
 import type { AiScriptureAnchor } from "./detection/coordinator"
 import { DetectionCoordinator } from "./detection/coordinator"
 import { cancelPendingAutoProjection, handleDetection, pruneSuggestions } from "./detections"
-import { startQuoteMatching, stopQuoteMatching } from "./quoteMatch/quoteMatchSession"
 import { scriptureState } from "./scriptureState"
 import { bookTableIds, buildBookTable, buildTranslationTable, cancelSessionBiblesRefresh, cueTranslationIds, scheduleSessionBiblesRefresh, sessionBibleIds } from "./sessionBibles"
 import { refreshSessionLlm, resolveSessionLlm } from "./sessionLlm"
+import { startQuoteMatching, stopQuoteMatching } from "./quoteMatch/quoteMatcherEngine"
 
 let suggestionPruneTimer: NodeJS.Timeout | null = null
 
