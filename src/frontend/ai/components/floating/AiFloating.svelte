@@ -53,6 +53,51 @@
     // (whisper sets no utteranceEnd flags, so it falls back to grouping on pause gaps)
     $: transcriptLines = groupTranscriptLines($aiTranscript)
 
+    // each newly registered word bumps a border confirmation pulse on the floating bubble
+    let wordConfirmTick = 0
+    let wordConfirmDurationMs = 260
+    let previousWordCount = -1
+    let burstWords = 0
+    let burstTimer: NodeJS.Timeout | null = null
+    $: updateWordConfirmation(transcriptLines)
+
+    function updateWordConfirmation(lines: { text: string }[]) {
+        const nextCount = countRegisteredWords(lines)
+
+        // first run sets baseline without emitting confirmation
+        if (previousWordCount < 0) {
+            previousWordCount = nextCount
+            return
+        }
+
+        const newWords = nextCount - previousWordCount
+        previousWordCount = nextCount
+        if (newWords <= 0) return
+
+        burstWords += newWords
+        if (!burstTimer) {
+            // collect nearby words into one visual confirmation instead of rapid pulse spam
+            burstTimer = setTimeout(flushWordPulseBurst, 120)
+        }
+    }
+
+    function flushWordPulseBurst() {
+        const wordsInBurst = burstWords
+        burstWords = 0
+        burstTimer = null
+        if (!wordsInBurst) return
+
+        wordConfirmDurationMs = Math.min(800, 260 + Math.max(0, wordsInBurst - 1) * 120)
+        wordConfirmTick += 1
+    }
+
+    function countRegisteredWords(lines: { text: string }[]) {
+        return lines.reduce((total, line) => {
+            const words = line.text.match(/\S+/g)
+            return total + (words?.length || 0)
+        }, 0)
+    }
+
     // STATE
 
     $: isEnabled = $ai.enabled
@@ -114,6 +159,7 @@
     $: audioLevel = $audioLevelStore
 
     onDestroy(() => {
+        if (burstTimer) clearTimeout(burstTimer)
         if (sessionMode === "stt") SpeechToText.disable()
         sessionMode = "off"
     })
@@ -198,7 +244,7 @@
 {/if}
 
 <div class="speech-widget {isOpen ? 'is-open' : 'is-closed'}">
-    <AiRing {state} {audioLevel} borderRadius={isOpen ? "20px" : "50%"} opacity={isOpen ? 0.8 : 0.4} fill>
+    <AiRing {state} {audioLevel} borderRadius={isOpen ? "20px" : "50%"} opacity={isOpen ? 0.8 : 0.4} fill {wordConfirmTick} {wordConfirmDurationMs}>
         {#if !isOpen}
             <button class="floating-trigger" on:click={toggleExpand} aria-label="Expand Speech Recognition Modal">
                 {#if state === "inactive" || state === "error"}
@@ -208,7 +254,7 @@
                         <line x1="12" y1="19" x2="12" y2="22" />
                     </svg>
                 {:else if state === "listening"}
-                    <div class="smoky-audio-visualizer" style="--audio-level: {Math.min(audioLevel * 8, 1)}">
+                    <div class="smoky-audio-visualizer" style="--audio-level: {Math.min(audioLevel * 4, 1)}">
                         <div class="smoke-layer layer-4"></div>
                         <div class="smoke-layer layer-3"></div>
                         <div class="smoke-layer layer-2"></div>
@@ -248,8 +294,7 @@
                             <p><T id="ai.processing" /></p>
                         </div>
                     {:else if transcriptLines.length || $aiInterim}
-                        <!-- "context #ai_transcript" wires the right-click menu (copy selection / copy transcript) -->
-                        <div class="transcript-box context #ai_transcript" bind:this={transcriptElem} on:scroll={onTranscriptScroll}>
+                        <div class="transcript-box" bind:this={transcriptElem} on:scroll={onTranscriptScroll}>
                             {#each transcriptLines as line}
                                 <p class:music={line.music}>
                                     {line.text}{#if line.open && $aiInterim}{" "}<span class="interim">{$aiInterim}</span>{/if}
@@ -304,25 +349,17 @@
 </div>
 
 <style>
-    :root {
-        --bg-dark: #090d16;
-        --card-bg: #111827;
-    }
-
-    /* the AI surface floats above the app UI (<= 1001) but stays UNDER the modal tier -
-       popup backdrops sit at 4999, popups at 5000 and the context menu at 5001, so
-       right-click menus & dialogs always cover the bubble */
     .backdrop {
         position: fixed;
         inset: 0;
         background: rgba(0, 0, 0, 0.65);
         backdrop-filter: blur(8px);
-        z-index: 4997;
+        z-index: 5000;
     }
 
     .speech-widget {
         position: fixed;
-        z-index: 4998;
+        z-index: 5000;
         font-family:
             system-ui,
             -apple-system,
@@ -379,7 +416,7 @@
         stroke: #ff2626;
     }
 
-    /* Dynamic Ambient Smoky Visualizer */
+    /* Living cloud / crystal audio visualizer */
     .smoky-audio-visualizer {
         position: relative;
         width: 100%;
@@ -389,97 +426,148 @@
         justify-content: center;
         border-radius: 50%;
         overflow: hidden;
+        /* isolation: isolate;
+        background: radial-gradient(circle at 42% 38%, rgba(255, 255, 255, 0.18), transparent 24%), radial-gradient(circle at 58% 62%, rgba(88, 210, 255, 0.12), transparent 38%), radial-gradient(circle, rgba(10, 34, 48, 0.78) 0%, rgba(5, 12, 22, 0.94) 74%); */
+    }
+
+    /* Slow inner atmosphere: keeps the orb alive even in quiet input. */
+    .smoky-audio-visualizer::before {
+        content: "";
+        position: absolute;
+        inset: -22%;
+        border-radius: 44% 56% 61% 39% / 46% 42% 58% 54%;
+        background: radial-gradient(circle at 30% 35%, rgba(121, 255, 245, 0.24), transparent 34%), radial-gradient(circle at 70% 58%, rgba(132, 112, 255, 0.2), transparent 37%), radial-gradient(circle at 48% 72%, rgba(255, 118, 199, 0.12), transparent 32%);
+        filter: blur(10px) saturate(1.15);
+        opacity: calc(0.52 + var(--audio-level) * 0.22);
+        transform: scale(calc(0.92 + var(--audio-level) * 0.2));
+        animation: cloudDrift 8s ease-in-out infinite alternate;
+    }
+
+    /* Small glass glint: enough crystal to feel dimensional without becoming a gem icon. */
+    .smoky-audio-visualizer::after {
+        content: "";
+        position: absolute;
+        width: 46%;
+        height: 28%;
+        top: 17%;
+        left: 20%;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.36), rgba(255, 255, 255, 0));
+        filter: blur(2px);
+        opacity: calc(0.18 + var(--audio-level) * 0.18);
+        transform: rotate(-24deg);
+        mix-blend-mode: screen;
     }
 
     .smoke-layer {
         position: absolute;
-        /* Soft-edge gradient that bleeds to transparent to eliminate hard circles */
-        background: radial-gradient(circle at center, rgba(0, 255, 255, 0.9) 0%, rgba(255, 0, 127, 0.7) 40%, rgba(121, 40, 202, 0.4) 75%, rgba(0, 0, 0, 0) 100%);
-        mix-blend-mode: screen;
         pointer-events: none;
-        border-radius: 50%;
-
-        /* Fast spring transition for instant reaction to audio peaks */
+        border-radius: 42% 58% 55% 45% / 48% 43% 57% 52%;
+        background: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.38), transparent 25%), linear-gradient(135deg, rgba(80, 246, 235, 0.48), rgba(119, 105, 255, 0.34) 54%, rgba(246, 118, 200, 0.22));
+        box-shadow:
+            inset 0 0 8px rgba(255, 255, 255, 0.14),
+            0 0 14px rgba(58, 225, 224, 0.15);
+        mix-blend-mode: screen;
+        will-change: transform, rotate, filter, opacity;
         transition:
-            transform 0.05s cubic-bezier(0, 0.95, 0.1, 1),
-            opacity 0.05s ease-out,
-            filter 0.05s ease-out;
+            transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+            opacity 120ms ease-out,
+            filter 120ms ease-out;
     }
 
-    /* Layer 1 (Inner soft mist cloud) */
+    /* The layers react with different amplitudes so the center feels fluid, not synchronized. */
     .smoke-layer.layer-1 {
-        width: 14px;
-        height: 14px;
+        width: 17px;
+        height: 17px;
         z-index: 4;
-        /* Elevated idle opacity from 0.3 -> 0.6 */
-        opacity: calc(0.6 + var(--audio-level) * 0.4);
-        filter: blur(5px);
-        animation: idleFloat1 5s ease-in-out infinite alternate;
-        transform: scale(calc(1.8 + var(--audio-level) * 5)) rotate(calc(var(--audio-level) * 200deg));
+        opacity: calc(0.62 + var(--audio-level) * 0.28);
+        border-radius: 38% 62% 48% 52% / 56% 42% 58% 44%;
+        clip-path: polygon(50% 0%, 88% 22%, 100% 62%, 72% 100%, 26% 92%, 0% 54%, 16% 18%);
+        filter: blur(0.2px) drop-shadow(0 0 5px rgba(212, 255, 252, 0.34));
+        transform: translate(-1px, -1px) scale(calc(1 + var(--audio-level) * 1.05));
+        animation: crystalTurn 7s ease-in-out infinite;
     }
 
-    /* Layer 2 (Mid blooming cloud) */
     .smoke-layer.layer-2 {
-        width: 18px;
-        height: 18px;
+        width: 29px;
+        height: 25px;
         z-index: 3;
-        /* Elevated idle opacity from 0.2 -> 0.45 */
-        opacity: calc(0.45 + var(--audio-level) * 0.5);
-        filter: blur(8px);
-        animation: idleFloat2 7s ease-in-out infinite alternate;
-        transform: scale(calc(2.2 + var(--audio-level) * 7)) rotate(calc(var(--audio-level) * -280deg));
+        opacity: calc(0.42 + var(--audio-level) * 0.28);
+        filter: blur(1.4px);
+        transform: translate(4px, 2px) scale(calc(0.92 + var(--audio-level) * 0.9));
+        animation: cloudTurnReverse 9s ease-in-out infinite alternate;
     }
 
-    /* Layer 3 (Outer plume) */
     .smoke-layer.layer-3 {
-        width: 22px;
-        height: 22px;
+        width: 40px;
+        height: 34px;
         z-index: 2;
-        /* Elevated idle opacity from 0.1 -> 0.3 */
-        opacity: calc(0.3 + var(--audio-level) * 0.6);
-        filter: blur(12px);
-        animation: idleFloat1 10s ease-in-out infinite reverse;
-        transform: scale(calc(2.6 + var(--audio-level) * 9)) rotate(calc(var(--audio-level) * 360deg));
+        opacity: calc(0.3 + var(--audio-level) * 0.26);
+        border-radius: 62% 38% 57% 43% / 42% 58% 40% 60%;
+        filter: blur(3.2px);
+        transform: translate(-4px, 4px) scale(calc(0.9 + var(--audio-level) * 0.72));
+        animation: cloudTurn 11s ease-in-out infinite alternate;
     }
 
-    /* Layer 4 (Deep dissipation haze) */
     .smoke-layer.layer-4 {
-        width: 26px;
-        height: 26px;
+        width: 52px;
+        height: 45px;
         z-index: 1;
-        /* Elevated idle opacity from 0.05 -> 0.2 */
-        opacity: calc(0.2 + var(--audio-level) * 0.7);
-        filter: blur(15px);
-        animation: idleFloat2 13s ease-in-out infinite reverse;
-        transform: scale(calc(3 + var(--audio-level) * 11)) rotate(calc(var(--audio-level) * -440deg));
+        opacity: calc(0.2 + var(--audio-level) * 0.22);
+        border-radius: 48% 52% 36% 64% / 62% 38% 58% 42%;
+        filter: blur(6px);
+        transform: translate(3px, -2px) scale(calc(0.88 + var(--audio-level) * 0.58));
+        animation: cloudTurnReverse 14s ease-in-out infinite alternate;
     }
 
-    /* Gentle ambient idle motion when silent */
-    @keyframes idleFloat1 {
-        0% {
-            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
-            transform: rotate(0deg) scale(0.95);
+    /* Rotate independently from transform so audio scaling remains active. */
+    @keyframes crystalTurn {
+        0%,
+        100% {
+            rotate: -8deg;
         }
         50% {
-            border-radius: 60% 30% 50% 70% / 50% 60% 30% 60%;
-        }
-        100% {
-            border-radius: 30% 60% 40% 70% / 60% 40% 70% 30%;
-            transform: rotate(180deg) scale(1.05);
+            rotate: 22deg;
         }
     }
 
-    @keyframes idleFloat2 {
+    @keyframes cloudTurn {
         0% {
-            border-radius: 60% 40% 30% 70% / 50% 30% 70% 50%;
-            transform: rotate(0deg) scale(1.05);
-        }
-        50% {
-            border-radius: 30% 60% 70% 40% / 60% 40% 50% 60%;
+            rotate: -12deg;
         }
         100% {
-            border-radius: 50% 30% 60% 40% / 40% 70% 30% 60%;
-            transform: rotate(-180deg) scale(0.95);
+            rotate: 18deg;
+        }
+    }
+
+    @keyframes cloudTurnReverse {
+        0% {
+            rotate: 16deg;
+        }
+        100% {
+            rotate: -14deg;
+        }
+    }
+
+    @keyframes cloudDrift {
+        0% {
+            rotate: -8deg;
+            translate: -2px 1px;
+        }
+        50% {
+            rotate: 8deg;
+            translate: 2px -1px;
+        }
+        100% {
+            rotate: 15deg;
+            translate: -1px 2px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .smoky-audio-visualizer::before,
+        .smoke-layer {
+            animation: none;
         }
     }
 

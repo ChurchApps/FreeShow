@@ -6,12 +6,19 @@
     export let borderWidth = "3px"
     export let opacity = 1
     export let fill = false // stretch to the parent's size (the floating bubble) instead of the content's natural height
+    export let wordConfirmTick = 0
+    export let wordConfirmDurationMs = 240
 </script>
 
 <div class="card-border-wrapper state-{state}" class:fill style="{$$props.style};--audio-level: {audioLevel};--ring-radius: {borderRadius};--ring-width: {borderWidth};--opacity: {opacity};">
     <div class="inner-content">
         <slot />
     </div>
+    {#if wordConfirmTick > 0}
+        {#key wordConfirmTick}
+            <span class="word-confirmation" style="--word-confirm-duration: {wordConfirmDurationMs}ms;" aria-hidden="true"></span>
+        {/key}
+    {/if}
 </div>
 
 <style>
@@ -55,6 +62,18 @@
         position: relative;
     }
 
+    .word-confirmation {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        border: 2px solid rgba(143, 185, 200, 0.7);
+        box-shadow:
+            0 0 0 1px rgba(125, 167, 178, 0.45),
+            0 0 10px rgba(143, 185, 200, 0.45);
+        pointer-events: none;
+        animation: wordConfirmPulse var(--word-confirm-duration, 240ms) ease-out forwards;
+    }
+
     @keyframes rotateGradient {
         0% {
             background-position: 50% 50%;
@@ -70,6 +89,21 @@
         }
         100% {
             background-position: 50% 50%;
+        }
+    }
+
+    @keyframes wordConfirmPulse {
+        0% {
+            opacity: 0;
+            transform: scale(0.97);
+        }
+        30% {
+            opacity: 1;
+            transform: scale(1.01);
+        }
+        100% {
+            opacity: 0;
+            transform: scale(1.04);
         }
     }
 </style>
