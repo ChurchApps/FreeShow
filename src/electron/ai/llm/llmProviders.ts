@@ -10,17 +10,10 @@ export const llmProviders = {
     gemini: geminiProvider,
     ollama: ollamaProvider
 }
-type AIProviderId = keyof typeof llmProviders
+export type AIProviderId = keyof typeof llmProviders
 
 export function getLLMProvider(id: AIProviderId) {
     return llmProviders[id]
-}
-
-export async function checkLLMConnection(data: { providerId: AIProviderId; model: string }): Promise<{ ok: boolean; error?: string }> {
-    const key = getAiKey(data.providerId)
-    if (!key && data.providerId !== "ollama") return { ok: false, error: "Invalid API key" }
-
-    return await getLLMProvider(data.providerId).testConnection(key, data.model)
 }
 
 export async function completeLLM(data: { providerId: AIProviderId; model: string; options: { systemPrompt?: string; prompt: string; jsonSchema?: any; temperature?: number; maxTokens?: number } }): Promise<{ text: string; error?: string; code?: string; retryAfter?: number }> {

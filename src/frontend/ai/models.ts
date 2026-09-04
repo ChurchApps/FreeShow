@@ -1,5 +1,3 @@
-export type AIProviderId = "anthropic" | "openai" | "gemini" | "ollama"
-
 // stable LLM error codes (electron ai/llm) -> locale keys (unknown codes pass through as-is)
 const AI_ERROR_LANG_KEYS: { [code: string]: string } = {
     invalid_key: "Invalid API key",
@@ -19,7 +17,7 @@ export function aiErrorText(code: string): string {
     return AI_ERROR_LANG_KEYS[code] || code
 }
 
-export const AI_PROVIDER_MODELS: { [id in AIProviderId]: { models: { id: string; name: string; recommended?: boolean }[]; defaultModel: string } } = {
+export const AI_PROVIDER_MODELS = {
     anthropic: {
         models: [
             { id: "claude-haiku-4-5", name: "Claude Haiku 4.5 (fast)", recommended: true },
@@ -64,3 +62,4 @@ export const AI_PROVIDER_MODELS: { [id in AIProviderId]: { models: { id: string;
         defaultModel: "gemma3:4b"
     }
 }
+export type AIProviderId = keyof typeof AI_PROVIDER_MODELS

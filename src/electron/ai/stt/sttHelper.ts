@@ -24,7 +24,7 @@ export interface DriverCallbacks {
     onInterim?: (text: string) => void
 }
 
-// AI STT - seam stitching, shared by both transcription drivers.
+// AI STT - seam stitching
 // Words at a decode seam (whisper's window overlap, nemotron's partial re-decodes) can be
 // transcribed twice: timings shift between decodes, and word counts drift when a re-decode
 // merges or splits a word. Each driver re-covers a little audio/text across the seam so no
