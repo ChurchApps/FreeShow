@@ -1566,10 +1566,6 @@ function toDetectedReference(emission: QuoteMatchEmission): DetectedReference | 
     const id = "aiq-" + Date.now().toString(36) + "-" + (idCounter++).toString(36)
     if (emission.confidence < 50) return null
 
-    let confidenceVal: "medium" | "high" | "highest" = "medium"
-    if (emission.confidence > 95) confidenceVal = "highest"
-    else if (emission.confidence > 75) confidenceVal = "high"
-
     return {
         id: id,
         book: bookNameFor(emission.translationId, emission.book),
@@ -1577,7 +1573,7 @@ function toDetectedReference(emission: QuoteMatchEmission): DetectedReference | 
         chapter: emission.chapter,
         verseStart: emission.verseStart,
         verseEnd: emission.verseEnd,
-        confidence: confidenceVal,
+        confidence: emission.confidence,
         type: "quoted",
         source: "local",
         quote: emission.quoteText,

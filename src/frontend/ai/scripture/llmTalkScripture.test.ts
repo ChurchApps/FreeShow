@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { type AIDetectionRequest, buildUserContent, parseDetectionResponse, type RawDetection } from "./llmTalkScripture"
+import { type AIDetectionRequest, buildUserContent, parseDetectionResponse } from "./llmTalkScripture"
 
 const request: AIDetectionRequest = { transcript: "turn with me to John chapter 3 verse 16", alreadyDetected: ["Romans 8:28"] }
-const detection: RawDetection = { book: "John", bookNumber: 43, chapter: 3, verseStart: 16, verseEnd: 16, confidence: "high", type: "explicit" }
 
 describe("Scripture LLM Request & Response Parsing", () => {
     it("builds user content with already detected and transcript", () => {
@@ -20,7 +19,7 @@ describe("Scripture LLM Request & Response Parsing", () => {
                     chapter: 3,
                     verseStart: 16,
                     verseEnd: 16,
-                    confidence: "high",
+                    confidence: 90,
                     type: "explicit",
                     quote: "For God so loved the world"
                 }

@@ -142,7 +142,7 @@ interface ReferenceMatch {
     chapter: number
     verseStart: number
     verseEnd: number
-    confidence: "high" | "medium" | "low"
+    confidence: number // 1-100
     quote: string
 }
 
@@ -226,16 +226,15 @@ export function matchReferences(text: string, index: BookIndex): ReferenceMatch[
 
         const quote = match[0].slice(match[1].length)
 
-        // CUE RULE: "high" only with an explicit cue in the spoken text - the word "chapter"/"verse", an ordinal/numbered
-        // book prefix ("first john"/"1 john") or a digit:digit shape ("3:16"). normalizeSpokenNumbers() never introduces any
-        // of these words (its digit ordinals land only where the shape already carried the cue), so checking the
-        // normalized snippet reflects the original text.
+        // CUE RULE: 90+ for explicit cues (word "chapter"/"verse", ordinal/numbered book prefix, digit:digit shape).
+        // normalizeSpokenNumbers() never introduces these words (its digit ordinals land only where the shape already
+        // carried the cue), so checking the normalized snippet reflects the original text.
         const hasCue = options.alwaysCued || /\bchapter\b|\bverses?\b/.test(quote) || /\d:\d/.test(quote) || /^[1-3]\b/.test(bookToken)
 
         // book + chapter + verse ("matthew 12 4"), the same pair run together ("deuteronomy 818") or a cued
-        // chapter ("turn to matthew chapter 5") is deliberate spoken intent - "high" so auto mode projects it.
-        // only a bare "bookname 15" ("he acts 15 years old") stays "medium" and waits for confirmation
-        const confidence: "high" | "medium" | "low" = hasVerse || unglued || hasCue ? "high" : "medium"
+        // chapter ("turn to matthew chapter 5") is deliberate spoken intent - 90+ confidence for auto-projection.
+        // only a bare "bookname 15" ("he acts 15 years old") stays 50-65 and waits for confirmation
+        const confidence = hasVerse || unglued || hasCue ? 90 : 55
 
         results.push({ bookNumber: book.number, book: book.name, chapter, verseStart, verseEnd, confidence, quote })
         if (options.claimSpan) claimedSpans.push({ from: match.index, to: match.index + match[0].length })
@@ -279,6 +278,6 @@ export function matchReferences(text: string, index: BookIndex): ReferenceMatch[
     return results
 }
 
-export function detectExplicitReferences(text: string, books: AiScriptureBook[]): { bookNumber: number; book: string; chapter: number; verseStart: number; verseEnd: number; confidence: "high" | "medium" | "low" }[] {
+export function detectExplicitReferences(text: string, books: AiScriptureBook[]): { bookNumber: number; book: string; chapter: number; verseStart: number; verseEnd: number; confidence: number }[] {
     return matchReferences(text, buildBookIndex(books)).map((match) => ({ bookNumber: match.bookNumber, book: match.book, chapter: match.chapter, verseStart: match.verseStart, verseEnd: match.verseEnd, confidence: match.confidence }))
 }

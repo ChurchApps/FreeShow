@@ -5,7 +5,7 @@ export interface DetectedReference {
     chapter: number
     verseStart: number
     verseEnd: number
-    confidence: "highest" | "high" | "medium"
+    confidence: number // 1-100: confidence score for the detection
     type: "explicit" | "quoted"
     source: "regex" | "llm" | "local" // "local" = the renderer's quote matcher (no LLM involved)
     quote?: string // the transcript text that triggered the detection
@@ -31,20 +31,3 @@ export interface AiScriptureTranslation {
     id: string
     names: string[]
 }
-
-export type AiScriptureCommand =
-    | { type: "verse_next" }
-    | { type: "verse_previous" }
-    | { type: "chapter_next" }
-    | { type: "chapter_previous" }
-    | { type: "verse_jump"; verse: number; verseEnd?: number } // verseEnd: spoken range ("verses 1 to 5")
-    | { type: "verse_add"; verse?: number } // extend the live selection ("add the next verse" / "add verse 6"); no verse = the next one
-    | { type: "chapter_jump"; chapter: number; verse?: number; verseEnd?: number }
-    | { type: "translation"; bibleId: string }
-    | { type: "translation_cycle" }
-    | { type: "translation_main" } // "give me the main translation" - back to the preferred one
-    | { type: "restore" } // put back what was on the output before the AI projected
-    | { type: "back"; book?: number } // previously shown passage; book = "go back to ephesians"
-    | { type: "accept" } // "yes, show it" - project the newest suggestion (confirm mode by voice)
-
-export type AiScriptureCommandEvent = AiScriptureCommand & { phrase: string }

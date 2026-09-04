@@ -47,7 +47,7 @@ interface DetectionCandidate {
     chapter: number
     verseStart: number
     verseEnd: number
-    confidence: "high" | "medium" | "low"
+    confidence: number // 1-100
     type: "explicit" | "quoted"
     quote?: string
 }
@@ -186,7 +186,7 @@ export class DetectionCoordinator {
             if (verseEnd < verseStart) verseEnd = verseStart
 
             // the anchor is the chapter live on screen, so a bare verse mention is context-certain
-            this.tryEmit({ book: anchor.book, bookNumber: anchor.bookNumber, chapter: anchor.chapter, verseStart, verseEnd, confidence: "high", type: "explicit", quote: match[2] }, "regex")
+            this.tryEmit({ book: anchor.book, bookNumber: anchor.bookNumber, chapter: anchor.chapter, verseStart, verseEnd, confidence: 90, type: "explicit", quote: match[2] }, "regex")
         }
     }
 
@@ -260,11 +260,10 @@ export class DetectionCoordinator {
             const bookNumber = nameMatch ? nameMatch.number : Math.floor(Number(raw?.bookNumber))
             if (!nameMatch && (!Number.isFinite(bookNumber) || bookNumber < 1 || bookNumber > 66)) return
 
-            const confidence: "high" | "medium" | "low" = raw?.confidence === "high" || raw?.confidence === "low" ? raw.confidence : "medium"
             const type: "explicit" | "quoted" = raw?.type === "quoted" ? "quoted" : "explicit"
             const quote = typeof raw?.quote === "string" && raw.quote ? raw.quote : undefined
 
-            this.tryEmit({ book: nameMatch ? nameMatch.name : rawName, bookNumber, chapter, verseStart, verseEnd, confidence, type, quote }, "llm")
+            this.tryEmit({ book: nameMatch ? nameMatch.name : rawName, bookNumber, chapter, verseStart, verseEnd, confidence: (raw?.confidence as number) ?? 50, type, quote }, "llm")
         })
     }
 

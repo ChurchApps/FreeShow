@@ -70,7 +70,7 @@ async function verifyQuote(ref: DetectedReference) {
     }
 
     if (bestScore >= QUOTE_MATCH_SCORE) ref.matchedBibleId = bestId
-    else if (bestScore < QUOTE_DEMOTE_SCORE && ref.confidence === "high") ref.confidence = "medium" // suggestion only
+    else if (bestScore < QUOTE_DEMOTE_SCORE && ref.confidence >= 75) ref.confidence = Math.max(50, ref.confidence - 25) // suggestion only: downgrade from high to medium range
 }
 
 function normalizeTokens(text: string): string[] {
@@ -94,14 +94,13 @@ function tokenOverlapSimilarity(verseText: string, quote: string): number {
     return matched / quoteTokens.length
 }
 
-// detection confidence is categorical - map the bands onto the percent scale the
-// auto-show threshold uses (the settings slider shows which band a percent lands in)
-function confidencePercent(confidence: string | undefined): number {
-    // if (confidence === "ask") return 100
-
+// map confidence threshold (string setting or numeric detection) to numeric scale for comparison
+function confidencePercent(confidence: string | number | undefined): number {
+    if (confidence === "ask" || confidence === undefined) return 0 // no threshold
     if (confidence === "highest") return 95
     if (confidence === "high") return 75
     if (confidence === "medium") return 50
+    if (typeof confidence === "number") return confidence // detection confidence is already 1-100
     return 0
 }
 
@@ -212,9 +211,9 @@ function queueAutoProjection(ref: DetectedReference) {
     const refCooldownMs = 30 * 1000
     if (scriptureState.lastAutoProjectedRef && Date.now() - scriptureState.lastAutoProjectionAt < refCooldownMs && isSameReference(scriptureState.lastAutoProjectedRef, ref)) return
 
-    // HIGH means the speaker explicitly asked or the match is decisive - it acts NOW. Only
-    // medium waits out the minimum display time of what is currently showing
-    if (ref.confidence === "high") {
+    // HIGH (75+) means the speaker explicitly asked or the match is decisive - it acts NOW. Only
+    // medium (50-74) waits out the minimum display time of what is currently showing
+    if (ref.confidence >= 75) {
         cancelPendingAutoProjection()
         projectDetection(ref)
         return

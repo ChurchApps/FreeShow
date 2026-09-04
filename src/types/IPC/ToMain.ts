@@ -1,6 +1,5 @@
 import type { ICommonTagsResult } from "music-metadata"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
-import type { AiCommandEnvelope } from "../ai/AiCommands"
 import type { RtmpStatus } from "../Output"
 import type { TrimmedShows } from "../Show"
 
@@ -25,7 +24,6 @@ export enum ToMain {
     AI_STATUS = "AI_STATUS",
     AI_TRANSCRIPT = "AI_TRANSCRIPT",
     AI_TRANSCRIPT_INTERIM = "AI_TRANSCRIPT_INTERIM",
-    AI_COMMAND = "AI_COMMAND",
     // Unified provider callbacks
     PROVIDER_CONNECT = "PROVIDER_CONNECT",
     PROVIDER_PROJECTS = "PROVIDER_PROJECTS",
@@ -80,7 +78,6 @@ export interface ToMainSendPayloads {
     [ToMain.AI_STATUS]: { state: "listening" | "stopped" | "error"; message?: string }
     [ToMain.AI_TRANSCRIPT]: { text: string; startMs: number; endMs: number; language?: string; music?: boolean; utteranceEnd?: boolean }
     [ToMain.AI_TRANSCRIPT_INTERIM]: { text: string }
-    [ToMain.AI_COMMAND]: AiCommandEnvelope
 }
 
 export interface ToMainReturnPayloads {

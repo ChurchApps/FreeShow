@@ -8,7 +8,7 @@ export interface RawDetection {
     chapter: number
     verseStart: number
     verseEnd: number
-    confidence: "high" | "medium" | "low"
+    confidence: number // 1-100: confidence score for the detection
     type: "explicit" | "quoted"
     quote?: string
 }
@@ -22,7 +22,7 @@ export interface AIDetectionRequest {
 export const DETECTION_PROMPT = `You detect Bible references in a live, imperfect speech transcript from a sermon. The transcript comes from automatic speech recognition and contains errors, missing punctuation, and mid-sentence cuts.
 
 Report a reference only in these two cases:
-1. "explicit" - the speaker names a passage (e.g. "John chapter 3 verse 16", "verses 28 through 30 of Romans 8", "back to our text in First Corinthians 13"). Spoken forms vary: "first/second/third" for numbered books, chapter-only mentions, verse ranges, references split across sentences, and bare number pairs - "Matthew 12 4", "Matthew 12, 4" or "Matthew 12-4" all mean Matthew 12:4. If only a chapter is named with no verse, report verseStart 1 and verseEnd 1 - with confidence "high" when the speaker clearly directs listeners to it ("turn to", "open your bibles to"), otherwise "low".
+1. "explicit" - the speaker names a passage (e.g. "John chapter 3 verse 16", "verses 28 through 30 of Romans 8", "back to our text in First Corinthians 13"). Spoken forms vary: "first/second/third" for numbered books, chapter-only mentions, verse ranges, references split across sentences, and bare number pairs - "Matthew 12 4", "Matthew 12, 4" or "Matthew 12-4" all mean Matthew 12:4. If only a chapter is named with no verse, report verseStart 1 and verseEnd 1 - with confidence 90+ when the speaker clearly directs listeners to it ("turn to", "open your bibles to"), otherwise 40-50.
 2. "quoted" - the speaker recites or closely paraphrases the wording of a specific, identifiable verse (e.g. "for God so loved the world, that he gave..."). Only report a quote when the wording clearly matches one specific verse or contiguous verse range. Do not report mere allusions, themes, or story retellings. For quoted references, include the spoken words in the "quote" field.
 
 Rules:
@@ -31,7 +31,7 @@ Rules:
 - verseEnd equals verseStart for a single verse; for a range, verseEnd is the last verse.
 - Do not report a reference that appears in the already-detected list unless the speaker has moved to a different verse or range.
 - The end of the transcript may cut off mid-reference. If a reference is incomplete (book named but no chapter or verse yet), do not report it - it will complete in a later window.
-- confidence: "high" = unambiguous explicit reference or verbatim quote; "medium" = clear but with minor ASR garbling or slight paraphrase; "low" = plausible but uncertain.
+- confidence: a percentage number from 1 to 100. 85-100 = unambiguous explicit reference or verbatim quote; 50-84 = clear but with minor ASR garbling or slight paraphrase; 1-49 = plausible but uncertain.
 - If there are no references, return an empty references array.`
 
 export const DETECTION_SCHEMA = {
@@ -47,7 +47,7 @@ export const DETECTION_SCHEMA = {
                     chapter: { type: "integer" },
                     verseStart: { type: "integer" },
                     verseEnd: { type: "integer" },
-                    confidence: { type: "string", enum: ["high", "medium", "low"] },
+                    confidence: { type: "integer", minimum: 1, maximum: 100 },
                     type: { type: "string", enum: ["explicit", "quoted"] },
                     quote: { type: "string" }
                 },
@@ -106,7 +106,7 @@ function isValidDetection(entry: any): boolean {
     if (!isPositiveInteger(entry.chapter)) return false
     if (!isPositiveInteger(entry.verseStart)) return false
     if (!isPositiveInteger(entry.verseEnd)) return false
-    if (entry.confidence !== "high" && entry.confidence !== "medium" && entry.confidence !== "low") return false
+    if (entry.confidence < 1 || entry.confidence > 100 || !Number.isInteger(entry.confidence)) return false
     if (entry.type !== "explicit" && entry.type !== "quoted") return false
     return true
 }
