@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
 import { requestMain } from "../../IPC/main"
 import { ai, aiLlmStatus } from "../../stores"
-import { AI_PROVIDER_MODELS, type AIProviderId } from "../models"
+import { AI_PROVIDER_MODELS, type AIProviderId } from "./llmModels"
 import { LLMTalk } from "./llmTalk"
 
 export type LLMSessionConfig = { provider: AIProviderId; model: string } | null

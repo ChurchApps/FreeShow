@@ -1,7 +1,7 @@
 import type { AiScriptureBook, DetectedReference } from "../../../../types/ai/AiScripture"
 import type { AiFeatureState } from "../../../../types/ai/Ai"
 import { normalizeSpokenNumbers } from "./numberUtils"
-import type { AIProviderId } from "../../models"
+import type { AIProviderId } from "../../llm/llmModels"
 import { getLLMScriptureProvider } from "../llmTalkScripture"
 import type { BookIndex } from "./references"
 import { buildBookIndex, matchReferences } from "./references"

@@ -1,24 +1,23 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { fade, fly } from "svelte/transition"
-    import Icon from "../../components/helpers/Icon.svelte"
-    import T from "../../components/helpers/T.svelte"
-    import MaterialButton from "../../components/inputs/MaterialButton.svelte"
-    import Center from "../../components/system/Center.svelte"
-    import { activePage, ai, aiInterim, aiSttStatus, aiSuggestions, aiTranscript, language, outLocked, settingsTab } from "../../stores"
-    import { translateText } from "../../utils/language"
-    import { audioLevelStore, resolveSttEngine, SpeechToText } from "../stt/stt"
-    import { copyTranscript, dismissAiSuggestion, groupTranscriptLines } from "../transcript"
+    import Icon from "../../../components/helpers/Icon.svelte"
+    import T from "../../../components/helpers/T.svelte"
+    import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
+    import Center from "../../../components/system/Center.svelte"
+    import { activePage, ai, aiInterim, aiSmartAction, aiSttStatus, aiSuggestions, aiTranscript, language, outLocked, settingsTab } from "../../../stores"
+    import { translateText } from "../../../utils/language"
+    import { audioLevelStore, resolveSttEngine, SpeechToText } from "../../stt/stt"
     import AiRing from "./AiRing.svelte"
     import ConfidenceMeter from "./ConfidenceMeter.svelte"
+    import { copyTranscript, dismissAiSuggestion, groupTranscriptLines } from "./transcript"
 
     let state: "inactive" | "error" | "listening" | "processing" = "inactive"
 
     let isOpen = false
     function toggleExpand() {
-        // close any opened suggestions
-        // WIP only remove in closed state, not in popups
-        // dismissSuggestion(latestSuggestion?.id)
+        // close any visible actions
+        aiSmartAction.set(null)
 
         setTimeout(() => (isOpen = !isOpen))
 
@@ -142,7 +141,7 @@
     // confident suggestions surface here so the operator can present them with one click
 
     $: suggestions = $aiSuggestions
-    $: latestSuggestion = $aiSuggestions.at(-1) || null
+    $: smartAction = $aiSmartAction
 </script>
 
 <svelte:window on:keydown={(e) => isOpen && e.key === "Escape" && toggleExpand()} />
@@ -162,27 +161,35 @@
     </div>
 {/if} -->
 
-{#if !isOpen && latestSuggestion && state !== "inactive"}
+{#if !isOpen && smartAction && state !== "inactive"}
     <div class="ticker-wrap" transition:fly={{ x: 45 + 62 / 2, duration: 200 }}>
         <!-- border-radius: 50px 10px 10px 50px; -->
         <MaterialButton
             style="padding: 0;border-radius: 50px;"
             on:click={() => {
-                latestSuggestion.trigger()
-                setTimeout(() => dismissAiSuggestion(latestSuggestion.id), 500)
+                if (smartAction?.trigger) {
+                    smartAction.trigger()
+                    setTimeout(() => aiSmartAction.set(null), 500)
+                } else {
+                    aiSmartAction.set(null)
+                }
             }}
         >
             <!-- borderRadius="20px 10px 10px 20px" -->
             <AiRing opacity={0.85}>
                 <div class="suggestion" style="margin-right: calc((62px / 2) - 4px);">
-                    {#if latestSuggestion?.action === "present"}
+                    {#if smartAction?.action === "presented"}
+                        <Icon id="check" white />
+                        <p>Presented:</p>
+                        <span style="font-weight: bold;">{smartAction.content}</span>
+                    {:else if smartAction?.action === "present"}
                         <Icon id="play" white />
                         <p>Click to present:</p>
-                        <span style="font-weight: bold;">{latestSuggestion.content}</span>
+                        <span style="font-weight: bold;">{smartAction.content}</span>
                     {/if}
 
-                    {#if latestSuggestion?.confidence}
-                        <ConfidenceMeter confidence={latestSuggestion.confidence} />
+                    {#if smartAction?.confidence}
+                        <ConfidenceMeter confidence={smartAction.confidence} />
                     {/if}
                 </div>
             </AiRing>
@@ -271,25 +278,26 @@
 
                                     <div class="fill" />
 
-                                    <MaterialButton
-                                        small
-                                        icon="play"
-                                        disabled={$outLocked}
-                                        title="menu._title_display"
-                                        on:click={() => {
-                                            suggestion.trigger?.()
-                                            dismissAiSuggestion(suggestion.id)
-                                        }}
-                                    />
-                                    <MaterialButton small icon="close" title="ai.dismiss" on:click={() => dismissAiSuggestion(suggestion.id)} />
+                                    {#if suggestion.action === "presented"}
+                                        <Icon id="check" size={0.9} color="var(--primary-lighter)" title="ai.presented" />
+                                    {:else if suggestion.trigger}
+                                        <MaterialButton
+                                            small
+                                            icon="play"
+                                            disabled={$outLocked}
+                                            title="menu._title_display"
+                                            on:click={() => {
+                                                suggestion.trigger?.()
+                                                // dismissAiSuggestion(suggestion.id)
+                                            }}
+                                        />
+                                    {/if}
+                                    <MaterialButton small icon="close" title="actions.remove" on:click={() => dismissAiSuggestion(suggestion.id)} />
                                 </div>
                             </div>
                         {/each}
                     </div>
                 {/if}
-
-                <!-- the bubble stays feature-agnostic (it reports anything the AI says/does) -
-                     feature specific settings live on the settings page, via the header gear -->
             </div>
         {/if}
     </AiRing>
@@ -603,6 +611,9 @@
         max-height: 200px;
         overflow-y: auto;
         flex-shrink: 0;
+
+        background-color: rgb(0 0 0 / 0.1);
+        border-top: 1px solid rgba(0, 0, 0, 0.3);
     }
 
     .suggestion.compact {
@@ -619,10 +630,10 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        flex: 1;
     }
     .suggestionHeader .reference {
         font-weight: 600;
-        color: var(--secondary);
         white-space: nowrap;
     }
 

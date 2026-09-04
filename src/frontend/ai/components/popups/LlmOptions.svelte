@@ -13,7 +13,7 @@
     import { ai } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { llmSession } from "../../llm/llmSession"
-    import { AI_PROVIDER_MODELS, type AIProviderId } from "../../models"
+    import { AI_PROVIDER_MODELS, type AIProviderId } from "../../llm/llmModels"
 
     $: llmOptions = $ai.llm || {}
 

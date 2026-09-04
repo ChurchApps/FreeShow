@@ -1,6 +1,6 @@
 import { Main } from "../../../types/IPC/Main"
 import { requestMain } from "../../IPC/main"
-import type { AIProviderId } from "../models"
+import type { AIProviderId } from "./llmModels"
 
 export interface LLMRequestOptions {
     systemPrompt?: string

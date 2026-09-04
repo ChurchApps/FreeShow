@@ -3,8 +3,8 @@
 // bubble UI and the context menu
 
 import { get } from "svelte/store"
-import { aiSuggestions, aiTranscript } from "../stores"
-import { newToast } from "../utils/common"
+import { aiSmartAction, aiSuggestions, aiTranscript } from "../../../stores"
+import { newToast } from "../../../utils/common"
 
 // segments closer than this continue the same display line
 const LINE_GAP_MS = 2000
@@ -55,5 +55,6 @@ export function copyTranscript(): void {
 }
 
 export function dismissAiSuggestion(id: string): void {
+    aiSmartAction.update((cur) => (cur?.id === id ? null : cur))
     aiSuggestions.update((list) => list.filter((item) => item.id !== id))
 }

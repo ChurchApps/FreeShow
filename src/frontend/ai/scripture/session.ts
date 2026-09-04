@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import type { AiScriptureBook } from "../../../types/ai/AiScripture"
-import { ai, aiInterim, aiLlmStatus, aiScriptureHasProjected, aiSttStatus, aiSuggestions, scriptures } from "../../stores"
-import type { AIProviderId } from "../models"
+import { ai, aiInterim, aiLlmStatus, aiScriptureHasProjected, aiSmartAction, aiSttStatus, aiSuggestions, scriptures } from "../../stores"
+import type { AIProviderId } from "../llm/llmModels"
 import { resolveSttEngine } from "../stt/stt"
 import type { AiScriptureAnchor } from "./detection/coordinator"
 import { DetectionCoordinator } from "./detection/coordinator"
@@ -80,6 +80,7 @@ export function stopScriptureSession(): void {
         suggestionPruneTimer = null
     }
     aiSuggestions.set([])
+    aiSmartAction.set(null)
 
     scriptureCoordinator?.stop()
     scriptureCoordinator = null

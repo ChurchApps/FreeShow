@@ -8,7 +8,7 @@ export interface BookIndex {
     verseFirstRegex: RegExp | null
     psalmOrdinalRegex: RegExp | null
     singleChapterVerseRegex: RegExp | null
-    byToken: Map<string, { name: string; number: number; }>
+    byToken: Map<string, { name: string; number: number }>
     bookPattern: string
     bookWords: string[]
     allBookWords: string[]
@@ -67,21 +67,31 @@ const VERSE_WORD = "(?:verses?|best|this|vers|versus|worse)"
 const rangePlain = (name: string) => `(?:\\s*(?:-|–|to\\b|through\\b)\\s*(?<${name}>\\d{1,3})\\b)?`
 
 export function buildBookIndex(books: AiScriptureBook[]): BookIndex {
-    const byToken = new Map<string, { name: string; number: number; }>()
+    const byToken = new Map<string, { name: string; number: number }>()
     const tokens: string[] = []
     const canonNames = new Map<number, string>()
 
-    books.forEach((book) => {
-        book.names.forEach((name) => {
-            const token = name.trim().toLowerCase().replace(/\s+/g, " ")
-            if (!token || byToken.has(token)) return
-            byToken.set(token, { name: name.trim(), number: book.canonNumber ?? book.number })
-            tokens.push(token)
+    // Separate canonical (66-book) entries from non-canonical
+    const canonicalBooks = books.filter((b) => b.canonNumber !== undefined)
+    const nonCanonicalBooks = books.filter((b) => b.canonNumber === undefined)
+
+    // Process canonical books first so they take precedence
+    const processBooks = (bookList: AiScriptureBook[]) => {
+        bookList.forEach((book) => {
+            book.names.forEach((name) => {
+                const token = name.trim().toLowerCase().replace(/\s+/g, " ")
+                if (!token || byToken.has(token)) return
+                byToken.set(token, { name: name.trim(), number: book.canonNumber ?? book.number })
+                tokens.push(token)
+            })
+            if (book.canonNumber && !canonNames.has(book.canonNumber)) {
+                canonNames.set(book.canonNumber, book.names[0]?.trim() || "")
+            }
         })
-        if (book.canonNumber && !canonNames.has(book.canonNumber)) {
-            canonNames.set(book.canonNumber, book.names[0]?.trim() || "")
-        }
-    })
+    }
+
+    processBooks(canonicalBooks)
+    processBooks(nonCanonicalBooks)
 
     ASR_BOOK_ALIASES.forEach(({ alias, canonNumber }) => {
         if (byToken.has(alias)) return
@@ -170,7 +180,7 @@ export function matchReferences(text: string, index: BookIndex): ReferenceMatch[
             }
         }
 
-        if ((hasVerse || unglued)) {
+        if (hasVerse || unglued) {
             const absoluteMaxChapterLength = 200
             if (verseStart > absoluteMaxChapterLength) return
             if (verseEnd > absoluteMaxChapterLength) verseEnd = absoluteMaxChapterLength

@@ -85,7 +85,6 @@ import {
     toggleOutputEnabled,
     variables
 } from "../../stores"
-import { copyTranscript } from "../../ai/transcript"
 import { escapeRegExp, hideDisplay, isOutputWindow, newToast, triggerFunction, wait } from "../../utils/common"
 import { setExampleEffects, setExampleOverlays, setExampleTemplates } from "../../utils/createData"
 import { translateText } from "../../utils/language"
@@ -204,7 +203,6 @@ const clickActions = {
         navigator.clipboard.writeText(text)
         newToast("actions.copied")
     },
-    ai_copy_transcript: () => copyTranscript(),
     text_copy: (obj: ObjData) => {
         const editElem = obj.contextElem?.closest?.(".edit") as HTMLElement | null
         if (!editElem) return

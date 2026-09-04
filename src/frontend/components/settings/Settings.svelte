@@ -5,7 +5,7 @@
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tip from "../main/Tip.svelte"
-    import AiSettings from "../../ai/components/settings/AiSettings.svelte"
+    import SmartSettings from "../../ai/components/settings/SmartSettings.svelte"
     import AudioRouting from "./tabs/AudioRouting.svelte"
     import Connection from "./tabs/Connection.svelte"
     import Files from "./tabs/Files.svelte"
@@ -39,7 +39,7 @@
         styles: "settings.styles_hint",
         audio: "settings.audio_hint",
         profiles: "profile.profiles_hint",
-        ai: "ai.hint"
+        ai: "ai.hint<br><br>ai.privacy_details"
     }
 
     let showMore = false
@@ -92,7 +92,7 @@
         {:else if tabId === "theme"}
             <Theme />
         {:else if tabId === "ai"}
-            <AiSettings />
+            <SmartSettings />
         {:else if tabId === "other"}
             <Other />
         {/if}

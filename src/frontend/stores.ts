@@ -215,6 +215,7 @@ export const slideDeleteHighlight: Writable<SlideHighlight> = writable(null)
 export const aiSttStatus: Writable<{ state: "inactive" | "listening" | "stopped" | "error"; message?: string }> = writable({ state: "inactive" })
 export const aiLlmStatus: Writable<AiFeatureStatus> = writable({ state: "stopped" })
 export const aiSuggestions: Writable<AiSuggestion[]> = writable([])
+export const aiSmartAction: Writable<AiSuggestion | null> = writable(null)
 export const aiTranscript: Writable<{ text: string; startMs: number; endMs: number; language?: string; music?: boolean; utteranceEnd?: boolean }[]> = writable([])
 export const aiInterim: Writable<string> = writable("") // the open utterance's unstable tail - display only, shown greyed
 export const aiScriptureHasProjected: Writable<boolean> = writable(false)

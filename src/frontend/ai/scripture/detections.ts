@@ -1,11 +1,12 @@
 import { get } from "svelte/store"
 import type { DetectedReference } from "../../../types/ai/AiScripture"
 import { getShortBibleName, loadJsonBible } from "../../components/drawer/bible/scripture"
-import { ai, aiSuggestions, drawerTabsData, outLocked, scriptures } from "../../stores"
+import { clone } from "../../components/helpers/array"
+import { ai, aiSmartAction, aiSuggestions, drawerTabsData, outLocked, scriptures } from "../../stores"
 import { projectDetection, resolveBookNumber } from "./projection"
 import { scriptureState } from "./scriptureState"
 
-const SUGGESTION_MAX_AGE = 3 * 60 * 1000
+const SUGGESTION_MAX_AGE = 5 * 60 * 1000
 const SUGGESTION_LIMIT = 5
 const QUOTE_MATCH_SCORE = 0.55
 const QUOTE_DEMOTE_SCORE = 0.35
@@ -23,10 +24,10 @@ export async function handleDetection(ref: DetectedReference): Promise<void> {
         await verifyQuote(ref)
     }
 
-    addSuggestion(ref)
-
     if (canAutoProjectFor(ref.confidence)) {
         queueAutoProjection(ref)
+    } else {
+        addSuggestion(ref)
     }
 }
 
@@ -119,11 +120,42 @@ function getReferenceLabel(suggestion: DetectedReference, drawerBibleId: string)
     return label
 }
 
+// SMART ACTION
+let smartActionTimer: NodeJS.Timeout | null = null
+
+export function setSmartAction(action: import("../../../types/ai/Ai").AiSuggestion | null, durationMs?: number): void {
+    if (smartActionTimer) {
+        clearTimeout(smartActionTimer)
+        smartActionTimer = null
+    }
+    aiSmartAction.set(action)
+    if (action && durationMs) {
+        smartActionTimer = setTimeout(() => {
+            smartActionTimer = null
+            aiSmartAction.update((cur) => (cur?.id === action.id ? null : cur))
+        }, durationMs)
+    }
+}
+
 // SUGGESTIONS
+const SUGGESTION_SMART_ACTION_DURATION = 30 * 1000
+
 function addSuggestion(ref: DetectedReference) {
     const confidence = confidencePercent(ref.confidence)
     if (confidence < 50) return
     const drawerBibleId = get(drawerTabsData).scripture?.activeSubTab || ""
+    const label = getReferenceLabel(ref, drawerBibleId)
+
+    const suggestionItem = {
+        id: ref.id,
+        action: "present" as const,
+        content: label,
+        timestamp: ref.timestamp,
+        confidence,
+        trigger: () => projectDetection(clone(ref), true)
+    }
+
+    setSmartAction(suggestionItem, SUGGESTION_SMART_ACTION_DURATION)
 
     aiSuggestions.update((list) => {
         const now = Date.now()
@@ -131,20 +163,9 @@ function addSuggestion(ref: DetectedReference) {
 
         if (ref.corrects) active = active.filter((a) => a.id !== ref.corrects?.id)
 
-        const label = getReferenceLabel(ref, drawerBibleId)
         if (active.some((a) => a.id === ref.id || a.content === label)) return active
 
-        return [
-            {
-                id: ref.id,
-                action: "present",
-                content: label,
-                timestamp: ref.timestamp,
-                confidence,
-                trigger: () => projectDetection(ref, true)
-            },
-            ...active
-        ].slice(0, SUGGESTION_LIMIT)
+        return [suggestionItem, ...active].slice(0, SUGGESTION_LIMIT)
     })
 }
 
@@ -157,6 +178,12 @@ export function pruneSuggestions() {
 }
 
 export function dismissSuggestion(id: string): void {
+    const timer = autoDismissTimers.get(id)
+    if (timer) {
+        clearTimeout(timer)
+        autoDismissTimers.delete(id)
+    }
+    aiSmartAction.update((cur) => (cur?.id === id ? null : cur))
     aiSuggestions.update((list) => list.filter((a) => a.id !== id))
 }
 
@@ -170,21 +197,63 @@ export function cancelPendingAutoProjection(): void {
         autoTimer = null
     }
     pendingAutoRef = null
+    setSmartAction(null)
+    for (const timer of autoDismissTimers.values()) {
+        clearTimeout(timer)
+    }
+    autoDismissTimers.clear()
 }
 
 function correctsLiveProjection(ref: DetectedReference): boolean {
     return !!(ref.corrects && scriptureState.lastAutoProjectedRef && isSameReference(scriptureState.lastAutoProjectedRef, ref.corrects))
 }
-
 function refinesLiveTranslation(ref: DetectedReference): boolean {
     if (!ref.matchedBibleId || ref.matchedBibleId === scriptureState.lastAutoProjectedBibleId) return false
     return !!(scriptureState.lastAutoProjectedRef && isSameReference(scriptureState.lastAutoProjectedRef, ref))
+}
+
+const AUTO_PRESENT_MESSAGE_DURATION = 4000
+const autoDismissTimers = new Map<string, NodeJS.Timeout>()
+
+function notifyAutoPresented(ref: DetectedReference) {
+    const confidence = confidencePercent(ref.confidence)
+    const drawerBibleId = get(drawerTabsData).scripture?.activeSubTab || ""
+    const label = getReferenceLabel(ref, drawerBibleId)
+    const id = `auto_${ref.id}`
+
+    const notificationItem = {
+        id,
+        action: "presented" as const,
+        content: label,
+        timestamp: Date.now(),
+        confidence
+    }
+
+    setSmartAction(notificationItem, AUTO_PRESENT_MESSAGE_DURATION)
+
+    aiSuggestions.update((list) => {
+        let active = list.filter((a) => a.id !== id && a.id !== ref.id)
+        if (ref.corrects) active = active.filter((a) => a.id !== ref.corrects?.id && a.id !== `auto_${ref.corrects?.id}`)
+
+        return [notificationItem, ...active].slice(0, SUGGESTION_LIMIT)
+    })
+
+    const existingTimer = autoDismissTimers.get(id)
+    if (existingTimer) clearTimeout(existingTimer)
+
+    const timer = setTimeout(() => {
+        autoDismissTimers.delete(id)
+        dismissSuggestion(id)
+    }, AUTO_PRESENT_MESSAGE_DURATION)
+
+    autoDismissTimers.set(id, timer)
 }
 
 function queueAutoProjection(ref: DetectedReference) {
     if (correctsLiveProjection(ref) || refinesLiveTranslation(ref)) {
         cancelPendingAutoProjection()
         projectDetection(ref)
+        notifyAutoPresented(ref)
         return
     }
 
@@ -196,6 +265,7 @@ function queueAutoProjection(ref: DetectedReference) {
     if (ref.confidence >= 75) {
         cancelPendingAutoProjection()
         projectDetection(ref)
+        notifyAutoPresented(ref)
         return
     }
 
@@ -203,10 +273,11 @@ function queueAutoProjection(ref: DetectedReference) {
     const elapsed = Date.now() - scriptureState.lastAutoProjectionAt
     if (!scriptureState.lastAutoProjectionAt || elapsed >= cooldownMs) {
         projectDetection(ref)
+        notifyAutoPresented(ref)
         return
     }
 
-    pendingAutoRef = ref
+    pendingAutoRef = clone(ref)
     if (autoTimer) clearTimeout(autoTimer)
     autoTimer = setTimeout(() => {
         autoTimer = null
@@ -215,6 +286,7 @@ function queueAutoProjection(ref: DetectedReference) {
 
         if (pending && scriptureState.sessionActive && canAutoProjectFor(pending.confidence)) {
             projectDetection(pending)
+            notifyAutoPresented(pending)
         }
     }, cooldownMs - elapsed)
 }

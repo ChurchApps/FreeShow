@@ -1,5 +1,5 @@
 import { createLLMTalk } from "../llm/llmTalk"
-import type { AIProviderId } from "../models"
+import type { AIProviderId } from "../llm/llmModels"
 
 export interface RawDetection {
     book: string

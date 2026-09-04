@@ -74,14 +74,24 @@ async function refreshSessionBibles(): Promise<void> {
 
 // BOOK TABLE
 export async function buildBookTable(bibleIds: string[]): Promise<AiScriptureBook[]> {
-    const namesByNumber = new Map<number, string[]>()
+    // Collect all (name, number) pairs and track which are canonical
+    const nameEntries = new Map<string, { number: number; isCanon: boolean }[]>()
     const canonNumbers = new Set<number>()
+    const namesByNumber = new Map<number, string[]>()
 
-    const addName = (number: number, name: string | undefined) => {
+    const addName = (number: number, name: string | undefined, isCanon: boolean) => {
         const trimmed = name?.trim()
         if (!number || !trimmed) return
+
+        const nameLower = trimmed.toLowerCase()
+        const entries = nameEntries.get(nameLower) || []
+        if (!entries.some((e) => e.number === number)) {
+            entries.push({ number, isCanon })
+            nameEntries.set(nameLower, entries)
+        }
+
         const list = namesByNumber.get(number) || []
-        if (!list.some((e) => e.toLowerCase() === trimmed.toLowerCase())) {
+        if (!list.some((e) => e.toLowerCase() === nameLower)) {
             list.push(trimmed)
             namesByNumber.set(number, list)
         }
@@ -89,10 +99,10 @@ export async function buildBookTable(bibleIds: string[]): Promise<AiScriptureBoo
 
     const processBookList = (books: any[], isCanon: boolean) => {
         books.forEach((book) => {
-            addName(book.number, book.name)
-            addName(book.number, book.customName)
-            addName(book.number, book.abbreviation)
-            addName(book.number, book.id)
+            addName(book.number, book.name, isCanon)
+            addName(book.number, book.customName, isCanon)
+            addName(book.number, book.abbreviation, isCanon)
+            addName(book.number, book.id, isCanon)
             if (isCanon) canonNumbers.add(book.number)
         })
     }
@@ -110,7 +120,30 @@ export async function buildBookTable(bibleIds: string[]): Promise<AiScriptureBoo
         processBookList(cachedBooks, cachedBooks.length === 66)
     }
 
-    return Array.from(namesByNumber.entries())
+    // For names that appear with multiple numbers, keep only the canonical one
+    nameEntries.forEach((entries, nameLower) => {
+        if (entries.length > 1) {
+            // Multiple numbers for same name - prefer canonical
+            const canonical = entries.find((e) => e.isCanon)
+            const preferred = canonical || entries.sort((a, b) => a.number - b.number)[0]
+
+            // Remove names from non-preferred numbers
+            entries.forEach((entry) => {
+                if (entry.number !== preferred.number) {
+                    const list = namesByNumber.get(entry.number)
+                    if (list) {
+                        const idx = list.findIndex((n) => n.toLowerCase() === nameLower)
+                        if (idx >= 0) list.splice(idx, 1)
+                        if (list.length === 0) namesByNumber.delete(entry.number)
+                    }
+                }
+            })
+        }
+    })
+
+    const result = Array.from(namesByNumber.entries())
         .sort(([a], [b]) => a - b)
         .map(([number, names]) => ({ number, names, canonNumber: canonNumbers.has(number) ? number : undefined }))
+
+    return result
 }

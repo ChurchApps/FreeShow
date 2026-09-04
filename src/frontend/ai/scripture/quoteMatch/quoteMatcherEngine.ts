@@ -3,7 +3,7 @@ import type { DetectedReference } from "../../../../types/ai/AiScripture"
 import { aiQuoteMatchActive, scriptures, scripturesCache } from "../../../stores"
 
 // Inline text utility fallbacks
-export function stripMarkdown(text: string): string {
+function stripMarkdown(text: string): string {
     return text
         .replace(/(\*\*|__)(.*?)\1/g, "$2")
         .replace(/(\*|_)(.*?)\1/g, "$2")
@@ -12,7 +12,7 @@ export function stripMarkdown(text: string): string {
         .trim()
 }
 
-export function stripText(text: string): string {
+function stripText(text: string): string {
     return text
         .replace(/<[^>]*>/g, "")
         .replace(/\s+/g, " ")
@@ -21,11 +21,11 @@ export function stripText(text: string): string {
 
 // --- CONSTANTS & CONFIGURATION ---
 
-export const PREFIX_LEN = 4
-export const NUMBER_PLACEHOLDER = "#num"
-export const PHONETIC_MIN_LEN = 6
+const PREFIX_LEN = 4
+const NUMBER_PLACEHOLDER = "#num"
+const PHONETIC_MIN_LEN = 6
 
-export const TUNING = {
+const TUNING = {
     WINDOW_TOKENS: 48,
     WINDOW_MAX_AGE_MS: 25000,
     GAP_RESET_MS: 15000,
@@ -91,13 +91,11 @@ export const TUNING = {
     BIGRAM_VOTE_IDF: 3.5
 }
 
-export type Tuning = typeof TUNING
+type Tuning = typeof TUNING
 
 const NUMBER_UNITS = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
 const NUMBER_TEENS = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
 const NUMBER_TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
-
-// --- TOKEN NORMALIZATION & PHONETICS ---
 
 function baseTokens(text: string): string[] {
     return text
@@ -111,20 +109,18 @@ function baseTokens(text: string): string[] {
         .filter((token) => token.length > 1 || /^\d$/.test(token))
 }
 
-export function tokenizeVerseText(cleanText: string): string[] {
+function tokenizeVerseText(cleanText: string): string[] {
     return baseTokens(cleanText)
 }
 
-export interface SpannedToken {
+interface SpannedToken {
     token: string
     from: number
     to: number
 }
 
-export function tokenizeTranscriptWithSpans(text: string): SpannedToken[] {
+function tokenizeTranscriptWithSpans(text: string): SpannedToken[] {
     const out: SpannedToken[] = []
-    const push = (token: string, from: number, to: number) => out.push({ token, from, to })
-
     for (const match of text.matchAll(/[\p{L}\p{M}\p{N}']+/gu)) {
         const from = match.index ?? 0
         const to = from + match[0].length
@@ -136,26 +132,26 @@ export function tokenizeTranscriptWithSpans(text: string): SpannedToken[] {
         if (token.length < 1 || (token.length === 1 && !/^\d$/.test(token))) continue
 
         if (!/^\d+$/.test(token)) {
-            push(token, from, to)
+            out.push({ token, from, to })
             continue
         }
 
         const value = parseInt(token, 10)
         if (value < 1 || value > 99) {
-            push(NUMBER_PLACEHOLDER, from, to)
+            out.push({ token: NUMBER_PLACEHOLDER, from, to })
             continue
         }
-        if (value < 10) push(NUMBER_UNITS[value], from, to)
-        else if (value < 20) push(NUMBER_TEENS[value - 10], from, to)
+        if (value < 10) out.push({ token: NUMBER_UNITS[value], from, to })
+        else if (value < 20) out.push({ token: NUMBER_TEENS[value - 10], from, to })
         else {
-            push(NUMBER_TENS[Math.floor(value / 10)], from, to)
-            if (value % 10) push(NUMBER_UNITS[value % 10], from, to)
+            out.push({ token: NUMBER_TENS[Math.floor(value / 10)], from, to })
+            if (value % 10) out.push({ token: NUMBER_UNITS[value % 10], from, to })
         }
     }
     return out
 }
 
-export function canonKey(token: string): string {
+function canonKey(token: string): string {
     return token.length > PREFIX_LEN ? token.slice(0, PREFIX_LEN) : token
 }
 
@@ -180,7 +176,7 @@ const SOUNDEX_CLASS: Record<string, string> = {
     r: "6"
 }
 
-export function phoneticKey(token: string): string | null {
+function phoneticKey(token: string): string | null {
     if (token.length < PHONETIC_MIN_LEN || token === NUMBER_PLACEHOLDER) return null
 
     const base = token.endsWith("s") ? token.slice(0, -1) : token
@@ -198,7 +194,7 @@ export function phoneticKey(token: string): string | null {
 const PHONETIC_CACHE_MAX = 20000
 const phoneticCache = new Map<string, string | null>()
 
-export function cachedPhoneticKey(token: string): string | null {
+function cachedPhoneticKey(token: string): string | null {
     let key = phoneticCache.get(token)
     if (key === undefined) {
         if (phoneticCache.size >= PHONETIC_CACHE_MAX) phoneticCache.clear()
@@ -317,29 +313,20 @@ const ASR_CONFUSABLE_SETS: string[][] = [
 
 const CONFUSABLE_CANON = new Map<string, string>()
 const CONFUSABLE_GROUPS = new Map<string, string[]>()
+
 for (const set of ASR_CONFUSABLE_SETS) {
-    const touched = new Set<string>()
-    for (const token of set) {
-        const existing = CONFUSABLE_CANON.get(token)
-        if (existing !== undefined) touched.add(existing)
-    }
-    const canon = touched.size ? [...touched][0] : set[0]
+    let canon = set.find((token) => CONFUSABLE_CANON.has(token)) ? CONFUSABLE_CANON.get(set.find((token) => CONFUSABLE_CANON.has(token))!)! : set[0]
     const members = new Set<string>(CONFUSABLE_GROUPS.get(canon) ?? [])
-    for (const other of touched) {
-        if (other === canon) continue
-        for (const member of CONFUSABLE_GROUPS.get(other) ?? []) members.add(member)
-        CONFUSABLE_GROUPS.delete(other)
-    }
     for (const token of set) members.add(token)
+
     const list = [...members]
     CONFUSABLE_GROUPS.set(canon, list)
     for (const member of list) CONFUSABLE_CANON.set(member, canon)
 }
 
-export function confusableAlternates(token: string): string[] {
+function confusableAlternates(token: string): string[] {
     const canon = CONFUSABLE_CANON.get(token)
-    if (canon === undefined) return []
-    return (CONFUSABLE_GROUPS.get(canon) ?? []).filter((member) => member !== token)
+    return canon ? (CONFUSABLE_GROUPS.get(canon) ?? []).filter((member) => member !== token) : []
 }
 
 function commonPrefixLength(a: string, b: string): number {
@@ -349,7 +336,7 @@ function commonPrefixLength(a: string, b: string): number {
     return i
 }
 
-export function tokenGrade(a: string, b: string, allowPhonetic = false): number {
+function tokenGrade(a: string, b: string, allowPhonetic = false): number {
     if (a === NUMBER_PLACEHOLDER || b === NUMBER_PLACEHOLDER) return 0
     if (a === b) return 1
 
@@ -360,25 +347,22 @@ export function tokenGrade(a: string, b: string, allowPhonetic = false): number 
     }
 
     if (cpl === 3 && (cpl === a.length || cpl === b.length) && Math.max(a.length, b.length) - cpl <= 2) {
-        const tail = (a.length > b.length ? a : b).slice(cpl)
-        if (STEM_TAILS.has(tail)) return 0.8
+        if (STEM_TAILS.has((a.length > b.length ? a : b).slice(cpl))) return 0.8
     }
 
     if (allowPhonetic) {
-        const canonA = CONFUSABLE_CANON.get(a)
-        if (canonA !== undefined && canonA === CONFUSABLE_CANON.get(b)) return 0.85
-    }
-
-    if (allowPhonetic && a.length >= PHONETIC_MIN_LEN && b.length >= PHONETIC_MIN_LEN && Math.abs(a.length - b.length) <= 3) {
-        const keyA = cachedPhoneticKey(a)
-        if (keyA && keyA === cachedPhoneticKey(b)) return 0.7
+        if (CONFUSABLE_CANON.has(a) && CONFUSABLE_CANON.get(a) === CONFUSABLE_CANON.get(b)) return 0.85
+        if (a.length >= PHONETIC_MIN_LEN && b.length >= PHONETIC_MIN_LEN && Math.abs(a.length - b.length) <= 3) {
+            const keyA = cachedPhoneticKey(a)
+            if (keyA && keyA === cachedPhoneticKey(b)) return 0.7
+        }
     }
     return 0
 }
 
 // --- INDEX STRUCTURES & PAYLOADS ---
 
-export interface IndexableVerse {
+interface IndexableVerse {
     book: number
     chapter: number
     verseStart: number
@@ -386,7 +370,7 @@ export interface IndexableVerse {
     cleanText: string
 }
 
-export class PrefixPool {
+class PrefixPool {
     keys: string[] = []
     private idByKey = new Map<string, number>()
 
@@ -401,8 +385,7 @@ export class PrefixPool {
     }
 
     lookup(key: string): number {
-        const id = this.idByKey.get(key)
-        return id === undefined ? -1 : id
+        return this.idByKey.get(key) ?? -1
     }
 
     get size(): number {
@@ -410,13 +393,11 @@ export class PrefixPool {
     }
 
     get sizeBytes(): number {
-        let bytes = 0
-        for (const key of this.keys) bytes += key.length * 2 + 16
-        return bytes + this.keys.length * 64
+        return this.keys.reduce((acc, key) => acc + key.length * 2 + 16, 0) + this.keys.length * 64
     }
 }
 
-export interface TranslationIndex {
+interface TranslationIndex {
     translationId: string
     pool: PrefixPool
     verseCount: number
@@ -440,19 +421,18 @@ export interface TranslationIndex {
     sizeBytes: number
 }
 
-export const IDF_CAP = 6
-export const DF_VOTE_MAX_FRACTION = 1 / 16
+const IDF_CAP = 6
+const DF_VOTE_MAX_FRACTION = 1 / 16
 const INFORMATIVE_IDF_ABSOLUTE = 3.0
 const INFORMATIVE_IDF_FRACTION = 0.5
-export const BIGRAM_VOTE_IDF = 5
-export const bigramKey = (a: string, b: string) => a + "|" + b
+const bigramKey = (a: string, b: string) => a + "|" + b
 
-export interface IndexBuildOptions {
+interface IndexBuildOptions {
     bigrams?: boolean
     bigramPool?: PrefixPool
 }
 
-export function buildTranslationIndex(translationId: string, verses: IndexableVerse[], pool: PrefixPool = new PrefixPool(), options: IndexBuildOptions = {}): TranslationIndex {
+function buildTranslationIndex(translationId: string, verses: IndexableVerse[], pool: PrefixPool = new PrefixPool(), options: IndexBuildOptions = {}): TranslationIndex {
     const verseCount = verses.length
     const book = new Uint8Array(verseCount)
     const chapter = new Uint8Array(verseCount)
@@ -466,8 +446,13 @@ export function buildTranslationIndex(translationId: string, verses: IndexableVe
 
     const tokenOffsets = new Uint32Array(verseCount + 1)
     const tokenIdsFlat: number[] = []
-
     const ordinalsByPrefixId = new Map<number, number[]>()
+
+    const appendPrefixPosting = (prefixId: number, ordinal: number) => {
+        let list = ordinalsByPrefixId.get(prefixId)
+        if (!list) ordinalsByPrefixId.set(prefixId, (list = []))
+        list.push(ordinal)
+    }
 
     for (let ordinal = 0; ordinal < verseCount; ordinal++) {
         const verse = verses[ordinal]
@@ -481,12 +466,12 @@ export function buildTranslationIndex(translationId: string, verses: IndexableVe
         const seenTokenIds = new Set<number>()
         const seenPrefixIds = new Set<number>()
 
-        for (let i = 0; i < tokens.length; i++) {
-            let id = vocabIdByToken.get(tokens[i])
+        for (const token of tokens) {
+            let id = vocabIdByToken.get(token)
             if (id === undefined) {
                 id = vocab.length
-                vocab.push(tokens[i])
-                vocabIdByToken.set(tokens[i], id)
+                vocab.push(token)
+                vocabIdByToken.set(token, id)
                 dfByVocabId.push(0)
             }
             tokenIdsFlat.push(id)
@@ -496,12 +481,10 @@ export function buildTranslationIndex(translationId: string, verses: IndexableVe
                 dfByVocabId[id]++
             }
 
-            const prefixId = pool.intern(canonKey(tokens[i]))
+            const prefixId = pool.intern(canonKey(token))
             if (!seenPrefixIds.has(prefixId)) {
                 seenPrefixIds.add(prefixId)
-                let list = ordinalsByPrefixId.get(prefixId)
-                if (!list) ordinalsByPrefixId.set(prefixId, (list = []))
-                list.push(ordinal)
+                appendPrefixPosting(prefixId, ordinal)
             }
         }
         tokenOffsets[ordinal + 1] = tokenIdsFlat.length
@@ -523,15 +506,15 @@ export function buildTranslationIndex(translationId: string, verses: IndexableVe
         const key = phoneticKey(vocab[id])
         if (key) phoneticIdByVocabId[id] = pool.intern("~" + key)
     }
+
     for (let ordinal = 0; ordinal < verseCount; ordinal++) {
-        let seenPhonetic: Set<number> | null = null
+        const seenPhonetic = new Set<number>()
         for (let i = tokenOffsets[ordinal]; i < tokenOffsets[ordinal + 1]; i++) {
             const phoneticId = phoneticIdByVocabId[tokenIdsFlat[i]]
-            if (phoneticId < 0 || seenPhonetic?.has(phoneticId)) continue
-            ;(seenPhonetic ||= new Set()).add(phoneticId)
-            let list = ordinalsByPrefixId.get(phoneticId)
-            if (!list) ordinalsByPrefixId.set(phoneticId, (list = []))
-            list.push(ordinal)
+            if (phoneticId >= 0 && !seenPhonetic.has(phoneticId)) {
+                seenPhonetic.add(phoneticId)
+                appendPrefixPosting(phoneticId, ordinal)
+            }
         }
     }
 
@@ -582,12 +565,7 @@ export function buildTranslationIndex(translationId: string, verses: IndexableVe
         buildBigramRoute(index, options.bigramPool || new PrefixPool(), dfCap, droppedPrefix)
     }
 
-    let sizeBytes = book.byteLength + chapter.byteLength + verseStart.byteLength + verseEnd.byteLength + chapterBreak.byteLength
-    sizeBytes += tokenData.byteLength + tokenOffsets.byteLength + idfByVocabId.byteLength
-    sizeBytes += prefixDf.byteLength + postingStarts.byteLength + postingData.byteLength
-    sizeBytes += (index.bigramIds?.byteLength || 0) + (index.bigramStarts?.byteLength || 0) + (index.bigramData?.byteLength || 0)
-    for (const token of vocab) sizeBytes += token.length * 2 + 16
-    index.sizeBytes = sizeBytes
+    index.sizeBytes = book.byteLength + chapter.byteLength + verseStart.byteLength + verseEnd.byteLength + chapterBreak.byteLength + tokenData.byteLength + tokenOffsets.byteLength + idfByVocabId.byteLength + prefixDf.byteLength + postingStarts.byteLength + postingData.byteLength + (index.bigramIds?.byteLength || 0) + (index.bigramStarts?.byteLength || 0) + (index.bigramData?.byteLength || 0) + vocab.reduce((acc, token) => acc + token.length * 2 + 16, 0)
 
     return index
 }
@@ -600,27 +578,29 @@ function buildBigramRoute(index: TranslationIndex, bigramPool: PrefixPool, dfCap
 
     const ordinalsByBigramId = new Map<number, number[]>()
     for (let ordinal = 0; ordinal < verseCount; ordinal++) {
-        let seen: Set<number> | null = null
+        const seen = new Set<number>()
         for (let i = tokenOffsets[ordinal] + 1; i < tokenOffsets[ordinal + 1]; i++) {
             const left = tokenData[i - 1]
             const right = tokenData[i]
             if (!droppedByVocabId[left] && !droppedByVocabId[right]) continue
 
             const bigramId = bigramPool.intern(bigramKey(canonByVocabId[left], canonByVocabId[right]))
-            if (seen?.has(bigramId)) continue
-            ;(seen ||= new Set()).add(bigramId)
-            let list = ordinalsByBigramId.get(bigramId)
-            if (!list) ordinalsByBigramId.set(bigramId, (list = []))
-            list.push(ordinal)
+            if (!seen.has(bigramId)) {
+                seen.add(bigramId)
+                let list = ordinalsByBigramId.get(bigramId)
+                if (!list) ordinalsByBigramId.set(bigramId, (list = []))
+                list.push(ordinal)
+            }
         }
     }
 
     const keptIds: number[] = []
     let postingTotal = 0
     ordinalsByBigramId.forEach((ordinals, bigramId) => {
-        if (ordinals.length > dfCap) return
-        keptIds.push(bigramId)
-        postingTotal += ordinals.length
+        if (ordinals.length <= dfCap) {
+            keptIds.push(bigramId)
+            postingTotal += ordinals.length
+        }
     })
     keptIds.sort((a, b) => a - b)
 
@@ -640,7 +620,7 @@ function buildBigramRoute(index: TranslationIndex, bigramPool: PrefixPool, dfCap
     index.bigramData = bigramData
 }
 
-export function bigramPostings(index: TranslationIndex, bigramId: number): Uint32Array | null {
+function bigramPostings(index: TranslationIndex, bigramId: number): Uint32Array | null {
     const ids = index.bigramIds
     if (!ids || bigramId < 0) return null
 
@@ -655,21 +635,20 @@ export function bigramPostings(index: TranslationIndex, bigramId: number): Uint3
     return null
 }
 
-export function verseTokensAt(index: TranslationIndex, ordinal: number): Uint16Array | Uint32Array {
+function verseTokensAt(index: TranslationIndex, ordinal: number): Uint16Array | Uint32Array {
     return index.tokenData.subarray(index.tokenOffsets[ordinal], index.tokenOffsets[ordinal + 1])
 }
 
-export function postingsForKey(index: TranslationIndex, prefixId: number): Uint32Array | null {
+function postingsForKey(index: TranslationIndex, prefixId: number): Uint32Array | null {
     if (prefixId < 0 || prefixId >= index.postingStarts.length - 1) return null
     const start = index.postingStarts[prefixId]
     const end = index.postingStarts[prefixId + 1]
     return end > start ? index.postingData.subarray(start, end) : null
 }
 
-export function prefixIdf(index: TranslationIndex, prefixId: number): number {
+function prefixIdf(index: TranslationIndex, prefixId: number): number {
     const df = prefixId >= 0 && prefixId < index.prefixDf.length ? index.prefixDf[prefixId] : 0
-    if (!df) return 0
-    return Math.min(IDF_CAP, Math.log(1 + index.verseCount / df))
+    return df ? Math.min(IDF_CAP, Math.log(1 + index.verseCount / df)) : 0
 }
 
 export interface TranslationPayload {
@@ -682,13 +661,13 @@ export interface TranslationPayload {
     textOffsets: Uint32Array
 }
 
-export const INDEX_MEMORY_BUDGET_BYTES = 256 * 1024 * 1024
+const INDEX_MEMORY_BUDGET_BYTES = 256 * 1024 * 1024
 
 interface PayloadBible {
     books?: { number: number; chapters?: { number: number; verses?: { number: number; endNumber?: number; text?: string }[] }[] }[]
 }
 
-export function buildTranslationPayload(translationId: string, bible: PayloadBible): TranslationPayload | null {
+function buildTranslationPayload(translationId: string, bible: PayloadBible): TranslationPayload | null {
     const book: number[] = []
     const chapter: number[] = []
     const verseStart: number[] = []
@@ -725,12 +704,8 @@ export function buildTranslationPayload(translationId: string, bible: PayloadBib
     }
 }
 
-export function payloadTransferables(payloads: TranslationPayload[]): ArrayBuffer[] {
-    const buffers: ArrayBuffer[] = []
-    for (const payload of payloads) {
-        buffers.push(payload.book.buffer as ArrayBuffer, payload.chapter.buffer as ArrayBuffer, payload.verseStart.buffer as ArrayBuffer, payload.verseEnd.buffer as ArrayBuffer, payload.textOffsets.buffer as ArrayBuffer)
-    }
-    return buffers
+function payloadTransferables(payloads: TranslationPayload[]): ArrayBuffer[] {
+    return payloads.flatMap((p) => [p.book.buffer, p.chapter.buffer, p.verseStart.buffer, p.verseEnd.buffer, p.textOffsets.buffer] as ArrayBuffer[])
 }
 
 export interface IndexBuildContext {
@@ -751,17 +726,15 @@ export async function buildIndexesFromPayloads(payloads: TranslationPayload[], c
     for (const payload of payloads) {
         if (budgetBytes <= 0 && context.count) break
 
-        const verses: IndexableVerse[] = []
         const verseCount = payload.textOffsets.length - 1
-        for (let ordinal = 0; ordinal < verseCount; ordinal++) {
-            verses.push({
-                book: payload.book[ordinal],
-                chapter: payload.chapter[ordinal],
-                verseStart: payload.verseStart[ordinal],
-                verseEnd: payload.verseEnd[ordinal],
-                cleanText: stripMarkdown(stripText(payload.textBlob.slice(payload.textOffsets[ordinal], payload.textOffsets[ordinal + 1])))
-            })
-        }
+        const verses: IndexableVerse[] = Array.from({ length: verseCount }, (_, ordinal) => ({
+            book: payload.book[ordinal],
+            chapter: payload.chapter[ordinal],
+            verseStart: payload.verseStart[ordinal],
+            verseEnd: payload.verseEnd[ordinal],
+            cleanText: stripMarkdown(stripText(payload.textBlob.slice(payload.textOffsets[ordinal], payload.textOffsets[ordinal + 1])))
+        }))
+
         if (!verses.length) continue
 
         const index = buildTranslationIndex(payload.translationId, verses, context.pool, context.count === 0 ? { bigrams: true, bigramPool: context.bigramPool } : {})
@@ -779,12 +752,12 @@ export async function buildIndexesFromPayloads(payloads: TranslationPayload[], c
 
 // --- ALIGNMENT SCORING ---
 
-export interface QueryToken {
+interface QueryToken {
     token: string
     endMs: number
 }
 
-export interface AlignResult {
+interface AlignResult {
     score: number
     coverage: number
     density: number
@@ -806,7 +779,7 @@ export interface AlignResult {
     bestRunQueryTo: number
 }
 
-export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, ordinal: number, tuning: Tuning = TUNING): AlignResult | null {
+function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, ordinal: number, tuning: Tuning = TUNING): AlignResult | null {
     if (ordinal < 0 || ordinal >= index.verseCount || !query.length) return null
     const verseIds = verseTokensAt(index, ordinal)
 
@@ -819,8 +792,6 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     const verseTokenAt = (j: number) => index.vocab[j < verseLength ? verseIds[j] : spillIds[j - verseLength]]
     const verseIdfAt = (j: number) => index.idfByVocabId[j < verseLength ? verseIds[j] : spillIds[j - verseLength]]
 
-    const informativeIdf = index.informativeIdf
-
     const width = n + 1
     const dp = new Float32Array((m + 1) * width)
     for (let i = 1; i <= m; i++) {
@@ -828,7 +799,7 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
         for (let j = 1; j <= n; j++) {
             const skip = Math.max(dp[(i - 1) * width + j], dp[i * width + j - 1])
             const idf = verseIdfAt(j - 1)
-            const grade = tokenGrade(q, verseTokenAt(j - 1), idf >= informativeIdf)
+            const grade = tokenGrade(q, verseTokenAt(j - 1), idf >= index.informativeIdf)
             const take = grade > 0 ? dp[(i - 1) * width + j - 1] + grade * idf : 0
             dp[i * width + j] = take > skip ? take : skip
         }
@@ -843,9 +814,10 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     let spillInformative = 0
     let i = m
     let j = n
+
     while (i > 0 && j > 0) {
         const idf = verseIdfAt(j - 1)
-        const grade = tokenGrade(query[i - 1].token, verseTokenAt(j - 1), idf >= informativeIdf)
+        const grade = tokenGrade(query[i - 1].token, verseTokenAt(j - 1), idf >= index.informativeIdf)
         if (grade > 0 && Math.abs(dp[i * width + j] - (dp[(i - 1) * width + j - 1] + grade * idf)) < 1e-6) {
             matchedQ.push(i - 1)
             matchedV.push(j - 1)
@@ -865,11 +837,6 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     matchedQ.reverse()
     matchedV.reverse()
 
-    const queryFrom = matchedQ[0]
-    const queryTo = matchedQ[matchedQ.length - 1]
-    const verseFrom = matchedV[0]
-    const verseTo = matchedV[matchedV.length - 1]
-
     let bestRunLength = 0
     let bestRunWeight = 0
     let bestRunPeakIdf = 0
@@ -881,19 +848,18 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     let runPeakIdf = 0
     let runPeaks = 0
     let runQueryFrom = -1
+
     for (let k = 0; k < matchedQ.length; k++) {
         if (matchedV[k] >= verseLength) {
-            runLength = 0
-            runWeight = 0
-            runPeakIdf = 0
-            runPeaks = 0
+            runLength = runWeight = runPeakIdf = runPeaks = 0
             runQueryFrom = -1
             continue
         }
         const idf = verseIdfAt(matchedV[k])
-        const grade = tokenGrade(query[matchedQ[k]].token, verseTokenAt(matchedV[k]), idf >= informativeIdf)
+        const grade = tokenGrade(query[matchedQ[k]].token, verseTokenAt(matchedV[k]), idf >= index.informativeIdf)
         const weight = grade * idf
         const peak = grade >= 0.9 ? idf : 0
+
         if (runLength > 0 && matchedQ[k] === matchedQ[k - 1] + 1 && matchedV[k] === matchedV[k - 1] + 1) {
             runLength++
             runWeight += weight + tuning.PHRASE_ADJACENCY_IDF
@@ -906,6 +872,7 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
             runPeaks = peak >= tuning.PHRASE_MIN_PEAK_IDF ? 1 : 0
             runQueryFrom = matchedQ[k]
         }
+
         if (idf >= tuning.PHRASE_EDGE_MIN_IDF && runWeight > bestRunWeight) {
             bestRunLength = runLength
             bestRunWeight = runWeight
@@ -917,25 +884,22 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     }
 
     let spanWeight = 0
-    for (let v = verseFrom; v <= verseTo; v++) spanWeight += verseIdfAt(v)
+    for (let v = matchedV[0]; v <= matchedV[matchedV.length - 1]; v++) spanWeight += verseIdfAt(v)
     const coverage = spanWeight > 0 ? matchedWeight / spanWeight : 0
-
-    const querySpan = queryTo - queryFrom + 1
-    const density = matchedQ.length / querySpan
-    const score = coverage * Math.min(1, density / tuning.DENSITY_REF)
+    const density = matchedQ.length / (matchedQ[matchedQ.length - 1] - matchedQ[0] + 1)
 
     return {
-        score,
+        score: coverage * Math.min(1, density / tuning.DENSITY_REF),
         coverage,
         density,
         matched: matchedQ.length,
         matchedInformative,
         matchedWeight,
         matchedFuzzy,
-        queryFrom,
-        queryTo,
-        verseFrom,
-        verseTo,
+        queryFrom: matchedQ[0],
+        queryTo: matchedQ[matchedQ.length - 1],
+        verseFrom: matchedV[0],
+        verseTo: matchedV[matchedV.length - 1],
         spillInformative,
         verseLength,
         bestRunLength,
@@ -947,38 +911,36 @@ export function alignQuoteWindow(query: QueryToken[], index: TranslationIndex, o
     }
 }
 
-export function phraseEvidence(a: AlignResult, tuning: Tuning = TUNING): boolean {
+function phraseEvidence(a: AlignResult, tuning: Tuning = TUNING): boolean {
     return a.bestRunLength >= tuning.PHRASE_MIN_RUN && a.bestRunWeight >= tuning.PHRASE_MIN_WEIGHT && a.bestRunPeakIdf >= tuning.PHRASE_MIN_PEAK_IDF
 }
 
-export function meetsFloors(a: AlignResult, tuning: Tuning = TUNING): boolean {
-    if (a.matchedFuzzy > Math.floor(a.matched * tuning.FUZZY_MAX_FRACTION)) return false
-    return a.matchedInformative >= tuning.MIN_INFORMATIVE && a.matchedWeight >= tuning.MIN_WEIGHT && a.queryTo - a.queryFrom + 1 >= tuning.MIN_QUERY_SPAN && a.density >= tuning.DENSITY_FLOOR
+function meetsFloors(a: AlignResult, tuning: Tuning = TUNING): boolean {
+    return a.matchedFuzzy <= Math.floor(a.matched * tuning.FUZZY_MAX_FRACTION) && a.matchedInformative >= tuning.MIN_INFORMATIVE && a.matchedWeight >= tuning.MIN_WEIGHT && a.queryTo - a.queryFrom + 1 >= tuning.MIN_QUERY_SPAN && a.density >= tuning.DENSITY_FLOOR
 }
 
-export function classify(a: AlignResult, tuning: Tuning = TUNING): "high" | "medium" | null {
+function classify(a: AlignResult, tuning: Tuning = TUNING): "high" | "medium" | null {
     if (!meetsFloors(a, tuning)) return null
     if (a.score >= tuning.EMIT_HIGH && a.matchedInformative >= tuning.HIGH_MIN_INFORMATIVE && a.matchedWeight >= tuning.HIGH_MIN_WEIGHT) return "high"
-    if (a.score >= tuning.EMIT_MEDIUM) return "medium"
-    return null
+    return a.score >= tuning.EMIT_MEDIUM ? "medium" : null
 }
 
 // --- QUOTE MATCHER STATE ENGINE ---
 
-export interface Segment {
+interface Segment {
     text: string
     startMs: number
     endMs: number
 }
 
-export interface EmissionAnchor {
+interface EmissionAnchor {
     book: number
     chapter: number
     verseStart: number
     verseEnd: number
 }
 
-export interface QuoteMatchEmission {
+interface QuoteMatchEmission {
     translationId: string
     book: number
     chapter: number
@@ -990,6 +952,8 @@ export interface QuoteMatchEmission {
     corrects?: EmissionAnchor
 }
 
+type QuoteAnchor = { bookNumber: number; chapter: number; verseStart: number; verseEnd: number }
+
 interface MatchCandidate {
     index: TranslationIndex
     ordinal: number
@@ -999,30 +963,25 @@ interface MatchCandidate {
 }
 
 export class QuoteMatcher {
-    private indexes: TranslationIndex[] = []
-    private tuning: Tuning
     private windowTokens: Array<QueryToken & { charFrom: number; charTo: number }> = []
     private rawTranscript = ""
-
     private trackerOrdinal = -1
     private trackerMs = 0
-
-    private anchorRef: { bookNumber: number; chapter: number; verseStart: number; verseEnd: number } | null = null
-
+    private anchorRef: QuoteAnchor | null = null
     private lastEmittedKey = ""
     private lastEmittedMs = 0
 
-    constructor(indexes: TranslationIndex[], tuning: Tuning = TUNING) {
-        this.indexes = indexes
-        this.tuning = tuning
-    }
+    constructor(
+        private indexes: TranslationIndex[],
+        private tuning: Tuning = TUNING
+    ) {}
 
     get translationCount(): number {
         return this.indexes.length
     }
 
     public addIndexes(indexes: TranslationIndex[]): void {
-        this.indexes = [...this.indexes, ...indexes]
+        this.indexes.push(...indexes)
     }
 
     public removeTranslations(ids: string[]): void {
@@ -1035,7 +994,7 @@ export class QuoteMatcher {
         this.indexes.sort((a, b) => (rank.get(a.translationId) ?? this.indexes.length) - (rank.get(b.translationId) ?? this.indexes.length))
     }
 
-    public setAnchor(anchor: { bookNumber: number; chapter: number; verseStart: number; verseEnd: number } | null): void {
+    public setAnchor(anchor: QuoteAnchor | null): void {
         this.anchorRef = anchor
     }
 
@@ -1046,17 +1005,13 @@ export class QuoteMatcher {
         if (this.windowTokens.length < this.tuning.MIN_QUERY_SPAN) return []
 
         const candidates = this.findCandidates()
-        if (!candidates.length) return []
-
-        return this.evaluateCandidates(candidates, segment.endMs)
+        return candidates.length ? this.evaluateCandidates(candidates, segment.endMs) : []
     }
 
     private pruneWindow(nowMs: number): void {
         const minTime = nowMs - this.tuning.WINDOW_MAX_AGE_MS
         let dropCount = 0
-        while (dropCount < this.windowTokens.length && this.windowTokens[dropCount].endMs < minTime) {
-            dropCount++
-        }
+        while (dropCount < this.windowTokens.length && this.windowTokens[dropCount].endMs < minTime) dropCount++
 
         if (this.windowTokens.length - dropCount > this.tuning.WINDOW_TOKENS) {
             dropCount = this.windowTokens.length - this.tuning.WINDOW_TOKENS
@@ -1081,12 +1036,11 @@ export class QuoteMatcher {
         const dt = spans.length > 1 ? (segment.endMs - segment.startMs) / spans.length : 0
 
         for (let i = 0; i < spans.length; i++) {
-            const span = spans[i]
             this.windowTokens.push({
-                token: span.token,
+                token: spans[i].token,
                 endMs: Math.round(segment.startMs + dt * (i + 1)),
-                charFrom: baseCharOffset + (baseCharOffset > 0 ? 1 : 0) + span.from,
-                charTo: baseCharOffset + (baseCharOffset > 0 ? 1 : 0) + span.to
+                charFrom: baseCharOffset + (baseCharOffset > 0 ? 1 : 0) + spans[i].from,
+                charTo: baseCharOffset + (baseCharOffset > 0 ? 1 : 0) + spans[i].to
             })
         }
     }
@@ -1115,8 +1069,7 @@ export class QuoteMatcher {
             }
 
             if (i > 0 && primary.bigramPool) {
-                const prev = query[i - 1].token
-                const bId = primary.bigramPool.lookup(bigramKey(canonKey(prev), canonKey(q)))
+                const bId = primary.bigramPool.lookup(bigramKey(canonKey(query[i - 1].token), canonKey(q)))
                 const bPostings = bigramPostings(primary, bId)
                 if (bPostings) {
                     for (let k = 0; k < bPostings.length; k++) vote(bPostings[k], this.tuning.BIGRAM_VOTE_IDF)
@@ -1125,19 +1078,17 @@ export class QuoteMatcher {
 
             const pKey = phoneticKey(q)
             if (pKey) {
-                const pId = primary.pool.lookup("~" + pKey)
-                const pPostings = postingsForKey(primary, pId)
+                const pPostings = postingsForKey(primary, primary.pool.lookup("~" + pKey))
                 if (pPostings) {
-                    const pIdf = prefixIdf(primary, pId) * this.tuning.PHONETIC_VOTE_DISCOUNT
+                    const pIdf = prefixIdf(primary, primary.pool.lookup("~" + pKey)) * this.tuning.PHONETIC_VOTE_DISCOUNT
                     for (let k = 0; k < pPostings.length; k++) vote(pPostings[k], pIdf)
                 }
             }
 
             for (const alt of confusableAlternates(q)) {
-                const altId = primary.pool.lookup(canonKey(alt))
-                const altPostings = postingsForKey(primary, altId)
+                const altPostings = postingsForKey(primary, primary.pool.lookup(canonKey(alt)))
                 if (altPostings) {
-                    const altIdf = prefixIdf(primary, altId) * 0.8
+                    const altIdf = prefixIdf(primary, primary.pool.lookup(canonKey(alt))) * 0.8
                     for (let k = 0; k < altPostings.length; k++) vote(altPostings[k], altIdf)
                 }
             }
@@ -1150,49 +1101,33 @@ export class QuoteMatcher {
             for (const index of this.indexes) {
                 const align = alignQuoteWindow(query, index, ordinal, this.tuning)
                 if (align && meetsFloors(align, this.tuning)) {
-                    candidates.push({
-                        index,
-                        ordinal,
-                        align,
-                        votes: meta.votes,
-                        rawWeight: meta.weight
-                    })
+                    candidates.push({ index, ordinal, align, votes: meta.votes, rawWeight: meta.weight })
                 }
             }
         })
 
-        candidates.sort((a, b) => b.align.score - a.align.score)
-        return candidates.slice(0, this.tuning.TOP_K)
+        return candidates.sort((a, b) => b.align.score - a.align.score).slice(0, this.tuning.TOP_K)
     }
 
     private evaluateCandidates(candidates: MatchCandidate[], nowMs: number): QuoteMatchEmission[] {
         const best = candidates[0]
-        const bestClass = classify(best.align, this.tuning)
-
-        if (!bestClass) return []
+        if (!classify(best.align, this.tuning)) return []
 
         let scoreAdjusted = best.align.score
-
         if (this.anchorRef && best.index.book[best.ordinal] === this.anchorRef.bookNumber) {
-            if (best.index.chapter[best.ordinal] === this.anchorRef.chapter) {
-                scoreAdjusted += this.tuning.ANCHOR_BONUS_Z0
-            } else {
-                scoreAdjusted += this.tuning.ANCHOR_BONUS_Z1
-            }
+            scoreAdjusted += best.index.chapter[best.ordinal] === this.anchorRef.chapter ? this.tuning.ANCHOR_BONUS_Z0 : this.tuning.ANCHOR_BONUS_Z1
         }
 
-        const isPhrase = phraseEvidence(best.align, this.tuning)
         let kind: "passage" | "single_shot" | "phrase" | "continuation" = "single_shot"
-
         if (this.trackerOrdinal >= 0 && Math.abs(best.ordinal - this.trackerOrdinal) <= 2 && nowMs - this.trackerMs <= this.tuning.TRACKER_TTL_MS) {
             kind = "continuation"
-        } else if (isPhrase) {
+        } else if (phraseEvidence(best.align, this.tuning)) {
             kind = "phrase"
         } else if (best.align.matchedInformative >= this.tuning.SINGLE_SHOT_INFORMATIVE) {
             kind = "passage"
         }
 
-        let correctsAnchor: EmissionAnchor | undefined = undefined
+        let correctsAnchor: EmissionAnchor | undefined
         if (this.trackerOrdinal >= 0 && best.index.book[best.ordinal] !== this.indexes[0].book[this.trackerOrdinal]) {
             correctsAnchor = {
                 book: this.indexes[0].book[this.trackerOrdinal],
@@ -1203,16 +1138,12 @@ export class QuoteMatcher {
         }
 
         const currentKey = `${best.index.book[best.ordinal]}:${best.index.chapter[best.ordinal]}:${best.index.verseStart[best.ordinal]}`
-        if (currentKey === this.lastEmittedKey && nowMs - this.lastEmittedMs < 10000) {
-            return []
-        }
+        if (currentKey === this.lastEmittedKey && nowMs - this.lastEmittedMs < 10000) return []
 
         this.trackerOrdinal = best.ordinal
         this.trackerMs = nowMs
         this.lastEmittedKey = currentKey
         this.lastEmittedMs = nowMs
-
-        const quoteText = this.extractQuoteText(best)
 
         return [
             {
@@ -1223,7 +1154,7 @@ export class QuoteMatcher {
                 verseEnd: best.index.verseEnd[best.ordinal],
                 confidence: Math.min(1.0, scoreAdjusted),
                 kind,
-                quoteText,
+                quoteText: this.extractQuoteText(best),
                 corrects: correctsAnchor
             }
         ]
@@ -1234,9 +1165,7 @@ export class QuoteMatcher {
         const qTo = cand.align.bestRunQueryTo >= 0 ? cand.align.bestRunQueryTo : cand.align.queryTo
 
         if (qFrom >= 0 && qTo < this.windowTokens.length && qFrom <= qTo) {
-            const charStart = this.windowTokens[qFrom].charFrom
-            const charEnd = this.windowTokens[qTo].charTo
-            return this.rawTranscript.slice(charStart, charEnd).trim()
+            return this.rawTranscript.slice(this.windowTokens[qFrom].charFrom, this.windowTokens[qTo].charTo).trim()
         }
         return this.rawTranscript.trim()
     }
@@ -1244,14 +1173,14 @@ export class QuoteMatcher {
 
 // --- HOSTS & WORKER COMMUNICATION ---
 
-export interface MatcherHostCallbacks {
+interface MatcherHostCallbacks {
     onReady: (info: { count: number; totalBytes: number }) => void
     onUpdated?: (info: { count: number; added: number; removed: number; totalBytes: number }) => void
     onEmissions: (emissions: any[]) => void
     onError: (message: string) => void
 }
 
-export interface MatcherHost {
+interface MatcherHost {
     start(payloads: TranslationPayload[], callbacks: MatcherHostCallbacks): void
     update(add: TranslationPayload[], remove: string[], order?: string[]): void
     segment(segment: { text: string; startMs: number; endMs: number }): void
@@ -1259,38 +1188,35 @@ export interface MatcherHost {
     stop(): void
 }
 
-export function createWorkerHost(): MatcherHost {
+function createWorkerHost(): MatcherHost {
     const worker = new Worker(new URL("./quoteMatchWorker.ts", import.meta.url), { type: "module" })
     let callbacks: MatcherHostCallbacks | null = null
 
     const send = (message: any, transfer?: Transferable[]) => {
         try {
-            if (transfer) worker.postMessage(message, transfer)
-            else worker.postMessage(message)
+            worker.postMessage(message, transfer!)
         } catch (err) {
             callbacks?.onError(String((err as Error)?.message || err))
         }
     }
 
     worker.onmessage = (event: MessageEvent<any>) => {
-        const message = event.data
-        if (!message || !callbacks) return
-        if (message.type === "ready") callbacks.onReady({ count: message.count, totalBytes: message.totalBytes })
-        else if (message.type === "updated") callbacks.onUpdated?.({ count: message.count, added: message.added, removed: message.removed, totalBytes: message.totalBytes })
-        else if (message.type === "emissions") callbacks.onEmissions(message.emissions)
-        else if (message.type === "error") callbacks.onError(message.message)
+        const msg = event.data
+        if (!msg || !callbacks) return
+        if (msg.type === "ready") callbacks.onReady({ count: msg.count, totalBytes: msg.totalBytes })
+        else if (msg.type === "updated") callbacks.onUpdated?.({ count: msg.count, added: msg.added, removed: msg.removed, totalBytes: msg.totalBytes })
+        else if (msg.type === "emissions") callbacks.onEmissions(msg.emissions)
+        else if (msg.type === "error") callbacks.onError(msg.message)
     }
 
-    worker.onerror = (event: ErrorEvent) => {
-        callbacks?.onError(event.message || "Quote match worker failed")
-    }
+    worker.onerror = (event: ErrorEvent) => callbacks?.onError(event.message || "Quote match worker failed")
 
     return {
-        start(payloads: TranslationPayload[], hostCallbacks) {
+        start(payloads, hostCallbacks) {
             callbacks = hostCallbacks
             send({ type: "start", translations: payloads }, payloadTransferables(payloads))
         },
-        update(add: TranslationPayload[], remove: string[], order?: string[]) {
+        update(add, remove, order) {
             send({ type: "update", add, remove, order }, payloadTransferables(add))
         },
         segment(segment) {
@@ -1306,7 +1232,7 @@ export function createWorkerHost(): MatcherHost {
     }
 }
 
-export function createDirectHost(): MatcherHost {
+function createDirectHost(): MatcherHost {
     let matcher: QuoteMatcher | null = null
     let callbacks: MatcherHostCallbacks | null = null
     let stopped = false
@@ -1327,8 +1253,8 @@ export function createDirectHost(): MatcherHost {
                 })
         },
         update(add, remove, order) {
+            if (!matcher || !callbacks) return
             const active = matcher
-            if (!active || !callbacks) return
             active.removeTranslations(remove)
             buildIndexesFromPayloads(add, buildContext)
                 .then(({ indexes, totalBytes }) => {
@@ -1361,7 +1287,7 @@ export function createDirectHost(): MatcherHost {
     }
 }
 
-export async function createMatcherHost(): Promise<MatcherHost> {
+async function createMatcherHost(): Promise<MatcherHost> {
     if (typeof Worker !== "undefined") {
         try {
             return createWorkerHost()
@@ -1374,7 +1300,7 @@ export async function createMatcherHost(): Promise<MatcherHost> {
 
 // --- SESSION LIFECYCLE MANAGEMENT ---
 
-export interface QuoteMatchSessionConfig {
+interface QuoteMatchSessionConfig {
     bibleIds: string[]
     interpretationMode: boolean
     listenLanguage?: string
@@ -1394,7 +1320,7 @@ let starting = false
 let gate: { interpretationMode: boolean; listenLanguage?: string } | null = null
 let onDetection: ((ref: DetectedReference) => void) | null = null
 let pendingSegments: TranscriptSegment[] = []
-let pendingAnchor: { bookNumber: number; chapter: number; verseStart: number; verseEnd: number } | null = null
+let pendingAnchor: QuoteAnchor | null = null
 let sessionToken = 0
 let idCounter = 0
 let currentBibleIds: string[] = []
@@ -1446,7 +1372,7 @@ async function updateSession(token: number, bibleIds: string[]): Promise<void> {
     if (token !== sessionToken) return
 
     const rank = new Map(bibleIds.map((id, position) => [id, position]))
-    const nextIds = [...currentBibleIds.filter((id) => !removed.includes(id)), ...addPayloads.map((payload) => payload.translationId)].sort((a, b) => (rank.get(a) ?? bibleIds.length) - (rank.get(b) ?? bibleIds.length))
+    const nextIds = [...currentBibleIds.filter((id) => !removed.includes(id)), ...addPayloads.map((p) => p.translationId)].sort((a, b) => (rank.get(a) ?? bibleIds.length) - (rank.get(b) ?? bibleIds.length))
     if (!removed.length && !addPayloads.length && nextIds.join("|") === currentBibleIds.join("|")) return
 
     console.info(`[AiScripture] Session bibles changed - updating quote match indexes (+${addPayloads.length} / -${removed.length})`)
@@ -1456,9 +1382,7 @@ async function updateSession(token: number, bibleIds: string[]): Promise<void> {
 
 export function handleQuoteMatchTranscript(segment: TranscriptSegment): void {
     if (!host && !starting) return
-
-    if (segment.music) return
-    if (gate?.interpretationMode && segment.language && gate.listenLanguage && segment.language !== gate.listenLanguage) return
+    if (segment.music || (gate?.interpretationMode && segment.language && gate.listenLanguage && segment.language !== gate.listenLanguage)) return
 
     if (starting) {
         pendingSegments.push(segment)
@@ -1469,7 +1393,7 @@ export function handleQuoteMatchTranscript(segment: TranscriptSegment): void {
     feedSegment(segment)
 }
 
-export function setQuoteMatchAnchor(anchor: { bookNumber: number; chapter: number; verseStart: number; verseEnd: number }): void {
+export function setQuoteMatchAnchor(anchor: QuoteAnchor): void {
     pendingAnchor = anchor
     host?.setAnchor(anchor)
 }
@@ -1492,7 +1416,7 @@ async function startSession(token: number, bibleIds: string[]): Promise<void> {
         }
 
         host = created
-        currentBibleIds = payloads.map((payload) => payload.translationId)
+        currentBibleIds = payloads.map((p) => p.translationId)
         host.start(payloads, callbacksFor(token, payloads))
     } catch (err) {
         if (token !== sessionToken) return
@@ -1534,11 +1458,7 @@ function callbacksFor(token: number, fallbackPayloads: TranslationPayload[] | nu
                 host.start(fallbackPayloads, callbacksFor(token, null))
                 return
             }
-            if (starting) {
-                starting = false
-                console.error("AI scripture quote matching failed to start:", message)
-                return
-            }
+            if (starting) starting = false
             console.error("AI scripture quote matching error:", message)
         }
     }
@@ -1563,11 +1483,11 @@ async function buildPayloads(bibleIds: string[]): Promise<TranslationPayload[]> 
 }
 
 function toDetectedReference(emission: QuoteMatchEmission): DetectedReference | null {
-    const id = "aiq-" + Date.now().toString(36) + "-" + (idCounter++).toString(36)
     if (emission.confidence < 50) return null
+    const id = "aiq-" + Date.now().toString(36) + "-" + (idCounter++).toString(36)
 
     return {
-        id: id,
+        id,
         book: bookNameFor(emission.translationId, emission.book),
         bookNumber: emission.book,
         chapter: emission.chapter,
@@ -1584,77 +1504,7 @@ function toDetectedReference(emission: QuoteMatchEmission): DetectedReference | 
     }
 }
 
-export const CANON_BOOK_NAMES = [
-    "",
-    "Genesis",
-    "Exodus",
-    "Leviticus",
-    "Numbers",
-    "Deuteronomy",
-    "Joshua",
-    "Judges",
-    "Ruth",
-    "1 Samuel",
-    "2 Samuel",
-    "1 Kings",
-    "2 Kings",
-    "1 Chronicles",
-    "2 Chronicles",
-    "Ezra",
-    "Nehemiah",
-    "Esther",
-    "Job",
-    "Psalms",
-    "Proverbs",
-    "Ecclesiastes",
-    "Song of Solomon",
-    "Isaiah",
-    "Jeremiah",
-    "Lamentations",
-    "Ezekiel",
-    "Daniel",
-    "Hosea",
-    "Joel",
-    "Amos",
-    "Obadiah",
-    "Jonah",
-    "Micah",
-    "Nahum",
-    "Habakkuk",
-    "Zephaniah",
-    "Haggai",
-    "Zechariah",
-    "Malachi",
-    "Matthew",
-    "Mark",
-    "Luke",
-    "John",
-    "Acts",
-    "Romans",
-    "1 Corinthians",
-    "2 Corinthians",
-    "Galatians",
-    "Ephesians",
-    "Philippians",
-    "Colossians",
-    "1 Thessalonians",
-    "2 Thessalonians",
-    "1 Timothy",
-    "2 Timothy",
-    "Titus",
-    "Philemon",
-    "Hebrews",
-    "James",
-    "1 Peter",
-    "2 Peter",
-    "1 John",
-    "2 John",
-    "3 John",
-    "Jude",
-    "Revelation"
-]
-
-export function bookNameFor(bibleId: string, bookNumber: number): string {
+function bookNameFor(bibleId: string, bookNumber: number): string {
     const books = get(scripturesCache)[bibleId]?.books || []
-    return books.find((book) => book.number === bookNumber)?.name || CANON_BOOK_NAMES[bookNumber] || String(bookNumber)
+    return books.find((book) => book.number === bookNumber)?.name || String(bookNumber)
 }

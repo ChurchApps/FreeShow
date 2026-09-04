@@ -14,5 +14,5 @@ export interface AiSuggestion {
     content: string
     timestamp: number
     confidence: number
-    trigger: () => void
+    trigger?: () => void
 }
