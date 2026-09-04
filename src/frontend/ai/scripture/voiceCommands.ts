@@ -8,7 +8,7 @@ import { loadJsonBible, outputIsScripture } from "../../components/drawer/bible/
 import { setDrawerTabData } from "../../components/helpers/historyHelpers"
 import { activeScripture, ai, aiSuggestions, drawerTabsData, outLocked, scriptureHistory, scriptures } from "../../stores"
 import { parseNumber, projectResolved, restorePrevious } from "./projection"
-import { getSettings, scriptureState } from "./scriptureState"
+import { scriptureState } from "./scriptureState"
 import { cycleRank, preferredTranslationId } from "./translationPreference"
 
 const ACCEPT_SUGGESTION_WINDOW_MS = 45000 // "yes, show it" only accepts a suggestion this fresh
@@ -16,8 +16,7 @@ const ACCEPT_SUGGESTION_WINDOW_MS = 45000 // "yes, show it" only accepts a sugge
 export async function executeScriptureCommand(cmd: AiScriptureCommandEvent): Promise<void> {
     if (!get(ai).enabled) return
 
-    const settings = getSettings()
-    if (!scriptureState.sessionActive || !settings.voiceCommands) return
+    if (!scriptureState.sessionActive) return
     if (get(outLocked)) return
 
     // accepting the newest suggestion is confirm mode by voice - it must work BEFORE anything

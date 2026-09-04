@@ -1,9 +1,10 @@
 // AI AUTO SCRIPTURE - MANUAL OVERRIDE WATCHER
 // pause auto projection when the operator manually projects something else
 
-import { outputs } from "../../stores"
+import { get } from "svelte/store"
+import { ai, outputs } from "../../stores"
 import { updateAnchorFromActiveScripture } from "./projection"
-import { getSettings, scriptureState } from "./scriptureState"
+import { scriptureState } from "./scriptureState"
 
 let lastActiveSlideKey: string | null = null
 let autoResumeTimer: NodeJS.Timeout | null = null
@@ -31,7 +32,7 @@ outputs.subscribe((allOutputs) => {
     // an operator-initiated scripture play moves the sermon anchor too
     if (key !== null && slide?.id === "temp") updateAnchorFromActiveScripture()
 
-    const settings = getSettings()
+    const settings = get(ai).scripture || {}
     const confidence = settings.confidence || "ask"
     if (confidence === "ask") return
 

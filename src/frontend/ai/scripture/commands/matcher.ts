@@ -5,8 +5,7 @@
 
 import type { AiScriptureCommandEvent, AiScriptureTranslation } from "../../../../types/ai/AiScripture"
 import type { FeatureCommandSpec } from "../../commands/commandStream"
-import { alternation, BARE_TAIL, CONDITIONAL_BEFORE, LEAD, matchCommand, mergeLocalizedGrammar, NARRATION_BEFORE, phraseOf, sequenceSpan, TAIL_CHARS } from "../../commands/grammar"
-import { normalizeSpokenNumbers, NUMBER_HOMOPHONES, parseNumberToken } from "../../commands/spokenNumbers"
+import { alternation, BARE_TAIL, CONDITIONAL_BEFORE, LEAD, matchCommand, mergeLocalizedGrammar, NARRATION_BEFORE, phraseOf, sequenceSpan, TAIL_CHARS, normalizeSpokenNumbers, NUMBER_HOMOPHONES, parseNumberToken } from "../../commands/utils"
 import { VERSE_WORD_MISHEARINGS } from "../vocabulary"
 import { COMMAND_GRAMMAR } from "./grammar"
 

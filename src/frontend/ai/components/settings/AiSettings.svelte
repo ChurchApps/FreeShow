@@ -5,7 +5,6 @@
     import Tip from "../../../components/main/Tip.svelte"
     import { ai } from "../../../stores"
     import { translateText } from "../../../utils/language"
-    import AiScriptureSettings from "./AiScriptureSettings.svelte"
     import STTOptions from "./STTOptions.svelte"
 
     $: isEnabled = $ai.enabled
@@ -47,12 +46,6 @@
     <MaterialDropdown label="Auto present" options={confidenceOptions} value={settings.confidence || "ask"} on:change={(e) => updateScripture("confidence", e.detail)} />
 
     <!-- TODO: auto lyrics & more -->
-
-    <br />
-    <br />
-
-    <!-- WIP this is being deprecated: -->
-    <AiScriptureSettings />
 {:else}
     <Tip type="info" value="ai.hint" top={20} />
     <Tip type="warning" value="ai.privacy_details" top={10} />

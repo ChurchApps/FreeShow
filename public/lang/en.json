@@ -1838,7 +1838,6 @@
         "processing": "Processing speech...",
         "test_success": "Connection successful!",
         "test_failed": "Connection failed",
-        "voice_commands": "Voice commands",
         "state_starting": "Starting...",
         "state_listening": "Listening",
         "state_stopped": "Stopped",

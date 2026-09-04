@@ -8,7 +8,7 @@ import { getShortBibleName, loadJsonBible } from "../../components/drawer/bible/
 import { ai, aiSuggestions, drawerTabsData, outLocked, scriptures } from "../../stores"
 import { projectDetection, resolveBookNumber } from "./projection"
 import { noteExplicitDetection } from "./quoteMatch/quoteMatchSession"
-import { getSettings, scriptureState } from "./scriptureState"
+import { scriptureState } from "./scriptureState"
 
 const SUGGESTION_MAX_AGE = 3 * 60 * 1000
 const SUGGESTION_LIMIT = 5
@@ -18,7 +18,7 @@ const QUOTE_DEMOTE_SCORE = 0.35
 export async function handleDetection(ref: DetectedReference): Promise<void> {
     if (!get(ai).enabled) return
 
-    const settings = getSettings()
+    const settings = get(ai).scripture || {}
     if (!scriptureState.sessionActive) return
 
     // a spoken reference primes the quote matcher: the recitation that follows resolves faster
@@ -242,7 +242,7 @@ function queueAutoProjection(ref: DetectedReference) {
 
         if (!pending || !scriptureState.sessionActive) return
 
-        const settings = getSettings()
+        const settings = get(ai).scripture || {}
         const confidence = settings.confidence || "ask"
         if (confidence === "ask") return
 

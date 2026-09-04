@@ -1,11 +1,12 @@
-// VOICE COMMAND DISPATCHER
+// VOICE COMMAND DISPATCHER & REGISTRY
 // features register a FeatureCommandSpec; the dispatcher runs each feature's stream over its
 // transcript segments, enforces the declared cooldowns and wraps a recognized command in the
-// generic envelope the renderer routes by feature
+// generic envelope. The registry maps envelopes to executors by feature.
 
 import type { AiCommandEnvelope } from "../../../types/ai/AiCommands"
 import type { CommandContext, FeatureCommandSpec } from "./commandStream"
 import { CommandStream } from "./commandStream"
+import { executeScriptureCommand } from "../scripture/voiceCommands"
 
 const DEFAULT_COOLDOWN_MS = 3000
 
@@ -40,4 +41,17 @@ export class CommandDispatcher {
         const { phrase, ...rest } = command
         return { feature, command: rest, phrase } as AiCommandEnvelope
     }
+}
+
+// ===== COMMAND REGISTRY =====
+// executors stay per-feature: this registry maps an envelope's feature to its executor. The
+// mapped type is exhaustive over the envelope union, so a feature without an executor is a
+// compile error - and the static imports keep module load order identical to a direct import
+
+const executors: { [F in AiCommandEnvelope["feature"]]: (envelope: Extract<AiCommandEnvelope, { feature: F }>) => void } = {
+    scripture: (envelope) => void executeScriptureCommand({ ...envelope.command, phrase: envelope.phrase })
+}
+
+export function dispatchAiCommand(envelope: AiCommandEnvelope): void {
+    executors[envelope.feature]?.(envelope as never)
 }

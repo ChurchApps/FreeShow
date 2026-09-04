@@ -3,10 +3,8 @@
 // across modules, so the cross-module fields live on one object). State a single module owns -
 // timers, debounce tokens, status-filter memory - stays private to that module instead.
 
-import { get } from "svelte/store"
 import type { DetectedReference } from "../../../types/ai/AiScripture"
 import type { OutSlide } from "../../../types/Show"
-import { ai } from "../../stores"
 
 export type PreviousOutputState = {
     activeScripture: { id?: string; reference?: { book: number | string; chapters: (number | string)[]; verses: (number | string)[][] } }
@@ -27,8 +25,4 @@ export const scriptureState = {
     lastAutoProjectedRef: null as DetectedReference | null,
     lastAutoProjectedBibleId: "", // which translation's wording is on the output right now
     lastQuoteMatchAnchor: null as { bookNumber: number; chapter: number; verseStart: number; verseEnd: number } | null
-}
-
-export function getSettings() {
-    return get(ai).scripture || {}
 }

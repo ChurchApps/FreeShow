@@ -1,5 +1,3 @@
-import type { LlmSelection } from "./AiModels"
-
 export interface DetectedReference {
     id: string
     book: string // canonical English book name (LLM) / matched book name (local)
@@ -22,18 +20,6 @@ export interface AiScriptureBook {
     number: number // book number as stored in the bible the names came from
     canonNumber?: number // position in the 66 book Protestant canon - set by the renderer for 66 book bibles (equal to number), undefined otherwise
     names: string[] // name/customName/abbreviations across the selected bibles
-}
-
-// scripture detection config handed from the renderer at start - engine/model/mic settings
-// live in the generic STT layer (AiSettings.stt), so only detection concerns travel here
-export interface AiScriptureDetectionConfig {
-    books: AiScriptureBook[]
-    llm: LlmSelection | null
-    voiceCommands?: boolean
-    translations?: AiScriptureTranslation[] // selected translations, for spoken translation switching
-    language?: string // spoken language code, for voice command matching
-    interpretationMode?: boolean // live interpretation: transcribe everything, only detect from listenLanguage
-    listenLanguage?: string // language code scripture detection listens to when interpretationMode is on
 }
 
 export type AiScriptureState = "starting" | "listening" | "stopped" | "error" | "llm_paused"

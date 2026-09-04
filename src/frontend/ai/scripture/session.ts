@@ -4,15 +4,15 @@
 import { get } from "svelte/store"
 import type { AiScriptureBook, AiScriptureTranslation } from "../../../types/ai/AiScripture"
 import { ai, aiInterim, aiScriptureHasProjected, aiScriptureStatus, aiStatus, aiSuggestions, scriptures } from "../../stores"
-import { CommandDispatcher } from "../commands/commandDispatcher"
-import { dispatchAiCommand } from "../commands/commandRegistry"
+import { CommandDispatcher, dispatchAiCommand } from "../commands/commandDispatcher"
+import type { AIProviderId } from "../models"
 import { resolveSttEngine } from "../stt/stt"
 import { scriptureCommandSpec } from "./commands/matcher"
 import type { AiScriptureAnchor } from "./detection/coordinator"
 import { DetectionCoordinator } from "./detection/coordinator"
 import { cancelPendingAutoProjection, handleDetection, pruneSuggestions } from "./detections"
 import { startQuoteMatching, stopQuoteMatching } from "./quoteMatch/quoteMatchSession"
-import { getSettings, scriptureState } from "./scriptureState"
+import { scriptureState } from "./scriptureState"
 import { bookTableIds, buildBookTable, buildTranslationTable, cancelSessionBiblesRefresh, cueTranslationIds, scheduleSessionBiblesRefresh, sessionBibleIds } from "./sessionBibles"
 import { refreshSessionLlm, resolveSessionLlm } from "./sessionLlm"
 
@@ -21,7 +21,7 @@ let suggestionPruneTimer: NodeJS.Timeout | null = null
 // Coordinator and command dispatcher instances running in the frontend session
 let scriptureCoordinator: DetectionCoordinator | null = null
 let scriptureCommandDispatcher: CommandDispatcher | null = null
-let scriptureConfig: { language: string; translations: AiScriptureTranslation[]; books: AiScriptureBook[]; voiceCommands: boolean; interpretationMode: boolean; listenLanguage: string } | null = null
+let scriptureConfig: { language: string; translations: AiScriptureTranslation[]; books: AiScriptureBook[]; interpretationMode: boolean; listenLanguage: string } | null = null
 let lastAnchorAtMs = 0
 const ANCHOR_FRESH_MS = 120000
 
@@ -29,8 +29,6 @@ const ANCHOR_FRESH_MS = 120000
 
 export async function startScriptureSession(): Promise<{ ok: boolean; error?: string }> {
     stopScriptureSession()
-
-    const settings = getSettings()
 
     scriptureState.searchBibleIds = sessionBibleIds()
     if (!bookTableIds().length) return { ok: false, error: "no_scripture" }
@@ -56,7 +54,6 @@ export async function startScriptureSession(): Promise<{ ok: boolean; error?: st
         books,
         translations,
         language,
-        voiceCommands: !!settings.voiceCommands,
         interpretationMode,
         listenLanguage
     }
@@ -143,7 +140,7 @@ export function handleScriptureTranscript(segment: { text: string; startMs: numb
 
     scriptureCoordinator.onTranscriptSegment(segment)
 
-    if (!config?.voiceCommands || !scriptureCommandDispatcher) return
+    if (!scriptureCommandDispatcher) return
     const envelope = scriptureCommandDispatcher.handleSegment("scripture", { text: segment.text, endMs: segment.endMs }, { anchored: Date.now() - lastAnchorAtMs < ANCHOR_FRESH_MS })
     if (envelope) dispatchAiCommand(envelope)
 }
@@ -156,7 +153,7 @@ export function updateScriptureCoordinatorBooks(books: AiScriptureBook[], transl
     scriptureCoordinator?.updateBooks(books)
 }
 
-export function updateScriptureCoordinatorLlm(llm: { provider: string; model: string } | null): void {
+export function updateScriptureCoordinatorLlm(llm: { provider: AIProviderId; model: string } | null): void {
     scriptureCoordinator?.updateLlm(llm)
 }
 
@@ -182,9 +179,6 @@ aiStatus.subscribe((status) => {
 // a provider/model change in settings re-arms the running session's tier 2 on the spot
 let lastLlmConfigKey = ""
 ai.subscribe((value) => {
-    if (scriptureConfig) {
-        scriptureConfig.voiceCommands = !!value?.scripture?.voiceCommands
-    }
     const key = `${value?.llm?.provider || ""}|${value?.llm?.model || ""}`
     if (key !== lastLlmConfigKey) {
         lastLlmConfigKey = key

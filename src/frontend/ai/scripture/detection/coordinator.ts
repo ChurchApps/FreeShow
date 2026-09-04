@@ -3,7 +3,8 @@
 // tier 2: LLM detection over the rolling transcript for paraphrased/quoted references (optional, needs an API key)
 
 import type { AiScriptureBook, AiScriptureState, DetectedReference } from "../../../../types/ai/AiScripture"
-import { normalizeSpokenNumbers } from "../../commands/spokenNumbers"
+import { normalizeSpokenNumbers } from "../../commands/utils"
+import type { AIProviderId } from "../../models"
 import { getLLMScriptureProvider } from "../llmTalkScripture"
 import type { BookIndex } from "./references"
 import { buildBookIndex, matchReferences } from "./references"
@@ -53,7 +54,7 @@ interface DetectionCandidate {
 
 interface DetectionCoordinatorOptions {
     books: AiScriptureBook[]
-    llm: { provider: string; model: string } | null
+    llm: { provider: AIProviderId; model: string } | null
     onDetection: (ref: DetectedReference) => void
     onStatus: (state: AiScriptureState, extra?: { message?: string; keyless?: boolean }) => void
     cooldownSeconds?: number

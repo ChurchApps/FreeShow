@@ -37,5 +37,4 @@ interface LlmSettings {
 
 interface AiScriptureSettings {
     confidence?: "ask" | "highest" | "high" | "medium"
-    voiceCommands?: boolean
 }

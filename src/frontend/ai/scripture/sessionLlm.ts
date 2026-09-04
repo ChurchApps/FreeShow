@@ -1,16 +1,15 @@
 import { get } from "svelte/store"
-import type { AiScriptureDetectionConfig } from "../../../types/ai/AiScripture"
 import { Main } from "../../../types/IPC/Main"
 import { requestMain } from "../../IPC/main"
 import { ai, aiScriptureStatus } from "../../stores"
-import { AI_PROVIDER_MODELS } from "../models"
+import { AI_PROVIDER_MODELS, type AIProviderId } from "../models"
 import { scriptureState } from "./scriptureState"
 import { updateScriptureCoordinatorLlm } from "./session"
 
 /** The tier-2 LLM config as it stands right now: a chosen provider whose key is saved, or null. */
-export async function resolveSessionLlm(): Promise<AiScriptureDetectionConfig["llm"]> {
-    const provider = get(ai).llm?.provider || "none"
-    if (provider === "none") return null
+export async function resolveSessionLlm() {
+    const provider = (get(ai).llm?.provider || null) as AIProviderId | null
+    if (!provider) return null
 
     const status = await requestMain(Main.AI_GET_STATUS, { engineId: provider })
     if (!status?.[provider]?.ready) return null
