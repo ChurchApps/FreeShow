@@ -19,7 +19,7 @@ export const NEMOTRON_MODEL_BYTES = 661_920_000
 // speech gating, shared by any streaming driver (~630 KB)
 const VAD_MODEL_URL = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx"
 export const NEMOTRON_VAD_FILE = "silero_vad.onnx"
-const VAD_MODEL_SHA256 = "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6"
+const NEMOTRON_VAD_SHA256 = "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6"
 
 export class NemotronSetupManager {
     static getBinaryName() {
@@ -35,7 +35,7 @@ export class NemotronSetupManager {
     static async downloadEngine(outputFolder: string) {
         const dlm = this.getDownloadManager()
 
-        const jobs = [...Object.values(NEMOTRON_MODEL_FILES).map((entry) => ({ url: `${MODEL_BASE_URL}/${entry.file}`, file: entry.file, sha256: entry.sha256 })), { url: VAD_MODEL_URL, file: NEMOTRON_VAD_FILE, sha256: VAD_MODEL_SHA256 }]
+        const jobs = [...Object.values(NEMOTRON_MODEL_FILES).map((entry) => ({ url: `${MODEL_BASE_URL}/${entry.file}`, file: entry.file, sha256: entry.sha256 })), { url: VAD_MODEL_URL, file: NEMOTRON_VAD_FILE, sha256: NEMOTRON_VAD_SHA256 }]
 
         // one download spans several files, so progress is reported against the known total rather than per file
         let completedBytes = 0

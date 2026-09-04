@@ -29,10 +29,10 @@
     }
 
     const confidenceOptions = [
-        { value: "ask", label: "ai.confidence_ask" },
-        { value: "highest", label: "ai.confidence_highest", data: "> 95%" },
-        { value: "high", label: "ai.confidence_high", data: "> 75%" },
-        { value: "medium", label: "ai.confidence_medium", data: "> 50%" }
+        { value: "ask", label: translateText("ai.confidence_ask") },
+        { value: "highest", label: translateText("ai.confidence_highest"), data: "> 95%" },
+        { value: "high", label: translateText("ai.confidence_high"), data: "> 75%" },
+        { value: "medium", label: translateText("ai.confidence_medium"), data: "> 50%" }
     ]
 </script>
 

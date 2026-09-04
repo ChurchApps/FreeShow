@@ -1,5 +1,6 @@
 import path from "path"
 import type { SttEngineOptions } from "../../../../types/ai/AiSettings"
+import { LocalModelManager } from "../../setup/LocalModelManager"
 import type { TranscriberSegment } from "../sttHelper"
 import { NemotronDriver, type NemotronWorkerRequest, type NemotronWorkerResponse } from "./nemotronWorker"
 
@@ -25,6 +26,7 @@ export class NemotronTranscriber {
     private lastWorkerMessageAt = 0
     private stallTimer: NodeJS.Timeout | null = null
     private restarting = false
+    private modelDir = ""
 
     constructor(options: SttEngineOptions, onSegment: (segment: TranscriberSegment) => void, onError: (message: string) => void, onInterim?: (text: string) => void) {
         this.options = options
@@ -34,12 +36,14 @@ export class NemotronTranscriber {
     }
 
     async start() {
+        this.modelDir = LocalModelManager.getModelDir("nemotron")
         if (await this.startWorker()) return true
         if (this.startErrorMessage) throw new Error(this.startErrorMessage)
 
         console.warn("[nemotron] Decode process unavailable - decoding in the main process instead")
         this.fallback = new NemotronDriver({
             language: this.options.language || "en",
+            modelDir: this.modelDir,
             onSegment: this.onSegment,
             onInterim: this.onInterim,
             onError: this.onError
@@ -115,7 +119,7 @@ export class NemotronTranscriber {
             if (!this.stopped) this.onError(`Nemotron transcription process exited unexpectedly (code ${code})`)
         })
 
-        this.post(child, { type: "start", language: this.options.language || "en" })
+        this.post(child, { type: "start", language: this.options.language || "en", modelDir: this.modelDir })
 
         const ok = await new Promise<boolean>((resolve) => {
             const timer = setTimeout(() => {

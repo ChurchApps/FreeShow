@@ -57,9 +57,16 @@ export class LocalModelManager {
         }
 
         if (engineId === "nemotron") {
-            const paths = (manager as any).getNemotronModelPaths()
-            const supported = (manager as any).isNemotronSupported()
-            return { ready: supported && !!paths && !!(manager as any).getVadModelPath(), localPath: paths ? (manager as any).getModelDir() : null, supported }
+            const nemotron = require("./models/nemotron") as {
+                NEMOTRON_MODEL_FILES: Record<string, { file: string }>
+                NEMOTRON_VAD_FILE: string
+            }
+
+            const modelDir = this.getModelDir(engineId)
+            const requiredFiles = [...Object.values(nemotron.NEMOTRON_MODEL_FILES).map((entry) => entry.file), nemotron.NEMOTRON_VAD_FILE]
+            const checks = await Promise.all(requiredFiles.map((file) => manager.verifyEngine(path.join(modelDir, file))))
+            const ready = checks.every(Boolean)
+            return { ready, localPath: ready ? modelDir : null }
         }
 
         const enginePath = customPath || this.getEnginePath(engineId)

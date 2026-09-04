@@ -1,10 +1,16 @@
 import path from "path"
-import { LocalModelManager } from "../../setup/LocalModelManager"
-import { NEMOTRON_MODEL_FILES, NEMOTRON_VAD_FILE } from "../../setup/models/nemotron"
 import type { DriverCallbacks, TranscriberSegment, TranscriptionDriver } from "../sttHelper"
 import { appendTailWords, trimRepeatedLeadWords } from "../sttHelper"
 
-export type NemotronWorkerRequest = { type: "start"; language?: string } | { type: "audio"; data: Uint8Array } | { type: "stop" }
+const NEMOTRON_FILES = {
+    encoder: "encoder.int8.onnx",
+    decoder: "decoder.int8.onnx",
+    joiner: "joiner.int8.onnx",
+    tokens: "tokens.txt",
+    vad: "silero_vad.onnx"
+} as const
+
+export type NemotronWorkerRequest = { type: "start"; language?: string; modelDir?: string } | { type: "audio"; data: Uint8Array } | { type: "stop" }
 
 export type NemotronWorkerResponse = { type: "ready" } | { type: "segment"; segment: TranscriberSegment } | { type: "interim"; text: string } | { type: "error"; message: string } | { type: "stopped" } | { type: "alive" }
 
@@ -15,7 +21,7 @@ const CLOSE_DEFER_SAMPLES = 8000
 const MAX_UTTERANCE_SAMPLES = 17 * SAMPLE_RATE
 
 export class NemotronDriver implements TranscriptionDriver {
-    private options: DriverCallbacks & { language?: string; sherpa?: any }
+    private options: DriverCallbacks & { language?: string; sherpa?: any; modelDir?: string }
     private recognizer: any = null
     private vad: any = null
 
@@ -33,7 +39,7 @@ export class NemotronDriver implements TranscriptionDriver {
     private emittedTailWords: string[] = []
     private nextEmitStartMs = 0
 
-    constructor(options: DriverCallbacks & { language?: string; sherpa?: any }) {
+    constructor(options: DriverCallbacks & { language?: string; sherpa?: any; modelDir?: string }) {
         this.options = options
     }
 
@@ -41,15 +47,15 @@ export class NemotronDriver implements TranscriptionDriver {
         if (this.stopped) throw new Error("Driver already stopped")
 
         const sherpa = this.options.sherpa || require("sherpa-onnx-node")
-        const modelDir = LocalModelManager.getModelDir("nemotron")
+        const modelDir = this.options.modelDir
 
         if (!modelDir) throw new Error("Nemotron model files are missing")
 
         const paths = {
-            encoder: path.join(modelDir, NEMOTRON_MODEL_FILES.encoder.file),
-            decoder: path.join(modelDir, NEMOTRON_MODEL_FILES.decoder.file),
-            joiner: path.join(modelDir, NEMOTRON_MODEL_FILES.joiner.file),
-            tokens: path.join(modelDir, NEMOTRON_MODEL_FILES.tokens.file)
+            encoder: path.join(modelDir, NEMOTRON_FILES.encoder),
+            decoder: path.join(modelDir, NEMOTRON_FILES.decoder),
+            joiner: path.join(modelDir, NEMOTRON_FILES.joiner),
+            tokens: path.join(modelDir, NEMOTRON_FILES.tokens)
         }
 
         this.recognizer = new sherpa.OnlineRecognizer({
@@ -67,7 +73,7 @@ export class NemotronDriver implements TranscriptionDriver {
         this.vad = new sherpa.Vad(
             {
                 sileroVad: {
-                    model: path.join(modelDir, NEMOTRON_VAD_FILE),
+                    model: path.join(modelDir, NEMOTRON_FILES.vad),
                     threshold: 0.3,
                     minSilenceDuration: 0.8,
                     minSpeechDuration: 0.15,
@@ -230,6 +236,7 @@ if (parentPort) {
             if (message.type === "start") {
                 driver = new NemotronDriver({
                     language: message.language,
+                    modelDir: message.modelDir,
                     onSegment: (segment) => post({ type: "segment", segment }),
                     onInterim: (text) => post({ type: "interim", text }),
                     onError: (message) => post({ type: "error", message })
