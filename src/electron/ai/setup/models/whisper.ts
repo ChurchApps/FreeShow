@@ -3,10 +3,12 @@ import fs from "fs"
 import path from "path"
 import { promisify } from "util"
 import { decompressZipStream } from "../../../data/zip"
-import { WHISPER_MODELS } from "../../speech/whisper/manager"
 import { DownloadManager } from "../DownloadManager"
 
 const execFileAsync = promisify(execFile)
+
+// exported model ids
+const WHISPER_MODELS = ["tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large-v3"]
 
 // pre-built whisper.cpp binaries from the official GitHub releases (Windows x64 only - other platforms use a system installed binary)
 // verified against https://github.com/ggml-org/whisper.cpp/releases/tag/v1.9.2 - the x64 zip contains whisper-cli.exe/whisper-server.exe + the required DLLs nested in a "Release/" folder

@@ -3,7 +3,6 @@ import type { LLMCompletionOptions } from "../../../../types/ai/AiModels"
 
 export const LLM_API_TIMEOUT = 12000
 
-// stable error codes: the scripture detection coordinator pauses/backs off on these, and the UI translates them (ai.error_*)
 export type LLMErrorCode = "invalid_key" | "forbidden" | "model_not_found" | "rate_limited" | "invalid_request" | "server_error" | "timeout" | "network" | "refusal" | "bad_response"
 const LLM_ERROR_CODES: LLMErrorCode[] = ["invalid_key", "forbidden", "model_not_found", "rate_limited", "invalid_request", "server_error", "timeout", "network", "refusal", "bad_response"]
 

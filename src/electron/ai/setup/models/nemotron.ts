@@ -8,7 +8,6 @@ import { DownloadManager } from "../DownloadManager"
 // pinned to a specific repo revision (not "main") and to per-file SHA-256 hashes, so exactly these bytes land
 // or nothing does - the hashes are the LFS checksums Hugging Face publishes for this revision
 const MODEL_BASE_URL = "https://huggingface.co/csukuangfj/sherpa-onnx-nemotron-speech-streaming-en-0.6b-int8-2026-01-14/resolve/f13b0c6a48186fdd9fdd8d203b9527b0b709b09f"
-// the runtime loader (speech/nemotron/manager.ts) builds its file paths from this same table
 export const NEMOTRON_MODEL_FILES = {
     encoder: { file: "encoder.int8.onnx", sha256: "2f6ae81fe4ccd69ef04cdf048ecd49628e2d3148a6195e152a91b4d2497952dc" },
     decoder: { file: "decoder.int8.onnx", sha256: "1fb1795cb46e7d0e99b2e096eae83f7e324294e895975a1a894b0384cbbe37f6" },

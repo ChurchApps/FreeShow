@@ -2,11 +2,10 @@ import { existsSync } from "fs"
 import type { SttEngineOptions } from "../../../types/ai/AiSettings"
 import { ToMain } from "../../../types/IPC/ToMain"
 import { sendToMain } from "../../IPC/main"
-import { getNemotronModelPaths, getVadModelPath, isNemotronSupported } from "../speech/nemotron/manager"
-import { isModelReady, resolveWhisper } from "../speech/whisper/manager"
-import type { TranscriberSegment } from "../speech/types"
-import { NemotronTranscriber } from "./transcribers/NemotronTranscriber"
-import { WhisperTranscriber } from "./transcribers/WhisperTranscriber"
+import { LocalModelManager } from "../setup/LocalModelManager"
+import { NemotronTranscriber } from "./models/NemotronTranscriber"
+import { WhisperTranscriber } from "./models/WhisperTranscriber"
+import type { TranscriberSegment } from "./sttHelper"
 
 type SttEngine = WhisperTranscriber | NemotronTranscriber
 type SegmentListener = (segment: TranscriberSegment) => void
@@ -15,7 +14,7 @@ export class SpeechToText {
     static transcriberEngine: SttEngine | null = null
     // bumped on every start/stop so a slow start that got superseded can tell it no longer owns the session
     static sessionToken = 0
-    // features (e.g. scripture detection) subscribe to the transcript stream while their toggle is on
+    // features (e.g. downstream detectors) subscribe to the transcript stream while their toggle is on
     private static segmentListeners: Set<SegmentListener> = new Set()
 
     static async listen(engine: string, options: SttEngineOptions): Promise<{ started: boolean; error?: string }> {
@@ -71,41 +70,34 @@ export class SpeechToText {
         this.transcriberEngine?.pushAudio(buffer)
     }
 
-    // scripture detection reports the bible book being preached from - whisper biases its decoder
-    // toward that book's vocabulary (a no-op for other engines and outside a session)
-    static setContextBook(bookNumber: number) {
-        if (this.transcriberEngine instanceof WhisperTranscriber) this.transcriberEngine.setContextBook(bookNumber)
-    }
-
     private static async createEngine(engine: string, options: SttEngineOptions): Promise<{ transcriber: SttEngine } | { error: string }> {
         const onSegment = this.onSegment.bind(this)
         const onError = this.onError.bind(this)
 
         if (engine === "whisper") {
             // interpretation mode needs per-window language detection, which only the whisper cli's -oj output provides
-            const whisper = await resolveWhisper(options.customPath, { preferCli: !!options.interpretationMode })
-            if (!whisper) return { error: "whisper_not_installed" }
+            const whisperStatus = await LocalModelManager.getStatus("whisper", undefined, options.customPath)
+            if (!whisperStatus.ready) return { error: "whisper_not_installed" }
+            const whisper = { kind: "cli", binaryPath: whisperStatus.localPath || "" } as const
 
             const customModel = options.customModelPath && existsSync(options.customModelPath) ? options.customModelPath : ""
             // default model matches the options popup's derivation: English-only speech uses the smaller .en variant
             let model = options.model || ((options.language || "en").startsWith("en") && !options.interpretationMode ? "base.en" : "base")
             // interpretation mode needs a multilingual model for per-window language detection - never an .en variant
             if (options.interpretationMode) model = model.replace(".en", "")
-            if (!customModel && !isModelReady(model)) return { error: "whisper_model_missing" }
+            if (!customModel) {
+                const modelStatus = await LocalModelManager.getStatus("whisper", model)
+                if (!modelStatus.ready) return { error: "whisper_model_missing" }
+            }
 
             return { transcriber: new WhisperTranscriber({ ...options, customModelPath: customModel, model, whisper }, onSegment, onError, this.onInterim.bind(this)) }
         }
 
         if (engine === "nemotron") {
-            // guard the addon before the model: a downloaded model with no loadable addon must not reach require() and
-            // surface a raw MODULE_NOT_FOUND stack in the UI
-            if (!isNemotronSupported()) return { error: "nemotron_unsupported" }
+            const nemotronStatus = await LocalModelManager.getStatus("nemotron")
+            if (!nemotronStatus.ready) return { error: "nemotron_unsupported" }
 
-            const nemotron = getNemotronModelPaths()
-            const vadModelPath = getVadModelPath()
-            if (!nemotron || !vadModelPath) return { error: "nemotron_model_missing" }
-
-            return { transcriber: new NemotronTranscriber({ ...options, nemotron, vadModelPath }, onSegment, onError, this.onInterim.bind(this)) }
+            return { transcriber: new NemotronTranscriber({ ...options }, onSegment, onError, this.onInterim.bind(this)) }
         }
 
         console.error(`Unknown STT engine: ${engine}`)

@@ -1,5 +1,6 @@
 import { Main } from "../../../types/IPC/Main"
 import { requestMain } from "../../IPC/main"
+import type { AIProviderId } from "../models"
 
 export interface RawDetection {
     book: string
@@ -114,7 +115,7 @@ function isPositiveInteger(value: any): boolean {
     return typeof value === "number" && Number.isInteger(value) && value > 0
 }
 
-export function getLLMScriptureProvider(providerId: string) {
+export function getLLMScriptureProvider(providerId: AIProviderId) {
     return {
         id: providerId,
         detectScripture: async (model: string, req: AIDetectionRequest, signal?: AbortSignal) => {

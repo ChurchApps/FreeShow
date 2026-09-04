@@ -3,10 +3,6 @@ import fs from "fs"
 import path from "path"
 import type { AiSetupOptions, EngineStatus } from "../../../types/ai/AiModels"
 import { createFolder } from "../../utils/files"
-import { getModelDir as getNemotronDir, getNemotronModelPaths, getVadModelPath, isNemotronSupported } from "../speech/nemotron/manager"
-import { isModelReady, resolveWhisper, WHISPER_MODELS } from "../speech/whisper/manager"
-import { NemotronSetupManager } from "./models/nemotron"
-import { WhisperSetupManager } from "./models/whisper"
 
 export async function aiHandleLocalSetup(data: AiSetupOptions) {
     if (data.action === "download") {
@@ -36,8 +32,9 @@ const BIN_DIR = path.join(app.getPath("userData"), "bin")
 
 export class LocalModelManager {
     private static getManager(engineId: string) {
-        if (engineId === "whisper") return WhisperSetupManager
-        if (engineId === "nemotron") return NemotronSetupManager
+        // require lazily to avoid circular imports when models import these helpers
+        if (engineId === "whisper") return require("./models/whisper").WhisperSetupManager
+        if (engineId === "nemotron") return require("./models/nemotron").NemotronSetupManager
         return null
     }
 
@@ -54,15 +51,15 @@ export class LocalModelManager {
         // engine readiness comes from the same resolvers the transcribers use,
         // so a system installed binary or an already downloaded model always counts
         if (engineId === "whisper") {
-            const binary = await resolveWhisper(customPath)
-            const downloadedModels = WHISPER_MODELS.filter((id) => isModelReady(id))
+            const binary = await (manager as any).resolveWhisper(customPath)
+            const downloadedModels = (await Promise.all(((manager as any).WHISPER_MODELS as string[]).map(async (id: string) => ({ id, ready: (manager as any).isModelReady(id) })))).filter(({ ready }) => ready).map(({ id }) => id)
             return { ready: !!binary, localPath: binary?.binaryPath || null, downloadedModels }
         }
 
         if (engineId === "nemotron") {
-            const paths = getNemotronModelPaths()
-            const supported = isNemotronSupported()
-            return { ready: supported && !!paths && !!getVadModelPath(), localPath: paths ? getNemotronDir() : null, supported }
+            const paths = (manager as any).getNemotronModelPaths()
+            const supported = (manager as any).isNemotronSupported()
+            return { ready: supported && !!paths && !!(manager as any).getVadModelPath(), localPath: paths ? (manager as any).getModelDir() : null, supported }
         }
 
         const enginePath = customPath || this.getEnginePath(engineId)

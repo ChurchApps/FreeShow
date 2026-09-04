@@ -110,7 +110,7 @@ async function updateSession(token: number, bibleIds: string[]): Promise<void> {
 export function handleQuoteMatchTranscript(segment: TranscriptSegment): void {
     if (!host && !starting) return
 
-    // mirror the main process's detection gating (electron/ai/index.ts): music lyrics are
+    // mirror the main process's detection gating: music lyrics are
     // hallucination territory, and in interpretation mode only the listen language is detectable
     if (segment.music) return
     if (gate?.interpretationMode && segment.language && gate.listenLanguage && segment.language !== gate.listenLanguage) return
@@ -231,8 +231,9 @@ async function buildPayloads(bibleIds: string[]): Promise<TranslationPayload[]> 
 }
 
 function toDetectedReference(emission: QuoteMatchEmission): DetectedReference {
+    const id = "aiq-" + Date.now().toString(36) + "-" + (idCounter++).toString(36)
     return {
-        id: "aiq-" + Date.now().toString(36) + "-" + (idCounter++).toString(36),
+        id: id,
         book: bookNameFor(emission.translationId, emission.book),
         bookNumber: emission.book,
         chapter: emission.chapter,
@@ -244,7 +245,7 @@ function toDetectedReference(emission: QuoteMatchEmission): DetectedReference {
         quote: emission.quoteText,
         matchedBibleId: emission.translationId,
         continuation: emission.kind === "continuation" || undefined,
-        corrects: emission.corrects ? { bookNumber: emission.corrects.book, chapter: emission.corrects.chapter, verseStart: emission.corrects.verseStart, verseEnd: emission.corrects.verseEnd } : undefined,
+        corrects: emission.corrects ? { id, bookNumber: emission.corrects.book, chapter: emission.corrects.chapter, verseStart: emission.corrects.verseStart, verseEnd: emission.corrects.verseEnd } : undefined,
         timestamp: Date.now()
     }
 }

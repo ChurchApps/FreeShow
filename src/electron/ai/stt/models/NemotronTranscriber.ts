@@ -1,14 +1,7 @@
 import path from "path"
 import type { SttEngineOptions } from "../../../../types/ai/AiSettings"
-import { NemotronDriver } from "../../speech/nemotron/driver"
-import type { NemotronModelPaths } from "../../speech/nemotron/manager"
-import type { NemotronWorkerRequest, NemotronWorkerResponse } from "../../speech/nemotron/worker"
-import type { TranscriberSegment } from "../../speech/types"
-
-interface NemotronTranscriberOptions extends SttEngineOptions {
-    nemotron: NemotronModelPaths
-    vadModelPath: string // resolved by the manager - a file path, not the model directory
-}
+import type { TranscriberSegment } from "../sttHelper"
+import { NemotronDriver, type NemotronWorkerRequest, type NemotronWorkerResponse } from "./nemotronWorker"
 
 // the worker loads ~650 MB of ONNX models from disk before it can answer
 const WORKER_START_TIMEOUT = 30000
@@ -25,7 +18,7 @@ const WORKER_STALL_CHECK_INTERVAL = 5000
  * worker cannot be spawned, decoding falls back in-process (the previous behavior).
  */
 export class NemotronTranscriber {
-    private options: NemotronTranscriberOptions
+    private options: SttEngineOptions
     private onSegment: (segment: TranscriberSegment) => void
     private onError: (message: string) => void
     private onInterim?: (text: string) => void
@@ -42,7 +35,7 @@ export class NemotronTranscriber {
     private stallTimer: NodeJS.Timeout | null = null
     private restarting = false
 
-    constructor(options: NemotronTranscriberOptions, onSegment: (segment: TranscriberSegment) => void, onError: (message: string) => void, onInterim?: (text: string) => void) {
+    constructor(options: SttEngineOptions, onSegment: (segment: TranscriberSegment) => void, onError: (message: string) => void, onInterim?: (text: string) => void) {
         this.options = options
         this.onSegment = onSegment
         this.onError = onError
@@ -56,8 +49,6 @@ export class NemotronTranscriber {
 
         console.warn("[nemotron] Decode process unavailable - decoding in the main process instead")
         this.fallback = new NemotronDriver({
-            paths: this.options.nemotron,
-            vadModelPath: this.options.vadModelPath,
             language: this.options.language || "en",
             onSegment: this.onSegment,
             onInterim: this.onInterim,
@@ -119,7 +110,7 @@ export class NemotronTranscriber {
             // eslint-disable-next-line @typescript-eslint/no-var-requires
             const { utilityProcess } = require("electron") as typeof import("electron")
             if (!utilityProcess?.fork) return false
-            child = utilityProcess.fork(path.join(__dirname, "../../speech/nemotron/worker.js"), [], { serviceName: "FreeShow AI transcription" })
+            child = utilityProcess.fork(path.join(__dirname, "./nemotronWorker.js"), [], { serviceName: "FreeShow AI transcription" })
         } catch (err) {
             console.error("[nemotron] Could not spawn the decode process:", err)
             return false
@@ -138,7 +129,7 @@ export class NemotronTranscriber {
             if (!this.stopped) this.onError(`Nemotron transcription process exited unexpectedly (code ${code})`)
         })
 
-        this.post(child, { type: "start", paths: this.options.nemotron, vadModelPath: this.options.vadModelPath, language: this.options.language || "en" })
+        this.post(child, { type: "start", language: this.options.language || "en" })
 
         const ok = await new Promise<boolean>((resolve) => {
             const timer = setTimeout(() => {

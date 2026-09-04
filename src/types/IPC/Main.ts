@@ -8,6 +8,7 @@ import type { PCOFolderTreeNode } from "../../electron/contentProviders/planning
 import type { _store } from "../../electron/data/store"
 import type { EncoderDetection } from "../../electron/streaming/encoderDetection"
 import type { TimecodeMode } from "../../electron/timecode/timecode"
+import type { AIProviderId } from "../../frontend/ai/models"
 import type { AiSetupOptions, EngineStatus } from "../ai/AiModels"
 import type { SttEngineOptions } from "../ai/AiSettings"
 import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, MediaCodecInfo, OS, SpotifyState, Subtitle } from "../Main"
@@ -299,8 +300,8 @@ export interface MainSendPayloads {
     [Main.AI_GET_STATUS]: { engineId?: string; modelId?: string; customPath?: string } | undefined
     [Main.AI_SETUP]: AiSetupOptions
     [Main.AI_SET_KEY]: { providerId: string; key: string }
-    [Main.AI_TEST_CONNECTION]: { providerId: string; model: string }
-    [Main.AI_LLM_COMPLETE]: { providerId: string; model: string; options: { systemPrompt?: string; prompt: string; jsonSchema?: any; temperature?: number; maxTokens?: number } }
+    [Main.AI_TEST_CONNECTION]: { providerId: AIProviderId; model: string }
+    [Main.AI_LLM_COMPLETE]: { providerId: AIProviderId; model: string; options: { systemPrompt?: string; prompt: string; jsonSchema?: any; temperature?: number; maxTokens?: number } }
 }
 
 export interface MainReturnPayloads {

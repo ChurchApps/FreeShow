@@ -8,7 +8,8 @@ import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
-import { completeAiLlm, testAiConnection } from "../ai"
+import { checkLLMConnection, completeLLM } from "../ai/llm/llmProviders"
+import { setAiKey } from "../ai/setup/aiKeys"
 import { aiHandleLocalSetup } from "../ai/setup/LocalModelManager"
 import { aiGetModelStatus } from "../ai/setup/status"
 import { SpeechToText } from "../ai/stt/SpeechToTextManager"
@@ -16,8 +17,8 @@ import { getAudioMetadata } from "../audio/audio"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 import { CaptureHelper } from "../capture/CaptureHelper"
 import { canSync, getSyncTeams, hasDataChanged, hasTeamData, markAsNewSync, restoreCloudBackup, syncData } from "../cloud/syncManager"
-import { ContentProviderRegistry } from "../contentProviders"
 import { ChurchAppsChat } from "../contentProviders/churchApps/ChurchAppsChat"
+import { ContentProviderRegistry } from "../contentProviders/ContentProviderRegistry"
 import { deleteBackup, getBackups, restoreFiles } from "../data/backup"
 import { getLocalIPs } from "../data/bonjour"
 import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
@@ -44,7 +45,6 @@ import { correctSpelling } from "../utils/spellcheck"
 import { executeSpotifyCommand, getSpotifyState } from "../utils/spotify"
 import checkForUpdates from "../utils/updater"
 import { sendToMain } from "./main"
-import { setAiKey } from "../ai/setup/aiKeys"
 
 // no need to await Promise returns here
 export const mainResponses: MainResponses = {
@@ -282,8 +282,8 @@ export const mainResponses: MainResponses = {
     [Main.AI_GET_STATUS]: (data) => aiGetModelStatus(data),
     [Main.AI_SETUP]: (data) => aiHandleLocalSetup(data),
     [Main.AI_SET_KEY]: (data) => setAiKey(data),
-    [Main.AI_TEST_CONNECTION]: (data) => testAiConnection(data),
-    [Main.AI_LLM_COMPLETE]: (data) => completeAiLlm(data)
+    [Main.AI_TEST_CONNECTION]: (data) => checkLLMConnection(data),
+    [Main.AI_LLM_COMPLETE]: (data) => completeLLM(data)
 }
 
 /// ///////

@@ -9,6 +9,7 @@ import { closeServers } from "../servers"
 import { RtmpStreamer } from "../streaming/RtmpStreamer"
 import { stopApiListener } from "./api"
 import { stopMidi } from "./midi"
+import { SpeechToText } from "../ai/stt/SpeechToTextManager"
 
 export let dialogClose = false // is unsaved
 export function callClose(e: Electron.Event) {
@@ -30,6 +31,8 @@ export async function exitApp() {
     console.info("Closing app!")
 
     dialogClose = false
+
+    SpeechToText.stop()
 
     RtmpStreamer.stopAll()
     await OutputHelper.Lifecycle.closeAllOutputs()

@@ -1,4 +1,30 @@
-// AI AUTO SCRIPTURE - seam stitching, shared by both transcription drivers.
+/** A finished piece of transcript. Timings are relative to the start of the session. */
+export interface TranscriberSegment {
+    text: string
+    startMs: number
+    endMs: number
+    language?: string // detected language of the window (whisper cli -oj with "-l auto" only)
+    music?: boolean // marked as sung content - lyrics are unreliable & never feed detection
+    utteranceEnd?: boolean // last segment of a spoken utterance (streaming engine) - the display groups lines on it
+}
+
+export interface TranscriptionDriver {
+    /** Prepare the engine. Rejects if the model/binary cannot be loaded. */
+    start(): Promise<void>
+    /** Release everything. Safe to call more than once. */
+    stop(): Promise<void>
+    /** Int16 LE PCM @ 16 kHz mono, as sent by the renderer. */
+    pushAudio(buffer: Uint8Array): void
+}
+
+export interface DriverCallbacks {
+    onSegment: (segment: TranscriberSegment) => void
+    onError: (message: string) => void
+    /** The open utterance's unstable tail - display-only text, replaced on every partial decode & cleared on finalize. */
+    onInterim?: (text: string) => void
+}
+
+// AI STT - seam stitching, shared by both transcription drivers.
 // Words at a decode seam (whisper's window overlap, nemotron's partial re-decodes) can be
 // transcribed twice: timings shift between decodes, and word counts drift when a re-decode
 // merges or splits a word. Each driver re-covers a little audio/text across the seam so no

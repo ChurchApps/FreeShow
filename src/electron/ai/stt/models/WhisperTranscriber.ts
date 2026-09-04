@@ -4,11 +4,12 @@ import fs from "fs"
 import net from "net"
 import os from "os"
 import path from "path"
-import { appendTailWords, trimRepeatedLeadWords } from "../seam"
-import type { DriverCallbacks, TranscriberSegment as DriverSegment, TranscriptionDriver } from "../types"
-import { isPromptEcho } from "./prompt"
+import type { SttEngineOptions } from "../../../../types/ai/AiSettings"
+import { LocalModelManager } from "../../setup/LocalModelManager"
+import type { DriverCallbacks, TranscriberSegment as DriverSegment, TranscriptionDriver } from "../sttHelper"
+import { appendTailWords, trimRepeatedLeadWords } from "../sttHelper"
 
-// AI AUTO SCRIPTURE - streaming transcription over whisper.cpp
+// AI STT - streaming transcription over whisper.cpp
 // Receives 100ms chunks of Int16 LE PCM @ 16kHz mono from the renderer (IPC) into a ring buffer.
 // Windows are cut COVERAGE-DRIVEN: each starts just before where the last one's emissions ended,
 // so no audio is ever skipped - when decodes lag, the next window GROWS (up to a cap) instead of
@@ -78,8 +79,8 @@ interface TranscriberOptions extends DriverCallbacks {
     modelPath: string
     language: string
     declaredLanguages?: string[] // interpretation mode: the languages actually being spoken - a "-l auto" guess outside this set triggers a forced re-check
-    primaryLanguage?: string // the scripture detection language - forced re-checks transcribe the window with this language
-    prompt?: string // decoder vocabulary biasing (biblical names/archaisms) - sent with every window, live-updatable via setPrompt()
+    primaryLanguage?: string // primary language code used for forced re-checks when detection is constrained
+    prompt?: string // optional decoder vocabulary biasing string - sent with every window, live-updatable via setPrompt()
 }
 
 interface PcmWindow {
@@ -270,9 +271,7 @@ export class Transcriber implements TranscriptionDriver {
     // WORD-LEVEL EMISSION - drop already-emitted words by timestamp, hold back the unsettled tail
 
     private emitWindow(parsed: WhisperSegment[], window: PcmWindow, windowStartMs: number, windowDurationMs: number) {
-        const prompt = this.options.prompt
-
-        // segment-level filters. Music stays (shown faded, never fed to detection) - it only flags
+        // segment-level filters. Music stays (shown faded, never fed to downstream detectors) - it only flags
         const speech = parsed.filter((segment) => !isNoiseSegment(segment.text) && !isLowConfidence(segment))
         const music = speech.some((segment) => isMusicSegment(segment.text))
         const language = speech.find((segment) => segment.language)?.language
@@ -313,7 +312,7 @@ export class Transcriber implements TranscriptionDriver {
             .map((word) => word.text)
             .join(" ")
             .trim()
-        if (!joined || isRepetitionLoop(joined) || (prompt && isPromptEcho(joined, prompt))) return
+        if (!joined || isRepetitionLoop(joined)) return
 
         // timings shift between decodes, so a seam word can survive the timestamp drop - the fuzzy
         // stitch removes repeats and re-transcription variants
@@ -613,7 +612,7 @@ export class Transcriber implements TranscriptionDriver {
     // TEMP FILES
 
     private getTmpDir(): string {
-        return path.join(app.getPath("userData"), "aiScripture-tmp")
+        return path.join(app.getPath("userData"), "ai-stt-tmp")
     }
 
     private deleteTempFile(filePath: string) {
@@ -708,7 +707,7 @@ export function isNoiseSegment(text: string): boolean {
 }
 
 // whisper wraps sung content in ♪...♪ - and reliably HALLUCINATES lyrics for music it does not know,
-// so music segments are shown in the transcript but must never feed scripture detection
+// so music segments are shown in the transcript but must never feed downstream detectors
 export function isMusicSegment(text: string): boolean {
     return /[♪♫]/.test(text)
 }
@@ -917,4 +916,60 @@ function killProcess(child: ChildProcess): Promise<void> {
 
 function delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+// re-export the segment type under its public name for use in the WhisperTranscriber class below
+type TranscriberSegment = DriverSegment
+
+interface WhisperTranscriberOptions extends SttEngineOptions {
+    whisper: { kind: "cli" | "server"; binaryPath: string }
+    model: string // resolved by the manager (defaults & interpretation-mode variant applied)
+    prompt?: string
+}
+
+export class WhisperTranscriber {
+    transcriber: Transcriber | null = null
+
+    constructor(_options: WhisperTranscriberOptions, onSegment: (segment: TranscriberSegment) => void, onError: (message: string) => void, onInterim?: (text: string) => void) {
+        const interpretation = !!_options.interpretationMode
+        const options = {
+            binary: _options.whisper,
+            modelPath: _options.customModelPath || LocalModelManager.getModelPath("whisper", _options.model),
+            // interpretation mode: a multilingual model detects the language of each window on its own
+            language: interpretation ? "auto" : _options.language || "en",
+            // ...but the free guess is constrained to the languages the user declared - anything else gets re-checked against the listen language
+            declaredLanguages: interpretation ? _options.spokenLanguages : undefined,
+            primaryLanguage: _options.listenLanguage,
+            prompt: _options.prompt,
+            onSegment,
+            onError,
+            onInterim
+        }
+        this.transcriber = new Transcriber(options)
+    }
+
+    // frontend may supply or update a generic prompt (e.g. vocabulary biasing)
+    setPrompt(prompt: string | undefined) {
+        if (!this.transcriber) return
+        this.transcriber.setPrompt(prompt)
+    }
+
+    async start() {
+        if (!this.transcriber) return false
+        await this.transcriber.start()
+        return true
+    }
+
+    async stop() {
+        if (!this.transcriber) return false
+        await this.transcriber.stop()
+        this.transcriber = null
+        return true
+    }
+
+    pushAudio(buffer: Uint8Array) {
+        if (!this.transcriber) return false
+        this.transcriber.pushAudio(buffer)
+        return true
+    }
 }

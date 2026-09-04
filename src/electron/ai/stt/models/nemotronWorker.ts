@@ -1,4 +1,4 @@
-// AI AUTO SCRIPTURE - streaming transcription over sherpa-onnx (NVIDIA Nemotron)
+// AI STT - streaming transcription over sherpa-onnx (NVIDIA Nemotron)
 // Receives Int16 LE PCM @ 16kHz mono from the renderer (IPC). Silero VAD finds utterance
 // boundaries, and each closed utterance is decoded in ONE batch on a fresh recognizer
 // stream - a spoken phrase is out roughly a second after the speaker stops, instead of
@@ -26,9 +26,15 @@
 // back until it stabilizes or the utterance closes - so text streams out while the speaker
 // is mid-sentence, and nothing already emitted is ever retracted.
 
-import { appendTailWords, trimRepeatedLeadWords } from "../seam"
-import type { DriverCallbacks, TranscriberSegment, TranscriptionDriver } from "../types"
-import type { NemotronModelPaths } from "./manager"
+import type { DriverCallbacks, TranscriberSegment, TranscriptionDriver } from "../sttHelper"
+import { appendTailWords, trimRepeatedLeadWords } from "../sttHelper"
+import path from "path"
+import { LocalModelManager } from "../../setup/LocalModelManager"
+import { NEMOTRON_MODEL_FILES, NEMOTRON_VAD_FILE } from "../../setup/models/nemotron"
+
+// Worker message protocol - defined here so worker.ts can import them without a circular dependency
+export type NemotronWorkerRequest = { type: "start"; language?: string } | { type: "audio"; data: Uint8Array } | { type: "stop" }
+export type NemotronWorkerResponse = { type: "ready" } | { type: "segment"; segment: TranscriberSegment } | { type: "interim"; text: string } | { type: "error"; message: string } | { type: "stopped" } | { type: "alive" }
 
 const SAMPLE_RATE = 16000
 
@@ -83,8 +89,6 @@ const SOFT_SPLIT_SAMPLES = 9 * SAMPLE_RATE
 const SOFT_SPLIT_RMS = 0.015
 
 interface NemotronOptions extends DriverCallbacks {
-    paths: NemotronModelPaths
-    vadModelPath: string
     /** Reported on every segment - Nemotron is English only, kept for the segment shape. */
     language?: string
     /** Injected by tests. Production loads the native addon lazily in start(). */
@@ -134,7 +138,19 @@ export class NemotronDriver implements TranscriptionDriver {
         // required lazily so the app still starts on a platform where the native addon fails to load
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const sherpa = this.options.sherpa || require("sherpa-onnx-node")
-        const { paths, vadModelPath } = this.options
+        // build runtime paths for the Nemotron model files from the model dir
+        const modelDir = LocalModelManager.getModelDir("nemotron")
+        const paths = modelDir
+            ? {
+                  encoder: path.join(modelDir, NEMOTRON_MODEL_FILES.encoder.file),
+                  decoder: path.join(modelDir, NEMOTRON_MODEL_FILES.decoder.file),
+                  joiner: path.join(modelDir, NEMOTRON_MODEL_FILES.joiner.file),
+                  tokens: path.join(modelDir, NEMOTRON_MODEL_FILES.tokens.file)
+              }
+            : null
+        const vadModelPath = modelDir ? path.join(modelDir, NEMOTRON_VAD_FILE) : null
+
+        if (!paths || !vadModelPath) throw new Error("Nemotron model files are missing")
 
         this.recognizer = new sherpa.OnlineRecognizer({
             featConfig: { sampleRate: SAMPLE_RATE, featureDim: 80 },
@@ -145,13 +161,12 @@ export class NemotronDriver implements TranscriptionDriver {
                 provider: "cpu",
                 debug: 0
             },
-            // greedy also rules out sherpa's hotword biasing (biblical names/KJV vocabulary), which
+            // greedy also rules out sherpa's hotword biasing (domain-specific hotwords), which
             // needs modified_beam_search plus a bpe.model to tokenize the hotword list - and the
             // pinned model revision ships no bpe.model (only encoder/decoder/joiner + tokens.txt).
             // Pre-tokenizing hotwords against tokens.txt would be fragile, and beam search decodes
-            // materially slower than the partial-decode budget here assumes. Misheard biblical
-            // vocabulary is instead recovered downstream by the quote matcher's phonetic layer
-            // (frontend/ai/scripture/quoteMatch/quoteMatchTokens.ts), which works for every engine
+            // materially slower than the partial-decode budget here assumes. Misheard domain-specific
+            // vocabulary is recovered downstream by the frontend's phonetic matcher where applicable.
             decodingMethod: "greedy_search",
             // boundaries come from the VAD - see the file header
             enableEndpoint: false
@@ -406,4 +421,54 @@ function int16ToFloat32(buffer: Uint8Array): Float32Array {
     const samples = new Float32Array(count)
     for (let i = 0; i < count; i++) samples[i] = view.getInt16(i * 2, true) / 32768
     return samples
+}
+
+/**
+ * Runs the Nemotron engine in an Electron utilityProcess, so its synchronous native decodes can
+ * never freeze the app - audio goes out as messages, segments come back as messages. When the
+ * worker cannot be spawned, decoding falls back in-process (the previous behavior).
+ */
+
+// AI STT - nemotron decode host (Electron utilityProcess entry)
+// Runs the NemotronDriver in its own process, where its synchronous ONNX decodes are free to
+// block: the app's main process only forwards audio and receives segments over the port, so a
+// slow decode can never freeze the UI, IPC or the audio feed. A crash in the native addon takes
+// down this process alone - the transcriber proxy surfaces it as an engine error.
+
+// present only when this file runs as a utilityProcess entry (the type import above is free)
+const parentPort = (process as NodeJS.Process & { parentPort?: { postMessage(message: unknown): void; on(event: "message", listener: (event: { data: NemotronWorkerRequest }) => void): void } }).parentPort
+
+if (parentPort) {
+    let driver: NemotronDriver | null = null
+    const post = (message: NemotronWorkerResponse) => parentPort.postMessage(message)
+
+    // liveness heartbeat: a decode that never returns (native hang) silences this too - which is
+    // exactly what lets the host tell a hung worker from a merely quiet room and restart it
+    setInterval(() => post({ type: "alive" }), 5000).unref?.()
+
+    const handle = async (message: NemotronWorkerRequest) => {
+        try {
+            if (message.type === "start") {
+                driver = new NemotronDriver({
+                    language: message.language,
+                    onSegment: (segment) => post({ type: "segment", segment }),
+                    onInterim: (text) => post({ type: "interim", text }),
+                    onError: (errorMessage) => post({ type: "error", message: errorMessage })
+                })
+                await driver.start()
+                post({ type: "ready" })
+            } else if (message.type === "audio") {
+                driver?.pushAudio(message.data)
+            } else if (message.type === "stop") {
+                // stop() flushes the open utterance first, so its segment message precedes "stopped"
+                await driver?.stop()
+                driver = null
+                post({ type: "stopped" })
+            }
+        } catch (err) {
+            post({ type: "error", message: String((err as Error)?.message || err) })
+        }
+    }
+
+    parentPort.on("message", (event) => void handle(event.data))
 }
