@@ -2,17 +2,17 @@ export type AIProviderId = "anthropic" | "openai" | "gemini" | "ollama"
 
 // stable LLM error codes (electron ai/llm) -> locale keys (unknown codes pass through as-is)
 const AI_ERROR_LANG_KEYS: { [code: string]: string } = {
-    invalid_key: "ai.error_invalid_key",
-    forbidden: "ai.error_forbidden",
-    model_not_found: "ai.error_model_not_found",
-    rate_limited: "ai.error_rate_limited",
-    invalid_request: "ai.error_invalid_request",
-    server_error: "ai.error_server_error",
-    timeout: "ai.error_timeout",
-    network: "ai.error_network",
-    refusal: "ai.error_refusal",
-    bad_response: "ai.error_bad_response",
-    ollama_not_running: "ai.error_ollama_not_running"
+    invalid_key: "Invalid API key",
+    forbidden: "Access denied - check your API key permissions",
+    model_not_found: "Model not found",
+    rate_limited: "Rate limited - try again in a moment",
+    invalid_request: "Invalid request",
+    server_error: "Provider server error - try again later",
+    timeout: "The request timed out",
+    network: "Network error - check your internet connection",
+    refusal: "The AI refused to answer",
+    bad_response: "Unexpected response from the AI",
+    ollama_not_running: "Ollama is not running - start it and try again"
 }
 
 export function aiErrorText(code: string): string {

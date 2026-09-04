@@ -276,7 +276,7 @@ export class DetectionCoordinator {
         // (a genuinely broken setup repeats on the very next window anyway). Tier 1 keeps running
         if (code === "invalid_key" || code === "forbidden" || code === "model_not_found" || code === "invalid_request") {
             this.llmPermanentFailures++
-            console.error(`[AiScripture] LLM ${String(code)}:`, err?.message || "")
+            console.error(`[AI Scripture] LLM ${String(code)}:`, err?.message || "")
             if (this.llmPermanentFailures >= 2) {
                 this.llmStopped = true
                 // name the provider & model - a bare code ("model_not_found") is undiagnosable

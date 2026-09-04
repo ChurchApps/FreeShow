@@ -4,13 +4,12 @@ import { Main } from "../../../types/IPC/Main"
 import { requestMain } from "../../IPC/main"
 import { ai, aiScriptureStatus } from "../../stores"
 import { AI_PROVIDER_MODELS } from "../models"
-import { getSettings, scriptureState } from "./scriptureState"
+import { scriptureState } from "./scriptureState"
 import { updateScriptureCoordinatorLlm } from "./session"
 
 /** The tier-2 LLM config as it stands right now: a chosen provider whose key is saved, or null. */
 export async function resolveSessionLlm(): Promise<AiScriptureDetectionConfig["llm"]> {
-    const settings = getSettings()
-    const provider = get(ai).llm?.provider || settings.provider || "none"
+    const provider = get(ai).llm?.provider || "none"
     if (provider === "none") return null
 
     const status = await requestMain(Main.AI_GET_STATUS, { engineId: provider })
@@ -20,9 +19,9 @@ export async function resolveSessionLlm(): Promise<AiScriptureDetectionConfig["l
     // kept in settings) 404s live while the popup's Test, which validates against the list,
     // passes. Anything unlisted falls through; an empty model means the provider's own default
     const listed = (id: string | undefined) => (id && AI_PROVIDER_MODELS[provider].models.some((entry) => entry.id === id) ? id : "")
-    const model = listed(get(ai).llm?.model) || listed(settings.customModel) || listed(settings.models?.[provider]) || listed(settings.model) || ""
-    const stored = get(ai).llm?.model || settings.customModel || settings.models?.[provider] || settings.model
-    if (stored && !model) console.info(`[AiScripture] Stored ${provider} model "${stored}" is no longer offered - using the provider default`)
+    const model = listed(get(ai).llm?.model) || ""
+    const stored = get(ai).llm?.model
+    if (stored && !model) console.info(`[AI Scripture] Stored ${provider} model "${stored}" is no longer offered - using the provider default`)
     return { provider, model }
 }
 
@@ -38,4 +37,3 @@ export async function refreshSessionLlm(): Promise<void> {
     updateScriptureCoordinatorLlm(llm)
     aiScriptureStatus.update((status) => (status.state === "listening" || status.state === "llm_paused" ? { ...status, state: "listening", keyless: !llm } : status))
 }
-

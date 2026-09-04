@@ -6,7 +6,6 @@ import { get } from "svelte/store"
 import type { DetectedReference } from "../../../types/ai/AiScripture"
 import { getShortBibleName, loadJsonBible } from "../../components/drawer/bible/scripture"
 import { ai, aiSuggestions, drawerTabsData, outLocked, scriptures } from "../../stores"
-import AiScriptureSettings from "../components/settings/AiScriptureSettings.svelte"
 import { projectDetection, resolveBookNumber } from "./projection"
 import { noteExplicitDetection } from "./quoteMatch/quoteMatchSession"
 import { getSettings, scriptureState } from "./scriptureState"
@@ -101,7 +100,7 @@ function tokenOverlapSimilarity(verseText: string, quote: string): number {
 
 // detection confidence is categorical - map the bands onto the percent scale the
 // auto-show threshold uses (the settings slider shows which band a percent lands in)
-function confidencePercent(confidence: AiScriptureSettings["confidence"]): number {
+function confidencePercent(confidence: string | undefined): number {
     // if (confidence === "ask") return 100
 
     if (confidence === "highest") return 95

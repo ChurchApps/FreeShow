@@ -199,7 +199,7 @@ export class Transcriber implements TranscriptionDriver {
 
             // pathological lag: a LOGGED jump with a visible hole beats an ever-growing delay
             if (head - this.coveredUntilSample > MAX_LAG_SAMPLES || this.coveredUntilSample < oldestSafe - STEP_SAMPLES) {
-                console.warn(`[AiScripture] Whisper fell ${Math.round((head - this.coveredUntilSample) / SAMPLE_RATE)}s behind - jumping to live audio (words in the gap are lost)`)
+                console.warn(`[AI STT] Whisper fell ${Math.round((head - this.coveredUntilSample) / SAMPLE_RATE)}s behind - jumping to live audio (words in the gap are lost)`)
                 this.coveredUntilSample = head - STEP_SAMPLES
                 this.lastEmittedEndMs = Math.round((this.coveredUntilSample / SAMPLE_RATE) * 1000)
                 this.lastEmittedTailWords = []
@@ -253,7 +253,7 @@ export class Transcriber implements TranscriptionDriver {
         } catch (err) {
             if (this.stopped) return
             const message = String((err as Error)?.message || err)
-            console.error("[AiScripture] Transcription window failed:", message)
+            console.error("[AI STT] Transcription window failed:", message)
             // coverage does NOT advance on a failure: the same audio re-decodes in a grown window
             // once the engine recovers (the lag jump above bounds how far that can stack up).
             // failures while the server is respawning are expected - don't count them
@@ -335,7 +335,7 @@ export class Transcriber implements TranscriptionDriver {
         if (decodeMs > windowDurationMs) {
             this.slowWindows++
             if (this.slowWindows === 1 || this.slowWindows % 10 === 0) {
-                console.warn(`[AiScripture] Whisper decoded ${windowDurationMs}ms of audio in ${decodeMs}ms - the transcript will lag on this machine/model`)
+                console.warn(`[AI STT] Whisper decoded ${windowDurationMs}ms of audio in ${decodeMs}ms - the transcript will lag on this machine/model`)
             }
         }
     }
@@ -562,7 +562,7 @@ export class Transcriber implements TranscriptionDriver {
 
         this.serverRespawned = true
         this.serverRespawning = true
-        console.error(`[AiScripture] Whisper server exited unexpectedly with code ${code}, respawning...`)
+        console.error(`[AI STT] Whisper server exited unexpectedly with code ${code}, respawning...`)
         this.startServer().then(
             () => {
                 // windows that failed while the server was down were transient - a single successful restart is not an error

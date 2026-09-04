@@ -34,11 +34,10 @@
         { value: "gemini", label: "Google (Gemini)" }
     ]
 
-    // legacy values lived under the scripture settings - read them as fallback until a new choice is saved
-    $: provider = llmOptions.provider || $ai.scripture?.provider || "none"
+    $: provider = llmOptions.provider || "none"
     $: providerData = provider === "none" ? null : AI_PROVIDER_MODELS[provider]
     $: modelOptions = providerData ? providerData.models.map((model) => ({ value: model.id, label: model.name })) : []
-    $: storedModel = llmOptions.model || $ai.scripture?.models?.[provider] || ""
+    $: storedModel = llmOptions.model || ""
     $: selectedModel = providerData ? (providerData.models.find((model) => model.id === storedModel) ? storedModel : providerData.defaultModel) : ""
 
     function setProvider(id: string) {
@@ -111,7 +110,7 @@
     <!-- explicitly no LLM - detection runs on speech-to-text alone -->
 {:else if provider === "ollama"}
     <!-- no API key: everything runs on the local ollama server - just make sure the model is pulled -->
-    <p class="faded hint"><T id="ai.ollama_hint" /></p>
+    <p class="faded hint">Install Ollama from ollama.com, then download the model:</p>
     <div class="commandRow">
         <code>{ollamaPullCommand}</code>
         <MaterialButton icon={ollamaCommandCopied ? "check" : "copy"} title={ollamaCommandCopied ? "actions.copied" : "actions.copy"} on:click={copyOllamaCommand} />

@@ -30,10 +30,10 @@
     }
 
     const confidenceOptions = [
-        { value: "ask", label: "Always ask" },
-        { value: "highest", label: "If confident", data: "> 95%" },
-        { value: "high", label: "If high confidence", data: "> 75%" },
-        { value: "medium", label: "If medium confidence", data: "> 50%" }
+        { value: "ask", label: "ai.confidence_ask" },
+        { value: "highest", label: "ai.confidence_highest", data: "> 95%" },
+        { value: "high", label: "ai.confidence_high", data: "> 75%" },
+        { value: "medium", label: "ai.confidence_medium", data: "> 50%" }
     ]
 </script>
 

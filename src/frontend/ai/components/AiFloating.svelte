@@ -275,7 +275,7 @@
                                         small
                                         icon="play"
                                         disabled={$outLocked}
-                                        title="ai.project"
+                                        title="menu._title_display"
                                         on:click={() => {
                                             suggestion.trigger?.()
                                             dismissAiSuggestion(suggestion.id)
