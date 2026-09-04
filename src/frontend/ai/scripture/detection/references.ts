@@ -1,5 +1,5 @@
 import type { AiScriptureBook } from "../../../../types/ai/AiScripture"
-import { HOMOPHONE_ALT, normalizeSpokenNumbers, parseNumberToken } from "../../commands/utils"
+import { HOMOPHONE_ALT, normalizeSpokenNumbers, parseNumberToken } from "./numberUtils"
 import { maxVerseInChapter } from "../chapterVerseCounts"
 import { VERSE_WORD } from "../vocabulary"
 import { ASR_BOOK_ALIASES, collapseStutteredBookNames, correctBookMishearings, FUZZY_MIN_LEN } from "./asrRepairs"

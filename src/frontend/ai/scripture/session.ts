@@ -1,29 +1,24 @@
 // AI AUTO SCRIPTURE - SESSION LIFECYCLE
-// coordinates detection, quote matching, command dispatching, and watches for LLM & library changes
+// coordinates detection, quote matching, and watches for LLM & library changes
 
 import { get } from "svelte/store"
 import type { AiScriptureBook, AiScriptureTranslation } from "../../../types/ai/AiScripture"
 import { ai, aiInterim, aiScriptureHasProjected, aiScriptureStatus, aiStatus, aiSuggestions, scriptures } from "../../stores"
-import { CommandDispatcher, dispatchAiCommand } from "../commands/commandDispatcher"
 import type { AIProviderId } from "../models"
 import { resolveSttEngine } from "../stt/stt"
-import { scriptureCommandSpec } from "./commands/matcher"
 import type { AiScriptureAnchor } from "./detection/coordinator"
 import { DetectionCoordinator } from "./detection/coordinator"
 import { cancelPendingAutoProjection, handleDetection, pruneSuggestions } from "./detections"
+import { startQuoteMatching, stopQuoteMatching } from "./quoteMatch/quoteMatcherEngine"
 import { scriptureState } from "./scriptureState"
 import { bookTableIds, buildBookTable, buildTranslationTable, cancelSessionBiblesRefresh, cueTranslationIds, scheduleSessionBiblesRefresh, sessionBibleIds } from "./sessionBibles"
 import { refreshSessionLlm, resolveSessionLlm } from "./sessionLlm"
-import { startQuoteMatching, stopQuoteMatching } from "./quoteMatch/quoteMatcherEngine"
 
 let suggestionPruneTimer: NodeJS.Timeout | null = null
 
-// Coordinator and command dispatcher instances running in the frontend session
+// Coordinator instance running in the frontend session
 let scriptureCoordinator: DetectionCoordinator | null = null
-let scriptureCommandDispatcher: CommandDispatcher | null = null
 let scriptureConfig: { language: string; translations: AiScriptureTranslation[]; books: AiScriptureBook[]; interpretationMode: boolean; listenLanguage: string } | null = null
-let lastAnchorAtMs = 0
-const ANCHOR_FRESH_MS = 120000
 
 // START / STOP
 
@@ -57,16 +52,6 @@ export async function startScriptureSession(): Promise<{ ok: boolean; error?: st
         interpretationMode,
         listenLanguage
     }
-
-    const dispatcher = new CommandDispatcher()
-    dispatcher.register(
-        scriptureCommandSpec(() => ({
-            language: scriptureConfig?.language || "en",
-            translations: scriptureConfig?.translations || [],
-            books: scriptureConfig?.books || []
-        }))
-    )
-    scriptureCommandDispatcher = dispatcher
 
     const coordinator = new DetectionCoordinator({
         books,
@@ -117,10 +102,7 @@ export function stopScriptureSession(): void {
 
     scriptureCoordinator?.stop()
     scriptureCoordinator = null
-    scriptureCommandDispatcher?.unregister("scripture")
-    scriptureCommandDispatcher = null
     scriptureConfig = null
-    lastAnchorAtMs = 0
 
     aiInterim.set("")
     aiScriptureStatus.set({ state: "stopped" })
@@ -139,10 +121,6 @@ export function handleScriptureTranscript(segment: { text: string; startMs: numb
     if (!detectable) return
 
     scriptureCoordinator.onTranscriptSegment(segment)
-
-    if (!scriptureCommandDispatcher) return
-    const envelope = scriptureCommandDispatcher.handleSegment("scripture", { text: segment.text, endMs: segment.endMs }, { anchored: Date.now() - lastAnchorAtMs < ANCHOR_FRESH_MS })
-    if (envelope) dispatchAiCommand(envelope)
 }
 
 export function updateScriptureCoordinatorBooks(books: AiScriptureBook[], translations: AiScriptureTranslation[]): void {
@@ -158,7 +136,6 @@ export function updateScriptureCoordinatorLlm(llm: { provider: AIProviderId; mod
 }
 
 export function updateScriptureCoordinatorContext(anchor: AiScriptureAnchor): void {
-    lastAnchorAtMs = Date.now()
     scriptureCoordinator?.updateContext(anchor)
 }
 

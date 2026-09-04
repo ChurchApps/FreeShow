@@ -3,7 +3,7 @@
 // tier 2: LLM detection over the rolling transcript for paraphrased/quoted references (optional, needs an API key)
 
 import type { AiScriptureBook, AiScriptureState, DetectedReference } from "../../../../types/ai/AiScripture"
-import { normalizeSpokenNumbers } from "../../commands/utils"
+import { normalizeSpokenNumbers } from "./numberUtils"
 import type { AIProviderId } from "../../models"
 import { getLLMScriptureProvider } from "../llmTalkScripture"
 import type { BookIndex } from "./references"

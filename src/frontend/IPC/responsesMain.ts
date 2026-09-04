@@ -4,7 +4,6 @@ import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
-import { dispatchAiCommand } from "../ai/commands/commandDispatcher"
 import { handleScriptureTranscript } from "../ai/scripture/session"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
@@ -308,9 +307,6 @@ export const mainResponses: MainResponses = {
         handleScriptureTranscript(data)
     },
     [ToMain.AI_TRANSCRIPT_INTERIM]: (data) => aiInterim.set(data.text),
-    [ToMain.AI_COMMAND]: (data) => {
-        dispatchAiCommand(data)
-    },
 
     // Companion dynamic value variables
     [ToMain.GET_DYNAMIC_VALUES]: (data) => {
