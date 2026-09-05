@@ -213,10 +213,12 @@ function releaseReadbackResources(id: string) {
     delete readbackSlots[id]
 }
 
-// OMT's send() returns the bytes written; 0 means the library dropped the frame (its encoder refused
-// it) and receivers stay connected but never get video. Count it and log the first offender's shape.
+// OMT's send() returns the bytes written. With a receiver connected, 0 means the library dropped the
+// frame (its encoder refused it): the receiver stays connected but never gets video. Count it and log
+// the first offender's shape. With nobody connected 0 is the normal idle result.
 function noteSendResult(senderData: Sender, id: string, frame: any, sent: unknown) {
     if (sent !== 0) return
+    if (!((senderData.sender?.connections || 0) > 0)) return
     senderData.sendRejected = (senderData.sendRejected || 0) + 1
     if (senderData.rejectLogged) return
     senderData.rejectLogged = true
