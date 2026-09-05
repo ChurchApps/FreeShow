@@ -136,6 +136,17 @@ function isHardware(status: string | undefined): boolean {
 // what the user asked for; on a machine with no usable GPU driver Chromium falls back to software
 // compositing on its own, and anything that assumes GPU textures (shared-texture offscreen capture)
 // must fall back with it.
+// Chromium's feature status at app-ready is a placeholder (software everywhere) until the GPU
+// process has reported; getGPUInfo resolves at that point, on machines with and without a GPU.
+// Anything that decides based on the GPU state awaits this first.
+export const gpuStateSettled: Promise<void> = app
+    .whenReady()
+    .then(() => app.getGPUInfo("basic"))
+    .then(
+        () => undefined,
+        () => undefined
+    )
+
 export function gpuCompositingAvailable(): boolean {
     if (hardwareAccelerationDisabled) return false
     try {

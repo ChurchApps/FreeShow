@@ -3,7 +3,7 @@ import { OUTPUT_CONSOLE, getMainWindow, hardwareAccelerationDisabled, isMac, loa
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
-import { gpuCompositingAvailable } from "../../utils/gpu"
+import { gpuCompositingAvailable, gpuStateSettled } from "../../utils/gpu"
 import { initializeSender } from "../../blackmagic/bmdTalk"
 import { CaptureHelper } from "../../capture/CaptureHelper"
 import { NdiSender } from "../../ndi/NdiSender"
@@ -87,6 +87,7 @@ export class OutputLifecycle {
     }
 
     static async createOutput(output: Output, groupRetries = 0) {
+        await gpuStateSettled // the offscreen capture mode depends on the real GPU state
         const id: string = output.id || ""
         if (!id) return
 
