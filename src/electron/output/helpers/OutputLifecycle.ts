@@ -3,6 +3,7 @@ import { OUTPUT_CONSOLE, getMainWindow, hardwareAccelerationDisabled, isMac, loa
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
+import { gpuCompositingAvailable } from "../../utils/gpu"
 import { initializeSender } from "../../blackmagic/bmdTalk"
 import { CaptureHelper } from "../../capture/CaptureHelper"
 import { NdiSender } from "../../ndi/NdiSender"
@@ -206,7 +207,7 @@ export class OutputLifecycle {
         const osr = this.isOsrOutput(extra)
         if (osr) {
             options.show = false
-            const useSharedTexture = !!this.getOsrCaptureAddon() && !this.isHardwareAccelerationDisabled()
+            const useSharedTexture = this.useSharedTextureCapture()
             const wp: any = { ...outputOptions.webPreferences, offscreen: useSharedTexture ? { useSharedTexture: true } : true }
             options.webPreferences = wp
         }
@@ -249,11 +250,10 @@ export class OutputLifecycle {
             // ignore
         }
 
-        // must match the useSharedTexture condition in createOutputWindow: with HWA off the paints are
-        // CPU frames, so attach the CPU handler instead of the shared-texture one
+        // must match the window's offscreen mode from createOutputWindow: CPU-mode paints are bitmaps,
+        // so attach the CPU handler instead of the shared-texture one
         const addon = this.getOsrCaptureAddon()
-        const useSharedTexture = !!addon && !this.isHardwareAccelerationDisabled()
-        if (useSharedTexture) this.attachOsrSharedTexture(window, id, addon)
+        if (this.useSharedTextureCapture()) this.attachOsrSharedTexture(window, id, addon)
         else this.attachOsrCpu(window, id)
 
         // Linux begin-frame drive; CaptureHelper.updateRenderRate re-drives it when the rate changes
@@ -337,6 +337,21 @@ export class OutputLifecycle {
 
     static isHardwareAccelerationDisabled(): boolean {
         return hardwareAccelerationDisabled
+    }
+
+    // Shared-texture offscreen capture needs the readback addon AND a GPU that Chromium is actually
+    // compositing with. A machine without a usable GPU driver (software compositing) gets CPU-bitmap
+    // offscreen capture, the same as when the user disables acceleration.
+    private static captureModeLogged = false
+    private static useSharedTextureCapture(): boolean {
+        const addon = !!this.getOsrCaptureAddon()
+        const gpu = gpuCompositingAvailable()
+        const shared = addon && gpu
+        if (!this.captureModeLogged) {
+            this.captureModeLogged = true
+            console.info(`[OSR] capture mode: ${shared ? "gpu shared-texture" : "cpu bitmap"} (readback addon=${addon ? "yes" : "no"}, gpu compositing=${gpu ? "hardware" : hardwareAccelerationDisabled ? "disabled in settings" : "software/unavailable"})`)
+        }
+        return shared
     }
 
     // lazily load the native shared-texture readback addon; null -> CPU offscreen capture fallback
