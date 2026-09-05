@@ -30,27 +30,51 @@
     let audioMuted = true
     let showAudioIcon = false
 
+    function slugify(str: string): string {
+        return (str || "")
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "")
+    }
+
+    let currentPath = slugify(window.location.pathname)
+    let isTransparent = false
+
+    // tell the server which output this client is displaying, so it only receives that output's frames
+    function subscribeToOutput() {
+        socket.emit("OUTPUT_STREAM", { channel: "STREAM_SUBSCRIBE", data: { path: currentPath } })
+    }
+    socket.on("connect", subscribeToOutput)
+    if (socket.connected) subscribeToOutput()
+
     // let initialDelay = 0
     socket.on("OUTPUT_STREAM", (msg) => {
         switch (msg.channel) {
             case "STREAM":
+                if (msg.data?.id) {
+                    socket.emit("OUTPUT_STREAM", { channel: "STREAM_DONE", data: { id: msg.data.id, success: true } })
+                }
+
+                const framePath = slugify(msg.data.path || "")
+                const frameName = slugify(msg.data.name || "")
+                const frameId = (msg.data.id || "").toLowerCase()
+
+                const matches = !currentPath || framePath === currentPath || frameName === currentPath || frameId === currentPath
+                if (!matches) return
+
+                isTransparent = !!msg.data.transparent
+                if (isTransparent) {
+                    document.body.classList.add("transparent")
+                } else {
+                    document.body.classList.remove("transparent")
+                }
+
                 frames++
                 // FPS
                 count++
                 if (!secondsTimeout) startFPS()
 
-                // this did not work well across different devices
-                // if (!initialDelay) {
-                //     // include device time offset / transmission delay
-                //     initialDelay = Date.now() - msg.data.time
-                // } else {
-                //     let timeSinceSent = Date.now() - initialDelay - msg.data.time
-                //     if (timeSinceSent > 5000) return // skip frames if overloaded
-                // }
-
                 capture = msg.data
-
-                socket.emit("OUTPUT_STREAM", { channel: "STREAM_DONE", data: { id: msg.data.id, success: true } })
                 break
             case "AUDIO_BUFFER":
                 if (audioSignal && audioMuted) return
@@ -76,8 +100,8 @@
         if (!canvas) return
 
         ctx = canvas.getContext("2d")
-        canvas.width = width
-        canvas.height = height
+        canvas.width = width || 1920
+        canvas.height = height || 1080
 
         checkSize()
 
@@ -95,14 +119,20 @@
     }
 
     async function updateCanvas() {
-        if (!canvas) return
+        if (!canvas || !capture?.buffer || !capture?.size?.width || !capture?.size?.height) return
+
+        if (canvas.width !== capture.size.width || canvas.height !== capture.size.height) {
+            canvas.width = capture.size.width
+            canvas.height = capture.size.height
+            ctx = canvas.getContext("2d")
+        }
 
         const arr = new Uint8ClampedArray(capture.buffer)
         const pixels = new ImageData(arr, capture.size.width, capture.size.height)
         const bitmap = await createImageBitmap(pixels)
 
         ctx.clearRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+        ctx.drawImage(bitmap, 0, 0)
 
         // Clean up bitmap to prevent memory leaks
         bitmap.close()
@@ -169,7 +199,7 @@
 <svelte:window on:click={click} />
 
 <div class="center" bind:offsetWidth={width} bind:offsetHeight={height}>
-    <canvas class:imgHeight style="aspect-ratio: {capture?.size?.width || 16}/{capture?.size?.height || 9};" class:height={width / height < (capture?.size?.width || 16) / (capture?.size?.height || 9)} class="previewCanvas" bind:this={canvas} />
+    <canvas class:imgHeight class:transparentBackground={isTransparent} style="aspect-ratio: {capture?.size?.width || 16}/{capture?.size?.height || 9};" class:height={width / height < (capture?.size?.width || 16) / (capture?.size?.height || 9)} class="previewCanvas" bind:this={canvas} />
 </div>
 
 {#if clicked}
@@ -250,12 +280,19 @@
         height: 100%;
     }
 
+    :global(body.transparent) {
+        background-color: transparent !important;
+    }
+
     canvas {
         background-color: #000000;
         aspect-ratio: 16/9;
         /* width: 100%; */
         height: 100%;
         /* object-fit: contain; */
+    }
+    canvas.transparentBackground {
+        background-color: transparent !important;
     }
     canvas.height {
         height: initial;

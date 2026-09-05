@@ -28,6 +28,8 @@ export interface Output {
     webrtcData?: { url?: string; token?: string; streaming?: boolean; fps?: string | number; bitrate?: string | number }
     rtmp?: boolean
     rtmpData?: RtmpData
+    html?: boolean
+    htmlData?: { path?: string }
     forcedResolution?: Resolution
     invisible?: boolean
     taskbar?: boolean

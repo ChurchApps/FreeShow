@@ -36,6 +36,8 @@ export function client(id: Clients, msg: ClientMessage) {
         console.info("SERVER: " + msgId + " connected")
 
         if (id === "STAGE") checkWindowCapture()
+        // start capturing the outputs served over HTTP as soon as someone opens one (startup = no toast on every browser refresh)
+        else if (id === "OUTPUT_STREAM") checkWindowCapture(true)
     } else if (msg.channel === "DISCONNECT") {
         connections.update((c: any) => {
             if (c[id]) delete c[id][msgId]
@@ -45,6 +47,7 @@ export function client(id: Clients, msg: ClientMessage) {
 
         // stop output capture when the last mirror viewer disconnects
         if (id === "STAGE") checkWindowCapture()
+        else if (id === "OUTPUT_STREAM") checkWindowCapture(true)
     } else sendData(id, msg)
 }
 

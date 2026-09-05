@@ -25,7 +25,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
             bounds: { x: 0, y: 0, width: 1920, height: 1080 },
             screen: null,
             style: "default",
-            show: {}
+            show: {},
+            htmlData: { path: "/primary" }
         }
     },
     sorted: {},

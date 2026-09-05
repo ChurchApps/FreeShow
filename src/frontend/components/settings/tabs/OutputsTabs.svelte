@@ -69,11 +69,14 @@
             }
 
             const captureTypeKeys = ["blackmagic", "ndi", "webrtc", "rtmp"]
+            // values the running output window can be updated with
+            const setValueKeys = ["alwaysOnTop", "html", "htmlData", "name"]
             if (out.enabled && (captureTypeKeys.includes(key) || key === "transparent" || key === "invisible")) {
                 if (value && captureTypeKeys.includes(key)) newToast("toast.output_capture_enabled")
                 // Recreate window for options fixed at creation (see Outputs.svelte)
                 send(OUTPUT, ["CREATE"], { id: outputId, ...out })
-            } else if (out.enabled && key === "alwaysOnTop") {
+            } else if (out.enabled && setValueKeys.includes(key)) {
+                if (value && key === "html") newToast("toast.output_capture_enabled")
                 send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
             }
 
@@ -120,7 +123,8 @@
         } else {
             let name = ""
             if (networkType && !localType) {
-                if (networkType === "ndi") name = "NDI"
+                if (networkType === "html") name = "HTML Output"
+                else if (networkType === "ndi") name = "NDI"
                 else if (networkType === "webrtc") name = "WebRTC"
                 else if (networkType === "rtmp") name = "RTMP"
             }
@@ -136,7 +140,8 @@
             }
 
             if (localType === "blackmagic") updateOutput("blackmagic", true, outputId)
-            if (networkType === "ndi") updateOutput("ndi", true, outputId)
+            if (networkType === "html") updateOutput("html", true, outputId)
+            else if (networkType === "ndi") updateOutput("ndi", true, outputId)
             else if (networkType === "webrtc") updateOutput("webrtc", true, outputId)
             else if (networkType === "rtmp") updateOutput("rtmp", true, outputId)
 
@@ -158,6 +163,7 @@
     <div class="right-icons">
         {#if !tab.invisible}<Icon id="hdmi" size={0.6} white title={translateText("settings.window")} />{/if}
         {#if tab.blackmagic}<Icon id="blackmagic" size={0.6} white title="Blackmagic Design" />{/if}
+        {#if tab.html}<Icon id="code" size={0.6} white title="HTML Output" />{/if}
         {#if tab.ndi}<Icon id="ndi" size={0.6} white title="NDI" />{/if}
         {#if tab.webrtc}<Icon id="broadcast" size={0.6} white title="WebRTC" />{/if}
         {#if tab.rtmp}<Icon id="broadcast" size={0.6} white title="RTMP" />{/if}

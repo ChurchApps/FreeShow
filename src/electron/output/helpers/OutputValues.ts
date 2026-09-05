@@ -27,6 +27,15 @@ const setValues = {
         output.rtmpData = value
         CaptureHelper.Lifecycle.startCapture(id, { rtmp: !!value?.streaming })
     },
+    html: (value: boolean, _window: BrowserWindow, id: string) => {
+        CaptureHelper.Lifecycle.startCapture(id, { server: value })
+    },
+    htmlData: (value: any, _window: BrowserWindow, _id: string, output: OutputWindow) => {
+        output.htmlData = value
+    },
+    name: (value: string, _window: BrowserWindow, _id: string, output: OutputWindow) => {
+        output.name = value
+    },
     capture: (data: { key: string; value: boolean }, _window: BrowserWindow, id: string) => {
         CaptureHelper.Lifecycle.startCapture(id, { [data.key]: data.value })
     },

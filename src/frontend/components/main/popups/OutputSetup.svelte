@@ -13,6 +13,7 @@
     ]
 
     const networkTypes = [
+        { id: "html", name: translateText("settings.html_output"), icon: "code", tip: "Browser, OBS, vMix" },
         { id: "ndi", name: "NDI®", icon: "ndi", tip: "IP, OBS" },
         { id: "webrtc", name: "WebRTC", icon: "broadcast", tip: "WHIP, restream.io" },
         { id: "rtmp", name: "RTMP", icon: "broadcast", tip: "YouTube, Twitch, Facebook Live" }

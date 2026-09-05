@@ -742,9 +742,15 @@ export function checkWindowCapture(startup = false) {
 export function shouldBeCaptured(outputId: string, startup = false) {
     const output = get(outputs)[outputId]
     const stageConnectionIds = Object.keys(get(connections).STAGE || {})
+    // any output can be served on its own URL path with "HTML Output" enabled,
+    // in addition to the single output selected in the OutputShow server settings (served on the root path)
+    const outputStreamEnabled = get(disabledServers).output_stream === false
+    const outputStreamViewers = Object.keys(get(connections).OUTPUT_STREAM || {}).length > 0
+    const rootStreamOutputId = get(serverData)?.output_stream?.outputId || getFirstOutput()?.id
     const captures = {
         ndi: !!output.ndi,
-        server: !!(get(disabledServers).output_stream === false && (get(serverData)?.output_stream?.outputId || getFirstOutput()?.id) === outputId),
+        // only capture while a browser is actually connected, so multiple HTML outputs cost nothing when nobody is watching
+        server: !!(outputStreamEnabled && outputStreamViewers && (output.html || rootStreamOutputId === outputId)),
         // only capture while a connected stage client is actually viewing a "current output" mirror (text-only stage displays need no capture)
         stage: !get(disabledServers).stage && stageConnectionIds.length > 0 && stageHasOutput(outputId) && hasStageStreamViewers(stageConnectionIds, outputId),
         webrtc: !!output.webrtc,
@@ -883,7 +889,16 @@ export const defaultOutput: Output = {
     name: "Output",
     color: "#F0008C",
     bounds: { x: 0, y: 0, width: 1920, height: 1080 }, // x: 1920 ?
-    screen: null
+    screen: null,
+    htmlData: { path: "/output" }
+}
+
+export function slugifyPath(name: string): string {
+    const slug = (name || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+    return slug ? `/${slug}` : "/output"
 }
 
 // WIP history
@@ -904,6 +919,8 @@ export function addOutput(onlyFirst = false, styleId = "", enabled = true, name 
         while (Object.values(output).find((a) => a.name === output[id].name + (n ? " " + n : ""))) n++
         if (n) output[id].name = output[id].name + " " + n
         if (onlyFirst) output[id].name = translateText("theme.primary")
+
+        output[id].htmlData = { path: slugifyPath(output[id].name) }
 
         // show
         if (enabled && !onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id] })
@@ -943,6 +960,7 @@ export function enableStageOutput(options: any = {}) {
     const id = uid()
 
     outputs.update((a) => {
+        const stageName = options?.name || "Stage Output"
         a[id] = {
             enabled: true,
             active: true,
@@ -951,6 +969,7 @@ export function enableStageOutput(options: any = {}) {
             color: "#555555",
             bounds,
             screen: null,
+            htmlData: { path: slugifyPath(stageName) },
             ...options
         }
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
     import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
@@ -7,12 +7,12 @@
     import type { Output, RtmpDestination } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, special, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, disabledServers, ndiData, outputDisplay, outputs, ports, rtmpStatus, saved, settingsTab, special, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { addRtmpDestination, checkFFmpeg, refreshOut, removeRtmpDestination, startRtmpStreaming, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutput, updateOutputRtmpData, updateOutputWebrtcData, updateRtmpDestination } from "../../helpers/output"
+    import { addRtmpDestination, checkFFmpeg, refreshOut, removeRtmpDestination, slugifyPath, startRtmpStreaming, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutput, updateOutputRtmpData, updateOutputWebrtcData, updateRtmpDestination } from "../../helpers/output"
     import { hasStreamableDestination } from "../../helpers/rtmpDestinations"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
@@ -70,9 +70,11 @@
             if (out.enabled) {
                 // Recreate window for options fixed at creation (transparency, invisibility, capture/OSR mode)
                 const recreateKeys = ["transparent", "invisible", "ndi", "webrtc", "rtmp", "blackmagic"]
+                // values the running output window can be updated with
+                const setValueKeys = ["alwaysOnTop", "html", "htmlData", "name"]
                 if (recreateKeys.includes(key)) {
                     send(OUTPUT, ["CREATE"], { id: outputId, ...out })
-                } else if (key === "alwaysOnTop") {
+                } else if (setValueKeys.includes(key)) {
                     send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
                 }
             }
@@ -128,6 +130,38 @@
             activePopup.set("alert")
             saved.set(false)
         }
+    }
+
+    // html
+    // the path is only stored when set explicitly - it otherwise follows the output name (matching the main process fallback)
+    $: htmlPath = currentOutput?.htmlData?.path || slugifyPath(currentOutput?.name || "")
+    // the URL is copied into a browser source on this or another machine, so show the network address like the connection tab does
+    let ip = "localhost"
+    onMount(async () => {
+        ip = ((await requestMain(Main.IP)) || ["localhost"])[0]
+    })
+    $: htmlUrl = `http://${ip}:${$ports?.output_stream || 5513}${htmlPath}`
+    $: htmlPathTaken = !!currentOutput?.html && outputsList.some((a) => a.id !== currentOutput?.id && a.html && (a.htmlData?.path || slugifyPath(a.name || "")) === htmlPath)
+
+    function updateHtmlData(e: any, key: string) {
+        const id = currentOutput?.id
+        if (!id) return
+
+        const newData = clone($outputs[id]?.htmlData || {})
+        let value = e?.detail?.value ?? e?.detail?.id ?? e
+        if (key === "path" && typeof value === "string") {
+            value = slugifyPath(value)
+        }
+
+        newData[key] = value
+        updateOutput("htmlData", newData)
+        saved.set(false)
+    }
+
+    function toggleHtml(value: boolean) {
+        // store the current (name based) path so renaming the output later does not change a URL already in use
+        if (value && !currentOutput?.htmlData?.path) updateHtmlData(htmlPath, "path")
+        updateOutput("html", value)
     }
 
     // webrtc
@@ -387,6 +421,32 @@
         {#if isAlphaSupported()}
             <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
         {/if}
+    {/if}
+{/if}
+
+<!-- HTML Output - can be enabled on any output, in addition to its other types -->
+<Title label="settings.html_output" icon="code" />
+
+<MaterialToggleSwitch label="settings.enabled" checked={currentOutput?.html === true} defaultValue={false} on:change={(e) => toggleHtml(e.detail)} />
+
+{#if currentOutput?.html}
+    <InputRow>
+        <MaterialTextInput label="settings.url_path" value={htmlPath} placeholder="/main-output" on:change={(e) => updateHtmlData(e.detail, "path")} />
+    </InputRow>
+
+    <div style="margin-bottom: 10px;">
+        <MaterialTextInput label="settings.html_output_url" value={htmlUrl} copyBtn readonly />
+    </div>
+
+    {#if !currentOutput?.ndi}
+        <MaterialToggleSwitch label="settings.transparent" checked={currentOutput?.transparent} defaultValue={false} on:change={(e) => updateOutput("transparent", e.detail)} />
+    {/if}
+
+    {#if htmlPathTaken}
+        <div class="hint">{translateText("settings.html_path_taken")}</div>
+    {/if}
+    {#if $disabledServers.output_stream !== false}
+        <div class="hint">{translateText("settings.html_server_disabled")}</div>
     {/if}
 {/if}
 
