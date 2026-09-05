@@ -70,6 +70,8 @@ type Sender = {
     paceBusy?: number
     lastRealSendAt?: number
     realGaps?: number[]
+    sendRejected?: number // sends the library accepted but did not put on the wire (OMT: encode failure)
+    rejectLogged?: boolean
 }
 const NDI: { [id: string]: Sender } = {}
 // OMT senders live in the same worker, so an NDI+OMT output shares one readback per frame
@@ -98,10 +100,11 @@ if (process.env.FS_CAP_STATS) {
                 const sorted = [...gaps].sort((a, b) => a - b)
                 gapP95 = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))]
             }
-            console.info(`[SEND-STATS ${id}] sentReal=${s.sentReal || 0} sentRepeat=${s.sentRepeat || 0} coalescedReal=${s.coalescedReal || 0} paceQ=${s.paceQueue?.length || 0} paceMisses=${s.paceMisses || 0} paceBusy=${s.paceBusy || 0} wireGap(mean=${Math.round(gapMean)} p95=${Math.round(gapP95)}) avgSendMs=${avg} rb=${rb} cpuCores=${cpuCores.toFixed(2)}`)
+            console.info(`[SEND-STATS ${id}] sentReal=${s.sentReal || 0} sentRepeat=${s.sentRepeat || 0} coalescedReal=${s.coalescedReal || 0} paceQ=${s.paceQueue?.length || 0} paceMisses=${s.paceMisses || 0} paceBusy=${s.paceBusy || 0} wireGap(mean=${Math.round(gapMean)} p95=${Math.round(gapP95)}) avgSendMs=${avg} rejected=${s.sendRejected || 0} rb=${rb} cpuCores=${cpuCores.toFixed(2)}`)
             s.sentReal = 0
             s.sentRepeat = 0
             s.coalescedReal = 0
+            s.sendRejected = 0
             s.paceMisses = 0
             s.paceBusy = 0
             s.sendMsSum = 0
@@ -210,6 +213,16 @@ function releaseReadbackResources(id: string) {
     delete readbackSlots[id]
 }
 
+// OMT's send() returns the bytes written; 0 means the library dropped the frame (its encoder refused
+// it) and receivers stay connected but never get video. Count it and log the first offender's shape.
+function noteSendResult(senderData: Sender, id: string, frame: any, sent: unknown) {
+    if (sent !== 0) return
+    senderData.sendRejected = (senderData.sendRejected || 0) + 1
+    if (senderData.rejectLogged) return
+    senderData.rejectLogged = true
+    console.error(`OMT sender ${id} rejected a video frame: ${frame.width}x${frame.height} stride=${frame.stride} codec=${frame.codec} flags=${frame.flags} bytes=${frame.data?.length}`)
+}
+
 async function sendQueuedVideoFrame(reg: { [id: string]: Sender }, id: string, doneType: string) {
     const senderData = reg[id]
     if (!senderData?.sender || senderData.sendingVideo) return
@@ -225,7 +238,7 @@ async function sendQueuedVideoFrame(reg: { [id: string]: Sender }, id: string, d
 
     const sendT0 = process.env.FS_CAP_STATS ? Date.now() : 0
     try {
-        await (senderData.sendFrame ? senderData.sendFrame(frame) : senderData.sender.video(frame))
+        noteSendResult(senderData, id, frame, await (senderData.sendFrame ? senderData.sendFrame(frame) : senderData.sender.video(frame)))
     } catch (err) {
         console.error("Error sending video frame:", err)
     } finally {
@@ -617,7 +630,7 @@ async function paceSend(reg: { [id: string]: Sender }, id: string, entry: { fram
     const frame = { ...entry.frame, [senderData.tsKey || "timecode"]: (timeStart + process.hrtime.bigint()) / TIMECODE_DIVISOR }
     const sendT0 = process.env.FS_CAP_STATS ? Date.now() : 0
     try {
-        await (senderData.sendFrame ? senderData.sendFrame(frame) : senderData.sender.video(frame))
+        noteSendResult(senderData, id, frame, await (senderData.sendFrame ? senderData.sendFrame(frame) : senderData.sender.video(frame)))
     } catch (err) {
         console.error("Error sending video frame:", err)
     } finally {
