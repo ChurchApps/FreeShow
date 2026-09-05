@@ -1468,7 +1468,12 @@
         "preview_frame_rate": "Preview frame rate",
         "auto": "Auto",
         "section_trigger_action": "Trigger action when navigating presentation to a section",
-        "rss": "RSS"
+        "rss": "RSS",
+        "html_output": "HTML Output",
+        "url_path": "URL Path",
+        "html_output_url": "HTML Output URL",
+        "html_path_taken": "Another output already uses this URL path.",
+        "html_server_disabled": "Enable the \"OutputShow\" server under the Connection tab to use HTML outputs."
     },
     "gpu": {
         "no_acceleration": "Graphics acceleration is unavailable",

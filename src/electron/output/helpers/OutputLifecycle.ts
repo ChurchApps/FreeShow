@@ -123,7 +123,7 @@ export class OutputLifecycle {
         const outputWindow = this.createOutputWindow({ ...renderBounds, alwaysOnTop: output.alwaysOnTop !== false, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name, output)
         // const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
-        OutputHelper.setOutput(id, { window: outputWindow, osr: this.isOsrOutput(output), invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: resolvedBounds, transparent: output.transparent, webrtcData: output.webrtcData, rtmpData: output.rtmpData })
+        OutputHelper.setOutput(id, { window: outputWindow, name: output.name, osr: this.isOsrOutput(output), invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: resolvedBounds, transparent: output.transparent, webrtcData: output.webrtcData, rtmpData: output.rtmpData, htmlData: output.htmlData })
         // OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds({ id: output.id!, bounds: resolvedBounds })
         this.updateWindowConstraints(id)
@@ -134,7 +134,7 @@ export class OutputLifecycle {
             delete this.pendingCaptureStart[id]
 
             if (!CaptureHelper.Lifecycle || !OutputHelper.getOutput(id)) return // window closed before timeout finished
-            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, blackmagic: !!output.blackmagic, webrtc: !!output.webrtcData?.streaming, rtmp: !!output.rtmpData?.streaming })
+            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, blackmagic: !!output.blackmagic, server: !!output.html, webrtc: !!output.webrtcData?.streaming, rtmp: !!output.rtmpData?.streaming })
         }, 1200)
 
         // NDI
@@ -147,10 +147,10 @@ export class OutputLifecycle {
         if (output.blackmagic) initializeSender(output, outputWindow, id)
     }
 
-    // only NDI capture outputs share a render; blackmagic/webrtc/rtmp need dedicated capture,
+    // only NDI capture outputs share a render; blackmagic/webrtc/rtmp/html need dedicated capture,
     // and displayed (non-OSR) outputs need their own window
     private static canShareRender(output: Output): boolean {
-        return !!output.ndi && !output.blackmagic && !output.webrtcData?.streaming && !output.rtmpData?.streaming && this.isOsrOutput(output)
+        return !!output.ndi && !output.blackmagic && !output.webrtcData?.streaming && !output.rtmpData?.streaming && !output.html && this.isOsrOutput(output)
     }
 
     private static async createFollowerOutput(id: string, output: Output, rendererId: string, rendererWindow: BrowserWindow) {

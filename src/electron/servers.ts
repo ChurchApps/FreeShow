@@ -10,6 +10,7 @@ import { CaptureHelper } from "./capture/CaptureHelper"
 import { publishPort, unpublishPorts } from "./data/bonjour"
 import { toApp } from "./index"
 import { OutputHelper } from "./output/OutputHelper"
+import { OutputStreamRouter } from "./output/OutputStreamRouter"
 
 type ServerName = "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM"
 interface ServerValues {
@@ -59,10 +60,8 @@ function createServerInstance(id: ServerName) {
         // app.get('/media/:token', handleMediaRequest);
     }
 
-    // The join import from 'path' is still needed for this part
-    app.get("/", (_req, res: Response) => res.sendFile(join(__dirname, id.toLowerCase(), "index.html")))
-    // The join import from 'path' is still needed for this part
     app.use(express.static(join(__dirname, id.toLowerCase())))
+    app.get("*", (_req, res: Response) => res.sendFile(join(__dirname, id.toLowerCase(), "index.html")))
 
     const io = new Server(server)
 
@@ -77,6 +76,7 @@ function createServerInstance(id: ServerName) {
     }
     ioServers[id] = io
     if (id === "STAGE") stageStreamSubscribers = {}
+    if (id === "OUTPUT_STREAM") OutputStreamRouter.reset()
 
     // RECEIVE CONNECTION FROM CLIENT
     io.on("connection", (socket) => {
@@ -157,15 +157,23 @@ export function closeServers() {
     })
 }
 
-let responded: { [key: string]: boolean } = {}
 export function toServer(id: ServerName, msg: any) {
-    if (msg.channel === "STREAM") {
-        // only send if responded
-        if (responded[msg.data.id] === false) return
-        responded[msg.data.id] = false
+    const io = ioServers[id]
+    if (!io) return
+
+    if (id === "OUTPUT_STREAM" && msg.channel === "STREAM") {
+        const socketIds = Object.keys(servers.OUTPUT_STREAM?.connections || {})
+        const targets = OutputStreamRouter.getTargets(socketIds, msg.data || {}, getServerData("OUTPUT_STREAM").outputId || "")
+
+        targets.forEach((socketId) => {
+            if (!OutputStreamRouter.claimFrame(socketId, msg.data.id)) return
+            io.to(socketId).emit(id, msg)
+        })
+
+        return
     }
 
-    ioServers[id]?.emit(id, msg)
+    io.emit(id, msg)
 }
 
 export function getConnections(id: ServerName) {
@@ -195,13 +203,16 @@ function initialize(id: ServerName, socket: Socket) {
     toApp(id, { channel: "CONNECTION", id: socket.id, data: { name } })
     servers[id]!.connections[socket.id] = { name }
 
-    // reset with new connection
-    if (id === "OUTPUT_STREAM") responded = {}
+    // until the client tells us which output it wants, treat it as a root client
+    if (id === "OUTPUT_STREAM") OutputStreamRouter.addSocket(socket.id)
 
     // SEND DATA FROM CLIENT TO APP
     socket.on(id, async (msg: Message) => {
         if (msg.channel === "STREAM_DONE") {
-            responded[msg.data.id] = true
+            OutputStreamRouter.acknowledge(socket.id, msg.data?.id)
+        } else if (msg.channel === "STREAM_SUBSCRIBE") {
+            // the client only wants frames from the output matching its URL path
+            OutputStreamRouter.setPath(socket.id, msg.data?.path || "")
         } else if (msg.channel === "OUTPUT_FRAME") {
             const window = OutputHelper.getOutput(msg.data.outputId)?.window
             if (!window || window.isDestroyed()) return
@@ -225,6 +236,7 @@ function disconnect(id: ServerName, socket: Socket) {
     toApp(id, { channel: "DISCONNECT", id: socket.id })
     delete servers[id]!.connections[socket.id]
     if (id === "STAGE") delete stageStreamSubscribers[socket.id]
+    if (id === "OUTPUT_STREAM") OutputStreamRouter.removeSocket(socket.id)
 }
 
 // https://stackoverflow.com/a/59706252

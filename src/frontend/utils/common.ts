@@ -1,14 +1,12 @@
 import { get } from "svelte/store"
-import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import type { ErrorLog } from "../../types/Main"
 import { removeDuplicates } from "../components/helpers/array"
 import { getContrast } from "../components/helpers/color"
-import { getActiveOutputs, toggleOutputs } from "../components/helpers/output"
+import { checkWindowCapture, toggleOutputs } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
-import { activePopup, activeTriggerFunction, autosave, currentWindow, disabledServers, drawer, errorHasOccurred, focusedArea, os, outputs, quickSearchActive, resized, serverData, statusIndicator, theme, themes, toastMessages, version } from "../stores"
+import { activePopup, activeTriggerFunction, autosave, currentWindow, drawer, errorHasOccurred, focusedArea, os, quickSearchActive, resized, statusIndicator, theme, themes, toastMessages, version } from "../stores"
 import { convertAutosave } from "../values/autosave"
-import { send } from "./request"
 import { save } from "./save"
 
 export const DEFAULT_WIDTH = 290 // --navigation-width (global.css) | resized (stores.ts & defaults.ts)
@@ -168,14 +166,8 @@ export function toggleRemoteStream() {
     // get(special).optimizedMode
     if (!isMainWindow()) return
 
-    const value = { key: "server", value: false }
-    let captureOutputId = get(serverData)?.output_stream?.outputId
-    if (!captureOutputId || !get(outputs)[captureOutputId]) captureOutputId = getActiveOutputs(get(outputs), true, true)[0]
-    if (get(disabledServers).output_stream === false) value.value = true
-
-    setTimeout(() => {
-        send(OUTPUT, ["SET_VALUE"], { id: captureOutputId, key: "capture", value })
-    }, 1800)
+    // multiple outputs can stream at once (one per "HTML Output" URL path), so every enabled output is re-evaluated
+    setTimeout(() => checkWindowCapture(true), 1800)
 }
 
 // dev specific commands

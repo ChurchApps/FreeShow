@@ -5,6 +5,7 @@ import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 import { NdiSender } from "../../ndi/NdiSender"
 import util from "../../ndi/vingester-util"
 import { OutputHelper } from "../../output/OutputHelper"
+import { slugifyStreamPath } from "../../output/OutputStreamRouter"
 import { getConnections, getStageStreamSubscriberIds, toServer, toStageStreamSubscribers } from "../../servers"
 import { RtmpStreamer } from "../../streaming/RtmpStreamer"
 import { WebRtcHost } from "../../streaming/WebRtcHost"
@@ -565,9 +566,15 @@ export class CaptureTransmitter {
         const size = image.getSize()
         if (this.shouldSkipUnchangedNonBlackmagicFrame("server", outputId, buffer, size)) return
 
+        // the client displaying this output is identified by the URL path it opened (falls back to the output name)
+        const output = OutputHelper.getOutput(outputId)
+        const name = output?.name || ""
+        const path = output?.htmlData?.path || `/${slugifyStreamPath(name) || "output"}`
+        const transparent = output?.transparent ?? false
+
         /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
         this.convertToRGBA(buffer)
-        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, time: Date.now(), buffer, size } })
+        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, path, name, transparent, time: Date.now(), buffer, size } })
     }
 
     // WEBRTC
