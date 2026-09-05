@@ -420,17 +420,38 @@ export class CaptureTransmitter {
         RtmpStreamer.updateFrame(captureId, Buffer.from(buffer), size)
     }
 
+    // The render surface is the window's logical bounds times the display scale, so on a scaled display
+    // its pixel size can miss the configured resolution (and land on an odd width, which the NDI/OMT
+    // encoders refuse). The wire senders get the configured resolution, whatever the surface produced.
+    private static sizeMismatchLogged: { [captureId: string]: string } = {}
+    private static toConfiguredSize(captureId: string, image: NativeImage): { image: NativeImage; size: Size } {
+        const size = image.getSize()
+        const intended = OutputHelper.getOutput(captureId)?.intendedBounds
+        if (!intended?.width || !intended?.height || (intended.width === size.width && intended.height === size.height)) return { image, size }
+        const target = { width: intended.width, height: intended.height }
+        const tag = `${size.width}x${size.height}->${target.width}x${target.height}`
+        if (this.sizeMismatchLogged[captureId] !== tag) {
+            this.sizeMismatchLogged[captureId] = tag
+            console.warn(`Output ${captureId} rendered ${size.width}x${size.height} but is configured ${target.width}x${target.height}; resampling frames for NDI/OMT`)
+        }
+        return { image: image.resize({ ...target, quality: "good" }), size: target }
+    }
+
     private static sendFrameToChannel(captureId: string, key: string, image: NativeImage) {
         const size = image.getSize()
         if (!size.width || !size.height) return
 
         switch (key) {
-            case "ndi":
-                this.sendBufferToNdi(captureId, image, { size })
+            case "ndi": {
+                const fitted = this.toConfiguredSize(captureId, image)
+                this.sendBufferToNdi(captureId, fitted.image, { size: fitted.size })
                 break
-            case "omt":
-                this.sendBufferToOmt(captureId, image, { size })
+            }
+            case "omt": {
+                const fitted = this.toConfiguredSize(captureId, image)
+                this.sendBufferToOmt(captureId, fitted.image, { size: fitted.size })
                 break
+            }
             case "blackmagic":
                 this.sendBufferToBlackmagic(captureId, image)
                 break
