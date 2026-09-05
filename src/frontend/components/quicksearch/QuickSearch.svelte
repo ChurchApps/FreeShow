@@ -56,12 +56,12 @@
 
         // choose specific categories with colon or space syntax
         // SearchCategory ids with a few excluded, including singular forms
-        let categoryMatch = value.match(/^(settings?|stage|overlays?|projects?|actions?|faq|shows?|media|audio|bible)[:| ]\s*/i)
+        let categoryMatch = value.match(/^(settings?|stage|overlays?|projects?|actions?|ai|faq|shows?|media|audio|bible)[:| ]\s*/i)
         if (categoryMatch) {
             let matchedCategory = categoryMatch[1].toLowerCase()
 
             // add 's' to singular forms that should be plural
-            if (!matchedCategory.endsWith("s") && !["stage", "faq", "media", "audio", "bible"].includes(matchedCategory)) matchedCategory += "s"
+            if (!matchedCategory.endsWith("s") && !["stage", "faq", "media", "audio", "bible", "ai"].includes(matchedCategory)) matchedCategory += "s"
 
             activeCategory = matchedCategory as SearchCategory
             value = value.replace(categoryMatch[0], "").trim()
@@ -87,6 +87,13 @@
         }
 
         scheduleSearch(value, activeCategory)
+    }
+
+    // some entries follow the current state (e.g. AI toggles) - reopening must not show stale results
+    $: if ($quickSearchActive) refreshResults()
+    function refreshResults() {
+        const value = activeCategory ? actualSearchText : searchValue
+        if (value) scheduleSearch(value, activeCategory, true)
     }
 
     function openCategory(category: SearchCategory) {

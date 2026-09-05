@@ -4,6 +4,7 @@ import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
+import { handleScriptureTranscript } from "../ai/scripture/session"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
@@ -48,6 +49,9 @@ import {
     activeProject,
     activeShow,
     activeTimers,
+    aiInterim,
+    aiSttStatus,
+    aiTranscript,
     alertMessage,
     audioData,
     contentProviderData,
@@ -86,8 +90,8 @@ import {
     windowState
 } from "../stores"
 import { setupCloudSync } from "../utils/cloudSync"
-import { translateText } from "../utils/language"
 import { newToast } from "../utils/common"
+import { translateText } from "../utils/language"
 import { confirmCustom } from "../utils/popup"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { invalidateSearchIndex } from "../utils/searchFast"
@@ -95,6 +99,7 @@ import { updateSettings, updateSyncedSettings, updateThemeValues } from "../util
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
 import { sendMain } from "./main"
+import { handleQuoteMatchTranscript } from "../ai/scripture/quoteMatch/quoteMatcherEngine"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -292,6 +297,16 @@ export const mainResponses: MainResponses = {
             return a
         })
     },
+
+    // AI
+    [ToMain.AI_STATUS]: (data) => aiSttStatus.set(data),
+    [ToMain.AI_TRANSCRIPT]: (data) => {
+        // the whole session stays scrollable - the cap only guards against unbounded growth
+        aiTranscript.update((a) => [...a, data].slice(-2000))
+        handleQuoteMatchTranscript(data)
+        handleScriptureTranscript(data)
+    },
+    [ToMain.AI_TRANSCRIPT_INTERIM]: (data) => aiInterim.set(data.text),
 
     // Companion dynamic value variables
     [ToMain.GET_DYNAMIC_VALUES]: (data) => {

@@ -12,6 +12,7 @@ import {
     actions,
     activePopup,
     activeProject,
+    ai,
     alertMessage,
     alertUpdates,
     audioChannelsData,
@@ -198,7 +199,8 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         timeline: get(timeline),
         timecode: get(timecode),
         contentProviderData: get(contentProviderData),
-        obsData: get(obsData)
+        obsData: get(obsData),
+        ai: get(ai)
     }
 
     const syncedSettings: { [key: string]: any } = {}
@@ -509,5 +511,6 @@ const saveList: { [key in SaveList]: any } = {
     obsData: null,
     effects,
     audioRouting,
-    deletedDefaults: null
+    deletedDefaults: null,
+    ai: ai
 }

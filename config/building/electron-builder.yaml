@@ -33,6 +33,8 @@ win:
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libspotifyctl/**/*"
+        # native addon + its onnxruntime libs, loaded by path at runtime (AI scripture streaming engine)
+        - "**/node_modules/sherpa-onnx-*/**"
     azureSignOptions:
         publisherName: Live Church Solutions
         endpoint: https://wus2.codesigning.azure.net/
@@ -46,6 +48,8 @@ linux:
         - "**/node_modules/grandiose/**"
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libltc-wrapper/**/*"
+        # native addon + its onnxruntime libs, loaded by path at runtime (AI scripture streaming engine)
+        - "**/node_modules/sherpa-onnx-*/**"
     category: AudioVideo
     target:
         - AppImage
@@ -65,6 +69,8 @@ mac:
     icon: build/public/icon.png
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
+        # native addon + its onnxruntime libs, loaded by path at runtime (AI scripture streaming engine)
+        - "**/node_modules/sherpa-onnx-*/**"
     target:
         - target: dmg
           arch:

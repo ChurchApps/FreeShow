@@ -1,4 +1,5 @@
 <script lang="ts">
+    import AiFloating from "./ai/components/floating/AiFloating.svelte"
     import { customActionActivation } from "./components/actions/actions"
     import DrawTabs from "./components/draw/DrawTabs.svelte"
     import Navigation from "./components/edit/Navigation.svelte"
@@ -14,7 +15,7 @@
     import StageLayouts from "./components/stage/StageLayouts.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
     import Timeline from "./components/timeline/Timeline.svelte"
-    import { activeEdit, activePage, activeProfile, activeProject, activeShow, activeStage, currentWindow, editMode, focusMode, loaded, os, projectView, resized, showChangeProfileMenu, showsCache, special } from "./stores"
+    import { activeEdit, activePage, activeProfile, activeProject, activeShow, activeStage, ai, currentWindow, editMode, focusMode, loaded, os, projectView, resized, showChangeProfileMenu, showsCache, special } from "./stores"
     import { DEFAULT_WIDTH } from "./utils/common"
 
     $: page = $activePage
@@ -118,6 +119,10 @@
 
     {#if $showChangeProfileMenu && $activeProfile !== null}
         <ProfileChangerMenu />
+    {/if}
+
+    {#if $ai.enabled}
+        <AiFloating />
     {/if}
 
     <Tipbar />

@@ -2,7 +2,7 @@
     import { Main } from "../../../types/IPC/Main"
     import type { Popups } from "../../../types/Main"
     import { sendMain } from "../../IPC/main"
-    import { activePopup, dataPath, outputs, popupData, settingsTab } from "../../stores"
+    import { activePopup, ai, dataPath, outputs, popupData, settingsTab } from "../../stores"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
 
@@ -52,6 +52,14 @@
             </MaterialButton>
         {/if}
     </div>
+{:else if openedTab === "ai"}
+    {#if $ai.enabled}
+        <div class="bottom">
+            <MaterialButton variant="outlined" icon="ai" on:click={() => open("ai_model_manager")} small>
+                <T id="popup.ai_model_manager" />
+            </MaterialButton>
+        </div>
+    {/if}
 {:else if openedTab === "other"}
     <div class="bottom">
         <MaterialButton variant="outlined" icon="document" on:click={openLog} small>

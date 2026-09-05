@@ -90,6 +90,7 @@ import UpdateManager from "../components/main/popups/UpdateManager.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import NodeOptions from "../components/main/popups/NodeOptions.svelte"
 import { activePopup, popupData } from "../stores"
+import AiModelManager from "../ai/components/popups/AiModelManager.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -179,7 +180,8 @@ export const popups: { [key in Popups]: ComponentType } = {
     cleaning_utility: CleaningUtility,
     pco_picker: PcoServicePicker,
     sync_folders: SyncFolders,
-    node_options: NodeOptions
+    node_options: NodeOptions,
+    ai_model_manager: AiModelManager
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {

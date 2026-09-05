@@ -6,6 +6,7 @@ import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { ContentProviderId } from "../electron/contentProviders/base/types"
 import type { TimecodeMode } from "../electron/timecode/timecode"
+import type { AiFeatureStatus } from "../types/ai/Ai"
 import type { AudioChannelData, AudioStream, MetronomeSettings, Playlist } from "../types/Audio"
 import type { AudioRoutingConfig } from "../types/AudioRouting"
 import type { Event } from "../types/Calendar"
@@ -19,6 +20,8 @@ import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowTy
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
+import { AiSuggestion } from "./../types/ai/Ai"
+import type { AiSettings } from "./../types/ai/AiSettings"
 import type { Outputs, RtmpStatus } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
@@ -208,6 +211,14 @@ export const statusIndicator: Writable<string> = writable("")
 export type SlideHighlight = { indexes: number[]; color?: string; icon?: string } | null
 export const slideDeleteHighlight: Writable<SlideHighlight> = writable(null)
 
+// AI
+export const aiSttStatus: Writable<{ state: "inactive" | "listening" | "stopped" | "error"; message?: string }> = writable({ state: "inactive" })
+export const aiLlmStatus: Writable<AiFeatureStatus> = writable({ state: "stopped" })
+export const aiSuggestions: Writable<AiSuggestion[]> = writable([])
+export const aiSmartAction: Writable<AiSuggestion | null> = writable(null)
+export const aiTranscript: Writable<{ text: string; startMs: number; endMs: number; language?: string; music?: boolean; utteranceEnd?: boolean }[]> = writable([])
+export const aiInterim: Writable<string> = writable("") // direct unprocessed transcript
+
 // ----- SAVED VARIABLES -----
 
 // HISTORY
@@ -385,6 +396,9 @@ export const obsData: Writable<{ enabled?: boolean; connected?: boolean; ip?: st
 export const cloudSyncData: Writable<{ enabled?: boolean; id?: string; deviceName?: string; team?: { id: string; churchId: string; name: string; count?: number }; cloudMethod?: "merge" | "read_only" | "upload" | "replace" }> = writable({}) // {}
 export const driveKeys: Writable<any> = writable({})
 export const driveData: Writable<any> = writable({ mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false })
+
+// AI
+export const ai: Writable<AiSettings> = writable({}) // {}
 
 // ----- STORES LIST -----
 

@@ -5,8 +5,8 @@ import { Main } from "../../types/IPC/Main"
 import type { Output } from "../../types/Output"
 import type { SaveListSettings, SaveListSyncedSettings } from "../../types/Save"
 import type { Metadata, Themes } from "../../types/Settings"
-import { initAudioRouting } from "../audio/routing/audioRoutingInit"
 import { migrateAudioEffects } from "../audio/effects/audioEffectsHelpers"
+import { initAudioRouting } from "../audio/routing/audioRoutingInit"
 import { clone, keysToID } from "../components/helpers/array"
 import { checkFFmpeg, checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
 import { migrateOutputsRtmp } from "../components/helpers/rtmpDestinations"
@@ -17,6 +17,7 @@ import {
     actions,
     activePopup,
     activeProject,
+    ai,
     alertUpdates,
     audioChannelsData,
     audioEffects,
@@ -448,5 +449,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     obsData: (v: any) => obsData.set(v),
     effects: (a: any) => effects.set(a),
     deletedDefaults: (a: any) => deletedDefaults.set({ ...get(deletedDefaults), ...a }),
-    audioRouting: (v: any) => initAudioRouting(v)
+    audioRouting: (v: any) => initAudioRouting(v),
+    ai: (a: any) => ai.set(a)
 }

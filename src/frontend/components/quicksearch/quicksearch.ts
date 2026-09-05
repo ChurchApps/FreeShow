@@ -74,7 +74,7 @@ interface QuickSearchValue {
 const MAX_RESULTS_NORMAL = 5
 const MAX_RESULTS_LARGE = 10
 
-export type SearchCategory = "show" | "settings" | "stage" | "overlays" | "projects" | "actions" | "navigation" | "faq" | "shows" | "media" | "audio" | "bible" | "items"
+export type SearchCategory = "show" | "settings" | "stage" | "overlays" | "projects" | "actions" | "ai" | "navigation" | "faq" | "shows" | "media" | "audio" | "bible" | "items"
 export const quickSearchCategoryNames: Record<SearchCategory, string> = {
     show: "formats.show",
     settings: "menu.settings",
@@ -82,6 +82,7 @@ export const quickSearchCategoryNames: Record<SearchCategory, string> = {
     overlays: "tabs.overlays",
     projects: "guide_title.projects",
     actions: "tabs.actions",
+    ai: "settings.ai",
     navigation: "settings.general",
     faq: "FAQ",
     shows: "tabs.shows",

@@ -195,6 +195,14 @@ const clickActions = {
             newToast("actions.copied")
         }
     },
+    // the live AI transcript is plain selectable text - copy the saved selection (opening the
+    // menu keeps it, clicking the item would clear it) or fall back to the live one
+    copy_text_selection: () => {
+        const text = savedTextRange?.toString() || window.getSelection()?.toString() || ""
+        if (!text.trim()) return
+        navigator.clipboard.writeText(text)
+        newToast("actions.copied")
+    },
     text_copy: (obj: ObjData) => {
         const editElem = obj.contextElem?.closest?.(".edit") as HTMLElement | null
         if (!editElem) return

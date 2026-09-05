@@ -410,7 +410,8 @@
         "close_ad": "Close ad on output screen",
         "start": "Start",
         "end": "End",
-        "change_folder": "Choose another location"
+        "change_folder": "Choose another location",
+        "custom_path": "Custom path"
     },
     "tabs": {
         "shows": "Shows",
@@ -567,7 +568,8 @@
         "reset_all_confirm": "Are you sure you want to reset everything?",
         "reset_all_action": "This will reset the whole program, but not delete the .show files in your \"Shows\"-folder.",
         "quit": "Quit without saving",
-        "save_quit": "Save & Quit"
+        "save_quit": "Save & Quit",
+        "ai_model_manager": "Manage models"
     },
     "confirm": {
         "statement_slide_exists_arrangement": "Slide exists in a different arrangement!",
@@ -1336,6 +1338,7 @@
         "display": "Display",
         "connection": "Connection",
         "cloud": "Cloud",
+        "ai": "Smart",
         "calendar": "Calendar",
         "text_import": "Text",
         "media_import": "Media",
@@ -1810,5 +1813,40 @@
         "translation_description_multiline": "Adds all languages in a single textbox in alternating lines. (Like in Songbeamer)",
         "translation_description_textboxes": "Adds every language as a separate textbox to the slide.",
         "translation_description_layouts": "Creates a unique set of slides and a layout for every language."
+    },
+    "ai": {
+        "hint": "Listens to your microphone, transcribes speech to text, and suggests relevant actions based on what is heard. Can also be linked to LLM models for better understanding and context.",
+        "privacy_details": "Everything remains locally on this device unless explicitly mentioned otherwise.",
+        "privacy_cloud": "Transcribed text data will be uploaded and processed in the cloud.",
+        "transcription": "Transcription",
+        "engine": "Engine",
+        "model": "Model",
+        "check_again": "Check again",
+        "whisper_mac_guide": "Install with Homebrew by running this command in the Terminal:",
+        "whisper_linux_guide": "Install whisper.cpp with your package manager, or select the whisper-cli binary below",
+        "interpretation": "Interpretation mode",
+        "interpretation_hint": "For services with live interpretation: everything is transcribed, but scriptures are only detected from the language selected below.",
+        "listen_language": "Detect scriptures from",
+        "spoken_languages_hint": "Only these languages are expected - anything else whisper thinks it hears is double-checked against your detection language.",
+        "interpretation_model_hint": "Language detection needs a multilingual model - Small or larger is recommended.",
+        "provider": "AI provider",
+        "api_key": "API key",
+        "key_saved": "API key saved",
+        "remove_key": "Remove key",
+        "test_connection": "Test",
+        "select_mic": "Select a microphone input",
+        "processing": "Processing speech...",
+        "test_success": "Connection successful!",
+        "test_failed": "Connection failed",
+        "state_starting": "Starting...",
+        "state_listening": "Listening",
+        "state_stopped": "Stopped",
+        "state_error": "Error",
+        "waiting_for_audio": "Waiting for audio...",
+        "confidence_ask": "Always ask",
+        "confidence_highest": "If confident",
+        "confidence_high": "If high confidence",
+        "confidence_medium": "If medium confidence",
+        "copy_transcript": "Copy transcript"
     }
 }

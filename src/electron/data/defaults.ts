@@ -85,7 +85,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
             syncCategories: ["song"]
         }
     },
-    obsData: {}
+    obsData: {},
+    ai: {}
 }
 
 export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
