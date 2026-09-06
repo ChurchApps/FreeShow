@@ -23,7 +23,6 @@ export enum ToMain {
     // AI
     AI_STATUS = "AI_STATUS",
     AI_TRANSCRIPT = "AI_TRANSCRIPT",
-    AI_TRANSCRIPT_INTERIM = "AI_TRANSCRIPT_INTERIM",
     // Unified provider callbacks
     PROVIDER_CONNECT = "PROVIDER_CONNECT",
     PROVIDER_PROJECTS = "PROVIDER_PROJECTS",
@@ -74,10 +73,9 @@ export interface ToMainSendPayloads {
     [ToMain.OPEN_FOLDER2]: { channel: string; path: string }
     [ToMain.OPEN_FILE2]: { channel: string; id: string; files: string[]; content: { [key: string]: string } }
     [ToMain.RECEIVE_MIDI2]: { id: string; values: any; type: "noteon" | "noteoff" | "control" }
-    // AI (WIP)
+    // AI
     [ToMain.AI_STATUS]: { state: "listening" | "stopped" | "error"; message?: string }
-    [ToMain.AI_TRANSCRIPT]: { text: string; startMs: number; endMs: number; language?: string; music?: boolean; utteranceEnd?: boolean }
-    [ToMain.AI_TRANSCRIPT_INTERIM]: { text: string }
+    [ToMain.AI_TRANSCRIPT]: { text: string; interim?: boolean; startMs?: number; endMs?: number; language?: string; music?: boolean; utteranceEnd?: boolean }
 }
 
 export interface ToMainReturnPayloads {

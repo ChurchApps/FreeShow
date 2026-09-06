@@ -35,6 +35,7 @@ interface LlmSettings {
     model?: string
 }
 
+export type ConfidenceLevels = "ask" | "highest" | "high" | "medium"
 interface AiScriptureSettings {
-    confidence?: "ask" | "highest" | "high" | "medium"
+    confidence?: ConfidenceLevels
 }

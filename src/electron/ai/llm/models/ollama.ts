@@ -24,13 +24,15 @@ export class OllamaProvider extends APIModel {
     }
 
     async complete(_apiKey: string, model: string, options: LLMCompletionOptions): Promise<string> {
+        const targetModel = model || this.fallbackModel
         const body: any = {
-            model,
+            model: targetModel,
             stream: false,
             options: { temperature: options.temperature ?? 0, num_predict: options.maxTokens ?? 1024 },
             messages: buildMessages(options)
         }
-        if (options.jsonSchema) body.format = options.jsonSchema
+        // Some Ollama versions reject schema objects in `format`; `json` works broadly and still enforces JSON output.
+        if (options.jsonSchema) body.format = "json"
 
         try {
             const response = await axios.post(`${API_URL}/api/chat`, body, {

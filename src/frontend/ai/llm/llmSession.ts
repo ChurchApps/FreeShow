@@ -3,7 +3,6 @@ import { Main } from "../../../types/IPC/Main"
 import { requestMain } from "../../IPC/main"
 import { ai, aiLlmStatus } from "../../stores"
 import { AI_PROVIDER_MODELS, type AIProviderId } from "./llmModels"
-import { LLMTalk } from "./llmTalk"
 
 export type LLMSessionConfig = { provider: AIProviderId; model: string } | null
 
@@ -41,12 +40,6 @@ class LLMSession {
 
     getConfig(): LLMSessionConfig {
         return this.lastConfig
-    }
-
-    createLLMTalk(): LLMTalk | null {
-        const config = this.lastConfig
-        if (!config) return null
-        return new LLMTalk({ providerId: config.provider, model: config.model })
     }
 
     onChange(listener: LLMSessionListener): () => void {

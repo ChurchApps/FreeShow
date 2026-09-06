@@ -28,7 +28,8 @@ export abstract class APIModel {
 
         const status = e?.response?.status
         if (typeof status === "number") {
-            const message = typeof e.response?.data?.error?.message === "string" ? e.response.data.error.message : undefined
+            const errorData = e?.response?.data?.error
+            const message = typeof errorData === "string" ? errorData : typeof errorData?.message === "string" ? errorData.message : typeof e?.response?.data?.message === "string" ? e.response.data.message : undefined
             if (message) return new Error(message)
 
             if (status === 401) return new Error("Invalid API key")

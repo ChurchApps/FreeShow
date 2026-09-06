@@ -195,6 +195,21 @@ describe("Ollama Provider Connection", () => {
         expect(config.timeout).toBe(30000)
     })
 
+    it("uses json output mode when structured output is requested", async () => {
+        post.mockResolvedValueOnce({
+            data: { message: { role: "assistant", content: '{"ok":true}' }, done: true }
+        } as any)
+
+        await ollamaProvider.complete("", "gemma3:4b", {
+            prompt: "hi",
+            jsonSchema: { type: "object", properties: { ok: { type: "boolean" } }, required: ["ok"] },
+            signal
+        })
+
+        const [, body] = post.mock.calls[0] as any[]
+        expect(body.format).toBe("json")
+    })
+
     it("testConnection returns ok when the model exists in local tags", async () => {
         get.mockResolvedValueOnce({
             data: { models: [{ name: "gemma3:4b" }, { name: "llama3.2:latest" }] }

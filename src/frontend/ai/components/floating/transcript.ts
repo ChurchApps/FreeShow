@@ -3,7 +3,7 @@
 // bubble UI and the context menu
 
 import { get } from "svelte/store"
-import { aiSmartAction, aiSuggestions, aiTranscript } from "../../../stores"
+import { aiSmartAction, aiSuggestions, sttTranscript } from "../../../stores"
 import { newToast } from "../../../utils/common"
 
 // segments closer than this continue the same display line
@@ -45,9 +45,7 @@ export function groupTranscriptLines(segments: { text: string; startMs: number; 
 
 /** Copy the whole session transcript - finalized text only, the unstable interim tail is excluded. */
 export function copyTranscript(): void {
-    const text = groupTranscriptLines(get(aiTranscript))
-        .map((line) => line.text)
-        .join("\n")
+    const text = get(sttTranscript).finalized
     if (!text) return
 
     navigator.clipboard.writeText(text)

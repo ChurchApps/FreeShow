@@ -5,12 +5,12 @@
     import T from "../../../components/helpers/T.svelte"
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
     import Center from "../../../components/system/Center.svelte"
-    import { activePage, ai, aiInterim, aiSmartAction, aiSttStatus, aiSuggestions, aiTranscript, language, outLocked, settingsTab } from "../../../stores"
+    import { activePage, ai, aiSmartAction, aiSttStatus, aiSuggestions, language, outLocked, settingsTab, sttTranscript } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { audioLevelStore, resolveSttEngine, SpeechToText } from "../../stt/stt"
     import AiRing from "./AiRing.svelte"
     import ConfidenceMeter from "./ConfidenceMeter.svelte"
-    import { copyTranscript, dismissAiSuggestion, groupTranscriptLines } from "./transcript"
+    import { copyTranscript, dismissAiSuggestion } from "./transcript"
 
     let state: "inactive" | "error" | "listening" | "processing" = "inactive"
 
@@ -29,7 +29,7 @@
     let transcriptElem: HTMLElement | undefined
     let transcriptPinned = true
     let autoScrollTimer: NodeJS.Timeout | null = null
-    $: if (isOpen && transcriptPinned && (transcriptLines.length || $aiInterim) && transcriptElem) scrollToBottom()
+    $: if (isOpen && transcriptPinned && ($sttTranscript.finalized || $sttTranscript.unprocessed) && transcriptElem) scrollToBottom()
     $: if (!isOpen) transcriptPinned = true
     function scrollToBottom() {
         setTimeout(() => {
@@ -49,20 +49,17 @@
         transcriptPinned = transcriptElem.scrollHeight - transcriptElem.scrollTop - transcriptElem.clientHeight < 40
     }
 
-    // nemotron emits an utterance in fragments - group them into one line per utterance
-    // (whisper sets no utteranceEnd flags, so it falls back to grouping on pause gaps)
-    $: transcriptLines = groupTranscriptLines($aiTranscript)
-
     // each newly registered word bumps a border confirmation pulse on the floating bubble
     let wordConfirmTick = 0
     let wordConfirmDurationMs = 260
     let previousWordCount = -1
     let burstWords = 0
     let burstTimer: NodeJS.Timeout | null = null
-    $: updateWordConfirmation(transcriptLines)
+    $: updateWordConfirmation($sttTranscript.finalized, $sttTranscript.unprocessed)
 
-    function updateWordConfirmation(lines: { text: string }[]) {
-        const nextCount = countRegisteredWords(lines)
+    function updateWordConfirmation(finalizedText: string, unprocessedText: string) {
+        const fullText = (finalizedText + (finalizedText && unprocessedText ? " " : "") + unprocessedText).trim()
+        const nextCount = countRegisteredWords(fullText)
 
         // first run sets baseline without emitting confirmation
         if (previousWordCount < 0) {
@@ -91,11 +88,9 @@
         wordConfirmTick += 1
     }
 
-    function countRegisteredWords(lines: { text: string }[]) {
-        return lines.reduce((total, line) => {
-            const words = line.text.match(/\S+/g)
-            return total + (words?.length || 0)
-        }, 0)
+    function countRegisteredWords(text: string) {
+        const words = text.match(/\S+/g)
+        return words?.length || 0
     }
 
     // STATE
@@ -197,11 +192,11 @@
 {/if}
 
 <!-- this will show the latest transcript segment (& interim) -->
-<!-- {#if !isOpen && isListening && (latestSegment || $aiInterim)}
+<!-- {#if !isOpen && isListening && ($sttTranscript.finalized || $sttTranscript.unprocessed)}
     <div class="ticker-wrap">
         <AiRing {state} {audioLevel} borderRadius="12px" borderWidth="1.5px">
             <button class="ticker" on:click={toggleExpand}>
-                {latestSegment}{#if $aiInterim}{" "}<span class="interim">{$aiInterim}</span>{/if}
+                {$sttTranscript.finalized}{#if $sttTranscript.unprocessed}{" "}<span class="interim">{$sttTranscript.unprocessed}</span>{/if}
             </button>
         </AiRing>
     </div>
@@ -272,7 +267,7 @@
                     </div>
 
                     <div class="headerActions">
-                        {#if transcriptLines.length}
+                        {#if $sttTranscript.finalized}
                             <MaterialButton icon="copy" title="ai.copy_transcript" on:click={copyTranscript} />
                         {/if}
                         <MaterialButton icon="settings" title="menu.settings" on:click={openSettings} />
@@ -287,22 +282,17 @@
                             <T id="remote.loading" />
                         </Center>
                     {:else if state === "error"}
-                        <p class="placeholder error">{translateText($aiSttStatus.message || "ai.error_start_failed")}</p>
+                        <p class="placeholder error">{translateText($aiSttStatus.message || "Something went wrong...")}</p>
                     {:else if state === "processing"}
                         <div class="processing-view">
                             <div class="spinner large"></div>
                             <p><T id="ai.processing" /></p>
                         </div>
-                    {:else if transcriptLines.length || $aiInterim}
+                    {:else if $sttTranscript.finalized || $sttTranscript.unprocessed}
                         <div class="transcript-box" bind:this={transcriptElem} on:scroll={onTranscriptScroll}>
-                            {#each transcriptLines as line}
-                                <p class:music={line.music}>
-                                    {line.text}{#if line.open && $aiInterim}{" "}<span class="interim">{$aiInterim}</span>{/if}
-                                </p>
-                            {/each}
-                            {#if $aiInterim && !transcriptLines[transcriptLines.length - 1]?.open}
-                                <p><span class="interim">{$aiInterim}</span></p>
-                            {/if}
+                            <p>
+                                {$sttTranscript.finalized}{#if $sttTranscript.unprocessed}{" "}<span class="interim">{$sttTranscript.unprocessed}</span>{/if}
+                            </p>
                         </div>
                     {:else}
                         <Center faded>
@@ -636,12 +626,6 @@
         white-space: initial;
         overflow-wrap: anywhere;
         margin: 2px 0;
-    }
-
-    /* whisper's guessed lyrics for music - shown for context, but faded & never used for detection */
-    .transcript-box .music {
-        opacity: 0.45;
-        font-style: italic;
     }
 
     /* the open utterance's unstable tail - visible right away, solidifies once confirmed */

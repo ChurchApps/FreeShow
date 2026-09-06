@@ -1,83 +1,151 @@
 import { get, type Unsubscriber } from "svelte/store"
+import { uid } from "uid"
 import type { AiSuggestion } from "../../../types/ai/Ai"
-import type { DetectedReference } from "../../../types/ai/AiScripture"
-import { getShortBibleName } from "../../components/drawer/bible/scripture"
-import { clone } from "../../components/helpers/array"
-import { setDrawerTabData } from "../../components/helpers/historyHelpers"
+import type { ConfidenceLevels } from "../../../types/ai/AiSettings"
+import { startScripture } from "../../components/actions/apiHelper"
 import { getFirstActiveOutput } from "../../components/helpers/output"
-import { activeDrawerTab, activePage, aiSmartAction, aiSuggestions, drawerTabsData, openScripture, outputs, scriptures } from "../../stores"
+import { ai, aiSmartAction, aiSuggestions, drawerTabsData, outputs } from "../../stores"
+import { getLLMManager } from "../llm/llmManager"
+import { BibleCacheManager } from "../scripture/detection"
 
-type AiSuggestType = "scripture"
+export interface MatchResult {
+    type: "scripture" | "lyrics" | "quote" | "announcement" | "empty"
+    content: string // "scripture" = reference (e.g., "Genesis 1:1")
+    confidence: number // 1-100
+}
 
 export class AiManager {
-    private static autoPlayLog = new Map<string, { content: string; time: number }>()
-    static autoPlay(type: AiSuggestType, content: DetectedReference) {
-        listenToOutput()
+    private static lastMatch: number = 0
+    private static MAX_LLM_REQUEST_AFTER_MATCH = 5000
+    private static latestSearchId: number = 0
 
-        const now = Date.now()
-        // skip if the output was manually updated recently
-        if (lastOutputUpdate && now - lastOutputUpdate < 3000) {
-            this.suggest("scripture", content)
+    static async processSTTChunk(chunk: { chunkWithOverlap: string; newWordsCount: number }) {
+        const searchId = ++this.latestSearchId
+        const isCancelled = () => searchId !== this.latestSearchId
+
+        const stringMatch = await this.stringDetection(chunk.chunkWithOverlap, isCancelled)
+        if (isCancelled()) return
+
+        if (stringMatch) {
+            this.newMatch(stringMatch)
+            this.lastMatch = Date.now()
             return
         }
 
-        const contentId = JSON.stringify(content)
-        const log = this.autoPlayLog.get(type)
-        if (log) {
-            const now = Date.now()
-            // just auto played
-            if (now - log.time < 5000 && log.content === contentId) return
+        if (this.lastMatch && Date.now() - this.lastMatch < this.MAX_LLM_REQUEST_AFTER_MATCH) return
+
+        const llmManager = getLLMManager()
+        if (!llmManager) return
+
+        // only report to LLM if nothing is auto detected
+        const llmMatch = await llmManager.detectMatch(chunk)
+        if (isCancelled()) return
+
+        if (llmMatch) {
+            this.newMatch(llmMatch)
+            this.lastMatch = Date.now()
         }
-
-        content = clone(content)
-
-        this.autoPlayLog.set(type, { content: contentId, time: Date.now() })
-        this.notifyAutoPresented(content)
-
-        console.log(`Auto-playing ${type}:`, content)
-        this.triggerFromType(type, content)
-
-        setTimeout(() => {
-            // reset output updates when auto played
-            lastOutputUpdate = 0
-        }, 1000)
     }
 
-    static suggest(type: AiSuggestType, content: DetectedReference) {
-        content = clone(content)
+    private static async stringDetection(textChunk: string, isCancelled?: () => boolean) {
+        const scriptureMatch = await this.bibleDetection(textChunk, isCancelled)
+        return scriptureMatch
+    }
 
-        const activeTranslationId = get(drawerTabsData).scripture?.activeSubTab || ""
-        if (content.matchedBibleId && content.matchedBibleId !== activeTranslationId) {
-            // TODO: request to change translation
+    private static async bibleDetection(textChunk: string, isCancelled?: () => boolean) {
+        const activeBibleId = get(drawerTabsData)?.scripture?.activeSubTab
+        if (!activeBibleId) return null
+
+        const bibleCache = await BibleCacheManager.getCache(activeBibleId)
+        if (!bibleCache || isCancelled?.()) return null
+
+        return bibleCache.search(textChunk, AiManager.liveContent, isCancelled)
+    }
+
+    /////
+
+    static newMatch(match: MatchResult) {
+        if (match.type === "empty" || !match.content) return
+        if (AiManager.liveContent === match.content) return
+
+        let suggestionDraft: any = {
+            id: uid(5),
+            timestamp: Date.now(),
+            content: match.content,
+            confidence: match.confidence
+        }
+
+        const trigger = () => this.triggerMatchAction(match)
+
+        if (this.shouldAutoPlay(match)) {
+            const suggestion = { ...suggestionDraft, action: "presented" }
+            this.addSuggestion(suggestion)
+
+            console.info(`Auto-playing ${match.type}:`, match.content)
+            trigger()
             return
         }
 
-        const label = this.labelFromType(type, content)
-
-        const suggestion = {
-            id: content.id,
-            action: "present" as const,
-            content: label,
-            timestamp: content.timestamp,
-            confidence: content.confidence,
-            trigger: () => this.triggerFromType(type, content)
-        }
-
+        const suggestion = { ...suggestionDraft, action: "present", trigger }
         this.addSuggestion(suggestion)
     }
 
-    private static labelFromType(type: AiSuggestType, content: DetectedReference) {
-        if (type === "scripture") {
-            return getReferenceLabel(content)
-        }
-        return ""
+    private static alreadySuggested(match: MatchResult): boolean {
+        // const currentlyPresented = AiManager.liveContent
+
+        // get suggested, but remove any suggestions that have lower confidence than the current match
+        const suggested = get(aiSuggestions)
+            .filter((a) => a.content !== match.content || a.confidence >= match.confidence)
+            .map((item) => item.content)
+        return suggested.includes(match.content)
+
+        // TODO: filter out "Matthew 7:1-2" if outputted is "Matthew 7:1-6"?
     }
 
-    private static triggerFromType(type: AiSuggestType, content: DetectedReference) {
-        if (type === "scripture") {
-            this.playScripture(content)
-        }
+    private static MAX_AUTO_PLAY_INTERVAL = 3000
+    private static shouldAutoPlay(match: MatchResult): boolean {
+        if (match.confidence <= 95 && this.alreadySuggested(match)) return false
+
+        // WIP currently only auto-plays scripture matches
+        if (match.type !== "scripture") return false
+
+        // never auto-play low confidence matches
+        if (match.confidence <= 50) return false
+
+        const now = Date.now()
+        // skip if the output was manually updated recently
+        if (this.lastOutputUpdate && now - this.lastOutputUpdate < this.MAX_AUTO_PLAY_INTERVAL) return false
+
+        const confidence = get(ai)[match.type]?.confidence || "ask"
+        if (confidence === "ask") return false
+
+        const autoPlay = match.confidence > this.getConfidenceScore(confidence)
+        if (autoPlay) this.listenToOutput()
+        return autoPlay
     }
+
+    private static getConfidenceScore(confidence: ConfidenceLevels): number {
+        if (confidence === "highest") return 95
+        if (confidence === "high") return 75
+        if (confidence === "medium") return 50
+        return 100
+    }
+
+    static liveContent: string = ""
+    private static triggerMatchAction(match: MatchResult) {
+        if (match.type === "scripture") {
+            startScripture({ reference: match.content })
+        }
+
+        this.liveContent = match.content
+
+        setTimeout(() => {
+            // reset output updates when auto played
+            this.lastOutputUpdate = 0
+        }, 100)
+    }
+
+    /////
 
     private static smartActionTimer: NodeJS.Timeout | null = null
     private static SMART_ACTION_DURATION = 30 * 1000 // 30 seconds
@@ -114,76 +182,26 @@ export class AiManager {
         })
     }
 
-    private static notifyAutoPresented(content: DetectedReference) {
-        const label = this.labelFromType("scripture", content)
-        const id = `auto_${content.id}`
+    /////
 
-        const suggestion = {
-            id,
-            action: "presented" as const,
-            content: label,
-            timestamp: Date.now(),
-            confidence: content.confidence
-        }
+    private static lastOutputUpdate = 0
+    private static outputListener: Unsubscriber | null = null
+    private static listenToOutput() {
+        if (this.outputListener) return
 
-        this.addSuggestion(suggestion)
+        let initialized = false
+        setTimeout(() => (initialized = true), 1000)
+
+        let previousOutput = ""
+        this.outputListener = outputs.subscribe(() => {
+            const firstOutput = getFirstActiveOutput()
+            const slide = firstOutput?.out?.slide || null
+
+            const slideKey = JSON.stringify(slide)
+            if (slideKey === JSON.stringify(previousOutput)) return
+            previousOutput = slideKey
+
+            if (initialized) this.lastOutputUpdate = Date.now()
+        })
     }
-
-    private static playScripture(content: DetectedReference) {
-        const activeTranslationId = get(drawerTabsData).scripture?.activeSubTab || ""
-        if (content.matchedBibleId && content.matchedBibleId !== activeTranslationId) {
-            setDrawerTabData("scripture", content.matchedBibleId)
-        }
-
-        let book: number | string = content.bookNumber
-        let chapter = content.chapter
-        let verseStart = content.verseStart
-        let verseEnd = Math.max(content.verseStart, content.verseEnd)
-
-        const maxVerses = 10
-        verseEnd = Math.min(verseEnd, verseStart + maxVerses - 1)
-
-        const verses = Array.from({ length: verseEnd - verseStart + 1 }, (_, i) => verseStart + i)
-
-        // WIP similar to apiHelper.ts startScripture
-        if (get(activePage) !== "edit") activePage.set("show")
-        activeDrawerTab.set("scripture")
-
-        openScripture.set({ book, chapter, verses, play: true })
-    }
-}
-
-function getReferenceLabel(suggestion: DetectedReference): string {
-    let label = `${suggestion.book} ${suggestion.chapter}:${suggestion.verseStart}`
-    if (suggestion.verseEnd > suggestion.verseStart) label += `-${suggestion.verseEnd}`
-
-    const drawerBibleId = get(drawerTabsData).scripture?.activeSubTab || ""
-    const bibleId = suggestion.matchedBibleId || drawerBibleId
-    if (bibleId === drawerBibleId) return label
-
-    const bible = bibleId ? get(scriptures)[bibleId] : null
-    if (bible) label += ` (${getShortBibleName(bible.customName || bible.name || "")})`
-
-    return label
-}
-
-let lastOutputUpdate = 0
-let outputListener: Unsubscriber | null = null
-function listenToOutput() {
-    if (outputListener) return
-
-    let initialized = false
-    setTimeout(() => (initialized = true), 1000)
-
-    let previousOutput = ""
-    outputListener = outputs.subscribe(() => {
-        const firstOutput = getFirstActiveOutput()
-        const slide = firstOutput?.out?.slide || null
-
-        const slideKey = JSON.stringify(slide)
-        if (slideKey === JSON.stringify(previousOutput)) return
-        previousOutput = slideKey
-
-        if (initialized) lastOutputUpdate = Date.now()
-    })
 }

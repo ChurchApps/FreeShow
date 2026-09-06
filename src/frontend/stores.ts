@@ -216,8 +216,7 @@ export const aiSttStatus: Writable<{ state: "inactive" | "listening" | "stopped"
 export const aiLlmStatus: Writable<AiFeatureStatus> = writable({ state: "stopped" })
 export const aiSuggestions: Writable<AiSuggestion[]> = writable([])
 export const aiSmartAction: Writable<AiSuggestion | null> = writable(null)
-export const aiTranscript: Writable<{ text: string; startMs: number; endMs: number; language?: string; music?: boolean; utteranceEnd?: boolean }[]> = writable([])
-export const aiInterim: Writable<string> = writable("") // direct unprocessed transcript
+export const sttTranscript: Writable<{ finalized: string; unprocessed: string }> = writable({ finalized: "", unprocessed: "" })
 
 // ----- SAVED VARIABLES -----
 

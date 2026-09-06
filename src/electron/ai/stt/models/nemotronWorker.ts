@@ -18,18 +18,20 @@ const PREROLL_MAX_SAMPLES = 16000
 const FINALIZE_PAD_SAMPLES = 16000
 const CLOSE_DEFER_SAMPLES = 8000
 const MAX_UTTERANCE_SAMPLES = 17 * SAMPLE_RATE
+const INTERIM_EMIT_INTERVAL_SAMPLES = Math.round(SAMPLE_RATE * 0.25)
 
 export class NemotronDriver implements TranscriptionDriver {
     private options: DriverCallbacks & { language?: string; sherpa?: any; modelDir?: string }
     private recognizer: any = null
     private vad: any = null
 
+    private stream: any = null
+
     private stopped = false
     private totalSamples = 0
     private inUtterance = false
     private finalizeAtSample = 0
 
-    private utterance: Float32Array[] = []
     private utteranceSamples = 0
     private preroll: Float32Array[] = []
     private prerollSamples = 0
@@ -37,6 +39,8 @@ export class NemotronDriver implements TranscriptionDriver {
     private emittedWords = 0
     private emittedTailWords: string[] = []
     private nextEmitStartMs = 0
+    private lastInterimEmitSample = 0
+    private lastInterimText = ""
 
     constructor(options: DriverCallbacks & { language?: string; sherpa?: any; modelDir?: string }) {
         this.options = options
@@ -86,9 +90,9 @@ export class NemotronDriver implements TranscriptionDriver {
         this.stopped = true
 
         if (this.inUtterance) this.finalizeUtterance()
+        this.stream = null
         this.recognizer = null
         this.vad = null
-        this.utterance = []
         this.preroll = []
     }
 
@@ -104,8 +108,14 @@ export class NemotronDriver implements TranscriptionDriver {
             if (this.vad.isDetected()) {
                 if (!this.inUtterance) {
                     this.inUtterance = true
-                    this.utterance = this.preroll
-                    this.utteranceSamples = this.prerollSamples
+                    this.stream = this.recognizer.createStream()
+                    this.utteranceSamples = 0
+
+                    // Feed preroll buffer into the new stream
+                    for (const preChunk of this.preroll) {
+                        this.feedAudioToStream(preChunk)
+                        this.utteranceSamples += preChunk.length
+                    }
                     this.preroll = []
                     this.prerollSamples = 0
                 }
@@ -113,7 +123,7 @@ export class NemotronDriver implements TranscriptionDriver {
             }
 
             if (this.inUtterance) {
-                this.utterance.push(samples)
+                this.feedAudioToStream(samples)
                 this.utteranceSamples += samples.length
 
                 if (this.utteranceSamples >= MAX_UTTERANCE_SAMPLES && !this.finalizeAtSample) {
@@ -130,6 +140,8 @@ export class NemotronDriver implements TranscriptionDriver {
                 if (this.inUtterance) this.finalizeAtSample = this.totalSamples + CLOSE_DEFER_SAMPLES
             }
 
+            if (this.inUtterance) this.maybeEmitInterim(false)
+
             if (this.finalizeAtSample && this.totalSamples >= this.finalizeAtSample) {
                 this.finalizeAtSample = 0
                 this.inUtterance = false
@@ -140,25 +152,23 @@ export class NemotronDriver implements TranscriptionDriver {
         }
     }
 
-    private decodeBatch(finalize: boolean): string {
-        const batch = new Float32Array(this.utteranceSamples + (finalize ? FINALIZE_PAD_SAMPLES : 0))
-        let offset = 0
-        for (const part of this.utterance) {
-            batch.set(part, offset)
-            offset += part.length
+    private feedAudioToStream(samples: Float32Array) {
+        if (!this.stream || !this.recognizer) return
+        this.stream.acceptWaveform({ sampleRate: SAMPLE_RATE, samples })
+        while (this.recognizer.isReady(this.stream)) {
+            this.recognizer.decode(this.stream)
         }
-
-        const stream = this.recognizer.createStream()
-        stream.acceptWaveform({ sampleRate: SAMPLE_RATE, samples: batch })
-        while (this.recognizer.isReady(stream)) {
-            this.recognizer.decode(stream)
-        }
-        return (this.recognizer.getResult(stream).text || "").trim()
     }
 
     private finalizeUtterance() {
-        const text = this.decodeBatch(true)
-        this.utterance = []
+        if (this.stream && this.recognizer) {
+            // Feed a short tail pad to flush remaining tokens in the transducer
+            const pad = new Float32Array(FINALIZE_PAD_SAMPLES)
+            this.feedAudioToStream(pad)
+        }
+
+        const text = (this.stream && this.recognizer ? this.recognizer.getResult(this.stream)?.text || "" : "").trim()
+        this.stream = null
         this.utteranceSamples = 0
 
         const words = text ? text.split(/\s+/) : []
@@ -166,8 +176,26 @@ export class NemotronDriver implements TranscriptionDriver {
         const trimmed = trimRepeatedLeadWords(this.emittedTailWords, candidate)
 
         if (trimmed) this.emitText(trimmed, true)
+        this.lastInterimText = ""
+        this.lastInterimEmitSample = this.totalSamples
         this.options.onInterim?.("")
         this.emittedWords = 0
+    }
+
+    private maybeEmitInterim(force: boolean) {
+        if (!this.options.onInterim || !this.stream || !this.recognizer) return
+        if (!force && this.totalSamples - this.lastInterimEmitSample < INTERIM_EMIT_INTERVAL_SAMPLES) return
+
+        const text = (this.recognizer.getResult(this.stream)?.text || "").trim()
+        const words = text ? text.split(/\s+/) : []
+        const candidate = words.slice(Math.max(0, this.emittedWords - 2)).join(" ")
+        const interim = trimRepeatedLeadWords(this.emittedTailWords, candidate)
+
+        this.lastInterimEmitSample = this.totalSamples
+        if (interim === this.lastInterimText) return
+
+        this.lastInterimText = interim
+        this.options.onInterim(interim)
     }
 
     private emitText(text: string, utteranceEnd = false) {

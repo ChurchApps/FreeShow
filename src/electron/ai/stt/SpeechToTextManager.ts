@@ -54,7 +54,7 @@ export class SpeechToText {
         if (!active) return
 
         Promise.resolve(active.stop()).catch((err) => console.error("Error stopping STT engine:", err))
-        sendToMain(ToMain.AI_TRANSCRIPT_INTERIM, { text: "" })
+        sendToMain(ToMain.AI_TRANSCRIPT, { text: "", interim: true })
         if (emitStatus) sendToMain(ToMain.AI_STATUS, { state: "stopped" })
     }
 
@@ -107,7 +107,7 @@ export class SpeechToText {
     }
 
     private static onInterim(text: string) {
-        sendToMain(ToMain.AI_TRANSCRIPT_INTERIM, { text })
+        sendToMain(ToMain.AI_TRANSCRIPT, { text, interim: true })
     }
 
     private static onError(message: string) {
