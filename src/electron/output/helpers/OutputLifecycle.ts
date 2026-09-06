@@ -211,6 +211,7 @@ export class OutputLifecycle {
             const useSharedTexture = this.useSharedTextureCapture()
             const wp: any = { ...outputOptions.webPreferences, offscreen: useSharedTexture ? { useSharedTexture: true } : true }
             options.webPreferences = wp
+            this.avoidLinuxDisplaySizeShrink(options)
         }
 
         if (options.alwaysOnTop === false) {
@@ -236,6 +237,24 @@ export class OutputLifecycle {
         if (OUTPUT_CONSOLE) window.webContents.openDevTools({ mode: "detach" })
 
         return window
+    }
+
+    // Chromium's X11 backend (X11Window::AdjustSizeForDisplay) subtracts 1px from a window whose
+    // requested size exactly equals a monitor's pixel size, so WMs don't treat it as fullscreen. That
+    // makes an offscreen capture window for a 1920x1080 output on a 1920x1080 screen render 1919x1079
+    // — an odd width the NDI/OMT (VMX) encoder refuses, so the receiver connects but gets no video.
+    // An offscreen window is never WM-managed, so nudge its requested size off the exact display match.
+    // No-op off Linux and whenever the size already differs from every display.
+    private static avoidLinuxDisplaySizeShrink(options: BrowserWindowConstructorOptions) {
+        if (process.platform !== "linux" || !options.width || !options.height) return
+        const matchesDisplay = screen.getAllDisplays().some((d) => {
+            const sf = d.scaleFactor || 1
+            return Math.round(d.size.width * sf) === options.width && Math.round(d.size.height * sf) === options.height
+        })
+        if (matchesDisplay) {
+            options.width! += 1
+            options.height! += 1
+        }
     }
 
     private static isOsrOutput(output: { ndi?: boolean; omt?: boolean; webrtc?: boolean; rtmp?: boolean; blackmagic?: boolean }): boolean {
