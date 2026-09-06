@@ -2,7 +2,7 @@
     import { actions, activePage, activePopup, activeShow, activeTimers, contextActive, groups, guideActive, outLocked, outputs, overlayTimers, playingAudio, playingMetronome, resized, slideTimers, special } from "../../../stores"
     import { DEFAULT_WIDTH, isDarkTheme } from "../../../utils/common"
     import { formatSearch } from "../../../utils/search"
-    import { getNormalizedKey, previewCtrlShortcuts, previewShortcuts } from "../../../utils/shortcuts"
+    import { getNormalizedKey, previewCtrlShortcuts, previewShortcuts, triggerMediaShortcut } from "../../../utils/shortcuts"
     import { runAction } from "../../actions/actions"
     import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
     import { getSlideText } from "../../edit/scripts/textStyle"
@@ -67,7 +67,17 @@
                 e.preventDefault()
                 return
             }
+        }
 
+        // play media with custom shortcut key
+        if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && !$outLocked) {
+            if (triggerMediaShortcut(e)) {
+                e.preventDefault()
+                return
+            }
+        }
+
+        if ((outSlide?.id || $activeShow) && !e.ctrlKey && !e.metaKey && !$outLocked) {
             // play group with custom shortcut keys
             // /^[A-Z]{1}$/i.test(e.key) &&
             if (checkGroupShortcuts(e)) {

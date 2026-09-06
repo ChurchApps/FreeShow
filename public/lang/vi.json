@@ -628,6 +628,12 @@
         "toggle_clock": "Bật/Tắt đồng hồ",
         "move_connections": "Di chuyển tất cả kết nối đến đây"
     },
+    "actions": {
+        "play_with_shortcut": "Kích hoạt bằng phím tắt",
+        "press_to_assign": "Nhấn phím chữ bất kỳ để gán",
+        "press_to_assign_media": "Nhấn phím bất kỳ (0-9, A-Z, F1-F12) để gán, hoặc Delete để xóa",
+        "shortcut_existing": "Phím tắt này đã được gán"
+    },
     "tools": {
         "notes": "Ghi chú",
         "--schedule": "Lịch trình",

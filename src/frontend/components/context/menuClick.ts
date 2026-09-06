@@ -1677,6 +1677,24 @@ const clickActions = {
             return a
         })
     },
+    media_shortcut: (obj: ObjData) => {
+        if (!obj.sel) return
+        const path = obj.sel.data[0]?.path || obj.sel.data[0]?.id
+        if (!path) return
+
+        const existingShortcuts = Object.entries(get(media))
+            .filter(([p, m]) => p !== path && m.shortcut)
+            .map(([p, m]) => m.shortcut!.toLowerCase())
+
+        const data = {
+            path,
+            mode: "media_shortcut",
+            active: get(media)[path]?.shortcut || "",
+            existingShortcuts
+        }
+        popupData.set(data)
+        activePopup.set("assign_shortcut")
+    },
     effects_library_add: (obj: ObjData) => {
         if (!obj.sel) return
 

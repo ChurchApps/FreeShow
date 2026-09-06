@@ -183,6 +183,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     play: { label: "media.play", icon: "play", iconColor: "#7d81ff" },
     play_no_audio: { label: "media.play_no_audio", icon: "play", iconColor: "#7d81ff" },
     play_no_filters: { label: "media.play_no_filters", icon: "play", iconColor: "#7d81ff" },
+    media_shortcut: { label: "actions.play_with_shortcut", icon: "play", iconColor: "#7d81ff" },
     favourite: { label: "media.favourite", icon: "star", iconColor: "#fff1ad" },
     effects_library_add: { label: "media.effects_library_add", icon: "effect", iconColor: "#fff1ad" },
     createSlideshow: { label: "context.create_slideshow", icon: "slide" },
@@ -288,9 +289,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     show_audio: ["preview", "SEPARATOR", "system_open"],
     slide_recorder_item: ["remove"],
     // , "addToShow"
-    // show_in_explorer!!
     media: ["manage_media_tags", "media_tag_filter", "sort_media_by", "media_view"],
-    media_card: ["GROUP_open", "createSlideshow", "play_no_audio", "play_no_filters", "SEPARATOR", "favourite", "SEPARATOR", "media_tag_set", "media_tag_filter", "sort_media_by", "SEPARATOR", "system_open"],
+    media_card: ["GROUP_open", "createSlideshow", "play_no_audio", "play_no_filters", "SEPARATOR", "media_shortcut", "favourite", "SEPARATOR", "media_tag_set", "media_tag_filter", "sort_media_by", "SEPARATOR", "system_open"],
     // "addToFirstSlide",
     drawer_overlays: ["reset_defaults"],
     overlay_card: ["GROUP_open", "overlay_actions", "display_duration", "SEPARATOR", "lock_to_output", "place_under_slide", "SEPARATOR", "rename", "recolor", "duplicate", "delete"], // "GROUP_rename_color"

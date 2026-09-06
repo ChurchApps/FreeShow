@@ -12,7 +12,7 @@ import { keysToID, sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
 import { getExtension, getMedia, getMediaLayerType, getMediaStyle, getMediaType } from "../components/helpers/media"
-import { getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
+import { getAllActiveOutputs, getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
 import { OutputHelper } from "../components/helpers/OutputHelper"
 import { VideoPlayer } from "../components/media/video/videoPlayer"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
@@ -552,3 +552,52 @@ export async function playFolder(path: string, back = false) {
 
     startFolderTimer(path, newMedia)
 }
+
+export function playMediaDirect(path: string) {
+    if (!path) return
+    const activeOutputs = getAllActiveOutputs()
+    const isActive = activeOutputs.some((a) => (a.out?.background?.path || a.out?.background?.id) === path)
+    if (isActive) {
+        clearBackground()
+        return
+    }
+
+    const mediaMap = get(media)
+    const mediaItem = mediaMap[path] || {}
+    const currentOutput = getFirstActiveOutput()
+    const currentStyle = get(styles)[currentOutput?.style || ""] || {}
+    const mediaStyle = getMediaStyle(mediaItem, currentStyle)
+    const type = getMediaType(getExtension(path))
+    const videoType = getMediaLayerType(path, mediaStyle)
+    const loop = videoType === "foreground" ? false : true
+    const muted = videoType === "background" ? true : false
+    if (videoType === "foreground") clearSlide()
+
+    const allStyles = get(styles)
+    activeOutputs.forEach((output) => {
+        const currentOutputStyle = allStyles[output.style || ""]
+        const outputMediaStyle = getMediaStyle(mediaItem, currentOutputStyle)
+        setOutput("background", { path, type, loop, muted, startAt: 0, ...outputMediaStyle, ignoreLayer: videoType === "foreground" }, false, output.id)
+    })
+}
+
+export function triggerMediaShortcut(e: KeyboardEvent | string): boolean {
+    const key = typeof e === "string" ? e : e.key
+    const normalizedKey = typeof e === "string" ? e : getNormalizedKey(e)
+    if (!key) return false
+
+    const mediaMap = get(media)
+    const upperKey = key.toUpperCase()
+    const upperNorm = normalizedKey.toUpperCase()
+
+    const match = Object.entries(mediaMap).find(([path, m]) => {
+        if (!m?.shortcut) return false
+        const s = m.shortcut.toUpperCase()
+        return s === upperKey || s === upperNorm
+    })
+    if (!match) return false
+
+    playMediaDirect(match[0])
+    return true
+}
+

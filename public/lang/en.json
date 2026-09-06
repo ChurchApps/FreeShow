@@ -801,6 +801,7 @@
         "select_chord": "Select this chord",
         "play_with_shortcut": "Activate with shortcut",
         "press_to_assign": "Press any letter key to assign",
+        "press_to_assign_media": "Press any key (0-9, A-Z, F1-F12) to assign, or Delete to remove",
         "shortcut_existing": "This shortcut is already assigned",
         "play_on_midi": "Activate on MIDI signal",
         "play_on_midi_tip": "Activate this specific slide when receiving chosen MIDI signal",

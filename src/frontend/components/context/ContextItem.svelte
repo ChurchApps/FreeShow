@@ -229,6 +229,12 @@
                 enabled = !!$media[path]?.favourite
             }
         },
+        media_shortcut: () => {
+            let path = $selected.data[0]?.path || $selected.data[0]?.id
+            if (path) {
+                enabled = !!$media[path]?.shortcut
+            }
+        },
         effects_library_add: () => {
             let path = $selected.data[0]?.path || $selected.data[0]?.id
             if (path) {

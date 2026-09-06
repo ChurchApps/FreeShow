@@ -230,6 +230,15 @@
     >
         <!-- icons -->
         <div class="icons">
+            {#if $media[path]?.shortcut}
+                <div style="max-width: 100%;">
+                    <div class="button" style="border: 1px solid var(--secondary);">
+                        <Button style="padding: 3px;" redHover title={translateText("actions.remove: actions.play_with_shortcut")} on:click={() => removeStyle("shortcut")}>
+                            <p>{($media[path].shortcut || "").toUpperCase()}</p>
+                        </Button>
+                    </div>
+                </div>
+            {/if}
             {#if isFavourite && active !== "favourites"}
                 <div style="max-width: 100%;">
                     <div class="button">
@@ -323,6 +332,14 @@
     .icons .button {
         background-color: rgb(0 0 0 / 0.6);
         pointer-events: all;
+    }
+    .icons .button p {
+        pointer-events: all;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 0 4px;
+        font-size: 1.1em;
+        color: var(--secondary);
     }
     .icons span {
         pointer-events: all;
