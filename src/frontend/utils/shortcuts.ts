@@ -556,9 +556,9 @@ export async function playFolder(path: string, back = false) {
 export function playMediaDirect(path: string) {
     if (!path) return
     const activeOutputs = getAllActiveOutputs()
-    const isActive = activeOutputs.some((a) => (a.out?.background?.path || a.out?.background?.id) === path)
-    if (isActive) {
-        clearBackground()
+    const matchingOutputs = activeOutputs.filter((a) => (a.out?.background?.path || a.out?.background?.id) === path)
+    if (matchingOutputs.length) {
+        matchingOutputs.forEach((o) => clearBackground(o.id))
         return
     }
 
