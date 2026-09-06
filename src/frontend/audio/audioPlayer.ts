@@ -6,11 +6,11 @@ import { customActionActivation } from "../components/actions/actions"
 import { encodeFilePath, getFileName, locateMediaFile, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { requestMain, sendMain } from "../IPC/main"
-import { activePlaylist, dictionary, media, outLocked, playingAudio, playingAudioPaths, special } from "../stores"
+import { activePlaylist, audioPlaylists, dictionary, media, outLocked, playingAudio, playingAudioPaths, special } from "../stores"
 import { addToMediaFolder } from "../utils/cloudSync"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioAnalyserMerger } from "./audioAnalyserMerger"
-import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
+import { cancelFadePause, clearAudio, clearing, currentlyPausingFade, fadeInAudio, fadeOutAudio, fadePause } from "./audioFading"
 import { AudioMultichannel } from "./audioMultichannel"
 import { AudioPlaylist } from "./audioPlaylist"
 import { AudioRoutingManager } from "./routing/audioRoutingManager"
@@ -316,6 +316,10 @@ export class AudioPlayer {
     static play(id: string) {
         if (!this.audioExists(id)) return
 
+        if (currentlyPausingFade[id]) {
+            cancelFadePause(id)
+        }
+
         const audio = this.getAudio(id)
 
         // reset volume in case it's played again while "Mute when video plays" is active
@@ -327,21 +331,50 @@ export class AudioPlayer {
         AudioAnalyserMerger.init()
     }
 
-    static pause(id: string) {
+    static async pause(id: string, immediate = false) {
         if (!this.audioExists(id)) return
 
-        updatePlayingStore(id, "paused", true)
-        this.getAudio(id)?.pause()
+        const audio = this.getAudio(id)
+        if (!audio) return
 
-        if (!AudioAnalyser.shouldAnalyse()) {
-            AudioAnalyserMerger.stop()
+        if (currentlyPausingFade[id]) return
+
+        if (audio.paused) {
+            updatePlayingStore(id, "paused", true)
+            return
+        }
+
+        const isMusic = AudioPlayer.isMusic(id)
+        updatePlayingStore(id, "paused", true)
+
+        if (!immediate && isMusic) {
+            const fadeDuration = AudioPlayer.getMusicFadeDuration(id)
+            if (fadeDuration > 0) {
+                await fadePause(id, audio, fadeDuration)
+            } else {
+                audio.pause()
+                if (!AudioAnalyser.shouldAnalyse()) {
+                    AudioAnalyserMerger.stop()
+                }
+            }
+        } else {
+            if (currentlyPausingFade[id]) {
+                cancelFadePause(id)
+            }
+            audio.pause()
+            if (!AudioAnalyser.shouldAnalyse()) {
+                AudioAnalyserMerger.stop()
+            }
         }
     }
 
     static stop(id: string) {
         if (!this.audioExists(id)) return
 
-        this.pause(id)
+        if (currentlyPausingFade[id]) {
+            cancelFadePause(id)
+        }
+        this.pause(id, true)
         AudioAnalyser.detach(id)
 
         playingAudio.update((a) => {
@@ -516,6 +549,38 @@ export class AudioPlayer {
 
     static getAudioType(path: string, duration: number) {
         return AudioPlayer.getGlobalOptions(path).audioType || (duration < 30 ? "effect" : "music")
+    }
+
+    static isMusic(id: string): boolean {
+        if (!id) return false
+        const playing = this.getPlaying(id)
+        if (playing?.isMic) return false
+        if (playing?.playlistId) return true
+
+        const duration = this.getDurationSync(id) || playing?.audio?.duration || 0
+        return this.getAudioType(id, duration) === "music"
+    }
+
+    static getMusicFadeDuration(id: string): number {
+        const itemFade = get(media)[id]?.fadeDuration
+        if (itemFade !== undefined && itemFade !== null && itemFade !== "" && !isNaN(Number(itemFade))) {
+            return Math.max(0, Number(itemFade))
+        }
+
+        const playlistId = get(playingAudio)[id]?.playlistId || get(activePlaylist)?.id
+        if (playlistId) {
+            const playlist = get(audioPlaylists)[playlistId]
+            if (playlist?.fadeDuration !== undefined && playlist?.fadeDuration !== null && playlist?.fadeDuration !== "" && !isNaN(Number(playlist.fadeDuration))) {
+                return Math.max(0, Number(playlist.fadeDuration))
+            }
+        }
+
+        const globalSpecial = get(special).music_fade_duration
+        if (globalSpecial !== undefined && globalSpecial !== null && globalSpecial !== "" && !isNaN(Number(globalSpecial))) {
+            return Math.max(0, Number(globalSpecial))
+        }
+
+        return 5
     }
 
     static getStartTime(path: string, startAt?: number | undefined) {

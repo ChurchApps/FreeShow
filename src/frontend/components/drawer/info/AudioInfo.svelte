@@ -34,6 +34,7 @@
 
 {#if settingsOpened}
     <main style="flex: 1;overflow-x: hidden;padding: 10px;">
+        <MaterialNumberInput label="settings.music_fade_duration (s)" value={$special.music_fade_duration ?? 5} min={0} max={30} step={0.5} on:change={(e) => updateSpecial(e.detail, "music_fade_duration")} />
         <MaterialNumberInput label="settings.audio_fade_duration (s)" value={$special.audio_fade_duration ?? 1.5} max={30} step={0.5} on:change={(e) => updateSpecial(e.detail, "audio_fade_duration")} />
 
         <!-- defaultValue={false}  -->

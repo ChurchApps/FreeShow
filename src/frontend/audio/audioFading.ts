@@ -7,6 +7,7 @@ import { activePlaylist, audioPlaylists, isFadingOut, playingAudio, special } fr
 import { AudioPlayer } from "./audioPlayer"
 import { AudioPlaylist } from "./audioPlaylist"
 import { AudioAnalyser } from "./audioAnalyser"
+import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 
 type AudioClearOptions = {
     clearPlaylist?: boolean
@@ -15,6 +16,44 @@ type AudioClearOptions = {
     commonClear?: boolean
     clearTime?: number // effects
     isPlayingNew?: boolean
+}
+
+export const currentlyPausingFade: { [key: string]: { initialVolume: number } } = {}
+
+export function cancelFadePause(id: string) {
+    const info = currentlyPausingFade[id]
+    if (!info) return
+    delete currentlyPausingFade[id]
+
+    stopFade("out_" + id, false)
+
+    const audio = AudioPlayer.getAudio(id)
+    if (audio) {
+        audio.volume = info.initialVolume
+        AudioAnalyser.setSourceVolume(id, info.initialVolume)
+    }
+}
+
+export async function fadePause(id: string, audio: HTMLAudioElement, duration = 5): Promise<boolean> {
+    if (!audio || audio.paused) return true
+
+    const initialVolume = audio.volume > 0 ? audio.volume : (AudioPlayer.getVolume(id) || 1)
+    currentlyPausingFade[id] = { initialVolume }
+
+    const faded = await fadeAudio(id, audio, duration)
+    const wasFading = currentlyPausingFade[id]
+    delete currentlyPausingFade[id]
+
+    if (faded && wasFading && get(playingAudio)[id]?.paused) {
+        audio.pause()
+        audio.volume = initialVolume
+        AudioAnalyser.setSourceVolume(id, initialVolume)
+        if (!AudioAnalyser.shouldAnalyse()) {
+            AudioAnalyserMerger.stop()
+        }
+        return true
+    }
+    return false
 }
 
 export const clearing: string[] = []
@@ -38,7 +77,6 @@ export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
         return
     }
 
-    const clearTime = options.playlistCrossfade ? 0 : (options.clearTime ?? get(special).audio_fade_duration ?? 1.5)
     let clearIds = audioPath ? [audioPath] : Object.keys(get(playingAudio))
     // don't clear microphones by default
     if (!audioPath && !options.clearMicrophones) {
@@ -52,10 +90,18 @@ export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
 
         clearing.push(path)
         try {
+            if (currentlyPausingFade[path]) {
+                cancelFadePause(path)
+            }
+
             const audio = AudioPlayer.getAudio(path)
             if (!audio) return deleteAudio(path)
 
-            const faded = await fadeAudio(path, audio, clearTime)
+            const isMusic = AudioPlayer.isMusic(path)
+            const defaultDuration = isMusic ? AudioPlayer.getMusicFadeDuration(path) : (get(special).audio_fade_duration ?? 1.5)
+            const itemClearTime = options.playlistCrossfade ? 0 : (options.clearTime ?? defaultDuration)
+
+            const faded = await fadeAudio(path, audio, itemClearTime)
             if (faded) removeAudio(path)
             else deleteAudio(path)
         } catch {
@@ -199,7 +245,9 @@ export function fadeoutAllPlayingAudio() {
     })
 
     async function fadeoutAudio(path: string, audio: HTMLAudioElement) {
-        const faded = await fadeAudio(path, audio, get(special).audio_fade_duration ?? 1.5)
+        const isMusic = AudioPlayer.isMusic(path)
+        const duration = isMusic ? AudioPlayer.getMusicFadeDuration(path) : (get(special).audio_fade_duration ?? 1.5)
+        const faded = await fadeAudio(path, audio, duration)
         if (faded && !clearing.includes(path)) {
             audio.pause()
             // analyseAudio()

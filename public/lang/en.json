@@ -1393,6 +1393,7 @@
         "disable_presenter_controller_keys": "Disable presenter controller keys",
         "default_project_name": "Default project name",
         "audio_fade_duration": "Audio fade duration",
+        "music_fade_duration": "Music fade out duration",
         "audio_crossfade": "Audio crossfade",
         "playlist_volume": "Playlist volume",
         "clear_style_background_on_text": "Clear style background when slide is active",

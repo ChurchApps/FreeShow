@@ -3,7 +3,8 @@
     import { AudioAnalyser } from "../../audio/audioAnalyser"
     import { clearAudio } from "../../audio/audioFading"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { focusMode, media, outLocked, playingAudio } from "../../stores"
+    import { dictionary, focusMode, media, outLocked, playingAudio, special } from "../../stores"
+    import { translateText } from "../../utils/language"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
     import Icon from "../helpers/Icon.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
@@ -242,6 +243,27 @@
             >
                 <Icon id="loop" white={!$media[path]?.loop} size={1.2} />
             </MaterialButton>
+
+            <div title={translateText("settings.music_fade_duration", $dictionary) + " (s)"} style="display: flex; align-items: center; gap: 4px; padding: 0 6px; opacity: 0.85; font-size: 0.85em;">
+                <span style="font-size: 0.8em; opacity: 0.7;">Fade:</span>
+                <input
+                    type="number"
+                    min="0"
+                    max="30"
+                    step="0.5"
+                    style="width: 44px; height: 26px; background: rgba(0,0,0,0.25); color: inherit; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 0 4px; text-align: center; font-size: 0.9em;"
+                    value={$media[path]?.fadeDuration ?? ($special.music_fade_duration ?? 5)}
+                    on:change={(e) => {
+                        const val = parseFloat(e.currentTarget.value)
+                        media.update((m) => {
+                            if (!m[path]) m[path] = {}
+                            m[path].fadeDuration = isNaN(val) ? 5 : Math.max(0, val)
+                            return m
+                        })
+                    }}
+                />
+                <span style="font-size: 0.8em; opacity: 0.7;">s</span>
+            </div>
         {/if}
 
         {#if $media[path]?.volume !== undefined && $media[path]?.volume < 1}

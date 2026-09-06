@@ -900,6 +900,7 @@
         "disable_presenter_controller_keys": "Vô hiệu hóa các phím điều khiển trình bày",
         "default_project_name": "Tên dự án mặc định",
         "audio_fade_duration": "Thời lượng làm mờ âm thanh",
+        "music_fade_duration": "Thời gian fade nhỏ dần khi tắt nhạc",
         "max_auto_font_size": "Cỡ chữ tự động lớn nhất",
         "resolution": "Độ phân giải",
         "cropping": "Cắt xén",
