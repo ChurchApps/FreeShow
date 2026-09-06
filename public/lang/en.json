@@ -467,6 +467,18 @@
         "bridge": "Bridge",
         "outro": "Outro"
     },
+    "fonts": {
+        "show_hint": "These fonts are saved with this show and appear in its font picker. Removing a font does not change text already using it.",
+        "google_family": "Google Fonts family",
+        "add_google": "Add Google font",
+        "google_hint": "Enter a family name from Google Fonts. An internet connection is required to download the font on each computer.",
+        "add_local": "Add local font file",
+        "local_hint": "Choose a .ttf or .otf file. Local files are referenced, not copied; the same path must be available on other computers.",
+        "loading": "Loading font…",
+        "duplicate": "This font has already been added.",
+        "local_error": "Could not load this font. Choose a valid, accessible .ttf or .otf file.",
+        "google_error": "Could not load this Google font. Check the family name and your internet connection."
+    },
     "popup": {
         "show": "New show",
         "select_show": "Select show",
@@ -533,6 +545,7 @@
         "category_action": "Category action",
         "category_template": "Category template",
         "custom_action": "Custom action",
+        "manage_fonts": "Manage show fonts",
         "slide_midi": "Slide MIDI input",
         "user_data_overwrite": "Found existing data",
         "connect": "Connect",

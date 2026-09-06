@@ -1,11 +1,12 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy } from "svelte"
-    import { actions, activeEdit, activePage, activeStage, outputs, special, timers } from "../../../stores"
+    import { actions, activeEdit, activePage, activePopup, activeShow, activeStage, outputs, popupData, showsCache, special, timers } from "../../../stores"
     import { throttle } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { mediaExtensions } from "../../../values/extensions"
     import { getSortedTimers } from "../../drawer/timers/timers"
     import { clone, keysToID, sortByName } from "../../helpers/array"
+    import { loadCustomFonts } from "../../helpers/fonts"
     import Icon from "../../helpers/Icon.svelte"
     import { getFilters, getStyles } from "../../helpers/style"
     import Input from "../../input/Input.svelte"
@@ -30,6 +31,15 @@
     export let item: any = {}
     export let isStage = false
     export let type: string = ""
+
+    $: fontShowId = $activePage === "edit" && !isStage && ($activeEdit.type || "show") === "show" && ($activeShow?.type || "show") === "show" ? $activeShow?.id || $activeEdit.showId || "" : ""
+    $: customFonts = $showsCache[fontShowId]?.settings?.customFonts || []
+    $: if (customFonts.length) loadCustomFonts(customFonts)
+
+    function manageFonts() {
+        popupData.set({ showId: fontShowId })
+        activePopup.set("manage_fonts")
+    }
 
     function getValue(input: EditInput, _updater: any = null) {
         if (!item) return ""
@@ -373,7 +383,10 @@
                                 {@const hasTimelineAction = $special.slideTimelineActive && $activePage === "edit" && ($activeEdit.type || "show") === "show" && SlideTimeline.hasActionAtTime(input.key || "", type, $activeEdit?.items?.length ? $activeEdit.items : [0], timelineUpdater)}
 
                                 {#if input.type === "fontDropdown"}
-                                    <MaterialFontDropdown label={values.label} {value} style={values.style} fontStyleValue={input.styleValue} on:change={(e) => changed(e, input)} on:fontStyle={(e) => changed(e, { ...input, key: "font" })} enableFontStyles />
+                                    <MaterialFontDropdown label={values.label} {value} style={values.style} fontStyleValue={input.styleValue} {customFonts} on:change={(e) => changed(e, input)} on:fontStyle={(e) => changed(e, { ...input, key: "font" })} enableFontStyles />
+                                    {#if fontShowId}
+                                        <MaterialButton icon="settings" title="popup.manage_fonts" on:click={manageFonts} />
+                                    {/if}
                                 {:else if input.type === "toggle"}
                                     <MaterialButton style="min-width: 50px;flex: 1;" title={values.label} on:click={() => toggle(input)}>
                                         <Icon id={values.icon} size={1.2} white />

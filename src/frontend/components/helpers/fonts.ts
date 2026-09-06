@@ -1,3 +1,6 @@
+import type { DropdownOptions } from "../../../types/Input"
+import type { CustomFont } from "../../../types/Show"
+
 export interface Family {
     family: string
     default: number
@@ -129,9 +132,19 @@ export async function getSystemFontsList() {
     })
 
     const loadedFonts = await getFontsList()
-    if (!loadedFonts.length) return []
-
     return addFonts(fonts, loadedFonts).map((a) => ({ label: a.family, value: getFontName(a.family), style: a.fonts[a.default]?.css || (a.family ? `font-family: ${getFontName(a.family)};` : "") }))
+}
+
+export function mergeCustomFontOptions(options: DropdownOptions, fonts: CustomFont[]): DropdownOptions {
+    const merged = [...options]
+    const names = new Set(options.map((option) => option.label?.toLowerCase()))
+    fonts.forEach(({ name }) => {
+        if (!name || names.has(name.toLowerCase())) return
+        names.add(name.toLowerCase())
+        const value = getFontName(name)
+        merged.push({ label: name, value, style: `font-family: ${value};` })
+    })
+    return merged.sort((a, b) => (a.label || "").localeCompare(b.label || ""))
 }
 export function getFontStyleList(font: string) {
     if (!cachedFonts.length) return { fontStyles: [], defaultValue: "" }
@@ -182,38 +195,79 @@ function filePathToURL(filePath: string) {
 
     let fileUrl = filePath.replace(/\\/g, "/").replace(/\0/g, "")
     if (/^[A-Za-z]:\//.test(fileUrl)) fileUrl = "/" + fileUrl
-    return "file://" + encodeURI(fileUrl)
+    return "file://" + encodeURI(fileUrl).replace(/[?#]/g, (character) => encodeURIComponent(character))
 }
 
-export function loadCustomFonts(fonts: { name: string; path: string }[]) {
-    fonts.forEach(async (font) => {
-        try {
-            const fileUrl = filePathToURL(font.path)
+// Shared by previews and output layers: reuse both in-flight and completed loads.
+const customFontLoads = new Map<string, Promise<CustomFont>>()
 
-            const response = await fetch(fileUrl)
-            const arrayBuffer = await response.arrayBuffer()
-            const fontData = extractFontInfo(arrayBuffer)
-            if (!fontData?.family) throw new Error("Unknown font format")
+export function loadCustomFont(font: CustomFont): Promise<CustomFont> {
+    const normalized = { name: font.name.trim(), path: font.path.trim() }
+    const key = normalized.path ? `local:${normalized.path}` : `google:${normalized.name}`
+    const existing = customFontLoads.get(key)
+    if (existing) return existing
 
-            // create the FontFace from the detected SFNT offset
-            const start = typeof fontData.offset === "number" ? fontData.offset : 0
-            const source = new Uint8Array(arrayBuffer, start)
+    const loading = (normalized.path ? loadLocalFont(normalized) : loadGoogleFont(normalized)).catch((error) => {
+        customFontLoads.delete(key)
+        throw error
+    })
+    customFontLoads.set(key, loading)
+    return loading
+}
 
-            const fontStyle = /italic/.test((fontData.subfamily || fontData.fullName || "").toLowerCase()) ? "italic" : "normal"
-            const weight = (fontData as any).weight || getWeightFromStyle((fontData.subfamily || fontData.fullName || "").toLowerCase())
+async function loadLocalFont(font: CustomFont): Promise<CustomFont> {
+    const response = await fetch(filePathToURL(font.path))
+    if (!response.ok) throw new Error("Could not read font file")
+    const arrayBuffer = await response.arrayBuffer()
+    const fontData = extractFontInfo(arrayBuffer)
+    if (!fontData?.family) throw new Error("Unknown font format")
 
-            const fnt = new (FontFace as any)(fontData.family, source, { weight: String(weight), style: fontStyle })
-            await fnt.load()
-            document.fonts.add(fnt)
-        } catch {
-            if (font.name.includes("font")) return
+    const source = new Uint8Array(arrayBuffer, fontData.offset || 0)
+    const fontStyle = /italic/.test((fontData.subfamily || fontData.fullName || "").toLowerCase()) ? "italic" : "normal"
+    const weight = fontData.weight || getWeightFromStyle((fontData.subfamily || fontData.fullName || "").toLowerCase())
+    const face = new FontFace(fontData.family, source, { weight: String(weight), style: fontStyle })
+    await face.load()
+    document.fonts.add(face)
+    return { name: fontData.family, path: font.path }
+}
 
-            // try loading from Google Fonts
-            const link = document.createElement("link")
-            link.rel = "stylesheet"
-            link.href = "https://fonts.googleapis.com/css2?family=" + font.name + ":wght@400;700&display=swap"
-            document.head.appendChild(link)
+function loadGoogleFont(font: CustomFont): Promise<CustomFont> {
+    if (!font.name) return Promise.reject(new Error("Missing font family"))
+    return new Promise((resolve, reject) => {
+        const link = document.createElement("link")
+        link.rel = "stylesheet"
+        link.href = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(font.name) + ":wght@400;700&display=swap"
+        const timeout = setTimeout(() => fail(), 15000)
+        const fail = () => {
+            clearTimeout(timeout)
+            link.onload = null
+            link.onerror = null
+            link.remove()
+            reject(new Error("Could not load Google font"))
         }
+        link.onerror = fail
+        link.onload = async () => {
+            try {
+                const faces = await document.fonts.load(`100px ${getFontName(font.name)}`)
+                if (!faces.length) return fail()
+                clearTimeout(timeout)
+                link.onload = null
+                link.onerror = null
+                resolve(font)
+            } catch {
+                fail()
+            }
+        }
+        document.head.appendChild(link)
+    })
+}
+
+export function loadCustomFonts(fonts: CustomFont[]) {
+    fonts.forEach((font) => {
+        void loadCustomFont(font).catch(() => {
+            // Preserve the PowerPoint importer's fallback for missing embedded fonts.
+            if (font.path && !font.name.includes("font")) void loadCustomFont({ name: font.name, path: "" }).catch(() => {})
+        })
     })
 }
 

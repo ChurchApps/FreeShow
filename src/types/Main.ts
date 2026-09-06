@@ -456,6 +456,7 @@ export type Popups =
     | "action"
     | "category_action"
     | "custom_action"
+    | "manage_fonts"
     | "slide_midi"
     | "connect"
     | "cloud_sync"

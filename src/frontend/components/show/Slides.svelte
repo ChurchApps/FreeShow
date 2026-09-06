@@ -27,6 +27,7 @@
     export let projectIndex = -1
 
     $: currentShow = $showsCache[showId]
+    $: if (currentShow?.settings?.customFonts) loadCustomFonts(currentShow.settings.customFonts)
     $: activeLayout = layout || $showsCache[showId]?.settings?.activeLayout
     $: layoutSlides = currentShow ? getCachedShow(showId, activeLayout, $cachedShowsData)?.layout || [] : []
 
@@ -35,9 +36,6 @@
     onMount(() => {
         // don't double render all slides on first load because of cachedShowsData update
         setTimeout(() => (hasMounted = true), 80)
-
-        // custom fonts
-        if (currentShow?.settings?.customFonts) loadCustomFonts(currentShow.settings.customFonts)
     })
 
     onDestroy(() => {

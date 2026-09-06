@@ -31,11 +31,10 @@
     export let styleIdOverride = ""
 
     let origin = ""
+    $: if ($showsCache[outSlide.id]?.settings?.customFonts) loadCustomFonts($showsCache[outSlide.id].settings.customFonts || [])
     $: if (outSlide.id) updateShow()
     function updateShow() {
-        // custom fonts
         const currentShow = $showsCache[outSlide.id]
-        if (currentShow?.settings?.customFonts) loadCustomFonts(currentShow.settings.customFonts)
         origin = currentShow?.origin || ""
     }
 

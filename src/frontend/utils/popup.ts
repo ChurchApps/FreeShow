@@ -54,6 +54,7 @@ import Translate from "../components/main/popups/localization/Translate.svelte"
 import ManageColors from "../components/main/popups/ManageColors.svelte"
 import ManageDynamicValues from "../components/main/popups/ManageDynamicValues.svelte"
 import ManageGroups from "../components/main/popups/ManageGroups.svelte"
+import ManageFonts from "../components/main/popups/ManageFonts.svelte"
 import ManageIcons from "../components/main/popups/ManageIcons.svelte"
 import ManageMetadata from "../components/main/popups/ManageMetadata.svelte"
 import ManageTags from "../components/main/popups/ManageTags.svelte"
@@ -165,6 +166,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     action: Action,
     category_action: CategoryAction,
     custom_action: CustomAction,
+    manage_fonts: ManageFonts,
     slide_midi: SlideMidi,
     connect: Connect,
     cloud_sync: CloudSync,
