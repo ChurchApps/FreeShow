@@ -336,10 +336,10 @@ export const _updaters = {
 
     show: {
         store: showsCache,
-        // lazy: a module-scope `new ShowObj()` runs while the ShowObj module can still be mid-initialization
-        // (circular import through utils/language -> IPC/main), crashing the whole renderer at boot
+        // Lazy to avoid constructing ShowObj during module evaluation.
+        // This helps avoid circular-import initialization issues.
         get empty() {
-            return new ShowObj() // this should not be used (it's not updated)
+            return new ShowObj() // this should not be used
         },
         initialize: (data: any) => {
             const replacer: any = {}
