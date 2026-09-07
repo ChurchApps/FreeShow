@@ -45,13 +45,24 @@ export class BibleSearchDetector {
             return match
         })
 
-        // 8. Standard spoken reference conversion: "Mark chapter 8 and 22" -> "Mark 8:22"
-        normalized = normalized.replace(/\b([1-3]?\s*[\p{L}]+)\s+(?:chapter\s*)?(\d+)\s+(?:and|verses|verse|v)\s+(\d+)(?:\s*(?:[-–—]|through|to)\s*(\d+))?\b/giu, (_match, book, chap, vStart, vEnd) => {
+        // 8. Standard spoken reference conversion: "Mark chapter 8 and 22" -> "Mark 8:22" or "Mark chapter 8 verse 22"
+        normalized = normalized.replace(/\b([1-3]?\s*[\p{L}]+)\s+chapter\s+(\d+)\s+(?:and|verses|verse|v)\s+(\d+)(?:\s*(?:[-–—]|through|to)\s*(\d+))?\b/giu, (_match, book, chap, vStart, vEnd) => {
+            return vEnd ? `${book} ${chap}:${vStart}-${vEnd}` : `${book} ${chap}:${vStart}`
+        })
+
+        // Add separate rule for "Mark 8 verse 22" without requiring "chapter"
+        normalized = normalized.replace(/\b([1-3]?\s*[\p{L}]+)\s+(\d+)\s+(?:verses|verse|v)\s+(\d+)(?:\s*(?:[-–—]|through|to)\s*(\d+))?\b/giu, (_match, book, chap, vStart, vEnd) => {
             return vEnd ? `${book} ${chap}:${vStart}-${vEnd}` : `${book} ${chap}:${vStart}`
         })
 
         // 9. Safe dot/comma/space reference formatting: convert "John 3.16" or "John 4 7" -> "John 4:7"
-        normalized = normalized.replace(/(?<![:\d])\b([1-3]?\s*[\p{L}]+)\s+(\d+)[.,\s]+(\d+)\b(?!\s*[1-3]?\s*[\p{L}]+)(?!:)/giu, "$1 $2:$3")
+        normalized = normalized.replace(/(?<![:\d])\b([1-3]?\s*[\p{L}]+)\s+(\d+)[.,\s]+(\d+)\b(?!\s*[1-3]?\s*[\p{L}]+)(?!:)/giu, (match, book, chap, verse) => {
+            const refKey = `${book.trim().toLowerCase()} ${chap}`
+            if (this.cacheData.referenceIndex.has(refKey)) {
+                return `${book} ${chap}:${verse}`
+            }
+            return match
+        })
 
         // 10. Split concatenated 3- and 4-digit reference numbers (e.g., "Mark 822" -> "Mark 8:22")
         normalized = normalized.replace(/\b([1-3]?\s*[\p{L}]+)\s+(\d{3,4})\b/giu, (match, book, digits) => {
@@ -94,13 +105,11 @@ export class BibleSearchDetector {
         const matches = Array.from(cleanInput.matchAll(globalRegex))
         if (matches.length === 0) return null
 
-        // Iterate backwards from the latest match to evaluate the most recent reference first
         for (let i = matches.length - 1; i >= 0; i--) {
             const refMatch = matches[i]
             const matchIndex = refMatch.index ?? 0
             const matchLength = refMatch[0].length
 
-            // Reject stale matches if followed by excessive subsequent spoken characters (> 120 chars)
             if (cleanInput.length - (matchIndex + matchLength) > 120) continue
 
             const matchedBookName = refMatch[1]
@@ -242,7 +251,7 @@ export class BibleSearchDetector {
         const allTokens = this.tokenizeText(cleanInput)
         if (allTokens.length < 3) return null
 
-        const windowSizes = [60, 80, 120]
+        const windowSizes = [20, 60, 80, 120]
         let bestResult: { match: MatchResult | null; hasAnyCandidates: boolean; isAmbiguous: boolean } | null = null
 
         for (let i = 0; i < windowSizes.length; i++) {
@@ -275,7 +284,7 @@ export class BibleSearchDetector {
 
     private evaluateContentMatch(allTokens: string[], windowSize: number, parsedCurrent: { book: string; chapter: number; verse: number } | null, upcomingVerseMap: Map<number, number>, currentlyOutputted?: string | null): { match: MatchResult | null; hasAnyCandidates: boolean; isAmbiguous: boolean } {
         const inputTokens = allTokens.slice(-windowSize)
-        const tokenThreshold = 1.0
+        const tokenThreshold = 0.3
         const totalTokensCount = inputTokens.length
 
         const highValueTokensWithWeight: Array<{ wordId: number; weightedIdf: number }> = []
@@ -346,7 +355,10 @@ export class BibleSearchDetector {
             const isCurrent = currentVerseId === verseId
             const upcomingDist = upcomingVerseMap.get(verseId) ?? null
 
-            const requiredMatches = isCurrent || upcomingDist !== null ? 2 : 3
+            let requiredMatches = 2
+            if (isCurrent) requiredMatches = 2
+            else if (upcomingDist !== null) requiredMatches = 3
+
             if (matchCount < requiredMatches) continue
 
             const ref = this.cacheData.versePool[verseId]
@@ -357,29 +369,27 @@ export class BibleSearchDetector {
             const candidateParsed = this.parseReference(ref)
 
             if (isCurrent) {
-                scoreRatio *= 1.1
+                scoreRatio *= 1.25
             } else if (upcomingDist === 1) {
-                scoreRatio *= 1.7
+                scoreRatio *= 1.15
             } else if (upcomingDist === 2) {
-                scoreRatio *= 1.2
+                scoreRatio *= 0.75
             } else if (upcomingDist === 3) {
-                scoreRatio *= 1.05
+                scoreRatio *= 0.5
             } else if (parsedCurrent && candidateParsed) {
-                if (matchCount < 4) {
-                    if (candidateParsed.book.toLowerCase() === parsedCurrent.book.toLowerCase() && candidateParsed.chapter === parsedCurrent.chapter) {
-                        if (candidateParsed.verse < parsedCurrent.verse) {
-                            scoreRatio *= 0.3
-                        } else {
-                            const verseDistance = candidateParsed.verse - parsedCurrent.verse
-                            scoreRatio *= Math.max(0.6, Math.pow(0.85, verseDistance - 1))
-                        }
+                if (candidateParsed.book.toLowerCase() === parsedCurrent.book.toLowerCase() && candidateParsed.chapter === parsedCurrent.chapter) {
+                    if (candidateParsed.verse < parsedCurrent.verse) {
+                        scoreRatio *= 0.2
                     } else {
-                        scoreRatio *= 0.35
+                        const verseDistance = candidateParsed.verse - parsedCurrent.verse
+                        scoreRatio *= Math.pow(0.4, verseDistance - 1)
                     }
+                } else {
+                    scoreRatio *= 0.5
                 }
             }
 
-            const threshold = isCurrent || upcomingDist === 1 ? 0.2 : 0.35
+            const threshold = isCurrent || upcomingDist === 1 ? 0.18 : 0.28
             if (scoreRatio >= threshold) {
                 evaluatedCandidates.push({
                     verseId,
@@ -405,17 +415,20 @@ export class BibleSearchDetector {
             const secondMatch = evaluatedCandidates[1]
             const relativeRatio = secondMatch.finalScore / (topMatch.finalScore || 1)
 
-            if (relativeRatio > 0.7) {
-                isAmbiguous = true
-                if (!topMatch.isCurrent && topMatch.upcomingDistance !== 1) {
-                    ambiguityPenalty = 1 - (relativeRatio - 0.7)
+            if (relativeRatio > 0.65 && !topMatch.isCurrent && topMatch.upcomingDistance !== 1) {
+                const topParsed = this.parseReference(topMatch.ref)
+                const secondParsed = this.parseReference(secondMatch.ref)
+
+                if (topParsed?.book.toLowerCase() !== secondParsed?.book.toLowerCase()) {
+                    isAmbiguous = true
+                    ambiguityPenalty = Math.max(0.5, 1 - (relativeRatio - 0.4))
                 }
             }
         }
 
         const confidence = Math.min(Math.max(Math.round(topMatch.finalScore * 100 * ambiguityPenalty), 51), 98)
 
-        if (confidence < 75) {
+        if (confidence < 70) {
             return { match: null, hasAnyCandidates: true, isAmbiguous }
         }
 
@@ -447,17 +460,28 @@ export class BibleSearchDetector {
 
         if (isCancelled?.()) return null
 
-        const rawContentMatch = await this.findContentMatch(transcript, currentlyOutputted, isCancelled)
+        // 1. Run active-context and fresh-context evaluations simultaneously
+        const activeRawPromise = this.findContentMatch(transcript, currentlyOutputted, isCancelled)
+        const activeMishearingPromise = this.findContentMatch(mishearingsCorrected, currentlyOutputted, isCancelled)
+
+        const freshRawPromise = currentlyOutputted ? this.findContentMatch(transcript, null, isCancelled) : Promise.resolve(null)
+        const freshMishearingPromise = currentlyOutputted ? this.findContentMatch(mishearingsCorrected, null, isCancelled) : Promise.resolve(null)
+
+        const [activeRaw, activeMishearing, freshRaw, freshMishearing] = await Promise.all([activeRawPromise, activeMishearingPromise, freshRawPromise, freshMishearingPromise])
+
         if (isCancelled?.()) return null
 
-        const mishearingContentMatch = await this.findContentMatch(mishearingsCorrected, currentlyOutputted, isCancelled)
-        if (isCancelled?.()) return null
+        const activeMatch = activeRaw && activeMishearing ? (activeRaw.confidence >= activeMishearing.confidence ? activeRaw : activeMishearing) : activeRaw || activeMishearing
+
+        const freshMatch = freshRaw && freshMishearing ? (freshRaw.confidence >= freshMishearing.confidence ? freshRaw : freshMishearing) : freshRaw || freshMishearing
 
         let bestContentMatch: MatchResult | null = null
-        if (rawContentMatch && mishearingContentMatch) {
-            bestContentMatch = rawContentMatch.confidence >= mishearingContentMatch.confidence ? rawContentMatch : mishearingContentMatch
+
+        // 2. Immediate Switch Logic: Prefer fresh context match if active context is absent or weak
+        if (freshMatch && (!activeMatch || freshMatch.confidence > activeMatch.confidence + 5)) {
+            bestContentMatch = freshMatch
         } else {
-            bestContentMatch = rawContentMatch || mishearingContentMatch
+            bestContentMatch = activeMatch || freshMatch
         }
 
         if (this.DEBUG_MODE) console.log("[DETECTION] Best content match:", bestContentMatch)

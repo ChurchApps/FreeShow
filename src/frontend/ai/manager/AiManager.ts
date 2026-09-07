@@ -140,9 +140,9 @@ export class AiManager {
         this.liveContent = match.content
 
         setTimeout(() => {
-            // reset output updates when auto played
+            // reset output updates when not "manually" played
             this.lastOutputUpdate = 0
-        }, 100)
+        }, 500)
     }
 
     /////
