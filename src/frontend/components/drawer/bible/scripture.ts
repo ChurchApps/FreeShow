@@ -923,9 +923,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                     const verseId = bible.chapters.length > 1 ? `${chapterNumber}${divider}${v}` : v.toString()
 
                     // custom Jesus red to JSON format: !{}!
-                    text = text.replace(/<span class="wj" ?>(.*?)<\/span>/g, "!{$1}!")
-                    text = text.replace(/<red ?>(.*?)<\/red>/g, "!{$1}!")
-                    text = text.replace(/<span style="color:red;" ?>(.*?)<\/span>/g, "!{$1}!")
+                    text = markJesusWords(text)
 
                     if (verseNumbers) {
                         const { id, subverse, endNumber } = getVerseIdParts(v)
@@ -1094,15 +1092,20 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                                 verse.text.split(/(!?\{[^}]*\}!?)/g).forEach((seg) => {
                                     if (!seg) return
                                     const isJesusWords = seg.startsWith("!{") && seg.endsWith("}!")
-                                    const text = formatBibleText(isJesusWords ? seg.slice(2, -2) : seg)
-                                    if (text) {
-                                        newLineText.push({
-                                            ...keyTextObj,
-                                            value: text,
-                                            sourceDynamicKey: `${valueName}:${i}`,
-                                            ...(isJesusWords && { style: (keyTextObj.style || "") + redJesusStyle, customType: "disableTemplate_jw" })
-                                        })
-                                    }
+                                    const inner = isJesusWords ? seg.slice(2, -2) : seg
+                                    const text = formatBibleText(inner)
+                                    // formatBibleText trims, keep the space between runs
+                                    const leading = /^\s/.test(inner) ? " " : ""
+                                    const trailing = text && /\s$/.test(inner) ? " " : ""
+                                    const value = leading + text + trailing
+                                    if (!value) return
+
+                                    newLineText.push({
+                                        ...keyTextObj,
+                                        value,
+                                        sourceDynamicKey: `${valueName}:${i}`,
+                                        ...(isJesusWords && { style: (keyTextObj.style || "") + redJesusStyle, customType: "disableTemplate_jw" })
+                                    })
                                 })
                             } else {
                                 newLineText.push({ ...keyTextObj, value: formatBibleText(verse.text), sourceDynamicKey: `${valueName}:${i}` })
@@ -1225,8 +1228,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
             }
 
             // custom Jesus red to JSON format: !{}!
-            text = text.replace(/<span class="wj" ?>(.*?)<\/span>/g, "!{$1}!")
-            text = text.replace(/<red ?>(.*?)<\/red>/g, "!{$1}!")
+            text = markJesusWords(text)
 
             // highlight Jesus text
             const textArray: any[] = []
@@ -1693,6 +1695,39 @@ function rebalanceHalves(first: string, second: string, maxLength: number, minSe
 
 function removeTags(text: string) {
     return text.replace(/(<([^>]+)>)/gi, "")
+}
+
+const RED_OPEN_TAG = /<span class="wj" ?>|<span style="color:red;" ?>|<red ?>/g
+
+// json-bible nests other spans inside the red one, so the close tag has to be found by depth
+export function markJesusWords(text: string) {
+    let result = ""
+    let index = 0
+    let match: RegExpExecArray | null
+    RED_OPEN_TAG.lastIndex = 0
+    while ((match = RED_OPEN_TAG.exec(text))) {
+        const tagName = match[0].startsWith("<red") ? "red" : "span"
+        const start = match.index + match[0].length
+        const end = findClosingTag(text, start, tagName)
+        if (end < 0) break
+
+        result += text.slice(index, match.index) + "!{" + text.slice(start, end) + "}!"
+        index = end + tagName.length + 3
+        RED_OPEN_TAG.lastIndex = index
+    }
+    return result + text.slice(index)
+}
+
+function findClosingTag(text: string, from: number, tagName: string) {
+    const tags = new RegExp(`<${tagName}\\b[^>]*>|</${tagName}>`, "g")
+    tags.lastIndex = from
+    let depth = 1
+    let match: RegExpExecArray | null
+    while ((match = tags.exec(text))) {
+        depth += match[0].startsWith("</") ? -1 : 1
+        if (depth === 0) return match.index
+    }
+    return -1
 }
 
 export function formatBibleText(text: string | undefined, redJesus = false) {
