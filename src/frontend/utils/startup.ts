@@ -52,6 +52,9 @@ export async function startup() {
         },
         "startup"
     )
+
+    // In case did-finish-load already fired before listener was registered
+    window.api.send(STARTUP, { channel: "GET_TYPE" })
 }
 
 async function startupMain() {

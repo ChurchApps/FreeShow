@@ -4,6 +4,7 @@ import { svelte, vitePreprocess } from "@sveltejs/vite-plugin-svelte"
 const production = process.env.NODE_ENV === "production"
 
 export default defineConfig({
+    appType: "spa",
     plugins: [
         svelte({
             preprocess: vitePreprocess(),

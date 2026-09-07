@@ -21,7 +21,8 @@ import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
 import { changeSlidesView } from "../show/slides"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeStage, alertMessage, audioChannelsData, contextActive, drawer, editMode, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, playingVideoState, projects, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, special, spellcheck, styles, timelineRecordingAction, topContextActive } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeStage, alertMessage, audioChannelsData, contextActive, drawer, editMode, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, playingVideoState, previewMode, projects, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, special, spellcheck, styles, timelineRecordingAction, topContextActive } from "../stores"
+import { takeToProgram, fadeToProgram, cutToProgram, blackoutProgram } from "../components/helpers/previewProgram"
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
@@ -365,8 +366,40 @@ export const previewShortcuts = {
         timelineRecordingAction.set({ id: "clear_audio" })
     },
     F5: () => {
+        if (get(previewMode)) {
+            cutToProgram()
+            return
+        }
         if (!presentationControllersKeysDisabled()) OutputHelper.advanceOutputs()
         else setOutput("transition", null)
+    },
+    F6: () => {
+        if (get(previewMode)) {
+            fadeToProgram()
+            return
+        }
+    },
+    b: () => {
+        if (get(previewMode)) {
+            blackoutProgram()
+            return true
+        }
+        return false
+    },
+    B: () => {
+        if (get(previewMode)) {
+            blackoutProgram()
+            return true
+        }
+        return false
+    },
+    Enter: (e: any) => {
+        if (get(previewMode)) {
+            e?.preventDefault?.()
+            fadeToProgram()
+            return true
+        }
+        return false
     },
 
     " ": (e: KeyboardEvent) => {
@@ -376,6 +409,10 @@ export const previewShortcuts = {
         if (isTimelineActive()) return
 
         e.preventDefault()
+        if (get(previewMode)) {
+            takeToProgram()
+            return
+        }
         OutputHelper.advanceOutputs(e)
     },
     ArrowRight: (e: any) => {

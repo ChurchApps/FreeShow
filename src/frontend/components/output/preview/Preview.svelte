@@ -26,6 +26,7 @@
     import ClearButtons from "./ClearButtons.svelte"
     import MultiOutputs from "./MultiOutputs.svelte"
     import PreviewOutputs from "./PreviewOutputs.svelte"
+    import PreviewProgramBar from "./PreviewProgramBar.svelte"
     import SpotifyController from "./SpotifyController.svelte"
 
     $: allActiveOutputs = getActiveOutputs($outputs, true, true, true)
@@ -262,6 +263,8 @@
                 <AudioMeter channelId="main" preview />
             </div>
         </div>
+
+        <PreviewProgramBar />
     {:else}
         <Button on:click={() => (enablePreview = true)} style="width: 100%;" center dark>
             <Icon id="eye" right />

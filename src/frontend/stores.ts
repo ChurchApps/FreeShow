@@ -143,6 +143,12 @@ export const presentationData: Writable<any> = writable({})
 export const presentationApps: Writable<null | string[]> = writable(null)
 export const colorbars: Writable<{ [key: string]: string }> = writable({})
 export const livePrepare: Writable<{ [key: string]: boolean }> = writable({})
+
+// PREVIEW/PROGRAM MODE
+export const previewMode: Writable<boolean> = writable(false)
+export const previewOut: Writable<{ [outputId: string]: any }> = writable({})
+export const previewTransitionType: Writable<"cut" | "fade"> = writable("fade")
+export const previewTransitionDuration: Writable<number> = writable(800)
 export const overlayTimers: Writable<{ [key: string]: { outputId: string; overlayId: string; timer: NodeJS.Timeout } }> = writable({})
 export const slideTimelineSpeedMultiplier: Writable<number> = writable(1)
 
@@ -479,7 +485,10 @@ export const $ = {
     maxConnections,
     remotePassword,
     providerConnections,
-    calendars
+    calendars,
+    previewMode,
+    previewTransitionType,
+    previewTransitionDuration
 }
 
 // DEBUG STORE UPDATES

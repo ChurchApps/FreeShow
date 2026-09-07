@@ -181,7 +181,7 @@ function createMain() {
     }
 
     // create window
-    mainWindow = new BrowserWindow({ ...mainOptions, ...options })
+    mainWindow = new BrowserWindow({ ...mainOptions, ...options, show: true })
 
     // ensure correct dimensions regardless of DPI scaling (without this, the window changed size each startup when scale was not 100%)
     mainWindow.setSize(options.width!, options.height!)
@@ -189,9 +189,21 @@ function createMain() {
     // macos min size
     mainWindow.setMinimumSize(MIN_WINDOW_SIZE, MIN_WINDOW_SIZE)
 
+    mainWindow.show()
+    mainWindow.focus()
+
     if (RECORD_STARTUP_TIME) console.time("Main window content")
     loadWindowContent(mainWindow)
     setMainListeners()
+
+    if (!isProd) {
+        setTimeout(() => {
+            if (!isLoaded && mainWindow && !mainWindow.isDestroyed()) {
+                console.info("Dev fallback: Showing main window after timeout")
+                mainWindowLoaded()
+            }
+        }, 10000)
+    }
 
     if (RECORD_STARTUP_TIME) console.timeEnd("Main window")
 
@@ -204,16 +216,23 @@ function createMain() {
 
 let isLoaded = false
 function mainWindowLoaded() {
-    if (RECORD_STARTUP_TIME) console.timeEnd("Main window content")
-    isLoaded = true
+    try {
+        if (RECORD_STARTUP_TIME) console.timeEnd("Main window content")
+        isLoaded = true
 
-    mainWindowInitialize()
-    if (config.get("maximized")) maximizeMain()
+        mainWindowInitialize()
+        if (config.get("maximized")) maximizeMain()
 
-    mainWindow?.show()
-    loadingWindow?.close()
+        mainWindow?.show()
+        mainWindow?.focus()
+        loadingWindow?.close()
 
-    if (RECORD_STARTUP_TIME) console.timeEnd("Full startup")
+        if (RECORD_STARTUP_TIME) console.timeEnd("Full startup")
+    } catch (e) {
+        console.error("Error in mainWindowLoaded:", e)
+        mainWindow?.show()
+        mainWindow?.focus()
+    }
 }
 
 export async function loadWindowContent(window: BrowserWindow, type: null | "output" = null) {
@@ -223,12 +242,20 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     else {
         // load development environment
         if (mainOutput) openDevTools(window)
-        window.loadURL("http://localhost:3000").catch(loadingFailed)
+        window.loadURL("http://127.0.0.1:3000/index.html").catch(loadingFailed)
     }
 
     window.webContents.on("did-finish-load", () => {
         window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile })
     })
+
+    const getStartupType = (_event: Electron.IpcMainEvent, msg: any) => {
+        if (msg?.channel === "GET_TYPE" && !window.isDestroyed()) {
+            window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile })
+        }
+    }
+    ipcMain.on(STARTUP, getStartupType)
+    window.once("closed", () => ipcMain.removeListener(STARTUP, getStartupType))
 
     function loadingFailed(err: Error) {
         console.error("Failed to load window:", JSON.stringify(err))

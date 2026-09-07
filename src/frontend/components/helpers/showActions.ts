@@ -47,6 +47,7 @@ import {
     playingAudio,
     playingMetronome,
     playingVideoState,
+    previewMode,
     projects,
     projectTemplates,
     shows,
@@ -291,7 +292,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
 
     // trigger start show action first
     const startShowId = data.actions?.startShow?.id || data.actions?.slideActions?.find((a) => a && a.actionValues?.start_show)?.actionValues?.start_show?.id
-    if (startShowId) {
+    if (!get(previewMode) && startShowId) {
         startShow(startShowId)
         return
     }
@@ -316,7 +317,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
     // actions will only trigger on index 0 if multiple lines
     if (outputAtLine) {
         // restart any next slide timers
-        outputIds.map(nextSlideTimers)
+        if (!get(previewMode)) outputIds.map(nextSlideTimers)
         return
     }
 
@@ -353,7 +354,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
         }
 
         // nextTimer - start next slide timer immediately before any awaits
-        nextSlideTimers(outputId)
+        if (!get(previewMode)) nextSlideTimers(outputId)
 
         // background
         if (background && (isSlideBg || _show(showId).get("media")?.[background])) {
@@ -395,14 +396,14 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
         }
 
         // mics
-        if (data.mics) {
+        if (!get(previewMode) && data.mics) {
             data.mics.forEach((mic) => {
                 AudioMicrophone.start(mic.id, { name: mic.name })
             })
         }
 
         // audio
-        if (Array.isArray(data.audio)) {
+        if (!get(previewMode) && Array.isArray(data.audio)) {
             // let clear action trigger first
             setTimeout(() => {
                 data.audio?.forEach((audio: string) => {
@@ -438,7 +439,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
 
         // DEPRECATED since <= 1.1.6, but still in use
         // actions per output
-        if (data.actions) {
+        if (!get(previewMode) && data.actions) {
             if (data.actions.clearBackground) setOutput("background", null, false, outputId)
             if (data.actions.clearOverlays) clearOverlays(outputId)
         }
@@ -446,7 +447,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
 
     // actions
     // DEPRECATED since <= 1.1.6, but still in use
-    if (data.actions) {
+    if (!get(previewMode) && data.actions) {
         // clear first
         if (data.actions.stopTimers) stopTimers()
         if (data.actions.clearAudio) clearAudio()
@@ -459,12 +460,14 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
         if (data.actions.startTimer) playSlideTimers({ showId, slideId: layout[index].id, overlayIds: data.overlays || [] })
     }
 
-    if (data.actions?.slideActions?.length) {
-        // let values update
-        setTimeout(() => {
-            playSlideActions(data.actions!.slideActions!, outputIds, index)
-        }, actionTimeout)
-    } else playOutputStyleTemplateActions(outputIds)
+    if (!get(previewMode)) {
+        if (data.actions?.slideActions?.length) {
+            // let values update
+            setTimeout(() => {
+                playSlideActions(data.actions!.slideActions!, outputIds, index)
+            }, actionTimeout)
+        } else playOutputStyleTemplateActions(outputIds)
+    }
 
     function nextSlideTimers(outputId) {
         // clear any active slide timers

@@ -12,6 +12,8 @@
     export let disabled = false
     export let outputId = ""
     export let style = ""
+    export let outOverride: any = null
+    export let badge: string = ""
 
     $: resolution = getResolution(null, [$outputs, $styles], false, outputId)
     let width = 0
@@ -25,7 +27,13 @@
     {#if stageOutput}
         <StageLayout {outputId} stageId={stageOutput} preview={!disableTransitions} edit={false} />
     {:else}
-        <Output {outputId} style={getStyleResolution(resolution, fullscreen ? width : resolution.width, fullscreen ? height : resolution.height, "fit")} mirror preview={!disableTransitions} />
+        <Output {outputId} {outOverride} style={getStyleResolution(resolution, fullscreen ? width : resolution.width, fullscreen ? height : resolution.height, "fit")} mirror preview={!disableTransitions} />
+    {/if}
+
+    {#if badge}
+        <div class="badge" class:live={badge.includes("LIVE")}>
+            <span>{badge}</span>
+        </div>
     {/if}
 
     {#if !fullscreen && $livePrepare[outputId]}
@@ -36,6 +44,26 @@
 </div>
 
 <style>
+    .badge {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background-color: rgba(30, 30, 45, 0.85);
+        color: #48cbe9;
+        font-size: 0.75em;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        border: 1px solid rgba(72, 203, 233, 0.3);
+        pointer-events: none;
+        z-index: 5;
+    }
+    .badge.live {
+        color: #ff4757;
+        border-color: rgba(255, 71, 87, 0.4);
+        background-color: rgba(40, 10, 15, 0.85);
+    }
     .center {
         display: flex;
         align-items: center;

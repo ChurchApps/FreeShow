@@ -69,6 +69,13 @@ export interface OutData {
     transition?: null | OutTransition
 }
 
+// Preview/Program mode data - reuses OutData structure
+export interface PreviewData extends OutData {
+    showId?: string // show ID being previewed
+    showName?: string // for UI display
+    timestamp?: number // when loaded, used for preload priority
+}
+
 export interface Animation {
     actions: AnimationAction[]
     repeat?: boolean

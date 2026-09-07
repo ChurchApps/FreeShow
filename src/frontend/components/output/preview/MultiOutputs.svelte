@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activeStyle, audioChannelsData, dictionary, outputs, rtmpStatus, selected, settingsTab, styles, templates, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activeStyle, audioChannelsData, dictionary, outputs, previewMode, previewOut, rtmpStatus, selected, settingsTab, styles, templates, toggleOutputEnabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
     import { openDrawer } from "../../edit/scripts/edit"
@@ -157,8 +157,27 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         {@const isMuted = $audioChannelsData[`channel_${output.id}`]?.isMuted}
         {@const isNetworkOutput = output.ndi || output.webrtc || output.rtmp}
 
-        <div id={output.id} class="outputPreview output_button context #output_preview" class:drop-target={!fullscreen && dragOverOutputId === output.id} on:dragover={(e) => handleDragOver(e, output.id)} on:dragleave={(e) => handleDragLeave(e, output.id)} on:drop={(e) => handleDrop(e, output.id)} style={fullscreen ? (fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;") : outs.length > 1 ? `border: 2px solid ${output?.color};width: 50%;` : "display: contents;"}>
-            <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
+        <div
+            id={output.id}
+            class="outputPreview output_button context #output_preview"
+            class:drop-target={!fullscreen && dragOverOutputId === output.id}
+            on:dragover={(e) => handleDragOver(e, output.id)}
+            on:dragleave={(e) => handleDragLeave(e, output.id)}
+            on:drop={(e) => handleDrop(e, output.id)}
+            style={fullscreen ? (fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;") : outs.length > 1 && !$previewMode ? `border: 2px solid ${output?.color};width: 50%;` : "display: contents;"}
+        >
+            {#if $previewMode && !fullscreen}
+                <div class="pvw-pgm-container">
+                    <div class="pvw-screen">
+                        <PreviewOutput outputId={output.id} {disableTransitions} outOverride={$previewOut[output.id] || {}} badge="PREVIEW" />
+                    </div>
+                    <div class="pgm-screen">
+                        <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !output?.active} badge="🔴 LIVE" />
+                    </div>
+                </div>
+            {:else}
+                <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
+            {/if}
 
             <!-- LIVE -->
             {#if !fullscreen && ((output.webrtcData?.url && output.webrtc) || (output.rtmp && hasStreamableDestination(output.rtmpData)))}
@@ -350,5 +369,34 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         z-index: 5;
 
         opacity: 0.7;
+    }
+
+    /* PVW / PGM */
+    .pvw-pgm-container {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        gap: 3px;
+        background-color: var(--primary-darkest);
+    }
+
+    .pvw-screen,
+    .pgm-screen {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        background-color: #000;
+    }
+
+    .pvw-screen {
+        border: 1px solid rgba(72, 203, 233, 0.4);
+    }
+
+    .pgm-screen {
+        border: 1px solid rgba(255, 71, 87, 0.4);
     }
 </style>
