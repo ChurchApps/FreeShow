@@ -2,10 +2,9 @@
     import { translateText } from "../../utils/language"
 
     export let title = ""
-    export let style = ""
 </script>
 
-<div class="title" {style}>
+<div class="title">
     {#if title}
         <span style="opacity: 0.8;">{translateText(title)}</span>
     {/if}

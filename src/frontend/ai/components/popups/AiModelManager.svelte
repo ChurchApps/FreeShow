@@ -32,7 +32,7 @@
 </script>
 
 <!-- Speech to text -->
-<HRule title="ai.transcription" style="margin-top: 0;" />
+<HRule title="ai.transcription" />
 
 <MaterialDropdown label="ai.engine" options={sttEngines} value={selectedSttEngine} on:change={(e) => updateValue("stt.engine", e.detail)} />
 
