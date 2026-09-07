@@ -411,6 +411,17 @@
 
         // newToast(translateText("toast.verse_undefined").replace("{}", verse))
 
+        if (activeReference.verses[0]?.length && activeReference.book !== null) {
+            activeScripture.set({
+                id: previewBibleId,
+                reference: {
+                    book: activeReference.book,
+                    chapters: activeReference.chapters,
+                    verses: activeReference.verses
+                }
+            })
+        }
+
         if (playWhenLoaded) setTimeout(playScripture)
         playWhenLoaded = false
     }

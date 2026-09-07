@@ -2153,6 +2153,16 @@ export async function resolveScriptureReference(referenceText: string, scripture
         const book = bookResult.book
         const chapter = bookResult.chapter ? Number(bookResult.chapter) : 1
         let verses = bookResult.verses || []
+        if (bookResult.chapter && !verses.length) {
+            const verseMatch = referenceText.match(/[:.,]\s*(\d+)(?:-(\d+))?[^a-zA-Z]*$/)
+            if (verseMatch) {
+                const start = parseInt(verseMatch[1])
+                const end = verseMatch[2] ? parseInt(verseMatch[2]) : start
+                if (start > 0 && start <= 150) {
+                    verses = Array.from({ length: end - start + 1 }, (_, i) => start + i)
+                }
+            }
+        }
         if (!verses.length) {
             const bookData = await bible.getBook(book)
             const chapterData = await bookData.getChapter(chapter)
