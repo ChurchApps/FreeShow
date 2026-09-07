@@ -1,7 +1,7 @@
 <script lang="ts">
     import HRule from "../../../components/input/HRule.svelte"
     import MaterialDropdown from "../../../components/inputs/MaterialDropdown.svelte"
-    import { ai, language } from "../../../stores"
+    import { ai } from "../../../stores"
     import { resolveSttEngine } from "../../stt/stt"
     import LlmOptions from "./LlmOptions.svelte"
     import NemotronOptions from "./NemotronOptions.svelte"
@@ -25,8 +25,7 @@
     }
 
     const sttEngines = [
-        // only show if any English language is selected, as this only supports English:
-        ...($language?.includes("en") || $ai.stt?.engine === "nemotron" ? [{ value: "nemotron", label: "Nemotron", data: "Transcribes as you speak, so references and voice commands are picked up almost immediately. English only, and nothing to install - just one model download." }] : []),
+        { value: "nemotron", label: "Nemotron", data: "Transcribes as you speak, so references are picked up almost immediately. Around 40 languages, and nothing to install - just one model download." },
         { value: "whisper", label: "Whisper", data: "Transcribes in short blocks. Supports many languages and live interpretation, but a spoken phrase is only recognised once its block finishes." }
     ]
     $: selectedSttEngine = sttOptions.engine || resolveSttEngine()

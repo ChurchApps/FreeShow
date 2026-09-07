@@ -85,7 +85,9 @@ export class SpeechToText {
         }
 
         if (engine === "nemotron") {
-            if (!(await LocalModelManager.getStatus("nemotron")).ready) return { error: "nemotron_unsupported" }
+            const status = await LocalModelManager.getStatus("nemotron")
+            if (status.outdated) return { error: "nemotron_outdated" }
+            if (!status.ready) return { error: "nemotron_unsupported" }
             return { transcriber: new NemotronTranscriber({ ...options }, onSegment, onError, onInterim) }
         }
 

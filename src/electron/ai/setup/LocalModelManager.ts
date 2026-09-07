@@ -79,12 +79,9 @@ export class LocalModelManager {
         }
 
         if (engineId === "nemotron") {
-            const { NEMOTRON_MODEL_FILES, NEMOTRON_VAD_FILE } = require("./models/nemotron")
             const modelDir = this.getModelDir(engineId)
-            const requiredFiles = [...Object.values(NEMOTRON_MODEL_FILES).map((e: any) => e.file), NEMOTRON_VAD_FILE]
-            const checks = await Promise.all(requiredFiles.map((file) => manager.verifyEngine(path.join(modelDir, file))))
-            const ready = checks.every(Boolean)
-            return { ready, localPath: ready ? modelDir : null }
+            const integrity = await manager.checkIntegrity(modelDir)
+            return { ready: integrity === "ok", localPath: integrity === "missing" ? null : modelDir, outdated: integrity === "outdated" }
         }
 
         const enginePath = customPath || this.getEnginePath(engineId)

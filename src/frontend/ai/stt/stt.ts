@@ -1,22 +1,13 @@
 import { get, writable } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
 import { requestMain, sendMain } from "../../IPC/main"
-import { ai, language } from "../../stores"
+import { ai } from "../../stores"
 import audioProcessor from "./audioProcessor.ts?worker&url"
 
 export const audioLevelStore = writable<number>(0.0)
 
-// nemotron (english-only) is the default engine on english UIs - whisper otherwise, when
-// interpretation mode is enabled (a whisper-only feature: per-window language detection), or
-// when whisper was configured for non-english speech the streaming model cannot transcribe
 export function resolveSttEngine(): string {
-    const stt = get(ai)?.stt || {}
-    if (stt.engine) return stt.engine
-
-    const whisperOptions = stt.engineOptions?.whisper || {}
-    const interpretation = whisperOptions.interpretationMode === true
-    const englishSpeech = !whisperOptions.language || String(whisperOptions.language).startsWith("en")
-    return get(language)?.includes("en") && !interpretation && englishSpeech ? "nemotron" : "whisper"
+    return get(ai)?.stt?.engine || "nemotron"
 }
 
 type AudioLevelCallback = (level: number) => void
@@ -50,7 +41,7 @@ export class SpeechToText {
             // the defaulted pick can be unsupported (sherpa-onnx missing) or simply not downloaded
             // (the ~660MB model is a manual download) - only an explicit nemotron choice should
             // surface those errors instead of falling back to whisper
-            const fallbackErrors = ["nemotron_unsupported", "nemotron_model_missing"]
+            const fallbackErrors = ["nemotron_unsupported", "nemotron_model_missing", "nemotron_outdated"]
             if (!get(ai)?.stt?.engine && engine === "nemotron" && fallbackErrors.includes(result?.error || "")) {
                 console.info(`[AI STT] defaulted nemotron unavailable (${result?.error}) - falling back to whisper`)
                 const retry = await requestMain(Main.AI_LISTEN_START, { engine: "whisper", engineOptions: get(ai)?.stt?.engineOptions?.whisper || {} }, undefined, 60000)

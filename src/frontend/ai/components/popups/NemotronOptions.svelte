@@ -72,6 +72,9 @@
         </MaterialButton>
     {/if}
 {:else if !status.ready}
+    {#if status.outdated}
+        <Tip type="warning" value="ai.nemotron_outdated" />
+    {/if}
     <div style="display: flex;gap: 5px;">
         <MaterialButton variant="outlined" icon="download" disabled={isModelDownloading} style="flex: 1;" on:click={downloadModel}>
             <T id="cloud.replace" />{getPercent(modelDownload)}

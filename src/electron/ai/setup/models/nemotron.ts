@@ -4,18 +4,33 @@ import { ToMain } from "../../../../types/IPC/ToMain"
 import { sendToMain } from "../../../IPC/main"
 import { DownloadManager } from "../DownloadManager"
 
-const MODEL_BASE_URL = "https://huggingface.co/csukuangfj/sherpa-onnx-nemotron-speech-streaming-en-0.6b-int8-2026-01-14/resolve/f13b0c6a48186fdd9fdd8d203b9527b0b709b09f"
+// int8 export of NVIDIA's Nemotron 3.5 streaming transducer, multilingual. Chosen over the
+// English-only 0.6b on 19 sermon excerpts: same CPU cost, better accuracy, fewer repeated words,
+// around 40 languages. Pinned to a revision and per-file hashes so exactly these bytes land.
+const MODEL_REVISION = "cba1c96ca5ef0e8393b50584ae153a79145dc492"
+const MODEL_BASE_URL = `https://huggingface.co/csukuangfj2/sherpa-onnx-nemotron-3.5-asr-streaming-0.6b-1120ms-int8-2026-06-11/resolve/${MODEL_REVISION}`
 export const NEMOTRON_MODEL_FILES = {
-    encoder: { file: "encoder.int8.onnx", sha256: "2f6ae81fe4ccd69ef04cdf048ecd49628e2d3148a6195e152a91b4d2497952dc" },
-    decoder: { file: "decoder.int8.onnx", sha256: "1fb1795cb46e7d0e99b2e096eae83f7e324294e895975a1a894b0384cbbe37f6" },
-    joiner: { file: "joiner.int8.onnx", sha256: "a3f41dccc0f67f37e4210051d1c39a29d473c841cfc32fe574135bac890db91d" },
-    tokens: { file: "tokens.txt", sha256: "dc0b4584ab2e4ddbf888425c076c61b736e7356a015250db7d307e6f1a8188ff" }
+    encoder: { file: "encoder.int8.onnx", sha256: "2fff2166acaa535bd969fb223c1f0783d71029f143cb298bc54c2afe85abf772" },
+    decoder: { file: "decoder.int8.onnx", sha256: "19f9c98fc6d0a2c33a65a43b36fdb2e914c26c0aa9764be3aebc502a1e982fb0" },
+    joiner: { file: "joiner.int8.onnx", sha256: "4101c7c679a0bc30483794b27a059e34e79232aa2068d78d51231a22c8b0d7ce" },
+    tokens: { file: "tokens.txt", sha256: "729cc103155bafa785f9cd45746cd41cabe97eab7182fc04d594129587958f8a" }
 }
-export const NEMOTRON_MODEL_BYTES = 661_920_000
+export const NEMOTRON_MODEL_BYTES = 682_200_000
 
 const VAD_MODEL_URL = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx"
 export const NEMOTRON_VAD_FILE = "silero_vad.onnx"
 const NEMOTRON_VAD_SHA256 = "9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6"
+
+const PINNED_FILES = [...Object.values(NEMOTRON_MODEL_FILES), { file: NEMOTRON_VAD_FILE, sha256: NEMOTRON_VAD_SHA256 }]
+const STAMP_FILE = "model.json"
+
+export type ModelIntegrity = "ok" | "missing" | "outdated"
+
+interface StampedFile {
+    sha256: string
+    size: number
+    mtimeMs: number
+}
 
 export class NemotronSetupManager {
     static getBinaryName() {
@@ -32,13 +47,16 @@ export class NemotronSetupManager {
         const dlm = this.getDownloadManager()
 
         const jobs = [...Object.values(NEMOTRON_MODEL_FILES).map((entry) => ({ url: `${MODEL_BASE_URL}/${entry.file}`, file: entry.file, sha256: entry.sha256 })), { url: VAD_MODEL_URL, file: NEMOTRON_VAD_FILE, sha256: NEMOTRON_VAD_SHA256 }]
+        const digests: { [file: string]: string } = {}
 
         let completedBytes = 0
         for (const job of jobs) {
             const target = path.join(outputFolder, job.file)
 
             if (await this.verifyEngine(target)) {
-                if ((await dlm.computeSha256(target)) === job.sha256) {
+                const digest = await dlm.computeSha256(target)
+                if (digest === job.sha256) {
+                    digests[job.file] = digest
                     completedBytes += fs.statSync(target).size
                     continue
                 }
@@ -59,10 +77,12 @@ export class NemotronSetupManager {
                     }
                 })
 
-                if ((await dlm.computeSha256(target)) !== job.sha256) {
+                const digest = await dlm.computeSha256(target)
+                if (digest !== job.sha256) {
                     dlm.safeUnlink(target)
                     throw new Error(`Downloaded ${job.file} failed checksum verification`)
                 }
+                digests[job.file] = digest
             } catch (err) {
                 if (dlm.isAbortError(err)) return { ok: false, error: "Download was cancelled." }
                 return dlm.reportError(`Failed to download Nemotron model: ${dlm.errorMessage(err)}`)
@@ -70,6 +90,8 @@ export class NemotronSetupManager {
             completedBytes = base + fs.statSync(target).size
         }
 
+        // stamp with the digests just computed, so the first start does not hash 680 MB again
+        await this.checkIntegrity(outputFolder, digests)
         return dlm.reportComplete()
     }
 
@@ -83,6 +105,61 @@ export class NemotronSetupManager {
         } catch {
             return false
         }
+    }
+
+    // A model from an earlier pin still transcribes, just not the one this build was measured
+    // against. Hashing 680 MB takes ~1.7s, so a verified model is stamped and the stamp is trusted
+    // while every file keeps its size and mtime.
+    static async checkIntegrity(modelDir: string, knownDigests?: { [file: string]: string }): Promise<ModelIntegrity> {
+        if (!knownDigests && this.isStampValid(modelDir)) return "ok"
+
+        const files: { [file: string]: StampedFile } = {}
+        let outdated = false
+
+        for (const entry of PINNED_FILES) {
+            const file = path.join(modelDir, entry.file)
+            let stats: fs.Stats
+            try {
+                stats = fs.statSync(file)
+            } catch {
+                return "missing"
+            }
+
+            const digest = knownDigests?.[entry.file] ?? (await this.getDownloadManager().computeSha256(file))
+            if (digest !== entry.sha256) outdated = true
+            files[entry.file] = { sha256: digest, size: stats.size, mtimeMs: stats.mtimeMs }
+        }
+
+        if (outdated) return "outdated"
+
+        try {
+            fs.writeFileSync(path.join(modelDir, STAMP_FILE), JSON.stringify({ revision: MODEL_REVISION, files }, null, 4))
+        } catch (err) {
+            console.error("[nemotron] Could not write the model stamp:", err)
+        }
+        return "ok"
+    }
+
+    private static isStampValid(modelDir: string): boolean {
+        let stamp: { revision?: string; files?: { [file: string]: StampedFile } }
+        try {
+            stamp = JSON.parse(fs.readFileSync(path.join(modelDir, STAMP_FILE), "utf8"))
+        } catch {
+            return false
+        }
+        if (stamp.revision !== MODEL_REVISION || !stamp.files) return false
+
+        for (const entry of PINNED_FILES) {
+            const stamped = stamp.files[entry.file]
+            if (!stamped || stamped.sha256 !== entry.sha256) return false
+            try {
+                const stats = fs.statSync(path.join(modelDir, entry.file))
+                if (stats.size !== stamped.size || stats.mtimeMs !== stamped.mtimeMs) return false
+            } catch {
+                return false
+            }
+        }
+        return true
     }
 
     // this has just one model, treated as "engine"

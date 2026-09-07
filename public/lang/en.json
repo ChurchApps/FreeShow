@@ -1847,6 +1847,7 @@
         "confidence_highest": "If confident",
         "confidence_high": "If high confidence",
         "confidence_medium": "If medium confidence",
-        "copy_transcript": "Copy transcript"
+        "copy_transcript": "Copy transcript",
+        "nemotron_outdated": "The speech model on this computer is an older version - download it again to get the current one"
     }
 }
