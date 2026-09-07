@@ -246,7 +246,8 @@ export class BibleSearchDetector {
         const upcomingVerseMap = this.getUpcomingVerseMap(currentlyOutputted || "", 3)
 
         const allTokens = this.tokenizeText(cleanInput)
-        if (allTokens.length < 3) return null
+        // a few common words can all land in one verse, so a chunk this short is not a quote
+        if (allTokens.length < 6) return null
 
         const windowSizes = [20, 60, 80, 120]
         let bestResult: { match: MatchResult | null; hasAnyCandidates: boolean; isAmbiguous: boolean } | null = null
