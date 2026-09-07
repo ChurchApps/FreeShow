@@ -87,10 +87,10 @@ export class BibleSearchCache {
         // Convert "Mark chapter 8 and 22" or "Mark 8 verse 22" -> "Mark 8:22"
         normalized = normalized.replace(/\b([\p{L}\p{N}\s]+?)\s*(?:chapter\s*)?(\d+)\s+(?:and|verse|v)\s+(\d+)\b/giu, "$1 $2:$3")
 
-        // Normalize various scripture reference formats to a standard "Book Chapter:Verse" format
-        normalized = normalized.replace(/\b([\p{L}\p{N}\s]+?)\s+(\d+)\.(\d+)\b/gu, "$1 $2:$3")
-        normalized = normalized.replace(/\b([\p{L}\p{N}\s]+?)\s+(\d+),\s*(\d+)\b/gu, "$1 $2:$3")
-        normalized = normalized.replace(/\b([\p{L}\p{N}\s]+?)\s+(\d+)\s+(\d+)\b/gu, "$1 $2:$3")
+        // Prevent matching digits if they are immediately preceded by a colon or verse marker
+        normalized = normalized.replace(/(?<!:)\b([\p{L}\p{N}\s]+?)\s+(\d+)\.(\d+)\b/gu, "$1 $2:$3")
+        normalized = normalized.replace(/(?<!:)\b([\p{L}\p{N}\s]+?)\s+(\d+),\s*(\d+)\b/gu, "$1 $2:$3")
+        normalized = normalized.replace(/(?<!:)\b([\p{L}\p{N}\s]+?)\s+(\d+)\s+(\d+)\b/gu, "$1 $2:$3")
 
         // Split concatenated 3- and 4-digit reference numbers (e.g., 4610 -> 46:10 or 316 -> 3:16)
         normalized = normalized.replace(/\b([\p{L}]+)\s+(\d{3,4})\b/gu, (match, book, digits) => {
@@ -170,6 +170,59 @@ export class BibleSearchCache {
             content: referenceContent,
             confidence: 98
         }
+    }
+
+    // if the text has a verse number only, we should look at the reference in the input or currently outputted reference to determine the likely chapter and book
+    public findStandaloneVerseMatch(cleanInput: string, currentlyOutputted?: string | null): MatchResult | null {
+        // Matches patterns like "verse 17", "v17", "verses 17-18"
+        const verseRegex = /\b(?:verse|v|verses)\s*(\d+)(?:\s*[-–—]\s*(\d+))?\b/gi
+        const matches = Array.from(cleanInput.matchAll(verseRegex))
+
+        if (matches.length === 0) return null
+
+        // Iterate backward through matches to prioritize the last (most recent) mention
+        for (let i = matches.length - 1; i >= 0; i--) {
+            const match = matches[i]
+            const matchIndex = match.index ?? 0
+            const matchLength = match[0].length
+
+            if (cleanInput.length - (matchIndex + matchLength) > 50) {
+                continue
+            }
+
+            const startVerseNum = parseInt(match[1], 10)
+            const endVerseNum = match[2] ? parseInt(match[2], 10) : undefined
+
+            // Prioritize reference matches found in the text directly preceding this verse mention
+            const priorText = cleanInput.slice(0, matchIndex)
+            const inlineRef = this.findReferenceMatch(priorText)
+            const targetRef = inlineRef?.content || currentlyOutputted
+
+            if (!targetRef) continue
+
+            const parsedCurrent = this.parseReference(targetRef)
+            if (!parsedCurrent) continue
+
+            const refKey = `${parsedCurrent.book.toLowerCase()} ${parsedCurrent.chapter}`
+            const chapterData = this.referenceIndex.get(refKey)
+
+            if (!chapterData || !chapterData.verses.has(startVerseNum)) continue
+
+            let referenceContent = `${chapterData.bookName} ${chapterData.chapterNumber}:${startVerseNum}`
+            if (endVerseNum && endVerseNum > startVerseNum) {
+                referenceContent += `-${endVerseNum}`
+            }
+
+            const isSequential = startVerseNum === parsedCurrent.verse + 1
+
+            return {
+                type: "scripture",
+                content: referenceContent,
+                confidence: isSequential ? 85 : 80 // Elevated confidence to ensure last part takes precedence
+            }
+        }
+
+        return null
     }
 
     private parseReference(refStr: string): { book: string; chapter: number; verse: number } | null {
@@ -416,15 +469,19 @@ export class BibleSearchCache {
         if (this.DEBUG_MODE) console.log("[DETECTION] Mishearings corrected:", mishearingsCorrected)
         if (this.DEBUG_MODE) console.log("[DETECTION] Mishearings normalized:", mishearingsNormalized)
 
-        const refMatch = this.findReferenceMatch(mishearingsNormalized) || this.findReferenceMatch(rawNormalized)
+        // Step 1: Evaluate reference or standalone verse matches first (focusing on late occurrences in text)
+        const refMatch = this.findStandaloneVerseMatch(mishearingsNormalized, currentlyOutputted) || this.findStandaloneVerseMatch(rawNormalized, currentlyOutputted) || this.findReferenceMatch(mishearingsNormalized) || this.findReferenceMatch(rawNormalized)
+
         if (this.DEBUG_MODE) console.log("[DETECTION] Reference match result:", refMatch)
 
-        if (refMatch && refMatch.confidence > 80) {
+        // Return immediately if an explicit verse or chapter/verse reference match was found in the text
+        if (refMatch) {
             return refMatch
         }
 
         if (isCancelled?.()) return null
 
+        // Step 2: Fall back to content-based search only if no explicit references/verses matched
         const rawContentMatch = await this.findContentMatch(transcript, currentlyOutputted, isCancelled)
         if (isCancelled?.()) return null
 
@@ -440,10 +497,6 @@ export class BibleSearchCache {
 
         if (this.DEBUG_MODE) console.log("[DETECTION] Best content match:", bestContentMatch)
 
-        if (refMatch && bestContentMatch) {
-            return bestContentMatch.confidence >= refMatch.confidence ? bestContentMatch : refMatch
-        }
-
-        return refMatch || bestContentMatch || null
+        return bestContentMatch || null
     }
 }
