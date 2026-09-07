@@ -174,7 +174,8 @@
     // FONT SIZE
 
     function resolveFontSize(style: string, outputStyle: Styles | null) {
-        const baseFontSize = Number(getStyles(style, true)["font-size"] || 100) || 100
+        let styleObj = getStyles(style, true)
+        const baseFontSize = Number(styleObj["font-size"] || 100) || 100
 
         let resolvedOutputStyle = outputStyle
         if (!resolvedOutputStyle) {
@@ -188,6 +189,7 @@
     }
 
     function getCustomFontSize(style: string, outputStyle: Styles | null) {
+        if (style?.includes("--base-font-size") || style?.includes("font-size: calc(")) return ""
         return `;font-size: ${resolveFontSize(style, outputStyle)}px;`
     }
 
@@ -354,7 +356,8 @@
 
     // $: isScripture = ref?.id === "scripture" || ref?.showId === "temp" || $showsCache[ref.showId || ""]?.reference?.type === "scripture"
 
-    $: baseFontSize = fontSize || (style ? resolveFontSize(renderedLines[0]?.text?.[0]?.style, outputStyle) : 100)
+    $: mainTextSegment = renderedLines?.flatMap((l) => l?.text || []).find((t) => !t?.customType?.includes("disableTemplate")) || renderedLines?.[0]?.text?.[0]
+    $: baseFontSize = fontSize || (style ? resolveFontSize(mainTextSegment?.style, outputStyle) : 100)
 </script>
 
 <div class="align" class:hasShapeOutside={!!shapeOutside} class:hidden={hideContent} class:isStage class:scrolling={!isStage && item?.scrolling?.type} style="--scrollSpeed: {(item?.scrolling?.speed ?? 30) * 1.5}s;{style ? item?.align : null};" use:measureScroll={"align"}>
@@ -409,9 +412,10 @@
                                             {#each line.text || [] as text, ti}
                                                 {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                                                 {@const fontRatio = text.customType?.includes("disableTemplate") && !text.customType?.includes("jw") ? customTypeRatio : 1}
+                                                {@const segmentFontSize = fontSize ? fontSize * fontRatio : style ? resolveFontSize(text.baseStyle || text.style, outputStyle) : 100}
 
                                                 <!-- NOTE: must be on the same line for rendering ...>{@html -->
-                                                <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''};--base-font-size: {baseFontSize}px;">{@html getTextValue(value, i, ti, updateDynamic)}</span>
+                                                <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''};--base-font-size: {segmentFontSize}px;">{@html getTextValue(value, i, ti, updateDynamic)}</span>
                                             {/each}
                                         {/if}
                                     </div>
@@ -464,9 +468,10 @@
                                 {#each line.text || [] as text, ti}
                                     {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                                     {@const fontRatio = text.customType?.includes("disableTemplate") && !text.customType?.includes("jw") ? customTypeRatio : 1}
+                                    {@const segmentFontSize = fontSize ? fontSize * fontRatio : style ? resolveFontSize(text.baseStyle || text.style, outputStyle) : 100}
 
                                     <!-- NOTE: must be on the same line for rendering ...>{@html -->
-                                    <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''};--base-font-size: {baseFontSize}px;">{@html getTextValue(value, i, ti, updateDynamic)}</span>
+                                    <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''};--base-font-size: {segmentFontSize}px;">{@html getTextValue(value, i, ti, updateDynamic)}</span>
                                 {/each}
                             {/if}
                         </div>
