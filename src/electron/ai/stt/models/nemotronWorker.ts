@@ -57,7 +57,6 @@ export class NemotronDriver implements TranscriptionDriver {
 
     // emission is tracked in characters: the trailing word grows in place ("Ephes" -> "Ephesians")
     private emittedChars = 0
-    private lastText = ""
     private nextEmitStartMs = 0
 
     constructor(options: NemotronOptions) {
@@ -201,9 +200,6 @@ export class NemotronDriver implements TranscriptionDriver {
             return
         }
 
-        this.assertPrefix(text)
-        this.lastText = text
-
         // a greedy RNN-T can lock into a cycle; only clearing the decoder breaks it
         const loopAt = findRepeatedTail(text)
         if (loopAt >= 0) {
@@ -222,18 +218,18 @@ export class NemotronDriver implements TranscriptionDriver {
 
         // only whole words are committed while the decoder is still writing: the trailing token
         // grows in place, and committing it early puts "cha" on screen for "chapter"
-        const lastBoundary = text.lastIndexOf(" ")
-        const commitTo = final ? text.length : lastBoundary
+        const commitTo = final ? text.length : text.lastIndexOf(" ")
 
+        let candidate = ""
+        let confidence: number | undefined
         if (commitTo > this.emittedChars) {
-            const candidate = text.slice(this.emittedChars, commitTo).trim()
-            const confidence = segmentConfidence(hypothesis.tokens, hypothesis.logProbs, text, this.emittedChars, commitTo)
+            candidate = text.slice(this.emittedChars, commitTo).trim()
+            if (candidate) confidence = segmentConfidence(hypothesis.tokens, hypothesis.logProbs, text, this.emittedChars, commitTo)
             this.emittedChars = commitTo
-            if (candidate) this.emitText(candidate, mode === "closed", confidence)
-            else if (mode === "closed" && this.emittedChars > 0) this.emitBoundary()
-        } else if (mode === "closed" && this.emittedChars > 0) {
-            this.emitBoundary()
         }
+
+        // an empty segment at close marks the utterance end
+        if (candidate || (mode === "closed" && this.emittedChars > 0)) this.emitText(candidate, mode === "closed", confidence)
 
         this.options.onInterim?.(final ? "" : text.slice(this.emittedChars).trim())
     }
@@ -241,7 +237,6 @@ export class NemotronDriver implements TranscriptionDriver {
     private resetDecoder() {
         this.recognizer.reset(this.stream)
         this.emittedChars = 0
-        this.lastText = ""
         this.blanksAtOpen = 0
     }
 
@@ -252,19 +247,7 @@ export class NemotronDriver implements TranscriptionDriver {
         if (forced && hypothesis.text) this.resetDecoder()
     }
 
-    // greedy RNN-T only extends its hypothesis; if that ever changes this is where it shows
-    private assertPrefix(text: string) {
-        if (!this.lastText || text.startsWith(this.lastText)) return
-        console.warn(`[nemotron] hypothesis was revised, not extended. was ${JSON.stringify(this.lastText.slice(-40))}, now ${JSON.stringify(text.slice(-40))}`)
-        this.emittedChars = text.length
-    }
-
     private emitText(text: string, utteranceEnd: boolean, confidence?: number) {
-        if (!text) {
-            if (utteranceEnd) this.emitBoundary()
-            return
-        }
-
         const endMs = this.currentMs()
         const segment: TranscriberSegment = { text, startMs: this.nextEmitStartMs, endMs }
         if (confidence !== undefined) segment.confidence = confidence
@@ -273,14 +256,6 @@ export class NemotronDriver implements TranscriptionDriver {
         if (this.options.language) segment.language = this.options.language
         this.nextEmitStartMs = endMs
 
-        this.options.onSegment(segment)
-    }
-
-    private emitBoundary() {
-        const endMs = this.currentMs()
-        const segment: TranscriberSegment = { text: "", startMs: this.nextEmitStartMs, endMs, utteranceEnd: true }
-        if (this.options.language) segment.language = this.options.language
-        this.nextEmitStartMs = endMs
         this.options.onSegment(segment)
     }
 }
