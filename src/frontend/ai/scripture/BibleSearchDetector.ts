@@ -152,7 +152,7 @@ export class BibleSearchDetector {
     public findStandaloneVerseMatch(cleanInput: string, currentlyOutputted?: string | null): MatchResult | null {
         const verseRegex = /\b(?:verse|v|verses)\s*(\d+)(?:\s*(?:[-–—]|through|to)\s*(\d+))?\b/gi
         const matches = Array.from(cleanInput.matchAll(verseRegex))
-        if (matches.length === 0) return null
+        if (matches.length === 0) return this.findNextVerseCue(cleanInput, currentlyOutputted)
 
         for (let i = matches.length - 1; i >= 0; i--) {
             const match = matches[i]
@@ -193,6 +193,20 @@ export class BibleSearchDetector {
         }
 
         return null
+    }
+
+    // a reader says the verse number before each verse
+    private findNextVerseCue(cleanInput: string, currentlyOutputted?: string | null): MatchResult | null {
+        const current = currentlyOutputted ? this.parseReference(currentlyOutputted) : null
+        if (!current) return null
+
+        const cue = Number(cleanInput.slice(-40).match(/\b(\d+)\b(?!.*\b\d+\b)/)?.[1])
+        if (cue !== current.verse + 1 && cue !== current.verse + 2) return null
+
+        const chapterData = this.cacheData.referenceIndex.get(`${current.book.toLowerCase()} ${current.chapter}`)
+        if (!chapterData || cue > chapterData.verseCount) return null
+
+        return { type: "scripture", content: `${chapterData.bookName} ${chapterData.chapterNumber}:${cue}`, confidence: 85 }
     }
 
     // share of the verse's word weight that the spoken words account for
