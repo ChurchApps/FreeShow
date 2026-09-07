@@ -82,8 +82,13 @@ export class BibleSearchCache {
     }
 
     private normalizeReferences(text: string): string {
+        let normalized = text
+
+        // Convert "Mark chapter 8 and 22" or "Mark 8 verse 22" -> "Mark 8:22"
+        normalized = normalized.replace(/\b([\p{L}\p{N}\s]+?)\s*(?:chapter\s*)?(\d+)\s+(?:and|verse|v)\s+(\d+)\b/giu, "$1 $2:$3")
+
         // Normalize various scripture reference formats to a standard "Book Chapter:Verse" format
-        let normalized = text.replace(/\b([\p{L}\p{N}\s]+?)\s+(\d+)\.(\d+)\b/gu, "$1 $2:$3")
+        normalized = normalized.replace(/\b([\p{L}\p{N}\s]+?)\s+(\d+)\.(\d+)\b/gu, "$1 $2:$3")
         normalized = normalized.replace(/\b([\p{L}\p{N}\s]+?)\s+(\d+),\s*(\d+)\b/gu, "$1 $2:$3")
         normalized = normalized.replace(/\b([\p{L}\p{N}\s]+?)\s+(\d+)\s+(\d+)\b/gu, "$1 $2:$3")
 

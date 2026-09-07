@@ -64,7 +64,10 @@ export const COMMON_MISHEARINGS: Record<string, string> = {
     thirst: "first",
     sec: "second",
     turd: "third",
-    ford: "fourth"
+    ford: "fourth",
+
+    // Other Mishearings
+    cha: "chapter"
 }
 
 export function normalizeMishearings(text: string): string {
