@@ -7,6 +7,7 @@ export interface TranscriberSegment {
     music?: boolean
     utteranceEnd?: boolean
     confidence?: number // 0-100, how sure the engine was of these words (streaming engine only)
+    glue?: boolean // continues the previous segment's last word: a comma or a plural that arrived after it settled
 }
 
 export interface TranscriptionDriver {

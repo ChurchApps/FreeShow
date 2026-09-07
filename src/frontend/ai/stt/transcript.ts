@@ -13,6 +13,7 @@ type TranscriptPart = {
     music?: boolean
     utteranceEnd?: boolean
     confidence?: number
+    glue?: boolean
 }
 
 export class Transcript {
@@ -29,10 +30,10 @@ export class Transcript {
             if (part.interim) {
                 return { ...t, unprocessed: textPart }
             } else {
-                this.pushed.push({ words: textPart.trim().split(/\s+/).filter(Boolean).length, confidence: part.confidence })
+                this.pushed.push({ words: part.glue ? 0 : textPart.trim().split(/\s+/).filter(Boolean).length, confidence: part.confidence })
                 this.pushed = this.pushed.slice(-40)
 
-                let finalized = t.finalized + (t.finalized ? " " : "") + textPart.trim()
+                let finalized = t.finalized + (t.finalized && !part.glue ? " " : "") + textPart.trim()
 
                 // cap at a certain amount of characters
                 if (finalized.length > this.MAX_TRANSCRIPT_CHARS) finalized = finalized.slice(-this.MAX_TRANSCRIPT_CHARS)

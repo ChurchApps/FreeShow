@@ -223,14 +223,18 @@ export class NemotronDriver implements TranscriptionDriver {
 
         let candidate = ""
         let confidence: number | undefined
+        let glue = false
         if (commitTo > this.emittedChars) {
-            candidate = text.slice(this.emittedChars, commitTo).trim()
-            if (candidate) confidence = segmentConfidence(hypothesis.tokens, hypothesis.logProbs, text, this.emittedChars, commitTo)
+            const from = this.emittedChars
+            candidate = text.slice(from, commitTo).trim()
+            if (candidate) confidence = segmentConfidence(hypothesis.tokens, hypothesis.logProbs, text, from, commitTo)
+            // the model adds punctuation and plurals once it has heard what follows, often after the word was committed
+            glue = from > 0 && text[from] !== " "
             this.emittedChars = commitTo
         }
 
         // an empty segment at close marks the utterance end
-        if (candidate || (mode === "closed" && this.emittedChars > 0)) this.emitText(candidate, mode === "closed", confidence)
+        if (candidate || (mode === "closed" && this.emittedChars > 0)) this.emitText(candidate, mode === "closed", confidence, glue)
 
         this.options.onInterim?.(final ? "" : text.slice(this.emittedChars).trim())
     }
@@ -254,10 +258,11 @@ export class NemotronDriver implements TranscriptionDriver {
         this.inUtterance = false
     }
 
-    private emitText(text: string, utteranceEnd: boolean, confidence?: number) {
+    private emitText(text: string, utteranceEnd: boolean, confidence?: number, glue = false) {
         const endMs = this.currentMs()
         const segment: TranscriberSegment = { text, startMs: this.nextEmitStartMs, endMs }
         if (confidence !== undefined) segment.confidence = confidence
+        if (glue) segment.glue = true
         if (isMusicAnnotation(text)) segment.music = true
         if (utteranceEnd) segment.utteranceEnd = true
         if (this.options.language) segment.language = this.options.language

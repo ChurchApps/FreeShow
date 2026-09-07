@@ -70,3 +70,18 @@ describe("a token that grows in place", () => {
         expect(words).not.toContain("[MUS ")
     })
 })
+
+describe("a token added after the word settled", () => {
+    it("is flagged so the transcript glues it on", async () => {
+        // the pause that settles "come" is also what makes the model put a comma after it
+        const segments: TranscriberSegment[] = []
+        const driver = new NemotronDriver({ modelDir: "m", sherpa: fakeSherpa(["come", "come", "come, just"]), onSegment: (s) => segments.push(s), onInterim: () => {}, onError: vi.fn() })
+
+        await driver.start()
+        for (let sent = 0; sent < PRIMING_MS + CHUNK_MS * 4; sent += 100) driver.pushAudio(pcm(100))
+        await driver.stop()
+
+        const texts = segments.filter((s) => s.text).map((s) => (s.glue ? "+" : "") + s.text)
+        expect(texts).toEqual(["come", "+,", "just"])
+    })
+})
