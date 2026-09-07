@@ -25,11 +25,31 @@ export class BibleCacheManager {
 }
 
 export class BibleSearchCache {
-    private referenceIndex: Map<string, { bookName: string; chapterNumber: number; verses: Map<number, boolean> }> = new Map()
-    private invertedWordIndex: Map<string, Set<string>> = new Map()
-    private verseTokensMap: Map<string, string[]> = new Map()
-    private verseTokenSetsMap: Map<string, Set<string>> = new Map()
-    private wordIdfMap: Map<string, number> = new Map()
+    // ------------------------------------------------------------------
+    // Compact String Pool & Reference Management
+    // ------------------------------------------------------------------
+    private versePool: string[] = [] // ID -> "John 3:16"
+    private verseToIdMap: Map<string, number> = new Map() // "john 3:16" -> ID
+
+    // Quick structural index: "genesis 1" -> { bookName, chapterNumber, startVerseId, verseCount }
+    private referenceIndex: Map<string, { bookName: string; chapterNumber: number; startVerseId: number; verseCount: number }> = new Map()
+
+    // ------------------------------------------------------------------
+    // Inverted Index (Packed Typed Arrays)
+    // ------------------------------------------------------------------
+    private vocabPool: string[] = [] // ID -> "beginning"
+    private vocabToIdMap: Map<string, number> = new Map() // "beginning" -> ID
+    private wordIdf: Float32Array = new Float32Array(0) // Vocabulary ID -> IDF score
+
+    // CSR (Compressed Sparse Row) packed postings list:
+    // wordPostingsOffsets[wordId] to wordPostingsOffsets[wordId + 1] slices wordPostings
+    private wordPostingsOffsets: Uint32Array = new Uint32Array(0)
+    private wordPostings: Uint32Array = new Uint32Array(0) // Array of Verse IDs
+
+    // Verse token bit-sets / sorted unique token IDs per verse
+    private verseTokensOffsets: Uint32Array = new Uint32Array(0)
+    private verseTokens: Uint32Array = new Uint32Array(0) // Array of Word IDs per verse
+
     private bookNames: string[] = []
     private refRegex: RegExp | null = null
     private totalVerses = 0
@@ -39,42 +59,104 @@ export class BibleSearchCache {
     }
 
     private buildCache(bible: Bible): void {
+        const tempPostingsMap: Map<number, number[]> = new Map()
+        const tempVerseTokensMap: number[][] = []
+
+        // Pass 1: Build verse pool and reference indices
         for (const book of bible.books) {
             this.bookNames.push(book.name)
             for (const chapter of book.chapters) {
                 const refKey = `${book.name.toLowerCase()} ${chapter.number}`
-                const verseMap = new Map<number, boolean>()
+                const startVerseId = this.totalVerses
+                let chapterVerseCount = 0
 
                 for (const verse of chapter.verses) {
-                    this.totalVerses++
-                    verseMap.set(verse.number, true)
                     const verseRef = `${book.name} ${chapter.number}:${verse.number}`
-                    const tokens = this.tokenizeText(verse.text)
+                    const verseId = this.totalVerses
 
-                    this.verseTokensMap.set(verseRef, tokens)
+                    this.versePool.push(verseRef)
+                    this.verseToIdMap.set(verseRef.toLowerCase(), verseId)
+                    this.totalVerses++
+                    chapterVerseCount++
 
-                    const uniqueTokens = new Set(tokens)
-                    this.verseTokenSetsMap.set(verseRef, uniqueTokens)
-                    for (const word of uniqueTokens) {
-                        if (!this.invertedWordIndex.has(word)) {
-                            this.invertedWordIndex.set(word, new Set())
+                    const rawTokens = this.tokenizeText(verse.text)
+                    const uniqueWordIds = new Set<number>()
+
+                    for (const word of rawTokens) {
+                        let wordId = this.vocabToIdMap.get(word)
+                        if (wordId === undefined) {
+                            wordId = this.vocabPool.length
+                            this.vocabToIdMap.set(word, wordId)
+                            this.vocabPool.push(word)
                         }
-                        this.invertedWordIndex.get(word)!.add(verseRef)
+                        uniqueWordIds.add(wordId)
+                    }
+
+                    const sortedWordIds = Array.from(uniqueWordIds).sort((a, b) => a - b)
+                    tempVerseTokensMap.push(sortedWordIds)
+
+                    for (const wordId of sortedWordIds) {
+                        let list = tempPostingsMap.get(wordId)
+                        if (!list) {
+                            list = []
+                            tempPostingsMap.set(wordId, list)
+                        }
+                        list.push(verseId)
                     }
                 }
 
                 this.referenceIndex.set(refKey, {
                     bookName: book.name,
                     chapterNumber: chapter.number,
-                    verses: verseMap
+                    startVerseId,
+                    verseCount: chapterVerseCount
                 })
             }
         }
 
-        for (const [word, verseSet] of this.invertedWordIndex.entries()) {
-            const docFreq = verseSet.size
-            const idf = Math.log((this.totalVerses + 1) / (docFreq + 1))
-            this.wordIdfMap.set(word, idf)
+        // Pass 2: Pack vocabulary IDFs & word postings into Uint32Array / Float32Array
+        const vocabSize = this.vocabPool.length
+        this.wordIdf = new Float32Array(vocabSize)
+        this.wordPostingsOffsets = new Uint32Array(vocabSize + 1)
+
+        let totalPostingsCount = 0
+        for (let wordId = 0; wordId < vocabSize; wordId++) {
+            const list = tempPostingsMap.get(wordId) || []
+            this.wordPostingsOffsets[wordId] = totalPostingsCount
+            totalPostingsCount += list.length
+
+            const docFreq = list.length
+            this.wordIdf[wordId] = Math.log((this.totalVerses + 1) / (docFreq + 1))
+        }
+        this.wordPostingsOffsets[vocabSize] = totalPostingsCount
+
+        this.wordPostings = new Uint32Array(totalPostingsCount)
+        for (let wordId = 0; wordId < vocabSize; wordId++) {
+            const list = tempPostingsMap.get(wordId) || []
+            const offset = this.wordPostingsOffsets[wordId]
+            for (let i = 0; i < list.length; i++) {
+                this.wordPostings[offset + i] = list[i]
+            }
+        }
+
+        // Pass 3: Pack verse tokens into Uint32Array offsets
+        this.verseTokensOffsets = new Uint32Array(this.totalVerses + 1)
+        let totalVerseTokensCount = 0
+
+        for (let verseId = 0; verseId < this.totalVerses; verseId++) {
+            const tokens = tempVerseTokensMap[verseId] || []
+            this.verseTokensOffsets[verseId] = totalVerseTokensCount
+            totalVerseTokensCount += tokens.length
+        }
+        this.verseTokensOffsets[this.totalVerses] = totalVerseTokensCount
+
+        this.verseTokens = new Uint32Array(totalVerseTokensCount)
+        for (let verseId = 0; verseId < this.totalVerses; verseId++) {
+            const tokens = tempVerseTokensMap[verseId] || []
+            const offset = this.verseTokensOffsets[verseId]
+            for (let i = 0; i < tokens.length; i++) {
+                this.verseTokens[offset + i] = tokens[i]
+            }
         }
 
         const bookPattern = this.bookNames.map((b) => b.replace(/\s+/g, "\\s+")).join("|")
@@ -94,27 +176,20 @@ export class BibleSearchCache {
 
         // Split concatenated 3- and 4-digit reference numbers (e.g., 4610 -> 46:10 or 316 -> 3:16)
         normalized = normalized.replace(/\b([\p{L}]+)\s+(\d{3,4})\b/gu, (match, book, digits) => {
-            if (digits.length === 3) {
-                return `${book} ${digits.slice(0, 1)}:${digits.slice(1)}`
-            } else if (digits.length === 4) {
-                return `${book} ${digits.slice(0, 2)}:${digits.slice(2)}`
-            }
+            if (digits.length === 3) return `${book} ${digits.slice(0, 1)}:${digits.slice(1)}`
+            if (digits.length === 4) return `${book} ${digits.slice(0, 2)}:${digits.slice(2)}`
             return match
         })
-
         return normalized
     }
 
     private tokenizeText(text: string): string[] {
-        return (
-            text
-                .toLowerCase()
-                // Split or strip all apostrophes and non-alphanumeric unicode characters generically
-                .replace(/['’`\-_]/g, " ")
-                .replace(/[^\p{L}\p{N}\s]/gu, "")
-                .split(/\s+/)
-                .filter((w) => w.length > 1)
-        )
+        return text
+            .toLowerCase()
+            .replace(/['’`\-_]/g, " ")
+            .replace(/[^\p{L}\p{N}\s]/gu, "")
+            .split(/\s+/)
+            .filter((w) => w.length > 1)
     }
 
     public findReferenceMatch(cleanInput: string): MatchResult | null {
@@ -122,17 +197,13 @@ export class BibleSearchCache {
 
         const globalRegex = new RegExp(this.refRegex.source, "gi")
         const matches = Array.from(cleanInput.matchAll(globalRegex))
-
         if (matches.length === 0) return null
 
         const refMatch = matches[matches.length - 1]
         const matchIndex = refMatch.index ?? 0
         const matchLength = refMatch[0].length
 
-        // Ignore references that are buried far back in the transcript buffer
-        if (cleanInput.length - (matchIndex + matchLength) > 30) {
-            return null
-        }
+        if (cleanInput.length - (matchIndex + matchLength) > 30) return null
 
         const matchedBookName = refMatch[1]
             .trim()
@@ -146,11 +217,10 @@ export class BibleSearchCache {
 
         const refKey = `${matchedBookName.toLowerCase()} ${chapterNum}`
         const chapterData = this.referenceIndex.get(refKey)
-
         if (!chapterData) return null
 
         if (!startVerseNum) {
-            if (!chapterData.verses.has(1)) return null
+            if (chapterData.verseCount < 1) return null
             return {
                 type: "scripture",
                 content: `${chapterData.bookName} ${chapterData.chapterNumber}:1`,
@@ -158,7 +228,7 @@ export class BibleSearchCache {
             }
         }
 
-        if (!chapterData.verses.has(startVerseNum)) return null
+        if (startVerseNum < 1 || startVerseNum > chapterData.verseCount) return null
 
         let referenceContent = `${chapterData.bookName} ${chapterData.chapterNumber}:${startVerseNum}`
         if (endVerseNum && endVerseNum > startVerseNum) {
@@ -177,7 +247,6 @@ export class BibleSearchCache {
         // Matches patterns like "verse 17", "v17", "verses 17-18"
         const verseRegex = /\b(?:verse|v|verses)\s*(\d+)(?:\s*[-–—]\s*(\d+))?\b/gi
         const matches = Array.from(cleanInput.matchAll(verseRegex))
-
         if (matches.length === 0) return null
 
         // Iterate backward through matches to prioritize the last (most recent) mention
@@ -186,9 +255,7 @@ export class BibleSearchCache {
             const matchIndex = match.index ?? 0
             const matchLength = match[0].length
 
-            if (cleanInput.length - (matchIndex + matchLength) > 50) {
-                continue
-            }
+            if (cleanInput.length - (matchIndex + matchLength) > 50) continue
 
             const startVerseNum = parseInt(match[1], 10)
             const endVerseNum = match[2] ? parseInt(match[2], 10) : undefined
@@ -206,7 +273,7 @@ export class BibleSearchCache {
             const refKey = `${parsedCurrent.book.toLowerCase()} ${parsedCurrent.chapter}`
             const chapterData = this.referenceIndex.get(refKey)
 
-            if (!chapterData || !chapterData.verses.has(startVerseNum)) continue
+            if (!chapterData || startVerseNum < 1 || startVerseNum > chapterData.verseCount) continue
 
             let referenceContent = `${chapterData.bookName} ${chapterData.chapterNumber}:${startVerseNum}`
             if (endVerseNum && endVerseNum > startVerseNum) {
@@ -218,7 +285,7 @@ export class BibleSearchCache {
             return {
                 type: "scripture",
                 content: referenceContent,
-                confidence: isSequential ? 85 : 80 // Elevated confidence to ensure last part takes precedence
+                confidence: isSequential ? 85 : 80
             }
         }
 
@@ -236,8 +303,8 @@ export class BibleSearchCache {
         }
     }
 
-    private getUpcomingVerseMap(currentRefStr: string, maxLookahead: number = 3): Map<string, number> {
-        const upcoming = new Map<string, number>()
+    private getUpcomingVerseMap(currentRefStr: string, maxLookahead: number = 3): Map<number, number> {
+        const upcoming = new Map<number, number>()
         const parsed = this.parseReference(currentRefStr)
         if (!parsed) return upcoming
 
@@ -250,16 +317,16 @@ export class BibleSearchCache {
             const refKey = `${currentBook.toLowerCase()} ${currentChap}`
             const chapterData = this.referenceIndex.get(refKey)
 
-            if (chapterData && chapterData.verses.has(nextVerseNum)) {
-                const refStr = `${chapterData.bookName} ${chapterData.chapterNumber}:${nextVerseNum}`
-                upcoming.set(refStr, dist)
+            if (chapterData && nextVerseNum <= chapterData.verseCount) {
+                const verseId = chapterData.startVerseId + (nextVerseNum - 1)
+                upcoming.set(verseId, dist)
                 currentVerse = nextVerseNum
             } else {
                 const nextChapKey = `${currentBook.toLowerCase()} ${currentChap + 1}`
                 const nextChapData = this.referenceIndex.get(nextChapKey)
-                if (nextChapData && nextChapData.verses.has(1)) {
-                    const refStr = `${nextChapData.bookName} ${nextChapData.chapterNumber}:1`
-                    upcoming.set(refStr, dist)
+                if (nextChapData && nextChapData.verseCount >= 1) {
+                    const verseId = nextChapData.startVerseId
+                    upcoming.set(verseId, dist)
                     currentChap++
                     currentVerse = 1
                 } else {
@@ -311,42 +378,47 @@ export class BibleSearchCache {
         return bestResult?.match || null
     }
 
-    private evaluateContentMatch(allTokens: string[], windowSize: number, parsedCurrent: { book: string; chapter: number; verse: number } | null, upcomingVerseMap: Map<string, number>, currentlyOutputted?: string | null): { match: MatchResult | null; hasAnyCandidates: boolean; isAmbiguous: boolean } {
+    private evaluateContentMatch(allTokens: string[], windowSize: number, parsedCurrent: { book: string; chapter: number; verse: number } | null, upcomingVerseMap: Map<number, number>, currentlyOutputted?: string | null): { match: MatchResult | null; hasAnyCandidates: boolean; isAmbiguous: boolean } {
         const inputTokens = allTokens.slice(-windowSize)
-
-        // Lower threshold to ensure words like "judge", "judged", "measured" pass through
         const tokenThreshold = 1.0
         const totalTokensCount = inputTokens.length
 
-        const highValueTokensWithWeight = inputTokens
-            .map((token, index) => {
-                const idf = this.wordIdfMap.get(token) || 0
-                const distanceFromEnd = totalTokensCount - 1 - index
-                const decayWeight = Math.pow(0.96, distanceFromEnd)
-                return { token, index, idf, weightedIdf: idf * decayWeight }
-            })
-            .filter((item) => item.idf > tokenThreshold)
+        const highValueTokensWithWeight: Array<{ wordId: number; weightedIdf: number }> = []
+
+        for (let index = 0; index < inputTokens.length; index++) {
+            const token = inputTokens[index]
+            const wordId = this.vocabToIdMap.get(token)
+            if (wordId === undefined) continue
+
+            const idf = this.wordIdf[wordId]
+            if (idf <= tokenThreshold) continue
+
+            const distanceFromEnd = totalTokensCount - 1 - index
+            const decayWeight = Math.pow(0.96, distanceFromEnd)
+            highValueTokensWithWeight.push({ wordId, weightedIdf: idf * decayWeight })
+        }
 
         if (highValueTokensWithWeight.length < 2) {
             return { match: null, hasAnyCandidates: false, isAmbiguous: false }
         }
 
-        const candidateScores = new Map<string, number>()
-        const candidateMatchedIdfSum = new Map<string, number>()
-        const candidateMatchedCount = new Map<string, number>()
+        const candidateScores = new Map<number, number>()
+        const candidateMatchedIdfSum = new Map<number, number>()
+        const candidateMatchedCount = new Map<number, number>()
 
         for (const item of highValueTokensWithWeight) {
-            const matches = this.invertedWordIndex.get(item.token)
-            if (!matches) continue
+            const startOffset = this.wordPostingsOffsets[item.wordId]
+            const endOffset = this.wordPostingsOffsets[item.wordId + 1]
 
-            for (const ref of matches) {
-                const prevScore = candidateScores.get(ref) || 0
-                const prevMatchedIdf = candidateMatchedIdfSum.get(ref) || 0
-                const prevCount = candidateMatchedCount.get(ref) || 0
+            for (let offset = startOffset; offset < endOffset; offset++) {
+                const verseId = this.wordPostings[offset]
+                const prevScore = candidateScores.get(verseId) || 0
+                const prevMatchedIdf = candidateMatchedIdfSum.get(verseId) || 0
+                const prevCount = candidateMatchedCount.get(verseId) || 0
 
-                candidateScores.set(ref, prevScore + item.weightedIdf)
-                candidateMatchedIdfSum.set(ref, prevMatchedIdf + item.weightedIdf)
-                candidateMatchedCount.set(ref, prevCount + 1)
+                candidateScores.set(verseId, prevScore + item.weightedIdf)
+                candidateMatchedIdfSum.set(verseId, prevMatchedIdf + item.weightedIdf)
+                candidateMatchedCount.set(verseId, prevCount + 1)
             }
         }
 
@@ -356,34 +428,37 @@ export class BibleSearchCache {
 
         // Apply decay to the denominator sum so distant words in long transcripts don't crush the score ratio
         const recentHighValueIdfSum = inputTokens.reduce((sum, token, index) => {
-            const idf = this.wordIdfMap.get(token) || 0
+            const wordId = this.vocabToIdMap.get(token)
+            if (wordId === undefined) return sum
+            const idf = this.wordIdf[wordId]
             if (idf <= tokenThreshold) return sum
             const distanceFromEnd = totalTokensCount - 1 - index
             return sum + idf * Math.pow(0.96, distanceFromEnd)
         }, 0)
 
         const evaluatedCandidates: Array<{
+            verseId: number
             ref: string
             finalScore: number
             isCurrent: boolean
             upcomingDistance: number | null
         }> = []
 
-        for (const [ref, accumulatedIdf] of candidateScores.entries()) {
-            const verseTokenSet = this.verseTokenSetsMap.get(ref)
-            if (!verseTokenSet) continue
+        const currentVerseId = currentlyOutputted ? this.verseToIdMap.get(currentlyOutputted.toLowerCase()) : undefined
 
-            const matchCount = candidateMatchedCount.get(ref) || 0
+        for (const [verseId, accumulatedIdf] of candidateScores.entries()) {
+            const matchCount = candidateMatchedCount.get(verseId) || 0
             if (matchCount < 2) continue
 
-            const matchedQueryIdf = candidateMatchedIdfSum.get(ref) || 1.0
+            const ref = this.versePool[verseId]
+            const matchedQueryIdf = candidateMatchedIdfSum.get(verseId) || 1.0
             let scoreRatio = recentHighValueIdfSum > 0 ? matchedQueryIdf / recentHighValueIdfSum : accumulatedIdf / matchedQueryIdf
 
             scoreRatio = Math.min(scoreRatio, 1.0)
             const candidateParsed = this.parseReference(ref)
 
-            const isCurrent = currentlyOutputted === ref
-            const upcomingDist = upcomingVerseMap.get(ref) ?? null
+            const isCurrent = currentVerseId === verseId
+            const upcomingDist = upcomingVerseMap.get(verseId) ?? null
 
             // Apply reading flow hysteresis unless strong keyword match indicates a jump
             if (isCurrent) {
@@ -413,6 +488,7 @@ export class BibleSearchCache {
             const threshold = isCurrent || upcomingDist === 1 ? 0.2 : 0.35
             if (scoreRatio >= threshold) {
                 evaluatedCandidates.push({
+                    verseId,
                     ref,
                     finalScore: scoreRatio,
                     isCurrent,
@@ -475,9 +551,7 @@ export class BibleSearchCache {
         if (this.DEBUG_MODE) console.log("[DETECTION] Reference match result:", refMatch)
 
         // Return immediately if an explicit verse or chapter/verse reference match was found in the text
-        if (refMatch) {
-            return refMatch
-        }
+        if (refMatch) return refMatch
 
         if (isCancelled?.()) return null
 
