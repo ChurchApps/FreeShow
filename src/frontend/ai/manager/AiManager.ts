@@ -6,7 +6,7 @@ import { startScripture } from "../../components/actions/apiHelper"
 import { getFirstActiveOutput } from "../../components/helpers/output"
 import { ai, aiSmartAction, aiSuggestions, drawerTabsData, outputs } from "../../stores"
 import { getLLMManager } from "../llm/llmManager"
-import { BibleCacheManager } from "../scripture/detection"
+import { BibleCacheManager } from "../scripture/BibleCacheManager"
 
 export interface MatchResult {
     type: "scripture" | "lyrics" | "quote" | "announcement" | "empty"
