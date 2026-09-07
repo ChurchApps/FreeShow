@@ -1398,7 +1398,7 @@
         max-width: 35%;
         overflow: clip;
         text-overflow: ellipsis;
-        white-space: nowrap;
+        white-space: pre;
         color: var(--secondary);
         font-weight: 600;
     }
