@@ -16,12 +16,16 @@ export const COMMON_MISHEARINGS: Record<string, string> = {
     hose: "hosea",
     jewel: "joel",
     mica: "micah",
+    johny: "john",
     romance: "romans",
     corinthian: "corinthians",
     galatian: "galatians",
     ephesian: "ephesians",
     colossian: "colossians",
     collisions: "colossians",
+    philman: "philemon",
+    philamon: "philemon",
+    filman: "philemon",
     hebrew: "hebrews",
     revelations: "revelation",
     revolution: "revelation",
@@ -74,9 +78,9 @@ export function normalizeMishearings(text: string): string {
     let normalized = text.toLowerCase()
 
     const mishearingKeys = Object.keys(COMMON_MISHEARINGS).sort((a, b) => b.length - a.length)
-    const mishearingRegex = new RegExp(`\\b(${mishearingKeys.join("|")})\\b`, "gi")
+    const mishearingRegex = new RegExp(`(?<!\\p{L})(${mishearingKeys.join("|")})(?!\\p{L})`, "giu")
 
     return normalized.replace(mishearingRegex, (match) => {
-        return COMMON_MISHEARINGS[match.toLowerCase()]
+        return COMMON_MISHEARINGS[match.toLowerCase()] || match
     })
 }
