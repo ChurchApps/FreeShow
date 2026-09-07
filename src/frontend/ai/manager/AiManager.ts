@@ -102,7 +102,7 @@ export class AiManager {
         // TODO: filter out "Matthew 7:1-2" if outputted is "Matthew 7:1-6"?
     }
 
-    private static MAX_AUTO_PLAY_INTERVAL = 3000
+    private static MAX_AUTO_PLAY_INTERVAL = 30000
     private static shouldAutoPlay(match: MatchResult): boolean {
         if (match.confidence <= 95 && this.alreadySuggested(match)) return false
 
