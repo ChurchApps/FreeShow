@@ -49,7 +49,8 @@ function buildOverrideRegex(override: TemplateStyleOverride) {
 
 function splitSegment(segment: any, regex: RegExp, override: TemplateStyleOverride) {
     if (!segment?.value) return [segment]
-    if (segment.customType?.includes("disableTemplate")) return [segment]
+    // verse numbers keep their own style, red-letter runs are still split
+    if (segment.customType === "disableTemplate") return [segment]
 
     const text = String(segment.value)
     const matcher = new RegExp(regex.source, regex.flags)

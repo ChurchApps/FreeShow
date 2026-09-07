@@ -1699,7 +1699,11 @@ export function formatBibleText(text: string | undefined, redJesus = false) {
     if (!text) return ""
     text = sanitizeVerseText(text)
     if (redJesus) text = text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>')
-    return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", "&")
+    // stripMarkdown pairs straight quotes, keep it away from the ones around attribute values
+    text = tokenizeHtml(text)
+        .map((token) => (token.type === "tag" ? token.value : stripMarkdown(token.value)))
+        .join("")
+    return text.replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", "&")
 }
 
 // CREATE SHOW/SLIDES
