@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { findRepeatedTail, isMusicAnnotation } from "./sttHelper"
+import { findRepeatedTail, isMusicAnnotation, segmentConfidence } from "./sttHelper"
 
 const times = (phrase: string, count: number) => Array.from({ length: count }, () => phrase).join(" ")
 const loops = (text: string) => findRepeatedTail(text) >= 0
@@ -23,6 +23,22 @@ describe("repeated tail", () => {
 
     it("ignores a repeat the speaker has moved on from", () => {
         expect(loops(`${times("amen", 10)} and now let us turn to the scripture together`)).toBe(false)
+    })
+})
+
+describe("segment confidence", () => {
+    // tokens carry their own separators, so " A" "ft" "er" " " "e" "ar" "ly" joins to " After early"
+    const tokens = [" A", "ft", "er", " ", "e", "ar", "ly"]
+    const probs = [0.9, 0.9, 0.9, 1, 0.5, 0.5, 0.5].map(Math.log)
+
+    it("averages the tokens behind the committed words", () => {
+        expect(segmentConfidence(tokens, probs, "After early", 0, 5)).toBe(90)
+        expect(segmentConfidence(tokens, probs, "After early", 6, 11)).toBe(50)
+    })
+
+    it("reports nothing when the tokens do not line up with the text", () => {
+        expect(segmentConfidence(tokens, probs, "something else", 0, 5)).toBeUndefined()
+        expect(segmentConfidence([], [], "After", 0, 5)).toBeUndefined()
     })
 })
 

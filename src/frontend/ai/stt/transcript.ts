@@ -12,6 +12,7 @@ type TranscriptPart = {
     language?: string
     music?: boolean
     utteranceEnd?: boolean
+    confidence?: number
 }
 
 export class Transcript {
@@ -28,6 +29,9 @@ export class Transcript {
             if (part.interim) {
                 return { ...t, unprocessed: textPart }
             } else {
+                this.pushed.push({ words: textPart.trim().split(/\s+/).filter(Boolean).length, confidence: part.confidence })
+                this.pushed = this.pushed.slice(-40)
+
                 let finalized = t.finalized + (t.finalized ? " " : "") + textPart.trim()
 
                 // cap at a certain amount of characters
@@ -62,12 +66,27 @@ export class Transcript {
     private static OVERLAP_WORDS: number = 8
     private static MAX_CHUNK_WORDS: number = 120
     private static lastSentWords: string[] = []
-    private static getTranscriptChunk(): { chunkWithOverlap: string; newWordsCount: number } {
+    // each finalized push with its word count, so a chunk can report how sure the engine was of its new words
+    private static pushed: { words: number; confidence?: number }[] = []
+
+    private static confidenceOfLast(wordCount: number): number | undefined {
+        let confidence: number | undefined
+        let covered = 0
+        for (let i = this.pushed.length - 1; i >= 0 && covered < wordCount; i--) {
+            const push = this.pushed[i]
+            if (push.confidence !== undefined) confidence = confidence === undefined ? push.confidence : Math.min(confidence, push.confidence)
+            covered += push.words
+        }
+        return confidence
+    }
+
+    private static getTranscriptChunk(): { chunkWithOverlap: string; newWordsCount: number; confidence?: number } {
         const { finalized, unprocessed } = get(sttTranscript)
         const combined = ((finalized || "") + (finalized && unprocessed ? " " : "") + (unprocessed || "")).trim()
 
         if (!combined) {
             this.lastSentWords = []
+            this.pushed = []
             return { chunkWithOverlap: "", newWordsCount: 0 }
         }
 
@@ -111,6 +130,6 @@ export class Transcript {
 
         this.lastSentWords = words
 
-        return { chunkWithOverlap, newWordsCount }
+        return { chunkWithOverlap, newWordsCount, confidence: this.confidenceOfLast(newWordsCount) }
     }
 }

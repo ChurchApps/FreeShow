@@ -6,6 +6,7 @@ export interface TranscriberSegment {
     language?: string
     music?: boolean
     utteranceEnd?: boolean
+    confidence?: number // 0-100, how sure the engine was of these words (streaming engine only)
 }
 
 export interface TranscriptionDriver {
@@ -143,6 +144,36 @@ export function findRepeatedTail(text: string): number {
         if (repeats >= needed) return tokens[start + size].at
     }
     return -1
+}
+
+// CONFIDENCE - the recognizer's own probability for the tokens behind a committed stretch of text.
+// tokens.join("") is the result text with a leading space, so a character range of the text is
+// the same range of the join shifted by that lead.
+
+export function segmentConfidence(tokens: string[], logProbs: number[], text: string, from: number, to: number): number | undefined {
+    if (!tokens.length || tokens.length !== logProbs.length || to <= from) return undefined
+
+    const joined = tokens.join("")
+    if (joined.trim() !== text) return undefined
+
+    const lead = joined.length - joined.trimStart().length
+    const start = from + lead
+    const end = to + lead
+
+    let sum = 0
+    let count = 0
+    let cursor = 0
+    for (let index = 0; index < tokens.length; index++) {
+        const next = cursor + tokens[index].length
+        if (next > start && cursor < end) {
+            sum += logProbs[index]
+            count++
+        }
+        cursor = next
+        if (cursor >= end) break
+    }
+
+    return count ? Math.round(Math.exp(sum / count) * 100) : undefined
 }
 
 // MUSIC - the model labels non-speech ("[MUSIC PLAYING]", "(upbeat music)") rather than inventing words for it.

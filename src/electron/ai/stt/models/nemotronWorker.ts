@@ -1,6 +1,6 @@
 import path from "path"
 import type { DriverCallbacks, TranscriberSegment, TranscriptionDriver } from "../sttHelper"
-import { findRepeatedTail, isMusicAnnotation } from "../sttHelper"
+import { findRepeatedTail, isMusicAnnotation, segmentConfidence } from "../sttHelper"
 
 const NEMOTRON_FILES = {
     encoder: "encoder.int8.onnx",
@@ -33,6 +33,8 @@ const CLOSE_TRAILING_BLANKS = Math.round(2.5 * FRAMES_PER_SECOND)
 
 interface Hypothesis {
     text: string
+    tokens: string[]
+    logProbs: number[]
     blanks: number
 }
 
@@ -177,7 +179,12 @@ export class NemotronDriver implements TranscriptionDriver {
 
     private readHypothesis(): Hypothesis {
         const result = this.recognizer.getResult(this.stream)
-        return { text: ((result.text || "") as string).trim(), blanks: (result.num_trailing_blanks || 0) as number }
+        return {
+            text: ((result.text || "") as string).trim(),
+            tokens: (result.tokens || []) as string[],
+            logProbs: (result.ys_probs || []) as number[],
+            blanks: (result.num_trailing_blanks || 0) as number
+        }
     }
 
     private flushTail() {
@@ -203,8 +210,9 @@ export class NemotronDriver implements TranscriptionDriver {
             const keep = text.slice(0, loopAt).trimEnd()
             if (keep.length > this.emittedChars) {
                 const candidate = keep.slice(this.emittedChars).trim()
+                const confidence = segmentConfidence(hypothesis.tokens, hypothesis.logProbs, text, this.emittedChars, keep.length)
                 this.emittedChars = keep.length
-                if (candidate) this.emitText(candidate, false)
+                if (candidate) this.emitText(candidate, false, confidence)
             }
             console.warn(`[nemotron] decoder was repeating ${JSON.stringify(text.slice(loopAt).slice(0, 60))} - clearing its state`)
             this.resetDecoder()
@@ -219,8 +227,9 @@ export class NemotronDriver implements TranscriptionDriver {
 
         if (commitTo > this.emittedChars) {
             const candidate = text.slice(this.emittedChars, commitTo).trim()
+            const confidence = segmentConfidence(hypothesis.tokens, hypothesis.logProbs, text, this.emittedChars, commitTo)
             this.emittedChars = commitTo
-            if (candidate) this.emitText(candidate, mode === "closed")
+            if (candidate) this.emitText(candidate, mode === "closed", confidence)
             else if (mode === "closed" && this.emittedChars > 0) this.emitBoundary()
         } else if (mode === "closed" && this.emittedChars > 0) {
             this.emitBoundary()
@@ -250,7 +259,7 @@ export class NemotronDriver implements TranscriptionDriver {
         this.emittedChars = text.length
     }
 
-    private emitText(text: string, utteranceEnd: boolean) {
+    private emitText(text: string, utteranceEnd: boolean, confidence?: number) {
         if (!text) {
             if (utteranceEnd) this.emitBoundary()
             return
@@ -258,6 +267,7 @@ export class NemotronDriver implements TranscriptionDriver {
 
         const endMs = this.currentMs()
         const segment: TranscriberSegment = { text, startMs: this.nextEmitStartMs, endMs }
+        if (confidence !== undefined) segment.confidence = confidence
         if (isMusicAnnotation(text)) segment.music = true
         if (utteranceEnd) segment.utteranceEnd = true
         if (this.options.language) segment.language = this.options.language

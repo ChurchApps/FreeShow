@@ -19,15 +19,18 @@ export class AiManager {
     private static MAX_LLM_REQUEST_AFTER_MATCH = 5000
     private static latestSearchId: number = 0
 
-    static async processSTTChunk(chunk: { chunkWithOverlap: string; newWordsCount: number }) {
+    static async processSTTChunk(chunk: { chunkWithOverlap: string; newWordsCount: number; confidence?: number }) {
         const searchId = ++this.latestSearchId
         const isCancelled = () => searchId !== this.latestSearchId
+
+        // a match is only as sure as the words it was read from
+        const cap = (match: MatchResult): MatchResult => (chunk.confidence === undefined ? match : { ...match, confidence: Math.min(match.confidence, chunk.confidence) })
 
         const stringMatch = await this.stringDetection(chunk.chunkWithOverlap, isCancelled)
         if (isCancelled()) return
 
         if (stringMatch) {
-            this.newMatch(stringMatch)
+            this.newMatch(cap(stringMatch))
             this.lastMatch = Date.now()
             return
         }
@@ -42,7 +45,7 @@ export class AiManager {
         if (isCancelled()) return
 
         if (llmMatch) {
-            this.newMatch(llmMatch)
+            this.newMatch(cap(llmMatch))
             this.lastMatch = Date.now()
         }
     }
