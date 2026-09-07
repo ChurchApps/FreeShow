@@ -71,14 +71,18 @@ export class Transcript {
     private static pushed: { words: number; confidence?: number }[] = []
 
     private static confidenceOfLast(wordCount: number): number | undefined {
-        let confidence: number | undefined
+        let sum = 0
+        let words = 0
         let covered = 0
         for (let i = this.pushed.length - 1; i >= 0 && covered < wordCount; i--) {
             const push = this.pushed[i]
-            if (push.confidence !== undefined) confidence = confidence === undefined ? push.confidence : Math.min(confidence, push.confidence)
+            if (push.confidence !== undefined && push.words) {
+                sum += push.confidence * push.words
+                words += push.words
+            }
             covered += push.words
         }
-        return confidence
+        return words ? Math.round(sum / words) : undefined
     }
 
     private static getTranscriptChunk(): { chunkWithOverlap: string; newWordsCount: number; confidence?: number } {

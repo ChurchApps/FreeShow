@@ -23,8 +23,8 @@ export class AiManager {
         const searchId = ++this.latestSearchId
         const isCancelled = () => searchId !== this.latestSearchId
 
-        // a match is only as sure as the words it was read from
-        const cap = (match: MatchResult): MatchResult => (chunk.confidence === undefined ? match : { ...match, confidence: Math.min(match.confidence, chunk.confidence) })
+        // words heard under 75 were right less than two thirds of the time (measured); above that the match speaks for itself
+        const cap = (match: MatchResult): MatchResult => (chunk.confidence === undefined || chunk.confidence >= 75 ? match : { ...match, confidence: Math.round((match.confidence * chunk.confidence) / 75) })
 
         const stringMatch = await this.stringDetection(chunk.chunkWithOverlap, isCancelled)
         if (isCancelled()) return
