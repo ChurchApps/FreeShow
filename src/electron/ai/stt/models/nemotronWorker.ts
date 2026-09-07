@@ -1,6 +1,6 @@
 import path from "path"
 import type { DriverCallbacks, TranscriberSegment, TranscriptionDriver } from "../sttHelper"
-import { appendTailWords, trimRepeatedLeadWords } from "../sttHelper"
+import { findRepeatedTail, isMusicAnnotation } from "../sttHelper"
 
 const NEMOTRON_FILES = {
     encoder: "encoder.int8.onnx",
@@ -10,39 +10,55 @@ const NEMOTRON_FILES = {
     vad: "silero_vad.onnx"
 } as const
 
-export type NemotronWorkerRequest = { type: "start"; language?: string; modelDir?: string } | { type: "audio"; data: Uint8Array } | { type: "stop" }
+export type NemotronWorkerRequest = { type: "start"; language?: string; decodeLanguage?: string; modelDir?: string } | { type: "audio"; data: Uint8Array } | { type: "stop" }
 export type NemotronWorkerResponse = { type: "ready" } | { type: "segment"; segment: TranscriberSegment } | { type: "interim"; text: string } | { type: "error"; message: string } | { type: "stopped" } | { type: "alive" }
 
 const SAMPLE_RATE = 16000
-const PREROLL_MAX_SAMPLES = 16000
-const FINALIZE_PAD_SAMPLES = 16000
-const CLOSE_DEFER_SAMPLES = 8000
-const MAX_UTTERANCE_SAMPLES = 17 * SAMPLE_RATE
-const INTERIM_EMIT_INTERVAL_SAMPLES = Math.round(SAMPLE_RATE * 0.25)
+
+// the export's encoder grid: one step per 1120ms of audio, 12.5 decoder frames per second
+const CHUNK_SHIFT_MS = 1120
+const FRAMES_PER_SECOND = 12.5
+// silence pushed at stop() so the audio after the last encoder step is still decoded
+const FLUSH_SAMPLES = Math.ceil(((CHUNK_SHIFT_MS + 100) / 1000) * SAMPLE_RATE)
+
+const VAD_THRESHOLD = 0.3
+const VAD_MIN_SILENCE = 0.8
+const VAD_MIN_SPEECH = 0.15
+const VAD_MAX_SPEECH = 30
+const MAX_UTTERANCE_SAMPLES = VAD_MAX_SPEECH * SAMPLE_RATE
+
+// decoder frames with no token: after the first the trailing word is settled, after the second the speaker is done
+const COMMIT_TRAILING_BLANKS = Math.round(VAD_MIN_SILENCE * FRAMES_PER_SECOND)
+const CLOSE_TRAILING_BLANKS = Math.round(2.5 * FRAMES_PER_SECOND)
+
+interface Hypothesis {
+    text: string
+    blanks: number
+}
+
+type NemotronOptions = DriverCallbacks & { language?: string; decodeLanguage?: string; modelDir?: string; sherpa?: any }
 
 export class NemotronDriver implements TranscriptionDriver {
-    private options: DriverCallbacks & { language?: string; sherpa?: any; modelDir?: string }
+    private options: NemotronOptions
     private recognizer: any = null
     private vad: any = null
-
+    // one stream for the whole session - its encoder cache is what keeps decoding cheap
     private stream: any = null
 
     private stopped = false
     private totalSamples = 0
+
     private inUtterance = false
-    private finalizeAtSample = 0
+    private blanksAtOpen = 0
+    private utteranceStartSample = 0
+    private emittedAtOpen = 0
 
-    private utteranceSamples = 0
-    private preroll: Float32Array[] = []
-    private prerollSamples = 0
-
-    private emittedWords = 0
-    private emittedTailWords: string[] = []
+    // emission is tracked in characters: the trailing word grows in place ("Ephes" -> "Ephesians")
+    private emittedChars = 0
+    private lastText = ""
     private nextEmitStartMs = 0
-    private lastInterimEmitSample = 0
-    private lastInterimText = ""
 
-    constructor(options: DriverCallbacks & { language?: string; sherpa?: any; modelDir?: string }) {
+    constructor(options: NemotronOptions) {
         this.options = options
     }
 
@@ -53,28 +69,36 @@ export class NemotronDriver implements TranscriptionDriver {
         const { modelDir } = this.options
         if (!modelDir) throw new Error("Nemotron model files are missing")
 
-        const paths = {
-            encoder: path.join(modelDir, NEMOTRON_FILES.encoder),
-            decoder: path.join(modelDir, NEMOTRON_FILES.decoder),
-            joiner: path.join(modelDir, NEMOTRON_FILES.joiner),
-            tokens: path.join(modelDir, NEMOTRON_FILES.tokens)
-        }
-
         this.recognizer = new sherpa.OnlineRecognizer({
-            featConfig: { sampleRate: SAMPLE_RATE, featureDim: 80 },
-            modelConfig: { transducer: paths, tokens: paths.tokens, numThreads: 2, provider: "cpu" },
+            featConfig: { sampleRate: SAMPLE_RATE, featureDim: 128 },
+            modelConfig: {
+                transducer: {
+                    encoder: path.join(modelDir, NEMOTRON_FILES.encoder),
+                    decoder: path.join(modelDir, NEMOTRON_FILES.decoder),
+                    joiner: path.join(modelDir, NEMOTRON_FILES.joiner)
+                },
+                tokens: path.join(modelDir, NEMOTRON_FILES.tokens),
+                numThreads: 2,
+                provider: "cpu"
+            },
             decodingMethod: "greedy_search",
             enableEndpoint: false
         })
+
+        this.stream = this.recognizer.createStream()
+
+        // trailing-blank counts and per-stream language both arrived in sherpa-onnx-node 1.13.7
+        if (typeof this.stream.setOption !== "function") throw new Error("sherpa-onnx-node 1.13.7 or newer is required")
+        if (this.options.decodeLanguage) this.stream.setOption("language", this.options.decodeLanguage)
 
         this.vad = new sherpa.Vad(
             {
                 sileroVad: {
                     model: path.join(modelDir, NEMOTRON_FILES.vad),
-                    threshold: 0.3,
-                    minSilenceDuration: 0.8,
-                    minSpeechDuration: 0.15,
-                    maxSpeechDuration: 12,
+                    threshold: VAD_THRESHOLD,
+                    minSilenceDuration: VAD_MIN_SILENCE,
+                    minSpeechDuration: VAD_MIN_SPEECH,
+                    maxSpeechDuration: VAD_MAX_SPEECH,
                     windowSize: 512
                 },
                 sampleRate: SAMPLE_RATE,
@@ -89,15 +113,20 @@ export class NemotronDriver implements TranscriptionDriver {
         if (this.stopped) return
         this.stopped = true
 
-        if (this.inUtterance) this.finalizeUtterance()
-        this.stream = null
+        try {
+            this.flushTail()
+            if (this.inUtterance) this.closeUtterance(this.readHypothesis(), true)
+        } catch (err) {
+            console.error("[nemotron] Failed to flush the final utterance:", err)
+        }
+
         this.recognizer = null
         this.vad = null
-        this.preroll = []
+        this.stream = null
     }
 
     pushAudio(buffer: Uint8Array): void {
-        if (this.stopped || !this.recognizer) return
+        if (this.stopped || !this.recognizer || !this.stream) return
 
         const samples = int16ToFloat32(buffer)
         if (!samples.length) return
@@ -105,122 +134,144 @@ export class NemotronDriver implements TranscriptionDriver {
         try {
             this.vad.acceptWaveform(samples)
 
-            if (this.vad.isDetected()) {
-                if (!this.inUtterance) {
-                    this.inUtterance = true
-                    this.stream = this.recognizer.createStream()
-                    this.utteranceSamples = 0
-
-                    // Feed preroll buffer into the new stream
-                    for (const preChunk of this.preroll) {
-                        this.feedAudioToStream(preChunk)
-                        this.utteranceSamples += preChunk.length
-                    }
-                    this.preroll = []
-                    this.prerollSamples = 0
-                }
-                this.finalizeAtSample = 0
-            }
-
-            if (this.inUtterance) {
-                this.feedAudioToStream(samples)
-                this.utteranceSamples += samples.length
-
-                if (this.utteranceSamples >= MAX_UTTERANCE_SAMPLES && !this.finalizeAtSample) {
-                    this.finalizeAtSample = this.totalSamples + samples.length
-                }
-            } else {
-                this.bufferPreroll(samples)
-            }
+            // every push reaches the recognizer, silence included, or the encoder cache goes stale
+            this.stream.acceptWaveform({ sampleRate: SAMPLE_RATE, samples })
+            while (this.recognizer.isReady(this.stream)) this.recognizer.decode(this.stream)
 
             this.totalSamples += samples.length
 
-            while (!this.vad.isEmpty()) {
-                this.vad.pop()
-                if (this.inUtterance) this.finalizeAtSample = this.totalSamples + CLOSE_DEFER_SAMPLES
+            const hypothesis = this.readHypothesis()
+            const pending = hypothesis.text.length > this.emittedChars
+
+            while (!this.vad.isEmpty()) this.vad.pop()
+
+            // the recognizer emitting tokens is speech too - a music bed can hold the VAD shut for tens of seconds
+            if (!this.inUtterance && (this.vad.isDetected() || pending)) {
+                this.inUtterance = true
+                this.nextEmitStartMs = Math.max(this.nextEmitStartMs, this.currentMs())
+                this.blanksAtOpen = hypothesis.blanks
+                this.utteranceStartSample = this.totalSamples
+                this.emittedAtOpen = this.emittedChars
+            }
+            if (!this.inUtterance) {
+                // clear the predictor only in a silence the decoder itself has confirmed
+                if (hypothesis.text && hypothesis.blanks >= CLOSE_TRAILING_BLANKS) this.resetDecoder()
+                return
             }
 
-            if (this.inUtterance) this.maybeEmitInterim(false)
+            // an utterance that has produced nothing counts silence from its own open, not from before it
+            const produced = pending || this.emittedChars > this.emittedAtOpen
+            const settledBlanks = produced ? hypothesis.blanks : hypothesis.blanks - this.blanksAtOpen
+            const overLong = this.totalSamples - this.utteranceStartSample >= MAX_UTTERANCE_SAMPLES && hypothesis.blanks >= 1
 
-            if (this.finalizeAtSample && this.totalSamples >= this.finalizeAtSample) {
-                this.finalizeAtSample = 0
-                this.inUtterance = false
-                this.finalizeUtterance()
-            }
+            if (settledBlanks >= CLOSE_TRAILING_BLANKS || overLong) this.closeUtterance(hypothesis, produced, overLong)
+            else this.emitFromHypothesis(hypothesis, settledBlanks >= COMMIT_TRAILING_BLANKS ? "settled" : "growing")
         } catch (err) {
             this.options.onError(String((err as Error)?.message || err))
         }
     }
 
-    private feedAudioToStream(samples: Float32Array) {
-        if (!this.stream || !this.recognizer) return
-        this.stream.acceptWaveform({ sampleRate: SAMPLE_RATE, samples })
-        while (this.recognizer.isReady(this.stream)) {
-            this.recognizer.decode(this.stream)
-        }
+    private currentMs(): number {
+        return Math.round((this.totalSamples / SAMPLE_RATE) * 1000)
     }
 
-    private finalizeUtterance() {
-        if (this.stream && this.recognizer) {
-            // Feed a short tail pad to flush remaining tokens in the transducer
-            const pad = new Float32Array(FINALIZE_PAD_SAMPLES)
-            this.feedAudioToStream(pad)
-        }
-
-        const text = (this.stream && this.recognizer ? this.recognizer.getResult(this.stream)?.text || "" : "").trim()
-        this.stream = null
-        this.utteranceSamples = 0
-
-        const words = text ? text.split(/\s+/) : []
-        const candidate = words.slice(Math.max(0, this.emittedWords - 2)).join(" ")
-        const trimmed = trimRepeatedLeadWords(this.emittedTailWords, candidate)
-
-        if (trimmed) this.emitText(trimmed, true)
-        this.lastInterimText = ""
-        this.lastInterimEmitSample = this.totalSamples
-        this.options.onInterim?.("")
-        this.emittedWords = 0
+    private readHypothesis(): Hypothesis {
+        const result = this.recognizer.getResult(this.stream)
+        return { text: ((result.text || "") as string).trim(), blanks: (result.num_trailing_blanks || 0) as number }
     }
 
-    private maybeEmitInterim(force: boolean) {
-        if (!this.options.onInterim || !this.stream || !this.recognizer) return
-        if (!force && this.totalSamples - this.lastInterimEmitSample < INTERIM_EMIT_INTERVAL_SAMPLES) return
-
-        const text = (this.recognizer.getResult(this.stream)?.text || "").trim()
-        const words = text ? text.split(/\s+/) : []
-        const candidate = words.slice(Math.max(0, this.emittedWords - 2)).join(" ")
-        const interim = trimRepeatedLeadWords(this.emittedTailWords, candidate)
-
-        this.lastInterimEmitSample = this.totalSamples
-        if (interim === this.lastInterimText) return
-
-        this.lastInterimText = interim
-        this.options.onInterim(interim)
+    private flushTail() {
+        if (!this.recognizer || !this.stream) return
+        this.stream.acceptWaveform({ sampleRate: SAMPLE_RATE, samples: new Float32Array(FLUSH_SAMPLES) })
+        while (this.recognizer.isReady(this.stream)) this.recognizer.decode(this.stream)
     }
 
-    private emitText(text: string, utteranceEnd = false) {
-        if (!text) return
-
-        const endMs = Math.round((this.totalSamples / SAMPLE_RATE) * 1000)
-        const segment: TranscriberSegment = {
-            text,
-            startMs: this.nextEmitStartMs,
-            endMs,
-            ...(utteranceEnd && { utteranceEnd: true }),
-            ...(this.options.language && { language: this.options.language })
+    private emitFromHypothesis(hypothesis: Hypothesis, mode: "growing" | "settled" | "closed") {
+        const final = mode !== "growing"
+        const text = hypothesis.text
+        if (!text) {
+            if (!final) this.options.onInterim?.("")
+            return
         }
 
+        this.assertPrefix(text)
+        this.lastText = text
+
+        // a greedy RNN-T can lock into a cycle; only clearing the decoder breaks it
+        const loopAt = findRepeatedTail(text)
+        if (loopAt >= 0) {
+            const keep = text.slice(0, loopAt).trimEnd()
+            if (keep.length > this.emittedChars) {
+                const candidate = keep.slice(this.emittedChars).trim()
+                this.emittedChars = keep.length
+                if (candidate) this.emitText(candidate, false)
+            }
+            console.warn(`[nemotron] decoder was repeating ${JSON.stringify(text.slice(loopAt).slice(0, 60))} - clearing its state`)
+            this.resetDecoder()
+            this.options.onInterim?.("")
+            return
+        }
+
+        // only whole words are committed while the decoder is still writing: the trailing token
+        // grows in place, and committing it early puts "cha" on screen for "chapter"
+        const lastBoundary = text.lastIndexOf(" ")
+        const commitTo = final ? text.length : lastBoundary
+
+        if (commitTo > this.emittedChars) {
+            const candidate = text.slice(this.emittedChars, commitTo).trim()
+            this.emittedChars = commitTo
+            if (candidate) this.emitText(candidate, mode === "closed")
+            else if (mode === "closed" && this.emittedChars > 0) this.emitBoundary()
+        } else if (mode === "closed" && this.emittedChars > 0) {
+            this.emitBoundary()
+        }
+
+        this.options.onInterim?.(final ? "" : text.slice(this.emittedChars).trim())
+    }
+
+    private resetDecoder() {
+        this.recognizer.reset(this.stream)
+        this.emittedChars = 0
+        this.lastText = ""
+        this.blanksAtOpen = 0
+    }
+
+    private closeUtterance(hypothesis: Hypothesis, produced: boolean, forced = false) {
+        if (produced) this.emitFromHypothesis(hypothesis, "closed")
+        this.inUtterance = false
+        // the length ceiling is the one close with no silence behind it, so it clears the predictor itself
+        if (forced && hypothesis.text) this.resetDecoder()
+    }
+
+    // greedy RNN-T only extends its hypothesis; if that ever changes this is where it shows
+    private assertPrefix(text: string) {
+        if (!this.lastText || text.startsWith(this.lastText)) return
+        console.warn(`[nemotron] hypothesis was revised, not extended. was ${JSON.stringify(this.lastText.slice(-40))}, now ${JSON.stringify(text.slice(-40))}`)
+        this.emittedChars = text.length
+    }
+
+    private emitText(text: string, utteranceEnd: boolean) {
+        if (!text) {
+            if (utteranceEnd) this.emitBoundary()
+            return
+        }
+
+        const endMs = this.currentMs()
+        const segment: TranscriberSegment = { text, startMs: this.nextEmitStartMs, endMs }
+        if (isMusicAnnotation(text)) segment.music = true
+        if (utteranceEnd) segment.utteranceEnd = true
+        if (this.options.language) segment.language = this.options.language
         this.nextEmitStartMs = endMs
-        this.emittedTailWords = appendTailWords(this.emittedTailWords, text)
+
         this.options.onSegment(segment)
     }
 
-    private bufferPreroll(samples: Float32Array) {
-        this.preroll.push(samples)
-        this.prerollSamples += samples.length
-        while (this.prerollSamples - (this.preroll[0]?.length || 0) >= PREROLL_MAX_SAMPLES) {
-            this.prerollSamples -= this.preroll.shift()!.length
-        }
+    private emitBoundary() {
+        const endMs = this.currentMs()
+        const segment: TranscriberSegment = { text: "", startMs: this.nextEmitStartMs, endMs, utteranceEnd: true }
+        if (this.options.language) segment.language = this.options.language
+        this.nextEmitStartMs = endMs
+        this.options.onSegment(segment)
     }
 }
 
@@ -249,6 +300,7 @@ if (parentPort) {
             if (message.type === "start") {
                 driver = new NemotronDriver({
                     language: message.language,
+                    decodeLanguage: message.decodeLanguage,
                     modelDir: message.modelDir,
                     onSegment: (segment) => post({ type: "segment", segment }),
                     onInterim: (text) => post({ type: "interim", text }),

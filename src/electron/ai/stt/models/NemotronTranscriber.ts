@@ -43,6 +43,7 @@ export class NemotronTranscriber {
         console.warn("[nemotron] Decode process unavailable - decoding in the main process instead")
         this.fallback = new NemotronDriver({
             language: this.options.language || "en",
+            decodeLanguage: this.options.language,
             modelDir: this.modelDir,
             onSegment: this.onSegment,
             onInterim: this.onInterim,
@@ -116,7 +117,7 @@ export class NemotronTranscriber {
             if (!this.stopped) this.onError(`Nemotron transcription process exited unexpectedly (code ${code})`)
         })
 
-        this.post(child, { type: "start", language: this.options.language || "en", modelDir: this.modelDir })
+        this.post(child, { type: "start", language: this.options.language || "en", decodeLanguage: this.options.language, modelDir: this.modelDir })
 
         const ok = await new Promise<boolean>((resolve) => {
             const timer = setTimeout(() => {

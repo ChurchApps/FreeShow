@@ -100,3 +100,61 @@ export function trimRepeatedLeadWords(previousTailWords: string[], text: string)
 export function appendTailWords(tail: string[], text: string): string[] {
     return [...tail, ...text.split(/\s+/).filter(Boolean)].slice(-SEAM_MATCH_MAX_WORDS)
 }
+
+// REPETITION - a greedy RNN-T can lock into a cycle and emit the same phrase indefinitely.
+// Preachers repeat deliberately, so the thresholds sit well above rhetorical repetition.
+
+const MAX_PHRASE_TOKENS = 8
+
+function minRepeatsFor(phraseTokens: number): number {
+    if (phraseTokens === 1) return 8
+    if (phraseTokens === 2) return 6
+    return 4
+}
+
+function tokenizeWithOffsets(text: string): { text: string; at: number }[] {
+    const tokens: { text: string; at: number }[] = []
+    const pattern = /\S+/g
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(text)) !== null) tokens.push({ text: match[0].toLowerCase().replace(/[^\p{L}\p{N}']/gu, ""), at: match.index })
+    return tokens.filter((token) => token.text)
+}
+
+// Character offset where a repeating tail begins, or -1. Only the tail counts - that is where a live decoder is looping now.
+export function findRepeatedTail(text: string): number {
+    const tokens = tokenizeWithOffsets(text)
+    if (tokens.length < 8) return -1
+
+    for (let size = 1; size <= MAX_PHRASE_TOKENS; size++) {
+        const needed = minRepeatsFor(size)
+        if (tokens.length < size * needed) continue
+
+        const phrase = tokens.slice(tokens.length - size).map((token) => token.text)
+        let repeats = 1
+        let start = tokens.length - size
+
+        while (start - size >= 0) {
+            const previous = tokens.slice(start - size, start).map((token) => token.text)
+            if (previous.join(" ") !== phrase.join(" ")) break
+            start -= size
+            repeats++
+        }
+
+        if (repeats >= needed) return tokens[start + size].at
+    }
+    return -1
+}
+
+// MUSIC - the model labels non-speech ("[MUSIC PLAYING]", "(upbeat music)") rather than inventing words for it.
+// Shown in the transcript, never fed to detection.
+
+const MUSIC_WORDS = /\b(music|musical|singing|sung|song|songs|instrumental|humming|chanting|applause|cheering)\b/i
+
+export function isMusicAnnotation(text: string): boolean {
+    if (/[♪♫]/.test(text)) return true
+
+    // a label can arrive split across segments, so the closing bracket is optional at the end of the text
+    const labels = text.match(/\[[^\]]*\]|\([^)]*\)|\*[^*]*\*|[[(*][^\])*]*$/g)
+    if (!labels) return false
+    return labels.some((label) => MUSIC_WORDS.test(label))
+}
