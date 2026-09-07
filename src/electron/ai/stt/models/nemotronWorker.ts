@@ -165,7 +165,8 @@ export class NemotronDriver implements TranscriptionDriver {
             const settledBlanks = produced ? hypothesis.blanks : hypothesis.blanks - this.blanksAtOpen
             const overLong = this.totalSamples - this.utteranceStartSample >= MAX_UTTERANCE_SAMPLES && hypothesis.blanks >= 1
 
-            if (settledBlanks >= CLOSE_TRAILING_BLANKS || overLong) this.closeUtterance(hypothesis, produced, overLong)
+            if (settledBlanks >= CLOSE_TRAILING_BLANKS) this.closeUtterance(hypothesis, produced)
+            else if (overLong) this.splitUtterance(hypothesis)
             else this.emitFromHypothesis(hypothesis, settledBlanks >= COMMIT_TRAILING_BLANKS ? "settled" : "growing")
         } catch (err) {
             this.options.onError(String((err as Error)?.message || err))
@@ -240,11 +241,17 @@ export class NemotronDriver implements TranscriptionDriver {
         this.blanksAtOpen = 0
     }
 
-    private closeUtterance(hypothesis: Hypothesis, produced: boolean, forced = false) {
+    private closeUtterance(hypothesis: Hypothesis, produced: boolean) {
         if (produced) this.emitFromHypothesis(hypothesis, "closed")
         this.inUtterance = false
-        // the length ceiling is the one close with no silence behind it, so it clears the predictor itself
-        if (forced && hypothesis.text) this.resetDecoder()
+    }
+
+    // a speaker in full flow gets a boundary every 30s, but the decoder keeps going: a reset here
+    // would land mid-passage and the trailing word is still being written
+    private splitUtterance(hypothesis: Hypothesis) {
+        this.emitFromHypothesis(hypothesis, "growing")
+        if (this.emittedChars > 0) this.emitText("", true)
+        this.inUtterance = false
     }
 
     private emitText(text: string, utteranceEnd: boolean, confidence?: number) {
