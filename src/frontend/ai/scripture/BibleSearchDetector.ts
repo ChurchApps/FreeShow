@@ -448,7 +448,7 @@ export class BibleSearchDetector {
                 const topParsed = this.parseReference(topMatch.ref)
                 const secondParsed = this.parseReference(secondMatch.ref)
 
-                if (topParsed?.book.toLowerCase() !== secondParsed?.book.toLowerCase()) {
+                if (topParsed?.book.toLowerCase() !== secondParsed?.book.toLowerCase() || topParsed?.chapter !== secondParsed?.chapter) {
                     isAmbiguous = true
                     ambiguityPenalty = 1 - (relativeRatio - 0.65)
                 }
