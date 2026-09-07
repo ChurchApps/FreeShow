@@ -195,6 +195,20 @@ export class BibleSearchDetector {
         return null
     }
 
+    // share of the verse's word weight that the spoken words account for
+    private verseCoverage(verseId: number, queryWords: Set<number>): number {
+        let total = 0
+        let covered = 0
+        for (let i = this.cacheData.verseTokensOffsets[verseId]; i < this.cacheData.verseTokensOffsets[verseId + 1]; i++) {
+            const wordId = this.cacheData.verseTokens[i]
+            const idf = this.cacheData.wordIdf[wordId]
+            if (idf <= 0.3) continue
+            total += idf
+            if (queryWords.has(wordId)) covered += idf
+        }
+        return total ? covered / total : 0
+    }
+
     private parseReference(refStr: string): { book: string; chapter: number; verse: number } | null {
         if (!refStr) return null
         const match = refStr.match(/^((?:[1-3]\s+)?[\p{L}\s]+)\s+(\d+):(\d+)(?:-(\d+))?$/u)
@@ -346,6 +360,7 @@ export class BibleSearchDetector {
         }> = []
 
         const currentVerseId = currentlyOutputted ? this.cacheData.verseToIdMap.get(currentlyOutputted.toLowerCase()) : undefined
+        const queryWords = new Set(highValueTokensWithWeight.map((item) => item.wordId))
 
         for (const [verseId, accumulatedIdf] of candidateScores.entries()) {
             const matchCount = candidateMatchedCount.get(verseId) || 0
@@ -364,6 +379,8 @@ export class BibleSearchDetector {
             let scoreRatio = recentHighValueIdfSum > 0 ? matchedQueryIdf / recentHighValueIdfSum : accumulatedIdf / matchedQueryIdf
 
             scoreRatio = Math.min(scoreRatio, 1.0)
+            // a handful of common words can match a long verse completely; the match is worth what it covers of the verse
+            scoreRatio *= Math.min(1, this.verseCoverage(verseId, queryWords) / 0.25)
             const candidateParsed = this.parseReference(ref)
 
             if (isCurrent) {
