@@ -2,7 +2,7 @@
     import type { MediaStyle } from "../../../../types/Main"
     import type { BibleContent } from "../../../../types/Scripture"
     import type { Item } from "../../../../types/Show"
-    import { activeEdit, activePage, activeScripture, activeStyle, drawerTabsData, media, outputs, scriptureSettings, settingsTab, styles, templates } from "../../../stores"
+    import { activeEdit, activePage, activeScripture, activeStyle, drawerTabsData, media, outputs, scriptureSettings, settingsTab, styles, templates, theme, themes } from "../../../stores"
     import { setDefaultScriptureTemplates } from "../../../utils/createData"
     import { confirmCustom } from "../../../utils/popup"
     import { mediaExtensions } from "../../../values/extensions"
@@ -140,6 +140,8 @@
     }
 
     $: containsJesusWords = Object.values(biblesContent?.[0]?.verses?.[0] || {})?.find((text: any) => text?.includes('<span class="wj"') || text?.includes("<red") || text?.includes("color:red;") || text?.includes("!{"))
+    $: containsUndertitles = Object.values(biblesContent?.[0]?.verses?.[0] || {})?.find((text: any) => text?.includes('class="undertitle"'))
+    $: secondaryColor = $themes[$theme]?.colors?.secondary || "#F0008C"
 
     $: previousSlides = "{}"
     let currentOutputSlides: any[] = []
@@ -243,6 +245,14 @@
                 <MaterialToggleSwitch label="scripture.red_jesus" style="width: 100%;" checked={$scriptureSettings.redJesus} defaultValue={false} on:change={(e) => update("redJesus", e.detail)} />
                 <!-- DEPRECATED -->
                 <MaterialColorInput label="edit.color" value={$scriptureSettings.jesusColor || "#FF4136"} defaultValue="#FF4136" on:change={(e) => update("jesusColor", e.detail)} />
+            {/if}
+
+            <!-- Undertitles -->
+            {#if containsUndertitles || $scriptureSettings.undertitles === false}
+                <MaterialToggleSwitch label="scripture.titles" style="width: 100%;" checked={$scriptureSettings.undertitles !== false} defaultValue={true} on:change={(e) => update("undertitles", e.detail)} />
+                {#if $scriptureSettings.undertitles !== false}
+                    <MaterialColorInput label="edit.color" value={$scriptureSettings.undertitleColor || secondaryColor} defaultValue={secondaryColor} on:change={(e) => update("undertitleColor", e.detail)} />
+                {/if}
             {/if}
 
             <!-- Smart split -->

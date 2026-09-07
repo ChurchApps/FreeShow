@@ -926,6 +926,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                     text = text.replace(/<span class="wj" ?>(.*?)<\/span>/g, "!{$1}!")
                     text = text.replace(/<red ?>(.*?)<\/red>/g, "!{$1}!")
                     text = text.replace(/<span style="color:red;" ?>(.*?)<\/span>/g, "!{$1}!")
+                    if (get(scriptureSettings).undertitles === false) text = text.replace(UNDERTITLE_REGEX, "")
 
                     if (verseNumbers) {
                         const { id, subverse, endNumber } = getVerseIdParts(v)
@@ -1227,6 +1228,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
             // custom Jesus red to JSON format: !{}!
             text = text.replace(/<span class="wj" ?>(.*?)<\/span>/g, "!{$1}!")
             text = text.replace(/<red ?>(.*?)<\/red>/g, "!{$1}!")
+            if (get(scriptureSettings).undertitles === false) text = text.replace(UNDERTITLE_REGEX, "")
 
             // highlight Jesus text
             const textArray: any[] = []
@@ -1695,9 +1697,17 @@ function removeTags(text: string) {
     return text.replace(/(<([^>]+)>)/gi, "")
 }
 
+const UNDERTITLE_REGEX = /<span class="undertitle">(.*?)<\/span>/g
+
+function colorUndertitles(text: string) {
+    const color = get(scriptureSettings).undertitleColor
+    if (!color) return text
+    return text.replace(UNDERTITLE_REGEX, `<span class="undertitle" style="color: ${color};">$1</span>`)
+}
+
 export function formatBibleText(text: string | undefined, redJesus = false) {
     if (!text) return ""
-    text = sanitizeVerseText(text)
+    text = colorUndertitles(sanitizeVerseText(text))
     if (redJesus) text = text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>')
     return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", "&")
 }
