@@ -186,6 +186,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         theme: get(theme),
         transitionData: get(transitionData),
         // themes: get(themes),
+        audioRouting: get(audioRouting),
         audioChannelsData: get(audioChannelsData),
         cloudSyncData: get(cloudSyncData),
         driveData: get(driveData),
@@ -277,7 +278,6 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         globalRegexes,
         customMetadata,
         effects,
-        audioRouting,
         deletedDefaults
     }
 }
