@@ -40,6 +40,9 @@
         <MaterialButton variant="outlined" icon="star" on:click={() => open("manage_icons")} small>
             <T id="popup.manage_icons" />
         </MaterialButton>
+        <MaterialButton variant="outlined" icon="text" on:click={() => open("manage_fonts")} small>
+            <T id="popup.manage_fonts" />
+        </MaterialButton>
         <MaterialButton variant="outlined" icon="color" on:click={() => open("manage_colors")} small>
             <T id="popup.manage_colors" />
         </MaterialButton>

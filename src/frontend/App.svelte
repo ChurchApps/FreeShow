@@ -4,6 +4,7 @@
     import ContextMenu from "./components/context/ContextMenu.svelte"
     import Pdf from "./components/export/Pdf.svelte"
     import Guide from "./components/guide/Guide.svelte"
+    import { loadCustomFonts } from "./components/helpers/fonts"
     import { getContrast } from "./components/helpers/color"
     import { getBlending } from "./components/helpers/output"
     import { checkTimers, startEventTimer, startTimer } from "./components/helpers/timerTick"
@@ -18,7 +19,7 @@
     import TooltipManager from "./components/main/TooltipManager.svelte"
     import QuickSearch from "./components/quicksearch/QuickSearch.svelte"
     import Center from "./components/system/Center.svelte"
-    import { activeProfile, activeTimers, closeAd, currentWindow, disabledServers, events, language, loaded, localeDirection, os, outputDisplay, outputs, profiles, theme, themes, timers } from "./stores"
+    import { activeProfile, activeTimers, closeAd, currentWindow, disabledServers, events, globalCustomFonts, language, loaded, localeDirection, os, outputDisplay, outputs, profiles, theme, themes, timers } from "./stores"
     import { focusArea, logerror, mainClick, toggleRemoteStream } from "./utils/common"
     import { keydown } from "./utils/shortcuts"
     import { startup } from "./utils/startup"
@@ -26,6 +27,9 @@
     startup()
 
     $: isWindows = !$currentWindow && $os.platform === "win32"
+
+    // Load global fonts in both the main renderer and every output renderer.
+    $: loadCustomFonts($globalCustomFonts, false)
 
     ///// UPDATERS /////
 

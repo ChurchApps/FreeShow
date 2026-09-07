@@ -262,13 +262,15 @@ function loadGoogleFont(font: CustomFont): Promise<CustomFont> {
     })
 }
 
-export function loadCustomFonts(fonts: CustomFont[]) {
-    fonts.forEach((font) => {
-        void loadCustomFont(font).catch(() => {
-            // Preserve the PowerPoint importer's fallback for missing embedded fonts.
-            if (font.path && !font.name.includes("font")) void loadCustomFont({ name: font.name, path: "" }).catch(() => {})
-        })
-    })
+export function loadCustomFonts(fonts: CustomFont[], fallbackToGoogle = true) {
+    return Promise.all(
+        fonts.map((font) =>
+            loadCustomFont(font).catch(() => {
+                // Only imported shows should substitute Google Fonts for missing local files.
+                if (fallbackToGoogle && font.path && !font.name.includes("font")) return loadCustomFont({ name: font.name, path: "" }).catch(() => {})
+            })
+        )
+    )
 }
 
 function extractFontInfo(arrayBuffer) {

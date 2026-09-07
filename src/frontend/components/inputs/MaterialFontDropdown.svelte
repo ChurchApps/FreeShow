@@ -1,6 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from "svelte"
     import type { DropdownOptions } from "../../../types/Input"
+    import { globalCustomFonts } from "../../stores"
     import type { CustomFont } from "../../../types/Show"
     import { getFontName, getFontStyleList, getSystemFontsList, mergeCustomFontOptions } from "../helpers/fonts"
     import MaterialDropdown from "./MaterialDropdown.svelte"
@@ -15,7 +16,7 @@
 
     let systemFontsList: DropdownOptions = []
     let fontsStylesList: DropdownOptions = []
-    $: fontOptions = mergeCustomFontOptions(systemFontsList, customFonts)
+    $: fontOptions = mergeCustomFontOptions(systemFontsList, [...$globalCustomFonts, ...customFonts])
 
     onMount(async () => {
         systemFontsList = await getSystemFontsList()

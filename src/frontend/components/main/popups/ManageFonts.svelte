@@ -1,20 +1,18 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { CustomFont } from "../../../../types/Show"
-    import { activePopup, popupData, showsCache } from "../../../stores"
+    import { activePopup, activeProfile, globalCustomFonts, profiles, special } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { loadCustomFont } from "../../helpers/fonts"
-    import { history } from "../../helpers/history"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
-    const showId: string = $popupData.showId || ""
-    $: show = $showsCache[showId]
-    $: fonts = show?.settings?.customFonts || []
-    $: readOnly = !show || show.locked || !canEdit()
+    $: fonts = $globalCustomFonts
+    $: access = $profiles[$activeProfile || ""]?.access.settings || {}
+    $: readOnly = [access.global, access.general].some((level) => level === "read" || level === "none")
 
     let name = ""
     let loading = false
@@ -23,14 +21,13 @@
     onDestroy(() => (destroyed = true))
 
     function canEdit() {
-        const currentShow = $showsCache[showId]
-        const access = getAccess("shows")
-        return !!currentShow && !currentShow.locked && !["read", "none"].includes(access.global) && !["read", "none"].includes(access[currentShow.category || ""])
+        const access = getAccess("settings")
+        return ![access.global, access.general].some((level) => level === "read" || level === "none")
     }
 
     function save(fonts: CustomFont[]) {
         if (!canEdit()) return
-        history({ id: "UPDATE", newData: { key: "settings", subkey: "customFonts", data: fonts }, oldData: { id: showId }, location: { page: "edit", id: "show_key" } })
+        special.update((settings) => ({ ...settings, customFonts: fonts }))
     }
 
     async function addFont(font: CustomFont) {
@@ -61,8 +58,7 @@
 </script>
 
 <div class="font-manager">
-    <p><b>{show?.name || ""}</b></p>
-    <p class="hint"><T id="fonts.show_hint" /></p>
+    <p class="hint"><T id="fonts.global_hint" /></p>
 
     {#each fonts as font, index}
         <div class="font-row">

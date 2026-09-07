@@ -1,3 +1,4 @@
+import { get } from "svelte/store"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // A minimal TrueType name table, sufficient to exercise the real metadata parser.
@@ -71,6 +72,45 @@ describe("custom fonts", () => {
         expect(merged.map((font) => font.label)).toEqual(["Arial", "Roboto"])
         expect(system).toHaveLength(1)
         expect(fonts.mergeCustomFontOptions(system, [])).toEqual(system)
+    })
+
+    it("restores global choices from settings while keeping imported fonts local to their show", async () => {
+        const { special, globalCustomFonts } = await import("../../stores")
+        special.set({})
+        expect(get(globalCustomFonts)).toEqual([])
+
+        // Settings loaded at startup use the same store as live output updates.
+        const registered = [{ name: "Global Family", path: "/Fonts/Global.ttf" }]
+        const imported = [{ name: "PPT Family", path: "/Import/PPT.ttf" }]
+        const localBefore = structuredClone(imported)
+        special.set(JSON.parse(JSON.stringify({ customFonts: registered, hideCursor: true })))
+        const options = () => fonts.mergeCustomFontOptions([], get(globalCustomFonts))
+        expect(options().map((option) => option.label)).toEqual(["Global Family"])
+        expect(fonts.mergeCustomFontOptions(options(), imported).map((option) => option.label)).toEqual(["Global Family", "PPT Family"])
+
+        special.update((settings) => ({ ...settings, customFonts: [] }))
+        expect(options()).toEqual([])
+        expect(get(special).hideCursor).toBe(true)
+        expect(imported).toEqual(localBefore)
+        expect(fonts.mergeCustomFontOptions(options(), imported).map((option) => option.label)).toEqual(["PPT Family"])
+        special.set({})
+    })
+
+    it("shares registered Google fonts across global and imported-show loaders", async () => {
+        const font = { name: "Roboto", path: "" }
+        const global = fonts.loadCustomFonts([font], false)
+        const imported = fonts.loadCustomFonts([font])
+        expect(links).toHaveLength(1)
+        await links[0].onload()
+        await Promise.all([global, imported])
+        expect(documentFonts.load).toHaveBeenCalledOnce()
+    })
+
+    it("does not substitute Google fonts for inaccessible global local files", async () => {
+        vi.mocked(fetch).mockRejectedValue(new Error("Missing file"))
+        await fonts.loadCustomFonts([{ name: "Roboto", path: "/missing.ttf" }], false)
+        expect(fetch).toHaveBeenCalledOnce()
+        expect(links).toHaveLength(0)
     })
 
     it("shares in-flight Google loads and encodes the family in the URL", async () => {
