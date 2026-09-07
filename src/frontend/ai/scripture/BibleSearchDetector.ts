@@ -45,13 +45,10 @@ export class BibleSearchDetector {
             return match
         })
 
-        // 8. Standard spoken reference conversion: "Mark chapter 8 and 22" -> "Mark 8:22" or "Mark chapter 8 verse 22"
-        normalized = normalized.replace(/\b([1-3]?\s*[\p{L}]+)\s+chapter\s+(\d+)\s+(?:and|verses|verse|v)\s+(\d+)(?:\s*(?:[-–—]|through|to)\s*(\d+))?\b/giu, (_match, book, chap, vStart, vEnd) => {
-            return vEnd ? `${book} ${chap}:${vStart}-${vEnd}` : `${book} ${chap}:${vStart}`
-        })
-
-        // Add separate rule for "Mark 8 verse 22" without requiring "chapter"
-        normalized = normalized.replace(/\b([1-3]?\s*[\p{L}]+)\s+(\d+)\s+(?:verses|verse|v)\s+(\d+)(?:\s*(?:[-–—]|through|to)\s*(\d+))?\b/giu, (_match, book, chap, vStart, vEnd) => {
+        // 8. Standard spoken reference conversion: "Mark chapter 8 and 22", "Mark 8 verse 22" or "Mark 8 and 22" -> "Mark 8:22"
+        normalized = normalized.replace(/\b([1-3]?\s*[\p{L}]+)\s+(chapter\s+)?(\d+)\s+(and|verses|verse|v)\s+(\d+)(?:\s*(?:[-–—]|through|to)\s*(\d+))?\b/giu, (match, book, chapterWord, chap, joiner, vStart, vEnd) => {
+            // "Genesis 1 and 2" is two chapters
+            if (!chapterWord && joiner.toLowerCase() === "and" && Number(vStart) === Number(chap) + 1) return match
             return vEnd ? `${book} ${chap}:${vStart}-${vEnd}` : `${book} ${chap}:${vStart}`
         })
 
@@ -421,7 +418,7 @@ export class BibleSearchDetector {
 
                 if (topParsed?.book.toLowerCase() !== secondParsed?.book.toLowerCase()) {
                     isAmbiguous = true
-                    ambiguityPenalty = Math.max(0.5, 1 - (relativeRatio - 0.4))
+                    ambiguityPenalty = 1 - (relativeRatio - 0.65)
                 }
             }
         }
