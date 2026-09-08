@@ -60,6 +60,7 @@ export type SaveListSettings =
     | "formatNewShow"
     | "labelsDisabled"
     | "language"
+    | "customFonts"
     | "maxConnections"
     | "mediaFolders"
     | "mediaOptions"

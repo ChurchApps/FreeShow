@@ -7,6 +7,14 @@ export interface Shows {
     [key: string]: Show
 }
 
+export interface CustomFont {
+    type?: "local" | "google"
+    // font family name (used by CSS)
+    name: string
+    // local font file path (empty path currently means Google Fonts)
+    path?: string
+}
+
 export interface Show {
     name: string
     id?: string // this id should not be stored (but often used in the program as a temporary value)
@@ -24,7 +32,7 @@ export interface Show {
         // resolution?: Resolution
         template: null | ID
         customAction?: string // special custom trigger
-        customFonts?: { name: string; path: string }[]
+        customFonts?: CustomFont[]
     }
     timestamps: {
         created: number

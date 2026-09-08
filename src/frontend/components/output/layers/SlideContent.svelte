@@ -35,7 +35,7 @@
     function updateShow() {
         // custom fonts
         const currentShow = $showsCache[outSlide.id]
-        if (currentShow?.settings?.customFonts) loadCustomFonts(currentShow.settings.customFonts)
+        loadCustomFonts(currentShow?.settings?.customFonts || [])
         origin = currentShow?.origin || ""
     }
 

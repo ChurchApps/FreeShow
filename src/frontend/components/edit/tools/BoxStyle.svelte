@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import type { Item, ItemType, Slide } from "../../../../types/Show"
+    import type { CustomFont, Item, ItemType, Slide } from "../../../../types/Show"
     import { activeEdit, activePopup, activeShow, alertMessage, categories, styles as outputStyles, overlays, selected, shownTips, showsCache, special, templates, theme, themes, timers } from "../../../stores"
     import { getNormalizedKey, isFormattingKey } from "../../../utils/shortcuts"
     import { newToast } from "../../../utils/common"
@@ -19,6 +19,7 @@
     export let id: ItemType
     export let allSlideItems: Item[] = []
     export let item: Item | null = null
+    export let customLocalFonts: CustomFont[] = []
 
     // -----
 
@@ -754,5 +755,5 @@
 <svelte:window on:keyup={keyup} on:keydown={keydown} on:mouseup={getTextSelection} on:mousedown={mousedown} />
 
 {#if loaded}
-    <EditValues sections={boxSections} {item} {styles} {customValues} type="text" on:change={updateValue2} />
+    <EditValues sections={boxSections} {item} {styles} {customValues} {customLocalFonts} type="text" on:change={updateValue2} />
 {/if}

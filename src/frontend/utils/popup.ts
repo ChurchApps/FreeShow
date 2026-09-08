@@ -90,6 +90,7 @@ import UpdateManager from "../components/main/popups/UpdateManager.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import NodeOptions from "../components/main/popups/NodeOptions.svelte"
 import { activePopup, popupData } from "../stores"
+import ManageFonts from "../components/main/popups/ManageFonts.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -107,6 +108,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     delete_duplicated_shows: DeleteDuplicatedShows,
     icon: ChangeIcon,
     manage_groups: ManageGroups,
+    manage_fonts: ManageFonts,
     manage_icons: ManageIcons,
     manage_colors: ManageColors,
     manage_metadata: ManageMetadata,
