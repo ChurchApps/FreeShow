@@ -1697,8 +1697,7 @@ function removeTags(text: string) {
     return text.replace(/(<([^>]+)>)/gi, "")
 }
 
-// stripMarkdown removes the quotes around attribute values
-const UNDERTITLE_REGEX = /<span class="?undertitle"?>(.*?)<\/span>/g
+const UNDERTITLE_REGEX = /<span class="undertitle">(.*?)<\/span>/g
 
 function colorUndertitles(text: string) {
     const color = get(scriptureSettings).undertitleColor
@@ -1708,10 +1707,9 @@ function colorUndertitles(text: string) {
 
 export function formatBibleText(text: string | undefined, redJesus = false) {
     if (!text) return ""
-    text = sanitizeVerseText(text)
+    text = colorUndertitles(sanitizeVerseText(text))
     if (redJesus) text = text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>')
-    text = stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", "&")
-    return colorUndertitles(text)
+    return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", "&")
 }
 
 // CREATE SHOW/SLIDES
