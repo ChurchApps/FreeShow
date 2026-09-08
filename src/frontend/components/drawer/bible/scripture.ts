@@ -1070,6 +1070,10 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                         const parts = keyTextObj.value.split(itemKey)
                         let newLineText: any[] = []
 
+                        // auto size gives every text object one size, so the title's px becomes a share of the verse text px
+                        const textSize = Number(keyTextObj.style?.match(/font-size:\s*(\d+)px/)?.[1]) || 100
+                        const titleStyle = undertitleStyle.replace(/font-size:\s*(\d+)px/, (_, size) => `font-size: ${Math.round((size / textSize) * 100)}%`)
+
                         // Add text objects before the key
                         newLineText.push(...line.text.slice(0, keyIndex))
 
@@ -1082,7 +1086,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                             const [, title = "", verseText = verse.text] = verse.text.match(/^(<span class="undertitle">.*?<\/span>)(.*)/) || []
                             if (title) {
                                 let value = formatBibleText(title)
-                                if (undertitleStyle) value = value.replace('">', `" style="${undertitleStyle}">`)
+                                if (titleStyle) value = value.replace('">', `" style="${titleStyle}">`)
                                 newLineText.push({ ...keyTextObj, value, sourceDynamicKey: `${valueName}:${i}` })
                             }
 
