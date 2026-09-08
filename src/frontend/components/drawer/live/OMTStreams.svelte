@@ -20,13 +20,11 @@
             loading = false
             if (!msg) return
 
-            // sources come and go while this list is open, so always take the latest set
             const list = JSON.parse(msg).map(({ name, urlAddress }) => ({ name, id: urlAddress }))
             if (JSON.stringify(list) !== JSON.stringify(sources)) sources = list
         }
     }
 
-    // discovery is asynchronous: a source that starts after this opened must still appear
     const REFRESH_INTERVAL_MS = 3000
     let refreshInterval: NodeJS.Timeout | null = null
 

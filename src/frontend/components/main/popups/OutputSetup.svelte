@@ -14,7 +14,7 @@
 
     const networkTypes = [
         { id: "ndi", name: "NDI®", icon: "ndi", tip: "IP, OBS" },
-        { id: "omt", name: "OMT", icon: "omt", tip: "IP, open source" },
+        { id: "omt", name: "OMT", icon: "omt", tip: "IP" },
         { id: "webrtc", name: "WebRTC", icon: "broadcast", tip: "WHIP, restream.io" },
         { id: "rtmp", name: "RTMP", icon: "broadcast", tip: "YouTube, Twitch, Facebook Live" }
     ]

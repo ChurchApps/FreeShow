@@ -1,10 +1,5 @@
-// Runs in an Electron utilityProcess: owns every NDI/OMT receive loop, the frame packing and the
-// preview downscale, and posts frames straight to the renderers that draw them over MessagePorts.
-//
-// Video must never touch the main thread. Receiving in the main process cost it ~15ms of event-loop
-// lag per 4K source (the IPC write alone is ~17ms per 8MB frame), which is what made the UI crawl
-// while a stream was live. From here the main process only brokers ports and control messages: it
-// never sees a frame, and its lag stays around 1ms no matter how many 4K sources are running.
+// Runs in an Electron utilityProcess: owns NDI/OMT receive loops, frame packing and preview downscaling,
+// and posts frames directly to renderers over MessagePorts.
 
 import { ensureOmtCodecSearchPath } from "../omt/omtModule"
 import { packStreamFrame, previewStreamFrame, type StreamFrame, type StreamFrameFormat } from "./streamFrames"
@@ -13,16 +8,9 @@ const parentPort: any = (process as any).parentPort
 
 // ----- transport -----
 
-// the app window draws previews a few hundred pixels wide
 const PREVIEW_MAX_WIDTH = 480
 const APP_TARGET = "app"
 
-// How many frames a window may have in flight is measured, not chosen: a frame's round trip (post to
-// ack) divided by the source's frame interval is how many must overlap to keep the transport busy on
-// this machine. A 4K frame's round trip is ~100ms, so at 17fps it takes two; a 1080p frame's is
-// shorter, so one. Beyond that the newest frame waits its turn, replacing whatever was waiting: the
-// window is never sent a frame it will have to catch up on. A window that goes away is dropped by
-// the main process (see StreamReceiverHost), so no timeout is needed to notice one either.
 type Pending = { ipcChannel: string; id: string; frame: StreamFrame; time: number }
 type Subscriber = {
     port: any
@@ -64,12 +52,6 @@ function needPort(targetId: string, preview: boolean) {
     toMain({ type: "needPort", targetId, preview })
 }
 
-// Frames are structured-cloned rather than transferred: a MessagePortMain transfer list only accepts
-// ports, and the copy happens here, off the main thread, which is the whole point.
-//
-// Sending faster than a window draws only grows a backlog, and the frames then arrive later and
-// later, which looks like a stall rather than a dropped frame. So one frame is in flight at a time
-// and the newest replaces whatever was waiting: live video wants the newest frame, not every frame.
 function deliver(targetId: string, ipcChannel: string, id: string, frame: StreamFrame, time: number) {
     const subscriber = subscribers[targetId]
     if (!subscriber) return
@@ -99,7 +81,7 @@ function post(targetId: string, subscriber: Subscriber, next: Pending) {
     }
 }
 
-// the window took a frame: measure the round trip, then send whatever arrived meanwhile, newest only
+// Window acknowledged frame: update round trip and flush pending frame if any
 function onAck(targetId: string) {
     const subscriber = subscribers[targetId]
     if (!subscriber) return
@@ -115,9 +97,6 @@ function onAck(targetId: string) {
     post(targetId, subscriber, next)
 }
 
-// Outputs render the stream itself and need every pixel; the app window only ever previews it (drawer
-// card, output mirror) so it gets a small copy of every frame, which keeps the preview as smooth as
-// the output without paying full frame size for it.
 function sendFrame(ipcChannel: string, id: string, outputIds: string[], packed: StreamFrame) {
     const time = Date.now()
 
@@ -368,11 +347,6 @@ async function loadOmt() {
     }
 }
 
-// One loop per source. The loop is the only thing that ever calls receive() or destroy() on its
-// instance, and it destroys the instance itself after its final receive() has settled: the addon runs
-// receive() on the libuv threadpool holding the raw libomt pointer, so a destroy from anywhere else
-// while one is in flight is a use-after-free. A loop ends when it is stopped or its record is replaced,
-// checked after every await; callers that need the instance gone await the loop, not a timer.
 type OmtLoop = {
     source: any
     lowbandwidth: boolean
@@ -383,9 +357,6 @@ type OmtLoop = {
 }
 
 class Omt {
-    // Reference count per output: an output's two crossfade layers each mount a stream component for
-    // the same source and output, so a plain list would let the first one to unmount stop a live
-    // stream that the other still shows.
     private static outputRefs: { [outputId: string]: number } = {}
     static codecs: any = null
     private static loops: { [sourceId: string]: OmtLoop } = {}
@@ -404,7 +375,6 @@ class Omt {
             if (!omt) return null
             this.codecs = omt.Codec
 
-            // UYVY where the source allows it; the renderer converts on the GPU. Sources with alpha still arrive as BGRA.
             const flags = lowbandwidth ? omt.ReceiveFlags.Preview : omt.ReceiveFlags.None
             return new omt.Receiver(address, omt.FrameType.Video, omt.PreferredVideoFormat.UYVYorBGRA, flags)
         } catch (err: any) {
@@ -417,7 +387,6 @@ class Omt {
         const omt = await loadOmt()
         if (!omt) return []
 
-        // discovery populates over time (DNS-SD); poll briefly until we have results
         let addresses: string[] = []
         for (let attempt = 0; attempt < 4; attempt++) {
             addresses = omt.getAddresses() || []
@@ -440,9 +409,6 @@ class Omt {
     static async capture({ source, outputId }: { source: any; outputId: string }) {
         this.outputRefs[outputId] = (this.outputRefs[outputId] || 0) + 1
 
-        // a running full-quality loop already serves this source; a thumbnail loop holds a
-        // low-bandwidth instance and a stopping loop still holds its instance, so either is ended and
-        // awaited before the full-quality one starts
         const existing = this.loops[source.id]
         if (existing) {
             if (!existing.lowbandwidth && !existing.stopped) return
@@ -458,14 +424,12 @@ class Omt {
         loop.done = this.frameLoop(source.id, loop, delayMs).catch((err) => log("OMT reception error for " + source.id + ": " + err.message))
     }
 
-    // ends the loop and resolves once it has destroyed its instance
     private static stopLoop(loop: OmtLoop) {
         loop.stopped = true
         loop.wake?.()
         return loop.done
     }
 
-    // a sleep that ends early when the loop is stopped, so a stop never waits out a thumbnail interval
     private static pause(loop: OmtLoop, ms: number) {
         return new Promise<void>((resolve) => {
             const timer = setTimeout(finish, ms)
@@ -482,7 +446,6 @@ class Omt {
         let consecutiveErrors = 0
 
         try {
-            // a replaced record belongs to a newer loop for the same source: this one is finished
             while (!loop.stopped && this.loops[sourceId] === loop) {
                 try {
                     if (!loop.receiver) {
@@ -498,13 +461,10 @@ class Omt {
                         consecutiveErrors = 0
                     }
 
-                    // receive() already blocks until the next frame, so pace on the source rather than a timer.
-                    // Idle (no frame) still backs off, and thumbnails keep their slow rate.
                     if (frame?.data && delayMs < this.THUMBNAIL_LOOP_DELAY_MS) await new Promise((resolve) => setImmediate(resolve))
                     else await this.pause(loop, delayMs)
                 } catch (err: any) {
                     consecutiveErrors++
-                    // the failed receive() has settled, so this loop's instance can be dropped and recreated
                     this.destroyInstance(loop)
 
                     if (consecutiveErrors >= 10) {
@@ -517,7 +477,6 @@ class Omt {
                 }
             }
         } finally {
-            // every receive() this loop issued has settled by now, so nothing can still be using it
             this.destroyInstance(loop)
             if (this.loops[sourceId] === loop) delete this.loops[sourceId]
         }

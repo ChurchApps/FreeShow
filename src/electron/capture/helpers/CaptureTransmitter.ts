@@ -420,9 +420,7 @@ export class CaptureTransmitter {
         RtmpStreamer.updateFrame(captureId, Buffer.from(buffer), size)
     }
 
-    // The render surface is the window's logical bounds times the display scale, so on a scaled display
-    // its pixel size can miss the configured resolution (and land on an odd width, which the NDI/OMT
-    // encoders refuse). The wire senders get the configured resolution, whatever the surface produced.
+    // Ensure frames match configured output size (resampling if display scaling altered dimensions)
     private static sizeMismatchLogged: { [captureId: string]: string } = {}
     private static toConfiguredSize(captureId: string, image: NativeImage): { image: NativeImage; size: Size } {
         const size = image.getSize()

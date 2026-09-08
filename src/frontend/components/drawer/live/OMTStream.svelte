@@ -17,8 +17,7 @@
     let frame: any
     export let background = false
     export let mirror = false
-    // the output showing this stream owns the receiver: without its id the frames would be routed to
-    // whichever output happens to come first in the store, and this output would never receive any
+    // the output showing this stream owns the receiver
     export let outputId = ""
 
     let canvas: HTMLCanvasElement | undefined
@@ -36,9 +35,6 @@
         if (data.id !== screen.id) return
         loaded = true
 
-        // Take the newest frame rather than dropping by age. Svelte coalesces several arrivals in one
-        // tick into a single draw, so a burst still never renders a backlog, while an absolute age cut
-        // discarded every 4K frame: 16MB takes longer than that to deliver on its own.
         frame = data.frame
     }
 

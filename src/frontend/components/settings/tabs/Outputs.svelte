@@ -136,10 +136,8 @@
     }
 
     // omt
-    // OMT's quality level is its bandwidth/latency control: lower quality compresses harder, so it
-    // costs less network and arrives sooner. "Default" lets the encoder follow what receivers ask for.
     const omtQualities = [
-        { value: "Default", label: "Automatic (receivers decide)" },
+        { value: "Default", label: translateText("settings.auto") },
         { value: "Low", label: "Low (least bandwidth)" },
         { value: "Medium", label: "Medium" },
         { value: "High", label: "High (most bandwidth)" }

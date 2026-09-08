@@ -1,9 +1,5 @@
-// Main-process side of the NDI/OMT receive path.
-//
-// The receiving itself runs in a utilityProcess (./streamReceiverProcess) and delivers frames to the
-// renderers over MessagePorts, so no frame is ever cloned, converted or written by the main process.
-// All this does is start that process, forward control messages, and hand it a port whenever it has
-// a frame for a window it isn't wired to yet.
+// Main-process host for NDI/OMT receiving in utilityProcess (./streamReceiverProcess).
+// Brokers MessagePorts to renderers and forwards control messages.
 
 import { MessageChannelMain, utilityProcess, type BrowserWindow } from "electron"
 import { join } from "path"
@@ -76,9 +72,6 @@ export class StreamReceiverHost {
         const window = this.getWindow(targetId)
         if (DIAG) console.info("[stream-port] wire", targetId, "window:", !!window)
 
-        // The child only asks once per window, so a request that goes unanswered would stop that
-        // window's video for good — the window may simply not exist yet when the first frame lands.
-        // Clearing the request lets the next frame ask again.
         if (!window || window.isDestroyed() || !this.child) {
             this.child?.postMessage({ type: "dropPort", targetId })
             return
@@ -90,19 +83,13 @@ export class StreamReceiverHost {
 
         this.wiredWindows.set(targetId, window)
 
-        // a reloaded or closed window takes its end of the port with it, and the sender gets no error
-        // for posting into a dead port — it would just stop showing video. Tell the child so it asks
-        // for a new one with the next frame.
         const drop = () => {
             if (this.wiredWindows.get(targetId) !== window) return
             this.wiredWindows.delete(targetId)
             this.child?.postMessage({ type: "dropPort", targetId })
         }
         window.webContents.once("destroyed", drop)
-        // a crashed renderer stops acking without navigating, and posting into its dead port raises
-        // nothing — without this the child would wait on an ack that can never come
         window.webContents.once("render-process-gone", drop)
-        // only a real main-frame document load replaces the page: in-page navigation keeps the port
         window.webContents.on("did-start-navigation", (details) => {
             if (details.isMainFrame && !details.isSameDocument) drop()
         })

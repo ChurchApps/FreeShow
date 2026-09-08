@@ -121,6 +121,7 @@
             let name = ""
             if (networkType && !localType) {
                 if (networkType === "ndi") name = "NDI"
+                else if (networkType === "omt") name = "OMT"
                 else if (networkType === "webrtc") name = "WebRTC"
                 else if (networkType === "rtmp") name = "RTMP"
             }
@@ -160,6 +161,7 @@
         {#if !tab.invisible}<Icon id="hdmi" size={0.6} white title={translateText("settings.window")} />{/if}
         {#if tab.blackmagic}<Icon id="blackmagic" size={0.6} white title="Blackmagic Design" />{/if}
         {#if tab.ndi}<Icon id="ndi" size={0.6} white title="NDI" />{/if}
+        {#if tab.omt}<Icon id="omt" size={0.6} white title="OMT" />{/if}
         {#if tab.webrtc}<Icon id="broadcast" size={0.6} white title="WebRTC" />{/if}
         {#if tab.rtmp}<Icon id="broadcast" size={0.6} white title="RTMP" />{/if}
     </div>

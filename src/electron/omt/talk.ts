@@ -30,7 +30,7 @@ export function setDataOMT(data: { id: string; framerate?: number | string; name
         CaptureHelper.updateFramerate(data.id)
     }
 
-    // name and quality are fixed at sender creation, so apply a change by recreating it; receivers reconnect on their own
+    // recreate sender if name or quality changed
     const current = OmtSender.OMT[data.id]
     if (!current?.sender) return
 

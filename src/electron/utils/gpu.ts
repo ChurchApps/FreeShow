@@ -132,13 +132,7 @@ function isHardware(status: string | undefined): boolean {
     return !!status && /^(enabled|hardware)/.test(status)
 }
 
-// Whether Chromium actually has hardware GPU compositing right now. The settings toggle only says
-// what the user asked for; on a machine with no usable GPU driver Chromium falls back to software
-// compositing on its own, and anything that assumes GPU textures (shared-texture offscreen capture)
-// must fall back with it.
-// Chromium's feature status at app-ready is a placeholder (software everywhere) until the GPU
-// process has reported; getGPUInfo resolves at that point, on machines with and without a GPU.
-// Anything that decides based on the GPU state awaits this first.
+// Resolves once Chromium GPU feature status has settled
 export const gpuStateSettled: Promise<void> = app
     .whenReady()
     .then(() => app.getGPUInfo("basic"))

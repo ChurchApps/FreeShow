@@ -240,12 +240,7 @@ export class OutputLifecycle {
         return window
     }
 
-    // Chromium's X11 backend (X11Window::AdjustSizeForDisplay) subtracts 1px from a window whose
-    // requested size exactly equals a monitor's pixel size, so WMs don't treat it as fullscreen. That
-    // makes an offscreen capture window for a 1920x1080 output on a 1920x1080 screen render 1919x1079
-    // — an odd width the NDI/OMT (VMX) encoder refuses, so the receiver connects but gets no video.
-    // An offscreen window is never WM-managed, so nudge its requested size off the exact display match.
-    // No-op off Linux and whenever the size already differs from every display.
+    // Avoid Chromium X11 1px shrink when window size matches screen size, which breaks NDI/OMT encoding
     private static avoidLinuxDisplaySizeShrink(options: BrowserWindowConstructorOptions) {
         if (process.platform !== "linux" || !options.width || !options.height) return
         const matchesDisplay = screen.getAllDisplays().some((d) => {
@@ -360,9 +355,7 @@ export class OutputLifecycle {
         return hardwareAccelerationDisabled
     }
 
-    // Shared-texture offscreen capture needs the readback addon AND a GPU that Chromium is actually
-    // compositing with. A machine without a usable GPU driver (software compositing) gets CPU-bitmap
-    // offscreen capture, the same as when the user disables acceleration.
+    // Shared-texture capture requires readback addon and active GPU compositing
     private static captureModeLogged = false
     private static useSharedTextureCapture(): boolean {
         const addon = !!this.getOsrCaptureAddon()

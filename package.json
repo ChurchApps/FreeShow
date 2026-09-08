@@ -16,7 +16,6 @@
         "tar": "^7.5.20"
     },
     "scripts": {
-        "preinstall": "node -e \"const [a,b]=process.versions.node.split('.').map(Number); if(a<22||(a===22&&b<12)){console.error('FreeShow requires Node >= 22.12 (found '+process.version+')');process.exit(1)}\"",
         "postinstall": "electron-builder install-app-deps",
         "rebuild-opus": "electron-rebuild -f -w @discordjs/opus",
         "rebuild-osr": "electron-rebuild -f -w osr-capture",

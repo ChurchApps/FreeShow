@@ -1,6 +1,4 @@
-// Control surface for OMT input. The receiving itself — the loops, the frame packing, the preview
-// downscale and the delivery to renderers — runs in a utilityProcess, because video must never touch
-// the main thread. See ../capture/streamReceiverProcess.
+// Control surface for OMT input. Receiving runs in a utilityProcess (../capture/streamReceiverProcess).
 
 import { StreamReceiverHost } from "../capture/StreamReceiverHost"
 
