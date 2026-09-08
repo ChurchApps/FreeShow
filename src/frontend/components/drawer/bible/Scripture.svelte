@@ -1141,6 +1141,7 @@
                                     id={content.id.toString()}
                                     class="verse"
                                     class:showAllText={$resized.rightPanelDrawer <= 5}
+                                    class:showAllVersions={$scriptureSettings.showAllVersions}
                                     class:isActive
                                     class:collection-verse={isCollection && $scriptureMode !== "grid"}
                                     data-title="{text}<br><br>{translateText('tooltip.scripture')}"
@@ -1487,11 +1488,9 @@
         flex: none !important;
         height: auto !important;
         min-height: 0 !important;
-        padding: 2px 10px 2px 0 !important;
-        margin: 0 !important;
-        white-space: normal !important;
-        overflow: visible !important;
-        text-overflow: unset !important;
+    }
+    .verse.collection-verse.showAllVersions {
+        padding: 0 !important;
     }
 
     .collection-versions {
@@ -1516,12 +1515,16 @@
     }
 
     .version-text {
-        display: inline !important;
+        display: block;
         font-size: 0.9em;
         line-height: 1.2;
         font-weight: normal;
         padding: 0 !important;
-        margin: 0 !important;
+    }
+    .verse:not(.showAllText) .version-text {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
     /* history */
