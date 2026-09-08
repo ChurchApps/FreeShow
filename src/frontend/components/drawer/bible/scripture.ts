@@ -851,6 +851,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     let verseNumberStyle = `color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
     let verseNumberStyles: string[] = []
     let redJesusStyle = `color: ${get(scriptureSettings).jesusColor || "#FF4136"};`
+    let undertitleStyle = ""
     let baseStyle = ""
 
     // find any text object with {scripture_number} / {scripture_red_jesus} and get the style
@@ -866,6 +867,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                         const textStyle = textObj.style || ""
                         if (textStyle) redJesusStyle = textStyle
                     }
+                    if (textObj.value?.includes("{scripture_undertitle}")) undertitleStyle = textObj.style || ""
                     if (textObj.value?.includes("{scripture_text}")) {
                         const textStyle = textObj.style || ""
                         if (textStyle && (item.textFit || "none") === "none") baseStyle = textStyle
@@ -976,6 +978,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
         slidesString = slidesString.replaceAll(`${numberValue} `, "").replaceAll(numberValue, "")
     }
     slidesString = slidesString.replaceAll("{scripture_red_jesus}", "")
+    slidesString = slidesString.replaceAll("{scripture_undertitle}", "")
 
     // remove text in () on scripture names
     const bibleVersions = biblesContent.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
@@ -1067,6 +1070,10 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                         const parts = keyTextObj.value.split(itemKey)
                         let newLineText: any[] = []
 
+                        // auto size gives every text object one size, so the title's px becomes a share of the verse text px
+                        const textSize = Number(keyTextObj.style?.match(/font-size:\s*(\d+)px/)?.[1]) || 100
+                        const titleStyle = undertitleStyle.replace(/font-size:\s*(\d+)px/, (_, size) => `font-size: ${Math.round((size / textSize) * 100)}%`)
+
                         // Add text objects before the key
                         newLineText.push(...line.text.slice(0, keyIndex))
 
@@ -1075,6 +1082,14 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
 
                         // Add verse content
                         bibleVerses.forEach((verse, i) => {
+                            // the title goes before the verse number
+                            const [, title = "", verseText = verse.text] = verse.text.match(/^(<span class="undertitle">.*?<\/span>)(.*)/) || []
+                            if (title) {
+                                let value = formatBibleText(title)
+                                if (titleStyle) value = value.replace('">', `" style="${titleStyle}">`)
+                                newLineText.push({ ...keyTextObj, value, sourceDynamicKey: `${valueName}:${i}` })
+                            }
+
                             // Verse number
                             if (verseNumbers && verse.number) {
                                 const size = verseNumberSize * (i === 0 ? 1.2 : 1)
@@ -1088,8 +1103,8 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                             }
 
                             // Verse text with Jesus words formatting
-                            if (get(scriptureSettings).redJesus && verse.text.includes("!{")) {
-                                verse.text.split(/(!?\{[^}]*\}!?)/g).forEach((seg) => {
+                            if (get(scriptureSettings).redJesus && verseText.includes("!{")) {
+                                verseText.split(/(!?\{[^}]*\}!?)/g).forEach((seg) => {
                                     if (!seg) return
                                     const isJesusWords = seg.startsWith("!{") && seg.endsWith("}!")
                                     const inner = isJesusWords ? seg.slice(2, -2) : seg
@@ -1108,7 +1123,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                                     })
                                 })
                             } else {
-                                newLineText.push({ ...keyTextObj, value: formatBibleText(verse.text), sourceDynamicKey: `${valueName}:${i}` })
+                                newLineText.push({ ...keyTextObj, value: formatBibleText(verseText), sourceDynamicKey: `${valueName}:${i}` })
                             }
 
                             // Separator between verses (don't break verses in multiple parts)
