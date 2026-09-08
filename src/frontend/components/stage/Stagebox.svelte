@@ -47,16 +47,31 @@
         const isSelected = $activeStage.items.includes(id)
 
         if (e.shiftKey) {
-            if (!isSelected) activeStage.update((ae) => { ae.items.push(id); return ae })
+            if (!isSelected)
+                activeStage.update((ae) => {
+                    ae.items.push(id)
+                    return ae
+                })
         } else if (!isSelected) {
-            activeStage.update((ae) => { ae.items = [id]; return ae })
+            activeStage.update((ae) => {
+                ae.items = [id]
+                return ae
+            })
         } else if ($activeStage.items.length > 1) {
-            const startX = e.clientX, startY = e.clientY
-            window.addEventListener("mouseup", (upEvent) => {
-                if (Math.hypot(upEvent.clientX - startX, upEvent.clientY - startY) < 4) {
-                    activeStage.update((ae) => { ae.items = [id]; return ae })
-                }
-            }, { once: true })
+            const startX = e.clientX,
+                startY = e.clientY
+            window.addEventListener(
+                "mouseup",
+                (upEvent) => {
+                    if (Math.hypot(upEvent.clientX - startX, upEvent.clientY - startY) < 4) {
+                        activeStage.update((ae) => {
+                            ae.items = [id]
+                            return ae
+                        })
+                    }
+                },
+                { once: true }
+            )
         }
 
         // deselect selected text
@@ -256,7 +271,7 @@
         })
     }
 
-    $: stageResolution = getStageResolution(stageOutputId, $outputs)
+    $: stageResolution = getStageResolution()
     $: customStyle = percentageStylePos(itemStyle, stageResolution)
 
     // pause video at middle
