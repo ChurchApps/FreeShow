@@ -158,15 +158,13 @@ export async function detectEncoders(force = false): Promise<EncoderDetection> {
     }
 }
 
-// global setting, pushed from the renderer on startup and whenever it changes
-let rtmpEncoderSetting = "auto"
-
-export function setRtmpEncoderSetting(encoder: string) {
-    rtmpEncoderSetting = encoder || "auto"
+// pushed from the renderer on startup and whenever it changes
+let rtmpEncoderSetting: Record<string, string> = {}
+export function setRtmpEncoderSetting(outputId: string, encoder: string) {
+    rtmpEncoderSetting[outputId] = encoder || "auto"
 }
-
-export function getRtmpEncoderSetting(): string {
-    return rtmpEncoderSetting
+export function getRtmpEncoderSetting(outputId: string): string {
+    return rtmpEncoderSetting[outputId] || "auto"
 }
 
 /** Resolve the configured setting ("auto" or an explicit id) to an encoder that actually works. */

@@ -308,12 +308,19 @@
         return titles.join("<br>")
     }
 
+    function toggleSectionsCollapsed() {
+        updateProject("sectionsCollapsed", !currentProject?.sectionsCollapsed)
+    }
     function lockSections() {
+        updateProject("sectionsLocked", !currentProject?.sectionsLocked)
+    }
+
+    function updateProject(key: string, value: any) {
         const projectId = $activeProject || ""
         projects.update((a) => {
             if (!a[projectId]) return a
 
-            a[projectId].sectionsLocked = !a[projectId].sectionsLocked
+            a[projectId][key] = value
             return a
         })
     }
@@ -400,9 +407,7 @@
                                     <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, projectTimelineActive: !a.projectTimelineActive }))}>
                                         <Icon id="timeline" white={!$special.projectTimelineActive} />
 
-                                        {#if $special.projectTimelineActive}
-                                            <Icon id="check" size={0.7} white />
-                                        {/if}
+                                        {#if $special.projectTimelineActive}<Icon id="check" size={0.7} white />{/if}
 
                                         <p><T id="timeline.toggle_timeline" /></p>
                                     </MaterialButton>
@@ -410,10 +415,14 @@
                                     {#if currentProject.shows?.some((a) => a.type === "section")}
                                         <div class="DIVIDER"></div>
 
+                                        <MaterialButton title="actions.collapsed" icon="collapse" on:click={() => toggleSectionsCollapsed()} white={!currentProject.sectionsCollapsed}>
+                                            {#if currentProject.sectionsCollapsed}<Icon id="check" size={0.7} white />{/if}
+
+                                            <T id="actions.collapsed" />
+                                        </MaterialButton>
+
                                         <MaterialButton title="actions.lock_sections" icon="lock" on:click={() => lockSections()} white={!currentProject.sectionsLocked}>
-                                            {#if currentProject.sectionsLocked}
-                                                <Icon id="check" size={0.7} white />
-                                            {/if}
+                                            {#if currentProject.sectionsLocked}<Icon id="check" size={0.7} white />{/if}
 
                                             <T id="actions.lock_sections" />
                                         </MaterialButton>

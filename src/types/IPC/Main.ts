@@ -293,7 +293,7 @@ export interface MainSendPayloads {
     [Main.FFMPEG_DOWNLOAD]: undefined
     // Streaming encoder
     [Main.ENCODER_DETECT]: { force?: boolean } | undefined
-    [Main.SET_RTMP_ENCODER]: { encoder: string }
+    [Main.SET_RTMP_ENCODER]: { outputId: string; encoder: string }
     // AI
     [Main.AI_LISTEN_START]: { engine: string; engineOptions: SttEngineOptions }
     [Main.AI_AUDIO_DATA]: { buffer: Uint8Array }
@@ -408,13 +408,10 @@ export interface MainReturnPayloads {
     [Main.SET_RTMP_ENCODER]: void
     // AI
     [Main.AI_LISTEN_START]: Promise<{ started: boolean; error?: string }>
-    [Main.AI_GET_STATUS]: Promise<{ [key: string]: EngineStatus }>
     [Main.AI_SETUP]: Promise<boolean>
     [Main.AI_TEST_CONNECTION]: Promise<{ ok: boolean; error?: string }>
     [Main.AI_LLM_COMPLETE]: Promise<{ text: string; error?: string; code?: string; retryAfter?: number }>
 }
-
-///////////
 
 export type ToMainSendValue2<ID extends Main> = ID extends keyof MainReturnPayloads ? MainReturnPayloads[ID] : never
 export type MainSendValue<ID extends Main> = ID extends keyof MainSendPayloads ? MainSendPayloads[ID] : never

@@ -26,29 +26,29 @@
     // highlight slide shortcut or next group shortcut
     $: shortcut = getNextShortcut(actions, currentShow, getFirstActiveOutput($outputs))
 
-    function getNextShortcut(actions: any, show: Show, output?: Output & { id: string }): string {
+    function getNextShortcut(actions: any, show: Show, output?: Output & { id: string }): { value: string; type: "slide" | "dynamic" } | null {
         // slide shortcut
-        if (actions.slide_shortcut?.key) return actions.slide_shortcut.key
+        if (actions.slide_shortcut?.key) return { value: actions.slide_shortcut.key, type: "slide" }
 
         // don't show group shortcut
-        if (!$special.groupShortcutPreview) return ""
+        if (!$special.groupShortcutPreview) return null
 
         const outSlide = output?.out?.slide
         // output is from another show
-        if (outSlide && (outSlide?.id !== showId || outSlide?.layout !== show?.settings?.activeLayout)) return ""
+        if (outSlide && (outSlide?.id !== showId || outSlide?.layout !== show?.settings?.activeLayout)) return null
 
         const ref = getLayoutRef(showId)
         const refSlide = ref[index] || {}
         const currentSlideGroup = refSlide.type === "parent" ? show.slides?.[refSlide.id]?.globalGroup : null
         const shortcut = ($groups[currentSlideGroup || ""]?.shortcut || "").toUpperCase()
-        if (!shortcut) return ""
+        if (!shortcut) return null
 
         // check if group shortcut is in use as slide shortcut
         const isSlideShortcut = ref.some((a) => {
             const slideShortcut = (a.data?.actions?.slide_shortcut?.key || "").toUpperCase()
             return slideShortcut === shortcut
         })
-        if (isSlideShortcut) return ""
+        if (isSlideShortcut) return null
 
         // find first group after the current output index
         const outIndex = outSlide?.index ?? -1
@@ -66,9 +66,9 @@
             })
         }
 
-        if (nextGroupIndex !== index) return ""
+        if (nextGroupIndex !== index) return null
 
-        return shortcut
+        return { value: shortcut, type: "dynamic" }
     }
 
     function hasAccess() {
@@ -149,9 +149,15 @@
 <div class="icons" style="zoom: {zoom};">
     {#if shortcut}
         <div class="button white" style="border: 1px solid var(--secondary);">
-            <Button style="padding: 3px;" redHover title={translateText("actions.remove: actions.play_with_shortcut")} {zoom} on:click={() => changeAction("slide_shortcut")}>
-                <p style="font-weight: bold;text-transform: capitalize;padding: 0 4px;font-size: 1.2em;">{shortcut}</p>
-            </Button>
+            {#if shortcut.type === "slide"}
+                <Button style="padding: 3px;" title={translateText("actions.remove: actions.play_with_shortcut")} {zoom} on:click={() => changeAction("slide_shortcut")} redHover>
+                    <p style="font-weight: bold;text-transform: capitalize;padding: 0 4px;font-size: 1.2em;">{shortcut.value}</p>
+                </Button>
+            {:else}
+                <Button style="padding: 1px;" {zoom}>
+                    <p style="font-weight: bold;text-transform: capitalize;padding: 0 3px;font-size: 0.8em;">{shortcut.value}</p>
+                </Button>
+            {/if}
         </div>
     {/if}
 

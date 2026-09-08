@@ -619,12 +619,12 @@
     /* chords */
     .break.chords :global(.invisible) {
         opacity: 0;
-        line-height: 0;
+        /* line-height: 0; */
         font-size: var(--font-size);
     }
     .break.chords :global(.chord) {
         position: absolute;
-        top: 0;
+        /* top: 0; */
         color: var(--chord-color);
         font-size: var(--chord-size) !important;
         font-weight: bold;
@@ -651,9 +651,9 @@
         font-weight: normal;
         font-style: normal;
     }
-    .break.chords.first {
+    /* .break.chords.first {
         line-height: 0 !important;
-    }
+    } */
     .break.chords.chordOnly {
         line-height: 1.1;
         max-height: unset;

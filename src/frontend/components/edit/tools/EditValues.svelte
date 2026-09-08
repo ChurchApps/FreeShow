@@ -46,6 +46,7 @@
             value = getFilters(item[input.id] || getStyles(item.style)[input.id])?.[input.key || ""] || input.values.value || input.value
         } else if (input.key) {
             value = styles[input.key || ""]
+            console.log(clone(input), defaultValue, value)
             if (input.type === "checkbox" && (input.key === "box-shadow" || input.key === "text-shadow")) {
                 value = value?.includes("inset") || false
             } else if (input.valueIndex !== undefined) {
@@ -65,7 +66,7 @@
             if (parts.length > 1) value = item[parts[0]]?.[parts[1]]
             else value = item[input.id]
         }
-        if (value === undefined) value = input.values.value
+        // if (value === undefined) value = input.values.value
 
         if (input.type === "number") {
             if (value === "") value = undefined
