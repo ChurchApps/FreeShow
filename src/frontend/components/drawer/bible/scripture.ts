@@ -851,6 +851,8 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     let verseNumberStyle = `color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
     let verseNumberStyles: string[] = []
     let redJesusStyle = `color: ${get(scriptureSettings).jesusColor || "#FF4136"};`
+    let undertitleStyle = ""
+    let verseTextStyle = ""
     let baseStyle = ""
 
     // find any text object with {scripture_number} / {scripture_red_jesus} and get the style
@@ -866,8 +868,10 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                         const textStyle = textObj.style || ""
                         if (textStyle) redJesusStyle = textStyle
                     }
+                    if (textObj.value?.includes("{scripture_undertitle}")) undertitleStyle = textObj.style || ""
                     if (textObj.value?.includes("{scripture_text}")) {
                         const textStyle = textObj.style || ""
+                        verseTextStyle = textStyle
                         if (textStyle && (item.textFit || "none") === "none") baseStyle = textStyle
                     }
                 })
@@ -880,6 +884,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     let baseFontSize = baseStyle.match(/font-size:\s*(\d+)px/)
     let percentageDiff = verseNumberFontSize && baseFontSize ? Number(verseNumberFontSize[1]) / Number(baseFontSize[1]) : 1
     if (Number(baseFontSize?.[1])) verseNumberSize = Number(baseFontSize?.[1]) * percentageDiff
+    if (undertitleStyle) undertitleStyle = withRelativeSize(undertitleStyle, verseTextStyle)
 
     // slide > translation > verse
     let scriptureVerseContent: { number: string; text: string; verseId: string }[][][] = []
@@ -924,6 +929,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
 
                     // custom Jesus red to JSON format: !{}!
                     text = markJesusWords(text)
+                    if (undertitleStyle) text = text.replaceAll('<span class="undertitle">', `<span class="undertitle" style="${undertitleStyle}">`)
 
                     if (verseNumbers) {
                         const { id, subverse, endNumber } = getVerseIdParts(v)
@@ -976,6 +982,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
         slidesString = slidesString.replaceAll(`${numberValue} `, "").replaceAll(numberValue, "")
     }
     slidesString = slidesString.replaceAll("{scripture_red_jesus}", "")
+    slidesString = slidesString.replaceAll("{scripture_undertitle}", "")
 
     // remove text in () on scripture names
     const bibleVersions = biblesContent.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
@@ -1728,6 +1735,14 @@ function findClosingTag(text: string, from: number, tagName: string) {
         if (depth === 0) return match.index
     }
     return -1
+}
+
+// a px size from the template becomes a share of the verse text size, so auto size keeps the ratio
+function withRelativeSize(style: string, textStyle: string) {
+    const size = Number(style.match(/font-size:\s*(\d+)px/)?.[1])
+    const textSize = Number(textStyle.match(/font-size:\s*(\d+)px/)?.[1])
+    const percent = size && textSize ? Math.round((size / textSize) * 100) : 100
+    return style.replace(/font-size:[^;]*;?/g, "") + `font-size: ${percent}%;`
 }
 
 export function formatBibleText(text: string | undefined, redJesus = false) {
