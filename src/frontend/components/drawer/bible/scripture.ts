@@ -763,8 +763,6 @@ export function useOldScriptureSystem(templateId: string, _updater: any = null) 
     return !_template.getPlainText().includes("{scripture")
 }
 
-const STYLE_PLACEHOLDER = /^\s*(\{scripture\d?_number\}|\{scripture_red_jesus\}|\{scripture_undertitle\})\s*$/
-
 export async function getScriptureSlidesNew(data: any, onlyOne = false, disableReference = false) {
     const templateId = getScriptureTemplateId()
     if (useOldScriptureSystem(templateId)) return getScriptureSlides(data, onlyOne, disableReference)
@@ -854,7 +852,6 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     let verseNumberStyles: string[] = []
     let redJesusStyle = `color: ${get(scriptureSettings).jesusColor || "#FF4136"};`
     let undertitleStyle = ""
-    let verseTextStyle = ""
     let baseStyle = ""
 
     // find any text object with {scripture_number} / {scripture_red_jesus} and get the style
@@ -873,7 +870,6 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                     if (textObj.value?.includes("{scripture_undertitle}")) undertitleStyle = textObj.style || ""
                     if (textObj.value?.includes("{scripture_text}")) {
                         const textStyle = textObj.style || ""
-                        verseTextStyle = textStyle
                         if (textStyle && (item.textFit || "none") === "none") baseStyle = textStyle
                     }
                 })
@@ -881,27 +877,11 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
         })
     })
 
-    // a line that only held style placeholders disappears instead of leaving an empty line
-    const isStylePlaceholder = (textObj: any) => STYLE_PLACEHOLDER.test(textObj.value || "")
-    slides.forEach((items) => {
-        items.forEach((item) => {
-            if (!item.lines?.some((line) => line.text?.some(isStylePlaceholder))) return
-            item.lines = item.lines.filter((line) => {
-                const kept = line.text.filter((textObj) => !isStylePlaceholder(textObj))
-                if (!kept.length) return false
-                line.text = kept
-                return true
-            })
-        })
-    })
-    slidesString = JSON.stringify(slides)
-
     // extract text size from baseStyle & verseNumberStyle & calculate percentage difference
     let verseNumberFontSize = (verseNumberStyles[0] || verseNumberStyle).match(/font-size:\s*(\d+)px/)
     let baseFontSize = baseStyle.match(/font-size:\s*(\d+)px/)
     let percentageDiff = verseNumberFontSize && baseFontSize ? Number(verseNumberFontSize[1]) / Number(baseFontSize[1]) : 1
     if (Number(baseFontSize?.[1])) verseNumberSize = Number(baseFontSize?.[1]) * percentageDiff
-    if (undertitleStyle) undertitleStyle = withRelativeSize(undertitleStyle, verseTextStyle)
 
     // slide > translation > verse
     let scriptureVerseContent: { number: string; text: string; verseId: string }[][][] = []
@@ -946,7 +926,6 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
 
                     // custom Jesus red to JSON format: !{}!
                     text = markJesusWords(text)
-                    if (undertitleStyle) text = text.replaceAll('<span class="undertitle">', `<span class="undertitle" style="${undertitleStyle}">`)
 
                     if (verseNumbers) {
                         const { id, subverse, endNumber } = getVerseIdParts(v)
@@ -1089,6 +1068,10 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
 
                         const keyTextObj = line.text[keyIndex]
                         const parts = keyTextObj.value.split(itemKey)
+
+                        // the template's px size becomes a share of the verse text size
+                        const textSize = Number(keyTextObj.style?.match(/font-size:\s*(\d+)px/)?.[1]) || 100
+                        const titleStyle = undertitleStyle.replace(/font-size:\s*(\d+)px/, (_, size) => `font-size: ${Math.round((size / textSize) * 100)}%`)
                         let newLineText: any[] = []
 
                         // Add text objects before the key
@@ -1099,6 +1082,14 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
 
                         // Add verse content
                         bibleVerses.forEach((verse, i) => {
+                            // the title goes before the verse number
+                            const [, title = "", verseText = verse.text] = verse.text.match(/^(<span class="undertitle">.*?<\/span>)(.*)/) || []
+                            if (title) {
+                                let value = formatBibleText(title)
+                                if (titleStyle) value = value.replace('">', `" style="${titleStyle}">`)
+                                newLineText.push({ ...keyTextObj, value, sourceDynamicKey: `${valueName}:${i}` })
+                            }
+
                             // Verse number
                             if (verseNumbers && verse.number) {
                                 const size = verseNumberSize * (i === 0 ? 1.2 : 1)
@@ -1112,8 +1103,8 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                             }
 
                             // Verse text with Jesus words formatting
-                            if (get(scriptureSettings).redJesus && verse.text.includes("!{")) {
-                                verse.text.split(/(!?\{[^}]*\}!?)/g).forEach((seg) => {
+                            if (get(scriptureSettings).redJesus && verseText.includes("!{")) {
+                                verseText.split(/(!?\{[^}]*\}!?)/g).forEach((seg) => {
                                     if (!seg) return
                                     const isJesusWords = seg.startsWith("!{") && seg.endsWith("}!")
                                     const inner = isJesusWords ? seg.slice(2, -2) : seg
@@ -1132,7 +1123,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                                     })
                                 })
                             } else {
-                                newLineText.push({ ...keyTextObj, value: formatBibleText(verse.text), sourceDynamicKey: `${valueName}:${i}` })
+                                newLineText.push({ ...keyTextObj, value: formatBibleText(verseText), sourceDynamicKey: `${valueName}:${i}` })
                             }
 
                             // Separator between verses (don't break verses in multiple parts)
@@ -1754,26 +1745,15 @@ function findClosingTag(text: string, from: number, tagName: string) {
     return -1
 }
 
-// a px size from the template becomes a share of the verse text size, so auto size keeps the ratio
-function withRelativeSize(style: string, textStyle: string) {
-    const size = Number(style.match(/font-size:\s*(\d+)px/)?.[1])
-    const textSize = Number(textStyle.match(/font-size:\s*(\d+)px/)?.[1])
-    const percent = size && textSize ? Math.round((size / textSize) * 100) : 100
-    return style.replace(/font-size:[^;]*;?/g, "") + `font-size: ${percent}%;`
-}
-
 export function formatBibleText(text: string | undefined, redJesus = false) {
     if (!text) return ""
     text = sanitizeVerseText(text)
     if (redJesus) text = text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>')
-    // stripMarkdown pairs straight quotes and the cleanups touch "/ ", keep both away from tags
-    return tokenizeHtml(text)
-        .map((token) => (token.type === "tag" ? token.value : formatVerseText(token.value)))
+    // stripMarkdown pairs straight quotes, keep it away from the ones around attribute values
+    text = tokenizeHtml(text)
+        .map((token) => (token.type === "tag" ? token.value : stripMarkdown(token.value)))
         .join("")
-}
-
-function formatVerseText(text: string) {
-    return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", "&")
+    return text.replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", "&")
 }
 
 // CREATE SHOW/SLIDES
