@@ -28,6 +28,7 @@
 
     export let slideIndex = 0
     export let preview = false
+    export let isStage = false
     export let cropPreviewMode = false
     export let isTemplatePreview = false
     export let smallFontSize = false
@@ -78,12 +79,12 @@
     }
 
     $: cameraCropState = getCropState(item.cropping, cropPreviewMode, item.style)
-    $: cameraStyleString = `${cameraCropState.mediaCropGeometry}object-fit: ${cameraCropState.cropHasValues ? (item.fit === "cover" ? "cover" : "fill") : (item.fit || "contain")};filter: ${item.filter};transform: scale(${item.flipped ? "-1" : "1"}, ${item.flippedY ? "-1" : "1"});`
+    $: cameraStyleString = `${cameraCropState.mediaCropGeometry}object-fit: ${cameraCropState.cropHasValues ? (item.fit === "cover" ? "cover" : "fill") : item.fit || "contain"};filter: ${item.filter};transform: scale(${item.flipped ? "-1" : "1"}, ${item.flippedY ? "-1" : "1"});`
     $: variableStyleString = typeof item.style === "string" ? (item.style.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${edit ? autoSize : fontSize}px;`) : ""
 </script>
 
 {#if item.type === "media"}
-    <MediaItem {item} {outputId} slideRef={{ ...ref, slideIndex }} {preview} {edit} {cropPreviewMode} />
+    <MediaItem {item} {outputId} slideRef={{ ...ref, slideIndex }} preview={preview || isStage} {edit} {cropPreviewMode} />
 {:else if item.type === "web"}
     <Website src={item.web?.src || ""} navigation={!edit && !item.web?.noNavigation} clickable={!edit && $currentWindow === "output"} {ratio} />
 {:else if item.type === "timer"}
