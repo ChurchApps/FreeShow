@@ -1749,11 +1749,14 @@ export function formatBibleText(text: string | undefined, redJesus = false) {
     if (!text) return ""
     text = sanitizeVerseText(text)
     if (redJesus) text = text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>')
-    // stripMarkdown pairs straight quotes, keep it away from the ones around attribute values
-    text = tokenizeHtml(text)
-        .map((token) => (token.type === "tag" ? token.value : stripMarkdown(token.value)))
+    // stripMarkdown pairs straight quotes and the cleanups touch "/ ", keep both away from tags
+    return tokenizeHtml(text)
+        .map((token) => (token.type === "tag" ? token.value : formatVerseText(token.value)))
         .join("")
-    return text.replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", "&")
+}
+
+function formatVerseText(text: string) {
+    return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", "&")
 }
 
 // CREATE SHOW/SLIDES
