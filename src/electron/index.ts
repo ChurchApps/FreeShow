@@ -214,11 +214,11 @@ function createMain() {
     }
 
     // should be centered to screen if x & y is not set (or bottom left on mac)
-    if (bounds.x) options.x = bounds.x
-    if (bounds.y) options.y = bounds.y
+    if (isSet(bounds.x)) options.x = bounds.x
+    if (isSet(bounds.y)) options.y = bounds.y
 
     // check if window position is within a visible area and draggable top area is accessible
-    if (bounds.x && bounds.y && (!isWithinDisplayBounds({ x: bounds.x, y: bounds.y }) || !isDraggableAreaVisible(bounds, options.width!))) {
+    if (isSet(bounds.x) && isSet(bounds.y) && (!isWithinDisplayBounds({ x: bounds.x, y: bounds.y }) || !isDraggableAreaVisible(bounds, options.width!))) {
         options.x = (screenBounds.width - options.width!) / 2
         options.y = (screenBounds.height - options.height!) / 2
     }
@@ -242,6 +242,10 @@ function createMain() {
         const size = !bounds[type] || bounds[type] === DEFAULT_WINDOW_SIZE[type] ? screenBounds[type] || DEFAULT_WINDOW_SIZE[type] : bounds[type]
         // set minimum window size on startup (in case it's tiny)
         return Math.max(MIN_WINDOW_SIZE, size)
+    }
+
+    function isSet(value: any) {
+        return value !== undefined && value !== null
     }
 }
 
@@ -294,8 +298,14 @@ export function resetMainWindow() {
 function setMainListeners() {
     if (!mainWindow) return
 
-    mainWindow.on("maximize", () => config.set("maximized", true))
-    mainWindow.on("unmaximize", () => config.set("maximized", false))
+    mainWindow.on("maximize", () => {
+        config.set("maximized", true)
+        windowBounds.save()
+    })
+    mainWindow.on("unmaximize", () => {
+        config.set("maximized", false)
+        windowBounds.save()
+    })
 
     mainWindow.on("resize", windowBounds.save)
     mainWindow.on("move", windowBounds.save)
@@ -319,7 +329,10 @@ const windowBounds = {
     save() {
         if (mainWindow?.isDestroyed()) return
         try {
-            config.set("bounds", mainWindow!.getBounds())
+            let bounds = mainWindow!.getBounds()
+            if (mainWindow!.isMaximized()) bounds = mainWindow!.getNormalBounds()
+
+            config.set("bounds", bounds)
         } catch (err) {
             console.warn("Failed to save window bounds:", err)
         }
