@@ -155,4 +155,20 @@
     .tabs {
         z-index: 1;
     }
+
+    @media (max-width: 1300px) {
+        main {
+            --padding: 100px;
+        }
+    }
+    @media (max-width: 1100px) {
+        main {
+            --padding: 50px;
+        }
+    }
+    @media (max-width: 800px) {
+        main {
+            --padding: 20px;
+        }
+    }
 </style>
