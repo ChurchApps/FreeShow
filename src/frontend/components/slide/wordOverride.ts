@@ -49,7 +49,8 @@ function buildOverrideRegex(override: TemplateStyleOverride) {
 
 function splitSegment(segment: any, regex: RegExp, override: TemplateStyleOverride) {
     if (!segment?.value) return [segment]
-    if (segment.customType?.includes("disableTemplate")) return [segment]
+    const templateDisabled = segment.customType?.includes("disableTemplate") && !segment.customType?.includes("_jw")
+    if (templateDisabled) return [segment]
 
     const text = String(segment.value)
     const matcher = new RegExp(regex.source, regex.flags)
