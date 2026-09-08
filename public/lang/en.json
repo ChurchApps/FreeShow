@@ -722,6 +722,7 @@
         "zoomIn": "Zoom In",
         "zoomOut": "Zoom Out",
         "reset": "Reset",
+        "collapsed": "Collapsed mode",
         "lock_sections": "Lock sections",
         "project_template": "Project template",
         "convert_to_template": "Convert to template",
