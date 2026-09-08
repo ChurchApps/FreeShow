@@ -763,6 +763,8 @@ export function useOldScriptureSystem(templateId: string, _updater: any = null) 
     return !_template.getPlainText().includes("{scripture")
 }
 
+const STYLE_PLACEHOLDER = /^\s*(\{scripture\d?_number\}|\{scripture_red_jesus\}|\{scripture_undertitle\})\s*$/
+
 export async function getScriptureSlidesNew(data: any, onlyOne = false, disableReference = false) {
     const templateId = getScriptureTemplateId()
     if (useOldScriptureSystem(templateId)) return getScriptureSlides(data, onlyOne, disableReference)
@@ -878,6 +880,21 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
             })
         })
     })
+
+    // a line that only held style placeholders disappears instead of leaving an empty line
+    const isStylePlaceholder = (textObj: any) => STYLE_PLACEHOLDER.test(textObj.value || "")
+    slides.forEach((items) => {
+        items.forEach((item) => {
+            if (!item.lines?.some((line) => line.text?.some(isStylePlaceholder))) return
+            item.lines = item.lines.filter((line) => {
+                const kept = line.text.filter((textObj) => !isStylePlaceholder(textObj))
+                if (!kept.length) return false
+                line.text = kept
+                return true
+            })
+        })
+    })
+    slidesString = JSON.stringify(slides)
 
     // extract text size from baseStyle & verseNumberStyle & calculate percentage difference
     let verseNumberFontSize = (verseNumberStyles[0] || verseNumberStyle).match(/font-size:\s*(\d+)px/)
