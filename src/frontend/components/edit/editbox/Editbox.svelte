@@ -44,7 +44,7 @@
     export let mouse: any = {}
     function mousedown(e: any) {
         if (e.target.closest(".chords") || e.target.closest(".editTools")) return
-        if (!e.target.closest(".line") && !e.target.closest(".square") && !e.target.closest(".rotate") && !e.target.closest(".radius") && !e.target.closest(".cropHandle") && !e.target.closest(".cropOverlay")) {
+        if (!e.shiftKey && !e.target.closest(".line") && !e.target.closest(".square") && !e.target.closest(".rotate") && !e.target.closest(".radius") && !e.target.closest(".cropHandle") && !e.target.closest(".cropOverlay")) {
             openToolsTab.set("text")
 
             // Table shouldn't be draggable from the center
@@ -57,19 +57,7 @@
         if (rightClick) {
             if (!isSelected) activeEdit.update((ae) => { ae.items = [index]; return ae })
         } else if (e.shiftKey) {
-            if (!isSelected) {
-                activeEdit.update((ae) => { ae.items.push(index); return ae })
-            } else {
-                const startX = e.clientX, startY = e.clientY
-                window.addEventListener("mouseup", (upEvent) => {
-                    if (Math.hypot(upEvent.clientX - startX, upEvent.clientY - startY) < 4) {
-                        activeEdit.update((ae) => {
-                            ae.items = ae.items.filter((i) => i !== index)
-                            return ae
-                        })
-                    }
-                }, { once: true })
-            }
+            if (!isSelected) activeEdit.update((ae) => { ae.items.push(index); return ae })
         } else if (!isSelected) {
             activeEdit.update((ae) => { ae.items = [index]; return ae })
         } else if ($activeEdit.items.length > 1) {
@@ -83,6 +71,7 @@
 
         // deselect selected text
         if (e.shiftKey) {
+            isShiftPressed = true
             e.preventDefault()
             if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
             window.getSelection()?.removeAllRanges()
@@ -329,11 +318,13 @@
         backdrop-filter: blur(20px);
     }
     .item.isShiftPressed,
-    .item.isShiftPressed :global(.edit) {
-        cursor: move !important;
-    }
+    .item.isShiftPressed :global(.edit),
     .item.isShiftPressed :global(.line) {
         cursor: move !important;
+    }
+    .item.isShiftPressed :global(.edit) {
+        pointer-events: none !important;
+        user-select: none !important;
     }
 
     .mediaFrame {

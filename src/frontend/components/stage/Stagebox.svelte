@@ -47,19 +47,7 @@
         const isSelected = $activeStage.items.includes(id)
 
         if (e.shiftKey) {
-            if (!isSelected) {
-                activeStage.update((ae) => { ae.items.push(id); return ae })
-            } else {
-                const startX = e.clientX, startY = e.clientY
-                window.addEventListener("mouseup", (upEvent) => {
-                    if (Math.hypot(upEvent.clientX - startX, upEvent.clientY - startY) < 4) {
-                        activeStage.update((ae) => {
-                            ae.items = ae.items.filter((i) => i !== id)
-                            return ae
-                        })
-                    }
-                }, { once: true })
-            }
+            if (!isSelected) activeStage.update((ae) => { ae.items.push(id); return ae })
         } else if (!isSelected) {
             activeStage.update((ae) => { ae.items = [id]; return ae })
         } else if ($activeStage.items.length > 1) {
@@ -73,6 +61,7 @@
 
         // deselect selected text
         if (e.shiftKey) {
+            isShiftPressed = true
             e.preventDefault()
             if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
             window.getSelection()?.removeAllRanges()
@@ -629,5 +618,15 @@
         animation-duration: 600ms;
         animation-timing-function: ease-out;
         animation-fill-mode: forwards;
+    }
+
+    :global(.stage_item.isShiftPressed),
+    :global(.stage_item.isShiftPressed .edit),
+    :global(.stage_item.isShiftPressed .line) {
+        cursor: move !important;
+    }
+    :global(.stage_item.isShiftPressed .edit) {
+        pointer-events: none !important;
+        user-select: none !important;
     }
 </style>
