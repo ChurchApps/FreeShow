@@ -257,6 +257,7 @@
         }
     }
 
+    $: activeIndex = $focusMode ? $activeFocus.index : $activeShow?.index
     $: activeId = $focusMode ? $activeFocus.id : $activeShow?.id
 </script>
 
@@ -268,7 +269,7 @@
         <DropArea id="project" selectChildren hoverTimeout={150} let:fileOver file>
             {#if projectItemsList.length}
                 {#each splittedProjectsList as splittedItemsList}
-                    {@const isCollapsed = currentProject?.sectionsCollapsed && splittedItemsList.items?.[0]?.type === "section" && !splittedItemsList.items?.some((a) => a.id === activeId)}
+                    {@const isCollapsed = currentProject?.sectionsCollapsed && splittedItemsList.items?.[0]?.type === "section" && !splittedItemsList.items?.some((a) => (activeIndex === undefined ? a.id === activeId : a.index === activeIndex))}
 
                     <div class="listSection" style="{splittedItemsList.color ? `--border-color: ${splittedItemsList.color};` : ''}{isCollapsed && splittedItemsList.items.length > 1 ? 'border-bottom: 3px solid var(--primary-lighter);' : ''}">
                         {#each splittedItemsList.items as show, i}
