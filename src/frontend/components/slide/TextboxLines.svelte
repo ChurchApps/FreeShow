@@ -573,6 +573,13 @@
         font-size: 0.8em;
         font-style: italic;
     }
+    /* a block here would give the line's leading space its own line */
+    .break :global(span.undertitle) {
+        display: inline-block;
+        width: 100%;
+        color: var(--secondary);
+        font-weight: 600;
+    }
 
     /* .height {
         height: 1em;

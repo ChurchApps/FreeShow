@@ -1392,6 +1392,16 @@
         font-size: 0.8em;
         font-style: italic;
     }
+    /* clip keeps the text baseline, hidden would align the box bottom */
+    .main span.verse :global(span.undertitle) {
+        display: inline-block;
+        max-width: 35%;
+        overflow: clip;
+        text-overflow: ellipsis;
+        white-space: pre;
+        color: var(--secondary);
+        font-weight: 600;
+    }
 
     /* LIST MODE */
 
