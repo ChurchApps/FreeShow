@@ -2,7 +2,7 @@
     import type { MediaStyle } from "../../../../types/Main"
     import type { BibleContent } from "../../../../types/Scripture"
     import type { Item } from "../../../../types/Show"
-    import { activeEdit, activePage, activeScripture, activeStyle, drawerTabsData, media, outputs, scriptureSettings, settingsTab, styles, templates } from "../../../stores"
+    import { activeEdit, activePage, activeScripture, activeStyle, drawerTabsData, media, outputs, scriptureSettings, settingsTab, styles, templates, theme, themes } from "../../../stores"
     import { setDefaultScriptureTemplates } from "../../../utils/createData"
     import { confirmCustom } from "../../../utils/popup"
     import { mediaExtensions } from "../../../values/extensions"
@@ -141,7 +141,7 @@
 
     $: containsJesusWords = Object.values(biblesContent?.[0]?.verses?.[0] || {})?.find((text: any) => text?.includes('<span class="wj"') || text?.includes("<red") || text?.includes("color:red;") || text?.includes("!{"))
     $: containsUndertitles = Object.values(biblesContent?.[0]?.verses?.[0] || {})?.find((text: any) => text?.includes('class="undertitle"'))
-    const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue("--secondary").trim() || "#F0008C"
+    $: secondaryColor = $themes[$theme]?.colors?.secondary || "#F0008C"
 
     $: previousSlides = "{}"
     let currentOutputSlides: any[] = []
