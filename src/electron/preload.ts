@@ -15,7 +15,9 @@ const LOG_MESSAGES: boolean = process.env.NODE_ENV !== "production"
 const filteredChannelsData: string[] = ["PLAYING_VIDEO_STATE", "VISUALIZER_DATA", "STREAM", "BUFFER", "GET_THUMBNAIL", "ACTIVE_TIMERS", "RECEIVE_STREAM", "CHECK_RAM_USAGE", "TIMECODE_VALUE", "TIMECODE_AUDIO_DATA", "SPOTIFY_GET_STATE"]
 const filteredChannels: ValidChannels[] = ["AUDIO"]
 
-const storedReceivers: { [key: string]: (e: IpcRendererEvent, args: any) => void } = {}
+const storedReceivers: {
+    [key: string]: (e: IpcRendererEvent, args: any) => void
+} = {}
 
 contextBridge.exposeInMainWorld("api", {
     send: (channel: ValidChannels, data: any, id?: string) => {
@@ -55,6 +57,14 @@ contextBridge.exposeInMainWorld("api", {
     showFilePath(file: File) {
         return webUtils.getPathForFile(file)
     }
+})
+
+// One port per window, handed over the first time the receiving process has a frame for it. It is
+// forwarded straight into the page instead of being read here: dispatching from the preload copies
+// every frame across the contextBridge again, which at 4K made frames arrive too old to be drawn.
+ipcRenderer.on("STREAM_PORT", (event) => {
+    if (!event.ports?.length) return
+    window.postMessage({ type: "STREAM_PORT" }, "*", [event.ports[0]])
 })
 
 ipcRenderer.on("AUDIO_PORT", (event, data) => {

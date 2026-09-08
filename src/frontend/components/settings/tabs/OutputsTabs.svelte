@@ -68,7 +68,7 @@
                 AudioAnalyser.recorderActivate()
             }
 
-            const captureTypeKeys = ["blackmagic", "ndi", "webrtc", "rtmp"]
+            const captureTypeKeys = ["blackmagic", "ndi", "omt", "webrtc", "rtmp"]
             if (out.enabled && (captureTypeKeys.includes(key) || key === "transparent" || key === "invisible")) {
                 if (value && captureTypeKeys.includes(key)) newToast("toast.output_capture_enabled")
                 // Recreate window for options fixed at creation (see Outputs.svelte)
@@ -132,11 +132,12 @@
         if (!skipPopup) {
             if (localType !== "window") {
                 updateOutput("invisible", true, outputId)
-                if (!localType && networkType === "ndi") updateOutput("transparent", true, outputId)
+                if (!localType && (networkType === "ndi" || networkType === "omt")) updateOutput("transparent", true, outputId)
             }
 
             if (localType === "blackmagic") updateOutput("blackmagic", true, outputId)
             if (networkType === "ndi") updateOutput("ndi", true, outputId)
+            else if (networkType === "omt") updateOutput("omt", true, outputId)
             else if (networkType === "webrtc") updateOutput("webrtc", true, outputId)
             else if (networkType === "rtmp") updateOutput("rtmp", true, outputId)
 

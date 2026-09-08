@@ -1,13 +1,13 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { NDI } from "../../../../types/Channels"
+    import { OMT } from "../../../../types/Channels"
     import { outputs } from "../../../stores"
     import { send } from "../../../utils/request"
     import { findMatchingOut } from "../../helpers/output"
     import Card from "../Card.svelte"
+    import SelectElem from "../../system/SelectElem.svelte"
     import { StreamCanvasRenderer } from "./streamCanvas"
     import { onStreamFrame } from "../../../utils/streamPort"
-    import SelectElem from "../../system/SelectElem.svelte"
 
     interface Screen {
         id: string
@@ -25,8 +25,8 @@
 
     onMount(() => {
         if (background) {
-            if (!mirror) send(NDI, ["CAPTURE_STREAM"], { source: screen, outputId: outputId || Object.keys($outputs)[0] })
-        } else send(NDI, ["RECEIVE_STREAM"], { source: screen })
+            if (!mirror) send(OMT, ["CAPTURE_STREAM"], { source: screen, outputId: outputId || Object.keys($outputs)[0] })
+        } else send(OMT, ["RECEIVE_STREAM"], { source: screen })
     })
 
     const renderer = new StreamCanvasRenderer()
@@ -42,11 +42,11 @@
         frame = data.frame
     }
 
-    const stopStream = onStreamFrame(NDI, receiveStream)
+    const stopStream = onStreamFrame(OMT, receiveStream)
     onDestroy(() => {
         renderer.destroy()
         stopStream()
-        if (background && !mirror) send(NDI, ["CAPTURE_DESTROY"], { id: screen.id, outputId: outputId || Object.keys($outputs)[0] })
+        if (background && !mirror) send(OMT, ["CAPTURE_DESTROY"], { id: screen.id, outputId: outputId || Object.keys($outputs)[0] })
     })
 
     let loaded = false
@@ -55,9 +55,8 @@
 {#if background}
     <canvas bind:this={canvas} />
 {:else}
-    <!-- class="context #screen_card" -->
-    <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} {loaded} icon="ndi" white showPlayOnHover>
-        <SelectElem style="display: flex;" id="ndi" data={{ id: screen.id, type: "ndi", name: screen.name }} draggable>
+    <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} {loaded} icon="omt" white showPlayOnHover>
+        <SelectElem style="display: flex;" id="omt" data={{ id: screen.id, type: "omt", name: screen.name }} draggable>
             <canvas bind:this={canvas} />
         </SelectElem>
     </Card>
@@ -67,7 +66,6 @@
     canvas {
         width: 100%;
         height: 100%;
-        /* aspect-ratio: 1920/1080; */
 
         object-fit: contain;
     }

@@ -11,6 +11,7 @@
     import { getStyleResolution } from "../../slide/getStyleResolution"
     import Capture from "../live/Capture.svelte"
     import NdiStream from "../live/NDIStream.svelte"
+    import OmtStream from "../live/OMTStream.svelte"
 
     export let name = ""
     export let path: string
@@ -163,6 +164,8 @@
             <Capture screen={{ id: path, name }} streams={[]} background />
         {:else if type === "ndi"}
             <NdiStream screen={{ id: path, name }} background />
+        {:else if type === "omt"}
+            <OmtStream screen={{ id: path, name }} background />
         {:else if readyToLoad}
             {#if ghost && !thumbnailPath}
                 <!-- show nothing if ghost without thumbnail -->

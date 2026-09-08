@@ -1,6 +1,7 @@
 import type { OpusEncoder as TOpusEncoder } from "@discordjs/opus"
 import { BlackmagicSender } from "../blackmagic/BlackmagicSender"
 import { NdiSender } from "../ndi/NdiSender"
+import { OmtSender } from "../omt/OmtSender"
 import { getServerData, toServer } from "../servers"
 import { RtmpStreamer } from "../streaming/RtmpStreamer"
 import { WebRtcHost } from "../streaming/WebRtcHost"
@@ -36,6 +37,11 @@ export async function processAudio(buffer: Buffer, sampleRate: number = 48000, t
         } else {
             NdiSender.sendAudioBufferNDI(buffer, { sampleRate: sr, channelCount: channelCount2 })
         }
+    }
+
+    // Route to OMT the same way (same planar Float32 buffer contract as NDI)
+    if (!tid || Object.keys(OmtSender.OMT).includes(tid)) {
+        OmtSender.sendAudioBufferOMT(buffer, { sampleRate: sr, channelCount: channelCount2 })
     }
 
     const normalizedIcecast = icecast && icecast.enabled !== false ? icecast : null

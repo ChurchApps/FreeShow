@@ -3,6 +3,7 @@ import { mainWindow, powerSaveBlockerId, resetMainWindow } from ".."
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendMain, sendToMain } from "../IPC/main"
+import { StreamReceiverHost } from "../capture/StreamReceiverHost"
 import { NdiReceiver } from "../ndi/NdiReceiver"
 import { OutputHelper } from "../output/OutputHelper"
 import { closeServers } from "../servers"
@@ -34,6 +35,7 @@ export async function exitApp() {
     RtmpStreamer.stopAll()
     await OutputHelper.Lifecycle.closeAllOutputs()
     NdiReceiver.stopReceiversNDI()
+    StreamReceiverHost.stop()
 
     closeServers()
     stopApiListener()

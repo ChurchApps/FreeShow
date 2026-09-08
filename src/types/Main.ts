@@ -98,6 +98,7 @@ export type SelectIds =
     | "effect"
     | "screen"
     | "ndi"
+    | "omt"
     | "camera"
     | "microphone"
     | "player"

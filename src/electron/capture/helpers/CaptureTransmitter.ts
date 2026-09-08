@@ -4,6 +4,7 @@ import { OUTPUT_STREAM } from "../../../types/Channels"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 import { NdiSender } from "../../ndi/NdiSender"
 import util from "../../ndi/vingester-util"
+import { OmtSender } from "../../omt/OmtSender"
 import { OutputHelper } from "../../output/OutputHelper"
 import { getConnections, getStageStreamSubscriberIds, toServer, toStageStreamSubscribers } from "../../servers"
 import { RtmpStreamer } from "../../streaming/RtmpStreamer"
@@ -52,7 +53,7 @@ export class CaptureTransmitter {
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
         if (!captureOptions) return
 
-        const channelKeys = ["ndi", "blackmagic", "server", "stage", "webrtc", "rtmp"]
+        const channelKeys = ["ndi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp"]
         channelKeys.forEach((key) => {
             if (captureOptions.options[key]) this.startChannel(captureId, key)
         })
@@ -92,19 +93,20 @@ export class CaptureTransmitter {
             const transparent = OutputHelper.getOutput(captureId)?.transparent === true
             return transparent ? 2 : 1
         }
+        if (only === "omt") return OutputHelper.getOutput(captureId)?.transparent === true ? 2 : 1
         if (only === "blackmagic" && size && BlackmagicSender.canAcceptRawUyvy(captureId, size)) return 1
         if (only === "webrtc") return 3
         return 0
     }
 
-    // Returns non-NDI consumers eligible for off-main capture (server/stage), or null if full-res path needed
+    // Returns non-NDI/OMT consumers eligible for off-main capture (server/stage), or null if full-res path needed
     static getHeavyOffMainConsumers(captureId: string): string[] | null {
-        const nonNdi = Object.keys(this.channels)
+        const heavy = Object.keys(this.channels)
             .filter((k) => k.startsWith(`${captureId}-`))
             .map((k) => this.channels[k].key)
-            .filter((key) => key !== "ndi")
-        if (nonNdi.some((key) => key !== "server" && key !== "stage")) return null
-        return nonNdi
+            .filter((key) => key !== "ndi" && key !== "omt")
+        if (heavy.some((key) => key !== "server" && key !== "stage")) return null
+        return heavy
     }
 
     // Downscale target for server/stage previews
@@ -118,12 +120,12 @@ export class CaptureTransmitter {
     static groupOffMainInfo(memberIds: string[]): { eligible: boolean; needsScaled: boolean } {
         let needsScaled = false
         for (const id of memberIds) {
-            const nonNdi = Object.keys(this.channels)
+            const heavy = Object.keys(this.channels)
                 .filter((k) => k.startsWith(`${id}-`))
                 .map((k) => this.channels[k].key)
-                .filter((key) => key !== "ndi")
-            if (nonNdi.some((key) => key !== "server" && key !== "stage")) return { eligible: false, needsScaled: false }
-            if (nonNdi.length) needsScaled = true
+                .filter((key) => key !== "ndi" && key !== "omt")
+            if (heavy.some((key) => key !== "server" && key !== "stage")) return { eligible: false, needsScaled: false }
+            if (heavy.length) needsScaled = true
         }
         return { eligible: true, needsScaled }
     }
@@ -256,7 +258,7 @@ export class CaptureTransmitter {
 
     // buffer-consumers need only raw BGRA bytes (no NativeImage resize/toJPEG), so on the shared-texture
     // path they can take the readback buffer directly instead of a createFromBitmap -> toBitmap round-trip.
-    private static readonly BUFFER_CONSUMERS = new Set(["ndi", "webrtc", "rtmp", "blackmagic"])
+    private static readonly BUFFER_CONSUMERS = new Set(["ndi", "omt", "webrtc", "rtmp", "blackmagic"])
 
     private static osrModule: any = null
     private static loadOsr(): any {
@@ -346,6 +348,9 @@ export class CaptureTransmitter {
             case "ndi":
                 this.sendRawToNdi(captureId, buffer, size, format)
                 break
+            case "omt":
+                this.sendRawToOmt(captureId, buffer, size, format)
+                break
             case "webrtc":
                 this.sendRawToWebRtc(captureId, buffer, size, format)
                 break
@@ -387,6 +392,16 @@ export class CaptureTransmitter {
         NdiSender.sendVideoBufferNDI(captureId, Buffer.from(buffer), { size, ratio, framerate, transparent, format })
     }
 
+    private static sendRawToOmt(captureId: string, buffer: Buffer, size: Size, format: number) {
+        if (!OmtSender.OMT[captureId]?.sender) return
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("omt", captureId, buffer, size)) return
+        const output = OutputHelper.getOutput(captureId)
+        const ratio = size.height ? size.width / size.height : 16 / 9
+        const transparent = output?.transparent !== false
+        const framerate = output?.captureOptions?.framerates?.omt || 30
+        OmtSender.sendVideoBufferOMT(captureId, Buffer.from(buffer), { size, ratio, framerate, transparent, format })
+    }
+
     private static sendRawToWebRtc(captureId: string, buffer: Buffer, size: Size, format = 0) {
         if (!WebRtcHost.isRunning()) return
         if (this.shouldSkipUnchangedNonBlackmagicFrame("webrtc", captureId, buffer, size)) return
@@ -405,14 +420,38 @@ export class CaptureTransmitter {
         RtmpStreamer.updateFrame(captureId, Buffer.from(buffer), size)
     }
 
+    // The render surface is the window's logical bounds times the display scale, so on a scaled display
+    // its pixel size can miss the configured resolution (and land on an odd width, which the NDI/OMT
+    // encoders refuse). The wire senders get the configured resolution, whatever the surface produced.
+    private static sizeMismatchLogged: { [captureId: string]: string } = {}
+    private static toConfiguredSize(captureId: string, image: NativeImage): { image: NativeImage; size: Size } {
+        const size = image.getSize()
+        const intended = OutputHelper.getOutput(captureId)?.intendedBounds
+        if (!intended?.width || !intended?.height || (intended.width === size.width && intended.height === size.height)) return { image, size }
+        const target = { width: intended.width, height: intended.height }
+        const tag = `${size.width}x${size.height}->${target.width}x${target.height}`
+        if (this.sizeMismatchLogged[captureId] !== tag) {
+            this.sizeMismatchLogged[captureId] = tag
+            console.warn(`Output ${captureId} rendered ${size.width}x${size.height} but is configured ${target.width}x${target.height}; resampling frames for NDI/OMT`)
+        }
+        return { image: image.resize({ ...target, quality: "good" }), size: target }
+    }
+
     private static sendFrameToChannel(captureId: string, key: string, image: NativeImage) {
         const size = image.getSize()
         if (!size.width || !size.height) return
 
         switch (key) {
-            case "ndi":
-                this.sendBufferToNdi(captureId, image, { size })
+            case "ndi": {
+                const fitted = this.toConfiguredSize(captureId, image)
+                this.sendBufferToNdi(captureId, fitted.image, { size: fitted.size })
                 break
+            }
+            case "omt": {
+                const fitted = this.toConfiguredSize(captureId, image)
+                this.sendBufferToOmt(captureId, fitted.image, { size: fitted.size })
+                break
+            }
             case "blackmagic":
                 this.sendBufferToBlackmagic(captureId, image)
                 break
@@ -456,6 +495,24 @@ export class CaptureTransmitter {
         const framerate = output?.captureOptions?.framerates?.ndi || 30
 
         NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate, transparent })
+    }
+
+    // OMT
+    static sendBufferToOmt(captureId: string, image: NativeImage, { size }: { size: { width: number; height: number } }) {
+        if (!OmtSender.OMT[captureId]?.sender) return
+        // skip the toBitmap readback for frames the busy worker would drop anyway
+        if (OmtSender.isBusyOMT(captureId)) return
+
+        const buffer = image.toBitmap()
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("omt", captureId, buffer, size)) return
+
+        const output = OutputHelper.getOutput(captureId)
+        const ratio = image.getAspectRatio()
+        const transparent = output?.transparent !== false
+        const framerate = output?.captureOptions?.framerates?.omt || 30
+
+        // toBitmap always yields BGRA
+        OmtSender.sendVideoBufferOMT(captureId, buffer, { size, ratio, framerate, transparent, format: 0 })
     }
 
     private static convertToRGBA(buffer: Buffer): void {

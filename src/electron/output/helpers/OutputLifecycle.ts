@@ -3,10 +3,14 @@ import { OUTPUT_CONSOLE, getMainWindow, hardwareAccelerationDisabled, isMac, loa
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
+import { gpuCompositingAvailable, gpuStateSettled } from "../../utils/gpu"
 import { initializeSender } from "../../blackmagic/bmdTalk"
 import { CaptureHelper } from "../../capture/CaptureHelper"
+import { SenderCapture } from "../../capture/SenderCapture"
 import { NdiSender } from "../../ndi/NdiSender"
 import { setDataNDI } from "../../ndi/talk"
+import { OmtSender } from "../../omt/OmtSender"
+import { setDataOMT } from "../../omt/talk"
 import { wait } from "../../utils/helpers"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
@@ -84,6 +88,7 @@ export class OutputLifecycle {
     }
 
     static async createOutput(output: Output, groupRetries = 0) {
+        await gpuStateSettled // the offscreen capture mode depends on the real GPU state
         const id: string = output.id || ""
         if (!id) return
 
@@ -134,13 +139,19 @@ export class OutputLifecycle {
             delete this.pendingCaptureStart[id]
 
             if (!CaptureHelper.Lifecycle || !OutputHelper.getOutput(id)) return // window closed before timeout finished
-            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, blackmagic: !!output.blackmagic, webrtc: !!output.webrtcData?.streaming, rtmp: !!output.rtmpData?.streaming })
+            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, omt: output.omt || false, blackmagic: !!output.blackmagic, webrtc: !!output.webrtcData?.streaming, rtmp: !!output.rtmpData?.streaming })
         }, 1200)
 
         // NDI
         if (output.ndi) {
             await NdiSender.createSenderNDI(id, NdiSender.initNameNDI(output.ndiData?.name, output.name), output.ndiData?.groups)
             if (output.ndiData) setDataNDI({ id, ...output.ndiData })
+        }
+
+        // OMT
+        if (output.omt) {
+            await OmtSender.createSenderOMT(id, OmtSender.initNameOMT(output.omtData?.name, output.name), output.omtData?.quality)
+            if (output.omtData) setDataOMT({ id, ...output.omtData })
         }
 
         // Blackmagic
@@ -150,7 +161,7 @@ export class OutputLifecycle {
     // only NDI capture outputs share a render; blackmagic/webrtc/rtmp need dedicated capture,
     // and displayed (non-OSR) outputs need their own window
     private static canShareRender(output: Output): boolean {
-        return !!output.ndi && !output.blackmagic && !output.webrtcData?.streaming && !output.rtmpData?.streaming && this.isOsrOutput(output)
+        return !!output.ndi && !output.omt && !output.blackmagic && !output.webrtcData?.streaming && !output.rtmpData?.streaming && this.isOsrOutput(output)
     }
 
     private static async createFollowerOutput(id: string, output: Output, rendererId: string, rendererWindow: BrowserWindow) {
@@ -198,9 +209,10 @@ export class OutputLifecycle {
         const osr = this.isOsrOutput(extra)
         if (osr) {
             options.show = false
-            const useSharedTexture = !!this.getOsrCaptureAddon() && !this.isHardwareAccelerationDisabled()
+            const useSharedTexture = this.useSharedTextureCapture()
             const wp: any = { ...outputOptions.webPreferences, offscreen: useSharedTexture ? { useSharedTexture: true } : true }
             options.webPreferences = wp
+            this.avoidLinuxDisplaySizeShrink(options)
         }
 
         if (options.alwaysOnTop === false) {
@@ -228,8 +240,26 @@ export class OutputLifecycle {
         return window
     }
 
-    private static isOsrOutput(output: { ndi?: boolean; webrtc?: boolean; rtmp?: boolean; blackmagic?: boolean }): boolean {
-        return !!(output.ndi || output.webrtc || output.rtmp || output.blackmagic)
+    // Chromium's X11 backend (X11Window::AdjustSizeForDisplay) subtracts 1px from a window whose
+    // requested size exactly equals a monitor's pixel size, so WMs don't treat it as fullscreen. That
+    // makes an offscreen capture window for a 1920x1080 output on a 1920x1080 screen render 1919x1079
+    // — an odd width the NDI/OMT (VMX) encoder refuses, so the receiver connects but gets no video.
+    // An offscreen window is never WM-managed, so nudge its requested size off the exact display match.
+    // No-op off Linux and whenever the size already differs from every display.
+    private static avoidLinuxDisplaySizeShrink(options: BrowserWindowConstructorOptions) {
+        if (process.platform !== "linux" || !options.width || !options.height) return
+        const matchesDisplay = screen.getAllDisplays().some((d) => {
+            const sf = d.scaleFactor || 1
+            return Math.round(d.size.width * sf) === options.width && Math.round(d.size.height * sf) === options.height
+        })
+        if (matchesDisplay) {
+            options.width! += 1
+            options.height! += 1
+        }
+    }
+
+    private static isOsrOutput(output: { ndi?: boolean; omt?: boolean; webrtc?: boolean; rtmp?: boolean; blackmagic?: boolean }): boolean {
+        return !!(output.ndi || output.omt || output.webrtc || output.rtmp || output.blackmagic)
     }
 
     static readonly OSR_RENDER_FPS = 60
@@ -241,11 +271,10 @@ export class OutputLifecycle {
             // ignore
         }
 
-        // must match the useSharedTexture condition in createOutputWindow: with HWA off the paints are
-        // CPU frames, so attach the CPU handler instead of the shared-texture one
+        // must match the window's offscreen mode from createOutputWindow: CPU-mode paints are bitmaps,
+        // so attach the CPU handler instead of the shared-texture one
         const addon = this.getOsrCaptureAddon()
-        const useSharedTexture = !!addon && !this.isHardwareAccelerationDisabled()
-        if (useSharedTexture) this.attachOsrSharedTexture(window, id, addon)
+        if (this.useSharedTextureCapture()) this.attachOsrSharedTexture(window, id, addon)
         else this.attachOsrCpu(window, id)
 
         // Linux begin-frame drive; CaptureHelper.updateRenderRate re-drives it when the rate changes
@@ -329,6 +358,21 @@ export class OutputLifecycle {
 
     static isHardwareAccelerationDisabled(): boolean {
         return hardwareAccelerationDisabled
+    }
+
+    // Shared-texture offscreen capture needs the readback addon AND a GPU that Chromium is actually
+    // compositing with. A machine without a usable GPU driver (software compositing) gets CPU-bitmap
+    // offscreen capture, the same as when the user disables acceleration.
+    private static captureModeLogged = false
+    private static useSharedTextureCapture(): boolean {
+        const addon = !!this.getOsrCaptureAddon()
+        const gpu = gpuCompositingAvailable()
+        const shared = addon && gpu
+        if (!this.captureModeLogged) {
+            this.captureModeLogged = true
+            console.info(`[OSR] capture mode: ${shared ? "gpu shared-texture" : "cpu bitmap"} (readback addon=${addon ? "yes" : "no"}, gpu compositing=${gpu ? "hardware" : hardwareAccelerationDisabled ? "disabled in settings" : "software/unavailable"})`)
+        }
+        return shared
     }
 
     // lazily load the native shared-texture readback addon; null -> CPU offscreen capture fallback
@@ -598,15 +642,20 @@ export class OutputLifecycle {
             const framerate = output?.captureOptions?.framerates?.ndi || 30
             const ratio = height ? width / height : 16 / 9
             const transparent = output?.transparent === true
+            const hasOmt = !!OmtSender.OMT[id]?.sender
+            const omtFramerate = output?.captureOptions?.framerates?.omt || framerate
             const fmt = transparent ? 2 : 1
             const members = NdiSender.NDI[id]?.sender ? RenderGroups.members(id).filter((m) => m === id || (OutputHelper.getOutput(m) as any)?.renderGroupRenderer === id) : []
             const memberFramerates: { [m: string]: number } = {}
             for (const m of members) memberFramerates[m] = OutputHelper.getOutput(m)?.captureOptions?.framerates?.ndi || framerate
-            const groupInfo = members.length ? CaptureHelper.Transmitter.groupOffMainInfo(members) : null
+            const groupIds = members.length ? members : hasOmt ? [id] : []
+            const groupInfo = groupIds.length ? CaptureHelper.Transmitter.groupOffMainInfo(groupIds) : null
             const mixed = !!groupInfo && groupInfo.eligible && groupInfo.needsScaled && typeof addon.readbackConsume === "function"
             const scaled = mixed ? CaptureHelper.Transmitter.getScaledTarget({ width, height }) : null
             const seq = ++offMainSeq
-            if (NdiSender.captureFrameNDI(id, source, { size: { width, height }, ratio, framerate, memberFramerates, format: fmt, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members, depth: OutputLifecycle.depthFor(id) })) {
+            // an output sends on one protocol, and each has its own worker
+            const captureOpts = { size: { width, height }, ratio, framerate: hasOmt ? omtFramerate : framerate, memberFramerates, format: fmt, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members, depth: OutputLifecycle.depthFor(id) }
+            if (hasOmt ? OmtSender.captureFrameOMT(id, source, captureOpts) : NdiSender.captureFrameNDI(id, source, captureOpts)) {
                 forwardAt.set(seq, { t: Date.now(), unc: OutputLifecycle.globalInFlight === 0, px: width * height })
                 OutputLifecycle.globalInFlight++
                 offMainInFlight++
@@ -676,10 +725,10 @@ export class OutputLifecycle {
 
         // the worker signals releaseTexture as soon as the GPU has consumed the shared texture (well before
         // the slow read finishes), so Electron's frame pool isn't starved -> keeps the main process responsive
-        NdiSender.releaseTextureCallbacks[id] = releaseHeldSeq
+        SenderCapture.releaseTextureCallbacks[id] = releaseHeldSeq
         // captureDone = the whole capture (incl. the slow read) is finished -> a pipeline slot frees up.
         // The forwardAt ledger dedupes: in-flight counters only move for a seq this map still tracks.
-        NdiSender.captureDoneCallbacks[id] = (seq: number, tl?: { recv: number; cS: number; cE: number; fS: number; fE: number; enq: number } | null) => {
+        SenderCapture.captureDoneCallbacks[id] = (seq, tl) => {
             releaseHeldSeq(seq)
             const now = Date.now()
             const fwd = forwardAt.get(seq)
@@ -747,7 +796,8 @@ export class OutputLifecycle {
             const requestedFormat = CaptureHelper.Transmitter.getReadbackFormat(id, { width, height })
 
             const members = NdiSender.NDI[id]?.sender ? RenderGroups.members(id).filter((m) => m === id || (OutputHelper.getOutput(m) as any)?.renderGroupRenderer === id) : []
-            const groupInfo = members.length ? CaptureHelper.Transmitter.groupOffMainInfo(members) : null
+            const offMainIds = members.length ? members : OmtSender.OMT[id]?.sender ? [id] : []
+            const groupInfo = offMainIds.length ? CaptureHelper.Transmitter.groupOffMainInfo(offMainIds) : null
             const hasGpuDownscale = typeof addon.readbackConsume === "function"
             const canOffMain = !!groupInfo && groupInfo.eligible && (!groupInfo.needsScaled || hasGpuDownscale)
             if (canOffMain) {
@@ -809,8 +859,8 @@ export class OutputLifecycle {
             offMainInFlight = 0
             this.offMain.delete(id)
             this.offMainRendererCount = Math.max(0, this.offMainRendererCount - 1)
-            delete NdiSender.captureDoneCallbacks[id]
-            delete NdiSender.releaseTextureCallbacks[id]
+            delete SenderCapture.captureDoneCallbacks[id]
+            delete SenderCapture.releaseTextureCallbacks[id]
             heldTextures.forEach((t) => releaseTex(t))
             heldTextures.clear()
             if (OutputLifecycle.osrTextureCleanup[id] === teardown) delete OutputLifecycle.osrTextureCleanup[id]
@@ -879,6 +929,7 @@ export class OutputLifecycle {
 
         CaptureHelper.Lifecycle.stopCapture(id)
         NdiSender.stopSenderNDI(id)
+        OmtSender.stopSenderOMT(id)
         BlackmagicSender.stop(id)
         // free the addon's reused readback buffers for this output (no-op if the addon/pool isn't present)
         try {
