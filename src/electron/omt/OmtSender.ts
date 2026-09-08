@@ -1,13 +1,15 @@
+import { join } from "path"
+import { Worker } from "worker_threads"
 import { toApp } from ".."
 import { CaptureHelper } from "../capture/CaptureHelper"
-import { NdiSender } from "../ndi/NdiSender"
+import { SenderCapture, type CaptureFrameOpts } from "../capture/SenderCapture"
 import { ensureOmtCodecSearchPath } from "./omtModule"
 
 // Resources:
 // https://github.com/openmediatransport/libomtnet
 // https://github.com/schplay/openmediatransport-node
 
-// OMT sender proxy: delegates OMT encoding and dispatch to the shared NDI/OMT worker thread (../ndi/ndiWorker)
+// OMT sender proxy: delegates OMT encoding and dispatch to a worker thread (./omtWorker)
 
 export class OmtSender {
     private static readonly MAX_INFLIGHT_SENDS = 3
@@ -25,17 +27,34 @@ export class OmtSender {
         }
     } = {}
 
-    private static handlerRegistered = false
-    private static getWorker() {
-        if (!this.handlerRegistered) {
-            NdiSender.auxMessageHandler = (msg: any) => this.onWorkerMessage(msg)
-            this.handlerRegistered = true
+    private static worker: Worker | null = null
+
+    private static getWorker(): Worker | null {
+        if (this.worker) return this.worker
+
+        try {
+            this.worker = new Worker(join(__dirname, "omtWorker.js"), {
+                env: { ...process.env, UV_THREADPOOL_SIZE: "32" }
+            })
+            this.worker.on("message", (msg: any) => this.onWorkerMessage(msg))
+            this.worker.on("error", (err) => console.error("OMT worker error:", err))
+            this.worker.on("exit", (code) => {
+                if (code !== 0) console.error(`OMT worker exited with code ${code}`)
+                this.worker = null
+                this.OMT = {}
+            })
+        } catch (err) {
+            console.error("Could not start OMT worker:", err)
+            this.worker = null
         }
-        return NdiSender.getSharedWorker()
+
+        return this.worker
     }
 
     private static onWorkerMessage(msg: any) {
-        if (msg.type === "statusOmt") {
+        if (!msg?.type) return
+        if (SenderCapture.handleMessage(msg)) return
+        if (msg.type === "status") {
             const data = this.OMT[msg.id]
             if (!data) return
 
@@ -47,9 +66,9 @@ export class OmtSender {
                 CaptureHelper.updateFramerate(msg.id)
                 data.previousStatus = newStatus
             }
-        } else if (msg.type === "createFailedOmt") {
+        } else if (msg.type === "createFailed") {
             delete this.OMT[msg.id]
-        } else if (msg.type === "videoDoneOmt") {
+        } else if (msg.type === "videoDone") {
             const data = this.OMT[msg.id]
             if (data) data.inFlight = Math.max(0, (data.inFlight ?? 0) - 1)
         }
@@ -74,14 +93,21 @@ export class OmtSender {
         if (!worker) return
 
         this.OMT[id] = { name, quality, sender: true, status: "unconnected" }
-        worker.postMessage({ type: "createOmt", id, name, quality })
+        worker.postMessage({ type: "create", id, name, quality })
     }
 
     static stopSenderOMT(id: string) {
         if (!this.OMT[id]) return
 
         delete this.OMT[id]
-        NdiSender.getSharedWorker()?.postMessage({ type: "destroyOmt", id })
+        this.worker?.postMessage({ type: "destroy", id })
+    }
+
+    // the worker reads the output's shared texture back, converts and sends it
+    static captureFrameOMT(id: string, source: any, opts: CaptureFrameOpts) {
+        if (!this.OMT[id]?.sender || !this.getWorker()) return false
+        this.worker!.postMessage({ type: "captureFrame", id, source, opts })
+        return true
     }
 
     // transferred zero-copy when the buffer owns its whole ArrayBuffer, copied otherwise (a transfer must never detach a pooled buffer)
@@ -98,7 +124,7 @@ export class OmtSender {
         } else {
             arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer
         }
-        worker.postMessage({ type: "videoOmt", id, buffer: arrayBuffer, byteOffset: 0, byteLength: arrayBuffer.byteLength, opts: { size, ratio, framerate, transparent, format } }, [arrayBuffer])
+        worker.postMessage({ type: "video", id, buffer: arrayBuffer, byteOffset: 0, byteLength: arrayBuffer.byteLength, opts: { size, ratio, framerate, transparent, format } }, [arrayBuffer])
     }
 
     // planar Float32 LE (the processAudio contract) is OMT's FPA1 format directly; clone rather than transfer, as these may be pooled
@@ -107,6 +133,6 @@ export class OmtSender {
         const worker = hasSender ? this.getWorker() : null
         if (!worker || !buffer || buffer.length === 0) return
 
-        worker.postMessage({ type: "audioOmt", buffer: buffer.buffer, byteOffset: buffer.byteOffset, byteLength: buffer.byteLength, opts: { sampleRate, channelCount } })
+        worker.postMessage({ type: "audio", buffer: buffer.buffer, byteOffset: buffer.byteOffset, byteLength: buffer.byteLength, opts: { sampleRate, channelCount } })
     }
 }

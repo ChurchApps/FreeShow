@@ -158,9 +158,6 @@
         updateOutput("omtData", newData)
 
         send(OMT, ["OMT_DATA"], { id, ...newData })
-
-        // the encoder's quality is fixed when a sender is created, so changing it restarts the stream
-        if (key === "quality" || key === "name") newToast("toast.omt_reconnect")
     }
 
     // webrtc

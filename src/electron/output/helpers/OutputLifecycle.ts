@@ -6,6 +6,7 @@ import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 import { gpuCompositingAvailable, gpuStateSettled } from "../../utils/gpu"
 import { initializeSender } from "../../blackmagic/bmdTalk"
 import { CaptureHelper } from "../../capture/CaptureHelper"
+import { SenderCapture } from "../../capture/SenderCapture"
 import { NdiSender } from "../../ndi/NdiSender"
 import { setDataNDI } from "../../ndi/talk"
 import { OmtSender } from "../../omt/OmtSender"
@@ -652,7 +653,9 @@ export class OutputLifecycle {
             const mixed = !!groupInfo && groupInfo.eligible && groupInfo.needsScaled && typeof addon.readbackConsume === "function"
             const scaled = mixed ? CaptureHelper.Transmitter.getScaledTarget({ width, height }) : null
             const seq = ++offMainSeq
-            if (NdiSender.captureFrameNDI(id, source, { size: { width, height }, ratio, framerate, memberFramerates, format: fmt, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members, depth: OutputLifecycle.depthFor(id), omt: hasOmt, omtFramerate })) {
+            // an output sends on one protocol, and each has its own worker
+            const captureOpts = { size: { width, height }, ratio, framerate: hasOmt ? omtFramerate : framerate, memberFramerates, format: fmt, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members, depth: OutputLifecycle.depthFor(id) }
+            if (hasOmt ? OmtSender.captureFrameOMT(id, source, captureOpts) : NdiSender.captureFrameNDI(id, source, captureOpts)) {
                 forwardAt.set(seq, { t: Date.now(), unc: OutputLifecycle.globalInFlight === 0, px: width * height })
                 OutputLifecycle.globalInFlight++
                 offMainInFlight++
@@ -722,10 +725,10 @@ export class OutputLifecycle {
 
         // the worker signals releaseTexture as soon as the GPU has consumed the shared texture (well before
         // the slow read finishes), so Electron's frame pool isn't starved -> keeps the main process responsive
-        NdiSender.releaseTextureCallbacks[id] = releaseHeldSeq
+        SenderCapture.releaseTextureCallbacks[id] = releaseHeldSeq
         // captureDone = the whole capture (incl. the slow read) is finished -> a pipeline slot frees up.
         // The forwardAt ledger dedupes: in-flight counters only move for a seq this map still tracks.
-        NdiSender.captureDoneCallbacks[id] = (seq: number, tl?: { recv: number; cS: number; cE: number; fS: number; fE: number; enq: number } | null) => {
+        SenderCapture.captureDoneCallbacks[id] = (seq, tl) => {
             releaseHeldSeq(seq)
             const now = Date.now()
             const fwd = forwardAt.get(seq)
@@ -856,8 +859,8 @@ export class OutputLifecycle {
             offMainInFlight = 0
             this.offMain.delete(id)
             this.offMainRendererCount = Math.max(0, this.offMainRendererCount - 1)
-            delete NdiSender.captureDoneCallbacks[id]
-            delete NdiSender.releaseTextureCallbacks[id]
+            delete SenderCapture.captureDoneCallbacks[id]
+            delete SenderCapture.releaseTextureCallbacks[id]
             heldTextures.forEach((t) => releaseTex(t))
             heldTextures.clear()
             if (OutputLifecycle.osrTextureCleanup[id] === teardown) delete OutputLifecycle.osrTextureCleanup[id]
