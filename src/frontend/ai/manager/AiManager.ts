@@ -7,6 +7,7 @@ import { getFirstActiveOutput } from "../../components/helpers/output"
 import { ai, aiSmartAction, aiSuggestions, drawerTabsData, outputs } from "../../stores"
 import { getLLMManager } from "../llm/llmManager"
 import { BibleCacheManager } from "../scripture/BibleCacheManager"
+import { isReferenceWithin } from "../scripture/references"
 
 export interface MatchResult {
     type: "scripture" | "lyrics" | "quote" | "announcement" | "empty"
@@ -94,15 +95,13 @@ export class AiManager {
     }
 
     private static alreadySuggested(match: MatchResult): boolean {
-        // const currentlyPresented = AiManager.liveContent
-
         // get suggested, but remove any suggestions that have lower confidence than the current match
         const suggested = get(aiSuggestions)
             .filter((a) => a.content !== match.content || a.confidence >= match.confidence)
+            .filter((a) => !isReferenceWithin(match.content, a.content))
             .map((item) => item.content)
-        return suggested.includes(match.content)
 
-        // TODO: filter out "Matthew 7:1-2" if outputted is "Matthew 7:1-6"?
+        return suggested.includes(match.content)
     }
 
     private static MAX_AUTO_PLAY_INTERVAL = 30000

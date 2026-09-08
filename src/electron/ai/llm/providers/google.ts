@@ -1,11 +1,11 @@
 import axios from "axios"
 import type { LLMCompletionOptions } from "../../../../types/ai/Ai"
-import { APIModel } from "./APIModel"
+import { APIModel, type ModelOption } from "./APIProvider"
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 
-export class GeminiProvider extends APIModel {
-    readonly id = "gemini"
+class GoogleProvider extends APIModel {
+    readonly id = "google"
     readonly fallbackModel = "gemini-3.1-flash-lite"
 
     private getHeaders(apiKey: string) {
@@ -21,6 +21,25 @@ export class GeminiProvider extends APIModel {
             if (key !== "additionalProperties") copy[key] = this.removeAdditionalProperties(schema[key])
         })
         return copy
+    }
+
+    async fetchModels(apiKey: string): Promise<ModelOption[]> {
+        if (!apiKey) return []
+        try {
+            const response = await axios.get(API_BASE, {
+                headers: this.getHeaders(apiKey),
+                timeout: this.REQUEST_TIMEOUT
+            })
+            const models = Array.isArray(response.data?.models) ? response.data.models : []
+            return models
+                .filter((m: any) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes("generateContent"))
+                .map((m: any) => ({
+                    id: typeof m.name === "string" ? m.name.replace(/^models\//, "") : m.name,
+                    name: m.displayName || m.name
+                }))
+        } catch {
+            return []
+        }
     }
 
     async testConnection(apiKey: string, model: string) {
@@ -76,4 +95,4 @@ export class GeminiProvider extends APIModel {
     }
 }
 
-export const geminiProvider = new GeminiProvider()
+export const googleProvider = new GoogleProvider()

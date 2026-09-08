@@ -13,6 +13,7 @@
     import Tip from "../../../components/main/Tip.svelte"
     import { requestMain, sendMain } from "../../../IPC/main"
     import { ai, mediaDownloads, os } from "../../../stores"
+    import { newToast } from "../../../utils/common"
     import { customLanguageModels, WHISPER_LANGUAGES, whisperModels } from "../../stt/whisperData"
 
     const engine = "whisper"
@@ -36,6 +37,7 @@
     async function getStatus() {
         const result = await requestMain(Main.AI_GET_STATUS, { engineId: engine, customPath: engineOptions.customPath || undefined })
         status = result?.[engine] || null
+        if (status?.[engine]?.error) newToast(status?.[engine]?.error)
     }
 
     onMount(() => {
@@ -188,11 +190,11 @@
         </InputRow>
     {:else if platform === "darwin"}
         <InputRow>
-            <Tip type="info" value="ai.whisper_mac_guide" style="padding: 6px;flex: 1;" />
+            <Tip type="info" value="Install with Homebrew by running this command in the Terminal:" style="padding: 6px;flex: 1;" />
 
             <MaterialFilePicker label="" title="inputs.custom_path" value={engineOptions.customPath || ""} filter={{ name: "whisper-cli", extensions: ["*"] }} icon="folder" style="width: initial;padding: 0 8px;" on:change={(e) => verifyCustomPath(e.detail || "")} noLabel allowEmpty />
 
-            <MaterialButton variant="outlined" icon="refresh" title="ai.check_again" on:click={getStatus} />
+            <MaterialButton variant="outlined" icon="refresh" title="Refresh" on:click={getStatus} />
         </InputRow>
 
         <InputRow>
@@ -201,8 +203,8 @@
         </InputRow>
     {:else}
         <InputRow>
-            <Tip type="info" value="ai.whisper_linux_guide" style="padding: 6px;flex: 1;" />
-            <MaterialButton variant="outlined" icon="refresh" title="ai.check_again" on:click={getStatus} />
+            <Tip type="info" value="Install whisper.cpp with your package manager, or select the whisper-cli binary below" style="padding: 6px;flex: 1;" />
+            <MaterialButton variant="outlined" icon="refresh" title="Refresh" on:click={getStatus} />
         </InputRow>
 
         <MaterialFilePicker label="inputs.custom_path" value={engineOptions.customPath || ""} filter={{ name: "whisper-cli", extensions: ["*"] }} icon="folder" on:change={(e) => verifyCustomPath(e.detail || "")} allowEmpty />
@@ -237,12 +239,12 @@
         </InputRow>
     {/if}
 
-    <!-- WIP interpretation -->
+    <!-- WIP interpretation (we might remove Whisper all together) -->
     <InputRow style="margin-top: 10px;" arrow={interpretationMode}>
-        <MaterialToggleSwitch label="ai.interpretation" checked={engineOptions.interpretationMode === true} defaultValue={false} style="width: 100%;" on:change={(e) => toggleInterpretation(e.detail)} />
+        <MaterialToggleSwitch label="Interpretation mode" checked={engineOptions.interpretationMode === true} defaultValue={false} style="width: 100%;" on:change={(e) => toggleInterpretation(e.detail)} />
 
         <svelte:fragment slot="menu">
-            <p class="faded hint"><T id="ai.interpretation_hint" /></p>
+            <p class="faded hint"><T id="For services with live interpretation: everything is transcribed, but scriptures are only detected from the language selected below." /></p>
 
             <p class="listLabel"><T id="captions.language" /> ({spokenLanguages.length})</p>
             <div class="languageList">
@@ -250,10 +252,10 @@
                     <MaterialCheckbox label={spoken.name} checked={spokenLanguages.includes(spoken.code)} on:change={(e) => toggleSpokenLanguage(spoken.code, e.detail)} />
                 {/each}
             </div>
-            <p class="faded hint"><T id="ai.spoken_languages_hint" /></p>
+            <p class="faded hint"><T id="Only these languages are expected - anything else whisper thinks it hears is double-checked against your detection language." /></p>
 
-            <MaterialDropdown label="ai.listen_language" options={listenLanguageOptions} value={listenLanguage} defaultValue={spokenLanguage} on:change={(e) => updateEngineOption("listenLanguage", e.detail)} />
-            <p class="faded hint"><T id="ai.interpretation_model_hint" /></p>
+            <MaterialDropdown label="Detect scriptures from" options={listenLanguageOptions} value={listenLanguage} defaultValue={spokenLanguage} on:change={(e) => updateEngineOption("listenLanguage", e.detail)} />
+            <p class="faded hint"><T id="Language detection needs a multilingual model - Small or larger is recommended." /></p>
         </svelte:fragment>
     </InputRow>
 {/if}

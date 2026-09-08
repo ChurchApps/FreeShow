@@ -1,9 +1,9 @@
 import { get } from "svelte/store"
+import type { AIProviderId } from "../../../types/ai/Ai"
 import { Main } from "../../../types/IPC/Main"
 import { requestMain } from "../../IPC/main"
 import { ai } from "../../stores"
 import { type MatchResult } from "../manager/AiManager"
-import type { AIProviderId } from "./llmModels"
 import { LLM_PROMPT, LLM_SCHEMA } from "./llmPrompt"
 
 interface LLMRequestOptions {
@@ -23,7 +23,7 @@ export function getLLMManager() {
     const model = llmOptions.model || ""
 
     if (llmManager && (llmManager.providerId !== provider || llmManager.model !== model)) {
-        // TODO: llmManager.stop()
+        llmManager.stop()
         llmManager = null
     }
 
@@ -81,6 +81,14 @@ export class LLMManager {
         } finally {
             this.isRequesting = false
         }
+    }
+
+    stop() {
+        if (this.retryTimeout) {
+            clearTimeout(this.retryTimeout)
+            this.retryTimeout = null
+        }
+        this.isRequesting = false
     }
 
     async detectMatch(chunk: { chunkWithOverlap: string; newWordsCount: number }) {

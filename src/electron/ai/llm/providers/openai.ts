@@ -1,16 +1,33 @@
 import axios from "axios"
 import type { LLMCompletionOptions } from "../../../../types/ai/Ai"
-import { APIModel, buildMessages } from "./APIModel"
+import { APIModel, buildMessages, type ModelOption } from "./APIProvider"
 
 const API_URL = "https://api.openai.com/v1/chat/completions"
 const MODELS_URL = "https://api.openai.com/v1/models"
 
-export class OpenAIProvider extends APIModel {
+class OpenAIProvider extends APIModel {
     readonly id = "openai"
     readonly fallbackModel = "gpt-4o-mini"
 
     private getHeaders(apiKey: string) {
         return { Authorization: `Bearer ${apiKey}`, "content-type": "application/json" }
+    }
+
+    async fetchModels(apiKey: string): Promise<ModelOption[]> {
+        if (!apiKey) return []
+        try {
+            const response = await axios.get(MODELS_URL, {
+                headers: this.getHeaders(apiKey),
+                timeout: this.REQUEST_TIMEOUT
+            })
+            const data = Array.isArray(response.data?.data) ? response.data.data : []
+            return data
+                .filter((m: any) => m.id && (m.id.startsWith("gpt-") || m.id.startsWith("o1") || m.id.startsWith("o3")))
+                .map((m: any) => ({ id: m.id, name: m.id }))
+                .sort((a: any, b: any) => a.id.localeCompare(b.id))
+        } catch {
+            return []
+        }
     }
 
     async testConnection(apiKey: string, model: string) {

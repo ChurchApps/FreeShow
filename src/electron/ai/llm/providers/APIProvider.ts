@@ -3,6 +3,12 @@ import type { LLMCompletionOptions } from "../../../../types/ai/Ai"
 
 export const LLM_API_TIMEOUT = 12000
 
+export interface ModelOption {
+    id: string
+    name: string
+    recommended?: boolean
+}
+
 export function buildMessages(options: LLMCompletionOptions): any[] {
     const messages: any[] = []
     if (options.systemPrompt) messages.push({ role: "system", content: options.systemPrompt })
@@ -15,6 +21,7 @@ export abstract class APIModel {
     abstract readonly id: string
     abstract fallbackModel: string
 
+    abstract fetchModels(apiKey: string): Promise<ModelOption[]>
     abstract testConnection(apiKey: string, model: string): Promise<{ ok: true } | { ok: false; error: string }>
     abstract complete(apiKey: string, model: string, options: LLMCompletionOptions): Promise<string>
 

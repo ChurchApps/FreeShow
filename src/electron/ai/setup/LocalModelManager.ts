@@ -2,7 +2,7 @@ import { app } from "electron"
 import fs from "fs"
 import path from "path"
 import type { AiSetupOptions, EngineStatus } from "../../../types/ai/Ai"
-import { createFolder } from "../../utils/files"
+import { createFolder, getFolderSize } from "../../utils/files"
 
 export async function aiHandleLocalSetup(data: AiSetupOptions): Promise<boolean> {
     const { action, engineId, modelId, customPath } = data
@@ -72,16 +72,22 @@ export class LocalModelManager {
         }
 
         if (engineId === "whisper") {
-            const binary = await manager.resolveWhisper(customPath)
+            const modelDir = this.getEngineDir(engineId)
+            const binName = manager.getBinaryName()
+            const binaryPath = path.join(modelDir, binName)
             const downloadedModels = (await Promise.all(manager.WHISPER_MODELS.map(async (id: string) => ({ id, ready: manager.isModelReady(id) })))).filter(({ ready }) => ready).map(({ id }) => id)
 
-            return { ready: !!binary, localPath: binary?.binaryPath || null, downloadedModels }
+            if (!binaryPath) return { ready: false, error: "Model binary not found" }
+            return { ready: true, localPath: binaryPath, downloadedModels }
         }
 
         if (engineId === "nemotron") {
             const modelDir = this.getModelDir(engineId)
             const integrity = await manager.checkIntegrity(modelDir)
-            return { ready: integrity === "ok", localPath: integrity === "missing" ? null : modelDir, outdated: integrity === "outdated" }
+
+            if (integrity === "outdated") return { ready: false, error: "The local model is outdated" }
+            if (integrity === "missing") return { ready: false, error: "The local model is missing" }
+            return { ready: integrity === "ok", localPath: modelDir }
         }
 
         const enginePath = customPath || this.getEnginePath(engineId)
@@ -147,5 +153,25 @@ export class LocalModelManager {
 
     static deleteEngine(engineId: string) {
         return this.getManager(engineId) ? this.removePath(this.getEngineDir(engineId), true) : false
+    }
+
+    ///
+
+    private static ENGINES = ["whisper", "nemotron"]
+    static async getDownloadedBinFiles() {
+        const files = await Promise.all(
+            this.ENGINES.map(async (engineFolder) => {
+                const filePath = path.join(BIN_DIR, engineFolder)
+                const size = getFolderSize(filePath)
+                if (size === 0) return null
+
+                return { path: filePath, name: engineFolder, size }
+            })
+        )
+        return files.filter((file) => file !== null) as { path: string; name: string; size: number }[]
+    }
+
+    static deleteBinFile(data: { path: string }) {
+        return this.removePath(data.path)
     }
 }

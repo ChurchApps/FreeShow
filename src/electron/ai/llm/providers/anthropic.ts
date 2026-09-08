@@ -1,15 +1,33 @@
 import axios from "axios"
 import type { LLMCompletionOptions } from "../../../../types/ai/Ai"
-import { APIModel } from "./APIModel"
+import { APIModel, type ModelOption } from "./APIProvider"
 
 const API_URL = "https://api.anthropic.com/v1/messages"
+const MODELS_URL = "https://api.anthropic.com/v1/models"
 
-export class AnthropicProvider extends APIModel {
+class AnthropicProvider extends APIModel {
     readonly id = "anthropic"
     readonly fallbackModel = "claude-haiku-4-5"
 
     private getHeaders(apiKey: string) {
         return { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" }
+    }
+
+    async fetchModels(apiKey: string): Promise<ModelOption[]> {
+        if (!apiKey) return []
+        try {
+            const response = await axios.get(MODELS_URL, {
+                headers: this.getHeaders(apiKey),
+                timeout: this.REQUEST_TIMEOUT
+            })
+            const data = Array.isArray(response.data?.data) ? response.data.data : []
+            return data.map((m: any) => ({
+                id: m.id,
+                name: m.display_name || m.id
+            }))
+        } catch {
+            return []
+        }
     }
 
     async testConnection(apiKey: string, model: string) {

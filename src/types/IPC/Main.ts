@@ -2,14 +2,13 @@ import type { Display } from "electron"
 import type { ExifData } from "exif"
 import type { Stats } from "fs"
 import type { Bible } from "json-bible/lib/Bible"
-import type { AIProviderId } from "../../electron/ai/llm/llmProviders"
 import type { SyncProviderId } from "../../electron/cloud/syncManager"
 import type { ContentFile, ContentLibraryCategory, ContentProviderId, MediaLicense } from "../../electron/contentProviders/base/types"
 import type { PCOFolderTreeNode } from "../../electron/contentProviders/planningCenter/request"
 import type { _store } from "../../electron/data/store"
 import type { EncoderDetection } from "../../electron/streaming/encoderDetection"
 import type { TimecodeMode } from "../../electron/timecode/timecode"
-import type { AiSetupOptions, EngineStatus } from "../ai/Ai"
+import type { AIProviderId, AiSetupOptions, EngineStatus } from "../ai/Ai"
 import type { SttEngineOptions } from "../ai/AiSettings"
 import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, MediaCodecInfo, OS, SpotifyState, Subtitle } from "../Main"
 import type { Output } from "../Output"
@@ -182,13 +181,15 @@ export enum Main {
     ENCODER_DETECT = "ENCODER_DETECT",
     SET_RTMP_ENCODER = "SET_RTMP_ENCODER",
     // AI
+    AI_GET_MODELS = "AI_GET_MODELS",
+    AI_GET_BIN = "AI_GET_BIN",
+    AI_DELETE_BIN = "AI_DELETE_BIN",
     AI_LISTEN_START = "AI_LISTEN_START",
     AI_LISTEN_STOP = "AI_LISTEN_STOP",
     AI_AUDIO_DATA = "AI_AUDIO_DATA",
     AI_GET_STATUS = "AI_GET_STATUS",
     AI_SETUP = "AI_SETUP",
     AI_SET_KEY = "AI_SET_KEY",
-    AI_TEST_CONNECTION = "AI_TEST_CONNECTION",
     AI_LLM_COMPLETE = "AI_LLM_COMPLETE"
 }
 
@@ -295,12 +296,13 @@ export interface MainSendPayloads {
     [Main.ENCODER_DETECT]: { force?: boolean } | undefined
     [Main.SET_RTMP_ENCODER]: { outputId: string; encoder: string }
     // AI
+    [Main.AI_GET_MODELS]: { providerId: AIProviderId }
+    [Main.AI_DELETE_BIN]: { path: string }
     [Main.AI_LISTEN_START]: { engine: string; engineOptions: SttEngineOptions }
     [Main.AI_AUDIO_DATA]: { buffer: Uint8Array }
     [Main.AI_GET_STATUS]: { engineId?: string; modelId?: string; customPath?: string } | undefined
     [Main.AI_SETUP]: AiSetupOptions
-    [Main.AI_SET_KEY]: { providerId: string; key: string }
-    [Main.AI_TEST_CONNECTION]: { providerId: AIProviderId; model: string }
+    [Main.AI_SET_KEY]: { providerId: AIProviderId; key: string }
     [Main.AI_LLM_COMPLETE]: { providerId: AIProviderId; model: string; options: { systemPrompt?: string; prompt: string; jsonSchema?: any; temperature?: number; maxTokens?: number } }
 }
 
@@ -407,9 +409,12 @@ export interface MainReturnPayloads {
     [Main.ENCODER_DETECT]: Promise<EncoderDetection>
     [Main.SET_RTMP_ENCODER]: void
     // AI
+    [Main.AI_GET_BIN]: Promise<{ path: string; name: string; size: number }[]>
+    [Main.AI_DELETE_BIN]: boolean
     [Main.AI_LISTEN_START]: Promise<{ started: boolean; error?: string }>
+    [Main.AI_GET_STATUS]: Promise<{ [key: string]: EngineStatus }>
     [Main.AI_SETUP]: Promise<boolean>
-    [Main.AI_TEST_CONNECTION]: Promise<{ ok: boolean; error?: string }>
+    [Main.AI_SET_KEY]: Promise<boolean>
     [Main.AI_LLM_COMPLETE]: Promise<{ text: string; error?: string; code?: string; retryAfter?: number }>
 }
 

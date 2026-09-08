@@ -1,3 +1,4 @@
+export type AIProviderId = "ollama" | "anthropic" | "openai" | "google"
 export type AiFeatureState = "starting" | "listening" | "stopped" | "error" | "llm_paused"
 
 export interface AiFeatureStatus {
@@ -19,10 +20,10 @@ export interface AiSuggestion {
 
 export interface EngineStatus {
     ready: boolean
+    error?: string
+
     localPath?: string | null
     downloadedModels?: string[]
-    supported?: boolean // engines with a native addon (nemotron) report whether this platform can run it at all
-    outdated?: boolean // the files on disk are from an earlier pinned revision
 }
 
 export interface AiSetupOptions {

@@ -1,5 +1,5 @@
 import type { EngineStatus } from "../../../types/ai/Ai"
-import { type AIProviderId, getLLMProvider } from "../llm/llmProviders"
+import { getLLMProvider } from "../llm/llmProviders"
 import { getAiKey } from "./aiKeys"
 import { LocalModelManager } from "./LocalModelManager"
 
@@ -14,19 +14,23 @@ export async function aiGetModelStatus(data?: { engineId?: string; modelId?: str
 
     if (!id || id === "ollama") {
         // ollama runs locally without any credentials - reachability is its readiness
-        status["ollama"] = { ready: (await getLLMProvider("ollama").testConnection("", modelId))?.ok }
+        const result = await getLLMProvider("ollama").testConnection("", modelId)
+        if ("error" in result) status["ollama"] = { ready: false, error: result?.error }
+        else status["ollama"] = { ready: result?.ok }
     }
     // remote providers: a saved key is readiness - the explicit test button does the live connection check
-    for (const providerId of ["anthropic", "openai", "gemini"] as const) {
-        if (!id || id === providerId) status[providerId] = { ready: !!getAiKey(providerId) }
+    for (const providerId of ["anthropic", "openai", "google"] as const) {
+        if (!id || id === providerId) {
+            const key = getAiKey(providerId)
+            if (!key)
+                status[providerId] = { ready: false } // No API Key set
+            else {
+                const result = await getLLMProvider(providerId).testConnection(key, modelId)
+                if ("error" in result) status[providerId] = { ready: false, error: result?.error }
+                else status[providerId] = { ready: result?.ok }
+            }
+        }
     }
 
     return status
-}
-
-export async function checkLLMConnection(data: { providerId: AIProviderId; model: string }): Promise<{ ok: boolean; error?: string }> {
-    const key = getAiKey(data.providerId)
-    if (!key && data.providerId !== "ollama") return { ok: false, error: "Invalid API key" }
-
-    return await getLLMProvider(data.providerId).testConnection(key, data.model)
 }

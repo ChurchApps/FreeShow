@@ -24,7 +24,7 @@ export class SpeechToText {
 
         if (token !== this.sessionToken) {
             created.transcriber.stop()
-            return { started: false, error: "superseded" }
+            return { started: false, error: "Error: superseded" }
         }
 
         this.transcriberEngine = created.transcriber
@@ -37,7 +37,7 @@ export class SpeechToText {
             return { started: false, error: sanitizeErrorMessage(String((err as Error)?.message || err)) }
         }
 
-        if (token !== this.sessionToken) return { started: false, error: "superseded" }
+        if (token !== this.sessionToken) return { started: false, error: "Error: superseded" }
 
         sendToMain(ToMain.AI_STATUS, { state: "listening" })
         return { started: true }
@@ -69,14 +69,14 @@ export class SpeechToText {
 
         if (engine === "whisper") {
             const whisperStatus = await LocalModelManager.getStatus("whisper", undefined, options.customPath)
-            if (!whisperStatus.ready) return { error: "whisper_not_installed" }
+            if (!whisperStatus.ready) return { error: "Whisper is not installed" }
 
             const customModel = options.customModelPath && existsSync(options.customModelPath) ? options.customModelPath : ""
             let model = options.model || ((options.language || "en").startsWith("en") && !options.interpretationMode ? "base.en" : "base")
             if (options.interpretationMode) model = model.replace(".en", "")
 
             if (!customModel && !(await LocalModelManager.getStatus("whisper", model)).ready) {
-                return { error: "whisper_model_missing" }
+                return { error: "Whisper model is missing" }
             }
 
             return {
@@ -86,13 +86,12 @@ export class SpeechToText {
 
         if (engine === "nemotron") {
             const status = await LocalModelManager.getStatus("nemotron")
-            if (status.outdated) return { error: "nemotron_outdated" }
-            if (!status.ready) return { error: "nemotron_unsupported" }
+            if (!status.ready) return { error: "Nemotron could not be initialized" }
             return { transcriber: new NemotronTranscriber({ ...options }, onSegment, onError, onInterim) }
         }
 
         console.error(`Unknown STT engine: ${engine}`)
-        return { error: "unknown_engine" }
+        return { error: "Unknown STT engine" }
     }
 
     static addSegmentListener(listener: SegmentListener) {

@@ -1,11 +1,19 @@
 <script lang="ts">
+    import Icon from "../../../components/helpers/Icon.svelte"
+    import T from "../../../components/helpers/T.svelte"
     import HRule from "../../../components/input/HRule.svelte"
+    import Link from "../../../components/inputs/Link.svelte"
+    import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../../components/inputs/MaterialDropdown.svelte"
-    import { ai } from "../../../stores"
+    import { ai, popupData } from "../../../stores"
     import { resolveSttEngine } from "../../stt/stt"
+    import LlmFiles from "./LlmFiles.svelte"
     import LlmOptions from "./LlmOptions.svelte"
     import NemotronOptions from "./NemotronOptions.svelte"
     import WhisperOptions from "./WhisperOptions.svelte"
+
+    const mode = $popupData.mode
+    popupData.set({})
 
     $: sttOptions = $ai.stt || {}
 
@@ -25,27 +33,52 @@
     }
 
     const sttEngines = [
-        { value: "nemotron", label: "Nemotron", data: "Transcribes as you speak, so references are picked up almost immediately. Around 40 languages, and nothing to install - just one model download." },
+        { value: "nemotron", label: "Nemotron", data: "Transcribes as you speak, so references are picked up almost immediately. Around 40 languages." },
         { value: "whisper", label: "Whisper", data: "Transcribes in short blocks. Supports many languages and live interpretation, but a spoken phrase is only recognised once its block finishes." }
     ]
     $: selectedSttEngine = sttOptions.engine || resolveSttEngine()
+
+    let showMore = false
 </script>
 
-<!-- Speech to text -->
-<HRule title="ai.transcription" />
+{#if !mode}
+    <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
 
-<MaterialDropdown label="ai.engine" options={sttEngines} value={selectedSttEngine} on:change={(e) => updateValue("stt.engine", e.detail)} />
-
-{#if selectedSttEngine === "whisper"}
-    <WhisperOptions />
-{:else if selectedSttEngine === "nemotron"}
-    <NemotronOptions />
+    <div style="display: flex;justify-content: center;font-size: 0.9em;">
+        <Link url="https://freeshow.app/docs/smart">
+            <T id="main.docs" />
+            <Icon id="launch" white />
+        </Link>
+    </div>
 {/if}
 
-<!-- LLM -->
-<HRule title="LLM" />
+{#if !mode || mode === "transcription"}
+    {#if !mode}
+        <!-- Speech to text -->
+        <HRule title="ai.transcription" />
+    {/if}
 
-<LlmOptions />
+    <MaterialDropdown label="ai.engine" options={sttEngines} value={selectedSttEngine} on:change={(e) => updateValue("stt.engine", e.detail)} />
 
-<!-- Download manager -->
-<!-- TODO: a downloaded manager where the user can see the file sizes/loocations of downloaded engines/models and delete them -->
+    {#if selectedSttEngine === "whisper"}
+        <WhisperOptions />
+    {:else if selectedSttEngine === "nemotron"}
+        <NemotronOptions />
+    {/if}
+{/if}
+
+{#if !mode || mode === "llm"}
+    {#if !mode}
+        <!-- LLM -->
+        <HRule title="LLM" />
+    {/if}
+
+    <LlmOptions />
+{/if}
+
+{#if showMore}
+    <!-- Download manager -->
+    <HRule title="settings.files" />
+
+    <LlmFiles />
+{/if}

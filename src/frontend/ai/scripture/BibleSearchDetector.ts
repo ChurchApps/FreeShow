@@ -2,98 +2,10 @@ import { MatchResult } from "../manager/AiManager"
 import type { BibleCacheData } from "./BibleCacheManager"
 import { normalizeMishearings } from "./mishearings"
 import { normalizeNumbers } from "./numbers"
+import { normalizeReferences } from "./references"
 
 export class BibleSearchDetector {
     constructor(private cacheData: BibleCacheData) {}
-
-    /**
-     * Resolves single-chapter books dynamically using reference index metadata.
-     */
-    private isSingleChapterBook(bookName: string): boolean {
-        const lowerBook = bookName.toLowerCase().trim()
-        const chap1Key = `${lowerBook} 1`
-        const chap2Key = `${lowerBook} 2`
-        return this.cacheData.referenceIndex.has(chap1Key) && !this.cacheData.referenceIndex.has(chap2Key)
-    }
-
-    private normalizeReferences(text: string): string {
-        let normalized = text
-
-        // 1. Remove punctuation that breaks numbered books (e.g., "1, john 4" or "first, john" -> "1 john")
-        normalized = normalized.replace(/\b([1-3]|first|second|third)\s*[,.\-_]\s*([\p{L}]+)/giu, "$1 $2")
-
-        // 2. Normalize plural or localized book names (e.g., "Psalms" -> "Psalm")
-        normalized = normalized.replace(/\bpsalms\b/gi, "Psalm")
-
-        // 3. Inverted structure: "verse 16 of John chapter 3" or "16th verse of John chapter 3" -> "John 3:16"
-        normalized = normalized.replace(/\b(?:the\s+)?(?:verse|v|verses)?\s*(\d+)(?:st|nd|rd|th)?\s+(?:verse\s+)?of\s+([1-3]?\s*[\p{L}]+)\s+(?:chapter\s*)?(\d+)\b/giu, "$2 $3:$1")
-
-        // 4. Trailing verse ordinal/word: "John chapter 3, the 16th verse" -> "John 3:16"
-        normalized = normalized.replace(/\b([1-3]?\s*[\p{L}]+)\s+(?:chapter\s*)?(\d+)[,\s]+(?:the\s+)?(\d+)(?:st|nd|rd|th)?\s+(?:verse|v|verses)\b/giu, "$1 $2:$3")
-
-        // 5. Ordinal chapter structure: "the 8th chapter of Romans" -> "Romans 8"
-        normalized = normalized.replace(/\b(?:the\s+)?(\d+)(?:st|nd|rd|th)?\s+(?:chapter|psalm)\s+of\s+([1-3]?\s*[\p{L}]+)\b/giu, "$2 $1")
-
-        // 6. Ordinal psalm phrasing: "the 23rd psalm" -> "Psalm 23"
-        normalized = normalized.replace(/\b(?:the\s+)?(\d+)(?:st|nd|rd|th)?\s+psalms?\b/giu, "Psalm $1")
-
-        // 7. Single-chapter book handler: convert "Philemon verse 6" -> "Philemon 1:6"
-        normalized = normalized.replace(/\b([1-3]?\s*[\p{L}]+)\s+(?:verse|v|verses)?\s*(\d+)\b/giu, (match, book, num) => {
-            if (this.isSingleChapterBook(book)) {
-                return `${book} 1:${num}`
-            }
-            return match
-        })
-
-        // 8. Standard spoken reference conversion: "Mark chapter 8 and 22", "Mark 8 verse 22" or "Mark 8 and 22" -> "Mark 8:22"
-        normalized = normalized.replace(/\b([1-3]?\s*[\p{L}]+)\s+(chapter\s+)?(\d+)\s+(and|verses|verse|v)\s+(\d+)(?:\s*(?:[-–—]|through|to)\s*(\d+))?\b/giu, (match, book, chapterWord, chap, joiner, vStart, vEnd) => {
-            // "Genesis 1 and 2" is two chapters
-            if (!chapterWord && joiner.toLowerCase() === "and" && Number(vStart) === Number(chap) + 1) return match
-            return vEnd ? `${book} ${chap}:${vStart}-${vEnd}` : `${book} ${chap}:${vStart}`
-        })
-
-        // 9. Safe dot/comma/space reference formatting: convert "John 3.16" or "John 4 7" -> "John 4:7"
-        normalized = normalized.replace(/(?<![:\d])\b([1-3]?\s*[\p{L}]+)\s+(\d+)[.,\s]+(\d+)\b(?!\s*[1-3]?\s*[\p{L}]+)(?!:)/giu, (match, book, chap, verse) => {
-            const refKey = `${book.trim().toLowerCase()} ${chap}`
-            if (this.cacheData.referenceIndex.has(refKey)) {
-                return `${book} ${chap}:${verse}`
-            }
-            return match
-        })
-
-        // 10. Split concatenated 3- and 4-digit reference numbers (e.g., "Mark 822" -> "Mark 8:22")
-        normalized = normalized.replace(/\b([1-3]?\s*[\p{L}]+)\s+(\d{3,4})\b/giu, (match, book, digits) => {
-            let chap = 0
-            let verse = 0
-            if (digits.length === 3) {
-                chap = parseInt(digits.slice(0, 1), 10)
-                verse = parseInt(digits.slice(1), 10)
-            } else if (digits.length === 4) {
-                chap = parseInt(digits.slice(0, 2), 10)
-                verse = parseInt(digits.slice(2), 10)
-            }
-
-            const refKey = `${book.toLowerCase()} ${chap}`
-            const chapterData = this.cacheData.referenceIndex.get(refKey)
-
-            if (chapterData && verse >= 1 && verse <= chapterData.verseCount) {
-                return `${book} ${chap}:${verse}`
-            }
-
-            return match
-        })
-
-        return normalized
-    }
-
-    private tokenizeText(text: string): string[] {
-        return text
-            .toLowerCase()
-            .replace(/['’`\-_]/g, " ")
-            .replace(/[^\p{L}\p{N}\s]/gu, "")
-            .split(/\s+/)
-            .filter((w) => w.length > 1)
-    }
 
     public findReferenceMatch(cleanInput: string): MatchResult | null {
         if (!this.cacheData.refRegex) return null
@@ -193,6 +105,15 @@ export class BibleSearchDetector {
         }
 
         return null
+    }
+
+    private tokenizeText(text: string): string[] {
+        return text
+            .toLowerCase()
+            .replace(/['’`\-_]/g, " ")
+            .replace(/[^\p{L}\p{N}\s]/gu, "")
+            .split(/\s+/)
+            .filter((w) => w.length > 1)
     }
 
     // a reader says the verse number before each verse
@@ -477,8 +398,8 @@ export class BibleSearchDetector {
         const rawNormalizedNumbers = normalizeNumbers(transcript)
         const mishearingsNormalizedNumbers = normalizeNumbers(mishearingsCorrected)
 
-        const rawNormalized = this.normalizeReferences(rawNormalizedNumbers)
-        const mishearingsNormalized = this.normalizeReferences(mishearingsNormalizedNumbers)
+        const rawNormalized = normalizeReferences(rawNormalizedNumbers, this.cacheData)
+        const mishearingsNormalized = normalizeReferences(mishearingsNormalizedNumbers, this.cacheData)
 
         if (this.DEBUG_MODE) console.log("[DETECTION] Mishearings corrected:", mishearingsCorrected)
         if (this.DEBUG_MODE) console.log("[DETECTION] Mishearings normalized:", mishearingsNormalized)

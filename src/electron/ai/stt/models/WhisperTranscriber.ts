@@ -190,7 +190,7 @@ export class Transcriber implements TranscriptionDriver {
                 }
             }
 
-            void this.runWindow({ samples: endsInSilence ? samples.subarray(0, windowEnd - windowStart) : samples, startSample: windowStart, endsInSilence })
+            this.runWindow({ samples: endsInSilence ? samples.subarray(0, windowEnd - windowStart) : samples, startSample: windowStart, endsInSilence })
             return
         }
     }

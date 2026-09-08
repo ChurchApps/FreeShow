@@ -1,21 +1,33 @@
 import axios from "axios"
 import type { LLMCompletionOptions } from "../../../../types/ai/Ai"
-import { APIModel, buildMessages } from "./APIModel"
+import { APIModel, buildMessages, type ModelOption } from "./APIProvider"
 
 const API_URL = "http://127.0.0.1:11434"
 const DETECT_TIMEOUT = 30000
 const TEST_TIMEOUT = 10000
 
-export class OllamaProvider extends APIModel {
+class OllamaProvider extends APIModel {
     readonly id = "ollama"
     readonly fallbackModel = "gemma3:4b"
 
-    async testConnection(_apiKey: string, model: string) {
+    async fetchModels(): Promise<ModelOption[]> {
         try {
             const response = await axios.get(`${API_URL}/api/tags`, { timeout: TEST_TIMEOUT })
             const installed = Array.isArray(response.data?.models) ? response.data.models : []
+            return installed.map((m: any) => ({
+                id: m.name,
+                name: m.name
+            }))
+        } catch {
+            return []
+        }
+    }
+
+    async testConnection(_apiKey: string, model: string) {
+        const models = await this.fetchModels()
+        try {
             const base = model.split(":")[0]
-            const found = installed.some((entry: any) => typeof entry?.name === "string" && (entry.name === model || entry.name.split(":")[0] === base))
+            const found = models.some((entry: any) => typeof entry?.name === "string" && (entry.name === model || entry.name.split(":")[0] === base))
 
             return found ? { ok: true as const } : { ok: false as const, error: "Model not found" }
         } catch {
@@ -31,7 +43,6 @@ export class OllamaProvider extends APIModel {
             options: { temperature: options.temperature ?? 0, num_predict: options.maxTokens ?? 1024 },
             messages: buildMessages(options)
         }
-        // Some Ollama versions reject schema objects in `format`; `json` works broadly and still enforces JSON output.
         if (options.jsonSchema) body.format = "json"
 
         try {

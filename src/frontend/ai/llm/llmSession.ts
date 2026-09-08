@@ -1,8 +1,8 @@
 import { get } from "svelte/store"
+import type { AIProviderId } from "../../../types/ai/Ai"
 import { Main } from "../../../types/IPC/Main"
 import { requestMain } from "../../IPC/main"
 import { ai, aiLlmStatus } from "../../stores"
-import { AI_PROVIDER_MODELS, type AIProviderId } from "./llmModels"
 
 export type LLMSessionConfig = { provider: AIProviderId; model: string } | null
 
@@ -20,11 +20,8 @@ class LLMSession {
         const status = await requestMain(Main.AI_GET_STATUS, { engineId: provider })
         if (!status?.[provider]?.ready) return null
 
-        const stored = llmConfig?.model
-        const model = this.resolveListedModel(provider, stored)
-        if (stored && !model) {
-            console.info(`[AI LLM] Stored ${provider} model "${stored}" is no longer offered - using the provider default`)
-        }
+        const model = llmConfig?.model
+        if (!model) return null
 
         return { provider, model }
     }
@@ -53,11 +50,6 @@ class LLMSession {
 
     private syncStatus(config: LLMSessionConfig): void {
         aiLlmStatus.update((status) => (status.state === "listening" || status.state === "llm_paused" ? { ...status, state: "listening", keyless: !config } : status))
-    }
-
-    private resolveListedModel(provider: AIProviderId, modelId: string | undefined): string {
-        if (!modelId) return ""
-        return AI_PROVIDER_MODELS[provider].models.some((entry) => entry.id === modelId) ? modelId : ""
     }
 }
 

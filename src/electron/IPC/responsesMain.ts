@@ -8,10 +8,10 @@ import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
-import { completeLLM } from "../ai/llm/llmProviders"
+import { completeLLM, fetchProviderModels } from "../ai/llm/llmProviders"
 import { setAiKey } from "../ai/setup/aiKeys"
-import { aiHandleLocalSetup } from "../ai/setup/LocalModelManager"
-import { aiGetModelStatus, checkLLMConnection } from "../ai/setup/status"
+import { aiHandleLocalSetup, LocalModelManager } from "../ai/setup/LocalModelManager"
+import { aiGetModelStatus } from "../ai/setup/status"
 import { SpeechToText } from "../ai/stt/SpeechToTextManager"
 import { getAudioMetadata } from "../audio/audio"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
@@ -276,13 +276,15 @@ export const mainResponses: MainResponses = {
         }
     },
     // AI
+    [Main.AI_GET_MODELS]: (data) => fetchProviderModels(data.providerId),
+    [Main.AI_GET_BIN]: () => LocalModelManager.getDownloadedBinFiles(),
+    [Main.AI_DELETE_BIN]: (data) => LocalModelManager.deleteBinFile(data),
     [Main.AI_LISTEN_START]: (data) => SpeechToText.listen(data.engine, data.engineOptions),
     [Main.AI_LISTEN_STOP]: () => SpeechToText.stop(),
     [Main.AI_AUDIO_DATA]: (data) => SpeechToText.pushAudio(data.buffer),
     [Main.AI_GET_STATUS]: (data) => aiGetModelStatus(data),
     [Main.AI_SETUP]: (data) => aiHandleLocalSetup(data),
     [Main.AI_SET_KEY]: (data) => setAiKey(data),
-    [Main.AI_TEST_CONNECTION]: (data) => checkLLMConnection(data),
     [Main.AI_LLM_COMPLETE]: (data) => completeLLM(data)
 }
 

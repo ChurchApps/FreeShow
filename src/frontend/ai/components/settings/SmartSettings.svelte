@@ -16,6 +16,8 @@
     }
 </script>
 
+<div class="experimental">EXPERIMENTAL!</div>
+
 <MaterialToggleSwitch label={translateText("actions.enable_specific", null, ["settings.ai"])} checked={isEnabled} on:change={(e) => updateValue("enabled", e.detail)} />
 
 {#if isEnabled}
@@ -28,3 +30,12 @@
     <Tip type="info" value="ai.hint" top={20} />
     <Tip type="warning" value="ai.privacy_details" top={10} />
 {/if}
+
+<style>
+    .experimental {
+        color: red;
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+</style>
