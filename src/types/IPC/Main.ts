@@ -281,7 +281,7 @@ export interface MainSendPayloads {
     [Main.FFMPEG_DOWNLOAD]: undefined
     // Streaming encoder
     [Main.ENCODER_DETECT]: { force?: boolean } | undefined
-    [Main.SET_RTMP_ENCODER]: { encoder: string }
+    [Main.SET_RTMP_ENCODER]: { outputId: string; encoder: string }
 }
 
 export interface MainReturnPayloads {
@@ -385,7 +385,6 @@ export interface MainReturnPayloads {
     [Main.FFMPEG_DOWNLOAD]: Promise<{ success: boolean; error?: string }>
     // Streaming encoder
     [Main.ENCODER_DETECT]: Promise<EncoderDetection>
-    [Main.SET_RTMP_ENCODER]: void
 }
 
 ///////////

@@ -49,6 +49,7 @@ export interface RtmpData {
     streaming?: boolean
     fps?: string | number
     bitrate?: string | number
+    encoder?: string
     destinations?: RtmpDestination[]
     url?: string // deprecated, only used in v1.6.4
     key?: string // deprecated, only used in v1.6.4

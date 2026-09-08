@@ -6,8 +6,8 @@
     import type { Option } from "../../../../types/Main"
     import type { Output, RtmpDestination } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, omtData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, special, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { requestMain } from "../../../IPC/main"
+    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, omtData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
@@ -175,6 +175,8 @@
     function updateRtmpData(value: any, key: string) {
         if (!currentOutput?.id) return
         updateOutputRtmpData(currentOutput.id, key, value)
+
+        saved.set(false)
     }
 
     function extractPlatformName(urlString: string | undefined): string | null {
@@ -204,12 +206,6 @@
         } finally {
             // detectingEncoders = false
         }
-    }
-
-    function setEncoder(encoder: string) {
-        special.update((a) => ({ ...a, rtmpEncoder: encoder }))
-        sendMain(Main.SET_RTMP_ENCODER, { encoder })
-        saved.set(false)
     }
 
     $: if (currentOutput?.rtmp && encoderOptions.length === 1) loadEncoders()
@@ -497,7 +493,7 @@
     </InputRow>
 
     <InputRow style="margin-bottom: 10px;">
-        <MaterialDropdown label="settings.video_encoder" value={$special.rtmpEncoder || "auto"} defaultValue="auto" options={encoderOptions} on:change={(e) => setEncoder(e.detail)} />
+        <MaterialDropdown label="settings.video_encoder" value={currentOutput.rtmpData?.encoder || "auto"} defaultValue="auto" options={encoderOptions} on:change={(e) => updateRtmpData(e.detail, "encoder")} />
         <!-- <MaterialButton variant="outlined" icon="refresh" title="Re-detect encoders" disabled={detectingEncoders} on:click={() => loadEncoders(true)} /> -->
     </InputRow>
 

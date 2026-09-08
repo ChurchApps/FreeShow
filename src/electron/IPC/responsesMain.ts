@@ -253,7 +253,7 @@ export const mainResponses: MainResponses = {
     },
     [Main.ENCODER_DETECT]: (data) => detectEncoders(data?.force),
     [Main.SET_RTMP_ENCODER]: (data) => {
-        setRtmpEncoderSetting(data.encoder)
+        setRtmpEncoderSetting(data.outputId, data.encoder)
         // apply now rather than lying dormant until some unrelated capture event restarts the encode
         CaptureHelper.Lifecycle.updateRtmpState()
     },

@@ -848,6 +848,10 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
         else AudioAnalyser.recorderDeactivate()
     }
 
+    if (key === "encoder") {
+        sendMain(Main.SET_RTMP_ENCODER, { outputId, encoder: value })
+    }
+
     send(OUTPUT, ["SET_VALUE"], { id: outputId, key: "rtmpData", value: newData })
     return newData
 }

@@ -295,7 +295,7 @@ export class CaptureLifecycle {
             if (o.captureOptions?.framerates) o.captureOptions.framerates.rtmp = fps
 
             // destination changes only touch relays; the encode keeps running
-            RtmpStreamer.update(o.id, { width: bounds.width, height: bounds.height, fps, bitrate, enableAudio: isAudioEnabled(), encoder: getRtmpEncoderSetting() }, destinations)
+            RtmpStreamer.update(o.id, { width: bounds.width, height: bounds.height, fps, bitrate, enableAudio: isAudioEnabled(), encoder: getRtmpEncoderSetting(o.id) }, destinations)
         })
     }
 }
