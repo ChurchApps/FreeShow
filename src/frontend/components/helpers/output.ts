@@ -913,8 +913,11 @@ export function addOutput(onlyFirst = false, styleId = "", enabled = true, name 
         if (enabled && !onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id] })
         if (enabled && !onlyFirst && get(outputDisplay)) toggleOutput(id)
 
+        // set as active
         if (get(currentOutputSettings) !== id) currentOutputSettings.set(id)
+        // start rename
         activeRename.set("output_" + id)
+
         return output
     })
 
@@ -959,6 +962,10 @@ export function enableStageOutput(options: any = {}) {
         }
 
         send(OUTPUT, ["CREATE"], { ...a[id], id })
+
+        // set as active
+        if (get(currentOutputSettings) !== id) currentOutputSettings.set(id)
+        // start rename
         activeRename.set("output_" + id)
 
         return a
