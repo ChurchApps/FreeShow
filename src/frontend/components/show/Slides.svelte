@@ -37,7 +37,7 @@
         setTimeout(() => (hasMounted = true), 80)
 
         // custom fonts
-        if (currentShow?.settings?.customFonts) loadCustomFonts(currentShow.settings.customFonts)
+        loadCustomFonts(currentShow?.settings?.customFonts || [])
     })
 
     onDestroy(() => {

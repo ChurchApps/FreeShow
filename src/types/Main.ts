@@ -398,6 +398,7 @@ export type Popups =
     | "delete_duplicated_shows"
     | "icon"
     | "manage_groups"
+    | "manage_fonts"
     | "manage_icons"
     | "manage_colors"
     | "manage_metadata"

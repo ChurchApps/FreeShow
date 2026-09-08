@@ -53,6 +53,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     drawerTabsData: {},
     drawer: { height: 300, stored: null },
     language: null,
+    customFonts: [],
     labelsDisabled: false,
     groupNumbers: true,
     fullColors: false,
