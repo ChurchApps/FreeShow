@@ -1,6 +1,16 @@
 import { getStyles } from "./../helpers/style"
 
-type TMouse = { x: number; y: number; left: number; top: number; width: number; height: number; offset: { x: number; y: number; width: number; height: number }; e: any }
+type TMouse = {
+    x: number
+    y: number
+    left: number
+    top: number
+    width: number
+    height: number
+    offset: { x: number; y: number; width: number; height: number }
+    e: any
+    initialPositions?: { [key: string | number]: { left: number; top: number } }
+}
 
 const snapDistance = 8
 export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | string)[], lines: [string, number][], styles: { [key: string]: any } = {}) {
@@ -23,19 +33,32 @@ export function moveBox(e: any, mouse: TMouse, ratio: number, active: (number | 
     else snapBox()
 
     if (!isResizing && active.length > 1) {
-        const slideElem = itemElem.closest(".slide")
-        const itemElems = Array.from(slideElem.querySelectorAll(".item, .stage_item")) as HTMLElement[]
+        if (!mouse.initialPositions) {
+            const slideElem = itemElem.closest(".slide")
+            const itemElems = Array.from(slideElem?.querySelectorAll(".item, .stage_item") || []) as HTMLElement[]
+            mouse.initialPositions = {}
+            active.forEach((id) => {
+                const elem = itemElems.find((el) => el.getAttribute("data-index") === String(id) || el.id === String(id) || el.getAttribute("id") === String(id))
+                if (!elem) {
+                    mouse.initialPositions![id] = { left: 0, top: 0 }
+                    return
+                }
+                const parsed = getStyles(elem.getAttribute("style"))
+                const parsedLeft = parseFloat(String(parsed.left))
+                const parsedTop = parseFloat(String(parsed.top))
+                const initialLeft = elem === itemElem ? mouse.left : (!isNaN(parsedLeft) ? parsedLeft : elem.offsetLeft || 0)
+                const initialTop = elem === itemElem ? mouse.top : (!isNaN(parsedTop) ? parsedTop : elem.offsetTop || 0)
+                mouse.initialPositions![id] = { left: initialLeft, top: initialTop }
+            })
+        }
+
         const deltaX = Number(styles.left) - mouse.left
         const deltaY = Number(styles.top) - mouse.top
 
         styles.__multiPositions = Object.fromEntries(
             active.map((id) => {
-                const elem = itemElems.find((el) => el.getAttribute("data-index") === String(id) || el.id === String(id) || el.getAttribute("id") === String(id))
-                if (!elem) return [id, { left: 0, top: 0 }]
-                const parsed = getStyles(elem.getAttribute("style"))
-                const initialLeft = elem === itemElem ? mouse.left : (parseFloat(String(parsed.left)) || elem.offsetLeft || 0)
-                const initialTop = elem === itemElem ? mouse.top : (parseFloat(String(parsed.top)) || elem.offsetTop || 0)
-                return [id, { left: initialLeft + deltaX, top: initialTop + deltaY }]
+                const init = mouse.initialPositions?.[id] || { left: 0, top: 0 }
+                return [id, { left: init.left + deltaX, top: init.top + deltaY }]
             })
         )
     }

@@ -44,16 +44,32 @@
     function mousedown(e: any) {
         if (!edit) return
 
-        console.log(e)
-        activeStage.update((ae) => {
-            if (e.shiftKey) {
-                if (ae.items.includes(id)) {
-                    if (!e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
-                } else ae.items.push(id)
-            } else ae.items = [id]
+        const isSelected = $activeStage.items.includes(id)
 
-            return ae
-        })
+        if (e.shiftKey) {
+            if (!isSelected) {
+                activeStage.update((ae) => { ae.items.push(id); return ae })
+            } else {
+                const startX = e.clientX, startY = e.clientY
+                window.addEventListener("mouseup", (upEvent) => {
+                    if (Math.hypot(upEvent.clientX - startX, upEvent.clientY - startY) < 4) {
+                        activeStage.update((ae) => {
+                            ae.items = ae.items.filter((i) => i !== id)
+                            return ae
+                        })
+                    }
+                }, { once: true })
+            }
+        } else if (!isSelected) {
+            activeStage.update((ae) => { ae.items = [id]; return ae })
+        } else if ($activeStage.items.length > 1) {
+            const startX = e.clientX, startY = e.clientY
+            window.addEventListener("mouseup", (upEvent) => {
+                if (Math.hypot(upEvent.clientX - startX, upEvent.clientY - startY) < 4) {
+                    activeStage.update((ae) => { ae.items = [id]; return ae })
+                }
+            }, { once: true })
+        }
 
         // deselect selected text
         if (e.shiftKey) {
@@ -71,6 +87,7 @@
             startResizing(cursor)
         }
 
+        const slideElem = target.closest(".slide") || target.closest(".stage")
         mouse = {
             x: e.clientX,
             y: e.clientY,
@@ -79,8 +96,8 @@
             top: target.offsetTop,
             left: target.offsetLeft,
             offset: {
-                x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - target.offsetLeft,
-                y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - target.offsetTop,
+                x: (e.clientX - (slideElem?.offsetLeft || 0)) / ratio - target.offsetLeft,
+                y: (e.clientY - (slideElem?.offsetTop || 0)) / ratio - target.offsetTop,
                 width: e.clientX / ratio - target.offsetWidth,
                 height: e.clientY / ratio - target.offsetHeight
             },

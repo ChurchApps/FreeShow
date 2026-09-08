@@ -52,29 +52,34 @@
         }
 
         const rightClick: boolean = e.button === 2 || e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
+        const isSelected = $activeEdit.items.includes(index)
 
-        activeEdit.update((ae) => {
-            if (rightClick) {
-                if (ae.items.includes(index)) return ae
-                ae.items = [index]
-
-                return ae
+        if (rightClick) {
+            if (!isSelected) activeEdit.update((ae) => { ae.items = [index]; return ae })
+        } else if (e.shiftKey) {
+            if (!isSelected) {
+                activeEdit.update((ae) => { ae.items.push(index); return ae })
+            } else {
+                const startX = e.clientX, startY = e.clientY
+                window.addEventListener("mouseup", (upEvent) => {
+                    if (Math.hypot(upEvent.clientX - startX, upEvent.clientY - startY) < 4) {
+                        activeEdit.update((ae) => {
+                            ae.items = ae.items.filter((i) => i !== index)
+                            return ae
+                        })
+                    }
+                }, { once: true })
             }
-
-            if (e.shiftKey) {
-                if (ae.items.includes(index)) {
-                    if (!e.target.closest(".line")) ae.items.splice(ae.items.indexOf(index), 1)
-                } else {
-                    ae.items.push(index)
+        } else if (!isSelected) {
+            activeEdit.update((ae) => { ae.items = [index]; return ae })
+        } else if ($activeEdit.items.length > 1) {
+            const startX = e.clientX, startY = e.clientY
+            window.addEventListener("mouseup", (upEvent) => {
+                if (Math.hypot(upEvent.clientX - startX, upEvent.clientY - startY) < 4) {
+                    activeEdit.update((ae) => { ae.items = [index]; return ae })
                 }
-
-                return ae
-            }
-
-            ae.items = [index]
-
-            return ae
-        })
+            }, { once: true })
+        }
 
         // deselect selected text
         if (e.shiftKey) {
@@ -92,6 +97,7 @@
             startResizing(cursor)
         }
 
+        const slideElem = target.closest(".slide")
         mouse = {
             x: e.clientX,
             y: e.clientY,
@@ -100,8 +106,8 @@
             top: target.offsetTop,
             left: target.offsetLeft,
             offset: {
-                x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - target.offsetLeft,
-                y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - target.offsetTop,
+                x: (e.clientX - (slideElem?.offsetLeft || 0)) / ratio - target.offsetLeft,
+                y: (e.clientY - (slideElem?.offsetTop || 0)) / ratio - target.offsetTop,
                 width: e.clientX / ratio - target.offsetWidth,
                 height: e.clientY / ratio - target.offsetHeight
             },
@@ -324,7 +330,7 @@
     }
     .item.isShiftPressed,
     .item.isShiftPressed :global(.edit) {
-        cursor: default !important;
+        cursor: move !important;
     }
     .item.isShiftPressed :global(.line) {
         cursor: move !important;
