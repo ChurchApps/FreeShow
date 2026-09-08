@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { activeEdit, activeFocus, activePage, activePopup, alertMessage, cachedShowsData, categories, focusMode, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special, templates } from "../../stores"
+    import { activeEdit, activeFocus, activePage, activePopup, alertMessage, cachedShowsData, categories, focusMode, groups, lessonsLoaded, notFound, outLocked, outputs, outputSlideCache, showsCache, slidesOptions, special, templates } from "../../stores"
     import { hasNewerUpdate, wait } from "../../utils/common"
     import { getAccess } from "../../utils/profile"
     import { videoExtensions } from "../../values/extensions"
@@ -37,7 +37,7 @@
         setTimeout(() => (hasMounted = true), 80)
 
         // custom fonts
-        if (currentShow?.settings?.customFonts) loadCustomFonts(currentShow.settings.customFonts)
+        loadCustomFonts(currentShow?.settings?.customFonts || [])
     })
 
     onDestroy(() => {
@@ -173,6 +173,22 @@
     }
 
     $: gridMode = mode === "grid" || mode === "simple" || mode === "groups"
+
+    // apply any group templates whenever a new slide group is added/updated
+    let previousTemplateSignature = ""
+    $: if (showId && loaded) {
+        const templateSignature = layoutSlides
+            .map((layoutSlide) => {
+                const slide = currentShow?.slides?.[layoutSlide.id]
+                const slideTemplate = slide?.settings?.template
+                const groupTemplate = slide?.globalGroup && $groups[slide.globalGroup]?.template
+                return slideTemplate || groupTemplate || ""
+            })
+            .join("|")
+
+        if (templateSignature && templateSignature !== previousTemplateSignature) setTimeout(updateTemplate, 100)
+        previousTemplateSignature = templateSignature
+    }
 
     // update show by its template
     $: if (showId && loaded) setTimeout(updateTemplate, 100)

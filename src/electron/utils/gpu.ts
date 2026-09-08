@@ -132,6 +132,25 @@ function isHardware(status: string | undefined): boolean {
     return !!status && /^(enabled|hardware)/.test(status)
 }
 
+// Resolves once Chromium GPU feature status has settled
+export const gpuStateSettled: Promise<void> = app
+    .whenReady()
+    .then(() => app.getGPUInfo("basic"))
+    .then(
+        () => undefined,
+        () => undefined
+    )
+
+export function gpuCompositingAvailable(): boolean {
+    if (hardwareAccelerationDisabled) return false
+    try {
+        const status = app.getGPUFeatureStatus() as unknown as Record<string, string>
+        return isHardware(status.gpu_compositing)
+    } catch {
+        return false
+    }
+}
+
 let healthNotified = false
 
 export function scheduleGpuHealthCheck() {

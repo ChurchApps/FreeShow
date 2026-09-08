@@ -22,6 +22,8 @@ export interface Output {
     transparent?: boolean
     ndi?: boolean
     ndiData?: any
+    omt?: boolean
+    omtData?: any
     blackmagic?: boolean
     blackmagicData?: any
     webrtc?: boolean

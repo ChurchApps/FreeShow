@@ -53,6 +53,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     drawerTabsData: {},
     drawer: { height: 300, stored: null },
     language: null,
+    customFonts: [],
     labelsDisabled: false,
     groupNumbers: true,
     fullColors: false,
@@ -66,6 +67,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
         text: { type: "fade", duration: 500, easing: "sine" },
         media: { type: "fade", duration: 800, easing: "sine" }
     },
+    audioRouting: {},
     audioChannelsData: {},
     cloudSyncData: {},
     driveData: { mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false },
@@ -165,6 +167,5 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     globalRegexes: {},
     customMetadata: { disabled: [], custom: [] },
     effects: {},
-    audioRouting: {},
     deletedDefaults: {}
 }

@@ -1,3 +1,9 @@
+import { get } from "svelte/store"
+import type { DropdownOptions } from "../../../types/Input"
+import type { CustomFont } from "../../../types/Show"
+import { customFonts } from "../../stores"
+import { sortByName } from "./array"
+
 export interface Family {
     family: string
     default: number
@@ -174,6 +180,21 @@ function addFonts(fonts: Family[], newFonts: Family[]) {
     return fonts
 }
 
+export function mergeCustomFonts(systemFontOptions: DropdownOptions, customFonts: CustomFont[]): DropdownOptions {
+    const mergedOptions: DropdownOptions = [...systemFontOptions]
+    const fontNames = new Set(systemFontOptions.map((option) => option.label))
+
+    customFonts.forEach(({ name }) => {
+        if (!name || fontNames.has(name)) return
+
+        fontNames.add(name)
+        const family = getFontName(name)
+        mergedOptions.push({ label: name, value: family, style: `font-family: ${family};` })
+    })
+
+    return sortByName(mergedOptions, "label")
+}
+
 // PPT import
 
 // normalize local file path to a proper file URL
@@ -185,36 +206,98 @@ function filePathToURL(filePath: string) {
     return "file://" + encodeURI(fileUrl)
 }
 
-export function loadCustomFonts(fonts: { name: string; path: string }[]) {
-    fonts.forEach(async (font) => {
-        try {
-            const fileUrl = filePathToURL(font.path)
+export function loadCustomFonts(localFonts: CustomFont[]) {
+    const globalFonts = get(customFonts) || []
+    const fonts = [...globalFonts, ...localFonts]
+    if (!fonts.length) return
 
-            const response = await fetch(fileUrl)
-            const arrayBuffer = await response.arrayBuffer()
-            const fontData = extractFontInfo(arrayBuffer)
-            if (!fontData?.family) throw new Error("Unknown font format")
+    fonts.forEach(loadCustomFont)
+}
 
-            // create the FontFace from the detected SFNT offset
-            const start = typeof fontData.offset === "number" ? fontData.offset : 0
-            const source = new Uint8Array(arrayBuffer, start)
+export function loadCustomFont(font: CustomFont) {
+    const type = font.type
 
-            const fontStyle = /italic/.test((fontData.subfamily || fontData.fullName || "").toLowerCase()) ? "italic" : "normal"
-            const weight = (fontData as any).weight || getWeightFromStyle((fontData.subfamily || fontData.fullName || "").toLowerCase())
+    if (type === undefined) return loadUnknownType(font)
+    else if (type === "local") return loadLocalFont(font)
+    else if (type === "google") return loadGoogleFont(font)
+    return false
+}
 
-            const fnt = new (FontFace as any)(fontData.family, source, { weight: String(weight), style: fontStyle })
-            await fnt.load()
-            document.fonts.add(fnt)
-        } catch {
-            if (font.name.includes("font")) return
+async function loadUnknownType(font: CustomFont) {
+    try {
+        return await loadLocalFont(font)
+    } catch {
+        if (font.name.includes("font")) return false
 
-            // try loading from Google Fonts
-            const link = document.createElement("link")
-            link.rel = "stylesheet"
-            link.href = "https://fonts.googleapis.com/css2?family=" + font.name + ":wght@400;700&display=swap"
-            document.head.appendChild(link)
+        // try loading from Google Fonts
+        return loadGoogleFont(font)
+    }
+}
+
+async function loadLocalFont(font: CustomFont) {
+    if (!font?.path) return false
+
+    try {
+        const fileUrl = filePathToURL(font.path)
+
+        const response = await fetch(fileUrl)
+        const arrayBuffer = await response.arrayBuffer()
+        const fontData = extractFontInfo(arrayBuffer)
+        if (!fontData?.family) throw new Error("Unknown font format")
+
+        // create the FontFace from the detected SFNT offset
+        const start = typeof fontData.offset === "number" ? fontData.offset : 0
+        const source = new Uint8Array(arrayBuffer, start)
+
+        const fontStyle = /italic/.test((fontData.subfamily || fontData.fullName || "").toLowerCase()) ? "italic" : "normal"
+        const weight = (fontData as any).weight || getWeightFromStyle((fontData.subfamily || fontData.fullName || "").toLowerCase())
+
+        const fnt = new FontFace(font.name || fontData.family, source, { weight: String(weight), style: fontStyle })
+        await fnt.load()
+        document.fonts.add(fnt)
+
+        return true
+    } catch {
+        console.error("Failed to load local font:", font.name)
+        return false
+    }
+}
+
+function loadGoogleFont(font: CustomFont) {
+    if (!font.name) return false
+
+    return new Promise<boolean>((resolve) => {
+        const link = getGoogleFontLink(font)
+
+        const timeout = setTimeout(() => finish(false), 5000)
+        link.onerror = () => finish(false)
+        link.onload = async () => {
+            try {
+                const faces = await document.fonts.load(`100px ${getFontName(font.name)}`)
+                finish(faces.length > 0)
+            } catch {
+                finish(false)
+            }
+        }
+
+        document.head.appendChild(link)
+
+        function finish(success: boolean) {
+            link.onload = null
+            link.onerror = null
+            if (!success) link.remove()
+            clearTimeout(timeout)
+
+            resolve(success)
         }
     })
+}
+
+function getGoogleFontLink(font: CustomFont) {
+    const link = document.createElement("link")
+    link.rel = "stylesheet"
+    link.href = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(font.name) + ":wght@400;700&display=swap"
+    return link
 }
 
 function extractFontInfo(arrayBuffer) {

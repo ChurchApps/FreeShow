@@ -411,6 +411,17 @@
 
         // newToast(translateText("toast.verse_undefined").replace("{}", verse))
 
+        if (activeReference.verses[0]?.length && activeReference.book !== null) {
+            activeScripture.set({
+                id: previewBibleId,
+                reference: {
+                    book: activeReference.book,
+                    chapters: activeReference.chapters,
+                    verses: activeReference.verses
+                }
+            })
+        }
+
         if (playWhenLoaded) setTimeout(playScripture)
         playWhenLoaded = false
     }
@@ -1380,6 +1391,16 @@
         opacity: 0.7;
         font-size: 0.8em;
         font-style: italic;
+    }
+    /* clip keeps the text baseline, hidden would align the box bottom */
+    .main span.verse :global(span.undertitle) {
+        display: inline-block;
+        max-width: 35%;
+        overflow: clip;
+        text-overflow: ellipsis;
+        white-space: pre;
+        color: var(--secondary);
+        font-weight: 600;
     }
 
     /* LIST MODE */

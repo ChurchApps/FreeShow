@@ -37,6 +37,9 @@
         <MaterialButton variant="outlined" icon="emitter" on:click={() => open("manage_emitters")} small>
             <T id="popup.manage_emitters" />
         </MaterialButton>
+        <MaterialButton variant="outlined" icon="text" on:click={() => open("manage_fonts")} small>
+            <T id="popup.manage_fonts" />
+        </MaterialButton>
         <MaterialButton variant="outlined" icon="star" on:click={() => open("manage_icons")} small>
             <T id="popup.manage_icons" />
         </MaterialButton>

@@ -1,6 +1,7 @@
 import type { BrowserWindow, Display, NativeImage, Size } from "electron"
 import electron from "electron"
 import { NdiSender } from "../ndi/NdiSender"
+import { OmtSender } from "../omt/OmtSender"
 import { OutputHelper } from "../output/OutputHelper"
 import { RenderGroups } from "../output/helpers/RenderGroups"
 import type { CaptureOptions } from "./CaptureOptions"
@@ -26,6 +27,7 @@ export class CaptureHelper {
 
         const defaultFramerates = {
             ndi: this.framerates.connected,
+            omt: this.framerates.connected,
             blackmagic: this.framerates.unconnected,
             server: this.framerates.server,
             stage: this.framerates.stage,
@@ -37,7 +39,7 @@ export class CaptureHelper {
             window,
             frameSubscription: null,
             displayFrequency: screen.displayFrequency || 60,
-            options: { ndi: false, blackmagic: false, server: false, stage: false, webrtc: false, rtmp: false },
+            options: { ndi: false, omt: false, blackmagic: false, server: false, stage: false, webrtc: false, rtmp: false },
             framerates: defaultFramerates,
             id
         }
@@ -50,6 +52,7 @@ export class CaptureHelper {
     static getMaxActiveFramerate(framerates: { [key: string]: number }, activeOptions: { [key: string]: boolean }): number {
         const activeRates: number[] = []
         if (activeOptions.ndi) activeRates.push(framerates.ndi || 1)
+        if (activeOptions.omt) activeRates.push(framerates.omt || 1)
         if (activeOptions.blackmagic) activeRates.push(framerates.blackmagic || 1)
         if (activeOptions.server) activeRates.push(framerates.server || 1)
         if (activeOptions.stage) activeRates.push(framerates.stage || 1)
@@ -71,6 +74,17 @@ export class CaptureHelper {
                 output.captureOptions!.framerates.ndi = parseInt(ndiFramerate.toString(), 10)
                 OutputHelper.setOutput(id, output)
                 CaptureTransmitter.startChannel(id, "ndi")
+            }
+        }
+
+        if (OmtSender.OMT[id]) {
+            let omtFramerate = this.framerates.unconnected
+            if (OmtSender.OMT[id].status === "connected") omtFramerate = this.customFramerates[id]?.omt || this.framerates.connected
+
+            if (captureOptions.framerates.omt !== parseInt(omtFramerate.toString(), 10)) {
+                output.captureOptions!.framerates.omt = parseInt(omtFramerate.toString(), 10)
+                OutputHelper.setOutput(id, output)
+                CaptureTransmitter.startChannel(id, "omt")
             }
         }
 

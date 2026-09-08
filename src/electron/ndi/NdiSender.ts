@@ -2,6 +2,7 @@ import { join } from "path"
 import { Worker } from "worker_threads"
 import { toApp } from ".."
 import { CaptureHelper } from "../capture/CaptureHelper"
+import { SenderCapture, type CaptureFrameOpts } from "../capture/SenderCapture"
 
 // Resources:
 // https://www.npmjs.com/package/grandiose-mac
@@ -50,6 +51,7 @@ export class NdiSender {
 
     private static onWorkerMessage(msg: any) {
         if (!msg?.type) return
+        if (SenderCapture.handleMessage(msg)) return
 
         if (msg.type === "status") {
             const data = this.NDI[msg.id]
@@ -68,19 +70,9 @@ export class NdiSender {
         } else if (msg.type === "videoDone") {
             const data = this.NDI[msg.id]
             if (data) data.inFlight = Math.max(0, (data.inFlight ?? 0) - 1)
-        } else if (msg.type === "releaseTexture") {
-            // off-main capture: the GPU has consumed the shared texture -> release it (frees the frame pool)
-            this.releaseTextureCallbacks[msg.id]?.(msg.seq)
-        } else if (msg.type === "captureDone") {
-            // off-main capture fully done -> a pipeline slot frees (the lifecycle may forward the next frame).
-            // msg.tl = FS_CAP_STATS per-frame worker timeline (hop timestamps) for the [TIMELINE] attribution.
-            this.captureDoneCallbacks[msg.id]?.(msg.seq, msg.tl)
-        } else if (msg.type === "scaledFrame") {
-            // the worker GPU-downscaled the 4K readback to a small BGRA (server/stage) and copied it here;
-            // main wraps the small image once and fans it out to every group member's server/stage consumers
-            CaptureHelper.Transmitter.receiveScaledFrame(msg.members || [msg.id], msg.buffer, msg.byteOffset, msg.byteLength, msg.size)
         }
     }
+
 
     static initNameNDI(name?: string, outputName?: string) {
         return name || `FreeShow NDI${outputName ? ` - ${outputName}` : ""}`
@@ -124,13 +116,10 @@ export class NdiSender {
         this.worker.postMessage({ type: "video", id, buffer: arrayBuffer, byteOffset: 0, byteLength: arrayBuffer.byteLength, opts: { size, ratio, framerate, transparent, format } }, [arrayBuffer])
     }
 
-    static captureDoneCallbacks: { [id: string]: (seq: number, tl?: { recv: number; cS: number; cE: number; fS: number; fE: number; enq: number } | null) => void } = {}
-    static releaseTextureCallbacks: { [id: string]: (seq: number) => void } = {}
-
-    static captureFrameNDI(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number }) {
+    static captureFrameNDI(id: string, source: any, opts: CaptureFrameOpts) {
         const data = this.NDI[id]
-        if (!data?.sender || !this.worker) return false
-        this.worker.postMessage({ type: "captureFrame", id, source, opts })
+        if (!data?.sender || !this.getWorker()) return false
+        this.worker!.postMessage({ type: "captureFrame", id, source, opts })
         return true
     }
 

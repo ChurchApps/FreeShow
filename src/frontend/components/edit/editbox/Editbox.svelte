@@ -44,7 +44,7 @@
     export let mouse: any = {}
     function mousedown(e: any) {
         if (e.target.closest(".chords") || e.target.closest(".editTools")) return
-        if (!e.target.closest(".line") && !e.target.closest(".square") && !e.target.closest(".rotate") && !e.target.closest(".radius") && !e.target.closest(".cropHandle") && !e.target.closest(".cropOverlay")) {
+        if (!e.shiftKey && !e.target.closest(".line") && !e.target.closest(".square") && !e.target.closest(".rotate") && !e.target.closest(".radius") && !e.target.closest(".cropHandle") && !e.target.closest(".cropOverlay")) {
             openToolsTab.set("text")
 
             // Table shouldn't be draggable from the center
@@ -52,32 +52,26 @@
         }
 
         const rightClick: boolean = e.button === 2 || e.buttons === 2 || ($os.platform === "darwin" && e.ctrlKey)
+        const isSelected = $activeEdit.items.includes(index)
 
-        activeEdit.update((ae) => {
-            if (rightClick) {
-                if (ae.items.includes(index)) return ae
-                ae.items = [index]
-
-                return ae
-            }
-
-            if (e.shiftKey) {
-                if (ae.items.includes(index)) {
-                    if (!e.target.closest(".line")) ae.items.splice(ae.items.indexOf(index), 1)
-                } else {
-                    ae.items.push(index)
+        if (rightClick) {
+            if (!isSelected) activeEdit.update((ae) => { ae.items = [index]; return ae })
+        } else if (e.shiftKey) {
+            if (!isSelected) activeEdit.update((ae) => { ae.items.push(index); return ae })
+        } else if (!isSelected) {
+            activeEdit.update((ae) => { ae.items = [index]; return ae })
+        } else if ($activeEdit.items.length > 1) {
+            const startX = e.clientX, startY = e.clientY
+            window.addEventListener("mouseup", (upEvent) => {
+                if (Math.hypot(upEvent.clientX - startX, upEvent.clientY - startY) < 4) {
+                    activeEdit.update((ae) => { ae.items = [index]; return ae })
                 }
-
-                return ae
-            }
-
-            ae.items = [index]
-
-            return ae
-        })
+            }, { once: true })
+        }
 
         // deselect selected text
         if (e.shiftKey) {
+            isShiftPressed = true
             e.preventDefault()
             if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
             window.getSelection()?.removeAllRanges()
@@ -92,6 +86,7 @@
             startResizing(cursor)
         }
 
+        const slideElem = target.closest(".slide")
         mouse = {
             x: e.clientX,
             y: e.clientY,
@@ -100,8 +95,8 @@
             top: target.offsetTop,
             left: target.offsetLeft,
             offset: {
-                x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - target.offsetLeft,
-                y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - target.offsetTop,
+                x: (e.clientX - (slideElem?.offsetLeft || 0)) / ratio - target.offsetLeft,
+                y: (e.clientY - (slideElem?.offsetTop || 0)) / ratio - target.offsetTop,
                 width: e.clientX / ratio - target.offsetWidth,
                 height: e.clientY / ratio - target.offsetHeight
             },
@@ -323,11 +318,13 @@
         backdrop-filter: blur(20px);
     }
     .item.isShiftPressed,
-    .item.isShiftPressed :global(.edit) {
-        cursor: default !important;
-    }
+    .item.isShiftPressed :global(.edit),
     .item.isShiftPressed :global(.line) {
         cursor: move !important;
+    }
+    .item.isShiftPressed :global(.edit) {
+        pointer-events: none !important;
+        user-select: none !important;
     }
 
     .mediaFrame {

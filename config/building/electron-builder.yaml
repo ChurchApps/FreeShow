@@ -34,6 +34,7 @@ win:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libspotifyctl/**/*"
         - "**/node_modules/sherpa-onnx-*/**"
+        - "**/node_modules/openmediatransport/**"
     azureSignOptions:
         publisherName: Live Church Solutions
         endpoint: https://wus2.codesigning.azure.net/
@@ -45,6 +46,7 @@ win:
 linux:
     asarUnpack:
         - "**/node_modules/grandiose/**"
+        - "**/node_modules/openmediatransport/**"
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libltc-wrapper/**/*"
         - "**/node_modules/sherpa-onnx-*/**"
@@ -60,6 +62,8 @@ deb:
         - libfontconfig1
         - uuid-runtime
         - libltc11
+        - libavahi-client3
+        - avahi-daemon
 
 # macos
 
@@ -68,6 +72,7 @@ mac:
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/sherpa-onnx-*/**"
+        - "**/node_modules/openmediatransport/**"
     target:
         - target: dmg
           arch:

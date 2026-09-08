@@ -32,6 +32,7 @@ import {
     cloudSyncData,
     companion,
     contentProviderData,
+    customFonts,
     customMetadata,
     customizedIcons,
     dataPath,
@@ -287,6 +288,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         language.set(v)
         setLanguage(v)
     },
+    customFonts: (v: any) => customFonts.set(v),
     alertUpdates: (v: any) => {
         alertUpdates.set(v !== false)
         // make sure "special" is set before checking

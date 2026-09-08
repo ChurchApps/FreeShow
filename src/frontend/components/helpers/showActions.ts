@@ -1329,7 +1329,8 @@ const scriptureDynamicValues = {
 
     // not replaced directly, but the style is used:
     scripture_number: () => "1",
-    scripture_red_jesus: () => "Words"
+    scripture_red_jesus: () => "Words",
+    scripture_undertitle: () => "Title"
 }
 
 function getOffsetDate(offset = 0, unit: "date" | "month" | "year" | "hours" | "minutes" | "seconds" = "date") {
