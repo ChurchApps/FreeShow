@@ -30,27 +30,12 @@ export class SpeechToText {
         return started
     }
 
-    // (re)start only the engine - switching whisper <-> nemotron mid-session goes through here,
-    // so the capture keeps running and the electron manager just swaps the transcriber
     static async restartEngine(): Promise<{ ok: boolean; error?: string }> {
         const engine = resolveSttEngine()
         const engineOptions = get(ai)?.stt?.engineOptions?.[engine] || {}
-        // whisper might need a moment to spin up on first start
-        const result = await requestMain(Main.AI_LISTEN_START, { engine, engineOptions }, undefined, 60000)
-        if (!result?.started) {
-            // the defaulted pick can be unsupported (sherpa-onnx missing) or simply not downloaded
-            // (the ~660MB model is a manual download) - only an explicit nemotron choice should
-            // surface those errors instead of falling back to whisper
-            const fallbackErrors = ["nemotron_unsupported", "nemotron_model_missing", "nemotron_outdated"]
-            if (!get(ai)?.stt?.engine && engine === "nemotron" && fallbackErrors.includes(result?.error || "")) {
-                console.info(`[AI STT] defaulted nemotron unavailable (${result?.error}) - falling back to whisper`)
-                const retry = await requestMain(Main.AI_LISTEN_START, { engine: "whisper", engineOptions: get(ai)?.stt?.engineOptions?.whisper || {} }, undefined, 60000)
-                if (retry?.started) return { ok: true }
-                return { ok: false, error: retry?.error || "start_failed" }
-            }
 
-            return { ok: false, error: result?.error || "start_failed" }
-        }
+        const result = await requestMain(Main.AI_LISTEN_START, { engine, engineOptions }, undefined, 60000)
+        if (!result?.started) return { ok: false, error: result?.error || "start_failed" }
 
         return { ok: true }
     }

@@ -29,7 +29,6 @@ const BIN_DIR = path.join(app.getPath("userData"), "bin")
 export class LocalModelManager {
     private static getManager(engineId: string) {
         // require lazily to avoid circular imports when models import these helpers
-        if (engineId === "whisper") return require("./models/whisper").WhisperSetupManager
         if (engineId === "nemotron") return require("./models/nemotron").NemotronSetupManager
         return null
     }
@@ -71,16 +70,6 @@ export class LocalModelManager {
             return { ready: await manager.verifyModel(modelPath), localPath: modelPath }
         }
 
-        if (engineId === "whisper") {
-            const modelDir = this.getEngineDir(engineId)
-            const binName = manager.getBinaryName()
-            const binaryPath = path.join(modelDir, binName)
-            const downloadedModels = (await Promise.all(manager.WHISPER_MODELS.map(async (id: string) => ({ id, ready: manager.isModelReady(id) })))).filter(({ ready }) => ready).map(({ id }) => id)
-
-            if (!binaryPath) return { ready: false, error: "Model binary not found" }
-            return { ready: true, localPath: binaryPath, downloadedModels }
-        }
-
         if (engineId === "nemotron") {
             const modelDir = this.getModelDir(engineId)
             const integrity = await manager.checkIntegrity(modelDir)
@@ -111,12 +100,6 @@ export class LocalModelManager {
 
         const result = await manager.downloadEngine(outputFolder)
         if (result?.ok !== true) return false
-
-        // whisper unzips a binary - make sure it actually runs
-        if (engineId === "whisper") {
-            const outputPath = this.getEnginePath(engineId)
-            if (!outputPath || !(await manager.verifyEngine(outputPath))) return false
-        }
 
         return true
     }
@@ -157,7 +140,7 @@ export class LocalModelManager {
 
     ///
 
-    private static ENGINES = ["whisper", "nemotron"]
+    private static ENGINES = ["nemotron"]
     static async getDownloadedBinFiles() {
         const files = await Promise.all(
             this.ENGINES.map(async (engineFolder) => {

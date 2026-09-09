@@ -10,7 +10,6 @@
     import LlmFiles from "./LlmFiles.svelte"
     import LlmOptions from "./LlmOptions.svelte"
     import NemotronOptions from "./NemotronOptions.svelte"
-    import WhisperOptions from "./WhisperOptions.svelte"
 
     const mode = $popupData.mode
     popupData.set({})
@@ -33,8 +32,8 @@
     }
 
     const sttEngines = [
-        { value: "nemotron", label: "Nemotron", data: "Transcribes as you speak, so references are picked up almost immediately. Around 40 languages." },
-        { value: "whisper", label: "Whisper", data: "Transcribes in short blocks. Supports many languages and live interpretation, but a spoken phrase is only recognised once its block finishes." }
+        { value: "nemotron", label: "Nemotron", data: "Transcribes as you speak, so references are picked up almost immediately. Supports around 40 languages." }
+        // other models in the future?
     ]
     $: selectedSttEngine = sttOptions.engine || resolveSttEngine()
 
@@ -60,9 +59,7 @@
 
     <MaterialDropdown label="ai.engine" options={sttEngines} value={selectedSttEngine} on:change={(e) => updateValue("stt.engine", e.detail)} />
 
-    {#if selectedSttEngine === "whisper"}
-        <WhisperOptions />
-    {:else if selectedSttEngine === "nemotron"}
+    {#if selectedSttEngine === "nemotron"}
         <NemotronOptions />
     {/if}
 {/if}

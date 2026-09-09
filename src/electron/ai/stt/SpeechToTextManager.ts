@@ -1,13 +1,11 @@
-import { existsSync } from "fs"
 import type { SttEngineOptions } from "../../../types/ai/AiSettings"
 import { ToMain } from "../../../types/IPC/ToMain"
 import { sendToMain } from "../../IPC/main"
 import { LocalModelManager } from "../setup/LocalModelManager"
 import { NemotronTranscriber } from "./models/NemotronTranscriber"
-import { WhisperTranscriber } from "./models/WhisperTranscriber"
 import type { TranscriberSegment } from "./sttHelper"
 
-type SttEngine = WhisperTranscriber | NemotronTranscriber
+type SttEngine = NemotronTranscriber
 type SegmentListener = (segment: TranscriberSegment) => void
 
 export class SpeechToText {
@@ -66,23 +64,6 @@ export class SpeechToText {
         const onSegment = this.onSegment.bind(this)
         const onError = this.onError.bind(this)
         const onInterim = this.onInterim.bind(this)
-
-        if (engine === "whisper") {
-            const whisperStatus = await LocalModelManager.getStatus("whisper", undefined, options.customPath)
-            if (!whisperStatus.ready) return { error: "Whisper is not installed" }
-
-            const customModel = options.customModelPath && existsSync(options.customModelPath) ? options.customModelPath : ""
-            let model = options.model || ((options.language || "en").startsWith("en") && !options.interpretationMode ? "base.en" : "base")
-            if (options.interpretationMode) model = model.replace(".en", "")
-
-            if (!customModel && !(await LocalModelManager.getStatus("whisper", model)).ready) {
-                return { error: "Whisper model is missing" }
-            }
-
-            return {
-                transcriber: new WhisperTranscriber({ ...options, customModelPath: customModel, model, whisper: { kind: "cli", binaryPath: whisperStatus.localPath || "" } }, onSegment, onError, onInterim)
-            }
-        }
 
         if (engine === "nemotron") {
             const status = await LocalModelManager.getStatus("nemotron")

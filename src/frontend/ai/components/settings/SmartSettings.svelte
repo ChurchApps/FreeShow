@@ -1,7 +1,7 @@
 <script lang="ts">
     import MaterialToggleSwitch from "../../../components/inputs/MaterialToggleSwitch.svelte"
     import Tip from "../../../components/main/Tip.svelte"
-    import { ai } from "../../../stores"
+    import { activePopup, ai } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import AutoScriptureOptions from "./AutoScriptureOptions.svelte"
     import STTOptions from "./STTOptions.svelte"
@@ -13,6 +13,10 @@
             a[key] = value
             return a
         })
+
+        if (key === "enabled" && value) {
+            activePopup.set("ai_model_manager")
+        }
     }
 </script>
 

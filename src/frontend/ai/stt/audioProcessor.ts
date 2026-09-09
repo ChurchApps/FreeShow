@@ -5,9 +5,7 @@
 
 export {} // module scope, so the AudioWorklet declarations don't collide with ltcProcessor.ts
 
-// 100ms per message at the 16kHz context rate. The streaming engine decodes whatever it is
-// handed, so this is its floor for detecting the end of a phrase - whisper buffers into a ring
-// and triggers on sample counts instead, so a smaller chunk costs it nothing (same bytes, more messages).
+// 100ms per message at the 16kHz context rate. The streaming engine decodes whatever it is handed, so this is its floor for detecting the end of a phrase
 const OUTPUT_SAMPLE_COUNT = 1600
 
 // Declare AudioWorklet types locally since they aren't in the default DOM lib
