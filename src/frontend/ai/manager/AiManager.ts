@@ -4,7 +4,8 @@ import type { AiSuggestion } from "../../../types/ai/Ai"
 import type { ConfidenceLevels } from "../../../types/ai/AiSettings"
 import { startScripture } from "../../components/actions/apiHelper"
 import { getFirstActiveOutput } from "../../components/helpers/output"
-import { ai, aiSmartAction, aiSuggestions, drawerTabsData, outputs } from "../../stores"
+import { ai, aiSmartAction, aiSuggestions, drawerTabsData, outputs, scriptures } from "../../stores"
+import { newToast } from "../../utils/common"
 import { getLLMManager } from "../llm/llmManager"
 import { BibleCacheManager } from "../scripture/BibleCacheManager"
 import { isReferenceWithin } from "../scripture/references"
@@ -54,9 +55,17 @@ export class AiManager {
         return scriptureMatch
     }
 
+    private static scriptureAlerted: boolean = false
     private static async bibleDetection(textChunk: string, isCancelled?: () => boolean) {
         const activeBibleId = get(drawerTabsData)?.scripture?.activeSubTab
         if (!activeBibleId) return null
+
+        const scriptureData = get(scriptures)[activeBibleId]
+        if (scriptureData?.api) {
+            if (!this.scriptureAlerted) newToast("Please use a local Bible instead of an API Bible for the auto detection!")
+            this.scriptureAlerted = true
+            return null
+        }
 
         const bibleCache = await BibleCacheManager.getCache(activeBibleId)
         if (!bibleCache || isCancelled?.()) return null
