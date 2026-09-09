@@ -266,6 +266,26 @@ export function getFileStatsAsync(filePath: string): Promise<null | Stats> {
     })
 }
 
+export function getFolderSize(dir: string): number {
+    try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true })
+
+        const sizes = entries.map((entry) => {
+            const fullPath = join(dir, entry.name)
+
+            try {
+                return entry.isDirectory() ? getFolderSize(fullPath) : fs.statSync(fullPath).size
+            } catch {
+                return 0
+            }
+        })
+
+        return sizes.reduce((a, b) => a + b, 0)
+    } catch {
+        return 0
+    }
+}
+
 export function makeDir(folderPath: string) {
     try {
         fs.mkdirSync(folderPath, { recursive: true })

@@ -34,6 +34,7 @@ win:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libspotifyctl/**/*"
         - "**/node_modules/openmediatransport/**"
+        - "**/node_modules/sherpa-onnx-*/**"
     azureSignOptions:
         publisherName: Live Church Solutions
         endpoint: https://wus2.codesigning.azure.net/
@@ -48,6 +49,7 @@ linux:
         - "**/node_modules/openmediatransport/**"
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libltc-wrapper/**/*"
+        - "**/node_modules/sherpa-onnx-*/**"
     category: AudioVideo
     target:
         - AppImage
@@ -70,6 +72,7 @@ mac:
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/openmediatransport/**"
+        - "**/node_modules/sherpa-onnx-*/**"
     target:
         - target: dmg
           arch:

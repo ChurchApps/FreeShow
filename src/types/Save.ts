@@ -91,6 +91,7 @@ export type SaveListSettings =
     | "timecode"
     | "contentProviderData"
     | "obsData"
+    | "ai"
 
 export interface SaveData {
     // SETTINGS
