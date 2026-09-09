@@ -164,21 +164,22 @@ class CameraManager {
         if (!videoElement) return
 
         let paused = false
-        const pauseVideo = (delay = 200) => {
+        const pauseVideo = (delay = 1000) => {
             setTimeout(() => {
                 if (paused || isDestroyed?.() || !videoElement) return
+
                 paused = true
                 if (!isHovered?.()) this.pause(videoElement)
             }, delay)
         }
 
         if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
-            ;(videoElement as any).requestVideoFrameCallback(() => pauseVideo(200))
+            ;(videoElement as any).requestVideoFrameCallback(() => pauseVideo())
         } else {
-            videoElement.addEventListener("loadeddata", () => pauseVideo(200), { once: true })
+            videoElement.addEventListener("loadeddata", () => pauseVideo(), { once: true })
         }
 
-        setTimeout(() => pauseVideo(0), 1200)
+        setTimeout(() => pauseVideo(), 1500)
     }
 
     async attachCamera(
