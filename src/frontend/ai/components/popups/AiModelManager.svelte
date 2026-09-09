@@ -42,7 +42,9 @@
 
 {#if !mode}
     <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
+{/if}
 
+{#if !mode || mode === "setup"}
     <div style="display: flex;justify-content: center;font-size: 0.9em;">
         <Link url="https://freeshow.app/docs/smart">
             <T id="main.docs" />
@@ -51,8 +53,8 @@
     </div>
 {/if}
 
-{#if !mode || mode === "transcription"}
-    {#if !mode}
+{#if !mode || mode === "transcription" || mode === "setup"}
+    {#if !mode || mode === "setup"}
         <!-- Speech to text -->
         <HRule title="ai.transcription" />
     {/if}

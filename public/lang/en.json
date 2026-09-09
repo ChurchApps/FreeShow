@@ -1833,7 +1833,6 @@
         "waiting": "Waiting...",
         "processing": "Processing...",
         "transcription": "Transcription",
-        "copy_transcript": "Copy transcript",
         "confidence_ask": "Always ask",
         "confidence_highest": "If confident",
         "confidence_high": "If high confidence",

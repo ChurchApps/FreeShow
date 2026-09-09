@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { ai, sttTranscript } from "../../stores"
-import { AiManager } from "../manager/AiManager"
 import { newToast } from "../../utils/common"
+import { AiManager } from "../manager/AiManager"
 
 type TranscriptPart = {
     text: string
