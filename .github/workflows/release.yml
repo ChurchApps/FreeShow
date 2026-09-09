@@ -47,7 +47,7 @@ jobs:
         run:
           |
           sudo apt-get update
-          sudo apt-get install -y libfontconfig1-dev uuid-dev libltc-dev --fix-missing
+          sudo apt-get install -y libfontconfig1-dev uuid-dev libltc-dev libegl1-mesa-dev libgles2-mesa-dev --fix-missing
 
       - name: Install dependencies
         run: npm ci
@@ -76,7 +76,7 @@ jobs:
         run:
           |
           sudo apt-get update
-          sudo apt-get install -y libfontconfig1-dev uuid-dev libltc-dev --fix-missing
+          sudo apt-get install -y libfontconfig1-dev uuid-dev libltc-dev libegl1-mesa-dev libgles2-mesa-dev --fix-missing
 
       # WIDEVINE
       # - name: Use stock Electron on ARM64
