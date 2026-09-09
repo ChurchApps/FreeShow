@@ -5,6 +5,7 @@
     import { activePopup, activeProject, activeShow, categories, drawerTabsData, formatNewShow, quickTextCache, shows, special, splitLines } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
     import { translateText } from "../../../../utils/language"
+    import { getNormalizedKey } from "../../../../utils/shortcuts"
     import { customIconsColors } from "../../../../values/customIcons"
     import { clone, sortObject } from "../../../helpers/array"
     import { history } from "../../../helpers/history"
@@ -161,8 +162,12 @@
     // SHORTCUTS
 
     function keydown(e: KeyboardEvent) {
+        if (e.shiftKey || e.altKey) return
+
         const ctrl = e.ctrlKey || e.metaKey
-        if (e.key === "f" && ctrl) {
+
+        const ctrlKey = ctrl ? getNormalizedKey(e) : ""
+        if (ctrlKey === "f") {
             e.preventDefault()
             selectOption("web")
 

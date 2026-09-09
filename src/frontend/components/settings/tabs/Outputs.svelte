@@ -1,13 +1,13 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
+    import { BLACKMAGIC, NDI, OMT, OUTPUT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
     import type { Option } from "../../../../types/Main"
     import type { Output, RtmpDestination } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, special, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { requestMain } from "../../../IPC/main"
+    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, omtData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
@@ -63,16 +63,22 @@
                         return n
                     })
 
+                    omtData.update((n) => {
+                        delete n[outputId]
+                        return n
+                    })
+
                     AudioAnalyser.recorderDeactivate()
                 }
             }
 
             if (out.enabled) {
-                const ipcKeys = ["alwaysOnTop", "transparent", "invisible", "ndi", "webrtc", "rtmp"]
-                if (key === "transparent") {
+                // Recreate window for options fixed at creation (transparency, invisibility, capture/OSR mode)
+                const recreateKeys = ["transparent", "invisible", "ndi", "omt", "webrtc", "rtmp", "blackmagic"]
+                if (recreateKeys.includes(key)) {
                     send(OUTPUT, ["CREATE"], { id: outputId, ...out })
-                } else if (key === "blackmagic" || ipcKeys.includes(key)) {
-                    send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value: key === "blackmagic" ? out : value })
+                } else if (key === "alwaysOnTop") {
+                    send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
                 }
             }
 
@@ -129,6 +135,29 @@
         }
     }
 
+    // omt
+    const omtQualities = [
+        { value: "Default", label: translateText("settings.auto") },
+        { value: "Low", label: "Low (least bandwidth)" },
+        { value: "Medium", label: "Medium" },
+        { value: "High", label: "High (most bandwidth)" }
+    ]
+    function updateOmtData(e: any, key: string) {
+        let id = currentOutput?.id
+        if (!id) return
+
+        let newData = $outputs[id]?.omtData
+        if (!newData) newData = {}
+
+        let value = e?.detail?.id ?? e
+
+        newData[key] = value
+
+        updateOutput("omtData", newData)
+
+        send(OMT, ["OMT_DATA"], { id, ...newData })
+    }
+
     // webrtc
     function updateWebrtcData(e: any, key: string) {
         let id = currentOutput?.id
@@ -146,6 +175,8 @@
     function updateRtmpData(value: any, key: string) {
         if (!currentOutput?.id) return
         updateOutputRtmpData(currentOutput.id, key, value)
+
+        saved.set(false)
     }
 
     function extractPlatformName(urlString: string | undefined): string | null {
@@ -175,12 +206,6 @@
         } finally {
             // detectingEncoders = false
         }
-    }
-
-    function setEncoder(encoder: string) {
-        special.update((a) => ({ ...a, rtmpEncoder: encoder }))
-        sendMain(Main.SET_RTMP_ENCODER, { encoder })
-        saved.set(false)
     }
 
     $: if (currentOutput?.rtmp && encoderOptions.length === 1) loadEncoders()
@@ -415,6 +440,24 @@
     {/if} -->
 {/if}
 
+{#if currentOutput?.omt}
+    <Title label="OMT" icon="omt" />
+
+    <InputRow>
+        {#if currentOutput.invisible && !currentOutput.blackmagic}
+            <MaterialPopupButton label="edit.size" value={outputLabel} name={outputLabel} icon="resize" popupId="change_output_values" />
+        {/if}
+        <MaterialDropdown label="settings.frame_rate" value={currentOutput.omtData?.framerate || "30"} defaultValue="30" options={framerates} on:change={(e) => updateOmtData(e.detail, "framerate")} />
+    </InputRow>
+
+    <InputRow>
+        <MaterialTextInput label="inputs.name" value={currentOutput.omtData?.name || `FreeShow OMT${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} defaultValue={`FreeShow OMT${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} on:change={(e) => updateOmtData(e.detail, "name")} />
+        <MaterialDropdown label="settings.quality" value={currentOutput.omtData?.quality || "Default"} defaultValue="Default" options={omtQualities} on:change={(e) => updateOmtData(e.detail, "quality")} />
+    </InputRow>
+
+    <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={true} on:change={(e) => updateOutput("transparent", e.detail)} />
+{/if}
+
 {#if currentOutput?.webrtc}
     <Title label="WebRTC" icon="broadcast" />
 
@@ -450,7 +493,7 @@
     </InputRow>
 
     <InputRow style="margin-bottom: 10px;">
-        <MaterialDropdown label="settings.video_encoder" value={$special.rtmpEncoder || "auto"} defaultValue="auto" options={encoderOptions} on:change={(e) => setEncoder(e.detail)} />
+        <MaterialDropdown label="settings.video_encoder" value={currentOutput.rtmpData?.encoder || "auto"} defaultValue="auto" options={encoderOptions} on:change={(e) => updateRtmpData(e.detail, "encoder")} />
         <!-- <MaterialButton variant="outlined" icon="refresh" title="Re-detect encoders" disabled={detectingEncoders} on:click={() => loadEncoders(true)} /> -->
     </InputRow>
 

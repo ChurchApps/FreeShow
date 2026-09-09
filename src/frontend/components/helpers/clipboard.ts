@@ -4,6 +4,7 @@ import { Main } from "../../../types/IPC/Main"
 import type { Clipboard } from "../../../types/Main"
 import type { Folder, Project } from "../../../types/Projects"
 import type { Item } from "../../../types/Show"
+import { removeOutputAudioChannel } from "../../audio/routing/audioRoutingInit"
 import { getProjectsInFolder } from "../../converters/project"
 import { sendMain } from "../../IPC/main"
 import {
@@ -61,6 +62,7 @@ import {
 import { newToast, setStatus, triggerFunction } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
+import { copyFromTextField, isFormField } from "../../utils/shortcutsHelper"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
 import { updateSortedStageItems } from "../edit/scripts/itemHelpers"
@@ -75,10 +77,15 @@ import { select } from "./select"
 import { loadShows } from "./setShow"
 import { checkName, getLayoutRef, removeTemplatesFromShow } from "./show"
 import { _show } from "./shows"
-import { removeOutputAudioChannel } from "../../audio/routing/audioRoutingInit"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
     let copyData: Clipboard | null = clip
+
+    const activeField = document.activeElement
+    if (!clip && isFormField(activeField)) {
+        copyFromTextField(activeField)
+        return
+    }
 
     if (window.getSelection()?.toString()) {
         navigator.clipboard.writeText(window.getSelection()!.toString())
@@ -116,6 +123,7 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
 
 // pasting text in editbox is it's own function
 export function paste(clip: Clipboard | null = null, extraData: any = {}, customElem: HTMLElement | null = null, isDuplicating = false) {
+    const hasCustomClip = !!clip
     if (!clip) clip = get(clipboard)
     let activeElem = document.activeElement
 
@@ -130,6 +138,8 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
         pasteText(activeElem)
         return
     }
+
+    if (!hasCustomClip && isFormField(activeElem)) return
 
     if (clip.id === null) return
 
@@ -154,6 +164,12 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
 }
 
 export function cut(clip: Clipboard | null = null) {
+    const activeField = document.activeElement
+    if (!clip && isFormField(activeField)) {
+        copyFromTextField(activeField)
+        return
+    }
+
     // Handle text directly
     if (window.getSelection()?.toString()) {
         const selection = window.getSelection()!

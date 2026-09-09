@@ -30,6 +30,7 @@ type DesignItem = {
     urls?: { view_url?: string; edit_url?: string }
     design_types?: any[]
     page_count?: number
+    updated_at?: number
 }
 
 type ListDesignsResponse = {
@@ -85,11 +86,33 @@ export class CanvaContentLibrary {
     }
 
     /**
-     * Fetches page metadata for a design (preview-only, fast).
-     * Returns cached result if available, otherwise fetches from API.
+     * Fetches metadata for a single design.
      */
-    public static async getPageMetadata(designId: string): Promise<PageMetadata | null> {
-        const cacheKey = `pages:${designId}`
+    public static async getDesign(designId: string): Promise<DesignItem | null> {
+        try {
+            const response = await this.request(`/v1/designs/${encodeURIComponent(designId)}`)
+            return response?.design || null
+        } catch (e) {
+            console.error("Failed to fetch design:", e)
+            return null
+        }
+    }
+
+    /**
+     * Gets the latest updated_at timestamp for a design to validate cache freshness.
+     */
+    public static async getDesignUpdatedAt(designId: string): Promise<number> {
+        const design = await this.getDesign(designId)
+        return design?.updated_at || (design as any)?.updatedAt || 0
+    }
+
+    /**
+     * Fetches page metadata for a design (preview-only, fast).
+     * Returns cached result if available and fresh, otherwise fetches from API.
+     */
+    public static async getPageMetadata(designId: string, updatedTimestamp?: number): Promise<PageMetadata | null> {
+        const lastUpdated = updatedTimestamp ?? (await this.getDesignUpdatedAt(designId))
+        const cacheKey = `pages:${designId}:${lastUpdated}`
         const cached = this.getCachedEntry(this.pageMetadataCache, cacheKey)
         if (cached) return cached
 
@@ -345,7 +368,9 @@ export class CanvaContentLibrary {
      * @param pages - Optional 1-based page indexes to fetch. If omitted, fetches all pages.
      */
     private static async getPresentationSlides(designId: string, exportFullQuality = true, pages?: number[]): Promise<ContentFile[]> {
-        const metadata = await this.getPageMetadata(designId)
+        const lastUpdated = await this.getDesignUpdatedAt(designId)
+
+        const metadata = await this.getPageMetadata(designId, lastUpdated)
         if (!metadata) return []
 
         const pageItems = pages?.length ? pages.map((page) => metadata.items[page - 1]).filter(Boolean) : metadata.items
@@ -353,7 +378,7 @@ export class CanvaContentLibrary {
 
         let exportedUrls: string[] = []
         if (exportFullQuality) {
-            exportedUrls = await this.exportDesignAsPngs(designId, pagesToExport)
+            exportedUrls = await this.exportDesignAsPngs(designId, pagesToExport, lastUpdated)
         }
 
         // Use full-quality export URLs when available. Page URLs are thumbnails and only used as fallback.
@@ -380,20 +405,23 @@ export class CanvaContentLibrary {
     /**
      * Requests high-quality PNG exports for one or more pages of a design.
      * Batches all pages into a single export job.
-     * Caches export URLs for 24 hours.
+     * Caches export URLs for 24 hours (keyed with design updated_at timestamp).
      *
      * @param designIdOrUrl Canva design ID or URL
      * @param pages 1-based page indexes. If omitted, Canva exports all pages.
+     * @param updatedTimestamp Optional design last updated timestamp for cache validation
      */
-    public static async exportDesignAsPngs(designIdOrUrl: string, pages?: number[]): Promise<string[]> {
+    public static async exportDesignAsPngs(designIdOrUrl: string, pages?: number[], updatedTimestamp?: number): Promise<string[]> {
         let designId = designIdOrUrl
         if (designIdOrUrl.startsWith("http://") || designIdOrUrl.startsWith("https://")) {
             designId = this.urlToContentIdMap[designIdOrUrl]
             if (!designId) return []
         }
 
-        // Check cache first
-        const cacheKey = `export:${designId}:${pages?.join(",") || "all"}`
+        const lastUpdated = updatedTimestamp ?? (await this.getDesignUpdatedAt(designId))
+
+        // Check cache first (includes updated timestamp to automatically invalidate when modified)
+        const cacheKey = `export:${designId}:${lastUpdated}:${pages?.join(",") || "all"}`
         const cached = this.getCachedEntry(this.exportJobCache, cacheKey)
         if (cached) return cached.urls
 

@@ -28,6 +28,8 @@
 
     export let slideIndex = 0
     export let preview = false
+    export let miniPreview = false
+    export let isStage = false
     export let cropPreviewMode = false
     export let isTemplatePreview = false
     export let smallFontSize = false
@@ -78,12 +80,12 @@
     }
 
     $: cameraCropState = getCropState(item.cropping, cropPreviewMode, item.style)
-    $: cameraStyleString = `${cameraCropState.mediaCropGeometry}object-fit: ${item.fit || "contain"};filter: ${item.filter};transform: scale(${item.flipped ? "-1" : "1"}, ${item.flippedY ? "-1" : "1"});`
+    $: cameraStyleString = `${cameraCropState.mediaCropGeometry}object-fit: ${cameraCropState.cropHasValues ? (item.fit === "cover" ? "cover" : "fill") : item.fit || "contain"};filter: ${item.filter};transform: scale(${item.flipped ? "-1" : "1"}, ${item.flippedY ? "-1" : "1"});`
     $: variableStyleString = typeof item.style === "string" ? (item.style.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${edit ? autoSize : fontSize}px;`) : ""
 </script>
 
 {#if item.type === "media"}
-    <MediaItem {item} {outputId} slideRef={{ ...ref, slideIndex }} {preview} {edit} {cropPreviewMode} />
+    <MediaItem {item} {outputId} slideRef={{ ...ref, slideIndex }} preview={preview || isStage} {miniPreview} {edit} {cropPreviewMode} />
 {:else if item.type === "web"}
     <Website src={item.web?.src || ""} navigation={!edit && !item.web?.noNavigation} clickable={!edit && $currentWindow === "output"} {ratio} />
 {:else if item.type === "timer"}
@@ -92,7 +94,7 @@
     <Clock {item} fontStyle={noAutoSize ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} style={false} {...item.clock} />
 {:else if item.type === "camera"}
     {#if item.device}
-        <Cam cam={item.device} item style={cameraStyleString} disablePreview={isTemplatePreview} cropping={item.cropping} {cropPreviewMode} preview={!outputId && (preview || isTemplatePreview)} />
+        <Cam cam={item.device} item style={cameraStyleString} disablePreview={isTemplatePreview} cropping={item.cropping} {cropPreviewMode} preview={!outputId && (preview || isTemplatePreview)} itemStyle={item.style} />
     {/if}
 {:else if item.type === "slide_tracker"}
     <SlideProgress {item} tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : edit ? autoSize : fontSize} {outputId} />

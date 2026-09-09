@@ -402,6 +402,9 @@
     //         return items
     //     }
     // }
+
+    // custom local fonts (likely from PPT import)
+    $: customLocalFonts = showIsActive ? $showsCache[$activeEdit?.id || $activeShow?.id || ""]?.settings?.customFonts || [] : []
 </script>
 
 <svelte:window on:keydown={keydown} />
@@ -413,7 +416,7 @@
         {#if active === "text"}
             <div class="content">
                 {#if item}
-                    <BoxStyle id={item?.type || "text"} bind:allSlideItems bind:item />
+                    <BoxStyle id={item?.type || "text"} bind:allSlideItems bind:item {customLocalFonts} />
                 {:else}
                     <Center faded>
                         <T id="empty.items" />

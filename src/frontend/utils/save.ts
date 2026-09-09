@@ -12,6 +12,7 @@ import {
     actions,
     activePopup,
     activeProject,
+    ai,
     alertMessage,
     alertUpdates,
     audioChannelsData,
@@ -26,6 +27,7 @@ import {
     categories,
     cloudSyncData,
     contentProviderData,
+    customFonts,
     customMetadata,
     customizedIcons,
     dataPath,
@@ -172,6 +174,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         formatNewShow: get(formatNewShow),
         labelsDisabled: get(labelsDisabled),
         language: get(language),
+        customFonts: get(customFonts),
         mediaFolders: get(mediaFolders),
         mediaOptions: get(mediaOptions),
         openedFolders: get(openedFolders),
@@ -186,6 +189,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         theme: get(theme),
         transitionData: get(transitionData),
         // themes: get(themes),
+        audioRouting: get(audioRouting),
         audioChannelsData: get(audioChannelsData),
         cloudSyncData: get(cloudSyncData),
         driveData: get(driveData),
@@ -198,7 +202,8 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         timeline: get(timeline),
         timecode: get(timecode),
         contentProviderData: get(contentProviderData),
-        obsData: get(obsData)
+        obsData: get(obsData),
+        ai: get(ai)
     }
 
     const syncedSettings: { [key: string]: any } = {}
@@ -277,7 +282,6 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         globalRegexes,
         customMetadata,
         effects,
-        audioRouting,
         deletedDefaults
     }
 }
@@ -452,6 +456,7 @@ const saveList: { [key in SaveList]: any } = {
     groups,
     labelsDisabled,
     language,
+    customFonts: null,
     mediaFolders,
     mediaOptions,
     openedFolders: null,
@@ -509,5 +514,6 @@ const saveList: { [key in SaveList]: any } = {
     obsData: null,
     effects,
     audioRouting,
-    deletedDefaults: null
+    deletedDefaults: null,
+    ai: ai
 }

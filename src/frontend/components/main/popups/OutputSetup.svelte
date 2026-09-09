@@ -3,6 +3,9 @@
     import { translateText } from "../../../utils/language"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
+    import { registerPopupSubmit } from "../../../utils/popup"
+
+    registerPopupSubmit(confirm)
 
     const localTypes = [
         { id: "window", name: translateText("settings.window"), icon: "hdmi", tip: "HDMI, DisplayPort" },
@@ -11,6 +14,7 @@
 
     const networkTypes = [
         { id: "ndi", name: "NDI®", icon: "ndi", tip: "IP, OBS" },
+        { id: "omt", name: "OMT", icon: "omt", tip: "IP" },
         { id: "webrtc", name: "WebRTC", icon: "broadcast", tip: "WHIP, restream.io" },
         { id: "rtmp", name: "RTMP", icon: "broadcast", tip: "YouTube, Twitch, Facebook Live" }
     ]
@@ -19,6 +23,8 @@
     let networkType: string = ""
 
     function confirm() {
+        if (!localType && !networkType) return
+
         popupData.set({ id: "choose_output_type", value: { localType, networkType } })
     }
 </script>

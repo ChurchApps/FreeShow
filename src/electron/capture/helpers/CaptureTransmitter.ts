@@ -1,9 +1,10 @@
-import type { NativeImage, Size } from "electron"
+import { nativeImage, type NativeImage, type Size } from "electron"
 import os from "os"
 import { OUTPUT_STREAM } from "../../../types/Channels"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
 import { NdiSender } from "../../ndi/NdiSender"
 import util from "../../ndi/vingester-util"
+import { OmtSender } from "../../omt/OmtSender"
 import { OutputHelper } from "../../output/OutputHelper"
 import { getConnections, getStageStreamSubscriberIds, toServer, toStageStreamSubscribers } from "../../servers"
 import { RtmpStreamer } from "../../streaming/RtmpStreamer"
@@ -52,7 +53,7 @@ export class CaptureTransmitter {
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
         if (!captureOptions) return
 
-        const channelKeys = ["ndi", "blackmagic", "server", "stage", "webrtc", "rtmp"]
+        const channelKeys = ["ndi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp"]
         channelKeys.forEach((key) => {
             if (captureOptions.options[key]) this.startChannel(captureId, key)
         })
@@ -79,6 +80,65 @@ export class CaptureTransmitter {
 
         const hasRemainingChannels = Object.keys(this.channels).some((k) => k.startsWith(`${captureId}-`))
         if (!hasRemainingChannels) delete this.lastChangeTimes[captureId]
+    }
+
+    // Choose shared-texture readback/convert target: 0=BGRA, 1=UYVY (opaque), 2=UYVA (transparency), 3=RGBA
+    static getReadbackFormat(captureId: string, size?: Size): number {
+        const keys = Object.keys(this.channels)
+            .filter((k) => k.startsWith(`${captureId}-`))
+            .map((k) => this.channels[k].key)
+        if (keys.length !== 1) return 0
+        const only = keys[0]
+        if (only === "ndi") {
+            const transparent = OutputHelper.getOutput(captureId)?.transparent === true
+            return transparent ? 2 : 1
+        }
+        if (only === "omt") return OutputHelper.getOutput(captureId)?.transparent === true ? 2 : 1
+        if (only === "blackmagic" && size && BlackmagicSender.canAcceptRawUyvy(captureId, size)) return 1
+        if (only === "webrtc") return 3
+        return 0
+    }
+
+    // Returns non-NDI/OMT consumers eligible for off-main capture (server/stage), or null if full-res path needed
+    static getHeavyOffMainConsumers(captureId: string): string[] | null {
+        const heavy = Object.keys(this.channels)
+            .filter((k) => k.startsWith(`${captureId}-`))
+            .map((k) => this.channels[k].key)
+            .filter((key) => key !== "ndi" && key !== "omt")
+        if (heavy.some((key) => key !== "server" && key !== "stage")) return null
+        return heavy
+    }
+
+    // Downscale target for server/stage previews
+    static getScaledTarget(size: Size): { dstW: number; dstH: number } {
+        const dstW = Math.min(size.width, this.HEAVY_IMAGE_MAX_WIDTH)
+        const dstH = Math.max(1, Math.round((dstW * size.height) / size.width))
+        return { dstW, dstH }
+    }
+
+    // Checks if all members of a group only use NDI, server, or stage
+    static groupOffMainInfo(memberIds: string[]): { eligible: boolean; needsScaled: boolean } {
+        let needsScaled = false
+        for (const id of memberIds) {
+            const heavy = Object.keys(this.channels)
+                .filter((k) => k.startsWith(`${id}-`))
+                .map((k) => this.channels[k].key)
+                .filter((key) => key !== "ndi" && key !== "omt")
+            if (heavy.some((key) => key !== "server" && key !== "stage")) return { eligible: false, needsScaled: false }
+            if (heavy.length) needsScaled = true
+        }
+        return { eligible: true, needsScaled }
+    }
+
+    // Dispatches downscaled frame from worker to server/stage channels
+    static receiveScaledFrame(memberIds: string[], buffer: ArrayBuffer, byteOffset: number, byteLength: number, size: Size) {
+        const image = nativeImage.createFromBitmap(Buffer.from(buffer, byteOffset, byteLength), size)
+        if (image.isEmpty()) return
+        for (const id of memberIds) {
+            for (const key of ["server", "stage"]) {
+                if (this.channels[`${id}-${key}`]) this.sendFrameToChannel(id, key, image)
+            }
+        }
     }
 
     static getTimeSinceLastChange(captureId: string): number {
@@ -196,36 +256,183 @@ export class CaptureTransmitter {
         return false
     }
 
-    static transmitFrame(captureId: string, image: NativeImage, captureTimestamp?: number) {
+    // buffer-consumers need only raw BGRA bytes (no NativeImage resize/toJPEG), so on the shared-texture
+    // path they can take the readback buffer directly instead of a createFromBitmap -> toBitmap round-trip.
+    private static readonly BUFFER_CONSUMERS = new Set(["ndi", "omt", "webrtc", "rtmp", "blackmagic"])
+
+    private static osrModule: any = null
+    private static loadOsr(): any {
+        if (this.osrModule !== null) return this.osrModule
+        try {
+            const m = require("osr-capture")
+            this.osrModule = typeof m?.downscaleBgra === "function" ? m : false
+        } catch {
+            this.osrModule = false
+        }
+        return this.osrModule
+    }
+
+    private static readonly HEAVY_IMAGE_MAX_WIDTH = 1280
+    // Downscale 4K buffer natively if possible before creating NativeImage for server/stage
+    private static buildHeavyImage(image: NativeImage | null, raw: { buffer: Buffer; size: Size; format?: number } | undefined): NativeImage | null {
+        if (image) return image
+        if (!raw || (raw.format ?? 0) !== 0) return null
+        if (raw.size.width > this.HEAVY_IMAGE_MAX_WIDTH) {
+            const osr = this.loadOsr()
+            if (osr) {
+                const dstW = this.HEAVY_IMAGE_MAX_WIDTH
+                const dstH = Math.max(1, Math.round((dstW * raw.size.height) / raw.size.width))
+                try {
+                    const small: Buffer = osr.downscaleBgra(raw.buffer, raw.size.width, raw.size.height, dstW, dstH)
+                    return nativeImage.createFromBitmap(small, { width: dstW, height: dstH })
+                } catch {
+                    // fall through to full-res createFromBitmap
+                }
+            }
+        }
+        return nativeImage.createFromBitmap(raw.buffer, raw.size)
+    }
+
+    static transmitFrame(captureId: string, image: NativeImage | null, captureTimestamp?: number, raw?: { buffer: Buffer; size: Size; format?: number }) {
         const frameTimestamp = captureTimestamp ?? performance.now()
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
         if (!captureOptions) return
 
         const framerates = captureOptions.framerates
 
-        // free the lifecycle loop immediately
         setImmediate(() => {
-            if (image.isEmpty()) return
+            if (!raw && (!image || image.isEmpty())) return
+            this.transmitFrameBody(captureId, image, raw, frameTimestamp, captureOptions, framerates)
+        })
+    }
 
+    private static transmitFrameBody(captureId: string, image: NativeImage | null, raw: { buffer: Buffer; size: Size; format?: number } | undefined, frameTimestamp: number, captureOptions: any, framerates: any) {
+        {
             const baseCaptureFrameRate = CaptureHelper.getMaxActiveFramerate(framerates || {}, captureOptions.options || {})
+            const px = raw?.size ? raw.size.width * raw.size.height : image ? image.getSize().width * image.getSize().height : 0
+            const heavyConsumerCap = px > 4_000_000 ? 12 : px > 2_000_000 ? 20 : Infinity
 
+            const firing: Channel[] = []
             for (const channel of Object.values(this.channels)) {
                 if (channel.captureId !== captureId) continue
 
-                const fps = framerates?.[channel.key] || 30
+                let fps = framerates?.[channel.key] || 30
+                if (!this.BUFFER_CONSUMERS.has(channel.key)) fps = Math.min(fps, heavyConsumerCap)
                 const minInterval = 1000 / fps
                 const timeSinceLastFrame = frameTimestamp - channel.lastFrameTime
 
                 const epsilon = fps >= baseCaptureFrameRate ? this.FPS_EPSILON_HIGH : this.FPS_EPSILON_LOW
-                if (timeSinceLastFrame < minInterval - epsilon) {
-                    continue
-                }
+                if (timeSinceLastFrame < minInterval - epsilon) continue
 
                 channel.lastFrameTime = frameTimestamp
-
-                this.sendFrameToChannel(captureId, channel.key, image)
+                firing.push(channel)
             }
-        })
+            if (firing.length === 0) return
+
+            let frameImage: NativeImage | null | undefined = undefined
+            for (const channel of firing) {
+                if (raw && this.BUFFER_CONSUMERS.has(channel.key)) {
+                    this.sendRawToChannel(captureId, channel.key, raw.buffer, raw.size, raw.format ?? 0)
+                    continue
+                }
+                if (frameImage === undefined) frameImage = this.buildHeavyImage(image, raw)
+                if (frameImage && !frameImage.isEmpty()) this.sendFrameToChannel(captureId, channel.key, frameImage)
+            }
+        }
+    }
+
+    // send a raw BGRA readback buffer straight to a buffer-consumer. `buffer` is the shared latest-frame
+    // buffer, so any consumer that mutates (convertToRGBA) or transfers (NDI worker) it must copy first.
+    private static sendRawToChannel(captureId: string, key: string, buffer: Buffer, size: Size, format: number) {
+        switch (key) {
+            case "ndi":
+                this.sendRawToNdi(captureId, buffer, size, format)
+                break
+            case "omt":
+                this.sendRawToOmt(captureId, buffer, size, format)
+                break
+            case "webrtc":
+                this.sendRawToWebRtc(captureId, buffer, size, format)
+                break
+            case "rtmp":
+                this.sendRawToRtmp(captureId, buffer, size)
+                break
+            case "blackmagic":
+                this.sendRawToBlackmagic(captureId, buffer, size, format)
+                break
+        }
+    }
+
+    // Blackmagic fast path: `format 1` means osr-capture already produced UYVY at the card's display mode
+    // (getReadbackFormat gated this via BlackmagicSender.canAcceptRawUyvy), so schedule it without the CPU
+    // BGRA->UYVY convert. `format 0` (BGRA) still works — it just goes through the standard NativeImage path
+    // (resize-to-display-mode + convert), same as when Blackmagic shares the frame with another consumer.
+    private static sendRawToBlackmagic(captureId: string, buffer: Buffer, size: Size, format: number) {
+        if (format === 1) {
+            if (!BlackmagicSender.canAcceptFrame(captureId)) return
+            const framerate = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.blackmagic
+            if (!framerate) return
+            const audioBuffer = BlackmagicSender.audioQueueLength > 0 ? this.AUDIO_PRESENT_MARKER : null
+            // own copy: the native scheduler must not retain/mutate the shared readback buffer
+            BlackmagicSender.scheduleFrame(captureId, Buffer.from(buffer), audioBuffer, framerate, true)
+            return
+        }
+        // BGRA: build a NativeImage once and use the standard converter path
+        const image = nativeImage.createFromBitmap(buffer, size)
+        if (!image.isEmpty()) this.sendBufferToBlackmagic(captureId, image)
+    }
+
+    private static sendRawToNdi(captureId: string, buffer: Buffer, size: Size, format: number) {
+        if (!NdiSender.NDI[captureId]?.sender) return
+        if (NdiSender.isBusyNDI(captureId)) return
+        const output = OutputHelper.getOutput(captureId)
+        const ratio = size.height ? size.width / size.height : 16 / 9
+        const transparent = output?.transparent === true
+        const framerate = output?.captureOptions?.framerates?.ndi || 30
+        NdiSender.sendVideoBufferNDI(captureId, Buffer.from(buffer), { size, ratio, framerate, transparent, format })
+    }
+
+    private static sendRawToOmt(captureId: string, buffer: Buffer, size: Size, format: number) {
+        if (!OmtSender.OMT[captureId]?.sender) return
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("omt", captureId, buffer, size)) return
+        const output = OutputHelper.getOutput(captureId)
+        const ratio = size.height ? size.width / size.height : 16 / 9
+        const transparent = output?.transparent !== false
+        const framerate = output?.captureOptions?.framerates?.omt || 30
+        OmtSender.sendVideoBufferOMT(captureId, Buffer.from(buffer), { size, ratio, framerate, transparent, format })
+    }
+
+    private static sendRawToWebRtc(captureId: string, buffer: Buffer, size: Size, format = 0) {
+        if (!WebRtcHost.isRunning()) return
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("webrtc", captureId, buffer, size)) return
+        if (format === 3) {
+            WebRtcHost.sendFrame(captureId, buffer, size)
+            return
+        }
+        const owned = Buffer.from(buffer)
+        this.convertToRGBA(owned)
+        WebRtcHost.sendFrame(captureId, owned, size)
+    }
+
+    private static sendRawToRtmp(captureId: string, buffer: Buffer, size: Size) {
+        if (!RtmpStreamer.isRunning(captureId)) return
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("rtmp", captureId, buffer, size)) return
+        RtmpStreamer.updateFrame(captureId, Buffer.from(buffer), size)
+    }
+
+    // Ensure frames match configured output size (resampling if display scaling altered dimensions)
+    private static sizeMismatchLogged: { [captureId: string]: string } = {}
+    private static toConfiguredSize(captureId: string, image: NativeImage): { image: NativeImage; size: Size } {
+        const size = image.getSize()
+        const intended = OutputHelper.getOutput(captureId)?.intendedBounds
+        if (!intended?.width || !intended?.height || (intended.width === size.width && intended.height === size.height)) return { image, size }
+        const target = { width: intended.width, height: intended.height }
+        const tag = `${size.width}x${size.height}->${target.width}x${target.height}`
+        if (this.sizeMismatchLogged[captureId] !== tag) {
+            this.sizeMismatchLogged[captureId] = tag
+            console.warn(`Output ${captureId} rendered ${size.width}x${size.height} but is configured ${target.width}x${target.height}; resampling frames for NDI/OMT`)
+        }
+        return { image: image.resize({ ...target, quality: "good" }), size: target }
     }
 
     private static sendFrameToChannel(captureId: string, key: string, image: NativeImage) {
@@ -233,9 +440,16 @@ export class CaptureTransmitter {
         if (!size.width || !size.height) return
 
         switch (key) {
-            case "ndi":
-                this.sendBufferToNdi(captureId, image, { size })
+            case "ndi": {
+                const fitted = this.toConfiguredSize(captureId, image)
+                this.sendBufferToNdi(captureId, fitted.image, { size: fitted.size })
                 break
+            }
+            case "omt": {
+                const fitted = this.toConfiguredSize(captureId, image)
+                this.sendBufferToOmt(captureId, fitted.image, { size: fitted.size })
+                break
+            }
             case "blackmagic":
                 this.sendBufferToBlackmagic(captureId, image)
                 break
@@ -267,14 +481,36 @@ export class CaptureTransmitter {
     static sendBufferToNdi(captureId: string, image: NativeImage, { size }: { size: { width: number; height: number } }) {
         if (!NdiSender.NDI[captureId]?.sender) return
 
+        // NDI drops to the latest frame while a send is in flight; skip the expensive toBitmap readback
+        // for frames that would be dropped anyway (avoids ~33MB/frame of throwaway allocation at 4K).
+        if (NdiSender.isBusyNDI(captureId)) return
+
         const buffer = image.toBitmap()
 
         const output = OutputHelper.getOutput(captureId)
         const ratio = image.getAspectRatio()
-        const transparent = output?.transparent !== false
+        const transparent = output?.transparent === true
         const framerate = output?.captureOptions?.framerates?.ndi || 30
 
         NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate, transparent })
+    }
+
+    // OMT
+    static sendBufferToOmt(captureId: string, image: NativeImage, { size }: { size: { width: number; height: number } }) {
+        if (!OmtSender.OMT[captureId]?.sender) return
+        // skip the toBitmap readback for frames the busy worker would drop anyway
+        if (OmtSender.isBusyOMT(captureId)) return
+
+        const buffer = image.toBitmap()
+        if (this.shouldSkipUnchangedNonBlackmagicFrame("omt", captureId, buffer, size)) return
+
+        const output = OutputHelper.getOutput(captureId)
+        const ratio = image.getAspectRatio()
+        const transparent = output?.transparent !== false
+        const framerate = output?.captureOptions?.framerates?.omt || 30
+
+        // toBitmap always yields BGRA
+        OmtSender.sendVideoBufferOMT(captureId, buffer, { size, ratio, framerate, transparent, format: 0 })
     }
 
     private static convertToRGBA(buffer: Buffer): void {
@@ -312,6 +548,15 @@ export class CaptureTransmitter {
     // BLACKMAGIC
     static sendBufferToBlackmagic(captureId: string, image: NativeImage) {
         if (!image || !BlackmagicSender.canAcceptFrame(captureId)) return
+
+        // match the Blackmagic device display mode. The capturePage poll resizes in
+        // captureAndProcessFrame; OSR outputs are captured at their render resolution, so resize here to
+        // cover both paths (no-op when the sizes already match).
+        const targetSize = BlackmagicSender.getTargetDimensions(captureId)
+        const currentSize = image.getSize()
+        if (targetSize?.width && (currentSize.width !== targetSize.width || currentSize.height !== targetSize.height)) {
+            image = image.resize({ width: targetSize.width, height: targetSize.height })
+        }
 
         const buffer = image.toBitmap({ scaleFactor: 1 })
         // release immediately to prevent memory accumulation

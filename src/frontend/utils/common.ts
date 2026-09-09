@@ -227,6 +227,11 @@ export function isDarkTheme() {
     return contrastColor === "#FFFFFF"
 }
 
+// escape any text value, so it can be safely used inside a RegExp as plain text */
+export function escapeRegExp(value: string) {
+    return (value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
 const throttled: { [key: string]: any } = {}
 export function throttle(id: string, value: any, callback: (v: any) => void, maxUpdatesPerSecond: number) {
     // value = clone(value)

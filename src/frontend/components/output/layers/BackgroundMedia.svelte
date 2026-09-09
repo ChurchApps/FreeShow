@@ -5,6 +5,7 @@
     import { media, playerVideos, special } from "../../../stores"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
+    import OmtStream from "../../drawer/live/OMTStream.svelte"
     import { getMediaStyle } from "../../helpers/media"
     import Player from "../../system/Player.svelte"
     import Camera from "../Camera.svelte"
@@ -39,10 +40,14 @@
         <Window {id} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "ndi"}
         {#key id}
-            <NdiStream screen={{ id, name: "" }} background {mirror} />
+            <NdiStream screen={{ id, name: "" }} background {mirror} {outputId} />
+        {/key}
+    {:else if type === "omt"}
+        {#key id}
+            <OmtStream screen={{ id, name: "" }} background {mirror} {outputId} />
         {/key}
     {:else if type === "blackmagic"}
-        <BmdStream screen={{ id, name: "" }} background {mirror} />
+        <BmdStream screen={{ id, name: "" }} background {mirror} {outputId} />
     {:else if type === "camera"}
         <Camera {id} groupId={data.cameraGroup || ""} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "player"}

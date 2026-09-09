@@ -145,6 +145,17 @@ export async function downloadFfmpeg(onProgress: (percent: number) => void): Pro
     try {
         await pipeline(body, fs.createWriteStream(zipPath))
         const extracted = await extractFfmpeg(zipPath, binDir)
+
+        // On macOS, files downloaded via fetch() get a com.apple.quarantine xattr
+        // that causes Gatekeeper to block execution. Strip it so the binary runs.
+        if (process.platform === "darwin") {
+            try {
+                await execFileAsync("xattr", ["-d", "com.apple.quarantine", extracted])
+            } catch {
+                // attribute may not be present — that's fine
+            }
+        }
+
         clearFfmpegPathCache()
         return extracted
     } finally {

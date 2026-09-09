@@ -3,7 +3,7 @@
     import type { Item, Transition } from "../../../../types/Show"
     import { currentWindow, scriptureSettings, templates } from "../../../stores"
     import { clone } from "../../helpers/array"
-    import { getStyleTemplate, slideHasAutoSizeItem } from "../../helpers/output"
+    import { getStyleTemplate, itemNeedsAutoSize, slideHasAutoSizeItem } from "../../helpers/output"
     import OutputTransition from "./OutputTransition.svelte"
     // import { onMount } from "svelte"
 
@@ -89,9 +89,8 @@
 
             // only keep the legacy autosize delay when nothing has pre-populated a font size yet
             const templateNeedsAutoSize = slideHasAutoSizeItem(customTemplate)
-            const itemNeedsAutoSize = item.auto && !item.autoFontSize
 
-            if (templateNeedsAutoSize || itemNeedsAutoSize) {
+            if (templateNeedsAutoSize || itemNeedsAutoSize(item)) {
                 autoSizeDelay = 500
                 outDelay = autoSizeDelay
                 if (!inDelay) inDelay = outDelay * 0.98

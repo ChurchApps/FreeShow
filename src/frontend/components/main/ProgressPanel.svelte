@@ -128,7 +128,7 @@
         border: 1px solid var(--primary-lighter);
         border-radius: 6px;
 
-        z-index: 4999;
+        z-index: 5000;
         overflow: hidden;
 
         --background: rgba(35, 35, 45, 0.8);

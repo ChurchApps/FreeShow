@@ -8,6 +8,7 @@ export interface Config {
     bounds: Electron.Rectangle
     dataPath: string | null
     disableHardwareAcceleration: boolean | null
+    graphicsDevice: string | null
     autoErrorReporting?: boolean
     mediaFolderPath?: string
 }
@@ -97,6 +98,7 @@ export type SelectIds =
     | "effect"
     | "screen"
     | "ndi"
+    | "omt"
     | "camera"
     | "microphone"
     | "player"
@@ -397,6 +399,7 @@ export type Popups =
     | "delete_duplicated_shows"
     | "icon"
     | "manage_groups"
+    | "manage_fonts"
     | "manage_icons"
     | "manage_colors"
     | "manage_metadata"
@@ -470,6 +473,7 @@ export type Popups =
     | "pco_picker"
     | "sync_folders"
     | "node_options"
+    | "ai_model_manager"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

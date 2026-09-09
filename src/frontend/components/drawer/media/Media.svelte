@@ -21,6 +21,7 @@
     import BMDStreams from "../live/BMDStreams.svelte"
     import Cameras from "../live/Cameras.svelte"
     import NDIStreams from "../live/NDIStreams.svelte"
+    import OMTStreams from "../live/OMTStreams.svelte"
     import Screens from "../live/Screens.svelte"
     import Windows from "../live/Windows.svelte"
     import PlayerVideos from "../player/PlayerVideos.svelte"
@@ -517,6 +518,10 @@
             <Icon size={1.1} id="ndi" white />
             <p>NDI</p>
         </MaterialButton>
+        <MaterialButton style="flex: 1;" isActive={inputsTab === "omt"} on:click={() => setSubSubTab("omt")}>
+            <Icon size={1.2} id="omt" white />
+            <p>OMT</p>
+        </MaterialButton>
         <MaterialButton style="flex: 1;" isActive={inputsTab === "blackmagic"} on:click={() => setSubSubTab("blackmagic")}>
             <Icon size={1.2} id="blackmagic" white />
             <p>Blackmagic</p>
@@ -583,6 +588,8 @@
                     <Windows bind:streams {searchValue} />
                 {:else if inputsTab === "ndi"}
                     <NDIStreams />
+                {:else if inputsTab === "omt"}
+                    <OMTStreams />
                 {:else if inputsTab === "blackmagic"}
                     <BMDStreams />
                 {/if}

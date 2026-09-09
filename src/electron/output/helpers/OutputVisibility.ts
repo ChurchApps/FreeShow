@@ -8,19 +8,19 @@ import { setOutputAlwaysOnTop } from "./OutputAlwaysOnTop"
 import { OutputBounds } from "./OutputBounds"
 
 export class OutputVisibility {
-    static toggleOutputs(data: { outputs: (Output & { id: string })[]; state: boolean; force?: boolean; autoStartup?: boolean; autoPosition?: boolean }) {
+    static toggleOutputs(data: { outputs: (Output & { id: string })[]; state: boolean; autoStartup?: boolean; autoPosition?: boolean }) {
         const newStates: { id: string; active: boolean | "invisible" }[] = []
 
         data.outputs.forEach((output) => {
-            const force = !!(data.force || output.boundsLocked)
-            const newState = OutputVisibility.toggleOutput(output, data.state, force, data.autoStartup, data.autoPosition)
+            const autoPosition = output.boundsLocked ? false : data.autoPosition
+            const newState = OutputVisibility.toggleOutput(output, data.state, data.autoStartup, autoPosition)
             newStates.push({ id: output.id, active: newState })
         })
 
         toApp(OUTPUT, { channel: "OUTPUT_STATE", data: newStates })
     }
 
-    static toggleOutput(output: Output & { id: string }, state: boolean, force?: boolean, autoStartup?: boolean, autoPosition?: boolean) {
+    static toggleOutput(output: Output & { id: string }, state: boolean, autoStartup?: boolean, autoPosition?: boolean) {
         if (!output?.id) return false
 
         let window: BrowserWindow = OutputHelper.getOutput(output.id)?.window
@@ -39,10 +39,12 @@ export class OutputVisibility {
             return "invisible"
         }
 
-        let bounds: Rectangle = this.resolveOutputBounds(output, autoPosition && !force)
-        const windowNotCoveringMain = this.amountCovered(bounds, mainWindow!.getBounds()) < 0.5
+        let bounds: Rectangle = this.resolveOutputBounds(output, autoPosition)
 
-        if (state === true && (force || window.isAlwaysOnTop() === false || windowNotCoveringMain)) {
+        const windowCoveringMain = this.amountCovered(bounds, mainWindow!.getBounds()) > 0.5
+        const invalidWindowPosition = windowCoveringMain && autoPosition && window.isAlwaysOnTop() === true
+
+        if (state === true && !invalidWindowPosition) {
             this.showWindow(window, output.alwaysOnTop !== false)
 
             OutputHelper.Bounds.updateBounds({ id: output.id, bounds })
@@ -65,7 +67,8 @@ export class OutputVisibility {
 
         // position at any existing target display
         if (displays.length > 0 && output.screen) {
-            const targetDisplay = displays.find((d) => d.id.toString() === output.screen)
+            const isCoveringMain = output.boundsLocked ? false : this.amountCovered(outputBounds, mainWindow!.getBounds()) > 0.5
+            const targetDisplay = isCoveringMain ? null : displays.find((d) => d.id.toString() === output.screen)
             if (targetDisplay) return { ...targetDisplay.bounds }
         }
 

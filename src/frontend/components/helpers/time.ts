@@ -4,7 +4,11 @@ import { dictionary } from "../../stores"
 
 export function secondsToTime(seconds: number): Time {
     // turn to positive (timers have custom negative placed before)
-    seconds = Math.abs(seconds)
+    if (!Number.isFinite(seconds) || isNaN(seconds)) {
+        seconds = 0
+    } else {
+        seconds = Math.abs(seconds)
+    }
 
     const d: number = Math.floor(seconds / (3600 * 24))
     const h: number = Math.floor(seconds / 3600 - d * 24)
@@ -84,8 +88,8 @@ export function getDateAndTimeString(time: number) {
     return dateToString(time) + " " + addZero(date.hours) + ":" + addZero(date.minutes)
 }
 
-export const padString = (a: number) => a.toString().padStart(2, "0")
-export const addZero = (a: number) => ("0" + String(a)).slice(-2)
+export const padString = (a: number) => (Number.isFinite(a) ? a.toString().padStart(2, "0") : "00")
+export const addZero = (a: number) => (Number.isFinite(a) ? ("0" + String(a)).slice(-2) : "00")
 // const clip = (a: number) => Math.max(0, Math.min(59, a))
 
 export function splitDate(time: Date) {

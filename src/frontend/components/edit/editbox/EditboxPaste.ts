@@ -33,13 +33,15 @@ export class EditboxPaste {
                 const intersectEnd = Math.min(selEnd, newLinePos)
 
                 if (intersectStart < intersectEnd) {
-                    const selectedVal = value.slice(intersectStart - linePos, intersectEnd - linePos)
-                    result.push({
-                        value: selectedVal,
-                        style: text.style || "",
-                        customType: text.customType,
-                        sourceDynamicKey: text.sourceDynamicKey
-                    })
+                    if (!text.customType?.includes("disableTemplate")) {
+                        const selectedVal = value.slice(intersectStart - linePos, intersectEnd - linePos)
+                        result.push({
+                            value: selectedVal,
+                            style: text.style || "",
+                            customType: text.customType,
+                            sourceDynamicKey: text.sourceDynamicKey
+                        })
+                    }
                 }
 
                 linePos = newLinePos
@@ -112,6 +114,8 @@ export class EditboxPaste {
         const result: { value: string; style: string; customType?: string; sourceDynamicKey?: string }[] = []
 
         function traverse(node: Node, parentStyle: string, parentCustomType?: string, parentSourceDynamicKey?: string) {
+            if (parentCustomType?.includes("disableTemplate")) return
+
             if (node.nodeType === Node.TEXT_NODE) {
                 const textVal = node.textContent || ""
                 if (textVal) {
@@ -139,6 +143,7 @@ export class EditboxPaste {
                     currentStyle = customIndex > -1 ? styleAttr.slice(0, customIndex).replace(/;$/, "") : styleAttr
                     customType = element.getAttribute("data-customtype") || customType
                     sourceDynamicKey = element.getAttribute("data-sourcedynamickey") || sourceDynamicKey
+                    if (customType?.includes("disableTemplate")) return
                 } else {
                     const styleLower = element.getAttribute("style")?.toLowerCase() || ""
                     const hasProp = (prop: string, tagNames: string[], regex: RegExp) => tagNames.includes(tagName) || regex.test(styleLower) || parentStyle.includes(prop)
@@ -172,15 +177,14 @@ export class EditboxPaste {
         return result
     }
 
-    static paste(e: any, clipboardText = "", clipboardHtml = "", ctx: EditboxPasteContext) {
-        const htmlData = clipboardHtml || e.clipboardData?.getData("text/html")
+    static paste(e: any, clipboardText: string | undefined, clipboardHtml: string | undefined, ctx: EditboxPasteContext) {
+        const htmlData = clipboardHtml !== undefined ? clipboardHtml : clipboardText !== undefined ? "" : e.clipboardData?.getData("text/html")
         let pastedElements = htmlData ? this.parseHtmlToTextElements(htmlData) : []
         let clipboard = pastedElements.map((el) => el.value).join("")
 
         if (!pastedElements.length) {
-            clipboard = clipboardText || e.clipboardData?.getData("text/plain") || ""
-            if (!clipboard) return
-            pastedElements = [{ value: clipboard, style: "" }]
+            clipboard = clipboardText !== undefined ? clipboardText : e.clipboardData?.getData("text/plain") || ""
+            pastedElements = clipboard ? [{ value: clipboard, style: "" }] : []
         }
 
         ctx.setPasting(true)
@@ -220,6 +224,13 @@ export class EditboxPaste {
             lines[lineIndex].text?.forEach((text) => {
                 let value = text.value
                 let newLinePos = linePos + value.length
+
+                if (text.customType?.includes("disableTemplate")) {
+                    lineText.push(text)
+                    linePos = newLinePos
+                    return
+                }
+
                 if (newLinePos < lineSel.start || linePos > lineSel.end) {
                     lineText.push(text)
                     linePos = newLinePos
@@ -250,11 +261,12 @@ export class EditboxPaste {
                     }
 
                     pastedElements.forEach((pEl) => {
+                        const inheritsDisableTemplate = text.customType?.includes("disableTemplate")
                         lineText.push({
-                            style: pEl.style || text.style || "",
+                            style: pEl.style || (inheritsDisableTemplate ? "" : text.style) || "",
                             value: pEl.value,
-                            customType: pEl.customType || text.customType,
-                            sourceDynamicKey: pEl.sourceDynamicKey || text.sourceDynamicKey
+                            customType: pEl.customType || (inheritsDisableTemplate ? undefined : text.customType),
+                            sourceDynamicKey: pEl.sourceDynamicKey || (inheritsDisableTemplate ? undefined : text.sourceDynamicKey)
                         })
                     })
 

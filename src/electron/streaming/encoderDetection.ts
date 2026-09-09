@@ -3,6 +3,7 @@ import { app } from "electron"
 import fs from "fs"
 import path from "path"
 import { promisify } from "util"
+import { config } from "../data/store"
 import { buildTestEncodeCommand, ENCODER_PROFILES, isSupportedOnPlatform, parseAvailableEncoders, type EncoderId } from "./encoderProfiles"
 import { resolveFfmpegPath } from "./ffmpegManager"
 
@@ -157,19 +158,30 @@ export async function detectEncoders(force = false): Promise<EncoderDetection> {
     }
 }
 
-// global setting, pushed from the renderer on startup and whenever it changes
-let rtmpEncoderSetting = "auto"
-
-export function setRtmpEncoderSetting(encoder: string) {
-    rtmpEncoderSetting = encoder || "auto"
+// pushed from the renderer on startup and whenever it changes
+let rtmpEncoderSetting: Record<string, string> = {}
+export function setRtmpEncoderSetting(outputId: string, encoder: string) {
+    rtmpEncoderSetting[outputId] = encoder || "auto"
 }
-
-export function getRtmpEncoderSetting(): string {
-    return rtmpEncoderSetting
+export function getRtmpEncoderSetting(outputId: string): string {
+    return rtmpEncoderSetting[outputId] || "auto"
 }
 
 /** Resolve the configured setting ("auto" or an explicit id) to an encoder that actually works. */
 export async function resolveEncoder(setting: string | undefined): Promise<EncoderId> {
+    // respect the app's "disable hardware acceleration" setting (Settings > Other) when resolving "auto":
+    // use software x264 instead of a hardware encoder. An explicitly chosen encoder still wins.
+    if (!setting || setting === "auto") {
+        try {
+            if (config.get("disableHardwareAcceleration") === true) {
+                console.info("[encoderDetection] hardware acceleration disabled in settings; using software x264")
+                return "x264"
+            }
+        } catch {
+            // ignore
+        }
+    }
+
     const detection = await detectEncoders()
     if (!setting || setting === "auto") return detection.recommended
 

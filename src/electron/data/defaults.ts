@@ -1,6 +1,6 @@
 import type { SaveListSettings, SaveListSyncedSettings } from "../../types/Save"
 
-export const defaultConfig = { loaded: false, maximized: true, bounds: { width: 800, height: 600, x: 0, y: 0 }, dataPath: null, disableHardwareAcceleration: null }
+export const defaultConfig = { loaded: false, maximized: true, bounds: { width: 800, height: 600, x: 0, y: 0 }, dataPath: null, disableHardwareAcceleration: null, graphicsDevice: null }
 
 export const defaultGroups = {
     break: { name: "break", default: true, color: "#f5255e" },
@@ -53,6 +53,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     drawerTabsData: {},
     drawer: { height: 300, stored: null },
     language: null,
+    customFonts: [],
     labelsDisabled: false,
     groupNumbers: true,
     fullColors: false,
@@ -66,6 +67,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
         text: { type: "fade", duration: 500, easing: "sine" },
         media: { type: "fade", duration: 800, easing: "sine" }
     },
+    audioRouting: {},
     audioChannelsData: {},
     cloudSyncData: {},
     driveData: { mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false },
@@ -85,7 +87,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
             syncCategories: ["song"]
         }
     },
-    obsData: {}
+    obsData: {},
+    ai: {}
 }
 
 export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
@@ -164,6 +167,5 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     globalRegexes: {},
     customMetadata: { disabled: [], custom: [] },
     effects: {},
-    audioRouting: {},
     deletedDefaults: {}
 }

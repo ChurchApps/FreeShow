@@ -542,6 +542,8 @@ export class AudioRoutingManager {
                 if (mergerNode) {
                     try {
                         node.connect(mergerNode)
+                        // Re-capture to ensure analyzer picks up active audio stream
+                        AudioInputCapture.getInstance().captureInput(mergerId, mergerNode)
                     } catch (e) {
                         console.error(`[AudioRoutingManager] Could not connect source to merger ${mergerId}:`, e)
                     }
@@ -553,7 +555,9 @@ export class AudioRoutingManager {
     private routeInput(inputId: string, inputNode: AudioNode) {
         AudioInputCapture.getInstance().captureInput(inputId, inputNode)
 
-        this.getConnectionsFrom(inputId).forEach((mergerId) => {
+        const targets = this.getConnectionsFrom(inputId)
+
+        targets.forEach((mergerId) => {
             const mergerNode = this.getMergerNode(mergerId)
             if (mergerNode) {
                 try {
@@ -566,7 +570,16 @@ export class AudioRoutingManager {
     }
 
     public getMergerNode(mergerId: string): GainNode | null {
-        return this.mergerNodes.get(mergerId) || null
+        if (!this.audioCtx) return null
+
+        let node = this.mergerNodes.get(mergerId)
+        if (!node) {
+            node = this.audioCtx.createGain()
+            this.mergerNodes.set(mergerId, node)
+            this.applyMergerGain(mergerId, node)
+        }
+
+        return node
     }
 
     public getConnectionsFrom(sourceId: string): string[] {

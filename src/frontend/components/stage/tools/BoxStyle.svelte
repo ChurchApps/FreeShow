@@ -41,7 +41,7 @@
                 ...stageSections.special,
                 inputs: [
                     ...stageSections.special.inputs,
-                    [{ id: "flash.enabled", type: "checkbox", value: flashEnabled, values: { label: "timer.flash" } }],
+                    [{ id: "flash.enabled", type: "checkbox", value: false, values: { label: "timer.flash" } }],
                     [
                         { id: "flash.color", type: "color", value: item.flash?.color || "#FF0000", hidden: !flashEnabled, values: { label: "edit.color" } },
                         { id: "flash.count", type: "number", value: item.flash?.count ?? 3, hidden: !flashEnabled, values: { label: "edit.count", min: 1, max: 20 } }

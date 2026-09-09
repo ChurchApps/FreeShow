@@ -18,13 +18,14 @@
         if (!mouse?.item || mouse.rightClick) return
 
         let notTextBox: boolean = mouse.item.type !== undefined && mouse.item.type !== "text"
-        if (!notTextBox && !e.ctrlKey && !e.metaKey && !mouse.e.target.closest(".line") && !mouse.e.target.closest(".square") && !mouse.e.target.closest(".rotate") && !mouse.e.target.closest(".radius")) return
+        let isShift = e.shiftKey || mouse.e.shiftKey
+        let control = mouse.e.ctrlKey || mouse.e.metaKey
+        if (!notTextBox && !control && !isShift && !mouse.e.target.closest(".line") && !mouse.e.target.closest(".square") && !mouse.e.target.closest(".rotate") && !mouse.e.target.closest(".radius")) return
 
         e?.preventDefault()
         styles = {}
 
-        let control = mouse.e.ctrlKey || mouse.e.metaKey
-        let moveCondition: boolean = mouse.e.target.closest(".line") || ((!mouse.e.target.closest(".edit") || notTextBox || mouse.e.altKey) && !mouse.e.target.closest(".square")) || (control && !mouse.e.target.closest(".square")) || mouse.e.buttons === 4
+        let moveCondition: boolean = mouse.e.target.closest(".line") || ((!mouse.e.target.closest(".edit") || notTextBox || mouse.e.altKey || isShift) && !mouse.e.target.closest(".square")) || (control && !mouse.e.target.closest(".square")) || mouse.e.buttons === 4
 
         let keepAspectRatio = e.shiftKey
         // WIP square option currently not working well (also custom SVG icons can be any ratio)

@@ -21,6 +21,7 @@
     export let itemIndex = -1
     export let slideIndex = 0
     export let preview = false
+    export let miniPreview = false
     export let isTemplatePreview = false
     export let mirror = true
     export let isOutputted = false
@@ -848,7 +849,7 @@
             {updateDynamicValues}
         />
     {:else}
-        <SlideItems {item} {slideIndex} {preview} {isTemplatePreview} {ratio} {smallFontSize} {ref} {fontSize} {outputId} />
+        <SlideItems {item} {slideIndex} {preview} miniPreview={miniPreview || centerPreview} {isTemplatePreview} {ratio} {smallFontSize} {ref} {fontSize} {outputId} />
     {/if}
 </div>
 

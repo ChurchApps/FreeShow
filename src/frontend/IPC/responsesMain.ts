@@ -4,6 +4,7 @@ import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
+import { Transcript } from "../ai/stt/transcript"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
 import { receivedMidi } from "../components/actions/midi"
 import { menuClick } from "../components/context/menuClick"
@@ -48,6 +49,7 @@ import {
     activeProject,
     activeShow,
     activeTimers,
+    aiSttStatus,
     alertMessage,
     audioData,
     contentProviderData,
@@ -87,6 +89,7 @@ import {
 } from "../stores"
 import { setupCloudSync } from "../utils/cloudSync"
 import { newToast } from "../utils/common"
+import { translateText } from "../utils/language"
 import { confirmCustom } from "../utils/popup"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { invalidateSearchIndex } from "../utils/searchFast"
@@ -170,6 +173,21 @@ export const mainResponses: MainResponses = {
         activePopup.set("alert")
     },
     [ToMain.TOAST]: (a) => newToast(a),
+    // GPU health degradation notice (electron utils/gpu.ts, ~20s after start): verbose alert with what
+    // happened, the implications, and concrete remediation. Composed here so every string is i18n'd.
+    [ToMain.GPU_HEALTH]: (a) => {
+        const compositing = a.issue === "compositing"
+        let html = `<h3>${translateText(compositing ? "gpu.no_acceleration" : "gpu.no_video_decode")}</h3><p>${translateText(compositing ? "gpu.no_acceleration_info" : "gpu.no_video_decode_info")}</p>`
+        if (a.vaDriverMissing && a.packages?.length) {
+            // Linux with no VA-API driver installed at all: name the exact package(s) for the GPU vendor
+            html += `<p>${translateText("gpu.va_driver_missing")}</p><pre style="user-select: text;">sudo apt install ${a.packages.join(" ")}</pre>`
+        } else {
+            html += `<p>${translateText("gpu.update_drivers")}${a.vendorName ? ` (${a.vendorName})` : ""}</p>`
+        }
+        html += `<p style="opacity: 0.7;">${translateText("gpu.disable_hint")}</p>`
+        alertMessage.set(html)
+        activePopup.set("alert")
+    },
     [ToMain.SPELL_CHECK]: (a) => spellcheck.set(a),
     [Main.CLOSE]: (a) => initializeClosing(a ?? false),
     [ToMain.RECEIVE_MIDI2]: (a) => receivedMidi(a),
@@ -335,6 +353,11 @@ export const mainResponses: MainResponses = {
     },
     [ToMain.PROVIDER_PROJECTS]: async (data) => {
         if (!data.projects) return
+
+        // Planning Center items are seperated into multiple categories based on the type: Songs (default) & Regular items (generic)
+        if (data.providerId === "planningcenter" && data.shows.some((a) => a.category === "planning_center_generic")) {
+            createCategory("Planning Center (Generic)", "presentation")
+        }
 
         // CREATE CATEGORY
         createCategory(data.categoryName)
@@ -588,5 +611,9 @@ export const mainResponses: MainResponses = {
     // Timecode
     [Main.TIMECODE_VALUE]: (data) => updateTimelineTime(data!),
     [Main.TIMECODE_STATUS]: (data) => updateTimelineStatus(data!),
-    [Main.TIMECODE_AUDIO_DATA]: (data) => processTimecodeFrame(data!)
+    [Main.TIMECODE_AUDIO_DATA]: (data) => processTimecodeFrame(data!),
+
+    // AI
+    [ToMain.AI_STATUS]: (data) => aiSttStatus.set(data),
+    [ToMain.AI_TRANSCRIPT]: (data) => Transcript.push(data)
 }

@@ -343,7 +343,7 @@
         "media": "Could not find media",
         "bible": "Could not find local scripture",
         "import": "Could not import",
-        "bible_api": "Could not load scripture from API.Bible, do you have an internet connection?",
+        "bible_api": "Could not load API scripture. Make sure you have an internet connection.",
         "not_found": "Not found",
         "display": "Could not show output window on current display",
         "video_unavailable": "Getting video unavailable? The creator has disabled embeds on the video.",
@@ -542,6 +542,7 @@
         "shortcuts": "Shortcuts",
         "icon": "Icons",
         "manage_groups": "Manage groups",
+        "manage_fonts": "Manage fonts",
         "manage_icons": "Manage icons",
         "manage_colors": "Manage colors",
         "manage_metadata": "Manage metadata",
@@ -567,7 +568,8 @@
         "reset_all_confirm": "Are you sure you want to reset everything?",
         "reset_all_action": "This will reset the whole program, but not delete the .show files in your \"Shows\"-folder.",
         "quit": "Quit without saving",
-        "save_quit": "Save & Quit"
+        "save_quit": "Save & Quit",
+        "ai_model_manager": "Manage models"
     },
     "confirm": {
         "statement_slide_exists_arrangement": "Slide exists in a different arrangement!",
@@ -721,6 +723,7 @@
         "zoomIn": "Zoom In",
         "zoomOut": "Zoom Out",
         "reset": "Reset",
+        "collapsed": "Collapsed mode",
         "lock_sections": "Lock sections",
         "project_template": "Project template",
         "convert_to_template": "Convert to template",
@@ -1097,6 +1100,7 @@
         "outline": "Outline",
         "shadow": "Shadow",
         "shadow_inset": "Shadow inset",
+        "shape_outside": "Cutout",
         "offset": "Offset",
         "offsetX": "Offset X",
         "offsetY": "Offset Y",
@@ -1335,6 +1339,7 @@
         "display": "Display",
         "connection": "Connection",
         "cloud": "Cloud",
+        "ai": "Smart",
         "calendar": "Calendar",
         "text_import": "Text",
         "media_import": "Media",
@@ -1406,6 +1411,7 @@
         "bitrate": "Bitrate",
         "video_encoder": "Video encoder",
         "add_destination": "Add destination",
+        "quality": "Quality",
         "device": "Device",
         "display_mode": "Display mode",
         "pixel_format": "Pixel format",
@@ -1423,6 +1429,9 @@
         "log_song_usage": "Log song usage to a file",
         "auto_error_reporting": "Auto error reporting",
         "disable_hardware_acceleration": "Disable hardware acceleration",
+        "graphics_device": "Graphics device",
+        "gpu_high_performance": "Prefer high-performance GPU",
+        "gpu_low_power": "Prefer low-power GPU",
         "restart_for_change": "You have to restart the program for the change to take effect!",
         "font": "Font",
         "font_family": "Font family",
@@ -1465,6 +1474,15 @@
         "auto": "Auto",
         "section_trigger_action": "Trigger action when navigating presentation to a section",
         "rss": "RSS"
+    },
+    "gpu": {
+        "no_acceleration": "Graphics acceleration is unavailable",
+        "no_acceleration_info": "Rendering is running on the CPU (high usage, choppy playback).",
+        "no_video_decode": "Hardware video decoding is unavailable",
+        "no_video_decode_info": "Videos are decoding on the CPU (high usage, choppy playback).",
+        "va_driver_missing": "A video driver is missing. To fix, run this and restart:",
+        "update_drivers": "Installing or updating your graphics drivers may fix this.",
+        "disable_hint": "Disable hardware acceleration in Settings to hide this."
     },
     "output": {
         "state_inactive": "Inactive",
@@ -1539,7 +1557,6 @@
     "scripture": {
         "collections": "Collections",
         "bibles_section": "Bibles",
-        "bibles": "Bibles from API.Bible",
         "local": "Import local file",
         "supported_formats": "Supported formats:",
         "max_verses": "Max verses per slide",
@@ -1798,5 +1815,27 @@
         "translation_description_multiline": "Adds all languages in a single textbox in alternating lines. (Like in Songbeamer)",
         "translation_description_textboxes": "Adds every language as a separate textbox to the slide.",
         "translation_description_layouts": "Creates a unique set of slides and a layout for every language."
+    },
+    "chat": {
+        "chat": "Chat",
+        "send": "Send",
+        "ask": "Ask anything...",
+        "type_message": "Type a message..."
+    },
+    "ai": {
+        "hint": "Listens to your microphone, transcribes speech to text, and suggests relevant actions based on what is heard. Can also be linked to LLM models for better understanding and context.",
+        "privacy_details": "Everything remains locally on this device unless explicitly mentioned otherwise.",
+        "privacy_cloud": "Transcribed text data will be uploaded and processed in the cloud.",
+        "provider": "Provider",
+        "engine": "Engine",
+        "model": "Model",
+        "api_key": "API key",
+        "waiting": "Waiting...",
+        "processing": "Processing...",
+        "transcription": "Transcription",
+        "confidence_ask": "Always ask",
+        "confidence_highest": "If confident",
+        "confidence_high": "If high confidence",
+        "confidence_medium": "If medium confidence"
     }
 }

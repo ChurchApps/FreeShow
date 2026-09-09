@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Item, Show, ShowList, Shows, Slide, TrimmedShow, TrimmedShows } from "../../../types/Show"
-import { activeEdit, activeFocus, activePage, activeProject, activeShow, cachedShowsData, customMetadata, dictionary, focusMode, groupNumbers, groups, projects, refreshEditSlide, shows, showsCache, sorted, sortedShowsList } from "../../stores"
+import { activeEdit, activeFocus, activePage, activeProject, activeShow, cachedShowsData, customMetadata, dictionary, focusMode, groupNumbers, groups, projects, refreshEditSlide, selected, shows, showsCache, sorted, sortedShowsList } from "../../stores"
 import { translateText } from "../../utils/language"
 import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
@@ -417,4 +417,51 @@ export function bindSlidesToOutput(indexes: number[], outputId: string) {
     })
 
     history({ id: "SHOW_LAYOUT", newData: { key: "bindings", data: newBindings, indexes, dataIsArray: false } })
+}
+
+// WIP should be merged with existing functions instead
+export function getSlideHighlightIndexes(actionId: string, sel = get(selected)): number[] {
+    const showId = get(activeShow)?.id || get(activeEdit)?.showId || ""
+    if (!showId) return []
+
+    const showSlides = get(showsCache)[showId]?.slides || {}
+    const ref = getLayoutRef(showId)
+    if (!ref.length) return []
+
+    const selectedSlides = sel.id === "slide" && Array.isArray(sel.data) ? sel.data.map((a: any) => ref[a.index]).filter(Boolean) : []
+    const getParentId = (s: any) => (s?.type === "child" ? s.parent?.id : s?.id) || ""
+    const getParentLayoutIndex = (s: any) => (s?.type === "child" ? s.parent?.layoutIndex : s?.layoutIndex)
+
+    if (actionId === "remove_group") {
+        const targetLayoutIndexes = new Set(
+            selectedSlides
+                .filter((s) => {
+                    const pid = getParentId(s)
+                    return pid && !showSlides[pid]?.locked && showSlides[pid]?.group !== "."
+                })
+                .map(getParentLayoutIndex)
+                .filter((idx) => idx !== undefined)
+        )
+        return targetLayoutIndexes.size ? ref.map((_, i) => i).filter((i) => targetLayoutIndexes.has(getParentLayoutIndex(ref[i]))) : []
+    }
+
+    if (actionId === "delete_slide" || actionId === "delete" || actionId === "delete_remove") {
+        const targetIds = new Set(
+            selectedSlides
+                .filter((s) => {
+                    const pid = getParentId(s)
+                    return pid && !showSlides[pid]?.locked
+                })
+                .map((s) => s.id)
+        )
+        return targetIds.size ? ref.map((_, i) => i).filter((i) => targetIds.has(ref[i].id)) : []
+    }
+
+    if (actionId === "delete_group" || sel.id === "group") {
+        const groupIds = sel.id === "group" ? (sel.data || []).map((a: any) => a.id).filter(Boolean) : selectedSlides.map(getParentId).filter((pid) => pid && !showSlides[pid]?.locked)
+        const targetGroupIds = new Set(groupIds)
+        return targetGroupIds.size ? ref.map((_, i) => i).filter((i) => targetGroupIds.has(getParentId(ref[i]))) : []
+    }
+
+    return []
 }

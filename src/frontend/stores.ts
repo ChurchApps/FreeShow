@@ -6,6 +6,7 @@ import type { ICommonTagsResult } from "music-metadata"
 import { type Writable, writable } from "svelte/store"
 import type { ContentProviderId } from "../electron/contentProviders/base/types"
 import type { TimecodeMode } from "../electron/timecode/timecode"
+import type { AiFeatureStatus } from "../types/ai/Ai"
 import type { AudioChannelData, AudioStream, MetronomeSettings, Playlist } from "../types/Audio"
 import type { AudioRoutingConfig } from "../types/AudioRouting"
 import type { Event } from "../types/Calendar"
@@ -15,10 +16,12 @@ import type { History, HistoryNew } from "../types/History"
 import type { ActiveEdit, Clipboard, Interaction, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { Action, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
+import type { Action, CustomFont, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
+import { AiSuggestion } from "./../types/ai/Ai"
+import type { AiSettings } from "./../types/ai/AiSettings"
 import type { Outputs, RtmpStatus } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
@@ -135,6 +138,7 @@ export const outputCache: Writable<any> = writable(null)
 export const outputSlideCache: Writable<any> = writable({})
 export const previewBuffers: Writable<any> = writable({})
 export const ndiData: Writable<any> = writable({})
+export const omtData: Writable<any> = writable({})
 export const closeAd: Writable<boolean> = writable(false)
 export const textLoaded: Writable<boolean> = writable(false)
 export const toggleOutputEnabled: Writable<boolean> = writable(false)
@@ -205,6 +209,15 @@ export const dynamicValueData: Writable<{ [key: string]: any }> = writable({})
 export const cachedDynamicValues: Writable<{ [key: string]: string }> = writable({})
 export const recentFiles: Writable<{ all: string[]; cleared: string[]; projectMedia: string[] }> = writable({ all: [], cleared: [], projectMedia: [] })
 export const statusIndicator: Writable<string> = writable("")
+export type SlideHighlight = { indexes: number[]; color?: string; icon?: string } | null
+export const slideDeleteHighlight: Writable<SlideHighlight> = writable(null)
+
+// AI
+export const aiSttStatus: Writable<{ state: "inactive" | "listening" | "stopped" | "error"; message?: string }> = writable({ state: "inactive" })
+export const aiLlmStatus: Writable<AiFeatureStatus> = writable({ state: "stopped" })
+export const aiSuggestions: Writable<AiSuggestion[]> = writable([])
+export const aiSmartAction: Writable<AiSuggestion | null> = writable(null)
+export const sttTranscript: Writable<{ finalized: string; unprocessed: string }> = writable({ finalized: "", unprocessed: "" })
 
 // ----- SAVED VARIABLES -----
 
@@ -226,6 +239,7 @@ export const transitionData: Writable<{ text: Transition; media: Transition }> =
 }) // {default}
 export const slidesOptions: Writable<SlidesOptions> = writable({ columns: 4, mode: "grid" }) // {default}
 export const customMetadata: Writable<{ disabled: string[]; custom: string[] }> = writable({ disabled: [], custom: [] }) // {disabled: [], custom: []}
+export const customFonts: Writable<CustomFont[]> = writable([]) // []
 
 // PROJECT
 export const openedFolders: Writable<ID[]> = writable([]) // []
@@ -354,6 +368,8 @@ export const styles: Writable<{ [key: string]: Styles }> = writable({}) // {}
 
 // OUTPUTS
 export const outputs: Writable<Outputs> = writable({}) // {default}
+// shared-render groups (renderer output id -> member ids); follower previews clone the renderer's mirror
+export const renderGroups: Writable<{ [rendererId: string]: string[] }> = writable({})
 export const outLocked: Writable<boolean> = writable(false) // false
 
 // PROFILES
@@ -381,6 +397,9 @@ export const obsData: Writable<{ enabled?: boolean; connected?: boolean; ip?: st
 export const cloudSyncData: Writable<{ enabled?: boolean; id?: string; deviceName?: string; team?: { id: string; churchId: string; name: string; count?: number }; cloudMethod?: "merge" | "read_only" | "upload" | "replace" }> = writable({}) // {}
 export const driveKeys: Writable<any> = writable({})
 export const driveData: Writable<any> = writable({ mainFolderId: null, disabled: false, initializeMethod: null, disableUpload: false })
+
+// AI
+export const ai: Writable<AiSettings> = writable({}) // {}
 
 // ----- STORES LIST -----
 

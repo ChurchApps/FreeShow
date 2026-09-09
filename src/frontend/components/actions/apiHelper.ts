@@ -10,6 +10,7 @@ import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioPlaylists, audioRouting, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
+import { parseEngScriptureRefToNumbers, resolveScriptureReference } from "../drawer/bible/scripture"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { keysToID, removeDeleted, sortByName } from "../helpers/array"
 import { ondrop } from "../helpers/drop"
@@ -24,7 +25,6 @@ import { getLabelId, getLayoutRef } from "../helpers/show"
 import { playNextGroup, selectProjectShow, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
 import { VideoPlayer } from "../media/video/videoPlayer"
-import { resolveScriptureReference } from "../drawer/bible/scripture"
 import { clearBackground, clearSlide } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
@@ -34,7 +34,7 @@ export function selectShowById(id: string) {
     if (typeof id !== "string" || !id) return
     if (!get(shows)[id]) return
 
-    activeShow.set({ id, type: "show" })
+    setActiveShowById(id)
     if (get(activeEdit).id) activeEdit.set({ type: "show", slide: 0, items: [] })
     if (get(activePage) === "edit") refreshEditSlide.set(true)
 }
@@ -49,9 +49,17 @@ export function selectShowByName(name: string) {
     const showId = sortedShows[0]?.id
     if (!showId) return
 
-    activeShow.set({ id: showId, type: "show" })
+    setActiveShowById(showId)
     if (get(activeEdit).id) activeEdit.set({ type: "show", slide: 0, items: [] })
     if (get(activePage) === "edit") refreshEditSlide.set(true)
+}
+
+function setActiveShowById(showId: string) {
+    const activeProjectId = get(activeProject)
+    const projectShows = activeProjectId ? get(projects)[activeProjectId]?.shows || [] : []
+    const projectIndex = projectShows.findIndex((item) => item.id === showId)
+
+    activeShow.set(projectIndex >= 0 ? { ...projectShows[projectIndex], index: projectIndex } : { id: showId, type: "show" })
 }
 
 // WIP duplicate of Preview.svelte checkGroupShortcuts()
@@ -175,7 +183,6 @@ export async function startProjectItemByName(name: string) {
         const loadingTask = getDocument(encodeFilePath(item.id))
         const pdfDoc = await loadingTask.promise
         const pages = pdfDoc.numPages
-        loadingTask.destroy()
 
         let name = item.name || removeExtension(getFileName(item.id))
         setOutput("slide", { type: "pdf", id: item.id, page: 0, pages, name })
@@ -687,8 +694,11 @@ export async function startScripture(data: API_scripture) {
         ref = { book, chapter, verses: [verseItems.length ? verseItems : [rawVerses]] }
     } else {
         // convert text reference to actual reference
-        const resolved = await resolveScriptureReference(data.reference, data.id)
-        if (!resolved) return
+        let resolved = await resolveScriptureReference(data.reference, data.id)
+        if (!resolved) {
+            resolved = parseEngScriptureRefToNumbers(data.reference)
+            if (!resolved) return
+        }
 
         ref = { book: resolved.book, chapter: resolved.chapter, verses: [resolved.verses] }
     }

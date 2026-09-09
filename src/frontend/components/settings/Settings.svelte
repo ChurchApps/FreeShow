@@ -5,6 +5,7 @@
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tip from "../main/Tip.svelte"
+    import SmartSettings from "../../ai/components/settings/SmartSettings.svelte"
     import AudioRouting from "./tabs/AudioRouting.svelte"
     import Connection from "./tabs/Connection.svelte"
     import Files from "./tabs/Files.svelte"
@@ -37,10 +38,11 @@
         display_settings: "settings.outputs_hint",
         styles: "settings.styles_hint",
         audio: "settings.audio_hint",
-        profiles: "profile.profiles_hint"
+        profiles: "profile.profiles_hint",
+        ai: "ai.hint<br><br>ai.privacy_details"
     }
 
-    let showMore = false
+    let showGlobalOutputOptions = false
 </script>
 
 <main>
@@ -61,8 +63,8 @@
             {:else if tabId === "theme"}
                 <ThemeButtons />
             {:else if tabId === "display_settings"}
-                <MaterialButton title="create_show.more_options" on:click={() => (showMore = !showMore)}>
-                    <Icon id="options" white={!showMore} />
+                <MaterialButton title="create_show.more_options" on:click={() => (showGlobalOutputOptions = !showGlobalOutputOptions)}>
+                    <Icon id="options" white={!showGlobalOutputOptions} />
                 </MaterialButton>
             {/if}
         </div>
@@ -72,7 +74,7 @@
         {#if tabId === "general"}
             <General />
         {:else if tabId === "display_settings"}
-            {#if showMore}
+            {#if showGlobalOutputOptions}
                 <OutputsGeneral />
             {:else}
                 <Outputs />
@@ -89,28 +91,30 @@
             <Profiles />
         {:else if tabId === "theme"}
             <Theme />
+        {:else if tabId === "ai"}
+            <SmartSettings />
         {:else if tabId === "other"}
             <Other />
         {/if}
     </div>
 
-    {#if !showMore}
-        <div class="tabs">
-            {#if tabId === "display_settings"}
+    <div class="tabs">
+        {#if tabId === "display_settings"}
+            {#if !showGlobalOutputOptions}
                 <OutputsTabs />
-            {:else if tabId === "styles"}
-                <StylesTabs />
-            {:else if tabId === "files"}
-                <FilesButtons />
-            {:else if tabId === "profiles"}
-                <ProfilesTabs />
-            {:else if tabId === "theme"}
-                <ThemeTabs />
-            {:else if tabId === "other"}
-                <OtherButtons />
             {/if}
-        </div>
-    {/if}
+        {:else if tabId === "styles"}
+            <StylesTabs />
+        {:else if tabId === "files"}
+            <FilesButtons />
+        {:else if tabId === "profiles"}
+            <ProfilesTabs />
+        {:else if tabId === "theme"}
+            <ThemeTabs />
+        {:else if tabId === "other"}
+            <OtherButtons />
+        {/if}
+    </div>
 </main>
 
 <style>
@@ -154,5 +158,21 @@
 
     .tabs {
         z-index: 1;
+    }
+
+    @media (max-width: 1300px) {
+        main {
+            --padding: 100px;
+        }
+    }
+    @media (max-width: 1100px) {
+        main {
+            --padding: 50px;
+        }
+    }
+    @media (max-width: 800px) {
+        main {
+            --padding: 20px;
+        }
     }
 </style>

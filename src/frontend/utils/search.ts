@@ -136,15 +136,57 @@ export function showSearchFilter(searchValue: string, show: ShowList, ctx?: Sear
     if (!hasUnmatched) return strictScore(q, titleMatchedCount, titleText, showName, contentText)
 
     // typo tolerance (titles only): a strong fuzzy title match can still qualify.
-    // IMPORTANT: similarity() is non-zero even for unrelated text, so only a strong
-    // near-match (>= 0.7) counts. editDistance >= length difference, so the exact
-    // length prune below skips Levenshtein whenever similarity can't reach 0.7.
     if (q.fuzzyNeedle) {
-        const maxLength = Math.max(showNameWithNumber.length, q.fuzzyNeedle.length)
-        if (maxLength && Math.abs(showNameWithNumber.length - q.fuzzyNeedle.length) <= maxLength * 0.3) {
-            const titleSimilarity = similarity(showNameWithNumber, q.fuzzyNeedle)
-            if (titleSimilarity >= 0.7) return Math.round(65 + ((titleSimilarity - 0.7) / 0.3) * 20)
+        return matchTitleTypo(titleText, showNameWithNumber, q.tokens, q.fuzzyNeedle)
+    }
+
+    return 0
+}
+
+function matchTitleTypo(titleText: string, showNameWithNumber: string, queryTokens: string[], fuzzyNeedle: string): number {
+    // 1. Full despaced title similarity (e.g. 'amzinggrace' for 'Amazing Grace')
+    const maxLen = Math.max(showNameWithNumber.length, fuzzyNeedle.length)
+    if (maxLen && Math.abs(showNameWithNumber.length - fuzzyNeedle.length) <= maxLen * 0.3) {
+        const titleSim = similarity(showNameWithNumber, fuzzyNeedle)
+        if (titleSim >= 0.7) return Math.round(65 + ((titleSim - 0.7) / 0.3) * 20)
+    }
+
+    // 2. Word-by-word token similarity (e.g. 'amzing grac' for 'Amazing Grace How Sweet')
+    const titleTokens = tokenize(titleText)
+    if (titleTokens.length >= queryTokens.length && queryTokens.length > 0) {
+        const used = new Set<number>()
+        let totalSim = 0
+
+        for (const q of queryTokens) {
+            let bestIdx = -1
+            let bestSim = 0
+
+            for (let j = 0; j < titleTokens.length; j++) {
+                if (used.has(j)) continue
+                const t = titleTokens[j]
+
+                if (t.startsWith(q)) {
+                    bestIdx = j
+                    bestSim = 1
+                    break
+                }
+
+                if (q.length <= 4 && Math.abs(t.length - q.length) > 1) continue
+
+                const sim = similarity(t, q)
+                if (sim >= 0.65 && sim > bestSim) {
+                    bestSim = sim
+                    bestIdx = j
+                }
+            }
+
+            if (bestIdx === -1 || bestSim < 0.65) return 0
+            used.add(bestIdx)
+            totalSim += bestSim
         }
+
+        const avgSim = totalSim / queryTokens.length
+        return Math.round(65 + ((avgSim - 0.65) / 0.35) * 20)
     }
 
     return 0

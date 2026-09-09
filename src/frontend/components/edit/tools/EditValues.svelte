@@ -1,5 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy } from "svelte"
+    import type { CustomFont } from "../../../../types/Show"
     import { actions, activeEdit, activePage, activeStage, outputs, special, timers } from "../../../stores"
     import { throttle } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
@@ -19,6 +20,7 @@
     import { SlideTimeline } from "../../timeline/SlideTimeline"
     import { parseShadowValue } from "../scripts/edit"
     import { filterItemStyle, mergeWithStyle } from "../scripts/itemClipboard"
+    import { getShapeOutsideStyle, parseShapeOutsideValue } from "../scripts/shapeOutside"
     import type { EditBoxSection, EditInput } from "../values/boxes"
     import { captionTranslateLanguages } from "../values/captionLanguages"
     import { sectionColors } from "../values/item"
@@ -26,6 +28,7 @@
     export let sections: { [key: string]: EditBoxSection } = {}
     export let styles: { [key: string]: string } = {}
     export let customValues: { [key: string]: string } = {}
+    export let customLocalFonts: CustomFont[] = []
     export let item: any = {}
     export let isStage = false
     export let type: string = ""
@@ -43,11 +46,15 @@
             value = getFilters(item[input.id] || getStyles(item.style)[input.id])?.[input.key || ""] || input.values.value || input.value
         } else if (input.key) {
             value = styles[input.key || ""]
+            console.log(clone(input), defaultValue, value)
             if (input.type === "checkbox" && (input.key === "box-shadow" || input.key === "text-shadow")) {
                 value = value?.includes("inset") || false
             } else if (input.valueIndex !== undefined) {
                 if (input.key === "box-shadow" || input.key === "text-shadow") {
                     const arr = parseShadowValue(value)
+                    value = arr[input.valueIndex]
+                } else if (input.key === "shape-outside") {
+                    const arr = parseShapeOutsideValue(value)
                     value = arr[input.valueIndex]
                 } else {
                     value = value?.split(" ")[input.valueIndex]
@@ -59,7 +66,7 @@
             if (parts.length > 1) value = item[parts[0]]?.[parts[1]]
             else value = item[input.id]
         }
-        if (value === undefined) value = input.values.value
+        // if (value === undefined) value = input.values.value
 
         if (input.type === "number") {
             if (value === "") value = undefined
@@ -149,6 +156,7 @@
                 const isInset = (input.key === "box-shadow" || input.key === "text-shadow") && currentValue.includes("inset")
                 let arr
                 if (input.key === "box-shadow" || input.key === "text-shadow") arr = parseShadowValue(currentValue)
+                else if (input.key === "shape-outside") arr = parseShapeOutsideValue(currentValue)
                 else arr = currentValue.split(" ").filter(Boolean)
                 arr[input.valueIndex] = value
 
@@ -161,8 +169,12 @@
                     }
                 }
 
-                value = arr.join(" ")
-                if (isInset) value = "inset " + value
+                if (input.key === "shape-outside") {
+                    value = getShapeOutsideStyle(arr[0], arr[1], arr[2], arr[3], item?.style)
+                } else {
+                    value = arr.join(" ")
+                    if (isInset) value = "inset " + value
+                }
             } else {
                 // reset
                 value = ""
@@ -212,7 +224,7 @@
             allInputsToCheck.push(input)
         })
 
-        const hasChanged = !!allInputsToCheck.find((a, i) => !isDefaultValue(a, sections[id].defaultValues?.[i]))
+        const hasChanged = allInputsToCheck.some((a, i) => !isDefaultValue(a, sections[id].defaultValues?.[i]))
         if (hasChanged && !openedSections.includes(id)) openedSections.push(id)
         return hasChanged
     }
@@ -263,6 +275,12 @@
                     if (input.valueIndex !== undefined) {
                         delete input.valueIndex
                         delete input.extension
+                    }
+
+                    // custom default expand value for this special style
+                    if (key === "shape-outside") {
+                        const [size = 45, top = 0, left = 100, radius = 0] = typeof value === "string" ? value.split(/\s+/) : []
+                        value = getShapeOutsideStyle(size, top, left, radius, item?.style)
                     }
 
                     changed({ detail: value }, input, id)
@@ -358,7 +376,7 @@
                                 {@const hasTimelineAction = $special.slideTimelineActive && $activePage === "edit" && ($activeEdit.type || "show") === "show" && SlideTimeline.hasActionAtTime(input.key || "", type, $activeEdit?.items?.length ? $activeEdit.items : [0], timelineUpdater)}
 
                                 {#if input.type === "fontDropdown"}
-                                    <MaterialFontDropdown label={values.label} {value} style={values.style} fontStyleValue={input.styleValue} on:change={(e) => changed(e, input)} on:fontStyle={(e) => changed(e, { ...input, key: "font" })} enableFontStyles />
+                                    <MaterialFontDropdown label={values.label} {value} style={values.style} fontStyleValue={input.styleValue} {customLocalFonts} on:change={(e) => changed(e, input)} on:fontStyle={(e) => changed(e, { ...input, key: "font" })} enableFontStyles />
                                 {:else if input.type === "toggle"}
                                     <MaterialButton style="min-width: 50px;flex: 1;" title={values.label} on:click={() => toggle(input)}>
                                         <Icon id={values.icon} size={1.2} white />

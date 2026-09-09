@@ -6,7 +6,8 @@
     import { startResizing, stopResizing } from "../../utils/cursor"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
-    import { shouldOpenReplace } from "../../utils/shortcuts"
+    import { getNormalizedKey, shouldOpenReplace } from "../../utils/shortcuts"
+    import { isTypingTarget } from "../../utils/shortcutsHelper"
     import { drawerTabs } from "../../values/tabs"
     import Content from "../drawer/Content.svelte"
     import Navigation from "../drawer/Navigation.svelte"
@@ -164,7 +165,11 @@
     let firstMatch: null | any = null
     let searchElem: HTMLInputElement | undefined
     async function keydown(e: KeyboardEvent) {
-        if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+        if (e.shiftKey || e.altKey) return
+
+        const ctrlKey = e.ctrlKey || e.metaKey ? getNormalizedKey(e) : ""
+
+        if (ctrlKey === "f") {
             if ($activePopup === "show" || shouldOpenReplace()) return
             focusSearch()
 
@@ -179,7 +184,7 @@
                     return a
                 })
             }
-        } else if ((e.ctrlKey || e.metaKey) && e.key === "d") {
+        } else if (ctrlKey === "d" && !isTypingTarget(document.activeElement)) {
             if (!$selected?.id && !$activeEdit.items.length) click(null)
         } else if (e.key === "Enter") {
             if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || $focusMode) return

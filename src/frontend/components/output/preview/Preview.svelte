@@ -42,9 +42,11 @@
     function keydown(e: KeyboardEvent) {
         if ($contextActive) return
         if ($guideActive || $activePopup === "assign_shortcut") return
-        if ((e.ctrlKey || e.metaKey || e.altKey) && previewCtrlShortcuts[e.key]) {
+
+        const ctrlShortcut = e.ctrlKey || e.metaKey ? previewCtrlShortcuts[getNormalizedKey(e)] : null
+        if (ctrlShortcut) {
             e.preventDefault()
-            previewCtrlShortcuts[e.key]()
+            ctrlShortcut()
         }
 
         const functionKey = /^F(?:[1-9]|1[0-9]|2[0-4])$/
@@ -52,7 +54,7 @@
 
         // start action with custom shortcut key
         // /^[A-Z]{1}$/i.test(e.key) &&
-        if (!e.ctrlKey && !e.metaKey && actionKeyActivate(e.key.toUpperCase())) {
+        if (!e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && actionKeyActivate(e.key.toUpperCase())) {
             e.preventDefault()
             return
         }

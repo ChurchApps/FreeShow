@@ -48,7 +48,7 @@
 
         unsubscriber = videoSync(path, outputId, (data) => {
             videoTime = data.currentTime || 0
-            if (data.duration) videoData.duration = data.duration
+            if (data.duration && Number.isFinite(data.duration)) videoData.duration = data.duration
             videoData.paused = data.paused
             videoData.loop = data.loop
             videoData.muted = data.muted

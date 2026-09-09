@@ -5,7 +5,7 @@ import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
 import { getTextboxes } from "./formatTextEditor"
 
-export function getPlainEditorText(showId = "", allowEmpty = false) {
+export function getPlainEditorText(showId = "", allowEmpty = false, itemIndex = 0) {
     if (!showId) showId = "active"
     const ref = getLayoutRef(showId)
     const slides = _show(showId).get("slides")
@@ -21,7 +21,7 @@ export function getPlainEditorText(showId = "", allowEmpty = false) {
         if (!slide) return
 
         const slideData: any = { id, items: slide.items, text: "", ref: refSlide }
-        let data = getItems(slide.items)
+        let data = getItems(slide.items, itemIndex)
 
         if (slide.group !== null && (data.hasTextboxItem || allowEmpty || slide.children?.find((childId) => getSlideText(slides[childId]).length))) {
             const groupId = "[" + (replaceValues(slide.group, true) || "—") + "]"
@@ -44,16 +44,21 @@ export function getPlainEditorText(showId = "", allowEmpty = false) {
     return text.trim()
 }
 
-function getItems(items: Item[]) {
+function getItems(items: Item[], itemIndex = 0) {
     let text = ""
     let plainText = ""
     // let selectedItem: Item = getFirstNormalTextbox(items)
-    const selectedItems: Item[] = getTextboxes(clone(items)).reverse()
+    let selectedItems: Item[] = getTextboxes(clone(items)).reverse()
+
+    if (itemIndex > 0) {
+        const targetItem = selectedItems[itemIndex - 1]
+        selectedItems = targetItem ? [targetItem] : []
+    }
 
     if (!selectedItems.length) return { text, plainText, hasTextboxItem: false }
 
     selectedItems.forEach((item, i) => {
-        if (selectedItems.length > 1) {
+        if (itemIndex === 0 && selectedItems.length > 1) {
             const translation = item?.language ? `:${item.language}` : ""
             const textboxId = `[#${i + 1}${translation}]`
             text += textboxId + "\n"

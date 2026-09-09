@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { AspectRatio, Resolution, Styles } from "../../../../types/Settings"
-    import { activeDrawerTab, activeEdit, activePage, activeStyle, outputs, styles, templates } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activeStyle, drawerTabsData, outputs, styles, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { transitionTypes } from "../../../utils/transitions"
     import { mediaExtensions } from "../../../values/extensions"
@@ -191,12 +191,14 @@
     {/if}
 </InputRow>
 
-<InputRow>
-    <MaterialPopupButton id="scripture" label="settings.override_scripture_with_template" disabled={!activeLayers.includes("slide")} value={templateOverrideScripture || currentStyle.templateScripture_2 || currentStyle.templateScripture_3 || currentStyle.templateScripture_4} name={scriptureTemplateLabel} popupId="select_template" icon="templates" on:change={updateScriptureTemplate} allowEmpty />
-    {#if templateOverrideScripture && $templates[templateOverrideScripture]}
-        <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(templateOverrideScripture)} />
-    {/if}
-</InputRow>
+{#if $drawerTabsData?.scripture?.enabled !== false}
+    <InputRow>
+        <MaterialPopupButton id="scripture" label="settings.override_scripture_with_template" disabled={!activeLayers.includes("slide")} value={templateOverrideScripture || currentStyle.templateScripture_2 || currentStyle.templateScripture_3 || currentStyle.templateScripture_4} name={scriptureTemplateLabel} popupId="select_template" icon="templates" on:change={updateScriptureTemplate} allowEmpty />
+        {#if templateOverrideScripture && $templates[templateOverrideScripture]}
+            <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(templateOverrideScripture)} />
+        {/if}
+    </InputRow>
+{/if}
 
 <MaterialPopupButton id={styleId} label="meta.display_metadata" disabled={!activeLayers.includes("slide")} value={metadataDisplay} defaultValue="default" name={metadataDisplayLabel} popupId="metadata_display" icon="info" data={{ type: "style" }} on:change={(e) => updateStyle({ ...metadata, display: e.detail }, "metadata")} />
 

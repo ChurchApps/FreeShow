@@ -9,6 +9,7 @@ export const sectionColors = {
     outline: "#d8d8d8",
     border: "#d8d8d8",
     shadow: "#9e9e9e",
+    shape_outside: "#d8d8d8",
     chords: "#ffbe86",
     scrolling: "#ceffbe",
     special: "#e9e495",
@@ -99,6 +100,17 @@ export const itemSections: { [key: string]: EditBoxSection } = {
             [{ id: "style", key: "box-shadow", valueIndex: 3, type: "number", value: 0, extension: "px", values: { label: "edit.length", min: -100, style: "flex: 3;" } }],
             [{ id: "style", key: "box-shadow", type: "checkbox", value: false, values: { label: "edit.shadow_inset", style: "flex: 1;" } }]
         ]
+    },
+    shape_outside: {
+        expandAutoValue: {
+            "shape-outside": "45% 0% 100% 0%"
+        },
+        inputs: splitIntoRows([
+            { id: "style", key: "shape-outside", valueIndex: 0, type: "number", value: 0, extension: "%", values: { label: "edit.size", min: 0, max: 200, showSlider: true, sliderValues: { min: 0, max: 100 } } },
+            { id: "style", key: "shape-outside", valueIndex: 1, type: "number", value: 0, extension: "%", values: { label: "screen.top", min: 0, max: 100, showSlider: true } },
+            { id: "style", key: "shape-outside", valueIndex: 2, type: "number", value: 100, extension: "%", values: { label: "screen.left", min: 0, max: 100, showSlider: true } },
+            { id: "style", key: "shape-outside", valueIndex: 3, type: "number", value: 0, extension: "%", values: { label: "edit.corner_radius", min: 0, max: 50, showSlider: true } }
+        ])
     },
     backdrop_filters: {
         name: "edit.filters",

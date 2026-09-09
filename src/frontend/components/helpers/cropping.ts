@@ -77,12 +77,16 @@ export function getCropCenter(crop: CropValues) {
 export function isCroppedItem(item?: { type?: string; cropping?: Partial<Cropping> | null } | null): boolean {
     if (!item || (item.type !== "media" && item.type !== "camera")) return false
     const cropping = item.cropping
-    if (!cropping) return false
+    if (!cropping || cropping.type === "ppt") return false
     return !!(Number(cropping.top) || Number(cropping.right) || Number(cropping.bottom) || Number(cropping.left))
 }
 
 export function getMediaContainerStyle(crop: CropState["crop"], cropHasValues: boolean, itemStyle?: string): string {
     if (!cropHasValues) return "position: absolute;left: 0;top: 0;width: 100%;height: 100%;overflow: hidden;"
+
+    if (crop.type === "ppt") {
+        return "position: absolute;left: 0;top: 0;width: 100%;height: 100%;overflow: hidden;"
+    }
 
     const visibleWidth = Math.max(0.0001, 100 - crop.left - crop.right)
     const visibleHeight = Math.max(0.0001, 100 - crop.top - crop.bottom)
@@ -105,14 +109,18 @@ export function getMediaContainerStyle(crop: CropState["crop"], cropHasValues: b
 
 export function getMediaInnerGeometry(crop: CropState["crop"], cropHasValues: boolean): string {
     if (cropHasValues) {
-        const visibleWidth = Math.max(0.0001, 100 - crop.left - crop.right)
-        const visibleHeight = Math.max(0.0001, 100 - crop.top - crop.bottom)
-        const innerWidth = (10000 / visibleWidth).toFixed(4)
-        const innerHeight = (10000 / visibleHeight).toFixed(4)
-        const innerLeft = ((-crop.left * 100) / visibleWidth).toFixed(4)
-        const innerTop = ((-crop.top * 100) / visibleHeight).toFixed(4)
+        if (crop.type === "ppt") {
+            const visibleWidth = Math.max(0.0001, 100 - crop.left - crop.right)
+            const visibleHeight = Math.max(0.0001, 100 - crop.top - crop.bottom)
+            const innerWidth = (10000 / visibleWidth).toFixed(4)
+            const innerHeight = (10000 / visibleHeight).toFixed(4)
+            const innerLeft = ((-crop.left * 100) / visibleWidth).toFixed(4)
+            const innerTop = ((-crop.top * 100) / visibleHeight).toFixed(4)
 
-        return `position: absolute;width: ${innerWidth}%;height: ${innerHeight}%;left: ${innerLeft}%;top: ${innerTop}%;`
+            return `position: absolute;width: ${innerWidth}%;height: ${innerHeight}%;left: ${innerLeft}%;top: ${innerTop}%;`
+        }
+
+        return `position: absolute;width: 100%;height: 100%;left: 0;top: 0;`
     }
 
     return `position: absolute;width: 100%;height: 100%;left: 0;top: 0;`

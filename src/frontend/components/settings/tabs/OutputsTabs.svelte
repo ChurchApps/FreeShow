@@ -68,11 +68,13 @@
                 AudioAnalyser.recorderActivate()
             }
 
-            const captureTypeKeys = ["blackmagic", "ndi", "webrtc", "rtmp"]
-            const ipcKeys = ["alwaysOnTop", "transparent", "invisible"]
-            if (out.enabled && (captureTypeKeys.includes(key) || ipcKeys.includes(key))) {
+            const captureTypeKeys = ["blackmagic", "ndi", "omt", "webrtc", "rtmp"]
+            if (out.enabled && (captureTypeKeys.includes(key) || key === "transparent" || key === "invisible")) {
                 if (value && captureTypeKeys.includes(key)) newToast("toast.output_capture_enabled")
-                send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value: key === "blackmagic" ? out : value })
+                // Recreate window for options fixed at creation (see Outputs.svelte)
+                send(OUTPUT, ["CREATE"], { id: outputId, ...out })
+            } else if (out.enabled && key === "alwaysOnTop") {
+                send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
             }
 
             return a
@@ -119,6 +121,7 @@
             let name = ""
             if (networkType && !localType) {
                 if (networkType === "ndi") name = "NDI"
+                else if (networkType === "omt") name = "OMT"
                 else if (networkType === "webrtc") name = "WebRTC"
                 else if (networkType === "rtmp") name = "RTMP"
             }
@@ -130,11 +133,12 @@
         if (!skipPopup) {
             if (localType !== "window") {
                 updateOutput("invisible", true, outputId)
-                if (!localType && networkType === "ndi") updateOutput("transparent", true, outputId)
+                if (!localType && (networkType === "ndi" || networkType === "omt")) updateOutput("transparent", true, outputId)
             }
 
             if (localType === "blackmagic") updateOutput("blackmagic", true, outputId)
             if (networkType === "ndi") updateOutput("ndi", true, outputId)
+            else if (networkType === "omt") updateOutput("omt", true, outputId)
             else if (networkType === "webrtc") updateOutput("webrtc", true, outputId)
             else if (networkType === "rtmp") updateOutput("rtmp", true, outputId)
 
@@ -157,6 +161,7 @@
         {#if !tab.invisible}<Icon id="hdmi" size={0.6} white title={translateText("settings.window")} />{/if}
         {#if tab.blackmagic}<Icon id="blackmagic" size={0.6} white title="Blackmagic Design" />{/if}
         {#if tab.ndi}<Icon id="ndi" size={0.6} white title="NDI" />{/if}
+        {#if tab.omt}<Icon id="omt" size={0.6} white title="OMT" />{/if}
         {#if tab.webrtc}<Icon id="broadcast" size={0.6} white title="WebRTC" />{/if}
         {#if tab.rtmp}<Icon id="broadcast" size={0.6} white title="RTMP" />{/if}
     </div>

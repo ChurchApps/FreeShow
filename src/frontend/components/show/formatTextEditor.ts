@@ -11,7 +11,7 @@ import { isEmpty } from "../helpers/output"
 import { getGlobalGroup } from "../helpers/show"
 import { _show } from "../helpers/shows"
 
-export function formatText(text: string, showId = "") {
+export function formatText(text: string, showId = "", itemIndex = 0) {
     if (!showId) showId = get(activeShow)?.id || ""
     const show: Show = clone(_show(showId).get())
     if (!show) return
@@ -39,8 +39,8 @@ export function formatText(text: string, showId = "") {
         }
     })
 
-    const groupedOldSlides = groupSlides(oldSlides)
-    const groupedNewSlides = groupSlides(slides)
+    const groupedOldSlides = groupSlides(oldSlides, itemIndex)
+    const groupedNewSlides = groupSlides(slides, itemIndex)
 
     let newLayoutSlides: SlideData[] = []
 
@@ -199,7 +199,8 @@ export function formatText(text: string, showId = "") {
 
         if (oldTextboxes.length && oldSlideId !== slideId) {
             slide.items.forEach((item, i) => {
-                const b = oldTextboxes[i]
+                // when targeting a specific itemIndex, copy styles from that exact textbox (reversed order)
+                const b = itemIndex > 0 ? oldTextboxes[oldTextboxes.length - itemIndex] : oldTextboxes[i]
                 if (!b) return
 
                 if (b.align) item.align = b.align
@@ -231,9 +232,10 @@ export function formatText(text: string, showId = "") {
                 })
             })
             // newSlides[slideId].items = slide.items
-        } else if (show.slides?.[slideId]) {
+        } else if (show.slides?.[slideId] && itemIndex === 0) {
             // add back full old slide including its style
             // only if text content is the same ??
+            // skip when itemIndex > 0: the newly parsed items must be preserved
             slide = clone(show.slides[slideId])
             newSlides[slideId] = slide
         } else if (parentStyles[slideId]) {
@@ -264,6 +266,13 @@ export function formatText(text: string, showId = "") {
             const textboxItemIndexes = getTextboxesIndexes(oldItems)
             if (!textboxItemIndexes.length) {
                 items = [...removeEmptyTextboxes(oldItems).filter((a) => (a.type || "text") === "text"), ...newItems]
+            } else if (itemIndex > 0) {
+                // when targeting a specific textbox itemIndex (the items are reversed)
+                const sortedIndexes = textboxItemIndexes.sort((a, b) => a - b).reverse()
+                const targetIndex = sortedIndexes[itemIndex - 1]
+                if (targetIndex !== undefined) {
+                    items[targetIndex] = newItems[0] || clone(defaultItem)
+                }
             } else {
                 textboxItemIndexes
                     .sort((a, b) => a - b)
@@ -408,7 +417,7 @@ export function getLine(text: string, chords: Chords[]): Line {
     return line
 }
 
-function groupSlides(slides: Slide[]) {
+function groupSlides(slides: Slide[], itemIndex = 0) {
     const slideGroups: { text: string; slides: Slide[] }[] = []
     let currentIndex = -1
 
@@ -423,7 +432,17 @@ function groupSlides(slides: Slide[]) {
         if (!slideGroups[currentIndex]) slideGroups[currentIndex] = { text: slide.group || "", slides: [] }
         slideGroups[currentIndex].slides.push(slide)
 
-        const textItems = getTextboxes(slide.items)
+        let textItems = getTextboxes(slide.items)
+        if (itemIndex > 0) {
+            if (textItems.length > 1) {
+                // Multi-textbox slide: pick the corresponding textbox for fingerprinting
+                const reversed = textItems.reverse()
+                textItems = reversed[itemIndex - 1] ? [reversed[itemIndex - 1]] : []
+            } else {
+                // Single-textbox slide: shown as empty placeholder in editor for this itemIndex
+                textItems = []
+            }
+        }
         if (!textItems.length) return
 
         // Create chord-position-agnostic fingerprint for slide matching when chords are moved

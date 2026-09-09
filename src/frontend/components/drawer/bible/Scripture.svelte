@@ -4,11 +4,11 @@
     import type { Verse } from "json-bible/lib/Bible"
     import type { VerseReference } from "json-bible/lib/reference"
     import { onMount } from "svelte"
-    import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
     import { activeEdit, activeScripture, activeTriggerFunction, customScriptureBooks, notFound, openScripture, outLocked, outputs, resized, scriptureHistory, scriptureMode, scriptures, scriptureSettings, selected } from "../../../stores"
-    import { wait } from "../../../utils/common"
+    import { escapeRegExp, wait } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
+    import { getNormalizedKey } from "../../../utils/shortcuts"
     import { clone } from "../../helpers/array"
     import { brightenDarkColor, fadeColor } from "../../helpers/color"
     import { setDrawerTabData } from "../../helpers/historyHelpers"
@@ -22,7 +22,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { createScriptureShow, formatBibleText, getShortBibleName, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
+    import { createScriptureShow, formatBibleText, getShortBibleName, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, sanitizeVerseText, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
 
     export let active: string | null
     export let searchValue: string
@@ -410,6 +410,17 @@
 
         // newToast(translateText("toast.verse_undefined").replace("{}", verse))
 
+        if (activeReference.verses[0]?.length && activeReference.book !== null) {
+            activeScripture.set({
+                id: previewBibleId,
+                reference: {
+                    book: activeReference.book,
+                    chapters: activeReference.chapters,
+                    verses: activeReference.verses
+                }
+            })
+        }
+
         if (playWhenLoaded) setTimeout(playScripture)
         playWhenLoaded = false
     }
@@ -779,11 +790,6 @@
         return `${bookName} ${firstLabel}${suffix}`.trim()
     }
 
-    // Escape user-facing book names before building regular expressions.
-    function escapeRegExp(value: string) {
-        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    }
-
     let contentSearchFieldActive = false
     let contentSearchValue = ""
     let contentSearchResults: VerseReference[] | null = null
@@ -874,10 +880,12 @@
 
         if (!e.ctrlKey && !e.metaKey) return
 
+        const ctrlKey = e.shiftKey || e.altKey ? "" : getNormalizedKey(e)
+
         // Ctrl+N Converts to show (shortcuts.ts)
 
         // Refresh
-        if (e.key === "r") {
+        if (ctrlKey === "r") {
             if (!isActiveInOutput) return
             e.preventDefault()
             playScripture()
@@ -885,14 +893,14 @@
         }
 
         // Toggle History
-        if (e.key === "h") {
+        if (ctrlKey === "h") {
             e.preventDefault()
             historyOpened = !historyOpened
             return
         }
 
         // toggle Bible content search
-        if (e.key === "b") {
+        if (ctrlKey === "b") {
             if (contentSearchFieldActive) resetContentSearch()
             else contentSearchFieldActive = true
             return
@@ -1074,7 +1082,7 @@
                                 {@const name = $scriptureMode === "grid" ? booksData[i]?.abbreviation : $customScriptureBooks[previewBibleId]?.[i] || book.name}
                                 {@const isActive = activeReference.book?.toString() === id}
 
-                                <span {id} class={isApi || isCollection || !Object.values(defaultBibleBookNames).includes(book.name) ? "" : "context #bible_book_local"} class:isActive style="{color ? `border-${$scriptureMode === 'grid' ? 'bottom' : 'left'}: 2px solid ${color};` : ''}{$scriptureMode === 'grid' ? `border-radius: 2px;background-color: ${fadeColor(color, 0.15)};color: ${brightenDarkColor(color)};` : ''}" on:click={() => openBook(id)} role="none">
+                                <span {id} class={isApi || isCollection || !Object.values(defaultBibleBookNames).includes(book.name) ? "" : "context #bible_book_local"} class:isActive style="{color ? `border-${$scriptureMode === 'grid' ? 'bottom' : 'left'}: 2px solid ${color};` : ''}{$scriptureMode === 'grid' ? `border-radius: 2px;background-color: ${fadeColor(color, isActive ? 0.35 : 0.15)};color: ${brightenDarkColor(color)};` : ''}" on:click={() => openBook(id)} role="none">
                                     {name}
                                 </span>
                             {/each}
@@ -1132,6 +1140,7 @@
                                     id={content.id.toString()}
                                     class="verse"
                                     class:showAllText={$resized.rightPanelDrawer <= 5}
+                                    class:showAllVersions={$scriptureSettings.showAllVersions}
                                     class:isActive
                                     class:collection-verse={isCollection && $scriptureMode !== "grid"}
                                     data-title="{text}<br><br>{translateText('tooltip.scripture')}"
@@ -1383,6 +1392,16 @@
         font-size: 0.8em;
         font-style: italic;
     }
+    /* clip keeps the text baseline, hidden would align the box bottom */
+    .main span.verse :global(span.undertitle) {
+        display: inline-block;
+        max-width: 35%;
+        overflow: clip;
+        text-overflow: ellipsis;
+        white-space: pre;
+        color: var(--secondary);
+        font-weight: 600;
+    }
 
     /* LIST MODE */
 
@@ -1468,11 +1487,9 @@
         flex: none !important;
         height: auto !important;
         min-height: 0 !important;
-        padding: 2px 10px 2px 0 !important;
-        margin: 0 !important;
-        white-space: normal !important;
-        overflow: visible !important;
-        text-overflow: unset !important;
+    }
+    .verse.collection-verse.showAllVersions {
+        padding: 0 !important;
     }
 
     .collection-versions {
@@ -1497,12 +1514,16 @@
     }
 
     .version-text {
-        display: inline !important;
+        display: block;
         font-size: 0.9em;
         line-height: 1.2;
         font-weight: normal;
         padding: 0 !important;
-        margin: 0 !important;
+    }
+    .verse:not(.showAllText) .version-text {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
     /* history */

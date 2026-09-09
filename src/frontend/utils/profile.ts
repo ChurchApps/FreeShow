@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
-import { activeProfile, profiles, showChangeProfileMenu, special } from "../stores"
 import { runActionId } from "../components/actions/actions"
+import { activeProfile, profiles, showChangeProfileMenu, special } from "../stores"
 
 export function getAccess(id: string) {
     return get(activeProfile) ? get(profiles)[get(activeProfile)!]?.access[id] || {} : {}

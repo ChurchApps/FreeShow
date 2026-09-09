@@ -42,9 +42,9 @@ export function toggleOutputs(outputIds: string[] | null = null, options: { forc
     const currentOutputState = !!get(outputState).find((a) => a.id === outputIds[0])?.active
     const state = typeof options.state === "boolean" ? options.state : options.force || !(outputIds.length === 1 ? currentOutputState : get(outputDisplay))
 
-    const autoPosition = sortedOutputList.length === 1 && !sortedOutputList[0].forcedResolution?.width
+    const autoPosition = options.force ? false : sortedOutputList.length === 1 && !sortedOutputList[0].forcedResolution?.width
 
-    send(OUTPUT, ["TOGGLE_OUTPUTS"], { outputs: sortedOutputList, state, force: options.force, autoStartup: options.autoStartup, autoPosition })
+    send(OUTPUT, ["TOGGLE_OUTPUTS"], { outputs: sortedOutputList, state, autoStartup: options.autoStartup, autoPosition })
 }
 
 export function toggleOutput(id: string) {
@@ -61,8 +61,6 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
     // stop any active break slide recording when the slide changes
     if (type === "slide") _stopBreakRecording()
-
-    customActionActivation("output_changed")
 
     const bindings = data?.bindings || (data?.layout ? ref[data.index]?.data?.bindings || [] : [])
     const allOutputIds = bindings.length ? bindings : getActiveOutputs(get(outputs), true, false, true)
@@ -90,10 +88,12 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
         if (data.type === "pdf") {
             const out = get(outputs)[outs[0]]?.out?.slide
-            if (out?.type !== "pdf") customActionActivation("pdf_start")
+            // timeout to activate after output has updated
+            if (out?.type !== "pdf") setTimeout(() => customActionActivation("pdf_start"))
         } else {
             const groupId = slide.globalGroup
-            if (groupId) customActionActivation("group_start", groupId)
+            // timeout to activate after output has updated
+            if (groupId) setTimeout(() => customActionActivation("group_start", groupId))
 
             // start recording time on break slides (no items, globalGroup === "break")
             const layoutSlideIndex = ref[data.index]?.type === "parent" ? (ref[data.index]?.index ?? -1) : -1
@@ -200,6 +200,8 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
         return a
     })
+
+    customActionActivation("output_changed")
 }
 
 // setup video manager (and audio analyser)
@@ -626,7 +628,7 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
 
 // this will get the first available stage output
 export function getStageOutputId(_updater = get(outputs)) {
-    return Object.values(_updater).find((a) => a.stageOutput && a.enabled)?.id || ""
+    return keysToID(_updater).find((a) => a.stageOutput && a.enabled)?.id || ""
 }
 
 export function getStageResolution(outputId = "", _updater = get(outputs)): Resolution {
@@ -846,6 +848,10 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
         else AudioAnalyser.recorderDeactivate()
     }
 
+    if (key === "encoder") {
+        sendMain(Main.SET_RTMP_ENCODER, { outputId, encoder: value })
+    }
+
     send(OUTPUT, ["SET_VALUE"], { id: outputId, key: "rtmpData", value: newData })
     return newData
 }
@@ -907,8 +913,11 @@ export function addOutput(onlyFirst = false, styleId = "", enabled = true, name 
         if (enabled && !onlyFirst) send(OUTPUT, ["CREATE"], { id, ...output[id] })
         if (enabled && !onlyFirst && get(outputDisplay)) toggleOutput(id)
 
+        // set as active
         if (get(currentOutputSettings) !== id) currentOutputSettings.set(id)
+        // start rename
         activeRename.set("output_" + id)
+
         return output
     })
 
@@ -953,6 +962,10 @@ export function enableStageOutput(options: any = {}) {
         }
 
         send(OUTPUT, ["CREATE"], { ...a[id], id })
+
+        // set as active
+        if (get(currentOutputSettings) !== id) currentOutputSettings.set(id)
+        // start rename
         activeRename.set("output_" + id)
 
         return a
@@ -1642,8 +1655,17 @@ export function getStyleTemplate(outSlide: OutSlide | null, currentStyle: Styles
     return template
 }
 
+function itemHasAutoSize(item: Item) {
+    return (item.textFit || "none") !== "none" || !!item.auto
+}
+
 export function slideHasAutoSizeItem(slide: Slide | Template) {
-    return slide?.items?.some((a) => (a.textFit || "none") !== "none" || a.auto)
+    return slide?.items?.some(itemHasAutoSize)
+}
+
+// the auto size text size has to be calculated if it is not stored yet
+export function itemNeedsAutoSize(item: Item) {
+    return itemHasAutoSize(item) && !item.autoFontSize
 }
 
 export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles, items: Item[] | undefined, outputId: string, slideDynamicValues?: { [key: string]: any }) {

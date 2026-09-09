@@ -1,4 +1,4 @@
-import type { ComponentType } from "svelte"
+import { onDestroy, type ComponentType } from "svelte"
 import { get } from "svelte/store"
 import type { Popups } from "../../types/Main"
 import About from "../components/main/popups/About.svelte"
@@ -90,6 +90,8 @@ import UpdateManager from "../components/main/popups/UpdateManager.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
 import NodeOptions from "../components/main/popups/NodeOptions.svelte"
 import { activePopup, popupData } from "../stores"
+import AiModelManager from "../ai/components/popups/AiModelManager.svelte"
+import ManageFonts from "../components/main/popups/ManageFonts.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -107,6 +109,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     delete_duplicated_shows: DeleteDuplicatedShows,
     icon: ChangeIcon,
     manage_groups: ManageGroups,
+    manage_fonts: ManageFonts,
     manage_icons: ManageIcons,
     manage_colors: ManageColors,
     manage_metadata: ManageMetadata,
@@ -179,7 +182,8 @@ export const popups: { [key in Popups]: ComponentType } = {
     cleaning_utility: CleaningUtility,
     pco_picker: PcoServicePicker,
     sync_folders: SyncFolders,
-    node_options: NodeOptions
+    node_options: NodeOptions,
+    ai_model_manager: AiModelManager
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {
@@ -222,4 +226,30 @@ export async function promptCustom(prompt: string, inputType: string = "text", m
     popupData.set({ prompt, inputType, message })
     const data = (await waitForPopupData("confirm")) || ""
     return data as string
+}
+
+// Enter to submit
+
+let activeSubmit: (() => void) | null = null
+
+export function registerPopupSubmit(submit: () => void) {
+    activeSubmit = submit
+
+    onDestroy(() => {
+        if (activeSubmit === submit) activeSubmit = null
+    })
+}
+
+export function triggerPopupSubmit(e?: KeyboardEvent): boolean {
+    if (!activeSubmit) return false
+
+    const target = e?.target as HTMLElement | null
+    if (target?.closest("textarea, [contenteditable='true'], button, [role], .editItem")) return false
+
+    activeSubmit()
+    return true
+}
+
+export function clearPopupSubmit() {
+    activeSubmit = null
 }

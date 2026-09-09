@@ -1,5 +1,5 @@
 import { get } from "svelte/store"
-import { CLOUD, CONTROLLER, NDI, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
+import { CLOUD, CONTROLLER, NDI, OMT, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { AudioMicrophone } from "../audio/audioMicrophone"
 import { runAction } from "../components/actions/actions"
@@ -37,8 +37,10 @@ import {
     metronome,
     metronomeTimer,
     ndiData,
+    omtData,
     outputDisplay,
     outputs,
+    renderGroups,
     outputSlideCache,
     outputState,
     overlays,
@@ -80,6 +82,7 @@ export function setupMainReceivers() {
 
     receive(OUTPUT, receiveOUTPUTasMAIN)
     receive(NDI, receiveNDI)
+    receive(OMT, receiveOMT)
     receive(CLOUD, receiveCLOUD)
 }
 
@@ -109,6 +112,7 @@ const receiveOUTPUTasMAIN: any = {
         })
     },
     OUTPUTS: (a: any) => outputs.set(a),
+    RENDER_GROUPS: (a: any) => renderGroups.set(a || {}),
     RESTART: ({ id }) => restartOutputs(id),
     // DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     OUTPUT_STATE: (newStates: { id: string; active: boolean | "invisible" }[]) => {
@@ -315,6 +319,20 @@ const receiveNDI: any = {
         if (!msg?.id) return
 
         ndiData.update((a) => {
+            a[msg.id] = msg
+
+            return a
+        })
+    }
+}
+
+// OMT
+
+const receiveOMT: any = {
+    SEND_DATA: (msg) => {
+        if (!msg?.id) return
+
+        omtData.update((a) => {
             a[msg.id] = msg
 
             return a

@@ -9,6 +9,9 @@
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import { registerPopupSubmit } from "../../../utils/popup"
+
+    registerPopupSubmit(rename)
 
     let list: string[] = []
     $: {
@@ -220,15 +223,7 @@
     }
 
     let groupName = ""
-
-    function keydown(e: KeyboardEvent) {
-        if (e.key === "Enter") {
-            setTimeout(rename)
-        }
-    }
 </script>
-
-<svelte:window on:keydown={keydown} />
 
 {#if list.length > 1}
     <p><T id="popup.change_name" />:</p>
@@ -239,7 +234,7 @@
     </ul>
 {/if}
 
-<MaterialTextInput label="inputs.name" value={groupName} on:change={(e) => (groupName = e.detail)} autoselect />
+<MaterialTextInput label="inputs.name" value={groupName} on:input={(e) => (groupName = e.detail)} on:change={(e) => (groupName = e.detail)} autoselect />
 
 <MaterialButton variant="contained" style="margin-top: 20px;" icon="edit" on:click={rename}>
     <T id="actions.rename" />

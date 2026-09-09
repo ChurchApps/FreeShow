@@ -49,7 +49,8 @@ function buildOverrideRegex(override: TemplateStyleOverride) {
 
 function splitSegment(segment: any, regex: RegExp, override: TemplateStyleOverride) {
     if (!segment?.value) return [segment]
-    if (segment.customType?.includes("disableTemplate")) return [segment]
+    const templateDisabled = segment.customType?.includes("disableTemplate") && !segment.customType?.includes("_jw")
+    if (templateDisabled) return [segment]
 
     const text = String(segment.value)
     const matcher = new RegExp(regex.source, regex.flags)
@@ -70,7 +71,7 @@ function splitSegment(segment: any, regex: RegExp, override: TemplateStyleOverri
             if (before) parts.push({ ...segment, value: before })
         }
 
-        const styledPart = { ...segment, value: matchedText, style: mergeOverrideStyles(segment.style, override) }
+        const styledPart = { ...segment, value: matchedText, style: mergeOverrideStyles(segment.style, override), baseStyle: segment.style }
         parts.push(styledPart)
         lastIndex = start + matchedText.length
     }
@@ -101,9 +102,15 @@ function mergeOverrideStyles(baseStyle: string, override: TemplateStyleOverride)
 
     // IMPORTANT: Remove font-size from merged result since it will be set separately by fontSizePart
     // This prevents duplicate font-size declarations in the final style string
-    let fontSizePercentage = (parseInt(merged["font-size"]) || 100) / 100
-    if (fontSizePercentage > 2) fontSizePercentage = 1 // likely grow to fit
     delete merged["font-size"]
+
+    // If template defines a font-size, treat it as percentage (e.g. 100 = 100% of base size)
+    // If not defined, default to 1 (100% of base size)
+    let fontSizePercentage = 1
+    if (templateProps["font-size"] !== undefined) {
+        fontSizePercentage = (parseInt(templateProps["font-size"]) || 100) / 100
+        if (fontSizePercentage > 2) fontSizePercentage = 1 // likely grow to fit or default px
+    }
 
     // Convert back to CSS string with !important for color and font-style to ensure they override
     let result =

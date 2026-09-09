@@ -130,12 +130,16 @@
     outline-offset: -5px; */
     }
 
-    .main :global(video),
+    .main :global(video:not(.mediaContainer *)),
     .main :global(canvas),
-    .main :global(img) {
+    .main :global(img:not(.mediaContainer *)) {
         max-width: 100%;
         max-height: 100%;
         align-self: center;
+        pointer-events: none;
+    }
+    .main :global(.mediaContainer > video),
+    .main :global(.mediaContainer > img) {
         pointer-events: none;
     }
     .main :global(.observer) {

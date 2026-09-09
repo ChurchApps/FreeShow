@@ -75,7 +75,9 @@ export class CaptureLifecycle {
         this.updateWebRtcHostState()
         this.updateRtmpState()
 
-        this.runCaptureLoop(id, token, output)
+        // OSR outputs are driven by paint events (OutputLifecycle.attachOsrCapture -> transmitFrame),
+        // so skip the capturePage poll for them; channels/senders are still set up above.
+        if (!output.osr) this.runCaptureLoop(id, token, output)
     }
 
     private static updateCaptureToggles(id: string, captureOptions: any, toggle: { [key: string]: boolean }) {
@@ -199,12 +201,6 @@ export class CaptureLifecycle {
         return baseCaptureFrameRate
     }
 
-    static stopAllCaptures() {
-        OutputHelper.getAllOutputs().forEach((output) => {
-            if (output.captureOptions) this.stopCapture(output.id)
-        })
-    }
-
     static stopCapture(id: string) {
         this.captureLoopToken[id] = (this.captureLoopToken[id] || 0) + 1
         this.activeCaptures.delete(id)
@@ -218,12 +214,13 @@ export class CaptureLifecycle {
             capture.frameSubscription = null
         }
 
-        const channels = ["ndi", "blackmagic", "server", "stage", "webrtc", "rtmp"]
+        const channels = ["ndi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp"]
         channels.forEach((channel) => CaptureHelper.Transmitter.stopChannel(id, channel))
 
         console.info("Capture - stopping: " + id)
 
-        this.cleanupListeners(capture.window)
+        OutputHelper.Lifecycle.releaseOsrCaptureTextures(id)
+        if (!(output as any).follower) this.cleanupListeners(capture.window)
         delete output.captureOptions
         this.updateWebRtcHostState()
         this.updateRtmpState()
@@ -298,7 +295,7 @@ export class CaptureLifecycle {
             if (o.captureOptions?.framerates) o.captureOptions.framerates.rtmp = fps
 
             // destination changes only touch relays; the encode keeps running
-            RtmpStreamer.update(o.id, { width: bounds.width, height: bounds.height, fps, bitrate, enableAudio: isAudioEnabled(), encoder: getRtmpEncoderSetting() }, destinations)
+            RtmpStreamer.update(o.id, { width: bounds.width, height: bounds.height, fps, bitrate, enableAudio: isAudioEnabled(), encoder: getRtmpEncoderSetting(o.id) }, destinations)
         })
     }
 }
