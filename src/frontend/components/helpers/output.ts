@@ -42,9 +42,9 @@ export function toggleOutputs(outputIds: string[] | null = null, options: { forc
     const currentOutputState = !!get(outputState).find((a) => a.id === outputIds[0])?.active
     const state = typeof options.state === "boolean" ? options.state : options.force || !(outputIds.length === 1 ? currentOutputState : get(outputDisplay))
 
-    const autoPosition = sortedOutputList.length === 1 && !sortedOutputList[0].forcedResolution?.width
+    const autoPosition = options.force ? false : sortedOutputList.length === 1 && !sortedOutputList[0].forcedResolution?.width
 
-    send(OUTPUT, ["TOGGLE_OUTPUTS"], { outputs: sortedOutputList, state, force: options.force, autoStartup: options.autoStartup, autoPosition })
+    send(OUTPUT, ["TOGGLE_OUTPUTS"], { outputs: sortedOutputList, state, autoStartup: options.autoStartup, autoPosition })
 }
 
 export function toggleOutput(id: string) {
