@@ -4,7 +4,6 @@
     import type { Verse } from "json-bible/lib/Bible"
     import type { VerseReference } from "json-bible/lib/reference"
     import { onMount } from "svelte"
-    import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
     import { activeEdit, activeScripture, activeTriggerFunction, customScriptureBooks, notFound, openScripture, outLocked, outputs, resized, scriptureHistory, scriptureMode, scriptures, scriptureSettings, selected } from "../../../stores"
     import { escapeRegExp, wait } from "../../../utils/common"
@@ -23,7 +22,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { createScriptureShow, formatBibleText, getShortBibleName, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
+    import { createScriptureShow, formatBibleText, getShortBibleName, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, sanitizeVerseText, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
 
     export let active: string | null
     export let searchValue: string

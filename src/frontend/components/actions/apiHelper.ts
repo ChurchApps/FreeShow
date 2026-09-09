@@ -7,11 +7,10 @@ import { isChannelRecording, startChannelRecording, stopAllChannelRecordings, st
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { defaultBibleBookNames } from "../../converters/bebliaBible"
 import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioPlaylists, audioRouting, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
-import { resolveScriptureReference } from "../drawer/bible/scripture"
+import { parseEngScriptureRefToNumbers, resolveScriptureReference } from "../drawer/bible/scripture"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { keysToID, removeDeleted, sortByName } from "../helpers/array"
 import { ondrop } from "../helpers/drop"
@@ -709,24 +708,6 @@ export async function startScripture(data: API_scripture) {
     activeDrawerTab.set("scripture")
 
     openScripture.set({ ...ref, play: true })
-}
-
-const bookNameToId: Record<string, number> = Object.fromEntries(Object.entries(defaultBibleBookNames).map(([id, name]: any) => [name.toLowerCase(), Number(id)]))
-function parseEngScriptureRefToNumbers(ref: string) {
-    const match = ref.trim().match(/^(.+?)\s+(\d+):([\d,-]+)$/)
-    if (!match) return null
-
-    const [, bookName, chapterStr, versesStr] = match
-    const book = bookNameToId[bookName.toLowerCase()]
-    if (!book) return null
-
-    const verses = versesStr.split(",").flatMap((part) => {
-        const [start, end] = part.split("-").map(Number)
-        if (!end) return [start]
-        return Array.from({ length: end - start + 1 }, (_, i) => start + i)
-    })
-
-    return { id: ref, book, chapter: Number(chapterStr), verses }
 }
 
 // MEDIA

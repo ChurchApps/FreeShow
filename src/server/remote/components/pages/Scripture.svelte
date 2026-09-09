@@ -1,16 +1,16 @@
 <script lang="ts">
-    import { tick, createEventDispatcher, onDestroy } from "svelte"
+    import { createEventDispatcher, onDestroy, tick } from "svelte"
     import Button from "../../../common/components/Button.svelte"
     import Center from "../../../common/components/Center.svelte"
     import Icon from "../../../common/components/Icon.svelte"
     import Loading from "../../../common/components/Loading.svelte"
     import { keysToID } from "../../../common/util/helpers"
+    import { sanitizeVerseText } from "../../../common/util/scripture"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { dictionary, isCleared, scriptureCache, scriptures, scriptureSearchResults, scriptureViewList, scriptureMultiSelect, selectedVerses, outSlide, outShow, openedScripture, collectionId, selectedTranslationIndex } from "../../util/stores"
+    import { collectionId, dictionary, isCleared, openedScripture, outShow, outSlide, scriptureCache, scriptureMultiSelect, scriptures, scriptureSearchResults, scriptureViewList, selectedTranslationIndex, selectedVerses } from "../../util/stores"
     import Clear from "../show/Clear.svelte"
     import ScriptureContent from "./ScriptureContent.svelte"
-    import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
     import ScriptureContentTablet from "./ScriptureContentTablet.svelte"
 
     export let tablet: boolean = false

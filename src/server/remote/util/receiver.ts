@@ -1,5 +1,5 @@
-import { sanitizeVerseText } from "../../../common/scripture/sanitizeVerseText"
 import type { Item, Show } from "../../../types/Show"
+import { sanitizeVerseText } from "../../common/util/scripture"
 import { setError, translate } from "./helpers"
 import { send } from "./socket"
 import { _, _get, _set, _update, activeTimers, currentScriptureState, overlays, runningActions, scriptureCache, scriptures, timers } from "./stores"

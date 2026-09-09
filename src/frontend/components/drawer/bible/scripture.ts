@@ -4,11 +4,11 @@ import type { CustomBibleListContent } from "json-bible/lib/api/ApiBible"
 import { stripMarkdown } from "json-bible/lib/markdown"
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
 import { Main } from "../../../../types/IPC/Main"
 import type { BibleContent } from "../../../../types/Scripture"
 import type { Item, Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
+import { defaultBibleBookNames } from "../../../converters/bebliaBible"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain, sendMain } from "../../../IPC/main"
 import { findBestBreak, splitTextContentInHalf } from "../../../show/slides"
@@ -1756,6 +1756,19 @@ export function formatBibleText(text: string | undefined, redJesus = false) {
     return text.replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", "&")
 }
 
+export function sanitizeVerseText(input: unknown): string {
+    if (input === null || input === undefined) return ""
+
+    const text = typeof input === "string" ? input : String(input)
+    const withoutBreaks = text.replace(/<\s*br\s*\/?>/gi, " ")
+    const normalizedSpaces = withoutBreaks.replace(/\u00a0/g, " ")
+    const withQuotes = normalizedSpaces.replace(/<q>(.*?)<\/q>/g, "“$1”")
+    const replacedUndertitles = withQuotes.replace(/<h4[^>]*>(.*?)<\/h4>\s*/g, '<span class="undertitle">$1 </span>')
+    const withoutMultipleSpaces = replacedUndertitles.replace(/ {2,}/g, " ")
+
+    return withoutMultipleSpaces.trim()
+}
+
 // CREATE SHOW/SLIDES
 
 function getVerseSeparator(verse: { verseId: string }, nextVerse: { verseId: string }, versesOnIndividualLines: boolean) {
@@ -2228,6 +2241,24 @@ export async function resolveScriptureReference(referenceText: string, scripture
         console.error("Error resolving scripture reference:", err)
         return null
     }
+}
+
+const bookNameToId: Record<string, number> = Object.fromEntries(Object.entries(defaultBibleBookNames).map(([id, name]: any) => [name.toLowerCase(), Number(id)]))
+export function parseEngScriptureRefToNumbers(ref: string) {
+    const match = ref.trim().match(/^(.+?)\s+(\d+):([\d,-]+)$/)
+    if (!match) return null
+
+    const [, bookName, chapterStr, versesStr] = match
+    const book = bookNameToId[bookName.toLowerCase()]
+    if (!book) return null
+
+    const verses = versesStr.split(",").flatMap((part) => {
+        const [start, end] = part.split("-").map(Number)
+        if (!end) return [start]
+        return Array.from({ length: end - start + 1 }, (_, i) => start + i)
+    })
+
+    return { id: ref, book, chapter: Number(chapterStr), verses }
 }
 
 export async function generateScriptureShowFromReference(referenceText: string) {
