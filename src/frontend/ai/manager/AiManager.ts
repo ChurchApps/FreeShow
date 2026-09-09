@@ -17,6 +17,8 @@ export class AiManager {
     private static latestSearchId: number = 0
 
     static async processSTTChunk(chunk: { chunkWithOverlap: string; newWordsCount: number; confidence?: number }) {
+        this.triggerBackgroundPreload()
+
         const searchId = ++this.latestSearchId
         const isCancelled = () => searchId !== this.latestSearchId
 
@@ -49,6 +51,22 @@ export class AiManager {
         return null
     }
 
+    private static isPreloadStarted: boolean = false
+    private static triggerBackgroundPreload() {
+        if (this.isPreloadStarted) return
+        this.isPreloadStarted = true
+
+        // load scriptures
+        const localScriptureIds = this.getLocalScriptureIds()
+        BibleCacheManager.preloadAllInBackground(localScriptureIds)
+    }
+
+    private static getLocalScriptureIds() {
+        return keysToID(get(scriptures))
+            .filter((a) => !a.api && !a.collection)
+            .map((a) => a.id)
+    }
+
     private static scriptureAlerted: boolean = false
     private static async globalBibleDetection(textChunk: string, isCancelled?: () => boolean) {
         const activeBibleId = get(drawerTabsData)?.scripture?.activeSubTab
@@ -69,15 +87,19 @@ export class AiManager {
 
         let highestConfidence = match.confidence || 0
 
-        // check other local scriptures
-        const allLocalScriptures = keysToID(get(scriptures)).filter((data) => !data.api && data.id !== activeBibleId)
-        allLocalScriptures.forEach(async ({ id }) => {
-            const otherMatch = await this.bibleDetection(id, textChunk, isCancelled)
-            if (otherMatch?.confidence && otherMatch.confidence > highestConfidence) {
-                highestConfidence = otherMatch.confidence
-                this.newMatch({ ...otherMatch, scriptureIsNewTranslation: true })
-            }
-        })
+        // Non-blocking concurrent scan
+        Promise.all(
+            this.getLocalScriptureIds().map(async (id) => {
+                // already checked
+                if (id === activeBibleId) return
+
+                const otherMatch = await this.bibleDetection(id, textChunk, isCancelled)
+                if (otherMatch?.confidence && otherMatch.confidence > highestConfidence) {
+                    highestConfidence = otherMatch.confidence
+                    this.newMatch({ ...otherMatch, scriptureIsNewTranslation: true })
+                }
+            })
+        )
 
         return match
     }
@@ -98,7 +120,6 @@ export class AiManager {
     static newMatch(match: MatchResult) {
         if (match.type === "empty" || !match.content) return
         if (AiManager.liveContent === match.content) return
-
         if (match.type !== "scripture") return // WIP only scripture is implemented
 
         let suggestionDraft: any = {
@@ -166,8 +187,6 @@ export class AiManager {
 
     static liveContent: string = ""
     private static triggerMatchAction(match: MatchResult) {
-        console.log("[AiManager] Triggering match action for:", match)
-
         if (match.type === "scripture") {
             startScripture({ reference: match.content })
         }

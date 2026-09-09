@@ -22,20 +22,72 @@ export interface BibleCacheData {
 
 export class BibleCacheManager {
     private static caches: Map<string, BibleSearchDetector> = new Map()
+    private static rawCaches: Map<string, BibleCacheData> = new Map()
+    private static cachePromises: Map<string, Promise<BibleSearchDetector | null>> = new Map()
 
     public static async getCache(bibleId: string): Promise<BibleSearchDetector | null> {
         if (this.caches.has(bibleId)) return this.caches.get(bibleId)!
+        if (this.cachePromises.has(bibleId)) return await this.cachePromises.get(bibleId)!
 
-        const scriptureData = get(scriptures)[bibleId]
-        if (!scriptureData || scriptureData?.api) return null
+        const promise = (async () => {
+            const scriptureData = get(scriptures)[bibleId]
+            if (!scriptureData || scriptureData?.api) return null
 
-        const bible = (await loadJsonBible(bibleId))?.data
-        if (!bible) return null
+            const bible = (await loadJsonBible(bibleId))?.data
+            if (!bible) return null
 
-        const cacheData = this.buildCache(bible)
-        const searchCache = new BibleSearchDetector(cacheData)
-        this.caches.set(bibleId, searchCache)
-        return searchCache
+            const cacheData = await this.buildCacheAsync(bible)
+            const searchCache = new BibleSearchDetector(cacheData)
+
+            this.rawCaches.set(bibleId, cacheData)
+            this.caches.set(bibleId, searchCache)
+            return searchCache
+        })()
+
+        this.cachePromises.set(bibleId, promise)
+        return await promise
+    }
+
+    /**
+     * Preloads all local Bibles sequentially in the background without blocking frames.
+     */
+    public static preloadAllInBackground(bibleIds: string[]) {
+        let index = 0
+        const loadNext = () => {
+            if (index >= bibleIds.length) return
+            const id = bibleIds[index++]
+            if (!this.caches.has(id) && !this.cachePromises.has(id)) {
+                this.getCache(id).then(() => {
+                    if ("requestIdleCallback" in window) {
+                        window.requestIdleCallback(loadNext)
+                    } else {
+                        setTimeout(loadNext, 50)
+                    }
+                })
+            } else {
+                loadNext()
+            }
+        }
+
+        if ("requestIdleCallback" in window) {
+            window.requestIdleCallback(loadNext)
+        } else {
+            setTimeout(loadNext, 100)
+        }
+    }
+
+    /**
+     * Instant lookup: Converts a canonical reference or verse ID from one translation directly into another.
+     */
+    public static getReferenceInTranslation(targetBibleId: string, verseRef: string): string | null {
+        const cache = this.rawCaches.get(targetBibleId)
+        if (!cache) return null
+
+        const verseId = cache.verseToIdMap.get(verseRef.toLowerCase())
+        if (verseId !== undefined && cache.versePool[verseId]) {
+            return cache.versePool[verseId]
+        }
+        return null
     }
 
     private static tokenizeText(text: string): string[] {
@@ -47,7 +99,10 @@ export class BibleCacheManager {
             .filter((w) => w.length > 1)
     }
 
-    private static buildCache(bible: Bible): BibleCacheData {
+    /**
+     * Non-blocking cache construction using yield-to-main-thread scheduling.
+     */
+    private static async buildCacheAsync(bible: Bible): Promise<BibleCacheData> {
         const versePool: string[] = []
         const verseToIdMap: Map<string, number> = new Map()
         const referenceIndex: Map<string, { bookName: string; chapterNumber: number; startVerseId: number; verseCount: number }> = new Map()
@@ -59,7 +114,16 @@ export class BibleCacheManager {
         const tempPostingsMap: Map<number, number[]> = new Map()
         const tempVerseTokensMap: number[][] = []
 
-        // Pass 1: Build verse pool and reference indices
+        let lastYield = performance.now()
+        const maybeYield = async () => {
+            if (performance.now() - lastYield > 8) {
+                // Yield frame if execution takes >8ms
+                await new Promise((resolve) => setTimeout(resolve, 0))
+                lastYield = performance.now()
+            }
+        }
+
+        // Pass 1: Build verse pool and reference indices asynchronously
         for (const book of bible.books) {
             bookNames.push(book.name)
             for (const chapter of book.chapters) {
@@ -109,9 +173,10 @@ export class BibleCacheManager {
                     verseCount: chapterVerseCount
                 })
             }
+            await maybeYield()
         }
 
-        // Pass 2: Pack vocabulary IDFs & word postings into Uint32Array / Float32Array
+        // Pass 2: Pack vocabulary IDFs & word postings into typed arrays
         const vocabSize = vocabPool.length
         const wordIdf = new Float32Array(vocabSize)
         const wordPostingsOffsets = new Uint32Array(vocabSize + 1)
@@ -136,7 +201,9 @@ export class BibleCacheManager {
             }
         }
 
-        // Pass 3: Pack verse tokens into Uint32Array offsets
+        await maybeYield()
+
+        // Pass 3: Pack verse tokens
         const verseTokensOffsets = new Uint32Array(totalVerses + 1)
         let totalVerseTokensCount = 0
 
