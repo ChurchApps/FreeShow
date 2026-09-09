@@ -220,7 +220,7 @@ export class AiManager {
     }
 
     private static SUGGESTION_MAX_AGE = 5 * 60 * 1000 // 5 minutes
-    private static SUGGESTION_LIMIT = 5
+    private static SUGGESTION_LIMIT = 15
     private static addSuggestion(content: AiSuggestion) {
         this.setSmartAction(content)
 

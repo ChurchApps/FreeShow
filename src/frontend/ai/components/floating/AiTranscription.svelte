@@ -172,7 +172,7 @@
         display: flex;
         flex-direction: column;
         gap: 6px;
-        max-height: 200px;
+        max-height: 180px;
         overflow-y: auto;
         flex-shrink: 0;
 
