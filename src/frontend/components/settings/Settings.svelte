@@ -42,7 +42,7 @@
         ai: "ai.hint<br><br>ai.privacy_details"
     }
 
-    let showMore = false
+    let showGlobalOutputOptions = false
 </script>
 
 <main>
@@ -63,8 +63,8 @@
             {:else if tabId === "theme"}
                 <ThemeButtons />
             {:else if tabId === "display_settings"}
-                <MaterialButton title="create_show.more_options" on:click={() => (showMore = !showMore)}>
-                    <Icon id="options" white={!showMore} />
+                <MaterialButton title="create_show.more_options" on:click={() => (showGlobalOutputOptions = !showGlobalOutputOptions)}>
+                    <Icon id="options" white={!showGlobalOutputOptions} />
                 </MaterialButton>
             {/if}
         </div>
@@ -74,7 +74,7 @@
         {#if tabId === "general"}
             <General />
         {:else if tabId === "display_settings"}
-            {#if showMore}
+            {#if showGlobalOutputOptions}
                 <OutputsGeneral />
             {:else}
                 <Outputs />
@@ -98,23 +98,23 @@
         {/if}
     </div>
 
-    {#if !showMore}
-        <div class="tabs">
-            {#if tabId === "display_settings"}
+    <div class="tabs">
+        {#if tabId === "display_settings"}
+            {#if !showGlobalOutputOptions}
                 <OutputsTabs />
-            {:else if tabId === "styles"}
-                <StylesTabs />
-            {:else if tabId === "files"}
-                <FilesButtons />
-            {:else if tabId === "profiles"}
-                <ProfilesTabs />
-            {:else if tabId === "theme"}
-                <ThemeTabs />
-            {:else if tabId === "other"}
-                <OtherButtons />
             {/if}
-        </div>
-    {/if}
+        {:else if tabId === "styles"}
+            <StylesTabs />
+        {:else if tabId === "files"}
+            <FilesButtons />
+        {:else if tabId === "profiles"}
+            <ProfilesTabs />
+        {:else if tabId === "theme"}
+            <ThemeTabs />
+        {:else if tabId === "other"}
+            <OtherButtons />
+        {/if}
+    </div>
 </main>
 
 <style>
