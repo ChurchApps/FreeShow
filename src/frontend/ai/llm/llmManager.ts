@@ -54,6 +54,7 @@ export class LLMManager {
     }
 
     private MIN_NEW_WORDS: number = 15
+    private accumulatedNewWords: number = 0
     private isRequesting: boolean = false
     private retryTimeout: any = null
 
@@ -102,9 +103,14 @@ export class LLMManager {
 
     // --- STT Match Detection ---
 
+    private requestInProgress: boolean = false
     async detectMatch(chunk: { chunkWithOverlap: string; newWordsCount: number }) {
         const { chunkWithOverlap, newWordsCount } = chunk
-        if (!chunkWithOverlap || newWordsCount < this.MIN_NEW_WORDS) return null
+        if (!chunkWithOverlap) return null
+
+        this.accumulatedNewWords += newWordsCount
+        if (this.requestInProgress) return null
+        if (this.accumulatedNewWords < this.MIN_NEW_WORDS) return null
 
         const options: LLMRequestOptions = {
             systemPrompt: STT_CONTROLLER_PROMPT,
@@ -112,7 +118,12 @@ export class LLMManager {
             prompt: chunkWithOverlap
         }
 
+        this.accumulatedNewWords = 0
+        this.requestInProgress = true
+
         const result = await this.request<MatchResult | null>(options)
+
+        this.requestInProgress = false
 
         if (!result?.content) return null
         return result

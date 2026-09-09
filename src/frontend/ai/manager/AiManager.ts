@@ -43,8 +43,6 @@ export class AiManager {
 
         // only report to LLM if nothing is auto detected
         const llmMatch = await llmManager.detectMatch(chunk)
-        if (isCancelled()) return
-
         if (llmMatch) {
             this.newMatch(cap(llmMatch))
             this.lastMatch = Date.now()
@@ -71,6 +69,8 @@ export class AiManager {
     static newMatch(match: MatchResult) {
         if (match.type === "empty" || !match.content) return
         if (AiManager.liveContent === match.content) return
+
+        if (match.type !== "scripture") return // WIP only scripture is implemented
 
         let suggestionDraft: any = {
             id: uid(5),
@@ -135,6 +135,8 @@ export class AiManager {
 
     static liveContent: string = ""
     private static triggerMatchAction(match: MatchResult) {
+        console.log("[AiManager] Triggering match action for:", match)
+
         if (match.type === "scripture") {
             startScripture({ reference: match.content })
         }
