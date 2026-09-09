@@ -18,6 +18,7 @@ files:
     - "!**/node_modules/**/*.{pdb,iobj,ipdb,obj,lib,exp,a,o,c,cc,cpp,h,hpp,gyp*,vcxproj*,filters,sln}"
     - "!**/node_modules/**/prebuild/node-v*"
     - "!**/node_modules/grandiose/ndi/**"
+    - "!**/node_modules/osr-capture/**/on12_harness.exe"
 
 extraResources:
     - from: node_modules/slideshow/
@@ -30,6 +31,8 @@ extraResources:
 win:
     target: NSIS
     icon: build/public/icon.png
+    files:
+        - "!**/node_modules/openmediatransport/lib/{macos,linux-*,win-arm64}/**"
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libspotifyctl/**/*"
@@ -44,6 +47,8 @@ win:
 # linux
 
 linux:
+    files:
+        - "!**/node_modules/openmediatransport/lib/{macos,win-*}/**"
     asarUnpack:
         - "**/node_modules/grandiose/**"
         - "**/node_modules/openmediatransport/**"
@@ -69,6 +74,8 @@ deb:
 
 mac:
     icon: build/public/icon.png
+    files:
+        - "!**/node_modules/openmediatransport/lib/{linux-*,win-*}/**"
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/openmediatransport/**"
