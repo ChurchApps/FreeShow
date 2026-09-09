@@ -3,7 +3,7 @@
     import { fade } from "svelte/transition"
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
     import Tabs from "../../../components/main/Tabs.svelte"
-    import { activePage, ai, aiSmartAction, aiSttStatus, language, settingsTab, sttTranscript } from "../../../stores"
+    import { activePage, ai, aiSmartAction, aiSttStatus, language, mediaDownloads, settingsTab, sttTranscript } from "../../../stores"
     import { audioLevelStore, resolveSttEngine, SpeechToText } from "../../stt/stt"
     import { Transcript } from "../../stt/transcript"
     import AiChat from "./AiChat.svelte"
@@ -29,6 +29,14 @@
         setTimeout(() => (isOpen = !isOpen))
 
         enableListening()
+    }
+
+    // try to enable every time a download finishes
+    let downloadingCount = 0
+    $: currentlyDownloading = $mediaDownloads
+    $: if (state !== "listening" && currentlyDownloading) {
+        if (currentlyDownloading.size < downloadingCount) enableListening()
+        downloadingCount = currentlyDownloading.size
     }
 
     // each newly registered word bumps a border confirmation pulse on the floating bubble

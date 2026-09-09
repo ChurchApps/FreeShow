@@ -5,7 +5,8 @@
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import Title from "../../../components/input/Title.svelte"
     import MaterialDropdown from "../../../components/inputs/MaterialDropdown.svelte"
-    import { ai } from "../../../stores"
+    import Tip from "../../../components/main/Tip.svelte"
+    import { ai, mediaDownloads } from "../../../stores"
     import { resolveSttEngine, SpeechToText } from "../../stt/stt"
 
     $: options = $ai.stt || {}
@@ -28,6 +29,14 @@
         status = result?.[selectedEngine] || null
 
         if (status?.ready) getMicrophones()
+    }
+
+    // update status every time a download finishes
+    let downloadingCount = 0
+    $: currentlyDownloading = $mediaDownloads
+    $: if (!status?.ready && currentlyDownloading) {
+        if (currentlyDownloading.size < downloadingCount) getStatus()
+        downloadingCount = currentlyDownloading.size
     }
 
     // MICS
@@ -70,4 +79,6 @@
 
 {#if status?.ready}
     <MaterialDropdown label="midi.input" options={microphones} value={options.micDeviceId || ""} on:change={(e) => updateValue("micDeviceId", e.detail)} />
+{:else}
+    <Tip type="warning" value={status?.error || "No model available."} />
 {/if}

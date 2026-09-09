@@ -5,7 +5,7 @@
     import T from "../../../components/helpers/T.svelte"
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
     import Loader from "../../../components/main/Loader.svelte"
-    import { requestMain, sendMain } from "../../../IPC/main"
+    import { requestMain } from "../../../IPC/main"
     import { mediaDownloads } from "../../../stores"
     import { newToast } from "../../../utils/common"
 
@@ -48,10 +48,10 @@
         getStatus()
     }
 
-    function cancelDownload() {
-        sendMain(Main.AI_SETUP, { action: "cancel", engineId: "nemotron" })
-        modelDownloadStarted = false
-    }
+    // function cancelDownload() {
+    //     sendMain(Main.AI_SETUP, { action: "cancel", engineId: "nemotron" })
+    //     modelDownloadStarted = false
+    // }
 
     // function deleteModel() {
     //     sendMain(Main.AI_SETUP, { action: "delete", engineId: "nemotron" })
@@ -64,13 +64,11 @@
         <Loader />
     </div>
 {:else if !status.ready}
-    <div style="display: flex;gap: 5px;">
-        <MaterialButton variant="outlined" icon="download" disabled={isModelDownloading} style="flex: 1;" on:click={downloadModel}>
-            <T id="cloud.replace" />{getPercent(modelDownload)}
-        </MaterialButton>
+    <MaterialButton variant="outlined" icon="download" disabled={isModelDownloading} style="flex: 1;" on:click={downloadModel}>
+        <T id="cloud.replace" />{getPercent(modelDownload)}
+    </MaterialButton>
 
-        {#if isModelDownloading}
+    <!-- {#if isModelDownloading}
             <MaterialButton variant="outlined" icon="close" title="actions.cancel" on:click={cancelDownload} />
-        {/if}
-    </div>
+        {/if} -->
 {/if}
