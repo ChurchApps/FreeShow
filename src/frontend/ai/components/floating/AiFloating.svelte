@@ -101,8 +101,10 @@
         return explicit || resolveSttEngine()
     }
 
+    let sessionToken = 0
     $: syncSession(isEnabled, micDeviceId, engineId)
     async function syncSession(enabled: boolean | undefined, mic: string | undefined, engine: string) {
+        const currentLock = ++sessionToken
         const mode = enabled && mic ? "stt" : "off"
         const micChanged = (mic || "") !== lastMic
         const engineChanged = engine !== lastEngine
@@ -110,11 +112,14 @@
         if (mode === sessionMode) {
             if (mode === "off" || (!micChanged && !engineChanged)) return
 
-            // switching the input or the engine mid-session only swaps that piece
             lastMic = mic || ""
             lastEngine = engine
             const capture = micChanged ? await SpeechToText.restartCapture() : { ok: true }
+            if (currentLock !== sessionToken) return
+
             const engineResult = engineChanged ? await SpeechToText.restartEngine() : { ok: true }
+            if (currentLock !== sessionToken) return
+
             if (sessionMode === mode && (!capture.ok || !engineResult.ok)) state = "error"
             return
         }
@@ -128,7 +133,7 @@
 
         if (mode === "stt") {
             const result = await SpeechToText.enable()
-            if (sessionMode !== "stt") return
+            if (currentLock !== sessionToken || sessionMode !== "stt") return
             state = result.ok ? "listening" : "error"
         } else {
             state = "inactive"

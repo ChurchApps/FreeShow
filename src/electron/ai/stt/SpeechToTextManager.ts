@@ -16,7 +16,7 @@ export class SpeechToText {
     private static segmentListeners = new Set<SegmentListener>()
 
     static async listen(engine: string, options: SttEngineOptions): Promise<{ started: boolean; error?: string }> {
-        this.stopInternal(false)
+        await this.stopInternal(false)
         const token = ++this.sessionToken
 
         const created = await this.createEngine(engine, options)
@@ -24,7 +24,7 @@ export class SpeechToText {
 
         if (token !== this.sessionToken) {
             created.transcriber.stop()
-            return { started: false, error: "Error: superseded" }
+            return { started: false }
         }
 
         this.transcriberEngine = created.transcriber
@@ -37,7 +37,7 @@ export class SpeechToText {
             return { started: false, error: sanitizeError(String((err as Error)?.message || err)) }
         }
 
-        if (token !== this.sessionToken) return { started: false, error: "Error: superseded" }
+        if (token !== this.sessionToken) return { started: false }
 
         sendToMain(ToMain.AI_STATUS, { state: "listening" })
         return { started: true }
@@ -47,13 +47,18 @@ export class SpeechToText {
         this.stopInternal(true)
     }
 
-    private static stopInternal(emitStatus: boolean) {
+    private static async stopInternal(emitStatus: boolean) {
         this.sessionToken++
         const active = this.transcriberEngine
         this.transcriberEngine = null
         if (!active) return
 
-        Promise.resolve(active.stop()).catch((err) => console.error("Error stopping STT engine:", err))
+        try {
+            await active.stop()
+        } catch (err) {
+            console.error("Error stopping STT engine:", err)
+        }
+
         sendToMain(ToMain.AI_TRANSCRIPT, { text: "", interim: true })
         if (emitStatus) sendToMain(ToMain.AI_STATUS, { state: "stopped" })
     }

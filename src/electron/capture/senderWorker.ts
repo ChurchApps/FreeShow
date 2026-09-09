@@ -248,7 +248,7 @@ async function sendVideoBuffer(id: string, buffer: Buffer, opts: VideoFrameOpts)
     senderData.pendingReal = true
     senderData.pendingVideoFrame = ADAPTER.videoFrame(lib, prepared.data, { ...opts, format: prepared.format })
 
-    void sendQueuedVideoFrame(id)
+    sendQueuedVideoFrame(id)
 }
 
 const readbackSlots: { [id: string]: { free: number[]; next: number } } = {}
@@ -308,13 +308,13 @@ function paceTick(id: string) {
     }
     const entry = s.paceQueue?.shift()
     if (entry) {
-        void paceSend(id, entry, true)
+        paceSend(id, entry, true)
         return
     }
     if (s.lastPace) {
         s.paceMisses = (s.paceMisses || 0) + 1
         s.lastPace.pbuf.refs++
-        void paceSend(id, s.lastPace, false)
+        paceSend(id, s.lastPace, false)
     }
 }
 
@@ -500,7 +500,7 @@ async function sendQueuedAudioFrame(id: string) {
     } finally {
         senderData.sendingAudio = false
         if (SENDERS[id]?.sender && senderData.audioQueue && senderData.audioQueue.length > 0) {
-            void sendQueuedAudioFrame(id)
+            sendQueuedAudioFrame(id)
         }
     }
 }
@@ -525,7 +525,7 @@ async function sendAudioBufferTarget(id: string, buffer: Buffer, { sampleRate, c
 
     if (!senderData.audioQueue) senderData.audioQueue = []
     senderData.audioQueue.push(frame)
-    void sendQueuedAudioFrame(id)
+    sendQueuedAudioFrame(id)
 }
 
 /** the same audio to every sender */
@@ -541,7 +541,7 @@ async function sendAudioBuffer(buffer: Buffer, { sampleRate, channelCount }: { s
 
         if (!senderData.audioQueue) senderData.audioQueue = []
         senderData.audioQueue.push({ ...frame })
-        void sendQueuedAudioFrame(id)
+        sendQueuedAudioFrame(id)
     })
 }
 
@@ -591,22 +591,22 @@ export function runSenderWorker(adapter: SenderAdapter) {
     port.on("message", (msg: any) => {
         switch (msg?.type) {
             case "create":
-                void createSender(msg.id, msg)
+                createSender(msg.id, msg)
                 break
             case "destroy":
                 stopSender(msg.id)
                 break
             case "video":
-                void sendVideoBuffer(msg.id, Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.opts)
+                sendVideoBuffer(msg.id, Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.opts)
                 break
             case "captureFrame":
-                void captureAndSend(msg.id, msg.source, msg.opts)
+                captureAndSend(msg.id, msg.source, msg.opts)
                 break
             case "audio":
-                void sendAudioBuffer(Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.opts)
+                sendAudioBuffer(Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.opts)
                 break
             case "audioTarget":
-                void sendAudioBufferTarget(msg.id, Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.opts)
+                sendAudioBufferTarget(msg.id, Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.opts)
                 break
         }
     })

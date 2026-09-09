@@ -38,5 +38,5 @@ export function setDataOMT(data: { id: string; framerate?: number | string; name
     const quality = data.quality ?? current.quality
     if (name === current.name && String(quality ?? "") === String(current.quality ?? "")) return
 
-    void OmtSender.createSenderOMT(data.id, name, quality)
+    OmtSender.createSenderOMT(data.id, name, quality)
 }

@@ -20,45 +20,69 @@ export class SpeechToText {
     private static animFrameId: number | null = null
     private static listeners = new Set<AudioLevelCallback>()
 
+    private static sessionToken = 0
+
     static async enable() {
-        const captured = await this.restartCapture()
+        const operationId = ++this.sessionToken
+
+        const captured = await this.restartCapture(operationId)
+        if (operationId !== this.sessionToken) return { ok: false }
         if (!captured.ok) return captured
 
-        const started = await this.restartEngine()
+        const started = await this.restartEngine(operationId)
+        if (operationId !== this.sessionToken) {
+            this.stopCapture()
+            return { ok: false }
+        }
+
         if (!started.ok) this.stopCapture()
         return started
     }
 
-    static async restartEngine() {
+    static async restartEngine(operationId?: number) {
         const engine = resolveSttEngine()
         const engineOptions = get(ai)?.stt?.engineOptions?.[engine] || {}
 
         const result = await requestMain(Main.AI_LISTEN_START, { engine, engineOptions }, undefined, 60000)
+
+        if (operationId && operationId !== this.sessionToken) return { ok: false }
         if (!result?.started) return { ok: false, error: result?.error }
 
         return { ok: true }
     }
 
-    static async restartCapture() {
+    static async restartCapture(operationId?: number) {
         this.stopCapture()
 
         const savedDeviceId = get(ai).stt?.micDeviceId || ""
         const deviceId = await this.resolveMicDeviceId(savedDeviceId)
+
+        if (operationId && operationId !== this.sessionToken) return { ok: false }
 
         if (deviceId && deviceId !== savedDeviceId) {
             ai.update((a) => ({ ...a, stt: { ...a.stt, micDeviceId: deviceId } }))
         }
 
         const stream = await this.getMicStream(deviceId)
-        if (!stream) return { ok: false, error: "microphone_access" }
+        if (operationId && operationId !== this.sessionToken) {
+            stream?.getTracks().forEach((track) => track.stop())
+            return { ok: false }
+        }
+
+        if (!stream) return { ok: false, error: "No microphone access" }
 
         this.stream = stream
-        this.captureAudioContext(stream)
+        const ac = await this.captureAudioContext(stream, operationId)
+
+        if (operationId && operationId !== this.sessionToken) return { ok: false }
+
+        if (!ac) return { ok: false, error: "Could not create audio context" }
 
         return { ok: true }
     }
 
     static disable() {
+        this.sessionToken++
         sendMain(Main.AI_LISTEN_STOP)
         this.stopCapture()
     }
@@ -81,7 +105,7 @@ export class SpeechToText {
         }
     }
 
-    static async getMicStream(deviceId = ""): Promise<MediaStream | null> {
+    static async getMicStream(deviceId = "", retries = 3, delayMs = 150): Promise<MediaStream | null> {
         const audioConstraints: MediaTrackConstraints = {
             deviceId: deviceId ? { exact: deviceId } : undefined,
             echoCancellation: false,
@@ -90,26 +114,36 @@ export class SpeechToText {
             channelCount: 1
         }
 
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints })
-            console.info("[AI STT] mic settings:", stream.getAudioTracks()[0]?.getSettings())
-            return stream
-        } catch (err) {
-            if (err?.name === "NotReadableError") {
-                sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
+        for (let attempt = 0; attempt < retries; attempt++) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints })
+                return stream
+            } catch (err: any) {
+                // Hardware lock during fast reset: pause and try again
+                if (err?.name === "NotReadableError" && attempt < retries - 1) {
+                    console.warn(`[AI STT] Mic hardware busy, retrying (${attempt + 1}/${retries})...`)
+                    await new Promise((resolve) => setTimeout(resolve, delayMs))
+                    continue
+                }
+
+                if (err?.name === "NotReadableError") {
+                    sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
+                    return null
+                }
+
+                if (err?.name === "OverconstrainedError" && deviceId) {
+                    return this.getMicStream("", retries, delayMs)
+                }
+
+                console.error("Error accessing microphone:", err)
                 return null
             }
-
-            if (err?.name === "OverconstrainedError" && deviceId) {
-                return this.getMicStream("")
-            }
-
-            console.error("Error accessing microphone:", err)
-            return null
         }
+
+        return null
     }
 
-    static async captureAudioContext(stream: MediaStream): Promise<AudioContext | null> {
+    static async captureAudioContext(stream: MediaStream, operationId?: number): Promise<AudioContext | null> {
         try {
             const ac = new AudioContext({ sampleRate: 16000 })
             this.ac = ac
@@ -125,7 +159,8 @@ export class SpeechToText {
             this.startLevelMonitoring(ac, analyserNode)
 
             await ac.audioWorklet.addModule("./assets/stt-processor.js")
-            if (this.ac !== ac || ac.state === "closed") {
+
+            if ((operationId && operationId !== this.sessionToken) || this.ac !== ac || ac.state === "closed") {
                 ac.close().catch(() => {})
                 return null
             }
@@ -214,13 +249,20 @@ export class SpeechToText {
         })
         this.sourceNode = this.captureNode = this.analyserNode = null
 
-        this.stream?.getTracks().forEach((track) => track.stop())
-        this.stream = null
-
-        if (this.ac && this.ac.state !== "closed") {
-            this.ac.close().catch(() => {})
+        if (this.stream) {
+            this.stream.getTracks().forEach((track) => {
+                track.enabled = false
+                track.stop()
+            })
+            this.stream = null
         }
-        this.ac = null
+
+        if (this.ac) {
+            if (this.ac.state !== "closed") {
+                this.ac.close().catch(() => {})
+            }
+            this.ac = null
+        }
 
         this.emitAudioLevel(0.0)
     }

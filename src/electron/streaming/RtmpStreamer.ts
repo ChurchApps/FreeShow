@@ -128,14 +128,14 @@ export class RtmpStreamer {
 
         const streamer = this.streamers.get(outputId)
         if (!streamer) {
-            void this.start(outputId, config, destinations)
+            this.start(outputId, config, destinations)
             return
         }
 
         if (configRequiresRestart(streamer.config, config)) {
             console.log(`[RtmpStreamer] Encode settings changed for ${outputId}, restarting`)
             this.stop(outputId)
-            void this.start(outputId, config, destinations)
+            this.start(outputId, config, destinations)
             return
         }
 
