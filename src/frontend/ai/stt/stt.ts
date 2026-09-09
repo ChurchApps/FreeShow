@@ -2,7 +2,6 @@ import { get, writable } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
 import { requestMain, sendMain } from "../../IPC/main"
 import { ai } from "../../stores"
-import audioProcessor from "./audioProcessor.ts?worker&url"
 
 export const audioLevelStore = writable<number>(0.0)
 
@@ -19,9 +18,9 @@ export class SpeechToText {
     private static captureNode: AudioWorkletNode | null = null
     private static analyserNode: AnalyserNode | null = null
     private static animFrameId: number | null = null
-    private static listeners: Set<AudioLevelCallback> = new Set()
+    private static listeners = new Set<AudioLevelCallback>()
 
-    static async enable(): Promise<{ ok: boolean; error?: string }> {
+    static async enable() {
         const captured = await this.restartCapture()
         if (!captured.ok) return captured
 
@@ -30,30 +29,24 @@ export class SpeechToText {
         return started
     }
 
-    static async restartEngine(): Promise<{ ok: boolean; error?: string }> {
+    static async restartEngine() {
         const engine = resolveSttEngine()
         const engineOptions = get(ai)?.stt?.engineOptions?.[engine] || {}
 
         const result = await requestMain(Main.AI_LISTEN_START, { engine, engineOptions }, undefined, 60000)
-        if (!result?.started) return { ok: false, error: result?.error || "start_failed" }
+        if (!result?.started) return { ok: false, error: result?.error }
 
         return { ok: true }
     }
 
-    // (re)start only the microphone capture - switching the input mid-session goes through here,
-    // so the engine in the electron process keeps running and just sees a short gap in audio
-    static async restartCapture(): Promise<{ ok: boolean; error?: string }> {
+    static async restartCapture() {
         this.stopCapture()
 
         const savedDeviceId = get(ai).stt?.micDeviceId || ""
         const deviceId = await this.resolveMicDeviceId(savedDeviceId)
+
         if (deviceId && deviceId !== savedDeviceId) {
-            // persist the auto-selected device so the settings dropdown shows what is actually capturing
-            ai.update((a) => {
-                if (!a.stt) a.stt = {}
-                a.stt.micDeviceId = deviceId
-                return a
-            })
+            ai.update((a) => ({ ...a, stt: { ...a.stt, micDeviceId: deviceId } }))
         }
 
         const stream = await this.getMicStream(deviceId)
@@ -70,19 +63,16 @@ export class SpeechToText {
         this.stopCapture()
     }
 
-    // prefer the saved device, else the SYSTEM default input, else the first available input -
-    // simply taking the first enumerated device can land on e.g. a continuity iPhone microphone
     static async resolveMicDeviceId(saved: string): Promise<string> {
         try {
-            const devices = (await navigator.mediaDevices.enumerateDevices()).filter((device) => device.kind === "audioinput")
-            const inputs = devices.filter((device) => device.deviceId !== "default")
-            if (!inputs.length) return saved
-            if (saved && inputs.some((device) => device.deviceId === saved)) return saved
+            const devices = await navigator.mediaDevices.enumerateDevices()
+            const inputs = devices.filter((d) => d.kind === "audioinput" && d.deviceId !== "default")
 
-            // the "default" virtual device mirrors the system default input - resolve the concrete
-            // device behind it (same groupId), so the settings dropdown shows the real device
-            const virtualDefault = devices.find((device) => device.deviceId === "default")
-            const systemDefault = virtualDefault?.groupId ? inputs.find((device) => device.groupId === virtualDefault.groupId) : undefined
+            if (!inputs.length) return saved
+            if (saved && inputs.some((d) => d.deviceId === saved)) return saved
+
+            const virtualDefault = devices.find((d) => d.deviceId === "default")
+            const systemDefault = virtualDefault?.groupId ? inputs.find((d) => d.groupId === virtualDefault.groupId) : undefined
 
             return systemDefault?.deviceId || inputs[0].deviceId
         } catch (err) {
@@ -91,10 +81,7 @@ export class SpeechToText {
         }
     }
 
-    static async getMicStream(deviceId: string = ""): Promise<MediaStream | null> {
-        // capture the feed raw: chromium's telephony-tuned noise suppression eats low-energy
-        // consonants & word tails, and gain control pumps levels - the engines were trained
-        // on unprocessed audio, so with all three off the WebRTC processing chain is bypassed
+    static async getMicStream(deviceId = ""): Promise<MediaStream | null> {
         const audioConstraints: MediaTrackConstraints = {
             deviceId: deviceId ? { exact: deviceId } : undefined,
             echoCancellation: false,
@@ -113,15 +100,8 @@ export class SpeechToText {
                 return null
             }
 
-            // saved device is probably unplugged - retry once with the default device
             if (err?.name === "OverconstrainedError" && deviceId) {
-                try {
-                    const defaultStream = await this.getMicStream("")
-                    return defaultStream || null
-                } catch (retryErr: any) {
-                    console.error("Failed to start AI scripture microphone:", retryErr)
-                    return null
-                }
+                return this.getMicStream("")
             }
 
             console.error("Error accessing microphone:", err)
@@ -131,71 +111,27 @@ export class SpeechToText {
 
     static async captureAudioContext(stream: MediaStream): Promise<AudioContext | null> {
         try {
-            // the context runs at the engines' target rate, so chromium's high-quality sinc
-            // resampler does device rate -> 16kHz upstream (any device rate, 44.1k included)
-            // & the worklet only converts/frames samples - it either honors 16000 or throws
             const ac = new AudioContext({ sampleRate: 16000 })
             this.ac = ac
 
-            // 1. Create source node
             const sourceNode = ac.createMediaStreamSource(stream)
-            this.sourceNode = sourceNode
-
-            // 2. Setup AnalyserNode for audio visualizer level computation
             const analyserNode = ac.createAnalyser()
             analyserNode.fftSize = 256
-            this.analyserNode = analyserNode
             sourceNode.connect(analyserNode)
 
-            const dataArray = new Uint8Array(analyserNode.frequencyBinCount)
+            this.sourceNode = sourceNode
+            this.analyserNode = analyserNode
 
-            // with gain control off the board owns the level - clipping mangles decodes in ways
-            // that read as transcription bugs, so a sustained hot feed gets called out loudly
-            let clippedFrames = 0
-            let clipCheckedFrames = 0
-            let lastClipWarnAt = 0
+            this.startLevelMonitoring(ac, analyserNode)
 
-            const updateLevel = () => {
-                if (!this.analyserNode || !this.ac || this.ac !== ac || ac.state === "closed") return
-
-                analyserNode.getByteTimeDomainData(dataArray)
-                let sum = 0
-                let clipped = false
-                for (let i = 0; i < dataArray.length; i++) {
-                    if (dataArray[i] === 0 || dataArray[i] === 255) clipped = true
-                    const sample = (dataArray[i] - 128) / 128
-                    sum += sample * sample
-                }
-                const rms = Math.sqrt(sum / dataArray.length)
-                this.emitAudioLevel(Math.min(1.0, Math.round(rms * 4.5 * 100) / 100))
-
-                clipCheckedFrames++
-                if (clipped) clippedFrames++
-                if (clipCheckedFrames >= 120) {
-                    // ~2s of frames: >5% carrying full-scale samples means the input is genuinely hot
-                    const now = Date.now()
-                    if (clippedFrames > clipCheckedFrames * 0.05 && now - lastClipWarnAt > 30000) {
-                        lastClipWarnAt = now
-                        console.warn("[AI STT] input is clipping - reduce the microphone/board gain (clipped audio garbles transcription)")
-                    }
-                    clippedFrames = 0
-                    clipCheckedFrames = 0
-                }
-
-                this.animFrameId = requestAnimationFrame(updateLevel)
-            }
-            updateLevel()
-
-            // 3. Load AudioWorklet module
-            await ac.audioWorklet.addModule(audioProcessor)
-
+            await ac.audioWorklet.addModule("./assets/stt-processor.js")
             if (this.ac !== ac || ac.state === "closed") {
                 ac.close().catch(() => {})
                 return null
             }
+            console.info("STT processor module loaded")
 
-            // 4. Create and connect capture node
-            const captureNode = new AudioWorkletNode(ac, "ai-scripture-processor")
+            const captureNode = new AudioWorkletNode(ac, "stt-processor")
             this.captureNode = captureNode
 
             captureNode.port.onmessage = (e) => {
@@ -206,68 +142,85 @@ export class SpeechToText {
             captureNode.connect(ac.destination)
 
             return ac
-        } catch (err: any) {
+        } catch (err) {
             console.error("Failed to capture audio context:", err)
             this.stopCapture()
             return null
         }
     }
 
+    private static startLevelMonitoring(ac: AudioContext, analyser: AnalyserNode) {
+        const dataArray = new Uint8Array(analyser.frequencyBinCount)
+        let clippedFrames = 0,
+            checkedFrames = 0,
+            lastWarnAt = 0
+
+        const updateLevel = () => {
+            if (!this.analyserNode || !this.ac || this.ac !== ac || ac.state === "closed") return
+
+            analyser.getByteTimeDomainData(dataArray)
+            let sum = 0,
+                clipped = false
+
+            for (const byte of dataArray) {
+                if (byte === 0 || byte === 255) clipped = true
+                const sample = (byte - 128) / 128
+                sum += sample * sample
+            }
+
+            const rms = Math.sqrt(sum / dataArray.length)
+            this.emitAudioLevel(Math.min(1.0, Math.round(rms * 4.5 * 100) / 100))
+
+            checkedFrames++
+            if (clipped) clippedFrames++
+
+            if (checkedFrames >= 120) {
+                const now = Date.now()
+                if (clippedFrames > checkedFrames * 0.05 && now - lastWarnAt > 30000) {
+                    lastWarnAt = now
+                    console.warn("[AI STT] input clipping detected.")
+                }
+                clippedFrames = 0
+                checkedFrames = 0
+            }
+
+            this.animFrameId = requestAnimationFrame(updateLevel)
+        }
+
+        updateLevel()
+    }
+
     static onAudioLevel(callback: AudioLevelCallback): () => void {
         this.listeners.add(callback)
-        return () => {
-            this.listeners.delete(callback)
-        }
+        return () => this.listeners.delete(callback)
     }
 
     private static emitAudioLevel(level: number) {
-        level = level < 0.04 ? 0 : level
-        audioLevelStore.set(level)
-        this.listeners.forEach((callback) => callback(level))
+        const value = level < 0.04 ? 0 : level
+        audioLevelStore.set(value)
+        this.listeners.forEach((fn) => fn(value))
     }
 
     static stopCapture() {
-        // Cancel animation frame loop
         if (this.animFrameId !== null) {
             cancelAnimationFrame(this.animFrameId)
             this.animFrameId = null
         }
 
-        // Disconnect audio nodes
-        if (this.sourceNode) {
+        ;[this.sourceNode, this.captureNode, this.analyserNode].forEach((node) => {
             try {
-                this.sourceNode.disconnect()
+                node?.disconnect()
             } catch (_) {}
-            this.sourceNode = null
-        }
+        })
+        this.sourceNode = this.captureNode = this.analyserNode = null
 
-        if (this.captureNode) {
-            try {
-                this.captureNode.disconnect()
-            } catch (_) {}
-            this.captureNode = null
-        }
+        this.stream?.getTracks().forEach((track) => track.stop())
+        this.stream = null
 
-        if (this.analyserNode) {
-            try {
-                this.analyserNode.disconnect()
-            } catch (_) {}
-            this.analyserNode = null
+        if (this.ac && this.ac.state !== "closed") {
+            this.ac.close().catch(() => {})
         }
-
-        // Stop all tracks on current stream
-        if (this.stream) {
-            this.stream.getTracks().forEach((track) => track.stop())
-            this.stream = null
-        }
-
-        // Close and clean up AudioContext
-        if (this.ac) {
-            if (this.ac.state !== "closed") {
-                this.ac.close().catch(() => {})
-            }
-            this.ac = null
-        }
+        this.ac = null
 
         this.emitAudioLevel(0.0)
     }

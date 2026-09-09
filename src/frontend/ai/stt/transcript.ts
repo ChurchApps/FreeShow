@@ -16,43 +16,41 @@ type TranscriptPart = {
     glue?: boolean
 }
 
+interface PushedWord {
+    words: number
+    confidence?: number
+}
+
 export class Transcript {
     private static readonly MAX_TRANSCRIPT_CHARS = 10000
-    private static interimTimeout: NodeJS.Timeout | null = null
     private static readonly INTERIM_DEBOUNCE_MS = 350
 
     static push(part: TranscriptPart) {
         if (!get(ai).enabled) return
 
-        const textPart = part.text
+        const textPart = part.text.trim()
 
         sttTranscript.update((t) => {
-            if (part.interim) {
-                return { ...t, unprocessed: textPart }
-            } else {
-                this.pushed.push({ words: part.glue ? 0 : textPart.trim().split(/\s+/).filter(Boolean).length, confidence: part.confidence })
-                this.pushed = this.pushed.slice(-40)
+            if (part.interim) return { ...t, unprocessed: textPart }
 
-                let finalized = t.finalized + (t.finalized && !part.glue ? " " : "") + textPart.trim()
+            const wordCount = part.glue ? 0 : textPart.split(/\s+/).filter(Boolean).length
+            this.pushed = [...this.pushed, { words: wordCount, confidence: part.confidence }].slice(-40)
 
-                // cap at a certain amount of characters
-                if (finalized.length > this.MAX_TRANSCRIPT_CHARS) finalized = finalized.slice(-this.MAX_TRANSCRIPT_CHARS)
+            const separator = t.finalized && !part.glue ? " " : ""
+            const finalized = (t.finalized + separator + textPart).slice(-this.MAX_TRANSCRIPT_CHARS)
 
-                return { finalized, unprocessed: "" }
-            }
+            return { finalized, unprocessed: "" }
         })
 
+        if (this.interimTimeout) clearTimeout(this.interimTimeout)
+
         if (part.interim) {
-            if (this.interimTimeout) clearTimeout(this.interimTimeout)
             this.interimTimeout = setTimeout(() => {
                 this.interimTimeout = null
                 this.processPendingChunk()
             }, this.INTERIM_DEBOUNCE_MS)
         } else {
-            if (this.interimTimeout) {
-                clearTimeout(this.interimTimeout)
-                this.interimTimeout = null
-            }
+            this.interimTimeout = null
             this.processPendingChunk()
         }
     }
@@ -64,16 +62,18 @@ export class Transcript {
         AiManager.processSTTChunk(chunk)
     }
 
-    private static OVERLAP_WORDS: number = 8
-    private static MAX_CHUNK_WORDS: number = 120
+    private static readonly OVERLAP_WORDS = 8
+    private static readonly MAX_CHUNK_WORDS = 120
+
+    private static interimTimeout: ReturnType<typeof setTimeout> | null = null
     private static lastSentWords: string[] = []
-    // each finalized push with its word count, so a chunk can report how sure the engine was of its new words
-    private static pushed: { words: number; confidence?: number }[] = []
+    private static pushed: PushedWord[] = []
 
     private static confidenceOfLast(wordCount: number): number | undefined {
         let sum = 0
         let words = 0
         let covered = 0
+
         for (let i = this.pushed.length - 1; i >= 0 && covered < wordCount; i--) {
             const push = this.pushed[i]
             if (push.confidence !== undefined && push.words) {
@@ -82,59 +82,60 @@ export class Transcript {
             }
             covered += push.words
         }
+
         return words ? Math.round(sum / words) : undefined
     }
 
-    private static getTranscriptChunk(): { chunkWithOverlap: string; newWordsCount: number; confidence?: number } {
-        const { finalized, unprocessed } = get(sttTranscript)
-        const combined = ((finalized || "") + (finalized && unprocessed ? " " : "") + (unprocessed || "")).trim()
-
-        if (!combined) {
-            this.lastSentWords = []
-            this.pushed = []
-            return { chunkWithOverlap: "", newWordsCount: 0 }
-        }
+    private static getTranscriptChunk() {
+        const { finalized = "", unprocessed = "" } = get(sttTranscript)
+        const combined = `${finalized} ${unprocessed}`.trim()
+        if (!combined) return this.resetState()
 
         let words = combined.split(/\s+/).filter(Boolean)
-        if (!words.length) return { chunkWithOverlap: "", newWordsCount: 0 }
+        if (!words.length) return this.resetState()
 
-        if (words.length > this.MAX_CHUNK_WORDS) {
-            words = words.slice(-this.MAX_CHUNK_WORDS)
-        }
+        if (words.length > this.MAX_CHUNK_WORDS) words = words.slice(-this.MAX_CHUNK_WORDS)
 
-        let startIdx = 0
-        if (this.lastSentWords.length) {
-            const lastWords = this.lastSentWords.map((w) => w.toLowerCase())
-            const currWords = words.map((w) => w.toLowerCase())
-
-            // 1. Direct prefix match (words started from where lastSentWords started)
-            let prefixMatchCount = 0
-            while (prefixMatchCount < lastWords.length && prefixMatchCount < currWords.length && lastWords[prefixMatchCount] === currWords[prefixMatchCount]) {
-                prefixMatchCount++
-            }
-
-            if (prefixMatchCount > 0 && prefixMatchCount >= lastWords.length - 3) {
-                startIdx = prefixMatchCount
-            } else {
-                // 2. Seam match (e.g. transcript finalized/shifted or pruned)
-                const maxSeam = Math.min(lastWords.length, currWords.length, 30)
-                for (let seam = maxSeam; seam >= 3; seam--) {
-                    const tail = lastWords.slice(-seam)
-                    const head = currWords.slice(0, seam)
-                    if (tail.every((w, idx) => w === head[idx])) {
-                        startIdx = seam
-                        break
-                    }
-                }
-            }
-        }
-
+        const startIdx = this.calculateStartIndex(words)
         const newWordsCount = words.length - startIdx
         const chunkStartIdx = Math.max(0, startIdx - this.OVERLAP_WORDS)
-        const chunkWithOverlap = words.slice(chunkStartIdx).join(" ")
 
         this.lastSentWords = words
 
-        return { chunkWithOverlap, newWordsCount, confidence: this.confidenceOfLast(newWordsCount) }
+        return {
+            chunkWithOverlap: words.slice(chunkStartIdx).join(" "),
+            newWordsCount,
+            confidence: this.confidenceOfLast(newWordsCount)
+        }
+    }
+
+    private static resetState() {
+        this.lastSentWords = []
+        this.pushed = []
+        return { chunkWithOverlap: "", newWordsCount: 0 }
+    }
+
+    private static calculateStartIndex(words: string[]): number {
+        if (!this.lastSentWords.length) return 0
+
+        const last = this.lastSentWords.map((w) => w.toLowerCase())
+        const curr = words.map((w) => w.toLowerCase())
+
+        // 1. Direct prefix match
+        let prefixCount = 0
+        while (prefixCount < last.length && prefixCount < curr.length && last[prefixCount] === curr[prefixCount]) {
+            prefixCount++
+        }
+        if (prefixCount > 0 && prefixCount >= last.length - 3) return prefixCount
+
+        // 2. Seam match
+        const maxSeam = Math.min(last.length, curr.length, 30)
+        for (let seam = maxSeam; seam >= 3; seam--) {
+            const tail = last.slice(-seam)
+            const head = curr.slice(0, seam)
+            if (tail.every((w, idx) => w === head[idx])) return seam
+        }
+
+        return 0
     }
 }
