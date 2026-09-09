@@ -69,6 +69,7 @@ export const COMMON_MISHEARINGS: Record<string, string> = {
     sec: "second",
     turd: "third",
     ford: "fourth",
+    for: "four",
 
     // Other Mishearings
     cha: "chapter"

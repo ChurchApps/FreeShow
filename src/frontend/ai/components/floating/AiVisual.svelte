@@ -44,7 +44,7 @@
             <line x1="12" y1="19" x2="12" y2="22" />
         </svg>
     {:else if state === "listening"}
-        <div class="smoky-audio-visualizer" style="--audio-level: {Math.min(displayedAudioLevel * 4, 1)}">
+        <div class="smoky-audio-visualizer" style="--audio-level: {Math.min(displayedAudioLevel * 2, 1)}">
             <div class="smoke-layer layer-4"></div>
             <div class="smoke-layer layer-3"></div>
             <div class="smoke-layer layer-2"></div>
