@@ -183,7 +183,6 @@ export enum Main {
     // AI
     AI_GET_MODELS = "AI_GET_MODELS",
     AI_GET_BIN = "AI_GET_BIN",
-    AI_DELETE_BIN = "AI_DELETE_BIN",
     AI_LISTEN_START = "AI_LISTEN_START",
     AI_LISTEN_STOP = "AI_LISTEN_STOP",
     AI_AUDIO_DATA = "AI_AUDIO_DATA",
@@ -297,7 +296,6 @@ export interface MainSendPayloads {
     [Main.SET_RTMP_ENCODER]: { outputId: string; encoder: string }
     // AI
     [Main.AI_GET_MODELS]: { providerId: AIProviderId }
-    [Main.AI_DELETE_BIN]: { path: string }
     [Main.AI_LISTEN_START]: { engine: string; engineOptions: SttEngineOptions }
     [Main.AI_AUDIO_DATA]: { buffer: Uint8Array }
     [Main.AI_GET_STATUS]: { engineId?: string; modelId?: string; customPath?: string } | undefined
@@ -410,7 +408,6 @@ export interface MainReturnPayloads {
     [Main.SET_RTMP_ENCODER]: void
     // AI
     [Main.AI_GET_BIN]: Promise<{ path: string; name: string; size: number }[]>
-    [Main.AI_DELETE_BIN]: boolean
     [Main.AI_LISTEN_START]: Promise<{ started: boolean; error?: string }>
     [Main.AI_GET_STATUS]: Promise<{ [key: string]: EngineStatus }>
     [Main.AI_SETUP]: Promise<boolean>

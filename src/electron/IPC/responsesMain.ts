@@ -278,7 +278,6 @@ export const mainResponses: MainResponses = {
     // AI
     [Main.AI_GET_MODELS]: (data) => fetchProviderModels(data.providerId),
     [Main.AI_GET_BIN]: () => LocalModelManager.getDownloadedBinFiles(),
-    [Main.AI_DELETE_BIN]: (data) => LocalModelManager.deleteBinFile(data),
     [Main.AI_LISTEN_START]: (data) => SpeechToText.listen(data.engine, data.engineOptions),
     [Main.AI_LISTEN_STOP]: () => SpeechToText.stop(),
     [Main.AI_AUDIO_DATA]: (data) => SpeechToText.pushAudio(data.buffer),

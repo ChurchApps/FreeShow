@@ -6,7 +6,7 @@
     import InputRow from "../../../components/input/InputRow.svelte"
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
     import Center from "../../../components/system/Center.svelte"
-    import { requestMain } from "../../../IPC/main"
+    import { requestMain, sendMain } from "../../../IPC/main"
 
     let files: { path: string; name: string; size: number }[] = []
     onMount(async () => {
@@ -14,12 +14,16 @@
         if (downloadedFiles?.length) files = downloadedFiles
     })
 
-    let isDeleting = false
-    async function deleteModel(path: string) {
-        isDeleting = true
-        const isDeleted = await requestMain(Main.AI_DELETE_BIN, { path })
-        if (isDeleted) files = files.filter((file) => file.path !== path)
-        isDeleting = false
+    // let isDeleting = false
+    // async function deleteModel(path: string) {
+    //     isDeleting = true
+    //     const isDeleted = await requestMain(Main.AI_DELETE_BIN, { path })
+    //     if (isDeleted) files = files.filter((file) => file.path !== path)
+    //     isDeleting = false
+    // }
+
+    function openInSystem(path: string) {
+        sendMain(Main.SYSTEM_OPEN, path)
     }
 </script>
 
@@ -32,7 +36,7 @@
                     <span style="font-size: 0.9em;opacity: 0.6;">{formatBytes(file.size)}</span>
                 </p>
 
-                <MaterialButton variant="outlined" icon="delete" title="actions.delete" disabled={isDeleting} on:click={() => deleteModel(file.path)} white />
+                <MaterialButton variant="outlined" icon="launch" title="main.system_open" on:click={() => openInSystem(file.path)} white />
             </InputRow>
         {/each}
     </div>
