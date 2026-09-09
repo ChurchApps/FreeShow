@@ -120,6 +120,7 @@ export class AiManager {
     static newMatch(match: MatchResult) {
         if (match.type === "empty" || !match.content) return
         if (AiManager.liveContent === match.content) return
+
         if (match.type !== "scripture") return // WIP only scripture is implemented
 
         let suggestionDraft: any = {

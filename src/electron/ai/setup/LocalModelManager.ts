@@ -7,21 +7,15 @@ import { createFolder, getFolderSize } from "../../utils/files"
 export async function aiHandleLocalSetup(data: AiSetupOptions): Promise<boolean> {
     const { action, engineId, modelId, customPath } = data
 
-    if (action === "verify") {
-        return await LocalModelManager.verifyCustomPath(engineId, customPath || "")
+    if (action === "verify") return LocalModelManager.verifyCustomPath(engineId, customPath || "")
+
+    const actions = {
+        download: () => (modelId ? LocalModelManager.downloadModel(engineId, modelId) : LocalModelManager.downloadEngine(engineId)),
+        cancel: () => (modelId ? LocalModelManager.cancelModelDownload(engineId, modelId) : LocalModelManager.cancelEngineDownload(engineId)),
+        delete: () => (modelId ? LocalModelManager.deleteModel(engineId, modelId) : LocalModelManager.deleteEngine(engineId))
     }
 
-    const isModelAction = Boolean(modelId)
-    switch (action) {
-        case "download":
-            return isModelAction ? LocalModelManager.downloadModel(engineId, modelId!) : LocalModelManager.downloadEngine(engineId)
-        case "cancel":
-            return isModelAction ? LocalModelManager.cancelModelDownload(engineId, modelId!) : LocalModelManager.cancelEngineDownload(engineId)
-        case "delete":
-            return isModelAction ? LocalModelManager.deleteModel(engineId, modelId!) : LocalModelManager.deleteEngine(engineId)
-        default:
-            return false
-    }
+    return actions[action as keyof typeof actions]?.() ?? false
 }
 
 const BIN_DIR = path.join(app.getPath("userData"), "bin")
@@ -35,8 +29,7 @@ export class LocalModelManager {
 
     private static removePath(targetPath: string, isDir = false): boolean {
         try {
-            if (isDir) fs.rmSync(targetPath, { recursive: true, force: true })
-            else fs.unlinkSync(targetPath)
+            fs.rmSync(targetPath, { recursive: isDir, force: true })
             return true
         } catch (err) {
             console.error(`Could not remove ${targetPath}:`, err)
@@ -44,21 +37,13 @@ export class LocalModelManager {
         }
     }
 
-    static getEngineDir(engineId: string) {
-        return path.join(BIN_DIR, engineId)
-    }
+    static getEngineDir = (engineId: string) => path.join(BIN_DIR, engineId)
+    static getModelDir = (engineId: string) => path.join(BIN_DIR, engineId, "models")
+    static getModelPath = (engineId: string, modelId: string) => path.join(this.getModelDir(engineId), `ggml-${modelId}.bin`)
 
     static getEnginePath(engineId: string) {
         const manager = this.getManager(engineId)
         return manager ? path.join(this.getEngineDir(engineId), manager.getBinaryName()) : null
-    }
-
-    static getModelDir(engineId: string) {
-        return path.join(this.getEngineDir(engineId), "models")
-    }
-
-    static getModelPath(engineId: string, modelId: string) {
-        return path.join(this.getModelDir(engineId), `ggml-${modelId}.bin`)
     }
 
     static async getStatus(engineId: string, modelId?: string, customPath?: string): Promise<EngineStatus> {
@@ -67,20 +52,18 @@ export class LocalModelManager {
 
         if (modelId) {
             const modelPath = customPath || this.getModelPath(engineId, modelId)
-            return { ready: await manager.verifyModel(modelPath), localPath: modelPath }
+            return { ready: await manager.verifyModel?.(modelPath), localPath: modelPath }
         }
 
         if (engineId === "nemotron") {
             const modelDir = this.getModelDir(engineId)
             const integrity = await manager.checkIntegrity(modelDir)
-
-            if (integrity === "outdated") return { ready: false, error: "The local model is outdated" }
-            if (integrity === "missing") return { ready: false, error: "The local model is missing" }
-            return { ready: integrity === "ok", localPath: modelDir }
+            if (integrity === "ok") return { ready: true, localPath: modelDir }
+            return { ready: false, error: `The local model is ${integrity}` }
         }
 
         const enginePath = customPath || this.getEnginePath(engineId)
-        return { ready: enginePath ? await manager.verifyEngine(enginePath) : false, localPath: enginePath }
+        return { ready: Boolean(enginePath && (await manager.verifyEngine(enginePath))), localPath: enginePath }
     }
 
     static async verifyCustomPath(engineId: string, customPath: string) {
@@ -89,19 +72,14 @@ export class LocalModelManager {
     }
 
     static async downloadEngine(engineId: string) {
-        if (!engineId) return false
-
         const manager = this.getManager(engineId)
         if (!manager) return false
 
-        // the nemotron "engine" download is its model files - they belong in the models dir the runtime loader reads
         const outputFolder = engineId === "nemotron" ? this.getModelDir(engineId) : this.getEngineDir(engineId)
         createFolder(outputFolder)
 
         const result = await manager.downloadEngine(outputFolder)
-        if (result?.ok !== true) return false
-
-        return true
+        return result?.ok === true
     }
 
     static cancelEngineDownload(engineId: string) {
@@ -110,7 +88,6 @@ export class LocalModelManager {
     }
 
     static async downloadModel(engineId: string, modelId: string) {
-        if (!engineId || !modelId) return false
         const manager = this.getManager(engineId)
         if (!manager) return false
 
@@ -118,11 +95,7 @@ export class LocalModelManager {
         const outputPath = this.getModelPath(engineId, modelId)
 
         const result = await manager.downloadModel(modelId, outputPath)
-        if (result?.ok !== true) return false
-
-        if (!(await manager.verifyModel(outputPath))) return false
-
-        return true
+        return result?.ok === true && (await manager.verifyModel(outputPath))
     }
 
     static cancelModelDownload(engineId: string, modelId: string) {
@@ -130,31 +103,18 @@ export class LocalModelManager {
         return true
     }
 
-    static deleteModel(engineId: string, modelId: string) {
-        return this.getManager(engineId) ? this.removePath(this.getModelPath(engineId, modelId)) : false
-    }
-
-    static deleteEngine(engineId: string) {
-        return this.getManager(engineId) ? this.removePath(this.getEngineDir(engineId), true) : false
-    }
-
-    ///
+    static deleteModel = (engineId: string, modelId: string) => this.removePath(this.getModelPath(engineId, modelId))
+    static deleteEngine = (engineId: string) => this.removePath(this.getEngineDir(engineId), true)
 
     private static ENGINES = ["nemotron"]
     static async getDownloadedBinFiles() {
-        const files = await Promise.all(
-            this.ENGINES.map(async (engineFolder) => {
-                const filePath = path.join(BIN_DIR, engineFolder)
-                const size = getFolderSize(filePath)
-                if (size === 0) return null
-
-                return { path: filePath, name: engineFolder, size }
-            })
-        )
-        return files.filter((file) => file !== null) as { path: string; name: string; size: number }[]
+        const files = this.ENGINES.map((engineFolder) => {
+            const filePath = path.join(BIN_DIR, engineFolder)
+            const size = getFolderSize(filePath)
+            return size > 0 ? { path: filePath, name: engineFolder, size } : null
+        })
+        return files.filter(Boolean) as { path: string; name: string; size: number }[]
     }
 
-    static deleteBinFile(data: { path: string }) {
-        return this.removePath(data.path)
-    }
+    static deleteBinFile = (data: { path: string }) => this.removePath(data.path)
 }

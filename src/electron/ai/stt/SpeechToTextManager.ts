@@ -8,10 +8,12 @@ import type { TranscriberSegment } from "./sttHelper"
 type SttEngine = NemotronTranscriber
 type SegmentListener = (segment: TranscriberSegment) => void
 
+const sanitizeError = (msg: string) => msg.replace(/\s+/g, " ").trim().slice(0, 200)
+
 export class SpeechToText {
     static transcriberEngine: SttEngine | null = null
     static sessionToken = 0
-    private static segmentListeners: Set<SegmentListener> = new Set()
+    private static segmentListeners = new Set<SegmentListener>()
 
     static async listen(engine: string, options: SttEngineOptions): Promise<{ started: boolean; error?: string }> {
         this.stopInternal(false)
@@ -32,7 +34,7 @@ export class SpeechToText {
         } catch (err) {
             console.error("STT start failed:", err)
             if (token === this.sessionToken) this.stopInternal(false)
-            return { started: false, error: sanitizeErrorMessage(String((err as Error)?.message || err)) }
+            return { started: false, error: sanitizeError(String((err as Error)?.message || err)) }
         }
 
         if (token !== this.sessionToken) return { started: false, error: "Error: superseded" }
@@ -61,44 +63,31 @@ export class SpeechToText {
     }
 
     private static async createEngine(engine: string, options: SttEngineOptions): Promise<{ transcriber: SttEngine } | { error: string }> {
-        const onSegment = this.onSegment.bind(this)
-        const onError = this.onError.bind(this)
-        const onInterim = this.onInterim.bind(this)
-
         if (engine === "nemotron") {
             const status = await LocalModelManager.getStatus("nemotron")
             if (!status.ready) return { error: "Nemotron could not be initialized" }
-            return { transcriber: new NemotronTranscriber({ ...options }, onSegment, onError, onInterim) }
+            return { transcriber: new NemotronTranscriber({ ...options }, this.onSegment, this.onError, this.onInterim) }
         }
 
         console.error(`Unknown STT engine: ${engine}`)
         return { error: "Unknown STT engine" }
     }
 
-    static addSegmentListener(listener: SegmentListener) {
-        this.segmentListeners.add(listener)
-    }
+    static addSegmentListener = (listener: SegmentListener) => this.segmentListeners.add(listener)
+    static removeSegmentListener = (listener: SegmentListener) => this.segmentListeners.delete(listener)
 
-    static removeSegmentListener(listener: SegmentListener) {
-        this.segmentListeners.delete(listener)
-    }
-
-    private static onSegment(segment: TranscriberSegment) {
+    private static onSegment = (segment: TranscriberSegment) => {
         sendToMain(ToMain.AI_TRANSCRIPT, segment)
         this.segmentListeners.forEach((listener) => listener(segment))
     }
 
-    private static onInterim(text: string) {
+    private static onInterim = (text: string) => {
         sendToMain(ToMain.AI_TRANSCRIPT, { text, interim: true })
     }
 
-    private static onError(message: string) {
+    private static onError = (message: string) => {
         console.error("STT error:", message)
         this.stopInternal(false)
-        sendToMain(ToMain.AI_STATUS, { state: "error", message: sanitizeErrorMessage(message) })
+        sendToMain(ToMain.AI_STATUS, { state: "error", message: sanitizeError(message) })
     }
-}
-
-function sanitizeErrorMessage(message: string): string {
-    return message.replace(/\s+/g, " ").trim().slice(0, 200)
 }

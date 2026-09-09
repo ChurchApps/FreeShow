@@ -16,12 +16,12 @@ class AnthropicProvider extends APIModel {
     async fetchModels(apiKey: string): Promise<ModelOption[]> {
         if (!apiKey) return []
         try {
-            const response = await axios.get(MODELS_URL, {
+            const { data } = await axios.get(MODELS_URL, {
                 headers: this.getHeaders(apiKey),
                 timeout: this.REQUEST_TIMEOUT
             })
-            const data = Array.isArray(response.data?.data) ? response.data.data : []
-            return data.map((m: any) => ({
+            const list = Array.isArray(data?.data) ? data.data : []
+            return list.map((m: any) => ({
                 id: m.id,
                 name: m.display_name || m.id
             }))
@@ -48,19 +48,14 @@ class AnthropicProvider extends APIModel {
         if (options.jsonSchema) body.output_config = { format: { type: "json_schema", schema: options.jsonSchema } }
 
         try {
-            const response = await axios.post(API_URL, body, {
+            const { data } = await axios.post(API_URL, body, {
                 headers: this.getHeaders(apiKey),
                 timeout: this.REQUEST_TIMEOUT,
                 signal: options.signal
             })
-            const data = response.data
 
-            if (data?.stop_reason === "refusal") {
-                throw new Error("Request was refused by the model")
-            }
-            if (data?.stop_reason === "length") {
-                throw new Error("Response was cut off at the token limit")
-            }
+            if (data?.stop_reason === "refusal") throw new Error("Request was refused by the model")
+            if (data?.stop_reason === "length") throw new Error("Response was cut off at the token limit")
 
             const textBlock = Array.isArray(data?.content) ? data.content.find((block: any) => block?.type === "text") : undefined
             return textBlock?.text || ""

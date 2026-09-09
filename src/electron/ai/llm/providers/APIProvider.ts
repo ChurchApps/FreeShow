@@ -29,14 +29,14 @@ export abstract class APIModel {
         if (err instanceof Error) return err
 
         const e = err as any
-        if (e?.code === "ECONNABORTED" || e?.code === "ETIMEDOUT" || e?.code === "ERR_CANCELED") {
-            return new Error(String(e.message || "Request timed out"))
+        if (["ECONNABORTED", "ETIMEDOUT", "ERR_CANCELED"].includes(e?.code)) {
+            return new Error(e.message || "Request timed out")
         }
 
         const status = e?.response?.status
         if (typeof status === "number") {
             const errorData = e?.response?.data?.error
-            const message = typeof errorData === "string" ? errorData : typeof errorData?.message === "string" ? errorData.message : typeof e?.response?.data?.message === "string" ? e.response.data.message : undefined
+            const message = typeof errorData === "string" ? errorData : errorData?.message || e?.response?.data?.message
             if (message) return new Error(message)
 
             if (status === 401) return new Error("Invalid API key")
@@ -47,16 +47,13 @@ export abstract class APIModel {
             return new Error(`HTTP ${status}`)
         }
 
-        return new Error(String(e?.message || e || "Network error"))
+        return new Error(e?.message || "Network error")
     }
 
     protected async testEndpoint(url: string, headers: Record<string, string>, method: "GET" | "POST" = "GET", body?: any): Promise<{ ok: true } | { ok: false; error: string }> {
         try {
-            if (method === "POST") {
-                await axios.post(url, body, { headers, timeout: this.REQUEST_TIMEOUT })
-            } else {
-                await axios.get(url, { headers, timeout: this.REQUEST_TIMEOUT })
-            }
+            const request = method === "POST" ? axios.post : axios.get
+            await request(url, method === "POST" ? body : { headers, timeout: this.REQUEST_TIMEOUT }, { headers, timeout: this.REQUEST_TIMEOUT })
             return { ok: true }
         } catch (err) {
             return { ok: false, error: this.toLLMError(err).message }

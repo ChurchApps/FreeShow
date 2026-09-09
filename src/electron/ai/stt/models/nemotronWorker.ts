@@ -44,18 +44,14 @@ export class NemotronDriver implements TranscriptionDriver {
     private options: NemotronOptions
     private recognizer: any = null
     private vad: any = null
-    // one stream for the whole session - its encoder cache is what keeps decoding cheap
     private stream: any = null
 
     private stopped = false
     private totalSamples = 0
-
     private inUtterance = false
     private blanksAtOpen = 0
     private utteranceStartSample = 0
     private emittedAtOpen = 0
-
-    // emission is tracked in characters: the trailing word grows in place ("Ephes" -> "Ephesians")
     private emittedChars = 0
     private nextEmitStartMs = 0
 
@@ -87,8 +83,6 @@ export class NemotronDriver implements TranscriptionDriver {
         })
 
         this.stream = this.recognizer.createStream()
-
-        // trailing-blank counts and per-stream language both arrived in sherpa-onnx-node 1.13.7
         if (typeof this.stream.setOption !== "function") throw new Error("sherpa-onnx-node 1.13.7 or newer is required")
         if (this.options.decodeLanguage) this.stream.setOption("language", this.options.decodeLanguage)
 
@@ -140,7 +134,6 @@ export class NemotronDriver implements TranscriptionDriver {
             while (this.recognizer.isReady(this.stream)) this.recognizer.decode(this.stream)
 
             this.totalSamples += samples.length
-
             const hypothesis = this.readHypothesis()
             const pending = hypothesis.text.length > this.emittedChars
 
@@ -154,6 +147,7 @@ export class NemotronDriver implements TranscriptionDriver {
                 this.utteranceStartSample = this.totalSamples
                 this.emittedAtOpen = this.emittedChars
             }
+
             if (!this.inUtterance) {
                 // clear the predictor only in a silence the decoder itself has confirmed
                 if (hypothesis.text && hypothesis.blanks >= CLOSE_TRAILING_BLANKS) this.resetDecoder()
@@ -173,17 +167,15 @@ export class NemotronDriver implements TranscriptionDriver {
         }
     }
 
-    private currentMs(): number {
-        return Math.round((this.totalSamples / SAMPLE_RATE) * 1000)
-    }
+    private currentMs = () => Math.round((this.totalSamples / SAMPLE_RATE) * 1000)
 
     private readHypothesis(): Hypothesis {
         const result = this.recognizer.getResult(this.stream)
         return {
-            text: ((result.text || "") as string).trim(),
-            tokens: (result.tokens || []) as string[],
-            logProbs: (result.ys_probs || []) as number[],
-            blanks: (result.num_trailing_blanks || 0) as number
+            text: (result.text || "").trim(),
+            tokens: result.tokens || [],
+            logProbs: result.ys_probs || [],
+            blanks: result.num_trailing_blanks || 0
         }
     }
 
@@ -211,24 +203,20 @@ export class NemotronDriver implements TranscriptionDriver {
                 this.emittedChars = keep.length
                 if (candidate) this.emitText(candidate, false, confidence)
             }
-            console.warn(`[nemotron] decoder was repeating ${JSON.stringify(text.slice(loopAt).slice(0, 60))} - clearing its state`)
             this.resetDecoder()
             this.options.onInterim?.("")
             return
         }
 
-        // only whole words are committed while the decoder is still writing: the trailing token
-        // grows in place, and committing it early puts "cha" on screen for "chapter"
         const commitTo = final ? text.length : text.lastIndexOf(" ")
-
         let candidate = ""
         let confidence: number | undefined
         let glue = false
+
         if (commitTo > this.emittedChars) {
             const from = this.emittedChars
             candidate = text.slice(from, commitTo).trim()
             if (candidate) confidence = segmentConfidence(hypothesis.tokens, hypothesis.logProbs, text, from, commitTo)
-            // the model adds punctuation and plurals once it has heard what follows, often after the word was committed
             glue = from > 0 && text[from] !== " "
             this.emittedChars = commitTo
         }
@@ -250,8 +238,6 @@ export class NemotronDriver implements TranscriptionDriver {
         this.inUtterance = false
     }
 
-    // a speaker in full flow gets a boundary every 30s, but the decoder keeps going: a reset here
-    // would land mid-passage and the trailing word is still being written
     private splitUtterance(hypothesis: Hypothesis) {
         this.emitFromHypothesis(hypothesis, "growing")
         if (this.emittedChars > 0) this.emitText("", true)
@@ -266,8 +252,8 @@ export class NemotronDriver implements TranscriptionDriver {
         if (isMusicAnnotation(text)) segment.music = true
         if (utteranceEnd) segment.utteranceEnd = true
         if (this.options.language) segment.language = this.options.language
-        this.nextEmitStartMs = endMs
 
+        this.nextEmitStartMs = endMs
         this.options.onSegment(segment)
     }
 }
@@ -284,30 +270,28 @@ export function int16ToFloat32(buffer: Uint8Array): Float32Array {
 
 // IPC Utility Process Worker Entrypoint
 const parentPort = (process as any).parentPort
-
 if (parentPort) {
     let driver: NemotronDriver | null = null
     const post = (msg: NemotronWorkerResponse) => parentPort.postMessage(msg)
 
     setInterval(() => post({ type: "alive" }), 5000).unref?.()
 
-    parentPort.on("message", async (event: { data: NemotronWorkerRequest }) => {
-        const message = event.data
+    parentPort.on("message", async ({ data }: { data: NemotronWorkerRequest }) => {
         try {
-            if (message.type === "start") {
+            if (data.type === "start") {
                 driver = new NemotronDriver({
-                    language: message.language,
-                    decodeLanguage: message.decodeLanguage,
-                    modelDir: message.modelDir,
+                    language: data.language,
+                    decodeLanguage: data.decodeLanguage,
+                    modelDir: data.modelDir,
                     onSegment: (segment) => post({ type: "segment", segment }),
                     onInterim: (text) => post({ type: "interim", text }),
                     onError: (message) => post({ type: "error", message })
                 })
                 await driver.start()
                 post({ type: "ready" })
-            } else if (message.type === "audio") {
-                driver?.pushAudio(message.data)
-            } else if (message.type === "stop") {
+            } else if (data.type === "audio") {
+                driver?.pushAudio(data.data)
+            } else if (data.type === "stop") {
                 await driver?.stop()
                 driver = null
                 post({ type: "stopped" })

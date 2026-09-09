@@ -26,9 +26,7 @@ export class DownloadManager {
         this.name = name || key.toUpperCase()
     }
 
-    isDownloading(): boolean {
-        return this.activeDownload !== null
-    }
+    isDownloading = () => this.activeDownload !== null
 
     cancel(): void {
         if (!this.activeDownload) return
@@ -41,15 +39,15 @@ export class DownloadManager {
         this.sendProgress(0, 0, "error")
     }
 
-    reportError(errorSentence: string): { ok: false; error: string } {
+    reportError(errorSentence: string) {
         this.sendProgress(0, 0, "error")
         sendToMain(ToMain.TOAST, errorSentence)
-        return { ok: false, error: errorSentence }
+        return { ok: false as const, error: errorSentence }
     }
 
-    reportComplete(): { ok: true } {
+    reportComplete() {
         this.sendProgress(1, 1, "complete")
-        return { ok: true }
+        return { ok: true as const }
     }
 
     async downloadFile(url: string, destPath: string, options: AiDownloadOptions = {}): Promise<void> {
@@ -122,13 +120,8 @@ export class DownloadManager {
         return hash.digest("hex")
     }
 
-    isAbortError(err: unknown): boolean {
-        return (err as Error)?.name === "AbortError" || (err as { code?: string })?.code === "ABORT_ERR"
-    }
-
-    errorMessage(err: unknown): string {
-        return (err as Error)?.message || String(err)
-    }
+    isAbortError = (err: unknown) => (err as Error)?.name === "AbortError" || (err as { code?: string })?.code === "ABORT_ERR"
+    errorMessage = (err: unknown) => (err as Error)?.message || String(err)
 
     private sendProgress(progress: number, total: number, status: "downloading" | "complete" | "error"): void {
         sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: this.key, name: this.name, progress, total, status })

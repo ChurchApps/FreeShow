@@ -410,8 +410,7 @@
         "close_ad": "Close ad on output screen",
         "start": "Start",
         "end": "End",
-        "change_folder": "Choose another location",
-        "custom_path": "Custom path"
+        "change_folder": "Choose another location"
     },
     "tabs": {
         "shows": "Shows",
@@ -1827,17 +1826,17 @@
         "hint": "Listens to your microphone, transcribes speech to text, and suggests relevant actions based on what is heard. Can also be linked to LLM models for better understanding and context.",
         "privacy_details": "Everything remains locally on this device unless explicitly mentioned otherwise.",
         "privacy_cloud": "Transcribed text data will be uploaded and processed in the cloud.",
-        "transcription": "Transcription",
         "provider": "Provider",
         "engine": "Engine",
         "model": "Model",
         "api_key": "API key",
         "waiting": "Waiting...",
         "processing": "Processing...",
+        "transcription": "Transcription",
+        "copy_transcript": "Copy transcript",
         "confidence_ask": "Always ask",
         "confidence_highest": "If confident",
         "confidence_high": "If high confidence",
-        "confidence_medium": "If medium confidence",
-        "copy_transcript": "Copy transcript"
+        "confidence_medium": "If medium confidence"
     }
 }

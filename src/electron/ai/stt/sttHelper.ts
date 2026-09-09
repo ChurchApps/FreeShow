@@ -1,4 +1,3 @@
-/** A finished piece of transcript. Timings are relative to the start of the session. */
 export interface TranscriberSegment {
     text: string
     startMs: number
@@ -39,7 +38,7 @@ function boundedEditDistance(a: string, b: string, maxEdits: number): number {
         for (let j = 1; j <= b.length; j++) {
             const cost = a[i - 1] === b[j - 1] ? 0 : 1
             row[j] = Math.min(previousRow[j] + 1, row[j - 1] + 1, previousRow[j - 1] + cost)
-            if (row[j] < rowMin) rowMin = row[j]
+            rowMin = Math.min(rowMin, row[j])
         }
         if (rowMin > maxEdits) return maxEdits + 1
         previousRow = row
@@ -74,28 +73,26 @@ export function trimRepeatedLeadWords(previousTailWords: string[], text: string)
     const previous = previousTailWords.map(normalizeWord).filter(Boolean)
     const current = words.map(normalizeWord)
 
-    let repeated = 0
     const max = Math.min(previous.length, words.length, SEAM_MATCH_MAX_WORDS)
     for (let length = max; length >= 1; length--) {
         let matches = true
         let anchors = 0
         for (let i = 0; i < length; i++) {
-            const previousWord = previous[previous.length - length + i]
-            const word = current[i]
-            const anchored = Boolean(word && (previousWord === word || wordsPrefixPair(previousWord, word)))
-            if (!word || (i === 0 ? !anchored : !wordsRoughlyEqual(previousWord, word))) {
+            const prev = previous[previous.length - length + i]
+            const curr = current[i]
+            const anchored = Boolean(curr && (prev === curr || wordsPrefixPair(prev, curr)))
+            if (!curr || (i === 0 ? !anchored : !wordsRoughlyEqual(prev, curr))) {
                 matches = false
                 break
             }
             if (anchored) anchors++
         }
         if (matches && anchors >= Math.ceil(length / 2)) {
-            repeated = length
-            break
+            return words.slice(length).join(" ")
         }
     }
 
-    return words.slice(repeated).join(" ")
+    return words.join(" ")
 }
 
 // Track the emitted tail the next trim compares against.
@@ -115,14 +112,17 @@ function minRepeatsFor(phraseTokens: number): number {
 }
 
 function tokenizeWithOffsets(text: string): { text: string; at: number }[] {
-    const tokens: { text: string; at: number }[] = []
     const pattern = /\S+/g
+    const tokens: { text: string; at: number }[] = []
     let match: RegExpExecArray | null
-    while ((match = pattern.exec(text)) !== null) tokens.push({ text: match[0].toLowerCase().replace(/[^\p{L}\p{N}']/gu, ""), at: match.index })
-    return tokens.filter((token) => token.text)
+
+    while ((match = pattern.exec(text)) !== null) {
+        const normalized = match[0].toLowerCase().replace(/[^\p{L}\p{N}']/gu, "")
+        if (normalized) tokens.push({ text: normalized, at: match.index })
+    }
+    return tokens
 }
 
-// Character offset where a repeating tail begins, or -1. Only the tail counts - that is where a live decoder is looping now.
 export function findRepeatedTail(text: string): number {
     const tokens = tokenizeWithOffsets(text)
     if (tokens.length < 8) return -1
@@ -131,13 +131,19 @@ export function findRepeatedTail(text: string): number {
         const needed = minRepeatsFor(size)
         if (tokens.length < size * needed) continue
 
-        const phrase = tokens.slice(tokens.length - size).map((token) => token.text)
+        const phrase = tokens
+            .slice(-size)
+            .map((t) => t.text)
+            .join(" ")
         let repeats = 1
         let start = tokens.length - size
 
-        while (start - size >= 0) {
-            const previous = tokens.slice(start - size, start).map((token) => token.text)
-            if (previous.join(" ") !== phrase.join(" ")) break
+        while (start >= size) {
+            const previous = tokens
+                .slice(start - size, start)
+                .map((t) => t.text)
+                .join(" ")
+            if (previous !== phrase) break
             start -= size
             repeats++
         }
@@ -164,10 +170,11 @@ export function segmentConfidence(tokens: string[], logProbs: number[], text: st
     let sum = 0
     let count = 0
     let cursor = 0
-    for (let index = 0; index < tokens.length; index++) {
-        const next = cursor + tokens[index].length
+
+    for (let i = 0; i < tokens.length; i++) {
+        const next = cursor + tokens[i].length
         if (next > start && cursor < end) {
-            sum += logProbs[index]
+            sum += logProbs[i]
             count++
         }
         cursor = next

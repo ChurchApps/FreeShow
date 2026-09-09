@@ -40,7 +40,6 @@ export class NemotronTranscriber {
         if (await this.startWorker()) return true
         if (this.startErrorMessage) throw new Error(this.startErrorMessage)
 
-        console.warn("[nemotron] Decode process unavailable - decoding in the main process instead")
         this.fallback = new NemotronDriver({
             language: this.options.language || "en",
             decodeLanguage: this.options.language,
@@ -108,7 +107,7 @@ export class NemotronTranscriber {
         this.lastWorkerMessageAt = Date.now()
         this.armStallWatchdog()
 
-        child.on("message", (message: NemotronWorkerResponse) => this.handleWorkerMessage(message))
+        child.on("message", (msg: NemotronWorkerResponse) => this.handleWorkerMessage(msg))
         child.on("exit", (code) => {
             if (this.child !== child) return
             this.child = null
@@ -144,30 +143,23 @@ export class NemotronTranscriber {
         if (!message || typeof message !== "object") return
         this.lastWorkerMessageAt = Date.now()
 
-        switch (message.type) {
-            case "alive":
-                return
-            case "segment":
-                this.onSegment(message.segment)
-                break
-            case "interim":
-                this.onInterim?.(message.text)
-                break
-            case "ready":
-                this.readyResolve?.(true)
-                break
-            case "stopped":
-                this.stoppedResolve?.()
-                break
-            case "error":
+        const handlers: Record<string, () => void> = {
+            segment: () => message.type === "segment" && this.onSegment(message.segment),
+            interim: () => message.type === "interim" && this.onInterim?.(message.text),
+            ready: () => this.readyResolve?.(true),
+            stopped: () => this.stoppedResolve?.(),
+            error: () => {
+                if (message.type !== "error") return
                 if (this.readyResolve) {
                     this.startErrorMessage = message.message
                     this.readyResolve(false)
                 } else if (!this.stopped) {
                     this.onError(message.message)
                 }
-                break
+            }
         }
+
+        handlers[message.type]?.()
     }
 
     private post(child: Electron.UtilityProcess, message: NemotronWorkerRequest) {
