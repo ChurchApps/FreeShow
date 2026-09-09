@@ -43,7 +43,7 @@ class OllamaProvider extends APIModel {
             options: { temperature: options.temperature ?? 0, num_predict: options.maxTokens ?? 1024 },
             messages: buildMessages(options)
         }
-        if (options.jsonSchema) body.format = "json"
+        if (options.jsonSchema) body.format = options.jsonSchema
 
         try {
             const response = await axios.post(`${API_URL}/api/chat`, body, {

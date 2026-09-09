@@ -1,18 +1,29 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
-    import { fade, fly } from "svelte/transition"
+    import { onDestroy, onMount } from "svelte"
+    import { fade } from "svelte/transition"
     import Icon from "../../../components/helpers/Icon.svelte"
     import T from "../../../components/helpers/T.svelte"
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
+    import Tabs from "../../../components/main/Tabs.svelte"
     import Center from "../../../components/system/Center.svelte"
     import { activePage, ai, aiSmartAction, aiSttStatus, aiSuggestions, language, outLocked, settingsTab, sttTranscript } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { type ChatMessage, getLLMManager } from "../../llm/llmManager"
+    import { ChatAction, chatActionLabels } from "../../manager/ChatAction"
     import { audioLevelStore, resolveSttEngine, SpeechToText } from "../../stt/stt"
     import AiRing from "./AiRing.svelte"
     import ConfidenceMeter from "./ConfidenceMeter.svelte"
+    import SmartAction from "./SmartAction.svelte"
     import { copyTranscript, dismissAiSuggestion } from "./transcript"
 
     let state: "inactive" | "error" | "listening" | "processing" = "inactive"
+
+    // Active tab state
+    let activeTab: "transcription" | "chat" = "transcription"
+    $: tabs = {
+        transcription: { name: "ai.transcription", icon: "microphone" } // , disabled: !$ai?.stt?.engine
+        // chat: { name: "chat.chat", icon: "chat" } // WIP disable for now, I guess more useful to have in the slide/template editor directly
+    }
 
     let isOpen = false
     function toggleExpand() {
@@ -29,7 +40,7 @@
     let transcriptElem: HTMLElement | undefined
     let transcriptPinned = true
     let autoScrollTimer: NodeJS.Timeout | null = null
-    $: if (isOpen && transcriptPinned && ($sttTranscript.finalized || $sttTranscript.unprocessed) && transcriptElem) scrollToBottom()
+    $: if (isOpen && activeTab === "transcription" && transcriptPinned && ($sttTranscript.finalized || $sttTranscript.unprocessed) && transcriptElem) scrollToBottom()
     $: if (!isOpen) transcriptPinned = true
     function scrollToBottom() {
         setTimeout(() => {
@@ -182,7 +193,80 @@
     // confident suggestions surface here so the operator can present them with one click
 
     $: suggestions = $aiSuggestions
-    $: smartAction = $aiSmartAction
+
+    // CHAT
+
+    let chatMessages: ChatMessage[] = []
+    let chatInput = ""
+    let isSending = false
+
+    onMount(() => {
+        const llm = getLLMManager()
+        if (!llm) return
+
+        chatMessages = llm.getHistory()
+    })
+
+    $: if (activeTab === "chat") {
+        setTimeout(() => {
+            scrollToBottomChat()
+
+            // highlight input
+            const chatInputElement = document.querySelector(".chat-input") as HTMLInputElement
+            if (chatInputElement) {
+                chatInputElement.focus()
+            }
+        })
+    }
+    function scrollToBottomChat() {
+        const messagesContainer = document.querySelector(".chat-messages")
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight
+        }
+    }
+
+    async function sendChatMessage() {
+        if (!chatInput.trim() || isSending) return
+
+        const llm = getLLMManager()
+        const inputPrompt = chatInput.trim()
+        chatInput = ""
+
+        if (!llm) return
+
+        // 1. Immediately append user message to local state so it appears in the UI right away
+        const userMsg: ChatMessage = {
+            id: `user_${Date.now()}`,
+            role: "user",
+            content: inputPrompt,
+            timestamp: Date.now()
+        }
+        chatMessages = [...chatMessages, userMsg]
+        setTimeout(scrollToBottomChat)
+
+        // 2. Set loading flag to display the pending/thinking state
+        isSending = true
+
+        try {
+            // 3. Request completion from LLM manager (this adds user & assistant to the manager's history)
+            await llm.sendMessage(inputPrompt)
+
+            // 4. Sync view with the manager's synced message history
+            chatMessages = llm.getHistory()
+            setTimeout(scrollToBottomChat)
+        } catch (err) {
+            console.error("Failed to send message:", err)
+        } finally {
+            isSending = false
+        }
+    }
+
+    function handleChatKeyDown(e: KeyboardEvent) {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault()
+            sendChatMessage()
+        }
+    }
 </script>
 
 <svelte:window on:keydown={(e) => isOpen && e.key === "Escape" && toggleExpand()} />
@@ -191,51 +275,8 @@
     <div class="backdrop" on:mousedown|self={toggleExpand} transition:fade={{ duration: 250 }}></div>
 {/if}
 
-<!-- this will show the latest transcript segment (& interim) -->
-<!-- {#if !isOpen && isListening && ($sttTranscript.finalized || $sttTranscript.unprocessed)}
-    <div class="ticker-wrap">
-        <AiRing {state} {audioLevel} borderRadius="12px" borderWidth="1.5px">
-            <button class="ticker" on:click={toggleExpand}>
-                {$sttTranscript.finalized}{#if $sttTranscript.unprocessed}{" "}<span class="interim">{$sttTranscript.unprocessed}</span>{/if}
-            </button>
-        </AiRing>
-    </div>
-{/if} -->
-
-{#if !isOpen && smartAction && state !== "inactive"}
-    <div class="ticker-wrap" transition:fly={{ x: 45 + 62 / 2, duration: 200 }}>
-        <!-- border-radius: 50px 10px 10px 50px; -->
-        <MaterialButton
-            style="padding: 0;border-radius: 50px;"
-            on:click={() => {
-                if (smartAction?.trigger) {
-                    smartAction.trigger()
-                    setTimeout(() => aiSmartAction.set(null), 500)
-                } else {
-                    aiSmartAction.set(null)
-                }
-            }}
-        >
-            <!-- borderRadius="20px 10px 10px 20px" -->
-            <AiRing opacity={0.85}>
-                <div class="suggestion" style="margin-right: calc((62px / 2) - 4px);">
-                    {#if smartAction?.action === "presented"}
-                        <Icon id="check" white />
-                        <p>Presented:</p>
-                        <span style="font-weight: bold;">{smartAction.content}</span>
-                    {:else if smartAction?.action === "present"}
-                        <Icon id="play" white />
-                        <p>Click to present:</p>
-                        <span style="font-weight: bold;">{smartAction.content}</span>
-                    {/if}
-
-                    {#if smartAction?.confidence}
-                        <ConfidenceMeter confidence={smartAction.confidence} />
-                    {/if}
-                </div>
-            </AiRing>
-        </MaterialButton>
-    </div>
+{#if !isOpen && state !== "inactive"}
+    <SmartAction />
 {/if}
 
 <div class="speech-widget {isOpen ? 'is-open' : 'is-closed'}">
@@ -262,75 +303,115 @@
         {:else}
             <div class="modal-view">
                 <div class="card-header">
-                    <div class="ai-badge">
-                        <p style="font-weight: bold;">{state.toUpperCase()}</p>
-                    </div>
+                    <Tabs {tabs} bind:active={activeTab} />
 
                     <div class="headerActions">
-                        {#if $sttTranscript.finalized}
-                            <MaterialButton icon="copy" title="ai.copy_transcript" on:click={copyTranscript} />
+                        {#if activeTab === "transcription" && $sttTranscript.finalized}
+                            <MaterialButton icon="copy" title="ai.copy_transcript" style="padding: 10px;" on:click={copyTranscript} />
                         {/if}
-                        <MaterialButton icon="settings" title="menu.settings" on:click={openSettings} />
+                        <MaterialButton icon="settings" title="menu.settings" style="padding: 10px;" on:click={openSettings} />
 
-                        <MaterialButton class="popup-close" icon="close" iconSize={1.3} title="actions.close" style="padding: 10px;" on:click={toggleExpand} />
+                        <MaterialButton class="popup-close" icon="close" iconSize={1.2} title="actions.close" style="padding: 8px;" on:click={toggleExpand} />
                     </div>
                 </div>
 
-                <div class="card-body">
-                    {#if state === "inactive"}
-                        <Center faded>
-                            <T id="remote.loading" />
-                        </Center>
-                    {:else if state === "error"}
-                        <p class="placeholder error">{translateText($aiSttStatus.message || "Something went wrong...")}</p>
-                    {:else if state === "processing"}
-                        <div class="processing-view">
-                            <div class="spinner large"></div>
-                            <p><T id="ai.processing" /></p>
-                        </div>
-                    {:else if $sttTranscript.finalized || $sttTranscript.unprocessed}
-                        <div class="transcript-box" bind:this={transcriptElem} on:scroll={onTranscriptScroll}>
-                            <p>
-                                {$sttTranscript.finalized}{#if $sttTranscript.unprocessed}{" "}<span class="interim">{$sttTranscript.unprocessed}</span>{/if}
-                            </p>
-                        </div>
-                    {:else}
-                        <Center faded>
-                            <T id="ai.waiting_for_audio" />
-                        </Center>
-                    {/if}
-                </div>
-
-                {#if suggestions.length}
-                    <div class="suggestions-panel">
-                        {#each suggestions as suggestion (suggestion.id)}
-                            <div class="suggestion compact">
-                                <div class="suggestionHeader">
-                                    <span class="reference">{suggestion.content}</span>
-                                    {#if suggestion.confidence}
-                                        <ConfidenceMeter confidence={suggestion.confidence} />
-                                    {/if}
-
-                                    <div class="fill" />
-
-                                    {#if suggestion.action === "presented"}
-                                        <Icon id="check" size={0.9} color="var(--primary-lighter)" title="ai.presented" />
-                                    {:else if suggestion.trigger}
-                                        <MaterialButton
-                                            small
-                                            icon="play"
-                                            disabled={$outLocked}
-                                            title="menu._title_display"
-                                            on:click={() => {
-                                                suggestion.trigger?.()
-                                                // dismissAiSuggestion(suggestion.id)
-                                            }}
-                                        />
-                                    {/if}
-                                    <MaterialButton small icon="close" title="actions.remove" on:click={() => dismissAiSuggestion(suggestion.id)} />
-                                </div>
+                {#if activeTab === "transcription"}
+                    <div class="card-body">
+                        {#if state === "error"}
+                            <p class="placeholder error">{translateText($aiSttStatus.message || "Something went wrong...")}</p>
+                        {:else if state === "processing"}
+                            <div class="processing-view">
+                                <div class="spinner large"></div>
+                                <p><T id="ai.processing" /></p>
                             </div>
-                        {/each}
+                        {:else if $sttTranscript.finalized || $sttTranscript.unprocessed}
+                            <div class="transcript-box" bind:this={transcriptElem} on:scroll={onTranscriptScroll}>
+                                <p>
+                                    {$sttTranscript.finalized}{#if $sttTranscript.unprocessed}{" "}<span class="interim">{$sttTranscript.unprocessed}</span>{/if}
+                                </p>
+                            </div>
+                        {:else}
+                            <!-- inactive or listening -->
+                            <Center faded>
+                                <T id="ai.waiting" />
+                            </Center>
+                        {/if}
+                    </div>
+
+                    {#if suggestions.length}
+                        <div class="suggestions-panel">
+                            {#each suggestions as suggestion (suggestion.id)}
+                                <div class="suggestion compact">
+                                    <div class="suggestionHeader">
+                                        <span class="reference">{suggestion.content}</span>
+                                        {#if suggestion.confidence}
+                                            <ConfidenceMeter confidence={suggestion.confidence} />
+                                        {/if}
+
+                                        <div class="fill" />
+
+                                        {#if suggestion.action === "presented"}
+                                            <Icon id="check" size={0.9} color="var(--primary-lighter)" title="ai.presented" />
+                                        {:else if suggestion.trigger}
+                                            <MaterialButton
+                                                small
+                                                icon="play"
+                                                disabled={$outLocked}
+                                                title="menu._title_display"
+                                                on:click={() => {
+                                                    suggestion.trigger?.()
+                                                    // dismissAiSuggestion(suggestion.id)
+                                                }}
+                                            />
+                                        {/if}
+                                        <MaterialButton small icon="close" title="actions.remove" on:click={() => dismissAiSuggestion(suggestion.id)} />
+                                    </div>
+                                </div>
+                            {/each}
+                        </div>
+                    {/if}
+                {:else if activeTab === "chat"}
+                    <div class="chat-container">
+                        {#if $ai?.llm?.provider}
+                            <div class="chat-messages">
+                                {#if chatMessages.length === 0}
+                                    <Center faded>
+                                        <p class="placeholder"><T id="chat.ask" /></p>
+                                    </Center>
+                                {:else}
+                                    {#each chatMessages as msg (msg.id)}
+                                        <div class="chat-message {msg.role}">
+                                            <p>{msg.content}</p>
+
+                                            {#if msg.action}
+                                                <MaterialButton title="Execute Action" style="margin-top: 10px;padding: 0;border-radius: 50px;" on:click={() => ChatAction.handle(msg.action)}>
+                                                    <AiRing opacity={0.85}>
+                                                        <div style="display: flex;align-items: center;justify-content: space-between;gap: 8px;padding: 8px 14px;">
+                                                            <Icon id="add" white />
+
+                                                            <span>{translateText(chatActionLabels[msg.action.type])}: {msg.action.data.name || "Untitled"}</span>
+                                                        </div>
+                                                    </AiRing>
+                                                </MaterialButton>
+                                            {/if}
+                                        </div>
+                                    {/each}
+                                    {#if isSending}
+                                        <div class="chat-message assistant placeholder">
+                                            <p><T id="ai.processing" /></p>
+                                        </div>
+                                    {/if}
+                                {/if}
+                            </div>
+                            <div class="chat-input-row">
+                                <input type="text" class="chat-input" placeholder={translateText("chat.type_message")} bind:value={chatInput} on:keydown={handleChatKeyDown} />
+                                <MaterialButton icon="send" title="chat.send" on:click={sendChatMessage} />
+                            </div>
+                        {:else}
+                            <Center faded>
+                                <p class="placeholder">No LLM provider selected</p>
+                            </Center>
+                        {/if}
                     </div>
                 {/if}
             </div>
@@ -416,8 +497,6 @@
         justify-content: center;
         border-radius: 50%;
         overflow: hidden;
-        /* isolation: isolate;
-        background: radial-gradient(circle at 42% 38%, rgba(255, 255, 255, 0.18), transparent 24%), radial-gradient(circle at 58% 62%, rgba(88, 210, 255, 0.12), transparent 38%), radial-gradient(circle, rgba(10, 34, 48, 0.78) 0%, rgba(5, 12, 22, 0.94) 74%); */
     }
 
     /* Slow inner atmosphere: keeps the orb alive even in quiet input. */
@@ -569,7 +648,7 @@
     }
 
     .card-header {
-        padding: 5px 10px 5px 20px;
+        padding: 5px 10px 5px 15px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -577,11 +656,28 @@
         background-color: rgb(0 0 0 / 0.1);
     }
 
+    .card-header :global(.tabs) {
+        background-color: transparent;
+    }
+    .card-header :global(.tabs button) {
+        padding: 8px 12px;
+    }
+    .card-header :global(.tabs button.isActive) {
+        background-color: rgb(0 0 0 / 0.15) !important;
+    }
+
+    .status-bar {
+        padding: 6px 15px;
+        background-color: rgb(0 0 0 / 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
     .ai-badge {
         display: flex;
         align-items: center;
         gap: 8px;
         text-transform: uppercase;
+        font-size: 0.75rem;
         font-weight: bold;
     }
 
@@ -605,30 +701,23 @@
         max-height: 100%;
         overflow-y: auto;
         padding: 15px;
-        /* no smooth scrolling: the follow-the-speech jump must not animate past its guard
-           window, or its trailing scroll events read as the user unpinning the view */
         font-size: 0.95rem;
         line-height: 1.5;
         cursor: text;
     }
 
-    /* the global stylesheet disables selection everywhere - the transcript is one of the few
-       places the user genuinely copies text from (the * rule hits every child, so both levels
-       need the override) */
     .transcript-box,
     .transcript-box p,
     .transcript-box span {
         user-select: text;
     }
 
-    /* the app's global styles ellipsize paragraphs - transcript lines must wrap instead */
     .transcript-box p {
         white-space: initial;
         overflow-wrap: anywhere;
         margin: 2px 0;
     }
 
-    /* the open utterance's unstable tail - visible right away, solidifies once confirmed */
     .interim {
         opacity: 0.45;
     }
@@ -651,31 +740,13 @@
         color: #00dfd8;
     }
 
-    /* on the closed bubble's row, to its left (bubble: 62px at 45px/45px) */
-    .ticker-wrap {
-        display: flex;
-        max-width: 60vw;
-
-        position: fixed;
-        /* right: 112px; */
-        right: calc(45px + (62px / 2));
-        bottom: calc(45px + (62px / 2));
-        transform: translateY(50%);
-        z-index: 4998;
-
-        /* the ring's inner card is opaque; the drop shadow lifts it off whatever panel is behind */
-        filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.5));
-    }
-
     .suggestion {
         display: flex;
         align-items: center;
         gap: 8px;
-
         padding: 8px 12px;
     }
 
-    /* the popup shows the whole suggestion list (the closed stack only keeps the newest three) */
     .suggestions-panel {
         display: flex;
         flex-direction: column;
@@ -728,5 +799,79 @@
         to {
             transform: rotate(360deg);
         }
+    }
+
+    /* Chat Tab Layout */
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        width: 100%;
+
+        overflow: hidden;
+    }
+
+    .chat-messages {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1;
+        padding: 12px;
+
+        overflow-y: auto;
+    }
+
+    .chat-message {
+        max-width: 80%;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .chat-message p {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .chat-message.user {
+        align-self: flex-end;
+        /* background-color: rgba(0, 223, 216, 0.15);
+        border: 1px solid rgba(0, 223, 216, 0.3); */
+        background-color: var(--secondary-opacity);
+        border: 1px solid var(--secondary);
+        color: #f1f5f9;
+    }
+
+    .chat-message.ai {
+        align-self: flex-start;
+        background-color: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #e2e8f0;
+    }
+
+    .chat-input-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-top: 1px solid #1e293b;
+        background-color: rgba(0, 0, 0, 0.15);
+    }
+
+    .chat-input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 6px;
+        padding: 8px 12px;
+        color: #fff;
+        font-size: 0.9rem;
+        outline: none;
+    }
+
+    .chat-input:focus {
+        border-color: var(--secondary);
     }
 </style>
