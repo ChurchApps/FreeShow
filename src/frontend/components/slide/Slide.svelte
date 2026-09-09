@@ -338,7 +338,7 @@
                         {#each layoutSlide.overlays as id}
                             {#if $overlays[id]?.placeUnderSlide === true}
                                 {#each $overlays[id]?.items || [] as item}
-                                    <Textbox {item} ref={{ type: "overlay", id }} preview />
+                                    <Textbox {item} ref={{ type: "overlay", id }} preview miniPreview />
                                 {/each}
                             {/if}
                         {/each}
@@ -391,7 +391,7 @@
                         {#each layoutSlide.overlays as id}
                             {#if $overlays[id] && !$overlays[id]?.placeUnderSlide}
                                 {#each $overlays[id]?.items || [] as item}
-                                    <Textbox {item} ref={{ type: "overlay", id }} preview />
+                                    <Textbox {item} ref={{ type: "overlay", id }} preview miniPreview />
                                 {/each}
                             {/if}
                         {/each}

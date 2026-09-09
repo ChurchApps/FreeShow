@@ -28,6 +28,7 @@
 
     export let slideIndex = 0
     export let preview = false
+    export let miniPreview = false
     export let isStage = false
     export let cropPreviewMode = false
     export let isTemplatePreview = false
@@ -84,7 +85,7 @@
 </script>
 
 {#if item.type === "media"}
-    <MediaItem {item} {outputId} slideRef={{ ...ref, slideIndex }} preview={preview || isStage} {edit} {cropPreviewMode} />
+    <MediaItem {item} {outputId} slideRef={{ ...ref, slideIndex }} preview={preview || isStage} {miniPreview} {edit} {cropPreviewMode} />
 {:else if item.type === "web"}
     <Website src={item.web?.src || ""} navigation={!edit && !item.web?.noNavigation} clickable={!edit && $currentWindow === "output"} {ratio} />
 {:else if item.type === "timer"}

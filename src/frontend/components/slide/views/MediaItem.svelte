@@ -16,6 +16,7 @@
     export let slideRef: any = {}
 
     export let preview = false
+    export let miniPreview = false
     export let edit = false
     export let cropPreviewMode = false
 
@@ -88,7 +89,7 @@
         thumbnailPath = media.thumbnail
 
         // only load thumbnails in main preview
-        if (shouldAutoUpdate || $currentWindow || preview) return
+        if (shouldAutoUpdate || $currentWindow || (preview && !miniPreview)) return
 
         mediaPath = thumbnailPath
     }

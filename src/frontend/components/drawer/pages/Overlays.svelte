@@ -74,10 +74,13 @@
             loaded = true
         } else {
             if (timeout) clearTimeout(timeout)
-            timeout = setTimeout(() => {
-                const batch = lazyLoader === 0 ? 4 : Math.min(32, lazyLoader * 2)
-                lazyLoader += batch
-            }, lazyLoader === 0 ? 60 : 30)
+            timeout = setTimeout(
+                () => {
+                    const batch = lazyLoader === 0 ? 4 : Math.min(32, lazyLoader * 2)
+                    lazyLoader += batch
+                },
+                lazyLoader === 0 ? 60 : 30
+            )
         }
     }
 
@@ -168,7 +171,7 @@
 
                                     <Zoomed {resolution} background={overlay.items.length ? "var(--primary);" : overlay.color || "var(--primary);"} checkered={!!overlay.items.length}>
                                         {#each overlay.items as item}
-                                            <Textbox {item} ref={{ type: "overlay", id: overlay.id }} preview />
+                                            <Textbox {item} ref={{ type: "overlay", id: overlay.id }} preview miniPreview />
                                         {/each}
                                     </Zoomed>
                                 {/if}
