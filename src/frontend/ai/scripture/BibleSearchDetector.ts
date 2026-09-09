@@ -1,4 +1,4 @@
-import { MatchResult } from "../manager/AiManager"
+import type { MatchResult } from "../../../types/ai/Ai"
 import type { BibleCacheData } from "./BibleCacheManager"
 import { normalizeMishearings } from "./mishearings"
 import { normalizeNumbers } from "./numbers"
@@ -383,7 +383,7 @@ export class BibleSearchDetector {
         }
 
         return {
-            match: { type: "scripture", content: topMatch.ref, confidence },
+            match: { type: "scripture", content: topMatch.ref, confidence, scriptureMatchType: "content" },
             hasAnyCandidates: true,
             isAmbiguous
         }

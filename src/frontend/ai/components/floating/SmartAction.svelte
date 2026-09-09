@@ -2,9 +2,10 @@
     import { fly } from "svelte/transition"
     import Icon from "../../../components/helpers/Icon.svelte"
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
-    import { aiSmartAction } from "../../../stores"
+    import { aiSmartAction, scriptures } from "../../../stores"
     import AiRing from "./AiRing.svelte"
     import ConfidenceMeter from "./ConfidenceMeter.svelte"
+    import { getShortBibleName } from "../../../components/drawer/bible/scripture"
 
     $: smartAction = $aiSmartAction
 </script>
@@ -43,8 +44,15 @@
                         <span style="font-weight: bold;">{smartAction.content}</span>
                     {:else if smartAction?.action === "present"}
                         <Icon id="play" white />
+
                         <p>Click to present:</p>
-                        <span style="font-weight: bold;">{smartAction.content}</span>
+                        <span style="font-weight: bold;">
+                            {smartAction.content}
+
+                            {#if smartAction?.scriptureTranslation}
+                                <span class="translation">({getShortBibleName($scriptures[smartAction.scriptureTranslation]?.name)})</span>
+                            {/if}
+                        </span>
                     {/if}
 
                     {#if smartAction?.confidence}

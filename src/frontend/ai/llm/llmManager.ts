@@ -1,9 +1,8 @@
 import { get } from "svelte/store"
-import type { AIProviderId } from "../../../types/ai/Ai"
+import type { AIProviderId, MatchResult } from "../../../types/ai/Ai"
 import { Main } from "../../../types/IPC/Main"
 import { requestMain } from "../../IPC/main"
 import { ai } from "../../stores"
-import { type MatchResult } from "../manager/AiManager"
 import { CHAT_RESPONSE_SCHEMA, CHAT_SYSTEM_PROMPT, STT_CONTROLLER_PROMPT, STT_CONTROLLER_SCHEMA } from "./prompts"
 import type { FreeShowAction } from "../manager/ChatAction"
 

@@ -7,6 +7,16 @@ export interface AiFeatureStatus {
     keyless?: boolean
 }
 
+export interface MatchResult {
+    type: "scripture" | "lyrics" | "quote" | "announcement" | "empty"
+    content: string // "scripture" = reference (e.g., "Genesis 1:1")
+    confidence: number // 1-100
+
+    scriptureMatchType?: "content"
+    scriptureTranslation?: string
+    scriptureIsNewTranslation?: boolean
+}
+
 export interface AiSuggestion {
     id: string
     action: string
@@ -14,6 +24,8 @@ export interface AiSuggestion {
     timestamp: number
     confidence: number
     trigger?: () => void
+
+    scriptureTranslation?: string
 }
 
 // models

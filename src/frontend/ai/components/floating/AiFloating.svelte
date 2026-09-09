@@ -6,7 +6,7 @@
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
     import Tabs from "../../../components/main/Tabs.svelte"
     import Center from "../../../components/system/Center.svelte"
-    import { activePage, ai, aiSmartAction, aiSttStatus, aiSuggestions, language, outLocked, settingsTab, sttTranscript } from "../../../stores"
+    import { activePage, ai, aiSmartAction, aiSttStatus, aiSuggestions, language, outLocked, scriptures, settingsTab, sttTranscript } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { type ChatMessage, getLLMManager } from "../../llm/llmManager"
     import { ChatAction, chatActionLabels } from "../../manager/ChatAction"
@@ -15,6 +15,7 @@
     import ConfidenceMeter from "./ConfidenceMeter.svelte"
     import SmartAction from "./SmartAction.svelte"
     import { copyTranscript, dismissAiSuggestion } from "./transcript"
+    import { getShortBibleName } from "../../../components/drawer/bible/scripture"
 
     let state: "inactive" | "error" | "listening" | "processing" = "inactive"
 
@@ -343,7 +344,14 @@
                             {#each suggestions as suggestion (suggestion.id)}
                                 <div class="suggestion compact">
                                     <div class="suggestionHeader">
-                                        <span class="reference">{suggestion.content}</span>
+                                        <span class="reference">
+                                            {suggestion.content}
+
+                                            {#if suggestion.scriptureTranslation}
+                                                <span class="translation">({getShortBibleName($scriptures[suggestion.scriptureTranslation]?.name)})</span>
+                                            {/if}
+                                        </span>
+
                                         {#if suggestion.confidence}
                                             <ConfidenceMeter confidence={suggestion.confidence} />
                                         {/if}

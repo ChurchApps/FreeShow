@@ -1,20 +1,15 @@
 import { get, type Unsubscriber } from "svelte/store"
 import { uid } from "uid"
-import type { AiSuggestion } from "../../../types/ai/Ai"
+import type { AiSuggestion, MatchResult } from "../../../types/ai/Ai"
 import type { ConfidenceLevels } from "../../../types/ai/AiSettings"
 import { startScripture } from "../../components/actions/apiHelper"
+import { keysToID } from "../../components/helpers/array"
 import { getFirstActiveOutput } from "../../components/helpers/output"
 import { ai, aiSmartAction, aiSuggestions, drawerTabsData, outputs, scriptures } from "../../stores"
 import { newToast } from "../../utils/common"
 import { getLLMManager } from "../llm/llmManager"
 import { BibleCacheManager } from "../scripture/BibleCacheManager"
 import { isReferenceWithin } from "../scripture/references"
-
-export interface MatchResult {
-    type: "scripture" | "lyrics" | "quote" | "announcement" | "empty"
-    content: string // "scripture" = reference (e.g., "Genesis 1:1")
-    confidence: number // 1-100
-}
 
 export class AiManager {
     private static lastMatch: number = 0
@@ -25,14 +20,11 @@ export class AiManager {
         const searchId = ++this.latestSearchId
         const isCancelled = () => searchId !== this.latestSearchId
 
-        // words heard under 75 were right less than two thirds of the time (measured); above that the match speaks for itself
-        const cap = (match: MatchResult): MatchResult => (chunk.confidence === undefined || chunk.confidence >= 75 ? match : { ...match, confidence: Math.round((match.confidence * chunk.confidence) / 75) })
-
         const stringMatch = await this.stringDetection(chunk.chunkWithOverlap, isCancelled)
         if (isCancelled()) return
 
         if (stringMatch) {
-            this.newMatch(cap(stringMatch))
+            this.newMatch(stringMatch)
             this.lastMatch = Date.now()
             return
         }
@@ -45,18 +37,20 @@ export class AiManager {
         // only report to LLM if nothing is auto detected
         const llmMatch = await llmManager.detectMatch(chunk)
         if (llmMatch) {
-            this.newMatch(cap(llmMatch))
+            this.newMatch(llmMatch)
             this.lastMatch = Date.now()
         }
     }
 
     private static async stringDetection(textChunk: string, isCancelled?: () => boolean) {
-        const scriptureMatch = await this.bibleDetection(textChunk, isCancelled)
-        return scriptureMatch
+        const scriptureMatch = await this.globalBibleDetection(textChunk, isCancelled)
+        if (scriptureMatch) return scriptureMatch
+
+        return null
     }
 
     private static scriptureAlerted: boolean = false
-    private static async bibleDetection(textChunk: string, isCancelled?: () => boolean) {
+    private static async globalBibleDetection(textChunk: string, isCancelled?: () => boolean) {
         const activeBibleId = get(drawerTabsData)?.scripture?.activeSubTab
         if (!activeBibleId) return null
 
@@ -67,10 +61,36 @@ export class AiManager {
             return null
         }
 
-        const bibleCache = await BibleCacheManager.getCache(activeBibleId)
+        const match = await this.bibleDetection(activeBibleId, textChunk, isCancelled)
+        if (!match) return null
+
+        // reference type matches stays on the active scripture
+        if (match.scriptureMatchType !== "content") return match
+
+        let highestConfidence = match.confidence || 0
+
+        // check other local scriptures
+        const allLocalScriptures = keysToID(get(scriptures)).filter((data) => !data.api && data.id !== activeBibleId)
+        allLocalScriptures.forEach(async ({ id }) => {
+            const otherMatch = await this.bibleDetection(id, textChunk, isCancelled)
+            if (otherMatch?.confidence && otherMatch.confidence > highestConfidence) {
+                highestConfidence = otherMatch.confidence
+                this.newMatch({ ...otherMatch, scriptureIsNewTranslation: true })
+            }
+        })
+
+        return match
+    }
+
+    private static async bibleDetection(id: string, textChunk: string, isCancelled?: () => boolean) {
+        const bibleCache = await BibleCacheManager.getCache(id)
         if (!bibleCache || isCancelled?.()) return null
 
-        return bibleCache.search(textChunk, AiManager.liveContent, isCancelled)
+        const match = await bibleCache.search(textChunk, AiManager.liveContent, isCancelled)
+        if (!match) return null
+
+        match.scriptureTranslation = id
+        return match
     }
 
     /////
@@ -87,6 +107,7 @@ export class AiManager {
             content: match.content,
             confidence: match.confidence
         }
+        if (match.scriptureIsNewTranslation) suggestionDraft.scriptureTranslation = match.scriptureTranslation
 
         const trigger = () => this.triggerMatchAction(match)
 
@@ -119,6 +140,7 @@ export class AiManager {
 
         // WIP currently only auto-plays scripture matches
         if (match.type !== "scripture") return false
+        if (match.type === "scripture" && match.scriptureIsNewTranslation) return false
 
         // never auto-play low confidence matches
         if (match.confidence <= 50) return false
