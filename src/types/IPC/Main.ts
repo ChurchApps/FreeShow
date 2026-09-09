@@ -405,7 +405,6 @@ export interface MainReturnPayloads {
     [Main.FFMPEG_DOWNLOAD]: Promise<{ success: boolean; error?: string }>
     // Streaming encoder
     [Main.ENCODER_DETECT]: Promise<EncoderDetection>
-    [Main.SET_RTMP_ENCODER]: void
     // AI
     [Main.AI_GET_BIN]: Promise<{ path: string; name: string; size: number }[]>
     [Main.AI_LISTEN_START]: Promise<{ started: boolean; error?: string }>
@@ -414,6 +413,8 @@ export interface MainReturnPayloads {
     [Main.AI_SET_KEY]: Promise<boolean>
     [Main.AI_LLM_COMPLETE]: Promise<{ text: string; error?: string; code?: string; retryAfter?: number }>
 }
+
+///////////
 
 export type ToMainSendValue2<ID extends Main> = ID extends keyof MainReturnPayloads ? MainReturnPayloads[ID] : never
 export type MainSendValue<ID extends Main> = ID extends keyof MainSendPayloads ? MainSendPayloads[ID] : never

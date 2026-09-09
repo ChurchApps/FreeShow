@@ -29,7 +29,9 @@ class LLMSession {
     async refreshConfig(): Promise<void> {
         const config = await this.resolveConfig()
         this.syncStatus(config)
-        if (JSON.stringify(config) !== JSON.stringify(this.lastConfig)) {
+
+        const isSameConfig = JSON.stringify(config) === JSON.stringify(this.lastConfig)
+        if (!isSameConfig) {
             this.lastConfig = config
             this.notifyListeners(config)
         }

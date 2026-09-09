@@ -6,7 +6,7 @@ import { NemotronDriver, type NemotronWorkerRequest, type NemotronWorkerResponse
 
 const WORKER_START_TIMEOUT = 30000
 const WORKER_FLUSH_TIMEOUT = 3000
-const WORKER_STALL_TIMEOUT = 20000
+const WORKER_STALL_TIMEOUT = 60000
 const WORKER_STALL_CHECK_INTERVAL = 5000
 
 export class NemotronTranscriber {
@@ -188,7 +188,9 @@ export class NemotronTranscriber {
         if (Date.now() - this.lastWorkerMessageAt < WORKER_STALL_TIMEOUT) return
 
         this.restarting = true
-        console.error(`[nemotron] Decode process went silent for ${Math.round((Date.now() - this.lastWorkerMessageAt) / 1000)}s - restarting process`)
+
+        // likely just not speaking
+        console.info(`[nemotron] Decode process went silent for ${Math.round((Date.now() - this.lastWorkerMessageAt) / 1000)}s - restarting process`)
 
         const { child } = this
         this.child = null

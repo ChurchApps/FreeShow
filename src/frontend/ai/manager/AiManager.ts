@@ -160,8 +160,8 @@ export class AiManager {
     private static shouldAutoPlay(match: MatchResult): boolean {
         if (match.confidence <= 95 && this.alreadySuggested(match)) return false
 
-        // WIP currently only auto-plays scripture matches
-        if (match.type !== "scripture") return false
+        if (match.type !== "scripture") return false // WIP currently only auto-plays scripture matches
+
         if (match.type === "scripture" && match.scriptureIsNewTranslation) return false
 
         // never auto-play low confidence matches

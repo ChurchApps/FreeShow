@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { ai, sttTranscript } from "../../stores"
 import { AiManager } from "../manager/AiManager"
+import { newToast } from "../../utils/common"
 
 type TranscriptPart = {
     text: string
@@ -53,6 +54,14 @@ export class Transcript {
             this.interimTimeout = null
             this.processPendingChunk()
         }
+    }
+
+    static copy() {
+        const text = get(sttTranscript).finalized
+        if (!text) return
+
+        navigator.clipboard.writeText(text)
+        newToast("actions.copied")
     }
 
     private static processPendingChunk() {

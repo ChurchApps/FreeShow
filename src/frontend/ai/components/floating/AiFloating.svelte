@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { fade } from "svelte/transition"
+    import { getShortBibleName } from "../../../components/drawer/bible/scripture"
     import Icon from "../../../components/helpers/Icon.svelte"
     import T from "../../../components/helpers/T.svelte"
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
@@ -11,11 +12,10 @@
     import { type ChatMessage, getLLMManager } from "../../llm/llmManager"
     import { ChatAction, chatActionLabels } from "../../manager/ChatAction"
     import { audioLevelStore, resolveSttEngine, SpeechToText } from "../../stt/stt"
+    import { Transcript } from "../../stt/transcript"
     import AiRing from "./AiRing.svelte"
     import ConfidenceMeter from "./ConfidenceMeter.svelte"
     import SmartAction from "./SmartAction.svelte"
-    import { copyTranscript, dismissAiSuggestion } from "./transcript"
-    import { getShortBibleName } from "../../../components/drawer/bible/scripture"
 
     let state: "inactive" | "error" | "listening" | "processing" = "inactive"
 
@@ -195,6 +195,11 @@
 
     $: suggestions = $aiSuggestions
 
+    function removeSuggestion(id: string) {
+        aiSmartAction.update((cur) => (cur?.id === id ? null : cur))
+        aiSuggestions.update((list) => list.filter((item) => item.id !== id))
+    }
+
     // CHAT
 
     let chatMessages: ChatMessage[] = []
@@ -308,7 +313,7 @@
 
                     <div class="headerActions">
                         {#if activeTab === "transcription" && $sttTranscript.finalized}
-                            <MaterialButton icon="copy" title="ai.copy_transcript" style="padding: 10px;" on:click={copyTranscript} />
+                            <MaterialButton icon="copy" title="ai.copy_transcript" style="padding: 10px;" on:click={() => Transcript.copy()} />
                         {/if}
                         <MaterialButton icon="settings" title="menu.settings" style="padding: 10px;" on:click={openSettings} />
 
@@ -368,11 +373,11 @@
                                                 title="menu._title_display"
                                                 on:click={() => {
                                                     suggestion.trigger?.()
-                                                    // dismissAiSuggestion(suggestion.id)
+                                                    // removeSuggestion(suggestion.id)
                                                 }}
                                             />
                                         {/if}
-                                        <MaterialButton small icon="close" title="actions.remove" on:click={() => dismissAiSuggestion(suggestion.id)} />
+                                        <MaterialButton small icon="close" title="actions.remove" on:click={() => removeSuggestion(suggestion.id)} />
                                     </div>
                                 </div>
                             {/each}
