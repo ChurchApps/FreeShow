@@ -1386,8 +1386,8 @@ export function getGroupText({ outSlide, show, ref, slideIndex }, groupOffset: n
 function getSlideText({ outSlide, show, ref }, slideIndex: number = 0) {
     let slideItemLines: string[] = []
     if (outSlide?.id === "temp") {
-        if (slideIndex < 0) slideItemLines = getTextLines({ items: outSlide?.previousSlides[0] }, true)
-        else if (slideIndex > 0) slideItemLines = getTextLines({ items: outSlide?.nextSlides[0] }, true)
+        if (slideIndex < 0) slideItemLines = getTextLines({ items: outSlide?.previousSlides?.[0] }, true)
+        else if (slideIndex > 0) slideItemLines = getTextLines({ items: outSlide?.nextSlides?.[0] }, true)
         else slideItemLines = getTextLines({ items: outSlide?.tempItems }, true)
     } else {
         const slide = show?.slides?.[ref[slideIndex]?.id]

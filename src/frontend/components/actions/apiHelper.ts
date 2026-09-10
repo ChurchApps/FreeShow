@@ -140,7 +140,7 @@ export async function startProjectItemByName(name: string) {
     while (match !== -1 && activeProjectItems[match]?.type === "section") match++
 
     const item = activeProjectItems[match]
-    if (!item) return
+    if (!item?.id) return
 
     // load any shows
     if ((item.type || "show") === "show") await loadShows([item.id])

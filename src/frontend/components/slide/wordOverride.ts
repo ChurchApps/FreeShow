@@ -131,7 +131,7 @@ function mergeOverrideStyles(baseStyle: string, override: TemplateStyleOverride)
 
 function parseStyleString(styleString: string): Record<string, string> {
     const result: Record<string, string> = {}
-    if (!styleString) return result
+    if (typeof styleString !== "string") return result
 
     // Split by semicolon and parse each property
     styleString.split(";").forEach((declaration) => {

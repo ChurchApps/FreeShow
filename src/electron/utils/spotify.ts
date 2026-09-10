@@ -6,14 +6,21 @@ import type { SpotifyState } from "../../types/Main"
 if (process.env.SPOTIFY_BRIDGE === "true") {
     let client: any = null
     let commandQueue = Promise.resolve()
+    let isExecuting = false
 
-    // Helper to queue native lib calls sequentially to prevent C++ thread race conditions
     const enqueueNativeCall = (fn: () => void) => {
         commandQueue = commandQueue
-            .then(() => {
-                if (client) fn()
+            .then(async () => {
+                if (!client || isExecuting) return
+                isExecuting = true
+                try {
+                    fn()
+                } finally {
+                    isExecuting = false
+                }
             })
             .catch((err) => {
+                isExecuting = false
                 process.send?.({ type: "error", error: err?.message || String(err) })
             })
     }
@@ -41,31 +48,39 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
             } else if (msg.type === "getState") {
                 enqueueNativeCall(() => {
                     if (!client) return
-                    const s = client.latestState()
-                    if (s) {
-                        if (s.albumArt?.length) s.albumArtBase64 = `data:image/jpeg;base64,${s.albumArt.toString("base64")}`
-                        delete s.albumArt
+                    try {
+                        const s = client.latestState()
+                        if (s) {
+                            if (s.albumArt?.length) s.albumArtBase64 = `data:image/jpeg;base64,${s.albumArt.toString("base64")}`
+                            delete s.albumArt
+                        }
+                        process.send?.({ type: "state", state: s })
+                    } catch (err: any) {
+                        process.send?.({ type: "state", state: null })
                     }
-                    process.send?.({ type: "state", state: s })
                 })
             } else if (msg.type === "command") {
                 enqueueNativeCall(() => {
                     if (!client) return
                     const { command: c, value: v } = msg
 
-                    if (c === "playpause") {
-                        const s = client.latestState()
-                        if (s) {
-                            if (s.statusName === "PLAYING") client.pause()
-                            else client.play()
-                        }
-                    } else if (c === "next") client.next()
-                    else if (c === "prev") client.previous()
-                    else if (c === "seek") client.seekMs(v * 1000)
-                    else if (c === "setVolume") {
-                        if ("appVolume" in client) client.appVolume = Number(v)
-                        else if (typeof client.setVolume === "function") client.setVolume(v)
-                    } else if (c === "pause") client.pause()
+                    try {
+                        if (c === "playpause") {
+                            const s = client.latestState()
+                            if (s) {
+                                if (s.statusName === "PLAYING") client.pause()
+                                else client.play()
+                            }
+                        } else if (c === "next") client.next()
+                        else if (c === "prev") client.previous()
+                        else if (c === "seek") client.seekMs(v * 1000)
+                        else if (c === "setVolume") {
+                            if ("appVolume" in client) client.appVolume = Number(v)
+                            else if (typeof client.setVolume === "function") client.setVolume(v)
+                        } else if (c === "pause") client.pause()
+                    } catch (err: any) {
+                        process.send?.({ type: "error", error: `Command ${c} failed: ${err?.message || String(err)}` })
+                    }
                 })
             }
         } catch (e: any) {
@@ -73,16 +88,23 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
         }
     })
 
-    process.on("exit", () => {
+    const cleanup = () => {
         if (client) {
             try {
                 const activeClient = client
-                client = null // Disallow subsequent queued calls immediately
+                client = null // Instantly block new enqueueNativeCall tasks
+                if (typeof activeClient.removeAllListeners === "function") {
+                    activeClient.removeAllListeners()
+                }
                 activeClient.stop()
                 activeClient.close()
             } catch {}
         }
-    })
+    }
+
+    process.on("exit", cleanup)
+    process.on("SIGINT", cleanup)
+    process.on("SIGTERM", cleanup)
 }
 
 // ----- CLIENT LOGIC (Main Process) -----

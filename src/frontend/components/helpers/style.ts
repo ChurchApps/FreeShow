@@ -4,7 +4,7 @@ const cache = new Map<string, StringObject>()
 const DONT_REPLACE = ["color", "background", "text-decoration", "text-transform", "text-shadow", "box-shadow", "font-family", "transform", "shape-outside"]
 
 export const getStyles = (str: string | null | undefined, removeTxt = false): StringObject => {
-    if (!str) return {}
+    if (typeof str !== "string") return {}
 
     const cacheKey = `${removeTxt ? 1 : 0}_${str}`
     const cached = cache.get(cacheKey)
@@ -35,7 +35,7 @@ export const getStyles = (str: string | null | undefined, removeTxt = false): St
 }
 
 export function getFilters(filter: string | undefined) {
-    if (!filter) return {}
+    if (typeof filter !== "string") return {}
 
     const styles: StringObject = {}
     filter.split(" ").forEach((s) => {

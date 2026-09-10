@@ -65,6 +65,7 @@ export class AudioPlayer {
 
     // returns false when the audio file can't be found or loaded
     static async start(path: string, metadata: AudioMetadata, options: AudioOptions = {}): Promise<boolean> {
+        if (typeof path !== "string") return false
         if (get(outLocked) || clearing.includes(path) || this.isLoading(path)) return true
         const pathId = path
         this.setLoading(pathId)

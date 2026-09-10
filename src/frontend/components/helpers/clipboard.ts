@@ -724,7 +724,7 @@ const deleteActions = {
         const showId = get(activeShow)?.id || ""
         const items = get(activeEdit).items || []
         const currentShow = get(showsCache)[showId]
-        if (currentShow.locked || currentShow?.slides?.[groupId || ""]?.locked) {
+        if (currentShow?.locked || currentShow?.slides?.[groupId || ""]?.locked) {
             newToast("output.state_locked")
             return
         }

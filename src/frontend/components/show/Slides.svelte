@@ -121,7 +121,7 @@
             }
 
             // get item click reveal
-            const clickRevealItems = (showSlide?.items || []).filter((a) => a?.clickReveal)
+            const clickRevealItems = Array.isArray(showSlide?.items) ? showSlide.items.filter((a) => a?.clickReveal) : []
             const isRevealed = clickRevealItems.length ? !!outSlide?.itemClickReveal : true
             let itemClickReveal = false
             if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && clickRevealItems.length) {
@@ -130,7 +130,7 @@
             }
 
             // get lines reveal
-            const linesRevealItems = (showSlide?.items || []).filter((a) => a?.lineReveal)
+            const linesRevealItems = Array.isArray(showSlide?.items) ? showSlide.items.filter((a) => a?.lineReveal) : []
             let revealCount = outSlide?.revealCount ?? 0
             if (outSlide && outSlide.id === showId && outSlide.layout === activeLayout && outSlide.index === index && linesRevealItems.length && isRevealed) {
                 revealCount++
@@ -218,9 +218,10 @@
         let slides = _show(showId).get("slides") || {}
         Object.keys(slides).forEach((slideId) => {
             let slide = slides[slideId]
+            if (!Array.isArray(slide?.items)) return
 
-            slide?.items?.forEach((item) => {
-                if (!item?.lines) return
+            slide.items.forEach((item) => {
+                if (!Array.isArray(item?.lines)) return
 
                 item.lines.forEach((line) => {
                     if (!Array.isArray(line?.text)) return

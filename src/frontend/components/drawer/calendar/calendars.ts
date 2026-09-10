@@ -5,6 +5,7 @@ import { convertCalendar } from "../../../converters/calendar"
 import { alertMessage, calendars, events, special } from "../../../stores"
 import { translateText } from "../../../utils/language"
 import { confirmCustom } from "../../../utils/popup"
+import { encodeFilePath } from "../../helpers/media"
 
 export interface CalendarData {
     id: string
@@ -171,7 +172,7 @@ function parseCalendarName(content: string, url: string): string {
         const parsed = new URL(url)
         const lastPath = parsed.pathname.split("/").filter(Boolean).pop()
         if (lastPath?.toLowerCase().endsWith(".ics")) {
-            return decodeURIComponent(lastPath.replace(/\.ics$/i, ""))
+            return encodeFilePath(lastPath.replace(/\.ics$/i, ""))
         }
         return parsed.hostname.replace(/^www\./i, "")
     } catch {
