@@ -17,8 +17,7 @@
     // Active tab state
     let activeTab: "transcription" | "chat" = "transcription"
     $: tabs = {
-        transcription: { name: "ai.transcription", icon: "microphone" } // , disabled: !$ai?.stt?.engine
-        // chat: { name: "chat.chat", icon: "chat" } // WIP disable for now, I guess more useful to have in the slide/template editor directly
+        transcription: { name: "ai.transcription", icon: "microphone" }
     }
 
     let isOpen = false
@@ -194,7 +193,7 @@
 {/if}
 
 <div class="speech-widget {isOpen ? 'is-open' : 'is-closed'}">
-    <AiRing {state} {audioLevel} borderRadius={isOpen ? "20px" : "50%"} opacity={isOpen ? 0.8 : 0.4} fill {wordConfirmTick} {wordConfirmDurationMs}>
+    <AiRing {state} {audioLevel} borderRadius={isOpen ? "20px" : "50%"} opacity={state === "inactive" || isOpen ? 0.8 : 0.4} fill {wordConfirmTick} {wordConfirmDurationMs}>
         {#if !isOpen}
             <AiVisual {state} on:click={toggleExpand} />
         {:else}
