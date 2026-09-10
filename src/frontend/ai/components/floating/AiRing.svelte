@@ -1,6 +1,6 @@
 <script lang="ts">
     // animated AI gradient ring - wraps any content to visually mark it as an AI feature area
-    export let state: "inactive" | "error" | "listening" | "processing" = "listening"
+    export let state: "loading" | "inactive" | "error" | "listening" | "processing" = "listening"
     export let audioLevel = 0.0
     export let borderRadius = "20px"
     export let borderWidth = "3px"
@@ -60,6 +60,8 @@
         border-radius: inherit;
         overflow: hidden;
         position: relative;
+
+        transition: background 0.2s ease-out;
     }
 
     .word-confirmation {

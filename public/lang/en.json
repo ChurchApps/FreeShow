@@ -1833,6 +1833,7 @@
         "waiting": "Waiting...",
         "processing": "Processing...",
         "transcription": "Transcription",
+        "auto_present": "Auto present",
         "confidence_ask": "Always ask",
         "confidence_highest": "If confident",
         "confidence_high": "If high confidence",

@@ -1,14 +1,14 @@
 <script lang="ts">
     import { getShortBibleName } from "../../../components/drawer/bible/scripture"
-    import Icon from "../../../components/helpers/Icon.svelte"
     import T from "../../../components/helpers/T.svelte"
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
     import Center from "../../../components/system/Center.svelte"
     import { aiSmartAction, aiSttStatus, aiSuggestions, outLocked, scriptures, sttTranscript } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { Transcript } from "../../stt/transcript"
     import ConfidenceMeter from "./ConfidenceMeter.svelte"
 
-    export let state: "inactive" | "error" | "listening" | "processing" = "inactive"
+    export let state: "loading" | "inactive" | "error" | "listening" | "processing" = "inactive"
 
     // the transcript follows the speech while pinned to the bottom - scrolling up to read
     // history stops the auto-jump until the user returns to the bottom
@@ -58,9 +58,15 @@
             <p>
                 {$sttTranscript.finalized}{#if $sttTranscript.unprocessed}{" "}<span class="interim">{$sttTranscript.unprocessed}</span>{/if}
             </p>
+
+            {#if $sttTranscript.finalized}
+                <div class="transcript-actions">
+                    <MaterialButton icon="copy" title="actions.copy" style="padding: 10px;" on:click={() => Transcript.copy()} />
+                </div>
+            {/if}
         </div>
     {:else}
-        <!-- inactive or listening -->
+        <!-- loading, inactive or listening -->
         <Center faded>
             <T id="ai.waiting" />
         </Center>
@@ -70,7 +76,7 @@
 {#if suggestions.length}
     <div class="suggestions-panel">
         {#each suggestions as suggestion (suggestion.id)}
-            <div class="suggestion compact">
+            <div class="suggestion">
                 <div class="suggestionHeader">
                     <span class="reference">
                         {suggestion.content}
@@ -87,20 +93,20 @@
                     <div class="fill" />
 
                     {#if suggestion.action === "presented"}
-                        <Icon id="check" size={0.9} color="var(--primary-lighter)" title="ai.presented" />
+                        <MaterialButton icon="check" title="ai.auto_present" style="padding: 6px;" disabled />
                     {:else if suggestion.trigger}
                         <MaterialButton
-                            small
                             icon="play"
                             disabled={$outLocked}
                             title="menu._title_display"
+                            style="padding: 6px;"
                             on:click={() => {
                                 suggestion.trigger?.()
                                 // removeSuggestion(suggestion.id)
                             }}
                         />
                     {/if}
-                    <MaterialButton small icon="close" title="actions.remove" on:click={() => removeSuggestion(suggestion.id)} />
+                    <MaterialButton icon="delete" title="actions.remove" style="padding: 6px;" on:click={() => removeSuggestion(suggestion.id)} />
                 </div>
             </div>
         {/each}
@@ -109,8 +115,10 @@
 
 <style>
     .card-body {
+        position: relative;
+
         flex: 1;
-        padding: 5px;
+        /* padding: 5px; */
         display: flex;
         align-items: center;
         justify-content: center;
@@ -121,7 +129,6 @@
         width: 100%;
         max-height: 100%;
         overflow-y: auto;
-        padding: 15px;
         font-size: 0.95rem;
         line-height: 1.5;
         cursor: text;
@@ -136,7 +143,13 @@
     .transcript-box p {
         white-space: initial;
         overflow-wrap: anywhere;
-        margin: 2px 0;
+        padding: 10px 25px;
+    }
+
+    .transcript-actions {
+        position: absolute;
+        bottom: 8px;
+        right: 10px;
     }
 
     .interim {
@@ -165,7 +178,7 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 8px 12px;
+        padding: 5px 14px;
     }
 
     .suggestions-panel {
@@ -180,12 +193,6 @@
         border-top: 1px solid rgba(0, 0, 0, 0.3);
     }
 
-    .suggestion.compact {
-        gap: 1px;
-        padding: 5px 10px;
-        box-shadow: none;
-    }
-
     .fill {
         flex: 1;
     }
@@ -193,7 +200,7 @@
     .suggestionHeader {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 5px;
         flex: 1;
     }
     .suggestionHeader .reference {

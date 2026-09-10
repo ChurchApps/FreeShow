@@ -218,6 +218,7 @@ export const aiLlmStatus: Writable<AiFeatureStatus> = writable({ state: "stopped
 export const aiSuggestions: Writable<AiSuggestion[]> = writable([])
 export const aiSmartAction: Writable<AiSuggestion | null> = writable(null)
 export const sttTranscript: Writable<{ finalized: string; unprocessed: string }> = writable({ finalized: "", unprocessed: "" })
+export const sttTempDisabled: Writable<boolean> = writable(false)
 
 // ----- SAVED VARIABLES -----
 

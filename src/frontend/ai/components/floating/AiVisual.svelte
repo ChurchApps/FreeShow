@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import { audioLevelStore } from "../../stt/stt"
 
-    export let state: "inactive" | "error" | "listening" | "processing" = "inactive"
+    export let state: "loading" | "inactive" | "error" | "listening" | "processing" = "inactive"
 
     let displayedAudioLevel = 0
     let animationFrameId: number
@@ -37,7 +37,7 @@
 </script>
 
 <button class="floating-trigger" on:click aria-label="Expand Speech Recognition Modal">
-    {#if state === "inactive" || state === "error"}
+    {#if state === "loading" || state === "inactive" || state === "error"}
         <svg class="mic-icon" class:error={state === "error"} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
             <path d="M19 10v2a7 7 0 0 1-14 0v-2" />

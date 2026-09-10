@@ -24,4 +24,4 @@
 
 <Title label="tabs.scripture" icon="scripture" />
 
-<MaterialDropdown label="Auto present" options={confidenceOptions} value={settings.confidence || "ask"} on:change={(e) => updateValue("confidence", e.detail)} />
+<MaterialDropdown label="ai.auto_present" options={confidenceOptions} value={settings.confidence || "ask"} on:change={(e) => updateValue("confidence", e.detail)} />
