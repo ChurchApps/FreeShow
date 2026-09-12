@@ -157,9 +157,6 @@
                     <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(templateFirst)} />
                 {/if}
             </InputRow>
-        {/if}
-
-        {#if display === "first" || display === "first_last" || display === "always"}
             <InputRow>
                 <MaterialNumberInput label="meta.first_offset" value={firstOffset} min={0} max={50} on:change={(e) => changeMetadata("firstOffset", e.detail)} />
             </InputRow>
@@ -171,6 +168,12 @@
                 <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(template)} />
             {/if}
         </InputRow>
+
+        {#if display === "first"}
+            <InputRow>
+                <MaterialNumberInput label="meta.first_offset" value={firstOffset} min={0} max={50} on:change={(e) => changeMetadata("firstOffset", e.detail)} />
+            </InputRow>
+        {/if}
 
         {#if display === "last" || display === "first_last" || display === "always"}
             <InputRow>
