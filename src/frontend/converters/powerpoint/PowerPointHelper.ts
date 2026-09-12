@@ -15,6 +15,7 @@ import type { Item, Line } from "../../../types/Show"
 import { getItemText } from "../../components/edit/scripts/textStyle"
 import { clone } from "../../components/helpers/array"
 import { hexToHSL, hexToRgb, hslToHex } from "../../components/helpers/color"
+import { mergeAdjacentTextRuns } from "./powerpointTextRuns"
 import { getCustomShapePath, getPresetShapePath } from "./powerpointShapes"
 
 export interface Relationship {
@@ -806,6 +807,8 @@ export class PowerPointPackage {
                                 }
                             ] // space so style (font size) applies
                           : []
+
+                    text = mergeAdjacentTextRuns(text)
 
                     if (text.length && bullet) {
                         text = [autoNum ? { ...bullet, value: getBulletValue(autoNum, bulletNum + startAt - 1) } : bullet, ...text]
