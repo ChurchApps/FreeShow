@@ -41,6 +41,8 @@ export interface Metadata {
     template?: string // default or last slide only
     templateFirst?: string // first slide only
     templateAll?: string // all slides (old "message")
+    firstOffset?: number // show N active slides after the first, instead of on the first itself
+    lastOffset?: number // show N active slides before the last, instead of on the last itself
 }
 
 export interface Resolution {

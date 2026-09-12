@@ -7,6 +7,7 @@
     import { metadataDisplayValues } from "../../helpers/show"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import Tip from "../Tip.svelte"
 
@@ -33,6 +34,8 @@
     $: templateAll = currentValue.templateAll || "metadata"
     $: template = currentValue.template || (display === "always" ? templateAll : "metadata")
     $: templateFirst = currentValue.templateFirst || (display === "always" ? templateAll : template)
+    $: firstOffset = currentValue.firstOffset || 0
+    $: lastOffset = currentValue.lastOffset || 0
 
     // VALUES
 
@@ -48,7 +51,7 @@
 
     // UPDATE
 
-    function changeMetadata(key: string, value: string) {
+    function changeMetadata(key: string, value: string | number) {
         console.log(key, value)
 
         if (key === "display" && currentValue[key] === value) {
@@ -156,12 +159,24 @@
             </InputRow>
         {/if}
 
+        {#if display === "first" || display === "first_last" || display === "always"}
+            <InputRow>
+                <MaterialNumberInput label="meta.first_offset" value={firstOffset} min={0} max={50} on:change={(e) => changeMetadata("firstOffset", e.detail)} />
+            </InputRow>
+        {/if}
+
         <InputRow>
             <MaterialPopupButton label="meta.meta_template{display === 'first_last' || display === 'always' ? ' (show_at.last)' : ''}" value={template} defaultValue={display === "always" ? templateAll : "metadata"} name={$templates[template]?.name} popupId="select_template" icon="templates" data={{ revert: "metadata_display" }} on:change={(e) => changeMetadata("template", e.detail)} />
             {#if template && $templates[template]}
                 <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(template)} />
             {/if}
         </InputRow>
+
+        {#if display === "last" || display === "first_last" || display === "always"}
+            <InputRow>
+                <MaterialNumberInput label="meta.last_offset" value={lastOffset} min={0} max={50} on:change={(e) => changeMetadata("lastOffset", e.detail)} />
+            </InputRow>
+        {/if}
 
         <Tip value="tips.metadata_customize" top={20} />
     </div>
