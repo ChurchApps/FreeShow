@@ -12,6 +12,7 @@ import { actions, activeFocus, activeProject, activeRename, activeShow, activeTi
 import { trackScriptureUsage } from "../../utils/analytics"
 import { isMainWindow, isOutputWindow, newToast } from "../../utils/common"
 import { translateText } from "../../utils/language"
+import { getMetadataSlideIndices } from "../../utils/metadataSlideIndex"
 import { confirmCustom } from "../../utils/popup"
 import { send } from "../../utils/request"
 import { hasStageStreamViewers, sendBackgroundToStage } from "../../utils/stageTalk"
@@ -1790,18 +1791,7 @@ export function getMetadata(show: Show | undefined, currentStyle: Styles, outSli
     if (typeof display !== "string" || display === "never") return null
 
     const ref = clone(_show(outSlide.id).layouts([outSlide.layout]).ref()[0] || [])
-    // "offset" counts *active* (non-disabled) slides, so e.g. firstOffset = 1
-    // targets the second active slide, not literally index (first + 1) — a
-    // disabled slide in between shouldn't shift the count. Default 0
-    // reproduces the previous first/last-active-slide behavior exactly.
-    const activeIndices = ref.reduce((indices: number[], a, i) => {
-        if (!a.data.disabled) indices.push(i)
-        return indices
-    }, [])
-    const firstOffset = Math.max(0, Math.floor(Number(metadataValues.firstOffset) || 0))
-    const lastOffset = Math.max(0, Math.floor(Number(metadataValues.lastOffset) || 0))
-    const firstActiveSlideIndex = activeIndices[Math.min(firstOffset, activeIndices.length - 1)] ?? -1
-    const lastActiveSlideIndex = activeIndices[Math.max(activeIndices.length - 1 - lastOffset, 0)] ?? -1
+    const { firstActiveSlideIndex, lastActiveSlideIndex } = getMetadataSlideIndices(ref, metadataValues.firstOffset, metadataValues.lastOffset)
     const displayMetadata = display === "always" || (display.includes("first") && outSlide?.index === firstActiveSlideIndex) || (display.includes("last") && outSlide?.index === lastActiveSlideIndex)
     if (!displayMetadata) return null
 
