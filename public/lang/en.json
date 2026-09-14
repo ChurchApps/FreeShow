@@ -369,6 +369,7 @@
         "meta_template": "Metadata template",
         "text_divider": "Text separator",
         "message_template": "Message template",
+        "ignore_empty": "Ignore empty slides",
         "tags": "Tags",
         "new_tag": "New tag",
         "clear_tag_filter": "Clear tag filter"

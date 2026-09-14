@@ -41,6 +41,7 @@ export interface Metadata {
     template?: string // default or last slide only
     templateFirst?: string // first slide only
     templateAll?: string // all slides (old "message")
+    ignoreEmpty?: boolean // only display on slides with text content
 }
 
 export interface Resolution {

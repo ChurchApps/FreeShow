@@ -8,6 +8,7 @@
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import Tip from "../Tip.svelte"
 
     let data
@@ -49,8 +50,6 @@
     // UPDATE
 
     function changeMetadata(key: string, value: string) {
-        console.log(key, value)
-
         if (key === "display" && currentValue[key] === value) {
             activePopup.set(null)
             return
@@ -115,6 +114,8 @@
     }
 
     $: displayValues = type === "style" ? [{ id: "default", name: "example.default" }, ...metadataDisplayValues] : metadataDisplayValues
+
+    let showMore = currentValue.ignoreEmpty ?? false
 </script>
 
 <div class="types">
@@ -137,6 +138,8 @@
 {#if display === "default"}
     <Tip value="tips.display_metadata" top={20} />
 {:else if display !== "never"}
+    <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white />
+
     <div style="margin-top: 20px;">
         {#if display === "always"}
             <InputRow>
@@ -162,6 +165,10 @@
                 <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(template)} />
             {/if}
         </InputRow>
+
+        {#if showMore}
+            <MaterialToggleSwitch label="meta.ignore_empty" checked={currentValue.ignoreEmpty} defaultValue={false} on:change={(e) => changeMetadata("ignoreEmpty", e.detail)} />
+        {/if}
 
         <Tip value="tips.metadata_customize" top={20} />
     </div>

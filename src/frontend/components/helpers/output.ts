@@ -1789,10 +1789,20 @@ export function getMetadata(show: Show | undefined, currentStyle: Styles, outSli
     const display = metadataValues.display || "never"
     if (typeof display !== "string" || display === "never") return null
 
+    const shouldDisplay = (slideRef: any) => {
+        // ignore disabled slides
+        if (!slideRef || slideRef.data?.disabled) return false
+        if (!metadataValues.ignoreEmpty) return true
+
+        // needs to have text content
+        const slide = show.slides?.[slideRef.id]
+        return !!slide?.items?.some((item) => item.lines?.some((line) => line.text?.some((text) => text.value?.length)))
+    }
+
     const ref = clone(_show(outSlide.id).layouts([outSlide.layout]).ref()[0] || [])
-    const firstActiveSlideIndex = ref.findIndex((a) => !a.data.disabled)
-    const lastActiveSlideIndex = ref.length - 1 - [...ref].reverse().findIndex((a) => !a.data.disabled)
-    const displayMetadata = display === "always" || (display.includes("first") && outSlide?.index === firstActiveSlideIndex) || (display.includes("last") && outSlide?.index === lastActiveSlideIndex)
+    const firstActiveSlideIndex = ref.findIndex(shouldDisplay)
+    const lastActiveSlideIndex = ref.length - 1 - [...ref].reverse().findIndex(shouldDisplay)
+    const displayMetadata = (display === "always" && shouldDisplay(ref[outSlide.index ?? -1])) || (display.includes("first") && outSlide?.index === firstActiveSlideIndex) || (display.includes("last") && outSlide?.index === lastActiveSlideIndex)
     if (!displayMetadata) return null
 
     // template
