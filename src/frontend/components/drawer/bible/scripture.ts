@@ -2229,9 +2229,7 @@ export async function resolveScriptureReference(referenceText: string, scripture
             if (verseMatch) {
                 const start = parseInt(verseMatch[1])
                 const end = verseMatch[2] ? parseInt(verseMatch[2]) : start
-                if (start > 0 && start <= 150) {
-                    verses = Array.from({ length: end - start + 1 }, (_, i) => start + i)
-                }
+                if (!isNaN(start)) verses = Array.from({ length: end - start + 1 }, (_, i) => start + i)
             }
         }
         if (!verses.length) {
