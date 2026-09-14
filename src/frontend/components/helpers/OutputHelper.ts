@@ -199,6 +199,9 @@ export class OutputHelper {
     private static getProjectItemIndex(item: OutSlide | ShowRef | null = null) {
         if (!item) return -1
 
+        const projectIndex = (item as OutSlide)?.projectIndex ?? (item as ShowRef)?.index
+        if (typeof projectIndex === "number" && projectIndex >= 0) return projectIndex
+
         const projectItems = this.getProjectItems()
         const activeShow = this.getActiveItem()
 
@@ -223,7 +226,7 @@ export class OutputHelper {
         const projectItems = this.getProjectItems()
         const activeItem = this.getActiveItem()
         const currentShow = get(showsCache)[activeItem?.id || ""]
-        const activeOutShow: OutSlide | null = currentShow && !options.playNext ? { id: activeItem?.id || "", layout: projectItems[activeItem?.index ?? -1]?.layout || currentShow?.settings?.activeLayout } : null
+        const activeOutShow: OutSlide | null = currentShow && !options.playNext ? { id: activeItem?.id || "", layout: projectItems[activeItem?.index ?? -1]?.layout || currentShow?.settings?.activeLayout, projectIndex: activeItem?.index } : null
 
         const outSlide = this.getOut(outputId).slide || null
 

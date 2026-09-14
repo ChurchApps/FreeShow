@@ -87,7 +87,7 @@
             showPlayOnHover
             on:click={(e) => {
                 if ($outLocked || e.ctrlKey || e.metaKey || iconClicked) return
-                if (e.target?.closest(".edit")) return
+                if (e.target?.closest?.(".edit")) return
 
                 if (findMatchingOut(video.rid, $outputs)) {
                     clearBackground()

@@ -467,7 +467,7 @@ export function _show(id = "active") {
                         a[id].layouts[layoutId][key] = value
                     })
 
-                    if (!a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
                     return a
                 })
                 return prev
@@ -493,7 +493,7 @@ export function _show(id = "active") {
                     prev.push(a[id].layouts[layoutId])
                     delete a[id].layouts[layoutId]
 
-                    if (!a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
                     return a
                 })
                 return prev
@@ -538,7 +538,7 @@ export function _show(id = "active") {
                             })
                         })
 
-                        if (!a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                        if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
                         return a
                     })
                     return prev
@@ -585,7 +585,7 @@ export function _show(id = "active") {
                             }
                         })
 
-                        if (!a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                        if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
                         return a
                     })
                 },
@@ -616,7 +616,7 @@ export function _show(id = "active") {
                                 })
                         })
 
-                        if (!a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                        if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
                         return a
                     })
                     return prev
@@ -644,7 +644,7 @@ export function _show(id = "active") {
                                 })
                             })
 
-                            if (!a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                            if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
                             return a
                         })
                         return prev

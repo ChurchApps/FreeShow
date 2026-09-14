@@ -1,7 +1,7 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { AspectRatio, Resolution, Styles } from "../../../../types/Settings"
-    import { activeDrawerTab, activeEdit, activePage, activeStyle, outputs, styles, templates } from "../../../stores"
+    import { activeDrawerTab, activeEdit, activePage, activeStyle, drawerTabsData, outputs, styles, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { transitionTypes } from "../../../utils/transitions"
     import { mediaExtensions } from "../../../values/extensions"
@@ -10,7 +10,6 @@
     import { history } from "../../helpers/history"
     import { defaultLayers } from "../../helpers/output"
     import { metadataDisplayValues } from "../../helpers/show"
-    import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -149,26 +148,7 @@
     function updateCustom(e: any) {
         updateStyle(e.value, e.key)
     }
-
-    $: normalOutputs = Object.values($outputs).filter((a) => a.enabled && !a.stageOutput)
-    function useStyle() {
-        outputs.update((a) => {
-            Object.keys(a).forEach((outputId) => {
-                let output = a[outputId]
-                if (output.stageOutput || !output.enabled) return
-
-                output.style = styleId
-            })
-            return a
-        })
-    }
 </script>
-
-{#if styleId && normalOutputs.length === 1 && normalOutputs[0].style !== styleId}
-    <MaterialButton variant="outlined" style="width: 100%;margin-bottom: 10px;" icon="check" on:click={useStyle}>
-        <T id="settings.active_style" />
-    </MaterialButton>
-{/if}
 
 <MaterialColorInput label="edit.background_color{templateBackground ? ' <span style="color: var(--text);opacity: 0.5;font-weight: normal;font-size: 0.6em;">settings.overrided_value<span>' : ''}" value={currentStyle.background || "#000000"} defaultValue="#000000" on:input={(e) => updateStyle(e, "background")} />
 
@@ -211,12 +191,14 @@
     {/if}
 </InputRow>
 
-<InputRow>
-    <MaterialPopupButton id="scripture" label="settings.override_scripture_with_template" disabled={!activeLayers.includes("slide")} value={templateOverrideScripture || currentStyle.templateScripture_2 || currentStyle.templateScripture_3 || currentStyle.templateScripture_4} name={scriptureTemplateLabel} popupId="select_template" icon="templates" on:change={updateScriptureTemplate} allowEmpty />
-    {#if templateOverrideScripture && $templates[templateOverrideScripture]}
-        <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(templateOverrideScripture)} />
-    {/if}
-</InputRow>
+{#if $drawerTabsData?.scripture?.enabled !== false}
+    <InputRow>
+        <MaterialPopupButton id="scripture" label="settings.override_scripture_with_template" disabled={!activeLayers.includes("slide")} value={templateOverrideScripture || currentStyle.templateScripture_2 || currentStyle.templateScripture_3 || currentStyle.templateScripture_4} name={scriptureTemplateLabel} popupId="select_template" icon="templates" on:change={updateScriptureTemplate} allowEmpty />
+        {#if templateOverrideScripture && $templates[templateOverrideScripture]}
+            <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(templateOverrideScripture)} />
+        {/if}
+    </InputRow>
+{/if}
 
 <MaterialPopupButton id={styleId} label="meta.display_metadata" disabled={!activeLayers.includes("slide")} value={metadataDisplay} defaultValue="default" name={metadataDisplayLabel} popupId="metadata_display" icon="info" data={{ type: "style" }} on:change={(e) => updateStyle({ ...metadata, display: e.detail }, "metadata")} />
 

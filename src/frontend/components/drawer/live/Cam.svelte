@@ -5,6 +5,7 @@
     import { media, os, outputs, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
+    import { getCropState } from "../../helpers/cropping"
     import { getMediaStyle } from "../../helpers/media"
     import { findMatchingOut } from "../../helpers/output"
     import Button from "../../inputs/Button.svelte"
@@ -13,18 +14,33 @@
 
     export let cam: CameraData
     export let item = false
+    export let preview = false
     export let style = ""
     export let showPlayOnHover = true
     export let disablePreview = false
+    export let cropping: any = undefined
+    export let cropPreviewMode = false
+    export let itemStyle: string | undefined = undefined
 
     let loaded = false
     // $: active = $outBackground?.type === "camera" && $outBackground.id === cam.id
 
     let videoElem: HTMLVideoElement | undefined
+    let videoOverflowElem: HTMLVideoElement | undefined
     let error: null | string = null
     let retryTimeout: NodeJS.Timeout | null = null
 
+    $: cropState = getCropState(cropping, cropPreviewMode, itemStyle || mediaStyle.style)
+    $: showCropOverflowPreview = cropState.showCropOverflowPreview
+    $: mediaOverflowPreviewStyle = `position: absolute;width: 100%;height: 100%;left: 0;top: 0;opacity: 0.35;pointer-events: none;`
+
+    $: if (videoOverflowElem && videoElem?.srcObject && videoOverflowElem.srcObject !== videoElem.srcObject) {
+        videoOverflowElem.srcObject = videoElem.srcObject
+        cameraManager.play(videoOverflowElem)
+    }
+
     let isDestroyed = false
+    let isHovered = false
 
     onMount(capture)
     async function capture() {
@@ -36,21 +52,23 @@
 
         error = ""
 
-        const cameraStream = await cameraManager.getCameraStream(cam.id, cam.group, { preview: true })
+        const res = await cameraManager.attachCamera(videoElem, cam.id, {
+            groupId: cam.group,
+            preview: !item || preview,
+            isHovered: () => isHovered,
+            isDestroyed: () => isDestroyed
+        })
+
         if (isDestroyed) return
 
-        if (typeof cameraStream === "string") {
-            error = cameraStream
+        if (typeof res === "string") {
+            error = res
             loaded = true
 
             // retry
             if ($os.platform === "darwin") retryTimeout = setTimeout(capture, 5000)
         } else {
-            if (!videoElem) return
-
-            videoElem.srcObject = cameraStream
             loaded = true
-            videoElem.play()
         }
     }
 
@@ -58,10 +76,7 @@
         isDestroyed = true
 
         if (retryTimeout) clearTimeout(retryTimeout)
-
-        if (!videoElem) return
-        cameraManager.stopTracks(videoElem.srcObject as MediaStream)
-        videoElem.srcObject = null
+        cameraManager.detachCamera(videoElem, cam.id)
     })
 
     let dispatch = createEventDispatcher()
@@ -112,12 +127,37 @@
             <Icon id="camera" size={3} white />
         </div>
     {:else if !error}
-        <video style="width: 100%;height: 100%;{style}" bind:this={videoElem}>
-            <track kind="captions" />
-        </video>
+        {#if showCropOverflowPreview}
+            <video style="{mediaOverflowPreviewStyle}{style.replace(/position:[^;]+;|width:[^;]+;|height:[^;]+;|left:[^;]+;|top:[^;]+;/g, '')}" bind:this={videoOverflowElem}>
+                <track kind="captions" />
+            </video>
+        {/if}
+        <div class="mediaContainer" style={cropState.mediaContainerStyle}>
+            <video style={style} bind:this={videoElem}>
+                <track kind="captions" />
+            </video>
+        </div>
     {/if}
 {:else}
-    <Card class="context #camera_card" {loaded} outlineColor={findMatchingOut(cam.id, $outputs)} active={findMatchingOut(cam.id, $outputs) !== null} on:click={click} label={cam.name} icon="camera" white={!cam.id.includes("cam")} {showPlayOnHover}>
+    <Card
+        class="context #camera_card"
+        {loaded}
+        outlineColor={findMatchingOut(cam.id, $outputs)}
+        active={findMatchingOut(cam.id, $outputs) !== null}
+        on:click={click}
+        on:mouseenter={() => {
+            isHovered = true
+            cameraManager.play(videoElem)
+        }}
+        on:mouseleave={() => {
+            isHovered = false
+            cameraManager.pause(videoElem)
+        }}
+        label={cam.name}
+        icon="camera"
+        white={!cam.id.includes("cam")}
+        {showPlayOnHover}
+    >
         <SelectElem id="camera" data={{ id: cam.id, type: "camera", name: cam.name, cameraGroup: cam.group }} draggable>
             <!-- icons -->
             <div class="icons">
@@ -163,6 +203,9 @@
 
     video {
         aspect-ratio: 1920/1080;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
 
     .error {

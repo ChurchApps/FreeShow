@@ -1,5 +1,4 @@
 const { spawn, execSync } = require("child_process")
-const path = require("path")
 
 // Set environment variables
 process.env.NODE_ENV = "development"
@@ -27,65 +26,49 @@ preBuild.on("close", (code) => {
         process.exit(code)
     }
 
-    console.log("Pre-build complete, building server files...")
+    console.log("Starting development servers...")
 
-    // Build server files first
-    const buildServers = spawn("node", ["scripts/vite/createServerFiles.js"], {
+    // Start Vite frontend dev server
+    const vite = spawn("npx", ["vite"], {
         stdio: "inherit",
-        shell: false,
-        env: { ...process.env, NODE_ENV: "development" }
+        shell: true,
+        env: process.env
     })
 
-    buildServers.on("close", (serverCode) => {
-        if (serverCode !== 0) {
-            console.error("Server build failed")
-            process.exit(serverCode)
-        }
+    // Start server watch mode (builds & watches all servers concurrently)
+    const serverWatch = spawn("node", ["scripts/vite/watchServers.js"], {
+        stdio: "inherit",
+        shell: false,
+        env: process.env
+    })
 
-        console.log("Server files built, starting development servers...")
-
-        // Start Vite
-        const vite = spawn("npx", ["vite"], {
+    // Start Electron build and watch
+    setTimeout(() => {
+        console.log("Starting Electron...")
+        const electron = spawn("npm", ["run", "start:electron"], {
             stdio: "inherit",
             shell: true,
             env: process.env
         })
 
-        // Start server watch mode
-        const serverWatch = spawn("node", ["scripts/vite/watchServers.js"], {
-            stdio: "inherit",
-            shell: false,
-            env: process.env
+        electron.on("error", (err) => {
+            console.error("Failed to start Electron:", err)
         })
+    }, 1500)
 
-        // Start Electron build and watch
-        setTimeout(() => {
-            console.log("Starting Electron...")
-            const electron = spawn("npm", ["run", "start:electron"], {
-                stdio: "inherit",
-                shell: true,
-                env: process.env
-            })
+    vite.on("error", (err) => {
+        console.error("Failed to start Vite:", err)
+    })
 
-            electron.on("error", (err) => {
-                console.error("Failed to start Electron:", err)
-            })
-        }, 5000) // Give Vite more time to start
+    serverWatch.on("error", (err) => {
+        console.error("Failed to start server watch:", err)
+    })
 
-        vite.on("error", (err) => {
-            console.error("Failed to start Vite:", err)
-        })
-
-        serverWatch.on("error", (err) => {
-            console.error("Failed to start server watch:", err)
-        })
-
-        // Handle process termination
-        process.on("SIGINT", () => {
-            console.log("\nShutting down development servers...")
-            vite.kill()
-            serverWatch.kill()
-            process.exit(0)
-        })
+    // Handle process termination
+    process.on("SIGINT", () => {
+        console.log("\nShutting down development servers...")
+        vite.kill()
+        serverWatch.kill()
+        process.exit(0)
     })
 })

@@ -10,7 +10,7 @@
 
     let width: number = 0
     let height: number = 0
-    let resolution: any = $stageLayout && $stageLayout.settings.resolution ? $stageLayout.settings.resolution : { width: 1920, height: 1080 } // $screen.resolution
+    $: resolution = width > 0 && height > 0 ? { width, height } : ($stageLayout?.settings?.resolution || { width: 1920, height: 1080 })
 
     // debounce remounting when resizing to avoid rapid remounts causing lag
     let resizeKey: string = `${width}-${height}-${Date.now()}`

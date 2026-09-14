@@ -308,12 +308,19 @@
         return titles.join("<br>")
     }
 
+    function toggleSectionsCollapsed() {
+        updateProject("sectionsCollapsed", !currentProject?.sectionsCollapsed)
+    }
     function lockSections() {
+        updateProject("sectionsLocked", !currentProject?.sectionsLocked)
+    }
+
+    function updateProject(key: string, value: any) {
         const projectId = $activeProject || ""
         projects.update((a) => {
             if (!a[projectId]) return a
 
-            a[projectId].sectionsLocked = !a[projectId].sectionsLocked
+            a[projectId][key] = value
             return a
         })
     }
@@ -328,9 +335,17 @@
     function refreshPcoProject(serviceTypeId: string, planId: string) {
         sendMain(Main.PCO_LOAD_PLAN, { serviceTypeId, planId })
     }
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (addMenuOpen && e.key === "Escape") {
+            addMenuOpen = false
+            e.preventDefault()
+            e.stopPropagation()
+        }
+    }
 </script>
 
-<svelte:window on:keydown={checkInput} on:mousedown={mousedown} on:dragenter={dragStart} on:dragstart={dragStart} on:dragend={dragEnd} on:drop={dragEnd} on:mouseup={dragEnd} />
+<svelte:window on:keydown={checkInput} on:keydown|capture={handleKeydown} on:mousedown={mousedown} on:dragenter={dragStart} on:dragstart={dragStart} on:dragend={dragEnd} on:drop={dragEnd} on:mouseup={dragEnd} />
 
 <div class="main" class:focusMode={$focusMode}>
     <span class="tabs">
@@ -392,9 +407,7 @@
                                     <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, projectTimelineActive: !a.projectTimelineActive }))}>
                                         <Icon id="timeline" white={!$special.projectTimelineActive} />
 
-                                        {#if $special.projectTimelineActive}
-                                            <Icon id="check" size={0.7} white />
-                                        {/if}
+                                        {#if $special.projectTimelineActive}<Icon id="check" size={0.7} white />{/if}
 
                                         <p><T id="timeline.toggle_timeline" /></p>
                                     </MaterialButton>
@@ -402,10 +415,14 @@
                                     {#if currentProject.shows?.some((a) => a.type === "section")}
                                         <div class="DIVIDER"></div>
 
+                                        <MaterialButton title="actions.collapsed" icon="collapse" on:click={() => toggleSectionsCollapsed()} white={!currentProject.sectionsCollapsed}>
+                                            {#if currentProject.sectionsCollapsed}<Icon id="check" size={0.7} white />{/if}
+
+                                            <T id="actions.collapsed" />
+                                        </MaterialButton>
+
                                         <MaterialButton title="actions.lock_sections" icon="lock" on:click={() => lockSections()} white={!currentProject.sectionsLocked}>
-                                            {#if currentProject.sectionsLocked}
-                                                <Icon id="check" size={0.7} white />
-                                            {/if}
+                                            {#if currentProject.sectionsLocked}<Icon id="check" size={0.7} white />{/if}
 
                                             <T id="actions.lock_sections" />
                                         </MaterialButton>
@@ -505,9 +522,13 @@
                         <T id="media.folder_type" />
                     </MaterialButton>
 
+                    <div class="group-spacer" />
+
                     <MaterialButton variant="outlined" icon="templates" title="actions.project_template" on:click={createProjectTemplate} white>
                         <T id="actions.project_template" />
                     </MaterialButton>
+
+                    <div class="group-spacer" />
 
                     <MaterialButton variant="outlined" icon="import" title="actions.import: formats.project" on:click={importProject} white>
                         <T id="actions.import" />
@@ -518,13 +539,14 @@
                     </MaterialButton>
 
                     {#if $providerConnections.planningcenter}
+                        <div class="group-spacer" />
                         <MaterialButton variant="outlined" icon="list" title="Planning Center" on:click={openPcoPicker} white>Planning Center</MaterialButton>
                     {/if}
                 </div>
             {/if}
 
             <FloatingInputs gradient style="width: 50px;height: 50px;border: none;">
-                <MaterialButton class="addButton" title="context.addToProject" style="width: 50px;height: 50px;" on:click={() => (addMenuOpen = !addMenuOpen)} on:dblclick={() => (addMenuOpen ? null : createProject())}>
+                <MaterialButton class="addButton" title={addMenuOpen ? "actions.close" : "context.addToProject"} style="width: 50px;height: 50px;" on:click={() => (addMenuOpen = !addMenuOpen)} on:dblclick={() => (addMenuOpen ? null : createProject())}>
                     <Icon id="add" size={1.5} style={addMenuOpen ? "transform: rotate(135deg);" : ""} white />
                 </MaterialButton>
             </FloatingInputs>
@@ -699,6 +721,17 @@
         display: flex;
         flex-direction: column;
         gap: 2px;
+
+        max-height: calc(100% - 100px);
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        background: rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(15px);
+        border-radius: 25px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 6px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
     }
 
     .addMenu :global(button) {
@@ -707,9 +740,20 @@
 
         border-radius: 50px;
 
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 
-        backdrop-filter: blur(10px);
+        /* for overflow shrinking */
+        min-height: 35px;
+    }
+
+    /* remove blur from individual buttons to avoid double blur */
+    .addMenu :global(button .surface) {
+        backdrop-filter: none !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+    }
+
+    .group-spacer {
+        height: 6px;
     }
 
     .actionType {
@@ -771,5 +815,10 @@
         width: 100%;
         height: 1px;
         background-color: var(--primary-lighter);
+    }
+
+    /* +/x rotate animation */
+    :global(.addButton svg) {
+        transition: transform 0.2s ease !important;
     }
 </style>

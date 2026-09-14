@@ -28,6 +28,7 @@ export type SaveListSyncedSettings =
     | "emitters"
     | "playerVideos"
     | "videoMarkers"
+    | "calendars"
     | "mediaTags"
     | "playerTags"
     | "actionTags"
@@ -59,6 +60,7 @@ export type SaveListSettings =
     | "formatNewShow"
     | "labelsDisabled"
     | "language"
+    | "customFonts"
     | "maxConnections"
     | "mediaFolders"
     | "mediaOptions"
@@ -75,8 +77,7 @@ export type SaveListSettings =
     | "splitLines"
     | "theme"
     | "transitionData"
-    | "volume"
-    | "gain"
+    | "audioRouting"
     | "audioChannelsData"
     | "cloudSyncData"
     | "driveData"
@@ -90,6 +91,7 @@ export type SaveListSettings =
     | "timecode"
     | "contentProviderData"
     | "obsData"
+    | "ai"
 
 export interface SaveData {
     // SETTINGS
@@ -119,4 +121,4 @@ export interface SaveData {
     closeWhenFinished: boolean
     customTriggers: SaveActions
 }
-export type SaveActions = { backup?: boolean; isAutoBackup?: boolean; backupShows?: boolean; autosave?: boolean; reset?: boolean }
+export type SaveActions = { backup?: boolean; isAutoBackup?: boolean; autosave?: boolean; reset?: boolean }

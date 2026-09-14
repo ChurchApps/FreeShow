@@ -2,9 +2,11 @@
     import { onDestroy, onMount } from "svelte"
     import { NDI } from "../../../../types/Channels"
     import { outputs } from "../../../stores"
-    import { destroy, receive, send } from "../../../utils/request"
+    import { send } from "../../../utils/request"
     import { findMatchingOut } from "../../helpers/output"
     import Card from "../Card.svelte"
+    import { StreamCanvasRenderer } from "./streamCanvas"
+    import { onStreamFrame } from "../../../utils/streamPort"
     import SelectElem from "../../system/SelectElem.svelte"
 
     interface Screen {
@@ -15,46 +17,32 @@
     let frame: any
     export let background = false
     export let mirror = false
+    // the output showing this stream owns the receiver
+    export let outputId = ""
 
     let canvas: HTMLCanvasElement | undefined
 
     onMount(() => {
         if (background) {
-            if (!mirror) send(NDI, ["CAPTURE_STREAM"], { source: screen, outputId: Object.keys($outputs)[0] })
+            if (!mirror) send(NDI, ["CAPTURE_STREAM"], { source: screen, outputId: outputId || Object.keys($outputs)[0] })
         } else send(NDI, ["RECEIVE_STREAM"], { source: screen })
     })
 
-    $: if (frame) setCanvas()
-    function setCanvas() {
-        if (!canvas) return
+    const renderer = new StreamCanvasRenderer()
+    $: if (frame && canvas) renderer.draw(canvas, frame)
 
-        let ctx = canvas.getContext("2d")
+    const receiveStream = (data: { id: string; frame: any; time: number }) => {
+        if (data.id !== screen.id) return
+        loaded = true
 
-        const WIDTH = frame.xres
-        const HEIGHT = frame.yres
-        canvas.width = WIDTH
-        canvas.height = HEIGHT
-
-        const imageData = new ImageData(new Uint8ClampedArray(frame.data), WIDTH, HEIGHT)
-        ctx?.putImageData(imageData, 0, 0)
+        frame = data.frame
     }
 
-    const receiveNDI = {
-        RECEIVE_STREAM: (data: { id: string; frame: any; time: number }) => {
-            if (data.id !== screen.id) return
-            loaded = true
-
-            let timeSinceSent = Date.now() - data.time
-            if (timeSinceSent > 100) return // skip frames if overloaded
-
-            frame = data.frame
-        }
-    }
-
-    receive(NDI, receiveNDI, screen.id)
+    const stopStream = onStreamFrame(NDI, receiveStream)
     onDestroy(() => {
-        destroy(NDI, screen.id)
-        if (background && !mirror) send(NDI, ["CAPTURE_DESTROY"], { id: screen.id, outputId: Object.keys($outputs)[0] })
+        renderer.destroy()
+        stopStream()
+        if (background && !mirror) send(NDI, ["CAPTURE_DESTROY"], { id: screen.id, outputId: outputId || Object.keys($outputs)[0] })
     })
 
     let loaded = false

@@ -17,15 +17,24 @@ export class AudioMultichannel {
      * slice of the file and decode it with OfflineAudioContext to read AudioBuffer.numberOfChannels.
      * Returns DEFAULT_CHANNELS on any failure.
      */
+    private static channelCache: Map<string, number> = new Map()
+
     static async detectFileChannelCount(filePath: string, maxChannels: number): Promise<number> {
         if (!filePath || filePath.startsWith("blob:") || filePath.startsWith("data:")) return this.DEFAULT_CHANNELS
+        if (this.channelCache.has(filePath)) return this.channelCache.get(filePath)!
+
+        // MP4/MOV containers usually store MOOV/codec metadata at the end of the file.
+        // Range requests for byte 0-256KB almost always fail decodeAudioData() for MP4s.
+        const ext = filePath.split(".").pop()?.toLowerCase()
+        if (ext === "mp4" || ext === "mov" || ext === "m4a") {
+            this.channelCache.set(filePath, this.DEFAULT_CHANNELS)
+            return this.DEFAULT_CHANNELS
+        }
 
         try {
-            // Use a short timeout for network files to avoid hanging
             const controller = new AbortController()
             const timeoutId = setTimeout(() => controller.abort(), 3000)
 
-            // First 256 KB is enough for any codec header + initial frames
             const response = await fetch(filePath, {
                 headers: { Range: "bytes=0-262143" },
                 signal: controller.signal
@@ -33,8 +42,6 @@ export class AudioMultichannel {
             clearTimeout(timeoutId)
 
             if (!response.ok && response.status !== 206) {
-                // If Range is not supported, we don't want to download the whole file
-                // for detection, so we just return default
                 return this.DEFAULT_CHANNELS
             }
 
@@ -44,12 +51,12 @@ export class AudioMultichannel {
             const offlineCtx = new OfflineAudioContext(maxChannels, 1, 48000)
             const audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer)
 
-            const channels = audioBuffer.numberOfChannels
-
-            return Math.min(channels, maxChannels)
+            const channels = Math.min(audioBuffer.numberOfChannels, maxChannels)
+            this.channelCache.set(filePath, channels)
+            return channels
         } catch (err) {
-            // AggregateError or AbortError are possible here
-            console.warn(`Channel detection for "${filePath}" failed:`, err instanceof Error ? err.message : err)
+            // Fallback safely to 2 channels on decode failure
+            this.channelCache.set(filePath, this.DEFAULT_CHANNELS)
             return this.DEFAULT_CHANNELS
         }
     }
@@ -79,7 +86,7 @@ export class AudioMultichannel {
         if (node.channelCount !== channelCount) {
             node.channelCount = channelCount
             node.channelCountMode = "explicit"
-            node.channelInterpretation = "speakers"
+            node.channelInterpretation = "discrete"
         }
     }
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { activeEdit, activePage, activeProject, activeRename, projectView } from "../../stores"
+    import { activeEdit, activePage, activeProject, activeRename, dictionary, projectView } from "../../stores"
     import { translateText } from "../../utils/language"
 
     export let value = ""
@@ -124,7 +124,7 @@
         {#if value.length}
             {value}
         {:else}
-            <span style="opacity: 0.5;font-style: italic;pointer-events: none;">{translateText("main.unnamed")}</span>
+            <span style="opacity: 0.5;font-style: italic;pointer-events: none;">{translateText("main.unnamed", $dictionary)}</span>
         {/if}
     </p>
 {/if}

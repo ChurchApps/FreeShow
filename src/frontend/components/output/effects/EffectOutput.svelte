@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Transition } from "../../../../types/Show"
+    import type { Transition } from "../../../../types/Show"
     import { effects } from "../../../stores"
     import OutputTransition from "../transitions/OutputTransition.svelte"
     import Effect from "./Effect.svelte"
@@ -18,7 +18,7 @@
     // }
 </script>
 
-{#each ids as id}
+{#each ids as id (id)}
     {@const effect = $effects[id]}
     {#if effect}
         <OutputTransition transition={mirror ? undefined : transition} inTransition={mirror ? null : transition.in || transition} outTransition={mirror ? null : transition.out || transition}>

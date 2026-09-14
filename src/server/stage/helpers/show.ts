@@ -5,7 +5,7 @@ import { awaitRequest } from "../util/socket"
 import { showsCache } from "../util/stores"
 
 export function getLayoutRef(showId: string, layoutId: string = "", _updater?: Shows | Show) {
-    let currentShow = get(showsCache)[showId]
+    let currentShow = (_updater && typeof _updater === "object" ? (_updater as any)[showId] || _updater : null) || get(showsCache)[showId]
     return getRef(currentShow, layoutId)
 }
 

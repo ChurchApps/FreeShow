@@ -72,9 +72,9 @@
 </script>
 
 {#if subTab === "inputs" || $activeRecording}
-    <LiveInfo />
+    <LiveInfo {optionsOpen} />
 {:else if subTab === "online"}
-    <PlayerInfo />
+    <PlayerInfo {optionsOpen} />
 {:else}
     <div class="scroll">
         {#if optionsOpen}

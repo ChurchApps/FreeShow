@@ -6,12 +6,19 @@ import path from "path"
 import { getMainWindow, isProd, mainWindow, maximizeMain, setGlobalMenu } from ".."
 import type { MainResponses } from "../../types/IPC/Main"
 import { Main } from "../../types/IPC/Main"
+import { ToMain } from "../../types/IPC/ToMain"
 import type { ErrorLog, LyricSearchResult, OS } from "../../types/Main"
+import { completeLLM, fetchProviderModels } from "../ai/llm/llmProviders"
+import { setAiKey } from "../ai/setup/aiKeys"
+import { aiHandleLocalSetup, LocalModelManager } from "../ai/setup/LocalModelManager"
+import { aiGetModelStatus } from "../ai/setup/status"
+import { SpeechToText } from "../ai/stt/SpeechToTextManager"
 import { getAudioMetadata } from "../audio/audio"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
+import { CaptureHelper } from "../capture/CaptureHelper"
 import { canSync, getSyncTeams, hasDataChanged, hasTeamData, markAsNewSync, restoreCloudBackup, syncData } from "../cloud/syncManager"
-import { ContentProviderRegistry } from "../contentProviders"
 import { ChurchAppsChat } from "../contentProviders/churchApps/ChurchAppsChat"
+import { ContentProviderRegistry } from "../contentProviders/ContentProviderRegistry"
 import { deleteBackup, getBackups, restoreFiles } from "../data/backup"
 import { getLocalIPs } from "../data/bonjour"
 import { checkIfMediaDownloaded, downloadLessonsMedia, downloadMedia } from "../data/downloadMedia"
@@ -23,10 +30,13 @@ import { OutputHelper } from "../output/OutputHelper"
 import { libreConvert } from "../output/ppt/libreConverter"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers, updateServerData } from "../servers"
+import { detectEncoders, setRtmpEncoderSetting } from "../streaming/encoderDetection"
+import { downloadFfmpeg, resolveFfmpegPath } from "../streaming/ffmpegManager"
 import { processAudioData, timecodeStart, timecodeStop, updateTimecodeValue } from "../timecode/timecode"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
 import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShowsAsync, locateMediaFile, openInSystem, readExifData, readFile, readFolder, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
+import { listGraphicsDevices } from "../utils/gpu"
 import { getMachineId } from "../utils/helpers"
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
@@ -34,6 +44,7 @@ import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refresh
 import { correctSpelling } from "../utils/spellcheck"
 import { executeSpotifyCommand, getSpotifyState } from "../utils/spotify"
 import checkForUpdates from "../utils/updater"
+import { sendToMain } from "./main"
 
 // no need to await Promise returns here
 export const mainResponses: MainResponses = {
@@ -106,6 +117,7 @@ export const mainResponses: MainResponses = {
     [Main.GET_SCREENS]: () => getScreens(),
     [Main.GET_WINDOWS]: () => getScreens("window"),
     [Main.GET_DISPLAYS]: () => screen.getAllDisplays(),
+    [Main.GET_GRAPHICS_DEVICES]: async () => await listGraphicsDevices(),
     [Main.OUTPUT]: (_, e) => (e.sender.id === getMainWindow()?.webContents.id ? "false" : "true"),
     // MEDIA
     [Main.DOES_MEDIA_EXIST]: (data) => doesMediaExist(data),
@@ -238,7 +250,41 @@ export const mainResponses: MainResponses = {
     [Main.SPOTIFY_COMMAND]: async (data) => {
         await executeSpotifyCommand(data.command, data.value)
         return true
-    }
+    },
+    // FFmpeg
+    [Main.FFMPEG_CHECK]: async () => {
+        const path = await resolveFfmpegPath()
+        return { installed: !!path, path: path || undefined }
+    },
+    [Main.ENCODER_DETECT]: (data) => detectEncoders(data?.force),
+    [Main.SET_RTMP_ENCODER]: (data) => {
+        setRtmpEncoderSetting(data.outputId, data.encoder)
+        // apply now rather than lying dormant until some unrelated capture event restarts the encode
+        CaptureHelper.Lifecycle.updateRtmpState()
+    },
+    [Main.FFMPEG_DOWNLOAD]: async () => {
+        try {
+            await downloadFfmpeg((progress) => {
+                sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: "ffmpeg", name: "FFmpeg", progress, total: 100, status: "downloading" })
+            })
+            sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: "ffmpeg", name: "FFmpeg", progress: 100, total: 100, status: "complete" })
+            return { success: true }
+        } catch (error: any) {
+            console.error("FFmpeg download error:", error)
+            sendToMain(ToMain.MEDIA_DOWNLOAD_PROGRESS, { url: "ffmpeg", name: "FFmpeg", progress: 0, total: 0, status: "error" })
+            return { success: false, error: error?.message || "Unknown download error" }
+        }
+    },
+    // AI
+    [Main.AI_GET_MODELS]: (data) => fetchProviderModels(data.providerId),
+    [Main.AI_GET_BIN]: () => LocalModelManager.getDownloadedBinFiles(),
+    [Main.AI_LISTEN_START]: (data) => SpeechToText.listen(data.engine, data.engineOptions),
+    [Main.AI_LISTEN_STOP]: () => SpeechToText.stop(),
+    [Main.AI_AUDIO_DATA]: (data) => SpeechToText.pushAudio(data.buffer),
+    [Main.AI_GET_STATUS]: (data) => aiGetModelStatus(data),
+    [Main.AI_SETUP]: (data) => aiHandleLocalSetup(data),
+    [Main.AI_SET_KEY]: (data) => setAiKey(data),
+    [Main.AI_LLM_COMPLETE]: (data) => completeLLM(data)
 }
 
 /// ///////
@@ -467,6 +513,13 @@ export function createLog(err: Error) {
 export function autoErrorReport() {
     if (!isProd) return
     if (config.get("autoErrorReporting") === false) return
+
+    // prevent random forks from sending error reports
+    // dots to prevent auto find/replace
+    const originalName = "f.r.e.e.s.h.o.w".replace(/\./g, "")
+    if (app.name !== originalName) return
+
+    console.info("Starting Sentry error reporting...")
 
     Sentry.init({
         dsn: "https://5d1069c3cb6faaa6e7ad0d9dc0145361@o4510419080445952.ingest.us.sentry.io/4510419082346496",

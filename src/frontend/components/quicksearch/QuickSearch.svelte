@@ -4,6 +4,7 @@
     import { fade, fly } from "svelte/transition"
     import { quickSearchActive, special, theme, themes } from "../../stores"
     import { translateText } from "../../utils/language"
+    import { highlightText } from "./searchHighlight"
     import { hexToRgb } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -150,30 +151,6 @@
         if (selectedEl) selectedEl.scrollIntoView({ block: "nearest" })
     }
 
-    // highlight matching text
-    function highlightMatch(text: string, search: string): string {
-        if (!search || !text) return text
-
-        // Strict phrase match first (highest priority highlight)
-        const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-        const strictRegex = new RegExp(`(${escapedSearch})`, "gi")
-        if (strictRegex.test(text)) {
-            return text.replace(strictRegex, "<mark>$1</mark>")
-        }
-
-        // Token match: highlight individual words
-        const words = search.split(/\s+/).filter((w) => w.length >= 1)
-        if (words.length > 0) {
-            // Sort by length descending to match longer words first
-            words.sort((a, b) => b.length - a.length)
-            const pattern = words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")
-            const regex = new RegExp(`(${pattern})`, "gi")
-            return text.replace(regex, "<mark>$1</mark>")
-        }
-
-        return text
-    }
-
     let centered = true
     let showValues = false
     $: if (values !== undefined) valuesChanged()
@@ -235,7 +212,7 @@
                                             {/if}
                                         </p>
                                         {#if value.description}
-                                            <p class="description">{@html highlightMatch(value.description, actualSearchText || searchValue)}</p>
+                                            <p class="description">{@html highlightText(value.description, actualSearchText || searchValue)}</p>
                                         {/if}
                                     </div>
                                 </MaterialButton>

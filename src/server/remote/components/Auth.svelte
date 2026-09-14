@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { getValue, isChecked } from "../../common/util/helpers"
+    import Icon from "../../common/components/Icon.svelte"
+    import { getValue } from "../../common/util/helpers"
     import { translate } from "../util/helpers"
     import { send } from "../util/socket"
     import { _get, _update, dictionary, password } from "../util/stores"
@@ -25,24 +26,14 @@
                 <label class="field-label" for="password-input">{translate("remote.password", $dictionary)}</label>
                 <div class="field">
                     <span class="icon" aria-hidden="true">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M7 10V8a5 5 0 0 1 10 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                            <rect x="4.75" y="10" width="14.5" height="9.5" rx="2.5" stroke="currentColor" stroke-width="1.5" />
-                            <circle cx="12" cy="14.75" r="1.25" fill="currentColor" />
-                        </svg>
+                        <Icon id="locked" size={1.1} white />
                     </span>
                     <input id="password-input" class="input" type="password" name="password" autocomplete="current-password" placeholder={translate("remote.password", $dictionary)} on:input={(e) => _update("password", "stored", getValue(e))} on:change={(e) => _update("password", "stored", getValue(e))} value={$password.stored} />
                 </div>
             </div>
 
             <div class="actions">
-                <label class="remember">
-                    <input class="remember-checkbox" type="checkbox" checked={$password.remember} on:change={(e) => _update("password", "remember", isChecked(e))} />
-                    <span class="toggle" aria-hidden="true"></span>
-                    <span class="remember-label">{translate("remote.remember", $dictionary)}</span>
-                </label>
-
-                <button type="submit" class="submit-button">{translate("remote.submit", $dictionary)}</button>
+                <button type="submit" class="submit-button" disabled={!$password.stored.trim()} style="width: 100%;">{translate("remote.submit", $dictionary)}</button>
             </div>
         </form>
     </div>
@@ -123,7 +114,10 @@
         position: absolute;
         left: 14px;
         top: 50%;
-        transform: translateY(-40%);
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
         color: color-mix(in oklab, var(--text) 65%, transparent);
         pointer-events: none;
         z-index: 1;
@@ -164,62 +158,6 @@
         flex-wrap: wrap;
         margin-top: 4px;
     }
-    .remember {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        user-select: none;
-        cursor: pointer;
-        color: color-mix(in oklab, var(--text) 75%, transparent);
-    }
-    .remember-checkbox {
-        appearance: none;
-        width: 46px;
-        height: 26px;
-        border-radius: 999px;
-        border: 1.5px solid color-mix(in oklab, var(--primary-lighter) 80%, transparent);
-        background: rgb(255 255 255 / 0.08);
-        position: relative;
-        outline: none;
-        cursor: pointer;
-        transition: all 140ms ease;
-        box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
-        flex-shrink: 0;
-    }
-    .remember-checkbox::after {
-        content: "";
-        position: absolute;
-        left: 3px;
-        top: 3px;
-        width: 18px;
-        height: 18px;
-        border-radius: 50%;
-        background: color-mix(in oklab, var(--text) 92%, transparent);
-        box-shadow: 0 4px 12px rgb(0 0 0 / 0.2);
-        transition: all 140ms ease;
-    }
-    .remember-checkbox:hover {
-        border-color: color-mix(in oklab, var(--primary-lighter) 60%, var(--secondary) 40%);
-        background: rgb(255 255 255 / 0.12);
-    }
-    .remember-checkbox:focus-visible {
-        box-shadow:
-            0 0 0 4px var(--secondary-opacity),
-            inset 0 1px 0 rgb(255 255 255 / 0.06);
-    }
-    .remember-checkbox:checked {
-        background: linear-gradient(130deg, var(--secondary), color-mix(in oklab, var(--secondary) 70%, white));
-        border-color: var(--secondary);
-    }
-    .remember-checkbox:checked::after {
-        transform: translateX(18px);
-        background: var(--secondary-text);
-        box-shadow: 0 4px 12px rgb(240 0 140 / 0.3);
-    }
-    .remember-label {
-        font-size: 0.98em;
-        transform: translateY(-2px);
-    }
 
     .submit-button {
         padding: 14px 18px;
@@ -235,9 +173,13 @@
         cursor: pointer;
         transition: all 140ms ease;
     }
-    .submit-button:hover {
+    .submit-button:hover:not(:disabled) {
         transform: translateY(-1px);
         filter: brightness(1.08);
+    }
+    .submit-button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
     }
     .submit-button:active {
         transform: translateY(0);
@@ -263,9 +205,6 @@
         .submit-button {
             width: 100%;
             text-align: center;
-        }
-        .remember {
-            justify-content: flex-start;
         }
     }
 </style>

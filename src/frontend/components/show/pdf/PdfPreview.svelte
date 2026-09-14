@@ -135,7 +135,12 @@
                     const page = await pdfDoc.getPage(i + 1)
                     if (currentPath !== loadPath) return
 
-                    const viewport = page.getViewport({ scale: 1.5 })
+                    const viewportAtScale1 = page.getViewport({ scale: 1 })
+                    const maxDim = Math.max(viewportAtScale1.width, viewportAtScale1.height)
+                    const targetMax = 1080
+                    const scale = Math.max(1.0, Math.min(2.5, targetMax / maxDim))
+
+                    const viewport = page.getViewport({ scale })
                     const canvas = canvases[i]
                     const context = canvas?.getContext("2d")
                     if (!context) break

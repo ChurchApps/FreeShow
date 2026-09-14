@@ -3,7 +3,7 @@
     import type { MediaStyle } from "../../../types/Main"
     import type { Item, Media, Show, Slide, SlideData } from "../../../types/Show"
     import { removeTagsAndContent } from "../../show/slides"
-    import { activeEdit, activePage, activeTimers, effects, focusMode, fullColors, groups, media, outputs, overlays, refreshListBoxes, refreshSlideThumbnails, slideNotesActive, slidesOptions, slideTimers, special, styles, textEditActive } from "../../stores"
+    import { activeEdit, activePage, activeShow, activeTimers, editMode, effects, focusMode, fullColors, groups, media, outputs, overlays, playerVideos, refreshListBoxes, refreshSlideThumbnails, slideDeleteHighlight, slideNotesActive, slidesOptions, slideTimers, special, styles } from "../../stores"
     import { wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
@@ -16,7 +16,7 @@
     import Icon from "../helpers/Icon.svelte"
     import { getMedia, getMediaCached, getMediaStyle, mediaSize } from "../helpers/media"
     import { allOutputsHasStyleTemplate, getActiveOutputs, getFirstActiveOutput, getResolution, getSlideFilter, setTemplateStyle } from "../helpers/output"
-    import { getGroupName } from "../helpers/show"
+    import { getGroupName, isSlideLocked } from "../helpers/show"
     import { _show } from "../helpers/shows"
     import Effect from "../output/effects/Effect.svelte"
     import SelectElem from "../system/SelectElem.svelte"
@@ -89,6 +89,15 @@
         mediaPath = bgPath
         thumbnailPath = ""
         // thumbnailPath = getThumbnailPath(mediaPath, ghostBackground ? ghostSize : mediaSize.slideSize)
+
+        if (bg?.type === "player" || $playerVideos[bgPath]) {
+            const playerVid = $playerVideos[bgPath] || (bg as any)?.data || bg
+            if (playerVid?.id) {
+                if (playerVid.type === "youtube") thumbnailPath = `https://i.ytimg.com/vi/${playerVid.id}/sddefault.jpg`
+                else if (playerVid.type === "vimeo") thumbnailPath = `https://vumbnail.com/${playerVid.id}_medium.jpg`
+                return
+            }
+        }
 
         // make sure it's downloaded
         if (isLessons) await wait(1000)
@@ -177,10 +186,10 @@
         if (viewMode !== "grid" && viewMode !== "simple" && viewMode !== "groups" && !noQuickEdit && viewMode !== "lyrics") style += `width: calc(${100 / columns}% - 6px)`
     }
 
-    function fadeColor(hexColor: string | null) {
-        if (typeof hexColor !== "string" || !hexColor.startsWith("#")) return ""
+    function fadeColor(hexColor: string | null, alpha = 0.7) {
+        if (typeof hexColor !== "string" || !hexColor.startsWith("#")) return hexColor || ""
         const rgb = hexToRgb(hexColor)
-        return `rgba(${rgb.r} ${rgb.g} ${rgb.b} / 0.7)`
+        return `rgba(${rgb.r} ${rgb.g} ${rgb.b} / ${alpha})`
     }
 
     $: slideFilter = getSlideFilter(layoutSlide)
@@ -195,7 +204,7 @@
     }
 
     function openNotes() {
-        if ($textEditActive) textEditActive.set(false)
+        if ($editMode === "text_edit") editMode.set("default")
         slideNotesActive.set(true)
 
         activeEdit.set({ slide: index, items: [], showId })
@@ -209,7 +218,7 @@
     }
 
     let profile = getAccess("shows")
-    $: isGroupLocked = !!slide?.locked // WIP get group slide
+    $: isGroupLocked = isSlideLocked(showId, layoutSlide.id, show)
     $: isLocked = show?.locked || isGroupLocked || profile.global === "read" || profile[show?.category || ""] === "read"
 
     // correct view order based on arranged order in Items.svelte (?.reverse())
@@ -251,6 +260,7 @@
     let conditionsUpdater = 0
     onMount(() => {
         const interval = setInterval(() => {
+            if (!Array.isArray(itemsList)) return
             if (itemsList.find((a) => a?.conditions)) conditionsUpdater++
         }, 3000)
 
@@ -258,6 +268,9 @@
             clearInterval(interval)
         }
     })
+
+    $: isDeleteHighlighted = !!$slideDeleteHighlight?.indexes?.includes(index) && (showId === $activeShow?.id || showId === $activeEdit?.showId)
+    $: highlightColor = $slideDeleteHighlight?.color || "#ff5454"
 </script>
 
 <div class="main" class:active class:focused style="{output?.color ? 'outline: 2px solid ' + getOutputColor(output.color) + ';' : ''}width: {viewMode === 'grid' || viewMode === 'simple' || viewMode === 'groups' || noQuickEdit ? 100 / columns : 100}%;">
@@ -271,8 +284,15 @@
         <Actions {slide} {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
     <!-- content -->
-    <div class="slide context #{isLocked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} {style} role="none" on:click>
+    <div class="slide context #{isLocked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} class:isDeleteHighlighted style="{style};{isDeleteHighlighted ? `--highlight-color: ${highlightColor};--highlight-bg: ${fadeColor(highlightColor, 0.35)};` : ''}" role="none" on:click>
         <div class="hover overlay" />
+
+        {#if isDeleteHighlighted}
+            <div class="deleteOverlay">
+                <Icon id={$slideDeleteHighlight?.icon || "delete"} size={8 * (1 / columns)} style="color: {highlightColor};" white />
+            </div>
+        {/if}
+
         <!-- <DropArea id="slide" hoverTimeout={0} file> -->
         <div style="width: 100%;height: 100%;">
             <SelectElem style={colorStyle} id="slide" data={{ index, showId }} draggable={!$focusMode && !isLocked} shiftRange={layoutSlides.map((_, index) => ({ index, showId }))} onlyRightClickSelect={$focusMode} selectable={!isLocked} trigger={list ? "column" : "row"}>
@@ -317,8 +337,8 @@
                     {#if !altKeyPressed && layoutSlide.overlays?.length && (viewMode !== "lyrics" || noQuickEdit)}
                         {#each layoutSlide.overlays as id}
                             {#if $overlays[id]?.placeUnderSlide === true}
-                                {#each $overlays[id].items as item}
-                                    <Textbox {item} ref={{ type: "overlay", id }} />
+                                {#each $overlays[id]?.items || [] as item}
+                                    <Textbox {item} ref={{ type: "overlay", id }} preview miniPreview />
                                 {/each}
                             {/if}
                         {/each}
@@ -333,7 +353,6 @@
                                 <!-- backdropFilter={layoutSlide.filterEnabled?.includes("foreground") ? layoutSlide["backdrop-filter"] : ""} -->
                                 <Textbox
                                     backdropFilter={layoutSlide["backdrop-filter"] || ""}
-                                    disableListTransition
                                     {item}
                                     isOutputted={!!output?.color}
                                     revealed={output?.line ?? -1}
@@ -351,7 +370,7 @@
                                     smallFontSize={viewMode === "lyrics" && !noQuickEdit}
                                     clickRevealed={!!output?.clickRevealed}
                                     {centerPreview}
-                                    fontPreview={true}
+                                    preview
                                     chords={item.chords?.enabled}
                                 />
                             {/if}
@@ -371,8 +390,8 @@
                     {#if !altKeyPressed && layoutSlide.overlays?.length && (viewMode !== "lyrics" || noQuickEdit)}
                         {#each layoutSlide.overlays as id}
                             {#if $overlays[id] && !$overlays[id]?.placeUnderSlide}
-                                {#each $overlays[id].items as item}
-                                    <Textbox {item} ref={{ type: "overlay", id }} />
+                                {#each $overlays[id]?.items || [] as item}
+                                    <Textbox {item} ref={{ type: "overlay", id }} preview miniPreview />
                                 {/each}
                             {/if}
                         {/each}
@@ -396,7 +415,7 @@
                         </div>
                     {/if}
 
-                    <div data-title={name || ""} style="height: 2px;" />
+                    <div data-title={name || ""} style="height: 2px;background-color: {color};" />
                 {:else if viewMode !== "lyrics" || noQuickEdit}
                     <!-- style="width: {resolution.width * zoom}px;" -->
                     <div class="label" data-title={removeTagsAndContent(name || "")} style={$fullColors ? `background-color: ${color};color: ${getContrast(color || "")};` : `border-bottom: 2px solid ${color || "var(--primary-darkest)"};`}>
@@ -427,7 +446,7 @@
                         <span class="text" style={name === null || name === "." ? "opacity: 0;" : ""}>{@html name === null || name === "." ? "-" : name || "—"}</span>
 
                         <!-- group is locked! -->
-                        {#if slide.locked || show?.slides?.[layoutSlide?.parent || ""]?.locked}
+                        {#if isGroupLocked}
                             <span class="lock"><Icon id="lock" size={0.7} style="color: var(--text);opacity: 0.3;" white /></span>
                         {/if}
 
@@ -493,6 +512,27 @@
     .slide :global(.isSelected) {
         outline: 5px solid var(--text) !important;
         border-radius: 0 !important;
+    }
+
+    /* hover highlight */
+    .slide.isDeleteHighlighted {
+        outline: 3px solid var(--highlight-color, #ff4444) !important;
+        outline-offset: -2px;
+        z-index: 3;
+    }
+    .deleteOverlay {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        position: absolute;
+        width: 100%;
+        height: 100%;
+
+        background-color: var(--highlight-bg, rgba(239, 68, 68, 0.35));
+
+        pointer-events: none;
+        z-index: 4;
     }
 
     .main.focused {

@@ -4,14 +4,14 @@ import type { CustomBibleListContent } from "json-bible/lib/api/ApiBible"
 import { stripMarkdown } from "json-bible/lib/markdown"
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
 import { Main } from "../../../../types/IPC/Main"
 import type { BibleContent } from "../../../../types/Scripture"
 import type { Item, Show } from "../../../../types/Show"
 import { ShowObj } from "../../../classes/Show"
+import { defaultBibleBookNames } from "../../../converters/bebliaBible"
 import { createCategory } from "../../../converters/importHelpers"
 import { requestMain, sendMain } from "../../../IPC/main"
-import { splitTextContentInHalf } from "../../../show/slides"
+import { findBestBreak, splitTextContentInHalf } from "../../../show/slides"
 import { activeProject, activeScripture, activeShow, drawerTabsData, media, notFound, outLocked, overlays, scriptureHistory, scriptures, scripturesCache, scriptureSettings, styles, templates } from "../../../stores"
 import { trackScriptureUsage } from "../../../utils/analytics"
 import { TemplateHelper } from "../../../utils/templates"
@@ -35,8 +35,12 @@ export async function getApiBiblesList() {
     }
 }
 
-const jsonBibleCache: { [id: string]: any } = {}
-export async function loadJsonBible(id: string) {
+export type BibleInstance = Awaited<ReturnType<typeof JsonBible>> | Awaited<ReturnType<typeof JsonBibleApi>>
+export type BookInstance = Awaited<ReturnType<BibleInstance["getBook"]>>
+export type ChapterInstance = Awaited<ReturnType<BookInstance["getChapter"]>>
+
+const jsonBibleCache: { [id: string]: BibleInstance } = {}
+export async function loadJsonBible(id: string): Promise<BibleInstance | null> {
     if (jsonBibleCache[id]) return jsonBibleCache[id]
 
     const scriptureData = get(scriptures)[id]
@@ -139,17 +143,25 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
                 const BibleData = await loadJsonBible(id)
                 if (!BibleData) return null
 
-                const Book = await BibleData.getBook(active?.book)
-
                 const scriptureData = get(scriptures)[id]
                 const version = scriptureData?.customName || scriptureData?.name || ""
                 const attributionString = scriptureData?.attributionString || ""
                 const attributionRequired = !!scriptureData?.attributionRequired
 
-                const bookName = Book.name
-                const bookAbbr = Book.getAbbreviation()
-                const selectedChapters = active?.chapters.map((c) => Number(c)) || []
-                const Chapters = await Promise.all(selectedChapters.map((c) => Book.getChapter(c)))
+                let bookName = ""
+                let bookAbbr = ""
+                let selectedChapters: number[] = []
+                let Chapters: ChapterInstance[] = []
+                try {
+                    const Book = await BibleData.getBook(active?.book)
+                    bookName = Book.name
+                    bookAbbr = Book.getAbbreviation()
+                    selectedChapters = active?.chapters.map((c) => Number(c)) || []
+                    Chapters = await Promise.all(selectedChapters.map((c) => Book.getChapter(c)))
+                } catch (err) {
+                    console.error("Error loading scripture book/chapter data:", id, err)
+                    return null
+                }
 
                 const metadata = BibleData.data.metadata || {}
                 Object.entries(scriptureData?.metadata || {}).forEach(([key, value]) => {
@@ -282,7 +294,13 @@ export async function playScripture() {
 
     // scripture usage history
     scriptureHistory.update((a) => {
+        const tabId = get(drawerTabsData).scripture?.activeSubTab || ""
+        const tabData = get(scriptures)[tabId]
+        const version = tabData?.customName || tabData?.name || biblesContent[0].version || ""
+
         const newItem = {
+            tabId, // can be a collection
+            version,
             id: biblesContent[0].id,
             book: biblesContent[0].bookId,
             chapter: biblesContent[0].chapters[0],
@@ -833,6 +851,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
     let verseNumberStyle = `color: ${get(scriptureSettings).numberColor || "#919191"};text-shadow: none;`
     let verseNumberStyles: string[] = []
     let redJesusStyle = `color: ${get(scriptureSettings).jesusColor || "#FF4136"};`
+    let undertitleStyle = ""
     let baseStyle = ""
 
     // find any text object with {scripture_number} / {scripture_red_jesus} and get the style
@@ -848,6 +867,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                         const textStyle = textObj.style || ""
                         if (textStyle) redJesusStyle = textStyle
                     }
+                    if (textObj.value?.includes("{scripture_undertitle}")) undertitleStyle = textObj.style || ""
                     if (textObj.value?.includes("{scripture_text}")) {
                         const textStyle = textObj.style || ""
                         if (textStyle && (item.textFit || "none") === "none") baseStyle = textStyle
@@ -905,9 +925,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                     const verseId = bible.chapters.length > 1 ? `${chapterNumber}${divider}${v}` : v.toString()
 
                     // custom Jesus red to JSON format: !{}!
-                    text = text.replace(/<span class="wj" ?>(.*?)<\/span>/g, "!{$1}!")
-                    text = text.replace(/<red ?>(.*?)<\/red>/g, "!{$1}!")
-                    text = text.replace(/<span style="color:red;" ?>(.*?)<\/span>/g, "!{$1}!")
+                    text = markJesusWords(text)
 
                     if (verseNumbers) {
                         const { id, subverse, endNumber } = getVerseIdParts(v)
@@ -960,6 +978,7 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
         slidesString = slidesString.replaceAll(`${numberValue} `, "").replaceAll(numberValue, "")
     }
     slidesString = slidesString.replaceAll("{scripture_red_jesus}", "")
+    slidesString = slidesString.replaceAll("{scripture_undertitle}", "")
 
     // remove text in () on scripture names
     const bibleVersions = biblesContent.map((a) => (a?.version || "").replace(/\([^)]*\)/g, "").trim())
@@ -1028,7 +1047,11 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
             const valueName = slideDynamicValues[contentIndex]?.[itemKey] as string
             if (valueName) {
                 delete slideDynamicValues[contentIndex][itemKey]
-                const content = bibleVerses.map((v) => [verseNumbers && v.number ? v.number : "0", v.text]) as [string, string][]
+                const content = bibleVerses.map((v, i) => {
+                    const formattedText = formatBibleText(v.text)
+                    const text = i < bibleVerses.length - 1 ? formattedText + getVerseSeparator(v, bibleVerses[i + 1], versesOnIndividualLines) : formattedText
+                    return [verseNumbers && v.number ? v.number : "0", text]
+                }) as [string, string][]
                 slideDynamicValues[contentIndex][valueName] = content
                 if (valueName === "scripture1_text") slideDynamicValues[contentIndex].scripture_text = content
             }
@@ -1047,6 +1070,10 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                         const parts = keyTextObj.value.split(itemKey)
                         let newLineText: any[] = []
 
+                        // auto size gives every text object one size, so the title's px becomes a share of the verse text px
+                        const textSize = Number(keyTextObj.style?.match(/font-size:\s*(\d+)px/)?.[1]) || 100
+                        const titleStyle = undertitleStyle.replace(/font-size:\s*(\d+)px/, (_, size) => `font-size: ${Math.round((size / textSize) * 100)}%`)
+
                         // Add text objects before the key
                         newLineText.push(...line.text.slice(0, keyIndex))
 
@@ -1055,6 +1082,14 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
 
                         // Add verse content
                         bibleVerses.forEach((verse, i) => {
+                            // the title goes before the verse number
+                            const [, title = "", verseText = verse.text] = verse.text.match(/^(<span class="undertitle">.*?<\/span>)(.*)/) || []
+                            if (title) {
+                                let value = formatBibleText(title)
+                                if (titleStyle) value = value.replace('">', `" style="${titleStyle}">`)
+                                newLineText.push({ ...keyTextObj, value, sourceDynamicKey: `${valueName}:${i}` })
+                            }
+
                             // Verse number
                             if (verseNumbers && verse.number) {
                                 const size = verseNumberSize * (i === 0 ? 1.2 : 1)
@@ -1068,38 +1103,33 @@ export async function getScriptureSlidesNew(data: any, onlyOne = false, disableR
                             }
 
                             // Verse text with Jesus words formatting
-                            if (get(scriptureSettings).redJesus && verse.text.includes("!{")) {
-                                verse.text.split(/(!?\{[^}]*\}!?)/g).forEach((seg) => {
+                            if (get(scriptureSettings).redJesus && verseText.includes("!{")) {
+                                verseText.split(/(!?\{[^}]*\}!?)/g).forEach((seg) => {
                                     if (!seg) return
                                     const isJesusWords = seg.startsWith("!{") && seg.endsWith("}!")
-                                    const text = formatBibleText(isJesusWords ? seg.slice(2, -2) : seg)
-                                    if (text) {
-                                        newLineText.push({
-                                            ...keyTextObj,
-                                            value: text,
-                                            ...(isJesusWords && { style: (keyTextObj.style || "") + redJesusStyle, customType: "disableTemplate_jw" })
-                                        })
-                                    }
+                                    const inner = isJesusWords ? seg.slice(2, -2) : seg
+                                    const text = formatBibleText(inner)
+                                    // formatBibleText trims, keep the space between runs
+                                    const leading = /^\s/.test(inner) ? " " : ""
+                                    const trailing = text && /\s$/.test(inner) ? " " : ""
+                                    const value = leading + text + trailing
+                                    if (!value) return
+
+                                    newLineText.push({
+                                        ...keyTextObj,
+                                        value,
+                                        sourceDynamicKey: `${valueName}:${i}`,
+                                        ...(isJesusWords && { style: (keyTextObj.style || "") + redJesusStyle, customType: "disableTemplate_jw" })
+                                    })
                                 })
                             } else {
-                                newLineText.push({ ...keyTextObj, value: formatBibleText(verse.text) })
+                                newLineText.push({ ...keyTextObj, value: formatBibleText(verseText), sourceDynamicKey: `${valueName}:${i}` })
                             }
 
                             // Separator between verses (don't break verses in multiple parts)
                             if (i < bibleVerses.length - 1) {
-                                const { id: currentVerseId, endNumber } = getVerseIdParts(verse.verseId)
-                                const nextVerseId = getVerseIdParts(bibleVerses[i + 1].verseId).id
-                                const isConsecutive = nextVerseId === currentVerseId + 1 || nextVerseId === endNumber + 1
-                                const isSameVersePart = currentVerseId === nextVerseId
-
-                                // Same verse parts get a space, non-consecutive verses get newline, consecutive verses follow settings
-                                if (isSameVersePart) {
-                                    newLineText.push({ ...keyTextObj, value: " " })
-                                } else if (!isConsecutive) {
-                                    newLineText.push({ ...keyTextObj, value: "<br><br>", style: keyTextObj.style + ";line-height: 0.1em;" })
-                                } else {
-                                    newLineText.push({ ...keyTextObj, value: versesOnIndividualLines ? "<br>" : " " })
-                                }
+                                const sep = getVerseSeparator(verse, bibleVerses[i + 1], versesOnIndividualLines)
+                                newLineText.push({ ...keyTextObj, value: sep, sourceDynamicKey: `${valueName}:${i}` })
                             }
                         })
 
@@ -1213,8 +1243,7 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
             }
 
             // custom Jesus red to JSON format: !{}!
-            text = text.replace(/<span class="wj" ?>(.*?)<\/span>/g, "!{$1}!")
-            text = text.replace(/<red ?>(.*?)<\/red>/g, "!{$1}!")
+            text = markJesusWords(text)
 
             // highlight Jesus text
             const textArray: any[] = []
@@ -1505,13 +1534,13 @@ function splitPlainText(value: string, maxLength: number, tolerance: number = 0)
             second = rebalanced.second
         }
 
-        if (second.length < 1) {
-            segments.push(first)
+        if (!first.length || !second.length) {
+            segments.push(current)
             continue
         }
 
-        if (second.length > 0) queue.unshift(second)
-        if (first.length > 0) queue.unshift(first)
+        queue.unshift(second)
+        queue.unshift(first)
     }
 
     if (segments.length > 1 && segments[segments.length - 1].length < minSegmentLength) {
@@ -1623,112 +1652,30 @@ function getTagName(tag: string) {
 
 function findHtmlSplitIndex(text: string, capacity: number, tolerance: number = 0) {
     if (text.length <= capacity) return text.length
-
-    // Tolerance-aware punctuation split
-    if (tolerance > 0) {
-        const windowMin = Math.max(0, capacity - tolerance)
-        const windowMax = Math.min(text.length - 1, capacity + tolerance)
-        for (let i = windowMin; i <= windowMax; i++) {
-            if (/[.,;:!?]/.test(text.charAt(i))) {
-                let breakPos = i + 1
-                breakPos = adjustSplitIndexForBracket(text, breakPos)
-                return Math.max(0, breakPos)
-            }
-        }
-    }
-
-    const slice = text.slice(0, capacity)
-    const breakChars = [" ", "\n", "\t", "-", ","]
-    let splitIndex = -1
-    breakChars.forEach((char) => {
-        const idx = slice.lastIndexOf(char)
-        if (idx > splitIndex) splitIndex = idx
-    })
-    if (splitIndex === -1) {
-        // Look ahead a little so we prefer the next whitespace instead of cutting through a word
-        const nextBreak = text.slice(capacity).search(/[ \n\t\-,]/)
-        if (nextBreak >= 0 && nextBreak <= 20) {
-            splitIndex = capacity + nextBreak
-        }
-    }
-    let breakPos = splitIndex === -1 ? capacity : splitIndex + 1
-    breakPos = adjustSplitIndexForBracket(text, breakPos)
-    return Math.max(0, breakPos)
+    let breakPos = findBestBreak(text, capacity, tolerance)
+    if (breakPos === -1 || breakPos > capacity + tolerance) breakPos = capacity
+    return Math.max(0, adjustSplitIndexForBracket(text, breakPos))
 }
 
 function getSplitHalves(text: string, maxLength: number, tolerance: number = 0): [string, string] | null {
-    // Only use splitTextContentInHalf when tolerance is 0 (original behavior)
     if (tolerance === 0) {
         const halves = splitTextContentInHalf(text)
-        if (halves.length >= 2) {
-            const first = halves[0].trim()
-            const second = halves[1].trim()
-            if (first.length && second.length) {
-                return [first, second]
-            }
-        }
+        if (halves.length >= 2) return [halves[0], halves[1]]
     }
 
     if (text.length <= maxLength) return null
 
-    let pivot = -1
+    // 1. Try to find the best break near the center
+    const center = Math.floor(text.length / 2)
+    let pivot = findBestBreak(text, center, center / 2)
 
-    // When tolerance > 0, search for punctuation near the CENTER for balanced splits
-    if (tolerance > 0) {
-        const center = Math.floor(text.length / 2)
-        const windowMin = Math.max(0, center - tolerance)
-        const windowMax = Math.min(text.length - 1, center + tolerance)
-
-        // Find punctuation closest to center (best balance)
-        let bestPivot = -1
-        let bestDistance = Infinity
-        for (let i = windowMin; i <= windowMax; i++) {
-            const ch = text.charAt(i)
-            if (/[.,;:!?]/.test(ch)) {
-                const distance = Math.abs(i - center)
-                if (distance < bestDistance) {
-                    bestDistance = distance
-                    bestPivot = i + 1
-                }
-            }
-        }
-
-        if (bestPivot !== -1) {
-            pivot = bestPivot
-        }
-
-        // No punctuation near center — try nearest space to center
-        if (pivot === -1) {
-            let leftSpace = -1
-            let rightSpace = -1
-            for (let i = center; i >= windowMin; i--) {
-                if (text[i] === " ") {
-                    leftSpace = i
-                    break
-                }
-            }
-            for (let i = center; i <= windowMax; i++) {
-                if (text[i] === " ") {
-                    rightSpace = i
-                    break
-                }
-            }
-            if (leftSpace !== -1 && rightSpace !== -1) {
-                pivot = center - leftSpace <= rightSpace - center ? leftSpace : rightSpace
-            } else if (leftSpace !== -1) {
-                pivot = leftSpace
-            } else if (rightSpace !== -1) {
-                pivot = rightSpace
-            }
-        }
+    // 2. Fall back to the last best break before the limit
+    if (pivot === -1 || pivot > maxLength + tolerance) {
+        pivot = findBestBreak(text, maxLength, maxLength)
     }
 
-    // Original behavior: find space near maxLength (used when tolerance=0 or no split found)
-    if (pivot === -1) {
-        pivot = text.lastIndexOf(" ", maxLength)
-        if (pivot <= 0) pivot = text.indexOf(" ", maxLength)
-        if (pivot <= 0) pivot = maxLength
-    }
+    // 3. Absolute fallback
+    if (pivot <= 0 || pivot > text.length - 1) pivot = maxLength
 
     const first = text.slice(0, pivot).trim()
     const second = text.slice(pivot).trim()
@@ -1765,14 +1712,79 @@ function removeTags(text: string) {
     return text.replace(/(<([^>]+)>)/gi, "")
 }
 
+const RED_OPEN_TAG = /<span class="wj" ?>|<span style="color:red;" ?>|<red ?>/g
+
+// json-bible nests other spans inside the red one, so the close tag has to be found by depth
+export function markJesusWords(text: string) {
+    let result = ""
+    let index = 0
+    let match: RegExpExecArray | null
+    RED_OPEN_TAG.lastIndex = 0
+    while ((match = RED_OPEN_TAG.exec(text))) {
+        const tagName = match[0].startsWith("<red") ? "red" : "span"
+        const start = match.index + match[0].length
+        const end = findClosingTag(text, start, tagName)
+        if (end < 0) break
+
+        result += text.slice(index, match.index) + "!{" + text.slice(start, end) + "}!"
+        index = end + tagName.length + 3
+        RED_OPEN_TAG.lastIndex = index
+    }
+    return result + text.slice(index)
+}
+
+function findClosingTag(text: string, from: number, tagName: string) {
+    const tags = new RegExp(`<${tagName}\\b[^>]*>|</${tagName}>`, "g")
+    tags.lastIndex = from
+    let depth = 1
+    let match: RegExpExecArray | null
+    while ((match = tags.exec(text))) {
+        depth += match[0].startsWith("</") ? -1 : 1
+        if (depth === 0) return match.index
+    }
+    return -1
+}
+
 export function formatBibleText(text: string | undefined, redJesus = false) {
     if (!text) return ""
     text = sanitizeVerseText(text)
     if (redJesus) text = text.replace(/!\{(.*?)\}!/g, '<span class="wj">$1</span>')
-    return stripMarkdown(text).replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", "&")
+    // stripMarkdown pairs straight quotes, keep it away from the ones around attribute values
+    text = tokenizeHtml(text)
+        .map((token) => (token.type === "tag" ? token.value : stripMarkdown(token.value)))
+        .join("")
+    return text.replaceAll("/ ", " ").replaceAll("*", "").replaceAll("&amp;", "&")
+}
+
+export function sanitizeVerseText(input: unknown): string {
+    if (input === null || input === undefined) return ""
+
+    const text = typeof input === "string" ? input : String(input)
+    const withoutBreaks = text.replace(/<\s*br\s*\/?>/gi, " ")
+    const normalizedSpaces = withoutBreaks.replace(/\u00a0/g, " ")
+    const withQuotes = normalizedSpaces.replace(/<q>(.*?)<\/q>/g, "“$1”")
+    const replacedUndertitles = withQuotes.replace(/<h4[^>]*>(.*?)<\/h4>\s*/g, '<span class="undertitle">$1 </span>')
+    const withoutMultipleSpaces = replacedUndertitles.replace(/ {2,}/g, " ")
+
+    return withoutMultipleSpaces.trim()
 }
 
 // CREATE SHOW/SLIDES
+
+function getVerseSeparator(verse: { verseId: string }, nextVerse: { verseId: string }, versesOnIndividualLines: boolean) {
+    const { id: currentVerseId, endNumber } = getVerseIdParts(verse.verseId)
+    const nextVerseId = getVerseIdParts(nextVerse.verseId).id
+    const isConsecutive = nextVerseId === currentVerseId + 1 || nextVerseId === endNumber + 1
+    const isSameVersePart = currentVerseId === nextVerseId
+
+    if (isSameVersePart) {
+        return " "
+    } else if (!isConsecutive) {
+        return "\n\n"
+    } else {
+        return versesOnIndividualLines ? "\n" : " "
+    }
+}
 
 export async function createScriptureShow() {
     const biblesContent = await getActiveScripturesContent()
@@ -1814,7 +1826,7 @@ export async function getScriptureShow(biblesContent: BibleContent[] | null) {
 
     // DEPRECATED
     // create first slide reference
-    const textboxes = slides[0].filter((a) => (a.type || "text") === "text" && a.lines?.length)
+    const textboxes = slides[0]?.filter((a) => (a.type || "text") === "text" && a.lines?.length)
     if (useOldSystem && get(scriptureSettings).firstSlideReference && textboxes[0]?.lines?.[0]?.text?.[0]) {
         const textboxesClone = clone(textboxes)
         // get verse text for correct styling
@@ -1933,6 +1945,8 @@ function fixHTMLTags(items: Item[]) {
                 if (typeof text.value !== "string") return
                 // replace <q> with actual quotes
                 text.value = text.value.replace(/<q>(.*?)<\/q>/g, "“$1”")
+                // update <br> to newlines
+                text.value = text.value.replace(/<br\s*\/?>/gi, "\n")
                 // remove HTML tags
                 // text.value = text.value.replace(/<[^>]+>/g, "")
             })
@@ -2050,10 +2064,10 @@ export function getShortBibleName(name: string) {
     name = name
         .replace(/[^a-zA-Z ]+/g, "")
         .trim()
-        .replaceAll("  ", " ")
+        .replaceAll(/\s+/g, " ")
 
     if (name.split(" ").length < 2) name = name.slice(0, 3)
-    else name = name.split(" ").reduce((current, word) => (current += word[0]), "")
+    else name = name.split(" ").reduce((current, word) => (current += word[0] || ""), "")
 
     return name || "B"
 }
@@ -2186,29 +2200,74 @@ function buildRouteBibleUrl(referenceLabel: string, translation = "") {
     return url.toString()
 }
 
-export async function generateScriptureShowFromReference(referenceText: string) {
+// convert text reference (e.g., "John 3:16") to actual reference (e.g., { book: "John", chapter: 3, verses: [16] })
+export async function resolveScriptureReference(referenceText: string, scriptureId = "") {
     if (typeof referenceText !== "string" || !referenceText.trim()) return null
 
-    const activeScriptureId = get(drawerTabsData).scripture?.activeSubTab || ""
-    if (!activeScriptureId) return null
+    const id = scriptureId || get(drawerTabsData).scripture?.activeSubTab || ""
+    if (!id) return null
+
+    // if collection of scriptures, use the first one
+    const activeScriptureId = get(scriptures)[id]?.collection?.versions?.[0] || id
 
     try {
-        const activeBible = await loadJsonBible(activeScriptureId)
-        if (!activeBible) return null
+        const bible = await loadJsonBible(activeScriptureId)
+        if (!bible) return null
 
-        const bookResult = activeBible.bookSearch(referenceText)
+        const bookResult = bible.bookSearch(referenceText)
         if (!bookResult?.book) return null
 
-        const bookNum = bookResult.book
-        const chapterNum = bookResult.chapter ? Number(bookResult.chapter) : 1
+        const book = bookResult.book
+        const chapter = bookResult.chapter ? Number(bookResult.chapter) : 1
         let verses = bookResult.verses || []
+        if (bookResult.chapter && !verses.length) {
+            const verseMatch = referenceText.match(/[:.,]\s*(\d+)(?:-(\d+))?[^a-zA-Z]*$/)
+            if (verseMatch) {
+                const start = parseInt(verseMatch[1])
+                const end = verseMatch[2] ? parseInt(verseMatch[2]) : start
+                if (start > 0 && start <= 150) {
+                    verses = Array.from({ length: end - start + 1 }, (_, i) => start + i)
+                }
+            }
+        }
         if (!verses.length) {
-            const bookData = await activeBible.getBook(bookNum)
-            const chapterData = await bookData.getChapter(chapterNum)
+            const bookData = await bible.getBook(book)
+            const chapterData = await bookData.getChapter(chapter)
             verses = (chapterData?.data?.verses || []).map((v) => Number(v.number)).filter(Boolean)
         }
 
-        activeScripture.set({ id: activeScriptureId, reference: { book: bookNum, chapters: [chapterNum], verses: [verses] } })
+        return { id, book, chapter, verses }
+    } catch (err) {
+        console.error("Error resolving scripture reference:", err)
+        return null
+    }
+}
+
+const bookNameToId: Record<string, number> = Object.fromEntries(Object.entries(defaultBibleBookNames).map(([id, name]: any) => [name.toLowerCase(), Number(id)]))
+export function parseEngScriptureRefToNumbers(ref: string) {
+    const match = ref.trim().match(/^(.+?)\s+(\d+):([\d,-]+)$/)
+    if (!match) return null
+
+    const [, bookName, chapterStr, versesStr] = match
+    const book = bookNameToId[bookName.toLowerCase()]
+    if (!book) return null
+
+    const verses = versesStr.split(",").flatMap((part) => {
+        const [start, end] = part.split("-").map(Number)
+        if (!end) return [start]
+        return Array.from({ length: end - start + 1 }, (_, i) => start + i)
+    })
+
+    return { id: ref, book, chapter: Number(chapterStr), verses }
+}
+
+export async function generateScriptureShowFromReference(referenceText: string) {
+    const resolved = await resolveScriptureReference(referenceText)
+    if (!resolved) return null
+
+    try {
+        // open the scripture location in the drawer
+        activeScripture.set({ id: resolved.id, reference: { book: resolved.book, chapters: [resolved.chapter], verses: [resolved.verses] } })
 
         const biblesContent = await getActiveScripturesContent()
         if (!biblesContent?.length) return null
@@ -2219,7 +2278,6 @@ export async function generateScriptureShowFromReference(referenceText: string) 
         return scriptureShow
     } catch (err) {
         console.error("Error generating scripture show from reference:", err)
+        return null
     }
-
-    return null
 }

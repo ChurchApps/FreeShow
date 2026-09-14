@@ -1,20 +1,19 @@
 <script lang="ts">
     import type { SettingsTabs } from "../../../types/Tabs"
     import { activePage, activeProfile, focusMode, profiles, settingsTab } from "../../stores"
+    import { settingsTabs } from "../../values/tabs"
     import { clone } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
 
-    const tabs: SettingsTabs[] = ["general", "display_settings", "styles", "connection", "files", "profiles", "theme", "other"]
-
     let activeTabs: SettingsTabs[] = []
     $: profile = $profiles[$activeProfile || ""]
-    $: if (profile) activeTabs = clone(tabs).filter((tabId) => profile.access.settings?.[tabId] !== "none")
-    else activeTabs = clone(tabs)
+    $: if (profile) activeTabs = clone(settingsTabs).filter((tabId) => profile.access.settings?.[tabId] !== "none")
+    else activeTabs = clone(settingsTabs)
 
     function keydown(e: KeyboardEvent) {
-        if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
+        if (e.target?.closest?.(".edit") || e.ctrlKey || e.metaKey) return
 
         let nextTab = -1
         let currentTabIndex = activeTabs.findIndex((tab) => tab === $settingsTab)

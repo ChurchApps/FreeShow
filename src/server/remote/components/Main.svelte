@@ -47,9 +47,10 @@
 
     // keyboard shortcuts
     function keydown(e: KeyboardEvent) {
-        if ((e.target as HTMLElement)?.closest("textarea") || (e.target as HTMLElement)?.closest("input")) return
+        // don't trigger shortcuts when typing in an input or textarea
+        if ((e.target as HTMLElement)?.closest("textarea, input, select")) return
 
-        if ([" ", "Arrow", "Page"].includes(e.key)) e.preventDefault()
+        if (e.key === " " || e.key.startsWith("Arrow") || e.key.startsWith("Page")) e.preventDefault()
 
         // WIP keyboard shortcuts same as main app
         if ([" ", "ArrowRight", "PageDown"].includes(e.key)) send("API:next_slide")

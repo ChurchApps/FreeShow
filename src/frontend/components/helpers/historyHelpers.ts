@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import { REMOTE } from "../../../types/Channels"
 import { ShowObj } from "../../classes/Show"
-import { actions, activeDrawerTab, activeEdit, activeProject, activeRename, activeShow, activeStage, activeTagFilter, audioPlaylists, currentOutputSettings, dictionary, drawerTabsData, effects, events, focusMode, folders, globalTags, groups, notFound, openedFolders, overlays, playerVideos, profiles, projects, projectTemplates, projectView, shows, showsCache, special, stageShows, styles, theme, themes } from "../../stores"
+import { actions, activeDrawerTab, activeEdit, activeProject, activeRename, activeShow, activeStage, activeTagFilter, audioPlaylists, currentOutputSettings, dictionary, drawerTabsData, editingProjectTemplate, effects, events, focusMode, folders, globalTags, groups, interactions, notFound, openedFolders, overlays, playerVideos, profiles, projects, projectTemplates, projectView, shows, showsCache, special, stageShows, styles, theme, themes } from "../../stores"
 import { translateText } from "../../utils/language"
 import { updateThemeValues } from "../../utils/updateSettings"
 import { EMPTY_CATEGORY, EMPTY_EFFECT, EMPTY_EVENT, EMPTY_LAYOUT, EMPTY_PLAYER_VIDEO, EMPTY_PROJECT, EMPTY_PROJECT_FOLDER, EMPTY_SECTION, EMPTY_SLIDE, EMPTY_STAGE, EMPTY_TAG } from "../../values/empty"
@@ -336,7 +336,11 @@ export const _updaters = {
 
     show: {
         store: showsCache,
-        empty: new ShowObj(), // this should not be used (it's not updated)
+        // Lazy to avoid constructing ShowObj during module evaluation.
+        // This helps avoid circular-import initialization issues.
+        get empty() {
+            return new ShowObj() // this should not be used
+        },
         initialize: (data: any) => {
             const replacer: any = {}
 
@@ -451,11 +455,16 @@ export const _updaters = {
         select: (id: string, { subkey }: any, initializing: boolean) => {
             _show(id).set({ key: "settings.activeLayout", value: subkey })
 
-            // set active layout in project
-            if (get(activeShow)?.index !== undefined && get(activeProject) && get(projects)[get(activeProject)!]?.shows?.[get(activeShow)!.index!]) {
-                projects.update((a) => {
-                    a[get(activeProject)!].shows[get(activeShow)!.index!].layout = subkey
-                    a[get(activeProject)!].shows[get(activeShow)!.index!].layoutInfo = { name: _show(id).get("layouts")?.[subkey]?.name || "" }
+            // set active layout in project / template
+            const isTemplate = !!get(editingProjectTemplate)
+            const projectId = isTemplate ? get(editingProjectTemplate) : get(activeProject)
+            const store = isTemplate ? projectTemplates : projects
+            const activeShowIndex = get(activeShow)?.index
+
+            if (activeShowIndex !== undefined && projectId && get(store)[projectId!]?.shows?.[activeShowIndex]) {
+                store.update((a) => {
+                    a[projectId!].shows[activeShowIndex].layout = subkey
+                    a[projectId!].shows[activeShowIndex].layoutInfo = { name: _show(id).get("layouts")?.[subkey]?.name || "" }
                     return a
                 })
             }
@@ -584,6 +593,10 @@ export const _updaters = {
     action: {
         store: actions,
         empty: { name: "", triggers: [] }
+    },
+    interaction: {
+        store: interactions,
+        empty: { name: "", inputs: [] }
     }
 }
 

@@ -4,12 +4,12 @@ import type { OutSlide } from "../../types/Show"
 import { runAction } from "../components/actions/actions"
 import { clone, keysToID } from "../components/helpers/array"
 import { getBase64Path } from "../components/helpers/media"
-import { getFirstOutput } from "../components/helpers/output"
+import { checkWindowCapture, getFirstOutput } from "../components/helpers/output"
 import { getCurrentProjectIndexes, getProjectItems } from "../components/helpers/projectProgress"
 import { getGroupName, getLayoutRef } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { getCustomStageLabel } from "../components/stage/stage"
-import { actions, activeProject, activeShow, events, groups, media, outputs, previewBuffers, projects, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
+import { actions, activeProject, activeShow, events, groups, media, metronome, metronomeTimer, outputs, projects, showsCache, stageShows, timeFormat, timers, variables } from "../stores"
 import { connections } from "./../stores"
 import { translateText } from "./language"
 import { send } from "./request"
@@ -78,10 +78,10 @@ export const receiveSTAGE = {
             .filter((a) => !a.disabled)
             .map((a) => ({ id: a.id, name: a.name, password: !!a.password }))
     },
-    LAYOUT: (data: { id: string }, connectionId: string) => {
+    LAYOUT: (data: { id: string; password?: string }, connectionId: string) => {
         let layout = get(stageShows)[data.id]
         if (!layout || layout.disabled) return { channel: "ERROR", data: "noShow" }
-        // if (show.password.length && show.password !== data.password) return { channel: "ERROR", data: "wrongPass" }
+        if (layout.password && layout.password !== data.password) return { channel: "ERROR", data: "wrongPass" }
         setConnectedState("STAGE", connectionId, "active", data.id)
 
         layout = arrayToObject(filterObjectArray(get(stageShows), ["disabled", "name", "settings", "items"]))[data.id]
@@ -92,61 +92,67 @@ export const receiveSTAGE = {
             item.label = getCustomStageLabel(item.type || itemId, item)
         })
 
-        // if (show.disabled) return { id: connectionId, channel: "ERROR", data: "noShow" }
-
         // initial
-        sendData(STAGE, { channel: "OUT" })
-        sendData(STAGE, { channel: "SHOW_DATA" })
+        sendData(STAGE, { id: connectionId, channel: "OUT" })
+        sendData(STAGE, { id: connectionId, channel: "SHOW_DATA" })
         window.api.send(STAGE, { id: connectionId, channel: "TIMERS", data: get(timers) })
         window.api.send(STAGE, { id: connectionId, channel: "EVENTS", data: get(events) })
         window.api.send(STAGE, { id: connectionId, channel: "VARIABLES", data: get(variables) })
+        window.api.send(STAGE, { id: connectionId, channel: "METRONOME", data: get(metronome) })
+        window.api.send(STAGE, { id: connectionId, channel: "METRONOME_TIMER", data: get(metronomeTimer) })
         send(STAGE, ["DATA"], { timeFormat: get(timeFormat) })
 
         // send media items
         Object.values(layout.items).forEach(async (item) => {
             if (item.type === "media" && item.src) {
-                const data = await getBase64Path(item.src)
-                send(STAGE, ["MEDIA"], { path: item.src, value: data })
+                const mediaData = await getBase64Path(item.src)
+                send(STAGE, ["MEDIA"], { path: item.src, value: mediaData })
             }
         })
 
         return layout
     },
 
-    OUT: (data: any, connectionId: string) => {
-        let stageId = data?.id
-        if (!stageId) stageId = get(connections).STAGE?.[connectionId]?.active
+    OUT: (data: any, connectionId: string = "") => {
+        let stageId = data?.id || get(connections).STAGE?.[connectionId]?.active || Object.values(get(connections).STAGE || {}).find((c: any) => c?.active)?.active
         if (!stageId) return
 
         const stageLayout = get(stageShows)[stageId]
         if (!stageLayout) return
 
-        const outputId = stageLayout.settings.output || getFirstOutput()?.id
+        const sourceOutputId = stageLayout.settings?.output
+        const outputStores = get(outputs)
+        const outputId = sourceOutputId && outputStores[sourceOutputId] ? sourceOutputId : getFirstOutput()?.id
         const output = { ...get(outputs)[outputId], id: outputId }
         if (!output?.out) return
 
         const outSlideId = output.out.slide?.id
-        if (outSlideId) send(STAGE, ["SHOW_DATA"], { id: outSlideId, show: get(showsCache)[outSlideId] })
+        if (outSlideId && outSlideId !== "temp") {
+            const show = get(showsCache)[outSlideId] || _show(outSlideId).get()
+            if (show) send(STAGE, ["SHOW_DATA"], { id: outSlideId, show })
+        }
 
         sendBackgroundToStage(outputId)
         return output
     },
-    SHOW_DATA: (_data: any, connectionId: string) => {
-        const stageId = get(connections).STAGE?.[connectionId]?.active
-        if (!stageId) return
 
-        const stageLayout = get(stageShows)[stageId]
-        if (!stageLayout) return
+    SHOW_DATA: (data: any, connectionId: string = "") => {
+        let outSlideId = data?.id
+        if (!outSlideId) {
+            const stageId = get(connections).STAGE?.[connectionId]?.active || Object.values(get(connections).STAGE || {}).find((c: any) => c?.active)?.active
+            const sourceOutputId = stageId ? get(stageShows)[stageId]?.settings?.output : ""
+            const outputId = sourceOutputId && get(outputs)[sourceOutputId] ? sourceOutputId : getFirstOutput()?.id
+            outSlideId = get(outputs)[outputId || ""]?.out?.slide?.id || ""
+        }
+        if (!outSlideId || outSlideId === "temp") return
 
-        const outputId = stageLayout.settings.output || getFirstOutput()?.id
-        const outSlideId = get(outputs)[outputId]?.out?.slide?.id || ""
-        const show = get(showsCache)[outSlideId]
+        const show = get(showsCache)[outSlideId] || _show(outSlideId).get()
         if (!show) return
 
         // send media items
         Object.values(show.media || {}).forEach(async (media) => {
-            const data = await getBase64Path(media.path || "")
-            send(STAGE, ["MEDIA"], { path: media.path, value: data })
+            const mediaData = await getBase64Path(media.path || "")
+            send(STAGE, ["MEDIA"], { path: media.path, value: mediaData })
         })
 
         return { id: outSlideId, show }
@@ -197,34 +203,24 @@ export const receiveSTAGE = {
 
         return data
     },
-    REQUEST_STREAM: (data: any) => {
-        let id = data.outputId
-        if (!id) id = getFirstOutput()?.id
 
-        if (!id) return
-
-        data.stream = get(previewBuffers)[id]
-
-        return data
+    // sent by clients with a visible "current output" mirror item (renewed while visible)
+    STREAM_SUBSCRIBE: (data: any, connectionId = "") => {
+        if (addStageStreamViewer(connectionId, data?.outputId)) checkWindowCapture()
+    },
+    STREAM_UNSUBSCRIBE: (_data: any, connectionId = "") => {
+        removeStageStreamViewer(connectionId)
+        checkWindowCapture()
     },
 
-    RUN_ACTION: (a: { id: string }) => {
+    RUN_ACTION: (a: { id: string }, connectionId: string) => {
+        const stageId = get(connections).STAGE?.[connectionId]?.active
+        const hasPassword = Object.values(get(stageShows) || {}).some((s: any) => s?.password)
+        if (hasPassword && !stageId) return
+
         runAction(get(actions)[a.id], { source: "remote" })
     }
 
-    // REQUEST_VIDEO_DATA: (data: any) => {
-    //     if (!data) data = {}
-
-    //     // WIP don't know the outputId
-    //     // let id = data.outputId
-    //     let outputId = getFirstOutput()?.id
-    //     if (!outputId) return
-
-    //     data.data = get(videosData)[outputId]
-    //     data.time = get(videosTime)[outputId]
-
-    //     return data
-    // },
     // case "SHOW":
     //   data = getStageShow(message.data)
     //   break
@@ -237,4 +233,29 @@ export const receiveSTAGE = {
     // case "OVERLAYS":
     //   data = getOutOverlays()
     //   break
+}
+
+// tracks StageShow connections actively viewing an "Output window" item
+const viewers: { [socketId: string]: { expires: number; outputId?: string } } = {}
+const VIEWER_TTL = 10000 // subscriptions are renewed by a client heartbeat
+export function addStageStreamViewer(socketId: string, outputId?: string): boolean {
+    if (!socketId) return false
+
+    const isNew = !viewers[socketId]
+    viewers[socketId] = { expires: Date.now() + VIEWER_TTL, outputId: outputId || viewers[socketId]?.outputId }
+    return isNew
+}
+export function removeStageStreamViewer(socketId: string) {
+    delete viewers[socketId]
+}
+
+export function hasStageStreamViewers(connectedIds: string[], outputId: string): boolean {
+    const connected = new Set(connectedIds)
+    const now = Date.now()
+    Object.keys(viewers).forEach((socketId) => {
+        if (!connected.has(socketId) || viewers[socketId].expires < now) delete viewers[socketId]
+    })
+
+    // a viewer without a specific output (no stage layout output set) matches any output
+    return Object.values(viewers).some((viewer) => !viewer.outputId || viewer.outputId === outputId)
 }

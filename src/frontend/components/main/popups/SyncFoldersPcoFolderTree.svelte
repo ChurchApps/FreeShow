@@ -20,7 +20,7 @@
     // }
 
     function toggleCheck(id: string, checked: boolean) {
-        dispatch("toggleSelect", { id, checked: !checked })
+        dispatch("toggleSelect", { id, checked })
     }
 
     function forwardToggleSelect(e: CustomEvent<{ id: string; checked: boolean }>) {

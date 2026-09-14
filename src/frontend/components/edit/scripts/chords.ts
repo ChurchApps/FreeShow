@@ -45,11 +45,17 @@ export function loadChords(item: Item) {
     return chordsList
 }
 
+// get a list of all chords used in a slide
+export function getSlideChords(slide: Slide) {
+    if (!slide?.items?.length) return []
+    return slide.items.reduce((value: string[], item) => [...value, ...loadChords(item)], [])
+}
+
 // get a list of unique chords used in a slide
 export function getUsedChords(slide: Slide) {
-    if (!slide?.items?.length) return []
-    const itemChords = slide.items.reduce((value: string[], item) => (value = [...value, ...loadChords(item)]), [])
-    return [...new Set(itemChords)].sort((a, b) => a?.localeCompare(b))
+    const chords = getSlideChords(slide)
+    if (!chords.length) return []
+    return [...new Set(chords)].sort((a, b) => a?.localeCompare(b))
 }
 
 // IMPORT CHORD TEXT LINES

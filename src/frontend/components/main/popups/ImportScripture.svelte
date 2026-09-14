@@ -95,7 +95,7 @@
     let importType = ""
     const importTypes = [
         { id: "api", name: "API", icon: "web" }, // translate | scripture_alt
-        { id: "local", name: translateText("cloud.local"), icon: "scripture" }
+        { id: "local", name: translateText("cloud.local"), icon: "folder" } // scripture
     ]
 
     let localBibles: { path: string; name: string }[] = []
@@ -121,7 +121,7 @@
         <T id="error.bible_api" />
     {:else}
         <div class="info">
-            <T id="scripture.bibles" /> & YouVersion
+            {translateText("captions.powered_by")} API.Bible & YouVersion
         </div>
 
         <MaterialTextInput label="main.search" id="scriptureApiSearchInput" value="" on:input={search} autofocus />
@@ -129,7 +129,7 @@
         <div class="list">
             {#if searchedRecommendedBibles.length}
                 {#each searchedRecommendedBibles as bible}
-                    <MaterialCheckbox label={bible.name} data={bible.description} checked={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)} on:change={() => toggleScripture(bible)} />
+                    <MaterialCheckbox label={bible.name} title="{bible.source === 'youversion' ? '[YouVersion] ' : ''}{bible.name}" data={bible.description} style={bible.source === "youversion" ? "border-left: 2px solid #4a3a30;" : bible.source === "api.bible" ? "border-left: 2px solid #253354;" : ""} checked={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)} on:change={() => toggleScripture(bible)} />
                 {/each}
 
                 {#if searchedBibles.length}
@@ -140,7 +140,7 @@
             {#if bibles.length}
                 {#if searchedBibles.length}
                     {#each searchedBibles as bible}
-                        <MaterialCheckbox label={bible.name} data={bible.description} checked={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)} on:change={() => toggleScripture(bible)} />
+                        <MaterialCheckbox label={bible.name} title="{bible.source === 'youversion' ? '[YouVersion] ' : ''}{bible.name}" data={bible.description} style={bible.source === "youversion" ? "border-left: 2px solid #4a3a30;" : bible.source === "api.bible" ? "border-left: 2px solid #253354;" : ""} checked={!!Object.values($scriptures).find((a) => a.id === bible.sourceKey)} on:change={() => toggleScripture(bible)} />
                     {/each}
                 {:else if !searchedRecommendedBibles.length}
                     <Center faded>

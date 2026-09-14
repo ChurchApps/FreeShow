@@ -7,6 +7,7 @@
     import Button from "../../inputs/Button.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import CalendarsManagement from "../calendar/CalendarsManagement.svelte"
     import CreateCalendarShow from "../calendar/CreateCalendarShow.svelte"
     import Day from "../calendar/Day.svelte"
     import { getSelectedEvents } from "../calendar/calendar"
@@ -18,8 +19,6 @@
 
     let currentEvents: any[] = []
     $: if ($activeDays || $events) currentEvents = getSelectedEvents()
-
-    // $: currentEvents = currentEvents.filter((a) => a.type === type)
 
     function updateSpecial(value, key) {
         special.update((a) => {
@@ -49,6 +48,8 @@
         {#if type === "event"}
             <!-- create show options -->
             <MaterialPopupButton label="calendar.add_slides_from_show" style="margin-top: 5px;" value={$calendarAddShow} name={$shows[$calendarAddShow]?.name || "—"} popupId="select_show" icon="showIcon" data={{ action: "select_show", location: "calendar" }} on:change={(e) => calendarAddShow.set(e.detail)} allowEmpty />
+
+            <CalendarsManagement />
         {/if}
     </main>
 {:else if type === "event"}

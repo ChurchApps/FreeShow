@@ -2,13 +2,13 @@
     import { getContext, onDestroy } from "svelte"
     import type { StageItem, StageLayout as TStageLayout } from "../../../types/Stage"
     import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, refreshEditSlide, stageShows, timers, variables } from "../../stores"
+    import { startResizing } from "../../utils/cursor"
     import { translateText } from "../../utils/language"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
     import { isConditionMet } from "../edit/scripts/itemHelpers"
     import { getItemText } from "../edit/scripts/textStyle"
-    import { clone, keysToID, sortByName } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { createCSSVariables, replaceDynamicValues } from "../helpers/showActions"
@@ -25,7 +25,6 @@
     import Movebox from "../system/Movebox.svelte"
     import SlideNotes from "./items/SlideNotes.svelte"
     import SlideText from "./items/SlideText.svelte"
-    import VideoTime from "./items/VideoTime.svelte"
     import { getCustomStageLabel, getSlideTextItems, stageItemToItem } from "./stage"
     import StageLayout from "./StageLayout.svelte"
 
@@ -35,7 +34,6 @@
     export let ratio: number
     export let preview = false
     export let edit = false
-    export let isMirrorItem = false
     export let disableStagePreview = false
 
     $: currentShow = stageLayout === null ? ($activeStage.id ? $stageShows[$activeStage.id] : null) : stageLayout
@@ -46,20 +44,54 @@
     function mousedown(e: any) {
         if (!edit) return
 
-        console.log(e)
-        activeStage.update((ae) => {
-            if (e.shiftKey) {
-                if (ae.items.includes(id)) {
-                    if (e.target.closest(".line")) ae.items.splice(ae.items.indexOf(id), 1)
-                } else ae.items.push(id)
-            } else ae.items = [id]
+        const isSelected = $activeStage.items.includes(id)
 
-            return ae
-        })
+        if (e.shiftKey) {
+            if (!isSelected)
+                activeStage.update((ae) => {
+                    ae.items.push(id)
+                    return ae
+                })
+        } else if (!isSelected) {
+            activeStage.update((ae) => {
+                ae.items = [id]
+                return ae
+            })
+        } else if ($activeStage.items.length > 1) {
+            const startX = e.clientX,
+                startY = e.clientY
+            window.addEventListener(
+                "mouseup",
+                (upEvent) => {
+                    if (Math.hypot(upEvent.clientX - startX, upEvent.clientY - startY) < 4) {
+                        activeStage.update((ae) => {
+                            ae.items = [id]
+                            return ae
+                        })
+                    }
+                },
+                { once: true }
+            )
+        }
+
+        // deselect selected text
+        if (e.shiftKey) {
+            isShiftPressed = true
+            e.preventDefault()
+            if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+            window.getSelection()?.removeAllRanges()
+        }
 
         let target = e.target.closest(".stage_item")
         if (!target) return
 
+        const square = e.target.closest(".square")
+        if (square) {
+            const cursor = window.getComputedStyle(square).cursor || "nwse-resize"
+            startResizing(cursor)
+        }
+
+        const slideElem = target.closest(".slide") || target.closest(".stage")
         mouse = {
             x: e.clientX,
             y: e.clientY,
@@ -68,8 +100,8 @@
             top: target.offsetTop,
             left: target.offsetLeft,
             offset: {
-                x: (e.clientX - e.target.closest(".slide").offsetLeft) / ratio - target.offsetLeft,
-                y: (e.clientY - e.target.closest(".slide").offsetTop) / ratio - target.offsetTop,
+                x: (e.clientX - (slideElem?.offsetLeft || 0)) / ratio - target.offsetLeft,
+                y: (e.clientY - (slideElem?.offsetTop || 0)) / ratio - target.offsetTop,
                 width: e.clientX / ratio - target.offsetWidth,
                 height: e.clientY / ratio - target.offsetHeight
             },
@@ -78,8 +110,14 @@
         }
     }
 
+    let isShiftPressed = false
+    function keyup(e: KeyboardEvent) {
+        if (!edit) return
+        if (e.key === "Shift") isShiftPressed = false
+    }
     function keydown(e: KeyboardEvent) {
         if (!edit) return
+        if (e.key === "Shift") isShiftPressed = true
 
         if ((e.key === "Backspace" || e.key === "Delete") && $activeStage.items.includes(id) && !document.activeElement?.closest(".stage_item") && !document.activeElement?.closest(".edit")) {
             // selected timeline actions
@@ -96,9 +134,10 @@
     }
 
     function deselect(e: any) {
+        if (!edit) return
         if (e.target.closest(".stageTools") || e.target.closest(".contextMenu") || $activePopup) return
 
-        if ((edit && !e.shiftKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
+        if ((!e.shiftKey && e.target.closest(".stage_item")?.id !== id && $activeStage.items.includes(id) && !e.target.closest(".stage_item")) || e.target.closest(".panel")) {
             activeStage.update((ae) => {
                 ae.items = []
                 return ae
@@ -108,10 +147,13 @@
 
     // timer
     let today = new Date()
-    const dateInterval = setInterval(() => (today = new Date()), 1000)
+    let dateInterval: any = null
+    $: if ((item?.type === "timer" || id.includes("timer") || id.includes("clock")) && !dateInterval && !disableStagePreview) {
+        dateInterval = setInterval(() => (today = new Date()), 1000)
+    }
 
     onDestroy(() => {
-        clearInterval(dateInterval)
+        if (dateInterval) clearInterval(dateInterval)
         if (currentAutoSizeTimeout) clearTimeout(currentAutoSizeTimeout)
     })
 
@@ -123,15 +165,11 @@
 
     let alignElem
     let size = 100
-    // Track previous slide to reset retry counter when slide changes
-    let prevSlideForAutoSize: any = undefined
-    // currentSlide & timeout to update auto size properly if slide notes
-    $: if (alignElem && item && currentSlide !== undefined && autoSizeEnabled) {
-        // Reset retry counter when slide changes
-        if (prevSlideForAutoSize !== currentSlide) {
-            autoSizeRetryCount = 0
-            prevSlideForAutoSize = currentSlide
-        }
+    let prevAutoSizeKey = ""
+    $: autoSizeKey = `${currentSlide?.id || ""}_${item?.style || ""}_${item?.textFit || ""}_${item?.auto ?? ""}_${currentItemText || ""}`
+    $: if (alignElem && autoSizeEnabled && autoSizeKey !== prevAutoSizeKey) {
+        prevAutoSizeKey = autoSizeKey
+        autoSizeRetryCount = 0
         updateAutoSize()
     }
     let currentAutoSizeTimeout: NodeJS.Timeout | null = null
@@ -172,11 +210,14 @@
             currentAutoSizeTimeout = null
         }, 20)
     }
-    $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
+    $: isAutoSized = item?.type?.includes("text") ? item?.auto || (item?.textFit && item?.textFit !== "none") : item?.auto !== false || (item?.textFit && item?.textFit !== "none")
+    $: autoSize = isAutoSized ? size : fontSize
 
     // SLIDE
-    $: stageOutputId = currentShow?.settings?.output || getActiveOutputs($currentWindow === "output" ? $allOutputs : $outputs, false, true, true)[0]
-    $: currentOutput = $outputs[stageOutputId] || $allOutputs[stageOutputId] || {}
+    $: sourceOutputId = currentShow?.settings?.output
+    $: outputStores = $currentWindow === "output" ? $allOutputs : $outputs
+    $: stageOutputId = sourceOutputId && outputStores[sourceOutputId] ? sourceOutputId : getActiveOutputs(outputStores, false, true, true)[0]
+    $: currentOutput = outputStores[stageOutputId] || {}
     $: currentSlide = currentOutput.out?.slide || (slideOffset !== 0 ? $outputSlideCache[stageOutputId] || null : null)
 
     $: outputWindowId = item?.currentOutput?.source || stageOutputId
@@ -202,10 +243,11 @@
     $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
 
     let firstTimerId = ""
-    $: if (!item?.timer?.id || id.includes("first_active_timer")) {
-        firstTimerId = $activeTimers[0]?.id
-        if (!firstTimerId) firstTimerId = sortByName(keysToID($timers)).find((timer) => timer.type !== "counter")?.id || ""
-    } else firstTimerId = ""
+    $: if (item?.type === "timer" || id.includes("first_active_timer")) {
+        firstTimerId = item?.timer?.id || $activeTimers[0]?.id || Object.values($timers).find((timer) => timer.type !== "counter")?.id || ""
+    } else {
+        firstTimerId = ""
+    }
 
     let itemStyle = ""
     let textStyle = ""
@@ -229,18 +271,16 @@
         })
     }
 
-    function getCustomStyle(style: string) {
-        let outputResolution = getStageResolution()
-        style = percentageStylePos(style, outputResolution)
-        return style
-    }
+    $: stageResolution = getStageResolution()
+    $: customStyle = percentageStylePos(itemStyle, stageResolution)
 
-    let video: HTMLVideoElement | undefined
-    function loaded() {
-        if (!video) return
-        video.pause()
-        video.currentTime = video.duration / 2
-    }
+    // pause video at middle
+    // let video: HTMLVideoElement | undefined
+    // function loaded() {
+    //     if (!video) return
+    //     video.pause()
+    //     video.currentTime = video.duration / 2
+    // }
 
     $: if ($refreshEditSlide) {
         setTimeout(() => {
@@ -248,7 +288,7 @@
         }, 100)
     }
 
-    $: newItem = item ? clone({ ...item, timer: { ...(item.timer || {}), id: firstTimerId || item.timer?.id || "" } }) : null
+    $: newItem = item?.type === "timer" && firstTimerId && item.timer?.id !== firstTimerId ? { ...item, timer: { ...(item.timer || {}), id: firstTimerId } } : item
 
     // ACTIONS
 
@@ -266,15 +306,22 @@
 
     let conditionsUpdater = 0
     let updateTrigger = 0
-    const updaterInterval = setInterval(() => conditionsUpdater++, 3000)
-    const cssInterval = setInterval(() => updateTrigger++, 1000)
+    let updaterInterval: any = null
+    let cssInterval: any = null
+
+    const intervalTime = disableStagePreview || preview ? 5000 : 1000
+    const condIntervalTime = disableStagePreview || preview ? 5000 : 3000
+
+    updaterInterval = setInterval(() => conditionsUpdater++, condIntervalTime)
+    cssInterval = setInterval(() => updateTrigger++, intervalTime)
+
     onDestroy(() => {
-        clearInterval(updaterInterval)
-        clearInterval(cssInterval)
+        if (updaterInterval) clearInterval(updaterInterval)
+        if (cssInterval) clearInterval(cssInterval)
     })
 
     $: currentItemText = item ? (item.type === "slide_text" ? getSlideTextItems(stageLayout!, item).map(getItemText).join("") : getItemText(stageItemToItem(item))) : ""
-    $: showItemState = edit ? isConditionMet(item?.conditions?.showItem, currentItemText, "stage", conditionsUpdater) : false
+    $: showItemState = edit && item?.conditions?.showItem ? isConditionMet(item.conditions.showItem, currentItemText, "stage", conditionsUpdater) : false
 
     // fixed letter width
     $: fixedWidth = item?.type === "timer" || item?.type === "clock" ? "font-feature-settings: 'tnum' 1;" : ""
@@ -290,10 +337,10 @@
     })()
 
     const getLayoutMounted = getContext<() => boolean>("layoutMounted")
-    $: evaluatedText = replaceDynamicValues(currentItemText, { type: "stage", id }, ($variables ? 0 : 0) + updateTrigger)
     let lastText = ""
     let flashTriggerId = 0
     $: if (item?.flash?.enabled) {
+        const evaluatedText = replaceDynamicValues(currentItemText, { type: "stage", id }, ($variables ? 0 : 0) + updateTrigger)
         const currentText = evaluatedText || ""
         const parentIsMounting = getLayoutMounted ? !getLayoutMounted() : false
 
@@ -302,7 +349,7 @@
     }
 </script>
 
-<svelte:window on:keydown={keydown} on:mousedown={deselect} />
+<svelte:window on:mousedown={deselect} on:keydown={keydown} on:keyup={keyup} />
 
 <div
     {id}
@@ -312,7 +359,8 @@
     class:selected={edit && $activeStage.items.includes(id)}
     class:isDisabledVariable
     class:isOutput={!!$currentWindow}
-    style="{getCustomStyle(itemStyle)}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}"
+    class:isShiftPressed
+    style="{customStyle}{id.includes('slide') && !id.includes('tracker') ? '' : textStyle}{edit ? `outline: ${3 / ratio}px solid rgb(255 255 255 / 0.2);` : ''}--labelColor: {currentShow?.settings?.labelColor || '#d0a853'};{fixedWidth}{cssVariables}"
     on:mousedown={mousedown}
 >
     {#if currentShow?.settings?.labels && id && item}
@@ -377,7 +425,8 @@
                         <!-- WIP this only includes "next" slide background -->
                         {#if typeof slideBackground?.path === "string"}
                             <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
-                                <Media path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror bind:video on:loaded={loaded} />
+                                <!-- bind:video on:loaded={loaded} -->
+                                <Media outputId={outputWindowId} path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror />
                             </div>
                         {/if}
                     {/if}
@@ -403,7 +452,7 @@
                     {/if}
                 {:else if item.type}
                     {#if newItem}
-                        <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false || item.textFit !== "none" ? autoSize : fontSize} {preview} {isMirrorItem} outputId={stageOutputId} />
+                        <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false || item.textFit !== "none" ? autoSize : fontSize} {preview} outputId={stageOutputId} isStage />
                     {/if}
                 {:else}
                     <!-- OLD CODE -->
@@ -412,8 +461,6 @@
                             <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} outputId={stageOutputId} />
                         {:else if id.includes("clock")}
                             <Clock style={false} fontStyle={item.auto === false ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
-                        {:else if id.includes("video")}
-                            <VideoTime outputId={stageOutputId} autoSize={item.auto !== false ? autoSize : fontSize} reverse={id.includes("countdown")} />
                         {:else if id.includes("first_active_timer")}
                             <Timer item={stageItemToItem(item)} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                         {:else if id.includes("timers")}
@@ -457,6 +504,13 @@
 
     .stage_item.outline {
         outline: 5px solid rgb(255 255 255 / 0.2);
+    }
+    .stage_item.isShiftPressed,
+    .stage_item.isShiftPressed :global(*:not(.line)) {
+        cursor: default !important;
+    }
+    .stage_item.isShiftPressed :global(.line) {
+        cursor: move !important;
     }
     .stage_item.selected {
         outline: 5px solid var(--secondary);
@@ -579,5 +633,15 @@
         animation-duration: 600ms;
         animation-timing-function: ease-out;
         animation-fill-mode: forwards;
+    }
+
+    :global(.stage_item.isShiftPressed),
+    :global(.stage_item.isShiftPressed .edit),
+    :global(.stage_item.isShiftPressed .line) {
+        cursor: move !important;
+    }
+    :global(.stage_item.isShiftPressed .edit) {
+        pointer-events: none !important;
+        user-select: none !important;
     }
 </style>

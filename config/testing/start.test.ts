@@ -12,7 +12,8 @@ test.beforeEach(async ({ context }) => {
 test("Launch electron app", async () => {
     const tmpSettingFolder = tmp.dirSync({ unsafeCleanup: true })
     const electronApp = await electron.launch({
-        args: ["."],
+        // --no-sandbox is required for Electron to launch reliably on Linux CI.
+        args: [".", "--no-sandbox"],
         env: { ...process.env, NODE_ENV: "production", FS_MOCK_STORE_PATH: tmpSettingFolder.name },
     })
 
@@ -126,8 +127,15 @@ test("Launch electron app", async () => {
 
     // Close after finishing
     console.log("Closing app...")
-    electronApp.close() // await here not detecting close on Linux
-    await delay(2_000)
+    // Race shutdown with a timeout to avoid hanging CI on Linux.
+    const electronProcess = electronApp.process()
+    await Promise.race([electronApp.close(), delay(5_000)]).catch(() => {})
+    try {
+        if (electronProcess?.pid && !electronProcess.killed) electronProcess.kill("SIGKILL")
+    } catch {
+        // already exited
+    }
+    await delay(1_000)
     console.log("App closed!")
 
     tmpDataFolder.removeCallback()

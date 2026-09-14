@@ -9,11 +9,11 @@
     import { getFirstActiveOutput } from "../helpers/output"
     import { replaceDynamicValues } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
+    import { calculateShapeVerticalOffset, getShapeFloatSide } from "../edit/scripts/shapeOutside"
     import { applyStyleOverrides } from "./wordOverride"
 
     export let item: Item
     export let slideIndex = 0
-    // export let isMirrorItem = false
     export let key = false
     export let smallFontSize = false
     export let animationStyle: any = {}
@@ -65,13 +65,17 @@
     let renderedLines: any[] = []
     $: renderedLines = styleOverrides?.length ? applyStyleOverrides(lines, styleOverrides) : lines
 
+    $: shapeOutside = getStyles(item?.style)["shape-outside"]
+    $: shapeFloatSide = getShapeFloatSide(shapeOutside)
+
+    let linesElem: HTMLElement | undefined
+    let shapeOffsetTop = 0
+    $: if (shapeOutside && linesElem && (renderedLines || item?.align)) {
+        setTimeout(() => (shapeOffsetTop = calculateShapeVerticalOffset(linesElem, item?.align)))
+    }
+
     function getCustomStyle(style: string) {
         if (!style) return ""
-
-        // if (outputId && !isMirrorItem) {
-        //     const outputResolution = getOutputResolution(outputId, $outputs, true)
-        //     style = percentageStylePos(style, outputResolution)
-        // }
 
         // text gradient
 
@@ -105,8 +109,31 @@
     let contentHeight = 0
     let alignHeight = 0
 
+    $: isScrolling = !isStage && !!item?.scrolling?.type && item.scrolling.type !== "none"
     $: copyCountHorizontal = contentWidth > 0 ? Math.ceil(alignWidth / (contentWidth + (item?.scrolling?.gap ?? 0))) + 2 : 2
     $: copyCountVertical = contentHeight > 0 ? Math.ceil(alignHeight / (contentHeight + (item?.scrolling?.gap ?? 0))) + 2 : 2
+
+    function measureScroll(node: HTMLElement, type: "align" | "content") {
+        if (!isScrolling) return
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const { width, height } = entry.contentRect
+                if (type === "align") {
+                    alignWidth = width
+                    alignHeight = height
+                } else {
+                    contentWidth = width
+                    contentHeight = height
+                }
+            }
+        })
+        observer.observe(node)
+        return {
+            destroy() {
+                observer.disconnect()
+            }
+        }
+    }
 
     function getColor(style: string | undefined) {
         if (!isStage || !useOriginalTextColor || !style) return ""
@@ -147,7 +174,8 @@
     // FONT SIZE
 
     function resolveFontSize(style: string, outputStyle: Styles | null) {
-        const baseFontSize = Number(getStyles(style, true)["font-size"] || 100) || 100
+        let styleObj = getStyles(style, true)
+        const baseFontSize = Number(styleObj["font-size"] || 100) || 100
 
         let resolvedOutputStyle = outputStyle
         if (!resolvedOutputStyle) {
@@ -161,6 +189,7 @@
     }
 
     function getCustomFontSize(style: string, outputStyle: Styles | null) {
+        if (style?.includes("--base-font-size") || style?.includes("font-size: calc(")) return ""
         return `;font-size: ${resolveFontSize(style, outputStyle)}px;`
     }
 
@@ -208,8 +237,17 @@
                 })
             })
 
-            chords.forEach((chord, i) => {
-                html += `<span class="chord end" data-autosize-ratio="${autosizeRatio}" style="transform: translateX(calc(${1.4 * (i + 1)}em - 50%));">${chord.key}</span>`
+            // Add leading offset before the first end chord to separate it from the last lyric character
+            if (chords.length > 0) {
+                const leadWidthEm = (0.8 * autosizeRatio).toFixed(2)
+                html += `<span class="invisible trailing-lead-space" style="display: inline-block; width: ${leadWidthEm}em; white-space: nowrap;"></span>`
+            }
+
+            // Dynamically reserve inline horizontal space per trailing chord with generous spacing
+            chords.forEach((chord) => {
+                html += `<span class="chord end" data-autosize-ratio="${autosizeRatio}">${chord.key}</span>`
+                const widthEm = Math.max(1.5, chord.key.length * 0.65 * autosizeRatio + 0.8).toFixed(2)
+                html += `<span class="invisible trailing-space" style="display: inline-block; width: ${widthEm}em; white-space: nowrap;"></span>`
             })
 
             if (!html) return
@@ -250,20 +288,33 @@
 
     const dispatch = createEventDispatcher()
     const previousValue: { [key: string]: string } = {}
+    const textValueCache = new Map<string, string>()
+    let lastUpdater = 0
+
     function getTextValue(value: string, i: number, ti: number, _updater: number) {
-        if (dynamicValues && value.includes("{")) {
-            const newValue = replaceDynamicValues(value, { ...ref, slideIndex })
-
-            const id = i + "_" + ti
-            if (previousValue[id] !== newValue) {
-                if (updateDynamic > 2) dispatch("updateAutoSize")
-                previousValue[id] = newValue
-            }
-
-            return newValue
+        if (!dynamicValues || !value || typeof value !== "string" || !value.includes("{")) {
+            return value || ""
         }
 
-        return value
+        if (_updater !== lastUpdater) {
+            textValueCache.clear()
+            lastUpdater = _updater
+        }
+
+        const cacheKey = `${i}_${ti}_${value}`
+        const cached = textValueCache.get(cacheKey)
+        if (cached !== undefined) return cached
+
+        const newValue = replaceDynamicValues(value, { ...ref, slideIndex }, _updater)
+
+        const id = i + "_" + ti
+        if (previousValue[id] !== newValue) {
+            if (updateDynamic > 2) dispatch("updateAutoSize")
+            previousValue[id] = newValue
+        }
+
+        textValueCache.set(cacheKey, newValue)
+        return newValue
     }
 
     // UPDATE DYNAMIC VALUES e.g. {time_} EVERY SECOND
@@ -305,17 +356,27 @@
 
     // $: isScripture = ref?.id === "scripture" || ref?.showId === "temp" || $showsCache[ref.showId || ""]?.reference?.type === "scripture"
 
-    $: baseFontSize = fontSize || (style ? resolveFontSize(renderedLines[0]?.text[0]?.style, outputStyle) : 100)
+    $: mainTextSegment = renderedLines?.flatMap((l) => l?.text || []).find((t) => !t?.customType?.includes("disableTemplate")) || renderedLines?.[0]?.text?.[0]
+    $: baseFontSize = fontSize || (style ? resolveFontSize(mainTextSegment?.style, outputStyle) : 100)
 </script>
 
-<div class="align" class:hidden={hideContent} class:isStage class:scrolling={!isStage && item?.scrolling?.type} style="--scrollSpeed: {(item?.scrolling?.speed ?? 30) * 1.5}s;{style ? item?.align : null};" bind:clientWidth={alignWidth} bind:clientHeight={alignHeight}>
+<div class="align" class:hasShapeOutside={!!shapeOutside} class:hidden={hideContent} class:isStage class:scrolling={!isStage && item?.scrolling?.type} style="--scrollSpeed: {(item?.scrolling?.speed ?? 30) * 1.5}s;{style ? item?.align : null};" use:measureScroll={"align"}>
     <!-- scrolling lines -->
     {#if !isStage && item?.scrolling?.type && item?.scrolling?.type !== "none"}
-        <div class="scrollWrapper" style="--copyCountHorizontal: {copyCountHorizontal}; --copyCountVertical: {copyCountVertical};" class:topBottomContinuousScrolling={!isStage && item?.scrolling?.type === "top_bottom"} class:bottomTopContinuousScrolling={!isStage && item?.scrolling?.type === "bottom_top"} class:leftRightContinuousScrolling={!isStage && item?.scrolling?.type === "left_right"} class:rightLeftContinuousScrolling={!isStage && item?.scrolling?.type === "right_left"}>
+        <div class="scrollWrapper" style="--copyCountHorizontal: {copyCountHorizontal};--copyCountVertical: {copyCountVertical};" class:topBottomContinuousScrolling={!isStage && item?.scrolling?.type === "top_bottom"} class:bottomTopContinuousScrolling={!isStage && item?.scrolling?.type === "bottom_top"} class:leftRightContinuousScrolling={!isStage && item?.scrolling?.type === "left_right"} class:rightLeftContinuousScrolling={!isStage && item?.scrolling?.type === "right_left"}>
             {#each Array.from({ length: item?.scrolling?.type === "top_bottom" || item?.scrolling?.type === "bottom_top" ? copyCountVertical : copyCountHorizontal }) as _}
-                <div class="scrollContent" style="{item?.scrolling?.type === 'top_bottom' || item?.scrolling?.type === 'bottom_top' ? 'margin-bottom' : 'margin-right'}: {item?.scrolling?.gap ?? 100}px;" bind:clientHeight={contentHeight} bind:clientWidth={contentWidth}>
+                <div class="scrollContent" style="{item?.scrolling?.type === 'top_bottom' || item?.scrolling?.type === 'bottom_top' ? 'margin-bottom' : 'margin-right'}: {item?.scrolling?.gap ?? 100}px;" use:measureScroll={"content"}>
                     <!-- WIP duplicate of "lines" down below -->
-                    <div class="lines" data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null} style="{style ? lineStyleBox : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
+                    <div
+                        class="lines"
+                        class:hasShapeOutside={!!shapeOutside}
+                        data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null}
+                        style="{style ? lineStyleBox : ''}{shapeOutside ? `--shape-outside: ${shapeOutside};` : ''}{shapeOutside && typeof item?.align === 'string' ? item.align.replace(/align-items/g, 'align-content') + ';' : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}"
+                    >
+                        {#if shapeOutside}
+                            <div class="shape-outside-float" style="shape-outside: {shapeOutside}; float: {shapeFloatSide};"></div>
+                        {/if}
+
                         {#each renderedLines as line, i}
                             <!-- set div height if chords, not last line, and no text content -->
                             {@const chordOnly = chords && chordOnlyLines[i]}
@@ -329,14 +390,14 @@
                                     </div>
                                 {/if}
 
-                                <!-- class:height={!line.text[0]?.value.length} -->
+                                <!-- class:height={!line.text?.[0]?.value.length} -->
                                 {#if !chordOnly}
                                     <div
                                         class="break"
                                         class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                                         class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                                         class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
-                                        style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
+                                        style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text?.[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
                                     >
                                         <!-- style Lines selection in center preview -->
                                         {#each highlighedLines || [] as box}
@@ -351,9 +412,10 @@
                                             {#each line.text || [] as text, ti}
                                                 {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                                                 {@const fontRatio = text.customType?.includes("disableTemplate") && !text.customType?.includes("jw") ? customTypeRatio : 1}
+                                                {@const segmentFontSize = fontSize ? fontSize * fontRatio : style ? resolveFontSize(text.baseStyle || text.style, outputStyle) : 100}
 
                                                 <!-- NOTE: must be on the same line for rendering ...>{@html -->
-                                                <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''};--base-font-size: {baseFontSize}px;">{@html getTextValue(value, i, ti, updateDynamic)}</span>
+                                                <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''};--base-font-size: {segmentFontSize}px;">{@html getTextValue(value, i, ti, updateDynamic)}</span>
                                             {/each}
                                         {/if}
                                     </div>
@@ -366,7 +428,11 @@
         </div>
     {:else}
         <!-- non scrolling lines -->
-        <div class="lines" data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null} style="{style ? lineStyleBox : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
+        <div bind:this={linesElem} class="lines" class:hasShapeOutside={!!shapeOutside} data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null} style="{style ? lineStyleBox : ''}{shapeOutside ? `--shape-outside: ${shapeOutside};--shape-offset-top: ${shapeOffsetTop}px;` : ''}{smallFontSize || customFontSize !== null ? '--font-size: ' + (smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : customFontSize) + 'px;' : ''}{textAnimation}{chordsStyle}">
+            {#if shapeOutside}
+                <div class="shape-outside-float" style="shape-outside: {shapeOutside}; float: {shapeFloatSide};"></div>
+            {/if}
+
             {#each renderedLines as line, i}
                 <!-- set div height if chords, not last line, and no text content -->
                 {@const chordOnly = chords && chordOnlyLines[i]}
@@ -380,14 +446,14 @@
                         </div>
                     {/if}
 
-                    <!-- class:height={!line.text[0]?.value.length} -->
+                    <!-- class:height={!line.text?.[0]?.value.length} -->
                     {#if !chordOnly}
                         <div
                             class="break"
                             class:normalWrap={normalWrap || (isStage ? typeof stageItem?.style === "string" && (stageItem?.style.includes("justify") || stageItem?.style.includes("nowrap")) : line.align?.includes("justify") || line.align?.includes("left") || JSON.stringify(line).includes("nowrap"))}
                             class:reveal={(centerPreview || isStage) && item?.lineReveal && revealed < i}
                             class:smallFontSize={smallFontSize || customFontSize || textAnimation.includes("font-size")}
-                            style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
+                            style="position: relative;{style ? lineStyle : ''}{style ? line.align : ''}{height ? `height: ${height}px;` : ''}{item?.list?.enabled && line.text?.reduce((value, t) => (value += t.value || ''), '')?.length ? listStyle : ''}{item?.list?.enabled ? `color: ${getStyles(line.text?.[0]?.style).color || ''};` : ''}{lineHidden && outputStyle?.showAsFaded ? `opacity: ${(outputStyle.lineOpacity ?? 50) / 100};` : ''}"
                         >
                             <!-- style Lines selection in center preview -->
                             {#each highlighedLines || [] as box}
@@ -402,9 +468,10 @@
                                 {#each line.text || [] as text, ti}
                                     {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
                                     {@const fontRatio = text.customType?.includes("disableTemplate") && !text.customType?.includes("jw") ? customTypeRatio : 1}
+                                    {@const segmentFontSize = fontSize ? fontSize * fontRatio : style ? resolveFontSize(text.baseStyle || text.style, outputStyle) : 100}
 
                                     <!-- NOTE: must be on the same line for rendering ...>{@html -->
-                                    <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''};--base-font-size: {baseFontSize}px;">{@html getTextValue(value, i, ti, updateDynamic)}</span>
+                                    <span class="textContainer" style="{style ? getCustomStyle(text.style) : ''}{getColor(text.style)}{customStyle}{text.customType?.includes('disableTemplate') ? text.style : ''}{fontSize ? `;font-size: ${fontSize * fontRatio}px;` : style ? getCustomFontSize(text.style, outputStyle) : ''};--base-font-size: {segmentFontSize}px;">{@html getTextValue(value, i, ti, updateDynamic)}</span>
                                 {/each}
                             {/if}
                         </div>
@@ -448,6 +515,10 @@
     }
 
     .break {
+        /* prevent line-breaks in HTML to affect content, like "text-align: justify;" */
+        /* this breaks how the text works in specific scenarios, so fixing would be hard */
+        /* display: table; */
+
         width: 100%;
         /* line-height: normal; */
 
@@ -502,10 +573,42 @@
         font-size: 0.8em;
         font-style: italic;
     }
+    /* a block here would give the line's leading space its own line */
+    .break :global(span.undertitle) {
+        display: inline-block;
+        width: 100%;
+        color: var(--secondary);
+        font-weight: 600;
+    }
 
     /* .height {
         height: 1em;
     } */
+
+    /* Cutout Shape */
+    .align.hasShapeOutside {
+        display: block !important;
+        height: 100% !important;
+        width: 100% !important;
+    }
+    .lines.hasShapeOutside {
+        display: block !important;
+        height: 100% !important;
+        width: 100% !important;
+        padding-top: var(--shape-offset-top, 0px) !important;
+        box-sizing: border-box !important;
+    }
+    .lines.hasShapeOutside .break {
+        text-wrap: unset !important;
+    }
+    .shape-outside-float {
+        /* it gives a warning, but float must be used with the shape-outside property */
+        float: left;
+        width: 100%;
+        height: calc(100% + var(--shape-offset-top, 0px));
+        margin-top: calc(-1 * var(--shape-offset-top, 0px));
+        pointer-events: none;
+    }
 
     /* scrolling */
     .scrolling {
@@ -516,12 +619,12 @@
     /* chords */
     .break.chords :global(.invisible) {
         opacity: 0;
-        line-height: 0;
+        /* line-height: 0; */
         font-size: var(--font-size);
     }
     .break.chords :global(.chord) {
         position: absolute;
-        top: 0;
+        /* top: 0; */
         color: var(--chord-color);
         font-size: var(--chord-size) !important;
         font-weight: bold;
@@ -548,9 +651,9 @@
         font-weight: normal;
         font-style: normal;
     }
-    .break.chords.first {
+    /* .break.chords.first {
         line-height: 0 !important;
-    }
+    } */
     .break.chords.chordOnly {
         line-height: 1.1;
         max-height: unset;

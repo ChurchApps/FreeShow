@@ -1,22 +1,18 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import type { ItemType } from "../../../../types/Show"
-    import { activeEdit, activePopup, outputs, popupData, styles, templates } from "../../../stores"
+    import { activeEdit, activePopup, popupData, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import TemplateSlide from "../../drawer/pages/TemplateSlide.svelte"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { getResolution } from "../../helpers/output"
     import { getStyles } from "../../helpers/style"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialZoom from "../../inputs/MaterialZoom.svelte"
-    import { getStyleResolution } from "../../slide/getStyleResolution"
     import Center from "../../system/Center.svelte"
     import DropArea from "../../system/DropArea.svelte"
-    import { addItem } from "../scripts/itemHelpers"
     import { centerZoom } from "../scripts/zoom"
 
     const update = () => (Slide = clone($templates[currentId]))
@@ -28,6 +24,12 @@
 
     let newStyles: { [key: string]: string | number } = {}
     $: active = $activeEdit.items
+
+    let lastActiveIds = ""
+    $: if (active.join(",") !== lastActiveIds) {
+        newStyles = {}
+        lastActiveIds = active.join(",")
+    }
 
     let ratio = 1
 
@@ -46,10 +48,10 @@
             let styles = getStyles(item.style)
             let textStyles = ""
 
-            Object.entries(newStyles).forEach(([key, value]) => (styles[key] = value.toString()))
+            const itemNewStyles = (newStyles as any).__multiPositions ? (newStyles as any).__multiPositions[id] || {} : newStyles
+            Object.entries(itemNewStyles).forEach(([key, value]) => (styles[key] = (value as any).toString()))
             Object.entries(styles).forEach((obj) => (textStyles += obj[0] + ":" + obj[1] + ";"))
 
-            // TODO: move multiple!
             values.push(textStyles)
         })
 
@@ -68,15 +70,8 @@
         zoom = e.detail
         const origin = zoomOrigin
         zoomOrigin = null
-        centerZoom(zoom, origin, scrollElem, ".droparea")
+        centerZoom(origin, scrollElem, ".droparea")
     }
-
-    const shortcutItems: { id: ItemType; icon?: string }[] = [{ id: "text" }, { id: "media", icon: "image" }, { id: "timer" }]
-
-    $: resolution = getResolution(null, { $outputs, $styles })
-    $: widthOrHeight = getStyleResolution(resolution, width, height, "fit", { zoom })
-
-    $: mode = Slide?.settings?.mode || "default"
 
     $: styleOverrides = (Slide?.settings?.styleOverrides || []).filter((a) => (a.globalRegex || a.pattern) && a.templateId).length
 </script>
@@ -101,18 +96,12 @@
         {/if}
     </div>
 
-    {#if !widthOrHeight.includes("height") && mode !== "text"}
-        <FloatingInputs side="center">
-            {#each shortcutItems as item}
-                <MaterialButton title="settings.add: items.{item.id}" on:click={() => addItem(item.id, null, {}, translateText("example.text"))}>
-                    <Icon id={item.icon || item.id} size={1.3} white />
-                </MaterialButton>
-            {/each}
-        </FloatingInputs>
-    {/if}
+    <FloatingInputs side="left">
+        <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
 
-    <FloatingInputs>
         {#if styleOverrides > 0}
+            <div class="divider"></div>
+
             <MaterialButton
                 icon="text"
                 on:click={() => {
@@ -123,11 +112,7 @@
                 {translateText("popup.template_style_overrides")}
                 <span style="font-size: 0.8em;opacity: 0.5;">{styleOverrides}</span>
             </MaterialButton>
-
-            <div class="divider"></div>
         {/if}
-
-        <MaterialZoom columns={zoom} min={0.2} max={4} defaultValue={1} addValue={0.1} on:change={updateZoom} on:origin={(e) => (zoomOrigin = e.detail)} />
     </FloatingInputs>
 </div>
 

@@ -2,11 +2,11 @@ import { get } from "svelte/store"
 import type { OutSlide } from "../../../types/Show"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
-import { activeEdit, activePage, activePopup, activeStage, contextActive, customMessageCredits, drawSettings, focusMode, lockedOverlays, outLocked, outputCache, outputs, outputSlideCache, overlays, overlayTimers, playingAudio, playingMetronome, selected, slideTimers, topContextActive, videosData, videosTime } from "../../stores"
+import { activeEdit, activePage, activePopup, activeStage, contextActive, customMessageCredits, drawSettings, focusMode, lockedOverlays, outLocked, outputCache, outputs, outputSlideCache, overlays, overlayTimers, playingAudio, playingMetronome, selected, slideTimers, topContextActive } from "../../stores"
 import { customActionActivation } from "../actions/actions"
 import { startMetronome } from "../drawer/audio/metronome"
 import { clone } from "../helpers/array"
-import { clearOverlayTimer, clearPlayingVideo, getAllActiveOutputIds, getAllActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
+import { clearOverlayTimer, getAllActiveOutputIds, getAllActiveOutputs, isOutCleared, setOutput } from "../helpers/output"
 import { _show } from "../helpers/shows"
 import { getActiveTimelinePlayback } from "../timeline/TimelinePlayback"
 
@@ -87,19 +87,7 @@ export function clearBackground(specificOutputId = "") {
     const outputIds = specificOutputId ? [specificOutputId] : getAllActiveOutputIds()
 
     outputIds.forEach((outputId) => {
-        // clearVideo()
         setOutput("background", null, false, outputId)
-        clearPlayingVideo(outputId)
-
-        // WIP this does not clear time properly
-        videosData.update((a) => {
-            delete a[outputId]
-            return a
-        })
-        videosTime.update((a) => {
-            delete a[outputId]
-            return a
-        })
     })
 
     customMessageCredits.set("") // unsplash

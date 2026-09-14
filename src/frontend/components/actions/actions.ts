@@ -144,7 +144,11 @@ export function toggleAction(data: API_toggle) {
     })
 }
 
+let startupActionsTriggered = false
 export function checkStartupActions() {
+    if (startupActionsTriggered) return
+    startupActionsTriggered = true
+
     customActionActivation("startup")
 }
 
@@ -214,6 +218,7 @@ export function getActionTriggerId(id: string) {
 const namedObjects = {
     run_action: () => get(actions),
     start_show: () => get(shows),
+    id_select_show: () => get(shows),
     start_audio_stream: () => get(audioStreams),
     start_playlist: () => get(audioPlaylists),
     id_select_stage_layout: () => get(stageShows)

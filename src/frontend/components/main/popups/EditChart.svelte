@@ -67,7 +67,7 @@
     }
 </script>
 
-<div style="display: flex;flex-direction: column;">
+<div style="display: flex;flex-direction: column;width: calc(100vw - (var(--navigation-width) + 20px) * 2);">
     {#each grid as _row, rowIdx}
         <InputRow>
             <!-- <span>{rowIdx + 1}</span> -->
@@ -90,6 +90,7 @@
             />
             <MaterialColorInput
                 label="edit.color"
+                style="max-width: 150px;"
                 value={grid[rowIdx][2] || getDefaultColor(rowIdx, grid)}
                 on:change={(e) => {
                     grid[rowIdx][2] = e.detail

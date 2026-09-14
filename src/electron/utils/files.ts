@@ -9,18 +9,16 @@ import path, { join, parse } from "path"
 import { uid } from "uid"
 import upath from "upath"
 import { fileURLToPath } from "url"
-import { OUTPUT } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { ToMain } from "../../types/IPC/ToMain"
-import type { FileFolder, MainFilePaths, Subtitle } from "../../types/Main"
+import type { FileFolder, MainFilePaths, MediaCodecInfo, Subtitle } from "../../types/Main"
 import type { Project } from "../../types/Projects"
 import type { Item, Show, TrimmedShows } from "../../types/Show"
 import { imageExtensions, mimeTypes, videoExtensions } from "../data/media"
 import { _store, appDataPath, config, getStore, setStore, setStoreValue } from "../data/store"
 import { createThumbnail, doesMediaExist, filePathHashCode } from "../data/thumbnails"
 import { sendMain, sendToMain } from "../IPC/main"
-import { OutputHelper } from "../output/OutputHelper"
-import { mainWindow, setAutoProfile, toApp } from "./../index"
+import { mainWindow, setAutoProfile } from "./../index"
 import { getAllShows, trimShow } from "./shows"
 
 function actionComplete(err: Error | null, actionFailedMessage: string) {
@@ -268,6 +266,26 @@ export function getFileStatsAsync(filePath: string): Promise<null | Stats> {
     })
 }
 
+export function getFolderSize(dir: string): number {
+    try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true })
+
+        const sizes = entries.map((entry) => {
+            const fullPath = join(dir, entry.name)
+
+            try {
+                return entry.isDirectory() ? getFolderSize(fullPath) : fs.statSync(fullPath).size
+            } catch {
+                return 0
+            }
+        })
+
+        return sizes.reduce((a, b) => a + b, 0)
+    } catch {
+        return 0
+    }
+}
+
 export function makeDir(folderPath: string) {
     try {
         fs.mkdirSync(folderPath, { recursive: true })
@@ -448,14 +466,12 @@ export async function readFolderContent(data: { path: string | string[]; depth?:
     if (!Array.isArray(data.path)) data.path = [data.path]
     if (data.depth === undefined) data.depth = 0
 
-    await Promise.all(
-        data.path.map(async (folderPath) => {
-            const stats = await getFileStatsAsync(folderPath)
-            if (!stats?.isDirectory()) return
+    await asyncPool(8, data.path, async (folderPath) => {
+        const stats = await getFileStatsAsync(folderPath)
+        if (!stats?.isDirectory()) return
 
-            await getFolderContentRecursive(folderPath)
-        })
-    )
+        await getFolderContentRecursive(folderPath)
+    })
 
     async function getFolderContentRecursive(folderPath: string, currentDepth = 0) {
         const exceededDepth = currentDepth > data.depth!
@@ -473,13 +489,12 @@ export async function readFolderContent(data: { path: string | string[]; depth?:
         let noMedia = false
         if (data.captureFolderContent) {
             // check if any of the files in the current folder are media files and no folders (because they might contain media files)
-            const results = await Promise.all(
-                filePaths.map(async (p) => {
-                    const stats = await getFileStatsAsync(p)
-                    return stats?.isDirectory() || isMedia(getExtension(p))
-                })
-            )
-            noMedia = !results.some((res) => res)
+            noMedia = true
+            await asyncPool(32, filePaths, async (p) => {
+                if (!noMedia) return
+                const stats = await getFileStatsAsync(p)
+                if (stats?.isDirectory() || isMedia(getExtension(p))) noMedia = false
+            })
         }
 
         if (data.captureFolderContent && currentDepth < 2 ? false : exceededDepth) {
@@ -490,27 +505,25 @@ export async function readFolderContent(data: { path: string | string[]; depth?:
         const captureThumbnailPaths = data.captureFolderContent && currentDepth === 1 ? getFirstMediaFiles(filePaths, 4) : []
         const currentPaths = data.captureFolderContent && exceededDepth ? captureThumbnailPaths : filePaths
 
-        await Promise.all(
-            currentPaths.map(async (filePath) => {
-                const stats = await getFileStatsAsync(filePath)
-                if (!stats) return
+        await asyncPool(32, currentPaths, async (filePath) => {
+            const stats = await getFileStatsAsync(filePath)
+            if (!stats) return
 
-                if (stats.isDirectory()) {
-                    await getFolderContentRecursive(filePath, currentDepth + 1)
-                } else {
-                    let thumbnailPath = ""
-                    if (captureThumbnailPaths.includes(filePath) || (data.generateThumbnails && currentDepth === 0 && isMedia(getExtension(filePath)))) {
-                        try {
-                            thumbnailPath = createThumbnail(filePath)
-                        } catch (err) {
-                            console.error("Thumbnail creation failed:", err)
-                        }
+            if (stats.isDirectory()) {
+                await getFolderContentRecursive(filePath, currentDepth + 1)
+            } else {
+                let thumbnailPath = ""
+                if (captureThumbnailPaths.includes(filePath) || (data.generateThumbnails && currentDepth === 0 && isMedia(getExtension(filePath)))) {
+                    try {
+                        thumbnailPath = createThumbnail(filePath)
+                    } catch (err) {
+                        console.error("Thumbnail creation failed:", err)
                     }
-
-                    folderContent.set(filePath, { isFolder: false, path: filePath, name: path.basename(filePath), thumbnailPath, stats })
                 }
-            })
-        )
+
+                folderContent.set(filePath, { isFolder: false, path: filePath, name: path.basename(filePath), thumbnailPath, stats })
+            }
+        })
 
         folderContent.set(folderPath, { isFolder: true, path: folderPath, name: path.basename(folderPath), files: filePaths, noMedia: noMedia ? true : undefined })
     }
@@ -634,228 +647,144 @@ export function readExifData({ id }: { id: string }): Promise<{ id: string; exif
 }
 
 // GET MEDIA CODEC
-export async function getMediaCodec(data: { path: string }) {
-    return await extractCodecInfo(data)
-}
+export async function getMediaCodec(data: { path: string }): Promise<MediaCodecInfo> {
+    const mimeType = getMimeType(data.path)
+    const emptyResult: MediaCodecInfo = { ...data, codecs: [], mimeType, mimeCodec: "" }
 
-type MediaCodecInfo = { path: string; codecs: string[]; mimeType: string; mimeCodec: string }
+    return parseMp4File(data.path, emptyResult, (mp4boxfile, resolve) => {
+        mp4boxfile.onReady = (info: any) => {
+            const codecs = info?.tracks?.map((t: any) => t.codec).filter(Boolean) || []
+            if (!codecs.length) return resolve(emptyResult)
 
-function getEmptyCodecInfo(data: { path: string }): MediaCodecInfo {
-    return { ...data, codecs: [], mimeType: getMimeType(data.path), mimeCodec: "" }
-}
-
-async function extractCodecInfo(data: { path: string }): Promise<MediaCodecInfo> {
-    const MP4Box = require("mp4box")
-
-    return new Promise((resolve) => {
-        const emptyResult = getEmptyCodecInfo(data)
-        const mimeType = emptyResult.mimeType
-
-        try {
-            const buffer = fs.readFileSync(data.path)
-            if (!buffer?.length || !hasIsoBmffHeader(buffer)) return resolve(emptyResult)
-
-            const uint8Array = new Uint8Array(buffer)
-            const arrayBuffer = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength) as ArrayBuffer & { fileStart?: number }
-            if (!arrayBuffer) return resolve(emptyResult)
-
-            const mp4boxfile = MP4Box.createFile()
-            let settled = false
-            const resolveOnce = (result: MediaCodecInfo) => {
-                if (settled) return
-                settled = true
-                resolve(result)
-            }
-
-            mp4boxfile.onError = (err: Error) => {
-                console.error("MP4Box error:", err)
-                resolveOnce(emptyResult)
-            }
-            mp4boxfile.onReady = (info: { tracks: { codec: string }[]; [key: string]: any }) => {
-                if (!Array.isArray(info?.tracks)) {
-                    resolveOnce(emptyResult)
-                    return
-                }
-
-                const codecs = info.tracks.map((track: { codec: string }) => track?.codec).filter((codec: string | undefined): codec is string => Boolean(codec))
-                if (!codecs.length) return resolveOnce(emptyResult)
-
-                const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
-                resolveOnce({ ...data, codecs, mimeType, mimeCodec })
-            }
-
-            arrayBuffer.fileStart = 0
-            try {
-                mp4boxfile.appendBuffer(arrayBuffer)
-                mp4boxfile.flush()
-            } catch (err) {
-                console.error("MP4Box append/flush error:", err)
-                resolveOnce(emptyResult)
-            }
-        } catch (err) {
-            console.error("MP4Box error catch:", err)
-            resolve(emptyResult)
-            return
+            const mimeCodec = `${mimeType}; codecs="${codecs.join(", ")}"`
+            resolve({ ...data, codecs, mimeType, mimeCodec })
         }
     })
 }
 
-function hasIsoBmffHeader(buffer: Buffer) {
-    // MP4/ISO-BMFF files should contain an 'ftyp' box near the beginning.
-    let offset = 0
-    const maxBytes = Math.min(buffer.length, 256 * 1024)
+export function getMimeType(filePath: string): string {
+    if (!filePath || typeof filePath !== "string") return "application/octet-stream"
 
-    while (offset + 8 <= maxBytes) {
-        const size32 = buffer.readUInt32BE(offset)
-        const type = buffer.toString("ascii", offset + 4, offset + 8)
-        if (type === "ftyp") return true
-
-        // size==0 means box extends to EOF; size==1 means extended 64-bit size follows.
-        if (size32 === 0) break
-
-        if (size32 === 1) {
-            if (offset + 16 > maxBytes) break
-            const size64 = Number(buffer.readBigUInt64BE(offset + 8))
-            if (!Number.isFinite(size64) || size64 < 16) break
-            offset += size64
-            continue
-        }
-
-        // Invalid box size, stop scanning to avoid infinite loops.
-        if (size32 < 8) break
-        offset += size32
-    }
-
-    return false
+    const ext = path.extname(filePath).toLowerCase().replace(/^\./, "")
+    return mimeTypes[ext] || "application/octet-stream"
 }
 
-export function getMimeType(filePath: string) {
-    if (typeof filePath !== "string") return ""
+// GET EMBEDDED SUBTITLES
+export async function getMediaTracks(data: { path: string }): Promise<{ path: string; tracks: Subtitle[] }> {
+    const DECODER = new TextDecoder("utf-8")
+    const emptyResult = { ...data, tracks: [] as Subtitle[] }
 
-    // const ext = filePath.split(".").pop()?.toLowerCase() || ""
-    const ext = path.extname(filePath).toLowerCase().slice(1)
-    return mimeTypes[ext] || ""
-}
-
-// get embedded subtitles/captions
-export function getMediaTracks(data: { path: string }) {
-    return extractSubtitles(data)
-}
-
-async function extractSubtitles(data: { path: string }): Promise<{ path: string; tracks: Subtitle[] }> {
-    const MP4Box = require("mp4box")
-
-    let arrayBuffer: (ArrayBuffer & { fileStart?: number }) | null = null
-    let buffer: Buffer
-    try {
-        buffer = fs.readFileSync(data.path)
-        if (!buffer?.length || !hasIsoBmffHeader(buffer)) return { ...data, tracks: [] }
-
-        const uint8Array = new Uint8Array(buffer)
-        arrayBuffer = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength) as ArrayBuffer & { fileStart?: number }
-    } catch (err) {
-        console.error(err)
-        return { ...data, tracks: [] }
-    }
-
-    if (!arrayBuffer) return { ...data, tracks: [] }
-    const mp4ArrayBuffer = arrayBuffer
-
-    return new Promise((resolve) => {
-        let settled = false
-        const resolveOnce = (result: { path: string; tracks: Subtitle[] }) => {
-            if (settled) return
-            settled = true
-            resolve(result)
-        }
-
-        const mp4boxfile = MP4Box.createFile()
-        mp4boxfile.onError = (e: Error) => {
-            console.error("MP4Box error:", e)
-            resolveOnce({ ...data, tracks: [] })
-        }
+    return parseMp4File(data.path, emptyResult, (mp4boxfile, resolve) => {
         mp4boxfile.onReady = (info: any) => {
-            if (!Array.isArray(info?.tracks)) {
-                resolveOnce({ ...data, tracks: [] })
-                return
-            }
-
-            const subtitleTracks = info.tracks.filter((track: any) => track?.type === "subtitles" || track?.type === "text")
-            if (!subtitleTracks.length) {
-                resolveOnce({ ...data, tracks: [] })
-                return
-            }
+            const subTracks = info?.tracks?.filter((t: any) => t?.type === "subtitles" || t?.type === "text") || []
+            if (!subTracks.length) return resolve(emptyResult)
 
             const tracks: Subtitle[] = []
-            let completed = 0
-            const pendingByTrackId = new Set<number>(subtitleTracks.map((track: any) => track.id))
-            const trackVtt = new Map<number, { lines: string[]; index: number; language: string }>()
+            const pendingIds = new Set<number>(subTracks.map((t: any) => t.id))
+            const trackVttMap = new Map<number, { lines: string[]; index: number; language: string }>()
 
-            subtitleTracks.forEach((track: any) => {
-                const vttLines = ["WEBVTT\n"]
-                trackVtt.set(track.id, { lines: vttLines, index: 1, language: track.language || "" })
-
+            subTracks.forEach((track: any) => {
+                trackVttMap.set(track.id, { lines: ["WEBVTT\n"], index: 1, language: track.language || "und" })
                 mp4boxfile.setExtractionOptions(track.id, null, { nbSamples: track.nb_samples })
             })
 
-            mp4boxfile.onSamples = (id: number, _user: any, samples: { data: BufferSource; cts: number; duration: number }[]) => {
-                if (!pendingByTrackId.has(id)) return
+            mp4boxfile.onSamples = (id: number, _user: any, samples: any[]) => {
+                if (!pendingIds.has(id)) return
+                const trackInfo = subTracks.find((t: any) => t.id === id)
+                const vttInfo = trackVttMap.get(id)
 
-                const trackInfo = subtitleTracks.find((track: any) => track.id === id)
-                const vttInfo = trackVtt.get(id)
-                if (!trackInfo || !vttInfo) return
+                if (trackInfo && vttInfo) {
+                    const scale = trackInfo.timescale || 1
 
-                const timescale = trackInfo.timescale || 1
-                const utf8Decoder = new TextDecoder("utf-8")
+                    for (const sample of samples) {
+                        const subtitleText = DECODER.decode(sample.data)
+                            .replace(/[^\x20-\x7E\r\n\t]+/g, "")
+                            .trim()
+                        if (!subtitleText) continue
 
-                samples.forEach((sample) => {
-                    let subtitleText = utf8Decoder.decode(sample.data).trim()
-                    // remove any non-printable characters (excluding line breaks)
-                    subtitleText = subtitleText.replace(/[^\x20-\x7E\n\r]+/g, "")
-                    if (!subtitleText) return
+                        const start = formatTimestamp((sample.cts / scale) * 1000)
+                        const end = formatTimestamp(((sample.cts + sample.duration) / scale) * 1000)
 
-                    const startTime = formatTimestamp((sample.cts / timescale) * 1000)
-                    const endTime = formatTimestamp(((sample.cts + sample.duration) / timescale) * 1000)
+                        vttInfo.lines.push(`${vttInfo.index++}`, `${start} --> ${end}`, `${subtitleText}\n`)
+                    }
 
-                    vttInfo.lines.push(`${vttInfo.index}`)
-                    vttInfo.lines.push(`${startTime} --> ${endTime}`)
-                    vttInfo.lines.push(`${subtitleText}\n`)
-                    vttInfo.index++
-                })
-
-                pendingByTrackId.delete(id)
-                completed++
-
-                if (vttInfo.lines.length > 1) {
-                    tracks.push({ lang: vttInfo.language.slice(0, 2), name: vttInfo.language, vtt: vttInfo.lines.join("\n"), embedded: true })
+                    if (vttInfo.lines.length > 1) {
+                        tracks.push({ lang: vttInfo.language.slice(0, 2), name: vttInfo.language, vtt: vttInfo.lines.join("\n"), embedded: true })
+                    }
                 }
 
-                if (completed === subtitleTracks.length) resolveOnce({ ...data, tracks })
+                pendingIds.delete(id)
+                if (pendingIds.size === 0) resolve({ ...data, tracks })
             }
 
             mp4boxfile.start()
         }
-
-        mp4ArrayBuffer.fileStart = 0
-        try {
-            mp4boxfile.appendBuffer(mp4ArrayBuffer)
-            mp4boxfile.flush()
-        } catch (err) {
-            console.error("MP4Box append/flush error:", err)
-            resolveOnce({ ...data, tracks: [] })
-        }
     })
 }
 
-// format timestamp in WebVTT format (HH:MM:SS.mmm)
-function formatTimestamp(timestamp: number) {
-    const hours = Math.floor(timestamp / 3600000)
-    const minutes = Math.floor((timestamp % 3600000) / 60000)
-    const seconds = Math.floor((timestamp % 60000) / 1000)
-    const milliseconds = Math.floor(timestamp % 1000)
+function formatTimestamp(ms: number): string {
+    const pad = (n: number, z = 2) => Math.floor(n).toString().padStart(z, "0")
+    return `${pad(ms / 3600000)}:${pad((ms % 3600000) / 60000)}:${pad((ms % 60000) / 1000)}.${pad(ms % 1000, 3)}`
+}
 
-    const formatted = [hours.toString().padStart(2, "0"), minutes.toString().padStart(2, "0"), seconds.toString().padStart(2, "0") + "." + milliseconds.toString().padStart(3, "0")].join(":")
-    return formatted
+// MP4BOX HELPER
+const CHUNK_SIZE = 1024 * 1024 // Read in 1MB chunks
+function parseMp4File<T>(filePath: string, fallback: T, setupListeners: (mp4boxfile: any, resolve: (res: T) => void) => void): Promise<T> {
+    return new Promise((resolve) => {
+        if (!fs.existsSync(filePath)) return resolve(fallback)
+
+        const MP4Box = require("mp4box")
+
+        let fd: number | null = null
+        let settled = false
+
+        const cleanupAndResolve = (result: T) => {
+            if (settled) return
+            settled = true
+            if (fd !== null) {
+                try {
+                    fs.closeSync(fd)
+                } catch {}
+            }
+            resolve(result)
+        }
+
+        try {
+            const stats = fs.statSync(filePath)
+            fd = fs.openSync(filePath, "r")
+
+            const mp4boxfile = MP4Box.createFile()
+            mp4boxfile.onError = () => cleanupAndResolve(fallback)
+
+            setupListeners(mp4boxfile, cleanupAndResolve)
+
+            let offset = 0
+            const buffer = Buffer.allocUnsafe(CHUNK_SIZE)
+
+            while (offset < stats.size && !settled) {
+                const bytesRead = fs.readSync(fd, buffer, 0, CHUNK_SIZE, offset)
+                if (bytesRead === 0) break
+
+                const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + bytesRead) as ArrayBuffer & { fileStart?: number }
+                arrayBuffer.fileStart = offset
+                offset += bytesRead
+
+                // Safeguard against internal mp4box runtime errors
+                try {
+                    mp4boxfile.appendBuffer(arrayBuffer)
+                } catch {
+                    return cleanupAndResolve(fallback)
+                }
+            }
+
+            try {
+                mp4boxfile.flush()
+            } catch {}
+            if (!settled) cleanupAndResolve(fallback)
+        } catch {
+            cleanupAndResolve(fallback)
+        }
+    })
 }
 
 /// ///
@@ -993,7 +922,7 @@ export async function locateMediaFile({ filePath, folders }: { filePath: string;
 }
 
 // poolLimit = number of concurrent promises
-async function asyncPool<T>(poolLimit: number, array: T[], iteratorFn: (item: T) => Promise<void>) {
+export async function asyncPool<T>(poolLimit: number, array: T[], iteratorFn: (item: T) => Promise<void>) {
     const ret: Promise<void>[] = []
     const executing: Promise<void>[] = []
 
@@ -1033,7 +962,7 @@ export async function detectNewFiles() {
         return
     }
 
-    const MAX_TIME = 16 * 60 * 60 * 1000 // 16 hours
+    const MAX_TIME = 8 * 60 * 60 * 1000 // 8 hours
     const ONE_MINUTE = 60 * 1000
     const WRITE_WAIT_MS = 2000
     const temporaryExtensions = [".crdownload", ".part", ".download", ".tmp"]
@@ -1196,36 +1125,34 @@ export async function addToMediaFolder(mediaPaths: string[], outputFolder?: stri
     const mediaFolderPath = outputFolder || getMediaSyncFolderPath()
     let changed = false
 
-    await Promise.all(
-        mediaPaths.map(async (mediaPath) => {
-            // if media path is already in media folder, skip
-            if (mediaPath.startsWith(mediaFolderPath)) return
+    await asyncPool(50, mediaPaths, async (mediaPath) => {
+        // if media path is already in media folder, skip
+        if (mediaPath.startsWith(mediaFolderPath)) return
 
-            // make sure original media exists
-            if (!(await doesPathExistAsync(mediaPath))) return
+        // make sure original media exists
+        if (!(await doesPathExistAsync(mediaPath))) return
 
-            // ensure folder name is matching path in case files with the same name has the same parent folder name
-            const folderId = getFileParentFolderId(mediaPath)
+        // ensure folder name is matching path in case files with the same name has the same parent folder name
+        const folderId = getFileParentFolderId(mediaPath)
 
-            const newFolderPath = path.join(mediaFolderPath, folderId)
-            createFolder(newFolderPath)
+        const newFolderPath = path.join(mediaFolderPath, folderId)
+        createFolder(newFolderPath)
 
-            const fileName = path.basename(mediaPath)
-            const newMediaPath = path.join(newFolderPath, fileName)
+        const fileName = path.basename(mediaPath)
+        const newMediaPath = path.join(newFolderPath, fileName)
 
-            const alreadyExists = await doesPathExistAsync(newMediaPath)
-            if (alreadyExists) {
-                // no need when we have the folder name path id
-                // double check that it's actually different
-                // const matches = await fileContentMatchesAsync(await readFileAsync(mediaPath), newMediaPath)
-                // if (matches) return
-                return
-            }
+        const alreadyExists = await doesPathExistAsync(newMediaPath)
+        if (alreadyExists) {
+            // no need when we have the folder name path id
+            // double check that it's actually different
+            // const matches = await fileContentMatchesAsync(await readFileAsync(mediaPath), newMediaPath)
+            // if (matches) return
+            return
+        }
 
-            changed = true
-            await copyFileAsync(mediaPath, newMediaPath)
-        })
-    )
+        changed = true
+        await copyFileAsync(mediaPath, newMediaPath)
+    })
 
     return changed
 }
@@ -1339,40 +1266,38 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
         const batch = filesInFolder.slice(i, i + BATCH_SIZE)
         let hadIo = false
 
-        await Promise.all(
-            batch.map(async (name) => {
-                const matchingShowId = cachedShowNames.get(name)
-                if (matchingShowId && !newCachedShows[matchingShowId]) {
-                    newCachedShows[matchingShowId] = cachedShows[matchingShowId]
-                    // backfill: build text for an already-cached show that was never text-cached
-                    if (!existingCacheText[matchingShowId]) {
-                        hadIo = true
-                        const cachedShowData = parseShow((await readFileAsync(path.join(showsPath, `${name}.show`))) || "{}")
-                        const cachedTxt = cachedShowData?.[1] ? getTextCacheString(cachedShowData[1]) : ""
-                        if (cachedTxt) textCache[matchingShowId] = cachedTxt
-                    }
-                    return
+        await asyncPool(20, batch, async (name) => {
+            const matchingShowId = cachedShowNames.get(name)
+            if (matchingShowId && !newCachedShows[matchingShowId]) {
+                newCachedShows[matchingShowId] = cachedShows[matchingShowId]
+                // backfill: build text for an already-cached show that was never text-cached
+                if (!existingCacheText[matchingShowId]) {
+                    hadIo = true
+                    const cachedShowData = parseShow((await readFileAsync(path.join(showsPath, `${name}.show`))) || "{}")
+                    const cachedTxt = cachedShowData?.[1] ? getTextCacheString(cachedShowData[1]) : ""
+                    if (cachedTxt) textCache[matchingShowId] = cachedTxt
                 }
+                return
+            }
 
-                hadIo = true
-                const showPath: string = path.join(showsPath, `${name}.show`)
-                const jsonData = (await readFileAsync(showPath)) || "{}"
-                const show = parseShow(jsonData)
+            hadIo = true
+            const showPath: string = path.join(showsPath, `${name}.show`)
+            const jsonData = (await readFileAsync(showPath)) || "{}"
+            const show = parseShow(jsonData)
 
-                if (!show || !show[1]) return
+            if (!show || !show[1]) return
 
-                let id = show[0]
-                // some old duplicated shows might have the same id
-                if (newCachedShows[id]) id = uid()
+            let id = show[0]
+            // some old duplicated shows might have the same id
+            if (newCachedShows[id]) id = uid()
 
-                const trimmedShow = trimShow({ ...show[1], name })
-                if (trimmedShow) newCachedShows[id] = trimmedShow
+            const trimmedShow = trimShow({ ...show[1], name })
+            if (trimmedShow) newCachedShows[id] = trimmedShow
 
-                // cache text content
-                const txt = getTextCacheString(show[1])
-                if (txt) textCache[id] = txt
-            })
-        )
+            // cache text content
+            const txt = getTextCacheString(show[1])
+            if (txt) textCache[id] = txt
+        })
 
         if (hadIo) await new Promise((resolve) => setImmediate(resolve))
     }
@@ -1517,15 +1442,8 @@ export function getShowsFromIds(showIds: string[], projectItems?: any[]) {
 
 // some users might have got themselves in a situation they can't get out of
 // example: enables "kiosk" mode on mac might have resulted in a black screen, and they can't find the app data location to revert it!
-// how: Place any file in your Documents/FreeShow folder that has the FIXES key in it's name (e.g. DISABLE_KIOSK_MODE), when you now start your app the fix will be triggered!
+// how: Place any file in your Documents/FreeShow folder that has the FIXES key in it's name (e.g. OPEN_APPDATA_SETTINGS), when you now start your app the fix will be triggered!
 const FIXES = {
-    DISABLE_KIOSK_MODE: () => {
-        // wait to ensure output settings have loaded in the app!
-        setTimeout(() => {
-            toApp(OUTPUT, { channel: "UPDATE_OUTPUTS_DATA", data: { key: "kioskMode", value: false, autoSave: true } })
-            OutputHelper.getAllOutputs().forEach((output) => output.window.setKiosk(false))
-        }, 1000)
-    },
     OPEN_APPDATA_SETTINGS: () => {
         // this will open the "settings.json" file located at the app data location (can also be used to find other setting files here)
         openInSystem(_store.SETTINGS?.path || "", true)

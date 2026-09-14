@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { activeStage, labelsDisabled, outputs, stageShows } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import { keysToID, sortByName } from "../helpers/array"
@@ -8,6 +9,7 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Autoscroll from "../system/Autoscroll.svelte"
     import Center from "../system/Center.svelte"
+    import SkeletonStageSlide from "./SkeletonStageSlide.svelte"
     import StageSlide from "./StageSlide.svelte"
 
     function addSlide() {
@@ -19,6 +21,27 @@
 
     $: sortedStageSlides = sortByName(keysToID($stageShows)).filter((a) => profile[a.id] !== "none")
 
+    // lazy loader
+    let lazyLoader = 0
+    let timeout: NodeJS.Timeout | null = null
+    let loaded = false
+
+    onDestroy(() => {
+        if (timeout) clearTimeout(timeout)
+    })
+
+    $: if (!loaded && sortedStageSlides?.length) {
+        if (lazyLoader >= sortedStageSlides.length) {
+            loaded = true
+        } else {
+            if (timeout) clearTimeout(timeout)
+            timeout = setTimeout(() => {
+                const batch = lazyLoader === 0 ? 2 : Math.min(16, lazyLoader * 2)
+                lazyLoader += batch
+            }, lazyLoader === 0 ? 80 : 40)
+        }
+    }
+
     $: if ($activeStage.id === null && Object.keys($stageShows).length) setActiveStage()
     function setActiveStage() {
         let activeStageOutput = Object.values($outputs).find((a) => a.enabled && a.stageOutput)?.stageOutput
@@ -27,7 +50,7 @@
     }
 
     function keydown(e: KeyboardEvent) {
-        if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
+        if (e.target?.closest?.(".edit") || e.ctrlKey || e.metaKey) return
         if ($activeStage.items.length) return
 
         // CHANGE STAGE LAYOUT
@@ -66,19 +89,33 @@
     {#if sortedStageSlides.length}
         <Autoscroll {offset} bind:scrollElem timeout={150} smoothTimeout={0}>
             <div class="grid">
-                {#each sortedStageSlides as show}
-                    <StageSlide
-                        id={show.id}
-                        layout={show}
-                        active={$activeStage.id === show.id}
-                        on:click={(e) => {
-                            if (!e.ctrlKey && !e.metaKey && !document.activeElement?.closest(".edit"))
-                                activeStage.update((as) => {
-                                    as.id = show.id
-                                    return as
-                                })
-                        }}
-                    />
+                {#each sortedStageSlides as show, i (show.id)}
+                    {#if loaded || i < lazyLoader}
+                        <StageSlide
+                            id={show.id}
+                            layout={show}
+                            active={$activeStage.id === show.id}
+                            on:click={(e) => {
+                                if (!e.ctrlKey && !e.metaKey && !document.activeElement?.closest?.(".edit"))
+                                    activeStage.update((as) => {
+                                        as.id = show.id
+                                        return as
+                                    })
+                            }}
+                        />
+                    {:else}
+                        <SkeletonStageSlide
+                            layout={show}
+                            active={$activeStage.id === show.id}
+                            on:click={(e) => {
+                                if (!e.ctrlKey && !e.metaKey && !document.activeElement?.closest?.(".edit"))
+                                    activeStage.update((as) => {
+                                        as.id = show.id
+                                        return as
+                                    })
+                            }}
+                        />
+                    {/if}
                 {/each}
 
                 <div class="padding" style="height: 60px;width: 1px;"></div>
@@ -91,7 +128,7 @@
     {/if}
 
     <FloatingInputs onlyOne>
-        <MaterialButton disabled={readOnly} icon="add" title="new.slide" on:click={addSlide}>
+        <MaterialButton disabled={readOnly} icon="add" title="show.new_layout" on:click={addSlide}>
             {#if !$labelsDisabled}<T id="show.new_layout" />{/if}
         </MaterialButton>
     </FloatingInputs>

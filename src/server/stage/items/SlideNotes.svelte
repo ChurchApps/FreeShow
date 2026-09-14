@@ -7,7 +7,7 @@
     export let slideOffset: number = 0
     export let autoSize: number = 100
 
-    $: showRef = currentSlide ? getLayoutRef(currentSlide.id) : []
+    $: showRef = currentSlide ? getLayoutRef(currentSlide.id, currentSlide.layout, $showsCache) : []
 
     // GET CORRECT INDEX OFFSET, EXCLUDING DISABLED SLIDES
     $: slideIndex = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index : null
@@ -30,7 +30,7 @@
     }
 
     $: slideId = slideIndex !== null && currentSlide ? showRef[slideIndex]?.id || null : null
-    $: slide = currentSlide && slideId ? $showsCache[currentSlide.id].slides[slideId] : null
+    $: slide = currentSlide && slideId ? $showsCache[currentSlide.id]?.slides?.[slideId] : null
     $: notes = slide?.notes ? slide.notes.replaceAll("\n", "<br>") : ""
 </script>
 

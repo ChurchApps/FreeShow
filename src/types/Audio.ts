@@ -11,6 +11,8 @@ export interface Playlist {
 export interface AudioChannelData {
     volume?: number
     isMuted?: boolean
+    delay?: number // delay in ms
+    dB?: number
 }
 
 export interface AudioChannel {
@@ -24,4 +26,11 @@ export interface AudioChannel {
 export interface AudioStream {
     name: string
     value: string
+}
+
+export interface MetronomeSettings {
+    tempo?: number
+    beats?: number
+    accentVolume?: number
+    secondaryVolume?: number
 }

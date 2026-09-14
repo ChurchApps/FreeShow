@@ -16,10 +16,13 @@ export function createMediaRecorder(stream) {
 }
 
 export function mediaRecorderIsPaused() {
-    return mediaRecorder?.state === "paused"
+    if (!mediaRecorder) return true
+    return mediaRecorder.state === "paused"
 }
 
 export function toggleMediaRecorder() {
+    if (!mediaRecorder) return false
+
     if (mediaRecorder.state === "paused") {
         mediaRecorder.resume()
         return false
@@ -30,6 +33,7 @@ export function toggleMediaRecorder() {
 }
 
 export function stopMediaRecorder() {
+    if (!mediaRecorder) return
     mediaRecorder.stop()
 }
 

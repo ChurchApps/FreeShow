@@ -8,6 +8,7 @@
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tabs from "../main/Tabs.svelte"
+    import { VideoPlayer } from "../media/video/videoPlayer"
     import { addFilterString } from "./scripts/textStyle"
     import EditValues from "./tools/EditValues.svelte"
     import { setBoxInputValue } from "./values/boxes"
@@ -33,12 +34,9 @@
     $: isVideo = mediaType === "video"
     $: if (mediaId && isVideo) getVideoDuration()
     function getVideoDuration() {
-        let video = document.createElement("video")
-        video.setAttribute("src", mediaId)
-        video.addEventListener("loadedmetadata", loaded)
+        VideoPlayer.getDuration(mediaId).then(loaded)
 
-        function loaded() {
-            let videoDuration = video?.duration || 0
+        function loaded(videoDuration: number) {
             if (!videoDuration) return
 
             const maxSoftLoop = Math.floor(videoDuration / 2)
@@ -53,7 +51,7 @@
     }
 
     function reset() {
-        let deleteKeys: string[] = ["flipped", "flippedY", "fit", "speed", "volume", "fromTime", "toTime", "videoType", "cropping"]
+        let deleteKeys: string[] = ["flipped", "flippedY", "blend", "fit", "speed", "volume", "fromTime", "toTime", "videoType", "cropping"]
 
         // reset
         if (active === "filters") deleteKeys = ["filter"]
@@ -64,6 +62,9 @@
         let currentOutput: any = getFirstActiveOutput()
         let bg = currentOutput?.out?.background
         if (!bg) return
+        const bgId = bg.path || bg.id || ""
+        if (bgId !== mediaId) return
+
         deleteKeys.forEach((key) => delete bg[key])
         setOutput("background", bg)
 
@@ -79,12 +80,22 @@
 
         updateStore("media", { keys: [mediaId, ...input.id.split(".")], value })
 
-        // update output filters
-        let currentOutput = getFirstActiveOutput()
-        if (!currentOutput?.out?.background || currentOutput?.out?.background?.path !== mediaId) return
+        VideoPlayer.updateProperties(mediaId)
 
-        let bg = currentOutput?.out.background
-        bg[input.id] = value
+        // update output filters / cropping
+        let currentOutput = getFirstActiveOutput()
+        let bg = currentOutput?.out?.background
+        if (!bg) return
+        const bgId = bg.path || bg.id || ""
+        if (bgId !== mediaId) return
+
+        const parts = input.id.split(".")
+        if (parts.length > 1) {
+            if (typeof bg[parts[0]] !== "object" || bg[parts[0]] === null) bg[parts[0]] = {}
+            bg[parts[0]][parts[1]] = value
+        } else {
+            bg[input.id] = value
+        }
         setOutput("background", bg)
     }
 

@@ -36,8 +36,6 @@
     }
 
     const showItemRef = { outputId, type: "default" }
-    // $: videoTime = $videosTime[outputId] || 0
-    // $: if ($activeTimers || $variables || $playingAudio || $playingAudioPaths || videoTime) updateValues()
     let conditionsUpdater = 0
     let isMic = false
     $: isMic = JSON.stringify(currentItems.map((a) => a?.conditions) || "").includes('"element":"volume"')
@@ -47,7 +45,7 @@
         clearInterval(updaterInterval)
         updaterInterval = setInterval(
             () => {
-                if (isClearing) return
+                if (isClearing || !Array.isArray(currentItems)) return
                 if (currentItems.find((a) => a?.conditions)) conditionsUpdater++
             },
             isMic ? 100 : 300
@@ -59,7 +57,7 @@
 {#key show}
     {#each currentItems as item}
         {#if show && shouldItemBeShown(item, [], showItemRef, conditionsUpdater)}
-            <SlideItemTransition {transitionEnabled} globalTransition={transition} {item} let:customItem>
+            <SlideItemTransition {transitionEnabled} {isClearing} globalTransition={transition} {item} let:customItem>
                 <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {preview} {outputId} updateDynamicValues={!isClearing} />
             </SlideItemTransition>
         {/if}

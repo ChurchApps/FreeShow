@@ -5,6 +5,10 @@ import { CANVA_API_URL } from "./CanvaProvider"
 
 const DEFAULT_SCOPE = "folder:read design:content:read design:meta:read" as const
 
+// The Canva "root" folder only contains content the user owns, so designs shared
+// with the user are listed separately through /v1/designs?ownership=shared
+export const SHARED_CATEGORY_KEY = "shared-with-me"
+
 type FolderItem = {
     type: "folder" | "design" | "image"
     folder?: { id: string; name?: string; title?: string; thumbnail?: { url?: string } }
@@ -14,6 +18,23 @@ type FolderItem = {
 
 type ListItemsResponse = {
     items?: FolderItem[]
+    continuation?: string
+}
+
+// Shape returned by /v1/designs (differs from the design object nested in folder items:
+// there is no top level url, and the design kind is a list rather than a single type)
+type DesignItem = {
+    id: string
+    title?: string
+    thumbnail?: { url?: string }
+    urls?: { view_url?: string; edit_url?: string }
+    design_types?: any[]
+    page_count?: number
+    updated_at?: number
+}
+
+type ListDesignsResponse = {
+    items?: DesignItem[]
     continuation?: string
 }
 
@@ -65,11 +86,33 @@ export class CanvaContentLibrary {
     }
 
     /**
-     * Fetches page metadata for a design (preview-only, fast).
-     * Returns cached result if available, otherwise fetches from API.
+     * Fetches metadata for a single design.
      */
-    public static async getPageMetadata(designId: string): Promise<PageMetadata | null> {
-        const cacheKey = `pages:${designId}`
+    public static async getDesign(designId: string): Promise<DesignItem | null> {
+        try {
+            const response = await this.request(`/v1/designs/${encodeURIComponent(designId)}`)
+            return response?.design || null
+        } catch (e) {
+            console.error("Failed to fetch design:", e)
+            return null
+        }
+    }
+
+    /**
+     * Gets the latest updated_at timestamp for a design to validate cache freshness.
+     */
+    public static async getDesignUpdatedAt(designId: string): Promise<number> {
+        const design = await this.getDesign(designId)
+        return design?.updated_at || (design as any)?.updatedAt || 0
+    }
+
+    /**
+     * Fetches page metadata for a design (preview-only, fast).
+     * Returns cached result if available and fresh, otherwise fetches from API.
+     */
+    public static async getPageMetadata(designId: string, updatedTimestamp?: number): Promise<PageMetadata | null> {
+        const lastUpdated = updatedTimestamp ?? (await this.getDesignUpdatedAt(designId))
+        const cacheKey = `pages:${designId}:${lastUpdated}`
         const cached = this.getCachedEntry(this.pageMetadataCache, cacheKey)
         if (cached) return cached
 
@@ -161,6 +204,55 @@ export class CanvaContentLibrary {
         return allItems
     }
 
+    /** Lists every design shared with the user (not owned by them), following pagination. */
+    private static async listSharedDesigns(): Promise<DesignItem[]> {
+        let continuation = ""
+        const allItems: DesignItem[] = []
+
+        do {
+            const continuationQuery = continuation ? `&continuation=${encodeURIComponent(continuation)}` : ""
+            const path = `/v1/designs?limit=100&ownership=shared&sort_by=modified_descending${continuationQuery}`
+            const response = (await this.request(path)) as ListDesignsResponse | null
+            if (!response) break
+
+            allItems.push(...(response.items || []))
+            continuation = response.continuation || ""
+        } while (continuation)
+
+        return allItems
+    }
+
+    private static async getSharedDesigns(): Promise<ContentFile[]> {
+        const items = await this.listSharedDesigns()
+
+        return items
+            .map((item): ContentFile | null => {
+                // designs listed this way only expose a thumbnail url
+                const url = item.thumbnail?.url
+                if (!url || !item.id) return null
+
+                this.urlToContentIdMap[url] = item.id
+
+                // design_types is documented as a list of names, but stay tolerant of object entries
+                const designTypes = (item.design_types || []).map((type: any) => (typeof type === "string" ? type : type?.name || type?.type || "")).filter(Boolean)
+                const isPresentation = designTypes.includes("presentation") || (typeof item.page_count === "number" && item.page_count > 1)
+
+                return {
+                    url,
+                    thumbnail: url,
+                    fileSize: 0,
+                    type: "image" as const,
+                    name: item.title || "Canva Design",
+                    mediaId: item.id,
+                    // @ts-ignore
+                    isPresentation,
+                    // @ts-ignore
+                    slideCount: item.page_count
+                } as ContentFile
+            })
+            .filter((file): file is ContentFile => !!file)
+    }
+
     public static async getContentLibrary(): Promise<ContentLibraryCategory[]> {
         if (this.contentLibraryCache) {
             return this.contentLibraryCache
@@ -175,7 +267,7 @@ export class CanvaContentLibrary {
                 key: item.folder!.id
             }))
 
-        const categories: ContentLibraryCategory[] = [{ name: "All Assets", key: "root" }, ...folders]
+        const categories: ContentLibraryCategory[] = [{ name: "All Assets", key: "root" }, { name: "Shared with me", key: SHARED_CATEGORY_KEY }, ...folders]
         this.contentLibraryCache = categories
 
         return categories
@@ -183,10 +275,15 @@ export class CanvaContentLibrary {
 
     /**
      * Returns content for a folder or a presentation (design).
+     * If folderId is the shared category key, list the designs shared with the user.
      * If folderId starts with 'presentation-export-batch:', fetch all pages with high-res exports.
      * If folderId starts with 'presentation:', treat as a presentation and fetch page metadata with thumbnails.
      */
     public static async getContent(folderId: string): Promise<ContentFile[]> {
+        if (folderId === SHARED_CATEGORY_KEY) {
+            return await this.getSharedDesigns()
+        }
+
         if (folderId.startsWith("presentation-export-batch:")) {
             const match = folderId.match(/^presentation-export-batch:(.*):(.+)$/)
             const designId = match?.[1] || ""
@@ -271,7 +368,9 @@ export class CanvaContentLibrary {
      * @param pages - Optional 1-based page indexes to fetch. If omitted, fetches all pages.
      */
     private static async getPresentationSlides(designId: string, exportFullQuality = true, pages?: number[]): Promise<ContentFile[]> {
-        const metadata = await this.getPageMetadata(designId)
+        const lastUpdated = await this.getDesignUpdatedAt(designId)
+
+        const metadata = await this.getPageMetadata(designId, lastUpdated)
         if (!metadata) return []
 
         const pageItems = pages?.length ? pages.map((page) => metadata.items[page - 1]).filter(Boolean) : metadata.items
@@ -279,7 +378,7 @@ export class CanvaContentLibrary {
 
         let exportedUrls: string[] = []
         if (exportFullQuality) {
-            exportedUrls = await this.exportDesignAsPngs(designId, pagesToExport)
+            exportedUrls = await this.exportDesignAsPngs(designId, pagesToExport, lastUpdated)
         }
 
         // Use full-quality export URLs when available. Page URLs are thumbnails and only used as fallback.
@@ -306,20 +405,23 @@ export class CanvaContentLibrary {
     /**
      * Requests high-quality PNG exports for one or more pages of a design.
      * Batches all pages into a single export job.
-     * Caches export URLs for 24 hours.
+     * Caches export URLs for 24 hours (keyed with design updated_at timestamp).
      *
      * @param designIdOrUrl Canva design ID or URL
      * @param pages 1-based page indexes. If omitted, Canva exports all pages.
+     * @param updatedTimestamp Optional design last updated timestamp for cache validation
      */
-    public static async exportDesignAsPngs(designIdOrUrl: string, pages?: number[]): Promise<string[]> {
+    public static async exportDesignAsPngs(designIdOrUrl: string, pages?: number[], updatedTimestamp?: number): Promise<string[]> {
         let designId = designIdOrUrl
         if (designIdOrUrl.startsWith("http://") || designIdOrUrl.startsWith("https://")) {
             designId = this.urlToContentIdMap[designIdOrUrl]
             if (!designId) return []
         }
 
-        // Check cache first
-        const cacheKey = `export:${designId}:${pages?.join(",") || "all"}`
+        const lastUpdated = updatedTimestamp ?? (await this.getDesignUpdatedAt(designId))
+
+        // Check cache first (includes updated timestamp to automatically invalidate when modified)
+        const cacheKey = `export:${designId}:${lastUpdated}:${pages?.join(",") || "all"}`
         const cached = this.getCachedEntry(this.exportJobCache, cacheKey)
         if (cached) return cached.urls
 

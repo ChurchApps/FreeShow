@@ -34,7 +34,8 @@ export const mainOptions: BrowserWindowConstructorOptions = {
         contextIsolation: true,
         allowRunningInsecureContent: false,
         webviewTag: true, // website item
-        backgroundThrottling: false // allow "timers" to run in background
+        backgroundThrottling: false, // allow "timers" to run in background
+        autoplayPolicy: "no-user-gesture-required" // API-triggered playback (e.g. Stream Deck) has no user gesture
     }
 }
 

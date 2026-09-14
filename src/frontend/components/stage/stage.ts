@@ -89,8 +89,10 @@ export function stageItemToItem(item: StageItem) {
 export function getSlideTextItems(stageLayout: StageLayout, item: StageItem, _updater: any = null) {
     const slideOffset = Number(item.slideOffset || 0)
     const currentShow = stageLayout === null ? (get(activeStage).id ? get(stageShows)[get(activeStage).id!] : null) : stageLayout
-    const stageMainOutputId = currentShow?.settings?.output || getActiveOutputs(isOutputWindow() ? get(allOutputs) : get(outputs), false, true, true)[0]
-    const currentOutput = get(outputs)[stageMainOutputId] || get(allOutputs)[stageMainOutputId] || {}
+    const sourceOutputId = currentShow?.settings?.output
+    const outputStores = isOutputWindow() ? get(allOutputs) : get(outputs)
+    const stageMainOutputId = sourceOutputId && outputStores[sourceOutputId] ? sourceOutputId : getActiveOutputs(outputStores, false, true, true)[0]
+    const currentOutput = outputStores[stageMainOutputId] || {}
     const currentSlide = currentOutput.out?.slide || (slideOffset !== 0 ? get(outputSlideCache)[stageMainOutputId] || null : null)
     const showRef = currentSlide ? getLayoutRef(currentSlide.id) : []
 

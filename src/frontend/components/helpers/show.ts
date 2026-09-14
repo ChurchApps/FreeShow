@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Item, Show, ShowList, Shows, Slide, TrimmedShow, TrimmedShows } from "../../../types/Show"
-import { activeEdit, activeFocus, activePage, activeProject, activeShow, cachedShowsData, customMetadata, dictionary, focusMode, groupNumbers, groups, projects, refreshEditSlide, shows, showsCache, sorted, sortedShowsList } from "../../stores"
+import { activeEdit, activeFocus, activePage, activeProject, activeShow, cachedShowsData, customMetadata, dictionary, focusMode, groupNumbers, groups, projects, refreshEditSlide, selected, shows, showsCache, sorted, sortedShowsList } from "../../stores"
 import { translateText } from "../../utils/language"
 import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
@@ -41,6 +41,8 @@ export function formatToFileName(name = "") {
 
 // convert any text to a label id format
 export function getLabelId(label: string, replaceNumbers = true) {
+    if (!label) return ""
+
     // TODO: disallow chars in labels: #:;!.,- ??
     label = label
         .toLowerCase()
@@ -129,15 +131,7 @@ export function getGroupName({ show, showId }: { show: Show | null; showId: stri
     if (!name?.length) name = layoutNumber ? "—" : ""
     if (!get(groupNumbers)) return name
 
-    // sort by order when just one layout
-    let slides = keysToID(clone(show.slides || {}))
-    if (Object.keys(show.layouts || {}).length < 2) {
-        const layoutSlides =
-            Object.values(show.layouts || {})[0]
-                ?.slides?.filter(Boolean)
-                ?.map(({ id }) => id) || []
-        slides = slides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
-    }
+    let slides = getSortedLayoutSlides(show)
 
     // different slides with same name
     const currentSlide = show.slides?.[slideID] || {}
@@ -155,6 +149,27 @@ export function getGroupName({ show, showId }: { show: Show | null; showId: stri
     if (layoutNumber) name += addHTML ? currentLayoutNumberHTML : currentLayoutNumber
 
     return name
+}
+
+// sort by order when just one layout
+function getSortedLayoutSlides(show: Show) {
+    let slides = keysToID(clone(show.slides || {}))
+    if (Object.keys(show.layouts || {}).length > 1) return slides
+
+    const layoutSlides = (Object.values(show.layouts || {})[0]?.slides || []).filter(Boolean).map(({ id }) => id)
+    if (!layoutSlides.length) return slides
+
+    slides = slides.sort((a, b) => {
+        const idxA = layoutSlides.indexOf(a.id)
+        const idxB = layoutSlides.indexOf(b.id)
+
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB
+        if (idxA !== -1) return -1
+        if (idxB !== -1) return 1
+        return 0
+    })
+
+    return slides
 }
 
 // meta
@@ -286,15 +301,7 @@ export function updateCachedShow(showId: string, show: Show, layoutId = "") {
         slidesUpdated: cachedShowsData[customId]?.template?.slidesUpdated || false
     }
 
-    // sort by order when just one layout
-    let showSlides = keysToID(clone(show.slides || {}))
-    if (Object.keys(show.layouts || {}).length < 2) {
-        const layoutSlides =
-            Object.values(show.layouts || {})[0]
-                ?.slides?.filter(Boolean)
-                ?.map(({ id }) => id) || []
-        showSlides = showSlides.sort((a, b) => layoutSlides.indexOf(a.id) - layoutSlides.indexOf(b.id))
-    }
+    let showSlides = getSortedLayoutSlides(show)
 
     // create groups
     const addedGroups: { [key: string]: number } = {}
@@ -382,6 +389,19 @@ export function getLayoutRef(showId = "active", _updater?: Shows | Show) {
     return _show(showId).layouts("active").ref()[0] || []
 }
 
+// a child slide has no "locked" state of its own, so check its parent (group) slide
+export function isSlideLocked(showId: string, slideId: string, _updater?: Shows | Show | null): boolean {
+    const slides = get(showsCache)[showId]?.slides || {}
+    const slide = slides[slideId]
+    if (!slide) return false
+    if (slide.locked) return true
+
+    // child slides are stored in the parent slide's "children" array
+    if (slide.group !== null) return false
+    const parentId = Object.keys(slides).find((id) => slides[id]?.children?.includes(slideId))
+    return !!slides[parentId || ""]?.locked
+}
+
 export function bindSlidesToOutput(indexes: number[], outputId: string) {
     const ref = getLayoutRef()
     const newBindings: string[][] = []
@@ -397,4 +417,51 @@ export function bindSlidesToOutput(indexes: number[], outputId: string) {
     })
 
     history({ id: "SHOW_LAYOUT", newData: { key: "bindings", data: newBindings, indexes, dataIsArray: false } })
+}
+
+// WIP should be merged with existing functions instead
+export function getSlideHighlightIndexes(actionId: string, sel = get(selected)): number[] {
+    const showId = get(activeShow)?.id || get(activeEdit)?.showId || ""
+    if (!showId) return []
+
+    const showSlides = get(showsCache)[showId]?.slides || {}
+    const ref = getLayoutRef(showId)
+    if (!ref.length) return []
+
+    const selectedSlides = sel.id === "slide" && Array.isArray(sel.data) ? sel.data.map((a: any) => ref[a.index]).filter(Boolean) : []
+    const getParentId = (s: any) => (s?.type === "child" ? s.parent?.id : s?.id) || ""
+    const getParentLayoutIndex = (s: any) => (s?.type === "child" ? s.parent?.layoutIndex : s?.layoutIndex)
+
+    if (actionId === "remove_group") {
+        const targetLayoutIndexes = new Set(
+            selectedSlides
+                .filter((s) => {
+                    const pid = getParentId(s)
+                    return pid && !showSlides[pid]?.locked && showSlides[pid]?.group !== "."
+                })
+                .map(getParentLayoutIndex)
+                .filter((idx) => idx !== undefined)
+        )
+        return targetLayoutIndexes.size ? ref.map((_, i) => i).filter((i) => targetLayoutIndexes.has(getParentLayoutIndex(ref[i]))) : []
+    }
+
+    if (actionId === "delete_slide" || actionId === "delete" || actionId === "delete_remove") {
+        const targetIds = new Set(
+            selectedSlides
+                .filter((s) => {
+                    const pid = getParentId(s)
+                    return pid && !showSlides[pid]?.locked
+                })
+                .map((s) => s.id)
+        )
+        return targetIds.size ? ref.map((_, i) => i).filter((i) => targetIds.has(ref[i].id)) : []
+    }
+
+    if (actionId === "delete_group" || sel.id === "group") {
+        const groupIds = sel.id === "group" ? (sel.data || []).map((a: any) => a.id).filter(Boolean) : selectedSlides.map(getParentId).filter((pid) => pid && !showSlides[pid]?.locked)
+        const targetGroupIds = new Set(groupIds)
+        return targetGroupIds.size ? ref.map((_, i) => i).filter((i) => targetGroupIds.has(getParentId(ref[i]))) : []
+    }
+
+    return []
 }

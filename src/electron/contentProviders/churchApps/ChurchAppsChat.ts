@@ -20,8 +20,8 @@ export class ChurchAppsChat {
     }
 
     public static async sendMessage(data: { churchId: string; conversationId: string; displayName: string; content: string }): Promise<boolean> {
-        const message = [{ churchId: data.churchId, content: data.content, conversationId: data.conversationId, displayName: data.displayName }]
-        const result = await ChurchAppsConnect.apiRequest({ api: "messaging", scope: "plans", endpoint: "/messages/send", authenticated: false, method: "POST", data: message })
+        const message = [{ content: data.content, conversationId: data.conversationId, displayName: data.displayName }]
+        const result = await ChurchAppsConnect.apiRequest({ api: "messaging", scope: "plans", endpoint: "/messages", authenticated: true, method: "POST", data: message })
         return result !== null
     }
 }

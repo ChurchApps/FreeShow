@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { EffectItem } from "../../../types/Effects"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, activePopup, effects } from "../../stores"
+    import { activeEdit, effects } from "../../stores"
     import { clone } from "../helpers/array"
     import Icon from "../helpers/Icon.svelte"
     import { addToPos } from "../helpers/mover"
@@ -124,19 +124,6 @@
                     {/key}
                 </div>
             {/if}
-
-            <MaterialButton
-                variant="outlined"
-                style="width: 100%;margin-top: 8px;"
-                icon="add"
-                on:click={() => {
-                    activePopup.set("effect_items")
-                    const nextIndex = currentItems.length
-                    if (!openedMenus[nextIndex]) openedMenus[nextIndex] = true
-                }}
-            >
-                <T id="settings.add" />
-            </MaterialButton>
 
             <!-- {:else if active === "filters"}
             <EditValues edits={filterEdits} on:change={(e) => valueChanged(e.detail)} /> -->

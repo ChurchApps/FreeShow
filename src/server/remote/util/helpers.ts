@@ -4,9 +4,9 @@ import { _get, _set } from "./stores"
 import { dictionary } from "./stores"
 import { get } from "svelte/store"
 
-export function translate(key: string, d: Dictionary = _get("dictionary")) {
+export function translate(key: string, d: Dictionary = _get("dictionary"), fallback = "") {
     let keys = key.split(".")
-    return d[keys[0]]?.[keys[1]] || ""
+    return d[keys[0]]?.[keys[1]] || fallback || ""
 }
 
 export function setError(err: string) {

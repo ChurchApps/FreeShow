@@ -78,7 +78,7 @@
             {#each mediaEntries as [url, data] (url)}
                 <div class="download-item" transition:fade={{ duration: 150 }}>
                     <div class="pdf-top-row">
-                        <div class="file-name" title={getFileName(url)}>{getFileName(url)}</div>
+                        <div class="file-name" title={data.name || getFileName(url)}>{data.name || getFileName(url)}</div>
                         <span class="status {data.status === 'error' ? 'error' : data.status === 'complete' ? 'ok' : ''}">{getStatusLabel(data.status, data.progress, data.total, url)}</span>
                     </div>
 
@@ -128,7 +128,7 @@
         border: 1px solid var(--primary-lighter);
         border-radius: 6px;
 
-        z-index: 4999;
+        z-index: 5000;
         overflow: hidden;
 
         --background: rgba(35, 35, 45, 0.8);

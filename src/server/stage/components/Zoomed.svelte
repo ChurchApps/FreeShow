@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { onDestroy, onMount } from "svelte"
+
     export let show: any
     export let disableStyle: boolean = false
     export let dynamicResolution: boolean = true
@@ -12,10 +14,30 @@
 
     // dynamic resolution
     if (dynamicResolution) resolution = { width: window.innerWidth, height: window.innerHeight }
+
+    let slideElem: HTMLElement | null = null
+    let resizeObserver: ResizeObserver | null = null
+
+    onMount(() => {
+        if (!slideElem || typeof ResizeObserver === "undefined") return
+        resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const { width, height } = entry.contentRect
+                if (slideWidth !== width || slideHeight !== height) {
+                    slideWidth = width
+                    slideHeight = height
+                }
+            }
+        })
+        resizeObserver.observe(slideElem)
+    })
+    onDestroy(() => {
+        if (resizeObserver) resizeObserver.disconnect()
+    })
 </script>
 
 <div class="center">
-    <div bind:offsetWidth={slideWidth} bind:offsetHeight={slideHeight} class:disableStyle class:relative class="slide" style="{$$props.style || ''}aspect-ratio: {resolution?.width}/{resolution?.height};">
+    <div bind:this={slideElem} class:disableStyle class:relative class="slide" style="{$$props.style || ''}aspect-ratio: {resolution?.width}/{resolution?.height};">
         <!-- Use transform scale for cross-browser support (Safari/Firefox do not support CSS zoom) -->
         <span style="display: inline-block; width: {resolution?.width || 1920}px; height: {resolution?.height || 1080}px; transform: scale({isFinite(ratio) && ratio > 0 ? ratio : 1}); transform-origin: top left; will-change: transform;">
             <slot />

@@ -11,11 +11,14 @@
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import { translateText } from "../../../utils/language"
+    import PreviewOutput from "../../output/preview/PreviewOutput.svelte"
 
     let screens: any[] = []
 
     // enabled windows on top
-    $: outputWindows = keysToID($outputs).sort((a, b) => (a.enabled === b.enabled ? 0 : a.enabled ? 1 : -1))
+    $: outputWindows = keysToID($outputs)
+        .filter((a) => !a.invisible)
+        .sort((a, b) => (a.enabled === b.enabled ? 0 : a.enabled ? 1 : -1))
 
     let minPosX: number | null = null
     let minPosY: number | null = null
@@ -88,10 +91,17 @@
             {/each}
 
             {#each outputWindows as currentScreen}
-                <div style="opacity: 0.8;position: absolute;width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;inset-inline-start: {currentScreen.bounds?.x - (minPosX ? minPosX : 0)}px;top: {currentScreen.bounds?.y - (minPosY ? minPosY : 0)}px;">
-                    <span style="z-index: 2;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);font-size: 0.5em;pointer-events: none;">{currentScreen.name}</span>
+                <div style="z-index: {currentScreen.enabled ? 1 : 0};opacity: {currentScreen.enabled ? 1 : 0.8};position: absolute;width: {currentScreen.bounds?.width}px;height: {currentScreen.bounds?.height}px;inset-inline-start: {currentScreen.bounds?.x - (minPosX ? minPosX : 0)}px;top: {currentScreen.bounds?.y - (minPosY ? minPosY : 0)}px;">
+                    {#if !currentScreen.enabled}
+                        <span style="z-index: 2;position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);font-size: 0.5em;pointer-events: none;">{currentScreen.name}</span>
+                    {/if}
+
                     <!-- Current screen position -->
-                    <div data-title={translateText(`main.open: <b>${currentScreen.name}</b>`)} class="screen" style="width: 100%;height: 100%;{currentScreen.screen && screens.find((a) => a.id.toString() === currentScreen.screen) ? 'opacity: 1;' : ''}" on:click={() => openOutput(currentScreen.id)} role="button" tabindex="0" on:keydown={triggerClickOnEnterSpace}></div>
+                    <div data-title={translateText(`main.open: <b>${currentScreen.name}</b>`)} class="screen" style="width: 100%;height: 100%;{currentScreen.screen && screens.find((a) => a.id.toString() === currentScreen.screen) ? 'opacity: 1;' : ''}" on:click={() => openOutput(currentScreen.id)} role="button" tabindex="0" on:keydown={triggerClickOnEnterSpace}>
+                        {#if currentScreen.enabled}
+                            <PreviewOutput outputId={currentScreen.id} disableTransitions />
+                        {/if}
+                    </div>
                 </div>
             {/each}
         </div>
@@ -184,5 +194,11 @@
     .screen:focus:not(.disabled) {
         outline: 42px solid var(--secondary);
         outline-offset: 0;
+    }
+
+    .screen :global(.previewOutput) {
+        width: 100%;
+        height: 100%;
+        aspect-ratio: unset !important;
     }
 </style>

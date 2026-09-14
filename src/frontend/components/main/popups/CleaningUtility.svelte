@@ -84,46 +84,52 @@
 </script>
 
 {#if type === "shows"}
-    <div class="list">
-        <!-- USED TO DELETE "BROKEN" SHOWS -->
-        {#if allShowsInFolder.length > Object.keys($shows).length}
-            <InputRow>
-                <MaterialButton style="width: 100%;" icon="delete" info={"" + (allShowsInFolder.length - Object.keys($shows).length)} on:click={deleteBrokenShows} red white>
-                    <T id="actions.delete_shows_not_indexed" />
-                </MaterialButton>
-            </InputRow>
-        {/if}
+    {#if allShowsInFolder.length > Object.keys($shows).length || emptyShows.length || duplicatedShows.length}
+        <div class="list">
+            <!-- USED TO DELETE "BROKEN" SHOWS -->
+            {#if allShowsInFolder.length > Object.keys($shows).length}
+                <InputRow>
+                    <MaterialButton style="width: 100%;" icon="delete" info={"" + (allShowsInFolder.length - Object.keys($shows).length)} on:click={deleteBrokenShows} red white>
+                        <T id="actions.delete_shows_not_indexed" />
+                    </MaterialButton>
+                </InputRow>
+            {/if}
 
-        <!-- DELETE EMPTY SHOWS -->
-        {#if emptyShows.length}
-            <InputRow arrow>
-                <MaterialButton style="width: 100%;" icon="delete" info={"" + emptyShows.length} on:click={deleteEmptyShows} red white>
-                    <T id="actions.delete_empty_shows" />
-                </MaterialButton>
+            <!-- DELETE EMPTY SHOWS -->
+            {#if emptyShows.length}
+                <InputRow arrow>
+                    <MaterialButton style="width: 100%;" icon="delete" info={"" + emptyShows.length} on:click={deleteEmptyShows} red white>
+                        <T id="actions.delete_empty_shows" />
+                    </MaterialButton>
 
-                <div slot="menu">
-                    <ul style="list-style-position: inside;margin-left: 20px;">
-                        {#each emptyShows as show}
-                            <li>{show.name}</li>
-                        {/each}
-                    </ul>
-                </div>
-            </InputRow>
-        {:else if loadingEmpty}
-            <Center padding={10}>
-                <Loader />
-            </Center>
-        {/if}
+                    <div slot="menu">
+                        <ul style="list-style-position: inside;margin-left: 20px;">
+                            {#each emptyShows as show}
+                                <li>{show.name}</li>
+                            {/each}
+                        </ul>
+                    </div>
+                </InputRow>
+            {:else if loadingEmpty}
+                <Center padding={10}>
+                    <Loader />
+                </Center>
+            {/if}
 
-        <!-- REMOVE DUPLICATED SHOWS -->
-        {#if duplicatedShows.length}
-            <InputRow>
-                <MaterialButton style="width: 100%;" icon="launch" info={"" + duplicatedShows.length} on:click={deleteDuplicatedShows} white>
-                    <T id="popup.delete_duplicated_shows" />
-                </MaterialButton>
-            </InputRow>
-        {/if}
-    </div>
+            <!-- REMOVE DUPLICATED SHOWS -->
+            {#if duplicatedShows.length}
+                <InputRow>
+                    <MaterialButton style="width: 100%;" icon="launch" info={"" + duplicatedShows.length} on:click={deleteDuplicatedShows} white>
+                        <T id="popup.delete_duplicated_shows" />
+                    </MaterialButton>
+                </InputRow>
+            {/if}
+        </div>
+    {:else}
+        <Center faded>
+            <T id="empty.search" /> :D
+        </Center>
+    {/if}
 {/if}
 
 <style>

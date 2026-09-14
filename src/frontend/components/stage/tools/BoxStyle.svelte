@@ -41,7 +41,7 @@
                 ...stageSections.special,
                 inputs: [
                     ...stageSections.special.inputs,
-                    [{ id: "flash.enabled", type: "checkbox", value: flashEnabled, values: { label: "timer.flash" } }],
+                    [{ id: "flash.enabled", type: "checkbox", value: false, values: { label: "timer.flash" } }],
                     [
                         { id: "flash.color", type: "color", value: item.flash?.color || "#FF0000", hidden: !flashEnabled, values: { label: "edit.color" } },
                         { id: "flash.count", type: "number", value: item.flash?.count ?? 3, hidden: !flashEnabled, values: { label: "edit.count", min: 1, max: 20 } }
@@ -135,11 +135,14 @@
     $: if (item?.type === "clock" && item) {
         const clockType = item.clock?.type || "digital"
         const dateFormat = item.clock?.dateFormat || "none"
+        const customFormat = item.clock?.customFormat || ""
+        const showOffsetDays = clockType === "custom" && /[MDY]/.test(customFormat) // has M or D or Y
 
         setBoxInputValue(stageSections, "default", "clock.dateFormat", "hidden", clockType !== "digital")
         setBoxInputValue(stageSections, "default", "clock.showTime", "hidden", clockType !== "digital" || dateFormat === "none")
         setBoxInputValue(stageSections, "default", "clock.seconds", "hidden", clockType === "custom" || (clockType === "digital" && item.clock?.showTime === false && dateFormat !== "none"))
         setBoxInputValue(stageSections, "default", "clock.customFormat", "hidden", clockType !== "custom")
+        setBoxInputValue(stageSections, "default", "clock.offsetDays", "hidden", !showOffsetDays)
 
         // show seconds by default on stage
         setBoxInputValue(stageSections, "default", "clock.seconds", "value", true)
@@ -153,8 +156,11 @@
         if (input.id.includes(".")) {
             let splitted = input.id.split(".")
             input.id = splitted[0]
-            let newValue = item?.[input.id] || {}
-            if (typeof newValue === "string") return // something is wrong
+
+            let newValue = item?.[input.id]
+            if (typeof newValue !== "object" || newValue === null) newValue = {}
+            else newValue = clone(newValue)
+
             newValue[splitted[1]] = value
             value = newValue
         }

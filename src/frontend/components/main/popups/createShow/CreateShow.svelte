@@ -5,6 +5,7 @@
     import { activePopup, activeProject, activeShow, categories, drawerTabsData, formatNewShow, quickTextCache, shows, special, splitLines } from "../../../../stores"
     import { newToast } from "../../../../utils/common"
     import { translateText } from "../../../../utils/language"
+    import { getNormalizedKey } from "../../../../utils/shortcuts"
     import { customIconsColors } from "../../../../values/customIcons"
     import { clone, sortObject } from "../../../helpers/array"
     import { history } from "../../../helpers/history"
@@ -161,8 +162,12 @@
     // SHORTCUTS
 
     function keydown(e: KeyboardEvent) {
+        if (e.shiftKey || e.altKey) return
+
         const ctrl = e.ctrlKey || e.metaKey
-        if (e.key === "f" && ctrl) {
+
+        const ctrlKey = ctrl ? getNormalizedKey(e) : ""
+        if (ctrlKey === "f") {
             e.preventDefault()
             selectOption("web")
 
@@ -170,10 +175,10 @@
         }
 
         if (e.key === "Enter") {
-            if (!ctrl && e.target?.closest(".edit") && !document.activeElement?.closest("#name")) return
+            if (!ctrl && e.target?.closest?.(".edit") && !document.activeElement?.closest?.("#name")) return
 
             e.preventDefault()
-            if (e.target?.closest("button")) return
+            if (e.target?.closest?.("button")) return
 
             if (!ctrl) {
                 selectOption("text")

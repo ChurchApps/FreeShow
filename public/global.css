@@ -86,6 +86,13 @@ body {
     font-size: var(--font-size);
 }
 
+/* persistent resizing cursor */
+body[data-resizing],
+body[data-resizing] * {
+    cursor: var(--resizing-cursor) !important;
+    user-select: none !important;
+}
+
 /* scroll bar */
 ::-webkit-scrollbar {
     width: 8px;

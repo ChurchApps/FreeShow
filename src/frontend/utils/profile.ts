@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
-import { activeProfile, profiles, showChangeProfileMenu, special } from "../stores"
 import { runActionId } from "../components/actions/actions"
+import { activeProfile, profiles, showChangeProfileMenu, special } from "../stores"
 
 export function getAccess(id: string) {
     return get(activeProfile) ? get(profiles)[get(activeProfile)!]?.access[id] || {} : {}
@@ -33,6 +33,8 @@ export function autoOpenLastUsedProfile() {
 
     activeProfile.set(lastUsedId)
 
+    // NOTE: don't run action on auto open because this profile is already active
+
     showChangeProfileMenu.set(true)
     setTimeout(() => showChangeProfileMenu.set(false), 5000)
 }
@@ -56,4 +58,3 @@ export function isGroupHidden(groupId: string): boolean {
     if (currentGlobalLevel === "none") return true
     return currentLocalLevel === "none"
 }
-

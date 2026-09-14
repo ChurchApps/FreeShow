@@ -2,7 +2,6 @@ import { get } from "svelte/store"
 import { Main } from "../../../types/IPC/Main"
 import { sendMain } from "../../IPC/main"
 import { timecode } from "../../stores"
-import ltcProcessorUrl from "./ltcProcessor.ts?worker&url"
 import { getActiveTimelinePlayback } from "./TimelinePlayback"
 
 export function updateTimelineTime(timeMs: number) {
@@ -105,7 +104,8 @@ export async function startListeningLTC() {
         listenerCtx = new AudioContext({ sampleRate: 48000 })
         const source = listenerCtx.createMediaStreamSource(stream)
 
-        await listenerCtx.audioWorklet.addModule(ltcProcessorUrl)
+        await listenerCtx.audioWorklet.addModule("./assets/ltc-processor.js")
+        console.info("LTC processor module loaded")
 
         listenerNode = new AudioWorkletNode(listenerCtx, "ltc-processor")
         listenerNode.port.onmessage = (e) => {

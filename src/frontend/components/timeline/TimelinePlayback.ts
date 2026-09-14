@@ -4,22 +4,21 @@ import type { TimelineAction } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
-import { activeEdit, activeShow, isTimelinePlaying, outputs, playingAudio, showsCache, timecode, videosData, videosTime } from "../../stores"
+import { activeEdit, activeShow, isTimelinePlaying, outputs, playingAudio, playingVideoState, showsCache, timecode } from "../../stores"
 import { triggerFunction } from "../../utils/common"
 import { runAction } from "../actions/actions"
 import { clone } from "../helpers/array"
-import { getFirstActiveOutput, getAllActiveOutputIds, setOutput } from "../helpers/output"
-import { clearBackground } from "../output/clear"
-import { send } from "../../utils/request"
-import { OUTPUT } from "../../../types/Channels"
+import { locateMediaFile } from "../helpers/media"
+import { getAllActiveOutputIds, getFirstActiveOutput, setOutput } from "../helpers/output"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
+import { VideoPlayer } from "../media/video/videoPlayer"
+import { clearBackground } from "../output/clear"
 import { ShowTimeline } from "./ShowTimeline"
 import { SlideTimeline } from "./SlideTimeline"
 import { TimelineType } from "./TimelineActions"
 import { startListeningLTC, stopListeningLTC } from "./timecode"
 import { getProjectShowDurations } from "./timeline"
-import { locateMediaFile } from "../helpers/media"
 
 let activePlayback: TimelinePlayback | null = null
 export function getActiveTimelinePlayback(type: TimelineType | null = null) {
@@ -354,7 +353,7 @@ export class TimelinePlayback {
         if (this.onTimeCallback) this.onTimeCallback(this.currentTime)
     }
 
-    private previousSlide: { id?: string; index?: number } = {}
+    private previousSlide: { id?: string; index?: number; line?: number } = {}
     private playAction(action: TimelineAction, ref: typeof this.ref) {
         if (action.type === "action") {
             runAction({ id: action.id, ...action.data }, { source: "timeline" })
@@ -362,7 +361,7 @@ export class TimelinePlayback {
             this.previousSlide = action.data
             ShowTimeline.playSlide(action.data, ref)
 
-            const triggerId = `${action.data.id}-${action.data.index}`
+            const triggerId = `${action.data.id}-${action.data.index}-${action.data.line || 0}`
             this.lastSlideTrigger = triggerId
         } else {
             console.log("Unknown Timeline Action:", action)
@@ -442,29 +441,21 @@ export class TimelinePlayback {
             const currentBackground = get(outputs)[outputId]?.out?.background
             if (currentBackground?.path !== path) {
                 if (hasBeenPlaying) return // was playing but cleared manually
-                setOutput("background", { name: action.name, path: path, type: "video" }, false, outputId)
+                setOutput("background", { name: action.name, path, type: "video" }, false, outputId)
             }
 
-            const vData = get(videosData)[outputId] || {}
-            const vTime = get(videosTime)[outputId] || 0
+            const key = `${path}_${outputId}`
+            const videoData = get(playingVideoState)[key]
+            if (!videoData || (videoData.type && videoData.type !== "background")) return
 
-            // Play the video if paused and timeline is playing
-            if (vData.paused && this.isPlaying) {
-                send(OUTPUT, ["DATA"], { [outputId]: { ...vData, paused: false } })
-            }
+            // play the video if paused and timeline is playing
+            if (videoData.paused && this.isPlaying) VideoPlayer.play(path, outputId)
 
             // seek to correct position (with tolerance)
             const seekPos = (this.getTimeWithOffset(this.currentTime) - videoStart) / 1000
-            const diff = Math.abs(vTime - seekPos)
+            const diff = Math.abs(videoData.currentTime - seekPos)
             const tolerance = this.isPlaying ? 0.5 : 0.05 // seconds
-            if (diff > tolerance) {
-                send(OUTPUT, ["TIME"], { [outputId]: seekPos })
-                // Update local store immediately to prevent duplicate seek commands before the output window reports back
-                videosTime.update((a) => {
-                    a[outputId] = seekPos
-                    return a
-                })
-            }
+            if (diff > tolerance) VideoPlayer.seekTo(path, outputId, seekPos)
         })
 
         if (!hasBeenPlaying) this.playingVideoPaths.push(path)
@@ -486,11 +477,9 @@ export class TimelinePlayback {
                     const activeOutputIds = getAllActiveOutputIds()
                     activeOutputIds.forEach((outputId) => {
                         const currentBackground = get(outputs)[outputId]?.out?.background
-                        if (currentBackground?.path === a.path) {
-                            const vData = get(videosData)[outputId] || {}
-                            if (!vData.paused) {
-                                send(OUTPUT, ["DATA"], { [outputId]: { ...vData, paused: true } })
-                            }
+                        if (a.path && currentBackground?.path === a.path) {
+                            // if (!videoData.paused) ...
+                            VideoPlayer.pause(a.path, outputId)
                         }
                     })
                 }
@@ -621,7 +610,7 @@ export class TimelinePlayback {
         const isLastAction = lastAction?.id === closestSlide.id
         if (isLastAction) return
 
-        const triggerId = `${closestSlide.data.id}-${closestSlide.data.index}`
+        const triggerId = `${closestSlide.data.id}-${closestSlide.data.index}-${closestSlide.data.line || 0}`
         if (this.lastSlideTrigger === triggerId) return
 
         this.playAction(closestSlide, this.ref)
@@ -730,14 +719,14 @@ export class TimelinePlayback {
                 const layoutRef = _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []
                 let layoutSlide = layoutRef[outSlide.index]
                 if (!layoutSlide) return
-                if (this.previousSlide.id === layoutSlide.id && this.previousSlide.index === outSlide.index) return
+                if (this.previousSlide.id === layoutSlide.id && this.previousSlide.index === outSlide.index && (this.previousSlide.line || 0) === (outSlide.line || 0)) return
 
                 const slideActions = this.actions.filter((a) => a.type === "slide")
 
                 // find next matching
                 if (
                     slideActions.some((action) => {
-                        if (action.time >= this.currentTime && action.data.id === layoutSlide.id && action.data.index === outSlide.index) {
+                        if (action.time >= this.currentTime && action.data.id === layoutSlide.id && action.data.index === outSlide.index && (action.data.line || 0) === (outSlide.line || 0)) {
                             this.setTime(action.time)
                             return true
                         }
@@ -748,7 +737,7 @@ export class TimelinePlayback {
 
                 // find any matching
                 slideActions.some((action) => {
-                    if (action.data.id === layoutSlide.id && action.data.index === outSlide.index) {
+                    if (action.data.id === layoutSlide.id && action.data.index === outSlide.index && (action.data.line || 0) === (outSlide.line || 0)) {
                         this.setTime(action.time)
                         return true
                     }

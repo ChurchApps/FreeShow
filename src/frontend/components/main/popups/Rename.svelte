@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Line, SlideData } from "../../../../types/Show"
-    import { activePopup, activeShow, customScriptureBooks, drawerTabsData, effectsLibrary, scripturesCache, selected, showsCache } from "../../../stores"
+    import { activePopup, activeShow, audioRouting, calendars, customScriptureBooks, drawerTabsData, effectsLibrary, scripturesCache, selected, showsCache } from "../../../stores"
+    import { renameCalendar } from "../../drawer/calendar/calendars"
     import { clone, removeDuplicates } from "../../helpers/array"
     import { history } from "../../helpers/history"
     import { getLayoutRef } from "../../helpers/show"
@@ -8,6 +9,9 @@
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
+    import { registerPopupSubmit } from "../../../utils/popup"
+
+    registerPopupSubmit(rename)
 
     let list: string[] = []
     $: {
@@ -36,6 +40,13 @@
             const bookIndex = selectionData[0]?.index - 1
             const book = activeBible.books?.[bookIndex] || {}
             groupName = (book as any).customName || book.name || ""
+        } else if ($selected.id === "audio_channel") {
+            const channelId = selectionData[0]?.id
+            const channel = ($audioRouting?.channels || []).find((m) => m.id === channelId)
+            groupName = channel?.name || ""
+        } else if ($selected.id === "calendar") {
+            const calId = selectionData[0]?.id
+            groupName = $calendars?.[calId]?.name || ""
         } else if (selectionData[0]?.name) {
             groupName = selectionData[0].name
         }
@@ -43,6 +54,9 @@
 
     const renameAction = {
         slide: () => {
+            const data = $selected.data
+            if (!Array.isArray(data)) return
+
             const showId = $activeShow?.id
             if (!showId) return
 
@@ -50,7 +64,7 @@
 
             // get selected ids
             let ids: string[] = []
-            $selected.data.forEach((a) => {
+            data.forEach((a) => {
                 const id = a.id || ref[a.index]?.id
                 ids.push(id)
             })
@@ -77,6 +91,8 @@
 
             // TODO: history (x3)
             refs.forEach((ref) => {
+                if (!ref?.id) return
+
                 const slideId = ref.id
 
                 // remove global group if active
@@ -124,6 +140,8 @@
         },
         group: () => {
             $selected.data.forEach((a) => {
+                if (!a?.id) return
+
                 const slideId = a.id
 
                 // remove global group if active
@@ -151,6 +169,19 @@
                 .items([chord.itemIndex])
                 .set({ key: "lines", values: [newLines] })
         },
+        audio_channel: () => {
+            const channelId = $selected.data?.[0]?.id
+            if (!channelId) return
+            audioRouting.update((c) => {
+                const list = c?.channels || []
+                const channel = list.find((m) => m.id === channelId)
+                if (channel) {
+                    channel.name = groupName
+                    delete channel.outputLink
+                }
+                return { ...c, channels: list, connections: c?.connections || [] }
+            })
+        },
         audio_effect: () => {
             let selectedPath = $selected.data?.[0]?.path
             effectsLibrary.update((a) => {
@@ -175,6 +206,12 @@
                 a[scriptureId][bookIndex] = groupName
                 return a
             })
+        },
+        calendar: () => {
+            const oldName = $selected.data?.[0]?.id
+            if (oldName && groupName && groupName.trim() && groupName.trim() !== oldName) {
+                renameCalendar(oldName, groupName.trim())
+            }
         }
     }
 
@@ -186,15 +223,7 @@
     }
 
     let groupName = ""
-
-    function keydown(e: KeyboardEvent) {
-        if (e.key === "Enter") {
-            setTimeout(rename)
-        }
-    }
 </script>
-
-<svelte:window on:keydown={keydown} />
 
 {#if list.length > 1}
     <p><T id="popup.change_name" />:</p>
@@ -205,7 +234,7 @@
     </ul>
 {/if}
 
-<MaterialTextInput label="inputs.name" value={groupName} on:change={(e) => (groupName = e.detail)} autoselect />
+<MaterialTextInput label="inputs.name" value={groupName} on:input={(e) => (groupName = e.detail)} on:change={(e) => (groupName = e.detail)} autoselect />
 
 <MaterialButton variant="contained" style="margin-top: 20px;" icon="edit" on:click={rename}>
     <T id="actions.rename" />

@@ -1,15 +1,10 @@
 import { get } from "svelte/store"
-import { CLOUD, CONTROLLER, NDI, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
+import { CLOUD, CONTROLLER, NDI, OMT, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
-import { AudioAnalyser } from "../audio/audioAnalyser"
-import { AudioAnalyserMerger } from "../audio/audioAnalyserMerger"
 import { AudioMicrophone } from "../audio/audioMicrophone"
-import { setEqualizerEnabled, updateEqualizerBands } from "../audio/effects/audioEqualizer"
 import { runAction } from "../components/actions/actions"
 import { getDynamicValue } from "../components/edit/scripts/itemHelpers"
 import { clone } from "../components/helpers/array"
-import { checkNextAfterMedia } from "../components/helpers/showActions"
-import { clearBackground } from "../components/output/clear"
 import { receiveMainGlobal } from "../IPC/main"
 import {
     actions,
@@ -19,10 +14,8 @@ import {
     activeTimers,
     alertMessage,
     allOutputs,
-    audioChannels,
     audioChannelsData,
     audioData,
-    audioEffects,
     cachedDynamicValues,
     categories,
     closeAd,
@@ -36,7 +29,7 @@ import {
     dynamicValueData,
     effects,
     events,
-    gain,
+    focusMode,
     globalRegexes,
     groups,
     livePrepare,
@@ -44,21 +37,22 @@ import {
     metronome,
     metronomeTimer,
     ndiData,
+    omtData,
     outputDisplay,
     outputs,
+    renderGroups,
     outputSlideCache,
     outputState,
     overlays,
     playerVideos,
     playingAudioPaths,
-    playingVideos,
+    playingVideoState,
     popupData,
     previewBuffers,
     projects,
     shows,
     showsCache,
     slideTimelineSpeedMultiplier,
-    slideVideoData,
     special,
     stageShows,
     styles,
@@ -67,10 +61,7 @@ import {
     timers,
     transitionData,
     variables,
-    videosData,
-    videosTime,
-    visualizerData,
-    volume
+    visualizerData
 } from "../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
@@ -79,7 +70,7 @@ import { sendInitialOutputData } from "./listeners"
 import { receive, send } from "./request"
 import { closeApp, save } from "./save"
 import { client } from "./sendData"
-import { playFolder, previewShortcuts } from "./shortcuts"
+import { previewShortcuts } from "./shortcuts"
 import { restartOutputs } from "./updateSettings"
 
 let mainReceiversInitialized = false
@@ -91,6 +82,7 @@ export function setupMainReceivers() {
 
     receive(OUTPUT, receiveOUTPUTasMAIN)
     receive(NDI, receiveNDI)
+    receive(OMT, receiveOMT)
     receive(CLOUD, receiveCLOUD)
 }
 
@@ -108,7 +100,6 @@ export function remoteListen() {
 
 // OUTPUT
 
-const clearing: string[] = []
 const receiveOUTPUTasMAIN: any = {
     BUFFER: ({ id, time, buffer, size }) => {
         // this will infinitely increace if this is not in place
@@ -121,6 +112,7 @@ const receiveOUTPUTasMAIN: any = {
         })
     },
     OUTPUTS: (a: any) => outputs.set(a),
+    RENDER_GROUPS: (a: any) => renderGroups.set(a || {}),
     RESTART: ({ id }) => restartOutputs(id),
     // DISPLAY: (a: any) => outputDisplay.set(a.enabled),
     OUTPUT_STATE: (newStates: { id: string; active: boolean | "invisible" }[]) => {
@@ -141,37 +133,38 @@ const receiveOUTPUTasMAIN: any = {
         })
     },
     ACTION_MAIN: (a: { id: string }) => runAction(get(actions)[a.id], { source: "remote" }),
-    AUDIO_MAIN: (data: any) => {
-        if (!data.id) return
+    // AUDIO_MAIN: (data: any) => {
+    //     if (!data.id) return
 
-        if (data.channels) AudioAnalyserMerger.addChannels(data.id, data.channels)
+    //     if (data.channels) AudioAnalyserMerger.addChannels(data.id, data.channels)
 
-        playingVideos.update((playingVideo) => {
-            const existing = playingVideo.findIndex((a) => a.id === data.id)
+    //     playingVideos.update((playingVideo) => {
+    //         const existing = playingVideo.findIndex((a) => a.id === data.id)
 
-            if (data.stop) {
-                if (existing > -1) playingVideo.splice(existing, 1)
-                return playingVideo
-            }
+    //         if (data.stop) {
+    //             if (existing > -1) playingVideo.splice(existing, 1)
+    //             return playingVideo
+    //         }
 
-            if (existing > -1) {
-                playingVideo[existing] = { ...data, location: "output" }
-            } else if (get(outputs)[data.id]?.out?.background) {
-                playingVideo.push({ location: "output", ...data })
-            }
+    //         if (existing > -1) {
+    //             playingVideo[existing] = { ...data, location: "output" }
+    //         } else if (get(outputs)[data.id]?.out?.background) {
+    //             playingVideo.push({ location: "output", ...data })
+    //         }
 
-            return playingVideo
-        })
+    //         return playingVideo
+    //     })
 
-        if (data.stop && !AudioAnalyser.shouldAnalyse()) {
-            AudioAnalyserMerger.stop()
-        }
-    },
+    //     if (data.stop && !AudioAnalyser.shouldAnalyse()) {
+    //         AudioAnalyserMerger.stop()
+    //     }
+    // },
     MOVE: (data) => {
         outputs.update((a) => {
             if (!a[data.id] || a[data.id].boundsLocked) return a
 
             a[data.id].bounds = data.bounds
+            if (data.screen) a[data.id].screen = data.screen
             return a
         })
     },
@@ -187,41 +180,6 @@ const receiveOUTPUTasMAIN: any = {
     },
     REQUEST_DATA_MAIN: () => sendInitialOutputData(),
     MAIN_LOG: (msg: any) => console.info(msg),
-    MAIN_DATA: (msg: any) => videosData.update((a) => ({ ...a, ...msg })),
-    MAIN_TIME: (msg: any) => videosTime.update((a) => ({ ...a, ...msg })),
-    MAIN_VIDEO_ENDED: async (msg) => {
-        if (!msg || clearing.includes(msg.id)) return
-        clearing.push(msg.id)
-        setTimeout(() => clearing.splice(clearing.indexOf(msg.id), 1), msg.duration || 1000)
-
-        const background = get(outputs)[msg.id]?.out?.background
-        const videoPath: string = background?.path || background?.id || ""
-        if (!videoPath) return
-
-        // project media folder
-        if (background?.folderPath) {
-            playFolder(background.folderPath)
-            return
-        }
-
-        // check and execute next after media regardless of loop
-        if ((await checkNextAfterMedia(videoPath, "media", msg.id)) || msg.loop) return
-
-        if (get(special).clearMediaOnFinish === false) return
-
-        setTimeout(() => {
-            // double check that output is still the same
-            const newVideoPath: string = get(outputs)[msg.id]?.out?.background?.path || get(outputs)[msg.id]?.out?.background?.id || ""
-            if (newVideoPath !== videoPath) return
-
-            clearBackground(msg.id)
-        }, 200) // WAIT FOR NEXT AFTER MEDIA TO FINISH
-    },
-    // stage
-    MAIN_REQUEST_VIDEO_DATA: (data: any) => {
-        if (!data.id) return
-        send(OUTPUT, ["VIDEO_DATA"], { id: data.id, data: get(videosData), time: get(videosTime) })
-    },
     ALERT_MAIN: (data: string) => {
         if (!data) return
 
@@ -234,13 +192,6 @@ const receiveOUTPUTasMAIN: any = {
         }
     },
     MAIN_SHOWS_DATA: () => send(OUTPUT, ["SHOWS_DATA"], get(shows)),
-    MAIN_SLIDE_VIDEO: (data: { id: string; path: string; data: any }) => {
-        slideVideoData.update((a) => {
-            if (!a[data.id]) a = { [data.id]: {} }
-            a[data.id][data.path] = data.data
-            return a
-        })
-    },
 
     MAIN_REQUEST_DYNAMIC_VALUE: (data: { dynamicId: string }) => {
         if (!data?.dynamicId) return
@@ -248,15 +199,8 @@ const receiveOUTPUTasMAIN: any = {
     },
     MAIN_REQUEST_VOLUME: (data: { deviceId: string }) => {
         if (!data?.deviceId) return
-        let value = -80
-        if (data.deviceId === "main") {
-            const channels = get(audioChannels)
-            const db = channels.length ? Math.max(...channels.map(c => c.dB?.value ?? -80)) : -80
-            value = Math.round(db)
-        } else {
-            AudioMicrophone.startListening(data.deviceId)
-            value = AudioMicrophone.getVolume(data.deviceId)
-        }
+        const chData = (get(audioChannelsData) || {})[data.deviceId]
+        const value = Math.round(chData?.dB ?? -60)
         send(OUTPUT, ["REQUEST_VOLUME"], { deviceId: data.deviceId, value })
     }
 }
@@ -343,24 +287,9 @@ export const receiveOUTPUTasOUTPUT: any = {
     ACTIVE_PROJECT: (a: any) => activeProject.set(a),
     SHOWS_DATA: (a: any) => shows.set(a),
 
-    // stage & dynamic value (video)
-    VIDEO_DATA: (data) => {
-        videosData.set(data.data)
-        videosTime.set(data.time)
-    },
+    // AUDIO_CHANNELS_DATA: (a: any) => audioChannelsData.set(a),
 
-    VOLUME: (a: any) => volume.set(a),
-    GAIN: (a: any) => gain.set(a),
-    AUDIO_CHANNELS_DATA: (a: any) => audioChannelsData.set(a),
-
-    AUDIO_EFFECTS: (a: any) => {
-        audioEffects.set(a)
-
-        if (a.main?.equalizer) {
-            setEqualizerEnabled(a.main.equalizer.enabled)
-            updateEqualizerBands(a.main.equalizer.bands)
-        }
-    },
+    PLAYING_VIDEO_STATE: (a: any) => playingVideoState.set(a),
 
     METRONOME: (a: any) => metronome.set(a),
     METRONOME_TIMER: (a: any) => metronomeTimer.set(a),
@@ -390,6 +319,20 @@ const receiveNDI: any = {
         if (!msg?.id) return
 
         ndiData.update((a) => {
+            a[msg.id] = msg
+
+            return a
+        })
+    }
+}
+
+// OMT
+
+const receiveOMT: any = {
+    SEND_DATA: (msg) => {
+        if (!msg?.id) return
+
+        omtData.update((a) => {
             a[msg.id] = msg
 
             return a
@@ -482,7 +425,7 @@ const receiveCLOUD = {
         }
 
         // reload shows cache (because there could be some changes)
-        showsCache.set({})
+        if (!get(focusMode)) showsCache.set({})
         activeShow.set(null)
 
         // show completed toast

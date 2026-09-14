@@ -109,7 +109,7 @@ function generatePlayersSlide() {
             { type: "text", style: "top:72.50px;left:461.00px;height:152.67px;width:998.00px;", lines: [{ align: "", text: [{ style: "font-weight:bold;font-size:120px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:15px;", value: "Players" }] }] },
 
             // these dynamic values use the show reference to get the correct interaction id - otherwise fallback to first active
-            { type: "text", style: "top:285.02px;left:50.00px;height:706.98px;width:1820.00px;", lines: [{ align: "", text: [{ style: "font-size:80px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:10px;", value: "{interaction_players|Waiting...}" }] }] },
+            { type: "text", style: "top:285.02px;left:50.00px;height:706.98px;width:1820.00px;", lines: [{ align: "", text: [{ style: "font-size:80px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:10px;", value: "{interaction_players?Waiting...}" }] }] },
             { type: "text", style: "top:55.17px;height:170.00px;width:245.38px;left:1625.00px;", lines: [{ align: "", text: [{ style: "font-feature-settings: 'tnum' 1;font-family:monospace;font-weight:bold;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width: 4px;font-size:90px;", value: "{interaction_players_count}" }] }] }
         ]
     }
@@ -165,7 +165,7 @@ function generateChartSlide(id: string) {
     for (let i = 0; i < optionsCount; i++) {
         const optionIdx = i + 1
         const color = defaultColors[i % defaultColors.length]
-        grid.push([`{interaction_input_options#${optionIdx}|}`, `{interaction_option_percentages#${optionIdx}}`, color])
+        grid.push([`{interaction_input_options#${optionIdx}?}`, `{interaction_option_percentages#${optionIdx}}`, color])
     }
 
     const slide: Slide = {

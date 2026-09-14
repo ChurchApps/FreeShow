@@ -1,11 +1,12 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
+    import type { MetronomeSettings } from "../../../types/Audio"
     import type { API_metronome } from "../../actions/api"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
 
-    export let values: API_metronome = {}
+    export let values: API_metronome | MetronomeSettings = {}
     export let action = false
 
     let dispatch = createEventDispatcher()

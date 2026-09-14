@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { TemplateSettings } from "../../../../types/Show"
+    import type { Item, TemplateSettings } from "../../../../types/Show"
     import { activeEdit, activePopup, overlays, popupData, templates } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { mediaExtensions } from "../../../values/extensions"
@@ -13,6 +13,7 @@
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import ItemsList from "./ItemsList.svelte"
 
     $: templateId = $activeEdit?.id || ""
     $: template = $templates[templateId] || {}
@@ -53,6 +54,8 @@
         // { value: "text", label: translateText("edit.text") } // hidden
     ]
     $: mode = template.settings?.mode || "default"
+
+    export let allSlideItems: Item[]
 </script>
 
 <div class="tools">
@@ -69,6 +72,7 @@
                 update()
             }}
             allowEmpty
+            allowGradients
             noLabel
         />
 
@@ -78,17 +82,19 @@
         </InputRow>
     </div>
 
-    <div>
-        <div class="title">
-            <span style="display: flex;gap: 8px;align-items: center;padding: 8px 12px;">
-                <Icon id="text" white />
-                <p>{translateText("edit.text")}</p>
-            </span>
-        </div>
+    {#if mode !== "scripture"}
+        <div>
+            <div class="title">
+                <span style="display: flex;gap: 8px;align-items: center;padding: 8px 12px;">
+                    <Icon id="text" white />
+                    <p>{translateText("edit.text")}</p>
+                </span>
+            </div>
 
-        <MaterialNumberInput label="edit.max_lines_per_slide" value={settings?.maxLinesPerSlide || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
-        <MaterialNumberInput label="edit.break_long_lines_tip" value={settings?.breakLongLines || 0} max={100} on:change={(e) => setValue(e, "breakLongLines")} />
-    </div>
+            <MaterialNumberInput label="edit.max_lines_per_slide" value={settings?.maxLinesPerSlide || 0} max={100} on:change={(e) => setValue(e, "maxLinesPerSlide")} />
+            <MaterialNumberInput label="edit.break_long_lines_tip" value={settings?.breakLongLines || 0} max={100} on:change={(e) => setValue(e, "breakLongLines")} />
+        </div>
+    {/if}
 
     <div>
         <div class="title">
@@ -145,6 +151,8 @@
             {translateText("popup.template_style_overrides")}
         </MaterialButton>
     </div>
+
+    <ItemsList bind:allSlideItems />
 </div>
 
 <style>

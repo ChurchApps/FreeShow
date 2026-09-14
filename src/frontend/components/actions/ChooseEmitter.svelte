@@ -11,7 +11,7 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../inputs/MaterialDropdown.svelte"
     import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
-    import { API_emitter } from "./api"
+    import type { API_emitter } from "./api"
     import { formatData } from "./emitters"
     import MidiValues from "./MidiValues.svelte"
 
@@ -173,6 +173,8 @@
 
     <InputRow style="background-color: var(--primary-darker);display: flex;align-items: center;justify-content: space-between;padding: 10px;">
         <p><T id="timer.preview" /></p>
-        <p style="opacity: 0.5;overflow: hidden;" data-title={dataPreview}>{dataPreview.includes("{") ? getDynamicValue(dataPreview) : dataPreview}</p>
+        {#if dataPreview}
+            <p style="opacity: 0.5;overflow: hidden;" data-title={dataPreview}>{dataPreview.includes("{") ? getDynamicValue(dataPreview) : dataPreview}</p>
+        {/if}
     </InputRow>
 {/if}

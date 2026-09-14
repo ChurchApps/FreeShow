@@ -3,10 +3,13 @@
     import { sendMain } from "../../../IPC/main"
     import { activePopup, alertMessage } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { registerPopupSubmit } from "../../../utils/popup"
     import Icon from "../../helpers/Icon.svelte"
     import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Loader from "../Loader.svelte"
+
+    registerPopupSubmit(() => (msg !== "actions.closing" ? close() : null))
 
     let msg = ""
     $: msg = $alertMessage.toString()
@@ -22,16 +25,10 @@
         }
     }
 
-    function keydown(e: KeyboardEvent) {
-        if (e.key === "Enter") close()
-    }
-
     function close() {
         activePopup.set(null)
     }
 </script>
-
-<svelte:window on:keydown={keydown} />
 
 {#if msg === "actions.closing"}
     <div class="centered">

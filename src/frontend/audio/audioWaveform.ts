@@ -44,8 +44,9 @@ async function loadWaveformData(path: string): Promise<Float32Array | null> {
     const candidatePaths = encodedPath === path ? [path] : [encodedPath, path]
 
     for (const candidatePath of candidatePaths) {
+        let audioCtx: AudioContext | null = null
         try {
-            const audioCtx = new AudioContext()
+            audioCtx = new AudioContext()
             const response = await fetch(candidatePath)
             if (!response.ok && response.status !== 0) continue
 
@@ -56,6 +57,10 @@ async function loadWaveformData(path: string): Promise<Float32Array | null> {
             return audioBuffer.getChannelData(0)
         } catch {
             // Try the next path variant before failing.
+        } finally {
+            if (audioCtx) {
+                audioCtx.close().catch(() => {})
+            }
         }
     }
 

@@ -12,18 +12,22 @@ import {
     actions,
     activePopup,
     activeProject,
+    ai,
     alertMessage,
     alertUpdates,
     audioChannelsData,
     audioEffects,
     audioFolders,
     audioPlaylists,
+    audioRouting,
     autoOutput,
     autosave,
     calendarAddShow,
+    calendars,
     categories,
     cloudSyncData,
     contentProviderData,
+    customFonts,
     customMetadata,
     customizedIcons,
     dataPath,
@@ -44,7 +48,6 @@ import {
     folders,
     formatNewShow,
     fullColors,
-    gain,
     globalRegexes,
     globalTags,
     groupNumbers,
@@ -106,15 +109,14 @@ import {
     usageLog,
     variableTags,
     variables,
-    videoMarkers,
-    volume
+    videoMarkers
 } from "../stores"
 import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
 import { socketDisconnect, syncWithCloud } from "./cloudSync"
 import { newToast, setStatus, startAutosave } from "./common"
 import { syncDrive } from "./drive"
-import { stopRemoteController } from "./remoteController"
+import { autoDisableRemoteController, stopRemoteController } from "./remoteController"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
     startAutosave() // reset auto save timer
@@ -142,6 +144,13 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         })
     }
 
+    // strip runtime state that should not save
+    const sanitizedOutputs = clone(get(outputs))
+    Object.values(sanitizedOutputs).forEach((out: any) => {
+        if (out.webrtcData) out.webrtcData.streaming = false
+        if (out.rtmpData) out.rtmpData.streaming = false
+    })
+
     const settings: { [key in SaveListSettings]: any } = {
         initialized: true,
         activeProject: get(activeProject),
@@ -165,11 +174,12 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         formatNewShow: get(formatNewShow),
         labelsDisabled: get(labelsDisabled),
         language: get(language),
+        customFonts: get(customFonts),
         mediaFolders: get(mediaFolders),
         mediaOptions: get(mediaOptions),
         openedFolders: get(openedFolders),
         outLocked: get(outLocked),
-        outputs: get(outputs),
+        outputs: sanitizedOutputs,
         sorted: get(sorted),
         remotePassword: get(remotePassword),
         resized: get(resized),
@@ -179,8 +189,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         theme: get(theme),
         transitionData: get(transitionData),
         // themes: get(themes),
-        volume: get(volume),
-        gain: get(gain),
+        audioRouting: get(audioRouting),
         audioChannelsData: get(audioChannelsData),
         cloudSyncData: get(cloudSyncData),
         driveData: get(driveData),
@@ -193,7 +202,8 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         timeline: get(timeline),
         timecode: get(timecode),
         contentProviderData: get(contentProviderData),
-        obsData: get(obsData)
+        obsData: get(obsData),
+        ai: get(ai)
     }
 
     const syncedSettings: { [key: string]: any } = {}
@@ -260,6 +270,7 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         emitters,
         playerVideos,
         videoMarkers,
+        calendars,
         mediaTags,
         playerTags,
         actionTags,
@@ -332,8 +343,10 @@ export async function closeApp() {
         const timeout = <T>(promise: Promise<T>, ms: number): Promise<T | void> => {
             return Promise.race([promise, new Promise<void>((resolve) => setTimeout(resolve, ms))])
         }
+
         await timeout(stopAllInteractions(), 500)
         await timeout(stopRemoteController(), 500)
+        autoDisableRemoteController()
     } catch (e) {
         console.error("Could not stop interactions before closing!", e)
     }
@@ -443,6 +456,7 @@ const saveList: { [key in SaveList]: any } = {
     groups,
     labelsDisabled,
     language,
+    customFonts: null,
     mediaFolders,
     mediaOptions,
     openedFolders: null,
@@ -470,12 +484,11 @@ const saveList: { [key in SaveList]: any } = {
     theme,
     themes,
     transitionData,
-    volume: null,
-    gain: null,
     audioChannelsData,
     midiIn: actions,
     emitters,
     videoMarkers,
+    calendars: null,
     mediaTags,
     playerTags,
     actionTags,
@@ -500,5 +513,7 @@ const saveList: { [key in SaveList]: any } = {
     contentProviderData,
     obsData: null,
     effects,
-    deletedDefaults: null
+    audioRouting,
+    deletedDefaults: null,
+    ai: ai
 }

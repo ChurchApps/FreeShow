@@ -3,9 +3,9 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { OutData } from "../../../types/Output"
+    import type { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
-    import type { AnimationData, Item, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Overlays as TOverlays } from "../../../types/Show"
+    import type { AnimationData, Item, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Transition, Overlays as TOverlays } from "../../../types/Show"
     import { allOutputs, colorbars, currentWindow, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { custom } from "../../utils/transitions"
@@ -305,6 +305,12 @@
     $: templateBackgroundData = { path: templateBackground, loop: true, ...($media[templateBackground] || {}) }
     $: backgroundData = templateBackground ? templateBackgroundData : background
 
+    // remove slide transition when replaced by "foreground" media (drawn below slide)
+    const noTransition: Transition = { type: "none", duration: 0, easing: "" }
+    $: textTransition = !slide && backgroundData?.ignoreLayer ? noTransition : transitions.text
+    // remove PDF/PPT transition when background is outputted
+    $: slideMediaTransition = !slide && backgroundData ? noTransition : transitions.media
+
     $: overlaysActive = !!(layers.includes("overlays") && clonedOverlays)
 
     // draw zoom
@@ -323,19 +329,22 @@
         const slideActive = layers.includes("slide")
         isSlideClearing = !slide || !slideActive
 
-        setTimeout(() => {
-            actualSlide = slideActive ? clone(slide) : null
-            actualSlideData = clone(slideData)
-            actualCurrentSlide = clone(currentSlide)
-            actualCurrentLineId = clone(currentLineId)
-        }, slide ? updateLinesTime : 0)
+        setTimeout(
+            () => {
+                actualSlide = slideActive ? clone(slide) : null
+                actualSlideData = clone(slideData)
+                actualCurrentSlide = clone(currentSlide)
+                actualCurrentLineId = clone(currentLineId)
+            },
+            slide ? updateLinesTime : 0
+        )
     }
 </script>
 
 <Zoomed id={outputId} background={backgroundColor} checkered={(preview || mirror) && backgroundColor === "transparent"} backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} align={alignPosition} center {style} {resolution} {mirror} {drawZoom} {cropping} bind:ratio>
     <!-- always show style background (behind other backgrounds) -->
     {#if styleBackground && actualSlide?.type !== "pdf"}
-        <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} mirror styleBackground />
+        <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} mirror />
     {/if}
 
     <!-- background -->
@@ -362,7 +371,7 @@
     <!-- slide -->
     {#if actualSlide?.type === "pdf" && layers.includes("background")}
         <span style="zoom: {1 / ratio};">
-            <PdfOutput slide={actualSlide} {currentStyle} transition={transitions.media} />
+            <PdfOutput slide={actualSlide} {currentStyle} transition={slideMediaTransition} />
         </span>
     {:else if actualSlide?.type === "ppt" && layers.includes("slide")}
         <span style="zoom: {1 / ratio};">
@@ -371,10 +380,10 @@
             {/if}
         </span>
     {:else if actualSlide && actualSlide?.type !== "pdf"}
-        <SlideContent {outputId} outSlide={actualSlide} isClearing={isSlideClearing} slideData={actualSlideData} currentSlide={actualCurrentSlide} {currentStyle} {animationData} currentLineId={actualCurrentLineId} {lines} {ratio} {mirror} {preview} transition={transitions.text} transitionEnabled={!mirror || preview} {styleIdOverride} />
+        <SlideContent {outputId} outSlide={actualSlide} isClearing={isSlideClearing} slideData={actualSlideData} currentSlide={actualCurrentSlide} {currentStyle} {animationData} currentLineId={actualCurrentLineId} {lines} {ratio} {mirror} {preview} transition={textTransition} transitionEnabled={!mirror || preview} {styleIdOverride} />
 
         <!-- metadata -->
-        <Overlay overlay={{ items: currentMetadataItems }} isClearing={isMetadataClearing || isSlideClearing} {outputId} transition={transitions.text} />
+        <Overlay overlay={{ items: currentMetadataItems }} isClearing={isMetadataClearing || isSlideClearing} {outputId} transition={textTransition} />
     {/if}
 
     {#if layers.includes("overlays")}
@@ -394,7 +403,7 @@
         {#if mirror}
             <p class="attributionString">{actualSlide.attributionString.slice(0, 135)}</p>
         {:else}
-            <p class="attributionString" transition:custom={transitions.text}>{actualSlide.attributionString.slice(0, 135)}</p>
+            <p class="attributionString" transition:custom={textTransition}>{actualSlide.attributionString.slice(0, 135)}</p>
         {/if}
     {/if}
 

@@ -1,8 +1,10 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { Item } from "../../../../types/Show"
     import { activeShow } from "../../../stores"
-    import { history } from "../../helpers/history"
+    import { startResizing, stopResizing } from "../../../utils/cursor"
     import { clampCrop, clampPan, getCropCenter, getCropValues, isSameCrop, type CropValues } from "../../helpers/cropping"
+    import { history } from "../../helpers/history"
 
     type CropSide = "top" | "right" | "bottom" | "left" | "topLeft" | "topRight" | "bottomRight" | "bottomLeft"
 
@@ -26,18 +28,29 @@
     let cropStart = { x: 0, y: 0, crop: { top: 0, right: 0, bottom: 0, left: 0 } as CropValues }
 
     function persistMissingTypeAsClipIfNeeded() {
-        if (!item || !$activeShow || (ref?.type || "show") !== "show") return
+        const refType = ref?.type || "show"
+        if (!item || (refType === "show" && !$activeShow) || !["show", "overlay", "template"].includes(refType)) return
         if (!item.cropping || item.cropping.type) return
 
-        history({
-            id: "setItems",
-            newData: { style: { key: "cropping", values: [{ ...getCropValues(item.cropping), type: "clip" }] } },
-            location: { page: "edit", show: $activeShow, slide: ref.id, items: [index] }
-        })
+        if (refType === "show") {
+            history({
+                id: "setItems",
+                newData: { style: { key: "cropping", values: [{ ...getCropValues(item.cropping), type: "clip" }] } },
+                location: { page: "edit", show: $activeShow, slide: ref.id, items: [index] }
+            })
+        } else {
+            history({
+                id: "UPDATE",
+                newData: { key: "items", indexes: [index], subkey: "cropping", data: [{ ...getCropValues(item.cropping), type: "clip" }] },
+                oldData: { id: ref.id },
+                location: { page: "edit", id: `${refType}_items`, override: true }
+            })
+        }
     }
 
     export function handleDblclick(e: MouseEvent) {
-        if (item?.type !== "media" || isLocked || (ref?.type || "show") !== "show" || !$activeShow) return false
+        const refType = ref?.type || "show"
+        if ((item?.type !== "media" && item?.type !== "camera") || isLocked || (refType === "show" && !$activeShow) || !["show", "overlay", "template"].includes(refType)) return false
         if (e.target instanceof HTMLElement && (e.target.closest(".line") || e.target.closest(".square") || e.target.closest(".rotate") || e.target.closest(".radius") || e.target.closest(".editTools"))) return false
 
         const wasActive = cropEditMode
@@ -54,15 +67,25 @@
         cropEditMode = false
         cropDragSide = null
         cropMoveActive = false
+        stopResizing()
         return true
     }
 
+    function getCropCursor(side: CropSide) {
+        if (side === "top" || side === "bottom") return "ns-resize"
+        if (side === "left" || side === "right") return "ew-resize"
+        if (side === "topLeft" || side === "bottomRight") return "nwse-resize"
+        if (side === "topRight" || side === "bottomLeft") return "nesw-resize"
+        return "default"
+    }
+
     function startCropDrag(side: CropSide, e: MouseEvent) {
-        if (item?.type !== "media" || !itemElem || isLocked) return
+        if ((item?.type !== "media" && item?.type !== "camera") || !itemElem || isLocked) return
 
         e.preventDefault()
         e.stopPropagation()
 
+        startResizing(getCropCursor(side))
         cropEditMode = true
         cropDragSide = side
         cropMoveActive = false
@@ -71,11 +94,12 @@
     }
 
     function startCropMove(e: MouseEvent) {
-        if (item?.type !== "media" || !itemElem || isLocked) return
+        if ((item?.type !== "media" && item?.type !== "camera") || !itemElem || isLocked) return
 
         e.preventDefault()
         e.stopPropagation()
 
+        startResizing("move")
         cropEditMode = true
         cropMoveActive = true
         cropDragSide = null
@@ -126,10 +150,12 @@
     function cropMouseup() {
         if (!cropDragSide && !cropMoveActive) return
 
+        stopResizing()
         cropDragSide = null
         cropMoveActive = false
 
-        if (!item || !$activeShow || (ref?.type || "show") !== "show") return
+        const refType = ref?.type || "show"
+        if (!item || (refType === "show" && !$activeShow) || !["show", "overlay", "template"].includes(refType)) return
 
         const nextCrop = clampCrop(cropPreview)
         const oldCrop = getCropValues(item.cropping)
@@ -137,16 +163,25 @@
         const needsTypeUpdate = !!item.cropping && !item.cropping.type
         if (!needsTypeUpdate && JSON.stringify(nextCrop) === JSON.stringify(oldCrop)) return
 
-        history({
-            id: "setItems",
-            newData: { style: { key: "cropping", values: [{ ...nextCrop, type: nextType }] } },
-            location: { page: "edit", show: $activeShow, slide: ref.id, items: [index] }
-        })
+        if (refType === "show") {
+            history({
+                id: "setItems",
+                newData: { style: { key: "cropping", values: [{ ...nextCrop, type: nextType }] } },
+                location: { page: "edit", show: $activeShow, slide: ref.id, items: [index] }
+            })
+        } else {
+            history({
+                id: "UPDATE",
+                newData: { key: "items", indexes: [index], subkey: "cropping", data: [{ ...nextCrop, type: nextType }] },
+                oldData: { id: ref.id },
+                location: { page: "edit", id: `${refType}_items`, override: true }
+            })
+        }
 
         cropPreview = nextCrop
     }
 
-    $: cropActive = item?.type === "media" && cropEditMode && selected && !plain && !isLocked
+    $: cropActive = (item?.type === "media" || item?.type === "camera") && cropEditMode && selected && !plain && !isLocked
     $: cropCenter = getCropCenter(cropPreview)
     $: cropCenterX = cropCenter.x
     $: cropCenterY = cropCenter.y
@@ -163,7 +198,12 @@
         cropEditMode = false
         cropDragSide = null
         cropMoveActive = false
+        stopResizing()
     }
+
+    onDestroy(() => {
+        stopResizing()
+    })
 </script>
 
 <svelte:window on:mousemove={cropMousemove} on:mouseup={cropMouseup} />

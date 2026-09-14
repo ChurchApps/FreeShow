@@ -5,6 +5,7 @@
     import Image from "../../media/Image.svelte"
     import Video from "../../media/Video.svelte"
 
+    export let outputId: string = ""
     export let path: string
     export let path2 = ""
     export let data: OutBackground = {}
@@ -13,16 +14,23 @@
     export let mediaStyle: MediaStyle = {}
     export let mirror = false
 
-    export let volume = 1
     export let video: HTMLVideoElement | null = null
-    export let videoData: any = { paused: false, muted: true, duration: 0, loop: false }
+    // for previews that are not outputted
+    export let videoData: any = { paused: false, muted: true, duration: 0, loop: data.loop === true }
     export let videoTime = 0
 
     $: extension = getExtension(path)
     $: type = data.type || getMediaType(extension)
 
+    let currentSyncPath = ""
+    $: if (typeof path === "string") {
+        if (path.startsWith("http")) currentSyncPath = path
+        else currentSyncPath = path
+    }
+
     $: if (typeof path === "string" && path.startsWith("http")) download()
     async function download() {
+        currentSyncPath = path
         path = await downloadOnlineMedia(path)
     }
 
@@ -51,7 +59,7 @@
 {#key retryCount}
     {#if type === "video"}
         <div class="video">
-            <Video {path} bind:video bind:videoData bind:videoTime startAt={data.startAt} {mediaStyle} {animationStyle} {mirror} {volume} on:loaded on:ended on:error={reload} />
+            <Video {outputId} {path} syncPath={currentSyncPath || path} bind:video bind:videoData bind:videoTime startAt={data.startAt} {mediaStyle} {animationStyle} {mirror} on:loaded on:ended on:error={reload} />
         </div>
     {:else if type === "image"}
         <div class="image" style="height: 100%;{animationStyle}">

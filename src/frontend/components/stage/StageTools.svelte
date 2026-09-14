@@ -12,14 +12,14 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tabs from "../main/Tabs.svelte"
     import BoxStyle from "./tools/BoxStyle.svelte"
-    import Items from "./tools/Items.svelte"
     import ItemStyle from "./tools/ItemStyle.svelte"
     import SlideStyle from "./tools/SlideStyle.svelte"
+    import T from "../helpers/T.svelte"
+    import Center from "../system/Center.svelte"
 
     const tabs: TabsObj = {
-        text: { name: "items.text", icon: "text", disabled: true },
-        item: { name: "tools.item", icon: "item", disabled: true },
-        items: { name: "tools.items", icon: "items" },
+        text: { name: "items.text", icon: "text" },
+        item: { name: "tools.item", icon: "item" },
         slide: { name: "edit.options", icon: "options", overflow: true } // tools.slide
     }
 
@@ -33,7 +33,7 @@
 
     $: item = activeItemId ? stageItems[activeItemId] : null
 
-    let active: string = selectedItemIds.length ? "item" : "items"
+    let active: string = "text"
     $: type = item?.type || "text"
     $: if (type === "slide_text" || type === "slide_notes") type = "text"
     $: tabs.text.name = "items." + type
@@ -41,19 +41,22 @@
 
     $: if (item !== undefined) updateTabs()
     function updateTabs() {
-        if (item?.type === "metronome") {
-            tabs.text.disabled = true
-            if (active === "text") active = "items"
-            return
+        if (!activeItemId) {
+            if (active === "item") active = "text"
         }
 
-        if (activeItemId && selectedItemIds.length === 1 && active === "items") {
-            tabs.text.disabled = tabs.item.disabled = false
+        if (item?.type === "metronome") {
+            tabs.text.disabled = true
+            if (active === "text") active = "item"
+        } else {
+            tabs.text.disabled = !activeItemId
+        }
+        tabs.item.disabled = !activeItemId
+
+        if (activeItemId && (active === "text" || active === "item")) {
+            // tabs.text.disabled = tabs.item.disabled = false
             // WIP don't change if clicking in "Arrange items"
-            if ($activeStage.items?.length) active = "text"
-        } else if (!activeItemId) {
-            tabs.text.disabled = tabs.item.disabled = true
-            if (!$activeStage.items?.length && (active === "item" || active === "text")) active = "items"
+            // if ($activeStage.items?.length) active = "text"
         }
     }
 
@@ -179,15 +182,17 @@
         <!-- labels={false} -->
         {#if active === "text"}
             <div class="content">
-                <BoxStyle />
+                {#if activeItemId}
+                    <BoxStyle />
+                {:else}
+                    <Center faded>
+                        <T id="empty.items" />
+                    </Center>
+                {/if}
             </div>
         {:else if active === "item"}
             <div class="content">
                 <ItemStyle />
-            </div>
-        {:else if active === "items"}
-            <div class="content">
-                <Items />
             </div>
         {:else if active === "slide"}
             <div class="content">
@@ -195,7 +200,7 @@
             </div>
         {/if}
 
-        {#if active !== "items"}
+        {#if activeItemId || active === "slide"}
             <FloatingInputs>
                 <MaterialButton icon="reset" title="actions.reset" on:click={resetStageStyle} />
             </FloatingInputs>

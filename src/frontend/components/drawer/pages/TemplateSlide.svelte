@@ -69,7 +69,7 @@
 
 <!-- background={transparentOutput && template.items?.length ? "transparent" : backgroundColor}
 checkered={template.items?.length > 0 && transparentOutput} -->
-<Zoomed background={!preview || template.items?.length ? template.settings?.backgroundColor || (preview ? "var(--primary);" : "transparent") : template.color || "var(--primary);"} {checkered} border={!preview && checkered} {resolution} style={width && height ? getStyleResolution(resolution, width, height, "fit", { zoom }) : ""} bind:ratio hideOverflow={!edit} center={edit ? zoom >= 1 : false}>
+<Zoomed background={!preview || template.items?.length ? template.settings?.backgroundColor || (preview ? "var(--primary);" : "transparent") : template.color || "var(--primary);"} {checkered} border={!preview && checkered} {resolution} style={width && height ? getStyleResolution(resolution, width, height, "fit", { zoom }) : ""} bind:ratio hideOverflow={!edit} center={edit}>
     <!-- background -->
     <!-- WIP !altKeyPressed &&  -->
     {#if thumbnailPath}
@@ -95,7 +95,7 @@ checkered={template.items?.length > 0 && transparentOutput} -->
     {#if overlay?.items}
         <div style={edit ? "opacity: 0.5;pointer-events: none;" : ""}>
             {#each overlay.items as item}
-                <Textbox {item} ref={{ type: "overlay", id: overlayId }} />
+                <Textbox {item} ref={{ type: "overlay", id: overlayId }} preview miniPreview />
             {/each}
         </div>
     {/if}

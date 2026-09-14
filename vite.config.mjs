@@ -1,17 +1,12 @@
 import { defineConfig } from "vite"
-import { svelte } from "@sveltejs/vite-plugin-svelte"
-import sveltePreprocess from "svelte-preprocess"
+import { svelte, vitePreprocess } from "@sveltejs/vite-plugin-svelte"
 
 const production = process.env.NODE_ENV === "production"
 
 export default defineConfig({
     plugins: [
         svelte({
-            preprocess: sveltePreprocess({
-                typescript: {
-                    tsconfigFile: "config/typescript/tsconfig.svelte.json"
-                }
-            }),
+            preprocess: vitePreprocess(),
             compilerOptions: {
                 dev: !production
             },

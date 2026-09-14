@@ -9,7 +9,7 @@
     ]
 
     function selectOutput(id) {
-        popupData.set({ id: "choose_output", value: id })
+        popupData.set({ id: "choose_output_input", value: id })
     }
 </script>
 

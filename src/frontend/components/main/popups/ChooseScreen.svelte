@@ -1,7 +1,7 @@
 <script lang="ts">
     import { alertMessage, popupData } from "../../../stores"
-    import T from "../../helpers/T.svelte"
     import Screens from "../../settings/Screens.svelte"
+    import Tip from "../Tip.svelte"
 
     let error = $alertMessage === "error.display"
     let activateOutput = $popupData.activateOutput
@@ -14,7 +14,7 @@
 
 <main>
     {#if error}
-        <p class="error"><T id="error.display" /></p>
+        <Tip type="warning" value="error.display" bottom={10} />
     {/if}
 
     <Screens {activateOutput} />
@@ -24,15 +24,5 @@
     main {
         min-height: 310px;
         min-width: 50vw;
-    }
-
-    .error {
-        margin-bottom: 2px;
-
-        font-size: 0.9em;
-        opacity: 0.9;
-
-        text-decoration-line: underline;
-        text-decoration-color: rgb(255 0 0 / 0.7);
     }
 </style>

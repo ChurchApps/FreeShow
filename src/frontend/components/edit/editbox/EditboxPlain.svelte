@@ -119,19 +119,23 @@
     let isMic = false
     $: isMic = JSON.stringify(item?.conditions?.showItem || "").includes('"element":"volume"')
 
-    let updaterInterval: NodeJS.Timeout
+    let updaterInterval: NodeJS.Timeout | undefined
     $: {
-        clearInterval(updaterInterval)
-        updaterInterval = setInterval(() => conditionsUpdater++, isMic ? 100 : 3000)
+        if (updaterInterval) clearInterval(updaterInterval)
+        if (item?.conditions?.showItem) {
+            updaterInterval = setInterval(() => conditionsUpdater++, isMic ? 100 : 3000)
+        }
     }
-    onDestroy(() => clearInterval(updaterInterval))
+    onDestroy(() => {
+        if (updaterInterval) clearInterval(updaterInterval)
+    })
 
-    $: showItemState = isConditionMet(item?.conditions?.showItem, getItemText(item), "default", conditionsUpdater)
+    $: showItemState = item?.conditions?.showItem ? isConditionMet(item.conditions.showItem, getItemText(item), "default", conditionsUpdater) : false
 </script>
 
 <!-- all icons are square, so only corner resizers need to be active -->
 {#if !hideMovebox}
-    <Movebox {ratio} itemStyle={item?.style} active={$activeEdit.items.includes(index)} onlyCorners={item?.type === "icon"} />
+    <Movebox {ratio} itemStyle={item?.style} active={$activeEdit.items.includes(index)} onlyCorners={item?.type === "icon" && item?.id !== "empty"} />
 {/if}
 
 <div class="actions">

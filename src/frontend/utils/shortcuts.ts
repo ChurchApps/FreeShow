@@ -12,21 +12,25 @@ import { keysToID, sortByName } from "../components/helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../components/helpers/clipboard"
 import { history, redo, undo } from "../components/helpers/history"
 import { getExtension, getMedia, getMediaLayerType, getMediaStyle, getMediaType } from "../components/helpers/media"
-import { getAllNormalOutputs, getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
+import { getFirstActiveOutput, refreshOut, setOutput, startFolderTimer, toggleOutputs } from "../components/helpers/output"
 import { OutputHelper } from "../components/helpers/OutputHelper"
+import { VideoPlayer } from "../components/media/video/videoPlayer"
 import { clearAll, clearBackground, clearSlide } from "../components/output/clear"
 import { getRecentlyUsedProjects, openProject } from "../components/show/project"
 import { importFromClipboard } from "../converters/importHelpers"
 import { addSection } from "../converters/project"
 import { requestMain, sendMain } from "../IPC/main"
 import { changeSlidesView } from "../show/slides"
-import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeStage, alertMessage, contextActive, drawer, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, special, spellcheck, styles, textEditActive, timelineRecordingAction, topContextActive, videosData, volume } from "../stores"
+import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, activeProject, activeStage, alertMessage, audioChannelsData, contextActive, drawer, editMode, focusedArea, focusMode, guideActive, media, os, outLocked, outputs, playingVideoState, projects, quickSearchActive, refreshEditSlide, selected, showRecentlyUsedProjects, special, spellcheck, styles, timelineRecordingAction, topContextActive } from "../stores"
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
 import { hideDisplay, isOutputWindow, togglePanels, triggerFunction } from "./common"
+import { getAccess } from "./profile"
+import { triggerPopupSubmit } from "./popup"
 import { send } from "./request"
 import { save } from "./save"
+import { isTypingTarget } from "./shortcutsHelper"
 
 const menus: TopViews[] = ["show", "edit", "stage", "draw", "settings"]
 
@@ -42,7 +46,12 @@ const ctrlKeys = {
     i: (e: KeyboardEvent) => (e.altKey ? importFromClipboard() : activePopup.set("import")),
     n: () => createNew(),
     h: () => (get(activeDrawerTab) === "scripture" ? "" : activePopup.set("history")),
-    m: () => volume.set(get(volume) ? 0 : 1),
+    m: () =>
+        audioChannelsData.update((a) => {
+            const main = a.main || {}
+            a.main = { ...main, isMuted: !main.isMuted }
+            return a
+        }),
     o: () => toggleOutputs(),
     s: () => save(),
     t: () => togglePanels(),
@@ -57,13 +66,13 @@ const shiftCtrlKeys = {
     t: () => {
         // toggle text edit
         if (get(activeShow)?.type !== "show") return
-        if (get(activePage) === "edit" && get(textEditActive)) {
+        if (get(activePage) === "edit" && get(editMode) === "text_edit") {
             activePage.set("show")
-            textEditActive.set(false)
+            editMode.set("default")
             return
         }
         if (!get(activeEdit)?.showId) activeEdit.set({ slide: 0, items: [], showId: get(activeShow)?.id })
-        textEditActive.set(true)
+        editMode.set("text_edit")
         activePage.set("edit")
     },
     f: () => menuClick("focus_mode"),
@@ -73,7 +82,8 @@ const shiftCtrlKeys = {
 }
 
 const altKeys = {
-    Enter: () => (get(activePage) === "show" ? menuClick("cut_in_half", true, null, null, null, get(selected)) : null)
+    // when the caret is inside a list view textbox, EditboxLines splits at the caret instead
+    Enter: () => (get(activePage) === "show" && !document.activeElement?.closest(".quickEdit") ? menuClick("cut_in_half", true, null, null, null, get(selected)) : null)
 }
 
 export const disablePopupClose = ["initialize", "cloud_method"]
@@ -115,6 +125,8 @@ const keys = {
         }, 20)
     },
     Enter: () => {
+        if (get(activePopup)) return
+
         // open last used project if Enter pressed "first" on startup
         if (get(showRecentlyUsedProjects) && !get(activeShow) && get(activePage) === "show") {
             const lastUsedProject = getRecentlyUsedProjects()[0]
@@ -149,6 +161,7 @@ export function keydown(e: KeyboardEvent) {
         return
     }
 
+    if (isComposing(e)) return
     if (get(guideActive)) return
 
     // clicking e.g. "Show" tab button will focus that making number tab change not work
@@ -166,7 +179,10 @@ export function keydown(e: KeyboardEvent) {
     if (e.ctrlKey || e.metaKey) {
         const drawerMenus = Object.keys(drawerTabs) as DrawerTabIds[]
         if (document.activeElement === document.body && Object.keys(drawerMenus).includes((Number(e.key) - 1).toString())) {
-            activeDrawerTab.set(drawerMenus[Number(e.key) - 1])
+            const tabId = drawerMenus[Number(e.key) - 1]
+            if (getAccess(tabId).global === "none") return
+
+            activeDrawerTab.set(tabId)
             // open drawer
             if (get(drawer).height < 300) drawer.set({ height: get(drawer).stored || 300, stored: null })
             return
@@ -181,11 +197,12 @@ export function keydown(e: KeyboardEvent) {
         if (isFormattingKey(e) && isEditingText()) return
 
         // use default input shortcuts on supported devices
-        const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y"]
-        const macShortcutDebug = false
-        if ((key === "i" && document.activeElement?.closest(".editItem")) || (document.activeElement?.classList?.contains("edit") && !exeption.includes(key) && get(os).platform !== "darwin" && !macShortcutDebug)) {
-            return
-        }
+        const exeption = ["e", "i", "n", "o", "s", "a", "z", "Z", "y", "x"]
+        const passthrough = get(os).platform === "darwin" ? [...exeption, "c", "v"] : exeption
+
+        const activeElem = document.activeElement
+        if (key === "i" && activeElem?.closest(".editItem")) return
+        if (isTypingTarget(activeElem) && !passthrough.includes(key)) return
 
         key = key.toLowerCase()
 
@@ -203,7 +220,7 @@ export function keydown(e: KeyboardEvent) {
             if (!handler) return false
             handler(e)
 
-            if (preventDefaults.includes(k) || macShortcutDebug) {
+            if (preventDefaults.includes(k)) {
                 e.preventDefault()
                 if (get(activePage) === "edit") refreshEditSlide.set(true)
             }
@@ -228,11 +245,17 @@ export function keydown(e: KeyboardEvent) {
         return
     }
 
-    if (document.activeElement?.classList.contains("edit") && e.key !== "Escape") return
+    // Enter to submit popup
+    if (get(activePopup) && e.key === "Enter" && !e.repeat && triggerPopupSubmit(e)) {
+        e.preventDefault()
+        return
+    }
+
+    if (isTypingTarget(document.activeElement) && e.key !== "Escape") return
 
     // change tab with number keys
-    if (document.activeElement === document.body && !get(special).numberKeys && Object.keys(menus).includes((Number(e.key) - 1).toString())) {
-        const menu = menus[Number(e.key) - 1]
+    const menu = menus[Number(e.key) - 1]
+    if (document.activeElement === document.body && !get(special).numberKeys && menu) {
         activePage.set(menu)
 
         // open edit
@@ -306,6 +329,12 @@ export function isFormattingKey(e: KeyboardEvent): boolean {
     return formattingKeys.includes(key)
 }
 
+// IME candidate window check
+export function isComposing(e: KeyboardEvent): boolean {
+    // while keyCode is deprecated, "keyCode === 229" is an official exception
+    return e.isComposing || e.keyCode === 229
+}
+
 /// // PREVIEW /////
 
 export const previewCtrlShortcuts = {
@@ -347,7 +376,7 @@ export const previewShortcuts = {
     },
     F4: () => {
         if (get(outLocked)) return
-        clearAudio("", { clearPlaylist: true, commonClear: true })
+        clearAudio("", { clearPlaylist: true, clearMicrophones: true, commonClear: true })
         timelineRecordingAction.set({ id: "clear_audio" })
     },
     F5: () => {
@@ -437,7 +466,7 @@ function createNew() {
     else if (selectId.includes("category_")) {
         // if (selectId.includes("media") || selectId.includes("audio")) sendMain(Main.OPEN_FOLDER, { channel: id, title, path })
         if (selectId.includes("scripture")) activePopup.set("import_scripture")
-        else if (selectId.includes("calendar")) sendMain(Main.IMPORT, { channel: "calendar", format: { name: "Calendar", extensions: ["ics"] } })
+        else if (selectId.includes("calendar")) activePopup.set("import_calendar")
         else history({ id: "UPDATE", location: { page: "drawer", id: selectId } })
     } else if (selectId === "overlay") history({ id: "UPDATE", location: { page: "drawer", id: "overlay" } })
     else if (selectId === "template") history({ id: "UPDATE", location: { page: "drawer", id: "template" } })
@@ -478,15 +507,12 @@ export async function togglePlayingMedia(e: Event | null = null, back = false, a
     if (type === "video" || type === "image" || type === "player") {
         if (alreadyPlaying) {
             // play / pause video
-            // WIP duplicate of MediaControls.svelte
-            const dataValues: any = {}
-            const activeOutputIds = getAllNormalOutputs().map((a) => a.id)
-            const videoData = get(videosData)[currentOutput?.id || ""] || {}
-            activeOutputIds.forEach((id) => {
-                dataValues[id] = { ...videoData, muted: id !== currentOutput?.id ? true : videoData.muted, paused: !videoData.paused }
-            })
+            const outputId = currentOutput?.id || ""
+            const key = `${currentlyPlaying}_${outputId}`
+            const videoData = get(playingVideoState)[key] || {}
+            if (videoData.type && videoData.type !== "background") return
 
-            send(OUTPUT, ["DATA"], dataValues)
+            VideoPlayer.start(currentlyPlaying, { paused: !videoData.paused }, [outputId])
             return
         }
 
@@ -496,8 +522,9 @@ export async function togglePlayingMedia(e: Event | null = null, back = false, a
         const mediaStyle = getMediaStyle(mediaData, outputStyle)
 
         const videoType = getMediaLayerType(item.id, mediaStyle)
-        const shouldLoop = videoType === "background" ? true : false
-        const shouldBeMuted = videoType === "background" ? true : false
+        const projectItem = item.index !== undefined ? get(projects)[get(activeProject) || ""]?.shows?.[item.index] : null
+        const shouldLoop = typeof projectItem?.loop === "boolean" ? projectItem.loop : videoType === "background" ? true : false
+        const shouldBeMuted = typeof projectItem?.muted === "boolean" ? projectItem.muted : videoType === "background" ? true : false
 
         // clear slide
         if (videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))) clearSlide()

@@ -21,12 +21,14 @@
     })
 
     function keydown(e: KeyboardEvent) {
+        if (e.ctrlKey || e.metaKey) return
+
         if (e.altKey) {
             e.preventDefault()
             altKeyPressed = true
         }
 
-        if (e.target instanceof HTMLTextAreaElement || e.target?.closest(".edit")) return
+        if (e.target instanceof HTMLTextAreaElement || e.target?.closest?.(".edit")) return
         if ($activeEdit.items.length) return
 
         if (e.key === "ArrowDown") {
@@ -61,7 +63,7 @@
 
         let index = $activeEdit.slide! - 1
         setTimeout(() => {
-            if (index >= 0 && scrollElem) offset = (scrollElem.querySelector(".grid")?.children?.[index] as HTMLElement)?.offsetTop || 5 - 5
+            if (index >= 0 && scrollElem) offset = ((scrollElem.querySelector(".grid")?.children?.[index] as HTMLElement)?.offsetTop || 5) - 5
         }, 10)
     }
 

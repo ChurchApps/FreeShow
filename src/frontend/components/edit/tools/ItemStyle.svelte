@@ -76,7 +76,7 @@
             }
         }
 
-        let allItems: number[] = $activeEdit.items
+        let allItems: number[] = clone($activeEdit.items)
 
         // update all items if nothing is selected
         if (!allItems.length) allSlideItems.forEach((_item, i) => allItems.push(i))

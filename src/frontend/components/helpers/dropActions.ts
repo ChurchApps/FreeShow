@@ -8,14 +8,14 @@ import type { DropData, Selected } from "../../../types/Main"
 import type { Item, Slide, SlideAction } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, scriptureSettings, shows, showsCache, templates, timers } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, scriptureSettings, shows, showsCache, slidesOptions, templates, timers } from "../../stores"
 import { newToast } from "../../utils/common"
 import { getAccess } from "../../utils/profile"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import { actionData } from "../actions/actionData"
 import { addSlideAction, getActionTriggerId } from "../actions/actions"
 import { getActiveScripturesContent, getReferenceText, getScriptureShow, getScriptureSlidesNew } from "../drawer/bible/scripture"
-import { getVimeoName, getYouTubeName, trimPlayerId } from "../drawer/player/playerHelper"
+import { getVimeoData, getYouTubeData, trimPlayerId } from "../drawer/player/playerHelper"
 import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { clone, removeDuplicates } from "./array"
 import { projectDropFolders } from "./drop"
@@ -33,7 +33,7 @@ function getId(drag: Selected): string {
     if (drag.id === "files" && getMediaType(extension) === "audio") return "audio"
     if (drag.id === "show" && drag.data[0]?.type === "audio") return "audio"
     if (drag.id === "effect") return "overlay"
-    if ((drag.id === "show" && ["media", "image", "video"].includes(drag.data[0]?.type)) || drag.id === "media" || drag.id === "files" || drag.id === "camera" || drag.id === "screen" || drag.id === "ndi") return "media"
+    if ((drag.id === "show" && ["media", "image", "video"].includes(drag.data[0]?.type)) || drag.id === "media" || drag.id === "files" || drag.id === "camera" || drag.id === "screen" || drag.id === "ndi" || drag.id === "player" || (drag.id === "urls" && (drag.data?.[0]?.includes?.("youtube.com") || drag.data?.[0]?.includes?.("youtu.be") || drag.data?.[0]?.includes?.("vimeo.com")))) return "media"
     // if (drag.id === "audio") return "audio"
     // if (drag.id === "global_group") return "global_group"
     return drag.id || id
@@ -197,12 +197,12 @@ export const dropActions = {
                 data.map(async (url) => {
                     if (url.includes("youtube.com") || url.includes("youtu.be")) {
                         const id = trimPlayerId(url, "youtube")
-                        const name = await getYouTubeName(id)
+                        const name = (await getYouTubeData(id)).name
                         return { id: "-", type: "player", data: { type: "youtube", id, name } }
                     }
                     if (url.includes("vimeo.com")) {
                         const id = trimPlayerId(url, "vimeo")
-                        const name = await getVimeoName(id)
+                        const name = (await getVimeoData(id)).name
                         return { id: "-", type: "player", data: { type: "vimeo", id, name } }
                     }
 
@@ -566,7 +566,7 @@ const files = {
 }
 
 const slideDrop = {
-    media: ({ drag, drop }: Data, h: History, keys: Keys) => {
+    media: async ({ drag, drop }: Data, h: History, keys: Keys) => {
         let data = clone(drag.data)
         if (!data.length) return
 
@@ -586,7 +586,44 @@ const slideDrop = {
         } else if (drag.id === "camera") data[0].type = "camera"
         else if (drag.id === "screen") data[0].type = "screen"
         else if (drag.id === "ndi") data[0].type = "ndi"
-        else if (!data[0]?.name) data[0].name = data[0].path
+        else if (drag.id === "player") {
+            data = data.map((id: string) => {
+                const playerData = get(playerVideos)[id] || {}
+                return { path: id, name: playerData.name || playerData.id || id, type: "player", data: { type: playerData.type, id: playerData.id, name: playerData.name } }
+            })
+        } else if (drag.id === "urls") {
+            data = (
+                await Promise.all(
+                    data.map(async (url: string) => {
+                        let videoType: "youtube" | "vimeo" | null = null
+                        if (url.includes("youtube.com") || url.includes("youtu.be")) videoType = "youtube"
+                        else if (url.includes("vimeo.com")) videoType = "vimeo"
+
+                        if (!videoType) return null
+
+                        const videoId = trimPlayerId(url, videoType)
+                        let rid = Object.keys(get(playerVideos)).find((key) => {
+                            const p = get(playerVideos)[key]
+                            return p?.type === videoType && p?.id === videoId
+                        })
+
+                        let name = ""
+                        if (rid) {
+                            name = get(playerVideos)[rid]?.name || ""
+                        } else {
+                            name = videoType === "youtube" ? (await getYouTubeData(videoId)).name : (await getVimeoData(videoId)).name
+                            rid = uid()
+                            playerVideos.update((a) => {
+                                a[rid!] = { id: videoId, name, type: videoType! }
+                                return a
+                            })
+                        }
+
+                        return { path: rid, name, type: "player", data: { type: videoType, id: videoId, name } }
+                    })
+                )
+            ).filter(Boolean)
+        } else if (!data[0]?.name) data[0].name = data[0].path
 
         let center = drop.center
         if (drag.id === "files" && drop.index !== undefined) center = true
@@ -603,12 +640,16 @@ const slideDrop = {
 
             // "background" by default
             let backgroundData = { muted: true, loop: true }
-            const mediaStyle = getMediaStyle(get(media)[path], undefined)
-            let type = getMediaLayerType(path, mediaStyle) || (shouldBeForeground ? "foreground" : "background")
-            if (a.contentProvider) type = "foreground"
-            if (type === "foreground") backgroundData = { muted: false, loop: false }
+            if (a.type === "player") {
+                backgroundData = { muted: false, loop: false }
+            } else {
+                const mediaStyle = getMediaStyle(get(media)[path], undefined)
+                let type = getMediaLayerType(path, mediaStyle) || (shouldBeForeground ? "foreground" : "background")
+                if (a.contentProvider) type = "foreground"
+                if (type === "foreground") backgroundData = { muted: false, loop: false }
+            }
 
-            return { ...a, path, ...(a.type === "video" ? backgroundData : {}) }
+            return { ...a, path, ...(a.type === "video" || a.type === "player" ? backgroundData : {}) }
         })
 
         if (center) {
@@ -732,6 +773,26 @@ const slideDrop = {
 
         const oldLayout = _show(showId).layouts("active").get()[0]?.slides || []
         history.oldData = clone({ layout: oldLayout, slides })
+
+        // in "Groups view", never place groups as children in between. Always place right before or after a parent group.
+        if (get(slidesOptions)?.mode === "groups" && drop.data?.index !== undefined) {
+            const targetRef = ref[drop.data.index]
+            if (drop.trigger?.includes("end")) {
+                if (targetRef?.type === "parent") {
+                    drop.index = drop.data.index + 1 + (targetRef.children?.length || 0)
+                } else if (targetRef?.type === "child" && targetRef.parent) {
+                    const parentRef = ref[targetRef.parent.layoutIndex] || ref.find((a) => a.id === targetRef.parent?.id && a.type === "parent")
+                    if (parentRef) drop.index = parentRef.layoutIndex + 1 + (parentRef.children?.length || 0)
+                }
+            } else {
+                if (targetRef?.type === "child" && targetRef.parent) {
+                    const parentRef = ref[targetRef.parent.layoutIndex] || ref.find((a) => a.id === targetRef.parent?.id && a.type === "parent")
+                    if (parentRef) drop.index = parentRef.layoutIndex
+                } else if (targetRef?.type === "parent") {
+                    drop.index = drop.data.index
+                }
+            }
+        }
 
         // end of layout
         if (drop.index === undefined) drop.index = ref.length
@@ -1004,6 +1065,18 @@ const slideDrop = {
 
         drag.data.forEach((action) => {
             if (!action?.triggers) return
+
+            const isSelfTrigger = action.triggers.some((trigger) => {
+                const triggerId = getActionTriggerId(trigger)
+                if (triggerId !== "index_select_slide") return false
+                const targetIndex = action.actionValues?.[trigger]?.index ?? action.actionValues?.index_select_slide?.index
+                return targetIndex !== undefined && Number(targetIndex) === Number(drop.index)
+            })
+            if (isSelfTrigger) {
+                alertMessage.set("The action can't be added to this slide because it is set to trigger the same slide which will cause an infinite loop!")
+                activePopup.set("alert")
+                return
+            }
 
             if (action.triggers.length > 1) {
                 const existingRunActionIndex = slideActions.findIndex((a) => a.actionValues?.run_action?.id === action.id)

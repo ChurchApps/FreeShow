@@ -1,0 +1,74 @@
+name: Bug report
+description: Help us improve the stability of FreeShow
+labels: ["bug"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting, please:
+        - Search existing **open and closed** issues, if you find a related issue, please comment there even though it may be closed.
+        - Make sure you are on the latest version of FreeShow, either **stable** or **beta**. [See all releases](https://github.com/ChurchApps/FreeShow/releases)
+        - If there's a newer version available, including a beta, you must reproduce the issue on that version.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing open and closed issues.
+          required: true
+        - label: I reproduced this on the latest available version.
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      placeholder: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots, logs, or files
+      description: Drag and drop screenshots, log files, or other helpful files here if they help explain the issue.
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Other
+
+  - type: input
+    id: version
+    attributes:
+      label: FreeShow version
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context

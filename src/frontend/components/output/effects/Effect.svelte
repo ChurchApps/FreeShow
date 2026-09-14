@@ -5,7 +5,7 @@
     import { clone, getChangedKeys } from "../../helpers/array"
     import { EffectRender } from "./effectRenderer"
 
-    export let effect: Effect & { id?: string }
+    export let effect: (Effect & { id?: string }) | undefined
     export let preview = false
     export let edit = false
 
@@ -26,7 +26,7 @@
         // return () => renderer.stop()
     })
 
-    $: style = `${effect.style};background: ${effect.background};opacity: ${effect.opacity ?? 1};`
+    $: style = `${effect?.style};background: ${effect?.background};opacity: ${effect?.opacity ?? 1};`
     $: if (style && canvasElem) canvasElem.style = style
 
     onDestroy(() => {
@@ -92,7 +92,7 @@
         const y = Math.max(0, mouseY / parentSlide.clientHeight)
 
         effects.update((a) => {
-            const item: any = a[effect.id!].items[movedIndex]
+            const item: any = a[effect?.id || ""].items[movedIndex]
 
             if (basicMove.includes(item.type)) {
                 item.x = x

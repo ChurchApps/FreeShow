@@ -18,6 +18,7 @@ import {
     currentOutputSettings,
     disabledServers,
     drawerTabsData,
+    editMode,
     focusMode,
     folders,
     groups,
@@ -31,6 +32,7 @@ import {
     projectView,
     quickSearchActive,
     refreshEditSlide,
+    selected,
     selectedProfile,
     settingsTab,
     showRecentlyUsedProjects,
@@ -38,8 +40,7 @@ import {
     slidesOptions,
     sortedShowsList,
     stageShows,
-    styles,
-    textEditActive
+    styles
 } from "../../stores"
 import { triggerFunction } from "../../utils/common"
 import { translateText } from "../../utils/language"
@@ -48,7 +49,10 @@ import { formatSearch, showSearch } from "../../utils/search"
 import { runAction } from "../actions/actions"
 import { sortByClosestMatch } from "../actions/apiHelper"
 import { menuClick } from "../context/menuClick"
+import { getLikelyPosition } from "../edit/scripts/autoPosition"
 import { openDrawer } from "../edit/scripts/edit"
+import { addItem, updateSortedStageItems } from "../edit/scripts/itemHelpers"
+import { slideItems, stageItems } from "../edit/values/items"
 import { keysToID } from "../helpers/array"
 import { duplicate } from "../helpers/clipboard"
 import { history } from "../helpers/history"
@@ -70,7 +74,7 @@ interface QuickSearchValue {
 const MAX_RESULTS_NORMAL = 5
 const MAX_RESULTS_LARGE = 10
 
-export type SearchCategory = "show" | "settings" | "stage" | "overlays" | "projects" | "actions" | "navigation" | "faq" | "shows" | "media" | "audio" | "bible"
+export type SearchCategory = "show" | "settings" | "stage" | "overlays" | "projects" | "actions" | "navigation" | "faq" | "shows" | "media" | "audio" | "bible" | "items"
 export const quickSearchCategoryNames: Record<SearchCategory, string> = {
     show: "formats.show",
     settings: "menu.settings",
@@ -83,7 +87,8 @@ export const quickSearchCategoryNames: Record<SearchCategory, string> = {
     shows: "tabs.shows",
     media: "tabs.media",
     audio: "tabs.audio",
-    bible: "tabs.scripture"
+    bible: "tabs.scripture",
+    items: "tools.items"
 }
 
 export async function quicksearch(searchValue: string, categoryFilter: null | SearchCategory = null) {
@@ -107,6 +112,44 @@ export async function quicksearch(searchValue: string, categoryFilter: null | Se
 
         if (get(activePage) === "edit" && !get(activeEdit)?.id && get(activeShow)?.type === "show") {
             addValues(trimValues(sort(getEditActions())), "custom_actions")
+        }
+
+        const isEditMode = get(activePage) === "edit" && (get(activeEdit).slide !== undefined || get(activeEdit).type === "overlay" || get(activeEdit).type === "template")
+        const isStageMode = get(activePage) === "stage" && get(activeStage).id
+
+        if (isEditMode) {
+            currentCategory = "items"
+            const addItems = slideItems
+                .flatMap((group) => group.items)
+                .flatMap((item) => (item.children ? item.children : [item]))
+                .map((item) => ({
+                    id: item.id,
+                    icon: item.icon,
+                    name: translateText(item.title || item.label)
+                }))
+
+            addValues(trimValues(sort(addItems)), "add_item_edit")
+        } else if (isStageMode) {
+            currentCategory = "items"
+            const stageId = get(activeStage).id || ""
+            const stageShow = get(stageShows)[stageId] || {}
+            const slideTextItemsCount = Object.values(stageShow.items || {}).filter((a: any) => a.type === "slide_text").length
+            const addItems = stageItems
+                .flatMap((group) => group.items)
+                .flatMap((item) => (item.children ? item.children : [item]))
+                .map((item) => {
+                    let name = translateText(item.title || item.label)
+                    if (item.id === "slide_text") {
+                        name = slideTextItemsCount === 1 ? translateText("stage.next_slide_text") : translateText("items.slide_text") + (slideTextItemsCount > 1 ? ` (+${slideTextItemsCount})` : "")
+                    }
+                    return {
+                        id: item.id,
+                        icon: item.icon,
+                        name
+                    }
+                })
+
+            addValues(trimValues(sort(addItems)), "add_item_stage")
         }
     }
 
@@ -232,7 +275,7 @@ const triggerActions = {
         }
 
         if (id === "textedit") {
-            textEditActive.set(!get(textEditActive))
+            editMode.set(get(editMode) === "text_edit" ? "default" : "text_edit")
             return
         }
 
@@ -275,6 +318,22 @@ const triggerActions = {
             slidesOptions.set({ ...get(slidesOptions), mode: data.view })
             return
         }
+    },
+    add_item_edit: (id: string) => {
+        if (id === "icon") {
+            selected.set({ id: "slide_icon", data: [{ ...get(activeEdit) }] })
+            activePopup.set("icon")
+        } else {
+            const textVal = id === "text" && get(activeEdit).type === "template" ? translateText("example.text") : ""
+            if (id === "text") {
+                addItem(id as any, null, {}, textVal)
+            } else {
+                addItem(id as any)
+            }
+        }
+    },
+    add_item_stage: (id: string) => {
+        addStageItem(id)
     },
     settings_output: (id: string) => {
         currentOutputSettings.set(id)
@@ -605,9 +664,9 @@ const settings = [
         id: "general",
         name: "settings.general",
         icon: "general",
-        aliases: ["settings.language", "settings.use24hClock", "settings.disable_labels", "settings.default_project_name", "settings.startup_projects_list", "settings.auto_output", "settings.hide_cursor_in_output", "settings.clear_media_when_finished", "settings.capitalize_words", "settings.transparent_slides", "settings.full_colors", "settings.slide_number_keys", "settings.auto_shortcut_first_letter"]
+        aliases: ["settings.language", "settings.use24hClock", "settings.disable_labels", "settings.full_colors", "settings.slide_number_keys", "settings.auto_shortcut_first_letter"]
     },
-    { id: "display_settings", name: "settings.display_settings", icon: "display_settings", aliases: ["settings.active_style", "settings.output_screen", "settings.always_on_top", "NDI®", "-Livestream", "-Stage", "-HDMI"] },
+    { id: "display_settings", name: "settings.display_settings", icon: "display_settings", aliases: ["settings.active_style", "settings.output_screen", "settings.always_on_top", "NDI®", "OMT", "WebRTC", "RTMP", "-Livestream", "-Stage", "-HDMI"] },
     {
         id: "styles",
         name: "settings.styles",
@@ -773,7 +832,7 @@ function getFaq() {
 const showActions = [
     // { id: "verse", name: "new.slide", icon: "add", data: { globalGroup: { group: "", color: null, globalGroup: "verse", settings: {}, notes: "", items: [] } } },
     { id: "slide", name: "new.slide", icon: "add", data: { menuClick: "newSlide" }, aliases: ["-Add", "-Add slide"] },
-    { id: "layout", name: "show.new_layout", icon: "add" },
+    { id: "layout", name: "show.new_arrangement", icon: "add" },
 
     { id: "groups", name: "tools.groups", icon: "groups", data: { toolsTab: "groups" } },
     // { id: "media", name: "tools.media", icon: "media", data: { toolsTab: "media" } },
@@ -814,4 +873,55 @@ const editActions = [
 
 function getEditActions() {
     return translateNames(editActions)
+}
+
+function addStageItem(itemType: string, textValue = "") {
+    const stageId = get(activeStage).id || ""
+    if (!stageId) return
+
+    const resolution = { width: 1920, height: 1080 }
+    const halfWidth = resolution.width * 0.5
+    const halfHeight = resolution.height * 0.5
+    const DEFAULT_STYLE = `width: ${halfWidth}px;height: ${halfHeight}px;left: ${halfWidth * 0.5}px;top: ${halfHeight * 0.5}px;`
+    const smallItems = ["timer", "clock", "slide_tracker"]
+
+    let itemId = uid(5)
+    stageShows.update((a: any) => {
+        if (!a[stageId]?.items) return a
+
+        let style = DEFAULT_STYLE
+        if (smallItems.includes(itemType) || textValue) {
+            const width = resolution.width * 0.45
+            const left = halfWidth - width * 0.5
+            const height = 150
+            const top = halfHeight - height * 0.5
+            style = `width: ${width}px;height: ${height}px;left: ${left}px;top: ${top}px;`
+        }
+
+        if (Object.keys(a[stageId]?.items).length > 0) {
+            style = getLikelyPosition(Object.values(a[stageId].items), style)
+        }
+
+        let item: any = { type: itemType as any, style, align: "" }
+
+        if (itemType === "text") item.lines = [{ align: "", text: [{ style: "", value: textValue || "" }] }]
+        else if (itemType === "slide_text") {
+            const slideTextItems = Object.values(a[stageId].items || {}).filter((a: any) => a.type === "slide_text")
+            item.slideOffset = slideTextItems.length
+            item.style += "font-size: 800px;"
+        }
+
+        a[stageId].items[itemId] = item
+        a[stageId].modified = Date.now()
+        return a
+    })
+
+    updateSortedStageItems()
+
+    if (Object.keys(get(stageShows)[stageId]?.items || {}).length > 1) {
+        activeStage.update((a) => {
+            a.items = [itemId]
+            return a
+        })
+    }
 }

@@ -80,11 +80,13 @@
 
     const waitDuration = 200 // approximate auto size time
     let timeout: NodeJS.Timeout | null = null
-    $: if (items) preloadItems()
+    let prevItemsKey = ""
+    $: itemsKey = `${slideId || currentSlide?.id || ""}_${slideOffset}_${itemNumber}_${stageItem?.invertItems ? 1 : 0}_${style ? 1 : 0}_${(slide?.items || []).length}`
+    $: if (items && itemsKey !== prevItemsKey) {
+        prevItemsKey = itemsKey
+        preloadItems()
+    }
     function preloadItems() {
-        // don't update if exact same (not needed)
-        // if (JSON.stringify(firstActive ? items1 : items2) === JSON.stringify(items)) return
-
         if (firstActive) items2 = clone(items)
         else items1 = clone(items)
 

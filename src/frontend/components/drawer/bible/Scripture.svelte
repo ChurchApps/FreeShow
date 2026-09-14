@@ -4,12 +4,14 @@
     import type { Verse } from "json-bible/lib/Bible"
     import type { VerseReference } from "json-bible/lib/reference"
     import { onMount } from "svelte"
-    import { sanitizeVerseText } from "../../../../common/scripture/sanitizeVerseText"
     import { defaultBibleBookNames } from "../../../converters/bebliaBible"
-    import { activeEdit, activeScripture, activeTriggerFunction, customScriptureBooks, notFound, openScripture, outLocked, outputs, resized, scriptureHistory, scriptureHistoryUsed, scriptureMode, scriptures, scriptureSettings, selected } from "../../../stores"
-    import { wait } from "../../../utils/common"
+    import { activeEdit, activeScripture, activeTriggerFunction, customScriptureBooks, notFound, openScripture, outLocked, outputs, resized, scriptureHistory, scriptureMode, scriptures, scriptureSettings, selected } from "../../../stores"
+    import { escapeRegExp, wait } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
+    import { getNormalizedKey } from "../../../utils/shortcuts"
     import { clone } from "../../helpers/array"
+    import { brightenDarkColor, fadeColor } from "../../helpers/color"
+    import { setDrawerTabData } from "../../helpers/historyHelpers"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
@@ -20,9 +22,7 @@
     import TextInput from "../../inputs/TextInput.svelte"
     import Loader from "../../main/Loader.svelte"
     import Center from "../../system/Center.svelte"
-    import { createScriptureShow, formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
-    import { brightenDarkColor, fadeColor } from "../../helpers/color"
-    import { aiScriptureSearchAsync } from "../../../utils/scriptureAI"
+    import { createScriptureShow, formatBibleText, getShortBibleName, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, sanitizeVerseText, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
 
     export let active: string | null
     export let searchValue: string
@@ -410,6 +410,17 @@
 
         // newToast(translateText("toast.verse_undefined").replace("{}", verse))
 
+        if (activeReference.verses[0]?.length && activeReference.book !== null) {
+            activeScripture.set({
+                id: previewBibleId,
+                reference: {
+                    book: activeReference.book,
+                    chapters: activeReference.chapters,
+                    verses: activeReference.verses
+                }
+            })
+        }
+
         if (playWhenLoaded) setTimeout(playScripture)
         playWhenLoaded = false
     }
@@ -449,7 +460,27 @@
     /// HISTORY ///
 
     let historyOpened = false
-    $: currentHistory = clone($scriptureHistory.filter((a) => a.id === previewBibleId)).reverse()
+    $: currentHistory = clone($scriptureHistory).reverse()
+    $: sameHistoryVersions = currentHistory.map((a) => a.version).every((v, _i, arr) => v === arr[0])
+
+    function openHistoryEntry(item) {
+        let targetTabId = item.tabId
+        if (!$scriptures[targetTabId]) targetTabId = item.id
+        if (!$scriptures[targetTabId]) return // tab no longer exists
+
+        const isOpen = targetTabId === activeScriptureId
+        // if (isOpen) {
+        //     openBook(item.book, [item.chapter], [item.verse])
+        //     playWhenLoaded = true
+        //     return
+        // }
+
+        // switch the drawer tab
+        if (!isOpen) setDrawerTabData("scripture", targetTabId)
+
+        // navigate (once loaded)
+        openScripture.set({ book: item.book, chapter: item.chapter, verses: item.verse, play: true })
+    }
 
     /// AUTOSCROLL ///
 
@@ -759,11 +790,6 @@
         return `${bookName} ${firstLabel}${suffix}`.trim()
     }
 
-    // Escape user-facing book names before building regular expressions.
-    function escapeRegExp(value: string) {
-        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-    }
-
     let contentSearchFieldActive = false
     let contentSearchValue = ""
     let contentSearchResults: VerseReference[] | null = null
@@ -858,7 +884,7 @@
             }
 
             // Ctrl+Enter to play
-            if (e.target?.closest(".edit")) return
+            if (e.target?.closest?.(".edit")) return
             if (e.ctrlKey || e.metaKey) playScripture()
             return
         }
@@ -878,10 +904,12 @@
 
         if (!e.ctrlKey && !e.metaKey) return
 
+        const ctrlKey = e.shiftKey || e.altKey ? "" : getNormalizedKey(e)
+
         // Ctrl+N Converts to show (shortcuts.ts)
 
         // Refresh
-        if (e.key === "r") {
+        if (ctrlKey === "r") {
             if (!isActiveInOutput) return
             e.preventDefault()
             playScripture()
@@ -889,15 +917,14 @@
         }
 
         // Toggle History
-        if (e.key === "h") {
+        if (ctrlKey === "h") {
             e.preventDefault()
             historyOpened = !historyOpened
-            scriptureHistoryUsed.set(true)
             return
         }
 
         // toggle Bible content search
-        if (e.key === "b") {
+        if (ctrlKey === "b") {
             if (contentSearchFieldActive) resetContentSearch()
             else contentSearchFieldActive = true
             return
@@ -1055,17 +1082,13 @@
         {:else if historyOpened}
             {#if currentHistory.length}
                 <div class="verses verseList">
-                    {#each currentHistory as verse}
-                        <span
-                            class="verse"
-                            class:showAllText={$resized.rightPanelDrawer <= 5}
-                            on:dblclick={() => {
-                                openBook(verse.book, [verse.chapter], [verse.verse])
-                                playWhenLoaded = true
-                            }}
-                            data-title={formatBibleText(verse.text)}
-                        >
-                            <span style="width: 250px;text-align: start;color: var(--text);" class="v">{verse.reference}</span>{@html formatBibleText(verse.text, true)}
+                    {#each currentHistory as item}
+                        <span class="verse" class:showAllText={$resized.rightPanelDrawer <= 5} on:dblclick={() => openHistoryEntry(item)} data-title={formatBibleText(item.text)}>
+                            <span style="width: 250px;text-align: start;color: var(--text);{!sameHistoryVersions && item.version ? 'padding-left: 0;' : ''}" class="v">
+                                {#if !sameHistoryVersions && item.version}<span class="v history-version">{getShortBibleName(item.version)}</span>{/if}
+                                {item.reference}
+                            </span>
+                            {@html formatBibleText(item.text, true)}
                         </span>
                     {/each}
                 </div>
@@ -1086,7 +1109,7 @@
                                 {@const name = $scriptureMode === "grid" ? booksData[i]?.abbreviation : $customScriptureBooks[previewBibleId]?.[i] || book.name}
                                 {@const isActive = activeReference.book?.toString() === id}
 
-                                <span {id} class={isApi || isCollection || !Object.values(defaultBibleBookNames).includes(book.name) ? "" : "context #bible_book_local"} class:isActive style="{color ? `border-${$scriptureMode === 'grid' ? 'bottom' : 'left'}: 2px solid ${color};` : ''}{$scriptureMode === 'grid' ? `border-radius: 2px;background-color: ${fadeColor(color, 0.15)};color: ${brightenDarkColor(color)};` : ''}" on:click={() => openBook(id)} role="none">
+                                <span {id} class={isApi || isCollection || !Object.values(defaultBibleBookNames).includes(book.name) ? "" : "context #bible_book_local"} class:isActive style="{color ? `border-${$scriptureMode === 'grid' ? 'bottom' : 'left'}: 2px solid ${color};` : ''}{$scriptureMode === 'grid' ? `border-radius: 2px;background-color: ${fadeColor(color, isActive ? 0.35 : 0.15)};color: ${brightenDarkColor(color)};` : ''}" on:click={() => openBook(id)} role="none">
                                     {name}
                                 </span>
                             {/each}
@@ -1144,6 +1167,7 @@
                                     id={content.id.toString()}
                                     class="verse"
                                     class:showAllText={$resized.rightPanelDrawer <= 5}
+                                    class:showAllVersions={$scriptureSettings.showAllVersions}
                                     class:isActive
                                     class:collection-verse={isCollection && $scriptureMode !== "grid"}
                                     data-title="{text}<br><br>{translateText('tooltip.scripture')}"
@@ -1255,13 +1279,13 @@
         </MaterialButton>
     </FloatingInputs>
 {:else if $scriptureMode !== "grid" || $resized.rightPanelDrawer > 5}
-    <FloatingInputs arrow let:open>
-        {#if open || isActiveInOutput}
+    <FloatingInputs>
+        {#if isActiveInOutput}
             <MaterialButton disabled={activeReference.book?.toString() === "1" && !!activeReference.chapters?.find((a) => a.toString() === "1") && !!activeReference.verses[0]?.find((a) => a.toString() === "1")} title="{translateText('preview._previous_slide')} [Ctrl+Arrow Left]" on:click={() => _moveSelection(true)}>
-                <Icon size={1.3} id="previous" white={!isActiveInOutput} />
+                <Icon size={1.3} id="previous" />
             </MaterialButton>
             <MaterialButton disabled={activeReference.book?.toString() === books?.length.toString() && activeReference.chapters?.includes(chapters ? chapters.length : 1) && activeReference.verses[0]?.includes(verses ? verses.length : 1)} title="{translateText('preview._next_slide')} [Ctrl+Arrow Right]" on:click={() => _moveSelection(false)}>
-                <Icon size={1.3} id="next" white={!isActiveInOutput} />
+                <Icon size={1.3} id="next" />
             </MaterialButton>
         {/if}
 
@@ -1275,23 +1299,16 @@
             <Icon size={1.3} id={$scriptureMode === "grid" ? "grid" : "list"} white />
         </MaterialButton>
 
-        {#if open || $scriptureHistoryUsed}
+        {#if currentHistory.length}
             <div class="divider" />
 
-            <MaterialButton
-                disabled={!currentHistory.length && !historyOpened}
-                isActive={historyOpened}
-                on:click={() => {
-                    historyOpened = !historyOpened
-                    scriptureHistoryUsed.set(true)
-                }}
-                title="popup.history [Ctrl+H]"
-            >
-                <Icon size={1.2} id="history" white={!currentHistory.length} />
+            <MaterialButton disabled={!currentHistory.length && !historyOpened} isActive={historyOpened} on:click={() => (historyOpened = !historyOpened)} title="popup.history [Ctrl+H]">
+                <Icon size={1.2} id="history" white />
             </MaterialButton>
         {/if}
 
-        <MaterialButton title="scripture.search [Ctrl+B]" on:click={() => (contentSearchFieldActive = true)}>
+        <!-- content search is not supported for YouVersion Bibles (at the moment)-->
+        <MaterialButton title="scripture.search [Ctrl+B]" disabled={typeof $scriptures[activeScriptureId]?.id === "string" ? $scriptures[activeScriptureId].id.includes("YOUVERSION") : false} on:click={() => (contentSearchFieldActive = true)}>
             <Icon size={1.1} id="search" white />
         </MaterialButton>
     </FloatingInputs>
@@ -1412,6 +1429,16 @@
         font-size: 0.8em;
         font-style: italic;
     }
+    /* clip keeps the text baseline, hidden would align the box bottom */
+    .main span.verse :global(span.undertitle) {
+        display: inline-block;
+        max-width: 35%;
+        overflow: clip;
+        text-overflow: ellipsis;
+        white-space: pre;
+        color: var(--secondary);
+        font-weight: 600;
+    }
 
     /* LIST MODE */
 
@@ -1497,11 +1524,9 @@
         flex: none !important;
         height: auto !important;
         min-height: 0 !important;
-        padding: 2px 10px 2px 0 !important;
-        margin: 0 !important;
-        white-space: normal !important;
-        overflow: visible !important;
-        text-overflow: unset !important;
+    }
+    .verse.collection-verse.showAllVersions {
+        padding: 0 !important;
     }
 
     .collection-versions {
@@ -1526,11 +1551,31 @@
     }
 
     .version-text {
-        display: inline !important;
+        display: block;
         font-size: 0.9em;
         line-height: 1.2;
         font-weight: normal;
         padding: 0 !important;
-        margin: 0 !important;
+    }
+    .verse:not(.showAllText) .version-text {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    /* history */
+
+    .history-version {
+        color: var(--text) !important;
+
+        margin-right: 5px !important;
+        width: initial !important;
+        min-width: 45px;
+
+        border: 1px solid var(--primary-lighter);
+        background-color: var(--primary-darkest);
+        font-size: 0.7em;
+        border-radius: 20px;
+        opacity: 0.9;
     }
 </style>

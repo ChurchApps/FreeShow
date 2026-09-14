@@ -15,6 +15,8 @@
     export let enableStartDate = false
     export let startDate = ""
     export let startTime = "00:00"
+    export let fromTime = "00:00"
+    export let toTime = "00:00"
 
     let filteredEvents: any[] = []
 
@@ -29,15 +31,29 @@
         }, UPDATE_INTERVAL)
     }
 
-    $: [updateEvents(), $events, maxEvents, startDaysFromToday, justOneDay, enableStartDate, startDate, startTime]
+    $: [updateEvents(), $events, maxEvents, startDaysFromToday, justOneDay, enableStartDate, startDate, startTime, fromTime, toTime]
 
     function updateEvents() {
         let startFromDate = enableStartDate ? combineDateAndTime(startDate, startTime) : getXDaysFromToday(Number(startDaysFromToday || 0))
-        let eventsList = keysToID($events).filter((a) => a.type === "event" && new Date(a.to) >= startFromDate)
+        let eventsList = keysToID($events).filter((a) => a.type === "event")
 
         if (justOneDay) {
-            let tomorrow = new Date(startFromDate).setHours(24, 0, 0, 0)
-            eventsList = eventsList.filter((a) => new Date(a.from).getTime() <= tomorrow)
+            const [fromH, fromM] = (fromTime || "00:00").split(":").map(Number)
+            const [toH, toM] = (toTime || "00:00").split(":").map(Number)
+
+            let startDateTime = new Date(startFromDate)
+            startDateTime.setHours(fromH, fromM, 0, 0)
+
+            let endDateTime = new Date(startFromDate)
+            endDateTime.setHours(toH, toM, 0, 0)
+
+            if (endDateTime <= startDateTime) {
+                endDateTime.setDate(endDateTime.getDate() + 1)
+            }
+
+            eventsList = eventsList.filter((a) => new Date(a.to) >= startDateTime && new Date(a.from) <= endDateTime)
+        } else {
+            eventsList = eventsList.filter((a) => new Date(a.to) >= startFromDate)
         }
 
         eventsList = eventsList.sort(sortByTime)

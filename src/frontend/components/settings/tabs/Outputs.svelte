@@ -1,19 +1,23 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { BLACKMAGIC, NDI, OUTPUT } from "../../../../types/Channels"
-    import { Option } from "../../../../types/Main"
-    import type { Output } from "../../../../types/Output"
+    import { BLACKMAGIC, NDI, OMT, OUTPUT } from "../../../../types/Channels"
+    import { Main } from "../../../../types/IPC/Main"
+    import type { Option } from "../../../../types/Main"
+    import type { Output, RtmpDestination } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
-    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, os, outputDisplay, outputs, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { requestMain } from "../../../IPC/main"
+    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, omtData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { refreshOut, startStreaming, stopStreaming, toggleOutput, updateOutputWebrtcData } from "../../helpers/output"
+    import { addRtmpDestination, checkFFmpeg, refreshOut, removeRtmpDestination, startRtmpStreaming, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutput, updateOutputRtmpData, updateOutputWebrtcData, updateRtmpDestination } from "../../helpers/output"
+    import { hasStreamableDestination } from "../../helpers/rtmpDestinations"
     import InputRow from "../../input/InputRow.svelte"
     import Title from "../../input/Title.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
@@ -27,126 +31,65 @@
 
     $: if (currentOutput?.blackmagic) send(BLACKMAGIC, ["GET_DEVICES"])
 
-    const autoRevert: string[] = ["kioskMode"] // changing these settings could break some things in some cases
-    const revertTime = 5 // seconds
-    let reverted: string[] = []
-
     function updateOutput(key: string, value: any, outputId = "") {
         if (!outputId) outputId = currentOutput?.id || ""
         if (!outputId || !$outputs[outputId]) return
 
-        // auto revert special values
-        if (autoRevert.includes(key) && value && !reverted.includes(key)) {
-            newToast(translateText("toast.reverting_setting").replace("{}", revertTime.toString()))
-            reverted.push(key)
-            setTimeout(() => {
-                updateOutput(key, false, outputId)
-                newToast(translateText("toast.reverted"))
-            }, revertTime * 1000)
-        }
+        if (key === "style") setTimeout(refreshOut)
 
-        // properly update output content
-        if (key === "style") {
-            // wait to update output, so slide is refreshed after style is changed in output window
-            setTimeout(refreshOut)
-        }
-
-        if (key === "ndi" || key === "webrtc") {
-            if (value) {
-                newToast("toast.output_capture_enabled")
-
-                // auto enable transparent & invisible if more than 1 non invisible output enabled
-                const enabledOutputs = Object.values($outputs).filter((a) => a.enabled && !a.stageOutput && !a.invisible)
-                if (enabledOutputs.length > 1) {
-                    updateOutput("transparent", true)
-                    updateOutput("invisible", true)
-                }
-
-                if (key === "ndi") ndiMenuOpened = true
-                else webrtcMenuOpened = true
-            }
-        } else if (key === "blackmagic") {
-            if (value === true) {
-                // send(BLACKMAGIC, ["GET_DEVICES"])
-                updateOutput("transparent", true)
-                updateOutput("invisible", true)
-
-                // Set default resolution (backend will adjust based on display mode)
-                const blackmagicBounds = { ...currentOutput?.bounds, width: 1920, height: 1080 }
-                updateOutput("bounds", blackmagicBounds)
-                updateOutput("screen", null)
-            } else {
-                send(BLACKMAGIC, ["STOP_SENDER"], { id: outputId })
-            }
-        }
-
-        // TODO: history
         outputs.update((a: any) => {
+            const out = a[outputId]
+            if (!out) return a
+
+            // Update value
             if (key.includes(".")) {
-                let split = key.split(".")
-                a[outputId][split[0]][split[1]] = value
-                if (split[1] === "lines" && !Number(value)) delete a[outputId][split[0]][split[1]]
+                let [p1, p2] = key.split(".")
+                out[p1][p2] = value
+                if (p2 === "lines" && !Number(value)) delete out[p1][p2]
             } else {
-                a[outputId][key] = value
+                out[key] = value
             }
 
-            if (key === "ndi") {
-                if (!value) {
-                    ndiData.update((a) => {
-                        delete a[outputId]
-                        return a
-                    })
-
-                    // delete a[outputId].ndiData
-                    if (!a[outputId].blackmagic) {
-                        if (a[outputId].ndiData?.audio) delete a[outputId].ndiData.audio
-                        delete a[outputId].transparent
-                        delete a[outputId].invisible
-                    }
-                }
-            }
-
-            if (key === "blackmagic") {
-                if (!value) {
-                    // ndiData.update((a) => {
-                    //     delete a[outputId]
-                    //     return a
-                    // })
-
-                    // delete a[outputId].blackmagicData
-                    if (!a[outputId].ndi) {
-                        delete a[outputId].transparent
-                        delete a[outputId].invisible
-                    }
-                }
-            }
-
-            if (key === "webrtc") {
-                if (!value) AudioAnalyser.recorderDeactivate()
-            }
-
+            // IPC
             if (key === "enabled") {
-                if (value) send(OUTPUT, ["CREATE"], currentOutput)
-                else {
+                if (value) {
+                    enableOutput(out)
+                } else {
                     send(OUTPUT, ["REMOVE"], { id: outputId })
                     updateOutput("hideFromPreview", false, outputId)
-                }
 
-                // WIP if only one left, all outputs should be "active"
+                    ndiData.update((n) => {
+                        delete n[outputId]
+                        return n
+                    })
+
+                    omtData.update((n) => {
+                        delete n[outputId]
+                        return n
+                    })
+
+                    AudioAnalyser.recorderDeactivate()
+                }
             }
 
-            if (!a[outputId].enabled) return a
-
-            // UPDATE OUTPUT WINDOW
-
-            if (["blackmagic"].includes(key)) {
-                send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value: a[outputId] })
-            } else if (["alwaysOnTop", "kioskMode", "transparent", "invisible", "ndi", "webrtc"].includes(key)) {
-                send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
+            if (out.enabled) {
+                // Recreate window for options fixed at creation (transparency, invisibility, capture/OSR mode)
+                const recreateKeys = ["transparent", "invisible", "ndi", "omt", "webrtc", "rtmp", "blackmagic"]
+                if (recreateKeys.includes(key)) {
+                    send(OUTPUT, ["CREATE"], { id: outputId, ...out })
+                } else if (key === "alwaysOnTop") {
+                    send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
+                }
             }
 
             return a
         })
+
+        async function enableOutput(out: Output) {
+            if (out.rtmp) await checkFFmpeg()
+            send(OUTPUT, ["CREATE"], { ...out, id: outputId })
+            AudioAnalyser.recorderActivate()
+        }
     }
 
     function _toggleOutput(state: boolean) {
@@ -185,16 +128,34 @@
 
         send(NDI, ["NDI_DATA"], { id, ...newData })
 
-        if (key === "audio") {
-            if (value) AudioAnalyser.recorderActivate()
-            else AudioAnalyser.recorderDeactivate()
-        }
-
         if (key === "name" || key === "groups") {
             alertMessage.set("settings.restart_for_change")
             activePopup.set("alert")
             saved.set(false)
         }
+    }
+
+    // omt
+    const omtQualities = [
+        { value: "Default", label: translateText("settings.auto") },
+        { value: "Low", label: "Low (least bandwidth)" },
+        { value: "Medium", label: "Medium" },
+        { value: "High", label: "High (most bandwidth)" }
+    ]
+    function updateOmtData(e: any, key: string) {
+        let id = currentOutput?.id
+        if (!id) return
+
+        let newData = $outputs[id]?.omtData
+        if (!newData) newData = {}
+
+        let value = e?.detail?.id ?? e
+
+        newData[key] = value
+
+        updateOutput("omtData", newData)
+
+        send(OMT, ["OMT_DATA"], { id, ...newData })
     }
 
     // webrtc
@@ -208,6 +169,61 @@
 
         saved.set(false)
     }
+
+    // RTMP
+
+    function updateRtmpData(value: any, key: string) {
+        if (!currentOutput?.id) return
+        updateOutputRtmpData(currentOutput.id, key, value)
+
+        saved.set(false)
+    }
+
+    function extractPlatformName(urlString: string | undefined): string | null {
+        if (!urlString) return null
+        try {
+            const normalizedUrl = urlString.replace(/^rtmp(s)?:\/\//i, "http$1://")
+            const parsedUrl = new URL(normalizedUrl)
+            const match = parsedUrl.hostname.toLowerCase().match(/([^.]+)\.[^.]+$/)
+            return match ? match[1] : null
+        } catch {
+            return null
+        }
+    }
+
+    // RTMP encoder
+
+    let encoderOptions: { value: string; label: string; data?: string; disabled?: boolean }[] = [{ value: "auto", label: "Auto" }]
+    // let detectingEncoders = false
+    async function loadEncoders(force = false) {
+        // detectingEncoders = true
+        try {
+            const detection = await requestMain(Main.ENCODER_DETECT, { force })
+            const encoders = (detection?.encoders || []).sort((a, b) => a.label.localeCompare(b.label)).sort((a, b) => (a.available === b.available ? 0 : a.available ? -1 : 1))
+            // .filter((a) => a.available) // should we hide unavailable encoders?
+            const recommended = encoders.find((e) => e.id === detection?.recommended)
+            encoderOptions = [{ value: "auto", label: "Auto", data: recommended?.label || "" }, ...encoders.map((e) => ({ value: e.id, label: e.label, data: e.available ? "" : e.reason, disabled: !e.available }))]
+        } finally {
+            // detectingEncoders = false
+        }
+    }
+
+    $: if (currentOutput?.rtmp && encoderOptions.length === 1) loadEncoders()
+    $: if (currentOutput?.rtmp && !currentOutput?.rtmpData?.destinations?.length) addDestination()
+
+    // RTMP destinations
+
+    function addDestination() {
+        if (currentOutput?.id) addRtmpDestination(currentOutput.id)
+    }
+    function updateDestination(destinationId: string, key: keyof RtmpDestination, value: any) {
+        if (currentOutput?.id) updateRtmpDestination(currentOutput.id, destinationId, key, value)
+    }
+    function removeDestination(destinationId: string) {
+        if (currentOutput?.id) removeRtmpDestination(currentOutput.id, destinationId)
+    }
+
+    // Frame rates
 
     const framerates = [
         { value: "10", label: "10 fps" },
@@ -283,7 +299,8 @@
                 setTimeout(() => {
                     if (newData.displayMode && newData.pixelFormat) send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
                 })
-            } else if (key === "pixelFormat" || key === "alphaKey") {
+            } else if (key === "pixelFormat" || key === "alphaKey" || key === "sdr") {
+                if (key === "alphaKey") updateOutput("transparent", value)
                 setTimeout(() => {
                     if (newData.displayMode && newData.pixelFormat) send(OUTPUT, ["SET_VALUE"], { id: currentOutput?.id, key: "blackmagic", value: currentOutput })
                 })
@@ -330,14 +347,11 @@
 
     $: isCropped = currentOutput?.cropping && (currentOutput.cropping.left || 0) + (currentOutput.cropping.right || 0) + (currentOutput.cropping.top || 0) + (currentOutput.cropping.bottom || 0) > 0
     $: outputLabel = (currentOutput?.blackmagicData?.displayMode || `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`) + (isCropped ? ` - settings.cropped` : "")
-
-    let ndiMenuOpened = false
-    let bmdMenuOpened = false
-    let webrtcMenuOpened = false
 </script>
 
 {#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
-    <MaterialToggleSwitch label="settings.enabled" checked={currentOutput?.enabled} defaultValue={true} disabled={!currentOutput?.stageOutput && currentOutput?.enabled && activeOutputs.length < 2} on:change={(e) => _toggleOutput(e.detail)} />
+    {@const isStreaming = currentOutput?.webrtcData?.streaming || currentOutput?.rtmpData?.streaming}
+    <MaterialToggleSwitch label="settings.enabled" checked={currentOutput?.enabled} defaultValue={true} disabled={(!currentOutput?.stageOutput && currentOutput?.enabled && activeOutputs.length < 2) || (currentOutput?.enabled && isStreaming)} on:change={(e) => _toggleOutput(e.detail)} />
 {/if}
 
 {#if stageId}
@@ -359,97 +373,229 @@
 <!-- WIP toggle fullscreen (Mac) ?? Only working one time for some reason -->
 <!-- WIP toggle visibleOnAllWorkspaces (Mac) -->
 
-<!-- window -->
-<Title label="settings.window" icon="window" />
+{#if !currentOutput?.invisible}
+    <!-- window -->
+    <Title label="settings.window" icon="hdmi" />
 
-<MaterialPopupButton label="settings.output_screen" value={outputLabel} name={outputLabel} icon={currentOutput?.invisible ? "stage" : currentOutput?.boundsLocked ? "locked" : "screen"} popupId={currentOutput?.invisible ? "change_output_values" : "choose_screen"} />
-<MaterialToggleSwitch label="settings.always_on_top" checked={currentOutput?.alwaysOnTop !== false} defaultValue={true} disabled={currentOutput?.invisible} on:change={(e) => updateOutput("alwaysOnTop", e.detail)} />
-
-<!-- this will make the whole application "locked" so no other apps can be accessed, might increase performance, but generally not recommend -->
-<!-- disable on windows -->
-<!-- only <= 1.4.5 -->
-{#if $os.platform !== "win32" && currentOutput?.kioskMode === true}
-    <MaterialToggleSwitch label="settings.kiosk_mode" checked={currentOutput?.kioskMode === true} defaultValue={false} on:change={(e) => updateOutput("kioskMode", e.detail)} />
+    <MaterialPopupButton label="settings.output_screen" value={outputLabel} name={outputLabel} icon={currentOutput?.boundsLocked ? "locked" : "screen"} popupId="choose_screen" />
+    <MaterialToggleSwitch label="settings.always_on_top" checked={currentOutput?.alwaysOnTop !== false} defaultValue={true} on:change={(e) => updateOutput("alwaysOnTop", e.detail)} />
 {/if}
 
-<!-- NDI -->
-<Title label="NDI®" icon="ndi" />
+{#if currentOutput?.blackmagic}
+    <Title label="Blackmagic Design" icon="blackmagic" />
 
-<InputRow arrow={currentOutput?.ndi} bind:open={ndiMenuOpened}>
-    <MaterialToggleSwitch label={translateText("actions.enable_specific", null, ["NDI®"])} style="width: 100%;" checked={currentOutput?.ndi} defaultValue={false} data={$ndiData[currentOutput?.id || ""]?.connections || null} on:change={(e) => updateOutput("ndi", e.detail)} />
+    <MaterialDropdown
+        label="settings.device"
+        value={currentOutput?.blackmagicData?.deviceId || ""}
+        options={(() => {
+            const usedIds = getUsedBlackmagicDeviceIds(currentOutput?.id)
+            return blackmagicDevices.map((device) => ({
+                label: usedIds.includes(String(device.id || "")) ? `${device.name} (in use)` : device.name,
+                value: device.id ? String(device.id) : "",
+                disabled: usedIds.includes(String(device.id))
+            }))
+        })()}
+        on:change={(e) => updateBlackmagicData(e.detail, "deviceId")}
+    />
 
-    <svelte:fragment slot="menu">
-        {#if currentOutput}
-            <InputRow>
-                <MaterialTextInput label="inputs.name" value={currentOutput.ndiData?.name || `FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} defaultValue={`FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} on:change={(e) => updateNdiData(e.detail, "name")} />
-                <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={currentOutput.ndiData?.groups || ""} defaultValue="" placeholder="public" on:change={(e) => updateNdiData(e.detail, "groups")} />
-            </InputRow>
+    {#if currentOutput?.blackmagicData?.deviceId}
+        <InputRow>
+            <MaterialDropdown label="settings.display_mode" value={currentOutput.blackmagicData?.displayMode} options={currentOutput.blackmagicData?.displayModes?.map((mode) => ({ label: mode.name, value: mode.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "displayMode")} />
+            <MaterialDropdown label="settings.pixel_format" value={currentOutput.blackmagicData?.pixelFormat} options={currentOutput.blackmagicData?.pixelFormats?.map((format) => ({ label: format.name, value: format.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "pixelFormat")} />
+        </InputRow>
 
-            <MaterialToggleSwitch label="preview.audio" checked={currentOutput.ndiData?.audio} defaultValue={false} on:change={(e) => updateNdiData(e.detail, "audio")} />
-            <MaterialDropdown label="settings.frame_rate" value={currentOutput.ndiData?.framerate || "30"} defaultValue="30" options={framerates} on:change={(e) => updateNdiData(e.detail, "framerate")} />
+        {#if currentOutput.blackmagicData?.pixelFormat?.includes("YUV")}
+            <MaterialToggleSwitch label="SDR" title="SDR Encoding (Rec. 709)" checked={currentOutput.blackmagicData?.sdr !== false} defaultValue={true} on:change={(e) => updateBlackmagicData(e.detail, "sdr")} />
         {/if}
-    </svelte:fragment>
-</InputRow>
 
-<!-- Blackmagic -->
-<Title label="Blackmagic Design" icon="blackmagic" />
-
-<InputRow arrow={currentOutput?.blackmagic} bind:open={bmdMenuOpened}>
-    <MaterialToggleSwitch label={translateText("actions.enable_specific", null, ["Blackmagic"])} style="width: 100%;" checked={currentOutput?.blackmagic} defaultValue={false} on:change={(e) => updateOutput("blackmagic", e.detail)} />
-
-    <svelte:fragment slot="menu">
-        <MaterialDropdown
-            label="settings.device"
-            value={currentOutput?.blackmagicData?.deviceId || ""}
-            options={(() => {
-                const usedIds = getUsedBlackmagicDeviceIds(currentOutput?.id)
-                return blackmagicDevices.map((device) => ({
-                    label: usedIds.includes(String(device.id || "")) ? `${device.name} (in use)` : device.name,
-                    value: device.id ? String(device.id) : "",
-                    disabled: usedIds.includes(String(device.id))
-                }))
-            })()}
-            on:change={(e) => updateBlackmagicData(e.detail, "deviceId")}
-        />
-
-        {#if currentOutput?.blackmagicData?.deviceId}
-            <InputRow>
-                <MaterialDropdown label="settings.display_mode" value={currentOutput.blackmagicData?.displayMode} options={currentOutput.blackmagicData?.displayModes?.map((mode) => ({ label: mode.name, value: mode.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "displayMode")} />
-                <MaterialDropdown label="settings.pixel_format" value={currentOutput.blackmagicData?.pixelFormat} options={currentOutput.blackmagicData?.pixelFormats?.map((format) => ({ label: format.name, value: format.name })) || []} on:change={(e) => updateBlackmagicData(e.detail, "pixelFormat")} />
-            </InputRow>
-
-            {#if isAlphaSupported()}
-                <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
-            {/if}
+        {#if isAlphaSupported()}
+            <MaterialToggleSwitch label="settings.alpha_key" checked={currentOutput.blackmagicData?.alphaKey} on:change={(e) => updateBlackmagicData(e.detail, "alphaKey")} />
         {/if}
-    </svelte:fragment>
-</InputRow>
-
-<!-- WebRTC -->
-<Title label="WebRTC Streaming" icon="record" />
-
-<InputRow arrow={currentOutput?.webrtc} bind:open={webrtcMenuOpened}>
-    <MaterialToggleSwitch label={translateText("actions.enable_specific", null, ["WebRTC"])} style="width: 100%;" checked={currentOutput?.webrtc} defaultValue={false} on:change={(e) => updateOutput("webrtc", e.detail)} />
-
-    <svelte:fragment slot="menu">
-        {#if currentOutput}
-            <MaterialTextInput label="WHIP Endpoint URL" value={currentOutput.webrtcData?.url || ""} placeholder="e.g. https://live.restream.io/whip/live/YOUR_KEY" on:change={(e) => updateWebrtcData(e.detail, "url")} />
-            <MaterialTextInput label="Bearer Token (Optional)" value={currentOutput.webrtcData?.token || ""} placeholder="Authorization token" on:change={(e) => updateWebrtcData(e.detail, "token")} />
-        {/if}
-    </svelte:fragment>
-</InputRow>
-
-{#if currentOutput?.webrtc && currentOutput?.webrtcData?.url}
-    <div style="padding-bottom: 10px;">
-        <MaterialButton variant="outlined" icon={currentOutput.webrtcData?.streaming ? "stop" : "record"} style="width: 100%; justify-content: center; {currentOutput.webrtcData?.streaming ? 'background: #b60707 !important;' : ''}" on:click={() => (currentOutput?.webrtcData?.streaming ? stopStreaming(currentOutput.id, true) : startStreaming(currentOutput?.id))} white>
-            {translateText(currentOutput.webrtcData?.streaming ? "output.stop_streaming" : "output.start_streaming")}
-        </MaterialButton>
-    </div>
+    {/if}
 {/if}
 
-{#if currentOutput?.ndi || currentOutput?.blackmagic}
-    <br />
+{#if currentOutput?.ndi}
+    <Title label="NDI®" icon="ndi" />
+
+    <InputRow>
+        {#if currentOutput.invisible && !currentOutput.blackmagic}
+            <MaterialPopupButton label="edit.size" value={outputLabel} name={outputLabel} icon="resize" popupId="change_output_values" />
+        {/if}
+        <MaterialDropdown label="settings.frame_rate" value={currentOutput.ndiData?.framerate || "30"} defaultValue="30" options={framerates} on:change={(e) => updateNdiData(e.detail, "framerate")} />
+    </InputRow>
+
+    <InputRow>
+        <MaterialTextInput label="inputs.name" value={currentOutput.ndiData?.name || `FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} defaultValue={`FreeShow NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} on:change={(e) => updateNdiData(e.detail, "name")} />
+        <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={currentOutput.ndiData?.groups || ""} defaultValue="" placeholder="public" on:change={(e) => updateNdiData(e.detail, "groups")} />
+    </InputRow>
+
+    <!-- not sure if we need to toggle this off? -->
+    <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={true} on:change={(e) => updateOutput("transparent", e.detail)} />
+
+    <!-- Connections count (connection status visible by blue indicator) -->
+    <!-- {#if $ndiData[currentOutput?.id || ""]?.connections > 0}
+        <div style="padding: 10px;font-size: 0.8em;opacity: 0.4;text-align: center;">
+            {$ndiData[currentOutput?.id || ""].connections}
+        </div>
+    {/if} -->
+{/if}
+
+{#if currentOutput?.omt}
+    <Title label="OMT" icon="omt" />
+
+    <InputRow>
+        {#if currentOutput.invisible && !currentOutput.blackmagic}
+            <MaterialPopupButton label="edit.size" value={outputLabel} name={outputLabel} icon="resize" popupId="change_output_values" />
+        {/if}
+        <MaterialDropdown label="settings.frame_rate" value={currentOutput.omtData?.framerate || "30"} defaultValue="30" options={framerates} on:change={(e) => updateOmtData(e.detail, "framerate")} />
+    </InputRow>
+
+    <InputRow>
+        <MaterialTextInput label="inputs.name" value={currentOutput.omtData?.name || `FreeShow OMT${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} defaultValue={`FreeShow OMT${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} on:change={(e) => updateOmtData(e.detail, "name")} />
+        <MaterialDropdown label="settings.quality" value={currentOutput.omtData?.quality || "Default"} defaultValue="Default" options={omtQualities} on:change={(e) => updateOmtData(e.detail, "quality")} />
+    </InputRow>
 
     <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={true} on:change={(e) => updateOutput("transparent", e.detail)} />
-    <MaterialToggleSwitch label="settings.invisible_window" checked={currentOutput.invisible} defaultValue={true} on:change={(e) => updateOutput("invisible", e.detail)} />
 {/if}
+
+{#if currentOutput?.webrtc}
+    <Title label="WebRTC" icon="broadcast" />
+
+    {#if currentOutput.invisible && !currentOutput.blackmagic}
+        <MaterialPopupButton label="edit.size" value={outputLabel} name={outputLabel} icon="resize" popupId="change_output_values" />
+    {/if}
+    <InputRow>
+        <MaterialDropdown label="settings.frame_rate" value={currentOutput.webrtcData?.fps?.toString() || "30"} defaultValue="30" options={framerates} on:change={(e) => updateWebrtcData(e.detail, "fps")} />
+        <MaterialTextInput label="Bitrate (kbps)" value={currentOutput.webrtcData?.bitrate?.toString() || "4000"} defaultValue="4000" placeholder="4000" on:change={(e) => updateWebrtcData(e.detail, "bitrate")} />
+    </InputRow>
+    <MaterialTextInput label="WHIP Endpoint URL" value={currentOutput.webrtcData?.url || ""} placeholder="e.g. https://live.restream.io/whip/live/YOUR_KEY" on:change={(e) => updateWebrtcData(e.detail, "url")} pasteBtn />
+    <MaterialTextInput label="Bearer Token (Optional)" value={currentOutput.webrtcData?.token || ""} placeholder="Authorization token" on:change={(e) => updateWebrtcData(e.detail, "token")} pasteBtn />
+    <!-- <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={false} on:change={(e) => updateOutput("transparent", e.detail)} /> -->
+
+    {#if currentOutput?.enabled && currentOutput?.webrtcData?.url}
+        <div style="padding-bottom: 10px;">
+            <MaterialButton variant="outlined" icon={currentOutput.webrtcData?.streaming ? "stop" : "record"} style="width: 100%; justify-content: center; {currentOutput.webrtcData?.streaming ? 'background: #b60707 !important;' : ''}" on:click={() => (currentOutput?.webrtcData?.streaming ? stopStreaming(currentOutput.id, true) : startStreaming(currentOutput?.id))} white>
+                {translateText(currentOutput.webrtcData?.streaming ? "output.stop_streaming" : "output.start_streaming")}
+            </MaterialButton>
+        </div>
+    {/if}
+{/if}
+
+{#if currentOutput?.rtmp}
+    <Title label="RTMP" icon="broadcast" />
+
+    {#if currentOutput.invisible && !currentOutput.blackmagic}
+        <MaterialPopupButton label="edit.size" value={outputLabel} name={outputLabel} icon="resize" popupId="change_output_values" />
+    {/if}
+    <InputRow>
+        <MaterialDropdown label="settings.frame_rate" value={currentOutput.rtmpData?.fps?.toString() || "30"} defaultValue="30" options={framerates} on:change={(e) => updateRtmpData(e.detail, "fps")} />
+        <MaterialTextInput label="settings.bitrate (kbps)" value={currentOutput.rtmpData?.bitrate?.toString() || "4000"} defaultValue="4000" placeholder="4000" on:change={(e) => updateRtmpData(e.detail, "bitrate")} />
+    </InputRow>
+
+    <InputRow style="margin-bottom: 10px;">
+        <MaterialDropdown label="settings.video_encoder" value={currentOutput.rtmpData?.encoder || "auto"} defaultValue="auto" options={encoderOptions} on:change={(e) => updateRtmpData(e.detail, "encoder")} />
+        <!-- <MaterialButton variant="outlined" icon="refresh" title="Re-detect encoders" disabled={detectingEncoders} on:click={() => loadEncoders(true)} /> -->
+    </InputRow>
+
+    <div class="destinations">
+        {#each currentOutput.rtmpData?.destinations || [] as destination (destination.id)}
+            {@const status = $rtmpStatus[currentOutput?.id || ""]?.[destination.id]}
+
+            <div class="destination">
+                <div style="display: flex;align-items: center;gap: 10px;padding-bottom: 4px;text-transform: uppercase;">
+                    <span class="dot {status?.state || 'idle'}" data-title={status?.error || status?.state || "idle"}></span>
+                    <div style="font-size: 0.8em; opacity: 0.5;">{extractPlatformName(destination.url) || ""}</div>
+                </div>
+
+                {#if (currentOutput.rtmpData?.destinations || []).length > 1 || destination.enabled === false}
+                    <InputRow>
+                        <MaterialCheckbox label="settings.enabled" checked={destination.enabled} defaultValue={true} style="flex: 1;" on:change={(e) => updateDestination(destination.id, "enabled", e.detail)} />
+                        {#if !destination.enabled || !destination.url}
+                            <MaterialButton variant="outlined" icon="delete" title="settings.remove" on:click={() => removeDestination(destination.id)} red />
+                        {/if}
+                    </InputRow>
+                {/if}
+
+                <MaterialTextInput label="Stream URL" value={destination.url} placeholder="e.g. rtmp://a.rtmp.youtube.com/live2" on:change={(e) => updateDestination(destination.id, "url", e.detail)} pasteBtn />
+                <MaterialTextInput label="Stream key" value={destination.key} type="password" on:change={(e) => updateDestination(destination.id, "key", e.detail)} pasteBtn />
+
+                <!-- kept visible after recovery: a destination that reconnects repeatedly still looks
+                     "live" between drops, so the count is the only signal that it is struggling -->
+                {#if status?.restarts}
+                    <div class="destination-warning">
+                        {status.restarts === 1 ? "Reconnected once" : `Reconnected ${status.restarts} times`}{status.lastIssue && !status.error ? ` — ${status.lastIssue}` : ""}
+                    </div>
+                {/if}
+                {#if status?.error}
+                    <div class="destination-error">{status.error}</div>
+                {/if}
+            </div>
+        {/each}
+
+        <MaterialButton variant="outlined" icon="add" disabled={(currentOutput.rtmpData?.destinations || []).some((a) => !a.url)} on:click={() => addDestination()}>
+            {translateText("settings.add_destination")}
+        </MaterialButton>
+    </div>
+
+    {#if currentOutput?.enabled && hasStreamableDestination(currentOutput.rtmpData)}
+        <div style="padding: 10px 0;">
+            <MaterialButton variant="outlined" icon={currentOutput.rtmpData?.streaming ? "stop" : "record"} style="width: 100%; justify-content: center; {currentOutput.rtmpData?.streaming ? 'background: #b60707 !important;' : ''}" on:click={() => (currentOutput?.rtmpData?.streaming ? stopRtmpStreaming(currentOutput.id, true) : startRtmpStreaming(currentOutput?.id))} white>
+                {translateText(currentOutput.rtmpData?.streaming ? "output.stop_streaming" : "output.start_streaming")}
+            </MaterialButton>
+        </div>
+    {/if}
+{/if}
+
+<style>
+    .hint {
+        padding: 0 10px 10px;
+        font-size: 0.8em;
+        opacity: 0.5;
+    }
+
+    /* Stream destinations */
+
+    .destinations {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .destination {
+        display: flex;
+        flex-direction: column;
+
+        padding: 8px;
+        border: 1px solid var(--primary-lighter);
+        border-radius: 4px;
+    }
+
+    .dot {
+        flex-shrink: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #6b6b6b;
+    }
+    .dot.connecting,
+    .dot.reconnecting {
+        background-color: #e0a800;
+    }
+    .dot.live {
+        background-color: #2ecc71;
+    }
+    .dot.error {
+        background-color: #b60707;
+    }
+
+    .destination-warning {
+        padding-top: 4px;
+        font-size: 0.8em;
+        color: #e0bc50;
+    }
+    .destination-error {
+        padding-top: 4px;
+        color: #ff8080;
+        font-size: 0.8em;
+    }
+</style>

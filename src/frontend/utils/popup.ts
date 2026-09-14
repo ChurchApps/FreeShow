@@ -1,4 +1,4 @@
-import type { ComponentType } from "svelte"
+import { onDestroy, type ComponentType } from "svelte"
 import { get } from "svelte/store"
 import type { Popups } from "../../types/Main"
 import About from "../components/main/popups/About.svelte"
@@ -7,12 +7,15 @@ import ActionHistory from "../components/main/popups/ActionHistory.svelte"
 import Alert from "../components/main/popups/Alert.svelte"
 import AspectRatio from "../components/main/popups/AspectRatio.svelte"
 import AudioStream from "../components/main/popups/AudioStream.svelte"
+import AudioEffect from "../components/main/popups/AudioEffect.svelte"
+import AddAudioEffect from "../components/main/popups/AddAudioEffect.svelte"
 import CategoryAction from "../components/main/popups/CategoryAction.svelte"
 import ChangeIcon from "../components/main/popups/ChangeIcon.svelte"
 import ChangeOutputValues from "../components/main/popups/ChangeOutputValues.svelte"
 import ChooseCamera from "../components/main/popups/ChooseCamera.svelte"
 import ChooseChord from "../components/main/popups/ChooseChord.svelte"
 import ChooseOutput from "../components/main/popups/ChooseOutput.svelte"
+import OutputSetup from "../components/main/popups/OutputSetup.svelte"
 import ChooseScreen from "../components/main/popups/ChooseScreen.svelte"
 import ChooseStyle from "../components/main/popups/ChooseStyle.svelte"
 import ChurchAppsSyncCategories from "../components/main/popups/ChurchAppsSyncCategories.svelte"
@@ -43,6 +46,7 @@ import Export from "../components/main/popups/export/Export.svelte"
 import FindReplace from "../components/main/popups/FindReplace.svelte"
 import History from "../components/main/popups/History.svelte"
 import Import from "../components/main/popups/Import.svelte"
+import ImportCalendar from "../components/main/popups/ImportCalendar.svelte"
 import ImportScripture from "../components/main/popups/ImportScripture.svelte"
 import Initialize from "../components/main/popups/Initialize.svelte"
 import InteractionInput from "../components/main/popups/InteractionInput.svelte"
@@ -84,7 +88,10 @@ import Transition from "../components/main/popups/Transition.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
 import UpdateManager from "../components/main/popups/UpdateManager.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
+import NodeOptions from "../components/main/popups/NodeOptions.svelte"
 import { activePopup, popupData } from "../stores"
+import AiModelManager from "../ai/components/popups/AiModelManager.svelte"
+import ManageFonts from "../components/main/popups/ManageFonts.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -102,6 +109,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     delete_duplicated_shows: DeleteDuplicatedShows,
     icon: ChangeIcon,
     manage_groups: ManageGroups,
+    manage_fonts: ManageFonts,
     manage_icons: ManageIcons,
     manage_colors: ManageColors,
     manage_metadata: ManageMetadata,
@@ -119,6 +127,8 @@ export const popups: { [key in Popups]: ComponentType } = {
     variable: Variable,
     interaction_input: InteractionInput,
     audio_stream: AudioStream,
+    audio_effect: AudioEffect,
+    add_audio_effect: AddAudioEffect,
     now_playing: NowPlaying,
     aspect_ratio: AspectRatio,
     max_lines: MaxLines,
@@ -126,11 +136,13 @@ export const popups: { [key in Popups]: ComponentType } = {
     media_fit: MediaFit,
     metadata_display: MetadataDisplay,
     import_scripture: ImportScripture,
+    import_calendar: ImportCalendar,
     create_collection: CreateCollection,
     edit_event: EditEvent,
     edit_chart: EditChart,
     choose_screen: ChooseScreen,
-    choose_output: ChooseOutput,
+    choose_output_input: ChooseOutput,
+    choose_output_type: OutputSetup,
     choose_style: ChooseStyle,
     change_output_values: ChangeOutputValues,
     output_selector: OutputSelector,
@@ -169,31 +181,39 @@ export const popups: { [key in Popups]: ComponentType } = {
     template_info: TemplateInfo,
     cleaning_utility: CleaningUtility,
     pco_picker: PcoServicePicker,
-    sync_folders: SyncFolders
+    sync_folders: SyncFolders,
+    node_options: NodeOptions,
+    ai_model_manager: AiModelManager
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {
-    popupData.set({ ...get(popupData), id: "", value: "" })
-    activePopup.set(popupId)
+    const promise = new Promise((resolve) => {
+        let unsubscribe = () => {}
 
-    return new Promise((resolve) => {
         // check that popup is still active
         const interval = setInterval(() => {
             if (get(activePopup) !== popupId) finish(undefined)
-        }, 1000)
+        }, 300)
 
-        const unsubscribe = popupData.subscribe((a) => {
-            if (a.id !== popupId) return
+        unsubscribe = popupData.subscribe((a) => {
+            if (!a || a.id !== popupId) return
             activePopup.set(null)
             finish(a.value)
         })
 
         function finish(value) {
-            unsubscribe()
+            if (unsubscribe) unsubscribe()
             clearInterval(interval)
-            resolve(value)
+            setTimeout(() => {
+                resolve(value)
+            }, 50)
         }
     })
+
+    popupData.set({ ...get(popupData), id: "", value: "" })
+    activePopup.set(popupId)
+
+    return promise
 }
 
 export async function confirmCustom(prompt: string) {
@@ -206,4 +226,30 @@ export async function promptCustom(prompt: string, inputType: string = "text", m
     popupData.set({ prompt, inputType, message })
     const data = (await waitForPopupData("confirm")) || ""
     return data as string
+}
+
+// Enter to submit
+
+let activeSubmit: (() => void) | null = null
+
+export function registerPopupSubmit(submit: () => void) {
+    activeSubmit = submit
+
+    onDestroy(() => {
+        if (activeSubmit === submit) activeSubmit = null
+    })
+}
+
+export function triggerPopupSubmit(e?: KeyboardEvent): boolean {
+    if (!activeSubmit) return false
+
+    const target = e?.target as HTMLElement | null
+    if (target?.closest("textarea, [contenteditable='true'], button, [role], .editItem")) return false
+
+    activeSubmit()
+    return true
+}
+
+export function clearPopupSubmit() {
+    activeSubmit = null
 }

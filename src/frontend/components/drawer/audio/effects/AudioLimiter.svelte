@@ -2,12 +2,12 @@
     import { onDestroy, onMount } from "svelte"
     import { AudioAnalyser } from "../../../../audio/audioAnalyser"
     import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
-    import { type LimiterConfig, getLimiterReduction, setLimiterEnabled, updateLimiterConfig } from "../../../../audio/effects/audioLimiter"
+    import { type LimiterConfig, getLimiterReduction, updateLimiterConfig } from "../../../../audio/effects/audioLimiter"
     import InputRow from "../../../input/InputRow.svelte"
     import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
-    export let disabled: boolean = false
+    export let effectId: string = ""
+    export let channelId: string = ""
 
     let config: LimiterConfig = {
         enabled: false,
@@ -21,9 +21,14 @@
     let unsubscribe: (() => void) | null = null
 
     onMount(() => {
-        unsubscribe = subscribeEffect("limiter", (c: LimiterConfig) => {
-            config = { ...c }
-        })
+        unsubscribe = subscribeEffect(
+            "limiter",
+            (c: LimiterConfig) => {
+                config = { ...c }
+            },
+            channelId,
+            effectId
+        )
 
         grInterval = setInterval(() => {
             grValue = getLimiterReduction()
@@ -43,12 +48,8 @@
 
     // ---- handlers ----
 
-    function handleEnable(e: any) {
-        setLimiterEnabled(e.detail)
-    }
-
     function handleChange(key: keyof LimiterConfig, raw: number) {
-        updateLimiterConfig({ [key]: raw })
+        updateLimiterConfig({ [key]: raw }, channelId, effectId)
     }
 
     // ---- transfer-curve visualisation ----
@@ -99,13 +100,9 @@
     $: releaseMs = Math.round(config.release * 1000)
 </script>
 
-<div class="limiter-container" style="--accent: #5284ad;" class:disabled>
-    <MaterialToggleSwitch label="settings.enabled" checked={config.enabled} on:change={handleEnable} />
-
-    <div style="height: 5px;" />
-
+<div class="limiter-container" style="--accent: #5284ad;">
     <!-- Transfer curve visualisation -->
-    <div class="curve-wrap" class:curve-disabled={!config.enabled}>
+    <div class="curve-wrap">
         <div class="curve-svg-wrap" bind:clientWidth={canvasW}>
             <svg width={canvasW} height={canvasH} class="curve-svg">
                 <!-- Grid -->
@@ -148,11 +145,11 @@
 
     <!-- Parameter inputs -->
     <InputRow>
-        <MaterialNumberInput label="audio.ceiling" value={config.ceiling} min={-30} max={0} step={0.5} maxDecimals={1} showSlider sliderValues={{ min: -30, max: 0, step: 0.5 }} {disabled} on:change={(e) => handleChange("ceiling", e.detail)} />
+        <MaterialNumberInput label="audio.ceiling" value={config.ceiling} min={-30} max={0} step={0.5} maxDecimals={1} showSlider sliderValues={{ min: -30, max: 0, step: 0.5 }} on:change={(e) => handleChange("ceiling", e.detail)} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.release" value={releaseMs} min={1} max={500} step={1} maxDecimals={0} showSlider sliderValues={{ min: 1, max: 500, step: 1 }} {disabled} on:change={(e) => handleChange("release", e.detail / 1000)} />
+        <MaterialNumberInput label="audio.release" value={releaseMs} min={1} max={500} step={1} maxDecimals={0} showSlider sliderValues={{ min: 1, max: 500, step: 1 }} on:change={(e) => handleChange("release", e.detail / 1000)} />
     </InputRow>
 </div>
 
@@ -160,11 +157,6 @@
     .limiter-container {
         border-radius: 8px;
         user-select: none;
-    }
-
-    .limiter-container.disabled {
-        opacity: 0.5;
-        pointer-events: none;
     }
 
     .curve-wrap {
@@ -177,10 +169,6 @@
         overflow: hidden;
         transition: opacity 0.2s ease;
         font-family: monospace;
-    }
-
-    .curve-wrap.curve-disabled {
-        opacity: 0.4;
     }
 
     .curve-svg-wrap {

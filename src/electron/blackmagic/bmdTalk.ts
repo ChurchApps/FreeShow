@@ -32,7 +32,7 @@ export async function receiveBM(e: any, msg: Message) {
 export const bmResponses: any = {
     GET_DEVICES: () => BlackmagicManager.getDevices(),
 
-    STOP_SENDER: (data: any) => BlackmagicSender.stop(data.id),
+    // STOP_SENDER: (data: any) => BlackmagicSender.stop(data.id),
 
     RECEIVE_FRAME: (data: any) => BlackmagicReceiver.captureFrame(data),
     RECEIVE_STREAM: (data: any) => BlackmagicReceiver.startCapture(data),
@@ -45,6 +45,8 @@ export const bmResponses: any = {
  * Sets up video output with appropriate resolution and configuration
  */
 export async function initializeSender(data: Output, window: BrowserWindow, id: string) {
+    if (!window || window.isDestroyed()) return
+
     const bmdData = data.blackmagicData || {}
 
     // Get target resolution from display mode
@@ -89,7 +91,7 @@ export async function initializeSender(data: Output, window: BrowserWindow, id: 
     const deviceIndex = BlackmagicManager.getIndexById(deviceId)
     if (deviceIndex < 0) return
 
-    if (data.blackmagic) await BlackmagicSender.initialize(id, deviceIndex, bmdData.displayMode, bmdData.pixelFormat, bmdData.alphaKey)
+    if (data.blackmagic) await BlackmagicSender.initialize(id, deviceIndex, bmdData.displayMode, bmdData.pixelFormat, bmdData.alphaKey, 2, bmdData.sdr !== false ? "rec709" : "passthrough")
     else BlackmagicSender.stop(id)
 
     // get & set custom frame rate

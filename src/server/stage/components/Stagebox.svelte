@@ -6,20 +6,20 @@
     import autosize from "../../common/util/autosize"
     import { keysToID, sortByName } from "../../common/util/helpers"
     import { getStyles } from "../../common/util/style"
+    import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
+    import { getItemText } from "../helpers/textStyle"
     import Clock from "../items/Clock.svelte"
+    import MetronomeVisualizer from "../items/MetronomeVisualizer.svelte"
     import SlideNotes from "../items/SlideNotes.svelte"
     import SlideProgress from "../items/SlideProgress.svelte"
     import SlideText from "../items/SlideText.svelte"
-    import VideoTime from "../items/VideoTime.svelte"
     import { _getDynamicValue } from "../util/itemHelpers"
     import { activeTimers, background, media, output, outputSlideCache, progressData, stream, timers, variables } from "../util/stores"
-    import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
     import MediaOutput from "./MediaOutput.svelte"
     import PreviewCanvas from "./PreviewCanvas.svelte"
     import Textbox from "./Textbox.svelte"
     import Timer from "./Timer.svelte"
     import Variable from "./Variable.svelte"
-    import { getItemText } from "../helpers/textStyle"
 
     export let stageLayout: StageLayout
     export let id: string
@@ -27,6 +27,16 @@
 
     $: currentOutput = $output
     $: currentSlide = currentOutput?.out?.slide || (slideOffset !== 0 ? $outputSlideCache[currentOutput?.id || ""] || null : null)
+
+    // pick the pushed frame for this layout's output, falling back deterministically
+    function getStreamCapture(streamMap: any, outputId: string | undefined) {
+        if (outputId && streamMap[outputId]) return streamMap[outputId]
+
+        const outputKeys = Object.keys(streamMap).sort()
+        if (outputKeys.length) return streamMap[outputKeys[0]]
+
+        return null
+    }
 
     $: currentBackground = $background
 
@@ -54,12 +64,11 @@
     }
 
     // custom dynamic size
-    // WIP this does not update when window size changes...
     let newSizes = `;
-        top: ${Math.min(itemStyles.top, (itemStyles.top / 1080) * resolution.height)}px;
-        left: ${Math.min(itemStyles.left, (itemStyles.left / 1920) * resolution.width)}px;
-        width: ${Math.min(itemStyles.width, (itemStyles.width / 1920) * resolution.width)}px;
-        height: ${Math.min(itemStyles.height, (itemStyles.height / 1080) * resolution.height)}px;
+        top: ${(itemStyles.top / 1080) * resolution.height}px;
+        left: ${(itemStyles.left / 1920) * resolution.width}px;
+        width: ${(itemStyles.width / 1920) * resolution.width}px;
+        height: ${(itemStyles.height / 1080) * resolution.height}px;
     `
 
     let alignElem: HTMLElement | undefined
@@ -70,20 +79,6 @@
     $: slideOffset = item.type ? Number(item.slideOffset || 0) : id.includes("next") ? 1 : 0
 
     $: isDisabledVariable = id.includes("variables") && $variables[id.split("#")[1]]?.enabled === false
-
-    // request video time
-    let videoTime: number = 0
-    // $: if (id.includes("video")) requestVideoData()
-    // let interval: any = null
-    // function requestVideoData() {
-    //     if (interval) return
-    //     // USE API ?!?
-    //     interval = setInterval(() => send("REQUEST_VIDEO_DATA"), 1000)
-    //     // interval = setInterval(() => socket.emit("STAGE", { id: socketId, channel: "REQUEST_VIDEO_DATA" }), 1000)
-    // }
-    // onDestroy(() => {
-    //     if (interval) clearInterval(interval)
-    // })
 
     let firstTimerId: string = ""
     $: if (item.type === "timer" || id.includes("first_active_timer")) {
@@ -187,7 +182,7 @@
         <span style="pointer-events: none;width: 100%;height: 100%;">
             {#if item.type === "current_output" || id.includes("current_output")}
                 <!-- width gets squished when resized -->
-                <PreviewCanvas alpha={id.includes("_alpha")} id={stageLayout?.settings?.output} capture={$stream[id.includes("_alpha") ? "alpha" : "default"]} />
+                <PreviewCanvas outputId={stageLayout?.settings?.output} capture={getStreamCapture($stream, stageLayout?.settings?.output)} />
             {:else if item.type === "slide_text" || id.includes("slide")}
                 {@const slideBackground = slideOffset === 0 ? currentBackground : slideOffset === 1 ? currentBackground.next : null}
 
@@ -198,7 +193,7 @@
                 {#if currentSlide}
                     {#key item || currentSlide}
                         <!-- autoStage={show.settings.autoStretch !== false} -->
-                        <SlideText {currentSlide} {slideOffset} stageItem={item} show={stageLayout} {resolution} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} autoSize={item.auto !== false} {fontSize} autoStage {textStyle} style={item.type ? item.keepStyle : false} />
+                        <SlideText {currentSlide} {slideOffset} stageItem={item} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} autoSize={item.textFit !== "none" && item.auto !== false} {fontSize} autoStage {textStyle} style={item.type ? item.keepStyle : false} />
                     {/key}
                 {/if}
             {:else if item.type === "slide_notes" || id.includes("notes")}
@@ -212,6 +207,8 @@
                 <Clock autoSize={item.auto !== false ? autoSize : fontSize} style={false} {...item.clock} />
             {:else if item.type === "timer"}
                 <Timer {item} id={item.timer?.id || item.timerId || firstTimerId || ""} {today} style={item.auto === false ? "" : `font-size: ${item.auto !== false ? autoSize : fontSize}px;`} />
+            {:else if item.type === "metronome" || id.includes("metronome")}
+                <MetronomeVisualizer isItem />
             {:else if item.type === "media"}
                 <MediaOutput path={$media[item.src] || item.src} />
             {:else if item.type === "camera"}
@@ -225,9 +222,7 @@
             {:else}
                 <!-- OLD CODE -->
                 <div>
-                    {#if id.includes("video")}
-                        <VideoTime {videoTime} autoSize={item.auto !== false ? autoSize : fontSize} />
-                    {:else if id.includes("first_active_timer")}
+                    {#if id.includes("first_active_timer")}
                         <Timer {item} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
                     {:else if id.includes("timers")}
                         {#if $timers[id.split("#")[1]]}

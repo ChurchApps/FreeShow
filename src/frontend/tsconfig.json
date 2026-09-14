@@ -1,7 +1,7 @@
 {
     "extends": "@tsconfig/svelte/tsconfig.json",
     "compilerOptions": {
-        "types": ["node", "svelte"],
+        "types": ["node", "svelte", "vite/client"],
         "sourceMap": true,
         "target": "ESNext",
         "stripInternal": true,

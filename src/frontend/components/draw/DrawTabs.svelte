@@ -8,7 +8,7 @@
     const tools: DrawTools[] = ["focus", "pointer", "particles", "zoom", "fill", "paint"]
 
     function keydown(e: KeyboardEvent) {
-        if (e.target?.closest(".edit") || e.ctrlKey || e.metaKey) return
+        if (e.target?.closest?.(".edit") || e.ctrlKey || e.metaKey) return
 
         let nextTab = -1
         let currentTabIndex = tools.findIndex((tab) => tab === $drawTool)

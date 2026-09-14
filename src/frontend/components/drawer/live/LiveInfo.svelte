@@ -6,7 +6,9 @@
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import { mediaRecorderIsPaused, stopMediaRecorder, toggleMediaRecorder } from "./recorder"
 
-    $: active = $drawerTabsData.media?.openedSubSubTab?.cameras || "cameras"
+    export let optionsOpen: boolean
+
+    $: active = $drawerTabsData.media?.openedSubSubTab?.inputs || "cameras"
 
     let videoElem
     $: if (videoElem) {
@@ -17,7 +19,7 @@
     }
 
     let paused = false
-    $: paused ? videoElem?.pause() : videoElem?.play()
+    $: paused ? videoElem?.pause() : videoElem?.play()?.catch(() => {})
 
     function updateSpecial(key: string, value: any) {
         special.update((a) => {
@@ -60,9 +62,11 @@
         <T id="empty.recording" />
     </div>
 {:else if active === "ndi"}
-    <div class="scroll" style="padding: 10px;">
-        <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={$special?.ndiInputGroups || ""} placeholder="public" on:change={(e) => updateSpecial("ndiInputGroups", e.detail)} />
-    </div>
+    {#if optionsOpen}
+        <div class="scroll" style="padding: 10px;">
+            <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={$special?.ndiInputGroups || ""} placeholder="public" on:change={(e) => updateSpecial("ndiInputGroups", e.detail)} />
+        </div>
+    {/if}
 {/if}
 
 <style>

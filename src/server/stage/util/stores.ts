@@ -16,7 +16,8 @@ export let updateTransposed: Writable<number> = writable(1)
 export let isConnected = writable(false)
 export let layouts: Writable<{ id: string; name: string; password: boolean }[] | null> = writable(null)
 export let selectedLayout = writable("")
-export let stageLayout: Writable<StageLayout | null> = writable(null)
+export let stageLayout: Writable<(StageLayout & { id?: string }) | null> = writable(null)
+export let passwordRequiredLayout: Writable<{ id: string; name: string } | null> = writable(null)
 
 export let output: Writable<Output | null> = writable(null)
 export let outputSlideCache: Writable<any> = writable({})
@@ -48,6 +49,8 @@ export let variables: Writable<any> = writable({})
 export let activeTimers: Writable<any[]> = writable([])
 export let timeFormat: Writable<"12" | "24"> = writable("24")
 export let progressData: Writable<any> = writable({})
+export let metronome: Writable<any> = writable({})
+export let metronomeTimer: Writable<{ beat: number; timeToNext: number }> = writable({ beat: 0, timeToNext: 0 })
 
 /////
 
@@ -59,6 +62,7 @@ export const _ = {
     layouts,
     selectedLayout,
     stageLayout,
+    passwordRequiredLayout,
 
     output,
     background,
@@ -74,7 +78,9 @@ export const _ = {
     layout,
     mediaCache,
     playingAudioData,
-    playingAudioTime
+    playingAudioTime,
+    metronome,
+    metronomeTimer
 }
 
 /////

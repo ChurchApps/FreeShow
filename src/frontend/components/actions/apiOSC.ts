@@ -17,7 +17,7 @@ const oscActions = {
     },
     show: {
         _id: (id: string) => ({
-            // open: () => ({ action: "id_select_show", id }),
+            open: () => ({ action: "id_select_show", id }),
             start: () => ({ action: "start_show", id })
             // slide: () => ({
             //     next: () => ({ action: "next_slide", id }),

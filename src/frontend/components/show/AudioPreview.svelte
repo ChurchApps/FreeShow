@@ -46,7 +46,7 @@
 
     onDestroy(() => {
         if (updaterInterval) clearInterval(updaterInterval)
-        if (rendering) cancelAnimationFrame(rendering)
+        stopVisualiser()
     })
 
     function setTime(e: any, newTime: number | null = null) {
@@ -73,22 +73,45 @@
 
     let mediaElem: HTMLElement | undefined
     let canvas: HTMLCanvasElement | undefined
-    $: if ($playingAudio[path]?.paused === false && canvas) renderVisualiser()
+    let ctx: CanvasRenderingContext2D | null = null
 
-    let isRendering = false
+    function stopVisualiser() {
+        if (rendering) {
+            cancelAnimationFrame(rendering)
+            rendering = 0
+        }
+        if (ctx && canvas) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
+        }
+    }
+
+    $: if (path) stopVisualiser()
+    $: if ($playingAudio[path]?.paused === false && canvas) renderVisualiser()
+    else if (canvas) stopVisualiser()
+
     let analysers: AnalyserNode[] = []
     let rendering = 0
     function renderVisualiser() {
-        analysers = AudioAnalyser.getAnalysers()
-        if (!canvas || !analysers.length) return
-        if (isRendering) return
+        stopVisualiser()
+
+        const currentPath = path
+        analysers = AudioAnalyser.getAnalysers(currentPath)
+        if (!canvas) return
+        if (!analysers.length) {
+            setTimeout(() => {
+                if (path === currentPath && $playingAudio[currentPath]?.paused === false && canvas) {
+                    renderVisualiser()
+                }
+            }, 50)
+            return
+        }
 
         const WIDTH = mediaElem?.clientWidth || window.innerWidth
         const HEIGHT = 80
 
         canvas.width = WIDTH
         canvas.height = HEIGHT
-        const ctx = canvas.getContext("2d")
+        ctx = canvas.getContext("2d")
         if (!ctx) return
 
         const bufferLength = analysers[0].frequencyBinCount // 128
@@ -97,41 +120,27 @@
 
         const dataArrays: Uint8Array[] = analysers.map(() => new Uint8Array(bufferLength))
 
-        // const padding = -0.5
-        // const barWidth = bufferLength ? (WIDTH / bufferLength - padding) * 1.3 : 0
-
         const padding = -0.5
         const barWidth = (WIDTH / bufferLength - padding) * 1.42 // 1.3
 
-        isRendering = true
         function renderFrame() {
-            // || ($playingAudio[path]?.paused !== false && allBars === 0)
-            if (!$playingAudio[path]) {
-                ctx!.clearRect(0, 0, WIDTH, HEIGHT)
-                isRendering = false
+            if (path !== currentPath || !$playingAudio[currentPath] || $playingAudio[currentPath].paused) {
+                stopVisualiser()
                 return
             }
 
             rendering = requestAnimationFrame(renderFrame)
 
             // update frequency data for all analysers
-            analysers.forEach((analyser, i) => analyser.getByteFrequencyData(dataArrays[i]))
+            analysers.forEach((analyser, i) => analyser.getByteFrequencyData(dataArrays[i] as Uint8Array<ArrayBuffer>))
 
             ctx!.clearRect(0, 0, WIDTH, HEIGHT)
 
             let x = 0
 
             for (let i = 0; i < bufferLength; i++) {
-                // if (i % 10 === 0 || i === bufferLength - 1) {
-                //     ctx.fillStyle = `rgb(255, 0, 0)`
-                //     ctx.fillRect(x, 0, barWidth, HEIGHT)
-                //     x += barWidth + padding
-                //     continue
-                // }
-
-                // const sum = dataArrays.reduce((total, array) => total + array[i], 0)
-                const sum = dataArrays[0][i] + dataArrays[1][i]
-                const percentage = Math.round(sum / dataArrays.length) / maxHeightValue
+                const sum = (dataArrays[0]?.[i] || 0) + (dataArrays[1]?.[i] || 0)
+                const percentage = Math.round(sum / (dataArrays.length || 1)) / maxHeightValue
                 const barHeight = HEIGHT * percentage
 
                 const r = 255 * percentage

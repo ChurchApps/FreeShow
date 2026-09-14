@@ -1,12 +1,12 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { type DelayConfig, setDelayEnabled, updateDelayConfig } from "../../../../audio/effects/audioDelay"
+    import { type DelayConfig, updateDelayConfig } from "../../../../audio/effects/audioDelay"
     import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
     import InputRow from "../../../input/InputRow.svelte"
     import MaterialNumberInput from "../../../inputs/MaterialNumberInput.svelte"
-    import MaterialToggleSwitch from "../../../inputs/MaterialToggleSwitch.svelte"
 
-    export let disabled: boolean = false
+    export let effectId: string = ""
+    export let channelId: string = ""
 
     let config: DelayConfig = {
         enabled: false,
@@ -18,21 +18,22 @@
     let unsubscribe: (() => void) | null = null
 
     onMount(() => {
-        unsubscribe = subscribeEffect("delay", (c: DelayConfig) => {
-            config = { ...c }
-        })
+        unsubscribe = subscribeEffect(
+            "delay",
+            (c: DelayConfig) => {
+                config = { ...c }
+            },
+            channelId,
+            effectId
+        )
     })
 
     onDestroy(() => {
         unsubscribe?.()
     })
 
-    function handleEnable(e: any) {
-        setDelayEnabled(e.detail)
-    }
-
     function handleChange(key: keyof DelayConfig, raw: number) {
-        updateDelayConfig({ [key]: raw })
+        updateDelayConfig({ [key]: raw }, channelId, effectId)
     }
 
     // ---- echo pulse visualisation ----
@@ -72,13 +73,9 @@
     $: wetPct = Math.round(config.wet * 100)
 </script>
 
-<div class="delay-container" style="--accent: #adad52;" class:disabled>
-    <MaterialToggleSwitch label="settings.enabled" checked={config.enabled} on:change={handleEnable} />
-
-    <div style="height: 5px;" />
-
+<div class="delay-container" style="--accent: #adad52;">
     <!-- Echo pulse visualisation -->
-    <div class="viz-wrap" class:viz-disabled={!config.enabled}>
+    <div class="viz-wrap">
         <div class="viz-svg-wrap" bind:clientWidth={canvasW}>
             <svg width={canvasW} height={canvasH} class="viz-svg">
                 <!-- Time grid -->
@@ -102,15 +99,15 @@
     <div style="height: 8px;" />
 
     <InputRow>
-        <MaterialNumberInput label="audio.delay" value={delayMs} min={10} max={2000} step={1} maxDecimals={0} showSlider sliderValues={{ min: 10, max: 2000, step: 1 }} {disabled} on:change={(e) => handleChange("delayTime", e.detail / 1000)} />
+        <MaterialNumberInput label="audio.delay" value={delayMs} min={10} max={2000} step={1} maxDecimals={0} showSlider sliderValues={{ min: 10, max: 2000, step: 1 }} on:change={(e) => handleChange("delayTime", e.detail / 1000)} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.feedback" value={feedbackPct} min={0} max={95} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 95, step: 1 }} {disabled} on:change={(e) => handleChange("feedback", e.detail / 100)} />
+        <MaterialNumberInput label="audio.feedback" value={feedbackPct} min={0} max={95} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 95, step: 1 }} on:change={(e) => handleChange("feedback", e.detail / 100)} />
     </InputRow>
 
     <InputRow>
-        <MaterialNumberInput label="audio.wet" value={wetPct} min={0} max={100} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 100, step: 1 }} {disabled} on:change={(e) => handleChange("wet", e.detail / 100)} />
+        <MaterialNumberInput label="audio.wet" value={wetPct} min={0} max={100} step={1} maxDecimals={0} showSlider sliderValues={{ min: 0, max: 100, step: 1 }} on:change={(e) => handleChange("wet", e.detail / 100)} />
     </InputRow>
 </div>
 
@@ -120,11 +117,6 @@
         user-select: none;
     }
 
-    .delay-container.disabled {
-        opacity: 0.5;
-        pointer-events: none;
-    }
-
     .viz-wrap {
         background: var(--primary-darker);
         border: 1px solid var(--primary-lighter);
@@ -132,10 +124,6 @@
         overflow: hidden;
         transition: opacity 0.2s ease;
         font-family: monospace;
-    }
-
-    .viz-wrap.viz-disabled {
-        opacity: 0.4;
     }
 
     .viz-svg-wrap {

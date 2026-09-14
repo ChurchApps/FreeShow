@@ -6,8 +6,11 @@ import type { SyncProviderId } from "../../electron/cloud/syncManager"
 import type { ContentFile, ContentLibraryCategory, ContentProviderId, MediaLicense } from "../../electron/contentProviders/base/types"
 import type { PCOFolderTreeNode } from "../../electron/contentProviders/planningCenter/request"
 import type { _store } from "../../electron/data/store"
+import type { EncoderDetection } from "../../electron/streaming/encoderDetection"
 import type { TimecodeMode } from "../../electron/timecode/timecode"
-import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, OS, SpotifyState, Subtitle } from "../Main"
+import type { AIProviderId, AiSetupOptions, EngineStatus } from "../ai/Ai"
+import type { SttEngineOptions } from "../ai/AiSettings"
+import type { ErrorLog, FileFolder, LessonsData, LyricSearchResult, MainFilePaths, Media, MediaCodecInfo, OS, SpotifyState, Subtitle } from "../Main"
 import type { Output } from "../Output"
 import type { Folders, Projects } from "../Projects"
 import type { Dictionary, Resolution, Themes } from "../Settings"
@@ -86,6 +89,7 @@ export enum Main {
     GET_SCREENS = "GET_SCREENS",
     GET_WINDOWS = "GET_WINDOWS",
     GET_DISPLAYS = "GET_DISPLAYS",
+    GET_GRAPHICS_DEVICES = "GET_GRAPHICS_DEVICES",
     OUTPUT = "OUTPUT",
     DOES_MEDIA_EXIST = "DOES_MEDIA_EXIST",
     GET_THUMBNAIL = "GET_THUMBNAIL",
@@ -169,7 +173,23 @@ export enum Main {
     TIMECODE_STATUS = "TIMECODE_STATUS",
     // Spotify
     SPOTIFY_GET_STATE = "SPOTIFY_GET_STATE",
-    SPOTIFY_COMMAND = "SPOTIFY_COMMAND"
+    SPOTIFY_COMMAND = "SPOTIFY_COMMAND",
+    // FFmpeg Download
+    FFMPEG_CHECK = "FFMPEG_CHECK",
+    FFMPEG_DOWNLOAD = "FFMPEG_DOWNLOAD",
+    // Streaming encoder
+    ENCODER_DETECT = "ENCODER_DETECT",
+    SET_RTMP_ENCODER = "SET_RTMP_ENCODER",
+    // AI
+    AI_GET_MODELS = "AI_GET_MODELS",
+    AI_GET_BIN = "AI_GET_BIN",
+    AI_LISTEN_START = "AI_LISTEN_START",
+    AI_LISTEN_STOP = "AI_LISTEN_STOP",
+    AI_AUDIO_DATA = "AI_AUDIO_DATA",
+    AI_GET_STATUS = "AI_GET_STATUS",
+    AI_SETUP = "AI_SETUP",
+    AI_SET_KEY = "AI_SET_KEY",
+    AI_LLM_COMPLETE = "AI_LLM_COMPLETE"
 }
 
 export interface MainSendPayloads {
@@ -268,6 +288,20 @@ export interface MainSendPayloads {
     // Spotify
     [Main.SPOTIFY_GET_STATE]: undefined
     [Main.SPOTIFY_COMMAND]: { command: "playpause" | "next" | "prev" | "seek" | "setVolume" | "pause"; value?: number }
+    // FFmpeg
+    [Main.FFMPEG_CHECK]: undefined
+    [Main.FFMPEG_DOWNLOAD]: undefined
+    // Streaming encoder
+    [Main.ENCODER_DETECT]: { force?: boolean } | undefined
+    [Main.SET_RTMP_ENCODER]: { outputId: string; encoder: string }
+    // AI
+    [Main.AI_GET_MODELS]: { providerId: AIProviderId }
+    [Main.AI_LISTEN_START]: { engine: string; engineOptions: SttEngineOptions }
+    [Main.AI_AUDIO_DATA]: { buffer: Uint8Array }
+    [Main.AI_GET_STATUS]: { engineId?: string; modelId?: string; customPath?: string } | undefined
+    [Main.AI_SETUP]: AiSetupOptions
+    [Main.AI_SET_KEY]: { providerId: AIProviderId; key: string }
+    [Main.AI_LLM_COMPLETE]: { providerId: AIProviderId; model: string; options: { systemPrompt?: string; prompt: string; jsonSchema?: any; temperature?: number; maxTokens?: number } }
 }
 
 export interface MainReturnPayloads {
@@ -314,12 +348,13 @@ export interface MainReturnPayloads {
     [Main.GET_EMPTY_SHOWS]: Promise<{ id: string; name: string }[] | undefined>
     [Main.FULL_SHOWS_LIST]: string[]
     [Main.GET_SCREENS]: Promise<{ name: string; id: string }[]>
+    [Main.GET_GRAPHICS_DEVICES]: Promise<{ value: string; label: string }[]>
     [Main.GET_WINDOWS]: Promise<{ name: string; id: string }[]>
     [Main.DOES_MEDIA_EXIST]: Promise<{ path: string; exists: boolean; creationTime?: number }>
     [Main.GET_THUMBNAIL]: Promise<{ output: string; input: string; size: number }>
     // [Main.PDF_TO_IMAGE]: Promise<string[]>
     [Main.READ_EXIF]: Promise<{ id: string; exif: ExifData | undefined }>
-    [Main.MEDIA_CODEC]: Promise<{ path: string; codecs: string[]; mimeType: string; mimeCodec: string }>
+    [Main.MEDIA_CODEC]: Promise<MediaCodecInfo>
     [Main.MEDIA_TRACKS]: Promise<{ path: string; tracks: Subtitle[] }>
     [Main.MEDIA_IS_DOWNLOADED]: Promise<{ path: string; buffer: Buffer | null; protectedUrl?: string | null; isDownloading?: boolean } | null>
     // [Main.MEDIA_BASE64]: { id: string; content: string }[]
@@ -344,7 +379,7 @@ export interface MainReturnPayloads {
     [Main.GET_TEAMS]: Promise<{ id: string; churchId: string; name: string }[]>
     [Main.CLOUD_DATA]: Promise<boolean>
     [Main.CLOUD_CHANGED]: Promise<boolean>
-    [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles: any[] }>
+    [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles?: any[] }>
     [Main.GET_CONVERSATION_ID]: Promise<string | null>
     [Main.SEND_SOCKET_MESSAGE]: Promise<boolean>
     // Provider-based routing
@@ -365,6 +400,18 @@ export interface MainReturnPayloads {
     // Spotify
     [Main.SPOTIFY_GET_STATE]: Promise<SpotifyState | null>
     [Main.SPOTIFY_COMMAND]: Promise<boolean>
+    // FFmpeg
+    [Main.FFMPEG_CHECK]: Promise<{ installed: boolean; path?: string }>
+    [Main.FFMPEG_DOWNLOAD]: Promise<{ success: boolean; error?: string }>
+    // Streaming encoder
+    [Main.ENCODER_DETECT]: Promise<EncoderDetection>
+    // AI
+    [Main.AI_GET_BIN]: Promise<{ path: string; name: string; size: number }[]>
+    [Main.AI_LISTEN_START]: Promise<{ started: boolean; error?: string }>
+    [Main.AI_GET_STATUS]: Promise<{ [key: string]: EngineStatus }>
+    [Main.AI_SETUP]: Promise<boolean>
+    [Main.AI_SET_KEY]: Promise<boolean>
+    [Main.AI_LLM_COMPLETE]: Promise<{ text: string; error?: string; code?: string; retryAfter?: number }>
 }
 
 ///////////

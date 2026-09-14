@@ -9,6 +9,7 @@
 
     export let id: string
     export let color: string = ""
+    export let title = ""
     export let size = 1
     export let white = false
     export let right = false
@@ -54,7 +55,7 @@
 </script>
 
 {#if select}
-    <svg class={$$props.class} class:flip class:white class:right class:fill class:select class:boxed on:click={click} on:keydown={triggerClickOnEnterSpace} tabindex={0} role="button" style="{$$props.style || ''};{color ? `color: ${color};` : ''}{boxed && color ? `background-color: ${fadeColor(color, 0.3)};` : ''}min-width: {width};{boxed ? `min-height: ${height};` : ''}" {width} {height} viewBox="0 0 {box} {box}">
+    <svg class={$$props.class} class:flip class:white class:right class:fill class:select class:boxed on:click={click} on:keydown={triggerClickOnEnterSpace} tabindex={0} role="button" style="{$$props.style || ''};{color ? `color: ${color};` : ''}{boxed && color ? `background-color: ${fadeColor(color, 0.3)};` : ''}min-width: {width};{boxed ? `min-height: ${height};` : ''}" {width} {height} viewBox="0 0 {box} {box}" data-title={title}>
         {#if !white && colorMid && colorEnd && colorStart}
             <defs>
                 <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -74,7 +75,7 @@
         {/if}
     </svg>
 {:else}
-    <svg class={$$props.class} class:flip class:white class:right class:fill class:boxed style="{$$props.style || ''};{color ? `color: ${color};` : ''}{boxed && color ? `background-color: ${fadeColor(color, 0.3)};` : ''}min-width: {width};{boxed ? `min-height: ${height};` : ''}" {width} {height} viewBox="0 0 {box} {box}">
+    <svg class={$$props.class} class:flip class:white class:right class:fill class:boxed style="{$$props.style || ''};{color ? `color: ${color};` : ''}{boxed && color ? `background-color: ${fadeColor(color, 0.3)};` : ''}min-width: {width};{boxed ? `min-height: ${height};` : ''}" {width} {height} viewBox="0 0 {box} {box}" data-title={title}>
         {#if !white && colorMid && colorEnd && colorStart}
             <defs>
                 <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">

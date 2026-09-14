@@ -2,7 +2,7 @@
     import { EXPORT } from "../../../../../types/Channels"
     import { Main } from "../../../../../types/IPC/Main"
     import type { Project } from "../../../../../types/Projects"
-    import { Show } from "../../../../../types/Show"
+    import type { Show } from "../../../../../types/Show"
     import { sendMain } from "../../../../IPC/main"
     import { activePopup, activeProject, projects, shows, showsCache, special } from "../../../../stores"
     import { wait } from "../../../../utils/common"
@@ -21,6 +21,9 @@
     import Loader from "../../Loader.svelte"
     import { convertShowSlidesToImages, exportFormats, exportTypes, getActiveShowId, getShowIdsFromType } from "./exportHelper"
     import PdfExport from "./PdfExport.svelte"
+    import { registerPopupSubmit } from "../../../../utils/popup"
+
+    registerPopupSubmit(exportClick)
 
     let previewShow: Show | null = null
     let showIds: string[] = []
@@ -76,6 +79,11 @@
 
     async function exportClick() {
         if (loading) return
+
+        // might not have selected an option
+        if (!exportFormat) return
+        const nothingToExport = exportType === "project" ? !$projects[$activeProject || ""]?.shows?.length : !showIds.length && exportType !== "all_shows"
+        if (nothingToExport) return
 
         // save all shows before exporting
         save()

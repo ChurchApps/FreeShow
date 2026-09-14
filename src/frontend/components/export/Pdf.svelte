@@ -7,7 +7,7 @@
     import MediaItem from "../slide/views/MediaItem.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
 
-    export let shows: Show[] = []
+    export let shows: any[] = []
     export let options: any = {}
     export let path = ""
 
@@ -65,7 +65,7 @@
         if ($currentWindow === "pdf") exportPDF()
     }
 
-    function getPagesForShow(show: Show, showOptions: any) {
+    function getPagesForShow(show: any, showOptions: any) {
         if (show && show.type === "section") return 1
         if (!show || !layoutSlides[show.id!]) return 0
         const slides = layoutSlides[show.id!]
@@ -169,10 +169,8 @@
                 slide.items?.forEach((item) => {
                     item.lines?.forEach((line) => {
                         line.chords?.forEach((chord) => {
-                            const key = chord.key || chord.chord || ""
-                            if (key) {
-                                chordCounts[key] = (chordCounts[key] || 0) + 1
-                            }
+                            const key = chord.key
+                            if (key) chordCounts[key] = (chordCounts[key] || 0) + 1
                         })
                     })
                 })
@@ -284,7 +282,7 @@
                                 {#if show.media?.[slide.data?.background]?.path}
                                     <div class="media" style="height: 100%;zoom: {1 / ratio};">
                                         <!-- {filter} {flipped} {fit} -->
-                                        <MediaItem id="" item={{ style: "", type: "media", src: show.media[slide.data.background].path }} mirror />
+                                        <MediaItem item={{ style: "", type: "media", src: show.media[slide.data.background].path }} preview />
                                     </div>
                                 {/if}
 
@@ -301,7 +299,10 @@
         {:else if options.type === "chordSheet"}
             <!-- Chord Sheet Export - Professional layout -->
             {#each renderedShows as show}
-                <div class="page chord-sheet-page" style="padding: {options.margin || 20}px; --font-size: {options.fontSize || 12}px; --chord-font-size: {options.chordFontSize || 10}px; font-size: {options.fontSize || 12}px; line-height: {options.spacing || 1.5}; {show.type === 'section' || show.type === 'image' || show.type === 'video' || show.type === 'audio' ? 'justify-content: center; align-items: center; text-align: center; background: white;' : ''}">
+                <div
+                    class="page chord-sheet-page"
+                    style="padding: {options.margin || 20}px; --font-size: {options.fontSize || 12}px; --chord-font-size: {options.chordFontSize || 10}px; --chord-color: {options.chordColor || '#0066cc'}; font-size: {options.fontSize || 12}px; line-height: {options.spacing || 1.5}; {show.type === 'section' || show.type === 'image' || show.type === 'video' || show.type === 'audio' ? 'justify-content: center; align-items: center; text-align: center; background: white;' : ''}"
+                >
                     {#if show.type === "section"}
                         <div class="section-chord-divider" style="max-width: 80%; width: 100%;">
                             {#if show.color}
@@ -413,7 +414,7 @@
                             </div>
                         {/if}
                         {#each layoutSlides[show.id || ""] as slide, i}
-                            <div class="slide" class:padding={options.type !== "slides" ? i === 0 : i < options.grid[0]} style={options.type !== "text" ? `height: calc(100vh / ${options.grid[1]} - 0.1px);` + (options.type !== "slides" ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}>
+                            <div class="slide" class:padding={options.type === "text" ? true : options.type !== "slides" ? i === 0 : i < options.grid[0]} class:no-break={options.type === "text"} style={options.type !== "text" ? `height: calc(100vh / ${options.grid[1]} - 0.1px);` + (options.type !== "slides" ? "" : `width: calc(100% / ${options.grid[0]});`) : ""}>
                                 <!-- TODO: different slide heights! -->
                                 <!-- style={settings.slides ? `height: calc(842pt / ${settings.grid[1]});` : "" + settings.text ? "" : `width: calc(100% / ${settings.grid[0]});`} -->
                                 {#if options.groups}
@@ -433,7 +434,7 @@
                                                 <div class="media" style="height: 100%;zoom: {1 / ratio};">
                                                     <!-- {filter} {flipped} {fit} -->
                                                     <!-- <Media path={show.media[slide.data.background].path || ""} mirror /> -->
-                                                    <MediaItem id="" item={{ style: "", type: "media", src: show.media[slide.data.background].path }} mirror />
+                                                    <MediaItem item={{ style: "", type: "media", src: show.media[slide.data.background].path }} preview />
                                                 </div>
                                             {/if}
 
@@ -476,12 +477,19 @@
                         {/if}
                     {/if}
                     {#if options.metadata}
-                        <div style="position: absolute;top: calc(100vh * {showPages} - 25px);width: 100%;">
-                            <p style="text-align: center;font-size: 12px;opacity: 0.8;">
-                                <!-- metaDisplay is only used here temporarily -->
+                        {#if options.type === "text"}
+                            <!-- text export flows freely, so its real height isn't a multiple of 100vh - render in normal flow instead of guessing an absolute offset -->
+                            <p style="text-align: center;font-size: 12px;opacity: 0.8;margin: 20px 0 0;">
                                 {show.metaDisplay}
                             </p>
-                        </div>
+                        {:else}
+                            <div style="position: absolute;top: calc(100vh * {showPages} - 25px);width: 100%;">
+                                <p style="text-align: center;font-size: 12px;opacity: 0.8;">
+                                    <!-- metaDisplay is only used here temporarily -->
+                                    {show.metaDisplay}
+                                </p>
+                            </div>
+                        {/if}
                     {/if}
                 </div>
             {/each}
@@ -551,6 +559,10 @@
     }
     .slide.padding {
         padding-top: 30px;
+    }
+    .slide.no-break {
+        break-inside: avoid;
+        page-break-inside: avoid;
     }
 
     .slide .group {
@@ -721,7 +733,7 @@
     .chord-line .line-content {
         font-family: "Consolas", "Monaco", "Courier New", monospace;
         font-weight: bold;
-        color: #0066cc;
+        color: var(--chord-color, #0066cc);
         font-size: var(--chord-font-size, 10px);
         margin-bottom: 1px;
         line-height: 1.1;

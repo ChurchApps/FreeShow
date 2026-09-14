@@ -1,7 +1,9 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { activePage, activePopup, currentOutputSettings, popupData, stageShows } from "../../../stores"
     import { keysToID, sortByName } from "../../helpers/array"
     import T from "../../helpers/T.svelte"
+    import SkeletonStageSlide from "../../stage/SkeletonStageSlide.svelte"
     import StageSlide from "../../stage/StageSlide.svelte"
     import Center from "../../system/Center.svelte"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
@@ -15,6 +17,27 @@
     let stageLayouts = sortByName(keysToID($stageShows)).filter((a) => profile[a.id] !== "none" && Object.values($stageShows[a.id]?.items).some((a) => a.currentOutput?.source !== $currentOutputSettings))
 
     let active = $popupData.active || ""
+
+    // lazy loader
+    let lazyLoader = 0
+    let timeout: NodeJS.Timeout | null = null
+    let loaded = false
+
+    onDestroy(() => {
+        if (timeout) clearTimeout(timeout)
+    })
+
+    $: if (!loaded && stageLayouts?.length) {
+        if (lazyLoader >= stageLayouts.length) {
+            loaded = true
+        } else {
+            if (timeout) clearTimeout(timeout)
+            timeout = setTimeout(() => {
+                const batch = lazyLoader === 0 ? 2 : Math.min(16, lazyLoader * 2)
+                lazyLoader += batch
+            }, lazyLoader === 0 ? 80 : 40)
+        }
+    }
 
     function select(selectedId: string) {
         active = selectedId
@@ -44,9 +67,13 @@
 <div style="position: relative;height: 100%;width: calc(100vw - (var(--navigation-width) + 20px) * 2);overflow-y: auto;">
     {#if stageLayouts.length}
         <div class="grid">
-            {#each stageLayouts as layout}
+            {#each stageLayouts as layout, i (layout.id)}
                 <div class="stageLayout" role="button" tabindex="0" on:click={() => select(layout.id)} on:keydown={triggerClickOnEnterSpace}>
-                    <StageSlide id={layout.id} {layout} active={active === layout.id} selectable={false} />
+                    {#if loaded || i < lazyLoader}
+                        <StageSlide id={layout.id} {layout} active={active === layout.id} selectable={false} />
+                    {:else}
+                        <SkeletonStageSlide {layout} active={active === layout.id} />
+                    {/if}
                 </div>
             {/each}
         </div>

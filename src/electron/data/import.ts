@@ -9,7 +9,7 @@ import WordExtractor from "word-extractor"
 import { ToMain } from "../../types/IPC/ToMain"
 import { sendToMain } from "../IPC/main"
 import { pptToShow } from "../output/ppt/pptToShow"
-import { doesPathExist, getDataFolderPath, getExtension, readFileAsync, readFileBufferAsync } from "../utils/files"
+import { asyncPool, doesPathExist, getDataFolderPath, getExtension, readFileAsync, readFileBufferAsync } from "../utils/files"
 import { detectFileType } from "./bibleDetecter"
 import { filePathHashCode } from "./thumbnails"
 import { decompressZip, decompressZipStream, isZip } from "./zip"
@@ -70,7 +70,7 @@ const specialImports = {
     mdb: async (files: string[]) => {
         const data: FileData[] = []
 
-        await Promise.all(files.map(async (filePath) => await mdbToFile(filePath)))
+        await asyncPool(50, files, async (filePath) => await mdbToFile(filePath))
 
         async function mdbToFile(filePath: string) {
             const buffer = await readFileBufferAsync(filePath)
@@ -88,9 +88,6 @@ const specialImports = {
         return data
     }
 }
-
-// protobufjs (.pro) import can't handle close to 1000 files at once
-const BATCH_SIZE = 500
 
 export async function importShow(id: string, files: string[] | null, importSettings: any) {
     if (!files?.length) return
@@ -116,7 +113,10 @@ export async function importShow(id: string, files: string[] | null, importSetti
 
     if (id === "songbeamer") {
         const encoding = importSettings.encoding
-        const fileContents = await Promise.all(files.map(async (file) => await readFile(file, encoding)))
+        const fileContents: any[] = []
+        await asyncPool(20, files, async (file) => {
+            fileContents.push(await readFile(file, encoding))
+        })
         const custom = {
             files: fileContents,
             length: fileContents.length,
@@ -146,11 +146,10 @@ export async function importShow(id: string, files: string[] | null, importSetti
     if (importId in specialImports) data = await specialImports[importId as keyof typeof specialImports](files)
     else {
         // TXT | FreeShow | ProPresenter | VidoePsalm | OpenLP | OpenSong | XML Bible | Lessons.church
-        for (let i = 0; i < files.length; i += BATCH_SIZE) {
-            const batch = files.slice(i, i + BATCH_SIZE)
-            const batchData = await Promise.all(batch.map((file) => readFile(file, "utf8", id)))
-            data.push(...batchData)
-        }
+        await asyncPool(20, files, async (file) => {
+            const batchData = await readFile(file, "utf8", id)
+            data.push(batchData)
+        })
     }
 
     if (!data.length) return
@@ -189,15 +188,16 @@ async function importProject(files: string[]) {
     // some .project files are plain JSON and others are zip
     const zipFiles: string[] = []
     const jsonFiles: string[] = []
-    await Promise.all(
-        files.map(async (file) => {
-            const zip = await isZip(file)
-            if (zip) zipFiles.push(file)
-            else jsonFiles.push(file)
-        })
-    )
+    await asyncPool(20, files, async (file) => {
+        const zip = await isZip(file)
+        if (zip) zipFiles.push(file)
+        else jsonFiles.push(file)
+    })
 
-    const data: FileData[] = await Promise.all(jsonFiles.map(async (file) => await readFile(file)))
+    const data: FileData[] = []
+    await asyncPool(20, jsonFiles, async (file) => {
+        data.push(await readFile(file))
+    })
 
     const importFolder = getDataFolderPath("imports", "Projects")
 
@@ -220,15 +220,16 @@ async function importTemplate(files: string[]) {
     // some .fstemplate files are plain JSON and others are zip
     const zipFiles: string[] = []
     const jsonFiles: string[] = []
-    await Promise.all(
-        files.map(async (file) => {
-            const zip = await isZip(file)
-            if (zip) zipFiles.push(file)
-            else jsonFiles.push(file)
-        })
-    )
+    await asyncPool(20, files, async (file) => {
+        const zip = await isZip(file)
+        if (zip) zipFiles.push(file)
+        else jsonFiles.push(file)
+    })
 
-    const data: FileData[] = await Promise.all(jsonFiles.map(async (file) => await readFile(file)))
+    const data: FileData[] = []
+    await asyncPool(20, jsonFiles, async (file) => {
+        data.push(await readFile(file))
+    })
 
     const importFolder = getDataFolderPath("imports", "Templates")
 

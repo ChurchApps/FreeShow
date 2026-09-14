@@ -11,7 +11,7 @@
     // path starting at "/" auto completes to app root, but should be file://
     $: if (typeof path === "string" && path[0] === "/") path = `file://${path}`
 
-    $: mediaStyleString = `object-fit: ${mediaStyle.fit || "contain"};filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});`
+    $: mediaStyleString = `object-fit: ${mediaStyle.fit || "contain"};filter: ${mediaStyle.filter || ""};transform: scale(${mediaStyle.flipped ? "-1" : "1"}, ${mediaStyle.flippedY ? "-1" : "1"});mix-blend-mode: ${mediaStyle.blend || "normal"};`
 </script>
 
 {#key path}

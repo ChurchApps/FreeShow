@@ -86,6 +86,8 @@ export function clipboardToProject() {
                 if (!a[currentProject]) return a
 
                 a[currentProject].shows = [...a[currentProject].shows, ...items]
+
+                a[currentProject].modified = Date.now()
                 return a
             })
         })

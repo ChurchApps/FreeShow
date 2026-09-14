@@ -4,7 +4,11 @@ import { dictionary } from "../../stores"
 
 export function secondsToTime(seconds: number): Time {
     // turn to positive (timers have custom negative placed before)
-    seconds = Math.abs(seconds)
+    if (!Number.isFinite(seconds) || isNaN(seconds)) {
+        seconds = 0
+    } else {
+        seconds = Math.abs(seconds)
+    }
 
     const d: number = Math.floor(seconds / (3600 * 24))
     const h: number = Math.floor(seconds / 3600 - d * 24)
@@ -24,18 +28,16 @@ export function joinTime(time: Time, ms = false): string {
     return arr.join(":")
 }
 
-export function joinTimeBig(time: number, showHours = true) {
+export function joinTimeBig(time: number, showHours = true, padding = true) {
     const allTimes = secondsToTime(time)
 
-    const days = allTimes.d === 0 ? "" : allTimes.d.toString() + ", "
-    const hours = showHours ? (allTimes.h === "00" ? "" : allTimes.h) : ""
-    const minutes = padString(Number(allTimes.m) + (showHours ? 0 : Number(allTimes.h) * 60))
-    let timeValue = days + [hours, minutes, allTimes.s].join(":")
-    while (timeValue[0] === ":") timeValue = timeValue.slice(1, timeValue.length)
+    const days = allTimes.d ? allTimes.d + ", " : ""
+    const h = showHours && Number(allTimes.h) ? (padding ? allTimes.h : Number(allTimes.h).toString()) : ""
 
-    timeValue = timeValue.replace(" :", " ")
+    const mins = Number(allTimes.m) + (showHours ? 0 : Number(allTimes.h) * 60)
+    const m = h || padding ? padString(mins) : mins.toString()
 
-    return timeValue
+    return (days + [h, m, allTimes.s].filter(Boolean).join(":")).replace(" :", " ")
 }
 
 export function dateToString(date: string | number | Date, full = false, d = get(dictionary)): string {
@@ -86,8 +88,8 @@ export function getDateAndTimeString(time: number) {
     return dateToString(time) + " " + addZero(date.hours) + ":" + addZero(date.minutes)
 }
 
-export const padString = (a: number) => a.toString().padStart(2, "0")
-export const addZero = (a: number) => ("0" + String(a)).slice(-2)
+export const padString = (a: number) => (Number.isFinite(a) ? a.toString().padStart(2, "0") : "00")
+export const addZero = (a: number) => (Number.isFinite(a) ? ("0" + String(a)).slice(-2) : "00")
 // const clip = (a: number) => Math.max(0, Math.min(59, a))
 
 export function splitDate(time: Date) {

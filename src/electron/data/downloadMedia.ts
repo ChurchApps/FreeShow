@@ -168,6 +168,14 @@ async function startDownload(data: DownloadFile) {
     makeDir(path.dirname(data.path))
     console.info(`Downloading lessons media: ${file.name}\n${url}`)
 
+    const timeout = setTimeout(
+        () => {
+            console.error(`File timed out: ${file.name}`)
+            next()
+        },
+        60 * 8 * 1000
+    ) // 8 minutes timeout
+
     try {
         await streamDownload(url, data.path)
         downloadCount++
@@ -198,14 +206,6 @@ async function startDownload(data: DownloadFile) {
         addToDownloadQueue(data)
         next()
     }
-
-    const timeout = setTimeout(
-        () => {
-            console.error(`File timed out: ${file.name}`)
-            next()
-        },
-        60 * 8 * 1000
-    ) // 8 minutes timeout
 }
 
 /// //

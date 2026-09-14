@@ -1,9 +1,12 @@
 <script lang="ts">
+    import { resetAudioRouting } from "../../audio/routing/audioRoutingInit"
     import { dictionary, settingsTab } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import Tip from "../main/Tip.svelte"
+    import SmartSettings from "../../ai/components/settings/SmartSettings.svelte"
+    import AudioRouting from "./tabs/AudioRouting.svelte"
     import Connection from "./tabs/Connection.svelte"
     import Files from "./tabs/Files.svelte"
     import FilesButtons from "./tabs/FilesButtons.svelte"
@@ -14,8 +17,10 @@
     import OutputsGeneral from "./tabs/OutputsGeneral.svelte"
     import OutputsTabs from "./tabs/OutputsTabs.svelte"
     import Profiles from "./tabs/Profiles.svelte"
+    import ProfilesButtons from "./tabs/ProfilesButtons.svelte"
     import ProfilesTabs from "./tabs/ProfilesTabs.svelte"
     import Styles from "./tabs/Styles.svelte"
+    import StylesButtons from "./tabs/StylesButtons.svelte"
     import StylesTabs from "./tabs/StylesTabs.svelte"
     import Theme from "./tabs/Theme.svelte"
     import ThemeButtons from "./tabs/ThemeButtons.svelte"
@@ -32,10 +37,12 @@
     const hints = {
         display_settings: "settings.outputs_hint",
         styles: "settings.styles_hint",
-        profiles: "profile.profiles_hint"
+        audio: "settings.audio_hint",
+        profiles: "profile.profiles_hint",
+        ai: "ai.hint<br><br>ai.privacy_details"
     }
 
-    let showMore = false
+    let showGlobalOutputOptions = false
 </script>
 
 <main>
@@ -47,27 +54,35 @@
                 <Tip type="info" value={translateText(hints[tabId])} style="opacity: 0.7;" hiddenText white />
             {/if}
 
-            {#if tabId === "theme"}
+            {#if tabId === "styles"}
+                <StylesButtons />
+            {:else if tabId === "audio"}
+                <MaterialButton title="actions.reset" icon="reset" on:click={resetAudioRouting} />
+            {:else if tabId === "profiles"}
+                <ProfilesButtons />
+            {:else if tabId === "theme"}
                 <ThemeButtons />
             {:else if tabId === "display_settings"}
-                <MaterialButton title="create_show.more_options" on:click={() => (showMore = !showMore)}>
-                    <Icon id="options" white={!showMore} />
+                <MaterialButton title="create_show.more_options" on:click={() => (showGlobalOutputOptions = !showGlobalOutputOptions)}>
+                    <Icon id="options" white={!showGlobalOutputOptions} />
                 </MaterialButton>
             {/if}
         </div>
     </div>
 
-    <div class="scroll" on:scroll={scroll}>
+    <div class="scroll" style={tabId === "audio" ? "--padding: 20px;" : ""} on:scroll={scroll}>
         {#if tabId === "general"}
             <General />
         {:else if tabId === "display_settings"}
-            {#if showMore}
+            {#if showGlobalOutputOptions}
                 <OutputsGeneral />
             {:else}
                 <Outputs />
             {/if}
         {:else if tabId === "styles"}
             <Styles />
+        {:else if tabId === "audio"}
+            <AudioRouting />
         {:else if tabId === "connection"}
             <Connection />
         {:else if tabId === "files"}
@@ -76,28 +91,30 @@
             <Profiles />
         {:else if tabId === "theme"}
             <Theme />
+        {:else if tabId === "ai"}
+            <SmartSettings />
         {:else if tabId === "other"}
             <Other />
         {/if}
     </div>
 
-    {#if !showMore}
-        <div class="tabs">
-            {#if tabId === "display_settings"}
+    <div class="tabs">
+        {#if tabId === "display_settings"}
+            {#if !showGlobalOutputOptions}
                 <OutputsTabs />
-            {:else if tabId === "styles"}
-                <StylesTabs />
-            {:else if tabId === "files"}
-                <FilesButtons />
-            {:else if tabId === "profiles"}
-                <ProfilesTabs />
-            {:else if tabId === "theme"}
-                <ThemeTabs />
-            {:else if tabId === "other"}
-                <OtherButtons />
             {/if}
-        </div>
-    {/if}
+        {:else if tabId === "styles"}
+            <StylesTabs />
+        {:else if tabId === "files"}
+            <FilesButtons />
+        {:else if tabId === "profiles"}
+            <ProfilesTabs />
+        {:else if tabId === "theme"}
+            <ThemeTabs />
+        {:else if tabId === "other"}
+            <OtherButtons />
+        {/if}
+    </div>
 </main>
 
 <style>
@@ -141,5 +158,21 @@
 
     .tabs {
         z-index: 1;
+    }
+
+    @media (max-width: 1300px) {
+        main {
+            --padding: 100px;
+        }
+    }
+    @media (max-width: 1100px) {
+        main {
+            --padding: 50px;
+        }
+    }
+    @media (max-width: 800px) {
+        main {
+            --padding: 20px;
+        }
     }
 </style>

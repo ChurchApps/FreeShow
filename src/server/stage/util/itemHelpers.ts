@@ -14,7 +14,7 @@ export function getSlideTextItems(stageLayout: StageLayout, item: StageItem, _up
     const slideOffset = Number(item.slideOffset || 0)
     const currentOutput = get(output)
     const currentSlide = currentOutput?.out?.slide || (slideOffset !== 0 ? get(outputSlideCache)[currentOutput?.id || ""] || null : null)
-    const showRef = currentSlide ? getLayoutRef(currentSlide.id) : []
+    const showRef = currentSlide ? getLayoutRef(currentSlide.id, currentSlide.layout, get(showsCache)) : []
 
     const slideIndex = currentSlide && currentSlide.index !== undefined && currentSlide.id !== "temp" ? currentSlide.index : null
     const customOffset = getStageTextLayoutOffset(showRef, slideOffset, slideIndex)

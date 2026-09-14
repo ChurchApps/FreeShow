@@ -7,7 +7,11 @@ export function clone<T>(object: T): T {
     try {
         return structuredClone(object)
     } catch {
-        return object
+        try {
+            return JSON.parse(JSON.stringify(object))
+        } catch {
+            return object
+        }
     }
 }
 

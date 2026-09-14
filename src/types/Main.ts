@@ -8,6 +8,7 @@ export interface Config {
     bounds: Electron.Rectangle
     dataPath: string | null
     disableHardwareAcceleration: boolean | null
+    graphicsDevice: string | null
     autoErrorReporting?: boolean
     mediaFolderPath?: string
 }
@@ -97,6 +98,7 @@ export type SelectIds =
     | "effect"
     | "screen"
     | "ndi"
+    | "omt"
     | "camera"
     | "microphone"
     | "player"
@@ -112,8 +114,10 @@ export type SelectIds =
     | "style"
     | "output"
     | "profile"
+    | "audio_channel"
     | "tag"
     | "bible_book"
+    | "calendar"
 
 export interface Selected {
     id: null | SelectIds
@@ -153,6 +157,7 @@ export interface SlidesOptions {
 export interface MediaOptions {
     columns: number
     mode: "grid" | "list"
+    view?: "all" | "image" | "video" | "folder"
 }
 
 export interface ActiveEdit {
@@ -176,6 +181,7 @@ export interface MediaStyle {
     filter?: string
     flipped?: boolean
     flippedY?: boolean
+    blend?: string
     fit?: MediaFit | ""
     fitOptions?: any
     speed?: string
@@ -200,11 +206,20 @@ export interface MediaStyle {
     licenseExpiresAt?: number // unix ms; content provider license is valid while Date.now() < licenseExpiresAt
     pingbackUrl?: string // URL for sending pingback after playback
     cropping?: Partial<Cropping>
+    style?: string // used to transfer styles from main item to cropped part (like border radius)
 
     ignoreLayer?: boolean // foreground background type
 }
 
 export type AudioType = "music" | "effect"
+
+// media codec
+export interface MediaCodecInfo {
+    path: string
+    codecs: string[]
+    mimeType: string
+    mimeCodec: string
+}
 
 // subtitles/captions
 export interface Subtitle {
@@ -384,6 +399,7 @@ export type Popups =
     | "delete_duplicated_shows"
     | "icon"
     | "manage_groups"
+    | "manage_fonts"
     | "manage_icons"
     | "manage_colors"
     | "manage_metadata"
@@ -399,6 +415,8 @@ export type Popups =
     | "variable"
     | "interaction_input"
     | "audio_stream"
+    | "audio_effect"
+    | "add_audio_effect"
     | "now_playing"
     | "aspect_ratio"
     | "max_lines"
@@ -406,13 +424,15 @@ export type Popups =
     | "media_fit"
     | "metadata_display"
     | "import_scripture"
+    | "import_calendar"
     | "create_collection"
     | "edit_event"
     | "edit_chart"
     | "choose_chord"
     | "choose_screen"
     | "choose_camera"
-    | "choose_output"
+    | "choose_output_input"
+    | "choose_output_type"
     | "choose_style"
     | "change_output_values"
     | "output_selector"
@@ -452,6 +472,8 @@ export type Popups =
     | "cleaning_utility"
     | "pco_picker"
     | "sync_folders"
+    | "node_options"
+    | "ai_model_manager"
 
 export type DefaultProjectNames = "date" | "today" | "sunday" | "week" | "custom" | "blank"
 

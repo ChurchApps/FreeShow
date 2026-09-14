@@ -1,5 +1,6 @@
 import fs from "fs"
 import path from "path"
+import type { Readable } from "stream"
 import yauzl from "yauzl"
 import yazl from "yazl"
 import { ToMain } from "../../types/IPC/ToMain"
@@ -12,15 +13,48 @@ import { createFolder, getExtension } from "../utils/files"
 export function compressToZip(entries: { name: string; content?: Buffer | string; filePath?: string }[], outputPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
         const zipfile = new yazl.ZipFile()
+        const writeStream = fs.createWriteStream(outputPath)
+        let settled = false
+
+        zipfile.outputStream.pipe(writeStream)
+
+        // "close" instead of "finish" so the file is fully closed before the caller uploads/opens it
+        writeStream.on("close", () => {
+            if (settled) return
+            settled = true
+            resolve()
+        })
+
+        writeStream.on("error", (err) => {
+            sendToMain(ToMain.ALERT, `Failed to create zip file: ${outputPath}`)
+            fail(err)
+        })
+
+        // yazl reads added files lazily and reports failures on the ZipFile itself.
+        zipfile.on("error", (err: Error) => fail(err))
 
         entries.forEach((entry) => {
             try {
                 if (entry.filePath) {
+                    // one unreadable file should not fail the entire zip,
+                    // this also catches folders, which yazl refuses to add
+                    const stats = fs.statSync(entry.filePath, { throwIfNoEntry: false })
+                    if (!stats?.isFile()) {
+                        console.error(`Skipped file in zip: ${entry.name} (${entry.filePath})`)
+                        return
+                    }
+
                     zipfile.addFile(entry.filePath, entry.name)
-                } else if (entry.content) {
+                    return
+                }
+
+                if (entry.content !== undefined && entry.content !== null) {
                     const buffer = typeof entry.content === "string" ? Buffer.from(entry.content, "utf-8") : entry.content
                     zipfile.addBuffer(buffer, entry.name)
+                    return
                 }
+
+                console.error(`Skipped empty zip entry: ${entry.name}`)
             } catch (err) {
                 console.error(`Error adding to zip: ${entry.name}`, err)
             }
@@ -28,24 +62,19 @@ export function compressToZip(entries: { name: string; content?: Buffer | string
 
         zipfile.end()
 
-        const writeStream = fs.createWriteStream(outputPath)
-
-        zipfile.outputStream.pipe(writeStream)
-
-        writeStream.on("finish", () => {
-            resolve()
-        })
-
-        writeStream.on("error", (err) => {
+        function fail(err: Error) {
+            if (settled) return
+            settled = true
             console.error(err)
-            sendToMain(ToMain.ALERT, `Failed to create zip file: ${outputPath}`)
-            reject(err)
-        })
 
-        zipfile.outputStream.on("error", (err) => {
-            console.error(err)
+            // stop yazl from pumping remaining entries
+            zipfile.outputStream.unpipe(writeStream)
+            ;(zipfile.outputStream as Readable).destroy()
+
+            // clean up output file and reject promise
+            fs.rmSync(outputPath, { force: true })
             reject(err)
-        })
+        }
     })
 }
 
@@ -102,7 +131,7 @@ export async function decompressZipStream(file: string, asBuffer = false, option
             resolve(data)
         }
 
-        yauzl.open(file, { lazyEntries: true }, (err, zipfile) => {
+        yauzl.open(file, { lazyEntries: true, decodeStrings: false } as any, (err, zipfile) => {
             if (err) {
                 rejectOnce(err)
                 return
@@ -116,13 +145,15 @@ export async function decompressZipStream(file: string, asBuffer = false, option
             zipfile.on("entry", (entry: yauzl.Entry) => {
                 if (hasFinished) return
 
+                const fileName = (entry.fileName as any as Buffer).toString("utf8")
+
                 // Skip directories
-                if (/\/$/.test(entry.fileName)) {
+                if (/\/$/.test(fileName)) {
                     zipfile.readEntry()
                     return
                 }
 
-                processEntry(entry, zipfile, data, asBuffer, options)
+                processEntry(entry, zipfile, data, asBuffer, options, fileName)
             })
 
             zipfile.on("end", resolveOnce)
@@ -138,13 +169,14 @@ export async function decompressZipStream(file: string, asBuffer = false, option
 function sanitizeZipPath(name: string): string {
     return name
         .replace(/\\/g, "/")
+        .replace(/^([a-zA-Z]:|\/)/, "") // strip leading C: or /
         .split("/")
         .filter((segment) => segment && segment !== "." && segment !== "..")
         .join("/")
 }
 
-function processEntry(entry: yauzl.Entry, zipfile: yauzl.ZipFile, data: { content: Buffer | string; name: string; extension: string }[], asBuffer: boolean, options: DecompressStreamOptions | undefined) {
-    const name = entry.fileName
+function processEntry(entry: yauzl.Entry, zipfile: yauzl.ZipFile, data: { content: Buffer | string; name: string; extension: string }[], asBuffer: boolean, options: DecompressStreamOptions | undefined, fileName: string) {
+    const name = fileName
     const safeName = sanitizeZipPath(name)
     const extension = getExtension(name)
     // pass the sanitized name to callers that build a destination path, so "../" entries can't escape the target folder
@@ -239,13 +271,14 @@ function bufferInMemory(readStream: NodeJS.ReadableStream, name: string, extensi
 
 export function getZipModifiedDates(filePath: string): Promise<{ [key: string]: Date }> {
     return new Promise((resolve) => {
-        yauzl.open(filePath, { lazyEntries: true }, (err, zipfile) => {
+        yauzl.open(filePath, { lazyEntries: true, decodeStrings: false } as any, (err, zipfile) => {
             if (err || !zipfile) return resolve({})
 
             const modified: { [key: string]: Date } = {}
 
             zipfile.on("entry", (entry: yauzl.Entry) => {
-                modified[sanitizeZipPath(entry.fileName)] = entry.getLastModDate()
+                const fileName = (entry.fileName as any as Buffer).toString("utf8")
+                modified[sanitizeZipPath(fileName)] = entry.getLastModDate()
                 zipfile.readEntry()
             })
 

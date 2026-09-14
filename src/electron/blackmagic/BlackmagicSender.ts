@@ -15,6 +15,7 @@ interface PlaybackData {
     scheduledFrames: number
     pixelFormat: string
     displayMode: string
+    colorSpace?: string
     targetSize: Size
     expectedVideoFrameSize: number
     expectedAudioSampleCount: number
@@ -90,7 +91,7 @@ export class BlackmagicSender {
         return Object.values(this.audioQueuesByOutput).reduce((sum, q) => sum + q.length, 0)
     }
 
-    static initialize(outputId?: string, deviceIndex?: number, displayModeName?: string, pixelFormat?: string, enableKeying?: boolean, audioChannels = 2) {
+    static initialize(outputId?: string, deviceIndex?: number, displayModeName?: string, pixelFormat?: string, enableKeying?: boolean, audioChannels = 2, colorSpace = "rec709") {
         // Start global memory cleanup
         if (!this.globalCleanupTimer) {
             this.globalCleanupTimer = setInterval(() => {
@@ -100,14 +101,14 @@ export class BlackmagicSender {
 
         // If parameters are provided, handle the old initialization logic
         if (outputId && deviceIndex !== undefined && displayModeName && pixelFormat) {
-            return this.initializeDevice(outputId, deviceIndex, displayModeName, pixelFormat, enableKeying || false, audioChannels)
+            return this.initializeDevice(outputId, deviceIndex, displayModeName, pixelFormat, enableKeying || false, audioChannels, colorSpace)
         }
 
         // Return undefined if no device-specific initialization
         return Promise.resolve(undefined)
     }
 
-    static async initializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
+    static async initializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2, colorSpace = "rec709") {
         const currentOutputDeviceIndex = this.playbackData[outputId]?.deviceIndex
         // prevent using a device if already in use by another output
         if (this.usedDeviceIndices.has(deviceIndex) && currentOutputDeviceIndex !== deviceIndex) {
@@ -124,7 +125,7 @@ export class BlackmagicSender {
         this.usedDeviceIndices.add(deviceIndex)
 
         // Create a promise that tracks this initialization
-        const initPromise = this._performInitializeDevice(outputId, deviceIndex, displayModeName, pixelFormat, enableKeying, audioChannels)
+        const initPromise = this._performInitializeDevice(outputId, deviceIndex, displayModeName, pixelFormat, enableKeying, audioChannels, colorSpace)
 
         // Store the promise to prevent concurrent attempts
         this.initializationInProgress[outputId] = initPromise
@@ -139,7 +140,7 @@ export class BlackmagicSender {
         }
     }
 
-    static async _performInitializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
+    static async _performInitializeDevice(outputId: string, deviceIndex: number, displayModeName: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2, colorSpace = "rec709") {
         const macadam = getMacadam()
         if (!macadam) {
             console.error("Cannot initialize Blackmagic device: macadam module not available")
@@ -275,6 +276,7 @@ export class BlackmagicSender {
                     scheduledFrames: 0,
                     pixelFormat,
                     displayMode: displayModeName,
+                    colorSpace,
                     targetSize,
                     expectedVideoFrameSize,
                     expectedAudioSampleCount,
@@ -519,7 +521,28 @@ export class BlackmagicSender {
         return true
     }
 
-    static scheduleFrame(outputId: string, videoFrame: Buffer, audioFrame: Buffer | null, framerate = 0) {
+    // A shared-texture readback can hand us a frame already in the card's pixel format (osr-capture converts
+    // BGRA->UYVY on the GPU on Windows, on the CPU elsewhere), letting us skip convertVideoFrameFormat. This
+    // is only safe for an exact-match config; canAcceptRawUyvy() is the gate.
+    static canAcceptRawUyvy(captureId: string, size: Size): boolean {
+        const data = this.playbackData[captureId]
+        if (!data) return false
+        // UYVY carries no alpha, so a keyer (fill+key) still needs the BGRA/alpha path.
+        if (data.enableKeying) return false
+        // osr-capture emits 8-bit packed 4:2:2 (UYVY). Only engage when the card is in that exact format.
+        const fmt = data.pixelFormat || ""
+        const is8bit422 = fmt.includes("YUV") && fmt.includes("422") && !fmt.includes("10") && !fmt.includes("12")
+        if (!is8bit422) return false
+        // osr-capture converts with BT.601 full range; only engage when the card colour space matches, so we
+        // don't introduce a 601/709 shift. (Adding BT.709 to the native converter would broaden this.)
+        const cs = (data.colorSpace || "").toLowerCase()
+        if (!(cs.includes("601") || cs.includes("170"))) return false
+        // A UYVY buffer can't be cheaply resized here, so the render size must already equal the card mode.
+        const target = this.getTargetDimensions(captureId)
+        return !!target && target.width === size.width && target.height === size.height
+    }
+
+    static scheduleFrame(outputId: string, videoFrame: Buffer, audioFrame: Buffer | null, framerate = 0, preConverted = false) {
         // Skip immediately if this device is known to cause segfaults
         if (SEGFAULT_PRONE_DEVICES.has(outputId)) {
             return
@@ -603,49 +626,62 @@ export class BlackmagicSender {
                 try {
                     // Log frame info and detect actual resolution
                     const now = Date.now()
-                    const expectedBytesForDeclaredSize = size.width * size.height * 4
-                    const maxAllowedInputBytes = expectedBytesForDeclaredSize * 4 // More lenient for HiDPI
-
-                    // Guard against HiDPI/invalid frame payloads before conversion allocates.
-                    if (videoFrame.length !== expectedBytesForDeclaredSize) {
-                        const actualPixels = videoFrame.length / 4
-                        const actualHeight = Math.round(actualPixels / size.width)
-
-                        // Only reject truly invalid frames (negative/zero height or extremely oversized)
-                        if (videoFrame.length > maxAllowedInputBytes || actualHeight <= 0 || !Number.isFinite(actualHeight)) {
+                    let convertedFrame
+                    if (preConverted) {
+                        // Frame already converted to target pixel format (e.g. UYVY via osr-capture)
+                        if (videoFrame.length !== data.expectedVideoFrameSize) {
                             if (now - (data.lastVideoSizeWarningTime || 0) > 5000) {
                                 data.lastVideoSizeWarningTime = now
-                                console.warn(`Skipping invalid source frame: got ${videoFrame.length} bytes (~${size.width}x${actualHeight}), expected ${expectedBytesForDeclaredSize} bytes (${size.width}x${size.height})`)
+                                console.warn(`Skipping pre-converted frame with wrong size: got ${videoFrame.length} bytes, expected ${data.expectedVideoFrameSize} bytes for ${size.width}x${size.height} in ${data.pixelFormat}`)
                             }
                             data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
                             return
                         }
+                        convertedFrame = videoFrame
+                    } else {
+                        const expectedBytesForDeclaredSize = size.width * size.height * 4
+                        const maxAllowedInputBytes = expectedBytesForDeclaredSize * 4 // More lenient for HiDPI
 
-                        // Log size mismatch but continue processing (might be valid HiDPI or scaling issue)
-                        if (now - (data.lastVideoSizeWarningTime || 0) > 10000) {
-                            data.lastVideoSizeWarningTime = now
-                            console.log(`Processing frame with size mismatch: got ${videoFrame.length} bytes (~${size.width}x${actualHeight}), expected ${expectedBytesForDeclaredSize} bytes (${size.width}x${size.height})`)
+                        // Guard against HiDPI/invalid frame payloads before conversion allocates.
+                        if (videoFrame.length !== expectedBytesForDeclaredSize) {
+                            const actualPixels = videoFrame.length / 4
+                            const actualHeight = Math.round(actualPixels / size.width)
+
+                            // Only reject truly invalid frames (negative/zero height or extremely oversized)
+                            if (videoFrame.length > maxAllowedInputBytes || actualHeight <= 0 || !Number.isFinite(actualHeight)) {
+                                if (now - (data.lastVideoSizeWarningTime || 0) > 5000) {
+                                    data.lastVideoSizeWarningTime = now
+                                    console.warn(`Skipping invalid source frame: got ${videoFrame.length} bytes (~${size.width}x${actualHeight}), expected ${expectedBytesForDeclaredSize} bytes (${size.width}x${size.height})`)
+                                }
+                                data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
+                                return
+                            }
+
+                            // Log size mismatch but continue processing (might be valid HiDPI or scaling issue)
+                            if (now - (data.lastVideoSizeWarningTime || 0) > 10000) {
+                                data.lastVideoSizeWarningTime = now
+                                console.log(`Processing frame with size mismatch: got ${videoFrame.length} bytes (~${size.width}x${actualHeight}), expected ${expectedBytesForDeclaredSize} bytes (${size.width}x${size.height})`)
+                            }
                         }
-                    }
 
-                    // Convert frame format
-                    let convertedFrame
-                    try {
-                        const reusableOutputBuffer = this.getReusableConversionBuffer(outputId, data.expectedVideoFrameSize)
-                        convertedFrame = this.convertVideoFrameFormat(videoFrame, data.pixelFormat, size, reusableOutputBuffer, data.enableKeying === true)
-                        data.conversionErrorCount = 0
-                    } catch (err) {
-                        console.error(`Frame conversion error: ${err instanceof Error ? err.message : String(err)}`)
+                        // Convert frame format
+                        try {
+                            const reusableOutputBuffer = this.getReusableConversionBuffer(outputId, data.expectedVideoFrameSize)
+                            convertedFrame = this.convertVideoFrameFormat(videoFrame, data.pixelFormat, size, reusableOutputBuffer, data.enableKeying === true, outputId)
+                            data.conversionErrorCount = 0
+                        } catch (err) {
+                            console.error(`Frame conversion error: ${err instanceof Error ? err.message : String(err)}`)
 
-                        const message = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase()
-                        if (message.includes("allocation failed") || message.includes("out of memory")) {
-                            const failCount = (data.conversionErrorCount || 0) + 1
-                            data.conversionErrorCount = failCount
-                            const backoffMs = Math.min(2000, 100 * 2 ** Math.min(5, failCount))
-                            data.conversionBackoffUntil = Date.now() + backoffMs
-                            data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
+                            const message = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase()
+                            if (message.includes("allocation failed") || message.includes("out of memory")) {
+                                const failCount = (data.conversionErrorCount || 0) + 1
+                                data.conversionErrorCount = failCount
+                                const backoffMs = Math.min(2000, 100 * 2 ** Math.min(5, failCount))
+                                data.conversionBackoffUntil = Date.now() + backoffMs
+                                data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
+                            }
+                            return
                         }
-                        return
                     }
 
                     // Validate frame sizes
@@ -928,7 +964,7 @@ export class BlackmagicSender {
         }
     }
 
-    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size, reusableOutputBuffer?: Buffer, enableKeying = false) {
+    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size, reusableOutputBuffer?: Buffer, enableKeying = false, outputId?: string) {
         // Check specific bit-depth RGB formats FIRST before generic checks
         if (format.includes("12Bit") || format.includes("12-bit") || format.includes("12 bit")) {
             const isLE = format.includes("RGBLE") || format.includes("RGB LE")
@@ -951,12 +987,13 @@ export class BlackmagicSender {
             if (this.devicePixelMode === "BGRA") return ImageBufferConverter10BitRGB.BGRAtoRGB(frame, size, reusableOutputBuffer)
             else return ImageBufferConverter10BitRGB.ARGBtoRGB(frame, size, reusableOutputBuffer)
         } else if (format.includes("YUV")) {
+            const colorSpace = this.playbackData[outputId || ""]?.colorSpace || "rec709"
             if (format.includes("10")) {
-                if (this.devicePixelMode === "BGRA") return ImageBufferConverter10Bit.BGRAtoYUV(frame, size, reusableOutputBuffer)
-                else return ImageBufferConverter10Bit.ARGBtoYUV(frame, size, reusableOutputBuffer)
+                if (this.devicePixelMode === "BGRA") return ImageBufferConverter10Bit.BGRAtoYUV(frame, size, reusableOutputBuffer, colorSpace)
+                else return ImageBufferConverter10Bit.ARGBtoYUV(frame, size, reusableOutputBuffer, colorSpace)
             } else {
-                if (this.devicePixelMode === "BGRA") return ImageBufferConverter.BGRAtoYUV(frame, size, reusableOutputBuffer)
-                else return ImageBufferConverter.ARGBtoYUV(frame, size, reusableOutputBuffer)
+                if (this.devicePixelMode === "BGRA") return ImageBufferConverter.BGRAtoYUV(frame, size, reusableOutputBuffer, colorSpace)
+                else return ImageBufferConverter.ARGBtoYUV(frame, size, reusableOutputBuffer, colorSpace)
             }
         } else if (format.includes("RGBXLE")) {
             const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)

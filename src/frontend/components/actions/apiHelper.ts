@@ -1,14 +1,16 @@
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
 import { get } from "svelte/store"
-import { OUTPUT, STAGE } from "../../../types/Channels"
+import { STAGE } from "../../../types/Channels"
 import type { History } from "../../../types/History"
 import type { DropData, Selected, Variable } from "../../../types/Main"
+import { isChannelRecording, startChannelRecording, stopAllChannelRecordings, stopChannelRecording, toggleChannelRecording } from "../../audio/audioChannelRecorder"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
-import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioPlaylists, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables, volume } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioPlaylists, audioRouting, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
+import { parseEngScriptureRefToNumbers, resolveScriptureReference } from "../drawer/bible/scripture"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { keysToID, removeDeleted, sortByName } from "../helpers/array"
 import { ondrop } from "../helpers/drop"
@@ -16,16 +18,26 @@ import { dropActions } from "../helpers/dropActions"
 import { history } from "../helpers/history"
 import { setDrawerTabData } from "../helpers/historyHelpers"
 import { encodeFilePath, getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension } from "../helpers/media"
-import { getActiveOutputs, getAllActiveOutputs, getAllEnabledOutputs, getCurrentStyle, getFirstActiveOutput, isOutCleared, setOutput } from "../helpers/output"
+import { getActiveOutputs, getAllEnabledOutputs, getCurrentStyle, getFirstActiveOutput, isOutCleared, setOutput } from "../helpers/output"
 import { setRandomValue } from "../helpers/randomValue"
 import { loadShows, setShow } from "../helpers/setShow"
 import { getLabelId, getLayoutRef } from "../helpers/show"
 import { playNextGroup, selectProjectShow, updateOut } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
+import { VideoPlayer } from "../media/video/videoPlayer"
 import { clearBackground, clearSlide } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
-import type { API_add_to_project, API_create_project, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_toggle_specific, API_variable } from "./api"
+import type { API_add_to_project, API_create_project, API_disable_slide, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_toggle_id, API_toggle_specific, API_variable } from "./api"
+
+export function selectShowById(id: string) {
+    if (typeof id !== "string" || !id) return
+    if (!get(shows)[id]) return
+
+    setActiveShowById(id)
+    if (get(activeEdit).id) activeEdit.set({ type: "show", slide: 0, items: [] })
+    if (get(activePage) === "edit") refreshEditSlide.set(true)
+}
 
 // WIP combine with click() in ShowButton.svelte
 export function selectShowByName(name: string) {
@@ -37,9 +49,17 @@ export function selectShowByName(name: string) {
     const showId = sortedShows[0]?.id
     if (!showId) return
 
-    activeShow.set({ id: showId, type: "show" })
+    setActiveShowById(showId)
     if (get(activeEdit).id) activeEdit.set({ type: "show", slide: 0, items: [] })
     if (get(activePage) === "edit") refreshEditSlide.set(true)
+}
+
+function setActiveShowById(showId: string) {
+    const activeProjectId = get(activeProject)
+    const projectShows = activeProjectId ? get(projects)[activeProjectId]?.shows || [] : []
+    const projectIndex = projectShows.findIndex((item) => item.id === showId)
+
+    activeShow.set(projectIndex >= 0 ? { ...projectShows[projectIndex], index: projectIndex } : { id: showId, type: "show" })
 }
 
 // WIP duplicate of Preview.svelte checkGroupShortcuts()
@@ -163,7 +183,6 @@ export async function startProjectItemByName(name: string) {
         const loadingTask = getDocument(encodeFilePath(item.id))
         const pdfDoc = await loadingTask.promise
         const pages = pdfDoc.numPages
-        loadingTask.destroy()
 
         let name = item.name || removeExtension(getFileName(item.id))
         setOutput("slide", { type: "pdf", id: item.id, page: 0, pages, name })
@@ -225,6 +244,53 @@ function outputSlide(showRef, data: API_slide_index) {
     updateOut(showId, data.index, showRef)
     const activeLayout = _show(showId).get("settings.activeLayout")
     setOutput("slide", { id: showId, layout: data.layoutId || activeLayout, index: data.index, line: 0 })
+}
+
+export async function disableSlide(data: API_disable_slide) {
+    if (data.index === undefined || data.index < 0) return
+
+    const useActiveShow = !data.showId || data.showId === "active"
+    const showId = useActiveShow ? get(activeShow)?.id : data.showId
+    if (!showId) return
+
+    if (!useActiveShow && data.showId) await loadShows([data.showId])
+
+    const layoutId = data.layoutId || _show(showId).get("settings.activeLayout")
+    const showRef = _show(showId)
+        .layouts(layoutId ? [layoutId] : "active")
+        .ref()[0]
+    if (!showRef) return newToast("toast.midi_no_show")
+
+    const slideRef = showRef[data.index]
+    if (!slideRef) return newToast("toast.midi_no_slide " + data.index)
+
+    const currentlyDisabled = !!slideRef.data?.disabled
+
+    if ((data.value as any) === "true") data.value = true
+    else if ((data.value as any) === "false") data.value = false
+    let newValue = data.value === undefined ? !currentlyDisabled : data.value
+
+    showsCache.update((a) => {
+        if (!a[showId]) return a
+        const activeLayout = layoutId || a[showId]?.settings?.activeLayout
+        const slides = a[showId].layouts?.[activeLayout]?.slides
+        if (!slides) return a
+
+        if (slideRef.type === "child") {
+            const parentIndex = slideRef.parent!.index
+            if (!slides[parentIndex]) return a
+            if (!slides[parentIndex].children) slides[parentIndex].children = {}
+            slides[parentIndex].children[slideRef.id] = {
+                ...(slides[parentIndex].children[slideRef.id] || {}),
+                disabled: newValue
+            }
+        } else if (slides[slideRef.index]) {
+            slides[slideRef.index].disabled = newValue
+        }
+
+        if (a[showId]?.timestamps) a[showId].timestamps.modified = Date.now()
+        return a
+    })
 }
 
 export function selectEffectById(id: string) {
@@ -506,7 +572,8 @@ export async function getPlainText(showId: string) {
     return { id: showId, value: getPlainEditorText(showId) } as API_id_value
 }
 
-export function getShowGroups(id: string) {
+export async function getShowGroups(id: string) {
+    await loadShows([id])
     return { id, value: getSlideGroups(id) }
 }
 
@@ -609,21 +676,32 @@ export function getClearedState() {
 }
 
 // "1.1.1,2,3" = "Gen 1:1-3"
-// WIP allow "John 1:35-36" or "43:1:35" as well
-export function startScripture(data: API_scripture) {
+// or "John 3:16" / "1 John 1:4-6"
+export async function startScripture(data: API_scripture) {
     const split = data.reference.split(".")
-
     const book = Number(split[0])
     const chapter = Number(split[1])
-    const rawVerses = String(split[2] ?? "").trim()
 
-    // Support multiple verses encoded as comma-separated values, e.g. "43.3.16,17,18".
-    const verseItems = rawVerses
-        .split(",")
-        .map((v) => v.trim())
-        .filter(Boolean)
+    let ref: { book: number; chapter: number; verses: (string | number)[][] }
 
-    const ref = { book, chapter, verses: [verseItems.length ? verseItems : [rawVerses]] }
+    if (split.length > 1 && !isNaN(book) && !isNaN(chapter)) {
+        const rawVerses = (split[2] ?? "").trim()
+        // Support multiple verses encoded as comma-separated values, e.g. "43.3.16,17,18".
+        const verseItems = rawVerses
+            .split(",")
+            .map((v) => v.trim())
+            .filter(Boolean)
+        ref = { book, chapter, verses: [verseItems.length ? verseItems : [rawVerses]] }
+    } else {
+        // convert text reference to actual reference
+        let resolved = await resolveScriptureReference(data.reference, data.id)
+        if (!resolved) {
+            resolved = parseEngScriptureRefToNumbers(data.reference)
+            if (!resolved) return
+        }
+
+        ref = { book: resolved.book, chapter: resolved.chapter, verses: [resolved.verses] }
+    }
 
     if (get(activePage) !== "edit") activePage.set("show")
     if (data.id) setDrawerTabData("scripture", data.id) // use active if no ID
@@ -668,13 +746,12 @@ export function playMedia(data: API_media) {
 export function videoSeekTo(data: API_seek) {
     if (get(outLocked)) return
 
-    const activeOutputIds = getAllActiveOutputs().map((a) => a.id)
-    const timeValues: any = {}
-    activeOutputIds.forEach((id) => {
-        timeValues[id] = data.seconds
-    })
+    const outputId = data.id || getFirstActiveOutput()?.id || ""
+    const bg = get(outputs)[outputId]?.out?.background
+    const path = bg?.path || bg?.id
+    if (!path) return
 
-    send(OUTPUT, ["TIME"], timeValues)
+    VideoPlayer.seekTo(path, outputId, data.seconds)
 }
 
 export function toggleMediaLoop() {
@@ -735,11 +812,20 @@ let unmutedValue = 1
 export function updateVolumeValues(value: number | undefined | "local") {
     // api mute(unmute)
     if (value === undefined) {
-        value = get(volume) ? 0 : unmutedValue
-        if (!value) unmutedValue = get(volume)
+        const currentVolume = get(audioChannelsData).main?.volume ?? 1
+        value = currentVolume ? 0 : unmutedValue
+        if (!value) unmutedValue = currentVolume
     }
 
-    volume.set(Number(Number(value).toFixed(2)))
+    // supposed to be in 0-1 range instead of 0-100
+    if (typeof value === "number" && value > 1) value = value / 100
+
+    const newVolume = Number(Number(value).toFixed(2))
+    audioChannelsData.update((data) => {
+        if (!data.main) data.main = { volume: 1 }
+        data.main.volume = newVolume
+        return data
+    })
 
     AudioPlayer.updateVolume()
 }
@@ -762,6 +848,58 @@ export function timerSeekTo(data: API_seek) {
             delete a[index].startTime
         }
 
+        return a
+    })
+}
+
+export function timerSeekAdd(data: API_seek) {
+    if (get(outLocked)) return
+
+    const timerId = data.id || get(activeTimers)[0]?.id
+    const currentTimer = get(timers)[timerId]
+    const time = data.seconds
+    if (!currentTimer) return
+
+    activeTimers.update((a) => {
+        const index = a.findIndex((timer) => timer.id === timerId)
+        if (index < 0) a.push({ ...currentTimer, id: timerId, currentTime: time, paused: true })
+        else {
+            a[index].currentTime = (a[index].currentTime || 0) + time
+            delete a[index].startTime
+        }
+        return a
+    })
+}
+
+// AUDIO
+
+export function toggleAudioRecording(data: API_toggle_id = {}) {
+    if ((data.value as any) === "false") data.value = false
+    if ((data.value as any) === "true") data.value = true
+
+    const channelId = data.id || "main"
+    const channelName = get(audioRouting)?.channels?.find((c) => c.id === channelId)?.name
+    const isRecording = isChannelRecording(channelId)
+
+    if (data.value === true) {
+        if (!isRecording) startChannelRecording(channelId, channelName)
+    } else if (data.value === false) {
+        if (isRecording) stopChannelRecording(channelId)
+        else stopAllChannelRecordings()
+    } else {
+        toggleChannelRecording(channelId, channelName)
+    }
+}
+
+export function toggleIcecast(data: API_toggle_specific = {}) {
+    if ((data.value as any) === "false") data.value = false
+    if ((data.value as any) === "true") data.value = true
+
+    const current = get(special).icecast?.enabled ?? true
+    const newValue = data.value !== undefined ? !!data.value : !current
+    special.update((a) => {
+        if (!a.icecast) a.icecast = {}
+        a.icecast.enabled = newValue
         return a
     })
 }
@@ -898,7 +1036,7 @@ function levenshteinDistance(a, b) {
 
 // PDF
 
-export async function getPDFThumbnails({ path }: API_media) {
+export async function getPDFThumbnails({ path, data }: API_media) {
     if (!path) return []
     const name =
         path
@@ -927,7 +1065,24 @@ export async function getPDFThumbnails({ path }: API_media) {
     try {
         for (let i = 0; i < pageCount; i++) {
             const page = await pdfDoc.getPage(i + 1)
-            const viewport = page.getViewport({ scale: 1.5 })
+            const viewportAtScale1 = page.getViewport({ scale: 1 })
+
+            // Use provided width/height or target a high-quality default (e.g. 2160px for 4K-ready quality)
+            let scale
+            const maxDim = Math.max(viewportAtScale1.width, viewportAtScale1.height)
+            if (data?.width) {
+                scale = data.width / viewportAtScale1.width
+            } else if (data?.height) {
+                scale = data.height / viewportAtScale1.height
+            } else {
+                const targetRes = 2160
+                scale = targetRes / maxDim
+                // Clamp scale to reasonable bounds (1.0 = 72dpi, 4.5 = ~325dpi)
+                if (scale < 1.0) scale = 1.0
+                if (scale > 4.5) scale = 4.5
+            }
+
+            const viewport = page.getViewport({ scale })
 
             canvas.height = viewport.height
             canvas.width = viewport.width

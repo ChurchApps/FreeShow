@@ -4,7 +4,7 @@ import { OUTPUT } from "../../../../types/Channels"
 import type { Condition, ConditionValue, Item, ItemType, Slide } from "../../../../types/Show"
 import type { StageItem } from "../../../../types/Stage"
 import { AudioMicrophone } from "../../../audio/audioMicrophone"
-import { activeEdit, activeShow, activeStage, activeTimers, allOutputs, audioChannels, outputs, outputSlideCache, overlays, refreshEditSlide, showsCache, stageShows, templates, timers, variables } from "../../../stores"
+import { activeEdit, activeShow, activeStage, activeTimers, allOutputs, audioChannelsData, outputs, outputSlideCache, overlays, refreshEditSlide, showsCache, stageShows, templates, timers, variables } from "../../../stores"
 import { isOutputWindow } from "../../../utils/common"
 import { send } from "../../../utils/request"
 import { addSlideAction } from "../../actions/actions"
@@ -66,7 +66,6 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
     activeEdit.update((ae) => ({ ...ae, items: [selectedIndex] }))
 
     if (type === "text") newData.lines = [{ align: template?.[0]?.lines?.[0]?.align || "", text: [{ value: textValue, style: template?.[0]?.lines?.[0]?.text?.[0]?.style || "" }] }]
-    if (type === "list") newData.list = { items: [] }
     // else if (type === "timer") newData.timer = { id: uid(), name: get(dictionary).timer?.counter || "Counter", type: "counter", start: 300, end: 0 }
     else if (type === "timer") {
         const timerId = options.timer?.id || sortByName(keysToID(get(timers)))[0]?.id || createNewTimer()
@@ -83,8 +82,7 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
             styleString += `${key}: ${value};`
         })
         newData.style = styleString
-    } else if (type === "mirror") newData.mirror = {}
-    else if (type === "media") newData.src = options.src || ""
+    } else if (type === "media") newData.src = options.src || ""
     else if (type === "variable") newData.variable = { id: "" }
     else if (type === "slide_tracker") newData.auto = true
     else if (type === "web") newData.web = { url: "" }
@@ -134,6 +132,10 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
         newData.style = styleString
     } else if (type === "icon" && options.path) {
         newData.customSvg = options.path
+    }
+
+    if (type === "icon" && id === "empty") {
+        newData.style += "background-color: rgba(255, 255, 255, 0.5);"
     }
 
     // console.log("NEW ITEM", newData)
@@ -258,13 +260,22 @@ export function rearrangeStageItems(type: string, itemId: string = get(activeSta
 
 export function getSortedStageItems(stageId = get(activeStage).id, _updater: any = null) {
     if (!stageId) return []
-    const stageShow = clone(get(stageShows)[stageId])
-    if (!stageShow) return []
+    const allStageShows = _updater && !_updater.items ? _updater : get(stageShows)
+    const stageShow = (_updater && _updater.items ? _updater : allStageShows?.[stageId]) || null
+    if (!stageShow || !stageShow.items) return []
 
-    const itemOrder = stageShow.itemOrder || Object.keys(stageShow.items)
-    // if ((stageShow.itemOrder || [])?.length !== Object.keys(stageShow.items).length) {
-    if (!stageShow.itemOrder) {
+    const currentItemIds = Object.keys(stageShow.items)
+    let itemOrder = stageShow.itemOrder ? [...stageShow.itemOrder] : currentItemIds
+
+    // remove items not existing anymore
+    itemOrder = itemOrder.filter((id) => currentItemIds.includes(id))
+    // add any new items
+    const newItems = currentItemIds.filter((id) => !itemOrder.includes(id))
+    if (newItems.length) itemOrder.push(...newItems)
+
+    if (!stageShow.itemOrder || newItems.length) {
         stageShows.update((a) => {
+            if (!a[stageId]) return a
             a[stageId].itemOrder = itemOrder
             a[stageId].modified = Date.now()
             return a
@@ -302,27 +313,28 @@ export function updateSortedStageItems() {
 }
 
 export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId, type }: any = { type: "default" }, _updater: any = null, preview = false) {
+    if (!item) return false
+
+    const condition = item.conditions?.showItem
+    const hasBindings = !preview && item.bindings?.length && Array.isArray(item.bindings)
+
+    // Fast path: if no conditions and no bindings, item is always visible
+    if (!condition && !hasBindings) return true
+
     // check bindings
-    if (!preview && item.bindings?.length && Array.isArray(item.bindings) && !item.bindings.includes(outputId)) return false
+    if (hasBindings && !item.bindings!.includes(outputId)) return false
+    if (!condition) return true
 
     if (type === "stage") allItems = getTempItems(item, allItems)
 
     if (!allItems.length) allItems = [item]
     const slideItems = allItems.filter((a) => !a?.bindings?.length || (Array.isArray(a.bindings) && a.bindings.includes(outputId)))
     const itemsText = slideItems.reduce((value, currentItem) => (value += getItemText(currentItem)), "")
-    // set dynamic values
-    // const ref = { showId: get(activeShow)?.id, layoutId: _show().get("settings.activeLayout"), slideIndex: get(activeEdit).slide, type: get(activePage) === "stage" ? "stage" : get(activeEdit).type || "show", id: get(activeEdit).id }
-    // itemsText = replaceDynamicValues(itemsText, { ...ref, slideIndex })
 
-    // check conditions
-    const condition = item.conditions?.showItem
-    if (!isConditionMet(condition, itemsText, type)) return false
-
-    return true
+    return isConditionMet(condition, itemsText, type)
 }
 
 // get "temp" items (scripture) if stage
-// TODO: fix "Maximum call stack size exceeded"
 function getTempItems(item: Item, allItems: Item[]) {
     const stageOutputId = getStageOutputId(get(outputs))
     const currentOutput = get(outputs)[stageOutputId] || get(allOutputs)[stageOutputId] || {}
@@ -330,7 +342,7 @@ function getTempItems(item: Item, allItems: Item[]) {
     const currentSlide = currentOutput.out?.slide || (slideOffset !== 0 ? get(outputSlideCache)[stageOutputId] || null : null)
 
     if (currentSlide?.id !== "temp") return allItems
-    return getTempSlides()
+    return getTempSlides() || []
 
     function getTempSlides() {
         if (slideOffset < 0) {
@@ -344,11 +356,20 @@ function getTempItems(item: Item, allItems: Item[]) {
     }
 }
 
+const conditionResultCache = new Map<string, { result: boolean; timestamp: number }>()
+
 export function isConditionMet(condition: Condition | undefined, itemsText: string, type: "default" | "stage", _updater: any = null) {
     if (!condition) return true
 
     if (!Array.isArray(condition)) {
         condition = (condition as any)?.values?.length ? [[[(condition as any).values]]] : []
+    }
+    if (!condition.length) return true
+
+    const cacheKey = `${type}_${itemsText}_${_updater || 0}_${JSON.stringify(condition)}`
+    const cached = conditionResultCache.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp < 200) {
+        return cached.result
     }
 
     // remove unused scripture dynamic values ({scripture_X} / {scriptureNUM_X})
@@ -365,6 +386,9 @@ export function isConditionMet(condition: Condition | undefined, itemsText: stri
             })
         })
     })
+
+    if (conditionResultCache.size > 200) conditionResultCache.clear()
+    conditionResultCache.set(cacheKey, { result: conditionMet, timestamp: Date.now() })
 
     return conditionMet
 }
@@ -392,16 +416,14 @@ export function checkConditionValue(cVal: ConditionValue, itemsText: string, typ
         else value = val
     } else if (element === "dynamicValue") value = getDynamicValue(elementId, type)
     else if (element === "volume") {
-        if (isOutputWindow()) {
+        const chData = (get(audioChannelsData) || {})[elementId]
+        if (chData && typeof chData.dB === "number") {
+            value = Math.round(chData.dB).toString()
+        } else if (isOutputWindow()) {
             send(OUTPUT, ["MAIN_REQUEST_VOLUME"], { deviceId: elementId })
-            value = AudioMicrophone.getVolume(elementId).toString()
-        } else if (elementId === "main") {
-            const channels = get(audioChannels)
-            const db = channels.length ? Math.max(...channels.map((c) => c.dB?.value ?? -80)) : -80
-            value = Math.round(db).toString()
+            value = Math.round(AudioMicrophone.getVolume(elementId)).toString()
         } else {
-            AudioMicrophone.startListening(elementId)
-            value = AudioMicrophone.getVolume(elementId).toString()
+            value = "-60"
         }
     }
 

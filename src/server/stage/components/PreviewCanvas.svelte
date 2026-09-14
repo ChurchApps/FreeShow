@@ -2,21 +2,18 @@
     import { onDestroy, onMount } from "svelte"
     import { send } from "../util/socket"
 
-    export let id: string | undefined
-    export let alpha: boolean
+    // frames are pushed from the app ("STREAM_FRAME") while subscribed - no frame polling needed
+    export let outputId: string | undefined = undefined
     export let capture: any
 
-    // REQUEST EVERY 500ms
-    const streamInterval = setInterval(() => {
-        send("REQUEST_STREAM", { outputId: id, alpha })
-    }, 500)
-    onDestroy(() => clearInterval(streamInterval))
-
-    // export let capture: any
-    // export let fullscreen: any = false
-    // export let disabled: any = false
-    // export let id: string = ""
-    // export let style: string = ""
+    // subscribe & renew (heartbeat keeps the subscription alive across reconnects; app expires stale ones)
+    const SUBSCRIBE_INTERVAL = 3000
+    send("STREAM_SUBSCRIBE", { outputId })
+    const subscribeInterval = setInterval(() => send("STREAM_SUBSCRIBE", { outputId }), SUBSCRIBE_INTERVAL)
+    onDestroy(() => {
+        clearInterval(subscribeInterval)
+        send("STREAM_UNSUBSCRIBE")
+    })
 
     let canvas: any
     let ctx: any
@@ -42,11 +39,20 @@
     }
 
     async function updateCanvas() {
-        if (!canvas) return
+        if (!canvas || !capture) return
 
-        const arr = new Uint8ClampedArray(capture.buffer)
-        const pixels = new ImageData(arr, capture.size.width, capture.size.height)
-        const bitmap = await createImageBitmap(pixels)
+        let bitmap: ImageBitmap
+        if (capture.jpeg) {
+            // pushed frame (compressed)
+            bitmap = await createImageBitmap(new Blob([capture.jpeg], { type: "image/jpeg" }))
+        } else if (capture.buffer && capture.size) {
+            // legacy polled frame (raw RGBA)
+            const arr = new Uint8ClampedArray(capture.buffer)
+            const pixels = new ImageData(arr, capture.size.width, capture.size.height)
+            bitmap = await createImageBitmap(pixels)
+        } else {
+            return
+        }
 
         ctx.clearRect(0, 0, canvas.width, canvas.height)
         ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height)

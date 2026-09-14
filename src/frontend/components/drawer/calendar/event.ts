@@ -119,20 +119,26 @@ export function createRepeatedEvents(event: Event, onlyMissing = false, skipDate
     }
 
     // create events
+    const groupId = event.group || event.id || uid()
+    event.group = groupId
+
     let newEvents: any = {}
     if (!onlyMissing) newEvents = { [event.id || event.group || ""]: event }
 
     dates.forEach((date: string[]) => {
         const newEvent = clone(event)
 
+        delete newEvent.id
         newEvent.from = date[0]
         newEvent.to = date[1]
+        newEvent.group = groupId
+        if (event.origin) newEvent.origin = event.origin
 
         // find existing event at this date!
         let exists = false
         if (onlyMissing) {
             Object.values(get(events)).forEach((currentEvent) => {
-                if (currentEvent.group !== event.group) return
+                if (!currentEvent.group || currentEvent.group !== groupId) return
                 if (currentEvent.from !== newEvent.from || currentEvent.to !== newEvent.to) return
 
                 exists = true

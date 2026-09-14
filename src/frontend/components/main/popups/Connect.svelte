@@ -144,7 +144,10 @@
         <MaterialDropdown label="midi.output" options={outputsList} value={$serverData?.output_stream?.outputId || ""} on:change={(e) => updateData(e.detail, "outputId")} allowEmpty />
         <!-- {/if} -->
 
-        <MaterialToggleSwitch label="preview.audio" checked={$serverData?.output_stream?.sendAudio} defaultValue={false} on:change={toggleAudio} />
+        <!-- WIP disable for now until it's working again -->
+        {#if $serverData?.output_stream?.sendAudio}
+            <MaterialToggleSwitch label="preview.audio" checked={$serverData?.output_stream?.sendAudio} defaultValue={false} on:change={toggleAudio} />
+        {/if}
     {/if}
 
     {#if id !== "companion"}

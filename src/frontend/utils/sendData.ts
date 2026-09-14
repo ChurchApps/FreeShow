@@ -42,6 +42,9 @@ export function client(id: Clients, msg: ClientMessage) {
             return c
         })
         console.info("SERVER: " + msgId + " disconnected")
+
+        // stop output capture when the last mirror viewer disconnects
+        if (id === "STAGE") checkWindowCapture()
     } else sendData(id, msg)
 }
 
@@ -148,7 +151,7 @@ function checkSent(id: Clients, msg: any): boolean {
 // send data per connection to all
 export function eachConnection(id: Clients, channel: any, callback: any) {
     Object.entries(get(connections)[id] || {}).forEach(async ([clientID, value]: any) => {
-        const data = await callback(value)
+        const data = await callback({ id: clientID, ...value })
         if (data) window.api.send(id, { id: clientID, channel, data })
     })
 }

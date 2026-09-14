@@ -2,10 +2,11 @@
     import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
     import type { ClickEvent } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
-    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, effects, focusMode, globalTags, media, notFound, outLocked, outputs, overlayCategories, overlays, playerVideos, playingAudio, projects, refreshEditSlide, shows, showsCache, special, styles } from "../../stores"
+    import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, editingProjectTemplate, effects, focusMode, globalTags, media, notFound, outLocked, outputs, overlayCategories, overlays, playerVideos, playingAudio, projects, projectTemplates, refreshEditSlide, shows, showsCache, special, styles, textCache } from "../../stores"
+    import { translateText } from "../../utils/language"
     import { getAccess } from "../../utils/profile"
     import { customIconsColors } from "../../values/customIcons"
-    import { historyAwait } from "../helpers/history"
+    import { history, historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { encodeFilePath, getExtension, getFileName, getMedia, getMediaLayerType, getMediaStyle, getMediaType, getVideoDuration, mediaSize, removeExtension } from "../helpers/media"
     import { findMatchingOut, getActiveOutputs, setOutput, startFolderTimer } from "../helpers/output"
@@ -15,9 +16,9 @@
     import T from "../helpers/T.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
     import { clearBackground, clearSlide } from "../output/clear"
+    import { getTextSnippet, highlightText } from "../quicksearch/searchHighlight"
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
-    import { translateText } from "../../utils/language"
 
     export let id: string
     export let show: any // ShowList | ShowRef
@@ -29,6 +30,7 @@
     $: name = type === "show" ? $shows[show.id]?.name : type === "overlay" ? $overlays[show.id]?.name : type === "effect" ? $effects[show.id]?.name : type === "player" ? ($playerVideos[id] || show.data?.id ? $playerVideos[id]?.name || show.data?.name || show.data?.id : setNotFound(id)) : show.name
     // export let page: "side" | "drawer" = "drawer"
     export let match: null | number = null
+    export let searchValue = ""
     $: showNumber = isProject ? "" : show?.quickAccess?.number || show?.meta?.number || ""
     $: showDuration = isProject ? $shows[show.id]?.quickAccess?.duration || show?.scheduleLength || 0 : 0
 
@@ -36,7 +38,9 @@
     let readOnly = profile.global === "read" || profile[show.category] === "read"
 
     // search
-    $: style = match !== null ? `background: linear-gradient(to right, var(--primary-lighter) ${match}%, transparent ${match}%);` : ""
+    $: searchStyle = match !== null ? `width: ${match}%;` : ""
+    // excerpt of the matching lyrics
+    $: snippet = !isProject && match !== null && searchValue.length > 2 ? getTextSnippet($textCache[id] || "", searchValue) : ""
 
     function setNotFound(id: string) {
         notFound.update((a) => {
@@ -179,7 +183,6 @@
             const loadingTask = getDocument(encodeFilePath(id))
             const pdfDoc = await loadingTask.promise
             const pages = pdfDoc.numPages
-            loadingTask.destroy()
 
             let name = show.name || removeExtension(getFileName(id))
             setOutput("slide", { type: "pdf", id, page: 0, pages, name })
@@ -195,7 +198,23 @@
     function rename(e: any) {
         if (readOnly) return
 
-        const name = checkName(e.detail.value, id)
+        const value = e.detail.value.trim()
+
+        if (type === "show_placeholder") {
+            const projectId = $editingProjectTemplate
+            if (!projectId) return
+
+            const project = $projectTemplates[projectId]
+            if (!project?.shows || index === null || !project.shows[index]) return
+
+            const newShows = [...project.shows]
+            newShows[index] = { ...newShows[index], name: value }
+
+            history({ id: "UPDATE", newData: { key: "shows", data: newShows }, oldData: { id: projectId }, location: { page: "show", id: "project_template" } })
+            return
+        }
+
+        const name = checkName(value, id)
         historyAwait([id], { id: "SHOWS", newData: { data: [{ id, show: { name } }], replace: true }, location: { page: "drawer" } })
     }
 
@@ -253,11 +272,11 @@
 
     // placeholder title with index
     // $: showTemplateName = type === "show_placeholder" ? `${translateText("new.placeholder: formats.show")} ${index !== null ? ($editingProjectTemplate ? $projectTemplates[$editingProjectTemplate] : $projects[$activeProject || ""])?.shows?.reduce((c, show, i) => (show.type === "show_placeholder" && i < index ? c + 1 : c), 1) : ""}` : ""
-    $: showTemplateName = type === "show_placeholder" ? translateText("new.placeholder") : ""
+    $: showTemplateName = type === "show_placeholder" ? (show.name && show.name !== "—" ? show.name : translateText("new.placeholder")) : ""
 </script>
 
-<div id="show_{id}" class="main" class:played={show.played}>
-    <MaterialButton on:click={click} on:dblclick={doubleClick} {isActive} showOutline={outline} class="context {$$props.class}{readOnly ? '_readonly' : ''}" style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{style}{$$props.style || ''}" tab>
+<div id="show_{id}" class="main" class:isProject class:played={show.played}>
+    <MaterialButton on:click={click} on:dblclick={doubleClick} {isActive} showOutline={outline} class="context {$$props.class}{readOnly ? '_readonly' : ''}" style="font-weight: normal;--outline-color: {activeOutput || 'var(--secondary)'};{$notFound.show?.includes(id) ? 'background-color: rgb(255 0 0 / 0.2);' : ''}{$$props.style || ''}" tab>
         <div class="row" style={type === "show_placeholder" ? "font-style: italic;" : ""}>
             <span class="cell" style={isProject ? `width: 100%;max-width: ${show.layoutInfo?.name || show.scheduleLength ? 92 : 100}%;` : `width: 75%;min-width: 120px;max-width: calc(100% ${showNumber ? "- var(--number-width)" : ""} - var(--modified-width, 0px));`}>
                 <div class="icon" class:isMedia style="position: relative;">
@@ -277,7 +296,7 @@
                     {/if}
                 </div>
 
-                <HiddenInput value={type === "show_placeholder" ? showTemplateName : newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={(!show.type || show.type === "show") && !readOnly && type !== "show_placeholder"} />
+                <HiddenInput value={type === "show_placeholder" ? showTemplateName : newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={!readOnly && ((type === "show_placeholder" && !!$editingProjectTemplate) || !show.type || show.type === "show")} />
 
                 {#if isProject}
                     {#if show.layoutInfo?.name}
@@ -325,7 +344,17 @@
                 </span>
             {/if}
         </div>
+
+        {#if snippet}
+            <p class="snippet">{@html highlightText(snippet, searchValue)}</p>
+        {/if}
     </MaterialButton>
+
+    {#if match !== null}
+        <span class="match-indicator" data-title="{match}%">
+            <span class="match-fill" style={searchStyle}></span>
+        </span>
+    {/if}
 </div>
 
 <style>
@@ -333,11 +362,20 @@
         width: 100%;
 
         display: flex;
+        flex-direction: column;
     }
 
     .main :global(button) {
         width: 100%;
         padding: 0.15em 0.8em;
+
+        /* content under the name, like a search match snippet */
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+    }
+    .main:not(.isProject) :global(button) {
+        border-left: 0 !important;
     }
 
     .row {
@@ -465,5 +503,34 @@
 
         border-radius: 20px;
         border: 2px solid var(--color);
+    }
+
+    /* search */
+
+    .main p.snippet {
+        font-size: 0.8em;
+        opacity: 0.6;
+        text-align: left;
+        margin: -2px 5px 3px;
+    }
+    .main p.snippet :global(mark) {
+        background: var(--secondary-opacity);
+        color: inherit;
+        padding: 0 2px;
+        border-radius: 4px;
+    }
+
+    .match-indicator {
+        position: relative;
+        display: block;
+        width: 100%;
+        height: 2px;
+        background: rgb(255 255 255 / 0.08);
+        overflow: hidden;
+    }
+    .match-fill {
+        display: block;
+        height: 100%;
+        background: var(--secondary-opacity);
     }
 </style>
