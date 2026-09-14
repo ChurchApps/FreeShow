@@ -66,7 +66,11 @@
         let customCSS = `body div.output {${customStyle};}`
         if (background) customCSS += `body div.output span {${background};}`
 
-        webElem.insertCSS(customCSS)
+        try {
+            webElem?.insertCSS(customCSS)
+        } catch (err) {
+            console.debug("Captions webview insertCSS failed:", err)
+        }
     }
 </script>
 
