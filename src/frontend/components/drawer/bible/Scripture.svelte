@@ -22,6 +22,7 @@
     import Center from "../../system/Center.svelte"
     import { createScriptureShow, formatBibleText, getVerseIdParts, getVersePartLetter, joinRange, loadJsonBible, moveSelection, outputIsScripture, playScripture, scriptureRangeSelect, sortScriptureSelection, splitText, swapPreviewBible } from "./scripture"
     import { brightenDarkColor, fadeColor } from "../../helpers/color"
+    import { aiScriptureSearchAsync } from "../../../utils/scriptureAI"
 
     export let active: string | null
     export let searchValue: string
@@ -766,6 +767,9 @@
     let contentSearchFieldActive = false
     let contentSearchValue = ""
     let contentSearchResults: VerseReference[] | null = null
+    // AI semantic re-rank (V1: keyword scoring, V2: embeddings) — sorted descending by score
+    let aiMode = false
+    let aiScores: { [ref: string]: number } = {}
 
     // auto search when char length is 5 or longer
     function searchValueChanged(e: any) {
@@ -788,6 +792,27 @@
             const result = await currentBibleData?.bibleData?.textSearch(contentSearchValue)
             if (!result) return
 
+            // AI mode: re-rank candidates by meaning, descending order
+            if (aiMode) {
+                const candidates = result.map((r: VerseReference) => ({
+                    book: Number(r.book),
+                    chapter: Number(r.chapter),
+                    verse: Number((r.verse as any)?.number ?? r.verse),
+                    reference: r.reference || "",
+                    text: (r.verse as any)?.text || ""
+                }))
+                const ranked = await aiScriptureSearchAsync(contentSearchValue, candidates, 50)
+                const rankMap = new Map(ranked.map((r) => [`${r.book}-${r.chapter}-${r.verse}`, r.score]))
+                aiScores = Object.fromEntries(ranked.map((r) => [r.reference, r.score]))
+                contentSearchResults = [...result].sort((a: any, b: any) => {
+                    const aKey = `${a.book}-${a.chapter}-${a.verse?.number ?? a.verse}`
+                    const bKey = `${b.book}-${b.chapter}-${b.verse?.number ?? b.verse}`
+                    return (rankMap.get(bKey) || 0) - (rankMap.get(aKey) || 0)
+                })
+                return
+            }
+
+            aiScores = {}
             contentSearchResults = result
         } catch (err) {
             console.error(err)
@@ -1016,6 +1041,9 @@
                             data-title={formatBibleText(match.verse.text)}
                         >
                             <span style="width: 250px;text-align: start;color: var(--text);" class="v">{match.reference}</span>{@html formatBibleText(match.verse.text, true)}
+                            {#if aiMode && aiScores[match.reference] !== undefined}
+                                <span style="opacity: 0.55;font-size: 0.8em;margin-left: 8px;">✨ {aiScores[match.reference]}%</span>
+                            {/if}
                         </span>
                     {/each}
                 </div>
@@ -1215,6 +1243,16 @@
 {#if contentSearchFieldActive}
     <FloatingInputs>
         <TextInput placeholder={translateText("scripture.search")} value={contentSearchValue} on:input={searchValueChanged} on:change={searchInBible} style="width: 300px;border-radius: 20px;" autofocus />
+        <MaterialButton
+            title="AI meaning search"
+            isActive={aiMode}
+            on:click={() => {
+                aiMode = !aiMode
+                if (contentSearchValue.length >= 3) searchInBible()
+            }}
+        >
+            <span style="font-size: 1.1em;">✨</span>
+        </MaterialButton>
     </FloatingInputs>
 {:else if $scriptureMode !== "grid" || $resized.rightPanelDrawer > 5}
     <FloatingInputs arrow let:open>

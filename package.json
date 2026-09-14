@@ -153,6 +153,7 @@
         "pusher-js": "^8.5.0",
         "slideshow": "github:vassbo/slideshow#224d50f",
         "socket.io": "^4.8.1",
+        "transformers": "^3.1.0",
         "uid": "^2.0.2",
         "upath": "^2.0.1",
         "word-extractor": "^1.0.4",
