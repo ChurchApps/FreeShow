@@ -807,6 +807,19 @@ export class PowerPointPackage {
                             ] // space so style (font size) applies
                           : []
 
+                    if (text.length) {
+                        const mergedText: { value: string; style: string }[] = []
+                        for (const seg of text) {
+                            const prev = mergedText[mergedText.length - 1]
+                            if (prev && prev.style === seg.style && prev.value !== "<br>" && seg.value !== "<br>") {
+                                prev.value += seg.value
+                            } else {
+                                mergedText.push({ ...seg })
+                            }
+                        }
+                        text = mergedText
+                    }
+
                     if (text.length && bullet) {
                         text = [autoNum ? { ...bullet, value: getBulletValue(autoNum, bulletNum + startAt - 1) } : bullet, ...text]
                         bulletNum++
