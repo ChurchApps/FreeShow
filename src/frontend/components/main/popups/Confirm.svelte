@@ -12,10 +12,21 @@
     const prompt = $popupData.prompt || ""
     const inputType = $popupData.inputType || ""
     const message = $popupData.message || ""
+    // more than a yes/no answer: each choice resolves the popup with its own value
+    const choices: { value: string; label: string; icon?: string }[] = $popupData.choices || []
 
+    function keydown(e: KeyboardEvent) {
+        // with several choices there is no single obvious default to trigger
+        if (e.key === "Enter" && !choices.length) confirm()
+    }
+                    
     function close() {
         popupData.set({})
         activePopup.set(null)
+    }
+
+    function choose(value: string) {
+        popupData.set({ ...$popupData, id: "confirm", value })
     }
 
     let textValue = ""
@@ -39,6 +50,19 @@
     <MaterialButton variant="contained" style="margin-top: 20px;" on:click={confirm}>
         <T id="remote.submit" />
     </MaterialButton>
+{:else if choices.length}
+    {#if prompt}
+        <p style="margin-bottom: 20px;">{@html prompt}</p>
+    {/if}
+
+    <div class="choices">
+        {#each choices as choice}
+            <MaterialButton style="width: 100%;" on:click={() => choose(choice.value)}>
+                {#if choice.icon}<Icon id={choice.icon} size={1.1} white />{/if}
+                {choice.label}
+            </MaterialButton>
+        {/each}
+    </div>
 {:else}
     {#if prompt}
         <p style="margin-bottom: 20px;">{@html prompt}</p>
@@ -65,5 +89,12 @@
         font-size: 0.8em;
         opacity: 0.9;
         margin-bottom: 20px;
+    }
+
+    .choices {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-width: 300px;
     }
 </style>

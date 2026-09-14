@@ -154,9 +154,13 @@ export enum Main {
     // Provider-based routing
     PROVIDER_LOAD_SERVICES = "PROVIDER_LOAD_SERVICES",
     PROVIDER_DISCONNECT = "PROVIDER_DISCONNECT",
+    PROVIDER_CONNECTIONS = "PROVIDER_CONNECTIONS",
+    PROVIDER_RELOAD_SHOW = "PROVIDER_RELOAD_SHOW",
     PROVIDER_STARTUP_LOAD = "PROVIDER_STARTUP_LOAD",
     PROVIDER_FETCH_FOLDERS = "PROVIDER_FETCH_FOLDERS",
     PCO_LIVE_GET = "PCO_LIVE_GET",
+    ONSTAGE_GET_TEAMS = "ONSTAGE_GET_TEAMS",
+    ONSTAGE_SWITCH_TEAM = "ONSTAGE_SWITCH_TEAM",
     PCO_PUSHER_AUTH = "PCO_PUSHER_AUTH",
     PCO_FETCH_SERVICE_TREE = "PCO_FETCH_SERVICE_TREE",
     PCO_LOAD_PLAN = "PCO_LOAD_PLAN",
@@ -270,9 +274,12 @@ export interface MainSendPayloads {
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId; cloudOnly?: boolean; data?: any }
     [Main.PROVIDER_DISCONNECT]: { providerId: ContentProviderId; scope?: string }
+    [Main.PROVIDER_RELOAD_SHOW]: { providerId: ContentProviderId; showId: string; data?: any }
     [Main.PROVIDER_STARTUP_LOAD]: { providerId: ContentProviderId; scope?: string; data?: any; cloudOnly?: boolean }
     [Main.PROVIDER_FETCH_FOLDERS]: { providerId: ContentProviderId }
     [Main.PCO_LIVE_GET]: { serviceTypeId: string; planId: string }
+    [Main.ONSTAGE_GET_TEAMS]: undefined
+    [Main.ONSTAGE_SWITCH_TEAM]: { teamId: string }
     [Main.PCO_PUSHER_AUTH]: { socketId: string; channelName: string; serviceTypeId: string }
     [Main.PCO_FETCH_SERVICE_TREE]: undefined
     [Main.PCO_LOAD_PLAN]: { serviceTypeId: string; planId: string }
@@ -384,8 +391,11 @@ export interface MainReturnPayloads {
     [Main.SEND_SOCKET_MESSAGE]: Promise<boolean>
     // Provider-based routing
     [Main.PROVIDER_DISCONNECT]: { success: boolean }
+    [Main.PROVIDER_CONNECTIONS]: { [key in ContentProviderId]?: boolean }
     [Main.PROVIDER_FETCH_FOLDERS]: Promise<PCOFolderTreeNode[]>
     [Main.PCO_FETCH_SERVICE_TREE]: Promise<PCOFolderTreeNode[]>
+    [Main.ONSTAGE_GET_TEAMS]: Promise<{ id: string; name: string; current: boolean }[]>
+    [Main.ONSTAGE_SWITCH_TEAM]: Promise<{ success: boolean }>
     [Main.PCO_LIVE_GET]: Promise<{ liveId: string | null; liveChannel: string | null; orgId: string | null; liveStartAt: string | null; liveEndAt: string | null; length: number | null; isPreService: boolean; serviceStartAt: string | null; serviceEndAt: string | null } | null>
     [Main.PCO_PUSHER_AUTH]: Promise<{ auth: string; channel_data?: string } | null>
     // Content Library

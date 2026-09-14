@@ -46,6 +46,8 @@ export function openProjectItem(id: string, index: number = 0) {
         setTimeout(() => {
             showsCache.update((a) => {
                 if (!a[item.id]?.settings) return a
+                // the stored layout may have been removed (e.g. a provider reload rebuilt the show)
+                if (!a[item.id].layouts?.[item.layout!]) return a
                 a[item.id].settings.activeLayout = item.layout!
                 return a
             })

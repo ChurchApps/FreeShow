@@ -38,6 +38,9 @@
     $: profile = $activeProfile ? getAccess("shows") : {}
     $: readOnly = profile.global === "read"
 
+    // an OnStage song can be reloaded on its own, so it gets an extra context menu entry
+    const isOnStageShow = (show: { id: string; origin?: string; quickAccess?: any }) => show.origin === "onstage" || !!show.quickAccess?.onstageLink || show.id.startsWith("onstagesong_")
+
     let filteredShows: ShowList[] = []
     let filteredStored: ShowList[] = []
     $: filteredStored = filteredShows =
@@ -261,7 +264,7 @@
                 <VirtualList items={filteredShows} let:item={show} activeIndex={searchValue.length ? -1 : filteredShows.findIndex((a) => a.id === $activeShow?.id)}>
                     <SelectElem id="show_drawer" data={{ id: show.id }} shiftRange={filteredShows} draggable>
                         {#if searchValue.length <= 1 || show.match}
-                            <ShowButton id={show.id} {show} data={dateToString(show.timestamps?.[sortType.replace("_old", "")] || show.timestamps?.modified || show.timestamps?.created || "", true)} class="#drawer_show_button" match={show.match || null} {searchValue} isFirst={firstMatch?.id === show.id && activeIsSearch} />
+                            <ShowButton id={show.id} {show} data={dateToString(show.timestamps?.[sortType.replace("_old", "")] || show.timestamps?.modified || show.timestamps?.created || "", true)} class="{!readOnly && isOnStageShow(show) ? '#onstage_item__' : '#'}drawer_show_button" match={show.match || null} {searchValue} isFirst={firstMatch?.id === show.id && activeIsSearch} />
                         {/if}
                     </SelectElem>
                 </VirtualList>

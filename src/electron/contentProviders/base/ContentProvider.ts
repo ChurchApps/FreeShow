@@ -77,6 +77,11 @@ export abstract class ContentProvider<TScope extends string = string, TAuthData 
     abstract startupLoad(scope: TScope, data?: any): Promise<void>
 
     /**
+     * Reloads a single show from the provider (optional - not all providers support this)
+     */
+    reloadShow?(showId: string, data?: any): Promise<void>
+
+    /**
      * Exports data to the content provider (optional - not all providers support this)
      */
     exportData?(data: any): Promise<void>

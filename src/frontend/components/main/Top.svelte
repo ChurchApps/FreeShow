@@ -1,13 +1,15 @@
 <script lang="ts">
     import { slide } from "svelte/transition"
-    import { activeEdit, activePage, activeProfile, activeProject, activeShow, cloudUsers, dictionary, drawSettings, drawTool, os, outputDisplay, outputs, paintCache, profiles, saved, settingsTab, shows } from "../../stores"
+    import { activeEdit, activePage, activeProfile, activeProject, activeShow, cloudUsers, dictionary, drawSettings, drawTool, os, outputDisplay, outputs, paintCache, profiles, providerConnections, saved, settingsTab, shows } from "../../stores"
     import { getCloudUsers } from "../../utils/cloudSync"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import { toggleOutputs } from "../helpers/output"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
+    import MaterialButton from "../inputs/MaterialButton.svelte"
     import TopButton from "../inputs/TopButton.svelte"
+    import { contentProviderSync } from "../../utils/startup"
     import { DEFAULT_DISPLAY_NAME } from "../../utils/SocketHelper"
 
     export let isWindows = false
@@ -19,6 +21,20 @@
     // && !$editHistory.length
     $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? isLocked : $activeShow?.type === "pdf" || !$activeShow?.id
     $: physicalOutputWindows = Object.values($outputs).filter((a) => a.enabled && !a.invisible)
+
+    // the sync button is only useful with a content provider connected
+    $: hasContentProvider = Object.values($providerConnections).some((connected) => connected)
+
+    // the sync itself is fire and forget, so the button spins for long enough to read as started
+    let syncing = false
+    let syncTimeout: NodeJS.Timeout | null = null
+    function syncContent() {
+        contentProviderSync()
+
+        syncing = true
+        if (syncTimeout) clearTimeout(syncTimeout)
+        syncTimeout = setTimeout(() => (syncing = false), 2500)
+    }
 
     let confirm = false
     let disableClick = false
@@ -112,6 +128,13 @@
         <TopButton id="stage" />
     </span>
     <span style="width: var(--navigation-width);justify-content: flex-end;">
+        {#if hasContentProvider}
+            <span class="sync">
+                <MaterialButton style="border-radius: 0;border-bottom: 2px solid var(--primary);" title={translateText("cloud.sync", $dictionary)} disabled={syncing} on:click={syncContent}>
+                    <Icon id="refresh" class={syncing ? "spinning" : ""} size={1.5} white />
+                </MaterialButton>
+            </span>
+        {/if}
         <TopButton id="draw" red={$drawTool === "fill" || ($drawTool === "zoom" && $drawSettings.zoom?.size !== 100) || !!($drawTool === "paint" && $paintCache?.length)} hideLabel />
         {#if !settingsDisabled}
             <TopButton id="settings" hideLabel />
@@ -158,6 +181,25 @@
 </div>
 
 <style>
+    /* the spin is the only feedback that the sync started, so it runs while the button is disabled */
+    .sync :global(.spinning) {
+        animation: spin 1s linear infinite;
+        transform-origin: center;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .sync :global(.spinning) {
+            animation: none;
+            opacity: 0.5;
+        }
+    }
+
     .top {
         position: relative;
         display: flex;

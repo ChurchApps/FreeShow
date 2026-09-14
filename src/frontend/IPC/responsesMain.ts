@@ -29,6 +29,7 @@ import { convertEasyslides } from "../converters/easyslides"
 import { convertEasyWorship } from "../converters/easyworship"
 import { createImageShow } from "../converters/imageShow"
 import { createCategory, importAction, importShow, importSpecific, importStage, importTemplate, setTempShows } from "../converters/importHelpers"
+import { hasSameSlideContent, matchArrangements, mergeAsNewArrangement } from "../converters/providerArrangement"
 import { convertLessonsPresentation } from "../converters/lessonsChurch"
 import { convertMediaShout } from "../converters/mediashout"
 import { convertOpenLP } from "../converters/openlp"
@@ -90,7 +91,7 @@ import {
 import { setupCloudSync } from "../utils/cloudSync"
 import { newToast } from "../utils/common"
 import { translateText } from "../utils/language"
-import { confirmCustom } from "../utils/popup"
+import { chooseCustom, confirmCustom } from "../utils/popup"
 import { initializeClosing, saveComplete } from "../utils/save"
 import { invalidateSearchIndex } from "../utils/searchFast"
 import { updateSettings, updateSyncedSettings, updateThemeValues } from "../utils/updateSettings"
@@ -365,14 +366,19 @@ export const mainResponses: MainResponses = {
         const replaceIds: { [key: string]: string } = {}
         const allShows = keysToID(get(shows))
         const songOrigin = get(contentProviderData)[data.providerId]?.songOrigin
-        const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : ""
+        const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : data.providerId === "onstage" ? "onstageLink" : ""
         const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
 
-        function updateExistingShow(showId: string) {
+        // linkToId stores the provider id, so later syncs recognize this show instead of asking again
+        function updateExistingShow(showId: string, linkToId = "") {
             shows.update((a) => {
                 if (!a[showId]) return a // should always exist
 
                 a[showId].origin = origin
+                if (linkToId && linkKey) {
+                    if (!a[showId].quickAccess) a[showId].quickAccess = {}
+                    a[showId].quickAccess[linkKey] = linkToId
+                }
                 return a
             })
 
@@ -381,12 +387,93 @@ export const mainResponses: MainResponses = {
                 if (!a[showId]) return a
 
                 // we should not set link when requesting to use local show, that way it will ask next time as well
-                // if (!a[showId].quickAccess) a[showId].quickAccess = {}
-                // if (linkKey) a[showId].quickAccess[linkKey] = originId
+                if (linkToId && linkKey) {
+                    if (!a[showId].quickAccess) a[showId].quickAccess = {}
+                    a[showId].quickAccess[linkKey] = linkToId
+                }
 
                 a[showId].origin = origin
                 return a
             })
+        }
+
+        // OnStage can add its arrangements to a local song instead of replacing it, so the conflict
+        // question has three answers instead of yes/no. This is independent of the song origin
+        // setting: the origin decides local vs online, the arrangement question decides whether
+        // the online structure replaces the local one or is added next to it.
+        const askArrangement = data.providerId === "onstage" && get(contentProviderData).onstage?.askArrangement !== false
+        // "only add new songs": a song that already exists locally is left completely alone
+        const onlyAddNew = data.providerId === "onstage" && get(contentProviderData).onstage?.syncMode === "new"
+
+        // Project items point at a specific arrangement of a show. When the provider show does not
+        // end up stored as-is, its arrangement ids no longer exist and have to be rewritten:
+        // a mapped id replaces it, an empty one drops it (falling back to the local arrangement).
+        const layoutReplaceIds: { [key: string]: string } = {}
+
+        function mapLayouts(layoutMap: { [key: string]: string }) {
+            Object.keys(layoutMap).forEach((incomingLayoutId) => (layoutReplaceIds[incomingLayoutId] = layoutMap[incomingLayoutId]))
+        }
+
+        function dropLayouts(providerShow: Show) {
+            Object.keys(providerShow.layouts || {}).forEach((layoutId) => (layoutReplaceIds[layoutId] = ""))
+        }
+
+        function applyGlobalGroups(providerShow: Show) {
+            Object.values<Slide>(providerShow.slides).forEach((slide) => {
+                if (slide.globalGroup || !slide.group) return
+
+                const globalGroup = getGlobalGroup(slide.group)
+                if (globalGroup) slide.globalGroup = globalGroup
+            })
+        }
+
+        // What to do with a provider song that already exists locally. "skip" means the provider
+        // has nothing new — the local show is left alone without asking anything.
+        async function resolveExistingShow(existingId: string, existingName: string, providerShow: Show, prompt: string, providerLabel: string): Promise<{ action: "local" | "replace" | "merge" | "skip"; layoutMap?: { [key: string]: string } }> {
+            // an explicit reload of one show is an unambiguous request for the provider version
+            if (data.forceReplace) return { action: "replace" }
+
+            if (onlyAddNew) {
+                // the local song stays untouched either way — mapping its arrangements when they
+                // happen to match just keeps the project items pointing at the right one
+                await loadShows([existingId])
+                const localShow = get(showsCache)[existingId]
+                const layoutMap = localShow ? matchArrangements(localShow, providerShow) : null
+
+                return layoutMap ? { action: "skip", layoutMap } : { action: "local" }
+            }
+
+            if (askArrangement) {
+                await loadShows([existingId])
+                const localShow = get(showsCache)[existingId]
+
+                if (localShow) {
+                    // Every arrangement the provider sent already exists locally, so there is no
+                    // structural change to ask about. The lyrics can still need rebuilding — the
+                    // lines per slide and line length settings change how the same words are
+                    // split — so only a song that already matches exactly is left alone.
+                    const layoutMap = matchArrangements(localShow, providerShow)
+                    if (layoutMap) {
+                        if (hasSameSlideContent(localShow, providerShow, layoutMap)) return { action: "skip", layoutMap }
+
+                        return { action: songOrigin === "local" ? "local" : "replace" }
+                    }
+
+                    const choice = await chooseCustom(`<b>${existingName}</b> has a different structure at ${providerLabel}.<br><br>What would you like to do?`, [
+                        { value: "merge", label: `Add the ${providerLabel} version as a new arrangement`, icon: "add" },
+                        { value: "replace", label: `Replace the local song with the ${providerLabel} version`, icon: "cloud_sync" },
+                        { value: "local", label: "Keep the local song unchanged", icon: "close" }
+                    ])
+
+                    // dismissing the popup must not change the local song
+                    return { action: (choice as "local" | "replace" | "merge") || "local" }
+                }
+            }
+
+            if (songOrigin === "local") return { action: "local" }
+            if (songOrigin === "online") return { action: "replace" }
+
+            return { action: (await confirmCustom(prompt)) ? "local" : "replace" }
         }
 
         // CREATE SHOWS
@@ -407,23 +494,37 @@ export const mainResponses: MainResponses = {
                 }
             }
 
-            const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : "the cloud"
+            const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : data.providerId === "onstage" ? "OnStage" : "the cloud"
 
             // first find any shows linked to the id
             const linkedShow = linkKey && allShows.find(({ quickAccess, id: showId }) => quickAccess?.[linkKey] === id || showId === id)
             if (linkedShow) {
                 replaceIds[id] = linkedShow.id
 
-                const useLocal = songOrigin === "online" ? false : songOrigin === "local" || (await confirmCustom(`This show already exists: ${linkedShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
-                if (useLocal) continue
+                const { action, layoutMap } = await resolveExistingShow(linkedShow.id, linkedShow.name, show, `This show already exists: ${linkedShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`, providerName)
+
+                if (action === "skip") {
+                    mapLayouts(layoutMap || {})
+                    continue
+                }
+                if (action === "local") {
+                    dropLayouts(show)
+                    continue
+                }
 
                 // replace local show with provider song
-                Object.values<Slide>(show.slides).forEach((slide) => {
-                    if (slide.globalGroup || !slide.group) return
+                applyGlobalGroups(show)
 
-                    const globalGroup = getGlobalGroup(slide.group)
-                    if (globalGroup) slide.globalGroup = globalGroup
-                })
+                if (action === "merge") {
+                    const localShow = get(showsCache)[linkedShow.id]
+                    if (localShow) {
+                        const merged = mergeAsNewArrangement(localShow, show, providerName)
+                        mapLayouts(merged.layoutMap)
+
+                        tempShows.push({ id: linkedShow.id, show: { ...merged.show, origin, name: checkName(merged.show.name, linkedShow.id) } })
+                        continue
+                    }
+                }
 
                 // set modified to now, so it will update properly in history
                 if (show.timestamps) show.timestamps.modified = Date.now()
@@ -437,19 +538,48 @@ export const mainResponses: MainResponses = {
             const showName = show?.name?.toLowerCase() || ""
             const existingShow = allShows.find(({ id: existingId, name }) => existingId !== id && name?.toLowerCase() === showName)
             // const existingShowHasContent = existingShow && (await loadShows([existingShow.id])) && getSlidesText(get(showsCache)[existingShow.id].slides)
-            if (existingShow && songOrigin !== "online") {
-                const useLocal = songOrigin === "local" || (await confirmCustom(`There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
-                if (useLocal) {
+            if (existingShow && (songOrigin !== "online" || askArrangement || onlyAddNew) && !data.forceReplace) {
+                const { action, layoutMap } = await resolveExistingShow(existingShow.id, existingShow.name, show, `There is an existing show with the same name: ${existingShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`, providerName)
+
+                if (action === "local") {
                     replaceIds[id] = existingShow.id
+                    dropLayouts(show)
                     updateExistingShow(existingShow.id)
                     continue
+                }
+
+                // the local song already holds these arrangements — link it so it stops being asked about
+                if (action === "skip") {
+                    replaceIds[id] = existingShow.id
+                    mapLayouts(layoutMap || {})
+                    updateExistingShow(existingShow.id, id)
+                    continue
+                }
+
+                if (action === "merge") {
+                    const localShow = get(showsCache)[existingShow.id]
+                    if (localShow) {
+                        replaceIds[id] = existingShow.id
+                        applyGlobalGroups(show)
+
+                        const merged = mergeAsNewArrangement(localShow, show, providerName)
+                        mapLayouts(merged.layoutMap)
+
+                        if (linkKey) {
+                            if (!merged.show.quickAccess) merged.show.quickAccess = {}
+                            merged.show.quickAccess[linkKey] = id
+                        }
+
+                        tempShows.push({ id: existingShow.id, show: { ...merged.show, origin, name: checkName(merged.show.name, existingShow.id) } })
+                        continue
+                    }
                 }
             }
 
             const targetId = existingShow?.id || id
             replaceIds[id] = targetId
 
-            if ((existingShow && songOrigin !== "local") || songOrigin === "online") {
+            if ((existingShow && songOrigin !== "local") || songOrigin === "online" || data.forceReplace) {
                 // set link so we will automatically update from the provider in the future
                 if (!show.quickAccess) show.quickAccess = {}
                 show.quickAccess[linkKey] = id
@@ -511,7 +641,18 @@ export const mainResponses: MainResponses = {
             const project = createProviderProject(data.providerId, projectBase)
 
             // REPLACE IDS
-            project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
+            project.shows = project.shows.map((a) => {
+                const item = { ...a, id: replaceIds[a.id] || a.id }
+
+                // the provider arrangement this item points at may have become a local one
+                const mappedLayout = item.layout ? layoutReplaceIds[item.layout] : undefined
+                if (mappedLayout !== undefined) {
+                    if (mappedLayout) item.layout = mappedLayout
+                    else delete item.layout
+                }
+
+                return item
+            })
 
             const projectId = currentProject.id
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })

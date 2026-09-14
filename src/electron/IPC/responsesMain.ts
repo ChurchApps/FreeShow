@@ -193,6 +193,8 @@ export const mainResponses: MainResponses = {
         if (data.cloudOnly) markAsNewSync()
         await ContentProviderRegistry.loadServices(data.providerId, data.cloudOnly || false, data.data)
     },
+    [Main.PROVIDER_CONNECTIONS]: () => ContentProviderRegistry.getConnectedProviders(),
+    [Main.PROVIDER_RELOAD_SHOW]: (data) => ContentProviderRegistry.reloadShow(data.providerId, data.showId, data.data),
     [Main.PROVIDER_DISCONNECT]: (data) => {
         ContentProviderRegistry.disconnect(data.providerId, data.scope)
         return { success: true }
@@ -202,6 +204,8 @@ export const mainResponses: MainResponses = {
     [Main.PCO_FETCH_SERVICE_TREE]: () => ContentProviderRegistry.fetchServiceTree("planningcenter"),
     [Main.PCO_LOAD_PLAN]: (data) => ContentProviderRegistry.loadSinglePlan(data.serviceTypeId, data.planId),
     [Main.PCO_LIVE_GET]: (data) => ContentProviderRegistry.getPcoLiveData(data.serviceTypeId, data.planId).catch(() => null),
+    [Main.ONSTAGE_GET_TEAMS]: () => ContentProviderRegistry.getOnStageTeams().catch(() => []),
+    [Main.ONSTAGE_SWITCH_TEAM]: (data) => ContentProviderRegistry.switchOnStageTeam(data.teamId).catch(() => ({ success: false })),
     [Main.PCO_PUSHER_AUTH]: (data) => ContentProviderRegistry.getPcoPusherAuth(data.socketId, data.channelName, data.serviceTypeId),
     // Content Library
     [Main.GET_CONTENT_PROVIDERS]: () => {

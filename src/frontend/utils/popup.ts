@@ -222,6 +222,13 @@ export async function confirmCustom(prompt: string) {
     return !!data
 }
 
+/** Ask a question with more than two answers — returns the chosen value, or "" if dismissed. */
+export async function chooseCustom(prompt: string, choices: { value: string; label: string; icon?: string }[]): Promise<string> {
+    popupData.set({ prompt, choices })
+    const data = await waitForPopupData("confirm")
+    return typeof data === "string" ? data : ""
+}
+
 export async function promptCustom(prompt: string, inputType: string = "text", message: string = "") {
     popupData.set({ prompt, inputType, message })
     const data = (await waitForPopupData("confirm")) || ""
