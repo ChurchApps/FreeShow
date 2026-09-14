@@ -557,7 +557,7 @@
         "template_info": "Informations sur le modèle",
         "cleaning_utility": "Utilitaire de nettoyage",
         "initialize": "Bienvenue sur FreeShow",
-        "unsaved": "Vous n'avez pas encore sauvergardé ! Êtes-vous sur de vouloir quitter ?",
+        "unsaved": "Êtes-vous sur de vouloir quitter ?",
         "cancel": "Annuler",
         "continue": "Continuer",
         "restore": "Restaurer la sauvegarde",
