@@ -1,11 +1,11 @@
 import { get } from "svelte/store"
-import type { AudioChannel } from "../../types/Audio"
 import { getFirstOutput } from "../components/helpers/output"
 import { disabledServers, media, playingAudio, playingVideos, serverData } from "../stores"
-import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { AudioMultichannel, MultichannelInfo } from "./audioMultichannel"
+import { AudioPlayer } from "./audioPlayer"
 import { AudioProcessor, PitchShiftNode } from "./audioProcessor"
 import { AudioSender } from "./audioSender"
+import { MIN_DB } from "./dBUtils"
 import { AudioInputCapture } from "./routing/audioInputCapture"
 import { AudioRoutingManager } from "./routing/audioRoutingManager"
 
@@ -127,10 +127,10 @@ export class AudioAnalyser {
             this.sources[key].connect(sourceGain)
             sourceGain.connect(processor.input)
 
-            // Route audio to configured mergers
+            // Route audio to configured nodes
             const nodeIds = this.getInputNodeIds(id, outputId)
             this.attachedInputIds.set(key, nodeIds)
-            this.connectToSinks(processor, id, outputId)
+            this.connectGain(processor, id, outputId)
 
             if (this.ac.state === "suspended") {
                 this.ac.resume().catch((err) => console.error("Could not resume AudioContext:", err))
@@ -294,7 +294,7 @@ export class AudioAnalyser {
 
     private static initAnalysers() {
         if (this.analysers.length) {
-            AudioAnalyserMerger.init()
+            AudioPlayer.initCheckLoop()
             return
         }
 
@@ -311,7 +311,7 @@ export class AudioAnalyser {
             this.analysers[channel] = analyser
         }
 
-        AudioAnalyserMerger.init()
+        AudioPlayer.initCheckLoop()
     }
 
     // MULTI CHANNEL
@@ -396,14 +396,6 @@ export class AudioAnalyser {
         }
     }
 
-    static connectToSinks(source: AudioNode | PitchShiftNode, id?: string, outputId?: string) {
-        this.connectGain(source, id, outputId)
-    }
-
-    static disconnectFromSinks(source: AudioNode | PitchShiftNode, id?: string) {
-        this.disconnectGain(source, id)
-    }
-
     static getInputNodeIds(id?: string, outputId?: string): string[] {
         if (!id) return ["drawer_audio"]
         if (id === "metronome") return ["metronome"]
@@ -472,55 +464,27 @@ export class AudioAnalyser {
         AudioSender.deactivate()
     }
 
-    static async customOutput(sinkId: string) {
-        try {
-            await (this.ac as any).setSinkId(sinkId || "")
-            return true
-        } catch (err) {
-            console.error("Could not set custom audio sink ID:", err)
-            return false
-        }
-    }
-
     // CHANNEL
 
-    static getChannelsVolume(): AudioChannel[] {
-        const volumes: AudioChannel[] = new Array(this.channels)
-        for (let channel = 0; channel < this.channels; channel++) {
-            volumes[channel] = this.getChannelVolume(channel)
-        }
-        return volumes
-    }
+    static getChannelLiveVolume(channelId: string): number {
+        const analysers = this.getAnalysers(channelId)
+        if (!analysers || analysers.length === 0) return MIN_DB
 
-    private static getChannelVolume(channelIndex: number): AudioChannel {
-        const analyser = this.analysers[channelIndex]
-        if (!analyser) return { dB: { value: AudioAnalyserMerger.dBmin } }
-
-        analyser.minDecibels = AudioAnalyserMerger.dBmin
-        analyser.maxDecibels = AudioAnalyserMerger.dBmax
-
-        const size = analyser.fftSize
+        // Read live time-domain buffer from the channel's specific analyser
+        const size = analysers[0].fftSize
         if (this.volumeBuffer.length !== size) {
             this.volumeBuffer = new Float32Array(size)
         }
-
-        analyser.getFloatTimeDomainData(this.volumeBuffer)
+        analysers[0].getFloatTimeDomainData(this.volumeBuffer)
 
         let sumSquare = 0
-        const len = this.volumeBuffer.length
-        for (let i = 0; i < len; i++) {
+        for (let i = 0; i < this.volumeBuffer.length; i++) {
             const sample = this.volumeBuffer[i]
             sumSquare += sample * sample
         }
 
-        const rms = Math.sqrt(len ? sumSquare / len : 0)
-        const dB = rms > 0.000001 ? Math.max(-60, Math.min(0, 20 * Math.log10(rms))) : -60
-
-        return { dB: { value: dB } }
-    }
-
-    static getSource(id: string): AudioNode | null {
-        return this.sources[id] || null
+        const rms = Math.sqrt(sumSquare / this.volumeBuffer.length)
+        return rms > 0.000001 ? Math.max(MIN_DB, Math.min(0, 20 * Math.log10(rms))) : MIN_DB
     }
 
     static getAnalysers(path?: string) {

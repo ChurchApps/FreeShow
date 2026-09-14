@@ -13,7 +13,7 @@
     export let icon: string | null = null
     export let color: string | undefined = undefined
     export let autoColor: string | undefined = undefined
-    export let nodeType: "input" | "channel" | "merger" | "output"
+    export let nodeType: "input" | "channel" | "output"
 
     export let isSubNode: boolean = false
     export let isExpanded: boolean = false
@@ -58,10 +58,10 @@
 
     $: activeColor = color || autoColor
 
-    $: isChannel = nodeType === "channel" || nodeType === "merger"
+    $: isChannel = nodeType === "channel"
     $: isInputCol = nodeType === "input"
     $: isOutputCol = nodeType === "output"
-    $: isStartChannel = dragStartType === "channel" || dragStartType === "merger"
+    $: isStartChannel = dragStartType === "channel"
 
     $: hasInPort = nodeType !== "input" && (type !== "network" || isSubNode) && (!isSubNode || nodeType === "output")
     $: hasOutPort = nodeType !== "output" && (type !== "output_window" || isSubNode)
@@ -73,7 +73,7 @@
 <div
     {id}
     class="node-card {isChannel ? `context #audio_channel${id === 'main' ? '_main' : ''}` : type}"
-    class:merger-card={isChannel}
+    class:channel-card={isChannel}
     class:sub-card={isSubNode}
     class:hover-valid={hoverTargetId === id && hasValidPort}
     class:disabled={!isEnabled && (!isInputCol || type === "output_window") && (!isOutputCol || type === "network")}
@@ -213,7 +213,7 @@
         padding: 8px 12px;
     }
 
-    .node-card.merger-card:hover {
+    .node-card.channel-card:hover {
         border-color: rgba(255, 255, 255, 0.3);
     }
 

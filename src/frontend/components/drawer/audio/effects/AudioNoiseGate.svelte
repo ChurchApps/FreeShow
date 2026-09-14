@@ -32,11 +32,8 @@
         )
 
         pollInterval = setInterval(() => {
-            const channels = AudioAnalyser.getChannelsVolume()
-            if (channels.length > 0) {
-                const avg = channels.reduce((sum, ch) => sum + ch.dB.value, 0) / channels.length
-                inputLevelDb = Math.max(dbMin, Math.min(dbMax, avg))
-            }
+            const channelDb = AudioAnalyser.getChannelLiveVolume(channelId)
+            inputLevelDb = Math.max(dbMin, Math.min(dbMax, channelDb))
         }, 50)
     })
 

@@ -1,8 +1,8 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
+    import { dbToLinear, MIN_DB } from "../../../audio/dBUtils"
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
     import { activeDrawerTab, activePage, audioChannelsData, drawer } from "../../../stores"
-    import { dbToLinear, MIN_DB } from "../../../audio/dBUtils"
     import { DEFAULT_DRAWER_HEIGHT } from "../../../utils/common"
 
     export let channelId: string = ""
@@ -39,7 +39,7 @@
             if (data && typeof data.dB === "number") {
                 return [data.dB, data.dB]
             }
-            return [-60, -60]
+            return [MIN_DB, MIN_DB]
         }
     }
 
@@ -49,7 +49,7 @@
         }
 
         let db = rawDb
-        if (isMuted) db = -60
+        if (isMuted) db = MIN_DB
 
         const target = dbToLinear(db)
 
@@ -117,7 +117,7 @@
 
             const dotEl = dotEls[i]
             if (dotEl) {
-                if (rawDb > -60) {
+                if (rawDb > MIN_DB) {
                     dotEl.classList.add("active")
                 } else {
                     dotEl.classList.remove("active")

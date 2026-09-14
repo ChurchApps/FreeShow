@@ -4,7 +4,6 @@ import { get } from "svelte/store"
 import { Main } from "../../../../types/IPC/Main"
 import { AudioAnalyser } from "../../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../../audio/audioFading"
-import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
 import { requestMain } from "../../../IPC/main"
 import { media, outputs, playerVideos, playingVideos, playingVideoState, special, transitionData } from "../../../stores"
 import { playFolder } from "../../../utils/shortcuts"
@@ -496,10 +495,6 @@ export class VideoPlayer {
         })
 
         videoEnding()
-
-        if (!get(playingVideos).length) {
-            AudioInputCapture.getInstance().clearMergedDbs()
-        }
     }
 
     private static async fadeOut(path: string, audio: HTMLAudioElement, durationMs: number): Promise<boolean> {

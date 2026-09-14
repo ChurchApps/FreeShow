@@ -28,11 +28,8 @@ interface CapturedAnalyzers {
 const ALWAYS_OBSERVED_NODES = new Set(["main", "drawer_audio", "speaker_default", "output_window"])
 
 export class AudioInputCapture {
-    private static instance: AudioInputCapture
-
     private analysers = new Map<string, CapturedAnalyzers>()
     private floatBuffers = new Map<string, Float32Array[]>()
-    private mergedLevels = new Map<string, number>()
     private lastCalcTimestamp = new Map<string, number>()
     private lastQueryTimestamp = new Map<string, number>()
     private windowStreams = new Map<string, MediaStream>()
@@ -42,30 +39,19 @@ export class AudioInputCapture {
 
     private constructor() {}
 
+    private static instance: AudioInputCapture
     public static getInstance(): AudioInputCapture {
         return (AudioInputCapture.instance ??= new AudioInputCapture())
     }
 
-    public setAudioContext(ctx: AudioContext) {
-        this.audioCtx = ctx
-    }
-
-    public setMergedDb(nodeId: string, db: number) {
-        this.mergedLevels.set(nodeId, db)
-    }
-
-    public clearMergedDbs() {
-        this.mergedLevels.clear()
-    }
-
-    public onNodeDisconnected(node: AudioNode) {
+    onNodeDisconnected(node: AudioNode) {
         this.analysers.forEach((entry) => entry.connectedSources.delete(node))
     }
 
     /**
      * Capture window/desktop audio loopback via desktopCapturer source ID and connect to AudioRoutingManager.
      */
-    public async captureDesktopAudio(nodeId: string, mediaId = "screen:0:0") {
+    async captureDesktopAudio(nodeId: string, mediaId = "screen:0:0") {
         this.audioCtx ??= AudioAnalyser.getAudioContext()
         if (!this.audioCtx || this.windowStreams.has(mediaId)) return
 
@@ -94,12 +80,7 @@ export class AudioInputCapture {
         }
     }
 
-    /** @deprecated Use captureDesktopAudio instead */
-    public async captureOutputWindowStream(windowMediaId: string, outputId = "output_window") {
-        return this.captureDesktopAudio(`output_win_sub_${outputId}`, windowMediaId)
-    }
-
-    public stopOutputWindowStream(windowMediaId: string) {
+    private stopOutputWindowStream(windowMediaId: string) {
         const stream = this.windowStreams.get(windowMediaId)
         if (stream) {
             stream.getTracks().forEach((track) => track.stop())
@@ -107,7 +88,7 @@ export class AudioInputCapture {
         }
     }
 
-    public stopDesktopAudio(mediaId = "screen:0:0") {
+    stopDesktopAudio(mediaId = "screen:0:0") {
         this.stopOutputWindowStream(mediaId)
         this.removeInput("desktop_default")
     }
@@ -115,7 +96,7 @@ export class AudioInputCapture {
     /**
      * Capture or connect a node to dynamic N-channel analyzers without repeatedly re-creating native C++ Web Audio nodes.
      */
-    public captureInput(nodeId: string, source: AudioNode, forcedChannelCount?: number): CapturedAnalyzers | null {
+    captureInput(nodeId: string, source: AudioNode, forcedChannelCount?: number): CapturedAnalyzers | null {
         const ctx = (this.audioCtx ??= source.context as AudioContext)
         if (!ctx) return null
 
@@ -164,7 +145,7 @@ export class AudioInputCapture {
         return entry
     }
 
-    public isNodeObserved(nodeId: string): boolean {
+    private isNodeObserved(nodeId: string): boolean {
         if (ALWAYS_OBSERVED_NODES.has(nodeId) || nodeId.startsWith("output_win_sub_")) return true
         return performance.now() - (this.lastQueryTimestamp.get(nodeId) || 0) < 3000
     }
@@ -181,7 +162,7 @@ export class AudioInputCapture {
         return entry
     }
 
-    public pruneStaleInputs(activeNodeIds: Set<string>) {
+    pruneStaleInputs(activeNodeIds: Set<string>) {
         this.analysers.forEach((_, nodeId) => {
             if (!activeNodeIds.has(nodeId) || !this.isNodeObserved(nodeId)) {
                 this.removeInput(nodeId)
@@ -189,7 +170,7 @@ export class AudioInputCapture {
         })
     }
 
-    public removeInput(nodeId: string) {
+    removeInput(nodeId: string) {
         const entry = this.analysers.get(nodeId)
         if (entry) {
             entry.connectedSources.forEach((s) => {
@@ -212,38 +193,15 @@ export class AudioInputCapture {
         }
     }
 
-    public getAnalysers(nodeId = "speaker_default"): AnalyserNode[] {
+    getAnalysers(nodeId = "speaker_default"): AnalyserNode[] {
         this.lastQueryTimestamp.set(nodeId, performance.now())
         return this.getOrCaptureEntry(nodeId)?.analysers || this.analysers.get("drawer_audio")?.analysers || []
     }
 
-    public getVisualizerData(nodeId: string): InputVisualizerData | null {
+    getVisualizerData(nodeId: string): InputVisualizerData | null {
         this.lastQueryTimestamp.set(nodeId, performance.now())
         const entry = this.getOrCaptureEntry(nodeId)
-
-        if (!entry) {
-            const mergedDb = this.mergedLevels.get(nodeId)
-            if (mergedDb === undefined) return null
-
-            let cachedResult = this.resultCache.get(nodeId)
-            if (!cachedResult || cachedResult.channels.length !== 1) {
-                cachedResult = {
-                    nodeId,
-                    db: mergedDb,
-                    channels: [{ channelIndex: 0, db: mergedDb, spectrum: [] }],
-                    dbL: mergedDb,
-                    dbR: mergedDb,
-                    spectrum: []
-                }
-                this.resultCache.set(nodeId, cachedResult)
-            } else {
-                cachedResult.db = mergedDb
-                cachedResult.channels[0].db = mergedDb
-                cachedResult.dbL = mergedDb
-                cachedResult.dbR = mergedDb
-            }
-            return cachedResult
-        }
+        if (!entry) return null
 
         const now = performance.now()
         const lastCalc = this.lastCalcTimestamp.get(nodeId) || 0

@@ -30,7 +30,7 @@
 
     interface RoutingColumn {
         title: string
-        type: "input" | "channel" | "merger" | "output"
+        type: "input" | "channel" | "output"
         nodes: RoutingColumnNode[]
     }
 
@@ -81,7 +81,7 @@
 
     let isConnecting = false
     let dragStartId: string | null = null
-    let dragStartType: "input" | "channel" | "merger" | "output" | null = null
+    let dragStartType: "input" | "channel" | "output" | null = null
     let dragStartPortType: "in" | "out" | null = null
     let dragFromPos = { x: 0, y: 0 }
     let dragCurrentPos = { x: 0, y: 0 }
@@ -335,7 +335,7 @@
         lines = newLines
     }
 
-    function handlePortMouseDown(e: MouseEvent, nodeId: string, nodeType: "input" | "channel" | "merger" | "output", portType: "in" | "out", _channelIndex = 0) {
+    function handlePortMouseDown(e: MouseEvent, nodeId: string, nodeType: "input" | "channel" | "output", portType: "in" | "out", _channelIndex = 0) {
         e.preventDefault()
         e.stopPropagation()
         isConnecting = true
@@ -456,7 +456,7 @@
                             c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to === "speaker_default"))
                             for (let ch = 0; ch < chCount; ch++) {
                                 if (!c.connections.some((conn) => conn.from === fromId && conn.to === toId && ((conn as any).channelIndex ?? 0) === ch)) {
-                                    c.connections.push({ from: fromId, to: toId, channelIndex: ch } as any)
+                                    c.connections.push({ from: fromId, to: toId, channelIndex: ch })
                                 }
                             }
                         }
@@ -479,7 +479,9 @@
                                     c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to.startsWith(prefix)))
                                 }
                             }
-                            c.connections.push({ from: fromId, to: toId, channelIndex: targetChIndex } as any)
+
+                            if (isSpecificCircle) c.connections.push({ from: fromId, to: toId, channelIndex: targetChIndex })
+                            else c.connections.push({ from: fromId, to: toId })
                         }
                     }
                 })
@@ -515,13 +517,13 @@
         })
     }
 
-    function handleNodeMouseEnter(nodeId: string, columnType: "input" | "channel" | "merger" | "output") {
+    function handleNodeMouseEnter(nodeId: string, columnType: "input" | "channel" | "output") {
         if (!isConnecting) return
 
         let valid = false
-        if (dragStartType === "input" && (columnType === "channel" || columnType === "merger")) valid = true
-        else if (dragStartType === "output" && (columnType === "channel" || columnType === "merger")) valid = true
-        else if (dragStartType === "channel" || dragStartType === "merger") {
+        if (dragStartType === "input" && columnType === "channel") valid = true
+        else if (dragStartType === "output" && columnType === "channel") valid = true
+        else if (dragStartType === "channel") {
             if (dragStartPortType === "in" && columnType === "input" && nodeId !== "output_window") valid = true
             else if (dragStartPortType === "out" && columnType === "output" && nodeId !== "network_default") valid = true
         }
@@ -675,7 +677,7 @@
                                 {/if}
                             {/each}
 
-                            {#if column.type === "channel" || column.type === "merger"}
+                            {#if column.type === "channel"}
                                 <MaterialButton variant="outlined" icon="add" on:click={addChannel} white />
                             {/if}
                         </div>

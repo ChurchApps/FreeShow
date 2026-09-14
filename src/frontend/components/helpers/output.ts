@@ -3,7 +3,6 @@ import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
 import type { Output, Outputs, RtmpDestination } from "../../../types/Output"
-import { createDestination, hasStreamableDestination } from "./rtmpDestinations"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, LayoutRef, Media, OutSlide, Show, Slide, SlideData, Template, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
@@ -24,6 +23,7 @@ import { VideoPlayer } from "../media/video/videoPlayer"
 import { clearBackground, clearSlide } from "../output/clear"
 import { areObjectsEqual, clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { getExtension, getFileName, getMediaLayerType, getMediaType, removeExtension } from "./media"
+import { createDestination, hasStreamableDestination } from "./rtmpDestinations"
 import { getLayoutRef } from "./show"
 import { getFewestOutputLines, getItemWithMostLines } from "./showActions"
 import { _show } from "./shows"
@@ -1020,7 +1020,7 @@ export function changeStageOutputLayout(data: API_stage_output_layout) {
 
 //             // if (!AudioAnalyser.shouldAnalyse()) {
 //             //     // wait for video to clear in output
-//             //     setTimeout(() => AudioAnalyserMerger.stop(), 5000)
+//             //     setTimeout(() => AudioPlayer.stopCheckLoop(), 5000)
 //             // }
 
 //             // send(OUTPUT, ["UPDATE_VIDEO"], { id: clearOutput, data: videoData, time: 0 })
