@@ -11,6 +11,7 @@ import { slideTimelineSpeedMultiplier } from "../../stores"
 import { transposeText } from "../../utils/chordTranspose"
 import { triggerFunction } from "../../utils/common"
 import { obsSetScene, obsStartLivestream, obsStartRecording, obsStopLivestream, obsStopRecording } from "../../utils/obsTalk"
+import { save } from "../../utils/save"
 import { togglePlayingMedia } from "../../utils/shortcuts"
 import { contentProviderSync } from "../../utils/startup"
 import { updateTransition } from "../../utils/transitions"
@@ -368,6 +369,7 @@ export const API_ACTIONS = {
     spotify_previous: () => skipPrev(),
 
     // OTHER
+    close: () => save(true),
     toggle_log_song_usage: (data: API_toggle_specific) => toggleLogSongUsage(data),
 
     // ACTION
