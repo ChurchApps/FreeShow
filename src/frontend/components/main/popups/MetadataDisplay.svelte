@@ -159,6 +159,7 @@
             </InputRow>
             <InputRow>
                 <MaterialNumberInput label="meta.first_offset" value={firstOffset} min={0} max={50} on:change={(e) => changeMetadata("firstOffset", e.detail)} />
+                <Tip type="info" value="meta.first_offset_tip" hiddenText />
             </InputRow>
         {/if}
 
@@ -172,12 +173,14 @@
         {#if display === "first"}
             <InputRow>
                 <MaterialNumberInput label="meta.first_offset" value={firstOffset} min={0} max={50} on:change={(e) => changeMetadata("firstOffset", e.detail)} />
+                <Tip type="info" value="meta.first_offset_tip" hiddenText />
             </InputRow>
         {/if}
 
         {#if display === "last" || display === "first_last" || display === "always"}
             <InputRow>
                 <MaterialNumberInput label="meta.last_offset" value={lastOffset} min={0} max={50} on:change={(e) => changeMetadata("lastOffset", e.detail)} />
+                <Tip type="info" value="meta.last_offset_tip" hiddenText />
             </InputRow>
         {/if}
 
