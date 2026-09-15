@@ -72,7 +72,7 @@ export class AudioAnalyser {
 
         const oldSource = this.sources[key]
         if (oldSource && sourceGain) {
-            const isShared = Object.values(this.sources).some((node) => node === oldSource && node !== oldSource) // check if another key uses oldSource
+            const isShared = Object.entries(this.sources).some(([k, node]) => k !== key && node === oldSource)
             try {
                 if (isShared) oldSource.disconnect(sourceGain)
                 else oldSource.disconnect()

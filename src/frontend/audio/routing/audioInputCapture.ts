@@ -45,15 +45,20 @@ export class AudioInputCapture {
     }
 
     onNodeDisconnected(node: AudioNode) {
-        this.analysers.forEach((entry) => entry.connectedSources.delete(node))
+        this.analysers.forEach((entry) => {
+            if (entry.connectedSources.has(node)) entry.connectedSources.delete(node)
+        })
     }
 
     /**
      * Capture window/desktop audio loopback via desktopCapturer source ID and connect to AudioRoutingManager.
      */
+    private pendingCaptures = new Set<string>()
     async captureDesktopAudio(nodeId: string, mediaId = "screen:0:0") {
         this.audioCtx ??= AudioAnalyser.getAudioContext()
         if (!this.audioCtx || this.windowStreams.has(mediaId)) return
+
+        this.pendingCaptures.add(mediaId)
 
         try {
             const constraints = {
@@ -62,6 +67,13 @@ export class AudioInputCapture {
             } as unknown as MediaStreamConstraints
 
             const stream = await navigator.mediaDevices.getUserMedia(constraints)
+
+            // if cancelled during getUserMedia
+            if (!this.pendingCaptures.has(mediaId)) {
+                stream.getTracks().forEach((track) => track.stop())
+                return
+            }
+
             this.windowStreams.set(mediaId, stream)
 
             if (stream.getAudioTracks().length > 0) {
@@ -77,6 +89,8 @@ export class AudioInputCapture {
             }
         } catch (e) {
             console.warn(`[AudioInputCapture] Could not capture desktop audio for ${nodeId}:`, e)
+        } finally {
+            this.pendingCaptures.delete(mediaId)
         }
     }
 
@@ -89,6 +103,7 @@ export class AudioInputCapture {
     }
 
     stopDesktopAudio(mediaId = "screen:0:0") {
+        this.pendingCaptures.delete(mediaId)
         this.stopOutputWindowStream(mediaId)
         this.removeInput("desktop_default")
     }

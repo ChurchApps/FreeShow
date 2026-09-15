@@ -31,7 +31,7 @@ interface EffectChainSegment {
     input: AudioNode
     output: AudioNode
     instance: any
-    dispose?: () => void
+    dispose: () => void
 }
 
 interface Connection {
@@ -58,6 +58,7 @@ export class AudioRoutingManager {
     private audioCtx: AudioContext | null = null
     private updateScheduled = false
 
+    // gain nodes = channel nodes
     private gainNodes = new Map<string, GainNode>()
     private delayNodes = new Map<string, DelayNode>()
     private effectChains = new Map<string, { firstInput: AudioNode; output: AudioNode; segments: EffectChainSegment[]; topologyHash: string; dispose: () => void }>()
@@ -114,15 +115,7 @@ export class AudioRoutingManager {
     setAudioContext(ctx: AudioContext) {
         if (this.audioCtx === ctx) return
         this.audioCtx = ctx
-
-        try {
-            // "main" must always exist
-            if (!this.destinationNodes.has("main")) {
-                const mainGain = this.audioCtx.createGain()
-                mainGain.connect(this.audioCtx.destination)
-                this.destinationNodes.set("main", mainGain)
-            }
-        } catch {}
+        this.cleanup()
 
         this.updateRoutingNodes()
     }
@@ -133,12 +126,33 @@ export class AudioRoutingManager {
         this.updateRoutingNodes()
     }
 
+    private cleanup() {
+        this.removeAllEffectChains()
+
+        this.destinationNodes.forEach(this.disconnect)
+        this.destinationNodes.clear()
+
+        this.outputNodes.clear()
+    }
+
+    private connect(source: AudioNode, destination: AudioNode) {
+        try {
+            source.connect(destination)
+        } catch {
+            console.error(`[AudioRoutingManager] Failed to connect source to destination.`)
+        }
+    }
+
     private disconnect(node?: AudioNode) {
         if (!node) return
+
         try {
             node.disconnect()
-            AudioInputCapture.getInstance().onNodeDisconnected(node)
-        } catch {}
+        } catch {
+            console.warn(`[AudioRoutingManager] Could not disconnect node.`)
+        }
+
+        AudioInputCapture.getInstance().onNodeDisconnected(node)
     }
 
     private getInactiveChannelIds(): Set<string> {
@@ -223,6 +237,7 @@ export class AudioRoutingManager {
             try {
                 delayNode.delayTime.setValueAtTime(delaySec, this.audioCtx.currentTime)
             } catch {}
+            if (delaySec === 0) this.updateRoutingNodes()
         } else if (delaySec > 0) {
             this.updateRoutingNodes()
         }
@@ -255,7 +270,10 @@ export class AudioRoutingManager {
                 const item = stack.find((s: any) => s.id === seg.id)
                 if (item?.config) seg.instance?.updateConfig?.(item.config)
             }
-            node.connect(existingChain.firstInput)
+
+            this.disconnect(existingChain.firstInput)
+            this.connect(node, existingChain.firstInput)
+
             return existingChain.output
         }
 
@@ -266,8 +284,7 @@ export class AudioRoutingManager {
         const chain: EffectChainSegment[] = []
         const stack = channelEffects?.stack || []
         for (const item of stack) {
-            if (item?.enabled === false) continue
-            if (!item?.config) continue
+            if (item?.enabled === false || !item?.config) continue
 
             const EffectClass = EFFECT_CLASSES[item.type]
             if (!EffectClass) continue
@@ -289,7 +306,7 @@ export class AudioRoutingManager {
 
         let prev: AudioNode = node
         for (const seg of chain) {
-            prev.connect(seg.input)
+            this.connect(prev, seg.input)
             prev = seg.output
         }
 
@@ -301,12 +318,17 @@ export class AudioRoutingManager {
             dispose: () => {
                 chain.forEach((seg) => {
                     this.disconnect(seg.output)
-                    seg.dispose?.()
+                    seg.dispose()
                 })
             }
         })
 
         return prev
+    }
+
+    private removeAllEffectChains() {
+        this.effectChains.forEach((chain) => chain.dispose())
+        this.effectChains.clear()
     }
 
     private removeEffectChain(id: string) {
@@ -344,7 +366,6 @@ export class AudioRoutingManager {
 
         this.routeOutputNodes(connectionsByFrom, subSpeakers)
         this.connectSpeakerSinks(subSpeakers)
-        this.captureDestinationVisualizers()
         this.routeInputNodes()
 
         const duration = performance.now() - startTime
@@ -352,18 +373,24 @@ export class AudioRoutingManager {
     }
 
     private syncGainNodes(activeChannels: Array<{ id: string }>) {
-        activeChannels.forEach((m) => {
-            let gainNode = this.gainNodes.get(m.id)
+        // "main" channel must always exist
+        const allChannelIds = ["main", ...new Set(activeChannels.map((c) => c.id))]
+        allChannelIds.forEach((id) => {
+            let gainNode = this.gainNodes.get(id)
+
             if (!gainNode) {
                 gainNode = this.audioCtx!.createGain()
-                this.gainNodes.set(m.id, gainNode)
+                this.gainNodes.set(id, gainNode)
             }
-            this.applyGain(m.id, gainNode)
+
+            this.applyGain(id, gainNode)
         })
     }
 
     private cleanupRemovedChannels(currentChannelIds: Set<string>) {
         this.gainNodes.forEach((node, id) => {
+            // "main" channel should never be removed
+            if (id === "main") return
             if (currentChannelIds.has(id)) return
 
             this.disconnect(node)
@@ -442,7 +469,7 @@ export class AudioRoutingManager {
             delayNode.delayTime.setValueAtTime(delaySec, this.audioCtx!.currentTime)
 
             this.disconnect(delayNode)
-            outNode.connect(delayNode)
+            this.connect(outNode, delayNode)
             outNode = delayNode
         }
 
@@ -455,62 +482,69 @@ export class AudioRoutingManager {
 
         this.gainNodes.forEach((node, id) => {
             this.disconnect(node)
-            const outNode = this.buildProcessedOutputNode(id, node, allEffects, allChannelData)
 
+            const outNode = this.buildProcessedOutputNode(id, node, allEffects, allChannelData)
             this.outputNodes.set(id, outNode)
+
             AudioInputCapture.getInstance().captureInput(id, outNode)
 
             const recDest = this.recorderDestinations.get(id)
-            if (recDest) {
-                try {
-                    outNode.connect(recDest)
-                } catch (e) {
-                    console.error(`[AudioRoutingManager] Could not connect outNode to channel recorder for ${id}:`, e)
-                }
-            }
+            if (recDest) this.connect(outNode, recDest)
 
             const conns = connectionsByFrom.get(id) || []
 
             // main speaker out
             if (conns.some((c) => c.to === "speaker_default")) {
-                const mainNode = this.destinationNodes.get("main")
-                if (mainNode) {
-                    try {
-                        outNode.connect(mainNode)
-                    } catch {}
+                let speakerNode = this.destinationNodes.get("speaker_default")
+                if (!speakerNode) {
+                    // speakerNode = AudioAnalyser.getOrCreateDestinationNode("speaker_default")
+                    speakerNode = this.audioCtx!.createGain()
+                    this.connect(speakerNode, this.audioCtx!.destination)
+                    this.destinationNodes.set("speaker_default", speakerNode)
                 }
+                if (speakerNode) this.connect(outNode, speakerNode)
+
+                AudioInputCapture.getInstance().captureInput("speaker_default", outNode)
             }
 
             // sub speaker out
-            subSpeakers.forEach(({ speakerNode }, targetId) => {
+            subSpeakers.forEach(({ speakerNode, maxChannels }, targetId) => {
                 const subConns = conns.filter((c) => c.to === targetId)
 
                 if (subConns.length === 1) {
                     outNode.connect(speakerNode, 0, subConns[0].channelIndex ?? 0)
                 } else if (subConns.length > 1) {
-                    const splitter = this.audioCtx!.createChannelSplitter(2)
+                    const splitter = this.audioCtx!.createChannelSplitter(maxChannels)
                     outNode.connect(splitter)
                     subConns.forEach((c) => {
                         const chIdx = c.channelIndex ?? 0
-                        splitter.connect(speakerNode, Math.min(chIdx, 1), chIdx)
+                        if (chIdx < maxChannels) splitter.connect(speakerNode, chIdx, chIdx)
                     })
                 }
             })
 
             // network destinations
             conns
-                .filter((c) => c.to === "icecast" || c.to.startsWith("network_sub_"))
+                .filter((c) => c.to.startsWith("network_sub_"))
                 .forEach((c) => {
-                    const targetKey = c.to.startsWith("network_sub_") ? c.to.replace("network_sub_", "") : c.to
+                    const targetKey = c.to.replace("network_sub_", "")
                     let destNode = this.destinationNodes.get(targetKey)
                     if (!destNode) destNode = AudioAnalyser.getOrCreateDestinationNode(targetKey)
-                    if (destNode) {
-                        try {
-                            outNode.connect(destNode)
-                        } catch {}
-                    }
+                    if (destNode) this.connect(outNode, destNode)
+
                     AudioInputCapture.getInstance().captureInput(c.to, outNode)
                 })
+
+            // Icecast
+            if (conns.some((c) => c.to === "icecast")) {
+                let icecastNode = this.destinationNodes.get("icecast")
+                if (!icecastNode) icecastNode = AudioAnalyser.getOrCreateDestinationNode("icecast")
+                if (icecastNode) this.connect(outNode, icecastNode)
+
+                setTimeout(() => {
+                    AudioInputCapture.getInstance().captureInput("icecast", outNode)
+                })
+            }
         })
     }
 
@@ -522,7 +556,7 @@ export class AudioRoutingManager {
 
             const prev = this.speakerStreams.get(targetId)
             if (prev && prev.maxChannels === maxChannels) {
-                speakerNode.connect(prev.streamDest)
+                this.connect(speakerNode, prev.streamDest)
                 AudioInputCapture.getInstance().captureInput(targetId, speakerNode, maxChannels)
                 return
             }
@@ -531,24 +565,19 @@ export class AudioRoutingManager {
 
             const streamDest = this.audioCtx!.createMediaStreamDestination()
             streamDest.channelCount = maxChannels
-            speakerNode.connect(streamDest)
+            this.connect(speakerNode, streamDest)
 
-            AudioInputCapture.getInstance().captureInput(targetId, speakerNode, maxChannels)
+            setTimeout(() => {
+                AudioInputCapture.getInstance().captureInput(targetId, speakerNode, maxChannels)
+            })
 
             const streamSource = sink.ctx.createMediaStreamSource(streamDest.stream)
-            streamSource.connect(sink.ctx.destination)
+            this.connect(streamSource, sink.ctx.destination)
             if (sink.ctx.state === "suspended") {
                 sink.ctx.resume().catch(() => {})
             }
 
             this.speakerStreams.set(targetId, { streamDest, streamSource, maxChannels })
-        })
-    }
-
-    private captureDestinationVisualizers() {
-        this.destinationNodes.forEach((destNode, targetKey) => {
-            const visualizerKey = targetKey === "icecast" ? "icecast" : targetKey === "main" ? "speaker_default" : `network_sub_${targetKey}`
-            AudioInputCapture.getInstance().captureInput(visualizerKey, destNode)
         })
     }
 
@@ -572,14 +601,7 @@ export class AudioRoutingManager {
 
             targetIds.forEach((id) => {
                 const gainNode = this.getGainNode(id)
-                if (gainNode) {
-                    try {
-                        node.connect(gainNode)
-                        AudioInputCapture.getInstance().captureInput(id, gainNode)
-                    } catch (e) {
-                        console.error(`[AudioRoutingManager] Could not connect source to node ${id}:`, e)
-                    }
-                }
+                if (gainNode) this.connect(node, gainNode)
             })
         })
     }
@@ -591,13 +613,7 @@ export class AudioRoutingManager {
 
         targets.forEach((id) => {
             const gainNode = this.getGainNode(id)
-            if (gainNode) {
-                try {
-                    inputNode.connect(gainNode)
-                } catch (e) {
-                    console.error(`[AudioRoutingManager] Could not connect source to node ${id}:`, e)
-                }
-            }
+            if (gainNode) this.connect(inputNode, gainNode)
         })
     }
 
@@ -630,6 +646,7 @@ export class AudioRoutingManager {
         if (!this.inputNodes.has(inputId)) this.inputNodes.set(inputId, new Set())
         const nodes = this.inputNodes.get(inputId)!
         if (nodes.has(node)) return
+
         nodes.add(node)
         this.routeInput(inputId, node)
     }
@@ -639,19 +656,13 @@ export class AudioRoutingManager {
         if (!nodes) return
 
         if (!node) {
-            nodes.forEach((n) => {
-                try {
-                    n.disconnect()
-                } catch {}
-            })
+            nodes.forEach(this.disconnect)
             this.inputNodes.delete(inputId)
             return
         }
 
         if (nodes.has(node)) {
-            try {
-                node.disconnect()
-            } catch {}
+            this.disconnect(node)
             nodes.delete(node)
         }
 
@@ -665,9 +676,7 @@ export class AudioRoutingManager {
         const outNode = this.getChannelOutputNode(channelId)
         if (!outNode) return
 
-        try {
-            outNode.connect(dest)
-        } catch {}
+        this.connect(outNode, dest)
     }
 
     unregisterChannelRecorder(channelId: string, dest?: MediaStreamAudioDestinationNode) {
@@ -677,9 +686,7 @@ export class AudioRoutingManager {
 
         try {
             const outNode = this.getChannelOutputNode(channelId)
-            if (outNode) {
-                outNode.disconnect(current)
-            }
+            if (outNode) outNode.disconnect(current)
         } catch {}
         this.recorderDestinations.delete(channelId)
     }
