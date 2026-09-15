@@ -150,13 +150,16 @@
             type: "channel",
             nodes: channelsList.map((m) => {
                 const inactive = inactiveOutputIds.some((a) => `channel_${a.id}` === m.id)
+                const linkedToOutput = m.outputLink || $outputs[m.id.replace("channel_", "")]
                 const chData = get(audioChannelsData)[m.id]
                 const muted = chData ? chData.isMuted || chData.volume === 0 : false
+
                 return {
                     id: m.id,
                     name: m.name,
                     type: "channel",
                     color: m.color,
+                    icon: m.id === "main" ? "protected" : linkedToOutput ? "display" : null,
                     isEnabled: !inactive,
                     isMuted: muted,
                     hasInputConnection: config.connections.some((c) => c.to === m.id)

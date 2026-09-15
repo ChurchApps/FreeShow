@@ -117,7 +117,14 @@
         {/if}
 
         {#if isChannel}
-            <span class="card-name" data-title={name}>{name}</span>
+            <span class="card-name" data-title={name}>
+                {name}
+
+                {#if icon}
+                    <Icon id={icon} size={0.7} style="margin-left: 2px;opacity: 0.2;" white />
+                {/if}
+            </span>
+
             {#if isMuted}
                 <Icon id="muted" size={0.9} style="opacity: 0.7;" white />
             {/if}
