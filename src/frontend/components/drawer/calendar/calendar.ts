@@ -19,8 +19,15 @@ export const isSameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear
 export const isBetween = (from: Date, to: Date, date: Date) => {
     if (isNaN(from.getTime())) return false
     if (isNaN(to.getTime()) || to < from) to = from
-    return date >= copyDate(from) && date <= copyDate(to)
+    let end = copyDate(to)
+
+    // ending at midnight of the next day, adjust the end date to the previous day
+    if (endsMidnight(from, to)) end = copyDate(to, -1)
+
+    return date >= copyDate(from) && date <= end
 }
+const endsMidnight = (from: Date, to: Date) => to.getTime() > from.getTime() && to.getHours() === 0 && to.getMinutes() === 0 && to.getSeconds() === 0 && to.getMilliseconds() === 0
+export const endsMidnightNextDay = (from: Date, to: Date) => endsMidnight(from, to) && isSameDay(copyDate(to, -1), from)
 export const getDaysInMonth = (year: number, month: number) => new Date(year, getMonthIndex(month), 0).getDate()
 const getMonthIndex = (month: number) => (month + 1 > 12 ? month + 1 : 0)
 
@@ -67,7 +74,7 @@ export async function createSlides(currentEvents: any[], showId = "") {
         day.events[0].from = from
         day.events[0].to = to
 
-        const isOverMultipleDays = !isSameDay(from, to)
+        const isOverMultipleDays = !isSameDay(from, to) && !endsMidnightNextDay(from, to)
         if (isOverMultipleDays) {
             textDay = getEventStringOverMultipleDays(textDay, [day.date, from, to])
             group = textDay
@@ -258,7 +265,7 @@ export function getSelectedEvents(selectedDays: number[] = get(activeDays)) {
             const startingAtSameDate = isSameDay(fromDate, copyDate(thisDay))
             if (!startingAtSameDate) return
 
-            const endingAtSameDate = isSameDay(toDate, copyDate(thisDay))
+            const endingAtSameDate = isSameDay(toDate, copyDate(thisDay)) || endsMidnightNextDay(fromDate, toDate)
             if (endingAtSameDate) tempEvents[tempEvents.length - 1].events.push({ ...a, id })
             else tempEvents.push({ date: day, events: [{ ...a, id }] })
         })
