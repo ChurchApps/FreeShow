@@ -8,6 +8,7 @@ import { translateText } from "../utils/language"
 import { ShowObj } from "./../classes/Show"
 import { activePopup, alertMessage, groups } from "./../stores"
 import { createCategory, setTempShows } from "./importHelpers"
+import { splitOpenLPSlideLines } from "./openlpSlides"
 import { xml2json } from "./xml"
 
 interface Song {
@@ -97,11 +98,10 @@ function createSlides({ verseOrder, lyrics }: Song) {
     // split into multiple sub slides (https://github.com/ChurchApps/FreeShow/issues/1743)
     const slidesList: ((typeof lyrics)[number] & { isChild: boolean })[] = []
     lyrics?.forEach((lyricSlide) => {
-        const currentSlides = lyricSlide.lines.join("__BREAK__").split(/<p\s*style=["']page-break-after:\s*always;["']\s*\/?>/i)
-        currentSlides.forEach((slideData, i) => {
-            const mergedLines = slideData.trim().split("__BREAK__").filter(Boolean)
+        const currentSlides = splitOpenLPSlideLines(lyricSlide.lines)
+        currentSlides.forEach((lines, i) => {
             // Chords will "break" if splitted into multiple
-            slidesList.push({ name: lyricSlide.name, isChild: i > 0, lines: mergedLines, chords: lyricSlide.chords })
+            slidesList.push({ name: lyricSlide.name, isChild: i > 0, lines, chords: lyricSlide.chords })
         })
     })
 
