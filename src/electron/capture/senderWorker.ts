@@ -25,6 +25,8 @@ export type PacerBuf = { buf: Buffer; refs: number; owner: string }
 
 export type Sender = {
     name: string
+    /** the protocol this sender speaks; members of one render may speak different ones */
+    adapter: SenderAdapter
     status?: string
     previousStatus?: string
     sender?: any
@@ -81,7 +83,8 @@ export type SenderAdapter = {
 }
 
 const SENDERS: { [id: string]: Sender } = {}
-let ADAPTER: SenderAdapter
+const ADAPTERS: { [tag: string]: SenderAdapter } = {}
+let DEFAULT_ADAPTER: SenderAdapter
 
 let osrCaptureModule: any = null
 export function loadOsrCapture(): any {
@@ -97,18 +100,19 @@ export function loadOsrCapture(): any {
 
 async function createSender(id: string, msg: any) {
     // replace an existing sender instead of skipping the create
+    const adapter = ADAPTERS[msg.protocol] || DEFAULT_ADAPTER
     if (SENDERS[id]) {
         stopSender(id)
-        if (ADAPTER.recreateDelayMs) await new Promise((resolve) => setTimeout(resolve, ADAPTER.recreateDelayMs))
+        if (adapter.recreateDelayMs) await new Promise((resolve) => setTimeout(resolve, adapter.recreateDelayMs))
     }
 
     const name: string = msg.name
-    SENDERS[id] = { name }
-    console.info(`${ADAPTER.label} - creating sender: ` + name + (ADAPTER.describe?.(msg) || ""))
+    SENDERS[id] = { name, adapter }
+    console.info(`${adapter.label} - creating sender: ` + name + (adapter.describe?.(msg) || ""))
 
     try {
-        const lib = await ADAPTER.load()
-        const created = lib ? await ADAPTER.create(lib, id, msg) : null
+        const lib = await adapter.load()
+        const created = lib ? await adapter.create(lib, id, msg) : null
         if (!created) {
             delete SENDERS[id]
             port.postMessage({ type: "createFailed", id })
@@ -118,7 +122,7 @@ async function createSender(id: string, msg: any) {
         // destroy arriving while the create was in progress: destroy instead of leaking
         if (!SENDERS[id]) {
             try {
-                ADAPTER.destroy(created.sender)
+                adapter.destroy(created.sender)
             } catch {}
             return
         }
@@ -128,7 +132,7 @@ async function createSender(id: string, msg: any) {
         SENDERS[id].sendAudio = created.sendAudio
         SENDERS[id].tsKey = created.tsKey
     } catch (err) {
-        console.error(`Could not create ${ADAPTER.label} sender:`, err)
+        console.error(`Could not create ${adapter.label} sender:`, err)
         delete SENDERS[id]
         port.postMessage({ type: "createFailed", id })
         return
@@ -137,14 +141,14 @@ async function createSender(id: string, msg: any) {
     SENDERS[id].timer = setInterval(() => {
         const s = SENDERS[id]
         if (!s?.sender) return
-        const conns = ADAPTER.connections(s.sender)
+        const conns = s.adapter.connections(s.sender)
         s.status = conns > 0 ? "connected" : "unconnected"
 
         const newStatus = String(s.status) + conns.toString()
         if (newStatus !== s.previousStatus) {
             port.postMessage({ type: "status", id, status: s.status, connections: conns })
             s.previousStatus = newStatus
-            if (s.status === "connected") console.log(`[${ADAPTER.label}] Reconnected for ${id}`)
+            if (s.status === "connected") console.log(`[${s.adapter.label}] Reconnected for ${id}`)
         }
     }, CONNECTION_POLL_INTERVAL_MS)
 }
@@ -154,12 +158,12 @@ function stopSender(id: string) {
     // createSender fire if a create is still awaiting the library
     const s = SENDERS[id]
     if (!s) return
-    console.info(`${ADAPTER.label} - stopping sender: ` + (s.name || id))
+    console.info(`${s.adapter.label} - stopping sender: ` + (s.name || id))
     if (s.timer) clearInterval(s.timer)
 
     if (s.sender) {
         try {
-            ADAPTER.destroy(s.sender)
+            s.adapter.destroy(s.sender)
         } catch (err) {
             console.error("ERROR", err)
         }
@@ -198,11 +202,11 @@ function releaseReadbackResources(id: string) {
 // with nobody connected 0 is the normal idle result.
 function noteSendResult(senderData: Sender, id: string, frame: any, sent: unknown) {
     if (sent !== 0) return
-    if (ADAPTER.connections(senderData.sender) <= 0) return
+    if (senderData.adapter.connections(senderData.sender) <= 0) return
     senderData.sendRejected = (senderData.sendRejected || 0) + 1
     if (senderData.rejectLogged) return
     senderData.rejectLogged = true
-    console.error(`${ADAPTER.label} sender ${id} rejected a video frame: ${frame.width || frame.xres}x${frame.height || frame.yres} stride=${frame.stride || frame.lineStrideBytes} bytes=${frame.data?.length}`)
+    console.error(`${senderData.adapter.label} sender ${id} rejected a video frame: ${frame.width || frame.xres}x${frame.height || frame.yres} stride=${frame.stride || frame.lineStrideBytes} bytes=${frame.data?.length}`)
 }
 
 async function sendQueuedVideoFrame(id: string) {
@@ -242,15 +246,16 @@ async function sendVideoBuffer(id: string, buffer: Buffer, opts: VideoFrameOpts)
     if (!senderData?.sender) return
     senderData.offMain = false
 
-    const lib = await ADAPTER.load()
+    const adapter = senderData.adapter
+    const lib = await adapter.load()
     if (!lib) return
 
-    const prepared = ADAPTER.prepareVideo(lib, buffer, opts.size, opts.format ?? 0, opts.transparent !== false)
+    const prepared = adapter.prepareVideo(lib, buffer, opts.size, opts.format ?? 0, opts.transparent !== false)
 
     // main-path frames are always real; count the loss when overwriting an unsent one
     if (senderData.pendingVideoFrame && senderData.pendingReal) senderData.coalescedReal = (senderData.coalescedReal || 0) + 1
     senderData.pendingReal = true
-    senderData.pendingVideoFrame = ADAPTER.videoFrame(lib, prepared.data, { ...opts, format: prepared.format })
+    senderData.pendingVideoFrame = adapter.videoFrame(lib, prepared.data, { ...opts, format: prepared.format })
 
     sendQueuedVideoFrame(id)
 }
@@ -653,8 +658,15 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
     const osr = loadOsrCapture()
     const membersAll = opts.members?.length ? opts.members : [id]
     const activeMembers = membersAll.filter((m) => SENDERS[m]?.sender)
-    const lib = activeMembers.length ? await ADAPTER.load() : null
-    const hasSenders = activeMembers.length > 0 && !!lib
+    // one render and one readback, but its members may send on different protocols: load each protocol
+    // present in the group and leave out a member whose library is unavailable
+    const libs: { [tag: string]: any } = {}
+    for (const m of activeMembers) {
+        const ad = SENDERS[m]!.adapter
+        if (!(ad.tag in libs)) libs[ad.tag] = await ad.load()
+    }
+    const sendMembers = activeMembers.filter((m) => !!libs[SENDERS[m]!.adapter.tag])
+    const hasSenders = sendMembers.length > 0
     const rtmpMembers = Object.keys(opts.rtmpMembers || {}).filter((m) => RtmpStreamer.isRunning(m))
     const hasRtmp = rtmpMembers.length > 0
     const bmdMembers = Object.keys(opts.bmdMembers || {}).filter((m) => !!BlackmagicSender.playbackData[m]?.playback)
@@ -839,14 +851,16 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
         // by the adapter, which reports the format it produced; the rest already hold what it wants.
         if (hasSenders) {
             const transparent = opts.transparent !== false
-            for (const m of activeMembers) {
+            for (const m of sendMembers) {
+                const ad = SENDERS[m]!.adapter
+                const lib = libs[ad.tag]
                 let b = bufFor(m)
                 if (b.format === 0) {
-                    const prepared = ADAPTER.prepareVideo(lib, b.pbuf.buf.subarray(0, bytesFor(b.width, b.height, 0)), { width: b.width, height: b.height }, 0, transparent)
-                    if (prepared.format !== 0) b = { pbuf: intoPacerBuf(`${id}#${ADAPTER.tag}`, prepared.data), width: b.width, height: b.height, format: prepared.format }
+                    const prepared = ad.prepareVideo(lib, b.pbuf.buf.subarray(0, bytesFor(b.width, b.height, 0)), { width: b.width, height: b.height }, 0, transparent)
+                    if (prepared.format !== 0) b = { pbuf: intoPacerBuf(`${id}#${ad.tag}`, prepared.data), width: b.width, height: b.height, format: prepared.format }
                 }
                 const mfr = Math.max(1, opts.memberFramerates?.[m] || framerate)
-                const frame = ADAPTER.videoFrame(lib, b.pbuf.buf, { size: { width: b.width, height: b.height }, ratio: b.height ? b.width / b.height : ratio, framerate: mfr, transparent, format: b.format })
+                const frame = ad.videoFrame(lib, b.pbuf.buf, { size: { width: b.width, height: b.height }, ratio: b.height ? b.width / b.height : ratio, framerate: mfr, transparent, format: b.format })
                 enqueue(m, frame, b.pbuf, 1000 / mfr)
             }
         }
@@ -1022,14 +1036,14 @@ async function sendQueuedAudioFrame(id: string) {
     }
 }
 
-async function makeAudioFrame(buffer: Buffer, sampleRate: number, channelCount: number) {
+async function makeAudioFrame(adapter: SenderAdapter, buffer: Buffer, sampleRate: number, channelCount: number) {
     if (!buffer || buffer.length === 0) return null
     if (Math.trunc(buffer.length / (channelCount * BYTES_PER_FLOAT32)) <= 0) return null
 
-    const lib = await ADAPTER.load()
+    const lib = await adapter.load()
     if (!lib) return null
 
-    return ADAPTER.audioFrame(lib, buffer, sampleRate, channelCount)
+    return adapter.audioFrame(lib, buffer, sampleRate, channelCount)
 }
 
 /** audio for one output */
@@ -1037,7 +1051,7 @@ async function sendAudioBufferTarget(id: string, buffer: Buffer, { sampleRate, c
     const senderData = SENDERS[id]
     if (!senderData?.sender) return
 
-    const frame = await makeAudioFrame(buffer, sampleRate, channelCount)
+    const frame = await makeAudioFrame(senderData.adapter, buffer, sampleRate, channelCount)
     if (!frame || !SENDERS[id]?.sender) return
 
     if (!senderData.audioQueue) senderData.audioQueue = []
@@ -1049,17 +1063,20 @@ async function sendAudioBufferTarget(id: string, buffer: Buffer, { sampleRate, c
 async function sendAudioBuffer(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
     if (!Object.values(SENDERS).some((s) => s?.sender)) return
 
-    const frame = await makeAudioFrame(buffer, sampleRate, channelCount)
-    if (!frame) return
-
-    Object.keys(SENDERS).forEach((id) => {
+    // one frame per protocol present: each library takes its own frame shape
+    const frames: { [tag: string]: any } = {}
+    for (const id of Object.keys(SENDERS)) {
         const senderData = SENDERS[id]
-        if (!senderData?.sender) return
+        if (!senderData?.sender) continue
+
+        const tag = senderData.adapter.tag
+        if (!(tag in frames)) frames[tag] = await makeAudioFrame(senderData.adapter, buffer, sampleRate, channelCount)
+        if (!frames[tag]) continue
 
         if (!senderData.audioQueue) senderData.audioQueue = []
-        senderData.audioQueue.push({ ...frame })
+        senderData.audioQueue.push({ ...frames[tag] })
         sendQueuedAudioFrame(id)
-    })
+    }
 }
 
 function startStats() {
@@ -1084,7 +1101,7 @@ function startStats() {
                 const sorted = [...gaps].sort((a, b) => a - b)
                 gapP95 = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))]
             }
-            console.info(`[SEND-STATS ${ADAPTER.tag}#${id}] sentReal=${s.sentReal || 0} sentRepeat=${s.sentRepeat || 0} coalescedReal=${s.coalescedReal || 0} paceQ=${s.paceQueue?.length || 0} paceMisses=${s.paceMisses || 0} paceBusy=${s.paceBusy || 0} wireGap(mean=${Math.round(gapMean)} p95=${Math.round(gapP95)}) avgSendMs=${avg} rejected=${s.sendRejected || 0} rb=${rb} cpuCores=${cpuCores.toFixed(2)}`)
+            console.info(`[SEND-STATS ${s.adapter.tag}#${id}] sentReal=${s.sentReal || 0} sentRepeat=${s.sentRepeat || 0} coalescedReal=${s.coalescedReal || 0} paceQ=${s.paceQueue?.length || 0} paceMisses=${s.paceMisses || 0} paceBusy=${s.paceBusy || 0} wireGap(mean=${Math.round(gapMean)} p95=${Math.round(gapP95)}) avgSendMs=${avg} rejected=${s.sendRejected || 0} rb=${rb} cpuCores=${cpuCores.toFixed(2)}`)
             s.sentReal = 0
             s.sentRepeat = 0
             s.coalescedReal = 0
@@ -1101,8 +1118,9 @@ function startStats() {
  * in:  create, destroy, video, audio, audioTarget, captureFrame
  * out: status, createFailed, videoDone, releaseTexture, captureDone, scaledFrame
  */
-export function runSenderWorker(adapter: SenderAdapter) {
-    ADAPTER = adapter
+export function runSenderWorker(adapters: SenderAdapter[]) {
+    for (const a of adapters) ADAPTERS[a.tag] = a
+    DEFAULT_ADAPTER = adapters[0]
     if (process.env.FS_CAP_STATS) startStats()
 
     port.on("message", (msg: any) => {

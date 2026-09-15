@@ -1011,13 +1011,12 @@ export class OutputLifecycle {
             // every member of this render (the renderer itself plus its followers) gets this one readback,
             // whichever protocol each one sends on
             const members = OutputLifecycle.groupMembers(id)
+            // each member is paced by the rate of the protocol it sends on
             const memberFramerates: { [m: string]: number } = {}
-            const omtMembers = members.filter((m) => !!OmtSender.OMT[m]?.sender)
-            const omtFramerates: { [m: string]: number } = {}
-            for (const m of members) memberFramerates[m] = OutputHelper.getOutput(m)?.captureOptions?.framerates?.ndi || framerate
-            for (const m of omtMembers) omtFramerates[m] = OutputHelper.getOutput(m)?.captureOptions?.framerates?.omt || framerate
-            const hasOmt = omtMembers.length > 0
-            const omtFramerate = omtFramerates[id] || framerate
+            for (const m of members) {
+                const rates = OutputHelper.getOutput(m)?.captureOptions?.framerates
+                memberFramerates[m] = (OmtSender.OMT[m]?.sender ? rates?.omt : rates?.ndi) || framerate
+            }
             const groupInfo = CaptureHelper.Transmitter.groupOffMainInfo(members)
             const mixed = !!groupInfo && groupInfo.eligible && groupInfo.needsScaled && typeof addon.readbackConsume === "function"
             const scaled = mixed ? CaptureHelper.Transmitter.getScaledTarget({ width, height }, members) : null
@@ -1128,11 +1127,9 @@ export class OutputLifecycle {
             }
             const cpuTargets = targets.length > 0 && !addon.targetsSupported
             const seq = ++offMainSeq
-            // An output sends on one protocol and each has its own worker, so one capture goes to one
-            // worker: a shared texture can only be opened once. A render group mixing protocols is
-            // therefore served by whichever the renderer sends on, as it is upstream.
-            const captureOpts = { size: { width, height }, ratio, framerate: hasOmt ? omtFramerate : framerate, memberFramerates: hasOmt ? omtFramerates : memberFramerates, format: cpuTargets ? 0 : fmt, mainFormat: fmt, convertCheck, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members: hasOmt ? omtMembers : members, depth: OutputLifecycle.depthFor(id), targets, memberTarget, memberFormats, memberSizes, cpuTargets, stageStream, serverStream, thumbStream, rtmpMembers, bmdMembers, webrtcMembers, presentMembers }
-            if (hasOmt ? OmtSender.captureFrameOMT(id, source, captureOpts) : NdiSender.captureFrameNDI(id, source, captureOpts)) {
+            const captureOpts = { size: { width, height }, ratio, framerate: memberFramerates[id] || framerate, memberFramerates, format: cpuTargets ? 0 : fmt, mainFormat: fmt, convertCheck, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members, depth: OutputLifecycle.depthFor(id), targets, memberTarget, memberFormats, memberSizes, cpuTargets, stageStream, serverStream, thumbStream, rtmpMembers, bmdMembers, webrtcMembers, presentMembers }
+            const anySender = members.some((m) => !!NdiSender.NDI[m]?.sender || !!OmtSender.OMT[m]?.sender)
+            if (SenderCapture.captureFrame(id, source, captureOpts, anySender)) {
                 forwardAt.set(seq, { t: Date.now(), unc: OutputLifecycle.globalInFlight === 0, px: width * height })
                 OutputLifecycle.globalInFlight++
                 offMainInFlight++

@@ -1,4 +1,4 @@
-import { runSenderWorker, frameTimestamp, type SenderAdapter, type VideoFrameOpts } from "../capture/senderWorker"
+import { frameTimestamp, type SenderAdapter, type VideoFrameOpts } from "../capture/senderWorker"
 import { loadOMT } from "./omtModule"
 
 // OMT adapter for the shared sender engine (../capture/senderWorker): everything libomt-specific.
@@ -24,7 +24,7 @@ function mapQuality(omt: any, quality?: number | string): number {
     }
 }
 
-const omtAdapter: SenderAdapter = {
+export const omtAdapter: SenderAdapter = {
     tag: "omt",
     label: "OMT",
     load: loadOMT,
@@ -77,5 +77,3 @@ const omtAdapter: SenderAdapter = {
         }
     }
 }
-
-runSenderWorker(omtAdapter)

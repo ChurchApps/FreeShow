@@ -1,4 +1,5 @@
 import { CaptureHelper } from "./CaptureHelper"
+import { SenderThread } from "./SenderThread"
 
 // Main-thread side of the off-main capture path, shared by the network sender proxies (NdiSender,
 // OmtSender), whose workers report the same things about a capture.
@@ -41,6 +42,20 @@ export type CaptureFrameOpts = {
 export type CaptureTimeline = { recv: number; cS: number; cE: number; fS: number; fE: number; enq: number }
 
 export class SenderCapture {
+    /**
+     * hand one readback of a shared render to the worker. `anySender` says whether any member of the
+     * render has a network sender; an output with none still has work here when something asked for a
+     * scaled frame: an OutputShow or stage viewer, a preview, or a window drawing the capture.
+     */
+    static captureFrame(id: string, source: any, opts: CaptureFrameOpts, anySender: boolean): boolean {
+        const wantsScaled = !!opts.stageStream || !!opts.serverStream || ((opts.dstW || 0) > 0 && (opts.dstH || 0) > 0)
+        const anyWorkerConsumer = Object.keys(opts.webrtcMembers || {}).length > 0 || Object.keys(opts.rtmpMembers || {}).length > 0 || Object.keys(opts.presentMembers || {}).length > 0 || !!opts.thumbStream || wantsScaled
+        const worker = SenderThread.get()
+        if ((!anySender && !anyWorkerConsumer) || !worker) return false
+        worker.postMessage({ type: "captureFrame", id, source, opts })
+        return true
+    }
+
     static captureDoneCallbacks: { [id: string]: (seq: number, tl?: CaptureTimeline | null) => void } = {}
     static releaseTextureCallbacks: { [id: string]: (seq: number) => void } = {}
 

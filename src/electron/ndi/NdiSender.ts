@@ -1,8 +1,6 @@
-import { join } from "path"
-import { Worker } from "worker_threads"
 import { toApp } from ".."
 import { CaptureHelper } from "../capture/CaptureHelper"
-import { SenderCapture, type CaptureFrameOpts } from "../capture/SenderCapture"
+import { SenderThread } from "../capture/SenderThread"
 
 // Resources:
 // https://www.npmjs.com/package/grandiose-mac
@@ -10,11 +8,10 @@ import { SenderCapture, type CaptureFrameOpts } from "../capture/SenderCapture"
 // https://github.com/rse/grandiose
 // https://github.com/rse/vingester
 
-// NDI sender proxy: delegates NDI encoding and dispatch to a worker thread (./ndiWorker)
-// one readback of a shared render, fanned out to every member at that member's size and format
+// NDI sender proxy: delegates NDI encoding and dispatch to the shared sender worker (./ndiWorker is
+// its adapter there); one readback of a shared render, fanned out to every member at its size and format
 
 export class NdiSender {
-    private static worker: Worker | null = null
     private static readonly MAX_INFLIGHT_SENDS = 3
 
     static NDI: {
@@ -29,26 +26,16 @@ export class NdiSender {
         }
     } = {}
 
-    private static getWorker(): Worker | null {
-        if (this.worker) return this.worker
-
-        try {
-            this.worker = new Worker(join(__dirname, "ndiWorker.js"), {
-                env: { ...process.env, UV_THREADPOOL_SIZE: "32" }
-            })
-            this.worker.on("message", (msg: any) => this.onWorkerMessage(msg))
-            this.worker.on("error", (err) => console.error("NDI worker error:", err))
-            this.worker.on("exit", (code) => {
-                if (code !== 0) console.error(`NDI worker exited with code ${code}`)
-                this.worker = null
-                this.NDI = {}
-            })
-        } catch (err) {
-            console.error("Could not start NDI worker:", err)
-            this.worker = null
+    private static subscribed = false
+    private static get worker() {
+        if (!this.subscribed) {
+            this.subscribed = true
+            SenderThread.subscribe(
+                (msg) => this.onWorkerMessage(msg),
+                () => (this.NDI = {})
+            )
         }
-
-        return this.worker
+        return SenderThread.get()
     }
 
     private static onWorkerMessage(msg: any) {
@@ -70,9 +57,6 @@ export class NdiSender {
     }
 
     private static onWorkerMessageBody(msg: any) {
-        if (!msg?.type) return
-        if (SenderCapture.handleMessage(msg)) return
-
         if (msg.type === "status") {
             const data = this.NDI[msg.id]
             if (!data) return
@@ -96,16 +80,15 @@ export class NdiSender {
 
     // Blackmagic playback and the stream receive host run on this worker too, so they need a handle to it
     static getSharedWorker(): import("worker_threads").Worker | null {
-        return this.getWorker()
+        return this.worker
     }
 
     static hasWorker(): boolean {
-        return !!this.getWorker()
+        return !!this.worker
     }
 
     static postToWorker(msg: any, transfer?: any[]) {
-        if (transfer) this.getWorker()?.postMessage(msg, transfer)
-        else this.getWorker()?.postMessage(msg)
+        SenderThread.post(msg, transfer)
     }
 
     static initNameNDI(name?: string, outputName?: string) {
@@ -121,11 +104,11 @@ export class NdiSender {
             this.stopSenderNDI(id)
         }
 
-        const worker = this.getWorker()
+        const worker = this.worker
         if (!worker) return
 
         this.NDI[id] = { name, groups, sender: true, status: "unconnected" }
-        worker.postMessage({ type: "create", id, name, groups })
+        worker.postMessage({ type: "create", protocol: "ndi", id, name, groups })
     }
 
     static stopSenderNDI(id: string) {
@@ -173,20 +156,6 @@ export class NdiSender {
             d.lagSum = d.lagMax = d.lagN = d.paintMs = d.paintN = d.paintMax = d.msgMs = d.msgN = d.msgMax = 0
             d.byType = {}
         }, 1000)
-    }
-
-    static captureFrameNDI(id: string, source: any, opts: CaptureFrameOpts) {
-        // the render is shared: any member with an NDI sender, or any OMT sender in the shared worker
-        // (opts.omt), keeps the capture going without an NDI sender on the renderer itself
-        const anySender = (opts.members?.length ? opts.members : [id]).some((m) => this.NDI[m]?.sender)
-        // an output with no sender at all still has work for the worker when something asked the GPU for a
-        // scaled frame: an OutputShow or stage viewer, or a preview. Refusing those sent the frame back to
-        // main to be read, converted and encoded there.
-        const wantsScaled = !!opts.stageStream || !!opts.serverStream || ((opts.dstW || 0) > 0 && (opts.dstH || 0) > 0)
-        const anyWorkerConsumer = Object.keys(opts.webrtcMembers || {}).length > 0 || Object.keys(opts.rtmpMembers || {}).length > 0 || Object.keys(opts.presentMembers || {}).length > 0 || !!opts.thumbStream || wantsScaled
-        if ((!anySender && !anyWorkerConsumer) || !this.getWorker()) return false
-        this.worker!.postMessage({ type: "captureFrame", id, source, opts })
-        return true
     }
 
     static async sendAudioBufferNDITarget(id: string, buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
