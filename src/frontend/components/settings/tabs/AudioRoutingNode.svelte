@@ -125,7 +125,7 @@
             {#if !hasSubNodes}
                 <Icon id={getIcon(type)} size={isSubNode ? 0.9 : 1.1} {color} white />
             {/if}
-            <span class="card-name" data-title={name} class:sub-name={isSubNode}>{name}</span>
+            <span class="card-name" data-title={name} class:sub-name={isSubNode}>{@html name}</span>
         {/if}
 
         {#if type === "mic" && isSubNode}

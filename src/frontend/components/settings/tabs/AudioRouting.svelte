@@ -59,7 +59,7 @@
         { id: "mic_default", name: translateText("live.microphones"), type: "mic" },
         { id: "metronome", name: translateText("audio.metronome"), type: "metronome" },
         { id: "desktop_default", name: translateText("audio.desktop_audio"), type: "desktop_audio" },
-        { id: "output_window", name: translateText("settings.display_settings"), type: "output_window" }
+        { id: "output_window", name: `${translateText("settings.display_settings")} <span style="font-size: 0.75em;opacity: 0.6;">(${translateText("category.videos")})</span>`, type: "output_window" }
     ]
 
     const fixedOutputs = [
