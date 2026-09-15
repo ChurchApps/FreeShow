@@ -69,7 +69,13 @@ export class AudioAnalyser {
 
         const oldSource = this.sources[key]
         if (oldSource) {
-            const isShared = Object.entries(this.sources).some(([k, node]) => k !== key && node === oldSource)
+            let isShared = false
+            for (const [k, node] of Object.entries(this.sources)) {
+                if (k !== key && node === oldSource) {
+                    isShared = true
+                    break
+                }
+            }
             try {
                 if (isShared) oldSource.disconnect(sourceGain)
                 else oldSource.disconnect()
@@ -137,12 +143,15 @@ export class AudioAnalyser {
         this.sourceVolumes[id] = volume
         if (outputId) this.sourceVolumes[`${id}_${outputId}`] = volume
 
-        Object.keys(this.gainNodes).forEach((k) => {
-            if (k === id || k.startsWith(`${id}_`)) {
+        const keys = Object.keys(this.gainNodes)
+        const prefix = `${id}_`
+        for (let i = 0; i < keys.length; i++) {
+            const k = keys[i]
+            if (k === id || k.startsWith(prefix)) {
                 this.sourceVolumes[k] = volume
                 this.gainNodes[k]?.gain.setValueAtTime(volume, this.ac.currentTime)
             }
-        })
+        }
     }
 
     private static detectAndUpgradeChannels(id: string, audio: HTMLMediaElement | MediaStream) {
@@ -183,14 +192,22 @@ export class AudioAnalyser {
             }
         }
 
-        const stillPlayingVideo = currentVideos.some((v) => v.path !== id)
+        let stillPlayingVideo = false
+        for (let i = 0; i < currentVideos.length; i++) {
+            if (currentVideos[i].path !== id) {
+                stillPlayingVideo = true
+                break
+            }
+        }
 
-        nodeIds.forEach((nodeId) => {
-            if (nodeId === "drawer_audio" && stillPlayingDrawer) return
-            if (nodeId === "playlists_default" && stillPlayingPlaylist) return
-            if (nodeId === "output_window" && stillPlayingVideo) return
+        for (let i = 0; i < nodeIds.length; i++) {
+            const nodeId = nodeIds[i]
+            if (nodeId === "drawer_audio" && stillPlayingDrawer) continue
+            if (nodeId === "playlists_default" && stillPlayingPlaylist) continue
+            if (nodeId === "output_window" && stillPlayingVideo) continue
+
             AudioInputCapture.getInstance().removeInput(nodeId)
-        })
+        }
 
         this.recorderDeactivate()
 
@@ -207,7 +224,14 @@ export class AudioAnalyser {
         delete this.sourceVolumes[id]
         delete this.sources[key]
 
-        const isShared = Object.values(this.sources).includes(source)
+        let isShared = false
+        for (const s of Object.values(this.sources)) {
+            if (s === source) {
+                isShared = true
+                break
+            }
+        }
+
         try {
             if (isShared) source.disconnect(this.gainNodes[key])
             else source.disconnect()
@@ -219,15 +243,15 @@ export class AudioAnalyser {
     }
 
     private static getActiveAudio() {
-        const playing = Object.values(get(playingAudio))
-        for (let i = 0; i < playing.length; i++) {
-            if (!playing[i].paused) return true
+        const playing = get(playingAudio)
+        for (const key in playing) {
+            if (!playing[key].paused) return true
         }
         return false
     }
 
     private static getActiveVideos() {
-        const videos = Object.values(get(playingVideos))
+        const videos = get(playingVideos)
         for (let i = 0; i < videos.length; i++) {
             const v = videos[i]
             if (!v.audio?.paused && !v.audio?.muted) return true
@@ -250,13 +274,14 @@ export class AudioAnalyser {
             this.splitter = AudioMultichannel.createChannelSplitter(this.ac, this.channels)
         }
 
-        this.analysers = Array.from({ length: this.channels }, (_, ch) => {
+        this.analysers = new Array(this.channels)
+        for (let ch = 0; ch < this.channels; ch++) {
             const analyser = this.ac.createAnalyser()
             analyser.smoothingTimeConstant = 0.85
             analyser.fftSize = 256
-            this.splitter!.connect(analyser, ch)
-            return analyser
-        })
+            this.splitter.connect(analyser, ch)
+            this.analysers[ch] = analyser
+        }
 
         AudioPlayer.initCheckLoop()
     }
@@ -287,31 +312,37 @@ export class AudioAnalyser {
         this.channels = validated
         this.splitter = AudioMultichannel.createChannelSplitter(this.ac, this.channels)
 
-        this.destinationNodes.forEach((dest) => AudioMultichannel.configureNodeForMultichannel(dest, this.channels))
+        for (const dest of this.destinationNodes.values()) {
+            AudioMultichannel.configureNodeForMultichannel(dest, this.channels)
+        }
 
         this.reconnectAllSources()
     }
 
     private static reconnectAllSources() {
-        Object.keys(this.sources).forEach((id) => {
+        for (const id of Object.keys(this.sources)) {
             const processor = this.processors[id]
-            if (!processor || !this.splitter) return
+            if (!processor || !this.splitter) continue
 
             const isMic = get(playingAudio)[id]?.isMic || id.startsWith("mic_sub_")
             if (!isMic) processor.output.connect(this.splitter)
             this.connectGain(processor, id)
-        })
+        }
 
         this.initAnalysers()
     }
 
     private static applyProcessorProperty(id: string, outputId: string | undefined, prop: "pitch" | "tempo", value: number) {
         const key = outputId ? `${id}_${outputId}` : id
-        Object.keys(this.processors).forEach((k) => {
-            if (k === key || k === id || k.startsWith(`${id}_`)) {
+        const keys = Object.keys(this.processors)
+        const prefix = `${id}_`
+
+        for (let i = 0; i < keys.length; i++) {
+            const k = keys[i]
+            if (k === key || k === id || k.startsWith(prefix)) {
                 this.processors[k][prop] = value
             }
-        })
+        }
     }
 
     static setPitch(id: string, value: number, outputId?: string) {
@@ -332,9 +363,7 @@ export class AudioAnalyser {
 
         if (isMic) return [id, "mic_default"]
         if (isVideo) {
-            const ids = ["output_window"]
-            if (outputId) ids.push(`output_win_sub_${outputId}`)
-            return ids
+            return outputId ? ["output_window", `output_win_sub_${outputId}`] : ["output_window"]
         }
 
         const playlistId = audioPlaying?.playlistId
@@ -351,7 +380,9 @@ export class AudioAnalyser {
         const nodeIds = (key && this.attachedInputIds.get(key)) || this.getInputNodeIds(id, outputId)
 
         const manager = AudioRoutingManager.getInstance()
-        nodeIds.forEach((nodeId) => manager.registerInputNode(nodeId, node))
+        for (let i = 0; i < nodeIds.length; i++) {
+            manager.registerInputNode(nodeIds[i], node)
+        }
         manager.updateRoutingNodes()
     }
 
@@ -361,7 +392,9 @@ export class AudioAnalyser {
         const nodeIds = (key && this.attachedInputIds.get(key)) || this.getInputNodeIds(id, outputId)
 
         const manager = AudioRoutingManager.getInstance()
-        nodeIds.forEach((nodeId) => manager.unregisterInputNode(nodeId, node))
+        for (let i = 0; i < nodeIds.length; i++) {
+            manager.unregisterInputNode(nodeIds[i], node)
+        }
 
         try {
             node.disconnect()
@@ -393,13 +426,20 @@ export class AudioAnalyser {
         const analysers = this.getAnalysers(channelId)
         if (!analysers?.length) return MIN_DB
 
-        const size = analysers[0].fftSize
+        const analyser = analysers[0]
+        const size = analyser.fftSize
         if (this.volumeBuffer.length !== size) this.volumeBuffer = new Float32Array(size)
 
-        analysers[0].getFloatTimeDomainData(this.volumeBuffer)
-        const sumSquare = this.volumeBuffer.reduce((sum, sample) => sum + sample * sample, 0)
-        const rms = Math.sqrt(sumSquare / this.volumeBuffer.length)
+        analyser.getFloatTimeDomainData(this.volumeBuffer)
 
+        let sumSquare = 0
+        const len = this.volumeBuffer.length
+        for (let i = 0; i < len; i++) {
+            const sample = this.volumeBuffer[i]
+            sumSquare += sample * sample
+        }
+
+        const rms = Math.sqrt(sumSquare / len)
         return rms > 0.000001 ? Math.max(MIN_DB, Math.min(0, 20 * Math.log10(rms))) : MIN_DB
     }
 

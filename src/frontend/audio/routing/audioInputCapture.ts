@@ -41,7 +41,9 @@ export class AudioInputCapture {
     }
 
     onNodeDisconnected(node: AudioNode) {
-        this.analysers.forEach((entry) => entry.connectedSources.delete(node))
+        for (const entry of this.analysers.values()) {
+            entry.connectedSources.delete(node)
+        }
     }
 
     async captureDesktopAudio(nodeId: string, mediaId = "screen:0:0") {
@@ -60,7 +62,8 @@ export class AudioInputCapture {
 
             // if cancelled during getUserMedia
             if (!this.pendingCaptures.has(mediaId)) {
-                stream.getTracks().forEach((track) => track.stop())
+                const tracks = stream.getTracks()
+                for (let i = 0; i < tracks.length; i++) tracks[i].stop()
                 return
             }
 
@@ -88,7 +91,8 @@ export class AudioInputCapture {
 
         const stream = this.windowStreams.get(mediaId)
         if (stream) {
-            stream.getTracks().forEach((track) => track.stop())
+            const tracks = stream.getTracks()
+            for (let i = 0; i < tracks.length; i++) tracks[i].stop()
             this.windowStreams.delete(mediaId)
         }
 
@@ -118,13 +122,15 @@ export class AudioInputCapture {
 
         try {
             const splitter = ctx.createChannelSplitter(channelCount)
-            const analysers = Array.from({ length: channelCount }, (_, i) => {
+            const analysers: AnalyserNode[] = new Array(channelCount)
+
+            for (let i = 0; i < channelCount; i++) {
                 const analyser = ctx.createAnalyser()
                 analyser.fftSize = 256
                 analyser.smoothingTimeConstant = 0.8
                 splitter.connect(analyser, i)
-                return analyser
-            })
+                analysers[i] = analyser
+            }
 
             entry = { splitter, analysers, channelCount, connectedSources: new Set([source]) }
             source.connect(splitter)
@@ -155,26 +161,28 @@ export class AudioInputCapture {
     }
 
     pruneStaleInputs(activeNodeIds: Set<string>) {
-        this.analysers.forEach((_, nodeId) => {
+        for (const nodeId of this.analysers.keys()) {
             if (!activeNodeIds.has(nodeId) || !this.isNodeObserved(nodeId)) {
                 this.removeInput(nodeId)
             }
-        })
+        }
     }
 
     removeInput(nodeId: string) {
         const entry = this.analysers.get(nodeId)
         if (!entry) return
 
-        entry.connectedSources.forEach((s) => {
+        for (const s of entry.connectedSources) {
             try {
                 s.disconnect(entry.splitter)
             } catch {}
-        })
+        }
 
         try {
             entry.splitter.disconnect()
-            entry.analysers.forEach((a) => a.disconnect())
+            for (let i = 0; i < entry.analysers.length; i++) {
+                entry.analysers[i].disconnect()
+            }
         } catch {}
 
         this.analysers.delete(nodeId)
@@ -188,48 +196,51 @@ export class AudioInputCapture {
     }
 
     getVisualizerData(nodeId: string): InputVisualizerData | null {
-        this.lastQueryTimestamp.set(nodeId, performance.now())
+        const now = performance.now()
+        this.lastQueryTimestamp.set(nodeId, now)
+
         const entry = this.getOrCaptureEntry(nodeId)
         if (!entry) return null
 
-        const now = performance.now()
         let cachedResult = this.resultCache.get(nodeId)
 
-        // ~50fps throttling
-        if (cachedResult && now - (this.lastCalcTimestamp.get(nodeId) || 0) < 20) {
-            return cachedResult
-        }
+        // ~50fps throttling (20ms interval check)
+        if (cachedResult && now - (this.lastCalcTimestamp.get(nodeId) || 0) < 20) return cachedResult
         this.lastCalcTimestamp.set(nodeId, now)
 
         // Ensure Float32Buffers exist
         let buffers = this.floatBuffers.get(nodeId)
         if (!buffers || buffers.length !== entry.channelCount) {
-            buffers = Array.from({ length: entry.channelCount }, (_, i) => new Float32Array(entry.analysers[i].fftSize))
+            buffers = new Array(entry.channelCount)
+            for (let i = 0; i < entry.channelCount; i++) {
+                buffers[i] = new Float32Array(entry.analysers[i].fftSize)
+            }
             this.floatBuffers.set(nodeId, buffers)
         }
 
         // Initialize cache structural template
         if (!cachedResult || cachedResult.channels.length !== entry.channelCount) {
-            cachedResult = {
-                nodeId,
-                db: MIN_DB,
-                channels: Array.from({ length: entry.channelCount }, (_, i) => ({ channelIndex: i, db: MIN_DB }))
+            const channelsData: ChannelVisualizerData[] = new Array(entry.channelCount)
+            for (let i = 0; i < entry.channelCount; i++) {
+                channelsData[i] = { channelIndex: i, db: MIN_DB }
             }
+            cachedResult = { nodeId, db: MIN_DB, channels: channelsData }
             this.resultCache.set(nodeId, cachedResult)
         }
 
         let maxDb = MIN_DB
-        entry.analysers.forEach((analyser, i) => {
-            const buf = buffers![i] as Float32Array<ArrayBuffer>
-            analyser.getFloatTimeDomainData(buf)
+        const len = entry.analysers.length
+
+        for (let i = 0; i < len; i++) {
+            const buf = buffers[i] as Float32Array<ArrayBuffer>
+            entry.analysers[i].getFloatTimeDomainData(buf)
 
             const db = calculatePeakDb(buf)
             if (db > maxDb) maxDb = db
-            cachedResult!.channels[i].db = db
-        })
+            cachedResult.channels[i].db = db
+        }
 
         cachedResult.db = maxDb
-
         return cachedResult
     }
 }

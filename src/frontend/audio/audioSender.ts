@@ -103,8 +103,8 @@ export class AudioSender {
             }
 
             // Create nodes for newly active targets
-            activeTargets.forEach((targetId) => {
-                if (this.processors.has(targetId)) return
+            for (const targetId of activeTargets) {
+                if (this.processors.has(targetId)) continue
 
                 try {
                     const destNode = getDestinationNode(targetId)
@@ -116,7 +116,7 @@ export class AudioSender {
                 } catch (err) {
                     console.error(`[AudioSender] Failed to create processor for targetId=${targetId}:`, err)
                 }
-            })
+            }
         } finally {
             this.isUpdating = false
         }
@@ -158,7 +158,9 @@ export class AudioSender {
         const frameSize = Math.max(128, Math.round(ac.sampleRate * 0.02))
         const bufL = new Float32Array(frameSize)
         const bufR = new Float32Array(frameSize)
+        const planarBuffer = new Float32Array(frameSize * 2)
         let offset = 0
+
         const processor = ac.createScriptProcessor(2048, 2, 2)
         processor.onaudioprocess = (ev) => {
             if ((processor as any)._destroyed) return
@@ -167,17 +169,20 @@ export class AudioSender {
             const right = inputBuffer.numberOfChannels > 1 ? inputBuffer.getChannelData(1) : left
             const len = left ? left.length : 0
 
-            for (let i = 0; i < len; i++) {
-                bufL[offset] = left ? left[i] : 0.0
-                bufR[offset] = right ? right[i] : 0.0
-                offset++
+            for (let readIdx = 0; readIdx < len; ) {
+                const chunk = Math.min(len - readIdx, frameSize - offset)
+                bufL.set(left.subarray(readIdx, readIdx + chunk), offset)
+                if (right) bufR.set(right.subarray(readIdx, readIdx + chunk), offset)
+                else bufR.set(left.subarray(readIdx, readIdx + chunk), offset)
+
+                offset += chunk
+                readIdx += chunk
 
                 if (offset >= frameSize) {
-                    const planar = new Float32Array(frameSize * 2)
-                    planar.set(bufL, 0)
-                    planar.set(bufR, frameSize)
+                    planarBuffer.set(bufL, 0)
+                    planarBuffer.set(bufR, frameSize)
 
-                    this.sendBuffer(targetId, ac.sampleRate, new Uint8Array(planar.buffer))
+                    this.sendBuffer(targetId, ac.sampleRate, new Uint8Array(planarBuffer.buffer))
                     offset = 0
                 }
             }
@@ -210,12 +215,22 @@ export class AudioSender {
 
         const connections = get(audioRouting)?.connections || []
         const isIcecastEnabled = get(special)?.icecast?.enabled ?? true
-        if (isIcecastEnabled && connections.some((c) => c.to === "icecast")) {
-            targets.add("icecast")
+
+        if (isIcecastEnabled) {
+            for (let i = 0; i < connections.length; i++) {
+                if (connections[i].to === "icecast") {
+                    targets.add("icecast")
+                    break
+                }
+            }
         }
 
-        const activeOutputs = keysToID(get(outputs)).filter((out) => out?.enabled && (out.ndi || out.blackmagic || out.webrtcData?.streaming || out.rtmpData?.streaming))
-        activeOutputs.forEach((out) => targets.add(out.id))
+        const rawOutputs = keysToID(get(outputs) || {})
+        for (let i = 0; i < rawOutputs.length; i++) {
+            const out = rawOutputs[i]
+            const networkOutput = out.ndi || out.blackmagic || out.webrtcData?.streaming || out.rtmpData?.streaming
+            if (out?.enabled && networkOutput) targets.add(out.id)
+        }
 
         if (this.sendOutputShowAudio()) {
             const outputId = this.getOutputShowId()
@@ -285,10 +300,20 @@ export class AudioSender {
 
         const connections = get(audioRouting)?.connections || []
         const isIcecastEnabled = get(special)?.icecast?.enabled ?? true
-        if (isIcecastEnabled && connections.some((c) => c.to.includes("icecast"))) return true
+        if (isIcecastEnabled) {
+            for (let i = 0; i < connections.length; i++) {
+                if (connections[i].to.includes("icecast")) return true
+            }
+        }
 
-        const outputList = keysToID(get(outputs) || {}).filter(Boolean)
-        return outputList.some((a) => a?.enabled && (a.ndi || a.blackmagic || a.webrtcData?.streaming || a.rtmpData?.streaming))
+        const outputList = keysToID(get(outputs) || {})
+        for (let i = 0; i < outputList.length; i++) {
+            const a = outputList[i]
+            const networkOutput = a.ndi || a.blackmagic || a.webrtcData?.streaming || a.rtmpData?.streaming
+            if (a?.enabled && networkOutput) return true
+        }
+
+        return false
     }
 
     private static sendOutputShowAudio(): boolean {
