@@ -16,8 +16,6 @@ import { getKey } from "../../utils/keys"
 import { httpsRequest } from "../../utils/requests"
 import { onStageLoadServices } from "./request"
 
-// OnStage stores the token pair under one logical scope key; the OAuth request itself asks for the
-// granular read scopes below.
 export type OnStageScopes = "presenter"
 export const ONSTAGE_OAUTH_SCOPES = "events:read songs:read teams:switch"
 
@@ -32,9 +30,7 @@ export type OnStageAuthData = {
     team_name?: string
 } | null
 
-// One token set per team: switching to an already-authorized team is instant, a new team costs one
-// browser consent. Stored under the same provider/scope key as before; a legacy single-token entry
-// is migrated on first read (its team becomes known at the next token response).
+// One token set per team, so switching to an authorized team needs no browser.
 type OnStageAuthStore = {
     activeTeamId: string | null
     byTeam: { [teamId: string]: NonNullable<OnStageAuthData> }
@@ -68,8 +64,7 @@ function activeAccess(scope: OnStageScopes): OnStageAuthData {
 
 export const ONSTAGE_API_URL = process.env.ONSTAGE_API_URL || "https://on-stage.app/api"
 
-// ONSTAGE_API_URL may be plain http with a custom port during local development; production is
-// always https. httpsRequest only speaks https on port 443, so all OnStage calls go through here.
+// httpsRequest is https-only and takes a bare hostname, so the base path and http (local dev) are handled here.
 export function onStageApiRequest(path: string, method: "POST" | "GET", headers: object, content: object, callback: (err: Error | null, result?: any) => void) {
     const url = new URL(ONSTAGE_API_URL)
     const fullPath = url.pathname.replace(/\/$/, "") + path
@@ -131,18 +126,15 @@ const HTML_error = `
 `
 
 let announcedThisRun = false
-// Startup auto-sync and a manual connect click can request authorization at the same moment; two
-// flows would each open a browser tab with its own PKCE verifier, and completing one tab exchanges
-// its code against the other flow's verifier. All callers share one in-flight authorization.
+// Two concurrent flows would each open a tab with its own PKCE verifier, so all callers share one.
 let pendingAuthentication: Promise<OnStageAuthData> | null = null
 let pendingAuthUrl = ""
-// An abandoned browser flow (tab closed before consent) never hits the callback, so the pending
-// promise would otherwise stay in-flight forever and every later connect click would be a no-op.
+// An abandoned flow never hits the callback, so the pending promise is released after a timeout.
 const AUTH_FLOW_TIMEOUT_MS = 10 * 60 * 1000
 
 function onStageAuthenticate(scope: OnStageScopes, teamIdHint?: string): Promise<OnStageAuthData> {
     if (pendingAuthentication) {
-        // re-open the same flow (same PKCE verifier) so a closed tab can be recovered by clicking connect again
+        // re-open the same flow so a closed tab can be recovered
         if (pendingAuthUrl) openURL(pendingAuthUrl)
         return pendingAuthentication
     }
@@ -244,8 +236,7 @@ function refreshToken(access: OnStageAuthData): Promise<OnStageAuthData> {
 
         onStageApiRequest("/oauth/token", "POST", {}, params, (err: any, data: OnStageAuthData) => {
             if (err || data === null) {
-                // OnStage revokes the whole grant when a rotated refresh token is replayed, so a
-                // failed refresh always means a fresh authorization is needed.
+                // OnStage revokes the grant on refresh token reuse, so a failure needs a new authorization
                 return resolve(handleRefreshFailure(access.scope))
             }
 
@@ -295,11 +286,7 @@ export async function onStageConnect(scope: OnStageScopes): Promise<OnStageAuthD
     return accessData
 }
 
-/**
- * Instant when the team already has cached tokens. Otherwise the server mints tokens silently —
- * covered by the teams:switch scope the user consented to at pairing. A browser consent happens
- * only as the fallback for grants issued before that scope existed.
- */
+/** Instant for a cached team; otherwise the server mints tokens under the teams:switch scope. */
 export async function onStageSwitchTeam(teamId: string, scope: OnStageScopes = "presenter"): Promise<{ success: boolean }> {
     const store = loadStore(scope)
     if (store.byTeam[teamId]) {
@@ -328,14 +315,14 @@ function silentSwitch(teamId: string, scope: OnStageScopes): Promise<boolean> {
     })
 }
 
-/** The team the active token is bound to — used to group imported projects into a team folder. */
+/** The team the active token is bound to. */
 export function onStageActiveTeam(scope: OnStageScopes = "presenter"): { id: string; name: string } | null {
     const access = activeAccess(scope)
     return access?.team_id ? { id: access.team_id, name: access.team_name || "" } : null
 }
 
 export function onStageDisconnect(scope: OnStageScopes = "presenter") {
-    // Revoke every team's grant server-side so the user does not have to clean up from OnStage settings.
+    // revoke server-side so the user does not have to clean up from OnStage
     const store = loadStore(scope)
     Object.values(store.byTeam).forEach((access) => {
         if (access?.refresh_token) onStageApiRequest("/oauth/revoke", "POST", {}, { token: access.refresh_token }, () => undefined)

@@ -108,22 +108,11 @@ export class ContentProviderRegistry {
     }
 
     /**
-     * Reload a single show from a provider, leaving everything else it manages alone
+     * Reload a single OnStage service, leaving the other projects alone
      */
-    static async reloadShow(providerId: ContentProviderId, showId: string, data?: any): Promise<void> {
+    static async loadOnStageService(serviceId: string, data?: any): Promise<void> {
         this.ensureInitialized()
-
-        const provider = this.getProvider(providerId)
-        if (!provider?.reloadShow) {
-            console.error(`Content provider '${providerId}' cannot reload a single show`)
-            return
-        }
-
-        try {
-            await provider.reloadShow(showId, data)
-        } catch (error) {
-            console.error(`Failed to reload show from ${providerId}:`, error)
-        }
+        return this.getProvider<OnStageProvider>("onstage")?.loadServices?.({ ...data, serviceId })
     }
 
     /**

@@ -177,7 +177,6 @@
 
     // "Song origin" and the arrangement question both only decide what happens to a song that
     // already exists, so they are meaningless — and misleading — while existing songs are skipped
-    $: onstageOnlyAddsNew = $contentProviderData.onstage?.syncMode === "new"
 
     // OnStage team switching: instant for a team with cached tokens, one preselected browser
     // consent for a new team. The list comes from the connected user's confirmed teams.
@@ -204,11 +203,6 @@
             loadOnStageTeams()
         }
     }
-
-    $: syncModeOptions = [
-        { value: "", label: "Update existing songs too" },
-        { value: "new", label: "Only add new songs" }
-    ]
 
     $: linesPerSlideOptions = [
         { value: "0", label: "Keep from OnStage" },
@@ -424,15 +418,7 @@
         <MaterialDropdown label="Team" options={onstageTeamOptions} value={onstageCurrentTeamId} on:change={(e) => switchOnStageTeam(e.detail)} />
     {/if}
 
-    {#if !onstageOnlyAddsNew}
-        <MaterialDropdown label="Song origin" options={providerOriginOptions} value={$contentProviderData.onstage?.songOrigin || ""} on:change={(e) => updateProvider("onstage", "songOrigin", e.detail)} />
-    {/if}
-
-    <MaterialDropdown label="Sync mode" options={syncModeOptions} value={$contentProviderData.onstage?.syncMode || ""} on:change={(e) => updateProvider("onstage", "syncMode", e.detail)} />
-
-    {#if onstageOnlyAddsNew}
-        <Tip type="warning" value="A song that already exists in FreeShow is never updated in this mode, so the formatting below only applies to songs that are new. To refresh one existing song, right click it in the song list and reload it from OnStage." />
-    {/if}
+    <MaterialDropdown label="Song origin" options={providerOriginOptions} value={$contentProviderData.onstage?.songOrigin || ""} on:change={(e) => updateProvider("onstage", "songOrigin", e.detail)} />
 
     <MaterialDropdown label="Lines per slide" options={linesPerSlideOptions} value={String($contentProviderData.onstage?.linesPerSlide || 0)} on:change={(e) => updateProvider("onstage", "linesPerSlide", Number(e.detail))} />
 
@@ -440,13 +426,7 @@
 
     <MaterialToggleSwitch label="Merge identical sections" checked={$contentProviderData.onstage?.mergeIdenticalSections !== false} on:change={(e) => updateProvider("onstage", "mergeIdenticalSections", e.detail)} />
 
-    {#if !onstageOnlyAddsNew}
-        <MaterialToggleSwitch label="Ask about new arrangement" checked={$contentProviderData.onstage?.askArrangement !== false} on:change={(e) => updateProvider("onstage", "askArrangement", e.detail)} />
-    {/if}
-
-    <Tip
-        value="Lines per slide and max characters per line only apply to songs imported from OnStage. A line that does not fit is split into whole words, as close to the middle as possible. 'Ask about new arrangement' offers to add the OnStage version as an extra arrangement instead of replacing the local song, and only asks when the structure actually differs. A song scheduled with different structures in several services keeps one arrangement per service, so one service no longer overwrites the others. With 'Only add new songs' a song that already exists locally is never touched by a sync — right click it in the song list to reload just that one from OnStage."
-    />
+    <Tip value="Formatting applies to songs imported from OnStage. A song scheduled with different structures in several services keeps one arrangement per service." />
 {/if}
 
 <!-- OBS Studio Controller -->

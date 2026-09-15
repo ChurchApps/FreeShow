@@ -36,7 +36,6 @@ import {
     categories,
     cloudSyncData,
     colorbars,
-    contentProviderData,
     currentOutputSettings,
     drawer,
     drawerTabsData,
@@ -1082,24 +1081,6 @@ const clickActions = {
             })
             return a
         })
-    },
-    reload_provider_show: (obj: ObjData) => {
-        if (!obj.sel) return
-
-        const providerData = get(contentProviderData).onstage || {}
-        let requested = 0
-
-        obj.sel.data.forEach(({ id }) => {
-            const show = get(shows)[id]
-            // the provider id is stored on the link; a show created by the sync carries it as its own id
-            const providerShowId = show?.quickAccess?.onstageLink || (id.startsWith("onstagesong_") ? id : "")
-            if (!providerShowId) return
-
-            requested++
-            sendMain(Main.PROVIDER_RELOAD_SHOW, { providerId: "onstage", showId: providerShowId, data: providerData })
-        })
-
-        if (!requested) newToast("This show is not linked to OnStage")
     },
     unlink_pco: (obj: ObjData) => {
         if (!obj.sel) return

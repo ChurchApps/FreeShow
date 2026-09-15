@@ -155,7 +155,7 @@ export enum Main {
     PROVIDER_LOAD_SERVICES = "PROVIDER_LOAD_SERVICES",
     PROVIDER_DISCONNECT = "PROVIDER_DISCONNECT",
     PROVIDER_CONNECTIONS = "PROVIDER_CONNECTIONS",
-    PROVIDER_RELOAD_SHOW = "PROVIDER_RELOAD_SHOW",
+    ONSTAGE_LOAD_SERVICE = "ONSTAGE_LOAD_SERVICE",
     PROVIDER_STARTUP_LOAD = "PROVIDER_STARTUP_LOAD",
     PROVIDER_FETCH_FOLDERS = "PROVIDER_FETCH_FOLDERS",
     PCO_LIVE_GET = "PCO_LIVE_GET",
@@ -274,7 +274,7 @@ export interface MainSendPayloads {
     // Provider-based routing
     [Main.PROVIDER_LOAD_SERVICES]: { providerId: ContentProviderId; cloudOnly?: boolean; data?: any }
     [Main.PROVIDER_DISCONNECT]: { providerId: ContentProviderId; scope?: string }
-    [Main.PROVIDER_RELOAD_SHOW]: { providerId: ContentProviderId; showId: string; data?: any }
+    [Main.ONSTAGE_LOAD_SERVICE]: { serviceId: string; data?: any }
     [Main.PROVIDER_STARTUP_LOAD]: { providerId: ContentProviderId; scope?: string; data?: any; cloudOnly?: boolean }
     [Main.PROVIDER_FETCH_FOLDERS]: { providerId: ContentProviderId }
     [Main.PCO_LIVE_GET]: { serviceTypeId: string; planId: string }

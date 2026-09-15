@@ -2,7 +2,7 @@ import type express from "express"
 import { getKey } from "../../utils/keys"
 import { ContentProvider } from "../base/ContentProvider"
 import { ONSTAGE_API_URL, onStageConnect, onStageDisconnect, onStageInitialize, onStageStartupLoad, onStageSwitchTeam, type OnStageAuthData, type OnStageScopes } from "./connect"
-import { onStageGetTeams, onStageLoadServices, onStageReloadSong } from "./request"
+import { onStageGetTeams, onStageLoadServices } from "./request"
 
 // Re-export types from connect file
 export type { OnStageScopes } from "./connect"
@@ -56,14 +56,9 @@ export class OnStageProvider extends ContentProvider<OnStageScopes, OnStageAuthD
         return null
     }
 
-    // `data` is the user's own OnStage settings (contentProviderData.onstage), forwarded from the
-    // frontend so the live store value is used instead of the last-saved settings file.
-    async loadServices(data?: unknown): Promise<void> {
-        return onStageLoadServices(data)
-    }
-
-    async reloadShow(showId: string, data?: unknown): Promise<void> {
-        return onStageReloadSong(showId, data)
+    // `data` carries the user's OnStage settings, and a serviceId when one project is refreshed.
+    async loadServices(data?: { serviceId?: string }): Promise<void> {
+        return onStageLoadServices(data, data?.serviceId)
     }
 
     async getTeams(): Promise<{ id: string; name: string; current: boolean }[]> {

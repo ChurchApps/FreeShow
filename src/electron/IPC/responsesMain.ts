@@ -194,7 +194,7 @@ export const mainResponses: MainResponses = {
         await ContentProviderRegistry.loadServices(data.providerId, data.cloudOnly || false, data.data)
     },
     [Main.PROVIDER_CONNECTIONS]: () => ContentProviderRegistry.getConnectedProviders(),
-    [Main.PROVIDER_RELOAD_SHOW]: (data) => ContentProviderRegistry.reloadShow(data.providerId, data.showId, data.data),
+    [Main.ONSTAGE_LOAD_SERVICE]: (data) => ContentProviderRegistry.loadOnStageService(data.serviceId, data.data),
     [Main.PROVIDER_DISCONNECT]: (data) => {
         ContentProviderRegistry.disconnect(data.providerId, data.scope)
         return { success: true }
