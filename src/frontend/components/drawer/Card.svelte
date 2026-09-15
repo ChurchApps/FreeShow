@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte"
     import type { Resolution } from "../../../types/Settings"
     import { mediaOptions, outputs, styles } from "../../stores"
     import { triggerClickOnEnterSpace } from "../../utils/clickable"
@@ -22,6 +23,9 @@
     export let color: null | string = null
     export let white = true
     export let showPlayOnHover = false
+    // a corner button on hover, for cards whose picture is a snapshot the user may want taken again
+    export let showRefreshOnHover = false
+    const dispatch = createEventDispatcher()
     export let showApplyOnHover = false
     export let checkered = false
     export let mode: "grid" | "list" | "lyrics" = "grid"
@@ -51,6 +55,11 @@
                 <div class="overlayIcon">
                     <Icon id="export" size={2} white />
                 </div>
+            {/if}
+            {#if showRefreshOnHover}
+                <button class="cornerIcon" title={translateText("actions.refresh")} on:click|stopPropagation={() => dispatch("refresh")}>
+                    <Icon id="refresh" size={1.1} white />
+                </button>
             {/if}
             <slot />
         </div>
@@ -86,6 +95,35 @@
 
     .over:hover > .card .overlayIcon {
         opacity: 0.6;
+    }
+    .over:hover > .card .cornerIcon {
+        opacity: 0.75;
+    }
+    .cornerIcon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+
+        position: absolute;
+        right: 4px;
+        top: 4px;
+
+        width: 1.8em;
+        height: 1.8em;
+        padding: 0;
+        border: none;
+        border-radius: 50%;
+        background-color: rgb(0 0 0 / 0.6);
+        /* a button resets the inherited text colour, and the icon draws in currentColor */
+        color: #fff;
+
+        z-index: 2;
+        transition: 0.2s opacity;
+        opacity: 0;
+    }
+    .cornerIcon:hover {
+        opacity: 1 !important;
     }
     .overlayIcon {
         display: flex;

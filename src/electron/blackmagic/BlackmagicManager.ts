@@ -1,4 +1,7 @@
-import { BlackmagicSender } from "./BlackmagicSender"
+// The manager is used on main AND in the capture worker (via BlackmagicSender). Device stability lives with
+// whoever owns the devices; main installs the bridge here so resetDevice can reach it without this module
+// importing main-process code into the worker.
+export type BlackmagicSenderControl = { isDeviceStable(outputId: string): boolean; resetProblematicDevice(outputId: string): boolean }
 import { getBmdDisplayModes, getBmdPixelFormats } from "./bmdFormats"
 import { getMacadam } from "./macadamLoader"
 import type { DeviceConfig, DeviceData } from "./TypeData"
@@ -19,6 +22,8 @@ function safeMacadamCall<T>(fallback: T, fn: (m: NonNullable<ReturnType<typeof g
  * Manages Blackmagic Design device discovery, configuration, and state
  */
 export class BlackmagicManager {
+    static senderControl: BlackmagicSenderControl | null = null
+
     static getFirstDeviceName(): string | undefined {
         return safeMacadamCall(undefined, (m) => m.getFirstDevice())
     }
@@ -121,10 +126,10 @@ export class BlackmagicManager {
             }
 
             // Check if the device was marked as unstable in BlackmagicSender
-            const wasUnstable = BlackmagicSender.isDeviceStable(deviceId) === false
+            const wasUnstable = this.senderControl ? this.senderControl.isDeviceStable(deviceId) === false : false
 
             // Reset the device in BlackmagicSender
-            const resetResult = BlackmagicSender.resetProblematicDevice(deviceId)
+            const resetResult = this.senderControl ? this.senderControl.resetProblematicDevice(deviceId) : false
 
             // If it wasn't previously marked as unstable, inform the user
             if (!wasUnstable && !resetResult) {

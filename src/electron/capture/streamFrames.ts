@@ -19,7 +19,36 @@ export function packStreamFrame(data: Buffer, width: number, height: number, str
 }
 
 // Nearest-neighbour shrink to RGBA for the app window's preview, converting only the sampled pixels.
+// The addon does this natively when available; the loop below is the reference it matches byte for
+// byte, and the fallback where the module cannot load.
+const NATIVE_FORMAT: { [format in StreamFrameFormat]: number } = { bgra: 0, uyvy: 1, rgba: 3 }
+let previewNative: any
+function loadPreviewNative() {
+    if (previewNative !== undefined) return previewNative
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const osr = require("osr-capture")
+        previewNative = typeof osr?.previewFrame === "function" ? osr : null
+    } catch {
+        previewNative = null
+    }
+    return previewNative
+}
+
 export function previewStreamFrame(full: StreamFrame, maxWidth = 480): StreamFrame {
+    const osr = loadPreviewNative()
+    if (osr) {
+        try {
+            const small = osr.previewFrame(full.data, full.xres, full.yres, NATIVE_FORMAT[full.format], maxWidth)
+            return { xres: small.width, yres: small.height, data: small.data, format: "rgba" }
+        } catch {
+            // fall through to the loop below
+        }
+    }
+    return previewStreamFrameJs(full, maxWidth)
+}
+
+export function previewStreamFrameJs(full: StreamFrame, maxWidth = 480): StreamFrame {
     const scale = Math.max(1, Math.ceil(full.xres / maxWidth))
     const width = Math.floor(full.xres / scale)
     const height = Math.floor(full.yres / scale)

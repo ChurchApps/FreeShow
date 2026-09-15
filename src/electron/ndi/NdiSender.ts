@@ -11,6 +11,8 @@ import { SenderCapture, type CaptureFrameOpts } from "../capture/SenderCapture"
 // https://github.com/rse/vingester
 
 // NDI sender proxy: delegates NDI encoding and dispatch to a worker thread (./ndiWorker)
+// one readback of a shared render, fanned out to every member at that member's size and format
+
 export class NdiSender {
     private static worker: Worker | null = null
     private static readonly MAX_INFLIGHT_SENDS = 3
@@ -50,6 +52,24 @@ export class NdiSender {
     }
 
     private static onWorkerMessage(msg: any) {
+        const t0 = process.env.FS_CAP_STATS ? performance.now() : 0
+        try {
+            this.onWorkerMessageBody(msg)
+        } finally {
+            if (t0) {
+                const dt = performance.now() - t0
+                this.mainDiag.msgMs += dt
+                this.mainDiag.msgN++
+                if (dt > this.mainDiag.msgMax) this.mainDiag.msgMax = dt
+                const t = (this.mainDiag.byType[msg?.type || "?"] ||= { ms: 0, n: 0, max: 0 })
+                t.ms += dt
+                t.n++
+                if (dt > t.max) t.max = dt
+            }
+        }
+    }
+
+    private static onWorkerMessageBody(msg: any) {
         if (!msg?.type) return
         if (SenderCapture.handleMessage(msg)) return
 
@@ -73,6 +93,20 @@ export class NdiSender {
         }
     }
 
+
+    // Blackmagic playback and the stream receive host run on this worker too, so they need a handle to it
+    static getSharedWorker(): import("worker_threads").Worker | null {
+        return this.getWorker()
+    }
+
+    static hasWorker(): boolean {
+        return !!this.getWorker()
+    }
+
+    static postToWorker(msg: any, transfer?: any[]) {
+        if (transfer) this.getWorker()?.postMessage(msg, transfer)
+        else this.getWorker()?.postMessage(msg)
+    }
 
     static initNameNDI(name?: string, outputName?: string) {
         return name || `FreeShow NDI${outputName ? ` - ${outputName}` : ""}`
@@ -116,9 +150,41 @@ export class NdiSender {
         this.worker.postMessage({ type: "video", id, buffer: arrayBuffer, byteOffset: 0, byteLength: arrayBuffer.byteLength, opts: { size, ratio, framerate, transparent, format } }, [arrayBuffer])
     }
 
+    // FS_CAP_STATS: how congested the MAIN JS thread is. lag = how late a 5ms timer fires (0 = idle);
+    // paint/msg = synchronous time spent in the OSR paint handler and in worker-message handling per second.
+    static mainDiag = { lagSum: 0, lagMax: 0, lagN: 0, paintMs: 0, paintN: 0, paintMax: 0, msgMs: 0, msgN: 0, msgMax: 0, lastTick: 0, started: false, byType: {} as { [type: string]: { ms: number; n: number; max: number } } }
+    static startMainDiag() {
+        if (this.mainDiag.started || !process.env.FS_CAP_STATS) return
+        this.mainDiag.started = true
+        const d = this.mainDiag
+        d.lastTick = performance.now()
+        setInterval(() => {
+            const now = performance.now()
+            const lag = Math.max(0, now - d.lastTick - 5)
+            d.lastTick = now
+            d.lagSum += lag
+            d.lagN++
+            if (lag > d.lagMax) d.lagMax = lag
+        }, 5)
+        setInterval(() => {
+            if (!d.lagN) return
+            const types = Object.entries(d.byType).map(([k, v]) => `${k}:n${v.n}/${v.ms.toFixed(0)}ms/max${v.max.toFixed(1)}`).join(" ")
+            console.info(`[MAIN-LOOP] lag(mean=${(d.lagSum / d.lagN).toFixed(2)}ms max=${d.lagMax.toFixed(1)}ms) paint(n=${d.paintN} ${d.paintMs.toFixed(1)}ms/s max=${d.paintMax.toFixed(1)}ms) workerMsg(n=${d.msgN} ${d.msgMs.toFixed(1)}ms/s max=${d.msgMax.toFixed(1)}ms) ${types}`)
+            d.lagSum = d.lagMax = d.lagN = d.paintMs = d.paintN = d.paintMax = d.msgMs = d.msgN = d.msgMax = 0
+            d.byType = {}
+        }, 1000)
+    }
+
     static captureFrameNDI(id: string, source: any, opts: CaptureFrameOpts) {
-        const data = this.NDI[id]
-        if (!data?.sender || !this.getWorker()) return false
+        // the render is shared: any member with an NDI sender, or any OMT sender in the shared worker
+        // (opts.omt), keeps the capture going without an NDI sender on the renderer itself
+        const anySender = (opts.members?.length ? opts.members : [id]).some((m) => this.NDI[m]?.sender)
+        // an output with no sender at all still has work for the worker when something asked the GPU for a
+        // scaled frame: an OutputShow or stage viewer, or a preview. Refusing those sent the frame back to
+        // main to be read, converted and encoded there.
+        const wantsScaled = !!opts.stageStream || !!opts.serverStream || ((opts.dstW || 0) > 0 && (opts.dstH || 0) > 0)
+        const anyWorkerConsumer = Object.keys(opts.webrtcMembers || {}).length > 0 || Object.keys(opts.rtmpMembers || {}).length > 0 || Object.keys(opts.presentMembers || {}).length > 0 || !!opts.thumbStream || wantsScaled
+        if ((!anySender && !anyWorkerConsumer) || !this.getWorker()) return false
         this.worker!.postMessage({ type: "captureFrame", id, source, opts })
         return true
     }

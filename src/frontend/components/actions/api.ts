@@ -19,7 +19,7 @@ import { startMetronome } from "../drawer/audio/metronome"
 import { getInteraction, startInteraction, stopInteraction } from "../drawer/pages/interactions"
 import { pauseAllTimers } from "../drawer/timers/timers"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
-import { changeStageOutputLayout, startCamera, startRtmpStreaming, startScene, startScreen, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutputs } from "../helpers/output"
+import { changeStageOutputLayout, setOutput, startCamera, startRtmpStreaming, startScene, startScreen, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutputs } from "../helpers/output"
 import { OutputHelper } from "../helpers/OutputHelper"
 import { changeOutputStyle, playSlideTimers, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
@@ -250,6 +250,8 @@ export const API_ACTIONS = {
     restore_output: () => restoreOutput(), // BC
     clear_all: () => clearAll(true), // BC
     clear_background: () => clearBackground(), // BC
+    // put a live NDI/OMT source on an output's background (the same as clicking it in the Live drawer)
+    show_live_source: (data: { id: string; type?: "ndi" | "omt"; outputId?: string }) => setOutput("background", { id: data.id, type: data.type || "omt" }, false, data.outputId || ""),
     clear_slide: () => clearSlide(), // BC
     clear_overlays: () => clearOverlays(), // BC
     clear_overlay: (data: API_id) => clearOverlay(data.id),

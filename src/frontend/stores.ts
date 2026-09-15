@@ -139,7 +139,6 @@ export const currentOutputSettings: Writable<string | null> = writable(null)
 export const slideTimers: Writable<{ [key: string]: SlideTimer }> = writable({})
 export const outputCache: Writable<any> = writable(null)
 export const outputSlideCache: Writable<any> = writable({})
-export const previewBuffers: Writable<any> = writable({})
 export const ndiData: Writable<any> = writable({})
 export const omtData: Writable<any> = writable({})
 export const closeAd: Writable<boolean> = writable(false)
@@ -380,6 +379,12 @@ export const styles: Writable<{ [key: string]: Styles }> = writable({}) // {}
 // OUTPUTS
 export const outputs: Writable<Outputs> = writable({}) // {default}
 export const syncedOutputs: Writable<SyncedOutputs> = writable({}) // {}
+// outputs a capture is running for, so their previews draw the captured frame (see shouldBeCaptured)
+export const capturedOutputs: Writable<{ [id: string]: boolean }> = writable({})
+// this output window draws the capture instead of rendering its content (see OutputPresenter.ts)
+export const presenting: Writable<boolean> = writable(false)
+// shared-render groups (renderer output id -> member ids); follower previews clone the renderer's mirror
+export const renderGroups: Writable<{ [rendererId: string]: string[] }> = writable({})
 export const outLocked: Writable<boolean> = writable(false) // false
 
 // PROFILES

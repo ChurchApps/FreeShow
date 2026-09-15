@@ -18,9 +18,15 @@ extraResources:
 
 linux:
     asarUnpack:
+        # native modules must live outside the asar: they are dlopen'd, and osr-capture is also mapped
+        # by the preload and the capture worker. Every platform unpacks the same set - a module unpacked
+        # on one and left to auto-detection on another is how a native path breaks in a release only.
+        - "**/node_modules/osr-capture/**"
+        - "**/node_modules/openmediatransport/**"
         - "**/node_modules/grandiose/**"
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libltc-wrapper/**/*"
+        - "**/node_modules/sharp/**"
     category: AudioVideo
     target:
         - AppImage

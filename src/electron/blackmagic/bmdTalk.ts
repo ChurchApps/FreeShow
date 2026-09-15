@@ -14,7 +14,7 @@ import { OutputHelper } from "../output/OutputHelper"
 import { wait } from "../utils/helpers"
 import { BlackmagicManager } from "./BlackmagicManager"
 import { BlackmagicReceiver } from "./BlackmagicReceiver"
-import { BlackmagicSender } from "./BlackmagicSender"
+import { BlackmagicBridge as BlackmagicSender } from "./BlackmagicBridge"
 
 /**
  * Handle incoming Blackmagic IPC messages

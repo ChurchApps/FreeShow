@@ -1,205 +1,39 @@
-import type { Size } from "electron"
-import type { CaptureChannel, CaptureFrame } from "macadam"
-import { toApp } from ".."
-import { BLACKMAGIC } from "../../types/Channels"
-import util from "../ndi/vingester-util"
-import { OutputHelper } from "../output/OutputHelper"
+// Control surface for Blackmagic (DeckLink) input. The capture itself — the channel, the frame loop,
+// the format handling, the preview downscale and the delivery to renderers — runs in the stream
+// receive utilityProcess next to NDI and OMT (see ../capture/streamReceiverProcess), because video
+// must never touch the main thread. Main only resolves the device from its list and forwards control.
+
+import { StreamReceiverHost } from "../capture/StreamReceiverHost"
 import { BlackmagicManager } from "./BlackmagicManager"
-import { InputImageBufferConverter } from "./ImageBufferConverter"
-import { getMacadam } from "./macadamLoader"
 
-interface ReceiverData {
-    receiver?: CaptureChannel
-    interval?: NodeJS.Timeout
-    displayMode: string
-    pixelFormat: string
-}
-
-/**
- * Manages Blackmagic Design video capture (input) devices
- */
 export class BlackmagicReceiver {
-    static BMD_RECEIVERS: { [key: string]: ReceiverData } = {}
-    static allActiveReceivers: { [key: string]: any } = {}
-    static sendToOutputs: string[] = []
-    static lastFrameTime = 0
-
-    /**
-     * Initialize a Blackmagic capture device
-     *
-     * @param deviceId Device handle/ID
-     * @param audioChannels Number of audio channels (0 to disable audio)
-     */
-    static async initialize(deviceId: string, audioChannels = 2) {
-        const macadam = getMacadam()
-        if (!macadam) {
-            console.error("Cannot initialize Blackmagic receiver: macadam module not available")
-            return
-        }
-
-        if (this.BMD_RECEIVERS[deviceId]?.receiver) return this.BMD_RECEIVERS[deviceId].receiver
-
+    private static resolve(deviceId: string, audioChannels = 2) {
         const deviceIndex = BlackmagicManager.getIndexById(deviceId)
-        if (deviceIndex < 0) return
+        if (deviceIndex < 0) return null
 
         const device = BlackmagicManager.getDeviceById(deviceId)
-        if (!device || !device.inputDisplayModes?.[0]) return
+        if (!device || !device.inputDisplayModes?.[0]) return null
 
-        const displayMode = device.inputDisplayModes[0].name // Select first available
-        const pixelFormat = device.inputDisplayModes[0].videoModes[0] // Select first available
-
-        if (!this.BMD_RECEIVERS[deviceId]) this.BMD_RECEIVERS[deviceId] = { displayMode, pixelFormat }
-        return (this.BMD_RECEIVERS[deviceId].receiver = await macadam.capture({
-            deviceIndex,
-            displayMode: BlackmagicManager.getDisplayMode(displayMode),
-            pixelFormat: BlackmagicManager.getPixelFormat(pixelFormat),
-            channels: audioChannels,
-            sampleRate: macadam.bmdAudioSampleRate48kHz,
-            sampleType: macadam.bmdAudioSampleType16bitInteger
-        }))
+        const displayModeName = device.inputDisplayModes[0].name // first available
+        const pixelFormatName = device.inputDisplayModes[0].videoModes[0] // first available
+        return { deviceId, deviceIndex, displayMode: BlackmagicManager.getDisplayMode(displayModeName), pixelFormat: BlackmagicManager.getPixelFormat(pixelFormatName), pixelFormatName, audioChannels }
     }
 
-    /**
-     * Start capturing video from a Blackmagic device
-     */
-    static async startCapture({ source, outputId }: any) {
-        if (!this.sendToOutputs.includes(outputId)) this.sendToOutputs.push(outputId)
-
-        const deviceId: string = source.id
-        if (this.BMD_RECEIVERS[deviceId]?.interval) return
-
-        const receiver = await this.initialize(deviceId)
-        if (!receiver) return
-
-        let frameRate = (receiver.frameRate[1] || 30000) / (receiver.frameRate[0] || 1001)
-        if (!isFinite(frameRate) || frameRate <= 0) frameRate = 30 // fallback to 30fps for safety
-
-        let gettingFrame = false
-        const currentReceiver = this.BMD_RECEIVERS[deviceId]
-        if (!currentReceiver) return
-
-        currentReceiver.interval = setInterval(
-            async () => {
-                if (gettingFrame) return
-                gettingFrame = true
-
-                try {
-                    if (!receiver) return this.stopReceiver({ id: source.id, outputId })
-                    const frame = await receiver.frame()
-                    this.sendFrame(source.id, frame, { width: receiver.width, height: receiver.height })
-                } catch (err) {
-                    console.error(err)
-                    this.stopReceiver({ id: source.id, outputId })
-                }
-
-                gettingFrame = false
-            },
-            // ensure a sane minimum interval to avoid flooding the event loop
-            Math.max(10, Math.round(1000 / frameRate))
-        )
+    /** full capture for an output background */
+    static startCapture({ source, outputId }: any) {
+        const spec = this.resolve(source?.id)
+        if (!spec) return
+        StreamReceiverHost.send("bmd:capture", { ...spec, outputId })
     }
 
-    /**
-     * Capture a single frame from a Blackmagic device
-     */
-    static async captureFrame({ source }: any) {
-        const deviceId: string = source.id
-        const receiver = await this.initialize(deviceId)
-        if (!receiver) return
-
-        try {
-            const frame = await receiver.frame()
-            this.sendFrame(source.id, frame, { width: receiver.width, height: receiver.height })
-        } catch (err) {
-            console.error(err)
-            this.stopReceiver({ id: source.id })
-        }
+    /** a single frame for a drawer card */
+    static captureFrame({ source }: any) {
+        const spec = this.resolve(source?.id)
+        if (!spec) return
+        StreamReceiverHost.send("bmd:thumbnail", spec)
     }
 
-    /**
-     * Send a captured frame to all registered outputs
-     */
-    static sendFrame(id: string, frame: CaptureFrame, size: Size) {
-        const receiverData = this.BMD_RECEIVERS[id]
-        if (!receiverData) return
-        if (!frame?.video?.data) return
-
-        // Skip frames if system is overloaded (lagging below 10 fps)
-        const timeSinceLastFrame = Date.now() - this.lastFrameTime
-        if (timeSinceLastFrame > 100 && timeSinceLastFrame < 200) return
-
-        const pixelFormat = receiverData.pixelFormat || ""
-        try {
-            const converted = this.convertVideoFrameFormat(frame.video.data, pixelFormat, size)
-            if (converted) frame.video.data = converted
-        } catch (err) {
-            console.error("Error converting Blackmagic frame format:", err)
-            return
-        }
-
-        const msg = { channel: "RECEIVE_STREAM", data: { id, frame, time: Date.now() } }
-        toApp(BLACKMAGIC, msg)
-
-        this.sendToOutputs.forEach((outputId) => {
-            OutputHelper.Send.sendToWindow(outputId, msg, BLACKMAGIC)
-        })
-
-        this.lastFrameTime = Date.now()
-    }
-
-    /**
-     * Convert video frame format from Blackmagic to RGBA
-     */
-    static convertVideoFrameFormat(frame: Buffer, format: string, size: Size): Buffer {
-        if (format.includes("ARGB")) {
-            util.ImageBufferAdjustment.ARGBtoRGBA(frame)
-        } else if (format.includes("YUV")) {
-            frame = InputImageBufferConverter.YUVtoRGBA(frame, size)
-        } else if (format.includes("BGRA")) {
-            util.ImageBufferAdjustment.BGRAtoRGBA(frame)
-        } else if (format.includes("RGBXLE")) {
-            InputImageBufferConverter.RGBXLEtoRGBA(frame)
-        } else if (format.includes("RGBLE")) {
-            InputImageBufferConverter.RGBLEtoRGBA(frame)
-        } else if (format.includes("RGBX")) {
-            InputImageBufferConverter.RGBXtoRGBA(frame)
-        } else if (format.includes("RGB")) {
-            InputImageBufferConverter.RGBtoRGBA(frame)
-        }
-
-        return frame
-    }
-
-    /**
-     * Stop capturing from a Blackmagic device
-     */
-    static stopReceiver(data: any) {
-        if (data?.id) {
-            if (data.outputId) {
-                const index = this.sendToOutputs.indexOf(data.outputId)
-                if (index > -1) this.sendToOutputs.splice(index, 1)
-            } else this.sendToOutputs = [] // error
-
-            if (!this.sendToOutputs.length) {
-                clearInterval(this.BMD_RECEIVERS[data.id]?.interval)
-                try {
-                    this.BMD_RECEIVERS[data.id]?.receiver?.stop()
-                } catch (err) {
-                    console.error("Error stopping Blackmagic receiver: ", err)
-                }
-                delete this.BMD_RECEIVERS[data.id]
-            }
-            return
-        }
-
-        Object.values(this.BMD_RECEIVERS).forEach(({ receiver, interval }) => {
-            clearInterval(interval)
-            try {
-                receiver?.stop()
-            } catch (err) {
-                console.error("Error stopping Blackmagic receiver: ", err)
-            }
-        })
-        this.BMD_RECEIVERS = {}
+    static stopReceiver(data: { id: string; outputId?: string } | null = null) {
+        StreamReceiverHost.send("bmd:stop", data)
     }
 }

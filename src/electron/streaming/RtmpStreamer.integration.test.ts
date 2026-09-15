@@ -13,7 +13,8 @@ vi.mock("./encoderDetection", () => ({
 }))
 vi.mock("./ffmpegManager", () => ({ resolveFfmpegPath: async () => "ffmpeg" }))
 
-const { RtmpStreamer, setRtmpStatusListener, setRtmpNoticeListener } = await import("./RtmpStreamer")
+const { RtmpStreamer, setRtmpStatusListener, setRtmpNoticeListener, setRtmpResolvers } = await import("./RtmpStreamer")
+setRtmpResolvers({ resolveFfmpegPath: async () => "ffmpeg", resolveEncoder: async () => "x264" })
 
 function hasFfmpeg(): boolean {
     try {

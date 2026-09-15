@@ -1,26 +1,20 @@
 import { isAudioEnabled } from "../../audio/processAudio"
-import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
+import { BlackmagicBridge as BlackmagicSender } from "../../blackmagic/BlackmagicBridge"
 import { OutputHelper } from "../../output/OutputHelper"
 import { getRtmpEncoderSetting } from "../../streaming/encoderDetection"
-import { RtmpStreamer } from "../../streaming/RtmpStreamer"
+import { RtmpBridge as RtmpStreamer } from "../../streaming/RtmpBridge"
 import { WebRtcHost } from "../../streaming/WebRtcHost"
 import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
 
 export class CaptureLifecycle {
-    private static readonly BACKPRESSURE_LOOKUP = [
-        { threshold: 6144, maxFps: 4 },
-        { threshold: 5120, maxFps: 6 },
-        { threshold: 4096, maxFps: 8 },
-        { threshold: 3072, maxFps: 10 }
-    ]
-    private static readonly FALLBACK_FPS = 60
+    // how soon to look again when a device refused a frame
+    private static get FALLBACK_FPS() {
+        return OutputHelper.Lifecycle.OSR_RENDER_FPS
+    }
     private static readonly MIN_DELAY_MS = 1
     private static readonly WEBRTC_START_DELAY_MS = 1000
-    private static readonly BYTES_PER_MB = 1048576
     // reduce capture rate when output content has not changed for a while (static slide/idle)
-    private static readonly IDLE_AFTER_MS = 2000
-    private static readonly IDLE_FPS = 3
 
     private static captureLoopToken: { [key: string]: number } = {}
     private static activeCaptures: Set<string> = new Set()
@@ -43,6 +37,10 @@ export class CaptureLifecycle {
             this.stopCapture(id)
             return
         }
+
+        // a displayed output is captured from a hidden offscreen surface, never with capturePage on main
+        OutputHelper.Lifecycle.createCaptureSurface(id)
+        captureOptions.window = OutputHelper.renderWindow(output) || output.window
 
         this.activeCaptures.add(id)
         CaptureHelper.updateFramerate(id)
@@ -159,22 +157,8 @@ export class CaptureLifecycle {
 
         const baseCaptureFrameRate = CaptureHelper.getMaxActiveFramerate(frameRates, options)
 
-        // Blackmagic only - reduce frame rate if memory exceeds thresholds
-        if (captureOpts.options?.blackmagic) {
-            const externalMB = process.memoryUsage().external / this.BYTES_PER_MB
-            for (const { threshold, maxFps } of this.BACKPRESSURE_LOOKUP) {
-                if (externalMB > threshold) {
-                    return Math.min(baseCaptureFrameRate, maxFps)
-                }
-            }
-        }
-
-        // static content - capture at a low rate until a change is detected
-        // (Blackmagic and NDI frames bypass change detection / idle backoff to maintain video stream clocks)
-        const timeSinceChange = CaptureTransmitter.getTimeSinceLastChange(id)
-        if (!options.blackmagic && !options.ndi && timeSinceChange > this.IDLE_AFTER_MS) {
-            return Math.min(baseCaptureFrameRate, this.IDLE_FPS)
-        }
+        // Blackmagic backpressure is the card's own buffer depth, gated per frame in BlackmagicSender;
+        // canAcceptFrame skips the capture entirely while it cannot take one.
 
         return baseCaptureFrameRate
     }
@@ -199,6 +183,7 @@ export class CaptureLifecycle {
 
         OutputHelper.Lifecycle.releaseOsrCaptureTextures(id)
         if (!(output as any).follower) this.cleanupListeners(capture.window)
+        OutputHelper.Lifecycle.destroyCaptureSurface(id)
         delete output.captureOptions
         this.updateWebRtcHostState()
         this.updateRtmpState()

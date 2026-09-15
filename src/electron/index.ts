@@ -18,7 +18,8 @@ import { autoErrorReport } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { receiveOMT } from "./omt/talk"
 import { OutputHelper } from "./output/OutputHelper"
-import { setRtmpNoticeListener, setRtmpStatusListener } from "./streaming/RtmpStreamer"
+import { RenderGroups } from "./output/helpers/RenderGroups"
+import { RtmpBridge } from "./streaming/RtmpBridge"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
 import { applyCommandLineSwitches } from "./utils/commandLineSwitches"
 import { applyGraphicsDeviceSelection, scheduleGpuHealthCheck } from "./utils/gpu"
@@ -50,6 +51,15 @@ export const isLinux: boolean = process.platform === "linux"
 
 // Chromium command-line switches must precede app "ready" (they configure the GPU process launch)
 applyCommandLineSwitches()
+
+// Whoever is reading our output may stop (a shell pipeline closing, a terminal going away). A write to a
+// closed stream raises EPIPE, and an unhandled one takes the whole app down mid-service - losing the
+// outputs over a log line nobody was reading.
+for (const stream of [process.stdout, process.stderr]) {
+    stream.on("error", (err: NodeJS.ErrnoException) => {
+        if (err?.code !== "EPIPE") throw err
+    })
+}
 
 // graphics device selection (Settings > Other): must run before "ready" (command-line switches
 // precede GPU process launch); a change requires a restart, like the hardware-acceleration toggle
@@ -151,8 +161,8 @@ async function startApp() {
 
     setTimeout(createLoading)
 
-    setRtmpStatusListener((outputId, destinations) => sendToMain(ToMain.RTMP_STATUS, { outputId, destinations }))
-    setRtmpNoticeListener((message) => sendToMain(ToMain.ALERT, message))
+    RtmpBridge.setStatusListener((outputId, destinations) => sendToMain(ToMain.RTMP_STATUS, { outputId, destinations }))
+    RtmpBridge.setNoticeListener((message) => sendToMain(ToMain.ALERT, message))
 
     await setupStores()
 
@@ -275,6 +285,9 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     window.webContents.ipc.on(STARTUP, (_event, msg) => {
         if (msg?.channel === "READY") {
             window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile })
+            // render groups may have formed before this window could receive the change broadcast
+            // (outputs are recreated during startup) — sync the current state on every (re)load
+            if (mainOutput) toApp(OUTPUT, { channel: "RENDER_GROUPS", data: RenderGroups.snapshot() })
         }
     })
 

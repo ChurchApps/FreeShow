@@ -4,6 +4,7 @@
 import type { IpcRendererEvent } from "electron"
 import { contextBridge, ipcRenderer, webUtils } from "electron"
 import type { ValidChannels } from "../types/Channels"
+import { installStreamLinks } from "./streamLink"
 
 // const maxInterval: number = 500
 // const useTimeout: ValidChannels[] = ["STAGE", "REMOTE", "CONTROLLER", "OUTPUT_STREAM"]
@@ -12,7 +13,7 @@ import type { ValidChannels } from "../types/Channels"
 // wait to log messages until after intial load is done
 let appLoaded = false
 const LOG_MESSAGES: boolean = process.env.NODE_ENV !== "production"
-const filteredChannelsData: string[] = ["PLAYING_VIDEO_STATE", "VISUALIZER_DATA", "STREAM", "BUFFER", "RECORDER_FRAME", "GET_THUMBNAIL", "ACTIVE_TIMERS", "RECEIVE_STREAM", "CHECK_RAM_USAGE", "TIMECODE_VALUE", "TIMECODE_AUDIO_DATA", "SPOTIFY_GET_STATE", "AI_AUDIO_DATA", "AI_TRANSCRIPT"]
+const filteredChannelsData: string[] = ["PLAYING_VIDEO_STATE", "VISUALIZER_DATA", "STREAM", "BUFFER", "RECORDER_FRAME", "GET_THUMBNAIL", "ACTIVE_TIMERS", "RECEIVE_STREAM", "CHECK_RAM_USAGE", "TIMECODE_VALUE", "TIMECODE_AUDIO_DATA", "SPOTIFY_GET_STATE", "AI_AUDIO_DATA", "AI_TRANSCRIPT", "STREAM_TICK", "STREAM_LAYER"]
 const filteredChannels: ValidChannels[] = ["AUDIO"]
 
 const storedReceivers: {
@@ -58,6 +59,9 @@ contextBridge.exposeInMainWorld("api", {
         return webUtils.getPathForFile(file)
     }
 })
+
+// frames from the stream receive process (shared memory + loopback socket): see streamLink.ts
+installStreamLinks(ipcRenderer)
 
 // Forward stream port directly to page to avoid extra copies over contextBridge
 ipcRenderer.on("STREAM_PORT", (event) => {

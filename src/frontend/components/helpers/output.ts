@@ -16,6 +16,7 @@ import {
     activeShow,
     activeTimers,
     allOutputs,
+    capturedOutputs,
     categories,
     connections,
     currentOutputSettings,
@@ -932,6 +933,14 @@ export function shouldBeCaptured(outputId: string, startup = false) {
 
     // alert user that screen recording starts
     if (!startup && Object.values(captures).filter(Boolean).length) newToast("toast.output_capture_enabled")
+
+    const active = Object.values(captures).some(Boolean)
+    capturedOutputs.update((a) => {
+        if (!!a[outputId] === active) return a
+        if (active) a[outputId] = true
+        else delete a[outputId]
+        return a
+    })
 
     send(OUTPUT, ["CAPTURE"], { id: outputId, captures })
 }

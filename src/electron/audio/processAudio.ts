@@ -1,9 +1,9 @@
 import type { OpusEncoder as TOpusEncoder } from "@discordjs/opus"
-import { BlackmagicSender } from "../blackmagic/BlackmagicSender"
+import { BlackmagicBridge as BlackmagicSender } from "../blackmagic/BlackmagicBridge"
 import { NdiSender } from "../ndi/NdiSender"
 import { OmtSender } from "../omt/OmtSender"
 import { getServerData, toServer } from "../servers"
-import { RtmpStreamer } from "../streaming/RtmpStreamer"
+import { RtmpBridge as RtmpStreamer } from "../streaming/RtmpBridge"
 import { WebRtcHost } from "../streaming/WebRtcHost"
 import { IcecastSender } from "./IcecastSender"
 
@@ -46,7 +46,7 @@ export async function processAudio(buffer: Buffer, sampleRate: number = 48000, t
 
     const normalizedIcecast = icecast && icecast.enabled !== false ? icecast : null
     const needsIcecast = !!(normalizedIcecast && opusEncoder && (!tid || tid === "icecast"))
-    const needsLegacySinks = (!tid || tid !== "icecast") && (Object.keys(BlackmagicSender.playbackData || {}).length > 0 || !!getServerData("OUTPUT_STREAM")?.sendAudio || WebRtcHost.isRunning() || RtmpStreamer.anyRunning())
+    const needsLegacySinks = (!tid || tid !== "icecast") && (BlackmagicSender.hasOutputs() || !!getServerData("OUTPUT_STREAM")?.sendAudio || WebRtcHost.isRunning() || RtmpStreamer.anyRunning())
 
     if (!needsIcecast && !needsLegacySinks) return
 

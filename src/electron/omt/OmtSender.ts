@@ -104,8 +104,22 @@ export class OmtSender {
     }
 
     // the worker reads the output's shared texture back, converts and sends it
+    static hasWorker(): boolean {
+        return !!this.getWorker()
+    }
+
+    static postToWorker(msg: any, transfer?: any[]) {
+        if (transfer) this.getWorker()?.postMessage(msg, transfer)
+        else this.getWorker()?.postMessage(msg)
+    }
+
     static captureFrameOMT(id: string, source: any, opts: CaptureFrameOpts) {
-        if (!this.OMT[id]?.sender || !this.getWorker()) return false
+        // an output with no sender still has work here when something asked for a scaled frame: an
+        // OutputShow or stage viewer, a preview, or a window drawing the capture
+        const anySender = (opts.members?.length ? opts.members : [id]).some((m) => this.OMT[m]?.sender)
+        const wantsScaled = !!opts.stageStream || !!opts.serverStream || ((opts.dstW || 0) > 0 && (opts.dstH || 0) > 0)
+        const anyWorkerConsumer = Object.keys(opts.webrtcMembers || {}).length > 0 || Object.keys(opts.rtmpMembers || {}).length > 0 || Object.keys(opts.presentMembers || {}).length > 0 || !!opts.thumbStream || wantsScaled
+        if ((!anySender && !anyWorkerConsumer) || !this.getWorker()) return false
         this.worker!.postMessage({ type: "captureFrame", id, source, opts })
         return true
     }

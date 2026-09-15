@@ -2,11 +2,15 @@ import { BrowserWindow, screen, type BrowserWindowConstructorOptions } from "ele
 import { OUTPUT_CONSOLE, getMainWindow, hardwareAccelerationDisabled, isMac, loadWindowContent, toApp } from "../.."
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
-import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
+import { BlackmagicBridge as BlackmagicSender } from "../../blackmagic/BlackmagicBridge"
+import { RtmpBridge } from "../../streaming/RtmpBridge"
+import { WebRtcHost } from "../../streaming/WebRtcHost"
 import { gpuCompositingAvailable, gpuStateSettled } from "../../utils/gpu"
 import { initializeSender } from "../../blackmagic/bmdTalk"
 import { CaptureHelper } from "../../capture/CaptureHelper"
 import { SenderCapture } from "../../capture/SenderCapture"
+import { ruleViolation } from "../../utils/ruleCheck"
+import { StreamReceiverHost } from "../../capture/StreamReceiverHost"
 import { NdiSender } from "../../ndi/NdiSender"
 import { setDataNDI } from "../../ndi/talk"
 import { OmtSender } from "../../omt/OmtSender"
@@ -15,7 +19,10 @@ import { wait } from "../../utils/helpers"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
 import { setOutputAlwaysOnTop, useOutputPanel } from "./OutputAlwaysOnTop"
+import { OutputPresenter } from "./OutputPresenter"
 import { OutputVisibility } from "./OutputVisibility"
+import { PreviewStream } from "../../capture/PreviewStream"
+import { RenderGroups } from "./RenderGroups"
 
 // Tracks timing stages for off-main GPU readback and transmission (in ms)
 type OffMainSegments = { consume: number; finish: number; enqueue: number; doneMain: number }
@@ -42,6 +49,9 @@ export class OutputLifecycle {
     }
 
     static initListeners() {
+        RenderGroups.onChanged = () => toApp(OUTPUT, { channel: "RENDER_GROUPS", data: RenderGroups.snapshot() })
+        this.watchPreviewSubscribers()
+
         screen.on("display-metrics-changed", () => {
             setTimeout(() => this.restoreAllOutputBounds(), 500)
         })
@@ -84,7 +94,7 @@ export class OutputLifecycle {
         })
     }
 
-    static async createOutput(output: Output) {
+    static async createOutput(output: Output, groupRetries = 0) {
         await gpuStateSettled // the offscreen capture mode depends on the real GPU state
         const id: string = output.id || ""
         if (!id) return
@@ -97,16 +107,45 @@ export class OutputLifecycle {
 
         this.clearPendingCaptureStart(id)
 
+        // a displayed output joins a render of its content that ALREADY exists and draws its frames; it
+        // never starts a group, so an output alone with its content renders its own window as before
+        const presentRenderer = !this.isOsrOutput(output) && !output.blackmagic ? RenderGroups.existingRenderer(output) : null
+
+        // Shared-render: outputs with identical content share one render window
+        const shareEligible = RenderGroups.enabled && (this.canShareRender(output) || !!presentRenderer)
+        const group = shareEligible ? RenderGroups.add(id, output) : { isRenderer: true, rendererId: id }
+        if (!group.isRenderer) {
+            const rendererWin = OutputHelper.getOutput(group.rendererId)?.window
+            if (rendererWin && !rendererWin.isDestroyed()) {
+                if (presentRenderer) await this.createPresentingOutput(id, output, group.rendererId)
+                else await this.createFollowerOutput(id, output, group.rendererId, rendererWin)
+                return
+            }
+            RenderGroups.remove(id)
+            if (groupRetries < 5) {
+                setTimeout(() => {
+                    if (!OutputHelper.getOutput(id)) void this.createOutput(output, groupRetries + 1)
+                }, 300)
+                return
+            }
+            console.warn(`[GROUP] renderer window for ${group.rendererId} never became ready; ${id} rendering independently`)
+        }
+
         // disable move/resize listeners during initialization
         OutputHelper.Bounds.disableWindowMoveListener()
 
         // invisible/capture outputs render DPI-corrected so capturePage() matches the configured resolution
-        const resolvedBounds = output.invisible ? output.bounds : OutputVisibility.resolveOutputBounds(output)
+        let resolvedBounds = output.invisible ? output.bounds : OutputVisibility.resolveOutputBounds(output)
+        // a shared render runs at the largest member's size (a follower larger than this output may already
+        // be registered when a renderer is rebuilt); this output still SENDS at its own size
+        const sendSize = { width: output.bounds.width, height: output.bounds.height }
+        const groupSize = shareEligible ? RenderGroups.renderSize(id) : null
+        if (groupSize && (groupSize.width !== resolvedBounds.width || groupSize.height !== resolvedBounds.height)) resolvedBounds = { ...resolvedBounds, ...groupSize }
         const renderBounds = OutputHelper.Bounds.getRenderBounds(output, resolvedBounds)
         const outputWindow = this.createOutputWindow({ ...renderBounds, alwaysOnTop: output.alwaysOnTop !== false, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name, output)
         // const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
-        OutputHelper.setOutput(id, { window: outputWindow, osr: this.isInvisible(output), invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: resolvedBounds, transparent: output.transparent, webrtcData: output.webrtcData, rtmpData: output.rtmpData })
+        OutputHelper.setOutput(id, { window: outputWindow, osr: this.isOsrOutput(output), invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: resolvedBounds, sendSize, transparent: output.transparent, webrtcData: output.webrtcData, rtmpData: output.rtmpData })
         // OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds({ id: output.id!, bounds: resolvedBounds })
         this.updateWindowConstraints(id)
@@ -136,6 +175,70 @@ export class OutputLifecycle {
         if (output.blackmagic) initializeSender(output, outputWindow, id)
     }
 
+    // NDI and OMT capture outputs share a render (one render per content, fanned out to every sender);
+    // Blackmagic needs dedicated capture, and displayed (non-OSR) outputs need their own window. WebRTC
+    // and RTMP outputs are served by the capture worker from the shared readback (a target at their own
+    // size), so they join a render like NDI/OMT ones do.
+    private static canShareRender(output: Output): boolean {
+        return (!!output.ndi || !!output.omt || !!output.webrtc || !!output.rtmp) && !output.blackmagic && this.isOsrOutput(output)
+    }
+
+    // a displayed group member: it owns the window the audience sees and draws the renderer's readback
+    private static async createPresentingOutput(id: string, output: Output, rendererId: string) {
+        OutputHelper.Bounds.disableWindowMoveListener()
+
+        const bounds = OutputVisibility.resolveOutputBounds(output)
+        const renderBounds = OutputHelper.Bounds.getRenderBounds(output, bounds)
+        const window = this.createOutputWindow({ ...renderBounds, alwaysOnTop: output.alwaysOnTop !== false, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name, output)
+
+        OutputHelper.setOutput(id, {
+            window,
+            presenter: true,
+            renderGroupRenderer: rendererId,
+            // nothing here is captured with capturePage: the frame comes from the renderer's readback
+            osr: true,
+            invisible: output.invisible,
+            boundsLocked: output.boundsLocked,
+            screen: output.screen,
+            intendedBounds: bounds,
+            sendSize: { width: bounds.width, height: bounds.height },
+            transparent: output.transparent,
+            webrtcData: output.webrtcData,
+            rtmpData: output.rtmpData
+        })
+        OutputHelper.Bounds.updateBounds({ id, bounds })
+        this.updateWindowConstraints(id)
+        this.fitRendererToGroup(rendererId)
+        if (this.presenterCanDraw()) OutputPresenter.start(id, window)
+        CaptureHelper.updateRenderRate(RenderGroups.rendererOf(id))
+
+        this.pendingCaptureStart[id] = setTimeout(() => {
+            delete this.pendingCaptureStart[id]
+            if (!CaptureHelper.Lifecycle || !OutputHelper.getOutput(id)) return
+            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, omt: output.omt || false })
+        }, 1200)
+    }
+
+    private static async createFollowerOutput(id: string, output: Output, rendererId: string, rendererWindow: BrowserWindow) {
+        OutputHelper.setOutput(id, { window: rendererWindow, follower: true, renderGroupRenderer: rendererId, osr: true, invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: output.bounds, sendSize: { width: output.bounds.width, height: output.bounds.height }, transparent: output.transparent })
+        this.fitRendererToGroup(rendererId)
+
+        this.pendingCaptureStart[id] = setTimeout(() => {
+            delete this.pendingCaptureStart[id]
+            if (!CaptureHelper.Lifecycle || !OutputHelper.getOutput(id)) return
+            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, omt: output.omt || false })
+        }, 1200)
+
+        if (output.ndi) {
+            await NdiSender.createSenderNDI(id, NdiSender.initNameNDI(output.ndiData?.name, output.name), output.ndiData?.groups)
+            if (output.ndiData) setDataNDI({ id, ...output.ndiData })
+        }
+        if (output.omt) {
+            await OmtSender.createSenderOMT(id, OmtSender.initNameOMT(output.omtData?.name, output.name), output.omtData?.quality)
+            if (output.omtData) setDataOMT({ id, ...output.omtData })
+        }
+    }
+
     /*
     private static createPreviewWindow(options) {
         const mainBounds = mainWindow?.getBounds()
@@ -163,7 +266,7 @@ export class OutputLifecycle {
     private static createOutputWindow(options: BrowserWindowConstructorOptions, id: string, name: string, extra: any) {
         options = { ...outputOptions, ...options }
 
-        const osr = this.isInvisible(extra)
+        const osr = this.isOsrOutput(extra)
         if (osr) {
             options.show = false
             const useSharedTexture = this.useSharedTextureCapture()
@@ -199,25 +302,176 @@ export class OutputLifecycle {
         return window
     }
 
-    // Avoid Chromium X11 1px shrink when window size matches screen size, which breaks NDI/OMT encoding
+
+    // Chromium's X11 backend (X11Window::AdjustSizeForDisplay) subtracts 1px from a window whose
+    // requested size exactly equals a monitor's pixel size, so WMs don't treat it as fullscreen. That
+    // makes an offscreen capture window for a 1920x1080 output on a 1920x1080 screen render 1919x1079
+    // — an odd width the NDI/OMT (VMX) encoder refuses, so the receiver connects but gets no video.
+    // An offscreen window is never WM-managed, so nudge its requested size off the exact display match,
+    // keeping the width even. No-op off Linux and whenever the size already differs from every display.
     private static avoidLinuxDisplaySizeShrink(options: BrowserWindowConstructorOptions) {
         if (process.platform !== "linux" || !options.width || !options.height) return
         const matchesDisplay = screen.getAllDisplays().some((d) => {
             const sf = d.scaleFactor || 1
             return Math.round(d.size.width * sf) === options.width && Math.round(d.size.height * sf) === options.height
         })
+        // by TWO, not one: the packed formats pair pixels, so an odd width is refused outright (and with a
+        // video layer there is no CPU fallback to refuse to, so the whole readback fails and the output is
+        // black). Nudging by one traded the 1919 this avoids for a 1921 that fails the same way.
         if (matchesDisplay) {
-            options.width! += 1
-            options.height! += 1
+            options.width! += 2
+            options.height! += 2
         }
     }
 
-    // can render offscreen (OSR)
-    private static isInvisible(output: { invisible?: boolean }): boolean {
+    // A shared render runs at its largest member's size. Called when membership changes: the renderer's
+    // offscreen window is resized to the largest member (up or down); each member keeps its own sendSize.
+    static fitRendererToGroup(rendererId: string) {
+        const renderer = OutputHelper.getOutput(rendererId)
+        if (!renderer?.window || renderer.window.isDestroyed() || !renderer.osr) return
+        const size = RenderGroups.renderSize(rendererId)
+        const current = renderer.intendedBounds
+        if (!size || !current || (current.width === size.width && current.height === size.height)) return
+        OutputHelper.Bounds.updateBounds({ id: rendererId, bounds: { ...current, width: size.width, height: size.height } })
+    }
+
+    // the outputs drawn by this window: the output itself plus the followers of its render group
+    static groupMembers(id: string): string[] {
+        return RenderGroups.members(id).filter((m) => m === id || (OutputHelper.getOutput(m) as any)?.renderGroupRenderer === id)
+    }
+
+    // Only an invisible output renders offscreen. A displayed one keeps the real window its audience sees,
+    // and a capture of it reads a hidden offscreen surface instead (createCaptureSurface).
+    private static isOsrOutput(output: { invisible?: boolean }): boolean {
         return output.invisible === true
     }
 
-    static readonly OSR_RENDER_FPS = 60
+    // An on-screen window can only be captured with capturePage on main, so a captured displayed output
+    // renders offscreen as well and the capture reads that. Only while a capture is running, and only
+    // when no other output already renders this content (that case presents instead).
+    // Offscreen mode is fixed when a window is created, so moving to the CPU path means building new
+    // windows. A capture SURFACE belongs to this process and is replaced here directly; an output whose
+    // own window is the offscreen one has to be recreated by the app, which owns its config. Doing the
+    // surfaces here matters: the app round-trip is the part that can fail to come back, and then the
+    // demotion is announced but never happens.
+    private static rebuildAfterDemotion() {
+        let needsAppRestart = false
+        for (const id of OutputHelper.getKeys()) {
+            const output = OutputHelper.getOutput(id)
+            if (!output || (output as any).follower) continue
+            if (output.captureWindow) {
+                // Restart the capture rather than swapping the window: on this path there may be no
+                // surface at all (an offscreen window is no use where it cannot render video), and the
+                // capture then has to run against the output's own window - a different loop entirely.
+                // Leaving the old options in place left the output with no capture running at all.
+                const toggles = { ...(output.captureOptions?.options || {}) }
+                this.destroyCaptureSurface(id)
+                CaptureHelper.Lifecycle.stopCapture(id)
+                CaptureHelper.Lifecycle.startCapture(id, toggles)
+                const mode = OutputHelper.getOutput(id)?.captureWindow ? "a new capture surface" : "its own window"
+                console.info(`[OSR ${id}] capture restarted on the CPU path, from ${mode}`)
+            } else if (output.osr) {
+                needsAppRestart = true
+            }
+        }
+        if (needsAppRestart) toApp(OUTPUT, { channel: "RESTART", data: {} })
+    }
+
+    // A presenting window renders nothing and draws the capture instead, and those frames come from the
+    // capture WORKER - which only runs on the shared-texture path. On the CPU path nothing would ever
+    // arrive, so the window must keep rendering its own content or it is simply black.
+    private static presenterCanDraw(): boolean {
+        return this.useSharedTextureCapture()
+    }
+
+    static createCaptureSurface(id: string): BrowserWindow | null {
+        const output = OutputHelper.getOutput(id)
+        if (!output || (output as any).follower || output.presenter || output.osr) return null
+        // Only worth doing when the capture is a shared texture. Without one this window gains nothing -
+        // the frame is read back on the main thread either way - and it costs correctness: a displayed
+        // output used to be captured from the window the user is looking at, which renders whatever the
+        // machine can render. An offscreen window is not that window, and on a machine without GPU
+        // drivers it does not paint video at all, so the capture is black while the display looks right.
+        if (!this.useSharedTextureCapture()) return null
+
+        const existing = output.captureWindow
+        if (existing && !existing.isDestroyed()) return existing
+
+        const bounds = output.intendedBounds
+        if (!bounds) return null
+
+        // hidden windows are rendered DPI-corrected, so ask for the size that yields the configured pixels
+        const renderBounds = OutputHelper.Bounds.getRenderBounds({ invisible: true }, bounds)
+        const options: BrowserWindowConstructorOptions = { ...outputOptions, ...renderBounds, show: false, skipTaskbar: true, alwaysOnTop: false, backgroundColor: output.transparent ? "#00000000" : "#000000" }
+        const useSharedTexture = this.useSharedTextureCapture()
+        options.webPreferences = { ...outputOptions.webPreferences, offscreen: useSharedTexture ? { useSharedTexture: true } : true } as any
+        this.avoidLinuxDisplaySizeShrink(options)
+
+        const window = new BrowserWindow(options)
+        window.setSkipTaskbar(true)
+        this.attachOsrCapture(window, id)
+        loadWindowContent(window, "output")
+
+        output.captureWindow = window
+        output.osr = true
+        // the surface is now the only render of this content: the on-screen window draws the capture
+        if (this.presenterCanDraw()) OutputPresenter.start(id, output.window)
+        CaptureHelper.updateRenderRate(RenderGroups.rendererOf(id))
+        return window
+    }
+
+    static destroyCaptureSurface(id: string) {
+        const output = OutputHelper.getOutput(id)
+        const window = output?.captureWindow
+        if (!output || !window) return
+
+        output.captureWindow = undefined
+        output.osr = false
+        OutputPresenter.stop(id)
+        this.stopOsrPaintDrive(id)
+        try {
+            this.osrCaptureAddon?.releasePool?.(id)
+        } catch {
+            // ignore
+        }
+        if (window.isDestroyed()) return
+        try {
+            window.removeAllListeners("close")
+            window.destroy()
+        } catch (err) {
+            console.error(err)
+        }
+    }
+
+    // whether the worker is producing this output's frames, so main does not serve the same consumers
+    private static offMainAt = new Map<string, number>()
+    // how long after a forwarded frame the worker still counts as owning this output, in its own frames
+    private static readonly OFF_MAIN_ACTIVE_FRAMES = 4
+
+    static noteOffMain(id: string) {
+        this.offMainAt.set(id, Date.now())
+    }
+
+    static isOffMainActive(id: string): boolean {
+        const at = this.offMainAt.get(id)
+        if (!at) return false
+        return Date.now() - at < this.getOsrTargetInterval(id) * this.OFF_MAIN_ACTIVE_FRAMES
+    }
+
+    // Room for both things that can ask for a rate: a display at whatever mode the OS gave it, and a
+    // consumer at the fastest the frame-rate setting offers. updateRenderRate picks the actual rate.
+    private static renderCeiling = 0
+    static get OSR_RENDER_FPS(): number {
+        if (this.renderCeiling) return this.renderCeiling
+        let best = CaptureHelper.MAX_CONFIGURABLE_FPS
+        try {
+            for (const d of screen.getAllDisplays()) best = Math.max(best, d.displayFrequency || 0)
+        } catch {
+            // no display information (headless): the configurable maximum stands on its own
+        }
+        this.renderCeiling = Math.max(1, Math.round(best))
+        return this.renderCeiling
+    }
 
     private static attachOsrCapture(window: BrowserWindow, id: string) {
         try {
@@ -232,8 +486,8 @@ export class OutputLifecycle {
         if (this.useSharedTextureCapture()) this.attachOsrSharedTexture(window, id, addon)
         else this.attachOsrCpu(window, id)
 
-        // Linux begin-frame drive; CaptureHelper.updateRenderRate re-drives it when the rate changes
-        if (process.platform === "linux") {
+        // begin-frame drive; CaptureHelper.updateRenderRate re-drives it when the rate changes
+        if (this.needsPaintDrive()) {
             window.on("closed", () => this.stopOsrPaintDrive(id))
             this.updateOsrPaintDrive(window, id, this.OSR_RENDER_FPS)
         }
@@ -247,10 +501,11 @@ export class OutputLifecycle {
     private static lastOsrInvalidateAt = new Map<string, number>()
     private static osrInvalidateInFlight = new Map<string, boolean>()
     private static osrInvalidatesIssued = new Map<string, number>()
+    private static osrInvalidatesTotal = new Map<string, number>()
     private static readonly DRIVE_TIMEOUT_INTERVALS = 4
 
     private static noteOsrPaint(id: string) {
-        if (process.platform !== "linux") return
+        if (!this.needsPaintDrive()) return
         const now = Date.now()
         const drive = this.osrPaintDrive.get(id)
         const invalidatedAt = this.lastOsrInvalidateAt.get(id)
@@ -267,8 +522,16 @@ export class OutputLifecycle {
         return n
     }
 
+    // Offscreen windows only paint when something marks them dirty. With a shared texture the compositor
+    // drives that itself, but the CPU path does not: measured on Windows with hardware acceleration off,
+    // a playing 4K video produced 0-2 paints a second while the send timer re-emitted one stale frame 30
+    // times a second. Linux needs it in both modes, having no reliable vsync for offscreen windows.
+    private static needsPaintDrive() {
+        return process.platform === "linux" || !this.useSharedTextureCapture()
+    }
+
     static updateOsrPaintDrive(window: BrowserWindow, id: string, fps: number) {
-        if (process.platform !== "linux") return
+        if (!this.needsPaintDrive()) return
         const rate = Math.max(1, Math.round(fps))
         const existing = this.osrPaintDrive.get(id)
         if (existing?.fps === rate) return
@@ -293,6 +556,7 @@ export class OutputLifecycle {
                 this.lastOsrInvalidateAt.set(id, now)
                 this.osrInvalidateInFlight.set(id, true)
                 this.osrInvalidatesIssued.set(id, (this.osrInvalidatesIssued.get(id) || 0) + 1)
+                this.osrInvalidatesTotal.set(id, (this.osrInvalidatesTotal.get(id) || 0) + 1)
                 wc.invalidate()
             } catch {
                 // window tearing down
@@ -309,17 +573,27 @@ export class OutputLifecycle {
         this.lastOsrInvalidateAt.delete(id)
         this.osrInvalidateInFlight.delete(id)
         this.osrInvalidatesIssued.delete(id)
+        this.osrInvalidatesTotal.delete(id)
     }
 
     static isHardwareAccelerationDisabled(): boolean {
         return hardwareAccelerationDisabled
     }
 
-    // Shared-texture capture requires readback addon and active GPU compositing
+
+    // Shared-texture offscreen capture needs the readback addon AND a GPU that Chromium is actually
+    // compositing with. A machine without a usable GPU driver (software compositing) gets CPU-bitmap
+    // offscreen capture, the same as when the user disables acceleration.
+    // Set when an offscreen window in shared-texture mode never delivers a paint. Chromium reports
+    // gpu_compositing "enabled" on a machine whose GL is software, and such a window is then asked for
+    // textures that cannot be produced: it paints NOTHING, so every consumer of it is black. One way,
+    // process-wide, and never set again once any paint has arrived.
+    private static sharedTextureDemoted = false
+
     private static captureModeLogged = false
     private static useSharedTextureCapture(): boolean {
         const addon = !!this.getOsrCaptureAddon()
-        const gpu = gpuCompositingAvailable()
+        const gpu = gpuCompositingAvailable() && !this.sharedTextureDemoted
         const shared = addon && gpu
         if (!this.captureModeLogged) {
             this.captureModeLogged = true
@@ -348,16 +622,53 @@ export class OutputLifecycle {
     // Computes per-renderer pipeline depth: ceil(targetFps * minRtt) + 1.
     // Limits how many frames are allowed in-flight to prevent queue bloating while keeping throughput high.
     private static readonly RTT_WINDOW_SAMPLES = 300
-    private static readonly ADDON_MAX_POOL = 16 // Max concurrent readback contexts in native addon
+    // in-flight readbacks are limited by the addon, so the limit is read from it rather than restated
+    private static addonMaxPool = 0
+    private static get ADDON_MAX_POOL(): number {
+        if (this.addonMaxPool) return this.addonMaxPool
+        const reported = Number(this.getOsrCaptureAddon()?.maxConcurrentReadbacks)
+        // an addon too old to report it still has the pool it always had
+        this.addonMaxPool = reported > 0 ? Math.floor(reported) : 16
+        return this.addonMaxPool
+    }
     private static globalInFlight = 0
     private static lastClampLogged = 0
     private static lastGateLogged = 0
     private static offMain = new Map<string, OffMainState>()
 
+    // a window drawing the capture needs frames at the rate it can show them: its display's OS mode
+    // (FreeShow has no frame-rate setting for a display output)
+    static presentFps(id: string): number {
+        if (!OutputPresenter.isPresenting(id)) return 0
+        const bounds = OutputHelper.getOutput(id)?.intendedBounds
+        try {
+            const display = bounds ? screen.getDisplayMatching(bounds) : screen.getPrimaryDisplay()
+            if (display?.displayFrequency) return Math.round(display.displayFrequency)
+        } catch {
+            // no display information: fall back to the ceiling below
+        }
+        return this.OSR_RENDER_FPS
+    }
+
+    // A window previewing this output is watching it, so the render must keep up with what it draws even
+    // with no receiver connected: the per-channel rates drop to the unconnected gate, which would idle the
+    // render to 1fps while the operator is looking at it.
+    static watchPreviewSubscribers() {
+        PreviewStream.onSubscribersChanged = (outputId) => CaptureHelper.updateRenderRate(RenderGroups.rendererOf(outputId))
+    }
+
+    static previewFps(id: string): number {
+        return PreviewStream.hasSubscribers(id) ? CaptureHelper.configuredFramerate(id) : 0
+    }
+
     private static rendererTargetFps(id: string): number {
-        const output = OutputHelper.getOutput(id)
-        if (!output?.captureOptions) return 0
-        return CaptureHelper.getMaxActiveFramerate(output.captureOptions.framerates || {}, output.captureOptions.options || {})
+        let fps = 0
+        for (const m of RenderGroups.members(id)) {
+            fps = Math.max(fps, this.presentFps(m), this.previewFps(m))
+            const mo = OutputHelper.getOutput(m)
+            if (mo?.captureOptions) fps = Math.max(fps, CaptureHelper.getMaxActiveFramerate(mo.captureOptions.framerates || {}, mo.captureOptions.options || {}))
+        }
+        return fps
     }
 
     private static capFor(id: string): number {
@@ -405,6 +716,66 @@ export class OutputLifecycle {
         const st = this.offMain.get(id)
         if (!st) return { minRtt: 0, seg: null, pipeRtt: 0 }
         return this.uncontendedMins(st)
+    }
+
+    // per-output paint bodies (the "paint" listener above only times and dispatches)
+    // Live input composited into a captured output by the worker (osr-capture's video layer) instead of
+    // being drawn by the page: the page asks for it when the stream is a plain full-cover background, and
+    // only stops drawing once the worker reports that it is compositing.
+    private static videoLayerWanted = new Set<string>()
+    private static videoLayerRunning = new Set<string>()
+    private static videoLayerHooked = false
+
+    // FS_VIDEO_LAYER=0 keeps the page drawing a live input itself instead of the worker compositing it,
+    // so a black output can be told apart from a black composite
+    static videoLayerDisabled = process.env.FS_VIDEO_LAYER === "0"
+
+    static requestVideoLayer(id: string, wanted: boolean) {
+        if (this.videoLayerDisabled) return
+        this.hookVideoLayer()
+        const renderer = RenderGroups.rendererOf(id) || id
+        if (wanted === this.videoLayerWanted.has(renderer)) return
+        if (wanted) this.videoLayerWanted.add(renderer)
+        else this.videoLayerWanted.delete(renderer)
+        StreamReceiverHost.send("videoLayer", { outputId: renderer, active: wanted })
+        if (!wanted) this.setVideoLayerRunning(renderer, false)
+    }
+
+    private static hookVideoLayer() {
+        if (this.videoLayerHooked) return
+        this.videoLayerHooked = true
+        SenderCapture.videoLayerHandler = (msg) => {
+            if (msg.type === "videoFrame") {
+                // A frame reached the worker. The page draws nothing now, so it needs telling to mark the
+                // window dirty — offscreen windows only paint when they are, and webContents.invalidate()
+                // does not do it. One tick per frame also paces the capture to the source instead of the
+                // compositor's free-running rate (vsync is off for offscreen rendering).
+                if (this.videoLayerRunning.has(msg.id)) OutputHelper.Send.sendToWindow(msg.id, { channel: "STREAM_TICK", data: { id: msg.id } })
+            } else if (msg.type === "videoLayerActive") {
+                this.setVideoLayerRunning(msg.id, msg.active !== false)
+            }
+        }
+    }
+
+    private static setVideoLayerRunning(id: string, running: boolean) {
+        if (running === this.videoLayerRunning.has(id)) return
+        if (running) this.videoLayerRunning.add(id)
+        else this.videoLayerRunning.delete(id)
+        // the worker is compositing: the frame no longer has to reach the page at all
+        if (this.videoLayerWanted.has(id)) StreamReceiverHost.send("videoLayer", { outputId: id, active: true, exclusive: running })
+        // and the window must not paint an opaque backdrop over it (the page drops its own background too)
+        const win = OutputHelper.getOutput(id)?.window
+        if (win && !win.isDestroyed()) {
+            const output = OutputHelper.getOutput(id)
+            win.setBackgroundColor(running || (output as any)?.transparent ? "#00000000" : "#000000")
+        }
+        // every member of the render group draws from this one page
+        for (const m of RenderGroups.members(id)) OutputHelper.Send.sendToWindow(m, { channel: "STREAM_LAYER", data: { id: m, active: running } })
+    }
+
+    private static sharedPaintImpls = new Map<string, (event: any, image: Electron.NativeImage) => void>()
+    private static onSharedTexturePaint(id: string, event: any, image: Electron.NativeImage) {
+        this.sharedPaintImpls.get(id)?.(event, image)
     }
 
     private static noteFrameSize(id: string, px: number) {
@@ -459,6 +830,48 @@ export class OutputLifecycle {
 
     static releaseOsrCaptureTextures(id: string) {
         this.osrTextureCleanup[id]?.()
+    }
+
+    // Shared-texture capture a GPU cannot actually drive ends in a black output that logs nothing: paints
+    // arrive carrying no texture, or stop carrying one after the first few. Neither is visible in a
+    // latched "did a texture ever arrive", because on such a machine the first frames often DO carry one.
+    //
+    // The begin-frame drive is what makes it decidable. It invalidates the window precisely to force a
+    // paint, so within one sampling window: invalidates went out, paints came back, and NONE of them
+    // carried a texture. On a working machine a forced paint carries one, idle or not. An idle machine
+    // that simply is not painting is not demoted, because paints must be arriving for this to fire.
+    private static readonly DEAD_CAPTURE_FRAMES = 90
+
+    private static watchForDeadCapture(id: string, state: () => { textured: number; textureless: number }) {
+        if (this.sharedTextureDemoted) return
+        const deadline = this.getOsrTargetInterval(id) * this.DEAD_CAPTURE_FRAMES
+        let lastTextured = 0
+        let lastTextureless = 0
+        let lastInvalidates = 0
+        const timer = setInterval(() => {
+            if (this.sharedTextureDemoted || !OutputHelper.getOutput(id)) {
+                clearInterval(timer)
+                return
+            }
+            const { textured, textureless } = state()
+            const invalidates = this.osrInvalidatesTotal.get(id) || 0
+            const texturedNow = textured - lastTextured
+            const texturelessNow = textureless - lastTextureless
+            const invalidatesNow = invalidates - lastInvalidates
+            lastTextured = textured
+            lastTextureless = textureless
+            lastInvalidates = invalidates
+
+            if (texturedNow > 0) return // it is delivering
+            if (invalidatesNow === 0 || texturelessNow === 0) return // nothing was asked, or nothing painted
+
+            clearInterval(timer)
+            this.sharedTextureDemoted = true
+            this.captureModeLogged = false
+            console.warn(`[OSR] ${texturelessNow} paints for ${invalidatesNow} requested, none carrying a shared texture: rebuilding outputs on the CPU path`)
+            this.rebuildAfterDemotion()
+        }, deadline)
+        timer.unref?.()
     }
 
     private static attachOsrSharedTexture(window: BrowserWindow, id: string, addon: any) {
@@ -527,6 +940,7 @@ export class OutputLifecycle {
         let statsTimer: any = null
         if (STATS) {
             statsTimer = setInterval(() => {
+                const m = RenderGroups.members(id)
                 const rtt = sRttCount ? Math.round(sRttSum / sRttCount) : 0
                 const sendCap = Math.round(1000 / this.getOsrSendInterval(id))
                 // admit = group admission target (max configured rate across members); ndiFramerate = the
@@ -570,7 +984,7 @@ export class OutputLifecycle {
                 // natural paints flow and the drive is silent)
                 const sInvalidates = process.platform === "linux" ? OutputLifecycle.readOsrInvalidatesIssued(id) : 0
                 console.info(
-                    `[CAP-STATS ${id}] paints=${sPaints} invalidates=${sInvalidates} burst=${sBurstPaints} fwd=${sForward} done=${sDone} readback=${sReadback} dropBudget=${sDropBudget} dropInterval=${sDropInterval} parkExp=${sParkExpired} inflight=${offMainInFlight}/${this.depthFor(id)} globalInflight=${this.globalInFlight} depth=${this.depthFor(id)} depthTotal=${this.totalDepth()} minRtt=${pr.minRtt}ms pipeRtt=${pr.pipeRtt}ms ${segStr} renderers=${this.offMainRendererCount} rtt=${rtt}ms gap(mean=${Math.round(gapMean)} std=${Math.round(gapStd)} p95=${gapP95} >25ms=${gapBig}) pipeIdle=${Math.round(idleMs)}ms${tlStr} admit=${admitFps}fps sendCap=${sendCap}fps ndiFramerate=${ndiFps}`
+                    `[CAP-STATS ${id}] members=[${m.join(",")}] paints=${sPaints} invalidates=${sInvalidates} burst=${sBurstPaints} fwd=${sForward} done=${sDone} readback=${sReadback} dropBudget=${sDropBudget} dropInterval=${sDropInterval} parkExp=${sParkExpired} inflight=${offMainInFlight}/${this.depthFor(id)} globalInflight=${this.globalInFlight} depth=${this.depthFor(id)} depthTotal=${this.totalDepth()} minRtt=${pr.minRtt}ms pipeRtt=${pr.pipeRtt}ms ${segStr} renderers=${this.offMainRendererCount} rtt=${rtt}ms gap(mean=${Math.round(gapMean)} std=${Math.round(gapStd)} p95=${gapP95} >25ms=${gapBig}) pipeIdle=${Math.round(idleMs)}ms${tlStr} admit=${admitFps}fps sendCap=${sendCap}fps ndiFramerate=${ndiFps}`
                 )
                 sPaints = sDropBudget = sDropInterval = sParkExpired = sForward = sDone = sReadback = sRttSum = sRttCount = sBurstPaints = 0
                 sGaps.length = 0
@@ -588,26 +1002,142 @@ export class OutputLifecycle {
         const forwardOffMain = (rec: { tex: any; source: any; width: number; height: number }) => {
             const { tex, source, width, height } = rec
             const output = OutputHelper.getOutput(id)
-            const framerate = output?.captureOptions?.framerates?.ndi || 30
+            // the fastest consumer this output actually has, not the NDI setting: an output with no NDI
+            // member was paced by a rate nothing on it was using
+            const capOpts = output?.captureOptions
+            const framerate = capOpts ? CaptureHelper.getMaxActiveFramerate(capOpts.framerates || {}, capOpts.options || {}) : 1
             const ratio = height ? width / height : 16 / 9
             const transparent = output?.transparent === true
-            const omtFramerate = output?.captureOptions?.framerates?.omt || framerate
-            const fmt = transparent ? 2 : 1
-            const hasNdi = !!NdiSender.NDI[id]?.sender
-            const hasOmt = !!OmtSender.OMT[id]?.sender
-            const memberFramerates: { [m: string]: number } = { [id]: framerate }
-            const groupIds = hasNdi || hasOmt ? [id] : []
-            const groupInfo = groupIds.length ? CaptureHelper.Transmitter.groupOffMainInfo(groupIds) : null
+            // every member of this render (the renderer itself plus its followers) gets this one readback,
+            // whichever protocol each one sends on
+            const members = OutputLifecycle.groupMembers(id)
+            const memberFramerates: { [m: string]: number } = {}
+            const omtMembers = members.filter((m) => !!OmtSender.OMT[m]?.sender)
+            const omtFramerates: { [m: string]: number } = {}
+            for (const m of members) memberFramerates[m] = OutputHelper.getOutput(m)?.captureOptions?.framerates?.ndi || framerate
+            for (const m of omtMembers) omtFramerates[m] = OutputHelper.getOutput(m)?.captureOptions?.framerates?.omt || framerate
+            const hasOmt = omtMembers.length > 0
+            const omtFramerate = omtFramerates[id] || framerate
+            const groupInfo = CaptureHelper.Transmitter.groupOffMainInfo(members)
             const mixed = !!groupInfo && groupInfo.eligible && groupInfo.needsScaled && typeof addon.readbackConsume === "function"
-            const scaled = mixed ? CaptureHelper.Transmitter.getScaledTarget({ width, height }) : null
+            const scaled = mixed ? CaptureHelper.Transmitter.getScaledTarget({ width, height }, members) : null
+            // The render is the largest member's size. Each member sends at its own size and format:
+            // full-size members in the main format take the main readback; the others get a target of
+            // their own (downscale + convert in the same GPU pass; CPU-derived where the addon can't).
+            const memberSize = (m: string) => {
+                const o = OutputHelper.getOutput(m)
+                const s = o?.sendSize || o?.intendedBounds
+                return s?.width && s?.height ? { width: s.width, height: s.height } : { width, height }
+            }
+            const memberFormat = (m: string) => (OutputHelper.getOutput(m)?.transparent === true ? 2 : 1)
+            const fmt = memberFormat(id)
+            const targets: { width: number; height: number; format: number }[] = []
+            const memberTarget: { [m: string]: number } = {}
+            const memberFormats: { [m: string]: number } = {}
+            const memberSizes: { [m: string]: { width: number; height: number } } = {}
+            for (const m of members) {
+                const sz = memberSize(m)
+                const f = memberFormat(m)
+                memberFormats[m] = f
+                memberSizes[m] = sz
+                if (sz.width === width && sz.height === height && f === fmt) {
+                    memberTarget[m] = -1
+                    continue
+                }
+                let idx = targets.findIndex((t) => t.width === sz.width && t.height === sz.height && t.format === f)
+                if (idx < 0) idx = targets.push({ width: sz.width, height: sz.height, format: f }) - 1
+                memberTarget[m] = idx
+            }
+            // members streaming RTMP: the worker feeds ffmpeg a BGRA frame at exactly the broadcast size
+            const rtmpMembers: { [m: string]: { width: number; height: number } } = {}
+            for (const m of members) {
+                const cfg = RtmpBridge.runningConfig(m)
+                if (!cfg) continue
+                rtmpMembers[m] = { width: cfg.width, height: cfg.height }
+                if (!targets.some((t) => t.width === cfg.width && t.height === cfg.height && t.format === 4)) targets.push({ width: cfg.width, height: cfg.height, format: 4 })
+            }
+            // members on a Blackmagic device: a frame at the card's mode, UYVY when the card takes it raw
+            const bmdMembers: { [m: string]: { width: number; height: number; format: number; framerate: number } } = {}
+            for (const m of members) {
+                if (!BlackmagicSender.isReady(m)) continue
+                const bfr = OutputHelper.getOutput(m)?.captureOptions?.framerates?.blackmagic
+                if (!bfr) continue
+                const sz = BlackmagicSender.getTargetDimensions(m)
+                const f = BlackmagicSender.canAcceptRawUyvy(m, sz) ? 1 : 0
+                bmdMembers[m] = { width: sz.width, height: sz.height, format: f, framerate: bfr }
+                if (!(sz.width === width && sz.height === height && f === fmt) && !targets.some((t) => t.width === sz.width && t.height === sz.height && t.format === f)) targets.push({ width: sz.width, height: sz.height, format: f })
+            }
+            // members streaming WebRTC: the host window draws a BGRA frame at the output's size
+            const webrtcMembers: { [m: string]: { width: number; height: number } } = {}
+            if (WebRtcHost.isRunning()) {
+                for (const m of members) {
+                    if (!OutputHelper.getOutput(m)?.webrtcData?.streaming) continue
+                    const sz = memberSizes[m] || { width, height }
+                    webrtcMembers[m] = sz
+                    if (!targets.some((t) => t.width === sz.width && t.height === sz.height && t.format === 0)) targets.push({ width: sz.width, height: sz.height, format: 0 })
+                }
+            }
+            // members whose on-screen window draws this capture instead of rendering the content again
+            const presentMembers: { [m: string]: { width: number; height: number } } = {}
+            for (const m of members) {
+                if (!OutputPresenter.isPresenting(m)) continue
+                const sz = memberSizes[m] || { width, height }
+                presentMembers[m] = sz
+                if (!targets.some((t) => t.width === sz.width && t.height === sz.height && t.format === 0)) targets.push({ width: sz.width, height: sz.height, format: 0 })
+            }
+            // FS_CONVERT_CHECK: take the frame BOTH ways in one GPU pass — the main readback as plain BGRA
+            // and a full-size target in the real format — so the worker can convert the BGRA itself and
+            // compare. That is the only way to check a GPU kernel against the CPU reference on a real
+            // frame, and it is the check that would have caught the UYVY chroma order being swapped.
+            const convertCheck = !!process.env.FS_CONVERT_CHECK
+            if (convertCheck) {
+                // ask for every packed format the GPU kernels produce, whatever this output actually
+                // needs: the point is to exercise the kernels, and a group with several consumers reads
+                // back as plain BGRA, where there would be nothing to compare
+                for (const f of [0, 1, 2, 4]) {
+                    if (!targets.some((t) => t.width === width && t.height === height && t.format === f)) targets.push({ width, height, format: f })
+                }
+            }
+            // Subscribed stage clients get their frame from the GPU at exactly the size they need and in
+            // the channel order the encoder wants, so the worker encodes it without touching a pixel and
+            // main never resizes or encodes anything.
+            const stageReq = CaptureHelper.Transmitter.stageStreamRequest()
+            let stageStream: { width: number; height: number; quality: number; intervalMs: number } | null = null
+            if (stageReq && width && height) {
+                const sw = Math.min(stageReq.width, width)
+                const sh = Math.max(1, Math.round((height * sw) / width))
+                if (!targets.some((t) => t.width === sw && t.height === sh && t.format === 3)) targets.push({ width: sw, height: sh, format: 3 })
+                stageStream = { width: sw, height: sh, quality: stageReq.quality, intervalMs: stageReq.intervalMs }
+            }
+            // OutputShow clients take raw RGBA, which the GPU produces directly
+            const serverReq = CaptureHelper.Transmitter.serverStreamRequest(id)
+            let serverStream: { width: number; height: number; intervalMs: number } | null = null
+            if (serverReq && width && height) {
+                const vw = Math.min(serverReq.width, width)
+                const vh = Math.max(1, Math.round((height * vw) / width))
+                if (!targets.some((t) => t.width === vw && t.height === vh && t.format === 3)) targets.push({ width: vw, height: vh, format: 3 })
+                serverStream = { width: vw, height: vh, intervalMs: serverReq.intervalMs }
+            }
+            const thumbReq = CaptureHelper.Transmitter.thumbRequest(id)
+            let thumbStream: { width: number; height: number; quality: number } | null = null
+            if (thumbReq && width && height) {
+                const tw = Math.min(thumbReq.width, width)
+                const th = Math.max(1, Math.round((height * tw) / width))
+                if (!targets.some((t) => t.width === tw && t.height === th && t.format === 3)) targets.push({ width: tw, height: th, format: 3 })
+                thumbStream = { width: tw, height: th, quality: thumbReq.quality }
+            }
+            const cpuTargets = targets.length > 0 && !addon.targetsSupported
             const seq = ++offMainSeq
-            // an output sends on one protocol, and each has its own worker
-            const captureOpts = { size: { width, height }, ratio, framerate: hasOmt ? omtFramerate : framerate, memberFramerates, format: fmt, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members: [id], depth: OutputLifecycle.depthFor(id) }
+            // An output sends on one protocol and each has its own worker, so one capture goes to one
+            // worker: a shared texture can only be opened once. A render group mixing protocols is
+            // therefore served by whichever the renderer sends on, as it is upstream.
+            const captureOpts = { size: { width, height }, ratio, framerate: hasOmt ? omtFramerate : framerate, memberFramerates: hasOmt ? omtFramerates : memberFramerates, format: cpuTargets ? 0 : fmt, mainFormat: fmt, convertCheck, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members: hasOmt ? omtMembers : members, depth: OutputLifecycle.depthFor(id), targets, memberTarget, memberFormats, memberSizes, cpuTargets, stageStream, serverStream, thumbStream, rtmpMembers, bmdMembers, webrtcMembers, presentMembers }
             if (hasOmt ? OmtSender.captureFrameOMT(id, source, captureOpts) : NdiSender.captureFrameNDI(id, source, captureOpts)) {
                 forwardAt.set(seq, { t: Date.now(), unc: OutputLifecycle.globalInFlight === 0, px: width * height })
                 OutputLifecycle.globalInFlight++
                 offMainInFlight++
                 heldTextures.set(seq, tex)
+                for (const m of members) OutputLifecycle.noteOffMain(m)
                 if (STATS) {
                     sForward++
                     if (idleSince) {
@@ -717,19 +1247,44 @@ export class OutputLifecycle {
         let cpuFallback = false
         let lastCpuImage: Electron.NativeImage | null = null
 
+        NdiSender.startMainDiag()
         window.webContents.on("paint", (event: any, _dirty: unknown, image: Electron.NativeImage) => {
+            const tPaint = STATS ? performance.now() : 0
+            try {
+                OutputLifecycle.onSharedTexturePaint(id, event, image)
+            } finally {
+                if (tPaint) {
+                    const dt = performance.now() - tPaint
+                    NdiSender.mainDiag.paintMs += dt
+                    NdiSender.mainDiag.paintN++
+                    if (dt > NdiSender.mainDiag.paintMax) NdiSender.mainDiag.paintMax = dt
+                }
+            }
+        })
+        let texturedPaints = 0
+        let texturelessPaints = 0
+        const onPaintImpl = (event: any, image: Electron.NativeImage) => {
             OutputLifecycle.noteOsrPaint(id)
             const tex = event?.texture
             const info = tex?.textureInfo
             if (!info) {
+                texturelessPaints++
                 if (image && !image.isEmpty()) {
                     if (!cpuFallback) {
                         cpuFallback = true
                         console.warn(`[OSR ${id}] paint carries no GPU shared texture — falling back to CPU capture`)
+                        ruleViolation("fallback", "paint without a shared texture")
                     }
                     lastCpuImage = image
                 }
                 return
+            }
+            // a texture is back: drop the CPU frame this output was holding in main, and re-arm the
+            // warning so a later loss is visible rather than silently permanent
+            if (cpuFallback) {
+                cpuFallback = false
+                lastCpuImage = null
+                console.info(`[OSR ${id}] GPU shared texture restored`)
             }
             if (STATS) {
                 sPaints++
@@ -738,16 +1293,25 @@ export class OutputLifecycle {
                 lastPaintTime = nowP
             }
 
+            texturedPaints++
             const width = info.codedSize.width
             const height = info.codedSize.height
             const source = process.platform === "linux" ? { planes: info.planes, modifier: info.modifier } : info.sharedTextureHandle
             const requestedFormat = CaptureHelper.Transmitter.getReadbackFormat(id, { width, height })
 
-            const offMainIds = NdiSender.NDI[id]?.sender || OmtSender.OMT[id]?.sender ? [id] : []
-            const groupInfo = offMainIds.length ? CaptureHelper.Transmitter.groupOffMainInfo(offMainIds) : null
-            const hasGpuDownscale = typeof addon.readbackConsume === "function"
-            const canOffMain = !!groupInfo && groupInfo.eligible && (!groupInfo.needsScaled || hasGpuDownscale)
+            const members = OutputLifecycle.groupMembers(id)
+            const offMainIds = members.filter((m) => !!NdiSender.NDI[m]?.sender || !!OmtSender.OMT[m]?.sender || !!RtmpBridge.runningConfig(m) || (WebRtcHost.isRunning() && !!OutputHelper.getOutput(m)?.webrtcData?.streaming))
+            // An output with no sender still belongs off main when something wants its downscaled frame
+            // (the web server, a stage client, a preview): the worker produces that on the GPU, where
+            // main used to resolve a full-resolution readback into its own process.
+            const groupInfo = CaptureHelper.Transmitter.groupOffMainInfo(offMainIds.length ? offMainIds : members)
+            // a presenting member is a consumer too: its window has nothing to show without this frame
+            const anyPresenting = members.some((m) => OutputPresenter.isPresenting(m))
+            const canOffMain = groupInfo.eligible && (offMainIds.length > 0 || groupInfo.needsScaled || anyPresenting)
             if (canOffMain) {
+                // the worker owns delivery now; anything main still holds would be re-sent stale beside it
+                lastRaw = null
+                lastCpuImage = null
                 OutputLifecycle.noteFrameSize(id, width * height)
                 if (pendingFrame) {
                     if (STATS) sDropInterval++
@@ -766,6 +1330,8 @@ export class OutputLifecycle {
             lastReadback = Date.now()
             if (STATS) sReadback++
             const seq = ++dispatchSeq
+            // the readback lands in the main process on this path
+            ruleViolation("main-frame", "readback into main")
             addon
                 .readback(source, width, height, requestedFormat, id)
                 .then((buf: Buffer) => {
@@ -778,7 +1344,9 @@ export class OutputLifecycle {
                     releaseTex(tex)
                     inFlight--
                 })
-        })
+        }
+        OutputLifecycle.sharedPaintImpls.set(id, onPaintImpl)
+        OutputLifecycle.watchForDeadCapture(id, () => ({ textured: texturedPaints, textureless: texturelessPaints }))
 
         this.startOsrSendTimer(window, id, () => {
             if (lastRaw) CaptureHelper.Transmitter.transmitFrame(id, null, undefined, lastRaw)
@@ -807,6 +1375,7 @@ export class OutputLifecycle {
             this.offMain.delete(id)
             this.offMainRendererCount = Math.max(0, this.offMainRendererCount - 1)
             delete SenderCapture.captureDoneCallbacks[id]
+            OutputLifecycle.sharedPaintImpls.delete(id)
             delete SenderCapture.releaseTextureCallbacks[id]
             heldTextures.forEach((t) => releaseTex(t))
             heldTextures.clear()
@@ -819,13 +1388,31 @@ export class OutputLifecycle {
     // CPU fallback path: the paint event delivers a NativeImage directly.
     private static attachOsrCpu(window: BrowserWindow, id: string) {
         let lastImage: Electron.NativeImage | null = null
+        let paints = 0
+        let empty = 0
+        let emitted = 0
         window.webContents.on("paint", (_e: unknown, _dirty: unknown, image: Electron.NativeImage) => {
             OutputLifecycle.noteOsrPaint(id) // linux begin-frame drive yields to natural paints
+            paints++
+            if (!image || image.isEmpty()) {
+                empty++
+                return
+            }
             lastImage = image
         })
         this.startOsrSendTimer(window, id, () => {
-            if (lastImage) CaptureHelper.Transmitter.transmitFrame(id, lastImage)
+            if (!lastImage) return
+            emitted++
+            CaptureHelper.Transmitter.transmitFrame(id, lastImage)
         })
+        // The CPU path had no telemetry, so an output that never painted looked the same from outside as
+        // one whose frames were being dropped later: both are a black consumer and silence in the log.
+        if (!process.env.FS_CAP_STATS) return
+        const statsTimer = setInterval(() => {
+            console.info(`[CPU-STATS ${id}] paints=${paints} empty=${empty} emitted=${emitted} invalidates=${OutputLifecycle.readOsrInvalidatesIssued(id)} haveFrame=${lastImage ? "yes" : "NO"}`)
+            paints = empty = emitted = 0
+        }, 1000)
+        window.on("closed", () => clearInterval(statsTimer))
     }
 
     // emit the latest frame at the output's configured framerate, decoupling the send rate from the
@@ -833,8 +1420,9 @@ export class OutputLifecycle {
     private static startOsrSendTimer(window: BrowserWindow, id: string, emit: () => void) {
         let sendTimer: NodeJS.Timeout
         const tick = () => {
+            // nothing to send while the worker owns delivery; resumes if the output falls back to main.
             // transmitFrame no-ops until the output's capture channels are set up, and throttles each consumer
-            if (!window.isDestroyed()) emit()
+            if (!window.isDestroyed() && !OutputLifecycle.isOffMainActive(id)) emit()
             // re-read the interval each tick so framerate changes (e.g. NDI connect) take effect
             const interval = this.getOsrSendInterval(id)
             sendTimer = setTimeout(tick, interval)
@@ -860,6 +1448,24 @@ export class OutputLifecycle {
     static async removeOutput(id: string, reopen: Output | null = null) {
         this.clearPendingCaptureStart(id)
 
+        // Shared-render bookkeeping: drop this output from its group. If it was the RENDERER and followers
+        // remain, the first follower must be promoted to render (given its own window) so the group keeps going.
+        const wasShared = RenderGroups.enabled && (!!(OutputHelper.getOutput(id) as any)?.follower || !!(OutputHelper.getOutput(id) as any)?.presenter || RenderGroups.isRenderer(id))
+        const groupInfo = wasShared ? RenderGroups.remove(id) : null
+
+        // A FOLLOWER owns no window — just tear down its senders/capture, never touch the shared window.
+        if ((OutputHelper.getOutput(id) as any)?.follower) {
+            const rendererId = (OutputHelper.getOutput(id) as any)?.renderGroupRenderer as string | undefined
+            CaptureHelper.Lifecycle.stopCapture(id)
+            NdiSender.stopSenderNDI(id)
+            OmtSender.stopSenderOMT(id)
+            OutputHelper.deleteOutput(id)
+            if (rendererId) this.fitRendererToGroup(rendererId)
+            if (reopen) OutputLifecycle.createOutput(reopen)
+            return
+        }
+
+        OutputPresenter.stop(id)
         CaptureHelper.Lifecycle.stopCapture(id)
         NdiSender.stopSenderNDI(id)
         OmtSender.stopSenderOMT(id)
@@ -869,6 +1475,14 @@ export class OutputLifecycle {
             this.osrCaptureAddon?.releasePool?.(id)
         } catch {
             // ignore
+        }
+
+        // renderer removed with followers present -> rebuild survivors (first one becomes the new
+        // renderer). A recreated renderer's reopen joins the same ordered batch — racing the rebuild
+        // let followers attach to a mid-teardown window and split the group.
+        if (groupInfo?.wasRenderer && groupInfo.members.length) {
+            this.rebuildGroupMembers(groupInfo.members, reopen)
+            reopen = null
         }
 
         const output = OutputHelper.getOutput(id)
@@ -893,6 +1507,28 @@ export class OutputLifecycle {
         } catch (err) {
             console.error(err)
         }
+    }
+
+    // The renderer of a shared group was removed. Tear down the surviving followers (they reference the dying
+    // window) and recreate them from their stored configs: RenderGroups already promoted the first survivor to
+    // members[0], so createOutput gives it a fresh window (renderer) and the rest re-follow it. Recreation is
+    // deferred so the old window finishes closing first.
+    private static rebuildGroupMembers(members: string[], reopenRenderer: Output | null = null) {
+        // don't resurrect a group mid-teardown (closing all outputs removes the renderer too)
+        if (this.closingAllOutputs) return
+        const configs = members.map((m) => RenderGroups.getConfig(m)).filter((c): c is Output => !!c)
+        if (reopenRenderer) configs.unshift(reopenRenderer)
+        for (const m of members) {
+            this.clearPendingCaptureStart(m)
+            CaptureHelper.Lifecycle.stopCapture(m)
+            NdiSender.stopSenderNDI(m)
+            OmtSender.stopSenderOMT(m)
+            OutputHelper.deleteOutput(m)
+        }
+        // sequential: each member awaits the previous, so followers attach to a live renderer window
+        setTimeout(async () => {
+            for (const config of configs) await this.createOutput(config)
+        }, 150)
     }
 
     static focusOutput(id: string) {
@@ -951,7 +1587,13 @@ export class OutputLifecycle {
         }
     }
 
+    private static closingAllOutputs = false
     static async closeAllOutputs() {
-        await Promise.all(OutputHelper.getKeys().map(async (id) => await this.removeOutput(id)))
+        this.closingAllOutputs = true
+        try {
+            await Promise.all(OutputHelper.getKeys().map(async (id) => await this.removeOutput(id)))
+        } finally {
+            this.closingAllOutputs = false
+        }
     }
 }

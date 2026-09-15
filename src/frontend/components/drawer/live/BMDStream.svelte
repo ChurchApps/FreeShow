@@ -1,15 +1,14 @@
-<script lang="ts" context="module">
-    let streamInstances = 0
-</script>
-
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { BLACKMAGIC } from "../../../../types/Channels"
     import { outputs } from "../../../stores"
-    import { destroy, receive, send } from "../../../utils/request"
+    import { send } from "../../../utils/request"
+    import { onStreamFrame } from "../../../utils/streamPort"
     import { findMatchingOut } from "../../helpers/output"
     import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
+    import { StreamCanvasRenderer } from "./streamCanvas"
+    import { StreamLayer } from "./streamLayer"
 
     interface Screen {
         id: string
@@ -22,47 +21,47 @@
     // the output showing this stream owns the receiver
     export let outputId = ""
     export let style = ""
+    // only an output's own background may be composited underneath the page; an item or a scene is drawn
+    // in its place in the layer order
+    export let outputBackground = false
 
-    let canvas: any
+    let canvas: HTMLCanvasElement | undefined
 
     onMount(() => {
         if (background) {
-            if (!mirror) send(BLACKMAGIC, ["RECEIVE_STREAM"], { source: screen, outputId: outputId || Object.keys($outputs)[0] })
+            // only a real output takes the full-quality receive; a tile has no outputId (see OMTStream)
+            if (!mirror) send(BLACKMAGIC, ["RECEIVE_STREAM"], { source: screen, outputId: outputId || undefined })
         } else send(BLACKMAGIC, ["RECEIVE_FRAME"], { source: screen })
     })
 
-    $: if (frame) setCanvas()
-    function setCanvas() {
-        if (!canvas) return
-
-        let ctx = canvas.getContext("2d")
-
-        const WIDTH = frame.width
-        const HEIGHT = frame.height
-        canvas.width = WIDTH
-        canvas.height = HEIGHT
-
-        const imageData = new ImageData(new Uint8ClampedArray(frame.data), WIDTH, HEIGHT)
-        ctx?.putImageData(imageData, 0, 0)
+    const renderer = new StreamCanvasRenderer()
+    // a full-cover background on a captured output is composited by the worker instead (see streamLayer)
+    // Only the component actually drawing an output's background may drive the composite. A drawer tile
+    // is rendered with `background` too but no outputId, and falling back to the first output in the
+    // store made it fight the real output: its small tile is never a full cover, so it kept cancelling
+    // the composite the output had just turned on, and both flickered.
+    const layer = new StreamLayer(outputBackground && background && !mirror && outputId ? outputId : "", () => (composited = layer.composited))
+    let composited = false
+    $: if (frame && canvas) {
+        layer.update(canvas, frame.xres, frame.yres)
+        if (!composited) renderer.draw(canvas, frame)
     }
 
-    const receiveBlackmagic: any = {
-        RECEIVE_STREAM: (data) => {
-            //  || data.frame?.type !== "frame"
-            if (data.id !== screen.id || !data.frame.video) return
-            loaded = true
+    // frames come from the receive process over the stream transport (see streamPort.ts), not over IPC
+    const receiveStream = (data: { id: string; frame: any; time: number }) => {
+        if (data.id !== screen.id) return
+        loaded = true
 
-            // WIP play audio? (data.audio.data ...)
-
-            frame = data.frame.video
-        }
+        // Take the newest frame rather than dropping by age: Svelte coalesces several arrivals in one
+        // tick into a single draw, so a burst never renders a backlog.
+        frame = data.frame
     }
 
-    const receiverId = `${screen.id}#${++streamInstances}`
-
-    receive(BLACKMAGIC, receiveBlackmagic, receiverId)
+    const stopStream = onStreamFrame(BLACKMAGIC, receiveStream)
     onDestroy(() => {
-        destroy(BLACKMAGIC, receiverId)
+        layer.destroy()
+        renderer.destroy()
+        stopStream()
         if (background && !mirror) send(BLACKMAGIC, ["STOP_RECEIVER"], { id: screen.id, outputId: outputId || Object.keys($outputs)[0] })
     })
 
@@ -70,7 +69,8 @@
 </script>
 
 {#if background}
-    <canvas bind:this={canvas} {style} />
+    <!-- while the worker composites this stream into the capture, the canvas must not paint over it -->
+    <canvas bind:this={canvas} style={composited ? `${style};visibility: hidden;` : style} />
 {:else}
     <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click label={screen.name} {loaded} icon="blackmagic" white showPlayOnHover>
         <SelectElem style="display: flex;" id="blackmagic" data={{ id: screen.id, type: "blackmagic", name: screen.name }} draggable>

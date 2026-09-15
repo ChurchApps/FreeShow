@@ -1,9 +1,10 @@
 // Main-process host for NDI/OMT receiving in utilityProcess (./streamReceiverProcess).
 // Brokers MessagePorts to renderers and forwards control messages.
 
-import { MessageChannelMain, utilityProcess, type BrowserWindow } from "electron"
+import { utilityProcess, type BrowserWindow } from "electron"
 import { join } from "path"
 import { getMainWindow } from ".."
+import { NdiSender } from "../ndi/NdiSender"
 import { OutputHelper } from "../output/OutputHelper"
 
 const APP_TARGET = "app"
@@ -14,6 +15,9 @@ export class StreamReceiverHost {
     private static pending: { [requestId: string]: (value: any) => void } = {}
     private static requestCount = 0
     private static wiredWindows = new Map<string, BrowserWindow>()
+    // the child's loopback frame socket; windows connect to it directly with the token
+    private static wsInfo: { port: number; token: string } | null = null
+    private static awaitingWs = new Set<string>()
 
     private static start() {
         if (this.child) return this.child
@@ -27,6 +31,8 @@ export class StreamReceiverHost {
         this.child.on("exit", (code: number) => {
             if (DIAG) console.info("[stream-port] receive process exited:", code)
             this.child = null
+            this.wsInfo = null
+            this.awaitingWs.clear()
             this.wiredWindows.clear()
             Object.values(this.pending).forEach((resolve) => resolve(null))
             this.pending = {}
@@ -40,6 +46,13 @@ export class StreamReceiverHost {
 
         if (message.type === "log") {
             console.log("[stream receiver]", message.text)
+            return
+        }
+
+        if (message.type === "wsInfo") {
+            this.wsInfo = { port: message.port, token: message.token }
+            for (const targetId of [...this.awaitingWs]) this.wirePort(targetId)
+            this.awaitingWs.clear()
             return
         }
 
@@ -69,6 +82,18 @@ export class StreamReceiverHost {
     // One channel per window: the child keeps its end, the window gets the other, and from then on
     // frames travel between those two processes without the main process in the middle.
     private static wirePort(targetId: string) {
+        // the capture worker subscribes to an output's stream to composite it into that output's capture
+        if (targetId.startsWith("worker:")) {
+            const worker = NdiSender.getSharedWorker()
+            if (!worker || !this.wsInfo) {
+                if (this.wsInfo) this.child?.postMessage({ type: "dropPort", targetId })
+                else this.awaitingWs.add(targetId)
+                return
+            }
+            worker.postMessage({ type: "videoSource", targetId, outputId: targetId.slice("worker:".length), port: this.wsInfo.port, token: this.wsInfo.token })
+            return
+        }
+
         const window = this.getWindow(targetId)
         if (DIAG) console.info("[stream-port] wire", targetId, "window:", !!window)
 
@@ -77,9 +102,12 @@ export class StreamReceiverHost {
             return
         }
 
-        const { port1, port2 } = new MessageChannelMain()
-        this.child.postMessage({ type: "port", targetId }, [port1])
-        window.webContents.postMessage("STREAM_PORT", { targetId }, [port2])
+        if (!this.wsInfo) {
+            // the socket is not up yet: answer as soon as the child reports it
+            this.awaitingWs.add(targetId)
+            return
+        }
+        window.webContents.send("STREAM_WS", { targetId, port: this.wsInfo.port, token: this.wsInfo.token })
 
         this.wiredWindows.set(targetId, window)
 

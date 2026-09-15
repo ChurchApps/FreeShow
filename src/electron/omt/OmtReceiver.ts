@@ -18,6 +18,12 @@ export class OmtReceiver {
         StreamReceiverHost.send("omt:thumbnail", data)
     }
 
+    // take a new snapshot now instead of waiting out the tile's refresh interval
+    static refreshStreamOMT(data: { source: Source }) {
+        if (this.omtDisabled) return
+        StreamReceiverHost.send("omt:refresh", data)
+    }
+
     // full reception for output/background
     static captureStreamOMT(data: { source: Source; outputId: string }) {
         if (this.omtDisabled) return

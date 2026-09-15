@@ -1,5 +1,10 @@
 <script lang="ts">
-    import { livePrepare, outputs, styles } from "../../../stores"
+    import { onDestroy } from "svelte"
+    import { OUTPUT } from "../../../../types/Channels"
+    import { capturedOutputs, livePrepare, outputs, styles } from "../../../stores"
+    import { onStreamFrame } from "../../../utils/streamPort"
+    import { send } from "../../../utils/request"
+    import { StreamCanvasRenderer } from "../../drawer/live/streamCanvas"
     import Icon from "../../helpers/Icon.svelte"
     //import { currentWindow, outputs, styles } from "../../../stores"
     import { getResolution } from "../../helpers/output"
@@ -20,6 +25,55 @@
     let height = 0
 
     $: stageOutput = $outputs[outputId]?.stageOutput
+
+    // a captured output's preview is its readback downscaled, so the preview never decodes the media
+    // again; which outputs those are is whatever a capture is actually running for
+    $: output = $outputs[outputId]
+    $: captured = !!output && !!$capturedOutputs[outputId]
+
+    let previewCanvas: HTMLCanvasElement | null = null
+    const renderer = new StreamCanvasRenderer()
+    let subscribedId = ""
+    let unlisten: (() => void) | null = null
+    // this preview instance, so main can size the frame to the widest preview actually drawn
+    const subscriber = "p" + Math.random().toString(36).slice(2, 10)
+    $: drawnWidth = Math.round(width * (window.devicePixelRatio || 1))
+    $: if (subscribedId && drawnWidth) send(OUTPUT, ["PREVIEW_SIZE"], { id: subscribedId, subscriber, width: drawnWidth })
+
+    // The preview must never be blank. The mirrored output stays on screen until the first capture frame
+    // arrives; after that the canvas always holds a frame, so it is never taken away again. Flipping back
+    // to the mirror was what produced the black flashes when triggering an input: the mirror's own stream
+    // canvas receives no frames and renders black, and the capture rate swings sharply around a trigger.
+    let hadFrame = false
+    function noteFrame() {
+        hadFrame = true
+    }
+    function resetLive() {
+        hadFrame = false
+    }
+
+    $: subscribePreview(captured && !stageOutput ? outputId : "")
+    function subscribePreview(id: string) {
+        if (id === subscribedId) return
+        if (subscribedId) {
+            send(OUTPUT, ["PREVIEW_UNSUBSCRIBE"], { id: subscribedId, subscriber })
+            unlisten?.()
+            unlisten = null
+        }
+        subscribedId = id
+        resetLive()
+        if (!id) return
+        send(OUTPUT, ["PREVIEW_SUBSCRIBE"], { id, subscriber, width: drawnWidth })
+        unlisten = onStreamFrame("PREVIEW", (data) => {
+            if (data.id !== id) return
+            noteFrame()
+            if (previewCanvas) renderer.draw(previewCanvas, data.frame)
+        })
+    }
+    onDestroy(() => {
+        subscribePreview("")
+        renderer.destroy()
+    })
 </script>
 
 <!-- class:fullscreen={fullscreen && !stageOutput} -->
@@ -27,7 +81,12 @@
     {#if stageOutput}
         <StageLayout {outputId} stageId={stageOutput} preview={!disableTransitions} edit={false} />
     {:else}
-        <Output {outputId} style={getStyleResolution(resolution, fullscreen ? width : resolution.width, fullscreen ? height : resolution.height, "fit")} mirror preview={!disableTransitions} />
+        {#if captured}
+            <canvas class="capturePreview" class:hidden={!hadFrame} bind:this={previewCanvas} />
+        {/if}
+        {#if !captured || !hadFrame}
+            <Output {outputId} style={getStyleResolution(resolution, fullscreen ? width : resolution.width, fullscreen ? height : resolution.height, "fit")} mirror preview={!disableTransitions} />
+        {/if}
     {/if}
 
     {#if !fullscreen && $livePrepare[outputId]}
@@ -55,6 +114,16 @@
 
     .center.disabled {
         opacity: 0.4;
+    }
+
+    .capturePreview {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background-color: black;
+    }
+    .capturePreview.hidden {
+        display: none;
     }
 
     .previewOutput :global(.main) {

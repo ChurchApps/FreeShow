@@ -128,9 +128,11 @@ export interface EncoderCommandOptions {
     bitrate: number
     enableAudio: boolean
     sampleRate?: number
+    /** pixel format of the raw frames on stdin: BGRA (4 bytes/px) or planar yuv420p (1.5 bytes/px, no swscale) */
+    inputPixelFormat?: "bgra" | "yuv420p"
 }
 
-/** Full arg list for the encoder process: raw BGRA + PCM in, flv out on stdout. */
+/** Full arg list for the encoder process: raw video + PCM in, flv out on stdout. */
 // Inside buildEncoderCommand in encoderProfiles.ts:
 
 export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
@@ -143,7 +145,7 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
     if (profile.preInput) args.push(...profile.preInput)
 
     // VIDEO INPUT PIPE
-    args.push("-thread_queue_size", "512", "-use_wallclock_as_timestamps", "1", "-fflags", "+nobuffer", "-f", "rawvideo", "-pixel_format", "bgra", "-video_size", `${opts.inputWidth}x${opts.inputHeight}`, "-framerate", `${opts.fps}`, "-i", "pipe:0")
+    args.push("-thread_queue_size", "512", "-use_wallclock_as_timestamps", "1", "-fflags", "+nobuffer", "-f", "rawvideo", "-pixel_format", opts.inputPixelFormat || "bgra", "-video_size", `${opts.inputWidth}x${opts.inputHeight}`, "-framerate", `${opts.fps}`, "-i", "pipe:0")
 
     if (opts.enableAudio) {
         const ar = opts.sampleRate || SAMPLE_RATE

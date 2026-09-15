@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { fade } from "svelte/transition"
     import { OUTPUT } from "../types/Channels"
     import type { Resolution } from "../types/Settings"
@@ -7,7 +7,9 @@
     import Output from "./components/output/Output.svelte"
     import { getStyleResolution } from "./components/slide/getStyleResolution"
     import StageLayout from "./components/stage/StageLayout.svelte"
-    import { currentWindow, livePrepare, outputs, special, styles } from "./stores"
+    import { currentWindow, livePrepare, outputs, presenting, special, styles } from "./stores"
+    import { onStreamFrame } from "./utils/streamPort"
+    import { StreamCanvasRenderer } from "./components/drawer/live/streamCanvas"
     import { hideDisplay } from "./utils/common"
     import { send } from "./utils/request"
 
@@ -31,6 +33,24 @@
         else enableOutputMove = false
     }
     $: if ($currentWindow === "output") send(OUTPUT, ["MOVE"], { enabled: enableOutputMove })
+
+    // presenter mode: this window draws the capture's frames rather than rendering the content itself
+    let presentCanvas: HTMLCanvasElement | null = null
+    const presentRenderer = new StreamCanvasRenderer()
+    let unlistenPresent: (() => void) | null = null
+    $: listenPresent($presenting)
+    function listenPresent(active: boolean) {
+        unlistenPresent?.()
+        unlistenPresent = null
+        if (!active) return
+        unlistenPresent = onStreamFrame("PRESENT", ({ frame }) => {
+            if (presentCanvas) presentRenderer.draw(presentCanvas, frame)
+        })
+    }
+    onDestroy(() => {
+        unlistenPresent?.()
+        presentRenderer.destroy()
+    })
 
     // make sure it's loaded to prevent output not changing to stage output because of Svelte transition bug
     let loaded = false
@@ -59,7 +79,9 @@
         </div>
     {/if}
 
-    {#if $outputs[outputId]?.stageOutput}
+    {#if $presenting}
+        <canvas class="presentCanvas" bind:this={presentCanvas}></canvas>
+    {:else if $outputs[outputId]?.stageOutput}
         <StageLayout {outputId} stageId={$outputs[outputId].stageOutput} edit={false} />
     {:else if loaded}
         <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} />
@@ -75,6 +97,13 @@
 </div>
 
 <style>
+    .presentCanvas {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background-color: black;
+    }
+
     .dragger {
         -webkit-app-region: drag;
         position: absolute;
