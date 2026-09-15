@@ -5,6 +5,7 @@
     import { requestMain, sendMain } from "../../../IPC/main"
     import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, notFound, obsData, outputs, popupData, ports, projectTemplates, providerConnections, serverData, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { save } from "../../../utils/save"
     import { contentProviderSync } from "../../../utils/startup"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
@@ -120,7 +121,9 @@
                 }
             }
 
-            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false })
+            // OnStage reads its formatting settings from here, so the live store value is used
+            const providerSettings = providerId === "onstage" ? $contentProviderData.onstage || {} : undefined
+            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false, data: providerSettings })
         } else {
             if ($cloudSyncData.enabled && providerId === $cloudSyncData.id) {
                 // should remain connected to cloud
@@ -149,15 +152,67 @@
         notFound.set({ show: [], bible: [] })
     }
 
+    // These settings only reach a sync through the live store, so losing them silently changes
+    // what gets imported. Autosave would take up to 15 minutes, and an unexpected shutdown in
+    // between would drop them — so they are written shortly after the last change instead.
+    let providerSaveTimeout: NodeJS.Timeout | null = null
     function updateProvider(id: ContentProviderId, key: string, value: any) {
         contentProviderData.update((a) => {
             if (!a[id]) a[id] = {}
             a[id][key] = value
             return a
         })
+
+        // debounced: a number input dispatches a change on every keystroke
+        if (providerSaveTimeout) clearTimeout(providerSaveTimeout)
+        providerSaveTimeout = setTimeout(() => {
+            providerSaveTimeout = null
+            // flagged as automatic: this is not a save the user asked for, and it resets the
+            // autosave timer instead of leaving a redundant one pending
+            save(false, { autosave: true })
+        }, 1500)
     }
 
     $: projectTemplateOptions = [{ value: "", label: translateText("main.none") }, ...sortByName(keysToID($projectTemplates)).map(({ id, name }) => ({ value: id, label: name }))]
+
+    // "Song origin" and the arrangement question both only decide what happens to a song that
+    // already exists, so they are meaningless — and misleading — while existing songs are skipped
+
+    // OnStage team switching: instant for a team with cached tokens, one preselected browser
+    // consent for a new team. The list comes from the connected user's confirmed teams.
+    let onstageTeams: { id: string; name: string; current: boolean }[] = []
+    let onstageTeamsRequested = false
+    $: if ($providerConnections.onstage && !onstageTeamsRequested) {
+        onstageTeamsRequested = true
+        loadOnStageTeams()
+    }
+    $: if (!$providerConnections.onstage) {
+        onstageTeamsRequested = false
+        onstageTeams = []
+    }
+    async function loadOnStageTeams() {
+        onstageTeams = (await requestMain(Main.ONSTAGE_GET_TEAMS)) || []
+    }
+    $: onstageTeamOptions = onstageTeams.map((team) => ({ value: team.id, label: team.name }))
+    $: onstageCurrentTeamId = onstageTeams.find((team) => team.current)?.id || ""
+    async function switchOnStageTeam(teamId: string) {
+        if (!teamId || teamId === onstageCurrentTeamId) return
+        const result = await requestMain(Main.ONSTAGE_SWITCH_TEAM, { teamId })
+        if (result?.success) {
+            syncContentProvider()
+            loadOnStageTeams()
+        }
+    }
+
+    $: linesPerSlideOptions = [
+        { value: "0", label: "Keep from OnStage" },
+        { value: "1", label: "1" },
+        { value: "2", label: "2" },
+        { value: "3", label: "3" },
+        { value: "4", label: "4" },
+        { value: "5", label: "5" },
+        { value: "6", label: "6" }
+    ]
 
     $: providerOriginOptions = [
         { value: "", label: "Ask when existing show is found" },
@@ -248,7 +303,7 @@
     <MaterialToggleSwitch label="" checked={$special.remoteController} on:change={(e) => toggleRemoteController(e.detail)} />
 </InputRow>
 
-{#if !$providerConnections.planningcenter && (!$providerConnections.churchApps || cloudOnly.churchApps) && !$providerConnections.amazinglife}
+{#if !$providerConnections.planningcenter && (!$providerConnections.churchApps || cloudOnly.churchApps) && !$providerConnections.amazinglife && !$providerConnections.onstage}
     <!-- No provider connected - show connection options -->
     <Title label="settings.content_provider" icon="list" />
 
@@ -267,6 +322,12 @@
     <InputRow>
         <MaterialButton on:click={() => contentProviderConnect("amazinglife")} style="flex: 1;" icon="login">
             <T id="settings.connect_to" replace={["APlay"]} />
+        </MaterialButton>
+    </InputRow>
+
+    <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("onstage")} style="flex: 1;" icon="login">
+            <T id="settings.connect_to" replace={["OnStage"]} />
         </MaterialButton>
     </InputRow>
 {:else if $providerConnections.planningcenter}
@@ -335,6 +396,37 @@
             <T id="cloud.sync" />
         </MaterialButton> -->
     </InputRow>
+{:else if $providerConnections.onstage}
+    <!-- OnStage connected -->
+    <Title label="Content Provider: OnStage" icon="list" />
+
+    <InputRow>
+        <MaterialButton on:click={() => contentProviderConnect("onstage")} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
+            <T id="settings.disconnect_from" replace={["OnStage"]} />
+        </MaterialButton>
+        <MaterialButton icon="cloud_sync" on:click={syncContentProvider}>
+            <T id="cloud.sync" />
+        </MaterialButton>
+        <MaterialButton on:click={() => sendMain(Main.URL, "https://getonstage.app")} title="OnStage" white>
+            <Icon id="launch" white />
+        </MaterialButton>
+    </InputRow>
+
+    <MaterialToggleSwitch label="settings.auto_sync_startup" checked={$contentProviderData.onstage?.autoSync !== false} on:change={(e) => updateProvider("onstage", "autoSync", e.detail)} />
+
+    {#if onstageTeams.length > 1}
+        <MaterialDropdown label="Team" options={onstageTeamOptions} value={onstageCurrentTeamId} on:change={(e) => switchOnStageTeam(e.detail)} />
+    {/if}
+
+    <MaterialDropdown label="Song origin" options={providerOriginOptions} value={$contentProviderData.onstage?.songOrigin || ""} on:change={(e) => updateProvider("onstage", "songOrigin", e.detail)} />
+
+    <MaterialDropdown label="Lines per slide" options={linesPerSlideOptions} value={String($contentProviderData.onstage?.linesPerSlide || 0)} on:change={(e) => updateProvider("onstage", "linesPerSlide", Number(e.detail))} />
+
+    <MaterialNumberInput label="Max characters per line" value={$contentProviderData.onstage?.maxLineLength || 0} defaultValue={0} min={0} max={200} placeholder={translateText("main.none")} hideWhenZero on:change={(e) => updateProvider("onstage", "maxLineLength", e.detail)} />
+
+    <MaterialToggleSwitch label="Merge identical sections" checked={$contentProviderData.onstage?.mergeIdenticalSections !== false} on:change={(e) => updateProvider("onstage", "mergeIdenticalSections", e.detail)} />
+
+    <Tip value="Formatting applies to songs imported from OnStage. A song scheduled with different structures in several services keeps one arrangement per service." />
 {/if}
 
 <!-- OBS Studio Controller -->

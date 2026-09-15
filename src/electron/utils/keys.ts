@@ -5,6 +5,8 @@
 // (they are all free, so you can just get your own keys if you want)
 
 export function getKey(type: string) {
+    // OnStage is a PKCE-only public client — this id is not a secret.
+    if (type === "onstage_id") return "freeshow"
     if (type === "pco_id") return "35d1112d839d678ce3f1de730d2cff0b81038c2944b11c5e2edf03f8b43abc05"
     if (type === "churchApps_id") return decrypt("1e2608317f261819055200")
     if (type === "churchApps_secret") return decrypt("02022a207f57193d5f2d13")

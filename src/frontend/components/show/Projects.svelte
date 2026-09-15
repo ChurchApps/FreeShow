@@ -92,6 +92,8 @@
     $: projectActive = !$projectView && $activeProject !== null
     $: currentProject = $activeProject ? $projects[$activeProject] : null
     $: currentProjectPcoFolderId = $activeProject ? ($contentProviderData?.planningcenter?.availablePlans as { planId: string; serviceTypeId: string }[] | undefined)?.find((p) => p.planId === $activeProject)?.serviceTypeId : undefined
+    // an OnStage project id is the service id, and its songs carry the provider show id prefix
+    $: currentProjectIsOnStage = !!$providerConnections.onstage && !!currentProject?.shows?.some((a) => a.id?.startsWith("onstagesong_"))
 
     function createProject(folder = false) {
         let parent = interactedFolder || ($folders[currentProject?.parent || ""] ? currentProject?.parent || "/" : "/")
@@ -336,6 +338,10 @@
         sendMain(Main.PCO_LOAD_PLAN, { serviceTypeId, planId })
     }
 
+    function refreshOnStageProject(serviceId: string) {
+        sendMain(Main.ONSTAGE_LOAD_SERVICE, { serviceId, data: $contentProviderData.onstage })
+    }
+
     function handleKeydown(e: KeyboardEvent) {
         if (addMenuOpen && e.key === "Escape") {
             addMenuOpen = false
@@ -378,6 +384,14 @@
                             {#if showProjectDropdown && currentProject}
                                 <!-- WIP use context menu style -->
                                 <div class="projectDropdown" transition:fade={{ duration: 100 }} role="none" on:click={() => (showProjectDropdown = false)}>
+                                    {#if currentProjectIsOnStage && $activeProject}
+                                        <MaterialButton title="Sync with OnStage" icon="refresh" on:click={() => refreshOnStageProject($activeProject)} white>
+                                            <T id="cloud.sync" />
+                                        </MaterialButton>
+
+                                        <div class="DIVIDER"></div>
+                                    {/if}
+
                                     {#if currentProjectPcoFolderId && $activeProject}
                                         <MaterialButton title="Sync with Planning Center" icon="refresh" on:click={() => refreshPcoProject(currentProjectPcoFolderId, $activeProject)} white>
                                             <T id="cloud.sync" />
