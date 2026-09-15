@@ -16,38 +16,40 @@ export interface EqualizerConfig {
 }
 
 export const DEFAULT_EQUALIZER_CONFIG: EqualizerConfig = {
-    enabled: false,
+    enabled: true,
     bands: [
-        { frequency: 60, gain: 0, type: "lowshelf", q: 1, label: "60Hz" },
-        { frequency: 170, gain: 0, type: "peaking", q: 1, label: "170Hz" },
-        { frequency: 500, gain: 0, type: "peaking", q: 1, label: "500Hz" },
-        { frequency: 1500, gain: 0, type: "peaking", q: 1, label: "1.5k" },
-        { frequency: 4500, gain: 0, type: "peaking", q: 1, label: "4.5k" },
-        { frequency: 12000, gain: 0, type: "highshelf", q: 1, label: "12k" }
+        { frequency: 60, gain: 0, q: 1.0, type: "lowshelf" },
+        { frequency: 170, gain: 0, q: 1.0, type: "peaking" },
+        { frequency: 500, gain: 0, q: 1.0, type: "peaking" },
+        { frequency: 1500, gain: 0, q: 1.0, type: "peaking" },
+        { frequency: 4500, gain: 0, q: 1.0, type: "peaking" },
+        { frequency: 12000, gain: 0, q: 1.0, type: "highshelf" }
     ]
 }
 
 export const EqualizerCalculations = {
     calculateBandResponse(band: EQBand, frequency: number): number {
-        if (band.gain === 0 && band.type !== "lowpass" && band.type !== "highpass") return 0
+        if (band.gain === 0) return 0
 
         const f0 = band.frequency
-        const Q = band.q ?? 1.0
+        const Q = Math.max(0.1, band.q ?? 1.0)
         const gain = band.gain
+        const ratio = frequency / f0
 
-        if (band.type === "lowpass") {
-            if (frequency <= f0) return 0
-            const octaves = Math.log2(frequency / f0)
-            return Math.max(-24, -12 * octaves)
+        if (band.type === "highshelf" || band.type === "lowshelf") {
+            // Standard smooth shelf frequency response curve
+            const octaveDiff = Math.log2(ratio)
+            const slope = 1 / Q
+
+            // Sigmoid transition around cutoff frequency
+            const transition = 1 / (1 + Math.exp((band.type === "highshelf" ? octaveDiff : -octaveDiff) / (slope * 0.5)))
+            const response = gain * (1 - transition)
+
+            return Math.max(-24, Math.min(24, response))
         }
 
-        if (band.type === "highpass") {
-            if (frequency >= f0) return 0
-            const octaves = Math.log2(f0 / frequency)
-            return Math.max(-24, -12 * octaves)
-        }
-
-        const octaveDiff = Math.abs(Math.log2(frequency / f0))
+        // Standard Peaking filter
+        const octaveDiff = Math.abs(Math.log2(ratio))
         const bandwidth = 1 / Q
         const response = gain * Math.exp(-Math.pow(octaveDiff / bandwidth, 2))
 
@@ -135,24 +137,23 @@ export class AudioEqualizer {
         const newBands = config.bands
         const bandsCountChanged = newBands && newBands.length !== this.filters.length
 
-        // Check if filter types changed (requires graph rebuild)
-        const typesChanged = newBands && newBands.some((b, i) => this.filters[i] && b.type && b.type !== this.filters[i].type)
-
         this.config = { ...this.config, ...config }
 
-        // Only tear down and rebuild audio nodes IF structural topology changed
-        if (bandsCountChanged || typesChanged) {
+        // Rebuild the audio node graph if count changed
+        if (bandsCountChanged) {
             this.rebuildFilters()
             return
         }
 
-        // SMOOTH PARAMETER UPDATES (No stutter or audio dropouts!)
+        // Smooth parameter updates for frequency, Q, gain, and filter type
         const t = this.ac.currentTime
         const tc = 0.015 // 15ms exponential smoothing constant
 
         this.config.bands.forEach((band, i) => {
             const filter = this.filters[i]
             if (filter) {
+                if (band.type && filter.type !== band.type) filter.type = band.type
+
                 const gain = Number.isFinite(band.gain) ? band.gain : 0
                 const freq = Math.max(20, Math.min(20000, band.frequency || 1000))
                 const q = Math.max(0.1, band.q ?? 1.0)

@@ -264,32 +264,15 @@
 
         // Allow frequency adjustment for peaking filters (not high/low pass)
         if (bands[draggedBandIndex].type === "peaking") {
-            // Constrain to reasonable ranges for each band to prevent overlap
-            // const bandRanges = [
-            //     [20, 200], // Band 1 range
-            //     [80, 800], // Band 2 range
-            //     [200, 2000], // Band 3 range
-            //     [500, 5000], // Band 4 range
-            //     [1000, 15000], // Band 5 range
-            //     [3000, 20000] // Band 6 range
-            // ]
-
-            const range = [20, 20000] // bandRanges[draggedBandIndex]
+            const range = [20, 20000]
             if (range && newFreq >= range[0] && newFreq <= range[1]) {
                 bands[draggedBandIndex].frequency = Math.round(newFreq)
                 bands[draggedBandIndex].label = formatFrequency(bands[draggedBandIndex].frequency) + "Hz"
             }
         } else {
-            // For high-pass and low-pass filters, allow frequency adjustment
-            if (bands[draggedBandIndex].type === "lowpass") {
-                const clampedFreq = Math.max(20, Math.min(500, newFreq))
-                bands[draggedBandIndex].frequency = Math.round(clampedFreq)
-                bands[draggedBandIndex].label = formatFrequency(bands[draggedBandIndex].frequency) + "Hz"
-            } else if (bands[draggedBandIndex].type === "highpass") {
-                const clampedFreq = Math.max(1000, Math.min(20000, newFreq))
-                bands[draggedBandIndex].frequency = Math.round(clampedFreq)
-                bands[draggedBandIndex].label = formatFrequency(bands[draggedBandIndex].frequency) + "Hz"
-            }
+            const clampedFreq = Math.max(20, Math.min(20000, newFreq))
+            bands[draggedBandIndex].frequency = Math.round(clampedFreq)
+            bands[draggedBandIndex].label = formatFrequency(bands[draggedBandIndex].frequency) + "Hz"
         }
 
         // Update dragged band position for display
