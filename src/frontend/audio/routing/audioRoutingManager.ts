@@ -261,7 +261,6 @@ export class AudioRoutingManager {
                 if (item?.config) seg.instance?.updateConfig?.(item.config)
             }
 
-            this.disconnect(existingChain.firstInput)
             this.connect(node, existingChain.firstInput)
 
             return existingChain.output

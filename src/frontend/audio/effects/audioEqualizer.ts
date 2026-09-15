@@ -19,9 +19,10 @@ export const DEFAULT_EQUALIZER_CONFIG: EqualizerConfig = {
     enabled: false,
     bands: [
         { frequency: 60, gain: 0, type: "lowshelf", q: 1, label: "60Hz" },
-        { frequency: 250, gain: 0, type: "peaking", q: 1, label: "250Hz" },
-        { frequency: 1000, gain: 0, type: "peaking", q: 1, label: "1k" },
-        { frequency: 4000, gain: 0, type: "peaking", q: 1, label: "4k" },
+        { frequency: 170, gain: 0, type: "peaking", q: 1, label: "170Hz" },
+        { frequency: 500, gain: 0, type: "peaking", q: 1, label: "500Hz" },
+        { frequency: 1500, gain: 0, type: "peaking", q: 1, label: "1.5k" },
+        { frequency: 4500, gain: 0, type: "peaking", q: 1, label: "4.5k" },
         { frequency: 12000, gain: 0, type: "highshelf", q: 1, label: "12k" }
     ]
 }
@@ -122,9 +123,9 @@ export class AudioEqualizer {
     }
 
     private applyGains() {
-        const t = this.ac.currentTime
+        const t = Number.isFinite(this.ac.currentTime) ? this.ac.currentTime : 0
         const timeConstant = 0.015 // Smooth transition constant (15ms)
-        const enabled = this.config.enabled
+        const enabled = Boolean(this.config.enabled)
 
         this.dryGain.gain.setTargetAtTime(enabled ? 0 : 1, t, timeConstant)
         this.wetGain.gain.setTargetAtTime(enabled ? 1 : 0, t, timeConstant)
@@ -152,9 +153,13 @@ export class AudioEqualizer {
         this.config.bands.forEach((band, i) => {
             const filter = this.filters[i]
             if (filter) {
-                filter.gain.setTargetAtTime(band.gain, t, tc)
-                filter.frequency.setTargetAtTime(Math.max(20, Math.min(20000, band.frequency)), t, tc)
-                filter.Q.setTargetAtTime(Math.max(0.1, band.q ?? 1.0), t, tc)
+                const gain = Number.isFinite(band.gain) ? band.gain : 0
+                const freq = Math.max(20, Math.min(20000, band.frequency || 1000))
+                const q = Math.max(0.1, band.q ?? 1.0)
+
+                filter.gain.setTargetAtTime(gain, t, tc)
+                filter.frequency.setTargetAtTime(freq, t, tc)
+                filter.Q.setTargetAtTime(q, t, tc)
             }
         })
 
