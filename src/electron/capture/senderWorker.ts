@@ -53,6 +53,7 @@ export type Sender = {
     paceCap?: number
     paceMisses?: number
     paceBusy?: number
+    paceDue?: boolean
     lastRealSendAt?: number
     realGaps?: number[]
     sendRejected?: number // sends the library accepted but did not put on the wire (OMT: encode failure)
@@ -272,6 +273,8 @@ function releaseReadbackSlot(id: string, slot: number) {
 
 // Send-side pacer: dispatches at steady intervals from refcounted recycled buffers, repeating the last
 // frame when no new one arrives in time.
+// One send at a time per sender: the send libraries serialise encodes per instance, so overlapping
+// them only adds contention (measured 41 -> 31 -> 22 fps at 1, 2 and 3 in flight on two 4K60 OMT).
 const pacerPools: { [rendererId: string]: Buffer[] } = {}
 function acquirePacerBuf(owner: string, length: number): PacerBuf {
     const pool = (pacerPools[owner] ||= [])
@@ -308,10 +311,13 @@ function schedulePaceTick(id: string) {
     }, delay)
 }
 
-function paceTick(id: string) {
+function paceTick(id: string, realOnly = false) {
     const s = SENDERS[id]
     if (!s?.sender) return
     if (s.sendingVideo) {
+        // the send is still running: hand this tick to it rather than dropping the frame, or the rate
+        // collapses to one send per interval that happens to find the sender idle
+        s.paceDue = true
         s.paceBusy = (s.paceBusy || 0) + 1
         return
     }
@@ -320,6 +326,9 @@ function paceTick(id: string) {
         paceSend(id, entry, true)
         return
     }
+    // a tick deferred by a running send only ever carries real work: sending a repeat here would
+    // occupy the encoder and the next real frame would queue behind it
+    if (realOnly) return
     if (s.lastPace) {
         s.paceMisses = (s.paceMisses || 0) + 1
         s.lastPace.pbuf.refs++
@@ -353,6 +362,12 @@ async function paceSend(id: string, entry: { frame: any; pbuf: PacerBuf }, real:
         }
         senderData.sendingVideo = false
         releasePacerRef(entry.pbuf)
+        // a tick fired while this send was running: take its turn now, so a send longer than the
+        // interval costs latency rather than half the frame rate
+        if (senderData.paceDue) {
+            senderData.paceDue = false
+            paceTick(id, true)
+        }
     }
 }
 
