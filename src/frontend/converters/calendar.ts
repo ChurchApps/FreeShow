@@ -47,34 +47,30 @@ const WEEKDAY_INDEX: Record<string, number> = {
     SA: 6
 }
 
-function shiftDateToWeekdayOnOrAfter(date: Date, weekday: number, useUtc: boolean): Date {
+function shiftDateToWeekdayOnOrAfter(date: Date, weekday: number): Date {
     const shifted = new Date(date)
-    const currentWeekday = useUtc ? shifted.getUTCDay() : shifted.getDay()
+    const currentWeekday = shifted.getDay()
     const offset = (weekday - currentWeekday + 7) % 7
 
-    if (useUtc) {
-        shifted.setUTCDate(shifted.getUTCDate() + offset)
-    } else {
-        shifted.setDate(shifted.getDate() + offset)
-    }
+    shifted.setDate(shifted.getDate() + offset)
 
     return shifted
 }
 
-function formatIsoDate(date: Date, hasTime: boolean, useUtc: boolean): string {
-    const year = useUtc ? date.getUTCFullYear() : date.getFullYear()
-    const month = addZero((useUtc ? date.getUTCMonth() : date.getMonth()) + 1)
-    const day = addZero(useUtc ? date.getUTCDate() : date.getDate())
+function formatIsoDate(date: Date, hasTime: boolean): string {
+    const year = date.getFullYear()
+    const month = addZero(date.getMonth() + 1)
+    const day = addZero(date.getDate())
 
     if (!hasTime) {
         return `${year}-${month}-${day}`
     }
 
-    const hours = addZero(useUtc ? date.getUTCHours() : date.getHours())
-    const minutes = addZero(useUtc ? date.getUTCMinutes() : date.getMinutes())
-    const seconds = addZero(useUtc ? date.getUTCSeconds() : date.getSeconds())
+    const hours = addZero(date.getHours())
+    const minutes = addZero(date.getMinutes())
+    const seconds = addZero(date.getSeconds())
 
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}${useUtc ? "Z" : ""}`
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
 }
 
 function parseIcsDate(dateStr: string): { iso: string; hasTime: boolean } {
@@ -166,9 +162,23 @@ export function convertCalendar(data: any) {
                 parsedEnd = parsedStart
             }
 
-            const startDate = parsedStart.iso
-            const endDate = parsedEnd.iso
             const hasTime = parsedStart.hasTime
+            let startDate = parsedStart.iso
+            let endDate = parsedEnd.iso
+
+            // Convert UTC timestamps to local timezone ISO strings so calendar displays and repeat logic match local time
+            if (hasTime && startDate) {
+                const d = new Date(startDate)
+                if (!isNaN(d.getTime())) {
+                    startDate = formatIsoDate(d, true)
+                }
+            }
+            if (hasTime && endDate) {
+                const d = new Date(endDate)
+                if (!isNaN(d.getTime())) {
+                    endDate = formatIsoDate(d, true)
+                }
+            }
 
             const exdateKey: string = Object.keys(event).find((a) => a.startsWith("EXDATE") || a.includes("EXDATE")) || ""
             const exdateVal: string = (event as any)[exdateKey] || ""
@@ -279,13 +289,12 @@ export function convertCalendar(data: any) {
                         const start = new Date(newEvent.from)
                         const end = new Date(newEvent.to)
                         const duration = end.getTime() - start.getTime()
-                        const useUtc = newEvent.from.endsWith("Z")
 
                         weeklyByDays.forEach((dayCode, idx) => {
                             const weekday = WEEKDAY_INDEX[dayCode]
                             if (typeof weekday !== "number") return
 
-                            const shiftedStart = shiftDateToWeekdayOnOrAfter(start, weekday, useUtc)
+                            const shiftedStart = shiftDateToWeekdayOnOrAfter(start, weekday)
                             const shiftedEnd = new Date(shiftedStart.getTime() + duration)
 
                             const ev = clone(newEvent)
@@ -293,8 +302,8 @@ export function convertCalendar(data: any) {
                                 ev.id = uid()
                             }
 
-                            ev.from = formatIsoDate(shiftedStart, hasTime, useUtc)
-                            ev.to = formatIsoDate(shiftedEnd, hasTime, useUtc)
+                            ev.from = formatIsoDate(shiftedStart, hasTime)
+                            ev.to = formatIsoDate(shiftedEnd, hasTime)
 
                             enqueueRepeatedEvent(ev, "week")
                         })
