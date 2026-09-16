@@ -40,7 +40,7 @@
     // search
     $: searchStyle = match !== null ? `width: ${match}%;` : ""
     // excerpt of the matching lyrics
-    $: snippet = !isProject && match !== null && searchValue.length > 2 ? getTextSnippet($textCache[id] || "", searchValue) : ""
+    $: snippet = !isProject && match !== null && searchValue.length > 2 ? getTextSnippet($textCache[id] || "", searchValue, show.name) : ""
 
     function setNotFound(id: string) {
         notFound.update((a) => {

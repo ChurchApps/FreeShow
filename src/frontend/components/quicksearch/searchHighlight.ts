@@ -41,8 +41,16 @@ function findMatchRanges(text: string, tokens: string[], firstOnly: boolean): [n
     return ranges
 }
 
-export function getTextSnippet(text: string, searchValue: string, before = 30, after = 50): string {
+export function getTextSnippet(text: string, searchValue: string, hideIfMatching = "", before = 30, after = 50): string {
     if (!text || searchValue.length < 3) return ""
+
+    // if searchValue has match in name, don't show content match
+    if (hideIfMatching) {
+        const searchParts = searchValue.toLowerCase().split(" ")
+        const matchParts = hideIfMatching.toLowerCase().split(" ")
+        if (searchParts.some(part => matchParts.some(a => a.includes(part)))) return ""
+    }
+
     const tokens = tokenize(formatSearch(searchValue, false))
     const { text: formatted, map } = formatWithMap(text)
     const [range] = findMatchRanges(formatted, tokens, true)
