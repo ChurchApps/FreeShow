@@ -148,7 +148,8 @@ class Ndi {
             this.fourCCUyvy = grandiose.FOURCC_UYVY
             const config: any = {
                 source,
-                colorFormat: grandiose.COLOR_FORMAT_UYVY_RGBA,
+                // colorFormat: grandiose.COLOR_FORMAT_UYVY_RGBA, // gives the wrong color format
+                colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA,
                 allowVideoFields: false
             }
             if (lowbandwidth) config.bandwidth = grandiose.BANDWIDTH_LOWEST
