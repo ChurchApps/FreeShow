@@ -1,15 +1,11 @@
 /**
  * Builds a FreeShow show out of the songs OnStage schedules.
- *
- * Kept free of electron imports so it can be reasoned about (and tested) on its own: it takes
- * OnStage's song payload plus the user's formatting settings and returns show data, nothing else.
  */
 
 import { uid } from "uid"
 import type { Show, SlideData } from "../../../types/Show"
-import { formatSectionSlides, getLyricsSignature, stripSectionNumber, type OnStageFormatSettings } from "./format"
 
-export type OnStageSlide = { lines: string[] }
+type OnStageSlide = { lines: string[] }
 export type OnStageSection = {
     label: string
     number: number
@@ -79,7 +75,7 @@ export function createSongBuild(song: OnStageSong): SongBuild {
  * itself) whenever the same structure was already built. Returns the layout id the service item
  * should point at.
  */
-export function addSongArrangement(build: SongBuild, song: OnStageSong, format: OnStageFormatSettings, arrangementName: string): string {
+export function addSongArrangement(build: SongBuild, song: OnStageSong, arrangementName: string): string {
     const { show, parentBySection, numbersByParent } = build
     const layoutSlides: SlideData[] = []
     // the section keys behind the layout, in presentation order — stable across syncs, unlike the
@@ -87,13 +83,12 @@ export function addSongArrangement(build: SongBuild, song: OnStageSong, format: 
     const layoutKeys: string[] = []
 
     song.sections.forEach((section) => {
-        const rawSlides: OnStageSlide[] = section.slides.length ? section.slides : [{ lines: [] }]
-        const sectionSlides = formatSectionSlides(rawSlides, format)
+        const sectionSlides: OnStageSlide[] = section.slides.length ? section.slides : [{ lines: [] }]
 
         // Same label + identical lyrics is one group: OnStage numbers every occurrence, so a song
         // repeating its chorus verbatim would otherwise import as Chorus 1, Chorus 2, Chorus 3.
         // An empty (instrumental) section has no lyrics to compare, so it stays keyed by number.
-        const signature = format.mergeIdenticalSections ? getLyricsSignature(sectionSlides) : ""
+        const signature = getLyricsSignature(sectionSlides)
         const sectionKey = signature ? `${section.label}|${signature}` : `${section.label} ${section.number}`
         let parentId = parentBySection[sectionKey]
 
@@ -158,6 +153,16 @@ export function addSongArrangement(build: SongBuild, song: OnStageSong, format: 
     return layoutId
 }
 
+// Matches anything that is NOT a Unicode letter (\p{L}), number (\p{N}), or space
+const NON_LYRIC_REGEX = /[^\p{L}\p{N}\s]/gu
+function getLyricsSignature(sectionSlides: { lines: string[] }[]): string {
+    return sectionSlides
+        .flatMap((slide) => slide.lines || [])
+        .map((line) => line.toLowerCase().replace(NON_LYRIC_REGEX, "").replace(/\s+/g, " ").trim())
+        .filter(Boolean)
+        .join("\n")
+}
+
 /**
  * An arrangement id derived from its content instead of a random one, so re-syncing (or reloading
  * a single song) rebuilds the same ids and the project items keep pointing at the right
@@ -192,4 +197,9 @@ export function finalizeSongBuild(build: SongBuild): Show {
     })
 
     return build.show
+}
+
+/** "Chorus 2" -> "Chorus": used when a label's numbered sections all collapsed into one group. */
+function stripSectionNumber(name: string): string {
+    return name.replace(/\s*\d+\s*$/, "").trim() || name
 }

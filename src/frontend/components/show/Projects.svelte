@@ -92,8 +92,7 @@
     $: projectActive = !$projectView && $activeProject !== null
     $: currentProject = $activeProject ? $projects[$activeProject] : null
     $: currentProjectPcoFolderId = $activeProject ? ($contentProviderData?.planningcenter?.availablePlans as { planId: string; serviceTypeId: string }[] | undefined)?.find((p) => p.planId === $activeProject)?.serviceTypeId : undefined
-    // an OnStage project id is the service id, and its songs carry the provider show id prefix
-    $: currentProjectIsOnStage = !!$providerConnections.onstage && !!currentProject?.shows?.some((a) => a.id?.startsWith("onstagesong_"))
+    $: currentProjectIsOnStage = !!$providerConnections.onstage && $activeProject?.startsWith("onstage_")
 
     function createProject(folder = false) {
         let parent = interactedFolder || ($folders[currentProject?.parent || ""] ? currentProject?.parent || "/" : "/")
@@ -338,7 +337,8 @@
         sendMain(Main.PCO_LOAD_PLAN, { serviceTypeId, planId })
     }
 
-    function refreshOnStageProject(serviceId: string) {
+    function refreshOnStageProject(projectId: string) {
+        const serviceId = projectId.replace("onstage_", "")
         sendMain(Main.ONSTAGE_LOAD_SERVICE, { serviceId, data: $contentProviderData.onstage })
     }
 

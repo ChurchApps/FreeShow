@@ -12,8 +12,8 @@ import { ToMain } from "../../../types/IPC/ToMain"
 import { getContentProviderAccess, setContentProviderAccess } from "../../data/contentProviders"
 import { sendToMain } from "../../IPC/main"
 import { openURL } from "../../IPC/responsesMain"
-import { getKey } from "../../utils/keys"
 import { httpsRequest } from "../../utils/requests"
+import { OnStageProvider } from "./OnStageProvider"
 import { onStageLoadServices } from "./request"
 
 export type OnStageScopes = "presenter"
@@ -105,7 +105,6 @@ export function onStageApiRequest(path: string, method: "POST" | "GET", headers:
 }
 
 const ONSTAGE_PORT = 5503
-const clientId = getKey("onstage_id")
 const HTML_success = `
     <head>
         <title>Success!</title>
@@ -185,7 +184,7 @@ function startAuthentication(scope: OnStageScopes, teamIdHint?: string): Promise
             const params = {
                 grant_type: "authorization_code",
                 code,
-                client_id: clientId,
+                client_id: OnStageProvider.CLIENT_ID,
                 redirect_uri,
                 code_verifier: codeVerifier
             }
@@ -211,7 +210,7 @@ function startAuthentication(scope: OnStageScopes, teamIdHint?: string): Promise
             })
         })
 
-        const URL = `${ONSTAGE_API_URL}/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${encodeURIComponent(ONSTAGE_OAUTH_SCOPES)}&code_challenge=${codeChallenge}&code_challenge_method=S256${teamIdHint ? `&team_id=${encodeURIComponent(teamIdHint)}` : ""}`
+        const URL = `${ONSTAGE_API_URL}/oauth/authorize?client_id=${OnStageProvider.CLIENT_ID}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${encodeURIComponent(ONSTAGE_OAUTH_SCOPES)}&code_challenge=${codeChallenge}&code_challenge_method=S256${teamIdHint ? `&team_id=${encodeURIComponent(teamIdHint)}` : ""}`
 
         pendingAuthUrl = URL
         openURL(URL)
@@ -232,7 +231,7 @@ function refreshToken(access: OnStageAuthData): Promise<OnStageAuthData> {
             return resolve(null)
         }
 
-        const params = { grant_type: "refresh_token", client_id: clientId, refresh_token: access.refresh_token }
+        const params = { grant_type: "refresh_token", client_id: OnStageProvider.CLIENT_ID, refresh_token: access.refresh_token }
 
         onStageApiRequest("/oauth/token", "POST", {}, params, (err: any, data: OnStageAuthData) => {
             if (err || data === null) {

@@ -17,8 +17,8 @@ export { ContentProviderError, ContentProviderErrorType, type ContentProviderSon
 
 // Provider implementations (simplified versions for now)
 export { ChurchAppsProvider } from "./churchApps/ChurchAppsProvider"
-export { OnStageProvider } from "./onStage/OnStageProvider"
 export { PlanningCenterProvider } from "./planningCenter/PlanningCenterProvider"
+export { OnStageProvider } from "./onStage/OnStageProvider"
 export { CanvaProvider } from "./canva/CanvaProvider"
 
 // Registry and legacy functions

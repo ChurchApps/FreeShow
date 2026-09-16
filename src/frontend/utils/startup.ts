@@ -127,8 +127,6 @@ export function contentProviderSync(startup = false, remainingOnly = false) {
         { providerId: "planningcenter" as ContentProviderId, scope: "services", data: get(contentProviderData).planningcenter?.syncFolderIds || [], autoSync: get(contentProviderData).planningcenter?.autoSync !== false },
         { providerId: "churchApps" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).churchApps?.syncCategories || [] } },
         { providerId: "amazinglife" as ContentProviderId, scope: "openid profile email" },
-        // the OnStage formatting settings are read here so a change applies to the very next sync,
-        // without waiting for the settings file to be written
         { providerId: "onstage" as ContentProviderId, scope: "presenter", data: get(contentProviderData).onstage || {}, autoSync: get(contentProviderData).onstage?.autoSync !== false }
     ]
 
@@ -165,14 +163,14 @@ function getMainData() {
         [Main.DEVICE_ID]: (a) => deviceId.set(a || ""),
         [Main.MAXIMIZED]: (a) => windowState.set({ ...get(windowState), maximized: a ?? false }),
         [Main.DATA_PATH]: (a) => (a ? dataPath.set(a) : null),
-        // a provider with a stored token is connected even before the first sync of the session.
-        // churchApps is left out on purpose: its connection state drives the cloud sync flow,
-        // which decides for itself whether syncing is possible.
+        // get connected providers, even before the first sync of the session
         [Main.PROVIDER_CONNECTIONS]: (a) => {
             if (!a) return
             providerConnections.update((c) => {
                 Object.keys(a).forEach((providerId) => {
+                    // churchApps is handled separately, due to cloud sync
                     if (providerId === "churchApps") return
+
                     c[providerId as ContentProviderId] = true
                 })
                 return c

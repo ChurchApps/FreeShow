@@ -108,14 +108,6 @@ export class ContentProviderRegistry {
     }
 
     /**
-     * Reload a single OnStage service, leaving the other projects alone
-     */
-    static async loadOnStageService(serviceId: string, data?: any): Promise<void> {
-        this.ensureInitialized()
-        return this.getProvider<OnStageProvider>("onstage")?.loadServices?.({ ...data, serviceId })
-    }
-
-    /**
      * Load services from a content provider
      */
     static async loadServices(providerId: ContentProviderId, cloudOnly: boolean, data: any): Promise<void> {
@@ -193,22 +185,6 @@ export class ContentProviderRegistry {
     }
 
     /**
-     * List the OnStage teams available for switching
-     */
-    static async getOnStageTeams(): Promise<{ id: string; name: string; current: boolean }[]> {
-        this.ensureInitialized()
-        return this.getProvider<OnStageProvider>("onstage")?.getTeams?.() ?? []
-    }
-
-    /**
-     * Switch the active OnStage team (may launch a browser consent for a new team)
-     */
-    static async switchOnStageTeam(teamId: string): Promise<{ success: boolean }> {
-        this.ensureInitialized()
-        return this.getProvider<OnStageProvider>("onstage")?.switchTeam?.(teamId) ?? { success: false }
-    }
-
-    /**
      * Get PCO Live countdown data for a specific plan
      */
     static async getPcoLiveData(serviceTypeId: string, planId: string): Promise<PCOLiveData | null> {
@@ -222,6 +198,30 @@ export class ContentProviderRegistry {
     static async getPcoPusherAuth(socketId: string, channelName: string, serviceTypeId: string): Promise<{ auth: string; channel_data?: string } | null> {
         this.ensureInitialized()
         return this.getProvider<PlanningCenterProvider>("planningcenter")?.getPusherAuth?.(socketId, channelName, serviceTypeId) ?? null
+    }
+
+    /**
+     * Reload a single OnStage service, leaving the other projects alone
+     */
+    static async loadOnStageService(serviceId: string, data?: any): Promise<void> {
+        this.ensureInitialized()
+        return this.getProvider<OnStageProvider>("onstage")?.loadServices?.({ ...data, serviceId })
+    }
+
+    /**
+     * List the OnStage teams available for switching
+     */
+    static async getOnStageTeams(): Promise<{ id: string; name: string; current: boolean }[]> {
+        this.ensureInitialized()
+        return this.getProvider<OnStageProvider>("onstage")?.getTeams?.() ?? []
+    }
+
+    /**
+     * Switch the active OnStage team (may launch a browser consent for a new team)
+     */
+    static async switchOnStageTeam(teamId: string): Promise<{ success: boolean }> {
+        this.ensureInitialized()
+        return this.getProvider<OnStageProvider>("onstage")?.switchTeam?.(teamId) ?? { success: false }
     }
 
     /**

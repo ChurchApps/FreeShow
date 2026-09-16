@@ -1,5 +1,4 @@
 import type express from "express"
-import { getKey } from "../../utils/keys"
 import { ContentProvider } from "../base/ContentProvider"
 import { ONSTAGE_API_URL, onStageConnect, onStageDisconnect, onStageInitialize, onStageStartupLoad, onStageSwitchTeam, type OnStageAuthData, type OnStageScopes } from "./connect"
 import { onStageGetTeams, onStageLoadServices } from "./request"
@@ -24,12 +23,14 @@ export interface OnStageAuthDataResolved {
  * All external code should use this provider through ContentProviderRegistry.
  */
 export class OnStageProvider extends ContentProvider<OnStageScopes, OnStageAuthDataResolved> {
+    static readonly CLIENT_ID = "freeshow" // OnStage is a PKCE-only public client
+
     constructor() {
         super({
             providerId: "onstage",
             displayName: "OnStage",
             port: 5503,
-            clientId: getKey("onstage_id") || "",
+            clientId: OnStageProvider.CLIENT_ID,
             clientSecret: "", // public client — PKCE only, no secret exists
             apiUrl: ONSTAGE_API_URL,
             scopes: ["presenter"] as const
@@ -58,7 +59,7 @@ export class OnStageProvider extends ContentProvider<OnStageScopes, OnStageAuthD
 
     // `data` carries the user's OnStage settings, and a serviceId when one project is refreshed.
     async loadServices(data?: { serviceId?: string }): Promise<void> {
-        return onStageLoadServices(data, data?.serviceId)
+        return onStageLoadServices(data)
     }
 
     async getTeams(): Promise<{ id: string; name: string; current: boolean }[]> {
@@ -90,3 +91,4 @@ export class OnStageProvider extends ContentProvider<OnStageScopes, OnStageAuthD
 }
 
 export type { OnStageAuthData }
+

@@ -9,7 +9,6 @@ import { ToMain } from "../../../types/IPC/ToMain"
 import type { Show } from "../../../types/Show"
 import { sendToMain } from "../../IPC/main"
 import { onStageActiveTeam, onStageApiRequest, onStageConnect } from "./connect"
-import { getFormatSettings } from "./format"
 import { addSongArrangement, createSongBuild, finalizeSongBuild, type OnStageSong, type SongBuild } from "./songBuilder"
 
 type OnStageServiceItem = {
@@ -25,6 +24,7 @@ type ProviderProjectItem = { type: "show" | "section"; id: string; scheduleLengt
 type ProviderProject = { id: string; name: string; scheduledTo: number; created: number; folderId: string; folderName: string; items: ProviderProjectItem[] }
 type OnStageServiceDetail = { id: string; name: string | null; dateTime: string; location: string | null; updatedAt: string | null; items: OnStageServiceItem[] }
 
+const PROJECT_ID_PREFIX = "onstage_"
 const SHOW_ID_PREFIX = "onstagesong_"
 
 async function onStageRequest<T>(endpoint: string): Promise<T | null> {
@@ -59,8 +59,7 @@ async function resolveTeamFolder(): Promise<{ id: string; name: string } | null>
 }
 
 /** Loads every upcoming service, or just one when a project is refreshed. */
-export async function onStageLoadServices(providerData?: unknown, onlyServiceId?: string): Promise<void> {
-    const format = getFormatSettings(providerData)
+export async function onStageLoadServices(providerData?: any): Promise<void> {
     const list = await onStageRequest<{ services: OnStageServiceOverview[]; hasMore: boolean }>("/services")
     if (!list?.services?.length) return
 
@@ -73,7 +72,7 @@ export async function onStageLoadServices(providerData?: unknown, onlyServiceId?
     const songBuilds: { [showId: string]: SongBuild } = {}
 
     for (const overview of list.services) {
-        if (onlyServiceId && overview.id !== onlyServiceId) continue
+        if (providerData?.serviceId && overview.id !== providerData.serviceId) continue
 
         const service = await onStageRequest<OnStageServiceDetail>(`/services/${overview.id}`)
         if (!service?.items?.length) continue
@@ -84,7 +83,7 @@ export async function onStageLoadServices(providerData?: unknown, onlyServiceId?
             if (item.type === "song" && item.song) {
                 const showId = `${SHOW_ID_PREFIX}${item.song.id}`
                 const build = songBuilds[showId] || (songBuilds[showId] = createSongBuild(item.song))
-                const layoutId = addSongArrangement(build, item.song, format, serviceName)
+                const layoutId = addSongArrangement(build, item.song, serviceName)
 
                 projectItems.push({ type: "show", id: showId, layout: layoutId, scheduleLength: Math.round(item.durationMs / 1000) })
             } else {
@@ -100,7 +99,7 @@ export async function onStageLoadServices(providerData?: unknown, onlyServiceId?
         if (!projectItems.length) continue
 
         projects.push({
-            id: service.id,
+            id: `${PROJECT_ID_PREFIX}${service.id}`,
             name: service.name || service.dateTime.slice(0, 10),
             scheduledTo: new Date(service.dateTime).getTime(),
             created: new Date(service.updatedAt || service.dateTime).getTime(),
