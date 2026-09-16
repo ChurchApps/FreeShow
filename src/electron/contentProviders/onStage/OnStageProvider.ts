@@ -57,7 +57,7 @@ export class OnStageProvider extends ContentProvider<OnStageScopes, OnStageAuthD
         return null
     }
 
-    // `data` carries the user's OnStage settings, and a serviceId when one project is refreshed.
+    // `data` carries a serviceId when one project is refreshed.
     async loadServices(data?: { serviceId?: string }): Promise<void> {
         return onStageLoadServices(data)
     }

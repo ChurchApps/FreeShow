@@ -1,7 +1,3 @@
-/**
- * Builds a FreeShow show out of the songs OnStage schedules.
- */
-
 import { uid } from "uid"
 import type { Show, SlideData } from "../../../types/Show"
 
@@ -28,13 +24,10 @@ export type OnStageSong = {
     copyright: string | null
     sections: OnStageSection[]
 }
-const itemStyle = "left:50px;top:120px;width:1820px;height:840px;"
-// Repeated sections are expressed as repeated layout references to one slide. Legacy imports have
-// carried absurd counts (a real song arrived with reps 104), so occurrences are capped.
+
+const ITEM_STYLE = "left:50px;top:120px;width:1820px;height:840px;"
 const MAX_REPEAT_OCCURRENCES = 16
 
-// One song under construction: its slides are shared by every arrangement, so two services
-// playing the same section reference one slide instead of duplicating the lyrics.
 export type SongBuild = {
     show: Show
     // section key -> parent slide id
@@ -47,13 +40,14 @@ export type SongBuild = {
 }
 
 export function createSongBuild(song: OnStageSong): SongBuild {
+    const title = song.title || ""
     return {
         show: {
-            name: song.title || "",
+            name: title,
             category: "onstage",
             timestamps: { created: Date.now(), modified: null, used: null },
             meta: {
-                title: song.title || "",
+                title,
                 artist: song.artist || "",
                 CCLI: song.ccli || "",
                 copyright: song.copyright || "",
@@ -78,43 +72,38 @@ export function createSongBuild(song: OnStageSong): SongBuild {
 export function addSongArrangement(build: SongBuild, song: OnStageSong, arrangementName: string): string {
     const { show, parentBySection, numbersByParent } = build
     const layoutSlides: SlideData[] = []
-    // the section keys behind the layout, in presentation order — stable across syncs, unlike the
-    // generated slide ids, so they can identify the arrangement itself
     const layoutKeys: string[] = []
 
-    song.sections.forEach((section) => {
-        const sectionSlides: OnStageSlide[] = section.slides.length ? section.slides : [{ lines: [] }]
+    for (const section of song.sections) {
+        const sectionSlides = section.slides.length ? section.slides : [{ lines: [] }]
 
         // Same label + identical lyrics is one group: OnStage numbers every occurrence, so a song
         // repeating its chorus verbatim would otherwise import as Chorus 1, Chorus 2, Chorus 3.
         // An empty (instrumental) section has no lyrics to compare, so it stays keyed by number.
         const signature = getLyricsSignature(sectionSlides)
         const sectionKey = signature ? `${section.label}|${signature}` : `${section.label} ${section.number}`
+        
         let parentId = parentBySection[sectionKey]
-
         if (!parentId) {
             const children: string[] = []
 
             sectionSlides.forEach((sectionSlide, i) => {
                 const slideId = uid()
+                const isParent = i === 0
+
                 show.slides[slideId] = {
-                    // Only the parent carries the group — a labeled child would count as its own group.
-                    group: i === 0 ? section.name : null,
-                    ...(i === 0 ? { globalGroup: section.label.toLowerCase() } : {}),
+                    group: isParent ? section.name : null,
+                    ...(isParent ? { globalGroup: section.label.toLowerCase() } : {}),
                     color: null,
                     settings: {},
                     notes: section.notes || "",
-                    items: sectionSlide.lines.length
-                        ? [
-                              {
-                                  style: itemStyle,
-                                  lines: sectionSlide.lines.map((line) => ({ align: "", text: [{ style: "", value: line }] }))
-                              }
-                          ]
-                        : []
+                    items: sectionSlide.lines.length ? [{
+                        style: ITEM_STYLE,
+                        lines: sectionSlide.lines.map((line) => ({ align: "", text: [{ style: "", value: line }] }))
+                    }] : []
                 }
 
-                if (i === 0) parentId = slideId
+                if (isParent) parentId = slideId
                 else children.push(slideId)
             })
 
@@ -122,7 +111,8 @@ export function addSongArrangement(build: SongBuild, song: OnStageSong, arrangem
             parentBySection[sectionKey] = parentId!
         }
 
-        const numbers = numbersByParent[parentId] || (numbersByParent[parentId] = [])
+        if (!numbersByParent[parentId]) numbersByParent[parentId] = []
+        const numbers = numbersByParent[parentId]
         if (!numbers.includes(section.number)) numbers.push(section.number)
 
         // A muted (repeats 0) or unscheduled section stays part of the song but out of the
@@ -134,19 +124,19 @@ export function addSongArrangement(build: SongBuild, song: OnStageSong, arrangem
             layoutSlides.push({ id: parentId! })
             layoutKeys.push(sectionKey)
         }
-    })
+    }
 
     const arrangementSignature = layoutKeys.join(",")
     const knownLayoutId = build.layoutBySignature[arrangementSignature]
     if (knownLayoutId) return knownLayoutId
 
-    // the first arrangement is the song's own; later ones are named after the service that plays them
     const isFirst = !Object.keys(show.layouts).length
-    // the song id is part of the hash: two different songs sharing a structure (common without
-    // merged sections, when keys are just "Verse 1,Chorus 1") must not share a layout id, since
-    // the frontend maps the ids of a whole sync in one pool
     const layoutId = getStableLayoutId(`${song.id}|${arrangementSignature}`)
-    show.layouts[layoutId] = { name: isFirst ? "Default" : getUniqueLayoutName(show, arrangementName), notes: "", slides: layoutSlides }
+    show.layouts[layoutId] = { 
+        name: isFirst ? "Default" : getUniqueLayoutName(show, arrangementName), 
+        notes: "", 
+        slides: layoutSlides 
+    }
     build.layoutBySignature[arrangementSignature] = layoutId
     if (isFirst) show.settings.activeLayout = layoutId
 
@@ -174,32 +164,29 @@ function getStableLayoutId(signature: string): string {
         hash ^= signature.charCodeAt(i)
         hash = Math.imul(hash, 0x01000193)
     }
-
     return `os${(hash >>> 0).toString(36)}${signature.length.toString(36)}`
 }
 
 function getUniqueLayoutName(show: Show, name: string): string {
-    const takenNames = Object.keys(show.layouts).map((layoutId) => show.layouts[layoutId].name)
-    if (!takenNames.includes(name)) return name
+    const takenNames = new Set(Object.values(show.layouts).map((l) => l.name))
+    if (!takenNames.has(name)) return name
 
     let counter = 2
-    while (takenNames.includes(`${name} ${counter}`)) counter++
+    while (takenNames.has(`${name} ${counter}`)) counter++
     return `${name} ${counter}`
 }
 
 export function finalizeSongBuild(build: SongBuild): Show {
     // a group that absorbed more than one numbered section is no longer "the second chorus"
-    Object.keys(build.numbersByParent).forEach((parentId) => {
-        if (build.numbersByParent[parentId].length < 2) return
-
+    for (const [parentId, numbers] of Object.entries(build.numbersByParent)) {
+        if (numbers.length < 2) continue
         const group = build.show.slides[parentId]?.group
         if (group) build.show.slides[parentId].group = stripSectionNumber(group)
-    })
-
+    }
     return build.show
 }
 
-/** "Chorus 2" -> "Chorus": used when a label's numbered sections all collapsed into one group. */
+// "Chorus 2" -> "Chorus": used when a label's numbered sections all collapsed into one group.
 function stripSectionNumber(name: string): string {
     return name.replace(/\s*\d+\s*$/, "").trim() || name
 }

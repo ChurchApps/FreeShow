@@ -120,9 +120,7 @@
                 }
             }
 
-            // OnStage reads its formatting settings from here, so the live store value is used
-            const providerSettings = providerId === "onstage" ? $contentProviderData.onstage || {} : undefined
-            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false, data: providerSettings })
+            sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: cloudOnly[providerId] || false })
         } else {
             if ($cloudSyncData.enabled && providerId === $cloudSyncData.id) {
                 // should remain connected to cloud
