@@ -106,6 +106,7 @@ export class AudioRoutingManager {
     setAudioContext(ctx: AudioContext) {
         if (this.audioCtx === ctx) return
         this.audioCtx = ctx
+
         this.cleanup()
         this.updateRoutingNodes()
     }
@@ -119,9 +120,6 @@ export class AudioRoutingManager {
     private cleanup() {
         for (const c of this.effectChains.values()) c.dispose()
         this.effectChains.clear()
-
-        for (const node of this.destinationNodes.values()) this.disconnect(node)
-        this.destinationNodes.clear()
 
         this.outputNodes.clear()
     }
