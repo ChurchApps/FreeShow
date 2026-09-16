@@ -126,7 +126,8 @@ export function contentProviderSync(startup = false, remainingOnly = false) {
     const providers = [
         { providerId: "planningcenter" as ContentProviderId, scope: "services", data: get(contentProviderData).planningcenter?.syncFolderIds || [], autoSync: get(contentProviderData).planningcenter?.autoSync !== false },
         { providerId: "churchApps" as ContentProviderId, scope: "plans", data: { shows: get(shows), categories: get(contentProviderData).churchApps?.syncCategories || [] } },
-        { providerId: "amazinglife" as ContentProviderId, scope: "openid profile email" }
+        { providerId: "amazinglife" as ContentProviderId, scope: "openid profile email" },
+        { providerId: "onstage" as ContentProviderId, scope: "presenter", data: get(contentProviderData).onstage || {}, autoSync: get(contentProviderData).onstage?.autoSync !== false }
     ]
 
     providers.forEach(({ providerId, scope, data, autoSync }) => {
@@ -161,7 +162,20 @@ function getMainData() {
         [Main.GET_CACHE_PATH]: (a) => cachePath.set(a || ""),
         [Main.DEVICE_ID]: (a) => deviceId.set(a || ""),
         [Main.MAXIMIZED]: (a) => windowState.set({ ...get(windowState), maximized: a ?? false }),
-        [Main.DATA_PATH]: (a) => (a ? dataPath.set(a) : null)
+        [Main.DATA_PATH]: (a) => (a ? dataPath.set(a) : null),
+        // get connected providers, even before the first sync of the session
+        [Main.PROVIDER_CONNECTIONS]: (a) => {
+            if (!a) return
+            providerConnections.update((c) => {
+                Object.keys(a).forEach((providerId) => {
+                    // churchApps is handled separately, due to cloud sync
+                    if (providerId === "churchApps") return
+
+                    c[providerId as ContentProviderId] = true
+                })
+                return c
+            })
+        }
     })
 }
 

@@ -44,9 +44,13 @@ export function openProjectItem(id: string, index: number = 0) {
     if ((item.type || "show") === "show" && item.layout) {
         // wait until loaded
         setTimeout(() => {
+            let storedLayout = item.layout || ""
+            const show = get(showsCache)[item.id]
+            if (!show?.settings) return
+            if (!show.layouts?.[storedLayout]) return
+
             showsCache.update((a) => {
-                if (!a[item.id]?.settings) return a
-                a[item.id].settings.activeLayout = item.layout!
+                a[item.id].settings.activeLayout = storedLayout
                 return a
             })
         }, 50)
