@@ -21,6 +21,7 @@
     export let channels: number = 0
     export let isEnabled: boolean = true
     export let isMuted: boolean = false
+    export let hasEffects: boolean = false
     export let hasInputConnection: boolean = true
 
     export let onToggleEnabled: ((enabled: boolean) => void) | undefined = undefined
@@ -126,7 +127,10 @@
             </span>
 
             {#if isMuted}
-                <Icon id="muted" size={0.9} style="opacity: 0.7;" white />
+                <Icon id="muted" title={translateText("actions.mute")} size={0.9} style="opacity: 0.7;" white />
+            {/if}
+            {#if hasEffects}
+                <Icon id="equalizer" title={translateText("tabs.effects")} size={0.9} style="opacity: 0.6;" white />
             {/if}
         {:else}
             {#if !hasSubNodes}

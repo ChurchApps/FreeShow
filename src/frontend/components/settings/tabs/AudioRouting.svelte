@@ -6,7 +6,7 @@
     import { AudioPlayer } from "../../../audio/audioPlayer"
     import { deduplicateConnections, syncOutputAudioChannels } from "../../../audio/routing/audioRoutingInit"
     import { AudioRoutingManager } from "../../../audio/routing/audioRoutingManager"
-    import { activePopup, audioChannelsData, audioPlaylists, audioRouting, outputs, selected, special } from "../../../stores"
+    import { activePopup, audioChannelsData, audioEffects, audioPlaylists, audioRouting, outputs, selected, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { keysToID } from "../../helpers/array"
     import { getAllOutputs } from "../../helpers/output"
@@ -152,7 +152,8 @@
                 const inactive = inactiveOutputIds.some((a) => `channel_${a.id}` === m.id)
                 const linkedToOutput = m.outputLink || $outputs[m.id.replace("channel_", "")]
                 const chData = get(audioChannelsData)[m.id]
-                const muted = chData ? chData.isMuted || chData.volume === 0 : false
+                const isMuted = chData ? chData.isMuted || chData.volume === 0 : false
+                const hasEffects = $audioEffects[m.id]?.stack?.length > 0
 
                 return {
                     id: m.id,
@@ -161,7 +162,8 @@
                     color: m.color,
                     icon: m.id === "main" ? "protected" : linkedToOutput ? "display" : null,
                     isEnabled: !inactive,
-                    isMuted: muted,
+                    isMuted,
+                    hasEffects,
                     hasInputConnection: config.connections.some((c) => c.to === m.id)
                 }
             })
