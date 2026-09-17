@@ -127,7 +127,7 @@
             </span>
 
             {#if isMuted}
-                <Icon id="muted" title={translateText("actions.mute")} size={0.9} style="opacity: 0.7;" white />
+                <Icon id="muted" title={translateText("actions.muted")} size={0.9} style="opacity: 0.7;" white />
             {/if}
             {#if hasEffects}
                 <Icon id="equalizer" title={translateText("tabs.effects")} size={0.9} style="opacity: 0.6;" white />

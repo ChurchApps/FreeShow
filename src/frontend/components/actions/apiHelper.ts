@@ -4,10 +4,10 @@ import { STAGE } from "../../../types/Channels"
 import type { History } from "../../../types/History"
 import type { DropData, Selected, Variable } from "../../../types/Main"
 import { isChannelRecording, startChannelRecording, stopAllChannelRecordings, stopChannelRecording, toggleChannelRecording } from "../../audio/audioChannelRecorder"
-import { dbToGain } from "../../audio/dBUtils"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
+import { dbToGain } from "../../audio/dBUtils"
 import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioPlaylists, audioRouting, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables } from "../../stores"
 import { newToast } from "../../utils/common"
 import { send } from "../../utils/request"
@@ -836,6 +836,21 @@ export function updateVolumeValues(data: API_volume) {
     })
 
     AudioPlayer.updateVolume()
+}
+
+export function muteChannel(data: API_toggle_id) {
+    const channelId = data.id || "main"
+    
+    let state = typeof data.value === "boolean" ? data.value : null
+    if ((data.value as any) === "false") state = false
+    else if ((data.value as any) === "true") state = true
+    else if (state === null) state = !(get(audioChannelsData)[channelId]?.isMuted ?? false)
+
+    audioChannelsData.update((data) => {
+        if (!data[channelId]) data[channelId] = { volume: 1 }
+        data[channelId].isMuted = state
+        return data
+    })
 }
 
 // TIMERS

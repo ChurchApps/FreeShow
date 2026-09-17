@@ -49,6 +49,7 @@ import {
     getTimersDetailed,
     gotoGroup,
     moveStageConnection,
+    muteChannel,
     pauseAudio,
     pauseTimerById,
     pauseTimerByName,
@@ -298,6 +299,7 @@ export const API_ACTIONS = {
     stop_audio: (data: API_media) => stopAudio(data),
     audio_seekto: (data: API_seek) => audioSeekTo(data), // BC
     change_volume: (data: API_volume) => updateVolumeValues(data), // BC
+    mute: (data: API_toggle_id) => muteChannel(data),
     start_audio_stream: (data: API_id) => AudioPlayer.start(data.id, { name: "" }),
     toggle_audio_recording: (data: API_toggle_id = {}) => toggleAudioRecording(data),
     toggle_icecast: (data: API_toggle_specific = {}) => toggleIcecast(data),

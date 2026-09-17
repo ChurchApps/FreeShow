@@ -1,8 +1,9 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
+import { gainToDb, MIN_DB } from "../../audio/dBUtils"
 import { actionHistory, actions, audioPlaylists, audioRouting, audioStreams, runningActions, shows, stageShows, styles } from "../../stores"
 import { newToast, wait } from "../../utils/common"
-import { gainToDb, MIN_DB } from "../../audio/dBUtils"
+import { translateText } from "../../utils/language"
 import { getShowBPM } from "../drawer/audio/metronome"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
 import { clone, keysToID } from "../helpers/array"
@@ -243,6 +244,14 @@ export function getActionName(actionId: string, actionValue: any): string {
         const volumeValue = rawVolume > 5 ? rawVolume / 100 : rawVolume
         const dbValue = Math.max(MIN_DB, Math.min(6, gainToDb(volumeValue)))
         return `${chName}${dbValue.toFixed(1)} dB`
+    }
+
+    if (actionId === "mute") {
+        const channelId = actionValue.id || "main"
+        const ch = get(audioRouting)?.channels?.find((c) => c.id === channelId)
+        const chName = ch?.name || (channelId === "main" ? translateText("audio.main") : channelId)
+        const state = typeof actionValue.value === "boolean" ? (actionValue.value ? translateText("actions.mute") : translateText("actions.unmute")) : "Toggle"
+        return `${chName}: ${state}`
     }
 
     if (!namedObjects[actionId]) return ""

@@ -216,7 +216,7 @@
         if (id === "start_camera") return actionValue.label || ""
         if (id === "start_microphone" || id === "stop_microphone") return actionValue.name || ""
         if (id === "start_screen") return actionValue.name || ""
-        if (id === "change_volume") return getActionName(id, actionValue)
+        if (id === "change_volume" || id === "mute") return getActionName(id, actionValue)
         if (id.includes("index")) return actionValue.index || "0"
         if (id.includes("name")) return actionValue.value || ""
         if (id === "change_stage_output_layout") return `${actionValue.outputId ? ($outputs[actionValue.outputId]?.name || "—") + ": " : ""}${$stageShows[actionValue.stageLayoutId]?.name || ""}`
