@@ -124,6 +124,8 @@
         "block": "Block",
         "more_options": "More options",
         "auto_groups": "Auto assign groups",
+        "songselect_mode": "CCLI SongSelect import",
+        "songselect_mode_tip": "Detect a CCLI SongSelect lyrics export and extract its title, writers, CCLI Song # and copyright as show metadata instead of importing them as lyrics.",
         "format_new_show": "Format text",
         "format_new_show_tip": "Improve text format with auto capitalize, trim/split text & more.",
         "split_lines": "Max lines per slide",

@@ -13,6 +13,7 @@ import { activePopup, activeProject, activeShow, alertMessage, dictionary, drawe
 import { translateText } from "../utils/language"
 import { setTempShows } from "./importHelpers"
 import { findPatterns } from "./txtAutoSections"
+import { extractSongSelectMetadata, type SongSelectMetadata } from "./txtSongSelect"
 
 export function getQuickExample() {
     const tip = translateText("create_show.quick_lyrics_example_tip")
@@ -51,6 +52,18 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     // remove empty spaces (as groups [] should be used for empty slides)
     // in "Text edit" spaces can be used to create empty "child" slides
     text = text.replaceAll("\r", "").replaceAll("\n \n", "\n\n")
+
+    // CCLI SongSelect export: strip the title line & footer (writers, CCLI Song #,
+    // copyright, licensing boilerplate) and pull them out as structured metadata,
+    // before any of that footer text can reach the section classifier
+    let songselectMetadata: SongSelectMetadata | null = null
+    if (get(special).songselectMode) {
+        const extracted = extractSongSelectMetadata(text)
+        if (extracted.metadata.ccliNumber) {
+            text = extracted.body
+            songselectMetadata = extracted.metadata
+        }
+    }
 
     // extract any trailing URL
     let source = ""
@@ -117,7 +130,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     labeled = patterns.indexes.map((a, i) => ({ type: a, text: sections[i] || "" }))
     labeled = checkRepeats(labeled)
 
-    if (!name) name = plainTextMetadata.title || trimNameFromString(labeled[0]?.text)
+    if (!name) name = songselectMetadata?.title || plainTextMetadata.title || trimNameFromString(labeled[0]?.text)
 
     const layoutID: string = uid()
     const show: Show = new ShowObj(false, category, layoutID)
@@ -131,7 +144,14 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     show.slides = slides
     show.layouts[layoutID].slides = layouts
 
-    if (ccli) {
+    if (songselectMetadata) {
+        show.meta = {
+            title: show.name,
+            CCLI: songselectMetadata.ccliNumber,
+            author: songselectMetadata.authors.join(" | "),
+            copyright: songselectMetadata.copyright
+        }
+    } else if (ccli) {
         const meta: string[] = ccli.split("\n")
         // songselect order
         if (meta[4]?.includes("CCLI")) {
