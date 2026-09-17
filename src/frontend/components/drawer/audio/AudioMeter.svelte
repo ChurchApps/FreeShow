@@ -2,14 +2,17 @@
     import { onDestroy, onMount } from "svelte"
     import { dbToLinear, MIN_DB } from "../../../audio/dBUtils"
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
-    import { activeDrawerTab, activePage, audioChannelsData, drawer } from "../../../stores"
+    import { activeDrawerTab, activePage, audioChannelsData, audioRouting, drawer } from "../../../stores"
     import { DEFAULT_DRAWER_HEIGHT } from "../../../utils/common"
+    import AudioDucking from "./AudioDucking.svelte"
 
     export let channelId: string = ""
     export let detailed: boolean = false
     export let preview: boolean = false
 
     $: isMuted = !!$audioChannelsData[channelId]?.isMuted
+
+    $: hasDuckingConnection = !!$audioRouting?.connections.some((c) => c.to === channelId && c.type === "ducking")
 
     const numbers: number[] = [-60, -54, -48, -42, -36, -30, -24, -18, -12, -6, 0]
 
@@ -178,6 +181,11 @@
                 {/if}
             </div>
         {/each}
+
+        {#if !preview && hasDuckingConnection}
+            <div style="height: 2px;width: 100%;"></div>
+            <AudioDucking {channelId} />
+        {/if}
 
         {#if detailed}
             <div class="lines-container">

@@ -242,6 +242,7 @@
         "channel": "Audio channel",
         "desktop_audio": "Desktop audio",
         "speakers": "Speakers",
+        "ducking": "Ducking",
         "mute_when_video_plays": "Mute when video plays",
         "volume_fade_duration": "Volume fade duration",
         "allow_gaining": "Allow gaining",

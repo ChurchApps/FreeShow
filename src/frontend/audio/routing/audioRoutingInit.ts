@@ -10,7 +10,8 @@ export function deduplicateConnections(connections: AudioRoutingConnection[]): A
     const seen = new Set<string>()
     return connections.filter((c) => {
         const chIdx = c.channelIndex ?? 0
-        const key = `${c.from}->${c.to}:${chIdx}`
+        const connType = c.type || "audio"
+        const key = `${c.from}->${c.to}:${chIdx}:${connType}`
         if (seen.has(key)) return false
         seen.add(key)
         return true

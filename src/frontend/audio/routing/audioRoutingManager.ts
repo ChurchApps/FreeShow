@@ -3,6 +3,7 @@ import type { AudioRoutingConfig } from "../../../types/AudioRouting"
 import { keysToID } from "../../components/helpers/array"
 import { audioChannelsData, audioEffects, audioRouting, outputs } from "../../stores"
 import { AudioAnalyser } from "../audioAnalyser"
+import { AudioDucking } from "../audioDucking"
 import { AudioCompressor } from "../effects/audioCompressor"
 import { AudioDelay } from "../effects/audioDelay"
 import { AudioEqualizer } from "../effects/audioEqualizer"
@@ -38,6 +39,7 @@ interface Connection {
     from: string
     to: string
     channelIndex?: number
+    type?: "audio" | "ducking"
 }
 
 type SubSpeakerMap = Map<string, { speakerNode: ChannelMergerNode; maxChannels: number }>
@@ -56,7 +58,11 @@ const EFFECT_CLASSES: Record<string, any> = {
 export class AudioRoutingManager {
     private static instance: AudioRoutingManager
     public static getInstance(): AudioRoutingManager {
-        return (AudioRoutingManager.instance ??= new AudioRoutingManager())
+        if (!AudioRoutingManager.instance) {
+            AudioRoutingManager.instance = new AudioRoutingManager()
+            AudioRoutingManager.instance.init()
+        }
+        return AudioRoutingManager.instance
     }
 
     private config: AudioRoutingConfig = { channels: [], connections: [] }
@@ -76,7 +82,9 @@ export class AudioRoutingManager {
     private speakerSinks = new Map<string, SpeakerSink>()
     private speakerStreams = new Map<string, SubSpeakerStream>()
 
-    private constructor() {
+    private constructor() {}
+
+    private init() {
         let prevOutputCount = 0
         outputs.subscribe((a) => {
             const count = Object.keys(a || {}).length
@@ -101,6 +109,8 @@ export class AudioRoutingManager {
 
         audioChannelsData.subscribe((data) => data && this.updateAllGains())
         audioEffects.subscribe(() => this.audioCtx && this.updateRoutingNodes())
+
+        AudioDucking.getInstance()
     }
 
     setAudioContext(ctx: AudioContext) {
@@ -205,7 +215,10 @@ export class AudioRoutingManager {
 
         const chData = get(audioChannelsData)[id] || {}
         const vol = this.getChannelVolume(id)
-        const targetGain = chData.isMuted ? 0 : Math.max(0, vol)
+        let targetGain = chData.isMuted ? 0 : Math.max(0, vol)
+
+        const duckMult = this.channelDuckingMultipliers.get(id) ?? 1.0
+        if (duckMult < 1.0) targetGain *= duckMult
 
         try {
             const currTime = this.audioCtx.currentTime
@@ -232,6 +245,29 @@ export class AudioRoutingManager {
             if (delaySec === 0) this.updateRoutingNodes()
         } else if (delaySec > 0) {
             this.updateRoutingNodes()
+        }
+    }
+
+    private channelDuckingMultipliers = new Map<string, number>()
+    public setChannelDucking(channelMultipliers: Map<string, number>) {
+        if (!this.audioCtx) return
+
+        const currTime = this.audioCtx.currentTime
+        for (const [id, node] of this.gainNodes.entries()) {
+            const mult = channelMultipliers.get(id) ?? 1.0
+            const prevMult = this.channelDuckingMultipliers.get(id) ?? 1.0
+            if (Math.abs(mult - prevMult) < 0.001) continue
+
+            this.channelDuckingMultipliers.set(id, mult)
+            const chData = get(audioChannelsData)[id] || {}
+            const vol = this.getChannelVolume(id)
+            const targetGain = (chData.isMuted ? 0 : Math.max(0, vol)) * mult
+
+            try {
+                node.gain.cancelScheduledValues(currTime)
+                node.gain.setValueAtTime(node.gain.value, currTime)
+                node.gain.linearRampToValueAtTime(targetGain, currTime + 0.04)
+            } catch {}
         }
     }
 
@@ -393,6 +429,8 @@ export class AudioRoutingManager {
             const c = connections[i]
             activeNodeIds.add(c.from)
             activeNodeIds.add(c.to)
+
+            if (c.type === "ducking") continue
 
             if (c.to.startsWith("speaker_sub_")) activeSubDeviceIds.add(c.to.replace("speaker_sub_", ""))
 
@@ -604,7 +642,7 @@ export class AudioRoutingManager {
         const conns = this.config.connections || []
         for (let i = 0; i < conns.length; i++) {
             const c = conns[i]
-            if (c.from === sourceId && !inactive.has(c.to)) res.push(c.to)
+            if (c.from === sourceId && !inactive.has(c.to) && c.type !== "ducking") res.push(c.to)
         }
         return res
     }
