@@ -200,7 +200,7 @@ export class AudioRoutingManager {
         } catch {}
     }
 
-    private applyGain(id: string, gainNode: GainNode) {
+    private applyGain(id: string, gainNode: GainNode, instant = false) {
         if (!this.audioCtx) return
 
         const chData = get(audioChannelsData)[id] || {}
@@ -213,11 +213,12 @@ export class AudioRoutingManager {
 
             // when changing volume (or mute state) fade instead of cutting
             const fadeDuration = chData.fadeDuration ?? 250
-            if (fadeDuration > 0 && Math.abs(currGain - targetGain) > 0.001) {
+            if (!instant && fadeDuration > 0 && Math.abs(currGain - targetGain) > 0.001) {
                 gainNode.gain.cancelScheduledValues(currTime)
                 gainNode.gain.setValueAtTime(currGain, currTime)
                 gainNode.gain.linearRampToValueAtTime(targetGain, currTime + fadeDuration / 1000)
             } else {
+                gainNode.gain.cancelScheduledValues(currTime)
                 gainNode.gain.setValueAtTime(targetGain, currTime)
             }
         } catch {}
@@ -356,11 +357,12 @@ export class AudioRoutingManager {
 
     private ensureGainNode(id: string): GainNode {
         let gainNode = this.gainNodes.get(id)
+        const isNew = !gainNode
         if (!gainNode) {
             gainNode = this.audioCtx!.createGain()
             this.gainNodes.set(id, gainNode)
         }
-        this.applyGain(id, gainNode)
+        this.applyGain(id, gainNode, isNew)
         return gainNode
     }
 
@@ -588,7 +590,7 @@ export class AudioRoutingManager {
         if (!node) {
             node = this.audioCtx.createGain()
             this.gainNodes.set(id, node)
-            this.applyGain(id, node)
+            this.applyGain(id, node, true)
         }
 
         return node
