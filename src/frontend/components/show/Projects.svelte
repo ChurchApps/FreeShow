@@ -172,8 +172,8 @@
         project.parent = interactedFolder || ($folders[currentProject?.parent || ""] ? currentProject?.parent || "/" : "/")
 
         if (project.name.includes("{") ? !ctrl : ctrl)
-            project.name = getProjectName({ default_project_name: project.name }) // replace actual name values
-        else project.name = getProjectName() // use default (auto) project name
+            project.name = getProjectName(project.parent, { default_project_name: project.name }) // replace actual name values
+        else project.name = getProjectName(project.parent) // use default (auto) project name
 
         let projectId = uid()
         history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
@@ -507,7 +507,7 @@
         <ProjectContentList tree={[]} on:scrollElem={(e) => (contentScrollElem = e.detail)} isTemplate />
     {:else if !projectActive && showProjectsOptions}
         <div class="options">
-            <MaterialTextInput label="settings.default_project_name<span style='opacity: 0.5;padding-left: 8px;font-size: 0.8em;color: var(--text);'>{getProjectName($special)}</span>" title={projectReplacerTitle} value={projectName} defaultValue={getDefaultProjectName()} on:change={(e) => updateSpecial(e.detail, "default_project_name", true)} />
+            <MaterialTextInput label="settings.default_project_name<span style='opacity: 0.5;padding-left: 8px;font-size: 0.8em;color: var(--text);'>{getProjectName('', $special)}</span>" title={projectReplacerTitle} value={projectName} defaultValue={getDefaultProjectName()} on:change={(e) => updateSpecial(e.detail, "default_project_name", true)} />
             <MaterialToggleSwitch label="settings.startup_projects_list" checked={$special.startupProjectsList} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "startupProjectsList")} />
         </div>
     {:else if !projectActive}

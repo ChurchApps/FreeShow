@@ -60,7 +60,7 @@ function handleUpdate(obj, data, initializing) {
         if (keys && !key) id = "keys"
 
         if (initializing && obj.location.id === "show") customActionActivation("show_created")
-        if (initializing && empty && updater.initialize) data.data = updater.initialize(data.data, id)
+        if (initializing && empty && updater.initialize) data.data = updater.initialize({ ...data.data, ...(data.replace || {}) }, id)
 
         if (initializing && obj.location.id === "project_ref") {
             projects.update((a) => {

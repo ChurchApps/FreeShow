@@ -65,7 +65,7 @@ export const _updaters = {
         store: projects,
         empty: EMPTY_PROJECT,
         initialize: (data) => {
-            return replaceEmptyValues(data, { name: getProjectName(), created: Date.now(), modified: Date.now(), used: Date.now() })
+            return replaceEmptyValues(data, { name: getProjectName(data.parent), created: Date.now(), modified: Date.now(), used: Date.now() })
         },
         select: (id: string, { data }: any, initializing: boolean) => {
             activeProject.set(id)
@@ -707,7 +707,7 @@ export function getDefaultProjectName() {
         return DEFAULT_PROJECT_NAME
     }
 }
-export function getProjectName(updater = get(special)) {
+export function getProjectName(parentFolder: string = "", updater = get(special)) {
     let name = updater.default_project_name ?? getDefaultProjectName()
 
     let date = new Date()
@@ -722,6 +722,15 @@ export function getProjectName(updater = get(special)) {
     projectReplacers.forEach((a) => {
         name = name.replaceAll(`{${a.id}}`, a.value(date))
     })
+
+    // if a project in the same folder with the same name exists, append a number to make it unique
+    const projectsInFolder = Object.values(get(projects)).filter((project) => !parentFolder || project.parent === parentFolder)
+    const names = new Set(projectsInFolder.map((project) => project.name))
+    if (names.has(name)) {
+        let num = 1
+        while (names.has(`${name} (${num})`)) num++
+        name = `${name} (${num})`
+    }
 
     return name
 }
