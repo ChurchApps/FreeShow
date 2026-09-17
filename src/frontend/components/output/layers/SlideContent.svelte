@@ -115,7 +115,7 @@
         if (JSON.stringify(currentSlide?.items) !== JSON.stringify(currentSlideItems)) currentSlideItems = clone(currentSlide?.items || null)
     }
     $: if (current && outSlide) {
-        if (current.outSlide) {
+        if (current.outSlide && current.outSlide.id === outSlide.id && current.outSlide.index === outSlide.index) {
             current.outSlide.itemClickReveal = outSlide.itemClickReveal
             current.outSlide.revealCount = outSlide.revealCount
             current.outSlide.line = outSlide.line
