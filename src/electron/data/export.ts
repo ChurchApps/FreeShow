@@ -344,12 +344,15 @@ export function exportTemplate(data: { file: { template: Template; files?: strin
 }
 
 function compressWithMedia(files: string[], fileData: any, name: string, extension: string, exportFolder: string, getFileName: (path: string, ext: string) => string, canOverwrite = false) {
-    const entries: { name: string; content?: Buffer | string; filePath?: string }[] = files
-        .filter((filePath) => fs.existsSync(filePath))
-        .map((filePath) => ({
-            name: getFileName(filePath, extname(filePath)),
-            filePath
-        }))
+    const uniqueEntries = new Map<string, { name: string; content?: Buffer | string; filePath?: string }>()
+    for (const filePath of files) {
+        if (!fs.existsSync(filePath)) continue
+
+        const name = getFileName(filePath, extname(filePath))
+        if (!uniqueEntries.has(name)) uniqueEntries.set(name, { name, filePath })
+    }
+
+    const entries: { name: string; content?: Buffer | string; filePath?: string }[] = Array.from(uniqueEntries.values())
 
     entries.push({ name: "data.json", content: Buffer.from(JSON.stringify(fileData)) })
 

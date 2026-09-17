@@ -128,7 +128,7 @@ export async function exportProject(project: Project, projectId: string, savePat
             }
         }
 
-        projectData.files = resolvedFiles
+        projectData.files = [...new Set(resolvedFiles)]
         if (Object.keys(mediaData).length) projectData.media = mediaData
     }
 
