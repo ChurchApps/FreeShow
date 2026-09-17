@@ -121,7 +121,7 @@ export type API_id_optional = { id?: string }
 type API_index = { index: number }
 type API_strval = { value: string }
 type API_numval = { value: number }
-type API_volume = { volume?: number } // no values will mute/unmute
+export type API_volume = { volume?: number; channelId?: string; useDB?: boolean }
 export type API_id_index = { id: string; index: number }
 export type API_slide = { showId?: string | "active"; slideId?: string }
 export type API_slide_index = { showId?: string; layoutId?: string; index: number }
@@ -300,7 +300,7 @@ export const API_ACTIONS = {
     pause_audio: (data: API_media) => pauseAudio(data),
     stop_audio: (data: API_media) => stopAudio(data),
     audio_seekto: (data: API_seek) => audioSeekTo(data), // BC
-    change_volume: (data: API_volume) => updateVolumeValues(data.volume), // BC
+    change_volume: (data: API_volume) => updateVolumeValues(data), // BC
     start_audio_stream: (data: API_id) => AudioPlayer.start(data.id, { name: "" }),
     toggle_audio_recording: (data: API_toggle_id = {}) => toggleAudioRecording(data),
     toggle_icecast: (data: API_toggle_specific = {}) => toggleIcecast(data),

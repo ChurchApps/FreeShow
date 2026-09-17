@@ -4,6 +4,7 @@ import { STAGE } from "../../../types/Channels"
 import type { History } from "../../../types/History"
 import type { DropData, Selected, Variable } from "../../../types/Main"
 import { isChannelRecording, startChannelRecording, stopAllChannelRecordings, stopChannelRecording, toggleChannelRecording } from "../../audio/audioChannelRecorder"
+import { dbToGain } from "../../audio/dBUtils"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
@@ -28,7 +29,7 @@ import { VideoPlayer } from "../media/video/videoPlayer"
 import { clearBackground, clearSlide } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
-import type { API_add_to_project, API_create_project, API_disable_slide, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_toggle_id, API_toggle_specific, API_variable } from "./api"
+import type { API_add_to_project, API_create_project, API_disable_slide, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_toggle_id, API_toggle_specific, API_variable, API_volume } from "./api"
 
 export function selectShowById(id: string) {
     if (typeof id !== "string" || !id) return
@@ -808,22 +809,29 @@ export function audioSeekTo(data: API_seek) {
     AudioPlayer.setTime(audioPath, data.seconds)
 }
 
-let unmutedValue = 1
-export function updateVolumeValues(value: number | undefined | "local") {
-    // api mute(unmute)
+let unmutedValues: { [channelId: string]: number } = {}
+export function updateVolumeValues(data: API_volume) {
+    let { volume: value, channelId, useDB } = data
+    const chId = channelId || "main"
+
+    // api mute(unmute) if no value - DEPRECATED
     if (value === undefined) {
-        const currentVolume = get(audioChannelsData).main?.volume ?? 1
-        value = currentVolume ? 0 : unmutedValue
-        if (!value) unmutedValue = currentVolume
+        const currentVolume = get(audioChannelsData)[chId]?.volume ?? 1
+        value = currentVolume ? 0 : (unmutedValues[chId] ?? 1)
+        if (!value) unmutedValues[chId] = currentVolume
     }
 
-    // supposed to be in 0-1 range instead of 0-100
-    if (typeof value === "number" && value > 1) value = value / 100
+    if (useDB && typeof value === "number") {
+        value = dbToGain(value)
+    } else if (typeof value === "number" && value > 5) {
+        // supposed to be in 0-1 range instead of 0-100
+        value = value / 100
+    }
 
-    const newVolume = Number(Number(value).toFixed(2))
+    const newVolume = Number(Number(value).toFixed(3))
     audioChannelsData.update((data) => {
-        if (!data.main) data.main = { volume: 1 }
-        data.main.volume = newVolume
+        if (!data[chId]) data[chId] = { volume: 1 }
+        data[chId].volume = newVolume
         return data
     })
 

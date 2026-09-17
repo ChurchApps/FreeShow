@@ -15,13 +15,13 @@
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialTextInput from "../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../inputs/MaterialToggleSwitch.svelte"
+    import { spotifyState } from "../output/preview/SpotifyManager"
     import { getGlobalGroupName } from "../show/tools/groups"
     import Center from "../system/Center.svelte"
     import CustomInput from "./CustomInput.svelte"
     import { actionData } from "./actionData"
-    import { getActionTriggerId } from "./actions"
+    import { getActionName, getActionTriggerId } from "./actions"
     import { API_ACTIONS } from "./api"
-    import { spotifyState } from "../output/preview/SpotifyManager"
 
     export let list = false
     export let full = false
@@ -216,7 +216,7 @@
         if (id === "start_camera") return actionValue.label || ""
         if (id === "start_microphone" || id === "stop_microphone") return actionValue.name || ""
         if (id === "start_screen") return actionValue.name || ""
-        if (id === "change_volume") return ((actionValue.volume || 1) * 100).toString()
+        if (id === "change_volume") return getActionName(id, actionValue)
         if (id.includes("index")) return actionValue.index || "0"
         if (id.includes("name")) return actionValue.value || ""
         if (id === "change_stage_output_layout") return `${actionValue.outputId ? ($outputs[actionValue.outputId]?.name || "—") + ": " : ""}${$stageShows[actionValue.stageLayoutId]?.name || ""}`

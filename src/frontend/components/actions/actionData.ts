@@ -68,7 +68,7 @@ export const actionData = {
     id_select_stage_layout: { name: "actions.id_change_stage_layout", icon: "stage", input: "id" },
 
     // AUDIO
-    change_volume: { SECTION: "tabs.audio", name: "actions.change_volume", icon: "volume", input: "volume" },
+    change_volume: { SECTION: "tabs.audio", canAddMultiple: true, name: "actions.change_volume", icon: "volume", input: "volume" },
     start_audio_stream: { slideId: "audioStream", common: true, name: "actions.start_audio_stream", icon: "audio_stream", input: "id" },
     toggle_audio_recording: { canAddMultiple: true, name: "actions.toggle_specific", replace: ["recording"], icon: "record", input: "toggle_channel_recording" },
     toggle_icecast: { name: "actions.toggle_specific", replace: ["Icecast"], icon: "cloud", input: "toggle" },
