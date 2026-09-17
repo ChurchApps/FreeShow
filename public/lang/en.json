@@ -243,6 +243,7 @@
         "desktop_audio": "Desktop audio",
         "speakers": "Speakers",
         "mute_when_video_plays": "Mute when video plays",
+        "volume_fade_duration": "Volume fade duration",
         "allow_gaining": "Allow gaining",
         "allow_gaining_tip": "Allow setting volume above 100% (May cause distortion)",
         "mixer": "Mixer",

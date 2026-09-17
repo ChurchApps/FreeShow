@@ -211,11 +211,12 @@ export class AudioRoutingManager {
             const currTime = this.audioCtx.currentTime
             const currGain = gainNode.gain.value
 
-            // when changing volume (or mute state) fade for 250ms instead of cutting
-            if (Math.abs(currGain - targetGain) > 0.001) {
+            // when changing volume (or mute state) fade instead of cutting
+            const fadeDuration = chData.fadeDuration ?? 250
+            if (fadeDuration > 0 && Math.abs(currGain - targetGain) > 0.001) {
                 gainNode.gain.cancelScheduledValues(currTime)
                 gainNode.gain.setValueAtTime(currGain, currTime)
-                gainNode.gain.linearRampToValueAtTime(targetGain, currTime + 0.25)
+                gainNode.gain.linearRampToValueAtTime(targetGain, currTime + fadeDuration / 1000)
             } else {
                 gainNode.gain.setValueAtTime(targetGain, currTime)
             }

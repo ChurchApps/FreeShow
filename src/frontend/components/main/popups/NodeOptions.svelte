@@ -21,6 +21,8 @@
     $: dbValue = Math.max(MIN_DB, Math.min(6, gainToDb(volumeValue)))
     $: muted = !!channelData.isMuted
 
+    $: fadeDuration = Number(channelData.fadeDuration ?? 250)
+
     $: delayMs = Number(channelData.delay ?? 0)
 
     function updateIcecast(key: string, value: any) {
@@ -56,6 +58,8 @@
         <MaterialNumberInput label="media.volume (dB)" value={Number(dbValue.toFixed(1))} min={MIN_DB} max={6} step={0.5} defaultValue={0} on:change={(e) => updateChannelData("volume", dbToGain(e.detail))} showSlider />
         <MaterialButton variant="outlined" icon={muted ? "muted" : "volume"} title="actions.{muted ? 'unmute' : 'mute'}" on:click={() => updateChannelData("isMuted", !muted)} red={muted} />
     </InputRow>
+
+    <MaterialNumberInput label="audio.volume_fade_duration (ms)" value={fadeDuration} min={0} max={5000} step={50} defaultValue={250} on:change={(e) => updateChannelData("fadeDuration", e.detail)} showSlider />
 
     <MaterialNumberInput label="audio.delay (ms)" value={delayMs} min={0} max={5000} step={10} defaultValue={0} on:change={(e) => updateChannelData("delay", e.detail)} showSlider />
 {/if}
