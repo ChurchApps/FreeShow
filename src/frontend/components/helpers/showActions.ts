@@ -882,28 +882,21 @@ export function getVariableValue(dynamicId: string, ref: any = null): string | s
 // Helper to escape characters like $, *, +, etc.
 const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
-// This pattern breaks down as:
+// Dynamic value replacement regular expression:
 // \{             -> Opening brace
-// ${id}          -> Your variable
-// (?:([+-]\d+))? -> Optional group 1: +num or -num offset
-// (?:#(\d+))?    -> Optional group 2: the number after #
-// (?:[|?](.*?))? -> Optional group 3: the fallback after ? (or |)
+// (${safeId})    -> Full variable ID matching non-greedily before offsets/index/fallbacks
+// (?:([+-]\d+))? -> Optional offset (+num or -num)
+// (?:#(\d+))?    -> Optional index (#num)
+// (?:[|?](.*?))? -> Optional fallback (|default or ?default)
 // \}             -> Closing brace
 const createRegex = (id: string) => {
-    // Escape the ID so the '$' isn't treated as "End of Line"
     const safeId = escapeRegExp(id)
-    return new RegExp(`\\{${safeId}(?:([+-]\\d+))?(?:#(\\d+))?(?:[|?]([^}]*))?\\}`, "g")
+    return new RegExp(`\\{(${safeId})(?:([+-]\\d+))?(?:#(\\d+))?(?:[|?]([^}]*))?\\}`, "g")
 }
-
-/** Check if the pattern exists **/
-// const exists = (str: string, id: string) => createRegex(id).test(str)
-
-/** Get all numbers (e.g., [null, 2, 100, 5, null]) **/
-// const getNumbers = (str: string, id: string) => [...str.matchAll(createRegex(id))].map(m => m[1] ?? null)
 
 /** Replace with input value or fallback **/
 const replaceTokens = (str: string, id: string, inputs: string[] = []) => {
-    return str.replace(createRegex(id), (match: string, _offset: string | undefined, num: string | undefined, fallback: string | undefined) => {
+    return str.replace(createRegex(id), (match: string, _varId: string, _offset: string | undefined, num: string | undefined, fallback: string | undefined) => {
         // 1. Determine index: Use the #num if it exists, otherwise default to 0
         const index = num !== undefined ? parseInt(num, 10) : 0
 
@@ -921,7 +914,7 @@ function getValidDynamicIds(mode = ""): Set<string> {
     if (!dynamicIdsCache.has(mode)) {
         const customIds = ["slide_text", "active_project_name", "active_layers", "active_styles", "output_windows_active", "outputs_locked", "stage_output_layout", "log_song_usage"]
         const ids = [...getDynamicIds(false, mode as any), ...deprecatedDynamicValues, ...customIds]
-        const set = new Set(ids.flatMap((id) => [id, id.replace("$", "variable_"), id.replace(/[+-]\d+$/, "")]))
+        const set = new Set(ids.flatMap((id) => [id, id.replace("$", "variable_"), id.replace(/(?:[+-]\d+)$/, "")]))
         dynamicIdsCache.set(mode, set)
         setTimeout(() => dynamicIdsCache.clear(), 3000)
     }
@@ -955,13 +948,14 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
     const processed = new Set<string>()
 
     for (const token of matches) {
-        const dynamicId = token.slice(1, -1).match(/^([^+\-#|?]+)/)?.[1] || ""
+        // Parse dynamicId by ignoring optional offset ([+-]\d+), index (#\d+), or fallbacks (|/?) before the closing brace
+        const dynamicId = token.slice(1, -1).match(/^([^#|?]+?)(?:[+-]\d+)?(?:#\d+)?(?:[|?].*)?$/)?.[1] || ""
         if (!dynamicId || processed.has(dynamicId) || !validIds.has(dynamicId)) continue
         processed.add(dynamicId)
 
         // get offset from {dynamicId+num} or {dynamicId-num}
         const match = createRegex(dynamicId).exec(text)
-        const offset = match?.[1] ? parseInt(match[1], 10) : 0
+        const offset = match?.[2] ? parseInt(match[2], 10) : 0
 
         const newValue = getDynamicValueText(dynamicId, currentShow, offset)
         text = replaceDynamicValueWithFallback(text, dynamicId, newValue)
