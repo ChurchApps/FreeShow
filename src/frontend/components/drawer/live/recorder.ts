@@ -1,3 +1,4 @@
+import { get } from "svelte/store"
 import { Main } from "../../../../types/IPC/Main"
 import { sendMain } from "../../../IPC/main"
 import { activeRecording, currentRecordingStream } from "../../../stores"
@@ -32,9 +33,14 @@ export function toggleMediaRecorder() {
     return true
 }
 
-export function stopMediaRecorder() {
-    if (!mediaRecorder) return
-    mediaRecorder.stop()
+let stopResolver: (() => void) | null = null
+export function stopMediaRecorder(): Promise<void> {
+    if (!get(activeRecording) || !mediaRecorder) return Promise.resolve()
+
+    return new Promise((resolve) => {
+        stopResolver = resolve
+        mediaRecorder.stop()
+    })
 }
 
 function handleDataAvailable(e: any) {
@@ -54,6 +60,11 @@ async function handleStop() {
     activeRecording.set(null)
     recordedChunks = []
     mediaRecorder = null
+
+    if (stopResolver) {
+        stopResolver()
+        stopResolver = null
+    }
 }
 
 function formatTime() {

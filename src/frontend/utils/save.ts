@@ -2,7 +2,9 @@ import { get } from "svelte/store"
 import { Main } from "../../types/IPC/Main"
 import type { Projects } from "../../types/Projects"
 import type { Shows } from "../../types/Show"
+import { stopAllChannelRecordings } from "../audio/audioChannelRecorder"
 import { customActionActivation } from "../components/actions/actions"
+import { stopMediaRecorder } from "../components/drawer/live/recorder"
 import { stopAllInteractions } from "../components/drawer/pages/interactions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { isOutCleared } from "../components/helpers/output"
@@ -347,6 +349,9 @@ export async function closeApp() {
         await timeout(stopAllInteractions(), 500)
         await timeout(stopRemoteController(), 500)
         autoDisableRemoteController()
+
+        await timeout(stopMediaRecorder(), 3000)
+        await timeout(stopAllChannelRecordings(), 3000)
     } catch (e) {
         console.error("Could not stop interactions before closing!", e)
     }
