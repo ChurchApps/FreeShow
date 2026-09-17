@@ -1,6 +1,7 @@
+import { get } from "svelte/store"
 import { Main } from "../../types/IPC/Main"
 import { sendMain } from "../IPC/main"
-import { recordingChannels } from "../stores"
+import { recordingChannels, special } from "../stores"
 import { newToast } from "../utils/common"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioRoutingManager } from "./routing/audioRoutingManager"
@@ -32,7 +33,8 @@ export function startChannelRecording(channelId: string, label = "") {
             const arraybuffer = await blob.arrayBuffer()
 
             const name = `FreeShow_${label ? label.replace(/[\\/:*?"<>|]/g, "_") + "_" : ""}${formatTime()}.webm`
-            sendMain(Main.RECORDER, { blob: arraybuffer, name })
+            const customPath = get(special)?.audioRecordingsPath
+            sendMain(Main.RECORDER, { blob: arraybuffer, name, path: customPath })
 
             streamDest.stream.getTracks().forEach((track) => track.stop())
             AudioRoutingManager.getInstance().unregisterChannelRecorder(channelId, streamDest)

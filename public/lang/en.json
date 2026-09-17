@@ -1427,6 +1427,7 @@
         "remove": "Remove",
         "change_name": "Change name",
         "data_location": "Data location",
+        "recordings_path": "Recordings location",
         "auto_locate_missing_media_files": "Auto locate missing media files",
         "popup_before_close": "Enable close confirmation popup",
         "log_song_usage": "Log song usage to a file",

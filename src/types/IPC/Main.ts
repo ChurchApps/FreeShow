@@ -249,7 +249,7 @@ export interface MainSendPayloads {
     [Main.GET_LYRICS]: { song: LyricSearchResult }
     [Main.SEARCH_LYRICS]: { artist: string; title: string }
     [Main.RESTORE]?: { path: string }
-    [Main.RECORDER]: { blob: ArrayBuffer; name: string }
+    [Main.RECORDER]: { blob: ArrayBuffer; name: string; path?: string }
     [Main.SYSTEM_OPEN]: string
 
     [Main.LOCATE_MEDIA_FILE]: { filePath: string; folders: string[] }

@@ -1,10 +1,11 @@
 <script lang="ts">
     import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio, isAllAudioFading } from "../../../audio/audioFading"
-    import { activeAudioEffects, activePopup, special } from "../../../stores"
+    import { activeAudioEffects, activePopup, dataPath, special } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialFolderPicker from "../../inputs/MaterialFolderPicker.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import { VideoPlayer } from "../../media/video/videoPlayer"
@@ -13,6 +14,18 @@
 
     // export let optionsOpen: boolean
     let settingsOpened = false
+
+    $: sep = $dataPath?.includes("\\") ? "\\" : "/"
+    $: defaultRecordingsPath = $dataPath ? `${$dataPath.replace(/[/\\]$/, "")}${sep}Recordings` : ""
+    $: recordingsPath = $special?.audioRecordingsPath || defaultRecordingsPath
+
+    function updateRecordingsPath(path: string) {
+        special.update((a) => {
+            if (!path || path === defaultRecordingsPath) delete a.audioRecordingsPath
+            else a.audioRecordingsPath = path
+            return a
+        })
+    }
 
     function updateSpecial(value, key) {
         special.update((a) => {
@@ -41,6 +54,8 @@
         <!-- <MaterialToggleSwitch label="audio.allow_gaining" checked={$special.allowGaining || false} on:change={(e) => updateSpecial(e.detail, "allowGaining")} /> -->
         <!-- ReplayGain enabled always as it uses audio metadata info -->
         <!-- <MaterialToggleSwitch label="ReplayGain" checked={$special.replayGain || false} on:change={(e) => updateSpecial(e.detail, "replayGain")} /> -->
+
+        <MaterialFolderPicker label="settings.recordings_path" value={recordingsPath} allowEmpty={!!$special?.audioRecordingsPath} on:change={(e) => updateRecordingsPath(e.detail)} />
 
         <MaterialButton variant="outlined" style="width: 100%;margin-top: 10px;" on:click={() => activePopup.set("now_playing")}>
             <Icon id="document" />
