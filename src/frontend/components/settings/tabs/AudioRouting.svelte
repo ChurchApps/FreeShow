@@ -435,6 +435,17 @@
         const isChannel = (id: string) => channelsList.some((m) => m.id === id)
         const isOutput = (id: string) => fixedOutputs.some((o) => o.id === id) || id.startsWith("speaker_sub_") || id.startsWith("network_sub_")
 
+        // Channel-to-channel ducking (cannot connect to self)
+        if (isChannel(fromId) && isChannel(toId) && fromId !== toId) {
+            const isDucking = dragStartPortType === "ducking" || hoverTargetPortType === "ducking"
+            if (isDucking) {
+                // If dragging from ducking port, target channel is the source (from), dragging channel is target (to)
+                if (dragStartPortType === "ducking") return { valid: true, from: toId, to: fromId }
+                // Otherwise dragging from channel out to channel ducking port
+                return { valid: true, from: fromId, to: toId }
+            }
+        }
+
         if ((isInput(fromId) && isChannel(toId)) || (isChannel(fromId) && isOutput(toId))) {
             return { valid: true, from: fromId, to: toId }
         }
@@ -465,6 +476,16 @@
                     }
 
                     if (isDucking) {
+                        // cannot connect to itself (should already be prevented by isValidConnection)
+                        if (fromId === toId) return
+
+                        // Prevent mutual / circular ducking loops
+                        const isCircular = c.connections.some((conn) => conn.from === toId && conn.to === fromId && conn.type === "ducking")
+                        if (isCircular) {
+                            newToast("Cannot create circular ducking.")
+                            return
+                        }
+
                         const existingIdx = c.connections.findIndex((conn) => conn.from === fromId && conn.to === toId && conn.type === "ducking")
                         if (existingIdx !== -1) {
                             c.connections.splice(existingIdx, 1)
@@ -525,11 +546,20 @@
                                 }
                             }
 
-                            if (isSpecificCircle) c.connections.push({ from: fromId, to: toId, channelIndex: targetChIndex })
-                            else c.connections.push({ from: fromId, to: toId })
+                            if (isSpeakerSub) {
+                                c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to === "speaker_default"))
+                            }
+
+                            c.connections.push({
+                                from: fromId,
+                                to: toId,
+                                ...(isSpeakerSub ? { channelIndex: targetChIndex } : {})
+                            })
                         }
                     }
                 })
+
+                tick().then(updateConnectionLines)
             }
         }
 
@@ -537,18 +567,25 @@
         dragStartId = null
         dragStartType = null
         dragStartPortType = null
+        dragFromPos = { x: 0, y: 0 }
+        dragCurrentPos = { x: 0, y: 0 }
         hoverTargetId = null
         hoverTargetPortEl = null
         hoverTargetPortType = null
+
         isPanning = false
+        startPanMouse = { x: 0, y: 0 }
+        startScroll = { left: 0, top: 0 }
     }
 
     function removeConnection(fromId: string, toId: string, type?: "audio" | "ducking") {
         updateConfig((c) => {
             c.connections = c.connections.filter((conn) => {
-                if (conn.from !== fromId || conn.to !== toId) return true
-                if (type && (conn.type || "audio") !== type) return true
-                return false
+                if (conn.from === fromId && conn.to === toId) {
+                    if (type && (conn.type || "audio") !== type) return true
+                    return false
+                }
+                return true
             })
         })
     }
@@ -571,14 +608,18 @@
     }
 
     function handleNodeMouseEnter(nodeId: string, columnType: "input" | "channel" | "output") {
-        if (!isConnecting) return
+        if (!isConnecting || nodeId === dragStartId) return
 
         let valid = false
         if (dragStartType === "input" && columnType === "channel") valid = true
         else if (dragStartType === "output" && columnType === "channel") valid = true
         else if (dragStartType === "channel") {
-            if ((dragStartPortType === "in" || dragStartPortType === "ducking") && columnType === "input" && nodeId !== "output_window") valid = true
-            else if (dragStartPortType === "out" && columnType === "output" && nodeId !== "network_default") valid = true
+            if (dragStartPortType === "in" && columnType === "input" && nodeId !== "output_window") valid = true
+            else if (dragStartPortType === "ducking" && columnType === "channel") valid = true
+            else if (dragStartPortType === "out") {
+                if (columnType === "output" && nodeId !== "network_default") valid = true
+                else if (columnType === "channel") valid = true
+            }
         }
 
         if (valid) {
@@ -645,8 +686,15 @@
                     {@const isDisabled = sourceNode?.isEnabled === false}
                     {@const isHighlighted = isLineConnectedToPort(line, activeHoverPort)}
                     {@const isDimmed = activeHoverPort !== null && !isHighlighted}
-                    {@const dx = Math.max(20, Math.abs(line.x2 - line.x1) / 2)}
-                    <path d="M {line.x1} {line.y1} C {line.x1 + dx} {line.y1}, {line.x2 - dx} {line.y2}, {line.x2} {line.y2}" stroke={strokeColor} class="connection-path" class:ducking-path={line.type === "ducking"} class:disabled={isDisabled} class:highlighted={isHighlighted} class:dimmed={isDimmed} style={isHighlighted ? "z-index: 10;" : isDimmed ? "z-index: 1;" : ""} on:dblclick={() => removeConnection(line.fromId, line.toId, line.type)} />
+
+                    {@const isDucking = line.type === "ducking"}
+                    {@const isBackward = isDucking && line.x1 >= line.x2}
+                    {@const dy = Math.abs(line.y2 - line.y1)}
+                    {@const dx = isBackward ? Math.max(120, dy * 0.7) : Math.max(20, Math.abs(line.x2 - line.x1) / 2)}
+                    {@const c1x = isBackward ? line.x1 + dx : line.x1 + dx}
+                    {@const c2x = isBackward ? line.x2 - dx : line.x2 - dx}
+
+                    <path d="M {line.x1} {line.y1} C {c1x} {line.y1}, {c2x} {line.y2}, {line.x2} {line.y2}" stroke={strokeColor} class="connection-path" class:ducking-path={isDucking} class:disabled={isDisabled} class:highlighted={isHighlighted} class:dimmed={isDimmed} style={isHighlighted ? "z-index: 10;" : isDimmed ? "z-index: 1;" : isDucking ? "z-index: 4;" : ""} on:dblclick={() => removeConnection(line.fromId, line.toId, line.type)} />
                 {/each}
 
                 {#if isConnecting && dragStartId}
@@ -655,10 +703,11 @@
                     {@const dragSourceNode = dragColNodes.find((n) => n.id === dragStartId)}
                     {@const dragNodeIndex = dragColNodes.findIndex((n) => n.id === dragStartId)}
                     {@const dragHue = (275 + (dragNodeIndex >= 0 ? dragNodeIndex : 0) * 6) % 360}
-                    {@const dragColor = dragStartPortType === "ducking" ? "#f59e0b" : dragSourceNode?.color || `hsl(${dragHue}, 80%, 65%)`}
+                    {@const isDragDucking = dragStartPortType === "ducking" || hoverTargetPortType === "ducking"}
+                    {@const dragColor = isDragDucking ? "#f59e0b" : dragSourceNode?.color || `hsl(${dragHue}, 80%, 65%)`}
                     {@const dx = Math.max(20, Math.abs(dragCurrentPos.x - dragFromPos.x) / 2)}
                     {@const sign = dragStartPortType === "out" ? 1 : -1}
-                    <path d="M {dragFromPos.x} {dragFromPos.y} C {dragFromPos.x + dx * sign} {dragFromPos.y}, {dragCurrentPos.x - dx * sign} {dragCurrentPos.y}, {dragCurrentPos.x} {dragCurrentPos.y}" stroke={dragColor} class="drag-path" />
+                    <path d="M {dragFromPos.x} {dragFromPos.y} C {dragFromPos.x + dx * sign} {dragFromPos.y}, {dragCurrentPos.x - dx * sign} {dragCurrentPos.y}, {dragCurrentPos.x} {dragCurrentPos.y}" stroke={dragColor} class="drag-path" style={isDragDucking ? "z-index: 5;" : ""} />
                 {/if}
             </svg>
 

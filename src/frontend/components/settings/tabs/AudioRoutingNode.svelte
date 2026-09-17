@@ -67,8 +67,8 @@
     $: hasInPort = nodeType !== "input" && (type !== "network" || isSubNode) && (!isSubNode || nodeType === "output")
     $: hasOutPort = nodeType !== "output" && (type !== "output_window" || isSubNode)
 
-    $: hasValidPort = (dragStartType === "input" && hasInPort) || (dragStartType === "output" && hasOutPort) || (isStartChannel && ((dragStartPortType === "in" && hasOutPort) || (dragStartPortType === "out" && hasInPort) || (dragStartPortType === "ducking" && hasOutPort)))
-    $: isValidHover = isConnecting && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isStartChannel && (((dragStartPortType === "in" || dragStartPortType === "ducking") && isInputCol) || (dragStartPortType === "out" && isOutputCol))))
+    $: hasValidPort = (dragStartType === "input" && hasInPort) || (dragStartType === "output" && hasOutPort) || (isStartChannel && ((dragStartPortType === "in" && hasOutPort) || (dragStartPortType === "out" && (hasInPort || (isChannel && id !== dragStartId))) || (dragStartPortType === "ducking" && isChannel && id !== dragStartId && hasOutPort)))
+    $: isValidHover = isConnecting && id !== dragStartId && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isStartChannel && ((dragStartPortType === "in" && isInputCol) || (dragStartPortType === "out" && (isOutputCol || isChannel)) || (dragStartPortType === "ducking" && isChannel))))
 </script>
 
 <div
