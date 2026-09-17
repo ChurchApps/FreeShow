@@ -85,20 +85,7 @@
     style="{activeColor ? `--port-color: ${activeColor};` : ''}{channels > 1 ? `min-height: ${channels * 30}px;` : ''}"
 >
     {#if nodeType !== "input" && type !== "network" && !isSubNode}
-        <div
-            class="port port-in"
-            class:hasDuckingPort={isChannel}
-            on:mouseenter={(e) => {
-                onMouseEnterPort(e, "in")
-                onHoverPort(e, "in")
-            }}
-            on:mouseleave={() => {
-                onMouseLeavePort()
-                onHoverPortEnd()
-            }}
-            on:mousedown={(e) => onMouseDown(e, "in")}
-            on:contextmenu={(e) => onPortContextMenu(e, "in")}
-        ></div>
+        <!-- placed first so ::after area is under the main port -->
         {#if isChannel}
             <div
                 class="port port-ducking"
@@ -115,6 +102,21 @@
                 on:contextmenu={(e) => onPortContextMenu(e, "ducking")}
             ></div>
         {/if}
+
+        <div
+            class="port port-in"
+            class:hasDuckingPort={isChannel}
+            on:mouseenter={(e) => {
+                onMouseEnterPort(e, "in")
+                onHoverPort(e, "in")
+            }}
+            on:mouseleave={() => {
+                onMouseLeavePort()
+                onHoverPortEnd()
+            }}
+            on:mousedown={(e) => onMouseDown(e, "in")}
+            on:contextmenu={(e) => onPortContextMenu(e, "in")}
+        ></div>
     {/if}
 
     {#if isSubNode && nodeType === "output" && channels > 1}
@@ -347,12 +349,12 @@
         top: calc(50% - 6px);
     }
     .port-in.hasDuckingPort {
-        top: calc(50% - 13px);
+        top: calc(50% - 15px);
     }
 
     .port-ducking {
         left: -7px;
-        top: calc(50% + 3px);
+        top: calc(50% + 5px);
         border-radius: 4px;
         background: #f59e0b;
     }
