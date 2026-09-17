@@ -9,9 +9,10 @@ import { checkName, getCustomMetadata, getLabelId } from "../components/helpers/
 import { _show } from "../components/helpers/shows"
 import { linesToTextboxes } from "../components/show/formatTextEditor"
 import { VIRTUAL_BREAK_CHAR } from "../show/slides"
-import { activePopup, activeProject, activeShow, alertMessage, dictionary, drawerTabsData, formatNewShow, groupNumbers, groups, special, splitLines } from "../stores"
+import { activePopup, activeProject, activeShow, alertMessage, dictionary, drawerTabsData, formatNewShow, groups, special, splitLines } from "../stores"
 import { translateText } from "../utils/language"
 import { setTempShows } from "./importHelpers"
+import { findPatterns } from "./txtAutoSections"
 
 export function getQuickExample() {
     const tip = translateText("create_show.quick_lyrics_example_tip")
@@ -643,151 +644,31 @@ function fixText(text: string, formatText: boolean): string {
     return text
 }
 
-//
+// --- Match Helpers ---
 
-const similarityNum = 0.7
+export function similarity(s1: string, s2: string): number {
+    if (!s1.length && !s2.length) return 1.0
+    const maxLength = Math.max(s1.length, s2.length)
+    if (maxLength === 0) return 1.0
 
-function findPatterns(sections: string[], autoGroups: boolean) {
-    const similarCount: { matches: number[]; count: 0 }[] = []
-    // total count of totally different slides
-    let totalMatches = 0
-    sections.forEach(countMatchingSections)
-
-    // let totalMatches = similarCount.filter((a) => a > 0).length
-    let matches = 0
-    const stored: { type: string; text: string }[] = []
-    const indexes = similarCount.map(getIndexes)
-
-    return { sections, indexes }
-
-    function countMatchingSections(section: string, i: number) {
-        similarCount[i] = { matches: [], count: 0 }
-
-        const alreadyCounted = similarCount.find((a) => a.matches.includes(i))
-        if (alreadyCounted) {
-            similarCount[i] = alreadyCounted
-            return
-        }
-
-        sections.forEach(count)
-        if (similarCount[i].count > 0) totalMatches++
-
-        function count(b: string, j: number) {
-            if (i === j || similarityNum > similarity(section, b)) return
-            similarCount[i].count++
-            similarCount[i].matches.push(j)
-        }
-    }
-
-    function getIndexes(similar: { matches: number[]; count: 0 }, i: number): string {
-        // let lines = sections[i].split("\n")
-        const splitted: string[] = sections[i].split("\n").filter((a) => a.length)
-        if (!splitted.length) return "break"
-
-        const length: number = sections[i].replaceAll("\n", "").length
-
-        // Priority: Use explicit label match before checking for text similarity to respect musical structure
-        const rawName = splitted[0].replace(/[\[\]'":]+/g, "").trim()
-        const exactMatch = findGroupMatch(rawName)
-        if (exactMatch) return exactMatch
-
-        const find = stored.find((a) => similarity(a.text, sections[i]) > similarityNum)
-
-        // TODO: repeat x6
-        // TODO: labels in text
-        // TODO: frihet, the blessing
-        // verses repeat..., bridge repeat
-
-        // if (lines.length < 2) group =  "break"
-        if (find) return find.type
-
-        // TODO: group....
-        const name = getLabelId(splitted[0])
-        if (findGroupMatch(name)) return findGroupMatch(name) || name
-
-        // let textGroup: string = splitted[0].trim()[0] === "[" && splitted[0].includes("]") ? splitted[0].slice(splitted[0].indexOf("[") + 1, splitted[0].indexOf("]")) : ""
-
-        // TODO: remove numbers....
-        if ((splitted[0].match(/\[[^\]]*]/g)?.[0] || "").length === splitted[0].length || splitted[0].trim()[splitted[0].length - 1] === ":") {
-            return splitted[0]
-                .replace(/[\[\]'":]+/g, "") // []'":
-                .replace(/x[0-9]/g, "") // x0-9
-                .replace(/[0-9]/g, "") // 0-9
-                .trim()
-        }
-
-        // if (length < 10 && !sections[i].includes("\n")) return sections[i].trim()
-        if (autoGroups) {
-            if (length < 30 || linesSimilarity(sections[i])) return "tag"
-
-            const cleanGroup = get(groupNumbers) ? splitted[0].replace(/\d+/g, "").trim() : splitted[0].trim()
-            const matchedGroup = findGroupMatch(cleanGroup)
-            if (splitted[0].length < 8 && splitted[1]?.length > 20 && !/[,.!?-]/.test(splitted[0]) && matchedGroup) {
-                sections[i] = splitted.slice(1, splitted.length).join("\n")
-                return matchedGroup
-            }
-
-            if (similar.count > 0) {
-                const globalGroups = ["pre_chorus", "chorus", "bridge", "bridge", "bridge"]
-                matches++
-                let group = globalGroups[matches]
-                if (totalMatches > 2) group = globalGroups[matches - 1] || "other"
-                stored.push({ type: group, text: sections[i] })
-                return group
-            }
-        }
-
-        return "verse"
-    }
+    return (maxLength - editDistance(s1, s2)) / maxLength
 }
 
-function linesSimilarity(text: string): boolean {
-    const lines = text.split("\n")
-    if (lines.length < 3) return false
-    let isSimilar = false
-    lines.reduce((a: string, b: string) => {
-        if (similarity(a, b) > 0.95) isSimilar = true
-        return ""
-    })
-    return isSimilar
-}
+function editDistance(s1: string, s2: string): number {
+    const str1 = s1.toLowerCase()
+    const str2 = s2.toLowerCase()
+    const costs: number[] = Array.from({ length: str2.length + 1 }, (_, i) => i)
 
-// https://stackoverflow.com/questions/10473745/compare-strings-javascript-return-of-likely
-export function similarity(s1: string, s2: string) {
-    let longer = s1
-    let shorter = s2
-    if (s1.length < s2.length) {
-        longer = s2
-        shorter = s1
-    }
-    const longerLength: number = longer.length
-    if (longerLength === 0) {
-        return 1.0
-    }
-    return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength.toString())
-}
-
-function editDistance(s1: string, s2: string) {
-    s1 = s1.toLowerCase()
-    s2 = s2.toLowerCase()
-
-    const costs: number[] = []
-    for (let i = 0; i <= s1.length; i++) {
+    for (let i = 1; i <= str1.length; i++) {
         let lastValue = i
-        for (let j = 0; j <= s2.length; j++) {
-            if (i === 0) costs[j] = j
-            else {
-                if (j > 0) {
-                    let newValue = costs[j - 1]
-                    if (s1.charAt(i - 1) !== s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1
-                    costs[j - 1] = lastValue
-                    lastValue = newValue
-                }
-            }
+        for (let j = 1; j <= str2.length; j++) {
+            const newValue = str1[i - 1] === str2[j - 1] ? costs[j - 1] : Math.min(costs[j - 1], lastValue, costs[j]) + 1
+            costs[j - 1] = lastValue
+            lastValue = newValue
         }
-        if (i > 0) costs[s2.length] = lastValue
+        costs[str2.length] = lastValue
     }
-    return costs[s2.length]
+    return costs[str2.length]
 }
 
 export function findGroupMatch(group: string): string {
@@ -807,13 +688,8 @@ export function findGroupMatch(group: string): string {
     const allGroups = get(groups)
     if (allGroups[searchLabel]) return searchLabel
 
-    let customMatchId = ""
-    Object.entries(allGroups).forEach(([id, config]: [string, any]) => {
-        if (config.name && config.name.toLowerCase() === searchLabel) {
-            customMatchId = id
-        }
-    })
-    if (customMatchId) return customMatchId
+    const customMatch = Object.entries(allGroups).find(([_, config]: [string, any]) => config.name?.toLowerCase() === searchLabel)
+    if (customMatch) return customMatch[0]
 
     let groupMatch = ""
     Object.entries(get(dictionary).groups || {}).forEach(([id, value]) => {
