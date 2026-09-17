@@ -19,7 +19,11 @@ export function findPatterns(sections: string[], autoGroups: boolean) {
     })
 
     const primaryChorusIndex = findPrimaryChorusIndex(sections, similarCount)
-    const indexes = similarCount.map((similar, i) => analyzeSection(similar, i))
+    const detectedIndexes = similarCount.map((similar, i) => analyzeSection(similar, i))
+
+    // if all slides has the same group, set to "verse"
+    const uniqueGroups = new Set(detectedIndexes)
+    const indexes = uniqueGroups.size === 1 ? detectedIndexes.map(() => "verse") : detectedIndexes
 
     return { sections, indexes }
 
