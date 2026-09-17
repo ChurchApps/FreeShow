@@ -5,12 +5,13 @@ import type { HistoryPages } from "../../../types/History"
 import { Main } from "../../../types/IPC/Main"
 import type { MediaStyle, Selected, SelectIds } from "../../../types/Main"
 import type { Item, LayoutRef, SlideData } from "../../../types/Show"
+import { AudioPlayer } from "../../audio/audioPlayer"
+import { duplicateEffectInStack, removeEffectFromStack } from "../../audio/effects/audioEffectsHelpers"
 import { ShowObj } from "../../classes/Show"
 import { markItemsAsPlayed } from "../../converters/project"
 import { sendMain } from "../../IPC/main"
 import { cameraManager } from "../../media/cameraManager"
 import { changeSlideGroups, mergeSlides, mergeTextboxes, splitItemInTwo, VIRTUAL_BREAK_CHAR } from "../../show/slides"
-import { duplicateEffectInStack, removeEffectFromStack } from "../../audio/effects/audioEffectsHelpers"
 import {
     $,
     actions,
@@ -32,6 +33,7 @@ import {
     activeTimers,
     activeTimerTagFilter,
     activeVariableTagFilter,
+    audioChannelsData,
     audioFolders,
     categories,
     cloudSyncData,
@@ -2048,6 +2050,20 @@ const clickActions = {
                 history({ id: "UPDATE", newData: { data: currentProfile }, oldData: { id }, location: { page: "settings", id: "settings_profile" } })
             })
 
+            return
+        }
+
+        if (obj.contextElem?.classList?.contains("#audio_channel_mixer")) {
+            const channelId = obj.contextElem.id
+            if (channelId) {
+                audioChannelsData.update((a) => {
+                    if (!a[channelId]) a[channelId] = {}
+                    a[channelId].volume = 1
+                    a[channelId].isMuted = false
+                    return a
+                })
+                AudioPlayer.updateVolume()
+            }
             return
         }
     }
