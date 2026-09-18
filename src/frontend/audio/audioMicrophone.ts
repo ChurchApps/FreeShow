@@ -4,8 +4,9 @@ import { sendMain } from "../IPC/main"
 import { outLocked } from "../stores"
 import { AudioAnalyser } from "./audioAnalyser"
 import { clearAudio } from "./audioFading"
-import { AudioInputCapture } from "./routing/audioInputCapture"
 import { AudioPlayer } from "./audioPlayer"
+import { MIN_DB } from "./dBUtils"
+import { AudioInputCapture } from "./routing/audioInputCapture"
 
 type AudioMetadata = {
     name: string
@@ -75,7 +76,7 @@ export class AudioMicrophone {
         const data = AudioInputCapture.getInstance().getVisualizerData(id)
         if (data && typeof data.db === "number") return data.db
         if (data && data.channels?.[0]) return data.channels[0].db
-        return -60
+        return MIN_DB
     }
 
     static async getList() {

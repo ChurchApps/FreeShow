@@ -3,7 +3,6 @@ import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
 import type { Output, Outputs, RtmpDestination } from "../../../types/Output"
-import { createDestination, hasStreamableDestination } from "./rtmpDestinations"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, LayoutRef, Media, OutSlide, Show, Slide, SlideData, Template, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
@@ -24,6 +23,7 @@ import { VideoPlayer } from "../media/video/videoPlayer"
 import { clearBackground, clearSlide } from "../output/clear"
 import { areObjectsEqual, clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
 import { getExtension, getFileName, getMediaLayerType, getMediaType, removeExtension } from "./media"
+import { createDestination, hasStreamableDestination } from "./rtmpDestinations"
 import { getLayoutRef } from "./show"
 import { getFewestOutputLines, getItemWithMostLines } from "./showActions"
 import { _show } from "./shows"
@@ -527,6 +527,23 @@ export function findMatchingOut(id: string, updater: Outputs = get(outputs)): st
     return match
 }
 
+export function getFirstOutputIdWithBackground(outputIds: string[] = [], _updater: any = null) {
+    if (!outputIds.length) outputIds = getAllNormalOutputs().map((a) => a.id)
+
+    return (
+        outputIds.find((id) => {
+            const output = get(outputs)[id]
+            if (!output || output.stageOutput) return false
+
+            const style = get(styles)[output.style || ""]
+            let layers = style?.layers
+            if (!Array.isArray(layers)) layers = ["background"]
+
+            return layers.includes("background")
+        }) || null
+    )
+}
+
 // used for checking if style template should be used as slide preview - only if all outputs have it
 export function allOutputsHasStyleTemplate(isScripture: boolean = false) {
     const outputs = getAllNormalOutputs()
@@ -1020,7 +1037,7 @@ export function changeStageOutputLayout(data: API_stage_output_layout) {
 
 //             // if (!AudioAnalyser.shouldAnalyse()) {
 //             //     // wait for video to clear in output
-//             //     setTimeout(() => AudioAnalyserMerger.stop(), 5000)
+//             //     setTimeout(() => AudioPlayer.stopCheckLoop(), 5000)
 //             // }
 
 //             // send(OUTPUT, ["UPDATE_VIDEO"], { id: clearOutput, data: videoData, time: 0 })
@@ -1718,7 +1735,7 @@ export function getOutputLines(outSlide: OutSlide, styleLines = 0) {
             .get()[0] || null
     const maxLines = showSlide ? getItemWithMostLines(showSlide) : 0
 
-    const clickRevealItems = (showSlide?.items || []).filter((a) => a?.clickReveal)
+    const clickRevealItems = Array.isArray(showSlide?.items) ? showSlide.items.filter((a) => a?.clickReveal) : []
     const clickRevealed = clickRevealItems.length ? !!outSlide.itemClickReveal : true
 
     if (!maxLines) return { start: null, end: null, clickRevealed } // , index: 0, max: 0
@@ -1789,10 +1806,20 @@ export function getMetadata(show: Show | undefined, currentStyle: Styles, outSli
     const display = metadataValues.display || "never"
     if (typeof display !== "string" || display === "never") return null
 
+    const shouldDisplay = (slideRef: any) => {
+        // ignore disabled slides
+        if (!slideRef || slideRef.data?.disabled) return false
+        if (!metadataValues.ignoreEmpty) return true
+
+        // needs to have text content
+        const slide = show.slides?.[slideRef.id]
+        return !!slide?.items?.some((item) => item.lines?.some((line) => line.text?.some((text) => text.value?.length)))
+    }
+
     const ref = clone(_show(outSlide.id).layouts([outSlide.layout]).ref()[0] || [])
-    const firstActiveSlideIndex = ref.findIndex((a) => !a.data.disabled)
-    const lastActiveSlideIndex = ref.length - 1 - [...ref].reverse().findIndex((a) => !a.data.disabled)
-    const displayMetadata = display === "always" || (display.includes("first") && outSlide?.index === firstActiveSlideIndex) || (display.includes("last") && outSlide?.index === lastActiveSlideIndex)
+    const firstActiveSlideIndex = ref.findIndex(shouldDisplay)
+    const lastActiveSlideIndex = ref.length - 1 - [...ref].reverse().findIndex(shouldDisplay)
+    const displayMetadata = (display === "always" && shouldDisplay(ref[outSlide.index ?? -1])) || (display.includes("first") && outSlide?.index === firstActiveSlideIndex) || (display.includes("last") && outSlide?.index === lastActiveSlideIndex)
     if (!displayMetadata) return null
 
     // template

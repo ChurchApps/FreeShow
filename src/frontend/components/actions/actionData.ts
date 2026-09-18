@@ -59,8 +59,6 @@ export const actionData = {
     // id_select_output_style: { name: "actions.id_select_output_style", icon: "styles", input: "id" },
     change_output_style: { slideId: "outputStyle", common: true, canAddMultiple: true, name: "actions.change_output_style", icon: "styles", input: "change_output_style" },
     change_transition: { name: "actions.change_transition", icon: "transition", input: "transition" },
-    mute_output: { name: "output.mute", icon: "muted", input: "id" },
-    unmute_output: { name: "output.unmute", icon: "volume", input: "id" },
 
     // STAGE
     // SECTION: "menu.stage",
@@ -68,7 +66,8 @@ export const actionData = {
     id_select_stage_layout: { name: "actions.id_change_stage_layout", icon: "stage", input: "id" },
 
     // AUDIO
-    change_volume: { SECTION: "tabs.audio", name: "actions.change_volume", icon: "volume", input: "volume" },
+    change_volume: { SECTION: "tabs.audio", canAddMultiple: true, name: "actions.change_volume", icon: "volume", input: "volume" },
+    mute: { canAddMultiple: true, name: "actions.mute", icon: "muted", input: "mute" },
     start_audio_stream: { slideId: "audioStream", common: true, name: "actions.start_audio_stream", icon: "audio_stream", input: "id" },
     toggle_audio_recording: { canAddMultiple: true, name: "actions.toggle_specific", replace: ["recording"], icon: "record", input: "toggle_channel_recording" },
     toggle_icecast: { name: "actions.toggle_specific", replace: ["Icecast"], icon: "cloud", input: "toggle" },
@@ -123,6 +122,9 @@ export const actionData = {
     spotify_fade_out: { name: "Spotify: media.fade_out", icon: "clear" },
     spotify_next: { name: "Spotify: media.next", icon: "nextFull" },
     spotify_previous: { name: "Spotify: media.previous", icon: "previousFull" },
+
+    // Smart
+    smart_toggle_stt: { SECTION: "settings.ai", name: "actions.toggle_specific", replace: ["STT"], icon: "mic", input: "toggle" },
 
     // OTHER
     toggle_log_song_usage: { SECTION: "settings.other", name: "settings.log_song_usage", icon: "history", input: "toggle" },

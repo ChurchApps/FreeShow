@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from "svelte"
     import type { ContentFile, ContentLibraryCategory } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
-    import { requestMain, sendMain } from "../../../IPC/main"
+    import { sendMain } from "../../../IPC/main"
     import { activeCanvaPresentation, mediaOptions, providerConnections } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -15,7 +15,7 @@
 
     onMount(() => {
         if (!$providerConnections.canva) {
-            requestMain(Main.PROVIDER_STARTUP_LOAD, { providerId: "canva", scope: "folder:read design:content:read design:meta:read" })
+            sendMain(Main.PROVIDER_STARTUP_LOAD, { providerId: "canva", scope: "folder:read design:content:read design:meta:read" })
         }
     })
 

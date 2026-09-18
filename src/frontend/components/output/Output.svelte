@@ -212,9 +212,11 @@
     let lines: { [key: string]: { start: number | null; end: number | null; linesStart?: number | null; linesEnd?: number | null; clickRevealed?: boolean } } = {}
     $: currentLineId = slide?.id
     const updateLinesTime = $currentWindow === "output" ? 50 : 10
+    let linesTimeout: NodeJS.Timeout | null = null
     $: if (currentLineId) {
         // don't update until all outputs has updated their "line" value
-        setTimeout(() => {
+        if (linesTimeout) clearTimeout(linesTimeout)
+        linesTimeout = setTimeout(() => {
             lines[currentLineId] = getOutputLines(slide!, currentStyle.lines) // , currentSlide
         }, updateLinesTime)
     }
@@ -245,7 +247,11 @@
     $: slideAnimation = slideData?.actions?.animate || null
 
     $: if (slide) stopAnimation()
-    onDestroy(stopAnimation)
+    onDestroy(() => {
+        stopAnimation()
+        if (linesTimeout) clearTimeout(linesTimeout)
+        if (slideTimeout) clearTimeout(slideTimeout)
+    })
     function stopAnimation() {
         animationData = {}
         currentAnimationId = ""
@@ -324,12 +330,14 @@
     let actualCurrentSlide: Slide | null = null
     let actualCurrentLineId: string | undefined = undefined
     let isSlideClearing = false
+    let slideTimeout: NodeJS.Timeout | null = null
     function updateSlide() {
         // update clearing variable before setting slide value (used for conditions to not show up again while clearing)
         const slideActive = layers.includes("slide")
         isSlideClearing = !slide || !slideActive
 
-        setTimeout(
+        if (slideTimeout) clearTimeout(slideTimeout)
+        slideTimeout = setTimeout(
             () => {
                 actualSlide = slideActive ? clone(slide) : null
                 actualSlideData = clone(slideData)

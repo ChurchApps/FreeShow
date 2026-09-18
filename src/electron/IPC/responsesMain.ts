@@ -35,7 +35,7 @@ import { downloadFfmpeg, resolveFfmpegPath } from "../streaming/ffmpegManager"
 import { processAudioData, timecodeStart, timecodeStop, updateTimecodeValue } from "../timecode/timecode"
 import { apiReturnData, emitOSC, startWebSocketAndRest, stopApiListener } from "../utils/api"
 import { closeMain } from "../utils/close"
-import { addToMediaFolder, bundleMediaFiles, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShowsAsync, locateMediaFile, openInSystem, readExifData, readFile, readFolder, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
+import { addToMediaFolder, bundleMediaFiles, createFolder, getDataFolderPath, getDataFolderRoot, getFileInfo, getMediaCodec, getMediaSyncFolderPath, getMediaTracks, getPaths, getSimularPaths, loadFile, loadShowsAsync, locateMediaFile, openInSystem, readExifData, readFile, readFolder, readFolderContent, selectFiles, selectFilesDialog, selectFolder, setMediaSyncFolderPath, writeFile } from "../utils/files"
 import { listGraphicsDevices } from "../utils/gpu"
 import { getMachineId } from "../utils/helpers"
 import { LyricSearch } from "../utils/LyricSearch"
@@ -193,6 +193,7 @@ export const mainResponses: MainResponses = {
         if (data.cloudOnly) markAsNewSync()
         await ContentProviderRegistry.loadServices(data.providerId, data.cloudOnly || false, data.data)
     },
+    [Main.PROVIDER_CONNECTIONS]: () => ContentProviderRegistry.getConnectedProviders(),
     [Main.PROVIDER_DISCONNECT]: (data) => {
         ContentProviderRegistry.disconnect(data.providerId, data.scope)
         return { success: true }
@@ -203,6 +204,9 @@ export const mainResponses: MainResponses = {
     [Main.PCO_LOAD_PLAN]: (data) => ContentProviderRegistry.loadSinglePlan(data.serviceTypeId, data.planId),
     [Main.PCO_LIVE_GET]: (data) => ContentProviderRegistry.getPcoLiveData(data.serviceTypeId, data.planId).catch(() => null),
     [Main.PCO_PUSHER_AUTH]: (data) => ContentProviderRegistry.getPcoPusherAuth(data.socketId, data.channelName, data.serviceTypeId),
+    [Main.ONSTAGE_GET_TEAMS]: () => ContentProviderRegistry.getOnStageTeams().catch(() => []),
+    [Main.ONSTAGE_SWITCH_TEAM]: (data) => ContentProviderRegistry.switchOnStageTeam(data.teamId).catch(() => ({ success: false })),
+    [Main.ONSTAGE_LOAD_SERVICE]: (data) => ContentProviderRegistry.loadOnStageService(data.serviceId, data.data),
     // Content Library
     [Main.GET_CONTENT_PROVIDERS]: () => {
         const providers = ContentProviderRegistry.getAvailableProviders()
@@ -454,8 +458,8 @@ function getScreens(type: "window" | "screen" = "screen"): Promise<{ name: strin
 // RECORDER
 // only open once per session
 let systemOpened = false
-export function saveRecording(data: { blob: ArrayBuffer; name: string }) {
-    const folder = getDataFolderPath("recordings")
+export function saveRecording(data: { blob: ArrayBuffer; name: string; path?: string }) {
+    const folder = data.path ? createFolder(data.path) : getDataFolderPath("recordings")
     const filePath = path.join(folder, data.name)
 
     const buffer = Buffer.from(data.blob)

@@ -35,7 +35,7 @@
 <OutputTransition {transition} inTransition={transition.in} outTransition={transition.out} on:outrostart={() => (fadingOut = true)}>
     {#if type === "media"}
         <!-- on:ended={videoEnded} -->
-        <Media {outputId} path={id} {data} {animationStyle} {mirror} {mediaStyle} on:loaded />
+        <Media {outputId} path={id} {data} {animationStyle} {mirror} {mediaStyle} {fadingOut} on:loaded />
     {:else if type === "screen"}
         <Window {id} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "ndi"}

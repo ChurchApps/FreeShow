@@ -26,55 +26,71 @@ export class SpeechToText {
         const operationId = ++this.sessionToken
 
         const captured = await this.restartCapture(operationId)
-        if (operationId !== this.sessionToken) return { ok: false }
+        if (operationId !== this.sessionToken) {
+            this.stopCapture()
+            return { ok: false, aborted: true }
+        }
         if (!captured.ok) return captured
 
         const started = await this.restartEngine(operationId)
         if (operationId !== this.sessionToken) {
             this.stopCapture()
-            return { ok: false }
+            return { ok: false, aborted: true }
         }
 
-        if (!started.ok) this.stopCapture()
-        return started
+        if (!started.ok) {
+            this.stopCapture()
+            return started
+        }
+
+        return { ok: true }
     }
 
     static async restartEngine(operationId?: number) {
+        const token = operationId ?? ++this.sessionToken
         const engine = resolveSttEngine()
         const engineOptions = get(ai)?.stt?.engineOptions?.[engine] || {}
 
         const result = await requestMain(Main.AI_LISTEN_START, { engine, engineOptions }, undefined, 60000)
 
-        if (operationId && operationId !== this.sessionToken) return { ok: false }
+        if (token !== this.sessionToken) return { ok: false, aborted: true }
         if (!result?.started) return { ok: false, error: result?.error }
 
         return { ok: true }
     }
 
     static async restartCapture(operationId?: number) {
+        const token = operationId ?? ++this.sessionToken
         this.stopCapture()
 
         const savedDeviceId = get(ai).stt?.micDeviceId || ""
         const deviceId = await this.resolveMicDeviceId(savedDeviceId)
 
-        if (operationId && operationId !== this.sessionToken) return { ok: false }
+        if (token !== this.sessionToken) return { ok: false, aborted: true }
 
+        // Mute store update during initialization to avoid re-triggering component reactivity loop
         if (deviceId && deviceId !== savedDeviceId) {
-            ai.update((a) => ({ ...a, stt: { ...a.stt, micDeviceId: deviceId } }))
+            const currentAi = get(ai)
+            if (currentAi?.stt) {
+                currentAi.stt.micDeviceId = deviceId
+            }
         }
 
         const stream = await this.getMicStream(deviceId)
-        if (operationId && operationId !== this.sessionToken) {
+        if (token !== this.sessionToken) {
             stream?.getTracks().forEach((track) => track.stop())
-            return { ok: false }
+            return { ok: false, aborted: true }
         }
 
         if (!stream) return { ok: false, error: "No microphone access" }
 
         this.stream = stream
-        const ac = await this.captureAudioContext(stream, operationId)
+        const ac = await this.captureAudioContext(stream, token)
 
-        if (operationId && operationId !== this.sessionToken) return { ok: false }
+        if (token !== this.sessionToken) {
+            this.stopCapture()
+            return { ok: false, aborted: true }
+        }
 
         if (!ac) return { ok: false, error: "Could not create audio context" }
 
@@ -116,10 +132,8 @@ export class SpeechToText {
 
         for (let attempt = 0; attempt < retries; attempt++) {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints })
-                return stream
+                return await navigator.mediaDevices.getUserMedia({ audio: audioConstraints })
             } catch (err: any) {
-                // Hardware lock during fast reset: pause and try again
                 if (err?.name === "NotReadableError" && attempt < retries - 1) {
                     console.warn(`[AI STT] Mic hardware busy, retrying (${attempt + 1}/${retries})...`)
                     await new Promise((resolve) => setTimeout(resolve, delayMs))
@@ -186,38 +200,20 @@ export class SpeechToText {
 
     private static startLevelMonitoring(ac: AudioContext, analyser: AnalyserNode) {
         const dataArray = new Uint8Array(analyser.frequencyBinCount)
-        let clippedFrames = 0,
-            checkedFrames = 0,
-            lastWarnAt = 0
 
         const updateLevel = () => {
             if (!this.analyserNode || !this.ac || this.ac !== ac || ac.state === "closed") return
 
             analyser.getByteTimeDomainData(dataArray)
-            let sum = 0,
-                clipped = false
+            let sum = 0
 
             for (const byte of dataArray) {
-                if (byte === 0 || byte === 255) clipped = true
                 const sample = (byte - 128) / 128
                 sum += sample * sample
             }
 
             const rms = Math.sqrt(sum / dataArray.length)
             this.emitAudioLevel(Math.min(1.0, Math.round(rms * 4.5 * 100) / 100))
-
-            checkedFrames++
-            if (clipped) clippedFrames++
-
-            if (checkedFrames >= 120) {
-                const now = Date.now()
-                if (clippedFrames > checkedFrames * 0.05 && now - lastWarnAt > 30000) {
-                    lastWarnAt = now
-                    console.warn("[AI STT] input clipping detected.")
-                }
-                clippedFrames = 0
-                checkedFrames = 0
-            }
 
             this.animFrameId = requestAnimationFrame(updateLevel)
         }

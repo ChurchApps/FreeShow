@@ -8,7 +8,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import Center from "../../system/Center.svelte"
-    import { copyDate, getTime, isBetween, isSameDay } from "./calendar"
+    import { copyDate, endsMidnightNextDay, getTime, isBetween, isSameDay } from "./calendar"
     import { isCalendarHidden } from "./calendars"
 
     export let type = "event"
@@ -72,7 +72,7 @@
                                     {getTime(new Date(event.from))}
                                 {/if}
                                 {#if type !== "action" && (!isSameDay(new Date(event.from), current) || new Date(event.to).getTime() > new Date(event.from).getTime())}
-                                    {#if isSameDay(new Date(event.to), current)}
+                                    {#if isSameDay(new Date(event.to), current) || endsMidnightNextDay(current, new Date(event.to))}
                                         {#if isSameDay(new Date(event.from), current)}
                                             -
                                         {/if}

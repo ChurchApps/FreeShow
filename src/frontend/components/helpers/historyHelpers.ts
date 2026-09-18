@@ -65,7 +65,7 @@ export const _updaters = {
         store: projects,
         empty: EMPTY_PROJECT,
         initialize: (data) => {
-            return replaceEmptyValues(data, { name: getProjectName(), created: Date.now(), modified: Date.now(), used: Date.now() })
+            return replaceEmptyValues(data, { name: getProjectName(data.parent), created: Date.now(), modified: Date.now(), used: Date.now() })
         },
         select: (id: string, { data }: any, initializing: boolean) => {
             activeProject.set(id)
@@ -707,21 +707,31 @@ export function getDefaultProjectName() {
         return DEFAULT_PROJECT_NAME
     }
 }
-export function getProjectName(updater = get(special)) {
-    let name = updater.default_project_name ?? getDefaultProjectName()
-
+export function getProjectName(parentFolder: string = "", updater = get(special)) {
+    const defaultName = updater.default_project_name ?? getDefaultProjectName()
     let date = new Date()
 
     // use Dnum date if it exists
-    const dNumMatch = name.match(/{D[0-7]}/)
-    if (dNumMatch) {
-        const dNum = parseInt(dNumMatch[0].match(/\d/)?.[0] || "0")
-        date = getNextWeekdayDate(date, dNum === 7 ? 0 : dNum)
-    }
+    const dNumMatch = defaultName.match(/{D[0-7]}/)
+    const dNum = dNumMatch ? parseInt(dNumMatch[0][2]) : null
+    if (dNum !== null) date = getNextWeekdayDate(date, dNum === 7 ? 0 : dNum)
 
-    projectReplacers.forEach((a) => {
-        name = name.replaceAll(`{${a.id}}`, a.value(date))
-    })
+    const replaceDate = (date: Date) => projectReplacers.reduce((name, a) => name.replaceAll(`{${a.id}}`, a.value(date)), defaultName)
+    let name = replaceDate(date)
+
+    // if a project in the same folder with the same name exists, append a number to make it unique (or get next available dNum date)
+    const projectsInFolder = Object.values(get(projects)).filter((project) => !parentFolder || project.parent === parentFolder)
+    const names = new Set(projectsInFolder.map((project) => project.name))
+    if (dNum !== null) {
+        while (names.has(name)) {
+            date.setDate(date.getDate() + 7)
+            name = replaceDate(date)
+        }
+    } else if (names.has(name)) {
+        let num = 2
+        while (names.has(`${name} (${num})`)) num++
+        name = `${name} (${num})`
+    }
 
     return name
 }

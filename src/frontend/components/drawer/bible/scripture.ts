@@ -586,6 +586,8 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
             const slideVersesText: { [key: string]: string }[] = bible.chapters.map(() => ({}))
 
             slideVerseContexts.forEach((verseContext) => {
+                if (!bible?.chapters) return
+
                 const chapterIndex = bible.chapters.findIndex((c) => c == verseContext.chapter)
                 if (chapterIndex !== -1) {
                     slideActiveVerses[chapterIndex].push(verseContext.verse)
@@ -724,6 +726,8 @@ export function groupVersesSmartly(allVersesInOrder: { chapter: number | string;
             let fits = true
             for (let b = 0; b < biblesContent.length; b++) {
                 const bible = biblesContent[b]
+                if (!bible?.chapters) continue
+
                 const proposedVerses = [...currentGroup, verseContext].map((vContext) => {
                     const chapterIndex = bible.chapters.findIndex((c) => c == vContext.chapter)
                     const verseKey = String(vContext.verse)
@@ -2225,9 +2229,7 @@ export async function resolveScriptureReference(referenceText: string, scripture
             if (verseMatch) {
                 const start = parseInt(verseMatch[1])
                 const end = verseMatch[2] ? parseInt(verseMatch[2]) : start
-                if (start > 0 && start <= 150) {
-                    verses = Array.from({ length: end - start + 1 }, (_, i) => start + i)
-                }
+                if (!isNaN(start)) verses = Array.from({ length: end - start + 1 }, (_, i) => start + i)
             }
         }
         if (!verses.length) {

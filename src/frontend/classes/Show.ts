@@ -13,11 +13,11 @@ export class ShowObj implements Show {
     category: any
     settings: any
     timestamps: any
-    quickAccess: any
+    quickAccess?: any
     metadata?: {
-        override: boolean
-        display: string
-        template: string
+        // override: boolean
+        // display: string
+        // template: string
         tags?: string[]
     }
     meta: any

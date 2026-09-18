@@ -173,6 +173,9 @@ export interface Item {
             }[]
         }[]
     }
+    qr?: {
+        text?: string
+    }
 }
 
 export interface LayoutRef {
@@ -648,7 +651,7 @@ export interface Tag {
 // types
 
 export type ID = string
-export type ItemType = "text" | "media" | "camera" | "timer" | "clock" | "button" | "events" | "weather" | "variable" | "web" | "icon" | "slide_tracker" | "visualizer" | "captions" | "metronome" | "current_output" | "chart" | "table" // "shape" | "video"
+export type ItemType = "text" | "media" | "camera" | "timer" | "clock" | "button" | "events" | "weather" | "variable" | "web" | "icon" | "slide_tracker" | "visualizer" | "captions" | "metronome" | "current_output" | "chart" | "table" | "qr" // "shape" | "video"
 export type ShowType = "DIVIDER" | "show" | "image" | "video" | "audio" | "player" | "section" | "overlay" | "effect" | "pdf" | "ppt" | "screen" | "ndi" | "camera" | "folder" | "show_placeholder" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "crossfade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "effect" | "screen" | "ndi" | "omt" | "camera" | "player" | "audio"

@@ -8,7 +8,7 @@ export interface AiFeatureStatus {
 }
 
 export interface MatchResult {
-    type: "scripture" | "lyrics" | "quote" | "announcement" | "empty"
+    type: "scripture" | "scripture_version" | "lyrics" | "quote" | "announcement" | "empty"
     content: string // "scripture" = reference (e.g., "Genesis 1:1")
     confidence: number // 1-100
 

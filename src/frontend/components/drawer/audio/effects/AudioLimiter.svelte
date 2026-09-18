@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import { AudioAnalyser } from "../../../../audio/audioAnalyser"
+    import { MAX_DB, MIN_DB } from "../../../../audio/dBUtils"
     import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
     import { type LimiterConfig, getLimiterReduction, updateLimiterConfig } from "../../../../audio/effects/audioLimiter"
     import InputRow from "../../../input/InputRow.svelte"
@@ -33,11 +34,8 @@
         grInterval = setInterval(() => {
             grValue = getLimiterReduction()
 
-            const channels = AudioAnalyser.getChannelsVolume()
-            if (channels.length > 0) {
-                const avg = channels.reduce((sum, ch) => sum + ch.dB.value, 0) / channels.length
-                inputLevelDb = Math.max(dbMin, Math.min(dbMax, avg))
-            }
+            const channelDb = AudioAnalyser.getChannelLiveVolume(channelId)
+            inputLevelDb = Math.max(MIN_DB, Math.min(MAX_DB, channelDb))
         }, 50)
     })
 
@@ -56,18 +54,16 @@
 
     let canvasW = 200
     const canvasH = 200
-    const dbMin = -60
-    const dbMax = 0
 
     // Limiter transfer: unity below ceiling, 20:1 above
     const RATIO = 20
 
     function dbToX(db: number, w: number): number {
-        return ((db - dbMin) / (dbMax - dbMin)) * w
+        return ((db - MIN_DB) / (MAX_DB - MIN_DB)) * w
     }
 
     function dbToY(db: number): number {
-        return canvasH - ((db - dbMin) / (dbMax - dbMin)) * canvasH
+        return canvasH - ((db - MIN_DB) / (MAX_DB - MIN_DB)) * canvasH
     }
 
     function transferOutput(inputDb: number, ceiling: number): number {
@@ -79,10 +75,10 @@
         const steps = 120
         const points: string[] = []
         for (let i = 0; i <= steps; i++) {
-            const inputDb = dbMin + (i / steps) * (dbMax - dbMin)
+            const inputDb = MIN_DB + (i / steps) * (MAX_DB - MIN_DB)
             const outputDb = transferOutput(inputDb, ceiling)
             const x = dbToX(inputDb, w)
-            const y = dbToY(Math.max(dbMin, Math.min(dbMax, outputDb)))
+            const y = dbToY(Math.max(MIN_DB, Math.min(MAX_DB, outputDb)))
             points.push(i === 0 ? `M ${x},${y}` : `L ${x},${y}`)
         }
         return points.join(" ")
@@ -95,7 +91,7 @@
     $: grDisplay = grValue.toFixed(1)
 
     $: signalX = dbToX(inputLevelDb, canvasW)
-    $: signalY = dbToY(Math.max(dbMin, Math.min(dbMax, transferOutput(inputLevelDb, config.ceiling))))
+    $: signalY = dbToY(Math.max(MIN_DB, Math.min(MAX_DB, transferOutput(inputLevelDb, config.ceiling))))
 
     $: releaseMs = Math.round(config.release * 1000)
 </script>
@@ -114,7 +110,7 @@
                 {/each}
 
                 <!-- 1:1 unity line -->
-                <line x1={dbToX(dbMin, canvasW)} y1={dbToY(dbMin)} x2={dbToX(dbMax, canvasW)} y2={dbToY(dbMax)} stroke="var(--primary-lighter)" stroke-width="1" opacity="0.35" stroke-dasharray="4,4" />
+                <line x1={dbToX(MIN_DB, canvasW)} y1={dbToY(MIN_DB)} x2={dbToX(MAX_DB, canvasW)} y2={dbToY(MAX_DB)} stroke="var(--primary-lighter)" stroke-width="1" opacity="0.35" stroke-dasharray="4,4" />
 
                 <!-- Ceiling: shaded region above -->
                 <rect x={ceilX} y="0" width={Math.max(0, canvasW - ceilX)} height={canvasH} fill="var(--accent)" opacity="0.08" />

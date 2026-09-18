@@ -4,7 +4,6 @@ import { get } from "svelte/store"
 import { Main } from "../../../../types/IPC/Main"
 import { AudioAnalyser } from "../../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../../audio/audioFading"
-import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
 import { requestMain } from "../../../IPC/main"
 import { media, outputs, playerVideos, playingVideos, playingVideoState, special, transitionData } from "../../../stores"
 import { playFolder } from "../../../utils/shortcuts"
@@ -56,9 +55,6 @@ export type PlayingVideoState = {
     softLoopOpacity?: number
     type?: "background" | "item"
     isFadingOut?: boolean
-    // true when the authoritative clock is the wall-clock ticker (video has no real audio element):
-    // nothing audible to lip-sync against, so followers may correct drift gently instead of hard-seeking
-    virtualClock?: boolean
 }
 
 export class VideoPlayer {
@@ -496,84 +492,48 @@ export class VideoPlayer {
         })
 
         videoEnding()
-
-        if (!get(playingVideos).length) {
-            AudioInputCapture.getInstance().clearMergedDbs()
-        }
     }
 
     private static async fadeOut(path: string, audio: HTMLAudioElement, durationMs: number): Promise<boolean> {
         if (!audio || audio.volume <= 0) return true
-        this.isFadingOut.push(path)
+        if (!this.isFadingOut.includes(path)) this.isFadingOut.push(path)
 
         // WIP account for transition offset
         // if (!clearOutput) duration /= 2.4 // a little less than half the time
 
-        const startVolume = audio.volume
-        const steps = 30
-        const intervalMs = Math.max(10, durationMs / steps)
-        const volumeStep = startVolume / steps
-        let currentStep = 0
+        AudioAnalyser.rampSourceVolume(path, 0, durationMs)
 
-        const finished = await new Promise<boolean>((resolve) => {
-            const timer = setInterval(() => {
-                currentStep++
+        await new Promise<void>((resolve) => setTimeout(resolve, durationMs))
 
-                if (!this.isFadingOut.includes(path)) {
-                    clearInterval(timer)
-                    resolve(false)
-                    return
-                }
+        if (!this.isFadingOut.includes(path)) return false
 
-                if (currentStep >= steps || audio.volume <= volumeStep) {
-                    audio.volume = 0
-                    AudioAnalyser.setSourceVolume(path, 0)
-                    const fadeIndex = this.isFadingOut.indexOf(path)
-                    if (fadeIndex !== -1) this.isFadingOut.splice(fadeIndex, 1)
-                    clearInterval(timer)
-                    resolve(true)
-                    return
-                }
-
-                audio.volume = Math.max(0, audio.volume - volumeStep)
-                AudioAnalyser.setSourceVolume(path, audio.volume)
-            }, intervalMs)
-        })
-
-        return finished
+        try {
+            audio.volume = 0
+        } catch {}
+        AudioAnalyser.setSourceVolume(path, 0)
+        return true
     }
 
     static isFadingIn: string[] = []
     private static async fadeIn(path: string, audio: HTMLAudioElement, durationMs: number): Promise<void> {
-        this.isFadingIn.push(path)
+        if (!this.isFadingIn.includes(path)) this.isFadingIn.push(path)
         const targetVolume = this.getVolume(path) * (this.getPlaying(path)?.replayGainMultiplier ?? 1)
-        audio.volume = 0
+
         AudioAnalyser.setSourceVolume(path, 0)
+        try {
+            audio.volume = Math.min(1, Math.max(0, targetVolume))
+        } catch {}
+        AudioAnalyser.rampSourceVolume(path, targetVolume, durationMs)
 
-        const steps = 30
-        const intervalMs = Math.max(10, durationMs / steps)
-        const volumeStep = targetVolume / steps
-        let currentStep = 0
+        await new Promise<void>((resolve) => setTimeout(resolve, durationMs))
 
-        await new Promise<void>((resolve) => {
-            const timer = setInterval(() => {
-                currentStep++
+        const fadeIndex = this.isFadingIn.indexOf(path)
+        if (fadeIndex !== -1) this.isFadingIn.splice(fadeIndex, 1)
 
-                if (this.isFadingOut.includes(path) || !this.isFadingIn.includes(path) || audio.paused || currentStep >= steps || audio.volume >= targetVolume - volumeStep) {
-                    audio.volume = Math.min(1, Math.max(0, targetVolume))
-                    AudioAnalyser.setSourceVolume(path, Math.max(0, targetVolume))
-                    const fadeIndex = this.isFadingIn.indexOf(path)
-                    if (fadeIndex !== -1) this.isFadingIn.splice(fadeIndex, 1)
-                    clearInterval(timer)
-                    resolve()
-                    return
-                }
-
-                const nextVol = Math.min(targetVolume, audio.volume + volumeStep)
-                audio.volume = Math.min(1, Math.max(0, nextVol))
-                AudioAnalyser.setSourceVolume(path, Math.max(0, nextVol))
-            }, intervalMs)
-        })
+        try {
+            audio.volume = Math.min(1, Math.max(0, targetVolume))
+        } catch {}
+        AudioAnalyser.setSourceVolume(path, targetVolume)
     }
 
     static stopByOutputIds(outputIds: string[]) {
@@ -774,7 +734,6 @@ export class VideoPlayer {
                         currentTime: Number.isFinite(activeAudio.currentTime) ? activeAudio.currentTime : 0,
                         duration: Number.isFinite(activeAudio.duration) && activeAudio.duration > 0 ? activeAudio.duration : 0,
                         paused: activeAudio.paused,
-                        virtualClock: "timeTick" in activeAudio,
                         loop: video.loop || false,
                         muted: activeAudio.muted,
                         softLoop,

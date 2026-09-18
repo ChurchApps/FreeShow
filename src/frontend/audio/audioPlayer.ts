@@ -9,7 +9,6 @@ import { requestMain, sendMain } from "../IPC/main"
 import { activePlaylist, dictionary, media, outLocked, playingAudio, playingAudioPaths, special } from "../stores"
 import { addToMediaFolder } from "../utils/cloudSync"
 import { AudioAnalyser } from "./audioAnalyser"
-import { AudioAnalyserMerger } from "./audioAnalyserMerger"
 import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
 import { AudioMultichannel } from "./audioMultichannel"
 import { AudioPlaylist } from "./audioPlaylist"
@@ -65,6 +64,7 @@ export class AudioPlayer {
 
     // returns false when the audio file can't be found or loaded
     static async start(path: string, metadata: AudioMetadata, options: AudioOptions = {}): Promise<boolean> {
+        if (typeof path !== "string") return false
         if (get(outLocked) || clearing.includes(path) || this.isLoading(path)) return true
         const pathId = path
         this.setLoading(pathId)
@@ -204,12 +204,12 @@ export class AudioPlayer {
         const audio = new Audio(encodeFilePath(path))
         const onPlay = () => {
             updatePlayingStore(path, "paused", false)
-            AudioAnalyserMerger.init()
+            this.initCheckLoop()
         }
         const onPause = () => {
             updatePlayingStore(path, "paused", true)
             if (!AudioAnalyser.shouldAnalyse()) {
-                AudioAnalyserMerger.stop()
+                this.stopCheckLoop()
             }
         }
         const onEnded = () => {
@@ -236,12 +236,12 @@ export class AudioPlayer {
         audio.srcObject = stream
         const onPlay = () => {
             updatePlayingStore(id, "paused", false)
-            AudioAnalyserMerger.init()
+            this.initCheckLoop()
         }
         const onPause = () => {
             updatePlayingStore(id, "paused", true)
             if (!AudioAnalyser.shouldAnalyse()) {
-                AudioAnalyserMerger.stop()
+                this.stopCheckLoop()
             }
         }
         audio.addEventListener("play", onPlay)
@@ -313,6 +313,34 @@ export class AudioPlayer {
 
     //
 
+    private static checkInterval: NodeJS.Timeout | null = null
+    static initCheckLoop() {
+        if (this.checkInterval) return
+
+        this.checkAudioTime()
+        this.checkInterval = setInterval(() => {
+            this.checkAudioTime()
+        }, 1000)
+    }
+
+    static stopCheckLoop() {
+        if (this.checkInterval) {
+            clearInterval(this.checkInterval)
+            this.checkInterval = null
+        }
+    }
+
+    private static checkAudioTime() {
+        AudioPlaylist.checkCrossfade()
+
+        const playing = AudioPlayer.getAllPlaying()
+        playing.forEach((id) => {
+            AudioPlayer.checkIfEnding(id)
+        })
+    }
+
+    //
+
     static play(id: string) {
         if (!this.audioExists(id)) return
 
@@ -324,7 +352,7 @@ export class AudioPlayer {
         updatePlayingStore(id, "paused", false)
         audio?.play()
 
-        AudioAnalyserMerger.init()
+        this.initCheckLoop()
     }
 
     static pause(id: string) {
@@ -334,7 +362,7 @@ export class AudioPlayer {
         this.getAudio(id)?.pause()
 
         if (!AudioAnalyser.shouldAnalyse()) {
-            AudioAnalyserMerger.stop()
+            this.stopCheckLoop()
         }
     }
 

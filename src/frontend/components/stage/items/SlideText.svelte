@@ -81,7 +81,8 @@
     const waitDuration = 200 // approximate auto size time
     let timeout: NodeJS.Timeout | null = null
     let prevItemsKey = ""
-    $: itemsKey = `${slideId || currentSlide?.id || ""}_${slideOffset}_${itemNumber}_${stageItem?.invertItems ? 1 : 0}_${style ? 1 : 0}_${(slide?.items || []).length}`
+    $: tempContentKey = currentSlide?.id === "temp" ? JSON.stringify(slide?.items || []) : ""
+    $: itemsKey = `${slideId || currentSlide?.id || ""}_${slideOffset}_${itemNumber}_${stageItem?.invertItems ? 1 : 0}_${style ? 1 : 0}_${(slide?.items || []).length}_${tempContentKey}`
     $: if (items && itemsKey !== prevItemsKey) {
         prevItemsKey = itemsKey
         preloadItems()

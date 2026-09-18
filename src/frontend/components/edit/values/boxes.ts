@@ -716,5 +716,15 @@ export const itemBoxes: Box2 = {
             sections.align = { defaultValues: ["center", "center"], inputs: [alignX, alignY] }
             return sections
         })()
+    },
+    qr: {
+        icon: "qr_code",
+        sections: {
+            default: {
+                inputs: splitIntoRows([
+                    { id: "qr.text", type: "string", value: "", values: { label: "inputs.url" } }
+                ])
+            }
+        }
     }
 }

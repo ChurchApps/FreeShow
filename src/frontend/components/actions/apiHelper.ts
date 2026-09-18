@@ -7,8 +7,9 @@ import { isChannelRecording, startChannelRecording, stopAllChannelRecordings, st
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
+import { dbToGain } from "../../audio/dBUtils"
 import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioPlaylists, audioRouting, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables } from "../../stores"
-import { newToast } from "../../utils/common"
+import { newToast, triggerFunction } from "../../utils/common"
 import { send } from "../../utils/request"
 import { parseEngScriptureRefToNumbers, resolveScriptureReference } from "../drawer/bible/scripture"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -28,7 +29,7 @@ import { VideoPlayer } from "../media/video/videoPlayer"
 import { clearBackground, clearSlide } from "../output/clear"
 import { getPlainEditorText } from "../show/getTextEditor"
 import { getSlideGroups } from "../show/tools/groups"
-import type { API_add_to_project, API_create_project, API_disable_slide, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_toggle_id, API_toggle_specific, API_variable } from "./api"
+import type { API_add_to_project, API_create_project, API_disable_slide, API_draw_zoom, API_edit_timer, API_group, API_id_index, API_id_value, API_layout, API_media, API_output_lock, API_rearrange, API_scripture, API_seek, API_slide_index, API_toggle_id, API_toggle_specific, API_variable, API_volume } from "./api"
 
 export function selectShowById(id: string) {
     if (typeof id !== "string" || !id) return
@@ -140,7 +141,7 @@ export async function startProjectItemByName(name: string) {
     while (match !== -1 && activeProjectItems[match]?.type === "section") match++
 
     const item = activeProjectItems[match]
-    if (!item) return
+    if (!item?.id) return
 
     // load any shows
     if ((item.type || "show") === "show") await loadShows([item.id])
@@ -808,26 +809,48 @@ export function audioSeekTo(data: API_seek) {
     AudioPlayer.setTime(audioPath, data.seconds)
 }
 
-let unmutedValue = 1
-export function updateVolumeValues(value: number | undefined | "local") {
-    // api mute(unmute)
+let unmutedValues: { [channelId: string]: number } = {}
+export function updateVolumeValues(data: API_volume) {
+    let { volume: value, channelId, useDB } = data
+    const chId = channelId || "main"
+
+    // api mute(unmute) if no value - DEPRECATED
     if (value === undefined) {
-        const currentVolume = get(audioChannelsData).main?.volume ?? 1
-        value = currentVolume ? 0 : unmutedValue
-        if (!value) unmutedValue = currentVolume
+        const currentVolume = get(audioChannelsData)[chId]?.volume ?? 1
+        value = currentVolume ? 0 : (unmutedValues[chId] ?? 1)
+        if (!value) unmutedValues[chId] = currentVolume
     }
 
-    // supposed to be in 0-1 range instead of 0-100
-    if (typeof value === "number" && value > 1) value = value / 100
+    if (useDB && typeof value === "number") {
+        value = dbToGain(value)
+    } else if (typeof value === "number" && value > 5) {
+        // supposed to be in 0-1 range instead of 0-100
+        value = value / 100
+    }
 
-    const newVolume = Number(Number(value).toFixed(2))
+    const newVolume = Number(Number(value).toFixed(3))
     audioChannelsData.update((data) => {
-        if (!data.main) data.main = { volume: 1 }
-        data.main.volume = newVolume
+        if (!data[chId]) data[chId] = { volume: 1 }
+        data[chId].volume = newVolume
         return data
     })
 
     AudioPlayer.updateVolume()
+}
+
+export function muteChannel(data: API_toggle_id) {
+    const channelId = data.id || "main"
+
+    let state = typeof data.value === "boolean" ? data.value : null
+    if ((data.value as any) === "false") state = false
+    else if ((data.value as any) === "true") state = true
+    else if (state === null) state = !(get(audioChannelsData)[channelId]?.isMuted ?? false)
+
+    audioChannelsData.update((data) => {
+        if (!data[channelId]) data[channelId] = { volume: 1 }
+        data[channelId].isMuted = state
+        return data
+    })
 }
 
 // TIMERS
@@ -905,6 +928,15 @@ export function toggleIcecast(data: API_toggle_specific = {}) {
 }
 
 // OTHER
+
+export function toggleSttListening(data: API_toggle_specific = {}) {
+    let state = typeof data.value === "boolean" ? data.value : null
+    if ((data.value as any) === "false") state = false
+    else if ((data.value as any) === "true") state = true
+
+    const stateStr = state === true ? "on" : state === false ? "off" : "toggle"
+    triggerFunction(`toggle_stt_listening:${stateStr}`)
+}
 
 export function toggleLogSongUsage(data: API_toggle_specific) {
     if ((data.value as any) === "false") data.value = false // from Companion

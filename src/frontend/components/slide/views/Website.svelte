@@ -33,8 +33,11 @@
     }
 
     let loaded = false
-    $: if (parsedSrc) loaded = false
     let webviewReady = false
+    $: if (parsedSrc) {
+        loaded = false
+        webviewReady = false
+    }
 
     $: if (webview && ratio) setWebpageRatio()
     function setWebpageRatio() {
@@ -46,22 +49,29 @@
         let isFullscreen = true || (webview.closest(".previewOutput")?.offsetWidth || 0) > 450
         const inverse = isFullscreen ? 100 : Math.round(100 / ratio)
 
-        if (loaded) setStyle()
+        if (loaded && webviewReady) setStyle()
         else {
             webview?.addEventListener("dom-ready", () => {
                 webviewReady = true
                 websiteLoaded()
                 checkNavigation()
+                setStyle()
             })
             webview?.addEventListener("did-finish-load", setStyle)
             webview?.addEventListener("did-navigate", () => {
                 checkNavigation()
-                url = webview?.getURL() || parsedSrc
+                if (webviewReady) {
+                    try {
+                        url = webview?.getURL() || parsedSrc
+                    } catch (err) {
+                        console.debug("Webview getURL failed:", err)
+                    }
+                }
             })
         }
 
         function setStyle() {
-            if (!webview) return
+            if (!webview || !webviewReady) return
             loaded = true
 
             if ($currentWindow !== "output") {
@@ -72,30 +82,42 @@
                 }
             }
 
-            webview
-                .executeJavaScript(
-                    `
-                if (document.body) {
-                    document.body.style.transform = 'scale(${isFullscreen ? 1 : ratio})';
-                    document.body.style.transformOrigin = '0 0';
-                    const scaleFactor = ${inverse};
-                    document.body.style.width = scaleFactor + '%';
-                    document.body.style.height = scaleFactor + '%';
-                }
-            `
-                )
-                .catch((err: any) => {
-                    console.debug("Webview executeJavaScript failed:", err)
-                })
+            try {
+                webview
+                    .executeJavaScript(
+                        `
+                    if (document.body) {
+                        document.body.style.transform = 'scale(${isFullscreen ? 1 : ratio})';
+                        document.body.style.transformOrigin = '0 0';
+                        const scaleFactor = ${inverse};
+                        document.body.style.width = scaleFactor + '%';
+                        document.body.style.height = scaleFactor + '%';
+                    }
+                `
+                    )
+                    ?.catch((err: any) => {
+                        console.debug("Webview executeJavaScript failed:", err)
+                    })
+            } catch (err) {
+                console.debug("Failed to execute JavaScript on webview:", err)
+            }
         }
     }
 
     function websiteLoaded() {
-        if ($currentWindow !== "output") return
+        if ($currentWindow !== "output" || !webview || !webviewReady) return
 
         // set focus on website
         send(OUTPUT, ["FOCUS"], { id: Object.keys($outputs)[0] })
-        setTimeout(() => webview?.focus())
+        setTimeout(() => {
+            if (webviewReady && webview) {
+                try {
+                    webview.focus()
+                } catch (err) {
+                    console.debug("Webview focus failed:", err)
+                }
+            }
+        })
     }
 
     let hover = false
@@ -110,10 +132,14 @@
     let backDisabled = true
     let forwardDisabled = true
     function navigate(back = true) {
-        if (!webview) return
+        if (!webview || !webviewReady) return
 
-        if (back) webview.goBack()
-        else webview.goForward()
+        try {
+            if (back) webview.goBack()
+            else webview.goForward()
+        } catch (err) {
+            console.debug("Webview navigation failed:", err)
+        }
 
         setTimeout(checkNavigation)
     }

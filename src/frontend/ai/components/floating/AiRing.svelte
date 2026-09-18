@@ -1,6 +1,6 @@
 <script lang="ts">
     // animated AI gradient ring - wraps any content to visually mark it as an AI feature area
-    export let state: "inactive" | "error" | "listening" | "processing" = "listening"
+    export let state: "loading" | "inactive" | "error" | "listening" | "processing" = "listening"
     export let audioLevel = 0.0
     export let borderRadius = "20px"
     export let borderWidth = "3px"
@@ -44,10 +44,6 @@
         box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
     }
 
-    .card-border-wrapper.state-inactive {
-        opacity: 0.75;
-    }
-
     .card-border-wrapper.state-listening {
         /* box-shadow: 0 0 calc(8px + var(--audio-level) * 16px) rgba(255, 0, 127, calc(0.3 + var(--audio-level) * 0.4)); */
         box-shadow: 0 0 calc(20px + var(--audio-level) * 30px) rgba(255, 0, 127, calc(0.2 + var(--audio-level) * 0.4));
@@ -60,6 +56,8 @@
         border-radius: inherit;
         overflow: hidden;
         position: relative;
+
+        transition: background 0.2s ease-out;
     }
 
     .word-confirmation {

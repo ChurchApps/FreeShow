@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { CLOUD, CONTROLLER, NDI, OMT, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
 import { AudioMicrophone } from "../audio/audioMicrophone"
+import { MIN_DB } from "../audio/dBUtils"
 import { runAction } from "../components/actions/actions"
 import { getDynamicValue } from "../components/edit/scripts/itemHelpers"
 import { clone } from "../components/helpers/array"
@@ -40,7 +41,6 @@ import {
     omtData,
     outputDisplay,
     outputs,
-    renderGroups,
     outputSlideCache,
     outputState,
     overlays,
@@ -50,6 +50,7 @@ import {
     popupData,
     previewBuffers,
     projects,
+    renderGroups,
     shows,
     showsCache,
     slideTimelineSpeedMultiplier,
@@ -133,32 +134,6 @@ const receiveOUTPUTasMAIN: any = {
         })
     },
     ACTION_MAIN: (a: { id: string }) => runAction(get(actions)[a.id], { source: "remote" }),
-    // AUDIO_MAIN: (data: any) => {
-    //     if (!data.id) return
-
-    //     if (data.channels) AudioAnalyserMerger.addChannels(data.id, data.channels)
-
-    //     playingVideos.update((playingVideo) => {
-    //         const existing = playingVideo.findIndex((a) => a.id === data.id)
-
-    //         if (data.stop) {
-    //             if (existing > -1) playingVideo.splice(existing, 1)
-    //             return playingVideo
-    //         }
-
-    //         if (existing > -1) {
-    //             playingVideo[existing] = { ...data, location: "output" }
-    //         } else if (get(outputs)[data.id]?.out?.background) {
-    //             playingVideo.push({ location: "output", ...data })
-    //         }
-
-    //         return playingVideo
-    //     })
-
-    //     if (data.stop && !AudioAnalyser.shouldAnalyse()) {
-    //         AudioAnalyserMerger.stop()
-    //     }
-    // },
     MOVE: (data) => {
         outputs.update((a) => {
             if (!a[data.id] || a[data.id].boundsLocked) return a
@@ -200,7 +175,7 @@ const receiveOUTPUTasMAIN: any = {
     MAIN_REQUEST_VOLUME: (data: { deviceId: string }) => {
         if (!data?.deviceId) return
         const chData = (get(audioChannelsData) || {})[data.deviceId]
-        const value = Math.round(chData?.dB ?? -60)
+        const value = Math.round(chData?.dB ?? MIN_DB)
         send(OUTPUT, ["REQUEST_VOLUME"], { deviceId: data.deviceId, value })
     }
 }

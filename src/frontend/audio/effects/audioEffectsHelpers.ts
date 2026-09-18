@@ -81,29 +81,31 @@ export function migrateAudioEffects(raw: any): Record<string, AudioEffectsConfig
         if (Array.isArray((cfg as any).stack)) {
             for (const item of (cfg as any).stack) {
                 const type = typeof item === "string" ? (item as EffectType) : item?.type
-                if (ALL_EFFECT_KEYS.includes(type)) {
-                    const savedConfig = typeof item === "string" ? (cfg as any)[type] : item.config
-                    const defaultConfig = DEFAULT_EFFECT_CONFIGS[type] || { enabled: true }
+                if (!ALL_EFFECT_KEYS.includes(type)) continue
 
-                    stack.push({
-                        id: (typeof item === "object" && item.id) || `${type}_${uid(6)}`,
-                        type,
-                        enabled: typeof item === "object" ? item.enabled !== false : savedConfig?.enabled !== false,
-                        config: clone(savedConfig || defaultConfig)
-                    })
-                }
+                const savedConfig = typeof item === "string" ? (cfg as any)[type] : item.config
+                const mergedConfig = migrateConfig(type, savedConfig)
+
+                stack.push({
+                    id: (typeof item === "object" && item.id) || `${type}_${uid(6)}`,
+                    type,
+                    enabled: typeof item === "object" ? item.enabled !== false : savedConfig?.enabled !== false,
+                    config: mergedConfig
+                })
             }
         } else {
             // Legacy individual keys fallback
             ALL_EFFECT_KEYS.forEach((key) => {
-                if ((cfg as any)[key]?.enabled) {
-                    stack.push({
-                        id: `${key}_${uid(6)}`,
-                        type: key,
-                        enabled: true,
-                        config: clone((cfg as any)[key])
-                    })
-                }
+                if (!(cfg as any)[key]?.enabled) return
+
+                const config = migrateConfig(key, (cfg as any)[key])
+
+                stack.push({
+                    id: `${key}_${uid(6)}`,
+                    type: key,
+                    enabled: true,
+                    config
+                })
             })
         }
 
@@ -111,6 +113,22 @@ export function migrateAudioEffects(raw: any): Record<string, AudioEffectsConfig
     }
 
     return result
+
+    function migrateConfig(key: (typeof ALL_EFFECT_KEYS)[number], config: any) {
+        if (!config) return clone(DEFAULT_EFFECT_CONFIGS[key] || { enabled: true })
+        config = clone(config)
+
+        // remove old EQ "lowpass" & "highpass" band types
+        if (key === "equalizer" && Array.isArray(config.bands)) {
+            config.bands = config.bands.map((band: any) => {
+                if (band?.type === "lowpass") return { ...band, type: "lowshelf" }
+                if (band?.type === "highpass") return { ...band, type: "highshelf" }
+                return band
+            })
+        }
+
+        return config
+    }
 }
 
 /** Read effect config merged with runtime defaults. */

@@ -11,6 +11,7 @@ import { slideTimelineSpeedMultiplier } from "../../stores"
 import { transposeText } from "../../utils/chordTranspose"
 import { triggerFunction } from "../../utils/common"
 import { obsSetScene, obsStartLivestream, obsStartRecording, obsStopLivestream, obsStopRecording } from "../../utils/obsTalk"
+import { save } from "../../utils/save"
 import { togglePlayingMedia } from "../../utils/shortcuts"
 import { contentProviderSync } from "../../utils/startup"
 import { updateTransition } from "../../utils/transitions"
@@ -22,7 +23,6 @@ import { changeStageOutputLayout, startCamera, startRtmpStreaming, startScreen, 
 import { OutputHelper } from "../helpers/OutputHelper"
 import { changeOutputStyle, playSlideTimers, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
-import { muteOutput, unmuteOutput } from "../helpers/video"
 import { clearAll, clearBackground, clearDrawing, clearOverlay, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { fadePause, skipNext, skipPrev, spotifyPause, spotifyPlay } from "../output/preview/SpotifyManager"
 import { formatText } from "../show/formatTextEditor"
@@ -49,6 +49,7 @@ import {
     getTimersDetailed,
     gotoGroup,
     moveStageConnection,
+    muteChannel,
     pauseAudio,
     pauseTimerById,
     pauseTimerByName,
@@ -85,6 +86,7 @@ import {
     toggleLogSongUsage,
     toggleMediaLoop,
     toggleMediaMute,
+    toggleSttListening,
     updateVolumeValues,
     videoSeekTo
 } from "./apiHelper"
@@ -120,7 +122,7 @@ export type API_id_optional = { id?: string }
 type API_index = { index: number }
 type API_strval = { value: string }
 type API_numval = { value: number }
-type API_volume = { volume?: number } // no values will mute/unmute
+export type API_volume = { volume?: number; channelId?: string; useDB?: boolean }
 export type API_id_index = { id: string; index: number }
 export type API_slide = { showId?: string | "active"; slideId?: string }
 export type API_slide_index = { showId?: string; layoutId?: string; index: number }
@@ -288,8 +290,6 @@ export const API_ACTIONS = {
     change_output_style: (data: API_output_style) => changeOutputStyle(data),
     change_stage_output_layout: (data: API_stage_output_layout) => changeStageOutputLayout(data),
     change_transition: (data: API_transition) => updateTransition(data), // BC
-    mute_output: (data: API_id) => muteOutput(data.id),
-    unmute_output: (data: API_id) => unmuteOutput(data.id),
 
     // STAGE
     id_select_stage_layout: (data: API_id) => moveStageConnection(data.id), // BC
@@ -299,7 +299,8 @@ export const API_ACTIONS = {
     pause_audio: (data: API_media) => pauseAudio(data),
     stop_audio: (data: API_media) => stopAudio(data),
     audio_seekto: (data: API_seek) => audioSeekTo(data), // BC
-    change_volume: (data: API_volume) => updateVolumeValues(data.volume), // BC
+    change_volume: (data: API_volume) => updateVolumeValues(data), // BC
+    mute: (data: API_toggle_id) => muteChannel(data),
     start_audio_stream: (data: API_id) => AudioPlayer.start(data.id, { name: "" }),
     toggle_audio_recording: (data: API_toggle_id = {}) => toggleAudioRecording(data),
     toggle_icecast: (data: API_toggle_specific = {}) => toggleIcecast(data),
@@ -367,7 +368,11 @@ export const API_ACTIONS = {
     spotify_next: () => skipNext(),
     spotify_previous: () => skipPrev(),
 
+    // Smart
+    smart_toggle_stt: (data: API_toggle_specific = {}) => toggleSttListening(data),
+
     // OTHER
+    close: () => save(true),
     toggle_log_song_usage: (data: API_toggle_specific) => toggleLogSongUsage(data),
 
     // ACTION

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { toggleChannelRecording } from "../../../audio/audioChannelRecorder"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { dbToGain, gainToDb, gainToSlider, MIN_DB, sliderToGain } from "../../../audio/dBUtils"
+    import { dbToGain, gainToDb, gainToSlider, MAX_DB, MIN_DB, sliderToGain } from "../../../audio/dBUtils"
     import { activeAudioEffects, audioChannelsData, recordingChannels } from "../../../stores"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import NumberInput from "../../inputs/NumberInput.svelte"
@@ -43,13 +43,13 @@
     $: rawVolume = Number(channelData.volume ?? 1)
     $: volumeValue = rawVolume > 5 ? rawVolume / 100 : rawVolume
     $: sliderPosition = gainToSlider(volumeValue)
-    $: dbValue = Math.max(MIN_DB, Math.min(6, gainToDb(volumeValue)))
+    $: dbValue = Math.max(MIN_DB, Math.min(MAX_DB, gainToDb(volumeValue)))
     $: muted = !!channelData.isMuted
 
     $: isRecording = !!$recordingChannels[channelId]
 </script>
 
-<section>
+<section class="context #audio_channel_mixer" id={channelId}>
     <!-- <MaterialNumberInput style="width: 100px;" label="media.volume (%)" value={volumeValue * 100} min={0} max={allowGaining ? 125 : 100} on:change={(e) => setVolume(e.detail / 100)} showSlider /> -->
 
     <div class="output" class:inactive style="--color: {color || 'var(--secondary)'};">

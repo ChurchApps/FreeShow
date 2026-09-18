@@ -154,7 +154,7 @@ export class OutputHelper {
             activeFocus.set({ id: newItem.id, index: newIndex, type: newItem.type || "show" })
 
             // play directly in focus mode
-            if ((newItem?.type || "show") === "show") {
+            if ((newItem.type || "show") === "show") {
                 const newOut = this.getSubsequent(outputId, { id: newItem.id, layout: newItem.layout }, next)
                 if (newOut) this.playSlide(outputId, newOut, options.slideLayers)
             } else {
@@ -170,13 +170,15 @@ export class OutputHelper {
         }
 
         const newItem = projectItems[newIndex]
+        if (!newItem) return
+
         this.runSectionAction(newItem)
 
         openProjectItem(get(activeProject) || "", newIndex)
 
         // play directly from "Next slide timer" & "nextAfterMedia"
         if (options.playNext) {
-            if ((newItem?.type || "show") === "show") {
+            if ((newItem.type || "show") === "show") {
                 // allow show to load first
                 setTimeout(() => {
                     const newOut = this.getSubsequent(outputId, { id: newItem.id, layout: newItem.layout }, next)
@@ -423,14 +425,14 @@ export class OutputHelper {
         return { hasEnded, nextLine, _hasEnded, previousLine, lastLine }
     }
     private static checkClickReveal(data: OutSlide, slide: Slide | null) {
-        const clickRevealItems = (slide?.items || []).filter((a) => a?.clickReveal)
+        const clickRevealItems = Array.isArray(slide?.items) ? slide.items.filter((a) => a?.clickReveal) : []
         const isRevealed = clickRevealItems.length ? !!data.itemClickReveal : true
         const _isRevealed = !clickRevealItems.length || !!data?.itemClickReveal
 
         return { isRevealed, shouldReveal: !!clickRevealItems.length, _isRevealed }
     }
     private static checkLinesReveal(data: OutSlide, slide: Slide | null) {
-        const linesRevealItems = (slide?.items || []).filter((a) => a?.lineReveal)
+        const linesRevealItems = Array.isArray(slide?.items) ? slide.items.filter((a) => a?.lineReveal) : []
         const shouldLinesReveal = !!linesRevealItems.length
         const maxRevealLines = getItemWithMostLines({ items: linesRevealItems })
         const currentReveal = data?.revealCount ?? 0

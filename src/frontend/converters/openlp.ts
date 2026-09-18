@@ -308,6 +308,8 @@ function XMLtoObject(xml: string) {
 
         // remove unused line separator char
         lines = lines.replaceAll("&#8232;", "")
+        // remove custom "force splits" (might return an empty line, resulting in a new slide)
+        lines = lines.replaceAll("[--}{--]", "")
         // find line breaks
         lines = lines.replaceAll('xmlns="http://openlyrics.info/namespace/2009/song"', "").replaceAll("<br/>", "\n").replaceAll("<br />", "\n")
 

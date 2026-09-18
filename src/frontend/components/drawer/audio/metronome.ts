@@ -49,7 +49,7 @@ export function startMetronome(values: API_metronome | MetronomeSettings = {}) {
 }
 
 export function getShowBPM() {
-    const showMetadata = _show().get("meta")
+    const showMetadata = _show().get("meta") || {}
     const customKey = get(customMetadata).custom.find((a) => a.toLowerCase().includes("bpm")) || "BPM"
     return Math.floor(parseFloat(showMetadata[customKey] || 0)) || 120
 }

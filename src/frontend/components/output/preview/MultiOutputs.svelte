@@ -206,7 +206,7 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
                     {#if isMuted}
                         {#if layers.length < 3 || styleTemplate}<div class="divider"></div>{/if}
 
-                        <div class="icon muted" data-title={translateText("output.mute")}>
+                        <div class="icon muted" data-title={translateText("actions.muted")}>
                             <Icon id="muted" size={0.8} white />
                         </div>
                     {/if}

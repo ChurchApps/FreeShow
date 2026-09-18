@@ -5,13 +5,15 @@ import { ShowObj } from "../classes/Show"
 import { getItemText, getSlideText } from "../components/edit/scripts/textStyle"
 import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
+import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import { checkName, getCustomMetadata, getLabelId } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { linesToTextboxes } from "../components/show/formatTextEditor"
 import { VIRTUAL_BREAK_CHAR } from "../show/slides"
-import { activePopup, activeProject, activeShow, alertMessage, dictionary, drawerTabsData, formatNewShow, groupNumbers, groups, special, splitLines } from "../stores"
+import { activePopup, activeProject, activeShow, alertMessage, dictionary, drawerTabsData, formatNewShow, groups, special, splitLines } from "../stores"
 import { translateText } from "../utils/language"
 import { setTempShows } from "./importHelpers"
+import { findPatterns } from "./txtAutoSections"
 
 export function getQuickExample() {
     const tip = translateText("create_show.quick_lyrics_example_tip")
@@ -103,8 +105,16 @@ export function convertText({ name = "", origin = "", category = null, text, noF
 
     // get ccli
     let ccli = ""
-    if (!Object.keys(plainTextMetadata).length && sections[sections.length - 1]?.includes("www.ccli.com")) {
-        ccli = sections.pop()!
+    if (!Object.keys(plainTextMetadata).length && isCCLIBlock(sections[sections.length - 1])) {
+        const lastSection = sections[sections.length - 1]
+        const lines = lastSection.split("\n")
+        const songIdIndex = lines.findIndex((line) => /CCLI\s*(?:Song)?\s*#\s*\d+/i.test(line))
+        if (songIdIndex > 0 && lines.slice(0, songIdIndex).join("\n").trim()) {
+            ccli = lines.slice(songIdIndex).join("\n")
+            sections[sections.length - 1] = lines.slice(0, songIdIndex).join("\n")
+        } else {
+            ccli = sections.pop()!
+        }
     }
 
     let labeled: { type: string; text: string }[] = []
@@ -119,7 +129,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     if (!name) name = plainTextMetadata.title || trimNameFromString(labeled[0]?.text)
 
     const layoutID: string = uid()
-    const show: Show = new ShowObj(false, category, layoutID)
+    let show: Show = new ShowObj(false, category, layoutID)
     if (origin) show.origin = origin
     // , existingSlides
     const { slides, layouts } = createSlides(labeled, noFormatting, autoGroups)
@@ -131,35 +141,27 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     show.layouts[layoutID].slides = layouts
 
     if (ccli) {
-        const meta: string[] = ccli.split("\n")
-        // songselect order
-        if (meta[4]?.includes("CCLI")) {
-            show.meta = {
-                title: show.name,
-                CCLI: meta[4].substring(meta[4].indexOf("#") + 1), // CCLI License
-                // CCLI Song = meta[1]
-                // artist: meta[0],
-                author: meta[0],
-                // composer: meta[0],
-                // publisher: meta[0],
-                copyright: meta[2]
-            }
-        } else {
-            show.meta = {
-                title: show.name,
-                CCLI: meta[0].substring(meta[0].indexOf("#") + 2),
-                artist: meta[1],
-                author: meta[2],
-                composer: meta[3],
-                publisher: meta[1],
-                copyright: meta[4]
-            }
-        }
+        show.meta = { ...show.meta, ...extractCCLIMetadata(ccli, name) }
     } else if (Object.keys(plainTextMetadata).length) {
         show.meta = plainTextMetadata
     }
+    if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
     if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
     if (source && !show.meta.publisher) show.meta.publisher = source
+
+    // remove first block if it matches the metadata title
+    if (show.meta.title && show.layouts[layoutID]?.slides?.length > 0) {
+        const firstSlideId = show.layouts[layoutID].slides[0].id
+        const firstSlide = show.slides[firstSlideId]
+        if (firstSlide) {
+            const slideText = getSlideText(firstSlide).trim()
+            const slideLines = slideText.split("\n").filter(Boolean)
+            if (slideLines.length === 1 && slideLines[0].toLowerCase() === show.meta.title.toLowerCase()) {
+                show.layouts[layoutID].slides.shift()
+                delete show.slides[firstSlideId]
+            }
+        }
+    }
 
     if (plainNotes) show.layouts[layoutID].notes = plainNotes
 
@@ -194,6 +196,60 @@ export function trimNameFromString(text: string) {
     if (name.length > 38) name = name.slice(0, 30)
 
     return name
+}
+
+function isCCLIBlock(text: string): boolean {
+    if (!text) return false
+    const lower = text.toLowerCase()
+    return lower.includes("www.ccli.com") || lower.includes("ccli song") || lower.includes("ccli licence") || lower.includes("ccli license")
+}
+function extractCCLIMetadata(ccliText: string, title?: string): Record<string, string> {
+    const lines = ccliText
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean)
+
+    const meta: Record<string, string> = {}
+    if (title) meta.title = title
+
+    const unknownData: string[] = []
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+
+        // CCLI Song #
+        const songMatch = line.match(/CCLI\s*(?:Song)?\s*#\s*(\d+)/i)
+        if (songMatch) {
+            meta.CCLI = songMatch[1].trim()
+            continue
+        }
+
+        // CCLI License #
+        const licMatch = line.match(/CCLI\s*Licen[cs]e\s*(?:No\.?|#)?\s*(\d+)/i)
+        if (licMatch) {
+            if (!meta.license) meta.license = licMatch[1].trim()
+            continue
+        }
+
+        // Copyright / Year
+        const copyrightMatch = line.match(/^(?:©|\(c\)|copyright)\s*(.+)$/i)
+        if (copyrightMatch) {
+            meta.copyright = line
+            const yearMatch = copyrightMatch[1].match(/\b(19\d{2}|20\d{2})\b/)
+            if (yearMatch) meta.year = yearMatch[1]
+            continue
+        }
+
+        // SongSelect disclaimer / website link
+        if (/terms\s+of\s+use|all\s+rights\s+reserved|ccli\.com/i.test(line)) continue
+
+        unknownData.push(line)
+    }
+
+    // push into Author
+    if (unknownData.length > 0) meta.author = unknownData.join(", ")
+
+    return meta
 }
 
 function isHeaderLine(line: string): boolean {
@@ -643,151 +699,31 @@ function fixText(text: string, formatText: boolean): string {
     return text
 }
 
-//
+// --- Match Helpers ---
 
-const similarityNum = 0.7
+export function similarity(s1: string, s2: string): number {
+    if (!s1.length && !s2.length) return 1.0
+    const maxLength = Math.max(s1.length, s2.length)
+    if (maxLength === 0) return 1.0
 
-function findPatterns(sections: string[], autoGroups: boolean) {
-    const similarCount: { matches: number[]; count: 0 }[] = []
-    // total count of totally different slides
-    let totalMatches = 0
-    sections.forEach(countMatchingSections)
-
-    // let totalMatches = similarCount.filter((a) => a > 0).length
-    let matches = 0
-    const stored: { type: string; text: string }[] = []
-    const indexes = similarCount.map(getIndexes)
-
-    return { sections, indexes }
-
-    function countMatchingSections(section: string, i: number) {
-        similarCount[i] = { matches: [], count: 0 }
-
-        const alreadyCounted = similarCount.find((a) => a.matches.includes(i))
-        if (alreadyCounted) {
-            similarCount[i] = alreadyCounted
-            return
-        }
-
-        sections.forEach(count)
-        if (similarCount[i].count > 0) totalMatches++
-
-        function count(b: string, j: number) {
-            if (i === j || similarityNum > similarity(section, b)) return
-            similarCount[i].count++
-            similarCount[i].matches.push(j)
-        }
-    }
-
-    function getIndexes(similar: { matches: number[]; count: 0 }, i: number): string {
-        // let lines = sections[i].split("\n")
-        const splitted: string[] = sections[i].split("\n").filter((a) => a.length)
-        if (!splitted.length) return "break"
-
-        const length: number = sections[i].replaceAll("\n", "").length
-
-        // Priority: Use explicit label match before checking for text similarity to respect musical structure
-        const rawName = splitted[0].replace(/[\[\]'":]+/g, "").trim()
-        const exactMatch = findGroupMatch(rawName)
-        if (exactMatch) return exactMatch
-
-        const find = stored.find((a) => similarity(a.text, sections[i]) > similarityNum)
-
-        // TODO: repeat x6
-        // TODO: labels in text
-        // TODO: frihet, the blessing
-        // verses repeat..., bridge repeat
-
-        // if (lines.length < 2) group =  "break"
-        if (find) return find.type
-
-        // TODO: group....
-        const name = getLabelId(splitted[0])
-        if (findGroupMatch(name)) return findGroupMatch(name) || name
-
-        // let textGroup: string = splitted[0].trim()[0] === "[" && splitted[0].includes("]") ? splitted[0].slice(splitted[0].indexOf("[") + 1, splitted[0].indexOf("]")) : ""
-
-        // TODO: remove numbers....
-        if ((splitted[0].match(/\[[^\]]*]/g)?.[0] || "").length === splitted[0].length || splitted[0].trim()[splitted[0].length - 1] === ":") {
-            return splitted[0]
-                .replace(/[\[\]'":]+/g, "") // []'":
-                .replace(/x[0-9]/g, "") // x0-9
-                .replace(/[0-9]/g, "") // 0-9
-                .trim()
-        }
-
-        // if (length < 10 && !sections[i].includes("\n")) return sections[i].trim()
-        if (autoGroups) {
-            if (length < 30 || linesSimilarity(sections[i])) return "tag"
-
-            const cleanGroup = get(groupNumbers) ? splitted[0].replace(/\d+/g, "").trim() : splitted[0].trim()
-            const matchedGroup = findGroupMatch(cleanGroup)
-            if (splitted[0].length < 8 && splitted[1]?.length > 20 && !/[,.!?-]/.test(splitted[0]) && matchedGroup) {
-                sections[i] = splitted.slice(1, splitted.length).join("\n")
-                return matchedGroup
-            }
-
-            if (similar.count > 0) {
-                const globalGroups = ["pre_chorus", "chorus", "bridge", "bridge", "bridge"]
-                matches++
-                let group = globalGroups[matches]
-                if (totalMatches > 2) group = globalGroups[matches - 1] || "other"
-                stored.push({ type: group, text: sections[i] })
-                return group
-            }
-        }
-
-        return "verse"
-    }
+    return (maxLength - editDistance(s1, s2)) / maxLength
 }
 
-function linesSimilarity(text: string): boolean {
-    const lines = text.split("\n")
-    if (lines.length < 3) return false
-    let isSimilar = false
-    lines.reduce((a: string, b: string) => {
-        if (similarity(a, b) > 0.95) isSimilar = true
-        return ""
-    })
-    return isSimilar
-}
+function editDistance(s1: string, s2: string): number {
+    const str1 = s1.toLowerCase()
+    const str2 = s2.toLowerCase()
+    const costs: number[] = Array.from({ length: str2.length + 1 }, (_, i) => i)
 
-// https://stackoverflow.com/questions/10473745/compare-strings-javascript-return-of-likely
-export function similarity(s1: string, s2: string) {
-    let longer = s1
-    let shorter = s2
-    if (s1.length < s2.length) {
-        longer = s2
-        shorter = s1
-    }
-    const longerLength: number = longer.length
-    if (longerLength === 0) {
-        return 1.0
-    }
-    return (longerLength - editDistance(longer, shorter)) / parseFloat(longerLength.toString())
-}
-
-function editDistance(s1: string, s2: string) {
-    s1 = s1.toLowerCase()
-    s2 = s2.toLowerCase()
-
-    const costs: number[] = []
-    for (let i = 0; i <= s1.length; i++) {
+    for (let i = 1; i <= str1.length; i++) {
         let lastValue = i
-        for (let j = 0; j <= s2.length; j++) {
-            if (i === 0) costs[j] = j
-            else {
-                if (j > 0) {
-                    let newValue = costs[j - 1]
-                    if (s1.charAt(i - 1) !== s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1
-                    costs[j - 1] = lastValue
-                    lastValue = newValue
-                }
-            }
+        for (let j = 1; j <= str2.length; j++) {
+            const newValue = str1[i - 1] === str2[j - 1] ? costs[j - 1] : Math.min(costs[j - 1], lastValue, costs[j]) + 1
+            costs[j - 1] = lastValue
+            lastValue = newValue
         }
-        if (i > 0) costs[s2.length] = lastValue
+        costs[str2.length] = lastValue
     }
-    return costs[s2.length]
+    return costs[str2.length]
 }
 
 export function findGroupMatch(group: string): string {
@@ -807,13 +743,8 @@ export function findGroupMatch(group: string): string {
     const allGroups = get(groups)
     if (allGroups[searchLabel]) return searchLabel
 
-    let customMatchId = ""
-    Object.entries(allGroups).forEach(([id, config]: [string, any]) => {
-        if (config.name && config.name.toLowerCase() === searchLabel) {
-            customMatchId = id
-        }
-    })
-    if (customMatchId) return customMatchId
+    const customMatch = Object.entries(allGroups).find(([_, config]: [string, any]) => config.name?.toLowerCase() === searchLabel)
+    if (customMatch) return customMatch[0]
 
     let groupMatch = ""
     Object.entries(get(dictionary).groups || {}).forEach(([id, value]) => {

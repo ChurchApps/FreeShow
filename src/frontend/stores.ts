@@ -120,6 +120,7 @@ export const playingVideoState: Writable<{ [key: string]: PlayingVideoState }> =
 export const activePlaylist: Writable<any> = writable(null)
 export const playingMetronome: Writable<boolean> = writable(false)
 export const visualizerData: Writable<any> = writable(null)
+export const channelDuckingMultipliers: Writable<{ [channelId: string]: number }> = writable({})
 export const isFadingOut: Writable<any> = writable(false)
 export const recordingChannels: Writable<{ [channelId: string]: boolean }> = writable({})
 
@@ -218,6 +219,7 @@ export const aiLlmStatus: Writable<AiFeatureStatus> = writable({ state: "stopped
 export const aiSuggestions: Writable<AiSuggestion[]> = writable([])
 export const aiSmartAction: Writable<AiSuggestion | null> = writable(null)
 export const sttTranscript: Writable<{ finalized: string; unprocessed: string }> = writable({ finalized: "", unprocessed: "" })
+export const sttTempDisabled: Writable<boolean> = writable(false)
 
 // ----- SAVED VARIABLES -----
 

@@ -92,6 +92,7 @@
     $: projectActive = !$projectView && $activeProject !== null
     $: currentProject = $activeProject ? $projects[$activeProject] : null
     $: currentProjectPcoFolderId = $activeProject ? ($contentProviderData?.planningcenter?.availablePlans as { planId: string; serviceTypeId: string }[] | undefined)?.find((p) => p.planId === $activeProject)?.serviceTypeId : undefined
+    $: currentProjectIsOnStage = !!$providerConnections.onstage && $activeProject?.startsWith("onstage_")
 
     function createProject(folder = false) {
         let parent = interactedFolder || ($folders[currentProject?.parent || ""] ? currentProject?.parent || "/" : "/")
@@ -171,8 +172,8 @@
         project.parent = interactedFolder || ($folders[currentProject?.parent || ""] ? currentProject?.parent || "/" : "/")
 
         if (project.name.includes("{") ? !ctrl : ctrl)
-            project.name = getProjectName({ default_project_name: project.name }) // replace actual name values
-        else project.name = getProjectName() // use default (auto) project name
+            project.name = getProjectName(project.parent, { default_project_name: project.name }) // replace actual name values
+        else project.name = getProjectName(project.parent) // use default (auto) project name
 
         let projectId = uid()
         history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
@@ -336,6 +337,11 @@
         sendMain(Main.PCO_LOAD_PLAN, { serviceTypeId, planId })
     }
 
+    function refreshOnStageProject(projectId: string) {
+        const serviceId = projectId.replace("onstage_", "")
+        sendMain(Main.ONSTAGE_LOAD_SERVICE, { serviceId, data: $contentProviderData.onstage })
+    }
+
     function handleKeydown(e: KeyboardEvent) {
         if (addMenuOpen && e.key === "Escape") {
             addMenuOpen = false
@@ -378,6 +384,14 @@
                             {#if showProjectDropdown && currentProject}
                                 <!-- WIP use context menu style -->
                                 <div class="projectDropdown" transition:fade={{ duration: 100 }} role="none" on:click={() => (showProjectDropdown = false)}>
+                                    {#if currentProjectIsOnStage && $activeProject}
+                                        <MaterialButton title="Sync with OnStage" icon="refresh" on:click={() => refreshOnStageProject($activeProject)} white>
+                                            <T id="cloud.sync" />
+                                        </MaterialButton>
+
+                                        <div class="DIVIDER"></div>
+                                    {/if}
+
                                     {#if currentProjectPcoFolderId && $activeProject}
                                         <MaterialButton title="Sync with Planning Center" icon="refresh" on:click={() => refreshPcoProject(currentProjectPcoFolderId, $activeProject)} white>
                                             <T id="cloud.sync" />
@@ -493,7 +507,7 @@
         <ProjectContentList tree={[]} on:scrollElem={(e) => (contentScrollElem = e.detail)} isTemplate />
     {:else if !projectActive && showProjectsOptions}
         <div class="options">
-            <MaterialTextInput label="settings.default_project_name<span style='opacity: 0.5;padding-left: 8px;font-size: 0.8em;color: var(--text);'>{getProjectName($special)}</span>" title={projectReplacerTitle} value={projectName} defaultValue={getDefaultProjectName()} on:change={(e) => updateSpecial(e.detail, "default_project_name", true)} />
+            <MaterialTextInput label="settings.default_project_name<span style='opacity: 0.5;padding-left: 8px;font-size: 0.8em;color: var(--text);'>{getProjectName('', $special)}</span>" title={projectReplacerTitle} value={projectName} defaultValue={getDefaultProjectName()} on:change={(e) => updateSpecial(e.detail, "default_project_name", true)} />
             <MaterialToggleSwitch label="settings.startup_projects_list" checked={$special.startupProjectsList} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "startupProjectsList")} />
         </div>
     {:else if !projectActive}

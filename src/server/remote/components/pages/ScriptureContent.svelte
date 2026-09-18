@@ -313,7 +313,7 @@
         }
     }
 
-    // Scroll to a specific verse in list mode
+    // Scroll to a specific verse
     export function scrollToVerse(verseNum: number) {
         if (!versesContainer || verseNum <= 0) return
 
@@ -321,13 +321,29 @@
         const verseButtons = versesContainer.querySelectorAll(".verse-button")
         for (let i = 0; i < verseButtons.length; i++) {
             const button = verseButtons[i] as HTMLElement
-            const verseSpan = button.querySelector("span")
-            if (verseSpan && Number(verseSpan.textContent?.trim()) === verseNum) {
-                // Scroll the container to show the button
+            const elId = button.id || button.getAttribute("data-verse")
+            let match = false
+            if (elId && Number(elId) === verseNum) {
+                match = true
+            } else {
+                const verseNumSpan = button.querySelector(".verse-num") || button.querySelector("span")
+                if (verseNumSpan && Number(verseNumSpan.textContent?.trim()) === verseNum) {
+                    match = true
+                }
+            }
+
+            if (match) {
+                // Scroll container to make the button visible
                 const containerRect = versesContainer.getBoundingClientRect()
                 const buttonRect = button.getBoundingClientRect()
-                const scrollTop = versesContainer.scrollTop + (buttonRect.top - containerRect.top) - containerRect.height / 2 + buttonRect.height / 2
-                versesContainer.scrollTo({ top: scrollTop, behavior: "smooth" })
+                const visibleTop = buttonRect.top - containerRect.top
+                const visibleBottom = buttonRect.bottom - containerRect.top
+
+                // Only scroll if outside or partially outside visible area
+                if (visibleTop < 0 || visibleBottom > containerRect.height) {
+                    const scrollTop = versesContainer.scrollTop + (buttonRect.top - containerRect.top) - containerRect.height / 2 + buttonRect.height / 2
+                    versesContainer.scrollTo({ top: Math.max(0, scrollTop), behavior: "smooth" })
+                }
                 break
             }
         }
@@ -429,27 +445,27 @@
         }
     }
 
-    // Auto-scroll to displayed verse when switching from grid to list view
-    $: if (depth === 2 && $scriptureViewList && !previousViewList && displayedVerseNumber > 0 && versesContainer && verses.length > 0) {
-        // Wait for DOM to update, then scroll
-        setTimeout(() => {
-            if (!versesContainer) return
+    // Auto-scroll to active verse when viewing verses (depth === 2 or list view)
+    let lastScrolledVerse = 0
+    let lastScrolledChapter = -1
+    let lastScrolledBook = -1
 
-            // Find the verse button with the displayed verse number
-            const verseButtons = versesContainer.querySelectorAll(".verse-button")
-            for (let i = 0; i < verseButtons.length; i++) {
-                const button = verseButtons[i] as HTMLElement
-                const verseSpan = button.querySelector("span")
-                if (verseSpan && Number(verseSpan.textContent?.trim()) === displayedVerseNumber) {
-                    // Scroll the container to show the button
-                    const containerRect = versesContainer.getBoundingClientRect()
-                    const buttonRect = button.getBoundingClientRect()
-                    const scrollTop = versesContainer.scrollTop + (buttonRect.top - containerRect.top) - containerRect.height / 2 + buttonRect.height / 2
-                    versesContainer.scrollTo({ top: scrollTop, behavior: "smooth" })
-                    break
-                }
-            }
-        }, 150)
+    $: currentActiveOrDisplayedVerse = activeVerse > 0 ? activeVerse : (activeBook === displayedBookIndex && activeChapter === displayedChapterIndex ? displayedVerseNumber : 0)
+
+    $: if (depth === 2 && currentActiveOrDisplayedVerse > 0 && versesContainer && verses.length > 0) {
+        const viewChanged = $scriptureViewList !== previousViewList
+        const verseChanged = currentActiveOrDisplayedVerse !== lastScrolledVerse
+        const chapterChanged = activeChapter !== lastScrolledChapter || activeBook !== lastScrolledBook
+
+        if (verseChanged || chapterChanged || viewChanged) {
+            lastScrolledVerse = currentActiveOrDisplayedVerse
+            lastScrolledChapter = activeChapter
+            lastScrolledBook = activeBook
+            const targetVerse = currentActiveOrDisplayedVerse
+            setTimeout(() => {
+                scrollToVerse(targetVerse)
+            }, viewChanged || chapterChanged ? 150 : 50)
+        }
         previousViewList = $scriptureViewList
     } else {
         previousViewList = $scriptureViewList
@@ -654,6 +670,7 @@
                     {/if}
 
                     <button
+                        id={String(verseNumber)}
                         type="button"
                         class="verse-button"
                         class:collection-verse={isCollection && $scriptureViewList}
