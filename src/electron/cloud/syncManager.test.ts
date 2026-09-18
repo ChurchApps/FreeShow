@@ -48,7 +48,9 @@ vi.mock("electron", () => {
                 }
                 return h.tempDir
             },
-            getName: () => "FreeShow-Test"
+            getName: () => "FreeShow-Test",
+            whenReady: () => Promise.resolve(),
+            getGPUInfo: () => Promise.resolve({})
         },
         dialog: {},
         shell: {},
