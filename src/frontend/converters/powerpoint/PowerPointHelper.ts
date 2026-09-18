@@ -449,6 +449,9 @@ export class PowerPointPackage {
         if (bgImage) {
             let imageItem: Item = { type: "media", style: "width:1920px;height:1080px;top:0;left:0;", src: bgImage, fit: "cover" }
 
+            const filter = resolveImageEffects(bgFill)
+            if (filter) imageItem.filter = filter
+
             const alpha = getAttribute(getValue(bgFill, "a:blip"), "amt", "a:alphaModFix")
             let a = parseInt(alpha || "100000") / 100000
             if (a < 1) imageItem.style += `opacity: ${a};`
@@ -1160,6 +1163,9 @@ export class PowerPointPackage {
                 // const mediaFit = getAttribute(fill, "method", "p:blipFill")
                 item.fit = "fill"
 
+                const filter = resolveImageEffects(blipFill)
+                if (filter) item.filter = filter
+
                 // is video elem
                 const nvPr = getValue(shape.shape, "p:nvPicPr", "p:nvPr")
                 const videoId = getAttribute(nvPr, "r:link", "a:videoFile")
@@ -1750,15 +1756,73 @@ function resolveGradient(gradFill: any[], colors: { [key: string]: any }[]) {
     return `linear-gradient(${angle}deg, ${gradientStops.join(", ")})`
 }
 
+function resolveImageEffects(blipFill: any[]): string {
+    const blip = getValue(blipFill, "a:blip")
+    if (!blip.length) return ""
+
+    const filters: string[] = []
+    const toPct = (val?: string) => (val != null && val !== "" ? Number(val) / 100000 : null)
+
+    // DrawingML direct effects
+    const lum = getValue(blip, "a:lum")
+    const lumB = toPct(getAttribute(lum, "bright"))
+    const lumC = toPct(getAttribute(lum, "contrast"))
+    if (lumB != null) filters.push(`brightness(${round(Math.max(0, 1 + lumB))})`)
+    if (lumC != null) filters.push(`contrast(${round(Math.max(0, 1 + lumC))})`)
+    if (getValue(blip, "a:grayscl").length) filters.push("grayscale(1)")
+
+    // Extension image effects (a14 / a15 / a16 / any namespace)
+    const effects = getValues(blip, "extLst", "ext", "imgProps", "imgLayer", "imgEffect").flat()
+    for (const effect of effects) {
+        const attrs = effect?.[":@"] || {}
+        const tag = Object.keys(effect || {}).find((k) => k !== ":@") || ""
+        const name = tag.includes(":") ? tag.split(":")[1] : tag
+
+        if (name === "brightnessContrast") {
+            const b = toPct(attrs.bright)
+            const c = toPct(attrs.contrast)
+            if (b != null) filters.push(`brightness(${round(Math.max(0, 1 + b))})`)
+            if (c != null) filters.push(`contrast(${round(Math.max(0, 1 + c))})`)
+        } else if (name === "saturation") {
+            const s = toPct(attrs.sat)
+            if (s != null) filters.push(`saturate(${round(Math.max(0, s))})`)
+        } else if (name === "colorTemperature") {
+            const temp = Number(attrs.colorTemp)
+            if (temp > 0 && temp !== 6500) {
+                const diff = (6500 - temp) / 6500
+                filters.push(diff > 0 ? `sepia(${round(diff * 0.4)})` : `hue-rotate(${round(diff * 20)}deg)`)
+            }
+        } else if (name === "sharpenSoften") {
+            const amount = Number(attrs.amount || 0)
+            if (amount < 0) filters.push(`blur(${round(Math.abs(amount) / 20000, 1)}px)`)
+        }
+    }
+
+    return filters.join(" ")
+}
+
 ///// XML
+
+function getNodeChild(n: any, key: string): any[] | undefined {
+    if (!n || typeof n !== "object") return undefined
+    if (n.hasOwnProperty(key)) return n[key]
+    const local = key.includes(":") ? key.split(":")[1] : key
+    const matchKey = Object.keys(n).find((k) => k !== ":@" && (k === local || k.endsWith(":" + local)))
+    return matchKey ? n[matchKey] : undefined
+}
 
 function getValue(data: any[], ...path: string[]): any[] {
     if (!Array.isArray(data)) return []
 
     let current = data
     for (const key of path) {
-        current = current.find((n: any) => n.hasOwnProperty(key))?.[key]
-        if (!Array.isArray(current)) return []
+        let next: any[] | undefined
+        for (const n of current) {
+            next = getNodeChild(n, key)
+            if (Array.isArray(next)) break
+        }
+        if (!Array.isArray(next)) return []
+        current = next
     }
 
     return current
@@ -1771,13 +1835,18 @@ function getValues(data: any[], ...path: string[]): any[][] {
 
     let current = data
     for (const key of path) {
-        current = current.find((n: any) => n.hasOwnProperty(key))?.[key]
-        if (!Array.isArray(current)) return []
+        let next: any[] | undefined
+        for (const n of current) {
+            next = getNodeChild(n, key)
+            if (Array.isArray(next)) break
+        }
+        if (!Array.isArray(next)) return []
+        current = next
     }
 
-    current = current.filter((n: any) => n.hasOwnProperty(lastPath)).map((n: any) => n[lastPath])
-
     return current
+        .map((n: any) => getNodeChild(n, lastPath))
+        .filter((child): child is any[] => Array.isArray(child))
 }
 
 // [slide, layout, master]
