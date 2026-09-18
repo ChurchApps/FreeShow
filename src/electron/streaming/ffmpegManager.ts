@@ -1,25 +1,36 @@
 import { execFile } from "child_process"
 import { app } from "electron"
-import fs from "fs"
+import { existsSync } from "fs"
+import fs from "fs/promises"
+import { createWriteStream } from "fs"
 import path from "path"
 import { Readable } from "stream"
 import { pipeline } from "stream/promises"
 import { promisify } from "util"
-import yauzl from "yauzl"
+import zlib from "zlib"
 
 const execFileAsync = promisify(execFile)
 
 // using pre-built, static ffmpeg binaries that can be downloaded at runtime
-const FFMPEG_VERSION = "6.1"
+const FFMPEG_VERSION = "b6.1.1"
 
-const BIN_NAME = process.platform === "win32" ? "ffmpeg.exe" : "ffmpeg"
+const IS_WIN = process.platform === "win32"
+const BIN_NAME = IS_WIN ? "ffmpeg.exe" : "ffmpeg"
 
-export function getFfmpegDir(): string {
-    return path.join(app.getPath("userData"), "bin")
+// resolving spawns a process, so the answer is cached and reused by the sync accessor
+let resolvedPath: string | null = null
+let resolvingPromise: Promise<string | null> | null = null
+
+export const getFfmpegDir = (): string => path.join(app.getPath("userData"), "bin")
+export const getFfmpegPathLocal = (): string => path.join(getFfmpegDir(), BIN_NAME)
+export const getResolvedFfmpegPath = (): string | null => resolvedPath
+export const clearFfmpegPathCache = (): void => {
+    resolvedPath = null
 }
 
-export function getFfmpegPathLocal(): string {
-    return path.join(getFfmpegDir(), BIN_NAME)
+const SYSTEM_PATHS: Record<string, string[]> = {
+    darwin: ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/opt/local/bin/ffmpeg"],
+    linux: ["/usr/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/snap/bin/ffmpeg"]
 }
 
 async function runsOk(binPath: string): Promise<boolean> {
@@ -31,104 +42,55 @@ async function runsOk(binPath: string): Promise<boolean> {
     }
 }
 
-// resolving spawns a process, so the answer is cached and reused by the sync accessor
-let resolvedPath: string | null = null
-let resolving: Promise<string | null> | null = null
+export async function resolveFfmpegPath(): Promise<string | null> {
+    if (resolvedPath) return resolvedPath
+    if (resolvingPromise) return resolvingPromise
 
-export function resolveFfmpegPath(): Promise<string | null> {
-    if (resolvedPath) return Promise.resolve(resolvedPath)
-    if (resolving) return resolving
+    resolvingPromise = (async () => {
+        const candidates = ["ffmpeg", ...(SYSTEM_PATHS[process.platform] || []), getFfmpegPathLocal()]
 
-    resolving = (async () => {
-        if (await runsOk("ffmpeg")) {
-            resolvedPath = "ffmpeg"
-            return resolvedPath
+        for (const binPath of candidates) {
+            if ((binPath === "ffmpeg" || existsSync(binPath)) && (await runsOk(binPath))) {
+                resolvedPath = binPath
+                return resolvedPath
+            }
         }
 
-        const binPath = getFfmpegPathLocal()
-        if (fs.existsSync(binPath) && fs.statSync(binPath).isFile() && (await runsOk(binPath))) {
-            resolvedPath = binPath
-            return resolvedPath
-        }
-
-        console.warn(`[ffmpegManager] No usable FFmpeg found (checked PATH and ${binPath})`)
+        console.warn(`[ffmpegManager] No usable FFmpeg found.`)
         return null
-    })()
+    })().finally(() => {
+        resolvingPromise = null
+    })
 
-    try {
-        return resolving
-    } finally {
-        resolving.finally(() => (resolving = null))
-    }
-}
-
-/** Path resolved by a previous resolveFfmpegPath() call, or null if not resolved yet. */
-export function getResolvedFfmpegPath(): string | null {
-    return resolvedPath
-}
-
-export function clearFfmpegPathCache() {
-    resolvedPath = null
+    return resolvingPromise
 }
 
 export async function isFfmpegInstalled(): Promise<boolean> {
     return (await resolveFfmpegPath()) !== null
 }
 
-function getPlatformKey(): string | null {
+function getDownloadUrl(): string | null {
     const { platform, arch } = process
-    if (platform === "win32") return arch === "ia32" ? "win-32" : "win-64"
-    if (platform === "darwin") return "macos-64"
-    if (platform === "linux") {
-        if (arch === "arm64") return "linux-arm-64"
-        if (arch === "arm") return "linux-armhf-32"
-        return "linux-64"
+    const BASE = `https://github.com/eugeneware/ffmpeg-static/releases/download/${FFMPEG_VERSION}`
+
+    const urls: Record<string, Record<string, string>> = {
+        darwin: { arm64: `${BASE}/ffmpeg-darwin-arm64.gz`, x64: `${BASE}/ffmpeg-darwin-x64.gz` },
+        win32: { x64: `${BASE}/ffmpeg-win32-x64.gz`, ia32: "https://github.com/eugeneware/ffmpeg-static/releases/download/b6.0/ffmpeg-win32-ia32.gz" },
+        linux: { x64: `${BASE}/ffmpeg-linux-x64.gz`, arm64: `${BASE}/ffmpeg-linux-arm64.gz`, arm: `${BASE}/ffmpeg-linux-arm.gz` }
     }
-    return null
-}
 
-function extractFfmpeg(zipPath: string, targetDir: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-        yauzl.open(zipPath, { lazyEntries: true }, (err, zipfile) => {
-            if (err || !zipfile) return reject(err || new Error("Could not open zip"))
-
-            zipfile.on("error", reject)
-            zipfile.readEntry()
-            zipfile.on("entry", (entry) => {
-                if (path.basename(entry.fileName) !== BIN_NAME) {
-                    zipfile.readEntry()
-                    return
-                }
-
-                zipfile.openReadStream(entry, (err, readStream) => {
-                    if (err || !readStream) return reject(err || new Error("Empty read stream"))
-
-                    const destPath = path.join(targetDir, BIN_NAME)
-                    const writeStream = fs.createWriteStream(destPath)
-
-                    pipeline(readStream, writeStream)
-                        .then(() => {
-                            zipfile.close()
-                            if (process.platform !== "win32") fs.chmodSync(destPath, 0o755)
-                            resolve(destPath)
-                        })
-                        .catch(reject)
-                })
-            })
-            zipfile.on("end", () => reject(new Error("ffmpeg not found in zip")))
-        })
-    })
+    return urls[platform]?.[arch] || null
 }
 
 export async function downloadFfmpeg(onProgress: (percent: number) => void): Promise<string> {
-    const platformKey = getPlatformKey()
-    if (!platformKey) throw new Error(`Unsupported platform: ${process.platform}/${process.arch}`)
+    const url = getDownloadUrl()
+    if (!url) throw new Error(`Unsupported platform: ${process.platform}/${process.arch}`)
 
     const binDir = getFfmpegDir()
-    fs.mkdirSync(binDir, { recursive: true })
+    await fs.mkdir(binDir, { recursive: true })
 
-    const zipPath = path.join(binDir, "ffmpeg_download.zip")
-    const url = `https://github.com/ffbinaries/ffbinaries-prebuilt/releases/download/v${FFMPEG_VERSION}/ffmpeg-${FFMPEG_VERSION}-${platformKey}.zip`
+    const tempPath = path.join(binDir, `${BIN_NAME}.download-${Date.now()}`)
+    const destPath = getFfmpegPathLocal()
 
     const response = await fetch(url)
     if (!response.ok || !response.body) throw new Error(`Download failed: ${response.status}`)
@@ -139,28 +101,24 @@ export async function downloadFfmpeg(onProgress: (percent: number) => void): Pro
     const body = Readable.fromWeb(response.body as any)
     body.on("data", (chunk) => {
         downloadedBytes += chunk.length
-        if (totalBytes > 0) onProgress(Math.round((downloadedBytes / totalBytes) * 100))
+        if (totalBytes) onProgress(Math.round((downloadedBytes / totalBytes) * 100))
     })
 
     try {
-        await pipeline(body, fs.createWriteStream(zipPath))
-        const extracted = await extractFfmpeg(zipPath, binDir)
+        await pipeline(body, zlib.createGunzip(), createWriteStream(tempPath))
 
-        // On macOS, files downloaded via fetch() get a com.apple.quarantine xattr
-        // that causes Gatekeeper to block execution. Strip it so the binary runs.
+        if (!IS_WIN) await fs.chmod(tempPath, 0o755)
+
+        await fs.rename(tempPath, destPath)
+
         if (process.platform === "darwin") {
-            try {
-                await execFileAsync("xattr", ["-d", "com.apple.quarantine", extracted])
-            } catch {
-                // attribute may not be present — that's fine
-            }
+            await execFileAsync("xattr", ["-cr", destPath]).catch(() => {})
+            await execFileAsync("codesign", ["-s", "-", "--force", destPath]).catch((err) => console.warn("[ffmpegManager] Ad-hoc codesign warning:", err))
         }
 
         clearFfmpegPathCache()
-        return extracted
+        return destPath
     } finally {
-        try {
-            fs.unlinkSync(zipPath)
-        } catch {}
+        await fs.rm(tempPath, { force: true }).catch(() => {})
     }
 }
