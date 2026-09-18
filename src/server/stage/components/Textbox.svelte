@@ -90,56 +90,85 @@
 
     // CHORDS
 
-    // WIP auto size here does not set correct size in stage output
     let chordLines: string[] = []
-    $: if (chords && item.lines) createChordLines()
+    let chordOnlyLines: boolean[] = []
+    $: if (chords && (item?.lines || fontSize)) setTimeout(createChordLines)
     function createChordLines() {
         chordLines = []
+        chordOnlyLines = []
         if (!Array.isArray(item?.lines)) return
 
         item.lines.forEach((line, i) => {
             if (!line.chords?.length || !line.text) return
 
             let chords = JSON.parse(JSON.stringify(line.chords || []))
-            let negativeChords = chords.filter((chord: any) => chord.pos < 0)
-            chords = chords.filter((chord: any) => chord.pos >= 0)
+            const lineText = getLineText(line)
+            const autosizeRatio = getChordSizeRatio()
 
             let html = ""
-
-            //add negative chords at the beginning of the line
-            negativeChords
-                .sort((a: any, b: any) => b.pos - a.pos)
-                .forEach((chord: any, i: number) => {
-                    html += `<span class="chord" style="transform: translateX(calc(-100% - ${60 * (i + 1)}px));">${chord.key}</span>`
-                })
+            if (!lineText.trim().length) {
+                chordLines[i] = getChordOnlyHtml(chords)
+                chordOnlyLines[i] = true
+                return
+            }
 
             let index = 0
             line.text.forEach((text) => {
-                let value = text.value.trim().replaceAll("\n", "") || "."
+                let value = text.value.trim().replaceAll("\n", "") || ""
 
                 let letters = value.split("")
                 letters.forEach((letter) => {
                     let chordIndex = chords.findIndex((a: any) => a.pos === index)
                     if (chordIndex >= 0) {
-                        html += `<span class="chord">${chords[chordIndex].key}</span>`
+                        html += `<span class="chord" data-autosize-ratio="${autosizeRatio}">${chords[chordIndex].key}</span>`
                         chords.splice(chordIndex, 1)
                     }
 
-                    html += `<span class="invisible">${letter}</span>`
+                    let size = fontSize || 0
+                    html += `<span class="invisible" style="${size ? `font-size: ${size}px;` : ""}">${letter}</span>`
 
                     index++
                 })
             })
 
-            chords
-                .sort((a: any, b: any) => a.pos - b.pos)
-                .forEach((chord: any, i: number) => {
-                    html += `<span class="chord" style="transform: translateX(${60 * (i + 1)}px);">${chord.key}</span>`
-                })
+            // Add leading offset before the first end chord to separate it from the last lyric character
+            if (chords.length > 0) {
+                const leadWidthEm = (0.8 * autosizeRatio).toFixed(2)
+                html += `<span class="invisible trailing-lead-space" style="display: inline-block; width: ${leadWidthEm}em; white-space: nowrap;"></span>`
+            }
+
+            // Dynamically reserve inline horizontal space per trailing chord with generous spacing
+            chords.forEach((chord: any) => {
+                html += `<span class="chord end" data-autosize-ratio="${autosizeRatio}">${chord.key}</span>`
+                const widthEm = Math.max(1.5, chord.key.length * 0.65 * autosizeRatio + 0.8).toFixed(2)
+                html += `<span class="invisible trailing-space" style="display: inline-block; width: ${widthEm}em; white-space: nowrap;"></span>`
+            })
 
             if (!html) return
             chordLines[i] = html
+            chordOnlyLines[i] = false
         })
+    }
+
+    function getLineText(line: any) {
+        return line.text?.reduce((value: string, text: any) => (value += text.value || ""), "") || ""
+    }
+
+    function getChordOnlyHtml(chords: any[]) {
+        const autosizeRatio = getChordSizeRatio()
+        return chords
+            .sort((a, b) => a.pos - b.pos)
+            .map((chord, i, sorted) => {
+                const previousPos = sorted[i - 1]?.pos ?? 0
+                const gap = i === 0 ? Math.max(0, chord.pos) : Math.max(1, chord.pos - previousPos)
+
+                return `<span class="chord" data-autosize-ratio="${autosizeRatio}" style="${gap ? `margin-left: ${gap * 0.65}em;` : ""}">${chord.key}</span>`
+            })
+            .join("")
+    }
+
+    function getChordSizeRatio() {
+        return (stageItem?.chords?.size || stageItem?.chordsData?.size || item?.chords?.size || 50) / 100
     }
 
     let thisElem: HTMLElement | undefined
@@ -269,8 +298,8 @@
         clearInterval(cssInterval)
     })
 
-    $: chordFontSize = chordLines.length ? (stageItem?.chords?.size || stageItem?.chordsData?.size || 60) * 0.65 : 0
-    $: chordsStyle = `--chord-size: ${chordLines.length ? fontSize * (chordFontSize / 100) : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || "#FF851B"};`
+    $: chordFontSize = chordLines.length ? stageItem?.chords?.size || stageItem?.chordsData?.size || item?.chords?.size || 50 : 0
+    $: chordsStyle = `--chord-size: ${chordLines.length ? fontSize * (chordFontSize / 100) : "undefined"}px;--chord-color: ${stageItem?.chords?.color || stageItem?.chordsData?.color || item?.chords?.color || "#FF851B"};`
 
     function press() {
         if (!item.button?.press) return
@@ -483,27 +512,29 @@
 
     {#if item.lines}
         <div class="align" style={style ? item.align : null} bind:this={alignElem}>
-            <div class="lines" style="{style ? lineStyleBox : ''}{chordsStyle}">
+            <div class="lines" data-chord-size-ratio={chordFontSize ? chordFontSize / 100 : null} style="{style ? lineStyleBox : ''}{chordsStyle}">
                 {#each createVirtualBreaks(item.lines) as line, i}
+                    {@const chordOnly = chords && chordOnlyLines[i]}
                     {#if !maxLines || i < maxLines}
-                        <!-- WIP chords are way bigger than stage preview for some reason -->
                         {#if chordLines[i]}
-                            <div class:first={i === 0} class="break chords" style="--font-size: {fontSize}px;--offsetY: {stageItem?.chords?.offsetY || 0}px;">
+                            <div class:first={i === 0} class="break chords" class:chordOnly style="--font-size: {fontSize}px;--offsetY: {stageItem?.chords?.offsetY || 0}px;">
                                 {@html chordLines[i]}
                             </div>
                         {/if}
-                        <div class="break" class:reveal={item?.lineReveal && revealed < i} style="{style ? lineStyle : ''}{style ? line.align : ''}">
-                            {#each line.text || [] as text}
-                                {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
-                                {#key updateDynamic}
-                                    {#await replaceDynamicValues(value)}
-                                        <span style="{style ? text.style + (fontSize ? 'font-size: ' + fontSize + 'px;' : '') : 'font-size: ' + fontSize + 'px;'}{customStyle}">{@html getDynamicValue(value)}</span>
-                                    {:then newValue}
-                                        <span style="{style ? text.style + (fontSize ? 'font-size: ' + fontSize + 'px;' : '') : 'font-size: ' + fontSize + 'px;'}{customStyle}">{@html newValue}</span>
-                                    {/await}
-                                {/key}
-                            {/each}
-                        </div>
+                        {#if !chordOnly}
+                            <div class="break" class:reveal={item?.lineReveal && revealed < i} style="{style ? lineStyle : ''}{style ? line.align : ''}">
+                                {#each line.text || [] as text}
+                                    {@const value = text.value?.replaceAll("\n", "<br>") || "<br>"}
+                                    {#key updateDynamic}
+                                        {#await replaceDynamicValues(value)}
+                                            <span style="{style ? text.style + (fontSize ? 'font-size: ' + fontSize + 'px;' : '') : 'font-size: ' + fontSize + 'px;'}{customStyle}">{@html getDynamicValue(value)}</span>
+                                        {:then newValue}
+                                            <span style="{style ? text.style + (fontSize ? 'font-size: ' + fontSize + 'px;' : '') : 'font-size: ' + fontSize + 'px;'}{customStyle}">{@html newValue}</span>
+                                        {/await}
+                                    {/key}
+                                {/each}
+                            </div>
+                        {/if}
                     {/if}
                 {/each}
             </div>
@@ -666,29 +697,38 @@
         font-size: var(--chord-size) !important;
         font-weight: bold;
 
-        transform: translate(0, calc(-55% - 2px - var(--offsetY)));
-        line-height: initial;
+        transform: translateY(calc(-1 * var(--offsetY)));
+        line-height: 1;
         z-index: 2;
     }
     .break.chords {
-        line-height: 0.5em;
-        max-height: 15px;
+        height: calc(var(--chord-size) * 1.02);
+        line-height: 0;
+        max-height: none;
         position: relative;
+        pointer-events: none;
 
         /* reset */
         font-weight: normal;
         font-style: normal;
     }
-    .break.chords.first {
-        line-height: var(--chord-size) !important;
+    .break.chords.chordOnly {
+        line-height: 1.1;
+        max-height: unset;
+        overflow-wrap: normal;
+        text-wrap: unset;
+        white-space: nowrap;
+    }
+    .break.chords.chordOnly :global(.chord) {
+        display: inline-block;
+        line-height: 1.1;
+        position: static;
+        transform: none !important;
     }
 
     .item.chords,
     .item.chords .align {
         overflow: visible;
-    }
-    .lines {
-        line-height: calc(var(--chord-size) * 1.2 + 4px) !important;
     }
 
     /* custom svg icon */
