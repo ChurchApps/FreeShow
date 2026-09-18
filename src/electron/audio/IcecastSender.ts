@@ -173,7 +173,7 @@ export class IcecastSender {
             if (!this.isConnected || !this.socket || this.socket.destroyed) return
 
             const now = Date.now()
-            if (now - this.lastRealAudioTime < 1000) return
+            if (now - this.lastRealAudioTime < 60) return
 
             this.granulePosition += BigInt(960)
             this.silentPacketsCount++
@@ -253,22 +253,14 @@ export class IcecastSender {
 
         if (this.socket && this.isConnected) {
             try {
-                if (this.granulePosition > BigInt(48000 * 2)) {
-                    console.log(`[IcecastSender] Track metadata updated to "${this.currentSongTitle}". Chaining new Ogg stream.`)
-                    this.writeOggPage(Buffer.alloc(0), 4, this.granulePosition) // EOS
-
-                    this.serial = crypto.randomBytes(4).readUInt32LE(0)
-                    this.pageSequence = 0
-                    this.granulePosition = BigInt(0)
-                    this.startStreamHeaders()
-                } else {
-                    console.log(`[IcecastSender] Initial track metadata updated to "${this.currentSongTitle}" in-stream.`)
-                    const { artist, title } = parseArtistAndTitle(this.currentSongTitle)
-                    const tags = createOpusTagsPacket(artist, title)
-                    this.writeOggPage(tags, 0, this.granulePosition)
-                }
+                console.log(`[IcecastSender] Track metadata updated to "${this.currentSongTitle}". Chaining stream headers.`)
+                this.serial = crypto.randomBytes(4).readUInt32LE(0)
+                this.pageSequence = 0
+                this.granulePosition = BigInt(0)
+                this.lastRealAudioTime = Date.now()
+                this.startStreamHeaders()
             } catch (err) {
-                console.error("[IcecastSender] Error writing in-stream OpusTags metadata:", err)
+                console.error("[IcecastSender] Error updating stream headers for metadata:", err)
             }
         }
     }
