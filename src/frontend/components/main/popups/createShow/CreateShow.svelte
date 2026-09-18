@@ -225,6 +225,7 @@
     <MaterialButton class="popup-options {showMore ? 'active' : ''}" icon="options" iconSize={1.3} title={showMore ? "actions.close" : "create_show.more_options"} on:click={() => (showMore = !showMore)} white>
         {#if Number($splitLines)}<span class="state">{$splitLines}</span>{/if}
     </MaterialButton>
+    <MaterialButton class="popup-reset" icon="info" iconSize={1.3} title="create_show.quick_lyrics_songselect_tip" white />
 
     <MaterialTextarea label="create_show.quick_lyrics" placeholder={getQuickExample()} value={values.text} autofocus={!values.text} rows={showMore ? 6 : Math.max(6, Math.min(12, values.text.split("\n").length))} on:input={(e) => changeValue(e)} />
     <!-- WIP buttons for paste / format(remove chords, remove empty lines), etc. -->
