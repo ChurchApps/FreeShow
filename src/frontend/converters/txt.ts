@@ -106,7 +106,15 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     // get ccli
     let ccli = ""
     if (!Object.keys(plainTextMetadata).length && isCCLIBlock(sections[sections.length - 1])) {
-        ccli = sections.pop()!
+        const lastSection = sections[sections.length - 1]
+        const lines = lastSection.split("\n")
+        const songIdIndex = lines.findIndex((line) => /CCLI\s*(?:Song)?\s*#\s*\d+/i.test(line))
+        if (songIdIndex > 0 && lines.slice(0, songIdIndex).join("\n").trim()) {
+            ccli = lines.slice(songIdIndex).join("\n")
+            sections[sections.length - 1] = lines.slice(0, songIdIndex).join("\n")
+        } else {
+            ccli = sections.pop()!
+        }
     }
 
     let labeled: { type: string; text: string }[] = []
@@ -133,7 +141,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     show.layouts[layoutID].slides = layouts
 
     if (ccli) {
-        show.meta = { ...show.meta, ...extractCCLIMetadata(ccli, show.name) }
+        show.meta = { ...show.meta, ...extractCCLIMetadata(ccli, name) }
     } else if (Object.keys(plainTextMetadata).length) {
         show.meta = plainTextMetadata
     }
@@ -204,7 +212,11 @@ function extractCCLIMetadata(ccliText: string, title?: string): Record<string, s
     const meta: Record<string, string> = {}
     if (title) meta.title = title
 
-    for (const line of lines) {
+    const unknownData: string[] = []
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]
+
         // CCLI Song #
         const songMatch = line.match(/CCLI\s*(?:Song)?\s*#\s*(\d+)/i)
         if (songMatch) {
@@ -231,9 +243,11 @@ function extractCCLIMetadata(ccliText: string, title?: string): Record<string, s
         // SongSelect disclaimer / website link
         if (/terms\s+of\s+use|all\s+rights\s+reserved|ccli\.com/i.test(line)) continue
 
-        // Fallback for Author / Artist / Composer line
-        if (!meta.author) meta.author = line
+        unknownData.push(line)
     }
+
+    // push into Author
+    if (unknownData.length > 0) meta.author = unknownData.join(", ")
 
     return meta
 }
