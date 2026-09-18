@@ -73,6 +73,8 @@
 
     const obsEnabled = !!$obsData.enabled
     const spotifyEnabled = !!$spotifyState
+    const webRtcOutputs = Object.values($outputs).some((a) => a.webrtc)
+    const rtmpOutputs = Object.values($outputs).some((a) => a.rtmp)
 
     let previousSection = ""
     $: ACTIONS = [
@@ -102,6 +104,10 @@
                 if (id.startsWith("obs_") && !obsEnabled) return false
                 // remove any Spotify ones if not active
                 if (id.startsWith("spotify_") && !spotifyEnabled) return false
+                // remove WebRTC actions if no WebRTC outputs exist
+                if (id.includes("webrtc_") && !webRtcOutputs) return false
+                // remove RTMP actions if no RTMP outputs exist
+                if (id.includes("rtmp_") && !rtmpOutputs) return false
 
                 // show if it has an input (because you probably want to have multiple)
                 // if (actionData[actionId]?.input) return true
