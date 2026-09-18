@@ -148,7 +148,7 @@ export class ChurchAppsImport {
             console.error(err)
         }
 
-        if (!data?.arrangementKey) return null
+        if (!data || !data.arrangementKey || !data.arrangement || !data.song || !data.songDetail) return null
 
         return ChurchAppsShowBuilder.createSongShow(data.arrangementKey, data.arrangement, data.song, data.songDetail)
     }
