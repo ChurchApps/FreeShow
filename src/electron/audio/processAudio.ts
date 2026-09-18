@@ -139,6 +139,7 @@ function resamplePcmInt16Stereo(input: Buffer, inSampleRate: number, outSampleRa
     if (numInputFrames === 0) return Buffer.alloc(0)
 
     const ratio = inSampleRate / outSampleRate // e.g. 44100 / 48000 = 0.91875
+    if (ratio <= 0 || !Number.isFinite(ratio)) return input
     let currentPhase = resampleState.phase
 
     const estimatedOutputFrames = Math.ceil((numInputFrames - currentPhase) / ratio) + 2

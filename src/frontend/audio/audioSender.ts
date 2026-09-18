@@ -122,10 +122,15 @@ export class AudioSender {
         }
     }
 
+    private static pendingPortCleanups = new Map<string, () => void>()
+
     private static createProcessor(ac: AudioContext, targetId: string): AudioNode {
         if (!this.registeredContexts.has(ac) || !ac.audioWorklet) {
             return this.createFallbackProcessor(ac, targetId)
         }
+
+        this.pendingPortCleanups.get(targetId)?.()
+        this.pendingPortCleanups.delete(targetId)
 
         const node = new AudioWorkletNode(ac, "pcm-sender-processor")
 
@@ -133,21 +138,33 @@ export class AudioSender {
         const portResponseHandler = (ev: MessageEvent) => {
             if (ev.data?.type === "AUDIO_PORT_RESPONSE" && ev.data?.targetId === targetId && ev.ports?.[0]) {
                 window.removeEventListener("message", portResponseHandler)
+                AudioSender.pendingPortCleanups.delete(targetId)
                 if (!(node as any)._destroyed) {
-                    node.port.postMessage(
-                        {
-                            type: "INIT_PORT",
-                            targetId,
-                            sampleRate: ac.sampleRate,
-                            icecastConfig: this.getIcecastConfig(targetId)
-                        },
-                        [ev.ports[0]]
-                    )
+                    try {
+                        node.port.postMessage(
+                            {
+                                type: "INIT_PORT",
+                                targetId,
+                                sampleRate: ac.sampleRate,
+                                icecastConfig: this.getIcecastConfig(targetId)
+                            },
+                            [ev.ports[0]]
+                        )
+                    } catch (err) {
+                        console.warn(`[AudioSender] Failed to transfer audio port for targetId=${targetId}:`, err)
+                    }
                 }
             }
         }
         window.addEventListener("message", portResponseHandler)
-        ;(node as any)._cleanupListener = () => window.removeEventListener("message", portResponseHandler)
+        const cleanupListener = () => {
+            window.removeEventListener("message", portResponseHandler)
+            if (AudioSender.pendingPortCleanups.get(targetId) === cleanupListener) {
+                AudioSender.pendingPortCleanups.delete(targetId)
+            }
+        }
+        this.pendingPortCleanups.set(targetId, cleanupListener)
+        ;(node as any)._cleanupListener = cleanupListener
 
         send(AUDIO, ["INIT_PORT"], { id: targetId })
 
@@ -170,7 +187,17 @@ export class AudioSender {
             const len = left ? left.length : 0
 
             for (let readIdx = 0; readIdx < len; ) {
+                if (offset >= frameSize) {
+                    planarBuffer.set(bufL, 0)
+                    planarBuffer.set(bufR, frameSize)
+
+                    this.sendBuffer(targetId, ac.sampleRate, new Uint8Array(planarBuffer.buffer))
+                    offset = 0
+                }
+
                 const chunk = Math.min(len - readIdx, frameSize - offset)
+                if (chunk <= 0) break
+
                 bufL.set(left.subarray(readIdx, readIdx + chunk), offset)
                 if (right) bufR.set(right.subarray(readIdx, readIdx + chunk), offset)
                 else bufR.set(left.subarray(readIdx, readIdx + chunk), offset)
@@ -241,6 +268,9 @@ export class AudioSender {
     }
 
     private static removeTarget(targetId: string) {
+        this.pendingPortCleanups.get(targetId)?.()
+        this.pendingPortCleanups.delete(targetId)
+
         const entry = this.processors.get(targetId)
         if (!entry) return
 
@@ -281,8 +311,17 @@ export class AudioSender {
     }
 
     static cleanupAll() {
-        for (const targetId of this.processors.keys()) {
-            this.removeTarget(targetId)
+        const cleanups = Array.from(this.pendingPortCleanups.values())
+        this.pendingPortCleanups.clear()
+        for (let i = 0; i < cleanups.length; i++) {
+            try {
+                cleanups[i]()
+            } catch {}
+        }
+
+        const targets = Array.from(this.processors.keys())
+        for (let i = 0; i < targets.length; i++) {
+            this.removeTarget(targets[i])
         }
         this.processors.clear()
 
