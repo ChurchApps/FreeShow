@@ -57,7 +57,7 @@ export function findPatterns(sections: string[], autoGroups: boolean) {
 
     function isRepetitiveRefrain(text: string): boolean {
         const words = cleanText(text).split(/\s+/).filter(Boolean)
-        if (words.length < 2) return false
+        if (words.length < 6) return false
 
         const freqMap: Record<string, number> = {}
         for (const word of words) {
@@ -140,7 +140,7 @@ export function findPatterns(sections: string[], autoGroups: boolean) {
         if (checkChorus(i, section, lines, repeatsInSong, hasChorus, hasTextRepetitions)) return storeSection("chorus")
 
         // Priority 6: Verse Footprint Matching
-        if (!passedInstrumentalBreak && isVerseFootprint) return storeSection("verse")
+        if (isVerseFootprint) return storeSection("verse")
 
         // Priority 7: Tag
         if (checkTag(section, lines, hasChorus)) return storeSection("tag")
