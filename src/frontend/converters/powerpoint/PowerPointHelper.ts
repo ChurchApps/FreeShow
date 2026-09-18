@@ -611,6 +611,34 @@ export class PowerPointPackage {
             return typeface
         }
 
+        function getShadowStyle(rPr: any, pPrL: any, pPrM: any, tx: any) {
+            let shadowVal = "text-shadow: 0 0 0 rgb(0 0 0 / 0);"
+
+            let effects = getValue(rPr, "a:effectLst")
+            if (!effects.length) effects = getValue(pPrL, "a:defRPr", "a:effectLst")
+            if (!effects.length) effects = getValue(pPrM, "a:defRPr", "a:effectLst")
+            if (!effects.length) effects = getValue(tx, "a:defRPr", "a:effectLst")
+            const glow = getValue(effects, "a:glow")
+            const outerShadow = getValue(effects, "a:outerShdw")
+            if (outerShadow.length) {
+                const color = resolveColor(outerShadow, ctx.colors)
+                const rgb = hexToRgb(color || "#000000")
+                const shadowColor = color?.startsWith("rgba") ? color : `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`
+                const blur = round((emuToPixels(getAttribute(outerShadow, "blurRad")) || 0) * 1.5 * ctx.scale.factor)
+                const dist = (emuToPixels(getAttribute(outerShadow, "dist")) || 0) * ctx.scale.factor
+                const angle = ((Number(getAttribute(outerShadow, "dir") || "0") / 60000) * Math.PI) / 180
+                const x = round(Math.cos(angle) * dist)
+                const y = round(Math.sin(angle) * dist)
+                shadowVal = `text-shadow: ${x}px ${y}px ${blur}px ${shadowColor};`
+            } else if (glow.length) {
+                const glowColor = resolveColor(glow, ctx.colors) || "rgb(255 255 255)"
+                const glowSize = round((emuToPixels(getAttribute(glow, "rad")) || 0) * ctx.scale.factor)
+                shadowVal = `text-shadow: 0 0 ${glowSize}px ${glowColor};`
+            }
+
+            return shadowVal
+        }
+
         function getRStyle(r: any[], pPrL: any, pPrM: any, tx: any) {
             let rPr = getValue(r, "a:rPr")
             if (!rPr.length) rPr = getValue(r, "a:endParaRPr")
@@ -639,34 +667,7 @@ export class PowerPointPackage {
             let lnColor = ""
             if (lnWPx != null && lnClr) lnColor = lnClr
 
-            // WIP shadow
-            // const shadow = getValue(rPr, "a:effectLst", "a:outerShdw")
-            let shadowVal = "text-shadow: 0 0 0 rgb(0 0 0 / 0);"
-            // if (shadow.length) {
-            //     // const shadowAttrs = getAttrs(shadow[0]) || {}
-            // }
-
-            let effects = getValue(rPr, "a:effectLst")
-            if (!effects.length) effects = getValue(pPrL, "a:defRPr", "a:effectLst")
-            if (!effects.length) effects = getValue(pPrM, "a:defRPr", "a:effectLst")
-            if (!effects.length) effects = getValue(tx, "a:defRPr", "a:effectLst")
-            const glow = getValue(effects, "a:glow")
-            const outerShadow = getValue(effects, "a:outerShdw")
-            if (outerShadow.length) {
-                const color = resolveColor(outerShadow, ctx.colors)
-                const rgb = hexToRgb(color || "#000000")
-                const shadowColor = color?.startsWith("rgba") ? color : `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`
-                const blur = round((emuToPixels(getAttribute(outerShadow, "blurRad")) || 0) * 1.5 * ctx.scale.factor)
-                const dist = (emuToPixels(getAttribute(outerShadow, "dist")) || 0) * ctx.scale.factor
-                const angle = ((Number(getAttribute(outerShadow, "dir") || "0") / 60000) * Math.PI) / 180
-                const x = round(Math.cos(angle) * dist)
-                const y = round(Math.sin(angle) * dist)
-                shadowVal = `text-shadow: ${x}px ${y}px ${blur}px ${shadowColor};`
-            } else if (glow.length) {
-                const glowColor = resolveColor(glow, ctx.colors) || "rgb(255 255 255)"
-                const glowSize = round((emuToPixels(getAttribute(glow, "rad")) || 0) * ctx.scale.factor)
-                shadowVal = `text-shadow: 0 0 ${glowSize}px ${glowColor};`
-            }
+            let shadowVal = getShadowStyle(rPr, pPrL, pPrM, tx)
 
             // raised text
             const baseline = getAttribute(r, "baseline") || "0"
@@ -732,6 +733,47 @@ export class PowerPointPackage {
             return style
         }
 
+        function getBullet(pPr: any, pPrL: any, pPrM: any, tx: any, firstRun: any[]) {
+            const buChar = getPrioritizedAttribute("char", "a:buChar")
+            const autoNum = getPrioritizedAttribute("type", "a:buAutoNum")
+            if (!buChar && !autoNum) return null
+
+            function getPrioritizedAttribute(key: string, tagName: string = "") {
+                return getAttribute(pPr, key, tagName) || getAttribute(pPrL, key, tagName) || getAttribute(pPrM, key, tagName)
+            }
+
+            const firstRunRPr = getValue(firstRun, "a:rPr").length ? getValue(firstRun, "a:rPr") : firstRun
+            const customBuFont = getPrioritizedAttribute("typeface", "a:buFont")
+            const defaultTypeface = getTypeface(getPrioritizedStyle(firstRunRPr, pPrL, pPrM, tx, "typeface", "a:latin"))
+            const buFont = customBuFont ? getTypeface(customBuFont) : defaultTypeface
+
+            const customBuClr = resolveColor(getValue(pPr, "a:buClr"), ctx.colors) || resolveColor(getValue(pPrL, "a:buClr"), ctx.colors) || resolveColor(getValue(pPrM, "a:buClr"), ctx.colors)
+            const defaultClr = resolveColor(getValue(firstRunRPr, "a:solidFill"), ctx.colors) || resolveColor(getValue(pPrL, "a:defRPr", "a:solidFill"), ctx.colors) || resolveColor(getValue(pPrM, "a:defRPr", "a:solidFill"), ctx.colors) || resolveColor(getValue(tx, "a:defRPr", "a:solidFill"), ctx.colors)
+            const buClr = customBuClr || defaultClr || "#000000"
+
+            const buSzPts = getPrioritizedAttribute("val", "a:buSzPts")
+            const buSzPct = getPrioritizedAttribute("val", "a:buSzPct")
+            const defaultFontSizePx = ptsToPx(getPrioritizedStyle(firstRun, pPrL, pPrM, tx, "sz")) || 24
+            let buFontSizePx = defaultFontSizePx
+            if (buSzPts) buFontSizePx = ptsToPx(buSzPts) || defaultFontSizePx
+            else if (buSzPct) buFontSizePx = round(defaultFontSizePx * (Number(buSzPct) / 100000))
+
+            const marL = Number(getPrioritizedAttribute("marL") || "0")
+            const indent = Number(getPrioritizedAttribute("indent") || "0")
+            const padLeft = marL ? round(emuToPixels(Math.max(0, marL + indent)) * (ctx.scale.x ?? 1)) : 0
+            const rawPadRight = indent < 0 ? round(emuToPixels(Math.abs(indent)) * (ctx.scale.x ?? 1)) : 16
+            const padRight = !rawPadRight || rawPadRight < 8 ? 16 : rawPadRight
+
+            let style = `font-family: ${buFont ? buFont + ", " : ""}Calibri;font-size: ${buFontSizePx}px;color: ${buClr};padding-left: ${padLeft}px;padding-right: ${padRight}px;`
+            style += getShadowStyle(firstRunRPr, pPrL, pPrM, tx)
+            if (getPrioritizedStyle(firstRun, pPrL, pPrM, tx, "b") === "1") style += "font-weight: bold;"
+            if (getPrioritizedStyle(firstRun, pPrL, pPrM, tx, "i") === "1") style += "font-style: italic;"
+
+            const startAt = Number(getPrioritizedAttribute("startAt", "a:buAutoNum") || "1")
+
+            return { value: buChar, style, autoNum, startAt }
+        }
+
         const getText = (n: any) => {
             const p = getValues(n, "p:txBody", "a:p")
             const pL = getValues(shape.layoutShape, "p:txBody")
@@ -743,38 +785,16 @@ export class PowerPointPackage {
             return p
                 .map((line, i) => {
                     const pPr = getValue(line, "a:pPr")
-
                     const lvl = Number(getAttribute(line, "lvl") || "0") + 1
 
-                    // let pPrL = getValue(pL[i] ? pL[i] : pL[0], "a:p", "a:pPr")
-                    // let pPrM = getValue(pM[i] ? pM[i] : pM[0], "a:p", "a:pPr")
                     const pPrL = getValue(pL[i] ? pL[i] : pL[0], "a:lstStyle", `a:lvl${lvl}pPr`)
                     const pPrM = getValue(pM[i] ? pM[i] : pM[0], "a:lstStyle", `a:lvl${lvl}pPr`)
                     let tx = getValue(shape.txStyles, `a:lvl${lvl}pPr`)
                     if (!tx.length) tx = getValue(shape.txStyles, "a:defPPr")
 
                     const sharedStyle = getSharedStyle(pPr, pPrL, pPrM)
-
-                    // let marL: string | number = getAttribute(pPr, "marL") || "0"
-                    // marL = round(emuToPixels(marL)) * ctx.scale.factor
-                    // let indent: string | number = getAttribute(pPr, "indent") || "0"
-                    // indent = round(emuToPixels(indent)) * ctx.scale.factor
-                    // // indent is typically negative
-                    // if (indent < 0) indent = Math.abs(indent)
-
-                    const buFont = getAttribute(pPr, "typeface", "a:buFont") || getAttribute(pPrL, "typeface", "a:buFont") || getAttribute(pPrM, "typeface", "a:buFont") || "Calibri"
-                    const buSize = getAttribute(pPr, "val", "a:buSzPts") || getAttribute(pPrL, "val", "a:buSzPts") || getAttribute(pPrM, "val", "a:buSzPts") || getAttribute(getValue(line, "a:r"), "sz")
-                    const buClr = resolveColor(getValue(pPr, "a:buClr"), ctx.colors) || resolveColor(getValue(pPrL, "a:buClr"), ctx.colors) || resolveColor(getValue(pPrM, "a:buClr"), ctx.colors)
-                    const buChar = getAttribute(pPr, "char", "a:buChar") || getAttribute(pPrL, "char", "a:buChar") || getAttribute(pPrM, "char", "a:buChar")
-                    const autoNum = getAttribute(pPr, "type", "a:buAutoNum") || getAttribute(pPrL, "type", "a:buAutoNum") || getAttribute(pPrM, "type", "a:buAutoNum")
-                    let marL = Number(getAttribute(pPr, "marL") || getAttribute(pPrL, "marL") || getAttribute(pPrM, "marL") || "0")
-                    let indent = Number(getAttribute(pPr, "indent") || getAttribute(pPrL, "indent") || getAttribute(pPrM, "indent") || "0")
-                    let padLeft = marL ? round(emuToPixels(Math.max(0, marL + indent)) * (ctx.scale.x ?? 1)) : 0
-                    let padRight = indent < 0 ? round(emuToPixels(Math.abs(indent)) * (ctx.scale.x ?? 1)) : 16
-                    if (!padRight || padRight < 8) padRight = 16
-                    let bulletPadding = `padding-left: ${padLeft}px;padding-right: ${padRight}px;`
-                    const startAt = Number(getAttribute(pPr, "startAt", "a:buAutoNum") || getAttribute(pPrL, "startAt", "a:buAutoNum") || getAttribute(pPrM, "startAt", "a:buAutoNum") || "1")
-                    let bullet = buChar || autoNum ? { value: buChar, style: `font-family: ${buFont};font-size: ${ptsToPx(buSize) || 24}px;color: ${buClr || "#000000"};${bulletPadding}` } : null
+                    const firstRun = line.find((a: any) => a["a:r"])?.["a:r"] || line.find((a: any) => a["a:endParaRPr"]) || []
+                    const bullet = getBullet(pPr, pPrL, pPrM, tx, firstRun)
 
                     // WIP split "a:br" properly as it breaks when style is changed
 
@@ -837,7 +857,8 @@ export class PowerPointPackage {
                     }
 
                     if (text.length && bullet) {
-                        text = [autoNum ? { ...bullet, value: getBulletValue(autoNum, bulletNum + startAt - 1) } : bullet, ...text]
+                        const val = bullet.autoNum ? getBulletValue(bullet.autoNum, bulletNum + bullet.startAt - 1) : bullet.value
+                        text = [{ value: val, style: bullet.style }, ...text]
                         bulletNum++
 
                         function getBulletValue(type: string, index: number) {
