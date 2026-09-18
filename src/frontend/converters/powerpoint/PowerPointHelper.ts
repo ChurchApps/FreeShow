@@ -400,7 +400,10 @@ export class PowerPointPackage {
         const masterShapes = master?.shapes || []
         const layoutShapes = layout?.shapes || []
         const slideShapes = slide?.shapes || []
-        const slideTree = buildRenderList(masterShapes, layoutShapes, slideShapes, master)
+        const slideShowMaster = getAttribute(getValue(slide?.json, "p:sld"), "showMasterSp") !== "0"
+        const layoutShowMaster = getAttribute(getValue(layout?.json, "p:sldLayout"), "showMasterSp") !== "0"
+        const layoutShowMasterSp = slideShowMaster && layoutShowMaster
+        const slideTree = buildRenderList(masterShapes, layoutShapes, slideShapes, master, slide, layout, layoutShowMasterSp)
 
         const scale = this.getScale(presentation?.slideSize)
 
@@ -427,9 +430,22 @@ export class PowerPointPackage {
         bgColor = resolveGradient(gradFill, colors) || bgColor
 
         // slide background image
-        const bgFill = getFirstAvailable([sldSlide, sldLayout, sldMaster], ["p:cSld", "p:bg", "p:bgPr", "a:blipFill"])
-        const bgImgId = getAttribute(bgFill, "r:embed", "a:blip")
-        const bgImage = this.getMediaPath(bgImgId, { slide, layout, master })
+        let bgPart: SlidePart | SlideLayoutPart | SlideMasterPart | null = null
+        let bgFill: any[] = []
+
+        for (const part of [slide, layout, master]) {
+            if (!part) continue
+            const sld = getValue(part.json, part === slide ? "p:sld" : part === layout ? "p:sldLayout" : "p:sldMaster")
+            const blip = getValue(sld, "p:cSld", "p:bg", "p:bgPr", "a:blipFill")
+            if (blip.length) {
+                bgFill = blip
+                bgPart = part
+                break
+            }
+        }
+
+        const bgImgId = getAttribute(bgFill, "r:embed", "a:blip") || getAttribute(bgFill, "r:link", "a:blip")
+        const bgImage = this.getMediaPath(bgImgId, bgPart || { slide, layout, master })
         if (bgImage) {
             let imageItem: Item = { type: "media", style: "width:1920px;height:1080px;top:0;left:0;", src: bgImage, fit: "fill" }
 
@@ -531,7 +547,7 @@ export class PowerPointPackage {
     }
 
     private shapeToItem(
-        shape: { name: string; shape: Shape; pos: Position; layoutShape: Shape; masterShape: Shape; txStyles: any[]; isDecoration?: boolean },
+        shape: { name: string; shape: Shape; pos: Position; layoutShape: Shape; masterShape: Shape; txStyles: any[]; isDecoration?: boolean; part?: OpcPart },
         ctx: {
             presentation: PresentationPart
             slide: SlidePart
@@ -1108,7 +1124,7 @@ export class PowerPointPackage {
             const customPath = getValue(spPr, "a:custGeom", "a:pathLst", "a:path")
             if (!svgText && (!hasContent || (prstGeom && prstGeom !== "rect") || customPath.length)) {
                 const rid = getAttribute(blipFill, "r:embed", "a:blip")
-                const image = this.getMediaPath(rid, ctx) || ""
+                const image = this.getMediaPath(rid, shape.part ? { part: shape.part, ...ctx } : ctx) || ""
 
                 const svg = pptShapeToNormalizedSvg(shape.shape, image)
                 if (svg) {
@@ -1132,7 +1148,7 @@ export class PowerPointPackage {
         } else if (item.type === "media") {
             // findAttribute(node, "r:embed") || findAttribute(node, "r:link")
             const rid = getAttribute(blipFill, "r:embed", "a:blip")
-            const image = this.getMediaPath(rid, ctx) || ""
+            const image = this.getMediaPath(rid, shape.part ? { part: shape.part, ...ctx } : ctx) || ""
 
             const svg = pptShapeToNormalizedSvg(shape.shape, image)
             if (svg) {
@@ -1150,7 +1166,7 @@ export class PowerPointPackage {
                 // is video elem
                 const nvPr = getValue(shape.shape, "p:nvPicPr", "p:nvPr")
                 const videoId = getAttribute(nvPr, "r:link", "a:videoFile")
-                const videoPath = this.getMediaPath(videoId, ctx)
+                const videoPath = this.getMediaPath(videoId, shape.part ? { part: shape.part, ...ctx } : ctx)
                 if (videoPath) {
                     item.src = videoPath
                     item.loop = false
@@ -1160,8 +1176,9 @@ export class PowerPointPackage {
                 // const title = getAttribute(getValue(shape.shape, "p:nvPicPr")[0], "title")
                 const cNvPr = getValue(shape.shape, "p:nvPicPr", "p:cNvPr")
                 const hlinkClickId = getAttribute(cNvPr[0], "r:id", "hlinkClick")
-                const links = ctx.slide.getRelationships("http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink")
-                const url = links.find((l) => l.id === hlinkClickId)?.target
+                const activePart = shape.part || ctx.slide
+                const links = activePart?.getRelationships?.("http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink") || []
+                const url = links.find((l: any) => l.id === hlinkClickId)?.target
                 if (url) {
                     item.type = "web"
                     item.web = { src: url, noNavigation: true }
@@ -1291,9 +1308,9 @@ export class PowerPointPackage {
         return item
     }
 
-    private getMediaPath(rid?: string, ctx?: { slide: any; layout: any; master: any }): string | null {
+    private getMediaPath(rid?: string, ctx?: { slide?: any; layout?: any; master?: any; part?: any } | OpcPart | null): string | null {
         if (!rid) return null
-        // Look for relationship in slide, then layout, then master
+        // Look for relationship in part, then slide, then layout, then master
         const tryFind = (part: any) => {
             if (!part) return null
             const rels = part.relationships || []
@@ -1301,7 +1318,12 @@ export class PowerPointPackage {
             if (rel) return getTarget(part.path, rel) || rel.target
             return null
         }
-        let target = tryFind(ctx?.slide) || tryFind(ctx?.layout) || tryFind(ctx?.master)
+        let target: string | null = null
+        if (ctx instanceof OpcPart || (ctx && "relationships" in ctx && "path" in ctx)) {
+            target = tryFind(ctx)
+        } else if (ctx) {
+            target = tryFind(ctx.part) || tryFind(ctx.slide) || tryFind(ctx.layout) || tryFind(ctx.master)
+        }
         if (!target) target = rid
         // Map to contentPaths if available
         const fsPath = this.contentPaths && this.contentPaths[target]
@@ -1549,7 +1571,15 @@ function unpackGroups(shapes: Shape[], parentPos: Position | null = null, child:
 }
 
 const keyOf = (s: TempShape) => `${s.phType}|${s.phIdx}`
-function buildRenderList(masterShapes: Shape[], layoutShapes: Shape[], slideShapes: Shape[], master: SlideMasterPart | null, layoutShowMasterSp: boolean = false) {
+function buildRenderList(
+    masterShapes: Shape[],
+    layoutShapes: Shape[],
+    slideShapes: Shape[],
+    master: SlideMasterPart | null,
+    slide: SlidePart | null = null,
+    layout: SlideLayoutPart | null = null,
+    layoutShowMasterSp: boolean = false
+) {
     const tempSlideShapes: TempShape[] = unpackGroups(slideShapes).map(getTempShape)
     const tempLayoutShapes: TempShape[] = unpackGroups(layoutShapes).map(getTempShape)
     const tempMasterShapes: TempShape[] = unpackGroups(masterShapes).map(getTempShape)
@@ -1582,16 +1612,16 @@ function buildRenderList(masterShapes: Shape[], layoutShapes: Shape[], slideShap
         }
     }
 
-    const render: { name: string; shape: Shape; pos: Position; layoutShape: Shape; masterShape: Shape; txStyles: any[]; isDecoration?: boolean }[] = []
+    const render: { name: string; shape: Shape; pos: Position; layoutShape: Shape; masterShape: Shape; txStyles: any[]; isDecoration?: boolean; part?: OpcPart }[] = []
 
     for (const s of tempSlideShapes) {
-        if (!s.hidden) render.push({ name: s.name, shape: s.node, pos: s.pos, layoutShape: getMatchingShape(keyOf(s), tempLayoutShapes), masterShape: getMatchingShape(keyOf(s), tempMasterShapes), txStyles: getTxStyles(s.phType) })
+        if (!s.hidden) render.push({ name: s.name, shape: s.node, pos: s.pos, layoutShape: getMatchingShape(keyOf(s), tempLayoutShapes), masterShape: getMatchingShape(keyOf(s), tempMasterShapes), txStyles: getTxStyles(s.phType), part: slide || undefined })
     }
 
     for (const s of tempLayoutShapes) {
         if (s.hidden) continue
         if (!s.isPlaceholder || !slidePH.has(keyOf(s))) {
-            render.push({ name: s.name, shape: s.node, pos: s.pos, layoutShape: [], masterShape: getMatchingShape(keyOf(s), tempMasterShapes), txStyles: [], isDecoration: true })
+            render.push({ name: s.name, shape: s.node, pos: s.pos, layoutShape: [], masterShape: getMatchingShape(keyOf(s), tempMasterShapes), txStyles: [], isDecoration: true, part: layout || undefined })
         }
     }
 
@@ -1600,7 +1630,7 @@ function buildRenderList(masterShapes: Shape[], layoutShapes: Shape[], slideShap
             if (s.hidden) continue
             const k = keyOf(s)
             if (!s.isPlaceholder || (!slidePH.has(k) && !layoutPH.has(k))) {
-                render.push({ name: s.name, shape: s.node, pos: s.pos, layoutShape: [], masterShape: [], txStyles: [] })
+                render.push({ name: s.name, shape: s.node, pos: s.pos, layoutShape: [], masterShape: [], txStyles: [], isDecoration: true, part: master || undefined })
             }
         }
     }
