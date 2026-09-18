@@ -34,24 +34,28 @@ export function clampPlaybackRate(rate: number): number {
 /**
  * Syncs a video element to an authoritative clock time (audio).
  * - Hard seeks on explicit jumps, paused alignment, or major desync (>1.5s).
- * - 500ms post-seek cooldown ensures smooth playback without re-seeking.
+ * - 500ms post-seek cooldown ensures smooth playback without repeated drift seeks.
  * - Smooth rate nudge with hysteresis for small continuous drift (80ms deadband).
  */
-export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1, isFadingOut = false, isVirtualClock = false): void {
+export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1, isFadingOut = false): void {
     if (!vid || targetTime === undefined || vid.readyState < 2 || vid.seeking) return
 
     // a previously issued seek resolved — record its latency (slight overshoot is trimmed by the nudge)
     const pendingSince = pendingSeeks.get(vid)
     if (pendingSince !== undefined) {
         pendingSeeks.delete(vid)
-        const latency = (performance.now() - pendingSince) / 1000
-        const prev = seekLatencyEMA.get(vid) ?? 0
-        seekLatencyEMA.set(vid, prev ? prev * 0.5 + latency * 0.5 : latency)
+        if (!vid.paused) {
+            const latency = (performance.now() - pendingSince) / 1000
+            const prev = seekLatencyEMA.get(vid) ?? 0
+            seekLatencyEMA.set(vid, prev ? prev * 0.5 + latency * 0.5 : latency)
+        }
     }
 
     const rate = clampPlaybackRate(targetPlaybackRate)
     if (isFadingOut) {
-        vid.playbackRate = rate
+        if (Math.abs(vid.playbackRate - rate) > 0.001) {
+            vid.playbackRate = rate
+        }
         return
     }
 
@@ -68,8 +72,8 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     if (lastSyncedTime === null || lastSyncedTime === undefined || !prevRecord) {
         lastSyncRecords.set(vid, { targetTime, timestamp: now, isNudging: false })
         lastSeekTimestamps.set(vid, now)
-        if (wrapDiff > 0.05) {
-            pendingSeeks.set(vid, now)
+        if (wrapDiff > 0.5 && targetTime > 1.0) {
+            if (!vid.paused) pendingSeeks.set(vid, now)
             vid.currentTime = targetTime
         }
         return
@@ -81,10 +85,9 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     const jumpAmount = targetDelta - Math.max(0, (now - prevRecord.timestamp) / 1000) * rate
     const isExplicitSeek = isSoftLoop ? lastSyncedTime > targetTime + 0.1 : vid.paused ? Math.abs(targetDelta) > 0.05 : jumpAmount > 0.5 * rate || jumpAmount < -0.3 * rate || targetDelta < -0.3
 
-    // 2. Cooldown & Hard Seek
-    const driftSeekThreshold = isVirtualClock && loopDuration ? 5 : 1.5
+    // 2. Cooldown & Hard Seek (Explicit seeks and paused scrubbing are never blocked by cooldown)
     const inSeekCooldown = now - (lastSeekTimestamps.get(vid) || 0) < 500
-    const shouldHardSeek = (isExplicitSeek && wrapDiff > 0.05) || (vid.paused && wrapDiff > 0.05) || (!inSeekCooldown && wrapDiff > driftSeekThreshold * rate)
+    const shouldHardSeek = (isExplicitSeek && wrapDiff > 0.05) || (vid.paused && wrapDiff > 0.05) || (!inSeekCooldown && wrapDiff > 1.5 * rate)
 
     if (shouldHardSeek) {
         lastSeekTimestamps.set(vid, now)
@@ -95,8 +98,10 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
             seekTo += Math.min(seekLatencyEMA.get(vid) ?? 0, 8) * rate
             if (loopDuration) seekTo %= loopDuration
             else if (Number.isFinite(vid.duration)) seekTo = Math.min(seekTo, Math.max(targetTime, vid.duration - 0.1))
+            pendingSeeks.set(vid, now)
+        } else {
+            seekLatencyEMA.delete(vid)
         }
-        pendingSeeks.set(vid, now)
         vid.currentTime = seekTo
         vid.playbackRate = rate
         return
@@ -112,7 +117,7 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     let isNudging = prevRecord.isNudging ?? false
     let targetRate = rate
 
-    if (!vid.paused && !inWrapZone) {
+    if (!vid.paused && !inWrapZone && vid.readyState >= 2) {
         if (isNudging && absDiff <= 0.03 * rate) {
             isNudging = false
         } else if (isNudging || absDiff > 0.08 * rate) {

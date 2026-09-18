@@ -154,6 +154,33 @@ export class AudioAnalyser {
         }
     }
 
+    static rampSourceVolume(id: string, targetVolume: number, durationMs: number, outputId?: string) {
+        if (this.ac.state === "suspended") this.ac.resume().catch(() => {})
+        this.sourceVolumes[id] = targetVolume
+        if (outputId) this.sourceVolumes[`${id}_${outputId}`] = targetVolume
+
+        const keys = Object.keys(this.gainNodes)
+        const prefix = `${id}_`
+        const rampDuration = Math.max(0.01, durationMs / 1000)
+        const endTime = this.ac.currentTime + rampDuration
+
+        for (let i = 0; i < keys.length; i++) {
+            const k = keys[i]
+            if (k === id || k.startsWith(prefix)) {
+                const node = this.gainNodes[k]
+                if (node) {
+                    try {
+                        node.gain.cancelScheduledValues(this.ac.currentTime)
+                        node.gain.setValueAtTime(node.gain.value, this.ac.currentTime)
+                        node.gain.linearRampToValueAtTime(targetVolume, endTime)
+                    } catch {
+                        node.gain.setValueAtTime(targetVolume, this.ac.currentTime)
+                    }
+                }
+            }
+        }
+    }
+
     private static detectAndUpgradeChannels(id: string, audio: HTMLMediaElement | MediaStream) {
         if (audio instanceof HTMLMediaElement && audio.src) {
             AudioMultichannel.detectFileChannelCount(audio.src, this.maxChannels)

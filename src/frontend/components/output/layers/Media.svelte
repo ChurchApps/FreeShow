@@ -13,6 +13,7 @@
     export let animationStyle = ""
     export let mediaStyle: MediaStyle = {}
     export let mirror = false
+    export let fadingOut = false
 
     export let video: HTMLVideoElement | null = null
     // for previews that are not outputted
@@ -59,7 +60,7 @@
 {#key retryCount}
     {#if type === "video"}
         <div class="video">
-            <Video {outputId} {path} syncPath={currentSyncPath || path} bind:video bind:videoData bind:videoTime startAt={data.startAt} {mediaStyle} {animationStyle} {mirror} on:loaded on:ended on:error={reload} />
+            <Video {outputId} {path} syncPath={currentSyncPath || path} bind:video bind:videoData bind:videoTime startAt={data.startAt} {mediaStyle} {animationStyle} {mirror} {fadingOut} on:loaded on:ended on:error={reload} />
         </div>
     {:else if type === "image"}
         <div class="image" style="height: 100%;{animationStyle}">

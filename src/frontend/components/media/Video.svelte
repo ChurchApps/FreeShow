@@ -18,6 +18,7 @@
     export let mediaStyle: MediaStyle = {}
     export let animationStyle = ""
     export let mirror = false
+    export let fadingOut = false
 
     let dispatch = createEventDispatcher()
 
@@ -47,6 +48,7 @@
     } else cloneDrawer.stop()
     onDestroy(() => cloneDrawer.stop())
 
+    let isFadingOutState = false
     let unsubscribeSync: (() => void) | null = null
     $: {
         unsubscribeSync?.()
@@ -55,11 +57,13 @@
             let lastSyncedTime: number | null = null
             unsubscribeSync = videoSync(targetPath, outputId, (data) => {
                 const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
-                syncVideoToAudio(video, data.currentTime, lastSyncedTime, isSoftLoop, targetPlaybackRate, data.isFadingOut, data.virtualClock)
+                isFadingOutState = !!data.isFadingOut
+                const isFading = fadingOut || isFadingOutState
+                syncVideoToAudio(video, data.currentTime, lastSyncedTime, isSoftLoop, targetPlaybackRate, isFading)
                 if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
 
-                if (!data.isFadingOut && videoData.loop !== data.loop) videoData.loop = data.loop
-                if (!data.isFadingOut && videoData.paused !== data.paused) videoData.paused = data.paused
+                if (!isFading && videoData.loop !== data.loop) videoData.loop = data.loop
+                if (!isFading && videoData.paused !== data.paused) videoData.paused = data.paused
 
                 if (data.softLoop !== undefined && videoData.softLoop !== data.softLoop) videoData.softLoop = data.softLoop
                 if (data.softLoopOpacity !== undefined && softLoopOpacity !== data.softLoopOpacity) softLoopOpacity = data.softLoopOpacity
@@ -84,13 +88,14 @@
 
     // ensure that video state matches the store state
     $: if (video) {
+        const isFading = fadingOut || isFadingOutState
         if (!videoData.paused && video.paused && !video.error) {
             video.play().catch((err) => {
                 if (err.name !== "AbortError") {
                     console.warn("[Video.svelte] Play failed:", err)
                 }
             })
-        } else if (videoData.paused && !video.paused) {
+        } else if (videoData.paused && !video.paused && !isFading) {
             video.pause()
         }
     }
@@ -171,7 +176,11 @@
     }
     $: if (video) video.preservesPitch = true
 
-    $: isVideoSupported(path)
+    let _videoSupportedTimeout: NodeJS.Timeout | null = null
+    $: if (path) {
+        if (_videoSupportedTimeout) clearTimeout(_videoSupportedTimeout)
+        _videoSupportedTimeout = setTimeout(() => isVideoSupported(path), 200)
+    }
 
     $: subtitle = $media[path]?.subtitle
     $: tracks = $media[path]?.tracks || []

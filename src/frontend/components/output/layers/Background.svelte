@@ -83,28 +83,28 @@
             return
         }
 
-        timeout = setTimeout(
-            () => {
-                loading = true
-                let loadingFirst = !background1 // && background2?.path ? background2?.path !== data.path : background2?.id !== data.id
-                currentlyLoadingFirst = loadingFirst
-                firstFadingOut = !loadingFirst
+        const hasActiveBg = !!(background1 || background2)
+        const mountDelay = hasActiveBg ? duration / 4 + 20 : 0
+        timeout = setTimeout(() => {
+            loading = true
+            let loadingFirst = !background1 // && background2?.path ? background2?.path !== data.path : background2?.id !== data.id
+            currentlyLoadingFirst = loadingFirst
+            firstFadingOut = !loadingFirst
 
-                if (loadingFirst) {
-                    background1 = newData
-                    transition1 = clone(transition)
-                } else {
-                    background2 = newData
-                    transition2 = clone(transition)
-                }
+            if (loadingFirst) {
+                background1 = newData
+                transition1 = clone(transition)
+            } else {
+                background2 = newData
+                transition2 = clone(transition)
+            }
 
-                // max 2 seconds loading time
-                timeout = setTimeout(() => {
-                    if (loading) loaded(loadingFirst)
-                }, 2000)
-            },
-            duration / 4 + 20
-        )
+            // max loading time fallback
+            const maxLoadTimeout = Math.max(2000, duration)
+            timeout = setTimeout(() => {
+                if (loading) loaded(loadingFirst)
+            }, maxLoadTimeout)
+        }, mountDelay)
     }
 
     function loaded(isFirst: boolean) {
