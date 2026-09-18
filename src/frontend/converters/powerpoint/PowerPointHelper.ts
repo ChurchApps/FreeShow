@@ -447,26 +447,23 @@ export class PowerPointPackage {
         const bgImgId = getAttribute(bgFill, "r:embed", "a:blip") || getAttribute(bgFill, "r:link", "a:blip")
         const bgImage = this.getMediaPath(bgImgId, bgPart || { slide, layout, master })
         if (bgImage) {
-            let imageItem: Item = { type: "media", style: "width:1920px;height:1080px;top:0;left:0;", src: bgImage, fit: "fill" }
+            let imageItem: Item = { type: "media", style: "width:1920px;height:1080px;top:0;left:0;", src: bgImage, fit: "cover" }
 
             const alpha = getAttribute(getValue(bgFill, "a:blip"), "amt", "a:alphaModFix")
             let a = parseInt(alpha || "100000") / 100000
             if (a < 1) imageItem.style += `opacity: ${a};`
 
-            const stretch = getValue(bgFill, "a:stretch")
-            const l = getAttribute(stretch, "l", "a:fillRect")
-            const t = getAttribute(stretch, "t", "a:fillRect")
-            const r = getAttribute(stretch, "r", "a:fillRect")
-            const b = getAttribute(stretch, "b", "a:fillRect")
+            const srcL = getAttribute(bgFill, "l", "a:srcRect")
+            const srcT = getAttribute(bgFill, "t", "a:srcRect")
+            const srcR = getAttribute(bgFill, "r", "a:srcRect")
+            const srcB = getAttribute(bgFill, "b", "a:srcRect")
 
-            // should be mainly for media item
-            if (l != null || t != null || r != null || b != null) {
+            if (srcL !== "" || srcT !== "" || srcR !== "" || srcB !== "") {
                 imageItem.cropping = {
-                    // fillRect is inverse of srcRect
-                    left: toFract(r),
-                    top: toFract(b),
-                    right: toFract(l),
-                    bottom: toFract(t),
+                    left: toFract(srcL),
+                    top: toFract(srcT),
+                    right: toFract(srcR),
+                    bottom: toFract(srcB),
                     type: "ppt"
                 }
                 if (imageItem.cropping.left + imageItem.cropping.right + imageItem.cropping.top + imageItem.cropping.bottom === 0) delete imageItem.cropping
