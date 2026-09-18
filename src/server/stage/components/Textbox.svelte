@@ -629,12 +629,22 @@
         /* background-color: rgb(0 0 0 / 0.5); */
         background-color: var(--primary);
         padding: 5px 10px;
-        font-size: 0.8em;
+        border-radius: 4px;
         z-index: 5;
 
         /* reset */
+        font-size: 20px;
+        font-family: Arial;
         color: var(--text);
         font-weight: initial;
+        font-style: normal;
+        letter-spacing: normal;
+        text-shadow: none;
+        text-decoration: none;
+    }
+
+    .actions p {
+        margin: 0;
     }
 
     .flex {
