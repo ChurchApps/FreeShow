@@ -4,7 +4,7 @@
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
     import MaterialToggleSwitch from "../../../components/inputs/MaterialToggleSwitch.svelte"
     import Tabs from "../../../components/main/Tabs.svelte"
-    import { activePage, ai, aiSmartAction, aiSttStatus, language, mediaDownloads, settingsTab, sttTempDisabled, sttTranscript } from "../../../stores"
+    import { activePage, activeTriggerFunction, ai, aiSmartAction, aiSttStatus, language, mediaDownloads, settingsTab, sttTempDisabled, sttTranscript } from "../../../stores"
     import { audioLevelStore, resolveSttEngine, SpeechToText } from "../../stt/stt"
     import AiChat from "./AiChat.svelte"
     import AiRing from "./AiRing.svelte"
@@ -152,14 +152,24 @@
     })
 
     // LISTEN TOGGLE
-    function toggleListening() {
-        if (isListening) {
+    $: if ($activeTriggerFunction.startsWith("toggle_stt_listening:")) {
+        const action = $activeTriggerFunction.split(":")[1]
+        if (action === "on") toggleListening(true)
+        else if (action === "off") toggleListening(false)
+        else toggleListening()
+    }
+
+    function toggleListening(enable?: boolean) {
+        const turnOn = enable === undefined ? !isListening : enable
+        if (turnOn) {
+            if (isListening) return
+            sttTempDisabled.set(false)
+            enableListening()
+        } else {
+            if (!isListening && state === "inactive") return
             sttTempDisabled.set(true)
             SpeechToText.stopCapture()
             state = "inactive"
-        } else {
-            sttTempDisabled.set(false)
-            enableListening()
         }
     }
 
@@ -203,7 +213,7 @@
 
                     <div class="headerActions">
                         {#if activeTab === "transcription"}
-                            <MaterialToggleSwitch label="" checked={isListening} disabled={state !== "inactive" && state !== "listening"} style="margin-right: 5px;" on:change={toggleListening} small />
+                            <MaterialToggleSwitch label="" checked={isListening} disabled={state !== "inactive" && state !== "listening"} style="margin-right: 5px;" on:change={() => toggleListening()} small />
                         {/if}
 
                         <MaterialButton icon="settings" title="menu.settings" style="padding: 10px;" on:click={openSettings} />

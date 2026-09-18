@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { actionRevealUsed, actions, activePopup, audioPlaylists, audioStreams, categories, effects, emitters, obsData, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, variables } from "../../stores"
+    import { actionRevealUsed, actions, activePopup, ai, audioPlaylists, audioStreams, categories, effects, emitters, obsData, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
     import { formatSearch } from "../../utils/search"
     import Icon from "../helpers/Icon.svelte"
@@ -75,6 +75,7 @@
     const spotifyEnabled = !!$spotifyState
     const webRtcOutputs = Object.values($outputs).some((a) => a.webrtc)
     const rtmpOutputs = Object.values($outputs).some((a) => a.rtmp)
+    const smartEnabled = !!$ai?.enabled
 
     let previousSection = ""
     $: ACTIONS = [
@@ -108,6 +109,8 @@
                 if (id.includes("webrtc_") && !webRtcOutputs) return false
                 // remove RTMP actions if no RTMP outputs exist
                 if (id.includes("rtmp_") && !rtmpOutputs) return false
+                // remove Smart actions if not enabled
+                if (id.includes("smart_") && !smartEnabled) return false
 
                 // show if it has an input (because you probably want to have multiple)
                 // if (actionData[actionId]?.input) return true

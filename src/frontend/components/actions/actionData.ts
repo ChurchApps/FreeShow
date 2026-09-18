@@ -123,6 +123,9 @@ export const actionData = {
     spotify_next: { name: "Spotify: media.next", icon: "nextFull" },
     spotify_previous: { name: "Spotify: media.previous", icon: "previousFull" },
 
+    // Smart
+    smart_toggle_stt: { SECTION: "settings.ai", name: "actions.toggle_specific", replace: ["STT"], icon: "mic", input: "toggle" },
+
     // OTHER
     toggle_log_song_usage: { SECTION: "settings.other", name: "settings.log_song_usage", icon: "history", input: "toggle" },
 

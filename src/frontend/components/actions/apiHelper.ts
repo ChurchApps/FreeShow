@@ -9,7 +9,7 @@ import { AudioPlayer } from "../../audio/audioPlayer"
 import { AudioPlaylist } from "../../audio/audioPlaylist"
 import { dbToGain } from "../../audio/dBUtils"
 import { activeDrawerTab, activeEdit, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioPlaylists, audioRouting, draw, drawSettings, drawTool, folders, groupNumbers, groups, media, openScripture, outLocked, outputs, overlays, pdfImports, playingAudio, playingMetronome, projects, refreshEditSlide, selected, shows, showsCache, sortedShowsList, special, styles, timers, variables } from "../../stores"
-import { newToast } from "../../utils/common"
+import { newToast, triggerFunction } from "../../utils/common"
 import { send } from "../../utils/request"
 import { parseEngScriptureRefToNumbers, resolveScriptureReference } from "../drawer/bible/scripture"
 import { getDynamicValue } from "../edit/scripts/itemHelpers"
@@ -840,7 +840,7 @@ export function updateVolumeValues(data: API_volume) {
 
 export function muteChannel(data: API_toggle_id) {
     const channelId = data.id || "main"
-    
+
     let state = typeof data.value === "boolean" ? data.value : null
     if ((data.value as any) === "false") state = false
     else if ((data.value as any) === "true") state = true
@@ -928,6 +928,15 @@ export function toggleIcecast(data: API_toggle_specific = {}) {
 }
 
 // OTHER
+
+export function toggleSttListening(data: API_toggle_specific = {}) {
+    let state = typeof data.value === "boolean" ? data.value : null
+    if ((data.value as any) === "false") state = false
+    else if ((data.value as any) === "true") state = true
+
+    const stateStr = state === true ? "on" : state === false ? "off" : "toggle"
+    triggerFunction(`toggle_stt_listening:${stateStr}`)
+}
 
 export function toggleLogSongUsage(data: API_toggle_specific) {
     if ((data.value as any) === "false") data.value = false // from Companion

@@ -86,6 +86,7 @@ import {
     toggleLogSongUsage,
     toggleMediaLoop,
     toggleMediaMute,
+    toggleSttListening,
     updateVolumeValues,
     videoSeekTo
 } from "./apiHelper"
@@ -366,6 +367,9 @@ export const API_ACTIONS = {
     spotify_fade_out: () => fadePause(),
     spotify_next: () => skipNext(),
     spotify_previous: () => skipPrev(),
+
+    // Smart
+    smart_toggle_stt: (data: API_toggle_specific = {}) => toggleSttListening(data),
 
     // OTHER
     close: () => save(true),
