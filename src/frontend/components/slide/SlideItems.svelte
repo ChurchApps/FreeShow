@@ -5,14 +5,15 @@
     import MetronomeVisualizer from "../drawer/audio/MetronomeVisualizer.svelte"
     import Cam from "../drawer/live/Cam.svelte"
     import autosize from "../edit/scripts/autosize"
-    import { getStyles } from "../helpers/style"
     import { getCropState } from "../helpers/cropping"
+    import { getStyles } from "../helpers/style"
     import Clock from "../system/Clock.svelte"
     import Captions from "./views/Captions.svelte"
     import Chart from "./views/Chart.svelte"
     import DynamicEvents from "./views/DynamicEvents.svelte"
     import IconItem from "./views/IconItem.svelte"
     import MediaItem from "./views/MediaItem.svelte"
+    import QrCode from "./views/QrCode.svelte"
     import SlideProgress from "./views/SlideProgress.svelte"
     import Table from "./views/Table.svelte"
     import Timer from "./views/Timer.svelte"
@@ -117,4 +118,6 @@
     <Chart {item} ref={{ ...ref, slideIndex }} />
 {:else if item.type === "table"}
     <Table {item} {edit} {ref} {ratio} {index} />
+{:else if item.type === "qr"}
+    <QrCode {item} {edit} />
 {/if}
