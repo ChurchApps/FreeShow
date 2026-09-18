@@ -14,6 +14,7 @@ import { activePopup, activeProject, activeShow, alertMessage, dictionary, drawe
 import { translateText } from "../utils/language"
 import { setTempShows } from "./importHelpers"
 import { findPatterns } from "./txtAutoSections"
+import { reshapeSongSelectExport } from "./txtSongSelectDetect"
 
 export function getQuickExample() {
     const tip = translateText("create_show.quick_lyrics_example_tip")
@@ -52,6 +53,17 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     // remove empty spaces (as groups [] should be used for empty slides)
     // in "Text edit" spaces can be used to create empty "child" slides
     text = text.replaceAll("\r", "").replaceAll("\n \n", "\n\n")
+
+    // reshape a CCLI SongSelect export so its footer lands as one isolated
+    // trailing section (what isCCLIBlock()/extractCCLIMetadata() below need
+    // to fire correctly) and its title line is out of the lyric body,
+    // regardless of how the paste's blank lines actually fell
+    let songselectTitle: string | undefined
+    const songselectReshape = reshapeSongSelectExport(text)
+    if (songselectReshape) {
+        text = songselectReshape.text
+        songselectTitle = songselectReshape.title
+    }
 
     // extract any trailing URL
     let source = ""
@@ -118,7 +130,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     labeled = patterns.indexes.map((a, i) => ({ type: a, text: sections[i] || "" }))
     labeled = checkRepeats(labeled)
 
-    if (!name) name = plainTextMetadata.title || trimNameFromString(labeled[0]?.text)
+    if (!name) name = songselectTitle || plainTextMetadata.title || trimNameFromString(labeled[0]?.text)
 
     const layoutID: string = uid()
     let show: Show = new ShowObj(false, category, layoutID)
