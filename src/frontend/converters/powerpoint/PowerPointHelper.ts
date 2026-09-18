@@ -447,9 +447,9 @@ export class PowerPointPackage {
         const bgImgId = getAttribute(bgFill, "r:embed", "a:blip") || getAttribute(bgFill, "r:link", "a:blip")
         const bgImage = this.getMediaPath(bgImgId, bgPart || { slide, layout, master })
         if (bgImage) {
-            let imageItem: Item = { type: "media", style: "width:1920px;height:1080px;top:0;left:0;", src: bgImage, fit: "cover" }
+            let imageItem: Item = { type: "media", style: "width:1920px;height:1080px;top:0;left:0;", src: bgImage, fit: "fill" }
 
-            const filter = resolveImageEffects(bgFill)
+            const filter = resolveImageEffects(bgFill, colors)
             if (filter) imageItem.filter = filter
 
             const alpha = getAttribute(getValue(bgFill, "a:blip"), "amt", "a:alphaModFix")
@@ -1163,7 +1163,7 @@ export class PowerPointPackage {
                 // const mediaFit = getAttribute(fill, "method", "p:blipFill")
                 item.fit = "fill"
 
-                const filter = resolveImageEffects(blipFill)
+                const filter = resolveImageEffects(blipFill, ctx.colors)
                 if (filter) item.filter = filter
 
                 // is video elem
@@ -1574,15 +1574,7 @@ function unpackGroups(shapes: Shape[], parentPos: Position | null = null, child:
 }
 
 const keyOf = (s: TempShape) => `${s.phType}|${s.phIdx}`
-function buildRenderList(
-    masterShapes: Shape[],
-    layoutShapes: Shape[],
-    slideShapes: Shape[],
-    master: SlideMasterPart | null,
-    slide: SlidePart | null = null,
-    layout: SlideLayoutPart | null = null,
-    layoutShowMasterSp: boolean = false
-) {
+function buildRenderList(masterShapes: Shape[], layoutShapes: Shape[], slideShapes: Shape[], master: SlideMasterPart | null, slide: SlidePart | null = null, layout: SlideLayoutPart | null = null, layoutShowMasterSp: boolean = false) {
     const tempSlideShapes: TempShape[] = unpackGroups(slideShapes).map(getTempShape)
     const tempLayoutShapes: TempShape[] = unpackGroups(layoutShapes).map(getTempShape)
     const tempMasterShapes: TempShape[] = unpackGroups(masterShapes).map(getTempShape)
@@ -1756,7 +1748,7 @@ function resolveGradient(gradFill: any[], colors: { [key: string]: any }[]) {
     return `linear-gradient(${angle}deg, ${gradientStops.join(", ")})`
 }
 
-function resolveImageEffects(blipFill: any[]): string {
+function resolveImageEffects(blipFill: any[], colors: { [key: string]: any }[] = []): string {
     const blip = getValue(blipFill, "a:blip")
     if (!blip.length) return ""
 
@@ -1770,6 +1762,32 @@ function resolveImageEffects(blipFill: any[]): string {
     if (lumB != null) filters.push(`brightness(${round(Math.max(0, 1 + lumB))})`)
     if (lumC != null) filters.push(`contrast(${round(Math.max(0, 1 + lumC))})`)
     if (getValue(blip, "a:grayscl").length) filters.push("grayscale(1)")
+
+    // a:duotone effect
+    const duotone = getValue(blip, "duotone")
+    if (duotone.length) {
+        let tintColor: string | null = null
+        for (const clrNode of duotone) {
+            const clr = resolveColor([clrNode], colors)
+            if (clr && clr.toLowerCase() !== "#000000" && clr.toLowerCase() !== "#000" && clr.toLowerCase() !== "black") {
+                tintColor = clr
+                break
+            }
+        }
+
+        if (tintColor) {
+            const hsl = hexToHSL(tintColor)
+            if (hsl && hsl.s > 5) {
+                const hueDiff = Math.round(hsl.h - 38)
+                const satBoost = Math.max(1, Math.round(hsl.s / 35))
+                filters.push(`grayscale(1) sepia(1) hue-rotate(${hueDiff}deg) saturate(${satBoost})`)
+            } else {
+                filters.push("grayscale(1)")
+            }
+        } else {
+            filters.push("grayscale(1)")
+        }
+    }
 
     // Extension image effects (a14 / a15 / a16 / any namespace)
     const effects = getValues(blip, "extLst", "ext", "imgProps", "imgLayer", "imgEffect").flat()
@@ -1844,9 +1862,7 @@ function getValues(data: any[], ...path: string[]): any[][] {
         current = next
     }
 
-    return current
-        .map((n: any) => getNodeChild(n, lastPath))
-        .filter((child): child is any[] => Array.isArray(child))
+    return current.map((n: any) => getNodeChild(n, lastPath)).filter((child): child is any[] => Array.isArray(child))
 }
 
 // [slide, layout, master]
