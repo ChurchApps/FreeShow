@@ -282,7 +282,7 @@ function getTextCacheString(show: Show) {
     // window.atob(encode)
 }
 
-export function setQuickAccessMetadata(show: ShowObj, key: string, value: string) {
+export function setQuickAccessMetadata(show: Show | ShowObj, key: string, value: string) {
     if (!value) return show
 
     if (!show.quickAccess) show.quickAccess = {}

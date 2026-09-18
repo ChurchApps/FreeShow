@@ -5,6 +5,7 @@ import { ShowObj } from "../classes/Show"
 import { getItemText, getSlideText } from "../components/edit/scripts/textStyle"
 import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
+import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import { checkName, getCustomMetadata, getLabelId } from "../components/helpers/show"
 import { _show } from "../components/helpers/shows"
 import { linesToTextboxes } from "../components/show/formatTextEditor"
@@ -104,7 +105,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
 
     // get ccli
     let ccli = ""
-    if (!Object.keys(plainTextMetadata).length && sections[sections.length - 1]?.includes("www.ccli.com")) {
+    if (!Object.keys(plainTextMetadata).length && isCCLIBlock(sections[sections.length - 1])) {
         ccli = sections.pop()!
     }
 
@@ -120,7 +121,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     if (!name) name = plainTextMetadata.title || trimNameFromString(labeled[0]?.text)
 
     const layoutID: string = uid()
-    const show: Show = new ShowObj(false, category, layoutID)
+    let show: Show = new ShowObj(false, category, layoutID)
     if (origin) show.origin = origin
     // , existingSlides
     const { slides, layouts } = createSlides(labeled, noFormatting, autoGroups)
@@ -132,35 +133,27 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     show.layouts[layoutID].slides = layouts
 
     if (ccli) {
-        const meta: string[] = ccli.split("\n")
-        // songselect order
-        if (meta[4]?.includes("CCLI")) {
-            show.meta = {
-                title: show.name,
-                CCLI: meta[4].substring(meta[4].indexOf("#") + 1), // CCLI License
-                // CCLI Song = meta[1]
-                // artist: meta[0],
-                author: meta[0],
-                // composer: meta[0],
-                // publisher: meta[0],
-                copyright: meta[2]
-            }
-        } else {
-            show.meta = {
-                title: show.name,
-                CCLI: meta[0].substring(meta[0].indexOf("#") + 2),
-                artist: meta[1],
-                author: meta[2],
-                composer: meta[3],
-                publisher: meta[1],
-                copyright: meta[4]
-            }
-        }
+        show.meta = { ...show.meta, ...extractCCLIMetadata(ccli, show.name) }
     } else if (Object.keys(plainTextMetadata).length) {
         show.meta = plainTextMetadata
     }
+    if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
     if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
     if (source && !show.meta.publisher) show.meta.publisher = source
+
+    // remove first block if it matches the metadata title
+    if (show.meta.title && show.layouts[layoutID]?.slides?.length > 0) {
+        const firstSlideId = show.layouts[layoutID].slides[0].id
+        const firstSlide = show.slides[firstSlideId]
+        if (firstSlide) {
+            const slideText = getSlideText(firstSlide).trim()
+            const slideLines = slideText.split("\n").filter(Boolean)
+            if (slideLines.length === 1 && slideLines[0].toLowerCase() === show.meta.title.toLowerCase()) {
+                show.layouts[layoutID].slides.shift()
+                delete show.slides[firstSlideId]
+            }
+        }
+    }
 
     if (plainNotes) show.layouts[layoutID].notes = plainNotes
 
@@ -195,6 +188,54 @@ export function trimNameFromString(text: string) {
     if (name.length > 38) name = name.slice(0, 30)
 
     return name
+}
+
+function isCCLIBlock(text: string): boolean {
+    if (!text) return false
+    const lower = text.toLowerCase()
+    return lower.includes("www.ccli.com") || lower.includes("ccli song") || lower.includes("ccli licence") || lower.includes("ccli license")
+}
+function extractCCLIMetadata(ccliText: string, title?: string): Record<string, string> {
+    const lines = ccliText
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean)
+
+    const meta: Record<string, string> = {}
+    if (title) meta.title = title
+
+    for (const line of lines) {
+        // CCLI Song #
+        const songMatch = line.match(/CCLI\s*(?:Song)?\s*#\s*(\d+)/i)
+        if (songMatch) {
+            meta.CCLI = songMatch[1].trim()
+            continue
+        }
+
+        // CCLI License #
+        const licMatch = line.match(/CCLI\s*Licen[cs]e\s*(?:No\.?|#)?\s*(\d+)/i)
+        if (licMatch) {
+            if (!meta.license) meta.license = licMatch[1].trim()
+            continue
+        }
+
+        // Copyright / Year
+        const copyrightMatch = line.match(/^(?:©|\(c\)|copyright)\s*(.+)$/i)
+        if (copyrightMatch) {
+            meta.copyright = line
+            const yearMatch = copyrightMatch[1].match(/\b(19\d{2}|20\d{2})\b/)
+            if (yearMatch) meta.year = yearMatch[1]
+            continue
+        }
+
+        // SongSelect disclaimer / website link
+        if (/terms\s+of\s+use|all\s+rights\s+reserved|ccli\.com/i.test(line)) continue
+
+        // Fallback for Author / Artist / Composer line
+        if (!meta.author) meta.author = line
+    }
+
+    return meta
 }
 
 function isHeaderLine(line: string): boolean {
