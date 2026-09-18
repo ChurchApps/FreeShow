@@ -81,7 +81,7 @@
                     <span class="reference">
                         {suggestion.content}
 
-                        {#if suggestion.scriptureTranslation}
+                        {#if suggestion.action === "scripture" && suggestion.scriptureTranslation}
                             <span class="translation">({getShortBibleName($scriptures[suggestion.scriptureTranslation]?.name)})</span>
                         {/if}
                     </span>
@@ -94,6 +94,8 @@
 
                     {#if suggestion.action === "presented"}
                         <MaterialButton icon="check" title="ai.auto_present" style="padding: 6px;" disabled />
+                    {:else if suggestion.action === "open_scripture"}
+                        <MaterialButton icon="scripture" disabled={$outLocked} title="actions.switch" style="padding: 6px;" on:click={() => suggestion.trigger?.()} />
                     {:else if suggestion.trigger}
                         <MaterialButton
                             icon="play"

@@ -5,10 +5,12 @@ import type { ConfidenceLevels } from "../../../types/ai/AiSettings"
 import { startScripture } from "../../components/actions/apiHelper"
 import { keysToID } from "../../components/helpers/array"
 import { getFirstActiveOutput } from "../../components/helpers/output"
+import { setActiveScripture } from "../../converters/bible"
 import { ai, aiSmartAction, aiSuggestions, drawerTabsData, outputs, scriptures } from "../../stores"
 import { newToast } from "../../utils/common"
 import { getLLMManager } from "../llm/llmManager"
 import { BibleCacheManager } from "../scripture/BibleCacheManager"
+import { detectBibleVersion } from "../scripture/BibleVersionDetector"
 import { isReferenceWithin } from "../scripture/references"
 
 export class AiManager {
@@ -47,6 +49,9 @@ export class AiManager {
     private static async stringDetection(textChunk: string, isCancelled?: () => boolean) {
         const scriptureMatch = await this.globalBibleDetection(textChunk, isCancelled)
         if (scriptureMatch) return scriptureMatch
+
+        const scriptureVersionMatch = await detectBibleVersion(textChunk, isCancelled)
+        if (scriptureVersionMatch) return scriptureVersionMatch
 
         return null
     }
@@ -119,9 +124,9 @@ export class AiManager {
 
     static newMatch(match: MatchResult) {
         if (match.type === "empty" || !match.content) return
-        if (AiManager.liveContent === match.content) return
+        if (match.type === "scripture" && AiManager.liveContent === match.content) return
 
-        if (match.type !== "scripture") return // WIP only scripture is implemented
+        if (match.type !== "scripture" && match.type !== "scripture_version") return // WIP only scripture is implemented
 
         let suggestionDraft: any = {
             id: uid(5),
@@ -139,6 +144,12 @@ export class AiManager {
 
             console.info(`Auto-playing ${match.type}:`, match.content)
             trigger()
+            return
+        }
+
+        if (match.type === "scripture_version") {
+            const suggestion = { ...suggestionDraft, action: "open_scripture", trigger }
+            this.addSuggestion(suggestion)
             return
         }
 
@@ -160,6 +171,7 @@ export class AiManager {
     private static shouldAutoPlay(match: MatchResult): boolean {
         if (match.confidence <= 95 && this.alreadySuggested(match)) return false
 
+        if (match.type === "scripture_version") return false
         if (match.type !== "scripture") return false // WIP currently only auto-plays scripture matches
 
         if (match.type === "scripture" && match.scriptureIsNewTranslation) return false
@@ -188,7 +200,9 @@ export class AiManager {
 
     static liveContent: string = ""
     private static triggerMatchAction(match: MatchResult) {
-        if (match.type === "scripture") {
+        if (match.type === "scripture_version") {
+            if (match.scriptureTranslation) setActiveScripture(match.scriptureTranslation)
+        } else if (match.type === "scripture") {
             startScripture({ reference: match.content })
         }
 
