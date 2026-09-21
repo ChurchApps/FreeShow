@@ -1189,7 +1189,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         })
     }
 
-    const sorted = sortItemsByType(templateItems)
+    const sorted = sortItemsByType(templateItems, true)
     const sortedTemplateItems = clone(sorted)
 
     const hasScriptureDynamicValue = Object.keys(customDynamicValues).length && templateItems?.some((item) => item?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{scripture"))))
@@ -1209,8 +1209,10 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     slideItems.forEach((item: Item) => {
         if (!item) return
 
-        const type = item.type || "text"
+        let type: string = item.type || "text"
         if (type === "text" && hasScriptureDynamicValue) return
+
+        if (hasDynamicValue(item)) type = "text_dynamic"
 
         const templateItem = clone(sortedTemplateItems[type]?.shift())
         if (!templateItem) return finish()
@@ -1264,7 +1266,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
         const textFormatSets = getTextFormatSets(item)
 
-        const hasDynamicValue = templateItem?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{")))
+        const templateItemHasDynamicValue = hasDynamicValue(templateItem)
 
         item.lines?.forEach((line, j) => {
             let templateLine = templateItem?.lines?.[j] || templateItem?.lines?.[0]
@@ -1287,7 +1289,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
                 const firstChar = templateText?.value?.[0] || ""
 
                 // add dynamic values
-                if ((!text.value?.length || text.value?.includes("{")) && hasDynamicValue && templateItem?.lines?.[j]) {
+                if ((!text.value?.length || text.value?.includes("{")) && templateItemHasDynamicValue && templateItem?.lines?.[j]) {
                     text.value = templateText!.value
                 }
 
@@ -1344,8 +1346,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // })
     }
 
-    // remove textbox items
-    templateItems = templateItems.filter((a) => (a.type || "text") !== "text")
+    // remove (non dynamic value) textbox items
+    templateItems = templateItems.filter((a) => (a.type || "text") !== "text" || hasDynamicValue(a))
     // remove any duplicate values
     templateItems = templateItems.filter(
         (item) =>
@@ -1585,19 +1587,25 @@ export function isEmpty(item: Item) {
     return !getItemText(item).length
 }
 
-export function sortItemsByType(items: Item[]) {
+export function sortItemsByType(items: Item[], dynamicValueType: boolean = false) {
     const sortedItems: { [key: string]: Item[] } = {}
 
     items.forEach((item) => {
         if (!item) return
 
-        const type = item.type || "text"
+        let type: string = item.type || "text"
+        if (dynamicValueType && hasDynamicValue(item)) type = "text_dynamic"
         if (!sortedItems[type]) sortedItems[type] = []
 
         sortedItems[type].push(item)
     })
 
     return sortedItems
+}
+
+function hasDynamicValue(item: Item) {
+    if (!item.lines) return false
+    return item.lines.some((line) => line.text?.some((text) => text.value?.includes("{")))
 }
 
 export function getItemsCountByType(items: Item[]) {
