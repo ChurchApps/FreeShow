@@ -120,7 +120,7 @@ export const playingVideoState: Writable<{ [key: string]: PlayingVideoState }> =
 export const activePlaylist: Writable<any> = writable(null)
 export const playingMetronome: Writable<boolean> = writable(false)
 export const visualizerData: Writable<any> = writable(null)
-export const channelDuckingMultipliers: Writable<{ [channelId: string]: number }> = writable({})
+export const channelSidechainMultipliers: Writable<{ [channelId: string]: number }> = writable({})
 export const isFadingOut: Writable<any> = writable(false)
 export const recordingChannels: Writable<{ [channelId: string]: boolean }> = writable({})
 

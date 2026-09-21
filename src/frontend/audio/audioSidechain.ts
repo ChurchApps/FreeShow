@@ -1,20 +1,20 @@
 import { get } from "svelte/store"
-import { audioRouting, channelDuckingMultipliers } from "../stores"
+import { audioRouting, channelSidechainMultipliers } from "../stores"
 import { AudioInputCapture } from "./routing/audioInputCapture"
 import { AudioRoutingManager } from "./routing/audioRoutingManager"
 import { dbToGain, MIN_DB } from "./dBUtils"
 
 interface ChannelState {
-    reductionDb: number       // 0 dB (no ducking) down to -48 dB
+    reductionDb: number       // 0 dB (no sidechain) down to -48 dB
     targetReductionDb: number // target reduction in dB
     holdUntil: number
     samples: { time: number; db: number }[]
 }
 
-export class AudioDucking {
-    private static instance: AudioDucking
-    public static getInstance(): AudioDucking {
-        return (AudioDucking.instance ??= new AudioDucking())
+export class AudioSidechain {
+    private static instance: AudioSidechain
+    public static getInstance(): AudioSidechain {
+        return (AudioSidechain.instance ??= new AudioSidechain())
     }
 
     private running = false
@@ -22,10 +22,10 @@ export class AudioDucking {
     private lastTickTime = 0
     private channels = new Map<string, ChannelState>()
 
-    // Ducking parameters in dB
+    // Sidechain parameters in dB
     // Input scale: -36 dB to 0 dB maps linearly to 0 dB down to MAX_ATTENUATION_DB (-48 dB)
     private static readonly THRESHOLD_DB = -36     // -36 dB input threshold (0 dB reduction)
-    private static readonly FULL_DUCK_DB = 0       // 0 dB input -> max reduction (-48 dB)
+    private static readonly FULL_SIDECHAIN_DB = 0       // 0 dB input -> max reduction (-48 dB)
     private static readonly MAX_ATTENUATION_DB = -48 // Max reduction level in dB
 
     // Timing in milliseconds
@@ -33,15 +33,15 @@ export class AudioDucking {
     private static readonly WINDOW_MS = 250
 
     // Smooth rates in dB per second
-    // Attack: 60 dB/s -> smooth ~800ms to reach full -48 dB duck
+    // Attack: 60 dB/s -> smooth ~800ms to reach full -48 dB sidechain
     private static readonly ATTACK_RATE_DB_PER_SEC = 60
     // Release: 20 dB/s -> gentle ~2.4s recovery back to 0 dB
     private static readonly RELEASE_RATE_DB_PER_SEC = 20
 
     private constructor() {
         audioRouting.subscribe((config) => {
-            const hasDucking = (config?.connections || []).some((c) => c.type === "ducking")
-            if (hasDucking) this.start()
+            const hasSidechain = (config?.connections || []).some((c) => c.type === "sidechain")
+            if (hasSidechain) this.start()
             else this.stop()
         })
     }
@@ -61,8 +61,8 @@ export class AudioDucking {
         }
         if (this.channels.size > 0) {
             this.channels.clear()
-            channelDuckingMultipliers.set({})
-            AudioRoutingManager.getInstance().setChannelDucking(new Map())
+            channelSidechainMultipliers.set({})
+            AudioRoutingManager.getInstance().setChannelSidechain(new Map())
         }
     }
 
@@ -70,9 +70,9 @@ export class AudioDucking {
         if (!this.running) return
 
         const connections = get(audioRouting)?.connections || []
-        const duckingConns = connections.filter((c) => c.type === "ducking")
+        const sidechainConns = connections.filter((c) => c.type === "sidechain")
 
-        if (duckingConns.length === 0) {
+        if (sidechainConns.length === 0) {
             this.stop()
             return
         }
@@ -80,9 +80,9 @@ export class AudioDucking {
         const dtSec = Math.min(0.1, Math.max(0.001, (now - this.lastTickTime) / 1000))
         this.lastTickTime = now
 
-        // Map target channels to their ducking input source IDs
+        // Map target channels to their sidechain input source IDs
         const channelSources = new Map<string, string[]>()
-        for (const { from, to } of duckingConns) {
+        for (const { from, to } of sidechainConns) {
             let list = channelSources.get(to)
             if (!list) channelSources.set(to, (list = []))
             list.push(from)
@@ -114,7 +114,7 @@ export class AudioDucking {
 
             // Rolling window averaging
             state.samples.push({ time: now, db: maxDb })
-            const cutoff = now - AudioDucking.WINDOW_MS
+            const cutoff = now - AudioSidechain.WINDOW_MS
             while (state.samples.length > 0 && state.samples[0].time < cutoff) {
                 state.samples.shift()
             }
@@ -128,15 +128,15 @@ export class AudioDucking {
 
             // Calculate target reduction directly in dB (MIN_DB (-60 dB) = 0 dB reduction, 0 dB = -48 dB reduction)
             let computedReductionDb = 0
-            if (avgDb > AudioDucking.THRESHOLD_DB) {
-                const ratio = Math.min(1.0, Math.max(0.0, (avgDb - AudioDucking.THRESHOLD_DB) / (AudioDucking.FULL_DUCK_DB - AudioDucking.THRESHOLD_DB)))
-                computedReductionDb = ratio * AudioDucking.MAX_ATTENUATION_DB
+            if (avgDb > AudioSidechain.THRESHOLD_DB) {
+                const ratio = Math.min(1.0, Math.max(0.0, (avgDb - AudioSidechain.THRESHOLD_DB) / (AudioSidechain.FULL_SIDECHAIN_DB - AudioSidechain.THRESHOLD_DB)))
+                computedReductionDb = ratio * AudioSidechain.MAX_ATTENUATION_DB
             }
 
-            // Duck deeper immediately when louder; enforce hold timer before rising
+            // Sidechain deeper immediately when louder; enforce hold timer before rising
             if (computedReductionDb < state.targetReductionDb) {
                 state.targetReductionDb = computedReductionDb
-                state.holdUntil = now + AudioDucking.HOLD_UP_MS
+                state.holdUntil = now + AudioSidechain.HOLD_UP_MS
             } else if (now < state.holdUntil) {
                 state.targetReductionDb = Math.min(state.targetReductionDb, computedReductionDb)
             } else {
@@ -145,11 +145,11 @@ export class AudioDucking {
 
             // Smooth in dB domain at constant dB/sec rate
             if (state.targetReductionDb < state.reductionDb) {
-                // Attack: ducking down (more negative dB)
-                state.reductionDb = Math.max(state.targetReductionDb, state.reductionDb - AudioDucking.ATTACK_RATE_DB_PER_SEC * dtSec)
+                // Attack: sidechain down (more negative dB)
+                state.reductionDb = Math.max(state.targetReductionDb, state.reductionDb - AudioSidechain.ATTACK_RATE_DB_PER_SEC * dtSec)
             } else if (now >= state.holdUntil && state.reductionDb < state.targetReductionDb) {
                 // Release: fading up (less negative dB)
-                state.reductionDb = Math.min(state.targetReductionDb, state.reductionDb + AudioDucking.RELEASE_RATE_DB_PER_SEC * dtSec)
+                state.reductionDb = Math.min(state.targetReductionDb, state.reductionDb + AudioSidechain.RELEASE_RATE_DB_PER_SEC * dtSec)
             }
 
             if (state.targetReductionDb === 0 && state.reductionDb >= -0.1) {
@@ -157,13 +157,13 @@ export class AudioDucking {
             }
 
             // Convert to linear gain multiplier for Web Audio & stores
-            const linearMult = state.reductionDb <= AudioDucking.MAX_ATTENUATION_DB ? dbToGain(AudioDucking.MAX_ATTENUATION_DB) : dbToGain(state.reductionDb)
+            const linearMult = state.reductionDb <= AudioSidechain.MAX_ATTENUATION_DB ? dbToGain(AudioSidechain.MAX_ATTENUATION_DB) : dbToGain(state.reductionDb)
             multipliersMap.set(channelId, linearMult)
             multipliersObj[channelId] = linearMult
         }
 
-        channelDuckingMultipliers.set(multipliersObj)
-        AudioRoutingManager.getInstance().setChannelDucking(multipliersMap)
+        channelSidechainMultipliers.set(multipliersObj)
+        AudioRoutingManager.getInstance().setChannelSidechain(multipliersMap)
 
         this.loopId = requestAnimationFrame(this.tick)
     }
