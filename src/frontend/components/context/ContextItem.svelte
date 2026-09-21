@@ -83,7 +83,7 @@
 
             menu.label = "edit.style"
             menu.icon = "styles"
-            if (!$styles[styleId]) disabled = true
+            // if (!$styles[styleId]) disabled = true
             menu.label += `: ${styleId ? $styles[styleId]?.name || "error.not_found" : "main.none"}`
         },
         edit_style: () => {

@@ -1366,7 +1366,7 @@ const clickActions = {
             return
         }
 
-        if (!output.style) return
+        // output style
 
         popupData.set({
             active: output.style,
