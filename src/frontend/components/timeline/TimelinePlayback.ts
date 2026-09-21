@@ -4,7 +4,7 @@ import type { TimelineAction } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import { clearAudio } from "../../audio/audioFading"
 import { AudioPlayer } from "../../audio/audioPlayer"
-import { activeEdit, activeShow, isTimelinePlaying, outputs, playingAudio, playingVideoState, showsCache, timecode } from "../../stores"
+import { activeEdit, activeShow, isTimelinePlaying, outputs, playingAudio, playingVideoState, showsCache, special, timecode } from "../../stores"
 import { triggerFunction } from "../../utils/common"
 import { runAction } from "../actions/actions"
 import { clone } from "../helpers/array"
@@ -19,6 +19,7 @@ import { SlideTimeline } from "./SlideTimeline"
 import { TimelineType } from "./TimelineActions"
 import { startListeningLTC, stopListeningLTC } from "./timecode"
 import { getProjectShowDurations } from "./timeline"
+import { tick } from "svelte"
 
 let activePlayback: TimelinePlayback | null = null
 export function getActiveTimelinePlayback(type: TimelineType | null = null) {
@@ -34,9 +35,15 @@ export function getActiveTimelinePlayback(type: TimelineType | null = null) {
 // }
 
 // API ACTIONS
-export function startTimeline(type: TimelineType) {
+export async function startTimeline(type: TimelineType) {
+    // open timeline if not already opened (temporary fix until the timeline can played without needing to be opened)
+    special.update((a) => ({ ...a, timelineActive: true }))
+    // wait until opened and mounted before starting
+    await tick()
+
     // const timeline = getOrCreateTimeline(type)
     // timeline.play()
+
     triggerFunction(`start_${type}_timeline`)
 }
 export function pauseTimeline(type: TimelineType) {
