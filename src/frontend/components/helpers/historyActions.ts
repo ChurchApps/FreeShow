@@ -151,6 +151,8 @@ function handleUpdate(obj, data, initializing) {
 
         if (subkey && index !== undefined && index > -1 && !Array.isArray(a[id]?.[key]?.[subkey])) delete data.previousData
         if (updater.timestamp && a[id]) a[id].modified = Date.now()
+        // update "shows" modified time (mainly needed for cloud sync)
+        if (a[id]?.timestamps) a[id].timestamps.modified = Date.now()
         if (data.previousData === data.data) console.warn(obj.id, "HISTORY:", "Previous data is the same as current data. Try using clone()!")
         return a
     }
