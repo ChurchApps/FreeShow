@@ -7,10 +7,48 @@
 
     export let src: string
     export let navigation = true
+    export let zoom: number | undefined = undefined
     export let clickable = false
 
     let webview: any
     export let ratio: number
+
+    let webviewReady = false
+    let prevSrc = ""
+
+    function initWebview(node: HTMLElement) {
+        node.addEventListener("dom-ready", onDomReady)
+        node.addEventListener("did-finish-load", setStyle)
+        node.addEventListener("did-navigate", onDidNavigate)
+
+        return {
+            destroy() {
+                node.removeEventListener("dom-ready", onDomReady)
+                node.removeEventListener("did-finish-load", setStyle)
+                node.removeEventListener("did-navigate", onDidNavigate)
+            }
+        }
+    }
+
+    function onDomReady() {
+        webviewReady = true
+        websiteLoaded()
+        checkNavigation()
+        setStyle()
+    }
+
+    function onDidNavigate() {
+        checkNavigation()
+        if (webviewReady) {
+            try {
+                url = webview?.getURL() || parsedSrc
+            } catch (err) {
+                console.debug("Webview getURL failed:", err)
+            }
+        }
+    }
+
+    $: if (webview && webviewReady && (ratio !== undefined || zoom !== undefined)) setStyle()
 
     let parsedSrc = ""
     $: if (src) checkURL()
@@ -32,15 +70,32 @@
         parsedSrc = valid ? src : ""
     }
 
-    let loaded = false
-    let webviewReady = false
-    $: if (parsedSrc) {
-        loaded = false
+    $: if (parsedSrc && parsedSrc !== prevSrc) {
+        prevSrc = parsedSrc
         webviewReady = false
     }
 
-    $: if (webview && ratio) setWebpageRatio()
-    function setWebpageRatio() {
+    function setStyle() {
+        if (!webview || !webviewReady) return
+
+        if ($currentWindow !== "output") {
+            try {
+                webview.setAudioMuted(true)
+            } catch (err) {
+                console.debug("Failed to mute webview audio:", err)
+            }
+        }
+
+        const factor = (parseFloat(zoom?.toString() || "100") || 100) / 100
+
+        try {
+            if (typeof webview.setZoomFactor === "function") {
+                webview.setZoomFactor(factor)
+            }
+        } catch (err) {
+            console.debug("Failed to set webview zoom factor:", err)
+        }
+
         // custom scale does often not work on embeds (Presentations)
         if (src.includes("embed")) return
 
@@ -49,58 +104,27 @@
         let isFullscreen = true || (webview.closest(".previewOutput")?.offsetWidth || 0) > 450
         const inverse = isFullscreen ? 100 : Math.round(100 / ratio)
 
-        if (loaded && webviewReady) setStyle()
-        else {
-            webview?.addEventListener("dom-ready", () => {
-                webviewReady = true
-                websiteLoaded()
-                checkNavigation()
-                setStyle()
-            })
-            webview?.addEventListener("did-finish-load", setStyle)
-            webview?.addEventListener("did-navigate", () => {
-                checkNavigation()
-                if (webviewReady) {
-                    try {
-                        url = webview?.getURL() || parsedSrc
-                    } catch (err) {
-                        console.debug("Webview getURL failed:", err)
-                    }
+        try {
+            webview
+                .executeJavaScript(
+                    `
+                if (document.documentElement) {
+                    document.documentElement.style.zoom = '${factor}';
                 }
-            })
-        }
-
-        function setStyle() {
-            if (!webview || !webviewReady) return
-            loaded = true
-
-            if ($currentWindow !== "output") {
-                try {
-                    webview.setAudioMuted(true)
-                } catch (err) {
-                    console.debug("Failed to mute webview audio:", err)
+                if (document.body) {
+                    document.body.style.transform = 'scale(${isFullscreen ? 1 : ratio})';
+                    document.body.style.transformOrigin = '0 0';
+                    const scaleFactor = ${inverse};
+                    document.body.style.width = scaleFactor + '%';
+                    document.body.style.height = scaleFactor + '%';
                 }
-            }
-
-            try {
-                webview
-                    .executeJavaScript(
-                        `
-                    if (document.body) {
-                        document.body.style.transform = 'scale(${isFullscreen ? 1 : ratio})';
-                        document.body.style.transformOrigin = '0 0';
-                        const scaleFactor = ${inverse};
-                        document.body.style.width = scaleFactor + '%';
-                        document.body.style.height = scaleFactor + '%';
-                    }
-                `
-                    )
-                    ?.catch((err: any) => {
-                        console.debug("Webview executeJavaScript failed:", err)
-                    })
-            } catch (err) {
-                console.debug("Failed to execute JavaScript on webview:", err)
-            }
+            `
+                )
+                ?.catch((err: any) => {
+                    console.debug("Webview executeJavaScript failed:", err)
+                })
+        } catch (err) {
+            console.debug("Failed to execute JavaScript on webview:", err)
         }
     }
 
@@ -183,7 +207,7 @@
             <p class="url" style="zoom: {ratio};">{formatUrl(url)}</p>
         </div>
     {/if}
-    <webview id="webview" src={parsedSrc} bind:this={webview} />
+    <webview id="webview" src={parsedSrc} bind:this={webview} use:initWebview />
 </div>
 
 <style>

@@ -88,7 +88,7 @@
 {#if item.type === "media"}
     <MediaItem {item} {outputId} slideRef={{ ...ref, slideIndex }} preview={preview || isStage} {miniPreview} {edit} {cropPreviewMode} />
 {:else if item.type === "web"}
-    <Website src={item.web?.src || ""} navigation={!edit && !item.web?.noNavigation} clickable={!edit && $currentWindow === "output"} {ratio} />
+    <Website src={item.web?.src || ""} navigation={!edit && !item.web?.noNavigation} zoom={item.web?.zoom} clickable={!edit && $currentWindow === "output"} {ratio} />
 {:else if item.type === "timer"}
     <Timer {item} id={item.timer?.id || item.timerId || ""} {today} style={noAutoSize ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} {edit} />
 {:else if item.type === "clock"}

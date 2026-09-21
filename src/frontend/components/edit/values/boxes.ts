@@ -406,7 +406,8 @@ export const itemBoxes: Box2 = {
             default: {
                 inputs: splitIntoRows([
                     { id: "web.src", type: "string", value: "", values: { label: "inputs.url" } },
-                    { id: "web.noNavigation", type: "checkbox", value: false, values: { label: "edit.disable_navigation" } }
+                    { id: "web.noNavigation", type: "checkbox", value: false, values: { label: "edit.disable_navigation" } },
+                    { id: "web.zoom", type: "number", value: 100, values: { label: "actions.zoom (%)", defaultValue: 100, min: 10, max: 1000, step: 5, showSlider: true, sliderValues: { min: 50, max: 250, step: 10 } } }
                 ])
             }
         }
@@ -721,9 +722,7 @@ export const itemBoxes: Box2 = {
         icon: "qr_code",
         sections: {
             default: {
-                inputs: splitIntoRows([
-                    { id: "qr.text", type: "string", value: "", values: { label: "inputs.url" } }
-                ])
+                inputs: splitIntoRows([{ id: "qr.text", type: "string", value: "", values: { label: "inputs.url" } }])
             }
         }
     }
