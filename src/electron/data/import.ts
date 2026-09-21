@@ -213,6 +213,9 @@ async function importProject(files: string[]) {
     // remove folder if no files stored
     // if (!readFolder(importFolder).length) deleteFolder(importFolder)
 
+    // might have alerted an error, so just return if there is no data
+    if (!data.length) return
+
     sendToMain(ToMain.IMPORT2, { channel: "freeshow_project", data })
 }
 
