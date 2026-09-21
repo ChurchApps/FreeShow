@@ -470,7 +470,6 @@
                         for (const [, { parentId, prefix }] of Object.entries(PARENT_PREFIX_MAP)) {
                             if (connFrom.startsWith(prefix) && id === parentId) return true
                             if (id.startsWith(prefix) && connFrom === parentId) return true
-                            if (connFrom.startsWith(prefix) && id.startsWith(prefix)) return true
                         }
                         return false
                     }
