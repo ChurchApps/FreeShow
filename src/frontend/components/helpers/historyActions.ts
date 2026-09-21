@@ -151,8 +151,7 @@ function handleUpdate(obj, data, initializing) {
 
         if (subkey && index !== undefined && index > -1 && !Array.isArray(a[id]?.[key]?.[subkey])) delete data.previousData
         if (updater.timestamp && a[id]) a[id].modified = Date.now()
-        // shows carry their own modified timestamp (used by cloud sync's newest-wins check); other update
-        // paths (e.g. _show().set()) already bump this, but the show_key store path here did not
+        // update "shows" modified time (mainly needed for cloud sync)
         if (a[id]?.timestamps) a[id].timestamps.modified = Date.now()
         if (data.previousData === data.data) console.warn(obj.id, "HISTORY:", "Previous data is the same as current data. Try using clone()!")
         return a
