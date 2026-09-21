@@ -1,7 +1,7 @@
-import type { AssetItem, AuroraItem, BloomItem, BubbleItem, CandleItem, CircleItem, CityItem, CycleItem, EffectDefinition, EffectFunction, EffectInit, EffectItem, EffectType, FireworkItem, FogItem, GalaxyItem, GrassItem, LensFlareItem, LightningItem, MeshGradientItem, RainbowItem, RainItem, RayItem, RectangleItem, ShapeItem, Side, SnowItem, SpotlightItem, StarItem, SunItem, TriangleItem, WaveItem } from "../../../../types/Effects"
+import type { AssetItem, AuroraItem, BloomItem, BubbleItem, CandleItem, CircleItem, CityItem, ConfettiItem, CycleItem, EffectDefinition, EffectFunction, EffectInit, EffectItem, EffectType, FireworkItem, FogItem, GalaxyItem, GrassItem, LensFlareItem, LightningItem, MeshGradientItem, RainbowItem, RainItem, RayItem, RectangleItem, ShapeItem, Side, SnowItem, SpotlightItem, StarItem, SunItem, TriangleItem, WaveItem } from "../../../../types/Effects"
 import { createNoise2D } from "./simplex-noise"
 
-const effectTypes: readonly EffectType[] = ["circle", "rectangle", "triangle", "wave", "bubbles", "stars", "galaxy", "rain", "snow", "sun", "lens_flare", "spotlight", "aurora", "bloom", "fog", "city", "rays", "fireworks", "candle", "cycle", "grass", "lightning", "rainbow", "mesh_gradient", "asset"] as const
+const effectTypes: readonly EffectType[] = ["circle", "rectangle", "triangle", "wave", "bubbles", "stars", "galaxy", "rain", "snow", "sun", "lens_flare", "spotlight", "aurora", "bloom", "fog", "city", "rays", "fireworks", "confetti", "candle", "cycle", "grass", "lightning", "rainbow", "mesh_gradient", "asset"] as const
 // type EffectType = (typeof effectTypes)[number]
 
 export class EffectRender {
@@ -2272,6 +2272,216 @@ export class EffectRender {
                 maxTrail: Math.min(10, Math.max(3, Math.round(4 * Math.sqrt(size)))),
                 type: "particle"
             })
+        }
+    }
+
+    /// CONFETTI ///
+
+    private getConfettiColors(baseColor?: string): string[] {
+        if (!baseColor || baseColor === "transparent" || baseColor === "rgba(0,0,0,0)") {
+            return [
+                "#f44336", "#e91e63", "#9c27b0", "#3f51b5",
+                "#2196f3", "#00bcd4", "#4caf50", "#ffeb3b",
+                "#ff9800", "#ff5722", "#e040fb", "#00e676"
+            ]
+        }
+
+        // Parse base color (supports hex, rgb, rgba)
+        const rgb = this.hexToRgb(baseColor)
+        let r = 255
+        let g = 255
+        let b = 255
+        let a = 1
+
+        if (rgb) {
+            r = rgb.r
+            g = rgb.g
+            b = rgb.b
+        } else {
+            const match = baseColor.match(/rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s/]+([\d.]+))?\)/)
+            if (match) {
+                r = Number(match[1])
+                g = Number(match[2])
+                b = Number(match[3])
+                a = match[4] !== undefined ? Number(match[4]) : 1
+            }
+        }
+
+        // Generate diverse shades and tints of the chosen color
+        return [
+            `rgba(${Math.round(r * 0.45)}, ${Math.round(g * 0.45)}, ${Math.round(b * 0.45)}, ${a})`,
+            `rgba(${Math.round(r * 0.65)}, ${Math.round(g * 0.65)}, ${Math.round(b * 0.65)}, ${a})`,
+            `rgba(${Math.round(r * 0.82)}, ${Math.round(g * 0.82)}, ${Math.round(b * 0.82)}, ${a})`,
+            baseColor,
+            `rgba(${Math.min(255, Math.round(r + (255 - r) * 0.25))}, ${Math.min(255, Math.round(g + (255 - g) * 0.25))}, ${Math.min(255, Math.round(b + (255 - b) * 0.25))}, ${a})`,
+            `rgba(${Math.min(255, Math.round(r + (255 - r) * 0.48))}, ${Math.min(255, Math.round(g + (255 - g) * 0.48))}, ${Math.min(255, Math.round(b + (255 - b) * 0.48))}, ${a})`,
+            `rgba(${Math.min(255, Math.round(r + (255 - r) * 0.7))}, ${Math.min(255, Math.round(g + (255 - g) * 0.7))}, ${Math.min(255, Math.round(b + (255 - b) * 0.7))}, ${a})`
+        ]
+    }
+
+    initConfetti(item: ConfettiItem) {
+        const colors = this.getConfettiColors(item.color)
+        const count = item.count ?? 100
+        const size = item.size ?? 1
+
+        const existing = this.effectData.get(item)
+        if (existing && existing.particles && existing.particles.length === count) {
+            existing.colors = colors
+            existing.baseColor = item.color
+            for (const p of existing.particles) {
+                p.baseSize = size
+                p.fallSpeed = (item.speed ?? 1) * this.randomNumber(1.8, 4.2)
+                p.speedY = p.fallSpeed
+                p.color = this.randomItem(colors)
+            }
+            return
+        }
+
+        const particles = Array.from({ length: count }, () =>
+            this.isPreview ? this.createConfettiFallingParticle(item, colors, true) : this.createConfettiBurstParticle(item, colors)
+        )
+        this.effectData.set(item, { particles, colors, baseColor: item.color })
+    }
+
+    private createConfettiBurstParticle(item: ConfettiItem, colors: string[]) {
+        const size = item.size ?? 1
+        const speedMultiplier = item.speed ?? 1
+        const shapeType = Math.random() < 0.2 ? "circle" : Math.random() < 0.35 ? "strip" : "rect"
+        const width = shapeType === "strip" ? size * this.randomNumber(4, 7) : size * this.randomNumber(8, 14)
+        const height = shapeType === "strip" ? size * this.randomNumber(12, 22) : shapeType === "circle" ? size * this.randomNumber(7, 11) : size * this.randomNumber(6, 11)
+
+        // Upward burst focused between ~ -65 deg and -115 deg to keep inside screen width
+        const burstAngle = -Math.PI / 2 + this.randomNumber(-0.62, 0.62)
+        const burstPower = this.randomNumber(40, 68) * Math.max(0.65, Math.min(2.5, speedMultiplier))
+
+        return {
+            x: this.width / 2 + this.randomNumber(-35, 35),
+            y: this.height + this.randomNumber(0, 20),
+            vx: Math.cos(burstAngle) * burstPower,
+            vy: Math.sin(burstAngle) * burstPower,
+            inBurst: true,
+            drag: 0.965,
+            gravity: 0.42 * Math.max(0.6, speedMultiplier),
+            w: width,
+            h: height,
+            shape: shapeType,
+            color: this.randomItem(colors),
+            fallSpeed: speedMultiplier * this.randomNumber(1.8, 4.2),
+            speedY: speedMultiplier * this.randomNumber(1.8, 4.2),
+            speedX: this.randomNumber(-0.8, 0.8),
+            angle: Math.random() * this.doublePI,
+            angularSpeed: this.randomNumber(-0.16, 0.16) * Math.max(0.6, speedMultiplier),
+            wobble: Math.random() * this.doublePI,
+            wobbleSpeed: this.randomNumber(0.1, 0.25) * Math.max(0.6, speedMultiplier),
+            swayPhase: Math.random() * this.doublePI,
+            swaySpeed: this.randomNumber(0.01, 0.03)
+        }
+    }
+
+    private createConfettiFallingParticle(item: ConfettiItem, colors: string[], initial = false) {
+        const size = item.size ?? 1
+        const speedMultiplier = item.speed ?? 1
+        const shapeType = Math.random() < 0.2 ? "circle" : Math.random() < 0.35 ? "strip" : "rect"
+        const width = shapeType === "strip" ? size * this.randomNumber(4, 7) : size * this.randomNumber(8, 14)
+        const height = shapeType === "strip" ? size * this.randomNumber(12, 22) : shapeType === "circle" ? size * this.randomNumber(7, 11) : size * this.randomNumber(6, 11)
+
+        return {
+            x: this.randomNumber(20, this.width - 20),
+            y: initial ? this.getRandomPosY() : -this.randomNumber(10, 80),
+            vx: 0,
+            vy: 0,
+            inBurst: false,
+            drag: 1,
+            gravity: 0,
+            w: width,
+            h: height,
+            shape: shapeType,
+            color: this.randomItem(colors),
+            fallSpeed: speedMultiplier * this.randomNumber(1.8, 4.2),
+            speedY: speedMultiplier * this.randomNumber(1.8, 4.2),
+            speedX: this.randomNumber(-0.8, 0.8),
+            angle: Math.random() * this.doublePI,
+            angularSpeed: this.randomNumber(-0.06, 0.06) * Math.max(0.5, speedMultiplier),
+            wobble: Math.random() * this.doublePI,
+            wobbleSpeed: this.randomNumber(0.04, 0.12) * Math.max(0.5, speedMultiplier),
+            swayPhase: Math.random() * this.doublePI,
+            swaySpeed: this.randomNumber(0.01, 0.03)
+        }
+    }
+
+    drawConfetti(item: ConfettiItem, deltaTime: number) {
+        const ctx = this.ctx
+        let data = this.effectData.get(item)
+        if (!data || data.baseColor !== item.color) {
+            this.initConfetti(item)
+            data = this.effectData.get(item)
+            if (!data) return
+        }
+
+        const particles = data.particles
+        const colors = data.colors || this.getConfettiColors(item.color)
+
+        for (let i = 0; i < particles.length; i++) {
+            const p = particles[i]
+
+            // Physics update
+            if (p.inBurst) {
+                p.vx *= Math.pow(p.drag, deltaTime)
+                p.vy = p.vy * Math.pow(p.drag, deltaTime) + p.gravity * deltaTime
+                p.x += p.vx * deltaTime
+                p.y += p.vy * deltaTime
+
+                // Transition to continuous floating fall once it peaks and starts descending
+                if (p.vy > 0 && p.vy >= p.fallSpeed) {
+                    p.inBurst = false
+                    p.speedY = p.fallSpeed
+                    p.speedX = p.vx * 0.25
+                }
+            } else {
+                p.y += p.speedY * deltaTime
+                p.x += (p.speedX + Math.sin(p.swayPhase) * 0.9) * deltaTime
+            }
+
+            // Keep within left/right edges
+            const margin = p.w / 2 + 4
+            if (p.x < margin) {
+                p.x = margin
+                if (p.inBurst) p.vx = Math.abs(p.vx) * 0.3
+                else p.speedX = Math.abs(p.speedX)
+            } else if (p.x > this.width - margin) {
+                p.x = this.width - margin
+                if (p.inBurst) p.vx = -Math.abs(p.vx) * 0.3
+                else p.speedX = -Math.abs(p.speedX)
+            }
+
+            p.swayPhase += p.swaySpeed * deltaTime
+            p.angle += p.angularSpeed * (p.inBurst ? 2 : 1) * deltaTime
+            p.wobble += p.wobbleSpeed * (p.inBurst ? 2 : 1) * deltaTime
+
+            // Check offscreen bottom
+            if (p.y > this.height + 30) {
+                particles[i] = this.createConfettiFallingParticle(item, colors, false)
+                continue
+            }
+
+            // 3D flip effect using cosine of wobble angle
+            const flipScale = Math.cos(p.wobble)
+
+            ctx.save()
+            ctx.translate(p.x, p.y)
+            ctx.rotate(p.angle)
+            ctx.scale(1, flipScale)
+
+            ctx.fillStyle = p.color
+            if (p.shape === "circle") {
+                ctx.beginPath()
+                ctx.arc(0, 0, p.w / 2, 0, this.doublePI)
+                ctx.fill()
+            } else {
+                ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h)
+            }
+
+            ctx.restore()
         }
     }
 

@@ -192,6 +192,15 @@ export const effectSections: { [key: string]: EditBoxSection } = {
         ])
     },
 
+    confetti: {
+        inputs: splitIntoRows([
+            { id: "count", type: "number", value: 100, values: { label: "edit.count", min: 1, max: 500, showSlider: true, sliderValues: { max: 300 } } },
+            { id: "size", type: "number", value: 1, multiplier: 10, values: { label: "edit.size", min: 1, max: 100, decimals: 1, showSlider: true, sliderValues: { max: 30 } } },
+            { id: "speed", type: "number", value: 1, multiplier: 10, values: { label: "edit.speed", min: 1, max: 100, decimals: 1, showSlider: true, sliderValues: { max: 30 } } },
+            { id: "color", type: "color", value: "", values: { label: "edit.color", allowEmpty: true, allowOpacity: true } }
+        ])
+    },
+
     candle: {
         inputs: splitIntoRows([
             { id: "width", type: "number", value: 140, values: { label: "edit.width", min: 10, max: 1000, showSlider: true, sliderValues: { min: 20, max: 200 } } },
