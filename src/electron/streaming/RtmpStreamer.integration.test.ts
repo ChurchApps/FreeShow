@@ -46,7 +46,10 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "freeshow-rtmp-"))
     })
 
+    const activeFeeds = new Set<NodeJS.Timeout>()
     afterEach(() => {
+        for (const interval of activeFeeds) clearInterval(interval)
+        activeFeeds.clear()
         RtmpStreamer.stopAll()
         mocked.encoder = "x264"
         setRtmpNoticeListener(() => {})
@@ -55,13 +58,15 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
     function feed(id: string, size = { width: WIDTH, height: HEIGHT }) {
         let i = 0
         const frame = Buffer.alloc(size.width * size.height * 4)
-        return setInterval(() => {
+        const interval = setInterval(() => {
             frame.fill((i++ * 8) % 256)
             RtmpStreamer.updateFrame(id, frame, size)
         }, 1000 / FPS)
+        activeFeeds.add(interval)
+        return interval
     }
 
-    it("encodes raw BGRA into a valid mpegts stream on stdout", async () => {
+    it("encodes raw BGRA into a valid flv stream on stdout", async () => {
         const args = buildEncoderCommand({
             encoderId: "x264",
             inputWidth: WIDTH,
@@ -80,19 +85,20 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         for (let i = 0; i < FPS * 2; i++) ffmpeg.stdin.write(bgraFrame(i * 8))
         ffmpeg.stdin.end()
 
-        // the silent audio input never ends, which is what we want for a live stream, so stop it explicitly
+        // wait for encoding to complete and ffmpeg to exit
         await new Promise((r) => setTimeout(r, 3000))
         ffmpeg.kill("SIGTERM")
         await new Promise((resolve) => ffmpeg.on("exit", resolve))
 
         const output = Buffer.concat(chunks)
         expect(output.length).toBeGreaterThan(0)
-        // every mpegts packet starts with the 0x47 sync byte
-        expect(output[0]).toBe(0x47)
+        // every FLV stream starts with 'F', 'L', 'V' (0x46, 0x4c, 0x56)
+        expect(output[0]).toBe(0x46)
+        expect(output.subarray(0, 3).toString("ascii")).toBe("FLV")
 
-        const tsFile = path.join(tmpDir, "encoded.ts")
-        fs.writeFileSync(tsFile, output)
-        const info = probe(tsFile)
+        const flvFile = path.join(tmpDir, "encoded.flv")
+        fs.writeFileSync(flvFile, output)
+        const info = probe(flvFile)
         const video = info.streams.find((s: any) => s.codec_type === "video")
         expect(video.codec_name).toBe("h264")
         expect(video.width).toBe(WIDTH)
@@ -109,10 +115,9 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         ])
 
         // the encoder spawns on the first frame, using its actual dimensions
-        let i = 0
-        const feed = setInterval(() => RtmpStreamer.updateFrame("test-output", bgraFrame((i++ * 8) % 256), { width: WIDTH, height: HEIGHT }), 1000 / FPS)
+        const feeding = feed("test-output")
         await new Promise((r) => setTimeout(r, 5000))
-        clearInterval(feed)
+        clearInterval(feeding)
 
         const status = RtmpStreamer.getStatus("test-output")
         expect(status.a?.state).toBe("live")
@@ -136,10 +141,9 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
 
         await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", url: path.join(tmpDir, "listener.flv"), key: "", enabled: true }])
 
-        let i = 0
-        const feed = setInterval(() => RtmpStreamer.updateFrame("test-output", bgraFrame((i++ * 8) % 256), { width: WIDTH, height: HEIGHT }), 1000 / FPS)
+        const feeding = feed("test-output")
         await new Promise((r) => setTimeout(r, 4000))
-        clearInterval(feed)
+        clearInterval(feeding)
 
         expect(pushes.length).toBeGreaterThan(0)
         expect(pushes.every((p) => p.outputId === "test-output")).toBe(true)
@@ -149,14 +153,14 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
     }, 30000)
 
     it("recovers to a healthy destination after falling back to software encoding", async () => {
-        // nvenc does not exist in a macOS ffmpeg build, so the encoder really fails and the
-        // hardware -> software fallback path runs for real
-        mocked.encoder = "nvenc"
+        // vaapi requires Linux and /dev/dri/renderD128 hardware device, which fails on non-Linux / test environments
+        // reliably triggering hardware -> software fallback
+        mocked.encoder = "vaapi"
         const notices: string[] = []
         setRtmpNoticeListener((message) => notices.push(message))
 
         const out = path.join(tmpDir, "fallback.flv")
-        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "nvenc" }, [{ id: "a", url: out, key: "", enabled: true }])
+        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "vaapi" }, [{ id: "a", url: out, key: "", enabled: true }])
 
         const feeding = feed("test-output")
         await new Promise((r) => setTimeout(r, 8000))
@@ -250,13 +254,12 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
 
         await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [destA, destB])
 
-        let i = 0
-        const feed = setInterval(() => RtmpStreamer.updateFrame("test-output", bgraFrame((i++ * 8) % 256), { width: WIDTH, height: HEIGHT }), 1000 / FPS)
+        const feeding = feed("test-output")
         await new Promise((r) => setTimeout(r, 3000))
 
         RtmpStreamer.syncDestinations("test-output", [destA])
         await new Promise((r) => setTimeout(r, 2000))
-        clearInterval(feed)
+        clearInterval(feeding)
 
         const status = RtmpStreamer.getStatus("test-output")
         expect(status.a?.state).toBe("live")
