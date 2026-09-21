@@ -44,7 +44,8 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         pixelFormat: "nv12",
         // prio_speed minimizes latency; avoid -realtime 1 to prevent internal frame drops from pipe jitter
         // use the shared rateControl helper so -bufsize is set consistently for better CBR behavior
-        args: (bitrate, gop) => ["-prio_speed", "1", "-allow_sw", "1", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`, "-rtbufsize", "100M"]
+        // -bf 0 prevents B-frame buffering latency and DTS/PTS disorder on RTMP streams
+        args: (bitrate, gop) => ["-prio_speed", "1", "-allow_sw", "1", "-bf", "0", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`]
     },
     nvenc: {
         id: "nvenc",
@@ -174,7 +175,7 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
 
 /** Relay process: remux the encoded mpegts straight to one RTMP destination, no re-encode. */
 export function buildRelayCommand(url: string): string[] {
-    return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-f", "flv", url]
+    return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-f", "flv", "-flvflags", "no_sequence_end", url]
 }
 
 /** Short throwaway encode used to prove the encoder actually works on this machine. */
