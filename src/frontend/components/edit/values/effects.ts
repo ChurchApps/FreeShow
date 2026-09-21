@@ -192,6 +192,16 @@ export const effectSections: { [key: string]: EditBoxSection } = {
         ])
     },
 
+    candle: {
+        inputs: splitIntoRows([
+            { id: "width", type: "number", value: 140, values: { label: "edit.width", min: 10, max: 1000, showSlider: true, sliderValues: { min: 20, max: 200 } } },
+            { id: "height", type: "number", value: 280, values: { label: "edit.height", min: 10, max: 1200, showSlider: true, sliderValues: { min: 30, max: 1000 } } },
+            { id: "color", type: "color", value: "#ece2d0", values: { label: "edit.color" } },
+            { id: "lit", type: "checkbox", value: true, values: { label: "Flame" } },
+            { id: "speed", type: "number", value: 5, values: { label: "edit.speed", min: 0, max: 10, decimals: 1, showSlider: true, sliderValues: { min: 0, max: 10 } } }
+        ])
+    },
+
     circle: {
         inputs: splitIntoRows([
             { id: "radius", type: "number", value: 200, values: { label: "edit.size", min: 1, max: 2000, showSlider: true, sliderValues: { max: 1000 } } },

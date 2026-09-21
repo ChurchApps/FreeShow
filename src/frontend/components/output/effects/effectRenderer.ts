@@ -1,7 +1,7 @@
-import type { AssetItem, AuroraItem, MeshGradientItem, BloomItem, BubbleItem, CircleItem, CityItem, CycleItem, EffectDefinition, EffectFunction, EffectInit, EffectItem, EffectType, FireworkItem, FogItem, GalaxyItem, GrassItem, LensFlareItem, LightningItem, RainbowItem, RainItem, RayItem, RectangleItem, ShapeItem, Side, SnowItem, SpotlightItem, StarItem, SunItem, TriangleItem, WaveItem } from "../../../../types/Effects"
+import type { AssetItem, AuroraItem, BloomItem, BubbleItem, CandleItem, CircleItem, CityItem, CycleItem, EffectDefinition, EffectFunction, EffectInit, EffectItem, EffectType, FireworkItem, FogItem, GalaxyItem, GrassItem, LensFlareItem, LightningItem, MeshGradientItem, RainbowItem, RainItem, RayItem, RectangleItem, ShapeItem, Side, SnowItem, SpotlightItem, StarItem, SunItem, TriangleItem, WaveItem } from "../../../../types/Effects"
 import { createNoise2D } from "./simplex-noise"
 
-const effectTypes: readonly EffectType[] = ["circle", "rectangle", "triangle", "wave", "bubbles", "stars", "galaxy", "rain", "snow", "sun", "lens_flare", "spotlight", "aurora", "bloom", "fog", "city", "rays", "fireworks", "cycle", "grass", "lightning", "rainbow", "mesh_gradient", "asset"] as const
+const effectTypes: readonly EffectType[] = ["circle", "rectangle", "triangle", "wave", "bubbles", "stars", "galaxy", "rain", "snow", "sun", "lens_flare", "spotlight", "aurora", "bloom", "fog", "city", "rays", "fireworks", "candle", "cycle", "grass", "lightning", "rainbow", "mesh_gradient", "asset"] as const
 // type EffectType = (typeof effectTypes)[number]
 
 export class EffectRender {
@@ -89,8 +89,8 @@ export class EffectRender {
         this.setItems(items)
 
         // if (noFrameChange) return
-        this.frame(0, true)
         if (this.isPreview) {
+            this.frame(0, true)
             this.frame(1)
         }
     }
@@ -701,7 +701,7 @@ export class EffectRender {
             // Create gradient per-blade (blade heights differ), but reuse the pre-computed colors
             const gradient = ctx.createLinearGradient(blade.x, baseY, blade.x, baseY - blade.height)
             gradient.addColorStop(0, darkerColor) // Darker at bottom
-            gradient.addColorStop(1, baseColor)   // Original color at top
+            gradient.addColorStop(1, baseColor) // Original color at top
             ctx.fillStyle = gradient
 
             // Draw the triangular grass blade using a path.
@@ -715,7 +715,7 @@ export class EffectRender {
                 const y = baseY - blade.height * progress
                 const swayAmount = windSway * progress * progress + windSway2 * progress
                 const x = blade.x + swayAmount + Math.sin(progress * Math.PI) * 1.5
-                const halfW = baseWidth * (1 - progress * 0.95) / 2
+                const halfW = (baseWidth * (1 - progress * 0.95)) / 2
                 ctx.lineTo(x - halfW, y)
             }
 
@@ -732,7 +732,7 @@ export class EffectRender {
                 const y = baseY - blade.height * progress
                 const swayAmount = windSway * progress * progress + windSway2 * progress
                 const x = blade.x + swayAmount + Math.sin(progress * Math.PI) * 1.5
-                const halfW = baseWidth * (1 - progress * 0.95) / 2
+                const halfW = (baseWidth * (1 - progress * 0.95)) / 2
                 ctx.lineTo(x + halfW, y)
             }
 
@@ -1346,14 +1346,7 @@ export class EffectRender {
         const secondaryREnd = secondaryOuterRadius + 1.5 * bandWidth
         const secondaryTotalSpan = secondaryREnd - secondaryRStart
 
-        const secondaryGrad = ctx.createRadialGradient(
-            centerX,
-            centerY,
-            Math.max(0, secondaryRStart),
-            centerX,
-            centerY,
-            Math.max(0, secondaryREnd)
-        )
+        const secondaryGrad = ctx.createRadialGradient(centerX, centerY, Math.max(0, secondaryRStart), centerX, centerY, Math.max(0, secondaryREnd))
 
         // Double rainbow colors are reversed (Red on the inside, Violet on the outside) and very subtle
         secondaryGrad.addColorStop(0.0, "rgba(255, 0, 0, 0)") // inner edge fade
@@ -1379,14 +1372,7 @@ export class EffectRender {
         const rEnd = outerRadius + 1.5 * bandWidth
         const totalSpan = rEnd - rStart
 
-        const primaryGrad = ctx.createRadialGradient(
-            centerX,
-            centerY,
-            Math.max(0, rStart),
-            centerX,
-            centerY,
-            Math.max(0, rEnd)
-        )
+        const primaryGrad = ctx.createRadialGradient(centerX, centerY, Math.max(0, rStart), centerX, centerY, Math.max(0, rEnd))
 
         // Primary rainbow colors: Violet on the inside, Red on the outside, with soft atmospheric fading
         primaryGrad.addColorStop(0.0, "rgba(148, 0, 211, 0)") // inner edge fade
@@ -2242,6 +2228,370 @@ export class EffectRender {
                 type: "particle"
             })
         }
+    }
+
+    /// CANDLE ///
+
+    initCandle(item: CandleItem) {
+        // Generate randomized drip streams uniquely per candle instance
+        const dripCount = 2 + Math.floor(Math.random() * 3) // 2 to 4 random drip streams
+        const drips: any[] = []
+
+        for (let i = 0; i < dripCount; i++) {
+            // Distribute across the visible front curve of the cylinder (-0.75 to +0.75)
+            const minX = -0.75 + (i * 1.5) / dripCount
+            const maxX = -0.75 + ((i + 1) * 1.5) / dripCount
+            const xRel = minX + Math.random() * (maxX - minX) * 0.85
+
+            drips.push({
+                xRel,
+                width: 6 + Math.random() * 5.5, // 6 to 11.5 px
+                maxLenRatio: 0.35 + Math.random() * 0.45, // 35% to 80% candle height
+                startDelay: 0.2 + i * 2.5 + Math.random() * 3.5, // staggered initiation
+                growProgress: 0,
+                growSpeed: 0.0004 + Math.random() * 0.00045, // variable drip trickle speed
+                beadProgress: Math.random(),
+                beadSpeed: 0.0015 + Math.random() * 0.0016
+            })
+        }
+
+        const isLit = item.lit !== false
+        this.effectData.set(item, {
+            time: 0,
+            elapsedLitTime: 0,
+            litAlpha: isLit ? 1 : 0,
+            drips
+        })
+    }
+
+    drawCandle(item: CandleItem, deltaTime: number) {
+        let data = this.effectData.get(item)
+        if (!data) {
+            this.initCandle(item)
+            data = this.effectData.get(item)
+        }
+
+        const ctx = this.ctx
+        const speed = item.speed ?? 5
+        data.time += deltaTime * 0.027 * (speed / 5)
+        const time = data.time
+        const isLitTarget = item.lit !== false
+        const waxColor = item.color || "#ece2d0"
+
+        // Smooth lighting fade-in / fade-out transition (snappy ignition ~120ms)
+        const targetAlpha = isLitTarget ? 1 : 0
+        if (data.litAlpha === undefined) data.litAlpha = targetAlpha
+        const fadeSpeed = isLitTarget ? 0.14 : 0.08 // quick snappy ignition (~120ms), smooth extinguishment
+        if (data.litAlpha < targetAlpha) {
+            data.litAlpha = Math.min(targetAlpha, data.litAlpha + deltaTime * fadeSpeed)
+        } else if (data.litAlpha > targetAlpha) {
+            data.litAlpha = Math.max(targetAlpha, data.litAlpha - deltaTime * fadeSpeed)
+        }
+        const litAlpha = data.litAlpha
+
+        if (litAlpha > 0 && speed > 0) {
+            data.elapsedLitTime = (data.elapsedLitTime ?? 0) + deltaTime * 0.016 * (speed / 5) * litAlpha
+        }
+
+        // Position coordinates
+        const x = this.getOffsetX(item.x)
+        const y = this.getOffsetY(item.y)
+
+        // Base candle dimensions
+        const candleWidth = Math.max(10, item.width ?? 140)
+        const candleHeight = Math.max(10, item.height ?? 280)
+        const topY = y - candleHeight * 0.5
+        const bottomY = y + candleHeight * 0.5
+        const rx = candleWidth * 0.5
+        const ry = Math.min(24, Math.max(2, Math.min(rx * 0.25, candleHeight * 0.15))) // top ellipse vertical radius, constrained by height
+        // Flame scale should maintain natural size regardless of small width, with subtle scaling only for extreme height/overall adjustments
+        const flameScale = Math.max(0.7, Math.min(1.4, candleHeight < 100 ? 0.7 + (candleHeight / 100) * 0.3 : 1.0))
+
+        ctx.save()
+
+        // 1. TOP LIGHTING / AMBIENT GLOW (when lit with fade-in/out)
+        if (litAlpha > 0.001) {
+            const flicker = Math.sin(time * 1.8) * 0.04 + Math.cos(time * 3.1) * 0.03 + Math.sin(time * 5.5) * 0.02
+            const flameWickY = topY - 32 * flameScale
+
+            // Wide ambient room glow
+            const ambientRadius = (380 + flicker * 40) * Math.max(0.7, flameScale)
+            const ambientGrad = ctx.createRadialGradient(x, flameWickY, 10, x, flameWickY, ambientRadius)
+            ambientGrad.addColorStop(0, `rgba(255, 185, 80, ${(0.45 * litAlpha).toFixed(3)})`)
+            ambientGrad.addColorStop(0.35, `rgba(255, 130, 30, ${(0.2 * litAlpha).toFixed(3)})`)
+            ambientGrad.addColorStop(0.7, `rgba(255, 90, 0, ${(0.06 * litAlpha).toFixed(3)})`)
+            ambientGrad.addColorStop(1, "rgba(255, 60, 0, 0)")
+            ctx.fillStyle = ambientGrad
+            ctx.beginPath()
+            ctx.arc(x, flameWickY, ambientRadius, 0, this.doublePI)
+            ctx.fill()
+
+            // Intense inner halo
+            const haloGrad = ctx.createRadialGradient(x, flameWickY, 2, x, flameWickY, 110 + flicker * 15)
+            haloGrad.addColorStop(0, `rgba(255, 245, 180, ${(0.4 * litAlpha).toFixed(3)})`)
+            haloGrad.addColorStop(0.4, `rgba(255, 175, 60, ${(0.15 * litAlpha).toFixed(3)})`)
+            haloGrad.addColorStop(1, "rgba(255, 120, 20, 0)")
+            ctx.fillStyle = haloGrad
+            ctx.beginPath()
+            ctx.arc(x, flameWickY, 110 + flicker * 15, 0, this.doublePI)
+            ctx.fill()
+        }
+
+        // 2. CANDLE BODY (Cylinder)
+        const leftX = x - rx
+        const rightX = x + rx
+
+        // Body base path
+        ctx.beginPath()
+        ctx.moveTo(leftX, topY)
+        ctx.lineTo(leftX, bottomY)
+        ctx.ellipse(x, bottomY, rx, ry, 0, Math.PI, 0, true) // bottom curve
+        ctx.lineTo(rightX, topY)
+        ctx.ellipse(x, topY, rx, ry, 0, 0, Math.PI, true) // back half of top
+        ctx.closePath()
+
+        // Cylinder body gradient (asymmetric 3D lighting with softer right shadow)
+        const bodyGrad = ctx.createLinearGradient(leftX, topY, rightX, topY)
+        const leftShadowWax = this.darkenColor(waxColor, 0.45)
+        const deepDarkWax = this.darkenColor(waxColor, 0.52)
+        const darkWax = this.darkenColor(waxColor, 0.75)
+        const highlightWax = this.lerpColor(waxColor, "#ffffff", 0.22)
+        const rightShadowWax = this.darkenColor(waxColor, 0.65) // subtly darker than body but softer than left
+
+        bodyGrad.addColorStop(0, leftShadowWax)
+        bodyGrad.addColorStop(0.12, darkWax)
+        bodyGrad.addColorStop(0.45, waxColor)
+        bodyGrad.addColorStop(0.72, highlightWax)
+        bodyGrad.addColorStop(0.92, darkWax)
+        bodyGrad.addColorStop(1, rightShadowWax)
+
+        ctx.fillStyle = bodyGrad
+        ctx.fill()
+
+        // Asymmetric edge shadow overlays clipped to candle body (so they follow the bottom half-circle curve)
+        ctx.save()
+        ctx.clip()
+
+        const leftShadowWidth = Math.min(26, rx * 0.35)
+        const rightShadowWidth = Math.min(16, rx * 0.22)
+
+        // Left edge shadow (pronounced)
+        const leftEdgeGrad = ctx.createLinearGradient(leftX, topY, leftX + leftShadowWidth, topY)
+        leftEdgeGrad.addColorStop(0, "rgba(0, 0, 0, 0.32)")
+        leftEdgeGrad.addColorStop(0.5, "rgba(0, 0, 0, 0.12)")
+        leftEdgeGrad.addColorStop(1, "rgba(0, 0, 0, 0)")
+        ctx.fillStyle = leftEdgeGrad
+        ctx.fillRect(leftX, topY, leftShadowWidth, candleHeight + ry)
+
+        // Right edge shadow (subtle)
+        const rightEdgeGrad = ctx.createLinearGradient(rightX, topY, rightX - rightShadowWidth, topY)
+        rightEdgeGrad.addColorStop(0, "rgba(0, 0, 0, 0.14)")
+        rightEdgeGrad.addColorStop(1, "rgba(0, 0, 0, 0)")
+        ctx.fillStyle = rightEdgeGrad
+        ctx.fillRect(rightX - rightShadowWidth, topY, rightShadowWidth, candleHeight + ry)
+
+        // Top lighting highlight on the upper pillar when lit (radiates down from flame base with natural falloff)
+        if (litAlpha > 0.001) {
+            const topHighlightH = Math.min(candleHeight * 0.45, 90 * flameScale)
+            const topRimLight = ctx.createRadialGradient(x, topY - 10, rx * 0.2, x, topY + topHighlightH * 0.3, Math.max(rx * 1.2, topHighlightH))
+            topRimLight.addColorStop(0, `rgba(255, 220, 140, ${(0.28 * litAlpha).toFixed(3)})`)
+            topRimLight.addColorStop(0.3, `rgba(255, 190, 100, ${(0.14 * litAlpha).toFixed(3)})`)
+            topRimLight.addColorStop(0.7, `rgba(255, 160, 60, ${(0.04 * litAlpha).toFixed(3)})`)
+            topRimLight.addColorStop(1, "rgba(255, 140, 40, 0)")
+            ctx.fillStyle = topRimLight
+            ctx.fillRect(leftX, topY, candleWidth, topHighlightH)
+        }
+
+        ctx.restore()
+
+        // 3. WAX DRIPS ALONG THE SIDES AND FRONT (starts at top, desynchronized random flow down)
+        const maxDripAllowable = Math.max(0, candleHeight - ry * 1.8)
+        if (data.drips && data.drips.length && maxDripAllowable > 4) {
+            const elapsed = data.elapsedLitTime ?? 0
+
+            for (const drip of data.drips) {
+                // Wait until each drip's unique start delay has passed
+                if (elapsed < drip.startDelay) continue
+
+                if (speed > 0 && litAlpha > 0) {
+                    if (drip.growProgress < 1) {
+                        drip.growProgress = Math.min(1, drip.growProgress + deltaTime * drip.growSpeed * (speed / 5) * litAlpha)
+                    }
+                    if (drip.growProgress > 0.35) {
+                        drip.beadProgress = (drip.beadProgress + deltaTime * drip.beadSpeed * (speed / 5) * litAlpha) % 1
+                    }
+                }
+
+                if (drip.growProgress <= 0) continue
+
+                const dx = x + drip.xRel * rx
+                const dripWidth = Math.min(drip.width, rx * 0.75) * Math.min(1, drip.growProgress * 2.5)
+                const targetLen = maxDripAllowable * drip.maxLenRatio
+                const curLen = Math.max(2, targetLen * drip.growProgress)
+                const dy = Math.min(bottomY - ry * 0.6, topY + curLen)
+
+                // Drip stream body
+                ctx.beginPath()
+                ctx.moveTo(dx - dripWidth * 0.5, topY + 4)
+                ctx.quadraticCurveTo(dx - dripWidth * 0.35, topY + curLen * 0.6, dx - dripWidth * 0.5, dy - dripWidth * 0.6)
+                ctx.arc(dx, dy, dripWidth * 0.6, Math.PI * 0.85, Math.PI * 0.15, true)
+                ctx.quadraticCurveTo(dx + dripWidth * 0.35, topY + curLen * 0.6, dx + dripWidth * 0.5, topY + 4)
+                ctx.closePath()
+
+                const dripGrad = ctx.createLinearGradient(dx - dripWidth, topY, dx + dripWidth, topY)
+                dripGrad.addColorStop(0, darkWax)
+                dripGrad.addColorStop(0.4, highlightWax)
+                dripGrad.addColorStop(1, deepDarkWax)
+
+                ctx.fillStyle = dripGrad
+                ctx.fill()
+
+                // Highlight gloss line on drip
+                if (curLen > 6) {
+                    ctx.strokeStyle = "rgba(255, 255, 255, 0.25)"
+                    ctx.lineWidth = Math.max(0.8, Math.min(1.2, dripWidth * 0.2))
+                    ctx.beginPath()
+                    ctx.moveTo(dx - dripWidth * 0.15, topY + 6)
+                    ctx.lineTo(dx - dripWidth * 0.15, Math.max(topY + 7, dy - dripWidth * 0.4))
+                    ctx.stroke()
+                }
+
+                // Slowly falling animated wax droplet bead (ONLY when lit, desynchronized)
+                const availableTravel = Math.max(0, bottomY - ry * 0.7 - dy)
+                if (drip.growProgress > 0.5 && availableTravel > 6 && litAlpha > 0.001) {
+                    const fallFrac = drip.beadProgress // 0 to 1
+                    const beadY = dy + fallFrac * availableTravel
+                    const beadRadius = Math.max(1.2, dripWidth * 0.45 * (1 - fallFrac * 0.3))
+                    const beadAlpha = Math.sin(fallFrac * Math.PI) * 0.85 * litAlpha
+
+                    const beadGrad = ctx.createRadialGradient(dx - beadRadius * 0.3, beadY - beadRadius * 0.3, 0.5, dx, beadY, beadRadius)
+                    beadGrad.addColorStop(0, highlightWax)
+                    beadGrad.addColorStop(0.5, waxColor)
+                    beadGrad.addColorStop(1, deepDarkWax)
+
+                    ctx.fillStyle = beadGrad
+                    ctx.globalAlpha = beadAlpha
+                    ctx.beginPath()
+                    ctx.arc(dx, beadY, beadRadius, 0, this.doublePI)
+                    ctx.fill()
+                    ctx.globalAlpha = 1
+                }
+            }
+        }
+
+        // 4. TOP RIM / MELTED WAX POOL
+        // Base melted pool ellipse
+        ctx.beginPath()
+        ctx.ellipse(x, topY, rx, ry, 0, 0, this.doublePI)
+        const poolGrad = ctx.createRadialGradient(x, topY + ry * 0.15, 2, x, topY, rx)
+        if (litAlpha > 0.001) {
+            const poolInner = this.lerpColor(darkWax, "rgba(255, 245, 205, 0.55)", litAlpha)
+            const poolMid = this.lerpColor(waxColor, "#ffe8a0", 0.35 * litAlpha)
+            poolGrad.addColorStop(0, poolInner)
+            poolGrad.addColorStop(0.25, poolMid)
+            poolGrad.addColorStop(0.65, waxColor)
+            poolGrad.addColorStop(0.88, darkWax)
+            poolGrad.addColorStop(1, deepDarkWax)
+        } else {
+            poolGrad.addColorStop(0, darkWax)
+            poolGrad.addColorStop(0.65, waxColor)
+            poolGrad.addColorStop(1, deepDarkWax)
+        }
+        ctx.fillStyle = poolGrad
+        ctx.fill()
+
+        // Soft rim edge definition (subtle bevel)
+        const rimStroke = litAlpha > 0.001 ? this.lerpColor("rgba(0, 0, 0, 0.12)", "rgba(255, 220, 150, 0.4)", litAlpha) : "rgba(0, 0, 0, 0.12)"
+        ctx.strokeStyle = rimStroke
+        ctx.lineWidth = 1.2
+        ctx.stroke()
+
+        // 5. CANDLE WICK
+        const wickScale = flameScale
+        const wickBaseY = topY + 2
+        const wickHeight = 26 * wickScale
+        const wickTipY = wickBaseY - wickHeight
+        const wickCurve = (Math.sin(time * 0.3) * 2.5 + 2.5) * wickScale
+
+        ctx.strokeStyle = "#1a120b"
+        ctx.lineWidth = Math.max(1.5, 3.5 * wickScale)
+        ctx.lineCap = "round"
+        ctx.beginPath()
+        ctx.moveTo(x, wickBaseY)
+        ctx.quadraticCurveTo(x + wickCurve * 0.5, wickBaseY - wickHeight * 0.5, x + wickCurve, wickTipY)
+        ctx.stroke()
+
+        // Wick glowing ember at the tip
+        if (litAlpha > 0.001) {
+            ctx.fillStyle = `rgba(255, 51, 0, ${litAlpha.toFixed(3)})`
+            ctx.beginPath()
+            ctx.arc(x + wickCurve, wickTipY, 2.2 * wickScale * litAlpha, 0, this.doublePI)
+            ctx.fill()
+        }
+
+        // 6. ANIMATED FLAME (when lit with fade-in / scale-in)
+        if (litAlpha > 0.001) {
+            const currentFlameScale = flameScale * Math.min(1, 0.2 + 0.8 * litAlpha)
+            const flameBaseX = x + wickCurve
+            const flameBaseY = wickTipY + 4 * currentFlameScale
+
+            // Multi-frequency wave / sway physics (gentle realistic calm flame)
+            const flameSway = (Math.sin(time * 1.1) * 6 + Math.sin(time * 2.3) * 3 + Math.cos(time * 3.7) * 1.5) * currentFlameScale
+            const flameFlickerH = (Math.sin(time * 2.5) * 4 + Math.cos(time * 4.2) * 2) * currentFlameScale
+            const flameHeight = (72 + flameFlickerH) * currentFlameScale
+            const flameWidth = (24 + Math.sin(time * 1.7) * 1.5) * currentFlameScale
+            const flameTipX = flameBaseX + flameSway
+            const flameTipY = flameBaseY - flameHeight
+
+            // Base Blue Flame Glow (hot oxygen base with transparency)
+            const blueRadius = 14 * currentFlameScale
+            const blueGrad = ctx.createRadialGradient(flameBaseX, flameBaseY - 3 * currentFlameScale, 1, flameBaseX, flameBaseY - 3 * currentFlameScale, blueRadius)
+            blueGrad.addColorStop(0, `rgba(70, 130, 255, ${(0.75 * litAlpha).toFixed(3)})`)
+            blueGrad.addColorStop(0.5, `rgba(50, 100, 240, ${(0.35 * litAlpha).toFixed(3)})`)
+            blueGrad.addColorStop(1, "rgba(20, 50, 220, 0)")
+            ctx.fillStyle = blueGrad
+            ctx.beginPath()
+            ctx.arc(flameBaseX, flameBaseY - 3 * currentFlameScale, blueRadius, 0, this.doublePI)
+            ctx.fill()
+
+            // Outer Orange/Amber Flame teardrop (natural flame translucency)
+            ctx.beginPath()
+            ctx.moveTo(flameBaseX - flameWidth * 0.5, flameBaseY)
+            ctx.bezierCurveTo(flameBaseX - flameWidth * 0.85, flameBaseY - flameHeight * 0.35, flameTipX - flameWidth * 0.4, flameTipY + flameHeight * 0.25, flameTipX, flameTipY)
+            ctx.bezierCurveTo(flameTipX + flameWidth * 0.4, flameTipY + flameHeight * 0.25, flameBaseX + flameWidth * 0.85, flameBaseY - flameHeight * 0.35, flameBaseX + flameWidth * 0.5, flameBaseY)
+            ctx.closePath()
+
+            const flameGrad = ctx.createLinearGradient(flameBaseX, flameBaseY, flameTipX, flameTipY)
+            flameGrad.addColorStop(0, `rgba(255, 110, 20, ${(0.45 * litAlpha).toFixed(3)})`)
+            flameGrad.addColorStop(0.2, `rgba(255, 140, 30, ${(0.75 * litAlpha).toFixed(3)})`)
+            flameGrad.addColorStop(0.5, `rgba(255, 195, 60, ${(0.82 * litAlpha).toFixed(3)})`)
+            flameGrad.addColorStop(0.8, `rgba(255, 150, 25, ${(0.65 * litAlpha).toFixed(3)})`)
+            flameGrad.addColorStop(1, "rgba(240, 80, 10, 0)")
+            ctx.fillStyle = flameGrad
+            ctx.fill()
+
+            // Inner Bright Core (White / Incandescent Light Yellow, semi-transparent)
+            const innerHeight = flameHeight * 0.58
+            const innerWidth = flameWidth * 0.5
+            const innerTipX = flameBaseX + flameSway * 0.7
+            const innerTipY = flameBaseY - innerHeight
+
+            ctx.beginPath()
+            ctx.moveTo(flameBaseX - innerWidth * 0.5, flameBaseY - 2)
+            ctx.bezierCurveTo(flameBaseX - innerWidth * 0.8, flameBaseY - innerHeight * 0.35, innerTipX - innerWidth * 0.3, innerTipY + innerHeight * 0.25, innerTipX, innerTipY)
+            ctx.bezierCurveTo(innerTipX + innerWidth * 0.3, innerTipY + innerHeight * 0.25, flameBaseX + innerWidth * 0.8, flameBaseY - innerHeight * 0.35, flameBaseX + innerWidth * 0.5, flameBaseY - 2)
+            ctx.closePath()
+
+            const innerGrad = ctx.createLinearGradient(flameBaseX, flameBaseY, innerTipX, innerTipY)
+            innerGrad.addColorStop(0, `rgba(255, 255, 245, ${(0.88 * litAlpha).toFixed(3)})`)
+            innerGrad.addColorStop(0.4, `rgba(255, 248, 200, ${(0.82 * litAlpha).toFixed(3)})`)
+            innerGrad.addColorStop(0.75, `rgba(255, 215, 90, ${(0.55 * litAlpha).toFixed(3)})`)
+            innerGrad.addColorStop(1, "rgba(255, 170, 40, 0)")
+            ctx.fillStyle = innerGrad
+            ctx.fill()
+        }
+
+        ctx.restore()
     }
 
     // SKY GRADIENT

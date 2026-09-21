@@ -34,6 +34,8 @@ export const effectItems = {
     city: { default: { count: 40, height: 200, width: 40, color: "#222222", windowColor: "#ffff99", night: true, flickerSpeed: 1 } },
     fireworks: { default: { speed: 0.5, count: 50, size: 1.5 } },
 
+    candle: { default: { width: 140, height: 280, color: "#ece2d0", lit: true, speed: 5 } },
+
     rays: { default: { speed: 1, color_1: "#000000", color_2: "#ffffff", numRays: 8 } },
 
     cycle: { default: { speed: 1 } },
