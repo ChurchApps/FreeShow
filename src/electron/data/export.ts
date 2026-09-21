@@ -7,7 +7,7 @@ import fs, { type WriteFileOptions } from "fs"
 import { basename, dirname, extname, join } from "path"
 import { EXPORT, STARTUP } from "../../types/Channels"
 import { ToMain } from "../../types/IPC/ToMain"
-import type { Show, Slide, Template } from "../../types/Show"
+import type { Overlay, Show, Slide, Template } from "../../types/Show"
 import type { Message } from "../../types/Socket"
 import { isProd } from "../index"
 import { sendToMain } from "../IPC/main"
@@ -20,6 +20,7 @@ import { compressToZip } from "./zip"
 // SHOW: .show, PROJECT: .project, BIBLE: .fsb
 const customJSONExtensions = {
     TEMPLATE: ".fstemplate",
+    OVERLAY: ".fsoverlay",
     THEME: ".fstheme",
     ACTION: ".fsaction",
     STAGE_LAYOUT: ".fsstage"
@@ -45,6 +46,11 @@ export function startExport(_e: Electron.IpcMainEvent, msg: Message) {
 
     if (msg.channel === "TEMPLATE") {
         exportTemplate(msg.data)
+        return
+    }
+
+    if (msg.channel === "OVERLAY") {
+        exportOverlay(msg.data)
         return
     }
 
@@ -341,6 +347,24 @@ export function exportTemplate(data: { file: { template: Template; files?: strin
 
     // create archive with original filenames
     compressWithMedia(files, data.file, data.name, customJSONExtensions.TEMPLATE, exportFolder, (path) => basename(path))
+}
+
+// ----- OVERLAY -----
+
+export function exportOverlay(data: { file: { overlay: Overlay; files?: string[] }; name: string }) {
+    sendToMain(ToMain.ALERT, "export.exporting")
+    const exportFolder = getDataFolderPath("exports")
+
+    const files: string[] = data.file.files || []
+    if (!files.length) {
+        // export as plain JSON
+        delete data.file.files
+        exportJSON(data.file, customJSONExtensions.OVERLAY, exportFolder, data.name)
+        return
+    }
+
+    // create archive with original filenames
+    compressWithMedia(files, data.file, data.name, customJSONExtensions.OVERLAY, exportFolder, (path) => basename(path))
 }
 
 function compressWithMedia(files: string[], fileData: any, name: string, extension: string, exportFolder: string, getFileName: (path: string, ext: string) => string, canOverwrite = false) {

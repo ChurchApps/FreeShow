@@ -21,6 +21,7 @@
         "show": "Show",
         "project": "Project",
         "template": "Template",
+        "overlay": "Overlay",
         "action": "Action",
         "theme": "Theme",
         "clipboard": "Clipboard",

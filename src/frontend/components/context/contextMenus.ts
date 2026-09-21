@@ -293,7 +293,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     media_card: ["GROUP_open", "createSlideshow", "play_no_audio", "play_no_filters", "SEPARATOR", "favourite", "SEPARATOR", "media_tag_set", "media_tag_filter", "sort_media_by", "SEPARATOR", "system_open"],
     // "addToFirstSlide",
     drawer_overlays: ["reset_defaults"],
-    overlay_card: ["GROUP_open", "overlay_actions", "display_duration", "SEPARATOR", "lock_to_output", "place_under_slide", "SEPARATOR", "rename", "recolor", "duplicate", "delete"], // "GROUP_rename_color"
+    overlay_card: ["GROUP_open", "overlay_actions", "display_duration", "export", "SEPARATOR", "lock_to_output", "place_under_slide", "SEPARATOR", "rename", "recolor", "duplicate", "delete"], // "GROUP_rename_color"
     overlay_card_default: ["GROUP_open", "duplicate", "delete"],
     overlay_card_readonly: ["preview"],
     // "addToShow",

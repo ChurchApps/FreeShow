@@ -28,7 +28,7 @@ import { convertCSV } from "../converters/csv"
 import { convertEasyslides } from "../converters/easyslides"
 import { convertEasyWorship } from "../converters/easyworship"
 import { createImageShow } from "../converters/imageShow"
-import { createCategory, importAction, importShow, importSpecific, importStage, importTemplate, setTempShows } from "../converters/importHelpers"
+import { createCategory, importAction, importOverlay, importShow, importSpecific, importStage, importTemplate, setTempShows } from "../converters/importHelpers"
 import { convertLessonsPresentation } from "../converters/lessonsChurch"
 import { convertMediaShout } from "../converters/mediashout"
 import { convertOpenLP } from "../converters/openlp"
@@ -576,6 +576,7 @@ export const mainResponses: MainResponses = {
             freeshow: () => importShow(data),
             freeshow_project: () => importProject(data),
             freeshow_template: () => importTemplate(data),
+            freeshow_overlay: () => importOverlay(data),
             freeshow_theme: () => importSpecific(data, themes),
             freeshow_action: () => importAction(data),
             freeshow_stage: () => importStage(data),

@@ -1007,6 +1007,26 @@ const clickActions = {
             return
         }
 
+        if (obj.sel?.id === "overlay") {
+            const id = obj.sel.data[0]
+            const overlay = get(overlays)[id]
+            if (!overlay) return
+
+            const files: string[] = []
+            overlay.items.forEach((item) => {
+                if (item.type === "media") getFile(item.src)
+            })
+
+            send(EXPORT, ["OVERLAY"], { name: formatToFileName(overlay.name), file: { overlay: { id, ...overlay }, files } })
+
+            function getFile(path: string | undefined) {
+                if (!path) return
+                files.push(path)
+            }
+
+            return
+        }
+
         if (obj.sel?.id === "theme") {
             obj.sel.data.forEach(({ id }) => {
                 const theme = clone(get(themes)[id])
