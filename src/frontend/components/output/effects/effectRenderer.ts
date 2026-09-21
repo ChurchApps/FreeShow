@@ -2162,11 +2162,37 @@ export class EffectRender {
         for (let i = particles.length - 1; i >= 0; i--) {
             const p = particles[i]
 
+            // Record trail position
+            if (p.trail) {
+                p.trail.push({ x: p.x, y: p.y })
+                if (p.trail.length > (p.maxTrail ?? 4)) {
+                    p.trail.shift()
+                }
+            }
+
             // Physics update
             p.vy += p.gravity
             p.x += p.vx
             p.y += p.vy
             p.life--
+
+            if (p.type === "particle") {
+                p.alpha = Math.max(0, p.life / p.maxLife)
+            }
+
+            // Draw trailing light
+            if (p.trail && p.trail.length > 0) {
+                ctx.beginPath()
+                ctx.moveTo(p.trail[0].x, p.trail[0].y)
+                for (let t = 1; t < p.trail.length; t++) {
+                    ctx.lineTo(p.trail[t].x, p.trail[t].y)
+                }
+                ctx.lineTo(p.x, p.y)
+                ctx.strokeStyle = `${p.hueStr}${(p.alpha * 0.45).toFixed(2)})`
+                ctx.lineWidth = Math.max(0.5, p.size * (p.type === "rocket" ? 0.9 : 0.7))
+                ctx.lineCap = "round"
+                ctx.stroke()
+            }
 
             // Draw particle — use cached hue string to avoid template-string allocation per particle per frame
             ctx.beginPath()
@@ -2190,41 +2216,60 @@ export class EffectRender {
         const vy = -Math.sqrt(2 * gravity * heightOffset)
 
         const hue = Math.floor(Math.random() * 360)
+        const life = item.speed < 1 ? 60 / (item.speed * deltaTime) : 60
+        const size = item.size ?? 1
         return {
             x: this.width / 2 + (Math.random() - 0.5) * (this.width * 0.8),
             y: this.height,
             vx: Math.random() - 0.5,
             vy,
             gravity,
-            life: item.speed < 1 ? 60 / (item.speed * deltaTime) : 60,
-            size: (item.size ?? 1) * 1.8,
+            life,
+            maxLife: life,
+            size: Math.max(1.2, size * 1.8),
             alpha: 1,
             hue,
             hueStr: `hsla(${hue}, 100%, 50%, `, // cached prefix — append alpha + ")" at draw time
+            trail: [] as { x: number; y: number }[],
+            maxTrail: Math.min(12, Math.max(4, Math.round(5 * Math.sqrt(size)))),
             type: "rocket"
         }
     }
 
-    private explode(item: FireworkItem, deltaTime: number, x: number, y: number, hue: number, particles: any[]) {
+    private explode(item: FireworkItem, deltaTime: number, x: number, y: number, rocketHue: number, particles: any[]) {
         const count = 50 + Math.floor(Math.random() * 50)
         const gravity = (item.speed ?? 1) * 0.02 * deltaTime
-        const baseSize = item.size ?? 1
-        const baseSpeed = (item.speed ?? 0.5) * deltaTime * 5
+        const size = item.size ?? 1
+        const baseSpeed = (item.speed ?? 0.5) * Math.max(0.2, size) * deltaTime * 3.5
+        const baseLife = (50 + Math.random() * 25) * Math.min(1.6, Math.max(0.7, Math.sqrt(size)))
+
+        // Determine explosion color theme (mostly single color, sometimes clean dual-tone)
+        const isDualTone = Math.random() < 0.4
+        const secondaryHue = isDualTone ? (rocketHue + 60 + Math.random() * 120) % 360 : rocketHue
+        const getHue = () => {
+            const base = isDualTone && Math.random() < 0.45 ? secondaryHue : rocketHue
+            return (base + (Math.random() - 0.5) * 10 + 360) % 360
+        }
 
         for (let i = 0; i < count; i++) {
             const angle = Math.random() * this.doublePI
             const speed = baseSpeed * Math.random()
+            const life = baseLife
+            const particleHue = Math.floor(getHue())
             particles.push({
                 x,
                 y,
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
                 gravity,
-                life: 60 + Math.random() * 30,
-                size: baseSize + Math.random(),
+                life,
+                maxLife: life,
+                size: Math.max(0.8, size * (0.8 + Math.random() * 0.5)),
                 alpha: 1,
-                hue,
-                hueStr: `hsla(${hue}, 100%, 50%, `, // cached prefix — append alpha + ")" at draw time
+                hue: particleHue,
+                hueStr: `hsla(${particleHue}, 100%, 50%, `, // cached prefix — append alpha + ")" at draw time
+                trail: [] as { x: number; y: number }[],
+                maxTrail: Math.min(10, Math.max(3, Math.round(4 * Math.sqrt(size)))),
                 type: "particle"
             })
         }
