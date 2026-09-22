@@ -1,16 +1,9 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import { uid } from "uid"
     import { subscribeEffect } from "../../../../audio/effects/audioEffectsHelpers"
     import { AudioEqualizer, type EQBand, EqualizerCalculations, updateEqualizerBands } from "../../../../audio/effects/audioEqualizer"
     import { SpectrumAnalyzer } from "../../../../audio/spectrumAnalyzer"
-    import { eqPresets, special } from "../../../../stores"
-    import { translateText } from "../../../../utils/language"
-    import { clone, keysToID } from "../../../helpers/array"
-    import InputRow from "../../../input/InputRow.svelte"
-    import MaterialButton from "../../../inputs/MaterialButton.svelte"
-    import MaterialDropdown from "../../../inputs/MaterialDropdown.svelte"
-    import MaterialTextInput from "../../../inputs/MaterialTextInput.svelte"
+    import { clone } from "../../../helpers/array"
 
     export let effectId: string = ""
     export let channelId: string = ""
@@ -264,25 +257,6 @@
 
         bands = [...bands] // Trigger reactivity
         updateBands()
-
-        // update preset
-        selectedPreset = "custom"
-        eqPresets.update((a) => {
-            a[selectedPreset] = {
-                name: translateText("sort.custom"),
-                bands: clone(bands)
-            }
-            return a
-        })
-        // Preset 1, Preset 2, ...
-        const label = translateText("audio.preset")
-        let existingWithDefaultName = Object.values(presets)
-            .map(({ name }) => {
-                const match = name.match(new RegExp(`^${label} (\\d+)$`))
-                return match ? parseInt(match[1], 10) : null
-            })
-            .filter((num) => num !== null)
-        customName = label + " " + (existingWithDefaultName.length + 1).toString()
     }
 
     function handleMouseEnter() {
@@ -434,82 +408,9 @@
         return `${freq}`
     }
 
-    let selectedPreset = $special.selectedEQPreset || "default"
-    $: presets = {
-        ...$eqPresets,
-        default: {
-            name: translateText("example.default"),
-            bands: originalBands
-        }
-    }
-    // value of "default" & "custom" should always be first, then alphabetical order
-    $: presetOptions = keysToID(presets)
-        .map((a) => ({ label: a.name, value: a.id }))
-        .sort((a, b) => {
-            if (a.value === "default" || a.value === "custom") return -1
-            if (b.value === "default" || b.value === "custom") return 1
-            return a.label.localeCompare(b.label)
-        })
-
-    function selectPreset(value: string) {
-        selectedPreset = value
-        const preset = presets[value]
-        if (!preset) return
-
-        special.update((a) => {
-            a.selectedEQPreset = selectedPreset
-            return a
-        })
-
-        bands = clone(preset.bands.map((band) => ({ ...band })))
-        updateBands()
-    }
-
-    let customName = ""
-    function saveCustomPreset() {
-        const name = customName.trim()
-        if (name === "") return
-
-        const id = uid(5)
-
-        // Save current bands as a new preset
-        eqPresets.update((a) => {
-            a[id] = {
-                name,
-                bands: clone(bands)
-            }
-
-            delete a.custom
-            return a
-        })
-
-        selectPreset(id)
-    }
-
-    function deletePreset() {
-        eqPresets.update((a) => {
-            delete a[selectedPreset]
-            return a
-        })
-
-        selectPreset("default")
-    }
 </script>
 
 <div class="equalizer-container" style="--accent: #5295ad;" bind:this={containerElement}>
-    <InputRow>
-        <MaterialDropdown label="audio.preset" value={selectedPreset} options={presetOptions} defaultValue="default" on:change={(e) => selectPreset(e.detail)} />
-
-        {#if selectedPreset === "custom"}
-            <MaterialTextInput label="inputs.name" value={customName} on:change={(e) => (customName = e.detail)} />
-            <MaterialButton icon="save" title="actions.save" on:click={saveCustomPreset} />
-        {:else if selectedPreset !== "default"}
-            <MaterialButton icon="delete" title="actions.delete" on:click={deletePreset} white />
-        {/if}
-    </InputRow>
-
-    <div style="height: 5px;width: 100%;"></div>
-
     <!-- EQ Visual Display -->
     <div class="eq-visual" bind:this={eqVisualElement} style="height: {canvasHeight}px;" on:mouseenter={handleMouseEnter} on:mouseleave={handleMouseLeave} on:mousemove={handleMouseHover}>
         <!-- Live frequency spectrum analyzer canvas -->

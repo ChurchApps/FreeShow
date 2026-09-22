@@ -84,7 +84,7 @@ export type SaveListSettings =
     | "calendarAddShow"
     | "metronome"
     | "audioEffects"
-    | "eqPresets"
+    | "audioEffectPresets"
     | "effectsLibrary"
     | "special"
     | "timeline"

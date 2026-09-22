@@ -74,7 +74,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     calendarAddShow: "",
     metronome: {},
     audioEffects: {},
-    eqPresets: {},
+    audioEffectPresets: {},
     effectsLibrary: [],
     special: {},
     timeline: {},

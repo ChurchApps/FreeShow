@@ -289,7 +289,12 @@ export interface AudioEffectInstance {
     config?: any
 }
 export const audioEffects = writable<Record<string, AudioEffectsConfig>>({}) // {}
-export const eqPresets: Writable<{ [key: string]: { name: string; bands: EQBand[] } }> = writable({}) // {}
+export type AudioEffectPresets = {
+    [key: string]: {
+        [id: string]: { name: string; config: any }
+    }
+}
+export const audioEffectPresets: Writable<AudioEffectPresets> = writable({}) // {}
 
 // PLAYER
 export const playerVideos: Writable<Categories> = writable({}) // {default}
