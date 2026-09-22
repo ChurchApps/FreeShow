@@ -83,7 +83,14 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
         })
         newData.style = styleString
     } else if (type === "media") newData.src = options.src || ""
-    else if (type === "variable") newData.variable = { id: "" }
+    else if (type === "camera") {
+        newData.device = options.device || {
+            id: options.id || "",
+            type: options.type || "camera",
+            name: options.name || "",
+            group: options.group || options.cameraGroup || ""
+        }
+    } else if (type === "variable") newData.variable = { id: "" }
     else if (type === "slide_tracker") newData.auto = true
     else if (type === "web") newData.web = { url: "" }
     else if (type === "qr_code") newData.qr_code = { text: "" }

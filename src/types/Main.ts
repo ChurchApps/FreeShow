@@ -99,6 +99,7 @@ export type SelectIds =
     | "screen"
     | "ndi"
     | "omt"
+    | "blackmagic"
     | "camera"
     | "microphone"
     | "player"

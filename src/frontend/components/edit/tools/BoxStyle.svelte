@@ -280,6 +280,13 @@
         setBoxInputValue(box, "default", "speed", "hidden", !isVideo)
     }
 
+    $: if (id === "camera" && item) {
+        if (item.device) {
+            setBoxInputValue(box, "default", "device", "value", item.device)
+            setBoxInputValue(box, "default", "device", "values", { name: item.device.name || item.device.id || "live.cameras" })
+        }
+    }
+
     $: if (id === "timer" && item) {
         setBoxInputValue(box, "default", "timer.circleMask", "hidden", item.timer?.viewType !== "circle")
         const timer = $timers[item.timer?.id || ""]

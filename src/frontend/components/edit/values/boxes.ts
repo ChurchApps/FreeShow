@@ -346,6 +346,22 @@ const mediaSections: { [key: string]: EditBoxSection } = {
         inputs: filterSection
     }
 }
+const cameraSections: { [key: string]: EditBoxSection } = {
+    default: {
+        inputs: splitIntoRows([
+            { id: "device", type: "popup", value: "", values: { label: "items.camera", name: "live.cameras", icon: "camera", popupId: "choose_media_input", allowEmpty: false } },
+            { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", defaultValue: "contain", options: mediaFitOptionsNoBlur } },
+            { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
+            { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
+        ])
+    },
+    cropping: {
+        inputs: getCroppingRowsPercentage()
+    },
+    filters: {
+        inputs: filterSection
+    }
+}
 
 ///
 
@@ -399,6 +415,10 @@ export const itemBoxes: Box2 = {
     media: {
         icon: "image",
         sections: mediaSections
+    },
+    camera: {
+        icon: "camera",
+        sections: cameraSections
     },
     web: {
         icon: "web",

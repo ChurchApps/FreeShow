@@ -33,7 +33,7 @@ function getId(drag: Selected): string {
     if (drag.id === "files" && getMediaType(extension) === "audio") return "audio"
     if (drag.id === "show" && drag.data[0]?.type === "audio") return "audio"
     if (drag.id === "effect") return "overlay"
-    if ((drag.id === "show" && ["media", "image", "video"].includes(drag.data[0]?.type)) || drag.id === "media" || drag.id === "files" || drag.id === "camera" || drag.id === "screen" || drag.id === "ndi" || drag.id === "player" || (drag.id === "urls" && (drag.data?.[0]?.includes?.("youtube.com") || drag.data?.[0]?.includes?.("youtu.be") || drag.data?.[0]?.includes?.("vimeo.com")))) return "media"
+    if ((drag.id === "show" && ["media", "image", "video"].includes(drag.data[0]?.type)) || drag.id === "media" || drag.id === "files" || drag.id === "camera" || drag.id === "screen" || drag.id === "ndi" || drag.id === "omt" || drag.id === "blackmagic" || drag.id === "player" || (drag.id === "urls" && (drag.data?.[0]?.includes?.("youtube.com") || drag.data?.[0]?.includes?.("youtu.be") || drag.data?.[0]?.includes?.("vimeo.com")))) return "media"
     // if (drag.id === "audio") return "audio"
     // if (drag.id === "global_group") return "global_group"
     return drag.id || id
@@ -223,8 +223,8 @@ export const dropActions = {
                 const playerData = get(playerVideos)[a] || {}
                 return { id: a, type: "player", data: { type: playerData.type, id: playerData.id, name: playerData.name } }
             })
-        } else if (drag.id === "camera") {
-            data = data.map((a) => ({ id: a.id, name: a.name, type: "camera", data: { groupId: a.cameraGroup } }))
+        } else if (drag.id === "camera" || drag.id === "screen" || drag.id === "ndi" || drag.id === "omt" || drag.id === "blackmagic") {
+            data = data.map((a) => ({ id: a.id, name: a.name, type: a.type || drag.id, data: { groupId: a.cameraGroup } }))
         } else if (drag.id === "scripture") {
             const biblesContent = await getActiveScripturesContent()
             const show = await getScriptureShow(biblesContent)
@@ -483,6 +483,17 @@ export const dropActions = {
     edit: ({ drag }: Data) => {
         if (drag.id === "media" || drag.id === "files") {
             drag.data.forEach((file) => addItem("media", null, { src: file.path || window.api.showFilePath(file) }))
+        } else if (drag.id === "camera" || drag.id === "screen" || drag.id === "ndi" || drag.id === "omt" || drag.id === "blackmagic") {
+            drag.data.forEach((device) => {
+                addItem("camera", null, {
+                    device: {
+                        id: device.id,
+                        name: device.name || "",
+                        type: device.type || drag.id,
+                        group: device.cameraGroup || device.group || ""
+                    }
+                })
+            })
         } else if (drag.id === "global_timer") {
             drag.data.forEach((a) => addItem("timer", null, { timer: { id: a.id } }))
         } else if (drag.id === "variable") {
@@ -586,6 +597,8 @@ const slideDrop = {
         } else if (drag.id === "camera") data[0].type = "camera"
         else if (drag.id === "screen") data[0].type = "screen"
         else if (drag.id === "ndi") data[0].type = "ndi"
+        else if (drag.id === "omt") data[0].type = "omt"
+        else if (drag.id === "blackmagic") data[0].type = "blackmagic"
         else if (drag.id === "player") {
             data = data.map((id: string) => {
                 const playerData = get(playerVideos)[id] || {}
