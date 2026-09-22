@@ -718,7 +718,7 @@ export const itemBoxes: Box2 = {
             return sections
         })()
     },
-    qr: {
+    qr_code: {
         icon: "qr_code",
         sections: {
             default: {

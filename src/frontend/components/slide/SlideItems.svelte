@@ -146,6 +146,6 @@
     <Chart {item} ref={{ ...ref, slideIndex }} />
 {:else if item.type === "table"}
     <Table {item} {edit} {ref} {ratio} {index} />
-{:else if item.type === "qr"}
+{:else if item.type === "qr_code"}
     <QrCode {item} {edit} />
 {/if}
