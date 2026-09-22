@@ -23,6 +23,7 @@ export const DEFAULT_DICTIONARY = {
     tabs: {
         shows: "Shows",
         media: "Media",
+        audio: "Audio",
         overlays: "Overlays",
         scripture: "Scriptures",
         calendar: "Calendar",
@@ -85,7 +86,9 @@ export const DEFAULT_DICTIONARY = {
         delete: "Delete",
         done: "Done",
         back: "Back",
-        archive_title: "Archive"
+        archive_title: "Archive",
+        mute: "Mute",
+        unmute: "Unmute"
     },
     tools: {
         groups: "Groups"

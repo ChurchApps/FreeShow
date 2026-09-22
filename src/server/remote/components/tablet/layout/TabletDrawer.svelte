@@ -13,7 +13,7 @@
     const maxHeight = 800
 
     // Tab configuration
-    const DRAWER_TABS = ["shows", "overlays", "templates", "scripture", "functions"] as const
+    const DRAWER_TABS = ["shows", "audio", "overlays", "templates", "scripture", "functions"] as const
 
     $: height = $drawer.height ?? defaultHeight
 
@@ -186,9 +186,11 @@
     </div>
 
     <div class="content">
-        <Resizeable id="leftPanelDrawer">
-            <TabletDrawerNavigation id={$activeDrawerTab} />
-        </Resizeable>
+        {#if $activeDrawerTab !== "audio"}
+            <Resizeable id="leftPanelDrawer">
+                <TabletDrawerNavigation id={$activeDrawerTab} />
+            </Resizeable>
+        {/if}
 
         <div class="main-content">
             <TabletDrawerContent id={$activeDrawerTab} {searchValue} on:search-clear={clearDrawerSearch} />

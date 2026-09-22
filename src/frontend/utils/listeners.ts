@@ -13,7 +13,9 @@ import {
     activeScripture,
     activeShow,
     activeTimers,
+    audioChannelsData,
     audioData,
+    audioRouting,
     cachedShowsData,
     categories,
     colorbars,
@@ -61,7 +63,7 @@ import {
 } from "../stores"
 import { hasNewerUpdate } from "./common"
 import { driveConnect } from "./drive"
-import { convertBackgrounds } from "./remoteTalk"
+import { convertBackgrounds, getFilteredAudioChannels } from "./remoteTalk"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
 
@@ -231,6 +233,7 @@ export function storeSubscriber() {
         send(OUTPUT, ["OUTPUTS"], data)
         // used for stage mirror data
         send(OUTPUT, ["ALL_OUTPUTS"], data)
+        send(REMOTE, ["AUDIO_ROUTING"], getFilteredAudioChannels())
 
         // let it update properly
         setTimeout(() => {
@@ -371,24 +374,12 @@ export function storeSubscriber() {
         send(OUTPUT, ["SLIDE_TIMELINE_SPEED_MULTIPLIER"], data)
     })
 
-    // let prevAudioChannelsJson = ""
-    // audioChannelsData.subscribe((data) => {
-    //     const controlData: any = {}
-    //     Object.entries(data || {}).forEach(([id, ch]: [string, any]) => {
-    //         if (!ch) return
-    //         const { dB, ...rest } = ch
-    //         controlData[id] = rest
-    //     })
-
-    //     const json = JSON.stringify(controlData)
-    //     if (json !== prevAudioChannelsJson) {
-    //         prevAudioChannelsJson = json
-    //         send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
-
-    //         // REMOTE mixer updates
-    //         sendRemoteMixer()
-    //     }
-    // })
+    audioRouting.subscribe(() => {
+        send(REMOTE, ["AUDIO_ROUTING"], getFilteredAudioChannels())
+    })
+    audioChannelsData.subscribe((data) => {
+        send(REMOTE, ["AUDIO_CHANNELS_DATA"], data)
+    })
 
     playingVideoState.subscribe((data) => {
         send(OUTPUT, ["PLAYING_VIDEO_STATE"], data)

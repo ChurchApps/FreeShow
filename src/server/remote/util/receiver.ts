@@ -303,6 +303,16 @@ export const receiver = {
         activeTimers.set(data.activeTimers)
         runningActions.set(data.runningActions)
     },
+    AUDIO_ROUTING: (data: any) => {
+        _set("audioRouting", data)
+    },
+    AUDIO_CHANNELS_DATA: (data: any) => {
+        _set("audioChannelsData", data || {})
+    },
+    GET_AUDIO_MIXER: (data: any) => {
+        if (data.audioRouting !== undefined) _set("audioRouting", data.audioRouting)
+        if (data.audioChannelsData !== undefined) _set("audioChannelsData", data.audioChannelsData || {})
+    },
     GET_AUDIO: (data: any) => {
         _set("audio", data)
     },

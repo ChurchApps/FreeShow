@@ -1,4 +1,6 @@
 import { get, Writable, writable } from "svelte/store"
+import type { AudioChannelData } from "../../../types/Audio"
+import type { AudioRoutingConfig } from "../../../types/AudioRouting"
 import type { Bible } from "../../../types/Bible"
 import type { OutData } from "../../../types/Output"
 import type { Dictionary } from "../../../types/Settings"
@@ -112,6 +114,8 @@ export let scriptureSearchResults: Writable<any> = writable(null)
 
 export let audio: Writable<{ [key: string]: any }> = writable({})
 export let mixer: Writable<any> = writable(null)
+export let audioRouting: Writable<AudioRoutingConfig | null> = writable(null)
+export let audioChannelsData: Writable<{ [key: string]: AudioChannelData }> = writable({})
 
 /////
 
@@ -169,6 +173,8 @@ export const _ = {
     scriptureSearchResults,
     audio,
     mixer,
+    audioRouting,
+    audioChannelsData,
     actions,
     actionTags,
     variables,
