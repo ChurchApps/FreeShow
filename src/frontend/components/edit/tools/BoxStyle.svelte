@@ -304,6 +304,7 @@
     }
     $: if (id === "camera" && item) {
         if (item.device?.name) setBoxInputValue(box, "default", "device", "name", item.device.name)
+        if (item.device?.type) setBoxInputValue(box, "default", "device", "icon", item.device.type === "ndi" ? "ndi" : item.device.type === "omt" ? "omt" : item.device.type === "screen" ? "screen" : item.device.type === "blackmagic" ? "blackmagic" : "camera")
     }
     $: if (id === "slide_tracker" && item) {
         setBoxInputValue(box, "default", "tracker.accent", "value", item.tracker?.accent || $themes[$theme]?.colors?.secondary || "#F0008C")

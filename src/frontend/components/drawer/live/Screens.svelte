@@ -1,10 +1,7 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { createEventDispatcher, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain } from "../../../IPC/main"
-    import { outLocked, outputs } from "../../../stores"
-    import { getFirstActiveOutput, setOutput } from "../../helpers/output"
-    import { clearBackground } from "../../output/clear"
     import Capture from "./Capture.svelte"
 
     let screens: { name: string; id: string }[] = []
@@ -14,17 +11,16 @@
         screens = (await requestMain(Main.GET_SCREENS)) || []
     })
 
-    $: currentOutput = getFirstActiveOutput($outputs)
+    let dispatch = createEventDispatcher()
+    function click(event: any, screen: { name: string; id: string }) {
+        dispatch("click", { event, screen })
+    }
 </script>
 
 {#each screens as screen}
     <Capture
         bind:streams
         {screen}
-        on:click={(e) => {
-            if ($outLocked || e.ctrlKey || e.metaKey) return
-            if (currentOutput?.out?.background?.id === screen.id) clearBackground()
-            else setOutput("background", { id: screen.id, type: "screen" })
-        }}
+        on:click={(e) => click(e.detail || e, screen)}
     />
 {/each}

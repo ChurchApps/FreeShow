@@ -430,7 +430,7 @@ export type Popups =
     | "edit_chart"
     | "choose_chord"
     | "choose_screen"
-    | "choose_camera"
+    | "choose_media_input"
     | "choose_output_input"
     | "choose_output_type"
     | "choose_style"

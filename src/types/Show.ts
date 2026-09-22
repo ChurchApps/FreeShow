@@ -130,7 +130,7 @@ export interface Item {
 
     src?: string // media item path
     customSvg?: string
-    device?: any // camera
+    device?: { id: string; group?: string; name: string; type?: string } // (camera) input data
     fit?: string
     filter?: string
     flipped?: boolean

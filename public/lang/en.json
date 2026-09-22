@@ -554,6 +554,7 @@
         "template_style_overrides": "Style overwrites",
         "regex_manager": "Regex manager",
         "choose_camera": "Choose camera",
+        "choose_media_input": "Choose media input",
         "manage_tags": "Manage tags",
         "sync_folders": "Sync folders",
         "sync_categories": "Sync categories",

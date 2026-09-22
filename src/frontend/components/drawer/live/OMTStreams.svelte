@@ -1,18 +1,13 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import { OMT } from "../../../../types/Channels"
-    import { outLocked, outputs } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
-    import { getFirstActiveOutput, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import Loader from "../../main/Loader.svelte"
-    import { clearBackground } from "../../output/clear"
     import Center from "../../system/Center.svelte"
     import OMTStream from "./OMTStream.svelte"
 
     let sources: { name: string; id: string }[] = []
-
-    $: currentOutput = getFirstActiveOutput($outputs)
 
     let loading = true
     const receiveOMT = {
@@ -37,6 +32,11 @@
         if (refreshInterval) clearInterval(refreshInterval)
         destroy(OMT, "OMT_CAPTURE")
     })
+
+    let dispatch = createEventDispatcher()
+    function click(event: any, screen: { name: string; id: string }) {
+        dispatch("click", { event, screen })
+    }
 </script>
 
 {#if loading}
@@ -47,11 +47,7 @@
     {#each sources as screen}
         <OMTStream
             {screen}
-            on:click={(e) => {
-                if ($outLocked || e.ctrlKey || e.metaKey) return
-                if (currentOutput?.out?.background?.id === screen.id) clearBackground()
-                else setOutput("background", { id: screen.id, type: "omt" })
-            }}
+            on:click={(e) => click(e.detail || e, screen)}
         />
     {/each}
 {:else}

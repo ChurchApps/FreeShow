@@ -133,7 +133,15 @@
 
     $: activeProviderId = (isProviderSection && active ? active : null) as ContentProviderId | null
 
+    $: currentOutput = getFirstActiveOutput($outputs)
+
     let inputsTab = $drawerTabsData.media?.openedSubSubTab?.cameras || "cameras"
+    function clickInput(e: any, item: any, type: string) {
+        if ($outLocked || e.ctrlKey || e.metaKey) return
+        if (currentOutput?.out?.background?.id === item.id) clearBackground()
+        else setOutput("background", { name: item.name, id: item.id, cameraGroup: item.group || item.cameraGroup, type })
+    }
+
     let onlineTab = $drawerTabsData.media?.openedSubSubTab?.online || "youtube"
     $: if (active === "online" && onlineTab === "pixabay" && (searchValue !== null || activeView)) loadFilesAsync()
     $: if (active === "online" && onlineTab === "unsplash" && (searchValue !== null || activeView)) loadFilesAsync()
@@ -477,8 +485,6 @@
     // const nextActiveView = { all: "image", folder: "image", image: "video", video: "all" } // all: "folder"
     $: if (notFolders.includes(active || "") && activeView === "folder") setView("image")
 
-    $: currentOutput = getFirstActiveOutput($outputs)
-
     // select all
     $: if ($selectAllMedia) selectAll()
     function selectAll() {
@@ -572,26 +578,17 @@
         {:else if active === "inputs"}
             <div class="gridgap">
                 {#if inputsTab === "cameras"}
-                    <Cameras
-                        on:click={({ detail }) => {
-                            let e = detail.event
-                            let cam = detail.cam
-
-                            if ($outLocked || e.ctrlKey || e.metaKey) return
-                            if (currentOutput?.out?.background?.id === cam.id) clearBackground()
-                            else setOutput("background", { name: cam.name, id: cam.id, cameraGroup: cam.group || cam.cameraGroup, type: "camera" })
-                        }}
-                    />
+                    <Cameras on:click={({ detail }) => clickInput(detail.event, detail.cam, "camera")} />
                 {:else if inputsTab === "screens"}
-                    <Screens bind:streams />
+                    <Screens bind:streams on:click={({ detail }) => clickInput(detail.event, detail.screen, "screen")} />
                     <div style="width: 100%;height: 10px;" />
-                    <Windows bind:streams {searchValue} />
+                    <Windows bind:streams {searchValue} on:click={({ detail }) => clickInput(detail.event, detail.screen, "screen")} />
                 {:else if inputsTab === "ndi"}
-                    <NDIStreams />
+                    <NDIStreams on:click={({ detail }) => clickInput(detail.event, detail.screen, "ndi")} />
                 {:else if inputsTab === "omt"}
-                    <OMTStreams />
+                    <OMTStreams on:click={({ detail }) => clickInput(detail.event, detail.screen, "omt")} />
                 {:else if inputsTab === "blackmagic"}
-                    <BMDStreams />
+                    <BMDStreams on:click={({ detail }) => clickInput(detail.event, detail.screen, "blackmagic")} />
                 {/if}
             </div>
         {:else if searchedFiles.length}

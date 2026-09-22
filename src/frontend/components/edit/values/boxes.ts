@@ -523,7 +523,7 @@ export const itemBoxes: Box2 = {
         sections: {
             default: {
                 inputs: splitIntoRows([
-                    { id: "device", type: "popup", value: "", values: { label: "popup.choose_camera", icon: "camera", popupId: "choose_camera" } },
+                    { id: "device", type: "popup", value: "", values: { label: "popup.choose_media_input", icon: "camera", popupId: "choose_media_input" } },
                     { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", options: mediaFitOptions.filter((a) => a.value !== "blur") } },
                     { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
                     { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }

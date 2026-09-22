@@ -125,6 +125,7 @@
 
     $: if (item?.type === "camera") {
         if (item.device?.name) setBoxInputValue(stageSections, "default", "device", "name", item.device.name)
+        if (item.device?.type) setBoxInputValue(stageSections, "default", "device", "icon", item.device.type === "ndi" ? "ndi" : item.device.type === "omt" ? "omt" : item.device.type === "screen" ? "screen" : item.device.type === "blackmagic" ? "blackmagic" : "camera")
     }
 
     $: if (item?.type === "timer" && item) {

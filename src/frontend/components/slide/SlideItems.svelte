@@ -3,10 +3,14 @@
     import type { Item } from "../../../types/Show"
     import { currentWindow, slidesOptions } from "../../stores"
     import MetronomeVisualizer from "../drawer/audio/MetronomeVisualizer.svelte"
+    import BMDStream from "../drawer/live/BMDStream.svelte"
     import Cam from "../drawer/live/Cam.svelte"
+    import NDIStream from "../drawer/live/NDIStream.svelte"
+    import OMTStream from "../drawer/live/OMTStream.svelte"
     import autosize from "../edit/scripts/autosize"
     import { getCropState } from "../helpers/cropping"
     import { getStyles } from "../helpers/style"
+    import Window from "../output/Window.svelte"
     import Clock from "../system/Clock.svelte"
     import Captions from "./views/Captions.svelte"
     import Chart from "./views/Chart.svelte"
@@ -95,7 +99,31 @@
     <Clock {item} fontStyle={noAutoSize ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} style={false} {...item.clock} />
 {:else if item.type === "camera"}
     {#if item.device}
-        <Cam cam={item.device} item style={cameraStyleString} disablePreview={isTemplatePreview} cropping={item.cropping} {cropPreviewMode} preview={!outputId && (preview || isTemplatePreview)} itemStyle={item.style} />
+        {#if item.device.type === "screen"}
+            <div class="mediaContainer" style={cameraCropState.mediaContainerStyle}>
+                <Window id={item.device.id} style={cameraStyleString} />
+            </div>
+        {:else if item.device.type === "ndi"}
+            <div class="mediaContainer" style={cameraCropState.mediaContainerStyle}>
+                {#key item.device.id}
+                    <NDIStream screen={{ id: item.device.id, name: item.device.name }} background {outputId} style={cameraStyleString} />
+                {/key}
+            </div>
+        {:else if item.device.type === "omt"}
+            <div class="mediaContainer" style={cameraCropState.mediaContainerStyle}>
+                {#key item.device.id}
+                    <OMTStream screen={{ id: item.device.id, name: item.device.name }} background {outputId} style={cameraStyleString} />
+                {/key}
+            </div>
+        {:else if item.device.type === "blackmagic"}
+            <div class="mediaContainer" style={cameraCropState.mediaContainerStyle}>
+                {#key item.device.id}
+                    <BMDStream screen={{ id: item.device.id, name: item.device.name }} background {outputId} style={cameraStyleString} />
+                {/key}
+            </div>
+        {:else}
+            <Cam cam={{ id: item.device.id, group: item.device.group || "", name: item.device.name }} item style={cameraStyleString} disablePreview={isTemplatePreview} cropping={item.cropping} {cropPreviewMode} preview={!outputId && (preview || isTemplatePreview)} itemStyle={item.style} />
+        {/if}
     {/if}
 {:else if item.type === "slide_tracker"}
     <SlideProgress {item} tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : edit ? autoSize : fontSize} {outputId} />
