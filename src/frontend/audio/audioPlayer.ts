@@ -134,7 +134,7 @@ export class AudioPlayer {
 
         const audioPlaying = Object.keys(get(playingAudio)).length
         if (options.crossfade) fadeOutAudio(options.crossfade)
-        else if (!options.playMultiple) clearAudio("", { playlistCrossfade: options.playlistCrossfade, isPlayingNew: true, clearMicrophones: false })
+        else if (!options.playMultiple) clearAudio("", { playlistCrossfade: options.playlistCrossfade, isPlayingNew: true, clearMicrophones: false, clearPlaylist: !options.playlistId })
 
         const audio = await this.createAudio(resolvedKey, path)
         if (!audio) {
