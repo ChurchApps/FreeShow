@@ -12,19 +12,20 @@
     import Slider from "../../inputs/Slider.svelte"
 
     function getName(id: string) {
-        return removeExtension(getFileName(id)) || id
+        return removeExtension(getFileName(AudioPlayer.getPath(id))) || id
     }
 
     // AUDIO CONTROLS
 
-    $: path = Object.keys($playingAudio)[0] || ""
+    $: key = Object.keys($playingAudio)[0] || ""
+    $: path = AudioPlayer.getPath(key)
     $: playing = Object.values($playingAudio)[0] || {}
     let currentTime = 0
     $: paused = playing.paused !== false
 
     let duration = 0
     $: justOneAudio = Object.keys($playingAudio).length === 1
-    $: if (justOneAudio && path) getDuration()
+    $: if (justOneAudio && key) getDuration()
     else {
         currentTime = 0
         duration = 0
@@ -32,7 +33,7 @@
     async function getDuration() {
         currentTime = 0
         duration = 0
-        duration = playing.isMic ? 0 : await AudioPlayer.getDuration(Object.keys($playingAudio)[0])
+        duration = playing.isMic ? 0 : await AudioPlayer.getDuration(key || path)
         currentTime = playing.audio?.currentTime || 0
     }
 
@@ -92,12 +93,12 @@
             </Button>
         {/each}
     </span>
-{:else if path}
-    {@const name = playing.name || getName(path)}
+{:else if key}
+    {@const name = playing.name || getName(key)}
 
-    <Button title={name} on:click={() => openAudio(path, playing)} active={$activeShow?.id === path} style="padding: 5px 10px;opacity: 0.8;width: 100%;z-index: 2;" bold={false} center>
+    <Button title={name} on:click={() => openAudio(key, playing)} active={$activeShow?.id === key || $activeShow?.id === path} style="padding: 5px 10px;opacity: 0.8;width: 100%;z-index: 2;" bold={false} center>
         {#if playing.isMic}<Icon id="microphone" size={1.2} right />{/if}
-        <p style="font-size: 0.9em;">{$activePlaylist?.active === path ? `${$audioPlaylists[$activePlaylist.id]?.name}: ` : ""}{name}</p>
+        <p style="font-size: 0.9em;">{$activePlaylist?.activeKey === key || $activePlaylist?.active === path ? `${$audioPlaylists[$activePlaylist.id]?.name}: ` : ""}{name}</p>
     </Button>
 
     <!-- AUDIO CONTROLS -->
@@ -110,7 +111,7 @@
                 title={translateText(paused ? "media.play" : "media.pause")}
                 on:click={() => {
                     if ($outLocked) return
-                    AudioPlayer.start(path, { name }, { pauseIfPlaying: true, startAt: currentTime })
+                    AudioPlayer.start(path, { name }, { pauseIfPlaying: true, startAt: currentTime, playlistIndex: playing.index, playlistId: playing.playlistId })
                 }}
             >
                 <Icon id={paused ? "play" : "pause"} white={paused} size={1.2} />
@@ -126,7 +127,7 @@
                 </span>
             {/if}
 
-            <Slider value={currentTime} max={duration} on:input={setSliderValue} on:change={(e) => setTime(e, path)} />
+            <Slider value={currentTime} max={duration} on:input={setSliderValue} on:change={(e) => setTime(e, key)} />
 
             <span style={fullLength ? "" : "color: var(--secondary)"} role="button" tabindex="0" on:click={() => (fullLength = !fullLength)} on:keydown={triggerClickOnEnterSpace}>
                 {#if fullLength}
@@ -136,7 +137,7 @@
                 {/if}
             </span>
 
-            {#if $activePlaylist?.active === path}
+            {#if $activePlaylist?.activeKey === key || $activePlaylist?.active === path}
                 <Button style="flex: 0" disabled={$outLocked} center title={translateText("media.next")} on:click={() => AudioPlaylist.next()}>
                     <Icon id="audio_forward" size={1.2} />
                 </Button>

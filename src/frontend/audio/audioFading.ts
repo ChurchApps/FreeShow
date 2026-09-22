@@ -21,7 +21,7 @@ export const clearing: string[] = []
 let forceClear = false
 export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
     // turn off any playlist
-    if (options.clearPlaylist && (!audioPath || AudioPlaylist.getPlayingKey() === audioPath)) activePlaylist.set(null)
+    if (options.clearPlaylist && (!audioPath || AudioPlaylist.getPlayingKey() === audioPath || AudioPlaylist.getPlayingPath() === audioPath)) activePlaylist.set(null)
 
     // stop playing metronome
     if (!options.isPlayingNew && options.clearPlaylist !== false && !audioPath) stopMetronome()
@@ -39,7 +39,7 @@ export function clearAudio(audioPath = "", options: AudioClearOptions = {}) {
     }
 
     const clearTime = options.playlistCrossfade ? 0 : (options.clearTime ?? get(special).audio_fade_duration ?? 1.5)
-    let clearIds = audioPath ? [audioPath] : Object.keys(get(playingAudio))
+    let clearIds = audioPath ? (get(playingAudio)[audioPath] ? [audioPath] : Object.keys(get(playingAudio)).filter((k) => k === audioPath || AudioPlayer.getPath(k) === audioPath)) : Object.keys(get(playingAudio))
     // don't clear microphones by default
     if (!audioPath && !options.clearMicrophones) {
         const allPlaying = get(playingAudio)
@@ -92,18 +92,19 @@ const currentlyCrossfadingOut: string[] = []
 export function fadeOutAudio(crossfade = 0) {
     stopFading()
 
-    Object.entries(get(playingAudio)).forEach(async ([path, { audio }]) => {
+    Object.entries(get(playingAudio)).forEach(async ([id, { audio }]) => {
+        const path = AudioPlayer.getPath(id)
         const type = AudioPlayer.getAudioType(path, audio.duration)
-        if (type === "effect" || currentlyCrossfadingOut.includes(path) || clearing.includes(path)) return
-        currentlyCrossfadingOut.push(path)
+        if (type === "effect" || currentlyCrossfadingOut.includes(id) || clearing.includes(id)) return
+        currentlyCrossfadingOut.push(id)
 
-        const faded = await fadeAudio(path, audio, crossfade)
+        const faded = await fadeAudio(id, audio, crossfade)
 
-        currentlyCrossfadingOut.splice(currentlyCrossfadingOut.indexOf(path), 1)
+        currentlyCrossfadingOut.splice(currentlyCrossfadingOut.indexOf(id), 1)
         if (!faded) return
 
         customActionActivation("audio_end")
-        AudioPlayer.stop(path)
+        AudioPlayer.stop(id)
     })
 }
 // if no "path" is provided it will fade out/clear all audio

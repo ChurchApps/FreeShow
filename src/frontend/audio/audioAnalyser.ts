@@ -124,7 +124,8 @@ export class AudioAnalyser {
 
         setTimeout(() => AudioRoutingManager.getInstance().updateRoutingNodes(), 100)
 
-        const mediaData = get(media)[id]
+        const path = AudioPlayer.getPath(id)
+        const mediaData = get(media)[path] || get(media)[id]
         if (mediaData) {
             const pitch = mediaData.pitch ?? 0
             const tempo = mediaData.tempo ?? 1
