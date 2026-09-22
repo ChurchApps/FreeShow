@@ -168,14 +168,14 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
     // SWITCH FROM MPEGTS TO FLV FOR RTMP
     // FLV is the native format for RTMP relays and YouTube ingest.
     // Setting flvflags no_sequence_end prevents stream termination artifacts.
-    args.push("-max_muxing_queue_size", "4096", "-muxdelay", "0", "-muxpreload", "0", "-f", "flv", "-flvflags", "no_sequence_end", "pipe:1")
+    args.push("-flags", "+global_header", "-max_muxing_queue_size", "4096", "-muxdelay", "0", "-muxpreload", "0", "-f", "flv", "-flvflags", "no_sequence_end", "pipe:1")
 
     return args
 }
 
 /** Relay process: remux the encoded mpegts straight to one RTMP destination, no re-encode. */
 export function buildRelayCommand(url: string): string[] {
-    return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-f", "flv", "-flvflags", "no_sequence_end", url]
+    return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-bsf:a", "aac_adtstoasc", "-f", "flv", "-flvflags", "no_sequence_end", url]
 }
 
 /** Short throwaway encode used to prove the encoder actually works on this machine. */
