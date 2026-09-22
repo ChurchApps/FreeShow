@@ -1,10 +1,12 @@
 <script lang="ts">
+    import { onMount } from "svelte"
     import type { CustomFont } from "../../../../types/Show"
-    import { customFonts } from "../../../stores"
+    import { customFonts, special } from "../../../stores"
     import { newToast } from "../../../utils/common"
-    import { getSystemFontsList, loadCustomFont } from "../../helpers/fonts"
+    import { defaultFonts, getSystemFontsList, loadCustomFont } from "../../helpers/fonts"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import HRule from "../../input/HRule.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
@@ -13,14 +15,17 @@
 
     $: fonts = $customFonts
 
-    let systemFontsList: any[] = []
+    let systemFonts: { label: string; value: string; style: string }[] = []
+    onMount(async () => {
+        const fonts = await getSystemFontsList(false)
+        // remove built-in fonts from system fonts list
+        systemFonts = fonts.filter((a) => !defaultFonts.includes(a.label))
+    })
+
     let fontFamily = ""
     let isValidFamily = false
     async function updateFontFamily(value: string) {
         fontFamily = value.trim()
-
-        if (!systemFontsList.length) systemFontsList = await getSystemFontsList()
-
         isValidFamily = isValid()
 
         function isValid() {
@@ -34,7 +39,8 @@
                 return false
             }
 
-            if (systemFontsList.some((a) => a.label.toLowerCase() === nameLower)) {
+            const fontsList = [...systemFonts.map((a) => a.label), ...defaultFonts]
+            if (fontsList.some((font) => font.toLowerCase() === nameLower)) {
                 newToast(`Font with name "${fontFamily}" already exists as a system font`)
                 return false
             }
@@ -76,8 +82,65 @@
         customFonts.set($customFonts.filter((_, i) => i !== index))
     }
 
+    let hiddenSystemFonts: string[] = $special.hiddenFonts || []
+    function toggleHiddenSystemFont(label: string) {
+        if (hiddenSystemFonts.includes(label)) hiddenSystemFonts = hiddenSystemFonts.filter((a) => a !== label)
+        else hiddenSystemFonts = [...hiddenSystemFonts, label]
+
+        special.update((s) => ({ ...s, hiddenFonts: hiddenSystemFonts }))
+    }
+
     let newFontInput = false
 </script>
+
+<!-- Built-in -->
+<InputRow arrow>
+    <div class="name" data-title="Built-in the program">
+        <Icon id="text" white />
+        <p><T id="example.default" /></p>
+        <p style="font-size: 0.7em;opacity: 0.7;max-width: 65%;">{defaultFonts.length}</p>
+    </div>
+
+    <svelte:fragment slot="menu">
+        {#each defaultFonts as font}
+            <InputRow>
+                <div class="name" style="max-width: unset;">
+                    <p style="font-family: {font}, sans-serif;">{font}</p>
+                </div>
+            </InputRow>
+        {/each}
+    </svelte:fragment>
+</InputRow>
+
+<!-- System fonts -->
+<InputRow style="margin-top: 10px;" arrow>
+    <div class="name" data-title="Installed on your system">
+        <Icon id="folder" white />
+        <p>System</p>
+        <p style="font-size: 0.7em;opacity: 0.7;max-width: 65%;">
+            {systemFonts.length}
+            {#if hiddenSystemFonts.length}({systemFonts.length - hiddenSystemFonts.length}){/if}
+        </p>
+    </div>
+
+    <svelte:fragment slot="menu">
+        {#each systemFonts as font}
+            {@const isHidden = hiddenSystemFonts.includes(font.label)}
+
+            <InputRow>
+                <div class="name">
+                    <p style={font.style}>{font.label}</p>
+                </div>
+
+                <MaterialButton title={isHidden ? "profile.show" : "profile.hide"} style="padding: 0.75rem;min-width: 50px;" on:click={() => toggleHiddenSystemFont(font.label)}>
+                    <Icon id={isHidden ? "hide" : "eye"} white={isHidden} />
+                </MaterialButton>
+            </InputRow>
+        {/each}
+    </svelte:fragment>
+</InputRow>
+
+<HRule title="sort.custom" />
 
 {#if fonts.length}
     {#each fonts as font, index}
@@ -88,7 +151,7 @@
                 <p style="font-size: 0.7em;opacity: 0.7;max-width: 65%;">{font.path || "Google Fonts"}</p>
             </div>
 
-            <MaterialButton icon="delete" title="actions.delete" disabled={addingFont} on:click={() => removeFont(index)} />
+            <MaterialButton icon="delete" title="actions.delete" disabled={addingFont} style="padding: 0.75rem;min-width: 50px;" on:click={() => removeFont(index)} />
         </InputRow>
     {/each}
 {:else if !newFontInput}

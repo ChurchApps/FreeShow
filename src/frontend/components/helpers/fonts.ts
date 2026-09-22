@@ -1,15 +1,15 @@
 import { get } from "svelte/store"
 import type { DropdownOptions } from "../../../types/Input"
 import type { CustomFont } from "../../../types/Show"
-import { customFonts } from "../../stores"
+import { customFonts, special } from "../../stores"
 import { sortByName } from "./array"
 
-export interface Family {
+interface Family {
     family: string
     default: number
     fonts: Font[]
 }
-export interface Font {
+interface Font {
     name: string
     style: string
     css: string
@@ -19,7 +19,7 @@ export interface Font {
 const commonStyles = ["Bold", "Italic", "Bold Italic"]
 
 let cachedFonts: Family[] = []
-export async function getFontsList() {
+async function getFontsList() {
     if (cachedFonts.length) return cachedFonts
 
     let localFonts: FontData[] = []
@@ -118,7 +118,8 @@ function getWeightFromStyle(style: string | undefined) {
 }
 
 // web fonts
-const defaultFonts = ["CMGSans", "Arial", "Verdana", "Tahoma", "Trebuchet MS", "Times New Roman", "Georgia", "Garamond", "Courier New", "Brush Script MT", "Helvetica", "Fantasy", "monospace"]
+const webFonts = ["Arial", "Verdana", "Tahoma", "Trebuchet MS", "Times New Roman", "Georgia", "Garamond", "Courier New", "Brush Script MT", "Helvetica", "Fantasy", "monospace"]
+export const defaultFonts = ["CMGSans", ...webFonts]
 // does not work with ''
 const noQuotes = ["Fantasy", "monospace"]
 export function getFontName(value: string) {
@@ -127,15 +128,18 @@ export function getFontName(value: string) {
     return `'${value}'`
 }
 
-export async function getSystemFontsList() {
+export async function getSystemFontsList(removeHidden: boolean = true) {
     // { family: "CMGSans", default: 0, fonts: [{ name: "CMGSans", path: "", style: "", css: "font: 1em 'CMGSans'" }] }
     const fonts: Family[] = defaultFonts.map((name) => {
         const css = `font: 1em ${getFontName(name)}`
         return { family: name, default: 0, fonts: [{ name, path: "", style: "", css }] }
     })
 
-    const loadedFonts = await getFontsList()
+    let loadedFonts = await getFontsList()
     if (!loadedFonts.length) return []
+
+    const hiddenSystemFonts: string[] = removeHidden ? get(special).hiddenFonts || [] : []
+    loadedFonts = loadedFonts.filter((a) => !hiddenSystemFonts.includes(a.family))
 
     return addFonts(fonts, loadedFonts).map((a) => ({ label: a.family, value: getFontName(a.family), style: a.fonts[a.default]?.css || (a.family ? `font-family: ${getFontName(a.family)};` : "") }))
 }
