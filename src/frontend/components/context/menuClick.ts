@@ -1723,6 +1723,12 @@ const clickActions = {
         })
     },
     system_open: (obj: ObjData) => {
+        if (obj.contextElem?.classList.contains("#media_preview") || obj.contextElem?.classList.contains("#audio_preview")) {
+            const path = obj.contextElem.id
+            if (path) sendMain(Main.SYSTEM_OPEN, path)
+            return
+        }
+
         if (!obj.sel) return
 
         let data = obj.sel.data[0]

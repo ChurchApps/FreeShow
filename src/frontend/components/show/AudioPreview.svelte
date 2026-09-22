@@ -165,7 +165,7 @@
     <canvas bind:this={canvas} />
 {/if}
 
-<div class="main media context #media_preview" bind:this={mediaElem}>
+<div id={path} class="main media context #audio_preview" bind:this={mediaElem}>
     <div class="buttons">
         <MaterialButton
             disabled={$outLocked || isMic}

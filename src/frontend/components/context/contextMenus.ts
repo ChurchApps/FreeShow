@@ -282,6 +282,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // media / audio
     // "play", "play_no_audio", "play_no_filters", "SEPARATOR", "edit",
     media_preview: ["create_show", "SEPARATOR", "system_open", "SEPARATOR", "close"],
+    audio_preview: ["system_open", "SEPARATOR", "close"],
     overlay_preview: ["close"],
     // , "delete_all"
     show_media: ["GROUP_open", "play_no_filters", "SEPARATOR", "system_open"], // "play_no_audio"
@@ -307,7 +308,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     player_button: ["GROUP_open", "player_tag_set", "player_tag_filter", "SEPARATOR", "rename", "delete"],
     audio_button: ["GROUP_open", "effects_library_add", "favourite", "SEPARATOR", "system_open"],
     audio_effect_button: ["GROUP_rename_only", "remove", "SEPARATOR", "system_open"],
-    audio_button_playlist: ["GROUP_open", "remove"],
+    audio_button_playlist: ["GROUP_open", "remove", "SEPARATOR", "system_open"],
     // "addToFirstSlide"
     screen_card: ["recording"],
     camera_card: ["GROUP_edit", "startup_activate", "SEPARATOR", "recording"],
