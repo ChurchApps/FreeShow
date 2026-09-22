@@ -330,7 +330,7 @@
 {/if}
 
 <div class="scroll" style="flex: 1;overflow-y: auto;" class:full={active === "inputs" || active === "effects_library"} bind:this={scrollElem}>
-    <div class="grid" style={active !== "inputs" && active !== "effects_library" && (playlist ? playlist.songs.length : searchedFiles.length) ? "" : "height: 100%;"}>
+    <div class="grid" style={active !== "inputs" && active !== "effects_library" && !playlist && searchedFiles.length ? "" : "height: 100%;"}>
         {#if active === "inputs"}
             {#if inputsTab === "microphones"}
                 <Microphones />
