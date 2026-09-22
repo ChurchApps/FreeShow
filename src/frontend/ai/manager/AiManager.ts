@@ -204,9 +204,12 @@ export class AiManager {
             if (match.scriptureTranslation) setActiveScripture(match.scriptureTranslation)
         } else if (match.type === "scripture") {
             startScripture({ reference: match.content })
+            this.outputUpdate(match.content)
         }
+    }
 
-        this.liveContent = match.content
+    private static outputUpdate(content: string) {
+        this.liveContent = content
 
         setTimeout(() => {
             // reset output updates when not "manually" played
