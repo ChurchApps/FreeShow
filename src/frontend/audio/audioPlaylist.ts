@@ -95,7 +95,7 @@ export class AudioPlaylist {
         if (!crossfadeDuration) return
 
         this.isCrossfading = true
-        setTimeout(() => (this.isCrossfading = false), crossfadeDuration)
+        setTimeout(() => (this.isCrossfading = false), crossfadeDuration * 1000)
     }
 
     private static extraMargin = 0.1 // s

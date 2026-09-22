@@ -9,7 +9,7 @@ import { requestMain, sendMain } from "../IPC/main"
 import { activePlaylist, dictionary, media, outLocked, playingAudio, playingAudioPaths, special } from "../stores"
 import { addToMediaFolder } from "../utils/cloudSync"
 import { AudioAnalyser } from "./audioAnalyser"
-import { clearAudio, clearing, fadeInAudio, fadeOutAudio } from "./audioFading"
+import { clearAudio, clearing, currentlyCrossfadingIn, fadeInAudio, fadeOutAudio } from "./audioFading"
 import { AudioMultichannel } from "./audioMultichannel"
 import { AudioPlaylist } from "./audioPlaylist"
 import { AudioRoutingManager } from "./routing/audioRoutingManager"
@@ -134,7 +134,7 @@ export class AudioPlayer {
 
         const audioPlaying = Object.keys(get(playingAudio)).length
         if (options.crossfade) fadeOutAudio(options.crossfade)
-        else if (!options.playMultiple) clearAudio("", { playlistCrossfade: options.playlistCrossfade, isPlayingNew: true, clearMicrophones: false, clearPlaylist: !options.playlistId })
+        else if (!options.playMultiple) clearAudio("", { playlistCrossfade: options.playlistCrossfade, isPlayingNew: true, clearMicrophones: false, clearPlaylist: !options.playlistId && !options.playlistCrossfade })
 
         const audio = await this.createAudio(resolvedKey, path)
         if (!audio) {
@@ -188,6 +188,7 @@ export class AudioPlayer {
         let waitToPlay = 0
         if (audioPlaying && options.crossfade) {
             audio.volume = 0
+            AudioAnalyser.setSourceVolume(resolvedKey, 0)
             waitToPlay = options.crossfade * 0.6
             fadeInAudio(resolvedKey, options.crossfade, !!waitToPlay, newVolume)
         }
@@ -370,8 +371,8 @@ export class AudioPlayer {
 
         const audio = this.getAudio(id)
 
-        // reset volume in case it's played again while "Mute when video plays" is active
-        if (audio && audio.volume === 0) this.updateVolume(id)
+        // reset volume in case it's played again while "Mute when video plays" is active (unless it's fading in)
+        if (audio && audio.volume === 0 && !currentlyCrossfadingIn.includes(id)) this.updateVolume(id)
 
         updatePlayingStore(id, "paused", false)
         audio?.play()
