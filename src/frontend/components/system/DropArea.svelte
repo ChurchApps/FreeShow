@@ -149,20 +149,13 @@
         const isMediaFile = file.type.startsWith("image/") || file.type.startsWith("video/") || file.type.startsWith("audio/")
         if (!isMediaFile) return false
 
-        const modifiedAgeMs = Date.now() - file.lastModified
-        const hasRecentModifiedTime = Number.isFinite(file.lastModified) && modifiedAgeMs >= 0 && modifiedAgeMs < 5000
+        // check if media is a local file
+        let localPath = ""
+        try {
+            localPath = (file as any).path || window.api?.showFilePath?.(file) || ""
+        } catch {}
 
-        const isFromWeb =
-            // Blob URLs are definitely from web
-            file.name.includes("blob:") ||
-            // Files with unusual extensions or no extensions (common for web files)
-            !/\.\w{2,4}$/i.test(file.name) ||
-            // Files with very recent modification times (within last few seconds) are likely from web
-            hasRecentModifiedTime ||
-            // Files with size 0 that aren't obviously empty file types
-            (file.size === 0 && !file.name.endsWith(".txt"))
-
-        return isFromWeb
+        return !localPath
     }
 
     async function fileToBase64(file: File): Promise<{ name: string; path: string }> {
