@@ -1,377 +1,266 @@
-// Spectrum Analyzer for Audio Frequency Visualization
-// Provides real-time frequency spectrum data and visualization utilities
-
 import { AudioAnalyser } from "./audioAnalyser"
 
-export interface SpectrumBar {
-    x: number
-    width: number
-    height: number
-    frequency: number
-    amplitude: number
-}
-
 export class SpectrumAnalyzer {
-    private frequencyData: Uint8Array
-    private smoothedFrequencyData: Float32Array
+    private canvas: HTMLCanvasElement | null = null
+    private ctx: CanvasRenderingContext2D | null = null
     private animationFrame: number | null = null
-    private isAnalyzing = false
-    private lastUpdateTime = 0
-    private readonly updateInterval = 50 // Update every 50ms (20 FPS) for better performance
+    private channelId: string = ""
+    private isRunning = false
 
-    // Configuration
-    private readonly smoothingFactor = 0.15 // Slightly increased for smoother visualization
-    private readonly numBars = 100 // Number of frequency bars to display
-
-    // Frequency range
     private readonly minFreq = 20
     private readonly maxFreq = 20000
+    private readonly numPoints = 120
 
-    // Dynamic properties based on actual analyser
-    private actualFFTSize = 256
-    private actualSampleRate = 48000
+    private smoothedValues: Float32Array = new Float32Array(this.numPoints)
+    private displayValues: Float32Array = new Float32Array(this.numPoints)
+    private channelBuffers: Uint8Array[] = []
 
-    // Callbacks
-    private onUpdateCallback?: () => void
+    private activeAnalysers: AnalyserNode[] = []
+    private lastFrameTime = 0
 
-    constructor() {
-        // Start with default size, will be updated based on actual analyser
-        this.frequencyData = new Uint8Array(128)
-        this.smoothedFrequencyData = new Float32Array(128)
-        this.updateAnalyserProperties()
+    constructor(channelId: string = "") {
+        this.channelId = channelId
     }
 
-    /**
-     * Update properties based on actual analyser configuration
-     */
-    private updateAnalyserProperties(): void {
-        const analysers = AudioAnalyser.getAnalysers()
-        if (analysers && analysers.length > 0) {
-            const analyser = analysers[0]
-            this.actualFFTSize = analyser.fftSize
-            this.actualSampleRate = analyser.context.sampleRate
-
-            // Resize arrays if needed based on actual frequency bin count
-            const actualBinCount = analyser.frequencyBinCount
-            if (this.frequencyData.length !== actualBinCount) {
-                this.frequencyData = new Uint8Array(actualBinCount)
-                this.smoothedFrequencyData = new Float32Array(actualBinCount)
-            }
+    public setChannel(channelId: string) {
+        if (this.channelId !== channelId) {
+            this.resetActiveAnalysersFft()
+            this.channelId = channelId
         }
     }
 
-    /**
-     * Start analyzing frequency data
-     */
-    public start(onUpdate?: () => void): void {
-        if (this.isAnalyzing) return
+    public start(canvas: HTMLCanvasElement) {
+        this.canvas = canvas
+        this.ctx = canvas.getContext("2d")
+        if (!this.ctx) return
 
-        // Update analyser properties before starting
-        this.updateAnalyserProperties()
-
-        this.onUpdateCallback = onUpdate
-        this.isAnalyzing = true
-        this.updateFrequencyData()
+        if (this.isRunning) return
+        this.isRunning = true
+        this.lastFrameTime = performance.now()
+        this.renderLoop()
     }
 
-    /**
-     * Stop analyzing frequency data
-     */
-    public stop(): void {
-        this.isAnalyzing = false
-        if (this.animationFrame) {
+    public stop() {
+        this.isRunning = false
+        if (this.animationFrame !== null) {
             cancelAnimationFrame(this.animationFrame)
             this.animationFrame = null
         }
-        this.onUpdateCallback = undefined
+        this.resetActiveAnalysersFft()
+        this.clearCanvas()
     }
 
-    /**
-     * Check if analyzer is currently running
-     */
-    public isRunning(): boolean {
-        return this.isAnalyzing
+    private resetActiveAnalysersFft() {
+        for (let i = 0; i < this.activeAnalysers.length; i++) {
+            const a = this.activeAnalysers[i]
+            if (a && a.fftSize !== 256) {
+                try {
+                    a.fftSize = 256
+                } catch {}
+            }
+        }
+        this.activeAnalysers = []
     }
 
-    /**
-     * Get current frequency data (smoothed)
-     */
-    public getFrequencyData(): Float32Array {
-        return this.smoothedFrequencyData
+    private clearCanvas() {
+        if (this.ctx && this.canvas) {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        }
     }
 
-    /**
-     * Update frequency data from audio analyzers
-     */
-    private updateFrequencyData(): void {
-        if (!this.isAnalyzing) return
+    private renderLoop = () => {
+        if (!this.isRunning || !this.canvas || !this.ctx) return
 
-        const currentTime = Date.now()
+        this.animationFrame = requestAnimationFrame(this.renderLoop)
 
-        // Throttle updates for better performance
-        if (currentTime - this.lastUpdateTime < this.updateInterval) {
-            this.animationFrame = requestAnimationFrame(() => this.updateFrequencyData())
+        const now = performance.now()
+        // Cap rendering to ~60 FPS (16ms)
+        if (now - this.lastFrameTime < 14) return
+        this.lastFrameTime = now
+
+        this.renderFrame()
+    }
+
+    private renderFrame() {
+        if (!this.canvas || !this.ctx) return
+
+        const width = this.canvas.width
+        const height = this.canvas.height
+        if (width <= 0 || height <= 0) return
+
+        const analysers = AudioAnalyser.getAnalysers(this.channelId)
+        const hasAnalysers = Boolean(analysers && analysers.length > 0)
+
+        let sampleRate = 48000
+        let binCount = 0
+
+        if (hasAnalysers) {
+            this.activeAnalysers = analysers
+            // Dynamically scale up to 1024 for high-resolution analysis only while actively displayed
+            for (let i = 0; i < analysers.length; i++) {
+                if (analysers[i].fftSize !== 1024) {
+                    try {
+                        analysers[i].fftSize = 1024
+                    } catch {}
+                }
+            }
+
+            const firstAnalyser = analysers[0]
+            binCount = firstAnalyser.frequencyBinCount
+            sampleRate = firstAnalyser.context.sampleRate || 48000
+
+            if (this.channelBuffers.length !== analysers.length || (this.channelBuffers[0] && this.channelBuffers[0].length !== binCount)) {
+                this.channelBuffers = analysers.map(() => new Uint8Array(binCount))
+            }
+
+            for (let ch = 0; ch < analysers.length; ch++) {
+                analysers[ch].getByteFrequencyData(this.channelBuffers[ch] as Uint8Array<ArrayBuffer>)
+            }
+        } else if (this.activeAnalysers.length > 0) {
+            this.resetActiveAnalysersFft()
+        }
+
+        const fftSize = binCount * 2
+        const freqPerBin = fftSize > 0 ? sampleRate / fftSize : 1
+
+        const logMin = Math.log10(this.minFreq)
+        const logMax = Math.log10(this.maxFreq)
+        const logRange = logMax - logMin
+
+        let maxAmpAcrossFrame = 0
+
+        for (let i = 0; i < this.numPoints; i++) {
+            let targetAmp = 0
+
+            if (hasAnalysers && binCount > 0 && this.channelBuffers.length > 0) {
+                const progress = i / (this.numPoints - 1)
+                const nextProgress = Math.min(1, (i + 1) / (this.numPoints - 1))
+
+                const freq = Math.pow(10, logMin + progress * logRange)
+                const nextFreq = Math.pow(10, logMin + nextProgress * logRange)
+
+                const bin = freq / freqPerBin
+                const nextBin = nextFreq / freqPerBin
+
+                const b0 = Math.min(binCount - 1, Math.max(0, Math.floor(bin)))
+                const bEnd = Math.min(binCount - 1, Math.max(b0, Math.ceil(nextBin)))
+
+                let rawVal = 0
+                const numCh = this.channelBuffers.length
+
+                if (bEnd > b0) {
+                    let maxVal = 0
+                    for (let ch = 0; ch < numCh; ch++) {
+                        const buf = this.channelBuffers[ch]
+                        for (let b = b0; b <= bEnd; b++) {
+                            const v = buf[b] || 0
+                            if (v > maxVal) maxVal = v
+                        }
+                    }
+                    rawVal = maxVal
+                } else {
+                    const b1 = Math.min(binCount - 1, b0 + 1)
+                    const frac = bin - b0
+                    let sum = 0
+                    for (let ch = 0; ch < numCh; ch++) {
+                        const buf = this.channelBuffers[ch]
+                        const v0 = buf[b0] || 0
+                        const v1 = buf[b1] || v0
+                        sum += v0 + (v1 - v0) * frac
+                    }
+                    rawVal = sum / numCh
+                }
+
+                // Direct accurate response to EQ gain changes
+                targetAmp = (rawVal / 255) * 0.85
+            }
+
+            if (isNaN(targetAmp)) targetAmp = 0
+            if (targetAmp > maxAmpAcrossFrame) maxAmpAcrossFrame = targetAmp
+
+            // Smooth attack and release ballistics
+            const current = this.smoothedValues[i] || 0
+            if (targetAmp > current) {
+                this.smoothedValues[i] = current * 0.65 + targetAmp * 0.35
+            } else {
+                this.smoothedValues[i] = current * 0.93 // Smooth decay
+            }
+        }
+
+        // Spatial blur across adjacent frequency bins to remove spiky jitter
+        for (let i = 0; i < this.numPoints; i++) {
+            const prev = i > 0 ? this.smoothedValues[i - 1] : this.smoothedValues[i]
+            const curr = this.smoothedValues[i]
+            const next = i < this.numPoints - 1 ? this.smoothedValues[i + 1] : this.smoothedValues[i]
+            this.displayValues[i] = prev * 0.2 + curr * 0.6 + next * 0.2
+        }
+
+        // Render to canvas
+        this.ctx.clearRect(0, 0, width, height)
+
+        if (maxAmpAcrossFrame < 0.002 && this.smoothedValues[0] < 0.005) {
             return
         }
 
-        this.lastUpdateTime = currentTime
-
-        // Get frequency data from AudioAnalyser
-        const analysers = AudioAnalyser.getAnalysers()
-        if (analysers && analysers.length > 0) {
-            // Use first channel (left) for frequency visualization
-            const analyser = analysers[0]
-
-            // Create properly typed array and get frequency data
-            const tempData = new Uint8Array(analyser.frequencyBinCount)
-            analyser.getByteFrequencyData(tempData)
-
-            // Copy to our arrays (ensuring they're the right size)
-            if (this.frequencyData.length !== tempData.length) {
-                this.frequencyData = new Uint8Array(tempData.length)
-                this.smoothedFrequencyData = new Float32Array(tempData.length)
-            }
-
-            for (let i = 0; i < tempData.length; i++) {
-                this.frequencyData[i] = tempData[i]
-            }
-
-            // Apply light smoothing to frequency data (AudioAnalyser already has smoothing)
-            for (let i = 0; i < this.frequencyData.length; i++) {
-                this.smoothedFrequencyData[i] = this.smoothingFactor * this.frequencyData[i] + (1 - this.smoothingFactor) * this.smoothedFrequencyData[i]
-            }
-
-            // Trigger callback for reactive updates
-            this.onUpdateCallback?.()
+        const points: { x: number; y: number }[] = []
+        for (let i = 0; i < this.numPoints; i++) {
+            const x = (i / (this.numPoints - 1)) * width
+            const normAmp = Math.min(1, Math.max(0, this.displayValues[i]))
+            const y = height - normAmp * height * 0.95
+            points.push({ x, y })
         }
 
-        // Schedule next frame
-        this.animationFrame = requestAnimationFrame(() => this.updateFrequencyData())
-    }
+        if (points.length < 2) return
 
-    /**
-     * Convert frequency to bin index (now using actual analyser properties)
-     */
-    private frequencyToBin(frequency: number): number {
-        // Get current analyser for accurate calculation
-        const analysers = AudioAnalyser.getAnalysers()
-        if (analysers && analysers.length > 0) {
-            const analyser = analysers[0]
-            const sampleRate = analyser.context.sampleRate
-            const fftSize = analyser.fftSize
-            return Math.round((frequency * fftSize) / sampleRate)
+        // Gradient fill
+        const gradient = this.ctx.createLinearGradient(0, height, 0, 0)
+        gradient.addColorStop(0, "rgba(78, 205, 196, 0.02)")
+        gradient.addColorStop(0.3, "rgba(78, 205, 196, 0.12)")
+        gradient.addColorStop(0.7, "rgba(82, 149, 173, 0.28)")
+        gradient.addColorStop(1, "rgba(100, 220, 240, 0.45)")
+
+        this.ctx.beginPath()
+        this.ctx.moveTo(0, height)
+        this.ctx.lineTo(points[0].x, points[0].y)
+
+        for (let i = 0; i < points.length - 1; i++) {
+            const curr = points[i]
+            const next = points[i + 1]
+            const midX = (curr.x + next.x) / 2
+            const midY = (curr.y + next.y) / 2
+            this.ctx.quadraticCurveTo(curr.x, curr.y, midX, midY)
         }
 
-        // Fallback to stored values
-        return Math.round((frequency * this.actualFFTSize) / this.actualSampleRate)
-    }
+        const last = points[points.length - 1]
+        this.ctx.lineTo(last.x, last.y)
+        this.ctx.lineTo(width, height)
+        this.ctx.closePath()
+        this.ctx.fillStyle = gradient
+        this.ctx.fill()
 
-    /**
-     * Get frequency amplitude at a specific frequency (interpolated)
-     */
-    public getFrequencyAmplitude(frequency: number): number {
-        const binIndex = this.frequencyToBin(frequency)
-        const maxBin = this.smoothedFrequencyData.length - 1
+        // Top line stroke
+        this.ctx.beginPath()
+        this.ctx.moveTo(points[0].x, points[0].y)
 
-        if (binIndex <= 0) return this.smoothedFrequencyData[0] || 0
-        if (binIndex >= maxBin) return this.smoothedFrequencyData[maxBin] || 0
-
-        // Linear interpolation between adjacent bins
-        const lowerBin = Math.floor(binIndex)
-        const upperBin = Math.ceil(binIndex)
-        const fraction = binIndex - lowerBin
-
-        const lowerValue = this.smoothedFrequencyData[lowerBin] || 0
-        const upperValue = this.smoothedFrequencyData[upperBin] || 0
-
-        return lowerValue + (upperValue - lowerValue) * fraction
-    }
-
-    /**
-     * Get averaged frequency amplitude over a frequency range for better resolution
-     */
-    private getAveragedFrequencyAmplitude(startFreq: number, endFreq: number, frequencyResolution: number, totalBins: number): number {
-        // Convert frequency range to bin indices
-        const startBinFloat = startFreq / frequencyResolution
-        const endBinFloat = endFreq / frequencyResolution
-
-        const startBin = Math.max(0, Math.floor(startBinFloat))
-        const endBin = Math.min(totalBins - 1, Math.ceil(endBinFloat))
-
-        if (startBin === endBin) {
-            // Single bin case - use interpolation if we're between bins
-            if (startBin < totalBins - 1) {
-                const fraction = startBinFloat - startBin
-                const currentValue = this.smoothedFrequencyData[startBin] || 0
-                const nextValue = this.smoothedFrequencyData[startBin + 1] || 0
-                return currentValue + (nextValue - currentValue) * fraction
-            } else {
-                return this.smoothedFrequencyData[startBin] || 0
-            }
+        for (let i = 0; i < points.length - 1; i++) {
+            const curr = points[i]
+            const next = points[i + 1]
+            const midX = (curr.x + next.x) / 2
+            const midY = (curr.y + next.y) / 2
+            this.ctx.quadraticCurveTo(curr.x, curr.y, midX, midY)
         }
+        this.ctx.lineTo(last.x, last.y)
 
-        let weightedSum = 0
-        let totalWeight = 0
-
-        // For frequency ranges spanning multiple bins, use weighted averaging
-        for (let bin = startBin; bin <= endBin; bin++) {
-            if (bin >= totalBins) break
-
-            const binStartFreq = bin * frequencyResolution
-            const binEndFreq = (bin + 1) * frequencyResolution
-
-            // Calculate overlap between this bin and our target frequency range
-            const overlapStart = Math.max(startFreq, binStartFreq)
-            const overlapEnd = Math.min(endFreq, binEndFreq)
-            const overlapAmount = Math.max(0, overlapEnd - overlapStart)
-
-            if (overlapAmount > 0) {
-                // Weight based on how much of the bin overlaps with our target range
-                const weight = overlapAmount / frequencyResolution
-                const binValue = this.smoothedFrequencyData[bin] || 0
-
-                weightedSum += binValue * weight
-                totalWeight += weight
-            }
-        }
-
-        return totalWeight > 0 ? weightedSum / totalWeight : 0
+        this.ctx.strokeStyle = "rgba(130, 230, 250, 0.75)"
+        this.ctx.lineWidth = 1.5
+        this.ctx.stroke()
     }
 
-    /**
-     * Generate spectrum bars data for visualization - aligned with frequency grid
-     */
-    public generateSpectrumBars(canvasWidth: number, canvasHeight: number): SpectrumBar[] {
-        const bars: SpectrumBar[] = []
-        const barWidth = canvasWidth / this.numBars
-
-        // Get current analyser for accurate frequency range
-        const analysers = AudioAnalyser.getAnalysers()
-        let maxDisplayFreq = this.maxFreq
-        let sampleRate = this.actualSampleRate
-        let fftSize = this.actualFFTSize
-
-        if (analysers && analysers.length > 0) {
-            const analyser = analysers[0]
-            sampleRate = analyser.context.sampleRate
-            fftSize = analyser.fftSize
-            // Limit max frequency to Nyquist frequency (half of sample rate)
-            maxDisplayFreq = Math.min(this.maxFreq, sampleRate / 2)
-        }
-
-        // Calculate frequency resolution per bin
-        const frequencyResolution = sampleRate / fftSize
-        const totalBins = this.smoothedFrequencyData.length
-
-        // Use SAME logarithmic frequency distribution as AudioEqualizer component
-        // This ensures perfect alignment with the frequency grid
-        const logMin = Math.log10(this.minFreq)
-        const logMax = Math.log10(maxDisplayFreq)
-
-        for (let i = 0; i < this.numBars; i++) {
-            const x = i * barWidth
-
-            // Calculate frequency for this bar using pure logarithmic scale
-            // (matching AudioEqualizer's getFreqX/getXFreq functions)
-            const logProgress = i / this.numBars
-            const logFreq = logMin + logProgress * (logMax - logMin)
-            const frequency = Math.pow(10, logFreq)
-
-            // Calculate frequency range for this bar
-            const nextLogProgress = (i + 1) / this.numBars
-            const nextLogFreq = logMin + nextLogProgress * (logMax - logMin)
-            const nextFrequency = i === this.numBars - 1 ? maxDisplayFreq : Math.pow(10, nextLogFreq)
-
-            // Get amplitude by averaging the frequency range for this bar
-            const amplitude = this.getAveragedFrequencyAmplitude(frequency, nextFrequency, frequencyResolution, totalBins)
-            const normalizedAmplitude = amplitude / 255 // Normalize to 0-1
-
-            // Apply logarithmic scaling for better visual representation
-            const logAmplitude = normalizedAmplitude > 0 ? Math.log10(normalizedAmplitude * 9 + 1) : 0
-            const height = logAmplitude * canvasHeight * 0.9 // Max 90% of canvas height
-
-            bars.push({
-                x,
-                width: barWidth - 1, // Small gap between bars
-                height: Math.max(0, height), // Ensure non-negative height
-                frequency,
-                amplitude: normalizedAmplitude
-            })
-        }
-
-        return bars
-    }
-
-    /**
-     * Get smooth color for amplitude level
-     */
-    public static getSpectrumColor(amplitude: number): string {
-        // Much smoother color interpolation with more gradual transitions
-        if (amplitude <= 0.15) {
-            // Very low: bright green
-            return `hsl(140, 100%, ${50 + amplitude * 200}%)`
-        } else if (amplitude <= 0.35) {
-            // Low to medium-low: green to lime green
-            const progress = (amplitude - 0.15) / 0.2
-            const hue = 140 - progress * 20 // 140 to 120
-            return `hsl(${hue}, 100%, 65%)`
-        } else if (amplitude <= 0.55) {
-            // Medium-low to medium: lime to yellow-green
-            const progress = (amplitude - 0.35) / 0.2
-            const hue = 120 - progress * 30 // 120 to 90
-            return `hsl(${hue}, 100%, 65%)`
-        } else if (amplitude <= 0.75) {
-            // Medium to medium-high: yellow-green to yellow-orange
-            const progress = (amplitude - 0.55) / 0.2
-            const hue = 90 - progress * 35 // 90 to 55
-            return `hsl(${hue}, 100%, 60%)`
-        } else if (amplitude <= 0.9) {
-            // Medium-high to high: yellow-orange to orange-red
-            const progress = (amplitude - 0.75) / 0.15
-            const hue = 55 - progress * 30 // 55 to 25
-            return `hsl(${hue}, 100%, 55%)`
-        } else {
-            // Very high: orange-red to deep red
-            const progress = (amplitude - 0.9) / 0.1
-            const hue = 25 - progress * 25 // 25 to 0
-            return `hsl(${hue}, 100%, 50%)`
-        }
-    }
-
-    /**
-     * Get normalized amplitude at specific frequency (0-1 range)
-     */
-    public getNormalizedAmplitude(frequency: number): number {
-        return this.getFrequencyAmplitude(frequency) / 255
-    }
-
-    /**
-     * Convert frequency to X position using logarithmic scale (matches AudioEqualizer)
-     */
-    public frequencyToX(frequency: number, canvasWidth: number): number {
-        const logMin = Math.log10(this.minFreq)
-        const logMax = Math.log10(this.maxFreq)
-        const logFreq = Math.log10(frequency)
-        return ((logFreq - logMin) / (logMax - logMin)) * canvasWidth
-    }
-
-    /**
-     * Convert X position to frequency using logarithmic scale (matches AudioEqualizer)
-     */
-    public xToFrequency(x: number, canvasWidth: number): number {
-        const logMin = Math.log10(this.minFreq)
-        const logMax = Math.log10(this.maxFreq)
-        const logFreq = logMin + (x / canvasWidth) * (logMax - logMin)
-        return Math.pow(10, logFreq)
-    }
-
-    /**
-     * Cleanup resources
-     */
-    public dispose(): void {
+    public dispose() {
         this.stop()
-        // Clear data arrays
-        this.frequencyData.fill(0)
-        this.smoothedFrequencyData.fill(0)
+        this.canvas = null
+        this.ctx = null
+        this.smoothedValues.fill(0)
+        this.displayValues.fill(0)
     }
 }

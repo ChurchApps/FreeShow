@@ -192,7 +192,7 @@ export class AudioInputCapture {
 
     getAnalysers(nodeId = "speaker_default"): AnalyserNode[] {
         this.lastQueryTimestamp.set(nodeId, performance.now())
-        return this.getOrCaptureEntry(nodeId)?.analysers || this.analysers.get("drawer_audio")?.analysers || []
+        return this.getOrCaptureEntry(nodeId)?.analysers || []
     }
 
     getVisualizerData(nodeId: string): InputVisualizerData | null {
