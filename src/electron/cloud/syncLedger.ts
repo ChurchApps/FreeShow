@@ -141,7 +141,8 @@ export class SyncLedger {
         }
         if (this.isCreated(storeId, key)) this.markAsCreated(storeId, key)
 
-        // exists on both sides and not deleted → newest wins (collections pass cloudIsNewer=false → keep local)
+        // exists on both sides and not deleted → newest wins. Collections have no per-item "modified",
+        // so callers pass whether the cloud file as a whole is newer than the local one (see mergeCollection).
         return { action: cloudIsNewer ? "download" : "upload" }
     }
 
@@ -169,13 +170,15 @@ export class SyncLedger {
     }
 
     // Merges one item-collection (e.g. scriptures) per-item. Used to avoid whole-object overwrites.
-    mergeCollection(storeId: string, type: string, cloudObj: Record<string, any>, localObj: Record<string, any>): Record<string, any> {
+    // cloudIsNewer resolves conflicts on items that exist on both sides (no per-item "modified" to
+    // compare, so this is the same whole-file newest-wins check the non-collection settings use).
+    mergeCollection(storeId: string, type: string, cloudObj: Record<string, any>, localObj: Record<string, any>, cloudIsNewer = false): Record<string, any> {
         const merged: Record<string, any> = { ...localObj }
 
         // items present in the cloud
         for (const [key, value] of Object.entries(cloudObj || {})) {
             const itemKey = `${type}/${key}`
-            const action = this.resolveCloudEntry(storeId, itemKey, key in merged).action
+            const action = this.resolveCloudEntry(storeId, itemKey, key in merged, cloudIsNewer).action
             if (action === "delete") delete merged[key]
             else if (action === "create" || action === "download") merged[key] = value
         }
