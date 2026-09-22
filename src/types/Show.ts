@@ -141,7 +141,7 @@ export interface Item {
     speed?: number // media item
     variable?: any
     web?: any
-    qr_code?: { text?: string }
+    qr_code?: { text?: string; color?: string; background?: string }
     tracker?: any // slide progress tracker item data
     bindings?: string[] // bind item to stage or an output
     actions?: any // showTime | hideTime | transition

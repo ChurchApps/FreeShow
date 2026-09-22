@@ -742,7 +742,12 @@ export const itemBoxes: Box2 = {
         icon: "qr_code",
         sections: {
             default: {
-                inputs: splitIntoRows([{ id: "qr.text", type: "string", value: "", values: { label: "inputs.url" } }])
+                inputs: splitIntoRows([
+                    { id: "qr_code.text", type: "string", value: "", values: { label: "inputs.url" } },
+                    // colors:
+                    { id: "qr_code.color", type: "color", value: "#000000", values: { label: "edit.color", defaultValue: "#000000", allowOpacity: true, style: "flex: 1;" } },
+                    { id: "qr_code.background", type: "color", value: "#FFFFFF", values: { label: "edit.background_color", defaultValue: "#FFFFFF", allowOpacity: true, style: "flex: 1;" } }
+                ])
             }
         }
     }
