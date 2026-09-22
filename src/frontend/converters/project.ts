@@ -8,7 +8,7 @@ import { history } from "../components/helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
 import { sendMain } from "../IPC/main"
-import { actions as actionsStores, activePage, activePopup, activeProject, activeShow, alertMessage, editingProjectTemplate, effects as effectsStores, focusMode, folders, media as mediaStores, overlays as overlayStores, projects, projectTemplates, projectView, recentFiles } from "../stores"
+import { actions as actionsStores, activePage, activePopup, activeProject, activeShow, alertMessage, categories as categoriesStore, editingProjectTemplate, effects as effectsStores, focusMode, folders, media as mediaStores, overlays as overlayStores, projects, projectTemplates, projectView, recentFiles } from "../stores"
 import { translateText } from "../utils/language"
 import { confirmCustom } from "../utils/popup"
 import { audioExtensions, mediaExtensions } from "../values/extensions"
@@ -16,7 +16,7 @@ import { newToast } from "../utils/common"
 
 export function importProject(files: { content: string; path?: string; name?: string; extension?: string }[]) {
     files.forEach(({ content, path }) => {
-        const { project, parentFolder, shows, overlays, effects, actions, media } = JSON.parse(content)
+        const { project, parentFolder, shows, overlays, effects, actions, media, categories } = JSON.parse(content)
         if (!project) return
 
         // find any parent folder with the same name as previous parent, or place at root
@@ -24,6 +24,16 @@ export function importProject(files: { content: string; path?: string; name?: st
         const projectId = project.id || ""
         delete project.id
         if (path) project.sourcePath = path
+
+        // create any missing categories
+        if (categories) {
+            categoriesStore.update((a) => {
+                Object.entries(categories).forEach(([id, cat]: any) => {
+                    if (!a[id]) a[id] = { name: cat.name, icon: cat.icon ?? null }
+                })
+                return a
+            })
+        }
 
         // add overlays
         if (overlays) {
