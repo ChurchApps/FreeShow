@@ -196,7 +196,7 @@ export class AudioPlayer {
         this.initAudio(resolvedKey, waitToPlay, !!options.startPaused)
 
         const name = removeExtension(metadata.name || getFileName(path))
-        this.nowPlaying(path, name)
+        if (type !== "effect") this.nowPlaying(path, name)
         this.clearLoading(key)
         return true
     }
@@ -414,7 +414,22 @@ export class AudioPlayer {
             return a
         })
 
-        if (!AudioPlayer.getAllPlaying().length) sendMain(Main.NOW_PLAYING_UNSET)
+        this.updateNowPlaying()
+    }
+
+    static updateNowPlaying() {
+        const playingMusic = Object.values(get(playingAudio)).filter((item) => {
+            if (!item.audio || item.isMic || !item.path) return false
+
+            const path = AudioPlayer.getPath(item.path)
+            const duration = item.audio.duration || this.getDurationSync(path)
+            return this.getAudioType(path, duration) !== "effect"
+        })
+        const playing = playingMusic.filter((item) => !item.paused)
+        const lastActive = playing.length ? playing[playing.length - 1] : playingMusic[playingMusic.length - 1]
+
+        if (lastActive?.path) this.nowPlaying(lastActive.path, lastActive.name)
+        else sendMain(Main.NOW_PLAYING_UNSET)
     }
 
     private static stopStream(stream: MediaStream | undefined) {
