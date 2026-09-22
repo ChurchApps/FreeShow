@@ -187,7 +187,7 @@ describe("backup.ts", () => {
 
     describe("restoreFiles", () => {
         it("returns early when no files are selected", async () => {
-            vi.mocked(selectFilesDialog).mockReturnValue([])
+            vi.mocked(selectFilesDialog).mockResolvedValue([])
             await restoreFiles()
 
             expect(sendToMain).toHaveBeenCalledWith(ToMain.RESTORE2, { finished: false })
