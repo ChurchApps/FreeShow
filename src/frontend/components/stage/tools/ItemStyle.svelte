@@ -18,6 +18,7 @@
     $: item = activeItemId ? stageItems[activeItemId] : null
 
     let currentItemSections = clone(itemSections)
+    delete currentItemSections.shape_outside
 
     let data: { [key: string]: any } = {}
     $: if (item?.style || item === null) updateData()
