@@ -8,7 +8,7 @@ import type { DropData, Selected } from "../../../types/Main"
 import type { Item, Slide, SlideAction } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, scriptureSettings, shows, showsCache, slidesOptions, templates, timers } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, effectsLibrary, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, scriptureSettings, shows, showsCache, slidesOptions, templates, timers } from "../../stores"
 import { newToast } from "../../utils/common"
 import { getAccess } from "../../utils/profile"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
@@ -431,6 +431,26 @@ export const dropActions = {
             return h
         }
 
+        if (drop.data === "effects_library" && (drag.id === "audio" || drag.id === "audio_effect" || drag.id === "media")) {
+            const rawFiles: any[] = drag.data
+            effectsLibrary.update((effects) => {
+                rawFiles.forEach((file) => {
+                    const path = file.path || file.id
+                    if (!path) return
+                    const ext = getExtension(file.name || path)
+                    if (getMediaType(ext) !== "audio" && !audioExtensions.includes(ext.toLowerCase())) return
+                    if (effects.some((e) => e.path === path)) return
+
+                    effects.push({
+                        path,
+                        name: file.name ? removeExtension(getFileName(file.name)) : removeExtension(getFileName(path))
+                    })
+                })
+                return effects
+            })
+            return
+        }
+
         if (drop.data !== "all" && (drag.id === "overlay" || drag.id === "template")) {
             drag.data.forEach((id) => {
                 history({
@@ -526,6 +546,26 @@ export const dropActions = {
 
         h.newData = { key: "songs", data: songs }
         return h
+    },
+    effects_library: ({ drag }: Data) => {
+        const rawFiles: any[] = drag.id === "files" ? drag.data.map((a: any) => ({ path: window.api.showFilePath(a), name: a.name })) : drag.data
+        if (!rawFiles?.length) return
+
+        effectsLibrary.update((effects) => {
+            rawFiles.forEach((file) => {
+                const path = file.path || file.id
+                if (!path) return
+                const ext = getExtension(file.name || path)
+                if (getMediaType(ext) !== "audio" && !audioExtensions.includes(ext.toLowerCase())) return
+                if (effects.some((e) => e.path === path)) return
+
+                effects.push({
+                    path,
+                    name: file.name ? removeExtension(getFileName(file.name)) : removeExtension(getFileName(path))
+                })
+            })
+            return effects
+        })
     }
 }
 
