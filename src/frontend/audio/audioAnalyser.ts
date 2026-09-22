@@ -474,9 +474,8 @@ export class AudioAnalyser {
     static getAnalysers(path?: string) {
         let nodeId = "speaker_default"
 
-        // WIP per item capture for visualizer ?
+        // WIP per item capture for visualizer (audio file playback preview) ?
         if (path) nodeId = path
-        console.log(path)
 
         return AudioInputCapture.getInstance().getAnalysers(nodeId)
     }
