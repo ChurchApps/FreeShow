@@ -81,8 +81,11 @@
     $: if (item?.style || item === null) styles = getStyles(item?.style, true)
 
     $: if (stageSections?.font || type === "text") {
-        setBoxInputValue(stageSections, "font", "font-size", "disabled", !isTextItem && item?.textFit === "growToFit")
-        setBoxInputValue(stageSections, "font", "textFit", "value", item?.textFit || "growToFit")
+        let sectionId = stageSections?.font ? "font" : "default"
+        const defaultTextFit = isSlideText ? "shrinkToFit" : item?.type === "text" ? "none" : "growToFit"
+        const currentTextFit = item?.textFit || defaultTextFit
+        setBoxInputValue(stageSections, sectionId, "font-size", "disabled", !isTextItem && currentTextFit === "growToFit")
+        setBoxInputValue(stageSections, sectionId, "textFit", "default", defaultTextFit)
         // setBoxInputValue(stageSections, "font", "auto", "value", item.auto ?? true)
 
         setBoxInputValue(stageSections, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
