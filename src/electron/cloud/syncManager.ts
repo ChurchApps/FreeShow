@@ -370,7 +370,9 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 })
             )
         } else if (id === "SYNCED_SETTINGS") {
-            // Merge item-collections per-item via ledger. See #3335.
+            // Merge item-collections per-item via ledger: additions/deletions never overwrite the other
+            // device's items (see #3335). Items present on both sides have no per-item "modified" to compare,
+            // so conflicts fall back to whichever whole settings file is newer (see #3772).
             const cloudFileIsNewer = isNewDevice || (await isCloudNewerThanFile(localStore.path, modifiedDates[file.name]))
             for (const [type, object] of Object.entries<{ [key: string]: any }>(cloudFileData)) {
                 const isCollection = SYNCED_SETTINGS_COLLECTIONS.includes(type) && !!object && typeof object === "object" && !Array.isArray(object)
@@ -381,7 +383,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 }
 
                 if (!localData[type] || typeof localData[type] !== "object") localData[type] = {}
-                localData[type] = ledger.mergeCollection(id, type, object, localData[type])
+                localData[type] = ledger.mergeCollection(id, type, object, localData[type], cloudFileIsNewer)
             }
         } else {
             // merge individual objects
