@@ -154,8 +154,11 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
                 { x: x1, y: y1 + height }
             ])
             break
-        case "roundRect": {
-            const r = (adj / 100000) * width // simple approximation
+        case "roundRect":
+        case "round2SameRect": {
+            const minDim = Math.min(width, height)
+            const cornerRadius = prstGeom === "roundRect" ? 16667 : 50000
+            const r = Math.min(minDim / 2, Math.max(0, ((adj || cornerRadius) / 100000) * minDim))
             path = `M ${normalizeX(x1 + r)} ${normalizeY(y1)} 
                     L ${normalizeX(x1 + width - r)} ${normalizeY(y1)}
                     Q ${normalizeX(x1 + width)} ${normalizeY(y1)} ${normalizeX(x1 + width)} ${normalizeY(y1 + r)}
@@ -274,13 +277,18 @@ export function getPresetShapePath(prstGeom, x1, y1, width, height, adj = 0) {
                 A ${normalizeX(rx)} ${normalizeY(ry)} 0 ${largeArc} 1 ${normalizeX(xEnd)} ${normalizeY(yEnd)}`
             break
         }
-        case "line": {
+        case "line":
+        case "straightConnector1": {
             // Simple straight line
             path = `M ${normalizeX(x1)} ${normalizeY(y1)}
                 L ${normalizeX(x1 + width)} ${normalizeY(y1 + height)}`
             break
         }
-        case "connector": {
+        case "connector":
+        case "bentConnector2":
+        case "bentConnector3":
+        case "curvedConnector2":
+        case "curvedConnector3": {
             // Straight or elbow connector
             path = `M ${normalizeX(x1)} ${normalizeY(y1)}
                 L ${normalizeX(x1 + width)} ${normalizeY(y1)}
