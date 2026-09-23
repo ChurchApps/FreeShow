@@ -16,7 +16,6 @@ import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
 import { setOutputAlwaysOnTop } from "./OutputAlwaysOnTop"
 import { OutputVisibility } from "./OutputVisibility"
-import { RenderGroups } from "./RenderGroups"
 
 // Tracks timing stages for off-main GPU readback and transmission (in ms)
 type OffMainSegments = { consume: number; finish: number; enqueue: number; doneMain: number }
@@ -43,8 +42,6 @@ export class OutputLifecycle {
     }
 
     static initListeners() {
-        RenderGroups.onChanged = () => toApp(OUTPUT, { channel: "RENDER_GROUPS", data: RenderGroups.snapshot() })
-
         screen.on("display-metrics-changed", () => {
             setTimeout(() => this.restoreAllOutputBounds(), 500)
         })
@@ -87,7 +84,7 @@ export class OutputLifecycle {
         })
     }
 
-    static async createOutput(output: Output, groupRetries = 0) {
+    static async createOutput(output: Output) {
         await gpuStateSettled // the offscreen capture mode depends on the real GPU state
         const id: string = output.id || ""
         if (!id) return
@@ -99,25 +96,6 @@ export class OutputLifecycle {
         }
 
         this.clearPendingCaptureStart(id)
-
-        // Shared-render: outputs with identical content share one render window
-        const shareEligible = RenderGroups.enabled && this.canShareRender(output)
-        const group = shareEligible ? RenderGroups.add(id, output) : { isRenderer: true, rendererId: id }
-        if (!group.isRenderer) {
-            const rendererWin = OutputHelper.getOutput(group.rendererId)?.window
-            if (rendererWin && !rendererWin.isDestroyed()) {
-                await this.createFollowerOutput(id, output, group.rendererId, rendererWin)
-                return
-            }
-            RenderGroups.remove(id)
-            if (groupRetries < 5) {
-                setTimeout(() => {
-                    if (!OutputHelper.getOutput(id)) void this.createOutput(output, groupRetries + 1)
-                }, 300)
-                return
-            }
-            console.warn(`[GROUP] renderer window for ${group.rendererId} never became ready; ${id} rendering independently`)
-        }
 
         // disable move/resize listeners during initialization
         OutputHelper.Bounds.disableWindowMoveListener()
@@ -156,27 +134,6 @@ export class OutputLifecycle {
 
         // Blackmagic
         if (output.blackmagic) initializeSender(output, outputWindow, id)
-    }
-
-    // only NDI capture outputs share a render; blackmagic/webrtc/rtmp need dedicated capture,
-    // and displayed (non-OSR) outputs need their own window
-    private static canShareRender(output: Output): boolean {
-        return output.ndi === true && this.isInvisible(output)
-    }
-
-    private static async createFollowerOutput(id: string, output: Output, rendererId: string, rendererWindow: BrowserWindow) {
-        OutputHelper.setOutput(id, { window: rendererWindow, follower: true, renderGroupRenderer: rendererId, osr: true, invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: output.bounds, transparent: output.transparent })
-
-        this.pendingCaptureStart[id] = setTimeout(() => {
-            delete this.pendingCaptureStart[id]
-            if (!CaptureHelper.Lifecycle || !OutputHelper.getOutput(id)) return
-            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false })
-        }, 1200)
-
-        if (output.ndi) {
-            await NdiSender.createSenderNDI(id, NdiSender.initNameNDI(output.ndiData?.name, output.name), output.ndiData?.groups)
-            if (output.ndiData) setDataNDI({ id, ...output.ndiData })
-        }
     }
 
     /*
@@ -396,12 +353,9 @@ export class OutputLifecycle {
     private static offMain = new Map<string, OffMainState>()
 
     private static rendererTargetFps(id: string): number {
-        let fps = 0
-        for (const m of RenderGroups.members(id)) {
-            const mo = OutputHelper.getOutput(m)
-            if (mo?.captureOptions) fps = Math.max(fps, CaptureHelper.getMaxActiveFramerate(mo.captureOptions.framerates || {}, mo.captureOptions.options || {}))
-        }
-        return fps
+        const output = OutputHelper.getOutput(id)
+        if (!output?.captureOptions) return 0
+        return CaptureHelper.getMaxActiveFramerate(output.captureOptions.framerates || {}, output.captureOptions.options || {})
     }
 
     private static capFor(id: string): number {
@@ -571,7 +525,6 @@ export class OutputLifecycle {
         let statsTimer: any = null
         if (STATS) {
             statsTimer = setInterval(() => {
-                const m = RenderGroups.members(id)
                 const rtt = sRttCount ? Math.round(sRttSum / sRttCount) : 0
                 const sendCap = Math.round(1000 / this.getOsrSendInterval(id))
                 // admit = group admission target (max configured rate across members); ndiFramerate = the
@@ -615,7 +568,7 @@ export class OutputLifecycle {
                 // natural paints flow and the drive is silent)
                 const sInvalidates = process.platform === "linux" ? OutputLifecycle.readOsrInvalidatesIssued(id) : 0
                 console.info(
-                    `[CAP-STATS ${id}] members=[${m.join(",")}] paints=${sPaints} invalidates=${sInvalidates} burst=${sBurstPaints} fwd=${sForward} done=${sDone} readback=${sReadback} dropBudget=${sDropBudget} dropInterval=${sDropInterval} parkExp=${sParkExpired} inflight=${offMainInFlight}/${this.depthFor(id)} globalInflight=${this.globalInFlight} depth=${this.depthFor(id)} depthTotal=${this.totalDepth()} minRtt=${pr.minRtt}ms pipeRtt=${pr.pipeRtt}ms ${segStr} renderers=${this.offMainRendererCount} rtt=${rtt}ms gap(mean=${Math.round(gapMean)} std=${Math.round(gapStd)} p95=${gapP95} >25ms=${gapBig}) pipeIdle=${Math.round(idleMs)}ms${tlStr} admit=${admitFps}fps sendCap=${sendCap}fps ndiFramerate=${ndiFps}`
+                    `[CAP-STATS ${id}] paints=${sPaints} invalidates=${sInvalidates} burst=${sBurstPaints} fwd=${sForward} done=${sDone} readback=${sReadback} dropBudget=${sDropBudget} dropInterval=${sDropInterval} parkExp=${sParkExpired} inflight=${offMainInFlight}/${this.depthFor(id)} globalInflight=${this.globalInFlight} depth=${this.depthFor(id)} depthTotal=${this.totalDepth()} minRtt=${pr.minRtt}ms pipeRtt=${pr.pipeRtt}ms ${segStr} renderers=${this.offMainRendererCount} rtt=${rtt}ms gap(mean=${Math.round(gapMean)} std=${Math.round(gapStd)} p95=${gapP95} >25ms=${gapBig}) pipeIdle=${Math.round(idleMs)}ms${tlStr} admit=${admitFps}fps sendCap=${sendCap}fps ndiFramerate=${ndiFps}`
                 )
                 sPaints = sDropBudget = sDropInterval = sParkExpired = sForward = sDone = sReadback = sRttSum = sRttCount = sBurstPaints = 0
                 sGaps.length = 0
@@ -636,19 +589,18 @@ export class OutputLifecycle {
             const framerate = output?.captureOptions?.framerates?.ndi || 30
             const ratio = height ? width / height : 16 / 9
             const transparent = output?.transparent === true
-            const hasOmt = !!OmtSender.OMT[id]?.sender
             const omtFramerate = output?.captureOptions?.framerates?.omt || framerate
             const fmt = transparent ? 2 : 1
-            const members = NdiSender.NDI[id]?.sender ? RenderGroups.members(id).filter((m) => m === id || (OutputHelper.getOutput(m) as any)?.renderGroupRenderer === id) : []
-            const memberFramerates: { [m: string]: number } = {}
-            for (const m of members) memberFramerates[m] = OutputHelper.getOutput(m)?.captureOptions?.framerates?.ndi || framerate
-            const groupIds = members.length ? members : hasOmt ? [id] : []
+            const hasNdi = !!NdiSender.NDI[id]?.sender
+            const hasOmt = !!OmtSender.OMT[id]?.sender
+            const memberFramerates: { [m: string]: number } = { [id]: framerate }
+            const groupIds = hasNdi || hasOmt ? [id] : []
             const groupInfo = groupIds.length ? CaptureHelper.Transmitter.groupOffMainInfo(groupIds) : null
             const mixed = !!groupInfo && groupInfo.eligible && groupInfo.needsScaled && typeof addon.readbackConsume === "function"
             const scaled = mixed ? CaptureHelper.Transmitter.getScaledTarget({ width, height }) : null
             const seq = ++offMainSeq
             // an output sends on one protocol, and each has its own worker
-            const captureOpts = { size: { width, height }, ratio, framerate: hasOmt ? omtFramerate : framerate, memberFramerates, format: fmt, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members, depth: OutputLifecycle.depthFor(id) }
+            const captureOpts = { size: { width, height }, ratio, framerate: hasOmt ? omtFramerate : framerate, memberFramerates, format: fmt, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members: [id], depth: OutputLifecycle.depthFor(id) }
             if (hasOmt ? OmtSender.captureFrameOMT(id, source, captureOpts) : NdiSender.captureFrameNDI(id, source, captureOpts)) {
                 forwardAt.set(seq, { t: Date.now(), unc: OutputLifecycle.globalInFlight === 0, px: width * height })
                 OutputLifecycle.globalInFlight++
@@ -789,8 +741,7 @@ export class OutputLifecycle {
             const source = process.platform === "linux" ? { planes: info.planes, modifier: info.modifier } : info.sharedTextureHandle
             const requestedFormat = CaptureHelper.Transmitter.getReadbackFormat(id, { width, height })
 
-            const members = NdiSender.NDI[id]?.sender ? RenderGroups.members(id).filter((m) => m === id || (OutputHelper.getOutput(m) as any)?.renderGroupRenderer === id) : []
-            const offMainIds = members.length ? members : OmtSender.OMT[id]?.sender ? [id] : []
+            const offMainIds = NdiSender.NDI[id]?.sender || OmtSender.OMT[id]?.sender ? [id] : []
             const groupInfo = offMainIds.length ? CaptureHelper.Transmitter.groupOffMainInfo(offMainIds) : null
             const hasGpuDownscale = typeof addon.readbackConsume === "function"
             const canOffMain = !!groupInfo && groupInfo.eligible && (!groupInfo.needsScaled || hasGpuDownscale)
@@ -907,20 +858,6 @@ export class OutputLifecycle {
     static async removeOutput(id: string, reopen: Output | null = null) {
         this.clearPendingCaptureStart(id)
 
-        // Shared-render bookkeeping: drop this output from its group. If it was the RENDERER and followers
-        // remain, the first follower must be promoted to render (given its own window) so the group keeps going.
-        const wasShared = RenderGroups.enabled && (!!(OutputHelper.getOutput(id) as any)?.follower || RenderGroups.isRenderer(id))
-        const groupInfo = wasShared ? RenderGroups.remove(id) : null
-
-        // A FOLLOWER owns no window — just tear down its senders/capture, never touch the shared window.
-        if ((OutputHelper.getOutput(id) as any)?.follower) {
-            CaptureHelper.Lifecycle.stopCapture(id)
-            NdiSender.stopSenderNDI(id)
-            OutputHelper.deleteOutput(id)
-            if (reopen) OutputLifecycle.createOutput(reopen)
-            return
-        }
-
         CaptureHelper.Lifecycle.stopCapture(id)
         NdiSender.stopSenderNDI(id)
         OmtSender.stopSenderOMT(id)
@@ -930,14 +867,6 @@ export class OutputLifecycle {
             this.osrCaptureAddon?.releasePool?.(id)
         } catch {
             // ignore
-        }
-
-        // renderer removed with followers present -> rebuild survivors (first one becomes the new
-        // renderer). A recreated renderer's reopen joins the same ordered batch — racing the rebuild
-        // let followers attach to a mid-teardown window and split the group.
-        if (groupInfo?.wasRenderer && groupInfo.members.length) {
-            this.rebuildGroupMembers(groupInfo.members, reopen)
-            reopen = null
         }
 
         const output = OutputHelper.getOutput(id)
@@ -962,27 +891,6 @@ export class OutputLifecycle {
         } catch (err) {
             console.error(err)
         }
-    }
-
-    // The renderer of a shared group was removed. Tear down the surviving followers (they reference the dying
-    // window) and recreate them from their stored configs: RenderGroups already promoted the first survivor to
-    // members[0], so createOutput gives it a fresh window (renderer) and the rest re-follow it. Recreation is
-    // deferred so the old window finishes closing first.
-    private static rebuildGroupMembers(members: string[], reopenRenderer: Output | null = null) {
-        // don't resurrect a group mid-teardown (closing all outputs removes the renderer too)
-        if (this.closingAllOutputs) return
-        const configs = members.map((m) => RenderGroups.getConfig(m)).filter((c): c is Output => !!c)
-        if (reopenRenderer) configs.unshift(reopenRenderer)
-        for (const m of members) {
-            this.clearPendingCaptureStart(m)
-            CaptureHelper.Lifecycle.stopCapture(m)
-            NdiSender.stopSenderNDI(m)
-            OutputHelper.deleteOutput(m)
-        }
-        // sequential: each member awaits the previous, so followers attach to a live renderer window
-        setTimeout(async () => {
-            for (const config of configs) await this.createOutput(config)
-        }, 150)
     }
 
     static focusOutput(id: string) {
@@ -1041,13 +949,7 @@ export class OutputLifecycle {
         }
     }
 
-    private static closingAllOutputs = false
     static async closeAllOutputs() {
-        this.closingAllOutputs = true
-        try {
-            await Promise.all(OutputHelper.getKeys().map(async (id) => await this.removeOutput(id)))
-        } finally {
-            this.closingAllOutputs = false
-        }
+        await Promise.all(OutputHelper.getKeys().map(async (id) => await this.removeOutput(id)))
     }
 }
