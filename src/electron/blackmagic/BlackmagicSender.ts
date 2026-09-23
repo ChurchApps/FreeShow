@@ -34,6 +34,7 @@ interface PlaybackData {
     frameProcessing?: boolean
     conversionBackoffUntil?: number
     conversionErrorCount?: number
+    frameDurationTicks?: number
 }
 
 interface AudioQueueState {
@@ -263,6 +264,7 @@ export class BlackmagicSender {
                 const targetSize = this.getDimensionsForDisplayMode(displayModeName)
                 const expectedVideoFrameSize = this.getExpectedVideoFrameSize(targetSize, pixelFormat)
                 const expectedAudioSampleCount = Math.round(48000 / BlackmagicSender.getAccurateFrameRate(displayModeName))
+                const frameDurationTicks = Array.isArray(playback.frameRate) && playback.frameRate[0] > 0 ? playback.frameRate[0] : Math.round(60000 / BlackmagicSender.getAccurateFrameRate(displayModeName))
 
                 // Clear conversion buffer pool for this output to handle resolution changes
                 delete this.conversionBufferPools[outputId]
@@ -280,6 +282,7 @@ export class BlackmagicSender {
                     targetSize,
                     expectedVideoFrameSize,
                     expectedAudioSampleCount,
+                    frameDurationTicks,
                     lastVideoSizeWarningTime: 0,
                     lastAudioSizeWarningTime: 0,
                     isStarted: false,
@@ -704,10 +707,9 @@ export class BlackmagicSender {
                         console.warn(`Audio buffer size mismatch: got ${audioData.length} bytes, expected ${expectedAudioSize} bytes (samples: ${expectedSampleCount}, channels: ${data.audioChannels})`)
                     }
 
-                    // Calculate stream time in milliseconds for this frame.
-                    // NOTE: `framerate` is frames-per-second, not milliseconds-per-frame.
-                    // Using FPS directly here causes slow playback (e.g. 60 -> 16.7fps timing).
-                    const currentTime = Math.round(data.scheduledFrames * frameDurationMs)
+                    // Calculate stream time in DeckLink timescale units (duration ticks) for this frame.
+                    const frameDurationTicks = data.frameDurationTicks || 1000
+                    const currentTime = data.scheduledFrames * frameDurationTicks
 
                     // Calculate correct sample frame count based on actual frame rate
                     // For 48kHz audio: sampleFrameCount = 48000 / frameRate

@@ -16,6 +16,7 @@ declare module 'macadam' {
     scheduledTime(): { streamTime: number } | null;
     lastPlayedFrameTime?(): number;
     onFramePlayed?(callback: (frameInfo: { time: number }) => void): void;
+    frameRate?: [number, number];
   }
 
   export interface CaptureChannel {
