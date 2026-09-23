@@ -128,7 +128,7 @@ export class OutputLifecycle {
         const outputWindow = this.createOutputWindow({ ...renderBounds, alwaysOnTop: output.alwaysOnTop !== false, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name, output)
         // const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
-        OutputHelper.setOutput(id, { window: outputWindow, osr: this.isOsrOutput(output), invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: resolvedBounds, transparent: output.transparent, webrtcData: output.webrtcData, rtmpData: output.rtmpData })
+        OutputHelper.setOutput(id, { window: outputWindow, osr: this.isInvisible(output), invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: resolvedBounds, transparent: output.transparent, webrtcData: output.webrtcData, rtmpData: output.rtmpData })
         // OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds({ id: output.id!, bounds: resolvedBounds })
         this.updateWindowConstraints(id)
@@ -161,7 +161,7 @@ export class OutputLifecycle {
     // only NDI capture outputs share a render; blackmagic/webrtc/rtmp need dedicated capture,
     // and displayed (non-OSR) outputs need their own window
     private static canShareRender(output: Output): boolean {
-        return !!output.ndi && !output.omt && !output.blackmagic && !output.webrtcData?.streaming && !output.rtmpData?.streaming && this.isOsrOutput(output)
+        return output.ndi === true && this.isInvisible(output)
     }
 
     private static async createFollowerOutput(id: string, output: Output, rendererId: string, rendererWindow: BrowserWindow) {
@@ -206,7 +206,7 @@ export class OutputLifecycle {
     private static createOutputWindow(options: BrowserWindowConstructorOptions, id: string, name: string, extra: any) {
         options = { ...outputOptions, ...options }
 
-        const osr = this.isOsrOutput(extra)
+        const osr = this.isInvisible(extra)
         if (osr) {
             options.show = false
             const useSharedTexture = this.useSharedTextureCapture()
@@ -253,8 +253,9 @@ export class OutputLifecycle {
         }
     }
 
-    private static isOsrOutput(output: { ndi?: boolean; omt?: boolean; webrtc?: boolean; rtmp?: boolean; blackmagic?: boolean }): boolean {
-        return !!(output.ndi || output.omt || output.webrtc || output.rtmp || output.blackmagic)
+    // can render offscreen (OSR)
+    private static isInvisible(output: { invisible?: boolean }): boolean {
+        return output.invisible === true
     }
 
     static readonly OSR_RENDER_FPS = 60
