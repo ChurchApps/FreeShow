@@ -1870,7 +1870,7 @@ export async function getScriptureShow(biblesContent: BibleContent[] | null) {
 
         const l: any = { id }
 
-        if (backgroundId && i === 0) l.background = backgroundId
+        if (backgroundPath && i === 0) l.background = backgroundId
 
         layouts.push(l)
     })
