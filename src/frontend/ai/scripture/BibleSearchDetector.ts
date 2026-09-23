@@ -2,6 +2,7 @@ import type { MatchResult } from "../../../types/ai/Ai"
 import type { BibleCacheData } from "./BibleCacheManager"
 import { normalizeMishearings } from "./mishearings"
 import { normalizeNumbers } from "./numbers"
+import { normalizeBookName, RANGE_PATTERN, VERSE_PATTERN } from "./referenceDictionary"
 import { normalizeReferences } from "./references"
 
 export class BibleSearchDetector {
@@ -10,7 +11,7 @@ export class BibleSearchDetector {
     public findReferenceMatch(cleanInput: string): MatchResult | null {
         if (!this.cacheData.refRegex) return null
 
-        const globalRegex = new RegExp(this.cacheData.refRegex.source, "gi")
+        const globalRegex = new RegExp(this.cacheData.refRegex.source, "giu")
         const matches = Array.from(cleanInput.matchAll(globalRegex))
         if (matches.length === 0) return null
 
@@ -21,11 +22,7 @@ export class BibleSearchDetector {
 
             if (cleanInput.length - (matchIndex + matchLength) > 120) continue
 
-            const matchedBookName = refMatch[1]
-                .trim()
-                .replace(/^first\b/i, "1")
-                .replace(/^second\b/i, "2")
-                .replace(/^third\b/i, "3")
+            const matchedBookName = normalizeBookName(refMatch[1])
 
             const chapterNum = parseInt(refMatch[2], 10)
             const startVerseNum = refMatch[3] ? parseInt(refMatch[3], 10) : undefined
@@ -62,7 +59,7 @@ export class BibleSearchDetector {
     }
 
     public findStandaloneVerseMatch(cleanInput: string, currentlyOutputted?: string | null): MatchResult | null {
-        const verseRegex = /\b(?:verse|v|verses)\s*(\d+)(?:\s*(?:[-–—]|through|to)\s*(\d+))?\b/gi
+        const verseRegex = new RegExp(`\\b(?:${VERSE_PATTERN})\\s*(\\d+)(?:\\s*(?:[-–—]|${RANGE_PATTERN})\\s*(\\d+))?\\b`, "giu")
         const matches = Array.from(cleanInput.matchAll(verseRegex))
         if (matches.length === 0) return this.findNextVerseCue(cleanInput, currentlyOutputted)
 
