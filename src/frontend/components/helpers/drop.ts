@@ -15,7 +15,7 @@ export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "
 
 const areas = {
     all_slides: ["template"],
-    slides: ["media", "player", "urls", "audio", "audio_effect", "overlay", "sound", "effect", "screen", "ndi", "camera", "microphone", "scripture", "category_audio", "audio_stream", "metronome", "show", "global_timer", "variable", "midi", "action", "omt", "blackmagic"], // group
+    slides: ["media", "player", "urls", "audio", "audio_effect", "overlay", "sound", "effect", "screen", "ndi", "camera", "microphone", "scripture", "category_audio", "audio_stream", "metronome", "show", "global_timer", "variable", "midi", "action", "omt", "blackmagic", "scene"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
     // projects: ["folder"],
     project: ["show_drawer", "media", "audio", "audio_effect", "overlay", "player", "scripture", "effect", "screen", "ndi", "camera", "omt", "blackmagic"],
