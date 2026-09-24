@@ -20,14 +20,15 @@
 
     $: resolution = getResolution(null, { $outputs, $styles })
 
-    let allOverlays = sortByName(keysToID($overlays))
+    let allOverlays: any[] = []
     $: allOverlays = sortByName(keysToID($overlays)).filter((a) => !hide.includes(a.id))
 
     const filter = (s: string) => s.toLowerCase().replace(/[.,\/#!?$%\^&\*;:{}=\-_`~()]/g, "")
     $: filteredOverlays = searchValue.length > 1 ? allOverlays.filter((a) => filter(a.name || "").includes(filter(searchValue))) : allOverlays
 
     // lazy loader
-    let lazyLoader = 0
+    const INITIAL_BATCH = 8
+    let lazyLoader = INITIAL_BATCH
     let timeout: NodeJS.Timeout | null = null
     let loaded = false
 
@@ -35,9 +36,11 @@
         if (timeout) clearTimeout(timeout)
     })
 
-    $: if (filteredOverlays) {
+    let prevSearchValue = ""
+    $: if (searchValue !== prevSearchValue) {
+        prevSearchValue = searchValue
         loaded = false
-        lazyLoader = 0
+        lazyLoader = INITIAL_BATCH
     }
 
     $: if (!loaded && filteredOverlays?.length) {
@@ -45,13 +48,9 @@
             loaded = true
         } else {
             if (timeout) clearTimeout(timeout)
-            timeout = setTimeout(
-                () => {
-                    const batch = lazyLoader === 0 ? 4 : Math.min(32, lazyLoader * 2)
-                    lazyLoader += batch
-                },
-                lazyLoader === 0 ? 60 : 30
-            )
+            timeout = setTimeout(() => {
+                lazyLoader += 16
+            }, 25)
         }
     }
 
