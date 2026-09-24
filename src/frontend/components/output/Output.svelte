@@ -35,8 +35,10 @@
 
     $: currentOutput = $outputs[outputId] || $allOutputs[outputId] || {}
 
+    $: styleId = styleIdOverride || sceneStyleId || currentOutput?.style
+
     // output styling
-    $: currentStyling = getCurrentStyle($styles, styleIdOverride || currentOutput.style)
+    $: currentStyling = getCurrentStyle($styles, styleId)
     let currentStyle: Styles = { name: "" }
     let cachedStyleStr = ""
     // don't refresh content unless it changes
@@ -107,14 +109,6 @@
             effectsIds = clone(out.effects || [])
         }
     }
-    let cachedSceneStr = ""
-    $: {
-        const newSceneStr = JSON.stringify(out.scene || null)
-        if (newSceneStr !== cachedSceneStr) {
-            cachedSceneStr = newSceneStr
-            updateOutData("scene")
-        }
-    }
 
     $: refreshOutput = out.refresh
     $: if (outputId || refreshOutput) updateOutData()
@@ -145,14 +139,14 @@
                 storedOverlays = JSON.stringify($overlays)
             }
         }
-        if (!type || type === "scene") scene = clone(out.scene || null)
     }
 
     // scenes
+    $: scene = out.scene || null
     $: sceneMedia = scene?.media || null
-    $: sceneStyle = scene?.style || null
+    $: sceneStyleId = scene?.style || ""
     $: sceneOverlays = scene?.overlays || []
-    $: sceneHideLayers = scene !== null && !sceneStyle
+    $: sceneHideLayers = scene !== null && !sceneStyleId
 
     // overlays
     $: outputtedOverlayIds = sceneHideLayers ? [] : out.overlays || []
@@ -209,15 +203,14 @@
 
     // slide styling
     // currentSlide?.settings?.resolution
-    $: resolution = getResolution(null, { currentOutput, currentStyle }, false, outputId, styleIdOverride)
+    $: resolution = getResolution(null, { currentOutput, currentStyle }, false, outputId, styleId)
     $: transitions = getOutputTransitions(slideData, currentStyle.transition, $transitionData, mirror && !preview)
     $: slideFilter = getSlideFilter(slideData)
 
     // custom template
     // WIP revert to old style when output style is reverted to no style (REFRESH OUTPUT)
-    $: outputStyle = styleIdOverride || currentOutput?.style
     // currentSlide is so the background updates when scripture is removed (if template background on both) - not changed in preview
-    $: if (outputStyle && currentStyle && currentSlide !== undefined) {
+    $: if (styleId && currentStyle && currentSlide !== undefined) {
         if (currentSlide) setTemplateItems()
         getStyleTemplateData()
     }
@@ -319,10 +312,10 @@
         }
     }
 
-    $: cropping = currentOutput.cropping || currentStyle.cropping
+    $: cropping = currentOutput?.cropping || currentStyle?.cropping
 
     // values
-    $: backgroundColor = currentOutput.transparent ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle.background || slide?.settings?.backgroundColor || "black"
+    $: backgroundColor = currentOutput?.transparent ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle?.background || slide?.settings?.backgroundColor || "black"
     // background image
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && (slide || background) ? "" : currentStyle?.backgroundImage || ""
     $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }
@@ -411,7 +404,7 @@
             {/if}
         </span>
     {:else if actualSlide && actualSlide?.type !== "pdf"}
-        <SlideContent {outputId} outSlide={actualSlide} isClearing={isSlideClearing} slideData={actualSlideData} currentSlide={actualCurrentSlide} {currentStyle} {animationData} currentLineId={actualCurrentLineId} {lines} {ratio} {mirror} {preview} transition={textTransition} transitionEnabled={!mirror || preview} {styleIdOverride} />
+        <SlideContent {outputId} outSlide={actualSlide} isClearing={isSlideClearing} slideData={actualSlideData} currentSlide={actualCurrentSlide} {currentStyle} {animationData} currentLineId={actualCurrentLineId} {lines} {ratio} {mirror} {preview} transition={textTransition} transitionEnabled={!mirror || preview} styleIdOverride={styleIdOverride || sceneStyleId} />
 
         <!-- metadata -->
         <Overlay overlay={{ items: currentMetadataItems }} isClearing={isMetadataClearing || isSlideClearing} {outputId} transition={textTransition} />
