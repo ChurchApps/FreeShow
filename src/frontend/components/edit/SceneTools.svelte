@@ -133,7 +133,7 @@
             </div>
 
             <div
-                class="items {overlaysList.length > 1 ? 'context #items_list_item' : ''}"
+                class="items"
                 style="display: flex;flex-direction: column;"
                 on:mousedown={(e) => {
                     if (e.button !== 2) return

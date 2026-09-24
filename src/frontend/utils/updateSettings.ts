@@ -284,11 +284,20 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         lockedOverlays.set(v)
 
         // start overlays
-        if (v.length) setOutput("overlays", v, false, "", true)
+        if (v.length) {
+            // timeout to ensure outputs are initialized
+            setTimeout(() => {
+                setOutput("overlays", v, false, "", true)
+            }, 10)
+        }
     },
     activeScenes: (v: any) => {
         activeScenes.set(v || {})
-        Object.entries(v || {}).forEach(([id, outputIds]: any) => startScene(id, outputIds))
+
+        // timeout to ensure outputs are initialized
+        setTimeout(() => {
+            Object.entries(v || {}).forEach(([id, outputIds]: any) => startScene(id, outputIds))
+        }, 10)
     },
     language: (v: any) => {
         language.set(v)
