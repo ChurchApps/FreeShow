@@ -233,26 +233,39 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
             a[id].out![type] = clone(outData)
 
-            // save locked overlays
-            if (type === "overlays") lockedOverlays.set(outData)
-            // save outputted scenes for relaunch
-            if (type === "scene") {
-                const scenesMap: { [sceneId: string]: string[] } = {}
-                Object.keys(a).forEach((outputId) => {
-                    const sceneId = a[outputId].out?.scene?.id
-                    if (!sceneId) return
-
-                    if (!scenesMap[sceneId]) scenesMap[sceneId] = []
-                    scenesMap[sceneId].push(outputId)
-                })
-                activeScenes.set(scenesMap)
-            }
+            // save locked overlays / outputted scenes for relaunch
+            if (type === "overlays") saveLockedOverlays(a)
+            if (type === "scene") saveActiveScenes(a)
         })
 
         return a
     })
 
     customActionActivation("output_changed")
+}
+
+function saveLockedOverlays(a: any) {
+    const overlaysMap: { [overlayId: string]: string[] } = {}
+    Object.keys(a).forEach((outputId) => {
+        a[outputId].out?.overlays?.forEach((overlayId) => {
+            if (!get(overlays)[overlayId]?.locked) return
+
+            if (!overlaysMap[overlayId]) overlaysMap[overlayId] = []
+            overlaysMap[overlayId].push(outputId)
+        })
+    })
+    lockedOverlays.set(overlaysMap)
+}
+function saveActiveScenes(a: any) {
+    const scenesMap: { [sceneId: string]: string[] } = {}
+    Object.keys(a).forEach((outputId) => {
+        const sceneId = a[outputId].out?.scene?.id
+        if (!sceneId) return
+
+        if (!scenesMap[sceneId]) scenesMap[sceneId] = []
+        scenesMap[sceneId].push(outputId)
+    })
+    activeScenes.set(scenesMap)
 }
 
 // setup video manager (and audio analyser)

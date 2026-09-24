@@ -352,7 +352,7 @@ export const timerTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const resized: Writable<NumberObject> = writable({ leftPanel: 290, rightPanel: 290, leftPanelDrawer: 290, rightPanelDrawer: 290 }) // {default}
 export const sorted: Writable<any> = writable({}) // {}
 export const dataPath: Writable<string> = writable("") // "" // DEPRECATED - only for setting
-export const lockedOverlays: Writable<string[]> = writable([]) // []
+export const lockedOverlays: Writable<{ [key: string]: string[] }> = writable({}) // {}
 export const activeScenes: Writable<{ [key: string]: string[] }> = writable({}) // {}
 export const special: Writable<any> = writable({}) // {}
 

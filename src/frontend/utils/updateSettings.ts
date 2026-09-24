@@ -278,18 +278,24 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         dataPath.set(v)
     },
     lockedOverlays: (v: any) => {
-        // only get locked overlays
-        v = v.filter((id) => get(overlays)[id]?.locked === true)
-
-        lockedOverlays.set(v)
-
-        // start overlays
-        if (v.length) {
-            // timeout to ensure outputs are initialized
-            setTimeout(() => {
-                setOutput("overlays", v, false, "", true)
-            }, 10)
+        if (Array.isArray(v)) {
+            const map: { [id: string]: string[] } = {}
+            v.forEach((id) => (map[id] = []))
+            v = map
         }
+
+        lockedOverlays.set(v || {})
+
+        // timeout to ensure outputs are initialized
+        setTimeout(() => {
+            Object.entries(v || {}).forEach(([id, outputIds]: any) => {
+                // only get locked overlays
+                if (!get(overlays)[id]?.locked) return
+
+                if (outputIds?.length) outputIds.forEach((outputId: string) => setOutput("overlays", [id], false, outputId, true))
+                else setOutput("overlays", [id], false, "", true)
+            })
+        }, 10)
     },
     activeScenes: (v: any) => {
         activeScenes.set(v || {})
