@@ -8,7 +8,7 @@ import type { Metadata, Themes } from "../../types/Settings"
 import { migrateAudioEffects } from "../audio/effects/audioEffectsHelpers"
 import { initAudioRouting } from "../audio/routing/audioRoutingInit"
 import { clone, keysToID } from "../components/helpers/array"
-import { checkFFmpeg, checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
+import { checkFFmpeg, checkWindowCapture, setOutput, startScene, toggleOutputs } from "../components/helpers/output"
 import { migrateOutputsRtmp } from "../components/helpers/rtmpDestinations"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { sendMain } from "../IPC/main"
@@ -58,6 +58,7 @@ import {
     loaded,
     loadedState,
     lockedOverlays,
+    activeScenes,
     maxConnections,
     mediaFolders,
     mediaOptions,
@@ -284,6 +285,10 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
 
         // start overlays
         if (v.length) setOutput("overlays", v, false, "", true)
+    },
+    activeScenes: (v: any) => {
+        activeScenes.set(v || {})
+        Object.entries(v || {}).forEach(([id, outputIds]: any) => startScene(id, outputIds))
     },
     language: (v: any) => {
         language.set(v)

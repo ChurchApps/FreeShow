@@ -648,6 +648,11 @@ export interface OutTransition {
     folderPath?: string
 }
 
+export interface OutScene extends SceneContent {
+    id?: string
+    name?: string
+}
+
 export interface SlideTimer {
     time: number
     paused: boolean

@@ -1,5 +1,5 @@
 import type { Cropping, Resolution } from "./Settings"
-import type { OutBackground, OutSlide, OutTransition } from "./Show"
+import type { OutBackground, OutScene, OutSlide, OutTransition } from "./Show"
 
 export interface Outputs {
     [key: string]: Output
@@ -70,6 +70,7 @@ export interface OutData {
     effects?: string[]
     overlays?: string[]
     transition?: null | OutTransition
+    scene?: null | OutScene
 }
 
 export interface Animation {

@@ -1,12 +1,11 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import type { Scene } from "../../../../types/Show"
-    import { runAction } from "../../actions/actions"
-    import { actions, activeEdit, activePage, labelsDisabled, mediaOptions, outLocked, outputs, scenes, styles } from "../../../stores"
+    import { activeEdit, activePage, labelsDisabled, mediaOptions, outLocked, outputs, scenes, styles } from "../../../stores"
     import { getAccess } from "../../../utils/profile"
     import { clone, keysToID, sortByName } from "../../helpers/array"
     import { history } from "../../helpers/history"
-    import { getResolution } from "../../helpers/output"
+    import { findMatchingOut, getResolution, startScene } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
@@ -83,13 +82,7 @@
         if ($outLocked || e.ctrlKey || e.metaKey) return
         if (e.target?.closest?.(".edit") || e.target?.closest?.(".icons")) return
 
-        // TODO: output to a custom scene layer
-
-        // run action
-        const actionId = $scenes[id]?.action
-        if (actionId && $actions[actionId]) {
-            runAction({ ...$actions[actionId], id: actionId }, { source: "scene" })
-        }
+        startScene(id)
     }
 
     function openSceneEditor(id: string) {
@@ -104,14 +97,18 @@
             <div class="grid" style="--width: {100 / $mediaOptions.columns}%;">
                 {#each fullFilteredScenes as scene, i (scene.id)}
                     {@const isReadOnly = readOnly || profile[scene.id] === "read"}
+                    {@const isActive = findMatchingOut(scene.id, $outputs) !== null}
+
                     <SelectElem id="scene" data={scene.id} class="context #scene_card{isReadOnly ? '_readonly' : ''}" draggable fill>
                         <Card
                             width={100}
                             preview={$activePage === "edit" ? $activeEdit.type === "scene" && $activeEdit.id === scene.id : false}
+                            outlineColor={findMatchingOut(scene.id, $outputs)}
+                            active={isActive}
                             label={scene.name}
                             renameId="scene_{scene.id}"
                             {resolution}
-                            showPlayOnHover
+                            showPlayOnHover={!isActive}
                             on:click={(e) => sceneClick(e, scene.id)}
                             on:dblclick={(e) => {
                                 if (e.ctrlKey || e.metaKey) return

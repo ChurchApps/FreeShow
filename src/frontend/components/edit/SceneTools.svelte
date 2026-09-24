@@ -6,6 +6,7 @@
     import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
+    import { updateActiveSceneOutputs } from "../helpers/output"
     import InputRow from "../input/InputRow.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
     import MaterialPopupButton from "../inputs/MaterialPopupButton.svelte"
@@ -40,6 +41,8 @@
             oldData: { id: sceneId },
             location: { page: "drawer", id: "scene_key", override: `content_${key}_${sceneId}` }
         })
+
+        updateActiveSceneOutputs(sceneId)
     }
 
     // Overlays

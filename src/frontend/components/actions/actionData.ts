@@ -36,6 +36,7 @@ export const actionData = {
     clear_overlay: { name: "clear.overlay", icon: "overlays", input: "id", red: true, incompatible: ["restore_output", "clear_all", "clear_overlays"] }, // common: true,
     clear_audio: { slideId: "clearAudio", common: true, name: "clear.audio", icon: "audio", red: true, incompatible: ["restore_output", "clear_all"] },
     clear_next_timer: { name: "clear.nextTimer", icon: "timer", red: true, incompatible: ["restore_output", "clear_all"] },
+    clear_scene: { name: "clear.scene", icon: "scene", red: true },
     clear_drawing: { name: "clear.drawing", icon: "paint", red: true },
 
     // MEDIA
@@ -49,7 +50,8 @@ export const actionData = {
     id_select_overlay: { common: true, canAddMultiple: true, name: "actions.id_select_overlay", icon: "overlays", input: "id" },
 
     // OUTPUT
-    start_webrtc_stream: { SECTION: "guide_title.output", name: "output.start_streaming (WebRTC)", icon: "record", input: "id" },
+    start_scene: { SECTION: "guide_title.output", canAddMultiple: true, name: "actions.start_scene", icon: "scene", input: "id" },
+    start_webrtc_stream: { name: "output.start_streaming (WebRTC)", icon: "record", input: "id" },
     stop_webrtc_stream: { name: "output.stop_streaming (WebRTC)", icon: "stop", input: "id", red: true },
     start_rtmp_stream: { name: "output.start_streaming (RTMP)", icon: "record", input: "id" },
     stop_rtmp_stream: { name: "output.stop_streaming (RTMP)", icon: "stop", input: "id", red: true },

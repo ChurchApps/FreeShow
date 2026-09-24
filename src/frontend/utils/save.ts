@@ -58,6 +58,7 @@ import {
     labelsDisabled,
     language,
     lockedOverlays,
+    activeScenes,
     maxConnections,
     media,
     mediaFolders,
@@ -170,6 +171,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         showsPath: get(showsPath), // DEPRECATED
         dataPath: get(dataPath), // DEPRECATED
         lockedOverlays: get(lockedOverlays),
+        activeScenes: get(activeScenes),
         drawer: get(drawer),
         drawerTabsData: get(drawerTabsData),
         groupNumbers: get(groupNumbers),
@@ -454,6 +456,7 @@ const saveList: { [key in SaveList]: any } = {
     showsPath: null,
     dataPath: null,
     lockedOverlays: null,
+    activeScenes: null,
     drawer: null,
     drawerTabsData: null,
     drawSettings,

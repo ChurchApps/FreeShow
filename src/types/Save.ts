@@ -54,6 +54,7 @@ export type SaveListSettings =
     | "showsPath"
     | "dataPath"
     | "lockedOverlays"
+    | "activeScenes"
     | "drawer"
     | "drawerTabsData"
     | "groupNumbers"

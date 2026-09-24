@@ -7,7 +7,46 @@ import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, LayoutRef, Media, OutSlide, Show, Slide, SlideData, Template, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
 import { requestMain, sendMain } from "../../IPC/main"
-import { actions, activeFocus, activeProject, activeRename, activeShow, activeTimers, allOutputs, categories, connections, currentOutputSettings, customMessageCredits, disabledServers, effects, focusMode, lockedOverlays, media, outputDisplay, outputs, outputSlideCache, outputState, overlays, overlayTimers, projects, scriptures, scriptureSettings, serverData, showsCache, special, stageShows, styles, templates, theme, themes, transitionData, usageLog } from "../../stores"
+import {
+    actions,
+    activeFocus,
+    activeProject,
+    activeRename,
+    activeScenes,
+    activeShow,
+    activeTimers,
+    allOutputs,
+    categories,
+    connections,
+    currentOutputSettings,
+    customMessageCredits,
+    disabledServers,
+    effects,
+    focusMode,
+    lockedOverlays,
+    media,
+    outLocked,
+    outputDisplay,
+    outputs,
+    outputSlideCache,
+    outputState,
+    overlays,
+    overlayTimers,
+    projects,
+    scenes,
+    scriptures,
+    scriptureSettings,
+    serverData,
+    showsCache,
+    special,
+    stageShows,
+    styles,
+    templates,
+    theme,
+    themes,
+    transitionData,
+    usageLog
+} from "../../stores"
 import { trackScriptureUsage } from "../../utils/analytics"
 import { isMainWindow, isOutputWindow, newToast } from "../../utils/common"
 import { translateText } from "../../utils/language"
@@ -196,6 +235,18 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
             // save locked overlays
             if (type === "overlays") lockedOverlays.set(outData)
+            // save outputted scenes for relaunch
+            if (type === "scene") {
+                const scenesMap: { [sceneId: string]: string[] } = {}
+                Object.keys(a).forEach((outputId) => {
+                    const sceneId = a[outputId].out?.scene?.id
+                    if (!sceneId) return
+
+                    if (!scenesMap[sceneId]) scenesMap[sceneId] = []
+                    scenesMap[sceneId].push(outputId)
+                })
+                activeScenes.set(scenesMap)
+            }
         })
 
         return a
@@ -360,6 +411,60 @@ export function startScreen(screen: API_screen) {
     setOutput("background", { name: screen.name || "", id: screen.id, type: "screen" })
 }
 
+export function startScene(id: string, specificOutputIds: string[] | null = null) {
+    if (get(outLocked)) return
+
+    const scene = get(scenes)[id]
+    if (!scene) return
+
+    const bindings = specificOutputIds?.length ? specificOutputIds : scene.bindings || []
+    const activeOutputIds = getAllActiveOutputIds()
+    const targetOutputIds = bindings.length ? activeOutputIds.filter((outputId) => bindings.includes(outputId)) : activeOutputIds
+    if (!targetOutputIds.length) return
+
+    const currentOutputs = get(outputs)
+    const isAlreadyOutputted = targetOutputIds.every((outputId) => currentOutputs[outputId]?.out?.scene?.id === id)
+    if (isAlreadyOutputted) return
+
+    outputScene(id, targetOutputIds)
+
+    // run action
+    const actionId = scene.action
+    if (actionId && get(actions)[actionId]) {
+        runAction({ ...get(actions)[actionId], id: actionId }, { source: "scene" })
+    }
+}
+
+export function updateActiveSceneOutputs(sceneId: string) {
+    const currentOutputs = get(outputs)
+    const matchingOutputIds = Object.keys(currentOutputs).filter((outputId) => currentOutputs[outputId]?.out?.scene?.id === sceneId)
+    if (!matchingOutputIds.length) return
+
+    outputScene(sceneId, matchingOutputIds)
+}
+
+function outputScene(sceneId: string, targetOutputIds: string[] = []) {
+    const scene = get(scenes)[sceneId]
+    if (!scene) return
+
+    const content = scene.content || {}
+
+    // update output style
+    if (content.style) {
+        outputs.update((a) => {
+            targetOutputIds.forEach((outputId) => {
+                if (a[outputId]) a[outputId].style = content.style
+            })
+            return a
+        })
+    }
+
+    // output scene to target outputs
+    targetOutputIds.forEach((outputId) => {
+        setOutput("scene", { ...content, id: sceneId, name: scene.name }, false, outputId)
+    })
+}
+
 /// EFFECTS
 
 const FULLSCREEN_EFFECT_TYPES = ["mesh_gradient", "rays"]
@@ -521,6 +626,7 @@ export function findMatchingOut(id: string, updater: Outputs = get(outputs)): st
             else if ((output.out?.background?.path || output.out?.background?.id) === id) match = output.color
             else if (output.out?.overlays?.includes(id)) match = output.color
             else if (output.out?.effects?.includes(id)) match = output.color
+            else if (output.out?.scene?.id === id) match = output.color
         }
     })
 
@@ -581,6 +687,7 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
         const keys: string[] = key ? [key] : Object.keys(output.out || {})
         cleared = !keys.some((type: string) => {
             if (!output.out?.[type]) return
+            if (key === null && type === "scene") return false
 
             if (type === "overlays") {
                 if (!Array.isArray(output.out.overlays)) return false

@@ -188,3 +188,13 @@ export function clearDrawing() {
         return a
     })
 }
+
+export function clearScene(specificOutputId = "") {
+    const outputIds = specificOutputId ? [specificOutputId] : getAllActiveOutputIds()
+
+    outputIds.forEach((outputId) => {
+        setOutput("scene", null, false, outputId)
+    })
+
+    customActionActivation("scene_cleared")
+}

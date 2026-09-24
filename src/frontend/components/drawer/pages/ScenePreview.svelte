@@ -2,16 +2,11 @@
     import type { Scene } from "../../../../types/Show"
     import { outputs, overlays } from "../../../stores"
     import { keysToID } from "../../helpers/array"
-    import Camera from "../../output/Camera.svelte"
     import Output from "../../output/Output.svelte"
-    import Window from "../../output/Window.svelte"
+    import SceneMedia from "../../output/layers/SceneMedia.svelte"
     import Textbox from "../../slide/Textbox.svelte"
-    import BmdStream from "../live/BMDStream.svelte"
-    import NdiStream from "../live/NDIStream.svelte"
-    import OmtStream from "../live/OMTStream.svelte"
 
     export let scene: Scene
-    export let mirror = false
     export let miniPreview = false
 
     $: content = scene?.content || {}
@@ -34,42 +29,12 @@
     {#if styleId && firstOutputId}
         <div class="layer output-layer">
             {#key styleId + "_" + firstOutputId}
-                <Output outputId={firstOutputId} style="width: 100%; height: 100%;" styleIdOverride={styleId} {outOverride} mirror={true} preview={false}>
-                    <svelte:fragment slot="scene_media">
-                        {#if mediaInput}
-                            <div class="layer media-layer">
-                                {#if mediaInput.type === "camera"}
-                                    <Camera id={mediaInput.id} groupId={mediaInput.group || ""} class="media" style="width: 100%;height: 100%;object-fit: cover;" preview={miniPreview} />
-                                {:else if mediaInput.type === "screen"}
-                                    <Window id={mediaInput.id} class="media" style="width: 100%;height: 100%;object-fit: cover;" />
-                                {:else if mediaInput.type === "ndi"}
-                                    <NdiStream screen={{ id: mediaInput.id, name: mediaInput.name || "" }} background {mirror} />
-                                {:else if mediaInput.type === "omt"}
-                                    <OmtStream screen={{ id: mediaInput.id, name: mediaInput.name || "" }} background {mirror} />
-                                {:else if mediaInput.type === "blackmagic"}
-                                    <BmdStream screen={{ id: mediaInput.id, name: mediaInput.name || "" }} background {mirror} />
-                                {/if}
-                            </div>
-                        {/if}
-                    </svelte:fragment>
-                </Output>
+                <Output outputId={firstOutputId} style="width: 100%; height: 100%;" styleIdOverride={styleId} outOverride={{ ...(outOverride || {}), scene: mediaInput ? { media: mediaInput } : null }} mirror={true} />
             {/key}
         </div>
     {:else if mediaInput}
         <!-- Media input layer without output style -->
-        <div class="layer media-layer">
-            {#if mediaInput.type === "camera"}
-                <Camera id={mediaInput.id} groupId={mediaInput.group || ""} class="media" style="width: 100%;height: 100%;object-fit: cover;" preview={miniPreview} />
-            {:else if mediaInput.type === "screen"}
-                <Window id={mediaInput.id} class="media" style="width: 100%;height: 100%;object-fit: cover;" />
-            {:else if mediaInput.type === "ndi"}
-                <NdiStream screen={{ id: mediaInput.id, name: mediaInput.name || "" }} background {mirror} />
-            {:else if mediaInput.type === "omt"}
-                <OmtStream screen={{ id: mediaInput.id, name: mediaInput.name || "" }} background {mirror} />
-            {:else if mediaInput.type === "blackmagic"}
-                <BmdStream screen={{ id: mediaInput.id, name: mediaInput.name || "" }} background {mirror} />
-            {/if}
-        </div>
+        <SceneMedia media={mediaInput} preview={miniPreview} />
     {/if}
 
     <!-- Overlays stack layer -->
@@ -77,7 +42,7 @@
         <div class="layer overlays-layer">
             {#each [...overlayList].reverse() as overlay (overlay.id)}
                 {#each overlay.items as item}
-                    <Textbox {item} ref={{ type: "overlay", id: overlay.id }} preview {miniPreview} {mirror} />
+                    <Textbox {item} ref={{ type: "overlay", id: overlay.id }} preview {miniPreview} mirror />
                 {/each}
             {/each}
         </div>
@@ -101,16 +66,6 @@
         width: 100%;
         height: 100%;
         pointer-events: none;
-    }
-
-    .media-layer {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .scene-preview > .media-layer {
-        z-index: 1;
     }
 
     .output-layer {

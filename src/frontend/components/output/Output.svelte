@@ -5,7 +5,7 @@
     import { uid } from "uid"
     import type { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
-    import type { AnimationData, Item, LayoutRef, OutBackground, OutSlide, Slide, SlideData, Template, Transition, Overlays as TOverlays } from "../../../types/Show"
+    import type { AnimationData, Item, LayoutRef, OutBackground, OutScene, OutSlide, Slide, SlideData, Template, Transition, Overlays as TOverlays } from "../../../types/Show"
     import { allOutputs, colorbars, currentWindow, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { custom } from "../../utils/transitions"
@@ -21,6 +21,7 @@
     import Overlay from "./layers/Overlay.svelte"
     import Overlays from "./layers/Overlays.svelte"
     import PdfOutput from "./layers/PdfOutput.svelte"
+    import SceneMedia from "./layers/SceneMedia.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
     import Window from "./Window.svelte"
 
@@ -55,6 +56,7 @@
     let slide: OutSlide | null = null
     let background: OutBackground | null = null
     let clonedOverlays: TOverlays | null = null
+    let scene: OutScene | null = null
 
     let effectsIds: string[] = []
     $: allEffects = $effects
@@ -105,6 +107,14 @@
             effectsIds = clone(out.effects || [])
         }
     }
+    let cachedSceneStr = ""
+    $: {
+        const newSceneStr = JSON.stringify(out.scene || null)
+        if (newSceneStr !== cachedSceneStr) {
+            cachedSceneStr = newSceneStr
+            updateOutData("scene")
+        }
+    }
 
     $: refreshOutput = out.refresh
     $: if (outputId || refreshOutput) updateOutData()
@@ -129,24 +139,29 @@
         }
         if (!type || type === "background") background = clone(out.background || null)
         if (!type || type === "overlays") {
-            storedOverlayIds = JSON.stringify(out.overlays)
+            storedOverlayIds = JSON.stringify(overlayIds)
             if (JSON.stringify($overlays) !== storedOverlays) {
                 clonedOverlays = clone($overlays)
                 storedOverlays = JSON.stringify($overlays)
             }
         }
+        if (!type || type === "scene") scene = clone(out.scene || null)
     }
 
+    // scenes
+    $: sceneOverlays = scene?.overlays || []
+    $: sceneMedia = scene?.media || null
+
     // overlays
-    $: overlayIds = out.overlays
+    $: overlayIds = [...new Set([...sceneOverlays, ...(out.overlays || [])])]
     let storedOverlayIds = ""
     let storedOverlays = ""
     $: {
         const newOverlayIdsStr = JSON.stringify(overlayIds)
         if (newOverlayIdsStr !== storedOverlayIds) updateOutData("overlays")
     }
-    $: outOverlays = out.overlays?.filter((id) => !clonedOverlays?.[id]?.placeUnderSlide) || []
-    $: outUnderlays = out.overlays?.filter((id) => clonedOverlays?.[id]?.placeUnderSlide) || []
+    $: outOverlays = overlayIds.filter((id) => !clonedOverlays?.[id]?.placeUnderSlide)
+    $: outUnderlays = overlayIds.filter((id) => clonedOverlays?.[id]?.placeUnderSlide)
 
     // layout & slide data
     let currentLayout: LayoutRef[] = []
@@ -355,12 +370,15 @@
         <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} mirror />
     {/if}
 
+    <!-- scene media -->
+    {#if sceneMedia}
+        <SceneMedia media={sceneMedia} {mirror} />
+    {/if}
+
     <!-- background -->
     {#if (backgroundData?.ignoreLayer ? layers.includes("slide") : layers.includes("background")) && backgroundData}
         <Background data={backgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} {mirror} />
     {/if}
-
-    <slot name="scene_media" />
 
     <!-- colorbars for testing -->
     {#if $colorbars[outputId]}

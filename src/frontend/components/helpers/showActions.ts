@@ -211,7 +211,8 @@ function shouldTriggerBefore(action: any) {
 
 const perOutputActions: Record<string, (outputId: string) => void> = {
     clear_background: (outputId) => setOutput("background", null, false, outputId),
-    clear_overlays: (outputId) => clearOverlays(outputId)
+    clear_overlays: (outputId) => clearOverlays(outputId),
+    clear_scene: (outputId) => setOutput("scene", null, false, outputId)
 }
 function runPerOutputAction(trigger: string, outputIds: string[]) {
     const action = perOutputActions[trigger]

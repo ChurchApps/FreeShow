@@ -20,14 +20,18 @@
         e.preventDefault()
         if (readOnly) return
         let newData = { key: "action", data: "" }
-        history({ id: "UPDATE", newData, oldData: { id: sceneId }, location: { page: "drawer", id: "scene_key", override: `action_${sceneId}` } })
+        setTimeout(() => {
+            history({ id: "UPDATE", newData, oldData: { id: sceneId }, location: { page: "drawer", id: "scene_key", override: `action_${sceneId}` } })
+        })
     }
 
     function removeBindings(e: any) {
         e.preventDefault()
         if (readOnly) return
         let newData = { key: "bindings", data: [] }
-        history({ id: "UPDATE", newData, oldData: { id: sceneId }, location: { page: "drawer", id: "scene_key", override: `bindings_${sceneId}` } })
+        setTimeout(() => {
+            history({ id: "UPDATE", newData, oldData: { id: sceneId }, location: { page: "drawer", id: "scene_key", override: `bindings_${sceneId}` } })
+        })
     }
 </script>
 
@@ -36,7 +40,7 @@
     {#if scene?.action && $actions[scene.action]}
         {@const act = $actions[scene.action]}
         <div class="button white">
-            <Button style="padding: 3px;" redHover title="{translateText('actions.remove')}: <b>{act.name}</b>" {zoom} on:click={removeCustomAction}>
+            <Button style="padding: 3px;" redHover title="{translateText('actions.remove')}: <b>{act.name}</b>" {zoom} on:click={(e) => setTimeout(() => removeCustomAction(e))}>
                 <Icon id="actions" size={0.9} white />
                 <p>{act.name}</p>
             </Button>
@@ -47,7 +51,7 @@
     {#if scene?.bindings?.length}
         <div>
             <div class="button white">
-                <Button style="padding: 3px;" redHover title={translateText("actions.remove_binding")} {zoom} on:click={removeBindings}>
+                <Button style="padding: 3px;" redHover title={translateText("actions.remove_binding")} {zoom} on:click={(e) => setTimeout(() => removeBindings(e))}>
                     <Icon id="bind" size={0.9} white />
                 </Button>
             </div>

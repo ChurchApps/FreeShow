@@ -172,6 +172,7 @@
         "audio": "Clear audio",
         "nextTimer": "Clear next slide timer",
         "timer": "Clear timer",
+        "scene": "Clear scene",
         "drawing": "Clear drawing",
         "search": "Clear search"
     },
@@ -871,6 +872,7 @@
         "start_screen": "Start screen",
         "id_start_effect": "Start effect",
         "id_select_overlay": "Start overlay",
+        "start_scene": "Start scene",
         "toggle_playing_media": "Toggle playing media",
         "change_volume": "Change volume",
         "start_audio_stream": "Start audio stream",

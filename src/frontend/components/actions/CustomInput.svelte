@@ -6,7 +6,7 @@
     import { dbToGain, gainToDb, MIN_DB } from "../../audio/dBUtils"
     import { AudioRoutingManager } from "../../audio/routing/audioRoutingManager"
     import { cameraManager } from "../../media/cameraManager"
-    import { actions, activePopup, audioPlaylists, audioRouting, audioStreams, effects, effectsLibrary, groups, interactions, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, variables } from "../../stores"
+    import { actions, activePopup, audioPlaylists, audioRouting, audioStreams, effects, effectsLibrary, groups, interactions, outputs, overlays, popupData, projects, scenes, shows, stageShows, styles, templates, timers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
     import { obsGetScenes } from "../../utils/obsTalk"
     import MetronomeInputs from "../drawer/audio/MetronomeInputs.svelte"
@@ -107,6 +107,7 @@
             ),
         clear_overlay: () => [...convertToOptions($overlays), ...convertToOptions($effects)],
         id_start_effect: () => convertToOptions($effects),
+        start_scene: () => convertToOptions($scenes),
         id_select_overlay: () => convertToOptions($overlays),
         id_select_stage_layout: () => convertToOptions($stageShows),
         normal_outputs: () => [{ value: "", label: translateText("actions.all_outputs") }, ...sortByName(keysToID($outputs).filter((a) => !a.stageOutput)).map((a) => ({ value: a.id, label: a.name }), "label")],
