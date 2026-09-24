@@ -108,6 +108,7 @@ export type SelectIds =
     | "global_timer"
     | "variable"
     | "scene"
+    | "scene_overlay"
     | "interaction"
     | "audio_stream"
     | "chord"

@@ -74,6 +74,7 @@ import { pasteText } from "./caretHelper"
 import { history } from "./history"
 import { deleteStore } from "./historyStores"
 import { getFileName, removeExtension } from "./media"
+import { updateActiveSceneOutputs } from "./output"
 import { select } from "./select"
 import { loadShows } from "./setShow"
 import { checkName, getLayoutRef, removeTemplatesFromShow } from "./show"
@@ -790,6 +791,26 @@ const deleteActions = {
 
             return a
         })
+    },
+    scene_overlay: (data: any) => {
+        const sceneId = get(activeEdit).id || ""
+        const scene = get(scenes)[sceneId]
+        if (!scene) return
+
+        const currentOverlays = clone(scene.content?.overlays || [])
+        const index = typeof data === "number" ? data : (data?.index ?? data?.[0]?.index)
+        if (index === undefined || index < 0 || index >= currentOverlays.length) return
+
+        currentOverlays.splice(index, 1)
+        const newContent = { ...clone(scene.content || {}), overlays: currentOverlays }
+        history({
+            id: "UPDATE",
+            newData: { key: "content", data: newContent },
+            oldData: { id: sceneId },
+            location: { page: "drawer", id: "scene_key" }
+        })
+
+        updateActiveSceneOutputs(sceneId)
     },
     audio_stream: (data: any) => {
         audioStreams.update((a) => {

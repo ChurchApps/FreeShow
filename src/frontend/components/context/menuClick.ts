@@ -1302,6 +1302,13 @@ const clickActions = {
             // properly set content when edit set to same type as preview, but different id
             // e.g. overlay opened in preview, then edited, then trying to edit another overlay will reset to preview without timeout
             setTimeout(() => activeEdit.set({ type: obj.sel!.id as any, id: obj.sel!.data[0], items: [] }))
+        } else if (obj.sel.id === "scene_overlay") {
+            const overlayId = obj.sel.data[0]?.id
+            if (typeof overlayId !== "string" || !overlayId) return
+
+            refreshEditSlide.set(true)
+            activePage.set("edit") // should already be "edit"
+            setTimeout(() => activeEdit.set({ type: "overlay", id: overlayId, items: [] }))
         } else if (obj.sel.id === "action") {
             const firstActionId = obj.sel.data[0]?.id
             const action = get(actions)[firstActionId]
