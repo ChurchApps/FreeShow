@@ -61,6 +61,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     showsPath: null, // DEPRECATED
     dataPath: "", // DEPRECATED
     lockedOverlays: [],
+    activeScenes: {},
     splitLines: 0,
     theme: "default",
     transitionData: {

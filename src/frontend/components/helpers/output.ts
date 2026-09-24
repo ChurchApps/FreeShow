@@ -450,14 +450,12 @@ function outputScene(sceneId: string, targetOutputIds: string[] = []) {
     const content = scene.content || {}
 
     // update output style
-    if (content.style) {
-        outputs.update((a) => {
-            targetOutputIds.forEach((outputId) => {
-                if (a[outputId]) a[outputId].style = content.style
-            })
-            return a
+    outputs.update((a) => {
+        targetOutputIds.forEach((outputId) => {
+            if (a[outputId]) a[outputId].style = content.style
         })
-    }
+        return a
+    })
 
     // output scene to target outputs
     targetOutputIds.forEach((outputId) => {

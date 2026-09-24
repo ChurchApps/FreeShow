@@ -5,7 +5,7 @@
     import { uid } from "uid"
     import type { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
-    import type { AnimationData, Item, LayoutRef, OutBackground, OutScene, OutSlide, Slide, SlideData, Template, Transition, Overlays as TOverlays } from "../../../types/Show"
+    import type { AnimationData, Item, LayoutRef, OutBackground, OutScene, OutSlide, Slide, SlideData, Template, Overlays as TOverlays, Transition } from "../../../types/Show"
     import { allOutputs, colorbars, currentWindow, drawSettings, drawTool, effects, media, outputs, overlays, showsCache, styles, templates, transitionData } from "../../stores"
     import { wait } from "../../utils/common"
     import { custom } from "../../utils/transitions"
@@ -149,11 +149,14 @@
     }
 
     // scenes
-    $: sceneOverlays = scene?.overlays || []
     $: sceneMedia = scene?.media || null
+    $: sceneStyle = scene?.style || null
+    $: sceneOverlays = scene?.overlays || []
+    $: sceneHideLayers = scene !== null && !sceneStyle
 
     // overlays
-    $: overlayIds = [...new Set([...sceneOverlays, ...(out.overlays || [])])]
+    $: outputtedOverlayIds = sceneHideLayers ? [] : out.overlays || []
+    $: overlayIds = [...new Set([...sceneOverlays, ...outputtedOverlayIds])]
     let storedOverlayIds = ""
     let storedOverlays = ""
     $: {
@@ -339,7 +342,7 @@
     $: drawZoom = $drawTool === "zoom" && zoomActive ? ($drawSettings.zoom?.size || 200) / 100 : 1
 
     // CLEARING
-    $: if (slide !== undefined || layers) updateSlide()
+    $: if (slide !== undefined || layers || sceneHideLayers !== undefined) updateSlide()
     let actualSlide: OutSlide | null = null
     let actualSlideData: SlideData | null = null
     let actualCurrentSlide: Slide | null = null
@@ -348,7 +351,7 @@
     let slideTimeout: NodeJS.Timeout | null = null
     function updateSlide() {
         // update clearing variable before setting slide value (used for conditions to not show up again while clearing)
-        const slideActive = layers.includes("slide")
+        const slideActive = layers.includes("slide") && !sceneHideLayers
         isSlideClearing = !slide || !slideActive
 
         if (slideTimeout) clearTimeout(slideTimeout)
@@ -376,7 +379,7 @@
     {/if}
 
     <!-- background -->
-    {#if (backgroundData?.ignoreLayer ? layers.includes("slide") : layers.includes("background")) && backgroundData}
+    {#if (backgroundData?.ignoreLayer ? layers.includes("slide") : layers.includes("background")) && !sceneHideLayers && backgroundData}
         <Background data={backgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} {mirror} />
     {/if}
 

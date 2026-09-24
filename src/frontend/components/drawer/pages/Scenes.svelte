@@ -85,10 +85,13 @@
         startScene(id)
     }
 
-    function openSceneEditor(id: string) {
-        activeEdit.set({ type: "scene", id, items: [] })
-        activePage.set("edit")
-    }
+    // function openSceneEditor(e, id: string) {
+    //     if (e.ctrlKey || e.metaKey) return
+    //     if (e.target?.closest?.(".edit") || e.target?.closest?.(".icons")) return
+
+    //     activeEdit.set({ type: "scene", id, items: [] })
+    //     activePage.set("edit")
+    // }
 </script>
 
 <div style="position: relative;height: 100%;overflow-y: auto;" class="context #drawer_scenes{readOnly ? '_readonly' : ''}" on:wheel={wheel}>
@@ -100,22 +103,8 @@
                     {@const isActive = findMatchingOut(scene.id, $outputs) !== null}
 
                     <SelectElem id="scene" data={scene.id} class="context #scene_card{isReadOnly ? '_readonly' : ''}" draggable fill>
-                        <Card
-                            width={100}
-                            preview={$activePage === "edit" ? $activeEdit.type === "scene" && $activeEdit.id === scene.id : false}
-                            outlineColor={findMatchingOut(scene.id, $outputs)}
-                            active={isActive}
-                            label={scene.name}
-                            renameId="scene_{scene.id}"
-                            {resolution}
-                            showPlayOnHover={!isActive}
-                            on:click={(e) => sceneClick(e, scene.id)}
-                            on:dblclick={(e) => {
-                                if (e.ctrlKey || e.metaKey) return
-                                if (e.target?.closest?.(".edit") || e.target?.closest?.(".icons")) return
-                                openSceneEditor(scene.id)
-                            }}
-                        >
+                        <Card width={100} preview={$activePage === "edit" ? $activeEdit.type === "scene" && $activeEdit.id === scene.id : false} outlineColor={findMatchingOut(scene.id, $outputs)} active={isActive} label={scene.name} renameId="scene_{scene.id}" {resolution} showPlayOnHover={!isActive} on:click={(e) => sceneClick(e, scene.id)}>
+                            <!-- on:dblclick={(e) => openSceneEditor(e, scene.id)} -->
                             {#if loaded || i < lazyLoader}
                                 <Zoomed {resolution}>
                                     <ScenePreview {scene} miniPreview />
