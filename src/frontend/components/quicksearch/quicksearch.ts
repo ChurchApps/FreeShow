@@ -417,7 +417,7 @@ const triggerActions = {
             activePage.set("settings")
         }
 
-        if (id === "overlay" || id === "template" || id === "effect") {
+        if (id === "overlay" || id === "template" || id === "effect" || id === "scene") {
             // make sure tab is opened before creating so rename input gets focused
             setTimeout(() => history({ id: "UPDATE", location: { page: "drawer", id } }))
             return
@@ -616,7 +616,8 @@ const drawerSubmenus = [
     // functions
     { id: "actions", name: "tabs.actions", icon: "actions", aliases: ["-Macros"] },
     { id: "timer", name: "tabs.timers", icon: "timer" },
-    { id: "variables", name: "tabs.variables", icon: "variable" }
+    { id: "variables", name: "tabs.variables", icon: "variable" },
+    { id: "scenes", name: "tabs.scenes", icon: "scene" }
 ]
 
 function getDrawerSubmenus() {
@@ -639,6 +640,7 @@ const popups = [
     { id: "action", name: "new.action", icon: "add", data: { drawerTab: "actions" }, aliases: ["-New macro"] },
     { id: "timer", name: "new.timer", icon: "add", data: { drawerTab: "timer" } },
     { id: "variable", name: "new.variable", icon: "add", data: { drawerTab: "variables" } },
+    { id: "scene", name: "new.scene", icon: "add", data: { drawerTab: "scenes" } },
     { id: "audio_stream", name: "new.audio_stream", icon: "add", data: { drawerTab: "audio_inputs" } },
     { id: "output", name: "settings.new_output", icon: "add", data: { settingsTab: "display_settings" } },
     { id: "style", name: "new.style", icon: "add", data: { settingsTab: "styles" } },
