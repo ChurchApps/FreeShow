@@ -396,9 +396,11 @@ export const mainResponses: MainResponses = {
 
             // if empty content and name is a scripture reference, generate slides from the active scripture
             const isEmptyContent = Object.keys(show.slides || {}).length === 0
+            let isScriptureShow = false
             if (isEmptyContent) {
                 const scriptureShow = await generateScriptureShowFromReference(show.name)
                 if (scriptureShow) {
+                    isScriptureShow = true
                     const originalId = show.id
                     const originalQuickAccess = show.quickAccess
                     Object.assign(show, scriptureShow)
@@ -410,26 +412,22 @@ export const mainResponses: MainResponses = {
             const providerName = data.providerId === "planningcenter" ? "Planning Center" : data.providerId === "churchApps" ? "ChurchApps" : data.providerId === "onstage" ? "OnStage" : "the cloud"
 
             // first find any shows linked to the id
-            const linkedShow = linkKey && allShows.find(({ quickAccess, id: showId }) => quickAccess?.[linkKey] === id || showId === id)
-            if (linkedShow) {
+            const linkedShow = linkKey ? allShows.find(({ quickAccess, id: showId }) => quickAccess?.[linkKey] === id || showId === id) : null
+            // if provider item name is a scripture reference, and the name has changed, we should always use the provider version
+            const changedName = isScriptureShow && linkedShow?.name !== show.name
+            if (linkedShow && !changedName) {
                 replaceIds[id] = linkedShow.id
 
-                const useLocal = songOrigin === "online" ? false : songOrigin === "local" || (await confirmCustom(`This show already exists: ${linkedShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
+                // no need to use local show if it doesn't have any slide content
+                // so if the name in provider changes, it will update (mostly for updating scripture references)
+                await loadShows([linkedShow.id])
+                const showData = get(showsCache)[linkedShow.id]
+                const hasSlides = Object.keys(showData.slides || {}).length > 0
+
+                const useLocal = !hasSlides || songOrigin === "online" ? false : songOrigin === "local" || (await confirmCustom(`This show already exists: ${linkedShow.name}.<br><br>Would you like to use the local version instead of the one from ${providerName}?`))
                 if (useLocal) continue
 
-                // replace local show with provider song
-                Object.values<Slide>(show.slides).forEach((slide) => {
-                    if (slide.globalGroup || !slide.group) return
-
-                    const globalGroup = getGlobalGroup(slide.group)
-                    if (globalGroup) slide.globalGroup = globalGroup
-                })
-
-                // set modified to now, so it will update properly in history
-                if (show.timestamps) show.timestamps.modified = Date.now()
-
-                delete show.id
-                tempShows.push({ id: linkedShow.id, show: { ...show, origin, name: checkName(show.name, linkedShow.id) } })
+                downloadShow(linkedShow.id)
                 continue
             }
 
@@ -455,20 +453,24 @@ export const mainResponses: MainResponses = {
                 show.quickAccess[linkKey] = id
             }
 
-            // download:
+            downloadShow(targetId)
 
-            // replace group names with existing global groups
-            Object.values<Slide>(show.slides).forEach((slide) => {
-                if (slide.globalGroup || !slide.group) return
+            // replace local show with provider song
+            function downloadShow(showId: string) {
+                // replace group names with existing global groups
+                Object.values<Slide>(show.slides).forEach((slide) => {
+                    if (slide.globalGroup || !slide.group) return
 
-                const globalGroup = getGlobalGroup(slide.group)
-                if (globalGroup) slide.globalGroup = globalGroup
-            })
+                    const globalGroup = getGlobalGroup(slide.group)
+                    if (globalGroup) slide.globalGroup = globalGroup
+                })
 
-            if (show.timestamps) show.timestamps.modified = Date.now()
+                // set modified to now, so it will update properly in history
+                if (show.timestamps) show.timestamps.modified = Date.now()
 
-            delete show.id
-            tempShows.push({ id: targetId, show: { ...show, origin, name: checkName(show.name, targetId) } })
+                delete show.id
+                tempShows.push({ id: showId, show: { ...show, origin, name: checkName(show.name, showId) } })
+            }
         }
         setTempShows(tempShows)
 
