@@ -2,7 +2,7 @@
     import { fade } from "svelte/transition"
     import { Main } from "../../../types/IPC/Main"
     import { sendMain } from "../../IPC/main"
-    import { activePopup, openToolsTab, outputs, showNotesActive, shows, showsCache, special, styles, templates } from "../../stores"
+    import { activePopup, autoOpenedTimeline, openToolsTab, outputs, showNotesActive, shows, showsCache, special, styles, templates } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import { allOutputsHasStyleTemplate, getFirstActiveOutput } from "../helpers/output"
@@ -140,7 +140,13 @@
 
                 <div class="DIVIDER"></div>
 
-                <MaterialButton title="timeline.toggle_timeline" on:click={() => special.update((a) => ({ ...a, timelineActive: !a.timelineActive }))}>
+                <MaterialButton
+                    title="timeline.toggle_timeline"
+                    on:click={() => {
+                        special.update((a) => ({ ...a, timelineActive: !a.timelineActive }))
+                        autoOpenedTimeline.set(false)
+                    }}
+                >
                     <Icon id="timeline" white={!$special.timelineActive} />
 
                     {#if $special.timelineActive}
