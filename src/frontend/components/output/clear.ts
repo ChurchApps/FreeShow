@@ -187,6 +187,8 @@ export function clearDrawing() {
 }
 
 export function clearScene(specificOutputId = "") {
+    if (get(outLocked)) return
+
     const outputIds = specificOutputId ? [specificOutputId] : getAllActiveOutputIds()
 
     outputIds.forEach((outputId) => {
