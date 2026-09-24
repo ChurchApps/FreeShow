@@ -146,7 +146,7 @@
     $: sceneMedia = scene?.media || null
     $: sceneStyleId = scene?.style || ""
     $: sceneOverlays = scene?.overlays || []
-    $: sceneHideLayers = scene !== null && !sceneStyleId
+    $: sceneHideLayers = styleIdOverride ? false : scene !== null && !sceneStyleId
 
     // overlays
     $: outputtedOverlayIds = sceneHideLayers ? [] : out.overlays || []
@@ -165,7 +165,7 @@
     let slideData: SlideData | null = null
     let currentSlide: Slide | null = null
 
-    $: updateSlideData(slide, outputId)
+    $: updateSlideData(slide, outputId || styleId)
     function updateSlideData(slide, _outputChanged) {
         if (!slide) {
             currentLayout = []
@@ -335,7 +335,7 @@
     $: drawZoom = $drawTool === "zoom" && zoomActive ? ($drawSettings.zoom?.size || 200) / 100 : 1
 
     // CLEARING
-    $: if (slide !== undefined || layers || sceneHideLayers !== undefined) updateSlide()
+    $: if (slide !== undefined || styleId || layers || sceneHideLayers !== undefined) updateSlide()
     let actualSlide: OutSlide | null = null
     let actualSlideData: SlideData | null = null
     let actualCurrentSlide: Slide | null = null
