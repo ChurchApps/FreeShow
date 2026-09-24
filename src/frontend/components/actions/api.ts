@@ -19,11 +19,11 @@ import { startMetronome } from "../drawer/audio/metronome"
 import { getInteraction, startInteraction, stopInteraction } from "../drawer/pages/interactions"
 import { pauseAllTimers } from "../drawer/timers/timers"
 import { getSlideThumbnail, getThumbnail } from "../helpers/media"
-import { changeStageOutputLayout, startCamera, startRtmpStreaming, startScreen, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutputs } from "../helpers/output"
+import { changeStageOutputLayout, startCamera, startRtmpStreaming, startScene, startScreen, startStreaming, stopRtmpStreaming, stopStreaming, toggleOutputs } from "../helpers/output"
 import { OutputHelper } from "../helpers/OutputHelper"
 import { changeOutputStyle, playSlideTimers, randomSlide, replaceDynamicValues, selectProjectShow, sendMidi, startShowSync } from "../helpers/showActions"
 import { startTimerById, startTimerByName, stopTimers } from "../helpers/timerTick"
-import { clearAll, clearBackground, clearDrawing, clearOverlay, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../output/clear"
+import { clearAll, clearBackground, clearDrawing, clearOverlay, clearOverlays, clearScene, clearSlide, clearTimers, restoreOutput } from "../output/clear"
 import { fadePause, skipNext, skipPrev, spotifyPause, spotifyPlay } from "../output/preview/SpotifyManager"
 import { formatText } from "../show/formatTextEditor"
 import { getPlainEditorText } from "../show/getTextEditor"
@@ -254,6 +254,7 @@ export const API_ACTIONS = {
     clear_overlay: (data: API_id) => clearOverlay(data.id),
     clear_audio: () => clearAudio("", { clearPlaylist: true, commonClear: true }), // BC
     clear_next_timer: () => clearTimers(), // BC
+    clear_scene: (data: API_id) => clearScene(data?.id),
     clear_drawing: () => clearDrawing(),
 
     // MEDIA (Backgrounds)
@@ -279,6 +280,7 @@ export const API_ACTIONS = {
     scripture_previous: () => triggerFunction("scripture_previous"), // BC
 
     // OUTPUT
+    start_scene: (data: API_id) => startScene(data.id),
     start_webrtc_stream: (data: API_id_optional) => startStreaming(data.id),
     stop_webrtc_stream: (data: API_id_optional) => stopStreaming(data.id),
     start_rtmp_stream: (data: API_id_optional) => startRtmpStreaming(data.id),

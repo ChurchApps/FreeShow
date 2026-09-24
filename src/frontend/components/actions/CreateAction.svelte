@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte"
-    import { actionRevealUsed, actions, activePopup, ai, audioPlaylists, audioStreams, categories, effects, emitters, obsData, outputs, overlays, popupData, projects, shows, stageShows, styles, templates, timers, variables } from "../../stores"
+    import { actionRevealUsed, actions, activePopup, ai, audioPlaylists, audioStreams, categories, effects, emitters, obsData, outputs, overlays, popupData, projects, scenes, shows, stageShows, styles, templates, timers, variables } from "../../stores"
     import { translateText } from "../../utils/language"
     import { formatSearch } from "../../utils/search"
     import Icon from "../helpers/Icon.svelte"
@@ -217,6 +217,7 @@
         if (id === "start_show" || id === "id_select_show") return getName($shows)
         if (id === "id_select_project") return getName($projects)
         if (id === "set_template") return getName($templates)
+        if (id === "start_scene") return getName($scenes)
         if (id === "toggle_output") return getName($outputs)
         if (id === "id_select_stage_layout") return getName($stageShows)
         if (id === "start_audio_stream") return getName($audioStreams)

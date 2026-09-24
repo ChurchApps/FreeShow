@@ -61,6 +61,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     showsPath: null, // DEPRECATED
     dataPath: "", // DEPRECATED
     lockedOverlays: [],
+    activeScenes: {},
     splitLines: 0,
     theme: "default",
     transitionData: {
@@ -115,6 +116,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     variables: {
         default: { name: "Counter", type: "number" }
     },
+    scenes: {},
     interactions: {},
     audioStreams: {},
     audioPlaylists: {},

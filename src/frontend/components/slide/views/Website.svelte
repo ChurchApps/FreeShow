@@ -9,6 +9,7 @@
     export let navigation = true
     export let zoom: number | undefined = undefined
     export let clickable = false
+    export let disablePreview = false
 
     let webview: any
     export let ratio: number
@@ -192,23 +193,29 @@
     }
 </script>
 
-<div class="website" class:clickable on:mouseover={mouseover} on:focus={mouseover} on:mouseleave={mouseleave}>
-    {#if navigation && hover && $currentWindow === "output"}
-        <div class="controls" style="zoom: {1 / ratio};">
-            {#if !backDisabled || !forwardDisabled}
-                <Button on:click={() => navigate(true)} disabled={backDisabled}>
-                    <Icon id="back" white />
-                </Button>
-                <Button on:click={() => navigate(false)} disabled={forwardDisabled}>
-                    <Icon id="arrow_forward" white />
-                </Button>
-            {/if}
+{#if disablePreview}
+    <div class="iconPreview">
+        <Icon id="web" size={3} white />
+    </div>
+{:else}
+    <div class="website" class:clickable on:mouseover={mouseover} on:focus={mouseover} on:mouseleave={mouseleave}>
+        {#if navigation && hover && $currentWindow === "output"}
+            <div class="controls" style="zoom: {1 / ratio};">
+                {#if !backDisabled || !forwardDisabled}
+                    <Button on:click={() => navigate(true)} disabled={backDisabled}>
+                        <Icon id="back" white />
+                    </Button>
+                    <Button on:click={() => navigate(false)} disabled={forwardDisabled}>
+                        <Icon id="arrow_forward" white />
+                    </Button>
+                {/if}
 
-            <p class="url" style="zoom: {ratio};">{formatUrl(url)}</p>
-        </div>
-    {/if}
-    <webview id="webview" src={parsedSrc} bind:this={webview} use:initWebview />
-</div>
+                <p class="url" style="zoom: {ratio};">{formatUrl(url)}</p>
+            </div>
+        {/if}
+        <webview id="webview" src={parsedSrc} bind:this={webview} use:initWebview />
+    </div>
+{/if}
 
 <style>
     .website {
@@ -249,5 +256,19 @@
         display: flex;
         align-items: center;
         padding: 2px 10px;
+    }
+
+    .iconPreview {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 100%;
+        height: 100%;
+
+        border: 2px solid white;
+        background-color: rgb(0 50 100 / 0.3);
+
+        zoom: 8;
     }
 </style>

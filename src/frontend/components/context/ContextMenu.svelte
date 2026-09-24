@@ -150,7 +150,7 @@
     function shouldShowMenuWithItems(id: string) {
         if (id === "rearrange") return getEditItems().length > 1
 
-        if (id === "bind_to") return $contextData.outputList
+        if (id === "bind_to" || id === "bind_to_scene") return $contextData.outputList
         if (id === "format") return $contextData.textContent || $activePage !== "show"
         if (id === "remove_layers") return $contextData.layers
         if (id === "tag_filter") return $contextData.tags

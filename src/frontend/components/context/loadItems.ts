@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Media } from "../../../types/Show"
-import { actions, actionTags, activeActionTagFilter, activeEdit, activeMediaTagFilter, activePlayerTagFilter, activeTagFilter, activeTimerTagFilter, activeVariableTagFilter, contextData, drawerTabsData, globalTags, groups, media, mediaOptions, mediaTags, outputs, overlays, playerTags, playerVideos, selected, shows, sorted, timers, timerTags, variables, variableTags } from "../../stores"
+import { actions, actionTags, activeActionTagFilter, activeEdit, activeMediaTagFilter, activePlayerTagFilter, activeTagFilter, activeTimerTagFilter, activeVariableTagFilter, contextData, drawerTabsData, globalTags, groups, media, mediaOptions, mediaTags, outputs, overlays, playerTags, playerVideos, scenes, selected, shows, sorted, timers, timerTags, variables, variableTags } from "../../stores"
 import { translateText } from "../../utils/language"
 import { isGroupHidden } from "../../utils/profile"
 import { drawerTabs } from "../../values/tabs"
@@ -360,7 +360,23 @@ const loadActions = {
 
         return contextOutputList
     },
-    bind_item: () => loadActions.bind_slide([], true)
+    bind_item: () => loadActions.bind_slide([], true),
+    bind_scene: () => {
+        const outputList: any[] = sortByName(keysToID(get(outputs)).filter((a) => !a.stageOutput))
+        let contextOutputList: (ContextMenuItem | "SEPARATOR")[] = outputList.map((a) => ({ id: a.id, label: a.name, translate: false }))
+
+        const sceneId = get(selected).data[0]
+        const currentBindings = get(scenes)[sceneId]?.bindings || []
+
+        contextOutputList = contextOutputList.map((a) => {
+            if (typeof a !== "string" && currentBindings.includes(a.id!)) a.enabled = true
+            return a
+        })
+
+        setContextData("outputList", contextOutputList?.length > 0)
+
+        return contextOutputList
+    }
 }
 
 function setContextData(key: string, data: boolean | string | number) {

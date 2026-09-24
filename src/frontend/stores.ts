@@ -16,7 +16,7 @@ import type { History, HistoryNew } from "../types/History"
 import type { ActiveEdit, Clipboard, Interaction, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { Action, CustomFont, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
+import type { Action, CustomFont, Emitter, ID, Overlays, Scene, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
@@ -256,6 +256,9 @@ export const timers: Writable<{ [key: string]: Timer }> = writable({}) // {}
 // VARIABLES
 export const variables: Writable<{ [key: string]: Variable }> = writable({}) // {}
 
+// SCENES
+export const scenes: Writable<{ [key: string]: Scene }> = writable({}) // {}
+
 // INTERACTIONS
 export const interactions: Writable<{ [key: string]: Interaction }> = writable({}) // {}
 
@@ -350,6 +353,7 @@ export const resized: Writable<NumberObject> = writable({ leftPanel: 290, rightP
 export const sorted: Writable<any> = writable({}) // {}
 export const dataPath: Writable<string> = writable("") // "" // DEPRECATED - only for setting
 export const lockedOverlays: Writable<string[]> = writable([]) // []
+export const activeScenes: Writable<{ [key: string]: string[] }> = writable({}) // {}
 export const special: Writable<any> = writable({}) // {}
 
 // SETTINGS
@@ -461,6 +465,7 @@ export const $ = {
     folders,
     timers,
     variables,
+    scenes,
     media,
     mediaFolders,
     effects,

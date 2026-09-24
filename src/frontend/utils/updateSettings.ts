@@ -8,7 +8,7 @@ import type { Metadata, Themes } from "../../types/Settings"
 import { migrateAudioEffects } from "../audio/effects/audioEffectsHelpers"
 import { initAudioRouting } from "../audio/routing/audioRoutingInit"
 import { clone, keysToID } from "../components/helpers/array"
-import { checkFFmpeg, checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
+import { checkFFmpeg, checkWindowCapture, setOutput, startScene, toggleOutputs } from "../components/helpers/output"
 import { migrateOutputsRtmp } from "../components/helpers/rtmpDestinations"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { sendMain } from "../IPC/main"
@@ -58,6 +58,7 @@ import {
     loaded,
     loadedState,
     lockedOverlays,
+    activeScenes,
     maxConnections,
     mediaFolders,
     mediaOptions,
@@ -77,6 +78,7 @@ import {
     projectView,
     remotePassword,
     resized,
+    scenes,
     scriptureSettings,
     scriptures,
     serverData,
@@ -282,7 +284,20 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         lockedOverlays.set(v)
 
         // start overlays
-        if (v.length) setOutput("overlays", v, false, "", true)
+        if (v.length) {
+            // timeout to ensure outputs are initialized
+            setTimeout(() => {
+                setOutput("overlays", v, false, "", true)
+            }, 10)
+        }
+    },
+    activeScenes: (v: any) => {
+        activeScenes.set(v || {})
+
+        // timeout to ensure outputs are initialized
+        setTimeout(() => {
+            Object.entries(v || {}).forEach(([id, outputIds]: any) => startScene(id, outputIds))
+        }, 10)
     },
     language: (v: any) => {
         language.set(v)
@@ -358,6 +373,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     templateCategories: (v: any) => templateCategories.set(v),
     timers: (v: any) => timers.set(v),
     variables: (v: any) => variables.set(v),
+    scenes: (v: any) => scenes.set(v),
     interactions: (v: any) => interactions.set(v),
     audioStreams: (v: any) => audioStreams.set(v),
     audioPlaylists: (v: any) => audioPlaylists.set(v),

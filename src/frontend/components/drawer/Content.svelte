@@ -10,6 +10,7 @@
     import Interactions from "./pages/Interactions.svelte"
     import OBS from "./pages/OBS.svelte"
     import Overlays from "./pages/Overlays.svelte"
+    import Scenes from "./pages/Scenes.svelte"
     import Shows from "./pages/Shows.svelte"
     import Templates from "./pages/Templates.svelte"
     import Variables from "./pages/Variables.svelte"
@@ -71,6 +72,8 @@
             <Timers {searchValue} />
         {:else if active === "variables"}
             <Variables {searchValue} />
+        {:else if active === "scenes"}
+            <Scenes {searchValue} />
         {:else if active === "interactions"}
             <Interactions {searchValue} />
         {:else if active === "obs"}

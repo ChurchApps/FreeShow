@@ -87,6 +87,8 @@
                         <LazyLoad component={() => import("./components/edit/AudioTools.svelte")} show={$activeEdit.type === "audio"} />
                     {:else if $activeEdit.type === "effect"}
                         <LazyLoad component={() => import("./components/edit/EffectTools.svelte")} show={$activeEdit.type === "effect"} />
+                    {:else if $activeEdit.type === "scene"}
+                        <LazyLoad component={() => import("./components/edit/SceneTools.svelte")} show={$activeEdit.type === "scene"} />
                     {:else if $activeEdit.type === "overlay" || $activeEdit.type === "template" || $showsCache[$activeShow?.id || ""]}
                         {#if $focusMode || (($activeEdit.type || "show") === "show" && $editMode !== "default")}
                             <!-- show nothing -->

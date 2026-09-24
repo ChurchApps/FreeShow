@@ -11,7 +11,7 @@ import { clone, keysToID } from "./array"
 import { history } from "./history"
 import { _updaters } from "./historyHelpers"
 import { addToPos } from "./mover"
-import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateLayoutsFromTemplate, updateSlideFromTemplate } from "./output"
+import { getItemsCountByType, isEmptyOrSpecial, mergeWithTemplate, updateActiveSceneOutputs, updateLayoutsFromTemplate, updateSlideFromTemplate } from "./output"
 import { loadShows, saveTextCache } from "./setShow"
 import { getShowCacheId } from "./show"
 import { getItemWithMostLines } from "./showActions"
@@ -95,6 +95,10 @@ function handleUpdate(obj, data, initializing) {
             else a[id].quickAccess = data.data
             return a
         })
+    }
+
+    if (obj.location?.id === "scene_key" || obj.location?.id === "scene") {
+        updateActiveSceneOutputs(id)
     }
 
     if (!initializing) return

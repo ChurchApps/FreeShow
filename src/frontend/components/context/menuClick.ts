@@ -69,6 +69,7 @@ import {
     projectView,
     quickSearchActive,
     refreshEditSlide,
+    scenes,
     scriptures,
     selected,
     settingsTab,
@@ -260,7 +261,7 @@ const clickActions = {
         const data = obj.sel?.data?.[0] || {}
 
         const renameById = ["show_drawer", "project", "folder", "stage", "theme", "style", "output", "tag", "profile", "interaction"]
-        const renameByIdDirect = ["overlay", "template", "player", "layout", "effect"]
+        const renameByIdDirect = ["overlay", "template", "player", "layout", "effect", "scene"]
 
         if (renameById.includes(id)) activeRename.set(id + "_" + data.id)
         else if (renameByIdDirect.includes(id)) activeRename.set(id + "_" + data)
@@ -1294,13 +1295,20 @@ const clickActions = {
             activeEdit.set({ type: "show", slide: 0, items: [], showId })
             if (get(activePage) === "edit") refreshEditSlide.set(true)
             activePage.set("edit")
-        } else if (["overlay", "template", "effect"].includes(obj.sel.id || "")) {
+        } else if (["overlay", "template", "effect", "scene"].includes(obj.sel.id || "")) {
             if (get(activePage) === "edit") refreshEditSlide.set(true)
             activePage.set("edit")
 
             // properly set content when edit set to same type as preview, but different id
             // e.g. overlay opened in preview, then edited, then trying to edit another overlay will reset to preview without timeout
             setTimeout(() => activeEdit.set({ type: obj.sel!.id as any, id: obj.sel!.data[0], items: [] }))
+        } else if (obj.sel.id === "scene_overlay") {
+            const overlayId = obj.sel.data[0]?.id
+            if (typeof overlayId !== "string" || !overlayId) return
+
+            refreshEditSlide.set(true)
+            activePage.set("edit") // should already be "edit"
+            setTimeout(() => activeEdit.set({ type: "overlay", id: overlayId, items: [] }))
         } else if (obj.sel.id === "action") {
             const firstActionId = obj.sel.data[0]?.id
             const action = get(actions)[firstActionId]
@@ -1533,6 +1541,14 @@ const clickActions = {
 
         popupData.set({ mode: "template", templateId, existing: existingActions.map((a) => a.triggers?.[0]) })
         activePopup.set("action")
+    },
+    scene_actions: (obj: ObjData) => {
+        const sceneId = obj.sel?.data[0]
+        const scene = get(scenes)[sceneId]
+        if (!scene) return
+
+        popupData.set({ mode: "scene", sceneId })
+        activePopup.set("custom_action")
     },
     remove_layers: (obj: ObjData) => {
         if (!obj.sel || !obj.menu.id) return
@@ -1928,6 +1944,27 @@ const clickActions = {
         // _show().slides([slideID!]).set({ key: "items", value: items })
 
         removeTemplatesFromShow(get(activeShow)?.id || "", slideRef.id)
+    },
+    bind_scene: (obj: ObjData) => {
+        const id = obj.menu?.id
+        const sceneIds: string[] = obj.sel?.data || []
+
+        sceneIds.forEach((sceneId) => {
+            const currentScene = get(scenes)[sceneId]
+            if (!currentScene) return
+
+            let bindings = clone(currentScene.bindings || [])
+            if (!id) bindings = []
+            else if (bindings.includes(id)) bindings.splice(bindings.indexOf(id), 1)
+            else bindings.push(id)
+
+            history({
+                id: "UPDATE",
+                oldData: { id: sceneId },
+                newData: { key: "bindings", data: bindings },
+                location: { page: "drawer", id: "scene_key", override: "bindings_" + sceneId }
+            })
+        })
     },
     dynamic_values: (obj: ObjData) => {
         const sel = getSelectionRange()

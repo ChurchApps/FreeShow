@@ -8,12 +8,12 @@ import type { DropData, Selected } from "../../../types/Main"
 import type { Item, Slide, SlideAction } from "../../../types/Show"
 import { sendMain } from "../../IPC/main"
 import { changeLayout, changeSlideGroups } from "../../show/slides"
-import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, effectsLibrary, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, scriptureSettings, shows, showsCache, slidesOptions, templates, timers } from "../../stores"
+import { activeDrawerTab, activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, audioFolders, audioPlaylists, audioStreams, drawerTabsData, editingProjectTemplate, effectsLibrary, media, mediaFolders, overlays, playerVideos, projects, projectTemplates, scenes, scriptureSettings, shows, showsCache, slidesOptions, templates, timers } from "../../stores"
 import { newToast } from "../../utils/common"
 import { getAccess } from "../../utils/profile"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
 import { actionData } from "../actions/actionData"
-import { addSlideAction, getActionTriggerId } from "../actions/actions"
+import { addSlideAction, getActionTriggerId, isMatchingSlideAction } from "../actions/actions"
 import { getActiveScripturesContent, getReferenceText, getScriptureShow, getScriptureSlidesNew } from "../drawer/bible/scripture"
 import { getVimeoData, getYouTubeData, trimPlayerId } from "../drawer/player/playerHelper"
 import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
@@ -792,6 +792,14 @@ const slideDrop = {
 
         addSlideAction(drop.index ?? -1, "start_playlist", { id: playlistId })
     },
+    scene: ({ drag, drop }: Data) => {
+        drag.data.forEach((scene) => {
+            const sceneId = scene?.id || scene
+            if (!sceneId || !get(scenes)[sceneId]) return
+
+            addSlideAction(drop.index ?? -1, "start_scene", { id: sceneId })
+        })
+    },
     audio_effect: ({ drag, drop }: Data, h: History) => slideDrop.audio({ drag, drop }, h),
     microphone: ({ drag, drop }: Data, h: History) => {
         if (drop.index === undefined) return
@@ -1148,16 +1156,7 @@ const slideDrop = {
 
             // replace if existing & and only one or value is the same
             // For actions that can have multiple instances, only replace if values are identical
-            const existingIndex = slideActions.findIndex((a) => {
-                const actionTriggerId = getActionTriggerId(a.triggers[0])
-                if (actionTriggerId !== triggerId) return false
-
-                // If action cannot have multiple instances, replace any existing
-                if (!data.canAddMultiple) return true
-
-                // If action can have multiple instances, only replace if values are exactly the same
-                return JSON.stringify(a.actionValues) === JSON.stringify(action.actionValues)
-            })
+            const existingIndex = slideActions.findIndex((a) => isMatchingSlideAction(a, triggerId, action.actionValues, data.canAddMultiple))
 
             if (existingIndex > -1) {
                 slideActions[existingIndex] = { ...action, id: slideActions[existingIndex].id }

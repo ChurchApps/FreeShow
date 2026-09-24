@@ -199,6 +199,9 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     place_under_slide: { label: "context.place_under_slide", icon: "under", iconColor: "#d497ff" },
     display_duration: { label: "popup.display_duration", icon: "clock", iconColor: "#d497ff" },
     overlay_actions: { label: "tabs.actions", icon: "actions", iconColor: "#d497ff" },
+    // SCENES
+    scene_actions: { label: "tabs.actions", icon: "actions", iconColor: "#d497ff" },
+    bind_to_scene: { label: "actions.specific_outputs", icon: "bind", iconColor: "#d497ff", items: ["LOAD_bind_scene"] },
     // TEMPLATES
     template_actions: { label: "tabs.actions", icon: "actions", iconColor: "#d497ff" },
     // SCRIPTUES
@@ -297,6 +300,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     overlay_card: ["GROUP_open", "overlay_actions", "display_duration", "export", "SEPARATOR", "lock_to_output", "place_under_slide", "SEPARATOR", "rename", "recolor", "duplicate", "delete"], // "GROUP_rename_color"
     overlay_card_default: ["GROUP_open", "duplicate", "delete"],
     overlay_card_readonly: ["preview"],
+    scene_card: ["GROUP_edit", "scene_actions", "bind_to_scene", "SEPARATOR", "rename", "duplicate", "delete"],
+    scene_card_readonly: ["preview"],
     // "addToShow",
     drawer_templates: ["reset_defaults"],
     template_card: ["GROUP_edit", "template_actions", "export", "SEPARATOR", "rename", "recolor", "duplicate", "delete"], // "GROUP_rename_color"
@@ -400,6 +405,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     edit_box: ["GROUP_dynamic", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPARATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar) // "GROUP_duplicate_delete"
     editbox_text: ["text_copy", "text_cut", "text_paste", "text_select_all", "SEPARATOR", "insert_virtual_break"],
     items_list_item: ["to_front", "forward", "backward", "to_back"],
+    scene_overlay: ["GROUP_edit", "delete"],
     table_context: ["delete_row", "delete_col"],
 
     // TIMELINE
