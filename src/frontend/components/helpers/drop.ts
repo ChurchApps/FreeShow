@@ -11,7 +11,7 @@ import { addToPos } from "./mover"
 import { deselect } from "./select"
 import { getFileName } from "./media"
 
-export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "project" | "projects" | "overlays" | "templates" | "navigation" | "audio_playlist" | "effects_library"
+export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "project" | "projects" | "overlays" | "templates" | "scenes" | "navigation" | "audio_playlist" | "effects_library"
 
 const areas = {
     all_slides: ["template"],

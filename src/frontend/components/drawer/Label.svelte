@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { effects, fullColors, overlays, playerVideos, templates } from "../../stores"
+    import { effects, fullColors, overlays, playerVideos, scenes, templates } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import { getContrast } from "../helpers/color"
     import Icon from "../helpers/Icon.svelte"
@@ -25,6 +25,10 @@
         template: (c: { name: string; id: string }) => {
             if (getAccess("templates").global === "read" || getAccess("templates")[c.id] === "read") return
             templates.update((a) => setName(a, c, true))
+        },
+        scene: (c: { name: string; id: string }) => {
+            if (getAccess("scenes").global === "read" || getAccess("scenes")[c.id] === "read") return
+            scenes.update((a) => setName(a, c, true))
         },
         effect: (c: { name: string; id: string }) => {
             if (getAccess("overlays").global === "read" || getAccess("overlays")[c.id] === "read") return

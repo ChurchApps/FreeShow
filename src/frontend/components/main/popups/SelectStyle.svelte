@@ -31,7 +31,7 @@
         popupData.set({ id: "select_style", value: selectedId })
 
         setTimeout(() => {
-            setTimeout(() => popupData.set({}), 500) // reset after closing
+            setTimeout(() => ($activePopup === null ? popupData.set({}) : null), 200) // reset after closing
             activePopup.set(null)
         })
     }

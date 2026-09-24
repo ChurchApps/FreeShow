@@ -16,6 +16,7 @@
     import EffectEditor from "./editors/EffectEditor.svelte"
     import MediaEditor from "./editors/MediaEditor.svelte"
     import OverlayEditor from "./editors/OverlayEditor.svelte"
+    import SceneEditor from "./editors/SceneEditor.svelte"
     import SlideEditor from "./editors/SlideEditor.svelte"
     import TemplateEditor from "./editors/TemplateEditor.svelte"
     import ItemAddMenu from "./ItemAddMenu.svelte"
@@ -70,11 +71,13 @@
         {#if $activeEdit.type === "overlay"}
             <OverlayEditor />
 
-            <ItemAddMenu {isLocked} />
+            <ItemAddMenu />
         {:else if $activeEdit.type === "template"}
             <TemplateEditor />
 
-            <ItemAddMenu {isLocked} />
+            <ItemAddMenu />
+        {:else if $activeEdit.type === "scene"}
+            <SceneEditor />
         {:else if $activeEdit.type === "effect"}
             <EffectEditor />
 

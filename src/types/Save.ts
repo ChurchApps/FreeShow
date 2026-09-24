@@ -18,6 +18,7 @@ export type SaveListSyncedSettings =
     | "profiles"
     | "timers"
     | "variables"
+    | "scenes"
     | "interactions"
     | "audioStreams"
     | "audioPlaylists"

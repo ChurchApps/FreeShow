@@ -43,6 +43,7 @@ import {
     projects,
     projectTemplates,
     refreshEditSlide,
+    scenes,
     scriptures,
     scriptureSettings,
     selectAllAudio,
@@ -417,6 +418,11 @@ const selectActions = {
 
         selected.set({ id: "template", data: newSelection })
     },
+    scene: () => {
+        let newSelection: any[] = Object.entries(get(scenes)).map(([id, a]) => ({ ...a, id }))
+        newSelection = newSelection.map(({ id }) => id)
+        selected.set({ id: "scene", data: newSelection })
+    },
     media: () => selectAllMedia.set(true),
     audio: () => selectAllAudio.set(true),
     timeline: () => triggerFunction("timeline_selectAll")
@@ -527,6 +533,10 @@ const copyActions = {
         if (!Array.isArray(data)) return []
         return data.map((id: string) => clone(get(templates)[id]))
     },
+    scene: (data: any) => {
+        if (!Array.isArray(data)) return []
+        return data.map((id: string) => clone(get(scenes)[id]))
+    },
     effect: (data: any) => {
         if (!Array.isArray(data)) return []
         return data.map((id: string) => clone(get(effects)[id]))
@@ -633,6 +643,7 @@ const pasteActions = {
     group: (data: any, extraData: any = {}, isDuplicating: boolean = false) => pasteActions.slide(data, extraData, isDuplicating),
     overlay: (data: any) => pasteDrawerItem(data, "overlay"),
     template: (data: any) => pasteDrawerItem(data, "template"),
+    scene: (data: any) => pasteDrawerItem(data, "scene"),
     effect: (data: any) => {
         data?.forEach((effect) => {
             const newEffect = clone(effect)
@@ -846,6 +857,7 @@ const deleteActions = {
     category_templates: (data: any) => historyDelete("UPDATE", data, { updater: "category_templates" }),
     player: (data: any) => historyDelete("UPDATE", data, { updater: "player_video" }),
     overlay: (data: any) => historyDelete("UPDATE", data, { updater: "overlay" }),
+    scene: (data: any) => historyDelete("UPDATE", data, { updater: "scene" }),
     effect: (data: any) => historyDelete("UPDATE", data, { updater: "effect" }),
     template: async (data: any) => {
         const ids = data.map((id) => id)
@@ -1315,7 +1327,7 @@ const duplicateActions = {
     }
 }
 
-function pasteDrawerItem(data: any, type: "overlay" | "template") {
+function pasteDrawerItem(data: any, type: "overlay" | "template" | "scene") {
     data?.forEach((item) => {
         const newItem = clone(item)
         delete newItem.isDefault

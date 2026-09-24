@@ -574,6 +574,25 @@ export interface TemplateSettings {
     styleOverrides?: TemplateStyleOverride[]
 }
 
+export interface Scenes {
+    [key: ID]: Scene
+}
+export interface Scene {
+    id?: string
+    name: string
+    modified?: number
+
+    bindings?: string[]
+    action?: string
+
+    content?: SceneContent
+}
+export interface SceneContent {
+    media?: any
+    style?: string
+    overlays?: string[]
+}
+
 // output
 
 export interface OutBackground {

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { AccessType, Profile } from "../../../../types/Main"
-    import { actions, actionTags, activePopup, activeProfile, categories, folders, groups, overlayCategories, popupData, profiles, selectedProfile, stageShows, templateCategories, timerTags, variableTags } from "../../../stores"
+    import { actions, actionTags, activePopup, activeProfile, categories, folders, groups, overlayCategories, popupData, profiles, scenes, selectedProfile, stageShows, templateCategories, timerTags, variableTags } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { encodePassword } from "../../../utils/profile"
     import { customIconsColors } from "../../../values/customIcons"
@@ -139,6 +139,11 @@
         .map((a) => ({ ...a, icon: "tag" }))
     $: variablesAccess = currentProfile.access.variables || {}
 
+    $: scenesList = sortByName(keysToID($scenes))
+        .filter((a) => a.name)
+        .map((a) => ({ ...a, icon: "scene" }))
+    $: scenesAccess = currentProfile.access.scenes || {}
+
     $: stageList = sortByName(keysToID($stageShows)).filter((a) => a.name)
     $: stageAccess = currentProfile.access.stage || {}
 
@@ -166,6 +171,7 @@
         { id: "actions", label: "tabs.actions", icon: "actions", access: actionsAccess, options: accessInputsRW, list: actionsList },
         { id: "timers", label: "tabs.timers", icon: "timer", access: timersAccess, options: accessInputsRW, list: timersList },
         { id: "variables", label: "tabs.variables", icon: "variable", access: variablesAccess, options: accessInputsRW, list: variablesList },
+        { id: "scenes", label: "tabs.scenes", icon: "scene", access: scenesAccess, options: accessInputsRW, list: scenesList },
         { id: "stage", label: "menu.stage", icon: "stage", access: stageAccess, options: accessInputsRW, list: stageList },
         { id: "groups", label: "tools.groups", icon: "groups", access: groupsAccess, options: [], list: groupsList },
         { id: "settings", label: "menu.settings", icon: "settings", access: settingsAccess, options: [], list: settingsList }

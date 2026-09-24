@@ -360,6 +360,8 @@
         <Background data={backgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} {mirror} />
     {/if}
 
+    <slot name="scene_media" />
+
     <!-- colorbars for testing -->
     {#if $colorbars[outputId]}
         <Image path="./assets/{$colorbars[outputId]}" mediaStyle={{ rendering: "pixelated", fit: "fill" }} />
