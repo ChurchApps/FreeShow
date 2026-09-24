@@ -77,14 +77,14 @@
                 menu.label = "stage.stage_layout"
                 menu.icon = "stage"
                 if (!$stageShows[stageId]) disabled = true
-                menu.label += `: ${stageId ? $stageShows[stageId]?.name || "error.not_found" : "main.none"}`
+                menu.label += `: ${stageId ? ($stageShows[stageId] ? $stageShows[stageId].name || "main.unnamed" : "error.not_found") : "main.none"}`
                 return
             }
 
             menu.label = "edit.style"
             menu.icon = "styles"
             // if (!$styles[styleId]) disabled = true
-            menu.label += `: ${styleId ? $styles[styleId]?.name || "error.not_found" : "main.none"}`
+            menu.label += `: ${styleId ? ($styles[styleId] ? $styles[styleId].name || "main.unnamed" : "error.not_found") : "main.none"}`
         },
         edit_style: () => {
             let outputId = contextElem?.id || ""
@@ -94,13 +94,13 @@
             if (stageId) {
                 menu.label = "menu.edit"
                 if (!$stageShows[stageId]) disabled = true
-                menu.label += `: ${stageId ? $stageShows[stageId]?.name || "error.not_found" : "main.none"}`
+                menu.label += `: ${stageId ? ($stageShows[stageId] ? $stageShows[stageId].name || "main.unnamed" : "error.not_found") : "main.none"}`
                 return
             }
 
             menu.label = "menu.edit"
             if (!$styles[styleId]) disabled = true
-            menu.label += `: ${styleId ? $styles[styleId]?.name || "error.not_found" : "main.none"}`
+            menu.label += `: ${styleId ? ($styles[styleId] ? $styles[styleId].name || "main.unnamed" : "error.not_found") : "main.none"}`
         },
         lock_group: () => {
             if ($selected.id !== "group") return
