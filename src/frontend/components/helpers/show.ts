@@ -5,6 +5,7 @@ import { translateText } from "../../utils/language"
 import { clone, keysToID, removeValues, sortByName, sortByNameAndNumber } from "./array"
 import { GetLayout } from "./get"
 import { history } from "./history"
+import { isOutputBound, resolveOutputId } from "./output"
 import { loadShows } from "./setShow"
 import { swichProjectItem } from "./showActions"
 import { _show } from "./shows"
@@ -406,13 +407,15 @@ export function bindSlidesToOutput(indexes: number[], outputId: string) {
     const ref = getLayoutRef()
     const newBindings: string[][] = []
 
-    const add = !ref[indexes[0]]?.data?.bindings?.includes(outputId)
+    const add = !isOutputBound(ref[indexes[0]]?.data?.bindings, outputId)
 
     indexes.forEach((i) => {
-        const bindings: string[] = ref[i]?.data?.bindings ? [...ref[i].data.bindings] : []
-        const existingIndex = bindings.indexOf(outputId)
-        if (add && existingIndex < 0) bindings.push(outputId)
-        else if (!add && existingIndex >= 0) bindings.splice(existingIndex, 1)
+        let bindings: string[] = ref[i]?.data?.bindings ? [...ref[i].data.bindings] : []
+        if (add) {
+            if (!isOutputBound(bindings, outputId)) bindings.push(outputId)
+        } else {
+            bindings = bindings.filter((bId) => resolveOutputId(bId) !== outputId && bId !== outputId)
+        }
         newBindings.push(bindings)
     })
 

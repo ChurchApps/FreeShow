@@ -109,7 +109,7 @@ import { clone, removeDuplicates, sortObjectNumbers } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
-import { defaultOutput, getCurrentStyle, getFirstActiveOutput, setOutput, toggleOutput, toggleOutputs } from "../helpers/output"
+import { defaultOutput, getCurrentStyle, getFirstActiveOutput, isOutputBound, resolveOutputId, setOutput, toggleOutput, toggleOutputs } from "../helpers/output"
 import { select } from "../helpers/select"
 import { bindSlidesToOutput, checkName, formatToFileName, getLayoutRef, openShow, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
@@ -1902,9 +1902,10 @@ const clickActions = {
             const currentItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
             const itemValues1 = items.map((index) => currentItems[index].bindings || [])
             const newValues1: string[][] = []
+            const isBound1 = id ? isOutputBound(itemValues1[0], id) : false
             itemValues1.forEach((value) => {
                 if (!id) value = []
-                else if (value.includes(id)) value.splice(value.indexOf(id, 1))
+                else if (isBound1) value = value.filter((bId) => resolveOutputId(bId) !== id && bId !== id)
                 else value.push(id)
 
                 newValues1.push(value)
@@ -1928,9 +1929,10 @@ const clickActions = {
         let itemValues = _show().slides([slideRef.id]).items(items).get("bindings")[0]
         itemValues = itemValues.map((a) => a || [])
         const newValues: string[][] = []
+        const isBound = id ? isOutputBound(itemValues[0], id) : false
         itemValues.forEach((value) => {
             if (!id) value = []
-            else if (value.includes(id)) value.splice(value.indexOf(id, 1))
+            else if (isBound) value = value.filter((bId) => resolveOutputId(bId) !== id && bId !== id)
             else value.push(id)
 
             newValues.push(value)
@@ -1955,8 +1957,11 @@ const clickActions = {
 
             let bindings = clone(currentScene.bindings || [])
             if (!id) bindings = []
-            else if (bindings.includes(id)) bindings.splice(bindings.indexOf(id), 1)
-            else bindings.push(id)
+            else if (isOutputBound(bindings, id)) {
+                bindings = bindings.filter((bId) => resolveOutputId(bId) !== id && bId !== id)
+            } else {
+                bindings.push(id)
+            }
 
             history({
                 id: "UPDATE",

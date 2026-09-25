@@ -38,6 +38,10 @@ export interface Output {
     out?: OutData
 }
 
+export interface SyncedOutputs {
+    [id: string]: string
+}
+
 // RTMP
 export interface RtmpDestination {
     id: string

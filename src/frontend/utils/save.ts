@@ -7,13 +7,14 @@ import { customActionActivation } from "../components/actions/actions"
 import { stopMediaRecorder } from "../components/drawer/live/recorder"
 import { stopAllInteractions } from "../components/drawer/pages/interactions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
-import { isOutCleared } from "../components/helpers/output"
+import { isOutCleared, updateSyncedOutputs } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
 import {
     actionTags,
     actions,
     activePopup,
     activeProject,
+    activeScenes,
     ai,
     alertMessage,
     alertUpdates,
@@ -58,7 +59,6 @@ import {
     labelsDisabled,
     language,
     lockedOverlays,
-    activeScenes,
     maxConnections,
     media,
     mediaFolders,
@@ -98,6 +98,7 @@ import {
     stageShows,
     statusIndicator,
     styles,
+    syncedOutputs,
     templateCategories,
     templates,
     textCache,
@@ -123,6 +124,7 @@ import { syncDrive } from "./drive"
 import { autoDisableRemoteController, stopRemoteController } from "./remoteController"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
+    updateSyncedOutputs()
     startAutosave() // reset auto save timer
 
     // don't save again while saving
@@ -288,7 +290,8 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         globalRegexes,
         customMetadata,
         effects,
-        deletedDefaults
+        deletedDefaults,
+        syncedOutputs
     }
 }
 
@@ -526,5 +529,6 @@ const saveList: { [key in SaveList]: any } = {
     effects,
     audioRouting,
     deletedDefaults: null,
+    syncedOutputs,
     ai: ai
 }

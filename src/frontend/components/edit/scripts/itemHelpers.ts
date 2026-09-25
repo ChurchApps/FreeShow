@@ -11,7 +11,7 @@ import { addSlideAction } from "../../actions/actions"
 import { createNewTimer, getCurrentTimerValue } from "../../drawer/timers/timers"
 import { clone, keysToID, sortByName } from "../../helpers/array"
 import { history } from "../../helpers/history"
-import { getFirstActiveOutput, getStageOutputId } from "../../helpers/output"
+import { getFirstActiveOutput, getStageOutputId, isOutputBound } from "../../helpers/output"
 import { getLayoutRef } from "../../helpers/show"
 import { dynamicValueText, getVariableValue, replaceDynamicValues } from "../../helpers/showActions"
 import { _show } from "../../helpers/shows"
@@ -330,13 +330,13 @@ export function shouldItemBeShown(item: Item, allItems: Item[] = [], { outputId,
     if (!condition && !hasBindings) return true
 
     // check bindings
-    if (hasBindings && !item.bindings!.includes(outputId)) return false
+    if (hasBindings && !isOutputBound(item.bindings, outputId)) return false
     if (!condition) return true
 
     if (type === "stage") allItems = getTempItems(item, allItems)
 
     if (!allItems.length) allItems = [item]
-    const slideItems = allItems.filter((a) => !a?.bindings?.length || (Array.isArray(a.bindings) && a.bindings.includes(outputId)))
+    const slideItems = allItems.filter((a) => !a?.bindings?.length || (Array.isArray(a.bindings) && isOutputBound(a.bindings, outputId)))
     const itemsText = slideItems.reduce((value, currentItem) => (value += getItemText(currentItem)), "")
 
     return isConditionMet(condition, itemsText, type)

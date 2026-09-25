@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { midiInListen } from "../components/actions/midi"
-import { getAllActiveOutputIds, getAllNormalOutputs } from "../components/helpers/output"
+import { getAllActiveOutputIds, getAllNormalOutputs, updateSyncedOutputs } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { getShowCacheId, updateCachedShow, updateCachedShows, updateShowsList } from "../components/helpers/show"
 import {
@@ -52,6 +52,7 @@ import {
     special,
     stageShows,
     styles,
+    syncedOutputs,
     templateCategories,
     templates,
     timeFormat,
@@ -234,6 +235,7 @@ export function storeSubscriber() {
         // used for stage mirror data
         send(OUTPUT, ["ALL_OUTPUTS"], data)
         send(REMOTE, ["AUDIO_ROUTING"], getFilteredAudioChannels())
+        updateSyncedOutputs()
 
         // let it update properly
         setTimeout(() => {
@@ -246,6 +248,9 @@ export function storeSubscriber() {
         // sendData(STAGE, { channel: "SLIDES" }, true)
         // send(STAGE, ["OUTPUTS"], data)
         // sendBackgroundToStage(a)
+    })
+    syncedOutputs.subscribe((data) => {
+        send(OUTPUT, ["SYNCED_OUTPUTS"], data)
     })
     styles.subscribe((data) => {
         send(OUTPUT, ["STYLES"], data)
@@ -504,6 +509,7 @@ const initalOutputData = {
     TIME_FORMAT: "timeFormat",
 
     SPECIAL: "special",
+    SYNCED_OUTPUTS: "syncedOutputs",
 
     SLIDE_TIMELINE_SPEED_MULTIPLIER: "slideTimelineSpeedMultiplier",
 

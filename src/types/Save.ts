@@ -42,6 +42,7 @@ export type SaveListSyncedSettings =
     | "customMetadata"
     | "effects"
     | "deletedDefaults"
+    | "syncedOutputs"
 
 export type SaveListSettings =
     | "initialized"

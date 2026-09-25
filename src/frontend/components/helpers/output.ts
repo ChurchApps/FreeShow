@@ -41,6 +41,7 @@ import {
     special,
     stageShows,
     styles,
+    syncedOutputs,
     templates,
     theme,
     themes,
@@ -68,8 +69,50 @@ import { getFewestOutputLines, getItemWithMostLines } from "./showActions"
 import { _show } from "./shows"
 import { getStyles } from "./style"
 
+// Resolve output ID or name to matching local output ID
+export function resolveOutputId(targetId: string, currentOutputs: Outputs = get(outputs)): string | null {
+    if (!targetId || currentOutputs[targetId]) return targetId || null
+
+    const registry = get(syncedOutputs) || {}
+    const targetName = registry[targetId] || targetId
+    const normalized = targetName.trim().toLowerCase()
+
+    const match = Object.entries(currentOutputs).find(([_, out]) => out?.name?.trim().toLowerCase() === normalized)
+    return match ? match[0] : null
+}
+
+export function resolveOutputIds(outputIds: string[], currentOutputs: Outputs = get(outputs)): string[] {
+    if (!outputIds || !outputIds.length) return []
+    return removeDuplicates(outputIds.map((id) => resolveOutputId(id, currentOutputs)).filter(Boolean) as string[])
+}
+
+// Check if output ID is included in bindings (supports ID and name resolution)
+export function isOutputBound(bindings: string[] | undefined, currentOutputId: string, currentOutputs: Outputs = get(outputs)): boolean {
+    if (!bindings?.length || !currentOutputId) return false
+    return bindings.includes(currentOutputId) || bindings.some((bId) => resolveOutputId(bId, currentOutputs) === currentOutputId)
+}
+
+export function updateSyncedOutputs() {
+    const outs = get(outputs)
+    if (!outs) return
+    syncedOutputs.update((synced = {}) => {
+        let changed = false
+        const updated = { ...synced }
+        for (const [id, out] of Object.entries(outs)) {
+            if (out?.name && updated[id] !== out.name) {
+                updated[id] = out.name
+                changed = true
+            }
+        }
+        return changed ? updated : synced
+    })
+}
+
+///
+
 export function toggleOutputs(outputIds: string[] | null = null, options: { force?: boolean; autoStartup?: boolean; state?: boolean } = {}) {
     if (outputIds === null) outputIds = getActiveOutputs(get(outputs), false)
+    else outputIds = resolveOutputIds(outputIds)
     // if (outputIds === null) outputIds = Object.keys(get(outputs))
 
     const outputsList = outputIds.map((id) => ({ ...get(outputs)[id], id })).filter((a) => a.enabled)
@@ -102,8 +145,10 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
     if (type === "slide") _stopBreakRecording()
 
     const bindings = data?.bindings || (data?.layout ? ref[data.index]?.data?.bindings || [] : [])
-    const allOutputIds = bindings.length ? bindings : getActiveOutputs(get(outputs), true, false, true)
-    const outs = outputId ? [outputId] : allOutputIds
+    const resolvedBindings = bindings.length ? resolveOutputIds(bindings) : []
+    const allOutputIds = resolvedBindings.length ? resolvedBindings : getActiveOutputs(get(outputs), true, false, true)
+    const resolvedOutputId = outputId ? resolveOutputId(outputId) || outputId : ""
+    const outs = resolvedOutputId ? [resolvedOutputId] : allOutputIds
 
     // track usage (& set attributionString)
     if (type === "slide" && data?.id) {
@@ -434,7 +479,7 @@ export function startScene(id: string, specificOutputIds: string[] | null = null
 
     const bindings = specificOutputIds?.length ? specificOutputIds : scene.bindings || []
     const activeOutputIds = getAllActiveOutputIds()
-    const targetOutputIds = bindings.length ? activeOutputIds.filter((outputId) => bindings.includes(outputId)) : activeOutputIds
+    const targetOutputIds = bindings.length ? activeOutputIds.filter((outputId) => isOutputBound(bindings, outputId)) : activeOutputIds
     if (!targetOutputIds.length) return
 
     const currentOutputs = get(outputs)
@@ -899,7 +944,9 @@ function stageHasOutput(outputId: string) {
             if (!outputItem) return false
         }
 
-        return (outputItem?.currentOutput?.source || stageLayout.settings?.output || outputId) === outputId
+        const targetOutput = outputItem?.currentOutput?.source || stageLayout.settings?.output
+        const resolvedTarget = targetOutput ? resolveOutputId(targetOutput) : outputId
+        return (resolvedTarget || outputId) === outputId
 
         // WIP check that this stage layout is not disabled & used in a output or (web enabled (disabledServers) + has connection)!
     })
@@ -908,9 +955,10 @@ function stageHasOutput(outputId: string) {
 // Streaming
 
 export function startStreaming(outputId: string = "") {
-    const outputIds = outputId ? [outputId] : getAllActiveOutputIds()
+    const resolvedId = outputId ? resolveOutputId(outputId) || outputId : ""
+    const outputIds = resolvedId ? [resolvedId] : getAllActiveOutputIds()
 
-    outputIds.forEach((outputId) => updateOutputWebrtcData(outputId, "streaming", true))
+    outputIds.forEach((id) => updateOutputWebrtcData(id, "streaming", true))
 }
 
 export async function stopStreaming(outputId: string = "", confirmStop: boolean = false) {
@@ -919,13 +967,15 @@ export async function stopStreaming(outputId: string = "", confirmStop: boolean 
         if (!confirmed) return
     }
 
-    const outputIds = outputId ? [outputId] : getAllActiveOutputIds()
+    const resolvedId = outputId ? resolveOutputId(outputId) || outputId : ""
+    const outputIds = resolvedId ? [resolvedId] : getAllActiveOutputIds()
 
-    outputIds.forEach((outputId) => updateOutputWebrtcData(outputId, "streaming", false))
+    outputIds.forEach((id) => updateOutputWebrtcData(id, "streaming", false))
 }
 
 export function updateOutputWebrtcData(outputId: string, key: string, value: any) {
-    const output = get(outputs)[outputId]
+    const resolvedId = resolveOutputId(outputId) || outputId
+    const output = get(outputs)[resolvedId]
     if (!output) return null
 
     const newData = { ...(output.webrtcData || {}), [key]: value }
@@ -933,8 +983,8 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
     if (key === "streaming" && (!output.webrtc || !output.webrtcData?.url)) return null
 
     outputs.update((a: any) => {
-        if (!a[outputId]) return a
-        a[outputId].webrtcData = newData
+        if (!a[resolvedId]) return a
+        a[resolvedId].webrtcData = newData
         return a
     })
 
@@ -943,13 +993,14 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
         else AudioAnalyser.recorderDeactivate()
     }
 
-    send(OUTPUT, ["SET_VALUE"], { id: outputId, key: "webrtcData", value: newData })
+    send(OUTPUT, ["SET_VALUE"], { id: resolvedId, key: "webrtcData", value: newData })
     return newData
 }
 
 export function startRtmpStreaming(outputId: string = "") {
-    const outputIds = outputId ? [outputId] : getAllActiveOutputIds()
-    outputIds.forEach((outputId) => updateOutputRtmpData(outputId, "streaming", true))
+    const resolvedId = outputId ? resolveOutputId(outputId) || outputId : ""
+    const outputIds = resolvedId ? [resolvedId] : getAllActiveOutputIds()
+    outputIds.forEach((id) => updateOutputRtmpData(id, "streaming", true))
 }
 
 export async function stopRtmpStreaming(outputId: string = "", confirmStop: boolean = false) {
@@ -958,8 +1009,9 @@ export async function stopRtmpStreaming(outputId: string = "", confirmStop: bool
         if (!confirmed) return
     }
 
-    const outputIds = outputId ? [outputId] : getAllActiveOutputIds()
-    outputIds.forEach((outputId) => updateOutputRtmpData(outputId, "streaming", false))
+    const resolvedId = outputId ? resolveOutputId(outputId) || outputId : ""
+    const outputIds = resolvedId ? [resolvedId] : getAllActiveOutputIds()
+    outputIds.forEach((id) => updateOutputRtmpData(id, "streaming", false))
 }
 
 export function updateOutputRtmpData(outputId: string, key: string, value: any) {
@@ -1110,7 +1162,8 @@ export function enableStageOutput(options: any = {}) {
 export function changeStageOutputLayout(data: API_stage_output_layout) {
     if (!data.stageLayoutId) return
 
-    const outputIds = data.outputId ? [data.outputId] : Object.keys(get(outputs))
+    const targetId = data.outputId ? resolveOutputId(data.outputId) : null
+    const outputIds = targetId ? [targetId] : Object.keys(get(outputs))
 
     outputs.update((a) => {
         outputIds.forEach((id) => {
@@ -1844,7 +1897,7 @@ export function setTemplateStyle(outSlide: OutSlide | null, currentStyle: Styles
     function checkSpecificOutput(item: Item) {
         if (!item) return false
         if (outSlide === null) return true // always show in slides preview
-        return !item.bindings?.length || item.bindings.includes(outputId)
+        return isOutputBound(item.bindings, outputId)
     }
 }
 

@@ -22,7 +22,7 @@ import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
 import { AiSuggestion } from "./../types/ai/Ai"
 import type { AiSettings } from "./../types/ai/AiSettings"
-import type { Outputs, RtmpStatus } from "./../types/Output"
+import type { Outputs, RtmpStatus, SyncedOutputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
 import type { PlayingVideoState, VideoAudioData } from "./components/media/video/videoPlayer"
@@ -379,6 +379,7 @@ export const styles: Writable<{ [key: string]: Styles }> = writable({}) // {}
 
 // OUTPUTS
 export const outputs: Writable<Outputs> = writable({}) // {default}
+export const syncedOutputs: Writable<SyncedOutputs> = writable({}) // {}
 export const outLocked: Writable<boolean> = writable(false) // false
 
 // PROFILES

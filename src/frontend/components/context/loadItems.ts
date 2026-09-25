@@ -11,6 +11,7 @@ import { getSlideText } from "../edit/scripts/textStyle"
 import { chordTypes, keys } from "../edit/values/chords"
 import { clone, keysToID, sortByName } from "../helpers/array"
 import { removeExtension } from "../helpers/media"
+import { isOutputBound } from "../helpers/output"
 import { getLayoutRef } from "../helpers/show"
 import { _show } from "../helpers/shows"
 import { createTagItems, getSelectedTagIds } from "../helpers/tags"
@@ -352,7 +353,7 @@ const loadActions = {
         }
 
         contextOutputList = contextOutputList.map((a) => {
-            if (typeof a !== "string" && currentBindings.includes(a.id!)) a.enabled = true
+            if (typeof a !== "string" && (a.id === "stage" ? currentBindings.includes("stage") : isOutputBound(currentBindings, a.id!))) a.enabled = true
             return a
         })
 
@@ -369,7 +370,7 @@ const loadActions = {
         const currentBindings = get(scenes)[sceneId]?.bindings || []
 
         contextOutputList = contextOutputList.map((a) => {
-            if (typeof a !== "string" && currentBindings.includes(a.id!)) a.enabled = true
+            if (typeof a !== "string" && isOutputBound(currentBindings, a.id!)) a.enabled = true
             return a
         })
 
