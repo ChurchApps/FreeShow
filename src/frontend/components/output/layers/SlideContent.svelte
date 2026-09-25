@@ -1,9 +1,10 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
-    import type { Item, OutSlide, SlideData, TimelineAction, Transition } from "../../../../types/Show"
+    import type { Item, OutSlide, SlideData, TimelineAction } from "../../../../types/Show"
     import { scriptureSettings, showsCache, slideTimelineSpeedMultiplier, templates } from "../../../stores"
     import { waitUntilValueIsDefined } from "../../../utils/common"
     import { shouldItemBeShown } from "../../edit/scripts/itemHelpers"
+    import { getItemText } from "../../edit/scripts/textStyle"
     import { clone } from "../../helpers/array"
     import { loadCustomFonts } from "../../helpers/fonts"
     import { getStyleTemplate, itemNeedsAutoSize, slideHasAutoSizeItem } from "../../helpers/output"
@@ -54,15 +55,10 @@
     let persistentItems: Item[] = []
     let persistentItemIndexes: number[] = []
 
-    // Check if a transition is "meaningful" (not none and duration > 0)
-    function hasRealTransition(itemTransition: Transition | undefined, globalTrans: Transition | undefined): boolean {
-        // Item-level transition takes priority
-        const trans = itemTransition || globalTrans
-        if (!trans) return false
-        // If type is "none" or duration is 0/undefined, no real transition
-        if (trans.type === "none") return false
-        if (!trans.duration || trans.duration === 0) return false
-        return true
+    // Check if an item has lines/text content
+    function hasLinesContent(item: Item | undefined): boolean {
+        if (!item) return false
+        return !!getItemText(item).length
     }
 
     // Compare two items to see if their visible content is identical
@@ -237,32 +233,24 @@
         let currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
         let waitToShow = currentTransitionDuration * ((currentTransition?.fadeInOffset ?? 50) / 100)
 
-        // Identify items that are unchanged and have no real transition (to skip redraw)
+        // Identify items that are unchanged and have no lines content (to keep outputted without fade)
         const newPersistentIndexes: number[] = []
         const newPersistentItems: Item[] = []
         const transitioningItems: Item[] = []
         const transitioningIndexes: number[] = []
 
-        // First, check if ANY item on the slide has a real transition
-        // If so, all items should animate together (no persistent items)
-        const slideHasAnyTransition = currentSlide.items.some((item: Item) => {
-            const itemTrans = item.actions?.transition
-            return hasRealTransition(itemTrans, currentTransition)
-        })
-
         currentSlide.items.forEach((newItem: Item, newIndex: number) => {
             // Find matching old item by index (position-based matching for slides)
             const oldItem = currentItems[newIndex]
 
-            // Item is persistent only if:
+            // Item is persistent if:
             // 1. Content is unchanged AND
-            // 2. No real transition on this item AND
-            // 3. No other item on the slide has a transition (so whole slide animates together)
-            if (itemsAreEqual(oldItem, newItem) && !slideHasAnyTransition) {
+            // 2. It does not have lines/text content (non-text items or text items without lines content)
+            if (!hasLinesContent(newItem) && itemsAreEqual(oldItem, newItem)) {
                 newPersistentIndexes.push(newIndex)
                 newPersistentItems.push(clone(newItem))
             } else {
-                // Item needs to be re-rendered (changed, has transition, or another item has transition)
+                // Item needs to be re-rendered (changed, or has lines content)
                 transitioningIndexes.push(newIndex)
                 transitioningItems.push(clone(newItem))
             }
@@ -432,7 +420,7 @@
                 transition={null}
                 {ratio}
                 {outputId}
-                ref={{ type: "show", showId: current.outSlide?.id, slideId: current.currentSlide?.id, id: current.currentSlide?.id || "", layoutId: current.outSlide?.layout }}
+                ref={{ type: "show", showId: current.outSlide?.id, slideId: current.currentSlide?.id, id: current.currentSlide?.id || "", layoutId: current.outSlide?.layout, origin }}
                 linesStart={current.lines?.[currentLineId || ""]?.[item.lineReveal ? "linesStart" : "start"]}
                 linesEnd={current.lines?.[currentLineId || ""]?.[item.lineReveal ? "linesEnd" : "end"]}
                 clickRevealed={!!current.lines?.[currentLineId || ""]?.clickRevealed}
