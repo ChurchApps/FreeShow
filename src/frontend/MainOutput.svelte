@@ -13,11 +13,13 @@
 
     $: outputId = Object.keys($outputs)[0]
 
+    $: sceneStyleId = $outputs[outputId]?.out?.scene?.style
+
     // get output resolution
     let width = 0
     let height = 0
     let resolution: Resolution = getResolution()
-    $: if ($currentWindow === "output") resolution = getResolution(null, { $outputs, $styles }, true)
+    $: if ($currentWindow === "output") resolution = getResolution(null, { $outputs, $styles }, true, "", sceneStyleId)
 
     // $: outputStyle = getCurrentStyle($styles, $outputs[outputId]?.style)
 
