@@ -33,7 +33,7 @@
 
 <script lang="ts">
     import type { Cropping, Resolution } from "../../../types/Settings"
-    import { draw, outputs, styles } from "../../stores"
+    import { currentWindow, draw, outputs, styles } from "../../stores"
     import { DEFAULT_BOUNDS, getActiveOutputs, getOutputResolution, getResolution } from "../helpers/output"
 
     export let id = ""
@@ -84,6 +84,8 @@
 
     $: croppedStyle = getCropping(cropping, resolution, outputRes)
     function getCropping(cropping, res, outRes) {
+        if ($currentWindow !== "output") return ""
+
         let style = ""
         if (!cropping || mirror) return ""
 
