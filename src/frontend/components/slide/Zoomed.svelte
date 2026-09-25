@@ -77,20 +77,21 @@
     $: shouldUseHeightRatio = outputRes.width < outputRes.height && stylesRatio.width > stylesRatio.height && styleAspectRatio === defaultRatio
     $: ratio = Math.max(0.01, shouldUseHeightRatio ? slideHeight / outputRes.height : slideWidth / outputRes.width) / customZoom
 
-    $: croppedStyle = getCropping(cropping)
-    function getCropping(cropping) {
+    $: croppedStyle = getCropping(cropping, resolution, outputRes)
+    function getCropping(cropping, res, outRes) {
         let style = ""
         if (!cropping || mirror) return ""
 
         let minusHeight = cropping.top + cropping.bottom
         let minusWidth = cropping.right + cropping.left
 
-        let newHeight = outputRes.height - minusHeight
-        let newWidth = outputRes.width - minusWidth
-        let heightRatio = newHeight / outputRes.height
-        let widthRatio = newWidth / outputRes.width
-        let paddingSides = (outputRes.width - minusWidth - outputRes.width * heightRatio) / 2
-        let paddingTops = (outputRes.height - minusHeight - outputRes.height * widthRatio) / 2
+        // Use the slide's actual aspect ratio, not the output's
+        let slideAR = res.width / res.height
+
+        // When height is reduced by cropping, the slide (at its AR) narrows — compute leftover horizontal space
+        let paddingSides = (outRes.width - (outRes.height - minusHeight) * slideAR) / 2
+        // When width is reduced by cropping, the slide (at its AR) shortens — compute leftover vertical space
+        let paddingTops = (outRes.height - (outRes.width - minusWidth) / slideAR) / 2
 
         // if (minusHeight) style += `height: calc(100% - ${minusHeight}px);`
         style += `margin-top: ${cropping.top + paddingTops}px;`
