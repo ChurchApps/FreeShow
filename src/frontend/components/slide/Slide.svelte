@@ -338,7 +338,7 @@
                         {#each layoutSlide.overlays as id}
                             {#if $overlays[id]?.placeUnderSlide === true}
                                 {#each $overlays[id]?.items || [] as item}
-                                    <Textbox {item} ref={{ type: "overlay", id }} preview miniPreview />
+                                    <Textbox {item} {outputId} ref={{ type: "overlay", id }} preview miniPreview />
                                 {/each}
                             {/if}
                         {/each}
@@ -354,6 +354,7 @@
                                 <Textbox
                                     backdropFilter={layoutSlide["backdrop-filter"] || ""}
                                     {item}
+                                    {outputId}
                                     isOutputted={!!output?.color}
                                     revealed={output?.line ?? -1}
                                     itemIndex={i}
@@ -391,7 +392,7 @@
                         {#each layoutSlide.overlays as id}
                             {#if $overlays[id] && !$overlays[id]?.placeUnderSlide}
                                 {#each $overlays[id]?.items || [] as item}
-                                    <Textbox {item} ref={{ type: "overlay", id }} preview miniPreview />
+                                    <Textbox {item} {outputId} ref={{ type: "overlay", id }} preview miniPreview />
                                 {/each}
                             {/if}
                         {/each}
