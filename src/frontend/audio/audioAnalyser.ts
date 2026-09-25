@@ -124,7 +124,8 @@ export class AudioAnalyser {
 
         setTimeout(() => AudioRoutingManager.getInstance().updateRoutingNodes(), 100)
 
-        const mediaData = get(media)[id]
+        const path = AudioPlayer.getPath(id)
+        const mediaData = get(media)[path] || get(media)[id]
         if (mediaData) {
             const pitch = mediaData.pitch ?? 0
             const tempo = mediaData.tempo ?? 1
@@ -140,14 +141,14 @@ export class AudioAnalyser {
 
     static setSourceVolume(id: string, volume: number, outputId?: string) {
         if (this.ac.state === "suspended") this.ac.resume().catch(() => {})
-        this.sourceVolumes[id] = volume
         if (outputId) this.sourceVolumes[`${id}_${outputId}`] = volume
+        else this.sourceVolumes[id] = volume
 
         const keys = Object.keys(this.gainNodes)
         const prefix = `${id}_`
         for (let i = 0; i < keys.length; i++) {
             const k = keys[i]
-            if (k === id || k.startsWith(prefix)) {
+            if (outputId ? k === `${id}_${outputId}` : (k === id || k.startsWith(prefix))) {
                 this.sourceVolumes[k] = volume
                 this.gainNodes[k]?.gain.setValueAtTime(volume, this.ac.currentTime)
             }
@@ -156,8 +157,8 @@ export class AudioAnalyser {
 
     static rampSourceVolume(id: string, targetVolume: number, durationMs: number, outputId?: string) {
         if (this.ac.state === "suspended") this.ac.resume().catch(() => {})
-        this.sourceVolumes[id] = targetVolume
         if (outputId) this.sourceVolumes[`${id}_${outputId}`] = targetVolume
+        else this.sourceVolumes[id] = targetVolume
 
         const keys = Object.keys(this.gainNodes)
         const prefix = `${id}_`
@@ -166,7 +167,7 @@ export class AudioAnalyser {
 
         for (let i = 0; i < keys.length; i++) {
             const k = keys[i]
-            if (k === id || k.startsWith(prefix)) {
+            if (outputId ? k === `${id}_${outputId}` : (k === id || k.startsWith(prefix))) {
                 const node = this.gainNodes[k]
                 if (node) {
                     try {
@@ -473,9 +474,8 @@ export class AudioAnalyser {
     static getAnalysers(path?: string) {
         let nodeId = "speaker_default"
 
-        // WIP per item capture for visualizer ?
+        // WIP per item capture for visualizer (audio file playback preview) ?
         if (path) nodeId = path
-        console.log(path)
 
         return AudioInputCapture.getInstance().getAnalysers(nodeId)
     }

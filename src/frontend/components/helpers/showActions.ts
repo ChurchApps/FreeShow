@@ -61,7 +61,7 @@ import {
 } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
 import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
-import { defaultLayers, getActiveOutputs, getAllActiveOutputIds, getAllNormalOutputs, getAllStageOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, setOutput, startFolderTimer } from "./output"
+import { defaultLayers, getActiveOutputs, getAllActiveOutputIds, getAllNormalOutputs, getAllStageOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, resolveOutputId, resolveOutputIds, setOutput, startFolderTimer } from "./output"
 import { OutputHelper } from "./OutputHelper"
 import { getSetChars } from "./randomValue"
 import { loadShows } from "./setShow"
@@ -211,7 +211,8 @@ function shouldTriggerBefore(action: any) {
 
 const perOutputActions: Record<string, (outputId: string) => void> = {
     clear_background: (outputId) => setOutput("background", null, false, outputId),
-    clear_overlays: (outputId) => clearOverlays(outputId)
+    clear_overlays: (outputId) => clearOverlays(outputId),
+    clear_scene: (outputId) => setOutput("scene", null, false, outputId)
 }
 function runPerOutputAction(trigger: string, outputIds: string[]) {
     const action = perOutputActions[trigger]
@@ -320,9 +321,10 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
     }
 
     const bindings = data?.bindings || []
+    const resolvedBindings = bindings.length ? resolveOutputIds(bindings) : []
 
     // get output slide
-    const outputIds = specificOutputId ? [specificOutputId] : bindings.length ? bindings : getActiveOutputs(get(outputs), true, false, true)
+    const outputIds = specificOutputId ? (resolveOutputId(specificOutputId) ? [resolveOutputId(specificOutputId)!] : [specificOutputId]) : resolvedBindings.length ? resolvedBindings : getActiveOutputs(get(outputs), true, false, true)
 
     // WIP custom next slide timer duration (has to be changed on slide click & in preview as well)
     // let outputWithLine = outputIds.find((id: string) => get(outputs)[id].out?.slide?.line !== undefined)
@@ -596,7 +598,8 @@ export function changeOutputStyle(data: API_output_style) {
         return
     }
 
-    const outputIds = data.outputId ? [data.outputId] : getAllNormalOutputs().map((a) => a.id)
+    const targetId = data.outputId ? resolveOutputId(data.outputId) : null
+    const outputIds = targetId ? [targetId] : getAllNormalOutputs().map((a) => a.id)
     outputs.update((a) => {
         outputIds.forEach((outputId) => {
             if (!a[outputId]) return

@@ -60,7 +60,8 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     formatNewShow: false,
     showsPath: null, // DEPRECATED
     dataPath: "", // DEPRECATED
-    lockedOverlays: [],
+    lockedOverlays: {},
+    activeScenes: {},
     splitLines: 0,
     theme: "default",
     transitionData: {
@@ -74,7 +75,7 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     calendarAddShow: "",
     metronome: {},
     audioEffects: {},
-    eqPresets: {},
+    audioEffectPresets: {},
     effectsLibrary: [],
     special: {},
     timeline: {},
@@ -115,6 +116,7 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     variables: {
         default: { name: "Counter", type: "number" }
     },
+    scenes: {},
     interactions: {},
     audioStreams: {},
     audioPlaylists: {},
@@ -167,5 +169,6 @@ export const defaultSyncedSettings: { [key in SaveListSyncedSettings]: any } = {
     globalRegexes: {},
     customMetadata: { disabled: [], custom: [] },
     effects: {},
-    deletedDefaults: {}
+    deletedDefaults: {},
+    syncedOutputs: {}
 }

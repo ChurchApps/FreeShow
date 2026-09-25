@@ -2,7 +2,7 @@ import { _electron as electron } from "playwright"
 import { expect, test } from "@playwright/test"
 import tmp from "tmp"
 
-const timeoutMs = 2_000;
+const timeoutMs = 2_000
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 test.beforeEach(async ({ context }) => {
@@ -14,14 +14,14 @@ test("Launch electron app", async () => {
     const electronApp = await electron.launch({
         // --no-sandbox is required for Electron to launch reliably on Linux CI.
         args: [".", "--no-sandbox"],
-        env: { ...process.env, NODE_ENV: "production", FS_MOCK_STORE_PATH: tmpSettingFolder.name },
+        env: { ...process.env, NODE_ENV: "production", FS_MOCK_STORE_PATH: tmpSettingFolder.name }
     })
 
     // Mocking Electron open dialog
     const tmpDataFolder = tmp.dirSync({ unsafeCleanup: true })
     await electronApp.evaluate(async ({ dialog }, tmpDataFolderName) => {
-        dialog.showOpenDialogSync = (): string[] | undefined => {
-            return [tmpDataFolderName]
+        dialog.showOpenDialog = async (): Promise<any> => {
+            return { canceled: false, filePaths: [tmpDataFolderName] }
         }
     }, tmpDataFolder.name)
 
@@ -58,7 +58,10 @@ test("Launch electron app", async () => {
         // await window.screenshot({ path: "intro.png" })
 
         // Wait for the app UI to be interactive: either the first-run setup popup or the main top bar.
-        await window.locator(".popup button.start, .top").first().waitFor({ timeout: 10 * timeoutMs })
+        await window
+            .locator(".popup button.start, .top")
+            .first()
+            .waitFor({ timeout: 10 * timeoutMs })
 
         // First-run setup popup (Initialize.svelte) — only shown when the app isn't initialized yet.
         // It can be absent if a previous run already initialized the user data, so guard it.
@@ -68,7 +71,10 @@ test("Launch electron app", async () => {
             const setupPopup = window.locator(".popup")
 
             // Set language to English (it is the default, but select it explicitly so the English text selectors below stay stable)
-            await setupPopup.locator(".dropdown-trigger").first().click({ timeout: 5 * timeoutMs })
+            await setupPopup
+                .locator(".dropdown-trigger")
+                .first()
+                .click({ timeout: 5 * timeoutMs })
             await setupPopup.locator("li[role=option]").filter({ hasText: "English" }).first().click({ timeout: timeoutMs })
 
             // Set the data location via the folder picker; this triggers the Electron open dialog, mocked above
@@ -110,7 +116,11 @@ test("Launch electron app", async () => {
         // Try changing group for Chorus (group names render as text in the #group list)
         await window.locator("#group").getByText("Chorus").first().click({ timeout: timeoutMs })
         //await window.getByText("Change group").hover({ timeout: timeoutMs })
-        await window.locator("#group").getByText("Verse").first().click({ timeout: 5 * timeoutMs })
+        await window
+            .locator("#group")
+            .getByText("Verse")
+            .first()
+            .click({ timeout: 5 * timeoutMs })
 
         // Verify the group changing was successful
         await expect(window.locator("#group").getByText("Verse").first()).toBeVisible({ timeout: timeoutMs })

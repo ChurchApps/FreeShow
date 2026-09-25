@@ -32,10 +32,13 @@
             loaded = true
         } else {
             if (timeout) clearTimeout(timeout)
-            timeout = setTimeout(() => {
-                const batch = lazyLoader === 0 ? 2 : Math.min(16, lazyLoader * 2)
-                lazyLoader += batch
-            }, lazyLoader === 0 ? 80 : 40)
+            timeout = setTimeout(
+                () => {
+                    const batch = lazyLoader === 0 ? 2 : Math.min(16, lazyLoader * 2)
+                    lazyLoader += batch
+                },
+                lazyLoader === 0 ? 80 : 40
+            )
         }
     }
 
@@ -49,7 +52,7 @@
         popupData.set({ id: "select_stage_layout", value: selectedId })
 
         setTimeout(() => {
-            setTimeout(() => popupData.set({}), 500) // reset after closing
+            setTimeout(() => ($activePopup === null ? popupData.set({}) : null), 200) // reset after closing
             activePopup.set(null)
         })
     }

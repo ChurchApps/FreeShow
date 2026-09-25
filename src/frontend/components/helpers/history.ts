@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { History, HistoryNew, HistoryTypes } from "../../../types/History"
-import { activePage, activeProject, activeShow, historyCacheCount, isDev, projects, undoHistory } from "../../stores"
+import { activePage, activeProject, activeShow, contextActive, historyCacheCount, isDev, projects, undoHistory } from "../../stores"
 import { redoHistory } from "./../../stores"
 import { areObjectsEqual, clone } from "./array"
 import { historyActions } from "./historyActions"
@@ -255,8 +255,8 @@ export function history(obj: History, shouldUndo: null | boolean = null) {
     }
 
     // deselect selected
-    // not when changing multiple selected slides OR changing slide transition
-    if (obj.location?.page !== "edit" && obj.id !== "SHOW_LAYOUT" && obj.id !== "setItems") {
+    // not when in edit mode, changing slide layouts/items (changing multiple selected slides OR changing slide transition), or when context menu is active
+    if (obj.location?.page !== "edit" && obj.id !== "SHOW_LAYOUT" && obj.id !== "setItems" && !get(contextActive)) {
         deselect()
     }
 

@@ -19,6 +19,7 @@
     export let mirror = false
     // the output showing this stream owns the receiver
     export let outputId = ""
+    export let style = ""
 
     let canvas: HTMLCanvasElement | undefined
 
@@ -49,7 +50,7 @@
 </script>
 
 {#if background}
-    <canvas bind:this={canvas} />
+    <canvas bind:this={canvas} {style} />
 {:else}
     <!-- class="context #screen_card" -->
     <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} {loaded} icon="ndi" white showPlayOnHover>

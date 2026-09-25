@@ -29,10 +29,10 @@ function getSofficePath(): string {
     return "soffice"
 }
 
-export function libreConvert(data: { type: string }) {
+export async function libreConvert(data: { type: string }) {
     if (data.type !== "powerpoint") return
 
-    const files = selectFilesDialog("", { name: "PowerPoint", extensions: ["ppt", "pptx"] }, false)
+    const files = await selectFilesDialog("", { name: "PowerPoint", extensions: ["ppt", "pptx"] }, false)
     if (!files.length) return
 
     const pptPath = files[0]

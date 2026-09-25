@@ -49,14 +49,15 @@ export function previewStreamFrame(full: StreamFrame, maxWidth = 480): StreamFra
                 data[target] = clamp((luma + kr * v) * 255)
                 data[target + 1] = clamp((luma - gu * u - gv * v) * 255)
                 data[target + 2] = clamp((luma + kb * u) * 255)
+                data[target + 3] = 255
             } else {
                 const i = (sourceY * full.xres + sourceX) * 4
                 const swapped = full.format === "bgra"
                 data[target] = source[i + (swapped ? 2 : 0)]
                 data[target + 1] = source[i + 1]
                 data[target + 2] = source[i + (swapped ? 0 : 2)]
+                data[target + 3] = source[i + 3]
             }
-            data[target + 3] = 255
         }
     }
     return { xres: width, yres: height, data, format: "rgba" }

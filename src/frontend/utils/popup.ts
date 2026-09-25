@@ -1,21 +1,21 @@
 import { onDestroy, type ComponentType } from "svelte"
 import { get } from "svelte/store"
 import type { Popups } from "../../types/Main"
+import AiModelManager from "../ai/components/popups/AiModelManager.svelte"
 import About from "../components/main/popups/About.svelte"
 import Action from "../components/main/popups/Action.svelte"
 import ActionHistory from "../components/main/popups/ActionHistory.svelte"
+import AddAudioEffect from "../components/main/popups/AddAudioEffect.svelte"
 import Alert from "../components/main/popups/Alert.svelte"
 import AspectRatio from "../components/main/popups/AspectRatio.svelte"
-import AudioStream from "../components/main/popups/AudioStream.svelte"
 import AudioEffect from "../components/main/popups/AudioEffect.svelte"
-import AddAudioEffect from "../components/main/popups/AddAudioEffect.svelte"
+import AudioStream from "../components/main/popups/AudioStream.svelte"
 import CategoryAction from "../components/main/popups/CategoryAction.svelte"
 import ChangeIcon from "../components/main/popups/ChangeIcon.svelte"
 import ChangeOutputValues from "../components/main/popups/ChangeOutputValues.svelte"
-import ChooseCamera from "../components/main/popups/ChooseCamera.svelte"
 import ChooseChord from "../components/main/popups/ChooseChord.svelte"
+import ChooseMediaInput from "../components/main/popups/ChooseMediaInput.svelte"
 import ChooseOutput from "../components/main/popups/ChooseOutput.svelte"
-import OutputSetup from "../components/main/popups/OutputSetup.svelte"
 import ChooseScreen from "../components/main/popups/ChooseScreen.svelte"
 import ChooseStyle from "../components/main/popups/ChooseStyle.svelte"
 import ChurchAppsSyncCategories from "../components/main/popups/ChurchAppsSyncCategories.svelte"
@@ -53,6 +53,7 @@ import InteractionInput from "../components/main/popups/InteractionInput.svelte"
 import Translate from "../components/main/popups/localization/Translate.svelte"
 import ManageColors from "../components/main/popups/ManageColors.svelte"
 import ManageDynamicValues from "../components/main/popups/ManageDynamicValues.svelte"
+import ManageFonts from "../components/main/popups/ManageFonts.svelte"
 import ManageGroups from "../components/main/popups/ManageGroups.svelte"
 import ManageIcons from "../components/main/popups/ManageIcons.svelte"
 import ManageMetadata from "../components/main/popups/ManageMetadata.svelte"
@@ -62,13 +63,16 @@ import MediaFit from "../components/main/popups/MediaFit.svelte"
 import MetadataDisplay from "../components/main/popups/MetadataDisplay.svelte"
 import NewUpdate from "../components/main/popups/NewUpdate.svelte"
 import NextTimer from "../components/main/popups/NextTimer.svelte"
+import NodeOptions from "../components/main/popups/NodeOptions.svelte"
 import NowPlaying from "../components/main/popups/NowPlaying.svelte"
 import OutputSelector from "../components/main/popups/OutputSelector.svelte"
+import OutputSetup from "../components/main/popups/OutputSetup.svelte"
 import PcoServicePicker from "../components/main/popups/PcoServicePicker.svelte"
 import RegexManager from "../components/main/popups/RegexManager.svelte"
 import Rename from "../components/main/popups/Rename.svelte"
 import ResetAll from "../components/main/popups/ResetAll.svelte"
 import Restore from "../components/main/popups/Restore.svelte"
+import SelectOverlay from "../components/main/popups/SelectOverlay.svelte"
 import SelectShow from "../components/main/popups/SelectShow.svelte"
 import SelectStageLayout from "../components/main/popups/SelectStageLayout.svelte"
 import SelectStyle from "../components/main/popups/SelectStyle.svelte"
@@ -88,10 +92,7 @@ import Transition from "../components/main/popups/Transition.svelte"
 import Unsaved from "../components/main/popups/Unsaved.svelte"
 import UpdateManager from "../components/main/popups/UpdateManager.svelte"
 import Variable from "../components/main/popups/Variable.svelte"
-import NodeOptions from "../components/main/popups/NodeOptions.svelte"
 import { activePopup, popupData } from "../stores"
-import AiModelManager from "../ai/components/popups/AiModelManager.svelte"
-import ManageFonts from "../components/main/popups/ManageFonts.svelte"
 
 export const popups: { [key in Popups]: ComponentType } = {
     initialize: Initialize,
@@ -104,6 +105,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     delete_show: DeleteShow,
     select_show: SelectShow,
     select_template: SelectTemplate,
+    select_overlay: SelectOverlay,
     select_style: SelectStyle,
     select_stage_layout: SelectStageLayout,
     delete_duplicated_shows: DeleteDuplicatedShows,
@@ -117,7 +119,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     template_style_overrides: TemplateStyleOverrides,
     regex_manager: RegexManager,
     choose_chord: ChooseChord,
-    choose_camera: ChooseCamera,
+    choose_media_input: ChooseMediaInput,
     player: CreatePlayer,
     rename: Rename,
     color: Color,

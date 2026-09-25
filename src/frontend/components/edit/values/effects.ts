@@ -127,7 +127,7 @@ export const effectSections: { [key: string]: EditBoxSection } = {
             { id: "colors", type: "colors", value: [], values: { label: "settings.colors" } },
             { id: "speed", type: "number", value: 1, values: { label: "edit.speed", min: 0, max: 10, decimals: 1, showSlider: true, sliderValues: { min: 0, max: 5 } } },
             { id: "motion", type: "number", value: 0.07, multiplier: 1000, values: { label: "effect.motion", min: 0, max: 200, decimals: 3, showSlider: true, sliderValues: { min: 0, max: 140 } } },
-            { id: "spread", type: "number", value: 1, values: { label: "effect.spread", min: 0.1, max: 5, step: 0.1, decimals: 1, showSlider: true, sliderValues: { min: 0.2, max: 3 } } },
+            { id: "spread", type: "number", value: 1, values: { label: "edit.blur", min: 0.1, max: 5, step: 0.1, decimals: 1, showSlider: true, sliderValues: { min: 0.2, max: 3 } } },
             { id: "density", type: "number", value: 4, values: { label: "effect.density", min: 4, max: 10, showSlider: true, sliderValues: { min: 4, max: 8 } } },
             { id: "grain", type: "number", value: 0, multiplier: 1000, values: { label: "effect.grain", min: 0, max: 200, decimals: 3, showSlider: true, sliderValues: { min: 0, max: 100 } } }
         ])
@@ -189,6 +189,25 @@ export const effectSections: { [key: string]: EditBoxSection } = {
             { id: "count", type: "number", value: 50, values: { label: "edit.count", min: 1, max: 200, showSlider: true, sliderValues: { max: 100 } } },
             { id: "size", type: "number", value: 1, multiplier: 10, values: { label: "edit.size", min: 1, max: 200, decimals: 1, showSlider: true, sliderValues: { max: 50 } } },
             { id: "speed", type: "number", value: 1, multiplier: 10, values: { label: "edit.speed", min: 1, max: 100, decimals: 1, showSlider: true, sliderValues: { max: 30 } } }
+        ])
+    },
+
+    confetti: {
+        inputs: splitIntoRows([
+            { id: "count", type: "number", value: 100, values: { label: "edit.count", min: 1, max: 500, showSlider: true, sliderValues: { max: 300 } } },
+            { id: "size", type: "number", value: 1, multiplier: 10, values: { label: "edit.size", min: 1, max: 100, decimals: 1, showSlider: true, sliderValues: { max: 30 } } },
+            { id: "speed", type: "number", value: 1, multiplier: 10, values: { label: "edit.speed", min: 1, max: 100, decimals: 1, showSlider: true, sliderValues: { max: 30 } } },
+            { id: "color", type: "color", value: "", values: { label: "edit.color", allowEmpty: true, allowOpacity: true } }
+        ])
+    },
+
+    candle: {
+        inputs: splitIntoRows([
+            { id: "width", type: "number", value: 140, values: { label: "edit.width", min: 10, max: 1000, showSlider: true, sliderValues: { min: 20, max: 200 } } },
+            { id: "height", type: "number", value: 280, values: { label: "edit.height", min: 10, max: 1200, showSlider: true, sliderValues: { min: 30, max: 1000 } } },
+            { id: "color", type: "color", value: "#ece2d0", values: { label: "edit.color" } },
+            { id: "lit", type: "checkbox", value: true, values: { label: "Flame" } },
+            { id: "speed", type: "number", value: 5, values: { label: "edit.speed", min: 0, max: 10, decimals: 1, showSlider: true, sliderValues: { min: 0, max: 10 } } }
         ])
     },
 

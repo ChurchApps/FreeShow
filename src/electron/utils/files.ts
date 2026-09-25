@@ -304,26 +304,26 @@ export function getValidFileName(filePath: string) {
 
 // SELECT DIALOGS
 
-export function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true, initialPath = ""): string[] {
+export async function selectFilesDialog(title = "", filters: Electron.FileFilter, multiple = true, initialPath = ""): Promise<string[]> {
     // crashes if empty in electron v37
     if (!filters.extensions?.length) filters.extensions = ["*"]
 
-    const options: Electron.OpenDialogSyncOptions = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
+    const options: Electron.OpenDialogOptions = { properties: ["openFile"], filters: [{ name: filters.name, extensions: filters.extensions }] }
     if (title) options.title = title
     if (multiple) options.properties!.push("multiSelections")
     if (initialPath) options.defaultPath = initialPath
 
-    const files: string[] = dialog.showOpenDialogSync(mainWindow!, options) || []
-    return files
+    const result = await dialog.showOpenDialog(mainWindow!, options)
+    return result.canceled ? [] : result.filePaths || []
 }
 
-export function selectFolderDialog(title = "", defaultPath = ""): string {
-    const options: Electron.OpenDialogSyncOptions = { properties: ["openDirectory"] }
+export async function selectFolderDialog(title = "", defaultPath = ""): Promise<string> {
+    const options: Electron.OpenDialogOptions = { properties: ["openDirectory"] }
     if (title) options.title = title
     if (defaultPath) options.defaultPath = defaultPath
 
-    const folderPaths: string[] = dialog.showOpenDialogSync(mainWindow!, options) || [""]
-    return folderPaths[0]
+    const result = await dialog.showOpenDialog(mainWindow!, options)
+    return result.canceled || !result.filePaths.length ? "" : result.filePaths[0]
 }
 
 // DATA FOLDERS
@@ -596,8 +596,8 @@ function similarity(str1: string, str2: string) {
 }
 
 // OPEN_FOLDER
-export function selectFolder(msg: { channel: string; title?: string; path?: string }) {
-    const folder = selectFolderDialog(msg.title, msg.path)
+export async function selectFolder(msg: { channel: string; title?: string; path?: string }) {
+    const folder = await selectFolderDialog(msg.title, msg.path)
     if (!folder) return
 
     if (msg.channel === "SHOWS") {
@@ -610,9 +610,9 @@ export function selectFolder(msg: { channel: string; title?: string; path?: stri
 }
 
 // OPEN_FILE
-export function selectFiles(msg: { id: string; channel: string; title?: string; filter: Electron.FileFilter; multiple: boolean; read?: boolean }) {
-    const files = selectFilesDialog(msg.title, msg.filter, msg.multiple === undefined ? true : msg.multiple)
-    if (!files) return
+export async function selectFiles(msg: { id: string; channel: string; title?: string; filter: Electron.FileFilter; multiple: boolean; read?: boolean }) {
+    const files = await selectFilesDialog(msg.title, msg.filter, msg.multiple === undefined ? true : msg.multiple)
+    if (!files || !files.length) return
 
     const content: { [key: string]: string } = {}
     if (msg.read) files.forEach(getContent)

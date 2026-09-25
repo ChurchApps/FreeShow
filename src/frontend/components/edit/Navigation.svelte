@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ClickEvent } from "../../../types/Main"
-    import { activeEdit, activePage, activeShow, editHistory, editMode, effects, focusMode, labelsDisabled, overlays, refreshEditSlide, shows, templates } from "../../stores"
+    import { activeEdit, activePage, activeShow, editHistory, editMode, effects, focusMode, labelsDisabled, overlays, refreshEditSlide, scenes, shows, templates } from "../../stores"
     import { getAccess } from "../../utils/profile"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -38,6 +38,7 @@
         audio: (id: string) => getFileName(id),
         overlay: (id: string) => $overlays[id]?.name || "",
         template: (id: string) => $templates[id]?.name || "",
+        scene: (id: string) => $scenes[id]?.name || "",
         effect: (id: string) => $effects[id]?.name || ""
     }
 
@@ -56,6 +57,7 @@
             else if (edit.icon === "audio") edit.icon = "music"
             else if (edit.icon === "template") edit.icon = "templates"
             else if (edit.icon === "overlay") edit.icon = "overlays"
+            else if (edit.icon === "scene") edit.icon = "scene"
             else if (edit.icon === "effect") edit.icon = "effects"
 
             if (!names[type]) return a

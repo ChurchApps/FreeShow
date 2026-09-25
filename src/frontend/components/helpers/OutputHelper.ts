@@ -9,7 +9,7 @@ import { activeFocus, activeProject, activeShow, focusMode, outLocked, outputs, 
 import { playFolder, togglePlayingMedia } from "../../utils/shortcuts"
 import { openProjectItem } from "../show/project"
 import { clone } from "./array"
-import { getAllActiveOutputIds, setOutput } from "./output"
+import { getAllActiveOutputIds, isOutputBound, setOutput } from "./output"
 import { checkActionTrigger, getFewestOutputLines, getItemWithMostLines, playPdf, updateOut } from "./showActions"
 import { _show } from "./shows"
 import { runActionId } from "../actions/actions"
@@ -404,7 +404,7 @@ export class OutputHelper {
 
         // bound to specific outputs, but not this one
         const bindings = ref.data?.bindings || []
-        if (bindings.length && !bindings.includes(outputId)) return true
+        if (bindings.length && !isOutputBound(bindings, outputId)) return true
 
         return false
     }

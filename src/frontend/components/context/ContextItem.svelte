@@ -77,14 +77,14 @@
                 menu.label = "stage.stage_layout"
                 menu.icon = "stage"
                 if (!$stageShows[stageId]) disabled = true
-                menu.label += `: ${stageId ? $stageShows[stageId]?.name || "error.not_found" : "main.none"}`
+                menu.label += `: ${stageId ? ($stageShows[stageId] ? $stageShows[stageId].name || "main.unnamed" : "error.not_found") : "main.none"}`
                 return
             }
 
             menu.label = "edit.style"
             menu.icon = "styles"
-            if (!$styles[styleId]) disabled = true
-            menu.label += `: ${styleId ? $styles[styleId]?.name || "error.not_found" : "main.none"}`
+            // if (!$styles[styleId]) disabled = true
+            menu.label += `: ${styleId ? ($styles[styleId] ? $styles[styleId].name || "main.unnamed" : "error.not_found") : "main.none"}`
         },
         edit_style: () => {
             let outputId = contextElem?.id || ""
@@ -94,13 +94,13 @@
             if (stageId) {
                 menu.label = "menu.edit"
                 if (!$stageShows[stageId]) disabled = true
-                menu.label += `: ${stageId ? $stageShows[stageId]?.name || "error.not_found" : "main.none"}`
+                menu.label += `: ${stageId ? ($stageShows[stageId] ? $stageShows[stageId].name || "main.unnamed" : "error.not_found") : "main.none"}`
                 return
             }
 
             menu.label = "menu.edit"
             if (!$styles[styleId]) disabled = true
-            menu.label += `: ${styleId ? $styles[styleId]?.name || "error.not_found" : "main.none"}`
+            menu.label += `: ${styleId ? ($styles[styleId] ? $styles[styleId].name || "main.unnamed" : "error.not_found") : "main.none"}`
         },
         lock_group: () => {
             if ($selected.id !== "group") return
@@ -425,7 +425,7 @@
         // don't hide context menu
         const keepOpen = ["uppercase", "lowercase", "capitalize", "trim"] // "dynamic_values" (caret position is lost)
         if (keepOpen.includes(id)) return
-        const keepOpenToggle = ["enabled_drawer_tabs", "tag_set", "tag_filter", "media_tag_set", "media_tag_filter", "player_tag_set", "player_tag_filter", "action_tag_set", "action_tag_filter", "variable_tag_set", "variable_tag_filter", "timer_tag_set", "timer_tag_filter", "bind_slide", "bind_item"]
+        const keepOpenToggle = ["enabled_drawer_tabs", "tag_set", "tag_filter", "media_tag_set", "media_tag_filter", "player_tag_set", "player_tag_filter", "action_tag_set", "action_tag_filter", "variable_tag_set", "variable_tag_filter", "timer_tag_set", "timer_tag_filter", "bind_slide", "bind_item", "bind_scene"]
         if (keepOpenToggle.includes(id)) {
             enabled = !enabled
             return

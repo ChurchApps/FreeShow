@@ -18,7 +18,6 @@ import { autoErrorReport } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { receiveOMT } from "./omt/talk"
 import { OutputHelper } from "./output/OutputHelper"
-import { RenderGroups } from "./output/helpers/RenderGroups"
 import { setRtmpNoticeListener, setRtmpStatusListener } from "./streaming/RtmpStreamer"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
 import { applyCommandLineSwitches } from "./utils/commandLineSwitches"
@@ -275,9 +274,6 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
 
     window.webContents.on("did-finish-load", () => {
         window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile })
-        // render groups may have formed before this window could receive the change broadcast
-        // (outputs are recreated during startup) — sync the current state on every (re)load
-        if (mainOutput) toApp(OUTPUT, { channel: "RENDER_GROUPS", data: RenderGroups.snapshot() })
     })
 
     function loadingFailed(err: Error) {

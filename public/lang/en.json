@@ -21,6 +21,7 @@
         "show": "Show",
         "project": "Project",
         "template": "Template",
+        "overlay": "Overlay",
         "action": "Action",
         "theme": "Theme",
         "clipboard": "Clipboard",
@@ -90,7 +91,8 @@
         "style_template_active": "A style in the output is set to override the show template.",
         "group_numbers": "Numbers are auto assigned, so you don't need to add numbers to group names.",
         "display_metadata": "Right click a show category to change when metadata is displayed.",
-        "metadata_customize": "To customize the displayed metadata content, edit the template and use dynamic values."
+        "metadata_customize": "To customize the displayed metadata content, edit the template and use dynamic values.",
+        "custom_action": "Assign an action to trigger when this is activated."
     },
     "setup": {
         "good_luck": "We hope you find this software useful. Good luck with the presentation! :)",
@@ -170,6 +172,7 @@
         "audio": "Clear audio",
         "nextTimer": "Clear next slide timer",
         "timer": "Clear timer",
+        "scene": "Clear scene",
         "drawing": "Clear drawing",
         "search": "Clear search"
     },
@@ -242,7 +245,7 @@
         "channel": "Audio channel",
         "desktop_audio": "Desktop audio",
         "speakers": "Speakers",
-        "ducking": "Ducking",
+        "sidechain": "Sidechain",
         "mute_when_video_plays": "Mute when video plays",
         "volume_fade_duration": "Volume fade duration",
         "allow_gaining": "Allow gaining",
@@ -430,6 +433,7 @@
         "live": "Live",
         "timers": "Timers",
         "variables": "Variables",
+        "scenes": "Scenes",
         "interactions": "Interactions",
         "triggers": "Triggers",
         "templates": "Templates",
@@ -474,6 +478,7 @@
         "show": "New show",
         "select_show": "Select show",
         "select_template": "Select template",
+        "select_overlay": "Select overlay",
         "select_style": "Select style",
         "select_stage_layout": "Select stage layout",
         "confirm": "Confirm",
@@ -553,6 +558,7 @@
         "template_style_overrides": "Style overwrites",
         "regex_manager": "Regex manager",
         "choose_camera": "Choose camera",
+        "choose_media_input": "Choose media input",
         "manage_tags": "Manage tags",
         "sync_folders": "Sync folders",
         "sync_categories": "Sync categories",
@@ -641,6 +647,7 @@
         "event_action": "New scheduled action",
         "calendar": "New calendar",
         "effect": "New effect",
+        "scene": "New scene",
         "interaction": "New interaction"
     },
     "show": {
@@ -865,6 +872,7 @@
         "start_screen": "Start screen",
         "id_start_effect": "Start effect",
         "id_select_overlay": "Start overlay",
+        "start_scene": "Start scene",
         "toggle_playing_media": "Toggle playing media",
         "change_volume": "Change volume",
         "start_audio_stream": "Start audio stream",
@@ -1027,7 +1035,8 @@
         "audio": "Audio",
         "item": "Item",
         "items": "Items",
-        "slide": "Slide"
+        "slide": "Slide",
+        "scene": "Scene"
     },
     "edit": {
         "text": "Text",
@@ -1714,6 +1723,8 @@
         "fog": "Fog",
         "city": "City",
         "fireworks": "Fireworks",
+        "confetti": "Confetti",
+        "candle": "Candle",
         "rays": "Rays",
         "cycle": "Cycle",
         "circle": "Circle",

@@ -11,6 +11,7 @@
 
     export let mirror = false
     export let preview = false
+    export let styleIdOverride = ""
 
     // SPAM PREVENTION
 
@@ -65,7 +66,7 @@
 {#each actualOutputtedOverlays as id (id)}
     {#if overlays?.[id]}
         <div>
-            <Overlay overlay={overlays[id]} {id} {outputId} isClearing={isClearing.includes(id)} {mirror} {transition} {preview} />
+            <Overlay overlay={overlays[id]} {id} {outputId} {styleIdOverride} isClearing={isClearing.includes(id)} {mirror} {transition} {preview} />
         </div>
     {/if}
 {/each}

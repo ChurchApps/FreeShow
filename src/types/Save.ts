@@ -18,6 +18,7 @@ export type SaveListSyncedSettings =
     | "profiles"
     | "timers"
     | "variables"
+    | "scenes"
     | "interactions"
     | "audioStreams"
     | "audioPlaylists"
@@ -41,6 +42,7 @@ export type SaveListSyncedSettings =
     | "customMetadata"
     | "effects"
     | "deletedDefaults"
+    | "syncedOutputs"
 
 export type SaveListSettings =
     | "initialized"
@@ -53,6 +55,7 @@ export type SaveListSettings =
     | "showsPath"
     | "dataPath"
     | "lockedOverlays"
+    | "activeScenes"
     | "drawer"
     | "drawerTabsData"
     | "groupNumbers"
@@ -84,7 +87,7 @@ export type SaveListSettings =
     | "calendarAddShow"
     | "metronome"
     | "audioEffects"
-    | "eqPresets"
+    | "audioEffectPresets"
     | "effectsLibrary"
     | "special"
     | "timeline"

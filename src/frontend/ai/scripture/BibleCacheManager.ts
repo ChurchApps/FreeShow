@@ -3,6 +3,7 @@ import { get } from "svelte/store"
 import { loadJsonBible } from "../../components/drawer/bible/scripture"
 import { scriptures } from "../../stores"
 import { BibleSearchDetector } from "./BibleSearchDetector"
+import { CHAPTER_PATTERN, ORDINAL_PREFIX_PATTERN, VERSE_PATTERN } from "./referenceDictionary"
 
 export interface BibleCacheData {
     versePool: string[]
@@ -224,7 +225,7 @@ export class BibleCacheManager {
         }
 
         const bookPattern = bookNames.map((b) => b.replace(/\s+/g, "\\s+")).join("|")
-        const refRegex = new RegExp(`\\b((?:(?:[1-3]|first|second|third)\\s+)?(?:${bookPattern}))\\b\\s*(?:chapter)?\\s*(\\d+)(?:[\\s,:.]+(?:verse|v|verses)?\\s*(\\d+)(?:\\s*[-–—]\\s*(\\d+))?)?`, "i")
+        const refRegex = new RegExp(`\\b((?:(?:[1-3]|${ORDINAL_PREFIX_PATTERN})\\s+)?(?:${bookPattern}))\\b\\s*(?:${CHAPTER_PATTERN})?\\s*(\\d+)(?:[\\s,:.]+(?:${VERSE_PATTERN})?\\s*(\\d+)(?:\\s*[-–—]\\s*(\\d+))?)?`, "iu")
 
         return {
             versePool,

@@ -14,6 +14,7 @@
     export let mirror = false
     export let preview = false
     export let transition: Transition
+    export let styleIdOverride = ""
 
     $: transitionEnabled = !!((transition.type !== "none" && transition.duration) || transition.in || transition.out)
 
@@ -58,7 +59,7 @@
     {#each currentItems as item}
         {#if show && shouldItemBeShown(item, [], showItemRef, conditionsUpdater)}
             <SlideItemTransition {transitionEnabled} {isClearing} globalTransition={transition} {item} let:customItem>
-                <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {preview} {outputId} updateDynamicValues={!isClearing} />
+                <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {preview} {outputId} {styleIdOverride} updateDynamicValues={!isClearing} />
             </SlideItemTransition>
         {/if}
     {/each}

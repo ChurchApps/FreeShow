@@ -66,6 +66,7 @@ interface StreamInstance {
     encoderId: EncoderId
     ffmpegPath: string
     encoder: ChildProcess | null
+    flvHeader: Buffer | null
     /** actual size of the raw frames, learned from the first captured frame */
     inputSize: { width: number; height: number } | null
     sampleRate?: number
@@ -164,6 +165,7 @@ export class RtmpStreamer {
                 encoderId,
                 ffmpegPath,
                 encoder: null,
+                flvHeader: null,
                 inputSize: null,
                 encoderStartedAt: 0,
                 encoderBackoffMs: BACKOFF_START_MS,
@@ -332,20 +334,11 @@ export class RtmpStreamer {
         if (streamer.audioInterval) clearInterval(streamer.audioInterval)
         streamer.videoTimeout = undefined
         streamer.audioInterval = undefined
+        streamer.flvHeader = null
 
         const encoder = streamer.encoder
         streamer.encoder = null
-        if (!encoder) return
-
-        encoder.removeAllListeners("exit")
-        encoder.removeAllListeners("error")
-        try {
-            encoder.stdin?.end()
-            ;(encoder.stdio[3] as any)?.end()
-            encoder.kill("SIGTERM")
-        } catch (err) {
-            console.error("[RtmpStreamer] Error stopping encoder:", err)
-        }
+        killGracefully(encoder)
     }
 
     /**
@@ -475,6 +468,12 @@ export class RtmpStreamer {
             console.warn(`[RtmpStreamer:relay ${relay.destination.url}] ${message}`)
         })
 
+        if (streamer.flvHeader && child.stdin && !child.stdin.destroyed) {
+            try {
+                child.stdin.write(streamer.flvHeader)
+            } catch {}
+        }
+
         relay.liveTimer = setTimeout(() => {
             if (relay.process !== child || relay.stopped) return
             this.setRelayState(streamer, relay, "live")
@@ -541,29 +540,14 @@ export class RtmpStreamer {
 
         const child = relay.process
         this.clearRelayProcess(relay)
-        if (!child) return
-
-        child.removeAllListeners("exit")
-        child.removeAllListeners("error")
-        try {
-            child.stdin?.end()
-            child.kill("SIGTERM")
-        } catch {}
+        killGracefully(child)
     }
 
     /** Reconnect one relay without touching the encoder or the other destinations. */
     private static restartRelay(streamer: StreamInstance, relay: RelayInstance, reason: string, { resetBackoff = false } = {}) {
         const child = relay.process
         this.clearRelayProcess(relay)
-
-        if (child) {
-            child.removeAllListeners("exit")
-            child.removeAllListeners("error")
-            try {
-                child.stdin?.end()
-                child.kill("SIGTERM")
-            } catch {}
-        }
+        killGracefully(child)
 
         // a reconnect we initiated is not the destination's fault, so it should not be penalised
         if (resetBackoff) relay.backoffMs = BACKOFF_START_MS
@@ -574,6 +558,8 @@ export class RtmpStreamer {
     }
 
     private static fanOut(streamer: StreamInstance, chunk: Buffer) {
+        if (!streamer.flvHeader) streamer.flvHeader = chunk
+
         const bufferCap = getRelayBufferCap(streamer.config.bitrate)
         for (const relay of streamer.relays.values()) {
             const stdin = relay.process?.stdin
@@ -703,4 +689,22 @@ function buildDestinationUrl(destination: { url: string; key: string }): string 
     // remove trailing slashes
     const url = destination.url.replace(/\/+$/, "")
     return destination.key ? `${url}/${destination.key}` : url
+}
+
+/** Close stdin and give the process time to flush/finalize containers before SIGTERM */
+function killGracefully(child: ChildProcess | null | undefined, timeoutMs = 2000) {
+    if (!child) return
+    child.removeAllListeners("exit")
+    child.removeAllListeners("error")
+    try {
+        child.stdin?.end()
+        ;(child.stdio[3] as any)?.end?.()
+    } catch {}
+
+    const killTimer = setTimeout(() => {
+        try {
+            child.kill("SIGTERM")
+        } catch {}
+    }, timeoutMs)
+    child.once("exit", () => clearTimeout(killTimer))
 }

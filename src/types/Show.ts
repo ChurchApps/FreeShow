@@ -130,7 +130,7 @@ export interface Item {
 
     src?: string // media item path
     customSvg?: string
-    device?: any // camera
+    device?: { id: string; group?: string; name: string; type?: string } // (camera) input data
     fit?: string
     filter?: string
     flipped?: boolean
@@ -141,6 +141,7 @@ export interface Item {
     speed?: number // media item
     variable?: any
     web?: any
+    qr_code?: { text?: string; color?: string; background?: string }
     tracker?: any // slide progress tracker item data
     bindings?: string[] // bind item to stage or an output
     actions?: any // showTime | hideTime | transition
@@ -172,9 +173,6 @@ export interface Item {
                 style?: string
             }[]
         }[]
-    }
-    qr?: {
-        text?: string
     }
 }
 
@@ -576,6 +574,25 @@ export interface TemplateSettings {
     styleOverrides?: TemplateStyleOverride[]
 }
 
+export interface Scenes {
+    [key: ID]: Scene
+}
+export interface Scene {
+    id?: string
+    name: string
+    modified?: number
+
+    bindings?: string[]
+    action?: string
+
+    content?: SceneContent
+}
+export interface SceneContent {
+    media?: any
+    style?: string
+    overlays?: string[]
+}
+
 // output
 
 export interface OutBackground {
@@ -631,6 +648,11 @@ export interface OutTransition {
     folderPath?: string
 }
 
+export interface OutScene extends SceneContent {
+    id?: string
+    name?: string
+}
+
 export interface SlideTimer {
     time: number
     paused: boolean
@@ -651,7 +673,7 @@ export interface Tag {
 // types
 
 export type ID = string
-export type ItemType = "text" | "media" | "camera" | "timer" | "clock" | "button" | "events" | "weather" | "variable" | "web" | "icon" | "slide_tracker" | "visualizer" | "captions" | "metronome" | "current_output" | "chart" | "table" | "qr" // "shape" | "video"
+export type ItemType = "text" | "media" | "camera" | "timer" | "clock" | "button" | "events" | "weather" | "variable" | "web" | "qr_code" | "icon" | "slide_tracker" | "visualizer" | "captions" | "metronome" | "current_output" | "chart" | "table" // "shape" | "video"
 export type ShowType = "DIVIDER" | "show" | "image" | "video" | "audio" | "player" | "section" | "overlay" | "effect" | "pdf" | "ppt" | "screen" | "ndi" | "camera" | "folder" | "show_placeholder" // "private"
 export type TransitionType = "none" | "blur" | "fade" | "crossfade" | "fly" | "scale" | "slide" | "spin"
 export type MediaType = "media" | "video" | "image" | "effect" | "screen" | "ndi" | "omt" | "camera" | "player" | "audio"

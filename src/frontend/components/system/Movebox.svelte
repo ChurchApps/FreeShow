@@ -42,7 +42,7 @@
 
     function readLiveRotation() {
         if (!moveboxElem) return null
-        const itemElem = moveboxElem.closest(".item") as HTMLElement | null
+        const itemElem = (moveboxElem.closest(".stage_item") || moveboxElem.closest(".item")) as HTMLElement | null
         if (!itemElem) return null
 
         const inlineRotation = getRotationDeg(itemElem.getAttribute("style") || "")

@@ -3,7 +3,7 @@ import type { AudioRoutingConfig } from "../../../types/AudioRouting"
 import { keysToID } from "../../components/helpers/array"
 import { audioChannelsData, audioEffects, audioRouting, outputs } from "../../stores"
 import { AudioAnalyser } from "../audioAnalyser"
-import { AudioDucking } from "../audioDucking"
+import { AudioSidechain } from "../audioSidechain"
 import { AudioCompressor } from "../effects/audioCompressor"
 import { AudioDelay } from "../effects/audioDelay"
 import { AudioEqualizer } from "../effects/audioEqualizer"
@@ -39,7 +39,7 @@ interface Connection {
     from: string
     to: string
     channelIndex?: number
-    type?: "audio" | "ducking"
+    type?: "audio" | "sidechain"
 }
 
 type SubSpeakerMap = Map<string, { speakerNode: ChannelMergerNode; maxChannels: number }>
@@ -110,7 +110,7 @@ export class AudioRoutingManager {
         audioChannelsData.subscribe((data) => data && this.updateAllGains())
         audioEffects.subscribe(() => this.audioCtx && this.updateRoutingNodes())
 
-        AudioDucking.getInstance()
+        AudioSidechain.getInstance()
     }
 
     setAudioContext(ctx: AudioContext) {
@@ -217,8 +217,8 @@ export class AudioRoutingManager {
         const vol = this.getChannelVolume(id)
         let targetGain = chData.isMuted ? 0 : Math.max(0, vol)
 
-        const duckMult = this.channelDuckingMultipliers.get(id) ?? 1.0
-        if (duckMult < 1.0) targetGain *= duckMult
+        const sidechainMult = this.channelSidechainMultipliers.get(id) ?? 1.0
+        if (sidechainMult < 1.0) targetGain *= sidechainMult
 
         try {
             const currTime = this.audioCtx.currentTime
@@ -248,17 +248,17 @@ export class AudioRoutingManager {
         }
     }
 
-    private channelDuckingMultipliers = new Map<string, number>()
-    public setChannelDucking(channelMultipliers: Map<string, number>) {
+    private channelSidechainMultipliers = new Map<string, number>()
+    public setChannelSidechain(channelMultipliers: Map<string, number>) {
         if (!this.audioCtx) return
 
         const currTime = this.audioCtx.currentTime
         for (const [id, node] of this.gainNodes.entries()) {
             const mult = channelMultipliers.get(id) ?? 1.0
-            const prevMult = this.channelDuckingMultipliers.get(id) ?? 1.0
+            const prevMult = this.channelSidechainMultipliers.get(id) ?? 1.0
             if (Math.abs(mult - prevMult) < 0.001) continue
 
-            this.channelDuckingMultipliers.set(id, mult)
+            this.channelSidechainMultipliers.set(id, mult)
             const chData = get(audioChannelsData)[id] || {}
             const vol = this.getChannelVolume(id)
             const targetGain = (chData.isMuted ? 0 : Math.max(0, vol)) * mult
@@ -430,7 +430,7 @@ export class AudioRoutingManager {
             activeNodeIds.add(c.from)
             activeNodeIds.add(c.to)
 
-            if (c.type === "ducking") continue
+            if (c.type === "sidechain") continue
 
             if (c.to.startsWith("speaker_sub_")) activeSubDeviceIds.add(c.to.replace("speaker_sub_", ""))
 
@@ -642,7 +642,7 @@ export class AudioRoutingManager {
         const conns = this.config.connections || []
         for (let i = 0; i < conns.length; i++) {
             const c = conns[i]
-            if (c.from === sourceId && !inactive.has(c.to) && c.type !== "ducking") res.push(c.to)
+            if (c.from === sourceId && !inactive.has(c.to) && c.type !== "sidechain") res.push(c.to)
         }
         return res
     }

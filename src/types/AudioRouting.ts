@@ -17,7 +17,7 @@ export interface AudioRoutingConnection {
     from: string // input ID or channel ID
     to: string // channel ID or output ID
     channelIndex?: number
-    type?: "audio" | "ducking"
+    type?: "audio" | "sidechain"
 }
 
 export interface AudioRoutingConfig {

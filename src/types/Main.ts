@@ -99,6 +99,7 @@ export type SelectIds =
     | "screen"
     | "ndi"
     | "omt"
+    | "blackmagic"
     | "camera"
     | "microphone"
     | "player"
@@ -106,6 +107,8 @@ export type SelectIds =
     | "timer"
     | "global_timer"
     | "variable"
+    | "scene"
+    | "scene_overlay"
     | "interaction"
     | "audio_stream"
     | "chord"
@@ -162,7 +165,7 @@ export interface MediaOptions {
 
 export interface ActiveEdit {
     // id?: string
-    type?: "show" | "media" | "camera" | "overlay" | "template" | "effect" | "audio"
+    type?: "show" | "media" | "camera" | "overlay" | "template" | "effect" | "audio" | "scene"
     id?: string
     slide?: null | number
     items: number[]
@@ -395,6 +398,7 @@ export type Popups =
     | "select_show"
     | "select_template"
     | "select_style"
+    | "select_overlay"
     | "select_stage_layout"
     | "delete_duplicated_shows"
     | "icon"
@@ -430,7 +434,7 @@ export type Popups =
     | "edit_chart"
     | "choose_chord"
     | "choose_screen"
-    | "choose_camera"
+    | "choose_media_input"
     | "choose_output_input"
     | "choose_output_type"
     | "choose_style"

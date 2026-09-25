@@ -2,14 +2,15 @@
     import { createEventDispatcher } from "svelte"
     import { clearAudio } from "../../../audio/audioFading"
     import { activeTimers, dictionary, isFadingOut, isTimelinePlaying, labelsDisabled, media, outLocked, outputCache, outputs, overlayTimers, playingAudio, playingMetronome, styles, timelineRecordingAction } from "../../../stores"
+    import { translateText } from "../../../utils/language"
     import { presentationControllersKeysDisabled } from "../../../utils/shortcuts"
     import Icon from "../../helpers/Icon.svelte"
     import { getMediaLayerType } from "../../helpers/media"
     import { getActiveOutputs, getOutputContent, isOutCleared } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import { clearAll, clearBackground, clearOverlays, clearSlide, clearTimers, restoreOutput } from "../clear"
-    import { translateText } from "../../../utils/language"
+    import { clearAll, clearBackground, clearOverlays, clearScene, clearSlide, clearTimers, restoreOutput } from "../clear"
+    import { openDrawer } from "../../edit/scripts/edit"
 
     export let autoChange: any
     export let activeClear: any
@@ -38,7 +39,8 @@
         slide: () => clearSlide(),
         overlays: () => clearOverlays(),
         audio: () => clearAudio("", { clearPlaylist: true, clearMicrophones: true, commonClear: true }),
-        nextTimer: () => clearTimers()
+        nextTimer: () => clearTimers(),
+        scene: () => clearScene()
     }
 
     function clear(key: string) {
@@ -85,6 +87,8 @@
 
     $: slideTimerCleared = [isOutCleared("transition", $outputs), !!$overlayTimers, !!$activeTimers][0]
 
+    $: sceneCleared = isOutCleared("scene", $outputs)
+
     // audio fade out
     let audioIcon = "audio"
     $: if ($isFadingOut) startAudioIcon()
@@ -109,6 +113,21 @@
 </script>
 
 <div class="clear" data-title={translateText("guide_description.output_clear", $dictionary)}>
+    {#if !sceneCleared}
+        <span class="group" style="border-bottom: 1px solid var(--primary-darker);">
+            <div class="combinedButton">
+                <MaterialButton style="padding: 0.3em 0.8em;" disabled={$outLocked} title={$outLocked ? "" : "clear.scene"} on:click={() => clear("scene")} red>
+                    <Icon id="scene" size={1.1} white />
+                    <T id="clear.scene" />
+                </MaterialButton>
+            </div>
+
+            <MaterialButton style="flex: unset;padding: 0.3em 0.6em;" title="main.open: <b>tabs.scenes</b>" on:click={() => openDrawer("scenes")}>
+                <Icon id="launch" white />
+            </MaterialButton>
+        </span>
+    {/if}
+
     <span>
         {#if allCleared && $outputCache && $outputCache?.slide?.type !== "ppt"}
             <MaterialButton style="padding: 0.42em 0.8em;" class="clearAll" disabled={$outLocked || !enableRestore} title="preview.restore_output" on:click={restoreOutput}>

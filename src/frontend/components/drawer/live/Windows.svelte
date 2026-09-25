@@ -1,12 +1,9 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { createEventDispatcher, onMount } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain } from "../../../IPC/main"
-    import { outLocked, outputs } from "../../../stores"
     import { clone } from "../../helpers/array"
-    import { getFirstActiveOutput, setOutput } from "../../helpers/output"
     import T from "../../helpers/T.svelte"
-    import { clearBackground } from "../../output/clear"
     import Center from "../../system/Center.svelte"
     import Capture from "./Capture.svelte"
 
@@ -28,7 +25,10 @@
         if (searchValue.length > 1) fullFilteredWindows = fullFilteredWindows.filter((a) => filter(a.name).includes(searchValue))
     }
 
-    $: currentOutput = getFirstActiveOutput($outputs)
+    let dispatch = createEventDispatcher()
+    function click(event: any, screen: { name: string; id: string }) {
+        dispatch("click", { event, screen })
+    }
 </script>
 
 {#if fullFilteredWindows.length}
@@ -37,11 +37,7 @@
             <Capture
                 bind:streams
                 screen={window}
-                on:click={(e) => {
-                    if ($outLocked || e.ctrlKey || e.metaKey) return
-                    if (currentOutput?.out?.background?.id === window.id) clearBackground()
-                    else setOutput("background", { id: window.id, type: "screen" })
-                }}
+                on:click={(e) => click(e.detail || e, window)}
             />
         {/each}
     {/key}

@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { gainToDb, MIN_DB } from "../../audio/dBUtils"
-import { actionHistory, actions, audioPlaylists, audioRouting, audioStreams, runningActions, shows, stageShows, styles } from "../../stores"
+import { actionHistory, actions, audioPlaylists, audioRouting, audioStreams, runningActions, scenes, shows, stageShows, styles } from "../../stores"
 import { newToast, wait } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { getShowBPM } from "../drawer/audio/metronome"
@@ -171,6 +171,29 @@ export function customActionActivation(id: string, specificActivation: any = nul
     }
 }
 
+export function isMatchingSlideAction(existingAction: any, triggerId: string, newActionValues: any = {}, canAddMultiple = false): boolean {
+    // different action triggers
+    const actionTriggerId = getActionTriggerId(existingAction?.triggers?.[0])
+    if (actionTriggerId !== triggerId) return false
+
+    // special handling for "start_scene" trigger: allow multiple if "bindings" are different
+    if (triggerId === "start_scene") {
+        const currentScenes = get(scenes)
+        const existingSceneId = existingAction.actionValues?.start_scene?.id
+        const newSceneId = newActionValues?.start_scene?.id ?? newActionValues?.id
+        const existingBindings = (currentScenes[existingSceneId]?.bindings || []).slice().sort()
+        const newBindings = (currentScenes[newSceneId]?.bindings || []).slice().sort()
+        return JSON.stringify(existingBindings) === JSON.stringify(newBindings)
+    }
+
+    // if action cannot have multiple instances, replace any existing
+    if (!canAddMultiple) return true
+
+    // if action can have multiple instances, only replace if values are exactly the same
+    const newValues = newActionValues?.[triggerId] !== undefined ? newActionValues : { [triggerId]: newActionValues }
+    return JSON.stringify(existingAction.actionValues) === JSON.stringify(newValues)
+}
+
 export function addSlideAction(slideIndex: number, actionId: string, actionValue: any = {}, allowMultiple = false) {
     if (slideIndex < 0) return
 
@@ -190,9 +213,9 @@ export function addSlideAction(slideIndex: number, actionId: string, actionValue
     const data = actionData[actionId]
     const canAddMultiple = data?.canAddMultiple || allowMultiple
 
-    const existingIndex = slideActions.slideActions.findIndex((a) => a.triggers?.[0] === actionId)
-    if (canAddMultiple || existingIndex < 0) slideActions.slideActions.push(action)
-    else slideActions.slideActions[existingIndex] = action
+    const existingIndex = slideActions.slideActions.findIndex((a) => isMatchingSlideAction(a, actionId, actionValues, canAddMultiple))
+    if (existingIndex > -1) slideActions.slideActions[existingIndex] = { ...action, id: slideActions.slideActions[existingIndex].id }
+    else slideActions.slideActions.push(action)
 
     history({ id: "SHOW_LAYOUT", newData: { key: "actions", data: slideActions, indexes: [slideIndex] } })
 }
@@ -221,6 +244,7 @@ const namedObjects = {
     run_action: () => get(actions),
     start_show: () => get(shows),
     id_select_show: () => get(shows),
+    start_scene: () => get(scenes),
     start_audio_stream: () => get(audioStreams),
     start_playlist: () => get(audioPlaylists),
     id_select_stage_layout: () => get(stageShows)

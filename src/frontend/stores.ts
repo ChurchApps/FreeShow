@@ -16,16 +16,15 @@ import type { History, HistoryNew } from "../types/History"
 import type { ActiveEdit, Clipboard, Interaction, Media, MediaOptions, NumberObject, OS, Popups, Profiles, Selected, SlidesOptions, Variable } from "../types/Main"
 import type { Folders, Projects, ShowRef } from "../types/Projects"
 import type { Dictionary, Styles, Themes } from "../types/Settings"
-import type { Action, CustomFont, Emitter, ID, Overlays, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
+import type { Action, CustomFont, Emitter, ID, Overlays, Scene, ShowGroups, ShowList, Shows, ShowType, SlideTimer, Tag, Templates, Timer, Transition, TrimmedShows } from "../types/Show"
 import type { ServerData } from "../types/Socket"
 import type { ActiveStage, StageLayouts } from "../types/Stage"
 import type { BibleCategories, Categories, DrawerTabs, EditMode, SettingsTabs, TopViews } from "../types/Tabs"
 import { AiSuggestion } from "./../types/ai/Ai"
 import type { AiSettings } from "./../types/ai/AiSettings"
-import type { Outputs, RtmpStatus } from "./../types/Output"
+import type { Outputs, RtmpStatus, SyncedOutputs } from "./../types/Output"
 import type { DrawerTabIds } from "./../types/Tabs"
 import type { AudioData } from "./audio/audioPlayer"
-import type { EQBand } from "./audio/effects/audioEqualizer"
 import type { PlayingVideoState, VideoAudioData } from "./components/media/video/videoPlayer"
 
 // ----- TEMPORARY VARIABLES -----
@@ -88,6 +87,7 @@ export const showChangeProfileMenu: Writable<boolean> = writable(false)
 export const cloudUsers: Writable<{ displayName: string; color: string; lastUpdate?: number; activePage?: string; activeShow?: ShowRef }[]> = writable([])
 export const isTimelinePlaying: Writable<boolean> = writable(false)
 export const timelineRecordingAction: Writable<{ id: string; data?: any }> = writable({ id: "" })
+export const autoOpenedTimeline: Writable<boolean> = writable(false)
 export const currentMetadataPopupData: Writable<any> = writable(null)
 export const editingProjectTemplate: Writable<string> = writable("")
 export const showNotesActive: Writable<boolean> = writable(false)
@@ -120,7 +120,7 @@ export const playingVideoState: Writable<{ [key: string]: PlayingVideoState }> =
 export const activePlaylist: Writable<any> = writable(null)
 export const playingMetronome: Writable<boolean> = writable(false)
 export const visualizerData: Writable<any> = writable(null)
-export const channelDuckingMultipliers: Writable<{ [channelId: string]: number }> = writable({})
+export const channelSidechainMultipliers: Writable<{ [channelId: string]: number }> = writable({})
 export const isFadingOut: Writable<any> = writable(false)
 export const recordingChannels: Writable<{ [channelId: string]: boolean }> = writable({})
 
@@ -256,6 +256,9 @@ export const timers: Writable<{ [key: string]: Timer }> = writable({}) // {}
 // VARIABLES
 export const variables: Writable<{ [key: string]: Variable }> = writable({}) // {}
 
+// SCENES
+export const scenes: Writable<{ [key: string]: Scene }> = writable({}) // {}
+
 // INTERACTIONS
 export const interactions: Writable<{ [key: string]: Interaction }> = writable({}) // {}
 
@@ -289,7 +292,12 @@ export interface AudioEffectInstance {
     config?: any
 }
 export const audioEffects = writable<Record<string, AudioEffectsConfig>>({}) // {}
-export const eqPresets: Writable<{ [key: string]: { name: string; bands: EQBand[] } }> = writable({}) // {}
+export type AudioEffectPresets = {
+    [key: string]: {
+        [id: string]: { name: string; config: any }
+    }
+}
+export const audioEffectPresets: Writable<AudioEffectPresets> = writable({}) // {}
 
 // PLAYER
 export const playerVideos: Writable<Categories> = writable({}) // {default}
@@ -344,7 +352,8 @@ export const timerTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 export const resized: Writable<NumberObject> = writable({ leftPanel: 290, rightPanel: 290, leftPanelDrawer: 290, rightPanelDrawer: 290 }) // {default}
 export const sorted: Writable<any> = writable({}) // {}
 export const dataPath: Writable<string> = writable("") // "" // DEPRECATED - only for setting
-export const lockedOverlays: Writable<string[]> = writable([]) // []
+export const lockedOverlays: Writable<{ [key: string]: string[] }> = writable({}) // {}
+export const activeScenes: Writable<{ [key: string]: string[] }> = writable({}) // {}
 export const special: Writable<any> = writable({}) // {}
 
 // SETTINGS
@@ -370,8 +379,7 @@ export const styles: Writable<{ [key: string]: Styles }> = writable({}) // {}
 
 // OUTPUTS
 export const outputs: Writable<Outputs> = writable({}) // {default}
-// shared-render groups (renderer output id -> member ids); follower previews clone the renderer's mirror
-export const renderGroups: Writable<{ [rendererId: string]: string[] }> = writable({})
+export const syncedOutputs: Writable<SyncedOutputs> = writable({}) // {}
 export const outLocked: Writable<boolean> = writable(false) // false
 
 // PROFILES
@@ -458,6 +466,7 @@ export const $ = {
     folders,
     timers,
     variables,
+    scenes,
     media,
     mediaFolders,
     effects,

@@ -1,4 +1,3 @@
-import qrcode from "qrcode-generator"
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Item, Slide } from "../../../../types/Show"
@@ -69,7 +68,6 @@ function generateJoinSlide(id: string) {
     if (!joinId) return null
 
     const url = `https://freeshow.net/interaction#id=${joinId}`
-    const qrData = generateQR(url)
 
     const slide: Slide = {
         group: "Join",
@@ -78,7 +76,7 @@ function generateJoinSlide(id: string) {
         notes: "",
         items: [
             BG_item,
-            { type: "media", style: "left:710.00px;top:340.50px;width: 500px;height: 500px;border-radius: 20px;border-color: #000000;border-width: 10px;", src: qrData },
+            { type: "qr_code", style: "left:710.00px;top:340.50px;width: 500px;height: 500px;border-radius: 20px;border-color: #000000;border-width: 10px;", qr_code: { text: url } },
             { type: "text", style: "top:100px;left:461.00px;height:152.67px;width:998.00px;", lines: [{ align: "", text: [{ style: "font-weight:bold;text-transform:uppercase;font-size:120px;text-shadow:0 0 0 rgb(0 0 0 / 0);-webkit-text-stroke-width:15px;", value: "Join now!" }] }] },
             // Use your phone to scan the QR code or go to freeshow.net/interaction and enter the code:
             { type: "text", style: "top:850px;left:380px;height:75px;width:1160px;", lines: [{ align: "", text: [{ style: "font-size:28px;color:rgb(255 255 255 / 0.8);text-shadow:0 0 0 rgb(0 0 0 / 0);", value: "Scan the QR Code with your phone!" }] }] },
@@ -89,13 +87,6 @@ function generateJoinSlide(id: string) {
     }
 
     return clone(slide)
-
-    function generateQR(text) {
-        var qr = qrcode(0, "L")
-        qr.addData(text)
-        qr.make()
-        return qr.createDataURL(10, 20)
-    }
 }
 
 function generatePlayersSlide() {

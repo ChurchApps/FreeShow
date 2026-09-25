@@ -16,7 +16,8 @@
     export let index = -1
     export let fileOver = false
 
-    $: outline = !!$playingAudio[path] && (!$activePlaylist || $activePlaylist?.index === index)
+    $: audioKey = playlist && index > -1 ? AudioPlayer.getKey(path, index) : path
+    $: outline = !!$playingAudio[audioKey] && (!$activePlaylist || $activePlaylist?.index === index)
 </script>
 
 <SelectElem id="audio" data={{ path, name, index }} {fileOver} borders={playlist ? "edges" : "all"} trigger={playlist ? "column" : null} draggable>
@@ -43,7 +44,7 @@
             {#await AudioPlayer.getDuration(path)}
                 <Icon id="music" white right />
             {:then duration}
-                <Icon id={$playingAudio[path]?.paused === true ? "play" : $playingAudio[path]?.paused === false ? "pause" : $media[path]?.favourite === true && active !== "favourites" ? "star" : AudioPlayer.getAudioType(path, duration)} white={$playingAudio[path]?.paused === true || (!$playingAudio[path] && ($media[path]?.favourite !== true || active === "favourites"))} right />
+                <Icon id={$playingAudio[audioKey]?.paused === true ? "play" : $playingAudio[audioKey]?.paused === false ? "pause" : $media[path]?.favourite === true && active !== "favourites" ? "star" : AudioPlayer.getAudioType(path, duration)} white={$playingAudio[audioKey]?.paused === true || (!$playingAudio[audioKey] && ($media[path]?.favourite !== true || active === "favourites"))} right />
             {/await}
             <p>{name.slice(0, name.lastIndexOf("."))}</p>
         </span>

@@ -1,9 +1,10 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import { actionHistory, activeTimers, drawerTabsData } from "../../../stores"
+    import InteractionsInfo from "../pages/InteractionsInfo.svelte"
     import TimerInfo from "../timers/TimerInfo.svelte"
     import OBSInfo from "./OBSInfo.svelte"
-    import InteractionsInfo from "../pages/InteractionsInfo.svelte"
+    import ScenesInfo from "./ScenesInfo.svelte"
 
     $: type = $drawerTabsData.functions?.activeSubTab || ""
 
@@ -36,6 +37,8 @@
     {/if}
 {:else if type === "variables"}
     <!-- VARIABLE -->
+{:else if type === "scenes"}
+    <ScenesInfo />
 {:else if type === "interactions"}
     <InteractionsInfo />
 {:else if type === "obs"}

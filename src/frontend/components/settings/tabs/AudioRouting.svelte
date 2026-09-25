@@ -39,7 +39,7 @@
         fromId: string
         toId: string
         channelIndex: number
-        type?: "audio" | "ducking"
+        type?: "audio" | "sidechain"
         x1: number
         y1: number
         x2: number
@@ -84,13 +84,13 @@
     let isConnecting = false
     let dragStartId: string | null = null
     let dragStartType: "input" | "channel" | "output" | null = null
-    let dragStartPortType: "in" | "out" | "ducking" | null = null
+    let dragStartPortType: "in" | "out" | "sidechain" | null = null
     let dragFromPos = { x: 0, y: 0 }
     let dragCurrentPos = { x: 0, y: 0 }
     let hoverTargetId: string | null = null
     let hoverTargetPortEl: HTMLElement | null = null
-    let hoverTargetPortType: "in" | "out" | "ducking" | null = null
-    let hoveredPort: { nodeId: string; portType: "in" | "out" | "ducking"; channelIndex?: number } | null = null
+    let hoverTargetPortType: "in" | "out" | "sidechain" | null = null
+    let hoveredPort: { nodeId: string; portType: "in" | "out" | "sidechain"; channelIndex?: number } | null = null
 
     let lines: RenderedLine[] = []
     let connectionFrame: number | null = null
@@ -300,7 +300,7 @@
         activePopup.set("rename")
     }
 
-    function getNodePortPos(nodeId: string, portType: "in" | "out" | "ducking", portElement?: HTMLElement | null): { x: number; y: number } | null {
+    function getNodePortPos(nodeId: string, portType: "in" | "out" | "sidechain", portElement?: HTMLElement | null): { x: number; y: number } | null {
         if (!spaceEl) return null
         const portEl = portElement || spaceEl.querySelector<HTMLElement>(`[data-node-id="${nodeId}"] .port-${portType}`)
         if (!portEl) return null
@@ -320,11 +320,11 @@
         for (const conn of config.connections) {
             const fromPos = getNodePortPos(conn.from, "out")
             const isSpeakerSub = conn.to.startsWith("speaker_sub_")
-            const isDucking = conn.type === "ducking"
+            const isSidechain = conn.type === "sidechain"
             let toPos: { x: number; y: number } | null = null
 
-            if (isDucking) {
-                toPos = getNodePortPos(conn.to, "ducking")
+            if (isSidechain) {
+                toPos = getNodePortPos(conn.to, "sidechain")
             } else if (isSpeakerSub && (conn as any).channelIndex !== undefined) {
                 const chEl = spaceEl.querySelector<HTMLElement>(`[data-node-id="${conn.to}"] [data-ch-index="${(conn as any).channelIndex}"]`)
                 if (chEl) toPos = getNodePortPos(conn.to, "in", chEl)
@@ -347,7 +347,7 @@
         lines = newLines
     }
 
-    function handlePortMouseDown(e: MouseEvent, nodeId: string, nodeType: "input" | "channel" | "output", portType: "in" | "out" | "ducking", _channelIndex = 0) {
+    function handlePortMouseDown(e: MouseEvent, nodeId: string, nodeType: "input" | "channel" | "output", portType: "in" | "out" | "sidechain", _channelIndex = 0) {
         e.preventDefault()
         e.stopPropagation()
         isConnecting = true
@@ -435,13 +435,13 @@
         const isChannel = (id: string) => channelsList.some((m) => m.id === id)
         const isOutput = (id: string) => fixedOutputs.some((o) => o.id === id) || id.startsWith("speaker_sub_") || id.startsWith("network_sub_")
 
-        // Channel-to-channel ducking (cannot connect to self)
+        // Channel-to-channel sidechain (cannot connect to self)
         if (isChannel(fromId) && isChannel(toId) && fromId !== toId) {
-            const isDucking = dragStartPortType === "ducking" || hoverTargetPortType === "ducking"
-            if (isDucking) {
-                // If dragging from ducking port, target channel is the source (from), dragging channel is target (to)
-                if (dragStartPortType === "ducking") return { valid: true, from: toId, to: fromId }
-                // Otherwise dragging from channel out to channel ducking port
+            const isSidechain = dragStartPortType === "sidechain" || hoverTargetPortType === "sidechain"
+            if (isSidechain) {
+                // If dragging from sidechain port, target channel is the source (from), dragging channel is target (to)
+                if (dragStartPortType === "sidechain") return { valid: true, from: toId, to: fromId }
+                // Otherwise dragging from channel out to channel sidechain port
                 return { valid: true, from: fromId, to: toId }
             }
         }
@@ -463,40 +463,39 @@
             const { valid, from: fromId, to: toId } = isValidConnection(dragStartId, hoverTargetId)
 
             if (valid) {
-                const isDucking = dragStartPortType === "ducking" || hoverTargetPortType === "ducking"
+                const isSidechain = dragStartPortType === "sidechain" || hoverTargetPortType === "sidechain"
                 updateConfig((c) => {
                     const isRelatedInput = (connFrom: string, id: string) => {
                         if (connFrom === id) return true
                         for (const [, { parentId, prefix }] of Object.entries(PARENT_PREFIX_MAP)) {
                             if (connFrom.startsWith(prefix) && id === parentId) return true
                             if (id.startsWith(prefix) && connFrom === parentId) return true
-                            if (connFrom.startsWith(prefix) && id.startsWith(prefix)) return true
                         }
                         return false
                     }
 
-                    if (isDucking) {
+                    if (isSidechain) {
                         // cannot connect to itself (should already be prevented by isValidConnection)
                         if (fromId === toId) return
 
-                        // Prevent mutual / circular ducking loops
-                        const isCircular = c.connections.some((conn) => conn.from === toId && conn.to === fromId && conn.type === "ducking")
+                        // Prevent mutual / circular sidechain loops
+                        const isCircular = c.connections.some((conn) => conn.from === toId && conn.to === fromId && conn.type === "sidechain")
                         if (isCircular) {
-                            newToast("Cannot create circular ducking.")
+                            newToast("Cannot create circular sidechain.")
                             return
                         }
 
-                        const existingIdx = c.connections.findIndex((conn) => conn.from === fromId && conn.to === toId && conn.type === "ducking")
+                        const existingIdx = c.connections.findIndex((conn) => conn.from === fromId && conn.to === toId && conn.type === "sidechain")
                         if (existingIdx !== -1) {
                             c.connections.splice(existingIdx, 1)
                         } else {
-                            const hasAudioConn = c.connections.some((conn) => conn.to === toId && isRelatedInput(conn.from, fromId) && conn.type !== "ducking")
+                            const hasAudioConn = c.connections.some((conn) => conn.to === toId && isRelatedInput(conn.from, fromId) && conn.type !== "sidechain")
                             if (hasAudioConn) {
                                 newToast("This source already has a regular audio connection to this channel.")
                                 return
                             }
 
-                            c.connections.push({ from: fromId, to: toId, type: "ducking" })
+                            c.connections.push({ from: fromId, to: toId, type: "sidechain" })
                         }
                         return
                     }
@@ -509,40 +508,40 @@
                     const isSpecificCircle = chIndexStr !== undefined
 
                     if (isSpeakerSub && chCount > 1 && !isSpecificCircle) {
-                        const activeConns = c.connections.filter((conn) => conn.from === fromId && conn.to === toId && conn.type !== "ducking")
+                        const activeConns = c.connections.filter((conn) => conn.from === fromId && conn.to === toId && conn.type !== "sidechain")
                         if (activeConns.length >= chCount) {
-                            c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to === toId && conn.type !== "ducking"))
+                            c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to === toId && conn.type !== "sidechain"))
                         } else {
                             c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to === "speaker_default"))
                             for (let ch = 0; ch < chCount; ch++) {
-                                if (!c.connections.some((conn) => conn.from === fromId && conn.to === toId && conn.type !== "ducking" && ((conn as any).channelIndex ?? 0) === ch)) {
+                                if (!c.connections.some((conn) => conn.from === fromId && conn.to === toId && conn.type !== "sidechain" && ((conn as any).channelIndex ?? 0) === ch)) {
                                     c.connections.push({ from: fromId, to: toId, channelIndex: ch })
                                 }
                             }
                         }
                     } else {
                         const targetChIndex = isSpecificCircle ? parseInt(chIndexStr) : 0
-                        const existingIndex = c.connections.findIndex((conn) => conn.from === fromId && conn.to === toId && conn.type !== "ducking" && (!isSpeakerSub || ((conn as any).channelIndex ?? 0) === targetChIndex))
+                        const existingIndex = c.connections.findIndex((conn) => conn.from === fromId && conn.to === toId && conn.type !== "sidechain" && (!isSpeakerSub || ((conn as any).channelIndex ?? 0) === targetChIndex))
 
                         if (existingIndex !== -1) {
                             c.connections.splice(existingIndex, 1)
                         } else {
-                            const hasDuckingConn = c.connections.some((conn) => conn.to === toId && isRelatedInput(conn.from, fromId) && conn.type === "ducking")
-                            if (hasDuckingConn) {
-                                newToast("This source already has a ducking connection to this channel.")
+                            const hasSidechainConn = c.connections.some((conn) => conn.to === toId && isRelatedInput(conn.from, fromId) && conn.type === "sidechain")
+                            if (hasSidechainConn) {
+                                newToast("This source already has a sidechain connection to this channel.")
                                 return
                             }
 
                             for (const [, { parentId, prefix }] of Object.entries(PARENT_PREFIX_MAP)) {
                                 if (fromId.startsWith(prefix)) {
-                                    c.connections = c.connections.filter((conn) => !(conn.from === parentId && conn.to === toId && conn.type !== "ducking"))
+                                    c.connections = c.connections.filter((conn) => !(conn.from === parentId && conn.to === toId && conn.type !== "sidechain"))
                                 } else if (fromId === parentId) {
-                                    c.connections = c.connections.filter((conn) => !(conn.from.startsWith(prefix) && conn.to === toId && conn.type !== "ducking"))
+                                    c.connections = c.connections.filter((conn) => !(conn.from.startsWith(prefix) && conn.to === toId && conn.type !== "sidechain"))
                                 }
                                 if (toId.startsWith(prefix)) {
-                                    c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to === parentId && conn.type !== "ducking"))
+                                    c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to === parentId && conn.type !== "sidechain"))
                                 } else if (toId === parentId) {
-                                    c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to.startsWith(prefix) && conn.type !== "ducking"))
+                                    c.connections = c.connections.filter((conn) => !(conn.from === fromId && conn.to.startsWith(prefix) && conn.type !== "sidechain"))
                                 }
                             }
 
@@ -578,7 +577,7 @@
         startScroll = { left: 0, top: 0 }
     }
 
-    function removeConnection(fromId: string, toId: string, type?: "audio" | "ducking") {
+    function removeConnection(fromId: string, toId: string, type?: "audio" | "sidechain") {
         updateConfig((c) => {
             c.connections = c.connections.filter((conn) => {
                 if (conn.from === fromId && conn.to === toId) {
@@ -590,16 +589,16 @@
         })
     }
 
-    function handlePortContextMenu(e: MouseEvent, nodeId: string, portType: "in" | "out" | "ducking", channelIndex = 0) {
+    function handlePortContextMenu(e: MouseEvent, nodeId: string, portType: "in" | "out" | "sidechain", channelIndex = 0) {
         e.preventDefault()
         e.stopPropagation()
 
         updateConfig((c) => {
             c.connections = c.connections.filter((conn) => {
-                if (portType === "ducking") return !(conn.to === nodeId && conn.type === "ducking")
+                if (portType === "sidechain") return !(conn.to === nodeId && conn.type === "sidechain")
                 if (portType === "in") {
                     if (conn.to !== nodeId) return true
-                    if (conn.type === "ducking") return true
+                    if (conn.type === "sidechain") return true
                     return nodeId.startsWith("speaker_sub_") ? ((conn as any).channelIndex ?? 0) !== channelIndex : false
                 }
                 return conn.from !== nodeId
@@ -615,7 +614,7 @@
         else if (dragStartType === "output" && columnType === "channel") valid = true
         else if (dragStartType === "channel") {
             if (dragStartPortType === "in" && columnType === "input" && nodeId !== "output_window") valid = true
-            else if (dragStartPortType === "ducking" && columnType === "channel") valid = true
+            else if (dragStartPortType === "sidechain" && columnType === "channel") valid = true
             else if (dragStartPortType === "out") {
                 if (columnType === "output" && nodeId !== "network_default") valid = true
                 else if (columnType === "channel") valid = true
@@ -637,7 +636,7 @@
         }
     }
 
-    function handlePortMouseEnter(e: MouseEvent, portType: "in" | "out" | "ducking" = "in") {
+    function handlePortMouseEnter(e: MouseEvent, portType: "in" | "out" | "sidechain" = "in") {
         if (isConnecting) {
             hoverTargetPortEl = e.currentTarget as HTMLElement
             hoverTargetPortType = portType
@@ -649,7 +648,7 @@
         hoverTargetPortType = null
     }
 
-    function handleHoverPort(nodeId: string, portType: "in" | "out" | "ducking", channelIndex?: number) {
+    function handleHoverPort(nodeId: string, portType: "in" | "out" | "sidechain", channelIndex?: number) {
         hoveredPort = { nodeId, portType, channelIndex }
     }
 
@@ -660,9 +659,9 @@
     function isLineConnectedToPort(line: RenderedLine, port: typeof hoveredPort): boolean {
         if (!port) return false
         if (port.portType === "out") return line.fromId === port.nodeId
-        if (port.portType === "ducking") return line.toId === port.nodeId && line.type === "ducking"
+        if (port.portType === "sidechain") return line.toId === port.nodeId && line.type === "sidechain"
         if (port.portType === "in") {
-            if (line.toId !== port.nodeId || line.type === "ducking") return false
+            if (line.toId !== port.nodeId || line.type === "sidechain") return false
             return port.channelIndex !== undefined ? (line.channelIndex ?? 0) === port.channelIndex : true
         }
         return false
@@ -682,19 +681,19 @@
                     {@const sourceNode = colNodes.find((n) => n.id === line.fromId)}
                     {@const nodeIndex = colNodes.findIndex((n) => n.id === line.fromId)}
                     {@const hue = (275 + (nodeIndex >= 0 ? nodeIndex : 0) * 6) % 360}
-                    {@const strokeColor = line.type === "ducking" ? "#f59e0b" : sourceNode?.color || `hsl(${hue}, 80%, 65%)`}
+                    {@const strokeColor = line.type === "sidechain" ? "#f59e0b" : sourceNode?.color || `hsl(${hue}, 80%, 65%)`}
                     {@const isDisabled = sourceNode?.isEnabled === false}
                     {@const isHighlighted = isLineConnectedToPort(line, activeHoverPort)}
                     {@const isDimmed = activeHoverPort !== null && !isHighlighted}
 
-                    {@const isDucking = line.type === "ducking"}
-                    {@const isBackward = isDucking && line.x1 >= line.x2}
+                    {@const isSidechain = line.type === "sidechain"}
+                    {@const isBackward = isSidechain && line.x1 >= line.x2}
                     {@const dy = Math.abs(line.y2 - line.y1)}
                     {@const dx = isBackward ? Math.max(120, dy * 0.7) : Math.max(20, Math.abs(line.x2 - line.x1) / 2)}
                     {@const c1x = isBackward ? line.x1 + dx : line.x1 + dx}
                     {@const c2x = isBackward ? line.x2 - dx : line.x2 - dx}
 
-                    <path d="M {line.x1} {line.y1} C {c1x} {line.y1}, {c2x} {line.y2}, {line.x2} {line.y2}" stroke={strokeColor} class="connection-path" class:ducking-path={isDucking} class:disabled={isDisabled} class:highlighted={isHighlighted} class:dimmed={isDimmed} style={isHighlighted ? "z-index: 10;" : isDimmed ? "z-index: 1;" : isDucking ? "z-index: 4;" : ""} on:dblclick={() => removeConnection(line.fromId, line.toId, line.type)} />
+                    <path d="M {line.x1} {line.y1} C {c1x} {line.y1}, {c2x} {line.y2}, {line.x2} {line.y2}" stroke={strokeColor} class="connection-path" class:sidechain-path={isSidechain} class:disabled={isDisabled} class:highlighted={isHighlighted} class:dimmed={isDimmed} style={isHighlighted ? "z-index: 10;" : isDimmed ? "z-index: 1;" : isSidechain ? "z-index: 4;" : ""} on:dblclick={() => removeConnection(line.fromId, line.toId, line.type)} />
                 {/each}
 
                 {#if isConnecting && dragStartId}
@@ -703,11 +702,11 @@
                     {@const dragSourceNode = dragColNodes.find((n) => n.id === dragStartId)}
                     {@const dragNodeIndex = dragColNodes.findIndex((n) => n.id === dragStartId)}
                     {@const dragHue = (275 + (dragNodeIndex >= 0 ? dragNodeIndex : 0) * 6) % 360}
-                    {@const isDragDucking = dragStartPortType === "ducking" || hoverTargetPortType === "ducking"}
-                    {@const dragColor = isDragDucking ? "#f59e0b" : dragSourceNode?.color || `hsl(${dragHue}, 80%, 65%)`}
+                    {@const isDragSidechain = dragStartPortType === "sidechain" || hoverTargetPortType === "sidechain"}
+                    {@const dragColor = isDragSidechain ? "#f59e0b" : dragSourceNode?.color || `hsl(${dragHue}, 80%, 65%)`}
                     {@const dx = Math.max(20, Math.abs(dragCurrentPos.x - dragFromPos.x) / 2)}
                     {@const sign = dragStartPortType === "out" ? 1 : -1}
-                    <path d="M {dragFromPos.x} {dragFromPos.y} C {dragFromPos.x + dx * sign} {dragFromPos.y}, {dragCurrentPos.x - dx * sign} {dragCurrentPos.y}, {dragCurrentPos.x} {dragCurrentPos.y}" stroke={dragColor} class="drag-path" style={isDragDucking ? "z-index: 5;" : ""} />
+                    <path d="M {dragFromPos.x} {dragFromPos.y} C {dragFromPos.x + dx * sign} {dragFromPos.y}, {dragCurrentPos.x - dx * sign} {dragCurrentPos.y}, {dragCurrentPos.x} {dragCurrentPos.y}" stroke={dragColor} class="drag-path" style={isDragSidechain ? "z-index: 5;" : ""} />
                 {/if}
             </svg>
 
@@ -862,7 +861,7 @@
             opacity 0.2s ease;
     }
 
-    .connection-path.ducking-path {
+    .connection-path.sidechain-path {
         stroke-dasharray: 6 4;
     }
 

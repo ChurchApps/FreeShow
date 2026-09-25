@@ -2,6 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Show } from "../../types/Show"
 import type { ClientMessage } from "../../types/Socket"
+import { AudioRoutingManager } from "../audio/routing/audioRoutingManager"
 import { loadJsonBible } from "../components/drawer/bible/scripture"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
 import { getThumbnailPath, mediaSize } from "../components/helpers/media"
@@ -12,11 +13,19 @@ import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, categories, connections, dictionary, folders, language, openedFolders, outLocked, overlayCategories, overlays, playerVideos, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, templateCategories, templates, timers, variables, variableTags } from "./../stores"
+import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioRouting, categories, connections, dictionary, folders, language, openedFolders, outLocked, outputs, overlayCategories, overlays, playerVideos, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, templateCategories, templates, timers, variables, variableTags } from "./../stores"
 import { lastClickTime } from "./common"
 import { translateText } from "./language"
 import { send } from "./request"
 import { sendData, setConnectedState } from "./sendData"
+
+export function getFilteredAudioChannels() {
+    const rawRouting = get(audioRouting) || { channels: [{ id: "main", name: translateText("audio.main") }], connections: [] }
+    const sortedConfig = AudioRoutingManager.sortChannels(rawRouting)
+    const inactiveOutputIds = keysToID(get(outputs) || {}).filter((a) => !a.enabled)
+    const filteredChannels = sortedConfig.channels.filter((ch) => !inactiveOutputIds.some((a) => `channel_${a.id}` === ch.id))
+    return { ...sortedConfig, channels: filteredChannels }
+}
 
 // REMOTE
 
@@ -306,6 +315,13 @@ export const receiveREMOTE: any = {
             runningActions: get(runningActions)
         }
         return msg
+    },
+    GET_AUDIO_MIXER: (msg: any) => {
+        msg.data = {
+            audioRouting: getFilteredAudioChannels(),
+            audioChannelsData: get(audioChannelsData)
+        }
+        return msg
     }
 }
 
@@ -351,6 +367,8 @@ export async function initializeRemote(id: string) {
     // Send additional data
     send(REMOTE, ["SCRIPTURE"], get(scriptures))
     send(REMOTE, ["CATEGORIES"], get(categories))
+    send(REMOTE, ["AUDIO_ROUTING"], getFilteredAudioChannels())
+    send(REMOTE, ["AUDIO_CHANNELS_DATA"], get(audioChannelsData))
 }
 
 export async function convertBackgrounds(show: Show, noLoad = false, init = false) {

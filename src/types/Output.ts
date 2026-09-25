@@ -1,5 +1,5 @@
 import type { Cropping, Resolution } from "./Settings"
-import type { OutBackground, OutSlide, OutTransition } from "./Show"
+import type { OutBackground, OutScene, OutSlide, OutTransition } from "./Show"
 
 export interface Outputs {
     [key: string]: Output
@@ -38,6 +38,10 @@ export interface Output {
     out?: OutData
 }
 
+export interface SyncedOutputs {
+    [id: string]: string
+}
+
 // RTMP
 export interface RtmpDestination {
     id: string
@@ -70,6 +74,7 @@ export interface OutData {
     effects?: string[]
     overlays?: string[]
     transition?: null | OutTransition
+    scene?: null | OutScene
 }
 
 export interface Animation {

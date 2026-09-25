@@ -3,8 +3,8 @@
 
 import { get } from "svelte/store"
 import { uid } from "uid"
-import { activeAudioEffects, audioEffects, type AudioEffectsConfig, type AudioEffectInstance } from "../../stores"
 import { clone } from "../../components/helpers/array"
+import { activeAudioEffects, audioEffects, type AudioEffectInstance, type AudioEffectsConfig } from "../../stores"
 
 export const ALL_EFFECT_KEYS = ["equalizer", "filter", "noiseGate", "compressor", "limiter", "reverb", "delay", "stereoShaper"] as const
 export type EffectType = (typeof ALL_EFFECT_KEYS)[number]
@@ -136,6 +136,27 @@ export function getEffectConfig<T>(key: EffectKey, defaults: T, channelId?: stri
     const stack = getEffectStack(undefined, channelId)
     const item = effectId ? stack.find((s) => s.id === effectId) : stack.find((s) => s.type === key)
     return item?.config ? { ...defaults, ...item.config } : { ...defaults }
+}
+
+/** Replace full effect config in store (e.g. applying a preset). */
+export function setEffectConfig(key: EffectKey, config: any, channelId?: string, effectId?: string): void {
+    const defaults = DEFAULT_EFFECT_CONFIGS[key as EffectType] || {}
+    updateStack(channelId, (stack) => {
+        const idx = findStackIndex(stack, effectId || key, !!effectId)
+        if (idx >= 0) {
+            const currentEnabled = stack[idx].enabled ?? stack[idx].config?.enabled ?? true
+            const enabled = config?.enabled !== undefined ? config.enabled : currentEnabled
+            stack[idx] = {
+                ...stack[idx],
+                enabled,
+                config: {
+                    ...clone(defaults),
+                    ...clone(config),
+                    enabled
+                }
+            }
+        }
+    })
 }
 
 /** Merge partial update into store. */

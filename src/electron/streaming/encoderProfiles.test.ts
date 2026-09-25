@@ -158,7 +158,7 @@ describe("buildRelayCommand", () => {
     })
 
     it("targets the destination as an flv output", () => {
-        expect(buildRelayCommand("rtmp://x/y").slice(-3)).toEqual(["-f", "flv", "rtmp://x/y"])
+        expect(buildRelayCommand("rtmp://x/y").slice(-5)).toEqual(["-f", "flv", "-flvflags", "no_sequence_end", "rtmp://x/y"])
     })
 })
 

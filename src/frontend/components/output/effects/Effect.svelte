@@ -75,7 +75,7 @@
         movedIndex = -1
     }
 
-    const basicMove = ["circle", "rectangle", "triangle", "galaxy", "sun", "lens_flare", "spotlight", "neon", "asset"]
+    const basicMove = ["circle", "rectangle", "triangle", "galaxy", "sun", "lens_flare", "spotlight", "candle", "neon", "asset"]
     const verticalMove = ["aurora", "fog", "fireworks", "city", "grass", "rainbow"]
 
     function mousemove(e: any) {

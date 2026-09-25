@@ -8,11 +8,15 @@
 
     let svg = ""
 
-    $: text = item?.qr?.text || ""
-    $: if (text) generate(text)
+    $: qrData = item?.qr_code
+    $: text = qrData?.text || ""
+    $: color = qrData?.color || "#000000"
+    $: background = qrData?.background ?? "#FFFFFF"
+
+    $: if (text) generate(text, color, background)
     else svg = ""
 
-    function generate(data: string) {
+    function generate(data: string, qrColor: string, qrBg: string) {
         try {
             const qr = qrcode(0, "M")
             qr.addData(data)
@@ -30,7 +34,13 @@
             }
         }
 
-        if (svg) svg = svg.replace(/preserveAspectRatio="[^"]*"/, 'preserveAspectRatio="xMidYMid meet"')
+        if (!svg) return
+
+        svg = svg.replace(/preserveAspectRatio="[^"]*"/, 'preserveAspectRatio="xMidYMid meet"')
+
+        if (qrBg) svg = svg.replace(/<rect\s+width="100%"\s+height="100%"\s+fill="[^"]*"/, `<rect width="100%" height="100%" fill="${qrBg}"`)
+        else svg = svg.replace(/<rect\s+width="100%"\s+height="100%"\s+fill="[^"]*"\s*cx="[^"]*"\s*cy="[^"]*"\/>/, "")
+        if (qrColor) svg = svg.replace(/fill="black"/g, `fill="${qrColor}"`)
     }
 </script>
 

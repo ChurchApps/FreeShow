@@ -1,7 +1,7 @@
 import type { Event } from "../../types/Calendar"
 import type { Effect } from "../../types/Effects"
 import type { Project, ProjectShowRef } from "../../types/Projects"
-import type { Layout, Overlay, Slide, Template } from "../../types/Show"
+import type { Layout, Overlay, Scene, Slide, Template } from "../../types/Show"
 import type { Category } from "../../types/Tabs"
 
 // UPDATE
@@ -24,6 +24,7 @@ export const EMPTY_STAGE = {
 export const EMPTY_CATEGORY: Category = { name: "", icon: null }
 export const EMPTY_PLAYER_VIDEO = { name: "", type: "" } // "youtube" | "vimeo"
 export const EMPTY_EFFECT: Effect = { name: "", color: null, style: "", background: "", items: [] }
+export const EMPTY_SCENE: Scene = { name: "", content: { media: null, style: "", overlays: [] }, bindings: [], action: "" }
 
 // if (get(drawerTabsData)[s.store]?.activeSubTab !== "all" && get(drawerTabsData).templates?.activeSubTab !== "unlabeled") category = get(drawerTabsData)[s.store].activeSubTab
 export const EMPTY_SLIDE: Overlay | Template = { name: "", color: null, category: null, items: [] }

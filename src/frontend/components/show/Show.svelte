@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activeProject, activeShow, outLocked, projects, resized, showsCache, special, templateApplied } from "../../stores"
+    import { activeProject, activeShow, autoOpenedTimeline, outLocked, projects, resized, showsCache, special, templateApplied } from "../../stores"
     import { DEFAULT_WIDTH } from "../../utils/common"
     import Capture from "../drawer/live/Capture.svelte"
     import NdiStream from "../drawer/live/NDIStream.svelte"
@@ -12,10 +12,10 @@
     import Resizeable from "../system/Resizeable.svelte"
     import Timeline from "../timeline/Timeline.svelte"
     import AudioPreview from "./AudioPreview.svelte"
+    import EffectPreview from "./effect/EffectPreview.svelte"
     import FolderShow from "./folder/FolderShow.svelte"
     import MediaPreview from "./media/MediaPreview.svelte"
     import OverlayPreview from "./overlay/OverlayPreview.svelte"
-    import EffectPreview from "./effect/EffectPreview.svelte"
     import PdfPreview from "./pdf/PdfPreview.svelte"
     import ProjectShowPlaceholder from "./placeholder/ProjectShowPlaceholder.svelte"
     import PowerPointPreview from "./ppt/PowerPointPreview.svelte"
@@ -30,7 +30,34 @@
 
     $: position = $projects[$activeProject || ""]?.shows?.findIndex((a) => a.id === show?.id)
 
-    $: layoutId = show && (show.type || "show") === "show" ? $showsCache[show.id]?.settings?.activeLayout : null
+    // TIMELINE
+
+    $: currentShow = show && (show.type || "show") === "show" ? $showsCache[show.id] : null
+    $: layoutId = currentShow?.settings?.activeLayout || null
+    $: hasTimelineContent = ((layoutId && currentShow?.layouts?.[layoutId]?.timeline?.actions?.length) || 0) > 0
+
+    $: if ($autoOpenedTimeline && ($resized.timeline || 0) > 40) autoOpenedTimeline.set(false)
+
+    let previousShow = ""
+    let previousHasContent = false
+    $: {
+        const currentShow = show ? `${show.id}_${layoutId}` : ""
+        const showChanged = currentShow !== previousShow
+        previousShow = currentShow
+
+        if (hasTimelineContent) {
+            if ((showChanged || !previousHasContent) && !$special.timelineActive) autoOpenTimeline()
+        } else if ($autoOpenedTimeline && $special.timelineActive) {
+            autoOpenTimeline(false)
+        }
+        previousHasContent = hasTimelineContent
+    }
+
+    function autoOpenTimeline(open = true) {
+        special.update((a) => ({ ...a, timelineActive: open }))
+        autoOpenedTimeline.set(open)
+        resized.update((a) => ({ ...a, timeline: open ? 40 : DEFAULT_WIDTH }))
+    }
 </script>
 
 <div class="double">

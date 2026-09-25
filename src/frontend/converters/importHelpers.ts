@@ -123,6 +123,29 @@ export function importTemplate(files: { content: string; name?: string; extensio
     }
 }
 
+/// OVERLAY ///
+
+export function importOverlay(files: { content: string; name?: string; extension?: string }[]) {
+    files.forEach(({ content }) => {
+        const parsed = JSON.parse(content)
+
+        const overlay = parsed.overlay ? parsed.overlay : parsed
+        if (!overlay.items) return
+
+        const overlayId = overlay.id
+        delete overlay.id
+
+        history({ id: "UPDATE", newData: { data: overlay }, oldData: { id: overlayId }, location: { page: "drawer", id: "overlay" } })
+    })
+
+    if (get(activePopup)) {
+        alertMessage.set("actions.imported")
+        activePopup.set("alert")
+    } else {
+        newToast("actions.imported")
+    }
+}
+
 export function importAction(files: { content: string; name?: string; extension?: string }[]) {
     files.forEach(({ content }) => {
         const parsed = JSON.parse(content)

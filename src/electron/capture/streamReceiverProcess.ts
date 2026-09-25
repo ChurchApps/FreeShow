@@ -266,7 +266,10 @@ class Ndi {
     static sendBuffer(id: string, frame: any) {
         if (!frame?.data) return
 
-        const format: StreamFrameFormat = frame.fourCC === this.fourCCUyvy ? "uyvy" : "rgba"
+        let format: StreamFrameFormat = "rgba"
+        if (frame.fourCC === this.fourCCUyvy) format = "uyvy"
+        else if (frame.fourCC === grandioseModule?.FOURCC_BGRA || frame.fourCC === grandioseModule?.FOURCC_BGRX) format = "bgra"
+
         const packed = packStreamFrame(frame.data, frame.xres, frame.yres, frame.lineStrideBytes || 0, format)
         if (!packed) return
 

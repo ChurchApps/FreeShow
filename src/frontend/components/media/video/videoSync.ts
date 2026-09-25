@@ -87,7 +87,7 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
 
     // 2. Cooldown & Hard Seek (Explicit seeks and paused scrubbing are never blocked by cooldown)
     const inSeekCooldown = now - (lastSeekTimestamps.get(vid) || 0) < 500
-    const shouldHardSeek = (isExplicitSeek && wrapDiff > 0.05) || (vid.paused && wrapDiff > 0.05) || (!inSeekCooldown && wrapDiff > 1.5 * rate)
+    const shouldHardSeek = (isExplicitSeek && wrapDiff > 0.05) || (vid.paused && wrapDiff > 0.05) || (!inSeekCooldown && wrapDiff > 0.8 * rate)
 
     if (shouldHardSeek) {
         lastSeekTimestamps.set(vid, now)
@@ -113,16 +113,17 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
         return
     }
 
-    // 3. Smooth rate nudge with deadband (80ms) & hysteresis (30ms)
+    // 3. Smooth rate nudge with deadband (50ms) & hysteresis (20ms)
+    // Scales dynamically: small drift gets gentle nudge, larger drift gets stronger nudge up to ±15%
     let isNudging = prevRecord.isNudging ?? false
     let targetRate = rate
 
     if (!vid.paused && !inWrapZone && vid.readyState >= 2) {
-        if (isNudging && absDiff <= 0.03 * rate) {
+        if (isNudging && absDiff <= 0.02 * rate) {
             isNudging = false
-        } else if (isNudging || absDiff > 0.08 * rate) {
+        } else if (isNudging || absDiff > 0.05 * rate) {
             isNudging = true
-            targetRate = rate + Math.max(-0.06 * rate, Math.min(0.06 * rate, -diff * 0.4 * rate))
+            targetRate = rate + Math.max(-0.15 * rate, Math.min(0.15 * rate, -diff * 0.8 * rate))
         }
     } else {
         isNudging = false
@@ -131,5 +132,5 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     lastSyncRecords.set(vid, { targetTime, timestamp: now, isNudging })
 
     const safeRate = clampPlaybackRate(targetRate)
-    if (Math.abs(vid.playbackRate - safeRate) > 0.008) vid.playbackRate = safeRate
+    if (Math.abs(vid.playbackRate - safeRate) > 0.005) vid.playbackRate = safeRate
 }

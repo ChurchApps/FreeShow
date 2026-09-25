@@ -4,7 +4,7 @@
     import { AudioInputCapture } from "../../../audio/routing/audioInputCapture"
     import { activeDrawerTab, activePage, audioChannelsData, audioRouting, drawer } from "../../../stores"
     import { DEFAULT_DRAWER_HEIGHT } from "../../../utils/common"
-    import AudioDucking from "./AudioDucking.svelte"
+    import AudioSidechain from "./AudioSidechain.svelte"
 
     export let channelId: string = ""
     export let detailed: boolean = false
@@ -12,7 +12,7 @@
 
     $: isMuted = !!$audioChannelsData[channelId]?.isMuted
 
-    $: hasDuckingConnection = !!$audioRouting?.connections.some((c) => c.to === channelId && c.type === "ducking")
+    $: hasSidechainConnection = !!$audioRouting?.connections.some((c) => c.to === channelId && c.type === "sidechain")
 
     const numbers: number[] = [-60, -54, -48, -42, -36, -30, -24, -18, -12, -6, 0]
 
@@ -182,9 +182,9 @@
             </div>
         {/each}
 
-        {#if !preview && hasDuckingConnection}
+        {#if !preview && hasSidechainConnection}
             <div style="height: 2px;width: 100%;"></div>
-            <AudioDucking {channelId} />
+            <AudioSidechain {channelId} />
         {/if}
 
         {#if detailed}

@@ -68,7 +68,7 @@ export interface StageItem {
 
     // other items
     variable?: { id: string } // variable data
-    device?: { name: string } // camera data
+    device?: { id: string; group?: string; name: string; type?: string } // (camera) input data
     src?: string // media path
     tracker?: any // slide tracker data
     timer?: any // timer options

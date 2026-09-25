@@ -346,6 +346,22 @@ const mediaSections: { [key: string]: EditBoxSection } = {
         inputs: filterSection
     }
 }
+const cameraSections: { [key: string]: EditBoxSection } = {
+    default: {
+        inputs: splitIntoRows([
+            { id: "device", type: "popup", value: "", values: { label: "popup.choose_media_input", icon: "camera", popupId: "choose_media_input" } },
+            { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", defaultValue: "contain", options: mediaFitOptionsNoBlur } },
+            { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
+            { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
+        ])
+    },
+    cropping: {
+        inputs: getCroppingRowsPercentage()
+    },
+    filters: {
+        inputs: filterSection
+    }
+}
 
 ///
 
@@ -400,13 +416,18 @@ export const itemBoxes: Box2 = {
         icon: "image",
         sections: mediaSections
     },
+    camera: {
+        icon: "camera",
+        sections: cameraSections
+    },
     web: {
         icon: "web",
         sections: {
             default: {
                 inputs: splitIntoRows([
                     { id: "web.src", type: "string", value: "", values: { label: "inputs.url" } },
-                    { id: "web.noNavigation", type: "checkbox", value: false, values: { label: "edit.disable_navigation" } }
+                    { id: "web.noNavigation", type: "checkbox", value: false, values: { label: "edit.disable_navigation" } },
+                    { id: "web.zoom", type: "number", value: 100, values: { label: "actions.zoom (%)", defaultValue: 100, min: 10, max: 1000, step: 5, showSlider: true, sliderValues: { min: 50, max: 250, step: 10 } } }
                 ])
             }
         }
@@ -515,22 +536,6 @@ export const itemBoxes: Box2 = {
                     }
                 ])
             })
-        }
-    },
-    camera: {
-        icon: "camera",
-        sections: {
-            default: {
-                inputs: splitIntoRows([
-                    { id: "device", type: "popup", value: "", values: { label: "popup.choose_camera", icon: "camera", popupId: "choose_camera" } },
-                    { id: "fit", type: "dropdown", value: "contain", values: { label: "media.fit", options: mediaFitOptions.filter((a) => a.value !== "blur") } },
-                    { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
-                    { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
-                ])
-            },
-            cropping: {
-                inputs: getCroppingRowsPercentage()
-            }
         }
     },
     slide_tracker: {
@@ -717,12 +722,15 @@ export const itemBoxes: Box2 = {
             return sections
         })()
     },
-    qr: {
+    qr_code: {
         icon: "qr_code",
         sections: {
             default: {
                 inputs: splitIntoRows([
-                    { id: "qr.text", type: "string", value: "", values: { label: "inputs.url" } }
+                    { id: "qr_code.text", type: "string", value: "", values: { label: "inputs.url" } },
+                    // colors:
+                    { id: "qr_code.color", type: "color", value: "#000000", values: { label: "edit.color", defaultValue: "#000000", allowOpacity: true, style: "flex: 1;" } },
+                    { id: "qr_code.background", type: "color", value: "#FFFFFF", values: { label: "edit.background_color", defaultValue: "#FFFFFF", allowOpacity: true, style: "flex: 1;" } }
                 ])
             }
         }

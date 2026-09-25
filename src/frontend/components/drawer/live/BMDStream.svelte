@@ -8,6 +8,7 @@
     import { outputs } from "../../../stores"
     import { destroy, receive, send } from "../../../utils/request"
     import { findMatchingOut } from "../../helpers/output"
+    import SelectElem from "../../system/SelectElem.svelte"
     import Card from "../Card.svelte"
 
     interface Screen {
@@ -20,6 +21,7 @@
     export let mirror = false
     // the output showing this stream owns the receiver
     export let outputId = ""
+    export let style = ""
 
     let canvas: any
 
@@ -68,10 +70,12 @@
 </script>
 
 {#if background}
-    <canvas bind:this={canvas} />
+    <canvas bind:this={canvas} {style} />
 {:else}
     <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click label={screen.name} {loaded} icon="blackmagic" white showPlayOnHover>
-        <canvas bind:this={canvas} />
+        <SelectElem style="display: flex;" id="blackmagic" data={{ id: screen.id, type: "blackmagic", name: screen.name }} draggable>
+            <canvas bind:this={canvas} />
+        </SelectElem>
     </Card>
 {/if}
 

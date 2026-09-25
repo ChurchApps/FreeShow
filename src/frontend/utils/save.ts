@@ -7,17 +7,19 @@ import { customActionActivation } from "../components/actions/actions"
 import { stopMediaRecorder } from "../components/drawer/live/recorder"
 import { stopAllInteractions } from "../components/drawer/pages/interactions"
 import { clone, keysToID, removeDeleted } from "../components/helpers/array"
-import { isOutCleared } from "../components/helpers/output"
+import { isOutCleared, updateSyncedOutputs } from "../components/helpers/output"
 import { sendMain } from "../IPC/main"
 import {
     actionTags,
     actions,
     activePopup,
     activeProject,
+    activeScenes,
     ai,
     alertMessage,
     alertUpdates,
     audioChannelsData,
+    audioEffectPresets,
     audioEffects,
     audioFolders,
     audioPlaylists,
@@ -44,7 +46,6 @@ import {
     effects,
     effectsLibrary,
     emitters,
-    eqPresets,
     errorHasOccurred,
     events,
     folders,
@@ -82,6 +83,7 @@ import {
     renamedShows,
     resized,
     saved,
+    scenes,
     scriptureSettings,
     scriptures,
     scripturesCache,
@@ -96,6 +98,7 @@ import {
     stageShows,
     statusIndicator,
     styles,
+    syncedOutputs,
     templateCategories,
     templates,
     textCache,
@@ -121,6 +124,7 @@ import { syncDrive } from "./drive"
 import { autoDisableRemoteController, stopRemoteController } from "./remoteController"
 
 export function save(closeWhenFinished = false, customTriggers: SaveActions = {}) {
+    updateSyncedOutputs()
     startAutosave() // reset auto save timer
 
     // don't save again while saving
@@ -169,6 +173,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         showsPath: get(showsPath), // DEPRECATED
         dataPath: get(dataPath), // DEPRECATED
         lockedOverlays: get(lockedOverlays),
+        activeScenes: get(activeScenes),
         drawer: get(drawer),
         drawerTabsData: get(drawerTabsData),
         groupNumbers: get(groupNumbers),
@@ -198,7 +203,7 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         calendarAddShow: get(calendarAddShow),
         metronome: get(metronome),
         audioEffects: get(audioEffects),
-        eqPresets: get(eqPresets),
+        audioEffectPresets: get(audioEffectPresets),
         effectsLibrary: get(effectsLibrary),
         special: get(special),
         timeline: get(timeline),
@@ -265,6 +270,7 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         profiles,
         timers,
         variables,
+        scenes,
         interactions,
         audioStreams,
         audioPlaylists,
@@ -284,7 +290,8 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         globalRegexes,
         customMetadata,
         effects,
-        deletedDefaults
+        deletedDefaults,
+        syncedOutputs
     }
 }
 
@@ -452,6 +459,7 @@ const saveList: { [key in SaveList]: any } = {
     showsPath: null,
     dataPath: null,
     lockedOverlays: null,
+    activeScenes: null,
     drawer: null,
     drawerTabsData: null,
     drawSettings,
@@ -481,6 +489,7 @@ const saveList: { [key in SaveList]: any } = {
     splitLines,
     templateCategories,
     templates,
+    scenes,
     timers,
     variables,
     interactions,
@@ -506,7 +515,7 @@ const saveList: { [key in SaveList]: any } = {
     calendarAddShow: null,
     metronome: null,
     audioEffects: null,
-    eqPresets: null,
+    audioEffectPresets: null,
     effectsLibrary: null,
     special,
     timeline: null,
@@ -520,5 +529,6 @@ const saveList: { [key in SaveList]: any } = {
     effects,
     audioRouting,
     deletedDefaults: null,
+    syncedOutputs,
     ai: ai
 }

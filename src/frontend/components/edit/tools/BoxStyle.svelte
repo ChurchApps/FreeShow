@@ -280,6 +280,13 @@
         setBoxInputValue(box, "default", "speed", "hidden", !isVideo)
     }
 
+    $: if (id === "camera" && item) {
+        if (item.device) {
+            setBoxInputValue(box, "default", "device", "value", item.device)
+            setBoxInputValue(box, "default", "device", "values", { name: item.device.name || item.device.id || "live.cameras" })
+        }
+    }
+
     $: if (id === "timer" && item) {
         setBoxInputValue(box, "default", "timer.circleMask", "hidden", item.timer?.viewType !== "circle")
         const timer = $timers[item.timer?.id || ""]
@@ -304,6 +311,7 @@
     }
     $: if (id === "camera" && item) {
         if (item.device?.name) setBoxInputValue(box, "default", "device", "name", item.device.name)
+        if (item.device?.type) setBoxInputValue(box, "default", "device", "icon", item.device.type === "ndi" ? "ndi" : item.device.type === "omt" ? "omt" : item.device.type === "screen" ? "screen" : item.device.type === "blackmagic" ? "blackmagic" : "camera")
     }
     $: if (id === "slide_tracker" && item) {
         setBoxInputValue(box, "default", "tracker.accent", "value", item.tracker?.accent || $themes[$theme]?.colors?.secondary || "#F0008C")

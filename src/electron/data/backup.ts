@@ -176,7 +176,7 @@ export async function restoreFiles(data?: { path: string }) {
         }
     } else {
         const initialPath = getDataFolderPath("backups")
-        const selectedPaths = selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json", "zip"] }, true, initialPath)
+        const selectedPaths = await selectFilesDialog("", { name: "FreeShow Backup Files", extensions: ["json", "zip"] }, true, initialPath)
 
         if (selectedPaths?.length) {
             for (const p of selectedPaths) {

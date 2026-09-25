@@ -45,7 +45,7 @@
 
     // get list of files & folders
     let prevActive: null | string = null
-    $: if (active || path) updateContent()
+    $: if (active || path || (active === "effects_library" && $effectsLibrary)) updateContent()
     function updateContent() {
         if (active === "favourites") {
             prevActive = active
@@ -174,13 +174,13 @@
             return
         }
         if (searchValue.length < 2) {
-            if (active !== "all" && active !== "favourites") requestFiles(path)
+            if (active !== "all" && active !== "favourites" && active !== "effects_library") requestFiles(path)
             else searchedFiles = clone(filteredFiles)
             searchFilterActive = false
             return
         }
 
-        if (active !== "all" && active !== "favourites" && currentDepth < 5) {
+        if (active !== "all" && active !== "favourites" && active !== "effects_library" && currentDepth < 5) {
             await requestFiles(path, 5)
         }
 
@@ -330,7 +330,7 @@
 {/if}
 
 <div class="scroll" style="flex: 1;overflow-y: auto;" class:full={active === "inputs" || active === "effects_library"} bind:this={scrollElem}>
-    <div class="grid" style={active !== "inputs" && active !== "effects_library" && (playlist ? playlist.songs.length : searchedFiles.length) ? "" : "height: 100%;"}>
+    <div class="grid" style={active !== "inputs" && active !== "effects_library" && !playlist && searchedFiles.length ? "" : "height: 100%;"}>
         {#if active === "inputs"}
             {#if inputsTab === "microphones"}
                 <Microphones />
@@ -341,8 +341,8 @@
             <Metronome />
         {:else if playlist && playlistSettings}
             <div class="settings">
-                <MaterialNumberInput label="settings.audio_crossfade (s)" value={playlist?.crossfade || 0} max={30} step={0.5} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} />
-                <MaterialNumberInput label="settings.playlist_volume (%)" value={Number(((playlist?.volume || 1) * 100).toFixed(2))} min={1} max={100} on:change={(e) => AudioPlaylist.update(active || "", "volume", e.detail / 100)} />
+                <MaterialNumberInput label="settings.audio_crossfade (s)" value={playlist?.crossfade || 0} max={60} on:change={(e) => AudioPlaylist.update(active || "", "crossfade", e.detail)} sliderValues={{ max: 10, step: 0.5 }} showSlider />
+                <MaterialNumberInput label="settings.playlist_volume (%)" value={Number(((playlist?.volume || 1) * 100).toFixed(2))} min={1} max={100} on:change={(e) => AudioPlaylist.update(active || "", "volume", e.detail / 100)} showSlider />
             </div>
         {:else if playlist}
             <DropArea id="audio_playlist" selectChildren let:fileOver file>
@@ -356,26 +356,32 @@
                     </Center>
                 {/if}
             </DropArea>
-        {:else if searchedFiles.length}
-            {#if active === "effects_library"}
-                <div class="effects">
-                    {#each searchedFiles as file}
-                        <AudioEffect path={file.path} name={file.name} />
-                    {/each}
-                </div>
-            {:else}
-                {#key rootPath}
-                    {#key path}
+        {:else if active === "effects_library"}
+            <DropArea id="effects_library" selectChildren file>
+                {#if searchedFiles.length}
+                    <div class="effects">
                         {#each searchedFiles as file}
-                            {#if file.isFolder}
-                                <Folder name={file.name} path={file.path} mode="list" on:open={(e) => (path = e.detail)} />
-                            {:else}
-                                <AudioFile path={file.path} name={file.name} {active} />
-                            {/if}
+                            <AudioEffect path={file.path} name={file.name} />
                         {/each}
-                    {/key}
+                    </div>
+                {:else}
+                    <Center faded>
+                        <T id="empty.general" />
+                    </Center>
+                {/if}
+            </DropArea>
+        {:else if searchedFiles.length}
+            {#key rootPath}
+                {#key path}
+                    {#each searchedFiles as file}
+                        {#if file.isFolder}
+                            <Folder name={file.name} path={file.path} mode="list" on:open={(e) => (path = e.detail)} />
+                        {:else}
+                            <AudioFile path={file.path} name={file.name} {active} />
+                        {/if}
+                    {/each}
                 {/key}
-            {/if}
+            {/key}
         {:else}
             <Center style="opacity: 0.2;">
                 <Icon id="noAudio" size={5} white />
@@ -556,11 +562,14 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        align-content: center;
         flex-wrap: wrap;
         gap: 5px;
 
-        height: 100%;
-        margin: 10px;
+        width: 100%;
+        min-height: 100%;
+        box-sizing: border-box;
+        padding: 10px;
     }
     .effects :global(.selectElem button) {
         background-color: var(--primary-darkest);

@@ -101,48 +101,51 @@
         item.lines.forEach((line, i) => {
             if (!line.chords?.length || !line.text) return
 
-            let chords = JSON.parse(JSON.stringify(line.chords || []))
+            let chords = JSON.parse(JSON.stringify(line.chords || [])).sort((a: any, b: any) => (a.pos || 0) - (b.pos || 0))
             const lineText = getLineText(line)
             const autosizeRatio = getChordSizeRatio()
 
-            let html = ""
             if (!lineText.trim().length) {
                 chordLines[i] = getChordOnlyHtml(chords)
                 chordOnlyLines[i] = true
                 return
             }
 
+            let html = ""
             let index = 0
-            line.text.forEach((text) => {
+            let prevChordEnd = -1
+
+            line.text.forEach((text: any) => {
                 let value = text.value.trim().replaceAll("\n", "") || ""
 
-                let letters = value.split("")
-                letters.forEach((letter) => {
+                for (const letter of value) {
                     let chordIndex = chords.findIndex((a: any) => a.pos === index)
                     if (chordIndex >= 0) {
-                        html += `<span class="chord" data-autosize-ratio="${autosizeRatio}">${chords[chordIndex].key}</span>`
-                        chords.splice(chordIndex, 1)
+                        let chord = chords.splice(chordIndex, 1)[0]
+                        let shift = Math.max(0, prevChordEnd - index)
+                        prevChordEnd = index + shift + chord.key.length * autosizeRatio * 1.1 + 0.6
+
+                        const marginStyle = shift ? `margin-left: ${(shift * 0.65).toFixed(2)}em;` : ""
+                        html += `<span class="chord" data-autosize-ratio="${autosizeRatio}" style="${marginStyle}">${chord.key}</span>`
                     }
 
                     let size = fontSize || 0
                     html += `<span class="invisible" style="${size ? `font-size: ${size}px;` : ""}">${letter}</span>`
-
                     index++
-                })
+                }
             })
 
             // Add leading offset before the first end chord to separate it from the last lyric character
             if (chords.length > 0) {
                 const leadWidthEm = (0.8 * autosizeRatio).toFixed(2)
                 html += `<span class="invisible trailing-lead-space" style="display: inline-block; width: ${leadWidthEm}em; white-space: nowrap;"></span>`
-            }
 
-            // Dynamically reserve inline horizontal space per trailing chord with generous spacing
-            chords.forEach((chord: any) => {
-                html += `<span class="chord end" data-autosize-ratio="${autosizeRatio}">${chord.key}</span>`
-                const widthEm = Math.max(1.5, chord.key.length * 0.65 * autosizeRatio + 0.8).toFixed(2)
-                html += `<span class="invisible trailing-space" style="display: inline-block; width: ${widthEm}em; white-space: nowrap;"></span>`
-            })
+                chords.forEach((chord: any) => {
+                    html += `<span class="chord end" data-autosize-ratio="${autosizeRatio}">${chord.key}</span>`
+                    const widthEm = Math.max(1.5, chord.key.length * 0.65 * autosizeRatio + 0.8).toFixed(2)
+                    html += `<span class="invisible trailing-space" style="display: inline-block; width: ${widthEm}em; white-space: nowrap;"></span>`
+                })
+            }
 
             if (!html) return
             chordLines[i] = html

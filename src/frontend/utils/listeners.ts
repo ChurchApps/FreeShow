@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { OUTPUT, REMOTE, STAGE } from "../../types/Channels"
 import { AudioPlayer } from "../audio/audioPlayer"
 import { midiInListen } from "../components/actions/midi"
-import { getAllActiveOutputIds, getAllNormalOutputs } from "../components/helpers/output"
+import { getAllActiveOutputIds, getAllNormalOutputs, updateSyncedOutputs } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
 import { getShowCacheId, updateCachedShow, updateCachedShows, updateShowsList } from "../components/helpers/show"
 import {
@@ -13,7 +13,9 @@ import {
     activeScripture,
     activeShow,
     activeTimers,
+    audioChannelsData,
     audioData,
+    audioRouting,
     cachedShowsData,
     categories,
     colorbars,
@@ -50,6 +52,7 @@ import {
     special,
     stageShows,
     styles,
+    syncedOutputs,
     templateCategories,
     templates,
     timeFormat,
@@ -61,7 +64,7 @@ import {
 } from "../stores"
 import { hasNewerUpdate } from "./common"
 import { driveConnect } from "./drive"
-import { convertBackgrounds } from "./remoteTalk"
+import { convertBackgrounds, getFilteredAudioChannels } from "./remoteTalk"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
 
@@ -231,6 +234,8 @@ export function storeSubscriber() {
         send(OUTPUT, ["OUTPUTS"], data)
         // used for stage mirror data
         send(OUTPUT, ["ALL_OUTPUTS"], data)
+        send(REMOTE, ["AUDIO_ROUTING"], getFilteredAudioChannels())
+        updateSyncedOutputs()
 
         // let it update properly
         setTimeout(() => {
@@ -243,6 +248,9 @@ export function storeSubscriber() {
         // sendData(STAGE, { channel: "SLIDES" }, true)
         // send(STAGE, ["OUTPUTS"], data)
         // sendBackgroundToStage(a)
+    })
+    syncedOutputs.subscribe((data) => {
+        send(OUTPUT, ["SYNCED_OUTPUTS"], data)
     })
     styles.subscribe((data) => {
         send(OUTPUT, ["STYLES"], data)
@@ -371,24 +379,12 @@ export function storeSubscriber() {
         send(OUTPUT, ["SLIDE_TIMELINE_SPEED_MULTIPLIER"], data)
     })
 
-    // let prevAudioChannelsJson = ""
-    // audioChannelsData.subscribe((data) => {
-    //     const controlData: any = {}
-    //     Object.entries(data || {}).forEach(([id, ch]: [string, any]) => {
-    //         if (!ch) return
-    //         const { dB, ...rest } = ch
-    //         controlData[id] = rest
-    //     })
-
-    //     const json = JSON.stringify(controlData)
-    //     if (json !== prevAudioChannelsJson) {
-    //         prevAudioChannelsJson = json
-    //         send(OUTPUT, ["AUDIO_CHANNELS_DATA"], data)
-
-    //         // REMOTE mixer updates
-    //         sendRemoteMixer()
-    //     }
-    // })
+    audioRouting.subscribe(() => {
+        send(REMOTE, ["AUDIO_ROUTING"], getFilteredAudioChannels())
+    })
+    audioChannelsData.subscribe((data) => {
+        send(REMOTE, ["AUDIO_CHANNELS_DATA"], data)
+    })
 
     playingVideoState.subscribe((data) => {
         send(OUTPUT, ["PLAYING_VIDEO_STATE"], data)
@@ -513,6 +509,7 @@ const initalOutputData = {
     TIME_FORMAT: "timeFormat",
 
     SPECIAL: "special",
+    SYNCED_OUTPUTS: "syncedOutputs",
 
     SLIDE_TIMELINE_SPEED_MULTIPLIER: "slideTimelineSpeedMultiplier",
 

@@ -39,7 +39,9 @@ If "type" is "empty", "content" MUST ALWAYS be an empty string "". Never put raw
   Historical summaries, sermon background, or story descriptions DO NOT contain scripture text or explicit citations. Return "type": "empty".
 - BOOK NAME EXPANSION & FORMAT NORMALIZATION:
   1. Always expand abbreviated book names to full canonical names (e.g., "Jere" or "Jer" -> "Jeremiah", "Phil" -> "Philippians", "Mat" -> "Matthew", "Ps" -> "Psalm").
-  2. Treat dots, spaces, commas, or spoken range words ("1 through 6") as standard colon/hyphen notation (e.g., "Jeremiah 29.11" -> "Jeremiah 29:11").
+  2. PRESERVE SPOKEN LANGUAGE OF BOOK NAMES: When non-English speech is transcribed, keep the book name in the spoken language / transcript language (e.g., "Jean 3:16", "Genèse 1:1", "Juan 3:16", "Johannes 3:16", "Romains 8:28", "Mateo 28:19"). DO NOT translate book names to English if spoken in another language.
+  3. Parse spoken number words in any language (e.g., "trois seize", "tres dieciséis", "drei sechzehn", "three sixteen") into numeric digits (e.g., "3:16").
+  4. Treat dots, spaces, commas, or spoken range words ("1 through 6", "1 à 6") as standard colon/hyphen notation (e.g., "Jeremiah 29.11" -> "Jeremiah 29:11").
 
 #### 2. SERMON QUOTES ("type": "quote")
 - MUST be an original, profound, fully self-contained sermon takeaway statement suitable for a projection slide.

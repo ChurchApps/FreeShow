@@ -3,7 +3,6 @@ import type { MatchResult } from "../../../types/ai/Ai"
 import { keysToID } from "../../components/helpers/array"
 import { drawerTabsData, scriptures } from "../../stores"
 import { getShortBibleName } from "../../components/drawer/bible/scripture"
-import { AiManager } from "../manager/AiManager"
 import { similarity } from "../../converters/txt"
 
 interface Candidate {
@@ -44,7 +43,7 @@ export async function detectBibleVersion(textChunk: string, isCancelled?: () => 
 
             return {
                 type: "scripture_version",
-                content: AiManager.liveContent || displayName,
+                content: displayName,
                 confidence: candidate.isShort ? 85 : 95,
                 scriptureTranslation: candidate.id,
                 scriptureIsNewTranslation: true

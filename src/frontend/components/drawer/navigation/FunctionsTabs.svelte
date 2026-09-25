@@ -8,6 +8,7 @@
     const actionsAccess = getAccess("actions")
     const variablesAccess = getAccess("variables")
     const timersAccess = getAccess("timers")
+    const scenesAccess = getAccess("scenes")
 
     $: activeSubTab = $drawerTabsData.functions?.activeSubTab || ""
 
@@ -91,6 +92,8 @@
                       }
                   ]
               ]),
+
+        ...(scenesAccess.global === "none" ? [] : [[{ id: "scenes", label: "tabs.scenes", icon: "scene" }]]),
 
         [{ id: "interactions", label: "tabs.interactions", icon: "game" }],
 

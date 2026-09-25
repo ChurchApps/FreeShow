@@ -8,7 +8,7 @@ import type { Metadata, Themes } from "../../types/Settings"
 import { migrateAudioEffects } from "../audio/effects/audioEffectsHelpers"
 import { initAudioRouting } from "../audio/routing/audioRoutingInit"
 import { clone, keysToID } from "../components/helpers/array"
-import { checkFFmpeg, checkWindowCapture, setOutput, toggleOutputs } from "../components/helpers/output"
+import { checkFFmpeg, checkWindowCapture, setOutput, startScene, toggleOutputs } from "../components/helpers/output"
 import { migrateOutputsRtmp } from "../components/helpers/rtmpDestinations"
 import { defaultThemes } from "../components/settings/tabs/defaultThemes"
 import { sendMain } from "../IPC/main"
@@ -20,6 +20,7 @@ import {
     ai,
     alertUpdates,
     audioChannelsData,
+    audioEffectPresets,
     audioEffects,
     audioFolders,
     audioPlaylists,
@@ -45,7 +46,6 @@ import {
     effects,
     effectsLibrary,
     emitters,
-    eqPresets,
     formatNewShow,
     fullColors,
     globalRegexes,
@@ -58,6 +58,7 @@ import {
     loaded,
     loadedState,
     lockedOverlays,
+    activeScenes,
     maxConnections,
     mediaFolders,
     mediaOptions,
@@ -77,6 +78,7 @@ import {
     projectView,
     remotePassword,
     resized,
+    scenes,
     scriptureSettings,
     scriptures,
     serverData,
@@ -276,13 +278,32 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         dataPath.set(v)
     },
     lockedOverlays: (v: any) => {
-        // only get locked overlays
-        v = v.filter((id) => get(overlays)[id]?.locked === true)
+        if (Array.isArray(v)) {
+            const map: { [id: string]: string[] } = {}
+            v.forEach((id) => (map[id] = []))
+            v = map
+        }
 
-        lockedOverlays.set(v)
+        lockedOverlays.set(v || {})
 
-        // start overlays
-        if (v.length) setOutput("overlays", v, false, "", true)
+        // timeout to ensure outputs are initialized
+        setTimeout(() => {
+            Object.entries(v || {}).forEach(([id, outputIds]: any) => {
+                // only get locked overlays
+                if (!get(overlays)[id]?.locked) return
+
+                if (outputIds?.length) outputIds.forEach((outputId: string) => setOutput("overlays", [id], false, outputId, true))
+                else setOutput("overlays", [id], false, "", true)
+            })
+        }, 10)
+    },
+    activeScenes: (v: any) => {
+        activeScenes.set(v || {})
+
+        // timeout to ensure outputs are initialized
+        setTimeout(() => {
+            Object.entries(v || {}).forEach(([id, outputIds]: any) => startScene(id, outputIds))
+        }, 10)
     },
     language: (v: any) => {
         language.set(v)
@@ -358,6 +379,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     templateCategories: (v: any) => templateCategories.set(v),
     timers: (v: any) => timers.set(v),
     variables: (v: any) => variables.set(v),
+    scenes: (v: any) => scenes.set(v),
     interactions: (v: any) => interactions.set(v),
     audioStreams: (v: any) => audioStreams.set(v),
     audioPlaylists: (v: any) => audioPlaylists.set(v),
@@ -379,7 +401,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     calendarAddShow: (v: any) => calendarAddShow.set(v),
     metronome: (v: any) => metronome.set(v),
     audioEffects: (v: any) => audioEffects.set(v),
-    eqPresets: (v: any) => eqPresets.set(v),
+    audioEffectPresets: (v: any) => audioEffectPresets.set(v),
     effectsLibrary: (v: any) => effectsLibrary.set(v),
     globalTags: (v: any) => globalTags.set(v),
     globalRegexes: (v: any) => globalRegexes.set(v),

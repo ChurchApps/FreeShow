@@ -30,17 +30,17 @@
     export let isConnecting: boolean = false
     export let dragStartId: string | null = null
     export let dragStartType: string | null = null
-    export let dragStartPortType: "in" | "out" | "ducking" | null = null
+    export let dragStartPortType: "in" | "out" | "sidechain" | null = null
 
     export let onToggleExpand: () => void = () => {}
-    export let onMouseDown: (e: MouseEvent, portType: "in" | "out" | "ducking", chIdx?: number) => void
+    export let onMouseDown: (e: MouseEvent, portType: "in" | "out" | "sidechain", chIdx?: number) => void
     export let onMouseEnter: (e: MouseEvent) => void
     export let onMouseLeave: () => void
-    export let onMouseEnterPort: (e: MouseEvent, portType?: "in" | "out" | "ducking", chIdx?: number) => void = () => {}
+    export let onMouseEnterPort: (e: MouseEvent, portType?: "in" | "out" | "sidechain", chIdx?: number) => void = () => {}
     export let onMouseLeavePort: () => void = () => {}
-    export let onHoverPort: (e: MouseEvent, portType: "in" | "out" | "ducking", chIdx?: number) => void = () => {}
+    export let onHoverPort: (e: MouseEvent, portType: "in" | "out" | "sidechain", chIdx?: number) => void = () => {}
     export let onHoverPortEnd: () => void = () => {}
-    export let onPortContextMenu: (e: MouseEvent, portType: "in" | "out" | "ducking", chIdx?: number) => void = () => {}
+    export let onPortContextMenu: (e: MouseEvent, portType: "in" | "out" | "sidechain", chIdx?: number) => void = () => {}
 
     const NODE_ICONS: Record<string, string> = {
         drawer_audio: "audio",
@@ -67,8 +67,8 @@
     $: hasInPort = nodeType !== "input" && (type !== "network" || isSubNode) && (!isSubNode || nodeType === "output")
     $: hasOutPort = nodeType !== "output" && (type !== "output_window" || isSubNode)
 
-    $: hasValidPort = (dragStartType === "input" && hasInPort) || (dragStartType === "output" && hasOutPort) || (isStartChannel && ((dragStartPortType === "in" && hasOutPort) || (dragStartPortType === "out" && (hasInPort || (isChannel && id !== dragStartId))) || (dragStartPortType === "ducking" && isChannel && id !== dragStartId && hasOutPort)))
-    $: isValidHover = isConnecting && id !== dragStartId && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isStartChannel && ((dragStartPortType === "in" && isInputCol) || (dragStartPortType === "out" && (isOutputCol || isChannel)) || (dragStartPortType === "ducking" && isChannel))))
+    $: hasValidPort = (dragStartType === "input" && hasInPort) || (dragStartType === "output" && hasOutPort) || (isStartChannel && ((dragStartPortType === "in" && hasOutPort) || (dragStartPortType === "out" && (hasInPort || (isChannel && id !== dragStartId))) || (dragStartPortType === "sidechain" && isChannel && id !== dragStartId && hasOutPort)))
+    $: isValidHover = isConnecting && id !== dragStartId && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isStartChannel && ((dragStartPortType === "in" && isInputCol) || (dragStartPortType === "out" && (isOutputCol || isChannel)) || (dragStartPortType === "sidechain" && isChannel))))
 </script>
 
 <div
@@ -88,24 +88,24 @@
         <!-- placed first so ::after area is under the main port -->
         {#if isChannel}
             <div
-                class="port port-ducking"
-                data-title={translateText("audio.ducking")}
+                class="port port-sidechain"
+                data-title={translateText("audio.sidechain")}
                 on:mouseenter={(e) => {
-                    onMouseEnterPort(e, "ducking")
-                    onHoverPort(e, "ducking")
+                    onMouseEnterPort(e, "sidechain")
+                    onHoverPort(e, "sidechain")
                 }}
                 on:mouseleave={() => {
                     onMouseLeavePort()
                     onHoverPortEnd()
                 }}
-                on:mousedown={(e) => onMouseDown(e, "ducking")}
-                on:contextmenu={(e) => onPortContextMenu(e, "ducking")}
+                on:mousedown={(e) => onMouseDown(e, "sidechain")}
+                on:contextmenu={(e) => onPortContextMenu(e, "sidechain")}
             ></div>
         {/if}
 
         <div
             class="port port-in"
-            class:hasDuckingPort={isChannel}
+            class:hasSidechainPort={isChannel}
             on:mouseenter={(e) => {
                 onMouseEnterPort(e, "in")
                 onHoverPort(e, "in")
@@ -348,18 +348,18 @@
         left: -7px;
         top: calc(50% - 6px);
     }
-    .port-in.hasDuckingPort {
+    .port-in.hasSidechainPort {
         top: calc(50% - 15px);
     }
 
-    .port-ducking {
+    .port-sidechain {
         left: -7px;
         top: calc(50% + 5px);
         border-radius: 4px;
         background: #f59e0b;
     }
 
-    .port-ducking:hover {
+    .port-sidechain:hover {
         background: #fbbf24;
     }
 

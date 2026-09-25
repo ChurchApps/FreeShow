@@ -46,7 +46,10 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "freeshow-rtmp-"))
     })
 
+    const activeFeeds = new Set<NodeJS.Timeout>()
     afterEach(() => {
+        for (const interval of activeFeeds) clearInterval(interval)
+        activeFeeds.clear()
         RtmpStreamer.stopAll()
         mocked.encoder = "x264"
         setRtmpNoticeListener(() => {})
@@ -55,13 +58,15 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
     function feed(id: string, size = { width: WIDTH, height: HEIGHT }) {
         let i = 0
         const frame = Buffer.alloc(size.width * size.height * 4)
-        return setInterval(() => {
+        const interval = setInterval(() => {
             frame.fill((i++ * 8) % 256)
             RtmpStreamer.updateFrame(id, frame, size)
         }, 1000 / FPS)
+        activeFeeds.add(interval)
+        return interval
     }
 
-    it("encodes raw BGRA into a valid mpegts stream on stdout", async () => {
+    it("encodes raw BGRA into a valid flv stream on stdout", async () => {
         const args = buildEncoderCommand({
             encoderId: "x264",
             inputWidth: WIDTH,
@@ -77,27 +82,28 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         const chunks: Buffer[] = []
         ffmpeg.stdout.on("data", (c) => chunks.push(c))
 
-        for (let i = 0; i < FPS * 2; i++) ffmpeg.stdin.write(bgraFrame(i * 8))
+        for (let i = 0; i < FPS; i++) ffmpeg.stdin.write(bgraFrame(i * 8))
         ffmpeg.stdin.end()
 
-        // the silent audio input never ends, which is what we want for a live stream, so stop it explicitly
-        await new Promise((r) => setTimeout(r, 3000))
+        // wait for encoding to finish buffered frames then stop
+        await new Promise((r) => setTimeout(r, 600))
         ffmpeg.kill("SIGTERM")
         await new Promise((resolve) => ffmpeg.on("exit", resolve))
 
         const output = Buffer.concat(chunks)
         expect(output.length).toBeGreaterThan(0)
-        // every mpegts packet starts with the 0x47 sync byte
-        expect(output[0]).toBe(0x47)
+        // every FLV stream starts with 'F', 'L', 'V' (0x46, 0x4c, 0x56)
+        expect(output[0]).toBe(0x46)
+        expect(output.subarray(0, 3).toString("ascii")).toBe("FLV")
 
-        const tsFile = path.join(tmpDir, "encoded.ts")
-        fs.writeFileSync(tsFile, output)
-        const info = probe(tsFile)
+        const flvFile = path.join(tmpDir, "encoded.flv")
+        fs.writeFileSync(flvFile, output)
+        const info = probe(flvFile)
         const video = info.streams.find((s: any) => s.codec_type === "video")
         expect(video.codec_name).toBe("h264")
         expect(video.width).toBe(WIDTH)
         expect(video.height).toBe(HEIGHT)
-    }, 30000)
+    }, 15000)
 
     it("fans one encode out to two destinations without re-encoding", async () => {
         const outA = path.join(tmpDir, "a.flv")
@@ -109,17 +115,16 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         ])
 
         // the encoder spawns on the first frame, using its actual dimensions
-        let i = 0
-        const feed = setInterval(() => RtmpStreamer.updateFrame("test-output", bgraFrame((i++ * 8) % 256), { width: WIDTH, height: HEIGHT }), 1000 / FPS)
-        await new Promise((r) => setTimeout(r, 5000))
-        clearInterval(feed)
+        const feeding = feed("test-output")
+        await new Promise((r) => setTimeout(r, 2400))
+        clearInterval(feeding)
 
         const status = RtmpStreamer.getStatus("test-output")
         expect(status.a?.state).toBe("live")
         expect(status.b?.state).toBe("live")
 
         RtmpStreamer.stopAll()
-        await new Promise((r) => setTimeout(r, 1500))
+        await new Promise((r) => setTimeout(r, 400))
 
         for (const file of [outA, outB]) {
             expect(fs.existsSync(file), `${file} should exist`).toBe(true)
@@ -128,7 +133,7 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
             expect(video.width).toBe(WIDTH)
             expect(video.height).toBe(HEIGHT)
         }
-    }, 30000)
+    }, 15000)
 
     it("pushes destination status through the registered listener", async () => {
         const pushes: { outputId: string; states: string[] }[] = []
@@ -136,30 +141,29 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
 
         await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", url: path.join(tmpDir, "listener.flv"), key: "", enabled: true }])
 
-        let i = 0
-        const feed = setInterval(() => RtmpStreamer.updateFrame("test-output", bgraFrame((i++ * 8) % 256), { width: WIDTH, height: HEIGHT }), 1000 / FPS)
-        await new Promise((r) => setTimeout(r, 4000))
-        clearInterval(feed)
+        const feeding = feed("test-output")
+        await new Promise((r) => setTimeout(r, 3200))
+        clearInterval(feeding)
 
         expect(pushes.length).toBeGreaterThan(0)
         expect(pushes.every((p) => p.outputId === "test-output")).toBe(true)
         expect(pushes.some((p) => p.states.includes("live"))).toBe(true)
 
         setRtmpStatusListener(() => {})
-    }, 30000)
+    }, 15000)
 
     it("recovers to a healthy destination after falling back to software encoding", async () => {
-        // nvenc does not exist in a macOS ffmpeg build, so the encoder really fails and the
-        // hardware -> software fallback path runs for real
-        mocked.encoder = "nvenc"
+        // vaapi requires Linux and /dev/dri/renderD128 hardware device, which fails on non-Linux / test environments
+        // reliably triggering hardware -> software fallback
+        mocked.encoder = "vaapi"
         const notices: string[] = []
         setRtmpNoticeListener((message) => notices.push(message))
 
         const out = path.join(tmpDir, "fallback.flv")
-        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "nvenc" }, [{ id: "a", url: out, key: "", enabled: true }])
+        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "vaapi" }, [{ id: "a", url: out, key: "", enabled: true }])
 
         const feeding = feed("test-output")
-        await new Promise((r) => setTimeout(r, 8000))
+        await new Promise((r) => setTimeout(r, 3600))
         clearInterval(feeding)
 
         expect(notices.some((n) => n.includes("software"))).toBe(true)
@@ -170,43 +174,43 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         expect(status.a?.error).toBeUndefined()
 
         RtmpStreamer.stopAll()
-        await new Promise((r) => setTimeout(r, 1500))
+        await new Promise((r) => setTimeout(r, 400))
 
         const video = probe(out).streams.find((s: any) => s.codec_type === "video")
         expect(video.codec_name).toBe("h264")
-    }, 40000)
+    }, 20000)
 
     it("reconnects relays when the encoder respawns, so timestamps do not jump backwards", async () => {
         const out = path.join(tmpDir, "respawn.flv")
         await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", url: out, key: "", enabled: true }])
 
         let feeding = feed("test-output")
-        await new Promise((r) => setTimeout(r, 3500))
+        await new Promise((r) => setTimeout(r, 2300))
         expect(RtmpStreamer.getStatus("test-output").a?.state).toBe("live")
         clearInterval(feeding)
 
         // a capture size change forces a new encoder, which restarts its mpegts clock at zero
         const bigger = { width: WIDTH * 2, height: HEIGHT * 2 }
         feeding = feed("test-output", bigger)
-        await new Promise((r) => setTimeout(r, 500))
+        await new Promise((r) => setTimeout(r, 300))
 
         // the relay must be torn down rather than left connected across the timestamp discontinuity
         expect(RtmpStreamer.getStatus("test-output").a?.state).toBe("reconnecting")
 
-        await new Promise((r) => setTimeout(r, 4500))
+        await new Promise((r) => setTimeout(r, 3300))
         clearInterval(feeding)
 
         // and it must come back on its own
         expect(RtmpStreamer.getStatus("test-output").a?.state).toBe("live")
 
         RtmpStreamer.stopAll()
-        await new Promise((r) => setTimeout(r, 1500))
+        await new Promise((r) => setTimeout(r, 400))
 
         // the broadcast size is the configured one throughout; the larger capture is scaled down
         const video = probe(out).streams.find((s: any) => s.codec_type === "video")
         expect(video.codec_name).toBe("h264")
         expect(video.width).toBe(WIDTH)
-    }, 40000)
+    }, 20000)
 
     it("drops a frame whose buffer does not match the declared size", async () => {
         await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [{ id: "a", url: path.join(tmpDir, "mismatch.flv"), key: "", enabled: true }])
@@ -215,7 +219,7 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         RtmpStreamer.updateFrame("test-output", Buffer.alloc(WIDTH * HEIGHT * 4 - 16), { width: WIDTH, height: HEIGHT })
 
         expect(RtmpStreamer.getStatus("test-output").a?.state).toBe("idle")
-    }, 30000)
+    }, 15000)
 
     it("does not leave a stream running when stopped mid-startup", async () => {
         const out = path.join(tmpDir, "cancelled.flv")
@@ -225,7 +229,7 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         await starting
 
         expect(RtmpStreamer.isRunning("test-output")).toBe(false)
-    }, 30000)
+    }, 15000)
 
     it("applies a destination added while start() was still resolving", async () => {
         const destA = { id: "a", url: path.join(tmpDir, "pending-a.flv"), key: "", enabled: true }
@@ -240,7 +244,7 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
 
         const status = RtmpStreamer.getStatus("test-output")
         expect(Object.keys(status).sort()).toEqual(["a", "b"])
-    }, 30000)
+    }, 15000)
 
     it("keeps the other destination live when one is removed", async () => {
         const outA = path.join(tmpDir, "keep.flv")
@@ -250,17 +254,16 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
 
         await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264" }, [destA, destB])
 
-        let i = 0
-        const feed = setInterval(() => RtmpStreamer.updateFrame("test-output", bgraFrame((i++ * 8) % 256), { width: WIDTH, height: HEIGHT }), 1000 / FPS)
-        await new Promise((r) => setTimeout(r, 3000))
+        const feeding = feed("test-output")
+        await new Promise((r) => setTimeout(r, 2300))
 
         RtmpStreamer.syncDestinations("test-output", [destA])
-        await new Promise((r) => setTimeout(r, 2000))
-        clearInterval(feed)
+        await new Promise((r) => setTimeout(r, 400))
+        clearInterval(feeding)
 
         const status = RtmpStreamer.getStatus("test-output")
         expect(status.a?.state).toBe("live")
         expect(status.b).toBeUndefined()
         expect(RtmpStreamer.isRunning("test-output")).toBe(true)
-    }, 30000)
+    }, 15000)
 })
