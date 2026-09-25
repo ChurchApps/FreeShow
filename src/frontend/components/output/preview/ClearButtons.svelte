@@ -10,6 +10,7 @@
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import { clearAll, clearBackground, clearOverlays, clearScene, clearSlide, clearTimers, restoreOutput } from "../clear"
+    import { openDrawer } from "../../edit/scripts/edit"
 
     export let autoChange: any
     export let activeClear: any
@@ -113,12 +114,18 @@
 
 <div class="clear" data-title={translateText("guide_description.output_clear", $dictionary)}>
     {#if !sceneCleared}
-        <div class="combinedButton">
-            <MaterialButton style="padding: 0.3em 0.6em;" disabled={$outLocked} title={$outLocked ? "" : "clear.scene"} on:click={() => clear("scene")} red>
-                <Icon id="scene" size={1.2} white />
-                <T id="clear.scene" />
+        <span class="group" style="border-bottom: 1px solid var(--primary-darker);">
+            <div class="combinedButton">
+                <MaterialButton style="padding: 0.3em 0.8em;" disabled={$outLocked} title={$outLocked ? "" : "clear.scene"} on:click={() => clear("scene")} red>
+                    <Icon id="scene" size={1.1} white />
+                    <T id="clear.scene" />
+                </MaterialButton>
+            </div>
+
+            <MaterialButton style="flex: unset;padding: 0.3em 0.6em;" title="main.open: <b>tabs.scenes</b>" on:click={() => openDrawer("scenes")}>
+                <Icon id="launch" white />
             </MaterialButton>
-        </div>
+        </span>
     {/if}
 
     <span>
