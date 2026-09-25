@@ -68,6 +68,11 @@
     $: styleAspectRatio = stylesRatio.width / stylesRatio.height
     const defaultRatio = DEFAULT_BOUNDS.width / DEFAULT_BOUNDS.height
 
+    // WIP when outputResolutionAsRatio is set slide should fills output 1:1, but only remaining after cropping
+    // $: currentStyleId = styleIdOverride || $outputs[outputId]?.style || ""
+    // $: styleRatioData = ($styles[currentStyleId]?.aspectRatio || $styles[currentStyleId]?.resolution) as any
+    // $: outputResolutionAsRatio = !!styleRatioData?.outputResolutionAsRatio
+
     let elemWidth = 0
     let elemHeight = 0
     let slideWidth = 0
@@ -82,25 +87,40 @@
         let style = ""
         if (!cropping || mirror) return ""
 
-        let minusHeight = cropping.top + cropping.bottom
-        let minusWidth = cropping.right + cropping.left
+        // values may be stored as strings — parse to numbers to avoid string concatenation
+        let top = Number(cropping.top) || 0
+        let bottom = Number(cropping.bottom) || 0
+        let left = Number(cropping.left) || 0
+        let right = Number(cropping.right) || 0
 
-        // Use the slide's actual aspect ratio, not the output's
+        let minusHeight = top + bottom
+        let minusWidth = right + left
+
+        let paddingSides = 0
+        let paddingTops = 0
         let slideAR = res.width / res.height
+        let availableWidth = outRes.width - minusWidth
+        let availableHeight = outRes.height - minusHeight
+        let availableAR = availableWidth / availableHeight
 
-        // When height is reduced by cropping, the slide (at its AR) narrows — compute leftover horizontal space
-        let paddingSides = (outRes.width - (outRes.height - minusHeight) * slideAR) / 2
-        // When width is reduced by cropping, the slide (at its AR) shortens — compute leftover vertical space
-        let paddingTops = (outRes.height - (outRes.width - minusWidth) / slideAR) / 2
+        if (availableAR >= slideAR) {
+            // slide is constrained by available height — compute leftover horizontal space on each side
+            paddingSides = (availableWidth - availableHeight * slideAR) / 2
+        } else {
+            // slide is constrained by available width — compute leftover vertical space on each side
+            paddingTops = (availableHeight - availableWidth / slideAR) / 2
+        }
 
-        // if (minusHeight) style += `height: calc(100% - ${minusHeight}px);`
-        style += `margin-top: ${cropping.top + paddingTops}px;`
-        style += `margin-bottom: ${cropping.bottom + paddingTops}px;`
+        // nothing to apply
+        if (!minusHeight && !minusWidth && !paddingSides && !paddingTops) return ""
 
-        let extraWidthAdjust = paddingSides > 0 ? paddingSides * 2 : 0
-        if (minusWidth || extraWidthAdjust) style += `width: calc(100% - ${minusWidth + extraWidthAdjust}px);`
-        style += `margin-inline-end: ${cropping.right + paddingSides}px;`
-        style += `margin-inline-start: ${cropping.left + paddingSides}px;`
+        style += `margin-top: ${top + paddingTops}px;`
+        style += `margin-bottom: ${bottom + paddingTops}px;`
+
+        let totalHorizontalMargin = minusWidth + paddingSides * 2
+        if (totalHorizontalMargin) style += `width: calc(100% - ${totalHorizontalMargin}px);`
+        style += `margin-inline-end: ${right + paddingSides}px;`
+        style += `margin-inline-start: ${left + paddingSides}px;`
 
         return style
     }
