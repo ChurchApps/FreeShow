@@ -23,6 +23,7 @@ type VideoOptions = {
     muted?: boolean
     startAt?: number
     type?: "background" | "item"
+    hasActiveBg?: boolean
 }
 // online videos
 type VirtualAudioElement = {
@@ -159,7 +160,8 @@ export class VideoPlayer {
 
         const mediaTransition = get(transitionData)?.media
         const durationMs = mediaTransition?.duration ?? 800
-        const delayMs = durationMs > 0 ? durationMs / 4 + 20 : 0
+        const hasDelay = options.hasActiveBg && options.type !== "item"
+        const delayMs = hasDelay && durationMs > 0 ? durationMs / 4 + 20 : 0
 
         const startPlayback = () => {
             if (audio instanceof HTMLAudioElement) this.attachToAnalyser(id, audio, linkedOutputIds || [])
@@ -451,23 +453,22 @@ export class VideoPlayer {
         const stopInOutputIds = linkedOutputIds.filter((id) => !nonActiveOutputs.includes(id))
         const shouldStop = linkedOutputIds.length === stopInOutputIds.length
 
-        if (shouldStop && audio instanceof HTMLAudioElement && !reachedEnd && audio && !audio.paused && audio.volume > 0) {
+        if (shouldStop && audio && !reachedEnd && !audio.paused) {
             const durationMs = get(transitionData)?.media?.duration ?? 800
             if (durationMs > 0) {
-                const faded = await this.fadeOut(path, audio, durationMs)
-                if (!faded) return
-            }
-        } else if (shouldStop && !reachedEnd && audio && "timeTick" in audio && !audio.paused) {
-            // silent / video-only files use a virtual clock — no audio to fade, but we still
-            // need to hold off pausing the video element until the visual transition finishes
-            const durationMs = get(transitionData)?.media?.duration ?? 800
-            if (durationMs > 0) {
-                this.isFadingOut.push(path)
-                await new Promise<void>((resolve) => setTimeout(resolve, durationMs))
-                const fadeIndex = this.isFadingOut.indexOf(path)
-                if (fadeIndex === -1) return
+                if (audio instanceof HTMLAudioElement) {
+                    const faded = await this.fadeOut(path, audio, durationMs)
+                    if (!faded) return
+                } else if ("timeTick" in audio) {
+                    // silent / video-only files use a virtual clock — no audio to fade, but we still
+                    // need to hold off pausing the video element until the visual transition finishes
+                    this.isFadingOut.push(path)
+                    await new Promise<void>((resolve) => setTimeout(resolve, durationMs))
+                    const fadeIndex = this.isFadingOut.indexOf(path)
+                    if (fadeIndex === -1) return
 
-                this.isFadingOut.splice(fadeIndex, 1)
+                    this.isFadingOut.splice(fadeIndex, 1)
+                }
             }
         }
 
@@ -510,13 +511,15 @@ export class VideoPlayer {
     }
 
     private static async fadeOut(path: string, audio: HTMLAudioElement, durationMs: number): Promise<boolean> {
-        if (!audio || audio.volume <= 0) return true
+        if (!audio) return true
         if (!this.isFadingOut.includes(path)) this.isFadingOut.push(path)
 
         // WIP account for transition offset
         // if (!clearOutput) duration /= 2.4 // a little less than half the time
 
-        AudioAnalyser.rampSourceVolume(path, 0, durationMs)
+        if (audio.volume > 0 && !audio.muted) {
+            AudioAnalyser.rampSourceVolume(path, 0, durationMs)
+        }
 
         await new Promise<void>((resolve) => setTimeout(resolve, durationMs))
 

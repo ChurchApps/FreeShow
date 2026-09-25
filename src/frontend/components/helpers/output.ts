@@ -275,15 +275,17 @@ function checkAudio(type: string, data: any, allOutputIds: string[], outs: strin
             const newPath = data.path || data.id || ""
 
             // stop any playing backgrounds (if different than new path)
+            let hasActiveBg = false
             allOutputIds.forEach((outputId) => {
                 const currentBg = get(outputs)[outputId]?.out?.background
                 const bgPath = currentBg?.path || currentBg?.id || ""
+                if (bgPath) hasActiveBg = true
 
                 // this will "break" any playing video items if it's the same
                 if (bgPath && bgPath !== newPath) VideoPlayer.stop(bgPath, outputId)
             })
 
-            VideoPlayer.start(newPath, { loop: data.loop, muted: data.muted, startAt: data.startAt || 0, isOnline: data.type === "player" }, allOutputIds)
+            VideoPlayer.start(newPath, { loop: data.loop, muted: data.muted, startAt: data.startAt || 0, isOnline: data.type === "player", hasActiveBg }, allOutputIds)
         } else {
             VideoPlayer.stopByOutputIds(allOutputIds)
         }
