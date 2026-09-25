@@ -96,7 +96,8 @@
         style += `margin-top: ${cropping.top + paddingTops}px;`
         style += `margin-bottom: ${cropping.bottom + paddingTops}px;`
 
-        if (minusWidth) style += `width: calc(100% - ${minusWidth}px);`
+        let extraWidthAdjust = paddingSides > 0 ? paddingSides * 2 : 0
+        if (minusWidth || extraWidthAdjust) style += `width: calc(100% - ${minusWidth + extraWidthAdjust}px);`
         style += `margin-inline-end: ${cropping.right + paddingSides}px;`
         style += `margin-inline-start: ${cropping.left + paddingSides}px;`
 
