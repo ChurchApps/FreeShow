@@ -162,9 +162,9 @@ export class VideoPlayer {
         const delayMs = durationMs > 0 ? durationMs / 4 + 20 : 0
 
         const startPlayback = () => {
-            if (!options.paused) this.play(id, linkedOutputIds?.[0])
-
             if (audio instanceof HTMLAudioElement) this.attachToAnalyser(id, audio, linkedOutputIds || [])
+
+            if (!options.paused) this.play(id, linkedOutputIds?.[0])
 
             if (!audio.muted && audio instanceof HTMLAudioElement && durationMs > 0) {
                 this.fadeIn(id, audio, durationMs)
@@ -234,11 +234,13 @@ export class VideoPlayer {
     }
 
     static isOutputMuted(outputId: string): boolean {
-        const scene = get(outputs)[outputId]?.out?.scene
-        if (!scene) return false
-        if (!scene.style) return true
+        const output = get(outputs)[outputId]
+        const scene = output?.out?.scene
+        const styleId = scene ? scene.style : output?.style
 
-        const layers = get(styles)[scene.style]?.layers || defaultLayers
+        if (scene && !styleId) return true
+
+        const layers = get(styles)[styleId || ""]?.layers || defaultLayers
         return !layers.includes("background")
     }
 
@@ -531,13 +533,23 @@ export class VideoPlayer {
     private static async fadeIn(path: string, audio: HTMLAudioElement, durationMs: number): Promise<void> {
         if (!this.isFadingIn.includes(path)) this.isFadingIn.push(path)
         const targetVolume = this.getVolume(path) * (this.getPlaying(path)?.replayGainMultiplier ?? 1)
+        const playing = this.getPlaying(path)
+        const linkedOutputIds = playing?.linkedOutputIds || []
 
         AudioAnalyser.setSourceVolume(path, 0)
         try {
             audio.volume = Math.min(1, Math.max(0, targetVolume))
         } catch {}
 
-        AudioAnalyser.rampSourceVolume(path, targetVolume, durationMs)
+        if (linkedOutputIds.length) {
+            linkedOutputIds.forEach((outputId) => {
+                const vol = this.isOutputMuted(outputId) ? 0 : targetVolume
+                if (vol > 0) AudioAnalyser.rampSourceVolume(path, vol, durationMs, outputId)
+                else AudioAnalyser.setSourceVolume(path, 0, outputId)
+            })
+        } else {
+            AudioAnalyser.rampSourceVolume(path, targetVolume, durationMs)
+        }
 
         await new Promise<void>((resolve) => setTimeout(resolve, durationMs))
 
@@ -872,7 +884,7 @@ export class VideoPlayer {
 }
 
 const SCENE_FADE_DURATION = 500
-// Scene updaters
+// Scene/Style layer updater listeners
 outputs.subscribe(() => {
     VideoPlayer.updateVolume(null, SCENE_FADE_DURATION)
 })
