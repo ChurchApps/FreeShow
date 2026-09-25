@@ -216,7 +216,7 @@ export class VideoPlayer {
     }
 
     static updateVolume(specificVideoPath: string | null = null, fadeDuration = 0) {
-        const videos = specificVideoPath ? get(playingVideos).filter((v) => v.path === specificVideoPath) : get(playingVideos)
+        const videos = (specificVideoPath ? get(playingVideos).filter((v) => v.path === specificVideoPath) : get(playingVideos)).filter((v) => !this.isFadingOut.includes(v.path))
         videos.forEach((v) => {
             const vol = this.getVolume(v.path) * (v.replayGainMultiplier || 1)
             const audio = this.getAudio(v.path)
