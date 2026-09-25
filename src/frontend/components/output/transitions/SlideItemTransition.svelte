@@ -118,7 +118,7 @@
 
         // SET
 
-        let stateId = uid(5)
+        let stateId = `state_${uid(5)}`
         let state = {
             item: clone(item),
             lines: clone(lines),
