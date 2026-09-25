@@ -88,7 +88,8 @@ export function resolveOutputIds(outputIds: string[], currentOutputs: Outputs = 
 
 // Check if output ID is included in bindings (supports ID and name resolution)
 export function isOutputBound(bindings: string[] | undefined, currentOutputId: string, currentOutputs: Outputs = get(outputs)): boolean {
-    if (!bindings?.length || !currentOutputId) return false
+    if (!bindings || !bindings.length) return true
+    if (!currentOutputId) return false
     return bindings.includes(currentOutputId) || bindings.some((bId) => resolveOutputId(bId, currentOutputs) === currentOutputId)
 }
 

@@ -1902,7 +1902,7 @@ const clickActions = {
             const currentItems = get($[(get(activeEdit).type || "") + "s"])?.[get(activeEdit).id!]?.items
             const itemValues1 = items.map((index) => currentItems[index].bindings || [])
             const newValues1: string[][] = []
-            const isBound1 = id ? isOutputBound(itemValues1[0], id) : false
+            const isBound1 = id && itemValues1[0]?.length ? isOutputBound(itemValues1[0], id) : false
             itemValues1.forEach((value) => {
                 if (!id) value = []
                 else if (isBound1) value = value.filter((bId) => resolveOutputId(bId) !== id && bId !== id)
@@ -1929,7 +1929,7 @@ const clickActions = {
         let itemValues = _show().slides([slideRef.id]).items(items).get("bindings")[0]
         itemValues = itemValues.map((a) => a || [])
         const newValues: string[][] = []
-        const isBound = id ? isOutputBound(itemValues[0], id) : false
+        const isBound = id && itemValues[0]?.length ? isOutputBound(itemValues[0], id) : false
         itemValues.forEach((value) => {
             if (!id) value = []
             else if (isBound) value = value.filter((bId) => resolveOutputId(bId) !== id && bId !== id)
@@ -1957,7 +1957,7 @@ const clickActions = {
 
             let bindings = clone(currentScene.bindings || [])
             if (!id) bindings = []
-            else if (isOutputBound(bindings, id)) {
+            else if (bindings.length && isOutputBound(bindings, id)) {
                 bindings = bindings.filter((bId) => resolveOutputId(bId) !== id && bId !== id)
             } else {
                 bindings.push(id)

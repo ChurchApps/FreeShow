@@ -353,7 +353,7 @@ const loadActions = {
         }
 
         contextOutputList = contextOutputList.map((a) => {
-            if (typeof a !== "string" && (a.id === "stage" ? currentBindings.includes("stage") : isOutputBound(currentBindings, a.id!))) a.enabled = true
+            if (typeof a !== "string" && currentBindings.length && (a.id === "stage" ? currentBindings.includes("stage") : isOutputBound(currentBindings, a.id!))) a.enabled = true
             return a
         })
 
@@ -370,7 +370,7 @@ const loadActions = {
         const currentBindings = get(scenes)[sceneId]?.bindings || []
 
         contextOutputList = contextOutputList.map((a) => {
-            if (typeof a !== "string" && isOutputBound(currentBindings, a.id!)) a.enabled = true
+            if (typeof a !== "string" && currentBindings.length && isOutputBound(currentBindings, a.id!)) a.enabled = true
             return a
         })
 

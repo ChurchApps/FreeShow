@@ -407,12 +407,13 @@ export function bindSlidesToOutput(indexes: number[], outputId: string) {
     const ref = getLayoutRef()
     const newBindings: string[][] = []
 
-    const add = !isOutputBound(ref[indexes[0]]?.data?.bindings, outputId)
+    const firstBindings = ref[indexes[0]]?.data?.bindings || []
+    const add = !firstBindings.length || !isOutputBound(firstBindings, outputId)
 
     indexes.forEach((i) => {
         let bindings: string[] = ref[i]?.data?.bindings ? [...ref[i].data.bindings] : []
         if (add) {
-            if (!isOutputBound(bindings, outputId)) bindings.push(outputId)
+            if (!bindings.length || !isOutputBound(bindings, outputId)) bindings.push(outputId)
         } else {
             bindings = bindings.filter((bId) => resolveOutputId(bId) !== outputId && bId !== outputId)
         }
