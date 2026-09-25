@@ -9,7 +9,6 @@
     import T from "../../helpers/T.svelte"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
-    import Zoomed from "../../slide/Zoomed.svelte"
     import Center from "../../system/Center.svelte"
     import DropArea from "../../system/DropArea.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
@@ -106,9 +105,9 @@
                         <Card width={100} preview={$activePage === "edit" ? $activeEdit.type === "scene" && $activeEdit.id === scene.id : false} outlineColor={findMatchingOut(scene.id, $outputs)} active={isActive} label={scene.name} renameId="scene_{scene.id}" {resolution} showPlayOnHover={!isActive} on:click={(e) => sceneClick(e, scene.id)}>
                             <!-- on:dblclick={(e) => openSceneEditor(e, scene.id)} -->
                             {#if loaded || i < lazyLoader}
-                                <Zoomed {resolution}>
-                                    <ScenePreview {scene} miniPreview />
-                                </Zoomed>
+                                <!-- <Zoomed {resolution}> -->
+                                <ScenePreview {scene} />
+                                <!-- </Zoomed> -->
 
                                 <SceneActions columns={$mediaOptions.columns} sceneId={scene.id} />
                             {/if}

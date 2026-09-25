@@ -59,11 +59,12 @@
     export let hideOverflow = true
     export let customZoom = 1
     export let cropping: Cropping | undefined = { top: 0, right: 0, bottom: 0, left: 0 }
-    export let resolution: Resolution = getResolution(null, { $outputs, $styles }, false, outputId)
-    $: if (!isStage) resolution = getResolution(resolution, { $outputs, $styles }, false, outputId)
+    export let styleIdOverride = ""
+    export let resolution: Resolution = getResolution(null, { $outputs, $styles }, false, outputId, styleIdOverride)
+    $: if (!isStage) resolution = getResolution(resolution, { $outputs, $styles }, false, outputId, styleIdOverride)
     $: outputRes = isStage ? resolution : getOutputResolution(outputId, $outputs)
 
-    $: stylesRatio = getResolution(null, $styles, false, outputId)
+    $: stylesRatio = getResolution(null, $styles, false, outputId, styleIdOverride)
     $: styleAspectRatio = stylesRatio.width / stylesRatio.height
     const defaultRatio = DEFAULT_BOUNDS.width / DEFAULT_BOUNDS.height
 
@@ -112,9 +113,22 @@
     $: canOverflow = false // $special.textCanOverflow !== false
 </script>
 
-<div id={outputId} class:center class:disabled class="zoomed" style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}{center ? 'display: flex;justify-content: safe center;align-items: safe center;overflow: visible;' : ''}" use:observeResize={(r) => { elemWidth = r.width; elemHeight = r.height }}>
+<div
+    id={outputId}
+    class:center
+    class:disabled
+    class="zoomed"
+    style="width: 100%;height: 100%;{outline ? `border: 2px solid ${outline};` : ''}{alignStyle}{center ? 'display: flex;justify-content: safe center;align-items: safe center;overflow: visible;' : ''}"
+    use:observeResize={(r) => {
+        elemWidth = r.width
+        elemHeight = r.height
+    }}
+>
     <div
-        use:observeResize={(r) => { slideWidth = r.width; slideHeight = r.height }}
+        use:observeResize={(r) => {
+            slideWidth = r.width
+            slideHeight = r.height
+        }}
         class="slide"
         class:landscape={resolution.width / resolution.height > elemWidth / elemHeight}
         class:hideOverflow

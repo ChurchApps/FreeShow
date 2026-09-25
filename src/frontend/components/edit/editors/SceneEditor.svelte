@@ -13,9 +13,11 @@
     $: currentId = $activeEdit.id!
     $: scene = $scenes[currentId]
 
+    $: sceneStyleId = scene?.content?.style
+
     let width = 0
     let height = 0
-    $: resolution = getResolution(null, { $outputs, $styles })
+    $: resolution = getResolution(null, { $outputs, $styles }, false, "", sceneStyleId)
 
     let scrollElem: HTMLDivElement | undefined
     let zoom = 1
@@ -35,7 +37,7 @@
     <div class="parent" bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if scene}
             <div class="scene-preview-container">
-                <Zoomed background="transparent" border {resolution} style={widthOrHeight} center>
+                <Zoomed background="transparent" border {resolution} styleIdOverride={sceneStyleId} style={widthOrHeight} center>
                     <ScenePreview {scene} />
                 </Zoomed>
             </div>
