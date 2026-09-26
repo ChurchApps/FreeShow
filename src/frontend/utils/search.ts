@@ -17,6 +17,23 @@ export function formatSearch(value: string, removeSpaces = false) {
     return newValue
 }
 
+// formatted text with runs of whitespace collapsed, so "grace - how" matches the phrase "grace how"
+function formatText(value: string) {
+    return formatSearch(value).replace(/\s+/g, " ").trim()
+}
+
+// formatting every show's lyrics on each keystroke is slow, so keep the result until the text changes
+const formattedContentCache = new Map<string, { raw: string; text: string }>()
+function getFormattedContent(id: string, raw: string) {
+    if (!raw) return ""
+    const cached = formattedContentCache.get(id)
+    if (cached?.raw === raw) return cached.text
+
+    const text = formatText(raw)
+    formattedContentCache.set(id, { raw, text })
+    return text
+}
+
 export function tokenize(str: string): string[] {
     return str.toLowerCase().split(/\s+/).filter(Boolean)
 }
@@ -96,10 +113,10 @@ export function showSearchFilter(searchValue: string, show: ShowList, ctx?: Sear
         const needle = tokenize(formatSearch(q.quoted, false)).join(" ")
         if (!needle) return 0
 
-        const title = formatSearch(`${songNumber} ${show.name}`, false)
+        const title = formatText(`${songNumber} ${show.name}`)
         if (findBoundaryPhrase(title, needle, true) !== -1) return 100
 
-        const content = formatSearch(ctx.cache[show.id] || "", false)
+        const content = getFormattedContent(show.id, ctx.cache[show.id] || "")
         if (content && findBoundaryPhrase(content, needle, true) !== -1) return 70
 
         return 0
@@ -119,8 +136,8 @@ export function showSearchFilter(searchValue: string, show: ShowList, ctx?: Sear
 
     if (!q.tokens.length) return 0
 
-    const titleText = formatSearch(`${songNumber} ${show.name}`, false)
-    const contentText = formatSearch(ctx.cache[show.id] || "", false)
+    const titleText = formatText(`${songNumber} ${show.name}`)
+    const contentText = getFormattedContent(show.id, ctx.cache[show.id] || "")
 
     // strict AND: every word must appear (in title or content) at the start of a word
     let titleMatchedCount = 0
