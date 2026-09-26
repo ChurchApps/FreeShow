@@ -22,6 +22,12 @@ export interface Category {
     openTrigger?: Function // trigger a custom function
 }
 
+export interface PlayerVideo extends Category {
+    type: "youtube" | "vimeo"
+    id: string
+    startTime?: number // seconds to start playing from (e.g. from a ?t= URL)
+}
+
 export interface BibleCategories extends Category {
     customName?: string
     api?: boolean

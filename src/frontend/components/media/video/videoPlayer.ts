@@ -646,8 +646,9 @@ export class VideoPlayer {
 
     static getStartTime(path: string, startAt?: number | undefined) {
         const data = this.getGlobalOptions(path)
-        const startTime = Math.max(startAt || 0, data.fromTime || 0)
-        return startTime
+        // online player videos can start at a timestamp from their URL (e.g. ?t=1234)
+        const playerStartTime = get(playerVideos)[path]?.startTime || 0
+        return Math.max(startAt || 0, data.fromTime || 0, playerStartTime)
     }
     static getEndTime(path: string, duration: number) {
         const data = this.getGlobalOptions(path)
