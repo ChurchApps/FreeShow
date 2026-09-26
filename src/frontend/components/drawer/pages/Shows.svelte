@@ -95,8 +95,8 @@
 
             firstMatch = filteredShows[0] || null
 
-            // every result matches all search words, so only offer to create a show when nothing matches
-            if (!filteredShows.length) {
+            // if nothing matches (or match confidence is very low on long search)
+            if (!showLoading && (!filteredShows.length || (active === "all" && query.length > 5 && (firstMatch?.match || 0) < 48))) {
                 firstMatch = "SEARCH_CREATE"
                 createFromSearch = true
             } else {
@@ -128,11 +128,13 @@
         })
     }
 
+    let showLoading = false
     function keydown(e: KeyboardEvent) {
         if (e.target?.closest?.(".drawer_search")) {
             // get preview of shows
-            if ((e.key === "ArrowDown" || e.key === "ArrowUp") && filteredShows.length) {
+            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                 e.preventDefault()
+                createFromSearch = false
                 // arrows move on from the open show; when it's not in the results, the first ArrowDown
                 // selects (and previews) the top result, even though it's already highlighted for Enter
                 let currentIndex = filteredShows.findIndex((a) => a.id === $activeShow?.id)
@@ -142,6 +144,9 @@
                 if (newIndex < 0 || newIndex >= filteredShows.length) return
 
                 activeShow.set({ id: filteredShows[newIndex].id, type: "show", data: { searchInput: true } })
+
+                showLoading = true
+                setTimeout(() => (showLoading = false), 500)
             }
             return
         }

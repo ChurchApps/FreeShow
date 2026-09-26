@@ -57,14 +57,14 @@ function findMatchRanges(text: string, tokens: string[], firstOnly: boolean): [n
 export function getTextSnippet(text: string, searchValue: string, hideIfMatching = "", before = 30, after = 50): string {
     if (!text || searchValue.length < 3) return ""
 
-    const tokens = tokenize(formatSearch(searchValue, false))
-
-    // if the name alone matches every search word, the lyrics snippet adds nothing
+    // if searchValue has match in name, don't show content match
     if (hideIfMatching) {
-        const nameWords = tokenize(formatSearch(hideIfMatching, false))
-        if (tokens.every((token) => nameWords.some((word) => word.startsWith(token)))) return ""
+        const searchParts = searchValue.toLowerCase().split(" ")
+        const matchParts = hideIfMatching.toLowerCase().split(" ")
+        if (searchParts.some(part => matchParts.some(a => a.includes(part)))) return ""
     }
 
+    const tokens = tokenize(formatSearch(searchValue, false))
     const { text: formatted, map } = formatWithMap(text)
     const [range] = findMatchRanges(formatted, tokens, true)
     if (!range) return ""

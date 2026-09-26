@@ -15,11 +15,10 @@ describe("getTextSnippet", () => {
     it("hides the snippet when the name matches every word", () => {
         expect(getTextSnippet(lyrics, "amazing gra", "Amazing Grace")).toBe("")
     })
-    it("keeps the snippet when some words are only in the lyrics", () => {
-        expect(getTextSnippet(lyrics, "grace wretch", "Amazing Grace")).toContain("wretch")
+    it("hides the snippet when any word matches the name", () => {
+        expect(getTextSnippet(lyrics, "grace wretch", "Amazing Grace")).toBe("")
     })
-    it("keeps the snippet when a word is only inside a name word, not at its start", () => {
-        expect(getTextSnippet(lyrics, "race", "Amazing Grace")).toBe("")
+    it("keeps the snippet when no word matches the name", () => {
         expect(getTextSnippet(lyrics, "sound", "Amazing Grace")).toContain("sound")
     })
 })
