@@ -34,6 +34,17 @@ function getFormattedContent(id: string, raw: string) {
     return text
 }
 
+// same for titles, which are checked for every show on each keystroke
+const formattedTitleCache = new Map<string, { number: string; name: string; titleText: string; showName: string; formattedNumber: string }>()
+function getFormattedTitle(id: string, number: string, name: string) {
+    const cached = formattedTitleCache.get(id)
+    if (cached?.number === number && cached.name === name) return cached
+
+    const title = { number, name, titleText: formatText(`${number} ${name}`), showName: formatSearch(name, true), formattedNumber: formatSearch(number, true) }
+    formattedTitleCache.set(id, title)
+    return title
+}
+
 export function tokenize(str: string): string[] {
     return str.toLowerCase().split(/\s+/).filter(Boolean)
 }
@@ -106,15 +117,14 @@ export function showSearchFilter(searchValue: string, show: ShowList, ctx?: Sear
     const q = ctx.query
 
     const songNumber: string = show.quickAccess?.number || ""
-    const formattedSongNumber = formatSearch(songNumber, true)
+    const { titleText, showName, formattedNumber: formattedSongNumber } = getFormattedTitle(show.id, songNumber, show.name)
 
     // a "quoted" query forces a strict, literal phrase match (no fuzzy / per-word scatter)
     if (q.quoted !== null) {
         const needle = tokenize(formatSearch(q.quoted, false)).join(" ")
         if (!needle) return 0
 
-        const title = formatText(`${songNumber} ${show.name}`)
-        if (findBoundaryPhrase(title, needle, true) !== -1) return 100
+        if (findBoundaryPhrase(titleText, needle, true) !== -1) return 100
 
         const content = getFormattedContent(show.id, ctx.cache[show.id] || "")
         if (content && findBoundaryPhrase(content, needle, true) !== -1) return 70
@@ -128,7 +138,6 @@ export function showSearchFilter(searchValue: string, show: ShowList, ctx?: Sear
     const songId = show.quickAccess?.metadata?.CCLI || ""
     if (songId && songId.toString() === searchValue.trim()) return 100
 
-    const showName = formatSearch(show.name, true)
     const showNameWithNumber = formattedSongNumber + showName
 
     // Priority 1: title exact match
@@ -136,7 +145,6 @@ export function showSearchFilter(searchValue: string, show: ShowList, ctx?: Sear
 
     if (!q.tokens.length) return 0
 
-    const titleText = formatText(`${songNumber} ${show.name}`)
     const contentText = getFormattedContent(show.id, ctx.cache[show.id] || "")
 
     // strict AND: every word must appear (in title or content) at the start of a word

@@ -271,3 +271,17 @@ describe("punctuation in text", () => {
         expect(showSearchFilter("new words", shows[2])).toBeGreaterThan(0)
     })
 })
+
+describe("cached titles", () => {
+    beforeEach(() => h.textCache._set({}))
+
+    it("uses the new name after a show is renamed", () => {
+        expect(showSearchFilter("old", { id: "renamed", name: "Old Name" } as any)).toBeGreaterThan(0)
+        expect(showSearchFilter("old", { id: "renamed", name: "New Name" } as any)).toBe(0)
+        expect(showSearchFilter("new", { id: "renamed", name: "New Name" } as any)).toBeGreaterThan(0)
+    })
+    it("uses the new song number after it changes", () => {
+        expect(showSearchFilter("123", { id: "numbered", name: "Song", quickAccess: { number: "123" } } as any)).toBe(100)
+        expect(showSearchFilter("123", { id: "numbered", name: "Song", quickAccess: { number: "456" } } as any)).toBe(0)
+    })
+})
