@@ -333,6 +333,8 @@ export class VideoPlayer {
         if (!audio) return finish()
 
         const endingTime = this.getEndTime(path, audio.duration)
+        // unknown length (e.g. YouTube livestreams report 0), can't be ending
+        if (!(endingTime > 0) && !force) return finish()
         const offset = ((get(transitionData)?.media?.duration ?? 800) / 1000) * 0.5
         if (audio.currentTime < endingTime - offset && !force) return finish()
 
