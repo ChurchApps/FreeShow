@@ -850,6 +850,14 @@ function handleShowItems(obj, data, initializing) {
         _show(data.remember.showId).slides(data.slides).items(data.items).set({ values: data.previousData })
     }
 
+    // _show().items().set() only bumps timestamps.modified on showsCache. The Shows drawer displays
+    // and sorts by the separate "shows" index, so it doesn't reflect a slide text edit until something
+    // else happens to touch that store (e.g. a metadata edit or rename).
+    shows.update((a) => {
+        if (a[data.remember.showId]?.timestamps) a[data.remember.showId].timestamps.modified = Date.now()
+        return a
+    })
+
     if (!initializing) return
     if (deleting) obj.oldData = clone(data)
     else obj.newData = clone(data)
