@@ -46,6 +46,10 @@
     let blending = ""
     $: if ($currentWindow === "output" && Object.values($outputs)[0]?.blending) blending = getBlending()
 
+    // selection outlines turn gray while the window has no keyboard focus.
+    // the electron main process keeps this up to date (see setMainListeners), this is the initial value.
+    document.documentElement.setAttribute("data-window-focused", document.hasFocus() ? "true" : "false")
+
     // set language direction
     $: document.documentElement.setAttribute("dir", $localeDirection)
     $: document.documentElement.setAttribute("lang", $language)

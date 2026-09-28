@@ -306,10 +306,22 @@ function setMainListeners() {
     mainWindow.on("resize", windowBounds.save)
     mainWindow.on("move", windowBounds.save)
 
+    // let the interface know whether the window has keyboard focus, so it can gray out
+    // selection outlines while shortcuts do nothing. The renderer is not told about this
+    // by the browser in Electron (no focus/blur event, document.hasFocus() stays true),
+    // so the window has to say it.
+    mainWindow.on("focus", () => setWindowFocused(true))
+    mainWindow.on("blur", () => setWindowFocused(false))
+
     mainWindow.on("close", callClose)
     mainWindow.once("closed", exitApp)
 
     mainWindow.webContents.on("context-menu", (_, a) => spellcheck(a))
+}
+
+function setWindowFocused(focused: boolean) {
+    if (!mainWindow || mainWindow.isDestroyed()) return
+    mainWindow.webContents.executeJavaScript(`document.documentElement.setAttribute("data-window-focused", "${focused}")`).catch(() => undefined)
 }
 
 const windowBounds = {

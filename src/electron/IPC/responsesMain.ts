@@ -41,7 +41,7 @@ import { getMachineId } from "../utils/helpers"
 import { LyricSearch } from "../utils/LyricSearch"
 import { closeMidiInPorts, getMidiInputs, getMidiOutputs, receiveMidi, sendMidi } from "../utils/midi"
 import { deleteShows, deleteShowsNotIndexed, getAllShows, getEmptyShows, refreshAllShows } from "../utils/shows"
-import { correctSpelling } from "../utils/spellcheck"
+import { correctSpelling, setSpellCheckerLanguage } from "../utils/spellcheck"
 import { executeSpotifyCommand, getSpotifyState } from "../utils/spotify"
 import checkForUpdates from "../utils/updater"
 import { sendToMain } from "./main"
@@ -92,7 +92,11 @@ export const mainResponses: MainResponses = {
     [Main.SHOWS]: (() => loadShowsAsync()) as any,
     [Main.AUTO_UPDATE]: () => checkForUpdates(),
     [Main.URL]: (data) => openURL(data),
-    [Main.LANGUAGE]: (data) => setGlobalMenu(data.strings),
+    [Main.LANGUAGE]: (data) => {
+        setGlobalMenu(data.strings)
+        // the spell checking dictionary follows the app language
+        setSpellCheckerLanguage(data.lang)
+    },
     [Main.GET_PATHS]: () => getPaths(),
     [Main.DATA_PATH]: () => getDataFolderRoot(),
     [Main.UPDATE_DATA_PATH]: (data) => {

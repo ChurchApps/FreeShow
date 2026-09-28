@@ -16,6 +16,9 @@
         requestMain(Main.GET_STORE_VALUE, { file: "config", key: "disableHardwareAcceleration" }, (value) => {
             disableHardwareAcceleration = !!value
         })
+        requestMain(Main.GET_STORE_VALUE, { file: "config", key: "spellcheck" }, (value) => {
+            spellcheck = value !== false
+        })
         requestMain(Main.GET_STORE_VALUE, { file: "config", key: "graphicsDevice" }, (value) => {
             graphicsDevice = value || ""
         })
@@ -43,6 +46,13 @@
 
         alertMessage.set("settings.restart_for_change")
         activePopup.set("alert")
+    }
+
+    // spell checking, the dictionary is downloaded by the app for the current language
+    let spellcheck = true
+    function toggleSpellcheck(e: any) {
+        spellcheck = e.detail
+        sendMain(Main.SPELLCHECK, { enabled: spellcheck })
     }
 
     // hardware acceleration
@@ -78,6 +88,8 @@
 <MaterialToggleSwitch label="settings.auto_error_reporting" checked={autoErrorReporting} defaultValue={true} on:change={toggleAutoErrorReporting} />
 
 <MaterialToggleSwitch label="settings.disable_hardware_acceleration" checked={disableHardwareAcceleration} defaultValue={false} on:change={toggleHardwareAcceleration} />
+
+<MaterialToggleSwitch label="settings.spellcheck" title="settings.spellcheck_hint" checked={spellcheck} defaultValue={true} on:change={toggleSpellcheck} />
 
 {#if graphicsDeviceSupported}
     <MaterialDropdown label="settings.graphics_device" value={graphicsDevice} defaultValue="" options={graphicsDeviceOptions} on:change={changeGraphicsDevice} />

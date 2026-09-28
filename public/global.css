@@ -56,6 +56,14 @@
     --navigation-width: 290px;
 }
 
+/* The app window does not have keyboard focus, so its shortcuts do nothing.
+   Every outline that marks something as selected, active or in output turns gray,
+   which says at a glance that the app is not listening to the keyboard.
+   Some of those outlines are set inline (the output color), hence the !important. */
+:root[data-window-focused="false"] * {
+    outline-color: #8b8b96 !important;
+}
+
 * {
     margin: 0;
     padding: 0;

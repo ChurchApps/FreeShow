@@ -1443,6 +1443,8 @@
         "popup_before_close": "Enable close confirmation popup",
         "log_song_usage": "Log song usage to a file",
         "auto_error_reporting": "Auto error reporting",
+        "spellcheck": "Check spelling while editing",
+        "spellcheck_hint": "Underlines misspelled words in the editor, using a dictionary for the app language",
         "disable_hardware_acceleration": "Disable hardware acceleration",
         "graphics_device": "Graphics device",
         "gpu_high_performance": "Prefer high-performance GPU",

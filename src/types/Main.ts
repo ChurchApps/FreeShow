@@ -11,6 +11,7 @@ export interface Config {
     graphicsDevice: string | null
     autoErrorReporting?: boolean
     mediaFolderPath?: string
+    spellcheck?: boolean
 }
 
 export interface OS {

@@ -207,7 +207,7 @@ export interface MainSendPayloads {
     [Main.SAVE]: SaveData
     ////////////
     [Main.DELETE_BACKUP]: { path: string }
-    [Main.SPELLCHECK]: { addToDictionary?: string; fixSpelling?: string }
+    [Main.SPELLCHECK]: { addToDictionary?: string; fixSpelling?: string; enabled?: boolean }
     [Main.URL]: string
     [Main.LANGUAGE]: { lang: string; strings: Dictionary }
     [Main.UPDATE_DATA_PATH]: { newPath: string; oldPath: string }
