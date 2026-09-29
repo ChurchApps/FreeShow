@@ -450,7 +450,7 @@ export function getPaths() {
 
     return paths
 }
-function getMediaFolderPath(name: Parameters<typeof app.getPath>[0]): string {
+export function getMediaFolderPath(name: Parameters<typeof app.getPath>[0]): string {
     try {
         return app.getPath(name)
     } catch (err) {
