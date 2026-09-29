@@ -52,8 +52,6 @@ export type SaveListSettings =
     | "autoOutput"
     | "autosave"
     | "timeFormat"
-    | "showsPath"
-    | "dataPath"
     | "lockedOverlays"
     | "activeScenes"
     | "drawer"

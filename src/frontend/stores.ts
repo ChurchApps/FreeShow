@@ -41,6 +41,7 @@ export const loaded: Writable<boolean> = writable(false)
 export const loadedState: Writable<string[]> = writable([])
 export const isDev: Writable<boolean> = writable(false)
 export const windowState: Writable<any> = writable({})
+export const dataPath: Writable<string> = writable("")
 
 // ACTIVE
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
@@ -351,7 +352,6 @@ export const timerTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 // OTHER
 export const resized: Writable<NumberObject> = writable({ leftPanel: 290, rightPanel: 290, leftPanelDrawer: 290, rightPanelDrawer: 290 }) // {default}
 export const sorted: Writable<any> = writable({}) // {}
-export const dataPath: Writable<string> = writable("") // "" // DEPRECATED - only for setting
 export const lockedOverlays: Writable<{ [key: string]: string[] }> = writable({}) // {}
 export const activeScenes: Writable<{ [key: string]: string[] }> = writable({}) // {}
 export const special: Writable<any> = writable({}) // {}
@@ -367,7 +367,6 @@ export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(false) // false
 export const formatNewShow: Writable<boolean> = writable(false) // false
 export const splitLines: Writable<number> = writable(0) // 0
-export const showsPath: Writable<null | string> = writable(null) // null // DEPRECATED
 export const customizedIcons: Writable<any> = writable({ disabled: [], svg: [] }) // {disabled: [], svg: []}
 
 // THEME

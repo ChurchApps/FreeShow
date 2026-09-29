@@ -34,7 +34,6 @@ import {
     customFonts,
     customMetadata,
     customizedIcons,
-    dataPath,
     deletedDefaults,
     deletedShows,
     disabledServers,
@@ -90,7 +89,6 @@ import {
     serverData,
     shows,
     showsCache,
-    showsPath,
     slidesOptions,
     sorted,
     special,
@@ -170,8 +168,6 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         autosave: get(autosave),
         timeFormat: get(timeFormat),
         // events: get(events),
-        showsPath: get(showsPath), // DEPRECATED
-        dataPath: get(dataPath), // DEPRECATED
         lockedOverlays: get(lockedOverlays),
         activeScenes: get(activeScenes),
         drawer: get(drawer),
@@ -456,8 +452,6 @@ const saveList: { [key in SaveList]: any } = {
     disabledServers,
     serverData,
     events,
-    showsPath: null,
-    dataPath: null,
     lockedOverlays: null,
     activeScenes: null,
     drawer: null,
