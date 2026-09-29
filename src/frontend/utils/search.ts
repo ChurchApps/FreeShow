@@ -124,10 +124,10 @@ export function showSearchFilter(searchValue: string, show: ShowList, ctx?: Sear
         const needle = tokenize(formatSearch(q.quoted, false)).join(" ")
         if (!needle) return 0
 
-        if (findBoundaryPhrase(titleText, needle, false) !== -1) return 100
+        if (findBoundaryPhrase(titleText, needle, true) !== -1) return 100
 
         const content = getFormattedContent(show.id, ctx.cache[show.id] || "")
-        if (content && findBoundaryPhrase(content, needle, false) !== -1) return 70
+        if (content && findBoundaryPhrase(content, needle, true) !== -1) return 70
 
         return 0
     }
