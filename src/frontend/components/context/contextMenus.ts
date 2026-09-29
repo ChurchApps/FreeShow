@@ -286,6 +286,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // media / audio
     // "play", "play_no_audio", "play_no_filters", "SEPARATOR", "edit",
     media_preview: ["create_show", "SEPARATOR", "system_open", "SEPARATOR", "close"],
+    media_player_preview: ["close"],
     audio_preview: ["system_open", "SEPARATOR", "close"],
     overlay_preview: ["close"],
     // , "delete_all"
