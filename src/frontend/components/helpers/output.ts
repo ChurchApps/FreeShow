@@ -1364,6 +1364,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
     const hasScriptureDynamicValue = Object.keys(customDynamicValues).length && templateItems?.some((item) => item?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{scripture"))))
 
+    // all template textboxes, in template order (text_dynamic ones are sorted out separately)
+    const templateTextItems = templateItems.filter((a) => (a.type || "text") === "text")
+
     // reduce template textboxes to slide items
     const slideTextboxes = hasScriptureDynamicValue ? 0 : slideItems.reduce((count, a) => (count += (a?.type || "text") === "text" ? 1 : 0), 0)
     if (!templateClicked && slideTextboxes < (sortedTemplateItems.text?.length || 0)) {
@@ -1486,7 +1489,10 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     })
 
     if (addOverflowTemplateItems || hasScriptureDynamicValue) {
-        const remainingTextTemplateItems = !templateClicked || hasScriptureDynamicValue ? sorted.text?.slice(slideTextboxes) || [] : sortedTemplateItems.text || []
+        // no slide textbox is consumed for scripture, so all textboxes are remaining ones
+        if (hasScriptureDynamicValue) delete sortedTemplateItems.text_dynamic
+
+        const remainingTextTemplateItems = !templateClicked || hasScriptureDynamicValue ? (hasScriptureDynamicValue ? templateTextItems : sorted.text)?.slice(slideTextboxes) || [] : sortedTemplateItems.text || []
 
         if (hasScriptureDynamicValue) {
             remainingTextTemplateItems.forEach((item) => {
@@ -1516,8 +1522,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // })
     }
 
-    // remove (non dynamic value) textbox items
-    templateItems = templateItems.filter((a) => (a.type || "text") !== "text" || hasDynamicValue(a))
+    // remove textbox items
+    templateItems = templateItems.filter((a) => (a.type || "text") !== "text" || (!hasScriptureDynamicValue && hasDynamicValue(a)))
     // remove any duplicate values
     templateItems = templateItems.filter(
         (item) =>
