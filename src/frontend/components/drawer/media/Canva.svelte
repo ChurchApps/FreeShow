@@ -51,8 +51,17 @@
         }
     }
 
-    function getContentCategory(item: ContentFile & { isPresentation?: boolean; slideCount?: number }) {
+    function getContentCategory(item: ContentFile & { isPresentation?: boolean; slideCount?: number; isFolder?: boolean }) {
+        if (item.isFolder && item.mediaId) {
+            return {
+                name: item.name || "Folder",
+                thumbnail: item.thumbnail,
+                key: item.mediaId
+            } as ContentLibraryCategory
+        }
+
         if (!item.isPresentation || !item.mediaId) return null
+
         return {
             name: item.name || "Untitled presentation",
             thumbnail: item.thumbnail,
@@ -60,7 +69,6 @@
             key: `presentation:${item.mediaId}`
         } as ContentLibraryCategory & { slideCount?: number }
     }
-
 </script>
 
 {#if $providerConnections.canva}
