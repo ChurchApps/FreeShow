@@ -1320,7 +1320,6 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
 function getTextCacheString(show: Show) {
     if (!show?.slides || show?.reference?.type) return ""
 
-    // styled parts of a line can split a word, so they are joined without a space
     return Object.values(show.slides)
         .flatMap((slide) => slide?.items)
         .flatMap((item) => item?.lines || [])

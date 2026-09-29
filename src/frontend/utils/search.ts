@@ -12,35 +12,35 @@ export function formatSearch(value: string, removeSpaces = false) {
         .replace(specialChars, "")
         .normalize("NFD")
         .replace(/\p{Diacritic}/gu, "")
-    if (removeSpaces) newValue = newValue.replace(/\s+/g, "")
+    // normalize whitespace
+    newValue = newValue.replace(/\s+/g, removeSpaces ? "" : " ")
 
     return newValue
 }
 
-// formatted text with runs of whitespace collapsed, so "grace - how" matches the phrase "grace how"
-function formatText(value: string) {
-    return formatSearch(value).replace(/\s+/g, " ").trim()
-}
-
-// formatting every show's lyrics on each keystroke is slow, so keep the result until the text changes
+// keep the result until the text changes
 const formattedContentCache = new Map<string, { raw: string; text: string }>()
 function getFormattedContent(id: string, raw: string) {
     if (!raw) return ""
     const cached = formattedContentCache.get(id)
     if (cached?.raw === raw) return cached.text
 
-    const text = formatText(raw)
+    const text = formatSearch(raw, false)
     formattedContentCache.set(id, { raw, text })
     return text
 }
 
-// same for titles, which are checked for every show on each keystroke
+// titles are checked for every show on each keystroke
 const formattedTitleCache = new Map<string, { number: string; name: string; titleText: string; showName: string; formattedNumber: string }>()
 function getFormattedTitle(id: string, number: string, name: string) {
     const cached = formattedTitleCache.get(id)
     if (cached?.number === number && cached.name === name) return cached
 
-    const title = { number, name, titleText: formatText(`${number} ${name}`), showName: formatSearch(name, true), formattedNumber: formatSearch(number, true) }
+    const showName = formatSearch(name, true)
+    const formattedNumber = formatSearch(number, true)
+    const titleText = formatSearch(`${number} ${name}`, false)
+    const title = { number, name, titleText, showName, formattedNumber }
+
     formattedTitleCache.set(id, title)
     return title
 }
@@ -124,10 +124,10 @@ export function showSearchFilter(searchValue: string, show: ShowList, ctx?: Sear
         const needle = tokenize(formatSearch(q.quoted, false)).join(" ")
         if (!needle) return 0
 
-        if (findBoundaryPhrase(titleText, needle, true) !== -1) return 100
+        if (findBoundaryPhrase(titleText, needle, false) !== -1) return 100
 
         const content = getFormattedContent(show.id, ctx.cache[show.id] || "")
-        if (content && findBoundaryPhrase(content, needle, true) !== -1) return 70
+        if (content && findBoundaryPhrase(content, needle, false) !== -1) return 70
 
         return 0
     }

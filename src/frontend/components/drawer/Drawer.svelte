@@ -146,16 +146,11 @@
         }, 10)
     }
 
-    // the value is not rewritten while typing (except for scripture), as that moves the text cursor to the end
     let searchValue = ""
     $: if ($activeDrawerTab) searchValue = ""
-    // scripture reference parsing expects single spaces (it autocompletes the input anyway)
-    $: if ($activeDrawerTab === "scripture") searchValue = searchValue.endsWith(" ") ? removeWhitespace(searchValue) + " " : removeWhitespace(searchValue)
-    const removeWhitespace = (v: string) =>
-        v
-            .split(" ")
-            .filter((n) => n)
-            .join(" ")
+    // single space normalization for search input
+    const removeWhitespace = (v: string) => v.trim().replace(/\s+/g, " ")
+    $: searchValue = removeWhitespace(searchValue) + (searchValue.endsWith(" ") ? " " : "")
     function search() {
         if (storeHeight === null && $drawer.height > minHeight) return
 
@@ -202,8 +197,8 @@
                 return
             }
 
-            // no project to add to, so just open the show
             if (!$activeProject) {
+                // open the show
                 activeShow.set({ id: match.id, type: "show" })
                 return
             }
@@ -231,15 +226,10 @@
         }
     }
 
-    // first Escape clears the text, the next one leaves the search
     function searchKeydown(e: KeyboardEvent) {
-        if (e.key !== "Escape") return
-
-        if (searchValue.length) {
-            e.stopPropagation()
-            searchValue = ""
-        } else {
+        if (e.key === "Escape") {
             searchActive = false
+            searchValue = ""
         }
     }
 

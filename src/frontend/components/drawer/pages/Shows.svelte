@@ -25,7 +25,6 @@
     export let active: string | null
     export let searchValue: string
 
-    // raw query (quotes are kept for exact phrase search), minimum two real characters to search
     $: query = searchValue.trim()
     $: isSearching = formatSearch(query).trim().length > 1
     $: showsSorted = $sortedShowsList
@@ -103,6 +102,7 @@
                 createFromSearch = false
             }
 
+            // scroll to top
             if (queryChanged) setTimeout(() => document.querySelector(".drawer svelte-virtual-list-viewport")?.scrollTo(0, 0))
         } else {
             filteredShows = filterByTags(clone(filteredStored), $activeTagFilter)
@@ -135,8 +135,6 @@
             if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                 e.preventDefault()
                 createFromSearch = false
-                // arrows move on from the open show; when it's not in the results, the first ArrowDown
-                // selects (and previews) the top result, even though it's already highlighted for Enter
                 let currentIndex = filteredShows.findIndex((a) => a.id === $activeShow?.id)
                 let newIndex = 0
                 if (currentIndex < 0) newIndex = e.key === "ArrowDown" ? 0 : filteredShows.length - 1

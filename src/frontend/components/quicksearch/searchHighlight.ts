@@ -3,7 +3,6 @@ import { formatSearch, tokenize } from "../../utils/search"
 const escapeHtml = (s: string) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c] || c)
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
-// formatting is done per character, which is slow for full lyrics, so keep recent results
 const MAX_CACHED = 300
 const formatCache = new Map<string, { text: string; map: number[] }>()
 function formatWithMap(raw: string) {
@@ -61,7 +60,7 @@ export function getTextSnippet(text: string, searchValue: string, hideIfMatching
     if (hideIfMatching) {
         const searchParts = searchValue.toLowerCase().split(" ")
         const matchParts = hideIfMatching.toLowerCase().split(" ")
-        if (searchParts.some(part => matchParts.some(a => a.includes(part)))) return ""
+        if (searchParts.some((part) => matchParts.some((a) => a.includes(part)))) return ""
     }
 
     const tokens = tokenize(formatSearch(searchValue, false))
