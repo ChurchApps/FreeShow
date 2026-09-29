@@ -205,6 +205,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // TEMPLATES
     template_actions: { label: "tabs.actions", icon: "actions", iconColor: "#d497ff" },
     // SCRIPTUES
+    open_reference: { label: "main.open", icon: "launch" },
     route_bible: { label: "main.open: route.bible", icon: "launch" },
     // STAGE
     move_connections: { label: "context.move_connections", icon: "up" },
@@ -392,6 +393,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // SCRIPTURE
     bible_book_local: ["rename"],
+    scripture_search_result: ["open_reference"],
 
     // STAGE
     stage_slide: ["GROUP_rename_only", "move_connections", "disable", "SEPARATOR", "export", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"

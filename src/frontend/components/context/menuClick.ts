@@ -56,6 +56,7 @@ import {
     mediaFolders,
     mediaOptions,
     openedInteractionId,
+    openScripture,
     outLocked,
     outputs,
     overlayCategories,
@@ -947,6 +948,15 @@ const clickActions = {
     },
     newScripture: () => activePopup.set("import_scripture"),
 
+    open_reference: (obj: ObjData) => {
+        if (obj.contextElem?.classList.contains("#scripture_search_result")) {
+            const book = Number(obj.contextElem.dataset.book)
+            const chapter = Number(obj.contextElem.dataset.chapter)
+            const verse = Number(obj.contextElem.dataset.verse)
+
+            if (book && chapter && verse) openScripture.set({ book, chapter, verses: [[verse]], play: false })
+        }
+    },
     route_bible: () => openActiveInRouteBible(),
     createCollection: () => {
         activePopup.set("create_collection")

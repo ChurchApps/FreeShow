@@ -446,6 +446,8 @@
             return
         }
 
+        resetContentSearch()
+
         if ($openScripture.play) playWhenLoaded = true
 
         let verses = $openScripture.verses
@@ -1035,13 +1037,17 @@
                 <div class="verses verseList">
                     {#each contentSearchResults as match}
                         <span
-                            class="verse"
+                            class="verse context #scripture_search_result"
                             class:showAllText={$resized.rightPanelDrawer <= 5}
+                            data-book={match.book}
+                            data-chapter={match.chapter}
+                            data-verse={match.verse.number}
                             on:dblclick={() => {
                                 openBook(match.book, [match.chapter], [[match.verse.number]])
                                 playWhenLoaded = true
                             }}
                             data-title={formatBibleText(match.verse.text)}
+                            role="none"
                         >
                             <span style="width: 250px;text-align: start;color: var(--text);" class="v">{match.reference}</span>{@html formatBibleText(match.verse.text, true)}
                         </span>
