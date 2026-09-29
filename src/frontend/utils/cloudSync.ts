@@ -5,7 +5,7 @@ import { generateLightRandomColor } from "../components/helpers/color"
 import { isLocalFile } from "../components/helpers/media"
 import { loadShows } from "../components/helpers/setShow"
 import { requestMain, sendMain } from "../IPC/main"
-import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cloudSyncData, cloudUsers, deletedShows, focusMode, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
+import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cloudSyncData, cloudUsers, deletedShows, deviceId, focusMode, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
 import { hasNewerUpdate, isMainWindow, newToast, setStatus, wait } from "./common"
 import { confirmCustom } from "./popup"
 import { getSyncedSettings, save } from "./save"
@@ -294,14 +294,15 @@ function broadcastPresence(action: string = "update") {
     const show = clone(get(activeShow))
     delete show?.index
 
-    cloudSyncMessage("presence", { action, activePage: page, activeShow: show, activeProject: get(activeProject) })
+    cloudSyncMessage("presence", { action, activePage: page, activeShow: show, activeProject: get(activeProject), deviceId: get(deviceId) })
 }
 
 export function getCloudUsers(updater = get(cloudUsers)) {
+    const currentDeviceId = get(deviceId)
     const name = get(cloudSyncData).deviceName || ""
     const timeout = 60 * 3000 // 3 minutes
     const now = Date.now()
-    return updater.filter((a) => a.displayName !== name && now - (a.lastUpdate || 0) < timeout)
+    return updater.filter((a) => (!currentDeviceId || !a.deviceId || a.deviceId !== currentDeviceId) && a.displayName !== name && now - (a.lastUpdate || 0) < timeout)
 }
 
 export function isActiveShowInUseByCloudUser(_updater: any = null) {
@@ -322,13 +323,16 @@ export async function cloudSyncMessage(id: string = "", data: { [key: string]: a
 // RECEIVERS
 
 const CLOUD_RECEIVERS = {
-    presence: (data: { displayName?: string; action?: string; activePage?: string; activeShow?: any; activeProject?: any }) => {
+    presence: (data: { displayName?: string; deviceId?: string; action?: string; activePage?: string; activeShow?: any; activeProject?: any }) => {
+        const currentDeviceId = get(deviceId)
+        if (currentDeviceId && data.deviceId && data.deviceId === currentDeviceId) return
+
         const currentName = get(cloudSyncData).deviceName || ""
         const name = data.displayName
         if (!name || name === currentName) return
 
         const isBye = data.action === "bye"
-        const userData = { displayName: name, lastUpdate: Date.now(), activePage: data.activePage, activeShow: data.activeShow, activeProject: data.activeProject }
+        const userData = { displayName: name, deviceId: data.deviceId, lastUpdate: Date.now(), activePage: data.activePage, activeShow: data.activeShow, activeProject: data.activeProject }
 
         // store a persistent color
         let color = get(special).cloudUserColors?.[name]
@@ -342,7 +346,7 @@ const CLOUD_RECEIVERS = {
 
         let isNewUser = data.action === "iamnew"
         cloudUsers.update((users) => {
-            const existingIndex = users.findIndex((u) => u.displayName === name)
+            const existingIndex = users.findIndex((u) => (data.deviceId && u.deviceId ? u.deviceId === data.deviceId : u.displayName === name))
 
             // remove user
             if (isBye) {
