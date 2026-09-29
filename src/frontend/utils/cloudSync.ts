@@ -131,6 +131,9 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
         return false
     }
 
+    // save any unsaved local changes before syncing with cloud
+    if (!get(saved)) save(false, { autosave: true })
+
     if (method === "replace") {
         // reset cached data
         if (!get(focusMode)) showsCache.set({})
@@ -174,16 +177,14 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
 
     if (isClosing) return true
 
-    // reset cached shows as they might have changed
-    const allShowIds = Object.keys(get(shows))
-    const syncedShowIds = Object.keys(get(showsCache)).filter((id) => allShowIds.includes(id))
-    showsCache.update((a) => {
-        // only delete shows that were synced, so any shows created while syncing don't get deleted
-        syncedShowIds.forEach((id) => {
-            delete a[id]
+    // reset cached shows that were downloaded from cloud
+    const downloaded = status.downloadedShowIds || []
+    if (downloaded.length) {
+        showsCache.update((a) => {
+            downloaded.forEach((id) => delete a[id])
+            return a
         })
-        return a
-    })
+    }
 
     // reload current show
     const currentlyActive = get(activeShow)?.id || ""

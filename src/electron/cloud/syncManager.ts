@@ -175,6 +175,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     const cloudBibleNames: string[] = []
     const cloudShowNames: string[] = []
     const replacedShows: string[] = []
+    const downloadedShowIds: string[] = []
 
     await asyncPool(50, extractedFiles, async (file) => {
         if (!file) return
@@ -239,6 +240,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
                 async function download(isNew: boolean) {
                     if (!isNew) replacedShows.push(show.name)
+                    if (_id) downloadedShowIds.push(_id)
                     await writeFileAsync(localShowPath, cloudFile)
                 }
             } catch (err) {
@@ -281,6 +283,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
 
                     async function download(isNew: boolean) {
                         if (!isNew) replacedShows.push(show.name)
+                        if (id) downloadedShowIds.push(id)
                         await writeFileAsync(localShowPath, JSON.stringify([id, show]))
                     }
                 } catch (err) {
@@ -526,7 +529,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         if (!DEBUG_MODE && !skipCleanup) await deleteFolderAsync(EXTRACT_LOCATION)
         console.log("Sync completed!")
         isNewDevice = false
-        return { success, error, changedFiles }
+        return { success, error, changedFiles, downloadedShowIds, replacedShows }
     }
 }
 

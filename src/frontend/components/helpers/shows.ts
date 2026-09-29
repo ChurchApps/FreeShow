@@ -6,6 +6,12 @@ import { clone } from "./array"
 import { addToPos } from "./mover"
 // import { loadShows } from "./setShow"
 
+export function touchShowModified(show: any) {
+    if (!show) return
+    if (!show.timestamps) show.timestamps = { created: Date.now(), modified: null, used: null }
+    show.timestamps.modified = Date.now()
+}
+
 /** Shows function */
 /** string[] | "active" */
 export function _show(id = "active") {
@@ -43,7 +49,7 @@ export function _show(id = "active") {
                     a[id][key] = value
                 }
 
-                if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                touchShowModified(a[id])
                 return a
             })
             return prev
@@ -57,7 +63,7 @@ export function _show(id = "active") {
                 prev = a[id][key]
                 delete a[id][key]
 
-                if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                touchShowModified(a[id])
                 return a
             })
             return prev
@@ -97,7 +103,7 @@ export function _show(id = "active") {
                         else a[id].slides[slideId][key] = value
                     })
 
-                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    touchShowModified(a[id])
                     return a
                 })
                 return prev
@@ -116,7 +122,7 @@ export function _show(id = "active") {
                         a[id].slides[slideId] = slides![i] || slides![0]
                     })
 
-                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    touchShowModified(a[id])
                     return a
                 })
                 return slideIds[0]
@@ -136,7 +142,7 @@ export function _show(id = "active") {
                         delete a[id].slides[slideId]
                     })
 
-                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    touchShowModified(a[id])
                     return a
                 })
                 return slides
@@ -200,7 +206,7 @@ export function _show(id = "active") {
                             })
                         })
 
-                        if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                        touchShowModified(a[id])
                         return a
                     })
                     return prev
@@ -218,7 +224,7 @@ export function _show(id = "active") {
                             })
                         })
 
-                        if (a[id]) a[id].timestamps.modified = new Date().getTime()
+                        touchShowModified(a[id])
                         return a
                     })
                 },
@@ -237,7 +243,7 @@ export function _show(id = "active") {
                             })
                         })
 
-                        if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                        touchShowModified(a[id])
                         return a
                     })
                     return prev
@@ -299,7 +305,7 @@ export function _show(id = "active") {
                                 })
                             })
 
-                            if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                            touchShowModified(a[id])
                             return a
                         })
                         return prev
@@ -319,7 +325,7 @@ export function _show(id = "active") {
                                 })
                             })
 
-                            if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                            touchShowModified(a[id])
                             return a
                         })
                     },
@@ -343,7 +349,7 @@ export function _show(id = "active") {
                                 })
                             })
 
-                            if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                            touchShowModified(a[id])
                             return a
                         })
                         return prev
@@ -454,7 +460,7 @@ export function _show(id = "active") {
                         a[id].layouts[layoutId][key] = value
                     })
 
-                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    touchShowModified(a[id])
                     return a
                 })
                 return prev
@@ -467,7 +473,7 @@ export function _show(id = "active") {
                     if (!a[id].layouts) a[id].layouts = {}
                     a[id].layouts[layoutId] = layout || { name: "", notes: "", slides: [] }
 
-                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    touchShowModified(a[id])
                     return a
                 })
                 return layoutId
@@ -480,7 +486,7 @@ export function _show(id = "active") {
                     prev.push(a[id].layouts[layoutId])
                     delete a[id].layouts[layoutId]
 
-                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    touchShowModified(a[id])
                     return a
                 })
                 return prev
@@ -525,7 +531,7 @@ export function _show(id = "active") {
                             })
                         })
 
-                        if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                        touchShowModified(a[id])
                         return a
                     })
                     return prev
@@ -572,7 +578,7 @@ export function _show(id = "active") {
                             }
                         })
 
-                        if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                        touchShowModified(a[id])
                         return a
                     })
                 },
@@ -603,7 +609,7 @@ export function _show(id = "active") {
                                 })
                         })
 
-                        if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                        touchShowModified(a[id])
                         return a
                     })
                     return prev
@@ -631,7 +637,7 @@ export function _show(id = "active") {
                                 })
                             })
 
-                            if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                            touchShowModified(a[id])
                             return a
                         })
                         return prev
@@ -666,7 +672,7 @@ export function _show(id = "active") {
                         else if (a[id].media?.[mediaId]) a[id].media[mediaId][key] = value
                     })
 
-                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    touchShowModified(a[id])
                     return a
                 })
                 // return prev
@@ -680,7 +686,7 @@ export function _show(id = "active") {
                     if (!a[id].media) a[id].media = {}
                     a[id].media[bgid] = object
 
-                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    touchShowModified(a[id])
                     return a
                 })
                 return bgid
@@ -699,7 +705,7 @@ export function _show(id = "active") {
                         delete a[id].media[mediaId]
                     })
 
-                    if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
+                    touchShowModified(a[id])
                     return a
                 })
                 return media
