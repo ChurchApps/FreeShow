@@ -127,6 +127,10 @@
         background-color: color-mix(in srgb, var(--secondary, #3a97f9) 30%, transparent) !important;
     }
 
+    :global(body.unfocused) .edit::selection {
+        background-color: rgb(128 128 128 / 0.4) !important;
+    }
+
     textarea::placeholder {
         color: var(--text, white);
         opacity: 0.5;

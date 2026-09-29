@@ -8,10 +8,10 @@ import { requestMain, requestMainMultiple, sendMain, sendMainMultiple } from "..
 import { cameraManager } from "../media/cameraManager"
 import { activePopup, activeProfile, alertMessage, cachePath, cloudSyncData, contentProviderData, currentWindow, dataPath, deviceId, driveKeys, isDev, loaded, loadedState, os, profiles, providerConnections, shows, special, version, windowState } from "../stores"
 import { startTracking } from "./analytics"
+import { setupCloudSync } from "./cloudSync"
 import { wait, waitUntilValueIsDefined } from "./common"
 import { getDefaultElements } from "./createData"
 import { setLanguage } from "./language"
-import { setupCloudSync } from "./cloudSync"
 import { storeSubscriber } from "./listeners"
 import { autoOpenLastUsedProfile, openProfileByName } from "./profile"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
@@ -86,6 +86,7 @@ async function startupMain() {
     autoBackup()
     await wait(3000)
     unsavedUpdater()
+    windowFocusListener()
     cameraManager.initializeCameraWarming()
 
     // CHECK LISTENERS
@@ -94,6 +95,20 @@ async function startupMain() {
     // RAM MONITOR (every 10 minutes)
     setTimeout(() => checkRamUsage(), 10000)
     setInterval(() => checkRamUsage(), 600000)
+}
+
+// window focus state
+function windowFocusListener() {
+    if (typeof window === "undefined") return
+
+    const updateFocus = () => {
+        if (document.hasFocus()) document.body.classList.remove("unfocused")
+        else document.body.classList.add("unfocused")
+    }
+
+    window.addEventListener("focus", updateFocus)
+    window.addEventListener("blur", updateFocus)
+    updateFocus()
 }
 
 async function checkRamUsage() {
