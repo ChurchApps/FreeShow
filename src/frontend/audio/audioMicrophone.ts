@@ -23,8 +23,30 @@ interface AudioMicrophoneListener {
 export class AudioMicrophone {
     static volumes: { [deviceId: string]: number } = {}
     private static activeListeners: { [deviceId: string]: AudioMicrophoneListener } = {}
+    public static channelCountCache = new Map<string, number>()
 
-    static start(deviceId: string, metadata: AudioMetadata, options: AudioOptions = {}) {
+    private static async getMediaStream(deviceId: string): Promise<{ stream: MediaStream; channelCount: number }> {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                deviceId: { exact: deviceId },
+                echoCancellation: false,
+                autoGainControl: false,
+                noiseSuppression: false,
+                channelCount: { ideal: 32 }
+            }
+        })
+        const [track] = stream.getAudioTracks()
+        let channelCount = 2
+        if (track) {
+            const cap = track.getCapabilities ? track.getCapabilities() : null
+            const settings = track.getSettings ? track.getSettings() : null
+            channelCount = Math.max(1, cap?.channelCount?.max || settings?.channelCount || 2)
+            this.channelCountCache.set(deviceId, channelCount)
+        }
+        return { stream, channelCount }
+    }
+
+    static async start(deviceId: string, metadata: AudioMetadata, options: AudioOptions = {}) {
         if (get(outLocked)) return
 
         const id = "mic_sub_" + deviceId
@@ -33,17 +55,15 @@ export class AudioMicrophone {
             return
         }
 
-        navigator.mediaDevices
-            .getUserMedia({ audio: { deviceId: { exact: deviceId }, echoCancellation: false } })
-            .then((stream) => {
-                AudioPlayer.playStream(id, stream, metadata)
-            })
-            .catch((err) => {
-                console.error(err)
-                if (err.name === "NotReadableError") {
-                    sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
-                }
-            })
+        try {
+            const { stream } = await this.getMediaStream(deviceId)
+            AudioPlayer.playStream(id, stream, metadata)
+        } catch (err: any) {
+            console.error(err)
+            if (err?.name === "NotReadableError") {
+                sendMain(Main.ACCESS_MICROPHONE_PERMISSION)
+            }
+        }
     }
 
     static stop(id: string) {
@@ -53,22 +73,20 @@ export class AudioMicrophone {
         // AudioPlayer.stop(micId)
     }
 
-    static startListening(deviceId: string) {
+    static async startListening(deviceId: string) {
         if (this.activeListeners[deviceId]) return
 
-        navigator.mediaDevices
-            .getUserMedia({ audio: { deviceId: { exact: deviceId } } })
-            .then((stream) => {
-                const ac = AudioAnalyser.getAudioContext()
-                const source = ac.createMediaStreamSource(stream)
-                this.activeListeners[deviceId] = { stream, source }
+        try {
+            const { stream, channelCount } = await this.getMediaStream(deviceId)
+            const ac = AudioAnalyser.getAudioContext()
+            const source = ac.createMediaStreamSource(stream)
+            this.activeListeners[deviceId] = { stream, source }
 
-                // Capture for visualizer but don't connect to destination
-                AudioInputCapture.getInstance().captureInput("mic_sub_" + deviceId, source)
-            })
-            .catch((err) => {
-                console.error("Could not start microphone listener:", err)
-            })
+            // Capture for visualizer but don't connect to destination
+            AudioInputCapture.getInstance().captureInput("mic_sub_" + deviceId, source, channelCount)
+        } catch (err) {
+            console.error("Could not start microphone listener:", err)
+        }
     }
 
     static getVolume(deviceId: string): number {
@@ -77,6 +95,42 @@ export class AudioMicrophone {
         if (data && typeof data.db === "number") return data.db
         if (data && data.channels?.[0]) return data.channels[0].db
         return MIN_DB
+    }
+
+    private static async detectChannelCount(deviceId: string, cap?: any): Promise<number> {
+        if (this.channelCountCache.has(deviceId)) {
+            return this.channelCountCache.get(deviceId)!
+        }
+        if (cap?.channelCount?.max) {
+            const max = Math.max(1, cap.channelCount.max)
+            this.channelCountCache.set(deviceId, max)
+            return max
+        }
+        try {
+            const { stream, channelCount } = await this.getMediaStream(deviceId)
+            stream.getTracks().forEach((t) => t.stop())
+            return channelCount
+        } catch {
+            return 2
+        }
+    }
+
+    static async getInputs(): Promise<{ value: string; label: string; channels: number }[]> {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices()
+            const inputDevices = devices.filter((d) => d.kind === "audioinput" && d.deviceId !== "default")
+
+            return await Promise.all(
+                inputDevices.map(async (d, i) => ({
+                    value: `mic_sub_${d.deviceId}`,
+                    label: d.label || `Microphone ${i + 1}`,
+                    channels: await this.detectChannelCount(d.deviceId, (d as any).getCapabilities?.())
+                }))
+            )
+        } catch (err) {
+            console.error("Could not enumerate audio inputs:", err)
+            return []
+        }
     }
 
     static async getList() {

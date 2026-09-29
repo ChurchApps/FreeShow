@@ -1,11 +1,12 @@
 import { get } from "svelte/store"
+import type { AudioRoutingConnection } from "../../types/AudioRouting"
 import { audioRouting, channelSidechainMultipliers } from "../stores"
+import { dbToGain, MIN_DB } from "./dBUtils"
 import { AudioInputCapture } from "./routing/audioInputCapture"
 import { AudioRoutingManager } from "./routing/audioRoutingManager"
-import { dbToGain, MIN_DB } from "./dBUtils"
 
 interface ChannelState {
-    reductionDb: number       // 0 dB (no sidechain) down to -48 dB
+    reductionDb: number // 0 dB (no sidechain) down to -48 dB
     targetReductionDb: number // target reduction in dB
     holdUntil: number
     samples: { time: number; db: number }[]
@@ -24,8 +25,8 @@ export class AudioSidechain {
 
     // Sidechain parameters in dB
     // Input scale: -36 dB to 0 dB maps linearly to 0 dB down to MAX_ATTENUATION_DB (-48 dB)
-    private static readonly THRESHOLD_DB = -36     // -36 dB input threshold (0 dB reduction)
-    private static readonly FULL_SIDECHAIN_DB = 0       // 0 dB input -> max reduction (-48 dB)
+    private static readonly THRESHOLD_DB = -36 // -36 dB input threshold (0 dB reduction)
+    private static readonly FULL_SIDECHAIN_DB = 0 // 0 dB input -> max reduction (-48 dB)
     private static readonly MAX_ATTENUATION_DB = -48 // Max reduction level in dB
 
     // Timing in milliseconds
@@ -80,35 +81,45 @@ export class AudioSidechain {
         const dtSec = Math.min(0.1, Math.max(0.001, (now - this.lastTickTime) / 1000))
         this.lastTickTime = now
 
-        // Map target channels to their sidechain input source IDs
-        const channelSources = new Map<string, string[]>()
-        for (const { from, to } of sidechainConns) {
-            let list = channelSources.get(to)
-            if (!list) channelSources.set(to, (list = []))
-            list.push(from)
+        // Map target channels to their sidechain input connections
+        const channelConnections = new Map<string, AudioRoutingConnection[]>()
+        for (const conn of sidechainConns) {
+            let list = channelConnections.get(conn.to)
+            if (!list) channelConnections.set(conn.to, (list = []))
+            list.push(conn)
         }
 
         const inputCapture = AudioInputCapture.getInstance()
 
         // Prune removed channels
         for (const id of this.channels.keys()) {
-            if (!channelSources.has(id)) this.channels.delete(id)
+            if (!channelConnections.has(id)) this.channels.delete(id)
         }
 
         const multipliersMap = new Map<string, number>()
         const multipliersObj: Record<string, number> = {}
 
-        for (const [channelId, sourceIds] of channelSources.entries()) {
+        for (const [channelId, conns] of channelConnections.entries()) {
             let state = this.channels.get(channelId)
             if (!state) {
                 state = { reductionDb: 0, targetReductionDb: 0, holdUntil: 0, samples: [] }
                 this.channels.set(channelId, state)
             }
 
-            // Get max peak dB among input sources
+            // Get max peak dB among input sources (respecting discrete channel index)
             let maxDb = MIN_DB
-            for (const srcId of sourceIds) {
-                const db = inputCapture.getVisualizerData(srcId)?.db
+            for (const c of conns) {
+                const viz = inputCapture.getVisualizerData(c.from)
+                if (!viz) continue
+
+                const fromCh = c.fromChannelIndex ?? (c.from.startsWith("mic_sub_") ? c.channelIndex : undefined)
+                let db: number | undefined
+                if (fromCh !== undefined && viz.channels?.[fromCh]) {
+                    db = viz.channels[fromCh].db
+                } else {
+                    db = viz.db
+                }
+
                 if (typeof db === "number" && db > maxDb) maxDb = db
             }
 

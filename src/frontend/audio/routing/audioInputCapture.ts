@@ -1,4 +1,5 @@
 import { AudioAnalyser } from "../audioAnalyser"
+import { AudioMicrophone } from "../audioMicrophone"
 import { calculatePeakDb, MIN_DB } from "../dBUtils"
 import { AudioRoutingManager } from "./audioRoutingManager"
 
@@ -103,7 +104,9 @@ export class AudioInputCapture {
         const ctx = this.context
         if (!ctx) return null
 
-        const channelCount = forcedChannelCount ?? Math.max(source.numberOfOutputs || 1, source.channelCount || 2)
+        const devId = nodeId.startsWith("mic_sub_") ? nodeId.replace("mic_sub_", "") : ""
+        const micCache = devId ? AudioMicrophone.channelCountCache.get(devId) : undefined
+        const channelCount = forcedChannelCount ?? micCache ?? Math.max(source.numberOfOutputs || 1, source.channelCount || 2)
         let entry = this.analysers.get(nodeId)
 
         if (entry && entry.channelCount === channelCount) {
