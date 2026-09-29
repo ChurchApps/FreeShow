@@ -20,6 +20,23 @@ export function setOutputAlwaysOnTop(window: BrowserWindow, value: boolean) {
     }
 }
 
+// macOS only: by default a window belongs to a single Space, so showing the output while another app
+// (e.g. a browser presenting a Canva deck) is fullscreen on the same display makes macOS switch to the
+// desktop Space, and hiding it again leaves the user there instead of returning to the fullscreen app.
+// Joining all Spaces (including fullscreen ones) lets the output simply cover/uncover whatever is below.
+export function setOutputVisibleOnFullscreenSpaces(window: BrowserWindow, value: boolean) {
+    if (process.platform !== "darwin" || window.isDestroyed()) return
+
+    try {
+        // setVisibleOnAllWorkspaces can reset the window level, so restore always on top afterwards
+        const alwaysOnTop = window.isAlwaysOnTop()
+        window.setVisibleOnAllWorkspaces(value, { visibleOnFullScreen: value })
+        if (alwaysOnTop) setOutputAlwaysOnTop(window, true)
+    } catch (err) {
+        console.warn("Failed to set visible on fullscreen spaces:", err)
+    }
+}
+
 // Windows only: use a helper executable to exclude the window from "Aero Peek" via DWM
 // this prevents the output from being hidden when the user peeks at the taskbar
 function setExcludedFromAeroPeek(handle: Buffer, state: boolean) {

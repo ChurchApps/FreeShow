@@ -7,7 +7,7 @@
     import type { Output, RtmpDestination } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { requestMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, omtData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, omtData, os, outputDisplay, outputs, rtmpStatus, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
@@ -77,7 +77,7 @@
                 const recreateKeys = ["transparent", "invisible", "ndi", "omt", "webrtc", "rtmp", "blackmagic"]
                 if (recreateKeys.includes(key)) {
                     send(OUTPUT, ["CREATE"], { id: outputId, ...out })
-                } else if (key === "alwaysOnTop") {
+                } else if (key === "alwaysOnTop" || key === "visibleOnFullscreenSpaces") {
                     send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
                 }
             }
@@ -371,7 +371,6 @@
 {/if}
 
 <!-- WIP toggle fullscreen (Mac) ?? Only working one time for some reason -->
-<!-- WIP toggle visibleOnAllWorkspaces (Mac) -->
 
 {#if !currentOutput?.invisible}
     <!-- window -->
@@ -379,6 +378,9 @@
 
     <MaterialPopupButton label="settings.output_screen" value={outputLabel} name={outputLabel} icon={currentOutput?.boundsLocked ? "locked" : "screen"} popupId="choose_screen" />
     <MaterialToggleSwitch label="settings.always_on_top" checked={currentOutput?.alwaysOnTop !== false} defaultValue={true} on:change={(e) => updateOutput("alwaysOnTop", e.detail)} />
+    {#if $os.platform === "darwin"}
+        <MaterialToggleSwitch label="settings.visible_on_fullscreen_spaces" checked={!!currentOutput?.visibleOnFullscreenSpaces} defaultValue={false} on:change={(e) => updateOutput("visibleOnFullscreenSpaces", e.detail)} />
+    {/if}
 {/if}
 
 {#if currentOutput?.blackmagic}
