@@ -1329,8 +1329,7 @@ function getTextCacheString(show: Show) {
     return Object.values(show.slides)
         .flatMap((slide) => slide?.items)
         .flatMap((item) => item?.lines || [])
-        .flatMap((line) => line?.text || [])
-        .map((text) => text?.value || "")
+        .map((line) => (line?.text || []).map((text) => text?.value || "").join(""))
         .join(" ")
         .toLowerCase()
 }

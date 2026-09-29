@@ -219,7 +219,7 @@ export async function quicksearch(searchValue: string, categoryFilter: null | Se
     if (isVisible("shows")) {
         const allShows = get(sortedShowsList).filter((a) => !get(categories)[a.category || ""]?.isArchive)
         // const shows = fastSearch(searchValue, allShows)
-        const shows = showSearch(searchValue, allShows)
+        const shows = showSearch(rawSearchValue, allShows)
         const showsWithPreview = trimValues(shows, MAX_RESULTS_LARGE).map((show) => showResult(show, rawSearchValue))
         addValues(showsWithPreview, "show", "slide")
     }
