@@ -1,5 +1,5 @@
 import { getLabelId } from "../components/helpers/show"
-import { findGroupMatch, similarity } from "./txt"
+import { findGroupMatch, isHeaderLine, similarity } from "./txt"
 
 const SIMILARITY_THRESHOLD = 0.7
 
@@ -21,9 +21,10 @@ export function findPatterns(sections: string[], autoGroups: boolean) {
     const primaryChorusIndex = findPrimaryChorusIndex(sections, similarCount)
     const detectedIndexes = similarCount.map((similar, i) => analyzeSection(similar, i))
 
-    // if all slides has the same group, set to "verse"
+    // if all slides has the same group and no section had an explicit header, set to "verse"
+    const hasAnyHeader = sections.some((sec) => hasExplicitHeader(sec))
     const uniqueGroups = new Set(detectedIndexes)
-    const indexes = uniqueGroups.size === 1 ? detectedIndexes.map(() => "verse") : detectedIndexes
+    const indexes = !hasAnyHeader && uniqueGroups.size === 1 ? detectedIndexes.map(() => "verse") : detectedIndexes
 
     return { sections, indexes }
 
@@ -81,6 +82,12 @@ export function findPatterns(sections: string[], autoGroups: boolean) {
         return text.toLowerCase().replace(/\n/g, " ").replace(/[^\p{L}\s]/gu, "").replace(/\s+/g, " ").trim()
     }
 
+    function hasExplicitHeader(section: string): boolean {
+        const lines = getLines(section)
+        if (!lines.length) return false
+        return (lines.length === 1 && !lines[0].includes(" ")) || isHeaderLine(lines[0], true)
+    }
+
     // --- Section Analysis ---
 
     function analyzeSection(similar: { matches: number[]; count: number }, i: number): string {
@@ -105,9 +112,10 @@ export function findPatterns(sections: string[], autoGroups: boolean) {
             return rawName.toLowerCase()
         }
 
-        if (/^\[.*\]$/.test(trimmedFirstLine) || trimmedFirstLine.endsWith(":")) {
+        // 3. Bracket or Colon Header
+        if (isHeaderLine(trimmedFirstLine, true)) {
             passedInstrumentalBreak = true
-            return rawName.replace(/x?\d+/gi, "").trim()
+            return rawName.replace(/[xх]\d+/gi, "").trim()
         }
 
         if (!autoGroups) return "verse"
