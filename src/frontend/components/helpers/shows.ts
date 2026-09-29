@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { LayoutRef } from "../../../types/Show"
-import { activeFocus, activeShow, shows as allShows, focusMode, showsCache } from "../../stores"
+import { activeFocus, activeShow, focusMode, showsCache } from "../../stores"
 import { clone } from "./array"
 import { addToPos } from "./mover"
 // import { loadShows } from "./setShow"
@@ -42,19 +42,6 @@ export function _show(id = "active") {
                     prev = clone(a[id][key])
                     a[id][key] = value
                 }
-
-                if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
-                return a
-            })
-            allShows.update((a) => {
-                const double = key.split(".")
-                if (!a[id]) {
-                    if (!get(showsCache)[id]) return a
-                    a[id] = get(showsCache)[id]
-                }
-
-                if (double.length > 1 && a[id][double[0]]?.[double[1]]) a[id][double[0]][double[1]] = value
-                else if (a[id][key]) a[id][key] = value
 
                 if (a[id]?.timestamps) a[id].timestamps.modified = new Date().getTime()
                 return a

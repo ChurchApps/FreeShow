@@ -4,7 +4,7 @@ import { AudioPlayer } from "../audio/audioPlayer"
 import { midiInListen } from "../components/actions/midi"
 import { getAllActiveOutputIds, getAllNormalOutputs, updateSyncedOutputs } from "../components/helpers/output"
 import { loadShows } from "../components/helpers/setShow"
-import { getShowCacheId, updateCachedShow, updateCachedShows, updateShowsList } from "../components/helpers/show"
+import { getShowCacheId, syncCachedShows, updateCachedShow, updateCachedShows, updateShowsList } from "../components/helpers/show"
 import {
     $,
     actions,
@@ -124,6 +124,9 @@ export function storeSubscriber() {
 
     showsCache.subscribe(async (data) => {
         if (await hasNewerUpdate("LISTENER_SHOWSCACHE")) return // TIMELINE style updates everytime unless set to 20ms
+
+        // update "shows" with new "showsCache" data
+        syncCachedShows(data)
 
         // needs to be sent before output data
         send(OUTPUT, ["SHOWS"], data)

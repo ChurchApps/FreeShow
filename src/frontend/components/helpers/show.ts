@@ -251,6 +251,33 @@ export function updateShowsList(allShows: TrimmedShows) {
     sortedShowsList.set(filteredShows)
 }
 
+// sync "shows" data from "showsCache"
+export function syncCachedShows(cacheData: Shows = get(showsCache)) {
+    if (!cacheData || typeof cacheData !== "object") return
+
+    const current = get(shows)
+    const updates: TrimmedShows = {}
+
+    Object.entries(cacheData).forEach(([id, show]) => {
+        if (!show) return
+        const trimmed: TrimmedShow = {
+            name: show.name,
+            category: show.category || null,
+            timestamps: show.timestamps || current[id]?.timestamps || { created: 0, modified: null, used: null },
+            quickAccess: show.quickAccess || {},
+            ...(show.origin ? { origin: show.origin } : {}),
+            ...(show.private ? { private: true } : {}),
+            ...(show.locked ? { locked: true } : {})
+        }
+
+        if (JSON.stringify(current[id]) !== JSON.stringify(trimmed)) updates[id] = trimmed
+    })
+
+    if (Object.keys(updates).length) {
+        shows.update((a) => ({ ...a, ...updates }))
+    }
+}
+
 // update cached shows
 export function updateCachedShows(newShowsData: Shows) {
     const cachedShows = {}
