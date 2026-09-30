@@ -12,15 +12,44 @@ const app = express()
 const servers: { [key: string]: http.Server | OSC } = {}
 const DEFAULT_PORTS = { WebSocket: 5505, REST: 5506 }
 
+// AUTH
+
+let apiPassword = ""
+const setApiPassword = (password?: string) => (apiPassword = (password || "").trim())
+
+function getAuthToken(...sources: any[]): string | undefined {
+    for (const src of sources) {
+        if (!src) continue
+        if (typeof src === "string") {
+            if (src.toLowerCase().startsWith("bearer ")) return src.slice(7).trim()
+            if (src === apiPassword) return src
+        } else if (Array.isArray(src)) {
+            const found = src.find((v) => typeof v === "string" && (v === apiPassword || v.toLowerCase().startsWith("bearer ")))
+            if (found) return found.toLowerCase().startsWith("bearer ") ? found.slice(7).trim() : found
+        } else if (typeof src === "object") {
+            const token = src.auth || src.password || src.token || src.key || src.apiKey || src.authKey || src.authorization || src["x-api-key"]
+            if (token) return String(token).trim()
+        }
+    }
+
+    return undefined
+}
+
+const checkAuth = (token?: string) => !apiPassword || token === apiPassword
+
 // WebSocket on 5506, REST on +1 (5506), but works with 5505 as well!
-export function startWebSocketAndRest(port: number | undefined) {
-    startRestListener(port ? port + 1 : DEFAULT_PORTS.REST)
-    startWebSocket(port || DEFAULT_PORTS.WebSocket)
-    startOSC(port || DEFAULT_PORTS.WebSocket)
+export function startWebSocketAndRest(options?: { port?: number; password?: string }) {
+    stopApiListener()
+    setApiPassword(options?.password)
+
+    startRestListener(options?.port ? options.port + 1 : DEFAULT_PORTS.REST)
+    startWebSocket(options?.port || DEFAULT_PORTS.WebSocket)
+    startOSC(options?.port || DEFAULT_PORTS.WebSocket)
 }
 
 // WEBSOCKET
 
+let ioServer: Server | null = null
 function startWebSocket(PORT: number) {
     const server = (servers.WebSocket = http.createServer(app))
 
@@ -33,20 +62,26 @@ function startWebSocket(PORT: number) {
         if ((err as any).code === "EADDRINUSE") server.close()
     })
 
-    const io = new Server(server)
-    io.on("connection", connected)
+    ioServer = new Server(server, { cors: { origin: "*" } })
+    ioServer.on("connection", connected)
 }
 
 function connected(socket: Socket) {
     log("Client connected.")
     sendToMain(ToMain.WEBSOCKET, "connected")
 
-    socket.on("data", async (data: string) => {
+    socket.on("data", async (data: string | any) => {
         let parsedData
         try {
-            parsedData = data && typeof data === "string" ? JSON.parse(data) : {}
+            parsedData = data && typeof data === "string" ? JSON.parse(data) : data || {}
         } catch (err) {
             console.error("Could not parse socket data\n", err)
+            return
+        }
+
+        if (!checkAuth(getAuthToken(socket.handshake.auth, socket.handshake.headers?.authorization, socket.handshake.headers, socket.handshake.query, parsedData))) {
+            log("Unauthorized request (401)", true)
+            safeEmit("data", { status: 401, error: "Unauthorized" })
             return
         }
 
@@ -96,11 +131,22 @@ function startRestListener(PORT: number) {
 
     app.use(express.json())
     // app.use(cors()) // if a browser should send body data (https://stackoverflow.com/a/63547498/10803046)
-    app.post("/", async (req, res) => {
+    app.all("/", async (req, res) => {
+        if (!checkAuth(getAuthToken(req.headers.authorization, req.headers, req.query, req.body))) {
+            res.status(401).json({ status: 401, error: "Unauthorized" })
+            return
+        }
+
         // {action: ACTION_ID, ...{}}
-        let data = req.body
+        let data = req.body || {}
         // ?action=ACTION_ID&data={}
-        if (!data.action && req.query.action) data = { action: req.query.action, ...JSON.parse((req.query.data || "{}") as string) }
+        if (!data.action && req.query.action) {
+            try {
+                data = { action: req.query.action, ...JSON.parse((req.query.data || "{}") as string) }
+            } catch (err) {
+                data = { action: req.query.action }
+            }
+        }
 
         const returnData = await receivedData(data, (msg: string) => console.info(`REST: ${msg}`))
         // 204 No Content if action returns empty data or does not exist
@@ -124,13 +170,18 @@ function startOSC(PORT: number) {
         let args: any = {}
         try {
             const data = msg.args[0]
-            args = data && typeof data === "string" ? JSON.parse(data) : {}
+            args = data && typeof data === "string" ? JSON.parse(data) : data || {}
         } catch (err) {
             console.error("OSC: Could not parse JSON!\n", err)
         }
 
+        if (!checkAuth(getAuthToken(args, msg.args))) {
+            osc.send(new OSC.Message(msg.address, JSON.stringify({ status: 401, error: "Unauthorized" })))
+            return
+        }
+
         const action = msg.address.replace("/freeshow", "")
-        const returnData = await receivedData({ action, ...args }, (a: string) => console.info(`OSC: ${a}`))
+        const returnData = await receivedData({ action, ...(typeof args === "object" ? args : {}) }, (a: string) => console.info(`OSC: ${a}`))
         if (!returnData) return
 
         const message = new OSC.Message(msg.address, returnData)
@@ -232,8 +283,10 @@ export function apiReturnData(data: any) {
 
 export function stopApiListener(specificId = "") {
     if (specificId) {
+        if (specificId === "WebSocket") closeIoServer()
         stop(specificId)
     } else {
+        closeIoServer()
         Object.keys(servers).forEach(stop)
     }
 
@@ -248,5 +301,14 @@ export function stopApiListener(specificId = "") {
         } catch (err) {
             console.error(`${id}: Error closing server:`, err)
         }
+    }
+
+    function closeIoServer() {
+        if (!ioServer) return
+
+        try {
+            ioServer.close()
+        } catch {}
+        ioServer = null
     }
 }

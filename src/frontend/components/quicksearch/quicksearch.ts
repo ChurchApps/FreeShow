@@ -27,6 +27,7 @@ import {
     openToolsTab,
     outputs,
     overlays,
+    ports,
     profiles,
     projects,
     projectView,
@@ -548,7 +549,8 @@ const connectionsList = [
 
 function enableConnection(id: string) {
     if (id === "companion") {
-        companion.set({ enabled: true })
+        companion.update((c) => ({ ...c, enabled: true }))
+        sendMain(Main.WEBSOCKET_START, { port: get(ports).companion, password: get(companion)?.password })
         return
     }
 

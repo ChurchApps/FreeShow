@@ -399,7 +399,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
 
         if (v.enabled) {
             setTimeout(() => {
-                sendMain(Main.WEBSOCKET_START, get(ports).companion)
+                sendMain(Main.WEBSOCKET_START, { port: get(ports).companion, password: v.password })
             }, 3000)
         }
     },

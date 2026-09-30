@@ -148,7 +148,7 @@ export const mainResponses: MainResponses = {
     [Main.STOP]: () => closeServers(),
     [Main.SERVER_DATA]: (data) => updateServerData(data),
     // WebSocket / REST / OSC
-    [Main.WEBSOCKET_START]: (port) => startWebSocketAndRest(port),
+    [Main.WEBSOCKET_START]: (data) => startWebSocketAndRest(data),
     [Main.WEBSOCKET_STOP]: () => stopApiListener(),
     [Main.API_TRIGGER]: (data) => apiReturnData(data),
     [Main.EMIT_OSC]: (data) => emitOSC(data),
