@@ -157,7 +157,6 @@
         flex-direction: column;
         justify-content: space-between;
         overflow: hidden;
-        background-color: var(--primary-darker);
     }
 
     .flex {
@@ -184,7 +183,7 @@
         height: 100%;
         background-color: black;
         border-radius: 4px;
-        border: 1px solid #333;
+        border: 1px solid var(--primary-lighter);
     }
 
     .preview-container {
@@ -279,7 +278,7 @@
         width: 100%;
         border: none;
         background: transparent;
-        color: white;
+        color: var(--text);
         font-size: 0.95em;
         font-weight: 600;
         padding: 4px 6px 2px 6px;

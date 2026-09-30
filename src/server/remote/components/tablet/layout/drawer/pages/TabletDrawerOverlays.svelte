@@ -136,7 +136,7 @@
         display: flex;
         flex-direction: column;
         height: 100%;
-        background-color: var(--primary-darkest);
+        background-color: var(--primary-darker);
         padding-bottom: 60px;
     }
 
