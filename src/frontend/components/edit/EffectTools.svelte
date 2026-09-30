@@ -3,7 +3,6 @@
     import type { TabsObj } from "../../../types/Tabs"
     import { activeEdit, effects } from "../../stores"
     import { clone } from "../helpers/array"
-    import Icon from "../helpers/Icon.svelte"
     import { addToPos } from "../helpers/mover"
     import T from "../helpers/T.svelte"
     import InputRow from "../input/InputRow.svelte"
@@ -39,30 +38,6 @@
         return { default: clone(effectSections[item.type]) }
     }
 
-    function deleteItem(index: number) {
-        // not tested:
-        let newOpenedMenus: number[] = []
-        Object.keys(openedMenus).forEach((menuIndex: string | number) => {
-            menuIndex = Number(menuIndex)
-            if (!openedMenus[menuIndex] || menuIndex === index) return
-            newOpenedMenus.push(menuIndex + (menuIndex > index ? 1 : 0))
-        })
-        openedMenus = {}
-        newOpenedMenus.forEach((index) => (openedMenus[index] = true))
-
-        effects.update((a) => {
-            a[effectId].items.splice(index, 1)
-            return a
-        })
-    }
-
-    function toggleHidden(index: number) {
-        effects.update((a) => {
-            a[effectId].items[index].hidden = !a[effectId].items[index].hidden
-            return a
-        })
-    }
-
     let moved = false
     function move(index: number, newIndex: number) {
         openedMenus = {}
@@ -94,32 +69,26 @@
                         {#each currentItems as item, i}
                             {@const editContent = getItemSections(item)}
 
-                            <InputRow arrow={!!editContent} bind:open={openedMenus[i]}>
-                                <div class="title">
-                                    <p style="width: 100%;"><T id="effect.{item.type === 'shape' ? item.shape : item.type}" /></p>
-                                </div>
+                            <div class="item-row context #effect_item" id={i.toString()} data-index={i}>
+                                <InputRow arrow={!!editContent} bind:open={openedMenus[i]}>
+                                    <div class="title" style={item.hidden ? "opacity: 0.5;" : ""}>
+                                        <p style="width: 100%;"><T id="effect.{item.type === 'shape' ? item.shape : item.type}" /></p>
+                                    </div>
 
-                                {#if i < currentItems.length - 1}
-                                    <MaterialButton class="down" icon="down" on:click={() => move(i, i + 1)} />
-                                {/if}
-                                {#if i > 0}
-                                    <MaterialButton class="up" icon="up" on:click={() => move(i, i - 1)} />
-                                {/if}
-
-                                <MaterialButton on:click={() => toggleHidden(i)}>
-                                    <Icon id={item.hidden ? "hide" : "eye"} white={!item.hidden} />
-                                </MaterialButton>
-
-                                <MaterialButton title="actions.delete" on:click={() => deleteItem(i)}>
-                                    <Icon id="delete" white />
-                                </MaterialButton>
-
-                                <svelte:fragment slot="menu">
-                                    {#if editContent}
-                                        <EditValues sections={editContent} {item} on:change={(e) => valueChanged(e.detail, i)} />
+                                    {#if i < currentItems.length - 1}
+                                        <MaterialButton class="down" icon="down" on:click={() => move(i, i + 1)} />
                                     {/if}
-                                </svelte:fragment>
-                            </InputRow>
+                                    {#if i > 0}
+                                        <MaterialButton class="up" icon="up" on:click={() => move(i, i - 1)} />
+                                    {/if}
+
+                                    <svelte:fragment slot="menu">
+                                        {#if editContent}
+                                            <EditValues sections={editContent} {item} on:change={(e) => valueChanged(e.detail, i)} />
+                                        {/if}
+                                    </svelte:fragment>
+                                </InputRow>
+                            </div>
                         {/each}
                     {/key}
                 </div>
@@ -177,6 +146,11 @@
     }
 
     .items {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .item-row {
         display: flex;
         flex-direction: column;
     }

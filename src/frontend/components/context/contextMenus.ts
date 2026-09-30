@@ -139,6 +139,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // SLIDE
     slide_transition: { label: "popup.transition", icon: "transition", iconColor: "#ffd5bb" },
     disable: { label: "actions.disable", icon: "disable", iconColor: "#ff5454" },
+    hide: { label: "profile.hide", icon: "hide" },
     edit: { label: "menu.edit", icon: "edit", iconColor: "#97c7ff" },
     change_style: { label: "edit.style", icon: "styles", iconColor: "#97c7ff" },
     edit_style: { label: "menu.edit", icon: "edit", iconColor: "#97c7ff" },
@@ -408,6 +409,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     edit_box: ["GROUP_dynamic", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPARATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar) // "GROUP_duplicate_delete"
     editbox_text: ["text_copy", "text_cut", "text_paste", "text_select_all", "SEPARATOR", "insert_virtual_break"],
     items_list_item: ["to_front", "forward", "backward", "to_back"],
+    effect_item: ["hide", "SEPARATOR", "duplicate", "delete"],
     scene_overlay: ["GROUP_edit", "delete"],
     table_context: ["delete_row", "delete_col"],
 

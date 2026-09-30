@@ -126,6 +126,19 @@
             enabled = isEnabled
             menu.label = isEnabled ? "actions.enable" : "actions.disable"
         },
+        hide: () => {
+            let isHidden = false
+            if (contextElem?.classList.value.includes("#effect_item")) {
+                const effectId = $activeEdit.id || ""
+                const effect = $effects[effectId]
+                const idxStr = contextElem.dataset.index ?? contextElem.id?.replace(/^#/, "")
+                const index = idxStr !== undefined ? Number(idxStr) : -1
+                if (index >= 0 && effect?.items?.[index]?.hidden) isHidden = true
+            }
+
+            enabled = isHidden
+            if (menu) menu.label = isHidden ? "profile.show" : "profile.hide"
+        },
         display_tags: () => {
             enabled = $special.displayTags
             hide = !Object.keys($globalTags).length

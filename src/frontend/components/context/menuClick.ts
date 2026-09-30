@@ -364,6 +364,8 @@ const clickActions = {
             return
         }
 
+        if (updateEffectItem(obj, (items, index) => items.splice(index, 1))) return
+
         if (obj.contextElem?.classList.value.includes("#timeline_node")) {
             triggerFunction("delete_selected_nodes")
             return
@@ -434,6 +436,8 @@ const clickActions = {
             duplicateEffectInStack(index >= 0 ? index : effectId, channelId)
             return
         }
+
+        if (updateEffectItem(obj, (items, index) => items.splice(index + 1, 0, clone(items[index])))) return
 
         if (obj.contextElem?.classList.value.includes("#event")) {
             duplicate({ id: "event", data: { id: obj.contextElem.id } })
@@ -1190,6 +1194,12 @@ const clickActions = {
 
         popupData.set({})
         activePopup.set("transition")
+    },
+    hide: (obj: ObjData) => {
+        const isEffectItemUpdated = updateEffectItem(obj, (items, index) => {
+            if (items[index]) items[index].hidden = !items[index].hidden
+        })
+        if (isEffectItemUpdated) return
     },
     disable: (obj: ObjData) => {
         if (obj.sel?.id === "slide") {
@@ -2148,6 +2158,22 @@ const clickActions = {
             return
         }
     }
+}
+
+function updateEffectItem(obj: ObjData, callback: (items: any[], index: number) => void) {
+    if (!obj.contextElem?.classList.value.includes("#effect_item")) return false
+    const effectId = get(activeEdit).id || ""
+    if (!effectId) return true
+    const idxStr = obj.contextElem.dataset.index ?? obj.contextElem.id?.replace(/^#/, "")
+    const index = idxStr !== undefined ? Number(idxStr) : -1
+    if (index < 0) return true
+
+    effects.update((a) => {
+        if (!a[effectId]?.items) return a
+        callback(a[effectId].items, index)
+        return a
+    })
+    return true
 }
 
 let savedTextRange: Range | null = null
