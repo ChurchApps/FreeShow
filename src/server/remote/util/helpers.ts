@@ -1,8 +1,17 @@
-import type { Dictionary } from "../../../types/Settings"
+import type { Dictionary, Themes } from "../../../types/Settings"
 import { clone } from "../../common/util/helpers"
 import { _get, _set } from "./stores"
 import { dictionary } from "./stores"
 import { get } from "svelte/store"
+
+export function applyThemeColors(colors: Themes["colors"]) {
+    if (!colors || typeof colors !== "object") return
+    Object.entries(colors).forEach(([key, value]) => {
+        if (typeof value === "string") {
+            document.documentElement.style.setProperty("--" + key, value)
+        }
+    })
+}
 
 export function translate(key: string, d: Dictionary = _get("dictionary"), fallback = "") {
     let keys = key.split(".")

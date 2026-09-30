@@ -1,6 +1,6 @@
 import type { Item, Show } from "../../../types/Show"
 import { sanitizeVerseText } from "../../common/util/scripture"
-import { setError, translate } from "./helpers"
+import { applyThemeColors, setError, translate } from "./helpers"
 import { send } from "./socket"
 import { _, _get, _set, _update, activeTimers, currentScriptureState, overlays, runningActions, scriptureCache, scriptures, timers } from "./stores"
 
@@ -33,6 +33,9 @@ function sanitizeChapterVerses(verses: any) {
 
 export type ReceiverKey = keyof typeof receiver
 export const receiver = {
+    THEME_COLORS: (data: any) => {
+        applyThemeColors(data)
+    },
     PASSWORD: (data: any) => {
         if (data.dictionary) _set("dictionary", data.dictionary)
         let password: boolean = data.password

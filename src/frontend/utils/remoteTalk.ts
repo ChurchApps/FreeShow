@@ -13,7 +13,7 @@ import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioRouting, categories, connections, dictionary, folders, language, openedFolders, outLocked, outputs, overlayCategories, overlays, playerVideos, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, templateCategories, templates, timers, variables, variableTags } from "./../stores"
+import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioRouting, categories, connections, dictionary, folders, language, openedFolders, outLocked, outputs, overlayCategories, overlays, playerVideos, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, templateCategories, templates, theme, themes, timers, variables, variableTags } from "./../stores"
 import { lastClickTime } from "./common"
 import { translateText } from "./language"
 import { send } from "./request"
@@ -33,6 +33,8 @@ let currentOut = ""
 let loadingShow = ""
 export const receiveREMOTE: any = {
     PASSWORD: (msg: any) => {
+        sendThemeToRemote()
+
         msg.data = {
             dictionary: get(dictionary),
             password: !!get(remotePassword).length
@@ -49,6 +51,8 @@ export const receiveREMOTE: any = {
     },
     ACCESS: (msg: any) => {
         if (get(remotePassword).length && msg.data !== get(remotePassword)) return { id: msg.id, channel: "ERROR", data: "wrongPass" }
+
+        sendThemeToRemote()
 
         send(REMOTE, ["LANGUAGE"], { lang: get(language), strings: get(dictionary) })
 
@@ -365,10 +369,18 @@ export async function initializeRemote(id: string) {
     sendData(REMOTE, { id, channel: "OUT_DATA" })
 
     // Send additional data
+    sendThemeToRemote()
     send(REMOTE, ["SCRIPTURE"], get(scriptures))
     send(REMOTE, ["CATEGORIES"], get(categories))
     send(REMOTE, ["AUDIO_ROUTING"], getFilteredAudioChannels())
     send(REMOTE, ["AUDIO_CHANNELS_DATA"], get(audioChannelsData))
+}
+
+function sendThemeToRemote() {
+    const currentThemeObj = get(themes)[get(theme)]
+    if (currentThemeObj?.colors) {
+        window.api.send(REMOTE, { id: null, channel: "THEME_COLORS", data: currentThemeObj.colors })
+    }
 }
 
 export async function convertBackgrounds(show: Show, noLoad = false, init = false) {

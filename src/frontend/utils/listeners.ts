@@ -55,6 +55,8 @@ import {
     syncedOutputs,
     templateCategories,
     templates,
+    theme,
+    themes,
     timeFormat,
     timers,
     timerTags,
@@ -414,6 +416,20 @@ export function storeSubscriber() {
     runningActions.subscribe((data) => {
         // REMOTE
         send(REMOTE, ["RUNNING_ACTIONS"], data)
+    })
+
+    theme.subscribe(async (currentTheme) => {
+        if (await hasNewerUpdate("LISTENER_THEME_REMOTE", 30)) return
+
+        const themeObj = get(themes)[currentTheme]
+        if (themeObj?.colors) send(REMOTE, ["THEME_COLORS"], themeObj.colors)
+    })
+    themes.subscribe(async (allThemes) => {
+        if (await hasNewerUpdate("LISTENER_THEMES_REMOTE", 30)) return
+
+        const currentTheme = get(theme)
+        const themeObj = allThemes[currentTheme]
+        if (themeObj?.colors) send(REMOTE, ["THEME_COLORS"], themeObj.colors)
     })
 
     activeShow.subscribe((data) => {
