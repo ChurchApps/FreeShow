@@ -52,6 +52,8 @@ export async function startup() {
         },
         "startup"
     )
+
+    window.api.send(STARTUP, { channel: "READY" })
 }
 
 async function startupMain() {
