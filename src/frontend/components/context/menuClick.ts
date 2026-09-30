@@ -110,7 +110,7 @@ import { clone, removeDuplicates, sortObjectNumbers } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
-import { defaultOutput, getCurrentStyle, getFirstActiveOutput, isOutputBound, resolveOutputId, setOutput, toggleOutput, toggleOutputs } from "../helpers/output"
+import { defaultOutput, getCurrentStyle, getFirstActiveOutput, isOutputBound, resolveOutputId, setOutput, toggleOutput, toggleOutputs, updateActiveSceneOutputs } from "../helpers/output"
 import { select } from "../helpers/select"
 import { bindSlidesToOutput, checkName, formatToFileName, getLayoutRef, openShow, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
@@ -1200,6 +1200,8 @@ const clickActions = {
             if (items[index]) items[index].hidden = !items[index].hidden
         })
         if (isEffectItemUpdated) return
+
+        if (toggleSceneOverlayHidden(obj)) return
     },
     disable: (obj: ObjData) => {
         if (obj.sel?.id === "slide") {
@@ -2173,6 +2175,27 @@ function updateEffectItem(obj: ObjData, callback: (items: any[], index: number) 
         callback(a[effectId].items, index)
         return a
     })
+    return true
+}
+
+function toggleSceneOverlayHidden(obj: ObjData) {
+    if (!obj.contextElem?.classList.value.includes("#scene_overlay") && obj.sel?.id !== "scene_overlay") return false
+    const sceneId = get(activeEdit).id || ""
+    const overlayId = obj.contextElem?.dataset.overlayId || obj.sel?.data?.[0]?.id || ""
+    const scene = get(scenes)[sceneId]
+    if (!sceneId || !overlayId || !scene) return true
+
+    const hidden = clone(scene.content?.hiddenOverlays || [])
+    const hiddenOverlays = hidden.includes(overlayId) ? hidden.filter((id) => id !== overlayId) : [...hidden, overlayId]
+
+    history({
+        id: "UPDATE",
+        newData: { key: "content", data: { ...clone(scene.content || {}), hiddenOverlays } },
+        oldData: { id: sceneId },
+        location: { page: "drawer", id: "scene_key", override: `content_hiddenOverlays_${sceneId}` }
+    })
+
+    updateActiveSceneOutputs(sceneId)
     return true
 }
 

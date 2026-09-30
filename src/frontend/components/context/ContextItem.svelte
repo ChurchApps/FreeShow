@@ -1,7 +1,7 @@
 <script lang="ts">
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { cameraManager } from "../../media/cameraManager"
-    import { actions, activeEdit, activeProject, activeRecording, activeShow, categories, colorbars, dictionary, disabledServers, drawerTabsData, effects, effectsLibrary, events, forceClock, globalTags, livePrepare, media, mediaFolders, os, outputs, overlayCategories, overlays, projects, redoHistory, scriptures, selected, shows, showsCache, slideDeleteHighlight, slidesOptions, special, spellcheck, stageShows, styles, templateCategories, timers, topContextActive, undoHistory } from "../../stores"
+    import { actions, activeEdit, activeProject, activeRecording, activeShow, categories, colorbars, dictionary, disabledServers, drawerTabsData, effects, effectsLibrary, events, forceClock, globalTags, livePrepare, media, mediaFolders, os, outputs, overlayCategories, overlays, projects, redoHistory, scenes, scriptures, selected, shows, showsCache, slideDeleteHighlight, slidesOptions, special, spellcheck, stageShows, styles, templateCategories, timers, topContextActive, undoHistory } from "../../stores"
     import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { keysToID } from "../helpers/array"
@@ -134,6 +134,11 @@
                 const idxStr = contextElem.dataset.index ?? contextElem.id?.replace(/^#/, "")
                 const index = idxStr !== undefined ? Number(idxStr) : -1
                 if (index >= 0 && effect?.items?.[index]?.hidden) isHidden = true
+            } else if (contextElem?.classList.value.includes("#scene_overlay")) {
+                const sceneId = $activeEdit.id || ""
+                const scene = $scenes[sceneId]
+                const overlayId = contextElem.dataset.overlayId || $selected.data?.[0]?.id || ""
+                if (overlayId && scene?.content?.hiddenOverlays?.includes(overlayId)) isHidden = true
             }
 
             enabled = isHidden

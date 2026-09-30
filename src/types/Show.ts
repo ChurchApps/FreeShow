@@ -591,6 +591,7 @@ export interface SceneContent {
     media?: any
     style?: string
     overlays?: string[]
+    hiddenOverlays?: string[]
 }
 
 // output
