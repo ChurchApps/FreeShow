@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { gainToDb, MIN_DB } from "../../audio/dBUtils"
-import { actionHistory, actions, audioPlaylists, audioRouting, audioStreams, runningActions, scenes, shows, stageShows, styles } from "../../stores"
+import { actionHistory, actions, audioPlaylists, audioRouting, audioStreams, outputs, runningActions, scenes, shows, stageShows, styles } from "../../stores"
 import { newToast, wait } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { getShowBPM } from "../drawer/audio/metronome"
@@ -247,7 +247,8 @@ const namedObjects = {
     start_scene: () => get(scenes),
     start_audio_stream: () => get(audioStreams),
     start_playlist: () => get(audioPlaylists),
-    id_select_stage_layout: () => get(stageShows)
+    id_select_stage_layout: () => get(stageShows),
+    start_output_recording: () => get(outputs)
 }
 export function getActionName(actionId: string, actionValue: any): string {
     if (!actionValue) return ""

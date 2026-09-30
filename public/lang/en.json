@@ -866,6 +866,7 @@
         "toggle_output_windows": "Toggle output windows",
         "id_select_group": "Play specific group",
         "id_change_stage_layout": "Change stage connections layout",
+        "toggle_audio_recording": "Toggle audio recording",
         "start_camera": "Start camera",
         "start_microphone": "Start microphone",
         "stop_microphone": "Stop microphone",

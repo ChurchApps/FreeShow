@@ -218,7 +218,7 @@
         if (id === "id_select_project") return getName($projects)
         if (id === "set_template") return getName($templates)
         if (id === "start_scene") return getName($scenes)
-        if (id === "toggle_output") return getName($outputs)
+        if (id === "toggle_output" || id === "start_output_recording") return getName($outputs)
         if (id === "id_select_stage_layout") return getName($stageShows)
         if (id === "start_audio_stream") return getName($audioStreams)
         if (id === "wait") return Number(actionValue.number) + "s"
