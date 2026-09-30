@@ -55,8 +55,20 @@
 
     let currentItems: any[]
     $: currentItems = currentEffect.items || []
+    $: invertedItems = Array.isArray(currentItems) ? clone(currentItems).reverse() : []
 
     let openedMenus: { [key: string]: boolean } = {}
+
+    let prevId = ""
+    let prevLength = 0
+    $: {
+        // auto open the menu for a newly added item
+        if (effectId === prevId && currentItems.length > prevLength) {
+            openedMenus[currentItems.length - 1] = true
+        }
+        prevId = effectId
+        prevLength = currentItems.length
+    }
 
     onDestroy(() => {
         hoveredEffectItem.set(null)
@@ -71,25 +83,26 @@
             {#if currentEffect}
                 <div class="items">
                     {#key moved}
-                        {#each currentItems as item, i}
+                        {#each invertedItems as item, displayIndex}
+                            {@const index = currentItems.length - displayIndex - 1}
                             {@const editContent = getItemSections(item)}
 
-                            <div class="item-row context #effect_item" id={i.toString()} data-index={i} on:mouseenter={() => hoveredEffectItem.set(item.hidden ? null : i)} on:mouseleave={() => hoveredEffectItem.set(null)} role="none">
-                                <InputRow arrow={!!editContent} bind:open={openedMenus[i]}>
+                            <div class="item-row context #effect_item" id={index.toString()} data-index={index} on:mouseenter={() => hoveredEffectItem.set(item.hidden ? null : index)} on:mouseleave={() => hoveredEffectItem.set(null)} role="none">
+                                <InputRow arrow={!!editContent} bind:open={openedMenus[index]}>
                                     <div class="title" style={item.hidden ? "opacity: 0.5;" : ""}>
                                         <p style="width: 100%;"><T id="effect.{item.type === 'shape' ? item.shape : item.type}" /></p>
                                     </div>
 
-                                    {#if i < currentItems.length - 1}
-                                        <MaterialButton class="down" icon="down" on:click={() => move(i, i + 1)} />
+                                    {#if displayIndex < invertedItems.length - 1}
+                                        <MaterialButton class="down" icon="down" on:click={() => move(index, index - 1)} />
                                     {/if}
-                                    {#if i > 0}
-                                        <MaterialButton class="up" icon="up" on:click={() => move(i, i - 1)} />
+                                    {#if displayIndex > 0}
+                                        <MaterialButton class="up" icon="up" on:click={() => move(index, index + 1)} />
                                     {/if}
 
                                     <svelte:fragment slot="menu">
                                         {#if editContent}
-                                            <EditValues sections={editContent} {item} on:change={(e) => valueChanged(e.detail, i)} />
+                                            <EditValues sections={editContent} {item} on:change={(e) => valueChanged(e.detail, index)} />
                                         {/if}
                                     </svelte:fragment>
                                 </InputRow>
