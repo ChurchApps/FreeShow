@@ -4,6 +4,7 @@ import type { ClientMessage } from "../../types/Socket"
 import { AudioMicrophone } from "../audio/audioMicrophone"
 import { MIN_DB } from "../audio/dBUtils"
 import { runAction } from "../components/actions/actions"
+import { handleRecorderFrame } from "../components/drawer/live/recorder"
 import { getDynamicValue } from "../components/edit/scripts/itemHelpers"
 import { clone } from "../components/helpers/array"
 import { receiveMainGlobal } from "../IPC/main"
@@ -111,6 +112,9 @@ const receiveOUTPUTasMAIN: any = {
             a[id] = { buffer, size }
             return a
         })
+    },
+    RECORDER_FRAME: ({ id, buffer, size }: { id: string; buffer: ArrayBuffer | Uint8Array; size: { width: number; height: number } }) => {
+        handleRecorderFrame(id, buffer, size)
     },
     OUTPUTS: (a: any) => outputs.set(a),
     RESTART: ({ id }) => restartOutputs(id),

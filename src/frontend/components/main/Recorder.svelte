@@ -7,8 +7,16 @@
 
     let recorderActive = false
 
-    let videoElem
-    let currentStream
+    let videoElem: HTMLVideoElement | undefined
+    let currentStream: MediaStream | null = null
+
+    $: isOutputRecording = $activeRecording?.isOutput || $activeRecording?.type === "output"
+
+    $: if (videoElem && $currentRecordingStream && !isOutputRecording && videoElem.srcObject !== $currentRecordingStream) {
+        videoElem.srcObject = $currentRecordingStream
+        videoElem.play().catch(() => {})
+    }
+
     function toggleRecording() {
         if (!$activeRecording) {
             currentStream?.getTracks().forEach((track) => {
@@ -21,6 +29,8 @@
 
             return
         }
+
+        if (isOutputRecording) return
 
         recorderActive = true
 
@@ -47,7 +57,7 @@
 
                 currentRecordingStream.set(stream)
                 videoElem.srcObject = stream
-                videoElem.play()
+                videoElem.play().catch(() => {})
                 createMediaRecorder(stream)
             })
             .catch(function (err) {
@@ -56,8 +66,8 @@
     }
 </script>
 
-{#if recorderActive}
-    <video class="recorder" bind:this={videoElem} muted>
+{#if (recorderActive || $currentRecordingStream) && !isOutputRecording}
+    <video class="recorder" bind:this={videoElem} muted autoplay playsinline>
         <track kind="captions" />
     </video>
 {/if}

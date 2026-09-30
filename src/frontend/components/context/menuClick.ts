@@ -101,7 +101,7 @@ import { moveStageConnection } from "../actions/apiHelper"
 import { midiInListen } from "../actions/midi"
 import { createScriptureShow, openActiveInRouteBible } from "../drawer/bible/scripture"
 import { deleteCalendarEvents } from "../drawer/calendar/calendars"
-import { stopMediaRecorder } from "../drawer/live/recorder"
+import { startOutputRecording, stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
 import { rearrangeItems, rearrangeStageItems } from "../edit/scripts/itemHelpers"
@@ -1816,7 +1816,10 @@ const clickActions = {
         cameraManager.setStartupCameras(cameraIds)
     },
     recording: (obj: ObjData) => {
-        if (get(activeRecording)) {
+        if (obj.contextElem?.classList.contains("#output_preview") || (obj.contextElem?.id && get(outputs)[obj.contextElem.id])) {
+            const outputId = obj.contextElem?.id || ""
+            if (outputId) startOutputRecording(outputId)
+        } else if (get(activeRecording)) {
             stopMediaRecorder()
         } else {
             const mediaData = JSON.parse(obj.contextElem?.getAttribute("data-media") || "{}")
