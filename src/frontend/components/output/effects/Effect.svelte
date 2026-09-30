@@ -1,13 +1,15 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import type { Effect } from "../../../../types/Effects"
-    import { currentWindow, effects } from "../../../stores"
+    import { currentWindow, effects, hoveredEffectItem } from "../../../stores"
     import { clone, getChangedKeys } from "../../helpers/array"
     import { EffectRender } from "./effectRenderer"
 
     export let effect: (Effect & { id?: string }) | undefined
     export let preview = false
     export let edit = false
+
+    $: if (renderer) renderer.highlightedIndex = edit ? $hoveredEffectItem : null
 
     let items: any[]
     $: items = effect?.items || [] // .filter((a) => !a.hidden)

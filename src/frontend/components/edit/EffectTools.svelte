@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import type { EffectItem } from "../../../types/Effects"
     import type { TabsObj } from "../../../types/Tabs"
-    import { activeEdit, effects } from "../../stores"
+    import { activeEdit, effects, hoveredEffectItem } from "../../stores"
     import { clone } from "../helpers/array"
     import { addToPos } from "../helpers/mover"
     import T from "../helpers/T.svelte"
@@ -56,6 +57,10 @@
     $: currentItems = currentEffect.items || []
 
     let openedMenus: { [key: string]: boolean } = {}
+
+    onDestroy(() => {
+        hoveredEffectItem.set(null)
+    })
 </script>
 
 <div class="main border editTools">
@@ -69,7 +74,7 @@
                         {#each currentItems as item, i}
                             {@const editContent = getItemSections(item)}
 
-                            <div class="item-row context #effect_item" id={i.toString()} data-index={i}>
+                            <div class="item-row context #effect_item" id={i.toString()} data-index={i} on:mouseenter={() => hoveredEffectItem.set(item.hidden ? null : i)} on:mouseleave={() => hoveredEffectItem.set(null)} role="none">
                                 <InputRow arrow={!!editContent} bind:open={openedMenus[i]}>
                                     <div class="title" style={item.hidden ? "opacity: 0.5;" : ""}>
                                         <p style="width: 100%;"><T id="effect.{item.type === 'shape' ? item.shape : item.type}" /></p>
