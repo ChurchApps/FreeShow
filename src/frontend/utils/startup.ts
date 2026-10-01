@@ -3,6 +3,7 @@ import type { ContentProviderId } from "../../electron/contentProviders/base/typ
 import { OUTPUT, STARTUP } from "../../types/Channels"
 import { Main } from "../../types/IPC/Main"
 import { checkStartupActions } from "../components/actions/actions"
+import { syncIcsCalendars } from "../components/drawer/calendar/calendars"
 import { getTimeFromInterval } from "../components/helpers/time"
 import { requestMain, requestMainMultiple, sendMain, sendMainMultiple } from "../IPC/main"
 import { cameraManager } from "../media/cameraManager"
@@ -85,11 +86,14 @@ async function startupMain() {
     // }
 
     await wait(2000)
+
     autoBackup()
     await wait(3000)
+
     unsavedUpdater()
     windowFocusListener()
     cameraManager.initializeCameraWarming()
+    syncIcsCalendars()
 
     // CHECK LISTENERS
     // console.log(window.api.getListeners())
