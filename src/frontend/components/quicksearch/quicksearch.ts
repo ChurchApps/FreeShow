@@ -50,13 +50,13 @@ import { formatSearch, showSearch } from "../../utils/search"
 import { runAction } from "../actions/actions"
 import { sortByClosestMatch } from "../actions/apiHelper"
 import { menuClick } from "../context/menuClick"
-import { getLikelyPosition } from "../edit/scripts/autoPosition"
 import { openDrawer } from "../edit/scripts/edit"
-import { addItem, updateSortedStageItems } from "../edit/scripts/itemHelpers"
+import { addItem } from "../edit/scripts/itemHelpers"
 import { slideItems, stageItems } from "../edit/values/items"
 import { keysToID } from "../helpers/array"
 import { duplicate } from "../helpers/clipboard"
 import { history } from "../helpers/history"
+import { addStageItem } from "../stage/stage"
 import { Main } from "./../../../types/IPC/Main"
 import { getMediaResults, showResult } from "./quicksearchData"
 
@@ -877,55 +877,4 @@ const editActions = [
 
 function getEditActions() {
     return translateNames(editActions)
-}
-
-function addStageItem(itemType: string, textValue = "") {
-    const stageId = get(activeStage).id || ""
-    if (!stageId) return
-
-    const resolution = { width: 1920, height: 1080 }
-    const halfWidth = resolution.width * 0.5
-    const halfHeight = resolution.height * 0.5
-    const DEFAULT_STYLE = `width: ${halfWidth}px;height: ${halfHeight}px;left: ${halfWidth * 0.5}px;top: ${halfHeight * 0.5}px;`
-    const smallItems = ["timer", "clock", "slide_tracker"]
-
-    let itemId = uid(5)
-    stageShows.update((a: any) => {
-        if (!a[stageId]?.items) return a
-
-        let style = DEFAULT_STYLE
-        if (smallItems.includes(itemType) || textValue) {
-            const width = resolution.width * 0.45
-            const left = halfWidth - width * 0.5
-            const height = 150
-            const top = halfHeight - height * 0.5
-            style = `width: ${width}px;height: ${height}px;left: ${left}px;top: ${top}px;`
-        }
-
-        if (Object.keys(a[stageId]?.items).length > 0) {
-            style = getLikelyPosition(Object.values(a[stageId].items), style)
-        }
-
-        let item: any = { type: itemType as any, style, align: "" }
-
-        if (itemType === "text") item.lines = [{ align: "", text: [{ style: "", value: textValue || "" }] }]
-        else if (itemType === "slide_text") {
-            const slideTextItems = Object.values(a[stageId].items || {}).filter((a: any) => a.type === "slide_text")
-            item.slideOffset = slideTextItems.length
-            item.style += "font-size: 800px;"
-        }
-
-        a[stageId].items[itemId] = item
-        a[stageId].modified = Date.now()
-        return a
-    })
-
-    updateSortedStageItems()
-
-    if (Object.keys(get(stageShows)[stageId]?.items || {}).length > 1) {
-        activeStage.update((a) => {
-            a.items = [itemId]
-            return a
-        })
-    }
 }

@@ -17,6 +17,7 @@ import { addSlideAction, getActionTriggerId, isMatchingSlideAction } from "../ac
 import { getActiveScripturesContent, getReferenceText, getScriptureShow, getScriptureSlidesNew } from "../drawer/bible/scripture"
 import { getVimeoData, getYouTubeData, trimPlayerId } from "../drawer/player/playerHelper"
 import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
+import { addStageItem } from "../stage/stage"
 import { clone, removeDuplicates } from "./array"
 import { projectDropFolders } from "./drop"
 import { history, historyAwait } from "./history"
@@ -501,25 +502,35 @@ export const dropActions = {
     },
     overlays: ({ drag, drop }: Data) => dropActions.templates({ drag, drop }),
     edit: ({ drag }: Data) => {
+        const isStage = get(activePage) === "stage"
+
         if (drag.id === "media" || drag.id === "files") {
-            drag.data.forEach((file) => addItem("media", null, { src: file.path || window.api.showFilePath(file) }))
+            drag.data.forEach((file) => {
+                const src = file.path || window.api.showFilePath(file) || (typeof file === "string" ? file : "")
+                if (isStage) addStageItem("media", { src })
+                else addItem("media", null, { src })
+            })
         } else if (drag.id === "camera" || drag.id === "screen" || drag.id === "ndi" || drag.id === "omt" || drag.id === "blackmagic") {
             drag.data.forEach((device) => {
-                addItem("camera", null, {
-                    device: {
-                        id: device.id,
-                        name: device.name || "",
-                        type: device.type || drag.id,
-                        group: device.cameraGroup || device.group || ""
-                    }
-                })
+                const deviceData = {
+                    id: device.id,
+                    name: device.name || "",
+                    type: device.type || drag.id,
+                    group: device.cameraGroup || device.group || ""
+                }
+                // if (isStage) addStageItem("camera", { device: deviceData })
+                addItem("camera", null, { device: deviceData })
             })
         } else if (drag.id === "global_timer") {
-            drag.data.forEach((a) => addItem("timer", null, { timer: { id: a.id } }))
+            drag.data.forEach((a) => {
+                // if (isStage) addStageItem("timer", { timer: { id: a.id } })
+                addItem("timer", null, { timer: { id: a.id } })
+            })
         } else if (drag.id === "variable") {
             drag.data.forEach((a) => {
                 const name = getVariableNameId(a.name || "")
                 if (!name) return
+                // if (isStage) addStageItem("text", {}, `{$${name}}`)
                 addItem("text", null, {}, `{$${name}}`)
             })
         }

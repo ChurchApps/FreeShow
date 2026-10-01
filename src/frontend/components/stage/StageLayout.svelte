@@ -16,6 +16,7 @@
     import { getStyleResolution } from "../slide/getStyleResolution"
     import Zoomed from "../slide/Zoomed.svelte"
     import Center from "../system/Center.svelte"
+    import DropArea from "../system/DropArea.svelte"
     import Snaplines from "../system/Snaplines.svelte"
     import { getSlideTextItems, stageItemToItem, updateStageShow } from "./stage"
     import Stagebox from "./Stagebox.svelte"
@@ -144,34 +145,38 @@
 </script>
 
 <div class="stageArea">
-    <!-- <Main slide={stageShowId ? show : null} let:width let:height let:resolution> -->
     <div class="parent" class:noOverflow={zoom >= 1} bind:this={scrollElem} bind:offsetWidth={width} bind:offsetHeight={height}>
         {#if stageLayoutId}
-            <!-- TODO: stage resolution... -->
-            <Zoomed background={backgroundColor} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio isStage disableStyle hideOverflow={!edit} center>
-                <!-- TODO: snapping to top left... -->
-                {#if edit && !readOnly}
-                    <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} isStage />
-                {/if}
-                {#key stageLayoutId}
-                    {#each stageItems as item, index (item.id)}
-                        {#if (item.type || item.enabled !== false) && (edit || checkVisibility(index, conditionsUpdater))}
-                            <Stagebox edit={edit && !readOnly} stageLayout={edit ? null : layout} id={item.id} {item} {ratio} {preview} {disableStagePreview} bind:mouse />
-                        {/if}
-                    {/each}
-                {/key}
-            </Zoomed>
+            {#if edit && !readOnly}
+                <DropArea id="edit" file>
+                    <Zoomed background={backgroundColor} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio isStage disableStyle hideOverflow={!edit} center>
+                        <Snaplines bind:lines bind:newStyles bind:mouse {ratio} {active} isStage />
+                        {#key stageLayoutId}
+                            {#each stageItems as item, index (item.id)}
+                                {#if (item.type || item.enabled !== false) && (edit || checkVisibility(index, conditionsUpdater))}
+                                    <Stagebox edit stageLayout={edit ? null : layout} id={item.id} {item} {ratio} {preview} {disableStagePreview} bind:mouse />
+                                {/if}
+                            {/each}
+                        {/key}
+                    </Zoomed>
+                </DropArea>
+            {:else}
+                <Zoomed background={backgroundColor} style={getStyleResolution(resolution, width, height, "fit", { zoom })} {resolution} id={stageOutputId} bind:ratio isStage disableStyle hideOverflow={!edit} center>
+                    {#key stageLayoutId}
+                        {#each stageItems as item, index (item.id)}
+                            {#if (item.type || item.enabled !== false) && (edit || checkVisibility(index, conditionsUpdater))}
+                                <Stagebox stageLayout={edit ? null : layout} id={item.id} {item} {ratio} {preview} {disableStagePreview} bind:mouse />
+                            {/if}
+                        {/each}
+                    {/key}
+                </Zoomed>
+            {/if}
         {:else if edit}
             <Center size={2} faded>
                 <T id="empty.layout" />
             </Center>
         {/if}
     </div>
-    <!-- </Main> -->
-
-    <!-- <div class="bar">
-        <T id="settings.connections" />: {Object.keys($connections.STAGE || {}).length}
-    </div> -->
 
     {#if edit && stageLayoutId}
         <FloatingInputs side="left" onlyOne>
@@ -210,6 +215,11 @@
     }
 
     .parent.noOverflow {
+        overflow: hidden;
+    }
+
+    /* disable "glitchy" scroll bars */
+    .parent.noOverflow :global(.droparea) {
         overflow: hidden;
     }
 </style>
