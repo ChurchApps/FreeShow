@@ -463,6 +463,7 @@
         "current": "Current",
         "global": "Global",
         "toggle_global_group": "Toggle global groups",
+        "merge_duplicated_groups": "Merge identical groups",
         "group_shortcut": "Group shortcut",
         "group_template": "Group template",
         "intro": "Intro",
