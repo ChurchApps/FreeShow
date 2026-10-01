@@ -9,6 +9,15 @@ import { IcecastSender } from "./IcecastSender"
 const fileNameText = "NowPlaying.txt"
 const fileNameImage = "NowPlayingCover.png"
 
+function getNowPlayingTextPath() {
+    const audioFolder = getDataFolderPath("audio")
+    return join(audioFolder, fileNameText)
+}
+export function getNowPlayingMediaPath() {
+    const audioFolder = getDataFolderPath("audio")
+    return join(audioFolder, fileNameImage)
+}
+
 type NowPlayingData = {
     filePath: string
     name: string
@@ -19,8 +28,6 @@ type NowPlayingData = {
 
 // let currentContent = ""
 export async function setPlayingState(data: NowPlayingData) {
-    const audioFolder = getDataFolderPath("audio")
-
     // get metadata
     const metadata = await getAudioMetadata(data.filePath)
 
@@ -31,7 +38,7 @@ export async function setPlayingState(data: NowPlayingData) {
     IcecastSender.updateMetadata(songName)
 
     // create album art cover BEFORE converting dynamic values
-    const filePathCover = join(audioFolder, fileNameImage)
+    const filePathCover = getNowPlayingMediaPath()
     const cover = metadata?.picture?.[0]
     const buffer = cover?.data
     let coverBuffer: Buffer | undefined
@@ -58,7 +65,7 @@ export async function setPlayingState(data: NowPlayingData) {
     // currentContent = content
 
     // create playing data text file
-    const filePath = join(audioFolder, fileNameText)
+    const filePath = getNowPlayingTextPath()
     writeFile(filePath, content)
 
     // (no point in this at the moment)
@@ -89,8 +96,7 @@ async function convertDynamicValues(data: NowPlayingData, metadata: ICommonTagsR
                 return metadata?.year?.toString() || "Unknown Year"
             case "{artwork_path}":
             case "{artwork_base64}":
-                const audioFolder = getDataFolderPath("audio")
-                const coverFilePath = join(audioFolder, fileNameImage)
+                const coverFilePath = getNowPlayingMediaPath()
                 if (value === "{artwork_path}") return coverFilePath
 
                 if (!coverBuffer) return ""
@@ -120,20 +126,17 @@ function getArtist(metadata: ICommonTagsResult) {
 
 // remove now playing when not playing
 export function unsetPlayingAudio() {
-    const audioFolder = getDataFolderPath("audio")
-
-    const filePath = join(audioFolder, fileNameText)
+    const filePath = getNowPlayingTextPath()
     writeFile(filePath, "")
 
-    const filePathCover = join(audioFolder, fileNameImage)
+    const filePathCover = getNowPlayingMediaPath()
     if (doesPathExist(filePathCover)) {
         deleteFile(filePathCover)
     }
 }
 
 export function openNowPlaying() {
-    const audioFolder = getDataFolderPath("audio")
-    const filePath = join(audioFolder, fileNameText)
+    const filePath = getNowPlayingTextPath()
     openInSystem(filePath)
 }
 

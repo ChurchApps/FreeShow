@@ -104,10 +104,7 @@ export const receiveSTAGE = {
 
         // send media items
         Object.values(layout.items).forEach(async (item) => {
-            if (item.type === "media" && item.src) {
-                const mediaData = await getBase64Path(item.src)
-                send(STAGE, ["MEDIA"], { path: item.src, value: mediaData })
-            }
+            if (item.type === "media") sendMediaData(item.src)
         })
 
         return layout
@@ -151,8 +148,7 @@ export const receiveSTAGE = {
 
         // send media items
         Object.values(show.media || {}).forEach(async (media) => {
-            const mediaData = await getBase64Path(media.path || "")
-            send(STAGE, ["MEDIA"], { path: media.path, value: mediaData })
+            sendMediaData(media.path)
         })
 
         return { id: outSlideId, show }
@@ -233,6 +229,16 @@ export const receiveSTAGE = {
     // case "OVERLAYS":
     //   data = getOutOverlays()
     //   break
+}
+
+async function sendMediaData(path: string | undefined) {
+    if (!path) return
+
+    // NowPlayingCover can update in real time
+    if (path.includes("NowPlayingCover")) return
+
+    const mediaData = await getBase64Path(path)
+    send(STAGE, ["MEDIA"], { path: path, value: mediaData })
 }
 
 // tracks StageShow connections actively viewing an "Output window" item
