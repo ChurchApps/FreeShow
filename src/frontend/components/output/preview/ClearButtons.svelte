@@ -10,7 +10,6 @@
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import { clearAll, clearBackground, clearOverlays, clearScene, clearSlide, clearTimers, restoreOutput } from "../clear"
-    import { openDrawer } from "../../edit/scripts/edit"
 
     export let autoChange: any
     export let activeClear: any
@@ -121,10 +120,6 @@
                     <T id="clear.scene" />
                 </MaterialButton>
             </div>
-
-            <MaterialButton style="flex: unset;padding: 0.3em 0.6em;" title="main.open: <b>tabs.scenes</b>" on:click={() => openDrawer("scenes")}>
-                <Icon id="launch" white />
-            </MaterialButton>
         </span>
     {/if}
 

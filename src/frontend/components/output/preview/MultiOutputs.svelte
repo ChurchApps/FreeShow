@@ -184,6 +184,15 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
                             </MaterialButton>
                         </div>
                     {/if}
+
+                    {#if output.out?.scene?.name}
+                        <div class="badge scene" style="background-color: var(--primary-darker);">
+                            <MaterialButton style="padding: 2px 4px;min-height: 0;gap: 3px;max-width: 100%;" on:click={() => openDrawer("scenes")} title={output.out.scene.name}>
+                                <Icon id="scene" size={0.7} white />
+                                <p>{output.out.scene.name}</p>
+                            </MaterialButton>
+                        </div>
+                    {/if}
                 </div>
             {/if}
 
@@ -317,15 +326,24 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         position: absolute;
         top: 3px;
         left: 3px;
+        right: 3px;
         display: flex;
         gap: 3px;
         z-index: 10;
         font-size: 0.7em;
+        pointer-events: none;
     }
 
     .badge {
         border-radius: 2px;
         overflow: hidden;
+        pointer-events: auto;
+        flex-shrink: 0;
+    }
+
+    .badge.scene {
+        flex-shrink: 1;
+        min-width: 0;
     }
 
     /* icons */
