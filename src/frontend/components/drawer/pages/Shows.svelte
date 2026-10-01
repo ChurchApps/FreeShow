@@ -3,6 +3,7 @@
     // import VirtualList from "@sveltejs/svelte-virtual-list"
     // import VirtualList from "./VirtualList2.svelte"
     import type { ShowList } from "../../../../types/Show"
+    import { ShowObj } from "../../../classes/Show"
     import { activeEdit, activeFocus, activePopup, activeProfile, activeProject, activeShow, activeTagFilter, categories, drawer, focusedArea, focusMode, labelsDisabled, shows, sorted, sortedShowsList } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
@@ -20,7 +21,6 @@
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
     import VirtualList from "../VirtualList.svelte"
-    import { ShowObj } from "../../../classes/Show"
 
     export let active: string | null
     export let searchValue: string
@@ -287,7 +287,8 @@
 
 {#if showWithNonExistentCategory}
     <FloatingInputs side="left" onlyOne>
-        <MaterialButton icon="autofill" on:click={createNonExistentCategories}>
+        <MaterialButton on:click={createNonExistentCategories}>
+            <Icon id="autofill" gradient />
             <T id="category.create_nonexistent" />
         </MaterialButton>
     </FloatingInputs>

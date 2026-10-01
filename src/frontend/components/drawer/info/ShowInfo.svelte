@@ -116,7 +116,6 @@
 
             <MaterialButton
                 variant="outlined"
-                icon="autofill"
                 title="popup.cleaning_utility"
                 style="margin-top: 5px;width: 100%;"
                 on:click={() => {
@@ -124,6 +123,7 @@
                     activePopup.set("cleaning_utility")
                 }}
             >
+                <Icon id="autofill" gradient />
                 <T id="popup.cleaning_utility" />
             </MaterialButton>
         </main>

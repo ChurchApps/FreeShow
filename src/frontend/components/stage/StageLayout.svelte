@@ -5,8 +5,8 @@
     import ItemAddMenu from "../edit/ItemAddMenu.svelte"
     import { getSortedStageItems, shouldItemBeShown } from "../edit/scripts/itemHelpers"
     import { centerZoom } from "../edit/scripts/zoom"
-    import { clone } from "../helpers/array"
     import { history } from "../helpers/history"
+    import Icon from "../helpers/Icon.svelte"
     import { enableStageOutput, getStageOutputId, getStageResolution } from "../helpers/output"
     import { getStyles } from "../helpers/style"
     import T from "../helpers/T.svelte"
@@ -176,7 +176,8 @@
     {#if edit && stageLayoutId}
         <FloatingInputs side="left" onlyOne>
             {#if !hasStageOutput}
-                <MaterialButton icon="autofill" title="stage.create_stage_output" on:click={createStageOutput}>
+                <MaterialButton title="stage.create_stage_output" on:click={createStageOutput}>
+                    <Icon id="autofill" gradient />
                     <T id="stage.create_stage_output" />
                 </MaterialButton>
             {/if}
