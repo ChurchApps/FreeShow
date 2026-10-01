@@ -3,7 +3,7 @@
 import { get } from "svelte/store"
 import { Main } from "../../types/IPC/Main"
 import { customActionActivation } from "../components/actions/actions"
-import { encodeFilePath, getFileName, locateMediaFile, removeExtension } from "../components/helpers/media"
+import { encodeFilePath, getFileName, isLocalFile, locateMediaFile, removeExtension } from "../components/helpers/media"
 import { checkNextAfterMedia } from "../components/helpers/showActions"
 import { requestMain, sendMain } from "../IPC/main"
 import { activePlaylist, dictionary, media, outLocked, playingAudio, playingAudioPaths, special } from "../stores"
@@ -590,7 +590,13 @@ export class AudioPlayer {
     }
 
     static getAudioType(path: string, duration: number) {
-        return AudioPlayer.getGlobalOptions(path).audioType || (duration < 30 ? "effect" : "music")
+        const type = AudioPlayer.getGlobalOptions(path).audioType
+        if (type) return type
+
+        // likely an Audio stream
+        if (!duration || !isLocalFile(path)) return "music"
+
+        return duration < 30 ? "effect" : "music"
     }
 
     static getStartTime(path: string, startAt?: number | undefined) {
