@@ -1359,10 +1359,10 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         })
     }
 
-    const hasScriptureDynamicValue = Object.keys(customDynamicValues).length && templateItems?.some((item) => item?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{scripture"))))
-
-    const sorted = sortItemsByType(templateItems, !hasScriptureDynamicValue)
+    const sorted = sortItemsByType(templateItems, true)
     const sortedTemplateItems = clone(sorted)
+
+    const hasScriptureDynamicValue = Object.keys(customDynamicValues).length && templateItems?.some((item) => item?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{scripture"))))
 
     // reduce template textboxes to slide items
     const slideTextboxes = hasScriptureDynamicValue ? 0 : slideItems.reduce((count, a) => (count += (a?.type || "text") === "text" ? 1 : 0), 0)
@@ -1382,7 +1382,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         let type: string = item.type || "text"
         if (type === "text" && hasScriptureDynamicValue) return
 
-        if (!hasScriptureDynamicValue && hasDynamicValue(item)) type = "text_dynamic"
+        if (hasDynamicValue(item)) type = "text_dynamic"
 
         const templateItem = clone(sortedTemplateItems[type]?.shift())
         if (!templateItem) return finish()
@@ -1517,7 +1517,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
     }
 
     // remove (non dynamic value) textbox items
-    templateItems = templateItems.filter((a) => (a.type || "text") !== "text" || (!hasScriptureDynamicValue && hasDynamicValue(a)))
+    templateItems = templateItems.filter((a) => (a.type || "text") !== "text" || hasDynamicValue(a))
     // remove any duplicate values
     templateItems = templateItems.filter(
         (item) =>
