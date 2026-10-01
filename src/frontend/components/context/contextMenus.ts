@@ -292,6 +292,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     overlay_preview: ["close"],
     // , "delete_all"
     show_media: ["GROUP_open", "play_no_filters", "SEPARATOR", "system_open"], // "play_no_audio"
+    show_overlay: ["GROUP_open"],
     show_audio: ["preview", "SEPARATOR", "system_open"],
     slide_recorder_item: ["remove"],
     // , "addToShow"

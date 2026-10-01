@@ -1,11 +1,11 @@
 <script lang="ts">
     import { Main } from "../../../../types/IPC/Main"
     import type { MediaStyle } from "../../../../types/Main"
-    import type { Media, MediaType, SlideAction } from "../../../../types/Show"
+    import type { Media, MediaType, Overlay, SlideAction } from "../../../../types/Show"
     import { requestMain } from "../../../IPC/main"
     import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { activePopup, activeShow, alertMessage, media, outLocked, outputs, playingAudio, showsCache, styles } from "../../../stores"
+    import { activePopup, activeShow, alertMessage, media, outLocked, outputs, overlays, playingAudio, showsCache, styles } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { getAccess } from "../../../utils/profile"
     import { actionData } from "../../actions/actionData"
@@ -15,10 +15,12 @@
     import T from "../../helpers/T.svelte"
     import { clone, sortByName } from "../../helpers/array"
     import { encodeFilePath, getExtension, getMedia, getMediaStyle, getMediaType, isMediaExtension, mediaSize } from "../../helpers/media"
-    import { findMatchingOut, getActiveOutputs, getCurrentStyle, setOutput } from "../../helpers/output"
+    import { findMatchingOut, getActiveOutputs, getCurrentStyle, getResolution, setOutput } from "../../helpers/output"
     import { _show } from "../../helpers/shows"
     import Button from "../../inputs/Button.svelte"
     import HoverButton from "../../inputs/HoverButton.svelte"
+    import Textbox from "../../slide/Textbox.svelte"
+    import Zoomed from "../../slide/Zoomed.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
 
@@ -26,14 +28,17 @@
 
     $: outputId = getActiveOutputs($outputs, false, true, true)[0]
     $: outputStyle = getCurrentStyle($styles, $outputs[outputId]?.style)
+    $: resolution = getResolution(null, { $outputs, $styles })
 
     let layoutBackgrounds: string[] = []
+    let layoutOverlays: string[] = []
     let layoutAudio: string[] = []
     let layoutMics: { id: string; name: string }[] = []
     let layoutActions: SlideAction[] = []
 
     $: {
         layoutBackgrounds = []
+        layoutOverlays = []
         layoutAudio = []
         layoutMics = []
         layoutActions = []
@@ -42,6 +47,12 @@
             let refs = _show().layouts().ref()
             refs.forEach((slides) => {
                 layoutBackgrounds.push(...slides.map((a) => a.data.background).filter((a) => a !== undefined))
+                layoutOverlays.push(
+                    ...slides
+                        .map((a) => a.data.overlays)
+                        .filter((a) => a !== undefined)
+                        .flat()
+                )
                 layoutAudio.push(
                     ...slides
                         .map((a) => a.data.audio)
@@ -80,6 +91,18 @@
         })
         bgs = sortByName(Object.values(tempBackgrounds))
     } else bgs = []
+
+    let showOverlays: (Overlay & { id: string; count: number })[] = []
+    $: if (layoutOverlays.length) {
+        let tempOverlays: { [key: string]: Overlay & { id: string; count: number } } = {}
+        layoutOverlays.forEach((id) => {
+            if (!$overlays[id]) return
+
+            if (tempOverlays[id]) tempOverlays[id].count++
+            else tempOverlays[id] = { id, ...$overlays[id], count: 1 }
+        })
+        showOverlays = sortByName(Object.values(tempOverlays))
+    } else showOverlays = []
 
     let audio: (Media & { count: number })[] = []
     $: if (layoutAudio.length) {
@@ -169,7 +192,7 @@
 </script>
 
 <div class="main">
-    {#if bgs.length || audio.length || mics.length || actions.length}
+    {#if bgs.length || showOverlays.length || audio.length || mics.length || actions.length}
         {#if bgs.length}
             <!-- <h5><T id="tools.media" /></h5> -->
             {#each bgs as background}
@@ -241,6 +264,41 @@
                     </SelectElem>
                 {/each}
             {/if}
+        {/if}
+
+        {#if showOverlays.length}
+            <h5><T id="preview.overlays" /></h5>
+            {#each showOverlays as overlay}
+                <SelectElem id="overlay" data={overlay.id} draggable>
+                    <div class="media_item item context #show_overlay" class:active={findMatchingOut(overlay.id, $outputs) !== null}>
+                        <HoverButton
+                            style="flex: 2;height: 50px;max-width: 100px;"
+                            icon={findMatchingOut(overlay.id, $outputs) !== null ? "clear" : "play"}
+                            size={3}
+                            on:click={() => {
+                                if ($outLocked) return
+                                const isActive = findMatchingOut(overlay.id, $outputs) !== null
+                                if (!isActive) {
+                                    if (Array.isArray(overlay.actions)) overlay.actions.forEach((a) => runAction(a, { source: "overlay" }))
+                                }
+                                setOutput("overlays", overlay.id, true)
+                            }}
+                        >
+                            <Zoomed {resolution} background={overlay.items?.length ? "var(--primary)" : overlay.color || "var(--primary)"} checkered={!!overlay.items?.length} center>
+                                {#each overlay.items || [] as item}
+                                    <Textbox {item} ref={{ type: "overlay", id: overlay.id }} preview miniPreview />
+                                {/each}
+                            </Zoomed>
+                        </HoverButton>
+
+                        <p data-title={overlay.name}>{overlay.name}</p>
+
+                        {#if overlay.count > 1}
+                            <span style="color: var(--secondary);font-weight: bold;">{overlay.count}</span>
+                        {/if}
+                    </div>
+                </SelectElem>
+            {/each}
         {/if}
 
         {#if audio.length}
@@ -399,5 +457,21 @@
     .main :global(.video),
     .main :global(.main) {
         display: block;
+    }
+
+    /* overlay preview */
+
+    .main :global(.zoomed) {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .main :global(.slide:not(.landscape)) {
+        height: 100%;
+    }
+    .main :global(.slide.landscape) {
+        width: 100%;
     }
 </style>
