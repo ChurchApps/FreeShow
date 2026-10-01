@@ -66,6 +66,10 @@ export class TemplateHelper {
 
         for (let i = 0; i < count; i++) {
             const items = mergeWithTemplate([], this.getItems(), true)
+            // textboxes are the slide content here (keep when output style template is applied)
+            items.forEach((item) => {
+                if ((item.type || "text") === "text") delete item.fromTemplate
+            })
 
             // add overlay items
             if (this.template.settings?.overlayId) {
