@@ -334,6 +334,8 @@ export class VideoPlayer {
         if (!audio) return finish()
 
         const endingTime = this.getEndTime(path, audio.duration)
+        // unknown length (e.g. YouTube livestreams report 0), can't be ending
+        if (!(endingTime > 0) && !force) return finish()
         const offset = ((get(transitionData)?.media?.duration ?? 800) / 1000) * 0.5
         if (audio.currentTime < endingTime - offset && !force) return finish()
 
@@ -645,8 +647,9 @@ export class VideoPlayer {
 
     static getStartTime(path: string, startAt?: number | undefined) {
         const data = this.getGlobalOptions(path)
-        const startTime = Math.max(startAt || 0, data.fromTime || 0)
-        return startTime
+        // online player videos can start at a timestamp from their URL (e.g. ?t=1234)
+        const playerStartTime = get(playerVideos)[path]?.startTime || 0
+        return Math.max(startAt || 0, data.fromTime || 0, playerStartTime)
     }
     static getEndTime(path: string, duration: number) {
         const data = this.getGlobalOptions(path)
