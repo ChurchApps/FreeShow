@@ -1,6 +1,6 @@
 <script lang="ts">
     import { OUTPUT } from "../../../../types/Channels"
-    import { currentWindow, outputs } from "../../../stores"
+    import { currentWindow, outputs, websiteSlideControl } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -10,6 +10,8 @@
     export let zoom: number | undefined = undefined
     export let clickable = false
     export let disablePreview = false
+    export let slideControls = false
+    export let outputId = ""
 
     let webview: any
     export let ratio: number
@@ -143,6 +145,21 @@
                 }
             }
         })
+    }
+
+    // next/previous slide (e.g. a Canva presentation): the output and its previews all get the key
+    let lastSlideControl = 0
+    $: if (slideControls && $websiteSlideControl && $websiteSlideControl.time !== lastSlideControl) sendSlideControl($websiteSlideControl)
+    function sendSlideControl(data: { outputId: string; keyCode: "Right" | "Left"; time: number }) {
+        lastSlideControl = data.time
+        if (!outputId || data.outputId !== outputId || !webview || !webviewReady) return
+
+        try {
+            webview.sendInputEvent({ type: "keyDown", keyCode: data.keyCode })
+            webview.sendInputEvent({ type: "keyUp", keyCode: data.keyCode })
+        } catch (err) {
+            console.debug("Could not send key to website:", err)
+        }
     }
 
     let hover = false
