@@ -1162,6 +1162,8 @@
         "just_one_day": "Just one day",
         "enable_start_date": "Enable start date",
         "disable_navigation": "Disable navigation controls",
+        "website_slide_controls": "Send next/previous slide to website",
+        "refresh_website": "Refresh website",
         "progress_bar": "Progress bar",
         "each_number_once": "Each number only once",
         "towards_result": "Towards result",
