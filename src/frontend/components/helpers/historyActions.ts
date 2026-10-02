@@ -609,6 +609,23 @@ function handleTemplate(obj, data, initializing) {
         if (templateId && !slideId && previousTemplateId !== templateId) _show(data.remember.showId).set({ key: "settings.template", value: slideId ? null : templateId })
 
         const template = clone(get(templates)[templateId])
+
+        // auto generate first empty slide if missing
+        if (template?.settings?.firstSlideTemplate && template?.settings?.createFirstSlide && !slideId) {
+            const layout = data.remember.layout || show.settings?.activeLayout
+            const firstSlide = show.slides[show.layouts?.[layout]?.slides?.[0]?.id]
+            const firstSlideHasText = firstSlide?.items?.some((item) => getItemText(item).trim())
+
+            if (!firstSlide || firstSlideHasText) {
+                const id = uid()
+                show.slides[id] = { ...EMPTY_SHOW_SLIDE, globalGroup: "intro", settings: { template: template.settings.firstSlideTemplate } }
+                if (!show.layouts[layout]) show.layouts[layout] = { name: "", notes: "", slides: [] }
+                show.layouts[layout].slides.unshift({ id })
+                slides = show.slides
+                ref = _show(data.remember.showId).layouts([layout]).ref()[0] || []
+            }
+        }
+
         const maxLines = template?.settings?.maxLinesPerSlide
         if (maxLines !== "0" && !isNaN(Number(maxLines))) {
             slides = splitToMaxLines(Number(maxLines))
