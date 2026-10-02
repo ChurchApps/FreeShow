@@ -1,11 +1,11 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
+import type { Project, ProjectShowRef } from "../../../types/Projects"
+import { similarity } from "../../converters/txt"
 import { activeEdit, activeProject, activeShow, projects, projectView, saved, showRecentlyUsedProjects, shows, showsCache } from "../../stores"
+import { generateScriptureShowFromReference } from "../drawer/bible/scripture"
 import { keysToID, sortByTimeNew } from "../helpers/array"
 import { history } from "../helpers/history"
-import { generateScriptureShowFromReference } from "../drawer/bible/scripture"
-import type { ProjectShowRef } from "../../../types/Projects"
-import { uid } from "uid"
-import { similarity } from "../../converters/txt"
 
 export function openProject(id: string, openFirstItem: boolean = true) {
     projectView.set(false)
@@ -152,4 +152,19 @@ async function textToProjectItems(text: string) {
     // text.split("\n\n").forEach((part) =>
 
     return items
+}
+
+export function isProjectLinked(project?: Project | null, projectId?: string, contentProviderDataVal?: any): boolean {
+    if (!project && !projectId) return false
+    if (project?.origin) return true
+
+    // pre 1.6.6 backwards compatibility for projects without "origin"
+    const id = projectId || project?.id
+    if (id) {
+        if (id.startsWith("onstage_")) return true
+        const pcoPlans = contentProviderDataVal?.planningcenter?.availablePlans as { planId: string }[] | undefined
+        if (pcoPlans?.some((p) => p.planId === id)) return true
+    }
+
+    return false
 }

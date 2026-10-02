@@ -508,7 +508,8 @@ export const mainResponses: MainResponses = {
                 created: currentProject.created,
                 used: Date.now(), // show on top in last used list
                 parent: folderId || "/",
-                shows: currentProject.items || []
+                shows: currentProject.items || [],
+                origin
             }
             const project = createProviderProject(data.providerId, projectBase)
 

@@ -18,6 +18,7 @@ export interface Project {
     sectionsCollapsed?: boolean // should all project sections be collapsed when not active?
     sectionsLocked?: boolean // if true, sections cannot be edited or removed
     sourcePath?: string // used to save directly to file import location
+    origin?: string // provider origin e.g. "pco" | "churchApps"
 }
 
 export interface ProjectShowRef extends ShowRef {
