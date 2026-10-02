@@ -39,6 +39,7 @@ export type VideoAudioData = {
     audio: HTMLAudioElement | VirtualAudioElement
     linkedOutputIds: string[]
     type?: "background" | "item"
+    isOnline?: boolean
     replayGainMultiplier?: number
     softLoop?: number
     loop?: boolean
@@ -132,7 +133,7 @@ export class VideoPlayer {
         const toTime = this.getEndTime(id, audio.duration)
 
         playingVideos.update((a) => {
-            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background", softLoop, loop, fromTime, toTime })
+            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background", isOnline: options.isOnline, softLoop, loop, fromTime, toTime })
             return a
         })
 
@@ -752,18 +753,27 @@ export class VideoPlayer {
                 // this also accounts for clearing player videos
                 this.checkIfEnding(video.path, outputIds)
 
+                let audibleOnlineOutputId: string | null = null
+                if (video.isOnline) {
+                    const unmutedOutputIds = outputIds.filter((outId) => !this.isOutputMuted(outId))
+                    // prioritize not invisible outputs
+                    audibleOnlineOutputId = unmutedOutputIds.find((outId) => !get(outputs)[outId]?.invisible) || unmutedOutputIds[0] || null
+                }
+
                 outputIds.forEach((outputId) => {
                     const id = `${video.path}_${outputId}`
                     const softLoop = video.softLoop || 0
                     const softLoopOpacity = this.handleSoftLoop(video, video.audio, softLoop, video.loop || false)
                     const activeAudio = video.audio
+                    const outputMuted = this.isOutputMuted(outputId)
+                    const isMuted = video.isOnline ? activeAudio.muted || outputId !== audibleOnlineOutputId : activeAudio.muted || outputMuted
 
                     a[id] = {
                         currentTime: Number.isFinite(activeAudio.currentTime) ? activeAudio.currentTime : 0,
                         duration: Number.isFinite(activeAudio.duration) && activeAudio.duration > 0 ? activeAudio.duration : 0,
                         paused: activeAudio.paused,
                         loop: video.loop || false,
-                        muted: activeAudio.muted || this.isOutputMuted(outputId),
+                        muted: isMuted,
                         softLoop,
                         softLoopOpacity,
                         type: video.type || "background",
