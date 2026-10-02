@@ -1,3 +1,4 @@
+import { getSlideWebsites, reloadWebsites } from "../helpers/websiteControls"
 import { get } from "svelte/store"
 import { uid } from "uid"
 import { EXPORT, OUTPUT } from "../../../types/Channels"
@@ -462,6 +463,10 @@ const clickActions = {
             duplicate({ id: "stage_item", data: get(activeStage) })
             return
         }
+    },
+    refresh_website: (obj: ObjData) => {
+        const showId = get(activeShow)?.id
+        if (showId) reloadWebsites(getSlideWebsites(showId, obj.sel?.data?.[0]?.index))
     },
     make_unique: (obj: ObjData) => {
         const ref = getLayoutRef()

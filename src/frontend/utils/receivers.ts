@@ -64,6 +64,7 @@ import {
     transitionData,
     variables,
     visualizerData,
+    websiteReload,
     websiteSlideControl
 } from "../stores"
 import { newToast } from "./common"
@@ -186,6 +187,7 @@ const receiveOUTPUTasMAIN: any = {
 
 let previousOutputs = ""
 export const receiveOUTPUTasOUTPUT: any = {
+    WEBSITE_RELOAD: (data: { src: string }) => websiteReload.set({ ...data, time: Date.now() }),
     WEBSITE_KEY: (data: { outputId: string; keyCode: "Right" | "Left" }) => websiteSlideControl.set({ ...data, time: Date.now() }),
     OUTPUTS: (a: any) => {
         // output.ts - only current output data is sent

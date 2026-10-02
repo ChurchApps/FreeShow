@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { OUTPUT } from "../../../types/Channels"
 import type { Item } from "../../../types/Show"
-import { outputs, overlays, showsCache, websiteSlideControl } from "../../stores"
+import { outputs, overlays, showsCache, websiteReload, websiteSlideControl } from "../../stores"
 import { send } from "../../utils/request"
 import { _show } from "./shows"
 
@@ -40,4 +40,27 @@ function getLiveItems(outputId: string): Item[] {
     ;(out.overlays || []).forEach((overlayId) => items.push(...(get(overlays)[overlayId]?.items || [])))
 
     return items
+}
+
+// "Refresh website" (slide context menu)
+export function getSlideWebsites(showId: string, layoutIndex: number): string[] {
+    const ref = _show(showId).layouts("active").ref()[0] || []
+    const slideId = ref[layoutIndex]?.id
+    const items: Item[] = get(showsCache)[showId]?.slides?.[slideId]?.items || []
+    return items.filter((item) => item.type === "web" && item.web?.src).map((item) => formatWebsiteUrl(item.web.src))
+}
+
+export function reloadWebsites(sources: string[]) {
+    sources.forEach((src) => {
+        send(OUTPUT, ["WEBSITE_RELOAD"], { src })
+        websiteReload.set({ src, time: Date.now() })
+    })
+}
+
+// same formatting as the website item uses for its url
+export function formatWebsiteUrl(src: string) {
+    if (!src) return ""
+    src = src.replaceAll("&amp;", "&").replaceAll("{", "%7B").replaceAll("}", "%7D")
+    if (!src.includes("://")) src = "http://" + src
+    return src
 }

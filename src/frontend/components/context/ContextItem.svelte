@@ -1,7 +1,48 @@
 <script lang="ts">
+    import { getSlideWebsites } from "../helpers/websiteControls"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { cameraManager } from "../../media/cameraManager"
-    import { actions, activeEdit, activeProject, activeRecording, activeShow, categories, colorbars, dictionary, disabledServers, drawerTabsData, effects, effectsLibrary, events, forceClock, globalTags, livePrepare, media, mediaFolders, os, outputs, overlayCategories, overlays, projects, redoHistory, scenes, scriptures, selected, shows, showsCache, slideDeleteHighlight, slidesOptions, special, spellcheck, stageShows, styles, templateCategories, timers, topContextActive, undoHistory } from "../../stores"
+    import {
+        actions,
+        activeEdit,
+        activeProject,
+        activeRecording,
+        activeShow,
+        categories,
+        colorbars,
+        dictionary,
+        disabledServers,
+        drawerTabsData,
+        effects,
+        effectsLibrary,
+        events,
+        forceClock,
+        globalTags,
+        livePrepare,
+        media,
+        mediaFolders,
+        os,
+        outputs,
+        overlayCategories,
+        overlays,
+        projects,
+        redoHistory,
+        scenes,
+        scriptures,
+        selected,
+        shows,
+        showsCache,
+        slideDeleteHighlight,
+        slidesOptions,
+        special,
+        spellcheck,
+        stageShows,
+        styles,
+        templateCategories,
+        timers,
+        topContextActive,
+        undoHistory
+    } from "../../stores"
     import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { keysToID } from "../helpers/array"
@@ -170,6 +211,10 @@
                 // let ref = getLayoutRef()
                 // enabled = ref[$selected.data[0]?.index]?.data?.transition || false
             }
+        },
+        refresh_website: () => {
+            // only slides with a website
+            hide = $selected.id !== "slide" || !$activeShow?.id || !getSlideWebsites($activeShow.id, $selected.data?.[0]?.index).length
         },
         make_unique: () => {
             if ($selected.id !== "slide" || !$selected.data?.length) return
