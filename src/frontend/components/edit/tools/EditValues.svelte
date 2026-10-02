@@ -44,6 +44,8 @@
         let value: any = null
         if (input.id === "filter" || input.id === "backdrop-filter") {
             value = getFilters(item[input.id] || getStyles(item.style)[input.id])?.[input.key || ""] || input.values.value || input.value
+        } else if (input.id === "nowrap") {
+            value = styles["white-space"]?.includes("nowrap") || false
         } else if (input.key) {
             value = styles[input.key || ""]
             if (input.type === "checkbox" && (input.key === "box-shadow" || input.key === "text-shadow")) {
@@ -65,7 +67,7 @@
             if (parts.length > 1) value = item[parts[0]]?.[parts[1]]
             else value = item[input.id]
         }
-        // if (value === undefined) value = input.values.value
+        if (value === undefined && input.values?.value !== undefined) value = input.values.value
 
         if (input.type === "number") {
             if (value === "") value = undefined
