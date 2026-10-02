@@ -218,8 +218,9 @@
     }
 
     let profile = getAccess("shows")
+    $: isFake = layoutSlide?.id === "fake_empty"
     $: isGroupLocked = isSlideLocked(showId, layoutSlide.id, show)
-    $: isLocked = show?.locked || isGroupLocked || profile.global === "read" || profile[show?.category || ""] === "read"
+    $: isLocked = isFake || show?.locked || isGroupLocked || profile.global === "read" || profile[show?.category || ""] === "read"
 
     // correct view order based on arranged order in Items.svelte (?.reverse())
     $: itemsList = clone(slide.items) || []

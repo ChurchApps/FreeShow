@@ -1,7 +1,8 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { LayoutRef } from "../../../types/Show"
-import { activeFocus, activeShow, focusMode, showsCache } from "../../stores"
+import { activeFocus, activeShow, focusMode, showsCache, special } from "../../stores"
+import { getSlideText } from "../edit/scripts/textStyle"
 import { clone } from "./array"
 import { addToPos } from "./mover"
 // import { loadShows } from "./setShow"
@@ -77,6 +78,16 @@ export function _show(id = "active") {
                 if (!shows[id]) return []
                 if (!slideIds.length && shows[id].slides) slideIds = Object.keys(shows[id].slides)
                 slideIds.forEach((slideId) => {
+                    if (slideId === "fake_empty") {
+                        const fakeSlide: any = { group: null, color: null, settings: {}, notes: "", items: [] }
+                        if (key) a.push(fakeSlide[key])
+                        else {
+                            if (addId) fakeSlide.id = "fake_empty"
+                            a.push(fakeSlide)
+                        }
+                        return
+                    }
+
                     const slide = clone(shows[id]?.slides?.[slideId])
                     if (!slide) return
 
@@ -443,6 +454,20 @@ export function _show(id = "active") {
                                 })
                             }
                         })
+
+                        if (get(special).alwaysPlaceEmptySlideFirst && a[i].length) {
+                            const firstSlide = shows[id]?.slides?.[a[i][0]?.id]
+                            if (firstSlide && getSlideText(firstSlide).length) {
+                                a[i].unshift({ type: "parent", layoutId, index: -1, layoutIndex: 0, id: "fake_empty", children: [], data: { id: "fake_empty" } })
+                                // Re-index layoutIndex for subsequent slides
+                                for (let k = 1; k < a[i].length; k++) {
+                                    a[i][k].layoutIndex = k
+                                    if (a[i][k].type === "child" && a[i][k].parent) {
+                                        a[i][k].parent!.layoutIndex = a[i][k].parent!.index === -1 ? 0 : a[i].findIndex((item) => item.id === a[i][k].parent?.id && item.type === "parent")
+                                    }
+                                }
+                            }
+                        }
                     })
                 }
                 return a

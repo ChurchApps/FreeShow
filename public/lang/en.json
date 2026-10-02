@@ -1401,6 +1401,7 @@
         "group_numbers": "Group numbers",
         "auto_group_numbers": "Auto assign group numbers",
         "shortcuts_on_slides": "Display shortcuts on slides",
+        "always_place_empty_slide_first": "Always place empty slide first",
         "transparent_slides": "Transparent slide preview",
         "style_template_preview": "Use style template as slide preview",
         "full_colors": "High contrast colors",
