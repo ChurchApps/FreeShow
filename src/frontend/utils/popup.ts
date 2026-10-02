@@ -10,6 +10,7 @@ import Alert from "../components/main/popups/Alert.svelte"
 import AspectRatio from "../components/main/popups/AspectRatio.svelte"
 import AudioEffect from "../components/main/popups/AudioEffect.svelte"
 import AudioStream from "../components/main/popups/AudioStream.svelte"
+import CanvaLinkPopup from "../components/main/popups/CanvaLinkPopup.svelte"
 import CategoryAction from "../components/main/popups/CategoryAction.svelte"
 import ChangeIcon from "../components/main/popups/ChangeIcon.svelte"
 import ChangeOutputValues from "../components/main/popups/ChangeOutputValues.svelte"
@@ -121,6 +122,7 @@ export const popups: { [key in Popups]: ComponentType } = {
     choose_chord: ChooseChord,
     choose_media_input: ChooseMediaInput,
     player: CreatePlayer,
+    canva_link: CanvaLinkPopup,
     rename: Rename,
     color: Color,
     color_gradient: ColorGradient,

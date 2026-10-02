@@ -409,6 +409,7 @@ export type Popups =
     | "manage_metadata"
     | "manage_dynamic_values"
     | "player"
+    | "canva_link"
     | "template_style_overrides"
     | "regex_manager"
     | "rename"

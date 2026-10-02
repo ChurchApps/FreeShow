@@ -187,6 +187,18 @@
         "transition": "Remove transition"
     },
     "media": {
+        "canva_link_title": "Present a Canva design",
+        "canva_link_info": "Shows your design live, including videos and animations. No Canva account or API key needed. Next/previous slide (keyboard, clicker or remote) moves through the design.",
+        "canva_link_step_1": "In Canva, open your design and click Share",
+        "canva_link_step_2": "Choose Embed (or set access to \"Anyone with the link\")",
+        "canva_link_step_3": "Copy the Smart embed link (or the view link) and paste it here",
+        "canva_link": "Canva link",
+        "canva_link_add": "Add as show",
+        "canva_link_invalid": "This does not look like a Canva design link.",
+        "canva_link_edit": "This is an edit link. Use the Smart embed link or a view link instead.",
+        "canva_link_short": "Short links are not supported. Open it in a browser and copy the full link.",
+        "canva_connect_title": "Or connect your Canva account",
+        "canva_connect_info": "Browse your designs and import each slide as an image. Requires your own Canva API key.",
         "_loop": "Loop",
         "soft_loop": "Soft loop",
         "auto_next": "Auto play next",
@@ -476,6 +488,7 @@
         "outro": "Outro"
     },
     "popup": {
+        "canva_link": "Add Canva presentation",
         "show": "New show",
         "select_show": "Select show",
         "select_template": "Select template",

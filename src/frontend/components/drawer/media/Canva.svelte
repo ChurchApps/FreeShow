@@ -7,6 +7,7 @@
     import T from "../../helpers/T.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
+    import CanvaLink from "./CanvaLink.svelte"
     import ContentLibraryBrowser from "./ContentLibraryBrowser.svelte"
     import CLogo from "./CLogo.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
@@ -83,18 +84,32 @@
 {:else}
     <div class="gridgap">
         <Center style="flex-direction: column;">
-            <Link url="https://freeshow.app/docs/media#connecting-to-canva">
-                <T id="main.docs" />
-                <Icon id="launch" white />
-            </Link>
+            <div class="options">
+                <!-- live presentation from a public link (no account needed) -->
+                <section class="card">
+                    <CanvaLink />
+                </section>
 
-            <MaterialTextInput label="Client ID" value={canvaClientId} on:change={(e) => (canvaClientId = e.detail)} style="margin-top: 20px;width: 100%;max-width: 250px;" pasteBtn />
-            <MaterialTextInput label="Client secret" value={canvaClientSecret} disabled={!canvaClientId} type="password" on:change={(e) => (canvaClientSecret = e.detail)} style="width: 100%;max-width: 250px;" pasteBtn />
+                <!-- import slides as images through the Canva API -->
+                <section class="card account">
+                    <div class="title">
+                        <p><T id="media.canva_connect_title" /></p>
+                        <Link url="https://freeshow.app/docs/media#connecting-to-canva">
+                            <T id="main.docs" />
+                            <Icon id="launch" white />
+                        </Link>
+                    </div>
+                    <p class="info"><T id="media.canva_connect_info" /></p>
 
-            <MaterialButton variant="outlined" disabled={!canvaClientId || !canvaClientSecret} on:click={handleConnect} style="margin-top: 10px;width: 100%;max-width: 250px;">
-                <CLogo />
-                <T id="settings.connect_to" replace={["Canva"]} />
-            </MaterialButton>
+                    <MaterialTextInput label="Client ID" value={canvaClientId} on:change={(e) => (canvaClientId = e.detail)} pasteBtn />
+                    <MaterialTextInput label="Client secret" value={canvaClientSecret} disabled={!canvaClientId} type="password" on:change={(e) => (canvaClientSecret = e.detail)} pasteBtn />
+
+                    <MaterialButton variant="outlined" disabled={!canvaClientId || !canvaClientSecret} on:click={handleConnect}>
+                        <CLogo />
+                        <T id="settings.connect_to" replace={["Canva"]} />
+                    </MaterialButton>
+                </section>
+            </div>
 
             <!-- <p style="font-size: 0.8em;color: rgba(255 255 255 / 0.2);">Powered by Canva</p> -->
         </Center>
@@ -102,6 +117,43 @@
 {/if}
 
 <style>
+    .options {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        max-width: 420px;
+        padding: 15px 0;
+    }
+
+    .card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 14px;
+        border-radius: 8px;
+        background-color: var(--primary-darkest);
+        border: 1px solid var(--primary-lighter);
+    }
+
+    .card.account {
+        opacity: 0.85;
+    }
+
+    .title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        font-weight: 600;
+    }
+
+    .info {
+        opacity: 0.7;
+        font-size: 0.85em;
+        line-height: 1.4;
+    }
+
     .gridgap {
         display: flex;
         flex-wrap: wrap;

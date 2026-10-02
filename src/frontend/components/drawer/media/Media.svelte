@@ -664,6 +664,13 @@
                 </MaterialButton>
 
                 <div class="divider"></div>
+            {:else if onlineTab === "canva"}
+                <MaterialButton title="popup.canva_link" on:click={() => activePopup.set("canva_link")}>
+                    <Icon size={1.2} id="add" white />
+                    {#if !$labelsDisabled}<T id="media.canva_link" />{/if}
+                </MaterialButton>
+
+                <div class="divider"></div>
             {/if}
 
             <MaterialButton
