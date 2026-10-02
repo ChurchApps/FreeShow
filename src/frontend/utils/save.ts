@@ -116,7 +116,7 @@ import {
 } from "../stores"
 import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
 import { audioStreams, companion } from "./../stores"
-import { socketDisconnect, syncWithCloud } from "./cloudSync"
+import { isSyncing, socketDisconnect, syncWithCloud } from "./cloudSync"
 import { newToast, setStatus, startAutosave } from "./common"
 import { syncDrive } from "./drive"
 import { autoDisableRemoteController, stopRemoteController } from "./remoteController"
@@ -309,8 +309,8 @@ export async function saveComplete({ closeWhenFinished, customTriggers }: { clos
 
         let shouldSync = true
         if (customTriggers?.autosave) {
-            // don't sync if already saved or if a slide is currently outputted
-            if (alreadySaved || !isOutCleared("slide")) shouldSync = false
+            // don't sync if already saved or if a slide is currently outputted or if cloud sync is in progress
+            if (alreadySaved || !isOutCleared("slide") || isSyncing) shouldSync = false
         }
 
         if (shouldSync) await syncWithCloud(false, closeWhenFinished)

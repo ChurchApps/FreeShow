@@ -12,16 +12,23 @@ import { getSyncedSettings, save } from "./save"
 import { SocketHelper } from "./SocketHelper"
 import { contentProviderSync } from "./startup"
 
-let startupSyncDone = false
+let pendingSync: { startup: boolean } | null = null
+function queueProviderSync(startup: boolean) {
+    pendingSync = { startup }
+}
 function syncFinished() {
-    if (!startupSyncDone) {
-        startupSyncDone = true
-        // sync providers after startup cloud sync has finished
-        contentProviderSync(true, true)
-    }
+    if (!pendingSync) return
+
+    const { startup } = pendingSync
+    pendingSync = null
+
+    // sync providers after cloud sync has finished
+    contentProviderSync(startup, true)
 }
 
 export async function setupCloudSync(auto: boolean = false) {
+    queueProviderSync(auto)
+
     if (get(cloudSyncData).enabled === false) {
         syncFinished()
         return
@@ -38,7 +45,7 @@ export async function setupCloudSync(auto: boolean = false) {
                 return
             }
         }
-        syncWithCloud()
+        await syncWithCloud()
         return
     }
     if (!(await requestMain(Main.CAN_SYNC))) {
@@ -104,7 +111,7 @@ export async function chooseTeam(team: { id: string; churchId: string; name: str
     syncWithCloud(true)
 }
 
-let isSyncing = false
+export let isSyncing = false
 // let lastSync = 0
 export async function syncWithCloud(initialize: boolean = false, isClosing: boolean = false) {
     if (!get(providerConnections).churchApps) {
@@ -126,13 +133,16 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
 
     if (initialize) {
         // save & backup
-        save(false, { autosave: true, backup: true, isAutoBackup: true })
+        save(false, { backup: true, isAutoBackup: true })
         syncFinished()
         return false
     }
 
+    isSyncing = true
+    setStatus("syncing")
+
     // save any unsaved local changes before syncing with cloud
-    if (!get(saved)) save(false, { autosave: true })
+    if (!get(saved)) save(false)
 
     if (method === "replace") {
         // reset cached data
@@ -145,9 +155,6 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
     }
 
     if (!isClosing) socketConnect()
-
-    isSyncing = true
-    setStatus("syncing")
 
     const timeout = 5 * 60 * 1000 // 5 minutes
     const status = await requestMain(Main.CLOUD_SYNC, { id: data.id as any, churchId: data.team.churchId, teamId: data.team.id, method }, () => {}, timeout)
@@ -175,7 +182,10 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
 
     setStatus("synced", 3)
 
-    if (isClosing) return true
+    if (isClosing) {
+        syncFinished()
+        return true
+    }
 
     // reset cached shows that were downloaded from cloud
     const downloaded = status.downloadedShowIds || []

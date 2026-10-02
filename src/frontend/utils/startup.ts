@@ -139,8 +139,8 @@ const lastProviderSyncs: Partial<Record<ContentProviderId, number>> = {}
 export function contentProviderSync(startup = false, remainingOnly = false) {
     const isCloudSyncEnabled = get(cloudSyncData).enabled && get(cloudSyncData).id
 
-    if (startup && isCloudSyncEnabled && !remainingOnly) {
-        setupCloudSync(true)
+    if (isCloudSyncEnabled && !remainingOnly) {
+        setupCloudSync(startup)
         return
     }
 
