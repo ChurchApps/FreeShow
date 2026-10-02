@@ -943,6 +943,9 @@ const clickActions = {
     newSlide: () => {
         history({ id: "SLIDES" })
     },
+    convert_to_regular: () => {
+        history({ id: "SLIDES", newData: { index: 0, replace: { parent: true, items: [], globalGroup: "intro" } }, location: { page: "show" } })
+    },
     newCategory: (obj: ObjData) => {
         const classList = obj.contextElem?.classList?.value || ""
         const index = classList.indexOf("#category")

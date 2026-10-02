@@ -130,6 +130,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     newSlide: { label: "new.slide", icon: "add", iconColor: "var(--secondary)" },
     // newGroup: { label: "context.createNew", icon: "add", iconColor: "var(--secondary)" },
     remove_template: { label: "actions.remove_template_from_show", icon: "remove_circle", iconColor: "#ff6b54" },
+    convert_to_regular: { label: "interaction.generate_slide", icon: "slide" },
     // SLIDE VIEWS
     view_grid: { label: "show.grid", icon: "grid" },
     view_simple: { label: "show.simple", icon: "simple" },
@@ -377,6 +378,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "copy", "paste"
     slide: ["GROUP_edit", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPARATOR", "duplicate", "make_unique", "GROUP_slide_remove"],
     slideChild: ["GROUP_edit", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPARATOR", "duplicate", "make_unique", "GROUP_slide_remove"],
+    slideFake: ["convert_to_regular"],
     slideFocus: ["editSlideText"],
     group: ["GROUP_rename_recolor", "lock_group", "SEPARATOR", "selectAll", "SEPARATOR", "duplicate", "delete_group"],
     global_group: ["manage_groups"],

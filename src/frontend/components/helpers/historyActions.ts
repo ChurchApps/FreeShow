@@ -572,7 +572,7 @@ function createNewSlide(showId, _layout, ref, data, index) {
     }
 
     const slide: Slide = clone({ ...EMPTY_SHOW_SLIDE, items })
-    if (isParent) slide.globalGroup = "verse"
+    if (isParent) slide.globalGroup = data.replace?.globalGroup || "verse"
     else slide.group = null
 
     return { id, ...slide }
