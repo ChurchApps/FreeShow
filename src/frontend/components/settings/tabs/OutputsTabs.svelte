@@ -4,7 +4,7 @@
     import type { Output } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { checkPrimaryOutputRouting, createOutputAudioChannel } from "../../../audio/routing/audioRoutingInit"
-    import { activeTriggerFunction, currentOutputSettings, outputs, popupData, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activeTriggerFunction, currentOutputSettings, os, outputs, popupData, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { waitForPopupData } from "../../../utils/popup"
@@ -69,7 +69,9 @@
             }
 
             const captureTypeKeys = ["blackmagic", "ndi", "omt", "webrtc", "rtmp"]
-            if (out.enabled && (captureTypeKeys.includes(key) || key === "transparent" || key === "invisible")) {
+            // macOS: always on top outputs are a different window type (panel)
+            const macWindowType = key === "alwaysOnTop" && $os.platform === "darwin"
+            if (out.enabled && (captureTypeKeys.includes(key) || key === "transparent" || key === "invisible" || macWindowType)) {
                 if (value && captureTypeKeys.includes(key)) newToast("toast.output_capture_enabled")
                 // Recreate window for options fixed at creation (see Outputs.svelte)
                 send(OUTPUT, ["CREATE"], { id: outputId, ...out })

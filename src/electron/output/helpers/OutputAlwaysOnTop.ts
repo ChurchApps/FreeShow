@@ -20,6 +20,12 @@ export function setOutputAlwaysOnTop(window: BrowserWindow, value: boolean) {
     }
 }
 
+// macOS: 'panel' type allows overlaying over fullscreen apps without switching Spaces,
+// which avoids the bug where setVisibleOnAllWorkspaces hides the app's Dock icon.
+export function useOutputPanel(alwaysOnTop: boolean | undefined, osr: boolean) {
+    return process.platform === "darwin" && !!alwaysOnTop && !osr
+}
+
 // Windows only: use a helper executable to exclude the window from "Aero Peek" via DWM
 // this prevents the output from being hidden when the user peeks at the taskbar
 function setExcludedFromAeroPeek(handle: Buffer, state: boolean) {
