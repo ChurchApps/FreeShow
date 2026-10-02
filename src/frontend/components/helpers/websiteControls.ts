@@ -7,6 +7,12 @@ import { _show } from "./shows"
 
 type KeyCode = "Right" | "Left"
 
+// every key press/reload is a new event (even within the same millisecond)
+let websiteEventId = 0
+export function nextWebsiteEventId() {
+    return ++websiteEventId
+}
+
 // Website items with "Send next/previous slide to website" (e.g. a Canva presentation)
 // take next/previous slide (keyboard, clickers, remote, API) while they are live on an output.
 // Returns true if a website took it.
@@ -21,12 +27,12 @@ export function sendSlideControlToWebsite(outputId: string, direction: "next" | 
 export function sendWebsiteKey(outputId: string, keyCode: KeyCode, src = "") {
     const data = { outputId, keyCode, ...(src ? { src } : {}) }
     send(OUTPUT, ["WEBSITE_KEY"], data)
-    websiteSlideControl.set({ ...data, time: Date.now() })
+    websiteSlideControl.set({ ...data, time: nextWebsiteEventId() })
 }
 
 export function reloadWebsite(outputId: string, src: string) {
     send(OUTPUT, ["WEBSITE_RELOAD"], { outputId, src })
-    websiteReload.set({ outputId, src, time: Date.now() })
+    websiteReload.set({ outputId, src, time: nextWebsiteEventId() })
 }
 
 // website items live on an output (current slide & overlays)

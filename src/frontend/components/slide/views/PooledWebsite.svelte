@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onDestroy } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
     import { currentWindow, websiteReload, websiteSlideControl } from "../../../stores"
     import { send } from "../../../utils/request"
@@ -20,13 +20,19 @@
 
     let rect = { left: 0, top: 0, width: 0, height: 0 }
     let frame = 0
-    onMount(() => {
+    // follow the placeholder (slide transitions, resizing) only while shown
+    $: if (visible && !frame) followPlaceholder()
+    function followPlaceholder() {
         const update = () => {
+            if (!website.element) {
+                frame = 0
+                return
+            }
             updateRect()
             frame = requestAnimationFrame(update)
         }
         update()
-    })
+    }
     onDestroy(() => cancelAnimationFrame(frame))
 
     function updateRect() {

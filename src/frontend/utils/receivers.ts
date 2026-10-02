@@ -1,3 +1,4 @@
+import { nextWebsiteEventId } from "../components/helpers/websiteControls"
 import { get } from "svelte/store"
 import { CLOUD, CONTROLLER, NDI, OMT, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
@@ -187,8 +188,8 @@ const receiveOUTPUTasMAIN: any = {
 
 let previousOutputs = ""
 export const receiveOUTPUTasOUTPUT: any = {
-    WEBSITE_RELOAD: (data: { outputId: string; src: string }) => websiteReload.set({ ...data, time: Date.now() }),
-    WEBSITE_KEY: (data: { outputId: string; keyCode: "Right" | "Left"; src?: string }) => websiteSlideControl.set({ ...data, time: Date.now() }),
+    WEBSITE_RELOAD: (data: { outputId: string; src: string }) => websiteReload.set({ ...data, time: nextWebsiteEventId() }),
+    WEBSITE_KEY: (data: { outputId: string; keyCode: "Right" | "Left"; src?: string }) => websiteSlideControl.set({ ...data, time: nextWebsiteEventId() }),
     OUTPUTS: (a: any) => {
         // output.ts - only current output data is sent
         const id = Object.keys(a)[0]
