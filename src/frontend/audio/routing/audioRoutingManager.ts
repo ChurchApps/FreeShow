@@ -396,6 +396,9 @@ export class AudioRoutingManager {
         const isNew = !gainNode
         if (!gainNode) {
             gainNode = this.audioCtx!.createGain()
+            gainNode.channelCount = 2
+            gainNode.channelCountMode = "explicit"
+            gainNode.channelInterpretation = "discrete"
             this.gainNodes.set(id, gainNode)
         }
         this.applyGain(id, gainNode, isNew)
@@ -606,17 +609,52 @@ export class AudioRoutingManager {
 
         for (const [node, inputIds] of nodeToIds.entries()) {
             this.disconnect(node)
-            const targetIds = new Set<string>()
+            const allConns: Connection[] = []
 
             for (const inputId of inputIds) {
                 AudioInputCapture.getInstance().captureInput(inputId, node)
-                const conns = this.getConnectionsFrom(inputId)
-                for (let i = 0; i < conns.length; i++) targetIds.add(conns[i])
+                const conns = this.getInputConnectionsFrom(inputId)
+                for (let i = 0; i < conns.length; i++) allConns.push(conns[i])
             }
 
-            for (const id of targetIds) {
-                const gainNode = this.getGainNode(id)
-                if (gainNode) this.connect(node, gainNode)
+            if (!allConns.length || !this.audioCtx) continue
+
+            const connsByTo = new Map<string, Connection[]>()
+            let maxFromChannel = -1
+
+            for (let i = 0; i < allConns.length; i++) {
+                const c = allConns[i]
+                let list = connsByTo.get(c.to)
+                if (!list) connsByTo.set(c.to, (list = []))
+                list.push(c)
+
+                const ch = c.channelIndex ?? (c as any).fromChannelIndex
+                if (ch !== undefined && ch > maxFromChannel) maxFromChannel = ch
+            }
+
+            let splitter: ChannelSplitterNode | null = null
+            if (maxFromChannel >= 0) {
+                const count = Math.max(maxFromChannel + 1, (node as any).channelCount || 2)
+                splitter = this.audioCtx.createChannelSplitter(count)
+                node.connect(splitter)
+            }
+
+            for (const [targetId, targetConns] of connsByTo.entries()) {
+                const gainNode = this.getGainNode(targetId)
+                if (!gainNode) continue
+
+                const specificConns = targetConns.filter((c) => (c.channelIndex ?? (c as any).fromChannelIndex) !== undefined)
+
+                if (specificConns.length > 0 && splitter) {
+                    const channels = specificConns.map((c) => (c.channelIndex ?? (c as any).fromChannelIndex)!)
+                    const merger = this.audioCtx.createChannelMerger(Math.max(2, Math.max(...channels) + 1))
+                    for (let i = 0; i < channels.length; i++) {
+                        splitter.connect(merger, channels[i], channels[i])
+                    }
+                    this.connect(merger, gainNode)
+                } else {
+                    this.connect(node, gainNode)
+                }
             }
         }
     }
@@ -627,6 +665,9 @@ export class AudioRoutingManager {
         let node = this.gainNodes.get(id)
         if (!node) {
             node = this.audioCtx.createGain()
+            node.channelCount = 2
+            node.channelCountMode = "explicit"
+            node.channelInterpretation = "discrete"
             this.gainNodes.set(id, node)
             this.applyGain(id, node, true)
         }
@@ -634,15 +675,15 @@ export class AudioRoutingManager {
         return node
     }
 
-    private getConnectionsFrom(sourceId: string): string[] {
+    private getInputConnectionsFrom(sourceId: string): Connection[] {
         const inactive = this.getInactiveChannelIds()
         if (inactive.has(sourceId)) return []
 
-        const res: string[] = []
+        const res: Connection[] = []
         const conns = this.config.connections || []
         for (let i = 0; i < conns.length; i++) {
             const c = conns[i]
-            if (c.from === sourceId && !inactive.has(c.to) && c.type !== "sidechain") res.push(c.to)
+            if (c.from === sourceId && !inactive.has(c.to) && c.type !== "sidechain") res.push(c)
         }
         return res
     }
@@ -661,13 +702,7 @@ export class AudioRoutingManager {
         if (nodes.has(node)) return
 
         nodes.add(node)
-        AudioInputCapture.getInstance().captureInput(inputId, node)
-
-        const conns = this.getConnectionsFrom(inputId)
-        for (let i = 0; i < conns.length; i++) {
-            const gainNode = this.getGainNode(conns[i])
-            if (gainNode) this.connect(node, gainNode)
-        }
+        this.routeInputNodes()
     }
 
     unregisterInputNode(inputId: string, node?: AudioNode) {

@@ -218,8 +218,9 @@
     }
 
     let profile = getAccess("shows")
+    $: isFake = layoutSlide?.id === "fake_empty"
     $: isGroupLocked = isSlideLocked(showId, layoutSlide.id, show)
-    $: isLocked = show?.locked || isGroupLocked || profile.global === "read" || profile[show?.category || ""] === "read"
+    $: isLocked = isFake || show?.locked || isGroupLocked || profile.global === "read" || profile[show?.category || ""] === "read"
 
     // correct view order based on arranged order in Items.svelte (?.reverse())
     $: itemsList = clone(slide.items) || []
@@ -284,7 +285,7 @@
         <Actions {slide} {columns} {index} actions={layoutSlide.actions || {}} />
     {/if}
     <!-- content -->
-    <div class="slide context #{isLocked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} class:isDeleteHighlighted style="{style};{isDeleteHighlighted ? `--highlight-color: ${highlightColor};--highlight-bg: ${fadeColor(highlightColor, 0.35)};` : ''}" role="none" on:click>
+    <div class="slide context #{isFake ? 'slideFake' : isLocked ? 'default' : $focusMode ? 'slideFocus' : name === null ? 'slideChild' : 'slide'}" class:disabled={layoutSlide.disabled} class:afterEnd={endIndex !== null && index > endIndex} class:isDeleteHighlighted style="{style};{isDeleteHighlighted ? `--highlight-color: ${highlightColor};--highlight-bg: ${fadeColor(highlightColor, 0.35)};` : ''}" role="none" on:click>
         <div class="hover overlay" />
 
         {#if isDeleteHighlighted}

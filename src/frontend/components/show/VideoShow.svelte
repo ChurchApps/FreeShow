@@ -370,7 +370,7 @@
 </script>
 
 {#key mediaPath || showId}
-    <div id={mediaPath || showId} class="media context #media_preview" style="flex: 1;overflow: hidden;">
+    <div id={mediaPath || showId} class="media context #media{type === 'player' ? '_player' : ''}_preview" style="flex: 1;overflow: hidden;">
         <!-- TODO: info about: CTRL click to play at current pos -->
         <HoverButton hide={playingInOutput} icon="play" size={10} on:click={(e) => playVideo(e.ctrlKey || e.metaKey ? videoTime : 0)}>
             {#if type === "player"}

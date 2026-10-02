@@ -269,7 +269,7 @@
         flex-direction: column;
         flex: 1;
         overflow-y: auto;
-        background-color: var(--primary-darkest);
+        background-color: var(--primary-darker);
         padding: 5px;
     }
 

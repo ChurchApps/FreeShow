@@ -27,27 +27,10 @@ export class CaptureLifecycle {
 
     static startCapture(id: string, toggle: { [key: string]: boolean } = {}) {
         const output = OutputHelper.getOutput(id)
-        if (!output) return
-
-        // already active - toggle values
-        if (this.activeCaptures.has(id)) {
-            if (Object.keys(toggle).length > 0 && output.captureOptions) {
-                this.updateCaptureToggles(id, output.captureOptions, toggle)
-                CaptureHelper.Transmitter.startTransmitting(id)
-                this.updateWebRtcHostState()
-                this.updateRtmpState()
-            }
+        if (!output || !output.window || output.window.isDestroyed()) {
+            this.stopCapture(id)
             return
         }
-
-        if (!output.window || output.window.isDestroyed()) {
-            this.activeCaptures.delete(id)
-            delete output.captureOptions
-            return
-        }
-
-        const toggleHasActive = Object.values(toggle).some(Boolean)
-        if (!toggleHasActive) return
 
         if (!output.captureOptions) output.captureOptions = CaptureHelper.getDefaultCapture(output.window, id)
         const captureOptions = output.captureOptions
@@ -55,29 +38,24 @@ export class CaptureLifecycle {
         // toggle values
         if (captureOptions && Object.keys(toggle).length > 0) this.updateCaptureToggles(id, captureOptions, toggle)
 
-        const hasEnabledCapture = captureOptions?.options && Object.values(captureOptions.options).some(Boolean)
-        if (!hasEnabledCapture || captureOptions?.window.isDestroyed()) {
+        const hasEnabledCapture = captureOptions.options && Object.values(captureOptions.options).some(Boolean)
+        if (!hasEnabledCapture) {
             this.stopCapture(id)
             return
         }
 
+        this.activeCaptures.add(id)
         CaptureHelper.updateFramerate(id)
         CaptureHelper.Transmitter.startTransmitting(id)
-
-        if (captureOptions.frameSubscription) {
-            clearTimeout(captureOptions.frameSubscription)
-        }
-
-        const token = (this.captureLoopToken[id] || 0) + 1
-        this.captureLoopToken[id] = token
-
-        this.activeCaptures.add(id)
         this.updateWebRtcHostState()
         this.updateRtmpState()
 
-        // OSR outputs are driven by paint events (OutputLifecycle.attachOsrCapture -> transmitFrame),
-        // so skip the capturePage poll for them; channels/senders are still set up above.
-        if (!output.osr) this.runCaptureLoop(id, token, output)
+        // OSR outputs are driven by paint events; non-OSR runs the capture loop if not already running
+        if (!output.osr && !captureOptions.frameSubscription) {
+            const token = (this.captureLoopToken[id] || 0) + 1
+            this.captureLoopToken[id] = token
+            this.runCaptureLoop(id, token, output)
+        }
     }
 
     private static updateCaptureToggles(id: string, captureOptions: any, toggle: { [key: string]: boolean }) {
@@ -214,7 +192,7 @@ export class CaptureLifecycle {
             capture.frameSubscription = null
         }
 
-        const channels = ["ndi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp"]
+        const channels = ["ndi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp", "recorder"]
         channels.forEach((channel) => CaptureHelper.Transmitter.stopChannel(id, channel))
 
         console.info("Capture - stopping: " + id)

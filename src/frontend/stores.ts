@@ -41,6 +41,7 @@ export const loaded: Writable<boolean> = writable(false)
 export const loadedState: Writable<string[]> = writable([])
 export const isDev: Writable<boolean> = writable(false)
 export const windowState: Writable<any> = writable({})
+export const dataPath: Writable<string> = writable("")
 
 // ACTIVE
 export const selected: Writable<Selected> = writable({ id: null, data: [] })
@@ -70,6 +71,7 @@ export const globalGroupViewEnabled: Writable<boolean> = writable(false)
 export const activeRecording: Writable<any> = writable(null)
 export const currentRecordingStream: Writable<any> = writable(null)
 export const focusedArea: Writable<string> = writable("")
+export const hoveredEffectItem: Writable<number | null> = writable(null)
 export const activeAnimate: Writable<any> = writable({ slide: -1, index: -1 })
 export const allOutputs: Writable<Outputs> = writable({}) // stage data in output windows
 export const activeScripture: Writable<{ id?: string; reference?: { book: number | string; chapters: (number | string)[]; verses: (number | string)[][] } }> = writable({})
@@ -84,7 +86,7 @@ export const mediaDownloads: Writable<Map<string, { progress: number; total: num
 export const rtmpStatus: Writable<{ [outputId: string]: RtmpStatus }> = writable({})
 export const pdfImports: Writable<Map<string, { name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }>> = writable(new Map())
 export const showChangeProfileMenu: Writable<boolean> = writable(false)
-export const cloudUsers: Writable<{ displayName: string; color: string; lastUpdate?: number; activePage?: string; activeShow?: ShowRef }[]> = writable([])
+export const cloudUsers: Writable<{ displayName: string; deviceId?: string; color: string; lastUpdate?: number; activePage?: string; activeShow?: ShowRef }[]> = writable([])
 export const isTimelinePlaying: Writable<boolean> = writable(false)
 export const timelineRecordingAction: Writable<{ id: string; data?: any }> = writable({ id: "" })
 export const autoOpenedTimeline: Writable<boolean> = writable(false)
@@ -351,7 +353,6 @@ export const timerTags: Writable<{ [key: string]: Tag }> = writable({}) // {}
 // OTHER
 export const resized: Writable<NumberObject> = writable({ leftPanel: 290, rightPanel: 290, leftPanelDrawer: 290, rightPanelDrawer: 290 }) // {default}
 export const sorted: Writable<any> = writable({}) // {}
-export const dataPath: Writable<string> = writable("") // "" // DEPRECATED - only for setting
 export const lockedOverlays: Writable<{ [key: string]: string[] }> = writable({}) // {}
 export const activeScenes: Writable<{ [key: string]: string[] }> = writable({}) // {}
 export const special: Writable<any> = writable({}) // {}
@@ -367,7 +368,6 @@ export const groupNumbers: Writable<boolean> = writable(true) // true
 export const fullColors: Writable<boolean> = writable(false) // false
 export const formatNewShow: Writable<boolean> = writable(false) // false
 export const splitLines: Writable<number> = writable(0) // 0
-export const showsPath: Writable<null | string> = writable(null) // null // DEPRECATED
 export const customizedIcons: Writable<any> = writable({ disabled: [], svg: [] }) // {disabled: [], svg: []}
 
 // THEME

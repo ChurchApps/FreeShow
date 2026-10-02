@@ -14,7 +14,7 @@ import { setDataOMT } from "../../omt/talk"
 import { wait } from "../../utils/helpers"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
-import { setOutputAlwaysOnTop } from "./OutputAlwaysOnTop"
+import { setOutputAlwaysOnTop, useOutputPanel } from "./OutputAlwaysOnTop"
 import { OutputVisibility } from "./OutputVisibility"
 
 // Tracks timing stages for off-main GPU readback and transmission (in ms)
@@ -176,6 +176,8 @@ export class OutputLifecycle {
             options.skipTaskbar = false
             if (!extra.boundsLocked) options.resizable = true
         }
+
+        if (useOutputPanel(options.alwaysOnTop, osr)) options.type = "panel"
 
         if (OUTPUT_CONSOLE) options.webPreferences!.devTools = true
         const window: BrowserWindow | null = new BrowserWindow(options)

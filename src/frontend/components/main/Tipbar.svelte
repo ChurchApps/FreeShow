@@ -22,8 +22,10 @@
     let lastClosed = $special[`${key}_closed`] || 0
     let lastInteracted = $special[`${key}_interacted`] || 0
     let now = Date.now()
-    // show again after 7 days (or 14 days if interacted) & 30% chance & until the end of 2025 (for now)
-    let isClosed = (lastInteracted ? now - lastInteracted < ONE_DAY * 14 : now - lastClosed < ONE_DAY * 7) || Math.random() > 0.3 || new Date().getFullYear() !== 2025
+    // don't show again until after 7 days if closed, or 14 days if interacted
+    let recentlyInteracted = lastInteracted ? now - lastInteracted < ONE_DAY * 14 : now - lastClosed < ONE_DAY * 7
+    // show if: not recently interacted & 30% chance & month is december & year is 2026 (for now)
+    let isClosed = recentlyInteracted || Math.random() > 0.3 || new Date().getMonth() !== 11 || new Date().getFullYear() !== 2026
 
     function close() {
         isClosed = true

@@ -1509,8 +1509,9 @@ function getMetadata(audioPath: string) {
 }
 
 function getArtist(metadata: ICommonTagsResult) {
-    const artists = [metadata.originalartist, metadata.artist, metadata.albumartist, ...(metadata.artists || [])].filter(Boolean)
-    return [...new Set(artists)].join(", ")
+    if (!metadata) return ""
+    const list = (metadata.artists?.length ? metadata.artists : [metadata.artist || metadata.albumartist || metadata.originalartist]).filter((a): a is string => Boolean(a))
+    return [...new Set(list.map((a) => a.trim()).filter(Boolean))].join(", ")
 }
 
 // INTERACTION

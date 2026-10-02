@@ -344,12 +344,13 @@ export const mainResponses: MainResponses = {
             return c
         })
 
-        if (data.isFirstConnection) newToast("main.finished")
+        if (data.isFirstConnection) {
+            newToast("main.finished")
 
-        if (data.providerId !== "churchApps") return
-        setTimeout(() => {
-            setupCloudSync(!data.isFirstConnection)
-        }, 1000)
+            if (data.providerId === "churchApps") {
+                setTimeout(() => setupCloudSync(false), 1000)
+            }
+        }
     },
     [ToMain.PROVIDER_PROJECTS]: async (data) => {
         if (!data.projects) return
@@ -508,7 +509,8 @@ export const mainResponses: MainResponses = {
                 created: currentProject.created,
                 used: Date.now(), // show on top in last used list
                 parent: folderId || "/",
-                shows: currentProject.items || []
+                shows: currentProject.items || [],
+                origin
             }
             const project = createProviderProject(data.providerId, projectBase)
 

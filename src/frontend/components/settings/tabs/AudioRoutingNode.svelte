@@ -67,8 +67,8 @@
     $: hasInPort = nodeType !== "input" && (type !== "network" || isSubNode) && (!isSubNode || nodeType === "output")
     $: hasOutPort = nodeType !== "output" && (type !== "output_window" || isSubNode)
 
-    $: hasValidPort = (dragStartType === "input" && hasInPort) || (dragStartType === "output" && hasOutPort) || (isStartChannel && ((dragStartPortType === "in" && hasOutPort) || (dragStartPortType === "out" && (hasInPort || (isChannel && id !== dragStartId))) || (dragStartPortType === "sidechain" && isChannel && id !== dragStartId && hasOutPort)))
-    $: isValidHover = isConnecting && id !== dragStartId && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isStartChannel && ((dragStartPortType === "in" && isInputCol) || (dragStartPortType === "out" && (isOutputCol || isChannel)) || (dragStartPortType === "sidechain" && isChannel))))
+    $: hasValidPort = (dragStartType === "input" && hasInPort) || (dragStartType === "output" && hasOutPort) || (isStartChannel && ((dragStartPortType === "in" && hasOutPort) || (dragStartPortType === "out" && (hasInPort || (isChannel && id !== dragStartId))) || (dragStartPortType === "sidechain" && ((isChannel && id !== dragStartId) || isInputCol) && hasOutPort)))
+    $: isValidHover = isConnecting && id !== dragStartId && ((dragStartType === "input" && isChannel) || (dragStartType === "output" && isChannel) || (isStartChannel && ((dragStartPortType === "in" && isInputCol) || (dragStartPortType === "out" && (isOutputCol || isChannel)) || (dragStartPortType === "sidechain" && (isChannel || isInputCol)))))
 </script>
 
 <div
@@ -125,6 +125,7 @@
                 <div
                     class="port port-in port-multi"
                     data-ch-index={chIdx}
+                    data-port-type="in"
                     data-title="{translateText('midi.channel')} {chIdx + 1}"
                     on:mouseenter={(e) => {
                         onMouseEnterPort(e, "in", chIdx)
@@ -142,6 +143,7 @@
     {:else if isSubNode && nodeType === "output"}
         <div
             class="port port-in"
+            data-port-type="in"
             on:mouseenter={(e) => {
                 onMouseEnterPort(e, "in")
                 onHoverPort(e, "in")
@@ -236,7 +238,43 @@
     {/if}
 
     {#if nodeType !== "output" && (type !== "output_window" || isSubNode)}
-        <div class="port port-out" on:mouseenter={(e) => onHoverPort(e, "out")} on:mouseleave={onHoverPortEnd} on:mousedown={(e) => onMouseDown(e, "out")} on:contextmenu={(e) => onPortContextMenu(e, "out")}></div>
+        {#if isSubNode && nodeType === "input" && channels > 1}
+            <div class="ports-column-out">
+                {#each Array(channels) as _, chIdx}
+                    <div
+                        class="port port-out port-multi"
+                        data-ch-index={chIdx}
+                        data-port-type="out"
+                        data-title="{translateText('midi.channel')} {chIdx + 1}"
+                        on:mouseenter={(e) => {
+                            onMouseEnterPort(e, "out", chIdx)
+                            onHoverPort(e, "out", chIdx)
+                        }}
+                        on:mouseleave={() => {
+                            onMouseLeavePort()
+                            onHoverPortEnd()
+                        }}
+                        on:mousedown={(e) => onMouseDown(e, "out", chIdx)}
+                        on:contextmenu={(e) => onPortContextMenu(e, "out", chIdx)}
+                    ></div>
+                {/each}
+            </div>
+        {:else}
+            <div
+                class="port port-out"
+                data-port-type="out"
+                on:mouseenter={(e) => {
+                    onMouseEnterPort(e, "out")
+                    onHoverPort(e, "out")
+                }}
+                on:mouseleave={() => {
+                    onMouseLeavePort()
+                    onHoverPortEnd()
+                }}
+                on:mousedown={(e) => onMouseDown(e, "out")}
+                on:contextmenu={(e) => onPortContextMenu(e, "out")}
+            ></div>
+        {/if}
     {/if}
 </div>
 
@@ -371,6 +409,17 @@
     .ports-column-in {
         position: absolute;
         left: -7px;
+        top: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        padding: 4px 0;
+    }
+
+    .ports-column-out {
+        position: absolute;
+        right: -7px;
         top: 0;
         bottom: 0;
         display: flex;

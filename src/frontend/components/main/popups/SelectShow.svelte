@@ -13,17 +13,17 @@
     $: privateShows = sortByName(keysToID($shows).filter((a) => a.private === true))
 
     $: defaultShows = clone([...(showPrivate ? privateShows : []), ...sortedShows])
-    $: if (defaultShows) search()
+    $: if (defaultShows) search(searchValue)
 
     $: active = $popupData.active || ""
 
     let searchedShows = clone(defaultShows)
     let searchValue = ""
 
-    function search(value: string | null = null) {
-        searchValue = formatSearch(value || "")
+    function search(value: string) {
+        searchValue = value || ""
 
-        if (searchValue.length < 2) {
+        if (formatSearch(searchValue).trim().length < 2) {
             searchedShows = clone(defaultShows)
             return
         }
@@ -61,7 +61,7 @@
 
 <div class="list">
     {#if sortedShows.length}
-        {#if searchValue.length > 1 && searchedShows.length === 0}
+        {#if formatSearch(searchValue).trim().length > 1 && searchedShows.length === 0}
             <Center size={1.2} faded><T id="empty.search" /></Center>
         {:else}
             <VirtualList items={searchedShows} let:item={show}>

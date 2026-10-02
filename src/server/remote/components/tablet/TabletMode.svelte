@@ -46,6 +46,7 @@
         width: 100%;
         overflow: hidden;
         position: relative;
+        background-color: var(--primary);
     }
 
     .row {

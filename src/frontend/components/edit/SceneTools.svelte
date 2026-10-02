@@ -145,6 +145,7 @@
             <div class="items" style="display: flex;flex-direction: column;">
                 {#each overlaysList as overlayId, index (index + "_" + overlayId)}
                     {@const overlayObj = $overlays[overlayId]}
+                    {@const isHidden = (content.hiddenOverlays || []).includes(overlayId)}
                     <div
                         id="#{index}"
                         data-index={index}
@@ -160,7 +161,7 @@
                         role="none"
                     >
                         <!-- on:dblclick={() => editOverlay(index)} -->
-                        <div class="item-title">
+                        <div class="item-title" style={isHidden ? "opacity: 0.5;" : ""}>
                             <span style="font-size: 0.75em;opacity: 0.5;min-width: 12px;text-align: center;">{index + 1}</span>
                             <p style="font-size: 0.9em;">{overlayObj?.name || translateText("main.unnamed")}</p>
                         </div>

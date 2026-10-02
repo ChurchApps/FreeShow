@@ -787,7 +787,7 @@ export class PowerPointPackage {
             return p
                 .map((line, i) => {
                     const pPr = getValue(line, "a:pPr")
-                    const lvl = Number(getAttribute(line, "lvl") || "0") + 1
+                    const lvl = Number(getAttribute(line, "lvl", "a:pPr") || getAttribute(pPr, "lvl") || getAttribute(line, "lvl") || "0") + 1
 
                     const pPrL = getValue(pL[i] ? pL[i] : pL[0], "a:lstStyle", `a:lvl${lvl}pPr`)
                     const pPrM = getValue(pM[i] ? pM[i] : pM[0], "a:lstStyle", `a:lvl${lvl}pPr`)
@@ -820,7 +820,7 @@ export class PowerPointPackage {
                             rs.push(br)
                         }
                     })
-                    const algn = getAttribute(pPr, "algn") || getAttribute(pPrL, "algn") || getAttribute(pPrM, "algn") || getAttribute(tx, "algn") || (svgText ? "ctr" : "")
+                    const algn = getAttribute(line, "algn", "a:pPr") || getAttribute(pPr, "algn") || getAttribute(pPrL, "algn") || getAttribute(pPrM, "algn") || getAttribute(tx, "algn") || (svgText ? "ctr" : "")
 
                     if (i === 0) hasText = false
                     if (rs.length) hasText = true

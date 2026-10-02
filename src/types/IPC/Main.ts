@@ -238,7 +238,7 @@ export interface MainSendPayloads {
     [Main.PRESENTATION_CONTROL]: { action: string }
     [Main.START]: { ports: { [key: string]: number }; max: number; disabled: { [key: string]: boolean }; data: { [key: string]: ServerData } }
     [Main.SERVER_DATA]: { [key: string]: any }
-    [Main.WEBSOCKET_START]: number
+    [Main.WEBSOCKET_START]: { port?: number; password?: string }
     [Main.API_TRIGGER]: { action: string; returnId: string; data: any }
     [Main.EMIT_OSC]: { signal: any; data: any }
     [Main.GET_MIDI_OUTPUTS]: string[]
@@ -386,7 +386,7 @@ export interface MainReturnPayloads {
     [Main.GET_TEAMS]: Promise<{ id: string; churchId: string; name: string }[]>
     [Main.CLOUD_DATA]: Promise<boolean>
     [Main.CLOUD_CHANGED]: Promise<boolean>
-    [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles?: any[] }>
+    [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles?: any[]; downloadedShowIds?: string[]; replacedShows?: string[] }>
     [Main.GET_CONVERSATION_ID]: Promise<string | null>
     [Main.SEND_SOCKET_MESSAGE]: Promise<boolean>
     // Provider-based routing

@@ -272,8 +272,10 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
         window.loadURL("http://localhost:3000").catch(loadingFailed)
     }
 
-    window.webContents.on("did-finish-load", () => {
-        window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile })
+    window.webContents.ipc.on(STARTUP, (_event, msg) => {
+        if (msg?.channel === "READY") {
+            window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile })
+        }
     })
 
     function loadingFailed(err: Error) {

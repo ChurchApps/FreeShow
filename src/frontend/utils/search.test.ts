@@ -253,3 +253,35 @@ describe("exact phrase (quoted) search", () => {
         expect(res.length).toBe(0)
     })
 })
+
+describe("punctuation in text", () => {
+    beforeEach(() => h.textCache._set({}))
+
+    it("matches a phrase across a dash in the title", () => {
+        expect(showSearchFilter('"grace how"', { id: "a", name: "Grace - How Sweet" } as any)).toBe(100)
+    })
+    it("matches a phrase across a dash in the lyrics", () => {
+        h.textCache._set({ great: "amazing grace - how sweet the sound" })
+        expect(showSearchFilter('"grace how sweet"', shows[2])).toBe(70)
+    })
+    it("uses updated lyrics after the text cache changes", () => {
+        h.textCache._set({ great: "old words" })
+        expect(showSearchFilter("new words", shows[2])).toBe(0)
+        h.textCache._set({ great: "new words" })
+        expect(showSearchFilter("new words", shows[2])).toBeGreaterThan(0)
+    })
+})
+
+describe("cached titles", () => {
+    beforeEach(() => h.textCache._set({}))
+
+    it("uses the new name after a show is renamed", () => {
+        expect(showSearchFilter("old", { id: "renamed", name: "Old Name" } as any)).toBeGreaterThan(0)
+        expect(showSearchFilter("old", { id: "renamed", name: "New Name" } as any)).toBe(0)
+        expect(showSearchFilter("new", { id: "renamed", name: "New Name" } as any)).toBeGreaterThan(0)
+    })
+    it("uses the new song number after it changes", () => {
+        expect(showSearchFilter("123", { id: "numbered", name: "Song", quickAccess: { number: "123" } } as any)).toBe(100)
+        expect(showSearchFilter("123", { id: "numbered", name: "Song", quickAccess: { number: "456" } } as any)).toBe(0)
+    })
+})

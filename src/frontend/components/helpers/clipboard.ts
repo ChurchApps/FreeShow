@@ -1228,7 +1228,9 @@ const duplicateActions = {
 
                 const projectList = removeDeleted(keysToID(get(projects))).filter((project) => project.parent === oldParent)
                 projectList.forEach((project) => {
-                    newProjects.push({ ...clone(project), parent: newParent })
+                    const cloned = clone(project)
+                    delete cloned.origin
+                    newProjects.push({ ...cloned, parent: newParent })
                 })
             }
 
@@ -1248,6 +1250,7 @@ const duplicateActions = {
             const project = clone(get(projects)[selData.id])
             if (!project) return
 
+            delete project.origin
             const id = uid()
             history({ id: "UPDATE", newData: { data: project, replace: { name: project.name + " 2" } }, oldData: { id }, location: { page: "show", id: "project" } })
         })

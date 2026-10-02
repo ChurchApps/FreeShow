@@ -56,6 +56,7 @@ import {
     mediaFolders,
     mediaOptions,
     openedInteractionId,
+    openScripture,
     outLocked,
     outputs,
     overlayCategories,
@@ -100,7 +101,7 @@ import { moveStageConnection } from "../actions/apiHelper"
 import { midiInListen } from "../actions/midi"
 import { createScriptureShow, openActiveInRouteBible } from "../drawer/bible/scripture"
 import { deleteCalendarEvents } from "../drawer/calendar/calendars"
-import { stopMediaRecorder } from "../drawer/live/recorder"
+import { startOutputRecording, stopMediaRecorder } from "../drawer/live/recorder"
 import { playPauseGlobal } from "../drawer/timers/timers"
 import { addChords } from "../edit/scripts/chords"
 import { rearrangeItems, rearrangeStageItems } from "../edit/scripts/itemHelpers"
@@ -109,7 +110,7 @@ import { clone, removeDuplicates, sortObjectNumbers } from "../helpers/array"
 import { copy, cut, deleteAction, duplicate, paste, selectAll } from "../helpers/clipboard"
 import { history, redo, undo } from "../helpers/history"
 import { getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension, splitPath } from "../helpers/media"
-import { defaultOutput, getCurrentStyle, getFirstActiveOutput, isOutputBound, resolveOutputId, setOutput, toggleOutput, toggleOutputs } from "../helpers/output"
+import { defaultOutput, getCurrentStyle, getFirstActiveOutput, isOutputBound, resolveOutputId, setOutput, toggleOutput, toggleOutputs, updateActiveSceneOutputs } from "../helpers/output"
 import { select } from "../helpers/select"
 import { bindSlidesToOutput, checkName, formatToFileName, getLayoutRef, openShow, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
@@ -363,6 +364,8 @@ const clickActions = {
             return
         }
 
+        if (updateEffectItem(obj, (items, index) => items.splice(index, 1))) return
+
         if (obj.contextElem?.classList.value.includes("#timeline_node")) {
             triggerFunction("delete_selected_nodes")
             return
@@ -433,6 +436,8 @@ const clickActions = {
             duplicateEffectInStack(index >= 0 ? index : effectId, channelId)
             return
         }
+
+        if (updateEffectItem(obj, (items, index) => items.splice(index + 1, 0, clone(items[index])))) return
 
         if (obj.contextElem?.classList.value.includes("#event")) {
             duplicate({ id: "event", data: { id: obj.contextElem.id } })
@@ -938,6 +943,9 @@ const clickActions = {
     newSlide: () => {
         history({ id: "SLIDES" })
     },
+    convert_to_regular: () => {
+        history({ id: "SLIDES", newData: { index: 0, replace: { parent: true, items: [], globalGroup: "intro" } }, location: { page: "show" } })
+    },
     newCategory: (obj: ObjData) => {
         const classList = obj.contextElem?.classList?.value || ""
         const index = classList.indexOf("#category")
@@ -947,6 +955,15 @@ const clickActions = {
     },
     newScripture: () => activePopup.set("import_scripture"),
 
+    open_reference: (obj: ObjData) => {
+        if (obj.contextElem?.classList.contains("#scripture_search_result")) {
+            const book = Number(obj.contextElem.dataset.book)
+            const chapter = Number(obj.contextElem.dataset.chapter)
+            const verse = Number(obj.contextElem.dataset.verse)
+
+            if (book && chapter && verse) openScripture.set({ book, chapter, verses: [[verse]], play: false })
+        }
+    },
     route_bible: () => openActiveInRouteBible(),
     createCollection: () => {
         activePopup.set("create_collection")
@@ -1180,6 +1197,14 @@ const clickActions = {
 
         popupData.set({})
         activePopup.set("transition")
+    },
+    hide: (obj: ObjData) => {
+        const isEffectItemUpdated = updateEffectItem(obj, (items, index) => {
+            if (items[index]) items[index].hidden = !items[index].hidden
+        })
+        if (isEffectItemUpdated) return
+
+        if (toggleSceneOverlayHidden(obj)) return
     },
     disable: (obj: ObjData) => {
         if (obj.sel?.id === "slide") {
@@ -1806,7 +1831,10 @@ const clickActions = {
         cameraManager.setStartupCameras(cameraIds)
     },
     recording: (obj: ObjData) => {
-        if (get(activeRecording)) {
+        if (obj.contextElem?.classList.contains("#output_preview") || (obj.contextElem?.id && get(outputs)[obj.contextElem.id])) {
+            const outputId = obj.contextElem?.id || ""
+            if (outputId) startOutputRecording(outputId)
+        } else if (get(activeRecording)) {
             stopMediaRecorder()
         } else {
             const mediaData = JSON.parse(obj.contextElem?.getAttribute("data-media") || "{}")
@@ -2135,6 +2163,43 @@ const clickActions = {
             return
         }
     }
+}
+
+function updateEffectItem(obj: ObjData, callback: (items: any[], index: number) => void) {
+    if (!obj.contextElem?.classList.value.includes("#effect_item")) return false
+    const effectId = get(activeEdit).id || ""
+    if (!effectId) return true
+    const idxStr = obj.contextElem.dataset.index ?? obj.contextElem.id?.replace(/^#/, "")
+    const index = idxStr !== undefined ? Number(idxStr) : -1
+    if (index < 0) return true
+
+    effects.update((a) => {
+        if (!a[effectId]?.items) return a
+        callback(a[effectId].items, index)
+        return a
+    })
+    return true
+}
+
+function toggleSceneOverlayHidden(obj: ObjData) {
+    if (!obj.contextElem?.classList.value.includes("#scene_overlay") && obj.sel?.id !== "scene_overlay") return false
+    const sceneId = get(activeEdit).id || ""
+    const overlayId = obj.contextElem?.dataset.overlayId || obj.sel?.data?.[0]?.id || ""
+    const scene = get(scenes)[sceneId]
+    if (!sceneId || !overlayId || !scene) return true
+
+    const hidden = clone(scene.content?.hiddenOverlays || [])
+    const hiddenOverlays = hidden.includes(overlayId) ? hidden.filter((id) => id !== overlayId) : [...hidden, overlayId]
+
+    history({
+        id: "UPDATE",
+        newData: { key: "content", data: { ...clone(scene.content || {}), hiddenOverlays } },
+        oldData: { id: sceneId },
+        location: { page: "drawer", id: "scene_key", override: `content_hiddenOverlays_${sceneId}` }
+    })
+
+    updateActiveSceneOutputs(sceneId)
+    return true
 }
 
 let savedTextRange: Range | null = null

@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Event } from "../../../../types/Calendar"
 import { convertCalendar } from "../../../converters/calendar"
-import { alertMessage, calendars, events, special } from "../../../stores"
+import { calendars, events, special } from "../../../stores"
 import { translateText } from "../../../utils/language"
 import { confirmCustom } from "../../../utils/popup"
 import { encodeFilePath } from "../../helpers/media"
@@ -180,7 +180,7 @@ function parseCalendarName(content: string, url: string): string {
     }
 }
 
-export async function fetchAndImportIcs(url: string, existingId?: string): Promise<boolean> {
+export async function fetchAndImportIcs(url: string, existingId?: string): Promise<boolean | string> {
     const normalized = url.trim().replace(/^(webcal:\/\/|(?!https?:\/\/))/, "https://")
 
     let response: Response
@@ -188,14 +188,12 @@ export async function fetchAndImportIcs(url: string, existingId?: string): Promi
         response = await fetch(normalized)
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
     } catch (err: any) {
-        alertMessage.set(`Failed to fetch calendar: ${err?.message || err}`)
-        return false
+        return err?.message || err || "Failed to fetch calendar"
     }
 
     const content = await response.text()
     if (!content.includes("BEGIN:VCALENDAR")) {
-        alertMessage.set("Invalid calendar format: Not an iCalendar / ICS feed")
-        return false
+        return "Invalid calendar format: Not an iCalendar / ICS feed"
     }
 
     const currentCalendars = get(calendars)
@@ -220,6 +218,13 @@ export async function fetchAndImportIcs(url: string, existingId?: string): Promi
 
     convertCalendar([{ content, name: resolvedName, id: calId, color: assignedColor }])
     return true
+}
+
+export async function syncIcsCalendars() {
+    const icsList = Object.values(get(calendars)).filter((cal) => cal?.url)
+    if (!icsList.length) return
+
+    await Promise.all(icsList.map((cal) => fetchAndImportIcs(cal.url, cal.id)))
 }
 
 export async function deleteCalendarEvents(id: string): Promise<boolean> {

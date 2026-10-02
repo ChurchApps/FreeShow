@@ -1775,6 +1775,11 @@ export function sortItemsByType(items: Item[], dynamicValueType: boolean = false
 
 function hasDynamicValue(item: Item) {
     if (!item.lines) return false
+
+    // scripture dynamic values does not count as normal dynamic values
+    const hasScriptureDynamicValue = item?.lines?.some((line) => line?.text?.some((text) => text.value?.includes("{scripture")))
+    if (hasScriptureDynamicValue) return false
+
     return item.lines.some((line) => line.text?.some((text) => text.value?.includes("{")))
 }
 

@@ -137,7 +137,8 @@
         start_webrtc_stream: () => [{ value: "", label: translateText("actions.all_outputs") }, ...getOutputsWithKey("webrtc")],
         stop_webrtc_stream: () => [{ value: "", label: translateText("actions.all_outputs") }, ...getOutputsWithKey("webrtc")],
         start_rtmp_stream: () => [{ value: "", label: translateText("actions.all_outputs") }, ...getOutputsWithKey("rtmp")],
-        stop_rtmp_stream: () => [{ value: "", label: translateText("actions.all_outputs") }, ...getOutputsWithKey("rtmp")]
+        stop_rtmp_stream: () => [{ value: "", label: translateText("actions.all_outputs") }, ...getOutputsWithKey("rtmp")],
+        start_output_recording: () => convertToOptions($outputs)
     }
 
     function getOutputsWithKey(key: string) {

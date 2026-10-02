@@ -252,7 +252,7 @@ function extractCCLIMetadata(ccliText: string, title?: string): Record<string, s
     return meta
 }
 
-function isHeaderLine(line: string): boolean {
+export function isHeaderLine(line: string, isFirstLineOfGroup: boolean = true): boolean {
     if (!line || line.trim() === "") return false
     const trimmed = line.trim()
 
@@ -260,7 +260,14 @@ function isHeaderLine(line: string): boolean {
     if (/^\[.+\]$/.test(trimmed)) return true
 
     // Match colon headers like "Intro:", "Verse 1:", "Chorus: x2"
-    if (/^[\d\s]*[\p{L}\w\s-]+\s*:\s*([xх]\d+)?$/iu.test(trimmed)) return true
+    if (/^[\d\s]*[\p{L}\w\s-]+\s*:\s*([xх]\d+)?$/iu.test(trimmed)) {
+        if (!isFirstLineOfGroup) return false
+        const rawName = trimmed.replace(/[\[\]'":]+/g, "").trim()
+        if (findGroupMatch(rawName) || findGroupMatch(getLabelId(trimmed))) return true
+
+        const wordOnly = rawName.replace(/[xх]\d+|\d+|[^\p{L}\w\s-]/giu, "").trim()
+        return wordOnly.split(/\s+/).filter(Boolean).length === 1
+    }
 
     return false
 }
@@ -289,9 +296,14 @@ function preprocessLines(lines: string[]): string[] {
 
     while (i < lines.length) {
         const currentLine = lines[i]
+        const isFirstLineOfGroup = i === 0 || lines[i - 1].trim() === ""
 
         // Check if this is a section header (like [Verse], [Chorus], "Verse 1:", etc.)
-        if (isHeaderLine(currentLine)) {
+        if (isHeaderLine(currentLine, isFirstLineOfGroup)) {
+            // Ensure a section break if preceding line was not empty
+            if (output.length > 0 && output[output.length - 1] !== "") {
+                output.push("")
+            }
             // Standardize header formatting to brackets
             const headerText = currentLine.replace(/[\[\]:]/g, "").trim()
             output.push(`[${headerText}]`)
@@ -307,7 +319,7 @@ function preprocessLines(lines: string[]): string[] {
                 j++
             }
 
-            if (j < lines.length && lines[j].trim() !== "" && !isChordLine(lines[j]) && !isHeaderLine(lines[j])) {
+            if (j < lines.length && lines[j].trim() !== "" && !isChordLine(lines[j]) && !isHeaderLine(lines[j], false)) {
                 // Found a lyric line - combine chord and lyric lines
                 const combinedLine = insertChordsIntoLyrics(currentLine, lines[j])
                 output.push(combinedLine)
@@ -413,7 +425,8 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting: b
         // this only accounted for the parent slide, so if the same group was placed multiple times with different children that would be replaced & all "duplicate" children would be removed!
         // if (stored[a.type]) id = stored[a.type].find((b) => b.text === text)?.id
 
-        const hasTextGroup: boolean = (a.text.trim()[0] === "[" && a.text.includes("]")) || a.text.trim()[a.text.length - 1] === ":"
+        const firstLine = a.text.trim().split("\n")[0]?.trim() || ""
+        const hasTextGroup: boolean = isHeaderLine(firstLine, true)
 
         if (id) {
             if (activeGroup && !hasTextGroup) return
@@ -510,11 +523,22 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting: b
                         text.value?.split("").forEach((char) => {
                             if ((char === "[" || char === "]") && !text.value.slice(0, -2).includes(":")) {
                                 if (char === "]" && isChord && chords.length > 0) {
+                                    const currentKey = chords[chords.length - 1].key
                                     // Check if this is a virtual break marker, not a chord
-                                    if (chords[chords.length - 1].key === "_VB") {
+                                    if (currentKey === "_VB") {
                                         // Remove the virtual break from chords array and add it to text
                                         chords.pop()
                                         newValue += VIRTUAL_BREAK_CHAR
+                                        isChord = false
+                                        return
+                                    }
+
+                                    // Validate that the extracted key is a valid musical chord
+                                    const validChordPattern = /^[A-G][#b]?(?:m|M|maj|min|dim|aug|sus|add)?(?:\d+)?(?:\/[A-G][#b]?)?$/
+                                    if (!validChordPattern.test(currentKey)) {
+                                        chords.pop()
+                                        newValue += `[${currentKey}]`
+                                        letterIndex += currentKey.length + 2
                                         isChord = false
                                         return
                                     }
@@ -636,9 +660,6 @@ function fixText(text: string, formatText: boolean): string {
         text = text.replace(/\([^)]{1,2}\) /g, "")
     }
 
-    // remove group from text
-    if (text[0] === "[" && text.includes("]")) text = text.slice(text.indexOf("]") + 1)
-    if (text.indexOf(":") === text.split("\n")[0].length - 1 && (formatText || text.split("\n")[0]?.split(" ").length < 3)) text = text.slice(text.indexOf(":") + 1)
 
     if (formatText) {
         // repeat text

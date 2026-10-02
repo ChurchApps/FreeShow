@@ -65,7 +65,7 @@
             if (parts.length > 1) value = item[parts[0]]?.[parts[1]]
             else value = item[input.id]
         }
-        // if (value === undefined) value = input.values.value
+        // if (value === undefined && input.values?.value !== undefined) value = input.values.value
 
         if (input.type === "number") {
             if (value === "") value = undefined

@@ -16,6 +16,7 @@ export class CaptureHelper {
         server: 10, // 30 // OutputShow
         webrtc: 30, // WebRTC (canvas stream, up to 30 fps)
         rtmp: 30, // RTMP
+        recorder: 30, // Output recording
         unconnected: 1,
         connected: 30 // NDI
     }
@@ -31,14 +32,15 @@ export class CaptureHelper {
             server: this.framerates.server,
             stage: this.framerates.stage,
             webrtc: this.framerates.webrtc,
-            rtmp: this.framerates.rtmp
+            rtmp: this.framerates.rtmp,
+            recorder: this.framerates.recorder
         }
 
         return {
             window,
             frameSubscription: null,
             displayFrequency: screen.displayFrequency || 60,
-            options: { ndi: false, omt: false, blackmagic: false, server: false, stage: false, webrtc: false, rtmp: false },
+            options: { ndi: false, omt: false, blackmagic: false, server: false, stage: false, webrtc: false, rtmp: false, recorder: false },
             framerates: defaultFramerates,
             id
         }
@@ -57,6 +59,7 @@ export class CaptureHelper {
         if (activeOptions.stage) activeRates.push(framerates.stage || 1)
         if (activeOptions.webrtc) activeRates.push(framerates.webrtc || 1)
         if (activeOptions.rtmp) activeRates.push(framerates.rtmp || 1)
+        if (activeOptions.recorder) activeRates.push(framerates.recorder || 30)
         return activeRates.length > 0 ? Math.max(...activeRates) : 1
     }
 

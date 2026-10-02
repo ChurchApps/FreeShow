@@ -69,7 +69,7 @@
             return a
         })
 
-        if (value) sendMain(Main.WEBSOCKET_START, $ports.companion)
+        if (value) sendMain(Main.WEBSOCKET_START, { port: $ports.companion, password: $companion?.password })
         else sendMain(Main.WEBSOCKET_STOP)
     }
 

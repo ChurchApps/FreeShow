@@ -6,10 +6,12 @@ import { join } from "path"
 import { Server, type Socket } from "socket.io"
 import type { Main, MainSendPayloads } from "../types/IPC/Main"
 import type { Message, ServerData } from "../types/Socket"
+import { getNowPlayingMediaPath } from "./audio/nowPlaying"
 import { CaptureHelper } from "./capture/CaptureHelper"
 import { publishPort, unpublishPorts } from "./data/bonjour"
 import { toApp } from "./index"
 import { OutputHelper } from "./output/OutputHelper"
+import { doesPathExist } from "./utils/files"
 
 type ServerName = "REMOTE" | "STAGE" | "CONTROLLER" | "OUTPUT_STREAM"
 interface ServerValues {
@@ -52,6 +54,13 @@ function createServers() {
 function createServerInstance(id: ServerName) {
     const app = express()
     const server = http.createServer(app)
+
+    // Serve NowPlaying cover image
+    app.get("/nowplayingcover", (_req, res: Response) => {
+        const filePath = getNowPlayingMediaPath()
+        if (doesPathExist(filePath)) res.sendFile(filePath)
+        else res.status(404).end()
+    })
 
     if (id === "STAGE") {
         // app.get('/show/:showId/:slideId', handleShowSlideHtmlRequest);

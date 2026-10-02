@@ -18,8 +18,10 @@
         const success = await fetchAndImportIcs(cal.url, cal.id)
         syncingCalendars[cal.id] = false
 
-        if (!success) {
-            newToast("error.import")
+        if (success !== true) {
+            let msg = "error.import"
+            if (typeof success === "string") msg = success
+            newToast(msg)
             return
         }
     }

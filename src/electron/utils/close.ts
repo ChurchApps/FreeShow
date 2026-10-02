@@ -11,6 +11,7 @@ import { RtmpStreamer } from "../streaming/RtmpStreamer"
 import { stopApiListener } from "./api"
 import { stopMidi } from "./midi"
 import { SpeechToText } from "../ai/stt/SpeechToTextManager"
+import { unsetPlayingAudio } from "../audio/nowPlaying"
 
 export let dialogClose = false // is unsaved
 export function callClose(e: Electron.Event) {
@@ -39,6 +40,8 @@ export async function exitApp() {
     await OutputHelper.Lifecycle.closeAllOutputs()
     NdiReceiver.stopReceiversNDI()
     StreamReceiverHost.stop()
+
+    unsetPlayingAudio()
 
     closeServers()
     stopApiListener()

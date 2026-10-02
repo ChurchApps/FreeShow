@@ -5,23 +5,30 @@ import { generateLightRandomColor } from "../components/helpers/color"
 import { isLocalFile } from "../components/helpers/media"
 import { loadShows } from "../components/helpers/setShow"
 import { requestMain, sendMain } from "../IPC/main"
-import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cloudSyncData, cloudUsers, deletedShows, focusMode, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
+import { activeEdit, activePage, activePopup, activeProject, activeShow, alertMessage, cloudSyncData, cloudUsers, deletedShows, deviceId, focusMode, popupData, providerConnections, renamedShows, saved, scripturesCache, shows, showsCache, special } from "../stores"
 import { hasNewerUpdate, isMainWindow, newToast, setStatus, wait } from "./common"
 import { confirmCustom } from "./popup"
 import { getSyncedSettings, save } from "./save"
 import { SocketHelper } from "./SocketHelper"
 import { contentProviderSync } from "./startup"
 
-let startupSyncDone = false
+let pendingSync: { startup: boolean } | null = null
+function queueProviderSync(startup: boolean) {
+    pendingSync = { startup }
+}
 function syncFinished() {
-    if (!startupSyncDone) {
-        startupSyncDone = true
-        // sync providers after startup cloud sync has finished
-        contentProviderSync(true, true)
-    }
+    if (!pendingSync) return
+
+    const { startup } = pendingSync
+    pendingSync = null
+
+    // sync providers after cloud sync has finished
+    contentProviderSync(startup, true)
 }
 
 export async function setupCloudSync(auto: boolean = false) {
+    queueProviderSync(auto)
+
     if (get(cloudSyncData).enabled === false) {
         syncFinished()
         return
@@ -38,7 +45,7 @@ export async function setupCloudSync(auto: boolean = false) {
                 return
             }
         }
-        syncWithCloud()
+        await syncWithCloud()
         return
     }
     if (!(await requestMain(Main.CAN_SYNC))) {
@@ -104,7 +111,7 @@ export async function chooseTeam(team: { id: string; churchId: string; name: str
     syncWithCloud(true)
 }
 
-let isSyncing = false
+export let isSyncing = false
 // let lastSync = 0
 export async function syncWithCloud(initialize: boolean = false, isClosing: boolean = false) {
     if (!get(providerConnections).churchApps) {
@@ -126,10 +133,16 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
 
     if (initialize) {
         // save & backup
-        save(false, { autosave: true, backup: true, isAutoBackup: true })
+        save(false, { backup: true, isAutoBackup: true })
         syncFinished()
         return false
     }
+
+    isSyncing = true
+    setStatus("syncing")
+
+    // save any unsaved local changes before syncing with cloud
+    if (!get(saved)) save(false)
 
     if (method === "replace") {
         // reset cached data
@@ -142,9 +155,6 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
     }
 
     if (!isClosing) socketConnect()
-
-    isSyncing = true
-    setStatus("syncing")
 
     const timeout = 5 * 60 * 1000 // 5 minutes
     const status = await requestMain(Main.CLOUD_SYNC, { id: data.id as any, churchId: data.team.churchId, teamId: data.team.id, method }, () => {}, timeout)
@@ -172,18 +182,19 @@ export async function syncWithCloud(initialize: boolean = false, isClosing: bool
 
     setStatus("synced", 3)
 
-    if (isClosing) return true
+    if (isClosing) {
+        syncFinished()
+        return true
+    }
 
-    // reset cached shows as they might have changed
-    const allShowIds = Object.keys(get(shows))
-    const syncedShowIds = Object.keys(get(showsCache)).filter((id) => allShowIds.includes(id))
-    showsCache.update((a) => {
-        // only delete shows that were synced, so any shows created while syncing don't get deleted
-        syncedShowIds.forEach((id) => {
-            delete a[id]
+    // reset cached shows that were downloaded from cloud
+    const downloaded = status.downloadedShowIds || []
+    if (downloaded.length) {
+        showsCache.update((a) => {
+            downloaded.forEach((id) => delete a[id])
+            return a
         })
-        return a
-    })
+    }
 
     // reload current show
     const currentlyActive = get(activeShow)?.id || ""
@@ -294,14 +305,15 @@ function broadcastPresence(action: string = "update") {
     const show = clone(get(activeShow))
     delete show?.index
 
-    cloudSyncMessage("presence", { action, activePage: page, activeShow: show, activeProject: get(activeProject) })
+    cloudSyncMessage("presence", { action, activePage: page, activeShow: show, activeProject: get(activeProject), deviceId: get(deviceId) })
 }
 
 export function getCloudUsers(updater = get(cloudUsers)) {
+    const currentDeviceId = get(deviceId)
     const name = get(cloudSyncData).deviceName || ""
     const timeout = 60 * 3000 // 3 minutes
     const now = Date.now()
-    return updater.filter((a) => a.displayName !== name && now - (a.lastUpdate || 0) < timeout)
+    return updater.filter((a) => (!currentDeviceId || !a.deviceId || a.deviceId !== currentDeviceId) && a.displayName !== name && now - (a.lastUpdate || 0) < timeout)
 }
 
 export function isActiveShowInUseByCloudUser(_updater: any = null) {
@@ -322,13 +334,16 @@ export async function cloudSyncMessage(id: string = "", data: { [key: string]: a
 // RECEIVERS
 
 const CLOUD_RECEIVERS = {
-    presence: (data: { displayName?: string; action?: string; activePage?: string; activeShow?: any; activeProject?: any }) => {
+    presence: (data: { displayName?: string; deviceId?: string; action?: string; activePage?: string; activeShow?: any; activeProject?: any }) => {
+        const currentDeviceId = get(deviceId)
+        if (currentDeviceId && data.deviceId && data.deviceId === currentDeviceId) return
+
         const currentName = get(cloudSyncData).deviceName || ""
         const name = data.displayName
         if (!name || name === currentName) return
 
         const isBye = data.action === "bye"
-        const userData = { displayName: name, lastUpdate: Date.now(), activePage: data.activePage, activeShow: data.activeShow, activeProject: data.activeProject }
+        const userData = { displayName: name, deviceId: data.deviceId, lastUpdate: Date.now(), activePage: data.activePage, activeShow: data.activeShow, activeProject: data.activeProject }
 
         // store a persistent color
         let color = get(special).cloudUserColors?.[name]
@@ -342,7 +357,7 @@ const CLOUD_RECEIVERS = {
 
         let isNewUser = data.action === "iamnew"
         cloudUsers.update((users) => {
-            const existingIndex = users.findIndex((u) => u.displayName === name)
+            const existingIndex = users.findIndex((u) => (data.deviceId && u.deviceId ? u.deviceId === data.deviceId : u.displayName === name))
 
             // remove user
             if (isBye) {

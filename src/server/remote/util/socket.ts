@@ -31,7 +31,7 @@ export function initSocket() {
         }
 
         if (!_get("isConnected")) {
-            const UNCONNECTED_ALLOWED_KEYS = ["PASSWORD", "ERROR", "ACCESS", "LANGUAGE"]
+            const UNCONNECTED_ALLOWED_KEYS = ["PASSWORD", "ERROR", "ACCESS", "LANGUAGE", "THEME_COLORS"]
             if (!UNCONNECTED_ALLOWED_KEYS.includes(key)) return
         }
 

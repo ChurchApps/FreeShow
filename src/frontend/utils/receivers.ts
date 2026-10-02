@@ -4,6 +4,7 @@ import type { ClientMessage } from "../../types/Socket"
 import { AudioMicrophone } from "../audio/audioMicrophone"
 import { MIN_DB } from "../audio/dBUtils"
 import { runAction } from "../components/actions/actions"
+import { handleRecorderFrame } from "../components/drawer/live/recorder"
 import { getDynamicValue } from "../components/edit/scripts/itemHelpers"
 import { clone } from "../components/helpers/array"
 import { receiveMainGlobal } from "../IPC/main"
@@ -111,6 +112,9 @@ const receiveOUTPUTasMAIN: any = {
             a[id] = { buffer, size }
             return a
         })
+    },
+    RECORDER_FRAME: ({ id, buffer, size }: { id: string; buffer: ArrayBuffer | Uint8Array; size: { width: number; height: number } }) => {
+        handleRecorderFrame(id, buffer, size)
     },
     OUTPUTS: (a: any) => outputs.set(a),
     RESTART: ({ id }) => restartOutputs(id),
@@ -232,7 +236,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     CATEGORIES: (a: any) => categories.set(a),
 
     TEMPLATES: (a: any) => templates.set(a),
-    OVERLAYS: (a: any) => clone(overlays.set(a)),
+    OVERLAYS: (a: any) => overlays.set(clone(a)),
     EVENTS: (a: any) => events.set(a),
     GROUPS: (a: any) => groups.set(a),
 
@@ -244,13 +248,13 @@ export const receiveOUTPUTasOUTPUT: any = {
     OUT_SLIDE_CACHE: (a: any) => outputSlideCache.set(a),
     CUSTOM_METADATA: (a: any) => customMetadata.set(a),
     CUSTOM_CREDITS: (a: any) => customMessageCredits.set(a),
-    EFFECTS: (a: any) => clone(effects.set(a)),
-    TIMERS: (a: any) => clone(timers.set(a)),
-    VARIABLES: (a: any) => clone(variables.set(a)),
+    EFFECTS: (a: any) => effects.set(clone(a)),
+    TIMERS: (a: any) => timers.set(clone(a)),
+    VARIABLES: (a: any) => variables.set(clone(a)),
     TIME_FORMAT: (a: any) => timeFormat.set(a),
     GLOBAL_REGEXES: (a: any) => globalRegexes.set(a),
     SYNCED_OUTPUTS: (a: any) => syncedOutputs.set(a),
-    SPECIAL: (a: any) => clone(special.set(a)),
+    SPECIAL: (a: any) => special.set(clone(a)),
     SLIDE_TIMELINE_SPEED_MULTIPLIER: (a: any) => slideTimelineSpeedMultiplier.set(a),
     ACTIVE_TIMERS: (a: any) => activeTimers.set(a),
     // POSITION: (a: any) => outputPosition.set(a),

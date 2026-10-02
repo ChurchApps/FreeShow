@@ -1,14 +1,73 @@
 import { get } from "svelte/store"
+import { uid } from "uid"
 import type { Item, LayoutRef } from "../../../types/Show"
 import type { StageItem, StageLayout } from "../../../types/Stage"
 import { isOutputWindow } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { arrayToObject, filterObjectArray } from "../../utils/sendData"
+import { getLikelyPosition } from "../edit/scripts/autoPosition"
+import { updateSortedStageItems } from "../edit/scripts/itemHelpers"
 import { getItemText } from "../edit/scripts/textStyle"
 import { getActiveOutputs } from "../helpers/output"
 import { getLayoutRef } from "../helpers/show"
 import { STAGE } from "./../../../types/Channels"
 import { activeStage, allOutputs, connections, outputs, outputSlideCache, showsCache, stageShows, timers, variables } from "./../../stores"
+
+const resolution = { width: 1920, height: 1080 }
+const halfWidth = resolution.width * 0.5
+const halfHeight = resolution.height * 0.5
+const DEFAULT_STYLE = `width: ${halfWidth}px;height: ${halfHeight}px;left: ${halfWidth * 0.5}px;top: ${halfHeight * 0.5}px;`
+const smallItems = ["timer", "clock", "slide_tracker"]
+
+export function addStageItem(itemType: string, options: any = {}, textValue = "") {
+    if (typeof options === "string") {
+        textValue = options
+        options = {}
+    }
+
+    const stageId = get(activeStage).id || ""
+    if (!stageId) return
+
+    let itemId = uid(5)
+    stageShows.update((a) => {
+        if (!a[stageId]?.items) return a
+
+        let style = DEFAULT_STYLE
+        if (smallItems.includes(itemType) || textValue) {
+            const width = resolution.width * 0.45
+            const left = halfWidth - width * 0.5
+            const height = 150
+            const top = halfHeight - height * 0.5
+            style = `width: ${width}px;height: ${height}px;left: ${left}px;top: ${top}px;`
+        }
+
+        const existingItems: StageItem[] = Object.values(a[stageId].items)
+        if (existingItems.length) style = getLikelyPosition(existingItems, style)
+
+        let item: StageItem = { type: itemType as any, style, align: "", ...options }
+
+        if (itemType === "text") {
+            item.lines = [{ align: "", text: [{ style: "", value: textValue || "" }] }]
+        } else if (itemType === "slide_text") {
+            const slideTextItems = existingItems.filter((i: any) => i.type === "slide_text")
+            item.slideOffset = slideTextItems.length
+            item.style += "font-size: 800px;"
+        }
+
+        a[stageId].items[itemId] = item
+        a[stageId].modified = Date.now()
+        return a
+    })
+
+    updateSortedStageItems()
+    updateStageShow()
+
+    if (Object.keys(get(stageShows)[stageId]?.items || {}).length > 1) {
+        activeStage.update((a) => ({ ...a, items: [itemId] }))
+    }
+
+    return itemId
+}
 
 export function updateStageShow() {
     Object.entries(get(connections).STAGE || {}).forEach(([id, stage]) => {

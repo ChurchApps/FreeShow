@@ -130,6 +130,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     newSlide: { label: "new.slide", icon: "add", iconColor: "var(--secondary)" },
     // newGroup: { label: "context.createNew", icon: "add", iconColor: "var(--secondary)" },
     remove_template: { label: "actions.remove_template_from_show", icon: "remove_circle", iconColor: "#ff6b54" },
+    convert_to_regular: { label: "interaction.generate_slide", icon: "slide" },
     // SLIDE VIEWS
     view_grid: { label: "show.grid", icon: "grid" },
     view_simple: { label: "show.simple", icon: "simple" },
@@ -139,6 +140,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // SLIDE
     slide_transition: { label: "popup.transition", icon: "transition", iconColor: "#ffd5bb" },
     disable: { label: "actions.disable", icon: "disable", iconColor: "#ff5454" },
+    hide: { label: "profile.hide", icon: "hide" },
     edit: { label: "menu.edit", icon: "edit", iconColor: "#97c7ff" },
     change_style: { label: "edit.style", icon: "styles", iconColor: "#97c7ff" },
     edit_style: { label: "menu.edit", icon: "edit", iconColor: "#97c7ff" },
@@ -205,6 +207,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // TEMPLATES
     template_actions: { label: "tabs.actions", icon: "actions", iconColor: "#d497ff" },
     // SCRIPTUES
+    open_reference: { label: "main.open", icon: "launch" },
     route_bible: { label: "main.open: route.bible", icon: "launch" },
     // STAGE
     move_connections: { label: "context.move_connections", icon: "up" },
@@ -251,7 +254,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     output: ["force_output", "SEPARATOR", "align_with_screen", "choose_screen"], // , "SEPARATOR", "edit"
 
     // OUTPUTS
-    output_preview: ["GROUP_edit", "change_style", "edit_style", "SEPARATOR", "live_prepare", "SEPARATOR", "test_pattern"],
+    output_preview: ["GROUP_edit", "change_style", "edit_style", "SEPARATOR", "recording", "SEPARATOR", "live_prepare", "SEPARATOR", "test_pattern"],
     output_active_button: ["GROUP_edit", "toggle_output", "move_to_front", "SEPARATOR", "hide_from_preview"],
 
     // DRAWER
@@ -285,10 +288,12 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // media / audio
     // "play", "play_no_audio", "play_no_filters", "SEPARATOR", "edit",
     media_preview: ["create_show", "SEPARATOR", "system_open", "SEPARATOR", "close"],
+    media_player_preview: ["close"],
     audio_preview: ["system_open", "SEPARATOR", "close"],
     overlay_preview: ["close"],
     // , "delete_all"
     show_media: ["GROUP_open", "play_no_filters", "SEPARATOR", "system_open"], // "play_no_audio"
+    show_overlay: ["GROUP_open"],
     show_audio: ["preview", "SEPARATOR", "system_open"],
     slide_recorder_item: ["remove"],
     // , "addToShow"
@@ -373,6 +378,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     // , "copy", "paste"
     slide: ["GROUP_edit", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPARATOR", "duplicate", "make_unique", "GROUP_slide_remove"],
     slideChild: ["GROUP_edit", "slideGroups", "actions", "bind_to", "format", "remove_layers", "slide_transition", "disable", "SEPARATOR", "duplicate", "make_unique", "GROUP_slide_remove"],
+    slideFake: ["convert_to_regular"],
     slideFocus: ["editSlideText"],
     group: ["GROUP_rename_recolor", "lock_group", "SEPARATOR", "selectAll", "SEPARATOR", "duplicate", "delete_group"],
     global_group: ["manage_groups"],
@@ -392,6 +398,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
 
     // SCRIPTURE
     bible_book_local: ["rename"],
+    scripture_search_result: ["open_reference"],
 
     // STAGE
     stage_slide: ["GROUP_rename_only", "move_connections", "disable", "SEPARATOR", "export", "SEPARATOR", "duplicate", "delete"], // "GROUP_duplicate_delete"
@@ -405,7 +412,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     edit_box: ["GROUP_dynamic", "item_actions", "item_bind_to", "format", "rearrange", "transition", "SEPARATOR", "duplicate", "delete"], // "copy", "paste" (shortcut or top menubar) // "GROUP_duplicate_delete"
     editbox_text: ["text_copy", "text_cut", "text_paste", "text_select_all", "SEPARATOR", "insert_virtual_break"],
     items_list_item: ["to_front", "forward", "backward", "to_back"],
-    scene_overlay: ["GROUP_edit", "delete"],
+    effect_item: ["hide", "SEPARATOR", "duplicate", "delete"],
+    scene_overlay: ["GROUP_edit", "hide", "SEPARATOR", "delete"],
     table_context: ["delete_row", "delete_col"],
 
     // TIMELINE

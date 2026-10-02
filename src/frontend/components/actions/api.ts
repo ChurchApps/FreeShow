@@ -86,6 +86,7 @@ import {
     toggleLogSongUsage,
     toggleMediaLoop,
     toggleMediaMute,
+    toggleOutputRecording,
     toggleSttListening,
     updateVolumeValues,
     videoSeekTo
@@ -285,6 +286,8 @@ export const API_ACTIONS = {
     stop_webrtc_stream: (data: API_id_optional) => stopStreaming(data.id),
     start_rtmp_stream: (data: API_id_optional) => startRtmpStreaming(data.id),
     stop_rtmp_stream: (data: API_id_optional) => stopRtmpStreaming(data.id),
+    start_output_recording: (data: API_id_optional = {}) => toggleOutputRecording({ ...data, value: true }),
+    stop_output_recording: () => toggleOutputRecording({ value: false }),
     lock_output: (data: API_output_lock) => toggleLock(data), // BC
     toggle_output_windows: (data: API_toggle_specific = {}) => toggleOutputs(null, { state: data.value }), // BC
     toggle_output: (data: API_toggle) => toggleOutputs([data.id], { state: data.value }),

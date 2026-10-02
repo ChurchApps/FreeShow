@@ -6,6 +6,8 @@ import { newToast } from "../utils/common"
 import { AudioAnalyser } from "./audioAnalyser"
 import { AudioRoutingManager } from "./routing/audioRoutingManager"
 
+import { getRecordingFileName } from "../components/drawer/live/recorder"
+
 const activeRecorders: { [channelId: string]: { recorder: MediaRecorder; stream: MediaStream; onstopPromise: Promise<void> } } = {}
 const options: any = { mimeType: "audio/webm; codecs=opus" }
 
@@ -32,7 +34,7 @@ export function startChannelRecording(channelId: string, label = "") {
             const blob = new Blob(chunks, options)
             const arraybuffer = await blob.arrayBuffer()
 
-            const name = `FreeShow_${label ? label.replace(/[\\/:*?"<>|]/g, "_") + "_" : ""}${formatTime()}.webm`
+            const name = getRecordingFileName(label)
             const customPath = get(special)?.audioRecordingsPath
             sendMain(Main.RECORDER, { blob: arraybuffer, name, path: customPath })
 
@@ -70,16 +72,4 @@ export function isChannelRecording(channelId = "main") {
 export async function stopAllChannelRecordings(): Promise<void> {
     const promises = Object.keys(activeRecorders).map((channelId) => stopChannelRecording(channelId))
     await Promise.all(promises)
-}
-
-function formatTime() {
-    const today = new Date()
-    const s = String(today.getSeconds()).padStart(2, "0")
-    const m = String(today.getMinutes()).padStart(2, "0")
-    const h = String(today.getHours()).padStart(2, "0")
-    const dd = String(today.getDate()).padStart(2, "0")
-    const mm = String(today.getMonth() + 1).padStart(2, "0")
-    const yyyy = today.getFullYear()
-
-    return mm + "-" + dd + "-" + yyyy + "_" + h + "-" + m + "-" + s
 }

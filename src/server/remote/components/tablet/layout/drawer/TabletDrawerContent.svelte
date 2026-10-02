@@ -122,6 +122,6 @@
         display: flex;
         flex-direction: column;
         flex: 1;
-        background-color: var(--primary-darkest);
+        background-color: var(--primary-darker);
     }
 </style>
