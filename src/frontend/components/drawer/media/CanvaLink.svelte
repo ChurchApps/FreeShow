@@ -70,6 +70,8 @@
     }
 
     .info {
+        white-space: normal;
+        overflow: visible;
         opacity: 0.8;
         font-size: 0.9em;
         line-height: 1.4;
@@ -86,6 +88,7 @@
     }
 
     .error {
+        white-space: normal;
         color: var(--error, #ff6b6b);
         font-size: 0.85em;
     }
