@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Output } from "../../../../types/Output"
     import type { LayoutRef } from "../../../../types/Show"
-    import { activeFocus, activeShow, focusMode, outLocked, playingVideoState, presentationData, showsCache } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, outLocked, outputs, overlays, playingVideoState, presentationData, showsCache } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
@@ -10,11 +10,13 @@
     import Button from "../../inputs/Button.svelte"
     import { VideoPlayer } from "../../media/video/videoPlayer"
     import VideoSlider from "../VideoSlider.svelte"
+    import { getLiveWebsites, reloadWebsite, sendWebsiteKey } from "../../helpers/websiteControls"
 
     export let currentOutput: Output
     export let ref: LayoutRef[] | { temp: boolean; items: any; id: string }[] | undefined
     export let linesIndex: null | number
     export let maxLines: null | number
+    export let outputId = ""
 
     $: slide = currentOutput?.out?.slide
 
@@ -47,6 +49,16 @@
     }
     function toggleLoop(path: string, outputId: string) {
         VideoPlayer.toggleLoop(path, outputId)
+    }
+
+    // live websites (e.g. a Canva presentation)
+    $: websites = getWebsites(outputId, $outputs, $showsCache, $overlays)
+    function getWebsites(outputId: string, _updater1: any, _updater2: any, _updater3: any) {
+        return outputId ? getLiveWebsites(outputId) : []
+    }
+
+    function formatUrl(url: string) {
+        return (url.split("://")[1] || url).replace("www.", "")
     }
 </script>
 
@@ -95,6 +107,24 @@
         {/each}
     {/if}
 {/if}
+
+{#each websites as website}
+    <div class="videoValues">
+        <p title={website.src}>{formatUrl(website.src)}</p>
+
+        <span class="group">
+            <Button center title={translateText("media.previous")} disabled={$outLocked} on:click={() => sendWebsiteKey(outputId, "Left", website.src)}>
+                <Icon id="previous" white />
+            </Button>
+            <Button center title={translateText("media.next")} disabled={$outLocked} on:click={() => sendWebsiteKey(outputId, "Right", website.src)}>
+                <Icon id="next" white />
+            </Button>
+            <Button center title={translateText("edit.refresh_website")} disabled={$outLocked} on:click={() => reloadWebsite(outputId, website.src)}>
+                <Icon id="refresh" white />
+            </Button>
+        </span>
+    </div>
+{/each}
 
 <style>
     .name {

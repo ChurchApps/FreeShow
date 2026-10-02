@@ -1,18 +1,37 @@
 <script lang="ts">
+    import { getContext, onDestroy } from "svelte"
     import { OUTPUT } from "../../../../types/Channels"
     import { currentWindow, outputs } from "../../../stores"
     import { send } from "../../../utils/request"
     import Icon from "../../helpers/Icon.svelte"
     import Button from "../../inputs/Button.svelte"
+    import { WEBSITE_POOL, type WebsitePool } from "./websitePool"
 
     export let src: string
     export let navigation = true
     export let zoom: number | undefined = undefined
     export let clickable = false
     export let disablePreview = false
+    export let slideControls = false
 
     let webview: any
     export let ratio: number
+
+    // inside an output view, the website is kept loaded in its pool (so it keeps its state between slides),
+    // and placed over this placeholder while the slide is shown
+    const pool = getContext<WebsitePool | undefined>(WEBSITE_POOL)
+    let placeholder: HTMLElement | undefined
+    let claimed: { src: string; element: HTMLElement } | null = null
+    $: if (pool && placeholder && parsedSrc) claim(parsedSrc, zoom, navigation, slideControls)
+    function claim(newSrc: string, _zoom: any, _navigation: boolean, _slideControls: boolean) {
+        if (!pool || !placeholder) return
+        if (claimed && (claimed.src !== newSrc || claimed.element !== placeholder)) pool.release(claimed.src, claimed.element)
+        claimed = { src: newSrc, element: placeholder }
+        pool.claim(newSrc, placeholder, { zoom, navigation, slideControls })
+    }
+    onDestroy(() => {
+        if (pool && claimed) pool.release(claimed.src, claimed.element)
+    })
 
     let webviewReady = false
     let prevSrc = ""
@@ -197,6 +216,8 @@
     <div class="iconPreview">
         <Icon id="web" size={3} white />
     </div>
+{:else if pool}
+    <div class="placeholder" bind:this={placeholder} />
 {:else}
     <div class="website" class:clickable on:mouseover={mouseover} on:focus={mouseover} on:mouseleave={mouseleave}>
         {#if navigation && hover && $currentWindow === "output"}
@@ -218,6 +239,7 @@
 {/if}
 
 <style>
+    .placeholder,
     .website {
         position: absolute;
         width: 100%;
