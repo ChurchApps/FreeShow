@@ -1379,7 +1379,6 @@
         "normal": "Normal",
         "enable_key_output": "Enable alpha key output",
         "always_on_top": "Always on top",
-        "visible_on_fullscreen_spaces": "Show on all Spaces, including over fullscreen apps",
         "change_key_output_position": "Change key output position",
         "position": "Position",
         "enabled": "Enabled",

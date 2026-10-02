@@ -4,7 +4,7 @@ import { CaptureHelper } from "../../capture/CaptureHelper"
 import type { Output as OutputWindow } from "../Output"
 import { OutputHelper } from "../OutputHelper"
 import type { Output } from "../../../types/Output"
-import { setOutputAlwaysOnTop, setOutputVisibleOnFullscreenSpaces } from "./OutputAlwaysOnTop"
+import { setOutputAlwaysOnTop } from "./OutputAlwaysOnTop"
 
 // SET_VALUE handles only values that can change on a LIVE window. Keys that affect window creation
 // (transparent/invisible) or the window's offscreen (OSR) mode (the persistent ndi/webrtc/rtmp/blackmagic
@@ -35,10 +35,6 @@ const setValues = {
         // show in taskbar if not always on top, because this will also show it in Alt+Tab menu
         window.setSkipTaskbar(value)
         if (output.boundsLocked !== true) window.setResizable(!value)
-    },
-    visibleOnFullscreenSpaces: (value: boolean, window: BrowserWindow, _id: string, output: OutputWindow) => {
-        if (output.osr) return
-        setOutputVisibleOnFullscreenSpaces(window, value)
     },
     boundsLocked: (value: boolean, _window: BrowserWindow, id: string, output: OutputWindow) => {
         output.boundsLocked = value

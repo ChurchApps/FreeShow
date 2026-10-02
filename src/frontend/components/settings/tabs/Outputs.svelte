@@ -75,9 +75,11 @@
             if (out.enabled) {
                 // Recreate window for options fixed at creation (transparency, invisibility, capture/OSR mode)
                 const recreateKeys = ["transparent", "invisible", "ndi", "omt", "webrtc", "rtmp", "blackmagic"]
+                // macOS: always on top outputs are a different window type (panel)
+                if ($os.platform === "darwin") recreateKeys.push("alwaysOnTop")
                 if (recreateKeys.includes(key)) {
                     send(OUTPUT, ["CREATE"], { id: outputId, ...out })
-                } else if (key === "alwaysOnTop" || key === "visibleOnFullscreenSpaces") {
+                } else if (key === "alwaysOnTop") {
                     send(OUTPUT, ["SET_VALUE"], { id: outputId, key, value })
                 }
             }
@@ -378,9 +380,6 @@
 
     <MaterialPopupButton label="settings.output_screen" value={outputLabel} name={outputLabel} icon={currentOutput?.boundsLocked ? "locked" : "screen"} popupId="choose_screen" />
     <MaterialToggleSwitch label="settings.always_on_top" checked={currentOutput?.alwaysOnTop !== false} defaultValue={true} on:change={(e) => updateOutput("alwaysOnTop", e.detail)} />
-    {#if $os.platform === "darwin"}
-        <MaterialToggleSwitch label="settings.visible_on_fullscreen_spaces" checked={!!currentOutput?.visibleOnFullscreenSpaces} defaultValue={false} on:change={(e) => updateOutput("visibleOnFullscreenSpaces", e.detail)} />
-    {/if}
 {/if}
 
 {#if currentOutput?.blackmagic}

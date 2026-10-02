@@ -19,7 +19,6 @@ export interface Output {
     blending?: { left: number; right: number; rotate: number; opacity: number; centered: boolean; offset: number }
     screen: string | null
     alwaysOnTop?: boolean
-    visibleOnFullscreenSpaces?: boolean // macOS: stay on top of other apps' fullscreen Spaces instead of switching to the desktop Space
     transparent?: boolean
     ndi?: boolean
     ndiData?: any

@@ -14,7 +14,7 @@ import { setDataOMT } from "../../omt/talk"
 import { wait } from "../../utils/helpers"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
-import { setOutputAlwaysOnTop, setOutputVisibleOnFullscreenSpaces } from "./OutputAlwaysOnTop"
+import { setOutputAlwaysOnTop, useOutputPanel } from "./OutputAlwaysOnTop"
 import { OutputVisibility } from "./OutputVisibility"
 
 // Tracks timing stages for off-main GPU readback and transmission (in ms)
@@ -177,14 +177,14 @@ export class OutputLifecycle {
             if (!extra.boundsLocked) options.resizable = true
         }
 
+        if (useOutputPanel(options.alwaysOnTop, osr)) options.type = "panel"
+
         if (OUTPUT_CONSOLE) options.webPreferences!.devTools = true
         const window: BrowserWindow | null = new BrowserWindow(options)
 
         if (osr) this.attachOsrCapture(window, id)
 
         window.setSkipTaskbar(!!options.skipTaskbar)
-        // set before the window is first minimized/shown, so macOS never assigns it to a single Space
-        if (!osr && extra.visibleOnFullscreenSpaces) setOutputVisibleOnFullscreenSpaces(window, true)
         if (isMac && !osr) window.minimize()
 
         window.once("show", () => {
