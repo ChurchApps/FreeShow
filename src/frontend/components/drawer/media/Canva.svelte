@@ -149,6 +149,8 @@
     }
 
     .info {
+        white-space: normal;
+        overflow: visible;
         opacity: 0.7;
         font-size: 0.85em;
         line-height: 1.4;
