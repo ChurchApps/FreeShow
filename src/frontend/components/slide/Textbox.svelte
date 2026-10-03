@@ -63,6 +63,9 @@
     export let styleIdOverride = ""
     // expose an optional key so parents can track autosize readiness per item
     export let autoSizeKey = ""
+    // output slides keep all textboxes hidden until every one of them has its auto size
+    export let autoSizeGate: { hold: (key: string) => void; release: (key: string) => void } | null = null
+    export let revealHold = false
     export let updateDynamicValues = true
 
     // reuse autosize work across components by caching measurements alongside a signature
@@ -99,6 +102,7 @@
         hideSafetyTimeout = setTimeout(() => {
             if (hideUntilAutosized) {
                 hideUntilAutosized = false
+                autoSizeGate?.release(autoSizeKey)
                 // markAutoSizeReady() // Ensure state is consistent
             }
         }, 600)
@@ -119,6 +123,7 @@
         }
     })
     onDestroy(() => {
+        autoSizeGate?.release(autoSizeKey)
         if (dateInterval) clearInterval(dateInterval)
         if (debounceTimer) clearTimeout(debounceTimer)
         if (cssInterval) clearInterval(cssInterval)
@@ -318,6 +323,7 @@
             }
 
             hideUntilAutosized = willHide
+            if (willHide) autoSizeGate?.hold(autoSizeKey)
         }
     }
     let prevAutosizeSignature = ""
@@ -613,7 +619,10 @@
         if (autoSizeReady) return
         autoSizeReady = true
         if (autoSizeKey) dispatch("autosizeReady", { key: autoSizeKey, fontSize })
-        if (hideUntilAutosized) requestAnimationFrame(() => (hideUntilAutosized = false))
+        // with a gate, the parent reveals all textboxes together, so don't wait an extra frame
+        if (hideUntilAutosized && autoSizeGate) hideUntilAutosized = false
+        else if (hideUntilAutosized) requestAnimationFrame(() => (hideUntilAutosized = false))
+        autoSizeGate?.release(autoSizeKey)
     }
 
     function shouldHideUntilAutoSizeCompletes() {
@@ -842,7 +851,7 @@
             {revealed}
             styleOverrides={templateStyleOverrides}
             {useOriginalTextColor}
-            hideContent={hideUntilAutosized}
+            hideContent={hideUntilAutosized || revealHold}
             {normalWrap}
             {highlighedLines}
             on:updateAutoSize={calculateAutosize}

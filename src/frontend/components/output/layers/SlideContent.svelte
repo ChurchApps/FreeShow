@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { getContext, onDestroy, onMount, tick } from "svelte"
+    import { uid } from "uid"
     import type { Item, OutSlide, SlideData, TimelineAction } from "../../../../types/Show"
     import { scriptureSettings, showsCache, slideTimelineSpeedMultiplier, templates } from "../../../stores"
     import { waitUntilValueIsDefined } from "../../../utils/common"
@@ -10,6 +11,8 @@
     import { getStyleTemplate, itemNeedsAutoSize, slideHasAutoSizeItem } from "../../helpers/output"
     import Textbox from "../../slide/Textbox.svelte"
     import { SlideTimeline } from "../../timeline/SlideTimeline"
+    import type { RevealSync } from "../revealSync"
+    import { REVEAL_SYNC_KEY } from "../revealSync"
     import SlideItemTransition from "../transitions/SlideItemTransition.svelte"
 
     export let outputId: string
@@ -184,12 +187,92 @@
         return slideHasAutoSizeItem(customTemplate)
     }
 
+    // REVEAL
+    // new text stays hidden until every textbox has its auto size & the background is ready,
+    // so all textboxes (and the background) change in the same frame
+    const revealSync = getContext<RevealSync | undefined>(REVEAL_SYNC_KEY)
+    const revealId = `slide_${uid(5)}`
+    const AUTOSIZE_MAX_WAIT = 700 // textboxes reveal themselves after 600ms anyway
+    const BACKGROUND_MAX_WAIT = 2000
+    let revealHeld = false
+    let revealedGeneration = 0
+    let cancelReveal: (() => void) | null = null
+    let autoSizeGate: AutoSizeGate | null = null
+
+    type AutoSizeGate = { hold: (key: string) => void; release: (key: string) => void }
+    function createAutoSizeGate(gen: number) {
+        const pendingKeys = new Set<string>()
+        let accepting = true
+        return {
+            hold: (key: string) => {
+                if (accepting && gen === updateGeneration) pendingKeys.add(key)
+            },
+            release: (key: string) => {
+                if (pendingKeys.delete(key) && !pendingKeys.size && !accepting) textReady(gen)
+            },
+            // only textboxes created together with the slide can hold back the reveal
+            stopAccepting: () => {
+                accepting = false
+                return pendingKeys.size
+            }
+        }
+    }
+
+    function holdReveal(maxHold: number) {
+        cancelReveal?.()
+        cancelReveal = null
+        revealSync?.hold(revealId, maxHold)
+    }
+    function releaseReveal() {
+        cancelReveal?.()
+        cancelReveal = null
+        revealSync?.release(revealId)
+        revealHeld = false
+    }
+    onDestroy(releaseReveal)
+
+    function textReady(gen: number) {
+        if (gen !== updateGeneration || revealedGeneration === gen) return
+        revealedGeneration = gen
+
+        if (!revealSync) {
+            revealHeld = false
+            return
+        }
+
+        revealSync.release(revealId)
+        cancelReveal = revealSync.whenClear(() => {
+            cancelReveal = null
+            if (gen === updateGeneration) revealHeld = false
+        }, BACKGROUND_MAX_WAIT)
+    }
+
+    async function showItems(gen: number) {
+        const gate = createAutoSizeGate(gen)
+        autoSizeGate = gate
+        revealHeld = true
+        show = true
+
+        // wait for the new textboxes to be created, then reveal when they all have their size
+        await tick()
+        if (gen !== updateGeneration) return
+        if (!gate.stopAccepting()) textReady(gen)
+        else setTimeout(() => textReady(gen), AUTOSIZE_MAX_WAIT)
+
+        // wait for between to set in transition
+        timeout = setTimeout(() => {
+            if (gen !== updateGeneration) return
+            transitioningBetween = false
+        })
+    }
+
     let isClearingToEmpty = false
     async function updateItems() {
         let betweenClearingTransition = transition.between || transition
         if (betweenClearingTransition?.type === "none") betweenClearingTransition.duration = 0
 
         if (!currentSlideItems?.length) {
+            releaseReveal()
             scheduleAutoSizePrecompute([])
             currentItems = []
             // Clear persistent items when no slide content
@@ -279,10 +362,12 @@
             // Keep currentItems in sync but don't toggle show
             currentItems = clone(currentSlide.items || [])
             transitioningBetween = false
+            releaseReveal()
             return
         }
 
         const gen = ++updateGeneration
+        holdReveal(waitToShow + BACKGROUND_MAX_WAIT)
 
         // wait for between to update out transition
         timeout = setTimeout(() => {
@@ -306,13 +391,18 @@
                 // wait until half transition duration of previous items have passed as it looks better visually
                 timeout = setTimeout(() => {
                     if (gen !== updateGeneration) return
-                    show = true
 
-                    // wait for between to set in transition
-                    timeout = setTimeout(() => {
-                        if (gen !== updateGeneration) return
-                        transitioningBetween = false
-                    })
+                    // with a transition, the text fades in together with the background, instead of popping in when it's ready
+                    if (!currentTransitionDuration || !revealSync) {
+                        showItems(gen)
+                        return
+                    }
+
+                    revealSync.release(revealId)
+                    cancelReveal = revealSync.whenClear(() => {
+                        cancelReveal = null
+                        if (gen === updateGeneration) showItems(gen)
+                    }, BACKGROUND_MAX_WAIT)
                 }, waitToShow)
             })
         })
@@ -455,6 +545,8 @@
                             slideIndex={customOut?.index}
                             {styleIdOverride}
                             autoSizeKey={createAutoSizeKey(item, index)}
+                            {autoSizeGate}
+                            revealHold={revealHeld}
                             updateDynamicValues={!isClearing}
                         />
                     </SlideItemTransition>
