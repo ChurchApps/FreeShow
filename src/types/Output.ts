@@ -48,6 +48,8 @@ export interface RtmpDestination {
     url: string
     key: string
     enabled: boolean
+    /** url is a file path: the encoded stream is recorded there instead of being sent */
+    file?: boolean
 }
 export interface RtmpData {
     streaming?: boolean

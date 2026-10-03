@@ -1,6 +1,6 @@
 import { spawn, type ChildProcess } from "child_process"
 import type { RtmpDestination, RtmpDestinationState, RtmpStatus } from "../../types/Output"
-import { buildEncoderCommand, buildRelayCommand, getProfile, SAMPLE_RATE, type EncoderId } from "./encoderProfiles"
+import { buildEncoderCommand, buildFileRelayCommand, buildRelayCommand, getProfile, SAMPLE_RATE, type EncoderId } from "./encoderProfiles"
 
 // This engine runs in the capture worker thread (RtmpBridge on main proxies it). It must not import
 // anything Electron-bound: the ffmpeg path and encoder are resolved on main and handed to start()
@@ -50,6 +50,8 @@ const ENCODER_MAX_CONSECUTIVE_FAILURES = 10
 const STATUS_PUSH_INTERVAL_MS = 1000
 
 interface RelayInstance {
+    /** recording relays only: how many files this destination has written */
+    fileParts?: number
     destination: RtmpDestination
     process: ChildProcess | null
     state: RtmpDestinationState
@@ -234,8 +236,14 @@ export class RtmpStreamer {
         if (streamer.encoderRestartTimer) clearTimeout(streamer.encoderRestartTimer)
         streamer.encoderRestartTimer = undefined
 
-        for (const relay of streamer.relays.values()) this.stopRelay(relay)
+        // the encoder flushes what it still holds into the relays as it exits; ending them first cut the
+        // last packet of a stream (and of a recording) in half
+        const relays = [...streamer.relays.values()]
+        const encoder = streamer.encoder
         this.stopEncoder(streamer)
+        const endRelays = () => relays.forEach((relay) => this.stopRelay(relay))
+        if (encoder && encoder.exitCode === null && encoder.signalCode === null) encoder.once("exit", endRelays)
+        else endRelays()
 
         const timer = this.statusTimers.get(outputId)
         if (timer) {
@@ -476,7 +484,8 @@ export class RtmpStreamer {
 
         let child: ChildProcess
         try {
-            child = spawn(streamer.ffmpegPath, buildRelayCommand(buildDestinationUrl(relay.destination)), {
+            const args = relay.destination.file ? buildFileRelayCommand(nextFilePart(relay)) : buildRelayCommand(buildDestinationUrl(relay.destination))
+            child = spawn(streamer.ffmpegPath, args, {
                 stdio: ["pipe", "ignore", "pipe"],
                 windowsHide: true
             })
@@ -735,6 +744,17 @@ export class RtmpStreamer {
 /** Destination changes are relay-only; anything here means the encoder has to be respawned. */
 function configRequiresRestart(prev: StreamConfig, next: StreamConfig): boolean {
     return prev.width !== next.width || prev.height !== next.height || prev.fps !== next.fps || prev.bitrate !== next.bitrate || prev.enableAudio !== next.enableAudio || prev.encoder !== next.encoder
+}
+
+// Every (re)start of a recording relay - an encoder respawn, a crashed relay - continues in a new part
+// file: restarting into the same path would overwrite what was already recorded.
+function nextFilePart(relay: RelayInstance): string {
+    relay.fileParts = (relay.fileParts || 0) + 1
+    if (relay.fileParts === 1) return relay.destination.url
+    const dot = relay.destination.url.lastIndexOf(".")
+    const base = dot > 0 ? relay.destination.url.slice(0, dot) : relay.destination.url
+    const ext = dot > 0 ? relay.destination.url.slice(dot) : ""
+    return `${base}_part${relay.fileParts}${ext}`
 }
 
 function buildDestinationUrl(destination: { url: string; key: string }): string {

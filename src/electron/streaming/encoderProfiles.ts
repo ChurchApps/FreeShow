@@ -166,6 +166,9 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
     }
 
     args.push("-c:a", "aac", "-ar", "48000", "-ac", `${AUDIO_CHANNELS}`, "-b:a", AUDIO_BITRATE)
+    // end with the video: once the inputs close, aresample would otherwise fill the gap between the
+    // wall-clock video timestamps and the sample-counted audio with minutes of silence
+    args.push("-shortest")
 
     // SWITCH FROM MPEGTS TO FLV FOR RTMP
     // FLV is the native format for RTMP relays and YouTube ingest.
@@ -178,6 +181,11 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
 /** Relay process: forward the encoded FLV stream straight to one RTMP/RTMPS destination without re-encoding. */
 export function buildRelayCommand(url: string): string[] {
     return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-f", "flv", "-flvflags", "no_sequence_end", url]
+}
+
+/** copy the encoded stream into a file; fragmented MP4 stays playable if the recording is cut off */
+export function buildFileRelayCommand(filePath: string): string[] {
+    return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-movflags", "+frag_keyframe+empty_moov+default_base_moof", "-f", "mp4", "-y", filePath]
 }
 
 /** Short throwaway encode used to prove the encoder actually works on this machine. */

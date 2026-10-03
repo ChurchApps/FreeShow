@@ -2,6 +2,7 @@ import { isAudioEnabled } from "../../audio/processAudio"
 import { BlackmagicBridge as BlackmagicSender } from "../../blackmagic/BlackmagicBridge"
 import { OutputHelper } from "../../output/OutputHelper"
 import { getRtmpEncoderSetting } from "../../streaming/encoderDetection"
+import { OutputRecording } from "../../streaming/OutputRecording"
 import { RtmpBridge as RtmpStreamer } from "../../streaming/RtmpBridge"
 import { WebRtcHost } from "../../streaming/WebRtcHost"
 import { CaptureHelper } from "../CaptureHelper"
@@ -233,18 +234,20 @@ export class CaptureLifecycle {
         }
     }
 
+    // H.264 at about a tenth of a bit per pixel per frame looks transparent for presentation content
+    private static readonly RECORDING_BITS_PER_PIXEL = 0.1
+
     /** Public so a settings change (e.g. the encoder) can be applied without waiting for a capture event. */
     static updateRtmpState() {
         const allOutputs = OutputHelper.getAllOutputs()
         allOutputs.forEach((o) => {
             if (!o.id) return
 
-            if (!o.rtmpData?.streaming) {
-                if (RtmpStreamer.isRunning(o.id)) RtmpStreamer.stop(o.id)
-                return
-            }
-
-            const destinations = (o.rtmpData.destinations || []).filter((d) => d.enabled && d.url)
+            // a recording is one more destination of the same encode
+            const streaming = !!o.rtmpData?.streaming
+            const destinations = streaming ? (o.rtmpData!.destinations || []).filter((d) => d.enabled && d.url) : []
+            const recording = OutputRecording.destination(o.id)
+            if (recording) destinations.push(recording)
             if (!destinations.length) {
                 if (RtmpStreamer.isRunning(o.id)) RtmpStreamer.stop(o.id)
                 return
@@ -253,8 +256,10 @@ export class CaptureLifecycle {
             // getBounds() is the DPI-corrected render size (halved on HiDPI for capture-only outputs),
             // so broadcast at the configured resolution instead
             const bounds = o.intendedBounds || o.window?.getBounds() || { width: 1920, height: 1080 }
-            const fps = o.rtmpData.fps ? Number(o.rtmpData.fps) : 30
-            const bitrate = o.rtmpData.bitrate ? Number(o.rtmpData.bitrate) : 4000
+            const recordFps = o.captureOptions?.framerates?.recorder || CaptureHelper.defaultFramerates().recorder
+            const fps = streaming && o.rtmpData!.fps ? Number(o.rtmpData!.fps) : streaming ? 30 : recordFps
+            // a recording alone is encoded at a bitrate proportional to its pixel rate, not a streaming budget
+            const bitrate = streaming && o.rtmpData!.bitrate ? Number(o.rtmpData!.bitrate) : streaming ? 4000 : Math.round((bounds.width * bounds.height * fps * this.RECORDING_BITS_PER_PIXEL) / 1000)
             if (o.captureOptions?.framerates) o.captureOptions.framerates.rtmp = fps
 
             // destination changes only touch relays; the encode keeps running

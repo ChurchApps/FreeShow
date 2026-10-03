@@ -12,6 +12,7 @@ import { OutputValues } from "./helpers/OutputValues"
 import { OutputVisibility } from "./helpers/OutputVisibility"
 import { RenderGroups } from "./helpers/RenderGroups"
 import { PreviewStream } from "../capture/PreviewStream"
+import { OutputRecording } from "../streaming/OutputRecording"
 import type { Output as OutputData } from "./Output"
 
 export class OutputHelper {
@@ -37,6 +38,7 @@ export class OutputHelper {
             PREVIEW_UNSUBSCRIBE: (data: { id: string; subscriber?: string }) => PreviewStream.unsubscribe(data.id, data.subscriber),
             PREVIEW_SIZE: (data: { id: string; subscriber: string; width: number }) => PreviewStream.setWidth(data.id, data.subscriber, data.width),
             CAPTURE: (data: { id: string; captures: { [key: string]: boolean } }) => CaptureHelper.Lifecycle.startCapture(data.id, data.captures),
+            RECORD_OUTPUT: (data: { id: string; state: boolean; name?: string; path?: string }) => (data.state ? OutputRecording.start(data.id, data.name || `${data.id}.mp4`, data.path) : OutputRecording.stop(data.id)),
 
             IDENTIFY_SCREENS: (data: { bounds: Rectangle }[]) => OutputHelper.Identify.identifyScreens(data),
             // PREVIEW_BOUNDS: (data) => OutputHelper.Bounds.setPreviewBounds(data),

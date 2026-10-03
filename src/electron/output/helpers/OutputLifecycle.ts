@@ -20,7 +20,6 @@ import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
 import { setOutputAlwaysOnTop, useOutputPanel } from "./OutputAlwaysOnTop"
 import { OutputPresenter } from "./OutputPresenter"
-import { RecorderStream } from "../../capture/RecorderStream"
 import { OutputVisibility } from "./OutputVisibility"
 import { PreviewStream } from "../../capture/PreviewStream"
 import { RenderGroups } from "./RenderGroups"
@@ -1085,15 +1084,6 @@ export class OutputLifecycle {
                 presentMembers[m] = sz
                 if (!targets.some((t) => t.width === sz.width && t.height === sz.height && t.format === 0)) targets.push({ width: sz.width, height: sz.height, format: 0 })
             }
-            // members being recorded: the main window's recorder draws a BGRA frame at the output's size
-            const recorderMembers: { [m: string]: { width: number; height: number } } = {}
-            for (const m of members) {
-                if (!OutputHelper.getOutput(m)?.captureOptions?.options?.recorder) continue
-                RecorderStream.ensure()
-                const sz = memberSizes[m] || { width, height }
-                recorderMembers[m] = sz
-                if (!targets.some((t) => t.width === sz.width && t.height === sz.height && t.format === 0)) targets.push({ width: sz.width, height: sz.height, format: 0 })
-            }
             // FS_CONVERT_CHECK: take the frame BOTH ways in one GPU pass — the main readback as plain BGRA
             // and a full-size target in the real format — so the worker can convert the BGRA itself and
             // compare. That is the only way to check a GPU kernel against the CPU reference on a real
@@ -1137,7 +1127,7 @@ export class OutputLifecycle {
             }
             const cpuTargets = targets.length > 0 && !addon.targetsSupported
             const seq = ++offMainSeq
-            const captureOpts = { size: { width, height }, ratio, framerate: memberFramerates[id] || framerate, memberFramerates, format: cpuTargets ? 0 : fmt, mainFormat: fmt, convertCheck, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members, depth: OutputLifecycle.depthFor(id), targets, memberTarget, memberFormats, memberSizes, cpuTargets, stageStream, serverStream, thumbStream, rtmpMembers, bmdMembers, webrtcMembers, presentMembers, recorderMembers }
+            const captureOpts = { size: { width, height }, ratio, framerate: memberFramerates[id] || framerate, memberFramerates, format: cpuTargets ? 0 : fmt, mainFormat: fmt, convertCheck, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members, depth: OutputLifecycle.depthFor(id), targets, memberTarget, memberFormats, memberSizes, cpuTargets, stageStream, serverStream, thumbStream, rtmpMembers, bmdMembers, webrtcMembers, presentMembers }
             const anySender = members.some((m) => !!NdiSender.NDI[m]?.sender || !!OmtSender.OMT[m]?.sender)
             if (SenderCapture.captureFrame(id, source, captureOpts, anySender)) {
                 forwardAt.set(seq, { t: Date.now(), unc: OutputLifecycle.globalInFlight === 0, px: width * height })
@@ -1307,7 +1297,7 @@ export class OutputLifecycle {
             const requestedFormat = CaptureHelper.Transmitter.getReadbackFormat(id, { width, height })
 
             const members = OutputLifecycle.groupMembers(id)
-            const offMainIds = members.filter((m) => !!NdiSender.NDI[m]?.sender || !!OmtSender.OMT[m]?.sender || !!RtmpBridge.runningConfig(m) || (WebRtcHost.isRunning() && !!OutputHelper.getOutput(m)?.webrtcData?.streaming) || !!OutputHelper.getOutput(m)?.captureOptions?.options?.recorder)
+            const offMainIds = members.filter((m) => !!NdiSender.NDI[m]?.sender || !!OmtSender.OMT[m]?.sender || !!RtmpBridge.runningConfig(m) || (WebRtcHost.isRunning() && !!OutputHelper.getOutput(m)?.webrtcData?.streaming))
             // An output with no sender still belongs off main when something wants its downscaled frame
             // (the web server, a stage client, a preview): the worker produces that on the GPU, where
             // main used to resolve a full-resolution readback into its own process.

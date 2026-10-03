@@ -123,7 +123,7 @@ export class CaptureTransmitter {
 
     // buffer-consumers need only raw BGRA bytes (no NativeImage resize/toJPEG), so on the shared-texture
     // path they can take the readback buffer directly instead of a createFromBitmap -> toBitmap round-trip.
-    private static readonly BUFFER_CONSUMERS = new Set(["ndi", "omt", "webrtc", "rtmp", "blackmagic"])
+    private static readonly BUFFER_CONSUMERS = new Set(["ndi", "omt", "webrtc", "rtmp", "blackmagic", "recorder"])
 
     private static osrModule: any = null
     private static loadOsr(): any {
@@ -272,6 +272,10 @@ export class CaptureTransmitter {
             case "blackmagic":
                 this.sendRawToBlackmagic(captureId, buffer, size, format)
                 break
+            case "recorder":
+                // the recording is a destination of the output's RTMP encode; feed it once
+                if (!this.channels[`${captureId}-rtmp`]) this.sendRawToRtmp(captureId, buffer, size)
+                break
         }
     }
 
@@ -390,8 +394,7 @@ export class CaptureTransmitter {
         const server = keys.includes("server") ? this.serverStreamRequest(captureId) : null
         const stage = keys.includes("stage") ? this.stageStreamRequest() : null
         const previewWidth = PreviewStream.hasSubscribers(captureId) ? Math.max(2, PreviewStream.requestedWidth([captureId]) || this.HEAVY_IMAGE_MAX_WIDTH) : 0
-        const recorder = keys.includes("recorder")
-        if (!server && !stage && !previewWidth && !recorder) return false
+        if (!server && !stage && !previewWidth) return false
 
         let source: Buffer
         let size: Size
@@ -418,8 +421,7 @@ export class CaptureTransmitter {
                 size,
                 server: server ? { width: Math.min(server.width, size.width) } : null,
                 stage: stage ? { width: Math.min(stage.width, size.width), quality: stage.quality, intervalMs: stage.intervalMs } : null,
-                preview: previewWidth ? { width: Math.min(previewWidth, size.width) } : null,
-                recorder: recorder ? { width: size.width } : null
+                preview: previewWidth ? { width: Math.min(previewWidth, size.width) } : null
             },
             [copy.buffer]
         )
