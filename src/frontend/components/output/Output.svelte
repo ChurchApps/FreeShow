@@ -1,7 +1,7 @@
 <!-- Used in output window, and currently in draw! -->
 
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, setContext, tick } from "svelte"
     import { uid } from "uid"
     import type { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
@@ -23,6 +23,7 @@
     import PdfOutput from "./layers/PdfOutput.svelte"
     import SceneMedia from "./layers/SceneMedia.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
+    import { createRevealSync, REVEAL_SYNC_KEY } from "./revealSync"
     import Window from "./Window.svelte"
 
     export let outputId = ""
@@ -32,6 +33,10 @@
     export let preview = false
     export let styleIdOverride = ""
     export let outOverride: OutData | null = null
+
+    // background & slide text wait for each other before revealing new content
+    const revealSync = createRevealSync()
+    setContext(REVEAL_SYNC_KEY, revealSync)
 
     $: currentOutput = $outputs[outputId] || $allOutputs[outputId] || {}
 
@@ -131,7 +136,10 @@
 
             slide = clone(out.slide || null)
         }
-        if (!type || type === "background") background = clone(out.background || null)
+        if (!type || type === "background") {
+            background = clone(out.background || null)
+            releaseExpectedBackground()
+        }
         if (!type || type === "overlays") {
             storedOverlayIds = JSON.stringify(overlayIds)
             if (JSON.stringify($overlays) !== storedOverlays) {
@@ -177,6 +185,7 @@
 
         currentLayout = clone(_show(slide.id).layouts([slide.layout]).ref()[0] || [])
         slideData = currentLayout[slide?.index]?.data || null
+        expectSlideBackground(slide, slideData)
 
         // don't refresh content unless it changes
         let newCurrentSlide = getCurrentSlide()
@@ -335,6 +344,25 @@
     $: zoomActive = currentOutput.active || (mirror && !preview)
     $: drawZoom = $drawTool === "zoom" && zoomActive ? ($drawSettings.zoom?.size || 200) / 100 : 1
 
+    // the slide background is set after the media path is resolved, which can be a while after the slide,
+    // so hold the slide text until it arrives (Background will then hold until the media has loaded)
+    const EXPECTED_BACKGROUND_MAX_WAIT = 500
+    function expectSlideBackground(slide: OutSlide, data: SlideData | null) {
+        const bgId = data?.background
+        if (!bgId || templateBackground || !layers.includes("background")) return
+
+        const showMedia = _show(slide.id).get("media")?.[bgId]
+        if (!showMedia?.path || showMedia.loop === false || $media[showMedia.path]?.videoType === "foreground") return
+        if (showMedia.path === background?.path) return
+
+        revealSync.hold("output_background", EXPECTED_BACKGROUND_MAX_WAIT)
+    }
+    async function releaseExpectedBackground() {
+        // wait for the Background layer to hold first
+        await tick()
+        revealSync.release("output_background")
+    }
+
     // CLEARING
     $: if (slide !== undefined || styleId || layers || sceneHideLayers !== undefined) updateSlide()
     let actualSlide: OutSlide | null = null
@@ -348,13 +376,19 @@
         const slideActive = layers.includes("slide") && !sceneHideLayers
         isSlideClearing = !slide || !slideActive
 
+        // the slide is set a bit later than the background, so hold the background until the slide text has started loading
+        if (slide && slideActive) revealSync.hold("output_slide", updateLinesTime + 1000)
+
         if (slideTimeout) clearTimeout(slideTimeout)
         slideTimeout = setTimeout(
-            () => {
+            async () => {
                 actualSlide = slideActive ? clone(slide) : null
                 actualSlideData = clone(slideData)
                 actualCurrentSlide = clone(currentSlide)
                 actualCurrentLineId = clone(currentLineId)
+
+                await tick()
+                revealSync.release("output_slide")
             },
             slide ? updateLinesTime : 0
         )
