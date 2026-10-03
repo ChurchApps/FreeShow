@@ -33,6 +33,7 @@ export type CaptureFrameOpts = {
     bmdMembers?: { [id: string]: { width: number; height: number; format: number; framerate: number } }
     webrtcMembers?: { [id: string]: { width: number; height: number } }
     presentMembers?: { [id: string]: { width: number; height: number } }
+    recorderMembers?: { [id: string]: { width: number; height: number } }
     stageStream?: { width: number; height: number; quality: number; intervalMs: number } | null
     serverStream?: { width: number; height: number; intervalMs: number } | null
     thumbStream?: { width: number; height: number; quality: number } | null
@@ -49,7 +50,7 @@ export class SenderCapture {
      */
     static captureFrame(id: string, source: any, opts: CaptureFrameOpts, anySender: boolean): boolean {
         const wantsScaled = !!opts.stageStream || !!opts.serverStream || ((opts.dstW || 0) > 0 && (opts.dstH || 0) > 0)
-        const anyWorkerConsumer = Object.keys(opts.webrtcMembers || {}).length > 0 || Object.keys(opts.rtmpMembers || {}).length > 0 || Object.keys(opts.presentMembers || {}).length > 0 || !!opts.thumbStream || wantsScaled
+        const anyWorkerConsumer = Object.keys(opts.webrtcMembers || {}).length > 0 || Object.keys(opts.rtmpMembers || {}).length > 0 || Object.keys(opts.presentMembers || {}).length > 0 || Object.keys(opts.recorderMembers || {}).length > 0 || !!opts.thumbStream || wantsScaled
         const worker = SenderThread.get()
         if ((!anySender && !anyWorkerConsumer) || !worker) return false
         worker.postMessage({ type: "captureFrame", id, source, opts })
@@ -65,6 +66,7 @@ export class SenderCapture {
     static bmdMessageHandler: ((msg: any) => void) | null = null
     static webrtcMessageHandler: ((msg: any) => void) | null = null
     static presentMessageHandler: ((msg: any) => void) | null = null
+    static recorderMessageHandler: ((msg: any) => void) | null = null
     static previewMessageHandler: ((msg: any) => void) | null = null
     static videoLayerHandler: ((msg: any) => void) | null = null
 
@@ -89,6 +91,8 @@ export class SenderCapture {
             this.bmdMessageHandler?.(msg)
         } else if (String(msg.type).startsWith("preview")) {
             this.previewMessageHandler?.(msg)
+        } else if (String(msg.type).startsWith("recorder")) {
+            this.recorderMessageHandler?.(msg)
         } else if (String(msg.type).startsWith("present")) {
             this.presentMessageHandler?.(msg)
         } else if (String(msg.type).startsWith("webrtc")) {

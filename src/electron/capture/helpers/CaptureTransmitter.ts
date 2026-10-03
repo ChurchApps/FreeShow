@@ -1,7 +1,6 @@
 import { nativeImage, type NativeImage, type Size } from "electron"
 import os from "os"
-import { toApp } from "../.."
-import { CONTROLLER, OUTPUT, OUTPUT_STREAM } from "../../../types/Channels"
+import { CONTROLLER, OUTPUT_STREAM } from "../../../types/Channels"
 import { BlackmagicBridge as BlackmagicSender } from "../../blackmagic/BlackmagicBridge"
 import { NdiSender } from "../../ndi/NdiSender"
 import util from "../../ndi/vingester-util"
@@ -81,7 +80,7 @@ export class CaptureTransmitter {
         const heavy = Object.keys(this.channels)
             .filter((k) => k.startsWith(`${captureId}-`))
             .map((k) => this.channels[k].key)
-            .filter((key) => key !== "ndi" && key !== "omt" && key !== "rtmp" && key !== "blackmagic" && key !== "webrtc")
+            .filter((key) => key !== "ndi" && key !== "omt" && key !== "rtmp" && key !== "blackmagic" && key !== "webrtc" && key !== "recorder")
         if (heavy.some((key) => key !== "server" && key !== "stage")) return null
         return heavy
     }
@@ -114,7 +113,7 @@ export class CaptureTransmitter {
             const heavy = Object.keys(this.channels)
                 .filter((k) => k.startsWith(`${id}-`))
                 .map((k) => this.channels[k].key)
-                .filter((key) => key !== "ndi" && key !== "omt" && key !== "rtmp" && key !== "blackmagic" && key !== "webrtc")
+                .filter((key) => key !== "ndi" && key !== "omt" && key !== "rtmp" && key !== "blackmagic" && key !== "webrtc" && key !== "recorder")
             if (heavy.some((key) => key !== "server" && key !== "stage")) return { eligible: false, needsScaled: false }
             if (heavy.length) needsScaled = true
         }
@@ -124,7 +123,7 @@ export class CaptureTransmitter {
 
     // buffer-consumers need only raw BGRA bytes (no NativeImage resize/toJPEG), so on the shared-texture
     // path they can take the readback buffer directly instead of a createFromBitmap -> toBitmap round-trip.
-    private static readonly BUFFER_CONSUMERS = new Set(["ndi", "omt", "webrtc", "rtmp", "blackmagic", "recorder"])
+    private static readonly BUFFER_CONSUMERS = new Set(["ndi", "omt", "webrtc", "rtmp", "blackmagic"])
 
     private static osrModule: any = null
     private static loadOsr(): any {
@@ -273,9 +272,6 @@ export class CaptureTransmitter {
             case "blackmagic":
                 this.sendRawToBlackmagic(captureId, buffer, size, format)
                 break
-            case "recorder":
-                this.sendRawToRecorder(captureId, buffer, size, format)
-                break
         }
     }
 
@@ -380,9 +376,6 @@ export class CaptureTransmitter {
             case "rtmp":
                 this.sendBufferToRtmpStreamer(captureId, image)
                 break
-            case "recorder":
-                this.sendBufferToRecorder(captureId, image)
-                break
         }
     }
 
@@ -397,7 +390,8 @@ export class CaptureTransmitter {
         const server = keys.includes("server") ? this.serverStreamRequest(captureId) : null
         const stage = keys.includes("stage") ? this.stageStreamRequest() : null
         const previewWidth = PreviewStream.hasSubscribers(captureId) ? Math.max(2, PreviewStream.requestedWidth([captureId]) || this.HEAVY_IMAGE_MAX_WIDTH) : 0
-        if (!server && !stage && !previewWidth) return false
+        const recorder = keys.includes("recorder")
+        if (!server && !stage && !previewWidth && !recorder) return false
 
         let source: Buffer
         let size: Size
@@ -424,7 +418,8 @@ export class CaptureTransmitter {
                 size,
                 server: server ? { width: Math.min(server.width, size.width) } : null,
                 stage: stage ? { width: Math.min(stage.width, size.width), quality: stage.quality, intervalMs: stage.intervalMs } : null,
-                preview: previewWidth ? { width: Math.min(previewWidth, size.width) } : null
+                preview: previewWidth ? { width: Math.min(previewWidth, size.width) } : null,
+                recorder: recorder ? { width: size.width } : null
             },
             [copy.buffer]
         )
@@ -624,29 +619,6 @@ export class CaptureTransmitter {
         const size = image.getSize()
 
         RtmpStreamer.updateFrame(outputId, buffer, size)
-    }
-
-    // RECORDER
-    private static sendRawToRecorder(captureId: string, buffer: Buffer, size: Size, format = 0) {
-
-        if (format === 3) {
-            toApp(OUTPUT, { channel: "RECORDER_FRAME", data: { id: captureId, buffer, size } })
-            return
-        }
-
-        const owned = Buffer.from(buffer)
-        this.convertToRGBA(owned)
-        toApp(OUTPUT, { channel: "RECORDER_FRAME", data: { id: captureId, buffer: owned, size } })
-    }
-
-    private static sendBufferToRecorder(captureId: string, image: NativeImage) {
-        if (!image) return
-
-        const buffer = image.toBitmap()
-        const size = image.getSize()
-
-        this.convertToRGBA(buffer)
-        toApp(OUTPUT, { channel: "RECORDER_FRAME", data: { id: captureId, buffer, size } })
     }
 
     static removeAllChannels(captureId: string) {

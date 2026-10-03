@@ -526,6 +526,25 @@ function presentFrames() {
     return presentServer
 }
 
+function recorderFrames() {
+    if (recorderServer) return recorderServer
+    recorderServer = new FrameServer({
+        log: (text) => console.info("[recorder frames]", text),
+        onListening: (info) => port.postMessage({ type: "recorderWs", port: info.port, token: info.token }),
+        onNeedTarget: (targetId) => port.postMessage({ type: "recorderNeedTarget", targetId }),
+        retain: (frame) => {
+            const pb = servedPacer.get(frame)
+            if (pb) pb.refs++
+        },
+        release: (frame) => {
+            const pb = servedPacer.get(frame)
+            if (pb) releasePacerRef(pb)
+        },
+        stats: !!process.env.FS_CAP_STATS
+    })
+    return recorderServer
+}
+
 function previewFrames() {
     if (previewServer) return previewServer
     previewServer = new FrameServer({
@@ -651,6 +670,7 @@ let sharpModule: any = null
 let webrtcServer: FrameServer | null = null
 let previewServer: FrameServer | null = null
 let presentServer: FrameServer | null = null
+let recorderServer: FrameServer | null = null
 
 const loopDiag = { lagSum: 0, lagMax: 0, lagN: 0, copyMs: 0, copyN: 0, fanMs: 0, lastTick: 0 }
 if (process.env.FS_CAP_STATS) {
@@ -665,7 +685,7 @@ if (process.env.FS_CAP_STATS) {
     }, 5)
 }
 
-async function captureAndSend(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; mainFormat?: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number; targets?: { width: number; height: number; format: number }[]; memberTarget?: { [id: string]: number }; memberFormats?: { [id: string]: number }; memberSizes?: { [id: string]: { width: number; height: number } }; cpuTargets?: boolean; rtmpMembers?: { [id: string]: { width: number; height: number } }; bmdMembers?: { [id: string]: { width: number; height: number; format: number; framerate: number } }; webrtcMembers?: { [id: string]: { width: number; height: number } }; presentMembers?: { [id: string]: { width: number; height: number } }; convertCheck?: boolean; stageStream?: { width: number; height: number; quality: number; intervalMs: number } | null; serverStream?: { width: number; height: number; intervalMs: number } | null; thumbStream?: { width: number; height: number; quality: number } | null }) {
+async function captureAndSend(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; mainFormat?: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number; targets?: { width: number; height: number; format: number }[]; memberTarget?: { [id: string]: number }; memberFormats?: { [id: string]: number }; memberSizes?: { [id: string]: { width: number; height: number } }; cpuTargets?: boolean; rtmpMembers?: { [id: string]: { width: number; height: number } }; bmdMembers?: { [id: string]: { width: number; height: number; format: number; framerate: number } }; webrtcMembers?: { [id: string]: { width: number; height: number } }; presentMembers?: { [id: string]: { width: number; height: number } }; recorderMembers?: { [id: string]: { width: number; height: number } }; convertCheck?: boolean; stageStream?: { width: number; height: number; quality: number; intervalMs: number } | null; serverStream?: { width: number; height: number; intervalMs: number } | null; thumbStream?: { width: number; height: number; quality: number } | null }) {
     // seq identifies this in-flight capture; the osr-capture key is slotted so concurrent readbacks
     // for one output use independent pool entries
     const seq = opts.seq ?? 0
@@ -690,11 +710,13 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
     const hasWebrtc = webrtcMembers.length > 0
     const presentMembers = Object.keys(opts.presentMembers || {})
     const hasPresent = presentMembers.length > 0
+    const recorderMembers = Object.keys(opts.recorderMembers || {})
+    const hasRecorder = recorderMembers.length > 0
     // An output whose only consumers are the web server, a stage client or a preview still belongs here:
     // it needs the downscaled frame, and producing that on the main thread was the last routine path that
     // put a full frame in front of the UI's event loop.
-    const wantsScaledOnly = !hasSenders && !hasRtmp && !hasBmd && !hasWebrtc && !hasPresent && (opts.dstW || 0) > 0 && (opts.dstH || 0) > 0
-    if ((!hasSenders && !hasRtmp && !hasBmd && !hasWebrtc && !hasPresent && !wantsScaledOnly) || !osr?.readback) {
+    const wantsScaledOnly = !hasSenders && !hasRtmp && !hasBmd && !hasWebrtc && !hasPresent && !hasRecorder && (opts.dstW || 0) > 0 && (opts.dstH || 0) > 0
+    if ((!hasSenders && !hasRtmp && !hasBmd && !hasWebrtc && !hasPresent && !hasRecorder && !wantsScaledOnly) || !osr?.readback) {
         port.postMessage({ type: "releaseTexture", id, seq })
         port.postMessage({ type: "captureDone", id, seq })
         return
@@ -929,6 +951,22 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
                 if (b.pbuf.refs > 0) queued.add(b.pbuf)
             }
         }
+        // the main window's output recorder, served like the WebRTC host window
+        if (hasRecorder) {
+            const server = recorderFrames()
+            const now = Date.now()
+            for (const m of recorderMembers) {
+                const want = opts.recorderMembers![m]
+                const ti = targetBufs.findIndex((t) => t.width === want.width && t.height === want.height && t.format === 0)
+                const b = ti >= 0 ? targetBufs[ti] : main.format === 0 && main.width === want.width && main.height === want.height ? main : null
+                if (!b) continue
+                const bytes = bytesFor(b.width, b.height, 0)
+                const frame: ServedFrame = { xres: b.width, yres: b.height, format: "bgra", data: b.pbuf.buf.length === bytes ? b.pbuf.buf : b.pbuf.buf.subarray(0, bytes) }
+                servedPacer.set(frame, b.pbuf)
+                server.deliver(`rec:${m}`, "RECORDER", m, frame, now)
+                if (b.pbuf.refs > 0) queued.add(b.pbuf)
+            }
+        }
         // Blackmagic: the card's scheduler retains what it is given, so it gets its own copy of the frame at
         // the card's mode (UYVY straight in when the card takes it raw, else BGRA converted by the sender)
         for (const m of bmdMembers) {
@@ -1157,7 +1195,7 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
                 // every consumer's version is derived here
                 const osr = loadOsrCapture()
                 const buf = Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength)
-                const { id, size, server, stage, preview } = msg
+                const { id, size, server, stage, preview, recorder } = msg
                 if (!osr || typeof osr.previewFrame !== "function") break
                 const rgbaAt = (maxWidth: number) => osr.previewFrame(buf, size.width, size.height, 0, maxWidth)
                 try {
@@ -1168,6 +1206,10 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
                     if (stage) {
                         const f = rgbaAt(stage.width)
                         encodeStageFrame(id, msg.members || [id], f.data, { width: f.width, height: f.height, quality: stage.quality, intervalMs: stage.intervalMs })
+                    }
+                    if (recorder) {
+                        const f = rgbaAt(recorder.width)
+                        recorderFrames().deliver(`rec:${id}`, "RECORDER", id, { xres: f.width, yres: f.height, format: "rgba", data: f.data }, Date.now())
                     }
                     if (preview) {
                         const f = rgbaAt(preview.width)
@@ -1183,6 +1225,9 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
                 break
             case "previewReset":
                 if (previewServer) for (const m of Object.keys(previewServer.targets())) previewServer.drop(m)
+                break
+            case "recorderReset":
+                if (recorderServer) for (const m of Object.keys(recorderServer.targets())) recorderServer.drop(m)
                 break
             case "presentReset":
                 if (presentServer) for (const m of Object.keys(presentServer.targets())) presentServer.drop(m)

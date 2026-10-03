@@ -8,19 +8,14 @@ import { activeRecording, audioRouting, currentRecordingStream, outputs, special
 import { newToast } from "../../../utils/common"
 import { send } from "../../../utils/request"
 import { getOutputResolution } from "../../helpers/output"
+import { onStreamFrame } from "../../../utils/streamPort"
+import { StreamCanvasRenderer } from "./streamCanvas"
 
 let mediaRecorder: MediaRecorder | null = null
 let recordedChunks: Blob[] = []
 let activeCleanup: (() => void) | null = null
 let activeLabel = ""
 let stopResolver: (() => void) | null = null
-
-type FrameCallback = (buffer: ArrayBuffer | Uint8Array, size: { width: number; height: number }) => void
-const frameListeners: { [outputId: string]: FrameCallback } = {}
-
-export function handleRecorderFrame(outputId: string, buffer: ArrayBuffer | Uint8Array, size: { width: number; height: number }) {
-    frameListeners[outputId]?.(buffer, size)
-}
 
 const getMimeType = () => (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported("video/webm; codecs=vp9,opus") ? "video/webm; codecs=vp9,opus" : "video/webm")
 
@@ -105,51 +100,28 @@ function getOutputVideoStream(outputId: string): { stream: MediaStream; cleanup:
     const res = getOutputResolution(outputId, get(outputs), true) || { width: 1920, height: 1080 }
     canvas.width = res.width || 1920
     canvas.height = res.height || 1080
-    const ctx = canvas.getContext("2d")
 
-    if (ctx) {
-        ctx.fillStyle = "#000000"
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-    }
-
-    let active = true
-    let lastImageData: ImageData | null = null
-
-    // Register frame listener
-    frameListeners[outputId] = (buffer, size) => {
-        if (!active || !ctx) return
-        try {
-            if (canvas.width !== size.width || canvas.height !== size.height) {
-                canvas.width = size.width
-                canvas.height = size.height
-            }
-            const arr = new Uint8ClampedArray(buffer)
-            const imageData = new ImageData(arr, size.width, size.height)
-            ctx.putImageData(imageData, 0, 0)
-            lastImageData = imageData
-        } catch (err) {
-            console.error("Recorder frame error:", err)
-        }
-    }
+    // frames come from the capture worker over shared memory (see RecorderStream.ts)
+    const renderer = new StreamCanvasRenderer()
+    const unlisten = onStreamFrame("RECORDER", (data) => {
+        if (data.id === outputId) renderer.draw(canvas, data.frame)
+    })
 
     // Start capture in Electron
     send(OUTPUT, ["CAPTURE"], { id: outputId, captures: { recorder: true } })
 
-    // Redraw keepalive interval so MediaRecorder receives frames smoothly even on static slides
-    const keepalive = setInterval(() => {
-        if (!active || !ctx) return
-        if (lastImageData) {
-            ctx.putImageData(lastImageData, 0, 0)
-        }
-    }, 100)
+    // The canvas keeps its last frame, so a static slide is recorded by asking the track for frames
+    // rather than redrawing it
+    const stream = canvas.captureStream(0)
+    const track = stream.getVideoTracks()[0] as CanvasCaptureMediaStreamTrack
+    const keepalive = setInterval(() => track.requestFrame(), 1000 / 30)
 
-    const stream = canvas.captureStream(30)
     return {
         stream,
         cleanup: () => {
-            active = false
             clearInterval(keepalive)
-            delete frameListeners[outputId]
+            unlisten()
+            renderer.destroy()
             send(OUTPUT, ["CAPTURE"], { id: outputId, captures: { recorder: false } })
             stream.getTracks().forEach((t) => t.stop())
         }
