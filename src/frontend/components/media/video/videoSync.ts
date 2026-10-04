@@ -26,6 +26,20 @@ const lastSyncRecords = new WeakMap<HTMLVideoElement, SyncRecord>()
 // Track seek latency to compensate when seeking a playing video
 const pendingSeeks = new WeakMap<HTMLVideoElement, number>()
 const seekLatencyEMA = new WeakMap<HTMLVideoElement, number>()
+const droppedSample = new WeakMap<HTMLVideoElement, { dropped: number; at: number; struggling: boolean }>()
+
+// whether the video dropped frames within about the last second (sync runs far more often than that, so
+// comparing against the previous call would almost always see no change)
+function isStruggling(vid: HTMLVideoElement, now: number): boolean {
+    const dropped = vid.getVideoPlaybackQuality?.().droppedVideoFrames ?? 0
+    const sample = droppedSample.get(vid)
+    if (!sample) {
+        droppedSample.set(vid, { dropped, at: now, struggling: false })
+        return vid.readyState < 4
+    }
+    if (now - sample.at >= 1000) droppedSample.set(vid, { dropped, at: now, struggling: dropped > sample.dropped })
+    return (droppedSample.get(vid)?.struggling ?? false) || vid.readyState < 4
+}
 
 export function clampPlaybackRate(rate: number): number {
     return Math.min(16, Math.max(0.1, rate || 1))
@@ -38,7 +52,15 @@ export function clampPlaybackRate(rate: number): number {
  * - Smooth rate nudge with hysteresis for small continuous drift (80ms deadband).
  */
 export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1, isFadingOut = false): void {
-    if (!vid || targetTime === undefined || vid.readyState < 2 || vid.seeking) return
+    if (!vid || targetTime === undefined) return
+    if (vid.readyState < 2 || vid.seeking) {
+        // The caller advances lastSyncedTime on every call, so the record must advance with it: left at its old
+        // time, the first sync after a seek measured a second of elapsed time against a tenth of a second of
+        // clock, read that as the clock jumping back, and seeked again - every seek causing the next.
+        const record = lastSyncRecords.get(vid)
+        if (record) lastSyncRecords.set(vid, { ...record, targetTime, timestamp: performance.now() })
+        return
+    }
 
     // a previously issued seek resolved — record its latency (slight overshoot is trimmed by the nudge)
     const pendingSince = pendingSeeks.get(vid)
@@ -86,7 +108,10 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     const isExplicitSeek = isSoftLoop ? lastSyncedTime > targetTime + 0.1 : vid.paused ? Math.abs(targetDelta) > 0.05 : jumpAmount > 0.5 * rate || jumpAmount < -0.3 * rate || targetDelta < -0.3
 
     // 2. Cooldown & Hard Seek (Explicit seeks and paused scrubbing are never blocked by cooldown)
-    const inSeekCooldown = now - (lastSeekTimestamps.get(vid) || 0) < 500
+    // A seek only helps once it has landed: on keyframe-sparse 4K that takes longer than the cooldown alone,
+    // and seeking again before then restarts it, so the measured seek time is added to the wait.
+    const seekCooldownMs = 500 + (seekLatencyEMA.get(vid) ?? 0) * 1000
+    const inSeekCooldown = now - (lastSeekTimestamps.get(vid) || 0) < seekCooldownMs
     const shouldHardSeek = (isExplicitSeek && wrapDiff > 0.05) || (vid.paused && wrapDiff > 0.05) || (!inSeekCooldown && wrapDiff > 0.8 * rate)
 
     if (shouldHardSeek) {
@@ -131,6 +156,13 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
 
     lastSyncRecords.set(vid, { targetTime, timestamp: now, isNudging })
 
-    const safeRate = clampPlaybackRate(targetRate)
-    if (Math.abs(vid.playbackRate - safeRate) > 0.005) vid.playbackRate = safeRate
+    // Every playbackRate change makes the media pipeline resynchronise - a stall, often dropped frames, and
+    // so more drift to correct. The correction therefore moves in coarse steps and is only written when its
+    // step changes. A video already dropping frames or short of data is never sped up: asking it to decode
+    // faster deepens the deficit until it falls far enough behind to seek, and the seek starts that over.
+    const step = 0.05 * rate
+    let steppedRate = rate + Math.round((targetRate - rate) / step) * step
+    if (steppedRate > rate && isStruggling(vid, now)) steppedRate = rate
+    const safeRate = clampPlaybackRate(steppedRate)
+    if (Math.abs(vid.playbackRate - safeRate) > step / 2) vid.playbackRate = safeRate
 }

@@ -59,8 +59,15 @@
                 const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
                 isFadingOutState = !!data.isFadingOut
                 const isFading = fadingOut || isFadingOutState
-                syncVideoToAudio(video, data.currentTime, lastSyncedTime, isSoftLoop, targetPlaybackRate, isFading)
-                if (data.currentTime !== undefined) lastSyncedTime = data.currentTime
+                // the clock as of now, not as of when it was read: a state can arrive late, or several at once
+                // after the page was busy, and judging progress by arrival time made that look like a jump
+                let clockNow = data.currentTime
+                if (clockNow !== undefined && data.at && !data.paused) {
+                    clockNow += (Math.max(0, Date.now() - data.at) / 1000) * targetPlaybackRate
+                    if (data.loop && data.duration > 0) clockNow %= data.duration
+                }
+                syncVideoToAudio(video, clockNow, lastSyncedTime, isSoftLoop, targetPlaybackRate, isFading)
+                if (clockNow !== undefined) lastSyncedTime = clockNow
 
                 if (!isFading && videoData.loop !== data.loop) videoData.loop = data.loop
                 if (!isFading && videoData.paused !== data.paused) videoData.paused = data.paused
