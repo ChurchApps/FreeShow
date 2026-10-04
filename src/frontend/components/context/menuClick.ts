@@ -68,6 +68,7 @@ import {
     projects,
     projectTemplates,
     projectView,
+    contentProviderData,
     quickSearchActive,
     refreshEditSlide,
     scenes,
@@ -861,6 +862,16 @@ const clickActions = {
 
             history({ id: "UPDATE", newData: { key: "archived", data: !project.archived }, oldData: { id }, location: { page: "show", id: "project_key" } })
         })
+    },
+    sync_provider: (obj: ObjData) => {
+        const projectId = obj.sel?.data[0]?.id
+        const project = get(projects)[projectId]
+        const providerId = project?.origin
+        if (!providerId) return
+        const providerData = get(contentProviderData)[providerId] || {}
+        sendMain(Main.PROVIDER_LOAD_SERVICES, { providerId, cloudOnly: false, data: { sngFolder: providerData.sngFolder || undefined } })
+        activeShow.set(null)
+        activePage.set("show")
     },
     toggle_clock: () => {
         forceClock.set(!get(forceClock))

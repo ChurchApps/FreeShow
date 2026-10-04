@@ -344,6 +344,14 @@ export const mainResponses: MainResponses = {
             return c
         })
 
+        // Write provider-specific defaults that the UI shows but doesn't save until user interacts
+        if (data.providerId === "churchtools") {
+            contentProviderData.update((d) => {
+                if (!d.churchtools?.songOrigin) d.churchtools = { ...(d.churchtools || {}), songOrigin: "local" }
+                return d
+            })
+        }
+
         if (data.isFirstConnection) {
             newToast("main.finished")
 
@@ -366,7 +374,7 @@ export const mainResponses: MainResponses = {
         const replaceIds: { [key: string]: string } = {}
         const allShows = keysToID(get(shows))
         const songOrigin = get(contentProviderData)[data.providerId]?.songOrigin
-        const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : data.providerId === "onstage" ? "onstageLink" : ""
+        const linkKey = data.providerId === "planningcenter" ? "pcoLink" : data.providerId === "churchApps" ? "chumsLink" : data.providerId === "amazinglife" ? "alLink" : data.providerId === "onstage" ? "onstageLink" : data.providerId === "churchtools" ? "ctLink" : ""
         const origin = data.providerId === "planningcenter" ? "pco" : data.providerId
 
         function updateExistingShow(showId: string) {

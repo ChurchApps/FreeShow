@@ -82,6 +82,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     metadata_display: { label: "popup.metadata_display", icon: "info" },
     use_as_archive: { label: "context.use_as_archive", icon: "archive" },
     archive: { label: "actions.move_to_archive", icon: "archive" },
+    sync_provider: { label: "ChurchTools Sync", translate: false, icon: "cloud_sync", iconColor: "var(--secondary)" },
     toggle_clock: { label: "context.toggle_clock", icon: "clock" },
     // OUTPUTS
     force_output: { label: "context.force_outputs", icon: "outputs" },
@@ -336,7 +337,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     projects: ["newProject", "newFolder", "SEPARATOR", "sort_projects_by"],
     projectTab: ["close"],
     project: ["newShowPopup", "section"], // "newShow"(empty) , "newPrivateShow"
-    project_button: ["GROUP_rename_only", "duplicate", "delete", "SEPARATOR", "copy_to_template", "SEPARATOR", "archive"], // "open", // "GROUP_rename"
+    project_button: ["GROUP_rename_only", "duplicate", "delete", "SEPARATOR", "copy_to_template", "SEPARATOR", "sync_provider", "archive"], // "open", // "GROUP_rename"
     project_button_readonly: [],
     project_template: ["GROUP_edit", "rename", "delete"],
     folder: ["GROUP_rename_only", "delete", "SEPARATOR", "newProject", "newFolder"],

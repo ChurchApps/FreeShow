@@ -107,6 +107,48 @@
     // Answer / Guess / Poll
 
     $: cloudOnly = { churchApps: !!$special.churchAppsCloudOnly }
+
+    // ChurchTools uses token auth — collect URL + token from UI, pass to provider
+    $: ctConfigured = !!($contentProviderData.churchtools?.url || "").trim() && !!($contentProviderData.churchtools?.token || "").trim()
+    function churchToolsConnect() {
+        if (!$providerConnections.churchtools) {
+            sendMain(Main.PROVIDER_LOAD_SERVICES, {
+                providerId: "churchtools",
+                cloudOnly: false,
+                data: {
+                    url: ($contentProviderData.churchtools?.url || "").trim(),
+                    token: ($contentProviderData.churchtools?.token || "").trim(),
+                    serviceId: $contentProviderData.churchtools?.serviceId || undefined,
+                    sngFolder: ($contentProviderData.churchtools?.sngFolder || "").trim() || undefined,
+                    weeksAhead: $contentProviderData.churchtools?.weeksAhead || undefined
+                }
+            })
+        } else {
+            requestMain(Main.PROVIDER_DISCONNECT, { providerId: "churchtools" }, (a) => {
+                if (!a?.success) return
+                providerConnections.update((c) => {
+                    c.churchtools = false
+                    return c
+                })
+            })
+        }
+    }
+
+    // Sync CT while passing the current sngFolder so it's stored for startup loads too
+    function ctSync() {
+        sendMain(Main.PROVIDER_LOAD_SERVICES, {
+            providerId: "churchtools",
+            cloudOnly: false,
+            data: {
+                sngFolder: ($contentProviderData.churchtools?.sngFolder || "").trim() || undefined,
+                weeksAhead: $contentProviderData.churchtools?.weeksAhead || undefined
+            }
+        })
+        activeShow.set(null)
+        activePage.set("show")
+        notFound.set({ show: [], bible: [] })
+    }
+
     function contentProviderConnect(providerId: ContentProviderId) {
         if (!$providerConnections[providerId] || cloudOnly[providerId]) {
             if (providerId === "churchApps") {
@@ -278,7 +320,7 @@
     <MaterialToggleSwitch label="" checked={$special.remoteController} on:change={(e) => toggleRemoteController(e.detail)} />
 </InputRow>
 
-{#if !$providerConnections.planningcenter && (!$providerConnections.churchApps || cloudOnly.churchApps) && !$providerConnections.amazinglife && !$providerConnections.onstage}
+{#if !$providerConnections.planningcenter && (!$providerConnections.churchApps || cloudOnly.churchApps) && !$providerConnections.amazinglife && !$providerConnections.onstage && !$providerConnections.churchtools}
     <!-- No provider connected - show connection options -->
     <Title label="settings.content_provider" icon="list" />
 
@@ -304,6 +346,19 @@
         <MaterialButton on:click={() => contentProviderConnect("onstage")} style="flex: 1;" icon="login">
             <T id="settings.connect_to" replace={["OnStage"]} />
         </MaterialButton>
+    </InputRow>
+
+    <InputRow arrow>
+        <MaterialButton on:click={churchToolsConnect} style="flex: 1;" icon="login" disabled={!ctConfigured}>
+            <T id="settings.connect_to" replace={["ChurchTools"]} />
+        </MaterialButton>
+        <div slot="menu">
+            <MaterialTextInput label="ChurchTools URL" placeholder="yourchurch.church.tools" value={$contentProviderData.churchtools?.url || ""} on:change={(e) => updateProvider("churchtools", "url", e.detail)} />
+            <MaterialTextInput label="API Token" value={$contentProviderData.churchtools?.token || ""} on:change={(e) => updateProvider("churchtools", "token", e.detail)} />
+            <MaterialNumberInput label="Service ID (optional)" value={$contentProviderData.churchtools?.serviceId || 0} on:change={(e) => updateProvider("churchtools", "serviceId", e.detail || undefined)} />
+            <MaterialNumberInput label="Weeks ahead" value={$contentProviderData.churchtools?.weeksAhead ?? 2} on:change={(e) => updateProvider("churchtools", "weeksAhead", e.detail || 2)} />
+            <MaterialTextInput label="SongBeamer folder (lyrics fallback)" placeholder="C:\\Songs" value={$contentProviderData.churchtools?.sngFolder || ""} on:change={(e) => updateProvider("churchtools", "sngFolder", e.detail)} />
+        </div>
     </InputRow>
 {:else if $providerConnections.planningcenter}
     <!-- Planning Center connected -->
@@ -371,6 +426,27 @@
             <T id="cloud.sync" />
         </MaterialButton> -->
     </InputRow>
+{:else if $providerConnections.churchtools}
+    <!-- ChurchTools connected -->
+    <Title label="Content Provider: ChurchTools" icon="list" />
+
+    <InputRow>
+        <MaterialButton on:click={churchToolsConnect} style="flex: 1;border-bottom: 2px solid var(--connected) !important;" icon="logout">
+            <T id="settings.disconnect_from" replace={["ChurchTools"]} />
+        </MaterialButton>
+        <MaterialButton icon="cloud_sync" on:click={ctSync}>
+            <T id="cloud.sync" />
+        </MaterialButton>
+    </InputRow>
+
+    <MaterialToggleSwitch label="settings.auto_sync_startup" checked={$contentProviderData.churchtools?.autoSync !== false} on:change={(e) => updateProvider("churchtools", "autoSync", e.detail)} />
+
+    <MaterialDropdown label="Song origin" options={providerOriginOptions} value={$contentProviderData.churchtools?.songOrigin ?? "local"} on:change={(e) => updateProvider("churchtools", "songOrigin", e.detail)} />
+
+    <MaterialNumberInput label="Weeks ahead" value={$contentProviderData.churchtools?.weeksAhead ?? 2} on:change={(e) => updateProvider("churchtools", "weeksAhead", e.detail || 2)} />
+
+    <MaterialTextInput label="SongBeamer folder (lyrics fallback)" placeholder="C:\\Songs" value={$contentProviderData.churchtools?.sngFolder || ""} on:change={(e) => updateProvider("churchtools", "sngFolder", e.detail)} />
+    <MaterialDropdown label="SongBeamer translation" options={[{value: "textboxes", label: "Textboxes — separate item per language (bilingual)"}, {value: "multiline", label: "MultiLine — languages interleaved in one textbox (legacy)"}]} value={$contentProviderData.churchtools?.sngTranslationMethod ?? "textboxes"} on:change={(e) => updateProvider("churchtools", "sngTranslationMethod", e.detail)} />
 {:else if $providerConnections.onstage}
     <!-- OnStage connected -->
     <Title label="Content Provider: OnStage" icon="list" />
