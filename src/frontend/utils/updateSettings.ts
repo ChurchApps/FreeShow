@@ -36,7 +36,6 @@ import {
     customFonts,
     customMetadata,
     customizedIcons,
-    dataPath,
     deletedDefaults,
     disabledServers,
     drawSettings,
@@ -83,7 +82,6 @@ import {
     scriptures,
     serverData,
     showRecentlyUsedProjects,
-    showsPath,
     slidesOptions,
     sorted,
     special,
@@ -265,18 +263,8 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         activeProject.set(v)
         if (v) projectView.set(false)
     },
-    showsPath: (v: any) => {
-        if (!v) return
 
-        // DEPRECATED (keep for backward compatibility)
-        showsPath.set(v)
-    },
-    dataPath: (v: any) => {
-        if (!v) return
 
-        // DEPRECATED (keep for backward compatibility)
-        dataPath.set(v)
-    },
     lockedOverlays: (v: any) => {
         if (Array.isArray(v)) {
             const map: { [id: string]: string[] } = {}
@@ -411,7 +399,7 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
 
         if (v.enabled) {
             setTimeout(() => {
-                sendMain(Main.WEBSOCKET_START, get(ports).companion)
+                sendMain(Main.WEBSOCKET_START, { port: get(ports).companion, password: v.password })
             }, 3000)
         }
     },

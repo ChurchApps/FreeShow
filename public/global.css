@@ -118,6 +118,10 @@ body[data-resizing] * {
     background-color: var(--secondary-opacity);
 }
 
+body.unfocused ::selection {
+    background-color: rgb(128 128 128 / 0.4);
+}
+
 h1,
 h2,
 h3,

@@ -1,13 +1,15 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import type { Effect } from "../../../../types/Effects"
-    import { activeEdit, activePage, currentWindow, effects } from "../../../stores"
+    import { currentWindow, effects, hoveredEffectItem } from "../../../stores"
     import { clone, getChangedKeys } from "../../helpers/array"
     import { EffectRender } from "./effectRenderer"
 
     export let effect: (Effect & { id?: string }) | undefined
     export let preview = false
     export let edit = false
+
+    $: if (renderer) renderer.highlightedIndex = edit ? $hoveredEffectItem : null
 
     let items: any[]
     $: items = effect?.items || [] // .filter((a) => !a.hidden)
@@ -44,13 +46,11 @@
             previousItems.filter((a) => !a.hidden)
         )
 
-        if (!edit && $activePage === "edit" && $activeEdit.type === "effect") {
-            // item added or removed
-            if (items.length !== previousItems.length) {
-                renderer?.stop()
-                renderer = new EffectRender(canvasElem, items, preview)
-                previousItems = clone(items)
-            }
+        // item added, removed, reordered, or hidden
+        if (items.length !== previousItems.length || items.some((it, i) => it.type !== previousItems[i]?.type || it.hidden !== previousItems[i]?.hidden)) {
+            renderer?.stop()
+            renderer = new EffectRender(canvasElem, items, preview)
+            previousItems = clone(items)
             return
         }
 

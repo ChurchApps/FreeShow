@@ -26,6 +26,7 @@
         let disableMedia = true
 
         if (refs.some((ref) => ref.some((slide) => slide.data.background))) disableMedia = false
+        else if (refs.some((ref) => ref.some((slide) => slide.data.overlays?.length))) disableMedia = false
         else if (refs.some((ref) => ref.some((slide) => slide.data.audio))) disableMedia = false
         else if (refs.some((ref) => ref.some((slide) => slide.data.mics))) disableMedia = false
         else if (refs.some((ref) => ref.some((slide) => slide.data.actions?.slideActions?.length))) disableMedia = false

@@ -306,11 +306,26 @@ export class CanvaContentLibrary {
         }
 
         // Otherwise, fetch normal folder content
-        const items = await this.listFolderItems(folderId, ["image", "design"])
+        const items = await this.listFolderItems(folderId, ["folder", "image", "design"])
 
-        // Always return files, but for presentations, add isPresentation and slideCount
+        // Always return files, but for presentations/folders, add extra metadata
         const files: ContentFile[] = items
             .map((item): ContentFile | null => {
+                // Subfolders
+                if (item.type === "folder" && item.folder?.id) {
+                    const thumbnail = item.folder.thumbnail?.url
+                    return {
+                        url: "",
+                        thumbnail,
+                        fileSize: 0,
+                        type: "image" as const,
+                        name: item.folder.name || item.folder.title || "Folder",
+                        mediaId: item.folder.id,
+                        // @ts-ignore
+                        isFolder: true
+                    } as ContentFile
+                }
+
                 if (item.type === "image" && item.image) {
                     const url = item.image.url || item.image.thumbnail?.url
                     if (!url) return null

@@ -98,7 +98,7 @@
         flex: 1;
         overflow-y: auto;
         padding: 12px;
-        background-color: var(--primary-darkest);
+        background-color: var(--primary-darker);
     }
 
     .channels-list {
@@ -234,10 +234,10 @@
     }
 
     .step-btn:hover {
-        background: rgb(255 255 255 / 0.1);
+        background: var(--hover);
     }
 
     .step-btn:active {
-        background: rgb(255 255 255 / 0.2);
+        background: var(--focus);
     }
 </style>

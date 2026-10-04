@@ -41,7 +41,7 @@
 
 {#if src}
     {#key retryCount}
-        <img style="{$$props.style}{transition ? `transition: opacity ${typeof transition === 'number' ? transition : 0.5}s ease-out;` : ''}" src="{encodeFilePath(src)}{updater ? '?' + updater : ''}" {alt} draggable="false" class:loaded bind:this={image} on:load={hasLoaded} on:error={reload} />
+        <img style="{$$props.style}{transition ? `transition: opacity ${typeof transition === 'number' ? transition : 500}ms ease-out;` : ''}" src="{encodeFilePath(src)}{updater ? '?' + updater : ''}" {alt} draggable="false" class:loaded bind:this={image} on:load={hasLoaded} on:error={reload} />
     {/key}
 {/if}
 

@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { activePage, activeStyle, audioChannelsData, dictionary, outputs, rtmpStatus, selected, settingsTab, styles, templates, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activeRecording, activeStyle, audioChannelsData, dictionary, outputs, rtmpStatus, selected, settingsTab, styles, templates, toggleOutputEnabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
+    import { stopMediaRecorder } from "../../drawer/live/recorder"
     import { openDrawer } from "../../edit/scripts/edit"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
@@ -160,16 +161,38 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         <div id={output.id} class="outputPreview output_button context #output_preview" class:drop-target={!fullscreen && dragOverOutputId === output.id} on:dragover={(e) => handleDragOver(e, output.id)} on:dragleave={(e) => handleDragLeave(e, output.id)} on:drop={(e) => handleDrop(e, output.id)} style={fullscreen ? (fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;") : outs.length > 1 ? `border: 2px solid ${output?.color};width: 50%;` : "display: contents;"}>
             <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
 
-            <!-- LIVE -->
-            {#if !fullscreen && ((output.webrtcData?.url && output.webrtc) || (output.rtmp && hasStreamableDestination(output.rtmpData)))}
-                {@const isRtmp = output.rtmp}
-                {@const isStreaming = isRtmp ? output.rtmpData?.streaming : output.webrtcData?.streaming}
-                {@const unhealthy = isRtmp && isStreaming ? getUnhealthyDestinations(output.rtmpData, $rtmpStatus[output.id]) : []}
+            <!-- BADGES (LIVE / REC) -->
+            {#if !fullscreen}
+                <div class="badges">
+                    {#if (output.webrtcData?.url && output.webrtc) || (output.rtmp && hasStreamableDestination(output.rtmpData))}
+                        {@const isRtmp = output.rtmp}
+                        {@const isStreaming = isRtmp ? output.rtmpData?.streaming : output.webrtcData?.streaming}
+                        {@const unhealthy = isRtmp && isStreaming ? getUnhealthyDestinations(output.rtmpData, $rtmpStatus[output.id]) : []}
 
-                <div class="live" style="background-color: {isStreaming ? (unhealthy.length ? '#ab8000' : '#b60707') : 'var(--primary-darker)'};">
-                    <MaterialButton style="padding: 2px 3px;min-height: 0;" on:click={() => (isRtmp ? (output.rtmpData?.streaming ? stopRtmpStreaming(output.id, true) : startRtmpStreaming(output.id)) : output.webrtcData?.streaming ? stopStreaming(output.id, true) : startStreaming(output.id))} title={unhealthy.length ? `${unhealthy.join(", ")} not live` : isStreaming ? "output.stop_streaming" : "output.start_streaming"}>
-                        {translateText(isStreaming ? "output.is_live" : "output.go_live", $dictionary)}
-                    </MaterialButton>
+                        <div class="badge live" style="background-color: {isStreaming ? (unhealthy.length ? '#ab8000' : '#b60707') : 'var(--primary-darker)'};">
+                            <MaterialButton style="padding: 2px 3px;min-height: 0;" on:click={() => (isRtmp ? (output.rtmpData?.streaming ? stopRtmpStreaming(output.id, true) : startRtmpStreaming(output.id)) : output.webrtcData?.streaming ? stopStreaming(output.id, true) : startStreaming(output.id))} title={unhealthy.length ? `${unhealthy.join(", ")} not live` : isStreaming ? "output.stop_streaming" : "output.start_streaming"}>
+                                {translateText(isStreaming ? "output.is_live" : "output.go_live", $dictionary)}
+                            </MaterialButton>
+                        </div>
+                    {/if}
+
+                    {#if $activeRecording?.outputId === output.id || ($activeRecording?.isOutput && !$activeRecording.outputId && outs[0]?.id === output.id)}
+                        <div class="badge rec" style="background-color: #b60707;">
+                            <MaterialButton style="padding: 2px 4px;min-height: 0;gap: 4px;" on:click={() => stopMediaRecorder()} title="actions.stop_recording">
+                                <Icon id="record" size={0.7} white />
+                                REC
+                            </MaterialButton>
+                        </div>
+                    {/if}
+
+                    {#if output.out?.scene?.name}
+                        <div class="badge scene" style="background-color: var(--primary-darker);">
+                            <MaterialButton style="padding: 2px 4px;min-height: 0;gap: 3px;max-width: 100%;" on:click={() => openDrawer("scenes")} title={output.out.scene.name}>
+                                <Icon id="scene" size={0.7} white />
+                                <p>{output.out.scene.name}</p>
+                            </MaterialButton>
+                        </div>
+                    {/if}
                 </div>
             {/if}
 
@@ -297,14 +320,30 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         z-index: 10;
     }
 
-    /* LIVE */
+    /* BADGES (LIVE / REC) */
 
-    .live {
+    .badges {
         position: absolute;
         top: 3px;
         left: 3px;
-
+        right: 3px;
+        display: flex;
+        gap: 3px;
+        z-index: 10;
         font-size: 0.7em;
+        pointer-events: none;
+    }
+
+    .badge {
+        border-radius: 2px;
+        overflow: hidden;
+        pointer-events: auto;
+        flex-shrink: 0;
+    }
+
+    .badge.scene {
+        flex-shrink: 1;
+        min-width: 0;
     }
 
     /* icons */

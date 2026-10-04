@@ -12,6 +12,5 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        background-color: var(--primary-darker);
     }
 </style>

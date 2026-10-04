@@ -450,7 +450,7 @@ export function getPaths() {
 
     return paths
 }
-function getMediaFolderPath(name: Parameters<typeof app.getPath>[0]): string {
+export function getMediaFolderPath(name: Parameters<typeof app.getPath>[0]): string {
     try {
         return app.getPath(name)
     } catch (err) {
@@ -1209,8 +1209,11 @@ export function loadShows(returnShows = false, reCacheNames: string[] = []) {
         if (!show || !show[1]) return
 
         let id = show[0]
-        // some old duplicated shows might have the same id
-        if (newCachedShows[id]) id = uid()
+        // handle duplicate IDs across different show files
+        if (!id || newCachedShows[id] || (cachedShows[id] && cachedShows[id].name !== name)) {
+            id = uid()
+            writeFile(showPath, JSON.stringify([id, show[1]]), id)
+        }
 
         const trimmedShow = trimShow({ ...show[1], name })
         if (trimmedShow) newCachedShows[id] = trimmedShow
@@ -1288,8 +1291,11 @@ export async function loadShowsAsync(returnShows = false, reCacheNames: string[]
             if (!show || !show[1]) return
 
             let id = show[0]
-            // some old duplicated shows might have the same id
-            if (newCachedShows[id]) id = uid()
+            // handle duplicate IDs across different show files
+            if (!id || newCachedShows[id] || (cachedShows[id] && cachedShows[id].name !== name)) {
+                id = uid()
+                await writeFileAsync(showPath, JSON.stringify([id, show[1]]), id)
+            }
 
             const trimmedShow = trimShow({ ...show[1], name })
             if (trimmedShow) newCachedShows[id] = trimmedShow
@@ -1323,8 +1329,7 @@ function getTextCacheString(show: Show) {
     return Object.values(show.slides)
         .flatMap((slide) => slide?.items)
         .flatMap((item) => item?.lines || [])
-        .flatMap((line) => line?.text || [])
-        .map((text) => text?.value || "")
+        .map((line) => (line?.text || []).map((text) => text?.value || "").join(""))
         .join(" ")
         .toLowerCase()
 }

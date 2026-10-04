@@ -10,9 +10,11 @@
 
     $: active = $drawerTabsData.media?.openedSubSubTab?.inputs || "cameras"
 
-    let videoElem
+    let videoElem: HTMLVideoElement | undefined
     $: if (videoElem) {
-        videoElem.srcObject = $currentRecordingStream
+        if (videoElem.srcObject !== $currentRecordingStream) {
+            videoElem.srcObject = $currentRecordingStream
+        }
         if ($currentRecordingStream) {
             paused = mediaRecorderIsPaused() || false
         }
@@ -32,7 +34,7 @@
 
 {#if $activeRecording}
     <div class="scroll">
-        <video bind:this={videoElem}>
+        <video bind:this={videoElem} muted playsinline>
             <track kind="captions" />
         </video>
 

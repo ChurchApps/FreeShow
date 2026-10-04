@@ -210,7 +210,7 @@
             {:else if item.type === "metronome" || id.includes("metronome")}
                 <MetronomeVisualizer isItem />
             {:else if item.type === "media"}
-                <MediaOutput path={$media[item.src] || item.src} />
+                <MediaOutput path={item.src?.includes("NowPlayingCover") ? item.src : ($media[item.src] || item.src)} />
             {:else if item.type === "camera"}
                 <Center faded>
                     <Icon id="noImage" size={8} white />

@@ -2,9 +2,11 @@
     import { uid } from "uid"
     import { activePopup, activeShow, alertMessage, cachedShowsData, fullColors, globalGroupViewEnabled, groups, selected, showsCache, templates } from "../../../stores"
     import { createKeydownHandler } from "../../../utils/clickable"
+    import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { getAccess, isGroupHidden } from "../../../utils/profile"
     import { sortByName } from "../../helpers/array"
+    import { hexToRgb } from "../../helpers/color"
     import { ondrop } from "../../helpers/drop"
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
@@ -14,15 +16,14 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
     import SelectElem from "../../system/SelectElem.svelte"
-    import { getSlideGroups } from "./groups"
-    import { newToast } from "../../../utils/common"
-    import { hexToRgb } from "../../helpers/color"
+    import { getDuplicateGroups, getSlideGroups, mergeDuplicateGroups } from "./groups"
 
     $: showId = $activeShow?.id || ""
     $: allShowGroups = getSlideGroups(showId, $showsCache, $cachedShowsData)
     $: showGroups = allShowGroups.filter((a) => a.group !== ".")
 
     $: currentShow = $showsCache[showId]
+    $: duplicateGroups = getDuplicateGroups(currentShow?.slides, showGroups)
 
     $: layoutSlides = currentShow?.layouts?.[_show().get("settings.activeLayout")]?.slides || []
     function countGroupsInLayout(slideId) {
@@ -185,7 +186,16 @@
         {/if}
     </div>
 
-    <FloatingInputs round>
+    <FloatingInputs round={!(!isLocked && duplicateGroups.length)}>
+        {#if !isLocked && duplicateGroups.length}
+            <MaterialButton title="groups.merge_duplicated_groups" on:click={() => mergeDuplicateGroups(showId, duplicateGroups)}>
+                <Icon id="autofill" gradient />
+                <T id="groups.merge_duplicated_groups" />
+            </MaterialButton>
+
+            <div class="divider"></div>
+        {/if}
+
         <MaterialButton isActive={displayGlobalGroups} title="groups.toggle_global_group" on:click={() => globalGroupViewEnabled.set(!$globalGroupViewEnabled)}>
             <Icon style={displayGlobalGroups ? "" : "opacity: 0.8;"} id="groups" white={!displayGlobalGroups} />
         </MaterialButton>

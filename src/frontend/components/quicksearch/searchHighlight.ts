@@ -3,8 +3,20 @@ import { formatSearch, tokenize } from "../../utils/search"
 const escapeHtml = (s: string) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c] || c)
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
-// Maps source string to formatted text and raw index mappings
+const MAX_CACHED = 300
+const formatCache = new Map<string, { text: string; map: number[] }>()
 function formatWithMap(raw: string) {
+    const cached = formatCache.get(raw)
+    if (cached) return cached
+
+    const result = formatWithMapUncached(raw)
+    if (formatCache.size >= MAX_CACHED) formatCache.delete(formatCache.keys().next().value!)
+    formatCache.set(raw, result)
+    return result
+}
+
+// Maps source string to formatted text and raw index mappings
+function formatWithMapUncached(raw: string) {
     let text = "",
         map: number[] = []
     for (let i = 0; i < raw.length; i++) {
@@ -48,7 +60,7 @@ export function getTextSnippet(text: string, searchValue: string, hideIfMatching
     if (hideIfMatching) {
         const searchParts = searchValue.toLowerCase().split(" ")
         const matchParts = hideIfMatching.toLowerCase().split(" ")
-        if (searchParts.some(part => matchParts.some(a => a.includes(part)))) return ""
+        if (searchParts.some((part) => matchParts.some((a) => a.includes(part)))) return ""
     }
 
     const tokens = tokenize(formatSearch(searchValue, false))

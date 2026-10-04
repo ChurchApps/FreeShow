@@ -173,9 +173,9 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
     return args
 }
 
-/** Relay process: remux the encoded mpegts straight to one RTMP destination, no re-encode. */
+/** Relay process: forward the encoded FLV stream straight to one RTMP/RTMPS destination without re-encoding. */
 export function buildRelayCommand(url: string): string[] {
-    return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-bsf:a", "aac_adtstoasc", "-f", "flv", "-flvflags", "no_sequence_end", url]
+    return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-f", "flv", "-flvflags", "no_sequence_end", url]
 }
 
 /** Short throwaway encode used to prove the encoder actually works on this machine. */

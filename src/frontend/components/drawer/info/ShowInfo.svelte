@@ -6,6 +6,7 @@
     import { send } from "../../../utils/request"
     import { keysToID, sortByName } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
+    import { updateCachedShows } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import T from "../../helpers/T.svelte"
     import InputRow from "../../input/InputRow.svelte"
@@ -72,6 +73,8 @@
 
             return a
         })
+
+        if (key === "alwaysPlaceEmptySlideFirst") updateCachedShows($showsCache)
     }
 
     // usage log
@@ -103,6 +106,7 @@
     {#if optionsOpen}
         <main style="overflow-x: hidden;padding: 10px;">
             <!-- only relevant for opened show really -->
+            <MaterialToggleSwitch label="settings.always_place_empty_slide_first" checked={$special.alwaysPlaceEmptySlideFirst || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "alwaysPlaceEmptySlideFirst")} />
             <MaterialToggleSwitch label="settings.transparent_slides" style="margin-bottom: 5px;" checked={$special.transparentSlides} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "transparentSlides")} />
 
             <MaterialToggleSwitch label="settings.log_song_usage" checked={$special.logSongUsage || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "logSongUsage")} />
@@ -116,7 +120,6 @@
 
             <MaterialButton
                 variant="outlined"
-                icon="autofill"
                 title="popup.cleaning_utility"
                 style="margin-top: 5px;width: 100%;"
                 on:click={() => {
@@ -124,6 +127,7 @@
                     activePopup.set("cleaning_utility")
                 }}
             >
+                <Icon id="autofill" gradient />
                 <T id="popup.cleaning_utility" />
             </MaterialButton>
         </main>

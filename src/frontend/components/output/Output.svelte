@@ -145,7 +145,8 @@
     $: scene = out.scene || null
     $: sceneMedia = scene?.media || null
     $: sceneStyleId = scene?.style || ""
-    $: sceneOverlays = scene?.overlays || []
+    $: sceneHiddenOverlays = scene?.hiddenOverlays || []
+    $: sceneOverlays = (scene?.overlays || []).filter((id) => !sceneHiddenOverlays.includes(id))
     $: sceneHideLayers = styleIdOverride ? false : scene !== null && !sceneStyleId
 
     // overlays

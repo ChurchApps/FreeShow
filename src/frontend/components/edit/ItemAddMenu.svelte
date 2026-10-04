@@ -1,7 +1,5 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { uid } from "uid"
-    import type { StageItem } from "../../../types/Stage"
     import { activeEdit, activePage, activePopup, activeStage, dictionary, selected, stageShows } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
@@ -9,8 +7,8 @@
     import T from "../helpers/T.svelte"
     import FloatingInputs from "../input/FloatingInputs.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
-    import { getLikelyPosition } from "./scripts/autoPosition"
-    import { addItem, updateSortedStageItems } from "./scripts/itemHelpers"
+    import { addStageItem } from "../stage/stage"
+    import { addItem } from "./scripts/itemHelpers"
     import { slideItems, stageItems } from "./values/items"
 
     export let isLocked = false
@@ -70,56 +68,6 @@
             })
         }
     })
-
-    const resolution = { width: 1920, height: 1080 }
-    const halfWidth = resolution.width * 0.5
-    const halfHeight = resolution.height * 0.5
-    const DEFAULT_STYLE = `width: ${halfWidth}px;height: ${halfHeight}px;left: ${halfWidth * 0.5}px;top: ${halfHeight * 0.5}px;`
-    const smallItems = ["timer", "clock", "slide_tracker"]
-
-    function addStageItem(itemType: string, textValue = "") {
-        if (!stageId) return
-
-        let itemId = uid(5)
-        stageShows.update((a) => {
-            if (!a[stageId]?.items) return a
-
-            let style = DEFAULT_STYLE
-            if (smallItems.includes(itemType) || textValue) {
-                const width = resolution.width * 0.45
-                const left = halfWidth - width * 0.5
-                const height = 150
-                const top = halfHeight - height * 0.5
-                style = `width: ${width}px;height: ${height}px;left: ${left}px;top: ${top}px;`
-            }
-
-            if (Object.keys(a[stageId]?.items).length > 0) {
-                style = getLikelyPosition(Object.values(a[stageId].items), style)
-            }
-
-            let item: StageItem = { type: itemType as any, style, align: "" }
-
-            if (itemType === "text") item.lines = [{ align: "", text: [{ style: "", value: textValue || "" }] }]
-            else if (itemType === "slide_text") {
-                const slideTextItems = Object.values(a[stageId].items || {}).filter((a) => a.type === "slide_text")
-                item.slideOffset = slideTextItems.length
-                item.style += "font-size: 800px;"
-            }
-
-            a[stageId].items[itemId] = item
-            a[stageId].modified = Date.now()
-            return a
-        })
-
-        updateSortedStageItems()
-
-        if (Object.keys($stageShows[stageId]?.items || {}).length > 1) {
-            activeStage.update((a) => {
-                a.items = [itemId]
-                return a
-            })
-        }
-    }
 
     function handleAdd(type: any) {
         isOpen = false

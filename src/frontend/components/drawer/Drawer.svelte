@@ -147,13 +147,10 @@
     }
 
     let searchValue = ""
-    $: searchValue = searchValue.endsWith(" ") ? removeWhitespace(searchValue) + " " : removeWhitespace(searchValue)
     $: if ($activeDrawerTab) searchValue = ""
-    const removeWhitespace = (v: string) =>
-        v
-            .split(" ")
-            .filter((n) => n)
-            .join(" ")
+    // single space normalization for search input
+    const removeWhitespace = (v: string) => v.trim().replace(/\s+/g, " ")
+    $: searchValue = removeWhitespace(searchValue) + (searchValue.endsWith(" ") ? " " : "")
     function search() {
         if (storeHeight === null && $drawer.height > minHeight) return
 
@@ -187,19 +184,24 @@
         } else if (ctrlKey === "d" && !isTypingTarget(document.activeElement)) {
             if (!$selected?.id && !$activeEdit.items.length) click(null)
         } else if (e.key === "Enter") {
-            if (document.activeElement !== searchElem || !searchValue.length || !firstMatch || $focusMode) return
+            if (document.activeElement !== searchElem || !searchValue.trim().length || !firstMatch || $focusMode) return
             if ($activeDrawerTab !== "shows") return
 
             let match = $activeShow?.data?.searchInput === true ? { id: $activeShow.id } : firstMatch
 
             // create from search
             if (match === "SEARCH_CREATE") {
-                quickTextCache.set({ name: searchValue[0]?.toUpperCase() + searchValue.slice(1), text: "", fromSearch: true })
+                const name = searchValue.trim()
+                quickTextCache.set({ name: name[0]?.toUpperCase() + name.slice(1), text: "", fromSearch: true })
                 activePopup.set("show")
                 return
             }
 
-            if (!$activeProject) return
+            if (!$activeProject) {
+                // open the show
+                activeShow.set({ id: match.id, type: "show" })
+                return
+            }
 
             // play
             if (e.ctrlKey || e.metaKey) {
@@ -221,8 +223,13 @@
             if ($activePage === "show") history({ id: "UPDATE", newData: { key: "shows", index: newIndex, data: { id: match.id } }, oldData: { id: $activeProject }, location: { page: "show", id: "project_ref" } })
             activeShow.set({ ...match, index: newIndex })
             searchValue = ""
-        } else if (e.key === "Escape") {
-            if (!searchValue.length && searchActive) searchActive = false
+        }
+    }
+
+    function searchKeydown(e: KeyboardEvent) {
+        if (e.key === "Escape") {
+            searchActive = false
+            searchValue = ""
         }
     }
 
@@ -277,7 +284,7 @@
             {/each}
         </span>
 
-        <input bind:this={searchElem} class:hidden={!searchActive && !searchValue.length} class="search edit drawer_search" type="text" placeholder={translateText("main.search...", $dictionary)} bind:value={searchValue} on:input={search} use:selectTextOnFocus />
+        <input bind:this={searchElem} class:hidden={!searchActive && !searchValue.length} class="search edit drawer_search" type="text" placeholder={translateText("main.search...", $dictionary)} bind:value={searchValue} on:input={search} on:keydown={searchKeydown} use:selectTextOnFocus />
         {#if !searchActive && !searchValue.length}
             <Button class="search" style="border-bottom: 2px solid var(--secondary);" on:click={() => (searchActive = true)} title={translateText("tabs.search_tip [Ctrl+F]")} bold={false}>
                 <Icon id="search" size={1.4} white right={!$labelsDisabled && !$focusMode} />

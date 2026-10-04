@@ -17,6 +17,8 @@ export interface AudioRoutingConnection {
     from: string // input ID or channel ID
     to: string // channel ID or output ID
     channelIndex?: number
+    fromChannelIndex?: number
+    toChannelIndex?: number
     type?: "audio" | "sidechain"
 }
 

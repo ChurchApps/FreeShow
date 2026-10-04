@@ -7,7 +7,7 @@
     import type { Output, RtmpDestination } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { requestMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, omtData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, omtData, os, outputDisplay, outputs, rtmpStatus, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
@@ -75,6 +75,8 @@
             if (out.enabled) {
                 // Recreate window for options fixed at creation (transparency, invisibility, capture/OSR mode)
                 const recreateKeys = ["transparent", "invisible", "ndi", "omt", "webrtc", "rtmp", "blackmagic"]
+                // macOS: always on top outputs are a different window type (panel)
+                if ($os.platform === "darwin") recreateKeys.push("alwaysOnTop")
                 if (recreateKeys.includes(key)) {
                     send(OUTPUT, ["CREATE"], { id: outputId, ...out })
                 } else if (key === "alwaysOnTop") {
@@ -371,7 +373,6 @@
 {/if}
 
 <!-- WIP toggle fullscreen (Mac) ?? Only working one time for some reason -->
-<!-- WIP toggle visibleOnAllWorkspaces (Mac) -->
 
 {#if !currentOutput?.invisible}
     <!-- window -->

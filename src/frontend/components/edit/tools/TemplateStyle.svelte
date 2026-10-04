@@ -7,12 +7,13 @@
     import { history } from "../../helpers/history"
     import Icon from "../../helpers/Icon.svelte"
     import InputRow from "../../input/InputRow.svelte"
-    import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
     import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
+    import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
     import ItemsList from "./ItemsList.svelte"
 
     $: templateId = $activeEdit?.id || ""
@@ -115,6 +116,7 @@
                 icon="templates"
                 on:change={(e) => {
                     settings.firstSlideTemplate = e.detail
+                    if (!e.detail) settings.createFirstSlide = false
                     update()
                 }}
                 allowEmpty
@@ -123,6 +125,10 @@
                     <MaterialButton title="titlebar.edit" icon="edit" on:click={() => editTemplate(settings.firstSlideTemplate || "")} />
                 {/if} -->
         </InputRow>
+
+        {#if settings.firstSlideTemplate}
+            <MaterialToggleSwitch label="settings.always_place_empty_slide_first" checked={settings.createFirstSlide} defaultValue={false} on:change={(e) => setValue(e.detail, "createFirstSlide")} />
+        {/if}
 
         <!-- <InputRow>
             <MaterialPopupButton

@@ -248,7 +248,7 @@
     }
 
     .rootFolder {
-        background-color: var(--primary-darkest);
+        background-color: var(--primary-darker);
         border: 1px solid var(--primary-lighter);
         border-left: 0;
         border-radius: 10px;

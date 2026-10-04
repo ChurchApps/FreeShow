@@ -58,8 +58,6 @@ export const defaultSettings: { [key in SaveListSettings]: any } = {
     groupNumbers: true,
     fullColors: false,
     formatNewShow: false,
-    showsPath: null, // DEPRECATED
-    dataPath: "", // DEPRECATED
     lockedOverlays: {},
     activeScenes: {},
     splitLines: 0,
