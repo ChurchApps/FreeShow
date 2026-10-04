@@ -25,6 +25,7 @@ import { activeDrawerTab, activeEdit, activeFocus, activePage, activePopup, acti
 import { audioExtensions, imageExtensions, videoExtensions } from "../values/extensions"
 import { drawerTabs } from "../values/tabs"
 import { activeShow } from "./../stores"
+import { getUpDownSlideKey } from "./clickerKeys"
 import { hideDisplay, isOutputWindow, togglePanels, triggerFunction } from "./common"
 import { getAccess } from "./profile"
 import { triggerPopupSubmit } from "./popup"
@@ -155,8 +156,8 @@ export function keydown(e: KeyboardEvent) {
         if (e.key === "Escape" && !contentDisplayed) return hideDisplay()
 
         // allow custom shortcuts through main display (could be useful in some cases when you need output over the main app)
-        const allowThroughWindow = ["Escape", "ArrowRight", "ArrowLeft", " ", "PageDown", "PageUp", "Home", "End", ".", "F1", "F2", "F3", "F4", "F5"]
-        if (allowThroughWindow.includes(e.key)) send(OUTPUT, ["MAIN_SHORTCUT"], { key: e.key, ctrlKey: e.ctrlKey, metaKey: e.metaKey, altKey: e.altKey })
+        const allowThroughWindow = ["Escape", "ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", " ", "PageDown", "PageUp", "Home", "End", ".", "F1", "F2", "F3", "F4", "F5"]
+        if (allowThroughWindow.includes(e.key)) send(OUTPUT, ["MAIN_SHORTCUT"], { key: e.key, ctrlKey: e.ctrlKey, metaKey: e.metaKey, altKey: e.altKey, fromOutputWindow: true })
 
         return
     }
@@ -407,6 +408,9 @@ export const previewShortcuts = {
         // e.preventDefault()
         OutputHelper.advanceOutputs(e)
     },
+    // presentation clickers that send arrow up/down (optional, default changes project item)
+    ArrowDown: (e: any) => advanceWithUpDownKey(e),
+    ArrowUp: (e: any) => advanceWithUpDownKey(e),
     PageDown: (e: KeyboardEvent) => {
         if (presentationControllersKeysDisabled()) return
 
@@ -436,6 +440,16 @@ export const previewShortcuts = {
         e.preventDefault()
         OutputHelper.advanceOutputs(e)
     }
+}
+
+function advanceWithUpDownKey(e: any) {
+    const slideKey = getUpDownSlideKey(e.key, !!get(special).arrowUpDownSlides)
+    if (!slideKey || e.ctrlKey || e.metaKey) return false
+    // other pages use arrow up/down for their own lists
+    if (!e.fromOutputWindow && get(activePage) !== "show") return false
+
+    OutputHelper.advanceOutputs({ key: slideKey, altKey: e.altKey } as KeyboardEvent)
+    return true
 }
 
 function isTimelineActive() {

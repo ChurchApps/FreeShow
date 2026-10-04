@@ -91,6 +91,8 @@ export function checkInput(e: any) {
 
     if (!["ArrowDown", "ArrowUp"].includes(e.key)) return
     if (get(activeProject) === null) return
+    // arrow up/down changes slides instead (presentation clickers)
+    if (get(special).arrowUpDownSlides) return
     e.preventDefault()
     ;(document.activeElement as any)?.blur()
 
