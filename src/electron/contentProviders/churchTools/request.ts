@@ -21,6 +21,14 @@ const ITEM_STYLE_TOP    = "left:50px;top:80px;width:1820px;height:430px;"
 const ITEM_STYLE_BOTTOM = "left:50px;top:530px;width:1820px;height:430px;"
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000
 
+let msOfficePptConverter: ((inputPath: string) => Promise<any>) | null = null
+try {
+    // Optional converter module from the dedicated PPT PR.
+    // Falls back to the normal import pipeline when unavailable.
+    const mod = require("../../output/ppt/msOfficeConverter")
+    if (typeof mod?.convertPptFileToSlides === "function") msOfficePptConverter = mod.convertPptFileToSlides
+} catch {}
+
 // ── API request ──────────────────────────────────────────────────────────────
 
 function ctGet(domain: string, token: string, endpoint: string, params?: Record<string, string>): Promise<any> {
@@ -699,7 +707,11 @@ export async function ctLoadServices(serviceId?: number): Promise<void> {
                     if (/\.pdf$/i.test(lowerName)) {
                         sendToMain(ToMain.IMPORT2, { channel: "pdf", data: [att.localPath] })
                     } else if (/\.(ppt|pptx)$/i.test(lowerName)) {
-                        await importShow("powerpoint", [att.localPath], {})
+                        if (msOfficePptConverter) {
+                            await msOfficePptConverter(att.localPath).catch(() => {})
+                        } else {
+                            await importShow("powerpoint", [att.localPath], {})
+                        }
                     }
                     projectItems.push({ type: "section", id: uid(5), name: `📎 ${att.name}`, notes: att.localPath, scheduleLength: 0 })
                 }
