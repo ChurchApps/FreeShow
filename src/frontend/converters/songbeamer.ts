@@ -1,7 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { Chords, ID, Item, Layout, Line, Show, Slide, SlideData } from "../../types/Show"
-import { TranslationMethod } from "../../types/Songbeamer"
+import { TranslationMethod, SNG_SECTION_RE, sngSlideTagToGroup } from "../../types/Songbeamer"
 import { ShowObj } from "../classes/Show"
 import { clone } from "../components/helpers/array"
 import { history } from "../components/helpers/history"
@@ -104,7 +104,7 @@ function convertSongbeamerFileToShow(name: string, text: string, settings: Impor
     show.origin = "songbeamer"
 
     text = text.replaceAll("\r", "").replaceAll(/\n\s+\n/g, "\n\n")
-    const sections: string[] = text.split(/(?:^|\n)--(?:-|A)?\s*\n/)
+    const sections: string[] = text.split(SNG_SECTION_RE)
 
     const metadata = parseMetadata(sections[0], settings.encoding)
     if (!metadata.title) {
@@ -264,7 +264,7 @@ function parseMetadata(text: string, encoding: BufferEncoding = "utf8") {
             case "VerseOrder":
                 const slideTags = parts[1].trim().split(",")
                 for (const tag of slideTags) {
-                    const { group, groupNumber } = slideTagToGroup(tag)
+                    const { group, groupNumber } = sngSlideTagToGroup(tag)
                     if (group !== null) {
                         metadata.verse_order.push({ group, groupNumber })
                     }
@@ -285,69 +285,7 @@ function convertChord(chord: SongbeamerChord): Chords {
     }
 }
 
-const SongbeamerGroups: { [key: string]: string } = {
-    unbekannt: "",
-    unbenannt: "",
-    unknown: "",
-    intro: "Intro",
-    vers: "Verse",
-    verse: "Verse",
-    strophe: "Verse",
-    "pre-bridge": "Pre-Bridge",
-    bridge: "Bridge",
-    misc: "Misc",
-    "pre-refrain": "Pre-Chorus",
-    refrain: "Chorus",
-    "pre-chorus": "Pre-Chorus",
-    chorus: "Chorus",
-    zwischenspiel: "Break",
-    instrumental: "Break",
-    interlude: "Break",
-    "pre-coda": "Pre-Outro",
-    coda: "Outro",
-    ending: "Outro",
-    outro: "Outro",
-    teil: "Tag",
-    part: "Tag",
-    chor: "Tag",
-    solo: "Tag"
-}
-const SongbeamerGlobalGroups: { [key: string]: string } = {
-    Intro: "intro",
-    Verse: "verse",
-    "Pre-Bridge": "pre_bridge",
-    Bridge: "bridge",
-    "Pre-Chorus": "pre_chorus",
-    Chorus: "chorus",
-    Break: "break",
-    "Pre-Outro": "pre_outro",
-    Outro: "outro",
-    Tag: "tag"
-}
-function slideTagToGroup(line: string): { group: string | null; globalGroup: string | null; groupNumber: number | null } {
-    if (line.charAt(0) === "#") {
-        return { group: null, globalGroup: null, groupNumber: null }
-    }
-    const parts: string[] = line.split(" ", 2)
-    const tag: string = parts[0].toLowerCase()
-    let groupNumber: number | null = null
-    if (parts.length > 1) {
-        groupNumber = parseInt(parts[1], 10)
-        if (isNaN(groupNumber) || groupNumber < 1) {
-            groupNumber = null
-        }
-    }
 
-    let group: string | null = null
-    let globalGroup: string | null = null
-    if (tag in SongbeamerGroups) {
-        group = SongbeamerGroups[tag]
-        if (group in SongbeamerGlobalGroups) {
-            globalGroup = SongbeamerGlobalGroups[group]
-        }
-    }
-    return { group, globalGroup, groupNumber }
-}
 
 function createLayoutFromVerseOrder(metadata: typeof songbeamerMetadata, groupSlides: Map<string, SlideData>): SlideData[] | null {
     if (!metadata.verse_order.length || !groupSlides.size) {
@@ -395,7 +333,7 @@ function parseSongbeamerSlides(sections: string[], metadata: typeof songbeamerMe
             lines.shift()
             ++chordLine
         } else {
-            const { group, globalGroup, groupNumber } = slideTagToGroup(firstLine)
+            const { group, globalGroup, groupNumber } = sngSlideTagToGroup(firstLine)
             if (group !== null) {
                 lines.shift()
                 ++chordLine
