@@ -13,6 +13,7 @@ import { OutputVisibility } from "./helpers/OutputVisibility"
 import { RenderGroups } from "./helpers/RenderGroups"
 import { PreviewStream } from "../capture/PreviewStream"
 import { OutputRecording } from "../streaming/OutputRecording"
+import { MediaLayers } from "./helpers/MediaLayers"
 import type { Output as OutputData } from "./Output"
 
 export class OutputHelper {
@@ -34,6 +35,7 @@ export class OutputHelper {
             TO_FRONT: (data: string) => OutputHelper.Bounds.moveToFront(data),
 
             STREAM_LAYER: (data: { id: string; active: boolean }) => OutputLifecycle.requestVideoLayer(data.id, !!data.active),
+            MEDIA_LAYERS: (data: { outputId: string; layers: any[]; fill: number[] }) => MediaLayers.update(data.outputId, data.layers || [], data.fill || [0, 0, 0]),
             PREVIEW_SUBSCRIBE: (data: { id: string; subscriber?: string; width?: number }) => PreviewStream.subscribe(data.id, data.subscriber, data.width),
             PREVIEW_UNSUBSCRIBE: (data: { id: string; subscriber?: string }) => PreviewStream.unsubscribe(data.id, data.subscriber),
             PREVIEW_SIZE: (data: { id: string; subscriber: string; width: number }) => PreviewStream.setWidth(data.id, data.subscriber, data.width),
@@ -46,6 +48,7 @@ export class OutputHelper {
             FOCUS: (data: { id: string }) => OutputHelper.Lifecycle.focusOutput(data.id)
         }
 
+        if (msg.channel === "MEDIA_SOURCE_READY") return MediaLayers.sourceReady(_e.sender)
         if (msg.channel.includes("MAIN")) return toApp(OUTPUT, OutputHelper.expandToRenderGroupMembers(msg))
         if (msg.channel in outputResponses) return outputResponses[msg.channel as keyof typeof outputResponses](msg.data)
 

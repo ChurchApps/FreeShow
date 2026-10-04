@@ -33,7 +33,7 @@ import type { PlayingVideoState, VideoAudioData } from "./components/media/video
 export const os: Writable<OS> = writable({ platform: "win32", name: "", arch: "" })
 export const deviceId: Writable<string> = writable("")
 export const version: Writable<string> = writable("0.0.0")
-export const currentWindow: Writable<null | "output" | "pdf"> = writable(null)
+export const currentWindow: Writable<null | "output" | "pdf" | "media"> = writable(null)
 export const localeDirection: Writable<"rtl" | "ltr"> = writable("ltr")
 export const dictionary: Writable<Dictionary> = writable({})
 export const saved: Writable<boolean> = writable(true)

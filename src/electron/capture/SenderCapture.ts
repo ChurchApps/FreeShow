@@ -67,6 +67,7 @@ export class SenderCapture {
     static presentMessageHandler: ((msg: any) => void) | null = null
     static previewMessageHandler: ((msg: any) => void) | null = null
     static videoLayerHandler: ((msg: any) => void) | null = null
+    static mediaMessageHandler: ((msg: any) => void) | null = null
 
     /** returns true when the message was a capture reply */
     static handleMessage(msg: any): boolean {
@@ -93,6 +94,8 @@ export class SenderCapture {
             this.presentMessageHandler?.(msg)
         } else if (String(msg.type).startsWith("webrtc")) {
             this.webrtcMessageHandler?.(msg)
+        } else if (String(msg.type).startsWith("media")) {
+            this.mediaMessageHandler?.(msg)
         } else if (msg.type === "videoFrame" || msg.type === "videoLayerActive") {
             this.videoLayerHandler?.(msg)
         } else return false

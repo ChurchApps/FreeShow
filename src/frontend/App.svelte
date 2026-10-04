@@ -1,6 +1,7 @@
 <script lang="ts">
     import MainLayout from "./MainLayout.svelte"
     import MainOutput from "./MainOutput.svelte"
+    import MediaSource from "./components/output/layers/MediaSource.svelte"
     import ContextMenu from "./components/context/ContextMenu.svelte"
     import Pdf from "./components/export/Pdf.svelte"
     import Guide from "./components/guide/Guide.svelte"
@@ -74,12 +75,14 @@
         <MenuBar />
     {/if}
 
-    <main style={globalStyle} class:closeAd={$closeAd} class:background={$currentWindow === "output"}>
+    <main style={globalStyle} class:closeAd={$closeAd} class:background={$currentWindow === "output" || $currentWindow === "media"}>
         <ContextMenu />
         <TooltipManager />
 
         {#if $currentWindow === "output"}
             <MainOutput />
+        {:else if $currentWindow === "media"}
+            <MediaSource />
         {:else if $loaded}
             <Popup />
             <QuickSearch />

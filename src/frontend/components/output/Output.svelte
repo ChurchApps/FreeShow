@@ -3,6 +3,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { compositedOutputs } from "../drawer/live/streamLayer"
+    import { mediaFill, mediaLayered } from "./layers/mediaLayers"
     import { uid } from "uid"
     import type { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
@@ -322,7 +323,10 @@
     // video underneath the page there. A mirror is an ordinary copy drawn in this window, so making it
     // transparent showed nothing, and Zoomed animates a background colour change, so it faded to black
     // for the best part of a second every time an input was triggered.
-    $: backgroundColor = currentOutput?.transparent || (!mirror && $compositedOutputs[outputId]) ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle?.background || slide?.settings?.backgroundColor || "black"
+    $: opaqueBackground = styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle?.background || slide?.settings?.backgroundColor || "black"
+    $: backgroundColor = currentOutput?.transparent || (!mirror && ($compositedOutputs[outputId] || $mediaLayered[outputId])) ? "transparent" : opaqueBackground
+    // a media layer is drawn under the page by the capture worker, which fills around it with this colour
+    $: if (!mirror && outputId && $mediaFill[outputId] !== opaqueBackground) mediaFill.update((a) => ({ ...a, [outputId]: opaqueBackground }))
     // background image
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && (slide || background) ? "" : currentStyle?.backgroundImage || ""
     $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }

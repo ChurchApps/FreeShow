@@ -2,7 +2,7 @@
     import type { MediaStyle } from "../../../../types/Main"
     import type { Styles } from "../../../../types/Settings"
     import type { OutBackground, Transition } from "../../../../types/Show"
-    import { media, playerVideos, special } from "../../../stores"
+    import { media, outputs, playerVideos, special } from "../../../stores"
     import BmdStream from "../../drawer/live/BMDStream.svelte"
     import NdiStream from "../../drawer/live/NDIStream.svelte"
     import OmtStream from "../../drawer/live/OMTStream.svelte"
@@ -12,6 +12,7 @@
     import OutputTransition from "../transitions/OutputTransition.svelte"
     import Window from "../Window.svelte"
     import Media from "./Media.svelte"
+    import { mediaLayersEnabled } from "./mediaLayers"
 
     export let outputId = ""
 
@@ -28,6 +29,11 @@
     $: type = data.type || "media"
     $: if (type === "video" || type === "image") type = "media"
 
+    // A video here can be decoded once for every output showing it and composited by the capture worker
+    // (mediaLayers.ts) when what the page does to it is only opacity: a fade or no transition, no animation.
+    $: fadeOnly = [transition?.in?.type || transition?.type, transition?.out?.type || transition?.type].every((t) => !t || t === "fade" || t === "none")
+    $: layerable = $mediaLayersEnabled && !mirror && !!outputId && fadeOnly && !animationStyle && !$outputs[outputId]?.transparent
+
     let mediaStyle: MediaStyle = {}
     $: if (data && currentStyle) mediaStyle = getMediaStyle({ ...$media[id], ...data }, currentStyle)
 </script>
@@ -35,7 +41,7 @@
 <OutputTransition {transition} inTransition={transition.in} outTransition={transition.out} on:outrostart={() => (fadingOut = true)}>
     {#if type === "media"}
         <!-- on:ended={videoEnded} -->
-        <Media {outputId} path={id} {data} {animationStyle} {mirror} {mediaStyle} {fadingOut} on:loaded />
+        <Media {outputId} path={id} {data} {animationStyle} {mirror} {mediaStyle} {fadingOut} {layerable} on:loaded />
     {:else if type === "screen"}
         <Window {id} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "ndi"}

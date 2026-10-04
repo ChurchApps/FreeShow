@@ -1,6 +1,6 @@
 import { BrowserWindow, screen, type BrowserWindowConstructorOptions } from "electron"
 import { OUTPUT_CONSOLE, getMainWindow, hardwareAccelerationDisabled, isMac, loadWindowContent, toApp } from "../.."
-import { OUTPUT } from "../../../types/Channels"
+import { OUTPUT, STARTUP } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import { BlackmagicBridge as BlackmagicSender } from "../../blackmagic/BlackmagicBridge"
 import { RtmpBridge } from "../../streaming/RtmpBridge"
@@ -19,6 +19,7 @@ import { wait } from "../../utils/helpers"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
 import { setOutputAlwaysOnTop, useOutputPanel } from "./OutputAlwaysOnTop"
+import { MediaLayers } from "./MediaLayers"
 import { OutputPresenter } from "./OutputPresenter"
 import { OutputVisibility } from "./OutputVisibility"
 import { PreviewStream } from "../../capture/PreviewStream"
@@ -285,7 +286,10 @@ export class OutputLifecycle {
         if (OUTPUT_CONSOLE) options.webPreferences!.devTools = true
         const window: BrowserWindow | null = new BrowserWindow(options)
 
-        if (osr) this.attachOsrCapture(window, id)
+        if (osr) {
+            this.attachOsrCapture(window, id)
+            this.enableMediaLayers(window)
+        }
 
         window.setSkipTaskbar(!!options.skipTaskbar)
         if (isMac && !osr) window.minimize()
@@ -410,6 +414,7 @@ export class OutputLifecycle {
         const window = new BrowserWindow(options)
         window.setSkipTaskbar(true)
         this.attachOsrCapture(window, id)
+        this.enableMediaLayers(window)
         loadWindowContent(window, "output")
 
         output.captureWindow = window
@@ -602,6 +607,39 @@ export class OutputLifecycle {
         return shared
     }
 
+    // A video background can be decoded once and composited by the worker (MediaLayers.ts) only where the
+    // capture is a shared texture and the addon can take another window's texture as the layer.
+    static mediaLayersAvailable(): boolean {
+        return process.env.FS_MEDIA_LAYER !== "0" && this.useSharedTextureCapture() && !!this.getOsrCaptureAddon()?.mediaLayerSupported
+    }
+
+    /** a hidden window rendering one media source at exactly width x height pixels, for MediaLayers */
+    static createMediaWindow(width: number, height: number): BrowserWindow | null {
+        if (!this.mediaLayersAvailable()) return null
+        const renderBounds = OutputHelper.Bounds.getRenderBounds({ invisible: true }, { x: 0, y: 0, width, height })
+        const options: BrowserWindowConstructorOptions = { ...outputOptions, ...renderBounds, show: false, skipTaskbar: true, alwaysOnTop: false, backgroundColor: "#000000" }
+        options.webPreferences = { ...outputOptions.webPreferences, offscreen: { useSharedTexture: true } } as any
+        this.avoidLinuxDisplaySizeShrink(options)
+        const window = new BrowserWindow(options)
+        window.setSkipTaskbar(true)
+        window.webContents.setFrameRate(this.OSR_RENDER_FPS)
+        // a size given at creation is clamped to the display; set afterwards (and again, as outputs do) it holds
+        const bounds = { x: 0, y: 0, width: renderBounds.width, height: renderBounds.height }
+        window.setBounds(bounds)
+        for (const delay of [10, 80]) setTimeout(() => !window.isDestroyed() && window.setBounds(bounds), delay)
+        loadWindowContent(window, "media")
+        return window
+    }
+
+    // a page whose pixels the worker composites may hand its background video to a media layer
+    private static enableMediaLayers(window: BrowserWindow) {
+        window.webContents.ipc.on(STARTUP, (_event, msg) => {
+            if (msg?.channel !== "READY" || window.isDestroyed()) return
+            window.webContents.send(OUTPUT, { channel: "MEDIA_LAYER_ENABLED", data: this.mediaLayersAvailable() })
+            if (process.env.FS_CAP_STATS) console.info(`[MEDIA] page ready, media layers ${this.mediaLayersAvailable() ? "enabled" : "unavailable"}`)
+        })
+    }
+
     // lazily load the native shared-texture readback addon; null -> CPU offscreen capture fallback
     private static osrCaptureAddon: any = undefined
     private static getOsrCaptureAddon(): any {
@@ -763,14 +801,19 @@ export class OutputLifecycle {
         else this.videoLayerRunning.delete(id)
         // the worker is compositing: the frame no longer has to reach the page at all
         if (this.videoLayerWanted.has(id)) StreamReceiverHost.send("videoLayer", { outputId: id, active: true, exclusive: running })
-        // and the window must not paint an opaque backdrop over it (the page drops its own background too)
-        const win = OutputHelper.getOutput(id)?.window
-        if (win && !win.isDestroyed()) {
-            const output = OutputHelper.getOutput(id)
-            win.setBackgroundColor(running || (output as any)?.transparent ? "#00000000" : "#000000")
-        }
+        this.updateRenderBackground(id)
         // every member of the render group draws from this one page
         for (const m of RenderGroups.members(id)) OutputHelper.Send.sendToWindow(m, { channel: "STREAM_LAYER", data: { id: m, active: running } })
+    }
+
+    // The page drops its own background wherever the worker draws video under it (a live input or a shared
+    // media layer), so the window it renders in must not paint an opaque backdrop there either.
+    static updateRenderBackground(id: string) {
+        const output = OutputHelper.getOutput(id)
+        const win = OutputHelper.renderWindow(output)
+        if (!win) return
+        const videoUnder = this.videoLayerRunning.has(id) || MediaLayers.showsMedia(id) || !!(output as any)?.transparent
+        win.setBackgroundColor(videoUnder ? "#00000000" : "#000000")
     }
 
     private static sharedPaintImpls = new Map<string, (event: any, image: Electron.NativeImage) => void>()
@@ -1463,6 +1506,7 @@ export class OutputLifecycle {
         }
 
         OutputPresenter.stop(id)
+        MediaLayers.removeOutput(id)
         CaptureHelper.Lifecycle.stopCapture(id)
         NdiSender.stopSenderNDI(id)
         OmtSender.stopSenderOMT(id)

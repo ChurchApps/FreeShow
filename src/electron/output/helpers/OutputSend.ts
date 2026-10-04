@@ -4,10 +4,12 @@ import type { Message } from "../../../types/Socket"
 import { clone } from "../../utils/helpers"
 import type { Output } from "../Output"
 import { OutputHelper } from "../OutputHelper"
+import { MediaLayers } from "./MediaLayers"
 
 export class OutputSend {
     static sendToOutputWindow(msg: Message) {
         OutputHelper.getAllOutputs().forEach(sendToWindow)
+        MediaLayers.broadcast(msg)
 
         function sendToWindow(output: Output & { id: string }) {
             // shared-render FOLLOWERS own no window (they reference the renderer's) and render no content of

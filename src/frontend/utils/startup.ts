@@ -42,7 +42,8 @@ export async function startup() {
             if (type) loaded.set(true)
 
             if (type === "pdf") return
-            if (type === "output") {
+            // a media window (MediaLayers.ts) takes the same data an output does
+            if (type === "output" || type === "media") {
                 startupOutput()
                 return
             }

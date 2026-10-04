@@ -4,6 +4,7 @@
     import { downloadOnlineMedia, getExtension, getMediaType } from "../../helpers/media"
     import Image from "../../media/Image.svelte"
     import Video from "../../media/Video.svelte"
+    import MediaLayerSlot from "./MediaLayerSlot.svelte"
 
     export let outputId: string = ""
     export let path: string
@@ -14,6 +15,9 @@
     export let mediaStyle: MediaStyle = {}
     export let mirror = false
     export let fadingOut = false
+    // decoded in a shared media window instead of here (see mediaLayers.ts); decided once, at mount, so a
+    // playing video is never handed between the two
+    export let layerable = false
 
     export let video: HTMLVideoElement | null = null
     // for previews that are not outputted
@@ -22,6 +26,9 @@
 
     $: extension = getExtension(path)
     $: type = data.type || getMediaType(extension)
+
+    let layered: boolean | null = null
+    $: if (layered === null && type) layered = layerable && type === "video" && typeof path === "string" && !!path && !path.startsWith("http")
 
     let currentSyncPath = ""
     $: if (typeof path === "string") {
@@ -58,7 +65,9 @@
 </script>
 
 {#key retryCount}
-    {#if type === "video"}
+    {#if type === "video" && layered}
+        <MediaLayerSlot {outputId} {path} {mediaStyle} startAt={data.startAt || 0} on:loaded />
+    {:else if type === "video"}
         <div class="video">
             <Video {outputId} {path} syncPath={currentSyncPath || path} bind:video bind:videoData bind:videoTime startAt={data.startAt} {mediaStyle} {animationStyle} {mirror} {fadingOut} on:loaded on:ended on:error={reload} />
         </div>

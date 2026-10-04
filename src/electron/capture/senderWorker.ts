@@ -665,6 +665,28 @@ if (process.env.FS_CAP_STATS) {
     }, 5)
 }
 
+// Shared media sources (MediaLayers.ts on main): the latest frame of each, and which ones each output shows.
+// A frame goes back to main for release once it is no longer the latest and no composite still reads it.
+type MediaFrame = { key: string; seq: number; handle: Buffer; refs: number }
+const mediaLatest = new Map<string, MediaFrame>()
+const mediaAssigned: { [outputId: string]: { layers: { key: string; alpha: number }[]; fill: number[] } } = {}
+
+function mediaFrameDone(f: MediaFrame) {
+    f.refs--
+    if (f.refs <= 0 && mediaLatest.get(f.key) !== f) port.postMessage({ type: "mediaRelease", key: f.key, seq: f.seq })
+}
+
+function mediaFramesFor(id: string): { frame: MediaFrame; alpha: number }[] {
+    const assigned = mediaAssigned[id]
+    if (!assigned) return []
+    const out: { frame: MediaFrame; alpha: number }[] = []
+    for (const l of assigned.layers) {
+        const frame = mediaLatest.get(l.key)
+        if (frame) out.push({ frame, alpha: l.alpha })
+    }
+    return out
+}
+
 async function captureAndSend(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; mainFormat?: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number; targets?: { width: number; height: number; format: number }[]; memberTarget?: { [id: string]: number }; memberFormats?: { [id: string]: number }; memberSizes?: { [id: string]: { width: number; height: number } }; cpuTargets?: boolean; rtmpMembers?: { [id: string]: { width: number; height: number } }; bmdMembers?: { [id: string]: { width: number; height: number; format: number; framerate: number } }; webrtcMembers?: { [id: string]: { width: number; height: number } }; presentMembers?: { [id: string]: { width: number; height: number } }; convertCheck?: boolean; stageStream?: { width: number; height: number; quality: number; intervalMs: number } | null; serverStream?: { width: number; height: number; intervalMs: number } | null; thumbStream?: { width: number; height: number; quality: number } | null }) {
     // seq identifies this in-flight capture; the osr-capture key is slotted so concurrent readbacks
     // for one output use independent pool entries
@@ -710,8 +732,12 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
     // the live frame this output is showing, composited under the page by the addon
     const layer = videoLayers[id]
     const layerBuf = layer?.current && layer.width && layer.height ? layer.current : null
-    const video = layerBuf ? { width: layer!.width, height: layer!.height, format: layer!.format, data: layerBuf.buf.subarray(0, layerBuf.bytes) } : null
+    // or the shared media sources this output's page shows (MediaLayers.ts), held until the composite is recorded
+    const mediaFrames = layerBuf ? [] : mediaFramesFor(id)
+    const assigned = mediaAssigned[id]
+    const video = layerBuf ? { width: layer!.width, height: layer!.height, format: layer!.format, data: layerBuf.buf.subarray(0, layerBuf.bytes) } : mediaFrames.length ? { media: mediaFrames.map((m) => ({ handle: m.frame.handle, fit: 0, alpha: m.alpha })), fill: assigned!.fill } : null
     if (layerBuf) layerBuf.inUse = true
+    for (const m of mediaFrames) m.frame.refs++
 
     const twoPhase = typeof osr.readbackConsume === "function" && typeof osr.readbackFinish === "function"
     const singleDispatch = !twoPhase && typeof osr.readbackOnce === "function"
@@ -758,7 +784,11 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
             }
         } else if (twoPhase) {
             if (tl) tl.cS = Date.now()
-            await osr.readbackConsume(source, size.width, size.height, format, rbKey, wantScaled ? dstW : 0, wantScaled ? dstH : 0, gpuTargets ? targets : undefined, video || undefined)
+            try {
+                await osr.readbackConsume(source, size.width, size.height, format, rbKey, wantScaled ? dstW : 0, wantScaled ? dstH : 0, gpuTargets ? targets : undefined, video || undefined)
+            } finally {
+                for (const m of mediaFrames) mediaFrameDone(m.frame)
+            }
             if (video && !videoLayerReported.has(id)) {
                 videoLayerReported.add(id)
                 port.postMessage({ type: "videoLayerActive", id })
@@ -1201,6 +1231,22 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
                 } catch (err: any) {
                     console.error("cpu frame fan-out failed:", err?.message)
                 }
+                break
+            }
+            case "mediaFrame": {
+                const prev = mediaLatest.get(msg.key)
+                mediaLatest.set(msg.key, { key: msg.key, seq: msg.seq, handle: Buffer.from(msg.handle), refs: 0 })
+                if (prev && prev.refs <= 0) port.postMessage({ type: "mediaRelease", key: prev.key, seq: prev.seq })
+                break
+            }
+            case "mediaAssign":
+                if (msg.layers?.length) mediaAssigned[msg.outputId] = { layers: msg.layers, fill: msg.fill || [0, 0, 0] }
+                else delete mediaAssigned[msg.outputId]
+                break
+            case "mediaDrop": {
+                const prev = mediaLatest.get(msg.key)
+                mediaLatest.delete(msg.key)
+                if (prev && prev.refs <= 0) port.postMessage({ type: "mediaRelease", key: prev.key, seq: prev.seq })
                 break
             }
             case "videoSource":

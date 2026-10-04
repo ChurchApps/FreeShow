@@ -272,7 +272,7 @@ function mainWindowLoaded() {
     if (RECORD_STARTUP_TIME) console.timeEnd("Full startup")
 }
 
-export async function loadWindowContent(window: BrowserWindow, type: null | "output" = null) {
+export async function loadWindowContent(window: BrowserWindow, type: null | "output" | "media" = null) {
     const mainOutput = type === null
 
     if (isProd) window.loadFile("public/index.html").catch(loadingFailed)
