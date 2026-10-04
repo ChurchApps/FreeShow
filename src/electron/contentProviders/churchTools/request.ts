@@ -10,8 +10,8 @@ import { uid } from "uid"
 import { ToMain } from "../../../types/IPC/ToMain"
 import { SNG_SECTION_RE, parseSngMeta, sngSlideTagToGroup } from "../../../types/Songbeamer"
 import type { Show, Slide, SlideData } from "../../../types/Show"
-import { convertPptFileToSlides } from "../../output/ppt/msOfficeConverter"
 import { sendToMain } from "../../IPC/main"
+import { importShow } from "../../data/import"
 import { getDataFolderPath, sanitizeFileName } from "../../utils/files"
 import { httpsRequest } from "../../utils/requests"
 import { ctGetAccess } from "./connect"
@@ -144,7 +144,7 @@ function buildHeaderShow(title: string, note: string, dateLabel: string): { show
                 slides: [{
                     id: slideId,
                     // automatically clears video/background when this slide is activated
-                    data: { actions: { slideActions: [{ id: uid(8), triggers: ["clear_background"], actionValues: {} }] } }
+                    actions: { slideActions: [{ id: uid(8), triggers: ["clear_background"], actionValues: {} }] }
                 }]
             }
         },
@@ -695,8 +695,12 @@ export async function ctLoadServices(serviceId?: number): Promise<void> {
                     shows.push({ id: showId, ...show })
                     projectItems.push({ type: "show", id: showId, scheduleLength: 0 })
                 } else {
-                    // Trigger Office/LibreOffice conversion — slides appear in Shows → Presentations
-                    convertPptFileToSlides(att.localPath).catch(() => {})
+                    const lowerName = att.name.toLowerCase()
+                    if (/\.pdf$/i.test(lowerName)) {
+                        sendToMain(ToMain.IMPORT2, { channel: "pdf", data: [att.localPath] })
+                    } else if (/\.(ppt|pptx)$/i.test(lowerName)) {
+                        await importShow("powerpoint", [att.localPath], {})
+                    }
                     projectItems.push({ type: "section", id: uid(5), name: `📎 ${att.name}`, notes: att.localPath, scheduleLength: 0 })
                 }
             }
