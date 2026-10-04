@@ -1,14 +1,18 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
+    import { uid } from "uid"
     import { Main } from "../../../../types/IPC/Main"
+    import { ToMain } from "../../../../types/IPC/ToMain"
     import { TranslationMethod } from "../../../../types/Songbeamer"
-    import { sendMain } from "../../../IPC/main"
-    import { activePopup, drawerTabsData } from "../../../stores"
+    import { destroyMain, receiveToMain, sendMain } from "../../../IPC/main"
+    import { activePopup, contentProviderData, drawerTabsData } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import MaterialFolderPicker from "../../inputs/MaterialFolderPicker.svelte"
 
     const encodingOptions = [
         {
@@ -28,11 +32,35 @@
 
     let selectedTranslationMethod = TranslationMethod.MultiLine
 
-    function importListener() {
+    let folderPath: string = $contentProviderData.churchtools?.sngFolder || ""
+
+    const FOLDER_PICK_ID = uid()
+    const listenerId = receiveToMain(ToMain.OPEN_FOLDER2, (data) => {
+        if (data.channel !== FOLDER_PICK_ID || !data.path) return
+        folderPath = data.path
+    })
+    onDestroy(() => destroyMain(listenerId))
+
+    function importSettings() {
+        return { encoding: selectedEncoding, category: showCategory, translation: selectedTranslationMethod }
+    }
+
+    function importFromFiles() {
         sendMain(Main.IMPORT, {
             channel: "songbeamer",
             format: { name: "Songbeamer", extensions: ["sng"] },
-            settings: { encoding: selectedEncoding, category: showCategory, translation: selectedTranslationMethod }
+            settings: importSettings()
+        })
+        $activePopup = null
+    }
+
+    function importFromFolder() {
+        if (!folderPath) return
+        sendMain(Main.IMPORT, {
+            channel: "songbeamer",
+            format: { name: "Songbeamer", extensions: ["sng"] },
+            settings: importSettings(),
+            folder: folderPath
         })
         $activePopup = null
     }
@@ -56,6 +84,13 @@
 
 <HRule />
 
-<MaterialButton variant="outlined" icon="import" on:click={importListener}>
-    <T id="actions.import" />
-</MaterialButton>
+<MaterialFolderPicker label="songbeamer_import.folder" value={folderPath} on:change={(e) => (folderPath = e.detail)} allowEmpty openButton={!!folderPath} />
+
+<InputRow>
+    <MaterialButton variant="outlined" icon="import" on:click={importFromFiles}>
+        <T id="actions.import" />
+    </MaterialButton>
+    <MaterialButton variant="outlined" icon="folder" disabled={!folderPath} on:click={importFromFolder}>
+        <T id="songbeamer_import.import_folder" />
+    </MaterialButton>
+</InputRow>

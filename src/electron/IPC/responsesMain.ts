@@ -294,8 +294,16 @@ export const mainResponses: MainResponses = {
 /// ///////
 
 // IMPORT
-export async function startImport(data: { channel: string; format: { name: string; extensions: string[] }; settings?: any }) {
-    const files: string[] = await selectFilesDialog("", data.format)
+export async function startImport(data: { channel: string; format: { name: string; extensions: string[] }; settings?: any; folder?: string }) {
+    let files: string[]
+
+    if (data.folder) {
+        const names = readFolder(data.folder)
+        const ext = (data.format.extensions || []).map((e: string) => e.toLowerCase())
+        files = names.filter((n) => !ext.length || ext.includes(n.slice(n.lastIndexOf(".") + 1).toLowerCase())).map((n) => path.join(data.folder!, n))
+    } else {
+        files = await selectFilesDialog("", data.format)
+    }
 
     const needsFileAndNoFileSelected = data.format.extensions && !files.length
     if (needsFileAndNoFileSelected) return
@@ -303,8 +311,8 @@ export async function startImport(data: { channel: string; format: { name: strin
     importShow(data.channel, files || null, data.settings || {})
 }
 
-function importFiles(data: { id: string; paths: string[] }) {
-    importShow(data.id, data.paths, {})
+function importFiles(data: { id: string; paths: string[]; settings?: any }) {
+    importShow(data.id, data.paths, data.settings || {})
 }
 
 // BIBLE
