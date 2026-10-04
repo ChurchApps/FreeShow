@@ -8,7 +8,7 @@ import type { FileFolder, MediaStyle, Subtitle } from "../../../types/Main"
 import type { Cropping, Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
 import { requestMain, sendMain } from "../../IPC/main"
-import { audioFolders, cachePath, loadedMediaThumbnails, media, mediaFolders, special } from "../../stores"
+import { audioFolders, cachePath, loadedMediaThumbnails, media, mediaFolders, special, videoMarkers } from "../../stores"
 import { addToMediaFolder } from "../../utils/cloudSync"
 import { isMainWindow, newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
@@ -365,6 +365,22 @@ export function enableSubtitle(video: HTMLVideoElement, languageId: string) {
 
     const newTrack = tracks.find((a) => a.language === languageId)
     if (newTrack) newTrack.mode = "showing"
+}
+
+// returns the index of the new marker, or -1 if there already is one at that time
+export function addVideoMarker(id: string, time: number) {
+    let index = -1
+
+    videoMarkers.update((a) => {
+        if (a[id]?.find((marker) => marker.time === time)) return a
+
+        a[id] = [...(a[id] || []), { name: "", time }].sort((markerA, markerB) => markerA.time - markerB.time)
+        index = a[id].findIndex((marker) => marker.time === time)
+
+        return a
+    })
+
+    return index
 }
 
 export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: Styles | undefined) {

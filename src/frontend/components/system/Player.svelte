@@ -1,6 +1,5 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
-    import type { PlayerVideo } from "../../../types/Tabs"
     import { activeProject, activeShow, playerVideos, projects } from "../../stores"
     import Vimeo from "../drawer/player/Vimeo.svelte"
     import YouTube from "../drawer/player/YouTube.svelte"
@@ -11,7 +10,7 @@
     export let outputId = ""
     export let preview = false
 
-    let data: PlayerVideo | null = null
+    let data: { type: "youtube" | "vimeo"; id: string; name?: string } | null = null
     $: if ($activeShow && !$playerVideos[id]) getProjectData()
     function getProjectData() {
         const showMedia = _show($activeShow?.id || "").get("media")?.[id]
@@ -55,7 +54,7 @@
 
 {#if video?.type === "youtube"}
     {#key video.id}
-        <YouTube id={video.id} startTime={video.startTime || 0} bind:videoData bind:videoTime bind:actualVideoTime {preview} on:loaded on:ended />
+        <YouTube id={video.id} bind:videoData bind:videoTime bind:actualVideoTime {preview} on:loaded on:ended />
     {/key}
 {:else if video?.type === "vimeo"}
     {#key video.id}

@@ -9,7 +9,7 @@
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import { enableSubtitle, encodeFilePath, getExtension, getFileName, getMediaLayerType, removeExtension } from "../helpers/media"
+    import { addVideoMarker, enableSubtitle, encodeFilePath, getExtension, getFileName, getMediaLayerType, removeExtension } from "../helpers/media"
     import { getFirstActiveOutput, setOutput } from "../helpers/output"
     import { joinTime, secondsToTime } from "../helpers/time"
     import FloatingInputs from "../input/FloatingInputs.svelte"
@@ -289,22 +289,8 @@
 
     // TODO: history
     function addMarker() {
-        videoMarkers.update((a) => {
-            const newMarker = { name: "", time: Math.floor(videoTime || 0) }
-
-            if (a[showId]?.find((a) => a.time === newMarker.time)) return a
-
-            if (!a[showId]) a[showId] = []
-            a[showId].push(newMarker)
-
-            // sort by time
-            a[showId] = a[showId].sort((a, b) => a.time - b.time)
-
-            let markerIndex = a[showId].findIndex((a) => a.time === newMarker.time)
-            activeRename.set("marker_" + markerIndex)
-
-            return a
-        })
+        const markerIndex = addVideoMarker(showId, Math.floor(videoTime || 0))
+        if (markerIndex > -1) activeRename.set("marker_" + markerIndex)
     }
 
     function changeName(e: any) {

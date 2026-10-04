@@ -763,6 +763,7 @@
         "manage_subtitles": "Manage subtitles",
         "toggle_time_marker": "Toggle time markers",
         "add_time_marker": "Add time marker",
+        "time_marker_added": "Time marker added at $1",
         "bind_to": "Specific outputs",
         "remove_binding": "Remove specific outputs",
         "dynamic_values": "Dynamic values",

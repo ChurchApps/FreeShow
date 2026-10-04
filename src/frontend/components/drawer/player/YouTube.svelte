@@ -9,7 +9,8 @@
     export let id
     // export let outputId
     export let preview
-    export let startTime = 0
+
+    // export let startAt = 0
 
     // <= 0.5.4
     $: id = id.includes("?list") ? id.slice(0, id.indexOf("?list")) : id
@@ -19,7 +20,6 @@
     const options = {
         playerVars: {
             autoplay: 1,
-            start: startTime,
             loop: videoData.loop,
             fs: 0,
             rel: 0,
