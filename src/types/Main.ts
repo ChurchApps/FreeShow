@@ -391,7 +391,6 @@ export type Popups =
     | "confirm"
     | "custom_text"
     | "import"
-    | "songbeamer_import"
     | "export"
     | "show"
     | "delete_show"

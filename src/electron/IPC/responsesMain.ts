@@ -294,17 +294,17 @@ export const mainResponses: MainResponses = {
 /// ///////
 
 // IMPORT
-export async function startImport(data: { channel: string; format: { name: string; extensions: string[] }; settings?: any }) {
+export async function startImport(data: { channel: string; format: { name: string; extensions: string[] } }) {
     const files: string[] = await selectFilesDialog("", data.format)
 
     const needsFileAndNoFileSelected = data.format.extensions && !files.length
     if (needsFileAndNoFileSelected) return
 
-    importShow(data.channel, files || null, data.settings || {})
+    importShow(data.channel, files || null)
 }
 
 function importFiles(data: { id: string; paths: string[] }) {
-    importShow(data.id, data.paths, {})
+    importShow(data.id, data.paths)
 }
 
 // BIBLE

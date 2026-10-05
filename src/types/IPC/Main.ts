@@ -200,7 +200,7 @@ export interface MainSendPayloads {
     // DEV
     [Main.LOG]: any
     /////
-    [Main.IMPORT]: { channel: string; format: { name: string; extensions: string[] }; settings?: any }
+    [Main.IMPORT]: { channel: string; format: { name: string; extensions: string[] } }
     [Main.IMPORT_FILES]: { id: string; paths: string[] }
     [Main.BIBLE]: { id: string; name: string }
     [Main.SHOW]: { id: string; name: string }

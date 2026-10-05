@@ -89,7 +89,7 @@ const specialImports = {
     }
 }
 
-export async function importShow(id: string, files: string[] | null, importSettings: any) {
+export async function importShow(id: string, files: string[] | null) {
     if (!files?.length) return
 
     let importId = id
@@ -112,24 +112,6 @@ export async function importShow(id: string, files: string[] | null, importSetti
     }
     if (id === "freeshow_overlay") {
         await importOverlay(files)
-        return
-    }
-
-    if (id === "songbeamer") {
-        const encoding = importSettings.encoding
-        const fileContents: any[] = []
-        await asyncPool(20, files, async (file) => {
-            fileContents.push(await readFile(file, encoding))
-        })
-        const custom = {
-            files: fileContents,
-            length: fileContents.length,
-            encoding,
-            category: importSettings.category.id,
-            translationMethod: importSettings.translation
-        }
-
-        sendToMain(ToMain.IMPORT2, { channel: id, data: [], custom })
         return
     }
 

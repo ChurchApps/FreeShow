@@ -1,21 +1,14 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
-import type { Chords, ID, Item, Layout, Line, Show, Slide, SlideData } from "../../types/Show"
+import type { Chords, ID, Item, Line, Show, Slide, SlideData } from "../../types/Show"
 import { ShowObj } from "../classes/Show"
+import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { history } from "../components/helpers/history"
 import { setQuickAccessMetadata } from "../components/helpers/setShow"
 import { checkName, getGlobalGroup } from "../components/helpers/show"
-import { categories, globalTags } from "../stores"
+import { activePopup, alertMessage, categories, drawerTabsData, globalTags } from "../stores"
+import { translateText } from "../utils/language"
 import { createCategory, setTempShows } from "./importHelpers"
-import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
-
-type TranslationMethod = "multiline" | "textboxes" | "layouts"
-
-interface ImportSettings {
-    category: string
-    encoding: BufferEncoding
-    translationMethod: TranslationMethod
-}
 
 interface SongbeamerChord {
     x: number
@@ -64,30 +57,32 @@ function getGroupId(group: string | null, groupNumber: number | null): string | 
 const BOM8 = String.fromCodePoint(0xef, 0xbb, 0xbf) // UTF-8
 const BOM16 = String.fromCodePoint(0xfeff) // UTF-16
 
-export function convertSongbeamerFiles({ files = [], category = "Songbeamer", translationMethod = "multiline", encoding = "utf8" }: any) {
-    const settings: ImportSettings = { category, encoding, translationMethod }
+export function convertSongbeamerFiles(data: any) {
+    activePopup.set("alert")
+    alertMessage.set("popup.importing")
+
+    const activeCategory = get(drawerTabsData).shows?.activeSubTab
+    const defaultCategory = activeCategory && activeCategory !== "all" && activeCategory !== "unlabeled" ? activeCategory : "songbeamer"
+    const categoryId = get(categories)[defaultCategory] ? defaultCategory : createCategory("Songbeamer")
+
+    const files = Array.isArray(data) ? data : data?.files || []
     const tempShows: { id: string; show: Show }[] = []
 
-    files.forEach(({ name, content }: any) => {
-        if (!content) return
-        if (content.startsWith(BOM8)) content = content.slice(3)
-        if (content.startsWith(BOM16)) content = content.slice(1)
+    setTimeout(() => {
+        files.forEach(({ name, content }: any) => {
+            if (!content || typeof content !== "string") return
+            if (content.startsWith(BOM8)) content = content.slice(3)
+            if (content.startsWith(BOM16)) content = content.slice(1)
 
-        const show = convertSongbeamerFileToShow(name, content, settings)
-        tempShows.push({ id: uid(), show })
-    })
+            const show = convertSongbeamerFileToShow(name || "Song", content, categoryId)
+            tempShows.push({ id: uid(), show })
+        })
 
-    setTempShows(tempShows)
+        setTempShows(tempShows)
+    }, 10)
 }
 
-function convertSongbeamerFileToShow(name: string, text: string, settings: ImportSettings): Show {
-    let categoryId: string | null = null
-    if (get(categories)[settings.category]) {
-        categoryId = settings.category
-    } else if (settings.category === "songbeamer") {
-        categoryId = createCategory("Songbeamer")
-    }
-
+function convertSongbeamerFileToShow(name: string, text: string, categoryId: string): Show {
     const layoutId = uid()
     let show = new ShowObj(false, categoryId, layoutId)
     show.origin = "songbeamer"
@@ -95,7 +90,7 @@ function convertSongbeamerFileToShow(name: string, text: string, settings: Impor
     text = text.replaceAll("\r", "").replaceAll(/\n\s+\n/g, "\n\n")
     const sections: string[] = text.split(/(?:^|\n)--(?:-|A)?\s*\n/)
 
-    const metadata = parseMetadata(sections.shift() || "", settings.encoding)
+    const metadata = parseMetadata(sections.shift() || "")
     if (!metadata.title) metadata.title = name
 
     show.name = checkName(metadata.title)
@@ -119,17 +114,15 @@ function convertSongbeamerFileToShow(name: string, text: string, settings: Impor
     }
 
     const songbeamerSlides = parseSongbeamerSlides(sections, metadata)
-    const { slides, layouts } = createSlides(songbeamerSlides, metadata, settings)
+    const { slides, layout } = createSlides(songbeamerSlides, metadata)
 
     show.slides = slides
-    show.layouts[layoutId].notes = metadata.comments
-    if (layouts.length) {
-        show.layouts[layoutId].name = layouts[0].name
-        show.layouts[layoutId].slides = layouts[0].slides
-    }
-    for (let i = 1; i < layouts.length; ++i) {
-        const layout = layouts[i]
-        if (layout.id) show.layouts[layout.id] = layout
+    show.layouts = {
+        [layoutId]: {
+            name: translateText("example.default"),
+            notes: metadata.comments,
+            slides: layout
+        }
     }
 
     return show as Show
@@ -148,16 +141,24 @@ function getOrCreateTag(name: string) {
     return tagId
 }
 
-function base64Utf8Decode(text: string, encoding: BufferEncoding = "utf8"): string {
-    text = atob(text)
-    const bytes = new Uint8Array(text.length & 1 ? text.length + 1 : text.length)
-    for (let i = 0; i < bytes.length; ++i) {
-        bytes[i] = text.charCodeAt(i)
+function base64Decode(text: string): string {
+    try {
+        const decoded = atob(text)
+        const bytes = new Uint8Array(decoded.length)
+        for (let i = 0; i < bytes.length; ++i) {
+            bytes[i] = decoded.charCodeAt(i)
+        }
+        try {
+            return new TextDecoder("utf-8", { fatal: true }).decode(bytes)
+        } catch {
+            return new TextDecoder("iso-8859-1").decode(bytes)
+        }
+    } catch {
+        return text
     }
-    return new TextDecoder(encoding).decode(bytes)
 }
 
-function parseMetadata(text: string, encoding: BufferEncoding = "utf8"): SongbeamerMetadata {
+function parseMetadata(text: string): SongbeamerMetadata {
     const metadata: SongbeamerMetadata = {
         lang_count: 1,
         title: "",
@@ -206,7 +207,7 @@ function parseMetadata(text: string, encoding: BufferEncoding = "utf8"): Songbea
                 metadata.publisher = val
                 break
             case "Comments":
-                metadata.comments = base64Utf8Decode(val, encoding)
+                metadata.comments = base64Decode(val)
                 break
             case "Keywords":
                 metadata.keywords = val
@@ -232,7 +233,7 @@ function parseMetadata(text: string, encoding: BufferEncoding = "utf8"): Songbea
                 break
             }
             case "Chords": {
-                const chords = base64Utf8Decode(val, encoding)
+                const chords = base64Decode(val)
                 for (const chord of chords.split("\r")) {
                     const chordParts = chord.split(",")
                     if (chordParts.length < 3) continue
@@ -454,15 +455,10 @@ function createMultilineTextbox(songbeamerSlide: SongbeamerSlide): Item {
     return textbox
 }
 
-function createTextboxForLanguage(songbeamerSlide: SongbeamerSlide, language: number): Item {
-    const lines = songbeamerSlide.lines[language] || []
-    return {
-        style: DEFAULT_ITEM_STYLE,
-        lines: lines.map(({ text, chords }) => lineToItemLine(text, chords))
-    }
-}
-
-function buildSlideCollection(songbeamerSlides: SongbeamerSlide[], getItems: (slide: SongbeamerSlide) => Item[]): { slides: Record<ID, Slide>; layout: SlideData[]; groupSlides: Map<string, SlideData> } {
+function createSlides(
+    songbeamerSlides: SongbeamerSlide[],
+    metadata: SongbeamerMetadata
+): { slides: Record<ID, Slide>; layout: SlideData[] } {
     const slides: Record<ID, Slide> = {}
     const layout: SlideData[] = []
     const groupSlides = new Map<string, SlideData>()
@@ -473,14 +469,17 @@ function buildSlideCollection(songbeamerSlides: SongbeamerSlide[], getItems: (sl
 
     for (const songbeamerSlide of songbeamerSlides) {
         const id: string = uid()
-        const isChildSlide = songbeamerSlide.group !== null ? songbeamerSlide.group === lastGroup && songbeamerSlide.groupNumber === lastGroupNumber : lastGroup !== null
+        const isChildSlide =
+            songbeamerSlide.group !== null
+                ? songbeamerSlide.group === lastGroup && songbeamerSlide.groupNumber === lastGroupNumber
+                : lastGroup !== null
 
         const slide: Slide = {
             group: isChildSlide ? null : songbeamerSlide.group,
             color: null,
             settings: {},
             notes: "",
-            items: getItems(songbeamerSlide)
+            items: [createMultilineTextbox(songbeamerSlide)]
         }
 
         if (!isChildSlide && songbeamerSlide.globalGroup !== null) {
@@ -516,49 +515,14 @@ function buildSlideCollection(songbeamerSlides: SongbeamerSlide[], getItems: (sl
         }
     }
 
-    return { slides, layout, groupSlides }
-}
+    const finalLayout = createLayoutFromVerseOrder(metadata, groupSlides) || layout
 
-function createSlides(songbeamerSlides: SongbeamerSlide[], metadata: SongbeamerMetadata, settings: ImportSettings): { slides: Record<ID, Slide>; layouts: Layout[] } {
-    let slides: Record<ID, Slide> = {}
-    const layouts: Layout[] = []
-
-    if (settings.translationMethod === "multiline" || settings.translationMethod === "textboxes") {
-        const {
-            slides: multiSlides,
-            layout,
-            groupSlides
-        } = buildSlideCollection(songbeamerSlides, (slide) => {
-            if (settings.translationMethod === "multiline") {
-                return [createMultilineTextbox(slide)]
-            }
-            return Array.from({ length: metadata.lang_count }, (_, lang) => createTextboxForLanguage(slide, lang))
-        })
-        slides = multiSlides
-        layouts.push({
-            name: "",
-            notes: "",
-            slides: createLayoutFromVerseOrder(metadata, groupSlides) || layout
-        })
-    } else if (settings.translationMethod === "layouts") {
-        for (let language = 0; language < metadata.lang_count; language++) {
-            const { slides: langSlides, layout, groupSlides } = buildSlideCollection(songbeamerSlides, (slide) => [createTextboxForLanguage(slide, language)])
-            slides = { ...slides, ...langSlides }
-            layouts.push({
-                id: uid(),
-                name: `Language ${language + 1}`,
-                notes: "",
-                slides: createLayoutFromVerseOrder(metadata, groupSlides) || layout
-            })
-        }
-    }
-
-    layouts[0]?.slides?.forEach(({ id }) => {
+    finalLayout.forEach(({ id }) => {
         if (slides[id] && !slides[id].group) {
             slides[id].group = ""
             slides[id].globalGroup = "verse"
         }
     })
 
-    return { slides, layouts }
+    return { slides, layout: finalLayout }
 }
