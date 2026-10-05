@@ -97,7 +97,7 @@
     }
 
     function handleClickOutside(event: MouseEvent) {
-        if (dropdownEl && !dropdownEl.contains(event.target as Node)) {
+        if (dropdownEl && !dropdownEl.contains(event.target as Node) && !event.composedPath().includes(dropdownEl)) {
             open = false
             addNewTextbox = false
         }
