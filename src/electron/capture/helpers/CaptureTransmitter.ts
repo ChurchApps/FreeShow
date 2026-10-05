@@ -109,15 +109,18 @@ export class CaptureTransmitter {
     // Checks if all members of a group only use NDI, server, or stage
     static groupOffMainInfo(memberIds: string[]): { eligible: boolean; needsScaled: boolean } {
         let needsScaled = false
+        const viewers = this.previewViewersConnected()
         for (const id of memberIds) {
             const heavy = Object.keys(this.channels)
                 .filter((k) => k.startsWith(`${id}-`))
                 .map((k) => this.channels[k].key)
                 .filter((key) => key !== "ndi" && key !== "omt" && key !== "rtmp" && key !== "blackmagic" && key !== "webrtc" && key !== "recorder")
             if (heavy.some((key) => key !== "server" && key !== "stage")) return { eligible: false, needsScaled: false }
-            if (heavy.length) needsScaled = true
+            // a previewed output needs the downscaled frame whether or not it has a server/stage channel:
+            // without it the preview falls back to a mirror that decodes the output's media all over again
+            if (PreviewStream.hasSubscribers(id) || (heavy.length && viewers)) needsScaled = true
         }
-        return { eligible: true, needsScaled: needsScaled && (this.previewViewersConnected() || PreviewStream.hasSubscribers()) }
+        return { eligible: true, needsScaled }
     }
 
 
