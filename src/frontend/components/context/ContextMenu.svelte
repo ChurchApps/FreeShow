@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { fade } from "svelte/transition"
-    import { activePage, activePopup, companion, contextActive, contextData, currentWindow, dictionary, localeDirection, os, slideDeleteHighlight, special, spellcheck, theme, themes } from "../../stores"
+    import { activePage, activePopup, contextActive, contextData, currentWindow, dictionary, localeDirection, os, serverData, slideDeleteHighlight, special, spellcheck, theme, themes } from "../../stores"
     import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { getEditItems } from "../edit/scripts/itemHelpers"
@@ -60,7 +60,7 @@
 
         activeMenu = [...(getContextMenu(id) || contextMenuLayouts.default)]
         // show "Copy ID" button if API is enabled
-        if ($companion?.enabled && id) {
+        if ($serverData?.companion?.enabled && id) {
             const baseId = id.slice(1).split("_readonly")[0].split("_default")[0]
             const idCopyableMenus = ["action", "overlay_card", "drawer_show_button", "global_timer", "variable", "project_button", "template_card", "stage_slide", "style", "audio_stream", "interaction", "camera_card", "screen_card", "output_screen", "output_screen_stage"]
             if (idCopyableMenus.includes(baseId) && !activeMenu.includes("copy_id")) {

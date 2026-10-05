@@ -398,8 +398,6 @@ export const ports: Writable<{ [key: string]: number }> = writable({ remote: 551
 export const disabledServers: Writable<any> = writable({ remote: false, stage: false, controller: true, output_stream: true }) // {}
 export const serverData: Writable<{ [key: string]: ServerData }> = writable({}) // {}
 export const maxConnections: Writable<number> = writable(10) // 10
-export const remotePassword: Writable<string> = writable("1234") // generate 4 numbers
-export const companion: Writable<any> = writable({ enabled: false }) // {}
 export const contentProviderData: Writable<{ [key in ContentProviderId]?: any }> = writable({}) // {}
 export const obsData: Writable<{ enabled?: boolean; connected?: boolean; ip?: string; port?: number; password?: string }> = writable({}) // {}
 
@@ -507,7 +505,6 @@ export const $ = {
     outLocked,
     ports,
     maxConnections,
-    remotePassword,
     providerConnections,
     calendars
 }

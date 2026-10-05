@@ -4,7 +4,7 @@ import type { MainFilePaths } from "../../types/Main"
 import type { Overlay, Template } from "../../types/Show"
 import { DEFAULT_ITEM_STYLE } from "../components/edit/scripts/itemHelpers"
 import { setShow } from "../components/helpers/setShow"
-import { activePopup, audioFolders, deletedDefaults, effects, folders, language, mediaFolders, outputs, overlays, projects, remotePassword, scriptures, shows, templates, variables } from "../stores"
+import { activePopup, audioFolders, deletedDefaults, effects, folders, language, mediaFolders, outputs, overlays, projects, scriptures, serverData, shows, templates, variables } from "../stores"
 import { stageShows, templateCategories } from "./../stores"
 import { translateText } from "./language"
 import { save } from "./save"
@@ -66,7 +66,8 @@ export function createData(paths: MainFilePaths) {
         return a
     })
 
-    remotePassword.set(randomNumber(1000, 9999).toString())
+    const remotePassword = randomNumber(1000, 9999).toString()
+    serverData.update((s) => ({ ...s, remote: { ...(s.remote || {}), password: remotePassword } }))
 
     // translate names set in defaults.ts
     if (get(outputs).default?.name === "Primary") {

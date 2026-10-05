@@ -31,7 +31,6 @@ import {
     calendars,
     categories,
     cloudSyncData,
-    companion,
     contentProviderData,
     customFonts,
     customMetadata,
@@ -75,7 +74,6 @@ import {
     ports,
     profiles,
     projectView,
-    remotePassword,
     resized,
     scenes,
     scriptureSettings,
@@ -113,6 +111,14 @@ export function updateSyncedSettings(data: any) {
     // pre v1.6.1 (triggers are now actions)
     data = convertTriggersToActions(data)
 
+    // pre v1.6.6
+    if (data.companion) {
+        if (!get(serverData)?.companion) {
+            serverData.update((s) => ({ ...s, companion: data.companion }))
+        }
+        delete data.companion
+    }
+
     Object.entries(data).forEach(([key, value]: any) => {
         if (updateList[key as SaveListSyncedSettings]) updateList[key as SaveListSyncedSettings](value)
         else console.info("RECEIVED UNKNOWN SETTINGS KEY:", key)
@@ -132,6 +138,14 @@ export function updateSettings(data: any) {
     // pre v1.6.5 (audioEffects was not in stack format)
     if (data.audioEffects) {
         data.audioEffects = migrateAudioEffects(data.audioEffects)
+    }
+
+    // pre v1.6.6
+    if (data.remotePassword !== undefined) {
+        if (!data.serverData) data.serverData = {}
+        if (!data.serverData.remote) data.serverData.remote = {}
+        if (!data.serverData.remote.password) data.serverData.remote.password = data.remotePassword
+        delete data.remotePassword
     }
 
     Object.entries(data).forEach(([key, value]: any) => {
@@ -264,7 +278,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         if (v) projectView.set(false)
     },
 
-
     lockedOverlays: (v: any) => {
         if (Array.isArray(v)) {
             const map: { [id: string]: string[] } = {}
@@ -307,7 +320,15 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     maxConnections: (v: any) => maxConnections.set(v),
     ports: (v: any) => ports.set(v),
     disabledServers: (v: any) => disabledServers.set(v),
-    serverData: (v: any) => serverData.set(v),
+    serverData: (v: any) => {
+        serverData.set(v)
+
+        if (v?.companion?.enabled) {
+            setTimeout(() => {
+                sendMain(Main.WEBSOCKET_START, { port: get(ports).companion, password: v.companion.password })
+            }, 3000)
+        }
+    },
     autosave: (v: any) => {
         autosave.set(v)
         startAutosave()
@@ -342,7 +363,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
         styles.set(v)
     },
     profiles: (v: any) => profiles.set(v),
-    remotePassword: (v: any) => remotePassword.set(v),
     audioFolders: (v: any) => audioFolders.set(v),
     categories: (v: any) => categories.set(v),
     drawer: (v: any) => drawer.set(v),
@@ -394,15 +414,6 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
     globalTags: (v: any) => globalTags.set(v),
     globalRegexes: (v: any) => globalRegexes.set(v),
     customMetadata: (v: any) => customMetadata.set(v),
-    companion: (v: any) => {
-        companion.set(v)
-
-        if (v.enabled) {
-            setTimeout(() => {
-                sendMain(Main.WEBSOCKET_START, { port: get(ports).companion, password: v.password })
-            }, 3000)
-        }
-    },
     special: (v: any) => {
         if (v.capitalize_words === undefined) v.capitalize_words = "Jesus, Lord" // God
         if (v.autoUpdates) sendMain(Main.AUTO_UPDATE)

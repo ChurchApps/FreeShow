@@ -3,7 +3,7 @@ import { CONTROLLER, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage, Clients } from "../../types/Socket"
 import { API_ACTIONS } from "../components/actions/api"
 import { checkWindowCapture } from "../components/helpers/output"
-import { connections, remotePassword, shows } from "../stores"
+import { connections, serverData, shows } from "../stores"
 import { isMainWindow } from "./common"
 import { receiveCONTROLLER } from "./controllerTalk"
 import { receiveREMOTE } from "./remoteTalk"
@@ -72,7 +72,7 @@ export async function sendData(id: Clients, msg: ClientMessage, check = false) {
     if (!connectionId) connectionId = Object.keys(get(connections)[id] || {})[0]
 
     // when a REMOTE password is set, only honor control/API messages from connections that have authenticated
-    if (id === REMOTE && get(remotePassword).length) {
+    if (id === REMOTE && get(serverData)?.remote?.password) {
         const PRE_AUTH_CHANNELS = ["PASSWORD", "ACCESS"]
         if (!PRE_AUTH_CHANNELS.includes(channel)) {
             const entered = get(connections).REMOTE?.[connectionId || ""]?.entered

@@ -14,7 +14,6 @@ import {
     audioFolders,
     audioPlaylists,
     categories,
-    companion,
     currentOutputSettings,
     disabledServers,
     drawerTabsData,
@@ -35,6 +34,7 @@ import {
     refreshEditSlide,
     selected,
     selectedProfile,
+    serverData,
     settingsTab,
     showRecentlyUsedProjects,
     showsCache,
@@ -549,8 +549,9 @@ const connectionsList = [
 
 function enableConnection(id: string) {
     if (id === "companion") {
-        companion.update((c) => ({ ...c, enabled: true }))
-        sendMain(Main.WEBSOCKET_START, { port: get(ports).companion, password: get(companion)?.password })
+        serverData.update((c) => ({ ...c, companion: { ...(c.companion || {}), enabled: true } }))
+        sendMain(Main.SERVER_DATA, get(serverData))
+        sendMain(Main.WEBSOCKET_START, { port: get(ports).companion, password: get(serverData)?.companion?.password })
         return
     }
 

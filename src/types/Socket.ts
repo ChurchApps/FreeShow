@@ -20,6 +20,9 @@ type DeviceID = string
 type ClientChannels = "API" | "CONNECTION" | "DISCONNECT" | "ERROR" | "DATA" | "PASSWORD" | "ACCESS" | "SWITCH" | "SHOWS" | "LAYOUT" | "SHOWS_CACHE" | "SHOW" | "SHOW_DATA" | "PROJECTS" | "OUT" | "OUT_DATA" | "BACKGROUND"
 
 export interface ServerData {
+    enabled?: boolean
+    password?: string
+
     outputId?: string
     sendAudio?: boolean
 }
