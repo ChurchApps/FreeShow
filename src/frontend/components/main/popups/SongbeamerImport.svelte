@@ -1,6 +1,5 @@
 <script lang="ts">
     import { Main } from "../../../../types/IPC/Main"
-    import { TranslationMethod } from "../../../../types/Songbeamer"
     import { sendMain } from "../../../IPC/main"
     import { activePopup, drawerTabsData } from "../../../stores"
     import { translateText } from "../../../utils/language"
@@ -23,10 +22,13 @@
     ]
     let selectedEncoding = encodingOptions[0].value
 
+    const translationMethods = ["multiline", "textboxes", "layouts"] as const
+    type TranslationMethod = (typeof translationMethods)[number]
+
     const activeCategory = $drawerTabsData.shows?.activeSubTab
     const showCategory = activeCategory && activeCategory !== "all" && activeCategory !== "unlabeled" ? activeCategory : "songbeamer"
 
-    let selectedTranslationMethod = TranslationMethod.MultiLine
+    let selectedTranslationMethod: TranslationMethod = "multiline"
 
     function importListener() {
         sendMain(Main.IMPORT, {
@@ -43,7 +45,7 @@
 <HRule title="songbeamer_import.translations" />
 
 <InputRow>
-    {#each Object.values(TranslationMethod) as method}
+    {#each translationMethods as method}
         <MaterialButton style="flex: 1;border-radius: 0;padding: 6px;border-width: 2px !important;" isActive={method === selectedTranslationMethod} on:click={() => (selectedTranslationMethod = method)}>
             <T id="songbeamer_import.translation_{method}" />
         </MaterialButton>
