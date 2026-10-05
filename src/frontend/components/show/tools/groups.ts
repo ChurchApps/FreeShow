@@ -3,6 +3,7 @@ import type { Show, Slide } from "../../../../types/Show"
 import { cachedShowsData, groups, refreshEditSlide, showsCache } from "../../../stores"
 import { clone, sortByName } from "../../helpers/array"
 import { history } from "../../helpers/history"
+import { getSlideText } from "../../edit/scripts/textStyle"
 import { getShowCacheId } from "../../helpers/show"
 import { translateText } from "../../../utils/language"
 
@@ -49,7 +50,11 @@ export function getDuplicateGroups(slides: { [key: string]: Slide } = {}, showGr
         const parent = slides[id]
         if (!parent || parent.group === ".") return
 
-        const allSlides = [parent, ...(parent.children || []).map((cId) => slides[cId])].map(getSlideContent)
+        const slideList = [parent, ...(parent.children || []).map((cId) => slides[cId])]
+        const hasText = slideList.some((slide) => slide && getSlideText(slide).trim().length > 0)
+        if (!hasText) return
+
+        const allSlides = slideList.map(getSlideContent)
         const key = JSON.stringify(allSlides)
 
         map.set(key, [...(map.get(key) || []), id])
