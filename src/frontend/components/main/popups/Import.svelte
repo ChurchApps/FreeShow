@@ -2,7 +2,7 @@
     import { Main } from "../../../../types/IPC/Main"
     import { importFromClipboard } from "../../../converters/importHelpers"
     import { sendMain } from "../../../IPC/main"
-    import { activePopup, alertMessage, popupData } from "../../../stores"
+    import { activePopup, alertMessage, os, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { presentationExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
@@ -63,7 +63,7 @@
 
     const powerpoint_options = [
         { name: "info.slides", description: "Imperfect formatting.", icon: "txt", click: pptText },
-        { name: "PDF", description: "Requires LibreOffice installed.", icon: "pdf", click: libreOfficeConvert },
+        { name: "PDF", description: `Requires LibreOffice${$os.platform === "linux" ? "" : " or PowerPoint"} installed.`, icon: "pdf", click: convertToPdf },
         { name: "PDF (Online)", description: "Requires network connection, and manual steps.", icon: "pdf", click: onlineConvert },
         { name: "Controller (Deprecated)", description: "Requires PowerPoint/Keynote installed. Useful for live streams, but buggy.", icon: "powerkey", click: pptController }
     ]
@@ -72,8 +72,8 @@
         sendMain(Main.IMPORT, { channel: "powerpoint", format: { name: "PowerPoint", extensions: ["ppt", "pptx"] } })
         activePopup.set(null)
     }
-    function libreOfficeConvert() {
-        sendMain(Main.LIBREOFFICE_CONVERT, { type: "powerpoint" })
+    function convertToPdf() {
+        sendMain(Main.PPT_TO_PDF)
     }
     function onlineConvert() {
         sendMain(Main.URL, "https://www.ilovepdf.com/powerpoint_to_pdf")

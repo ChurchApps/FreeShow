@@ -109,7 +109,7 @@ export enum Main {
     ACCESS_CAMERA_PERMISSION = "ACCESS_CAMERA_PERMISSION",
     ACCESS_MICROPHONE_PERMISSION = "ACCESS_MICROPHONE_PERMISSION",
     ACCESS_SCREEN_PERMISSION = "ACCESS_SCREEN_PERMISSION",
-    LIBREOFFICE_CONVERT = "LIBREOFFICE_CONVERT",
+    PPT_TO_PDF = "PPT_TO_PDF",
     SLIDESHOW_GET_APPS = "SLIDESHOW_GET_APPS",
     START_SLIDESHOW = "START_SLIDESHOW",
     PRESENTATION_CONTROL = "PRESENTATION_CONTROL",
@@ -233,7 +233,6 @@ export interface MainSendPayloads {
     // [Main.MEDIA_BASE64]: { id: string; path: string }[]
     [Main.READ_AUDIO_METADATA]: { filePath: string }
     [Main.CAPTURE_SLIDE]: { output: { [key: string]: Output }; resolution: Resolution }
-    [Main.LIBREOFFICE_CONVERT]: { type: string }
     [Main.START_SLIDESHOW]: { path: string; program: string }
     [Main.PRESENTATION_CONTROL]: { action: string }
     [Main.START]: { ports: { [key: string]: number }; max: number; disabled: { [key: string]: boolean }; data: { [key: string]: ServerData } }
