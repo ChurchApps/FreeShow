@@ -74,6 +74,17 @@
         subscribePreview("")
         renderer.destroy()
     })
+
+    // The mirror is mounted by hand so taking it away removes it at once. As a child of the if-block, its
+    // removal waited on the out-transitions of everything inside it, and those could hang indefinitely,
+    // leaving the mirror's video playing (a full-resolution decode) behind the capture preview.
+    function mirrorOutput(node: HTMLElement, props: { outputId: string; style: string; preview: boolean }) {
+        const mirror = new Output({ target: node, props: { ...props, mirror: true } })
+        return {
+            update: (next: typeof props) => mirror.$set(next),
+            destroy: () => mirror.$destroy()
+        }
+    }
 </script>
 
 <!-- class:fullscreen={fullscreen && !stageOutput} -->
@@ -85,7 +96,7 @@
             <canvas class="capturePreview" class:hidden={!hadFrame} bind:this={previewCanvas} />
         {/if}
         {#if !captured || !hadFrame}
-            <Output {outputId} style={getStyleResolution(resolution, fullscreen ? width : resolution.width, fullscreen ? height : resolution.height, "fit")} mirror preview={!disableTransitions} />
+            <div class="mirror" use:mirrorOutput={{ outputId, style: getStyleResolution(resolution, fullscreen ? width : resolution.width, fullscreen ? height : resolution.height, "fit"), preview: !disableTransitions }} />
         {/if}
     {/if}
 
@@ -124,6 +135,10 @@
     }
     .capturePreview.hidden {
         display: none;
+    }
+    /* lays the mirror out as if it were a direct child */
+    .mirror {
+        display: contents;
     }
 
     .previewOutput :global(.main) {
