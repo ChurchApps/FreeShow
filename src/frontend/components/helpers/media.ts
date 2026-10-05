@@ -367,14 +367,15 @@ export function enableSubtitle(video: HTMLVideoElement, languageId: string) {
     if (newTrack) newTrack.mode = "showing"
 }
 
-// returns the index of the new marker, or -1 if there already is one at that time
-export function addVideoMarker(id: string, time: number) {
+export function addVideoMarker(id: string, time: number, name: string = "") {
+    if (!id || !time) return -1
+
     let index = -1
 
     videoMarkers.update((a) => {
         if (a[id]?.find((marker) => marker.time === time)) return a
 
-        a[id] = [...(a[id] || []), { name: "", time }].sort((markerA, markerB) => markerA.time - markerB.time)
+        a[id] = [...(a[id] || []), { name, time }].sort((markerA, markerB) => markerA.time - markerB.time)
         index = a[id].findIndex((marker) => marker.time === time)
 
         return a

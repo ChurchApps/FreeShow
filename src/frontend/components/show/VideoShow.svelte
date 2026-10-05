@@ -123,8 +123,11 @@
         // videoData.paused = true
         playingInOutput = true
 
-        // trigger time update (player previews sync to the output in Player.svelte, resetting would seek them to the start)
-        if (type !== "player") setTimeout(() => (videoTime = 0), 50)
+        // player previews sync to the output in Player.svelte, resetting would seek them to the start
+        if (type === "player") return
+
+        // trigger time update
+        setTimeout(() => (videoTime = 0), 50)
     }
 
     // WIP player video output time
@@ -465,7 +468,7 @@
     {#if playingInOutput}
         <MediaControls {currentOutput} {outputId} big />
     {:else}
-        <FloatingInputs arrow let:open>
+        <FloatingInputs arrow={type === "video" || type === "player"} let:open>
             <div slot="menu" style="display: flex;min-width: 500px;">
                 <MaterialButton
                     title={videoData.paused ? "media.play" : "media.pause"}

@@ -63,19 +63,18 @@ export function trimPlayerId(id: string, type: "youtube" | "vimeo") {
     return id
 }
 
-// seconds from "1234", "1234s", "1h2m3s" (as in YouTube/Vimeo URLs) or a typed "1:02:03"
-export function parseTimestamp(value: string): number {
-    const text = value.trim().toLowerCase()
-    if (/^\d+(:\d{1,2}){1,2}$/.test(text)) return text.split(":").reduce((total, part) => total * 60 + Number(part), 0)
-
-    const [, h = 0, m = 0, s = 0] = text.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s?)?$/) || []
-    return Number(h) * 3600 + Number(m) * 60 + Number(s)
-}
-
 // start time from a pasted video URL (?t=1234, &start=90, #t=1m30s)
 export function getUrlTimestamp(url: string): number {
     const match = url.match(/[?&#](?:t|start)=([^&#]+)/)
     return match ? parseTimestamp(match[1]) : 0
+}
+// seconds from "1234", "1234s", "1h2m3s" (YouTube/Vimeo URLs)
+// https://www.youtube.com/watch?v=X-AJdKty74M&t=82s
+// https://vimeo.com/144160599#t=1m30s
+function parseTimestamp(value: string): number {
+    const text = value.trim().toLowerCase()
+    const [, h = 0, m = 0, s = 0] = text.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s?)?$/) || []
+    return Number(h) * 3600 + Number(m) * 60 + Number(s)
 }
 
 let isLoadingIds: string[] = []
