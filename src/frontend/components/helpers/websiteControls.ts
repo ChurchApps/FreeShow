@@ -43,3 +43,10 @@ export function getOutputtedWebsites(_updater: any = null): { src: string }[] {
             return true
         })
 }
+
+export function formatUrl(url: string) {
+    url = url.split("://")[1] || url
+    url = url.replace("www.", "")
+    if (url[url.length - 1] === "/") url = url.slice(0, -1)
+    return url
+}

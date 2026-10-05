@@ -1,6 +1,7 @@
 <script lang="ts">
     import { currentWindow } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
+    import { formatUrl } from "../../helpers/websiteControls"
     import Button from "../../inputs/Button.svelte"
     import { attachPersistentWebview } from "./websiteDomPool"
 
@@ -68,13 +69,6 @@
         } catch (err) {
             console.debug("Webview navigation check failed:", err)
         }
-    }
-
-    function formatUrl(url: string) {
-        url = url.split("://")[1] || url
-        url = url.replace("www.", "")
-        if (url[url.length - 1] === "/") url = url.slice(0, -1)
-        return url
     }
 </script>
 

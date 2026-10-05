@@ -7,7 +7,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
-    import { getOutputtedWebsites, sendWebsiteKey, triggerWebsiteAction } from "../../helpers/websiteControls"
+    import { formatUrl, getOutputtedWebsites, sendWebsiteKey, triggerWebsiteAction } from "../../helpers/websiteControls"
     import Button from "../../inputs/Button.svelte"
     import { VideoPlayer } from "../../media/video/videoPlayer"
     import VideoSlider from "../VideoSlider.svelte"
@@ -51,11 +51,7 @@
     }
 
     // Website controls
-
     $: websites = getOutputtedWebsites($outputs)
-    function formatUrl(url: string) {
-        return (url.split("://")[1] || url).replace("www.", "")
-    }
     function handleWebsiteKeydown(e: KeyboardEvent, websiteSrc: string) {
         if (e.key === "ArrowLeft") {
             e.preventDefault()
