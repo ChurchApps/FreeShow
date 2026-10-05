@@ -122,8 +122,9 @@ export class VideoPlayer {
 
         const startTime = this.getStartTime(id, options.startAt)
         if (startTime) {
-            audio.currentTime = startTime
-            if ("timeTick" in audio) audio.timeTick.update(startTime)
+            const initialTime = audio.duration > 0 && startTime > audio.duration ? 0 : startTime
+            audio.currentTime = initialTime
+            if ("timeTick" in audio) audio.timeTick.update(initialTime)
         }
 
         const globalOpts = this.getGlobalOptions(id)
@@ -621,6 +622,8 @@ export class VideoPlayer {
         const audio = this.getAudio(path, outputId)
         if (!audio) return
 
+        if (key === "currentTime" && audio.duration > 0 && value > audio.duration + 3) value = 0
+
         audio[key] = value
 
         if (key === "currentTime" && "timeTick" in audio) audio.timeTick.update(value)
@@ -750,6 +753,11 @@ export class VideoPlayer {
                 if (!audio) return
 
                 if ("timeTick" in audio) audio.currentTime = audio.timeTick.value
+
+                if (audio.duration > 0 && audio.currentTime > audio.duration + 3) {
+                    audio.currentTime = 0
+                    if ("timeTick" in audio) audio.timeTick.update(0)
+                }
 
                 const outputIds = video.linkedOutputIds || []
 
