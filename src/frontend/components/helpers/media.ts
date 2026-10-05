@@ -370,18 +370,24 @@ export function enableSubtitle(video: HTMLVideoElement, languageId: string) {
 export function addVideoMarker(id: string, time: number, name: string = "") {
     if (!id || !time) return -1
 
-    let index = -1
+    let markerIndex = -1
+    const newMarker = { name, time: Math.floor(time || 0) }
 
     videoMarkers.update((a) => {
-        if (a[id]?.find((marker) => marker.time === time)) return a
+        // return if marker already exists
+        if (a[id]?.find((a) => a.time === newMarker.time)) return a
 
-        a[id] = [...(a[id] || []), { name, time }].sort((markerA, markerB) => markerA.time - markerB.time)
-        index = a[id].findIndex((marker) => marker.time === time)
+        if (!a[id]) a[id] = []
+        a[id].push(newMarker)
 
+        // sort by time
+        a[id] = a[id].sort((a, b) => a.time - b.time)
+
+        markerIndex = a[id].findIndex((a) => a.time === newMarker.time)
         return a
     })
 
-    return index
+    return markerIndex
 }
 
 export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: Styles | undefined) {
