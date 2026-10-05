@@ -1,7 +1,7 @@
 <!-- Used in output window, and currently in draw! -->
 
 <script lang="ts">
-    import { onDestroy, setContext } from "svelte"
+    import { onDestroy } from "svelte"
     import { uid } from "uid"
     import type { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
@@ -15,8 +15,6 @@
     import { _show } from "../helpers/shows"
     import Image from "../media/Image.svelte"
     import Zoomed from "../slide/Zoomed.svelte"
-    import WebsitePool from "../slide/views/WebsitePool.svelte"
-    import { createWebsitePool, WEBSITE_POOL } from "../slide/views/websitePool"
     import { updateAnimation } from "./animation"
     import EffectOutput from "./effects/EffectOutput.svelte"
     import Background from "./layers/Background.svelte"
@@ -34,10 +32,6 @@
     export let preview = false
     export let styleIdOverride = ""
     export let outOverride: OutData | null = null
-
-    // websites stay loaded between slides
-    const websitePool = createWebsitePool()
-    setContext(WEBSITE_POOL, websitePool)
 
     $: currentOutput = $outputs[outputId] || $allOutputs[outputId] || {}
 
@@ -416,9 +410,6 @@
         <!-- metadata -->
         <Overlay overlay={{ items: currentMetadataItems }} isClearing={isMetadataClearing || isSlideClearing} {outputId} transition={textTransition} styleIdOverride={styleIdOverride || sceneStyleId} />
     {/if}
-
-    <!-- websites stay loaded between slides (placed over website items on the current slide) -->
-    <WebsitePool pool={websitePool} {outputId} {ratio} />
 
     {#if layers.includes("overlays")}
         <!-- effects -->

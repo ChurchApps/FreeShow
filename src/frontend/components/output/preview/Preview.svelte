@@ -283,7 +283,7 @@
             {#if updatedActiveClear === "background"}
                 <MediaControls currentOutput={currentBgOutput} outputId={backgroundOutputId} />
             {:else if updatedActiveClear === "slide"}
-                <Show {currentOutput} {outputId} {ref} {linesIndex} {maxLines} />
+                <Show {currentOutput} {ref} {linesIndex} {maxLines} />
             {:else if updatedActiveClear === "overlays"}
                 <Overlay {currentOutput} />
             {:else if updatedActiveClear === "audio"}

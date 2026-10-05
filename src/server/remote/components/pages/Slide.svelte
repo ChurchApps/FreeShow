@@ -19,10 +19,6 @@
 
     $: totalSlides = layout ? layout.length : 0
 
-    // a live website with slide controls (e.g. Canva) has its own pages, so next/previous always work
-    $: currentItems = ($outShow && layout ? $outShow.slides?.[layout[slideNum]?.id]?.items : null) || []
-    $: websiteControls = currentItems.some((item: any) => item?.type === "web" && item.web?.slideControls)
-
     // click on content
     function click(e: any) {
         // if (e.clientX < window.innerWidth / 3) previous()
@@ -54,11 +50,11 @@
 
         <div class="controls-section">
             <div class="slide-progress desktop-only">
-                <Button class="desktop-nav" on:click={() => send("API:previous_slide")} disabled={!websiteControls && slideNum <= 0} variant="outlined" center compact>
+                <Button class="desktop-nav" on:click={() => send("API:previous_slide")} disabled={slideNum <= 0} variant="outlined" center compact>
                     <Icon id="previous" size={1.2} />
                 </Button>
                 <span class="counter">{slideNum + 1}/{totalSlides}</span>
-                <Button class="desktop-nav" on:click={() => send("API:next_slide")} disabled={!websiteControls && slideNum + 1 >= totalSlides} variant="outlined" center compact>
+                <Button class="desktop-nav" on:click={() => send("API:next_slide")} disabled={slideNum + 1 >= totalSlides} variant="outlined" center compact>
                     <Icon id="next" size={1.2} />
                 </Button>
             </div>

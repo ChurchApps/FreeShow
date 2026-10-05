@@ -1,71 +1,55 @@
 import { get } from "svelte/store"
 import { OUTPUT } from "../../../types/Channels"
-import type { Item } from "../../../types/Show"
-import { outputs, overlays, showsCache, websiteReload, websiteSlideControl } from "../../stores"
+import { outputs, overlays, showsCache, websiteAction } from "../../stores"
 import { send } from "../../utils/request"
+import { getAllActiveOutputIds } from "./output"
 import { _show } from "./shows"
 
-type KeyCode = "Right" | "Left"
+export type WebsiteAction = { type: "key"; keyCode: "Right" | "Left"; src?: string } | { type: "reload"; src?: string }
 
-// every key press/reload is a new event (even within the same millisecond)
 let websiteEventId = 0
 export function nextWebsiteEventId() {
     return ++websiteEventId
 }
 
-// Website items with "Send next/previous slide to website" (e.g. a Canva presentation)
-// take next/previous slide (keyboard, clickers, remote, API) while they are live on an output.
-// Returns true if a website took it.
-export function sendSlideControlToWebsite(outputId: string, direction: "next" | "previous"): boolean {
-    if (!outputId || !getLiveWebsites(outputId).some((website) => website.slideControls)) return false
-
-    sendWebsiteKey(outputId, direction === "next" ? "Right" : "Left")
-    return true
+function triggerWebsiteAction(action: WebsiteAction) {
+    send(OUTPUT, ["WEBSITE_ACTION"], action)
+    websiteAction.set({ ...action, time: nextWebsiteEventId() })
 }
 
-// the output window has the live website, but the main window previews should follow along too
-export function sendWebsiteKey(outputId: string, keyCode: KeyCode, src = "") {
-    const data = { outputId, keyCode, ...(src ? { src } : {}) }
-    send(OUTPUT, ["WEBSITE_KEY"], data)
-    websiteSlideControl.set({ ...data, time: nextWebsiteEventId() })
+export function sendWebsiteKey(keyCode: "Right" | "Left", src = "") {
+    triggerWebsiteAction({ type: "key", keyCode, ...(src ? { src } : {}) })
 }
 
-export function reloadWebsite(outputId: string, src: string) {
-    send(OUTPUT, ["WEBSITE_RELOAD"], { outputId, src })
-    websiteReload.set({ outputId, src, time: nextWebsiteEventId() })
+export function reloadWebsite(src = "") {
+    triggerWebsiteAction({ type: "reload", ...(src ? { src } : {}) })
 }
 
-// website items live on an output (current slide & overlays)
-export function getLiveWebsites(outputId: string): { src: string; slideControls: boolean }[] {
-    return getLiveItems(outputId)
-        .filter((item) => item?.type === "web" && item.web?.src)
-        .map((item) => ({ src: formatWebsiteUrl(item.web.src), slideControls: !!item.web.slideControls }))
-}
+// website urls live on active outputs (current slides & overlays)
+export function getLiveWebsites(outputIds = getAllActiveOutputIds()): { src: string }[] {
+    const allOuts = get(outputs)
+    const items = outputIds.flatMap((id) => {
+        const out = allOuts[id]?.out
+        if (!out) return []
+        const outSlide = out.slide
+        const slideItems = outSlide?.tempItems ? outSlide.tempItems : outSlide?.id && outSlide.layout && typeof outSlide.index === "number" ? get(showsCache)[outSlide.id]?.slides?.[_show(outSlide.id).layouts([outSlide.layout]).ref()[0]?.[outSlide.index]?.id]?.items || [] : []
+        const overlayItems = (out.overlays || []).flatMap((overlayId) => get(overlays)[overlayId]?.items || [])
+        return [...slideItems, ...overlayItems]
+    })
 
-function getLiveItems(outputId: string): Item[] {
-    const out = get(outputs)[outputId]?.out
-    if (!out) return []
-
-    const items: Item[] = []
-
-    const outSlide = out.slide
-    if (outSlide?.tempItems) {
-        items.push(...outSlide.tempItems)
-    } else if (outSlide?.id && outSlide.layout && typeof outSlide.index === "number") {
-        const ref = _show(outSlide.id).layouts([outSlide.layout]).ref()[0] || []
-        const slideId = ref[outSlide.index]?.id
-        items.push(...(get(showsCache)[outSlide.id]?.slides?.[slideId]?.items || []))
-    }
-
-    ;(out.overlays || []).forEach((overlayId) => items.push(...(get(overlays)[overlayId]?.items || [])))
-
+    const urls = new Set<string>()
     return items
+        .filter((item) => item?.type === "web" && item.web?.src)
+        .map((item) => ({ src: formatWebsiteUrl(item.web.src) }))
+        .filter((site) => {
+            if (!site.src || urls.has(site.src)) return false
+            urls.add(site.src)
+            return true
+        })
 }
 
-// same formatting as the website item uses for its url
 export function formatWebsiteUrl(src: string) {
     if (!src) return ""
     src = src.replaceAll("&amp;", "&").replaceAll("{", "%7B").replaceAll("}", "%7D")
-    if (!src.includes("://")) src = "http://" + src
-    return src
+    return src.includes("://") ? src : "http://" + src
 }

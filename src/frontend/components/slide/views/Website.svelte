@@ -1,82 +1,26 @@
 <script lang="ts">
-    import { getContext, onDestroy } from "svelte"
-    import { OUTPUT } from "../../../../types/Channels"
-    import { currentWindow, outputs } from "../../../stores"
-    import { send } from "../../../utils/request"
+    import { currentWindow } from "../../../stores"
     import Icon from "../../helpers/Icon.svelte"
     import Button from "../../inputs/Button.svelte"
-    import { WEBSITE_POOL, type WebsitePool } from "./websitePool"
+    import { attachPersistentWebview } from "./websiteDomPool"
 
     export let src: string
     export let navigation = true
     export let zoom: number | undefined = undefined
     export let clickable = false
     export let disablePreview = false
-    export let slideControls = false
-
-    let webview: any
+    export let outputId = ""
     export let ratio: number
 
-    // inside an output view, the website is kept loaded in its pool (so it keeps its state between slides),
-    // and placed over this placeholder while the slide is shown
-    const pool = getContext<WebsitePool | undefined>(WEBSITE_POOL)
-    let placeholder: HTMLElement | undefined
-    let claimed: { src: string; element: HTMLElement } | null = null
-    $: if (pool && placeholder && parsedSrc) claim(parsedSrc, zoom, navigation, slideControls)
-    function claim(newSrc: string, _zoom: any, _navigation: boolean, _slideControls: boolean) {
-        if (!pool || !placeholder) return
-        if (claimed && (claimed.src !== newSrc || claimed.element !== placeholder)) pool.release(claimed.src, claimed.element)
-        claimed = { src: newSrc, element: placeholder }
-        pool.claim(newSrc, placeholder, { zoom, navigation, slideControls })
-    }
-    onDestroy(() => {
-        if (pool && claimed) pool.release(claimed.src, claimed.element)
-    })
-
+    let webview: any
     let webviewReady = false
-    let prevSrc = ""
-
-    function initWebview(node: HTMLElement) {
-        node.addEventListener("dom-ready", onDomReady)
-        node.addEventListener("did-finish-load", setStyle)
-        node.addEventListener("did-navigate", onDidNavigate)
-
-        return {
-            destroy() {
-                node.removeEventListener("dom-ready", onDomReady)
-                node.removeEventListener("did-finish-load", setStyle)
-                node.removeEventListener("did-navigate", onDidNavigate)
-            }
-        }
-    }
-
-    function onDomReady() {
-        webviewReady = true
-        websiteLoaded()
-        checkNavigation()
-        setStyle()
-    }
-
-    function onDidNavigate() {
-        checkNavigation()
-        if (webviewReady) {
-            try {
-                url = webview?.getURL() || parsedSrc
-            } catch (err) {
-                console.debug("Webview getURL failed:", err)
-            }
-        }
-    }
-
-    $: if (webview && webviewReady && (ratio !== undefined || zoom !== undefined)) setStyle()
-
     let parsedSrc = ""
+    let url = ""
+
     $: if (src) checkURL()
 
     function checkURL() {
         let valid = false
-
-        // format url
         src = src.replaceAll("&amp;", "&").replaceAll("{", "%7B").replaceAll("}", "%7D")
         if (!src.includes("://")) src = "http://" + src
 
@@ -88,80 +32,7 @@
         }
 
         parsedSrc = valid ? src : ""
-    }
-
-    $: if (parsedSrc && parsedSrc !== prevSrc) {
-        prevSrc = parsedSrc
-        webviewReady = false
-    }
-
-    function setStyle() {
-        if (!webview || !webviewReady) return
-
-        if ($currentWindow !== "output") {
-            try {
-                webview.setAudioMuted(true)
-            } catch (err) {
-                console.debug("Failed to mute webview audio:", err)
-            }
-        }
-
-        const factor = (parseFloat(zoom?.toString() || "100") || 100) / 100
-
-        try {
-            if (typeof webview.setZoomFactor === "function") {
-                webview.setZoomFactor(factor)
-            }
-        } catch (err) {
-            console.debug("Failed to set webview zoom factor:", err)
-        }
-
-        // custom scale does often not work on embeds (Presentations)
-        if (src.includes("embed")) return
-
-        // if preview is fullscreen, don't set ratio
-        // temporary set to always fullscreen as the scaling does not always work in the preview, if there's video streams, etc.
-        let isFullscreen = true || (webview.closest(".previewOutput")?.offsetWidth || 0) > 450
-        const inverse = isFullscreen ? 100 : Math.round(100 / ratio)
-
-        try {
-            webview
-                .executeJavaScript(
-                    `
-                if (document.documentElement) {
-                    document.documentElement.style.zoom = '${factor}';
-                }
-                if (document.body) {
-                    document.body.style.transform = 'scale(${isFullscreen ? 1 : ratio})';
-                    document.body.style.transformOrigin = '0 0';
-                    const scaleFactor = ${inverse};
-                    document.body.style.width = scaleFactor + '%';
-                    document.body.style.height = scaleFactor + '%';
-                }
-            `
-                )
-                ?.catch((err: any) => {
-                    console.debug("Webview executeJavaScript failed:", err)
-                })
-        } catch (err) {
-            console.debug("Failed to execute JavaScript on webview:", err)
-        }
-    }
-
-    function websiteLoaded() {
-        if ($currentWindow !== "output" || !webview || !webviewReady) return
-
-        // set focus on website
-        send(OUTPUT, ["FOCUS"], { id: Object.keys($outputs)[0] })
-        setTimeout(() => {
-            if (webviewReady && webview) {
-                try {
-                    webview.focus()
-                } catch (err) {
-                    console.debug("Webview focus failed:", err)
-                }
-            }
-        })
+        url = parsedSrc
     }
 
     let hover = false
@@ -176,34 +47,30 @@
     let backDisabled = true
     let forwardDisabled = true
     function navigate(back = true) {
-        if (!webview || !webviewReady) return
-
+        if (!webview) return
         try {
-            if (back) webview.goBack()
-            else webview.goForward()
+            if (back) webview.goBack?.()
+            else webview.goForward?.()
         } catch (err) {
             console.debug("Webview navigation failed:", err)
         }
-
         setTimeout(checkNavigation)
     }
 
     function checkNavigation() {
-        if (!webviewReady || !webview) {
+        if (!webview) {
             backDisabled = true
             forwardDisabled = true
             return
         }
-
         try {
-            backDisabled = !webview.canGoBack()
-            forwardDisabled = !webview.canGoForward()
+            backDisabled = !webview.canGoBack?.()
+            forwardDisabled = !webview.canGoForward?.()
         } catch (err) {
             console.debug("Webview navigation check failed:", err)
         }
     }
 
-    $: url = parsedSrc
     function formatUrl(url: string) {
         url = url.split("://")[1] || url
         url = url.replace("www.", "")
@@ -216,9 +83,7 @@
     <div class="iconPreview">
         <Icon id="web" size={3} white />
     </div>
-{:else if pool}
-    <div class="placeholder" bind:this={placeholder} />
-{:else}
+{:else if parsedSrc}
     <div class="website" class:clickable on:mouseover={mouseover} on:focus={mouseover} on:mouseleave={mouseleave}>
         {#if navigation && hover && $currentWindow === "output"}
             <div class="controls" style="zoom: {1 / ratio};">
@@ -234,27 +99,40 @@
                 <p class="url" style="zoom: {ratio};">{formatUrl(url)}</p>
             </div>
         {/if}
-        <webview id="webview" src={parsedSrc} bind:this={webview} use:initWebview />
+
+        <div
+            class="webview-container"
+            use:attachPersistentWebview={{
+                src: parsedSrc,
+                zoom,
+                isOutput: $currentWindow === "output",
+                outputId,
+                onReady: (wv) => {
+                    webview = wv
+                    webviewReady = true
+                    checkNavigation()
+                },
+                onNavigate: (newUrl) => {
+                    url = newUrl
+                    checkNavigation()
+                }
+            }}
+        />
     </div>
 {/if}
 
 <style>
-    .placeholder,
-    .website {
+    .website,
+    .webview-container {
         position: absolute;
         width: 100%;
         height: 100%;
-
         pointer-events: none;
     }
 
-    .website.clickable {
+    .website.clickable,
+    .website.clickable .webview-container {
         pointer-events: initial;
-    }
-
-    webview {
-        width: 100%;
-        height: 100%;
     }
 
     .controls {
@@ -262,11 +140,9 @@
         position: absolute;
         bottom: 0;
         left: 0;
-
         background-color: black;
         border-start-end-radius: 3px;
         display: flex;
-
         opacity: 0.4;
     }
     .controls :global(button) {
@@ -284,13 +160,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-
         width: 100%;
         height: 100%;
-
         border: 2px solid white;
         background-color: rgb(0 50 100 / 0.3);
-
         zoom: 8;
     }
 </style>

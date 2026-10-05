@@ -427,7 +427,6 @@ export const itemBoxes: Box2 = {
                 inputs: splitIntoRows([
                     { id: "web.src", type: "string", value: "", values: { label: "inputs.url" } },
                     { id: "web.noNavigation", type: "checkbox", value: false, values: { label: "edit.disable_navigation" } },
-                    { id: "web.slideControls", type: "checkbox", value: false, values: { label: "edit.website_slide_controls" } },
                     { id: "web.zoom", type: "number", value: 100, values: { label: "actions.zoom (%)", defaultValue: 100, min: 10, max: 1000, step: 5, showSlider: true, sliderValues: { min: 50, max: 250, step: 10 } } }
                 ])
             }

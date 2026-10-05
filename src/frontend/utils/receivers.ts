@@ -65,8 +65,7 @@ import {
     transitionData,
     variables,
     visualizerData,
-    websiteReload,
-    websiteSlideControl
+    websiteAction
 } from "../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
@@ -188,8 +187,7 @@ const receiveOUTPUTasMAIN: any = {
 
 let previousOutputs = ""
 export const receiveOUTPUTasOUTPUT: any = {
-    WEBSITE_RELOAD: (data: { outputId: string; src: string }) => websiteReload.set({ ...data, time: nextWebsiteEventId() }),
-    WEBSITE_KEY: (data: { outputId: string; keyCode: "Right" | "Left"; src?: string }) => websiteSlideControl.set({ ...data, time: nextWebsiteEventId() }),
+    WEBSITE_ACTION: (data: any) => websiteAction.set({ ...data, time: nextWebsiteEventId() }),
     OUTPUTS: (a: any) => {
         // output.ts - only current output data is sent
         const id = Object.keys(a)[0]

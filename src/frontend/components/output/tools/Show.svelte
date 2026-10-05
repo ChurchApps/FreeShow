@@ -7,16 +7,15 @@
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
+    import { getLiveWebsites, reloadWebsite, sendWebsiteKey } from "../../helpers/websiteControls"
     import Button from "../../inputs/Button.svelte"
     import { VideoPlayer } from "../../media/video/videoPlayer"
     import VideoSlider from "../VideoSlider.svelte"
-    import { getLiveWebsites, reloadWebsite, sendWebsiteKey } from "../../helpers/websiteControls"
 
     export let currentOutput: Output
     export let ref: LayoutRef[] | { temp: boolean; items: any; id: string }[] | undefined
     export let linesIndex: null | number
     export let maxLines: null | number
-    export let outputId = ""
 
     $: slide = currentOutput?.out?.slide
 
@@ -51,14 +50,26 @@
         VideoPlayer.toggleLoop(path, outputId)
     }
 
-    // live websites (e.g. a Canva presentation)
-    $: websites = getWebsites(outputId, $outputs, $showsCache, $overlays)
-    function getWebsites(outputId: string, _updater1: any, _updater2: any, _updater3: any) {
-        return outputId ? getLiveWebsites(outputId) : []
+    // Website controls
+
+    $: websites = getWebsites($outputs, $showsCache, $overlays)
+    function getWebsites(_updater1: any, _updater2: any, _updater3: any) {
+        return getLiveWebsites()
     }
 
     function formatUrl(url: string) {
         return (url.split("://")[1] || url).replace("www.", "")
+    }
+    function handleKeydown(e: KeyboardEvent, websiteSrc: string) {
+        if (e.key === "ArrowLeft") {
+            e.preventDefault()
+            e.stopPropagation()
+            sendWebsiteKey("Left", websiteSrc)
+        } else if (e.key === "ArrowRight") {
+            e.preventDefault()
+            e.stopPropagation()
+            sendWebsiteKey("Right", websiteSrc)
+        }
     }
 </script>
 
@@ -109,17 +120,17 @@
 {/if}
 
 {#each websites as website}
-    <div class="videoValues">
+    <div class="videoValues websiteValues" role="none" on:keydown={(e) => handleKeydown(e, website.src)}>
         <p title={website.src}>{formatUrl(website.src)}</p>
 
         <span class="group">
-            <Button center title={translateText("media.previous")} disabled={$outLocked} on:click={() => sendWebsiteKey(outputId, "Left", website.src)}>
+            <Button center title={translateText("media.previous")} disabled={$outLocked} on:click={() => sendWebsiteKey("Left", website.src)}>
                 <Icon id="previous" white />
             </Button>
-            <Button center title={translateText("media.next")} disabled={$outLocked} on:click={() => sendWebsiteKey(outputId, "Right", website.src)}>
+            <Button center title={translateText("media.next")} disabled={$outLocked} on:click={() => sendWebsiteKey("Right", website.src)}>
                 <Icon id="next" white />
             </Button>
-            <Button center title={translateText("edit.refresh_website")} disabled={$outLocked} on:click={() => reloadWebsite(outputId, website.src)}>
+            <Button center title={translateText("preview.refresh")} disabled={$outLocked} on:click={() => reloadWebsite(website.src)}>
                 <Icon id="refresh" white />
             </Button>
         </span>
@@ -147,6 +158,15 @@
         flex-direction: column;
 
         border-top: 2px solid var(--primary-lighter);
+    }
+
+    .websiteValues {
+        outline: none;
+    }
+    .websiteValues:focus,
+    .websiteValues:focus-within {
+        outline: 2px solid var(--secondary);
+        outline-offset: -2px;
     }
 
     .videoValues p {
