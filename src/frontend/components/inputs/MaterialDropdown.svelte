@@ -587,6 +587,9 @@
         overflow-x: hidden;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 
+        /* .popup size is set to 1.2em, reset that */
+        font-size: initial;
+
         border-bottom: 1px solid var(--primary-lighter);
 
         animation: dropdownFlyFade 80ms cubic-bezier(0.33, 1, 0.68, 1);
