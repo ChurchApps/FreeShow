@@ -9,7 +9,7 @@
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
-    import { enableSubtitle, encodeFilePath, getExtension, getFileName, getMediaLayerType, removeExtension } from "../helpers/media"
+    import { addVideoMarker, enableSubtitle, encodeFilePath, getExtension, getFileName, getMediaLayerType, removeExtension } from "../helpers/media"
     import { getFirstActiveOutput, setOutput } from "../helpers/output"
     import { joinTime, secondsToTime } from "../helpers/time"
     import FloatingInputs from "../input/FloatingInputs.svelte"
@@ -122,6 +122,9 @@
         autoPause = true
         // videoData.paused = true
         playingInOutput = true
+
+        // player previews sync to the output in Player.svelte, resetting would seek them to the start
+        if (type === "player") return
 
         // trigger time update
         setTimeout(() => (videoTime = 0), 50)
@@ -289,22 +292,8 @@
 
     // TODO: history
     function addMarker() {
-        videoMarkers.update((a) => {
-            const newMarker = { name: "", time: Math.floor(videoTime || 0) }
-
-            if (a[showId]?.find((a) => a.time === newMarker.time)) return a
-
-            if (!a[showId]) a[showId] = []
-            a[showId].push(newMarker)
-
-            // sort by time
-            a[showId] = a[showId].sort((a, b) => a.time - b.time)
-
-            let markerIndex = a[showId].findIndex((a) => a.time === newMarker.time)
-            activeRename.set("marker_" + markerIndex)
-
-            return a
-        })
+        const markerIndex = addVideoMarker(showId, Math.floor(videoTime || 0))
+        if (markerIndex > -1) activeRename.set("marker_" + markerIndex)
     }
 
     function changeName(e: any) {
@@ -374,7 +363,7 @@
         <!-- TODO: info about: CTRL click to play at current pos -->
         <HoverButton hide={playingInOutput} icon="play" size={10} on:click={(e) => playVideo(e.ctrlKey || e.metaKey ? videoTime : 0)}>
             {#if type === "player"}
-                <Player id={showId} {outputId} preview />
+                <Player id={showId} {outputId} preview bind:videoData bind:videoTime />
             {:else if mediaPath}
                 <!-- TODO: use Video.svelte element instead -->
                 <!-- TODO: on:error={videoError} - ERR_FILE_NOT_FOUND -->
@@ -479,7 +468,7 @@
     {#if playingInOutput}
         <MediaControls {currentOutput} {outputId} big />
     {:else}
-        <FloatingInputs arrow={type === "video"} let:open>
+        <FloatingInputs arrow={type === "video" || type === "player"} let:open>
             <div slot="menu" style="display: flex;min-width: 500px;">
                 <MaterialButton
                     title={videoData.paused ? "media.play" : "media.pause"}
