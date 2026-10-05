@@ -1,4 +1,3 @@
-import { nextWebsiteEventId } from "../components/helpers/websiteControls"
 import { get } from "svelte/store"
 import { CLOUD, CONTROLLER, NDI, OMT, OUTPUT, OUTPUT_STREAM, REMOTE, STAGE } from "../../types/Channels"
 import type { ClientMessage } from "../../types/Socket"
@@ -187,7 +186,6 @@ const receiveOUTPUTasMAIN: any = {
 
 let previousOutputs = ""
 export const receiveOUTPUTasOUTPUT: any = {
-    WEBSITE_ACTION: (data: any) => websiteAction.set({ ...data, time: nextWebsiteEventId() }),
     OUTPUTS: (a: any) => {
         // output.ts - only current output data is sent
         const id = Object.keys(a)[0]
@@ -272,6 +270,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     // AUDIO_CHANNELS_DATA: (a: any) => audioChannelsData.set(a),
 
     PLAYING_VIDEO_STATE: (a: any) => playingVideoState.set(a),
+    WEBSITE_ACTION: (a: any) => websiteAction.set(a),
 
     METRONOME: (a: any) => metronome.set(a),
     METRONOME_TIMER: (a: any) => metronomeTimer.set(a),

@@ -1,13 +1,13 @@
 <script lang="ts">
     import type { Output } from "../../../../types/Output"
     import type { LayoutRef } from "../../../../types/Show"
-    import { activeFocus, activeShow, focusMode, outLocked, outputs, overlays, playingVideoState, presentationData, showsCache } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, outLocked, outputs, playingVideoState, presentationData, showsCache } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
-    import { getLiveWebsites, reloadWebsite, sendWebsiteKey } from "../../helpers/websiteControls"
+    import { getOutputtedWebsites, sendWebsiteKey, triggerWebsiteAction } from "../../helpers/websiteControls"
     import Button from "../../inputs/Button.svelte"
     import { VideoPlayer } from "../../media/video/videoPlayer"
     import VideoSlider from "../VideoSlider.svelte"
@@ -52,23 +52,19 @@
 
     // Website controls
 
-    $: websites = getWebsites($outputs, $showsCache, $overlays)
-    function getWebsites(_updater1: any, _updater2: any, _updater3: any) {
-        return getLiveWebsites()
-    }
-
+    $: websites = getOutputtedWebsites($outputs)
     function formatUrl(url: string) {
         return (url.split("://")[1] || url).replace("www.", "")
     }
-    function handleKeydown(e: KeyboardEvent, websiteSrc: string) {
+    function handleWebsiteKeydown(e: KeyboardEvent, websiteSrc: string) {
         if (e.key === "ArrowLeft") {
             e.preventDefault()
             e.stopPropagation()
-            sendWebsiteKey("Left", websiteSrc)
+            sendWebsiteKey(websiteSrc, "Left")
         } else if (e.key === "ArrowRight") {
             e.preventDefault()
             e.stopPropagation()
-            sendWebsiteKey("Right", websiteSrc)
+            sendWebsiteKey(websiteSrc, "Right")
         }
     }
 </script>
@@ -120,17 +116,18 @@
 {/if}
 
 {#each websites as website}
-    <div class="videoValues websiteValues" role="none" on:keydown={(e) => handleKeydown(e, website.src)}>
+    <div class="videoValues websiteValues" tabindex="0" role="button" on:keydown={(e) => handleWebsiteKeydown(e, website.src)}>
         <p title={website.src}>{formatUrl(website.src)}</p>
 
         <span class="group">
-            <Button center title={translateText("media.previous")} disabled={$outLocked} on:click={() => sendWebsiteKey("Left", website.src)}>
+            <Button center title={translateText("media.previous")} disabled={$outLocked} on:click={() => sendWebsiteKey(website.src, "Left")}>
                 <Icon id="previous" white />
             </Button>
-            <Button center title={translateText("media.next")} disabled={$outLocked} on:click={() => sendWebsiteKey("Right", website.src)}>
+            <Button center title={translateText("media.next")} disabled={$outLocked} on:click={() => sendWebsiteKey(website.src, "Right")}>
                 <Icon id="next" white />
             </Button>
-            <Button center title={translateText("preview.refresh")} disabled={$outLocked} on:click={() => reloadWebsite(website.src)}>
+
+            <Button center title={translateText("preview.reload")} disabled={$outLocked} on:click={() => triggerWebsiteAction({ src: website.src, type: "reload" })}>
                 <Icon id="refresh" white />
             </Button>
         </span>

@@ -159,7 +159,7 @@
         "nextTimer": "Next slide timer",
         "lock": "Lock",
         "unlock": "Unlock",
-        "refresh": "Refresh",
+        "reload": "Reload",
         "test_pattern": "Test pattern",
         "live_prepare": "Hide output content (Black overlay)"
     },

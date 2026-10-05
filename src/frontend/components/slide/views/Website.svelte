@@ -13,7 +13,6 @@
     export let ratio: number
 
     let webview: any
-    let webviewReady = false
     let parsedSrc = ""
     let url = ""
 
@@ -109,7 +108,6 @@
                 outputId,
                 onReady: (wv) => {
                     webview = wv
-                    webviewReady = true
                     checkNavigation()
                 },
                 onNavigate: (newUrl) => {
@@ -140,9 +138,11 @@
         position: absolute;
         bottom: 0;
         left: 0;
+
         background-color: black;
         border-start-end-radius: 3px;
         display: flex;
+
         opacity: 0.4;
     }
     .controls :global(button) {
@@ -160,10 +160,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
+
         width: 100%;
         height: 100%;
+
         border: 2px solid white;
         background-color: rgb(0 50 100 / 0.3);
+
         zoom: 8;
     }
 </style>

@@ -7,7 +7,7 @@ type AttachedSlot = {
     src: string
     currentParent: HTMLElement | null
     lastUsed: number
-    actionUnsub?: () => void
+    actionUnsubscribe?: () => void
 }
 
 const MAX_CACHED_WEBVIEWS = 3
@@ -29,7 +29,7 @@ export function cleanupOldWebviews() {
     if (unattached.length > MAX_CACHED_WEBVIEWS) {
         unattached.sort((a, b) => a.lastUsed - b.lastUsed)
         for (const slot of unattached.slice(0, unattached.length - MAX_CACHED_WEBVIEWS)) {
-            slot.actionUnsub?.()
+            slot.actionUnsubscribe?.()
             slot.webview.remove?.()
             webviewPool.delete(slot.src)
         }
@@ -57,10 +57,8 @@ export function attachPersistentWebview(
         webview.src = currentSrc
         webview.style.cssText = "width:100%;height:100%;display:block;"
 
-        let lastActionTime = 0
-        const actionUnsub = websiteAction.subscribe((action) => {
-            if (!action || action.time === lastActionTime || (action.src && action.src !== currentSrc)) return
-            lastActionTime = action.time
+        const actionUnsubscribe = websiteAction.subscribe((action) => {
+            if (!action || (action.src && action.src !== currentSrc)) return
 
             try {
                 if (action.type === "key") {
@@ -79,12 +77,13 @@ export function attachPersistentWebview(
             src: currentSrc,
             currentParent: null,
             lastUsed: Date.now(),
-            actionUnsub
+            actionUnsubscribe
         }
 
         webview.addEventListener("dom-ready", () => {
             applyWebviewStyle(webview, options.zoom, options.isOutput, currentSrc)
             options.onReady?.(webview)
+
             if (options.isOutput && options.outputId) {
                 send(OUTPUT, ["FOCUS"], { id: options.outputId })
                 setTimeout(() => {
@@ -161,7 +160,9 @@ function applyWebviewStyle(webview: any, zoom = 100, isOutput = false, src = "")
 
         if (src.includes("embed")) return
 
-        webview.executeJavaScript?.(`
+        webview
+            .executeJavaScript?.(
+                `
             if (document.documentElement) {
                 document.documentElement.style.zoom = '${factor}';
                 document.documentElement.style.width = '100%';
@@ -172,7 +173,9 @@ function applyWebviewStyle(webview: any, zoom = 100, isOutput = false, src = "")
                 document.body.style.width = '100%';
                 document.body.style.height = '100%';
             }
-        `).catch((err: any) => console.debug("Webview executeJavaScript failed:", err))
+        `
+            )
+            .catch((err: any) => console.debug("Webview executeJavaScript failed:", err))
     } catch (err) {
         console.debug("Failed applying webview style:", err)
     }

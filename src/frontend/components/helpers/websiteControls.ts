@@ -1,55 +1,45 @@
 import { get } from "svelte/store"
 import { OUTPUT } from "../../../types/Channels"
-import { outputs, overlays, showsCache, websiteAction } from "../../stores"
+import { outputs, showsCache, websiteAction } from "../../stores"
 import { send } from "../../utils/request"
+import { clone } from "./array"
 import { getAllActiveOutputIds } from "./output"
 import { _show } from "./shows"
 
-export type WebsiteAction = { type: "key"; keyCode: "Right" | "Left"; src?: string } | { type: "reload"; src?: string }
+export type WebsiteAction = { src: string; type: "key"; keyCode: string } | { src: string; type: "reload" }
 
-let websiteEventId = 0
-export function nextWebsiteEventId() {
-    return ++websiteEventId
-}
-
-function triggerWebsiteAction(action: WebsiteAction) {
+export function triggerWebsiteAction(action: WebsiteAction) {
     send(OUTPUT, ["WEBSITE_ACTION"], action)
-    websiteAction.set({ ...action, time: nextWebsiteEventId() })
+    websiteAction.set(action)
+}
+export function sendWebsiteKey(src: string, keyCode: string) {
+    triggerWebsiteAction({ src, type: "key", keyCode })
 }
 
-export function sendWebsiteKey(keyCode: "Right" | "Left", src = "") {
-    triggerWebsiteAction({ type: "key", keyCode, ...(src ? { src } : {}) })
-}
-
-export function reloadWebsite(src = "") {
-    triggerWebsiteAction({ type: "reload", ...(src ? { src } : {}) })
-}
-
-// website urls live on active outputs (current slides & overlays)
-export function getLiveWebsites(outputIds = getAllActiveOutputIds()): { src: string }[] {
-    const allOuts = get(outputs)
-    const items = outputIds.flatMap((id) => {
-        const out = allOuts[id]?.out
+export function getOutputtedWebsites(_updater: any = null): { src: string }[] {
+    const activeOutputIds = getAllActiveOutputIds()
+    const items = activeOutputIds.flatMap((id) => {
+        const out = get(outputs)[id]?.out
         if (!out) return []
+
         const outSlide = out.slide
-        const slideItems = outSlide?.tempItems ? outSlide.tempItems : outSlide?.id && outSlide.layout && typeof outSlide.index === "number" ? get(showsCache)[outSlide.id]?.slides?.[_show(outSlide.id).layouts([outSlide.layout]).ref()[0]?.[outSlide.index]?.id]?.items || [] : []
-        const overlayItems = (out.overlays || []).flatMap((overlayId) => get(overlays)[overlayId]?.items || [])
-        return [...slideItems, ...overlayItems]
+        if (!outSlide?.id || !outSlide.layout || outSlide.index === undefined) return []
+
+        const ref = _show(outSlide.id).layouts([outSlide.layout]).ref()[0]
+        const slideId = ref?.[outSlide.index]?.id
+        const slideItems = get(showsCache)[outSlide.id]?.slides?.[slideId]?.items || []
+
+        // const overlayItems = (out.overlays || []).flatMap((overlayId) => get(overlays)[overlayId]?.items || [])
+        return slideItems
     })
 
-    const urls = new Set<string>()
-    return items
+    const foundUrls = new Set<string>()
+    return clone(items)
         .filter((item) => item?.type === "web" && item.web?.src)
-        .map((item) => ({ src: formatWebsiteUrl(item.web.src) }))
-        .filter((site) => {
-            if (!site.src || urls.has(site.src)) return false
-            urls.add(site.src)
+        .map((item) => ({ src: item.web.src }))
+        .filter((item) => {
+            if (foundUrls.has(item.src)) return false
+            foundUrls.add(item.src)
             return true
         })
-}
-
-export function formatWebsiteUrl(src: string) {
-    if (!src) return ""
-    src = src.replaceAll("&amp;", "&").replaceAll("{", "%7B").replaceAll("}", "%7D")
-    return src.includes("://") ? src : "http://" + src
 }
