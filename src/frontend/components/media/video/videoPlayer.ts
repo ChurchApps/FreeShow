@@ -266,17 +266,35 @@ export class VideoPlayer {
 
         const audio = new Audio(encodeFilePath(audioPath))
 
-        // a real audio track has decoded bytes by canplay; none means this is a video-only file
-        audio.addEventListener("canplay", () => {
-            if (((audio as any).webkitAudioDecodedByteCount ?? 1) === 0) (audio as any).__noAudioTrack = true
-        })
         audio.addEventListener("ended", () => {
             const playing = this.getPlaying(originalId, outputIds || [])
             if (playing?.loop || this.getGlobalOptions(originalId)?.loop) {
                 const startTime = this.getStartTime(originalId)
                 audio.currentTime = startTime
                 if ("timeTick" in audio) (audio as any).timeTick.update(startTime)
-                if (audio.paused) audio.play().catch(() => {})
+                if (audio.paused && audio instanceof HTMLAudioElement) audio.play().catch(() => {})
+                return
+            }
+            // If ended fired prematurely (e.g. video-only file with no audio track free-running to EOF),
+            // switch to a virtual time ticker instead of clearing the background early.
+            if (audio.duration > 1 && audio.currentTime < audio.duration - 1) {
+                const duration = audio.duration
+                const currentTime = Math.min(audio.currentTime, duration)
+                const timeTick = new TimeInterpolator()
+                timeTick.update(currentTime)
+                if (!audio.paused) timeTick.play()
+
+                playingVideos.update((list) => {
+                    const item = list.find((v) => v.path === originalId)
+                    if (item) {
+                        item.audio = { currentTime, timeTick, duration, paused: audio.paused, loop: !!item.loop, muted: true }
+                    }
+                    return list
+                })
+                try {
+                    audio.removeAttribute("src")
+                    audio.load()
+                } catch {}
                 return
             }
             // absolute end
@@ -284,22 +302,6 @@ export class VideoPlayer {
         })
         const loaded = await this.waitForAudio(originalId, audio)
         if (!loaded) return null
-
-        // Video-only files: an <audio> element has no audio track to pace against and (with webm)
-        // free-runs at demux speed, "ending" a full video within a second — which the end check then
-        // treats as media finished and clears the background right after it starts. Nothing is
-        // audible either way, so clock silent videos with the wall-clock ticker instead (same as
-        // online media); the probe element is discarded once it has yielded the duration.
-        if ((loaded as any).__noAudioTrack === true) {
-            const duration = loaded.duration
-            try {
-                loaded.removeAttribute("src")
-                loaded.load()
-            } catch {
-                // probe element already unloaded
-            }
-            return { currentTime: 0, timeTick: new TimeInterpolator(), duration, paused: true, loop: false, muted: true }
-        }
 
         return loaded
     }
