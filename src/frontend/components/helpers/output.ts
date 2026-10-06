@@ -815,10 +815,10 @@ export function getStageResolution(outputId = "", _updater = get(outputs)): Reso
 export const DEFAULT_BOUNDS = { width: 1920, height: 1080 }
 const outputResolutionCache = new Map<string, Resolution>()
 
-export function getOutputResolution(outputId: string, _updater = get(outputs), scaled = false, styleIdOverride = "") {
+export function getOutputResolution(outputId: string, _updater = get(outputs), scaled = false, styleIdOverride = "", _stylesUpdater = get(styles)) {
     const currentOutput = _updater[outputId]
     const effectiveStyleId = styleIdOverride || currentOutput?.style || ""
-    const currentStyle = effectiveStyleId ? get(styles)[effectiveStyleId] : null
+    const currentStyle = effectiveStyleId ? _stylesUpdater[effectiveStyleId] : null
     const styleRatioVal: any = currentStyle?.aspectRatio || currentStyle?.resolution
     const styleRatioKey = styleRatioVal ? `${styleRatioVal.width}x${styleRatioVal.height}_${styleRatioVal.outputResolutionAsRatio ? 1 : 0}` : ""
     const cacheKey = `${outputId}_${scaled}_${effectiveStyleId}_${styleRatioKey}_${currentOutput?.bounds?.width || 0}_${currentOutput?.bounds?.height || 0}`

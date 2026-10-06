@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { draw, drawSettings, drawTool, outputs } from "../../stores"
+    import { draw, drawSettings, drawTool, outputs, styles } from "../../stores"
     import { getFirstActiveOutput, getOutputResolution } from "../helpers/output"
     import Output from "../output/Output.svelte"
     import { getStyleResolution } from "../slide/getStyleResolution"
@@ -12,7 +12,7 @@
     let width = 0
     let height = 0
     // Slide?.settings?.resolution
-    $: resolution = getOutputResolution(outputId, $outputs, true)
+    $: resolution = getOutputResolution(outputId, $outputs, true, "", $styles)
     let ratio = 0
 
     let mouseStartPos = { x: 0, y: 0, drawX: 0, drawY: 0 }
@@ -46,10 +46,10 @@
             return
         }
 
-        let centerElem = slide.closest(".parent")?.closest(".center")
+        const rect = slide.getBoundingClientRect()
 
-        let x = (e.clientX - slide.offsetLeft - (centerElem?.offsetLeft || 0)) / ratio
-        let y = (e.clientY - slide.offsetTop - (centerElem?.offsetTop || 0)) / ratio
+        let x = (e.clientX - rect.left) / ratio
+        let y = (e.clientY - rect.top) / ratio
 
         // straight
         let mode: "x" | "y" = e.shiftKey ? "x" : "y"
