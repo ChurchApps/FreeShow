@@ -216,11 +216,15 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
                         const splittedVerses = getSplittedVerses({ [id]: text })
 
                         const newVerseId = id + (subverse ? `_${subverse}` : "")
+                        const splitKeys = Object.keys(splittedVerses)
                         if (splitLongVerses && splittedVerses[newVerseId]) {
                             versesText[v] = splittedVerses[newVerseId]
-                        } else if (splitLongVerses && !subverse && Object.keys(splittedVerses).length > 1) {
+                        } else if (splitLongVerses && subverse > 1 && splitKeys.length) {
+                            // This translation has fewer parts than another one in the collection.
+                            // Keep its last part on screen instead of the whole verse or a blank box.
+                            versesText[v] = splittedVerses[splitKeys[splitKeys.length - 1]]
+                        } else if (splitLongVerses && !subverse && splitKeys.length > 1) {
                             // Verse was split into sub-parts (e.g. "1_1", "1_2") but lookup by base ID failed
-                            const splitKeys = Object.keys(splittedVerses)
                             splitKeys.forEach((key) => {
                                 versesText[key] = splittedVerses[key]
                             })
@@ -1564,6 +1568,85 @@ function splitHtmlText(value: string, maxLength: number, tolerance: number = 0) 
     const tokens = tokenizeHtml(value)
     if (!tokens.length) return [value]
 
+    // Split the words the same way as plain text, then put the tags back around those parts.
+    // The old packer cut at exactly maxLength, which landed in the middle of a word whenever
+    // a verse had markup (brackets, red letters) and tolerance was 0.
+    const plain = tokens
+        .filter((token) => token.type === "text")
+        .map((token) => token.value)
+        .join("")
+    const plainParts = splitPlainText(plain, maxLength, tolerance)
+    if (plainParts.length <= 1) return [value]
+
+    const ranges = locatePlainParts(plain, plainParts)
+    if (ranges.length === plainParts.length) {
+        const segments = ranges.map(([start, end]) => sliceHtmlRange(tokens, start, end)).filter((segment) => segment.replace(/<[^>]+>/g, "").trim())
+        if (segments.length === plainParts.length) return segments
+    }
+
+    return splitHtmlTextSequential(value, maxLength, tolerance)
+}
+
+function locatePlainParts(plain: string, parts: string[]) {
+    const ranges: [number, number][] = []
+    let cursor = 0
+    for (const part of parts) {
+        if (!part) return []
+        const index = plain.indexOf(part, cursor)
+        if (index === -1) return []
+        ranges.push([index, index + part.length])
+        cursor = index + part.length
+    }
+    return ranges
+}
+
+function sliceHtmlRange(tokens: { type: "text" | "tag"; value: string }[], start: number, end: number) {
+    const openTags: { name: string; tag: string }[] = []
+    let plainPos = 0
+    let out = ""
+    let started = false
+
+    for (const token of tokens) {
+        if (started && plainPos >= end) break
+
+        if (token.type === "tag") {
+            if (!started || plainPos < start) {
+                updateTagStack(token.value, openTags)
+                continue
+            }
+            out += token.value
+            updateTagStack(token.value, openTags)
+            continue
+        }
+
+        const textStart = plainPos
+        const textEnd = plainPos + token.value.length
+        plainPos = textEnd
+        if (textEnd <= start || textStart >= end) continue
+
+        if (!started) {
+            started = true
+            out = openTags.map((entry) => entry.tag).join("")
+        }
+
+        const from = Math.max(0, start - textStart)
+        const to = Math.min(token.value.length, end - textStart)
+        out += token.value.slice(from, to)
+        if (plainPos >= end) break
+    }
+
+    out += openTags
+        .slice()
+        .reverse()
+        .map((entry) => `</${entry.name}>`)
+        .join("")
+    return out.trim()
+}
+
+function splitHtmlTextSequential(value: string, maxLength: number, tolerance: number = 0) {
+    const tokens = tokenizeHtml(value)
+    if (!tokens.length) return [value]
+
     const segments: string[] = []
     let current = ""
     let currentLength = 0
@@ -1656,8 +1739,15 @@ function getTagName(tag: string) {
 
 function findHtmlSplitIndex(text: string, capacity: number, tolerance: number = 0) {
     if (text.length <= capacity) return text.length
-    let breakPos = findBestBreak(text, capacity, tolerance)
-    if (breakPos === -1 || breakPos > capacity + tolerance) breakPos = capacity
+    // Search back through this chunk for punctuation or a space. Tolerance only extends past the limit.
+    // A range of 0 used to cut at exactly `capacity`, which splits a word in half.
+    const lookback = Math.max(capacity - 1, 0)
+    let breakPos = findBestBreak(text, capacity, Math.max(tolerance, lookback))
+    const limit = capacity + tolerance
+    if (breakPos === -1 || breakPos > limit || breakPos <= 0) {
+        const lastSpace = text.lastIndexOf(" ", limit)
+        breakPos = lastSpace > 0 ? lastSpace : capacity
+    }
     return Math.max(0, adjustSplitIndexForBracket(text, breakPos))
 }
 
