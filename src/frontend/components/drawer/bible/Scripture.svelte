@@ -151,12 +151,8 @@
 
                     if (isSplit && fullText) {
                         const splitParts = splitText(fullText, splitChars, splitTolerance)
-                        if (splitParts.length > 1) {
-                            const repeated = subverse > splitParts.length
-                            const part = splitParts[subverse - 1] || splitParts[splitParts.length - 1] || ""
-                            return { id: scriptureId, name, text: part, isSplit: true, repeated }
-                        }
-                        if (subverse > 1) return { id: scriptureId, name, text: fullText, isSplit: true, repeated: true }
+                        const part = splitParts[subverse - 1] || splitParts[splitParts.length - 1] || fullText
+                        return { id: scriptureId, name, text: part, isSplit: true, repeated: subverse > splitParts.length }
                     }
 
                     return { id: scriptureId, name, text: fullText, isSplit: false, repeated: false }
@@ -204,24 +200,22 @@
     // category color / abbreviation data
     $: booksData = currentBibleData?.bibleData?.getBooksData() || []
 
-    // Check if any translation in collection supports splitting for verses.
-    // Arguments are listed so this reruns after the other translations finish loading.
-    function checkCollectionSplitSupport(scriptureDataMap: { [key: string]: Data }, verseList: { number: number }[] | null, scriptureIds: string[], chars: number, tolerance: number): { [verseNumber: number]: number } {
-        if (!isCollection || !$scriptureSettings.splitLongVerses || !verseList?.length) return {}
+    // Check if any translation in collection supports splitting for verses
+    function checkCollectionSplitSupport(): { [verseNumber: number]: number } {
+        if (!isCollection || !splitEnabled || !verses?.length) return {}
 
         const splitCounts: { [verseNumber: number]: number } = {}
 
-        scriptureIds.forEach((scriptureId) => {
-            const chapterData = scriptureDataMap[scriptureId]?.chapterData
+        activeScriptures.forEach((scriptureId) => {
+            const chapterData = data[scriptureId]?.chapterData
             if (!chapterData) return
 
-            verseList.forEach((verse) => {
+            verses.forEach((verse) => {
                 try {
-                    const verseObj = chapterData.getVerse(verse.number)
-                    const fullText = sanitizeVerseText(verseObj.getHTML() || verseObj?.data?.text || "")
+                    const fullText = sanitizeVerseText(chapterData.getVerse(verse.number).getHTML() || "")
                     if (!fullText) return
 
-                    const splitParts = splitText(fullText, chars, tolerance)
+                    const splitParts = splitText(fullText, splitChars, splitTolerance)
                     if (splitParts.length > 1) {
                         splitCounts[verse.number] = Math.max(splitCounts[verse.number] || 0, splitParts.length)
                     }
@@ -238,7 +232,7 @@
     $: splitEnabled = $scriptureSettings.splitLongVerses
 
     let collectionSplitCounts: { [verseNumber: number]: number } = {}
-    $: collectionSplitCounts = isCollection && splitEnabled ? checkCollectionSplitSupport(data, verses, activeScriptures, splitChars, splitTolerance) : {}
+    $: collectionSplitCounts = isCollection && splitEnabled && data && verses ? checkCollectionSplitSupport() : {}
 
     let splittedVerses: (Verse & { id: string })[] = []
     $: splittedVerses = updateSplitted(verses, $scriptureSettings, collectionSplitCounts)
@@ -539,10 +533,8 @@
         const keys = e.ctrlKey || e.metaKey || e.shiftKey
         const clicked = verseNumber.toString()
         const current = selectedVerses[selectedVerses.length - 1] || []
-        const exactMatch = current.some((a) => a?.toString() === clicked)
-        // "1" means the whole verse. Clicking "1_1" should still select that part.
-        const bareVerseMatch = !clicked.includes("_") && current.some((a) => a != null && !a.toString().includes("_") && Number(a) === getVerseId(clicked))
-        if (keys || (!exactMatch && !bareVerseMatch)) {
+        const isSelectedVerse = current.some((a) => a?.toString() === clicked || (!clicked.includes("_") && a?.toString() === getVerseId(clicked).toString()))
+        if (keys || !isSelectedVerse) {
             selectedVerses[selectedVerses.length - 1] = scriptureRangeSelect(e, selectedVerses[selectedVerses.length - 1], verseNumber, splittedVerses)
 
             // Remove plain verse IDs if split versions exist (e.g., remove "1" if "1_1", "1_2" are present)
@@ -575,18 +567,13 @@
 
     function focusFirstSplitPart(parts: { id: string }[], selectedChapters: (number | string)[][]) {
         const selected = selectedChapters?.[selectedChapters.length - 1]
-        if (!parts?.length || !selected || selected.length !== 1) return
+        if (!parts?.length || selected?.length !== 1 || String(selected[0]).includes("_")) return
 
         const base = getVerseIdParts(selected[0]).id
-        if (!base || String(selected[0]).includes("_")) return
+        const firstPart = parts.find((part) => getVerseIdParts(part.id).id === base && getVerseIdParts(part.id).subverse === 1)
+        if (!firstPart) return
 
-        const verseParts = parts.filter((part) => {
-            const parsed = getVerseIdParts(part.id)
-            return parsed.id === base && parsed.subverse > 0
-        })
-        if (verseParts.length < 2) return
-
-        const next = selectedChapters.map((chapter, index) => (index === selectedChapters.length - 1 ? [verseParts[0].id] : chapter))
+        const next = selectedChapters.map((chapter, index) => (index === selectedChapters.length - 1 ? [firstPart.id] : chapter))
         openVerse(next)
         if (isActiveInOutput) setTimeout(playScripture)
     }

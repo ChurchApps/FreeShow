@@ -1568,9 +1568,6 @@ function splitHtmlText(value: string, maxLength: number, tolerance: number = 0) 
     const tokens = tokenizeHtml(value)
     if (!tokens.length) return [value]
 
-    // Split the words the same way as plain text, then put the tags back around those parts.
-    // The old packer cut at exactly maxLength, which landed in the middle of a word whenever
-    // a verse had markup (brackets, red letters) and tolerance was 0.
     const plain = tokens
         .filter((token) => token.type === "text")
         .map((token) => token.value)
@@ -1579,12 +1576,10 @@ function splitHtmlText(value: string, maxLength: number, tolerance: number = 0) 
     if (plainParts.length <= 1) return [value]
 
     const ranges = locatePlainParts(plain, plainParts)
-    if (ranges.length === plainParts.length) {
-        const segments = ranges.map(([start, end]) => sliceHtmlRange(tokens, start, end)).filter((segment) => segment.replace(/<[^>]+>/g, "").trim())
-        if (segments.length === plainParts.length) return segments
-    }
+    if (ranges.length !== plainParts.length) return [value]
 
-    return splitHtmlTextSequential(value, maxLength, tolerance)
+    const segments = ranges.map(([start, end]) => sliceHtmlRange(tokens, start, end)).filter((segment) => segment.replace(/<[^>]+>/g, "").trim())
+    return segments.length ? segments : [value]
 }
 
 function locatePlainParts(plain: string, parts: string[]) {
@@ -1610,11 +1605,7 @@ function sliceHtmlRange(tokens: { type: "text" | "tag"; value: string }[], start
         if (started && plainPos >= end) break
 
         if (token.type === "tag") {
-            if (!started || plainPos < start) {
-                updateTagStack(token.value, openTags)
-                continue
-            }
-            out += token.value
+            if (started && plainPos >= start) out += token.value
             updateTagStack(token.value, openTags)
             continue
         }
@@ -1632,7 +1623,6 @@ function sliceHtmlRange(tokens: { type: "text" | "tag"; value: string }[], start
         const from = Math.max(0, start - textStart)
         const to = Math.min(token.value.length, end - textStart)
         out += token.value.slice(from, to)
-        if (plainPos >= end) break
     }
 
     out += openTags
@@ -1641,60 +1631,6 @@ function sliceHtmlRange(tokens: { type: "text" | "tag"; value: string }[], start
         .map((entry) => `</${entry.name}>`)
         .join("")
     return out.trim()
-}
-
-function splitHtmlTextSequential(value: string, maxLength: number, tolerance: number = 0) {
-    const tokens = tokenizeHtml(value)
-    if (!tokens.length) return [value]
-
-    const segments: string[] = []
-    let current = ""
-    let currentLength = 0
-    const openTags: { name: string; tag: string }[] = []
-
-    const reopenTags = () => openTags.map((entry) => entry.tag).join("")
-    const closeTags = () =>
-        openTags
-            .slice()
-            .reverse()
-            .map((entry) => `</${entry.name}>`)
-            .join("")
-
-    const flushSegment = () => {
-        const textContent = current.replace(/<[^>]+>/g, "").trim()
-        if (textContent) segments.push(current + closeTags())
-        current = reopenTags()
-        currentLength = 0
-    }
-
-    tokens.forEach((token) => {
-        if (token.type === "tag") {
-            current += token.value
-            updateTagStack(token.value, openTags)
-            return
-        }
-
-        let remaining = token.value
-        while (remaining.length) {
-            const capacity = maxLength - currentLength
-            if (capacity <= 0) {
-                flushSegment()
-                continue
-            }
-
-            const splitIndex = findHtmlSplitIndex(remaining, capacity, tolerance)
-            const chunk = remaining.slice(0, splitIndex)
-            current += chunk
-            currentLength += chunk.length
-            remaining = remaining.slice(splitIndex)
-
-            if (remaining.length) flushSegment()
-        }
-    })
-
-    if (current.replace(/<[^>]+>/g, "").trim()) segments.push(current + closeTags())
-
-    return segments.length ? segments : [value]
 }
 
 function tokenizeHtml(value: string) {
@@ -1735,20 +1671,6 @@ function updateTagStack(tag: string, stack: { name: string; tag: string }[]) {
 function getTagName(tag: string) {
     const match = tag.match(/^<\/?([a-z0-9_-]+)/i)
     return match ? match[1] : ""
-}
-
-function findHtmlSplitIndex(text: string, capacity: number, tolerance: number = 0) {
-    if (text.length <= capacity) return text.length
-    // Search back through this chunk for punctuation or a space. Tolerance only extends past the limit.
-    // A range of 0 used to cut at exactly `capacity`, which splits a word in half.
-    const lookback = Math.max(capacity - 1, 0)
-    let breakPos = findBestBreak(text, capacity, Math.max(tolerance, lookback))
-    const limit = capacity + tolerance
-    if (breakPos === -1 || breakPos > limit || breakPos <= 0) {
-        const lastSpace = text.lastIndexOf(" ", limit)
-        breakPos = lastSpace > 0 ? lastSpace : capacity
-    }
-    return Math.max(0, adjustSplitIndexForBracket(text, breakPos))
 }
 
 function getSplitHalves(text: string, maxLength: number, tolerance: number = 0): [string, string] | null {
