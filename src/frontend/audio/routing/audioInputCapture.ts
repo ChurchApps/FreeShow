@@ -147,7 +147,7 @@ export class AudioInputCapture {
     }
 
     private isNodeObserved(nodeId: string): boolean {
-        if (ALWAYS_OBSERVED_NODES.has(nodeId) || nodeId.startsWith("output_win_sub_")) return true
+        if (ALWAYS_OBSERVED_NODES.has(nodeId) || nodeId.startsWith("output_win_sub_") || AudioAnalyser.hasSource(nodeId)) return true
         return performance.now() - (this.lastQueryTimestamp.get(nodeId) || 0) < 3000
     }
 
