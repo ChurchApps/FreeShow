@@ -1480,20 +1480,6 @@ function getDanglingBracketInfo(before: string, after: string): DanglingBracketI
     return { lastOpen }
 }
 
-function adjustSplitIndexForBracket(text: string, breakIndex: number) {
-    if (!text) return breakIndex
-    const safeIndex = Math.max(0, Math.min(breakIndex, text.length))
-    const before = text.slice(0, safeIndex)
-    const after = text.slice(safeIndex)
-    const info = getDanglingBracketInfo(before, after)
-    if (!info) return safeIndex
-
-    let newIndex = info.lastOpen
-    while (newIndex > 0 && /\s/.test(before[newIndex - 1])) newIndex--
-
-    return Math.max(0, newIndex)
-}
-
 function moveDanglingBracketToNext(first: string, second: string) {
     const info = getDanglingBracketInfo(first, second)
     if (!info) return { first, second }
