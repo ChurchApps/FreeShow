@@ -192,7 +192,6 @@ export function exportJSONFile(content: any, path: string, name: string) {
 // ----- SHOW -----
 
 export function exportShow(data: { path: string; shows: Show[] }) {
-    console.log(data.path, data.shows.length)
     data.shows.forEach((show, i) => {
         const id = show.id
         delete show.id
@@ -240,9 +239,7 @@ function getSlidesText(show: Show) {
                 })
 
                 if (Array.isArray(line.chords) && line.chords.length) {
-                    const sortedChords = [...line.chords]
-                        .map((chord, originalIndex) => ({ chord, originalIndex }))
-                        .sort((a, b) => b.chord.pos - a.chord.pos || b.originalIndex - a.originalIndex)
+                    const sortedChords = [...line.chords].map((chord, originalIndex) => ({ chord, originalIndex })).sort((a, b) => b.chord.pos - a.chord.pos || b.originalIndex - a.originalIndex)
 
                     sortedChords.forEach(({ chord }) => {
                         while (!tempText[chord.pos]) tempText += " "
