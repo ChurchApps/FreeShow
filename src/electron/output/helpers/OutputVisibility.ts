@@ -39,6 +39,10 @@ export class OutputVisibility {
             return "invisible"
         }
 
+        const displays = screen.getAllDisplays()
+        const isSingleScreenAutoStartup = autoStartup && displays.length <= 1
+        if (isSingleScreenAutoStartup) return false
+
         let bounds: Rectangle = this.resolveOutputBounds(output, autoPosition)
 
         const windowCoveringMain = this.amountCovered(bounds, mainWindow!.getBounds()) > 0.5
