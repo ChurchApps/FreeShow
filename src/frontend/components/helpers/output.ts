@@ -122,8 +122,10 @@ export function toggleOutputs(outputIds: string[] | null = null, options: { forc
     // sort so display order can be changed! (needs app restart)
     const sortedOutputList = sortObject(sortByName(outputsList), "stageOutput")
 
-    const currentOutputState = !!get(outputState).find((a) => a.id === outputIds[0])?.active
-    const state = typeof options.state === "boolean" ? options.state : options.force || !(outputIds.length === 1 ? currentOutputState : get(outputDisplay))
+    const visibleOutputs = sortedOutputList.filter((a) => !a.invisible)
+    const primaryVisibleId = visibleOutputs[0]?.id || outputIds[0]
+    const currentOutputState = !!get(outputState).find((a) => a.id === primaryVisibleId)?.active
+    const state = typeof options.state === "boolean" ? options.state : options.force || !(visibleOutputs.length === 1 ? currentOutputState : get(outputDisplay))
 
     const autoPosition = options.force ? false : sortedOutputList.length === 1 && !sortedOutputList[0].forcedResolution?.width
 
@@ -593,13 +595,17 @@ export function getAllOutputs() {
 export function getAllEnabledOutputs() {
     const outputsList = getAllOutputs()
     const enabled = outputsList.filter((a) => a.enabled)
-    if (!enabled.length && isMainWindow()) {
+
+    // enable first if no outputs are currently enabled
+    if (!enabled.length && isMainWindow() && outputsList.length > 0) {
         outputs.update((a) => {
-            a[Object.keys(a)[0]].enabled = true
+            const firstId = outputsList[0].id
+            if (a[firstId]) a[firstId].enabled = true
             return a
         })
         return [outputsList[0]]
     }
+
     return enabled
 }
 
@@ -624,13 +630,17 @@ export function getWindowOutputId() {
 export function getAllActiveOutputs() {
     const outputsList = getAllNormalOutputs()
     const active = outputsList.filter((a) => a.active)
-    if (!active.length && isMainWindow()) {
+
+    // set first to active if no outputs are currently active
+    if (!active.length && isMainWindow() && outputsList.length > 0) {
         outputs.update((a) => {
-            a[Object.keys(a)[0]].active = true
+            const firstNormalId = outputsList[0].id
+            if (a[firstNormalId]) a[firstNormalId].active = true
             return a
         })
         return [outputsList[0]]
     }
+
     return active
 }
 export function getAllActiveOutputIds() {
