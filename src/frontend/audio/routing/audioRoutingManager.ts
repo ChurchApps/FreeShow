@@ -168,7 +168,11 @@ export class AudioRoutingManager {
 
         try {
             const ctx = new AudioContext({ latencyHint: "playback" })
-            if ("setSinkId" in ctx) (ctx as any).setSinkId(deviceId)
+            if ("setSinkId" in ctx) {
+                ;(ctx as any).setSinkId(deviceId).catch((err: unknown) => {
+                    console.warn(`[AudioRoutingManager] Could not set sink ID for device ${deviceId}:`, err)
+                })
+            }
             const element = new Audio()
             element.muted = true
 
