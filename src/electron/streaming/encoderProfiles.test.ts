@@ -163,6 +163,9 @@ describe("buildRelayCommand", () => {
 })
 
 describe("buildTestEncodeCommand", () => {
+    it("tests the requested CBR mode rather than only testing the legacy profile", () => {
+        expect(arg(buildTestEncodeCommand("videotoolbox", "cbr"), "-constant_bit_rate")).toBe("1")
+    })
     it("encodes a few frames to null with no external input", () => {
         const args = buildTestEncodeCommand("videotoolbox")
         expect(arg(args, "-frames:v")).toBe("3")
@@ -172,6 +175,67 @@ describe("buildTestEncodeCommand", () => {
 
     it("exercises the same hw device setup the real encode uses", () => {
         expect(buildTestEncodeCommand("vaapi")).toContain("-init_hw_device")
+    })
+})
+
+describe("explicit RTMP rate control", () => {
+    it("pads x264 CBR even when the picture needs very few bits", () => {
+        const args = buildEncoderCommand({ ...baseOptions, rateControl: "cbr", maxBitrate: 8000 })
+        expect(arg(args, "-x264-params")).toBe("nal-hrd=cbr:filler=1")
+        expect(arg(args, "-maxrate")).toBe("4000k")
+    })
+
+    it.each([
+        ["videotoolbox", "-constant_bit_rate", "1"],
+        ["nvenc", "-rc", "cbr"],
+        ["amf", "-rc", "cbr"],
+        ["vaapi", "-rc_mode", "CBR"]
+    ] as const)("requests native CBR on %s", (encoderId, flag, value) => {
+        const args = buildEncoderCommand({ ...baseOptions, encoderId, rateControl: "cbr" })
+        expect(arg(args, flag)).toBe(value)
+    })
+
+    it("enables filler on AMD CBR", () => {
+        const args = buildEncoderCommand({ ...baseOptions, encoderId: "amf", rateControl: "cbr" })
+        expect(arg(args, "-filler_data")).toBe("1")
+        expect(arg(args, "-enforce_hrd")).toBe("1")
+    })
+
+    it.each([
+        ["x264", "-x264-params", "nal-hrd=vbr:filler=0"],
+        ["nvenc", "-rc", "vbr"],
+        ["amf", "-rc", "vbr_peak"],
+        ["vaapi", "-rc_mode", "VBR"]
+    ] as const)("requests native VBR on %s with a separate peak", (encoderId, flag, value) => {
+        const args = buildEncoderCommand({ ...baseOptions, encoderId, rateControl: "vbr", maxBitrate: 7000 })
+        expect(arg(args, flag)).toBe(value)
+        expect(arg(args, "-b:v")).toBe("4000k")
+        expect(arg(args, "-maxrate")).toBe("7000k")
+        expect(arg(args, "-bufsize")).toBe("7000k")
+    })
+
+    it("keeps Apple VBR on average bitrate and does not request CBR", () => {
+        const args = buildEncoderCommand({ ...baseOptions, encoderId: "videotoolbox", rateControl: "vbr", maxBitrate: 7000 })
+        expect(args).not.toContain("-constant_bit_rate")
+        expect(arg(args, "-maxrate")).toBe("7000k")
+    })
+
+    it("selects QSV CBR/VBR by equal/different target and peak bitrates", () => {
+        expect(arg(buildEncoderCommand({ ...baseOptions, encoderId: "qsv", rateControl: "cbr", maxBitrate: 7000 }), "-maxrate")).toBe("4000k")
+        const vbr = buildEncoderCommand({ ...baseOptions, encoderId: "qsv", rateControl: "vbr", maxBitrate: 7000 })
+        expect(arg(vbr, "-maxrate")).toBe("7000k")
+        expect(vbr).not.toContain("-low_delay_brc")
+    })
+
+    it("defaults the VBR peak above the target so QSV cannot silently select CBR", () => {
+        const args = buildEncoderCommand({ ...baseOptions, encoderId: "qsv", rateControl: "vbr" })
+        expect(arg(args, "-maxrate")).toBe("8000k")
+    })
+
+    it("preserves legacy settings when no mode has been saved", () => {
+        const args = buildEncoderCommand(baseOptions)
+        expect(args).not.toContain("-x264-params")
+        expect(arg(args, "-maxrate")).toBe("4000k")
     })
 })
 

@@ -3,6 +3,7 @@ import { uid } from "uid"
 import { OUTPUT } from "../../../types/Channels"
 import { Main } from "../../../types/IPC/Main"
 import type { Output, Outputs, RtmpDestination } from "../../../types/Output"
+import { getRtmpBitrates } from "../../../types/RtmpEncoding"
 import type { Resolution, Styles } from "../../../types/Settings"
 import type { Item, Layout, LayoutRef, Media, OutSlide, Show, Slide, SlideData, Template, TemplateSettings, Transition } from "../../../types/Show"
 import { AudioAnalyser } from "../../audio/audioAnalyser"
@@ -1020,6 +1021,9 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
     if (!output) return null
 
     const newData = { ...(output.rtmpData || {}), [key]: value }
+    if (["rateControl", "bitrate", "maxBitrate"].includes(key) && newData.rateControl === "vbr") {
+        newData.maxBitrate = getRtmpBitrates("vbr", Number(newData.bitrate || 4000), Number(newData.maxBitrate)).maxBitrate
+    }
 
     if (key === "streaming" && (!output.rtmp || !hasStreamableDestination(newData))) return null
 

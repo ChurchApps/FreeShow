@@ -6,9 +6,14 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { buildEncoderCommand } from "./encoderProfiles"
 
 // only encoder resolution is faked; the ffmpeg processes are real
-const mocked = vi.hoisted(() => ({ encoder: "x264" }))
+const mocked = vi.hoisted(() => ({ encoder: "x264", resolutionError: "", resolutionNotice: "", resolveGate: null as Promise<void> | null }))
 vi.mock("./encoderDetection", () => ({
-    resolveEncoder: async () => mocked.encoder,
+    resolveEncoder: async (_setting: string | undefined, _mode: string | undefined, onNotice?: (message: string) => void) => {
+        if (mocked.resolveGate) await mocked.resolveGate
+        if (mocked.resolutionError) throw new Error(mocked.resolutionError)
+        if (mocked.resolutionNotice) onNotice?.(mocked.resolutionNotice)
+        return mocked.encoder
+    },
     getRtmpEncoderSetting: () => mocked.encoder
 }))
 vi.mock("./ffmpegManager", () => ({ resolveFfmpegPath: async () => "ffmpeg" }))
@@ -52,7 +57,11 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         activeFeeds.clear()
         RtmpStreamer.stopAll()
         mocked.encoder = "x264"
+        mocked.resolutionError = ""
+        mocked.resolutionNotice = ""
+        mocked.resolveGate = null
         setRtmpNoticeListener(() => {})
+        setRtmpStatusListener(() => {})
     })
 
     function feed(id: string, size = { width: WIDTH, height: HEIGHT }) {
@@ -65,6 +74,60 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         activeFeeds.add(interval)
         return interval
     }
+
+    function videoKbps(file: string): number {
+        const data = JSON.parse(execFileSync("ffprobe", ["-v", "error", "-select_streams", "v:0", "-show_packets", "-of", "json", file], { encoding: "utf8" }))
+        const packets = data.packets.filter((p: any) => Number(p.pts_time) >= 1)
+        expect(packets.length).toBeGreaterThan(FPS)
+        const seconds = Number(packets[packets.length - 1].pts_time) - Number(packets[0].pts_time) + 1 / FPS
+        return (packets.reduce((bytes: number, p: any) => bytes + Number(p.size), 0) * 8) / seconds / 1000
+    }
+
+    it("passes CBR through the streamer and holds the target on a static slide", async () => {
+        const file = path.join(tmpDir, "static-cbr.flv")
+        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, rateControl: "cbr", enableAudio: false, encoder: "x264" }, [{ id: "a", url: file, key: "", enabled: true }])
+        const interval = setInterval(() => RtmpStreamer.updateFrame("test-output", bgraFrame(0), { width: WIDTH, height: HEIGHT }), 1000 / FPS)
+        activeFeeds.add(interval)
+        await new Promise((r) => setTimeout(r, 4000))
+        RtmpStreamer.stop("test-output")
+        await new Promise((r) => setTimeout(r, 400))
+        expect(videoKbps(file)).toBeGreaterThan(400)
+        expect(videoKbps(file)).toBeLessThan(600)
+    }, 10000)
+
+    it("restarts the live encoder when the mode changes from CBR to VBR", async () => {
+        const cbrFile = path.join(tmpDir, "changed-from-cbr.flv")
+        const file = path.join(tmpDir, "changed-to-vbr.flv")
+        const config = { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264", rateControl: "cbr" as const }
+        const destinations = [{ id: "a", url: cbrFile, key: "", enabled: true }]
+        await RtmpStreamer.start("test-output", config, destinations)
+        const interval = setInterval(() => RtmpStreamer.updateFrame("test-output", bgraFrame(0), { width: WIDTH, height: HEIGHT }), 1000 / FPS)
+        activeFeeds.add(interval)
+        await new Promise((r) => setTimeout(r, 3400))
+        RtmpStreamer.update("test-output", { ...config, rateControl: "vbr", maxBitrate: 1000 }, [{ ...destinations[0], url: file }])
+        await new Promise((r) => setTimeout(r, 4000))
+        RtmpStreamer.stop("test-output")
+        await new Promise((r) => setTimeout(r, 400))
+        expect(videoKbps(cbrFile)).toBeGreaterThan(400)
+        expect(videoKbps(file)).toBeLessThan(100)
+    }, 10000)
+
+    it.each(["cbr", "vbr"] as const)(
+        "restarts for a peak change only in VBR (%s)",
+        async (rateControl) => {
+            const config = { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, maxBitrate: 1000, rateControl, enableAudio: false, encoder: "x264" }
+            const destinations = [{ id: "a", url: path.join(tmpDir, `peak-${rateControl}.flv`), key: "", enabled: true }]
+            await RtmpStreamer.start("test-output", config, destinations)
+            feed("test-output")
+            await new Promise((r) => setTimeout(r, 2300))
+            expect(RtmpStreamer.getStatus("test-output").a?.state).toBe("live")
+            RtmpStreamer.update("test-output", { ...config, maxBitrate: 1500 }, destinations)
+            await new Promise((r) => setTimeout(r, 200))
+            if (rateControl === "vbr") expect(["reconnecting", "connecting"]).toContain(RtmpStreamer.getStatus("test-output").a?.state)
+            else expect(RtmpStreamer.getStatus("test-output").a?.state).toBe("live")
+        },
+        10000
+    )
 
     it("encodes raw BGRA into a valid flv stream on stdout", async () => {
         const args = buildEncoderCommand({
@@ -160,7 +223,7 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         setRtmpNoticeListener((message) => notices.push(message))
 
         const out = path.join(tmpDir, "fallback.flv")
-        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "vaapi" }, [{ id: "a", url: out, key: "", enabled: true }])
+        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "auto" }, [{ id: "a", url: out, key: "", enabled: true }])
 
         const feeding = feed("test-output")
         await new Promise((r) => setTimeout(r, 3600))
@@ -179,6 +242,46 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         const video = probe(out).streams.find((s: any) => s.codec_type === "video")
         expect(video.codec_name).toBe("h264")
     }, 20000)
+
+    it.each([false, true])("does not start or report errors after pending detection is cancelled (%s)", async (reject) => {
+        let finish!: () => void
+        mocked.resolveGate = new Promise<void>((resolve) => {
+            finish = resolve
+        })
+        mocked.resolutionError = reject ? "Unsupported CBR" : ""
+        const notices: string[] = []
+        setRtmpNoticeListener((message) => notices.push(message))
+        const starting = RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "videotoolbox" }, [{ id: "a", url: path.join(tmpDir, "cancel-probe.flv"), key: "", enabled: true }])
+        await new Promise((resolve) => setImmediate(resolve))
+        RtmpStreamer.stop("test-output")
+        finish()
+        await starting
+        expect(RtmpStreamer.isRunning("test-output")).toBe(false)
+        expect(notices).toEqual([])
+    })
+
+    it("reports an unsupported explicit encoder without leaving a stream running", async () => {
+        mocked.resolutionError = "VideoToolbox (Apple) does not support CBR. Choose VBR or another encoder."
+        const notices: string[] = []
+        const pushes: any[] = []
+        setRtmpNoticeListener((message) => notices.push(message))
+        setRtmpStatusListener((outputId, destinations) => pushes.push({ outputId, destinations }))
+        await expect(RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, rateControl: "cbr", enableAudio: false, encoder: "videotoolbox" }, [{ id: "a", url: path.join(tmpDir, "unsupported.flv"), key: "", enabled: true }])).resolves.toBeUndefined()
+        expect(RtmpStreamer.isRunning("test-output")).toBe(false)
+        expect(notices[0]).toContain("Choose VBR")
+        expect(pushes.at(-1)?.destinations.a.state).toBe("error")
+    })
+
+    it("stops rather than switching to software when an explicit hardware encoder fails at runtime", async () => {
+        mocked.encoder = "vaapi"
+        const notices: string[] = []
+        setRtmpNoticeListener((message) => notices.push(message))
+        await RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "vaapi" }, [{ id: "a", url: path.join(tmpDir, "explicit-failed.flv"), key: "", enabled: true }])
+        feed("test-output")
+        await vi.waitFor(() => expect(RtmpStreamer.isRunning("test-output")).toBe(false), { timeout: 5000 })
+        expect(notices.some((message) => message.includes("Choose another encoder"))).toBe(true)
+        expect(notices.some((message) => message.includes("streaming with software"))).toBe(false)
+    }, 10000)
 
     it("reconnects relays when the encoder respawns, so timestamps do not jump backwards", async () => {
         const out = path.join(tmpDir, "respawn.flv")
@@ -220,6 +323,24 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
 
         expect(RtmpStreamer.getStatus("test-output").a?.state).toBe("idle")
     }, 15000)
+
+    it.each(["stop", "stopAll"] as const)("suppresses fallback notices when %s cancels encoder detection", async (method) => {
+        let finishDetection!: () => void
+        mocked.resolveGate = new Promise((resolve) => {
+            finishDetection = resolve
+        })
+        mocked.resolutionNotice = "VideoToolbox does not support CBR — streaming with software encoding."
+        const notices: string[] = []
+        setRtmpNoticeListener((message) => notices.push(message))
+        const starting = RtmpStreamer.start("test-output", { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, rateControl: "cbr", enableAudio: false, encoder: "auto" }, [{ id: "a", url: path.join(tmpDir, "cancelled-notice.flv"), key: "", enabled: true }])
+        await Promise.resolve()
+        if (method === "stop") RtmpStreamer.stop("test-output")
+        else RtmpStreamer.stopAll()
+        finishDetection()
+        await starting
+        expect(RtmpStreamer.isRunning("test-output")).toBe(false)
+        expect(notices).toEqual([])
+    })
 
     it("does not leave a stream running when stopped mid-startup", async () => {
         const out = path.join(tmpDir, "cancelled.flv")

@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from "child_process"
 import type { RtmpDestination, RtmpDestinationState, RtmpStatus } from "../../types/Output"
+import { getRtmpBitrates, type RtmpRateControl } from "../../types/RtmpEncoding"
 import { resolveEncoder } from "./encoderDetection"
 import { buildEncoderCommand, buildRelayCommand, getProfile, SAMPLE_RATE, type EncoderId } from "./encoderProfiles"
 import { resolveFfmpegPath } from "./ffmpegManager"
@@ -96,6 +97,8 @@ interface StreamConfig {
     height: number
     fps: number
     bitrate: number
+    rateControl?: RtmpRateControl
+    maxBitrate?: number
     enableAudio: boolean
     /** "auto", an explicit encoder id, or undefined */
     encoder?: string
@@ -154,7 +157,9 @@ export class RtmpStreamer {
                 return
             }
 
-            const encoderId = await resolveEncoder(config.encoder)
+            const encoderId = await resolveEncoder(config.encoder, config.rateControl, (message) => {
+                if (!this.cancelled.has(outputId)) noticeListener?.(message)
+            })
             if (this.cancelled.has(outputId)) return
 
             console.log(`[RtmpStreamer] Starting ${outputId} with ${getProfile(encoderId).label} at ${config.width}x${config.height} ${config.fps}fps ${config.bitrate}k`)
@@ -179,6 +184,12 @@ export class RtmpStreamer {
 
             // the encoder is spawned once the first frame reveals the real capture size
             this.syncDestinations(outputId, destinations)
+        } catch (error) {
+            if (!this.cancelled.has(outputId)) {
+                const message = `Streaming could not start: ${error instanceof Error ? error.message : "The selected encoder could not be initialized."}`
+                console.error(`[RtmpStreamer] ${message}`)
+                this.reportFailure(outputId, destinations, message)
+            }
         } finally {
             this.starting.delete(outputId)
             this.cancelled.delete(outputId)
@@ -189,6 +200,15 @@ export class RtmpStreamer {
                 this.update(outputId, pending.config, pending.destinations)
             }
         }
+    }
+
+    private static reportFailure(outputId: string, destinations: RtmpDestination[], message: string) {
+        const status: RtmpStatus = {}
+        for (const destination of destinations) {
+            if (destination.enabled) status[destination.id] = { state: "error", error: message }
+        }
+        statusListener?.(outputId, status)
+        noticeListener?.(message)
     }
 
     static stop(outputId: string) {
@@ -241,6 +261,8 @@ export class RtmpStreamer {
             outputHeight: config.height,
             fps: config.fps,
             bitrate: config.bitrate,
+            rateControl: config.rateControl,
+            maxBitrate: config.maxBitrate,
             enableAudio: config.enableAudio,
             sampleRate: streamer.sampleRate || SAMPLE_RATE
         })
@@ -370,6 +392,13 @@ export class RtmpStreamer {
         }
 
         const diedEarly = uptime < HW_FAILURE_WINDOW_MS
+        if (code !== 0 && diedEarly && streamer.config.encoder && streamer.config.encoder !== "auto") {
+            const message = `${getProfile(streamer.encoderId).label} failed to start. Choose another encoder or Auto.`
+            const destinations = [...streamer.relays.values()].map((relay) => relay.destination)
+            this.stop(streamer.outputId)
+            this.reportFailure(streamer.outputId, destinations, message)
+            return
+        }
         if (code !== 0 && diedEarly && streamer.encoderId !== "x264" && !streamer.triedSoftwareFallback) {
             const label = getProfile(streamer.encoderId).label
             console.warn(`[RtmpStreamer] ${label} failed to start, falling back to software encoding`)
@@ -560,7 +589,8 @@ export class RtmpStreamer {
     private static fanOut(streamer: StreamInstance, chunk: Buffer) {
         if (!streamer.flvHeader) streamer.flvHeader = chunk
 
-        const bufferCap = getRelayBufferCap(streamer.config.bitrate)
+        const rates = getRtmpBitrates(streamer.config.rateControl, streamer.config.bitrate, streamer.config.maxBitrate)
+        const bufferCap = getRelayBufferCap(rates.maxBitrate)
         for (const relay of streamer.relays.values()) {
             const stdin = relay.process?.stdin
             if (!stdin || stdin.destroyed) continue
@@ -682,7 +712,7 @@ export class RtmpStreamer {
 
 /** Destination changes are relay-only; anything here means the encoder has to be respawned. */
 function configRequiresRestart(prev: StreamConfig, next: StreamConfig): boolean {
-    return prev.width !== next.width || prev.height !== next.height || prev.fps !== next.fps || prev.bitrate !== next.bitrate || prev.enableAudio !== next.enableAudio || prev.encoder !== next.encoder
+    return prev.width !== next.width || prev.height !== next.height || prev.fps !== next.fps || prev.bitrate !== next.bitrate || prev.enableAudio !== next.enableAudio || prev.encoder !== next.encoder || prev.rateControl !== next.rateControl || (next.rateControl === "vbr" && prev.maxBitrate !== next.maxBitrate)
 }
 
 function buildDestinationUrl(destination: { url: string; key: string }): string {

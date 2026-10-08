@@ -1,4 +1,5 @@
 import type { Cropping, Resolution } from "./Settings"
+import type { RtmpRateControl } from "./RtmpEncoding"
 import type { OutBackground, OutScene, OutSlide, OutTransition } from "./Show"
 
 export interface Outputs {
@@ -53,6 +54,9 @@ export interface RtmpData {
     streaming?: boolean
     fps?: string | number
     bitrate?: string | number
+    /** Undefined preserves the encoder's legacy rate control. */
+    rateControl?: RtmpRateControl
+    maxBitrate?: string | number
     encoder?: string
     destinations?: RtmpDestination[]
     url?: string // deprecated, only used in v1.6.4
