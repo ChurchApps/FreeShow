@@ -51,8 +51,7 @@ export class LyricSearch {
                 if (searchedSong.id.toString() === song.key) {
                     result = await searchedSong.lyrics()
                     // remove extra song info
-                    const songInfo = result.indexOf("Read More")
-                    if (songInfo > -1) result = result.slice(songInfo + 9).trim()
+                    result = result.replace(/^[\s\S]*?\d*\s*Contributors[\s\S]*?(?:Lyrics[\s\S]*?Read More|Lyrics)/, "").trim()
                     break
                 }
             }
