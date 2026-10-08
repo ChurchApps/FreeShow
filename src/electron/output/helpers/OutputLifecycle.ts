@@ -116,8 +116,9 @@ export class OutputLifecycle {
         this.pendingCaptureStart[id] = setTimeout(() => {
             delete this.pendingCaptureStart[id]
 
-            if (!CaptureHelper.Lifecycle || !OutputHelper.getOutput(id)) return // window closed before timeout finished
-            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, omt: output.omt || false, blackmagic: !!output.blackmagic, webrtc: !!output.webrtcData?.streaming, rtmp: !!output.rtmpData?.streaming })
+            const currentOutput = OutputHelper.getOutput(id)
+            if (!CaptureHelper.Lifecycle || !currentOutput || currentOutput.window !== outputWindow) return // window closed or replaced before timeout finished
+            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, omt: output.omt || false, blackmagic: !!output.blackmagic, webrtc: !!currentOutput.webrtcData?.streaming, rtmp: !!currentOutput.rtmpData?.streaming })
         }, 1200)
 
         // NDI
@@ -861,6 +862,7 @@ export class OutputLifecycle {
         this.clearPendingCaptureStart(id)
 
         CaptureHelper.Lifecycle.stopCapture(id)
+        this.releaseOsrCaptureTextures(id)
         NdiSender.stopSenderNDI(id)
         OmtSender.stopSenderOMT(id)
         BlackmagicSender.stop(id)
