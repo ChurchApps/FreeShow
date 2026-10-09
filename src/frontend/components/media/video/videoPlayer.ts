@@ -244,7 +244,8 @@ export class VideoPlayer {
 
         if (scene && !styleId) return true
 
-        const layers = get(styles)[styleId || ""]?.layers || defaultLayers
+        const rawLayers = get(styles)[styleId || ""]?.layers
+        const layers = Array.isArray(rawLayers) ? rawLayers : defaultLayers
         return !layers.includes("background")
     }
 
