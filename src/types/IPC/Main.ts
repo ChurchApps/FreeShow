@@ -146,7 +146,6 @@ export enum Main {
     CAN_SYNC = "CAN_SYNC",
     GET_TEAMS = "GET_TEAMS",
     CLOUD_DATA = "CLOUD_DATA",
-    CLOUD_CHANGED = "CLOUD_CHANGED",
     CLOUD_SYNC = "CLOUD_SYNC",
     RESTORE_CLOUD_BACKUP = "RESTORE_CLOUD_BACKUP",
     GET_CONVERSATION_ID = "GET_CONVERSATION_ID",
@@ -265,7 +264,6 @@ export interface MainSendPayloads {
     [Main.CAN_SYNC]?: { id: SyncProviderId }
     [Main.GET_TEAMS]?: { id: SyncProviderId }
     [Main.CLOUD_DATA]: { id: SyncProviderId; churchId: string; teamId: string }
-    [Main.CLOUD_CHANGED]: { id: SyncProviderId; churchId: string; teamId: string }
     [Main.CLOUD_SYNC]: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" | "upload" | "replace" }
     [Main.RESTORE_CLOUD_BACKUP]: { id: SyncProviderId; churchId: string; teamId: string }
     [Main.GET_CONVERSATION_ID]: { teamId: string }
@@ -384,7 +382,6 @@ export interface MainReturnPayloads {
     [Main.CAN_SYNC]: Promise<boolean>
     [Main.GET_TEAMS]: Promise<{ id: string; churchId: string; name: string }[]>
     [Main.CLOUD_DATA]: Promise<boolean>
-    [Main.CLOUD_CHANGED]: Promise<boolean>
     [Main.CLOUD_SYNC]: Promise<{ success?: boolean; error?: string; changedFiles?: any[]; downloadedShowIds?: string[]; replacedShows?: string[] }>
     [Main.GET_CONVERSATION_ID]: Promise<string | null>
     [Main.SEND_SOCKET_MESSAGE]: Promise<boolean>

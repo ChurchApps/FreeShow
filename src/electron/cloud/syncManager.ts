@@ -39,13 +39,6 @@ export async function hasTeamData({ id, churchId, teamId }: { id: SyncProviderId
     return await provider.existingData(churchId, teamId)
 }
 
-export async function hasDataChanged({ id, churchId, teamId }: { id: SyncProviderId; churchId: string; teamId: string }) {
-    const provider = getManager[id]()
-    if (!provider) return false
-
-    return await provider.hasChanged(churchId, teamId)
-}
-
 async function deleteLocalFiles() {
     // reset syncable (portable) Config files
     // no need, these will get auto replaced by the downloaded files
@@ -94,6 +87,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     if (!DEBUG_MODE && (await doesPathExistAsync(EXTRACT_LOCATION))) await deleteFolderAsync(EXTRACT_LOCATION)
 
     const cloudDataPath = await provider.getData(data.churchId, data.teamId, EXTRACT_LOCATION)
+    if (cloudDataPath === "unchanged") return await finish(true)
     if (!cloudDataPath) {
         const uploadResult = await uploadLocalData()
         return await finish(uploadResult.success, uploadResult.error)
@@ -492,17 +486,14 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     async function uploadBackupData() {
         try {
             console.log("Syncing backup data")
-            const backupPath = await provider!.getBackup(data.churchId, data.teamId, EXTRACT_LOCATION)
-
-            // if no cloud backup exists, upload the newest local zip
-            if (!backupPath) return await upload()
+            // only check the date (0 if no cloud backup exists), no need to download it
+            const backupModified = await provider!.getBackupModified(data.churchId, data.teamId)
 
             const oneWeek = ONE_HOUR * 24 * 7
             const now = Date.now()
 
-            // return if no cloud backup is older than a week
-            const stats = await getFileStatsAsync(backupPath)
-            if (stats && now - stats.mtime.getTime() < oneWeek) return false
+            // return if cloud backup is less than a week old
+            if (now - backupModified < oneWeek) return false
 
             return await upload()
 
