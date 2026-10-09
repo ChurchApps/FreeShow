@@ -5,13 +5,12 @@ import { join } from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { ChurchAppsProvider } from "../contentProviders"
 import { ContentProviderRegistry } from "../contentProviders"
+import { getChurchAppsApiUrl, getChurchAppsContentUrl } from "../contentProviders/churchApps/types"
 import { getContentProviderAccess } from "../data/contentProviders"
 import { _store, getStore, safeStoreSet } from "../data/store"
 import { sendToMain } from "../IPC/main"
 import { httpsRequest } from "../utils/requests"
 
-const CONTENT_HOSTNAME = "https://content.churchapps.org"
-const HOSTNAME = "https://api.churchapps.org"
 const SCOPE = "plans"
 const ZIP_TYPE = "application/zip"
 
@@ -47,7 +46,7 @@ class ChurchAppsSyncManager {
         console.log("Checking data...")
 
         return new Promise((resolve) => {
-            httpsRequest(CONTENT_HOSTNAME, path, "HEAD", {}, {}, response, "", true)
+            httpsRequest(getChurchAppsContentUrl(), path, "HEAD", {}, {}, response, "", true)
 
             function response(err: any, data?: any) {
                 if (err) {
@@ -76,7 +75,7 @@ class ChurchAppsSyncManager {
         console.log("Downloading data...")
 
         const filePath = await new Promise<string | null>((resolve) => {
-            httpsRequest(CONTENT_HOSTNAME, path, "GET", {}, {}, response, join(outputFolderPath, fileName), false, this.TWO_MINUTES)
+            httpsRequest(getChurchAppsContentUrl(), path, "GET", {}, {}, response, join(outputFolderPath, fileName), false, this.TWO_MINUTES)
 
             function response(err: any, filePath?: string) {
                 if (err) {
@@ -151,7 +150,7 @@ class ChurchAppsSyncManager {
         const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
         return new Promise((resolve) => {
-            httpsRequest(HOSTNAME, path, "POST", headers, params, (err, data: Buffer) => {
+            httpsRequest(getChurchAppsApiUrl(), path, "POST", headers, params, (err, data: Buffer) => {
                 if (err) {
                     console.error("Failed to get token:", err)
                     if (fileName !== "current.zip") return resolve(null)

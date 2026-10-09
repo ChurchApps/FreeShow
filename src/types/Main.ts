@@ -11,6 +11,12 @@ export interface Config {
     graphicsDevice: string | null
     autoErrorReporting?: boolean
     mediaFolderPath?: string
+
+    // ChurchApps API URLs
+    churchAppsApiUrl?: string
+    churchAppsAppUrl?: string
+    churchAppsContentUrl?: string
+    churchAppsLessonsUrl?: string
 }
 
 export interface OS {
