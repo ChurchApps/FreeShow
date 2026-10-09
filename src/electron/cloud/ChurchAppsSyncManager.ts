@@ -1,6 +1,8 @@
 import axios from "axios"
+import crypto from "crypto"
+import { app } from "electron"
 import fs from "fs"
-import { join } from "path"
+import { dirname, join } from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { ChurchAppsProvider } from "../contentProviders"
 import { ContentProviderRegistry } from "../contentProviders"
@@ -34,33 +36,18 @@ class ChurchAppsSyncManager {
 
     async existingData(churchId: string, teamId: string) {
         const headers = await this.getHeaders(churchId, teamId)
-        this.isCloudNewer(headers) // update changedAt
         return !!headers
     }
 
-    async hasChanged(churchId: string, teamId: string) {
-        const headers = await this.getHeaders(churchId, teamId)
-        return this.isCloudNewer(headers)
-    }
-
-    private changedAt = 0
-    private isCloudNewer(headers: any): boolean {
-        if (!headers) return false
-
-        const remoteLastModified = new Date(headers["last-modified"]).getTime()
-        const localLastModified = this.changedAt
-
-        this.changedAt = remoteLastModified
-        return remoteLastModified > localLastModified
-    }
-
-    // Simple HTTP GET to content S3 web server.  No auth needed.
+    // Simple HTTP HEAD to content S3 web server.  No auth needed.
     private async getHeaders(churchId: string, teamId: string, fileName = "current.zip"): Promise<any> {
-        const path = `/${churchId}/files/group/${teamId}/${fileName}`
+        // cache buster so CloudFront never returns a stale ETag / Last-Modified
+        const randomNumber = Math.floor(Math.random() * 1000000)
+        const path = `/${churchId}/files/group/${teamId}/${fileName}?cacheBuster=${randomNumber}`
         console.log("Checking data...")
 
         return new Promise((resolve) => {
-            httpsRequest(CONTENT_HOSTNAME, path, "GET", {}, {}, response, "", true)
+            httpsRequest(CONTENT_HOSTNAME, path, "HEAD", {}, {}, response, "", true)
 
             function response(err: any, data?: any) {
                 if (err) {
@@ -78,11 +65,20 @@ class ChurchAppsSyncManager {
     // Fetch from S3 content server. No auth needed.
     private TWO_MINUTES = 2 * 60 * 1000
     async getData(churchId: string, teamId: string, outputFolderPath: string, fileName = "current.zip"): Promise<string | null> {
+        const isCurrent = fileName === "current.zip"
+        if (isCurrent) {
+            const cachedPath = await this.getUnchangedCache(churchId, teamId)
+            if (cachedPath) {
+                console.log("Cloud data unchanged, using local copy")
+                return cachedPath
+            }
+        }
+
         const randomNumber = Math.floor(Math.random() * 1000000)
         const path = `/${churchId}/files/group/${teamId}/${fileName}?cacheBuster=${randomNumber}`
         console.log("Downloading data...")
 
-        return new Promise((resolve) => {
+        const filePath = await new Promise<string | null>((resolve) => {
             httpsRequest(CONTENT_HOSTNAME, path, "GET", {}, {}, response, join(outputFolderPath, fileName), false, this.TWO_MINUTES)
 
             function response(err: any, filePath?: string) {
@@ -108,6 +104,45 @@ class ChurchAppsSyncManager {
                 return resolve(filePath || null)
             }
         })
+
+        if (filePath && isCurrent) await this.setCache(teamId, filePath)
+        return filePath
+    }
+
+    // CACHE
+
+    // Keep a copy of the last current.zip downloaded/uploaded, so it's only downloaded again when another device changed it.
+    // S3 ETag is the MD5 of the file for single-part uploads; anything else (multipart, KMS) never matches and falls back to a full download.
+    private getCachePath(teamId: string) {
+        return join(app.getPath("userData"), "cloud-cache", `${teamId}.zip`)
+    }
+
+    private async getUnchangedCache(churchId: string, teamId: string): Promise<string | null> {
+        const cachePath = this.getCachePath(teamId)
+        if (!fs.existsSync(cachePath)) return null
+
+        const headers = await this.getHeaders(churchId, teamId)
+        const etag = headers?.etag?.replace(/"/g, "")
+        if (!etag) return null
+
+        try {
+            return etag === (await md5File(cachePath)) ? cachePath : null
+        } catch (err) {
+            console.error("Could not read cloud cache:", err)
+            return null
+        }
+    }
+
+    private async setCache(teamId: string, filePath: string) {
+        const cachePath = this.getCachePath(teamId)
+        if (filePath === cachePath) return
+
+        try {
+            await fs.promises.mkdir(dirname(cachePath), { recursive: true })
+            await fs.promises.copyFile(filePath, cachePath)
+        } catch (err) {
+            console.error("Could not update cloud cache:", err)
+        }
     }
 
     async getWriteToken(teamId: string, fileName: string): Promise<any> {
@@ -167,6 +202,7 @@ class ChurchAppsSyncManager {
             formData.append("file", blob, fileName)
             await axios.post(presigned.url, formData, { headers: { "Content-Type": "multipart/form-data" }, timeout: 60000 })
 
+            if (fileName === "current.zip") await this.setCache(teamId, filePath)
             return true
         } catch (err) {
             console.error("Failed to upload data:", err)
@@ -180,9 +216,25 @@ class ChurchAppsSyncManager {
         return await this.getData(churchId, teamId, outputFolderPath, "previous.zip")
     }
 
+    // 0 if no backup exists
+    async getBackupModified(churchId: string, teamId: string): Promise<number> {
+        const headers = await this.getHeaders(churchId, teamId, "previous.zip")
+        return headers?.["last-modified"] ? new Date(headers["last-modified"]).getTime() : 0
+    }
+
     async uploadBackup(teamId: string, filePath: string): Promise<boolean> {
         return await this.uploadData(teamId, filePath, "previous.zip")
     }
+}
+
+function md5File(filePath: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const hash = crypto.createHash("md5")
+        fs.createReadStream(filePath)
+            .on("data", (chunk) => hash.update(chunk))
+            .on("end", () => resolve(hash.digest("hex")))
+            .on("error", reject)
+    })
 }
 
 let syncManager: ChurchAppsSyncManager | null = null

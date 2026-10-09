@@ -16,7 +16,7 @@ import { SpeechToText } from "../ai/stt/SpeechToTextManager"
 import { getAudioMetadata } from "../audio/audio"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 import { CaptureHelper } from "../capture/CaptureHelper"
-import { canSync, getSyncTeams, hasDataChanged, hasTeamData, markAsNewSync, restoreCloudBackup, syncData } from "../cloud/syncManager"
+import { canSync, getSyncTeams, hasTeamData, markAsNewSync, restoreCloudBackup, syncData } from "../cloud/syncManager"
 import { ChurchAppsChat } from "../contentProviders/churchApps/ChurchAppsChat"
 import { ContentProviderRegistry } from "../contentProviders/ContentProviderRegistry"
 import { deleteBackup, getBackups, restoreFiles } from "../data/backup"
@@ -183,7 +183,6 @@ export const mainResponses: MainResponses = {
     [Main.CAN_SYNC]: (data) => canSync(data),
     [Main.GET_TEAMS]: (data) => getSyncTeams(data),
     [Main.CLOUD_DATA]: (data) => hasTeamData(data),
-    [Main.CLOUD_CHANGED]: (data) => hasDataChanged(data),
     [Main.CLOUD_SYNC]: (data) => syncData(data),
     [Main.RESTORE_CLOUD_BACKUP]: (data) => restoreCloudBackup(data),
     [Main.GET_CONVERSATION_ID]: (data) => getConversationId(data.teamId),
