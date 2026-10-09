@@ -1,14 +1,14 @@
 import axios from "axios"
 import crypto from "crypto"
-import { app } from "electron"
 import fs from "fs"
-import { dirname, join } from "path"
+import { join } from "path"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { ChurchAppsProvider } from "../contentProviders"
 import { ContentProviderRegistry } from "../contentProviders"
+import { getContentProviderAccess } from "../data/contentProviders"
+import { _store, getStore, safeStoreSet } from "../data/store"
 import { sendToMain } from "../IPC/main"
 import { httpsRequest } from "../utils/requests"
-import { getContentProviderAccess } from "../data/contentProviders"
 
 const CONTENT_HOSTNAME = "https://content.churchapps.org"
 const HOSTNAME = "https://api.churchapps.org"
@@ -64,14 +64,11 @@ class ChurchAppsSyncManager {
 
     // Fetch from S3 content server. No auth needed.
     private TWO_MINUTES = 2 * 60 * 1000
-    async getData(churchId: string, teamId: string, outputFolderPath: string, fileName = "current.zip"): Promise<string | null> {
+    async getData(churchId: string, teamId: string, outputFolderPath: string, fileName = "current.zip"): Promise<string | "unchanged" | null> {
         const isCurrent = fileName === "current.zip"
-        if (isCurrent) {
-            const cachedPath = await this.getUnchangedCache(churchId, teamId)
-            if (cachedPath) {
-                console.log("Cloud data unchanged, using local copy")
-                return cachedPath
-            }
+        if (isCurrent && (await this.isCloudDataUnchanged(churchId, teamId))) {
+            console.log("Cloud data unchanged, skipping sync")
+            return "unchanged"
         }
 
         const randomNumber = Math.floor(Math.random() * 1000000)
@@ -105,44 +102,45 @@ class ChurchAppsSyncManager {
             }
         })
 
-        if (filePath && isCurrent) await this.setCache(teamId, filePath)
+        if (filePath && isCurrent) await this.setCache(teamId, churchId)
         return filePath
     }
 
     // CACHE
 
-    // Keep a copy of the last current.zip downloaded/uploaded, so it's only downloaded again when another device changed it.
-    // S3 ETag is the MD5 of the file for single-part uploads; anything else (multipart, KMS) never matches and falls back to a full download.
-    private getCachePath(teamId: string) {
-        return join(app.getPath("userData"), "cloud-cache", `${teamId}.zip`)
+    // Keep locally stored ETag/MD5 of current.zip to avoid re-downloading when the cloud copy is unchanged
+    private getStoredMD5(teamId: string): string | null {
+        const syncCache = getStore("CACHE_SYNC") || {}
+        return syncCache.cloudEtags?.[teamId] || null
     }
 
-    private async getUnchangedCache(churchId: string, teamId: string): Promise<string | null> {
-        const cachePath = this.getCachePath(teamId)
-        if (!fs.existsSync(cachePath)) return null
+    private async storeMD5(teamId: string, etag: string) {
+        const syncCache = getStore("CACHE_SYNC") || {}
+        if (!syncCache.cloudEtags) syncCache.cloudEtags = {}
+        syncCache.cloudEtags[teamId] = etag
+
+        if (_store.CACHE_SYNC) await safeStoreSet(_store.CACHE_SYNC, syncCache, "CACHE_SYNC")
+    }
+
+    private async isCloudDataUnchanged(churchId: string, teamId: string): Promise<boolean> {
+        const lastEtag = this.getStoredMD5(teamId)
+        if (!lastEtag) return false
 
         const headers = await this.getHeaders(churchId, teamId)
         const etag = headers?.etag?.replace(/"/g, "")
-        if (!etag) return null
-
-        try {
-            return etag === (await md5File(cachePath)) ? cachePath : null
-        } catch (err) {
-            console.error("Could not read cloud cache:", err)
-            return null
-        }
+        return !!etag && etag === lastEtag
     }
 
-    private async setCache(teamId: string, filePath: string) {
-        const cachePath = this.getCachePath(teamId)
-        if (filePath === cachePath) return
+    private async setCache(teamId: string, churchId: string) {
+        const headers = await this.getHeaders(churchId, teamId)
+        if (headers?.etag) await this.setMD5(teamId, headers.etag)
+    }
 
-        try {
-            await fs.promises.mkdir(dirname(cachePath), { recursive: true })
-            await fs.promises.copyFile(filePath, cachePath)
-        } catch (err) {
-            console.error("Could not update cloud cache:", err)
-        }
+    private async setMD5(teamId: string, content: Buffer | string) {
+        const etag = typeof content === "string" ? content.replace(/"/g, "") : crypto.createHash("md5").update(content).digest("hex")
+        if (!etag) return
+
+        await this.storeMD5(teamId, etag)
     }
 
     async getWriteToken(teamId: string, fileName: string): Promise<any> {
@@ -202,7 +200,7 @@ class ChurchAppsSyncManager {
             formData.append("file", blob, fileName)
             await axios.post(presigned.url, formData, { headers: { "Content-Type": "multipart/form-data" }, timeout: 60000 })
 
-            if (fileName === "current.zip") await this.setCache(teamId, filePath)
+            if (fileName === "current.zip") await this.setMD5(teamId, fileBuffer)
             return true
         } catch (err) {
             console.error("Failed to upload data:", err)
@@ -225,16 +223,6 @@ class ChurchAppsSyncManager {
     async uploadBackup(teamId: string, filePath: string): Promise<boolean> {
         return await this.uploadData(teamId, filePath, "previous.zip")
     }
-}
-
-function md5File(filePath: string): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const hash = crypto.createHash("md5")
-        fs.createReadStream(filePath)
-            .on("data", (chunk) => hash.update(chunk))
-            .on("end", () => resolve(hash.digest("hex")))
-            .on("error", reject)
-    })
 }
 
 let syncManager: ChurchAppsSyncManager | null = null

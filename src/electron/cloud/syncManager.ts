@@ -87,6 +87,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     if (!DEBUG_MODE && (await doesPathExistAsync(EXTRACT_LOCATION))) await deleteFolderAsync(EXTRACT_LOCATION)
 
     const cloudDataPath = await provider.getData(data.churchId, data.teamId, EXTRACT_LOCATION)
+    if (cloudDataPath === "unchanged") return await finish(true)
     if (!cloudDataPath) {
         const uploadResult = await uploadLocalData()
         return await finish(uploadResult.success, uploadResult.error)
