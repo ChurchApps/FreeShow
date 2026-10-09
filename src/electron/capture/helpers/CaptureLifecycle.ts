@@ -197,20 +197,9 @@ export class CaptureLifecycle {
 
         console.info("Capture - stopping: " + id)
 
-        OutputHelper.Lifecycle.releaseOsrCaptureTextures(id)
-        if (!(output as any).follower) this.cleanupListeners(capture.window)
         delete output.captureOptions
         this.updateWebRtcHostState()
         this.updateRtmpState()
-    }
-
-    private static cleanupListeners(window: any) {
-        if (!window || window.isDestroyed()) return
-
-        window.removeAllListeners()
-        if (window.webContents && !window.webContents.isDestroyed?.()) {
-            window.webContents.removeAllListeners()
-        }
     }
 
     private static updateWebRtcHostState() {
@@ -255,13 +244,13 @@ export class CaptureLifecycle {
             if (!o.id) return
 
             if (!o.rtmpData?.streaming) {
-                if (RtmpStreamer.isRunning(o.id)) RtmpStreamer.stop(o.id)
+                RtmpStreamer.stop(o.id)
                 return
             }
 
             const destinations = (o.rtmpData.destinations || []).filter((d) => d.enabled && d.url)
             if (!destinations.length) {
-                if (RtmpStreamer.isRunning(o.id)) RtmpStreamer.stop(o.id)
+                RtmpStreamer.stop(o.id)
                 return
             }
 
