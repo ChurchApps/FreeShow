@@ -120,9 +120,10 @@
         style += `margin-bottom: ${bottom + paddingTops}px;`
 
         let totalHorizontalMargin = minusWidth + paddingSides * 2
-        if (totalHorizontalMargin) style += `width: calc(100% - ${totalHorizontalMargin}px);`
+        style += `width: calc(100% - ${totalHorizontalMargin}px);`
         style += `margin-inline-end: ${right + paddingSides}px;`
         style += `margin-inline-start: ${left + paddingSides}px;`
+        style += `height: auto;`
 
         return style
     }
