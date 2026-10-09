@@ -76,7 +76,6 @@ vi.mock("./importHelpers", () => ({
     }
 }))
 
-import { TranslationMethod } from "../../types/Songbeamer"
 import { convertSongbeamerFiles } from "./songbeamer"
 
 function layoutNotes(show: any): string {
@@ -107,8 +106,7 @@ describe("convertSongbeamerFiles mixed metadata encoding", () => {
                 { name: "latin1", content: latin1Song, encoding: "latin1" }
             ],
             category: "songbeamer",
-            encoding: "utf8",
-            translationMethod: TranslationMethod.MultiLine
+            encoding: "utf8"
         })
 
         expect(h.capturedTempShows).toHaveLength(2)
