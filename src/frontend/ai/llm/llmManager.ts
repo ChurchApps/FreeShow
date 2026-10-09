@@ -1,9 +1,10 @@
-import { get } from "svelte/store"
+import { get, writable, type Writable } from "svelte/store"
 import type { AIProviderId, MatchResult } from "../../../types/ai/Ai"
 import { Main } from "../../../types/IPC/Main"
 import { requestMain } from "../../IPC/main"
 import { ai } from "../../stores"
-import { CHAT_RESPONSE_SCHEMA, CHAT_SYSTEM_PROMPT, STT_CONTROLLER_PROMPT, STT_CONTROLLER_SCHEMA } from "./prompts"
+import { getEditItems } from "../../components/edit/scripts/itemHelpers"
+import { CHAT_RESPONSE_SCHEMA, CHAT_SYSTEM_PROMPT, getSlideChatSystemPrompt, SLIDE_CHAT_RESPONSE_SCHEMA, STT_CONTROLLER_PROMPT, STT_CONTROLLER_SCHEMA } from "./prompts"
 import type { FreeShowAction } from "../manager/ChatAction"
 
 export interface ChatMessage {
@@ -13,6 +14,13 @@ export interface ChatMessage {
     timestamp: number
     action?: FreeShowAction
 }
+
+export interface ChatSendOptions {
+    systemPrompt?: string
+    jsonSchema?: any
+}
+
+export const chatSessions: Writable<Record<string, ChatMessage[]>> = writable({})
 
 interface LLMRequestOptions {
     systemPrompt?: string
@@ -113,41 +121,66 @@ export class LLMManager {
 
     // --- Chat Helper ---
 
-    private chatHistory: ChatMessage[] = []
-
-    getHistory(): ChatMessage[] {
-        return [...this.chatHistory]
+    getHistory(sessionKey: string = "default"): ChatMessage[] {
+        return getChatHistory(sessionKey)
     }
 
-    clearHistory(): void {
-        this.chatHistory = []
+    clearHistory(sessionKey: string = "default"): void {
+        clearChatHistory(sessionKey)
     }
 
-    addMessage(role: ChatMessage["role"], content: string, action?: FreeShowAction): ChatMessage {
-        const message: ChatMessage = {
-            id: crypto.randomUUID(),
-            role,
-            content,
-            timestamp: Date.now(),
-            ...(action ? { action } : {})
-        }
-        this.chatHistory.push(message)
-        return message
+    addMessage(sessionKey: string, role: ChatMessage["role"], content: string, action?: FreeShowAction): ChatMessage {
+        return addChatMessage(sessionKey, role, content, action)
     }
 
     private readonly DEBUG_MODE = false
-    async sendMessage(prompt: string): Promise<ChatMessage | null> {
+    async sendMessage(sessionKeyOrPrompt: string, promptOrOptions?: string | ChatSendOptions, maybeOptions?: ChatSendOptions): Promise<ChatMessage | null> {
+        let sessionKey = "default"
+        let prompt = ""
+        let options: ChatSendOptions = {}
+
+        if (typeof promptOrOptions === "string") {
+            sessionKey = sessionKeyOrPrompt
+            prompt = promptOrOptions
+            options = maybeOptions || {}
+        } else {
+            prompt = sessionKeyOrPrompt
+            options = promptOrOptions || {}
+        }
+
         const trimmed = prompt.trim()
         if (!trimmed) return null
 
-        if (this.DEBUG_MODE) console.log("[CHAT] Sending message:", trimmed)
+        if (this.DEBUG_MODE) console.log(`[CHAT:${sessionKey}] Sending message:`, trimmed)
 
-        this.addMessage("user", trimmed)
+        this.addMessage(sessionKey, "user", trimmed)
 
-        const messages = this.chatHistory.map(({ role, content }) => ({ role, content }))
+        const currentHistory = this.getHistory(sessionKey)
+        const messages = currentHistory.map(({ role, content, action }) => {
+            if (role === "assistant" && action?.data?.items) {
+                return {
+                    role,
+                    content: JSON.stringify({ content, items: action.data.items })
+                }
+            }
+            return { role, content }
+        })
+        const systemPrompt =
+            options.systemPrompt ||
+            (sessionKey.startsWith("overlay")
+                ? getSlideChatSystemPrompt("overlay", getEditItems())
+                : sessionKey.startsWith("template")
+                  ? getSlideChatSystemPrompt("template", getEditItems())
+                  : sessionKey.includes("slide")
+                    ? getSlideChatSystemPrompt("slide", getEditItems())
+                    : CHAT_SYSTEM_PROMPT)
+
+        const isSlideTarget = sessionKey.startsWith("overlay") || sessionKey.startsWith("template") || sessionKey.includes("slide")
+        const defaultSchema = isSlideTarget ? SLIDE_CHAT_RESPONSE_SCHEMA : CHAT_RESPONSE_SCHEMA
+
         const rawResponse = await this.request<any>({
-            systemPrompt: CHAT_SYSTEM_PROMPT,
-            jsonSchema: CHAT_RESPONSE_SCHEMA,
+            systemPrompt,
+            jsonSchema: options.jsonSchema || defaultSchema,
             prompt: trimmed,
             messages
         })
@@ -157,12 +190,51 @@ export class LLMManager {
         let content = rawResponse.content || rawResponse.text || rawResponse.response || ""
         content = content.replace(/\s*content\s*$/i, "").trim()
 
-        const action = rawResponse.action?.type && rawResponse.action?.data ? (rawResponse.action as FreeShowAction) : undefined
+        let action: FreeShowAction | undefined = rawResponse.action?.type && rawResponse.action?.data ? (rawResponse.action as FreeShowAction) : undefined
 
-        if (!content) {
-            content = action ? `Create ${action.type.replace("CREATE_", "").toLowerCase()}?` : "Incorrect response format received. Try again!"
+        if (!action && Array.isArray(rawResponse.items) && rawResponse.items.length > 0) {
+            action = {
+                type: "APPLY_TO_SLIDE",
+                data: {
+                    items: rawResponse.items
+                }
+            }
         }
 
-        return this.addMessage("assistant", content, action)
+        if (!content) {
+            content = action ? `Apply changes to ${sessionKey.startsWith("overlay") ? "overlay" : sessionKey.startsWith("template") ? "template" : "slide"}?` : "Incorrect response format received. Try again!"
+        }
+
+        return this.addMessage(sessionKey, "assistant", content, action)
     }
+}
+
+// CHAT
+
+export function getChatHistory(sessionKey: string = "default"): ChatMessage[] {
+    return get(chatSessions)[sessionKey] || []
+}
+
+export function clearChatHistory(sessionKey: string = "default"): void {
+    chatSessions.update((sessions) => {
+        delete sessions[sessionKey]
+        return sessions
+    })
+}
+
+export function addChatMessage(sessionKey: string, role: ChatMessage["role"], content: string, action?: FreeShowAction): ChatMessage {
+    const message: ChatMessage = {
+        id: crypto.randomUUID(),
+        role,
+        content,
+        timestamp: Date.now(),
+        ...(action ? { action } : {})
+    }
+
+    chatSessions.update((sessions) => {
+        const history = sessions[sessionKey] || []
+        return { ...sessions, [sessionKey]: [...history, message] }
+    })
+
+    return message
 }

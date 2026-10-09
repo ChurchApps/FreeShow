@@ -579,7 +579,8 @@
         "reset_all_action": "This will reset the whole program, but not delete the .show files in your \"Shows\"-folder.",
         "quit": "Quit without saving",
         "save_quit": "Save & Quit",
-        "ai_model_manager": "Manage models"
+        "ai_model_manager": "Manage models",
+        "ai_chat": "Chat"
     },
     "confirm": {
         "statement_slide_exists_arrangement": "Slide exists in a different arrangement!",

@@ -1,6 +1,7 @@
 import { onDestroy, type ComponentType } from "svelte"
 import { get } from "svelte/store"
 import type { Popups } from "../../types/Main"
+import AiChat from "../ai/components/floating/AiChat.svelte"
 import AiModelManager from "../ai/components/popups/AiModelManager.svelte"
 import About from "../components/main/popups/About.svelte"
 import Action from "../components/main/popups/Action.svelte"
@@ -183,7 +184,8 @@ export const popups: { [key in Popups]: ComponentType } = {
     pco_picker: PcoServicePicker,
     sync_folders: SyncFolders,
     node_options: NodeOptions,
-    ai_model_manager: AiModelManager
+    ai_model_manager: AiModelManager,
+    ai_chat: AiChat
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {
