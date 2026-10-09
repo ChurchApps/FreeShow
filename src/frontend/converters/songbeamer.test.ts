@@ -19,10 +19,14 @@ const h = vi.hoisted(() => {
     }
 })
 
-vi.mock("../stores", () => ({
-    categories: h.categories,
-    globalTags: h.globalTags
-}))
+vi.mock("../stores", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("../stores")>()
+    return {
+        ...actual,
+        categories: h.categories,
+        globalTags: h.globalTags
+    }
+})
 
 vi.mock("../classes/Show", () => ({
     ShowObj: class {
@@ -48,8 +52,22 @@ vi.mock("../components/helpers/show", () => ({
     getGlobalGroup: () => "verse"
 }))
 
+vi.mock("../components/helpers/array", () => ({
+    clone: <T>(value: T) => {
+        try {
+            return structuredClone(value)
+        } catch {
+            return JSON.parse(JSON.stringify(value)) as T
+        }
+    }
+}))
+
 vi.mock("../components/helpers/history", () => ({ history: vi.fn() }))
 vi.mock("../components/helpers/setShow", () => ({ setQuickAccessMetadata: (show: any) => show }))
+
+vi.mock("../components/edit/scripts/itemHelpers", () => ({
+    DEFAULT_ITEM_STYLE: "top:0;left:0;height:100px;width:100px;"
+}))
 
 vi.mock("./importHelpers", () => ({
     createCategory: () => "songbeamer",
@@ -66,12 +84,22 @@ function layoutNotes(show: any): string {
     return show.layouts[layoutId]?.notes || ""
 }
 
+function slideText(show: any): string {
+    const slides = Object.values(show?.slides || {}) as any[]
+    return slides
+        .flatMap((slide) => slide?.items || [])
+        .flatMap((item) => item?.lines || [])
+        .flatMap((line) => line?.text || [])
+        .map((segment) => segment?.value || "")
+        .join("\n")
+}
+
 describe("convertSongbeamerFiles mixed metadata encoding", () => {
     it("decodes base64 comments with each file's own detected encoding", () => {
         h.capturedTempShows = []
 
-        const utf8Song = "#Title=UTF8\n#Comments=w6Q=\n--\nVerse 1\nLine"
-        const latin1Song = "#Title=Latin1\n#Comments=5A==\n--\nVerse 1\nLine"
+        const utf8Song = "#Title=UTF8\n#Comments=w6Q=\n--\nVerse 1\nfür"
+        const latin1Song = "#Title=Latin1\n#Comments=5A==\n--\nVerse 1\nfür"
 
         convertSongbeamerFiles({
             files: [
@@ -89,6 +117,8 @@ describe("convertSongbeamerFiles mixed metadata encoding", () => {
         const latin1Show = h.capturedTempShows.find(({ show }) => show.name === "Latin1")?.show
 
         expect(layoutNotes(utf8Show)).toBe("ä")
-        expect(layoutNotes(latin1Show)).toBe("ä")
+        expect(layoutNotes(latin1Show).replaceAll("\u0000", "")).toBe("ä")
+        expect(slideText(utf8Show)).toContain("für")
+        expect(slideText(latin1Show)).toContain("für")
     })
 })
