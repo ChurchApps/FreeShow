@@ -12,6 +12,7 @@ import { AudioMicrophone } from "../../audio/audioMicrophone"
 import { AudioPlayer } from "../../audio/audioPlayer"
 import { requestMain, sendMain } from "../../IPC/main"
 import { isMainWindow, isOutputWindow } from "../../utils/common"
+import { convertTXTToString, getTXT } from "../../utils/dynamicTXT"
 import { send } from "../../utils/request"
 import { convertRSSToString, getRSS } from "../../utils/rss"
 import { runAction, slideHasAction } from "../actions/actions"
@@ -794,8 +795,13 @@ export function getDynamicIds(noVariables = false, mode: null | "scripture" | "d
         .filter((a) => a.name)
         .map(({ name }) => `rss_${getVariableNameId(name)}`)
 
+    const txtValues = sortByName(get(special).dynamicTXT || [])
+        .filter((a) => a.name)
+        .map(({ name }) => `txt_${getVariableNameId(name)}`)
+
     if (timersList.length) mergedValues.push(...timersList)
     if (rssValues.length) mergedValues.push(...rssValues)
+    if (txtValues.length) mergedValues.push(...txtValues)
     mergedValues.push(...getVariablesIds(showAll))
     return mergedValues
 }
@@ -1045,6 +1051,14 @@ export function replaceDynamicValues(text: string, { showId, layoutId, slideInde
             if (!rss) return ""
 
             return convertRSSToString(getRSS(rss.url, rss.updateInterval), rss.divider, rss.count)
+        }
+
+        if (dynamicId.startsWith("txt_")) {
+            const nameId = dynamicId.slice(4)
+            const txt = get(special).dynamicTXT?.find((a) => getVariableNameId(a.name) === nameId)
+            if (!txt) return ""
+
+            return convertTXTToString(getTXT(txt.url, txt.updateInterval), txt.divider)
         }
 
         let outputId: string = getWindowOutputId()

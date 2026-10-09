@@ -1493,7 +1493,8 @@
         "preview_frame_rate": "Preview frame rate",
         "auto": "Auto",
         "section_trigger_action": "Trigger action when navigating presentation to a section",
-        "rss": "RSS"
+        "rss": "RSS",
+        "txt": "TXT"
     },
     "gpu": {
         "no_acceleration": "Graphics acceleration is unavailable",

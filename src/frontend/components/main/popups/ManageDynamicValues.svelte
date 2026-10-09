@@ -11,8 +11,10 @@
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
+    import MaterialFilePicker from "../../inputs/MaterialFilePicker.svelte"
+
     const alwaysEnabledIds = ["time", "show", "$"]
-    const toggleSections = ["time", "project", "show", "slide_text", "video", "audio", "meta", "timer", "rss", "$"]
+    const toggleSections = ["time", "project", "show", "slide_text", "video", "audio", "meta", "timer", "rss", "txt", "$"]
     function getTitle(id: string) {
         if (id === "time") return "timer.time"
         if (id === "project") return "guide_title.project"
@@ -23,6 +25,7 @@
         if (id === "meta") return "tools.metadata"
         if (id === "timer") return "items.timer"
         if (id === "rss") return "settings.rss"
+        if (id === "txt") return "settings.txt"
         if (id === "$") return "items.variable"
         return ""
     }
@@ -95,6 +98,62 @@
         })
     }
 
+    // TXT
+
+    type TXT = {
+        name: string
+        url: string
+        divider?: string
+        updateInterval?: string
+    }
+
+    const DEFAULT_TXT: TXT = { name: "", url: "", updateInterval: "3" }
+
+    $: txtList = sortList($special.dynamicTXT || []) as TXT[]
+
+    function addTXT() {
+        special.update((a) => {
+            if (!a.dynamicTXT) a.dynamicTXT = []
+            a.dynamicTXT.push(clone(DEFAULT_TXT))
+            return a
+        })
+
+        const nextIndex = $special.dynamicTXT?.length - 1
+        if (!openedTxtMenus.includes(nextIndex)) {
+            openedTxtMenus.push(nextIndex)
+            openedTxtMenus = openedTxtMenus
+        }
+    }
+
+    function deleteTxtItem(index: number) {
+        if (openedTxtMenus.includes(index)) toggleTxtMenu(index)
+        openedTxtMenus = openedTxtMenus.map((i) => (i > index ? i - 1 : i))
+
+        special.update((a) => {
+            if (!a.dynamicTXT) return a
+            a.dynamicTXT.splice(index, 1)
+            return a
+        })
+    }
+
+    function setTxtValue(e: any, index: number, key: string) {
+        const value = e?.detail !== undefined ? e.detail : e
+
+        special.update((a) => {
+            if (!a.dynamicTXT?.[index]) return a
+
+            a.dynamicTXT[index][key] = value
+            return a
+        })
+    }
+
+    let openedTxtMenus: number[] = []
+    function toggleTxtMenu(index: number) {
+        if (openedTxtMenus.includes(index)) openedTxtMenus.splice(openedTxtMenus.indexOf(index), 1)
+        else openedTxtMenus.push(index)
+        openedTxtMenus = openedTxtMenus
+    }
+
     // WIP duplicate of EffectTools.svelte
     let openedMenus: number[] = []
     function toggleMenu(index: number) {
@@ -112,12 +171,22 @@
         { value: "120", label: translateText("120 settings.minutes") },
         { value: "240", label: translateText("240 settings.minutes") }
     ]
+
+    const txtUpdateIntervalList = [
+        { value: "1", label: translateText("1 timer.seconds") },
+        { value: "3", label: translateText("3 timer.seconds") },
+        { value: "5", label: translateText("5 timer.seconds") },
+        { value: "10", label: translateText("10 timer.seconds") },
+        { value: "30", label: translateText("30 timer.seconds") },
+        { value: "60", label: translateText("1 settings.minutes") },
+        { value: "300", label: translateText("5 settings.minutes") }
+    ]
 </script>
 
 <div>
     {#each toggleSections as section}
         {@const alwaysEnabled = alwaysEnabledIds.includes(section)}
-        {@const alwaysDisabled = section === "rss" && !$special.dynamicRSS?.length}
+        {@const alwaysDisabled = (section === "rss" && !$special.dynamicRSS?.length) || (section === "txt" && !$special.dynamicTXT?.length)}
 
         <MaterialCheckbox label={getTitle(section)} disabled={alwaysEnabled || alwaysDisabled} checked={alwaysDisabled ? false : alwaysEnabled || !hidden.includes(section)} on:change={() => toggleHidden(section)} />
     {/each}
@@ -146,5 +215,31 @@
 {/each}
 
 <MaterialButton variant="outlined" icon="add" on:click={addRSS}>
+    <T id="settings.add" />
+</MaterialButton>
+
+<HRule title="settings.txt" />
+
+{#each txtList as txt, i}
+    <InputRow arrow>
+        <MaterialTextInput label="inputs.name" value={txt.name} disabled={!!(txt.name && txt.url)} on:change={(e) => setTxtValue(e, i, "name")} />
+
+        <MaterialButton icon="delete" title="actions.delete" on:click={() => deleteTxtItem(i)} white />
+
+        <div slot="menu">
+            <InputRow>
+                <MaterialTextInput style="flex: 1;" label="inputs.url" value={txt.url} on:change={(e) => setTxtValue(e, i, "url")} />
+                <MaterialFilePicker style="flex: 0;" label="scripture.local" value={txt.url} filter={{ name: "Text files", extensions: ["txt"] }} icon="folder" on:change={(e) => setTxtValue(e, i, "url")} noLabel />
+            </InputRow>
+
+            <InputRow>
+                <MaterialDropdown style="width: 75%;" label="edit.interval" options={txtUpdateIntervalList} value={txt.updateInterval || "3"} on:change={(e) => setTxtValue(e, i, "updateInterval")} />
+                <MaterialTextInput style="width: 25%;" label="meta.text_divider" value={txt.divider || "<br>"} on:change={(e) => setTxtValue(e, i, "divider")} />
+            </InputRow>
+        </div>
+    </InputRow>
+{/each}
+
+<MaterialButton variant="outlined" icon="add" on:click={addTXT}>
     <T id="settings.add" />
 </MaterialButton>
