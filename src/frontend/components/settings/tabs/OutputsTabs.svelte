@@ -142,10 +142,7 @@
             if (networkType === "ndi") updateOutput("ndi", true, outputId)
             else if (networkType === "omt") updateOutput("omt", true, outputId)
             else if (networkType === "webrtc") updateOutput("webrtc", true, outputId)
-            else if (networkType === "rtmp") {
-                updateOutput("rtmpData", { rateControl: "cbr" }, outputId)
-                updateOutput("rtmp", true, outputId)
-            }
+            else if (networkType === "rtmp") updateOutput("rtmp", true, outputId)
 
             updateOutput("enabled", true, outputId)
 

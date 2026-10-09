@@ -5,10 +5,9 @@
     import { Main } from "../../../../types/IPC/Main"
     import type { Option } from "../../../../types/Main"
     import type { Output, RtmpDestination } from "../../../../types/Output"
-    import { getRtmpBitrates } from "../../../../types/RtmpEncoding"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { requestMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, dictionary, ndiData, omtData, os, outputDisplay, outputs, rtmpStatus, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, omtData, os, outputDisplay, outputs, rtmpStatus, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
@@ -177,20 +176,6 @@
 
     function updateRtmpData(value: any, key: string) {
         if (!currentOutput?.id) return
-        if (key === "bitrate" || key === "maxBitrate") {
-            const numeric = Number(value)
-            if (!Number.isSafeInteger(numeric) || numeric <= 0) {
-                newToast(translateText("settings.rtmp_invalid_bitrate"))
-                rtmpInputReset++
-                return
-            }
-            if (key === "maxBitrate" && numeric <= Number(currentOutput.rtmpData?.bitrate || 4000)) {
-                newToast(translateText("settings.rtmp_invalid_max_bitrate"))
-                rtmpInputReset++
-                return
-            }
-            value = numeric
-        }
         updateOutputRtmpData(currentOutput.id, key, value)
 
         saved.set(false)
@@ -227,10 +212,11 @@
 
     $: if (currentOutput?.rtmp && encoderOptions.length === 1) loadEncoders()
     $: if (currentOutput?.rtmp && !currentOutput?.rtmpData?.destinations?.length) addDestination()
-    $: rtmpRates = getRtmpBitrates(currentOutput?.rtmpData?.rateControl, Number(currentOutput?.rtmpData?.bitrate || 4000), Number(currentOutput?.rtmpData?.maxBitrate))
-    let rtmpInputReset = 0
 
-    $: rateControlOptions = [...(!currentOutput?.rtmpData?.rateControl ? [{ value: "legacy", label: translateText("settings.rtmp_legacy", $dictionary) }] : []), { value: "cbr", label: translateText("settings.rtmp_cbr", $dictionary) }, { value: "vbr", label: translateText("settings.rtmp_vbr", $dictionary) }]
+    const rateControlOptions = [
+        { value: "cbr", label: "CBR", data: "Constant Bitrate" },
+        { value: "vbr", label: "VBR", data: "Variable Bitrate" }
+    ]
 
     // RTMP destinations
 
@@ -509,17 +495,13 @@
     {/if}
     <InputRow>
         <MaterialDropdown label="settings.frame_rate" value={currentOutput.rtmpData?.fps?.toString() || "30"} defaultValue="30" options={framerates} on:change={(e) => updateRtmpData(e.detail, "fps")} />
-        <MaterialDropdown label="settings.rtmp_rate_control" value={currentOutput.rtmpData?.rateControl || "legacy"} defaultValue={currentOutput.rtmpData?.rateControl ? "cbr" : "legacy"} options={rateControlOptions} on:change={(e) => updateRtmpData(e.detail === "legacy" ? undefined : e.detail, "rateControl")} />
     </InputRow>
 
-    {#key rtmpInputReset}
-        <InputRow>
-            <MaterialTextInput id="rtmp-bitrate" label={currentOutput.rtmpData?.rateControl === "vbr" ? "settings.rtmp_target_bitrate (kbps)" : "settings.bitrate (kbps)"} value={rtmpRates.bitrate.toString()} defaultValue="4000" placeholder="4000" on:change={(e) => updateRtmpData(e.detail, "bitrate")} />
-            {#if currentOutput.rtmpData?.rateControl === "vbr"}
-                <MaterialTextInput id="rtmp-max-bitrate" label="settings.rtmp_max_bitrate (kbps)" value={rtmpRates.maxBitrate.toString()} defaultValue={(rtmpRates.bitrate * 2).toString()} on:change={(e) => updateRtmpData(e.detail, "maxBitrate")} />
-            {/if}
-        </InputRow>
-    {/key}
+    <InputRow>
+        <MaterialTextInput label="settings.bitrate (kbps)" value={currentOutput.rtmpData?.bitrate?.toString() || "4000"} defaultValue="4000" placeholder="4000" on:change={(e) => updateRtmpData(e.detail, "bitrate")} />
+        <MaterialDropdown label="actions.mode" value={currentOutput.rtmpData?.rateControl || "cbr"} options={rateControlOptions} on:change={(e) => updateRtmpData(e.detail, "rateControl")} />
+    </InputRow>
+
     <InputRow style="margin-bottom: 10px;">
         <MaterialDropdown label="settings.video_encoder" value={currentOutput.rtmpData?.encoder || "auto"} defaultValue="auto" options={encoderOptions} on:change={(e) => updateRtmpData(e.detail, "encoder")} />
         <!-- <MaterialButton variant="outlined" icon="refresh" title="Re-detect encoders" disabled={detectingEncoders} on:click={() => loadEncoders(true)} /> -->

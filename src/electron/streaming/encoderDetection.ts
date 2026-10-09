@@ -6,12 +6,11 @@ import { promisify } from "util"
 import { config } from "../data/store"
 import { buildTestEncodeCommand, ENCODER_PROFILES, isSupportedOnPlatform, parseAvailableEncoders, type EncoderId } from "./encoderProfiles"
 import { resolveFfmpegPath } from "./ffmpegManager"
-import type { RtmpRateControl } from "../../types/RtmpEncoding"
 
 const execFileAsync = promisify(execFile)
 
 const TEST_ENCODE_TIMEOUT_MS = 5000
-const CACHE_VERSION = 2
+const CACHE_VERSION = 1
 
 export interface EncoderStatus {
     id: EncoderId
@@ -20,8 +19,6 @@ export interface EncoderStatus {
     available: boolean
     /** why it is unavailable, shown in the settings dropdown */
     reason?: string
-    cbrSupported?: boolean
-    cbrReason?: string
 }
 
 export interface EncoderDetection {
@@ -80,9 +77,9 @@ function firstErrorLine(err: any): string {
 }
 
 /** Stage 2: a listed encoder still fails when the GPU or driver is missing, so actually encode a few frames. */
-async function testEncode(ffmpegPath: string, id: EncoderId, mode?: RtmpRateControl): Promise<{ ok: true } | { ok: false; reason: string }> {
+async function testEncode(ffmpegPath: string, id: EncoderId): Promise<{ ok: true } | { ok: false; reason: string }> {
     try {
-        await execFileAsync(ffmpegPath, buildTestEncodeCommand(id, mode), { timeout: TEST_ENCODE_TIMEOUT_MS, windowsHide: true })
+        await execFileAsync(ffmpegPath, buildTestEncodeCommand(id), { timeout: TEST_ENCODE_TIMEOUT_MS, windowsHide: true })
         return { ok: true }
     } catch (err) {
         return { ok: false, reason: firstErrorLine(err) }
@@ -113,10 +110,8 @@ async function probe(ffmpegPath: string): Promise<EncoderDetection> {
         }
 
         const result = await testEncode(ffmpegPath, profile.id)
-        if (result.ok) {
-            const cbr = await testEncode(ffmpegPath, profile.id, "cbr")
-            encoders.push({ ...base, available: true, cbrSupported: cbr.ok, ...(!cbr.ok ? { cbrReason: cbr.reason } : {}) })
-        } else encoders.push({ ...base, available: false, reason: result.reason })
+        if (result.ok) encoders.push({ ...base, available: true })
+        else encoders.push({ ...base, available: false, reason: result.reason })
     }
 
     const recommended = encoders.find((e) => e.hardware && e.available)?.id || "x264"
@@ -173,7 +168,7 @@ export function getRtmpEncoderSetting(outputId: string): string {
 }
 
 /** Resolve the configured setting ("auto" or an explicit id) to an encoder that actually works. */
-export async function resolveEncoder(setting: string | undefined, mode?: RtmpRateControl, onNotice?: (message: string) => void): Promise<EncoderId> {
+export async function resolveEncoder(setting: string | undefined): Promise<EncoderId> {
     // respect the app's "disable hardware acceleration" setting (Settings > Other) when resolving "auto":
     // use software x264 instead of a hardware encoder. An explicitly chosen encoder still wins.
     if (!setting || setting === "auto") {
@@ -188,21 +183,10 @@ export async function resolveEncoder(setting: string | undefined, mode?: RtmpRat
     }
 
     const detection = await detectEncoders()
-    const automatic = !setting || setting === "auto"
-    const selected = automatic ? detection.recommended : setting
-    const match = detection.encoders.find((e) => e.id === selected)
-    if (match?.available) {
-        if (mode === "cbr" && match.cbrSupported === false) {
-            if (!automatic || selected === "x264") throw new Error(`${match.label} does not support CBR. Choose VBR or another encoder.`)
-            const message = `${match.label} does not support CBR — streaming with software encoding.`
-            console.warn(`[encoderDetection] ${message} (${match.cbrReason || "CBR test failed"})`)
-            onNotice?.(message)
-            return "x264"
-        }
-        return match.id as EncoderId
-    }
+    if (!setting || setting === "auto") return detection.recommended
 
-    if (!automatic) throw new Error(`${match?.label || setting} is unavailable. Choose another encoder or Auto.`)
+    const match = detection.encoders.find((e) => e.id === setting)
+    if (match?.available) return match.id as EncoderId
 
     console.warn(`[encoderDetection] Encoder "${setting}" is unavailable (${match?.reason || "unknown"}), falling back to x264`)
     return "x264"
