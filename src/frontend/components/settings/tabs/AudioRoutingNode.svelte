@@ -219,14 +219,14 @@
             <MaterialToggleSwitch label="" checked={isEnabled} on:change={(e) => onToggleEnabled?.(e.detail)} small />
         {/if}
 
-        {#if type === "icecast" || isChannel}
+        {#if type === "icecast" || isChannel || (type === "mic" && isSubNode)}
             <MaterialButton
                 variant="outlined"
                 icon="options"
                 style="padding: 5px;"
                 title="popup.node_options"
                 on:click={() => {
-                    popupData.set({ nodeId: id, name })
+                    popupData.set({ nodeId: id, name, type, channels })
                     activePopup.set("node_options")
                 }}
             />
