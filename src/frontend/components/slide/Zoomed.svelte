@@ -68,10 +68,10 @@
     $: styleAspectRatio = stylesRatio.width / stylesRatio.height
     const defaultRatio = DEFAULT_BOUNDS.width / DEFAULT_BOUNDS.height
 
-    // WIP when outputResolutionAsRatio is set slide should fills output 1:1, but only remaining after cropping
-    // $: currentStyleId = styleIdOverride || $outputs[outputId]?.style || ""
-    // $: styleRatioData = ($styles[currentStyleId]?.aspectRatio || $styles[currentStyleId]?.resolution) as any
-    // $: outputResolutionAsRatio = !!styleRatioData?.outputResolutionAsRatio
+    // cropping affects aspect ratio if "outputResolutionAsRatio"
+    $: currentStyleId = styleIdOverride || $outputs[outputId]?.style || ""
+    $: styleRatioData = ($styles[currentStyleId]?.aspectRatio || $styles[currentStyleId]?.resolution) as any
+    $: outputResolutionAsRatio = !isStage && !!styleRatioData?.outputResolutionAsRatio
 
     let elemWidth = 0
     let elemHeight = 0
@@ -82,8 +82,8 @@
     $: shouldUseHeightRatio = outputRes.width < outputRes.height && stylesRatio.width > stylesRatio.height && styleAspectRatio === defaultRatio
     $: ratio = Math.max(0.01, shouldUseHeightRatio ? slideHeight / outputRes.height : slideWidth / outputRes.width) / customZoom
 
-    $: croppedStyle = getCropping(cropping, resolution, outputRes)
-    function getCropping(cropping, res, outRes) {
+    $: croppedStyle = getCropping(cropping, resolution, outputRes, outputResolutionAsRatio)
+    function getCropping(cropping, res, outRes, isOutputResolutionAsRatio = false) {
         if ($currentWindow !== "output") return ""
 
         let style = ""
@@ -97,6 +97,20 @@
 
         let minusHeight = top + bottom
         let minusWidth = right + left
+
+        if (isOutputResolutionAsRatio) {
+            if (!minusHeight && !minusWidth) return ""
+
+            style += `margin-top: ${top}px;`
+            style += `margin-bottom: ${bottom}px;`
+            style += `margin-inline-start: ${left}px;`
+            style += `margin-inline-end: ${right}px;`
+            style += `width: calc(100% - ${minusWidth}px);`
+            style += `height: calc(100% - ${minusHeight}px);`
+            style += `aspect-ratio: auto;`
+
+            return style
+        }
 
         let paddingSides = 0
         let paddingTops = 0
