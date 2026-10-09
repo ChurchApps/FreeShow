@@ -1,6 +1,6 @@
 import type { BrowserWindow, Rectangle } from "electron"
 import { screen } from "electron"
-import { mainWindow, toApp } from "../.."
+import { isMac, mainWindow, toApp } from "../.."
 import { MAIN, OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import { OutputHelper } from "../OutputHelper"
@@ -69,17 +69,10 @@ export class OutputVisibility {
         const hasValidBounds = !!(output.bounds?.width && output.bounds?.height)
         const outputBounds = hasValidBounds ? output.bounds : primaryBounds
 
-        // position at any existing target display
-        if (displays.length > 0 && output.screen) {
-            const isCoveringMain = output.boundsLocked ? false : this.amountCovered(outputBounds, mainWindow!.getBounds()) > 0.5
-            const targetDisplay = isCoveringMain ? null : displays.find((d) => d.id.toString() === output.screen)
-            if (targetDisplay) return { ...targetDisplay.bounds }
-        }
-
         // never auto position locked bounds
         if (output.boundsLocked) return outputBounds
 
-        // preserve valid input pos if already on an active display
+        // 1. Primary: Preserve valid coordinates if already within an active physical display
         if (displays.length > 0 && hasValidBounds && output.bounds) {
             const isCenterOnDisplay = displays.some((d) => {
                 const centerX = output.bounds!.x + output.bounds!.width / 2
@@ -90,9 +83,16 @@ export class OutputVisibility {
             if (isCenterOnDisplay) return output.bounds
         }
 
+        // 2. Secondary fallback: Look up by target display ID if coordinates are off-screen (e.g. topology changed)
+        if (displays.length > 0 && output.screen) {
+            const isCoveringMain = this.amountCovered(outputBounds, mainWindow!.getBounds()) > 0.5
+            const targetDisplay = isCoveringMain ? null : displays.find((d) => d.id.toString() === output.screen)
+            if (targetDisplay) return { ...targetDisplay.bounds }
+        }
+
         // fallback to second display auto positioning if not locked and autoPosition requested or bounds are undefined
         // (not on macOS due to window detection quirks)
-        if ((autoPosition || !hasValidBounds) && displays.length > 1 && process.platform !== "darwin") {
+        if ((autoPosition || !hasValidBounds) && displays.length > 1 && !isMac) {
             return this.getSecondDisplay(outputBounds)
         }
 

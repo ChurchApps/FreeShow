@@ -3,7 +3,6 @@ import { OUTPUT_CONSOLE, getMainWindow, hardwareAccelerationDisabled, isMac, loa
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
-import { gpuCompositingAvailable, gpuStateSettled } from "../../utils/gpu"
 import { initializeSender } from "../../blackmagic/bmdTalk"
 import { CaptureHelper } from "../../capture/CaptureHelper"
 import { SenderCapture } from "../../capture/SenderCapture"
@@ -11,6 +10,7 @@ import { NdiSender } from "../../ndi/NdiSender"
 import { setDataNDI } from "../../ndi/talk"
 import { OmtSender } from "../../omt/OmtSender"
 import { setDataOMT } from "../../omt/talk"
+import { gpuCompositingAvailable, gpuStateSettled } from "../../utils/gpu"
 import { wait } from "../../utils/helpers"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
@@ -67,13 +67,6 @@ export class OutputLifecycle {
                     OutputHelper.Bounds.updateBounds({ id, bounds: output.intendedBounds })
                 }
                 return
-            }
-
-            // if a specific screen is selected, check if it's available
-            if (output.screen) {
-                const displays = screen.getAllDisplays()
-                const targetDisplay = displays.find((d) => d.id.toString() === output.screen)
-                if (!targetDisplay) return
             }
 
             const targetBounds = OutputVisibility.resolveOutputBounds({ ...output, bounds: output.intendedBounds, id })
