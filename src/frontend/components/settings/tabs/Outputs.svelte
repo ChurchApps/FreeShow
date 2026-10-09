@@ -213,6 +213,11 @@
     $: if (currentOutput?.rtmp && encoderOptions.length === 1) loadEncoders()
     $: if (currentOutput?.rtmp && !currentOutput?.rtmpData?.destinations?.length) addDestination()
 
+    const rateControlOptions = [
+        { value: "cbr", label: "CBR", data: "Constant Bitrate" },
+        { value: "vbr", label: "VBR", data: "Variable Bitrate" }
+    ]
+
     // RTMP destinations
 
     function addDestination() {
@@ -490,7 +495,11 @@
     {/if}
     <InputRow>
         <MaterialDropdown label="settings.frame_rate" value={currentOutput.rtmpData?.fps?.toString() || "30"} defaultValue="30" options={framerates} on:change={(e) => updateRtmpData(e.detail, "fps")} />
+    </InputRow>
+
+    <InputRow>
         <MaterialTextInput label="settings.bitrate (kbps)" value={currentOutput.rtmpData?.bitrate?.toString() || "4000"} defaultValue="4000" placeholder="4000" on:change={(e) => updateRtmpData(e.detail, "bitrate")} />
+        <MaterialDropdown label="actions.mode" value={currentOutput.rtmpData?.rateControl || "cbr"} options={rateControlOptions} on:change={(e) => updateRtmpData(e.detail, "rateControl")} />
     </InputRow>
 
     <InputRow style="margin-bottom: 10px;">
