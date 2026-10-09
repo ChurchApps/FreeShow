@@ -724,6 +724,7 @@ export function allOutputsHasStyleTemplate(isScripture: boolean = false) {
 export function refreshOut(refresh = true) {
     outputs.update((a) => {
         getAllActiveOutputs().forEach(({ id }) => {
+            if (!a[id]) return
             a[id].out = { ...a[id].out, refresh }
         })
         return a

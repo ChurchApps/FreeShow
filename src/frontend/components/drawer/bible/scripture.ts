@@ -584,15 +584,17 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
 
     slidesVerseContexts.forEach((slideVerseContexts) => {
         const slideContentForTranslations: BibleContent[] = content.map((bible) => {
+            const chapters = bible?.chapters || []
+
             // For the current slide, we need to build the `activeVerses` and `verses` properties
             // that match the expected structure (an array per chapter).
-            const slideActiveVerses: (number | string)[][] = bible.chapters.map(() => [])
-            const slideVersesText: { [key: string]: string }[] = bible.chapters.map(() => ({}))
+            const slideActiveVerses: (number | string)[][] = chapters.map(() => [])
+            const slideVersesText: { [key: string]: string }[] = chapters.map(() => ({}))
 
             slideVerseContexts.forEach((verseContext) => {
-                if (!bible?.chapters) return
+                if (!chapters.length) return
 
-                const chapterIndex = bible.chapters.findIndex((c) => c == verseContext.chapter)
+                const chapterIndex = chapters.findIndex((c) => c == verseContext.chapter)
                 if (chapterIndex !== -1) {
                     slideActiveVerses[chapterIndex].push(verseContext.verse)
 
