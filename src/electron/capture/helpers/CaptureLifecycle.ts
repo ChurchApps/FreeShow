@@ -197,8 +197,6 @@ export class CaptureLifecycle {
 
         console.info("Capture - stopping: " + id)
 
-        // The output window survives a capture stop. Its paint and lifecycle listeners
-        // must remain attached so capture can resume without recreating the window.
         delete output.captureOptions
         this.updateWebRtcHostState()
         this.updateRtmpState()

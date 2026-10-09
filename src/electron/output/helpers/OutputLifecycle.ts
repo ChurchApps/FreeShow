@@ -862,16 +862,17 @@ export class OutputLifecycle {
         this.clearPendingCaptureStart(id)
 
         CaptureHelper.Lifecycle.stopCapture(id)
-        this.releaseOsrCaptureTextures(id)
         NdiSender.stopSenderNDI(id)
         OmtSender.stopSenderOMT(id)
         BlackmagicSender.stop(id)
+
         // free the addon's reused readback buffers for this output (no-op if the addon/pool isn't present)
         try {
             this.osrCaptureAddon?.releasePool?.(id)
         } catch {
             // ignore
         }
+        this.releaseOsrCaptureTextures(id)
 
         const output = OutputHelper.getOutput(id)
         if (!output) return

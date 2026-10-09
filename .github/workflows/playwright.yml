@@ -18,7 +18,7 @@ jobs:
               with:
                   node-version: 22
             - name: Install libraries
-              run: sudo apt-get update && sudo apt-get install -y libfontconfig1-dev libegl1 libgles2 ffmpeg
+              run: sudo apt-get install libfontconfig1-dev
             - name: Install dependencies
               run: npm install
             - name: Install Playwright Browsers
