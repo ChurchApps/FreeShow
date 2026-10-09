@@ -69,6 +69,8 @@ function getMergeGuardKey(data: { id: SyncProviderId; churchId: string; teamId: 
 export async function syncData(data: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" | "upload" | "replace" }) {
     let readOnly = data.method === "read_only" || data.method === "replace" // never write to cloud
     const changedFiles: string[] = [] // WIP write changes
+    const replacedShows: string[] = []
+    const downloadedShowIds: string[] = []
     let guardCloudModifiedAt = 0
 
     const provider = getManager[data.id]()
@@ -168,8 +170,6 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
     // MERGE
     const cloudBibleNames: string[] = []
     const cloudShowNames: string[] = []
-    const replacedShows: string[] = []
-    const downloadedShowIds: string[] = []
 
     await asyncPool(50, extractedFiles, async (file) => {
         if (!file) return
