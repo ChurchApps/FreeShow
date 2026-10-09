@@ -8,7 +8,7 @@ import type { FileFolder, MediaStyle, Subtitle } from "../../../types/Main"
 import type { Cropping, Styles } from "../../../types/Settings"
 import type { ShowType } from "../../../types/Show"
 import { requestMain, sendMain } from "../../IPC/main"
-import { audioFolders, cachePath, loadedMediaThumbnails, media, mediaFolders, special } from "../../stores"
+import { audioFolders, cachePath, loadedMediaThumbnails, media, mediaFolders, special, videoMarkers } from "../../stores"
 import { addToMediaFolder } from "../../utils/cloudSync"
 import { isMainWindow, newToast, wait, waitUntilValueIsDefined } from "../../utils/common"
 import { audioExtensions, imageExtensions, mediaExtensions, presentationExtensions, videoExtensions } from "../../values/extensions"
@@ -18,8 +18,8 @@ import { getFirstActiveOutput, getOutputResolution } from "./output"
 
 export function getExtension(path: string): string {
     if (typeof path !== "string") return ""
-    if (path.indexOf(".") < 0) return path
     if (path.includes("?")) path = path.slice(0, path.indexOf("?"))
+    if (path.indexOf(".") < 0) return path.startsWith("freeshow-protected://") ? "mp4" : path
     return path.substring(path.lastIndexOf(".") + 1).toLowerCase()
 }
 
@@ -40,6 +40,7 @@ export function getMediaType(extension: string): ShowType {
     if (presentationExtensions.includes(extension.toLowerCase())) return "ppt"
     if (audioExtensions.includes(extension.toLowerCase())) return "audio"
     if (videoExtensions.includes(extension.toLowerCase())) return "video"
+    if (extension.startsWith("freeshow-protected://")) return "video"
     return "image"
 }
 
@@ -365,6 +366,29 @@ export function enableSubtitle(video: HTMLVideoElement, languageId: string) {
 
     const newTrack = tracks.find((a) => a.language === languageId)
     if (newTrack) newTrack.mode = "showing"
+}
+
+export function addVideoMarker(id: string, time: number, name: string = "") {
+    if (!id || !time) return -1
+
+    let markerIndex = -1
+    const newMarker = { name, time: Math.floor(time || 0) }
+
+    videoMarkers.update((a) => {
+        // return if marker already exists
+        if (a[id]?.find((a) => a.time === newMarker.time)) return a
+
+        if (!a[id]) a[id] = []
+        a[id].push(newMarker)
+
+        // sort by time
+        a[id] = a[id].sort((a, b) => a.time - b.time)
+
+        markerIndex = a[id].findIndex((a) => a.time === newMarker.time)
+        return a
+    })
+
+    return markerIndex
 }
 
 export function getMediaStyle(mediaObj: MediaStyle | undefined, currentStyle: Styles | undefined) {

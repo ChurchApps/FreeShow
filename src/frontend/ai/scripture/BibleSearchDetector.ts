@@ -105,6 +105,7 @@ export class BibleSearchDetector {
     }
 
     private tokenizeText(text: string): string[] {
+        if (!text || typeof text !== "string") return []
         return text
             .toLowerCase()
             .replace(/['’`\-_]/g, " ")

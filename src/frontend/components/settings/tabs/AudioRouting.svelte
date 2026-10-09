@@ -140,7 +140,23 @@
             title: "audio.inputs",
             type: "input",
             nodes: fixedInputs.map((node) => {
-                const subNodes = node.id === "playlists_default" ? availablePlaylists : node.id === "mic_default" ? availableAudioInputs.map((mic) => ({ id: mic.value, name: mic.label, type: "mic", channels: mic.channels })) : node.id === "output_window" ? nonStageOutputs : []
+                const subNodes =
+                    node.id === "playlists_default"
+                        ? availablePlaylists
+                        : node.id === "mic_default"
+                          ? availableAudioInputs.map((mic) => {
+                                const micDeviceId = mic.value.startsWith("mic_sub_") ? mic.value.slice(8) : mic.value
+                                const configured = config?.inputs?.find((i) => i.id === mic.value || i.id === micDeviceId || i.deviceId === micDeviceId)
+                                return {
+                                    id: mic.value,
+                                    name: mic.label,
+                                    type: "mic",
+                                    channels: configured?.channels ?? mic.channels
+                                }
+                            })
+                          : node.id === "output_window"
+                            ? nonStageOutputs
+                            : []
                 const isEnabled = node.type === "desktop_audio" ? !!config.desktopAudioEnabled : true
                 return {
                     ...node,

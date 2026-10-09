@@ -1,12 +1,13 @@
 <script lang="ts">
     import type { Output } from "../../../../types/Output"
     import type { LayoutRef } from "../../../../types/Show"
-    import { activeFocus, activeShow, focusMode, outLocked, playingVideoState, presentationData, showsCache } from "../../../stores"
+    import { activeFocus, activeShow, focusMode, outLocked, outputs, playingVideoState, presentationData, showsCache } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
+    import { formatUrl, getOutputtedWebsites, sendWebsiteKey, triggerWebsiteAction } from "../../helpers/websiteControls"
     import Button from "../../inputs/Button.svelte"
     import { VideoPlayer } from "../../media/video/videoPlayer"
     import VideoSlider from "../VideoSlider.svelte"
@@ -47,6 +48,20 @@
     }
     function toggleLoop(path: string, outputId: string) {
         VideoPlayer.toggleLoop(path, outputId)
+    }
+
+    // Website controls
+    $: websites = getOutputtedWebsites($outputs)
+    function handleWebsiteKeydown(e: KeyboardEvent, websiteSrc: string) {
+        if (e.key === "ArrowLeft") {
+            e.preventDefault()
+            e.stopPropagation()
+            sendWebsiteKey(websiteSrc, "Left")
+        } else if (e.key === "ArrowRight") {
+            e.preventDefault()
+            e.stopPropagation()
+            sendWebsiteKey(websiteSrc, "Right")
+        }
     }
 </script>
 
@@ -96,6 +111,25 @@
     {/if}
 {/if}
 
+{#each websites as website}
+    <div class="videoValues websiteValues" tabindex="0" role="button" on:keydown={(e) => handleWebsiteKeydown(e, website.src)}>
+        <p title={website.src}>{formatUrl(website.src)}</p>
+
+        <span class="group">
+            <Button center title={translateText("media.previous")} disabled={$outLocked} on:click={() => sendWebsiteKey(website.src, "Left")}>
+                <Icon id="previous" white />
+            </Button>
+            <Button center title={translateText("media.next")} disabled={$outLocked} on:click={() => sendWebsiteKey(website.src, "Right")}>
+                <Icon id="next" white />
+            </Button>
+
+            <Button center title={translateText("preview.reload")} disabled={$outLocked} on:click={() => triggerWebsiteAction({ src: website.src, type: "reload" })}>
+                <Icon id="refresh" white />
+            </Button>
+        </span>
+    </div>
+{/each}
+
 <style>
     .name {
         display: flex;
@@ -117,6 +151,15 @@
         flex-direction: column;
 
         border-top: 2px solid var(--primary-lighter);
+    }
+
+    .websiteValues {
+        outline: none;
+    }
+    .websiteValues:focus,
+    .websiteValues:focus-within {
+        outline: 2px solid var(--secondary);
+        outline-offset: -2px;
     }
 
     .videoValues p {

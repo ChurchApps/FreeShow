@@ -216,11 +216,15 @@ export async function getActiveScripturesContent(selectedVerses: (number | strin
                         const splittedVerses = getSplittedVerses({ [id]: text })
 
                         const newVerseId = id + (subverse ? `_${subverse}` : "")
+                        const splitKeys = Object.keys(splittedVerses)
                         if (splitLongVerses && splittedVerses[newVerseId]) {
                             versesText[v] = splittedVerses[newVerseId]
-                        } else if (splitLongVerses && !subverse && Object.keys(splittedVerses).length > 1) {
+                        } else if (splitLongVerses && subverse > 1 && splitKeys.length) {
+                            // This translation has fewer parts than another one in the collection.
+                            // Keep its last part on screen instead of the whole verse or a blank box.
+                            versesText[v] = splittedVerses[splitKeys[splitKeys.length - 1]]
+                        } else if (splitLongVerses && !subverse && splitKeys.length > 1) {
                             // Verse was split into sub-parts (e.g. "1_1", "1_2") but lookup by base ID failed
-                            const splitKeys = Object.keys(splittedVerses)
                             splitKeys.forEach((key) => {
                                 versesText[key] = splittedVerses[key]
                             })
@@ -580,15 +584,17 @@ function splitContent(content: BibleContent[], perSlide: number): BibleContent[]
 
     slidesVerseContexts.forEach((slideVerseContexts) => {
         const slideContentForTranslations: BibleContent[] = content.map((bible) => {
+            const chapters = bible?.chapters || []
+
             // For the current slide, we need to build the `activeVerses` and `verses` properties
             // that match the expected structure (an array per chapter).
-            const slideActiveVerses: (number | string)[][] = bible.chapters.map(() => [])
-            const slideVersesText: { [key: string]: string }[] = bible.chapters.map(() => ({}))
+            const slideActiveVerses: (number | string)[][] = chapters.map(() => [])
+            const slideVersesText: { [key: string]: string }[] = chapters.map(() => ({}))
 
             slideVerseContexts.forEach((verseContext) => {
-                if (!bible?.chapters) return
+                if (!chapters.length) return
 
-                const chapterIndex = bible.chapters.findIndex((c) => c == verseContext.chapter)
+                const chapterIndex = chapters.findIndex((c) => c == verseContext.chapter)
                 if (chapterIndex !== -1) {
                     slideActiveVerses[chapterIndex].push(verseContext.verse)
 
@@ -1476,20 +1482,6 @@ function getDanglingBracketInfo(before: string, after: string): DanglingBracketI
     return { lastOpen }
 }
 
-function adjustSplitIndexForBracket(text: string, breakIndex: number) {
-    if (!text) return breakIndex
-    const safeIndex = Math.max(0, Math.min(breakIndex, text.length))
-    const before = text.slice(0, safeIndex)
-    const after = text.slice(safeIndex)
-    const info = getDanglingBracketInfo(before, after)
-    if (!info) return safeIndex
-
-    let newIndex = info.lastOpen
-    while (newIndex > 0 && /\s/.test(before[newIndex - 1])) newIndex--
-
-    return Math.max(0, newIndex)
-}
-
 function moveDanglingBracketToNext(first: string, second: string) {
     const info = getDanglingBracketInfo(first, second)
     if (!info) return { first, second }
@@ -1564,54 +1556,69 @@ function splitHtmlText(value: string, maxLength: number, tolerance: number = 0) 
     const tokens = tokenizeHtml(value)
     if (!tokens.length) return [value]
 
-    const segments: string[] = []
-    let current = ""
-    let currentLength = 0
+    const plain = tokens
+        .filter((token) => token.type === "text")
+        .map((token) => token.value)
+        .join("")
+    const plainParts = splitPlainText(plain, maxLength, tolerance)
+    if (plainParts.length <= 1) return [value]
+
+    const ranges = locatePlainParts(plain, plainParts)
+    if (ranges.length !== plainParts.length) return [value]
+
+    const segments = ranges.map(([start, end]) => sliceHtmlRange(tokens, start, end)).filter((segment) => segment.replace(/<[^>]+>/g, "").trim())
+    return segments.length ? segments : [value]
+}
+
+function locatePlainParts(plain: string, parts: string[]) {
+    const ranges: [number, number][] = []
+    let cursor = 0
+    for (const part of parts) {
+        if (!part) return []
+        const index = plain.indexOf(part, cursor)
+        if (index === -1) return []
+        ranges.push([index, index + part.length])
+        cursor = index + part.length
+    }
+    return ranges
+}
+
+function sliceHtmlRange(tokens: { type: "text" | "tag"; value: string }[], start: number, end: number) {
     const openTags: { name: string; tag: string }[] = []
+    let plainPos = 0
+    let out = ""
+    let started = false
 
-    const reopenTags = () => openTags.map((entry) => entry.tag).join("")
-    const closeTags = () =>
-        openTags
-            .slice()
-            .reverse()
-            .map((entry) => `</${entry.name}>`)
-            .join("")
+    for (const token of tokens) {
+        if (started && plainPos >= end) break
 
-    const flushSegment = () => {
-        const textContent = current.replace(/<[^>]+>/g, "").trim()
-        if (textContent) segments.push(current + closeTags())
-        current = reopenTags()
-        currentLength = 0
+        if (token.type === "tag") {
+            if (started && plainPos >= start) out += token.value
+            updateTagStack(token.value, openTags)
+            continue
+        }
+
+        const textStart = plainPos
+        const textEnd = plainPos + token.value.length
+        plainPos = textEnd
+        if (textEnd <= start || textStart >= end) continue
+
+        if (!started) {
+            started = true
+            out = openTags.map((entry) => entry.tag).join("")
+        }
+
+        const from = Math.max(0, start - textStart)
+        const to = Math.min(token.value.length, end - textStart)
+        out += token.value.slice(from, to)
     }
 
-    tokens.forEach((token) => {
-        if (token.type === "tag") {
-            current += token.value
-            updateTagStack(token.value, openTags)
-            return
-        }
-
-        let remaining = token.value
-        while (remaining.length) {
-            const capacity = maxLength - currentLength
-            if (capacity <= 0) {
-                flushSegment()
-                continue
-            }
-
-            const splitIndex = findHtmlSplitIndex(remaining, capacity, tolerance)
-            const chunk = remaining.slice(0, splitIndex)
-            current += chunk
-            currentLength += chunk.length
-            remaining = remaining.slice(splitIndex)
-
-            if (remaining.length) flushSegment()
-        }
-    })
-
-    if (current.replace(/<[^>]+>/g, "").trim()) segments.push(current + closeTags())
-
-    return segments.length ? segments : [value]
+    out += openTags
+        .slice()
+        .reverse()
+        .map((entry) => `</${entry.name}>`)
+        .join("")
+    return out.trim()
 }
 
 function tokenizeHtml(value: string) {
@@ -1652,13 +1659,6 @@ function updateTagStack(tag: string, stack: { name: string; tag: string }[]) {
 function getTagName(tag: string) {
     const match = tag.match(/^<\/?([a-z0-9_-]+)/i)
     return match ? match[1] : ""
-}
-
-function findHtmlSplitIndex(text: string, capacity: number, tolerance: number = 0) {
-    if (text.length <= capacity) return text.length
-    let breakPos = findBestBreak(text, capacity, tolerance)
-    if (breakPos === -1 || breakPos > capacity + tolerance) breakPos = capacity
-    return Math.max(0, adjustSplitIndexForBracket(text, breakPos))
 }
 
 function getSplitHalves(text: string, maxLength: number, tolerance: number = 0): [string, string] | null {

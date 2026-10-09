@@ -128,16 +128,11 @@
     // if anything is outputted & changing to something that's outputted
     let transitioningBetween = false
 
-    // lightweight guard so we only precompute for text items that actually rely on autosize
-    function shouldPrecomputeAutoSize(item: Item) {
-        if (!item) return false
-        const type = item.type || "text"
-        if (type !== "text") return false
-        return !!item.auto
-    }
+    let onPrecomputeDone: (() => void) | null = null
 
     // kick off hidden textbox renders that warm the autosize cache before we flip "show" on
     function scheduleAutoSizePrecompute(items: Item[]) {
+        onPrecomputeDone = null
         if (preview || !Array.isArray(items) || !items.length) {
             precomputeTargets = []
             precomputePending.clear()
@@ -148,10 +143,11 @@
         const pendingKeys = new Set<string>()
 
         items.forEach((item, index) => {
-            if (!shouldPrecomputeAutoSize(item)) return
+            if (!itemNeedsAutoSize(item)) return
             const key = createAutoSizeKey(item, index)
             if (!key) return
             if (item.autoFontSize) return // skip entries that already have cached measurements
+
             pendingKeys.add(key)
             targets.push({ item: clone(item), index, key })
         })
@@ -165,7 +161,11 @@
         const key = event.detail?.key
         if (!key || !precomputePending.has(key)) return
         precomputePending.delete(key)
-        if (!precomputePending.size) precomputeTargets = []
+        if (!precomputePending.size) {
+            precomputeTargets = []
+            onPrecomputeDone?.()
+            onPrecomputeDone = null
+        }
     }
 
     // create a stable identifier for precompute + visible textbox coordination
@@ -306,13 +306,27 @@
                 // wait until half transition duration of previous items have passed as it looks better visually
                 timeout = setTimeout(() => {
                     if (gen !== updateGeneration) return
-                    show = true
 
-                    // wait for between to set in transition
-                    timeout = setTimeout(() => {
+                    const showSlide = () => {
                         if (gen !== updateGeneration) return
-                        transitioningBetween = false
-                    })
+                        show = true
+
+                        // wait for between to set in transition
+                        timeout = setTimeout(() => {
+                            if (gen !== updateGeneration) return
+                            transitioningBetween = false
+                        })
+                    }
+
+                    if (precomputePending.size) {
+                        const safetyTimer = setTimeout(showSlide, 150)
+                        onPrecomputeDone = () => {
+                            clearTimeout(safetyTimer)
+                            showSlide()
+                        }
+                    } else {
+                        showSlide()
+                    }
                 }, waitToShow)
             })
         })

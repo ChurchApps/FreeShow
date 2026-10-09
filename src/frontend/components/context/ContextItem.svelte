@@ -1,7 +1,48 @@
 <script lang="ts">
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { cameraManager } from "../../media/cameraManager"
-    import { actions, activeEdit, activeProject, activeRecording, activeShow, categories, colorbars, dictionary, disabledServers, drawerTabsData, effects, effectsLibrary, events, forceClock, globalTags, livePrepare, media, mediaFolders, os, outputs, overlayCategories, overlays, projects, redoHistory, scenes, scriptures, selected, shows, showsCache, slideDeleteHighlight, slidesOptions, special, spellcheck, stageShows, styles, templateCategories, timers, topContextActive, undoHistory } from "../../stores"
+    import {
+        actions,
+        activeEdit,
+        activePage,
+        activeProject,
+        activeRecording,
+        activeShow,
+        categories,
+        colorbars,
+        dictionary,
+        disabledServers,
+        drawerTabsData,
+        effects,
+        effectsLibrary,
+        events,
+        forceClock,
+        globalTags,
+        livePrepare,
+        media,
+        mediaFolders,
+        os,
+        outputs,
+        overlayCategories,
+        overlays,
+        projects,
+        redoHistory,
+        scenes,
+        scriptures,
+        selected,
+        shows,
+        showsCache,
+        slideDeleteHighlight,
+        slidesOptions,
+        special,
+        spellcheck,
+        stageShows,
+        styles,
+        templateCategories,
+        timers,
+        topContextActive,
+        undoHistory
+    } from "../../stores"
     import { translateText } from "../../utils/language"
     import { closeContextMenu } from "../../utils/shortcuts"
     import { keysToID } from "../helpers/array"
@@ -210,7 +251,7 @@
             }, 20)
         },
         insert_virtual_break: () => {
-            if (window.getSelection()?.toString()) hide = true
+            if (window.getSelection()?.toString() || ($activeEdit.type || "show") !== "show" || $activePage !== "edit") hide = true
         },
         createSlideshow: () => {
             hide = $selected.id !== "media" || $selected.data.length < 2

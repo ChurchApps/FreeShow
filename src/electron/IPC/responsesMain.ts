@@ -16,7 +16,7 @@ import { SpeechToText } from "../ai/stt/SpeechToTextManager"
 import { getAudioMetadata } from "../audio/audio"
 import { openNowPlaying, setPlayingState, unsetPlayingAudio } from "../audio/nowPlaying"
 import { CaptureHelper } from "../capture/CaptureHelper"
-import { canSync, getSyncTeams, hasDataChanged, hasTeamData, markAsNewSync, restoreCloudBackup, syncData } from "../cloud/syncManager"
+import { canSync, getSyncTeams, hasTeamData, markAsNewSync, restoreCloudBackup, syncData } from "../cloud/syncManager"
 import { ChurchAppsChat } from "../contentProviders/churchApps/ChurchAppsChat"
 import { ContentProviderRegistry } from "../contentProviders/ContentProviderRegistry"
 import { deleteBackup, getBackups, restoreFiles } from "../data/backup"
@@ -27,7 +27,7 @@ import { save } from "../data/save"
 import { _store, appDataPath, config, createStores, getStore, getStoreValue, setStoreValue } from "../data/store"
 import { captureSlide, doesMediaExist, getThumbnail, getThumbnailFolderPath, pdfToImage, saveImage } from "../data/thumbnails"
 import { OutputHelper } from "../output/OutputHelper"
-import { libreConvert } from "../output/ppt/libreConverter"
+import { pptToPdf } from "../output/ppt/pptToPdf"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers, updateServerData } from "../servers"
 import { detectEncoders, setRtmpEncoderSetting } from "../streaming/encoderDetection"
@@ -139,7 +139,7 @@ export const mainResponses: MainResponses = {
     [Main.ACCESS_MICROPHONE_PERMISSION]: () => getPermission("microphone"),
     [Main.ACCESS_SCREEN_PERMISSION]: () => getPermission("screen"),
     // PPT
-    [Main.LIBREOFFICE_CONVERT]: (data) => libreConvert(data),
+    [Main.PPT_TO_PDF]: () => pptToPdf(),
     [Main.SLIDESHOW_GET_APPS]: () => getPresentationApplications(),
     [Main.START_SLIDESHOW]: (data) => startSlideshow(data),
     [Main.PRESENTATION_CONTROL]: (data) => presentationControl(data),
@@ -183,7 +183,6 @@ export const mainResponses: MainResponses = {
     [Main.CAN_SYNC]: (data) => canSync(data),
     [Main.GET_TEAMS]: (data) => getSyncTeams(data),
     [Main.CLOUD_DATA]: (data) => hasTeamData(data),
-    [Main.CLOUD_CHANGED]: (data) => hasDataChanged(data),
     [Main.CLOUD_SYNC]: (data) => syncData(data),
     [Main.RESTORE_CLOUD_BACKUP]: (data) => restoreCloudBackup(data),
     [Main.GET_CONVERSATION_ID]: (data) => getConversationId(data.teamId),
@@ -294,17 +293,17 @@ export const mainResponses: MainResponses = {
 /// ///////
 
 // IMPORT
-export async function startImport(data: { channel: string; format: { name: string; extensions: string[] }; settings?: any }) {
+export async function startImport(data: { channel: string; format: { name: string; extensions: string[] } }) {
     const files: string[] = await selectFilesDialog("", data.format)
 
     const needsFileAndNoFileSelected = data.format.extensions && !files.length
     if (needsFileAndNoFileSelected) return
 
-    importShow(data.channel, files || null, data.settings || {})
+    importShow(data.channel, files || null)
 }
 
 function importFiles(data: { id: string; paths: string[] }) {
-    importShow(data.id, data.paths, {})
+    importShow(data.id, data.paths)
 }
 
 // BIBLE

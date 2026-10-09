@@ -168,7 +168,11 @@ export class AudioRoutingManager {
 
         try {
             const ctx = new AudioContext({ latencyHint: "playback" })
-            if ("setSinkId" in ctx) (ctx as any).setSinkId(deviceId)
+            if ("setSinkId" in ctx) {
+                ;(ctx as any).setSinkId(deviceId).catch((err: unknown) => {
+                    console.warn(`[AudioRoutingManager] Could not set sink ID for device ${deviceId}:`, err)
+                })
+            }
             const element = new Audio()
             element.muted = true
 
@@ -424,7 +428,7 @@ export class AudioRoutingManager {
     }
 
     private indexActiveNodesAndConnections(connections: Connection[]) {
-        const activeNodeIds = new Set(["drawer_audio", "playlists_default", "output_window", "mic_default", ...this.inputNodes.keys(), ...this.gainNodes.keys()])
+        const activeNodeIds = new Set(["drawer_audio", "playlists_default", "output_window", "mic_default", ...this.inputNodes.keys(), ...this.gainNodes.keys(), ...AudioAnalyser.getActiveSourceIds()])
         const activeSubDeviceIds = new Set<string>()
         const connectionsByFrom = new Map<string, Connection[]>()
 
@@ -647,9 +651,19 @@ export class AudioRoutingManager {
 
                 if (specificConns.length > 0 && splitter) {
                     const channels = specificConns.map((c) => (c.channelIndex ?? (c as any).fromChannelIndex)!)
-                    const merger = this.audioCtx.createChannelMerger(Math.max(2, Math.max(...channels) + 1))
-                    for (let i = 0; i < channels.length; i++) {
-                        splitter.connect(merger, channels[i], channels[i])
+                    const destChannels = Math.max(2, gainNode.channelCount || 2)
+                    const merger = this.audioCtx.createChannelMerger(destChannels)
+
+                    if (channels.length === 1 && destChannels >= 2) {
+                        // Single input channel routed to stereo channel -> dual-mono (both L and R)
+                        const srcCh = channels[0]
+                        splitter.connect(merger, srcCh, 0)
+                        splitter.connect(merger, srcCh, 1)
+                    } else {
+                        // Multiple input channels -> map sequentially to destination channels (0 -> L, 1 -> R, etc.)
+                        for (let i = 0; i < channels.length && i < destChannels; i++) {
+                            splitter.connect(merger, channels[i], i)
+                        }
                     }
                     this.connect(merger, gainNode)
                 } else {

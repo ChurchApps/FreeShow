@@ -126,7 +126,7 @@
     }
 
     // Get verses for all scriptures in a collection
-    function getCollectionVerses(verseId: string | number, _updater: any): { id: string; name: string; text: string; isSplit: boolean }[] {
+    function getCollectionVerses(verseId: string | number, _updater: any): { id: string; name: string; text: string; isSplit: boolean; repeated: boolean }[] {
         if (!isCollection) return []
 
         const { id, subverse } = getVerseIdParts(verseId)
@@ -142,23 +142,22 @@
                 const currentId = id + offset
 
                 if (!scriptureData?.chapterData || (offset && (currentId < 1 || currentId > scriptureData.chapterData.data.verses.length))) {
-                    return { id: scriptureId, name, text: "", isSplit: false }
+                    return { id: scriptureId, name, text: "", isSplit: false, repeated: false }
                 }
 
                 try {
                     const verse = scriptureData.chapterData.getVerse(currentId)
-                    const fullText = verse.getHTML() || verse?.data?.text || ""
+                    const fullText = sanitizeVerseText(verse.getHTML() || verse?.data?.text || "")
 
                     if (isSplit && fullText) {
                         const splitParts = splitText(fullText, splitChars, splitTolerance)
-                        if (splitParts.length > 1) {
-                            return { id: scriptureId, name, text: splitParts[subverse - 1] || "", isSplit: true }
-                        }
+                        const part = splitParts[subverse - 1] || splitParts[splitParts.length - 1] || fullText
+                        return { id: scriptureId, name, text: part, isSplit: true, repeated: subverse > splitParts.length }
                     }
 
-                    return { id: scriptureId, name, text: fullText, isSplit: false }
+                    return { id: scriptureId, name, text: fullText, isSplit: false, repeated: false }
                 } catch {
-                    return { id: scriptureId, name, text: "", isSplit: false }
+                    return { id: scriptureId, name, text: "", isSplit: false, repeated: false }
                 }
             })
             .filter((v) => v.text)
@@ -203,7 +202,7 @@
 
     // Check if any translation in collection supports splitting for verses
     function checkCollectionSplitSupport(): { [verseNumber: number]: number } {
-        if (!isCollection || !$scriptureSettings.splitLongVerses || !verses) return {}
+        if (!isCollection || !splitEnabled || !verses?.length) return {}
 
         const splitCounts: { [verseNumber: number]: number } = {}
 
@@ -213,8 +212,7 @@
 
             verses.forEach((verse) => {
                 try {
-                    const verseObj = chapterData.getVerse(verse.number)
-                    const fullText = verseObj.getHTML() || verseObj?.data?.text || ""
+                    const fullText = sanitizeVerseText(chapterData.getVerse(verse.number).getHTML() || "")
                     if (!fullText) return
 
                     const splitParts = splitText(fullText, splitChars, splitTolerance)
@@ -234,10 +232,13 @@
     $: splitEnabled = $scriptureSettings.splitLongVerses
 
     let collectionSplitCounts: { [verseNumber: number]: number } = {}
-    $: collectionSplitCounts = isCollection && splitEnabled ? checkCollectionSplitSupport() : {}
+    $: collectionSplitCounts = isCollection && splitEnabled && data && verses ? checkCollectionSplitSupport() : {}
 
     let splittedVerses: (Verse & { id: string })[] = []
     $: splittedVerses = updateSplitted(verses, $scriptureSettings, collectionSplitCounts)
+    // Changing chapter selects verse 1 as a plain number. That plays every split part on one slide.
+    // Keep just the first part, for a single Bible and for a collection.
+    $: if (splitEnabled) focusFirstSplitPart(splittedVerses, activeReference.verses)
 
     let apiError = false
 
@@ -274,11 +275,13 @@
             const sanitizedVerse = sanitizeVerseText(verse.text)
             const newVerseStrings = splitText(sanitizedVerse, splitChars, splitTolerance)
             const end = verse.endNumber ? `-${verse.endNumber}` : ""
-            const numParts = Math.max(newVerseStrings.length, collectionSplitCounts[verse.number] || 0)
+            // Only line this Bible up with the others while Show all is on. Otherwise extra rows repeat the last sentence.
+            const alignWithCollection = isCollection && $scriptureSettings.showAllVersions
+            const numParts = Math.max(newVerseStrings.length, alignWithCollection ? collectionSplitCounts[verse.number] || 0 : 0)
 
             if (numParts > 1) {
                 for (let i = 0; i < numParts; i++) {
-                    const text = newVerseStrings[i] || (i === 0 ? newVerseStrings[0] || verse.text : "")
+                    const text = newVerseStrings[i] || (i === 0 ? verse.text : "")
                     newVerses.push({ ...verse, id: `${verse.number}_${i + 1}${end}`, text })
                 }
             } else {
@@ -528,7 +531,10 @@
         selectedTimeout = setTimeout(() => (isSelected = false), 100)
 
         const keys = e.ctrlKey || e.metaKey || e.shiftKey
-        if (keys || !selectedVerses[selectedVerses.length - 1]?.find((a) => a && (a.toString() === verseNumber || a === getVerseId(verseNumber)))) {
+        const clicked = verseNumber.toString()
+        const current = selectedVerses[selectedVerses.length - 1] || []
+        const isSelectedVerse = current.some((a) => a?.toString() === clicked || (!clicked.includes("_") && a?.toString() === getVerseId(clicked).toString()))
+        if (keys || !isSelectedVerse) {
             selectedVerses[selectedVerses.length - 1] = scriptureRangeSelect(e, selectedVerses[selectedVerses.length - 1], verseNumber, splittedVerses)
 
             // Remove plain verse IDs if split versions exist (e.g., remove "1" if "1_1", "1_2" are present)
@@ -557,6 +563,19 @@
             if (!verseRef) return 1
             return Number(verseRef.toString().split("_")[0])
         }
+    }
+
+    function focusFirstSplitPart(parts: { id: string }[], selectedChapters: (number | string)[][]) {
+        const selected = selectedChapters?.[selectedChapters.length - 1]
+        if (!parts?.length || selected?.length !== 1 || String(selected[0]).includes("_")) return
+
+        const base = getVerseIdParts(selected[0]).id
+        const firstPart = parts.find((part) => getVerseIdParts(part.id).id === base && getVerseIdParts(part.id).subverse === 1)
+        if (!firstPart) return
+
+        const next = selectedChapters.map((chapter, index) => (index === selectedChapters.length - 1 ? [firstPart.id] : chapter))
+        openVerse(next)
+        if (isActiveInOutput) setTimeout(playScripture)
     }
 
     $: if ($activeTriggerFunction === "scripture_selectAll") selectAllVerses()
@@ -1166,7 +1185,7 @@
                                             <!-- Show all versions for collections -->
                                             <div class="collection-versions">
                                                 {#each collectionVerses as cv, cvIndex}
-                                                    <div class="version-item" style="--version-color: {getVersionColor(cvIndex)}; --version-bg: {getVersionBgColor(cvIndex)}">
+                                                    <div class="version-item" class:repeated={cv.repeated} style="--version-color: {getVersionColor(cvIndex)}; --version-bg: {getVersionBgColor(cvIndex)}">
                                                         <span class="version-text">
                                                             <!-- && cv.text !== collectionVerses.reduce((acc, v) => acc + v.text, "") -->
                                                             {#if cv.isSplit}
@@ -1517,6 +1536,9 @@
 
     .version-item:last-child {
         margin-bottom: 0 !important;
+    }
+    .version-item.repeated {
+        opacity: 0.38;
     }
 
     .version-text {

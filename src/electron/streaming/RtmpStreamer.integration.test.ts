@@ -266,4 +266,29 @@ describeIfFfmpeg("RTMP pipeline (real ffmpeg)", () => {
         expect(status.b).toBeUndefined()
         expect(RtmpStreamer.isRunning("test-output")).toBe(true)
     }, 15000)
+
+    it("restarts the live encoder when the rate control mode changes", async () => {
+        const cbrFile = path.join(tmpDir, "cbr.flv")
+        const vbrFile = path.join(tmpDir, "vbr.flv")
+        const config = { width: WIDTH, height: HEIGHT, fps: FPS, bitrate: 500, enableAudio: false, encoder: "x264", rateControl: "cbr" as const }
+        const destinations = [{ id: "a", url: cbrFile, key: "", enabled: true }]
+
+        await RtmpStreamer.start("test-output", config, destinations)
+        const feeding = feed("test-output")
+        await new Promise((r) => setTimeout(r, 2300))
+
+        expect(RtmpStreamer.getStatus("test-output").a?.state).toBe("live")
+
+        RtmpStreamer.update("test-output", { ...config, rateControl: "vbr" }, [{ id: "a", url: vbrFile, key: "", enabled: true }])
+        await new Promise((r) => setTimeout(r, 200))
+
+        expect(["reconnecting", "connecting", "live"]).toContain(RtmpStreamer.getStatus("test-output").a?.state)
+
+        await new Promise((r) => setTimeout(r, 2500))
+        clearInterval(feeding)
+
+        expect(RtmpStreamer.getStatus("test-output").a?.state).toBe("live")
+        RtmpStreamer.stopAll()
+        await new Promise((r) => setTimeout(r, 400))
+    }, 15000)
 })

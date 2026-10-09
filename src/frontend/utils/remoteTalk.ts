@@ -13,7 +13,7 @@ import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioRouting, categories, connections, dictionary, folders, language, openedFolders, outLocked, outputs, overlayCategories, overlays, playerVideos, projects, remotePassword, runningActions, scriptures, shows, showsCache, styles, templateCategories, templates, theme, themes, timers, variables, variableTags } from "./../stores"
+import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioRouting, categories, connections, dictionary, folders, language, openedFolders, outLocked, outputs, overlayCategories, overlays, playerVideos, projects, runningActions, scriptures, serverData, shows, showsCache, styles, templateCategories, templates, theme, themes, timers, variables, variableTags } from "./../stores"
 import { lastClickTime } from "./common"
 import { translateText } from "./language"
 import { send } from "./request"
@@ -35,9 +35,10 @@ export const receiveREMOTE: any = {
     PASSWORD: (msg: any) => {
         sendThemeToRemote()
 
+        const pass = get(serverData)?.remote?.password || ""
         msg.data = {
             dictionary: get(dictionary),
-            password: !!get(remotePassword).length
+            password: !!pass.length
         }
         if (msg.data.password) return msg
 
@@ -50,7 +51,8 @@ export const receiveREMOTE: any = {
         return msg
     },
     ACCESS: (msg: any) => {
-        if (get(remotePassword).length && msg.data !== get(remotePassword)) return { id: msg.id, channel: "ERROR", data: "wrongPass" }
+        const pass = get(serverData)?.remote?.password || ""
+        if (pass.length && msg.data !== pass) return { id: msg.id, channel: "ERROR", data: "wrongPass" }
 
         sendThemeToRemote()
 

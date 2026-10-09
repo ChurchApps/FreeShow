@@ -122,8 +122,10 @@ export function toggleOutputs(outputIds: string[] | null = null, options: { forc
     // sort so display order can be changed! (needs app restart)
     const sortedOutputList = sortObject(sortByName(outputsList), "stageOutput")
 
-    const currentOutputState = !!get(outputState).find((a) => a.id === outputIds[0])?.active
-    const state = typeof options.state === "boolean" ? options.state : options.force || !(outputIds.length === 1 ? currentOutputState : get(outputDisplay))
+    const visibleOutputs = sortedOutputList.filter((a) => !a.invisible)
+    const primaryVisibleId = visibleOutputs[0]?.id || outputIds[0]
+    const currentOutputState = !!get(outputState).find((a) => a.id === primaryVisibleId)?.active
+    const state = typeof options.state === "boolean" ? options.state : options.force || !(visibleOutputs.length === 1 ? currentOutputState : get(outputDisplay))
 
     const autoPosition = options.force ? false : sortedOutputList.length === 1 && !sortedOutputList[0].forcedResolution?.width
 
@@ -593,13 +595,17 @@ export function getAllOutputs() {
 export function getAllEnabledOutputs() {
     const outputsList = getAllOutputs()
     const enabled = outputsList.filter((a) => a.enabled)
-    if (!enabled.length && isMainWindow()) {
+
+    // enable first if no outputs are currently enabled
+    if (!enabled.length && isMainWindow() && outputsList.length > 0) {
         outputs.update((a) => {
-            a[Object.keys(a)[0]].enabled = true
+            const firstId = outputsList[0].id
+            if (a[firstId]) a[firstId].enabled = true
             return a
         })
         return [outputsList[0]]
     }
+
     return enabled
 }
 
@@ -624,13 +630,17 @@ export function getWindowOutputId() {
 export function getAllActiveOutputs() {
     const outputsList = getAllNormalOutputs()
     const active = outputsList.filter((a) => a.active)
-    if (!active.length && isMainWindow()) {
+
+    // set first to active if no outputs are currently active
+    if (!active.length && isMainWindow() && outputsList.length > 0) {
         outputs.update((a) => {
-            a[Object.keys(a)[0]].active = true
+            const firstNormalId = outputsList[0].id
+            if (a[firstNormalId]) a[firstNormalId].active = true
             return a
         })
         return [outputsList[0]]
     }
+
     return active
 }
 export function getAllActiveOutputIds() {
@@ -714,6 +724,7 @@ export function allOutputsHasStyleTemplate(isScripture: boolean = false) {
 export function refreshOut(refresh = true) {
     outputs.update((a) => {
         getAllActiveOutputs().forEach(({ id }) => {
+            if (!a[id]) return
             a[id].out = { ...a[id].out, refresh }
         })
         return a
@@ -793,12 +804,23 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
 
     if (currentOutput?.stageOutput) return currentOutput.bounds ?? DEFAULT_BOUNDS
 
-    const style = styleIdOverride || currentOutput?.style ? get(styles)[(styleIdOverride || currentOutput?.style)!] || null : null
+    const styleId = styleIdOverride || currentOutput?.style || ""
+    const style = styleId ? get(styles)[styleId] || null : null
     const styleRatio: any = style?.aspectRatio || style?.resolution
 
-    const ratio = styleRatio?.outputResolutionAsRatio ? currentOutput?.bounds : styleRatio
+    // cropping affects aspect ratio if "outputResolutionAsRatio"
+    if (styleRatio?.outputResolutionAsRatio) {
+        const bounds = currentOutput?.bounds ?? DEFAULT_BOUNDS
+        const cropping = currentOutput?.cropping || style?.cropping
+        const cropWidth = (Number(cropping?.left) || 0) + (Number(cropping?.right) || 0)
+        const cropHeight = (Number(cropping?.top) || 0) + (Number(cropping?.bottom) || 0)
+        return {
+            width: Math.max(1, bounds.width - cropWidth),
+            height: Math.max(1, bounds.height - cropHeight)
+        }
+    }
 
-    return ratio || { width: 16, height: 9 }
+    return styleRatio || { width: 16, height: 9 }
 }
 
 // this will get the first available stage output
@@ -815,12 +837,14 @@ export function getStageResolution(outputId = "", _updater = get(outputs)): Reso
 export const DEFAULT_BOUNDS = { width: 1920, height: 1080 }
 const outputResolutionCache = new Map<string, Resolution>()
 
-export function getOutputResolution(outputId: string, _updater = get(outputs), scaled = false, styleIdOverride = "") {
+export function getOutputResolution(outputId: string, _updater = get(outputs), scaled = false, styleIdOverride = "", _stylesUpdater = get(styles)) {
     const currentOutput = _updater[outputId]
     const effectiveStyleId = styleIdOverride || currentOutput?.style || ""
-    const currentStyle = effectiveStyleId ? get(styles)[effectiveStyleId] : null
+    const currentStyle = effectiveStyleId ? _stylesUpdater[effectiveStyleId] : null
     const styleRatioVal: any = currentStyle?.aspectRatio || currentStyle?.resolution
-    const styleRatioKey = styleRatioVal ? `${styleRatioVal.width}x${styleRatioVal.height}_${styleRatioVal.outputResolutionAsRatio ? 1 : 0}` : ""
+    const cropping = currentOutput?.cropping || currentStyle?.cropping
+    const cropKey = cropping ? `${cropping.top || 0}_${cropping.right || 0}_${cropping.bottom || 0}_${cropping.left || 0}` : ""
+    const styleRatioKey = styleRatioVal ? `${styleRatioVal.width}x${styleRatioVal.height}_${styleRatioVal.outputResolutionAsRatio ? 1 : 0}_${cropKey}` : ""
     const cacheKey = `${outputId}_${scaled}_${effectiveStyleId}_${styleRatioKey}_${currentOutput?.bounds?.width || 0}_${currentOutput?.bounds?.height || 0}`
     const cached = outputResolutionCache.get(cacheKey)
     if (cached) return { ...cached }

@@ -20,10 +20,13 @@ export interface EncoderProfile {
     /** filter appended after the format conversion */
     filterSuffix?: string
     /** encoder specific args, placed after -c:v <codec> */
-    args: (bitrate: number, gop: number) => string[]
+    args: (bitrate: number, gop: number, rateControl?: "cbr" | "vbr") => string[]
 }
 
-const rateControl = (bitrate: number) => ["-b:v", `${bitrate}k`, "-maxrate", `${bitrate}k`, "-bufsize", `${bitrate}k`]
+const rateControl = (bitrate: number, mode?: "cbr" | "vbr") => {
+    const max = mode === "vbr" ? Math.round(bitrate * 1.5) : bitrate
+    return ["-b:v", `${bitrate}k`, "-maxrate", `${max}k`, "-bufsize", `${max}k`]
+}
 
 export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
     x264: {
@@ -33,7 +36,7 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         hardware: false,
         platforms: ["darwin", "win32", "linux"],
         pixelFormat: "yuv420p",
-        args: (bitrate, gop) => ["-preset", "veryfast", "-tune", "zerolatency", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`]
+        args: (bitrate, gop, mode) => ["-preset", "veryfast", "-tune", "zerolatency", "-profile:v", "high", ...rateControl(bitrate, mode), "-g", `${gop}`]
     },
     videotoolbox: {
         id: "videotoolbox",
@@ -43,9 +46,8 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         platforms: ["darwin"],
         pixelFormat: "nv12",
         // prio_speed minimizes latency; avoid -realtime 1 to prevent internal frame drops from pipe jitter
-        // use the shared rateControl helper so -bufsize is set consistently for better CBR behavior
         // -bf 0 prevents B-frame buffering latency and DTS/PTS disorder on RTMP streams
-        args: (bitrate, gop) => ["-prio_speed", "1", "-allow_sw", "1", "-bf", "0", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`]
+        args: (bitrate, gop, mode) => ["-prio_speed", "1", "-allow_sw", "1", "-bf", "0", "-profile:v", "high", ...rateControl(bitrate, mode), "-g", `${gop}`]
     },
     nvenc: {
         id: "nvenc",
@@ -56,7 +58,7 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         pixelFormat: "nv12",
         // -no-scenecut only applies with rc_lookahead > 0 and -forced-idr only with -force_key_frames,
         // neither of which are set here, so both would be silent no-ops
-        args: (bitrate, gop) => ["-preset", "p4", "-tune", "ll", "-rc", "cbr", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`]
+        args: (bitrate, gop, mode) => ["-preset", "p4", "-tune", "ll", "-rc", mode === "vbr" ? "vbr" : "cbr", "-profile:v", "high", ...rateControl(bitrate, mode), "-g", `${gop}`]
     },
     qsv: {
         id: "qsv",
@@ -65,7 +67,7 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         hardware: true,
         platforms: ["win32", "linux"],
         pixelFormat: "nv12",
-        args: (bitrate, gop) => ["-preset", "veryfast", "-profile:v", "high", "-forced_idr", "1", "-low_delay_brc", "1", "-bf", "0", ...rateControl(bitrate), "-g", `${gop}`]
+        args: (bitrate, gop, mode) => ["-preset", "veryfast", "-profile:v", "high", "-forced_idr", "1", "-low_delay_brc", "1", "-bf", "0", ...rateControl(bitrate, mode), "-g", `${gop}`]
     },
     amf: {
         id: "amf",
@@ -74,7 +76,7 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         hardware: true,
         platforms: ["win32"],
         pixelFormat: "nv12",
-        args: (bitrate, gop) => ["-usage", "lowlatency", "-quality", "speed", "-rc", "cbr", "-profile:v", "high", ...rateControl(bitrate), "-g", `${gop}`]
+        args: (bitrate, gop, mode) => ["-usage", "lowlatency", "-quality", "speed", "-rc", mode === "vbr" ? "vbr_peak" : "cbr", "-profile:v", "high", ...rateControl(bitrate, mode), "-g", `${gop}`]
     },
     vaapi: {
         id: "vaapi",
@@ -85,7 +87,7 @@ export const ENCODER_PROFILES: Record<EncoderId, EncoderProfile> = {
         pixelFormat: "nv12",
         preInput: ["-init_hw_device", `vaapi=va:${VAAPI_DEVICE}`, "-filter_hw_device", "va"],
         filterSuffix: "hwupload",
-        args: (bitrate, gop) => ["-rc_mode", "CBR", "-profile:v", "high", "-bf", "0", ...rateControl(bitrate), "-g", `${gop}`]
+        args: (bitrate, gop, mode) => ["-rc_mode", mode === "vbr" ? "VBR" : "CBR", "-profile:v", "high", "-bf", "0", ...rateControl(bitrate, mode), "-g", `${gop}`]
     }
 }
 
@@ -126,6 +128,7 @@ export interface EncoderCommandOptions {
     fps: number
     /** video bitrate in kbps */
     bitrate: number
+    rateControl?: "cbr" | "vbr"
     enableAudio: boolean
     sampleRate?: number
 }
@@ -157,7 +160,7 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
     args.push("-vf", `${baseFilter},fps=${opts.fps}`)
     // prefer passthrough fps mode and generate PTS to avoid ffmpeg inserting extra buffering
     args.push("-fps_mode", "passthrough", "-fflags", "+genpts")
-    args.push("-c:v", profile.codec, ...profile.args(opts.bitrate, opts.fps * 2))
+    args.push("-c:v", profile.codec, ...profile.args(opts.bitrate, opts.fps * 2, opts.rateControl))
 
     if (opts.enableAudio) {
         args.push("-af", "aresample=async=1:max_soft_comp=10000:first_pts=0")

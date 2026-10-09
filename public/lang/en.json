@@ -159,6 +159,7 @@
         "nextTimer": "Next slide timer",
         "lock": "Lock",
         "unlock": "Unlock",
+        "reload": "Reload",
         "test_pattern": "Test pattern",
         "live_prepare": "Hide output content (Black overlay)"
     },
@@ -523,7 +524,6 @@
         "next_timer": "Next slide timer",
         "display_duration": "Display duration",
         "import": "Import",
-        "songbeamer_import": "Songbeamer Import",
         "export": "Export",
         "importing": "Importing...",
         "import_scripture": "Import scripture",
@@ -579,7 +579,8 @@
         "reset_all_action": "This will reset the whole program, but not delete the .show files in your \"Shows\"-folder.",
         "quit": "Quit without saving",
         "save_quit": "Save & Quit",
-        "ai_model_manager": "Manage models"
+        "ai_model_manager": "Manage models",
+        "ai_chat": "Chat"
     },
     "confirm": {
         "statement_slide_exists_arrangement": "Slide exists in a different arrangement!",
@@ -763,6 +764,7 @@
         "manage_subtitles": "Manage subtitles",
         "toggle_time_marker": "Toggle time markers",
         "add_time_marker": "Add time marker",
+        "time_marker_added": "Time marker added at $1",
         "bind_to": "Specific outputs",
         "remove_binding": "Remove specific outputs",
         "dynamic_values": "Dynamic values",
@@ -1491,7 +1493,8 @@
         "preview_frame_rate": "Preview frame rate",
         "auto": "Auto",
         "section_trigger_action": "Trigger action when navigating presentation to a section",
-        "rss": "RSS"
+        "rss": "RSS",
+        "txt": "TXT"
     },
     "gpu": {
         "no_acceleration": "Graphics acceleration is unavailable",
@@ -1572,6 +1575,7 @@
     },
     "scripture": {
         "collections": "Collections",
+        "translations": "Translations",
         "bibles_section": "Bibles",
         "local": "Import local file",
         "supported_formats": "Supported formats:",
@@ -1822,17 +1826,6 @@
         "output_clear": "Clear individual output layers, or clear all layers in the output.",
         "edit": "Open slide editing with one click at the top.",
         "end": "Feel free to look on the web if you need help with other features."
-    },
-    "songbeamer_import": {
-        "encoding": "Encoding",
-        "older_versions": "For Songbeamer versions older than 6.02a",
-        "translations": "Translations",
-        "translation_multiline": "Multiline",
-        "translation_textboxes": "Textboxes",
-        "translation_layouts": "Layouts",
-        "translation_description_multiline": "Adds all languages in a single textbox in alternating lines. (Like in Songbeamer)",
-        "translation_description_textboxes": "Adds every language as a separate textbox to the slide.",
-        "translation_description_layouts": "Creates a unique set of slides and a layout for every language."
     },
     "chat": {
         "chat": "Chat",

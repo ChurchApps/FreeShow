@@ -92,14 +92,7 @@ export class OutputBounds {
             const centerTop = wBounds.y + wBounds.height / 2
 
             const point = { x: centerLeft, y: centerTop }
-            let targetDisplay = screen.getDisplayNearestPoint(point)
-
-            // If output window is currently on primary screen (0,0) and secondary screen exists, align to secondary screen
-            if (displays.length >= 2 && targetDisplay.id === displays[0].id && output.screen) {
-                const savedDisplay = displays.find((d) => d.id.toString() === output.screen)
-                if (savedDisplay) targetDisplay = savedDisplay
-            }
-
+            const targetDisplay = screen.getDisplayNearestPoint(point)
             output.screen = targetDisplay.id.toString()
 
             if (JSON.stringify(wBounds) !== JSON.stringify(targetDisplay.bounds)) {

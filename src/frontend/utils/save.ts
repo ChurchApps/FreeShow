@@ -24,6 +24,7 @@ import {
     audioFolders,
     audioPlaylists,
     audioRouting,
+    audioStreams,
     autoOutput,
     autosave,
     calendarAddShow,
@@ -78,7 +79,6 @@ import {
     projects,
     providerConnections,
     redoHistory,
-    remotePassword,
     renamedShows,
     resized,
     saved,
@@ -115,7 +115,6 @@ import {
     videoMarkers
 } from "../stores"
 import type { SaveActions, SaveData, SaveList, SaveListSettings, SaveListSyncedSettings } from "./../../types/Save"
-import { audioStreams, companion } from "./../stores"
 import { isSyncing, socketDisconnect, syncWithCloud } from "./cloudSync"
 import { newToast, setStatus, startAutosave } from "./common"
 import { syncDrive } from "./drive"
@@ -184,7 +183,6 @@ export function save(closeWhenFinished = false, customTriggers: SaveActions = {}
         outLocked: get(outLocked),
         outputs: sanitizedOutputs,
         sorted: get(sorted),
-        remotePassword: get(remotePassword),
         resized: get(resized),
         slidesOptions: get(slidesOptions),
         splitLines: get(splitLines),
@@ -281,7 +279,6 @@ export function getSyncedSettings(): { [key in SaveListSyncedSettings]: any } {
         variableTags,
         timerTags,
         customizedIcons,
-        companion,
         globalTags,
         globalRegexes,
         customMetadata,
@@ -475,7 +472,6 @@ const saveList: { [key in SaveList]: any } = {
     overlayCategories,
     overlays,
     playerVideos,
-    remotePassword,
     resized: null,
     scriptures,
     scriptureSettings,
@@ -514,7 +510,6 @@ const saveList: { [key in SaveList]: any } = {
     special,
     timeline: null,
     timecode: null,
-    companion: null,
     globalTags,
     globalRegexes: null,
     customMetadata: null,

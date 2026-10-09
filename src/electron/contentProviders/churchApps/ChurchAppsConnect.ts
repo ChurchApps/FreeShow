@@ -6,7 +6,7 @@ import { openURL } from "../../IPC/responsesMain"
 import { getKey } from "../../utils/keys"
 import { httpsRequest } from "../../utils/requests"
 import type { ChurchAppsAuthData, ChurchAppsRequestData, ChurchAppsScopes } from "./types"
-import { CHURCHAPPS_API_URL, CHURCHAPPS_APP_URL, LESSONS_API_URL } from "./types"
+import { getChurchAppsApiUrl, getChurchAppsAppUrl, getLessonsApiUrl } from "./types"
 
 /**
  * Handles authentication and API communication with the ChurchApps service.
@@ -79,11 +79,11 @@ export class ChurchAppsConnect {
         }
 
         return new Promise((resolve) => {
-            let apiUrl = CHURCHAPPS_API_URL
+            let apiUrl = getChurchAppsApiUrl()
             let fullEndpoint = ""
 
             if (data.api === "lessons") {
-                apiUrl = LESSONS_API_URL
+                apiUrl = getLessonsApiUrl()
                 fullEndpoint = data.endpoint
             } else {
                 const pathPrefix = data.api === "doing" ? "/doing" : data.api === "membership" ? "/membership" : data.api === "messaging" ? "/messaging" : "/content"
@@ -138,7 +138,7 @@ export class ChurchAppsConnect {
                     redirect_uri
                 }
 
-                httpsRequest(CHURCHAPPS_API_URL, "/membership/oauth/token", "POST", {}, params, (err, data: ChurchAppsAuthData) => {
+                httpsRequest(getChurchAppsApiUrl(), "/membership/oauth/token", "POST", {}, params, (err, data: ChurchAppsAuthData) => {
                     if (err) {
                         res.setHeader("Content-Type", "text/html")
                         const errorPage = this.HTML_ERROR.replace("{error_msg}", err.message)
@@ -162,7 +162,7 @@ export class ChurchAppsConnect {
                 })
             })
 
-            const URL = `${CHURCHAPPS_APP_URL}/login?returnUrl=` + encodeURIComponent(`/oauth?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}`) + "&forceLogin=1"
+            const URL = `${getChurchAppsAppUrl()}/login?returnUrl=` + encodeURIComponent(`/oauth?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}`) + "&forceLogin=1"
             openURL(URL)
         })
     }
@@ -184,7 +184,7 @@ export class ChurchAppsConnect {
                 refresh_token: access.refresh_token
             }
 
-            httpsRequest(CHURCHAPPS_API_URL, "/membership/oauth/token", "POST", {}, params, (err, data: ChurchAppsAuthData) => {
+            httpsRequest(getChurchAppsApiUrl(), "/membership/oauth/token", "POST", {}, params, (err, data: ChurchAppsAuthData) => {
                 if (err || data === null) {
                     this.disconnect()
                     sendToMain(ToMain.ALERT, "Could not refresh token! " + String(err?.message))

@@ -63,7 +63,8 @@ import {
     timers,
     transitionData,
     variables,
-    visualizerData
+    visualizerData,
+    websiteAction
 } from "../stores"
 import { newToast } from "./common"
 import { syncDrive } from "./drive"
@@ -269,6 +270,7 @@ export const receiveOUTPUTasOUTPUT: any = {
     // AUDIO_CHANNELS_DATA: (a: any) => audioChannelsData.set(a),
 
     PLAYING_VIDEO_STATE: (a: any) => playingVideoState.set(a),
+    WEBSITE_ACTION: (a: any) => websiteAction.set(a),
 
     METRONOME: (a: any) => metronome.set(a),
     METRONOME_TIMER: (a: any) => metronomeTimer.set(a),

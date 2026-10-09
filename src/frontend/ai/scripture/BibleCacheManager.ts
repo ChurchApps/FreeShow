@@ -92,6 +92,7 @@ export class BibleCacheManager {
     }
 
     private static tokenizeText(text: string): string[] {
+        if (!text || typeof text !== "string") return []
         return text
             .toLowerCase()
             .replace(/['’`\-_]/g, " ")

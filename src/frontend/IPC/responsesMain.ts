@@ -599,7 +599,7 @@ export const mainResponses: MainResponses = {
             mediashout: () => convertMediaShout(data),
             quelea: () => convertQuelea(data),
             softprojector: () => convertSoftProjector(data),
-            songbeamer: () => convertSongbeamerFiles(a.custom),
+            songbeamer: () => convertSongbeamerFiles(data),
             easyslides: () => convertEasyslides(data),
             verseview: () => convertVerseVIEW(data),
             // Media

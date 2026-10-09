@@ -992,7 +992,7 @@ export async function detectNewFiles() {
 
     // watch for file changes
     try {
-        fs.watch(downloadsFolder, { persistent: false }, async (eventType, filename) => {
+        const watcher = fs.watch(downloadsFolder, { persistent: false }, async (eventType, filename) => {
             if (eventType !== "rename" || !filename) return
 
             const ext = path.extname(filename).toLowerCase()
@@ -1026,6 +1026,10 @@ export async function detectNewFiles() {
                 if (!allRecentFiles.includes(filePath)) allRecentFiles.push(filePath)
                 sendToMain(ToMain.RECENTLY_ADDED_FILES, { paths: allRecentFiles })
             }, WRITE_WAIT_MS)
+        })
+
+        watcher.on("error", (err) => {
+            console.warn("Watcher error in downloads folder:", err)
         })
     } catch (err) {
         console.warn("No permission to watch folder:", err)

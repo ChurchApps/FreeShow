@@ -21,8 +21,8 @@
 
     $: video = $playerVideos[id] || data
 
-    let videoData = { muted: true, paused: false, loop: false, duration: 0 }
-    let videoTime = 0
+    export let videoData = { muted: true, paused: false, loop: false, duration: 0 }
+    export let videoTime = 0
 
     // TODO: looping player videos does not work!
 

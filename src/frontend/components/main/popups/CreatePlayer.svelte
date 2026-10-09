@@ -1,8 +1,12 @@
 <script lang="ts">
     import { uid } from "uid"
     import { playerVideos, popupData } from "../../../stores"
-    import { getVimeoData, getYouTubeData, trimPlayerId } from "../../drawer/player/playerHelper"
+    import { newToast } from "../../../utils/common"
+    import { translateText } from "../../../utils/language"
+    import { getUrlTimestamp, getVimeoData, getYouTubeData, trimPlayerId } from "../../drawer/player/playerHelper"
     import { clone } from "../../helpers/array"
+    import { addVideoMarker } from "../../helpers/media"
+    import { joinTime, secondsToTime } from "../../helpers/time"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
 
     let active: "youtube" | "vimeo" = $popupData.active
@@ -13,7 +17,16 @@
     let data = clone($playerVideos[editId] || { name: "", id: "" })
 
     function setValue(key: "id" | "name", value: string) {
-        if (key === "id") value = trimPlayerId(value, active)
+        if (key === "id") {
+            // extract any timestamp in the pasted link (e.g. ?t=1234)
+            const markerTime = getUrlTimestamp(value)
+            if (markerTime) {
+                const markerIndex = addVideoMarker(currentId, markerTime, "URL")
+                if (markerIndex > -1) newToast(translateText("actions.time_marker_added", null, [joinTime(secondsToTime(markerTime))]))
+            }
+
+            value = trimPlayerId(value, active)
+        }
 
         const newData = { ...data, [key]: value, type: active }
         data = newData

@@ -187,7 +187,7 @@ export const textSections: { [key: string]: EditBoxSection } = {
             [
                 // probably not needed as we have line and item background color
                 // { label: "background_color", id: "style", key: "background-color", type: "color", value: "rgb(0 0 0 / 0)", values: { enableNoColor: true } },
-                { id: "nowrap", type: "checkbox", value: false, values: { label: "edit.no_wrap" } }
+                { id: "style", key: "white-space", type: "checkbox", value: false, styleValue: "nowrap", values: { label: "edit.no_wrap" } }
             ]
         ]
     },

@@ -47,6 +47,7 @@
     onDestroy(() => {
         if (updaterInterval) clearInterval(updaterInterval)
         stopVisualiser()
+        if (previousPath) AudioAnalyser.releaseAnalyser(previousPath)
     })
 
     function setTime(e: any, newTime: number | null = null) {
@@ -56,14 +57,6 @@
         if (!AudioPlayer.setTime(path, time)) {
             currentTime = time
         }
-        // if (playing.audio) {
-        //     playing.audio.currentTime = e.target.value
-
-        //     // something (in audio.ts I guess) plays the audio when updating the time, so this will pause it again
-        //     if (paused) setTimeout(() => playing.audio.pause(), 20)
-        // } else {
-        //     currentTime = e.target.value
-        // }
     }
 
     let sliderValue: any = null
@@ -74,6 +67,8 @@
     let mediaElem: HTMLElement | undefined
     let canvas: HTMLCanvasElement | undefined
     let ctx: CanvasRenderingContext2D | null = null
+    let previousPath = ""
+    let rendering = 0
 
     function stopVisualiser() {
         if (rendering) {
@@ -85,23 +80,29 @@
         }
     }
 
-    $: if (path) stopVisualiser()
-    $: if ($playingAudio[path]?.paused === false && canvas) renderVisualiser()
-    else if (canvas) stopVisualiser()
-
-    let analysers: AnalyserNode[] = []
-    let rendering = 0
-    function renderVisualiser() {
+    $: if (path !== previousPath) {
         stopVisualiser()
+        if (previousPath) AudioAnalyser.releaseAnalyser(previousPath)
+        previousPath = path
+    }
+
+    $: if (canvas && path) {
+        if (!paused) renderVisualiser()
+        else stopVisualiser()
+    }
+
+    function renderVisualiser() {
+        if (rendering) {
+            cancelAnimationFrame(rendering)
+            rendering = 0
+        }
 
         const currentPath = path
-        analysers = AudioAnalyser.getAnalysers(currentPath)
+        const analysers = AudioAnalyser.getAnalysers(currentPath)
         if (!canvas) return
         if (!analysers.length) {
             setTimeout(() => {
-                if (path === currentPath && $playingAudio[currentPath]?.paused === false && canvas) {
-                    renderVisualiser()
-                }
+                if (path === currentPath && !paused && canvas) renderVisualiser()
             }, 50)
             return
         }
@@ -119,20 +120,20 @@
         if (!bufferLength || !maxHeightValue) return
 
         const dataArrays: Uint8Array[] = analysers.map(() => new Uint8Array(bufferLength))
-
         const padding = -0.5
-        const barWidth = (WIDTH / bufferLength - padding) * 1.42 // 1.3
+        const barWidth = (WIDTH / bufferLength - padding) * 1.42
 
         function renderFrame() {
-            if (path !== currentPath || !$playingAudio[currentPath] || $playingAudio[currentPath].paused) {
+            if (path !== currentPath || paused) {
                 stopVisualiser()
                 return
             }
 
             rendering = requestAnimationFrame(renderFrame)
 
-            // update frequency data for all analysers
-            analysers.forEach((analyser, i) => analyser.getByteFrequencyData(dataArrays[i] as Uint8Array<ArrayBuffer>))
+            for (let i = 0; i < analysers.length; i++) {
+                analysers[i].getByteFrequencyData(dataArrays[i] as Uint8Array<ArrayBuffer>)
+            }
 
             ctx!.clearRect(0, 0, WIDTH, HEIGHT)
 

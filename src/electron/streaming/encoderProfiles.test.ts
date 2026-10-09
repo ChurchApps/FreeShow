@@ -175,6 +175,30 @@ describe("buildTestEncodeCommand", () => {
     })
 })
 
+describe("explicit RTMP rate control", () => {
+    it.each([
+        ["nvenc", "-rc", "cbr"],
+        ["amf", "-rc", "cbr"],
+        ["vaapi", "-rc_mode", "CBR"]
+    ] as const)("requests CBR on %s", (encoderId, flag, value) => {
+        const args = buildEncoderCommand({ ...baseOptions, encoderId, rateControl: "cbr" })
+        expect(arg(args, flag)).toBe(value)
+        expect(arg(args, "-maxrate")).toBe("4000k")
+    })
+
+    it.each([
+        ["nvenc", "-rc", "vbr"],
+        ["amf", "-rc", "vbr_peak"],
+        ["vaapi", "-rc_mode", "VBR"]
+    ] as const)("requests VBR on %s with auto-calculated peak", (encoderId, flag, value) => {
+        const args = buildEncoderCommand({ ...baseOptions, encoderId, rateControl: "vbr" })
+        expect(arg(args, flag)).toBe(value)
+        expect(arg(args, "-b:v")).toBe("4000k")
+        expect(arg(args, "-maxrate")).toBe("6000k")
+        expect(arg(args, "-bufsize")).toBe("6000k")
+    })
+})
+
 describe("isSupportedOnPlatform", () => {
     it("gates vendor encoders to the right platforms", () => {
         expect(isSupportedOnPlatform("videotoolbox", "darwin")).toBe(true)

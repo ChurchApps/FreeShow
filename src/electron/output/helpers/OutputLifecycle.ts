@@ -3,7 +3,6 @@ import { OUTPUT_CONSOLE, getMainWindow, hardwareAccelerationDisabled, isMac, loa
 import { OUTPUT } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
-import { gpuCompositingAvailable, gpuStateSettled } from "../../utils/gpu"
 import { initializeSender } from "../../blackmagic/bmdTalk"
 import { CaptureHelper } from "../../capture/CaptureHelper"
 import { SenderCapture } from "../../capture/SenderCapture"
@@ -11,6 +10,7 @@ import { NdiSender } from "../../ndi/NdiSender"
 import { setDataNDI } from "../../ndi/talk"
 import { OmtSender } from "../../omt/OmtSender"
 import { setDataOMT } from "../../omt/talk"
+import { gpuCompositingAvailable, gpuStateSettled } from "../../utils/gpu"
 import { wait } from "../../utils/helpers"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
@@ -69,13 +69,6 @@ export class OutputLifecycle {
                 return
             }
 
-            // if a specific screen is selected, check if it's available
-            if (output.screen) {
-                const displays = screen.getAllDisplays()
-                const targetDisplay = displays.find((d) => d.id.toString() === output.screen)
-                if (!targetDisplay) return
-            }
-
             const targetBounds = OutputVisibility.resolveOutputBounds({ ...output, bounds: output.intendedBounds, id })
             const currentBounds = output.window.getBounds()
             if (JSON.stringify(currentBounds) !== JSON.stringify(targetBounds)) {
@@ -116,8 +109,9 @@ export class OutputLifecycle {
         this.pendingCaptureStart[id] = setTimeout(() => {
             delete this.pendingCaptureStart[id]
 
-            if (!CaptureHelper.Lifecycle || !OutputHelper.getOutput(id)) return // window closed before timeout finished
-            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, omt: output.omt || false, blackmagic: !!output.blackmagic, webrtc: !!output.webrtcData?.streaming, rtmp: !!output.rtmpData?.streaming })
+            const currentOutput = OutputHelper.getOutput(id)
+            if (!CaptureHelper.Lifecycle || !currentOutput || currentOutput.window !== outputWindow) return // window closed or replaced before timeout finished
+            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, omt: output.omt || false, blackmagic: !!output.blackmagic, webrtc: !!currentOutput.webrtcData?.streaming, rtmp: !!currentOutput.rtmpData?.streaming })
         }, 1200)
 
         // NDI
@@ -864,12 +858,14 @@ export class OutputLifecycle {
         NdiSender.stopSenderNDI(id)
         OmtSender.stopSenderOMT(id)
         BlackmagicSender.stop(id)
+
         // free the addon's reused readback buffers for this output (no-op if the addon/pool isn't present)
         try {
             this.osrCaptureAddon?.releasePool?.(id)
         } catch {
             // ignore
         }
+        this.releaseOsrCaptureTextures(id)
 
         const output = OutputHelper.getOutput(id)
         if (!output) return
