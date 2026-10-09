@@ -10,6 +10,12 @@ import { activePopup, alertMessage, categories, drawerTabsData, globalTags } fro
 import { translateText } from "../utils/language"
 import { createCategory, setTempShows } from "./importHelpers"
 
+function normalizeSongbeamerEncoding(encoding: unknown, fallback: BufferEncoding = "utf8"): BufferEncoding {
+    if (encoding === "latin1") return "latin1"
+    if (encoding === "utf8" || encoding === "utf-8") return "utf8"
+    return fallback === "latin1" ? "latin1" : "utf8"
+}
+
 interface SongbeamerChord {
     x: number
     line: number
@@ -66,15 +72,17 @@ export function convertSongbeamerFiles(data: any) {
     const categoryId = get(categories)[defaultCategory] ? defaultCategory : createCategory("Songbeamer")
 
     const files = Array.isArray(data) ? data : data?.files || []
+    const defaultEncoding = normalizeSongbeamerEncoding(data?.encoding)
     const tempShows: { id: string; show: Show }[] = []
 
     setTimeout(() => {
-        files.forEach(({ name, content }: any) => {
+        files.forEach(({ name, content, encoding: fileEncoding }: any) => {
             if (!content || typeof content !== "string") return
             if (content.startsWith(BOM8)) content = content.slice(3)
             if (content.startsWith(BOM16)) content = content.slice(1)
 
-            const show = convertSongbeamerFileToShow(name || "Song", content, categoryId)
+            const effectiveEncoding = normalizeSongbeamerEncoding(fileEncoding, defaultEncoding)
+            const show = convertSongbeamerFileToShow(name || "Song", content, categoryId, effectiveEncoding)
             tempShows.push({ id: uid(), show })
         })
 
@@ -82,7 +90,7 @@ export function convertSongbeamerFiles(data: any) {
     }, 10)
 }
 
-function convertSongbeamerFileToShow(name: string, text: string, categoryId: string): Show {
+function convertSongbeamerFileToShow(name: string, text: string, categoryId: string, encoding: BufferEncoding = "utf8"): Show {
     const layoutId = uid()
     let show = new ShowObj(false, categoryId, layoutId)
     show.origin = "songbeamer"
@@ -90,7 +98,7 @@ function convertSongbeamerFileToShow(name: string, text: string, categoryId: str
     text = text.replaceAll("\r", "").replaceAll(/\n\s+\n/g, "\n\n")
     const sections: string[] = text.split(/(?:^|\n)--(?:-|A)?\s*\n/)
 
-    const metadata = parseMetadata(sections.shift() || "")
+    const metadata = parseMetadata(sections.shift() || "", encoding)
     if (!metadata.title) metadata.title = name
 
     show.name = checkName(metadata.title)
@@ -141,13 +149,16 @@ function getOrCreateTag(name: string) {
     return tagId
 }
 
-function base64Decode(text: string): string {
+function base64Decode(text: string, encoding: BufferEncoding = "utf8"): string {
     try {
         const decoded = atob(text)
         const bytes = new Uint8Array(decoded.length)
         for (let i = 0; i < bytes.length; ++i) {
             bytes[i] = decoded.charCodeAt(i)
         }
+
+        if (encoding === "latin1") return new TextDecoder("iso-8859-1").decode(bytes)
+
         try {
             return new TextDecoder("utf-8", { fatal: true }).decode(bytes)
         } catch {
@@ -158,7 +169,7 @@ function base64Decode(text: string): string {
     }
 }
 
-function parseMetadata(text: string): SongbeamerMetadata {
+function parseMetadata(text: string, encoding: BufferEncoding = "utf8"): SongbeamerMetadata {
     const metadata: SongbeamerMetadata = {
         lang_count: 1,
         title: "",
@@ -207,7 +218,7 @@ function parseMetadata(text: string): SongbeamerMetadata {
                 metadata.publisher = val
                 break
             case "Comments":
-                metadata.comments = base64Decode(val)
+                metadata.comments = base64Decode(val, encoding)
                 break
             case "Keywords":
                 metadata.keywords = val
@@ -233,7 +244,7 @@ function parseMetadata(text: string): SongbeamerMetadata {
                 break
             }
             case "Chords": {
-                const chords = base64Decode(val)
+                const chords = base64Decode(val, encoding)
                 for (const chord of chords.split("\r")) {
                     const chordParts = chord.split(",")
                     if (chordParts.length < 3) continue
