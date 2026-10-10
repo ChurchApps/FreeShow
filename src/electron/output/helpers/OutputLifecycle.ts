@@ -1340,7 +1340,7 @@ export class OutputLifecycle {
             const requestedFormat = CaptureHelper.Transmitter.getReadbackFormat(id, { width, height })
 
             const members = OutputLifecycle.groupMembers(id)
-            const offMainIds = members.filter((m) => !!NdiSender.NDI[m]?.sender || !!OmtSender.OMT[m]?.sender || !!RtmpBridge.runningConfig(m) || (WebRtcHost.isRunning() && !!OutputHelper.getOutput(m)?.webrtcData?.streaming))
+            const offMainIds = members.filter((m) => !!NdiSender.NDI[m]?.sender || !!OmtSender.OMT[m]?.sender || !!RtmpBridge.runningConfig(m) || BlackmagicSender.isReady(m) || (WebRtcHost.isRunning() && !!OutputHelper.getOutput(m)?.webrtcData?.streaming))
             // An output with no sender still belongs off main when something wants its downscaled frame
             // (the web server, a stage client, a preview): the worker produces that on the GPU, where
             // main used to resolve a full-resolution readback into its own process.

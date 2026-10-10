@@ -49,7 +49,7 @@ export class SenderCapture {
      */
     static captureFrame(id: string, source: any, opts: CaptureFrameOpts, anySender: boolean): boolean {
         const wantsScaled = !!opts.stageStream || !!opts.serverStream || ((opts.dstW || 0) > 0 && (opts.dstH || 0) > 0)
-        const anyWorkerConsumer = Object.keys(opts.webrtcMembers || {}).length > 0 || Object.keys(opts.rtmpMembers || {}).length > 0 || Object.keys(opts.presentMembers || {}).length > 0 || !!opts.thumbStream || wantsScaled
+        const anyWorkerConsumer = Object.keys(opts.webrtcMembers || {}).length > 0 || Object.keys(opts.rtmpMembers || {}).length > 0 || Object.keys(opts.bmdMembers || {}).length > 0 || Object.keys(opts.presentMembers || {}).length > 0 || !!opts.thumbStream || wantsScaled
         const worker = SenderThread.get()
         if ((!anySender && !anyWorkerConsumer) || !worker) return false
         worker.postMessage({ type: "captureFrame", id, source, opts })
