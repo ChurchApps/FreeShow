@@ -1,5 +1,7 @@
 import type { Size } from "electron"
+import { CaptureHelper } from "../capture/CaptureHelper"
 import { SenderCapture } from "../capture/SenderCapture"
+import { OutputHelper } from "../output/OutputHelper"
 import { NdiSender } from "../ndi/NdiSender"
 import { BlackmagicManager } from "./BlackmagicManager"
 
@@ -15,6 +17,7 @@ export type BmdState = {
     colorSpace: string
     targetSize: Size
     stable: boolean
+    framerate: number
 }
 
 export class BlackmagicBridge {
@@ -38,9 +41,10 @@ export class BlackmagicBridge {
     private static onWorkerMessage(msg: any) {
         switch (msg?.type) {
             case "bmdState": {
-                const st: BmdState = { ready: !!msg.ready, displayMode: msg.displayMode || "", pixelFormat: msg.pixelFormat || "", enableKeying: !!msg.enableKeying, colorSpace: msg.colorSpace || "", targetSize: msg.targetSize || { width: 0, height: 0 }, stable: msg.stable !== false }
+                const st: BmdState = { ready: !!msg.ready, displayMode: msg.displayMode || "", pixelFormat: msg.pixelFormat || "", enableKeying: !!msg.enableKeying, colorSpace: msg.colorSpace || "", targetSize: msg.targetSize || { width: 0, height: 0 }, stable: msg.stable !== false, framerate: Number(msg.framerate) || 0 }
                 if (st.ready) this.states.set(msg.outputId, st)
                 else this.states.delete(msg.outputId)
+                if (st.ready) this.applyFramerate(msg.outputId, st.framerate)
                 const waiters = this.initWaiters.get(msg.outputId) || []
                 this.initWaiters.delete(msg.outputId)
                 for (const w of waiters) w(st.ready)
@@ -50,6 +54,18 @@ export class BlackmagicBridge {
                 this.audioQueued = Number(msg.length) || 0
                 break
         }
+    }
+
+    // The card plays out at its mode's rate whether or not anything is plugged into it, so that is the rate
+    // its frames are needed at. Without it the output kept the idle rate (1fps) whenever the mode's rate had
+    // not reached the saved settings.
+    private static applyFramerate(outputId: string, framerate: number) {
+        if (!(framerate > 0)) return
+        const output = OutputHelper.getOutput(outputId)
+        if (!output?.captureOptions || output.captureOptions.framerates.blackmagic === framerate) return
+        output.captureOptions.framerates.blackmagic = framerate
+        OutputHelper.setOutput(outputId, output)
+        CaptureHelper.updateFramerate(outputId)
     }
 
     static hasOutputs(): boolean {

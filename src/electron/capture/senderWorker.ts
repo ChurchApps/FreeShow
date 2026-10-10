@@ -1187,7 +1187,9 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
     // Blackmagic output lives here too (BlackmagicBridge on main mirrors device state)
     const bmdReportState = (outputId: string) => {
         const d = BlackmagicSender.playbackData[outputId]
-        port.postMessage({ type: "bmdState", outputId, ready: !!d?.playback, displayMode: d?.displayMode || "", pixelFormat: d?.pixelFormat || "", enableKeying: !!d?.enableKeying, colorSpace: d?.colorSpace || "", targetSize: d?.targetSize || null, stable: BlackmagicSender.isDeviceStable(outputId) })
+        // the rate the card plays out at, from the opened mode itself ([frame duration, timescale]) when it reports one
+        const rate = Array.isArray(d?.playback?.frameRate) && d.playback.frameRate[0] > 0 ? d.playback.frameRate[1] / d.playback.frameRate[0] : d?.displayMode ? BlackmagicSender.getAccurateFrameRate(d.displayMode) : 0
+        port.postMessage({ type: "bmdState", outputId, ready: !!d?.playback, displayMode: d?.displayMode || "", pixelFormat: d?.pixelFormat || "", enableKeying: !!d?.enableKeying, colorSpace: d?.colorSpace || "", targetSize: d?.targetSize || null, stable: BlackmagicSender.isDeviceStable(outputId), framerate: rate })
     }
     setInterval(() => {
         if (Object.keys(BlackmagicSender.playbackData).length) port.postMessage({ type: "bmdAudioQueued", length: BlackmagicSender.audioQueueLength })
