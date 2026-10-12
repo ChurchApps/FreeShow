@@ -233,13 +233,26 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
         }
 
         let toggleState = false
-        outs.forEach((id: string, i: number) => {
+        let toggleStateSet = false
+        outs.forEach((id: string) => {
             const output = a[id]
             if (!output) return
 
             if (!output.out) a[id].out = {}
             if (!output.out?.[type]) a[id].out![type] = type === "overlays" || type === "effects" ? [] : null
             data = clone(inputData)
+
+            // effects bound to specific outputs
+            if (type === "effects" && data) {
+                const wasArray = Array.isArray(data)
+                const effectIds: string[] = wasArray ? data : [data]
+                const allowedIds = effectIds.filter((effectId) => {
+                    const effectBindings = get(effects)[effectId]?.bindings || []
+                    return !effectBindings.length || isOutputBound(effectBindings, id)
+                })
+                if (effectIds.length && !allowedIds.length) return
+                data = wasArray ? allowedIds : allowedIds[0]
+            }
 
             if (type === "slide" && data === null && output.out?.slide?.type === "ppt") {
                 sendMain(Main.PRESENTATION_CONTROL, { action: "stop" })
@@ -256,7 +269,10 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             let outData = a[id].out?.[type] || null
             if ((type === "overlays" || type === "effects") && data?.length) {
                 if (!Array.isArray(data)) data = [data]
-                if (toggle && i === 0) toggleState = outData?.includes(data[0])
+                if (toggle && !toggleStateSet) {
+                    toggleState = outData?.includes(data[0])
+                    toggleStateSet = true
+                }
                 if (toggle && toggleState) outData.splice(outData.indexOf(data[0]), 1)
                 else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[type] || []), ...data])
                 else outData = data

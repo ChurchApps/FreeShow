@@ -6,6 +6,7 @@ export interface Effect {
     name: string
     isDefault?: boolean
     displayDuration?: number
+    bindings?: string[] // only show on specific outputs
     placeUnderSlide?: boolean
     color: string | null
     // options

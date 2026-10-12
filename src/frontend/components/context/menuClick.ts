@@ -1974,6 +1974,28 @@ const clickActions = {
 
         removeTemplatesFromShow(get(activeShow)?.id || "", slideRef.id)
     },
+    bind_effect: (obj: ObjData) => {
+        const id = obj.menu?.id
+        const effectIds: string[] = obj.sel?.data || []
+
+        effects.update((a) => {
+            effectIds.forEach((effectId) => {
+                if (!a[effectId]) return
+
+                let bindings = clone(a[effectId].bindings || [])
+                if (!id) bindings = []
+                else if (bindings.length && isOutputBound(bindings, id)) {
+                    bindings = bindings.filter((bId) => resolveOutputId(bId) !== id && bId !== id)
+                } else {
+                    bindings.push(id)
+                }
+
+                if (bindings.length) a[effectId].bindings = bindings
+                else delete a[effectId].bindings
+            })
+            return a
+        })
+    },
     bind_scene: (obj: ObjData) => {
         const id = obj.menu?.id
         const sceneIds: string[] = obj.sel?.data || []
