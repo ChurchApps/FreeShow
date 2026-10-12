@@ -21,7 +21,8 @@
     $: outs = allEnabledOuts.length > 1 ? allEnabledOuts.filter((a) => !a.hideFromPreview) : allEnabledOuts
     $: hiddenOuts = allEnabledOuts.length > 1 ? allEnabledOuts.filter((a) => a.hideFromPreview) : []
 
-    $: gridColumns = allEnabledOuts.length > 1 ? ($special.outputPreviewGrid || 2) : 1
+    $: maxColumns = Math.max(1, outs.length)
+    $: gridColumns = allEnabledOuts.length > 1 ? Math.min($special.outputPreviewGrid || 2, maxColumns) : 1
 
     let nextZoomTimeout: NodeJS.Timeout | null = null
     function handleWheel(e: WheelEvent) {
@@ -30,12 +31,11 @@
         e.preventDefault()
         if (nextZoomTimeout) return
 
-        const current = $special.outputPreviewGrid || 2
+        const current = gridColumns
         const direction = e.deltaY < 0 ? -1 : 1
-        const maxColumns = Math.max(2, outs.length)
         const nextValue = Math.max(1, Math.min(maxColumns, current + direction))
 
-        if (nextValue !== current) {
+        if (nextValue !== ($special.outputPreviewGrid || 2)) {
             special.update((s) => ({ ...s, outputPreviewGrid: nextValue }))
         }
 
