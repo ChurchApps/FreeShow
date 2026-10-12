@@ -62,8 +62,10 @@
 
     let effectsIds: string[] = []
     $: allEffects = $effects
-    $: effectsUnderSlide = effectsIds.filter((id) => allEffects[id]?.placeUnderSlide === true)
-    $: effectsOverSlide = effectsIds.filter((id) => !allEffects[id]?.placeUnderSlide)
+    $: outputtedEffectIds = sceneHideLayers ? [] : effectsIds || []
+    $: effectIds = [...new Set(outputtedEffectIds)]
+    $: effectsUnderSlide = effectIds.filter((id) => allEffects[id]?.placeUnderSlide === true)
+    $: effectsOverSlide = effectIds.filter((id) => !allEffects[id]?.placeUnderSlide)
 
     // don't update when layer content changes, only when refreshing or adding/removing layer
     // currentOutput is set to refresh state when changed in preview
@@ -151,7 +153,7 @@
 
     // overlays
     $: outputtedOverlayIds = sceneHideLayers ? [] : out.overlays || []
-    $: overlayIds = [...new Set([...sceneOverlays, ...outputtedOverlayIds])]
+    $: overlayIds = [...new Set([...sceneOverlays, ...(layers.includes("overlays") ? outputtedOverlayIds : [])])]
     let storedOverlayIds = ""
     let storedOverlays = ""
     $: {
@@ -329,8 +331,8 @@
     // remove PDF/PPT transition when background is outputted
     $: slideMediaTransition = !slide && backgroundData ? noTransition : transitions.media
 
-    $: overlaysActive = !!(layers.includes("overlays") && clonedOverlays)
-    // $: effectsActive = !!(layers.includes("overlays") && allEffects.length)
+    $: overlaysActive = !!((scene === null ? layers.includes("overlays") : true) && clonedOverlays)
+    // $: effectsActive = !!(layers.includes("overlays") && effectIds.length)
 
     // draw zoom
     $: zoomActive = currentOutput.active || (mirror && !preview)
