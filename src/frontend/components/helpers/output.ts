@@ -1406,6 +1406,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
     // reduce template textboxes to slide items
     const slideTextboxes = hasScriptureDynamicValue ? 0 : slideItems.reduce((count, a) => (count += (a?.type || "text") === "text" ? 1 : 0), 0)
+    // if template textboxes (without dynamic values) count matches all slide textboxes (with or without dynamic values), merge as normal textboxes
+    const mergeDynamicAsText = !hasScriptureDynamicValue && slideTextboxes > 0 && (sorted.text?.length || 0) === slideTextboxes
     if (!templateClicked && slideTextboxes < (sortedTemplateItems.text?.length || 0)) {
         sortedTemplateItems.text = sortedTemplateItems.text.slice(0, slideTextboxes)
     }
@@ -1422,7 +1424,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         let type: string = item.type || "text"
         if (type === "text" && hasScriptureDynamicValue) return
 
-        if (hasDynamicValue(item)) type = "text_dynamic"
+        if (hasDynamicValue(item) && !mergeDynamicAsText) type = "text_dynamic"
 
         const templateItem = clone(sortedTemplateItems[type]?.shift())
         if (!templateItem) return finish()
