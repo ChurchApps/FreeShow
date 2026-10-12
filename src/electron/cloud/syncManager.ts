@@ -68,6 +68,7 @@ function getMergeGuardKey(data: { id: SyncProviderId; churchId: string; teamId: 
 
 export async function syncData(data: { id: SyncProviderId; churchId: string; teamId: string; method: "merge" | "read_only" | "upload" | "replace" }) {
     let readOnly = data.method === "read_only" || data.method === "replace" // never write to cloud
+    let localMergedIn = false
     const changedFiles: string[] = [] // WIP write changes
     const replacedShows: string[] = []
     const downloadedShowIds: string[] = []
@@ -322,6 +323,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 sendMain(Main[id], localData)
             } else if (localFileModified) {
                 // Local wins: carry real edit time into ledger for other devices.
+                localMergedIn = true
                 if (!CHANGES.fileModified) CHANGES.fileModified = {}
                 CHANGES.fileModified[id] = Math.max(CHANGES.fileModified[id] || 0, localFileModified)
             }
@@ -436,7 +438,7 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
         if (result.action === "delete") deleteFile(localBiblePath)
     }
 
-    if (readOnly) {
+    if (readOnly || (!localMergedIn && !ledger.localMergedIn)) {
         // store the last modified cloud time, to prevent overwriting cloud data with old local data
         if (guardCloudModifiedAt > 0) {
             const syncCache = getStore("CACHE_SYNC") || {}
