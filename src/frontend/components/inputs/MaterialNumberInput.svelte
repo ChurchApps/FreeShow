@@ -73,12 +73,6 @@
     function handleInput(e: Event) {
         const inputVal = (e.target as HTMLInputElement).value
         rawInput = inputVal
-
-        // If inputVal is a valid complete number, update in real-time (Effect inputs)
-        const trimmed = inputVal.trim()
-        if (trimmed !== "" && !trimmed.endsWith(".") && !trimmed.endsWith(",") && !isNaN(Number(trimmed.replace(/,/g, ".")))) {
-            updateValue(inputVal)
-        }
     }
 
     function handleChange(e: Event) {
