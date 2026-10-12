@@ -40,7 +40,7 @@ export function clampPlaybackRate(rate: number): number {
 export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1, isFadingOut = false): void {
     if (!vid || targetTime === undefined) return
     if (vid.readyState < 2 || vid.seeking) {
-        // keep the record in step with lastSyncedTime, otherwise a slow seek looks like an explicit jump and seeks again in a loop
+        // keep in step with lastSyncedTime, otherwise a slow seek looks like an explicit jump and seeks again in a loop
         const record = lastSyncRecords.get(vid)
         if (record) lastSyncRecords.set(vid, { ...record, targetTime, timestamp: performance.now() })
         return
