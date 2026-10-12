@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activeRecording, activeStyle, audioChannelsData, dictionary, outputs, rtmpStatus, selected, settingsTab, styles, templates, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activeRecording, activeStyle, audioChannelsData, dictionary, outputs, rtmpStatus, selected, settingsTab, special, styles, templates, toggleOutputEnabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
     import { stopMediaRecorder } from "../../drawer/live/recorder"
@@ -20,6 +20,30 @@
     $: allEnabledOuts = sortObject(sortByName(keysToID($outputs).filter((a) => a.enabled)), "stageOutput")
     $: outs = allEnabledOuts.length > 1 ? allEnabledOuts.filter((a) => !a.hideFromPreview) : allEnabledOuts
     $: hiddenOuts = allEnabledOuts.length > 1 ? allEnabledOuts.filter((a) => a.hideFromPreview) : []
+
+    $: gridColumns = allEnabledOuts.length > 1 ? ($special.outputPreviewGrid || 2) : 1
+
+    let nextZoomTimeout: NodeJS.Timeout | null = null
+    function handleWheel(e: WheelEvent) {
+        if (!e.ctrlKey && !e.metaKey) return
+        if (allEnabledOuts.length <= 1) return
+        e.preventDefault()
+        if (nextZoomTimeout) return
+
+        const current = $special.outputPreviewGrid || 2
+        const direction = e.deltaY < 0 ? -1 : 1
+        const maxColumns = Math.max(2, outs.length)
+        const nextValue = Math.max(1, Math.min(maxColumns, current + direction))
+
+        if (nextValue !== current) {
+            special.update((s) => ({ ...s, outputPreviewGrid: nextValue }))
+        }
+
+        if (Math.abs(e.deltaY) >= 100) return
+        nextZoomTimeout = setTimeout(() => {
+            nextZoomTimeout = null
+        }, 300)
+    }
 
     let fullscreen = false
     let fullscreenId = ""
@@ -136,7 +160,7 @@
 <!-- role="button"
 tabindex="0"
 aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"} -->
-<div on:click={toggleFullscreen} class="multipleOutputs" class:multiple={outs.length > 1} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 4px);"} role="none">
+<div on:click={toggleFullscreen} on:wheel={handleWheel} class="multipleOutputs" class:multiple={outs.length > 1} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 4px);"} role="none">
     {#if fullscreen}
         <MaterialButton class="hide" style="z-index: 2;opacity: 1;inset-inline-end: 10px;" title="actions.close" on:click={() => (fullscreen = false)}>
             <Icon id="close" size={1.2} white />
@@ -152,7 +176,7 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
     {:else if hiddenOuts.length}
         <div class="hiddenOutputTitles">
             {#each hiddenOuts as output (output.id)}
-                <div style="flex: 1 1 50%;min-width: 0;">
+                <div style="flex: 1 1 {100 / gridColumns}%;min-width: 0;">
                     <OutputPreviewLabel {output} outs={allEnabledOuts} />
                 </div>
             {/each}
@@ -166,7 +190,7 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         {@const isMuted = $audioChannelsData[`channel_${output.id}`]?.isMuted}
         {@const isNetworkOutput = output.ndi || output.webrtc || output.rtmp}
 
-        <div id={output.id} class="outputPreview output_button context #output_preview" class:drop-target={!fullscreen && dragOverOutputId === output.id} on:dragover={(e) => handleDragOver(e, output.id)} on:dragleave={(e) => handleDragLeave(e, output.id)} on:drop={(e) => handleDrop(e, output.id)} style={fullscreen ? (fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;") : outs.length > 1 ? "width: 50%;" : "display: contents;"}>
+        <div id={output.id} class="outputPreview output_button context #output_preview" class:drop-target={!fullscreen && dragOverOutputId === output.id} on:dragover={(e) => handleDragOver(e, output.id)} on:dragleave={(e) => handleDragLeave(e, output.id)} on:drop={(e) => handleDrop(e, output.id)} style={fullscreen ? (fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;") : outs.length > 1 ? `width: ${100 / gridColumns}%;` : "display: contents;"}>
             {#if !fullscreen && allEnabledOuts.length > 1}
                 <OutputPreviewLabel {output} outs={allEnabledOuts} />
             {/if}
