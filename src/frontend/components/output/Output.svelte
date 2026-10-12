@@ -330,6 +330,7 @@
     $: slideMediaTransition = !slide && backgroundData ? noTransition : transitions.media
 
     $: overlaysActive = !!(layers.includes("overlays") && clonedOverlays)
+    // $: effectsActive = !!(layers.includes("overlays") && allEffects.length)
 
     // draw zoom
     $: zoomActive = currentOutput.active || (mirror && !preview)
@@ -383,7 +384,7 @@
     {/if}
 
     <!-- effects -->
-    {#if effectsUnderSlide}
+    {#if effectsUnderSlide && layers.includes("overlays")}
         <EffectOutput ids={effectsUnderSlide} transition={transitions.overlay} {mirror} />
     {/if}
 
@@ -411,17 +412,15 @@
         <Overlay overlay={{ items: currentMetadataItems }} isClearing={isMetadataClearing || isSlideClearing} {outputId} transition={textTransition} styleIdOverride={styleIdOverride || sceneStyleId} />
     {/if}
 
-    {#if layers.includes("overlays")}
-        <!-- effects -->
-        {#if effectsOverSlide}
-            <EffectOutput ids={effectsOverSlide} transition={transitions.overlay} {mirror} />
-        {/if}
+    <!-- effects -->
+    {#if effectsOverSlide && layers.includes("overlays")}
+        <EffectOutput ids={effectsOverSlide} transition={transitions.overlay} {mirror} />
+    {/if}
 
-        <!-- overlays -->
-        <!-- outOverlays?.length -->
-        {#if overlaysActive}
-            <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {mirror} {preview} styleIdOverride={styleIdOverride || sceneStyleId} />
-        {/if}
+    <!-- overlays -->
+    <!-- outOverlays?.length -->
+    {#if overlaysActive}
+        <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {mirror} {preview} styleIdOverride={styleIdOverride || sceneStyleId} />
     {/if}
 
     {#if actualSlide?.attributionString && layers.includes("slide")}
