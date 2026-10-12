@@ -56,8 +56,6 @@
 
         const changedKeys = _changedKeys.filter((a) => a.key !== "x" && a.key !== "y" && a.key !== "offset")
 
-        if (_changedKeys.length && !changedKeys.length && !$currentWindow) return
-
         previousItems = clone(items)
 
         renderer.updateItems(items, !changedKeys.length)
