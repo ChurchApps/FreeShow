@@ -38,7 +38,13 @@ export function clampPlaybackRate(rate: number): number {
  * - Smooth rate nudge with hysteresis for small continuous drift (80ms deadband).
  */
 export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1, isFadingOut = false): void {
-    if (!vid || targetTime === undefined || vid.readyState < 2 || vid.seeking) return
+    if (!vid || targetTime === undefined) return
+    if (vid.readyState < 2 || vid.seeking) {
+        // keep in step with lastSyncedTime, otherwise a slow seek looks like an explicit jump and seeks again in a loop
+        const record = lastSyncRecords.get(vid)
+        if (record) lastSyncRecords.set(vid, { ...record, targetTime, timestamp: performance.now() })
+        return
+    }
 
     // a previously issued seek resolved — record its latency (slight overshoot is trimmed by the nudge)
     const pendingSince = pendingSeeks.get(vid)

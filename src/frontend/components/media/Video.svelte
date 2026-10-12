@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import type { MediaStyle } from "../../../types/Main"
-    import { currentWindow, media } from "../../stores"
+    import { currentWindow, media, playingVideoState } from "../../stores"
     import { enableSubtitle, encodeFilePath, isVideoSupported } from "../helpers/media"
     import { SoftLoopSync } from "./video/softLoop"
     import { clampPlaybackRate, syncVideoToAudio, videoSync } from "./video/videoSync"
@@ -65,6 +65,12 @@
     let hasLoaded = false
     function loaded() {
         hasLoaded = true
+
+        // a mirror can mount while the video is already playing, so start directly at the current playing time, instead of waiting on videoSync
+        const playingKey = `${syncPath || path}_${outputId}`
+        const playingTime = mirror ? $playingVideoState[playingKey]?.currentTime || 0 : 0
+        if (video && playingTime) video.currentTime = playingTime
+
         dispatch("loaded", true)
     }
 
