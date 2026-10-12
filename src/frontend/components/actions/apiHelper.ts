@@ -343,7 +343,7 @@ export function toggleLock(data: API_output_lock) {
         toggleOutputLock(outputId, typeof data.value === "boolean" ? !data.value : isLocked)
     })
 }
-// similar to PreviewOutputs.svelte
+// similar to OutputPreviewLabel.svelte
 function toggleOutputLock(outputId: string, value: boolean) {
     outputs.update((a) => {
         if (!a[outputId]?.enabled) return a

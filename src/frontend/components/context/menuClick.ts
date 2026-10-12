@@ -885,11 +885,10 @@ const clickActions = {
         toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
         setTimeout(() => {
             outputs.update((output) => {
-                // should match the outputs list in MultiOutputs.svelte
-                const showingOutputsList = Object.values(output).filter((a) => a.enabled && !a.hideFromPreview)
+                const allEnabledList = Object.values(output).filter((a) => a.enabled)
                 const newValue = !output[outputId].hideFromPreview
 
-                if (newValue && showingOutputsList.length <= 1) newToast("toast.one_output")
+                if (newValue && allEnabledList.length <= 1) newToast("toast.one_output")
                 else output[outputId].hideFromPreview = !output[outputId].hideFromPreview
 
                 return output
