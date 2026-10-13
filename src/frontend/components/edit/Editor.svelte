@@ -35,7 +35,7 @@
 
     // no need to add chords on scripture/events
     $: chordsHidden = !!currentShow?.reference?.type
-    $: chordsDisabled = !Slide || isLocked || !getSlideText(Slide)
+    $: chordsDisabled = !Slide || isLocked || (chordCount < 1 && !getSlideText(Slide))
 
     $: if ($editMode === "chords" && (chordsHidden || chordsDisabled)) editMode.set("default")
 
