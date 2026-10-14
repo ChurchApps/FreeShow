@@ -2,7 +2,7 @@
     import { onDestroy } from "svelte"
     import type { Unsubscriber } from "svelte/store"
     import type { Item } from "../../../../types/Show"
-    import { audioChannelsData, currentWindow, media, outputs, styles } from "../../../stores"
+    import { currentWindow, media, outputs, styles } from "../../../stores"
     import Image from "../../drawer/media/Image.svelte"
     import { getCropState } from "../../helpers/cropping"
     import { encodeFilePath, getExtension, getMedia, getMediaType, getThumbnailPath, mediaSize } from "../../helpers/media"
@@ -170,8 +170,26 @@
     // Soft loop
 
     $: softLoopValue = $media[mediaPath]?.softLoop ?? 0
-    $: fromTime = $media[mediaPath]?.fromTime ?? 0
-    $: toTime = $media[mediaPath]?.toTime ?? 0
+    $: fromTime = item?.fromTime ?? $media[mediaPath]?.fromTime ?? 0
+    $: toTime = item?.toTime || $media[mediaPath]?.toTime || 0
+
+    let constrainingPlayback = false
+    function constrainItemPlayback(event: Event) {
+        if (outputId || constrainingPlayback) return
+        const el = event.currentTarget as HTMLVideoElement
+        if (!el || el.seeking) return
+
+        const start = item?.fromTime || 0
+        const end = item?.toTime || 0
+        const needsStart = start > 0 && el.currentTime < start && el.currentTime < 0.3
+        const needsEnd = end > start && el.currentTime >= end
+        if (!needsStart && !needsEnd) return
+
+        constrainingPlayback = true
+        if (needsEnd && item?.loop === false) el.pause()
+        else el.currentTime = start
+        constrainingPlayback = false
+    }
 
     const softLoopSync = new SoftLoopSync()
     onDestroy(() => softLoopSync.destroy())
@@ -190,8 +208,7 @@
             {#if item.fit === "blur"}
                 <video bind:this={videoBlurElem} src={encodeFilePath(mediaPath)} style="{mediaStyleBlurString}{mediaStyleCombinedString}" muted autoplay loop={shouldLoop} />
             {/if}
-            {@const mainVol = $audioChannelsData.main?.volume ?? 1}
-            <video bind:this={videoElem} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString}" muted volume={mainVol} autoplay loop={shouldLoop}>
+            <video bind:this={videoElem} src={encodeFilePath(mediaPath)} style="{mediaStyleString}{mediaStyleCombinedString}" muted autoplay loop={shouldLoop} on:loadedmetadata={constrainItemPlayback} on:timeupdate={constrainItemPlayback}>
                 <track kind="captions" />
             </video>
 

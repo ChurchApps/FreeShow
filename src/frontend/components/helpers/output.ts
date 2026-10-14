@@ -59,6 +59,7 @@ import { customActionActivation, runAction } from "../actions/actions"
 import type { API_camera, API_screen, API_stage_output_layout } from "../actions/api"
 import { getItemText, getSlideText } from "../edit/scripts/textStyle"
 import type { EditInput } from "../edit/values/boxes"
+import { AudioPlayer } from "../../audio/audioPlayer"
 import { VideoPlayer } from "../media/video/videoPlayer"
 import { clearBackground, clearSlide } from "../output/clear"
 import { areObjectsEqual, clone, keysToID, removeDuplicates, sortByName, sortObject } from "./array"
@@ -355,10 +356,13 @@ function checkAudio(type: string, data: any, allOutputIds: string[], outs: strin
         }
     } else if (type === "slide") {
         const oldSlideOut = get(outputs)[outs?.[0]]?.out?.slide
-        const oldItems = getSlideVideoItems(oldSlideOut)
-        const newItems = getSlideVideoItems(data)
+        const oldItems = getSlideMediaItems(oldSlideOut, "video")
+        const newItems = getSlideMediaItems(data, "video")
+        const oldAudio = getSlideMediaItems(oldSlideOut, "audio")
+        const newAudio = getSlideMediaItems(data, "audio")
 
         const newPaths = newItems.map((item: any) => item.src)
+        const newAudioPaths = newAudio.map((item: any) => item.src)
 
         // stop old video items not present on new slide
         oldItems.forEach((item: any) => {
@@ -371,17 +375,29 @@ function checkAudio(type: string, data: any, allOutputIds: string[], outs: strin
             }
         })
 
+        oldAudio.forEach((item: any) => {
+            if (newAudioPaths.includes(item.src)) return
+            const playing = AudioPlayer.getPlaying(item.src)
+            if (playing?.slideItem) AudioPlayer.stop(item.src)
+        })
+
         // start new video items
         newItems.forEach((item: any) => {
-            VideoPlayer.start(item.src, { loop: item.loop !== false, muted: item.muted, startAt: item.startAt || 0, type: "item" }, allOutputIds)
+            const alreadyPlaying = !!VideoPlayer.getPlaying(item.src, allOutputIds)
+            VideoPlayer.start(item.src, { loop: item.loop !== false, muted: item.muted, startAt: item.fromTime || 0, fromTime: item.fromTime, toTime: item.toTime, volume: item.volume, type: "item", keepIfPlaying: alreadyPlaying }, allOutputIds)
+        })
+
+        newAudio.forEach((item: any) => {
+            const alreadyPlaying = !!AudioPlayer.getPlaying(item.src)
+            AudioPlayer.start(item.src, { name: item.src }, { slideItem: true, keepIfPlaying: alreadyPlaying, playMultiple: true, pauseIfPlaying: false, fromTime: item.fromTime, toTime: item.toTime, itemVolume: item.volume, loop: item.loop !== false })
         })
     }
 }
-function getSlideVideoItems(slideData: any) {
+function getSlideMediaItems(slideData: any, kind: "video" | "audio") {
     if (!slideData || !slideData.id) return []
     const layoutRef = slideData.layout ? _show(slideData.id).layouts([slideData.layout]).ref()[0] || [] : []
     const slide = _show(slideData.id).get("slides")?.[layoutRef[slideData.index]?.id] || {}
-    return (slide.items || []).filter((item: any) => item.type === "media" && item.src && getMediaType(getExtension(item.src)) === "video")
+    return (slide.items || []).filter((item: any) => item.type === "media" && item.src && getMediaType(getExtension(item.src)) === kind)
 }
 
 export function startFolderTimer(folderPath: string, file: { type: string; path: string }) {

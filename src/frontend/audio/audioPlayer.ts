@@ -29,6 +29,12 @@ type AudioOptions = {
     volume?: number // playlist
     playlistId?: string
     playlistIndex?: number
+    fromTime?: number
+    toTime?: number
+    itemVolume?: number
+    loop?: boolean
+    slideItem?: boolean
+    keepIfPlaying?: boolean
 }
 export type AudioData = {
     name: string
@@ -40,6 +46,11 @@ export type AudioData = {
     playlistId?: string
     path?: string
     index?: number
+    fromTime?: number
+    toTime?: number
+    itemVolume?: number
+    loop?: boolean
+    slideItem?: boolean
 }
 
 export class AudioPlayer {
@@ -115,6 +126,11 @@ export class AudioPlayer {
         if (type === "effect") options = { ...options, playMultiple: true }
 
         if (get(playingAudio)[resolvedKey]) {
+            if (options.keepIfPlaying) {
+                this.applyPlaybackOptions(resolvedKey, options)
+                this.clearLoading(key)
+                return true
+            }
             if (options.pauseIfPlaying === false) {
                 updateAudioStore(resolvedKey, "currentTime", 0)
                 this.clearLoading(key)
@@ -147,10 +163,11 @@ export class AudioPlayer {
             return true
         }
 
-        const newVolume = AudioPlayer.getVolume(path) * (options.volume || 1)
+        const itemVolume = options.itemVolume ?? 1
+        const newVolume = AudioPlayer.getVolume(path) * (options.volume || 1) * itemVolume
         audio.volume = Math.min(1, Math.max(0, newVolume))
 
-        options.startAt = AudioPlayer.getStartTime(path, options.startAt)
+        options.startAt = AudioPlayer.getStartTime(path, options.startAt, options.fromTime)
         if (options.startAt > 0) audio.currentTime = options.startAt
 
         playingAudio.update((a) => {
@@ -161,7 +178,12 @@ export class AudioPlayer {
                 audio,
                 playlistId: options.playlistId,
                 path,
-                index: options.playlistIndex
+                index: options.playlistIndex,
+                fromTime: options.fromTime,
+                toTime: options.toTime,
+                itemVolume: options.itemVolume,
+                loop: options.loop,
+                slideItem: options.slideItem
             }
             return a
         })
@@ -178,7 +200,7 @@ export class AudioPlayer {
                 })
 
                 try {
-                    const updatedVolume = AudioPlayer.getVolume(path) * (options.volume || 1) * gain
+                    const updatedVolume = AudioPlayer.getVolume(path) * (options.volume || 1) * itemVolume * gain
                     audio.volume = Math.min(1, Math.max(0, updatedVolume))
                     AudioAnalyser.setSourceVolume(resolvedKey, audio.volume)
                 } catch (e) {}
@@ -447,6 +469,8 @@ export class AudioPlayer {
         const ids = specificAudioPath ? [specificAudioPath] : Object.keys(get(playingAudio))
         ids.forEach((id) => {
             let newVolume = this.getVolume(id)
+            const itemVolume = get(playingAudio)[id]?.itemVolume
+            if (itemVolume != null) newVolume *= itemVolume
 
             // check playlist volume
             if (AudioPlaylist.getPlayingKey() === id) {
@@ -485,13 +509,14 @@ export class AudioPlayer {
 
         const audio = this.getAudio(id)
         if (!audio) return
+        if (!Number.isFinite(audio.duration) || audio.duration <= 0) return
 
         const path = AudioPlayer.getPath(id)
         const endingTime = AudioPlayer.getEndTime(path, audio.duration)
         if (audio.currentTime < endingTime && !force) return
 
         // loop single audio
-        if (get(media)[path]?.loop) {
+        if (playing.loop || get(media)[path]?.loop) {
             const startTime = AudioPlayer.getStartTime(path)
             const audioObj = get(playingAudio)[id]?.audio
             if (audioObj) {
@@ -599,15 +624,34 @@ export class AudioPlayer {
         return duration < 30 ? "effect" : "music"
     }
 
-    static getStartTime(path: string, startAt?: number | undefined) {
-        const globalStart = AudioPlayer.getGlobalOptions(path).fromTime || 0
-        return Math.max(startAt || 0, globalStart)
+    static getStartTime(path: string, startAt?: number | undefined, fromOverride?: number) {
+        const playingFrom = this.getPlaying(path)?.fromTime
+        const fromTime = fromOverride != null ? fromOverride : playingFrom != null ? playingFrom : AudioPlayer.getGlobalOptions(path).fromTime || 0
+        return Math.max(startAt || 0, fromTime)
     }
     static getEndTime(path: string, duration: number) {
-        const globalEnd = AudioPlayer.getGlobalOptions(path).toTime || 0
+        const playingEnd = this.getPlaying(path)?.toTime
+        const globalEnd = playingEnd && playingEnd > 0 ? playingEnd : AudioPlayer.getGlobalOptions(path).toTime || 0
         // if (!duration) duration = this.storedDurations.get(path) || 0
         // if (!duration && globalEnd) return globalEnd
         return globalEnd > 0 ? Math.min(duration, globalEnd) : duration
+    }
+
+    private static applyPlaybackOptions(id: string, options: AudioOptions) {
+        playingAudio.update((a) => {
+            const playing = a[id]
+            if (!playing) return a
+            if (options.fromTime != null) playing.fromTime = options.fromTime
+            if (options.toTime != null) playing.toTime = options.toTime
+            if (options.itemVolume != null) playing.itemVolume = options.itemVolume
+            if (options.loop != null) playing.loop = options.loop
+            if (options.slideItem) playing.slideItem = true
+            return a
+        })
+
+        const audio = this.getAudio(id)
+        if (audio && options.fromTime != null && audio.currentTime < options.fromTime) audio.currentTime = options.fromTime
+        this.updateVolume(id)
     }
 
     static getOutputs(): Promise<{ value: string; label: string; channels: number }[]> {

@@ -335,6 +335,9 @@ const mediaSections: { [key: string]: EditBoxSection } = {
             { id: "muted", type: "checkbox", value: false, values: { label: "actions.mute" } }, // , hidden: true
             { id: "loop", type: "checkbox", value: true, values: { label: "media._loop" } },
             { id: "speed", type: "number", value: 1, values: { label: "media.speed", defaultValue: 1, step: 0.1, min: 0.1, max: 15, showSlider: true } },
+            { id: "volume", type: "number", value: 1, multiplier: 100, values: { label: "media.item_volume", min: 0, max: 125, defaultValue: 100, showSlider: true } },
+            { id: "fromTime", type: "number", value: 0, values: { label: "inputs.start", min: 0, max: 100000, step: 0.1, defaultValue: 0, showSlider: true } },
+            { id: "toTime", type: "number", value: 0, values: { label: "inputs.end", min: 0, max: 100000, step: 0.1, defaultValue: 0, showSlider: true } },
             { id: "flipped", type: "checkbox", value: false, values: { label: "media.flip_horizontally" } },
             { id: "flippedY", type: "checkbox", value: false, values: { label: "media.flip_vertically" } }
         ])

@@ -6,7 +6,9 @@
     import { newToast } from "../../../utils/common"
     import { clone } from "../../helpers/array"
     import { history } from "../../helpers/history"
+    import { AudioPlayer } from "../../../audio/audioPlayer"
     import { getExtension, getMediaType } from "../../helpers/media"
+    import { VideoPlayer } from "../../media/video/videoPlayer"
     import { getAllEnabledOutputs } from "../../helpers/output"
     import { getCustomMetadata, getLayoutRef, initializeMetadata } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
@@ -271,12 +273,35 @@
         setBoxInputValue(box, "default", "textFit", "value", item?.auto ? "shrinkToFit" : "none") // text items
     }
 
+    let loadedDurationFor = ""
+
     $: if (id === "media" && item) {
         const extension = getExtension(item.src || "")
-        const isVideo = getMediaType(extension) === "video"
+        const mediaKind = getMediaType(extension)
+        const isVideo = mediaKind === "video"
+        const isPlayable = isVideo || mediaKind === "audio"
         setBoxInputValue(box, "default", "muted", "hidden", !isVideo)
-        setBoxInputValue(box, "default", "loop", "hidden", !isVideo)
+        setBoxInputValue(box, "default", "loop", "hidden", !isPlayable)
         setBoxInputValue(box, "default", "speed", "hidden", !isVideo)
+        setBoxInputValue(box, "default", "volume", "hidden", !isPlayable)
+        setBoxInputValue(box, "default", "fromTime", "hidden", !isPlayable)
+        setBoxInputValue(box, "default", "toTime", "hidden", !isPlayable)
+
+        const src = item.src || ""
+        if (isPlayable && src && loadedDurationFor !== src) {
+            loadedDurationFor = src
+            loadItemMediaDuration(src, isVideo)
+        }
+    }
+
+    async function loadItemMediaDuration(src: string, isVideo: boolean) {
+        const duration = isVideo ? await VideoPlayer.getDuration(src) : await AudioPlayer.getDuration(src)
+        if (!duration || item?.src !== src || loadedDurationFor !== src) return
+
+        setBoxInputValue(box, "default", "fromTime", "values", { max: duration })
+        setBoxInputValue(box, "default", "toTime", "values", { max: duration })
+        if (!item?.toTime) setBoxInputValue(box, "default", "toTime", "default", duration)
+        box = box
     }
 
     $: if (id === "camera" && item) {

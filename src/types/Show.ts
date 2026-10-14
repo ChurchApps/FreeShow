@@ -139,6 +139,9 @@ export interface Item {
     muted?: boolean // media item
     loop?: boolean // media item
     speed?: number // media item
+    fromTime?: number // seconds
+    toTime?: number // seconds, 0 = play to the end of the file
+    volume?: number // 1 = 100%, multiplied with the file volume
     variable?: any
     web?: any
     qr_code?: { text?: string; color?: string; background?: string }

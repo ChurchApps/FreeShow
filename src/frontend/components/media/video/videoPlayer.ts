@@ -22,7 +22,11 @@ type VideoOptions = {
     loop?: boolean
     muted?: boolean
     startAt?: number
+    fromTime?: number
+    toTime?: number
+    volume?: number
     type?: "background" | "item"
+    keepIfPlaying?: boolean
     hasActiveBg?: boolean
 }
 // online videos
@@ -45,6 +49,7 @@ export type VideoAudioData = {
     loop?: boolean
     fromTime?: number
     toTime?: number
+    itemVolume?: number
 }
 
 export type PlayingVideoState = {
@@ -104,6 +109,10 @@ export class VideoPlayer {
             const newOutputIds = (linkedOutputIds || []).filter((outId) => !existingPlaying.linkedOutputIds.includes(outId))
             if (newOutputIds.length) {
                 linkedOutputIds = newOutputIds
+            } else if (options.keepIfPlaying) {
+                this.applyItemOptions(id, options)
+                this.isStarting.delete(ref)
+                return true
             } else {
                 // toggle play/pause if already playing
                 if (options.paused) this.pause(id, linkedOutputIds?.[0])
@@ -120,21 +129,32 @@ export class VideoPlayer {
             return false
         }
 
-        const startTime = this.getStartTime(id, options.startAt)
+        const globalOpts = this.getGlobalOptions(id)
+        const fromTime = options.fromTime != null ? options.fromTime : globalOpts.fromTime || 0
+        const startTime = Math.max(options.startAt || 0, fromTime)
         if (startTime) {
             const initialTime = audio.duration > 0 && startTime > audio.duration ? 0 : startTime
             audio.currentTime = initialTime
             if ("timeTick" in audio) audio.timeTick.update(initialTime)
         }
 
-        const globalOpts = this.getGlobalOptions(id)
         const softLoop = globalOpts.softLoop || 0
         const loop = globalOpts.loop !== undefined ? globalOpts.loop : options.loop
-        const fromTime = globalOpts.fromTime || 0
-        const toTime = this.getEndTime(id, audio.duration)
+        const toTime = options.toTime && options.toTime > 0 ? options.toTime : globalOpts.toTime || audio.duration
 
         playingVideos.update((a) => {
-            a.push({ path: id, audio, linkedOutputIds: linkedOutputIds || [], type: options.type || "background", isOnline: options.isOnline, softLoop, loop, fromTime, toTime })
+            a.push({
+                path: id,
+                audio,
+                linkedOutputIds: linkedOutputIds || [],
+                type: options.type || "background",
+                isOnline: options.isOnline,
+                softLoop,
+                loop,
+                fromTime,
+                toTime: options.toTime && options.toTime > 0 ? options.toTime : globalOpts.toTime || 0,
+                itemVolume: options.volume
+            })
             return a
         })
 
@@ -192,6 +212,32 @@ export class VideoPlayer {
 
         this.isStarting.delete(ref)
         return true
+    }
+
+    static applyItemOptions(path: string, options: VideoOptions) {
+        const audio = this.getAudio(path)
+        playingVideos.update((list) => {
+            const item = list.find((v) => v.path === path)
+            if (!item) return list
+
+            if (options.fromTime != null) item.fromTime = options.fromTime
+            if (options.toTime != null) item.toTime = options.toTime > 0 ? options.toTime : 0
+            if (options.volume != null) item.itemVolume = options.volume
+            if (options.loop != null) item.loop = options.loop
+            if (options.muted != null && item.audio) item.audio.muted = options.muted
+
+            const fromTime = item.fromTime || 0
+            const toTime = item.toTime && item.toTime > 0 ? item.toTime : item.audio?.duration || 0
+            const hasCustomBounds = fromTime > 0 || (toTime > 0 && item.audio && toTime < item.audio.duration)
+            if (item.audio) item.audio.loop = !!item.loop && !hasCustomBounds
+            return list
+        })
+
+        if (audio && options.fromTime != null && audio.currentTime < options.fromTime) {
+            audio.currentTime = options.fromTime
+            if ("timeTick" in audio) audio.timeTick.update(options.fromTime)
+        }
+        this.updateVolume(path)
     }
 
     static updateProperties(path: string) {
@@ -341,6 +387,7 @@ export class VideoPlayer {
 
         const audio = this.getAudio(path, outputIds ? outputIds[0] : undefined)
         if (!audio) return finish()
+        if (!Number.isFinite(audio.duration) || audio.duration <= 0) return finish()
 
         const endingTime = this.getEndTime(path, audio.duration)
 
@@ -655,18 +702,21 @@ export class VideoPlayer {
     }
 
     static getVolume(path: string) {
-        return this.getGlobalOptions(path)?.volume ?? 1
+        const itemVolume = this.getPlaying(path)?.itemVolume
+        return (this.getGlobalOptions(path)?.volume ?? 1) * (itemVolume ?? 1)
     }
 
     static getStartTime(path: string, startAt?: number | undefined) {
-        const data = this.getGlobalOptions(path)
-        const startTime = Math.max(startAt || 0, data.fromTime || 0)
-        return startTime
+        const playingFrom = this.getPlaying(path)?.fromTime
+        const fromTime = playingFrom != null ? playingFrom : this.getGlobalOptions(path).fromTime || 0
+        return Math.max(startAt || 0, fromTime)
     }
     static getEndTime(path: string, duration: number) {
-        const data = this.getGlobalOptions(path)
-        const endTime = data.toTime || duration
-        return endTime
+        const playingEnd = this.getPlaying(path)?.toTime
+        const fileEnd = this.getGlobalOptions(path).toTime || 0
+        const chosen = playingEnd && playingEnd > 0 ? playingEnd : fileEnd
+        if (chosen > 0) return duration > 0 ? Math.min(duration, chosen) : chosen
+        return duration
     }
 
     static async getDuration(path: string): Promise<number> {

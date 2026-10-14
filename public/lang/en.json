@@ -207,6 +207,7 @@
         "back10": "Go back 10 seconds",
         "forward10": "Go forward 10 seconds",
         "volume": "Volume",
+        "item_volume": "Item volume",
         "gain": "Gain",
         "pitch": "Pitch",
         "speed": "Speed",
