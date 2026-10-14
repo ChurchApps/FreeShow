@@ -14,7 +14,7 @@
         {#if media.type === "camera"}
             <Camera id={media.id} groupId={media.group || ""} class="media" style="width: 100%;height: 100%;object-fit: cover;" {preview} />
         {:else if media.type === "screen"}
-            <Window id={media.id} class="media" style="width: 100%;height: 100%;object-fit: cover;" />
+            <Window id={media.id} class="media" style="width: 100%;height: 100%;" />
         {:else if media.type === "ndi"}
             <NdiStream screen={{ id: media.id, name: media.name || "" }} background mirror={preview} />
         {:else if media.type === "omt"}

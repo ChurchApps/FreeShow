@@ -61,7 +61,7 @@ import {
     variables
 } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
-import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
+import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, locateMediaFile, removeExtension } from "./media"
 import { defaultLayers, getActiveOutputs, getAllActiveOutputIds, getAllNormalOutputs, getAllStageOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, resolveOutputId, resolveOutputIds, setOutput, startFolderTimer } from "./output"
 import { OutputHelper } from "./OutputHelper"
 import { getSetChars } from "./randomValue"
@@ -240,17 +240,24 @@ export function checkActionTrigger(layoutData: SlideData, slideIndex = 0) {
     })
 }
 
-export async function playPdf(data: OutSlide | null, next: boolean, loop = false) {
+export async function playPdf(data: OutSlide | null, next: boolean, loop = false, page?: number) {
     if (!data?.id || data?.type !== "pdf") return
 
+    const located = await locateMediaFile(data.id)
+    const targetId = located?.path || data.id
+
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-    const loadingTask = getDocument(encodeFilePath(data.id))
+    const loadingTask = getDocument(encodeFilePath(targetId))
     const pdfDoc = await loadingTask.promise
     const pages = pdfDoc.numPages
 
-    let nextPage = data.page
-    if (nextPage === undefined) nextPage = next ? -1 : pages
-    nextPage += next ? 1 : -1
+    let nextPage: number
+    if (page !== undefined) {
+        nextPage = page
+    } else {
+        const currentPage = data.page !== undefined ? data.page : next ? -1 : pages
+        nextPage = currentPage + (next ? 1 : -1)
+    }
 
     if (nextPage > pages - 1) {
         if (!loop) return
@@ -258,13 +265,13 @@ export async function playPdf(data: OutSlide | null, next: boolean, loop = false
     }
 
     const projectItem = get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index || 0]
-    const name = data?.name || projectItem?.name
+    const name = data?.name || projectItem?.name || removeExtension(getFileName(targetId))
 
-    setOutput("slide", { type: "pdf", id: data.id, page: nextPage, pages, name })
+    setOutput("slide", { type: "pdf", id: targetId, page: nextPage, pages, name })
     clearBackground()
 
     const timer = projectItem?.data?.timer || 0
-    if (timer) startFolderTimer(data.id, { type: "pdf", path: "" })
+    if (timer) startFolderTimer(targetId, { type: "pdf", path: "" })
 }
 
 // go to random slide in current project

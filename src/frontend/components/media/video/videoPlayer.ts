@@ -165,6 +165,11 @@ export class VideoPlayer {
         const hasDelay = options.hasActiveBg && options.type !== "item"
         const delayMs = hasDelay && durationMs > 0 ? durationMs / 4 + 20 : 0
 
+        if (globalOpts.speed && audio instanceof HTMLAudioElement) {
+            const speedVal = parseFloat(globalOpts.speed)
+            if (!isNaN(speedVal) && speedVal > 0) this.setTempo(id, speedVal)
+        }
+
         const startPlayback = () => {
             if (audio instanceof HTMLAudioElement) this.attachToAnalyser(id, audio, linkedOutputIds || [])
 

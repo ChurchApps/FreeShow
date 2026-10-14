@@ -26,10 +26,11 @@
     $: currentEffect = $effects[effectId] || {}
 
     export function valueChanged(input: any, itemIndex: number) {
-        if (!effectId) return
+        if (!effectId || !currentEffect?.items?.[itemIndex]) return
 
         effects.update((a) => {
-            a[effectId].items[itemIndex][input.id] = input.values.value
+            if (!a[effectId]?.items?.[itemIndex]) return a
+            a[effectId].items[itemIndex] = { ...a[effectId].items[itemIndex], [input.id]: input.values.value }
             return a
         })
     }

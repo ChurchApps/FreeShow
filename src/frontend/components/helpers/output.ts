@@ -233,13 +233,26 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
         }
 
         let toggleState = false
-        outs.forEach((id: string, i: number) => {
+        let toggleStateSet = false
+        outs.forEach((id: string) => {
             const output = a[id]
             if (!output) return
 
             if (!output.out) a[id].out = {}
             if (!output.out?.[type]) a[id].out![type] = type === "overlays" || type === "effects" ? [] : null
             data = clone(inputData)
+
+            // effects bound to specific outputs
+            if (type === "effects" && data) {
+                const wasArray = Array.isArray(data)
+                const effectIds: string[] = wasArray ? data : [data]
+                const allowedIds = effectIds.filter((effectId) => {
+                    const effectBindings = get(effects)[effectId]?.bindings || []
+                    return !effectBindings.length || isOutputBound(effectBindings, id)
+                })
+                if (effectIds.length && !allowedIds.length) return
+                data = wasArray ? allowedIds : allowedIds[0]
+            }
 
             if (type === "slide" && data === null && output.out?.slide?.type === "ppt") {
                 sendMain(Main.PRESENTATION_CONTROL, { action: "stop" })
@@ -256,7 +269,10 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             let outData = a[id].out?.[type] || null
             if ((type === "overlays" || type === "effects") && data?.length) {
                 if (!Array.isArray(data)) data = [data]
-                if (toggle && i === 0) toggleState = outData?.includes(data[0])
+                if (toggle && !toggleStateSet) {
+                    toggleState = outData?.includes(data[0])
+                    toggleStateSet = true
+                }
                 if (toggle && toggleState) outData.splice(outData.indexOf(data[0]), 1)
                 else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[type] || []), ...data])
                 else outData = data
@@ -1390,6 +1406,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
     // reduce template textboxes to slide items
     const slideTextboxes = hasScriptureDynamicValue ? 0 : slideItems.reduce((count, a) => (count += (a?.type || "text") === "text" ? 1 : 0), 0)
+    // if template textboxes (without dynamic values) count matches all slide textboxes (with or without dynamic values), merge as normal textboxes
+    const mergeDynamicAsText = !hasScriptureDynamicValue && slideTextboxes > 0 && (sorted.text?.length || 0) === slideTextboxes
     if (!templateClicked && slideTextboxes < (sortedTemplateItems.text?.length || 0)) {
         sortedTemplateItems.text = sortedTemplateItems.text.slice(0, slideTextboxes)
     }
@@ -1406,7 +1424,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         let type: string = item.type || "text"
         if (type === "text" && hasScriptureDynamicValue) return
 
-        if (hasDynamicValue(item)) type = "text_dynamic"
+        if (hasDynamicValue(item) && !mergeDynamicAsText) type = "text_dynamic"
 
         const templateItem = clone(sortedTemplateItems[type]?.shift())
         if (!templateItem) return finish()

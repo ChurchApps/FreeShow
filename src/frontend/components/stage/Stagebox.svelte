@@ -10,6 +10,8 @@
     import { isConditionMet } from "../edit/scripts/itemHelpers"
     import { getItemText } from "../edit/scripts/textStyle"
     import Icon from "../helpers/Icon.svelte"
+    import { getExtension, loadThumbnail, mediaSize } from "../helpers/media"
+    import { videoExtensions } from "../../values/extensions"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { createCSSVariables, replaceDynamicValues } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
@@ -234,6 +236,16 @@
 
         let currentOutputs = $currentWindow ? $allOutputs : $outputs
         let bg = await sendBackgroundToStage(stageOutputId, currentOutputs, true)
+
+        // show thumbnails instead of playing videos when "Slide offset" is not 0
+        if (bg && slideOffset !== 0) {
+            for (const key of ["next", "next2"]) {
+                const path = bg[key]?.path
+                if (typeof path !== "string" || !videoExtensions.includes(getExtension(path))) continue
+                const thumbnail = await loadThumbnail(path, mediaSize.big)
+                if (thumbnail) bg[key] = { ...bg[key], path: thumbnail, filePath: thumbnail }
+            }
+        }
 
         currentBackground = bg
     }

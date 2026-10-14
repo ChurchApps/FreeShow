@@ -6,7 +6,10 @@ import { clone } from "./array"
 import { getAllActiveOutputIds } from "./output"
 import { _show } from "./shows"
 
-export type WebsiteAction = { src: string; type: "key"; keyCode: string } | { src: string; type: "reload" }
+export type WebsiteAction =
+    | { src: string; type: "key"; keyCode: string }
+    | { src: string; type: "reload" }
+    | { src: string; type: "mute"; muted: boolean }
 
 export function triggerWebsiteAction(action: WebsiteAction) {
     send(OUTPUT, ["WEBSITE_ACTION"], action)
@@ -14,6 +17,9 @@ export function triggerWebsiteAction(action: WebsiteAction) {
 }
 export function sendWebsiteKey(src: string, keyCode: string) {
     triggerWebsiteAction({ src, type: "key", keyCode })
+}
+export function toggleWebsiteMute(src: string, muted: boolean) {
+    triggerWebsiteAction({ src, type: "mute", muted })
 }
 
 export function getOutputtedWebsites(_updater: any = null): { src: string }[] {

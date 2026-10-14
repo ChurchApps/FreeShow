@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { effects } from "../../../stores"
+    import { effects, outputs } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import Icon from "../../helpers/Icon.svelte"
     import Button from "../../inputs/Button.svelte"
@@ -21,6 +21,7 @@
 
     const actionsList = [
         { id: "displayDuration", title: translateText("popup.display_duration"), icon: "clock" },
+        { id: "bindings", title: translateText("actions.specific_outputs"), icon: "bind" },
         { id: "placeUnderSlide", title: translateText("context.place_under_slide"), icon: "under" }
     ]
 
@@ -29,15 +30,18 @@
 
 <div class="icons" style="zoom: {zoom};">
     {#each actionsList as action}
-        {#if effect[action.id]}
+        {#if action.id === "bindings" ? effect.bindings?.length : effect[action.id]}
             <div>
                 <div class="button white">
                     <Button style="padding: 3px;" redHover title="{translateText('actions.remove')}: {action.title}" {zoom} on:click={() => changeAction(action.id)}>
                         <Icon id={action.icon} size={0.9} white />
                     </Button>
                 </div>
+
                 {#if action.id === "displayDuration" && !isNaN(effect[action.id] || 0)}
                     <span><p>{effect[action.id] || 0}s</p></span>
+                {:else if action.id === "bindings" && effect.bindings}
+                    <span><p>{effect.bindings.length > 1 ? effect.bindings.length : $outputs[effect.bindings[0]]?.name || ""}</p></span>
                 {/if}
             </div>
         {/if}

@@ -40,8 +40,12 @@
     }
 
     let retryTimeout: NodeJS.Timeout | null = null
+    let currentStream: MediaStream | null = null
+    let destroyed = false
     onDestroy(() => {
+        destroyed = true
         if (retryTimeout) clearTimeout(retryTimeout)
+        currentStream?.getTracks().forEach((track) => track.stop())
     })
 
     onMount(capture)
@@ -49,8 +53,9 @@
         navigator.mediaDevices
             .getUserMedia(constraints)
             .then((stream) => {
-                if (!videoElem) return
+                if (destroyed || !videoElem) return stream.getTracks().forEach((track) => track.stop())
 
+                currentStream = stream
                 streams.push(stream)
                 videoElem.srcObject = stream
                 videoElem.onloadedmetadata = () => {
@@ -59,6 +64,8 @@
                 }
             })
             .catch(function (err) {
+                if (destroyed) return
+
                 let msg: string = err.message
                 console.error(err.name + ": " + msg)
 

@@ -47,6 +47,18 @@ export class CaptureLifecycle {
         this.activeCaptures.add(id)
         CaptureHelper.updateFramerate(id)
         CaptureHelper.Transmitter.startTransmitting(id)
+
+        // OSR outputs are paint-driven: force a fresh paint so newly enabled consumers get a frame even on static content
+        if (output.osr) {
+            try {
+                const wc = output.window.webContents
+                if (!wc.isPainting()) wc.startPainting()
+                wc.invalidate()
+            } catch {
+                // window tearing down
+            }
+        }
+
         this.updateWebRtcHostState()
         this.updateRtmpState()
 

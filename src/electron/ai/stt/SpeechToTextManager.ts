@@ -70,7 +70,7 @@ export class SpeechToText {
     private static async createEngine(engine: string, options: SttEngineOptions): Promise<{ transcriber: SttEngine } | { error: string }> {
         if (engine === "nemotron") {
             const status = await LocalModelManager.getStatus("nemotron")
-            if (!status.ready) return { error: "Nemotron could not be initialized" }
+            if (!status.ready) return { error: status.error || "Nemotron could not be initialized" }
             return { transcriber: new NemotronTranscriber({ ...options }, this.onSegment, this.onError, this.onInterim) }
         }
 

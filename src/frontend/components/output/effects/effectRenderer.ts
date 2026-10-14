@@ -89,6 +89,11 @@ export class EffectRender {
             }
         }
 
+        // Re-initialize updated items with their new parameters
+        for (const item of filteredNew) {
+            this.TYPES[item.type]?.init?.(item)
+        }
+
         this.setItems(items)
 
         // if (noFrameChange) return

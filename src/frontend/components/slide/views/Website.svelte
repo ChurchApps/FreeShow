@@ -4,6 +4,7 @@
     import { formatUrl } from "../../helpers/websiteControls"
     import Button from "../../inputs/Button.svelte"
     import { attachPersistentWebview } from "./websiteDomPool"
+    import type { WebviewController } from "./websiteDomPool"
 
     export let src: string
     export let navigation = true
@@ -13,12 +14,13 @@
     export let outputId = ""
     export let ratio: number
 
-    let webview: any
+    let controller: WebviewController | undefined
     let parsedSrc = ""
     let url = ""
 
     $: if (src) checkURL()
 
+    let previousParsedSrc = ""
     function checkURL() {
         let valid = false
         src = src.replaceAll("&amp;", "&").replaceAll("{", "%7B").replaceAll("}", "%7D")
@@ -32,7 +34,10 @@
         }
 
         parsedSrc = valid ? src : ""
-        url = parsedSrc
+        if (parsedSrc !== previousParsedSrc) {
+            previousParsedSrc = parsedSrc
+            url = parsedSrc
+        }
     }
 
     let hover = false
@@ -47,28 +52,14 @@
     let backDisabled = true
     let forwardDisabled = true
     function navigate(back = true) {
-        if (!webview) return
-        try {
-            if (back) webview.goBack?.()
-            else webview.goForward?.()
-        } catch (err) {
-            console.debug("Webview navigation failed:", err)
-        }
-        setTimeout(checkNavigation)
+        if (back) controller?.goBack()
+        else controller?.goForward()
+        checkNavigation()
     }
 
     function checkNavigation() {
-        if (!webview) {
-            backDisabled = true
-            forwardDisabled = true
-            return
-        }
-        try {
-            backDisabled = !webview.canGoBack?.()
-            forwardDisabled = !webview.canGoForward?.()
-        } catch (err) {
-            console.debug("Webview navigation check failed:", err)
-        }
+        backDisabled = !controller?.canGoBack()
+        forwardDisabled = !controller?.canGoForward()
     }
 </script>
 
@@ -100,8 +91,9 @@
                 zoom,
                 isOutput: $currentWindow === "output",
                 outputId,
-                onReady: (wv) => {
-                    webview = wv
+                onReady: (_, ctrl) => {
+                    controller = ctrl
+                    url = ctrl.getCurrentUrl()
                     checkNavigation()
                 },
                 onNavigate: (newUrl) => {

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { activePage, activeRecording, activeStyle, audioChannelsData, dictionary, outputs, rtmpStatus, selected, settingsTab, styles, templates, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activeRecording, activeStyle, audioChannelsData, dictionary, outputs, rtmpStatus, selected, settingsTab, special, styles, templates, toggleOutputEnabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
     import { stopMediaRecorder } from "../../drawer/live/recorder"
@@ -7,19 +7,43 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { clone, keysToID, sortByName, sortObject } from "../../helpers/array"
-    import { defaultLayers, getOutputResolution, startStreaming, stopStreaming, startRtmpStreaming, stopRtmpStreaming } from "../../helpers/output"
+    import { defaultLayers, getOutputResolution, startRtmpStreaming, startStreaming, stopRtmpStreaming, stopStreaming } from "../../helpers/output"
     import { getUnhealthyDestinations, hasStreamableDestination } from "../../helpers/rtmpDestinations"
     import { bindSlidesToOutput, getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import OutputPreviewLabel from "./OutputPreviewLabel.svelte"
     import PreviewOutput from "./PreviewOutput.svelte"
 
     export let disableTransitions = false
 
-    // export let resolution: Resolution
-    $: outs = sortObject(sortByName(keysToID($outputs).filter((a) => a.enabled)), "stageOutput")
-    // hide from preview if omre than one output is "enabled", and no non hidden output is "active"
-    $: if (outs.length > 1 && !keysToID($outputs).filter((a) => outs.find(({ id }) => a.id === id) && !a.active && !a.hideFromPreview).length) outs = outs.filter((a) => !a.hideFromPreview)
+    $: allEnabledOuts = sortObject(sortByName(keysToID($outputs).filter((a) => a.enabled)), "stageOutput")
+    $: outs = allEnabledOuts.length > 1 ? allEnabledOuts.filter((a) => !a.hideFromPreview) : allEnabledOuts
+    $: hiddenOuts = allEnabledOuts.length > 1 ? allEnabledOuts.filter((a) => a.hideFromPreview) : []
+
+    $: maxColumns = Math.max(1, outs.length)
+    $: gridColumns = allEnabledOuts.length > 1 ? Math.min($special.outputPreviewGrid || 2, maxColumns) : 1
+
+    let nextZoomTimeout: NodeJS.Timeout | null = null
+    function handleWheel(e: WheelEvent) {
+        if (!e.ctrlKey && !e.metaKey) return
+        if (allEnabledOuts.length <= 1) return
+        e.preventDefault()
+        if (nextZoomTimeout) return
+
+        const current = gridColumns
+        const direction = e.deltaY < 0 ? -1 : 1
+        const nextValue = Math.max(1, Math.min(maxColumns, current + direction))
+
+        if (nextValue !== ($special.outputPreviewGrid || 2)) {
+            special.update((s) => ({ ...s, outputPreviewGrid: nextValue }))
+        }
+
+        if (Math.abs(e.deltaY) >= 100) return
+        nextZoomTimeout = setTimeout(() => {
+            nextZoomTimeout = null
+        }, 300)
+    }
 
     let fullscreen = false
     let fullscreenId = ""
@@ -136,7 +160,7 @@
 <!-- role="button"
 tabindex="0"
 aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"} -->
-<div on:click={toggleFullscreen} class="multipleOutputs" class:multiple={outs.length > 1} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 4px);"} role="none">
+<div on:click={toggleFullscreen} on:wheel={handleWheel} class="multipleOutputs" class:multiple={outs.length > 1} class:fullscreen style={fullscreen ? "width: 100%;height: 100%;" : "width: calc(100% - 4px);"} role="none">
     {#if fullscreen}
         <MaterialButton class="hide" style="z-index: 2;opacity: 1;inset-inline-end: 10px;" title="actions.close" on:click={() => (fullscreen = false)}>
             <Icon id="close" size={1.2} white />
@@ -149,6 +173,14 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
                 <p><b><T id="settings.aspect_ratio" />:</b> {Number((resolution.width / resolution.height).toFixed(2))} ({toFraction(resolution.width / resolution.height)})</p>
             {/if}
         </span>
+    {:else if hiddenOuts.length}
+        <div class="hiddenOutputTitles">
+            {#each hiddenOuts as output (output.id)}
+                <div style="flex: 1 1 {100 / gridColumns}%;min-width: 0;">
+                    <OutputPreviewLabel {output} outs={allEnabledOuts} />
+                </div>
+            {/each}
+        </div>
     {/if}
 
     {#each outs as output (output.id)}
@@ -158,95 +190,108 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         {@const isMuted = $audioChannelsData[`channel_${output.id}`]?.isMuted}
         {@const isNetworkOutput = output.ndi || output.webrtc || output.rtmp}
 
-        <div id={output.id} class="outputPreview output_button context #output_preview" class:drop-target={!fullscreen && dragOverOutputId === output.id} on:dragover={(e) => handleDragOver(e, output.id)} on:dragleave={(e) => handleDragLeave(e, output.id)} on:drop={(e) => handleDrop(e, output.id)} style={fullscreen ? (fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;") : outs.length > 1 ? `border: 2px solid ${output?.color};width: 50%;` : "display: contents;"}>
-            <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
-
-            <!-- BADGES (LIVE / REC) -->
-            {#if !fullscreen}
-                <div class="badges">
-                    {#if (output.webrtcData?.url && output.webrtc) || (output.rtmp && hasStreamableDestination(output.rtmpData))}
-                        {@const isRtmp = output.rtmp}
-                        {@const isStreaming = isRtmp ? output.rtmpData?.streaming : output.webrtcData?.streaming}
-                        {@const unhealthy = isRtmp && isStreaming ? getUnhealthyDestinations(output.rtmpData, $rtmpStatus[output.id]) : []}
-
-                        <div class="badge live" style="background-color: {isStreaming ? (unhealthy.length ? '#ab8000' : '#b60707') : 'var(--primary-darker)'};">
-                            <MaterialButton style="padding: 2px 3px;min-height: 0;" on:click={() => (isRtmp ? (output.rtmpData?.streaming ? stopRtmpStreaming(output.id, true) : startRtmpStreaming(output.id)) : output.webrtcData?.streaming ? stopStreaming(output.id, true) : startStreaming(output.id))} title={unhealthy.length ? `${unhealthy.join(", ")} not live` : isStreaming ? "output.stop_streaming" : "output.start_streaming"}>
-                                {translateText(isStreaming ? "output.is_live" : "output.go_live", $dictionary)}
-                            </MaterialButton>
-                        </div>
-                    {/if}
-
-                    {#if $activeRecording?.outputId === output.id || ($activeRecording?.isOutput && !$activeRecording.outputId && outs[0]?.id === output.id)}
-                        <div class="badge rec" style="background-color: #b60707;">
-                            <MaterialButton style="padding: 2px 4px;min-height: 0;gap: 4px;" on:click={() => stopMediaRecorder()} title="actions.stop_recording">
-                                <Icon id="record" size={0.7} white />
-                                REC
-                            </MaterialButton>
-                        </div>
-                    {/if}
-
-                    {#if output.out?.scene?.name}
-                        <div class="badge scene" style="background-color: var(--primary-darker);">
-                            <MaterialButton style="padding: 2px 4px;min-height: 0;gap: 3px;max-width: 100%;" on:click={() => openDrawer("scenes")} title={output.out.scene.name}>
-                                <Icon id="scene" size={0.7} white />
-                                <p>{output.out.scene.name}</p>
-                            </MaterialButton>
-                        </div>
-                    {/if}
-                </div>
+        <div id={output.id} class="outputPreview output_button context #output_preview" class:drop-target={!fullscreen && dragOverOutputId === output.id} on:dragover={(e) => handleDragOver(e, output.id)} on:dragleave={(e) => handleDragLeave(e, output.id)} on:drop={(e) => handleDrop(e, output.id)} style={fullscreen ? (fullscreenId === output.id ? "display: contents;" : "opacity: 0;position: absolute;") : outs.length > 1 ? `width: ${100 / gridColumns}%;` : "display: contents;"}>
+            {#if !fullscreen && allEnabledOuts.length > 1}
+                <OutputPreviewLabel {output} outs={allEnabledOuts} />
             {/if}
 
-            <!-- icons -->
-            {#if !fullscreen && (layers.length < 3 || styleTemplate || isMuted)}
-                <div class="icons">
-                    <!-- active layers -->
-                    {#if !layers.includes("background")}
-                        <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.background")}>
-                            <Icon id="media_off" size={0.8} white />
-                        </div>
-                    {/if}
-                    {#if !layers.includes("slide")}
-                        <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.slide")}>
-                            <Icon id="shows_off" size={0.8} white />
-                        </div>
-                    {/if}
-                    {#if !layers.includes("overlays")}
-                        <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.overlays")}>
-                            <Icon id="overlays_off" size={0.8} white />
-                        </div>
-                    {/if}
+            <div class="previewContainer" style={outs.length > 1 && !fullscreen ? `border: 2px solid ${output?.color};` : ""}>
+                <PreviewOutput outputId={output.id} {disableTransitions} disabled={outs.length > 1 && !fullscreen && !output?.active} {fullscreen} />
 
-                    <!-- style template -->
-                    {#if styleTemplate && $templates[styleTemplate]}
-                        {#if layers.length < 3}<div class="divider"></div>{/if}
+                <!-- BADGES (LIVE / REC) -->
+                {#if !fullscreen}
+                    <div class="badges">
+                        {#if (output.webrtcData?.url && output.webrtc) || (output.rtmp && hasStreamableDestination(output.rtmpData))}
+                            {@const isRtmp = output.rtmp}
+                            {@const isStreaming = isRtmp ? output.rtmpData?.streaming : output.webrtcData?.streaming}
+                            {@const unhealthy = isRtmp && isStreaming ? getUnhealthyDestinations(output.rtmpData, $rtmpStatus[output.id]) : []}
 
-                        <div class="icon" data-title={`<b>${translateText(`settings.override${isScriptureOutput ? "_scripture" : ""}_with_template`)}</b>:<br>${$templates[styleTemplate].name}`}>
-                            <Icon id="templates" size={0.8} white />
-                        </div>
-                    {/if}
+                            <div class="badge live" style="background-color: {isStreaming ? (unhealthy.length ? '#ab8000' : '#b60707') : 'var(--primary-darker)'};">
+                                <MaterialButton style="padding: 2px 3px;min-height: 0;" on:click={() => (isRtmp ? (output.rtmpData?.streaming ? stopRtmpStreaming(output.id, true) : startRtmpStreaming(output.id)) : output.webrtcData?.streaming ? stopStreaming(output.id, true) : startStreaming(output.id))} title={unhealthy.length ? `${unhealthy.join(", ")} not live` : isStreaming ? "output.stop_streaming" : "output.start_streaming"}>
+                                    {translateText(isStreaming ? "output.is_live" : "output.go_live", $dictionary)}
+                                </MaterialButton>
+                            </div>
+                        {/if}
 
-                    <!-- muted -->
-                    {#if isMuted}
-                        {#if layers.length < 3 || styleTemplate}<div class="divider"></div>{/if}
+                        {#if $activeRecording?.outputId === output.id || ($activeRecording?.isOutput && !$activeRecording.outputId && outs[0]?.id === output.id)}
+                            <div class="badge rec" style="background-color: #b60707;">
+                                <MaterialButton style="padding: 2px 4px;min-height: 0;gap: 4px;" on:click={() => stopMediaRecorder()} title="actions.stop_recording">
+                                    <Icon id="record" size={0.7} white />
+                                    REC
+                                </MaterialButton>
+                            </div>
+                        {/if}
 
-                        <div class="icon muted" data-title={translateText("actions.muted")}>
-                            <Icon id="muted" size={0.8} white />
-                        </div>
-                    {/if}
-                </div>
-            {/if}
+                        {#if output.out?.scene?.name}
+                            <div class="badge scene" style="background-color: var(--primary-darker);">
+                                <MaterialButton style="padding: 2px 4px;min-height: 0;gap: 3px;max-width: 100%;" on:click={() => openDrawer("scenes")} title={output.out.scene.name}>
+                                    <Icon id="scene" size={0.7} white />
+                                    <p>{output.out.scene.name}</p>
+                                </MaterialButton>
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
 
-            <!-- Network Output Audio -->
-            {#if isNetworkOutput}
-                <div class="preview-meter">
-                    <AudioMeter channelId="network_sub_{output.id}" preview />
-                </div>
-            {/if}
+                <!-- icons -->
+                {#if !fullscreen && (layers.length < 3 || styleTemplate || isMuted)}
+                    <div class="icons">
+                        <!-- active layers -->
+                        {#if !layers.includes("background")}
+                            <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.background")}>
+                                <Icon id="media_off" size={0.8} white />
+                            </div>
+                        {/if}
+                        {#if !layers.includes("slide")}
+                            <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.slide")}>
+                                <Icon id="shows_off" size={0.8} white />
+                            </div>
+                        {/if}
+                        {#if !layers.includes("overlays")}
+                            <div class="icon" data-title={translateText("<b>output.disabled_layers:</b> preview.overlays")}>
+                                <Icon id="overlays_off" size={0.8} white />
+                            </div>
+                        {/if}
+
+                        <!-- style template -->
+                        {#if styleTemplate && $templates[styleTemplate]}
+                            {#if layers.length < 3}<div class="divider"></div>{/if}
+
+                            <div class="icon" data-title={`<b>${translateText(`settings.override${isScriptureOutput ? "_scripture" : ""}_with_template`)}</b>:<br>${$templates[styleTemplate].name}`}>
+                                <Icon id="templates" size={0.8} white />
+                            </div>
+                        {/if}
+
+                        <!-- muted -->
+                        {#if isMuted}
+                            {#if layers.length < 3 || styleTemplate}<div class="divider"></div>{/if}
+
+                            <div class="icon muted" data-title={translateText("actions.muted")}>
+                                <Icon id="muted" size={0.8} white />
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
+
+                <!-- Network Output Audio -->
+                {#if isNetworkOutput}
+                    <div class="preview-meter">
+                        <AudioMeter channelId="network_sub_{output.id}" preview />
+                    </div>
+                {/if}
+            </div>
         </div>
     {/each}
 </div>
 
 <style>
+    .hiddenOutputTitles {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+        background-color: var(--primary-darker);
+    }
+
     .multipleOutputs {
         display: flex;
         flex-wrap: wrap;
@@ -308,9 +353,17 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
 
     .outputPreview {
         position: relative;
+        display: flex;
+        flex-direction: column;
     }
 
-    .outputPreview.drop-target::after {
+    .previewContainer {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+
+    .outputPreview.drop-target .previewContainer::after {
         content: "";
         position: absolute;
         inset: 0;

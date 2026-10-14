@@ -273,6 +273,9 @@ async function extractZipDataAndMedia(filePath: string, importFolder: string) {
     const replacedMedia: { [key: string]: string } = {}
 
     dataContent.files?.forEach((rawPath: string) => {
+        if (!rawPath || typeof rawPath !== "string") return
+        if (rawPath.startsWith("data:") || rawPath.startsWith("http://") || rawPath.startsWith("https://") || rawPath.startsWith("blob:") || rawPath.startsWith("freeshow-protected://")) return
+
         // check if path already exists on the system
         if (doesPathExist(rawPath)) return
 

@@ -5,6 +5,7 @@
     import T from "../../../components/helpers/T.svelte"
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
     import Loader from "../../../components/main/Loader.svelte"
+    import Tip from "../../../components/main/Tip.svelte"
     import { requestMain } from "../../../IPC/main"
     import { mediaDownloads } from "../../../stores"
     import { newToast } from "../../../utils/common"
@@ -17,7 +18,7 @@
     async function getStatus() {
         const result = await requestMain(Main.AI_GET_STATUS, { engineId: engine })
         status = result?.[engine] || null
-        if (status?.[engine]?.error) newToast(status?.[engine]?.error)
+        if (status?.error) newToast(status.error)
     }
 
     onMount(() => {
@@ -63,6 +64,8 @@
     <div style="display: flex;justify-content: center;padding: 10px;">
         <Loader />
     </div>
+{:else if status.error}
+    <Tip type="warning" value={status.error} />
 {:else if !status.ready}
     <MaterialButton variant="outlined" icon="download" disabled={isModelDownloading} style="flex: 1;" on:click={downloadModel}>
         <T id="cloud.replace" />{getPercent(modelDownload)}

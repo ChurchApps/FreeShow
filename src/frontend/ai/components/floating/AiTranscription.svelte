@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { startScripture } from "../../../components/actions/apiHelper"
     import { getShortBibleName } from "../../../components/drawer/bible/scripture"
     import T from "../../../components/helpers/T.svelte"
     import MaterialButton from "../../../components/inputs/MaterialButton.svelte"
@@ -95,7 +96,7 @@
                     {#if suggestion.action === "presented"}
                         <MaterialButton icon="check" title="ai.auto_present" style="padding: 6px;" disabled />
                     {:else if suggestion.action === "open_scripture"}
-                        <MaterialButton icon="scripture" disabled={$outLocked} title="actions.switch" style="padding: 6px;" on:click={() => suggestion.trigger?.()} />
+                        <MaterialButton icon="scripture" title="main.open" style="padding: 6px;" on:click={() => suggestion.trigger?.()} />
                     {:else if suggestion.trigger}
                         <MaterialButton
                             icon="play"
@@ -105,6 +106,16 @@
                             on:click={() => {
                                 suggestion.trigger?.()
                                 // removeSuggestion(suggestion.id)
+                            }}
+                        />
+
+                        <!-- open -->
+                        <MaterialButton
+                            icon="scripture"
+                            title="main.open"
+                            style="padding: 6px;"
+                            on:click={() => {
+                                startScripture({ id: suggestion.scriptureTranslation, reference: suggestion.content, play: false })
                             }}
                         />
                     {/if}

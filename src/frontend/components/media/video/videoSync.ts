@@ -38,7 +38,13 @@ export function clampPlaybackRate(rate: number): number {
  * - Smooth rate nudge with hysteresis for small continuous drift (80ms deadband).
  */
 export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: number | undefined, lastSyncedTime: number | null, isSoftLoop = false, targetPlaybackRate = 1, isFadingOut = false): void {
-    if (!vid || targetTime === undefined || vid.readyState < 2 || vid.seeking) return
+    if (!vid || targetTime === undefined) return
+    if (vid.readyState < 2 || vid.seeking) {
+        // keep in step with lastSyncedTime, otherwise a slow seek looks like an explicit jump and seeks again in a loop
+        const record = lastSyncRecords.get(vid)
+        if (record) lastSyncRecords.set(vid, { ...record, targetTime, timestamp: performance.now() })
+        return
+    }
 
     // a previously issued seek resolved — record its latency (slight overshoot is trimmed by the nudge)
     const pendingSince = pendingSeeks.get(vid)
@@ -83,11 +89,13 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     let targetDelta = targetTime - lastSyncedTime
     if (loopDuration && targetDelta < -loopDuration / 2) targetDelta += loopDuration
     const jumpAmount = targetDelta - Math.max(0, (now - prevRecord.timestamp) / 1000) * rate
-    const isExplicitSeek = isSoftLoop ? lastSyncedTime > targetTime + 0.1 : vid.paused ? Math.abs(targetDelta) > 0.05 : jumpAmount > 0.5 * rate || jumpAmount < -0.3 * rate || targetDelta < -0.3
+    const seekRateScale = Math.max(0.8, rate)
+    const isExplicitSeek = isSoftLoop ? lastSyncedTime > targetTime + 0.1 : vid.paused ? Math.abs(targetDelta) > 0.05 : jumpAmount > 0.5 * seekRateScale || jumpAmount < -0.3 * seekRateScale || targetDelta < -0.3
 
     // 2. Cooldown & Hard Seek (Explicit seeks and paused scrubbing are never blocked by cooldown)
     const inSeekCooldown = now - (lastSeekTimestamps.get(vid) || 0) < 500
-    const shouldHardSeek = (isExplicitSeek && wrapDiff > 0.05) || (vid.paused && wrapDiff > 0.05) || (!inSeekCooldown && wrapDiff > 0.8 * rate)
+    const driftThreshold = Math.max(0.4, 0.8 * rate)
+    const shouldHardSeek = (isExplicitSeek && wrapDiff > 0.05) || (vid.paused && wrapDiff > 0.05) || (!inSeekCooldown && wrapDiff > driftThreshold)
 
     if (shouldHardSeek) {
         lastSeekTimestamps.set(vid, now)
@@ -119,9 +127,11 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     let targetRate = rate
 
     if (!vid.paused && !inWrapZone && vid.readyState >= 2) {
-        if (isNudging && absDiff <= 0.02 * rate) {
+        const deadband = Math.max(0.03, 0.05 * rate)
+        const hysteresis = Math.max(0.015, 0.02 * rate)
+        if (isNudging && absDiff <= hysteresis) {
             isNudging = false
-        } else if (isNudging || absDiff > 0.05 * rate) {
+        } else if (isNudging || absDiff > deadband) {
             isNudging = true
             targetRate = rate + Math.max(-0.15 * rate, Math.min(0.15 * rate, -diff * 0.8 * rate))
         }

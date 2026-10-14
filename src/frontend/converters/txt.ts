@@ -108,7 +108,7 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     if (!Object.keys(plainTextMetadata).length && isCCLIBlock(sections[sections.length - 1])) {
         const lastSection = sections[sections.length - 1]
         const lines = lastSection.split("\n")
-        const songIdIndex = lines.findIndex((line) => /CCLI\s*(?:Song)?\s*#\s*\d+/i.test(line))
+        const songIdIndex = lines.findIndex((line) => isCCLIBlock(line))
         if (songIdIndex > 0 && lines.slice(0, songIdIndex).join("\n").trim()) {
             ccli = lines.slice(songIdIndex).join("\n")
             sections[sections.length - 1] = lines.slice(0, songIdIndex).join("\n")
@@ -201,7 +201,7 @@ export function trimNameFromString(text: string) {
 function isCCLIBlock(text: string): boolean {
     if (!text) return false
     const lower = text.toLowerCase()
-    return lower.includes("www.ccli.com") || lower.includes("ccli song") || lower.includes("ccli licence") || lower.includes("ccli license")
+    return lower.includes("ccli.com") || lower.includes("songselect") || (/ccli/i.test(lower) && /\d+/.test(lower))
 }
 function extractCCLIMetadata(ccliText: string, title?: string): Record<string, string> {
     const lines = ccliText
@@ -217,18 +217,23 @@ function extractCCLIMetadata(ccliText: string, title?: string): Record<string, s
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i]
 
-        // CCLI Song #
-        const songMatch = line.match(/CCLI\s*(?:Song)?\s*#\s*(\d+)/i)
-        if (songMatch) {
-            meta.CCLI = songMatch[1].trim()
-            continue
+        // CCLI License # (any CCLI line mentioning license/licen/lizen/etc.)
+        if (/ccli/i.test(line) && /licen|lizen|ライセンス|라이선스/i.test(line)) {
+            const numMatch = line.match(/\d+/)
+            if (numMatch) {
+                meta.license = numMatch[0]
+                continue
+            }
         }
 
-        // CCLI License #
-        const licMatch = line.match(/CCLI\s*Licen[cs]e\s*(?:No\.?|#)?\s*(\d+)/i)
-        if (licMatch) {
-            if (!meta.license) meta.license = licMatch[1].trim()
-            continue
+        // CCLI Song # (any other CCLI line containing digits)
+        if (/ccli/i.test(line)) {
+            const numMatch = line.match(/\d+/)
+            if (numMatch) {
+                if (!meta.CCLI) meta.CCLI = numMatch[0]
+                else if (!meta.license) meta.license = numMatch[0]
+                continue
+            }
         }
 
         // Copyright / Year
@@ -241,12 +246,12 @@ function extractCCLIMetadata(ccliText: string, title?: string): Record<string, s
         }
 
         // SongSelect disclaimer / website link
-        if (/terms\s+of\s+use|all\s+rights\s+reserved|ccli\.com/i.test(line)) continue
+        if (/ccli|songselect|\.com|terms|rights/i.test(line)) continue
 
         unknownData.push(line)
     }
 
-    // push into Author
+    // push remaining lines into Author
     if (unknownData.length > 0) meta.author = unknownData.join(", ")
 
     return meta
@@ -659,7 +664,6 @@ function fixText(text: string, formatText: boolean): string {
         // .replaceAll(".", "")
         text = text.replace(/\([^)]{1,2}\) /g, "")
     }
-
 
     if (formatText) {
         // repeat text

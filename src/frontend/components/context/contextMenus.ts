@@ -201,6 +201,7 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     place_under_slide: { label: "context.place_under_slide", icon: "under", iconColor: "#d497ff" },
     display_duration: { label: "popup.display_duration", icon: "clock", iconColor: "#d497ff" },
     overlay_actions: { label: "tabs.actions", icon: "actions", iconColor: "#d497ff" },
+    bind_to_effect: { label: "actions.specific_outputs", icon: "bind", iconColor: "#d497ff", items: ["LOAD_bind_effect"] },
     // SCENES
     scene_actions: { label: "tabs.actions", icon: "actions", iconColor: "#d497ff" },
     bind_to_scene: { label: "actions.specific_outputs", icon: "bind", iconColor: "#d497ff", items: ["LOAD_bind_scene"] },
@@ -312,7 +313,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     template_card: ["GROUP_edit", "template_actions", "export", "SEPARATOR", "rename", "recolor", "duplicate", "delete"], // "GROUP_rename_color"
     template_card_default: ["GROUP_edit", "duplicate", "delete"],
     template_card_readonly: [],
-    effect_card: ["GROUP_open", "display_duration", "SEPARATOR", "place_under_slide", "SEPARATOR", "rename", "recolor", "duplicate", "delete"], // "GROUP_rename_color"
+    effect_card: ["GROUP_open", "display_duration", "SEPARATOR", "bind_to_effect", "place_under_slide", "SEPARATOR", "rename", "recolor", "duplicate", "delete"], // "GROUP_rename_color"
     effect_card_default: ["GROUP_open", "duplicate", "delete"],
     player: ["manage_player_tags", "player_tag_filter"],
     player_button: ["GROUP_open", "player_tag_set", "player_tag_filter", "SEPARATOR", "rename", "delete"],

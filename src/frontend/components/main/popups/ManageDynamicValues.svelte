@@ -229,7 +229,7 @@
         <div slot="menu">
             <InputRow>
                 <MaterialTextInput style="flex: 1;" label="inputs.url" value={txt.url} on:change={(e) => setTxtValue(e, i, "url")} />
-                <MaterialFilePicker style="flex: 0;" label="scripture.local" value={txt.url} filter={{ name: "Text files", extensions: ["txt"] }} icon="folder" on:change={(e) => setTxtValue(e, i, "url")} noLabel />
+                <MaterialFilePicker style="flex: 0;" label="" title="scripture.local" value="" filter={{ name: "Text files", extensions: ["txt"] }} icon="folder" on:change={(e) => setTxtValue(e, i, "url")} noLabel />
             </InputRow>
 
             <InputRow>
