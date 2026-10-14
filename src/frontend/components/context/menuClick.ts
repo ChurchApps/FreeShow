@@ -348,8 +348,6 @@ const clickActions = {
             })
         }
 
-        if (obj.sel && deleteAction(obj.sel)) return
-
         if (obj.contextElem?.classList.value.includes("#audio_channel")) {
             deleteAction({ id: "audio_channel", data: [{ id: obj.contextElem.id }] })
             return
@@ -395,6 +393,8 @@ const clickActions = {
             deleteAction({ id: "interaction_input", data: { index: Number(obj.contextElem.id?.slice(1)) } })
             return
         }
+
+        if (obj.sel && deleteAction(obj.sel)) return
 
         // THIS MUST BE LAST (otherwise deleteing e.g. an event while the editbox is selected will delete that instead)
         // delete slide item using context menu, or menubar action
