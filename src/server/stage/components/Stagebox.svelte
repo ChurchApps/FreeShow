@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getContext, onDestroy } from "svelte"
+    import { getContext, onDestroy, tick } from "svelte"
     import type { StageLayout } from "../../../types/Stage"
     import Center from "../../common/components/Center.svelte"
     import Icon from "../../common/components/Icon.svelte"
@@ -73,7 +73,13 @@
 
     let alignElem: HTMLElement | undefined
     let size = 100
-    $: if (alignElem && (item || $progressData)) size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })
+    $: if (alignElem && (item || $progressData || currentSlide)) updateSize()
+    async function updateSize() {
+        // wait for DOM to reflect new content before measuring
+        await tick()
+        if (!alignElem) return
+        size = autosize(alignElem, { type: "growToFit", textQuery: ".autoFontSize" })
+    }
     $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
 
     $: slideOffset = item.type ? Number(item.slideOffset || 0) : id.includes("next") ? 1 : 0
