@@ -726,7 +726,7 @@ export async function startScripture(data: API_scripture) {
     if (data.id) setDrawerTabData("scripture", data.id) // use active if no ID
     activeDrawerTab.set("scripture")
 
-    openScripture.set({ ...ref, play: true })
+    openScripture.set({ ...ref, play: data.play !== false })
 }
 
 // MEDIA
