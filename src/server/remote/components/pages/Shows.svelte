@@ -5,7 +5,7 @@
     import { dateToString } from "../../../common/util/time"
     import { translate } from "../../util/helpers"
     import { send } from "../../util/socket"
-    import { _set, activeShow, createShow, dictionary, quickPlay, shows, showSearchValue } from "../../util/stores"
+    import { _set, activeShow, createShow, dictionary, quickPlay, shows, showSearchResults, showSearchValue } from "../../util/stores"
     import ShowButton from "../ShowButton.svelte"
     import Button from "../../../common/components/Button.svelte"
     import Icon from "../../../common/components/Icon.svelte"
@@ -32,13 +32,43 @@
     let searchTimeout: number | null = null
     $: {
         if (searchTimeout !== null) clearTimeout(searchTimeout)
-        if (searchValue.length > 1) {
-            searchTimeout = setTimeout(findMatches, 150) as unknown as number
+        const trimmed = (searchValue || "").trim()
+        if (trimmed.length > 1) {
+            searchTimeout = setTimeout(() => {
+                send("SEARCH_SHOWS", { query: trimmed, limit: MAX_VISIBLE_ITEMS })
+                findMatches()
+            }, 120) as unknown as number
         } else {
             filteredShows = filteredStored || []
             firstMatch = null
             updateVisibleShows()
         }
+    }
+
+    // React to backend search results
+    $: if ($showSearchResults && $showSearchResults.query === (searchValue || "").trim()) {
+        applySearchResults($showSearchResults.results)
+    }
+
+    function applySearchResults(results: { id: string; match: number }[]) {
+        if (!results || !results.length) {
+            filteredShows = []
+            firstMatch = null
+            updateVisibleShows()
+            return
+        }
+
+        const showsMap = new Map(($shows || []).map((s: any) => [s.id, s]))
+        const matched: any[] = []
+        for (const res of results) {
+            const showObj = showsMap.get(res.id)
+            if (showObj && !showObj.private) {
+                matched.push({ ...showObj, match: res.match })
+            }
+        }
+        filteredShows = matched
+        firstMatch = filteredShows[0]?.id || null
+        updateVisibleShows()
     }
 
     function findMatches() {

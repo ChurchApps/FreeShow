@@ -13,10 +13,11 @@ import { updateOut } from "../components/helpers/showActions"
 import { _show } from "../components/helpers/shows"
 import { clearAll } from "../components/output/clear"
 import { REMOTE } from "./../../types/Channels"
-import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioRouting, categories, connections, dictionary, folders, language, openedFolders, outLocked, outputs, overlayCategories, overlays, playerVideos, projects, runningActions, scriptures, serverData, shows, showsCache, styles, templateCategories, templates, theme, themes, timers, variables, variableTags } from "./../stores"
+import { actions, actionTags, activePage, activeProject, activeShow, activeTimers, audioChannelsData, audioRouting, categories, connections, dictionary, folders, language, openedFolders, outLocked, outputs, overlayCategories, overlays, playerVideos, projects, runningActions, scriptures, serverData, shows, showsCache, sortedShowsList, styles, templateCategories, templates, theme, themes, timers, variables, variableTags } from "./../stores"
 import { lastClickTime } from "./common"
 import { translateText } from "./language"
 import { send } from "./request"
+import { formatSearch, showSearch } from "./search"
 import { sendData, setConnectedState } from "./sendData"
 
 export function getFilteredAudioChannels() {
@@ -228,6 +229,21 @@ export const receiveREMOTE: any = {
             chapters: []
         }))
         msg.data.bible = { books: mappedBooks }
+        return msg
+    },
+    SEARCH_SHOWS: (msg: ClientMessage) => {
+        const { query = "", limit = 500 } = msg.data || {}
+        const trimmed = typeof query === "string" ? query.trim() : ""
+        if (!trimmed || formatSearch(trimmed).length <= 1) {
+            msg.data = { query: trimmed, results: [] }
+            return msg
+        }
+
+        const allShows = get(sortedShowsList) || []
+        const matches = showSearch(trimmed, allShows)
+        // Return matching show IDs and scores to keep payload light
+        const results = matches.slice(0, limit).map((s) => ({ id: s.id, match: s.match }))
+        msg.data = { query: trimmed, results }
         return msg
     },
     SEARCH_SCRIPTURE: async (msg: ClientMessage) => {

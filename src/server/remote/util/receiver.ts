@@ -245,6 +245,11 @@ export const receiver = {
         }
     },
     // SCRIPTURE_CHAPTERS and SCRIPTURE_VERSES are handled by GET_SCRIPTURE's bibleUpdate handling
+    SEARCH_SHOWS: (data: any) => {
+        if (data && data.results !== undefined) {
+            _set("showSearchResults", data)
+        }
+    },
     SEARCH_SCRIPTURE: (data: any) => {
         // Store search results for the search component to use
         if (data.searchResults !== undefined) {
