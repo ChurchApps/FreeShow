@@ -11,7 +11,7 @@ type AttachedSlot = {
 }
 
 const MAX_CACHED_WEBVIEWS = 3
-const webviewPool = new Map<string, AttachedSlot>()
+const webviewPool = new Set<AttachedSlot>()
 
 let hiddenContainer: HTMLElement | null = null
 function getHiddenContainer(): HTMLElement {
@@ -31,7 +31,7 @@ export function cleanupOldWebviews() {
         for (const slot of unattached.slice(0, unattached.length - MAX_CACHED_WEBVIEWS)) {
             slot.actionUnsubscribe?.()
             slot.webview.remove?.()
-            webviewPool.delete(slot.src)
+            webviewPool.delete(slot)
         }
     }
 }
@@ -50,7 +50,8 @@ export function attachPersistentWebview(
     let currentSrc = options.src
     if (!currentSrc) return
 
-    let slot = webviewPool.get(currentSrc)
+    // only reuse a webview not shown by another mount (moving it would blank the other one)
+    let slot: AttachedSlot | undefined = [...webviewPool].find((s) => s.src === currentSrc && (!s.currentParent || s.currentParent === hiddenContainer))
 
     if (!slot) {
         const webview = document.createElement("webview") as any
@@ -104,7 +105,7 @@ export function attachPersistentWebview(
             }
         })
 
-        webviewPool.set(currentSrc, slot)
+        webviewPool.add(slot)
     }
 
     slot.lastUsed = Date.now()
@@ -113,18 +114,21 @@ export function attachPersistentWebview(
     applyWebviewStyle(slot.webview, options.zoom, options.isOutput, currentSrc)
     options.onReady?.(slot.webview)
 
+    let inner: { update: (o: typeof options) => void; destroy: () => void } | undefined | void
+
     return {
         update(newOptions: typeof options) {
+            if (inner) return inner.update(newOptions)
             if (newOptions.src !== currentSrc) {
                 detach()
-                currentSrc = newOptions.src
-                attachPersistentWebview(targetNode, newOptions)
+                inner = attachPersistentWebview(targetNode, newOptions)
             } else {
                 applyWebviewStyle(slot!.webview, newOptions.zoom, newOptions.isOutput, currentSrc)
             }
         },
         destroy() {
-            detach()
+            if (inner) inner.destroy()
+            else detach()
         }
     }
 
