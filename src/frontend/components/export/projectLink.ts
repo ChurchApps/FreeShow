@@ -4,7 +4,7 @@ import { overlays, playerVideos, showsCache } from "../../stores"
 import { newToast } from "../../utils/common"
 import { loadShows } from "../helpers/setShow"
 import { _show } from "../helpers/shows"
-import { LinkGenericItem, LinkOverlayItem, LinkShowItem, LinkSlide, LinkSlideGenericItem, LinkSlideItems, LinkSlideLine, LinkSlideMediaItem, LinkSlideTextItem, ProjectLink } from "./ProjectLinkTypes"
+import { LinkGenericItem, LinkOverlayItem, LinkSectionItem, LinkShowItem, LinkSlide, LinkSlideGenericItem, LinkSlideItems, LinkSlideLine, LinkSlideMediaItem, LinkSlideTextItem, ProjectLink } from "./ProjectLinkTypes"
 
 export async function exportProjectAsData(project: Project, projectId: string): Promise<ProjectLink | null> {
     if (!project) return null
@@ -27,6 +27,18 @@ export async function exportProjectAsData(project: Project, projectId: string): 
             .map((item) => {
                 const type = item.type || "show"
                 if (type === "DIVIDER" || type === "show_placeholder") return null
+
+                if (type === "section") {
+                    const sectionData: any = {}
+                    if (item.notes) sectionData.notes = item.notes
+                    if (item.data?.time) sectionData.time = item.data.time
+
+                    return {
+                        name: item.name,
+                        type,
+                        data: sectionData
+                    } as LinkSectionItem
+                }
 
                 if (type === "show") {
                     const show = cachedShows[item.id]
