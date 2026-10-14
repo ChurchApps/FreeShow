@@ -21,6 +21,7 @@ type AttachedSlot = {
     historyIndex: number
     isNavigating?: boolean
     isDomReady?: boolean
+    isMuted?: boolean
     options?: PersistentWebviewOptions
 }
 
@@ -102,6 +103,9 @@ export function attachPersistentWebview(
                     } else {
                         webview.reload?.()
                     }
+                } else if (action.type === "mute") {
+                    if (slot) slot.isMuted = action.muted
+                    webview.setAudioMuted?.(!options.isOutput || action.muted)
                 }
             } catch (err) {
                 console.debug("Website action failed:", err)
@@ -111,7 +115,7 @@ export function attachPersistentWebview(
 
         webview.addEventListener("dom-ready", () => {
             slot!.isDomReady = true
-            applyWebviewStyle(webview, options.zoom, options.isOutput, currentSrc, true)
+            applyWebviewStyle(webview, options.zoom, options.isOutput, currentSrc, true, slot!.isMuted)
             slot!.options?.onReady?.(webview, controller)
 
             if (options.isOutput && options.outputId) {
@@ -209,7 +213,7 @@ export function attachPersistentWebview(
     slot.currentParent = targetNode
     targetNode.appendChild(slot.webview)
     if (slot.isDomReady) {
-        applyWebviewStyle(slot.webview, options.zoom, options.isOutput, currentSrc, true)
+        applyWebviewStyle(slot.webview, options.zoom, options.isOutput, currentSrc, true, slot.isMuted)
     }
     // Always notify the mounting component of the webview and controller
     options.onReady?.(slot.webview, controller)
@@ -224,7 +228,7 @@ export function attachPersistentWebview(
                 detach()
                 inner = attachPersistentWebview(targetNode, newOptions)
             } else {
-                applyWebviewStyle(slot!.webview, newOptions.zoom, newOptions.isOutput, currentSrc, slot!.isDomReady)
+                applyWebviewStyle(slot!.webview, newOptions.zoom, newOptions.isOutput, currentSrc, slot!.isDomReady, slot!.isMuted)
             }
         },
         destroy() {
@@ -252,10 +256,10 @@ export function attachPersistentWebview(
     }
 }
 
-function applyWebviewStyle(webview: any, zoom = 100, isOutput = false, src = "", isDomReady = false) {
+function applyWebviewStyle(webview: any, zoom = 100, isOutput = false, src = "", isDomReady = false, isMuted = false) {
     if (!webview) return
     try {
-        webview.setAudioMuted?.(!isOutput)
+        webview.setAudioMuted?.(!isOutput || isMuted)
 
         const factor = (parseFloat(zoom?.toString() || "100") || 100) / 100
         webview.setZoomFactor?.(factor)

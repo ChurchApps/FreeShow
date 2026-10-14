@@ -7,7 +7,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import { getFileName, removeExtension } from "../../helpers/media"
     import T from "../../helpers/T.svelte"
-    import { formatUrl, getOutputtedWebsites, sendWebsiteKey, triggerWebsiteAction } from "../../helpers/websiteControls"
+    import { formatUrl, getOutputtedWebsites, sendWebsiteKey, toggleWebsiteMute, triggerWebsiteAction } from "../../helpers/websiteControls"
     import Button from "../../inputs/Button.svelte"
     import { VideoPlayer } from "../../media/video/videoPlayer"
     import VideoSlider from "../VideoSlider.svelte"
@@ -48,6 +48,13 @@
     }
     function toggleLoop(path: string, outputId: string) {
         VideoPlayer.toggleLoop(path, outputId)
+    }
+
+    let mutedWebsites: { [src: string]: boolean } = {}
+    function toggleMute(src: string) {
+        const isMuted = !mutedWebsites[src]
+        mutedWebsites[src] = isMuted
+        toggleWebsiteMute(src, isMuted)
     }
 
     // Website controls
@@ -125,6 +132,10 @@
 
             <Button center title={translateText("preview.reload")} disabled={$outLocked} on:click={() => triggerWebsiteAction({ src: website.src, type: "reload" })}>
                 <Icon id="refresh" white />
+            </Button>
+
+            <Button center title={translateText(mutedWebsites[website.src] ? "actions.unmute" : "actions.mute")} disabled={$outLocked} on:click={() => toggleMute(website.src)}>
+                <Icon id={mutedWebsites[website.src] ? "muted" : "volume"} white={mutedWebsites[website.src]} />
             </Button>
         </span>
     </div>
