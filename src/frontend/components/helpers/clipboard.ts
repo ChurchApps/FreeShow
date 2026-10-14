@@ -1070,6 +1070,10 @@ const deleteActions = {
         data.forEach(({ id }) => {
             history({ id: "UPDATE", newData: { id }, location: { page: "settings", id: "settings_profile" } })
         })
+
+        // clear admin user also if all other users are deleted
+        const profileList = Object.keys(get(profiles)).filter((id) => id !== "admin")
+        if (!profileList.length) profiles.set({})
     },
     audio_channel: (data: any) => {
         const channelId = data?.[0]?.id || data?.[0]
