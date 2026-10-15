@@ -1,17 +1,18 @@
 <script lang="ts">
     import { getContext, onDestroy } from "svelte"
+    import type { Resolution } from "../../../types/Settings"
     import type { StageItem, StageLayout as TStageLayout } from "../../../types/Stage"
     import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, refreshEditSlide, stageShows, timers, variables } from "../../stores"
     import { startResizing } from "../../utils/cursor"
     import { translateText } from "../../utils/language"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
+    import { videoExtensions } from "../../values/extensions"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
     import { isConditionMet } from "../edit/scripts/itemHelpers"
     import { getItemText } from "../edit/scripts/textStyle"
     import Icon from "../helpers/Icon.svelte"
     import { getExtension, loadThumbnail, mediaSize } from "../helpers/media"
-    import { videoExtensions } from "../../values/extensions"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { createCSSVariables, replaceDynamicValues } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
@@ -34,6 +35,7 @@
     export let item: StageItem | undefined
     export let stageLayout: TStageLayout | null = null
     export let ratio: number
+    export let resolution: Resolution | undefined = undefined
     export let preview = false
     export let edit = false
     export let disableStagePreview = false
@@ -283,7 +285,7 @@
         })
     }
 
-    $: stageResolution = getStageResolution()
+    $: stageResolution = resolution || getStageResolution(stageOutputId, outputStores)
     $: customStyle = percentageStylePos(itemStyle, stageResolution)
 
     // pause video at middle

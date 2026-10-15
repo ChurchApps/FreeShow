@@ -95,7 +95,7 @@
 
     let width = 0
     let height = 0
-    $: stageOutputId = getStageOutputId($outputs)
+    $: stageOutputId = outputId || getStageOutputId($outputs)
     $: resolution = getStageResolution(stageOutputId, $outputs)
 
     // ACTION BAR
@@ -154,7 +154,7 @@
                         {#key stageLayoutId}
                             {#each stageItems as item, index (item.id)}
                                 {#if (item.type || item.enabled !== false) && (edit || checkVisibility(index, conditionsUpdater))}
-                                    <Stagebox edit stageLayout={edit ? null : layout} id={item.id} {item} {ratio} {preview} {disableStagePreview} bind:mouse />
+                                    <Stagebox edit stageLayout={edit ? null : layout} id={item.id} {item} {ratio} {resolution} {preview} {disableStagePreview} bind:mouse />
                                 {/if}
                             {/each}
                         {/key}
@@ -165,7 +165,7 @@
                     {#key stageLayoutId}
                         {#each stageItems as item, index (item.id)}
                             {#if (item.type || item.enabled !== false) && (edit || checkVisibility(index, conditionsUpdater))}
-                                <Stagebox stageLayout={edit ? null : layout} id={item.id} {item} {ratio} {preview} {disableStagePreview} bind:mouse />
+                                <Stagebox stageLayout={edit ? null : layout} id={item.id} {item} {ratio} {resolution} {preview} {disableStagePreview} bind:mouse />
                             {/if}
                         {/each}
                     {/key}
