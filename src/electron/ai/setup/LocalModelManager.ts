@@ -15,7 +15,7 @@ export async function aiHandleLocalSetup(data: AiSetupOptions): Promise<boolean>
         delete: () => (modelId ? LocalModelManager.deleteModel(engineId, modelId) : LocalModelManager.deleteEngine(engineId))
     }
 
-    return actions[action as keyof typeof actions]?.() ?? false
+    return actions[action]?.() ?? false
 }
 
 const BIN_DIR = path.join(app.getPath("userData"), "bin")

@@ -12,10 +12,10 @@ export async function aiGetModelStatus(data?: { engineId?: string; modelId?: str
     const status: Record<string, EngineStatus> = {}
     const { engineId: id, modelId = "", customPath } = data || {}
 
-    if (!id || id === "nemotron") status["nemotron"] = await LocalModelManager.getStatus("nemotron", modelId, customPath)
+    if (!id || id === "nemotron") status.nemotron = await LocalModelManager.getStatus("nemotron", modelId, customPath)
 
     if (!id || id === "ollama") {
-        status["ollama"] = await checkConnectionStatus("ollama", "", modelId)
+        status.ollama = await checkConnectionStatus("ollama", "", modelId)
     }
 
     const remoteProviders = ["anthropic", "openai", "google"] as const

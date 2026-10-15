@@ -292,7 +292,7 @@ export class RtmpStreamer {
 
         const sendVideoFrame = () => {
             const frameInterval = 1000 / config.fps
-            let startTime = performance.now()
+            const startTime = performance.now()
             let frameCount = 0
 
             const tick = () => {
@@ -614,7 +614,7 @@ export class RtmpStreamer {
         }
     }
 
-    static updateAudio(outputId: string | undefined, buffer: Buffer, _sampleRate: number = 48000) {
+    static updateAudio(outputId: string | undefined, buffer: Buffer, _sampleRate = 48000) {
         const writeToStreamer = (streamer: StreamInstance) => {
             if (!streamer || !streamer.config.enableAudio) return
 

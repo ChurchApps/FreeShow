@@ -159,7 +159,7 @@ export async function detectEncoders(force = false): Promise<EncoderDetection> {
 }
 
 // pushed from the renderer on startup and whenever it changes
-let rtmpEncoderSetting: Record<string, string> = {}
+const rtmpEncoderSetting: Record<string, string> = {}
 export function setRtmpEncoderSetting(outputId: string, encoder: string) {
     rtmpEncoderSetting[outputId] = encoder || "auto"
 }
@@ -186,7 +186,7 @@ export async function resolveEncoder(setting: string | undefined): Promise<Encod
     if (!setting || setting === "auto") return detection.recommended
 
     const match = detection.encoders.find((e) => e.id === setting)
-    if (match?.available) return match.id as EncoderId
+    if (match?.available) return match.id
 
     console.warn(`[encoderDetection] Encoder "${setting}" is unavailable (${match?.reason || "unknown"}), falling back to x264`)
     return "x264"

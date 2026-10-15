@@ -396,7 +396,7 @@ async function captureAndSend(id: string, source: any, opts: CaptureOpts) {
     const wantScaled = dstW > 0 && dstH > 0
     const slot = acquireReadbackSlot(id)
     const rbKey = `${id}#${slot}`
-    senderData!.offMain = true
+    senderData.offMain = true
     const twoPhase = typeof osr.readbackConsume === "function" && typeof osr.readbackFinish === "function"
     const singleDispatch = !twoPhase && typeof osr.readbackOnce === "function"
     let textureReleased = false

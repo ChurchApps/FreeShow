@@ -191,7 +191,7 @@ class ChurchAppsSyncManager {
             const blob = new Blob([new Uint8Array(fileBuffer)], { type: ZIP_TYPE })
 
             const formData = new FormData()
-            if (!presigned.fields?.["acl"]) formData.append("acl", "public-read")
+            if (!presigned.fields?.acl) formData.append("acl", "public-read")
             if (!presigned.fields?.["Content-Type"]) formData.append("Content-Type", ZIP_TYPE)
 
             // Loop through all the presigned parameters returned and append them to this request

@@ -43,7 +43,7 @@ export class OutputVisibility {
         const isSingleScreenAutoStartup = autoStartup && displays.length <= 1
         if (isSingleScreenAutoStartup) return false
 
-        let bounds: Rectangle = this.resolveOutputBounds(output, autoPosition)
+        const bounds: Rectangle = this.resolveOutputBounds(output, autoPosition)
 
         const windowCoveringMain = this.amountCovered(bounds, mainWindow!.getBounds()) > 0.5
         const invalidWindowPosition = windowCoveringMain && autoPosition && window.isAlwaysOnTop() === true
@@ -75,8 +75,8 @@ export class OutputVisibility {
         // 1. Primary: Preserve valid coordinates if already within an active physical display
         if (displays.length > 0 && hasValidBounds && output.bounds) {
             const isCenterOnDisplay = displays.some((d) => {
-                const centerX = output.bounds!.x + output.bounds!.width / 2
-                const centerY = output.bounds!.y + output.bounds!.height / 2
+                const centerX = output.bounds.x + output.bounds.width / 2
+                const centerY = output.bounds.y + output.bounds.height / 2
                 return centerX >= d.bounds.x && centerX < d.bounds.x + d.bounds.width && centerY >= d.bounds.y && centerY < d.bounds.y + d.bounds.height
             })
 
