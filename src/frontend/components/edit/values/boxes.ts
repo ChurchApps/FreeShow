@@ -632,7 +632,11 @@ export const itemBoxes: Box2 = {
                                 options: [
                                     { value: "bars", label: "Lines" },
                                     { value: "particles", label: "Particles" },
-                                    { value: "kaleidoscope", label: "Kaleidoscope" }
+                                    { value: "kaleidoscope", label: "Kaleidoscope" },
+                                    { value: "aurora", label: "Aurora" },
+                                    { value: "horizon", label: "Horizon" },
+                                    { value: "orbit", label: "Orbit" },
+                                    { value: "soft-spectrum", label: "Soft spectrum" }
                                 ]
                             }
                         }
