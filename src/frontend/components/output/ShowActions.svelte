@@ -6,7 +6,7 @@
     import { refreshOut, setOutput } from "../helpers/output"
     import { OutputHelper } from "../helpers/OutputHelper"
     import { getLayoutRef } from "../helpers/show"
-    import { updateOut } from "../helpers/showActions"
+    import { checkActionTrigger, updateOut } from "../helpers/showActions"
     import MaterialButton from "../inputs/MaterialButton.svelte"
 
     export let currentOutput: Output
@@ -74,13 +74,15 @@
         if (!currentShow || !$showsCache[currentShow.id]?.settings) return
 
         const layout = $showsCache[currentShow.id].settings.activeLayout
-        if (isEdit) setOutput("slide", { id: currentShow.id, layout, index: $activeEdit.slide })
-        else {
-            setOutput("slide", { id: currentShow.id, layout, index: 0 })
-        }
+        const layoutRef = getLayoutRef(currentShow.id)
+        let firstEnabledIndex = layoutRef.findIndex((a) => !a.data.disabled)
+        if (firstEnabledIndex < 0) firstEnabledIndex = 0
+        const index = isEdit ? $activeEdit.slide || 0 : firstEnabledIndex
 
-        // ref || getLayoutRef()
-        updateOut("active", $activeEdit.slide || 0, getLayoutRef(), !e.altKey)
+        checkActionTrigger(layoutRef[index]?.data, index)
+        setOutput("slide", { id: currentShow.id, layout, index })
+
+        updateOut(currentShow.id, index, layoutRef, !e.altKey)
     }
 </script>
 
