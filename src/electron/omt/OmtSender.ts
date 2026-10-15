@@ -13,6 +13,7 @@ import { ensureOmtCodecSearchPath } from "./omtModule"
 
 export class OmtSender {
     private static readonly MAX_INFLIGHT_SENDS = 3
+    private static readonly STALE_INFLIGHT_MS = 1500
 
     // main-side mirror of the worker's OMT senders
     static OMT: {
@@ -23,6 +24,7 @@ export class OmtSender {
             previousStatus?: string
             sender?: boolean
             inFlight?: number
+            inFlightChangedAt?: number
             connections?: number
         }
     } = {}
@@ -70,7 +72,10 @@ export class OmtSender {
             delete this.OMT[msg.id]
         } else if (msg.type === "videoDone") {
             const data = this.OMT[msg.id]
-            if (data) data.inFlight = Math.max(0, (data.inFlight ?? 0) - 1)
+            if (data) {
+                data.inFlight = Math.max(0, (data.inFlight ?? 0) - 1)
+                data.inFlightChangedAt = Date.now()
+            }
         }
     }
 
@@ -79,7 +84,18 @@ export class OmtSender {
     }
 
     static isBusyOMT(id: string): boolean {
-        return (this.OMT[id]?.inFlight ?? 0) >= this.MAX_INFLIGHT_SENDS
+        const data = this.OMT[id]
+        if (!data) return false
+        const inFlight = data.inFlight ?? 0
+        if (inFlight < this.MAX_INFLIGHT_SENDS) return false
+
+        const lastChange = data.inFlightChangedAt ?? 0
+        if (lastChange && Date.now() - lastChange > this.STALE_INFLIGHT_MS) {
+            data.inFlight = 0
+            data.inFlightChangedAt = Date.now()
+            return false
+        }
+        return true
     }
 
     static async createSenderOMT(id: string, name = "", quality?: number | string) {
@@ -117,6 +133,7 @@ export class OmtSender {
         if (!data?.sender || !worker) return
 
         data.inFlight = (data.inFlight ?? 0) + 1
+        data.inFlightChangedAt = Date.now()
 
         let arrayBuffer: ArrayBuffer
         if (buffer.byteOffset === 0 && buffer.byteLength === buffer.buffer.byteLength) {

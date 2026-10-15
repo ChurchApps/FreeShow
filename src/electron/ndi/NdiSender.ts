@@ -14,6 +14,7 @@ import { SenderCapture, type CaptureFrameOpts } from "../capture/SenderCapture"
 export class NdiSender {
     private static worker: Worker | null = null
     private static readonly MAX_INFLIGHT_SENDS = 3
+    private static readonly STALE_INFLIGHT_MS = 1500
 
     static NDI: {
         [key: string]: {
@@ -23,6 +24,7 @@ export class NdiSender {
             previousStatus?: string
             sender?: boolean
             inFlight?: number
+            inFlightChangedAt?: number
             connections?: number
         }
     } = {}
@@ -69,17 +71,30 @@ export class NdiSender {
             delete this.NDI[msg.id]
         } else if (msg.type === "videoDone") {
             const data = this.NDI[msg.id]
-            if (data) data.inFlight = Math.max(0, (data.inFlight ?? 0) - 1)
+            if (data) {
+                data.inFlight = Math.max(0, (data.inFlight ?? 0) - 1)
+                data.inFlightChangedAt = Date.now()
+            }
         }
     }
-
 
     static initNameNDI(name?: string, outputName?: string) {
         return name || `FreeShow NDI${outputName ? ` - ${outputName}` : ""}`
     }
 
     static isBusyNDI(id: string): boolean {
-        return (this.NDI[id]?.inFlight ?? 0) >= this.MAX_INFLIGHT_SENDS
+        const data = this.NDI[id]
+        if (!data) return false
+        const inFlight = data.inFlight ?? 0
+        if (inFlight < this.MAX_INFLIGHT_SENDS) return false
+
+        const lastChange = data.inFlightChangedAt ?? 0
+        if (lastChange && Date.now() - lastChange > this.STALE_INFLIGHT_MS) {
+            data.inFlight = 0
+            data.inFlightChangedAt = Date.now()
+            return false
+        }
+        return true
     }
 
     static async createSenderNDI(id: string, name = "", groups?: string) {
@@ -106,6 +121,7 @@ export class NdiSender {
         if (!data?.sender || !this.worker) return
 
         data.inFlight = (data.inFlight ?? 0) + 1
+        data.inFlightChangedAt = Date.now()
 
         let arrayBuffer: ArrayBuffer
         if (buffer.byteOffset === 0 && buffer.byteLength === buffer.buffer.byteLength) {
