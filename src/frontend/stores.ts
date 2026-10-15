@@ -86,6 +86,7 @@ export const providerConnections: Writable<{ [key in ContentProviderId]?: boolea
 export const metronomeTimer: Writable<{ beat: number; timeToNext: number }> = writable({ beat: 0, timeToNext: 0 })
 export const mediaDownloads: Writable<Map<string, { progress: number; total: number; status: string; name?: string }>> = writable(new Map())
 export const rtmpStatus: Writable<{ [outputId: string]: RtmpStatus }> = writable({})
+export const icecastStatus: Writable<{ connected: boolean; connecting?: boolean; error?: string }> = writable({ connected: false })
 export const pdfImports: Writable<Map<string, { name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }>> = writable(new Map())
 export const showChangeProfileMenu: Writable<boolean> = writable(false)
 export const cloudUsers: Writable<{ displayName: string; deviceId?: string; color: string; lastUpdate?: number; activePage?: string; activeShow?: ShowRef }[]> = writable([])

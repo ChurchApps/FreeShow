@@ -24,6 +24,7 @@
     import TimerControls from "../tools/TimerControls.svelte"
     import ClearButtons from "./ClearButtons.svelte"
     import MultiOutputs from "./MultiOutputs.svelte"
+    import IcecastStatus from "./IcecastStatus.svelte"
     import SpotifyController from "./SpotifyController.svelte"
 
     $: allActiveOutputs = getActiveOutputs($outputs, true, true, true)
@@ -296,6 +297,7 @@
             {/if}
         </div>
 
+        <IcecastStatus />
         <SpotifyController />
     {/if}
 </div>

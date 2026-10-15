@@ -1,5 +1,7 @@
 import crypto from "crypto"
 import net from "net"
+import { ToMain } from "../../types/IPC/ToMain"
+import { sendToMain } from "../IPC/main"
 
 // Precompute CRC32 table for Xiph.org Ogg polynomial (0x04c11db7)
 // This makes CRC calculation 8x faster than the bit-by-bit loop.
@@ -41,6 +43,8 @@ export class IcecastSender {
     private static silentPacketsCount = 0
     private static lastStatsLog = Date.now()
 
+    private static lastReportedStatus: { connected: boolean; connecting: boolean; error?: string } = { connected: false, connecting: false }
+
     public static sendAudio(opusPacket: Buffer, icecast?: any) {
         if (!icecast) return
 
@@ -54,13 +58,16 @@ export class IcecastSender {
 
         if (isNewConfig) {
             console.log(`[IcecastSender] Config updated: enabled=${enabled}, host=${host}:${port}, mount=${mount}`)
+            this.lastConnectAttempt = 0
             this.disconnect()
         }
 
         this.activeConfig = { enabled, host, port, mount, password }
 
         if (!enabled) {
-            this.disconnect()
+            if (this.isConnected || this.isConnecting) {
+                this.disconnect()
+            }
             return
         }
 
@@ -94,8 +101,14 @@ export class IcecastSender {
         }
     }
 
+    private static lastConnectAttempt = 0
+    private static connectCooldownMs = 3000
+
     private static connect() {
         if (this.isConnecting || this.isConnected) return
+        const now = Date.now()
+        if (now - this.lastConnectAttempt < this.connectCooldownMs) return
+        this.lastConnectAttempt = now
         this.isConnecting = true
 
         const config = this.activeConfig
@@ -106,6 +119,7 @@ export class IcecastSender {
         this.silentPacketsCount = 0
         this.lastStatsLog = Date.now()
 
+        this.notifyStatus(false, true)
         const mountPath = config.mount.startsWith("/") ? config.mount : `/${config.mount}`
         console.log(`[IcecastSender] Opening TCP socket to http://${config.host}:${config.port}${mountPath}...`)
 
@@ -129,6 +143,7 @@ export class IcecastSender {
             client.write(headerText, () => {
                 console.log(`[IcecastSender] Icecast headers sent. Stream active.`)
                 this.isConnected = true
+                this.notifyStatus(true, false)
                 this.startStreamHeaders()
                 this.startIdleKeepAlive()
             })
@@ -138,23 +153,19 @@ export class IcecastSender {
             const resp = data.toString("utf8")
             if (resp.includes("409 Conflict") || resp.includes("Mountpoint in use")) {
                 console.warn(`[IcecastSender] Mountpoint in use, will retry connection in 3 seconds...`)
-                this.disconnect()
-                setTimeout(() => {
-                    if (this.activeConfig.enabled && !this.isConnected && !this.isConnecting) {
-                        this.connect()
-                    }
-                }, 3000)
+                this.disconnect("Mountpoint in use")
                 return
             }
             if (resp.includes("401 Unauthorized") || resp.includes("403 Forbidden") || resp.includes("404 Not Found")) {
-                console.error(`[IcecastSender] Connection rejected by server. Check credentials/mount. Response: ${resp.trim().split("\r\n")[0]}`)
-                this.disconnect()
+                const errMsg = resp.trim().split("\r\n")[0]
+                console.error(`[IcecastSender] Connection rejected by server. Check credentials/mount. Response: ${errMsg}`)
+                this.disconnect(errMsg)
             }
         })
 
         client.on("error", (err) => {
             console.error("[IcecastSender] Socket error:", err.message || err)
-            this.disconnect()
+            this.disconnect(err.message || String(err))
         })
 
         client.on("close", () => {
@@ -265,7 +276,7 @@ export class IcecastSender {
         }
     }
 
-    public static disconnect() {
+    public static disconnect(error?: string) {
         if (this.paceTimer) {
             clearInterval(this.paceTimer)
             this.paceTimer = null
@@ -275,7 +286,6 @@ export class IcecastSender {
                 this.writeOggPage(Buffer.alloc(0), 4, this.granulePosition)
             } catch {}
         }
-        this.activeConfig = { ...this.activeConfig, enabled: false }
         this.isConnected = false
         this.isConnecting = false
         if (this.socket) {
@@ -285,6 +295,19 @@ export class IcecastSender {
             } catch {}
             this.socket = null
         }
+        this.notifyStatus(false, false, error)
+    }
+
+    private static notifyStatus(connected: boolean, connecting = false, error?: string) {
+        if (
+            this.lastReportedStatus.connected === connected &&
+            this.lastReportedStatus.connecting === connecting &&
+            this.lastReportedStatus.error === error
+        ) {
+            return
+        }
+        this.lastReportedStatus = { connected, connecting, error }
+        sendToMain(ToMain.ICECAST_STATUS, { connected, connecting, error })
     }
 }
 
