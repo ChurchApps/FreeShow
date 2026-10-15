@@ -168,7 +168,14 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
 export function cut(clip: Clipboard | null = null) {
     const activeField = document.activeElement
     if (!clip && isFormField(activeField)) {
-        copyFromTextField(activeField)
+        if (copyFromTextField(activeField)) {
+            const selectionStart = activeField.selectionStart
+            const selectionEnd = activeField.selectionEnd
+            if (selectionStart !== null && selectionEnd !== null && selectionStart !== selectionEnd) {
+                activeField.setRangeText("", selectionStart, selectionEnd, "start")
+                activeField.dispatchEvent(new Event("input", { bubbles: true }))
+            }
+        }
         return
     }
 
