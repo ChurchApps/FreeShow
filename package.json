@@ -155,7 +155,7 @@
         "osc-js": "^2.4.1",
         "osr-capture": "github:meros-co/osr-capture#4c78276",
         "protobufjs": "^7.5.3",
-        "slideshow": "github:vassbo/slideshow#224d50f",
+        "slideshow": "github:vassbo/slideshow#58f8a1e",
         "socket.io": "^4.8.1",
         "uid": "^2.0.2",
         "upath": "^2.0.1",
