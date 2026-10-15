@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy, onMount } from "svelte"
     import type { CustomFont, Item, ItemType, Slide } from "../../../../types/Show"
-    import { activeEdit, activePopup, activeShow, alertMessage, categories, styles as outputStyles, overlays, selected, shownTips, showsCache, special, templates, theme, themes, timers } from "../../../stores"
+    import { activeEdit, activePopup, activeShow, alertMessage, categories, media, styles as outputStyles, overlays, selected, shownTips, showsCache, special, templates, theme, themes, timers } from "../../../stores"
     import { getNormalizedKey, isFormattingKey } from "../../../utils/shortcuts"
     import { newToast } from "../../../utils/common"
     import { clone } from "../../helpers/array"
@@ -14,6 +14,7 @@
     import { MAX_FONT_SIZE } from "../scripts/autosize"
     import { addFilterString, addStyle, addStyleString, getItemStyleAtPos, getItemText, getLastLineAlign, getLineText, getSelectionRange } from "../scripts/textStyle"
     import { itemBoxes, setBoxInputValue } from "../values/boxes"
+    import { VideoPlayer } from "../../media/video/videoPlayer"
     import EditValues from "./EditValues.svelte"
 
     export let id: ItemType
@@ -274,10 +275,50 @@
     $: if (id === "media" && item) {
         const extension = getExtension(item.src || "")
         const isVideo = getMediaType(extension) === "video"
-        setBoxInputValue(box, "default", "muted", "hidden", !isVideo)
+        // setBoxInputValue(box, "default", "muted", "hidden", !isVideo)
         setBoxInputValue(box, "default", "loop", "hidden", !isVideo)
+        setBoxInputValue(box, "default", "volume", "hidden", !isVideo)
         setBoxInputValue(box, "default", "speed", "hidden", !isVideo)
+        setBoxInputValue(box, "default", "fromTime", "hidden", !isVideo)
+        setBoxInputValue(box, "default", "toTime", "hidden", !isVideo)
+
+        // set default values to any global options
+        const globalMedia = (item.src && $media[item.src]) || {}
+        const defaultFields: Array<{ id: string; val: any; multiply?: number }> = [
+            { id: "volume", val: globalMedia.volume, multiply: 100 },
+            { id: "loop", val: globalMedia.loop },
+            { id: "speed", val: globalMedia.speed },
+            { id: "fromTime", val: globalMedia.fromTime },
+            { id: "toTime", val: globalMedia.toTime }
+        ]
+        defaultFields.forEach(({ id, val, multiply }) => {
+            if (val === undefined) return
+            setBoxInputValue(box, "default", id, "values", { defaultValue: multiply ? val * multiply : val })
+            setBoxInputValue(box, "default", id, "default", val)
+            if (item[id] === undefined) setBoxInputValue(box, "default", id, "value", val)
+        })
+
+        if (isVideo && item.src) {
+            const applyDuration = (duration: number) => {
+                setBoxInputValue(box, "default", "fromTime", "values", { max: duration, sliderValues: { min: 0, max: duration } })
+                setBoxInputValue(box, "default", "toTime", "values", { max: duration, sliderValues: { min: 0, max: duration }, defaultValue: globalMedia.toTime ?? duration })
+                setBoxInputValue(box, "default", "toTime", "default", globalMedia.toTime ?? duration)
+                box = box
+            }
+
+            if (mediaDurations[item.src]) {
+                applyDuration(mediaDurations[item.src])
+            } else {
+                VideoPlayer.getDuration(item.src).then((duration) => {
+                    if (!duration || !item.src) return
+                    mediaDurations[item.src] = duration
+                    applyDuration(duration)
+                })
+            }
+        }
+        box = box
     }
+    let mediaDurations: { [path: string]: number } = {}
 
     $: if (id === "camera" && item) {
         if (item.device) {

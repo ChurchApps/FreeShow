@@ -138,7 +138,10 @@ export interface Item {
     blend?: string
     muted?: boolean // media item
     loop?: boolean // media item
+    volume?: number // media item
     speed?: number // media item
+    fromTime?: number // media item
+    toTime?: number // media item
     variable?: any
     web?: any
     qr_code?: { text?: string; color?: string; background?: string }
