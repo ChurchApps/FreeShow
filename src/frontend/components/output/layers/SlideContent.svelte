@@ -53,7 +53,6 @@
     let renderVersion = 0
 
     // Track items that are unchanged between slides and have no transition (to avoid redraw flicker)
-    let persistentItems: Item[] = []
     let persistentItemIndexes: number[] = []
 
     // Check if an item has lines/text content
@@ -131,6 +130,17 @@
 
     let onPrecomputeDone: (() => void) | null = null
 
+    function setCurrentState() {
+        currentItems = clone(currentSlide.items || [])
+        current = {
+            outSlide: clone(outSlide),
+            slideData: clone(slideData),
+            currentSlide: clone(currentSlide),
+            lines: clone(lines),
+            currentStyle: clone(currentStyle)
+        }
+    }
+
     // kick off hidden textbox renders that warm the autosize cache before we flip "show" on
     function scheduleAutoSizePrecompute(items: Item[]) {
         onPrecomputeDone = null
@@ -194,7 +204,6 @@
             scheduleAutoSizePrecompute([])
             currentItems = []
             // Clear persistent items when no slide content
-            persistentItems = []
             persistentItemIndexes = []
             current = {
                 outSlide: clone(outSlide),
@@ -237,9 +246,7 @@
 
         // Identify items that are unchanged and have no lines content (to keep outputted without fade)
         const newPersistentIndexes: number[] = []
-        const newPersistentItems: Item[] = []
-        const transitioningItems: Item[] = []
-        const transitioningIndexes: number[] = []
+        let hasTransitioningItems = false
 
         currentSlide.items.forEach((newItem: Item, newIndex: number) => {
             // Find matching old item by index (position-based matching for slides)
@@ -250,17 +257,14 @@
             // 2. It does not have lines/text content (non-text items or text items without lines content)
             if (!hasLinesContent(newItem) && itemsAreEqual(oldItem, newItem)) {
                 newPersistentIndexes.push(newIndex)
-                newPersistentItems.push(clone(newItem))
             } else {
                 // Item needs to be re-rendered (changed, or has lines content)
-                transitioningIndexes.push(newIndex)
-                transitioningItems.push(clone(newItem))
+                hasTransitioningItems = true
             }
         })
 
         // Update persistent items (these won't flash)
         persistentItemIndexes = newPersistentIndexes
-        persistentItems = newPersistentItems
 
         // between
         const isDifferentSlide = current.currentSlide?.id !== currentSlide?.id || current.outSlide?.index !== outSlide?.index || current.outSlide?.id !== outSlide?.id
@@ -269,17 +273,9 @@
         if (timeout) clearTimeout(timeout)
 
         // If all items are persistent (unchanged), skip the show/hide cycle entirely
-        if (transitioningItems.length === 0 && persistentItems.length > 0) {
+        if (!hasTransitioningItems && persistentItemIndexes.length > 0) {
             // Just update the context without triggering transitions
-            current = {
-                outSlide: clone(outSlide),
-                slideData: clone(slideData),
-                currentSlide: clone(currentSlide),
-                lines: clone(lines),
-                currentStyle: clone(currentStyle)
-            }
-            // Keep currentItems in sync but don't toggle show
-            currentItems = clone(currentSlide.items || [])
+            setCurrentState()
             transitioningBetween = false
             return
         }
@@ -292,14 +288,7 @@
             const applyInstantSwap = () => {
                 if (gen !== updateGeneration) return
                 renderVersion++
-                currentItems = clone(currentSlide.items || [])
-                current = {
-                    outSlide: clone(outSlide),
-                    slideData: clone(slideData),
-                    currentSlide: clone(currentSlide),
-                    lines: clone(lines),
-                    currentStyle: clone(currentStyle)
-                }
+                setCurrentState()
                 show = true
                 transitioningBetween = false
             }
@@ -328,14 +317,7 @@
                 if (gen !== updateGeneration) return
                 // Only include items that need transitioning in currentItems
                 // Persistent items are rendered separately
-                currentItems = clone(currentSlide.items || [])
-                current = {
-                    outSlide: clone(outSlide),
-                    slideData: clone(slideData),
-                    currentSlide: clone(currentSlide),
-                    lines: clone(lines),
-                    currentStyle: clone(currentStyle)
-                }
+                setCurrentState()
 
                 // wait until half transition duration of previous items have passed as it looks better visually
                 timeout = setTimeout(() => {
