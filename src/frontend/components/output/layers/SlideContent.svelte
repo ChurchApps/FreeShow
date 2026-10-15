@@ -224,6 +224,18 @@
 
         if (isClearingToEmpty) await waitUntilValueIsDefined(() => !isClearingToEmpty, 10, betweenClearingTransition.duration)
 
+        const isDifferentSlide = current.currentSlide?.id !== currentSlide?.id || current.outSlide?.index !== outSlide?.index || current.outSlide?.id !== outSlide?.id
+        // Same-slide refreshes (line reveal / dynamic values / metadata churn) should update in place.
+        // Running the full hide/show transition cycle here can briefly output an empty frame.
+        if (!isDifferentSlide) {
+            if (timeout) clearTimeout(timeout)
+            updateGeneration++
+            setCurrentState()
+            show = true
+            transitioningBetween = false
+            return
+        }
+
         scheduleAutoSizePrecompute(currentSlide.items)
 
         // get any items with no transition between the two slides
@@ -267,7 +279,6 @@
         persistentItemIndexes = newPersistentIndexes
 
         // between
-        const isDifferentSlide = current.currentSlide?.id !== currentSlide?.id || current.outSlide?.index !== outSlide?.index || current.outSlide?.id !== outSlide?.id
         if (isDifferentSlide && currentItems.length && currentSlide.items.length) transitioningBetween = true
 
         if (timeout) clearTimeout(timeout)
@@ -464,7 +475,7 @@
             />
         {:else}
             <!-- Transitioning item: render with animation wrapper inside {#key} -->
-            {#key `${show}-${renderVersion}`}
+            {#key `${show}-${renderVersion}-${index}-${item?.id || "noid"}`}
                 {#if show}
                     <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} {isClearing} {incomingNeedsAutoSize} globalTransition={transition} currentSlide={current.currentSlide} {item} outSlide={current.outSlide} lines={current.lines} currentStyle={current.currentStyle} let:customSlide let:customItem let:customLines let:customOut let:transition>
                         <Textbox
