@@ -50,6 +50,7 @@
     let currentItems: Item[] = []
     let current: any = {}
     let show = false
+    let renderVersion = 0
 
     // Track items that are unchanged between slides and have no transition (to avoid redraw flicker)
     let persistentItems: Item[] = []
@@ -232,6 +233,7 @@
 
         let currentTransitionDuration = transitionEnabled ? (itemTransitionDuration ?? currentTransition?.duration ?? 0) : 0
         let waitToShow = currentTransitionDuration * ((currentTransition?.fadeInOffset ?? 50) / 100)
+        const hasNoVisualTransition = currentTransitionDuration === 0
 
         // Identify items that are unchanged and have no lines content (to keep outputted without fade)
         const newPersistentIndexes: number[] = []
@@ -279,6 +281,38 @@
             // Keep currentItems in sync but don't toggle show
             currentItems = clone(currentSlide.items || [])
             transitioningBetween = false
+            return
+        }
+
+        // Keep currently visible items mounted when transition is "none", then swap instantly
+        // once incoming autosize precompute has completed. This avoids the brief fade/flash.
+        if (hasNoVisualTransition) {
+            const gen = ++updateGeneration
+
+            const applyInstantSwap = () => {
+                if (gen !== updateGeneration) return
+                renderVersion++
+                currentItems = clone(currentSlide.items || [])
+                current = {
+                    outSlide: clone(outSlide),
+                    slideData: clone(slideData),
+                    currentSlide: clone(currentSlide),
+                    lines: clone(lines),
+                    currentStyle: clone(currentStyle)
+                }
+                show = true
+                transitioningBetween = false
+            }
+
+            if (precomputePending.size) {
+                const safetyTimer = setTimeout(applyInstantSwap, 150)
+                onPrecomputeDone = () => {
+                    clearTimeout(safetyTimer)
+                    applyInstantSwap()
+                }
+            } else {
+                applyInstantSwap()
+            }
             return
         }
 
@@ -448,7 +482,7 @@
             />
         {:else}
             <!-- Transitioning item: render with animation wrapper inside {#key} -->
-            {#key show}
+            {#key `${show}-${renderVersion}`}
                 {#if show}
                     <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} {isClearing} {incomingNeedsAutoSize} globalTransition={transition} currentSlide={current.currentSlide} {item} outSlide={current.outSlide} lines={current.lines} currentStyle={current.currentStyle} let:customSlide let:customItem let:customLines let:customOut let:transition>
                         <Textbox
