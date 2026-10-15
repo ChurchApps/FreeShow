@@ -142,6 +142,65 @@ export class BibleSearchDetector {
         return total ? covered / total : 0
     }
 
+    // Calculates a bonus/penalty multiplier based on sequential phrase / n-gram match between input tokens and verse tokens
+    private computePhraseBonus(verseId: number, queryWordIds: number[]): number {
+        if (queryWordIds.length < 2) return 1.0
+
+        const start = this.cacheData.verseTokensOffsets[verseId]
+        const end = this.cacheData.verseTokensOffsets[verseId + 1]
+        const verseLen = end - start
+        if (verseLen === 0) return 1.0
+
+        const qLen = queryWordIds.length
+
+        // Find the longest contiguous matching sub-sequence of query tokens within the verse
+        let maxRun = 0
+        for (let i = start; i < end; i++) {
+            for (let j = 0; j < qLen; j++) {
+                if (this.cacheData.verseTokens[i] === queryWordIds[j]) {
+                    let run = 1
+                    while (i + run < end && j + run < qLen && this.cacheData.verseTokens[i + run] === queryWordIds[j + run]) {
+                        run++
+                    }
+                    if (run > maxRun) maxRun = run
+                }
+            }
+        }
+
+        // Exact full phrase match
+        if (maxRun === qLen) return 1.6
+
+        // Substantial contiguous phrase match (e.g. 3+ contiguous words matching)
+        if (maxRun >= 3) {
+            const runRatio = maxRun / qLen
+            return 1.2 + runRatio * 0.3
+        }
+
+        // Count matching bigrams (adjacent word pairs)
+        let matchingBigrams = 0
+        const totalBigrams = qLen - 1
+        for (let j = 0; j < totalBigrams; j++) {
+            const w1 = queryWordIds[j]
+            const w2 = queryWordIds[j + 1]
+            for (let i = start; i < end - 1; i++) {
+                if (this.cacheData.verseTokens[i] === w1 && this.cacheData.verseTokens[i + 1] === w2) {
+                    matchingBigrams++
+                    break
+                }
+            }
+        }
+
+        if (matchingBigrams > 0) {
+            const bigramRatio = matchingBigrams / totalBigrams
+            return 1.0 + bigramRatio * 0.4
+        }
+
+        // For short queries (<= 5 tokens) where words are scattered with 0 adjacent bigrams, apply a penalty
+        if (qLen >= 3 && qLen <= 5) return 0.65
+
+        return 1.0
+    }
+
     private parseReference(refStr: string): { book: string; chapter: number; verse: number } | null {
         if (!refStr) return null
         const match = refStr.match(/^((?:[1-3]\s+)?[\p{L}\s]+)\s+(\d+):(\d+)(?:-(\d+))?$/u)
@@ -193,8 +252,8 @@ export class BibleSearchDetector {
         const upcomingVerseMap = this.getUpcomingVerseMap(currentlyOutputted || "", 3)
 
         const allTokens = this.tokenizeText(cleanInput)
-        // a few common words can all land in one verse, so a chunk this short is not a quote
-        if (allTokens.length < 6) return null
+        // Allow shorter phrases to match if distinct (e.g. "In the beginning God")
+        if (allTokens.length < 3) return null
 
         const windowSizes = [20, 60, 80, 120]
         let bestResult: { match: MatchResult | null; hasAnyCandidates: boolean; isAmbiguous: boolean } | null = null
@@ -294,6 +353,7 @@ export class BibleSearchDetector {
 
         const currentVerseId = currentlyOutputted ? this.cacheData.verseToIdMap.get(currentlyOutputted.toLowerCase()) : undefined
         const queryWords = new Set(highValueTokensWithWeight.map((item) => item.wordId))
+        const queryWordIds = inputTokens.map((t) => this.cacheData.vocabToIdMap.get(t)).filter((id): id is number => id !== undefined)
 
         for (const [verseId, accumulatedIdf] of candidateScores.entries()) {
             const matchCount = candidateMatchedCount.get(verseId) || 0
@@ -312,8 +372,18 @@ export class BibleSearchDetector {
             let scoreRatio = recentHighValueIdfSum > 0 ? matchedQueryIdf / recentHighValueIdfSum : accumulatedIdf / matchedQueryIdf
 
             scoreRatio = Math.min(scoreRatio, 1.0)
-            // a handful of common words can match a long verse completely; the match is worth what it covers of the verse
-            scoreRatio *= Math.min(1, this.verseCoverage(verseId, queryWords) / 0.25)
+
+            // Bonus for phrase / consecutive word matches vs scattered words
+            const phraseBonus = this.computePhraseBonus(verseId, queryWordIds)
+            scoreRatio *= phraseBonus
+
+            // a handful of common words can match a long verse completely; the match is worth what it covers of the verse,
+            // but for short distinct phrases (e.g. 2-4 words), require less total verse coverage to not penalize long verses.
+            const isShortQuery = queryWords.size <= 4
+            if (!isShortQuery) {
+                const coverageTarget = Math.min(0.25, Math.max(0.06, queryWords.size * 0.03))
+                scoreRatio *= Math.min(1, this.verseCoverage(verseId, queryWords) / coverageTarget)
+            }
             const candidateParsed = this.parseReference(ref)
 
             if (isCurrent) {
@@ -337,7 +407,7 @@ export class BibleSearchDetector {
                 }
             }
 
-            const threshold = isCurrent || upcomingDist === 1 ? 0.18 : 0.28
+            const threshold = isCurrent || upcomingDist === 1 ? 0.18 : isShortQuery ? 0.2 : 0.28
             if (scoreRatio >= threshold) {
                 evaluatedCandidates.push({
                     verseId,
@@ -358,23 +428,39 @@ export class BibleSearchDetector {
 
         let isAmbiguous = false
         let ambiguityPenalty = 1.0
+        let uniquenessMultiplier = 1.0
 
         if (evaluatedCandidates.length > 1) {
             const secondMatch = evaluatedCandidates[1]
             const relativeRatio = secondMatch.finalScore / (topMatch.finalScore || 1)
 
-            if (relativeRatio > 0.65 && !topMatch.isCurrent && topMatch.upcomingDistance !== 1) {
+            if (relativeRatio > 0.75 && !topMatch.isCurrent && topMatch.upcomingDistance !== 1) {
                 const topParsed = this.parseReference(topMatch.ref)
                 const secondParsed = this.parseReference(secondMatch.ref)
 
                 if (topParsed?.book.toLowerCase() !== secondParsed?.book.toLowerCase() || topParsed?.chapter !== secondParsed?.chapter) {
                     isAmbiguous = true
-                    ambiguityPenalty = 1 - (relativeRatio - 0.65)
+                    ambiguityPenalty = 1 - (relativeRatio - 0.75)
                 }
+            } else if (relativeRatio < 0.45) {
+                // Dominant winner over the next candidate
+                uniquenessMultiplier = 1.25
+            } else if (relativeRatio < 0.6) {
+                uniquenessMultiplier = 1.15
             }
+        } else {
+            // Only one candidate in the entire Bible matched
+            uniquenessMultiplier = 1.4
         }
 
-        const confidence = Math.min(Math.max(Math.round(topMatch.finalScore * 100 * ambiguityPenalty), 51), 98)
+        let baseConfidence = topMatch.finalScore * 100 * ambiguityPenalty * uniquenessMultiplier
+
+        // If a candidate uniquely stands out with minimal ambiguity, ensure high confidence so it can suggest/autoplay
+        if (!isAmbiguous && uniquenessMultiplier > 1.0 && topMatch.finalScore >= 0.35) {
+            baseConfidence = Math.max(baseConfidence, 85)
+        }
+
+        const confidence = Math.min(Math.max(Math.round(baseConfidence), 51), 98)
 
         if (confidence < 70) {
             return { match: null, hasAnyCandidates: true, isAmbiguous }

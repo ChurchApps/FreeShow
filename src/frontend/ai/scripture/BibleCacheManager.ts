@@ -143,6 +143,7 @@ export class BibleCacheManager {
                     chapterVerseCount++
 
                     const rawTokens = this.tokenizeText(verse.text)
+                    const verseTokenIds: number[] = []
                     const uniqueWordIds = new Set<number>()
 
                     for (const word of rawTokens) {
@@ -152,13 +153,13 @@ export class BibleCacheManager {
                             vocabToIdMap.set(word, wordId)
                             vocabPool.push(word)
                         }
+                        verseTokenIds.push(wordId)
                         uniqueWordIds.add(wordId)
                     }
 
-                    const sortedWordIds = Array.from(uniqueWordIds).sort((a, b) => a - b)
-                    tempVerseTokensMap.push(sortedWordIds)
+                    tempVerseTokensMap.push(verseTokenIds)
 
-                    for (const wordId of sortedWordIds) {
+                    for (const wordId of uniqueWordIds) {
                         let list = tempPostingsMap.get(wordId)
                         if (!list) {
                             list = []
