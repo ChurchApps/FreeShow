@@ -63,7 +63,7 @@ import {
 import { newToast, setStatus, triggerFunction } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
-import { copyFromTextField, isFormField } from "../../utils/shortcutsHelper"
+import { copyFromTextField, cutFromTextField, isFormField } from "../../utils/shortcutsHelper"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
 import { updateSortedStageItems } from "../edit/scripts/itemHelpers"
@@ -168,14 +168,7 @@ export function paste(clip: Clipboard | null = null, extraData: any = {}, custom
 export function cut(clip: Clipboard | null = null) {
     const activeField = document.activeElement
     if (!clip && isFormField(activeField)) {
-        if (copyFromTextField(activeField)) {
-            const selectionStart = activeField.selectionStart
-            const selectionEnd = activeField.selectionEnd
-            if (selectionStart !== null && selectionEnd !== null && selectionStart !== selectionEnd) {
-                activeField.setRangeText("", selectionStart, selectionEnd, "start")
-                activeField.dispatchEvent(new Event("input", { bubbles: true }))
-            }
-        }
+        cutFromTextField(activeField)
         return
     }
 

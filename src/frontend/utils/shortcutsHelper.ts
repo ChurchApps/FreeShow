@@ -10,6 +10,19 @@ export function copyFromTextField(elem: Element | null): boolean {
     return true
 }
 
+export function cutFromTextField(elem: Element | null): boolean {
+    if (!copyFromTextField(elem)) return false
+
+    if (!isTextField(elem)) return false
+    const selectionStart = elem.selectionStart
+    const selectionEnd = elem.selectionEnd
+    if (selectionStart === null || selectionEnd === null || selectionStart === selectionEnd) return true
+
+    elem.setRangeText("", selectionStart, selectionEnd, "start")
+    elem.dispatchEvent(new Event("input", { bubbles: true }))
+    return true
+}
+
 // any editable form field
 export function isFormField(elem: Element | null): elem is HTMLInputElement | HTMLTextAreaElement {
     return elem instanceof HTMLInputElement || elem instanceof HTMLTextAreaElement
