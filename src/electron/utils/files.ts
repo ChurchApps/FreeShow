@@ -733,8 +733,6 @@ function parseMp4File<T>(filePath: string, fallback: T, setupListeners: (mp4boxf
     return new Promise((resolve) => {
         if (!fs.existsSync(filePath)) return resolve(fallback)
 
-        const MP4Box = require("mp4box")
-
         let fd: number | null = null
         let settled = false
 
@@ -753,6 +751,13 @@ function parseMp4File<T>(filePath: string, fallback: T, setupListeners: (mp4boxf
             const stats = fs.statSync(filePath)
             fd = fs.openSync(filePath, "r")
 
+            // Fast check: ISO-BMFF / MP4 containers must contain an "ftyp" box near the beginning
+            const headerBytes = Math.min(stats.size, 256 * 1024)
+            const header = Buffer.allocUnsafe(headerBytes)
+            fs.readSync(fd, header, 0, headerBytes, 0)
+            if (!header.includes("ftyp")) return cleanupAndResolve(fallback)
+
+            const MP4Box = require("mp4box")
             const mp4boxfile = MP4Box.createFile()
             mp4boxfile.onError = () => cleanupAndResolve(fallback)
 
