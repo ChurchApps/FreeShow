@@ -2479,7 +2479,12 @@ export class EffectRender {
 
             // Check offscreen bottom
             if (p.y > this.height + 30) {
-                particles[i] = this.createConfettiFallingParticle(item, colors, false)
+                if (item.loop || this.isPreview) {
+                    particles[i] = this.createConfettiFallingParticle(item, colors, false)
+                } else {
+                    particles.splice(i, 1)
+                    i--
+                }
                 continue
             }
 
