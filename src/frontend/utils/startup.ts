@@ -77,6 +77,8 @@ async function startupMain() {
     if (!hasProfiles || get(activeProfile) !== null) checkStartupActions()
 
     startTracking()
+    // the song upload reads the shows list, which arrives after the settings
+    await waitUntilValueIsDefined(() => get(loadedState).includes("shows"), 50, 8000)
     contentProviderSync(true)
 
     // custom alert

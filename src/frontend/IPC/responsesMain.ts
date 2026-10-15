@@ -60,6 +60,7 @@ import {
     folders,
     icecastStatus,
     lessonsLoaded,
+    loadedState,
     media,
     mediaDownloads,
     outputs,
@@ -119,6 +120,7 @@ export const mainResponses: MainResponses = {
         }
 
         shows.set(a)
+        if (!get(loadedState).includes("shows")) loadedState.set([...get(loadedState), "shows"])
     },
     [Main.STAGE]: (a) => stageShows.set(a),
     [Main.PROJECTS]: (a) => {
