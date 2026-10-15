@@ -30,6 +30,7 @@
     export let transition: any = {}
     export let transitionEnabled = false
     export let styleIdOverride = ""
+    export let refreshCounter = 0
 
     let origin = ""
     $: if (outSlide.id) updateShow()
@@ -105,6 +106,12 @@
         let outLinesString = JSON.stringify(lines)
         if (outLinesString !== currentLines) currentLines = outLinesString
     }
+    // do not update if style has no changes for this output
+    $: currentStyleHash = "{}"
+    $: {
+        const styleString = JSON.stringify(currentStyle || {})
+        if (styleString !== currentStyleHash) currentStyleHash = styleString
+    }
     // only update if changed (no update when another output changes)
     let currentSlideItems: Item[] | null = null
     $: if (currentSlide?.items !== 0) {
@@ -121,9 +128,10 @@
         current.lines = clone(lines)
     }
 
-    $: if (currentSlideItems !== undefined || currentOutSlide || currentLines) updateItems()
+    $: if (currentSlideItems !== undefined || currentOutSlide || currentLines || currentStyleHash || refreshCounter) updateItems()
     let timeout: NodeJS.Timeout | null = null
     let updateGeneration = 0
+    let handledRefreshCounter = 0
 
     // if anything is outputted & changing to something that's outputted
     let transitioningBetween = false
@@ -137,7 +145,8 @@
             slideData: clone(slideData),
             currentSlide: clone(currentSlide),
             lines: clone(lines),
-            currentStyle: clone(currentStyle)
+            currentStyle: clone(currentStyle),
+            currentStyleHash
         }
     }
 
@@ -224,10 +233,13 @@
 
         if (isClearingToEmpty) await waitUntilValueIsDefined(() => !isClearingToEmpty, 10, betweenClearingTransition.duration)
 
+        const forceRemount = refreshCounter !== handledRefreshCounter
+        if (forceRemount) handledRefreshCounter = refreshCounter
+
         const isDifferentSlide = current.currentSlide?.id !== currentSlide?.id || current.outSlide?.index !== outSlide?.index || current.outSlide?.id !== outSlide?.id
         // Same-slide refreshes (line reveal / dynamic values / metadata churn) should update in place.
         // Running the full hide/show transition cycle here can briefly output an empty frame.
-        if (!isDifferentSlide) {
+        if (!isDifferentSlide && !forceRemount) {
             if (timeout) clearTimeout(timeout)
             updateGeneration++
             setCurrentState()
@@ -259,6 +271,9 @@
         // Identify items that are unchanged and have no lines content (to keep outputted without fade)
         const newPersistentIndexes: number[] = []
         let hasTransitioningItems = false
+        const isSameSlideRefresh = current.currentSlide?.id === currentSlide?.id && current.outSlide?.id === outSlide?.id && current.outSlide?.layout === outSlide?.layout && current.outSlide?.index === outSlide?.index
+        const hasStyleChange = current.currentStyleHash !== currentStyleHash
+        const forceRefreshItems = isSameSlideRefresh || hasStyleChange || forceRemount
 
         currentSlide.items.forEach((newItem: Item, newIndex: number) => {
             // Find matching old item by index (position-based matching for slides)
@@ -267,7 +282,7 @@
             // Item is persistent if:
             // 1. Content is unchanged AND
             // 2. It does not have lines/text content (non-text items or text items without lines content)
-            if (!hasLinesContent(newItem) && itemsAreEqual(oldItem, newItem)) {
+            if (!forceRefreshItems && !hasLinesContent(newItem) && itemsAreEqual(oldItem, newItem)) {
                 newPersistentIndexes.push(newIndex)
             } else {
                 // Item needs to be re-rendered (changed, or has lines content)

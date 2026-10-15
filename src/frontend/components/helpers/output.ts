@@ -295,6 +295,22 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
                 }
             }
 
+            if (type === "slide") {
+                const previousSlide = a[id].out?.slide || null
+                const sameSlideOutput =
+                    !!previousSlide &&
+                    !!outData &&
+                    previousSlide.id === outData.id &&
+                    previousSlide.layout === outData.layout &&
+                    previousSlide.index === outData.index &&
+                    previousSlide.page === outData.page &&
+                    previousSlide.type === outData.type
+
+                if (sameSlideOutput) {
+                    a[id].out!.refresh = Number(a[id].out!.refresh || 0) + 1
+                }
+            }
+
             a[id].out![type] = clone(outData)
 
             // save locked overlays / outputted scenes for relaunch
@@ -737,20 +753,14 @@ export function allOutputsHasStyleTemplate(isScripture: boolean = false) {
     })
 }
 
-export function refreshOut(refresh = true) {
+export function refreshOut() {
     outputs.update((a) => {
         getAllActiveOutputs().forEach(({ id }) => {
             if (!a[id]) return
-            a[id].out = { ...a[id].out, refresh }
+            a[id].out = { ...a[id].out, refresh: Number(a[id].out?.refresh || 0) + 1 }
         })
         return a
     })
-
-    if (refresh) {
-        setTimeout(() => {
-            refreshOut(false)
-        }, 100)
-    }
 }
 
 // outputs is just for updates

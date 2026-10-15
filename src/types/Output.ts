@@ -70,7 +70,7 @@ export interface RtmpStatus {
 }
 
 export interface OutData {
-    refresh?: boolean
+    refresh?: number
     background?: null | OutBackground
     slide?: null | OutSlide
     effects?: string[]
