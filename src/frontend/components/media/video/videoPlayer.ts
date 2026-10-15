@@ -277,14 +277,17 @@ export class VideoPlayer {
 
         const audio = new Audio(encodeFilePath(audioPath))
 
-        audio.addEventListener("ended", () => {
+        audio.addEventListener("ended", async () => {
             if (this.getOptions(originalId, outputIds)?.loop) {
+                if (await checkNextAfterMedia(originalId, "media", outputIds)) return
+
                 const startTime = this.getStartTime(originalId, undefined, outputIds)
                 audio.currentTime = startTime
                 if ("timeTick" in audio) (audio as any).timeTick.update(startTime)
                 if (audio.paused && audio instanceof HTMLAudioElement) audio.play().catch(() => {})
                 return
             }
+
             // If ended fired prematurely (e.g. video-only file with no audio track free-running to EOF),
             // switch to a virtual time ticker instead of clearing the background early.
             if (audio.duration > 1 && audio.currentTime < audio.duration - 1) {
@@ -307,6 +310,7 @@ export class VideoPlayer {
                 } catch {}
                 return
             }
+
             // absolute end
             this.checkIfEnding(originalId, outputIds, true)
         })
@@ -353,6 +357,9 @@ export class VideoPlayer {
 
         const offset = ((get(transitionData)?.media?.duration ?? 800) / 1000) * 0.5
         if (audio.currentTime < endingTime - offset && !force) return finish()
+
+        // check and execute next after media regardless of loop
+        if (await checkNextAfterMedia(path, "media", outputIds)) return finish()
 
         // should loop
         if (this.getOptions(path, outputIds)?.loop) {
