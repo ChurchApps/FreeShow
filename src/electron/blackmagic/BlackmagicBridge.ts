@@ -42,8 +42,10 @@ export class BlackmagicBridge {
         switch (msg?.type) {
             case "bmdState": {
                 const st: BmdState = { ready: !!msg.ready, displayMode: msg.displayMode || "", pixelFormat: msg.pixelFormat || "", enableKeying: !!msg.enableKeying, colorSpace: msg.colorSpace || "", targetSize: msg.targetSize || { width: 0, height: 0 }, stable: msg.stable !== false, framerate: Number(msg.framerate) || 0 }
+                const was = this.states.get(msg.outputId)
                 if (st.ready) this.states.set(msg.outputId, st)
                 else this.states.delete(msg.outputId)
+                if (!!was?.ready !== st.ready) console.info(st.ready ? `[BMD] ${msg.outputId} playing out: ${st.displayMode} ${st.pixelFormat} ${st.targetSize.width}x${st.targetSize.height} at ${st.framerate}fps` : `[BMD] ${msg.outputId} has no device playing out (frames for it are dropped)`)
                 if (st.ready) this.applyFramerate(msg.outputId, st.framerate)
                 const waiters = this.initWaiters.get(msg.outputId) || []
                 this.initWaiters.delete(msg.outputId)

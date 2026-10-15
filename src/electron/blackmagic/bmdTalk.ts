@@ -89,7 +89,10 @@ export async function initializeSender(data: Output, window: BrowserWindow, id: 
 
     const deviceId = bmdData.deviceId
     const deviceIndex = BlackmagicManager.getIndexById(deviceId)
-    if (deviceIndex < 0) return
+    if (deviceIndex < 0) {
+        console.warn(`[BMD] ${id}: output device ${deviceId || "(none selected)"} not found among ${BlackmagicManager.getDevices().length} Blackmagic devices`)
+        return
+    }
 
     if (data.blackmagic) await BlackmagicSender.initialize(id, deviceIndex, bmdData.displayMode, bmdData.pixelFormat, bmdData.alphaKey, 2, bmdData.sdr !== false ? "rec709" : "passthrough")
     else BlackmagicSender.stop(id)
