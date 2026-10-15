@@ -30,6 +30,7 @@
     $: color = item?.visualizer?.color || null
     $: padding = (item?.visualizer?.padding || 0) - 0.5
     $: visualizerType = item?.visualizer?.type || "bars"
+    $: visualizerPalette = item?.visualizer?.palette || "ocean"
     $: ambientVisualizer = ambientVisualizerTypes.includes(visualizerType)
 
     let canvas: HTMLCanvasElement | undefined
@@ -86,7 +87,7 @@
     }
 
     function drawAmbient(cCtx: CanvasRenderingContext2D, bars: any[], width: number, height: number, time: number) {
-        const options = { ctx: cCtx, bars, width, height, color, padding, edit, time }
+        const options = { ctx: cCtx, bars, width, height, color, palette: visualizerPalette, padding, edit, time }
         if (visualizerType === "aurora") drawAurora(options)
         else if (visualizerType === "horizon") drawHorizon(options)
         else if (visualizerType === "orbit") drawOrbit(options)

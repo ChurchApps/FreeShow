@@ -642,6 +642,23 @@ export const itemBoxes: Box2 = {
                         }
                     ],
                     [
+                        {
+                            id: "visualizer.palette",
+                            type: "dropdown",
+                            value: "ocean",
+                            values: {
+                                label: "Palette",
+                                defaultValue: "ocean",
+                                options: [
+                                    { value: "ocean", label: "Ocean" },
+                                    { value: "violet", label: "Violet" },
+                                    { value: "ember", label: "Ember" },
+                                    { value: "forest", label: "Forest" }
+                                ]
+                            }
+                        }
+                    ],
+                    [
                         { id: "visualizer.padding", type: "number", value: 0, values: { label: "edit.padding", style: "flex: 4;" } },
                         { id: "visualizer.color", type: "color", value: "", values: { label: "edit.color", allowEmpty: true, allowOpacity: true, noLabel: true, style: "flex: 1;" } }
                     ]

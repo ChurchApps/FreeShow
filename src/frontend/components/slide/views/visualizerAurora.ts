@@ -1,3 +1,5 @@
+import { getVisualizerPalette } from "./visualizerAmbient"
+
 interface Bar {
     percentage: number
 }
@@ -8,6 +10,7 @@ interface DrawOptions {
     width: number
     height: number
     color: string | null
+    palette: string
     edit: boolean
     time: number
 }
@@ -17,7 +20,8 @@ interface DrawOptions {
  * Canvas API. It deliberately has no dependency on third-party visualizer
  * code or preset formats.
  */
-export function drawAurora({ ctx, bars, width, height, color, edit, time }: DrawOptions) {
+export function drawAurora({ ctx, bars, width, height, color, palette: paletteName, edit, time }: DrawOptions) {
+    const palette = getVisualizerPalette(paletteName)
     const count = bars.length || 1
     const band = (start: number, end: number) => {
         let total = 0
@@ -34,7 +38,7 @@ export function drawAurora({ ctx, bars, width, height, color, edit, time }: Draw
     const treble = edit ? 0.18 : band(0.62, 1)
     const motion = time / 1000
     const pulse = Math.min(1, bass * 1.7 + mids * 0.6)
-    const accent = color && color !== "rgb(0 0 0 / 0)" ? color : "rgba(127, 230, 255, 0.74)"
+    const accent = color && color !== "rgb(0 0 0 / 0)" ? color : palette.accent
 
     ctx.save()
     ctx.globalCompositeOperation = "source-over"
@@ -42,9 +46,9 @@ export function drawAurora({ ctx, bars, width, height, color, edit, time }: Draw
 
     // An opaque, quiet base makes lyrics legible over the visualiser.
     const base = ctx.createLinearGradient(0, 0, width * 0.8, height)
-    base.addColorStop(0, "#07111f")
-    base.addColorStop(0.52, "#10142d")
-    base.addColorStop(1, "#071924")
+    base.addColorStop(0, palette.background[0])
+    base.addColorStop(0.52, palette.background[1])
+    base.addColorStop(1, palette.background[2])
     ctx.fillStyle = base
     ctx.fillRect(0, 0, width, height)
 
@@ -57,15 +61,33 @@ export function drawAurora({ ctx, bars, width, height, color, edit, time }: Draw
         ctx.fillRect(0, 0, width, height)
     }
     const drift = Math.sin(motion * 0.19)
-    glow(width * (0.24 + drift * 0.08), height * (0.42 + Math.cos(motion * 0.16) * 0.07), width * (0.48 + pulse * 0.08), "rgba(23, 161, 190, 0.20)", "rgba(23, 161, 190, 0)")
-    glow(width * (0.76 - drift * 0.06), height * (0.64 + Math.sin(motion * 0.13) * 0.08), width * (0.42 + mids * 0.1), "rgba(125, 54, 171, 0.18)", "rgba(125, 54, 171, 0)")
+    glow(width * (0.24 + drift * 0.08), height * (0.42 + Math.cos(motion * 0.16) * 0.07), width * (0.48 + pulse * 0.08), palette.glowPrimary, "rgba(23, 161, 190, 0)")
+    glow(width * (0.76 - drift * 0.06), height * (0.64 + Math.sin(motion * 0.13) * 0.08), width * (0.42 + mids * 0.1), palette.glowSecondary, "rgba(125, 54, 171, 0)")
 
     // Broad flowing ribbons, each with a different tempo and audio response.
     ctx.globalCompositeOperation = "screen"
     const layers = [
-        { y: 0.4, amp: 0.105, speed: 0.24, freq: 1.55, color: "rgba(32, 204, 221, 0.15)" },
-        { y: 0.53, amp: 0.125, speed: -0.18, freq: 1.9, color: "rgba(91, 115, 231, 0.14)" },
-        { y: 0.66, amp: 0.095, speed: 0.13, freq: 1.35, color: "rgba(190, 76, 185, 0.13)" }
+        {
+            y: 0.4,
+            amp: 0.105,
+            speed: 0.24,
+            freq: 1.55,
+            color: palette.layerOne
+        },
+        {
+            y: 0.53,
+            amp: 0.125,
+            speed: -0.18,
+            freq: 1.9,
+            color: palette.layerTwo
+        },
+        {
+            y: 0.66,
+            amp: 0.095,
+            speed: 0.13,
+            freq: 1.35,
+            color: palette.layerThree
+        }
     ]
 
     layers.forEach((layer, layerIndex) => {
@@ -113,7 +135,7 @@ export function drawAurora({ ctx, bars, width, height, color, edit, time }: Draw
         if (x === 0) ctx.moveTo(x, y)
         else ctx.lineTo(x, y)
     }
-    ctx.strokeStyle = "rgba(180, 235, 255, 0.34)"
+    ctx.strokeStyle = palette.contour
     ctx.lineWidth = Math.max(1, height * 0.0015)
     ctx.stroke()
 
