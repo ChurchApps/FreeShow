@@ -29,7 +29,7 @@ function isTextField(elem: Element | null): elem is HTMLInputElement | HTMLTextA
 // selected text in a form field
 function getTextFieldSelection(elem: HTMLInputElement | HTMLTextAreaElement): string {
     const { selectionStart: start, selectionEnd: end, value } = elem
-    if (!start || !end || start === end) return ""
+    if (start === null || end === null || start === end) return ""
 
     return value.slice(start, end)
 }
