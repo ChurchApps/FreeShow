@@ -197,6 +197,7 @@ export const effectSections: { [key: string]: EditBoxSection } = {
             { id: "count", type: "number", value: 100, values: { label: "edit.count", min: 1, max: 500, showSlider: true, sliderValues: { max: 300 } } },
             { id: "size", type: "number", value: 1, multiplier: 10, values: { label: "edit.size", min: 1, max: 100, decimals: 1, showSlider: true, sliderValues: { max: 30 } } },
             { id: "speed", type: "number", value: 1, multiplier: 10, values: { label: "edit.speed", min: 1, max: 100, decimals: 1, showSlider: true, sliderValues: { max: 30 } } },
+            { id: "loop", type: "checkbox", value: false, values: { label: "media._loop" } },
             { id: "color", type: "color", value: "", values: { label: "edit.color", allowEmpty: true, allowOpacity: true } }
         ])
     },
