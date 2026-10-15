@@ -109,7 +109,8 @@ export function convertText({ name = "", origin = "", category = null, text, noF
         const lastSection = sections[sections.length - 1]
         const lines = lastSection.split("\n")
         const songIdIndex = lines.findIndex((line) => isCCLIBlock(line))
-        if (songIdIndex > 0 && lines.slice(0, songIdIndex).join("\n").trim()) {
+        const linesBefore = lines.slice(0, songIdIndex).filter((line) => line.trim())
+        if (linesBefore.length > 1) {
             ccli = lines.slice(songIdIndex).join("\n")
             sections[sections.length - 1] = lines.slice(0, songIdIndex).join("\n")
         } else {
