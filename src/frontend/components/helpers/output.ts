@@ -1020,6 +1020,7 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
     if (!output) return null
 
     const newData = { ...(output.webrtcData || {}), [key]: value }
+    if (key === "streaming") newData.startedAt = value ? Date.now() : undefined
 
     if (key === "streaming" && (!output.webrtc || !output.webrtcData?.url)) return null
 
@@ -1060,6 +1061,9 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
     if (!output) return null
 
     const newData = { ...(output.rtmpData || {}), [key]: value }
+    if (key === "streaming") {
+        newData.startedAt = value ? Date.now() : undefined
+    }
 
     if (key === "streaming" && (!output.rtmp || !hasStreamableDestination(newData))) return null
 
