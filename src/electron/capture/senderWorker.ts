@@ -647,6 +647,34 @@ const convertChecked = new Set<string>()
 // (0 = idle loop); copyMs/fanMs = synchronous time spent copying readbacks and fanning out frames.
 type VideoBuf = { buf: Buffer; bytes: number; inUse: boolean }
 const BMD_AUDIO_MARKER = Buffer.from([1])
+
+// A Blackmagic card plays out continuously, but a page only paints when something on it changes, so a still
+// slide produced one frame and then nothing. Each output keeps the last frame it was given, and when a frame
+// period at the card's own rate passes without a new one, that frame is given again.
+const bmdLast = new Map<string, { buf: Buffer; framerate: number; preConverted: boolean; seq: number; timer: NodeJS.Timeout | null }>()
+function bmdGive(outputId: string, buf: Buffer, framerate: number, preConverted: boolean) {
+    const prev = bmdLast.get(outputId)
+    if (prev?.timer) clearTimeout(prev.timer)
+    const last = { buf, framerate, preConverted, seq: (prev?.seq || 0) + 1, timer: null as NodeJS.Timeout | null }
+    bmdLast.set(outputId, last)
+    BlackmagicSender.scheduleFrame(outputId, buf, BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null, framerate, preConverted)
+    if (!(framerate > 0)) return
+    const seq = last.seq
+    const hold = () => {
+        const cur = bmdLast.get(outputId)
+        if (!cur || cur.seq !== seq || !BlackmagicSender.playbackData[outputId]?.playback) return
+        BlackmagicSender.scheduleFrame(outputId, cur.buf, BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null, cur.framerate, cur.preConverted)
+        cur.timer = setTimeout(hold, 1000 / cur.framerate)
+    }
+    last.timer = setTimeout(hold, 1000 / framerate)
+}
+function bmdForget(outputId?: string) {
+    for (const [id, last] of bmdLast) {
+        if (outputId && id !== outputId) continue
+        if (last.timer) clearTimeout(last.timer)
+        bmdLast.delete(id)
+    }
+}
 let sharpModule: any = null
 let webrtcServer: FrameServer | null = null
 let previewServer: FrameServer | null = null
@@ -968,8 +996,7 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
             const b = ti >= 0 ? targetBufs[ti] : main.width === want.width && main.height === want.height && main.format === want.format ? main : null
             if (!b) continue
             const bytes = bytesFor(b.width, b.height, b.format)
-            const marker = BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null
-            BlackmagicSender.scheduleFrame(m, Buffer.from(b.pbuf.buf.subarray(0, bytes)), marker, want.framerate, b.format === 1)
+            bmdGive(m, Buffer.from(b.pbuf.buf.subarray(0, bytes)), want.framerate, b.format === 1)
         }
         // FS_CONVERT_CHECK: the GPU produced this frame in the real format as a target, and `main` holds
         // the same frame as BGRA, so converting that here gives the CPU reference to compare it against.
@@ -1282,13 +1309,16 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
                 )
                 break
             case "bmdStop":
+                bmdForget(msg.outputId)
                 BlackmagicSender.stop(msg.outputId)
                 bmdReportState(msg.outputId)
                 break
             case "bmdStopAll":
+                bmdForget()
                 BlackmagicSender.stopAll()
                 break
             case "bmdShutdown":
+                bmdForget()
                 BlackmagicSender.shutdown()
                 break
             case "bmdReset":
@@ -1298,8 +1328,7 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
                 BlackmagicSender.sendAudioBuffer(Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.opts)
                 break
             case "bmdFrame": {
-                const marker = BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null
-                BlackmagicSender.scheduleFrame(msg.outputId, Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), marker, msg.framerate, !!msg.preConverted)
+                bmdGive(msg.outputId, Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.framerate, !!msg.preConverted)
                 break
             }
             case "previewReset":
