@@ -24,7 +24,7 @@ export function isAudioEnabled(): boolean {
 
 let icecastPcmAccumulator: Buffer = Buffer.alloc(0)
 
-export async function processAudio(buffer: Buffer, sampleRate: number = 48000, targetId?: string, icecast?: any) {
+export async function processAudio(buffer: Buffer, sampleRate = 48000, targetId?: string, icecast?: any) {
     if (!buffer || buffer.length === 0) return
 
     const sr = Number(sampleRate) || 48000
@@ -93,7 +93,7 @@ export async function processAudio(buffer: Buffer, sampleRate: number = 48000, t
     }
 }
 
-function convertPlanarFloat32ToInt16Interleaved(buffer: Buffer, channels: number = 2): Buffer {
+function convertPlanarFloat32ToInt16Interleaved(buffer: Buffer, channels = 2): Buffer {
     const totalFloat32 = Math.floor(buffer.length / 4)
     const samplesPerChannel = Math.floor(totalFloat32 / channels)
 
@@ -128,7 +128,7 @@ interface ResampleState {
 }
 let resampleState: ResampleState | null = null
 
-function resamplePcmInt16Stereo(input: Buffer, inSampleRate: number, outSampleRate: number = 48000): Buffer {
+function resamplePcmInt16Stereo(input: Buffer, inSampleRate: number, outSampleRate = 48000): Buffer {
     if (inSampleRate === outSampleRate || !input || input.length === 0) return input
 
     if (!resampleState || resampleState.inSampleRate !== inSampleRate) {

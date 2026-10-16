@@ -221,6 +221,7 @@ export const API_ACTIONS = {
     index_select_project_item: (data: API_index) => selectProjectShow(data.index), // BC
     name_start_project_item: (data: API_strval) => startProjectItemByName(data.value),
     mark_active_as_played: (data: API_toggle_specific) => markItemsAsPlayed("active", data.value),
+    unmark_all_as_played: () => markItemsAsPlayed("all", false),
 
     // SHOWS
     id_select_show: (data: API_id) => selectShowById(data.id),

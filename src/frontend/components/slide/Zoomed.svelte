@@ -64,7 +64,7 @@
     $: if (!isStage) resolution = getResolution(resolution, { $outputs, $styles }, false, outputId, styleIdOverride)
     $: outputRes = isStage ? resolution : getOutputResolution(outputId, $outputs)
 
-    $: stylesRatio = getResolution(null, $styles, false, outputId, styleIdOverride)
+    $: stylesRatio = isStage ? resolution : getResolution(null, $styles, false, outputId, styleIdOverride)
     $: styleAspectRatio = stylesRatio.width / stylesRatio.height
     const defaultRatio = DEFAULT_BOUNDS.width / DEFAULT_BOUNDS.height
 

@@ -29,6 +29,8 @@ export function createMediaRecorder(stream: MediaStream, options?: { onCleanup?:
     activeLabel = options?.label || ""
     recordedChunks = []
 
+    activeRecording.update((a) => (a ? { ...a, startedAt: a.startedAt || Date.now() } : { startedAt: Date.now() }))
+
     newToast("toast.recording_started")
     mediaRecorder = new MediaRecorder(stream, { mimeType: getMimeType() })
     mediaRecorder.ondataavailable = (e) => {

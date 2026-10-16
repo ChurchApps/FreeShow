@@ -7,6 +7,7 @@ export const actionData = {
     index_select_project_item: { name: "actions.index_select_project_item", icon: "project", input: "index", incompatible: ["next_project_item", "previous_project_item"] },
     name_start_project_item: { name: "actions.name_start_project_item", icon: "project", input: "strval" },
     mark_active_as_played: { name: "actions.mark_played", icon: "check", input: "toggle" },
+    unmark_all_as_played: { name: "actions.unmark_all_as_played", icon: "check" },
 
     // SHOWS
     id_select_show: { SECTION: "guide_title.show", name: "actions.id_select_show", icon: "showIcon", input: "start_show" },

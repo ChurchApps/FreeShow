@@ -119,6 +119,12 @@ async function initPresentation(path: string, program = "powerpoint") {
         } else {
             sendToMain(ToMain.ALERT, String(err))
         }
+
+        if (typeof err === "string" && (err.includes("Connector process") || err.includes("not running") || err.includes("ended unexpectedly"))) {
+            currentSlideshow = null
+            starting = false
+            return
+        }
     }
 
     if (openedPresentation !== path) {
@@ -130,6 +136,12 @@ async function initPresentation(path: string, program = "powerpoint") {
                 sendToMain(ToMain.ALERT, "Presentation app could not start, try opening it manually!")
             } else {
                 sendToMain(ToMain.ALERT, String(err))
+            }
+
+            if (typeof err === "string" && (err.includes("Connector process") || err.includes("not running") || err.includes("ended unexpectedly"))) {
+                currentSlideshow = null
+                starting = false
+                return
             }
         }
     }
@@ -180,7 +192,6 @@ const presentationActions = {
             navigationTimeout = null
         }, navigationWait)
     },
-    // WIP black screen not working
     // black: () => {
     //     if (isPaused) currentSlideshow!.resume()
     //     else currentSlideshow!.pause()

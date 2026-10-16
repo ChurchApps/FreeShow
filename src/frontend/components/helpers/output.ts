@@ -295,6 +295,22 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
                 }
             }
 
+            if (type === "slide") {
+                const previousSlide = a[id].out?.slide || null
+                const sameSlideOutput =
+                    !!previousSlide &&
+                    !!outData &&
+                    previousSlide.id === outData.id &&
+                    previousSlide.layout === outData.layout &&
+                    previousSlide.index === outData.index &&
+                    previousSlide.page === outData.page &&
+                    previousSlide.type === outData.type
+
+                if (sameSlideOutput) {
+                    a[id].out!.refresh = Number(a[id].out!.refresh || 0) + 1
+                }
+            }
+
             a[id].out![type] = clone(outData)
 
             // save locked overlays / outputted scenes for relaunch
@@ -373,7 +389,7 @@ function checkAudio(type: string, data: any, allOutputIds: string[], outs: strin
 
         // start new video items
         newItems.forEach((item: any) => {
-            VideoPlayer.start(item.src, { loop: item.loop !== false, muted: item.muted, startAt: item.startAt || 0, type: "item" }, allOutputIds)
+            VideoPlayer.start(item.src, { loop: item.loop !== false, muted: item.muted, startAt: item.startAt || item.fromTime || 0, fromTime: item.fromTime, toTime: item.toTime, volume: item.volume, type: "item" }, allOutputIds)
         })
     }
 }
@@ -737,20 +753,14 @@ export function allOutputsHasStyleTemplate(isScripture: boolean = false) {
     })
 }
 
-export function refreshOut(refresh = true) {
+export function refreshOut() {
     outputs.update((a) => {
         getAllActiveOutputs().forEach(({ id }) => {
             if (!a[id]) return
-            a[id].out = { ...a[id].out, refresh }
+            a[id].out = { ...a[id].out, refresh: Number(a[id].out?.refresh || 0) + 1 }
         })
         return a
     })
-
-    if (refresh) {
-        setTimeout(() => {
-            refreshOut(false)
-        }, 100)
-    }
 }
 
 // outputs is just for updates
@@ -1020,6 +1030,7 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
     if (!output) return null
 
     const newData = { ...(output.webrtcData || {}), [key]: value }
+    if (key === "streaming") newData.startedAt = value ? Date.now() : undefined
 
     if (key === "streaming" && (!output.webrtc || !output.webrtcData?.url)) return null
 
@@ -1060,6 +1071,9 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
     if (!output) return null
 
     const newData = { ...(output.rtmpData || {}), [key]: value }
+    if (key === "streaming") {
+        newData.startedAt = value ? Date.now() : undefined
+    }
 
     if (key === "streaming" && (!output.rtmp || !hasStreamableDestination(newData))) return null
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onDestroy } from "svelte"
     import { activePage, activeRecording, activeStyle, audioChannelsData, dictionary, outputs, rtmpStatus, selected, settingsTab, special, styles, templates, toggleOutputEnabled } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import AudioMeter from "../../drawer/audio/AudioMeter.svelte"
@@ -153,6 +154,41 @@
 
         bindSlidesToOutput(indexes, outputId)
     }
+
+    // Fullscreen stats ticker
+    let now = Date.now()
+    let statsInterval: NodeJS.Timeout | null = null
+
+    $: if (fullscreen) {
+        if (!statsInterval) {
+            now = Date.now()
+            statsInterval = setInterval(() => (now = Date.now()), 1000)
+        }
+    } else if (statsInterval) {
+        clearInterval(statsInterval)
+        statsInterval = null
+    }
+
+    onDestroy(() => {
+        if (statsInterval) clearInterval(statsInterval)
+    })
+
+    function formatDuration(ms = 0) {
+        const s = Math.floor(Math.max(0, ms) / 1000)
+        const h = Math.floor(s / 3600)
+        const m = Math.floor((s % 3600) / 60)
+        const sec = s % 60
+        const pad = (n: number) => n.toString().padStart(2, "0")
+        return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`
+    }
+
+    $: fullscreenOut = $outputs[fullscreenId]
+    $: isLive = fullscreenOut?.rtmp ? fullscreenOut?.rtmpData?.streaming : fullscreenOut?.webrtcData?.streaming
+    $: liveStartedAt = (fullscreenOut?.rtmp ? fullscreenOut?.rtmpData?.startedAt : fullscreenOut?.webrtcData?.startedAt) || 0
+    $: liveUnhealthy = fullscreenOut?.rtmp && isLive && getUnhealthyDestinations(fullscreenOut?.rtmpData, $rtmpStatus[fullscreenId])?.length
+
+    $: isRec = $activeRecording?.outputId === fullscreenId || ($activeRecording?.isOutput && !$activeRecording.outputId && outs[0]?.id === fullscreenId)
+    $: recStartedAt = $activeRecording?.startedAt || 0
 </script>
 
 <!-- aspect-ratio: {resolution?.width || 1920}/{resolution?.height || 1080}; -->
@@ -165,6 +201,30 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         <MaterialButton class="hide" style="z-index: 2;opacity: 1;inset-inline-end: 10px;" title="actions.close" on:click={() => (fullscreen = false)}>
             <Icon id="close" size={1.2} white />
         </MaterialButton>
+
+        {#if isLive || isRec}
+            <div class="fullscreen-stats">
+                {#if isLive}
+                    <div class="stat-badge" style="background-color: {liveUnhealthy ? '#ab8000' : '#b60707'};">
+                        <span class="stat-dot pulse"></span>
+                        <span>{translateText("output.is_live", $dictionary).toUpperCase()}</span>
+                        {#if liveStartedAt}
+                            <span class="stat-time">{formatDuration(now - liveStartedAt)}</span>
+                        {/if}
+                    </div>
+                {/if}
+
+                {#if isRec}
+                    <div class="stat-badge" style="background-color: #b60707;">
+                        <span class="stat-dot pulse"></span>
+                        <span>REC</span>
+                        {#if recStartedAt}
+                            <span class="stat-time">{formatDuration(now - recStartedAt)}</span>
+                        {/if}
+                    </div>
+                {/if}
+            </div>
+        {/if}
 
         <span class="resolution">
             <p><b><T id="screen.width" />:</b> {resolution?.width || 0} <T id="screen.pixels" /></p>
@@ -318,6 +378,40 @@ aria-label={fullscreen ? "Exit fullscreen preview" : "Toggle fullscreen preview"
         transform: translate(-50%, -50%);
         /* border: 4px solid var(--secondary); */
         z-index: 5500;
+    }
+
+    /* fullscreen stats */
+    .fullscreen-stats {
+        position: absolute;
+        top: 10px;
+        inset-inline-start: 10px;
+        display: flex;
+        gap: 8px;
+        z-index: 30;
+        pointer-events: none;
+    }
+    .stat-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        color: #fff;
+        font-size: 0.8em;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+    .stat-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background-color: #fff;
+    }
+    .stat-time {
+        font-family: monospace;
+        font-size: 1.1em;
+        letter-spacing: 0.5px;
     }
 
     .resolution {

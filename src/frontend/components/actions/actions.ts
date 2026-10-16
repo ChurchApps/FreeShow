@@ -1,4 +1,4 @@
-import { get } from "svelte/store"
+import { writable, get } from "svelte/store"
 import { uid } from "uid"
 import { gainToDb, MIN_DB } from "../../audio/dBUtils"
 import { actionHistory, actions, audioPlaylists, audioRouting, audioStreams, outputs, runningActions, scenes, shows, stageShows, styles } from "../../stores"
@@ -17,8 +17,21 @@ import { API_ACTIONS } from "./api"
 import { sortByClosestMatch } from "./apiHelper"
 import { convertOldMidiToNewAction } from "./midi"
 
+export const actionTimeouts = writable(0)
+const activeActionWaiters = new Set<() => void>()
+
+export function stopAllActionTimeouts() {
+    activeActionWaiters.forEach((cancel) => cancel())
+    activeActionWaiters.clear()
+    actionTimeouts.set(0)
+    runningActions.set([])
+}
+
 export function runActionId(id: string, source = "action") {
-    runAction(get(actions)[id], { source })
+    const action = get(actions)[id]
+    if (!action) return
+
+    runAction({ ...action, id }, { source })
 }
 
 export function runActionByName(name: string, source = "action") {
@@ -57,7 +70,9 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1, sourc
     // set to active
     runningActions.set([...get(runningActions), action.id])
 
+    let stopped = false
     for (const actionId of actionTriggers) {
+        if (stopped) break
         await runTrigger(actionId)
     }
 
@@ -78,7 +93,20 @@ export async function runAction(action, { midiIndex = -1, slideIndex = -1, sourc
         actionId = getActionTriggerId(actionId)
 
         if (actionId === "wait") {
-            await wait((triggerData.number || 0) * 1000)
+            await new Promise<void>((resolve) => {
+                let timeoutId: NodeJS.Timeout | null = null
+                const finish = (cancelled = false) => {
+                    if (timeoutId) clearTimeout(timeoutId)
+                    if (cancelled) stopped = true
+                    activeActionWaiters.delete(cancel)
+                    actionTimeouts.set(activeActionWaiters.size)
+                    resolve()
+                }
+                const cancel = () => finish(true)
+                timeoutId = setTimeout(finish, (triggerData.number || 0) * 1000)
+                activeActionWaiters.add(cancel)
+                actionTimeouts.set(activeActionWaiters.size)
+            })
             return
         }
 

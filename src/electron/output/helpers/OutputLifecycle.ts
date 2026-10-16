@@ -201,8 +201,8 @@ export class OutputLifecycle {
             return Math.round(d.size.width * sf) === options.width && Math.round(d.size.height * sf) === options.height
         })
         if (matchesDisplay) {
-            options.width! += 1
-            options.height! += 1
+            options.width += 1
+            options.height += 1
         }
     }
 
@@ -374,10 +374,10 @@ export class OutputLifecycle {
 
     private static uncontendedMins(st: { samples: { rtt: number; unc: boolean; seg?: OffMainSegments }[] }): { minRtt: number; seg: OffMainSegments | null; pipeRtt: number } {
         let minRtt = Infinity
-        let consume = Infinity,
-            finish = Infinity,
-            enqueue = Infinity,
-            doneMain = Infinity
+        let consume = Infinity
+        let finish = Infinity
+        let enqueue = Infinity
+        let doneMain = Infinity
         for (const s of st.samples) {
             if (!s.unc) continue
             if (s.rtt < minRtt) minRtt = s.rtt
@@ -495,19 +495,19 @@ export class OutputLifecycle {
         // optional capture stats (FS_CAP_STATS=1), printed once/sec: paints/forwards/completions,
         // drop + coalesce counters, delivery-gap spread, and per-frame hop timings from the worker
         const STATS = !!process.env.FS_CAP_STATS
-        let sPaints = 0,
-            sDropBudget = 0,
-            sDropInterval = 0,
-            sForward = 0,
-            sDone = 0,
-            sReadback = 0,
-            sRttSum = 0,
-            sRttCount = 0
+        let sPaints = 0
+        let sDropBudget = 0
+        let sDropInterval = 0
+        let sForward = 0
+        let sDone = 0
+        let sReadback = 0
+        let sRttSum = 0
+        let sRttCount = 0
         // pending frames released by the full-pipe park watchdog (expected under saturation)
         let sParkExpired = 0
         // paints arriving within 5ms of the previous one (the compositor delivering in clumps)
-        let sBurstPaints = 0,
-            lastPaintTime = 0
+        let sBurstPaints = 0
+        let lastPaintTime = 0
         // inter-arrival gaps between completed frames; the spread (not the mean) is what reads as jitter
         const sGaps: number[] = []
         let lastDoneTime = 0
@@ -528,10 +528,10 @@ export class OutputLifecycle {
                 const admitFps = Math.round(1000 / this.getOsrTargetInterval(id))
                 const ndiFps = OutputHelper.getOutput(id)?.captureOptions?.framerates?.ndi ?? "?"
                 // delivery-evenness stats from the inter-done gaps collected this window
-                let gapMean = 0,
-                    gapStd = 0,
-                    gapP95 = 0,
-                    gapBig = 0
+                let gapMean = 0
+                let gapStd = 0
+                let gapP95 = 0
+                let gapBig = 0
                 if (sGaps.length) {
                     gapMean = sGaps.reduce((a, b) => a + b, 0) / sGaps.length
                     gapStd = Math.sqrt(sGaps.reduce((a, b) => a + (b - gapMean) * (b - gapMean), 0) / sGaps.length)
