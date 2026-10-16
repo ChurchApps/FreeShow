@@ -430,6 +430,14 @@ function getDefaultOverlays() {
         // TODO: create box
         items: [{ style: "top:35px;left:36.5px;height:1008.21px;width:1847.62px;border:4px solid white;" }, { style: "top:80px;left:80px;height:40px;width:40px;background-color:red;border-radius:50%;" }, { style: "top:80px;left:140px;height:40px;width:100px;", lines: [{ align: "", text: [{ value: "REC", style: "font-size:40px;" }] }] }]
     }
+    a.aurora_visualizer = {
+        isDefault: true,
+        name: "Aurora Visualizer",
+        color: null,
+        category: "visuals",
+        placeUnderSlide: true,
+        items: [{ type: "visualizer", style: "top:0px;left:0px;height:1080px;width:1920px;", visualizer: { type: "aurora", padding: 0, color: "" } }]
+    }
     a.clock = {
         isDefault: true,
         name: translateText("example.clock"),

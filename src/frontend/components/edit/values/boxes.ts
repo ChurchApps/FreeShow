@@ -635,7 +635,28 @@ export const itemBoxes: Box2 = {
                                 options: [
                                     { value: "bars", label: "Lines" },
                                     { value: "particles", label: "Particles" },
-                                    { value: "kaleidoscope", label: "Kaleidoscope" }
+                                    { value: "kaleidoscope", label: "Kaleidoscope" },
+                                    { value: "aurora", label: "Aurora" },
+                                    { value: "horizon", label: "Horizon" },
+                                    { value: "orbit", label: "Orbit" },
+                                    { value: "soft-spectrum", label: "Soft spectrum" }
+                                ]
+                            }
+                        }
+                    ],
+                    [
+                        {
+                            id: "visualizer.palette",
+                            type: "dropdown",
+                            value: "ocean",
+                            values: {
+                                label: "Palette",
+                                defaultValue: "ocean",
+                                options: [
+                                    { value: "ocean", label: "Ocean" },
+                                    { value: "violet", label: "Violet" },
+                                    { value: "ember", label: "Ember" },
+                                    { value: "forest", label: "Forest" }
                                 ]
                             }
                         }

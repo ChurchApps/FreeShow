@@ -5,6 +5,8 @@
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { currentWindow, visualizerData } from "../../../stores"
     import { send } from "../../../utils/request"
+    import { ambientVisualizerTypes, drawHorizon, drawOrbit, drawSoftSpectrum } from "./visualizerAmbient"
+    import { drawAurora } from "./visualizerAurora"
     import { drawKaleidoscope } from "./visualizerKaleidoscope"
     import { drawParticles } from "./visualizerParticles"
 
@@ -13,7 +15,6 @@
     export let edit = false
 
     // visualizer
-    // TODO: videos & mics
     // WIP circles: https://medium.com/swlh/building-a-audio-visualizer-with-javascript-324b8d420e7
 
     let analysers = AudioAnalyser.getAnalysers()
@@ -29,6 +30,8 @@
     $: color = item?.visualizer?.color || null
     $: padding = (item?.visualizer?.padding || 0) - 0.5
     $: visualizerType = item?.visualizer?.type || "bars"
+    $: visualizerPalette = item?.visualizer?.palette || "ocean"
+    $: ambientVisualizer = ambientVisualizerTypes.includes(visualizerType)
 
     let canvas: HTMLCanvasElement | undefined
     let ctx: CanvasRenderingContext2D | null = null
@@ -61,7 +64,7 @@
         if (edit) {
             stopLoop()
             drawEditMode()
-        } else if (!$currentWindow && (analysers?.length || $visualizerData)) {
+        } else if (!$currentWindow && (analysers?.length || $visualizerData || ambientVisualizer)) {
             startLoop()
         }
     }
@@ -81,6 +84,14 @@
             ctx = canvas.getContext("2d")
         }
         return ctx
+    }
+
+    function drawAmbient(cCtx: CanvasRenderingContext2D, bars: any[], width: number, height: number, time: number) {
+        const options = { ctx: cCtx, bars, width, height, color, palette: visualizerPalette, padding, edit, time }
+        if (visualizerType === "aurora") drawAurora(options)
+        else if (visualizerType === "horizon") drawHorizon(options)
+        else if (visualizerType === "orbit") drawOrbit(options)
+        else if (visualizerType === "soft-spectrum") drawSoftSpectrum(options)
     }
 
     function drawEditMode() {
@@ -104,6 +115,8 @@
             drawKaleidoscope({ ctx: cCtx, bars: mockBars, width: WIDTH, height: HEIGHT, color, padding, edit })
         } else if (visualizerType === "particles") {
             drawParticles({ ctx: cCtx, bars: mockBars, width: WIDTH, height: HEIGHT, color, padding, edit })
+        } else if (ambientVisualizer) {
+            drawAmbient(cCtx, mockBars, WIDTH, HEIGHT, 12000)
         } else {
             let x = 0
             const activeColor = color === "rgb(0 0 0 / 0)" ? "" : color
@@ -135,6 +148,8 @@
             drawKaleidoscope({ ctx: cCtx, bars, width: WIDTH, height: HEIGHT, color, padding, edit })
         } else if (visualizerType === "particles") {
             drawParticles({ ctx: cCtx, bars, width: WIDTH, height: HEIGHT, color, padding, edit })
+        } else if (ambientVisualizer) {
+            drawAmbient(cCtx, bars, WIDTH, HEIGHT, performance.now())
         } else {
             let x = 0
             const activeColor = color === "rgb(0 0 0 / 0)" ? "" : color
@@ -156,7 +171,7 @@
         if (rendering) return
 
         function renderFrame(timestamp: number = 0) {
-            if (!analysers?.length && !$visualizerData) {
+            if (!analysers?.length && !$visualizerData && !ambientVisualizer) {
                 if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height)
                 stopLoop()
                 if (preview) send(OUTPUT, ["VISUALIZER_DATA"], null)
@@ -174,11 +189,11 @@
 
             const WIDTH = canvas.width
             const HEIGHT = canvas.height
-            const bufferLength = analysers[0]?.frequencyBinCount || 128
+            const bufferLength = analysers[0]?.frequencyBinCount || $visualizerData?.buffers || 128
             const maxHeightValue = analysers[0]?.fftSize || 256
             const barWidth = (WIDTH / bufferLength - padding) * 1.42
 
-            const shouldDraw = frameCounter % 5 === 0
+            const shouldDraw = ambientVisualizer || frameCounter % 5 === 0
             frameCounter++
 
             if (shouldDraw) cCtx.clearRect(0, 0, WIDTH, HEIGHT)
@@ -210,6 +225,8 @@
                     drawKaleidoscope({ ctx: cCtx, bars, width: WIDTH, height: HEIGHT, color, padding, edit })
                 } else if (visualizerType === "particles") {
                     drawParticles({ ctx: cCtx, bars, width: WIDTH, height: HEIGHT, color, padding, edit })
+                } else if (ambientVisualizer) {
+                    drawAmbient(cCtx, bars, WIDTH, HEIGHT, timestamp)
                 }
             }
 
