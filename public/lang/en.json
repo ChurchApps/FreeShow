@@ -920,7 +920,7 @@
         "activate_show_opened": "Activate when show is opened",
         "activate_audio_playlist_ended": "Activate when audio playlist has ended",
         "mark_played": "Mark as played",
-        "mark_not_played": "Mark as not played"
+        "unmark_all_as_played": "Reset all mark as played"
     },
     "conditions": {
         "show_item": "Show item if",

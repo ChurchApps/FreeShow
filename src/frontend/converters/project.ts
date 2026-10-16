@@ -234,7 +234,7 @@ export async function updateRecentlyAddedFiles(paths: string[] | null = null) {
     sendMain(Main.IMPORT_FILES, { id: "freeshow_project", paths: [projectFile.path] })
 }
 
-export function markItemsAsPlayed(indexes: number[] | "active", customNewState?: boolean | undefined) {
+export function markItemsAsPlayed(indexes: number[] | "active" | "all", customNewState?: boolean | undefined) {
     const projectId = get(activeProject)
     if (!projectId) return
 
@@ -242,6 +242,8 @@ export function markItemsAsPlayed(indexes: number[] | "active", customNewState?:
         const activeShowIndex = get(activeShow)?.index
         if (activeShowIndex === undefined) return
         indexes = [activeShowIndex]
+    } else if (indexes === "all") {
+        indexes = (get(projects)[projectId]?.shows || []).map((_, i) => i)
     }
 
     projects.update((a) => {
