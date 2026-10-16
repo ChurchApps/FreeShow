@@ -1,6 +1,7 @@
 <script lang="ts">
     import { categories, contentProviderData, shows } from "../../../stores"
     import { translateText } from "../../../utils/language"
+    import { contentProviderSync } from "../../../utils/startup"
     import { keysToID, sortByName } from "../../helpers/array"
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
     import Tip from "../Tip.svelte"
@@ -17,6 +18,8 @@
 
     $: currentlySelected = $contentProviderData.churchApps?.syncCategories || []
 
+    let syncTimeout: NodeJS.Timeout | null = null
+
     function toggleCategory(id: string) {
         contentProviderData.update((a) => {
             if (currentlySelected.indexOf(id) === -1) {
@@ -27,6 +30,9 @@
 
             return a
         })
+
+        if (syncTimeout) clearTimeout(syncTimeout)
+        syncTimeout = setTimeout(() => contentProviderSync(), 2000)
     }
 </script>
 
