@@ -375,6 +375,11 @@
         setBoxInputValue(box, "default", "chart.holeSize", "hidden", item.chart?.type !== "pie")
         setBoxInputValue(box, "default", "chart.holeSize", "value", item.chart?.holeSize ?? 0)
     }
+    $: if (id === "visualizer" && item) {
+        const visualizerType = item.visualizer?.type || "bars"
+        const showPalette = ["aurora", "horizon", "orbit", "soft-spectrum"].includes(visualizerType)
+        setBoxInputValue(box, "default", "visualizer.palette", "hidden", !showPalette)
+    }
 
     ///
 

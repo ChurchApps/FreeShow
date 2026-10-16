@@ -15,6 +15,7 @@
     export let edit = false
 
     // visualizer
+    // TODO: videos & mics
     // WIP circles: https://medium.com/swlh/building-a-audio-visualizer-with-javascript-324b8d420e7
 
     let analysers = AudioAnalyser.getAnalysers()

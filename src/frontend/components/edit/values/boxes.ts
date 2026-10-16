@@ -649,6 +649,7 @@ export const itemBoxes: Box2 = {
                             id: "visualizer.palette",
                             type: "dropdown",
                             value: "ocean",
+                            hidden: true,
                             values: {
                                 label: "Palette",
                                 defaultValue: "ocean",
