@@ -77,8 +77,6 @@ async function startupMain() {
     if (!hasProfiles || get(activeProfile) !== null) checkStartupActions()
 
     startTracking()
-    // the song upload reads the shows list, which arrives after the settings
-    await waitUntilValueIsDefined(() => get(loadedState).includes("shows"), 50, 8000)
     contentProviderSync(true)
 
     // custom alert
@@ -138,12 +136,18 @@ function autoBackup() {
 }
 
 const lastProviderSyncs: Partial<Record<ContentProviderId, number>> = {}
-export function contentProviderSync(startup = false, remainingOnly = false) {
+export async function contentProviderSync(startup = false, remainingOnly = false) {
     const isCloudSyncEnabled = get(cloudSyncData).enabled && get(cloudSyncData).id
 
     if (isCloudSyncEnabled && !remainingOnly) {
         setupCloudSync(startup)
         return
+    }
+
+    // on startup, wait until data is loaded
+    if (!Object.keys(get(shows)).length) {
+        await waitUntilValueIsDefined(() => get(loadedState).includes("synced_settings"), 200, 8000) // same await in getStoredData
+        await waitUntilValueIsDefined(() => Object.keys(get(shows)).length, 50, 2000)
     }
 
     const providers = [
