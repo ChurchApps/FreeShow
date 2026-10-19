@@ -121,7 +121,7 @@
         }))
 
     $: networkOutputWindows = getAllOutputs()
-        .filter((out) => out && (out.rtmp || out.webrtc || out.ndi))
+        .filter((out) => out && (out.rtmp || out.webrtc || out.ndi || out.omt))
         .map((out) => {
             const connId = `network_sub_${out.id}`
             return {
