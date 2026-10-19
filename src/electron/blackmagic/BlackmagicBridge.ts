@@ -46,7 +46,11 @@ export class BlackmagicBridge {
                 if (st.ready) this.states.set(msg.outputId, st)
                 else this.states.delete(msg.outputId)
                 if (!!was?.ready !== st.ready) console.info(st.ready ? `[BMD] ${msg.outputId} playing out: ${st.displayMode} ${st.pixelFormat} ${st.targetSize.width}x${st.targetSize.height} at ${st.framerate}fps` : `[BMD] ${msg.outputId} has no device playing out (frames for it are dropped)`)
-                if (st.ready) this.applyFramerate(msg.outputId, st.framerate)
+                if (st.ready) {
+                    this.applyFramerate(msg.outputId, st.framerate)
+                    // the card plays out from the first frame it is given, and a still page sends none
+                    if (!was?.ready) OutputHelper.Lifecycle.requestRepaint(msg.outputId)
+                }
                 const waiters = this.initWaiters.get(msg.outputId) || []
                 this.initWaiters.delete(msg.outputId)
                 for (const w of waiters) w(st.ready)

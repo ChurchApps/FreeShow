@@ -469,8 +469,14 @@ export class OutputLifecycle {
         if (on) this.outputsOn.add(id)
         else this.outputsOn.delete(id)
         NdiSender.postToWorker({ type: "outputsOff", ids: this.offOutputIds() })
-        // the page may be still, and nothing goes out until it paints: ask it for a frame, so the switch
-        // to or from black happens at once
+        // the switch to or from black has to go out even on a still page
+        this.requestRepaint(id)
+    }
+
+    // An offscreen page paints only when something on it changes, and webContents.invalidate() does not
+    // count, so a consumer that starts on a still page would get no frame at all. The page redraws a 1px
+    // canvas instead (RepaintTick.svelte), which makes it paint once.
+    static requestRepaint(id: string) {
         OutputHelper.Send.sendToWindow(RenderGroups.rendererOf(id) || id, { channel: "REPAINT" })
     }
 

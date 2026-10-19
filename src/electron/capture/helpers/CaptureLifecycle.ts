@@ -52,10 +52,10 @@ export class CaptureLifecycle {
             try {
                 const wc = output.window.webContents
                 if (!wc.isPainting()) wc.startPainting()
-                wc.invalidate()
             } catch {
                 // window tearing down
             }
+            OutputHelper.Lifecycle.requestRepaint(id)
         }
 
         this.updateWebRtcHostState()
@@ -263,8 +263,12 @@ export class CaptureLifecycle {
             const bitrate = streaming && o.rtmpData!.bitrate ? Number(o.rtmpData!.bitrate) : streaming ? 4000 : Math.round((bounds.width * bounds.height * fps * this.RECORDING_BITS_PER_PIXEL) / 1000)
             if (o.captureOptions?.framerates) o.captureOptions.framerates.rtmp = fps
 
+            const starting = !RtmpStreamer.isRunning(o.id)
             // destination changes only touch relays; the encode keeps running
-            RtmpStreamer.update(o.id, { width: bounds.width, height: bounds.height, fps, bitrate, rateControl: o.rtmpData?.rateControl, enableAudio: isAudioEnabled(), encoder: getRtmpEncoderSetting(o.id) }, destinations)
+            // an encoder that starts on a still page needs one frame to begin, once the worker is running it
+            void RtmpStreamer.update(o.id, { width: bounds.width, height: bounds.height, fps, bitrate, rateControl: o.rtmpData?.rateControl, enableAudio: isAudioEnabled(), encoder: getRtmpEncoderSetting(o.id) }, destinations).then(() => {
+                if (starting) OutputHelper.Lifecycle.requestRepaint(o.id)
+            })
         })
     }
 }
