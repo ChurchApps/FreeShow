@@ -19,6 +19,7 @@ export enum ToMain {
     MEDIA_DOWNLOAD_PROGRESS = "MEDIA_DOWNLOAD_PROGRESS",
     PDF_IMPORT_PROGRESS = "PDF_IMPORT_PROGRESS",
     RTMP_STATUS = "RTMP_STATUS",
+    ICECAST_STATUS = "ICECAST_STATUS",
     GPU_HEALTH = "GPU_HEALTH",
     // AI
     AI_STATUS = "AI_STATUS",
@@ -56,6 +57,7 @@ export interface ToMainSendPayloads {
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: { url: string; progress: number; total: number; status: "downloading" | "complete" | "error"; name?: string }
     [ToMain.PDF_IMPORT_PROGRESS]: { filePath: string; name: string; progress: number; total: number; status: "importing" | "complete" | "error"; message?: string }
     [ToMain.RTMP_STATUS]: { outputId: string; destinations: RtmpStatus }
+    [ToMain.ICECAST_STATUS]: { connected: boolean; connecting?: boolean; error?: string }
     [ToMain.GPU_HEALTH]: { issue: "compositing" | "video-decode"; platform: string; vendorName: string; vaDriverMissing: boolean; packages: string[] }
     // Unified provider callbacks
     [ToMain.PROVIDER_CONNECT]: { providerId: ContentProviderId; success: boolean; isFirstConnection?: boolean }
@@ -64,7 +66,7 @@ export interface ToMainSendPayloads {
     [ToMain.AUDIO_METADATA]: { filePath: string; metadata: ICommonTagsResult }
     [ToMain.GET_DYNAMIC_VALUES]: string[]
     ///
-    [ToMain.IMPORT2]: { channel: string; data: ({ content: Buffer | string | object; name?: string; extension?: string } | string)[]; custom?: any }
+    [ToMain.IMPORT2]: { channel: string; data: ({ content: Buffer | string | object; name?: string; extension?: string } | string)[] }
     [ToMain.SHOW2]: { error?: string; err?: NodeJS.ErrnoException; id: string }
     [ToMain.SAVE2]: { closeWhenFinished: boolean; customTriggers: any }
     [ToMain.REFRESH_SHOWS2]: TrimmedShows

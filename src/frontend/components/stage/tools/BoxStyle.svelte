@@ -87,8 +87,6 @@
         setBoxInputValue(stageSections, sectionId, "font-size", "disabled", !isTextItem && currentTextFit === "growToFit")
         setBoxInputValue(stageSections, sectionId, "textFit", "default", defaultTextFit)
         // setBoxInputValue(stageSections, "font", "auto", "value", item.auto ?? true)
-
-        setBoxInputValue(stageSections, "text", "nowrap", "value", !!styles["white-space"]?.includes("nowrap"))
     }
 
     $: if (item && type === "text") {

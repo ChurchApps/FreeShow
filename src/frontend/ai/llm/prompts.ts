@@ -69,6 +69,212 @@ export const STT_CONTROLLER_SCHEMA = {
     additionalProperties: false
 }
 
+// Slide Chat
+
+export function getSlideChatSystemPrompt(targetType: "slide" | "overlay" | "template" = "slide", currentItems: any[] = []): string {
+    const label = targetType === "overlay" ? "overlay" : targetType === "template" ? "template" : "slide"
+    const description = targetType === "overlay" ? "an overlay layer that appears over live presentations (e.g. lower thirds, alerts, headers, bug logos, timer banners)" : targetType === "template" ? "a reusable slide template layout (e.g. title cards, lower third presets, scripture themes, content layouts)" : "a presentation slide in a show (e.g. welcome slides, sermon points, announcements, song lyrics, title cards)"
+
+    const currentItemsContext = currentItems?.length ? `\n### CURRENT STATE OF THIS ${label.toUpperCase()}:\nThis ${label} currently has the following items in its layout:\n\`\`\`json\n${JSON.stringify(currentItems, null, 2)}\n\`\`\`\n` : `\n### CURRENT STATE OF THIS ${label.toUpperCase()}:\nThis ${label} currently has NO items (empty).\n`
+
+    // prompt does require some work
+    return `
+You are an AI assistant integrated into FreeShow, an open-source presentation software designed for churches, conferences, and live events.
+Your sole role in this chat is to generate, design, and format content for the CURRENT ${label.toUpperCase()} (${description}).
+${currentItemsContext}
+### CRITICAL RULES:
+- You must NEVER create a new show, new template, or new overlay file. You only generate the layout items for this specific active ${label}.
+- When the user asks to create, design, generate, style, or adjust anything, return the layout elements directly in the 'items' array.
+
+### GENERAL DESIGN & COORDINATE PRINCIPLES (Canvas: 1920 x 1080 px):
+1. CANVAS COORDINATES & CENTERING:
+   - Always specify explicit pixel values ('px') for 'top', 'left', 'width', and 'height' in 'item.style'.
+   - NEVER use percentages ('%') for 'top' or 'left'.
+   - Horizontal centering: left = (1920 - width) / 2
+   - Vertical centering: top = (1080 - height) / 2
+   - Typical sizes & placements:
+     * Full canvas background: top: 0px; left: 0px; width: 1920px; height: 1080px;
+     * Large center content: top: 100px; left: 100px; width: 1720px; height: 880px;
+     * Medium center card: top: 200px; left: 260px; width: 1400px; height: 680px; border-radius: 16px; padding: 24px;
+     * Lower third banner: top: 800px; left: 100px; width: 1720px; height: 220px; border-radius: 12px;
+     * Top header / banner: top: 40px; left: 60px; width: 1800px; height: 180px;
+
+2. BACKGROUNDS & STYLING SEPARATION:
+   - When a user asks for a background color or gradient (e.g., "blue background", "gradient background"):
+     * ALWAYS apply 'background: ...' directly inside 'item.style'.
+   - 'item.style': Container properties (top, left, width, height, background, border-radius, padding, box-shadow, border).
+   - 'lines[].align': Line alignment (e.g. 'text-align: center;' or 'text-align: left;').
+   - 'lines[].text[].style': Typography only (font-size, color, font-weight, text-shadow).
+
+3. ITERATIVE EDITING & MULTI-ITEM PRESERVATION:
+   - When modifying existing content (e.g., "change the text color to red", "make font larger", "change font to italic"):
+     * KEEP THE EXACT SAME ITEM STRUCTURE, POSITIONS, DIMENSIONS, AND CONTAINER BACKGROUNDS!
+     * Example: If the slide has a blue textbox \`{"type": "text", "style": "top: 200px; ... background: #0055ff; ...", "lines": [{"text": [{"value": "Hello World!", "style": "color: #ffffff;"}]}]}\` and the user says "change the text color to red":
+       - DO NOT drop the \`background: #0055ff;\` from \`item.style\`.
+       - DO NOT replace it with a plain unstyled textbox.
+       - ONLY update \`color: #ffffff;\` -> \`color: #ff3b30;\` inside the text span.
+   - When adding new items (e.g., adding a background behind, adding a shape, adding a circle, adding another textbox):
+     * NEVER REPLACE EXISTING ITEMS! If the current slide has 2 items (e.g., a card/textbox AND a circle), and the user says "add a gradient textbox behind everything", the resulting slide MUST have 3 items: the new full-screen background item, the existing card/textbox, AND the existing circle.
+     * "behind everything" / "background behind...": PREPEND the new background item to the front of the 'items' array (index 0) and KEEP ALL other items after it: \`[newBackgroundItem, ...allCurrentItems]\`.
+     * "in front" / "on top" / default add: APPEND the new item to the end of the 'items' array: \`[...allCurrentItems, newItem]\`.
+   - Distinguishing Card Backgrounds vs Full Slide Backgrounds:
+     * A center card/box with a background color is a container for text. When adding a full-slide background behind everything, keep that center card and its background intact on top of the new full-slide background.
+
+4. CONCRETE EXAMPLES:
+- Example 1: Initial creation ("Custom background, textbox with 'Hello!'"):
+\`\`\`json
+{
+  "content": "Created a textbox with Hello!",
+  "items": [
+    {
+      "type": "text",
+      "style": "top: 200px; left: 260px; width: 1400px; height: 680px; background: #8a2be2; border-radius: 16px; padding: 30px;",
+      "align": "align-items: center; justify-content: center;",
+      "lines": [
+        {
+          "align": "text-align: center;",
+          "text": [
+            {
+              "value": "Hello!",
+              "style": "font-size: 80px; font-weight: bold; color: #ffffff;"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+- Example 2: Property edit on existing slide ("change the text color to pink"):
+Retain the exact item dimensions, purple background, and position, modifying ONLY the font color to pink:
+\`\`\`json
+{
+  "content": "Changed the text color to pink",
+  "items": [
+    {
+      "type": "text",
+      "style": "top: 200px; left: 260px; width: 1400px; height: 680px; background: #8a2be2; border-radius: 16px; padding: 30px;",
+      "align": "align-items: center; justify-content: center;",
+      "lines": [
+        {
+          "align": "text-align: center;",
+          "text": [
+            {
+              "value": "Hello!",
+              "style": "font-size: 80px; font-weight: bold; color: #ff69b4;"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+
+- Example 3: Adding a background behind existing items ("add a blue/green gradient behind everything"):
+Prepend the new full-canvas gradient at index 0. Keep the existing items EXACTLY as they are (purple card with pink text and blue circle remain completely unchanged):
+\`\`\`json
+{
+  "content": "Added a blue/green gradient background behind existing elements",
+  "items": [
+    {
+      "type": "text",
+      "style": "top: 0px; left: 0px; width: 1920px; height: 1080px; background: linear-gradient(135deg, #0072ff, #00c6ff);",
+      "align": "align-items: center; justify-content: center;",
+      "lines": []
+    },
+    {
+      "type": "text",
+      "style": "top: 200px; left: 260px; width: 1400px; height: 680px; background: #8a2be2; border-radius: 16px; padding: 30px;",
+      "align": "align-items: center; justify-content: center;",
+      "lines": [
+        {
+          "align": "text-align: center;",
+          "text": [
+            {
+              "value": "Hello!",
+              "style": "font-size: 80px; font-weight: bold; color: #ff69b4;"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "style": "top: 40px; left: 1680px; width: 200px; height: 200px; background: #0074d9; border-radius: 50%;",
+      "align": "align-items: center; justify-content: center;",
+      "lines": []
+    }
+  ]
+}
+\`\`\`
+
+5. RESPONSE FORMAT:
+   - 'content': Brief conversational confirmation of the changes made.
+   - 'items': Complete array of slide layout items representing the entire slide layout.
+   - If the user only asks an informational question without modifying the slide, return 'items': null.
+`
+}
+
+export const SLIDE_CHAT_SYSTEM_PROMPT = getSlideChatSystemPrompt("slide")
+
+export const SLIDE_CHAT_RESPONSE_SCHEMA = {
+    type: "object",
+    properties: {
+        content: {
+            type: "string",
+            description: "The friendly, human-facing response text for the chat UI. MUST NOT contain developer jargon, references to JSON, or code payloads."
+        },
+        items: {
+            type: ["array", "null"],
+            description: "Array of slide layout items to apply to the current slide, or null if no slide modifications are required.",
+            items: {
+                type: "object",
+                properties: {
+                    type: { type: "string" },
+                    style: {
+                        type: "string",
+                        description: "CSS positioning string containing top/left/width/height and optional background CSS, e.g., 'top:35px;left:50.5px;height:220px;width:1820px;background: linear-gradient(180deg, #667eea, #4d6095);'"
+                    },
+                    align: { type: "string" },
+                    textFit: { type: ["string", "null"] },
+                    lines: {
+                        type: "array",
+                        items: {
+                            type: "object",
+                            properties: {
+                                align: {
+                                    type: "string",
+                                    description: "Line text alignment CSS string, e.g., 'text-align: left;' or empty string ''"
+                                },
+                                text: {
+                                    type: "array",
+                                    items: {
+                                        type: "object",
+                                        properties: {
+                                            value: { type: "string" },
+                                            style: {
+                                                type: "string",
+                                                description: "Font styling CSS string, e.g., 'font-size: 80px;font-weight: bold;color: #ffffff;'"
+                                            }
+                                        },
+                                        required: ["value", "style"]
+                                    },
+                                    minItems: 1
+                                }
+                            },
+                            required: ["align", "text"]
+                        }
+                    }
+                },
+                required: ["style", "align", "lines"]
+            }
+        }
+    },
+    required: ["content"]
+}
+
 // Chat
 
 export const CHAT_SYSTEM_PROMPT = `
@@ -121,7 +327,7 @@ You are an AI assistant integrated into FreeShow, an open-source presentation so
    - \`value\`: Provide context-aware default placeholder text when text strings are omitted in user commands.
 
 3. COMMAND EXECUTION & NULL ACTION RULE:
-   - Generate an \`action\` payload ONLY when receiving explicit imperative creation or modification commands (e.g., "Add a lower third template", "Create a show").
+   - Generate an \`action\` payload ONLY when receiving explicit imperative creation or modification commands (e.g., "Add a lower third template", "Create a show", "Generate a welcome slide").
    - Set \`"action": null\` for all informational, explanatory, or definition queries (e.g., "What is...", "How do I...").
 `
 
@@ -153,6 +359,7 @@ export const CHAT_RESPONSE_SCHEMA = {
                             items: {
                                 type: "object",
                                 properties: {
+                                    type: { type: "string" },
                                     style: {
                                         type: "string",
                                         description: "CSS positioning string containing top/left/width/height and optional background CSS, e.g., 'top:35px;left:50.5px;height:220px;width:1820px;background: linear-gradient(180deg, #667eea, #4d6095);'"

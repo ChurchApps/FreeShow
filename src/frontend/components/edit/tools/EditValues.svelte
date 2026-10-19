@@ -46,8 +46,14 @@
             value = getFilters(item[input.id] || getStyles(item.style)[input.id])?.[input.key || ""] || input.values.value || input.value
         } else if (input.key) {
             value = styles[input.key || ""]
-            if (input.type === "checkbox" && (input.key === "box-shadow" || input.key === "text-shadow")) {
-                value = value?.includes("inset") || false
+            if (input.type === "checkbox") {
+                if (input.key === "box-shadow" || input.key === "text-shadow") {
+                    value = value?.includes("inset") || false
+                } else if (input.styleValue) {
+                    value = value?.includes(input.styleValue) || false
+                } else {
+                    value = !!value
+                }
             } else if (input.valueIndex !== undefined) {
                 if (input.key === "box-shadow" || input.key === "text-shadow") {
                     const arr = parseShadowValue(value)
@@ -184,6 +190,9 @@
             currentValue = currentValue.replace(/\binset\b/gi, "").trim()
             if (isInset) value = "inset " + currentValue
             else value = currentValue
+        } else if (input.type === "checkbox" && input.key && input.id === "style") {
+            if (input.styleValue) value = value ? input.styleValue : null
+            else if (!value) value = null
         }
 
         /// CUSTOM
@@ -229,7 +238,7 @@
     }
 
     function isDefaultValue(input: EditInput, defaultValue: any) {
-        if (!defaultValue) defaultValue = input.value
+        if (defaultValue === undefined || defaultValue === null) defaultValue = input.value
         const currentValue = getValue(input)
 
         if (input.type === "toggle") {

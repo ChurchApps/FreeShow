@@ -28,6 +28,12 @@ const STAMP_FILE = "model.json"
 export type ModelIntegrity = "ok" | "missing" | "outdated"
 
 export class NemotronSetupManager {
+    static isPlatformSupported(): boolean {
+        // sherpa-onnx-node does not work on Intel macOS (darwin-x64)
+        if (process.platform === "darwin" && process.arch === "x64") return false
+        return true
+    }
+
     static getBinaryName() {
         return process.platform === "win32" ? "nemotron-cli.exe" : "nemotron-cli"
     }

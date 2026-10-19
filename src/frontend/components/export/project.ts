@@ -12,7 +12,7 @@ import { clone } from "../helpers/array"
 import { loadShows } from "../helpers/setShow"
 import { formatToFileName } from "../helpers/show"
 import { _show } from "../helpers/shows"
-import { getMedia } from "../helpers/media"
+import { getMedia, isLocalFile } from "../helpers/media"
 
 export async function exportProject(project: Project, projectId: string, savePath?: string) {
     if (!project) return
@@ -160,7 +160,7 @@ export async function exportProject(project: Project, projectId: string, savePat
     }
 
     function getFile(path: string | undefined) {
-        if (!path) return
+        if (!path || !isLocalFile(path)) return
         files.push(path)
     }
 

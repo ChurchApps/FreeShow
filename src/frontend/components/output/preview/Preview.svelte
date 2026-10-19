@@ -24,7 +24,7 @@
     import TimerControls from "../tools/TimerControls.svelte"
     import ClearButtons from "./ClearButtons.svelte"
     import MultiOutputs from "./MultiOutputs.svelte"
-    import PreviewOutputs from "./PreviewOutputs.svelte"
+    import IcecastStatus from "./IcecastStatus.svelte"
     import SpotifyController from "./SpotifyController.svelte"
 
     $: allActiveOutputs = getActiveOutputs($outputs, true, true, true)
@@ -253,8 +253,6 @@
 
 <div id="previewArea" class="main">
     {#if enablePreview}
-        <PreviewOutputs />
-
         <div class="top">
             <MaterialButton class="hide" icon="hide" style="z-index: 2;" title="preview._hide_preview" on:click={() => (enablePreview = false)} />
             <!-- disable before hiding: disableTransitions={!enablePreview} -->
@@ -299,6 +297,7 @@
             {/if}
         </div>
 
+        <IcecastStatus />
         <SpotifyController />
     {/if}
 </div>

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte"
     import type { Draw, DrawLine } from "../../../types/Draw"
-    import { draw, drawSettings, outputs, paintCache, paintCacheSlide } from "../../stores"
+    import { draw, drawSettings, outputs, paintCache, paintCacheSlide, styles } from "../../stores"
     import { clone } from "../helpers/array"
     import { getFirstActiveOutput, getOutputResolution } from "../helpers/output"
 
@@ -12,9 +12,8 @@
 
     let lines: DrawLine[] = []
 
-    // WIP only works when output resolution ratio is the same as the style ratio
     $: outputId = getFirstActiveOutput($outputs)?.id || ""
-    $: resolution = getOutputResolution(outputId, $outputs, true)
+    $: resolution = getOutputResolution(outputId, $outputs, true, "", $styles)
 
     $: outSlide = $outputs[outputId]?.out?.slide
     $: outSlideId = (outSlide?.id || "") + (outSlide?.index || 0) + (outSlide?.layout || "")

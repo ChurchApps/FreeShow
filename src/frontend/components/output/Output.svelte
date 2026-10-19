@@ -65,8 +65,10 @@
 
     let effectsIds: string[] = []
     $: allEffects = $effects
-    $: effectsUnderSlide = effectsIds.filter((id) => allEffects[id]?.placeUnderSlide === true)
-    $: effectsOverSlide = effectsIds.filter((id) => !allEffects[id]?.placeUnderSlide)
+    $: outputtedEffectIds = sceneHideLayers ? [] : effectsIds || []
+    $: effectIds = [...new Set(outputtedEffectIds)]
+    $: effectsUnderSlide = effectIds.filter((id) => allEffects[id]?.placeUnderSlide === true)
+    $: effectsOverSlide = effectIds.filter((id) => !allEffects[id]?.placeUnderSlide)
 
     // don't update when layer content changes, only when refreshing or adding/removing layer
     // currentOutput is set to refresh state when changed in preview
@@ -113,9 +115,17 @@
         }
     }
 
-    $: refreshOutput = out.refresh
-    $: if (outputId || refreshOutput) updateOutData()
-    function updateOutData(type = "") {
+    let refreshVersion = 0
+    let handledRefreshVersion = -1
+    $: {
+        refreshVersion = typeof out.refresh === "number" ? out.refresh : out.refresh ? 1 : 0
+        if (refreshVersion !== handledRefreshVersion) {
+            handledRefreshVersion = refreshVersion
+            updateOutData("slide", true)
+        }
+    }
+    $: if (outputId) updateOutData()
+    function updateOutData(type = "", forceSlideUpdate = false) {
         if (!type || type === "slide") {
             let noLineCurrent = clone(slide)
             if (noLineCurrent) delete noLineCurrent.line
@@ -123,7 +133,7 @@
             if (noLineNew) delete noLineNew.line
 
             // don't refresh if changing lines on another slide & content is unchanged
-            if (!refreshOutput && !out?.slide?.type && lines[currentLineId || ""]?.start === null && JSON.stringify(noLineCurrent) === JSON.stringify(noLineNew)) return
+            if (!forceSlideUpdate && !out?.slide?.type && lines[currentLineId || ""]?.start === null && JSON.stringify(noLineCurrent) === JSON.stringify(noLineNew)) return
 
             // WIP option to turn off "content refresh" if slide content is identical to previous content ?
 
@@ -154,7 +164,7 @@
 
     // overlays
     $: outputtedOverlayIds = sceneHideLayers ? [] : out.overlays || []
-    $: overlayIds = [...new Set([...sceneOverlays, ...outputtedOverlayIds])]
+    $: overlayIds = [...new Set([...sceneOverlays, ...(layers.includes("overlays") ? outputtedOverlayIds : [])])]
     let storedOverlayIds = ""
     let storedOverlays = ""
     $: {
@@ -340,7 +350,8 @@
     // remove PDF/PPT transition when background is outputted
     $: slideMediaTransition = !slide && backgroundData ? noTransition : transitions.media
 
-    $: overlaysActive = !!(layers.includes("overlays") && clonedOverlays)
+    $: overlaysActive = !!((scene === null ? layers.includes("overlays") : true) && clonedOverlays)
+    // $: effectsActive = !!(layers.includes("overlays") && effectIds.length)
 
     // draw zoom
     $: zoomActive = currentOutput.active || (mirror && !preview)
@@ -352,8 +363,18 @@
     let actualSlideData: SlideData | null = null
     let actualCurrentSlide: Slide | null = null
     let actualCurrentLineId: string | undefined = undefined
+    let slideRemountCounter = 0
+    let previousRefreshVersion = -1
+    let pendingSlideRemounts = 0
     let isSlideClearing = false
     let slideTimeout: NodeJS.Timeout | null = null
+    $: {
+        if (previousRefreshVersion >= 0 && refreshVersion !== previousRefreshVersion) {
+            pendingSlideRemounts++
+        }
+        previousRefreshVersion = refreshVersion
+    }
+
     function updateSlide() {
         // update clearing variable before setting slide value (used for conditions to not show up again while clearing)
         const slideActive = layers.includes("slide") && !sceneHideLayers
@@ -366,6 +387,10 @@
                 actualSlideData = clone(slideData)
                 actualCurrentSlide = clone(currentSlide)
                 actualCurrentLineId = clone(currentLineId)
+                if (pendingSlideRemounts) {
+                    slideRemountCounter += pendingSlideRemounts
+                    pendingSlideRemounts = 0
+                }
             },
             slide ? updateLinesTime : 0
         )
@@ -394,7 +419,7 @@
     {/if}
 
     <!-- effects -->
-    {#if effectsUnderSlide}
+    {#if effectsUnderSlide && layers.includes("overlays")}
         <EffectOutput ids={effectsUnderSlide} transition={transitions.overlay} {mirror} />
     {/if}
 
@@ -416,23 +441,21 @@
             {/if}
         </span>
     {:else if actualSlide && actualSlide?.type !== "pdf"}
-        <SlideContent {outputId} outSlide={actualSlide} isClearing={isSlideClearing} slideData={actualSlideData} currentSlide={actualCurrentSlide} {currentStyle} {animationData} currentLineId={actualCurrentLineId} {lines} {ratio} {mirror} {preview} transition={textTransition} transitionEnabled={!mirror || preview} styleIdOverride={styleIdOverride || sceneStyleId} />
+        <SlideContent {outputId} outSlide={actualSlide} isClearing={isSlideClearing} slideData={actualSlideData} currentSlide={actualCurrentSlide} {currentStyle} {animationData} currentLineId={actualCurrentLineId} {lines} {ratio} {mirror} {preview} transition={textTransition} transitionEnabled={!mirror || preview} styleIdOverride={styleIdOverride || sceneStyleId} refreshCounter={slideRemountCounter} />
 
         <!-- metadata -->
         <Overlay overlay={{ items: currentMetadataItems }} isClearing={isMetadataClearing || isSlideClearing} {outputId} transition={textTransition} styleIdOverride={styleIdOverride || sceneStyleId} />
     {/if}
 
-    {#if layers.includes("overlays")}
-        <!-- effects -->
-        {#if effectsOverSlide}
-            <EffectOutput ids={effectsOverSlide} transition={transitions.overlay} {mirror} />
-        {/if}
+    <!-- effects -->
+    {#if effectsOverSlide && layers.includes("overlays")}
+        <EffectOutput ids={effectsOverSlide} transition={transitions.overlay} {mirror} />
+    {/if}
 
-        <!-- overlays -->
-        <!-- outOverlays?.length -->
-        {#if overlaysActive}
-            <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {mirror} {preview} styleIdOverride={styleIdOverride || sceneStyleId} />
-        {/if}
+    <!-- overlays -->
+    <!-- outOverlays?.length -->
+    {#if overlaysActive}
+        <Overlays {outputId} overlays={clonedOverlays} activeOverlays={outOverlays} transition={transitions.overlay} {mirror} {preview} styleIdOverride={styleIdOverride || sceneStyleId} />
     {/if}
 
     {#if actualSlide?.attributionString && layers.includes("slide")}

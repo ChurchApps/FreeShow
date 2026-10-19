@@ -6,6 +6,7 @@ export interface Effect {
     name: string
     isDefault?: boolean
     displayDuration?: number
+    bindings?: string[] // only show on specific outputs
     placeUnderSlide?: boolean
     color: string | null
     // options
@@ -225,6 +226,7 @@ export interface ConfettiItem extends EffectItem<"confetti"> {
     size: number
     count: number
     speed: number
+    loop?: boolean
     color?: string
 }
 

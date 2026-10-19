@@ -257,7 +257,7 @@ export class CaptureTransmitter {
                 if (servedByWorker) this.noteHeavyCost(captureId, performance.now() - started)
             }
 
-            let frameImage: NativeImage | null | undefined = undefined
+            let frameImage: NativeImage | null | undefined
             for (const channel of firing) {
                 if (raw && this.BUFFER_CONSUMERS.has(channel.key)) {
                     this.sendRawToChannel(captureId, channel.key, raw.buffer, raw.size, raw.format ?? 0)

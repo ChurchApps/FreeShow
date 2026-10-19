@@ -9,7 +9,7 @@
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 
-    let backupsList: { path: string; name: string; date: number; size: number }[] = []
+    let backupsList: { path: string; name: string; date: number; size: number; isDeleted?: boolean }[] = []
     onMount(async () => {
         backupsList = (await requestMain(Main.BACKUPS)) || []
         backupsList = backupsList.sort((a, b) => b.date - a.date)
@@ -37,25 +37,31 @@
         return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`
     }
 
-    // WIP deleting multiple folders should be possible without having to wait 5 seconds for each
-
     let deletingPath: string | null = null
     let undoTimeout: NodeJS.Timeout | null = null
-    function deleteBackup(path: string) {
-        if (undoTimeout) {
-            if (deletingPath === path) {
-                clearTimeout(undoTimeout)
-                clear()
-            }
-            return
-        }
+    function requestDeleteBackup(path: string) {
+        if (undoDelete()) return
 
         deletingPath = path
-        undoTimeout = setTimeout(() => {
+        undoTimeout = setTimeout(() => deleteBackup(path), 5000)
+
+        function deleteBackup(path: string) {
             sendMain(Main.DELETE_BACKUP, { path })
-            backupsList = backupsList.filter((b) => b.path !== path)
+            const backup = backupsList.find((b) => b.path === path)
+            if (backup) backup.isDeleted = true
             clear()
-        }, 5000)
+        }
+
+        function undoDelete() {
+            if (!undoTimeout) return false
+
+            const newPath = !!deletingPath && deletingPath !== path
+            if (newPath) deleteBackup(deletingPath!) // delete now
+
+            clearTimeout(undoTimeout)
+            clear()
+            return !newPath
+        }
 
         function clear() {
             deletingPath = null
@@ -81,14 +87,14 @@
         <InputRow>
             <MaterialButton variant="outlined" title="settings.restore" style="width: 100%;" on:click={() => restore(backup)}>
                 <div class="info">
-                    <div class="name">{backup.name.endsWith("_auto") ? translateText("settings.auto") : backup.name} <span style="opacity: 0.3;font-size: 0.7em;padding: 0 8px;">{sizeToString(backup.size)}</span></div>
+                    <div class="name" class:deleted={backup.isDeleted || deletingPath === backup.path}>{backup.name.endsWith("_auto") ? translateText("settings.auto") : backup.name} <span style="opacity: 0.3;font-size: 0.7em;padding: 0 8px;">{sizeToString(backup.size)}</span></div>
                     <div class="date">{getDaysAgo(backup.date)} - {new Date(backup.date).toLocaleString()}</div>
                 </div>
             </MaterialButton>
 
             <!-- show delete button if backup is older than 30 days -->
             {#if backup.date < Date.now() - 86400000 * 30}
-                <MaterialButton variant="outlined" icon={deletingPath === backup.path ? "undo" : "delete"} title="actions.delete" disabled={deletingPath !== backup.path && undoTimeout !== null} on:click={() => deleteBackup(backup.path)} />
+                <MaterialButton variant="outlined" icon={deletingPath === backup.path ? "undo" : "delete"} title="actions.delete" disabled={backup.isDeleted} on:click={() => requestDeleteBackup(backup.path)} />
             {/if}
         </InputRow>
     {/each}
@@ -117,6 +123,10 @@
         width: 100%;
     }
 
+    .name.deleted {
+        text-decoration: line-through;
+        opacity: 0.5;
+    }
     .date {
         font-size: 0.9em;
         opacity: 0.7;

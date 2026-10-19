@@ -123,8 +123,10 @@ export function toggleOutputs(outputIds: string[] | null = null, options: { forc
     // sort so display order can be changed! (needs app restart)
     const sortedOutputList = sortObject(sortByName(outputsList), "stageOutput")
 
-    const currentOutputState = !!get(outputState).find((a) => a.id === outputIds[0])?.active
-    const state = typeof options.state === "boolean" ? options.state : options.force || !(outputIds.length === 1 ? currentOutputState : get(outputDisplay))
+    const visibleOutputs = sortedOutputList.filter((a) => !a.invisible)
+    const primaryVisibleId = visibleOutputs[0]?.id || outputIds[0]
+    const currentOutputState = !!get(outputState).find((a) => a.id === primaryVisibleId)?.active
+    const state = typeof options.state === "boolean" ? options.state : options.force || !(visibleOutputs.length === 1 ? currentOutputState : get(outputDisplay))
 
     const autoPosition = options.force ? false : sortedOutputList.length === 1 && !sortedOutputList[0].forcedResolution?.width
 
@@ -232,13 +234,26 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
         }
 
         let toggleState = false
-        outs.forEach((id: string, i: number) => {
+        let toggleStateSet = false
+        outs.forEach((id: string) => {
             const output = a[id]
             if (!output) return
 
             if (!output.out) a[id].out = {}
             if (!output.out?.[type]) a[id].out![type] = type === "overlays" || type === "effects" ? [] : null
             data = clone(inputData)
+
+            // effects bound to specific outputs
+            if (type === "effects" && data) {
+                const wasArray = Array.isArray(data)
+                const effectIds: string[] = wasArray ? data : [data]
+                const allowedIds = effectIds.filter((effectId) => {
+                    const effectBindings = get(effects)[effectId]?.bindings || []
+                    return !effectBindings.length || isOutputBound(effectBindings, id)
+                })
+                if (effectIds.length && !allowedIds.length) return
+                data = wasArray ? allowedIds : allowedIds[0]
+            }
 
             if (type === "slide" && data === null && output.out?.slide?.type === "ppt") {
                 sendMain(Main.PRESENTATION_CONTROL, { action: "stop" })
@@ -255,7 +270,10 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             let outData = a[id].out?.[type] || null
             if ((type === "overlays" || type === "effects") && data?.length) {
                 if (!Array.isArray(data)) data = [data]
-                if (toggle && i === 0) toggleState = outData?.includes(data[0])
+                if (toggle && !toggleStateSet) {
+                    toggleState = outData?.includes(data[0])
+                    toggleStateSet = true
+                }
                 if (toggle && toggleState) outData.splice(outData.indexOf(data[0]), 1)
                 else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[type] || []), ...data])
                 else outData = data
@@ -275,6 +293,22 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
                 if (type === "overlays" || type === "effects") {
                     clearOverlayTimers(id)
+                }
+            }
+
+            if (type === "slide") {
+                const previousSlide = a[id].out?.slide || null
+                const sameSlideOutput =
+                    !!previousSlide &&
+                    !!outData &&
+                    previousSlide.id === outData.id &&
+                    previousSlide.layout === outData.layout &&
+                    previousSlide.index === outData.index &&
+                    previousSlide.page === outData.page &&
+                    previousSlide.type === outData.type
+
+                if (sameSlideOutput) {
+                    a[id].out!.refresh = Number(a[id].out!.refresh || 0) + 1
                 }
             }
 
@@ -356,7 +390,7 @@ function checkAudio(type: string, data: any, allOutputIds: string[], outs: strin
 
         // start new video items
         newItems.forEach((item: any) => {
-            VideoPlayer.start(item.src, { loop: item.loop !== false, muted: item.muted, startAt: item.startAt || 0, type: "item" }, allOutputIds)
+            VideoPlayer.start(item.src, { loop: item.loop !== false, muted: item.muted, startAt: item.startAt || item.fromTime || 0, fromTime: item.fromTime, toTime: item.toTime, volume: item.volume, type: "item" }, allOutputIds)
         })
     }
 }
@@ -594,13 +628,17 @@ export function getAllOutputs() {
 export function getAllEnabledOutputs() {
     const outputsList = getAllOutputs()
     const enabled = outputsList.filter((a) => a.enabled)
-    if (!enabled.length && isMainWindow()) {
+
+    // enable first if no outputs are currently enabled
+    if (!enabled.length && isMainWindow() && outputsList.length > 0) {
         outputs.update((a) => {
-            a[Object.keys(a)[0]].enabled = true
+            const firstId = outputsList[0].id
+            if (a[firstId]) a[firstId].enabled = true
             return a
         })
         return [outputsList[0]]
     }
+
     return enabled
 }
 
@@ -625,13 +663,17 @@ export function getWindowOutputId() {
 export function getAllActiveOutputs() {
     const outputsList = getAllNormalOutputs()
     const active = outputsList.filter((a) => a.active)
-    if (!active.length && isMainWindow()) {
+
+    // set first to active if no outputs are currently active
+    if (!active.length && isMainWindow() && outputsList.length > 0) {
         outputs.update((a) => {
-            a[Object.keys(a)[0]].active = true
+            const firstNormalId = outputsList[0].id
+            if (a[firstNormalId]) a[firstNormalId].active = true
             return a
         })
         return [outputsList[0]]
     }
+
     return active
 }
 export function getAllActiveOutputIds() {
@@ -712,19 +754,14 @@ export function allOutputsHasStyleTemplate(isScripture: boolean = false) {
     })
 }
 
-export function refreshOut(refresh = true) {
+export function refreshOut() {
     outputs.update((a) => {
         getAllActiveOutputs().forEach(({ id }) => {
-            a[id].out = { ...a[id].out, refresh }
+            if (!a[id]) return
+            a[id].out = { ...a[id].out, refresh: Number(a[id].out?.refresh || 0) + 1 }
         })
         return a
     })
-
-    if (refresh) {
-        setTimeout(() => {
-            refreshOut(false)
-        }, 100)
-    }
 }
 
 // outputs is just for updates
@@ -794,12 +831,23 @@ export function getResolution(initial: Resolution | undefined | null = null, _up
 
     if (currentOutput?.stageOutput) return currentOutput.bounds ?? DEFAULT_BOUNDS
 
-    const style = styleIdOverride || currentOutput?.style ? get(styles)[(styleIdOverride || currentOutput?.style)!] || null : null
+    const styleId = styleIdOverride || currentOutput?.style || ""
+    const style = styleId ? get(styles)[styleId] || null : null
     const styleRatio: any = style?.aspectRatio || style?.resolution
 
-    const ratio = styleRatio?.outputResolutionAsRatio ? currentOutput?.bounds : styleRatio
+    // cropping affects aspect ratio if "outputResolutionAsRatio"
+    if (styleRatio?.outputResolutionAsRatio) {
+        const bounds = currentOutput?.bounds ?? DEFAULT_BOUNDS
+        const cropping = currentOutput?.cropping || style?.cropping
+        const cropWidth = (Number(cropping?.left) || 0) + (Number(cropping?.right) || 0)
+        const cropHeight = (Number(cropping?.top) || 0) + (Number(cropping?.bottom) || 0)
+        return {
+            width: Math.max(1, bounds.width - cropWidth),
+            height: Math.max(1, bounds.height - cropHeight)
+        }
+    }
 
-    return ratio || { width: 16, height: 9 }
+    return styleRatio || { width: 16, height: 9 }
 }
 
 // this will get the first available stage output
@@ -816,12 +864,14 @@ export function getStageResolution(outputId = "", _updater = get(outputs)): Reso
 export const DEFAULT_BOUNDS = { width: 1920, height: 1080 }
 const outputResolutionCache = new Map<string, Resolution>()
 
-export function getOutputResolution(outputId: string, _updater = get(outputs), scaled = false, styleIdOverride = "") {
+export function getOutputResolution(outputId: string, _updater = get(outputs), scaled = false, styleIdOverride = "", _stylesUpdater = get(styles)) {
     const currentOutput = _updater[outputId]
     const effectiveStyleId = styleIdOverride || currentOutput?.style || ""
-    const currentStyle = effectiveStyleId ? get(styles)[effectiveStyleId] : null
+    const currentStyle = effectiveStyleId ? _stylesUpdater[effectiveStyleId] : null
     const styleRatioVal: any = currentStyle?.aspectRatio || currentStyle?.resolution
-    const styleRatioKey = styleRatioVal ? `${styleRatioVal.width}x${styleRatioVal.height}_${styleRatioVal.outputResolutionAsRatio ? 1 : 0}` : ""
+    const cropping = currentOutput?.cropping || currentStyle?.cropping
+    const cropKey = cropping ? `${cropping.top || 0}_${cropping.right || 0}_${cropping.bottom || 0}_${cropping.left || 0}` : ""
+    const styleRatioKey = styleRatioVal ? `${styleRatioVal.width}x${styleRatioVal.height}_${styleRatioVal.outputResolutionAsRatio ? 1 : 0}_${cropKey}` : ""
     const cacheKey = `${outputId}_${scaled}_${effectiveStyleId}_${styleRatioKey}_${currentOutput?.bounds?.width || 0}_${currentOutput?.bounds?.height || 0}`
     const cached = outputResolutionCache.get(cacheKey)
     if (cached) return { ...cached }
@@ -989,6 +1039,7 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
     if (!output) return null
 
     const newData = { ...(output.webrtcData || {}), [key]: value }
+    if (key === "streaming") newData.startedAt = value ? Date.now() : undefined
 
     if (key === "streaming" && (!output.webrtc || !output.webrtcData?.url)) return null
 
@@ -1029,6 +1080,9 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
     if (!output) return null
 
     const newData = { ...(output.rtmpData || {}), [key]: value }
+    if (key === "streaming") {
+        newData.startedAt = value ? Date.now() : undefined
+    }
 
     if (key === "streaming" && (!output.rtmp || !hasStreamableDestination(newData))) return null
 
@@ -1375,6 +1429,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
     // reduce template textboxes to slide items
     const slideTextboxes = hasScriptureDynamicValue ? 0 : slideItems.reduce((count, a) => (count += (a?.type || "text") === "text" ? 1 : 0), 0)
+    // if template textboxes (without dynamic values) count matches all slide textboxes (with or without dynamic values), merge as normal textboxes
+    const mergeDynamicAsText = !hasScriptureDynamicValue && slideTextboxes > 0 && (sorted.text?.length || 0) === slideTextboxes
     if (!templateClicked && slideTextboxes < (sortedTemplateItems.text?.length || 0)) {
         sortedTemplateItems.text = sortedTemplateItems.text.slice(0, slideTextboxes)
     }
@@ -1391,7 +1447,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         let type: string = item.type || "text"
         if (type === "text" && hasScriptureDynamicValue) return
 
-        if (hasDynamicValue(item)) type = "text_dynamic"
+        if (hasDynamicValue(item) && !mergeDynamicAsText) type = "text_dynamic"
 
         const templateItem = clone(sortedTemplateItems[type]?.shift())
         if (!templateItem) return finish()

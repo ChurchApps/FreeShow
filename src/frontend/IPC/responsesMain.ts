@@ -58,6 +58,7 @@ import {
     driveKeys,
     events,
     folders,
+    icecastStatus,
     lessonsLoaded,
     media,
     mediaDownloads,
@@ -242,6 +243,7 @@ export const mainResponses: MainResponses = {
     [ToMain.LESSONS_DONE]: (data) => lessonsLoaded.set({ ...get(lessonsLoaded), [data.showId]: data.status }),
     [ToMain.IMAGES_TO_SHOW]: (data) => createImageShow(data),
     [ToMain.RTMP_STATUS]: (data) => rtmpStatus.update((a) => ({ ...a, [data.outputId]: data.destinations })),
+    [ToMain.ICECAST_STATUS]: (data) => icecastStatus.set(data),
     [ToMain.MEDIA_DOWNLOAD_PROGRESS]: (data) => {
         mediaDownloads.update((downloads) => {
             const newDownloads = new Map(downloads)
@@ -599,7 +601,7 @@ export const mainResponses: MainResponses = {
             mediashout: () => convertMediaShout(data),
             quelea: () => convertQuelea(data),
             softprojector: () => convertSoftProjector(data),
-            songbeamer: () => convertSongbeamerFiles(a.custom),
+            songbeamer: () => convertSongbeamerFiles(data),
             easyslides: () => convertEasyslides(data),
             verseview: () => convertVerseVIEW(data),
             // Media

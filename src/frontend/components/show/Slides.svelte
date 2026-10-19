@@ -142,9 +142,6 @@
 
             setOutput("slide", { id: showId, layout: activeLayout, index, line, revealCount, itemClickReveal })
             updateOut(showId, index, slideRef, !e.altKey)
-
-            // force update output if index is the same as previous
-            if (activeSlides[index]) refreshOut()
         })
 
         // set to active in focus mode

@@ -113,6 +113,7 @@ export interface StreamConfig {
     height: number
     fps: number
     bitrate: number
+    rateControl?: "cbr" | "vbr"
     enableAudio: boolean
     /** "auto", an explicit encoder id, or undefined */
     encoder?: string
@@ -275,6 +276,7 @@ export class RtmpStreamer {
             outputHeight: config.height,
             fps: config.fps,
             bitrate: config.bitrate,
+            rateControl: config.rateControl,
             enableAudio: config.enableAudio,
             sampleRate: streamer.sampleRate || SAMPLE_RATE,
             inputPixelFormat: streamer.inputPixFmt || "bgra"
@@ -325,7 +327,7 @@ export class RtmpStreamer {
 
         const sendVideoFrame = () => {
             const frameInterval = 1000 / config.fps
-            let startTime = performance.now()
+            const startTime = performance.now()
             let frameCount = 0
 
             const tick = () => {
@@ -603,7 +605,8 @@ export class RtmpStreamer {
     private static fanOut(streamer: StreamInstance, chunk: Buffer) {
         if (!streamer.flvHeader) streamer.flvHeader = chunk
 
-        const bufferCap = getRelayBufferCap(streamer.config.bitrate)
+        const maxBitrate = streamer.config.rateControl === "vbr" ? Math.round(streamer.config.bitrate * 1.5) : streamer.config.bitrate
+        const bufferCap = getRelayBufferCap(maxBitrate)
         for (const relay of streamer.relays.values()) {
             const stdin = relay.process?.stdin
             if (!stdin || stdin.destroyed) continue
@@ -673,7 +676,7 @@ export class RtmpStreamer {
         }
     }
 
-    static updateAudio(outputId: string | undefined, buffer: Buffer, _sampleRate: number = 48000) {
+    static updateAudio(outputId: string | undefined, buffer: Buffer, _sampleRate = 48000) {
         const writeToStreamer = (streamer: StreamInstance) => {
             if (!streamer || !streamer.config.enableAudio) return
 
@@ -745,7 +748,7 @@ export class RtmpStreamer {
 
 /** Destination changes are relay-only; anything here means the encoder has to be respawned. */
 function configRequiresRestart(prev: StreamConfig, next: StreamConfig): boolean {
-    return prev.width !== next.width || prev.height !== next.height || prev.fps !== next.fps || prev.bitrate !== next.bitrate || prev.enableAudio !== next.enableAudio || prev.encoder !== next.encoder
+    return prev.width !== next.width || prev.height !== next.height || prev.fps !== next.fps || prev.bitrate !== next.bitrate || prev.enableAudio !== next.enableAudio || prev.encoder !== next.encoder || prev.rateControl !== next.rateControl
 }
 
 // Every (re)start of a recording relay - an encoder respawn, a crashed relay - continues in a new part

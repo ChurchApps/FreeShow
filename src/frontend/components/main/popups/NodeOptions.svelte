@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { AudioMicrophone } from "../../../audio/audioMicrophone"
     import { AudioPlayer } from "../../../audio/audioPlayer"
-    import { audioChannelsData, audioRouting, popupData, special } from "../../../stores"
     import { dbToGain, gainToDb, MIN_DB } from "../../../audio/dBUtils"
+    import { audioChannelsData, audioRouting, popupData, special } from "../../../stores"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialNumberInput from "../../inputs/MaterialNumberInput.svelte"
@@ -10,10 +11,17 @@
 
     const popupInfo = $popupData
     const nodeId = popupInfo?.nodeId
+    const nodeType = popupInfo?.type
+    const initialChannels = popupInfo?.channels
     popupData.set({})
 
     $: channel = $audioRouting?.channels?.find((c) => c.id === nodeId)
     $: isChannelNode = !!channel || nodeId === "main" || nodeId?.startsWith("channel_")
+    // mic
+    $: isMicNode = nodeType === "mic" || nodeId?.startsWith("mic_sub_")
+    $: deviceId = isMicNode ? (nodeId?.startsWith("mic_sub_") ? nodeId.slice(8) : nodeId) : ""
+    $: configuredItem = $audioRouting?.inputs?.find((i) => i.id === nodeId || i.id === deviceId || i.deviceId === deviceId)
+    $: micChannels = configuredItem?.channels ?? initialChannels ?? 2
 
     $: channelData = $audioChannelsData[nodeId] || {}
     $: rawVolume = Number(channelData.volume ?? 1)
@@ -42,6 +50,30 @@
 
         AudioPlayer.updateVolume()
     }
+
+    function updateMicChannels(count: number) {
+        const val = Math.max(1, Math.min(32, Math.round(count) || 2))
+        audioRouting.update((c) => {
+            if (!c) c = { channels: [], connections: [] }
+            if (!c.inputs) c.inputs = []
+            const existing = c.inputs.find((i) => i.id === nodeId || i.id === deviceId || i.deviceId === deviceId)
+            if (existing) {
+                existing.channels = val
+            } else {
+                c.inputs.push({
+                    id: nodeId,
+                    name: popupInfo?.name || "Microphone",
+                    type: "mic",
+                    deviceId,
+                    channels: val
+                })
+            }
+            return { ...c }
+        })
+        if (deviceId) {
+            AudioMicrophone.setChannelCount(deviceId, val)
+        }
+    }
 </script>
 
 {#if nodeId === "icecast"}
@@ -62,4 +94,6 @@
     <MaterialNumberInput label="audio.volume_fade_duration (ms)" value={fadeDuration} min={0} max={5000} step={50} defaultValue={250} on:change={(e) => updateChannelData("fadeDuration", e.detail)} showSlider />
 
     <MaterialNumberInput label="audio.delay (ms)" value={delayMs} min={0} max={5000} step={10} defaultValue={0} on:change={(e) => updateChannelData("delay", e.detail)} showSlider />
+{:else if isMicNode}
+    <MaterialNumberInput label="audio.channels" value={micChannels} min={1} max={32} step={1} defaultValue={2} on:change={(e) => updateMicChannels(e.detail)} />
 {/if}

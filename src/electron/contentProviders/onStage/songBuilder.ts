@@ -82,7 +82,7 @@ export function addSongArrangement(build: SongBuild, song: OnStageSong, arrangem
         // An empty (instrumental) section has no lyrics to compare, so it stays keyed by number.
         const signature = getLyricsSignature(sectionSlides)
         const sectionKey = signature ? `${section.label}|${signature}` : `${section.label} ${section.number}`
-        
+
         let parentId = parentBySection[sectionKey]
         if (!parentId) {
             const children: string[] = []
@@ -97,10 +97,14 @@ export function addSongArrangement(build: SongBuild, song: OnStageSong, arrangem
                     color: null,
                     settings: {},
                     notes: section.notes || "",
-                    items: sectionSlide.lines.length ? [{
-                        style: ITEM_STYLE,
-                        lines: sectionSlide.lines.map((line) => ({ align: "", text: [{ style: "", value: line }] }))
-                    }] : []
+                    items: sectionSlide.lines.length
+                        ? [
+                              {
+                                  style: ITEM_STYLE,
+                                  lines: sectionSlide.lines.map((line) => ({ align: "", text: [{ style: "", value: line }] }))
+                              }
+                          ]
+                        : []
                 }
 
                 if (isParent) parentId = slideId
@@ -121,7 +125,7 @@ export function addSongArrangement(build: SongBuild, song: OnStageSong, arrangem
         const occurrences = section.unscheduled ? 0 : Math.min(section.repeats, MAX_REPEAT_OCCURRENCES)
         if (section.repeats > MAX_REPEAT_OCCURRENCES) console.warn(`OnStage: capping section "${section.name}" of "${song.title}" from ${section.repeats} to ${MAX_REPEAT_OCCURRENCES} repeats`)
         for (let repeat = 0; repeat < occurrences; repeat++) {
-            layoutSlides.push({ id: parentId! })
+            layoutSlides.push({ id: parentId })
             layoutKeys.push(sectionKey)
         }
     }
@@ -132,10 +136,10 @@ export function addSongArrangement(build: SongBuild, song: OnStageSong, arrangem
 
     const isFirst = !Object.keys(show.layouts).length
     const layoutId = getStableLayoutId(`${song.id}|${arrangementSignature}`)
-    show.layouts[layoutId] = { 
-        name: isFirst ? "Default" : getUniqueLayoutName(show, arrangementName), 
-        notes: "", 
-        slides: layoutSlides 
+    show.layouts[layoutId] = {
+        name: isFirst ? "Default" : getUniqueLayoutName(show, arrangementName),
+        notes: "",
+        slides: layoutSlides
     }
     build.layoutBySignature[arrangementSignature] = layoutId
     if (isFirst) show.settings.activeLayout = layoutId

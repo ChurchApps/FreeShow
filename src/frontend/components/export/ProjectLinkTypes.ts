@@ -2,12 +2,20 @@ export interface ProjectLink {
     id?: string
     name: string
     sharedAt: number
-    items: (LinkShowItem | LinkOverlayItem | LinkGenericItem | null)[]
+    items: (LinkSectionItem | LinkShowItem | LinkOverlayItem | LinkGenericItem | null)[]
 }
 
 export interface LinkItem {
     id?: string
     name: string
+}
+
+export type LinkSectionItem = LinkItem & {
+    type: "section"
+    data: {
+        notes?: string
+        time?: number
+    }
 }
 
 export type LinkShowItem = LinkItem & {
@@ -25,7 +33,7 @@ export type LinkOverlayItem = LinkItem & {
 }
 
 export type LinkGenericItem = LinkItem & {
-    type: "image" | "video" | "audio" | "player" | "section" | "pdf" | "ppt" | "screen" | "ndi" | "camera" | "folder"
+    type: "image" | "video" | "audio" | "player" | "pdf" | "ppt" | "screen" | "ndi" | "camera" | "folder"
 }
 
 export type LinkSlide = {

@@ -52,6 +52,11 @@
             if (!player) return
             try {
                 if (player.getPlayerState() === 1) actualVideoTime = player.getCurrentTime()
+
+                // report back to the VideoShow preview
+                if (preview && !seeking) videoTime = player.getCurrentTime()
+                const duration = preview && !videoData.duration ? player.getDuration() : 0
+                if (duration) videoData.duration = duration
             } catch {}
         }, 250)
     }

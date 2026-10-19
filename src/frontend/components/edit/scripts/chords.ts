@@ -1,5 +1,5 @@
 import { uid } from "uid"
-import type { Chords, Item, Slide } from "../../../../types/Show"
+import type { Chords, Item, Show, Slide } from "../../../../types/Show"
 import { selected } from "../../../stores"
 import { clone } from "../../helpers/array"
 import { _show } from "../../helpers/shows"
@@ -54,6 +54,14 @@ export function getSlideChords(slide: Slide) {
 // get a list of unique chords used in a slide
 export function getUsedChords(slide: Slide) {
     const chords = getSlideChords(slide)
+    if (!chords.length) return []
+    return [...new Set(chords)].sort((a, b) => a?.localeCompare(b))
+}
+
+// get a list of unique chords used in a show
+export function getShowChords(show: Show | null | undefined) {
+    if (!show?.slides) return []
+    const chords = Object.values(show.slides).flatMap(getSlideChords)
     if (!chords.length) return []
     return [...new Set(chords)].sort((a, b) => a?.localeCompare(b))
 }

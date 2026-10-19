@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
     import type { ClickEvent } from "../../../types/Main"
     import { AudioPlayer } from "../../audio/audioPlayer"
     import { activeEdit, activeFocus, activePage, activeProject, activeShow, categories, editingProjectTemplate, effects, focusMode, globalTags, media, notFound, outLocked, outputs, overlayCategories, overlays, playerVideos, playingAudio, projects, projectTemplates, refreshEditSlide, shows, showsCache, special, styles, textCache } from "../../stores"
@@ -9,13 +8,13 @@
     import { history, historyAwait } from "../helpers/history"
     import Icon from "../helpers/Icon.svelte"
     import { encodeFilePath, getExtension, getFileName, getMedia, getMediaLayerType, getMediaStyle, getMediaType, getVideoDuration, mediaSize, removeExtension } from "../helpers/media"
-    import { findMatchingOut, getActiveOutputs, setOutput, startFolderTimer } from "../helpers/output"
+    import { findMatchingOut, getActiveOutputs, setOutput } from "../helpers/output"
     import { loadShows } from "../helpers/setShow"
     import { checkName, getLayoutRef } from "../helpers/show"
-    import { swichProjectItem, updateOut } from "../helpers/showActions"
+    import { playPdf, swichProjectItem, updateOut } from "../helpers/showActions"
     import T from "../helpers/T.svelte"
     import { joinTime, secondsToTime } from "../helpers/time"
-    import { clearBackground, clearSlide } from "../output/clear"
+    import { clearSlide } from "../output/clear"
     import { getTextSnippet, highlightText } from "../quicksearch/searchHighlight"
     import HiddenInput from "./HiddenInput.svelte"
     import MaterialButton from "./MaterialButton.svelte"
@@ -177,18 +176,7 @@
 
             setOutput("background", out)
         } else if (type === "pdf") {
-            // get PDF data
-            // WIP duplicate of playPdf in showActions.ts
-            GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-            const loadingTask = getDocument(encodeFilePath(id))
-            const pdfDoc = await loadingTask.promise
-            const pages = pdfDoc.numPages
-
-            let name = show.name || removeExtension(getFileName(id))
-            setOutput("slide", { type: "pdf", id, page: 0, pages, name })
-            clearBackground()
-
-            if (show.data?.timer) startFolderTimer(id, { type: "pdf", path: "" })
+            await playPdf({ id, type: "pdf", name: show.name }, false, false, 0)
         } else if (type === "audio") AudioPlayer.start(id, { name: show.name })
         else if (type === "overlay") setOutput("overlays", show.id, false, "", true)
         else if (type === "effect") setOutput("effects", show.id, false, "", true)

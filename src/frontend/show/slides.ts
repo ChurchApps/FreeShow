@@ -271,6 +271,7 @@ export function changeLayout(layout: LayoutRef[], slides: { [key: string]: Slide
     }
 
     ref = checkParentMove(ref, moved, index)
+    if (!ref.length) return []
     // WIP dont know why these are the same
     layout = ref
 

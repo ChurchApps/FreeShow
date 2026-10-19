@@ -15,7 +15,7 @@ export async function aiHandleLocalSetup(data: AiSetupOptions): Promise<boolean>
         delete: () => (modelId ? LocalModelManager.deleteModel(engineId, modelId) : LocalModelManager.deleteEngine(engineId))
     }
 
-    return actions[action as keyof typeof actions]?.() ?? false
+    return actions[action]?.() ?? false
 }
 
 const BIN_DIR = path.join(app.getPath("userData"), "bin")
@@ -56,6 +56,9 @@ export class LocalModelManager {
         }
 
         if (engineId === "nemotron") {
+            if (manager.isPlatformSupported && !manager.isPlatformSupported()) {
+                return { ready: false, error: "Nemotron transcription is not supported on Intel Mac" }
+            }
             const modelDir = this.getModelDir(engineId)
             const integrity = await manager.checkIntegrity(modelDir)
             if (integrity === "ok") return { ready: true, localPath: modelDir }
@@ -74,6 +77,7 @@ export class LocalModelManager {
     static async downloadEngine(engineId: string) {
         const manager = this.getManager(engineId)
         if (!manager) return false
+        if (manager.isPlatformSupported && !manager.isPlatformSupported()) return false
 
         const outputFolder = engineId === "nemotron" ? this.getModelDir(engineId) : this.getEngineDir(engineId)
         createFolder(outputFolder)

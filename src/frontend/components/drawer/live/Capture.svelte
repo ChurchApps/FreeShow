@@ -46,12 +46,14 @@
     }
 
     let retryTimeout: NodeJS.Timeout | null = null
-    let stream: MediaStream | null = null
+    let currentStream: MediaStream | null = null
+    let destroyed = false
     function stopStream() {
-        stream?.getTracks().forEach((track) => track.stop())
-        stream = null
+        currentStream?.getTracks().forEach((track) => track.stop())
+        currentStream = null
     }
     onDestroy(() => {
+        destroyed = true
         if (retryTimeout) clearTimeout(retryTimeout)
         // nothing else stops these: the tiles are handed a throwaway `streams` array
         stopStream()
@@ -68,21 +70,20 @@
     function capture() {
         navigator.mediaDevices
             .getUserMedia(constraints)
-            .then((captured) => {
-                if (!videoElem) {
-                    captured.getTracks().forEach((track) => track.stop())
-                    return
-                }
+            .then((stream) => {
+                if (destroyed || !videoElem) return stream.getTracks().forEach((track) => track.stop())
 
-                stream = captured
-                streams.push(captured)
-                videoElem.srcObject = captured
+                currentStream = stream
+                streams.push(stream)
+                videoElem.srcObject = stream
                 videoElem.onloadedmetadata = () => {
                     videoElem?.play()
                     setTimeout(ready, 1000)
                 }
             })
             .catch(function (err) {
+                if (destroyed) return
+
                 let msg: string = err.message
                 console.error(err.name + ": " + msg)
 

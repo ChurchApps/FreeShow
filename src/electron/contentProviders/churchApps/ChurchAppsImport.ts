@@ -11,6 +11,7 @@ import { sendToMain } from "../../IPC/main"
 import { ChurchAppsConnect } from "./ChurchAppsConnect"
 import { ChurchAppsShowBuilder } from "./ChurchAppsShowBuilder"
 import type { FeedFile, VenueFeed } from "./types"
+import { getLessonsApiUrl } from "./types"
 
 export class ChurchAppsImport {
     private static projects: any[] = []
@@ -228,7 +229,7 @@ export class ChurchAppsImport {
         if (data.video) {
             files.push({
                 name: data.name || "",
-                url: `https://api.lessons.church/externalVideos/download/${data.video.id}`,
+                url: `${getLessonsApiUrl()}/externalVideos/download/${data.video.id}`,
                 streamUrl: data.video.videoId ? `https://vimeo.com/${data.video.videoId}` : undefined,
                 seconds: data.video.seconds,
                 loopVideo: data.video.loopVideo,

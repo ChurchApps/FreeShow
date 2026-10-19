@@ -126,6 +126,8 @@ function getArtist(metadata: ICommonTagsResult) {
 
 // remove now playing when not playing
 export function unsetPlayingAudio() {
+    IcecastSender.updateMetadata("")
+
     const filePath = getNowPlayingTextPath()
     writeFile(filePath, "")
 

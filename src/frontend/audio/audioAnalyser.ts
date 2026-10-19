@@ -57,7 +57,11 @@ export class AudioAnalyser {
 
     static hasSource(id: string, outputId?: string): boolean {
         const key = outputId ? `${id}_${outputId}` : id
-        return !!this.sources[key]
+        return !!this.sources[key] || !!this.gainNodes[key]
+    }
+
+    static getActiveSourceIds(): string[] {
+        return Object.keys(this.sources)
     }
 
     static updateSource(id: string, audio: HTMLMediaElement | MediaStream, outputId?: string) {
@@ -487,11 +491,19 @@ export class AudioAnalyser {
         return rms > 0.000001 ? Math.max(MIN_DB, Math.min(0, 20 * Math.log10(rms))) : MIN_DB
     }
 
+    static releaseAnalyser(path?: string) {
+        if (!path) return
+        AudioInputCapture.getInstance().removeInput(path)
+    }
+
     static getAnalysers(path?: string) {
         let nodeId = "speaker_default"
 
-        // WIP per item capture for visualizer (audio file playback preview) ?
-        if (path) nodeId = path
+        if (path) {
+            nodeId = path
+            const source = this.gainNodes[path] || this.sources[path]
+            if (source) AudioInputCapture.getInstance().captureInput(path, source)
+        }
 
         return AudioInputCapture.getInstance().getAnalysers(nodeId)
     }

@@ -348,8 +348,6 @@ const clickActions = {
             })
         }
 
-        if (obj.sel && deleteAction(obj.sel)) return
-
         if (obj.contextElem?.classList.value.includes("#audio_channel")) {
             deleteAction({ id: "audio_channel", data: [{ id: obj.contextElem.id }] })
             return
@@ -395,6 +393,8 @@ const clickActions = {
             deleteAction({ id: "interaction_input", data: { index: Number(obj.contextElem.id?.slice(1)) } })
             return
         }
+
+        if (obj.sel && deleteAction(obj.sel)) return
 
         // THIS MUST BE LAST (otherwise deleteing e.g. an event while the editbox is selected will delete that instead)
         // delete slide item using context menu, or menubar action
@@ -885,11 +885,10 @@ const clickActions = {
         toggleOutputEnabled.set(true) // disable preview output transitions (to prevent visual svelte bug)
         setTimeout(() => {
             outputs.update((output) => {
-                // should match the outputs list in MultiOutputs.svelte
-                const showingOutputsList = Object.values(output).filter((a) => a.enabled && !a.hideFromPreview)
+                const allEnabledList = Object.values(output).filter((a) => a.enabled)
                 const newValue = !output[outputId].hideFromPreview
 
-                if (newValue && showingOutputsList.length <= 1) newToast("toast.one_output")
+                if (newValue && allEnabledList.length <= 1) newToast("toast.one_output")
                 else output[outputId].hideFromPreview = !output[outputId].hideFromPreview
 
                 return output
@@ -1974,6 +1973,28 @@ const clickActions = {
         // _show().slides([slideID!]).set({ key: "items", value: items })
 
         removeTemplatesFromShow(get(activeShow)?.id || "", slideRef.id)
+    },
+    bind_effect: (obj: ObjData) => {
+        const id = obj.menu?.id
+        const effectIds: string[] = obj.sel?.data || []
+
+        effects.update((a) => {
+            effectIds.forEach((effectId) => {
+                if (!a[effectId]) return
+
+                let bindings = clone(a[effectId].bindings || [])
+                if (!id) bindings = []
+                else if (bindings.length && isOutputBound(bindings, id)) {
+                    bindings = bindings.filter((bId) => resolveOutputId(bId) !== id && bId !== id)
+                } else {
+                    bindings.push(id)
+                }
+
+                if (bindings.length) a[effectId].bindings = bindings
+                else delete a[effectId].bindings
+            })
+            return a
+        })
     },
     bind_scene: (obj: ObjData) => {
         const id = obj.menu?.id

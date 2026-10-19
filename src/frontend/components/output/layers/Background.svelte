@@ -16,6 +16,7 @@
     export let mirror = false
 
     $: duration = transition.duration ?? 800
+    $: noTransition = transition.type === "none" || !duration
     $: style = `height: 100%;zoom: ${1 / ratio};transition: filter ${duration}ms, backdrop-filter ${duration}ms;${slideFilter}`
 
     let firstActive = true
@@ -150,12 +151,12 @@
 
 <div class="media" {style}>
     {#if background1}
-        <div class="media" class:hidden={loading && !firstActive}>
+        <div class="media" class:hidden={!firstActive && (loading || noTransition)}>
             <BackgroundMedia data={background1Data} fadingOut={firstFadingOut} {outputId} transition={transition1} {currentStyle} animationStyle={animation1} {mirror} on:loaded={() => loaded(true)} />
         </div>
     {/if}
     {#if background2}
-        <div class="media" class:hidden={loading && firstActive}>
+        <div class="media" class:hidden={firstActive && (loading || noTransition)}>
             <BackgroundMedia data={background2Data} fadingOut={!firstFadingOut} {outputId} transition={transition2} {currentStyle} animationStyle={animation2} {mirror} on:loaded={() => loaded(false)} />
         </div>
     {/if}

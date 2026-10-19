@@ -72,44 +72,54 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     const metadataKeys = getCustomMetadata()
     const plainTextMetadata: { [key: string]: string } = {}
     let plainNotes = ""
-    sections.forEach((section, i) => {
-        const lines = section.split("\n")
-        const newLines: string[] = []
-        lines.forEach((line) => {
-            if (!line.includes("=")) {
-                newLines.push(line)
-                return
-            }
 
-            const meta = line.split("=")
-            const metaKey = meta[0]?.toString().toLowerCase().replaceAll(" ", "").trim() || ""
-            if (metaKey === "notes") {
-                plainNotes = meta[1]
-                return
-            }
+    function extractMetaLine(line: string, delimiter: ":" | "=") {
+        const idx = line.indexOf(delimiter)
+        if (idx <= 0) return false
+        if (delimiter === ":" && isHeaderLine(line, true)) return false
 
-            const metadataKey = Object.keys(metadataKeys).find((key) => key.toLowerCase().replaceAll(" ", "").trim() === metaKey || translateText("meta." + key).toLowerCase() === metaKey)
-            if (!metadataKey) {
-                // create slide with unknown metadata
-                // newLines.push(line)
-                // add unknown metadata to show, without adding it globally
-                plainTextMetadata[meta[0]] = meta[1]
-                return
-            }
+        const key = line.slice(0, idx).trim()
+        const val = line.slice(idx + 1).trim()
+        const cleanKey = key.toLowerCase().replaceAll(" ", "").trim()
 
-            plainTextMetadata[metadataKey] = meta[1]
-        })
-        sections[i] = newLines.join("\n")
-    })
-    if (sections[0] === "") sections.splice(0, 1)
+        if (cleanKey === "notes") {
+            plainNotes = val
+            return true
+        }
+
+        const matchedKey = Object.keys(metadataKeys).find((k) => k.toLowerCase().replaceAll(" ", "").trim() === cleanKey || translateText("meta." + k).toLowerCase() === cleanKey)
+        plainTextMetadata[matchedKey || key] = val
+        return true
+    }
+
+    // Check first block for colon metadata (e.g., Key: D, CCLI: 12345)
+    if (sections[0]) {
+        sections[0] = sections[0]
+            .split("\n")
+            .filter((line) => !extractMetaLine(line, ":"))
+            .join("\n")
+            .trim()
+    }
+
+    // Parse equals metadata across all sections (e.g., Artist=Casting Crowns)
+    sections = sections
+        .map((sec) =>
+            sec
+                .split("\n")
+                .filter((line) => !extractMetaLine(line, "="))
+                .join("\n")
+                .trim()
+        )
+        .filter(Boolean)
 
     // get ccli
     let ccli = ""
     if (!Object.keys(plainTextMetadata).length && isCCLIBlock(sections[sections.length - 1])) {
         const lastSection = sections[sections.length - 1]
         const lines = lastSection.split("\n")
-        const songIdIndex = lines.findIndex((line) => /CCLI\s*(?:Song)?\s*#\s*\d+/i.test(line))
-        if (songIdIndex > 0 && lines.slice(0, songIdIndex).join("\n").trim()) {
+        const songIdIndex = lines.findIndex((line) => isCCLIBlock(line))
+        const linesBefore = lines.slice(0, songIdIndex).filter((line) => line.trim())
+        if (linesBefore.length > 1) {
             ccli = lines.slice(songIdIndex).join("\n")
             sections[sections.length - 1] = lines.slice(0, songIdIndex).join("\n")
         } else {
@@ -140,10 +150,11 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     show.slides = slides
     show.layouts[layoutID].slides = layouts
 
+    if (Object.keys(plainTextMetadata).length) {
+        show.meta = { ...show.meta, ...plainTextMetadata }
+    }
     if (ccli) {
         show.meta = { ...show.meta, ...extractCCLIMetadata(ccli, name) }
-    } else if (Object.keys(plainTextMetadata).length) {
-        show.meta = plainTextMetadata
     }
     if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
     if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }
@@ -201,7 +212,8 @@ export function trimNameFromString(text: string) {
 function isCCLIBlock(text: string): boolean {
     if (!text) return false
     const lower = text.toLowerCase()
-    return lower.includes("www.ccli.com") || lower.includes("ccli song") || lower.includes("ccli licence") || lower.includes("ccli license")
+    // Must contain ccli as a distinct word or explicit domains
+    return lower.includes("ccli.com") || lower.includes("songselect") || (/\bccli\b/i.test(text) && /\d+/.test(text))
 }
 function extractCCLIMetadata(ccliText: string, title?: string): Record<string, string> {
     const lines = ccliText
@@ -217,18 +229,23 @@ function extractCCLIMetadata(ccliText: string, title?: string): Record<string, s
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i]
 
-        // CCLI Song #
-        const songMatch = line.match(/CCLI\s*(?:Song)?\s*#\s*(\d+)/i)
-        if (songMatch) {
-            meta.CCLI = songMatch[1].trim()
-            continue
+        // CCLI License # (any CCLI line mentioning license/licen/lizen/etc.)
+        if (/\bccli\b/i.test(line) && /licen|lizen|ライセンス|라이선스/i.test(line)) {
+            const numMatch = line.match(/\d+/)
+            if (numMatch) {
+                meta.license = numMatch[0]
+                continue
+            }
         }
 
-        // CCLI License #
-        const licMatch = line.match(/CCLI\s*Licen[cs]e\s*(?:No\.?|#)?\s*(\d+)/i)
-        if (licMatch) {
-            if (!meta.license) meta.license = licMatch[1].trim()
-            continue
+        // CCLI Song # (any other CCLI line containing digits)
+        if (/\bccli\b/i.test(line)) {
+            const numMatch = line.match(/\d+/)
+            if (numMatch) {
+                if (!meta.CCLI) meta.CCLI = numMatch[0]
+                else if (!meta.license) meta.license = numMatch[0]
+                continue
+            }
         }
 
         // Copyright / Year
@@ -241,46 +258,53 @@ function extractCCLIMetadata(ccliText: string, title?: string): Record<string, s
         }
 
         // SongSelect disclaimer / website link
-        if (/terms\s+of\s+use|all\s+rights\s+reserved|ccli\.com/i.test(line)) continue
+        if (/\bccli\b|songselect|ccli\.com|terms\s+of\s+use|all\s+rights\s+reserved/i.test(line)) continue
 
         unknownData.push(line)
     }
 
-    // push into Author
+    // push remaining lines into Author
     if (unknownData.length > 0) meta.author = unknownData.join(", ")
 
     return meta
 }
 
+const CHORD_CORE = "[A-G][#b]?(?:m|M|maj|min|dim|aug|sus|add)?\\d*(?:\\/[A-G][#b]?)?"
+const CHORD_EXACT_REGEX = new RegExp(`^${CHORD_CORE}$`)
+const CHORD_WORD_REGEX = new RegExp(`(?:^|(?<=[\\s|\\[/]))(${CHORD_CORE})(?=[\\s|\\]/]|$)(?!\\])`, "g")
+
 export function isHeaderLine(line: string, isFirstLineOfGroup: boolean = true): boolean {
     if (!line || line.trim() === "") return false
     const trimmed = line.trim()
 
-    // Match bracket headers like [Verse] or [Intro]
-    if (/^\[.+\]$/.test(trimmed)) return true
+    // Bracket headers like [Verse] or [Intro]
+    if (/^\[[^\]]+\]$/.test(trimmed)) {
+        const inner = trimmed.slice(1, -1).trim()
+        if (inner === "|" || inner === "/" || inner.includes("|") || CHORD_EXACT_REGEX.test(inner)) return false
+        return true
+    }
 
-    // Match colon headers like "Intro:", "Verse 1:", "Chorus: x2"
+    // Match colon headers like "Intro:", "Vers:", "Verse 1:"
     if (/^[\d\s]*[\p{L}\w\s-]+\s*:\s*([xх]\d+)?$/iu.test(trimmed)) {
-        if (!isFirstLineOfGroup) return false
         const rawName = trimmed.replace(/[\[\]'":]+/g, "").trim()
         if (findGroupMatch(rawName) || findGroupMatch(getLabelId(trimmed))) return true
+        if (!isFirstLineOfGroup) return false
 
         const wordOnly = rawName.replace(/[xх]\d+|\d+|[^\p{L}\w\s-]/giu, "").trim()
-        return wordOnly.split(/\s+/).filter(Boolean).length === 1
+        if (wordOnly.split(/\s+/).filter(Boolean).length === 1) return true
     }
 
     return false
 }
 
 function isChordLine(line: string): boolean {
-    if (!line || line.trim() === "") return false
-    if (isHeaderLine(line)) return false
+    if (!line || line.trim() === "" || isHeaderLine(line)) return false
 
-    const chordPattern = /\b[A-G][#b]?(?:m|M|maj|min|dim|aug|sus|add)?(?:\d+)?(?:\/[A-G][#b]?)?\b/g
-    const nonWhitespace = line.replace(/\s/g, "")
+    // Allow measure bars, slashes, and brackets
+    const nonWhitespace = line.replace(/[\s|/\[\]]/g, "")
     if (!nonWhitespace) return false
 
-    const chords = line.match(chordPattern) || []
+    const chords = line.match(CHORD_WORD_REGEX) || []
     if (chords.length === 0) return false
 
     const chordChars = chords.join("").length
@@ -298,41 +322,40 @@ function preprocessLines(lines: string[]): string[] {
         const currentLine = lines[i]
         const isFirstLineOfGroup = i === 0 || lines[i - 1].trim() === ""
 
-        // Check if this is a section header (like [Verse], [Chorus], "Verse 1:", etc.)
+        // Section header
         if (isHeaderLine(currentLine, isFirstLineOfGroup)) {
-            // Ensure a section break if preceding line was not empty
-            if (output.length > 0 && output[output.length - 1] !== "") {
-                output.push("")
-            }
-            // Standardize header formatting to brackets
+            if (output.length > 0 && output[output.length - 1] !== "") output.push("")
             const headerText = currentLine.replace(/[\[\]:]/g, "").trim()
             output.push(`[${headerText}]`)
             i++
             continue
         }
 
-        // Check if current line is a chord line
+        // Chord line
         if (isChordLine(currentLine)) {
             let j = i + 1
-            // Skip one empty line if present
-            if (j < lines.length && lines[j].trim() === "") {
-                j++
-            }
+            while (j < lines.length && lines[j].trim() === "") j++
 
-            if (j < lines.length && lines[j].trim() !== "" && !isChordLine(lines[j]) && !isHeaderLine(lines[j], false)) {
-                // Found a lyric line - combine chord and lyric lines
-                const combinedLine = insertChordsIntoLyrics(currentLine, lines[j])
-                output.push(combinedLine)
+            if (!currentLine.includes("|") && j < lines.length && lines[j].trim() !== "" && !isChordLine(lines[j]) && !isHeaderLine(lines[j], j > i + 1)) {
+                output.push(insertChordsIntoLyrics(currentLine, lines[j]))
                 i = j + 1
             } else {
-                // Standalone chord line (e.g. Intro, Instrumental, Outro)
-                // Wrap all individual chords in square brackets
-                const bracketedChords = currentLine.replace(/\b[A-G][#b]?(?:m|M|maj|min|dim|aug|sus|add)?(?:\d+)?(?:\/[A-G][#b]?)?\b/g, (chord) => `[${chord}]`)
-                output.push(bracketedChords)
+                const trimmed = currentLine.trim()
+                if (trimmed.includes("|")) {
+                    output.push(
+                        `[${trimmed
+                            .replace(/\[([|/])\]/g, "$1")
+                            .replace(/\[([^\]]+)\]/g, "$1")
+                            .trim()}]`
+                    )
+                } else {
+                    const normalizedLine = currentLine.replace(/\[([|/])\]/g, "$1")
+                    output.push(normalizedLine.replace(CHORD_WORD_REGEX, (chord) => `[${chord}]`))
+                }
+                output.push("")
                 i++
             }
         } else {
-            // Not a chord line, add as is
             output.push(currentLine)
             i++
         }
@@ -342,7 +365,7 @@ function preprocessLines(lines: string[]): string[] {
 }
 
 function insertChordsIntoLyrics(chordLine: string, lyricLine: string): string {
-    const chordRegex = /\b[A-G][#b]?(?:m|M|maj|min|dim|aug|sus|add)?(?:\d+)?(?:\/[A-G][#b]?)?\b/g
+    const chordRegex = new RegExp(CHORD_WORD_REGEX.source, "g")
     const chords: { chord: string; position: number }[] = []
     let match: RegExpExecArray | null
 
@@ -533,9 +556,18 @@ function createSlides(labeled: { type: string; text: string }[], noFormatting: b
                                         return
                                     }
 
-                                    // Validate that the extracted key is a valid musical chord
-                                    const validChordPattern = /^[A-G][#b]?(?:m|M|maj|min|dim|aug|sus|add)?(?:\d+)?(?:\/[A-G][#b]?)?$/
-                                    if (!validChordPattern.test(currentKey)) {
+                                    // Check if this is a measure bar or slash delimiter, not a chord
+                                    if (currentKey === "|" || currentKey === "/") {
+                                        chords.pop()
+                                        newValue += currentKey
+                                        letterIndex += currentKey.length
+                                        isChord = false
+                                        return
+                                    }
+
+                                    // Validate that the extracted key is a valid musical chord or measure progression
+                                    const isMeasureProgression = currentKey.includes("|") && isChordLine(currentKey)
+                                    if (!CHORD_EXACT_REGEX.test(currentKey) && !isMeasureProgression) {
                                         chords.pop()
                                         newValue += `[${currentKey}]`
                                         letterIndex += currentKey.length + 2
@@ -659,7 +691,6 @@ function fixText(text: string, formatText: boolean): string {
         // .replaceAll(".", "")
         text = text.replace(/\([^)]{1,2}\) /g, "")
     }
-
 
     if (formatText) {
         // repeat text

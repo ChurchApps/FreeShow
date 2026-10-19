@@ -1,6 +1,7 @@
 import { onDestroy, type ComponentType } from "svelte"
 import { get } from "svelte/store"
 import type { Popups } from "../../types/Main"
+import AiChat from "../ai/components/floating/AiChat.svelte"
 import AiModelManager from "../ai/components/popups/AiModelManager.svelte"
 import About from "../components/main/popups/About.svelte"
 import Action from "../components/main/popups/Action.svelte"
@@ -81,7 +82,6 @@ import SetTime from "../components/main/popups/SetTime.svelte"
 import Shortcuts from "../components/main/popups/Shortcuts.svelte"
 import SlideMidi from "../components/main/popups/SlideMidi.svelte"
 import SlideShortcut from "../components/main/popups/SlideShortcut.svelte"
-import SongbeamerImport from "../components/main/popups/SongbeamerImport.svelte"
 import SyncFolders from "../components/main/popups/SyncFolders.svelte"
 import TemplateInfo from "../components/main/popups/TemplateInfo.svelte"
 import TemplateStyleOverrides from "../components/main/popups/TemplateStyleOverrides.svelte"
@@ -99,7 +99,6 @@ export const popups: { [key in Popups]: ComponentType } = {
     confirm: Confirm,
     custom_text: CustomText,
     import: Import,
-    songbeamer_import: SongbeamerImport,
     export: Export,
     show: CreateShow,
     delete_show: DeleteShow,
@@ -185,7 +184,8 @@ export const popups: { [key in Popups]: ComponentType } = {
     pco_picker: PcoServicePicker,
     sync_folders: SyncFolders,
     node_options: NodeOptions,
-    ai_model_manager: AiModelManager
+    ai_model_manager: AiModelManager,
+    ai_chat: AiChat
 }
 
 export function waitForPopupData(popupId: Popups): Promise<any> {

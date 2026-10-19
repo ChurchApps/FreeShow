@@ -32,7 +32,7 @@
     import Timeline from "../../timeline/Timeline.svelte"
     import EditHeader from "../EditHeader.svelte"
     import Editbox from "../editbox/Editbox.svelte"
-    import { getUsedChords } from "../scripts/chords"
+    import { getShowChords, getUsedChords } from "../scripts/chords"
     import { addItem } from "../scripts/itemHelpers"
     import { setCaretAtEnd } from "../scripts/textStyle"
     import { centerZoom } from "../scripts/zoom"
@@ -224,10 +224,8 @@
     // CHORDS
     let usedChords: string[] = []
     $: slideChords = Slide ? getUsedChords(Slide) : []
-    $: allChords = Object.values(currentShow?.slides || {})
-        .map(getUsedChords)
-        .flat()
-    // combine and remove duplicates
+    $: allChords = getShowChords(currentShow)
+    // combine and remove duplicates (current slide chords first, then all other show chords, both sorted alphabetically)
     $: usedChords = slideChords.length + allChords.length ? [...new Set([...slideChords, ...allChords])] : []
 
     let chordsAction = ""

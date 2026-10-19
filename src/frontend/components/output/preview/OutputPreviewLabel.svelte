@@ -4,15 +4,11 @@
     import { dictionary, ndiData, outputs, outputState } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
-    import { keysToID, sortByName, sortObject } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 
-    // onMount(() => {
-    //     currentOutputId = getActiveOutputs({}, true, true)[0]
-    // })
-
-    $: outs = sortObject(sortByName(keysToID($outputs).filter((a) => a.enabled)), "stageOutput")
+    export let output: Output & { id: string }
+    export let outs: Output[] = []
 
     function toggleOutput(e: ClickEvent, id: string) {
         if (outs.length <= 1) return
@@ -41,13 +37,6 @@
         })
     }
 
-    // let allSameState = true
-    // // wait for all windows to update first
-    // $: if ($outputState) setTimeout(updateState, 100)
-    // function updateState() {
-    //     allSameState = new Set($outputState.map((a) => a.active)).size < 2
-    // }
-
     function getOutputStateTitle(output: Output, _updater: any) {
         if (!output.active) return "output.state_locked"
         if ($outputState.find((a) => a.id === output.id)?.active) return "settings.enabled"
@@ -57,35 +46,27 @@
     }
 </script>
 
-{#if outs.length > 1}
-    <div class="outputTitles">
-        {#each outs as output (output.id)}
-            <MaterialButton id={output.id} title={output.stageOutput ? "" : "actions.toggle_output_lock"} active={output.active} style="width: 50%;font-weight: normal;border-radius: 0;padding: 0.2em 0.8em;{output.active ? 'border-bottom: 2px solid ' + output.color + ' !important;' : ''}" class="output_button context #output_active_button" on:click={(e) => toggleOutput(e, output.id)}>
-                <div class="indicator" class:locked={!output.active} class:invisible={output.invisible} class:ndi={$ndiData[output?.id || ""]?.connections > 0} class:active={$outputState.find((a) => a.id === output.id)?.active === true} data-title={translateText(getOutputStateTitle(output, { $outputState, $ndiData }), $dictionary)}></div>
-                {#if output.stageOutput}<Icon id="stage" size={0.8} white />{/if}
-                <!-- {#if !allSameState && $outputState.find((a) => a.id === output.id)?.active}<Icon id="check" />{/if} -->
+<div class="outputTitle">
+    <MaterialButton id={output.id} title={output.stageOutput ? "" : "actions.toggle_output_lock"} active={output.active} style="width: 100%;font-weight: normal;border-radius: 0;padding: 0.2em 0.8em;{output.active ? 'border-bottom: 2px solid ' + output.color + ' !important;' : ''}" class="output_button context #output_active_button" on:click={(e) => toggleOutput(e, output.id)}>
+        <div class="indicator" class:locked={!output.active} class:invisible={output.invisible} class:ndi={$ndiData[output?.id || ""]?.connections > 0} class:active={$outputState.find((a) => a.id === output.id)?.active === true} data-title={translateText(getOutputStateTitle(output, { $outputState, $ndiData }), $dictionary)}></div>
+        {#if output.stageOutput}<Icon id="stage" size={0.8} white />{/if}
 
-                <p style={output.active ? "" : "text-decoration: line-through;"}>{output.name}</p>
-            </MaterialButton>
-        {/each}
-    </div>
-{/if}
+        <p style={output.active ? "" : "text-decoration: line-through;"}>{output.name}</p>
+    </MaterialButton>
+</div>
 
 <style>
-    .outputTitles {
-        display: flex;
-        flex-wrap: wrap;
-        /* overflow-x: auto; */
-
+    .outputTitle {
+        width: 100%;
         background-color: var(--primary-darker);
     }
 
-    .outputTitles :global(button) {
+    .outputTitle :global(button) {
         cursor: pointer;
         border-bottom: 2px solid var(--primary-lighter) !important;
         white-space: nowrap;
     }
-    .outputTitles :global(button.active:hover) {
+    .outputTitle :global(button.active:hover) {
         filter: brightness(0.8);
     }
 

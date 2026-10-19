@@ -97,7 +97,7 @@
     }
 
     function handleClickOutside(event: MouseEvent) {
-        if (dropdownEl && !dropdownEl.contains(event.target as Node)) {
+        if (dropdownEl && !dropdownEl.contains(event.target as Node) && !event.composedPath().includes(dropdownEl)) {
             open = false
             addNewTextbox = false
         }
@@ -586,6 +586,9 @@
         overflow-y: auto;
         overflow-x: hidden;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+
+        /* .popup size is set to 1.2em, reset that */
+        font-size: initial;
 
         border-bottom: 1px solid var(--primary-lighter);
 

@@ -412,10 +412,13 @@ function setupSettingsListeners() {
         if (activeListeners.has(key)) return
 
         const store = syncedSettings[key]
+        const initialValue = get(store)
+        if (typeof initialValue === "object" && initialValue !== null) {
+            previousData.set(key, clone(initialValue))
+        }
+
         const unsubscriber = store.subscribe((a) => settingsListener(key, a))
         activeListeners.set(key, unsubscriber)
-
-        setTimeout(() => previousData.set(key, clone(get(store))), 50)
     })
 }
 function clearSettingsListeners() {
@@ -431,10 +434,13 @@ function settingsListener(key: string, data: any) {
         currentlyUpdatingSettings.delete(key)
         return
     }
-    if (!previousData.has(key)) return
     if (typeof data !== "object" || data === null) return
 
     const previous = previousData.get(key)
+    if (!previous || typeof previous !== "object") {
+        previousData.set(key, clone(data))
+        return
+    }
 
     // find changed key(s)
     const changedKeys = Object.keys(data).filter((k) => JSON.stringify(data[k]) !== JSON.stringify(previous[k]))

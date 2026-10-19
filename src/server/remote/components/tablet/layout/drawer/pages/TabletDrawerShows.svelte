@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { shows, dictionary, activeShow, activeCategory, categories } from "../../../../../util/stores"
+    import { shows, dictionary, activeShow, activeCategory, categories, showSearchResults } from "../../../../../util/stores"
     import { translate, dateToString } from "../../../../../util/helpers"
     import { send } from "../../../../../util/socket"
     import { _set } from "../../../../../util/stores"
@@ -9,11 +9,23 @@
     import Center from "../../../../../../common/components/Center.svelte"
 
     export let searchValue: string = ""
-    $: searchTerm = (searchValue || "").trim().toLowerCase()
+    $: query = (searchValue || "").trim()
+    $: searchTerm = query.toLowerCase()
 
     // Sorting state
     let sortType = "name"
     let sortDirection = "asc"
+
+    // Debounce search requests to backend
+    let searchTimeout: any = null
+    $: {
+        if (searchTimeout) clearTimeout(searchTimeout)
+        if (query.length > 1) {
+            searchTimeout = setTimeout(() => {
+                send("SEARCH_SHOWS", { query, limit: 500 })
+            }, 120)
+        }
+    }
 
     // Helper: get timestamp for a show based on current sort type (matching frontend logic)
     function getShowTimestamp(show: any): number {
@@ -24,25 +36,37 @@
 
     $: active = $activeCategory || "all"
 
-    // Filter shows based on search and category
-    $: filteredShows = ($shows || []).filter((s: any) => {
-        if (!s) return false
-        // Category filter
-        if (active === "all") {
-            if (s.private) return false
-            // Check if category is archived
-            if (s.category && $categories[s.category]?.isArchive) return false
-        } else if (active === "unlabeled") {
-            if (s.category && $categories[s.category]) return false
-        } else {
-            if (s.category !== active) return false
-        }
+    // Map match scores from showSearchResults if matching current query
+    $: matchMap = $showSearchResults && $showSearchResults.query === query
+        ? new Map($showSearchResults.results.map((r: any) => [r.id, r.match]))
+        : null
 
-        // Search filter
-        if (!searchTerm) return true
-        const name = typeof s.name === "string" ? s.name.toLowerCase() : ""
-        return name.includes(searchTerm)
-    })
+    // Filter shows based on search and category
+    $: filteredShows = ($shows || [])
+        .filter((s: any) => {
+            if (!s) return false
+            // Category filter
+            if (active === "all") {
+                if (s.private) return false
+                // Check if category is archived
+                if (s.category && $categories[s.category]?.isArchive) return false
+            } else if (active === "unlabeled") {
+                if (s.category && $categories[s.category]) return false
+            } else {
+                if (s.category !== active) return false
+            }
+
+            // Search filter
+            if (!searchTerm) return true
+            if (matchMap) return matchMap.has(s.id)
+
+            const name = typeof s.name === "string" ? s.name.toLowerCase() : ""
+            return name.includes(searchTerm)
+        })
+        .map((s: any) => {
+            const match = matchMap?.get(s.id)
+            return match !== undefined ? { ...s, match } : s
+        })
 
     // Keep the list scrolled to the top whenever the visible set of shows changes
     let virtualListRef: any = null
@@ -55,6 +79,13 @@
 
     // Sort shows
     $: sortedShows = [...filteredShows].sort((a: any, b: any) => {
+        // If searching with match scores, sort by match score first (highest first)
+        if (matchMap) {
+            const matchA = a.match ?? 0
+            const matchB = b.match ?? 0
+            if (matchA !== matchB) return matchB - matchA
+        }
+
         let valA: any
         let valB: any
 

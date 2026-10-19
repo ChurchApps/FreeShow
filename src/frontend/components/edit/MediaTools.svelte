@@ -29,8 +29,6 @@
 
     $: mediaSections = clone(mediaBoxes[mediaType]?.sections || {})
 
-    // WIP camera / video cropping ??
-
     $: isVideo = mediaType === "video"
     $: if (mediaId && isVideo) getVideoDuration()
     function getVideoDuration() {

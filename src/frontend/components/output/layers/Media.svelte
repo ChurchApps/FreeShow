@@ -18,6 +18,7 @@
     // decoded in a shared media window instead of here (see mediaLayers.ts); decided once, at mount, so a
     // playing video is never handed between the two
     export let layerable = false
+    export let pauseCenter = false
 
     export let video: HTMLVideoElement | null = null
     // for previews that are not outputted
@@ -69,7 +70,7 @@
         <MediaLayerSlot {outputId} {path} {mediaStyle} startAt={data.startAt || 0} on:loaded />
     {:else if type === "video"}
         <div class="video">
-            <Video {outputId} {path} syncPath={currentSyncPath || path} bind:video bind:videoData bind:videoTime startAt={data.startAt} {mediaStyle} {animationStyle} {mirror} {fadingOut} on:loaded on:ended on:error={reload} />
+            <Video {outputId} {path} syncPath={currentSyncPath || path} bind:video bind:videoData bind:videoTime startAt={data.startAt} {mediaStyle} {animationStyle} {mirror} {fadingOut} {pauseCenter} on:loaded on:ended on:error={reload} />
         </div>
     {:else if type === "image"}
         <div class="image" style="height: 100%;{animationStyle}">

@@ -27,7 +27,7 @@ export interface Output {
     blackmagic?: boolean
     blackmagicData?: any
     webrtc?: boolean
-    webrtcData?: { url?: string; token?: string; streaming?: boolean; fps?: string | number; bitrate?: string | number }
+    webrtcData?: { url?: string; token?: string; streaming?: boolean; startedAt?: number; fps?: string | number; bitrate?: string | number }
     rtmp?: boolean
     rtmpData?: RtmpData
     forcedResolution?: Resolution
@@ -53,8 +53,10 @@ export interface RtmpDestination {
 }
 export interface RtmpData {
     streaming?: boolean
+    startedAt?: number
     fps?: string | number
     bitrate?: string | number
+    rateControl?: "cbr" | "vbr"
     encoder?: string
     destinations?: RtmpDestination[]
     url?: string // deprecated, only used in v1.6.4
@@ -70,7 +72,7 @@ export interface RtmpStatus {
 }
 
 export interface OutData {
-    refresh?: boolean
+    refresh?: number
     background?: null | OutBackground
     slide?: null | OutSlide
     effects?: string[]

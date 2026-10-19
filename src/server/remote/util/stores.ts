@@ -25,6 +25,7 @@ export let isConnected = writable(false)
 export let quickPlay = writable(false)
 export let createShow: Writable<boolean | string> = writable(false)
 export let showSearchValue = writable("")
+export let showSearchResults: Writable<{ query: string; results: { id: string; match: number }[] } | null> = writable(null)
 export let activeTab = writable("shows")
 export let activeDrawerTab = writable("shows")
 export let activeCategory = writable("all")
@@ -125,6 +126,7 @@ export const _ = {
     password,
     isConnected,
     quickPlay,
+    showSearchResults,
     activeTab,
     activeDrawerTab,
     activeCategory,

@@ -1,6 +1,7 @@
 <script lang="ts">
     import { fade } from "svelte/transition"
-    import { activeEdit, activePage, activePopup, activeStage, dictionary, selected, stageShows } from "../../stores"
+    import AiGenerate from "../../ai/components/floating/AiGenerate.svelte"
+    import { activeEdit, activePage, activePopup, activeStage, ai, dictionary, selected, stageShows } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import { getDynamicIds, replaceDynamicValues } from "../helpers/showActions"
@@ -198,6 +199,11 @@
             <Icon id="add" size={1.5} style={isOpen ? "transform: rotate(135deg);" : ""} white />
         </MaterialButton>
     </FloatingInputs>
+
+    <!-- Centered Generate Button -->
+    {#if $ai?.enabled && !isStage}
+        <AiGenerate />
+    {/if}
 {/if}
 
 <style>

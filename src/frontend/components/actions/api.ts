@@ -140,7 +140,7 @@ export type API_layout = { showId: string; layoutId: string }
 export type API_slide_thumbnail = { showId?: string; layoutId?: string; index?: number }
 export type API_seek = { id?: string; seconds: number }
 export type API_media = { path: string; index?: number; data?: any }
-export type API_scripture = { id?: string; reference: string }
+export type API_scripture = { id?: string; reference: string; play?: boolean }
 export type API_toggle = { id: string; value?: boolean }
 export type API_toggle_specific = { value?: boolean }
 export type API_toggle_id = { id?: string; value?: boolean }
@@ -221,6 +221,7 @@ export const API_ACTIONS = {
     index_select_project_item: (data: API_index) => selectProjectShow(data.index), // BC
     name_start_project_item: (data: API_strval) => startProjectItemByName(data.value),
     mark_active_as_played: (data: API_toggle_specific) => markItemsAsPlayed("active", data.value),
+    unmark_all_as_played: () => markItemsAsPlayed("all", false),
 
     // SHOWS
     id_select_show: (data: API_id) => selectShowById(data.id),

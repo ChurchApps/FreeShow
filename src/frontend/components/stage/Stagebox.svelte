@@ -1,15 +1,18 @@
 <script lang="ts">
     import { getContext, onDestroy } from "svelte"
+    import type { Resolution } from "../../../types/Settings"
     import type { StageItem, StageLayout as TStageLayout } from "../../../types/Stage"
-    import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, outputs, outputSlideCache, refreshEditSlide, stageShows, timers, variables } from "../../stores"
+    import { activePopup, activeStage, activeTimers, allOutputs, currentWindow, dictionary, media, outputs, outputSlideCache, refreshEditSlide, stageShows, timers, variables } from "../../stores"
     import { startResizing } from "../../utils/cursor"
     import { translateText } from "../../utils/language"
     import { sendBackgroundToStage } from "../../utils/stageTalk"
+    import { videoExtensions } from "../../values/extensions"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
     import autosize from "../edit/scripts/autosize"
     import { isConditionMet } from "../edit/scripts/itemHelpers"
     import { getItemText } from "../edit/scripts/textStyle"
     import Icon from "../helpers/Icon.svelte"
+    import { getExtension, loadThumbnail, mediaSize } from "../helpers/media"
     import { getActiveOutputs, getStageResolution, percentageStylePos } from "../helpers/output"
     import { createCSSVariables, replaceDynamicValues } from "../helpers/showActions"
     import { getStyles } from "../helpers/style"
@@ -32,6 +35,7 @@
     export let item: StageItem | undefined
     export let stageLayout: TStageLayout | null = null
     export let ratio: number
+    export let resolution: Resolution | undefined = undefined
     export let preview = false
     export let edit = false
     export let disableStagePreview = false
@@ -235,6 +239,24 @@
         let currentOutputs = $currentWindow ? $allOutputs : $outputs
         let bg = await sendBackgroundToStage(stageOutputId, currentOutputs, true)
 
+        // show thumbnails instead of playing videos when "Slide offset" is not 0
+        if (bg && slideOffset !== 0) {
+            for (const key of ["next", "next2"]) {
+                const item = bg[key]
+                const path = item?.path
+                if (typeof path !== "string" || !videoExtensions.includes(getExtension(path))) continue
+
+                const customThumbnail = item?.thumbnail || $media[path]?.contentFile?.thumbnail
+                if (customThumbnail) {
+                    bg[key] = { ...item, path: customThumbnail, filePath: customThumbnail }
+                    continue
+                }
+
+                const thumbnail = await loadThumbnail(path, mediaSize.big)
+                if (thumbnail && thumbnail !== path) bg[key] = { ...item, path: thumbnail, filePath: thumbnail }
+            }
+        }
+
         currentBackground = bg
     }
 
@@ -271,7 +293,7 @@
         })
     }
 
-    $: stageResolution = getStageResolution()
+    $: stageResolution = resolution || getStageResolution(stageOutputId, outputStores)
     $: customStyle = percentageStylePos(itemStyle, stageResolution)
 
     // pause video at middle
@@ -426,7 +448,7 @@
                         {#if typeof slideBackground?.path === "string"}
                             <div class="image" style="position: absolute;left: 0;top: 0;width: 100%;height: 100%;">
                                 <!-- bind:video on:loaded={loaded} -->
-                                <Media outputId={outputWindowId} path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror />
+                                <Media outputId={outputWindowId} path={slideBackground.path} path2={slideBackground.filePath} mediaStyle={slideBackground.mediaStyle || {}} mirror pauseCenter={slideOffset !== 0} />
                             </div>
                         {/if}
                     {/if}

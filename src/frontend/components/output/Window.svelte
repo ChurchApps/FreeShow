@@ -21,12 +21,20 @@
         }
     }
 
+    let currentStream: MediaStream | null = null
+    let destroyed = false
+    onDestroy(() => {
+        destroyed = true
+        currentStream?.getTracks().forEach((track) => track.stop())
+    })
+
     onMount(() => {
         navigator.mediaDevices
             .getUserMedia(constraints)
             .then((stream) => {
-                if (!videoElem) return
+                if (destroyed || !videoElem) return stream.getTracks().forEach((track) => track.stop())
 
+                currentStream = stream
                 videoElem.srcObject = stream
                 videoElem.onloadedmetadata = loaded
             })
@@ -34,13 +42,6 @@
                 console.error(err.name + ": " + err.message)
             })
     })
-
-    onDestroy(stopStream)
-    function stopStream() {
-        if (!videoElem) return
-        ;(videoElem.srcObject as MediaStream)?.getTracks()?.forEach((track) => track.stop())
-        videoElem.srcObject = null
-    }
 
     let dispatch = createEventDispatcher()
     function loaded() {

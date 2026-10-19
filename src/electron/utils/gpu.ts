@@ -79,7 +79,7 @@ export async function listGraphicsDevices(): Promise<GraphicsDeviceOption[]> {
 export function applyGraphicsDeviceSelection() {
     if (config.get("disableHardwareAcceleration") === true) return // no GPU process to pin
 
-    const configured = (config.get("graphicsDevice") as string | null) || ""
+    const configured = config.get("graphicsDevice") || ""
 
     if (isLinux) {
         // env override kept as a no-rebuild debugging lever; the Settings value is the product mechanism
@@ -259,7 +259,7 @@ async function runGpuHealthCheck() {
     let packages: string[] = []
     if (isLinux) {
         const drivers = findVaDrivers()
-        const configuredNode = (config.get("graphicsDevice") as string | null) || ""
+        const configuredNode = config.get("graphicsDevice") || ""
         const candidateVendors = configuredNode ? [linuxNodeVendor(configuredNode) || vendorName] : allLinuxGpuVendors()
         const missingVendors = (candidateVendors.length ? candidateVendors : [vendorName]).filter((v) => !vendorVaDriverPresent(v, drivers))
         vaDriverMissing = missingVendors.length > 0

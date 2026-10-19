@@ -1,10 +1,8 @@
 <script lang="ts">
-    import { tick } from "svelte"
     import { Main } from "../../../../types/IPC/Main"
-    import type { Popups } from "../../../../types/Main"
     import { importFromClipboard } from "../../../converters/importHelpers"
     import { sendMain } from "../../../IPC/main"
-    import { activePopup, alertMessage, popupData } from "../../../stores"
+    import { activePopup, alertMessage, os, popupData } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { presentationExtensions } from "../../../values/extensions"
     import Icon from "../../helpers/Icon.svelte"
@@ -29,7 +27,7 @@
     const freeshow_primary_formats = freeshow_formats.filter((format) => ["freeshow", "freeshow_project"].includes(format.id))
     const freeshow_more_formats = freeshow_formats.filter((format) => ["freeshow_template", "freeshow_overlay", "freeshow_action", "freeshow_stage", "freeshow_theme"].includes(format.id))
 
-    const text_formats: { name: string; extensions: string[]; id: string; shortcut?: string; tutorial?: string; popup?: Popups }[] = [
+    const text_formats: { name: string; extensions: string[]; id: string; shortcut?: string; tutorial?: string }[] = [
         { name: "formats.text", extensions: ["txt"], id: "txt" },
         { name: "CSV", extensions: ["csv"], id: "csv" },
         { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chordpro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
@@ -52,7 +50,7 @@
         { name: "MediaShout", extensions: ["ssc", "xml", "mdb"], id: "mediashout" }, // SSC (Songs5.mdb)
         { name: "Quelea", extensions: ["xml", "qsp"], id: "quelea" },
         { name: "SoftProjector", extensions: ["sps"], id: "softprojector" },
-        { name: "Songbeamer", id: "songbeamer", extensions: [], popup: "songbeamer_import" },
+        { name: "Songbeamer", extensions: ["sng"], id: "songbeamer" },
         { name: "Easyslides", extensions: ["xml"], id: "easyslides" },
         { name: "VerseVIEW", extensions: ["xml"], id: "verseview" }
     ]
@@ -65,7 +63,7 @@
 
     const powerpoint_options = [
         { name: "info.slides", description: "Imperfect formatting.", icon: "txt", click: pptText },
-        { name: "PDF", description: "Requires LibreOffice installed.", icon: "pdf", click: libreOfficeConvert },
+        { name: "PDF", description: `Requires LibreOffice${$os.platform === "linux" ? "" : " or PowerPoint"} installed.`, icon: "pdf", click: convertToPdf },
         { name: "PDF (Online)", description: "Requires network connection, and manual steps.", icon: "pdf", click: onlineConvert },
         { name: "Controller (Deprecated)", description: "Requires PowerPoint/Keynote installed. Useful for live streams, but buggy.", icon: "powerkey", click: pptController }
     ]
@@ -74,8 +72,8 @@
         sendMain(Main.IMPORT, { channel: "powerpoint", format: { name: "PowerPoint", extensions: ["ppt", "pptx"] } })
         activePopup.set(null)
     }
-    function libreOfficeConvert() {
-        sendMain(Main.LIBREOFFICE_CONVERT, { type: "powerpoint" })
+    function convertToPdf() {
+        sendMain(Main.PPT_TO_PDF)
     }
     function onlineConvert() {
         sendMain(Main.URL, "https://www.ilovepdf.com/powerpoint_to_pdf")
@@ -198,17 +196,9 @@
                 variant="outlined"
                 style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;"
                 on:click={() => {
-                    if (format.popup) {
-                        tick().then(() => {
-                            if (format.popup) {
-                                activePopup.set(format.popup)
-                            }
-                        })
-                    } else {
-                        let name = translateText(format.name)
-                        sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
-                        displayTutorial(format)
-                    }
+                    let name = translateText(format.name)
+                    sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
+                    displayTutorial(format)
                 }}
                 title={format.shortcut ? ` [${format.shortcut}]` : ""}
             >
@@ -317,17 +307,9 @@
                 variant="outlined"
                 style="justify-content: start;width: calc((100% / 3) - (5px * 2 / 3));min-height: 50px;font-weight: normal;border: 1px solid var(--primary-lighter);"
                 on:click={() => {
-                    if (format.popup) {
-                        tick().then(() => {
-                            if (format.popup) {
-                                activePopup.set(format.popup)
-                            }
-                        })
-                    } else {
-                        let name = translateText(format.name)
-                        sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
-                        displayTutorial(format)
-                    }
+                    let name = translateText(format.name)
+                    sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
+                    displayTutorial(format)
                 }}
                 title={format.shortcut ? ` [${format.shortcut}]` : ""}
             >

@@ -85,8 +85,6 @@
         display: flex;
         flex-direction: column;
         gap: 10px;
-        min-width: 480px;
-        max-width: 700px;
     }
 
     .tabs {

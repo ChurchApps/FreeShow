@@ -1,13 +1,14 @@
 <script lang="ts">
     import { fade, scale } from "svelte/transition"
     import type { Popups } from "../../../types/Main"
+    import { EFFECTS_LIST } from "../../audio/effects/audioEffectsHelpers"
     import { activePopup, alertMessage, os, popupData, special } from "../../stores"
     import { MENU_BAR_HEIGHT } from "../../utils/common"
+    import { translateText } from "../../utils/language"
     import { clearPopupSubmit, popups } from "../../utils/popup"
     import { disablePopupClose } from "../../utils/shortcuts"
     import T from "../helpers/T.svelte"
     import MaterialButton from "../inputs/MaterialButton.svelte"
-    import { EFFECTS_LIST } from "../../audio/effects/audioEffectsHelpers"
 
     function mousedown(e: any) {
         // same logic for Escape in shortcuts.ts
@@ -55,7 +56,9 @@
                             {#key popupId}
                                 <!-- margin-top: -5px; -->
                                 <h2 style="font-size: 1.3em;margin-top: -2px;">
-                                    {#if popupId === "new_update"}
+                                    {#if $popupData?.popupTitle}
+                                        {translateText($popupData.popupTitle)}
+                                    {:else if popupId === "new_update"}
                                         <T id="about.new_update" />: <span style="color: var(--secondary);">v{$popupData.latestVersion}</span>
                                     {:else if popupId === "pco_picker"}
                                         Planning Center

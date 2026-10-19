@@ -1114,18 +1114,6 @@ const slideDrop = {
 
         return history
     },
-    midi: ({ drag, drop }: Data, history: History) => {
-        // WIP not in use:
-        history.id = "SHOW_LAYOUT"
-
-        const ref = getLayoutRef()[drop.index!]
-        const data: any = ref?.data?.actions || {}
-        const key = drag.data[0].type === "in" ? "receiveMidi" : "sendMidi"
-        data[key] = drag.data[0].id
-
-        history.newData = { key: "actions", data, indexes: [drop.index] }
-        return history
-    },
     action: ({ drag, drop }: Data, history: History, keys?: Keys) => {
         history.id = "SHOW_LAYOUT"
 

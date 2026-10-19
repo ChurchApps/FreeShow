@@ -25,19 +25,34 @@ export interface ChurchAppsStartupLoadData {
  * Syncs local songs with ChurchApps by identifying missing songs and sending them in batches.
  */
 export class ChurchAppsExport {
+    private static syncing = false
+
     public static async sendSongsToChurchApps(data: ChurchAppsStartupLoadData): Promise<void> {
+        // a large library takes a long time, don't start a second upload of the same songs
+        if (this.syncing) return
+        this.syncing = true
+
+        try {
+            await this.uploadMissingSongs(data)
+        } finally {
+            this.syncing = false
+        }
+    }
+
+    private static async uploadMissingSongs(data: ChurchAppsStartupLoadData): Promise<void> {
         const missingIds = await this.getMissingSongIds(data)
-        // console.log("Sending songs to ChurchApps", missingIds.length)
         if (missingIds.length === 0) return
 
         // Get song data only for missing songs
         const songData = this.getChurchAppsSongData(missingIds, data)
         const batchSize = 10
+        let synced = 0
+        let failed = 0
 
         // Send the missing songs in batches
         for (let i = 0; i < songData.length; i += batchSize) {
             const batch = songData.slice(i, i + batchSize)
-            await ChurchAppsConnect.apiRequest({
+            const result = await ChurchAppsConnect.apiRequest({
                 api: "content",
                 authenticated: true,
                 scope: "plans",
@@ -45,9 +60,16 @@ export class ChurchAppsExport {
                 method: "POST",
                 data: batch
             })
+
+            if (result) synced += batch.length
+            else failed += batch.length
+
+            const sent = i + batch.length
+            if (sent < songData.length && sent % 100 === 0) sendToMain(ToMain.TOAST, `Syncing songs to ChurchApps: ${sent}/${songData.length}`)
         }
 
-        sendToMain(ToMain.TOAST, `Synced ${missingIds.length} new songs to ChurchApps`)
+        if (failed) sendToMain(ToMain.ALERT, `Synced ${synced} new songs to ChurchApps, but ${failed} could not be uploaded. Try syncing again later.`)
+        else sendToMain(ToMain.TOAST, `Synced ${synced} new songs to ChurchApps`)
     }
 
     private static async getMissingSongIds(data: ChurchAppsStartupLoadData): Promise<string[]> {

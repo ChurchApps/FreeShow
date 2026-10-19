@@ -343,7 +343,7 @@ export function toggleLock(data: API_output_lock) {
         toggleOutputLock(outputId, typeof data.value === "boolean" ? !data.value : isLocked)
     })
 }
-// similar to PreviewOutputs.svelte
+// similar to OutputPreviewLabel.svelte
 function toggleOutputLock(outputId: string, value: boolean) {
     outputs.update((a) => {
         if (!a[outputId]?.enabled) return a
@@ -726,7 +726,7 @@ export async function startScripture(data: API_scripture) {
     if (data.id) setDrawerTabData("scripture", data.id) // use active if no ID
     activeDrawerTab.set("scripture")
 
-    openScripture.set({ ...ref, play: true })
+    openScripture.set({ ...ref, play: data.play !== false })
 }
 
 // MEDIA

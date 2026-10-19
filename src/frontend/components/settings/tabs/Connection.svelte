@@ -3,7 +3,7 @@
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
     import { requestMain, sendMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, notFound, obsData, outputs, popupData, ports, projectTemplates, providerConnections, saved, serverData, special } from "../../../stores"
+    import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, connections, contentProviderData, disabledServers, maxConnections, notFound, obsData, outputs, popupData, ports, projectTemplates, providerConnections, saved, serverData, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { startRemoteController, stopRemoteController } from "../../../utils/remoteController"
     import { contentProviderSync } from "../../../utils/startup"
@@ -28,11 +28,10 @@
 
     // WIP reset in popups
     // function reset() {
-    //     remotePassword.set(randomNumber(1000, 9999).toString())
     //     ports.set({ remote: 5510, stage: 5511 })
     //     maxConnections.set(10)
     //     disabledServers.set({})
-    //     serverData.set({})
+    //     serverData.set({ remote: { password: randomNumber(1000, 9999).toString() } })
     // }
     // const randomNumber = (from: number, to: number): number => Math.floor(Math.random() * (to - from)) + from
 
@@ -64,12 +63,14 @@
     function toggleCompanion(e: any) {
         let value = e.detail
 
-        companion.update((a) => {
-            a.enabled = value
+        serverData.update((a) => {
+            if (!a.companion) a.companion = {}
+            a.companion.enabled = value
             return a
         })
+        sendMain(Main.SERVER_DATA, $serverData)
 
-        if (value) sendMain(Main.WEBSOCKET_START, { port: $ports.companion, password: $companion?.password })
+        if (value) sendMain(Main.WEBSOCKET_START, { port: $ports.companion, password: $serverData?.companion?.password })
         else sendMain(Main.WEBSOCKET_STOP)
     }
 
@@ -219,7 +220,7 @@
 </script>
 
 {#each servers as server}
-    {@const disabled = server.id === "companion" ? $companion?.enabled !== true : server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
+    {@const disabled = server.id === "companion" ? $serverData?.companion?.enabled !== true : server.enabledByDefault ? $disabledServers[server.id] === true : $disabledServers[server.id] !== false}
     {@const connections = Object.keys($connections[server.id.toUpperCase()] || {})?.length || 0}
 
     <InputRow>
@@ -252,7 +253,7 @@
         </MaterialButton>
 
         {#if server.id === "companion"}
-            <MaterialToggleSwitch label="" checked={$companion?.enabled === true} on:change={toggleCompanion} />
+            <MaterialToggleSwitch label="" checked={$serverData?.companion?.enabled === true} on:change={toggleCompanion} />
         {:else}
             <MaterialToggleSwitch label="" checked={server.enabledByDefault ? $disabledServers[server.id] !== true : $disabledServers[server.id] === false} on:change={(e) => toggleServer(e, server.id)} />
         {/if}
