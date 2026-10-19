@@ -156,7 +156,7 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
 
     lastSyncRecords.set(vid, { targetTime, timestamp: now, isNudging })
 
-    // Every playbackRate change makes the media pipeline resynchronise - a stall, often dropped frames, and
+    // Every playbackRate change makes the media pipeline resynchronize - a stall, often dropped frames, and
     // so more drift to correct. The correction therefore moves in coarse steps and is only written when its
     // step changes. A video already dropping frames or short of data is never sped up: asking it to decode
     // faster deepens the deficit until it falls far enough behind to seek, and the seek starts that over.

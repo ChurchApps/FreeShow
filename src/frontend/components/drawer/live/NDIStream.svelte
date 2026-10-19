@@ -42,7 +42,7 @@
     // a full-cover background on a captured output is composited by the worker instead (see streamLayer)
     // Only the component actually drawing an output's background may drive the composite. A drawer tile
     // is rendered with `background` too but no outputId, and falling back to the first output in the
-    // store made it fight the real output: its small tile is never a full cover, so it kept cancelling
+    // store made it fight the real output: its small tile is never a full cover, so it kept canceling
     // the composite the output had just turned on, and both flickered.
     const layer = new StreamLayer(outputBackground && background && !mirror && outputId ? outputId : "", () => (composited = layer.composited))
     let composited = false

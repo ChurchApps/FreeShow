@@ -12,7 +12,7 @@ import { receive, send } from "../../../utils/request"
 export const mediaLayersEnabled = writable(false)
 /** outputs whose page currently shows at least one media layer (the page then paints transparent there) */
 export const mediaLayered = writable<{ [outputId: string]: boolean }>({})
-/** the colour behind the video, which the worker fills with since the page itself goes transparent */
+/** the color behind the video, which the worker fills with since the page itself goes transparent */
 export const mediaFill = writable<{ [outputId: string]: string }>({})
 
 // clock: when this output's playback of the file started (now minus its playback time), so main only shares

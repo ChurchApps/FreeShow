@@ -115,7 +115,7 @@
         border: none;
         border-radius: 50%;
         background-color: rgb(0 0 0 / 0.6);
-        /* a button resets the inherited text colour, and the icon draws in currentColor */
+        /* a button resets the inherited text color, and the icon draws in currentColor */
         color: #fff;
 
         z-index: 2;

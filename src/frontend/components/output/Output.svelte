@@ -321,11 +321,11 @@
     // a composited stream (see streamLayer) is behind the page, so the background must let it through
     // Only the captured output window itself goes transparent for the composite; the worker draws the
     // video underneath the page there. A mirror is an ordinary copy drawn in this window, so making it
-    // transparent showed nothing, and Zoomed animates a background colour change, so it faded to black
+    // transparent showed nothing, and Zoomed animates a background color change, so it faded to black
     // for the best part of a second every time an input was triggered.
     $: opaqueBackground = styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle?.background || slide?.settings?.backgroundColor || "black"
     $: backgroundColor = currentOutput?.transparent || (!mirror && ($compositedOutputs[outputId] || $mediaLayered[outputId])) ? "transparent" : opaqueBackground
-    // a media layer is drawn under the page by the capture worker, which fills around it with this colour
+    // a media layer is drawn under the page by the capture worker, which fills around it with this color
     $: if (!mirror && outputId && $mediaFill[outputId] !== opaqueBackground) mediaFill.update((a) => ({ ...a, [outputId]: opaqueBackground }))
     // background image
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && (slide || background) ? "" : currentStyle?.backgroundImage || ""

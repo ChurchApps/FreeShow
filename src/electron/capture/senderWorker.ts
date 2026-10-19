@@ -273,7 +273,7 @@ function releaseReadbackSlot(id: string, slot: number) {
 
 // Send-side pacer: dispatches at steady intervals from refcounted recycled buffers, repeating the last
 // frame when no new one arrives in time.
-// One send at a time per sender: the send libraries serialise encodes per instance, so overlapping
+// One send at a time per sender: the send libraries serialize encodes per instance, so overlapping
 // them only adds contention (measured 41 -> 31 -> 22 fps at 1, 2 and 3 in flight on two 4K60 OMT).
 const pacerPools: { [rendererId: string]: Buffer[] } = {}
 function acquirePacerBuf(owner: string, length: number): PacerBuf {
@@ -406,7 +406,7 @@ function bgraToUyvy(bgra: Buffer, width: number, height: number): Buffer {
     return out
 }
 
-// BGRA -> UYVA = UYVY colour plane (width*2*height) immediately followed by a full-res alpha plane
+// BGRA -> UYVA = UYVY color plane (width*2*height) immediately followed by a full-res alpha plane
 // (width*height). Keeps transparency while still skipping the SDK's BGRA->UYVY conversion.
 function bgraToUyva(bgra: Buffer, width: number, height: number): Buffer {
     const uyvySize = width * 2 * height

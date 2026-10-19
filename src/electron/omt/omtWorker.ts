@@ -35,7 +35,7 @@ export const omtAdapter: SenderAdapter = {
         const sender = new omt.Sender(msg.name, mapQuality(omt, msg.quality))
         if (!sender) return null
         // sendAsync runs the VMX encode on the libuv pool, so senders encode in parallel instead of
-        // serialising on this worker's JS thread
+        // serializing on this worker's JS thread
         return { sender, sendFrame: (frame: any) => sender.sendAsync(frame), sendAudio: (frame: any) => sender.sendAsync(frame), tsKey: "timestamp" }
     },
     connections: (sender: any) => sender?.connections || 0,
