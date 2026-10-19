@@ -268,6 +268,14 @@ async function runGpuHealthCheck() {
     }
 
     healthNotified = true
+    // reported once: the same problem on every launch is noise, and the old way to silence it was turning
+    // hardware acceleration off, which made everything worse
+    const notice = [issue, process.platform, vendorName, packages.join(",")].join("|")
+    if (config.get("gpuHealthNotice") === notice) {
+        console.info(`[GPU-HEALTH] degraded (already reported): issue=${issue} gpu_compositing=${status.gpu_compositing} video_decode=${status.video_decode} probe=${hwDecodeProbe ?? "unavailable"} vendor=${vendorName || "?"}`)
+        return
+    }
+    config.set("gpuHealthNotice", notice)
     console.info(`[GPU-HEALTH] degraded: issue=${issue} gpu_compositing=${status.gpu_compositing} video_decode=${status.video_decode} probe=${hwDecodeProbe ?? "unavailable"} vendor=${vendorName || "?"} vaDriverMissing=${vaDriverMissing}`)
     sendToMain(ToMain.GPU_HEALTH, { issue, platform: process.platform, vendorName, vaDriverMissing, packages })
 }
