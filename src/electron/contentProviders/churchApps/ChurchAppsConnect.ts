@@ -3,10 +3,9 @@ import { ToMain } from "../../../types/IPC/ToMain"
 import { getContentProviderAccess, setContentProviderAccess } from "../../data/contentProviders"
 import { sendToMain } from "../../IPC/main"
 import { openURL } from "../../IPC/responsesMain"
-import { getKey } from "../../utils/keys"
 import { httpsRequest } from "../../utils/requests"
 import type { ChurchAppsAuthData, ChurchAppsRequestData, ChurchAppsScopes } from "./types"
-import { getChurchAppsApiUrl, getChurchAppsAppUrl, getLessonsApiUrl } from "./types"
+import { getChurchAppsApiUrl, getChurchAppsAppUrl, getChurchAppsClientId, getChurchAppsClientSecret, getLessonsApiUrl } from "./types"
 
 /**
  * Handles authentication and API communication with the ChurchApps service.
@@ -20,8 +19,6 @@ export class ChurchAppsConnect {
     private static app = express()
     private static readonly CHURCHAPPS_PORT = 5502
     private static CHURCHAPPS_ACCESS: ChurchAppsAuthData = null
-    private static readonly clientId: string = getKey("churchApps_id")
-    private static readonly clientSecret: string = getKey("churchApps_secret")
 
     private static readonly HTML_SUCCESS = `
     <head>
@@ -133,8 +130,8 @@ export class ChurchAppsConnect {
                 const params = {
                     grant_type: "authorization_code",
                     code,
-                    client_id: this.clientId,
-                    client_secret: this.clientSecret,
+                    client_id: getChurchAppsClientId(),
+                    client_secret: getChurchAppsClientSecret(),
                     redirect_uri
                 }
 
@@ -162,7 +159,7 @@ export class ChurchAppsConnect {
                 })
             })
 
-            const URL = `${getChurchAppsAppUrl()}/login?returnUrl=` + encodeURIComponent(`/oauth?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}`) + "&forceLogin=1"
+            const URL = `${getChurchAppsAppUrl()}/login?returnUrl=` + encodeURIComponent(`/oauth?client_id=${getChurchAppsClientId()}&redirect_uri=${encodeURIComponent(redirect_uri)}&response_type=code&scope=${scope}`) + "&forceLogin=1"
             openURL(URL)
         })
     }
@@ -179,8 +176,8 @@ export class ChurchAppsConnect {
 
             const params = {
                 grant_type: "refresh_token",
-                client_id: this.clientId,
-                client_secret: this.clientSecret,
+                client_id: getChurchAppsClientId(),
+                client_secret: getChurchAppsClientSecret(),
                 refresh_token: access.refresh_token
             }
 
