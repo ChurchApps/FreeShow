@@ -1488,7 +1488,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             if (templateItem[key]) item[key] = templateItem[key]
         })
 
-        if (type !== "text") return finish()
+        if (type !== "text" && type !== "text_dynamic") return finish()
 
         const textFormatSets = getTextFormatSets(item)
 
@@ -1511,6 +1511,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
                     text.style = style
                 }
+
+                // Dynamic placeholders inherit formatting without changing their content.
+                if (type === "text_dynamic") return
 
                 const firstChar = templateText?.value?.[0] || ""
 
