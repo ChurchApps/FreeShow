@@ -33,6 +33,8 @@ export type CaptureFrameOpts = {
     bmdMembers?: { [id: string]: { width: number; height: number; format: number; framerate: number } }
     webrtcMembers?: { [id: string]: { width: number; height: number } }
     presentMembers?: { [id: string]: { width: number; height: number } }
+    /** members the user has turned off: they send black and silence (outputsOff.ts) */
+    offMembers?: string[]
     stageStream?: { width: number; height: number; quality: number; intervalMs: number } | null
     serverStream?: { width: number; height: number; intervalMs: number } | null
     thumbStream?: { width: number; height: number; quality: number } | null

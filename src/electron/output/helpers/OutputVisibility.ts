@@ -48,7 +48,9 @@ export class OutputVisibility {
             if (window.isVisible()) this.hideWindow(window)
             // capture-only: render at the configured resolution (DPI-corrected)
             OutputBounds.updateBounds({ id: output.id, bounds: output.bounds })
-            return "invisible"
+            // no window to show, but the toggle applies all the same: off sends black and silence
+            OutputHelper.Lifecycle.setOutputOn(output.id, state)
+            return state ? "invisible" : false
         }
 
         let bounds: Rectangle = this.resolveOutputBounds(output, autoPosition)
@@ -60,11 +62,13 @@ export class OutputVisibility {
             this.showWindow(window, output.alwaysOnTop !== false)
 
             OutputHelper.Bounds.updateBounds({ id: output.id, bounds })
+            OutputHelper.Lifecycle.setOutputOn(output.id, true)
             return true
         } else {
             this.hideWindow(window, output)
             // returning to capture-only: render at the configured resolution (DPI-corrected)
             OutputBounds.updateBounds({ id: output.id, bounds: output.bounds })
+            OutputHelper.Lifecycle.setOutputOn(output.id, false)
 
             if (state === true && !autoStartup) toApp(MAIN, { channel: "ALERT", data: "error.display" })
             return false

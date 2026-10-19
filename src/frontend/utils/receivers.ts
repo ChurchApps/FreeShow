@@ -115,10 +115,10 @@ const receiveOUTPUTasMAIN: any = {
                 else a[stateIndex] = newState
             })
 
-            // only enabled ones & not invisible
-            a = a.filter((state) => get(outputs)[state.id]?.enabled && !get(outputs)[state.id]?.invisible)
+            // every enabled output counts, network ones included: "invisible" means on without a window
+            a = a.filter((state) => get(outputs)[state.id]?.enabled)
 
-            const getVisibleState = [...new Set(a.filter((state) => typeof state.active === "boolean").map((state) => state.active) as boolean[])]
+            const getVisibleState = [...new Set(a.map((state) => state.active !== false))]
             if (getVisibleState.length === 1) outputDisplay.set(getVisibleState[0])
 
             return a

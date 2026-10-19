@@ -3,6 +3,7 @@ import { ruleViolation } from "../utils/ruleCheck"
 import { RtmpStreamer, setRtmpNoticeListener, setRtmpStatusListener } from "../streaming/RtmpStreamer"
 import { BlackmagicSender } from "../blackmagic/BlackmagicSender"
 import { FrameServer, type ServedFrame } from "./FrameServer"
+import { blankFrame, outputsOff, setOutputsOff } from "./outputsOff"
 
 // Protocol-independent engine for the network sender workers (../ndi/ndiWorker, ../omt/omtWorker), which
 // run it with their own SenderAdapter.
@@ -715,13 +716,31 @@ function mediaFramesFor(id: string): { frame: MediaFrame; alpha: number }[] {
     return out
 }
 
-async function captureAndSend(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; mainFormat?: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number; targets?: { width: number; height: number; format: number }[]; memberTarget?: { [id: string]: number }; memberFormats?: { [id: string]: number }; memberSizes?: { [id: string]: { width: number; height: number } }; cpuTargets?: boolean; rtmpMembers?: { [id: string]: { width: number; height: number } }; bmdMembers?: { [id: string]: { width: number; height: number; format: number; framerate: number } }; webrtcMembers?: { [id: string]: { width: number; height: number } }; presentMembers?: { [id: string]: { width: number; height: number } }; convertCheck?: boolean; stageStream?: { width: number; height: number; quality: number; intervalMs: number } | null; serverStream?: { width: number; height: number; intervalMs: number } | null; thumbStream?: { width: number; height: number; quality: number } | null }) {
+// The frames an off output sends in place of its picture (outputsOff.ts), made once per size and format.
+// Owned by no pacer pool, so a released reference never hands one out to be written over.
+const blankBufs = new Map<string, PacerBuf>()
+function blankPacerBuf(width: number, height: number, format: number, transparent: boolean): PacerBuf {
+    const key = `${width}x${height}:${format}:${transparent ? "t" : "o"}`
+    let pb = blankBufs.get(key)
+    if (!pb) blankBufs.set(key, (pb = { buf: blankFrame(width, height, format, transparent), refs: 0, owner: "blank" }))
+    return pb
+}
+// a blank in the format a protocol's adapter turns BGRA into, converted once
+const preparedBlanks = new Map<string, { pbuf: PacerBuf; format: number }>()
+
+async function captureAndSend(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; mainFormat?: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number; targets?: { width: number; height: number; format: number }[]; memberTarget?: { [id: string]: number }; memberFormats?: { [id: string]: number }; memberSizes?: { [id: string]: { width: number; height: number } }; cpuTargets?: boolean; rtmpMembers?: { [id: string]: { width: number; height: number } }; bmdMembers?: { [id: string]: { width: number; height: number; format: number; framerate: number } }; webrtcMembers?: { [id: string]: { width: number; height: number } }; presentMembers?: { [id: string]: { width: number; height: number } }; offMembers?: string[]; convertCheck?: boolean; stageStream?: { width: number; height: number; quality: number; intervalMs: number } | null; serverStream?: { width: number; height: number; intervalMs: number } | null; thumbStream?: { width: number; height: number; quality: number } | null }) {
     // seq identifies this in-flight capture; the osr-capture key is slotted so concurrent readbacks
     // for one output use independent pool entries
     const seq = opts.seq ?? 0
     const senderData = SENDERS[id]
     const osr = loadOsrCapture()
     const membersAll = opts.members?.length ? opts.members : [id]
+    if (opts.offMembers) {
+        for (const m of membersAll) {
+            if (opts.offMembers.includes(m)) outputsOff.add(m)
+            else outputsOff.delete(m)
+        }
+    }
     const activeMembers = membersAll.filter((m) => SENDERS[m]?.sender)
     // one render and one readback, but its members may send on different protocols: load each protocol
     // present in the group and leave out a member whose library is unavailable
@@ -928,7 +947,17 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
                 const ad = SENDERS[m]!.adapter
                 const lib = libs[ad.tag]
                 let b = bufFor(m)
-                if (b.format === 0) {
+                if (outputsOff.has(m)) {
+                    if (b.format === 0) {
+                        const key = `${ad.tag}:${b.width}x${b.height}:${transparent}`
+                        let prepared = preparedBlanks.get(key)
+                        if (!prepared) {
+                            const p = ad.prepareVideo(lib, blankFrame(b.width, b.height, 0, transparent), { width: b.width, height: b.height }, 0, transparent)
+                            preparedBlanks.set(key, (prepared = { pbuf: { buf: Buffer.from(p.data), refs: 0, owner: "blank" }, format: p.format }))
+                        }
+                        b = { pbuf: prepared.pbuf, width: b.width, height: b.height, format: prepared.format }
+                    } else b = { pbuf: blankPacerBuf(b.width, b.height, b.format, transparent), width: b.width, height: b.height, format: b.format }
+                } else if (b.format === 0) {
                     const prepared = ad.prepareVideo(lib, b.pbuf.buf.subarray(0, bytesFor(b.width, b.height, 0)), { width: b.width, height: b.height }, 0, transparent)
                     if (prepared.format !== 0) b = { pbuf: intoPacerBuf(`${id}#${ad.tag}`, prepared.data), width: b.width, height: b.height, format: prepared.format }
                 }
@@ -944,8 +973,9 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
         for (const m of rtmpMembers) {
             const want = opts.rtmpMembers![m]
             const ti = targetBufs.findIndex((t) => t.width === want.width && t.height === want.height && (t.format === 4 || t.format === 0))
-            const b = ti >= 0 ? targetBufs[ti] : main.format === 0 && main.width === want.width && main.height === want.height ? main : null
+            let b = ti >= 0 ? targetBufs[ti] : main.format === 0 && main.width === want.width && main.height === want.height ? main : null
             if (!b) continue
+            if (outputsOff.has(m)) b = { pbuf: blankPacerBuf(b.width, b.height, b.format, false), width: b.width, height: b.height, format: b.format }
             const pb = b.pbuf
             const bytes = bytesFor(b.width, b.height, b.format)
             pb.refs++
@@ -960,8 +990,9 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
             for (const m of webrtcMembers) {
                 const want = opts.webrtcMembers![m]
                 const ti = targetBufs.findIndex((t) => t.width === want.width && t.height === want.height && t.format === 0)
-                const b = ti >= 0 ? targetBufs[ti] : main.format === 0 && main.width === want.width && main.height === want.height ? main : null
+                let b = ti >= 0 ? targetBufs[ti] : main.format === 0 && main.width === want.width && main.height === want.height ? main : null
                 if (!b) continue
+                if (outputsOff.has(m)) b = { pbuf: blankPacerBuf(b.width, b.height, 0, false), width: b.width, height: b.height, format: 0 }
                 const bytes = bytesFor(b.width, b.height, 0)
                 const frame: ServedFrame = { xres: b.width, yres: b.height, format: "bgra", data: b.pbuf.buf.length === bytes ? b.pbuf.buf : b.pbuf.buf.subarray(0, bytes) }
                 servedPacer.set(frame, b.pbuf)
@@ -996,7 +1027,9 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
             const b = ti >= 0 ? targetBufs[ti] : main.width === want.width && main.height === want.height && main.format === want.format ? main : null
             if (!b) continue
             const bytes = bytesFor(b.width, b.height, b.format)
-            bmdGive(m, Buffer.from(b.pbuf.buf.subarray(0, bytes)), want.framerate, b.format === 1)
+            // an off output's blank is never written, so the card may hold it without a copy
+            const frameData = outputsOff.has(m) ? blankPacerBuf(b.width, b.height, b.format, false).buf.subarray(0, bytes) : Buffer.from(b.pbuf.buf.subarray(0, bytes))
+            bmdGive(m, frameData, want.framerate, b.format === 1)
         }
         // FS_CONVERT_CHECK: the GPU produced this frame in the real format as a target, and `main` holds
         // the same frame as BGRA, so converting that here gives the CPU reference to compare it against.
@@ -1043,7 +1076,7 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
             const ti = targetBufs.findIndex((t) => t.width === cfg.width && t.height === cfg.height && t.format === 3)
             if (ti >= 0) {
                 const bytes = cfg.width * cfg.height * 4
-                const copy = Buffer.from(targetBufs[ti].pbuf.buf.subarray(0, bytes))
+                const copy = outputsOff.has(id) ? blankFrame(cfg.width, cfg.height, 3, false) : Buffer.from(targetBufs[ti].pbuf.buf.subarray(0, bytes))
                 port.postMessage({ type: "serverFrame", id, buffer: copy, size: { width: cfg.width, height: cfg.height } }, [copy.buffer])
             }
         }
@@ -1058,7 +1091,7 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
         if (opts.stageStream) {
             const cfg = opts.stageStream
             const ti = targetBufs.findIndex((t) => t.width === cfg.width && t.height === cfg.height && t.format === 3)
-            if (ti >= 0) encodeStageFrame(id, members, targetBufs[ti].pbuf.buf.subarray(0, cfg.width * cfg.height * 4), cfg)
+            if (ti >= 0) encodeStageFrame(id, members, outputsOff.has(id) ? blankPacerBuf(cfg.width, cfg.height, 3, false).buf : targetBufs[ti].pbuf.buf.subarray(0, cfg.width * cfg.height * 4), cfg)
         }
 
         loopDiag.fanMs += performance.now() - tFan
@@ -1123,7 +1156,7 @@ async function sendAudioBufferTarget(id: string, buffer: Buffer, { sampleRate, c
     const senderData = SENDERS[id]
     if (!senderData?.sender) return
 
-    const frame = await makeAudioFrame(senderData.adapter, buffer, sampleRate, channelCount)
+    const frame = await makeAudioFrame(senderData.adapter, outputsOff.has(id) ? Buffer.alloc(buffer.length) : buffer, sampleRate, channelCount)
     if (!frame || !SENDERS[id]?.sender) return
 
     if (!senderData.audioQueue) senderData.audioQueue = []
@@ -1135,14 +1168,17 @@ async function sendAudioBufferTarget(id: string, buffer: Buffer, { sampleRate, c
 async function sendAudioBuffer(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
     if (!Object.values(SENDERS).some((s) => s?.sender)) return
 
-    // one frame per protocol present: each library takes its own frame shape
+    // one frame per protocol present: each library takes its own frame shape; an off output gets silence
     const frames: { [tag: string]: any } = {}
+    let silence: Buffer | null = null
     for (const id of Object.keys(SENDERS)) {
         const senderData = SENDERS[id]
         if (!senderData?.sender) continue
 
-        const tag = senderData.adapter.tag
-        if (!(tag in frames)) frames[tag] = await makeAudioFrame(senderData.adapter, buffer, sampleRate, channelCount)
+        const off = outputsOff.has(id)
+        const tag = senderData.adapter.tag + (off ? ":off" : "")
+        if (off) silence ||= Buffer.alloc(buffer.length)
+        if (!(tag in frames)) frames[tag] = await makeAudioFrame(senderData.adapter, off ? silence! : buffer, sampleRate, channelCount)
         if (!frames[tag]) continue
 
         if (!senderData.audioQueue) senderData.audioQueue = []
@@ -1339,6 +1375,9 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
                 break
             case "webrtcReset":
                 if (webrtcServer) for (const m of Object.keys(webrtcServer.targets())) webrtcServer.drop(m)
+                break
+            case "outputsOff":
+                setOutputsOff(msg.ids || [])
                 break
             case "audio":
                 sendAudioBuffer(Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.opts)

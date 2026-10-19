@@ -25,6 +25,7 @@
     import PdfOutput from "./layers/PdfOutput.svelte"
     import SceneMedia from "./layers/SceneMedia.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
+    import RepaintTick from "./RepaintTick.svelte"
     import Window from "./Window.svelte"
 
     export let outputId = ""
@@ -445,6 +446,10 @@
     <!-- draw -->
     {#if zoomActive}
         <Draw />
+    {/if}
+
+    {#if !mirror && !preview}
+        <RepaintTick {outputId} />
     {/if}
 </Zoomed>
 

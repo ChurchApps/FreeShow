@@ -1,6 +1,7 @@
 import { spawn, type ChildProcess } from "child_process"
 import type { RtmpDestination, RtmpDestinationState, RtmpStatus } from "../../types/Output"
 import { buildEncoderCommand, buildFileRelayCommand, buildRelayCommand, getProfile, SAMPLE_RATE, type EncoderId } from "./encoderProfiles"
+import { outputsOff } from "../capture/outputsOff"
 
 // This engine runs in the capture worker thread (RtmpBridge on main proxies it). It must not import
 // anything Electron-bound: the ffmpeg path and encoder are resolved on main and handed to start()
@@ -682,7 +683,8 @@ export class RtmpStreamer {
             if (!streamer.hasReceivedFirstAudio) streamer.hasReceivedFirstAudio = true
 
             try {
-                audioStream.write(buffer)
+                // an output the user turned off keeps streaming, silent (capture/outputsOff.ts)
+                audioStream.write(outputsOff.has(streamer.outputId) ? Buffer.alloc(buffer.length) : buffer)
                 if (streamer.audioStats) {
                     streamer.audioStats.totalBytes += buffer.length
                     streamer.audioStats.chunkCount++

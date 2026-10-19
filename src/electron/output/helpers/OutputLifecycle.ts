@@ -457,6 +457,29 @@ export class OutputLifecycle {
         this.offMainAt.set(id, Date.now())
     }
 
+    // Outputs the user has turned on (the output toggle, for every output alike). Off is the default: an
+    // output goes live when it is turned on, and while off it keeps its connections but sends black and
+    // silence (capture/outputsOff.ts).
+    private static outputsOn = new Set<string>()
+
+    static isOutputOn(id: string): boolean {
+        return this.outputsOn.has(id)
+    }
+
+    static offOutputIds(ids = OutputHelper.getAllOutputs().map((o) => o.id)): string[] {
+        return ids.filter((id) => !this.outputsOn.has(id))
+    }
+
+    static setOutputOn(id: string, on: boolean) {
+        if (this.outputsOn.has(id) === on) return
+        if (on) this.outputsOn.add(id)
+        else this.outputsOn.delete(id)
+        NdiSender.postToWorker({ type: "outputsOff", ids: this.offOutputIds() })
+        // the page may be still, and nothing goes out until it paints: ask it for a frame, so the switch
+        // to or from black happens at once
+        OutputHelper.Send.sendToWindow(RenderGroups.rendererOf(id) || id, { channel: "REPAINT" })
+    }
+
     static isOffMainActive(id: string): boolean {
         const at = this.offMainAt.get(id)
         if (!at) return false
@@ -1170,7 +1193,8 @@ export class OutputLifecycle {
             }
             const cpuTargets = targets.length > 0 && !addon.targetsSupported
             const seq = ++offMainSeq
-            const captureOpts = { size: { width, height }, ratio, framerate: memberFramerates[id] || framerate, memberFramerates, format: cpuTargets ? 0 : fmt, mainFormat: fmt, convertCheck, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members, depth: OutputLifecycle.depthFor(id), targets, memberTarget, memberFormats, memberSizes, cpuTargets, stageStream, serverStream, thumbStream, rtmpMembers, bmdMembers, webrtcMembers, presentMembers }
+            const offMembers = OutputLifecycle.offOutputIds(members)
+            const captureOpts = { size: { width, height }, ratio, framerate: memberFramerates[id] || framerate, memberFramerates, format: cpuTargets ? 0 : fmt, mainFormat: fmt, convertCheck, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members, depth: OutputLifecycle.depthFor(id), targets, memberTarget, memberFormats, memberSizes, cpuTargets, stageStream, serverStream, thumbStream, rtmpMembers, bmdMembers, webrtcMembers, presentMembers, offMembers }
             const anySender = members.some((m) => !!NdiSender.NDI[m]?.sender || !!OmtSender.OMT[m]?.sender)
             if (SenderCapture.captureFrame(id, source, captureOpts, anySender)) {
                 forwardAt.set(seq, { t: Date.now(), unc: OutputLifecycle.globalInFlight === 0, px: width * height })

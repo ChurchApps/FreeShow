@@ -7,6 +7,7 @@ import { BlackmagicManager } from "./BlackmagicManager"
 import { BufferManager } from "./BufferManager"
 import { ImageBufferConverter, ImageBufferConverter10Bit, ImageBufferConverter10BitRGB, ImageBufferConverter12BitRGB } from "./ImageBufferConverter"
 import { getMacadam } from "./macadamLoader"
+import { outputsOff } from "../capture/outputsOff"
 
 const SEGFAULT_PRONE_DEVICES: Set<string> = new Set()
 
@@ -876,14 +877,17 @@ export class BlackmagicSender {
         // Blackmagic expects PCM 16-bit integer audio, which is the same format we receive
         const outputIds = Object.keys(this.playbackData)
         if (buffer.length > 0 && outputIds.length > 0) {
+            let silence: Buffer | null = null
             for (const outputId of outputIds) {
+                // an output the user turned off plays silence (capture/outputsOff.ts)
+                const chunk = outputsOff.has(outputId) ? (silence ||= Buffer.alloc(buffer.length)) : buffer
                 if (!this.audioQueuesByOutput[outputId]) {
                     this.audioQueuesByOutput[outputId] = { queue: [], offset: 0, length: 0 }
                 }
 
                 const outputQueue = this.audioQueuesByOutput[outputId]
-                outputQueue.queue.push(buffer)
-                outputQueue.length += buffer.length
+                outputQueue.queue.push(chunk)
+                outputQueue.length += chunk.length
             }
         }
 
