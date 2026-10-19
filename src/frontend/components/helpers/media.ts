@@ -18,7 +18,8 @@ import { getFirstActiveOutput, getOutputResolution } from "./output"
 
 export function getExtension(path: string): string {
     if (typeof path !== "string") return ""
-    if (path.includes("?")) path = path.slice(0, path.indexOf("?"))
+    // macOS allows local file names to have "?"
+    if (path.startsWith("http://") || path.startsWith("https://")) if (path.includes("?")) path = path.slice(0, path.indexOf("?"))
     if (path.indexOf(".") < 0) return path.startsWith("freeshow-protected://") ? "mp4" : path
     return path.substring(path.lastIndexOf(".") + 1).toLowerCase()
 }
