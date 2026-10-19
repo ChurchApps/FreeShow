@@ -218,7 +218,8 @@ export class CaptureLifecycle {
                         const fps = o.webrtcData?.fps ? Number(o.webrtcData.fps) : 30
                         const bitrate = o.webrtcData?.bitrate ? Number(o.webrtcData.bitrate) : 2500
                         if (o.captureOptions?.framerates) o.captureOptions.framerates.webrtc = fps
-                        if (url) WebRtcHost.startWhip(o.id, url, token, { fps, bitrate })
+                        // a new stream starts on a black canvas, and a still page sends nothing to replace it
+                        if (url && WebRtcHost.startWhip(o.id, url, token, { fps, bitrate })) OutputHelper.Lifecycle.requestRepaint(o.id)
                     } else {
                         WebRtcHost.stopWhip(o.id)
                     }

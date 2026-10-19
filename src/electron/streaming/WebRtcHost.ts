@@ -18,6 +18,9 @@ ipcMain.on("WEBRTC_LOG", (_event, { type, message }) => {
     }
 })
 
+// a stream the host gave up on (failed negotiation): the next start request must really start it
+ipcMain.on("WHIP_ENDED", (_event, { outputId }) => WebRtcHost.whipEnded(outputId))
+
 // Perform WHIP HTTP POST signaling from Electron Main (NodeJS) to bypass all browser CORS / Origin limits
 ipcMain.on("DO_WHIP_POST", async (event, { outputId, url, token, sdp }) => {
     try {
@@ -162,6 +165,7 @@ export class WebRtcHost {
             this.window = null
             this.started = false
             this.loaded = false
+            this.whipConfigs.clear()
             NdiSender.getSharedWorker()?.postMessage({ type: "webrtcReset" })
         })
     }
@@ -177,6 +181,7 @@ export class WebRtcHost {
         }
         this.loaded = false
         this.wanted.clear()
+        this.whipConfigs.clear()
         NdiSender.getSharedWorker()?.postMessage({ type: "webrtcReset" })
     }
 
@@ -192,19 +197,35 @@ export class WebRtcHost {
         this.window!.webContents.send("WEBRTC_AUDIO", { buffer, sampleRate, channelCount })
     }
 
-    /** Start a WHIP stream for a specific output window. */
-    static startWhip(outputId: string, url: string, token?: string, options?: { fps?: number; bitrate?: number }) {
+    // The settings each output's stream was started with. Every capture start or stop asks for every stream
+    // again, and a start replaces the running stream, so without this any output toggle or capture change
+    // dropped every WebRTC viewer for a reconnect. Only a stream whose settings changed is restarted.
+    private static whipConfigs = new Map<string, string>()
+
+    /** Start a WHIP stream for a specific output window. Returns whether a (re)start was sent. */
+    static startWhip(outputId: string, url: string, token?: string, options?: { fps?: number; bitrate?: number }): boolean {
         if (!this.isRunning()) {
             console.warn(`[WebRtcHost] Cannot start WHIP for ${outputId}: Host is not running.`)
-            return
+            return false
         }
-        this.window!.webContents.send("START_WHIP", { outputId, url, token, fps: options?.fps || 30, bitrate: options?.bitrate || 2500 })
+        const fps = options?.fps || 30
+        const bitrate = options?.bitrate || 2500
+        const config = JSON.stringify({ url, token: token || "", fps, bitrate })
+        if (this.whipConfigs.get(outputId) === config) return false
+        this.whipConfigs.set(outputId, config)
+        this.window!.webContents.send("START_WHIP", { outputId, url, token, fps, bitrate })
+        return true
     }
 
     /** Stop a WHIP stream for a specific output window. */
     static stopWhip(outputId: string) {
-        if (!this.isRunning()) return
+        if (!this.isRunning() || !this.whipConfigs.has(outputId)) return
+        this.whipConfigs.delete(outputId)
         this.window!.webContents.send("STOP_WHIP", { outputId })
+    }
+
+    static whipEnded(outputId: string) {
+        this.whipConfigs.delete(outputId)
     }
 
     private static buildHostHtml(): string {
@@ -581,6 +602,7 @@ host.on("START_WHIP", async ({ outputId, url, token, fps, bitrate }) => {
     } catch (err) {
         console.error("Failed to start WHIP stream for " + outputId + ": " + err.message);
         await stopStream(outputId);
+        host.send("WHIP_ENDED", { outputId });
     } finally {
         startingStreams.delete(outputId);
     }
