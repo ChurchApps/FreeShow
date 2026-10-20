@@ -197,6 +197,8 @@ export const receiveOUTPUTasOUTPUT: any = {
         // used for stage mirror data (hacky fix)
         allOutputs.set(a)
     },
+    // this window now draws a capture's frames rather than rendering the content a second time
+    PRESENT: ({ active }: { id: string; active: boolean }) => presenting.set(!!active),
     CLOSE_AD: () => closeAd.set(true),
     LANGUAGE: (a: any) => setLanguage(a),
     STYLES: (a: any) => styles.set(a),
