@@ -299,24 +299,25 @@
 
     let itemElem: HTMLElement | undefined
 
+    let lastRenderedItemKey = ""
     $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${item?.style || ""}_${item?.auto ? 1 : 0}_${item?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || "")}`
-
     $: if (stateSignature !== lastRenderedSignature && (!textTransition || textTransition.show)) {
+        const itemKey = `${ref?.id || ""}_${item?.id || itemIndex}_${resolvedTemplateId}`
+        const isSameItem = itemKey === lastRenderedItemKey && fontSize > 0
+        lastRenderedItemKey = itemKey
         lastRenderedSignature = stateSignature
         autoSizeReady = false
         const isTextItem = (item?.type || "text") === "text"
         const textFit = item?.textFit || (item?.auto ? (isTextItem ? "shrinkToFit" : "growToFit") : "none")
         const hasAutoSize = stageAutoSize || textFit !== "none"
         if (hasAutoSize) {
-            const willHide = shouldHideUntilAutoSizeCompletes()
+            const willHide = !isSameItem && shouldHideUntilAutoSizeCompletes()
 
             if (isStage) {
                 // Keep existing fontSize on stage to prevent flicker during drag
-            } else if (willHide) {
-                fontSize = 0
-            } else {
-                fontSize = item?.autoFontSize || (preview ? 100 : 0)
-            }
+            } else if (willHide) fontSize = 0
+            else if (item?.autoFontSize) fontSize = item.autoFontSize
+            else if (!fontSize) fontSize = preview ? 100 : 0
 
             hideUntilAutosized = willHide
         } else if (!isStage) {
@@ -327,13 +328,24 @@
     let prevAutosizeSignature = ""
     $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.auto ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${ratio}`
 
+    const AUTOSIZE_THROTTLE_MS = 100
     let debounceTimer: NodeJS.Timeout | null = null
+    let lastAutosizeRun = 0
     function debouncedCalculateAutosize(delay = 50) {
         if (debounceTimer) clearTimeout(debounceTimer)
+        const elapsed = Date.now() - lastAutosizeRun
+        const waitTime = Math.max(delay, elapsed < AUTOSIZE_THROTTLE_MS ? AUTOSIZE_THROTTLE_MS - elapsed : 0)
+        if (waitTime <= 0) {
+            debounceTimer = null
+            lastAutosizeRun = Date.now()
+            calculateAutosize()
+            return
+        }
         debounceTimer = setTimeout(() => {
             debounceTimer = null
+            lastAutosizeRun = Date.now()
             calculateAutosize()
-        }, delay)
+        }, waitTime)
     }
 
     // Trigger calculation only when Content, Style, Template, or Ratio actually changes (and inner text is mounted)
@@ -813,18 +825,7 @@
             <div class="textTransitionContainer">
                 {#key `${textTransition.show}-${textTransition.renderVersion}-${itemIndex}`}
                     {#if textTransition.show}
-                        <SlideItemTransition
-                            {preview}
-                            transitionEnabled={textTransition.transitionEnabled}
-                            transitioningBetween={textTransition.transitioningBetween}
-                            isClearing={textTransition.isClearing}
-                            incomingNeedsAutoSize={textTransition.incomingNeedsAutoSize}
-                            globalTransition={textTransition.globalTransition}
-                            item={{ ...item, autoFontSize: fontSize || item?.autoFontSize }}
-                            lines={textTransition.lines}
-                            let:customItem
-                            let:customLines
-                        >
+                        <SlideItemTransition {preview} transitionEnabled={textTransition.transitionEnabled} transitioningBetween={textTransition.transitioningBetween} isClearing={textTransition.isClearing} incomingNeedsAutoSize={textTransition.incomingNeedsAutoSize} globalTransition={textTransition.globalTransition} item={{ ...item, autoFontSize: fontSize || item?.autoFontSize }} lines={textTransition.lines} let:customItem let:customLines>
                             <TextboxLines
                                 item={customItem}
                                 {slideIndex}

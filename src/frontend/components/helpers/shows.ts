@@ -209,6 +209,8 @@ export function _show(id = "active") {
                                         if (value === undefined) delete a[id].slides[slideId].items[index][key]
                                         else a[id].slides[slideId].items[index][key] = value
                                     }
+
+                                    if (key !== "autoFontSize") delete a[id].slides[slideId].items[index].autoFontSize
                                 } else {
                                     prev.values.push(a[id].slides[slideId].items[index] ? clone(a[id].slides[slideId].items[index]) : null)
                                     a[id].slides[slideId].items[index] = value
@@ -312,6 +314,7 @@ export function _show(id = "active") {
                                             a[id].slides[slideId].items[index].lines![line] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
                                         }
                                     })
+                                    if (a[id].slides[slideId].items[index]) delete a[id].slides[slideId].items[index].autoFontSize
                                 })
                             })
 
@@ -331,6 +334,7 @@ export function _show(id = "active") {
                                         if (!a[id].slides[slideId]?.items?.[index]) return
                                         if (!a[id].slides[slideId].items[index].lines) a[id].slides[slideId].items[index].lines = []
                                         a[id].slides[slideId].items[index].lines![lineIndexes[i]] = item
+                                        delete a[id].slides[slideId].items[index].autoFontSize
                                     })
                                 })
                             })
@@ -356,6 +360,7 @@ export function _show(id = "active") {
                                         prev.items.push(a[id].slides[slideId].items[index].lines![line])
                                         delete a[id].slides[slideId].items[index].lines![line]
                                     })
+                                    if (a[id].slides[slideId].items[index]) delete a[id].slides[slideId].items[index].autoFontSize
                                 })
                             })
 

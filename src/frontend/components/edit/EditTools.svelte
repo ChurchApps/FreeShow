@@ -216,6 +216,8 @@
                 $activeEdit.items.forEach((i: number) => {
                     if (!a[$activeEdit.id!].items[i]?.lines) return
 
+                    delete a[$activeEdit.id!].items[i].autoFontSize
+
                     a[$activeEdit.id!].items[i].lines.forEach((line: Line) => {
                         line.text?.forEach((text) => {
                             text.style = ""

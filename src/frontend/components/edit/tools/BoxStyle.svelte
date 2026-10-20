@@ -464,6 +464,8 @@
             allItems.forEach((i: number) => {
                 if (!a[$activeEdit.id!].items[i]) return
 
+                delete a[$activeEdit.id!].items[i].autoFontSize
+
                 if (!targetId.includes(".")) {
                     a[$activeEdit.id!].items[i][targetId] = value
                     return
@@ -506,6 +508,7 @@
                 if (!a[$activeEdit.id!].items[i]) return
                 a[$activeEdit.id!].items[i].textFit = "none"
                 a[$activeEdit.id!].items[i].auto = false
+                delete a[$activeEdit.id!].items[i].autoFontSize
             })
             a[$activeEdit.id!].modified = Date.now()
             return a

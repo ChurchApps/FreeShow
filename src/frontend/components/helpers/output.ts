@@ -1448,7 +1448,6 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (mode === "item") return finish()
 
         if (resetAutoSize) delete item.autoFontSize
-        const prevTextFit = item.textFit
 
         // Handle auto and textFit properties
         if (templateItem.auto !== undefined) {
@@ -1466,7 +1465,6 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // Apply textFit if template defines it
         if (templateItem.textFit) item.textFit = templateItem.textFit
         else if (!templateItem.auto) delete item.textFit
-        if (item.textFit !== prevTextFit) delete item.autoFontSize
         if (templateItem.list) item.list = templateItem.list
         else delete item.list
 

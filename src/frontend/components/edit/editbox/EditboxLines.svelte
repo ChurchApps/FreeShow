@@ -365,6 +365,7 @@
             if (!a[$activeEdit.id!]?.items?.[index]) return a
 
             a[$activeEdit.id!].items[index].lines = newLines
+            delete a[$activeEdit.id!].items[index].autoFontSize
 
             a[$activeEdit.id!].modified = Date.now()
             return a
