@@ -661,13 +661,18 @@ function bmdGive(outputId: string, buf: Buffer, framerate: number, preConverted:
     BlackmagicSender.scheduleFrame(outputId, buf, BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null, framerate, preConverted)
     if (!(framerate > 0)) return
     const seq = last.seq
+    // timed to deadlines: chained delays each run a little late, and the card would slowly run out of frames
+    const period = 1000 / framerate
+    let due = performance.now() + period
     const hold = () => {
         const cur = bmdLast.get(outputId)
         if (!cur || cur.seq !== seq || !BlackmagicSender.playbackData[outputId]?.playback) return
         BlackmagicSender.scheduleFrame(outputId, cur.buf, BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null, cur.framerate, cur.preConverted)
-        cur.timer = setTimeout(hold, 1000 / cur.framerate)
+        const now = performance.now()
+        due = Math.max(due + period, now)
+        cur.timer = setTimeout(hold, due - now)
     }
-    last.timer = setTimeout(hold, 1000 / framerate)
+    last.timer = setTimeout(hold, period)
 }
 function bmdForget(outputId?: string) {
     for (const [id, last] of bmdLast) {

@@ -714,6 +714,22 @@ export class BlackmagicSender {
 
                     // Calculate stream time in DeckLink timescale units (duration ticks) for this frame.
                     const frameDurationTicks = data.frameDurationTicks || 1000
+                    // Stream time counts scheduled frames, so every frame not given in time (a still page, a late
+                    // tick) left all later frames scheduled in the past, where the card drops them and keeps showing
+                    // the last frame it played. Once playing, a frame that would not land at least one frame period
+                    // ahead of the card's position moves to the first period that does.
+                    if (data.isStarted) {
+                        try {
+                            const streamTime = data.playback.scheduledTime()?.streamTime
+                            if (typeof streamTime === "number") {
+                                // streamTime is 32-bit; the difference stays right across its wrap
+                                const lead = (data.scheduledFrames * frameDurationTicks - streamTime) | 0
+                                if (lead < frameDurationTicks) data.scheduledFrames += Math.ceil((frameDurationTicks - lead) / frameDurationTicks)
+                            }
+                        } catch {
+                            // no position to align to; schedule in sequence
+                        }
+                    }
                     const currentTime = data.scheduledFrames * frameDurationTicks
 
                     // Calculate correct sample frame count based on actual frame rate
