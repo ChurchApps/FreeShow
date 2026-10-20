@@ -153,7 +153,7 @@
     // kick off hidden textbox renders that warm the autosize cache before we flip "show" on
     function scheduleAutoSizePrecompute(items: Item[]) {
         onPrecomputeDone = null
-        if (preview || !Array.isArray(items) || !items.length) {
+        if (!Array.isArray(items) || !items.length) {
             precomputeTargets = []
             precomputePending.clear()
             return
@@ -466,7 +466,8 @@
 <!-- Render all items in original order to maintain z-index layering -->
 {#each currentItems as item, index}
     {#if item && shouldItemBeShown(item, [], showItemRef, conditionsUpdater) && (!item.clickReveal || current.outSlide?.itemClickReveal)}
-        {#if persistentItemIndexes.includes(index)}
+        {@const currentTransition = transition.between || transition.in || transition}
+        {#if persistentItemIndexes.includes(index) || !transitionEnabled || currentTransition?.type === "none" || currentTransition?.duration === 0}
             <!-- Persistent item: unchanged content, render outside transition to avoid flicker -->
             <Textbox
                 backdropFilter={current.slideData?.["backdrop-filter"] || ""}
@@ -486,13 +487,14 @@
                 slideIndex={current.outSlide?.index}
                 {styleIdOverride}
                 autoSizeKey={createAutoSizeKey(item, index)}
+                itemIndex={index}
                 updateDynamicValues={!isClearing}
             />
         {:else}
             <!-- Transitioning item: render with animation wrapper inside {#key} -->
             {#key `${show}-${renderVersion}-${index}-${item?.id || "noid"}`}
                 {#if show}
-                    <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} {isClearing} {incomingNeedsAutoSize} globalTransition={transition} currentSlide={current.currentSlide} {item} outSlide={current.outSlide} lines={current.lines} currentStyle={current.currentStyle} let:customSlide let:customItem let:customLines let:customOut let:transition>
+                    <SlideItemTransition {preview} {transitionEnabled} {transitioningBetween} {isClearing} {incomingNeedsAutoSize} globalTransition={transition} currentSlide={current.currentSlide} {item} outSlide={current.outSlide} lines={current.lines} let:customSlide let:customItem let:customLines let:customOut let:transition>
                         <Textbox
                             backdropFilter={current.slideData?.["backdrop-filter"] || ""}
                             chords={customItem.chords?.enabled}
@@ -511,6 +513,7 @@
                             slideIndex={customOut?.index}
                             {styleIdOverride}
                             autoSizeKey={createAutoSizeKey(item, index)}
+                            itemIndex={index}
                             updateDynamicValues={!isClearing}
                         />
                     </SlideItemTransition>
@@ -523,7 +526,7 @@
 {#if precomputeTargets.length}
     <div class="autosize-precompute" aria-hidden="true">
         {#each precomputeTargets as target (target.key)}
-            <Textbox item={target.item} {ratio} {outputId} outputStyle={currentStyle} {mirror} {preview} {styleIdOverride} ref={{ type: "show", showId: outSlide?.id, slideId: currentSlide?.id, id: currentSlide?.id || "", layoutId: outSlide?.layout }} autoSizeKey={target.key} on:autosizeReady={handlePrecomputeReady} updateDynamicValues={!isClearing} />
+            <Textbox item={target.item} {ratio} {outputId} outputStyle={currentStyle} {mirror} {preview} {styleIdOverride} ref={{ type: "show", showId: outSlide?.id, slideId: currentSlide?.id, id: currentSlide?.id || "", layoutId: outSlide?.layout }} autoSizeKey={target.key} itemIndex={target.index} on:autosizeReady={handlePrecomputeReady} updateDynamicValues={!isClearing} />
         {/each}
     </div>
 {/if}

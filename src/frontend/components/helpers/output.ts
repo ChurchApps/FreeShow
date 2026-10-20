@@ -297,14 +297,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
             if (type === "slide") {
                 const previousSlide = a[id].out?.slide || null
-                const sameSlideOutput =
-                    !!previousSlide &&
-                    !!outData &&
-                    previousSlide.id === outData.id &&
-                    previousSlide.layout === outData.layout &&
-                    previousSlide.index === outData.index &&
-                    previousSlide.page === outData.page &&
-                    previousSlide.type === outData.type
+                const sameSlideOutput = !!previousSlide && !!outData && previousSlide.id === outData.id && previousSlide.layout === outData.layout && previousSlide.index === outData.index && previousSlide.page === outData.page && previousSlide.type === outData.type
 
                 if (sameSlideOutput) {
                     a[id].out!.refresh = Number(a[id].out!.refresh || 0) + 1
@@ -1453,6 +1446,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (mode === "item") return finish()
 
         if (resetAutoSize) delete item.autoFontSize
+        const prevTextFit = item.textFit
 
         // Handle auto and textFit properties
         if (templateItem.auto !== undefined) {
@@ -1470,6 +1464,10 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // Apply textFit if template defines it
         if (templateItem.textFit) item.textFit = templateItem.textFit
         else if (!templateItem.auto) delete item.textFit
+        if (item.textFit !== prevTextFit) {
+            delete item.autoFontSize
+            delete item.previewAutoFontSize
+        }
         if (templateItem.list) item.list = templateItem.list
         else delete item.list
 
@@ -1912,7 +1910,9 @@ export function getStyleTemplate(outSlide: OutSlide | null, currentStyle: Styles
 }
 
 function itemHasAutoSize(item: Item) {
-    return (item.textFit || "none") !== "none" || !!item.auto
+    const hasAutoSize = (item.textFit || "none") !== "none" || !!item.auto
+    if (hasAutoSize && (item.type || "text") === "text" && !getItemText(item).length) return false
+    return hasAutoSize
 }
 
 export function slideHasAutoSizeItem(slide: Slide | Template) {

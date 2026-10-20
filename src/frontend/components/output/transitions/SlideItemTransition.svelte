@@ -1,9 +1,8 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { Item, Transition } from "../../../../types/Show"
-    import { currentWindow, scriptureSettings, templates } from "../../../stores"
+    import { currentWindow } from "../../../stores"
     import { clone } from "../../helpers/array"
-    import { getStyleTemplate, itemNeedsAutoSize, slideHasAutoSizeItem } from "../../helpers/output"
     import OutputTransition from "./OutputTransition.svelte"
     // import { onMount } from "svelte"
 
@@ -18,7 +17,6 @@
     export let currentSlide: any = {}
     export let outSlide: any = {}
     export let lines: any[] = []
-    export let currentStyle: any = {}
 
     let currentlyTransitioning: { [key: string]: any } = {}
 
@@ -82,20 +80,21 @@
 
         // EXTRA DELAY
 
-        // auto size delay
-        if (!outDelay) {
-            let customTemplate = getStyleTemplate(outSlide, currentStyle)
-            if (!Object.keys(customTemplate).length && outSlide?.id === "temp") customTemplate = $templates[$scriptureSettings.template] || {}
+        // this is hopefully not needed anymore
+        // // auto size delay
+        // if (!outDelay) {
+        //     let customTemplate = getStyleTemplate(outSlide, currentStyle)
+        //     if (!Object.keys(customTemplate).length && outSlide?.id === "temp") customTemplate = $templates[$scriptureSettings.template] || {}
 
-            // only keep the legacy autosize delay when nothing has pre-populated a font size yet
-            const templateNeedsAutoSize = slideHasAutoSizeItem(customTemplate)
+        //     // only keep the legacy autosize delay when nothing has pre-populated a font size yet
+        //     const templateNeedsAutoSize = slideHasAutoSizeItem(customTemplate)
 
-            if (templateNeedsAutoSize || itemNeedsAutoSize(item)) {
-                autoSizeDelay = 500
-                outDelay = autoSizeDelay
-                if (!inDelay) inDelay = outDelay * 0.98
-            }
-        }
+        //     if (templateNeedsAutoSize || itemNeedsAutoSize(item)) {
+        //         autoSizeDelay = 500
+        //         outDelay = autoSizeDelay
+        //         if (!inDelay) inDelay = outDelay * 0.98
+        //     }
+        // }
 
         // add some time in case an identical item is "fading" in
         if (!outDelay && itemTransition?.duration === 0 && item.type === "media") outDelay = 250

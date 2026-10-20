@@ -387,6 +387,11 @@
         }
 
         const isTextItem = (item.type || "text") === "text"
+        if (isTextItem && !getItemText(isStage ? stageItem : item).length && !isStage) {
+            fontSize = 0
+            markAutoSizeReady()
+            return
+        }
         let textFit = item.textFit || (isTextItem ? (item?.auto ? "shrinkToFit" : "none") : "growToFit")
         if (textFit === "none" && !isStage) {
             fontSize = 0
@@ -403,6 +408,14 @@
         const cacheKey = buildAutoSizeCacheKey()
         const cacheSignature = buildAutoSizeSignature(undefined, undefined, chords)
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
+
+        // trust "autoFontSize" if it exists and there are no template or output style overrides
+        const hasOutputOverride = Number(outputStyle?.lines || 0) || (outputStyle?.template && outputStyle.template !== currentShowTemplateId)
+        if ((item.type || "text") === "text" && !isDynamic && !chords && !hasOutputOverride && item?.autoFontSize && !isStage) {
+            fontSize = item.autoFontSize
+            markAutoSizeReady()
+            return
+        }
 
         if (!isDynamic && !chords && !Number(outputStyle?.lines || 0) && cachedResult && cachedResult.signature === cacheSignature) {
             fontSize = cachedResult.fontSize
@@ -617,11 +630,13 @@
     }
 
     function shouldHideUntilAutoSizeCompletes() {
-        if (preview || isStage) return false
+        if (isStage) return false
+        if ((item?.type || "text") === "text" && !getItemText(item).length) return false
 
         const isTextItem = (item?.type || "text") === "text"
         const textFit = item?.textFit || (item?.auto ? (isTextItem ? "shrinkToFit" : "growToFit") : "none")
         if (textFit === "none") return false
+        if (item?.autoFontSize) return false
 
         // CHECK CACHE
         const cacheKey = buildAutoSizeCacheKey()
