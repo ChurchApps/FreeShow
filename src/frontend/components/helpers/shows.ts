@@ -1,8 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { LayoutRef } from "../../../types/Show"
-import { activeFocus, activeShow, focusMode, showsCache, special } from "../../stores"
-import { getSlideText } from "../edit/scripts/textStyle"
+import { activeFocus, activeShow, focusMode, showsCache } from "../../stores"
 import { clone } from "./array"
 import { addToPos } from "./mover"
 // import { loadShows } from "./setShow"
@@ -455,19 +454,20 @@ export function _show(id = "active") {
                             }
                         })
 
-                        if (get(special).alwaysPlaceEmptySlideFirst && a[i].length) {
-                            const firstSlide = shows[id]?.slides?.[a[i][0]?.id]
-                            if (firstSlide && getSlideText(firstSlide).length) {
-                                a[i].unshift({ type: "parent", layoutId, index: -1, layoutIndex: 0, id: "fake_empty", children: [], data: { id: "fake_empty" } })
-                                // Re-index layoutIndex for subsequent slides
-                                for (let k = 1; k < a[i].length; k++) {
-                                    a[i][k].layoutIndex = k
-                                    if (a[i][k].type === "child" && a[i][k].parent) {
-                                        a[i][k].parent!.layoutIndex = a[i][k].parent!.index === -1 ? 0 : a[i].findIndex((item) => item.id === a[i][k].parent?.id && item.type === "parent")
-                                    }
-                                }
-                            }
-                        }
+                        // this broke things more than it helps, use the template option instead
+                        // if (get(special).alwaysPlaceEmptySlideFirst && a[i].length) {
+                        //     const firstSlide = shows[id]?.slides?.[a[i][0]?.id]
+                        //     if (firstSlide && getSlideText(firstSlide).length) {
+                        //         a[i].unshift({ type: "parent", layoutId, index: -1, layoutIndex: 0, id: "fake_empty", children: [], data: { id: "fake_empty" } })
+                        //         // Re-index layoutIndex for subsequent slides
+                        //         for (let k = 1; k < a[i].length; k++) {
+                        //             a[i][k].layoutIndex = k
+                        //             if (a[i][k].type === "child" && a[i][k].parent) {
+                        //                 a[i][k].parent!.layoutIndex = a[i][k].parent!.index === -1 ? 0 : a[i].findIndex((item) => item.id === a[i][k].parent?.id && item.type === "parent")
+                        //             }
+                        //         }
+                        //     }
+                        // }
                     })
                 }
                 return a
