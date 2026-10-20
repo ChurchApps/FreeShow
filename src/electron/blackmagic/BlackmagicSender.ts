@@ -262,7 +262,8 @@ export class BlackmagicSender {
 
                 // Use BufferManager for optimal buffer size calculation
                 const targetBufferSize = BufferManager.calculateOptimalBufferSize(displayModeName, pixelFormat)
-                const targetSize = this.getDimensionsForDisplayMode(displayModeName)
+                // the opened mode's own size; the name differs by driver ("4K2160p29.97" or "2160p29.97")
+                const targetSize = playback.width && playback.height ? { width: playback.width, height: playback.height } : this.getDimensionsForDisplayMode(displayModeName)
                 const expectedVideoFrameSize = this.getExpectedVideoFrameSize(targetSize, pixelFormat)
                 const expectedAudioSampleCount = Math.round(48000 / BlackmagicSender.getAccurateFrameRate(displayModeName))
                 const frameDurationTicks = Array.isArray(playback.frameRate) && playback.frameRate[0] > 0 ? playback.frameRate[0] : Math.round(60000 / BlackmagicSender.getAccurateFrameRate(displayModeName))
@@ -456,6 +457,9 @@ export class BlackmagicSender {
         // Check for 4K resolutions
         if (normalized.includes("4k") && normalized.includes("2160")) return { width: 3840, height: 2160 }
         if (normalized.includes("4kdci")) return { width: 4096, height: 2160 }
+        // UHD named without the "4K"/"8K" prefix, as Desktop Video on macOS does
+        if (normalized.includes("4320")) return { width: 7680, height: 4320 }
+        if (normalized.includes("2160")) return { width: 3840, height: 2160 }
 
         // Check for 2K resolutions
         if (normalized.includes("2kdci")) return { width: 2048, height: 1080 }

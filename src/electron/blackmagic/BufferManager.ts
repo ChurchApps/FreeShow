@@ -27,7 +27,7 @@ export class BufferManager {
         let baseSize = 5 // Conservative starting point
 
         // Adjust based on resolution
-        if (displayMode.includes("4K") || displayMode.includes("4k")) {
+        if (displayMode.includes("4K") || displayMode.includes("4k") || displayMode.includes("2160")) {
             baseSize = 8
         } else if (displayMode.includes("1080")) {
             baseSize = 6

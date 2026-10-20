@@ -63,7 +63,7 @@ export async function initializeSender(data: Output, window: BrowserWindow, id: 
     } else if (displayMode.includes("2k")) {
         blackmagicWidth = 2048
         blackmagicHeight = 1080
-    } else if (displayMode.includes("4K") || displayMode.includes("4k")) {
+    } else if (displayMode.includes("4K") || displayMode.includes("4k") || displayMode.includes("2160")) {
         blackmagicWidth = 3840
         blackmagicHeight = 2160
     } else if (displayMode.includes("525i") || displayMode.includes("NTSC")) {
@@ -72,6 +72,14 @@ export async function initializeSender(data: Output, window: BrowserWindow, id: 
     } else if (displayMode.includes("625i") || displayMode.includes("PAL")) {
         blackmagicWidth = 720
         blackmagicHeight = 576
+    }
+
+    // the device's own description of the mode wins over reading it from the name, which differs by driver
+    const device: any = BlackmagicManager.getDeviceById(bmdData.deviceId)
+    const modeData = (device?.outputDisplayModes || device?.inputDisplayModes || []).find((m: any) => m?.name === displayMode)
+    if (modeData?.width && modeData?.height) {
+        blackmagicWidth = modeData.width
+        blackmagicHeight = modeData.height
     }
 
     const windowBounds = window.getBounds()

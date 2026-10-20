@@ -80,6 +80,13 @@ export class BlackmagicManager {
         mode = getBmdDisplayModes().get(normalized)
         if (mode !== undefined) return mode
 
+        // Desktop Video on macOS names the UHD modes without the "4K"/"8K" prefix ("2160p29.97")
+        const uhd = normalized.replace(/^2160/, "4K2160").replace(/^4320/, "8K4320")
+        if (uhd !== normalized) {
+            mode = getBmdDisplayModes().get(uhd)
+            if (mode !== undefined) return mode
+        }
+
         // Try with different case variations
         const lowerNormalized = normalized.toLowerCase()
         for (const [key, value] of getBmdDisplayModes()) {
