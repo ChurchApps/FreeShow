@@ -349,9 +349,14 @@
     }
 
     // Trigger calculation only when Content, Style, Template, or Ratio actually changes (and inner text is mounted)
-    $: if (itemElem && loaded && (!textTransition || textTransition.show) && autosizeSignature !== prevAutosizeSignature) {
-        prevAutosizeSignature = autosizeSignature
-        debouncedCalculateAutosize(isStage ? 60 : 0)
+    $: if (itemElem && loaded && (!textTransition || textTransition.show)) {
+        const isTextItem = (item?.type || "text") === "text"
+        const textFit = item?.textFit || (item?.auto ? (isTextItem ? "shrinkToFit" : "growToFit") : "none")
+        const hasAutoSize = stageAutoSize || textFit !== "none"
+        if (autosizeSignature !== prevAutosizeSignature || (hasAutoSize && !fontSize && !debounceTimer)) {
+            prevAutosizeSignature = autosizeSignature
+            debouncedCalculateAutosize(isStage ? 60 : 0)
+        }
     }
     $: isDynamicText = (stageItem ? getItemText(stageItem) : getItemText(item)).includes("{")
     $: if (itemElem && loaded && $variables && isDynamicText) {

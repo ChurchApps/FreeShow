@@ -372,6 +372,7 @@
                                     clickRevealed={!!output?.clickRevealed}
                                     {centerPreview}
                                     preview
+                                    outputStyle={styleTemplateActive ? currentStyle : null}
                                     styleTemplateUsed={styleTemplateActive}
                                     chords={item.chords?.enabled}
                                 />
