@@ -1,7 +1,20 @@
-import type { ValidChannels } from "../../types/Channels"
+import { OUTPUT, type ValidChannels } from "../../types/Channels"
+
+// set by the main window (renderSignature.ts): sees every message to the output windows first, and may
+// return one to send ahead of it
+let beforeOutputSend: ((channel: string, data: any) => { channel: string; data: any } | null) | null = null
+export function setBeforeOutputSend(fn: typeof beforeOutputSend) {
+    beforeOutputSend = fn
+}
 
 export function send(ID: ValidChannels, channels: string[], data: any = null) {
-    channels.forEach((channel: string) => window.api.send(ID, { channel, data }))
+    channels.forEach((channel: string) => {
+        if (ID === OUTPUT && beforeOutputSend) {
+            const first = beforeOutputSend(channel, data)
+            if (first) window.api.send(ID, first)
+        }
+        window.api.send(ID, { channel, data })
+    })
 }
 
 export function receive(ID: ValidChannels, channels: any, id = "") {

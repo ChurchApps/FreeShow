@@ -14,9 +14,10 @@ import { wait, waitUntilValueIsDefined } from "./common"
 import { getDefaultElements } from "./createData"
 import { setLanguage } from "./language"
 import { storeSubscriber } from "./listeners"
+import { renderSignatureHook } from "./renderSignature"
 import { autoOpenLastUsedProfile, openProfileByName } from "./profile"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
-import { destroy, receive, send } from "./request"
+import { destroy, receive, send, setBeforeOutputSend } from "./request"
 import { save, unsavedUpdater } from "./save"
 
 let initialized = false
@@ -71,6 +72,8 @@ async function startupMain() {
     if (startupProfile) openProfileByName(startupProfile)
     else autoOpenLastUsedProfile()
 
+    // before the stores start sending to the output windows, so the signatures see every message
+    setBeforeOutputSend(renderSignatureHook)
     storeSubscriber()
     remoteListen()
 

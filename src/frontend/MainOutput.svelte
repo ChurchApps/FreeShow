@@ -59,9 +59,59 @@
             loaded = true
         }, 2000)
     })
+
+    // What this page shows, for main to decide whether another output may show this page's frames instead
+    // of its own (RenderGroups.ts): whether a transition or animation is running, and a hash of the page's
+    // content once it is still. An output joins another's render only when both pages are still and show
+    // the same content, so a fade is never cut short and nothing changes on the switch.
+    let rootEl: HTMLElement | null = null
+    let reported = ""
+    let checkQueued = false
+    function queueCheck() {
+        if (checkQueued) return
+        checkQueued = true
+        // after the current task, so a burst of changes is looked at once, settled
+        setTimeout(reportState, 0)
+    }
+    function reportState() {
+        checkQueued = false
+        if (!outputId || !rootEl) return
+        const busy = document.getAnimations().some((a) => a.playState === "running")
+        // the content as markup, minus what differs between windows showing the same thing: element ids
+        // (some are random) and this output's own id
+        const dom = busy ? "" : contentHash(rootEl.innerHTML.replace(/ id="[^"]*"/g, "").split(outputId).join("~"))
+        const state = `${busy}|${dom}`
+        if (state === reported) return
+        reported = state
+        send(OUTPUT, ["RENDER_BUSY"], { id: outputId, busy, dom })
+    }
+    function contentHash(str: string): string {
+        let h1 = 0xdeadbeef
+        let h2 = 0x41c6ce57
+        for (let i = 0; i < str.length; i++) {
+            const ch = str.charCodeAt(i)
+            h1 = Math.imul(h1 ^ ch, 2654435761)
+            h2 = Math.imul(h2 ^ ch, 1597334677)
+        }
+        return `${(h1 >>> 0).toString(36)}${(h2 >>> 0).toString(36)}`
+    }
+    const animationEvents = ["animationstart", "animationend", "animationcancel", "transitionrun", "transitionend", "transitioncancel"]
+    onMount(() => {
+        if ($currentWindow !== "output" || !rootEl) return
+        const observer = new MutationObserver(queueCheck)
+        observer.observe(rootEl, { subtree: true, childList: true, attributes: true, characterData: true })
+        for (const ev of animationEvents) document.addEventListener(ev, queueCheck, true)
+        queueCheck()
+        return () => {
+            observer.disconnect()
+            for (const ev of animationEvents) document.removeEventListener(ev, queueCheck, true)
+        }
+    })
+    $: if (outputId && $currentWindow === "output") queueCheck()
 </script>
 
 <div
+    bind:this={rootEl}
     class="fill context #output_window"
     style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') && !Object.values($outputs)[0]?.stageOutput ? 'row' : 'column'};"
     class:hideCursor={$special.hideCursor}
