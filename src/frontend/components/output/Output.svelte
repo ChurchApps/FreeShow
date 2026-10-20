@@ -119,10 +119,11 @@
         if (refreshVersion !== handledRefreshVersion) {
             handledRefreshVersion = refreshVersion
             updateOutData("slide", true)
+            updateOutData("overlays", true)
         }
     }
     $: if (outputId) updateOutData()
-    function updateOutData(type = "", forceSlideUpdate = false) {
+    function updateOutData(type = "", forceUpdate = false) {
         if (!type || type === "slide") {
             let noLineCurrent = clone(slide)
             if (noLineCurrent) delete noLineCurrent.line
@@ -130,7 +131,7 @@
             if (noLineNew) delete noLineNew.line
 
             // don't refresh if changing lines on another slide & content is unchanged
-            if (!forceSlideUpdate && !out?.slide?.type && lines[currentLineId || ""]?.start === null && JSON.stringify(noLineCurrent) === JSON.stringify(noLineNew)) return
+            if (!forceUpdate && !out?.slide?.type && lines[currentLineId || ""]?.start === null && JSON.stringify(noLineCurrent) === JSON.stringify(noLineNew)) return
 
             // WIP option to turn off "content refresh" if slide content is identical to previous content ?
 
@@ -144,7 +145,7 @@
         if (!type || type === "background") background = clone(out.background || null)
         if (!type || type === "overlays") {
             storedOverlayIds = JSON.stringify(overlayIds)
-            if (JSON.stringify($overlays) !== storedOverlays) {
+            if (forceUpdate || JSON.stringify($overlays) !== storedOverlays) {
                 clonedOverlays = clone($overlays)
                 storedOverlays = JSON.stringify($overlays)
             }
