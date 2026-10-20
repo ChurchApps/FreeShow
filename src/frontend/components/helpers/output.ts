@@ -738,8 +738,9 @@ export function getFirstOutputIdWithBackground(outputIds: string[] = [], _update
 }
 
 // used for checking if style template should be used as slide preview - only if all outputs have it
-export function allOutputsHasStyleTemplate(isScripture: boolean = false) {
+export function allOutputsHasStyleTemplate(isScripture: boolean = false, _updater: any = null) {
     const outputs = getAllNormalOutputs()
+    if (!outputs.length) return false
     return outputs.every((output) => {
         const style = output.style ? get(styles)[output.style] || null : null
         const template = style?.[isScripture ? "templateScripture" : "template"]
@@ -1404,6 +1405,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         templateItems.forEach((item) => {
             if (!item) return
             delete item.autoFontSize
+            delete item.previewAutoFontSize
         })
     }
 
@@ -1446,7 +1448,10 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         // don't alter text if item mode
         if (mode === "item") return finish()
 
-        if (resetAutoSize) delete item.autoFontSize
+        if (resetAutoSize) {
+            delete item.autoFontSize
+            delete item.previewAutoFontSize
+        }
         const prevTextFit = item.textFit
 
         // Handle auto and textFit properties

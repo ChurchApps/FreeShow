@@ -41,6 +41,7 @@
     export let useOriginalTextColor = false
     export let customFontSize: number | null = null
     export let outputStyle: Styles | null = null
+    export let styleTemplateUsed = false
     export let ref: {
         type?: "show" | "stage" | "overlay" | "template"
         showId?: string
@@ -298,9 +299,9 @@
 
     let itemElem: HTMLElement | undefined
 
-    $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${JSON.stringify(item?.lines || "")}`
+    $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${item?.style || ""}_${item?.auto ? 1 : 0}_${item?.textFit || ""}_${JSON.stringify(item?.lines || "")}`
 
-    $: if (stateSignature !== lastRenderedSignature) {
+    $: if (stateSignature !== lastRenderedSignature && (!textTransition || textTransition.show)) {
         lastRenderedSignature = stateSignature
         autoSizeReady = false
         const isTextItem = (item?.type || "text") === "text"
@@ -320,10 +321,13 @@
             }
 
             hideUntilAutosized = willHide
+        } else if (!isStage) {
+            fontSize = 0
+            hideUntilAutosized = false
         }
     }
     let prevAutosizeSignature = ""
-    $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${ratio}`
+    $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.auto ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${ratio}`
 
     let debounceTimer: NodeJS.Timeout | null = null
     function debouncedCalculateAutosize(delay = 50) {
@@ -412,7 +416,8 @@
         const cachedResult = cacheKey ? readAutoSizeCache(cacheKey) : undefined
 
         // trust "autoFontSize" if it exists and there are no template or output style overrides
-        const hasOutputOverride = Number(outputStyle?.lines || 0) || (outputStyle?.template && outputStyle.template !== currentShowTemplateId)
+        const hasOutputTemplateOverride = (outputStyle?.template && outputStyle.template !== currentShowTemplateId) || (isScriptureContext && !!styleScriptureTemplateId)
+        const hasOutputOverride = Number(outputStyle?.lines || 0) || hasOutputTemplateOverride || styleTemplateUsed
         if ((item.type || "text") === "text" && !isDynamic && !chords && !hasOutputOverride && item?.autoFontSize && !isStage) {
             fontSize = item.autoFontSize
             markAutoSizeReady()
@@ -651,7 +656,8 @@
     }
 
     function setItemAutoFontSize(fontSize) {
-        if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp") return
+        const hasOutputTemplateOverride = (outputStyle?.template && outputStyle.template !== currentShowTemplateId) || (isScriptureContext && !!styleScriptureTemplateId)
+        if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp" || styleTemplateUsed || hasOutputTemplateOverride) return
 
         if (ref.type === "overlay") {
             const currentOverlays = $overlays
@@ -681,7 +687,8 @@
     }
 
     function setItemPreviewAutoFontSize(fontSize) {
-        if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp") return
+        const hasOutputTemplateOverride = (outputStyle?.template && outputStyle.template !== currentShowTemplateId) || (isScriptureContext && !!styleScriptureTemplateId)
+        if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp" || styleTemplateUsed || hasOutputTemplateOverride) return
 
         if (ref.type === "overlay") {
             const currentOverlays = $overlays
