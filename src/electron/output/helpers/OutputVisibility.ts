@@ -14,12 +14,11 @@ export class OutputVisibility {
         // The list is in display order, which decides stacking, so it is not reordered. Creation order is
         // separate: an offscreen output must exist before a displayed one of the same content, or that one
         // finds no render to join. Awaited, so the loop below does not create these a second time.
-        const rendersOffscreen = (o: Output) => !!(o.ndi || o.omt || o.webrtc || o.rtmp || o.blackmagic || o.invisible)
         const needsWindow = (o: Output & { id: string }) => {
             const win = OutputHelper.getOutput(o.id)?.window
             return !win || win.isDestroyed()
         }
-        for (const output of data.outputs.filter(needsWindow).filter(rendersOffscreen)) {
+        for (const output of data.outputs.filter(needsWindow).filter(OutputVisibility.rendersOffscreen)) {
             await OutputHelper.Lifecycle.createOutput(output)
         }
 
@@ -30,6 +29,10 @@ export class OutputVisibility {
         })
 
         toApp(OUTPUT, { channel: "OUTPUT_STATE", data: newStates })
+    }
+
+    static rendersOffscreen(o: Output) {
+        return !!(o.ndi || o.omt || o.webrtc || o.rtmp || o.blackmagic || o.invisible)
     }
 
     static toggleOutput(output: Output & { id: string }, state: boolean, autoStartup?: boolean, autoPosition?: boolean) {
@@ -55,7 +58,7 @@ export class OutputVisibility {
 
         const displays = screen.getAllDisplays()
         const isSingleScreenAutoStartup = autoStartup && displays.length <= 1
-        if (isSingleScreenAutoStartup) return false
+        if (isSingleScreenAutoStartup) return this.windowNotShown(output, state)
 
         const bounds: Rectangle = this.resolveOutputBounds(output, autoPosition)
 
@@ -72,11 +75,18 @@ export class OutputVisibility {
             this.hideWindow(window, output)
             // returning to capture-only: render at the configured resolution (DPI-corrected)
             OutputBounds.updateBounds({ id: output.id, bounds: output.bounds })
-            OutputHelper.Lifecycle.setOutputOn(output.id, false)
 
             if (state === true && !autoStartup) toApp(MAIN, { channel: "ALERT", data: "error.display" })
-            return false
+            return this.windowNotShown(output, state)
         }
+    }
+
+    // The window stays hidden, but an output that also sends elsewhere (NDI, Blackmagic...) is still turned on
+    // or off as asked: only its window could not be shown, and turning it off would send black.
+    private static windowNotShown(output: Output & { id: string }, state: boolean): "invisible" | false {
+        const on = state && this.rendersOffscreen(output)
+        OutputHelper.Lifecycle.setOutputOn(output.id, on)
+        return on ? "invisible" : false
     }
 
     static resolveOutputBounds(output: Partial<Output> & { bounds: Rectangle; boundsLocked?: boolean; screen?: string | null }, autoPosition = false): Rectangle {
