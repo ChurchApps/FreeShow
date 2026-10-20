@@ -275,7 +275,7 @@
     {/if}
 
     {#if $activePage === "show"}
-        <div class="section" style="margin-top: 2px;">
+        <div class="section clear-btns" style="margin-top: 2px;">
             <ClearButtons bind:autoChange activeClear={updatedActiveClear} on:update={(e) => (activeClear = e.detail)} />
 
             {#if updatedActiveClear === "background"}
@@ -307,6 +307,7 @@
         /* max-height: 50%; */
         flex: 1;
         min-width: 50%;
+        position: relative;
     }
 
     .top {
@@ -354,6 +355,12 @@
         overflow: hidden;
 
         transition: transform 0.2s ease;
+    }
+
+    .section.clear-btns {
+        position: sticky;
+        bottom: 5px;
+        z-index: 10;
     }
 
     .section.float {

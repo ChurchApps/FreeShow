@@ -122,10 +122,11 @@
         if (refreshVersion !== handledRefreshVersion) {
             handledRefreshVersion = refreshVersion
             updateOutData("slide", true)
+            updateOutData("overlays", true)
         }
     }
     $: if (outputId) updateOutData()
-    function updateOutData(type = "", forceSlideUpdate = false) {
+    function updateOutData(type = "", forceUpdate = false) {
         if (!type || type === "slide") {
             let noLineCurrent = clone(slide)
             if (noLineCurrent) delete noLineCurrent.line
@@ -133,7 +134,7 @@
             if (noLineNew) delete noLineNew.line
 
             // don't refresh if changing lines on another slide & content is unchanged
-            if (!forceSlideUpdate && !out?.slide?.type && lines[currentLineId || ""]?.start === null && JSON.stringify(noLineCurrent) === JSON.stringify(noLineNew)) return
+            if (!forceUpdate && !out?.slide?.type && lines[currentLineId || ""]?.start === null && JSON.stringify(noLineCurrent) === JSON.stringify(noLineNew)) return
 
             // WIP option to turn off "content refresh" if slide content is identical to previous content ?
 
@@ -147,7 +148,7 @@
         if (!type || type === "background") background = clone(out.background || null)
         if (!type || type === "overlays") {
             storedOverlayIds = JSON.stringify(overlayIds)
-            if (JSON.stringify($overlays) !== storedOverlays) {
+            if (forceUpdate || JSON.stringify($overlays) !== storedOverlays) {
                 clonedOverlays = clone($overlays)
                 storedOverlays = JSON.stringify($overlays)
             }
@@ -179,8 +180,8 @@
     let slideData: SlideData | null = null
     let currentSlide: Slide | null = null
 
-    $: updateSlideData(slide, outputId || styleId)
-    function updateSlideData(slide, _outputChanged) {
+    $: updateSlideData(slide, outputId, currentStyle)
+    function updateSlideData(slide, _outputChanged, _styleChanged) {
         if (!slide) {
             currentLayout = []
             slideData = null
@@ -222,10 +223,9 @@
     $: slideFilter = getSlideFilter(slideData)
 
     // custom template
-    // WIP revert to old style when output style is reverted to no style (REFRESH OUTPUT)
     // currentSlide is so the background updates when scripture is removed (if template background on both) - not changed in preview
-    $: if (styleId && currentStyle && currentSlide !== undefined) {
-        if (currentSlide) setTemplateItems()
+    $: if (currentStyle && currentSlide !== undefined) {
+        if (styleId && currentSlide) setTemplateItems()
         getStyleTemplateData()
     }
     const setTemplateItems = () => (currentSlide!.items = setTemplateStyle(slide!, currentStyle, currentSlide!.items, outputId, currentSlide!.customDynamicValues))
@@ -358,7 +358,7 @@
     $: drawZoom = $drawTool === "zoom" && zoomActive ? ($drawSettings.zoom?.size || 200) / 100 : 1
 
     // CLEARING
-    $: if (slide !== undefined || styleId || layers || sceneHideLayers !== undefined) updateSlide()
+    $: if (slide !== undefined || currentStyle || layers || sceneHideLayers !== undefined) updateSlide()
     let actualSlide: OutSlide | null = null
     let actualSlideData: SlideData | null = null
     let actualCurrentSlide: Slide | null = null

@@ -1358,9 +1358,9 @@ export function getScriptureSlides({ biblesContent, selectedChapters, selectedVe
                 if (templateTextItems[j]?.bindings) slides[i][j].bindings = templateTextItems[j].bindings
 
                 // auto size
-                if (!templateTextItems[j]?.auto || !slides[i][j].lines?.[0]?.text) return
+                if ((templateTextItems[j]?.textFit || "none") === "none" || !slides[i][j].lines?.[0]?.text) return
 
-                slides[i][j].auto = true
+                slides[i][j].textFit = templateTextItems[j]?.textFit
                 if (templateTextItems[j]?.textFit) slides[i][j].textFit = templateTextItems[j]?.textFit
                 // slides[i][j].lines![0].text.forEach((_, k) => {
                 //     if (slides[i][j].lines![0].text[k].customType === "disableTemplate") return

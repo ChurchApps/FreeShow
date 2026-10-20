@@ -91,7 +91,6 @@ export function addItem(type: ItemType, id: string | null = null, options: any =
             group: options.group || options.cameraGroup || ""
         }
     } else if (type === "variable") newData.variable = { id: "" }
-    else if (type === "slide_tracker") newData.auto = true
     else if (type === "web") newData.web = { url: "" }
     else if (type === "qr_code") newData.qr_code = { text: "" }
     else if (type === "captions") newData.captions = { roomId: "freeshow" + uid(6) }

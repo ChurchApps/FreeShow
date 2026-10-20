@@ -60,7 +60,7 @@
     }
 
     let chordLines: string[] = []
-    $: if (chordsMode && (item?.lines || (item?.auto && autoSize))) createChordLines()
+    $: if (chordsMode && (item?.lines || ((item?.textFit || "none") !== "none" && autoSize))) createChordLines()
     function createChordLines() {
         chordLines = []
         chordButtons = []
@@ -92,7 +92,7 @@
                     }
 
                     let style = text.style
-                    if (item.auto && autoSize) style += `font-size: ${autoSize}px;`
+                    if ((item?.textFit || "none") !== "none" && autoSize) style += `font-size: ${autoSize}px;`
 
                     // in some cases spaces will get width 0 and change text layout if at line breaks (this is not an issue)
                     html += `<span id="${i}_${currentIndex}" class="invisible add" style="${style}">${letter}</span>`

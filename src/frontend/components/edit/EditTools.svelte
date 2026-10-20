@@ -216,6 +216,8 @@
                 $activeEdit.items.forEach((i: number) => {
                     if (!a[$activeEdit.id!].items[i]?.lines) return
 
+                    delete a[$activeEdit.id!].items[i].autoFontSize
+
                     a[$activeEdit.id!].items[i].lines.forEach((line: Line) => {
                         line.text?.forEach((text) => {
                             text.style = ""
@@ -294,7 +296,7 @@
             })
         }
 
-        let deleteKeys = ["auto", "textFit", "specialStyle", "scrolling"]
+        let deleteKeys = ["textFit", "specialStyle", "scrolling"]
         // reset timer/icon/media/mirror etc. style
         if (item && item[item.type || ""]) deleteKeys = [item.type!]
 
@@ -387,7 +389,6 @@
     //     function trimItems(items: Item[]) {
     //         items.forEach((item) => {
     //             if (item.type === "text") delete item.type
-    //             if (item.auto === false) delete item.auto
 
     //             item.lines?.forEach((line, lineIndex) => {
     //                 line.align = (line.align || "").replaceAll(";;", ";")

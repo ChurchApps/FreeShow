@@ -71,8 +71,8 @@
         let defaultFontSize
         let maxFontSize
 
-        if (stageItem?.type !== "text") type = stageItem?.textFit || "growToFit"
-        let itemFontSize = Number(getStyles(stageItem?.style, true)?.["font-size"] || "") || 100
+        if (Object.keys(stageItem).length && stageItem?.type !== "text") type = stageItem?.textFit || "growToFit"
+        let itemFontSize = Number(getStyles((Object.keys(stageItem).length ? stageItem : item)?.style, true)?.["font-size"] || "") || 100
         defaultFontSize = itemFontSize
         if (type === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
 

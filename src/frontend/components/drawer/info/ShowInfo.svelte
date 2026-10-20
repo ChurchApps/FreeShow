@@ -106,7 +106,8 @@
     {#if optionsOpen}
         <main style="overflow-x: hidden;padding: 10px;">
             <!-- only relevant for opened show really -->
-            <MaterialToggleSwitch label="settings.always_place_empty_slide_first" checked={$special.alwaysPlaceEmptySlideFirst || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "alwaysPlaceEmptySlideFirst")} />
+            <!-- this broke things more than it helps, use the template option instead -->
+            <!-- <MaterialToggleSwitch label="settings.always_place_empty_slide_first" checked={$special.alwaysPlaceEmptySlideFirst || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "alwaysPlaceEmptySlideFirst")} /> -->
             <MaterialToggleSwitch label="settings.transparent_slides" style="margin-bottom: 5px;" checked={$special.transparentSlides} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "transparentSlides")} />
 
             <MaterialToggleSwitch label="settings.log_song_usage" checked={$special.logSongUsage || false} defaultValue={false} on:change={(e) => updateSpecial(e.detail, "logSongUsage")} />
