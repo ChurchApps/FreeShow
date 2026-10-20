@@ -55,7 +55,7 @@
     // Strip text content and computed autoFontSize so we can compare the item/box shell itself
     function getItemBase(item: Item | undefined): Partial<Item> | null {
         if (!item) return null
-        const { lines: _lines, autoFontSize: _auto, previewAutoFontSize: _previewAuto, ...base } = item
+        const { lines: _lines, autoFontSize: _auto, ...base } = item
         return base
     }
 

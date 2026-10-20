@@ -314,10 +314,8 @@
                 // Keep existing fontSize on stage to prevent flicker during drag
             } else if (willHide) {
                 fontSize = 0
-            } else if (preview) {
-                fontSize = item?.previewAutoFontSize || item?.autoFontSize || 100
             } else {
-                fontSize = item?.autoFontSize || 0
+                fontSize = item?.autoFontSize || (preview ? 100 : 0)
             }
 
             hideUntilAutosized = willHide
@@ -559,8 +557,6 @@
             markAutoSizeReady()
             return
         }
-        // Store in separate field for previews vs OUTPUT
-        if (preview && fontSize !== item.previewAutoFontSize) setItemPreviewAutoFontSize(fontSize)
         if (fontSize !== item.autoFontSize) setItemAutoFontSize(fontSize)
         if (!isDynamic && finalCacheKey) writeAutoSizeCache(finalCacheKey, { signature: finalCacheSignature, fontSize })
 
@@ -681,37 +677,6 @@
 
             showsCache.update((a) => {
                 a[ref.showId!].slides[ref.id].items[itemIndex].autoFontSize = fontSize
-                return a
-            })
-        }
-    }
-
-    function setItemPreviewAutoFontSize(fontSize) {
-        const hasOutputTemplateOverride = (outputStyle?.template && outputStyle.template !== currentShowTemplateId) || (isScriptureContext && !!styleScriptureTemplateId)
-        if (isStage || itemIndex < 0 || $currentWindow || ref.showId === "temp" || styleTemplateUsed || hasOutputTemplateOverride) return
-
-        if (ref.type === "overlay") {
-            const currentOverlays = $overlays
-            if (!currentOverlays[ref.id]?.items?.[itemIndex] || currentOverlays[ref.id].items[itemIndex].previewAutoFontSize === fontSize) return
-
-            overlays.update((a) => {
-                a[ref.id].items[itemIndex].previewAutoFontSize = fontSize
-                return a
-            })
-        } else if (ref.type === "template") {
-            const currentTemplates = $templates
-            if (!currentTemplates[ref.id]?.items?.[itemIndex] || currentTemplates[ref.id].items[itemIndex].previewAutoFontSize === fontSize) return
-
-            templates.update((a) => {
-                a[ref.id].items[itemIndex].previewAutoFontSize = fontSize
-                return a
-            })
-        } else if (ref.showId) {
-            const currentShows = $showsCache
-            if (!currentShows[ref.showId]?.slides?.[ref.id]?.items?.[itemIndex] || currentShows[ref.showId].slides[ref.id].items[itemIndex].previewAutoFontSize === fontSize) return
-
-            showsCache.update((a) => {
-                a[ref.showId!].slides[ref.id].items[itemIndex].previewAutoFontSize = fontSize
                 return a
             })
         }
