@@ -98,7 +98,7 @@
             <Zoomed show={{ settings: { resolution: slideResolution } }} dynamicResolution={false} style={getStyleResolution(slideResolution, width, height, "fit")} center>
                 {#each items as item, i}
                     {#if !itemNumber || itemNumber - 1 === i}
-                        <Textbox showId={currentSlide.id} {item} originalStyle customStyle={textStyle} {chords} {stageItem} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} autoSize={(item.textFit !== "none" || item.auto) && autoSize} fontSize={0} {autoStage} {clickRevealed} {revealed} />
+                        <Textbox showId={currentSlide.id} {item} originalStyle customStyle={textStyle} {chords} {stageItem} maxLines={Number(slideOffset !== 0 && stageItem.lineCount)} autoSize={item.textFit !== "none" && autoSize} fontSize={0} {autoStage} {clickRevealed} {revealed} />
                     {/if}
                 {/each}
             </Zoomed>

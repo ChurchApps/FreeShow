@@ -1448,23 +1448,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (mode === "item") return finish()
 
         if (resetAutoSize) delete item.autoFontSize
-
-        // Handle auto and textFit properties
-        if (templateItem.auto !== undefined) {
-            // Template explicitly defines auto
-            item.auto = templateItem.auto
-        } else if (templateItem.textFit) {
-            // Template has textFit but not auto - enable auto (textFit implies auto-sizing)
-            if (templateItem.textFit !== "none") item.auto = true
-        } else if (templateItem.auto === undefined && templateItem.textFit === undefined) {
-            // Template defines neither - disable auto-sizing (simple static template)
-            item.auto = false
-            delete item.textFit
-        }
-
-        // Apply textFit if template defines it
         if (templateItem.textFit) item.textFit = templateItem.textFit
-        else if (!templateItem.auto) delete item.textFit
+        else delete item.textFit
+
         if (templateItem.list) item.list = templateItem.list
         else delete item.list
 
@@ -1575,7 +1561,6 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             !newSlideItems.find((a) => {
                 const currentItem = clone(a)
                 delete currentItem.align
-                delete currentItem.auto
                 delete currentItem.autoFontSize
                 delete currentItem.fromTemplate
 
@@ -1907,7 +1892,7 @@ export function getStyleTemplate(outSlide: OutSlide | null, currentStyle: Styles
 }
 
 function itemHasAutoSize(item: Item) {
-    const hasAutoSize = (item.textFit || "none") !== "none" || !!item.auto
+    const hasAutoSize = (item.textFit || "none") !== "none"
     if (hasAutoSize && (item.type || "text") === "text" && !getItemText(item).length) return false
     return hasAutoSize
 }

@@ -301,14 +301,14 @@
 
     const getItemTextFit = (target: any) => {
         const isText = (target?.type || "text") === "text"
-        return target?.textFit || (isText ? (target?.auto ? "shrinkToFit" : "none") : "growToFit")
+        return target?.textFit || (isText ? "none" : "growToFit")
     }
     $: isTextItem = (item?.type || "text") === "text"
     $: itemTextFit = getItemTextFit(item)
     $: hasAutoSize = stageAutoSize || itemTextFit !== "none"
 
     let lastRenderedItemKey = ""
-    $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${item?.style || ""}_${item?.auto ? 1 : 0}_${item?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || "")}`
+    $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${item?.style || ""}_${item?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || "")}`
     $: if (stateSignature !== lastRenderedSignature && (!textTransition || textTransition.show)) {
         const itemKey = `${ref?.id || ""}_${item?.id || itemIndex}_${resolvedTemplateId}`
         const isSameItem = itemKey === lastRenderedItemKey && fontSize > 0
@@ -335,7 +335,7 @@
         }
     }
     let prevAutosizeSignature = ""
-    $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.auto ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${ratio}`
+    $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${ratio}`
 
     const AUTOSIZE_THROTTLE_MS = 100
     let debounceTimer: NodeJS.Timeout | null = null
@@ -375,8 +375,6 @@
     $: if (item?.type === "slide_tracker" && outputSlide) debouncedCalculateAutosize(50) // overlay progress update
     $: if ($currentWindow === "output" && outputStyle?.template && outputStyle.template !== currentShowTemplateId && !stageAutoSize) calculateAutosize()
     // else outputTemplateAutoSize = false
-
-    // $: fontSizeValue = stageAutoSize || item.auto || outputTemplateAutoSize ? fontSize : fontSize
 
     let customTypeRatio = 1
     function deriveCustomTypeRatio() {

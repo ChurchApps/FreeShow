@@ -86,15 +86,12 @@
         const currentTextFit = item?.textFit || defaultTextFit
         setBoxInputValue(stageSections, sectionId, "font-size", "disabled", !isTextItem && currentTextFit === "growToFit")
         setBoxInputValue(stageSections, sectionId, "textFit", "default", defaultTextFit)
-        // setBoxInputValue(stageSections, "font", "auto", "value", item.auto ?? true)
     }
 
     $: if (item && type === "text") {
         let sectionId = stageSections?.font ? "font" : "default"
         setBoxInputValue(stageSections, sectionId, "font-family", "default", "Arial")
         setBoxInputValue(stageSections, sectionId, "font-family", "styleValue", styles["font"] || "")
-        // setBoxInputValue(stageSections, sectionId, "font-size", "disabled", item.type === "text" ? item.auto === true : item.auto !== false)
-        // setBoxInputValue(edits, sectionId, "textFit", "hidden", item?.auto !== false)
     }
     $: if (item && isSlideText) {
         setBoxInputValue(stageSections, "default", "lineCount", "hidden", Number(item.slideOffset || 0) === 0)
@@ -245,8 +242,6 @@
         input.input = input.type
 
         if (input.id === "textFit") {
-            updateStyle({ detail: { id: "auto", value: input.value !== "none" } })
-
             if (isTextItem) {
                 let newFontSize = 0
                 // change font size to more clearly indicate what the different text fit does

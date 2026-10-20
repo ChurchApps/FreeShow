@@ -64,7 +64,7 @@
 
     // AUTO SIZE
 
-    $: noAutoSize = item.auto === false && item.textFit === "none"
+    $: noAutoSize = item.textFit === "none"
 
     let previousItem = "{}"
     $: newItem = JSON.stringify(item)
@@ -126,7 +126,7 @@
         {/if}
     {/if}
 {:else if item.type === "slide_tracker"}
-    <SlideProgress {item} tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : edit ? autoSize : fontSize} {outputId} />
+    <SlideProgress {item} tracker={item.tracker || {}} autoSize={noAutoSize ? 0 : edit ? autoSize : fontSize} {outputId} />
 {:else if item.type === "events"}
     <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
 {:else if item.type === "weather"}

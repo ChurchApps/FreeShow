@@ -41,7 +41,7 @@
         let defaultFontSize
         let maxFontSize
 
-        if ((item.type || "text") === "text" && !item.auto) {
+        if ((item.type || "text") === "text" && (item.textFit || "none") === "none") {
             fontSize = 0
             return
         }

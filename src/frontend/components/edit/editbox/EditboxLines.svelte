@@ -375,7 +375,7 @@
     // AUTO SIZE
 
     let loaded = false
-    $: isAuto = item?.auto || (item?.textFit || "none") !== "none"
+    $: isAuto = (item?.textFit || "none") !== "none"
     $: textArray = Array.isArray(item?.lines?.[0]?.text) ? item.lines[0].text : []
     $: itemText = textArray.filter((a) => !a.customType?.includes("disableTemplate")) || []
     $: itemFontSize = Number(getStyles((ref.type === "stage" ? item : itemText[0])?.style, true)?.["font-size"] || "")
