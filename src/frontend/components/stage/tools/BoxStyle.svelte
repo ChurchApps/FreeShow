@@ -82,7 +82,7 @@
 
     $: if (stageSections?.font || type === "text") {
         let sectionId = stageSections?.font ? "font" : "default"
-        const defaultTextFit = isSlideText ? "shrinkToFit" : item?.type === "text" ? "none" : "growToFit"
+        const defaultTextFit = item?.type === "text" ? "none" : "growToFit"
         const currentTextFit = item?.textFit || defaultTextFit
         setBoxInputValue(stageSections, sectionId, "font-size", "disabled", !isTextItem && currentTextFit === "growToFit")
         setBoxInputValue(stageSections, sectionId, "textFit", "default", defaultTextFit)
