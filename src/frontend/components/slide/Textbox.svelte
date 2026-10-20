@@ -811,7 +811,7 @@
     {#if lines && !noTextMode}
         {#if textTransition}
             <div class="textTransitionContainer">
-                {#key `${textTransition.show}-${textTransition.renderVersion}-${itemIndex}-${item?.id || "noid"}`}
+                {#key `${textTransition.show}-${textTransition.renderVersion}-${itemIndex}`}
                     {#if textTransition.show}
                         <SlideItemTransition
                             {preview}
