@@ -112,8 +112,7 @@ export class CaptureHelper {
         // readback (~20ms -> ~100ms) -> the received output only gets a few NEW frames/sec. So render each OSR
         // output at the rate it actually needs: full rate when a receiver is connected, a low rate when not.
         // Reacts within CONNECTION_POLL_INTERVAL_MS (250ms), so a connecting output ramps to 60 quickly.
-        // The OSR window's render rate is owned by the group RENDERER. A follower must never set it (its window
-        // is the renderer's), and the renderer renders at the MAX rate ANY member needs — so one member with a
+        // A shared page renders at the MAX rate any output shown from it needs — so one member with a
         // connected 60fps receiver keeps the shared render at 60 even if others are idle.
         this.updateRenderRate(RenderGroups.rendererOf(id))
     }
@@ -121,7 +120,18 @@ export class CaptureHelper {
     static updateRenderRate(rendererId: string) {
         const output = OutputHelper.getOutput(rendererId)
         const win = OutputHelper.renderWindow(output)
-        if (!(output as any)?.osr || (output as any)?.follower || (output as any)?.presenter || !win || win.isDestroyed()) return
+        if (!output?.osr || !win || win.isDestroyed()) return
+        // An output showing another page keeps its own current but idle: painted at the lowest rate, so it
+        // is ready the moment its content stops matching, and never read.
+        if (RenderGroups.isFollower(rendererId)) {
+            try {
+                win.webContents.setFrameRate(1)
+            } catch {
+                // ignore
+            }
+            OutputHelper.Lifecycle.updateOsrPaintDrive(win, rendererId, 1)
+            return
+        }
 
         let fps = 0
         for (const m of RenderGroups.members(rendererId)) {

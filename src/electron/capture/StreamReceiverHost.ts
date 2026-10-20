@@ -74,8 +74,7 @@ export class StreamReceiverHost {
         if (targetId === APP_TARGET) return getMainWindow()
 
         const output = OutputHelper.getOutput(targetId)
-        // a shared-render follower's window belongs to the renderer, which already has its own port
-        if (!output?.window || output.window.isDestroyed() || (output as any).follower) return null
+        if (!output?.window || output.window.isDestroyed()) return null
         return output.window
     }
 

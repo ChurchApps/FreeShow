@@ -6,6 +6,7 @@ import type { Message } from "../../../types/Socket"
 import { SenderCapture } from "../../capture/SenderCapture"
 import { SenderThread } from "../../capture/SenderThread"
 import { OutputHelper } from "../OutputHelper"
+import { RenderGroups } from "./RenderGroups"
 
 // A background video shown on several captured outputs is decoded once: one hidden media window per source
 // draws it exactly as an output would (same component, media style and size), and the capture worker
@@ -104,8 +105,9 @@ export class MediaLayers {
             if (STATS) src.size = `${info.codedSize.width}x${info.codedSize.height}`
             const handle = process.platform === "linux" ? { planes: info.planes, modifier: info.modifier } : info.sharedTextureHandle
             SenderThread.post({ type: "mediaFrame", key, seq, handle, width: info.codedSize.width, height: info.codedSize.height })
-            // each output's page repaints once per frame of its source, which is what drives its capture
-            for (const m of src.members) OutputHelper.Send.sendToWindow(m, { channel: "MEDIA_TICK", data: { outputId: m } })
+            // each output's page repaints once per frame of its source, which is what drives its capture; a
+            // page whose output shows another page's frames is not captured, so it is left idle
+            for (const m of src.members) if (RenderGroups.isRenderer(m)) OutputHelper.Send.sendToWindow(m, { channel: "MEDIA_TICK", data: { outputId: m } })
         })
         return key
     }

@@ -14,6 +14,7 @@ import { PreviewStream } from "../capture/PreviewStream"
 import { OutputRecording } from "../streaming/OutputRecording"
 import { MediaLayers } from "./helpers/MediaLayers"
 import type { Output as OutputData } from "./Output"
+import { RenderGroups } from "./helpers/RenderGroups"
 
 export class OutputHelper {
     static receiveOutput(_e: Electron.IpcMainEvent, msg: Message) {
@@ -29,7 +30,7 @@ export class OutputHelper {
                 OutputHelper.getKeys().forEach((id) => OutputHelper.Lifecycle.updateWindowConstraints(id))
             },
 
-            UPDATE_BOUNDS: (data: { id: string; bounds: Rectangle }) => OutputHelper.Bounds.updateBounds(data),
+            UPDATE_BOUNDS: (data: { id: string; bounds: Rectangle }) => OutputHelper.Lifecycle.boundsChanged(data),
             SET_VALUE: (data: { id: string; key: string; value: boolean | { key: string; value: boolean } }) => OutputHelper.Values.updateValue(data),
             TO_FRONT: (data: string) => OutputHelper.Bounds.moveToFront(data),
 
@@ -44,10 +45,13 @@ export class OutputHelper {
             IDENTIFY_SCREENS: (data: { bounds: Rectangle }[]) => OutputHelper.Identify.identifyScreens(data),
             // PREVIEW_BOUNDS: (data) => OutputHelper.Bounds.setPreviewBounds(data),
 
-            FOCUS: (data: { id: string }) => OutputHelper.Lifecycle.focusOutput(data.id)
+            FOCUS: (data: { id: string }) => OutputHelper.Lifecycle.focusOutput(data.id),
+            // the app's render signature per output (renderSignature.ts); sent ahead of the change it reflects
+            RENDER_SIGNATURES: (data: { [id: string]: string }) => RenderGroups.setSignatures(data || {})
         }
 
         if (msg.channel === "MEDIA_SOURCE_READY") return MediaLayers.sourceReady(_e.sender)
+        if (msg.channel === "RENDER_BUSY") return OutputHelper.Lifecycle.pageBusy(_e.sender, msg.data)
         if (msg.channel.includes("MAIN")) return toApp(OUTPUT, msg)
         if (msg.channel in outputResponses) return outputResponses[msg.channel as keyof typeof outputResponses](msg.data)
 

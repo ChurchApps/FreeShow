@@ -194,7 +194,8 @@ export class CaptureLifecycle {
 
         console.info("Capture - stopping: " + id)
 
-        OutputHelper.Lifecycle.destroyCaptureSurface(id)
+        // a displayed output that shares a render keeps its surface: that is its page
+        if (!OutputHelper.Lifecycle.sharesThroughSurface(id)) OutputHelper.Lifecycle.destroyCaptureSurface(id)
         delete output.captureOptions
         this.updateWebRtcHostState()
         this.updateRtmpState()

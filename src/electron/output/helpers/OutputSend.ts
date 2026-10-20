@@ -12,10 +12,6 @@ export class OutputSend {
         MediaLayers.broadcast(msg)
 
         function sendToWindow(output: Output & { id: string }) {
-            // shared-render FOLLOWERS own no window (they reference the renderer's) and render no content of
-            // their own — never send their OUTPUT data to the shared window or it would corrupt the renderer.
-            // a presenter draws another output's render; sending it content would render it a second time
-            if ((output as any).follower || (output as any).presenter) return
             if ((msg.data?.id && msg.data.id !== output.id) || !output?.window || output.window.isDestroyed()) return
 
             let tempMsg: Message = clone(msg)
@@ -40,8 +36,7 @@ export class OutputSend {
 
     static sendToWindow(id: string, msg: any, channel: ValidChannels = OUTPUT) {
         const output = OutputHelper.getOutput(id)
-        // a shared-render follower's window is the renderer's — don't inject the follower's data into it
-        if (!output?.window || output.window.isDestroyed() || (output as any).follower || (output as any).presenter) return
+        if (!output?.window || output.window.isDestroyed()) return
         output.window.webContents.send(channel, msg)
         const surface = (output as any).captureWindow
         if (surface && !surface.isDestroyed()) surface.webContents.send(channel, msg)

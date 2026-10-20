@@ -1,4 +1,4 @@
-import { BrowserWindow, screen, type BrowserWindowConstructorOptions } from "electron"
+import { BrowserWindow, screen, type BrowserWindowConstructorOptions, type Rectangle } from "electron"
 import { OUTPUT_CONSOLE, getMainWindow, hardwareAccelerationDisabled, isMac, loadWindowContent, toApp } from "../.."
 import { OUTPUT, STARTUP } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
@@ -51,6 +51,7 @@ export class OutputLifecycle {
 
     static initListeners() {
         RenderGroups.onChanged = () => toApp(OUTPUT, { channel: "RENDER_GROUPS", data: RenderGroups.snapshot() })
+        RenderGroups.onMembership = (changes) => this.applyMembership(changes)
         this.watchPreviewSubscribers()
 
         screen.on("display-metrics-changed", () => {
@@ -88,7 +89,7 @@ export class OutputLifecycle {
         })
     }
 
-    static async createOutput(output: Output, groupRetries = 0) {
+    static async createOutput(output: Output) {
         await gpuStateSettled // the offscreen capture mode depends on the real GPU state
         const id: string = output.id || ""
         if (!id) return
@@ -101,39 +102,19 @@ export class OutputLifecycle {
 
         this.clearPendingCaptureStart(id)
 
-        // a displayed output joins a render of its content that ALREADY exists and draws its frames; it
-        // never starts a group, so an output alone with its content renders its own window as before
-        const presentRenderer = !this.isOsrOutput(output) && !output.blackmagic ? RenderGroups.existingRenderer(output) : null
-
-        // Shared-render: outputs with identical content share one render window
-        const shareEligible = RenderGroups.enabled && (this.canShareRender(output) || !!presentRenderer)
-        const group = shareEligible ? RenderGroups.add(id, output) : { isRenderer: true, rendererId: id }
-        if (!group.isRenderer) {
-            const rendererWin = OutputHelper.getOutput(group.rendererId)?.window
-            if (rendererWin && !rendererWin.isDestroyed()) {
-                if (presentRenderer) await this.createPresentingOutput(id, output, group.rendererId)
-                else await this.createFollowerOutput(id, output, group.rendererId, rendererWin)
-                return
-            }
-            RenderGroups.remove(id)
-            if (groupRetries < 5) {
-                setTimeout(() => {
-                    if (!OutputHelper.getOutput(id)) void this.createOutput(output, groupRetries + 1)
-                }, 300)
-                return
-            }
-            console.warn(`[GROUP] renderer window for ${group.rendererId} never became ready; ${id} rendering independently`)
-        }
+        // Every output has a page of its own. One that may share a render is registered first, so its class
+        // (RenderGroups) is sized with it before its page is made.
+        const shareable = this.shareable(output)
+        if (shareable) RenderGroups.register(id, output)
 
         // disable move/resize listeners during initialization
         OutputHelper.Bounds.disableWindowMoveListener()
 
         // invisible/capture outputs render DPI-corrected so capturePage() matches the configured resolution
         let resolvedBounds = output.invisible ? output.bounds : OutputVisibility.resolveOutputBounds(output)
-        // a shared render runs at the largest member's size (a follower larger than this output may already
-        // be registered when a renderer is rebuilt); this output still SENDS at its own size
+        // a shareable page renders at its class's largest size; this output still SENDS at its own size
         const sendSize = { width: output.bounds.width, height: output.bounds.height }
-        const groupSize = shareEligible ? RenderGroups.renderSize(id) : null
+        const groupSize = shareable && this.isOsrOutput(output) ? RenderGroups.renderSize(id) : null
         if (groupSize && (groupSize.width !== resolvedBounds.width || groupSize.height !== resolvedBounds.height)) resolvedBounds = { ...resolvedBounds, ...groupSize }
         const renderBounds = OutputHelper.Bounds.getRenderBounds(output, resolvedBounds)
         const outputWindow = this.createOutputWindow({ ...renderBounds, alwaysOnTop: output.alwaysOnTop !== false, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name, output)
@@ -143,6 +124,11 @@ export class OutputLifecycle {
         // OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds({ id: output.id!, bounds: resolvedBounds })
         this.updateWindowConstraints(id)
+        if (shareable) {
+            if (this.isOsrOutput(output)) RenderGroups.setRenderable(id, true)
+            this.fitClass(id)
+            this.updateDisplayedSharing(id)
+        }
 
         // OutputHelper.Bounds.updatePreviewBounds()
 
@@ -178,59 +164,67 @@ export class OutputLifecycle {
         return (!!output.ndi || !!output.omt || !!output.webrtc || !!output.rtmp) && !output.blackmagic && this.isOsrOutput(output)
     }
 
-    // a displayed group member: it owns the window the audience sees and draws the renderer's readback
-    private static async createPresentingOutput(id: string, output: Output, rendererId: string) {
-        OutputHelper.Bounds.disableWindowMoveListener()
-
-        const bounds = OutputVisibility.resolveOutputBounds(output)
-        const renderBounds = OutputHelper.Bounds.getRenderBounds(output, bounds)
-        const window = this.createOutputWindow({ ...renderBounds, alwaysOnTop: output.alwaysOnTop !== false, backgroundColor: output.transparent ? "#00000000" : "#000000" }, id, output.name, output)
-
-        OutputHelper.setOutput(id, {
-            window,
-            presenter: true,
-            renderGroupRenderer: rendererId,
-            // nothing here is captured with capturePage: the frame comes from the renderer's readback
-            osr: true,
-            invisible: output.invisible,
-            boundsLocked: output.boundsLocked,
-            screen: output.screen,
-            intendedBounds: bounds,
-            sendSize: { width: bounds.width, height: bounds.height },
-            transparent: output.transparent,
-            webrtcData: output.webrtcData,
-            rtmpData: output.rtmpData
-        })
-        OutputHelper.Bounds.updateBounds({ id, bounds })
-        this.updateWindowConstraints(id)
-        this.fitRendererToGroup(rendererId)
-        if (this.presenterCanDraw()) OutputPresenter.start(id, window)
-        CaptureHelper.updateRenderRate(RenderGroups.rendererOf(id))
-
-        this.pendingCaptureStart[id] = setTimeout(() => {
-            delete this.pendingCaptureStart[id]
-            if (!CaptureHelper.Lifecycle || !OutputHelper.getOutput(id)) return
-            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, omt: output.omt || false })
-        }, 1200)
+    // An offscreen output that sends somewhere, or a displayed one (which shares by presenting another page's
+    // frames). Only on the shared-texture path: the frames a member takes from another page come from the
+    // capture worker. Blackmagic keeps a render of its own.
+    private static shareable(output: Output): boolean {
+        if (!RenderGroups.enabled || !this.useSharedTextureCapture() || output.blackmagic) return false
+        return this.isOsrOutput(output) ? this.canShareRender(output) : true
     }
 
-    private static async createFollowerOutput(id: string, output: Output, rendererId: string, rendererWindow: BrowserWindow) {
-        OutputHelper.setOutput(id, { window: rendererWindow, follower: true, renderGroupRenderer: rendererId, osr: true, invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: output.bounds, sendSize: { width: output.bounds.width, height: output.bounds.height }, transparent: output.transparent })
-        this.fitRendererToGroup(rendererId)
+    /** a displayed output whose capture surface is how it shares a render with an offscreen output */
+    static sharesThroughSurface(id: string): boolean {
+        const output = OutputHelper.getOutput(id)
+        if (!output || output.invisible || !RenderGroups.isRegistered(id)) return false
+        return RenderGroups.classMembers(id).some((m) => m !== id && OutputHelper.getOutput(m)?.invisible)
+    }
 
-        this.pendingCaptureStart[id] = setTimeout(() => {
-            delete this.pendingCaptureStart[id]
-            if (!CaptureHelper.Lifecycle || !OutputHelper.getOutput(id)) return
-            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, omt: output.omt || false })
-        }, 1200)
-
-        if (output.ndi) {
-            await NdiSender.createSenderNDI(id, NdiSender.initNameNDI(output.ndiData?.name, output.name), output.ndiData?.groups)
-            if (output.ndiData) setDataNDI({ id, ...output.ndiData })
+    // A displayed output shares only through a page rendered offscreen (its capture surface), whose frames
+    // its window then draws. It gets one while its class has an offscreen member to share with.
+    private static updateDisplayedSharing(id: string) {
+        const members = RenderGroups.classMembers(id)
+        const hasOffscreen = members.some((m) => OutputHelper.getOutput(m)?.invisible)
+        if (!hasOffscreen) return
+        for (const m of members) {
+            const o = OutputHelper.getOutput(m)
+            if (!o || o.invisible || o.captureWindow) continue
+            this.createCaptureSurface(m)
         }
-        if (output.omt) {
-            await OmtSender.createSenderOMT(id, OmtSender.initNameOMT(output.omtData?.name, output.name), output.omtData?.quality)
-            if (output.omtData) setDataOMT({ id, ...output.omtData })
+    }
+
+    // The app changed an output's position or resolution. An output that may share renders at its class's
+    // size and is sent at its own, so both follow, and so does the class's size for every other page.
+    static boundsChanged(data: { id: string; bounds: Rectangle }) {
+        OutputHelper.Bounds.updateBounds(data)
+        const output = OutputHelper.getOutput(data.id)
+        const config = RenderGroups.getConfig(data.id)
+        if (!output || !config || !data.bounds?.width || !data.bounds?.height) return
+        if (output.invisible) output.sendSize = { width: data.bounds.width, height: data.bounds.height }
+        RenderGroups.updateConfig(data.id, { ...config, bounds: data.bounds })
+        this.fitClass(data.id)
+    }
+
+    // A page reports whether a transition or animation is running on it. Only an output's render page
+    // counts (its capture surface when it has one): a window drawing frames animates nothing of its own.
+    static pageBusy(sender: Electron.WebContents, data: { id: string; busy: boolean; dom?: string }) {
+        const output = data?.id ? OutputHelper.getOutput(data.id) : null
+        if (!output || OutputHelper.renderWindow(output)?.webContents !== sender) return
+        RenderGroups.setPageState(data.id, !!data.busy, data.dom || "")
+    }
+
+    // Applies RenderGroups' decisions: an output that now shows another page idles its own (kept current,
+    // painted rarely, never read), and one that renders again gets its page back to full rate at once.
+    private static applyMembership(changes: { id: string; from: string; to: string }[]) {
+        const touched = new Set<string>()
+        for (const c of changes) {
+            touched.add(c.from)
+            touched.add(c.to)
+            touched.add(c.id)
+        }
+        for (const id of touched) {
+            if (!OutputHelper.getOutput(id)) continue
+            CaptureHelper.updateRenderRate(id)
+            if (RenderGroups.isRenderer(id)) this.requestRepaint(id)
         }
     }
 
@@ -322,20 +316,29 @@ export class OutputLifecycle {
         }
     }
 
-    // A shared render runs at its largest member's size. Called when membership changes: the renderer's
-    // offscreen window is resized to the largest member (up or down); each member keeps its own sendSize.
-    static fitRendererToGroup(rendererId: string) {
-        const renderer = OutputHelper.getOutput(rendererId)
-        if (!renderer?.window || renderer.window.isDestroyed() || !renderer.osr) return
-        const size = RenderGroups.renderSize(rendererId)
-        const current = renderer.intendedBounds
-        if (!size || !current || (current.width === size.width && current.height === size.height)) return
-        OutputHelper.Bounds.updateBounds({ id: rendererId, bounds: { ...current, width: size.width, height: size.height } })
+    // Every page of a class renders at the class's largest size, so any member can take another's frames;
+    // each member keeps its own sendSize. Called when the class changes.
+    static fitClass(id: string) {
+        const size = RenderGroups.renderSize(id)
+        if (!size) return
+        for (const m of RenderGroups.classMembers(id)) {
+            const o = OutputHelper.getOutput(m)
+            if (!o) continue
+            if (o.invisible && o.osr) {
+                const current = o.intendedBounds
+                if (!current || (current.width === size.width && current.height === size.height)) continue
+                OutputHelper.Bounds.updateBounds({ id: m, bounds: { ...current, width: size.width, height: size.height } })
+            } else if (o.captureWindow && !o.captureWindow.isDestroyed()) {
+                const rb = OutputHelper.Bounds.getRenderBounds({ invisible: true }, { x: 0, y: 0, ...size })
+                o.captureWindow.setBounds({ x: 0, y: 0, width: rb.width, height: rb.height })
+            }
+        }
     }
 
-    // the outputs drawn by this window: the output itself plus the followers of its render group
+    // the outputs whose consumers this page's frames go to: itself and its followers, or none when the
+    // output shows another page
     static groupMembers(id: string): string[] {
-        return RenderGroups.members(id).filter((m) => m === id || (OutputHelper.getOutput(m) as any)?.renderGroupRenderer === id)
+        return RenderGroups.isFollower(id) ? [] : RenderGroups.members(id)
     }
 
     // Only an invisible output renders offscreen. A displayed one keeps the real window its audience sees,
@@ -356,7 +359,7 @@ export class OutputLifecycle {
         let needsAppRestart = false
         for (const id of OutputHelper.getKeys()) {
             const output = OutputHelper.getOutput(id)
-            if (!output || (output as any).follower) continue
+            if (!output) continue
             if (output.captureWindow) {
                 // Restart the capture rather than swapping the window: on this path there may be no
                 // surface at all (an offscreen window is no use where it cannot render video), and the
@@ -384,7 +387,7 @@ export class OutputLifecycle {
 
     static createCaptureSurface(id: string): BrowserWindow | null {
         const output = OutputHelper.getOutput(id)
-        if (!output || (output as any).follower || output.presenter || output.osr) return null
+        if (!output || (output.osr && !output.captureWindow)) return null
         // Only worth doing when the capture is a shared texture. Without one this window gains nothing -
         // the frame is read back on the main thread either way - and it costs correctness: a displayed
         // output used to be captured from the window the user is looking at, which renders whatever the
@@ -395,7 +398,12 @@ export class OutputLifecycle {
         const existing = output.captureWindow
         if (existing && !existing.isDestroyed()) return existing
 
-        const bounds = output.intendedBounds
+        // a page that may share renders at its class's size, like every other page of the class
+        const classSize = RenderGroups.isRegistered(id) ? RenderGroups.renderSize(id) : null
+        // At the origin, like every offscreen output: a hidden window's pixel size follows the display it sits
+        // on, so placed on the output's own display it came out a few pixels off its class's other pages.
+        const size = classSize || output.intendedBounds
+        const bounds = size ? { x: 0, y: 0, width: size.width, height: size.height } : null
         if (!bounds) return null
 
         // hidden windows are rendered DPI-corrected, so ask for the size that yields the configured pixels
@@ -415,7 +423,8 @@ export class OutputLifecycle {
         output.osr = true
         // the surface is now the only render of this content: the on-screen window draws the capture
         if (this.presenterCanDraw()) OutputPresenter.start(id, output.window)
-        CaptureHelper.updateRenderRate(RenderGroups.rendererOf(id))
+        if (RenderGroups.isRegistered(id)) RenderGroups.setRenderable(id, true)
+        CaptureHelper.updateRenderRate(id)
         return window
     }
 
@@ -426,6 +435,7 @@ export class OutputLifecycle {
 
         output.captureWindow = undefined
         output.osr = false
+        if (RenderGroups.isRegistered(id)) RenderGroups.setRenderable(id, false)
         OutputPresenter.stop(id)
         this.stopOsrPaintDrive(id)
         try {
@@ -477,7 +487,7 @@ export class OutputLifecycle {
     // count, so a consumer that starts on a still page would get no frame at all. The page redraws a 1px
     // canvas instead (RepaintTick.svelte), which makes it paint once.
     static requestRepaint(id: string) {
-        OutputHelper.Send.sendToWindow(RenderGroups.rendererOf(id) || id, { channel: "REPAINT" })
+        OutputHelper.Send.sendToWindow(RenderGroups.rendererOf(id), { channel: "REPAINT" })
     }
 
     static isOffMainActive(id: string): boolean {
@@ -1077,6 +1087,11 @@ export class OutputLifecycle {
             // every member of this render (the renderer itself plus its followers) gets this one readback,
             // whichever protocol each one sends on
             const members = OutputLifecycle.groupMembers(id)
+            // this output started showing another page after the frame was admitted
+            if (!members.length) {
+                releaseTex(tex)
+                return
+            }
             // each member is paced by the rate of the protocol it sends on
             const memberFramerates: { [m: string]: number } = {}
             for (const m of members) {
@@ -1363,6 +1378,16 @@ export class OutputLifecycle {
             const source = process.platform === "linux" ? { planes: info.planes, modifier: info.modifier } : info.sharedTextureHandle
             const requestedFormat = CaptureHelper.Transmitter.getReadbackFormat(id, { width, height })
 
+            // an output showing another page keeps its own page current but never reads it
+            if (RenderGroups.isFollower(id)) {
+                releaseTex(tex)
+                if (pendingFrame) {
+                    releaseTex(pendingFrame.tex)
+                    pendingFrame = null
+                }
+                return
+            }
+
             const members = OutputLifecycle.groupMembers(id)
             const offMainIds = members.filter((m) => !!NdiSender.NDI[m]?.sender || !!OmtSender.OMT[m]?.sender || !!RtmpBridge.runningConfig(m) || BlackmagicSender.isReady(m) || (WebRtcHost.isRunning() && !!OutputHelper.getOutput(m)?.webrtcData?.streaming))
             // An output with no sender still belongs off main when something wants its downscaled frame
@@ -1512,22 +1537,11 @@ export class OutputLifecycle {
     static async removeOutput(id: string, reopen: Output | null = null) {
         this.clearPendingCaptureStart(id)
 
-        // Shared-render bookkeeping: drop this output from its group. If it was the RENDERER and followers
-        // remain, the first follower must be promoted to render (given its own window) so the group keeps going.
-        const wasShared = RenderGroups.enabled && (!!(OutputHelper.getOutput(id) as any)?.follower || !!(OutputHelper.getOutput(id) as any)?.presenter || RenderGroups.isRenderer(id))
-        const groupInfo = wasShared ? RenderGroups.remove(id) : null
-
-        // A FOLLOWER owns no window — just tear down its senders/capture, never touch the shared window.
-        if ((OutputHelper.getOutput(id) as any)?.follower) {
-            const rendererId = (OutputHelper.getOutput(id) as any)?.renderGroupRenderer as string | undefined
-            CaptureHelper.Lifecycle.stopCapture(id)
-            NdiSender.stopSenderNDI(id)
-            OmtSender.stopSenderOMT(id)
-            OutputHelper.deleteOutput(id)
-            if (rendererId) this.fitRendererToGroup(rendererId)
-            if (reopen) OutputLifecycle.createOutput(reopen)
-            return
-        }
+        // Any output following this one goes to another page of its content, or back to its own, at once;
+        // the pages left in the class shrink to its new largest size.
+        const classmates = RenderGroups.isRegistered(id) ? RenderGroups.classMembers(id).filter((m) => m !== id) : []
+        RenderGroups.remove(id)
+        if (classmates.length && !this.closingAllOutputs) this.fitClass(classmates[0])
 
         OutputPresenter.stop(id)
         MediaLayers.removeOutput(id)
@@ -1543,14 +1557,6 @@ export class OutputLifecycle {
             // ignore
         }
         this.releaseOsrCaptureTextures(id)
-
-        // renderer removed with followers present -> rebuild survivors (first one becomes the new
-        // renderer). A recreated renderer's reopen joins the same ordered batch — racing the rebuild
-        // let followers attach to a mid-teardown window and split the group.
-        if (groupInfo?.wasRenderer && groupInfo.members.length) {
-            this.rebuildGroupMembers(groupInfo.members, reopen)
-            reopen = null
-        }
 
         const output = OutputHelper.getOutput(id)
         if (!output) return
@@ -1574,28 +1580,6 @@ export class OutputLifecycle {
         } catch (err) {
             console.error(err)
         }
-    }
-
-    // The renderer of a shared group was removed. Tear down the surviving followers (they reference the dying
-    // window) and recreate them from their stored configs: RenderGroups already promoted the first survivor to
-    // members[0], so createOutput gives it a fresh window (renderer) and the rest re-follow it. Recreation is
-    // deferred so the old window finishes closing first.
-    private static rebuildGroupMembers(members: string[], reopenRenderer: Output | null = null) {
-        // don't resurrect a group mid-teardown (closing all outputs removes the renderer too)
-        if (this.closingAllOutputs) return
-        const configs = members.map((m) => RenderGroups.getConfig(m)).filter((c): c is Output => !!c)
-        if (reopenRenderer) configs.unshift(reopenRenderer)
-        for (const m of members) {
-            this.clearPendingCaptureStart(m)
-            CaptureHelper.Lifecycle.stopCapture(m)
-            NdiSender.stopSenderNDI(m)
-            OmtSender.stopSenderOMT(m)
-            OutputHelper.deleteOutput(m)
-        }
-        // sequential: each member awaits the previous, so followers attach to a live renderer window
-        setTimeout(async () => {
-            for (const config of configs) await this.createOutput(config)
-        }, 150)
     }
 
     static focusOutput(id: string) {
