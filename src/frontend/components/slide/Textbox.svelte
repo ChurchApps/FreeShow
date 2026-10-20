@@ -299,7 +299,7 @@
 
     let itemElem: HTMLElement | undefined
 
-    $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${item?.style || ""}_${item?.auto ? 1 : 0}_${item?.textFit || ""}_${JSON.stringify(item?.lines || "")}`
+    $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${item?.style || ""}_${item?.auto ? 1 : 0}_${item?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || "")}`
 
     $: if (stateSignature !== lastRenderedSignature && (!textTransition || textTransition.show)) {
         lastRenderedSignature = stateSignature
@@ -325,7 +325,7 @@
         }
     }
     let prevAutosizeSignature = ""
-    $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.auto ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${ratio}`
+    $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.auto ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${ratio}`
 
     let debounceTimer: NodeJS.Timeout | null = null
     function debouncedCalculateAutosize(delay = 50) {
@@ -619,6 +619,8 @@
             smallFontSize: !!smallFontSize,
             maxLines: maxLines || 0,
             maxLinesInvert: !!maxLinesInvert,
+            linesStart: linesStart ?? null,
+            linesEnd: linesEnd ?? null,
             centerPreview: !!centerPreview,
             // Include resolved template to invalidate cache when template changes
             resolvedTemplateId: resolvedTemplateId || ""
@@ -818,7 +820,7 @@
                             isClearing={textTransition.isClearing}
                             incomingNeedsAutoSize={textTransition.incomingNeedsAutoSize}
                             globalTransition={textTransition.globalTransition}
-                            {item}
+                            item={{ ...item, autoFontSize: fontSize || item?.autoFontSize }}
                             lines={textTransition.lines}
                             let:customItem
                             let:customLines
@@ -840,7 +842,7 @@
                                 chords={customItem.chords?.enabled ?? chords}
                                 linesStart={customLines?.[textTransition.currentLineId || ""]?.[customItem.lineReveal ? "linesStart" : "start"]}
                                 linesEnd={customLines?.[textTransition.currentLineId || ""]?.[customItem.lineReveal ? "linesEnd" : "end"]}
-                                fontSize={smallFontSize ? 20 : fontSize}
+                                fontSize={smallFontSize ? 20 : customItem.autoFontSize || fontSize}
                                 {customTypeRatio}
                                 {maxLines}
                                 {maxLinesInvert}

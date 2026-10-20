@@ -59,10 +59,8 @@
         return base
     }
 
-    // Compare two items to see if their visible content is identical (ignoring cached autoFontSize)
-    function itemsAreEqual(oldItem: Item | undefined, newItem: Item | undefined): boolean {
-        if (!oldItem || !newItem) return false
-        return JSON.stringify(getItemBase(oldItem)) === JSON.stringify(getItemBase(newItem)) && JSON.stringify(oldItem.lines) === JSON.stringify(newItem.lines)
+    function hasLinesContent(item: Item | undefined): boolean {
+        return !!item?.lines?.some((line) => line.text?.some((t) => t.value?.length))
     }
 
     // Compare two items ignoring their text content and computed autoFontSize
@@ -275,7 +273,7 @@
         const forceRefreshItems = isSameSlideRefresh || hasStyleChange || forceRemount
         if (forceRefreshItems) renderVersion++
 
-        const hasTransitioningItems = forceRefreshItems || currentSlide.items.some((newItem: Item, i: number) => !itemsAreEqual(currentItems[i], newItem))
+        const hasTransitioningItems = forceRefreshItems || currentSlide.items.length !== currentItems.length || currentSlide.items.some((newItem: Item, i: number) => !itemBoxesAreEqual(currentItems[i], newItem) || hasLinesContent(newItem) || hasLinesContent(currentItems[i]))
 
         // between
         if (isDifferentSlide && currentItems.length && currentSlide.items.length) transitioningBetween = true
@@ -283,7 +281,7 @@
         if (timeout) clearTimeout(timeout)
 
         // If all items are unchanged, skip the show/hide cycle entirely
-        if (!hasTransitioningItems && currentSlide.items.length > 0 && currentSlide.items.length === currentItems.length) {
+        if (!hasTransitioningItems && currentSlide.items.length > 0) {
             // Just update the context without triggering transitions
             setCurrentState()
             show = true
@@ -490,7 +488,7 @@
                             transition={boxTransition}
                             textTransition={show || !boxChanged
                                 ? {
-                                      show: itemsAreEqual(currentItems[index], currentSlide?.items?.[index]) ? true : show,
+                                      show,
                                       renderVersion,
                                       transitionEnabled,
                                       transitioningBetween,

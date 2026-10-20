@@ -49,7 +49,13 @@
         const lastStateId = Object.keys(currentlyTransitioning).pop()
         if (lastStateId) {
             const lastState = currentlyTransitioning[lastStateId]
-            if (JSON.stringify(lastState.item) === JSON.stringify(item) && JSON.stringify(lastState.lines) === JSON.stringify(lines) && JSON.stringify(lastState.outSlide) === JSON.stringify(outSlide) && JSON.stringify(lastState.currentSlide) === JSON.stringify(currentSlide)) {
+            const { autoFontSize: _oldAuto, ...oldItem } = lastState.item || {}
+            const { autoFontSize: _newAuto, ...newItem } = item || {}
+            if (JSON.stringify(oldItem) === JSON.stringify(newItem) && JSON.stringify(lastState.lines) === JSON.stringify(lines) && JSON.stringify(lastState.outSlide) === JSON.stringify(outSlide) && JSON.stringify(lastState.currentSlide) === JSON.stringify(currentSlide)) {
+                if (item?.autoFontSize !== lastState.item?.autoFontSize) {
+                    lastState.item = clone(item)
+                    if (currentOut[lastStateId]) currentOut[lastStateId].item = clone(item)
+                }
                 return
             }
         }
@@ -129,8 +135,8 @@
             autoSizeDelay
         }
 
-        currentlyTransitioning[stateId] = state
-        currentlyTransitioning = currentlyTransitioning
+        // Keep only the active state so previous states un-render and trigger their out transition
+        currentlyTransitioning = { [stateId]: state }
     }
 
     function getOutTransition(transitioning: any, incomingNeedsAutoSize: boolean, transitioningBetween: boolean): Transition {
@@ -151,9 +157,15 @@
     }
 </script>
 
-{#each Object.values(currentOut) as transitioning}
+{#each Object.entries(currentOut) as [id, transitioning] (id)}
     {@const outTransition = !transitionEnabled ? null : isClearing ? clearingOutTransition : getOutTransition(transitioning, incomingNeedsAutoSize, transitioningBetween)}
-    <OutputTransition inTransition={transitionEnabled ? transitioning.inTransition : null} {outTransition}>
+    <OutputTransition
+        inTransition={transitionEnabled ? transitioning.inTransition : null}
+        {outTransition}
+        on:outrostart={() => {
+            delete currentlyTransitioning[id]
+        }}
+    >
         <slot customItem={transitioning.item} customLines={transitioning.lines} customOut={transitioning.outSlide} customSlide={transitioning.currentSlide} transition={transitionEnabled ? transitioning.inTransition : null} />
     </OutputTransition>
 {/each}

@@ -770,7 +770,7 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
         const keys: string[] = key ? [key] : Object.keys(output.out || {})
         cleared = !keys.some((type: string) => {
             if (!output.out?.[type]) return
-            if (key === null && type === "scene") return false
+            if (key === null && (type === "scene" || type === "refresh")) return false
 
             if (type === "overlays") {
                 if (!Array.isArray(output.out.overlays)) return false
