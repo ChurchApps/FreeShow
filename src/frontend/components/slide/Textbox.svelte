@@ -13,6 +13,7 @@
     import { createCSSVariables } from "../helpers/showActions"
     import { isCroppedItem } from "../helpers/cropping"
     import { getStyles, getItemStyle } from "../helpers/style"
+    import SlideItemTransition from "../output/transitions/SlideItemTransition.svelte"
     import SlideItems from "./SlideItems.svelte"
     import TextboxLines from "./TextboxLines.svelte"
     import { readAutoSizeCache, writeAutoSizeCache } from "./autosizeCache"
@@ -31,6 +32,7 @@
     export let backdropFilter = ""
     export let key = false
     export let transition: Transition | null = null
+    export let textTransition: any = null
     export let smallFontSize = false
     export let animationStyle: any = {}
     export let dynamicValues = true
@@ -296,7 +298,7 @@
 
     let itemElem: HTMLElement | undefined
 
-    $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${item?.lines?.length || 0}`
+    $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${JSON.stringify(item?.lines || "")}`
 
     $: if (stateSignature !== lastRenderedSignature) {
         lastRenderedSignature = stateSignature
@@ -332,8 +334,8 @@
         }, delay)
     }
 
-    // Trigger calculation only when Content, Style, Template, or Ratio actually changes
-    $: if (itemElem && loaded && autosizeSignature !== prevAutosizeSignature) {
+    // Trigger calculation only when Content, Style, Template, or Ratio actually changes (and inner text is mounted)
+    $: if (itemElem && loaded && (!textTransition || textTransition.show) && autosizeSignature !== prevAutosizeSignature) {
         prevAutosizeSignature = autosizeSignature
         debouncedCalculateAutosize(isStage ? 60 : 0)
     }
@@ -518,7 +520,8 @@
 
         let textQuery = ""
         if (isTextItem) {
-            elem = elem.querySelector(".align") as HTMLElement
+            const alignElems = elem.querySelectorAll(".align")
+            elem = alignElems[alignElems.length - 1] as HTMLElement
             if (!elem) return
             textQuery = ".lines .break span"
         } else {
@@ -591,9 +594,9 @@
         // Include container dimensions to invalidate cache when OUTPUT resolution/size changes
         if (!preview && !isStage && itemElem) {
             const container = itemElem.parentElement
-            if (container) {
-                boxDimensions.containerWidth = container.clientWidth ? Math.round(container.clientWidth / 5) * 5 : 0
-                boxDimensions.containerHeight = container.clientHeight ? Math.round(container.clientHeight / 5) * 5 : 0
+            if (container?.clientWidth && container?.clientHeight) {
+                boxDimensions.containerWidth = Math.round(container.clientWidth / 5) * 5
+                boxDimensions.containerHeight = Math.round(container.clientHeight / 5) * 5
             }
         }
 
@@ -832,37 +835,90 @@
     on:mouseup={release}
 >
     {#if lines && !noTextMode}
-        <TextboxLines
-            {item}
-            {slideIndex}
-            {key}
-            {smallFontSize}
-            {animationStyle}
-            {dynamicValues}
-            {isStage}
-            {customFontSize}
-            {outputStyle}
-            {ref}
-            {style}
-            {customStyle}
-            {stageItem}
-            {chords}
-            {linesStart}
-            {linesEnd}
-            fontSize={smallFontSize ? 20 : fontSize}
-            {customTypeRatio}
-            {maxLines}
-            {maxLinesInvert}
-            {centerPreview}
-            {revealed}
-            styleOverrides={templateStyleOverrides}
-            {useOriginalTextColor}
-            hideContent={hideUntilAutosized}
-            {normalWrap}
-            {highlighedLines}
-            on:updateAutoSize={calculateAutosize}
-            {updateDynamicValues}
-        />
+        {#if textTransition}
+            <div class="textTransitionContainer">
+                {#key `${textTransition.show}-${textTransition.renderVersion}-${itemIndex}-${item?.id || "noid"}`}
+                    {#if textTransition.show}
+                        <SlideItemTransition
+                            {preview}
+                            transitionEnabled={textTransition.transitionEnabled}
+                            transitioningBetween={textTransition.transitioningBetween}
+                            isClearing={textTransition.isClearing}
+                            incomingNeedsAutoSize={textTransition.incomingNeedsAutoSize}
+                            globalTransition={textTransition.globalTransition}
+                            {item}
+                            lines={textTransition.lines}
+                            let:customItem
+                            let:customLines
+                        >
+                            <TextboxLines
+                                item={customItem}
+                                {slideIndex}
+                                {key}
+                                {smallFontSize}
+                                {animationStyle}
+                                {dynamicValues}
+                                {isStage}
+                                {customFontSize}
+                                {outputStyle}
+                                {ref}
+                                {style}
+                                {customStyle}
+                                {stageItem}
+                                chords={customItem.chords?.enabled ?? chords}
+                                linesStart={customLines?.[textTransition.currentLineId || ""]?.[customItem.lineReveal ? "linesStart" : "start"]}
+                                linesEnd={customLines?.[textTransition.currentLineId || ""]?.[customItem.lineReveal ? "linesEnd" : "end"]}
+                                fontSize={smallFontSize ? 20 : fontSize}
+                                {customTypeRatio}
+                                {maxLines}
+                                {maxLinesInvert}
+                                {centerPreview}
+                                {revealed}
+                                styleOverrides={templateStyleOverrides}
+                                {useOriginalTextColor}
+                                hideContent={hideUntilAutosized}
+                                {normalWrap}
+                                {highlighedLines}
+                                on:updateAutoSize={calculateAutosize}
+                                {updateDynamicValues}
+                            />
+                        </SlideItemTransition>
+                    {/if}
+                {/key}
+            </div>
+        {:else}
+            <TextboxLines
+                {item}
+                {slideIndex}
+                {key}
+                {smallFontSize}
+                {animationStyle}
+                {dynamicValues}
+                {isStage}
+                {customFontSize}
+                {outputStyle}
+                {ref}
+                {style}
+                {customStyle}
+                {stageItem}
+                {chords}
+                {linesStart}
+                {linesEnd}
+                fontSize={smallFontSize ? 20 : fontSize}
+                {customTypeRatio}
+                {maxLines}
+                {maxLinesInvert}
+                {centerPreview}
+                {revealed}
+                styleOverrides={templateStyleOverrides}
+                {useOriginalTextColor}
+                hideContent={hideUntilAutosized}
+                {normalWrap}
+                {highlighedLines}
+                on:updateAutoSize={calculateAutosize}
+                {updateDynamicValues}
+            />
+        {/if}
     {:else}
         <SlideItems {item} {slideIndex} {preview} miniPreview={miniPreview || centerPreview} {isTemplatePreview} {ratio} {smallFontSize} {ref} {fontSize} {outputId} />
     {/if}
@@ -929,5 +985,11 @@
     .item.chords,
     .item.chords :global(.align) {
         overflow: visible;
+    }
+
+    .textTransitionContainer {
+        position: relative;
+        width: 100%;
+        height: 100%;
     }
 </style>

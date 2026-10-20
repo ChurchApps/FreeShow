@@ -297,7 +297,8 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
             if (type === "slide") {
                 const previousSlide = a[id].out?.slide || null
-                const sameSlideOutput = !!previousSlide && !!outData && previousSlide.id === outData.id && previousSlide.layout === outData.layout && previousSlide.index === outData.index && previousSlide.page === outData.page && previousSlide.type === outData.type
+                const isTempSlide = outData?.id === "temp" || outData?.id === "tempText"
+                const sameSlideOutput = !!previousSlide && !!outData && !isTempSlide && previousSlide.id === outData.id && previousSlide.layout === outData.layout && previousSlide.index === outData.index && previousSlide.page === outData.page && previousSlide.type === outData.type
 
                 if (sameSlideOutput) {
                     a[id].out!.refresh = Number(a[id].out!.refresh || 0) + 1
