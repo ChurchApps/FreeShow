@@ -307,6 +307,7 @@
         /* max-height: 50%; */
         flex: 1;
         min-width: 50%;
+        position: relative;
     }
 
     .top {
@@ -344,7 +345,9 @@
         display: flex;
         flex-direction: column;
 
-        position: relative;
+        position: sticky;
+        bottom: 5px;
+        z-index: 10;
 
         background-color: var(--primary-darker);
         border: 1px solid var(--primary-lighter);
