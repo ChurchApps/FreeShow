@@ -701,7 +701,8 @@ if (process.env.FS_CAP_STATS) {
 
 // Shared media sources (MediaLayers.ts on main): the latest frame of each, and which ones each output shows.
 // A frame goes back to main for release once it is no longer the latest and no composite still reads it.
-type MediaFrame = { key: string; seq: number; handle: Buffer; refs: number }
+// handle: the shared texture handle (Windows, macOS) or the dmabuf { planes, modifier } (Linux)
+type MediaFrame = { key: string; seq: number; handle: Buffer | { planes: any[]; modifier: any }; width: number; height: number; refs: number }
 const mediaLatest = new Map<string, MediaFrame>()
 const mediaAssigned: { [outputId: string]: { layers: { key: string; alpha: number }[]; fill: number[] } } = {}
 
@@ -787,7 +788,7 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
     // or the shared media sources this output's page shows (MediaLayers.ts), held until the composite is recorded
     const mediaFrames = layerBuf ? [] : mediaFramesFor(id)
     const assigned = mediaAssigned[id]
-    const video = layerBuf ? { width: layer!.width, height: layer!.height, format: layer!.format, data: layerBuf.buf.subarray(0, layerBuf.bytes) } : mediaFrames.length ? { media: mediaFrames.map((m) => ({ handle: m.frame.handle, fit: 0, alpha: m.alpha })), fill: assigned!.fill } : null
+    const video = layerBuf ? { width: layer!.width, height: layer!.height, format: layer!.format, data: layerBuf.buf.subarray(0, layerBuf.bytes) } : mediaFrames.length ? { media: mediaFrames.map((m) => ({ handle: m.frame.handle, width: m.frame.width, height: m.frame.height, fit: 0, alpha: m.alpha })), fill: assigned!.fill } : null
     if (layerBuf) layerBuf.inUse = true
     for (const m of mediaFrames) m.frame.refs++
 
@@ -1305,7 +1306,8 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
             }
             case "mediaFrame": {
                 const prev = mediaLatest.get(msg.key)
-                mediaLatest.set(msg.key, { key: msg.key, seq: msg.seq, handle: Buffer.from(msg.handle), refs: 0 })
+                const handle = msg.handle?.planes ? msg.handle : Buffer.from(msg.handle)
+                mediaLatest.set(msg.key, { key: msg.key, seq: msg.seq, handle, width: msg.width, height: msg.height, refs: 0 })
                 if (prev && prev.refs <= 0) port.postMessage({ type: "mediaRelease", key: prev.key, seq: prev.seq })
                 break
             }
