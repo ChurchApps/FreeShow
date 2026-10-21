@@ -77,7 +77,7 @@ import { getFileName, removeExtension } from "./media"
 import { updateActiveSceneOutputs } from "./output"
 import { select } from "./select"
 import { loadShows } from "./setShow"
-import { checkName, getLayoutRef, removeTemplatesFromShow } from "./show"
+import { checkName, getLayoutRef, removeTemplatesFromShow, updateShowsList } from "./show"
 import { _show } from "./shows"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
@@ -1455,17 +1455,24 @@ function historyDelete(id, data, { updater } = { updater: "" }) {
 
 async function duplicateShows(selectedData: any) {
     await loadShows(selectedData.map(({ id }) => id))
-    selectedData.forEach(({ id }) => {
+    let newIds: string[] = []
+    selectedData.forEach(async ({ id }) => {
         const projectId = id === "show" ? get(activeProject) : null
-        const newId = duplicateShow(id, projectId)
-        if (newId === id) return
+        const newId = await duplicateShow(id, projectId, true)
+        if (newId !== id) newIds.push(newId)
+    })
 
-        if (selectedData.length === 1) activeRename.set("show_drawer_" + newId)
+    setTimeout(() => {
+        // update list instantly
+        updateShowsList(get(shows))
+
+        // activate rename
+        if (newIds.length === 1) activeRename.set("show_drawer_" + newIds[0])
     })
 }
 
-export async function duplicateShow(id: string, projectId?: string | null): Promise<string> {
-    await loadShows([id])
+export async function duplicateShow(id: string, projectId?: string | null, alreadyLoaded: boolean = false): Promise<string> {
+    if (!alreadyLoaded) await loadShows([id])
     const show = clone(get(showsCache)[id])
     if (!show) return id
 
