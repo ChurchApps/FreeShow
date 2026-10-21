@@ -266,8 +266,6 @@
     $: if (id === "text") {
         setBoxInputValue(box, "default", "font-family", "styleValue", getStyles(style)["font"] || "")
         setBoxInputValue(box, "lines", "specialStyle.lineRadius", "hidden", !item?.specialStyle?.lineRadius && !item?.specialStyle?.lineBg)
-
-        setBoxInputValue(box, "default", "textFit", "value", item?.textFit || "none") // text items
     }
 
     $: if (id === "media" && item) {
