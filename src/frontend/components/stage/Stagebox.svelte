@@ -170,7 +170,7 @@
     let alignElem
     let size = 100
     let prevAutoSizeKey = ""
-    $: autoSizeKey = `${currentSlide?.id || ""}_${item?.style || ""}_${item?.textFit || ""}_${currentItemText || ""}`
+    $: autoSizeKey = `${currentSlide?.id || ""}_${item?.style || ""}_${item?.textFit || ""}_${currentItemText || ""}_${JSON.stringify(item?.tracker || item?.clock || item?.timer || "")}`
     $: if (alignElem && autoSizeEnabled && autoSizeKey !== prevAutoSizeKey) {
         prevAutoSizeKey = autoSizeKey
         autoSizeRetryCount = 0

@@ -308,7 +308,7 @@
     $: hasAutoSize = stageAutoSize || itemTextFit !== "none"
 
     let lastRenderedItemKey = ""
-    $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${item?.style || ""}_${item?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || "")}`
+    $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${item?.style || ""}_${item?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || "")}_${JSON.stringify(item?.tracker || "")}`
     $: if (stateSignature !== lastRenderedSignature && (!textTransition || textTransition.show)) {
         const itemKey = `${ref?.id || ""}_${item?.id || itemIndex}_${resolvedTemplateId}`
         const isSameItem = itemKey === lastRenderedItemKey && fontSize > 0
@@ -335,7 +335,7 @@
         }
     }
     let prevAutosizeSignature = ""
-    $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${ratio}`
+    $: autosizeSignature = `${isStage ? stageItem?.style || "" : item?.style || ""}_${resolvedTemplateId}_${chordLines ? 1 : 0}_${stageAutoSize ? 1 : 0}_${item?.textFit || ""}_${stageItem?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || stageItem?.lines || "")}_${JSON.stringify(item?.tracker || "")}_${ratio}`
 
     const AUTOSIZE_THROTTLE_MS = 100
     let debounceTimer: NodeJS.Timeout | null = null
@@ -644,6 +644,7 @@
             linesStart: linesStart ?? null,
             linesEnd: linesEnd ?? null,
             centerPreview: !!centerPreview,
+            tracker: item?.tracker || null,
             // Include resolved template to invalidate cache when template changes
             resolvedTemplateId: resolvedTemplateId || ""
         })
