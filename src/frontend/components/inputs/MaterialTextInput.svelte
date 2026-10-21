@@ -108,7 +108,7 @@
             {/if}
         {/if}
 
-        {#if type === "password" && (!pasteBtn || value)}
+        {#if type === "password" && !disabled && (!pasteBtn || value)}
             <MaterialButton
                 on:click={(e) => {
                     showText = !showText
