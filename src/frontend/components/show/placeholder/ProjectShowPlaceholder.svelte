@@ -75,10 +75,14 @@
         {#if project}
             <div style="display: flex;gap: 4px;">
                 <MaterialButton variant={isTemplate ? "outlined" : "contained"} icon="slide" style="font-size: 1.1em;" on:click={selectShow}>
-                    {selectedShowName ? `${translateText("popup.select_show")}: ${selectedShowName}` : translateText("popup.select_show")}
+                    {#if selectedShowName}
+                        {translateText("actions.duplicate")}: <span style="font-weight: normal;">{selectedShowName}</span>
+                    {:else}
+                        {translateText("popup.select_show")}
 
-                    {#if isTemplate}
-                        <span style="font-style: italic;font-size: 0.9em;opacity: 0.6;font-weight: normal;">{translateText("actions.duplicate")}</span>
+                        {#if isTemplate}
+                            <span style="font-style: italic;font-size: 0.9em;opacity: 0.6;font-weight: normal;">{translateText("actions.duplicate")}</span>
+                        {/if}
                     {/if}
                 </MaterialButton>
                 {#if isTemplate && selectedShowId}
