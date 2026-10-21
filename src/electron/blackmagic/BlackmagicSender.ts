@@ -56,6 +56,13 @@ export class BlackmagicSender {
     private static macadamInitMutex: Promise<void> = Promise.resolve()
     // Core state
     static playbackData: { [key: string]: PlaybackData } = {}
+    // FS_CAP_STATS: what happened to each frame given to an output, read and reset once a second
+    static stats: { [outputId: string]: { [what: string]: number } } = {}
+    private static note(outputId: string, what: string, value = 1, set = false) {
+        if (!process.env.FS_CAP_STATS) return
+        const s = (this.stats[outputId] ||= {})
+        s[what] = set ? value : (s[what] || 0) + value
+    }
     static initializationInProgress: { [key: string]: Promise<boolean> | undefined } = {}
 
     // Audio buffers cache
@@ -571,6 +578,7 @@ export class BlackmagicSender {
         // If one frame is still processing, drop the incoming frame.
         if (data.frameProcessing) {
             data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
+            this.note(outputId, "busy")
             return
         }
 
@@ -579,6 +587,7 @@ export class BlackmagicSender {
         // Back off briefly after conversion allocation failures.
         if (data.conversionBackoffUntil && now < data.conversionBackoffUntil) {
             data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
+            this.note(outputId, "backoff")
             return
         }
 
@@ -588,6 +597,7 @@ export class BlackmagicSender {
         const frameDurationMs = 1000 / targetFps
         const minInterval = Math.max(1, Math.floor(frameDurationMs * 0.75))
         if (data.lastFrameTime && now - data.lastFrameTime < minInterval) {
+            this.note(outputId, "fast")
             return // Skip this frame - coming too fast
         }
         data.lastFrameTime = now
@@ -622,8 +632,10 @@ export class BlackmagicSender {
 
                     // Keep buffer minimal once started to prevent accumulation
                     const maxBuffer = data.isStarted ? Math.min(2, Math.max(1, Math.ceil(data.targetBufferSize / 4))) : data.targetBufferSize
+                    this.note(outputId, "buffered", bufferedFrames, true)
                     if (bufferedFrames > maxBuffer) {
                         data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
+                        this.note(outputId, "full")
                         return // Buffer too full, skip frame
                     }
                 } catch (err) {
@@ -679,6 +691,7 @@ export class BlackmagicSender {
                             data.conversionErrorCount = 0
                         } catch (err) {
                             console.error(`Frame conversion error: ${err instanceof Error ? err.message : String(err)}`)
+                            this.note(outputId, "convertError")
 
                             const message = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase()
                             if (message.includes("allocation failed") || message.includes("out of memory")) {
@@ -724,7 +737,11 @@ export class BlackmagicSender {
                             if (typeof streamTime === "number") {
                                 // streamTime is 32-bit; the difference stays right across its wrap
                                 const lead = (data.scheduledFrames * frameDurationTicks - streamTime) | 0
-                                if (lead < frameDurationTicks) data.scheduledFrames += Math.ceil((frameDurationTicks - lead) / frameDurationTicks)
+                                if (lead < frameDurationTicks) {
+                                    data.scheduledFrames += Math.ceil((frameDurationTicks - lead) / frameDurationTicks)
+                                    this.note(outputId, "realigned")
+                                }
+                                this.note(outputId, "streamTime", streamTime, true)
                             }
                         } catch {
                             // no position to align to; schedule in sequence
@@ -752,6 +769,8 @@ export class BlackmagicSender {
 
                         // Assume scheduling was successful if no error was thrown
                         data.scheduledFrames++
+                        this.note(outputId, "scheduled")
+                        this.note(outputId, "frameTime", currentTime, true)
 
                         try {
                             data.playback.hardwareTime()
@@ -776,6 +795,7 @@ export class BlackmagicSender {
                         }
                     } catch (scheduleErr) {
                         console.error(`Frame scheduling error: ${scheduleErr instanceof Error ? scheduleErr.message : String(scheduleErr)}`)
+                        this.note(outputId, "scheduleError")
 
                         // Handle schedule failures
                         data.scheduleFailCount = (data.scheduleFailCount || 0) + 1

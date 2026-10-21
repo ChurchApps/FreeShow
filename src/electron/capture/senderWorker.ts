@@ -667,12 +667,31 @@ function bmdGive(outputId: string, buf: Buffer, framerate: number, preConverted:
     const hold = () => {
         const cur = bmdLast.get(outputId)
         if (!cur || cur.seq !== seq || !BlackmagicSender.playbackData[outputId]?.playback) return
+        bmdNote(outputId, "repeat")
         BlackmagicSender.scheduleFrame(outputId, cur.buf, BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null, cur.framerate, cur.preConverted)
         const now = performance.now()
         due = Math.max(due + period, now)
         cur.timer = setTimeout(hold, due - now)
     }
     last.timer = setTimeout(hold, period)
+}
+// FS_CAP_STATS: once a second per Blackmagic output, what reached the card and what stopped short of it
+const bmdTrace: { [outputId: string]: { [what: string]: number } } = {}
+function bmdNote(outputId: string, what: string) {
+    if (!process.env.FS_CAP_STATS) return
+    const t = (bmdTrace[outputId] ||= {})
+    t[what] = (t[what] || 0) + 1
+}
+if (process.env.FS_CAP_STATS) {
+    setInterval(() => {
+        for (const id of new Set([...Object.keys(bmdTrace), ...Object.keys(BlackmagicSender.playbackData)])) {
+            const d = BlackmagicSender.playbackData[id]
+            const fmt = (o: { [k: string]: number } | undefined) => Object.entries(o || {}).map(([k, v]) => `${k}=${v}`).join(" ")
+            console.info(`[BMD-STATS ${id}] playing=${!!d?.playback} started=${!!d?.isStarted} target=${d?.targetSize?.width}x${d?.targetSize?.height} ${d?.pixelFormat || ""} worker(${fmt(bmdTrace[id])}) sender(${fmt(BlackmagicSender.stats[id])})`)
+            delete bmdTrace[id]
+            delete BlackmagicSender.stats[id]
+        }
+    }, 1000)
 }
 function bmdForget(outputId?: string) {
     for (const [id, last] of bmdLast) {
@@ -760,6 +779,10 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
     const rtmpMembers = Object.keys(opts.rtmpMembers || {}).filter((m) => RtmpStreamer.isRunning(m))
     const hasRtmp = rtmpMembers.length > 0
     const bmdMembers = Object.keys(opts.bmdMembers || {}).filter((m) => !!BlackmagicSender.playbackData[m]?.playback)
+    if (process.env.FS_CAP_STATS) {
+        for (const m of Object.keys(opts.bmdMembers || {})) bmdNote(m, bmdMembers.includes(m) ? "inCapture" : "inCaptureNotPlaying")
+        for (const m of membersAll) if (BlackmagicSender.playbackData[m] && !opts.bmdMembers?.[m]) bmdNote(m, "captureWithoutBmd")
+    }
     const hasBmd = bmdMembers.length > 0
     const webrtcMembers = Object.keys(opts.webrtcMembers || {})
     const hasWebrtc = webrtcMembers.length > 0
@@ -1028,10 +1051,17 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
         // the card's mode (UYVY straight in when the card takes it raw, else BGRA converted by the sender)
         for (const m of bmdMembers) {
             const want = opts.bmdMembers![m]
-            if (!BlackmagicSender.canAcceptFrame(m)) continue
+            if (!BlackmagicSender.canAcceptFrame(m)) {
+                bmdNote(m, "refused")
+                continue
+            }
             const ti = targetBufs.findIndex((t) => t.width === want.width && t.height === want.height && t.format === want.format)
             const b = ti >= 0 ? targetBufs[ti] : main.width === want.width && main.height === want.height && main.format === want.format ? main : null
-            if (!b) continue
+            if (!b) {
+                bmdNote(m, `noFrameAt${want.width}x${want.height}f${want.format}`)
+                continue
+            }
+            bmdNote(m, outputsOff.has(m) ? "givenOff" : "given")
             const bytes = bytesFor(b.width, b.height, b.format)
             // an off output's blank is never written, so the card may hold it without a copy
             const frameData = outputsOff.has(m) ? blankPacerBuf(b.width, b.height, b.format, false).buf.subarray(0, bytes) : Buffer.from(b.pbuf.buf.subarray(0, bytes))
