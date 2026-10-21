@@ -16,6 +16,11 @@ export function checkName(name = "", showId = "") {
     name = formatToFileName(name)
 
     const showsList = Object.entries(get(shows) || {})
+
+    // strip trailing space + digits from the name if it exists, so "x 2" becomes "x", and then likely "x 3" instead of "x 2 2"
+    const hasConflict = showsList.some(([id, a]) => (!showId || id !== showId) && a.name?.toLowerCase() === name.toLowerCase())
+    if (hasConflict) name = name.replace(/\s+\d+$/, "")
+
     const nameLower = name.toLowerCase()
 
     let number = 1
