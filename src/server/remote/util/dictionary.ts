@@ -110,6 +110,9 @@ export const DEFAULT_DICTIONARY = {
         wrong_password: "Wrong password",
         quick_play: "Quick play"
     },
+    error: {
+        overLimit: "Maximum connections reached!"
+    },
     clear: {
         all: "Clear all"
     },

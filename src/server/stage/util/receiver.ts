@@ -107,7 +107,7 @@ export const receiver = {
             localStorage.removeItem("password")
             if (layoutId) localStorage.removeItem("password_" + layoutId)
         } else {
-            setError(data)
+            setError(translate("error." + data) || data)
         }
         _set("selectedLayout", "")
     },

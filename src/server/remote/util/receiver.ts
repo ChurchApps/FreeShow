@@ -46,7 +46,7 @@ export const receiver = {
             setError(translate("remote.wrong_password"))
             localStorage.removeItem("password")
             _update("password", "required", true)
-        } else setError(data)
+        } else setError(translate("error." + data) || data)
     },
     LANGUAGE: (data: any) => {
         _.dictionary.update((a) => {

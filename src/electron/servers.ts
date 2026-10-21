@@ -90,7 +90,8 @@ function createServerInstance(id: ServerName) {
     // RECEIVE CONNECTION FROM CLIENT
     io.on("connection", (socket) => {
         if (Object.keys(servers[id]!.connections).length >= servers[id]!.max) {
-            io.emit(id, { channel: "ERROR", id: "overLimit", data: servers[id]!.max })
+            // only tell the rejected client, the already connected clients should not be affected
+            socket.emit(id, { channel: "ERROR", data: "overLimit" })
             socket.disconnect()
             return
         }
