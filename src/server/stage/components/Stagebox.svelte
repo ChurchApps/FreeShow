@@ -49,7 +49,8 @@
         clearInterval(cssInterval)
     })
 
-    let itemStyles: any = getStyles(item.style, true)
+    let itemStyles: any = {}
+    $: itemStyles = getStyles(item.style, true)
     $: fontSize = Number(itemStyles?.["font-size"] || 0) || 100 // item.autoFontSize ||
 
     // dynamic resolution
@@ -64,7 +65,7 @@
     }
 
     // custom dynamic size
-    let newSizes = `;
+    $: newSizes = `;
         top: ${(itemStyles.top / 1080) * resolution.height}px;
         left: ${(itemStyles.left / 1920) * resolution.width}px;
         width: ${(itemStyles.width / 1920) * resolution.width}px;
@@ -184,7 +185,7 @@
         <div class="label">{item.label || ""}</div>
     {/if}
 
-    <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX};{item.type !== 'slide_text' || item.keepStyle ? 'height: 100%;' : ''}">
+    <div bind:this={alignElem} class="align" style="--align: {item.align};--text-align: {item.alignX || 'center'};{item.type !== 'slide_text' || item.keepStyle ? 'height: 100%;' : ''}">
         <span style="pointer-events: none;width: 100%;height: 100%;">
             {#if item.type === "current_output" || id.includes("current_output")}
                 <!-- width gets squished when resized -->

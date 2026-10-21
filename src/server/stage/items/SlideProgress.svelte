@@ -35,27 +35,27 @@
 
 <div class="progress" bind:this={progressElem} class:barBG={type === "bar"} style={accent ? "--accent: " + accent : ""}>
     {#if type === "number"}
-        <div class="autoFontSize" style={autoSize ? "font-size: " + autoSize + "px" : ""}><span style="color: var(--accent);">{currentShowSlide + 1}</span>/{slidesLength}</div>
+        <div class="align autoFontSize" style={autoSize ? "font-size: " + autoSize + "px" : ""}><span style="color: var(--accent);">{currentShowSlide + 1}</span>/{slidesLength}</div>
     {:else if type === "bar"}
         <!-- progress bar -->
         <div class="bar" style="width: {slidesLength ? ((currentShowSlide + 1) / slidesLength) * 100 : 0}%;"></div>
     {:else if type === "group"}
         <!-- group sequence -->
-        <div class="groups autoFontSize" class:column style={autoSize ? "font-size: " + autoSize + "px" : ""}>
+        <div class="align groups autoFontSize" class:column style={autoSize ? "font-size: " + autoSize + "px" : ""}>
             {#each layoutGroups as group}
                 {#if !group.child && !group.hide}
                     {@const activeGroup = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide)}
                     {@const nextSlide = layoutGroups.find((a, i) => a.index === group.index && i === currentShowSlide + 1)}
 
                     <div class="group" class:active={group.index === layoutGroups.find((_, i) => i === currentShowSlide)?.index}>
-                        {tracker.oneLetter ? group.oneLetterName : group.name}{#if tracker.childProgress && (activeGroup?.child || nextSlide?.child)}<span style="opacity: 0.8;font-size: 0.7em;">.{activeGroup.child + 1}</span>{/if}
+                        {tracker.oneLetter ? group.oneLetterName : group.name}{#if tracker.childProgress && (activeGroup?.child || nextSlide?.child)}<span style="opacity: 0.8;font-size: 0.7em;">.{(activeGroup?.child ?? -1) + 1}</span>{/if}
                     </div>
                 {/if}
             {/each}
         </div>
     {:else if type === "project"}
         <!-- project sequence -->
-        <div class="groups projectGroups autoFontSize" style={autoSize ? "font-size: " + autoSize + "px" : ""}>
+        <div class="align groups projectGroups autoFontSize" style={autoSize ? "font-size: " + autoSize + "px" : ""}>
             {#each projectItems as projectItem}
                 {@const label = getProjectItemLabel(projectItem, projectMetadata)}
                 <div class="group projectItem" class:active={currentProjectIndexes.includes(projectItem.index)}>
@@ -87,9 +87,18 @@
         transition: width 0.5s;
     }
 
+    .align {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        justify-content: var(--text-align);
+    }
+
     .groups {
         display: flex;
-        gap: 15px;
+        gap: 25px;
         flex-wrap: wrap;
     }
     .groups.column {
@@ -104,10 +113,11 @@
         color: var(--accent);
     }
 
+    .projectGroups.align {
+        align-items: var(--text-align);
+        justify-content: center;
+    }
     .projectGroups {
-        width: 100%;
-        height: 100%;
-
         flex-direction: column;
         flex-wrap: nowrap;
         gap: 0;
