@@ -8,7 +8,7 @@
     import { sendBackgroundToStage } from "../../utils/stageTalk"
     import { videoExtensions } from "../../values/extensions"
     import EditboxLines from "../edit/editbox/EditboxLines.svelte"
-    import autosize from "../edit/scripts/autosize"
+    import autosize, { getAutoSizeOptions } from "../edit/scripts/autosize"
     import { isConditionMet } from "../edit/scripts/itemHelpers"
     import { getItemText } from "../edit/scripts/textStyle"
     import Icon from "../helpers/Icon.svelte"
@@ -165,12 +165,13 @@
 
     // Exclude slide_text from Stagebox autosize - it uses Textbox's own autosize instead
     // Stagebox autosize is for SlideNotes, SlideProgress, VideoTime, etc.
-    $: autoSizeEnabled = item?.type === "current_output" || item?.type === "slide_text" ? false : item?.type?.includes("text") ? item?.auto || (item?.textFit && item?.textFit !== "none") : item?.auto !== false || item?.textFit !== "none"
+    $: isAutoSized = item?.type === "text" ? (item.textFit || "none") !== "none" : item?.textFit !== "none"
+    $: autoSizeEnabled = item?.type === "current_output" || item?.type === "slide_text" ? false : isAutoSized
 
     let alignElem
     let size = 100
     let prevAutoSizeKey = ""
-    $: autoSizeKey = `${currentSlide?.id || ""}_${item?.style || ""}_${item?.textFit || ""}_${item?.auto ?? ""}_${currentItemText || ""}`
+    $: autoSizeKey = `${currentSlide?.id || ""}_${item?.style || ""}_${item?.textFit || ""}_${currentItemText || ""}_${JSON.stringify(item?.tracker || item?.clock || item?.timer || "")}`
     $: if (alignElem && autoSizeEnabled && autoSizeKey !== prevAutoSizeKey) {
         prevAutoSizeKey = autoSizeKey
         autoSizeRetryCount = 0
@@ -200,21 +201,16 @@
             // Reset retry count on successful measurement
             autoSizeRetryCount = 0
 
-            let itemFontSize = Number(getStyles(item?.style, true)?.["font-size"] || "") || 100
-
+            let itemFontSize = getStyles(item?.style, true)?.["font-size"]
             const type = item?.textFit || "growToFit"
-            let defaultFontSize = itemFontSize
-            let maxFontSize = type ? itemFontSize : 0
-
-            const isTextItem = item?.type === "slide_text" || (item?.type || "text") === "text"
-            if (!isTextItem) maxFontSize = 0
+            const isTextboxItem = (item?.type || "text") === "text"
+            const { defaultFontSize, maxFontSize } = getAutoSizeOptions(type, itemFontSize, isTextboxItem)
 
             size = autosize(alignElem, { type, textQuery: ".autoFontSize", defaultFontSize, maxFontSize })
 
             currentAutoSizeTimeout = null
         }, 20)
     }
-    $: isAutoSized = item?.type?.includes("text") ? item?.auto || (item?.textFit && item?.textFit !== "none") : item?.auto !== false || (item?.textFit && item?.textFit !== "none")
     $: autoSize = isAutoSized ? size : fontSize
 
     // SLIDE
@@ -273,13 +269,13 @@
 
     let itemStyle = ""
     let textStyle = ""
-    $: if (item?.style) updateStyles()
+    $: if (item?.style || isAutoSized !== undefined) updateStyles()
     function updateStyles() {
         const styles = getStyles(item?.style)
         const textStyleKeys = ["line-height", "text-decoration"]
         // For slide_text items with autosize, exclude font-size from container style
         // to prevent CSS inheritance of 800px (MAX_FONT_SIZE) before autosize computes correct value
-        const isSlideTextWithAutosize = item?.type === "slide_text" && (item?.auto !== false || (item?.textFit && item?.textFit !== "none"))
+        const isSlideTextWithAutosize = item?.type === "slide_text" && item?.textFit !== "none"
 
         itemStyle = ""
         textStyle = ""
@@ -456,10 +452,10 @@
                     <!-- For slide_text items with autosize, don't pass fontSize from item style (which is MAX_FONT_SIZE=800) -->
                     <!-- When autosize is disabled (None), pass stage item's fontSize -->
                     {#key currentSlide?.id || currentSlide?.index}
-                        <SlideText {currentSlide} {slideOffset} stageItem={item} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} ref={{ type: "stage", id }} autoSize={item.textFit !== "none" && item.auto !== false} fontSize={item.textFit !== "none" && item.auto !== false ? 0 : fontSize} {textStyle} style={item.type ? item.keepStyle : false} />
+                        <SlideText {currentSlide} {slideOffset} stageItem={item} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} ref={{ type: "stage", id }} autoSize={isAutoSized} fontSize={isAutoSized ? 0 : fontSize} {textStyle} style={item.type ? item.keepStyle : false} />
                     {/key}
                 {:else if item.type === "slide_notes" || id.includes("notes")}
-                    <SlideNotes {currentSlide} {slideOffset} autoSize={item.auto !== false ? autoSize : fontSize} />
+                    <SlideNotes {currentSlide} {slideOffset} {autoSize} />
                 {:else if item.type === "text"}
                     {#if edit}
                         {#key $refreshEditSlide}
@@ -468,28 +464,28 @@
                             </span>
                         {/key}
                     {:else}
-                        <Textbox item={stageItemToItem(item)} stageItem={item} ref={{ type: "stage", id }} {fontSize} stageAutoSize={item.auto || (item.textFit && item.textFit !== "none")} isStage />
+                        <Textbox item={stageItemToItem(item)} stageItem={item} ref={{ type: "stage", id }} {fontSize} stageAutoSize={isAutoSized} isStage />
                     {/if}
                 {:else if item.type}
                     {#if newItem}
-                        <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={item.auto !== false || item.textFit !== "none" ? autoSize : fontSize} {preview} outputId={stageOutputId} isStage />
+                        <SlideItems item={stageItemToItem(newItem)} ref={{ type: "stage", id }} fontSize={autoSize} {preview} outputId={stageOutputId} isStage />
                     {/if}
                 {:else}
                     <!-- OLD CODE -->
                     <div>
                         {#if id.includes("slide_tracker")}
-                            <SlideProgress tracker={item.tracker || {}} autoSize={item.auto !== false ? autoSize : fontSize} outputId={stageOutputId} />
+                            <SlideProgress tracker={item.tracker || {}} {autoSize} outputId={stageOutputId} />
                         {:else if id.includes("clock")}
-                            <Clock style={false} fontStyle={item.auto === false ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
+                            <Clock style={false} fontStyle="font-size: {edit ? autoSize : fontSize}px;" seconds={item.clock?.seconds ?? true} dateFormat={item.clock?.show_date ? "DD/MM/YYYY" : "none"} />
                         {:else if id.includes("first_active_timer")}
-                            <Timer item={stageItemToItem(item)} id={firstTimerId} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                            <Timer item={stageItemToItem(item)} id={firstTimerId} {today} style="font-size: {autoSize}px;" />
                         {:else if id.includes("timers")}
                             {#if $timers[id.split("#")[1]]}
-                                <Timer item={stageItemToItem(item)} id={id.split("#")[1]} {today} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" />
+                                <Timer item={stageItemToItem(item)} id={id.split("#")[1]} {today} style="font-size: {autoSize}px;" />
                             {/if}
                         {:else if id.includes("variables")}
                             {#if $variables[id.split("#")[1]]}
-                                <Variable id={id.split("#")[1]} style="font-size: {item.auto !== false ? autoSize : fontSize}px;" ref={{ type: "stage", id }} hideText={!!$currentWindow} />
+                                <Variable id={id.split("#")[1]} style="font-size: {autoSize}px;" ref={{ type: "stage", id }} hideText={!!$currentWindow} />
                             {/if}
                         {:else}
                             {id}

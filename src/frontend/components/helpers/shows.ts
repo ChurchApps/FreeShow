@@ -1,8 +1,7 @@
 import { get } from "svelte/store"
 import { uid } from "uid"
 import type { LayoutRef } from "../../../types/Show"
-import { activeFocus, activeShow, focusMode, showsCache, special } from "../../stores"
-import { getSlideText } from "../edit/scripts/textStyle"
+import { activeFocus, activeShow, focusMode, showsCache } from "../../stores"
 import { clone } from "./array"
 import { addToPos } from "./mover"
 // import { loadShows } from "./setShow"
@@ -210,6 +209,8 @@ export function _show(id = "active") {
                                         if (value === undefined) delete a[id].slides[slideId].items[index][key]
                                         else a[id].slides[slideId].items[index][key] = value
                                     }
+
+                                    if (key !== "autoFontSize") delete a[id].slides[slideId].items[index].autoFontSize
                                 } else {
                                     prev.values.push(a[id].slides[slideId].items[index] ? clone(a[id].slides[slideId].items[index]) : null)
                                     a[id].slides[slideId].items[index] = value
@@ -313,6 +314,7 @@ export function _show(id = "active") {
                                             a[id].slides[slideId].items[index].lines![line] = values[i] ? (values[i][lineIndex] !== undefined ? values[i][lineIndex] : values[i][0]) : values[0][0]
                                         }
                                     })
+                                    if (a[id].slides[slideId].items[index]) delete a[id].slides[slideId].items[index].autoFontSize
                                 })
                             })
 
@@ -332,6 +334,7 @@ export function _show(id = "active") {
                                         if (!a[id].slides[slideId]?.items?.[index]) return
                                         if (!a[id].slides[slideId].items[index].lines) a[id].slides[slideId].items[index].lines = []
                                         a[id].slides[slideId].items[index].lines![lineIndexes[i]] = item
+                                        delete a[id].slides[slideId].items[index].autoFontSize
                                     })
                                 })
                             })
@@ -357,6 +360,7 @@ export function _show(id = "active") {
                                         prev.items.push(a[id].slides[slideId].items[index].lines![line])
                                         delete a[id].slides[slideId].items[index].lines![line]
                                     })
+                                    if (a[id].slides[slideId].items[index]) delete a[id].slides[slideId].items[index].autoFontSize
                                 })
                             })
 
@@ -455,19 +459,20 @@ export function _show(id = "active") {
                             }
                         })
 
-                        if (get(special).alwaysPlaceEmptySlideFirst && a[i].length) {
-                            const firstSlide = shows[id]?.slides?.[a[i][0]?.id]
-                            if (firstSlide && getSlideText(firstSlide).length) {
-                                a[i].unshift({ type: "parent", layoutId, index: -1, layoutIndex: 0, id: "fake_empty", children: [], data: { id: "fake_empty" } })
-                                // Re-index layoutIndex for subsequent slides
-                                for (let k = 1; k < a[i].length; k++) {
-                                    a[i][k].layoutIndex = k
-                                    if (a[i][k].type === "child" && a[i][k].parent) {
-                                        a[i][k].parent!.layoutIndex = a[i][k].parent!.index === -1 ? 0 : a[i].findIndex((item) => item.id === a[i][k].parent?.id && item.type === "parent")
-                                    }
-                                }
-                            }
-                        }
+                        // this broke things more than it helps, use the template option instead
+                        // if (get(special).alwaysPlaceEmptySlideFirst && a[i].length) {
+                        //     const firstSlide = shows[id]?.slides?.[a[i][0]?.id]
+                        //     if (firstSlide && getSlideText(firstSlide).length) {
+                        //         a[i].unshift({ type: "parent", layoutId, index: -1, layoutIndex: 0, id: "fake_empty", children: [], data: { id: "fake_empty" } })
+                        //         // Re-index layoutIndex for subsequent slides
+                        //         for (let k = 1; k < a[i].length; k++) {
+                        //             a[i][k].layoutIndex = k
+                        //             if (a[i][k].type === "child" && a[i][k].parent) {
+                        //                 a[i][k].parent!.layoutIndex = a[i][k].parent!.index === -1 ? 0 : a[i].findIndex((item) => item.id === a[i][k].parent?.id && item.type === "parent")
+                        //             }
+                        //         }
+                        //     }
+                        // }
                     })
                 }
                 return a

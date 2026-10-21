@@ -12,11 +12,13 @@ export interface Config {
     autoErrorReporting?: boolean
     mediaFolderPath?: string
 
-    // ChurchApps API URLs
+    // ChurchApps API URLs and credentials
     churchAppsApiUrl?: string
     churchAppsAppUrl?: string
     churchAppsContentUrl?: string
     churchAppsLessonsUrl?: string
+    churchAppsClientId?: string
+    churchAppsClientSecret?: string
 }
 
 export interface OS {

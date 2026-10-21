@@ -178,8 +178,10 @@ function handleUpdate(obj, data, initializing) {
                 const replacerValue = Array.isArray(newValue) ? newValue[currentIndex] : newValue
                 if (subkey) {
                     value[subkey] = replacerValue
+                    if (key === "items" && subkey !== "autoFontSize") delete value.autoFontSize
                     return value
                 }
+                if (key === "items" && replacerValue) delete replacerValue.autoFontSize
                 return replacerValue
             })
             keyData[id][key] = keyData[id][key].filter((a) => a !== undefined)

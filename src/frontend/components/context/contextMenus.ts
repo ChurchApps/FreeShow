@@ -354,6 +354,7 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     pco_item: ["unlink_pco"],
     project_section: ["GROUP_recolor", "remove"],
     project_overlay: ["remove"],
+    project_effect: ["remove"],
     project_pdf: ["remove", "SEPARATOR", "mark_played"],
     project_ppt: ["remove", "SEPARATOR", "mark_played"],
     project_screen: ["remove"],

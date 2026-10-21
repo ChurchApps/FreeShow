@@ -64,7 +64,7 @@
 
     // AUTO SIZE
 
-    $: noAutoSize = item.auto === false && item.textFit === "none"
+    $: noAutoSize = item.textFit === "none"
 
     let previousItem = "{}"
     $: newItem = JSON.stringify(item)
@@ -84,9 +84,12 @@
         }, 50)
     }
 
+    $: itemFontSize = Number(getStyles(item.style, true)?.["font-size"] || "") || 100
+    $: resolvedFontSize = noAutoSize ? itemFontSize : edit ? autoSize : fontSize
+
     $: cameraCropState = getCropState(item.cropping, cropPreviewMode, item.style)
     $: cameraStyleString = `${cameraCropState.mediaCropGeometry}object-fit: ${cameraCropState.cropHasValues ? (item.fit === "cover" ? "cover" : "fill") : item.fit || "contain"};filter: ${item.filter};transform: scale(${item.flipped ? "-1" : "1"}, ${item.flippedY ? "-1" : "1"});`
-    $: variableStyleString = typeof item.style === "string" ? (item.style.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${edit ? autoSize : fontSize}px;`) : ""
+    $: variableStyleString = typeof item.style === "string" ? (item.style.includes("font-size") && item.style.split("font-size:")[1].trim()[0] !== "0" ? "" : `font-size: ${resolvedFontSize}px;`) : ""
 </script>
 
 {#if item.type === "media"}
@@ -94,9 +97,9 @@
 {:else if item.type === "web"}
     <Website src={item.web?.src || ""} navigation={!edit && !item.web?.noNavigation} zoom={item.web?.zoom} clickable={!edit && $currentWindow === "output"} {outputId} {ratio} disablePreview={isTemplatePreview || (ref?.type === "overlay" && !outputId && miniPreview)} />
 {:else if item.type === "timer"}
-    <Timer {item} id={item.timer?.id || item.timerId || ""} {today} style={noAutoSize ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} {edit} />
+    <Timer {item} id={item.timer?.id || item.timerId || ""} {today} style="font-size: {resolvedFontSize}px;" {edit} />
 {:else if item.type === "clock"}
-    <Clock {item} fontStyle={noAutoSize ? "" : `font-size: ${edit ? autoSize : fontSize}px;`} style={false} {...item.clock} />
+    <Clock {item} fontStyle="font-size: {resolvedFontSize}px;" style={false} {...item.clock} />
 {:else if item.type === "camera"}
     {#if item.device}
         {#if item.device.type === "screen"}
@@ -126,7 +129,7 @@
         {/if}
     {/if}
 {:else if item.type === "slide_tracker"}
-    <SlideProgress {item} tracker={item.tracker || {}} autoSize={item.auto === false ? 0 : edit ? autoSize : fontSize} {outputId} />
+    <SlideProgress {item} tracker={item.tracker || {}} autoSize={resolvedFontSize} {outputId} />
 {:else if item.type === "events"}
     <DynamicEvents {...item.events} textSize={smallFontSize ? (-1.1 * $slidesOptions.columns + 10) * 5 : Number(getStyles(item.style, true)?.["font-size"]) || 80} />
 {:else if item.type === "weather"}

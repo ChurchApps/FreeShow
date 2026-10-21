@@ -1,9 +1,8 @@
 <script lang="ts">
     import { uid } from "uid"
     import type { Item, Transition } from "../../../../types/Show"
-    import { currentWindow, scriptureSettings, templates } from "../../../stores"
+    import { currentWindow } from "../../../stores"
     import { clone } from "../../helpers/array"
-    import { getStyleTemplate, itemNeedsAutoSize, slideHasAutoSizeItem } from "../../helpers/output"
     import OutputTransition from "./OutputTransition.svelte"
     // import { onMount } from "svelte"
 
@@ -18,7 +17,6 @@
     export let currentSlide: any = {}
     export let outSlide: any = {}
     export let lines: any[] = []
-    export let currentStyle: any = {}
 
     let currentlyTransitioning: { [key: string]: any } = {}
 
@@ -51,7 +49,13 @@
         const lastStateId = Object.keys(currentlyTransitioning).pop()
         if (lastStateId) {
             const lastState = currentlyTransitioning[lastStateId]
-            if (JSON.stringify(lastState.item) === JSON.stringify(item) && JSON.stringify(lastState.lines) === JSON.stringify(lines) && JSON.stringify(lastState.outSlide) === JSON.stringify(outSlide) && JSON.stringify(lastState.currentSlide) === JSON.stringify(currentSlide)) {
+            const { autoFontSize: _oldAuto, ...oldItem } = lastState.item || {}
+            const { autoFontSize: _newAuto, ...newItem } = item || {}
+            if (JSON.stringify(oldItem) === JSON.stringify(newItem) && JSON.stringify(lastState.lines) === JSON.stringify(lines) && JSON.stringify(lastState.outSlide) === JSON.stringify(outSlide) && JSON.stringify(lastState.currentSlide) === JSON.stringify(currentSlide)) {
+                if (item?.autoFontSize !== lastState.item?.autoFontSize) {
+                    lastState.item = clone(item)
+                    if (currentOut[lastStateId]) currentOut[lastStateId].item = clone(item)
+                }
                 return
             }
         }
@@ -82,20 +86,21 @@
 
         // EXTRA DELAY
 
-        // auto size delay
-        if (!outDelay) {
-            let customTemplate = getStyleTemplate(outSlide, currentStyle)
-            if (!Object.keys(customTemplate).length && outSlide?.id === "temp") customTemplate = $templates[$scriptureSettings.template] || {}
+        // this is hopefully not needed anymore
+        // // auto size delay
+        // if (!outDelay) {
+        //     let customTemplate = getStyleTemplate(outSlide, currentStyle)
+        //     if (!Object.keys(customTemplate).length && outSlide?.id === "temp") customTemplate = $templates[$scriptureSettings.template] || {}
 
-            // only keep the legacy autosize delay when nothing has pre-populated a font size yet
-            const templateNeedsAutoSize = slideHasAutoSizeItem(customTemplate)
+        //     // only keep the legacy autosize delay when nothing has pre-populated a font size yet
+        //     const templateNeedsAutoSize = slideHasAutoSizeItem(customTemplate)
 
-            if (templateNeedsAutoSize || itemNeedsAutoSize(item)) {
-                autoSizeDelay = 500
-                outDelay = autoSizeDelay
-                if (!inDelay) inDelay = outDelay * 0.98
-            }
-        }
+        //     if (templateNeedsAutoSize || itemNeedsAutoSize(item)) {
+        //         autoSizeDelay = 500
+        //         outDelay = autoSizeDelay
+        //         if (!inDelay) inDelay = outDelay * 0.98
+        //     }
+        // }
 
         // add some time in case an identical item is "fading" in
         if (!outDelay && itemTransition?.duration === 0 && item.type === "media") outDelay = 250
@@ -130,8 +135,8 @@
             autoSizeDelay
         }
 
-        currentlyTransitioning[stateId] = state
-        currentlyTransitioning = currentlyTransitioning
+        // Keep only the active state so previous states un-render and trigger their out transition
+        currentlyTransitioning = { [stateId]: state }
     }
 
     function getOutTransition(transitioning: any, incomingNeedsAutoSize: boolean, transitioningBetween: boolean): Transition {
@@ -152,9 +157,15 @@
     }
 </script>
 
-{#each Object.values(currentOut) as transitioning}
+{#each Object.entries(currentOut) as [id, transitioning] (id)}
     {@const outTransition = !transitionEnabled ? null : isClearing ? clearingOutTransition : getOutTransition(transitioning, incomingNeedsAutoSize, transitioningBetween)}
-    <OutputTransition inTransition={transitionEnabled ? transitioning.inTransition : null} {outTransition}>
+    <OutputTransition
+        inTransition={transitionEnabled ? transitioning.inTransition : null}
+        {outTransition}
+        on:outrostart={() => {
+            delete currentlyTransitioning[id]
+        }}
+    >
         <slot customItem={transitioning.item} customLines={transitioning.lines} customOut={transitioning.outSlide} customSlide={transitioning.currentSlide} transition={transitionEnabled ? transitioning.inTransition : null} />
     </OutputTransition>
 {/each}

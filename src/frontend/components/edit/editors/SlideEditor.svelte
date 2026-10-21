@@ -123,7 +123,6 @@
         else newStyles = {}
     }
 
-    let updateTimeout: NodeJS.Timeout | null = null
     function updateStyles() {
         if (!Object.keys(newStyles).length) return
 
@@ -160,20 +159,6 @@
             newData: { style: { key: "style", values } },
             location: { page: "edit", show: historyShow, slide: slideId, items: activeItems }
         })
-
-        if (!items[0]?.auto) return
-        // recalculate auto size
-        if (updateTimeout) clearTimeout(updateTimeout)
-        updateTimeout = setTimeout(resetAutoSize, 3000)
-
-        function resetAutoSize() {
-            showsCache.update((a) => {
-                if (!a[currentShowId]?.slides?.[slideId]?.items?.[activeItems[0] || 0]?.autoFontSize) return a
-
-                delete a[currentShowId].slides[slideId].items[activeItems[0] || 0].autoFontSize
-                return a
-            })
-        }
     }
 
     let altTimeout: NodeJS.Timeout | null = null
@@ -366,7 +351,7 @@
                             {#each layoutSlide.overlays as id}
                                 {#if $overlays[id]}
                                     {#each $overlays[id]?.items || [] as item}
-                                        <Textbox {item} ref={{ type: "overlay", id }} preview />
+                                        <Textbox {item} ref={{ type: "overlay", id }} preview centerPreview />
                                     {/each}
                                 {/if}
                             {/each}

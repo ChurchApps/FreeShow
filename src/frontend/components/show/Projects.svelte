@@ -10,6 +10,7 @@
     import { exportProject } from "../export/project"
     import { shareProjectLink } from "../export/projectLink"
     import { clone, keysToID, removeDuplicateValues, sortByName } from "../helpers/array"
+    import { duplicateShow } from "../helpers/clipboard"
     import { history } from "../helpers/history"
     import { getDefaultProjectName, getProjectName, projectReplacers } from "../helpers/historyHelpers"
     import Icon from "../helpers/Icon.svelte"
@@ -160,7 +161,7 @@
 
     // TEMPLATE
 
-    function createFromTemplate(e: any, id: string) {
+    async function createFromTemplate(e: any, id: string) {
         // prevent extra single click on (template) double click
         let { ctrl, doubleClick, target } = e.detail
 
@@ -176,6 +177,21 @@
         else project.name = getProjectName(project.parent) // use default (auto) project name
 
         let projectId = uid()
+
+        // duplicate any placeholder shows
+        if (project.shows?.length) {
+            project.shows = await Promise.all(
+                project.shows.map(async (item) => {
+                    if (item.type === "show_placeholder" && item.data?.showId) {
+                        // const customName = getProjectName(item.name) - allow {} values...?
+                        const newShowId = await duplicateShow(item.data.showId)
+                        return { id: newShowId, type: "show" }
+                    }
+                    return item
+                })
+            )
+        }
+
         history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })
         setTimeout(() => activeRename.set("project_" + projectId))
     }

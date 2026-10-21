@@ -761,7 +761,7 @@ export function sendMidi(data: any) {
 
 // DYNAMIC VALUES
 
-const commonOnly = ["time_str", "project_section_notes", "project_section_time", "show_name_next", "show_text_full", "slide_group_text", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
+const commonOnly = ["time_str", "project_section_notes", "project_section_time", "project_item_number", "project_items_count", "show_name_next", "show_text_full", "slide_group_text", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
 const deprecatedDynamicValues = ["show_name_next", "project_section_next", "project_section_time_next", "slide_group_next", "slide_group_next_color", "slide_notes_next", "slide_text_previous", "slide_text_current", "slide_text_next"]
 
 function insertOffsetVariants(idList: string[]): string[] {
@@ -1210,6 +1210,20 @@ const dynamicValues = {
         const projectTime = getActiveProjectSection({}, 1 + offset)?.data?.time
         return projectTime ? joinTimeBig(getTimeUntilClock(getActiveProjectSection({}, 1 + offset)?.data?.time)) : "00:00"
     },
+    project_item_number: ({ projectRef }) => {
+        // get outputted index
+        let index = projectRef?.index ?? -1
+        if (index < 0) {
+            // get any opened index
+            const activeItem = get(focusMode) ? get(activeFocus) : get(activeShow)
+            if (typeof activeItem?.index === "number" && activeItem.index >= 0) index = activeItem.index
+        }
+        return (Number(index ?? -1) + 1).toString()
+    },
+    project_items_count: ({ projectRef }) => {
+        const projectItems = get(projects)[projectRef?.id || ""]?.shows || []
+        return projectItems.length
+    },
 
     // show
     show_name: ({ show, projectRef, offset }) => {
@@ -1231,7 +1245,7 @@ const dynamicValues = {
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",
 
-    slide_number: ({ slideIndex, offset }) => (Number(slideIndex ?? -1) + 1 + offset).toString(),
+    slide_number: ({ slideIndex }) => (Number(slideIndex ?? -1) + 1).toString(),
     slide_group: ({ show, ref, slideIndex, outSlide, offset }) => {
         const idx = slideIndex + offset
         const parentIndex = ref[idx]?.parent?.layoutIndex ?? idx

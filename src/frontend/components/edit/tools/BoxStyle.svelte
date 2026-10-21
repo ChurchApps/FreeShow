@@ -261,15 +261,11 @@
     $: if (box?.sections?.font) {
         setBoxInputValue(box, "font", "font-size", "disabled", item?.textFit !== "none")
         setBoxInputValue(box, "font", "textFit", "value", item?.textFit || (id === "table" ? "none" : "growToFit")) // other items (like clock, timer)
-        // setBoxInputValue(box2, "font", "auto", "value", item.auto ?? true)
     }
 
     $: if (id === "text") {
         setBoxInputValue(box, "default", "font-family", "styleValue", getStyles(style)["font"] || "")
-        // setBoxInputValue(box2, "default", "textFit", "hidden", !item?.auto)
         setBoxInputValue(box, "lines", "specialStyle.lineRadius", "hidden", !item?.specialStyle?.lineRadius && !item?.specialStyle?.lineBg)
-
-        setBoxInputValue(box, "default", "textFit", "value", item?.auto ? "shrinkToFit" : "none") // text items
     }
 
     $: if (id === "media" && item) {
@@ -431,9 +427,6 @@
                 } else {
                     newFontSize = input.value !== "growToFit" ? 100 : MAX_FONT_SIZE
                 }
-            } else if (input.id === "auto" && item?.textFit === "growToFit") {
-                if (input.value && Number(styles["font-size"]) < MAX_FONT_SIZE) newFontSize = MAX_FONT_SIZE
-                else if (!input.value && Number(styles["font-size"]) === MAX_FONT_SIZE) newFontSize = 100
             }
             if (newFontSize) updateValue({ detail: { name: "font_size", id: "style", key: "font-size", value: newFontSize + "px" } })
         }
@@ -463,6 +456,8 @@
 
             allItems.forEach((i: number) => {
                 if (!a[$activeEdit.id!].items[i]) return
+
+                delete a[$activeEdit.id!].items[i].autoFontSize
 
                 if (!targetId.includes(".")) {
                     a[$activeEdit.id!].items[i][targetId] = value
@@ -498,14 +493,13 @@
         const location = { page: "edit" as const, show: $activeShow!, slide: getLayoutRef()[$activeEdit.slide!]?.id, items }
         // separate location ids so the different keys don't get coalesced into one history entry
         history({ id: "setItems", newData: { style: { key: "textFit", values: ["none"] } }, location: { ...location, id: "textFit" } })
-        history({ id: "setItems", newData: { style: { key: "auto", values: [false] } }, location: { ...location, id: "auto" } })
 
         function updateAutoSize(a: any) {
             if (!a[$activeEdit.id!]?.items) return a
             items.forEach((i) => {
                 if (!a[$activeEdit.id!].items[i]) return
                 a[$activeEdit.id!].items[i].textFit = "none"
-                a[$activeEdit.id!].items[i].auto = false
+                delete a[$activeEdit.id!].items[i].autoFontSize
             })
             a[$activeEdit.id!].modified = Date.now()
             return a
@@ -547,7 +541,7 @@
 
         // font size on a partial selection is invisible while auto size is enabled, so disable auto size first
         const hasScriptureNumber = item?.lines?.some((line) => line.text?.some((t) => /scripture(?:\d+)?_number/.test(t.value || "")))
-        if (id === "text" && input.id === "style" && input.key === "font-size" && input.name !== "font_size" && (item?.auto || (item?.textFit || "none") !== "none") && isPartialTextSelection() && !hasScriptureNumber) {
+        if (id === "text" && input.id === "style" && input.key === "font-size" && input.name !== "font_size" && (item?.textFit || "none") !== "none" && isPartialTextSelection() && !hasScriptureNumber) {
             disableAutoSize(allItems)
             newToast("toast.autosize_disabled")
         }
@@ -730,7 +724,6 @@
         input.value = input.values.value
         input.input = input.type
 
-        if (input.id === "textFit") updateValue({ detail: { id: "auto", value: input.value !== "none" } })
         // unset transparent color
         if (input.key === "text-shadow" && input.value.includes("rgb(0 0 0 / 0)") && input.value.includes("px")) {
             input.value = input.value.replace("rgb(0 0 0 / 0)", "rgb(0 0 0 / 0.4)")

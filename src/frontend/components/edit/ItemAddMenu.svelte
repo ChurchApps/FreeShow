@@ -285,7 +285,8 @@
     .submenu {
         position: absolute;
         right: calc(100% + 4px);
-        width: 260px;
+        min-width: 160px;
+        max-width: 260px;
         z-index: 1000;
 
         /* backdrop blur does not work for this apparently */

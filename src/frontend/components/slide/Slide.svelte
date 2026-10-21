@@ -226,12 +226,12 @@
     $: itemsList = clone(slide.items) || []
 
     // style template preview
-    $: if ($special.styleTemplatePreview !== false) updateItemsList(slide)
+    $: styleTemplateActive = $special.styleTemplatePreview !== false && allOutputsHasStyleTemplate(show?.reference?.type === "scripture", { $outputs, $styles })
+    $: if (styleTemplateActive) updateItemsList(slide, currentStyle)
     else itemsList = clone(slide.items) || []
-    function updateItemsList(_updater: any = null) {
+    function updateItemsList(_updater: any = null, _style: any = null) {
         // WIP show scripture style preview as well
-        if (!allOutputsHasStyleTemplate(show?.reference?.type === "scripture")) return
-        itemsList = setTemplateStyle({ id: showId, index }, currentStyle, itemsList, outputId, slide?.customDynamicValues)
+        itemsList = setTemplateStyle({ id: showId, index }, currentStyle, clone(slide.items) || [], outputId, slide?.customDynamicValues)
     }
 
     // $: styleTemplate = getStyleTemplate(null, currentStyle)
@@ -372,6 +372,8 @@
                                     clickRevealed={!!output?.clickRevealed}
                                     {centerPreview}
                                     preview
+                                    outputStyle={styleTemplateActive ? currentStyle : null}
+                                    styleTemplateUsed={styleTemplateActive}
                                     chords={item.chords?.enabled}
                                 />
                             {/if}

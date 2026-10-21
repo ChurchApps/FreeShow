@@ -7,8 +7,8 @@ body:
     attributes:
       value: |
         Before submitting, please:
-        - Search existing **open and closed** issues, if you find a related issue, please comment there even though it may be closed.
-        - Make sure you are on the latest version of FreeShow, either **stable** or **beta**. [See all releases](https://github.com/ChurchApps/FreeShow/releases)
+        - Search existing **open and closed** [issues](https://github.com/ChurchApps/FreeShow/issues?q=is%3Aissue), if you find a related issue, please comment there even though it may be closed.
+        - Make sure you are on the latest released version of FreeShow: [See all releases](https://github.com/ChurchApps/FreeShow/releases)
         - If there's a newer version available, including a beta, you must reproduce the issue on that version.
 
   - type: checkboxes

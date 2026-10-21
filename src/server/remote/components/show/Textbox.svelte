@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Item } from "../../../../types/Show"
-    import autosize, { type AutosizeTypes } from "../../../common/util/autosize"
+    import autosize, { getAutoSizeOptions, type AutosizeTypes } from "../../../common/util/autosize"
     import { createVirtualBreaks } from "../../../common/util/show"
     import { getStyles } from "../../../common/util/style"
     import { mediaCache } from "../../util/stores"
@@ -37,27 +37,24 @@
         previousItem = newItem
 
         let type = (item?.textFit || "shrinkToFit") as AutosizeTypes
+        const isTextboxItem = (item.type || "text") === "text"
 
-        let defaultFontSize
-        let maxFontSize
-
-        if ((item.type || "text") === "text" && !item.auto) {
+        if (isTextboxItem && (item.textFit || "none") === "none") {
             fontSize = 0
             return
         }
 
         const textArray = Array.isArray(item?.lines?.[0]?.text) ? item.lines[0].text : []
         const itemText = textArray.filter((a) => !a.customType?.includes("disableTemplate")) || []
-        let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
+        let itemFontSize = getStyles(itemText[0]?.style, true)?.["font-size"]
 
-        defaultFontSize = itemFontSize
-        if (type === "growToFit") maxFontSize = itemFontSize
+        const { defaultFontSize, maxFontSize } = getAutoSizeOptions(type, itemFontSize, isTextboxItem)
 
         let elem = itemElem
         if (!elem) return
 
         let textQuery = ""
-        if ((item.type || "text") === "text") {
+        if (isTextboxItem) {
             elem = elem.querySelector(".align")
             textQuery = ".lines .break span"
         } else {
@@ -82,7 +79,10 @@
                 {#each createVirtualBreaks(item.lines) as line}
                     <div class="break" style="{lineStyle}{line.align}">
                         {#each line.text || [] as text}
-                            <span style="{text.style};{fontSize ? `font-size: ${fontSize}px;` : ''}">{@html text.value?.replaceAll("\n", "<br>") || "<br>"}</span>
+                            <!-- remove font size it it's 0 -->
+                            {@const textStyle = text.style?.replace(/font-size:\s*0(?:px)?;?/gi, "") || ""}
+
+                            <span style="{textStyle};{fontSize ? `font-size: ${fontSize}px;` : ''}">{@html text.value?.replaceAll("\n", "<br>") || "<br>"}</span>
                         {/each}
                     </div>
                 {/each}

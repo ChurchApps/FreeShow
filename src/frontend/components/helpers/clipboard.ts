@@ -77,7 +77,7 @@ import { getFileName, removeExtension } from "./media"
 import { updateActiveSceneOutputs } from "./output"
 import { select } from "./select"
 import { loadShows } from "./setShow"
-import { checkName, getLayoutRef, removeTemplatesFromShow } from "./show"
+import { checkName, getLayoutRef, removeTemplatesFromShow, updateShowsList } from "./show"
 import { _show } from "./shows"
 
 export function copy(clip: Clipboard | null = null, getData = true, shouldDuplicate = false) {
@@ -1455,18 +1455,32 @@ function historyDelete(id, data, { updater } = { updater: "" }) {
 
 async function duplicateShows(selectedData: any) {
     await loadShows(selectedData.map(({ id }) => id))
-    selectedData.forEach(({ id }) => {
-        const show = clone(get(showsCache)[id])
-        if (!show) return
-
-        show.name = checkName(show.name + " 2")
-        show.timestamps.modified = new Date().getTime()
-
-        const newId = uid()
-        history({ id: "UPDATE", newData: { data: show, remember: { project: id === "show" ? get(activeProject) : null } }, oldData: { id: newId }, location: { page: "show", id: "show" } })
-
-        if (selectedData.length === 1) {
-            activeRename.set("show_drawer_" + newId)
-        }
+    let newIds: string[] = []
+    selectedData.forEach(async ({ id }) => {
+        const projectId = id === "show" ? get(activeProject) : null
+        const newId = await duplicateShow(id, projectId, true)
+        if (newId !== id) newIds.push(newId)
     })
+
+    setTimeout(() => {
+        // update list instantly
+        updateShowsList(get(shows))
+
+        // activate rename
+        if (newIds.length === 1) activeRename.set("show_drawer_" + newIds[0])
+    })
+}
+
+export async function duplicateShow(id: string, projectId?: string | null, alreadyLoaded: boolean = false): Promise<string> {
+    if (!alreadyLoaded) await loadShows([id])
+    const show = clone(get(showsCache)[id])
+    if (!show) return id
+
+    show.name = checkName(show.name)
+    if (!show.timestamps) show.timestamps = { created: Date.now(), modified: Date.now(), used: null }
+    else show.timestamps.modified = Date.now()
+
+    const newId = uid()
+    history({ id: "UPDATE", newData: { data: show, remember: { project: projectId || null } }, oldData: { id: newId }, location: { page: "show", id: "show" } })
+    return newId
 }

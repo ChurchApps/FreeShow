@@ -15,6 +15,16 @@ type Options = {
     minFontSize?: number // 10
 }
 
+export function getAutoSizeOptions(type: AutosizeTypes | undefined, itemFontSize: number | string | undefined, isTextboxItem = true) {
+    const fontSize = Number(itemFontSize) || 0
+    const isGrowToFit = type === "growToFit"
+
+    const defaultFontSize = isGrowToFit ? DEF_FONT_SIZE : fontSize || DEF_FONT_SIZE
+    const maxFontSize = !isTextboxItem ? MAX_FONT_SIZE : isGrowToFit ? fontSize || MAX_FONT_SIZE : undefined
+
+    return { defaultFontSize, maxFontSize }
+}
+
 export default function autosize(elem: HTMLElement, { type, textQuery, defaultFontSize, maxFontSize, minFontSize }: Options = {}) {
     // set default values
     if (!minFontSize) minFontSize = MIN_FONT_SIZE

@@ -234,6 +234,8 @@ export class EditboxHelper {
 
         // fix quotes (for font family names with spaces)
         style = style.replaceAll('"', "'")
+        // remove font size it it's 0
+        style = style.replace(/font-size:\s*0(?:px)?;?/gi, "")
 
         // text gradient
 

@@ -1,4 +1,5 @@
 import { config } from "../../data/store"
+import { getKey } from "../../utils/keys"
 
 export type ChurchAppsScopes = "plans"
 
@@ -38,6 +39,12 @@ export function getChurchAppsContentUrl(): string {
 }
 export function getLessonsApiUrl(): string {
     return (config.get("churchAppsLessonsUrl") as string)?.trim() || LESSONS_API_URL
+}
+export function getChurchAppsClientId(): string {
+    return (config.get("churchAppsClientId") as string)?.trim() || getKey("churchApps_id")
+}
+export function getChurchAppsClientSecret(): string {
+    return (config.get("churchAppsClientSecret") as string)?.trim() || getKey("churchApps_secret")
 }
 
 // export const DEFAULT_CHURCHAPPS_DATA: ChurchAppsAuthData = {

@@ -72,36 +72,45 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     const metadataKeys = getCustomMetadata()
     const plainTextMetadata: { [key: string]: string } = {}
     let plainNotes = ""
-    sections.forEach((section, i) => {
-        const lines = section.split("\n")
-        const newLines: string[] = []
-        lines.forEach((line) => {
-            if (!line.includes("=")) {
-                newLines.push(line)
-                return
-            }
 
-            const meta = line.split("=")
-            const metaKey = meta[0]?.toString().toLowerCase().replaceAll(" ", "").trim() || ""
-            if (metaKey === "notes") {
-                plainNotes = meta[1]
-                return
-            }
+    function extractMetaLine(line: string, delimiter: ":" | "=") {
+        const idx = line.indexOf(delimiter)
+        if (idx <= 0) return false
+        if (delimiter === ":" && isHeaderLine(line, true)) return false
 
-            const metadataKey = Object.keys(metadataKeys).find((key) => key.toLowerCase().replaceAll(" ", "").trim() === metaKey || translateText("meta." + key).toLowerCase() === metaKey)
-            if (!metadataKey) {
-                // create slide with unknown metadata
-                // newLines.push(line)
-                // add unknown metadata to show, without adding it globally
-                plainTextMetadata[meta[0]] = meta[1]
-                return
-            }
+        const key = line.slice(0, idx).trim()
+        const val = line.slice(idx + 1).trim()
+        const cleanKey = key.toLowerCase().replaceAll(" ", "").trim()
 
-            plainTextMetadata[metadataKey] = meta[1]
-        })
-        sections[i] = newLines.join("\n")
-    })
-    if (sections[0] === "") sections.splice(0, 1)
+        if (cleanKey === "notes") {
+            plainNotes = val
+            return true
+        }
+
+        const matchedKey = Object.keys(metadataKeys).find((k) => k.toLowerCase().replaceAll(" ", "").trim() === cleanKey || translateText("meta." + k).toLowerCase() === cleanKey)
+        plainTextMetadata[matchedKey || key] = val
+        return true
+    }
+
+    // Check first block for colon metadata (e.g., Key: D, CCLI: 12345)
+    if (sections[0]) {
+        sections[0] = sections[0]
+            .split("\n")
+            .filter((line) => !extractMetaLine(line, ":"))
+            .join("\n")
+            .trim()
+    }
+
+    // Parse equals metadata across all sections (e.g., Artist=Casting Crowns)
+    sections = sections
+        .map((sec) =>
+            sec
+                .split("\n")
+                .filter((line) => !extractMetaLine(line, "="))
+                .join("\n")
+                .trim()
+        )
+        .filter(Boolean)
 
     // get ccli
     let ccli = ""
@@ -141,10 +150,11 @@ export function convertText({ name = "", origin = "", category = null, text, noF
     show.slides = slides
     show.layouts[layoutID].slides = layouts
 
+    if (Object.keys(plainTextMetadata).length) {
+        show.meta = { ...show.meta, ...plainTextMetadata }
+    }
     if (ccli) {
         show.meta = { ...show.meta, ...extractCCLIMetadata(ccli, name) }
-    } else if (Object.keys(plainTextMetadata).length) {
-        show.meta = plainTextMetadata
     }
     if (show.meta.CCLI) show = setQuickAccessMetadata(show, "CCLI", show.meta.CCLI)
     if (show.meta.number !== undefined) show.quickAccess = { number: show.meta.number }

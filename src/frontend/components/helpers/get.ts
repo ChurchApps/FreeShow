@@ -1,7 +1,6 @@
 import { get } from "svelte/store"
 import type { ID, Show, Slide, SlideData } from "../../../types/Show"
-import { activeShow, showsCache, special } from "../../stores"
-import { getSlideText } from "../edit/scripts/textStyle"
+import { activeShow, showsCache } from "../../stores"
 import { getExtension, getFileName, removeExtension } from "./media"
 
 // please don't use the functions in this file!
@@ -40,12 +39,13 @@ export const GetLayout = (showID: null | ID = null, layoutID: null | ID = null):
         })
     }
 
-    if (get(special).alwaysPlaceEmptySlideFirst && layoutSlides.length) {
-        const firstSlide = currentShow?.slides?.[layoutSlides[0]?.id]
-        if (firstSlide && getSlideText(firstSlide).length) {
-            layoutSlides.unshift({ id: "fake_empty", color: null })
-        }
-    }
+    // this broke things more than it helps, use the template option instead
+    // if (get(special).alwaysPlaceEmptySlideFirst && layoutSlides.length) {
+    //     const firstSlide = currentShow?.slides?.[layoutSlides[0]?.id]
+    //     if (firstSlide && getSlideText(firstSlide).length) {
+    //         layoutSlides.unshift({ id: "fake_empty", color: null })
+    //     }
+    // }
 
     return layoutSlides
 }
