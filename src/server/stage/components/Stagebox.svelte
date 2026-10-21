@@ -3,7 +3,7 @@
     import type { StageLayout } from "../../../types/Stage"
     import Center from "../../common/components/Center.svelte"
     import Icon from "../../common/components/Icon.svelte"
-    import autosize from "../../common/util/autosize"
+    import autosize, { getAutoSizeOptions } from "../../common/util/autosize"
     import { keysToID, sortByName } from "../../common/util/helpers"
     import { getStyles } from "../../common/util/style"
     import { getDynamicValue, replaceDynamicValues } from "../helpers/show"
@@ -53,10 +53,12 @@
     $: itemStyles = getStyles(item.style, true)
     $: fontSize = Number(itemStyles?.["font-size"] || 0) || 100 // item.autoFontSize ||
 
+    $: isAutoSized = item?.type === "text" ? (item.textFit || "none") !== "none" : item?.textFit !== "none"
+
     // dynamic resolution
     let resolution = { width: window.innerWidth, height: window.innerHeight }
 
-    $: style = item.textFit !== "none" ? removeFontSize(item.style) : item.style
+    $: style = isAutoSized ? removeFontSize(item.style) : item.style
     function removeFontSize(style: string) {
         let fontSizeIndex = style.indexOf("font-size")
         if (fontSizeIndex < 0) return style
@@ -74,14 +76,19 @@
 
     let alignElem: HTMLElement | undefined
     let size = 100
-    $: if (alignElem && (item || $progressData || currentSlide)) updateSize()
+    $: if (alignElem && isAutoSized && (item || $progressData || currentSlide)) updateSize()
     async function updateSize() {
         // wait for DOM to reflect new content before measuring
         await tick()
         if (!alignElem) return
-        size = autosize(alignElem, { type: item?.textFit || "growToFit", textQuery: ".autoFontSize" })
+
+        const type = item?.textFit || "growToFit"
+        const isTextboxItem = (item?.type || "text") === "text"
+        const { defaultFontSize, maxFontSize } = getAutoSizeOptions(type, itemStyles?.["font-size"], isTextboxItem)
+
+        size = autosize(alignElem, { type, textQuery: ".autoFontSize", defaultFontSize, maxFontSize })
     }
-    $: autoSize = fontSize !== 100 ? Math.max(fontSize, size) : size
+    $: autoSize = isAutoSized ? size : fontSize
 
     $: slideOffset = item.type ? Number(item.slideOffset || 0) : id.includes("next") ? 1 : 0
 
@@ -200,20 +207,20 @@
                 {#if currentSlide}
                     {#key item || currentSlide}
                         <!-- autoStage={show.settings.autoStretch !== false} -->
-                        <SlideText {currentSlide} {slideOffset} stageItem={item} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} autoSize={item.textFit !== "none"} {fontSize} autoStage {textStyle} style={item.type ? item.keepStyle : false} />
+                        <SlideText {currentSlide} {slideOffset} stageItem={item} chords={typeof item.chords === "boolean" ? item.chords : item.chords?.enabled} autoSize={isAutoSized} {fontSize} autoStage {textStyle} style={item.type ? item.keepStyle : false} />
                     {/key}
                 {/if}
             {:else if item.type === "slide_notes" || id.includes("notes")}
-                <SlideNotes {currentSlide} {slideOffset} autoSize={item.textFit !== "none" ? autoSize : fontSize} />
+                <SlideNotes {currentSlide} {slideOffset} {autoSize} />
             {:else if item.type === "text"}
-                <Textbox {item} showId={id} autoSize={(item.textFit || "none") !== "none"} {fontSize} />
+                <Textbox {item} showId={id} autoSize={isAutoSized} {fontSize} />
                 <!-- STAGE VV -->
             {:else if item.type === "slide_tracker" || id.includes("slide_tracker")}
-                <SlideProgress tracker={item.tracker || {}} autoSize={item.textFit !== "none" ? autoSize : fontSize} />
+                <SlideProgress tracker={item.tracker || {}} {autoSize} />
             {:else if item.type === "clock" || id.includes("clock")}
-                <Clock autoSize={item.textFit !== "none" ? autoSize : fontSize} style={false} {...item.clock} />
+                <Clock {autoSize} style={false} {...item.clock} />
             {:else if item.type === "timer"}
-                <Timer {item} id={item.timer?.id || item.timerId || firstTimerId || ""} {today} style={item.textFit === "none" ? "" : `font-size: ${item.textFit !== "none" ? autoSize : fontSize}px;`} />
+                <Timer {item} id={item.timer?.id || item.timerId || firstTimerId || ""} {today} style="font-size: {autoSize}px;" />
             {:else if item.type === "metronome" || id.includes("metronome")}
                 <MetronomeVisualizer isItem />
             {:else if item.type === "media"}
@@ -224,19 +231,19 @@
                 </Center>
             {:else if item.type}
                 <!-- probably unused -->
-                <Textbox {item} showId={id} fontSize={item.textFit !== "none" ? autoSize : fontSize} />
+                <Textbox {item} showId={id} fontSize={autoSize} />
             {:else}
                 <!-- OLD CODE -->
                 <div>
                     {#if id.includes("first_active_timer")}
-                        <Timer {item} id={firstTimerId} {today} style="font-size: ${item.textFit !== 'none' ? autoSize : fontSize}px;" />
+                        <Timer {item} id={firstTimerId} {today} style="font-size: {autoSize}px;" />
                     {:else if id.includes("timers")}
                         {#if $timers[id.split("#")[1]]}
-                            <Timer {item} id={id.split("#")[1]} {today} style="font-size: ${item.textFit !== 'none' ? autoSize : fontSize}px;" />
+                            <Timer {item} id={id.split("#")[1]} {today} style="font-size: {autoSize}px;" />
                         {/if}
                     {:else if id.includes("variables")}
                         {#if $variables[id.split("#")[1]]}
-                            <Variable id={id.split("#")[1]} style="font-size: ${item.textFit !== 'none' ? autoSize : fontSize}px;" />
+                            <Variable id={id.split("#")[1]} style="font-size: {autoSize}px;" />
                         {/if}
                     {:else}
                         {id}

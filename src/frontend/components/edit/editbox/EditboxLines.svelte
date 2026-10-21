@@ -13,8 +13,8 @@
     import { getLayoutRef } from "../../helpers/show"
     import { _show } from "../../helpers/shows"
     import { getStyles } from "../../helpers/style"
+    import autosize, { getAutoSizeOptions } from "../scripts/autosize"
     import { calculateShapeVerticalOffset, getShapeFloatSide } from "../scripts/shapeOutside"
-    import autosize from "../scripts/autosize"
     import { getItemText, getLineText, getSelectionRange, setCaret } from "../scripts/textStyle"
     import EditboxChords from "./EditboxChords.svelte"
     import { EditboxHelper } from "./EditboxHelper"
@@ -270,8 +270,8 @@
         } else if (ref.id) {
             // dont override history when undoing
             let lastRedo = $redoHistory[$redoHistory.length - 1]
-            if (lastRedo?.id === "SHOW_ITEMS") {
-                let previousData = lastRedo.oldData.previousData
+            if ((lastRedo as any)?.id === "SHOW_ITEMS") {
+                let previousData = (lastRedo as any).oldData.previousData
 
                 let historyText = previousData[index]?.lines.reduce((text, line) => (text += getLineText(line)), "")
                 let linesText = newLines.reduce((text, line) => (text += getLineText(line)), "")
@@ -446,8 +446,7 @@
         if (signature === lastSignature) return
         lastSignature = signature
 
-        const defaultFontSize = type === "growToFit" ? 100 : itemFontSize
-        const maxFontSize = type === "growToFit" ? itemFontSize : undefined
+        const { defaultFontSize, maxFontSize } = getAutoSizeOptions(type, itemFontSize)
 
         const measureStart = performance.now()
         autoSize = autosize(alignElem, { type, textQuery: ".edit .break span", defaultFontSize, maxFontSize })

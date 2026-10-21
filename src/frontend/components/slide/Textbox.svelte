@@ -6,7 +6,7 @@
     import { currentWindow, groups, outputs, overlays, scriptureSettings, showsCache, styles, templates, variables } from "../../stores"
     import { wait } from "../../utils/common"
     import { send } from "../../utils/request"
-    import autosize from "../edit/scripts/autosize"
+    import autosize, { getAutoSizeOptions } from "../edit/scripts/autosize"
     import { getItemText } from "../edit/scripts/textStyle"
     import { clone } from "../helpers/array"
     import { getActiveOutputs, getAllActiveOutputs, getFirstActiveOutput, getOutputLines, getOutputResolution, percentageStylePos } from "../helpers/output"
@@ -303,9 +303,9 @@
         const isText = (target?.type || "text") === "text"
         return target?.textFit || (isText ? "none" : "growToFit")
     }
-    $: isTextItem = (item?.type || "text") === "text"
+    $: isTextboxItem = (item?.type || "text") === "text"
     $: itemTextFit = getItemTextFit(item)
-    $: hasAutoSize = stageAutoSize || itemTextFit !== "none"
+    $: hasAutoSize = isStage ? stageAutoSize : itemTextFit !== "none"
 
     let lastRenderedItemKey = ""
     $: stateSignature = `${item?.id || itemIndex}_${resolvedTemplateId}_${item?.style || ""}_${item?.textFit || ""}_${linesStart ?? ""}_${linesEnd ?? ""}_${JSON.stringify(item?.lines || "")}_${JSON.stringify(item?.tracker || "")}`
@@ -411,7 +411,7 @@
             return
         }
 
-        if (isTextItem && !getItemText(isStage ? stageItem : item).length && !isStage) {
+        if (isTextboxItem && !getItemText(isStage ? stageItem : item).length && !isStage) {
             fontSize = 0
             markAutoSizeReady()
             return
@@ -426,7 +426,7 @@
         let elem = itemElem
         if (!elem) return
 
-        const isDynamic = isTextItem && getItemText(isStage ? stageItem : item).includes("{")
+        const isDynamic = isTextboxItem && getItemText(isStage ? stageItem : item).includes("{")
 
         // Immediate cache check: if we already have a cached size for the current element dimensions, return it immediately without waiting!
         const cacheKey = buildAutoSizeCacheKey()
@@ -493,12 +493,10 @@
             // wait for text content to populate if dynamic value
             if (isDynamic) await wait(10)
             if (stageItem?.type !== "text") textFit = stageItem?.textFit || "growToFit"
+            else textFit = stageItem?.textFit || "shrinkToFit"
 
-            // const textItem = isTextItem ? item?.lines?.[0]?.text || [] : stageItem
-            let itemFontSize = Number(getStyles(stageItem?.style, true)?.["font-size"] || "") || 100
-
-            defaultFontSize = itemFontSize
-            if (textFit === "growToFit" && itemFontSize !== 100) maxFontSize = itemFontSize
+            let itemFontSize = getStyles(stageItem?.style, true)?.["font-size"]
+            ;({ defaultFontSize, maxFontSize } = getAutoSizeOptions(textFit, itemFontSize))
         } else {
             textFit = itemTextFit
             if (textFit === "none") {
@@ -513,15 +511,14 @@
                 if (line?.text && Array.isArray(line.text)) allText.push(...line.text)
             })
             const itemText = allText.filter((a) => !a.customType?.includes("disableTemplate")) || []
-            let itemFontSize = Number(getStyles(itemText[0]?.style, true)?.["font-size"] || "") || 100
+            let itemFontSize = getStyles(itemText[0]?.style, true)?.["font-size"]
 
             // get scripture verse ratio
             const verseItemText = allText.filter((a) => a.customType?.includes("disableTemplate")) || []
             const verseItemSize = Number(getStyles(verseItemText[0]?.style, true)?.["font-size"] || "") || 0
             customTypeRatio = verseItemSize / 100 || 1
 
-            defaultFontSize = itemFontSize
-            if (textFit === "growToFit" && isTextItem) maxFontSize = itemFontSize
+            ;({ defaultFontSize, maxFontSize } = getAutoSizeOptions(textFit, itemFontSize, isTextboxItem))
         }
 
         elem = itemElem
@@ -544,7 +541,7 @@
         }
 
         let textQuery = ""
-        if (isTextItem) {
+        if (isTextboxItem) {
             const alignElems = elem.querySelectorAll(".align")
             elem = alignElems[alignElems.length - 1] as HTMLElement
             if (!elem) return
@@ -660,7 +657,7 @@
 
     function shouldHideUntilAutoSizeCompletes() {
         if (isStage || !hasAutoSize || item?.autoFontSize) return false
-        if (isTextItem && !getItemText(item).length) return false
+        if (isTextboxItem && !getItemText(item).length) return false
 
         // CHECK CACHE
         const cacheKey = buildAutoSizeCacheKey()
@@ -854,7 +851,7 @@
                                 chords={customItem.chords?.enabled ?? chords}
                                 linesStart={customLines?.[textTransition.currentLineId || ""]?.[customItem.lineReveal ? "linesStart" : "start"]}
                                 linesEnd={customLines?.[textTransition.currentLineId || ""]?.[customItem.lineReveal ? "linesEnd" : "end"]}
-                                fontSize={smallFontSize ? 20 : hasAutoSize ? customItem.autoFontSize || fontSize : 0}
+                                fontSize={smallFontSize ? 20 : isStage || hasAutoSize ? customItem.autoFontSize || fontSize : 0}
                                 {customTypeRatio}
                                 {maxLines}
                                 {maxLinesInvert}
@@ -890,7 +887,7 @@
                 {chords}
                 {linesStart}
                 {linesEnd}
-                fontSize={smallFontSize ? 20 : hasAutoSize ? fontSize : 0}
+                fontSize={smallFontSize ? 20 : isStage || hasAutoSize ? fontSize : 0}
                 {customTypeRatio}
                 {maxLines}
                 {maxLinesInvert}
@@ -930,8 +927,7 @@
         height: 100%;
     }
     .item.stageNoAuto,
-    .item.stageNoAuto :global(.break),
-    .item.stageNoAuto :global(span.textContainer) {
+    .item.stageNoAuto :global(.break) {
         font-size: unset;
     }
 
