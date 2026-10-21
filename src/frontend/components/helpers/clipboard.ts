@@ -1456,17 +1456,24 @@ function historyDelete(id, data, { updater } = { updater: "" }) {
 async function duplicateShows(selectedData: any) {
     await loadShows(selectedData.map(({ id }) => id))
     selectedData.forEach(({ id }) => {
-        const show = clone(get(showsCache)[id])
-        if (!show) return
+        const projectId = id === "show" ? get(activeProject) : null
+        const newId = duplicateShow(id, projectId)
+        if (newId === id) return
 
-        show.name = checkName(show.name + " 2")
-        show.timestamps.modified = new Date().getTime()
-
-        const newId = uid()
-        history({ id: "UPDATE", newData: { data: show, remember: { project: id === "show" ? get(activeProject) : null } }, oldData: { id: newId }, location: { page: "show", id: "show" } })
-
-        if (selectedData.length === 1) {
-            activeRename.set("show_drawer_" + newId)
-        }
+        if (selectedData.length === 1) activeRename.set("show_drawer_" + newId)
     })
+}
+
+export async function duplicateShow(id: string, projectId?: string | null): Promise<string> {
+    await loadShows([id])
+    const show = clone(get(showsCache)[id])
+    if (!show) return id
+
+    show.name = checkName(show.name)
+    if (!show.timestamps) show.timestamps = { created: Date.now(), modified: Date.now(), used: null }
+    else show.timestamps.modified = Date.now()
+
+    const newId = uid()
+    history({ id: "UPDATE", newData: { data: show, remember: { project: projectId || null } }, oldData: { id: newId }, location: { page: "show", id: "show" } })
+    return newId
 }

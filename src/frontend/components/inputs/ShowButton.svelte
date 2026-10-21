@@ -260,7 +260,8 @@
 
     // placeholder title with index
     // $: showTemplateName = type === "show_placeholder" ? `${translateText("new.placeholder: formats.show")} ${index !== null ? ($editingProjectTemplate ? $projectTemplates[$editingProjectTemplate] : $projects[$activeProject || ""])?.shows?.reduce((c, show, i) => (show.type === "show_placeholder" && i < index ? c + 1 : c), 1) : ""}` : ""
-    $: showTemplateName = type === "show_placeholder" ? (show.name && show.name !== "—" ? show.name : translateText("new.placeholder")) : ""
+    $: showPlaceholderShowName = type === "show_placeholder" && show.data?.showId ? $shows[show.data.showId]?.name || "" : ""
+    $: showTemplateName = type === "show_placeholder" ? (show.name && show.name !== "—" ? show.name : translateText("new.placeholder")) + (showPlaceholderShowName ? ` (${showPlaceholderShowName})` : "") : ""
 </script>
 
 <div id="show_{id}" class="main" class:isProject class:played={show.played}>
@@ -284,7 +285,7 @@
                     {/if}
                 </div>
 
-                <HiddenInput value={type === "show_placeholder" ? showTemplateName : newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={!readOnly && ((type === "show_placeholder" && !!$editingProjectTemplate) || !show.type || show.type === "show")} />
+                <HiddenInput value={type === "show_placeholder" ? (editActive ? show.name || "" : showTemplateName) : newName} id={index !== null ? "show_" + id + "#" + index : "show_drawer_" + id} on:edit={rename} bind:edit={editActive} allowEmpty={false} allowEdit={!readOnly && ((type === "show_placeholder" && !!$editingProjectTemplate) || !show.type || show.type === "show")} />
 
                 {#if isProject}
                     {#if show.layoutInfo?.name}
