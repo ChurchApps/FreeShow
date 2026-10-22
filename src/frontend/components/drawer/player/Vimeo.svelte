@@ -8,12 +8,13 @@
     export let actualVideoTime = 0
     export let id
     // export let outputId
-    export let preview
+    export let preview = false
+    export let mirror = false
 
     // export let startAt = 0
 
-    let shouldBeMuted = preview || $currentWindow !== "output" ? true : !!videoData.muted
-    $: if (videoData) shouldBeMuted = preview || $currentWindow !== "output" ? true : !!videoData.muted
+    let shouldBeMuted = preview || mirror || $currentWindow !== "output" ? true : !!videoData.muted
+    $: if (videoData) shouldBeMuted = preview || mirror || $currentWindow !== "output" ? true : !!videoData.muted
 
     const options = {
         autoplay: true,

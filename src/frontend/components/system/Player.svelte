@@ -9,6 +9,7 @@
     export let id: string
     export let outputId = ""
     export let preview = false
+    export let mirror = false
 
     let data: { type: "youtube" | "vimeo"; id: string; name?: string } | null = null
     $: if ($activeShow && !$playerVideos[id]) getProjectData()
@@ -54,10 +55,10 @@
 
 {#if video?.type === "youtube"}
     {#key video.id}
-        <YouTube id={video.id} bind:videoData bind:videoTime bind:actualVideoTime {preview} on:loaded on:ended />
+        <YouTube id={video.id} bind:videoData bind:videoTime bind:actualVideoTime {preview} {mirror} on:loaded on:ended />
     {/key}
 {:else if video?.type === "vimeo"}
     {#key video.id}
-        <Vimeo id={video.id} bind:videoData bind:videoTime bind:actualVideoTime {preview} on:loaded />
+        <Vimeo id={video.id} bind:videoData bind:videoTime bind:actualVideoTime {preview} {mirror} on:loaded />
     {/key}
 {/if}

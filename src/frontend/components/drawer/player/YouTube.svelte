@@ -8,7 +8,8 @@
     export let actualVideoTime = 0
     export let id
     // export let outputId
-    export let preview
+    export let preview = false
+    export let mirror = false
 
     // export let startAt = 0
 
@@ -84,7 +85,7 @@
     }
 
     // mute state
-    $: shouldBeMuted = preview || $currentWindow !== "output" ? true : !!videoData.muted
+    $: shouldBeMuted = preview || mirror || $currentWindow !== "output" ? true : !!videoData.muted
     $: if (player && loaded && shouldBeMuted !== undefined) {
         if (shouldBeMuted) {
             if (!player.isMuted()) player.mute()
