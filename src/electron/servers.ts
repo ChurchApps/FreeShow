@@ -220,9 +220,9 @@ function initialize(id: ServerName, socket: Socket) {
 
             const bounds = window.getBounds()
             toServer(id, { channel: "OUTPUT_FRAME", data: { frame, width: bounds.width, height: bounds.height } })
-        } else if (msg) {
+        } else if (msg && typeof msg === "object") {
             if (id === "STAGE") updateStageStreamSubscription(socket.id, msg.channel)
-            toApp(id, msg)
+            toApp(id, { ...msg, id: socket.id })
         }
     })
 
