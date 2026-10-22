@@ -479,6 +479,8 @@ export class OutputLifecycle {
         if (on) this.outputsOn.add(id)
         else this.outputsOn.delete(id)
         NdiSender.postToWorker({ type: "outputsOff", ids: this.offOutputIds() })
+        // an off output still sends (black and silence), so say so: from outside it looks like a fault
+        console.info(`[OUTPUT] ${id} turned ${on ? "on" : "off"}${on ? "" : ": it sends black and silence until turned on"}`)
         // the switch to or from black has to go out even on a still page
         this.requestRepaint(id)
     }

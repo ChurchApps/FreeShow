@@ -650,33 +650,50 @@ const convertChecked = new Set<string>()
 type VideoBuf = { buf: Buffer; bytes: number; inUse: boolean }
 const BMD_AUDIO_MARKER = Buffer.from([1])
 
-// A Blackmagic card plays out continuously, but a page only paints when something on it changes, so a still
-// slide produced one frame and then nothing. Each output keeps the last frame it was given, and when a frame
-// period at the card's own rate passes without a new one, that frame is given again.
-const bmdLast = new Map<string, { buf: Buffer; framerate: number; preConverted: boolean; seq: number; timer: NodeJS.Timeout | null }>()
+// A Blackmagic card plays out continuously at its own rate, but a page only paints when something on it
+// changes. So each output has one feed, ticking at the card's rate to deadlines: every tick hands the card
+// the newest frame the capture gave it, or, when none came since the last tick, repeats the frame the card
+// already has (converted once, so a repeat costs nothing). New frames and repeats never compete for the
+// card: there is one hand-off per card frame either way.
+type BmdFeed = { buf: Buffer | null; fresh: boolean; framerate: number; preConverted: boolean; timer: NodeJS.Timeout | null; due: number }
+const bmdFeeds = new Map<string, BmdFeed>()
 function bmdGive(outputId: string, buf: Buffer, framerate: number, preConverted: boolean) {
-    const prev = bmdLast.get(outputId)
-    if (prev?.timer) clearTimeout(prev.timer)
-    const last = { buf, framerate, preConverted, seq: (prev?.seq || 0) + 1, timer: null as NodeJS.Timeout | null }
-    bmdLast.set(outputId, last)
-    BlackmagicSender.scheduleFrame(outputId, buf, BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null, framerate, preConverted)
-    if (!(framerate > 0)) return
-    const seq = last.seq
-    // timed to deadlines: chained delays each run a little late, and the card would slowly run out of frames
-    const period = 1000 / framerate
-    let due = performance.now() + period
-    const hold = () => {
-        const cur = bmdLast.get(outputId)
-        if (!cur || cur.seq !== seq || !BlackmagicSender.playbackData[outputId]?.playback) return
-        bmdNote(outputId, "repeat")
-        // the card's own copy of the last frame, already converted; until one exists, the frame itself
-        const audio = BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null
-        if (!BlackmagicSender.repeatLastFrame(outputId, audio)) BlackmagicSender.scheduleFrame(outputId, cur.buf, audio, cur.framerate, cur.preConverted)
-        const now = performance.now()
-        due = Math.max(due + period, now)
-        cur.timer = setTimeout(hold, due - now)
+    let feed = bmdFeeds.get(outputId)
+    if (!feed) {
+        feed = { buf: null, fresh: false, framerate, preConverted, timer: null, due: 0 }
+        bmdFeeds.set(outputId, feed)
     }
-    last.timer = setTimeout(hold, period)
+    feed.buf = buf
+    feed.fresh = true
+    feed.framerate = framerate
+    feed.preConverted = preConverted
+    if (!feed.timer) bmdTick(outputId)
+}
+function bmdTick(outputId: string) {
+    const feed = bmdFeeds.get(outputId)
+    if (!feed) return
+    feed.timer = null
+    if (!BlackmagicSender.playbackData[outputId]?.playback) {
+        bmdFeeds.delete(outputId)
+        return
+    }
+    const audio = BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null
+    if (feed.fresh && feed.buf) {
+        // a frame that cannot go this tick (the card is full) stays fresh for the next one
+        if (BlackmagicSender.canAcceptFrame(outputId)) {
+            feed.fresh = false
+            bmdNote(outputId, "sent")
+            BlackmagicSender.scheduleFrame(outputId, feed.buf, audio, feed.framerate, feed.preConverted)
+        } else bmdNote(outputId, "waited")
+    } else {
+        bmdNote(outputId, "repeat")
+        if (!BlackmagicSender.repeatLastFrame(outputId, audio) && feed.buf) BlackmagicSender.scheduleFrame(outputId, feed.buf, audio, feed.framerate, feed.preConverted)
+    }
+    if (!(feed.framerate > 0)) return
+    const period = 1000 / feed.framerate
+    const now = performance.now()
+    feed.due = Math.max((feed.due || now) + period, now)
+    feed.timer = setTimeout(() => bmdTick(outputId), feed.due - now)
 }
 // FS_CAP_STATS: once a second per Blackmagic output, what reached the card and what stopped short of it
 const bmdTrace: { [outputId: string]: { [what: string]: number } } = {}
@@ -697,10 +714,10 @@ if (process.env.FS_CAP_STATS) {
     }, 1000)
 }
 function bmdForget(outputId?: string) {
-    for (const [id, last] of bmdLast) {
+    for (const [id, feed] of bmdFeeds) {
         if (outputId && id !== outputId) continue
-        if (last.timer) clearTimeout(last.timer)
-        bmdLast.delete(id)
+        if (feed.timer) clearTimeout(feed.timer)
+        bmdFeeds.delete(id)
     }
 }
 let sharpModule: any = null
@@ -1055,10 +1072,6 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
         // the card's mode (UYVY straight in when the card takes it raw, else BGRA converted by the sender)
         for (const m of bmdMembers) {
             const want = opts.bmdMembers![m]
-            if (!BlackmagicSender.canAcceptFrame(m)) {
-                bmdNote(m, "refused")
-                continue
-            }
             const ti = targetBufs.findIndex((t) => t.width === want.width && t.height === want.height && t.format === want.format)
             const b = ti >= 0 ? targetBufs[ti] : main.width === want.width && main.height === want.height && main.format === want.format ? main : null
             if (!b) {
