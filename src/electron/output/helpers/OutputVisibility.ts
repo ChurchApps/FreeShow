@@ -10,6 +10,9 @@ import { OutputBounds } from "./OutputBounds"
 export class OutputVisibility {
     static async toggleOutputs(data: { outputs: (Output & { id: string })[]; state: boolean; force?: boolean; autoStartup?: boolean; autoPosition?: boolean }) {
         const newStates: { id: string; active: boolean | "invisible" }[] = []
+        // who asked to turn which outputs on or off; with "[OUTPUT] <id> turned on/off" this shows why an
+        // output is sending black
+        console.info(`[OUTPUT] ${data.state ? "on" : "off"} requested for ${data.outputs.map((o) => o.id).join(", ")}${data.autoStartup ? " (auto output at startup)" : ""}`)
 
         // The list is in display order, which decides stacking, so it is not reordered. Creation order is
         // separate: an offscreen output must exist before a displayed one of the same content, or that one
