@@ -6,6 +6,7 @@ import { wait } from "../utils/helpers"
 import { BlackmagicManager } from "./BlackmagicManager"
 import { BufferManager } from "./BufferManager"
 import { ImageBufferConverter, ImageBufferConverter10Bit, ImageBufferConverter10BitRGB, ImageBufferConverter12BitRGB } from "./ImageBufferConverter"
+import { cardFormat, cardFrameBytes } from "./cardFormat"
 import { getMacadam } from "./macadamLoader"
 import { outputsOff } from "../capture/outputsOff"
 
@@ -36,6 +37,8 @@ interface PlaybackData {
     conversionBackoffUntil?: number
     conversionErrorCount?: number
     frameDurationTicks?: number
+    // the last frame given to the card, already in its pixel format (repeatLastFrame)
+    lastConverted?: Buffer
 }
 
 interface AudioQueueState {
@@ -56,6 +59,8 @@ export class BlackmagicSender {
     private static macadamInitMutex: Promise<void> = Promise.resolve()
     // Core state
     static playbackData: { [key: string]: PlaybackData } = {}
+    // osr-capture's native converter to the card formats, set by the capture worker when the addon has it
+    static nativeCardConvert: ((frame: Buffer, width: number, height: number, format: number) => Buffer) | null = null
     // FS_CAP_STATS: what happened to each frame given to an output, read and reset once a second
     static stats: { [outputId: string]: { [what: string]: number } } = {}
     private static note(outputId: string, what: string, value = 1, set = false) {
@@ -414,12 +419,8 @@ export class BlackmagicSender {
 
         if (pixelFormat.includes("YUV")) {
             // 10-bit YUV uses v210 format: 8/3 bytes per pixel (16 bytes per 6 pixels)
-            if (pixelFormat.includes("10")) {
-                // This converter packs/pads in 6-pixel groups per row.
-                // Each group occupies 16 bytes in v210.
-                const groupsPerRow = Math.ceil(width / 6)
-                return groupsPerRow * height * 16
-            }
+            // v210: 16 bytes per 6 pixels, each row padded to 128 bytes (48 pixels) as the card lays it out
+            if (pixelFormat.includes("10")) return cardFrameBytes(width, height, 7)
             // YUV420 planar: Y full res + U/V at quarter res
             if (pixelFormat.includes("420")) {
                 return width * height + (width / 2) * (height / 2) * 2 // Y + U + V
@@ -525,9 +526,9 @@ export class BlackmagicSender {
 
         try {
             const bufferedFrames = data.playback.bufferedFrames()
-            // Keep buffer at 1 frame once started for lowest latency
-            // During startup, allow small buffer (max 3 frames) for smooth start
-            const maxBuffer = data.isStarted ? 1 : Math.min(3, data.targetBufferSize)
+            // the same depth scheduling allows (scheduleFrame), so a repeat of the last frame never leaves the
+            // card too full to take a new one
+            const maxBuffer = data.isStarted ? Math.min(2, Math.max(1, Math.ceil(data.targetBufferSize / 4))) : data.targetBufferSize
             if (bufferedFrames > maxBuffer) return false
         } catch {
             return false
@@ -711,102 +712,8 @@ export class BlackmagicSender {
                         console.warn(`Video frame size mismatch: got ${convertedFrame.length} bytes, expected ${data.expectedVideoFrameSize} bytes for ${size.width}x${size.height} in ${data.pixelFormat}`)
                     }
 
-                    // Get audio safely with correct sample count for the display mode
-                    // Use queued audio to get exactly the right amount for this frame
-                    const audioChannels = data.audioChannels || 2
-                    const outputAudioQueue = this.audioQueuesByOutput[outputId]
-                    const audioData = outputAudioQueue && outputAudioQueue.length > 0 && audioFrame !== null ? this.getAudioForFrame(outputId, audioChannels, data.displayMode) : this.getSilentAudio(audioChannels, data.displayMode)
-
-                    // Validate audio buffer size
-                    const expectedSampleCount = data.expectedAudioSampleCount
-                    const expectedAudioSize = expectedSampleCount * 2 * audioChannels
-                    if (audioData.length !== expectedAudioSize && now - (data.lastAudioSizeWarningTime || 0) > 5000) {
-                        data.lastAudioSizeWarningTime = now
-                        console.warn(`Audio buffer size mismatch: got ${audioData.length} bytes, expected ${expectedAudioSize} bytes (samples: ${expectedSampleCount}, channels: ${data.audioChannels})`)
-                    }
-
-                    // Calculate stream time in DeckLink timescale units (duration ticks) for this frame.
-                    const frameDurationTicks = data.frameDurationTicks || 1000
-                    // Stream time counts scheduled frames, so every frame not given in time (a still page, a late
-                    // tick) left all later frames scheduled in the past, where the card drops them and keeps showing
-                    // the last frame it played. Once playing, a frame that would not land at least one frame period
-                    // ahead of the card's position moves to the first period that does.
-                    if (data.isStarted) {
-                        try {
-                            const streamTime = data.playback.scheduledTime()?.streamTime
-                            if (typeof streamTime === "number") {
-                                // streamTime is 32-bit; the difference stays right across its wrap
-                                const lead = (data.scheduledFrames * frameDurationTicks - streamTime) | 0
-                                if (lead < frameDurationTicks) {
-                                    data.scheduledFrames += Math.ceil((frameDurationTicks - lead) / frameDurationTicks)
-                                    this.note(outputId, "realigned")
-                                }
-                                this.note(outputId, "streamTime", streamTime, true)
-                            }
-                        } catch {
-                            // no position to align to; schedule in sequence
-                        }
-                    }
-                    const currentTime = data.scheduledFrames * frameDurationTicks
-
-                    // Calculate correct sample frame count based on actual frame rate
-                    // For 48kHz audio: sampleFrameCount = 48000 / frameRate
-                    // Use accurate fractional frame rate for precise audio sizing
-                    const correctSampleFrameCount = expectedSampleCount
-
-                    // Schedule the frame directly with playback.schedule()
-                    const frameDataToSchedule = {
-                        video: convertedFrame,
-                        audio: audioData,
-                        sampleFrameCount: correctSampleFrameCount,
-                        time: currentTime
-                    }
-
-                    // Use the original schedule method but with BufferManager backpressure check
-                    try {
-                        // Schedule the frame using the original method
-                        data.playback.schedule(frameDataToSchedule)
-
-                        // Assume scheduling was successful if no error was thrown
-                        data.scheduledFrames++
-                        this.note(outputId, "scheduled")
-                        this.note(outputId, "frameTime", currentTime, true)
-
-                        try {
-                            data.playback.hardwareTime()
-                            data.playback.scheduledTime()
-                        } catch {
-                            // Ignore timing errors
-                        }
-
-                        // Start playback if needed - use smaller buffer for faster start and lower latency
-                        if (!data.isStarted && bufferedFrames >= Math.min(2, data.targetBufferSize)) {
-                            try {
-                                console.log(`Starting BlackMagic playback with ${bufferedFrames} buffered frames`)
-                                data.playback.start({ startTime: 0 })
-                                data.isStarted = true
-                            } catch (err) {
-                                if (err instanceof Error && err.message !== "Already started") {
-                                    console.error(`Error starting playback: ${err.message}`)
-                                } else {
-                                    data.isStarted = true
-                                }
-                            }
-                        }
-                    } catch (scheduleErr) {
-                        console.error(`Frame scheduling error: ${scheduleErr instanceof Error ? scheduleErr.message : String(scheduleErr)}`)
-                        this.note(outputId, "scheduleError")
-
-                        // Handle schedule failures
-                        data.scheduleFailCount = (data.scheduleFailCount || 0) + 1
-
-                        // If we're failing too often, reduce buffer target
-                        if (data.scheduleFailCount > 5) {
-                            data.targetBufferSize = Math.max(3, data.targetBufferSize - 1)
-                            data.scheduleFailCount = 0
-                            console.log(`Reduced buffer target to ${data.targetBufferSize} due to schedule failures`)
-                        }
-                    }
+                    data.lastConverted = convertedFrame
+                    this.submitFrame(outputId, data, convertedFrame, audioFrame, bufferedFrames, now)
                 } catch (err) {
                     console.error(`Schedule error: ${err instanceof Error ? err.message : String(err)}`)
 
@@ -828,6 +735,129 @@ export class BlackmagicSender {
                 data.frameProcessing = false
             }
         }, 0) // End setTimeout - this executes the frame scheduling in a separate tick
+    }
+
+    // Hand one converted frame (with this frame's audio) to the card, at least one frame period ahead of its
+    // clock, and start playback once enough is buffered.
+    private static submitFrame(outputId: string, data: PlaybackData, convertedFrame: Buffer, audioFrame: Buffer | null, bufferedFrames: number, now: number) {
+        // Get audio safely with correct sample count for the display mode
+        // Use queued audio to get exactly the right amount for this frame
+        const audioChannels = data.audioChannels || 2
+        const outputAudioQueue = this.audioQueuesByOutput[outputId]
+        const audioData = outputAudioQueue && outputAudioQueue.length > 0 && audioFrame !== null ? this.getAudioForFrame(outputId, audioChannels, data.displayMode) : this.getSilentAudio(audioChannels, data.displayMode)
+
+        // Validate audio buffer size
+        const expectedSampleCount = data.expectedAudioSampleCount
+        const expectedAudioSize = expectedSampleCount * 2 * audioChannels
+        if (audioData.length !== expectedAudioSize && now - (data.lastAudioSizeWarningTime || 0) > 5000) {
+            data.lastAudioSizeWarningTime = now
+            console.warn(`Audio buffer size mismatch: got ${audioData.length} bytes, expected ${expectedAudioSize} bytes (samples: ${expectedSampleCount}, channels: ${data.audioChannels})`)
+        }
+
+        // Calculate stream time in DeckLink timescale units (duration ticks) for this frame.
+        const frameDurationTicks = data.frameDurationTicks || 1000
+        // Stream time counts scheduled frames, so every frame not given in time (a still page, a late
+        // tick) left all later frames scheduled in the past, where the card drops them and keeps showing
+        // the last frame it played. Once playing, a frame that would not land at least one frame period
+        // ahead of the card's position moves to the first period that does.
+        if (data.isStarted) {
+            try {
+                const streamTime = data.playback.scheduledTime()?.streamTime
+                if (typeof streamTime === "number") {
+                    // streamTime is 32-bit; the difference stays right across its wrap
+                    const lead = (data.scheduledFrames * frameDurationTicks - streamTime) | 0
+                    if (lead < frameDurationTicks) {
+                        data.scheduledFrames += Math.ceil((frameDurationTicks - lead) / frameDurationTicks)
+                        this.note(outputId, "realigned")
+                    }
+                    this.note(outputId, "streamTime", streamTime, true)
+                }
+            } catch {
+                // no position to align to; schedule in sequence
+            }
+        }
+        const currentTime = data.scheduledFrames * frameDurationTicks
+
+        // Calculate correct sample frame count based on actual frame rate
+        // For 48kHz audio: sampleFrameCount = 48000 / frameRate
+        // Use accurate fractional frame rate for precise audio sizing
+        const correctSampleFrameCount = expectedSampleCount
+
+        // Schedule the frame directly with playback.schedule()
+        const frameDataToSchedule = {
+            video: convertedFrame,
+            audio: audioData,
+            sampleFrameCount: correctSampleFrameCount,
+            time: currentTime
+        }
+
+        // Use the original schedule method but with BufferManager backpressure check
+        try {
+            // Schedule the frame using the original method
+            data.playback.schedule(frameDataToSchedule)
+
+            // Assume scheduling was successful if no error was thrown
+            data.scheduledFrames++
+            this.note(outputId, "scheduled")
+            this.note(outputId, "frameTime", currentTime, true)
+
+            try {
+                data.playback.hardwareTime()
+                data.playback.scheduledTime()
+            } catch {
+                // Ignore timing errors
+            }
+
+            // Start playback if needed - use smaller buffer for faster start and lower latency
+            if (!data.isStarted && bufferedFrames >= Math.min(2, data.targetBufferSize)) {
+                try {
+                    console.log(`Starting BlackMagic playback with ${bufferedFrames} buffered frames`)
+                    data.playback.start({ startTime: 0 })
+                    data.isStarted = true
+                } catch (err) {
+                    if (err instanceof Error && err.message !== "Already started") {
+                        console.error(`Error starting playback: ${err.message}`)
+                    } else {
+                        data.isStarted = true
+                    }
+                }
+            }
+        } catch (scheduleErr) {
+            console.error(`Frame scheduling error: ${scheduleErr instanceof Error ? scheduleErr.message : String(scheduleErr)}`)
+            this.note(outputId, "scheduleError")
+
+            // Handle schedule failures
+            data.scheduleFailCount = (data.scheduleFailCount || 0) + 1
+
+            // If we're failing too often, reduce buffer target
+            if (data.scheduleFailCount > 5) {
+                data.targetBufferSize = Math.max(3, data.targetBufferSize - 1)
+                data.scheduleFailCount = 0
+                console.log(`Reduced buffer target to ${data.targetBufferSize} due to schedule failures`)
+            }
+        }
+    }
+
+    // A card plays out continuously; while the page has nothing new, the frame it last showed goes again.
+    // That frame was converted already, so a repeat costs no conversion and never holds up a new frame.
+    static repeatLastFrame(outputId: string, audioFrame: Buffer | null): boolean {
+        const data = this.playbackData[outputId]
+        if (!data?.playback || data.needsReinit || this.isPaused[outputId] || !data.lastConverted) return false
+        // a new frame is being converted: it is about to go out, so this repeat is not needed
+        if (data.frameProcessing) return true
+        try {
+            const bufferedFrames = data.playback.bufferedFrames()
+            const maxBuffer = data.isStarted ? Math.min(2, Math.max(1, Math.ceil(data.targetBufferSize / 4))) : data.targetBufferSize
+            if (bufferedFrames > maxBuffer) {
+                this.note(outputId, "repeatFull")
+                return true
+            }
+            this.note(outputId, "repeat")
+            this.submitFrame(outputId, data, data.lastConverted, audioFrame, bufferedFrames, Date.now())
+        } catch (err) {
+            console.error(`Blackmagic repeat error: ${err instanceof Error ? err.message : String(err)}`)
+        }
+        return true
     }
 
     static async reinitializePlayback(outputId: string, deviceIndex: number, displayMode: string, pixelFormat: string, enableKeying: boolean, audioChannels = 2) {
@@ -1034,6 +1064,9 @@ export class BlackmagicSender {
             else return ImageBufferConverter10BitRGB.ARGBtoRGB(frame, size, reusableOutputBuffer)
         } else if (format.includes("YUV")) {
             const colorSpace = this.playbackData[outputId || ""]?.colorSpace || "rec709"
+            // native, limited range, the same bytes the GPU produces when it makes the frame (cardFormat.ts)
+            const card = cardFormat(format, colorSpace, false)
+            if (card && this.nativeCardConvert) return this.nativeCardConvert(frame, size.width, size.height, card)
             if (format.includes("10")) {
                 if (this.devicePixelMode === "BGRA") return ImageBufferConverter10Bit.BGRAtoYUV(frame, size, reusableOutputBuffer, colorSpace)
                 else return ImageBufferConverter10Bit.ARGBtoYUV(frame, size, reusableOutputBuffer, colorSpace)

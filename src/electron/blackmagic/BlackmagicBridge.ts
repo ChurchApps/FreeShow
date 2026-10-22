@@ -1,4 +1,5 @@
 import type { Size } from "electron"
+import { cardFormat } from "./cardFormat"
 import { CaptureHelper } from "../capture/CaptureHelper"
 import { SenderCapture } from "../capture/SenderCapture"
 import { OutputHelper } from "../output/OutputHelper"
@@ -101,6 +102,12 @@ export class BlackmagicBridge {
         const cs = (st.colorSpace || "").toLowerCase()
         if (!(cs.includes("601") || cs.includes("170"))) return false
         return st.targetSize.width === size.width && st.targetSize.height === size.height
+    }
+    /** the card's format as a GPU target (cardFormat.ts), or 0 when it takes BGRA converted by the sender */
+    static cardFormat(outputId: string): number {
+        const st = this.states.get(outputId)
+        if (!st?.ready) return 0
+        return cardFormat(st.pixelFormat || "", st.colorSpace || "", !!st.enableKeying)
     }
     static isDeviceStable(outputId: string): boolean {
         return this.states.get(outputId)?.stable !== false

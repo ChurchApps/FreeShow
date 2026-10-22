@@ -1143,7 +1143,9 @@ export class OutputLifecycle {
                 const bfr = OutputHelper.getOutput(m)?.captureOptions?.framerates?.blackmagic
                 if (!bfr) continue
                 const sz = BlackmagicSender.getTargetDimensions(m)
-                const f = BlackmagicSender.canAcceptRawUyvy(m, sz) ? 1 : 0
+                // the card's own pixel format straight from the GPU when the addon makes it; else BGRA, which
+                // the sender converts on the CPU
+                const f = addon.cardFormats ? BlackmagicSender.cardFormat(m) : 0
                 bmdMembers[m] = { width: sz.width, height: sz.height, format: f, framerate: bfr }
                 if (!(sz.width === width && sz.height === height && f === fmt) && !targets.some((t) => t.width === sz.width && t.height === sz.height && t.format === f)) targets.push({ width: sz.width, height: sz.height, format: f })
             }
@@ -1174,7 +1176,7 @@ export class OutputLifecycle {
                 // ask for every packed format the GPU kernels produce, whatever this output actually
                 // needs: the point is to exercise the kernels, and a group with several consumers reads
                 // back as plain BGRA, where there would be nothing to compare
-                for (const f of [0, 1, 2, 4]) {
+                for (const f of [0, 1, 2, 4, ...(addon.cardFormats ? [5, 6, 7, 8] : [])]) {
                     if (!targets.some((t) => t.width === width && t.height === height && t.format === f)) targets.push({ width, height, format: f })
                 }
             }

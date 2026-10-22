@@ -3,6 +3,8 @@
 // output, so a keyed graphic disappears instead of covering the program) and silence in place of sound.
 // Main owns the state (OutputLifecycle.setOutputOn) and posts the full list whenever it changes.
 
+import { cardFrameBytes } from "../blackmagic/cardFormat"
+
 export const outputsOff = new Set<string>()
 
 export function setOutputsOff(ids: string[]) {
@@ -17,6 +19,19 @@ export function blankFrame(width: number, height: number, format: number, transp
     if (format === 1 || format === 2) {
         const buf = Buffer.alloc(px * 2 + (format === 2 ? px : 0))
         for (let i = 0; i < px * 2; i += 2) buf[i] = 128
+        return buf
+    }
+    // the SDI card formats (cardFormat.ts), limited range: Y 16 (64), chroma 128 (512)
+    if (format === 5 || format === 6) {
+        const buf = Buffer.alloc(px * 2, 16)
+        for (let i = 0; i < px * 2; i += 2) buf[i] = 128
+        return buf
+    }
+    if (format === 7 || format === 8) {
+        const buf = Buffer.alloc(cardFrameBytes(width, height, format))
+        // each 6-pixel group: chroma 512 and luma 64 in the v210 word order
+        const words = [512 | (64 << 10) | (512 << 20), 64 | (512 << 10) | (64 << 20), 512 | (64 << 10) | (512 << 20), 64 | (512 << 10) | (64 << 20)]
+        for (let i = 0; i + 16 <= buf.length; i += 16) for (let k = 0; k < 4; k++) buf.writeUInt32LE(words[k], i + k * 4)
         return buf
     }
     if (format === 4) {

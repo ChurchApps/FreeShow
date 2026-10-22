@@ -2,6 +2,7 @@ import { parentPort } from "worker_threads"
 import { ruleViolation } from "../utils/ruleCheck"
 import { RtmpStreamer, setRtmpNoticeListener, setRtmpStatusListener } from "../streaming/RtmpStreamer"
 import { BlackmagicSender } from "../blackmagic/BlackmagicSender"
+import { cardFrameBytes } from "../blackmagic/cardFormat"
 import { FrameServer, type ServedFrame } from "./FrameServer"
 import { blankFrame, outputsOff, setOutputsOff } from "./outputsOff"
 
@@ -668,7 +669,9 @@ function bmdGive(outputId: string, buf: Buffer, framerate: number, preConverted:
         const cur = bmdLast.get(outputId)
         if (!cur || cur.seq !== seq || !BlackmagicSender.playbackData[outputId]?.playback) return
         bmdNote(outputId, "repeat")
-        BlackmagicSender.scheduleFrame(outputId, cur.buf, BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null, cur.framerate, cur.preConverted)
+        // the card's own copy of the last frame, already converted; until one exists, the frame itself
+        const audio = BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null
+        if (!BlackmagicSender.repeatLastFrame(outputId, audio)) BlackmagicSender.scheduleFrame(outputId, cur.buf, audio, cur.framerate, cur.preConverted)
         const now = performance.now()
         due = Math.max(due + period, now)
         cur.timer = setTimeout(hold, due - now)
@@ -829,7 +832,7 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
     // buffers: the addon writes straight into them and no frame is copied here on the GPU path.
     const targets = opts.targets || []
     const mainFormat = opts.mainFormat ?? format
-    const bytesFor = (w: number, h: number, f: number) => (f === 1 ? w * h * 2 : f === 2 ? w * h * 3 : f === 4 ? w * h + 2 * (Math.floor(w / 2) * Math.floor(h / 2)) : w * h * 4)
+    const bytesFor = (w: number, h: number, f: number) => (f === 1 ? w * h * 2 : f === 2 ? w * h * 3 : f === 4 ? w * h + 2 * (Math.floor(w / 2) * Math.floor(h / 2)) : f >= 5 && f <= 8 ? cardFrameBytes(w, h, f) : w * h * 4)
     const gpuTargets = twoPhase && targets.length > 0 && !opts.cpuTargets && !!osr.targetsSupported
     const framePbuf = twoPhase ? acquirePacerBuf(id, bytesFor(size.width, size.height, format)) : null
     const targetPbufs: PacerBuf[] = gpuTargets ? targets.map((t, i) => acquirePacerBuf(`${id}#t${i}`, bytesFor(t.width, t.height, t.format))) : []
@@ -905,6 +908,7 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
             if (f === 2) return osr.convertBgraToUyva ? osr.convertBgraToUyva(bgra, w, h) : bgraToUyva(bgra, w, h)
             if (f === 1) return osr.convertBgraToUyvy ? osr.convertBgraToUyvy(bgra, w, h) : bgraToUyvy(bgra, w, h)
             if (f === 4) return osr.convertBgraToI420(bgra, w, h)
+            if (f >= 5 && f <= 8) return osr.convertBgraToCard(bgra, w, h, f)
             return bgra
         }
         const intoPacerBuf = (owner: string, data: Buffer): PacerBuf => {
@@ -1065,7 +1069,7 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
             const bytes = bytesFor(b.width, b.height, b.format)
             // an off output's blank is never written, so the card may hold it without a copy
             const frameData = outputsOff.has(m) ? blankPacerBuf(b.width, b.height, b.format, false).buf.subarray(0, bytes) : Buffer.from(b.pbuf.buf.subarray(0, bytes))
-            bmdGive(m, frameData, want.framerate, b.format === 1)
+            bmdGive(m, frameData, want.framerate, b.format !== 0)
         }
         // FS_CONVERT_CHECK: the GPU produced this frame in the real format as a target, and `main` holds
         // the same frame as BGRA, so converting that here gives the CPU reference to compare it against.
@@ -1079,7 +1083,7 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
                 convertChecked.add(id)
                 const backend = typeof osr._readbackBackend === "function" ? osr._readbackBackend() : "?"
                 const bgra = targetBufs[si].pbuf.buf.subarray(0, bytesFor(size.width, size.height, 0))
-                for (const f of [1, 2, 4]) {
+                for (const f of [1, 2, 4, ...(osr.cardFormats ? [5, 6, 7, 8] : [])]) {
                     const ti = targetBufs.findIndex((t) => t.width === size.width && t.height === size.height && t.format === f)
                     if (ti < 0) {
                         console.info(`[CONVERT-CHECK ${id}] format ${f}: the GPU produced no target for it`)
@@ -1372,7 +1376,10 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
             case "rtmpFrame":
                 RtmpStreamer.updateFrame(msg.outputId, Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.size)
                 break
-            case "bmdInit":
+            case "bmdInit": {
+                // the card's YUV modes are converted natively when a frame did not come from the GPU in them
+                const osrMod = loadOsrCapture()
+                if (osrMod && typeof osrMod.convertBgraToCard === "function") BlackmagicSender.nativeCardConvert = (frame, w, h, f) => osrMod.convertBgraToCard(frame, w, h, f)
                 void BlackmagicSender.initialize(msg.outputId, msg.deviceIndex, msg.displayMode, msg.pixelFormat, msg.enableKeying, msg.audioChannels, msg.colorSpace).then(
                     () => bmdReportState(msg.outputId),
                     (err) => {
@@ -1381,6 +1388,7 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
                     }
                 )
                 break
+            }
             case "bmdStop":
                 bmdForget(msg.outputId)
                 BlackmagicSender.stop(msg.outputId)

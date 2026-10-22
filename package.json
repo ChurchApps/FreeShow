@@ -153,7 +153,7 @@
         "node-machine-id": "^1.1.12",
         "openmediatransport": "github:meros-co/openmediatransport-node#1eb7bb50b0c135fbb7ddbbbd858d774f630d9df4",
         "osc-js": "^2.4.1",
-        "osr-capture": "github:meros-co/osr-capture#4a347c519a0bc9bea41c9e8ae05f4440810b3ae2",
+        "osr-capture": "github:meros-co/osr-capture#21a908f8498c63b592a7354062ccc6bef158b404",
         "protobufjs": "^7.5.3",
         "sharp": "^0.35.4",
         "slideshow": "github:vassbo/slideshow#58f8a1e",
