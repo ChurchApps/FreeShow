@@ -85,8 +85,8 @@ export const receiveSTAGE = {
     },
     LAYOUT: (data: { id: string; password?: string }, connectionId: string) => {
         let layout = get(stageShows)[data.id]
-        if (!layout || layout.disabled) return { channel: "ERROR", data: "noShow" }
-        if (layout.password && layout.password !== data.password) return { channel: "ERROR", data: "wrongPass" }
+        if (!layout || layout.disabled) return { channel: "ERROR", data: { key: "noShow" } }
+        if (layout.password && layout.password !== data.password) return { channel: "ERROR", data: { key: "wrongPass" } }
         setConnectedState("STAGE", connectionId, "active", data.id)
 
         layout = arrayToObject(filterObjectArray(get(stageShows), ["disabled", "name", "settings", "items"]))[data.id]

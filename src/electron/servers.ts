@@ -90,7 +90,7 @@ function createServerInstance(id: ServerName) {
     // RECEIVE CONNECTION FROM CLIENT
     io.on("connection", (socket) => {
         if (Object.keys(servers[id]!.connections).length >= servers[id]!.max) {
-            io.emit(id, { channel: "ERROR", id: "overLimit", data: servers[id]!.max })
+            socket.emit(id, { channel: "ERROR", data: { key: "overLimit", max: servers[id]!.max } })
             socket.disconnect()
             return
         }

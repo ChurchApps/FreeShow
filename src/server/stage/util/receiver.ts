@@ -98,7 +98,8 @@ export const receiver = {
     },
 
     ERROR: (data: any) => {
-        if (data === "wrongPass") {
+        const key = data?.key || ""
+        if (key === "wrongPass") {
             setError(translate("remote.wrong_password") || "Wrong password")
             const layoutId = _get("selectedLayout") || lastAttemptedLayoutId
             const layoutsList = _get("layouts") || []
@@ -106,8 +107,10 @@ export const receiver = {
             _set("passwordRequiredLayout", { id: layoutId, name: layoutObj?.name || "" })
             localStorage.removeItem("password")
             if (layoutId) localStorage.removeItem("password_" + layoutId)
+        } else if (key === "overLimit") {
+            setError(`${translate(`error.${key}`)} (${data?.max})`)
         } else {
-            setError(data)
+            setError(key ? translate(`error.${key}`) : data)
         }
         _set("selectedLayout", "")
     },

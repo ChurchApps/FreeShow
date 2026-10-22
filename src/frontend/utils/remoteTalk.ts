@@ -53,7 +53,7 @@ export const receiveREMOTE: any = {
     },
     ACCESS: (msg: any) => {
         const pass = get(serverData)?.remote?.password || ""
-        if (pass.length && msg.data !== pass) return { id: msg.id, channel: "ERROR", data: "wrongPass" }
+        if (pass.length && msg.data !== pass) return { id: msg.id, channel: "ERROR", data: { key: "wrongPass" } }
 
         sendThemeToRemote()
 
