@@ -335,7 +335,17 @@
     // transparent showed nothing, and Zoomed animates a background color change, so it faded to black
     // for the best part of a second every time an input was triggered.
     $: opaqueBackground = styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle?.background || slide?.settings?.backgroundColor || "black"
-    $: backgroundColor = currentOutput?.transparent || (!mirror && ($compositedOutputs[outputId] || $mediaLayered[outputId])) ? "transparent" : opaqueBackground
+    $: layerUnder = !mirror && !!($compositedOutputs[outputId] || $mediaLayered[outputId])
+    $: backgroundColor = currentOutput?.transparent || layerUnder ? "transparent" : opaqueBackground
+    // The page stops or starts drawing that video in the frame the layer switches, so the backdrop has to
+    // switch in that frame too: fading it would cover the video for the best part of a second.
+    let layerSwitching = false
+    let lastLayerUnder = false
+    $: if (layerUnder !== lastLayerUnder) {
+        lastLayerUnder = layerUnder
+        layerSwitching = true
+        requestAnimationFrame(() => requestAnimationFrame(() => (layerSwitching = false)))
+    }
     // a media layer is drawn under the page by the capture worker, which fills around it with this color
     $: if (!mirror && outputId && $mediaFill[outputId] !== opaqueBackground) mediaFill.update((a) => ({ ...a, [outputId]: opaqueBackground }))
     // background image
@@ -397,7 +407,7 @@
     }
 </script>
 
-<Zoomed id={outputId} background={backgroundColor} checkered={(preview || mirror) && backgroundColor === "transparent"} backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} align={alignPosition} center {style} {resolution} styleIdOverride={styleId} {mirror} {drawZoom} {cropping} bind:ratio>
+<Zoomed id={outputId} background={backgroundColor} checkered={(preview || mirror) && backgroundColor === "transparent"} backgroundDuration={layerSwitching || transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} align={alignPosition} center {style} {resolution} styleIdOverride={styleId} {mirror} {drawZoom} {cropping} bind:ratio>
     <!-- always show style background (behind other backgrounds) -->
     {#if styleBackground && actualSlide?.type !== "pdf"}
         <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} mirror />
