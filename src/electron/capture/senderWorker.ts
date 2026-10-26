@@ -663,6 +663,8 @@ function bmdGive(outputId: string, buf: Buffer, framerate: number, preConverted:
         feed = { buf: null, fresh: false, framerate, preConverted, timer: null, due: 0 }
         bmdFeeds.set(outputId, feed)
     }
+    // the feed holds the newest frame only; one it never sent goes back unplayed
+    if (feed.buf !== buf) BlackmagicSender.releaseBuffer(feed.buf)
     feed.buf = buf
     feed.fresh = true
     feed.framerate = framerate
@@ -717,6 +719,7 @@ function bmdForget(outputId?: string) {
     for (const [id, feed] of bmdFeeds) {
         if (outputId && id !== outputId) continue
         if (feed.timer) clearTimeout(feed.timer)
+        BlackmagicSender.releaseBuffer(feed.buf)
         bmdFeeds.delete(id)
     }
 }
@@ -1081,7 +1084,13 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
             bmdNote(m, outputsOff.has(m) ? "givenOff" : "given")
             const bytes = bytesFor(b.width, b.height, b.format)
             // an off output's blank is never written, so the card may hold it without a copy
-            const frameData = outputsOff.has(m) ? blankPacerBuf(b.width, b.height, b.format, false).buf.subarray(0, bytes) : Buffer.from(b.pbuf.buf.subarray(0, bytes))
+            let frameData: Buffer
+            if (outputsOff.has(m)) frameData = blankPacerBuf(b.width, b.height, b.format, false).buf.subarray(0, bytes)
+            else {
+                // the card's own copy, from its reused buffers (BlackmagicSender.acquireBuffer)
+                frameData = BlackmagicSender.acquireBuffer(m, bytes)
+                b.pbuf.buf.copy(frameData, 0, 0, bytes)
+            }
             bmdGive(m, frameData, want.framerate, b.format !== 0)
         }
         // FS_CONVERT_CHECK: the GPU produced this frame in the real format as a target, and `main` holds
@@ -1392,7 +1401,7 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
             case "bmdInit": {
                 // the card's YUV modes are converted natively when a frame did not come from the GPU in them
                 const osrMod = loadOsrCapture()
-                if (osrMod && typeof osrMod.convertBgraToCard === "function") BlackmagicSender.nativeCardConvert = (frame, w, h, f) => osrMod.convertBgraToCard(frame, w, h, f)
+                if (osrMod && typeof osrMod.convertBgraToCard === "function") BlackmagicSender.nativeCardConvert = (frame, w, h, f, into) => osrMod.convertBgraToCard(frame, w, h, f, into)
                 void BlackmagicSender.initialize(msg.outputId, msg.deviceIndex, msg.displayMode, msg.pixelFormat, msg.enableKeying, msg.audioChannels, msg.colorSpace).then(
                     () => bmdReportState(msg.outputId),
                     (err) => {

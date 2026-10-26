@@ -59,8 +59,36 @@ export class BlackmagicSender {
     private static macadamInitMutex: Promise<void> = Promise.resolve()
     // Core state
     static playbackData: { [key: string]: PlaybackData } = {}
+    // Frames handed to a card, reused instead of allocated per frame: a 4K frame is 16-33MB, and allocating
+    // one 30 times a second outran the garbage collector until allocation failed. A buffer goes back to its
+    // output's free list once nothing holds it: the feed that took it, the last frame kept for repeats, and
+    // every scheduled copy until the card reports it played (playback.played).
+    private static freeBuffers = new Map<string, Buffer[]>()
+    private static bufferRefs = new Map<Buffer, { outputId: string; count: number }>()
+    static acquireBuffer(outputId: string, bytes: number): Buffer {
+        const free = this.freeBuffers.get(outputId) || []
+        const i = free.findIndex((b) => b.length === bytes)
+        const buf = i >= 0 ? free.splice(i, 1)[0] : Buffer.allocUnsafe(bytes)
+        this.bufferRefs.set(buf, { outputId, count: 1 })
+        return buf
+    }
+    static retainBuffer(buf: Buffer) {
+        const r = this.bufferRefs.get(buf)
+        if (r) r.count++
+    }
+    static releaseBuffer(buf: Buffer | null | undefined) {
+        if (!buf) return
+        const r = this.bufferRefs.get(buf)
+        if (!r || --r.count > 0) return
+        this.bufferRefs.delete(buf)
+        // a stopped output's buffers are left to the collector
+        if (!this.playbackData[r.outputId]) return
+        const free = this.freeBuffers.get(r.outputId) || []
+        free.push(buf)
+        this.freeBuffers.set(r.outputId, free)
+    }
     // osr-capture's native converter to the card formats, set by the capture worker when the addon has it
-    static nativeCardConvert: ((frame: Buffer, width: number, height: number, format: number) => Buffer) | null = null
+    static nativeCardConvert: ((frame: Buffer, width: number, height: number, format: number, into?: Buffer) => Buffer) | null = null
     // FS_CAP_STATS: what happened to each frame given to an output, read and reset once a second
     static stats: { [outputId: string]: { [what: string]: number } } = {}
     private static note(outputId: string, what: string, value = 1, set = false) {
@@ -712,7 +740,11 @@ export class BlackmagicSender {
                         console.warn(`Video frame size mismatch: got ${convertedFrame.length} bytes, expected ${data.expectedVideoFrameSize} bytes for ${size.width}x${size.height} in ${data.pixelFormat}`)
                     }
 
-                    data.lastConverted = convertedFrame
+                    if (data.lastConverted !== convertedFrame) {
+                        this.retainBuffer(convertedFrame)
+                        this.releaseBuffer(data.lastConverted)
+                        data.lastConverted = convertedFrame
+                    }
                     this.submitFrame(outputId, data, convertedFrame, audioFrame, bufferedFrames, now)
                 } catch (err) {
                     console.error(`Schedule error: ${err instanceof Error ? err.message : String(err)}`)
@@ -795,6 +827,14 @@ export class BlackmagicSender {
         try {
             // Schedule the frame using the original method
             data.playback.schedule(frameDataToSchedule)
+            // the card holds the frame until it has played it
+            this.retainBuffer(convertedFrame)
+            const played = () => this.releaseBuffer(convertedFrame)
+            try {
+                data.playback.played(currentTime).then(played, played)
+            } catch {
+                played()
+            }
 
             // Assume scheduling was successful if no error was thrown
             data.scheduledFrames++
@@ -1066,7 +1106,7 @@ export class BlackmagicSender {
             const colorSpace = this.playbackData[outputId || ""]?.colorSpace || "rec709"
             // native, limited range, the same bytes the GPU produces when it makes the frame (cardFormat.ts)
             const card = cardFormat(format, colorSpace, false)
-            if (card && this.nativeCardConvert) return this.nativeCardConvert(frame, size.width, size.height, card)
+            if (card && this.nativeCardConvert) return this.nativeCardConvert(frame, size.width, size.height, card, reusableOutputBuffer)
             if (format.includes("10")) {
                 if (this.devicePixelMode === "BGRA") return ImageBufferConverter10Bit.BGRAtoYUV(frame, size, reusableOutputBuffer, colorSpace)
                 else return ImageBufferConverter10Bit.ARGBtoYUV(frame, size, reusableOutputBuffer, colorSpace)
@@ -1136,6 +1176,11 @@ export class BlackmagicSender {
         if (!data) return false
 
         if (typeof data.deviceIndex === "number") this.usedDeviceIndices.delete(data.deviceIndex)
+        this.releaseBuffer(data.lastConverted)
+        data.lastConverted = undefined
+        this.freeBuffers.delete(outputId)
+        // frames the card never reported played: nothing will release them now
+        for (const [buf, r] of this.bufferRefs) if (r.outputId === outputId) this.bufferRefs.delete(buf)
 
         console.log(`Stopping Blackmagic output: ${outputId}`)
 
