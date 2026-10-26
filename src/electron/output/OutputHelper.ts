@@ -34,7 +34,7 @@ export class OutputHelper {
             SET_VALUE: (data: { id: string; key: string; value: boolean | { key: string; value: boolean } }) => OutputHelper.Values.updateValue(data),
             TO_FRONT: (data: string) => OutputHelper.Bounds.moveToFront(data),
 
-            STREAM_LAYER: (data: { id: string; active: boolean }) => OutputLifecycle.requestVideoLayer(data.id, !!data.active),
+            STREAM_LAYER: (data: { id: string; active: boolean; source?: string; release?: boolean }) => OutputLifecycle.requestVideoLayer(data.id, !!data.active, data.source || "", !!data.release),
             MEDIA_LAYERS: (data: { outputId: string; layers: any[]; fill: number[] }) => MediaLayers.update(data.outputId, data.layers || [], data.fill || [0, 0, 0]),
             PREVIEW_SUBSCRIBE: (data: { id: string; subscriber?: string; width?: number }) => PreviewStream.subscribe(data.id, data.subscriber, data.width),
             PREVIEW_UNSUBSCRIBE: (data: { id: string; subscriber?: string }) => PreviewStream.unsubscribe(data.id, data.subscriber),

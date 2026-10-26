@@ -7,7 +7,11 @@ import { receive, send } from "../../../utils/request"
 // 4K frame out of the browser's GPU thread. That only holds while the element covers the output with the
 // frame's own aspect and nothing is applied on top of it, so the page checks that and keeps drawing
 // whenever it is not true. It also keeps drawing until the worker confirms it is compositing, so the
-// output is never blank.
+// output is never blank, and takes the drawing back only once it has drawn a fresh frame itself: its
+// canvas holds whatever it last drew before the worker took over, which can be minutes old.
+//
+// The worker composites one source. While two streams share an output (one fading into the other), the
+// page draws both.
 
 /**
  * Outputs whose stream the capture worker is compositing. The output paints its background transparent
@@ -17,6 +21,8 @@ export const compositedOutputs = writable<{ [id: string]: boolean }>({})
 
 const LISTENER_ID = "STREAM_LAYER"
 const listeners = new Set<(id: string, active: boolean) => void>()
+// every stream layer on each output, so one can tell whether it is the only stream there
+const outputLayers = new Map<string, Set<StreamLayer>>()
 const tickListeners = new Set<(id: string) => void>()
 let receiving = false
 
@@ -76,9 +82,12 @@ function drawnPlainly(canvas: HTMLElement, frameWidth: number, frameHeight: numb
  */
 export class StreamLayer {
     private outputId = ""
+    private sourceId = ""
     private canvas: HTMLElement | null = null
     private wanted = false
     private active = false
+    // the page needs the drawing back: the worker keeps compositing until the page has drawn a fresh frame
+    private releasing = false
     private checkedAt = 0
     private lastWidth = 0
     private lastHeight = 0
@@ -86,6 +95,9 @@ export class StreamLayer {
     private onChange: () => void
     private listener = (id: string, active: boolean) => {
         if (id !== this.outputId) return
+        // the composite is this layer's only while this layer asked for it
+        active = active && this.wanted
+        if (!active) this.releasing = false
         this.active = active
         this.onChange()
         this.driveDamage(active)
@@ -98,17 +110,38 @@ export class StreamLayer {
         }
     }
 
-    constructor(outputId: string, onChange: () => void) {
+    constructor(outputId: string, sourceId: string, onChange: () => void) {
         this.outputId = outputId
+        this.sourceId = sourceId
         this.onChange = onChange
         if (!outputId) return
         listen()
         listeners.add(this.listener)
+        const layers = outputLayers.get(outputId) || new Set()
+        layers.add(this)
+        outputLayers.set(outputId, layers)
+        // another stream on this output takes the composite back to the page at once
+        layers.forEach((l) => l.check())
     }
 
-    /** true while the worker composites this stream, so the page must not draw it */
+    /** true while the worker composites this stream, so the page must not show its canvas */
     get composited() {
         return this.active
+    }
+
+    /** true while the page must draw frames: always, except while the worker composites them */
+    get drawing() {
+        return !this.active || this.releasing
+    }
+
+    /** the page drew a fresh frame: if it was taking the drawing back, its canvas can now be shown */
+    drawn() {
+        if (!this.releasing) return
+        this.releasing = false
+        this.wanted = false
+        this.active = false
+        this.onChange()
+        send(OUTPUT, ["STREAM_LAYER"], { id: this.outputId, active: false, source: this.sourceId })
     }
 
     update(canvas: HTMLElement | undefined, frameWidth: number, frameHeight: number) {
@@ -124,14 +157,23 @@ export class StreamLayer {
     private check() {
         if (!this.canvas || !this.lastWidth) return
         this.checkedAt = Date.now()
-        const plain = drawnPlainly(this.canvas, this.lastWidth, this.lastHeight)
-        if (plain === this.wanted) return
-        this.wanted = plain
-        send(OUTPUT, ["STREAM_LAYER"], { id: this.outputId, active: plain })
-        if (!plain) {
-            this.active = false
-            this.onChange()
+        const plain = outputLayers.get(this.outputId)?.size === 1 && drawnPlainly(this.canvas, this.lastWidth, this.lastHeight)
+        if (plain) {
+            if (this.wanted && !this.releasing) return
+            this.wanted = true
+            this.releasing = false
+            send(OUTPUT, ["STREAM_LAYER"], { id: this.outputId, active: true, source: this.sourceId })
+            return
         }
+        if (!this.wanted || this.releasing) return
+        if (this.active) {
+            // the worker keeps compositing, and frames reach the page again, until the page has drawn one
+            this.releasing = true
+            send(OUTPUT, ["STREAM_LAYER"], { id: this.outputId, active: true, source: this.sourceId, release: true })
+            return
+        }
+        this.wanted = false
+        send(OUTPUT, ["STREAM_LAYER"], { id: this.outputId, active: false, source: this.sourceId })
     }
 
     // The page stops drawing while the worker composites, so nothing marks the window dirty — and an
@@ -193,8 +235,13 @@ export class StreamLayer {
         if (this.timer) clearInterval(this.timer)
         this.timer = null
         listeners.delete(this.listener)
-        if (this.wanted) send(OUTPUT, ["STREAM_LAYER"], { id: this.outputId, active: false })
+        if (this.wanted) send(OUTPUT, ["STREAM_LAYER"], { id: this.outputId, active: false, source: this.sourceId })
         this.wanted = false
         this.active = false
+        this.releasing = false
+        const layers = outputLayers.get(this.outputId)
+        layers?.delete(this)
+        if (layers && !layers.size) outputLayers.delete(this.outputId)
+        layers?.forEach((l) => l.check())
     }
 }

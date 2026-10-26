@@ -795,7 +795,10 @@ export class OutputLifecycle {
     // Live input composited into a captured output by the worker (osr-capture's video layer) instead of
     // being drawn by the page: the page asks for it when the stream is a plain full-cover background, and
     // only stops drawing once the worker reports that it is compositing.
-    private static videoLayerWanted = new Set<string>()
+    // the source each output's composite shows, and the outputs whose page is taking the drawing back (it is
+    // sent frames again, while the worker keeps compositing until the page has drawn one)
+    private static videoLayerWanted = new Map<string, string>()
+    private static videoLayerReleasing = new Set<string>()
     private static videoLayerRunning = new Set<string>()
     private static videoLayerHooked = false
 
@@ -803,15 +806,33 @@ export class OutputLifecycle {
     // so a black output can be told apart from a black composite
     static videoLayerDisabled = process.env.FS_VIDEO_LAYER === "0"
 
-    static requestVideoLayer(id: string, wanted: boolean) {
+    static requestVideoLayer(id: string, wanted: boolean, source: string, release = false) {
         if (this.videoLayerDisabled) return
         this.hookVideoLayer()
         const renderer = RenderGroups.rendererOf(id) || id
-        if (wanted === this.videoLayerWanted.has(renderer)) return
-        if (wanted) this.videoLayerWanted.add(renderer)
-        else this.videoLayerWanted.delete(renderer)
-        StreamReceiverHost.send("videoLayer", { outputId: renderer, active: wanted })
-        if (!wanted) this.setVideoLayerRunning(renderer, false)
+        const current = this.videoLayerWanted.get(renderer)
+        // a different source is a new composite: the worker must not show a frame of the old one
+        if (!wanted || (current !== undefined && current !== source)) {
+            if (current === undefined) return
+            this.videoLayerWanted.delete(renderer)
+            this.videoLayerReleasing.delete(renderer)
+            StreamReceiverHost.send("videoLayer", { outputId: renderer, active: false })
+            this.setVideoLayerRunning(renderer, false)
+            if (!wanted) return
+        }
+        if (current === source && release === this.videoLayerReleasing.has(renderer)) return
+        this.videoLayerWanted.set(renderer, source)
+        if (release) this.videoLayerReleasing.add(renderer)
+        else this.videoLayerReleasing.delete(renderer)
+        this.sendVideoLayer(renderer)
+    }
+
+    private static sendVideoLayer(id: string) {
+        const source = this.videoLayerWanted.get(id)
+        if (source === undefined) return
+        // once the worker composites, the frame no longer has to reach the page, unless it is taking over
+        const exclusive = this.videoLayerRunning.has(id) && !this.videoLayerReleasing.has(id)
+        StreamReceiverHost.send("videoLayer", { outputId: id, active: true, source, exclusive })
     }
 
     private static hookVideoLayer() {
@@ -834,8 +855,7 @@ export class OutputLifecycle {
         if (running === this.videoLayerRunning.has(id)) return
         if (running) this.videoLayerRunning.add(id)
         else this.videoLayerRunning.delete(id)
-        // the worker is compositing: the frame no longer has to reach the page at all
-        if (this.videoLayerWanted.has(id)) StreamReceiverHost.send("videoLayer", { outputId: id, active: true, exclusive: running })
+        this.sendVideoLayer(id)
         this.updateRenderBackground(id)
         // every member of the render group draws from this one page
         for (const m of RenderGroups.members(id)) OutputHelper.Send.sendToWindow(m, { channel: "STREAM_LAYER", data: { id: m, active: running } })

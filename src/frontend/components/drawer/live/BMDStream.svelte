@@ -40,11 +40,14 @@
     // is rendered with `background` too but no outputId, and falling back to the first output in the
     // store made it fight the real output: its small tile is never a full cover, so it kept canceling
     // the composite the output had just turned on, and both flickered.
-    const layer = new StreamLayer(outputBackground && background && !mirror && outputId ? outputId : "", () => (composited = layer.composited))
+    const layer = new StreamLayer(outputBackground && background && !mirror && outputId ? outputId : "", screen.id, () => (composited = layer.composited))
     let composited = false
     $: if (frame && canvas) {
         layer.update(canvas, frame.xres, frame.yres)
-        if (!composited) renderer.draw(canvas, frame)
+        if (layer.drawing) {
+            renderer.draw(canvas, frame)
+            layer.drawn()
+        }
     }
 
     // frames come from the receive process over the stream transport (see streamPort.ts), not over IPC
