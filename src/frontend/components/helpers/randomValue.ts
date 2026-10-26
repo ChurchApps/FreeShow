@@ -18,11 +18,12 @@ export function setRandomValue(id: string) {
 
     // map sets to ranges with counts (excluding disabled sets)
     const ranges = variable.sets
-        .filter((set) => !set.disabled)
         .map((set, i) => {
             const min = Number(set.minValue ?? 1)
             const max = Number(set.maxValue ?? 1000)
             const name = set.name || `#${i + 1}`
+
+            if (set.disabled) return null
 
             const start = Math.min(min, max)
             const end = Math.max(min, max)
@@ -30,6 +31,7 @@ export function setRandomValue(id: string) {
 
             return { name, start, count }
         })
+        .filter((r) => r !== null)
 
     const total = ranges.reduce((sum, r) => sum + r.count, 0)
 
