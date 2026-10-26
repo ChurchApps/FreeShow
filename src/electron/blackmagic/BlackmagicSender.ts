@@ -550,12 +550,20 @@ export class BlackmagicSender {
         return buffer
     }
 
-    // Whether the card already has as many frames queued ahead as playback keeps. Once playing this is read
-    // from the card's clock: the frames waiting are the slots between the one on air and the next free one.
-    // The card's own buffered count did not match its clock (it read full while the clock showed a slot about
-    // to go out empty), so going by the count left 5-7 slots a second empty and the card repeating frames.
-    private static cardFull(data: PlaybackData, bufferedFrames: number): boolean {
-        if (!data.isStarted) return bufferedFrames > data.targetBufferSize
+    // How many frames to hand the card now so it holds `depth` frames queued behind the one on air, read
+    // from the card's clock: one per period normally, more after a late tick, none after an early one. The
+    // card's own buffered count did not match its clock, and a fixed one-frame-per-tick feed lost a slot to
+    // every bit of timer jitter, which left 6-10 slots a second empty.
+    static framesWanted(outputId: string): number {
+        const data = this.playbackData[outputId]
+        if (!data?.playback || data.needsReinit || this.isPaused[outputId]) return 0
+        let buffered = 0
+        try {
+            buffered = data.playback.bufferedFrames()
+        } catch {
+            return 0
+        }
+        if (!data.isStarted) return buffered > data.targetBufferSize ? 0 : 1
         const depth = Math.min(2, Math.max(1, Math.ceil(data.targetBufferSize / 4)))
         const duration = data.frameDurationTicks || 1000
         let streamTime: number | undefined
@@ -564,10 +572,12 @@ export class BlackmagicSender {
         } catch {
             streamTime = undefined
         }
-        if (typeof streamTime !== "number") return bufferedFrames > depth
-        // wrap-safe: streamTime is 32-bit
+        if (typeof streamTime !== "number") return buffered > depth ? 0 : 1
+        // wrap-safe: streamTime is 32-bit. The next free slot is `lead` ahead; the frames queued behind the
+        // one on air are the whole periods before it (a slot under a period away is realigned when scheduled).
         const lead = (data.scheduledFrames * duration - streamTime) | 0
-        return lead > depth * duration
+        const queued = Math.max(1, Math.ceil(lead / duration)) - 1
+        return Math.max(0, depth - queued)
     }
 
     static canAcceptFrame(outputId: string): boolean {
@@ -580,16 +590,7 @@ export class BlackmagicSender {
         const now = Date.now()
         if (data.conversionBackoffUntil && now < data.conversionBackoffUntil) return false
 
-        try {
-            const bufferedFrames = data.playback.bufferedFrames()
-            // the same depth scheduling allows (scheduleFrame), so a repeat of the last frame never leaves the
-            // card too full to take a new one
-            if (this.cardFull(data, bufferedFrames)) return false
-        } catch {
-            return false
-        }
-
-        return true
+        return this.framesWanted(outputId) > 0
     }
 
     // A shared-texture readback can hand us a frame already in the card's pixel format (osr-capture converts
@@ -672,9 +673,9 @@ export class BlackmagicSender {
 
         data.frameProcessing = true
 
-        // Use setTimeout to completely isolate each frame scheduling operation
-        // This prevents a crash in one frame from affecting others
-        setTimeout(() => {
+        // A frame to convert is scheduled in a later tick, isolated from the caller; one already in the card's
+        // format goes now, so the feed's repeats in the same tick come after it, not ahead of it.
+        const work = () => {
             try {
                 // Skip empty frames
                 if (!videoFrame || videoFrame.length === 0) {
@@ -688,11 +689,6 @@ export class BlackmagicSender {
 
                     // Keep buffer minimal once started to prevent accumulation
                     this.note(outputId, "buffered", bufferedFrames, true)
-                    if (this.cardFull(data, bufferedFrames)) {
-                        data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
-                        this.note(outputId, "full")
-                        return // Buffer too full, skip frame
-                    }
                 } catch (err) {
                     console.log(`Buffer check error: ${err instanceof Error ? err.message : String(err)}`)
                     return // Skip frame on any error
@@ -792,7 +788,9 @@ export class BlackmagicSender {
             } finally {
                 data.frameProcessing = false
             }
-        }, 0) // End setTimeout - this executes the frame scheduling in a separate tick
+        }
+        if (preConverted) work()
+        else setTimeout(work, 0)
     }
 
     // Hand one converted frame (with this frame's audio) to the card, at least one frame period ahead of its
@@ -924,10 +922,6 @@ export class BlackmagicSender {
         if (data.frameProcessing) return true
         try {
             const bufferedFrames = data.playback.bufferedFrames()
-            if (this.cardFull(data, bufferedFrames)) {
-                this.note(outputId, "repeatFull")
-                return true
-            }
             this.note(outputId, "repeat")
             this.submitFrame(outputId, data, data.lastConverted, audioFrame, bufferedFrames, Date.now())
         } catch (err) {

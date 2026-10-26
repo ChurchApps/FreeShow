@@ -680,16 +680,21 @@ function bmdTick(outputId: string) {
         return
     }
     const audio = BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null
-    if (feed.fresh && feed.buf) {
-        // a frame that cannot go this tick (the card is full) stays fresh for the next one
-        if (BlackmagicSender.canAcceptFrame(outputId)) {
-            feed.fresh = false
-            bmdNote(outputId, "sent")
-            BlackmagicSender.scheduleFrame(outputId, feed.buf, audio, feed.framerate, feed.preConverted)
-        } else bmdNote(outputId, "waited")
-    } else {
+    // as many frames as the card needs to stay full: the newest frame first, then repeats of it
+    let wanted = BlackmagicSender.canAcceptFrame(outputId) ? BlackmagicSender.framesWanted(outputId) : 0
+    if (!wanted) bmdNote(outputId, "waited")
+    if (wanted && feed.fresh && feed.buf) {
+        feed.fresh = false
+        bmdNote(outputId, "sent")
+        BlackmagicSender.scheduleFrame(outputId, feed.buf, audio, feed.framerate, feed.preConverted)
+        wanted--
+    }
+    for (; wanted > 0; wanted--) {
         bmdNote(outputId, "repeat")
-        if (!BlackmagicSender.repeatLastFrame(outputId, audio) && feed.buf) BlackmagicSender.scheduleFrame(outputId, feed.buf, audio, feed.framerate, feed.preConverted)
+        if (!BlackmagicSender.repeatLastFrame(outputId, audio)) {
+            if (feed.buf) BlackmagicSender.scheduleFrame(outputId, feed.buf, audio, feed.framerate, feed.preConverted)
+            break
+        }
     }
     if (!(feed.framerate > 0)) return
     const period = 1000 / feed.framerate
