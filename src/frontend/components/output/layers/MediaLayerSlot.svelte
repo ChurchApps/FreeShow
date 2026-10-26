@@ -46,7 +46,7 @@
 </script>
 
 <div class="slot" bind:this={el}>
-    <canvas bind:this={canvas} width="1" height="1" />
+    <canvas bind:this={canvas} data-source={path} width="1" height="1" />
 </div>
 
 <style>

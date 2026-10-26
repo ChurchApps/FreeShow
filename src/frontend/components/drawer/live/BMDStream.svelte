@@ -70,7 +70,8 @@
 
 {#if background}
     <!-- while the worker composites this stream into the capture, the canvas must not paint over it -->
-    <canvas bind:this={canvas} style={composited ? `${style};visibility: hidden;` : style} />
+    <!-- the source is named in the markup: an output's page reports its markup as what it shows (MainOutput.svelte) -->
+    <canvas bind:this={canvas} data-source={screen.id} style={composited ? `${style};visibility: hidden;` : style} />
 {:else}
     <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click label={screen.name} {loaded} icon="blackmagic" white showPlayOnHover>
         <SelectElem style="display: flex;" id="blackmagic" data={{ id: screen.id, type: "blackmagic", name: screen.name }} draggable>
