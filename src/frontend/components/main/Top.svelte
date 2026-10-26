@@ -3,12 +3,13 @@
     import { activeEdit, activePage, activeProfile, activeProject, activeShow, cloudUsers, dictionary, drawSettings, drawTool, os, outputDisplay, outputs, paintCache, profiles, saved, settingsTab, shows } from "../../stores"
     import { getCloudUsers } from "../../utils/cloudSync"
     import { translateText } from "../../utils/language"
+    import { DEFAULT_DISPLAY_NAME } from "../../utils/SocketHelper"
+    import { settingsTabs } from "../../values/tabs"
     import Icon from "../helpers/Icon.svelte"
     import { toggleOutputs } from "../helpers/output"
     import T from "../helpers/T.svelte"
     import Button from "../inputs/Button.svelte"
     import TopButton from "../inputs/TopButton.svelte"
-    import { DEFAULT_DISPLAY_NAME } from "../../utils/SocketHelper"
 
     export let isWindows = false
 
@@ -57,7 +58,7 @@
 
     let settingsDisabled = false
     $: profile = $profiles[$activeProfile || ""]
-    $: settingsDisabled = Object.keys(profile?.access.settings || {}).length > 7
+    $: settingsDisabled = Object.keys(profile?.access.settings || {}).length >= settingsTabs.length
 
     $: noPhysicalOutputWindows = (!$outputDisplay && !physicalOutputWindows.length) || disableClick
 
