@@ -141,7 +141,9 @@ export class StreamLayer {
         this.wanted = false
         this.active = false
         this.onChange()
-        send(OUTPUT, ["STREAM_LAYER"], { id: this.outputId, active: false, source: this.sourceId })
+        // the worker stops compositing only once the page has painted with its canvas shown, so no captured
+        // frame has neither
+        requestAnimationFrame(() => requestAnimationFrame(() => send(OUTPUT, ["STREAM_LAYER"], { id: this.outputId, active: false, source: this.sourceId })))
     }
 
     update(canvas: HTMLElement | undefined, frameWidth: number, frameHeight: number) {

@@ -896,7 +896,9 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
             } finally {
                 for (const m of mediaFrames) mediaFrameDone(m.frame)
             }
-            if (video && !videoLayerReported.has(id)) {
+            // only a live frame counts, and only while its layer is still this output's: a readback that
+            // finished after the layer was dropped must not report the composite running again
+            if (layerBuf && videoLayers[id] === layer && !videoLayerReported.has(id)) {
                 videoLayerReported.add(id)
                 port.postMessage({ type: "videoLayerActive", id })
             }
