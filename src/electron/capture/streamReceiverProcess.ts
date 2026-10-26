@@ -106,13 +106,10 @@ function sendFrame(ipcChannel: string, id: string, outputIds: string[], packed: 
     })
 
     needPort(APP_TARGET, true)
-    if (subscribers[APP_TARGET]) deliver(APP_TARGET, ipcChannel, id, previewStreamFrame(packed, PREVIEW_MAX_WIDTH), time)
-}
-
-type ReceiverState = {
-    shouldStop?: boolean
-    source: any
-    lowbandwidth?: boolean
+    if (subscribers[APP_TARGET]) {
+        const preview = packed.format === "rgba" && packed.xres <= PREVIEW_MAX_WIDTH ? packed : previewStreamFrame(packed, PREVIEW_MAX_WIDTH)
+        deliver(APP_TARGET, ipcChannel, id, preview, time)
+    }
 }
 
 // ----- NDI -----
@@ -122,7 +119,8 @@ let grandioseWarned = false
 async function loadGrandiose() {
     if (grandioseModule) return grandioseModule
     try {
-        grandioseModule = await import("grandiose")
+        const m = await import("grandiose")
+        grandioseModule = m.default || m
         return grandioseModule
     } catch (err: any) {
         if (!grandioseWarned) log("NDI not available: " + err.message)
@@ -131,12 +129,28 @@ async function loadGrandiose() {
     }
 }
 
+type NdiLoop = {
+    source: any
+    lowbandwidth: boolean
+    stopped: boolean
+    receiver: any
+    done: Promise<void>
+    wake: (() => void) | null
+}
+
 class Ndi {
-    static receivers: { [id: string]: ReceiverState } = {}
-    static active: { [id: string]: any } = {}
-    static outputs: string[] = []
+    private static outputRefs: { [outputId: string]: number } = {}
+    private static loops: { [sourceId: string]: NdiLoop } = {}
     static fourCCUyvy: number | null = null
     private static findInterval: NodeJS.Timeout | null = null
+
+    private static get outputs() {
+        return Object.keys(this.outputRefs)
+    }
+
+    private static readonly RECEIVE_TIMEOUT_MS = 50
+    private static readonly FULL_LOOP_DELAY_MS = 0
+    private static readonly THUMBNAIL_LOOP_DELAY_MS = 500
 
     static async createReceiver(source: { name: string; urlAddress: string }, lowbandwidth = false) {
         try {
@@ -148,8 +162,7 @@ class Ndi {
             this.fourCCUyvy = grandiose.FOURCC_UYVY
             const config: any = {
                 source,
-                // colorFormat: grandiose.COLOR_FORMAT_UYVY_RGBA, // gives the wrong color format
-                colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA,
+                colorFormat: grandiose.COLOR_FORMAT_UYVY_RGBA,
                 allowVideoFields: false
             }
             if (lowbandwidth) config.bandwidth = grandiose.BANDWIDTH_LOWEST
@@ -221,45 +234,108 @@ class Ndi {
         }
     }
 
-    static async frameLoop(sourceId: string, thumbnail: boolean) {
+    static async thumbnail({ source }: { source: any }) {
+        const existing = this.loops[source.id]
+        if (existing) {
+            if (!existing.stopped) return
+            await this.stopLoop(existing)
+        }
+        this.startLoop(source, true, this.THUMBNAIL_LOOP_DELAY_MS)
+    }
+
+    static async capture({ source, outputId }: { source: any; outputId: string }) {
+        this.outputRefs[outputId] = (this.outputRefs[outputId] || 0) + 1
+
+        const existing = this.loops[source.id]
+        if (existing) {
+            if (!existing.lowbandwidth && !existing.stopped) return
+            await this.stopLoop(existing)
+        }
+
+        this.startLoop(source, false, this.FULL_LOOP_DELAY_MS)
+    }
+
+    private static startLoop(source: any, lowbandwidth: boolean, delayMs: number) {
+        const loop: NdiLoop = { source, lowbandwidth, stopped: false, receiver: null, done: Promise.resolve(), wake: null }
+        this.loops[source.id] = loop
+        loop.done = this.frameLoop(source.id, loop, delayMs).catch((err) => log("NDI reception error for " + source.id + ": " + err.message))
+    }
+
+    private static stopLoop(loop: NdiLoop) {
+        loop.stopped = true
+        loop.wake?.()
+        return loop.done
+    }
+
+    private static pause(loop: NdiLoop, ms: number) {
+        if (ms === 0) {
+            return new Promise<void>((resolve) => {
+                setImmediate(resolve)
+            })
+        }
+        return new Promise<void>((resolve) => {
+            const timer = setTimeout(finish, ms)
+            function finish() {
+                clearTimeout(timer)
+                loop.wake = null
+                resolve()
+            }
+            loop.wake = finish
+        })
+    }
+
+    private static async frameLoop(sourceId: string, loop: NdiLoop, delayMs: number) {
         let consecutiveErrors = 0
 
-        while (this.receivers[sourceId] && !this.receivers[sourceId].shouldStop) {
-            const state = this.receivers[sourceId]
-            try {
-                let receiver = this.active[sourceId]
-                if (!receiver) {
-                    const source = state.source
-                    receiver = this.active[sourceId] = await this.createReceiver({ name: source.name, urlAddress: source.urlAddress || source.id }, state.lowbandwidth)
-                }
-                if (!receiver?.video) {
-                    delete this.active[sourceId]
-                    throw new Error("No video data received")
-                }
+        try {
+            while (!loop.stopped && this.loops[sourceId] === loop) {
+                try {
+                    if (!loop.receiver) {
+                        loop.receiver = await this.createReceiver({ name: loop.source.name, urlAddress: loop.source.urlAddress || loop.source.id }, loop.lowbandwidth)
+                        if (!loop.receiver?.video) throw new Error("Could not create receiver")
+                        if (loop.stopped) break
+                    }
 
-                const rawFrame = await receiver.video(50)
-                if (rawFrame) {
-                    this.sendBuffer(sourceId, rawFrame)
-                    consecutiveErrors = 0
+                    const rawFrame = await loop.receiver.video(this.RECEIVE_TIMEOUT_MS)
+                    if (loop.stopped) break
+                    if (rawFrame?.data) {
+                        this.sendBuffer(sourceId, rawFrame)
+                        consecutiveErrors = 0
+                    }
 
-                    // video() already blocks until the next frame, so pace on the source: waiting
-                    // after every frame pushes the next fetch past the frame after it
-                    if (thumbnail) await new Promise((resolve) => setTimeout(resolve, 500))
-                    else await new Promise((resolve) => setImmediate(resolve))
-                    continue
+                    if (rawFrame?.data && delayMs < this.THUMBNAIL_LOOP_DELAY_MS) await new Promise((resolve) => setImmediate(resolve))
+                    else await this.pause(loop, delayMs)
+                } catch (err: any) {
+                    const { shouldContinue, delay, newErrorCount } = this.handleError(err, consecutiveErrors)
+                    consecutiveErrors = newErrorCount
+
+                    if (!shouldContinue) {
+                        log("NDI source " + sourceId + ": too many errors, stopping")
+                        loop.stopped = true
+                        break
+                    }
+
+                    if (consecutiveErrors >= 5) {
+                        this.destroyInstance(loop)
+                    }
+
+                    await this.pause(loop, delay)
                 }
-            } catch (err: any) {
-                const { shouldContinue, delay, newErrorCount } = this.handleError(err, consecutiveErrors)
-                consecutiveErrors = newErrorCount
-
-                if (!shouldContinue) {
-                    log("NDI source " + sourceId + ": too many errors, stopping")
-                    this.stop({ id: sourceId })
-                    return
-                }
-
-                await new Promise((resolve) => setTimeout(resolve, delay))
             }
+        } finally {
+            this.destroyInstance(loop)
+            if (this.loops[sourceId] === loop) delete this.loops[sourceId]
+        }
+    }
+
+    private static destroyInstance(loop: NdiLoop) {
+        const receiver = loop.receiver
+        loop.receiver = null
+        if (!receiver) return
+        try {
+            receiver.destroy?.()
+        } catch (err: any) {
+            log("Error destroying NDI receiver: " + err.message)
         }
     }
 
@@ -276,59 +352,20 @@ class Ndi {
         sendFrame("NDI", id, this.outputs, packed)
     }
 
-    static async thumbnail({ source }: { source: any }) {
-        if (this.receivers[source.id]) return
-        this.receivers[source.id] = {
-            shouldStop: false,
-            source,
-            lowbandwidth: true
-        }
-        this.frameLoop(source.id, true).catch((err) => log("NDI thumbnail error for " + source.id + ": " + err.message))
-    }
-
-    static async capture({ source, outputId }: { source: any; outputId: string }) {
-        if (!this.outputs.includes(outputId)) this.outputs.push(outputId)
-
-        // if a thumbnail loop is running, upgrade it to full capture
-        if (this.receivers[source.id]) {
-            this.receivers[source.id].shouldStop = true
-            await new Promise((resolve) => setTimeout(resolve, 100))
-        }
-        delete this.active[source.id]
-
-        this.receivers[source.id] = {
-            shouldStop: false,
-            source,
-            lowbandwidth: false
-        }
-        this.frameLoop(source.id, false).catch((err) => {
-            log("NDI reception error for " + source.id + ": " + err.message)
-            this.stop({ id: source.id })
-        })
-    }
-
-    static stop(data: { id: string; outputId?: string } | null = null) {
+    static stop(data: { id: string; outputId?: string } | null = null): Promise<void> {
         if (data?.id) {
             if (data.outputId) {
-                const index = this.outputs.indexOf(data.outputId)
-                if (index >= 0) this.outputs.splice(index, 1)
-            } else this.outputs = []
+                const refs = (this.outputRefs[data.outputId] || 0) - 1
+                if (refs > 0) this.outputRefs[data.outputId] = refs
+                else delete this.outputRefs[data.outputId]
+            } else this.outputRefs = {}
 
-            if (!this.outputs.length && this.receivers[data.id]) {
-                this.receivers[data.id].shouldStop = true
-                setTimeout(() => {
-                    delete this.active[data.id]
-                    delete this.receivers[data.id]
-                }, 100)
-            }
-            return
+            const loop = this.loops[data.id]
+            if (!this.outputs.length && loop) return this.stopLoop(loop)
+            return Promise.resolve()
         }
 
-        Object.keys(this.receivers).forEach((id) => (this.receivers[id].shouldStop = true))
-        setTimeout(() => {
-            this.active = {}
-            this.receivers = {}
-        }, 100)
+        return Promise.all(Object.values(this.loops).map((loop) => this.stopLoop(loop))).then(() => undefined)
     }
 }
 
