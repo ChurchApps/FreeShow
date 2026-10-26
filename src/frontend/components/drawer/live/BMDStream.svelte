@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { createEventDispatcher, onDestroy, onMount } from "svelte"
     import { BLACKMAGIC } from "../../../../types/Channels"
     import { outputs } from "../../../stores"
     import { send } from "../../../utils/request"
@@ -40,6 +40,8 @@
     // is rendered with `background` too but no outputId, and falling back to the first output in the
     // store made it fight the real output: its small tile is never a full cover, so it kept canceling
     // the composite the output had just turned on, and both flickered.
+    const dispatch = createEventDispatcher()
+    let announced = false
     const layer = new StreamLayer(outputBackground && background && !mirror && outputId ? outputId : "", screen.id, () => (composited = layer.composited))
     let composited = false
     $: if (frame && canvas) {
@@ -47,6 +49,11 @@
         if (layer.drawing) {
             renderer.draw(canvas, frame)
             layer.drawn()
+        }
+        // an output switches to a new background once it reports a picture (Background.svelte)
+        if (!announced) {
+            announced = true
+            dispatch("loaded")
         }
     }
 
