@@ -7,7 +7,7 @@
     import CreateAction from "../../actions/CreateAction.svelte"
     import { getTime, isSameDay } from "../../drawer/calendar/calendar"
     import { createCustomCalendar, isCalendarImported } from "../../drawer/calendar/calendars"
-    import { createRepeatedEvents, updateEventData } from "../../drawer/calendar/event"
+    import { createRepeatedEvents, setDate, updateEventData } from "../../drawer/calendar/event"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
@@ -163,12 +163,6 @@
         // activeDays.set([copy(data.from).getTime()])
         activePopup.set(null)
         eventEdit.set(null)
-    }
-
-    const setDate = (date: Date, options: any): Date => {
-        let newDate = [options.year ?? date.getFullYear(), (options.month ?? date.getMonth()) + 1, options.date ?? date.getDate()]
-        let time = date.getHours() + ":" + date.getMinutes()
-        return new Date([...newDate, time].join(" "))
     }
 
     $: weekdayIndex = editEvent.isoFrom ? parseISODate(editEvent.isoFrom).getDay() : 1

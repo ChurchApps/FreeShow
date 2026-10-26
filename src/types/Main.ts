@@ -297,7 +297,7 @@ export interface Variable {
     animateTowardsResult?: boolean
     animationDuration?: number
     eachNumberOnce?: boolean
-    sets?: { name: string; minValue?: number; maxValue?: number }[]
+    sets?: { name: string; minValue?: number; maxValue?: number; disabled?: boolean }[]
     setName?: string // chosen random set
     setLog?: { name: string; number: string }[]
 

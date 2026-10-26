@@ -103,8 +103,26 @@ export class StreamCanvasRenderer {
     private ctx2d: CanvasRenderingContext2D | null = null
     private reportedCpu = false
     private lossHooked = false
+    private animFrameId: number | null = null
+    private latestCanvas: HTMLCanvasElement | null = null
+    private latestFrame: StreamFrame | null = null
 
     draw(canvas: HTMLCanvasElement, frame: StreamFrame) {
+        this.latestCanvas = canvas
+        this.latestFrame = frame
+
+        if (this.animFrameId === null) {
+            this.animFrameId = requestAnimationFrame(() => {
+                this.animFrameId = null
+                const c = this.latestCanvas
+                const f = this.latestFrame
+                if (!c || !f) return
+                this.render(c, f)
+            })
+        }
+    }
+
+    private render(canvas: HTMLCanvasElement, frame: StreamFrame) {
         const width = frame.xres
         const height = frame.yres
         if (!width || !height) return
@@ -120,6 +138,12 @@ export class StreamCanvasRenderer {
     }
 
     destroy() {
+        if (this.animFrameId !== null) {
+            cancelAnimationFrame(this.animFrameId)
+            this.animFrameId = null
+        }
+        this.latestCanvas = null
+        this.latestFrame = null
         this.gl?.getExtension("WEBGL_lose_context")?.loseContext()
         this.gl = null
         this.programs = {}

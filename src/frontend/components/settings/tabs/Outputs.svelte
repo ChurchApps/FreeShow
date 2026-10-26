@@ -526,8 +526,8 @@
                     </InputRow>
                 {/if}
 
-                <MaterialTextInput label="Stream URL" value={destination.url} placeholder="e.g. rtmp://a.rtmp.youtube.com/live2" on:change={(e) => updateDestination(destination.id, "url", e.detail)} pasteBtn />
-                <MaterialTextInput label="Stream key" value={destination.key} type="password" on:change={(e) => updateDestination(destination.id, "key", e.detail)} pasteBtn />
+                <MaterialTextInput label="Stream URL" value={destination.url} placeholder="e.g. rtmp://a.rtmp.youtube.com/live2" disabled={currentOutput.rtmpData?.streaming} on:change={(e) => updateDestination(destination.id, "url", e.detail)} pasteBtn />
+                <MaterialTextInput label="Stream key" value={destination.key} type="password" disabled={currentOutput.rtmpData?.streaming} on:change={(e) => updateDestination(destination.id, "key", e.detail)} pasteBtn />
 
                 <!-- kept visible after recovery: a destination that reconnects repeatedly still looks
                      "live" between drops, so the count is the only signal that it is struggling -->

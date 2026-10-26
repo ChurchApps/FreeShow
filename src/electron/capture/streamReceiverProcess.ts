@@ -123,13 +123,6 @@ function sendFrame(ipcChannel: string, id: string, outputIds: string[], packed: 
     return true
 }
 
-type ReceiverState = {
-    shouldStop?: boolean
-    source: any
-    lowbandwidth?: boolean
-    wake?: (() => void) | null
-}
-
 // ----- NDI -----
 
 let grandioseModule: any = null
@@ -137,7 +130,8 @@ let grandioseWarned = false
 async function loadGrandiose() {
     if (grandioseModule) return grandioseModule
     try {
-        grandioseModule = await import("grandiose")
+        const m = await import("grandiose")
+        grandioseModule = m.default || m
         return grandioseModule
     } catch (err: any) {
         if (!grandioseWarned) log("NDI not available: " + err.message)
@@ -146,14 +140,33 @@ async function loadGrandiose() {
     }
 }
 
+type NdiLoop = {
+    source: any
+    lowbandwidth: boolean
+    gotFirst: boolean
+    stopped: boolean
+    receiver: any
+    done: Promise<void>
+    wake: (() => void) | null
+}
+
 class Ndi {
-    static receivers: { [id: string]: ReceiverState } = {}
-    static active: { [id: string]: any } = {}
-    static outputs: string[] = []
+    private static outputRefs: { [outputId: string]: number } = {}
+    private static loops: { [sourceId: string]: NdiLoop } = {}
     // see the OMT class: a frame only reaches outputs actually showing that source
-    static outputSource: { [outputId: string]: string } = {}
+    private static outputSource: { [outputId: string]: string } = {}
     static fourCCUyvy: number | null = null
     private static findInterval: NodeJS.Timeout | null = null
+
+    private static get outputs() {
+        return Object.keys(this.outputRefs)
+    }
+
+    private static readonly RECEIVE_TIMEOUT_MS = 50
+    // see the OMT loop: drawer and editor tiles are periodic snapshots, not live streams
+    static readonly THUMBNAIL_REFRESH_MS = 30000
+    private static readonly SNAPSHOT_RECEIVE_TIMEOUT_MS = 1000 // a fresh receiver needs longer for its first frame
+    private static readonly SNAPSHOT_RETRY_MS = 1000
 
     static async createReceiver(source: { name: string; urlAddress: string }, lowbandwidth = false) {
         try {
@@ -165,8 +178,7 @@ class Ndi {
             this.fourCCUyvy = grandiose.FOURCC_UYVY
             const config: any = {
                 source,
-                // colorFormat: grandiose.COLOR_FORMAT_UYVY_RGBA, // gives the wrong color format
-                colorFormat: grandiose.COLOR_FORMAT_RGBX_RGBA,
+                colorFormat: grandiose.COLOR_FORMAT_UYVY_RGBA,
                 allowVideoFields: false
             }
             if (lowbandwidth) config.bandwidth = grandiose.BANDWIDTH_LOWEST
@@ -238,67 +250,127 @@ class Ndi {
         }
     }
 
-    // see the OMT loop: drawer and editor tiles are periodic snapshots, not live streams
-    static readonly THUMBNAIL_REFRESH_MS = 30000
+    static async thumbnail({ source }: { source: any }) {
+        const existing = this.loops[source.id]
+        if (existing) {
+            if (!existing.stopped) return
+            await this.stopLoop(existing)
+        }
+        this.startLoop(source, true)
+    }
 
-    // a sleep a refresh request can cut short (see the OMT loop's pause)
-    static sleep(state: ReceiverState, ms: number) {
+    // refresh now rather than waiting out the snapshot interval (the tile's refresh button)
+    static refresh({ source }: { source: any }) {
+        const loop = this.loops[source.id]
+        if (loop?.lowbandwidth && !loop.stopped) loop.wake?.()
+        else if (!loop) void this.thumbnail({ source })
+    }
+
+    static async capture({ source, outputId }: { source: any; outputId: string }) {
+        this.outputRefs[outputId] = (this.outputRefs[outputId] || 0) + 1
+        this.outputSource[outputId] = source.id
+
+        // a thumbnail loop on this source is upgraded to a full capture
+        const existing = this.loops[source.id]
+        if (existing) {
+            if (!existing.lowbandwidth && !existing.stopped) return
+            await this.stopLoop(existing)
+        }
+
+        this.startLoop(source, false)
+    }
+
+    private static startLoop(source: any, lowbandwidth: boolean) {
+        const loop: NdiLoop = { source, lowbandwidth, gotFirst: false, stopped: false, receiver: null, done: Promise.resolve(), wake: null }
+        this.loops[source.id] = loop
+        loop.done = this.frameLoop(source.id, loop).catch((err) => log("NDI reception error for " + source.id + ": " + err.message))
+    }
+
+    private static stopLoop(loop: NdiLoop) {
+        loop.stopped = true
+        loop.wake?.()
+        return loop.done
+    }
+
+    // a sleep a refresh request or a stop can cut short
+    private static pause(loop: NdiLoop, ms: number) {
+        if (ms === 0) {
+            return new Promise<void>((resolve) => {
+                setImmediate(resolve)
+            })
+        }
         return new Promise<void>((resolve) => {
             const timer = setTimeout(finish, ms)
             function finish() {
                 clearTimeout(timer)
-                state.wake = null
+                loop.wake = null
                 resolve()
             }
-            state.wake = finish
+            loop.wake = finish
         })
     }
 
-    static async frameLoop(sourceId: string, thumbnail: boolean) {
+    private static async frameLoop(sourceId: string, loop: NdiLoop) {
         let consecutiveErrors = 0
 
-        while (this.receivers[sourceId] && !this.receivers[sourceId].shouldStop) {
-            const state = this.receivers[sourceId]
-            try {
-                let receiver = this.active[sourceId]
-                if (!receiver) {
-                    const source = state.source
-                    receiver = this.active[sourceId] = await this.createReceiver({ name: source.name, urlAddress: source.urlAddress || source.id }, state.lowbandwidth)
-                }
-                if (!receiver?.video) {
-                    delete this.active[sourceId]
-                    throw new Error("No video data received")
-                }
+        try {
+            while (!loop.stopped && this.loops[sourceId] === loop) {
+                try {
+                    if (!loop.receiver) {
+                        loop.receiver = await this.createReceiver({ name: loop.source.name, urlAddress: loop.source.urlAddress || loop.source.id }, loop.lowbandwidth)
+                        if (!loop.receiver?.video) throw new Error("Could not create receiver")
+                        if (loop.stopped) break
+                    }
 
-                // a fresh receiver needs longer for its first frame than a running one does for its next
-                const rawFrame = await receiver.video(thumbnail ? 1000 : 50)
-                if (rawFrame) {
-                    this.sendBuffer(sourceId, rawFrame)
-                    consecutiveErrors = 0
+                    const rawFrame = await loop.receiver.video(loop.lowbandwidth ? this.SNAPSHOT_RECEIVE_TIMEOUT_MS : this.RECEIVE_TIMEOUT_MS)
+                    if (loop.stopped) break
+                    let delivered = false
+                    if (rawFrame?.data) {
+                        delivered = this.sendBuffer(sourceId, rawFrame)
+                        consecutiveErrors = 0
+                    }
 
-                    // video() already blocks until the next frame, so pace on the source: waiting
-                    // after every frame pushes the next fetch past the frame after it. A tile is a
-                    // snapshot, so it drops the receiver and holds nothing open between refreshes — but
-                    // only once it has a picture: dropping it before that restarts the connection every
-                    // attempt and the tile sits on its loading spinner.
-                    if (thumbnail) {
-                        delete this.active[sourceId]
-                        await Ndi.sleep(state, Ndi.THUMBNAIL_REFRESH_MS)
-                    } else await new Promise((resolve) => setImmediate(resolve))
-                    continue
+                    // video() already blocks until the next frame, so pace on the source: waiting after
+                    // every frame pushes the next fetch past the frame after it. A tile is a snapshot (see
+                    // the OMT loop): it keeps asking until it has a picture, then drops the receiver and
+                    // holds nothing open until the next refresh.
+                    if (loop.lowbandwidth) {
+                        if (!delivered && !loop.gotFirst) continue
+                        loop.gotFirst = loop.gotFirst || delivered
+                        this.destroyInstance(loop)
+                        await this.pause(loop, delivered ? this.THUMBNAIL_REFRESH_MS : this.SNAPSHOT_RETRY_MS)
+                    } else await this.pause(loop, 0)
+                } catch (err: any) {
+                    const { shouldContinue, delay, newErrorCount } = this.handleError(err, consecutiveErrors)
+                    consecutiveErrors = newErrorCount
+
+                    if (!shouldContinue) {
+                        log("NDI source " + sourceId + ": too many errors, stopping")
+                        loop.stopped = true
+                        break
+                    }
+
+                    if (consecutiveErrors >= 5) {
+                        this.destroyInstance(loop)
+                    }
+
+                    await this.pause(loop, delay)
                 }
-            } catch (err: any) {
-                const { shouldContinue, delay, newErrorCount } = this.handleError(err, consecutiveErrors)
-                consecutiveErrors = newErrorCount
-
-                if (!shouldContinue) {
-                    log("NDI source " + sourceId + ": too many errors, stopping")
-                    this.stop({ id: sourceId })
-                    return
-                }
-
-                await new Promise((resolve) => setTimeout(resolve, delay))
             }
+        } finally {
+            this.destroyInstance(loop)
+            if (this.loops[sourceId] === loop) delete this.loops[sourceId]
+        }
+    }
+
+    private static destroyInstance(loop: NdiLoop) {
+        const receiver = loop.receiver
+        loop.receiver = null
+        if (!receiver) return
+        try {
+            receiver.destroy?.()
+        } catch (err: any) {
+            log("Error destroying NDI receiver: " + err.message)
         }
     }
 
@@ -315,71 +387,26 @@ class Ndi {
         return sendFrame("NDI", id, this.outputs.filter((outputId) => this.outputSource[outputId] === id), packed)
     }
 
-    static async thumbnail({ source }: { source: any }) {
-        if (this.receivers[source.id]) return
-        this.receivers[source.id] = {
-            shouldStop: false,
-            source,
-            lowbandwidth: true
-        }
-        this.frameLoop(source.id, true).catch((err) => log("NDI thumbnail error for " + source.id + ": " + err.message))
-    }
-
-    // refresh now rather than waiting out the snapshot interval (the tile's refresh button)
-    static refresh({ source }: { source: any }) {
-        const state = this.receivers[source.id]
-        if (state?.lowbandwidth && !state.shouldStop) state.wake?.()
-        else if (!state) void this.thumbnail({ source })
-    }
-
-    static async capture({ source, outputId }: { source: any; outputId: string }) {
-        if (!this.outputs.includes(outputId)) this.outputs.push(outputId)
-        this.outputSource[outputId] = source.id
-
-        // if a thumbnail loop is running, upgrade it to full capture
-        if (this.receivers[source.id]) {
-            this.receivers[source.id].shouldStop = true
-            await new Promise((resolve) => setTimeout(resolve, 100))
-        }
-        delete this.active[source.id]
-
-        this.receivers[source.id] = {
-            shouldStop: false,
-            source,
-            lowbandwidth: false
-        }
-        this.frameLoop(source.id, false).catch((err) => {
-            log("NDI reception error for " + source.id + ": " + err.message)
-            this.stop({ id: source.id })
-        })
-    }
-
-    static stop(data: { id: string; outputId?: string } | null = null) {
+    static stop(data: { id: string; outputId?: string } | null = null): Promise<void> {
         if (data?.id) {
             if (data.outputId) {
-                const index = this.outputs.indexOf(data.outputId)
-                if (index >= 0) this.outputs.splice(index, 1)
-                delete this.outputSource[data.outputId]
+                const refs = (this.outputRefs[data.outputId] || 0) - 1
+                if (refs > 0) this.outputRefs[data.outputId] = refs
+                else {
+                    delete this.outputRefs[data.outputId]
+                    delete this.outputSource[data.outputId]
+                }
             } else {
-                this.outputs = []
+                this.outputRefs = {}
                 this.outputSource = {}
             }
 
-            if (!this.outputs.length && this.receivers[data.id]) {
-                this.receivers[data.id].shouldStop = true
-                setTimeout(() => {
-                    delete this.active[data.id]
-                    delete this.receivers[data.id]
-                }, 100)
-            }
-            return
+            const loop = this.loops[data.id]
+            if (!this.outputs.length && loop) return this.stopLoop(loop)
+            return Promise.resolve()
         }
 
-        Object.keys(this.receivers).forEach((id) => (this.receivers[id].shouldStop = true))
-        setTimeout(() => {
-            this.active = {}
-            this.receivers = {}
-        }, 100)
+        return Promise.all(Object.values(this.loops).map((loop) => this.stopLoop(loop))).then(() => undefined)
     }
 }
 

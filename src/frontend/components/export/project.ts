@@ -6,13 +6,15 @@ import { EXPORT } from "../../../types/Channels"
 import type { Effects } from "../../../types/Effects"
 import type { Project, ProjectShowRef } from "../../../types/Projects"
 import type { Action, Overlays, Shows, SlideData } from "../../../types/Show"
-import { actions as actionsStores, categories, effects as effectsStores, folders, media, overlays as overlayStores, showsCache, special } from "../../stores"
+import { actions as actionsStores, categories, effects as effectsStores, folders, media, overlays as overlayStores, showsCache, special, variables } from "../../stores"
 import { send } from "../../utils/request"
+import { getSlidesText, getSlideText } from "../edit/scripts/textStyle"
 import { clone } from "../helpers/array"
+import { getMedia, isLocalFile } from "../helpers/media"
 import { loadShows } from "../helpers/setShow"
 import { formatToFileName } from "../helpers/show"
+import { getVariableNameId } from "../helpers/showActions"
 import { _show } from "../helpers/shows"
-import { getMedia, isLocalFile } from "../helpers/media"
 
 export async function exportProject(project: Project, projectId: string, savePath?: string) {
     if (!project) return
@@ -111,6 +113,25 @@ export async function exportProject(project: Project, projectId: string, savePat
     if (Object.keys(effects).length) projectData.effects = effects
     if (Object.keys(actions).length) projectData.actions = actions
 
+    const rawText =
+        Object.values(shows)
+            .map((show) => getSlidesText(show.slides || {}))
+            .join("") +
+        Object.values(overlays)
+            .map((a) => getSlideText({ items: a.items } as any))
+            .join("")
+
+    // variables (if used in any dynamic value text)
+    const allVariables = Object.entries(get(variables)).map(([id, value]) => ({ id, dynamicValue: `{$${getVariableNameId(value.name)}}` }))
+    const usedVariables: string[] = allVariables.filter(({ dynamicValue }) => rawText.includes(dynamicValue)).map(({ id }) => id)
+    // WIP check uses in Conditions also?
+    if (usedVariables.length) {
+        projectData.variables = {}
+        usedVariables.forEach((id) => {
+            projectData.variables[id] = get(variables)[id]
+        })
+    }
+
     // used show categories
     const usedCategories: { [id: string]: { name: string; icon?: string | null } } = {}
     const allCategories = get(categories)
@@ -123,6 +144,8 @@ export async function exportProject(project: Project, projectId: string, savePat
         usedCategories[show.category] = { name: cat.name, icon: cat.icon ?? null }
     })
     if (Object.keys(usedCategories).length) projectData.categories = usedCategories
+
+    // media files
     const includeMediaFiles = get(special).projectIncludeMedia ?? true
     if (includeMediaFiles) {
         const resolvedFiles: string[] = []

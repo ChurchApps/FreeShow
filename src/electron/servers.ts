@@ -90,7 +90,7 @@ function createServerInstance(id: ServerName) {
     // RECEIVE CONNECTION FROM CLIENT
     io.on("connection", (socket) => {
         if (Object.keys(servers[id]!.connections).length >= servers[id]!.max) {
-            io.emit(id, { channel: "ERROR", id: "overLimit", data: servers[id]!.max })
+            socket.emit(id, { channel: "ERROR", data: { key: "overLimit", max: servers[id]!.max } })
             socket.disconnect()
             return
         }
@@ -226,9 +226,9 @@ function initialize(id: ServerName, socket: Socket) {
 
             const bounds = window.getBounds()
             toServer(id, { channel: "OUTPUT_FRAME", data: { frame, width: bounds.width, height: bounds.height } })
-        } else if (msg) {
+        } else if (msg && typeof msg === "object") {
             if (id === "STAGE") updateStageStreamSubscription(socket.id, msg.channel)
-            toApp(id, msg)
+            toApp(id, { ...msg, id: socket.id })
         }
     })
 

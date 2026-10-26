@@ -405,7 +405,7 @@
 
     <!-- scene media -->
     {#if sceneMedia}
-        <SceneMedia media={sceneMedia} preview={mirror} {outputId} />
+        <SceneMedia media={sceneMedia} {mirror} {outputId} />
     {/if}
 
     <!-- background -->

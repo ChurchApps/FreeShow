@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import { randomNumberVariable, variables } from "../../stores"
 import { newToast, wait } from "../../utils/common"
+import { clone } from "./array"
 
 function updateVariable(id: string, key: string, value: any) {
     variables.update((a) => {
@@ -12,21 +13,25 @@ function updateVariable(id: string, key: string, value: any) {
 export function setRandomValue(id: string) {
     if (get(randomNumberVariable)[id]) return
 
-    const variable = get(variables)[id]
+    const variable = clone(get(variables)[id])
     if (!variable.sets) variable.sets = [{ name: "", minValue: 1, maxValue: 1000 }]
 
-    // map sets to ranges with counts
-    const ranges = variable.sets.map((set, i) => {
-        const min = Number(set.minValue ?? 1)
-        const max = Number(set.maxValue ?? 1000)
-        const name = set.name || `#${i + 1}`
+    // map sets to ranges with counts (excluding disabled sets)
+    const ranges = variable.sets
+        .map((set, i) => {
+            const min = Number(set.minValue ?? 1)
+            const max = Number(set.maxValue ?? 1000)
+            const name = set.name || `#${i + 1}`
 
-        const start = Math.min(min, max)
-        const end = Math.max(min, max)
-        const count = end - start + 1
+            if (set.disabled) return null
 
-        return { name, start, count }
-    })
+            const start = Math.min(min, max)
+            const end = Math.max(min, max)
+            const count = end - start + 1
+
+            return { name, start, count }
+        })
+        .filter((r) => r !== null)
 
     const total = ranges.reduce((sum, r) => sum + r.count, 0)
 
@@ -150,11 +155,11 @@ function setRandom(id: string, finalValue: { name: string; number: number }) {
     })
 }
 
-export function getSetChars(sets: { name: string; minValue?: number; maxValue?: number }[] | undefined) {
+export function getSetChars(sets: { name: string; minValue?: number; maxValue?: number; disabled?: boolean }[] | undefined) {
     let chars = 1
     if (!sets) return 4
 
-    sets.forEach((a) => {
+    sets.filter((a) => !a.disabled).forEach((a) => {
         const minChars = (a.minValue ?? 1).toString().length
         const maxChars = (a.maxValue ?? 1000).toString().length
         if (minChars > chars) chars = minChars

@@ -6,7 +6,7 @@
     import Window from "../Window.svelte"
 
     export let media: any = null
-    export let preview = false
+    export let mirror = false
     // the output this scene is shown on, which owns a full-quality receive of its stream
     export let outputId = ""
 </script>
@@ -14,15 +14,15 @@
 {#if media}
     <div class="layer media-layer {$$props.class || ''}" style={$$props.style || ""}>
         {#if media.type === "camera"}
-            <Camera id={media.id} groupId={media.group || ""} class="media" style="width: 100%;height: 100%;object-fit: cover;" {preview} />
+            <Camera id={media.id} groupId={media.group || ""} class="media" style="width: 100%;height: 100%;object-fit: cover;" />
         {:else if media.type === "screen"}
             <Window id={media.id} class="media" style="width: 100%;height: 100%;" />
         {:else if media.type === "ndi"}
-            <NdiStream screen={{ id: media.id, name: media.name || "" }} background mirror={preview} {outputId} />
+            <NdiStream screen={{ id: media.id, name: media.name || "" }} background {mirror} {outputId} />
         {:else if media.type === "omt"}
-            <OmtStream screen={{ id: media.id, name: media.name || "" }} background mirror={preview} {outputId} />
+            <OmtStream screen={{ id: media.id, name: media.name || "" }} background {mirror} {outputId} />
         {:else if media.type === "blackmagic"}
-            <BmdStream screen={{ id: media.id, name: media.name || "" }} background mirror={preview} {outputId} />
+            <BmdStream screen={{ id: media.id, name: media.name || "" }} background {mirror} {outputId} />
         {/if}
     </div>
 {/if}

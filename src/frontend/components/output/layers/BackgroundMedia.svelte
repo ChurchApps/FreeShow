@@ -60,7 +60,7 @@
         <!-- prevent showing controls in output -->
         {#if $special.hideCursor || $playerVideos[id]?.type !== "youtube"}<div class="overlay" />{/if}
         <!-- on:ended={videoEnded} -->
-        <Player {outputId} {id} on:loaded />
+        <Player {outputId} {id} {mirror} on:loaded />
     {/if}
 </OutputTransition>
 
