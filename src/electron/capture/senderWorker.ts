@@ -709,7 +709,7 @@ if (process.env.FS_CAP_STATS) {
         for (const id of new Set([...Object.keys(bmdTrace), ...Object.keys(BlackmagicSender.playbackData)])) {
             const d = BlackmagicSender.playbackData[id]
             const fmt = (o: { [k: string]: number } | undefined) => Object.entries(o || {}).map(([k, v]) => `${k}=${v}`).join(" ")
-            console.info(`[BMD-STATS ${id}] playing=${!!d?.playback} started=${!!d?.isStarted} target=${d?.targetSize?.width}x${d?.targetSize?.height} ${d?.pixelFormat || ""} worker(${fmt(bmdTrace[id])}) sender(${fmt(BlackmagicSender.stats[id])})`)
+            console.info(`[BMD-STATS ${id}] playing=${!!d?.playback} started=${!!d?.isStarted} target=${d?.targetSize?.width}x${d?.targetSize?.height} ${d?.pixelFormat || ""} worker(${fmt(bmdTrace[id])}) sender(${fmt(BlackmagicSender.stats[id])}) buffers(${BlackmagicSender.bufferStats(id)})`)
             delete bmdTrace[id]
             delete BlackmagicSender.stats[id]
         }

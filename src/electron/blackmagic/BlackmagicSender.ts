@@ -72,6 +72,12 @@ export class BlackmagicSender {
         this.bufferRefs.set(buf, { outputId, count: 1 })
         return buf
     }
+    /** FS_CAP_STATS: buffers this output has in use and waiting for reuse */
+    static bufferStats(outputId: string): string {
+        let used = 0
+        for (const r of this.bufferRefs.values()) if (r.outputId === outputId) used++
+        return `${used} in use, ${(this.freeBuffers.get(outputId) || []).length} free`
+    }
     static retainBuffer(buf: Buffer) {
         const r = this.bufferRefs.get(buf)
         if (r) r.count++
