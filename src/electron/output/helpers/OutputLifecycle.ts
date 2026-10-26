@@ -206,10 +206,10 @@ export class OutputLifecycle {
 
     // A page reports whether a transition or animation is running on it. Only an output's render page
     // counts (its capture surface when it has one): a window drawing frames animates nothing of its own.
-    static pageBusy(sender: Electron.WebContents, data: { id: string; busy: boolean; dom?: string }) {
+    static pageBusy(sender: Electron.WebContents, data: { id: string; busy: boolean; dom?: string; seq?: number }) {
         const output = data?.id ? OutputHelper.getOutput(data.id) : null
         if (!output || OutputHelper.renderWindow(output)?.webContents !== sender) return
-        RenderGroups.setPageState(data.id, !!data.busy, data.dom || "")
+        RenderGroups.setPageState(data.id, !!data.busy, data.dom || "", data.seq || 0)
     }
 
     // Applies RenderGroups' decisions: an output that now shows another page idles its own (kept current,

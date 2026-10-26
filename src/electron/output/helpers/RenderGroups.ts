@@ -22,6 +22,13 @@ export class RenderGroups {
     // content, so a fade is never cut short and nothing changes on the switch
     private static busy = new Set<string>()
     private static content = new Map<string, string>()
+    // Messages sent to each output's page, numbered (stamp), and the last of them each page's reported state
+    // includes. A state only counts once it includes every message sent since the output's signature last
+    // changed: a report from before the change describes what the page showed before it, and two pages that
+    // looked the same then can be animating away from different pictures now.
+    private static sent = new Map<string, number>()
+    private static applied = new Map<string, number>()
+    private static changedAt = new Map<string, number>()
     // outputs with an offscreen page to share: an offscreen output's own window, or a displayed output's
     // capture surface. A displayed output without one renders on screen and shares with nobody.
     private static renderable = new Set<string>()
@@ -83,6 +90,9 @@ export class RenderGroups {
         this.signatures.delete(id)
         this.busy.delete(id)
         this.content.delete(id)
+        this.sent.delete(id)
+        this.applied.delete(id)
+        this.changedAt.delete(id)
         this.renderable.delete(id)
         this.order = this.order.filter((o) => o !== id)
         const had = this.renderer.delete(id)
@@ -98,6 +108,7 @@ export class RenderGroups {
             if (this.signatures.get(id) === sig) continue
             if (sig === undefined) this.signatures.delete(id)
             else this.signatures.set(id, sig)
+            this.changedAt.set(id, this.sent.get(id) || 0)
             changed = true
         }
         if (changed) this.recompute()
@@ -110,7 +121,15 @@ export class RenderGroups {
         this.recompute()
     }
 
-    static setPageState(id: string, busy: boolean, content: string) {
+    /** the number of the next message sent to this output's page */
+    static stamp(id: string): number {
+        const seq = (this.sent.get(id) || 0) + 1
+        this.sent.set(id, seq)
+        return seq
+    }
+
+    static setPageState(id: string, busy: boolean, content: string, seq: number) {
+        this.applied.set(id, seq)
         if (busy) this.busy.add(id)
         else this.busy.delete(id)
         if (content) this.content.set(id, content)
@@ -119,8 +138,14 @@ export class RenderGroups {
         if (!busy) this.recompute()
     }
 
+    // the page's last report includes every message sent since the output's signature changed
+    private static current(id: string): boolean {
+        return (this.applied.get(id) || 0) > (this.changedAt.get(id) ?? -1)
+    }
+
     private static showsSame(a: string, b: string): boolean {
         if (a === b) return true
+        if (!this.current(a) || !this.current(b)) return false
         if (this.busy.has(a) || this.busy.has(b)) return false
         const ca = this.content.get(a)
         return !!ca && ca === this.content.get(b)

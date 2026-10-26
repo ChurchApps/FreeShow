@@ -5,6 +5,7 @@ import { clone } from "../../utils/helpers"
 import type { Output } from "../Output"
 import { OutputHelper } from "../OutputHelper"
 import { MediaLayers } from "./MediaLayers"
+import { RenderGroups } from "./RenderGroups"
 
 export class OutputSend {
     static sendToOutputWindow(msg: Message) {
@@ -16,6 +17,8 @@ export class OutputSend {
 
             let tempMsg: Message = clone(msg)
             if (msg.channel === "OUTPUTS") tempMsg = onlySendToMatchingId(tempMsg, output.id)
+            // numbered per output, so the page can say which messages its reported state includes
+            ;(tempMsg as any).seq = RenderGroups.stamp(output.id)
 
             output.window.webContents.send(OUTPUT, tempMsg)
             // the offscreen capture surface renders the same output, so it needs the same data

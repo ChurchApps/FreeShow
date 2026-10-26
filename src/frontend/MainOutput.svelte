@@ -66,6 +66,8 @@
     // the same content, so a fade is never cut short and nothing changes on the switch.
     let rootEl: HTMLElement | null = null
     let reported = ""
+    // the number of the last message main sent this page (OutputSend.ts), reported with the state it produced
+    let appliedSeq = 0
     let checkQueued = false
     function queueCheck() {
         if (checkQueued) return
@@ -80,10 +82,10 @@
         // the content as markup, minus what differs between windows showing the same thing: element ids
         // (some are random) and this output's own id
         const dom = busy ? "" : contentHash(rootEl.innerHTML.replace(/ id="[^"]*"/g, "").split(outputId).join("~"))
-        const state = `${busy}|${dom}`
+        const state = `${busy}|${dom}|${appliedSeq}`
         if (state === reported) return
         reported = state
-        send(OUTPUT, ["RENDER_BUSY"], { id: outputId, busy, dom })
+        send(OUTPUT, ["RENDER_BUSY"], { id: outputId, busy, dom, seq: appliedSeq })
     }
     function contentHash(str: string): string {
         let h1 = 0xdeadbeef
@@ -101,9 +103,20 @@
         const observer = new MutationObserver(queueCheck)
         observer.observe(rootEl, { subtree: true, childList: true, attributes: true, characterData: true })
         for (const ev of animationEvents) document.addEventListener(ev, queueCheck, true)
+        // the state is looked at after the task that applies the message, so it includes it
+        window.api.receive(
+            OUTPUT,
+            (msg: any) => {
+                if (typeof msg?.seq !== "number") return
+                appliedSeq = msg.seq
+                queueCheck()
+            },
+            "RENDER_SEQ"
+        )
         queueCheck()
         return () => {
             observer.disconnect()
+            window.api.removeListener(OUTPUT, "RENDER_SEQ")
             for (const ev of animationEvents) document.removeEventListener(ev, queueCheck, true)
         }
     })
