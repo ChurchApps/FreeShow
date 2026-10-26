@@ -806,6 +806,8 @@ export class OutputLifecycle {
     // so a black output can be told apart from a black composite
     static videoLayerDisabled = process.env.FS_VIDEO_LAYER === "0"
 
+    private static pipelines = 0
+
     static requestVideoLayer(id: string, wanted: boolean, source: string, release = false) {
         if (this.videoLayerDisabled) return
         this.hookVideoLayer()
@@ -987,6 +989,8 @@ export class OutputLifecycle {
         // monotonic seq so the next frame's GPU consume overlaps the previous frame's readback
         let offMainInFlight = 0
         let offMainSeq = 0
+        // this pipeline, so the worker can tell its frames' order from those of the one it replaced
+        const pipe = ++OutputLifecycle.pipelines
         const heldTextures = new Map<number, any>()
         // a swallowed release failure permanently shrinks the compositor frame pool, so log it (once)
         let releaseWarned = false
@@ -1233,7 +1237,7 @@ export class OutputLifecycle {
             const cpuTargets = targets.length > 0 && !addon.targetsSupported
             const seq = ++offMainSeq
             const offMembers = OutputLifecycle.offOutputIds(members)
-            const captureOpts = { size: { width, height }, ratio, framerate: memberFramerates[id] || framerate, memberFramerates, format: cpuTargets ? 0 : fmt, mainFormat: fmt, convertCheck, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members, depth: OutputLifecycle.depthFor(id), targets, memberTarget, memberFormats, memberSizes, cpuTargets, stageStream, serverStream, thumbStream, rtmpMembers, bmdMembers, webrtcMembers, presentMembers, offMembers }
+            const captureOpts = { pipe, size: { width, height }, ratio, framerate: memberFramerates[id] || framerate, memberFramerates, format: cpuTargets ? 0 : fmt, mainFormat: fmt, convertCheck, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members, depth: OutputLifecycle.depthFor(id), targets, memberTarget, memberFormats, memberSizes, cpuTargets, stageStream, serverStream, thumbStream, rtmpMembers, bmdMembers, webrtcMembers, presentMembers, offMembers }
             const anySender = members.some((m) => !!NdiSender.NDI[m]?.sender || !!OmtSender.OMT[m]?.sender)
             if (SenderCapture.captureFrame(id, source, captureOpts, anySender)) {
                 forwardAt.set(seq, { t: Date.now(), unc: OutputLifecycle.globalInFlight === 0, px: width * height })

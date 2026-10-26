@@ -781,7 +781,10 @@ function blankPacerBuf(width: number, height: number, format: number, transparen
 // a blank in the format a protocol's adapter turns BGRA into, converted once
 const preparedBlanks = new Map<string, { pbuf: PacerBuf; format: number }>()
 
-async function captureAndSend(id: string, source: any, opts: { size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; mainFormat?: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number; targets?: { width: number; height: number; format: number }[]; memberTarget?: { [id: string]: number }; memberFormats?: { [id: string]: number }; memberSizes?: { [id: string]: { width: number; height: number } }; cpuTargets?: boolean; rtmpMembers?: { [id: string]: { width: number; height: number } }; bmdMembers?: { [id: string]: { width: number; height: number; format: number; framerate: number } }; webrtcMembers?: { [id: string]: { width: number; height: number } }; presentMembers?: { [id: string]: { width: number; height: number } }; offMembers?: string[]; convertCheck?: boolean; stageStream?: { width: number; height: number; quality: number; intervalMs: number } | null; serverStream?: { width: number; height: number; intervalMs: number } | null; thumbStream?: { width: number; height: number; quality: number } | null }) {
+// the newest capture each output has sent, by pipeline and seq
+const newestCapture = new Map<string, { pipe: number; seq: number }>()
+
+async function captureAndSend(id: string, source: any, opts: { pipe?: number; size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; mainFormat?: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number; targets?: { width: number; height: number; format: number }[]; memberTarget?: { [id: string]: number }; memberFormats?: { [id: string]: number }; memberSizes?: { [id: string]: { width: number; height: number } }; cpuTargets?: boolean; rtmpMembers?: { [id: string]: { width: number; height: number } }; bmdMembers?: { [id: string]: { width: number; height: number; format: number; framerate: number } }; webrtcMembers?: { [id: string]: { width: number; height: number } }; presentMembers?: { [id: string]: { width: number; height: number } }; offMembers?: string[]; convertCheck?: boolean; stageStream?: { width: number; height: number; quality: number; intervalMs: number } | null; serverStream?: { width: number; height: number; intervalMs: number } | null; thumbStream?: { width: number; height: number; quality: number } | null }) {
     // seq identifies this in-flight capture; the osr-capture key is slotted so concurrent readbacks
     // for one output use independent pool entries
     const seq = opts.seq ?? 0
@@ -914,6 +917,13 @@ async function captureAndSend(id: string, source: any, opts: { size: { width: nu
             if (tl) tl.cE = tl.fS = tl.fE = Date.now()
             releaseTexture()
         }
+
+        // Readbacks in flight finish out of order: a frame older than one this output already sent would
+        // step its picture back, so it is dropped
+        const pipe = opts.pipe ?? 0
+        const newest = newestCapture.get(id)
+        if (newest && newest.pipe === pipe && seq < newest.seq) return
+        newestCapture.set(id, { pipe, seq })
 
         // the app window's previews are served straight from here, so main never holds a preview frame
         if (scaled && scaled.length) {
