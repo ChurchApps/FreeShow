@@ -550,6 +550,26 @@ export class BlackmagicSender {
         return buffer
     }
 
+    // Whether the card already has as many frames queued ahead as playback keeps. Once playing this is read
+    // from the card's clock: the frames waiting are the slots between the one on air and the next free one.
+    // The card's own buffered count did not match its clock (it read full while the clock showed a slot about
+    // to go out empty), so going by the count left 5-7 slots a second empty and the card repeating frames.
+    private static cardFull(data: PlaybackData, bufferedFrames: number): boolean {
+        if (!data.isStarted) return bufferedFrames > data.targetBufferSize
+        const depth = Math.min(2, Math.max(1, Math.ceil(data.targetBufferSize / 4)))
+        const duration = data.frameDurationTicks || 1000
+        let streamTime: number | undefined
+        try {
+            streamTime = data.playback.scheduledTime()?.streamTime
+        } catch {
+            streamTime = undefined
+        }
+        if (typeof streamTime !== "number") return bufferedFrames > depth
+        // wrap-safe: streamTime is 32-bit
+        const lead = (data.scheduledFrames * duration - streamTime) | 0
+        return lead > depth * duration
+    }
+
     static canAcceptFrame(outputId: string): boolean {
         if (SEGFAULT_PRONE_DEVICES.has(outputId)) return false
 
@@ -564,8 +584,7 @@ export class BlackmagicSender {
             const bufferedFrames = data.playback.bufferedFrames()
             // the same depth scheduling allows (scheduleFrame), so a repeat of the last frame never leaves the
             // card too full to take a new one
-            const maxBuffer = data.isStarted ? Math.min(2, Math.max(1, Math.ceil(data.targetBufferSize / 4))) : data.targetBufferSize
-            if (bufferedFrames > maxBuffer) return false
+            if (this.cardFull(data, bufferedFrames)) return false
         } catch {
             return false
         }
@@ -668,9 +687,8 @@ export class BlackmagicSender {
                     bufferedFrames = data.playback.bufferedFrames()
 
                     // Keep buffer minimal once started to prevent accumulation
-                    const maxBuffer = data.isStarted ? Math.min(2, Math.max(1, Math.ceil(data.targetBufferSize / 4))) : data.targetBufferSize
                     this.note(outputId, "buffered", bufferedFrames, true)
-                    if (bufferedFrames > maxBuffer) {
+                    if (this.cardFull(data, bufferedFrames)) {
                         data.totalFramesDropped = (data.totalFramesDropped || 0) + 1
                         this.note(outputId, "full")
                         return // Buffer too full, skip frame
@@ -906,8 +924,7 @@ export class BlackmagicSender {
         if (data.frameProcessing) return true
         try {
             const bufferedFrames = data.playback.bufferedFrames()
-            const maxBuffer = data.isStarted ? Math.min(2, Math.max(1, Math.ceil(data.targetBufferSize / 4))) : data.targetBufferSize
-            if (bufferedFrames > maxBuffer) {
+            if (this.cardFull(data, bufferedFrames)) {
                 this.note(outputId, "repeatFull")
                 return true
             }
