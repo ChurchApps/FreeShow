@@ -22,7 +22,7 @@ import { RenderGroups } from "./output/helpers/RenderGroups"
 import { RtmpBridge } from "./streaming/RtmpBridge"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
 import { applyCommandLineSwitches } from "./utils/commandLineSwitches"
-import { applyGraphicsDeviceSelection, gpuStateSettled, scheduleGpuHealthCheck } from "./utils/gpu"
+import { applyGraphicsDeviceSelection, scheduleGpuHealthCheck } from "./utils/gpu"
 import { isDraggableAreaVisible, isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs } from "./utils/init"
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
@@ -117,8 +117,7 @@ if (RECORD_STARTUP_TIME) console.time("Full startup")
 app.on("ready", async () => {
     // getGPUFeatureStatus() at app-ready is premature (GPU process still initializing, reports
     // disabled_software defaults) — only the delayed re-logs reflect the real state
-    // once the GPU process has reported in: before that every feature reads as software
-    gpuStateSettled.then(() => logGpuStatus("ready"))
+    logGpuStatus("start")
     setTimeout(() => logGpuStatus("t=10s"), 10_000)
     setTimeout(() => logGpuStatus("t=25s"), 25_000)
     // compares the steady-state GPU regime against the user's intent, notifies on degradation
@@ -132,15 +131,17 @@ app.on("ready", async () => {
 // Always on for Linux, elsewhere gated behind FS_CAP_STATS; observational only.
 function logGpuStatus(tag: string) {
     if (!isLinux && !process.env.FS_CAP_STATS) return
-    try {
-        const s = app.getGPUFeatureStatus() as unknown as Record<string, string>
-        console.info(`[GPU-STATUS ${tag}] gpu_compositing=${s.gpu_compositing} gpu_rasterization=${s.rasterization ?? s.gpu_rasterization} webgl=${s.webgl} webgl2=${s.webgl2} video_decode=${s.video_decode}`)
-    } catch (err) {
-        console.warn(`[GPU-STATUS ${tag}] getGPUFeatureStatus failed:`, err)
-    }
-    // "complete" carries the GL strings ("basic" has none on macOS, so the log read renderer=? driver=?)
+    // "complete" waits for the GPU process's own report, so the feature status read after it is the real
+    // one (read straight away it is still the software placeholder) and the GL strings are present ("basic"
+    // has none on macOS)
     app.getGPUInfo("complete")
         .then((info: any) => {
+            try {
+                const s = app.getGPUFeatureStatus() as unknown as Record<string, string>
+                console.info(`[GPU-STATUS ${tag}] gpu_compositing=${s.gpu_compositing} gpu_rasterization=${s.rasterization ?? s.gpu_rasterization} webgl=${s.webgl} webgl2=${s.webgl2} video_decode=${s.video_decode}`)
+            } catch (err) {
+                console.warn(`[GPU-STATUS ${tag}] getGPUFeatureStatus failed:`, err)
+            }
             const d = info?.gpuDevice?.find((g: any) => g.active) ?? info?.gpuDevice?.[0] ?? {}
             const vendorId = typeof d.vendorId === "number" ? `0x${d.vendorId.toString(16).padStart(4, "0")}` : "?"
             const name = d.deviceString || d.driverVendor || ""
