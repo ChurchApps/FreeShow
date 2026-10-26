@@ -115,16 +115,17 @@ export function applyGraphicsDeviceSelection() {
 
 // hardware video decode needs a *_drv_video.so VA driver; many installs (e.g. Ubuntu live ISOs) ship none
 const VA_DRIVER_DIRS = ["/usr/lib/x86_64-linux-gnu/dri", "/usr/lib/aarch64-linux-gnu/dri", "/usr/lib/dri", "/usr/lib64/dri", "/usr/local/lib/dri"]
+// distros link some of these directories to one another, so a driver is listed once however many reach it
 function findVaDrivers(): string[] {
-    const found: string[] = []
+    const found = new Set<string>()
     for (const dir of VA_DRIVER_DIRS) {
         try {
-            for (const f of fs.readdirSync(dir)) if (f.endsWith("_drv_video.so")) found.push(f)
+            for (const f of fs.readdirSync(dir)) if (f.endsWith("_drv_video.so")) found.add(f)
         } catch {
             // dir absent — expected on most systems
         }
     }
-    return found
+    return [...found]
 }
 
 // "enabled..." / "hardware..." = hardware acceleration active
