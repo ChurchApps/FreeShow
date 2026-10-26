@@ -4,6 +4,7 @@
     import { translateText } from "../../../utils/language"
     import { clone, moveToPos } from "../../helpers/array"
     import { createStore, updateStore } from "../../helpers/historyStores"
+    import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import HRule from "../../input/HRule.svelte"
     import InputRow from "../../input/InputRow.svelte"
@@ -88,6 +89,18 @@
         })
     }
 
+    function toggleSetDisabled(index: number) {
+        if (!currentVariable.sets?.[index]) return
+
+        currentVariable.sets[index].disabled = !currentVariable.sets[index].disabled
+        currentVariable = currentVariable
+
+        variables.update((a) => {
+            a[variableId] = currentVariable
+            return a
+        })
+    }
+
     function duplicateSet(index: number) {
         if (!currentVariable.sets?.[index]) return
 
@@ -123,7 +136,7 @@
     $: min = Number(currentVariable.minValue ?? minDefault)
     $: max = Number(currentVariable.maxValue ?? maxDefault)
 
-    const DEFAULT_SET = { name: "", minValue: 1, maxValue: 1000 }
+    const DEFAULT_SET: { name: string; minValue?: number; maxValue?: number; disabled?: boolean } = { name: "", minValue: 1, maxValue: 1000 }
 
     // TEXT SET
 
@@ -293,17 +306,22 @@
         {/if}
 
         {#each currentVariable.sets || [DEFAULT_SET] as set, i}
+            {@const isDisabled = set.disabled ?? false}
+
             <InputRow style="border-radius: 4px;overflow: hidden;">
                 {#if (currentVariable.sets?.length || 0) > 1}
-                    <span style="background-color: var(--primary-darker);font-weight: bold;font-size: 0.8em;display: flex;align-items: center;padding: 0 10px;"><span style="color: var(--secondary);display: flex;align-items: center;">#</span>{i + 1}</span>
-                    <MaterialTextInput label="inputs.name" style="flex: 2;" value={set.name} on:change={(e) => updateSet(i, e.detail, "name")} autofocus={!!currentVariable.name && !set.name} />
+                    <span style="background-color: var(--primary-darker);font-weight: bold;font-size: 0.8em;display: flex;align-items: center;padding: 0 10px;{isDisabled ? 'opacity: 0.5;' : ''}"><span style="color: var(--secondary);display: flex;align-items: center;">#</span>{i + 1}</span>
+                    <MaterialTextInput label="inputs.name" style="flex: 2;" value={set.name} disabled={isDisabled} on:change={(e) => updateSet(i, e.detail, "name")} autofocus={!!currentVariable.name && !set.name} />
                 {/if}
 
                 <!-- WIP no negative numbers at the moment -->
-                <MaterialNumberInput label="variables.minimum" style="flex: 1;" value={set.minValue ?? DEFAULT_SET.minValue} step={1} min={0} max={maxAbsolute} on:change={(e) => updateSet(i, e.detail, "minValue")} />
-                <MaterialNumberInput label="variables.maximum" style="flex: 1;" value={set.maxValue ?? DEFAULT_SET.maxValue} step={1} min={0} max={maxAbsolute} on:change={(e) => updateSet(i, e.detail, "maxValue")} />
+                <MaterialNumberInput label="variables.minimum" style="flex: 1;" value={set.minValue ?? DEFAULT_SET.minValue} step={1} min={0} max={maxAbsolute} disabled={isDisabled} on:change={(e) => updateSet(i, e.detail, "minValue")} />
+                <MaterialNumberInput label="variables.maximum" style="flex: 1;" value={set.maxValue ?? DEFAULT_SET.maxValue} step={1} min={0} max={maxAbsolute} disabled={isDisabled} on:change={(e) => updateSet(i, e.detail, "maxValue")} />
                 <!-- {#if i > 0 && i === (currentVariable.sets?.length || 0) - 1} -->
                 {#if (currentVariable.sets?.length || 1) > 1}
+                    <MaterialButton title="actions.{isDisabled ? 'enable' : 'disable'}" on:click={() => toggleSetDisabled(i)}>
+                        <Icon id={isDisabled ? "hide" : "eye"} white={isDisabled} />
+                    </MaterialButton>
                     <MaterialButton icon="duplicate" title="actions.duplicate" on:click={() => duplicateSet(i)} />
                     <MaterialButton icon="delete" title="actions.delete" on:click={() => removeSet(i)} red />
                 {/if}
