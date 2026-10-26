@@ -122,7 +122,8 @@
 
 <svelte:window on:mousemove={mousemove} on:mouseup={mouseup} />
 
-<canvas bind:this={canvasElem}></canvas>
+<!-- drawn every frame, so an output showing it never joins another's render (MainOutput.svelte) -->
+<canvas bind:this={canvasElem} data-animated></canvas>
 
 <!-- move boxes -->
 {#if edit}

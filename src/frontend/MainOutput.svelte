@@ -78,7 +78,8 @@
     function reportState() {
         checkQueued = false
         if (!outputId || !rootEl) return
-        const busy = document.getAnimations().some((a) => a.playState === "running")
+        // a canvas drawn every frame (an effect) is never still: two pages running one are at different points in it
+        const busy = document.getAnimations().some((a) => a.playState === "running") || !!rootEl.querySelector("[data-animated]")
         // the content as markup, minus what differs between windows showing the same thing: element ids
         // (some are random) and this output's own id
         const dom = busy ? "" : contentHash(rootEl.innerHTML.replace(/ id="[^"]*"/g, "").split(outputId).join("~"))
