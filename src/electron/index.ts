@@ -22,7 +22,7 @@ import { RenderGroups } from "./output/helpers/RenderGroups"
 import { RtmpBridge } from "./streaming/RtmpBridge"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
 import { applyCommandLineSwitches } from "./utils/commandLineSwitches"
-import { applyGraphicsDeviceSelection, scheduleGpuHealthCheck } from "./utils/gpu"
+import { applyGraphicsDeviceSelection, gpuStateSettled, scheduleGpuHealthCheck } from "./utils/gpu"
 import { isDraggableAreaVisible, isWithinDisplayBounds, mainWindowInitialize, openDevTools, parseCommandLineArgs } from "./utils/init"
 import { template } from "./utils/menuTemplate"
 import { spellcheck } from "./utils/spellcheck"
@@ -117,7 +117,8 @@ if (RECORD_STARTUP_TIME) console.time("Full startup")
 app.on("ready", async () => {
     // getGPUFeatureStatus() at app-ready is premature (GPU process still initializing, reports
     // disabled_software defaults) — only the delayed re-logs reflect the real state
-    logGpuStatus("t=0")
+    // once the GPU process has reported in: before that every feature reads as software
+    gpuStateSettled.then(() => logGpuStatus("ready"))
     setTimeout(() => logGpuStatus("t=10s"), 10_000)
     setTimeout(() => logGpuStatus("t=25s"), 25_000)
     // compares the steady-state GPU regime against the user's intent, notifies on degradation
@@ -137,10 +138,13 @@ function logGpuStatus(tag: string) {
     } catch (err) {
         console.warn(`[GPU-STATUS ${tag}] getGPUFeatureStatus failed:`, err)
     }
-    app.getGPUInfo("basic")
+    // "complete" carries the GL strings ("basic" has none on macOS, so the log read renderer=? driver=?)
+    app.getGPUInfo("complete")
         .then((info: any) => {
             const d = info?.gpuDevice?.find((g: any) => g.active) ?? info?.gpuDevice?.[0] ?? {}
-            console.info(`[GPU-STATUS ${tag}] vendor=${info?.auxAttributes?.glVendor ?? d.vendorId} renderer=${info?.auxAttributes?.glRenderer ?? "?"} driver=${info?.auxAttributes?.glVersion ?? d.driverVersion ?? "?"}`)
+            const vendorId = typeof d.vendorId === "number" ? `0x${d.vendorId.toString(16).padStart(4, "0")}` : "?"
+            const name = d.deviceString || d.driverVendor || ""
+            console.info(`[GPU-STATUS ${tag}] gpu=${vendorId}${name ? ` (${name})` : ""} renderer=${info?.auxAttributes?.glRenderer || "?"} driver=${d.driverVersion || info?.auxAttributes?.glVersion || "?"}`)
         })
         .catch((err: Error) => console.warn(`[GPU-STATUS ${tag}] getGPUInfo failed:`, err))
 }
