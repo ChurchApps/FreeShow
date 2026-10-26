@@ -168,16 +168,38 @@ export function scheduleGpuHealthCheck() {
     setTimeout(attempt, 20_000)
 }
 
-// Probes whether video hardware-decodes in the active renderer
+// One 1920x1080 H.264 High (level 4.0) keyframe, Annex B, a flat gray picture (460 bytes)
+const PROBE_KEYFRAME = "AAAAAWdkECisuA8ARPy4CIAAAAMAgAAAHgIAAAABaO4PLIsAAAFliIQEv/73rd+BTYekVa7pXOLTLq5Q0PVH2lKZ4tkgAAADAAADAAADAAADAADLprQ5tRHDh/oPAAADAAADAAB+AAADABlwAAAIqAAABCwAAAMDUAAAAwMkAAADA4gAAAMD+AAABMgAAAhoAAAQEAAAGKAAADsAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMBAQ=="
+
+// Whether a hardware decoder really decodes video in the app's renderer: one 1080p H.264 frame through
+// WebCodecs with "prefer-hardware", which never falls back to software, so a decoded frame proves it. The
+// old probe asked MediaCapabilities whether decoding would be "power efficient", which Electron on Linux
+// answers false even while VA-API decodes every video (#3900, #3919).
 async function probeHardwareDecode(): Promise<boolean | null> {
     const win = getMainWindow()
     if (!win || win.webContents.isLoading()) return null
     try {
         const result = await win.webContents.executeJavaScript(
-            `navigator.mediaCapabilities.decodingInfo({
-                type: "file",
-                video: { contentType: 'video/mp4; codecs="avc1.640028"', width: 1920, height: 1080, bitrate: 8000000, framerate: 30 }
-            }).then((r) => !!r.powerEfficient).catch(() => null)`,
+            `(async () => {
+                if (typeof VideoDecoder === "undefined" || typeof EncodedVideoChunk === "undefined") return null
+                const config = { codec: "avc1.640028", codedWidth: 1920, codedHeight: 1080, hardwareAcceleration: "prefer-hardware" }
+                const support = await VideoDecoder.isConfigSupported(config).catch(() => null)
+                if (!support) return null
+                if (!support.supported) return false
+                const data = Uint8Array.from(atob("${PROBE_KEYFRAME}"), (c) => c.charCodeAt(0))
+                return await new Promise((resolve) => {
+                    let settled = false
+                    const settle = (v) => { if (!settled) { settled = true; resolve(v) } }
+                    const decoder = new VideoDecoder({ output: (frame) => { frame.close(); settle(true) }, error: () => settle(false) })
+                    try {
+                        decoder.configure(config)
+                        decoder.decode(new EncodedVideoChunk({ type: "key", timestamp: 0, data }))
+                        decoder.flush().then(() => settle(false), () => settle(false)).finally(() => { try { decoder.close() } catch {} })
+                    } catch {
+                        settle(false)
+                    }
+                })
+            })()`,
             true
         )
         return typeof result === "boolean" ? result : null
