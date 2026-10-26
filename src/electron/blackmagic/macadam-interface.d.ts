@@ -14,8 +14,6 @@ declare module 'macadam' {
     bufferedFrames(): number;
     hardwareTime(): { hardwareTime: number } | null;
     scheduledTime(): { streamTime: number } | null;
-    // resolves when the frame scheduled at `time` has played (or been dropped or flushed)
-    played(time: number): Promise<{ result: number; summary: string }>;
     lastPlayedFrameTime?(): number;
     onFramePlayed?(callback: (frameInfo: { time: number }) => void): void;
     frameRate?: [number, number];

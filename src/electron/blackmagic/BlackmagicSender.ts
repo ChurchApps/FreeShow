@@ -39,6 +39,8 @@ interface PlaybackData {
     frameDurationTicks?: number
     // the last frame given to the card, already in its pixel format (repeatLastFrame)
     lastConverted?: Buffer
+    // frames scheduled on the card and not yet past their display time, oldest first
+    onCard?: { time: number; buf: Buffer }[]
 }
 
 interface AudioQueueState {
@@ -833,14 +835,11 @@ export class BlackmagicSender {
         try {
             // Schedule the frame using the original method
             data.playback.schedule(frameDataToSchedule)
-            // the card holds the frame until it has played it
+            // The card holds the frame until its display time has passed. That is read from the card's own clock:
+            // the played() completions never arrived here (hundreds stayed pending), so they cannot say.
             this.retainBuffer(convertedFrame)
-            const played = () => this.releaseBuffer(convertedFrame)
-            try {
-                data.playback.played(currentTime).then(played, played)
-            } catch {
-                played()
-            }
+            ;(data.onCard ||= []).push({ time: currentTime, buf: convertedFrame })
+            this.releasePlayed(data, frameDurationTicks)
 
             // Assume scheduling was successful if no error was thrown
             data.scheduledFrames++
@@ -882,6 +881,20 @@ export class BlackmagicSender {
                 console.log(`Reduced buffer target to ${data.targetBufferSize} due to schedule failures`)
             }
         }
+    }
+
+    // frames on the card whose display period has ended, by the card's clock (wrap-safe: streamTime is 32-bit)
+    private static releasePlayed(data: PlaybackData, frameDurationTicks: number) {
+        const onCard = data.onCard
+        if (!onCard?.length) return
+        let streamTime: number | undefined
+        try {
+            streamTime = data.playback.scheduledTime()?.streamTime
+        } catch {
+            return
+        }
+        if (typeof streamTime !== "number") return
+        while (onCard.length && ((streamTime - (onCard[0].time + frameDurationTicks)) | 0) >= 0) this.releaseBuffer(onCard.shift()!.buf)
     }
 
     // A card plays out continuously; while the page has nothing new, the frame it last showed goes again.
@@ -1184,6 +1197,7 @@ export class BlackmagicSender {
         if (typeof data.deviceIndex === "number") this.usedDeviceIndices.delete(data.deviceIndex)
         this.releaseBuffer(data.lastConverted)
         data.lastConverted = undefined
+        data.onCard = []
         this.freeBuffers.delete(outputId)
         // frames the card never reported played: nothing will release them now
         for (const [buf, r] of this.bufferRefs) if (r.outputId === outputId) this.bufferRefs.delete(buf)
