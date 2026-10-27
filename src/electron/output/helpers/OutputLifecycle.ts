@@ -795,8 +795,7 @@ export class OutputLifecycle {
     // Live input composited into a captured output by the worker (osr-capture's video layer) instead of
     // being drawn by the page: the page asks for it when the stream is a plain full-cover background, and
     // only stops drawing once the worker reports that it is compositing.
-    // the source each output's composite shows, and the outputs whose page is taking the drawing back (it is
-    // sent frames again, while the worker keeps compositing until the page has drawn one)
+    // composited source per output; releasing: the page is taking the drawing back
     private static videoLayerWanted = new Map<string, string>()
     private static videoLayerReleasing = new Set<string>()
     private static videoLayerRunning = new Set<string>()
@@ -813,7 +812,7 @@ export class OutputLifecycle {
         this.hookVideoLayer()
         const renderer = RenderGroups.rendererOf(id) || id
         const current = this.videoLayerWanted.get(renderer)
-        // a different source is a new composite: the worker must not show a frame of the old one
+        // new source: restart the composite so no frame of the old one shows
         if (!wanted || (current !== undefined && current !== source)) {
             if (current === undefined) return
             this.videoLayerWanted.delete(renderer)
@@ -832,7 +831,7 @@ export class OutputLifecycle {
     private static sendVideoLayer(id: string) {
         const source = this.videoLayerWanted.get(id)
         if (source === undefined) return
-        // once the worker composites, the frame no longer has to reach the page, unless it is taking over
+        // exclusive: the page is not sent frames while composited, unless releasing
         const exclusive = this.videoLayerRunning.has(id) && !this.videoLayerReleasing.has(id)
         StreamReceiverHost.send("videoLayer", { outputId: id, active: true, source, exclusive })
     }
@@ -989,7 +988,7 @@ export class OutputLifecycle {
         // monotonic seq so the next frame's GPU consume overlaps the previous frame's readback
         let offMainInFlight = 0
         let offMainSeq = 0
-        // this pipeline, so the worker can tell its frames' order from those of the one it replaced
+        // seq order only holds within one pipeline
         const pipe = ++OutputLifecycle.pipelines
         const heldTextures = new Map<number, any>()
         // a swallowed release failure permanently shrinks the compositor frame pool, so log it (once)

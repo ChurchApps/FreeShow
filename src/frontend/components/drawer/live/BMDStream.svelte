@@ -50,7 +50,7 @@
             renderer.draw(canvas, frame)
             layer.drawn()
         }
-        // an output switches to a new background once it reports a picture (Background.svelte)
+        // Background.svelte switches to a new background once it reports loaded
         if (!announced) {
             announced = true
             dispatch("loaded")
@@ -80,7 +80,7 @@
 
 {#if background}
     <!-- while the worker composites this stream into the capture, the canvas must not paint over it -->
-    <!-- the source is named in the markup: an output's page reports its markup as what it shows (MainOutput.svelte) -->
+    <!-- data-source: part of the page's content hash (MainOutput.svelte) -->
     <canvas bind:this={canvas} data-source={screen.id} style={composited ? `${style};visibility: hidden;` : style} />
 {:else}
     <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click label={screen.name} {loaded} icon="blackmagic" white showPlayOnHover>

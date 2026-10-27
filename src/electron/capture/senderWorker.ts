@@ -781,7 +781,7 @@ function blankPacerBuf(width: number, height: number, format: number, transparen
 // a blank in the format a protocol's adapter turns BGRA into, converted once
 const preparedBlanks = new Map<string, { pbuf: PacerBuf; format: number }>()
 
-// the newest capture each output has sent, by pipeline and seq
+// newest capture sent per output
 const newestCapture = new Map<string, { pipe: number; seq: number }>()
 
 async function captureAndSend(id: string, source: any, opts: { pipe?: number; size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; mainFormat?: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number; targets?: { width: number; height: number; format: number }[]; memberTarget?: { [id: string]: number }; memberFormats?: { [id: string]: number }; memberSizes?: { [id: string]: { width: number; height: number } }; cpuTargets?: boolean; rtmpMembers?: { [id: string]: { width: number; height: number } }; bmdMembers?: { [id: string]: { width: number; height: number; format: number; framerate: number } }; webrtcMembers?: { [id: string]: { width: number; height: number } }; presentMembers?: { [id: string]: { width: number; height: number } }; offMembers?: string[]; convertCheck?: boolean; stageStream?: { width: number; height: number; quality: number; intervalMs: number } | null; serverStream?: { width: number; height: number; intervalMs: number } | null; thumbStream?: { width: number; height: number; quality: number } | null }) {
@@ -896,8 +896,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
             } finally {
                 for (const m of mediaFrames) mediaFrameDone(m.frame)
             }
-            // only a live frame counts, and only while its layer is still this output's: a readback that
-            // finished after the layer was dropped must not report the composite running again
+            // not for a readback that finished after its layer was dropped
             if (layerBuf && videoLayers[id] === layer && !videoLayerReported.has(id)) {
                 videoLayerReported.add(id)
                 port.postMessage({ type: "videoLayerActive", id })
@@ -920,8 +919,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
             releaseTexture()
         }
 
-        // Readbacks in flight finish out of order: a frame older than one this output already sent would
-        // step its picture back, so it is dropped
+        // readbacks finish out of order: drop a frame older than one already sent
         const pipe = opts.pipe ?? 0
         const newest = newestCapture.get(id)
         if (newest && newest.pipe === pipe && seq < newest.seq) return

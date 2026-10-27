@@ -22,10 +22,7 @@ export class RenderGroups {
     // content, so a fade is never cut short and nothing changes on the switch
     private static busy = new Set<string>()
     private static content = new Map<string, string>()
-    // Messages sent to each output's page, numbered (stamp), and the last of them each page's reported state
-    // includes. A state only counts once it includes every message sent since the output's signature last
-    // changed: a report from before the change describes what the page showed before it, and two pages that
-    // looked the same then can be animating away from different pictures now.
+    // message seqs per output: sent, applied (in the last page report), and sent at the last signature change
     private static sent = new Map<string, number>()
     private static applied = new Map<string, number>()
     private static changedAt = new Map<string, number>()
@@ -121,7 +118,7 @@ export class RenderGroups {
         this.recompute()
     }
 
-    /** the number of the next message sent to this output's page */
+    /** next message seq for this output */
     static stamp(id: string): number {
         const seq = (this.sent.get(id) || 0) + 1
         this.sent.set(id, seq)
@@ -138,7 +135,7 @@ export class RenderGroups {
         if (!busy) this.recompute()
     }
 
-    // the page's last report includes every message sent since the output's signature changed
+    // the last report covers the latest signature change
     private static current(id: string): boolean {
         return (this.applied.get(id) || 0) > (this.changedAt.get(id) ?? -1)
     }

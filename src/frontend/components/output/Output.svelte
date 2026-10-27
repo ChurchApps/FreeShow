@@ -337,8 +337,7 @@
     $: opaqueBackground = styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle?.background || slide?.settings?.backgroundColor || "black"
     $: layerUnder = !mirror && !!($compositedOutputs[outputId] || $mediaLayered[outputId])
     $: backgroundColor = currentOutput?.transparent || layerUnder ? "transparent" : opaqueBackground
-    // The page stops or starts drawing that video in the frame the layer switches, so the backdrop has to
-    // switch in that frame too: fading it would cover the video for the best part of a second.
+    // the backdrop switches with the layer, unfaded, so it never covers the video
     let layerSwitching = false
     let lastLayerUnder = false
     $: if (layerUnder !== lastLayerUnder) {

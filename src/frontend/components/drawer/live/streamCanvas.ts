@@ -104,8 +104,7 @@ export class StreamCanvasRenderer {
     private reportedCpu = false
     private lossHooked = false
 
-    // Drawn now, not on the next animation frame: the frame's buffer goes back to the receiver for reuse
-    // as soon as this dispatch returns (streamPort.ts), and the receiver already coalesces to the newest frame.
+    // synchronous: the frame's buffer goes back to the receiver when the dispatch returns (streamPort.ts)
     draw(canvas: HTMLCanvasElement, frame: StreamFrame) {
         const width = frame.xres
         const height = frame.yres

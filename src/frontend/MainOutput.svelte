@@ -66,7 +66,7 @@
     // the same content, so a fade is never cut short and nothing changes on the switch.
     let rootEl: HTMLElement | null = null
     let reported = ""
-    // the number of the last message main sent this page (OutputSend.ts), reported with the state it produced
+    // last message seq applied (OutputSend.ts)
     let appliedSeq = 0
     let checkQueued = false
     function queueCheck() {
@@ -78,7 +78,7 @@
     function reportState() {
         checkQueued = false
         if (!outputId || !rootEl) return
-        // a canvas drawn every frame (an effect) is never still: two pages running one are at different points in it
+        // a canvas drawn every frame (effects) is never still
         const busy = document.getAnimations().some((a) => a.playState === "running") || !!rootEl.querySelector("[data-animated]")
         // the content as markup, minus what differs between windows showing the same thing: element ids
         // (some are random) and this output's own id
@@ -104,7 +104,6 @@
         const observer = new MutationObserver(queueCheck)
         observer.observe(rootEl, { subtree: true, childList: true, attributes: true, characterData: true })
         for (const ev of animationEvents) document.addEventListener(ev, queueCheck, true)
-        // the state is looked at after the task that applies the message, so it includes it
         window.api.receive(
             OUTPUT,
             (msg: any) => {

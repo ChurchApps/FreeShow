@@ -17,7 +17,7 @@ export class OutputSend {
 
             let tempMsg: Message = clone(msg)
             if (msg.channel === "OUTPUTS") tempMsg = onlySendToMatchingId(tempMsg, output.id)
-            // numbered per output, so the page can say which messages its reported state includes
+            // per-output seq; the page reports the last one it applied
             ;(tempMsg as any).seq = RenderGroups.stamp(output.id)
 
             output.window.webContents.send(OUTPUT, tempMsg)

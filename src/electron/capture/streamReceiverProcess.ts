@@ -58,13 +58,11 @@ const PREVIEW_MAX_WIDTH = 480
 const WORKER_TARGET = "worker:"
 // outputs whose capture worker wants the stream (to composite it into that output's capture), and those
 // where it is actually compositing — only then does the window stop being sent the frame
-// output -> the source the capture worker composites for it, and the outputs whose page is not sent that
-// source's frames while it does
+// output -> source the worker composites; workerOnly: the page is not sent that source's frames
 const workerTargets = new Map<string, string>()
 const workerOnly = new Set<string>()
 
-// Which sources each output shows, counted. Usually one, but two while one fades into the other: both
-// pages draw then, so both keep receiving. A frame never reaches an output not showing its source.
+// sources shown per output, refcounted (two during a crossfade)
 class OutputSources {
     private refs: { [outputId: string]: { [sourceId: string]: number } } = {}
 
@@ -191,7 +189,7 @@ class Ndi {
     private static findInterval: NodeJS.Timeout | null = null
 
     private static readonly RECEIVE_TIMEOUT_MS = 50
-    // see the OMT loop: drawer and editor tiles are periodic snapshots, not live streams
+    // tiles are periodic snapshots (see the OMT loop)
     static readonly THUMBNAIL_REFRESH_MS = 30000
     private static readonly SNAPSHOT_RECEIVE_TIMEOUT_MS = 1000 // a fresh receiver needs longer for its first frame
     private static readonly SNAPSHOT_RETRY_MS = 1000
@@ -297,7 +295,7 @@ class Ndi {
     static async capture({ source, outputId }: { source: any; outputId: string }) {
         this.sources.add(outputId, source.id)
 
-        // a thumbnail loop on this source is upgraded to a full capture
+        // upgrade a thumbnail loop to a full capture
         const existing = this.loops[source.id]
         if (existing) {
             if (!existing.lowbandwidth && !existing.stopped) return
@@ -319,7 +317,7 @@ class Ndi {
         return loop.done
     }
 
-    // a sleep a refresh request or a stop can cut short
+    // a refresh or stop cuts the sleep short
     private static pause(loop: NdiLoop, ms: number) {
         if (ms === 0) {
             return new Promise<void>((resolve) => {
@@ -357,10 +355,8 @@ class Ndi {
                         consecutiveErrors = 0
                     }
 
-                    // video() already blocks until the next frame, so pace on the source: waiting after
-                    // every frame pushes the next fetch past the frame after it. A tile is a snapshot (see
-                    // the OMT loop): it keeps asking until it has a picture, then drops the receiver and
-                    // holds nothing open until the next refresh.
+                    // video() blocks until the next frame, so the source paces this. A snapshot drops the
+                    // receiver once it has a picture
                     if (loop.lowbandwidth) {
                         if (!delivered && !loop.gotFirst) continue
                         loop.gotFirst = loop.gotFirst || delivered
@@ -419,7 +415,7 @@ class Ndi {
             if (data.outputId) this.sources.remove(data.outputId, data.id)
             else this.sources.clear()
 
-            // a source no output shows any more stops; a thumbnail loop is left to its tile
+            // stop a full receive no output shows; thumbnail loops stay
             const loop = this.loops[data.id]
             if (loop && !loop.lowbandwidth && !this.sources.outputsFor(data.id).length) return this.stopLoop(loop)
             return Promise.resolve()
@@ -461,8 +457,7 @@ type OmtLoop = {
 }
 
 class Omt {
-    // A frame must never reach an output that is not showing its source: the capture worker composites
-    // what it is handed, so a thumbnail refresh for a different source used to flash into a live output.
+    // frames only reach outputs showing their source
     private static sources = new OutputSources()
     static codecs: any = null
     private static loops: { [sourceId: string]: OmtLoop } = {}
@@ -652,7 +647,7 @@ class Omt {
             if (data.outputId) this.sources.remove(data.outputId, data.id)
             else this.sources.clear()
 
-            // a source no output shows any more stops; a thumbnail loop is left to its tile
+            // stop a full receive no output shows; thumbnail loops stay
             const loop = this.loops[data.id]
             if (loop && !loop.lowbandwidth && !this.sources.outputsFor(data.id).length) return this.stopLoop(loop)
             return Promise.resolve()
