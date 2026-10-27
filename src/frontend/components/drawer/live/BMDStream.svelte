@@ -65,6 +65,7 @@
         layer.destroy()
         renderer.destroy()
         stopStream()
+        if (!background) send(BLACKMAGIC, ["RECEIVE_FRAME_STOP"], { id: screen.id })
         if (background && !mirror) send(BLACKMAGIC, ["STOP_RECEIVER"], { id: screen.id, outputId: outputId || Object.keys($outputs)[0] })
     })
 

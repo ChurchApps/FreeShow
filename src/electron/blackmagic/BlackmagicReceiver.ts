@@ -30,6 +30,11 @@ export class BlackmagicReceiver {
         StreamReceiverHost.send("bmd:thumbnail", spec)
     }
 
+    // a drawer card was closed
+    static stopFrame(data: { id: string }) {
+        StreamReceiverHost.send("bmd:tileStop", data)
+    }
+
     static stopReceiver(data: { id: string; outputId?: string } | null = null) {
         StreamReceiverHost.send("bmd:stop", data)
     }

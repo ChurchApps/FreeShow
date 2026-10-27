@@ -35,6 +35,7 @@ export const bmResponses: any = {
     // STOP_SENDER: (data: any) => BlackmagicSender.stop(data.id),
 
     RECEIVE_FRAME: (data: any) => BlackmagicReceiver.captureFrame(data),
+    RECEIVE_FRAME_STOP: (data: any) => BlackmagicReceiver.stopFrame(data),
     RECEIVE_STREAM: (data: any) => BlackmagicReceiver.startCapture(data),
     STOP_RECEIVER: (data: any) => BlackmagicReceiver.stopReceiver(data),
     RESET_DEVICE: (data: any) => BlackmagicManager.resetDevice(data.deviceId)

@@ -21,10 +21,9 @@ export class OmtReceiver {
         StreamReceiverHost.send("omt:thumbnail", data)
     }
 
-    // take a new snapshot now instead of waiting out the tile's refresh interval
-    static refreshStreamOMT(data: { source: Source }) {
-        if (this.omtDisabled) return
-        StreamReceiverHost.send("omt:refresh", data)
+    // a drawer card was closed
+    static stopStreamFrameOMT(data: { id: string }) {
+        StreamReceiverHost.send("omt:tileStop", data)
     }
 
     // full reception for output/background

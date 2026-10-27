@@ -21,10 +21,9 @@ export class NdiReceiver {
         StreamReceiverHost.send("ndi:thumbnail", data)
     }
 
-    // take a new snapshot now instead of waiting out the tile's refresh interval
-    static refreshStreamNDI(data: { source: { name: string; urlAddress: string; id: string } }) {
-        if (this.ndiDisabled) return
-        StreamReceiverHost.send("ndi:refresh", data)
+    // a drawer card was closed
+    static stopStreamFrameNDI(data: { id: string }) {
+        StreamReceiverHost.send("ndi:tileStop", data)
     }
 
     // full reception for output/background

@@ -89,6 +89,7 @@
         renderer.destroy()
         stopStream()
         stopPreview?.()
+        if (!background && !screen.outputId) send(OMT, ["RECEIVE_STOP"], { id: screen.id })
         if (background && !mirror && outputId) send(OMT, ["CAPTURE_DESTROY"], { id: screen.id, outputId })
     })
 
@@ -100,7 +101,7 @@
     <!-- data-source: part of the page's content hash (MainOutput.svelte) -->
     <canvas bind:this={canvas} data-source={screen.id} style={composited ? `${style};visibility: hidden;` : style} />
 {:else}
-    <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} {loaded} icon="omt" white showPlayOnHover showRefreshOnHover={!screen.outputId} on:refresh={() => send(OMT, ["REFRESH_STREAM"], { source: screen })}>
+    <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} {loaded} icon="omt" white showPlayOnHover>
         <SelectElem style="display: flex;" id="omt" data={{ id: screen.id, type: "omt", name: screen.name }} draggable>
             <canvas bind:this={canvas} />
         </SelectElem>

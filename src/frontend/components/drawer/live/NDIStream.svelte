@@ -89,6 +89,7 @@
         renderer.destroy()
         stopStream()
         stopPreview?.()
+        if (!background && !screen.outputId) send(NDI, ["RECEIVE_STOP"], { id: screen.id })
         if (background && !mirror && outputId) send(NDI, ["CAPTURE_DESTROY"], { id: screen.id, outputId })
     })
 
@@ -101,7 +102,7 @@
     <canvas bind:this={canvas} data-source={screen.id} style={composited ? `${style};visibility: hidden;` : style} />
 {:else}
     <!-- class="context #screen_card" -->
-    <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} {loaded} icon="ndi" white showPlayOnHover showRefreshOnHover={!screen.outputId} on:refresh={() => send(NDI, ["REFRESH_STREAM"], { source: screen })}>
+    <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} {loaded} icon="ndi" white showPlayOnHover>
         <SelectElem style="display: flex;" id="ndi" data={{ id: screen.id, type: "ndi", name: screen.name }} draggable>
             <canvas bind:this={canvas} />
         </SelectElem>
