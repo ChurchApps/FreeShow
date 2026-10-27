@@ -1,7 +1,6 @@
 import { OUTPUT, type ValidChannels } from "../../types/Channels"
 
-// set by the main window (renderSignature.ts): sees every message to the output windows first, and may
-// return one to send ahead of it
+// sees every message to the output windows first and may return one to send before it
 let beforeOutputSend: ((channel: string, data: any) => { channel: string; data: any } | null) | null = null
 export function setBeforeOutputSend(fn: typeof beforeOutputSend) {
     beforeOutputSend = fn

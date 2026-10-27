@@ -7,9 +7,7 @@ import { resolveFfmpegPath } from "./ffmpegManager"
 import type { EncoderId } from "./encoderProfiles"
 import type { StreamConfig } from "./RtmpStreamer"
 
-// RTMP runs in the capture worker (see ndiWorker.ts), where the frame already is: the worker spawns and
-// feeds ffmpeg and the relays. Main keeps only what needs Electron (ffmpeg/encoder resolution, settings)
-// and mirrors the worker's status for the UI. No video frame passes through main for RTMP.
+// Main-side proxy for the RTMP engine in the capture worker: resolves ffmpeg and the encoder, mirrors status.
 type StatusListener = (outputId: string, destinations: RtmpStatus) => void
 type NoticeListener = (message: string) => void
 
@@ -33,7 +31,7 @@ export class RtmpBridge {
     static anyRunning(): boolean {
         return this.running.size > 0
     }
-    /** the broadcast size of a running stream, so the capture produces a frame of exactly that size for it */
+    /** config of a running stream; the capture produces frames at its size */
     static runningConfig(outputId: string): StreamConfig | null {
         return this.running.get(outputId)?.config || null
     }
@@ -70,7 +68,7 @@ export class RtmpBridge {
         }
     }
 
-    /** Apply the latest settings: resolves ffmpeg + encoder here (Electron-bound), then the worker runs it. */
+    /** resolves ffmpeg and the encoder on main (Electron-bound), then hands the stream to the worker */
     static async update(outputId: string, config: StreamConfig, destinations: RtmpDestination[]) {
         const worker = this.worker()
         if (!worker) return
@@ -86,7 +84,7 @@ export class RtmpBridge {
         worker.postMessage({ type: "rtmpUpdate", outputId, config, destinations, ffmpegPath: await this.absolutePath(ffmpegPath), encoderId })
     }
 
-    // a bare "ffmpeg" was found on main's PATH; the worker thread spawns with an explicit path
+    // the worker spawns with an absolute path: resolve a bare "ffmpeg" from main's PATH
     private static absoluteCache = new Map<string, string>()
     private static absolutePath(binary: string): Promise<string> {
         if (binary.includes("/") || binary.includes("\\")) return Promise.resolve(binary)
@@ -115,7 +113,7 @@ export class RtmpBridge {
         this.worker()?.postMessage({ type: "rtmpStopAll" })
     }
 
-    /** interleaved int16 audio for the encoder's audio pipe (small; a clone, the caller may pool its buffer) */
+    /** interleaved int16 audio; copied, so the caller may reuse its buffer */
     static updateAudio(outputId: string | undefined, buffer: Buffer, sampleRate = 48000) {
         if (!this.running.size) return
         const copy = new Uint8Array(buffer.byteLength)
@@ -123,7 +121,7 @@ export class RtmpBridge {
         this.worker()?.postMessage({ type: "rtmpAudio", outputId, buffer: copy.buffer, byteOffset: 0, byteLength: copy.byteLength, sampleRate }, [copy.buffer])
     }
 
-    /** CPU-capture path only (no GPU): the paint bitmap already lives on main by Electron's design */
+    /** CPU capture path only (no GPU capture) */
     static updateFrame(outputId: string, buffer: Buffer, size: { width: number; height: number }) {
         if (!this.running.has(outputId)) return
         const copy = new Uint8Array(buffer.byteLength)

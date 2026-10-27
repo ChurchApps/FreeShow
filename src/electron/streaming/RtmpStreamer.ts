@@ -3,9 +3,7 @@ import type { RtmpDestination, RtmpDestinationState, RtmpStatus } from "../../ty
 import { buildEncoderCommand, buildFileRelayCommand, buildRelayCommand, getProfile, SAMPLE_RATE, type EncoderId } from "./encoderProfiles"
 import { outputsOff } from "../capture/outputsOff"
 
-// This engine runs in the capture worker thread (RtmpBridge on main proxies it). It must not import
-// anything Electron-bound: the ffmpeg path and encoder are resolved on main and handed to start()
-// as `resolved`, or supplied through setRtmpResolvers() by a host that runs the engine directly.
+// RTMP engine for the capture worker thread: no Electron imports, ffmpeg and encoder are resolved by the host
 export type RtmpResolved = { ffmpegPath: string; encoderId: EncoderId }
 type Resolvers = { resolveFfmpegPath: () => Promise<string | null>; resolveEncoder: (preference?: string) => Promise<EncoderId> }
 let resolvers: Resolvers | null = null
@@ -80,7 +78,7 @@ interface StreamInstance {
     flvHeader: Buffer | null
     /** actual size of the raw frames, learned from the first captured frame */
     inputSize: { width: number; height: number } | null
-    /** pixel format of the raw frames (bgra 4 B/px, yuv420p 1.5 B/px); the encoder is declared with it */
+    /** pixel format the encoder input is declared with */
     inputPixFmt?: "bgra" | "yuv420p"
     sampleRate?: number
     encoderStartedAt: number
@@ -238,8 +236,7 @@ export class RtmpStreamer {
         if (streamer.encoderRestartTimer) clearTimeout(streamer.encoderRestartTimer)
         streamer.encoderRestartTimer = undefined
 
-        // the encoder flushes what it still holds into the relays as it exits; ending them first cut the
-        // last packet of a stream (and of a recording) in half
+        // stop the encoder first: it flushes into the relays as it exits
         const relays = [...streamer.relays.values()]
         const encoder = streamer.encoder
         this.stopEncoder(streamer)
@@ -355,7 +352,7 @@ export class RtmpStreamer {
                             isWriting = false
                             streamer.frameWriting = false
                             streamer.videoFrameCount = (streamer.videoFrameCount || 0) + 1
-                            // the frame that was current when this write began may have been replaced meanwhile
+                            // release the frame replaced while this write was in flight
                             const pending = streamer.pendingRelease
                             streamer.pendingRelease = undefined
                             pending?.()
@@ -625,12 +622,11 @@ export class RtmpStreamer {
 
     // ----- inputs -----
 
-    // The frame is BORROWED: the caller keeps it untouched until `release` is called (when a newer frame
-    // replaces it or the stream stops), so no copy is made here. Omit `release` for an owned buffer.
     static frameBytes(size: { width: number; height: number }, pixFmt: "bgra" | "yuv420p"): number {
         return pixFmt === "yuv420p" ? size.width * size.height + 2 * (Math.floor(size.width / 2) * Math.floor(size.height / 2)) : size.width * size.height * 4
     }
 
+    // `buffer` is borrowed (not copied) until `release` is called; omit `release` for an owned buffer
     static updateFrame(outputId: string, buffer: Buffer, size: { width: number; height: number }, release?: () => void, pixFmt: "bgra" | "yuv420p" = "bgra") {
         const streamer = this.streamers.get(outputId)
         if (!streamer) {
@@ -647,7 +643,7 @@ export class RtmpStreamer {
             return
         }
 
-        // a write of the previous frame may still be in flight: swap the release to run after that write
+        // the previous frame may still be writing: defer its release until the write ends
         const previousRelease = streamer.releaseFrame
         streamer.lastFrame = buffer
         streamer.releaseFrame = release
@@ -668,7 +664,7 @@ export class RtmpStreamer {
             return
         }
 
-        // the capture resolution or pixel format changed under us, so the encoder's input declaration no longer matches
+        // capture size or pixel format changed: the encoder input declaration no longer matches
         if (streamer.inputSize && (streamer.inputSize.width !== size.width || streamer.inputSize.height !== size.height || (streamer.inputPixFmt || "bgra") !== pixFmt)) {
             console.log(`[RtmpStreamer] Capture input changed to ${size.width}x${size.height} ${pixFmt}, restarting encoder`)
             streamer.inputPixFmt = pixFmt
@@ -686,7 +682,7 @@ export class RtmpStreamer {
             if (!streamer.hasReceivedFirstAudio) streamer.hasReceivedFirstAudio = true
 
             try {
-                // an output the user turned off keeps streaming, silent (capture/outputsOff.ts)
+                // an output turned off keeps streaming, silent
                 audioStream.write(outputsOff.has(streamer.outputId) ? Buffer.alloc(buffer.length) : buffer)
                 if (streamer.audioStats) {
                     streamer.audioStats.totalBytes += buffer.length
@@ -751,8 +747,7 @@ function configRequiresRestart(prev: StreamConfig, next: StreamConfig): boolean 
     return prev.width !== next.width || prev.height !== next.height || prev.fps !== next.fps || prev.bitrate !== next.bitrate || prev.enableAudio !== next.enableAudio || prev.encoder !== next.encoder || prev.rateControl !== next.rateControl
 }
 
-// Every (re)start of a recording relay - an encoder respawn, a crashed relay - continues in a new part
-// file: restarting into the same path would overwrite what was already recorded.
+// each recording relay restart writes a new part file so it does not overwrite the recording
 function nextFilePart(relay: RelayInstance): string {
     relay.fileParts = (relay.fileParts || 0) + 1
     if (relay.fileParts === 1) return relay.destination.url

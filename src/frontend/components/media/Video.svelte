@@ -32,7 +32,7 @@
     let softLoopVideo: HTMLVideoElement | null = null
     let softLoopOpacity = 0
 
-    // Follower mirrors paint renderer frames to canvas instead of redundant decoding
+    // a follower mirror paints the renderer's frames instead of decoding again
     $: groupRendererId = mirror && !$currentWindow ? findGroupRendererId($renderGroups, outputId) : null
     $: cloneSource = groupRendererId && $mirrorRegistryTick >= 0 ? getMirrorVideo(mirrorVideoKey(groupRendererId, path)) : null
 
@@ -60,8 +60,7 @@
                 const isSoftLoop = !!(data.softLoop && data.softLoop > 0)
                 isFadingOutState = !!data.isFadingOut
                 const isFading = fadingOut || isFadingOutState
-                // the clock as of now, not as of when it was read: a state can arrive late, or several at once
-                // after the page was busy, and judging progress by arrival time made that look like a jump
+                // advance the clock to now: a state can arrive late or in a burst
                 let clockNow = data.currentTime
                 if (clockNow !== undefined && data.at && !data.paused) {
                     clockNow += (Math.max(0, Date.now() - data.at) / 1000) * targetPlaybackRate

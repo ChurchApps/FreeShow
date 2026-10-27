@@ -1,9 +1,9 @@
 import { writable } from "svelte/store"
 
-// Preview deduplication: group renderer decodes once, follower mirrors paint from it via canvas
+// Preview mirrors: the group renderer decodes once, followers paint from it via canvas.
 const elements = new Map<string, HTMLVideoElement>()
 
-// bumped on every register/unregister so Svelte components re-query reactively
+// bumped on every register/unregister so components re-query
 export const mirrorRegistryTick = writable(0)
 
 export function mirrorVideoKey(outputId: string, path: string): string {
@@ -30,7 +30,7 @@ export function findGroupRendererId(groups: { [rendererId: string]: string[] }, 
     return Object.entries(groups).find(([rendererId, members]) => rendererId !== outputId && members.includes(outputId))?.[0] ?? null
 }
 
-// keeps the registry in sync with a mirror's <video> element across reactive updates
+// keeps the registry in sync with a mirror's <video> element
 export class MirrorRegistration {
     private key: string | null = null
     private el: HTMLVideoElement | null = null
@@ -61,7 +61,7 @@ export class MirrorRegistration {
     }
 }
 
-// paints a source <video>'s frames onto a canvas, honoring the media fit like object-fit would
+// paints a source <video> onto a canvas with the media fit applied
 export class MirrorCloneDrawer {
     private canvas: HTMLCanvasElement | null = null
     private source: HTMLVideoElement | null = null

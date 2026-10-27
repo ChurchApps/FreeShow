@@ -5,10 +5,8 @@ type StreamHandler = (data: StreamFrameData) => void
 
 const handlers: { [channel: string]: Set<StreamHandler> } = {}
 
-// Two ways in. Output windows: the preload owns the socket and posts each frame here as a transferred
-// ArrayBuffer read out of shared memory (see preload.ts); this side acks after dispatch so the sender
-// keeps only what this window draws. The app window (small preview frames): a socket opened here, each
-// frame a text header followed by one binary message read in place.
+// output windows: the preload posts frames as transferred ArrayBuffers; app window: a socket opened here,
+// each frame a text header then one binary message
 let socket: WebSocket | null = null
 let pendingHeader: { ipcChannel: string; id: string; time: number; xres: number; yres: number; format: string } | null = null
 
@@ -41,7 +39,7 @@ function connectStream(targetId: string, port: number, token: string) {
         if (!header || !(message.data instanceof ArrayBuffer)) return
         const frame = { xres: header.xres, yres: header.yres, format: header.format, data: new Uint8Array(message.data) }
         dispatch(header.ipcChannel, { id: header.id, frame, time: header.time })
-        // ack after dispatch: the sender measures the round trip to size what it keeps in flight
+        // ack after dispatch: the sender sizes its in-flight frames from the round trip
         if (ws.readyState === WebSocket.OPEN) ws.send("1")
     }
     ws.onclose = () => {
@@ -56,8 +54,7 @@ if (typeof window !== "undefined") {
         if (message?.type === "STREAM_FRAME" && message.data instanceof ArrayBuffer) {
             const buffer: ArrayBuffer = message.data
             dispatch(message.ipcChannel, { id: message.id, frame: { xres: message.xres, yres: message.yres, format: message.format, data: new Uint8Array(buffer) }, time: message.time })
-            // The components draw in Svelte's flush, a microtask they queued during dispatch; this one
-            // runs after it, so the upload has read the buffer and it can go back to be refilled.
+            // after Svelte's flush (queued during dispatch), so the upload has read the buffer
             queueMicrotask(() => window.postMessage({ type: "STREAM_ACK", target: message.target, slot: message.slot, data: buffer }, "*", [buffer]))
             return
         }

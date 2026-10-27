@@ -1,21 +1,10 @@
 import type { Output, Outputs } from "../../types/Output"
 import { isOutputBound } from "../components/helpers/output"
 
-// Two outputs may share one render (main's RenderGroups.ts) only while their pages would render the same
-// picture. A page renders from the data this window sends it, so its signature is computed from exactly
-// that data, as sent: a mirror of every message to the output windows, not the live stores, which can be
-// ahead of what the pages have. The signatures go out ahead of each message, so an output that stops
-// matching has its own page back before the change reaches any page.
-//
-// What makes one output's page differ from another's, given the same messages:
-// - its entry in OUTPUTS (each window is sent only its own), minus the fields no page draws;
-// - any message keyed by output id (colorbars, the live-prepare blackout, ...), taken generically;
-// - its playing-video state, keyed "<path>_<output id>";
-// - every binding to outputs anywhere in the content it can show, evaluated for it as its page does;
-// - the draw messages sent to it alone (main routes them by id), and the strokes its page has painted,
-//   which each page keeps for itself.
+// Signature of what each output's page draws, from the messages as sent (not the stores, which can be ahead);
+// sent before each message, so outputs that stop matching are split before any page changes.
 
-// main handles these itself; no page draws from them
+// main handles these; no page draws from them
 const CONTROL = new Set([
     "CREATE",
     "REMOVE",
@@ -38,19 +27,15 @@ const CONTROL = new Set([
     "RENDER_BUSY"
 ])
 
-// Output fields no page draws from: where its window is, how it is sent, what it is called (bindings by
-// name are evaluated below). Everything else counts, so a field added later splits outputs rather than
-// letting one show another's content.
+// output fields no page draws from; any other field counts, so a new field splits outputs
 const NOT_DRAWN = new Set(["id", "name", "color", "screen", "boundsLocked", "alwaysOnTop", "taskbar", "hideFromPreview", "invisible", "ndi", "ndiData", "omt", "omtData", "blackmagic", "blackmagicData", "webrtc", "webrtcData", "rtmp", "rtmpData"])
 
 const sent: { [channel: string]: any } = {}
-// per output: the last DRAW and DRAW_TOOL it was sent (a page that was sent none has the defaults), and
-// every stroke its page painted: a page paints the DRAW data it gets while its tool is "paint"
+// per output: last DRAW and DRAW_TOOL sent to it, and a hash of the DRAW data painted while the tool was "paint"
 const draws: { [outputId: string]: { data: any; tool: string; painted: number } } = {}
 let lastSent = ""
 
-/** For request.ts: every message to the output windows goes through here first; changed signatures are
- *  sent ahead of it. */
+/** RENDER_SIGNATURES message to send before this one, if any signature changed */
 export function renderSignatureHook(channel: string, data: any): { channel: string; data: any } | null {
     const sigs = renderSignaturesBefore(channel, data)
     return sigs ? { channel: "RENDER_SIGNATURES", data: sigs } : null
@@ -90,10 +75,9 @@ function signature(id: string, output: Output): string {
         if (key === "bounds") continue
         own[key] = value
     }
-    // every page reads transparency as a truth value, and saved outputs hold false, null or nothing
+    // saved outputs hold false, null or nothing for opaque
     own.transparent = !!output?.transparent
-    // The aspect lays the page out. The exact size does too where a style uses it as the resolution, and
-    // for a stage layout; elsewhere a page of any size draws the same picture scaled.
+    // only the aspect matters, unless a style uses the output resolution or it is a stage output
     const b = output?.bounds
     const style = sent.STYLES?.[output?.style || ""]
     const exactSize = !!output?.stageOutput || !!style?.aspectRatio?.outputResolutionAsRatio
@@ -123,9 +107,7 @@ function signature(id: string, output: Output): string {
     return hash(stableJson([own, keyed, video, bound, d.data, d.tool, d.painted])).toString(36)
 }
 
-// every binding list in the content this output shows: its own out (slide, background, overlays, effects,
-// scene), the slide on it and that slide's place in the layout, the overlays and effects it shows, and
-// every template any of these or its style name (a style's templates, scripture and metadata templates)
+// every binding list in the content this output can show, including templates named anywhere in it
 function bindingsIn(_id: string, output: Output): string[][] {
     const lists: string[][] = []
     const out = output?.out
@@ -141,7 +123,6 @@ function bindingsIn(_id: string, output: Output): string[][] {
     for (const overlayId of out?.overlays || []) sources.push(sent.OVERLAYS?.[overlayId])
     for (const effectId of out?.effects || []) sources.push(sent.EFFECTS?.[effectId])
 
-    // templates named anywhere in that content, and in those templates
     const templates = sent.TEMPLATES || {}
     const seen = new Set<string>()
     const queue = [...sources]
@@ -191,8 +172,7 @@ function collect(value: any, lists: string[][], depth = 0) {
     }
 }
 
-// JSON with object keys in a fixed order: two outputs saved with the same fields in a different order
-// render the same
+// JSON with sorted object keys, so field order does not change the signature
 function stableJson(value: any): string {
     if (value === null || typeof value !== "object") return JSON.stringify(value) ?? "null"
     if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`

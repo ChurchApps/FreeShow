@@ -60,7 +60,7 @@ contextBridge.exposeInMainWorld("api", {
     }
 })
 
-// frames from the stream receive process (shared memory + loopback socket): see streamLink.ts
+// stream frames from the receive process (streamLink.ts)
 installStreamLinks(ipcRenderer)
 
 // Forward stream port directly to page to avoid extra copies over contextBridge

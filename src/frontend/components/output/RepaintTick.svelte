@@ -3,9 +3,7 @@
     import { OUTPUT } from "../../../types/Channels"
     import { destroy, receive } from "../../utils/request"
 
-    // An offscreen page only paints when something on it changes, and webContents.invalidate() does not
-    // count. Main asks for a frame here when what goes out changes without the page changing, such as an
-    // output being turned on or off: redrawing a 1px canvas is the change that makes the page paint.
+    // forces an offscreen paint by redrawing a 1px canvas; webContents.invalidate() does not
     export let outputId: string
 
     let canvas: HTMLCanvasElement

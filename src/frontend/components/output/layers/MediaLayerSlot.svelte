@@ -5,8 +5,7 @@
     import type { MediaStyle } from "../../../../types/Main"
     import { addMediaSlot, removeMediaSlot, type MediaSlot } from "./mediaLayers"
 
-    // Where a background video would be: the capture worker draws it here (see mediaLayers.ts). An offscreen
-    // page only paints when something in it changed, so a 1px canvas is redrawn on every frame of the source.
+    // The capture worker draws the video here; a 1px canvas redrawn per source frame keeps the page painting.
     export let outputId: string
     export let path: string
     export let mediaStyle: MediaStyle = {}
@@ -22,7 +21,7 @@
 
     function onTick() {
         if (!loaded) {
-            // the first frame of the source: the background can start its transition now
+            // first source frame: the background may start its transition
             loaded = true
             dispatch("loaded")
         }

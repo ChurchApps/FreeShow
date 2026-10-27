@@ -1,7 +1,4 @@
-// Control surface for Blackmagic (DeckLink) input. The capture itself — the channel, the frame loop,
-// the format handling, the preview downscale and the delivery to renderers — runs in the stream
-// receive utilityProcess next to NDI and OMT (see ../capture/streamReceiverProcess), because video
-// must never touch the main thread. Main only resolves the device from its list and forwards control.
+// Blackmagic input control; capture runs in the stream receive utilityProcess.
 
 import { StreamReceiverHost } from "../capture/StreamReceiverHost"
 import { BlackmagicManager } from "./BlackmagicManager"

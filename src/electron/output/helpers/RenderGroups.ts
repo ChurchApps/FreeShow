@@ -1,33 +1,20 @@
 import type { Output } from "../../../types/Output"
 
-// Shared render: outputs that would render the same picture share one render, and its single readback
-// fans out to every member's consumers. Every output keeps a page of its own, fed all the same data, so
-// sharing never decides what an output shows: a member only takes another page's frames while the app
-// reports that both pages have identical render inputs (renderSignature.ts), and it goes back to its own
-// page the moment that stops being true, before the change reaches any page.
-//
-// Two levels decide it:
-// - the CLASS: the output settings a page's pixels depend on that main knows itself (style, stage layout,
-//   resolution, aspect, transparency, cropping, blending). Pages of one class render at the class's
-//   largest size, so a member can take any other member's frames at its own size.
-// - the SIGNATURE: everything else the page renders from, computed by the app per output.
+// Outputs with the same class (pixel-affecting settings) and app render signature share one page's render.
 export class RenderGroups {
     static enabled = process.env.FS_SHARE_RENDER !== "0"
 
     private static classes = new Map<string, string>()
     private static configs = new Map<string, Output>()
     private static signatures = new Map<string, string>()
-    // pages with a transition or animation still running, and a hash of each still page's content: an
-    // output gives up its own page's frames for another's only once both pages are still and show the same
-    // content, so a fade is never cut short and nothing changes on the switch
+    // pages mid-transition, and each still page's content hash; joining waits until both are still and equal
     private static busy = new Set<string>()
     private static content = new Map<string, string>()
-    // message seqs per output: sent, applied (in the last page report), and sent at the last signature change
+    // message seqs per output: sent, last applied by the page, and sent at the last signature change
     private static sent = new Map<string, number>()
     private static applied = new Map<string, number>()
     private static changedAt = new Map<string, number>()
-    // outputs with an offscreen page to share: an offscreen output's own window, or a displayed output's
-    // capture surface. A displayed output without one renders on screen and shares with nobody.
+    // outputs with an offscreen page (own offscreen window or capture surface)
     private static renderable = new Set<string>()
     // id -> the id whose page it shows (itself when it renders its own)
     private static renderer = new Map<string, string>()
@@ -42,8 +29,7 @@ export class RenderGroups {
         return this.configs.get(id)
     }
 
-    // The output settings that change a page's pixels. Size is not one: a class renders at its largest
-    // member's size and each member is sent at its own. Aspect is, since it changes the layout.
+    // size is excluded (a class renders at its largest member's size); aspect is not, it changes layout
     static computeKey(output: Output): string {
         const w = output.bounds?.width || 0
         const h = output.bounds?.height || 0
@@ -67,7 +53,6 @@ export class RenderGroups {
         this.recompute()
     }
 
-    /** an output's settings changed: its class (and the class's size) follow */
     static updateConfig(id: string, output: Output) {
         if (!this.classes.has(id)) return
         this.configs.set(id, output)
@@ -96,7 +81,7 @@ export class RenderGroups {
         if (had) this.recompute()
     }
 
-    /** the app's render signatures; outputs missing from the map have none and render alone */
+    /** outputs missing from the map render alone */
     static setSignatures(sigs: { [id: string]: string }) {
         if (!this.enabled) return
         let changed = false
@@ -131,7 +116,7 @@ export class RenderGroups {
         else this.busy.delete(id)
         if (content) this.content.set(id, content)
         else this.content.delete(id)
-        // only a still page can let an output join another's render; anything else never changes membership
+        // a busy report never changes membership
         if (!busy) this.recompute()
     }
 
@@ -172,7 +157,7 @@ export class RenderGroups {
         }
 
         for (const ids of buckets.values()) {
-            // keep the page that already renders for the most of these outputs
+            // prefer the page already rendering for most of these outputs
             let chosen = ids[0]
             let best = -1
             for (const r of ids) {
@@ -183,16 +168,13 @@ export class RenderGroups {
                     chosen = r
                 }
             }
-            // An output showing its own page joins once both pages are still and show the same content (the
-            // signatures can match before a page has applied the change that made them match); until then it
-            // keeps its own page.
+            // join only once both pages are still and equal; signatures can match before a page applies the change
             for (const m of ids) {
                 const showingOwn = (prev.get(m) ?? m) === m
                 if (!showingOwn) continue
                 next.set(m, this.showsSame(m, chosen) ? chosen : m)
             }
-            // An output showing another page stays with it while that page still renders the same content
-            // for itself; otherwise it moves now, since what it was showing is no longer its content.
+            // a follower stays while its page still renders for itself, else moves to the chosen page
             for (const m of ids) {
                 const was = prev.get(m) ?? m
                 if (was === m) continue
@@ -231,7 +213,6 @@ export class RenderGroups {
         return this.rendererOf(id) !== id
     }
 
-    /** whether any other registered output is of the same class (could share this output's render) */
     static hasClassmates(id: string): boolean {
         const cls = this.classes.get(id)
         if (cls === undefined) return false
@@ -239,7 +220,7 @@ export class RenderGroups {
         return false
     }
 
-    /** the size every page of this output's class renders at: its largest member */
+    /** the largest class member's size */
     static renderSize(id: string): { width: number; height: number } | null {
         const cls = this.classes.get(id)
         let best: { width: number; height: number } | null = null

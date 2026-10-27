@@ -1,20 +1,4 @@
-// Frame transport from a video-producing process to the windows that draw the frames, with no copy
-// on the main process and no serialization of pixels. Used by the stream receive process (NDI/OMT/
-// Blackmagic input → output windows, app previews) and by the capture worker (captured output →
-// the WebRTC host window).
-//
-// A MessagePort clone of a 16MB frame cost ~30ms to serialize and ~30ms to deserialize (Mojo chunks
-// it), which capped 4K delivery at 12-14fps; a binary WebSocket message took Chromium ~110ms to hand
-// to the page. So full-size frames go through shared memory: the frame is written into a slot of a
-// ring the window has mapped too (osr-capture shmMap), and a loopback WebSocket carries only a small
-// header naming the slot, plus the window's ack that frees it. Windows without the native module
-// (the app window's small preview frames) get the pixels as binary messages instead. The main
-// process only tells a window the port and the token.
-//
-// Flow control is measured, not chosen: a frame's round trip (post to ack) divided by the source's
-// frame interval is how many frames must overlap to keep the window busy; beyond that the newest
-// frame waits its turn, replacing whatever was waiting, so a window is never sent a frame it will
-// have to catch up on.
+// Loopback WebSocket frame server: pixels go through shared-memory ring slots, or as binary messages to windows without osr-capture.
 
 import http from "http"
 import { randomBytes } from "crypto"
@@ -23,14 +7,13 @@ export type ServedFrame = { xres: number; yres: number; data: Buffer; format: st
 
 export type FrameServerOptions = {
     log: (text: string) => void
-    /** the socket is listening: hand port + token to the process that wires windows */
     onListening: (info: { port: number; token: string }) => void
-    /** a frame arrived for a target no window has connected for yet (asked once per target) */
+    /** called once per target that has frames but no window */
     onNeedTarget?: (targetId: string, preview: boolean) => void
-    /** reference hooks for frames the server keeps (waiting, or being copied on the thread pool) */
+    /** refcount hooks for frames held while waiting or being copied */
     retain?: (frame: ServedFrame) => void
     release?: (frame: ServedFrame) => void
-    /** per-second delivery statistics through log() */
+    /** log delivery stats every second */
     stats?: boolean
 }
 
@@ -40,18 +23,17 @@ type Subscriber = {
     ws: any
     inFlight: number
     sentAt: number[]
-    roundTrips: number[] // recent post->ack samples, ms
+    roundTrips: number[] // post->ack samples, ms
     pending: Pending | null
-    roundTrip: number // the window's round trip when it is keeping up: the minimum of the recent samples
-    frameInterval: number // measured arrival spacing, ms (smoothed)
+    roundTrip: number // min of roundTrips
+    frameInterval: number // smoothed arrival spacing, ms
     lastFrameAt: number
     wantsShm: boolean
     ring: ShmRing | null
 }
 
-// slots a ring starts with; growRing takes it further when the measurement asks
+// initial ring slots; growRing adds more
 const SHM_SLOTS = 3
-// smoothing weight for the interval measurement; a weight, not a machine-dependent threshold
 const SMOOTHING = 0.2
 const ROUND_TRIP_SAMPLES = 32
 
@@ -79,7 +61,7 @@ export class FrameServer {
     private stats: { [targetId: string]: { offered: number; posted: number; acked: number; replaced: number } } = {}
     private stallTimer: NodeJS.Timeout | null = null
     private statsTimer: NodeJS.Timeout | null = null
-    /** time spent in shared-memory copies (thread pool), ms, for the owner's telemetry */
+    /** ms spent in shared-memory copies */
     shmMs = 0
 
     constructor(private opts: FrameServerOptions) {
@@ -108,7 +90,7 @@ export class FrameServer {
         return !!this.subscribers[targetId]
     }
 
-    /** every target with a window connected or asked for */
+    /** true = connected, false = requested */
     targets(): { [targetId: string]: boolean } {
         const out: { [targetId: string]: boolean } = {}
         for (const id of Object.keys(this.subscribers)) out[id] = true
@@ -116,7 +98,6 @@ export class FrameServer {
         return out
     }
 
-    /** ask for a target's window without a frame to offer yet (asked once until it connects or is dropped) */
     request(targetId: string, preview = false) {
         if (this.subscribers[targetId] || this.requested.has(targetId)) return
         this.requested.add(targetId)
@@ -129,7 +110,7 @@ export class FrameServer {
             if (isBinary) return
             const text = raw.toString()
             if (!targetId) {
-                // handshake: { token, targetId, shm }: shm = the window can map shared memory
+                // handshake: { token, targetId, shm }; shm = window can map shared memory
                 let hello: any = null
                 try {
                     hello = JSON.parse(text)
@@ -156,7 +137,7 @@ export class FrameServer {
         ws.on("error", () => {})
     }
 
-    /** forget a target's window (it closed, reloaded or crashed); the next frame asks for it again */
+    /** the next frame requests the window again */
     drop(targetId: string) {
         this.requested.delete(targetId)
         const sub = this.subscribers[targetId]
@@ -179,10 +160,7 @@ export class FrameServer {
         } catch {}
     }
 
-    /**
-     * Offer a frame to a target. The frame is referenced (retain) while the server keeps it and
-     * released when it has been copied out or replaced; the caller's own reference is its business.
-     */
+    /** retains the frame until it is copied out or replaced by a newer one */
     deliver(targetId: string, ipcChannel: string, id: string, frame: ServedFrame, time: number, preview = false) {
         const subscriber = this.subscribers[targetId]
         if (!subscriber) {
@@ -216,12 +194,7 @@ export class FrameServer {
         return (this.stats[targetId] ||= { offered: 0, posted: 0, acked: 0, replaced: 0 })
     }
 
-    // How many frames to keep in flight so the window is never idle: round trip / frame interval, plus
-    // one so the next frame is already there when the window finishes the current one (frames arrive
-    // in bursts). The round trip used is the best recent one, not the average: a window that falls
-    // behind reports longer and longer round trips, and sizing the depth on those would feed the
-    // backlog that caused them.
-    // frames that must overlap to keep this window busy, plus the one being written
+    // min round trip, not the average: a lagging window's longer round trips would grow its own backlog
     private neededDepth(subscriber: Subscriber) {
         if (!subscriber.roundTrip || !subscriber.frameInterval) return 1
         return Math.ceil(subscriber.roundTrip / subscriber.frameInterval) + 1
@@ -232,8 +205,7 @@ export class FrameServer {
         return subscriber.ring ? Math.min(depth, subscriber.ring.slots) : depth
     }
 
-    // Grow the ring to the depth this window needs. Only while it is idle: reallocating the shared region
-    // under a reader would pull a slot out from under it.
+    // only while idle: reallocating the region would pull a slot from under a reader
     private growRing(targetId: string, subscriber: Subscriber) {
         const ring = subscriber.ring
         if (!ring || subscriber.inFlight > 0 || subscriber.pending) return
@@ -247,9 +219,7 @@ export class FrameServer {
         subscriber.ring = grown
     }
 
-    // A window that stops acking leaves its slots busy for good, so this target would never send again.
-    // The bound is its own measured round trips, so a merely slow window - which is always acking
-    // something - is never cut off.
+    // frees slots of a window that stopped acking; the bound is relative to its own round trips
     private sweepStalled() {
         const now = Date.now()
         for (const targetId of Object.keys(this.subscribers)) {
@@ -302,15 +272,13 @@ export class FrameServer {
         } catch {}
     }
 
-    // Shared memory: the frame is copied into a free ring slot on the thread pool and the header names
-    // the slot once it holds the frame. Otherwise two WebSocket messages: the header, then the pixels.
+    // shm: the header is sent once the slot holds the frame; otherwise header then binary pixels
     private post(targetId: string, subscriber: Subscriber, next: Pending) {
         try {
             const header: any = { ipcChannel: next.ipcChannel, id: next.id, time: next.time, xres: next.frame.xres, yres: next.frame.yres, format: next.frame.format }
             if (subscriber.wantsShm) {
                 const bytes = next.frame.data.length
                 if (!subscriber.ring || subscriber.ring.slotBytes < bytes) {
-                    // a ring for this frame size; the window maps the new one and lets go of the old
                     this.dropRing(subscriber.ring)
                     subscriber.ring = this.createRing(bytes)
                     if (!subscriber.ring) subscriber.wantsShm = false
@@ -359,7 +327,6 @@ export class FrameServer {
         }
     }
 
-    // the window took a frame: measure the round trip, then send whatever arrived meanwhile, newest only
     private onAck(targetId: string, slot: number) {
         const subscriber = this.subscribers[targetId]
         if (!subscriber) return
@@ -384,8 +351,7 @@ export class FrameServer {
         this.post(targetId, subscriber, next)
     }
 
-    // acked = frames the window took (it acks after handing the frame to its drawing components), so
-    // acked/s is the rate the window actually drew
+    // acked/s = frames the window drew
     private logStats() {
         for (const [targetId, st] of Object.entries(this.stats)) {
             const sub = this.subscribers[targetId]

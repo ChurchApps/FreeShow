@@ -1,12 +1,4 @@
-// Renderer side (preload) of the frame transport in capture/FrameServer.ts: shared-memory frames from
-// the stream receive process (NDI/OMT/Blackmagic input) or the capture worker (WebRTC host).
-//
-// A window keeps one socket per target it draws (an output window has one; the WebRTC host has one per
-// streamed output). Each header names a ring slot, whose bytes are copied once into an ArrayBuffer on
-// the thread pool and then transferred (not copied) to the page as a STREAM_FRAME message. The page
-// posts STREAM_ACK after it has handed the frame to its drawing components, returning the buffer to be
-// refilled, which frees the slot and paces the sender. Windows where the native module cannot load
-// get the STREAM_WS details forwarded so the page reads frames from the socket itself.
+// Preload client of capture/FrameServer.ts: reads ring slots into transferred buffers; STREAM_ACK returns the buffer and frees the slot.
 
 import type { IpcRenderer } from "electron"
 
@@ -79,8 +71,7 @@ export function installStreamLinks(ipcRenderer: IpcRenderer) {
                 if (ws.readyState === WebSocket.OPEN) ws.send("1:" + header.slot)
                 return
             }
-            // a buffer the page has handed back, or a new one; the copy runs on the thread pool so this
-            // thread is free to draw the previous frame meanwhile
+            // reuse a buffer the page returned
             const reuse = link.spare.findIndex((b) => b.byteLength === header.bytes)
             const data = reuse >= 0 ? link.spare.splice(reuse, 1)[0] : new ArrayBuffer(header.bytes)
             const tRead = performance.now()
@@ -104,7 +95,6 @@ export function installStreamLinks(ipcRenderer: IpcRenderer) {
         ws.onerror = () => {}
     }
 
-    // the page is done with a frame: its buffer comes back to be filled again, and the slot is freed
     window.addEventListener("message", (e: MessageEvent) => {
         if (e.data?.type !== "STREAM_ACK") return
         const link = links.get(String(e.data.target || ""))

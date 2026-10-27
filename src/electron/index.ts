@@ -52,9 +52,7 @@ export const isLinux: boolean = process.platform === "linux"
 // Chromium command-line switches must precede app "ready" (they configure the GPU process launch)
 applyCommandLineSwitches()
 
-// Whoever is reading our output may stop (a shell pipeline closing, a terminal going away). A write to a
-// closed stream raises EPIPE, and an unhandled one takes the whole app down mid-service - losing the
-// outputs over a log line nobody was reading.
+// a closed stdout/stderr (pipe or terminal gone) raises EPIPE, which would otherwise crash the app
 for (const stream of [process.stdout, process.stderr]) {
     stream.on("error", (err: NodeJS.ErrnoException) => {
         if (err?.code !== "EPIPE") throw err
@@ -131,9 +129,7 @@ app.on("ready", async () => {
 // Always on for Linux, elsewhere gated behind FS_CAP_STATS; observational only.
 function logGpuStatus(tag: string) {
     if (!isLinux && !process.env.FS_CAP_STATS) return
-    // "complete" waits for the GPU process's own report, so the feature status read after it is the real
-    // one (read straight away it is still the software placeholder) and the GL strings are present ("basic"
-    // has none on macOS)
+    // "complete" waits for the GPU process, so the feature status is real and GL strings exist ("basic" has none on macOS)
     app.getGPUInfo("complete")
         .then((info: any) => {
             try {
@@ -290,8 +286,7 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     window.webContents.ipc.on(STARTUP, (_event, msg) => {
         if (msg?.channel === "READY") {
             window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile })
-            // render groups may have formed before this window could receive the change broadcast
-            // (outputs are recreated during startup) — sync the current state on every (re)load
+            // render groups may have formed before this window could receive the broadcast
             if (mainOutput) toApp(OUTPUT, { channel: "RENDER_GROUPS", data: RenderGroups.snapshot() })
         }
     })

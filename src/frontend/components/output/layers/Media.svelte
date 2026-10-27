@@ -15,8 +15,7 @@
     export let mediaStyle: MediaStyle = {}
     export let mirror = false
     export let fadingOut = false
-    // decoded in a shared media window instead of here (see mediaLayers.ts); decided once, at mount, so a
-    // playing video is never handed between the two
+    // decoded in a shared media window; fixed at mount so a playing video never moves between the two
     export let layerable = false
     export let pauseCenter = false
 

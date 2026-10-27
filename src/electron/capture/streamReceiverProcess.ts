@@ -1,10 +1,4 @@
-// Runs in an Electron utilityProcess: owns every NDI/OMT/Blackmagic receive loop, the frame packing
-// and the preview downscale, and hands frames straight to the renderers that draw them.
-//
-// Video must never touch the main thread. Receiving in the main process cost it ~15ms of event-loop
-// lag per 4K source (the IPC write alone is ~17ms per 8MB frame), which is what made the UI crawl
-// while a stream was live. From here the main process only brokers ports and control messages: it
-// never sees a frame, and its lag stays around 1ms no matter how many 4K sources are running.
+// Electron utilityProcess running the NDI/OMT/Blackmagic receive loops and serving their frames to windows.
 
 import { ensureOmtCodecSearchPath } from "../omt/omtModule"
 import { getMacadam } from "../blackmagic/macadamLoader"
@@ -14,17 +8,9 @@ import { packStreamFrame, previewStreamFrame, type StreamFrame, type StreamFrame
 
 const parentPort: any = (process as any).parentPort
 
-// ----- frame transport -----
-//
-// Frames go to the windows through FrameServer (shared-memory ring + loopback socket; see
-// FrameServer.ts). Main is never in the path: it only tells a window the port and the token.
 import { FrameServer } from "./FrameServer"
 
-// Frame buffers are pooled and reference counted: the OMT receiver decodes straight into a pooled
-// buffer (receive(..., into)), each window that still needs the frame (waiting, or being copied into
-// shared memory on the thread pool) holds a reference, and the buffer goes back to the pool when the
-// last one lets go. No frame is copied on this thread; a fresh 16MB buffer per frame cost more in page
-// faults than the copy itself.
+// pooled, refcounted frame buffers: OMT decodes into one, and each window still holding the frame keeps a reference
 const pooled = new Map<Buffer, number>()
 const freeBuffers: Buffer[] = []
 function acquireBuffer(bytes: number): Buffer {
@@ -56,8 +42,6 @@ function releaseFrame(frame: { data: Buffer }) {
 const PREVIEW_MAX_WIDTH = 480
 // prefix of the targets that are the capture worker rather than a window
 const WORKER_TARGET = "worker:"
-// outputs whose capture worker wants the stream (to composite it into that output's capture), and those
-// where it is actually compositing — only then does the window stop being sent the frame
 // output -> source the worker composites; workerOnly: the page is not sent that source's frames
 const workerTargets = new Map<string, string>()
 const workerOnly = new Set<string>()
@@ -105,8 +89,6 @@ function log(text: string) {
 const frames = new FrameServer({
     log,
     onListening: (info) => toMain({ type: "wsInfo", port: info.port, token: info.token }),
-    // a window is only asked for when there is actually a frame to deliver, so nothing is wired up for
-    // outputs that never show a stream
     onNeedTarget: (targetId, preview) => toMain({ type: "needPort", targetId, preview }),
     retain: holdFrame,
     release: releaseFrame,
@@ -124,24 +106,17 @@ if (process.env.FS_CAP_STATS) {
     }, 1000)
 }
 
-// Outputs render the stream itself and need every pixel; the app window only ever previews it (drawer
-// card, output mirror) so it gets a small copy of every frame, which keeps the preview as smooth as
-// the output without paying full frame size for it.
-// returns whether the app window was actually given a preview of this frame: a snapshot has to know,
-// because the first frames arrive before the window has subscribed and are dropped here, and waiting a
-// full refresh interval to try again leaves the tile on its loading spinner
+// outputs get the full frame, the app window a PREVIEW_MAX_WIDTH copy; returns whether the app window got it
 function sendFrame(ipcChannel: string, id: string, outputIds: string[], packed: StreamFrame): boolean {
     const time = Date.now()
 
     outputIds.forEach((outputId) => {
-        // The capture worker composites this frame into the output's captured page (see ndiWorker), so it
-        // subscribes to the same stream as the window — and while it does, the window is not sent the
-        // frame at all: drawing it there is the cost the composite exists to avoid.
+        // while the worker composites this source, the window is not sent the frame
         const composited = workerTargets.get(outputId) === id
         if (composited) frames.deliver(WORKER_TARGET + outputId, ipcChannel, id, packed, time, false)
         if (!composited || !workerOnly.has(outputId) || !frames.hasSubscriber(WORKER_TARGET + outputId)) frames.deliver(outputId, ipcChannel, id, packed, time, false)
     })
-    // the receiver's own hold (acquireBuffer) ends here; windows that took the frame keep theirs
+    // ends the receiver's acquireBuffer hold
     releaseFrame(packed)
 
     if (!frames.hasSubscriber(APP_TARGET)) {
@@ -189,7 +164,7 @@ class Ndi {
     private static findInterval: NodeJS.Timeout | null = null
 
     private static readonly RECEIVE_TIMEOUT_MS = 50
-    // tiles are periodic snapshots (see the OMT loop)
+    // tiles are periodic snapshots
     static readonly THUMBNAIL_REFRESH_MS = 30000
     private static readonly SNAPSHOT_RECEIVE_TIMEOUT_MS = 1000 // a fresh receiver needs longer for its first frame
     private static readonly SNAPSHOT_RETRY_MS = 1000
@@ -285,7 +260,7 @@ class Ndi {
         this.startLoop(source, true)
     }
 
-    // refresh now rather than waiting out the snapshot interval (the tile's refresh button)
+    // the tile's refresh button: skip the snapshot wait
     static refresh({ source }: { source: any }) {
         const loop = this.loops[source.id]
         if (loop?.lowbandwidth && !loop.stopped) loop.wake?.()
@@ -355,8 +330,7 @@ class Ndi {
                         consecutiveErrors = 0
                     }
 
-                    // video() blocks until the next frame, so the source paces this. A snapshot drops the
-                    // receiver once it has a picture
+                    // a snapshot drops the receiver once it has a picture
                     if (loop.lowbandwidth) {
                         if (!delivered && !loop.gotFirst) continue
                         loop.gotFirst = loop.gotFirst || delivered
@@ -457,22 +431,16 @@ type OmtLoop = {
 }
 
 class Omt {
-    // frames only reach outputs showing their source
     private static sources = new OutputSources()
     static codecs: any = null
     private static loops: { [sourceId: string]: OmtLoop } = {}
 
     private static readonly RECEIVE_TIMEOUT_MS = 50
-    // How long to wait before asking again when a receive came back EMPTY. It is not a frame-rate ceiling
-    // (it was named as one): receive() blocks until the source's next frame, so a source that is delivering
-    // paces the loop itself and this is never waited.
+    // wait after an empty receive only; a live source paces the loop through receive()
     private static readonly IDLE_POLL_MS = 16
-    // Drawer and editor tiles are snapshots, not live streams: take one frame, drop the connection, and
-    // come back later. Holding a receiver open made the sender count the tile as a viewer, which on
-    // FreeShow's own output lifted its idle gate and drove the encoder at full rate for a thumbnail.
-    // The interval itself is Ndi.THUMBNAIL_REFRESH_MS, so the two protocols cannot drift apart.
+    // tiles take one frame and drop the receiver: an open receiver counts as a viewer on the sender
     private static readonly SNAPSHOT_RECEIVE_TIMEOUT_MS = 1000 // a fresh receiver needs longer for its first frame
-    private static readonly SNAPSHOT_RETRY_MS = 1000 // nothing arrived: come back sooner than a full refresh
+    private static readonly SNAPSHOT_RETRY_MS = 1000 // nothing arrived yet
 
     static async createReceiver(address: string, lowbandwidth = false) {
         try {
@@ -511,7 +479,7 @@ class Omt {
         this.startLoop(source, true, Ndi.THUMBNAIL_REFRESH_MS)
     }
 
-    // refresh now rather than waiting out the snapshot interval (the tile's refresh button)
+    // the tile's refresh button: skip the snapshot wait
     static refresh({ source }: { source: any }) {
         const loop = this.loops[source.id]
         if (loop?.snapshot && !loop.stopped) loop.wake?.()
@@ -567,8 +535,7 @@ class Omt {
                         if (loop.stopped) break
                     }
 
-                    // decode into a pooled buffer sized from the last frame (a bigger frame arrives in
-                    // its own buffer, which sizes the next one); sendBuffer takes over the hold
+                    // pooled buffer sized from the largest frame so far; sendBuffer takes over the hold
                     const into = loop.lowbandwidth || !loop.frameBytes ? null : acquireBuffer(loop.frameBytes)
                     const tRecv = performance.now()
                     let frame: any = null
@@ -590,12 +557,9 @@ class Omt {
                         consecutiveErrors = 0
                     } else loopStats.empty++
 
-                    // receive() already blocks until the next frame, so pace on the source rather than a timer.
-                    // Idle (no frame) still backs off. A snapshot holds nothing open between refreshes.
+                    // receive() blocks until the next frame; only an empty receive waits
                     if (loop.snapshot) {
-                        // Until there is a picture at all, keep the receiver and keep asking: a source needs
-                        // a moment to connect, and tearing the receiver down after every attempt restarts
-                        // that negotiation, so a tile could sit on its loading spinner for a long time.
+                        // keep the receiver until the first picture: recreating it restarts the connection
                         if (!delivered && !loop.gotFirst) continue
                         loop.gotFirst = loop.gotFirst || delivered
                         this.destroyInstance(loop)
@@ -658,18 +622,12 @@ class Omt {
 }
 
 // ----- Blackmagic (DeckLink) input -----
-//
-// Main resolves the device (index, display mode and pixel format values) from its device list and sends
-// them here; the capture channel, the frame loop and the format handling all live in this process. 8-bit
-// YUV frames are UYVY and go to the windows as they are (the renderer converts on the GPU); the RGB
-// variants are swizzled to RGBA in place, as before.
 
 type BmdCaptureSpec = { deviceId: string; deviceIndex: number; displayMode: number; pixelFormat: number; pixelFormatName: string; audioChannels?: number }
 type BmdReceiver = { spec: BmdCaptureSpec; channel: any; running: boolean; stopped: boolean; loop: Promise<void> | null }
 
 class Bmd {
     static receivers: { [deviceId: string]: BmdReceiver } = {}
-    // see the OMT class: a frame only reaches outputs actually showing that device
     private static sources = new OutputSources()
 
     private static async open(spec: BmdCaptureSpec): Promise<BmdReceiver | null> {
@@ -728,7 +686,7 @@ class Bmd {
         return packStreamFrame(pixels, width, height, stride, format)
     }
 
-    // one frame for the drawer card; the channel stays open so the next request is instant (as before)
+    // one frame for the drawer card; the channel stays open
     static async thumbnail(spec: BmdCaptureSpec) {
         const receiver = await this.open(spec)
         if (!receiver || receiver.running) return

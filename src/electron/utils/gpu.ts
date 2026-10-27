@@ -169,13 +169,11 @@ export function scheduleGpuHealthCheck() {
     setTimeout(attempt, 20_000)
 }
 
-// One 1920x1080 H.264 High (level 4.0) keyframe, Annex B, a flat gray picture (460 bytes)
+// 1920x1080 H.264 High 4.0 keyframe (Annex B), flat gray
 const PROBE_KEYFRAME = "AAAAAWdkECisuA8ARPy4CIAAAAMAgAAAHgIAAAABaO4PLIsAAAFliIQEv/73rd+BTYekVa7pXOLTLq5Q0PVH2lKZ4tkgAAADAAADAAADAAADAADLprQ5tRHDh/oPAAADAAADAAB+AAADABlwAAAIqAAABCwAAAMDUAAAAwMkAAADA4gAAAMD+AAABMgAAAhoAAAQEAAAGKAAADsAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMBAQ=="
 
-// Whether a hardware decoder really decodes video in the app's renderer: one 1080p H.264 frame through
-// WebCodecs with "prefer-hardware", which never falls back to software, so a decoded frame proves it. The
-// old probe asked MediaCapabilities whether decoding would be "power efficient", which Electron on Linux
-// answers false even while VA-API decodes every video (#3900, #3919).
+// decodes one frame with WebCodecs "prefer-hardware", which never falls back to software
+// (MediaCapabilities powerEfficient is false on Linux even with VA-API)
 async function probeHardwareDecode(): Promise<boolean | null> {
     const win = getMainWindow()
     if (!win || win.webContents.isLoading()) return null
@@ -291,8 +289,7 @@ async function runGpuHealthCheck() {
     }
 
     healthNotified = true
-    // reported once: the same problem on every launch is noise, and the old way to silence it was turning
-    // hardware acceleration off, which made everything worse
+    // notify once per distinct issue/platform/GPU/packages
     const notice = [issue, process.platform, vendorName, packages.join(",")].join("|")
     if (config.get("gpuHealthNotice") === notice) {
         console.info(`[GPU-HEALTH] degraded (already reported): issue=${issue} gpu_compositing=${status.gpu_compositing} video_decode=${status.video_decode} probe=${hwDecodeProbe ?? "unavailable"} vendor=${vendorName || "?"}`)

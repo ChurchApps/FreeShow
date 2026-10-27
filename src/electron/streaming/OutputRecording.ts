@@ -3,9 +3,7 @@ import type { RtmpDestination } from "../../types/Output"
 import { CaptureHelper } from "../capture/CaptureHelper"
 import { createFolder, getDataFolderPath, openInSystem } from "../utils/files"
 
-// Recording an output is one more destination of its hardware encode (RtmpStreamer, in the capture
-// worker): a relay copies the encoded stream into a file. No frame is read, converted or encoded on main or
-// in the app window, and an output that is also streaming is still encoded only once.
+// Records an output as a file relay of its RTMP encode, so a streamed output is encoded once.
 export class OutputRecording {
     private static active = new Map<string, string>()
     private static folderOpened = false

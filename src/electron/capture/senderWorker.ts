@@ -27,7 +27,7 @@ export type PacerBuf = { buf: Buffer; refs: number; owner: string }
 
 export type Sender = {
     name: string
-    /** the protocol this sender speaks; members of one render may speak different ones */
+    /** this sender's protocol; members of one render may differ */
     adapter: SenderAdapter
     status?: string
     previousStatus?: string
@@ -275,8 +275,7 @@ function releaseReadbackSlot(id: string, slot: number) {
 
 // Send-side pacer: dispatches at steady intervals from refcounted recycled buffers, repeating the last
 // frame when no new one arrives in time.
-// One send at a time per sender: the send libraries serialize encodes per instance, so overlapping
-// them only adds contention (measured 41 -> 31 -> 22 fps at 1, 2 and 3 in flight on two 4K60 OMT).
+// One send in flight per sender: the libraries serialize encodes per instance.
 const pacerPools: { [rendererId: string]: Buffer[] } = {}
 function acquirePacerBuf(owner: string, length: number): PacerBuf {
     const pool = (pacerPools[owner] ||= [])
@@ -317,8 +316,7 @@ function paceTick(id: string, realOnly = false) {
     const s = SENDERS[id]
     if (!s?.sender) return
     if (s.sendingVideo) {
-        // the send is still running: hand this tick to it rather than dropping the frame, or the rate
-        // collapses to one send per interval that happens to find the sender idle
+        // send still running: defer this tick to it instead of dropping the frame
         s.paceDue = true
         s.paceBusy = (s.paceBusy || 0) + 1
         return
@@ -328,8 +326,7 @@ function paceTick(id: string, realOnly = false) {
         paceSend(id, entry, true)
         return
     }
-    // a tick deferred by a running send only ever carries real work: sending a repeat here would
-    // occupy the encoder and the next real frame would queue behind it
+    // a deferred tick sends only real frames; a repeat would delay the next real one
     if (realOnly) return
     if (s.lastPace) {
         s.paceMisses = (s.paceMisses || 0) + 1
@@ -364,8 +361,7 @@ async function paceSend(id: string, entry: { frame: any; pbuf: PacerBuf }, real:
         }
         senderData.sendingVideo = false
         releasePacerRef(entry.pbuf)
-        // a tick fired while this send was running: take its turn now, so a send longer than the
-        // interval costs latency rather than half the frame rate
+        // run the tick deferred during this send
         if (senderData.paceDue) {
             senderData.paceDue = false
             paceTick(id, true)
@@ -379,8 +375,7 @@ export type CaptureOpts = { size: FrameSize; ratio: number; framerate: number; m
 
 // reads the output's shared GPU texture back, then fans that one readback out to every output sharing
 // the render, each at its own framerate
-// integer/fixed-point BGRA -> UYVY packed 4:2:2 (BT.601 full range, coefficients scaled by 256).
-// Integer math + inline clamping avoids the per-pixel float work, which dominated the JS conversion time.
+// BGRA -> UYVY 4:2:2, BT.601 full range, fixed point (coefficients x256)
 function bgraToUyvy(bgra: Buffer, width: number, height: number): Buffer {
     const out = Buffer.allocUnsafe(width * 2 * height)
     const rowIn = width * 4
@@ -408,8 +403,7 @@ function bgraToUyvy(bgra: Buffer, width: number, height: number): Buffer {
     return out
 }
 
-// BGRA -> UYVA = UYVY color plane (width*2*height) immediately followed by a full-res alpha plane
-// (width*height). Keeps transparency while still skipping the SDK's BGRA->UYVY conversion.
+// BGRA -> UYVA: UYVY plane (width*2*height) followed by a full-res alpha plane (width*height)
 function bgraToUyva(bgra: Buffer, width: number, height: number): Buffer {
     const uyvySize = width * 2 * height
     const out = Buffer.allocUnsafe(uyvySize + width * height)
@@ -539,11 +533,9 @@ function previewFrames() {
     return previewServer
 }
 
-// WebRTC host window: frames leave here over the shared-memory transport (see capture/FrameServer.ts);
-// main relays the socket details to the window and nothing else
 const servedPacer = new WeakMap<ServedFrame, PacerBuf>()
 
-// last push per output, so an OutputShow viewer is served at its rate and not at the render rate
+// last server push per output, so OutputShow viewers get their own rate
 const lastServerPush = new Map<string, number>()
 
 const stageBusy = new Set<string>()
@@ -591,7 +583,7 @@ function connectVideoSource(targetId: string, outputId: string, wsPort: number, 
                 state.ring = null
             }
         }
-        // every format the receive process produces composites; anything else stays with the page's draw
+        // formats the addon composites; others are left to the page's draw
         const format = header.format === "uyvy" ? 1 : header.format === "bgra" ? 0 : header.format === "rgba" ? 3 : -1
         if (!state.ring || format < 0) return done()
 
@@ -600,7 +592,7 @@ function connectVideoSource(targetId: string, outputId: string, wsPort: number, 
             slot = { buf: Buffer.allocUnsafeSlow(header.bytes), bytes: 0, inUse: false }
             state.bufs.push(slot)
         }
-        if (!slot) return done() // every buffer is in a readback: drop this frame, the next one is close
+        if (!slot) return done() // all buffers busy: drop this frame
         const target = slot
         target.inUse = true
         osr.shmReadAsync(state.ring.name, header.slot * state.ring.slotBytes, target.buf.subarray(0, header.bytes)).then(
@@ -612,8 +604,7 @@ function connectVideoSource(targetId: string, outputId: string, wsPort: number, 
                 state.format = format
                 state.current = target
                 done()
-                // the page is not drawing this frame; it repaints once per frame on this tick, which
-                // keeps the capture running at the source's rate rather than as fast as it can paint
+                // repaint once per source frame so the capture runs at the source's rate
                 port.postMessage({ type: "videoFrame", id: outputId })
             },
             () => {
@@ -645,16 +636,11 @@ const videoLayerReported = new Set<string>()
 // FS_CONVERT_CHECK reports once per output; comparing every frame would swamp the log
 const convertChecked = new Set<string>()
 
-// FS_CAP_STATS: how congested this worker's JS thread is. Loop lag = how late a 5ms timer fires
-// (0 = idle loop); copyMs/fanMs = synchronous time spent copying readbacks and fanning out frames.
 type VideoBuf = { buf: Buffer; bytes: number; inUse: boolean }
 const BMD_AUDIO_MARKER = Buffer.from([1])
 
-// A Blackmagic card plays out continuously at its own rate, but a page only paints when something on it
-// changes. So each output has one feed, ticking at the card's rate to deadlines: every tick hands the card
-// the newest frame the capture gave it, or, when none came since the last tick, repeats the frame the card
-// already has (converted once, so a repeat costs nothing). New frames and repeats never compete for the
-// card: there is one hand-off per card frame either way.
+// One feed per Blackmagic output, ticking at the card's rate: each tick sends the newest frame or repeats
+// the last one, since a page only paints on change.
 type BmdFeed = { buf: Buffer | null; fresh: boolean; framerate: number; preConverted: boolean; timer: NodeJS.Timeout | null; due: number }
 const bmdFeeds = new Map<string, BmdFeed>()
 function bmdGive(outputId: string, buf: Buffer, framerate: number, preConverted: boolean) {
@@ -733,6 +719,7 @@ let webrtcServer: FrameServer | null = null
 let previewServer: FrameServer | null = null
 let presentServer: FrameServer | null = null
 
+// FS_CAP_STATS: lag = how late a 5ms timer fires; copyMs/fanMs = sync time copying and fanning out frames
 const loopDiag = { lagSum: 0, lagMax: 0, lagN: 0, copyMs: 0, copyN: 0, fanMs: 0, lastTick: 0 }
 if (process.env.FS_CAP_STATS) {
     loopDiag.lastTick = performance.now()
@@ -746,9 +733,8 @@ if (process.env.FS_CAP_STATS) {
     }, 5)
 }
 
-// Shared media sources (MediaLayers.ts on main): the latest frame of each, and which ones each output shows.
-// A frame goes back to main for release once it is no longer the latest and no composite still reads it.
-// handle: the shared texture handle (Windows, macOS) or the dmabuf { planes, modifier } (Linux)
+// Shared media sources: a frame is released to main once superseded and no composite reads it.
+// handle: shared texture handle (Windows, macOS) or dmabuf { planes, modifier } (Linux)
 type MediaFrame = { key: string; seq: number; handle: Buffer | { planes: any[]; modifier: any }; width: number; height: number; refs: number }
 const mediaLatest = new Map<string, MediaFrame>()
 const mediaAssigned: { [outputId: string]: { layers: { key: string; alpha: number }[]; fill: number[] } } = {}
@@ -769,8 +755,7 @@ function mediaFramesFor(id: string): { frame: MediaFrame; alpha: number }[] {
     return out
 }
 
-// The frames an off output sends in place of its picture (outputsOff.ts), made once per size and format.
-// Owned by no pacer pool, so a released reference never hands one out to be written over.
+// off-output blanks per size and format; owned by no pool so they are never written over
 const blankBufs = new Map<string, PacerBuf>()
 function blankPacerBuf(width: number, height: number, format: number, transparent: boolean): PacerBuf {
     const key = `${width}x${height}:${format}:${transparent ? "t" : "o"}`
@@ -785,8 +770,7 @@ const preparedBlanks = new Map<string, { pbuf: PacerBuf; format: number }>()
 const newestCapture = new Map<string, { pipe: number; seq: number }>()
 
 async function captureAndSend(id: string, source: any, opts: { pipe?: number; size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; mainFormat?: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number; targets?: { width: number; height: number; format: number }[]; memberTarget?: { [id: string]: number }; memberFormats?: { [id: string]: number }; memberSizes?: { [id: string]: { width: number; height: number } }; cpuTargets?: boolean; rtmpMembers?: { [id: string]: { width: number; height: number } }; bmdMembers?: { [id: string]: { width: number; height: number; format: number; framerate: number } }; webrtcMembers?: { [id: string]: { width: number; height: number } }; presentMembers?: { [id: string]: { width: number; height: number } }; offMembers?: string[]; convertCheck?: boolean; stageStream?: { width: number; height: number; quality: number; intervalMs: number } | null; serverStream?: { width: number; height: number; intervalMs: number } | null; thumbStream?: { width: number; height: number; quality: number } | null }) {
-    // seq identifies this in-flight capture; the osr-capture key is slotted so concurrent readbacks
-    // for one output use independent pool entries
+    // seq identifies this capture; slotted keys keep concurrent readbacks in separate pool entries
     const seq = opts.seq ?? 0
     const senderData = SENDERS[id]
     const osr = loadOsrCapture()
@@ -798,8 +782,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
         }
     }
     const activeMembers = membersAll.filter((m) => SENDERS[m]?.sender)
-    // one render and one readback, but its members may send on different protocols: load each protocol
-    // present in the group and leave out a member whose library is unavailable
+    // members may use different protocols: load each, skip members whose library is unavailable
     const libs: { [tag: string]: any } = {}
     for (const m of activeMembers) {
         const ad = SENDERS[m]!.adapter
@@ -819,9 +802,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
     const hasWebrtc = webrtcMembers.length > 0
     const presentMembers = Object.keys(opts.presentMembers || {})
     const hasPresent = presentMembers.length > 0
-    // An output whose only consumers are the web server, a stage client or a preview still belongs here:
-    // it needs the downscaled frame, and producing that on the main thread was the last routine path that
-    // put a full frame in front of the UI's event loop.
+    // scaled-frame-only consumers (web server, stage, preview) are still read back here
     const wantsScaledOnly = !hasSenders && !hasRtmp && !hasBmd && !hasWebrtc && !hasPresent && (opts.dstW || 0) > 0 && (opts.dstH || 0) > 0
     if ((!hasSenders && !hasRtmp && !hasBmd && !hasWebrtc && !hasPresent && !wantsScaledOnly) || !osr?.readback) {
         port.postMessage({ type: "releaseTexture", id, seq })
@@ -829,7 +810,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
         return
     }
     const { size, ratio, framerate, format, dstW = 0, dstH = 0 } = opts
-    // FS_CAP_STATS: per-frame hop timestamps posted back with captureDone (worker_threads share the
+    // FS_CAP_STATS: per-frame hop timestamps, posted back with captureDone
     const tl = process.env.FS_CAP_STATS ? { recv: Date.now(), cS: 0, cE: 0, fS: 0, fE: 0, enq: 0 } : null
     const members = membersAll
     const wantScaled = dstW > 0 && dstH > 0
@@ -839,7 +820,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
     // the live frame this output is showing, composited under the page by the addon
     const layer = videoLayers[id]
     const layerBuf = layer?.current && layer.width && layer.height ? layer.current : null
-    // or the shared media sources this output's page shows (MediaLayers.ts), held until the composite is recorded
+    // else the shared media sources it shows, held until the composite is recorded
     const mediaFrames = layerBuf ? [] : mediaFramesFor(id)
     const assigned = mediaAssigned[id]
     const video = layerBuf ? { width: layer!.width, height: layer!.height, format: layer!.format, data: layerBuf.buf.subarray(0, layerBuf.bytes) } : mediaFrames.length ? { media: mediaFrames.map((m) => ({ handle: m.frame.handle, width: m.frame.width, height: m.frame.height, fit: 0, alpha: m.alpha })), fill: assigned!.fill } : null
@@ -854,10 +835,8 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
         textureReleased = true
         port.postMessage({ type: "releaseTexture", id, seq })
     }
-    // Every member sends at its own size and format. Full-size members in the main format share the main
-    // readback buffer; each other (size, format) gets a target: produced on the GPU in the same pass when the
-    // addon supports it, else derived on this thread from a BGRA main. All buffers are refcounted pacer
-    // buffers: the addon writes straight into them and no frame is copied here on the GPU path.
+    // full-size members in the main format share the main buffer; each other (size, format) is a target,
+    // from the same GPU pass when supported, else derived here from a BGRA main
     const targets = opts.targets || []
     const mainFormat = opts.mainFormat ?? format
     const bytesFor = (w: number, h: number, f: number) => (f === 1 ? w * h * 2 : f === 2 ? w * h * 3 : f === 4 ? w * h + 2 * (Math.floor(w / 2) * Math.floor(h / 2)) : f >= 5 && f <= 8 ? cardFrameBytes(w, h, f) : w * h * 4)
@@ -925,12 +904,11 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
         if (newest && newest.pipe === pipe && seq < newest.seq) return
         newestCapture.set(id, { pipe, seq })
 
-        // the app window's previews are served straight from here, so main never holds a preview frame
+        // previews are served from here so main never holds a preview frame
         if (scaled && scaled.length) {
             const server = previewFrames()
             const now = Date.now()
-            // the addon reuses its scaled buffer for the next readback, and the server may still be
-            // holding this frame waiting for the window, so it gets its own copy - on this thread
+            // own copy: the addon reuses its scaled buffer while the server may still hold this frame
             const frame: ServedFrame = { xres: dstW, yres: dstH, format: "bgra", data: Buffer.from(new Uint8Array(scaled.buffer, scaled.byteOffset, scaled.byteLength)) }
             for (const m of members) server.deliver(m, "PREVIEW", m, frame, now, true)
         }
@@ -938,7 +916,6 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
         const tFan = performance.now()
         type FrameBuf = { pbuf: PacerBuf; width: number; height: number; format: number }
         const convertBgra = (bgra: Buffer, w: number, h: number, f: number): Buffer => {
-            // every branch below walks the frame on a CPU core, which the GPU convert exists to avoid
             ruleViolation("cpu-frame", "worker convert format " + f)
             if (f === 2) return osr.convertBgraToUyva ? osr.convertBgraToUyva(bgra, w, h) : bgraToUyva(bgra, w, h)
             if (f === 1) return osr.convertBgraToUyvy ? osr.convertBgraToUyvy(bgra, w, h) : bgraToUyvy(bgra, w, h)
@@ -959,7 +936,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
         // main buffer, in the format full-size members send in
         let main: FrameBuf
         if (format === 0 && mainFormat !== 0) {
-            // CPU-target path (or legacy single-phase): the readback is BGRA; convert once for the full-size members
+            // CPU-target or single-phase path: the readback is BGRA; convert once for full-size members
             main = { pbuf: intoPacerBuf(`${id}#m`, convertBgra(buffer, size.width, size.height, mainFormat)), width: size.width, height: size.height, format: mainFormat }
         } else if (framePbuf && buffer === framePbuf.buf) {
             main = { pbuf: framePbuf, width: size.width, height: size.height, format }
@@ -967,7 +944,6 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
             main = { pbuf: intoPacerBuf(id, buffer), width: size.width, height: size.height, format }
         }
 
-        // per-target buffers
         const targetBufs: FrameBuf[] = []
         if (gpuTargets) {
             targets.forEach((t, i) => targetBufs.push({ pbuf: targetPbufs[i], width: t.width, height: t.height, format: t.format }))
@@ -1000,15 +976,14 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
             }
             pbuf.refs++ // queue entry's ref
             queue.push({ frame, pbuf })
-            pbuf.refs++ // lastPace pin's ref (repeats only fire when the queue is empty, i.e. this
-            if (md.lastPace) releasePacerRef(md.lastPace.pbuf) // frame has already been sent or dropped)
+            pbuf.refs++ // lastPace pin's ref
+            if (md.lastPace) releasePacerRef(md.lastPace.pbuf)
             md.lastPace = { frame, pbuf }
             queued.add(pbuf)
             startPacer(m)
         }
 
-        // Each member sends at its own size and format. A member whose buffer is still BGRA is converted
-        // by the adapter, which reports the format it produced; the rest already hold what it wants.
+        // a member whose buffer is still BGRA is converted by its adapter, which reports the format produced
         if (hasSenders) {
             const transparent = opts.transparent !== false
             for (const m of sendMembers) {
@@ -1035,9 +1010,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
             }
         }
 
-        // RTMP: ffmpeg takes a planar I420 frame at the broadcast size (1.5 bytes/px, no swscale in the
-        // encoder). The engine borrows the pacer buffer (one ref) and releases it when a newer frame
-        // replaces it, so no copy is made on this thread
+        // RTMP: I420 or BGRA at the broadcast size; the engine holds one pacer ref until a newer frame replaces it
         for (const m of rtmpMembers) {
             const want = opts.rtmpMembers![m]
             const ti = targetBufs.findIndex((t) => t.width === want.width && t.height === want.height && (t.format === 4 || t.format === 0))
@@ -1050,8 +1023,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
             queued.add(pb)
             RtmpStreamer.updateFrame(m, pb.buf.length === bytes ? pb.buf : pb.buf.subarray(0, bytes), { width: b.width, height: b.height }, () => releasePacerRef(pb), b.format === 4 ? "yuv420p" : "bgra")
         }
-        // WebRTC: the host window draws a BGRA frame at the output's size, served over shared memory
-        // (FrameServer); the server holds a pacer reference while it keeps or copies the frame
+        // WebRTC: BGRA at the output's size over shared memory; the server holds a pacer ref while it keeps the frame
         if (hasWebrtc) {
             const server = webrtcFrames()
             const now = Date.now()
@@ -1064,8 +1036,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
                 const bytes = bytesFor(b.width, b.height, 0)
                 const frame: ServedFrame = { xres: b.width, yres: b.height, format: "bgra", data: b.pbuf.buf.length === bytes ? b.pbuf.buf : b.pbuf.buf.subarray(0, bytes) }
                 servedPacer.set(frame, b.pbuf)
-                // the buffer is the server's to release once it retained it; without a window it stays
-                // unqueued and returns to its pool below
+                // once retained the server releases it; without a window it returns to its pool below
                 server.deliver(m, "WEBRTC", m, frame, now)
                 if (b.pbuf.refs > 0) queued.add(b.pbuf)
             }
@@ -1086,8 +1057,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
                 if (b.pbuf.refs > 0) queued.add(b.pbuf)
             }
         }
-        // Blackmagic: the card's scheduler retains what it is given, so it gets its own copy of the frame at
-        // the card's mode (UYVY straight in when the card takes it raw, else BGRA converted by the sender)
+        // Blackmagic: the card's scheduler retains frames, so it gets its own copy in the card's mode
         for (const m of bmdMembers) {
             const want = opts.bmdMembers![m]
             const ti = targetBufs.findIndex((t) => t.width === want.width && t.height === want.height && t.format === want.format)
@@ -1102,18 +1072,13 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
             let frameData: Buffer
             if (outputsOff.has(m)) frameData = blankPacerBuf(b.width, b.height, b.format, false).buf.subarray(0, bytes)
             else {
-                // the card's own copy, from its reused buffers (BlackmagicSender.acquireBuffer)
+                // the card's own copy, from its reused buffers
                 frameData = BlackmagicSender.acquireBuffer(m, bytes)
                 b.pbuf.buf.copy(frameData, 0, 0, bytes)
             }
             bmdGive(m, frameData, want.framerate, b.format !== 0)
         }
-        // FS_CONVERT_CHECK: the GPU produced this frame in the real format as a target, and `main` holds
-        // the same frame as BGRA, so converting that here gives the CPU reference to compare it against.
-        // FS_CONVERT_CHECK: every packed format was produced by the GPU as a full-size target, alongside
-        // a plain BGRA one. Converting that BGRA here with the CPU reference gives something to compare
-        // each GPU kernel against on a real frame — the check that would have caught the UYVY chroma
-        // order being swapped.
+        // FS_CONVERT_CHECK: compare each GPU-produced full-size format against a CPU convert of the BGRA target
         if (opts.convertCheck && !convertChecked.has(id)) {
             const si = targetBufs.findIndex((t) => t.width === size.width && t.height === size.height && t.format === 0)
             if (si >= 0) {
@@ -1185,7 +1150,7 @@ async function captureAndSend(id: string, source: any, opts: { pipe?: number; si
         if (layerBuf) layerBuf.inUse = false
         releaseTexture() // safety: ensure the texture is released even on error
         releaseReadbackSlot(id, slot)
-        // capture fully done -> this pipeline slot frees (main may forward another frame for this output)
+        // frees this pipeline slot, so main may forward the next frame
         port.postMessage({ type: "captureDone", id, seq, tl })
     }
 }
@@ -1311,7 +1276,7 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
     process.on("uncaughtException", (err) => console.error("[sender worker] uncaught exception:", err))
     process.on("unhandledRejection", (err) => console.error("[sender worker] unhandled rejection:", err))
 
-    // RTMP engine lives here (RtmpBridge on main proxies control and mirrors status)
+    // RTMP engine (RtmpBridge on main proxies it)
     setRtmpStatusListener((outputId, destinations) => port.postMessage({ type: "rtmpStatus", outputId, destinations }))
     setRtmpNoticeListener((message) => port.postMessage({ type: "rtmpNotice", message }))
     const rtmpStopWatch = new Set<string>()
@@ -1324,10 +1289,10 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
         }
     }, 1000)
 
-    // Blackmagic output lives here too (BlackmagicBridge on main mirrors device state)
+    // Blackmagic output (BlackmagicBridge on main mirrors its state)
     const bmdReportState = (outputId: string) => {
         const d = BlackmagicSender.playbackData[outputId]
-        // the rate the card plays out at, from the opened mode itself ([frame duration, timescale]) when it reports one
+        // playout rate from the opened mode ([frame duration, timescale]) when reported
         const rate = Array.isArray(d?.playback?.frameRate) && d.playback.frameRate[0] > 0 ? d.playback.frameRate[1] / d.playback.frameRate[0] : d?.displayMode ? BlackmagicSender.getAccurateFrameRate(d.displayMode) : 0
         port.postMessage({ type: "bmdState", outputId, ready: !!d?.playback, displayMode: d?.displayMode || "", pixelFormat: d?.pixelFormat || "", enableKeying: !!d?.enableKeying, colorSpace: d?.colorSpace || "", targetSize: d?.targetSize || null, stable: BlackmagicSender.isDeviceStable(outputId), framerate: rate })
     }
@@ -1350,8 +1315,7 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
                 captureAndSend(msg.id, msg.source, msg.opts)
                 break
             case "cpuFrame": {
-                // a frame that could not be captured as a shared texture: main read it back once and
-                // every consumer's version is derived here
+                // a frame without a shared texture, read back on main; each consumer's version is derived here
                 const osr = loadOsrCapture()
                 const buf = Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength)
                 const { id, size, server, stage, preview } = msg
@@ -1414,7 +1378,7 @@ export function runSenderWorker(adapters: SenderAdapter[]) {
                 RtmpStreamer.updateFrame(msg.outputId, Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.size)
                 break
             case "bmdInit": {
-                // the card's YUV modes are converted natively when a frame did not come from the GPU in them
+                // native conversion to the card's YUV modes for frames the GPU did not produce in them
                 const osrMod = loadOsrCapture()
                 if (osrMod && typeof osrMod.convertBgraToCard === "function") BlackmagicSender.nativeCardConvert = (frame, w, h, f, into) => osrMod.convertBgraToCard(frame, w, h, f, into)
                 void BlackmagicSender.initialize(msg.outputId, msg.deviceIndex, msg.displayMode, msg.pixelFormat, msg.enableKeying, msg.audioChannels, msg.colorSpace).then(

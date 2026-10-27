@@ -4,8 +4,7 @@ import { OUTPUT } from "../../../types/Channels"
 import { NdiSender } from "../../ndi/NdiSender"
 import { OutputHelper } from "../OutputHelper"
 
-// An output shown on a monitor whose content is rendered elsewhere: its window draws that render's
-// frames, delivered by the capture worker over shared memory (FrameServer.ts, streamLink.ts).
+// Draws frames rendered elsewhere into an output's window, delivered by the capture worker over shared memory.
 export class OutputPresenter {
     private static wsInfo: { port: number; token: string } | null = null
     private static presenting = new Set<string>()
@@ -29,7 +28,7 @@ export class OutputPresenter {
         }
     }
 
-    // the window draws the capture from now on: it stops rendering the content itself
+    // the window stops rendering content and draws the capture instead
     static start(id: string, window: BrowserWindow) {
         this.hook()
         if (this.presenting.has(id)) return
@@ -46,7 +45,7 @@ export class OutputPresenter {
         NdiSender.postToWorker({ type: "presentReset" })
     }
 
-    // the worker asks once per target, so an output wired before the socket existed is remembered
+    // the worker asks once per target, so remember outputs wired before the socket or window exists
     private static wire(id: string) {
         if (!this.presenting.has(id) || !this.wsInfo) {
             this.wanted.add(id)

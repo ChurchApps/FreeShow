@@ -251,7 +251,7 @@ export const API_ACTIONS = {
     restore_output: () => restoreOutput(), // BC
     clear_all: () => clearAll(true), // BC
     clear_background: () => clearBackground(), // BC
-    // put a live NDI/OMT source on an output's background (the same as clicking it in the Live drawer)
+    // put a live NDI/OMT source on an output's background
     show_live_source: (data: { id: string; type?: "ndi" | "omt"; outputId?: string }) => setOutput("background", { id: data.id, type: data.type || "omt" }, false, data.outputId || ""),
     clear_slide: () => clearSlide(), // BC
     clear_overlays: () => clearOverlays(), // BC

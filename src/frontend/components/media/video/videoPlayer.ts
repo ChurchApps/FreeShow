@@ -53,7 +53,7 @@ export type VideoAudioData = {
 
 export type PlayingVideoState = {
     currentTime: number
-    /** when currentTime was read (ms since the epoch), so a receiver can account for delivery delays */
+    /** when currentTime was read, in epoch ms */
     at?: number
     duration: number
     paused: boolean

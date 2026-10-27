@@ -37,7 +37,7 @@ interface PlaybackData {
     conversionBackoffUntil?: number
     conversionErrorCount?: number
     frameDurationTicks?: number
-    // the last frame given to the card, already in its pixel format (repeatLastFrame)
+    // last frame given to the card, in its pixel format
     lastConverted?: Buffer
     // frames scheduled on the card and not yet past their display time, oldest first
     onCard?: { time: number; buf: Buffer }[]
@@ -61,10 +61,7 @@ export class BlackmagicSender {
     private static macadamInitMutex: Promise<void> = Promise.resolve()
     // Core state
     static playbackData: { [key: string]: PlaybackData } = {}
-    // Frames handed to a card, reused instead of allocated per frame: a 4K frame is 16-33MB, and allocating
-    // one 30 times a second outran the garbage collector until allocation failed. A buffer goes back to its
-    // output's free list once nothing holds it: the feed that took it, the last frame kept for repeats, and
-    // every scheduled copy until the card reports it played (playback.played).
+    // per-output pool of card frames (4K is 16-33MB); a buffer is reused once every holder has released it
     private static freeBuffers = new Map<string, Buffer[]>()
     private static bufferRefs = new Map<Buffer, { outputId: string; count: number }>()
     static acquireBuffer(outputId: string, bytes: number): Buffer {
@@ -74,7 +71,7 @@ export class BlackmagicSender {
         this.bufferRefs.set(buf, { outputId, count: 1 })
         return buf
     }
-    /** FS_CAP_STATS: buffers this output has in use and waiting for reuse */
+    /** FS_CAP_STATS: buffers in use and free */
     static bufferStats(outputId: string): string {
         let used = 0
         for (const r of this.bufferRefs.values()) if (r.outputId === outputId) used++
@@ -95,9 +92,9 @@ export class BlackmagicSender {
         free.push(buf)
         this.freeBuffers.set(r.outputId, free)
     }
-    // osr-capture's native converter to the card formats, set by the capture worker when the addon has it
+    // osr-capture native card-format converter, set by the capture worker when available
     static nativeCardConvert: ((frame: Buffer, width: number, height: number, format: number, into?: Buffer) => Buffer) | null = null
-    // FS_CAP_STATS: what happened to each frame given to an output, read and reset once a second
+    // FS_CAP_STATS: per-output frame counters, reset each second
     static stats: { [outputId: string]: { [what: string]: number } } = {}
     private static note(outputId: string, what: string, value = 1, set = false) {
         if (!process.env.FS_CAP_STATS) return
@@ -455,7 +452,7 @@ export class BlackmagicSender {
 
         if (pixelFormat.includes("YUV")) {
             // 10-bit YUV uses v210 format: 8/3 bytes per pixel (16 bytes per 6 pixels)
-            // v210: 16 bytes per 6 pixels, each row padded to 128 bytes (48 pixels) as the card lays it out
+            // rows padded to 128 bytes (48 pixels)
             if (pixelFormat.includes("10")) return cardFrameBytes(width, height, 7)
             // YUV420 planar: Y full res + U/V at quarter res
             if (pixelFormat.includes("420")) {
@@ -501,7 +498,7 @@ export class BlackmagicSender {
         // Check for 4K resolutions
         if (normalized.includes("4k") && normalized.includes("2160")) return { width: 3840, height: 2160 }
         if (normalized.includes("4kdci")) return { width: 4096, height: 2160 }
-        // UHD named without the "4K"/"8K" prefix, as Desktop Video on macOS does
+        // UHD names without the 4K/8K prefix (macOS driver)
         if (normalized.includes("4320")) return { width: 7680, height: 4320 }
         if (normalized.includes("2160")) return { width: 3840, height: 2160 }
 
@@ -550,10 +547,7 @@ export class BlackmagicSender {
         return buffer
     }
 
-    // How many frames to hand the card now so it holds `depth` frames queued behind the one on air, read
-    // from the card's clock: one per period normally, more after a late tick, none after an early one. The
-    // card's own buffered count did not match its clock, and a fixed one-frame-per-tick feed lost a slot to
-    // every bit of timer jitter, which left 6-10 slots a second empty.
+    // frames to schedule now so `depth` stay queued behind the one on air, by the card's clock (bufferedFrames() does not match it)
     static framesWanted(outputId: string): number {
         const data = this.playbackData[outputId]
         if (!data?.playback || data.needsReinit || this.isPaused[outputId]) return 0
@@ -573,8 +567,7 @@ export class BlackmagicSender {
             streamTime = undefined
         }
         if (typeof streamTime !== "number") return buffered > depth ? 0 : 1
-        // wrap-safe: streamTime is 32-bit. The next free slot is `lead` ahead; the frames queued behind the
-        // one on air are the whole periods before it (a slot under a period away is realigned when scheduled).
+        // | 0: wrap-safe for the 32-bit streamTime; a slot under a period away is realigned in submitFrame
         const lead = (data.scheduledFrames * duration - streamTime) | 0
         const queued = Math.max(1, Math.ceil(lead / duration)) - 1
         return Math.max(0, depth - queued)
@@ -673,8 +666,7 @@ export class BlackmagicSender {
 
         data.frameProcessing = true
 
-        // A frame to convert is scheduled in a later tick, isolated from the caller; one already in the card's
-        // format goes now, so the feed's repeats in the same tick come after it, not ahead of it.
+        // pre-converted frames go now so same-tick repeats follow them; others convert in a later tick
         const work = () => {
             try {
                 // Skip empty frames
@@ -793,8 +785,7 @@ export class BlackmagicSender {
         else setTimeout(work, 0)
     }
 
-    // Hand one converted frame (with this frame's audio) to the card, at least one frame period ahead of its
-    // clock, and start playback once enough is buffered.
+    // schedule a converted frame with its audio; starts playback once enough is buffered
     private static submitFrame(outputId: string, data: PlaybackData, convertedFrame: Buffer, audioFrame: Buffer | null, bufferedFrames: number, now: number) {
         // Get audio safely with correct sample count for the display mode
         // Use queued audio to get exactly the right amount for this frame
@@ -812,15 +803,12 @@ export class BlackmagicSender {
 
         // Calculate stream time in DeckLink timescale units (duration ticks) for this frame.
         const frameDurationTicks = data.frameDurationTicks || 1000
-        // Stream time counts scheduled frames, so every frame not given in time (a still page, a late
-        // tick) left all later frames scheduled in the past, where the card drops them and keeps showing
-        // the last frame it played. Once playing, a frame that would not land at least one frame period
-        // ahead of the card's position moves to the first period that does.
+        // keep each frame at least one period ahead of the card's clock, or the card drops it as late
         if (data.isStarted) {
             try {
                 const streamTime = data.playback.scheduledTime()?.streamTime
                 if (typeof streamTime === "number") {
-                    // streamTime is 32-bit; the difference stays right across its wrap
+                    // | 0: wrap-safe for the 32-bit streamTime
                     const lead = (data.scheduledFrames * frameDurationTicks - streamTime) | 0
                     if (lead < frameDurationTicks) {
                         data.scheduledFrames += Math.ceil((frameDurationTicks - lead) / frameDurationTicks)
@@ -851,8 +839,7 @@ export class BlackmagicSender {
         try {
             // Schedule the frame using the original method
             data.playback.schedule(frameDataToSchedule)
-            // The card holds the frame until its display time has passed. That is read from the card's own clock:
-            // the played() completions never arrived here (hundreds stayed pending), so they cannot say.
+            // held until its display time passes on the card's clock (played() completions do not arrive)
             this.retainBuffer(convertedFrame)
             ;(data.onCard ||= []).push({ time: currentTime, buf: convertedFrame })
             this.releasePlayed(data, frameDurationTicks)
@@ -899,7 +886,7 @@ export class BlackmagicSender {
         }
     }
 
-    // frames on the card whose display period has ended, by the card's clock (wrap-safe: streamTime is 32-bit)
+    // releases frames whose display period has ended on the card's clock
     private static releasePlayed(data: PlaybackData, frameDurationTicks: number) {
         const onCard = data.onCard
         if (!onCard?.length) return
@@ -913,12 +900,11 @@ export class BlackmagicSender {
         while (onCard.length && ((streamTime - (onCard[0].time + frameDurationTicks)) | 0) >= 0) this.releaseBuffer(onCard.shift()!.buf)
     }
 
-    // A card plays out continuously; while the page has nothing new, the frame it last showed goes again.
-    // That frame was converted already, so a repeat costs no conversion and never holds up a new frame.
+    // the card plays out continuously; with no new frame, the last converted one goes again
     static repeatLastFrame(outputId: string, audioFrame: Buffer | null): boolean {
         const data = this.playbackData[outputId]
         if (!data?.playback || data.needsReinit || this.isPaused[outputId] || !data.lastConverted) return false
-        // a new frame is being converted: it is about to go out, so this repeat is not needed
+        // a new frame is about to go out
         if (data.frameProcessing) return true
         try {
             const bufferedFrames = data.playback.bufferedFrames()
@@ -1019,7 +1005,7 @@ export class BlackmagicSender {
         if (buffer.length > 0 && outputIds.length > 0) {
             let silence: Buffer | null = null
             for (const outputId of outputIds) {
-                // an output the user turned off plays silence (capture/outputsOff.ts)
+                // a turned-off output plays silence
                 const chunk = outputsOff.has(outputId) ? (silence ||= Buffer.alloc(buffer.length)) : buffer
                 if (!this.audioQueuesByOutput[outputId]) {
                     this.audioQueuesByOutput[outputId] = { queue: [], offset: 0, length: 0 }
@@ -1134,7 +1120,7 @@ export class BlackmagicSender {
             else return ImageBufferConverter10BitRGB.ARGBtoRGB(frame, size, reusableOutputBuffer)
         } else if (format.includes("YUV")) {
             const colorSpace = this.playbackData[outputId || ""]?.colorSpace || "rec709"
-            // native, limited range, the same bytes the GPU produces when it makes the frame (cardFormat.ts)
+            // same bytes as the GPU conversion (cardFormat.ts)
             const card = cardFormat(format, colorSpace, false)
             if (card && this.nativeCardConvert) return this.nativeCardConvert(frame, size.width, size.height, card, reusableOutputBuffer)
             if (format.includes("10")) {
@@ -1210,7 +1196,7 @@ export class BlackmagicSender {
         data.lastConverted = undefined
         data.onCard = []
         this.freeBuffers.delete(outputId)
-        // frames the card never reported played: nothing will release them now
+        // drop refs to frames still on the card
         for (const [buf, r] of this.bufferRefs) if (r.outputId === outputId) this.bufferRefs.delete(buf)
 
         console.log(`Stopping Blackmagic output: ${outputId}`)

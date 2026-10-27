@@ -116,7 +116,7 @@ const receiveOUTPUTasMAIN: any = {
                 else a[stateIndex] = newState
             })
 
-            // every enabled output counts, network ones included: "invisible" means on without a window
+            // enabled outputs, invisible ones included (on without a window)
             a = a.filter((state) => get(outputs)[state.id]?.enabled)
 
             const getVisibleState = [...new Set(a.map((state) => state.active !== false))]
@@ -197,7 +197,7 @@ export const receiveOUTPUTasOUTPUT: any = {
         // used for stage mirror data (hacky fix)
         allOutputs.set(a)
     },
-    // this window now draws a capture's frames rather than rendering the content a second time
+    // this window draws a capture's frames instead of rendering the content
     PRESENT: ({ active }: { id: string; active: boolean }) => presenting.set(!!active),
     CLOSE_AD: () => closeAd.set(true),
     LANGUAGE: (a: any) => setLanguage(a),

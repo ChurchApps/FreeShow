@@ -21,8 +21,7 @@
     // the output showing this stream owns the receiver
     export let outputId = ""
     export let style = ""
-    // only an output's own background may be composited underneath the page; an item or a scene is drawn
-    // in its place in the layer order
+    // only an output's own background may be composited under the page
     export let outputBackground = false
 
     let canvas: HTMLCanvasElement | undefined
@@ -35,11 +34,7 @@
     })
 
     const renderer = new StreamCanvasRenderer()
-    // a full-cover background on a captured output is composited by the worker instead (see streamLayer)
-    // Only the component actually drawing an output's background may drive the composite. A drawer tile
-    // is rendered with `background` too but no outputId, and falling back to the first output in the
-    // store made it fight the real output: its small tile is never a full cover, so it kept canceling
-    // the composite the output had just turned on, and both flickered.
+    // only a real output's background drives the composite (see streamLayer); a tile has no outputId
     const dispatch = createEventDispatcher()
     let announced = false
     const layer = new StreamLayer(outputBackground && background && !mirror && outputId ? outputId : "", screen.id, () => (composited = layer.composited))
@@ -57,13 +52,11 @@
         }
     }
 
-    // frames come from the receive process over the stream transport (see streamPort.ts), not over IPC
     const receiveStream = (data: { id: string; frame: any; time: number }) => {
         if (data.id !== screen.id) return
         loaded = true
 
-        // Take the newest frame rather than dropping by age: Svelte coalesces several arrivals in one
-        // tick into a single draw, so a burst never renders a backlog.
+        // newest frame wins: Svelte coalesces a burst into one draw
         frame = data.frame
     }
 
@@ -79,7 +72,7 @@
 </script>
 
 {#if background}
-    <!-- while the worker composites this stream into the capture, the canvas must not paint over it -->
+    <!-- hidden while the worker composites this stream -->
     <!-- data-source: part of the page's content hash (MainOutput.svelte) -->
     <canvas bind:this={canvas} data-source={screen.id} style={composited ? `${style};visibility: hidden;` : style} />
 {:else}

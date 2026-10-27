@@ -81,7 +81,7 @@ export class StreamReceiverHost {
     // One channel per window: the child keeps its end, the window gets the other, and from then on
     // frames travel between those two processes without the main process in the middle.
     private static wirePort(targetId: string) {
-        // the capture worker subscribes to an output's stream to composite it into that output's capture
+        // worker:<outputId>: the capture worker composites this stream into that output's capture
         if (targetId.startsWith("worker:")) {
             const worker = NdiSender.getSharedWorker()
             if (!worker || !this.wsInfo) {

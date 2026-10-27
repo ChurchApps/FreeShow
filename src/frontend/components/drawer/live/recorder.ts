@@ -12,8 +12,7 @@ let activeCleanup: (() => void) | null = null
 let activeLabel = ""
 let stopResolver: (() => void) | null = null
 
-// An output is recorded by its hardware encoder in the capture worker (see OutputRecording.ts): this
-// window only says where. A pause closes the current file and the recording continues in a new part.
+// An output recording is encoded in the capture worker; a pause starts a new part file.
 let outputRecording: { outputId: string; label: string; part: number; paused: boolean } | null = null
 
 function recordOutput(state: boolean) {

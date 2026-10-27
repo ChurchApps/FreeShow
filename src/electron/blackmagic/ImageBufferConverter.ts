@@ -692,7 +692,7 @@ export class ImageBufferConverter10Bit {
         // Each 128-bit block contains: U0 Y0 V0 Y1 U2 Y2 V2 Y3 U4 Y4 V4 Y5
         // Packed as: [V0:Y0:U0] [Y2:U2:Y1] [U4:Y3:V2] [Y5:V4:Y4] (little-endian 32-bit words)
         // Groups are padded per row, so allocation must be based on rows (not total pixels).
-        // rows padded to 128 bytes (48 pixels) as the card lays them out; the padding groups stay unwritten
+        // v210 rows are padded to 128 bytes (48 pixels)
         const rowBytes = Math.ceil(width / 48) * 128
         const newData = getOutputBuffer(rowBytes * height, outputBuffer)
         let outIndex = 0
@@ -770,7 +770,7 @@ export class ImageBufferConverter10Bit {
     static ARGBtoYUV(data: Buffer, { width, height }: Size, outputBuffer?: Buffer, colorSpace = "rec709") {
         // v210 format: 16 bytes per 6 pixels
         // Groups are padded per row, so allocation must be based on rows (not total pixels).
-        // rows padded to 128 bytes (48 pixels) as the card lays them out; the padding groups stay unwritten
+        // v210 rows are padded to 128 bytes (48 pixels)
         const rowBytes = Math.ceil(width / 48) * 128
         const newData = getOutputBuffer(rowBytes * height, outputBuffer)
         let outIndex = 0

@@ -8,9 +8,7 @@ import { SenderThread } from "../capture/SenderThread"
 // https://github.com/rse/grandiose
 // https://github.com/rse/vingester
 
-// NDI sender proxy: delegates NDI encoding and dispatch to the shared sender worker (./ndiWorker is
-// its adapter there); one readback of a shared render, fanned out to every member at its size and format
-
+// NDI sender proxy: delegates NDI encoding and dispatch to the shared sender worker (./ndiWorker)
 export class NdiSender {
     private static readonly MAX_INFLIGHT_SENDS = 3
 
@@ -78,7 +76,7 @@ export class NdiSender {
     }
 
 
-    // Blackmagic playback and the stream receive host run on this worker too, so they need a handle to it
+    // also used by Blackmagic playback and the stream receive host
     static getSharedWorker(): import("worker_threads").Worker | null {
         return this.worker
     }
@@ -133,8 +131,7 @@ export class NdiSender {
         this.worker.postMessage({ type: "video", id, buffer: arrayBuffer, byteOffset: 0, byteLength: arrayBuffer.byteLength, opts: { size, ratio, framerate, transparent, format } }, [arrayBuffer])
     }
 
-    // FS_CAP_STATS: how congested the MAIN JS thread is. lag = how late a 5ms timer fires (0 = idle);
-    // paint/msg = synchronous time spent in the OSR paint handler and in worker-message handling per second.
+    // FS_CAP_STATS: main-thread load; lag = lateness of a 5ms timer, paint/msg = sync ms per second
     static mainDiag = { lagSum: 0, lagMax: 0, lagN: 0, paintMs: 0, paintN: 0, paintMax: 0, msgMs: 0, msgN: 0, msgMax: 0, lastTick: 0, started: false, byType: {} as { [type: string]: { ms: number; n: number; max: number } } }
     static startMainDiag() {
         if (this.mainDiag.started || !process.env.FS_CAP_STATS) return

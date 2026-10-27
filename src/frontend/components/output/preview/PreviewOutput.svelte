@@ -26,8 +26,7 @@
 
     $: stageOutput = $outputs[outputId]?.stageOutput
 
-    // a captured output's preview is its readback downscaled, so the preview never decodes the media
-    // again; which outputs those are is whatever a capture is actually running for
+    // a captured output's preview is its downscaled readback, so it never decodes the media again
     $: output = $outputs[outputId]
     $: captured = !!output && !!$capturedOutputs[outputId]
 
@@ -35,15 +34,12 @@
     const renderer = new StreamCanvasRenderer()
     let subscribedId = ""
     let unlisten: (() => void) | null = null
-    // this preview instance, so main can size the frame to the widest preview actually drawn
+    // main sizes the frame to the widest preview drawn
     const subscriber = "p" + Math.random().toString(36).slice(2, 10)
     $: drawnWidth = Math.round(width * (window.devicePixelRatio || 1))
     $: if (subscribedId && drawnWidth) send(OUTPUT, ["PREVIEW_SIZE"], { id: subscribedId, subscriber, width: drawnWidth })
 
-    // The preview must never be blank. The mirrored output stays on screen until the first capture frame
-    // arrives; after that the canvas always holds a frame, so it is never taken away again. Flipping back
-    // to the mirror was what produced the black flashes when triggering an input: the mirror's own stream
-    // canvas receives no frames and renders black, and the capture rate swings sharply around a trigger.
+    // the mirror shows until the first capture frame; after that the canvas is never taken away
     let hadFrame = false
     function noteFrame() {
         hadFrame = true
@@ -75,9 +71,7 @@
         renderer.destroy()
     })
 
-    // The mirror is mounted by hand so taking it away removes it at once. As a child of the if-block, its
-    // removal waited on the out-transitions of everything inside it, and those could hang indefinitely,
-    // leaving the mirror's video playing (a full-resolution decode) behind the capture preview.
+    // mounted by hand so removal does not wait on out-transitions inside an if-block
     function mirrorOutput(node: HTMLElement, props: { outputId: string; style: string; preview: boolean }) {
         const mirror = new Output({ target: node, props: { ...props, mirror: true } })
         return {

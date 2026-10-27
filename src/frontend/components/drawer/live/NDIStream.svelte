@@ -22,33 +22,25 @@
     // the output showing this stream owns the receiver
     export let outputId = ""
     export let style = ""
-    // only an output's own background may be composited underneath the page; an item or a scene is drawn
-    // in its place in the layer order
+    // only an output's own background may be composited under the page
     export let outputBackground = false
 
     let canvas: HTMLCanvasElement | undefined
 
     onMount(() => {
-        // A full-quality receive belongs only to a real output. Everything else showing this source (a
-        // drawer tile, an editor preview) is a thumbnail, and asking for the full stream made the media
-        // drawer start a 4K decode per source — including FreeShow's own output — which halved the
-        // output rate and made the picture judder.
+        // only a real output takes the full-quality receive; anything else is a thumbnail
         if (background && mirror) return
         if (background && outputId) send(NDI, ["CAPTURE_STREAM"], { source: screen, outputId })
         else send(NDI, ["RECEIVE_STREAM"], { source: screen })
     })
 
     const renderer = new StreamCanvasRenderer()
-    // a full-cover background on a captured output is composited by the worker instead (see streamLayer)
-    // Only the component actually drawing an output's background may drive the composite. A drawer tile
-    // is rendered with `background` too but no outputId, and falling back to the first output in the
-    // store made it fight the real output: its small tile is never a full cover, so it kept canceling
-    // the composite the output had just turned on, and both flickered.
+    // only a real output's background drives the composite (see streamLayer); a tile has no outputId
     const dispatch = createEventDispatcher()
     let announced = false
     const layer = new StreamLayer(outputBackground && background && !mirror && outputId ? outputId : "", screen.id, () => (composited = layer.composited))
     let composited = false
-    // show the last picture this source had immediately; a live frame replaces it when one arrives
+    // show the source's last picture until a live frame arrives
     $: if (canvas && !frame && !background) {
         const cached = getCachedStreamFrame(screen.id)
         if (cached) {
@@ -73,7 +65,7 @@
     const receiveStream = (data: { id: string; frame: any; time: number }) => {
         if (data.id !== screen.id) return
         loaded = true
-        // a tile is only refreshed every so often, so keep this one for the next time it is mounted
+        // a remounted tile shows this until its next refresh
         if (!background) cacheStreamFrame(screen.id, data.frame)
 
         frame = data.frame
@@ -91,7 +83,7 @@
 </script>
 
 {#if background}
-    <!-- while the worker composites this stream into the capture, the canvas must not paint over it -->
+    <!-- hidden while the worker composites this stream -->
     <!-- data-source: part of the page's content hash (MainOutput.svelte) -->
     <canvas bind:this={canvas} data-source={screen.id} style={composited ? `${style};visibility: hidden;` : style} />
 {:else}

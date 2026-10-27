@@ -17,7 +17,7 @@ export type CaptureFrameOpts = {
     seq?: number
     members?: string[]
     depth?: number
-    /** the format the readback itself is taken in, when targets are derived from a plain BGRA copy */
+    /** format of the readback itself when targets are derived from a BGRA copy */
     mainFormat?: number
     /** FS_CONVERT_CHECK: also take the frame as BGRA so the worker can check the GPU convert */
     convertCheck?: boolean
@@ -33,7 +33,7 @@ export type CaptureFrameOpts = {
     bmdMembers?: { [id: string]: { width: number; height: number; format: number; framerate: number } }
     webrtcMembers?: { [id: string]: { width: number; height: number } }
     presentMembers?: { [id: string]: { width: number; height: number } }
-    /** members the user has turned off: they send black and silence (outputsOff.ts) */
+    /** members turned off: they send black and silence */
     offMembers?: string[]
     stageStream?: { width: number; height: number; quality: number; intervalMs: number } | null
     serverStream?: { width: number; height: number; intervalMs: number } | null
@@ -44,11 +44,7 @@ export type CaptureFrameOpts = {
 export type CaptureTimeline = { recv: number; cS: number; cE: number; fS: number; fE: number; enq: number }
 
 export class SenderCapture {
-    /**
-     * hand one readback of a shared render to the worker. `anySender` says whether any member of the
-     * render has a network sender; an output with none still has work here when something asked for a
-     * scaled frame: an OutputShow or stage viewer, a preview, or a window drawing the capture.
-     */
+    /** `anySender`: whether any member has a network sender; scaled-frame consumers need the worker without one */
     static captureFrame(id: string, source: any, opts: CaptureFrameOpts, anySender: boolean): boolean {
         const wantsScaled = !!opts.stageStream || !!opts.serverStream || ((opts.dstW || 0) > 0 && (opts.dstH || 0) > 0)
         const anyWorkerConsumer = Object.keys(opts.webrtcMembers || {}).length > 0 || Object.keys(opts.rtmpMembers || {}).length > 0 || Object.keys(opts.bmdMembers || {}).length > 0 || Object.keys(opts.presentMembers || {}).length > 0 || !!opts.thumbStream || wantsScaled
@@ -61,8 +57,7 @@ export class SenderCapture {
     static captureDoneCallbacks: { [id: string]: (seq: number, tl?: CaptureTimeline | null) => void } = {}
     static releaseTextureCallbacks: { [id: string]: (seq: number) => void } = {}
 
-    // The features that own these replies register here rather than being imported, which would make a
-    // cycle: the senders import this, and these features import the senders.
+    // registered by their owners to avoid an import cycle
     static rtmpMessageHandler: ((msg: any) => void) | null = null
     static bmdMessageHandler: ((msg: any) => void) | null = null
     static webrtcMessageHandler: ((msg: any) => void) | null = null
@@ -80,7 +75,7 @@ export class SenderCapture {
             // a pipeline slot frees, so the lifecycle may forward the next frame
             this.captureDoneCallbacks[msg.id]?.(msg.seq, msg.tl)
         } else if (msg.type === "serverFrame") {
-            // produced as RGBA by the GPU; main forwards the bytes untouched
+            // RGBA from the GPU, forwarded untouched
             CaptureHelper.Transmitter.sendServerFrame(msg.id, msg.buffer, msg.size)
         } else if (msg.type === "stageJpeg") {
             CaptureHelper.Transmitter.sendStageJpeg(msg.id, msg.jpeg, msg.size)

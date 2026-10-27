@@ -23,7 +23,7 @@
     export let color: null | string = null
     export let white = true
     export let showPlayOnHover = false
-    // a corner button on hover, for cards whose picture is a snapshot the user may want taken again
+    // a corner button on hover to retake a snapshot
     export let showRefreshOnHover = false
     const dispatch = createEventDispatcher()
     export let showApplyOnHover = false
@@ -115,7 +115,7 @@
         border: none;
         border-radius: 50%;
         background-color: rgb(0 0 0 / 0.6);
-        /* a button resets the inherited text color, and the icon draws in currentColor */
+        /* the icon draws in currentColor */
         color: #fff;
 
         z-index: 2;

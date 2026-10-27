@@ -1,5 +1,4 @@
-// Draws NDI/OMT/Blackmagic stream frames into a canvas on the GPU (UYVY converts, BGRA swizzles),
-// with a CPU path for machines without WebGL.
+// Draws stream frames (UYVY, RGBA, BGRA) into a canvas with WebGL, or on the CPU without it.
 
 export type StreamFrame = { xres: number; yres: number; data: Uint8Array | ArrayBuffer; format?: "uyvy" | "rgba" | "bgra" }
 
@@ -19,7 +18,7 @@ const UYVY_SHADER = [
     " gl_FragColor=vec4(clamp(y+kr*c,0.0,1.0),clamp(y-gu*u-gv*c,0.0,1.0),clamp(y+kb*u,0.0,1.0),1.0);}"
 ].join("")
 
-// a packed RGBA texture drawn as it is; `swap` exchanges the red and blue channels for BGRA
+// `swap` exchanges red and blue for BGRA
 const RGBA_SHADER = "precision mediump float;varying vec2 v;uniform sampler2D t;uniform float swap;void main(){vec4 c=texture2D(t,v);gl_FragColor=vec4(mix(c.rgb,c.bgr,swap),1.0);}"
 
 function buildProgram(context: WebGLRenderingContext, fragmentSource = UYVY_SHADER) {
@@ -40,15 +39,12 @@ function buildProgram(context: WebGLRenderingContext, fragmentSource = UYVY_SHAD
 }
 
 // A canvas can only ever have one kind of context, so prove the GPU path on a throwaway canvas first.
-// A negative result is NOT cached: WebGL is unavailable while the GPU process is restarting, and caching
-// that would put every stream on the CPU for the rest of the session. Re-probing costs one throwaway
-// canvas, and only happens on frames that would otherwise take the CPU path anyway.
+// A failed probe is not cached: WebGL is also missing while the GPU process restarts.
 let gpuConvertSupported: boolean | null = null
 let gpuProbedAt = 0
 function canConvertOnGPU() {
     if (gpuConvertSupported) return true
-    // back off between failed probes by the time since the last one, so a permanently GPU-less machine
-    // settles into probing rarely instead of once per frame
+    // back off between failed probes
     const now = Date.now()
     if (gpuConvertSupported === false && now - gpuProbedAt < Math.min(gpuProbeBackoff, 30000)) return false
     gpuProbedAt = now
@@ -104,7 +100,7 @@ export class StreamCanvasRenderer {
     private reportedCpu = false
     private lossHooked = false
 
-    // synchronous: the frame's buffer goes back to the receiver when the dispatch returns (streamPort.ts)
+    // synchronous: the frame's buffer is reused by the receiver once this returns
     draw(canvas: HTMLCanvasElement, frame: StreamFrame) {
         const width = frame.xres
         const height = frame.yres
@@ -113,7 +109,7 @@ export class StreamCanvasRenderer {
 
         if (!this.ctx2d && canConvertOnGPU() && this.drawOnGPU(canvas, width, height, data, frame.format)) return
         this.drawOnCPU(canvas, width, height, data, frame.format)
-        // this canvas is a 2D canvas for good now, but the element can be replaced: tell whoever owns it
+        // the canvas is 2D for good now; its owner can replace the element
         if (!this.reportedCpu) {
             this.reportedCpu = true
             canvas.dispatchEvent(new CustomEvent("streamcpufallback", { bubbles: true }))
@@ -131,8 +127,7 @@ export class StreamCanvasRenderer {
         this.gl = canvas.getContext("webgl", { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: true })
         if (!this.gl) return false
 
-        // a lost context is recoverable: drop the GL state and rebuild it on the next frame rather than
-        // giving up on the GPU for the life of this renderer
+        // a lost context is rebuilt on the next frame
         if (!this.lossHooked) {
             this.lossHooked = true
             canvas.addEventListener("webglcontextlost", (e) => {
@@ -157,7 +152,6 @@ export class StreamCanvasRenderer {
         return true
     }
 
-    // one program per pixel layout, built on first use
     private useProgram(gl: WebGLRenderingContext, packed: boolean): GpuProgram | null {
         const key = packed ? "uyvy" : "rgba"
         let entry = this.programs[key]
@@ -179,7 +173,7 @@ export class StreamCanvasRenderer {
         const gl = this.gl
         if (!gl) return false
 
-        // UYVY packs two pixels per texel, so its texture is half as wide as the frame
+        // UYVY packs two pixels per texel
         const packed = format === "uyvy"
         const entry = this.useProgram(gl, packed)
         if (!entry) return false

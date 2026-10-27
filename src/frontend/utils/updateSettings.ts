@@ -240,8 +240,7 @@ function convertTriggersToActions(data: any) {
 
 export function restartOutputs(specificId = "") {
     const allOutputs = keysToID(get(outputs))
-    // offscreen outputs first: a displayed one joins a render of its content that already exists, so it
-    // must not depend on which output comes first in the settings
+    // offscreen outputs first, so a displayed output can join their render regardless of settings order
     const rendersOffscreen = (o: Output) => !!(o.ndi || o.omt || o.webrtc || o.rtmp || o.blackmagic || o.invisible)
     const outputIds = specificId
         ? [specificId]

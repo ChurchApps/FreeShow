@@ -46,7 +46,7 @@ export class OutputHelper {
             // PREVIEW_BOUNDS: (data) => OutputHelper.Bounds.setPreviewBounds(data),
 
             FOCUS: (data: { id: string }) => OutputHelper.Lifecycle.focusOutput(data.id),
-            // the app's render signature per output (renderSignature.ts); sent ahead of the change it reflects
+            // sent ahead of the change they reflect
             RENDER_SIGNATURES: (data: { [id: string]: string }) => RenderGroups.setSignatures(data || {})
         }
 
@@ -69,7 +69,6 @@ export class OutputHelper {
         return Object.entries(this.outputs).map(([id, output]) => ({ ...output, id }))
     }
 
-    // the window a capture reads from: the offscreen surface when one exists, else the output's own window
     static renderWindow(output: OutputData | undefined) {
         const win = output?.captureWindow && !output.captureWindow.isDestroyed() ? output.captureWindow : output?.window
         return win && !win.isDestroyed() ? win : undefined

@@ -19,7 +19,7 @@
 
     // && !$editHistory.length
     $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? isLocked : $activeShow?.type === "pdf" || !$activeShow?.id
-    // the button turns every enabled output on or off, network outputs included (off ones send black)
+    // the button toggles every enabled output, network outputs included
     $: enabledOutputs = Object.values($outputs).filter((a) => a.enabled)
 
     let confirm = false

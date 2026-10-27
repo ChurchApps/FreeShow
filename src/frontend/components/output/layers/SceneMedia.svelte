@@ -7,7 +7,7 @@
 
     export let media: any = null
     export let mirror = false
-    // the output this scene is shown on, which owns a full-quality receive of its stream
+    // this output owns the full-quality receive
     export let outputId = ""
 </script>
 

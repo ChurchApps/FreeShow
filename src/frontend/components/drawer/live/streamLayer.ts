@@ -2,23 +2,13 @@ import { writable } from "svelte/store"
 import { OUTPUT } from "../../../../types/Channels"
 import { receive, send } from "../../../utils/request"
 
-// A live stream shown full-screen on a captured output does not have to be drawn by the page at all: the
-// capture worker composites the frame into the capture itself (osr-capture's video layer), which keeps a
-// 4K frame out of the browser's GPU thread. That only holds while the element covers the output with the
-// frame's own aspect and nothing is applied on top of it, so the page checks that and keeps drawing
-// whenever it is not true. It also keeps drawing until the worker confirms it is compositing, so the
-// output is never blank, and takes the drawing back only after drawing a fresh frame (its canvas is stale
-// while composited). With two streams on an output, the page draws both.
+// Hands a full-screen stream to the capture worker to composite instead of the page drawing it.
 
-/**
- * Outputs whose stream the capture worker is compositing. The output paints its background transparent
- * then, so the composited video shows through where the page has nothing of its own.
- */
+/** outputs whose stream the capture worker composites; their background paints transparent */
 export const compositedOutputs = writable<{ [id: string]: boolean }>({})
 
 const LISTENER_ID = "STREAM_LAYER"
 const listeners = new Set<(id: string, active: boolean) => void>()
-// stream layers per output
 const outputLayers = new Map<string, Set<StreamLayer>>()
 const tickListeners = new Set<(id: string) => void>()
 let receiving = false
@@ -39,18 +29,11 @@ function listen() {
     )
 }
 
-/**
- * True when the composite would land exactly where the page draws this canvas: it covers the output, the
- * frame's aspect matches it (so there is no letterboxing to reproduce), and no ancestor fades, filters,
- * blends or reshapes it. Pure translation is allowed, since it only moves an element that still covers
- * the output.
- */
+/** true when the composite matches the page: full cover, frame aspect, no ancestor effect but translation */
 function drawnPlainly(canvas: HTMLElement, frameWidth: number, frameHeight: number) {
     const rect = canvas.getBoundingClientRect()
     if (!rect.width || !rect.height || !frameWidth || !frameHeight) return false
-    // the composite fills the output, so it only matches while the frame's aspect is the element's
     if (Math.abs(rect.width / rect.height - frameWidth / frameHeight) > 0.01) return false
-    // ... and while that element covers the whole output
     const slack = 1
     if (rect.left > slack || rect.top > slack || rect.right < window.innerWidth - slack || rect.bottom < window.innerHeight - slack) return false
 
@@ -60,7 +43,7 @@ function drawnPlainly(canvas: HTMLElement, frameWidth: number, frameHeight: numb
         if (style.filter !== "none" || style.backdropFilter !== "none") return false
         if (style.opacity !== "1") return false
         if (style.mixBlendMode !== "normal") return false
-        // translation keeps the pixels where they are; anything else (scale, rotation, skew) does not
+        // only a pure translation keeps the pixels in place
         const t = style.transform
         if (t !== "none") {
             const m = t.match(/^matrix\(([-0-9.e, ]+)\)$/)
@@ -73,17 +56,14 @@ function drawnPlainly(canvas: HTMLElement, frameWidth: number, frameHeight: numb
     return true
 }
 
-/**
- * Tracks whether this output's stream can be composited by the worker instead of drawn here.
- * `update` is called with each frame; `composited` says whether to skip the draw.
- */
+/** whether the worker composites this output's stream; `update` runs per frame */
 export class StreamLayer {
     private outputId = ""
     private sourceId = ""
     private canvas: HTMLElement | null = null
     private wanted = false
     private active = false
-    // taking the drawing back: the composite runs until the page draws a fresh frame
+    // the composite continues until the page draws a fresh frame
     private releasing = false
     private checkedAt = 0
     private lastWidth = 0
@@ -98,8 +78,7 @@ export class StreamLayer {
         this.active = active
         this.onChange()
         this.driveDamage(active)
-        // frames stop arriving here while the worker composites them, so keep checking on a timer:
-        // a transition or a filter has to put the drawing back in this page
+        // no frames arrive while composited, so poll for a transition or filter
         if (active && !this.timer) this.timer = setInterval(() => this.check(), 250)
         else if (!active && this.timer) {
             clearInterval(this.timer)
@@ -121,17 +100,15 @@ export class StreamLayer {
         layers.forEach((l) => l.check())
     }
 
-    /** the worker composites this stream: canvas hidden */
     get composited() {
         return this.active
     }
 
-    /** the page draws frames: not composited, or releasing */
     get drawing() {
         return !this.active || this.releasing
     }
 
-    /** a fresh frame was drawn: finish releasing */
+    /** call after drawing a fresh frame */
     drawn() {
         if (!this.releasing) return
         this.releasing = false
@@ -147,7 +124,7 @@ export class StreamLayer {
         this.canvas = canvas
         this.lastWidth = frameWidth
         this.lastHeight = frameHeight
-        // the element's geometry only changes with layout, so this does not run per frame
+        // geometry only changes with layout
         if (Date.now() - this.checkedAt < 250) return
         this.check()
     }
@@ -174,31 +151,26 @@ export class StreamLayer {
         send(OUTPUT, ["STREAM_LAYER"], { id: this.outputId, active: false, source: this.sourceId })
     }
 
-    // The page stops drawing while the worker composites, so nothing marks the window dirty — and an
-    // offscreen window only paints when it is. A 1px canvas redrawn on each frame tick keeps the paints
-    // coming at the source's rate; it paints nothing visible itself.
+    // an offscreen page only paints when dirty: a 1px canvas redrawn per frame tick keeps it painting
     private damage: HTMLCanvasElement | null = null
     private damageCtx: CanvasRenderingContext2D | null = null
     private flip = false
     private pending = false
     private raf = 0
 
-    // A tick says a frame reached the worker: it sets the pace. The repaint runs on this page's own
-    // animation loop, so a paint never waits on the round trip that announced it, and never free-runs
-    // either (offscreen rendering has no vsync to throttle it).
+    // a tick means a frame reached the worker; the repaint runs on rAF (offscreen has no vsync)
     private tick = (id: string) => {
         if (id === this.outputId) this.pending = true
     }
 
     private loop = () => {
         this.raf = requestAnimationFrame(this.loop)
-        // one repaint per frame that arrived. A flag rather than a due time: animation frames jitter
-        // either side of the source's interval, and comparing against a deadline drops every other one
+        // a flag, not a deadline: rAF jitter around the source interval would drop every other frame
         if (!this.damageCtx || !this.pending) return
         this.pending = false
         this.flip = !this.flip
         this.damageCtx.clearRect(0, 0, 1, 1)
-        // two values that both round to nothing on screen, so the pixel never changes visibly
+        // both alphas round to zero on screen
         this.damageCtx.fillStyle = this.flip ? "rgba(0,0,0,0.001)" : "rgba(0,0,0,0.002)"
         this.damageCtx.fillRect(0, 0, 1, 1)
     }

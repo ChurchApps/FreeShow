@@ -23,15 +23,12 @@
         canvas.height = videoElem.offsetHeight
         canvas.getContext("2d")?.drawImage(videoElem, 0, 0, videoElem.offsetWidth, videoElem.offsetHeight)
         loaded = true
-        // the tile is a still image, so the desktop capture has done its job; leaving it running kept a
-        // 1080p60 Windows capture alive per tile for the rest of the session
+        // the tile is a still, so the capture is no longer needed
         stopStream()
     }
 
     // TS issue https://github.com/electron/electron/issues/27139
-    // A tile only needs one frame for its still, and a drawer opens many at once: asking each for 1080p60
-    // spun up that many full-rate desktop captures together, which is what floods the console with
-    // wgc_capture_session ProcessFrame warnings while they warm up.
+    // a tile only needs one frame, and a drawer opens many at once
     let constraints: any = {
         video: {
             mandatory: {
@@ -55,11 +52,11 @@
     onDestroy(() => {
         destroyed = true
         if (retryTimeout) clearTimeout(retryTimeout)
-        // nothing else stops these: the tiles are handed a throwaway `streams` array
+        // the tiles get a throwaway `streams` array, so nothing else stops these
         stopStream()
     })
 
-    // take the still again on demand (the card's refresh button)
+    // the card's refresh button
     function refresh() {
         stopStream()
         loaded = false

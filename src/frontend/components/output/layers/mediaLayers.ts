@@ -3,20 +3,16 @@ import { OUTPUT } from "../../../../types/Channels"
 import type { MediaStyle } from "../../../../types/Main"
 import { receive, send } from "../../../utils/request"
 
-// A background video on a captured output need not be decoded by the output page at all: one hidden media
-// window decodes it once for every output showing it (see MediaLayers.ts) and the capture worker composites
-// it under each page on the GPU. The page keeps an empty slot where the video would be, and reports what the
-// worker should draw there: which sources, in what order, at what opacity (so fades are reproduced exactly).
+// Reports the background videos the capture worker composites under a page: sources, order and opacity.
 
 /** set by main for a page whose pixels are composited by the capture worker */
 export const mediaLayersEnabled = writable(false)
-/** outputs whose page currently shows at least one media layer (the page then paints transparent there) */
+/** outputs showing at least one media layer (their page paints transparent) */
 export const mediaLayered = writable<{ [outputId: string]: boolean }>({})
-/** the color behind the video, which the worker fills with since the page itself goes transparent */
+/** the color the worker fills behind the video */
 export const mediaFill = writable<{ [outputId: string]: string }>({})
 
-// clock: when this output's playback of the file started (now minus its playback time), so main only shares
-// one decode between outputs that are playing it in step
+// clock: playback start time (now minus currentTime); only outputs in step share a decode
 export type MediaSlot = { el: HTMLElement; outputId: string; path: string; mediaStyle: MediaStyle; startAt: number; clock: number | null; onTick: () => void }
 
 const slots = new Set<MediaSlot>()
@@ -54,8 +50,7 @@ export function removeMediaSlot(slot: MediaSlot) {
     report(slot.outputId)
 }
 
-// what the page actually shows of the slot: the product of every ancestor's opacity, so a fade of any
-// duration or easing is drawn exactly as the page animates it
+// product of every ancestor's opacity, so any fade is reproduced exactly
 function opacityOf(el: HTMLElement) {
     let alpha = 1
     for (let node: HTMLElement | null = el; node; node = node.parentElement) alpha *= parseFloat(getComputedStyle(node).opacity || "1")
@@ -72,10 +67,10 @@ function toRgb(color: string): [number, number, number] {
     return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [0, 0, 0]
 }
 
-/** send this output's layers to main when they changed: bottom to top, in the order the page draws them */
+/** sends this output's layers bottom to top when they changed */
 export function report(outputId: string) {
     const ordered = [...slots].filter((s) => s.outputId === outputId && s.el.isConnected).sort((a, b) => (a.el.compareDocumentPosition(b.el) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1))
-    // a layer about to fade in is reported at opacity 0 too: its source has to exist before it can show
+    // layers at opacity 0 are reported too, so a source exists before it fades in
     const layers = ordered.map((s) => ({ path: s.path, mediaStyle: s.mediaStyle, startAt: s.startAt, clock: s.clock, alpha: Math.round(opacityOf(s.el) * 1000) / 1000 }))
     const fill = toRgb(fills[outputId] || "black")
     const message = JSON.stringify({ layers, fill })

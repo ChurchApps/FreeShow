@@ -1,6 +1,4 @@
-// The manager is used on main AND in the capture worker (via BlackmagicSender). Device stability lives with
-// whoever owns the devices; main installs the bridge here so resetDevice can reach it without this module
-// importing main-process code into the worker.
+// set by main, so this module (also loaded in the capture worker) does not import main-process code
 export type BlackmagicSenderControl = { isDeviceStable(outputId: string): boolean; resetProblematicDevice(outputId: string): boolean }
 import { getBmdDisplayModes, getBmdPixelFormats } from "./bmdFormats"
 import { getMacadam } from "./macadamLoader"

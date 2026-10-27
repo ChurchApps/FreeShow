@@ -74,7 +74,7 @@ export async function initializeSender(data: Output, window: BrowserWindow, id: 
         blackmagicHeight = 576
     }
 
-    // the device's own description of the mode wins over reading it from the name, which differs by driver
+    // the device's mode size wins over parsing the name, which differs by driver
     const device: any = BlackmagicManager.getDeviceById(bmdData.deviceId)
     const modeData = (device?.outputDisplayModes || device?.inputDisplayModes || []).find((m: any) => m?.name === displayMode)
     if (modeData?.width && modeData?.height) {

@@ -34,7 +34,7 @@
     }
     $: if ($currentWindow === "output") send(OUTPUT, ["MOVE"], { enabled: enableOutputMove })
 
-    // presenter mode: this window draws the capture's frames rather than rendering the content itself
+    // presenter mode: draw the capture's frames instead of rendering the content
     let presentCanvas: HTMLCanvasElement | null = null
     const presentRenderer = new StreamCanvasRenderer()
     let unlistenPresent: (() => void) | null = null
@@ -60,19 +60,16 @@
         }, 2000)
     })
 
-    // What this page shows, for main to decide whether another output may show this page's frames instead
-    // of its own (RenderGroups.ts): whether a transition or animation is running, and a hash of the page's
-    // content once it is still. An output joins another's render only when both pages are still and show
-    // the same content, so a fade is never cut short and nothing changes on the switch.
+    // reports whether the page is animating and a hash of its still content, for main's render sharing
     let rootEl: HTMLElement | null = null
     let reported = ""
-    // last message seq applied (OutputSend.ts)
+    // seq of the last applied message
     let appliedSeq = 0
     let checkQueued = false
     function queueCheck() {
         if (checkQueued) return
         checkQueued = true
-        // after the current task, so a burst of changes is looked at once, settled
+        // next task, so a burst of changes is checked once
         setTimeout(reportState, 0)
     }
     function reportState() {
@@ -80,8 +77,7 @@
         if (!outputId || !rootEl) return
         // a canvas drawn every frame (effects) is never still
         const busy = document.getAnimations().some((a) => a.playState === "running") || !!rootEl.querySelector("[data-animated]")
-        // the content as markup, minus what differs between windows showing the same thing: element ids
-        // (some are random) and this output's own id
+        // markup without element ids (some random) or this output's id, which differ between identical pages
         const dom = busy ? "" : contentHash(rootEl.innerHTML.replace(/ id="[^"]*"/g, "").split(outputId).join("~"))
         const state = `${busy}|${dom}|${appliedSeq}`
         if (state === reported) return

@@ -8,10 +8,7 @@ import { SenderThread } from "../../capture/SenderThread"
 import { OutputHelper } from "../OutputHelper"
 import { RenderGroups } from "./RenderGroups"
 
-// A background video shown on several captured outputs is decoded once: one hidden media window per source
-// draws it exactly as an output would (same component, media style and size), and the capture worker
-// composites that window's frames under each output's page on the GPU (osr-capture's media layer). The
-// output pages keep only an empty slot and report what belongs in it (frontend mediaLayers.ts).
+// One hidden media window per shared background video, composited under each output page by the capture worker.
 
 type Layer = { path: string; mediaStyle: MediaStyle; startAt: number; clock?: number | null; alpha: number }
 type Spec = { outputId: string; path: string; mediaStyle: MediaStyle; startAt: number; width: number; height: number; clock: number | null }
@@ -25,7 +22,7 @@ export class MediaLayers {
     private static seq = 0
     private static hooked = false
 
-    /** an output's page reported the layers it shows, bottom to top */
+    /** layers are bottom to top */
     static update(outputId: string, layers: Layer[], fill: number[]) {
         this.hook()
         if (STATS) console.info(`[MEDIA] ${outputId} shows ${layers.map((l) => `${path.basename(l.path)}@${l.alpha}`).join(", ") || "no media layer"}`)
@@ -52,24 +49,21 @@ export class MediaLayers {
         SenderThread.post({ type: "mediaAssign", outputId, layers: [], fill: [0, 0, 0] })
     }
 
-    /** what the outputs are sent, the media windows need too: playback state, media, styles */
+    /** media windows need the same playback state, media and styles as outputs */
     static broadcast(msg: Message) {
         for (const src of this.sources.values()) if (!src.win.isDestroyed()) src.win.webContents.send(OUTPUT, msg)
     }
 
-    /** a media window's page is listening: tell it what to draw */
     static sourceReady(sender: WebContents) {
         for (const src of this.sources.values()) {
             if (!src.win.isDestroyed() && src.win.webContents === sender) src.win.webContents.send(OUTPUT, { channel: "MEDIA_SOURCE", data: src.spec })
         }
     }
 
-    // Outputs playing the same file in step share one source. Started at different times they are separate
-    // playbacks, each following its own clock, so they get separate sources. "In step" is the drift the video
-    // sync itself tolerates before it seeks (videoSync.ts).
+    // max clock drift to share a source; the drift videoSync.ts tolerates before seeking
     private static readonly SAME_PLAYBACK_MS = 800
 
-    /** the source this output joins or starts for this layer; returns its key */
+    /** returns the key of the source joined or started */
     private static acquire(base: string, outputId: string, spec: Spec): string {
         const mine = [...this.used.get(outputId) || []].find((k) => this.sources.get(k)?.base === base)
         if (mine) return mine
@@ -105,8 +99,7 @@ export class MediaLayers {
             if (STATS) src.size = `${info.codedSize.width}x${info.codedSize.height}`
             const handle = process.platform === "linux" ? { planes: info.planes, modifier: info.modifier } : info.sharedTextureHandle
             SenderThread.post({ type: "mediaFrame", key, seq, handle, width: info.codedSize.width, height: info.codedSize.height })
-            // each output's page repaints once per frame of its source, which is what drives its capture; a
-            // page whose output shows another page's frames is not captured, so it is left idle
+            // the tick repaints the page, which drives its capture; followers are not captured
             for (const m of src.members) if (RenderGroups.isRenderer(m)) OutputHelper.Send.sendToWindow(m, { channel: "MEDIA_TICK", data: { outputId: m } })
         })
         return key
@@ -120,7 +113,7 @@ export class MediaLayers {
         this.sources.delete(key)
         if (STATS) console.info(`[MEDIA] source for ${src.spec.path} released, sources=${this.sources.size}`)
         SenderThread.post({ type: "mediaDrop", key })
-        // the worker hands back the frames it holds; anything it never received is ours to release
+        // the worker returns the textures it holds; release the ones it never received
         setTimeout(() => {
             for (const tex of src.held.values()) {
                 try {

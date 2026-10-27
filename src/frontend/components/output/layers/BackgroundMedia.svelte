@@ -29,8 +29,7 @@
     $: type = data.type || "media"
     $: if (type === "video" || type === "image") type = "media"
 
-    // A video here can be decoded once for every output showing it and composited by the capture worker
-    // (mediaLayers.ts) when what the page does to it is only opacity: a fade or no transition, no animation.
+    // the worker can composite it only when the page changes nothing but its opacity
     $: fadeOnly = [transition?.in?.type || transition?.type, transition?.out?.type || transition?.type].every((t) => !t || t === "fade" || t === "none")
     $: layerable = $mediaLayersEnabled && !mirror && !!outputId && fadeOnly && !animationStyle && !$outputs[outputId]?.transparent
 

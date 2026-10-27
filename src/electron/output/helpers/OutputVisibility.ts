@@ -10,13 +10,9 @@ import { OutputBounds } from "./OutputBounds"
 export class OutputVisibility {
     static async toggleOutputs(data: { outputs: (Output & { id: string })[]; state: boolean; force?: boolean; autoStartup?: boolean; autoPosition?: boolean }) {
         const newStates: { id: string; active: boolean | "invisible" }[] = []
-        // who asked to turn which outputs on or off; with "[OUTPUT] <id> turned on/off" this shows why an
-        // output is sending black
         console.info(`[OUTPUT] ${data.state ? "on" : "off"} requested for ${data.outputs.map((o) => o.id).join(", ")}${data.autoStartup ? " (auto output at startup)" : ""}`)
 
-        // The list is in display order, which decides stacking, so it is not reordered. Creation order is
-        // separate: an offscreen output must exist before a displayed one of the same content, or that one
-        // finds no render to join. Awaited, so the loop below does not create these a second time.
+        // list order decides stacking; offscreen outputs are created first (awaited) so displayed ones can join their render
         const needsWindow = (o: Output & { id: string }) => {
             const win = OutputHelper.getOutput(o.id)?.window
             return !win || win.isDestroyed()
@@ -54,7 +50,7 @@ export class OutputVisibility {
             if (window.isVisible()) this.hideWindow(window)
             // capture-only: render at the configured resolution (DPI-corrected)
             OutputBounds.updateBounds({ id: output.id, bounds: output.bounds })
-            // no window to show, but the toggle applies all the same: off sends black and silence
+            // off sends black and silence
             OutputHelper.Lifecycle.setOutputOn(output.id, state)
             return state ? "invisible" : false
         }
@@ -84,8 +80,7 @@ export class OutputVisibility {
         }
     }
 
-    // The window stays hidden, but an output that also sends elsewhere (NDI, Blackmagic...) is still turned on
-    // or off as asked: only its window could not be shown, and turning it off would send black.
+    // window not shown; an output that also sends elsewhere still follows the toggle
     private static windowNotShown(output: Output & { id: string }, state: boolean): "invisible" | false {
         const on = state && this.rendersOffscreen(output)
         OutputHelper.Lifecycle.setOutputOn(output.id, on)

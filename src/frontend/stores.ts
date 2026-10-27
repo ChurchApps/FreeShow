@@ -382,11 +382,11 @@ export const styles: Writable<{ [key: string]: Styles }> = writable({}) // {}
 // OUTPUTS
 export const outputs: Writable<Outputs> = writable({}) // {default}
 export const syncedOutputs: Writable<SyncedOutputs> = writable({}) // {}
-// outputs a capture is running for, so their previews draw the captured frame (see shouldBeCaptured)
+// outputs with a running capture; their previews draw the captured frame
 export const capturedOutputs: Writable<{ [id: string]: boolean }> = writable({})
-// this output window draws the capture instead of rendering its content (see OutputPresenter.ts)
+// this output window draws the capture instead of rendering its content
 export const presenting: Writable<boolean> = writable(false)
-// shared-render groups (renderer output id -> member ids); follower previews clone the renderer's mirror
+// shared renders: renderer output id -> member ids
 export const renderGroups: Writable<{ [rendererId: string]: string[] }> = writable({})
 export const outLocked: Writable<boolean> = writable(false) // false
 

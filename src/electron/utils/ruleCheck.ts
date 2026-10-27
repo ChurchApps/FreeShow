@@ -1,13 +1,5 @@
-// FS_RULE_CHECK=1 turns the standing rules about video frames into something the running app reports on
-// instead of something a reader has to remember:
-//
-//   - no frame is converted or scaled pixel by pixel on a CPU while a GPU is available
-//   - no frame-sized data is handled in the main process
-//   - no path silently degrades to a CPU or main-thread fallback
-//
-// Every count printed under [RULE-CHECK] is a rule being broken. On a machine with a working GPU the
-// expected output is nothing at all. It is off unless the variable is set, and costs one boolean when it
-// is off.
+// FS_RULE_CHECK=1: logs per second, under [RULE-CHECK], CPU frame processing with a GPU available,
+// frame data on main, and silent fallbacks. Silent on a working GPU.
 
 const enabled = !!process.env.FS_RULE_CHECK
 
@@ -16,8 +8,7 @@ export type RuleKind = "cpu-frame" | "main-frame" | "fallback"
 const counts = new Map<string, number>()
 let reporting = false
 
-// which process this instance is in, since the module is loaded separately in main, the capture worker
-// and the receive process
+// loaded separately in main, the capture worker and the receive process
 function role() {
     if (process.env.FS_RULE_ROLE) return process.env.FS_RULE_ROLE
     return (process as unknown as { parentPort?: unknown }).parentPort ? "receive" : "main/worker"

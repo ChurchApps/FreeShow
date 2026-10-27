@@ -86,9 +86,7 @@ export class CaptureTransmitter {
         return heavy
     }
 
-    // Downscale target for server/stage viewers and the main window's previews. Web/stage viewers get the
-    // full preview width; when only previews are subscribed, the frame is no wider than the widest preview
-    // actually drawn (even width, since the packed formats pair pixels), so the relay costs what it must.
+    // Downscale target for server/stage viewers and previews; with previews only, the widest drawn preview (even: packed formats pair pixels)
     static getScaledTarget(size: Size, memberIds: string[] = []): { dstW: number; dstH: number } {
         let dstW = Math.min(size.width, this.HEAVY_IMAGE_MAX_WIDTH)
         if (!this.previewViewersConnected()) {
@@ -99,9 +97,7 @@ export class CaptureTransmitter {
         return { dstW, dstH }
     }
 
-    // Someone is actually watching a web output stream or a stage "current output" mirror. Without a
-    // viewer the server/stage channels stay registered (the servers are enabled) but no preview frame is
-    // produced, shipped or converted for them: that work only exists for a connected viewer.
+    // a web output stream or stage "current output" mirror is connected
     static previewViewersConnected(): boolean {
         if (getConnections("OUTPUT_STREAM") > 0) return true
         return getConnections("STAGE") > 0 && getStageStreamSubscriberIds().length > 0
@@ -117,8 +113,7 @@ export class CaptureTransmitter {
                 .map((k) => this.channels[k].key)
                 .filter((key) => key !== "ndi" && key !== "omt" && key !== "rtmp" && key !== "blackmagic" && key !== "webrtc" && key !== "recorder")
             if (heavy.some((key) => key !== "server" && key !== "stage")) return { eligible: false, needsScaled: false }
-            // a previewed output needs the downscaled frame whether or not it has a server/stage channel:
-            // without it the preview falls back to a mirror that decodes the output's media all over again
+            // without it the preview falls back to a mirror that decodes the media again
             if (PreviewStream.hasSubscribers(id) || (heavy.length && viewers)) needsScaled = true
         }
         return { eligible: true, needsScaled }
@@ -147,9 +142,7 @@ export class CaptureTransmitter {
     private static heavyCostMs: { [captureId: string]: number } = {}
     private static heavyServedByWorker: { [captureId: string]: boolean } = {}
 
-    // The two ways of serving these consumers cost wildly different amounts, and the smoothed cost is
-    // what caps the rate. Carrying a measurement across a switch throttles the cheap path to the speed of
-    // the expensive one - and then measures too rarely to ever recover.
+    // the two paths cost very differently, so a switch resets the measured cost
     private static noteHeavyMode(captureId: string, viaWorker: boolean) {
         if (this.heavyServedByWorker[captureId] === viaWorker) return
         this.heavyServedByWorker[captureId] = viaWorker
@@ -163,7 +156,7 @@ export class CaptureTransmitter {
 
     private static heavyRateCap(captureId: string): number {
         const cost = this.heavyCostMs[captureId]
-        if (!cost || cost <= 0) return Infinity // nothing measured yet: let the first frames through and find out
+        if (!cost || cost <= 0) return Infinity // not measured yet
         return Math.max(1, Math.floor((1000 * this.HEAVY_MAIN_SHARE) / cost))
     }
 
@@ -188,7 +181,7 @@ export class CaptureTransmitter {
         return nativeImage.createFromBitmap(raw.buffer, raw.size)
     }
 
-    // every consumer below reads the frame back with toBitmap and may resize or encode it, all on main
+    // runs on main; consumers below may toBitmap, resize or encode
     static transmitFrame(captureId: string, image: NativeImage | null, captureTimestamp?: number, raw?: { buffer: Buffer; size: Size; format?: number }) {
         const frameTimestamp = captureTimestamp ?? performance.now()
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
@@ -196,12 +189,11 @@ export class CaptureTransmitter {
 
         const framerates = captureOptions.framerates
 
-        // the worker serves every consumer while it owns this output; serving them here too would
-        // double-send. Checked before anything is scheduled, so such a frame costs main no timer either.
+        // the worker serves every consumer while it owns this output
         if (OutputHelper.Lifecycle.isOffMainActive(captureId)) return
         if (!raw && (!image || image.isEmpty())) return
 
-        // an output the user turned off sends black in place of its picture (capture/outputsOff.ts)
+        // a turned-off output sends black
         if (!OutputHelper.Lifecycle.isOutputOn(captureId)) {
             const size = raw?.size || image!.getSize()
             raw = { buffer: this.blankFor(size, OutputHelper.getOutput(captureId)?.transparent === true), size, format: 0 }
@@ -243,14 +235,10 @@ export class CaptureTransmitter {
             }
             if (firing.length === 0) return
 
-            // Consumers that need the frame resized, converted or encoded go to the worker even when the
-            // capture could not be a shared texture: main reads the frame back once and hands it over,
-            // and does no per-consumer work at all.
+            // resized/converted/encoded consumers go to the worker; main reads back once
             const heavy = firing.filter((c) => !this.BUFFER_CONSUMERS.has(c.key)).map((c) => c.key)
             let servedByWorker = false
             if (heavy.length > 0) {
-                // measured like any other main-thread frame work, so the rate cap reflects what this path
-                // actually costs (one readback) rather than what the per-consumer path used to
                 const started = performance.now()
                 servedByWorker = this.serveHeavyViaWorker(captureId, image, raw, heavy)
                 this.noteHeavyMode(captureId, servedByWorker)
@@ -385,7 +373,7 @@ export class CaptureTransmitter {
                 this.sendBufferToBlackmagic(captureId, image)
                 break
             case "server": {
-                if (getConnections("OUTPUT_STREAM") === 0) break // nobody watching: no resize, no convert, no send
+                if (getConnections("OUTPUT_STREAM") === 0) break
                 const width = Math.min(size.width, this.serverFrameWidth())
                 this.sendBufferToServer(captureId, image.resize({ width, height: Math.max(1, Math.round((size.height * width) / size.width)), quality: "good" }))
                 break
@@ -402,11 +390,7 @@ export class CaptureTransmitter {
         }
     }
 
-    // A viewer costs its area, so bandwidth is viewers x width^2; holding that constant means the width
-    // falls with the square root of the viewer count.
-    // Hand ONE readback of this frame to the capture worker and let it derive every consumer's version.
-    // The readback cannot be avoided here - a frame captured from a real window exists only as a
-    // NativeImage on this thread - but it happens once, and no resize, convert or encode happens here.
+    // one readback to the capture worker, which derives every consumer's version
     private static serveHeavyViaWorker(captureId: string, image: NativeImage | null, raw: { buffer: Buffer; size: Size; format?: number } | undefined, keys: string[]): boolean {
         if (!NdiSender.hasWorker()) return false
 
@@ -447,10 +431,11 @@ export class CaptureTransmitter {
         return true
     }
 
+    // width falls with sqrt(viewers) to keep total bandwidth constant
     static serverFrameWidth(): number {
         const viewers = Math.max(1, getConnections("OUTPUT_STREAM"))
         const width = Math.round(this.HEAVY_IMAGE_MAX_WIDTH / Math.sqrt(viewers))
-        return Math.max(2, width - (width % 2)) // even, since the packed formats pair pixels
+        return Math.max(2, width - (width % 2)) // even: packed formats pair pixels
     }
 
     // NDI
@@ -491,7 +476,6 @@ export class CaptureTransmitter {
     }
 
     private static convertToRGBA(buffer: Buffer): void {
-        // a full-frame channel swap, on the main thread
         ruleViolation("main-frame", "convertToRGBA")
         if (this.IS_BIG_ENDIAN) util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
@@ -539,19 +523,18 @@ export class CaptureTransmitter {
 
     // push a downscaled JPEG frame to subscribed web StageShow clients
     // clients without a visible "current output" mirror never subscribe, so text-only stage displays receive nothing
-    // what connected OutputShow clients want; they take raw RGBA, which the GPU produces directly
+    // what connected OutputShow clients want (raw RGBA)
     static serverStreamRequest(captureId: string): { width: number; intervalMs: number } | null {
         if (getConnections("OUTPUT_STREAM") === 0) return null
         const fps = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.server || CaptureHelper.defaultFramerates().server
         return { width: this.serverFrameWidth(), intervalMs: 1000 / Math.max(1, fps) }
     }
 
-    // The worker produced the RGBA frame OutputShow clients want; main only forwards it.
     static sendServerFrame(outputId: string, buffer: Buffer, size: Size) {
         toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, time: Date.now(), buffer, size } })
     }
 
-    // a controller asks for a thumbnail and waits; the worker encodes the frame it already has
+    // the worker encodes the thumbnail from its current frame
     private static thumbWanted = new Set<string>()
 
     static requestControllerThumbnail(outputId: string) {
@@ -568,23 +551,21 @@ export class CaptureTransmitter {
         toServer(CONTROLLER, { channel: "OUTPUT_FRAME", data: { frame: "data:image/jpeg;base64," + jpeg.toString("base64"), width: size.width, height: size.height } })
     }
 
-    // What subscribed stage clients want, so the capture worker can produce and encode it. Returning
-    // null means nobody is watching and no frame should be made for them at all.
     private static stagePushIntervalMs() {
         return 1000 / Math.max(1, CaptureHelper.defaultFramerates().stage)
     }
 
+    // null = no stage viewer, so no frame is made
     static stageStreamRequest(): { width: number; quality: number; intervalMs: number } | null {
         if (getConnections("STAGE") === 0 || getStageStreamSubscriberIds().length === 0) return null
         return { width: this.STAGE_FRAME_MAX_WIDTH, quality: 70, intervalMs: this.stagePushIntervalMs() }
     }
 
-    // The worker encoded a frame for the stage clients; main only forwards the bytes.
     static sendStageJpeg(captureId: string, jpeg: Buffer, size: Size) {
         toStageStreamSubscribers({ channel: "STREAM_FRAME", data: { id: captureId, jpeg, size, time: Date.now() } })
     }
 
-    // Legacy path only: an output captured with capturePage has no worker to encode for it.
+    // legacy path only: capturePage outputs have no worker
     private static sendFrameToStageClients(captureId: string, image: NativeImage, size: Size) {
         if (getConnections("STAGE") === 0 || getStageStreamSubscriberIds().length === 0) return
 

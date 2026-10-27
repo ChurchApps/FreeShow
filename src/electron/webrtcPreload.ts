@@ -1,6 +1,4 @@
-// Preload of the hidden WebRTC host window (streaming/WebRtcHost.ts): the frame transport from the
-// capture worker (see streamLink.ts) plus the few IPC calls the host page makes (WHIP signaling
-// through main, logs, start/stop).
+// Preload of the hidden WebRTC host window (streaming/WebRtcHost.ts).
 
 import { contextBridge, ipcRenderer } from "electron"
 import { installStreamLinks } from "./streamLink"

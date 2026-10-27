@@ -7,8 +7,7 @@ import { ensureOmtCodecSearchPath } from "./omtModule"
 // https://github.com/openmediatransport/libomtnet
 // https://github.com/schplay/openmediatransport-node
 
-// OMT sender proxy: delegates OMT encoding and dispatch to the shared sender worker (./omtWorker is
-// its adapter there)
+// OMT sender proxy: delegates OMT encoding and dispatch to the shared sender worker (./omtWorker)
 
 export class OmtSender {
     private static readonly MAX_INFLIGHT_SENDS = 3

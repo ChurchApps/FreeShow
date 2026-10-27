@@ -6,10 +6,7 @@ import { OutputHelper } from "../output/OutputHelper"
 import { NdiSender } from "../ndi/NdiSender"
 import { BlackmagicManager } from "./BlackmagicManager"
 
-// Blackmagic output runs in the capture worker (see ndiWorker.ts), where the frame already is: the worker
-// owns the device (macadam playback), converts and schedules frames, and holds the audio queue. Main keeps
-// only what the UI and the capture path need: the device's mode, size and format, mirrored from the
-// worker. No video frame passes through main for Blackmagic on the GPU capture path.
+// Main-side proxy for Blackmagic output, which runs in the capture worker; device state is mirrored from it.
 export type BmdState = {
     ready: boolean
     displayMode: string
@@ -63,9 +60,7 @@ export class BlackmagicBridge {
         }
     }
 
-    // The card plays out at its mode's rate whether or not anything is plugged into it, so that is the rate
-    // its frames are needed at. Without it the output kept the idle rate (1fps) whenever the mode's rate had
-    // not reached the saved settings.
+    // the card plays out at its mode's rate, so capture must run at that rate
     private static applyFramerate(outputId: string, framerate: number) {
         if (!(framerate > 0)) return
         const output = OutputHelper.getOutput(outputId)
@@ -88,7 +83,6 @@ export class BlackmagicBridge {
         return this.audioQueued
     }
 
-    // mirrors BlackmagicSender.getTargetDimensions / canAcceptRawUyvy from the mirrored state
     static getTargetDimensions(outputId: string): Size {
         const st = this.states.get(outputId)
         return st?.targetSize?.width ? st.targetSize : { width: 1920, height: 1080 }
@@ -103,7 +97,7 @@ export class BlackmagicBridge {
         if (!(cs.includes("601") || cs.includes("170"))) return false
         return st.targetSize.width === size.width && st.targetSize.height === size.height
     }
-    /** the card's format as a GPU target (cardFormat.ts), or 0 when it takes BGRA converted by the sender */
+    /** GPU card format (cardFormat.ts), or 0 for BGRA */
     static cardFormat(outputId: string): number {
         const st = this.states.get(outputId)
         if (!st?.ready) return 0
@@ -112,7 +106,7 @@ export class BlackmagicBridge {
     static isDeviceStable(outputId: string): boolean {
         return this.states.get(outputId)?.stable !== false
     }
-    // the worker applies the real per-frame gate (buffer depth, reinit, backoff); here: is there a device at all
+    // the per-frame gate is in the worker
     static canAcceptFrame(outputId: string): boolean {
         return this.isReady(outputId)
     }
@@ -148,7 +142,7 @@ export class BlackmagicBridge {
         return wasUnstable
     }
 
-    /** interleaved int16 PCM (small; cloned, the caller may pool its buffer) */
+    /** interleaved int16 PCM; copied because the caller may reuse its buffer */
     static sendAudioBuffer(buffer: Buffer, opts: { sampleRate: number; channelCount: number }) {
         if (!this.states.size || !buffer.length) return
         const copy = new Uint8Array(buffer.byteLength)
@@ -156,7 +150,7 @@ export class BlackmagicBridge {
         this.worker()?.postMessage({ type: "bmdAudio", buffer: copy.buffer, byteOffset: 0, byteLength: copy.byteLength, opts }, [copy.buffer])
     }
 
-    /** CPU-capture path only (no GPU): the paint bitmap already lives on main by Electron's design */
+    /** CPU capture path only */
     static scheduleFrame(outputId: string, videoFrame: Buffer, size: Size, framerate: number, preConverted: boolean) {
         if (!this.states.has(outputId)) return
         const copy = new Uint8Array(videoFrame.byteLength)

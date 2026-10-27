@@ -3,16 +3,13 @@ import { SenderCapture } from "./SenderCapture"
 import { getMainWindow } from ".."
 import { NdiSender } from "../ndi/NdiSender"
 
-// The main window's output previews are fed from the capture, not from their own decode: the readback
-// worker already produces a GPU-downscaled frame of each render and serves it to the previewing window
-// over the shared-memory transport (capture/FrameServer.ts, streamLink.ts); main relays only the socket.
+// Output previews in the main window, fed downscaled frames from the capture worker; main relays only the socket.
 export class PreviewStream {
     private static refs: { [outputId: string]: number } = {}
-    // widest pixel width any subscriber of an output currently draws its preview at (0 = unknown yet)
+    // preview width in px per subscriber (0 = unknown yet)
     private static widths: { [outputId: string]: { [subscriber: string]: number } } = {}
 
-    // set by OutputLifecycle: a subscriber arriving or leaving changes the rate the render must run at, and
-    // nothing else re-applies it until a receiver connects or disconnects
+    // set by OutputLifecycle: subscriber changes alter the required render rate
     static onSubscribersChanged: ((outputId: string) => void) | null = null
 
     static subscribe(outputId: string, subscriber = "", width = 0) {
@@ -33,13 +30,12 @@ export class PreviewStream {
         this.onSubscribersChanged?.(outputId)
     }
 
-    // a subscriber's preview element was (re)sized: the frame it is sent need be no wider than that
     static setWidth(outputId: string, subscriber: string, width: number) {
         if (!width || !subscriber) return
         ;(this.widths[outputId] ||= {})[subscriber] = Math.round(width)
     }
 
-    // the widest preview any subscriber of these outputs draws (0 = no size known yet)
+    // 0 = no size known yet
     static requestedWidth(outputIds: string[]): number {
         let best = 0
         for (const id of outputIds) for (const w of Object.values(this.widths[id] || {})) if (w > best) best = w
@@ -51,7 +47,7 @@ export class PreviewStream {
         return Object.keys(this.refs).length > 0
     }
 
-    // the worker asks once per output, so one subscribed before the socket existed is remembered
+    // the worker asks once per output: remember those requested before the socket existed
     private static wsInfo: { port: number; token: string } | null = null
     private static wired = new Set<string>()
     private static wanted = new Set<string>()

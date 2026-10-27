@@ -2,10 +2,7 @@ import { join } from "path"
 import { Worker } from "worker_threads"
 import { SenderCapture } from "./SenderCapture"
 
-// The single worker thread that owns every network sender (./senderWorkerHost). Outputs showing the
-// same content share one render and so one shared texture, which only one thread can open, so the
-// senders those outputs feed all live here whatever protocol each of them speaks. Blackmagic playback,
-// RTMP and the stream receive host run on it too.
+// The one worker thread for all senders, Blackmagic, RTMP and stream receive: a shared texture opens on one thread only.
 
 export class SenderThread {
     private static worker: Worker | null = null

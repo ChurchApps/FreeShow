@@ -39,7 +39,7 @@ export class CaptureLifecycle {
             return
         }
 
-        // a displayed output is captured from a hidden offscreen surface, never with capturePage on main
+        // a displayed output is captured from a hidden offscreen surface, not capturePage on main
         OutputHelper.Lifecycle.createCaptureSurface(id)
         captureOptions.window = OutputHelper.renderWindow(output) || output.window
 
@@ -170,9 +170,6 @@ export class CaptureLifecycle {
 
         const baseCaptureFrameRate = CaptureHelper.getMaxActiveFramerate(frameRates, options)
 
-        // Blackmagic backpressure is the card's own buffer depth, gated per frame in BlackmagicSender;
-        // canAcceptFrame skips the capture entirely while it cannot take one.
-
         return baseCaptureFrameRate
     }
 
@@ -237,7 +234,7 @@ export class CaptureLifecycle {
         }
     }
 
-    // H.264 at about a tenth of a bit per pixel per frame looks transparent for presentation content
+    // recording-only H.264 bitrate, in bits per pixel per frame
     private static readonly RECORDING_BITS_PER_PIXEL = 0.1
 
     /** Public so a settings change (e.g. the encoder) can be applied without waiting for a capture event. */
@@ -261,13 +258,13 @@ export class CaptureLifecycle {
             const bounds = o.intendedBounds || o.window?.getBounds() || { width: 1920, height: 1080 }
             const recordFps = o.captureOptions?.framerates?.recorder || CaptureHelper.defaultFramerates().recorder
             const fps = streaming && o.rtmpData!.fps ? Number(o.rtmpData!.fps) : streaming ? 30 : recordFps
-            // a recording alone is encoded at a bitrate proportional to its pixel rate, not a streaming budget
+            // a recording alone gets a bitrate from its pixel rate
             const bitrate = streaming && o.rtmpData!.bitrate ? Number(o.rtmpData!.bitrate) : streaming ? 4000 : Math.round((bounds.width * bounds.height * fps * this.RECORDING_BITS_PER_PIXEL) / 1000)
             if (o.captureOptions?.framerates) o.captureOptions.framerates.rtmp = fps
 
             const starting = !RtmpStreamer.isRunning(o.id)
             // destination changes only touch relays; the encode keeps running
-            // an encoder that starts on a still page needs one frame to begin, once the worker is running it
+            // an encoder starting on a still page needs one repaint
             void RtmpStreamer.update(o.id, { width: bounds.width, height: bounds.height, fps, bitrate, rateControl: o.rtmpData?.rateControl, enableAudio: isAudioEnabled(), encoder: getRtmpEncoderSetting(o.id) }, destinations).then(() => {
                 if (starting) OutputHelper.Lifecycle.requestRepaint(o.id)
             })

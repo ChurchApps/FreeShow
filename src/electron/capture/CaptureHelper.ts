@@ -27,9 +27,7 @@ export class CaptureHelper {
     // the highest rate the frame-rate setting in Outputs.svelte offers
     static readonly MAX_CONFIGURABLE_FPS = 60
 
-    // The rate this output is SET to, ignoring whether anything is connected to it. The per-channel
-    // framerates drop to `unconnected` when a receiver goes away, which is the gate; this is what the
-    // output runs at for a consumer that is watching regardless, such as a preview.
+    // the configured rate, regardless of connected receivers (for consumers like a preview)
     static configuredFramerate(id: string): number {
         const custom = this.customFramerates[id]
         const configured = Number(custom?.ndi || custom?.omt || custom?.blackmagic || 0)
@@ -38,7 +36,6 @@ export class CaptureHelper {
 
 
 
-    // the rate each consumer starts at, so callers never restate one as a literal
     static defaultFramerates(): { [key: string]: number } {
         return {
             ndi: this.framerates.connected,
@@ -112,8 +109,7 @@ export class CaptureHelper {
         // readback (~20ms -> ~100ms) -> the received output only gets a few NEW frames/sec. So render each OSR
         // output at the rate it actually needs: full rate when a receiver is connected, a low rate when not.
         // Reacts within CONNECTION_POLL_INTERVAL_MS (250ms), so a connecting output ramps to 60 quickly.
-        // A shared page renders at the MAX rate any output shown from it needs — so one member with a
-        // connected 60fps receiver keeps the shared render at 60 even if others are idle.
+        // a shared page renders at the max rate any of its members needs
         this.updateRenderRate(RenderGroups.rendererOf(id))
     }
 
@@ -121,8 +117,7 @@ export class CaptureHelper {
         const output = OutputHelper.getOutput(rendererId)
         const win = OutputHelper.renderWindow(output)
         if (!output?.osr || !win || win.isDestroyed()) return
-        // An output showing another page keeps its own current but idle: painted at the lowest rate, so it
-        // is ready the moment its content stops matching, and never read.
+        // a follower's own page idles at 1fps, ready for when its content diverges
         if (RenderGroups.isFollower(rendererId)) {
             try {
                 win.webContents.setFrameRate(1)
@@ -159,7 +154,7 @@ export class CaptureHelper {
         })
     }
 
-    // Fallback only: an output nothing is capturing has no worker frame a thumbnail could come from.
+    // fallback for an output nothing is capturing
     static async captureBase64Frame(window: BrowserWindow) {
         ruleViolation("main-frame", "controller thumbnail capturePage")
         return (await window.capturePage()).toDataURL({ scaleFactor: 0.5 })

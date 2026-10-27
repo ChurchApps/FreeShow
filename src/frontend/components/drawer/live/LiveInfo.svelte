@@ -34,7 +34,7 @@
 
 {#if $activeRecording}
     <div class="scroll">
-        <!-- an output recording is encoded in the capture worker, so there is no stream to show here -->
+        <!-- an output recording is encoded in the capture worker, so there is no stream here -->
         {#if $currentRecordingStream}
             <video bind:this={videoElem} muted playsinline>
                 <track kind="captions" />

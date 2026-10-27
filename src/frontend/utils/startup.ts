@@ -43,7 +43,7 @@ export async function startup() {
             if (type) loaded.set(true)
 
             if (type === "pdf") return
-            // a media window (MediaLayers.ts) takes the same data an output does
+            // a media window takes the same data as an output
             if (type === "output" || type === "media") {
                 startupOutput()
                 return
@@ -72,7 +72,7 @@ async function startupMain() {
     if (startupProfile) openProfileByName(startupProfile)
     else autoOpenLastUsedProfile()
 
-    // before the stores start sending to the output windows, so the signatures see every message
+    // before storeSubscriber, so the signatures see every message
     setBeforeOutputSend(renderSignatureHook)
     storeSubscriber()
     remoteListen()

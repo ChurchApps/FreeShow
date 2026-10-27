@@ -21,7 +21,6 @@ export class OutputSend {
             ;(tempMsg as any).seq = RenderGroups.stamp(output.id)
 
             output.window.webContents.send(OUTPUT, tempMsg)
-            // the offscreen capture surface renders the same output, so it needs the same data
             const surface = (output as any).captureWindow
             if (surface && !surface.isDestroyed()) surface.webContents.send(OUTPUT, tempMsg)
 

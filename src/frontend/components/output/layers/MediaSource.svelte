@@ -5,8 +5,7 @@
     import { destroy, receive, send } from "../../../utils/request"
     import Video from "../../media/Video.svelte"
 
-    // A media window (see MediaLayers.ts): decodes one background video once for every captured output that
-    // shows it, drawn exactly as those outputs would draw it; the capture worker composites it under their pages.
+    // Decodes one background video for every captured output showing it, for the worker to composite.
     let source: { outputId: string; path: string; startAt?: number; mediaStyle: MediaStyle } | null = null
 
     receive(OUTPUT, { MEDIA_SOURCE: (data: typeof source) => (source = data) }, "MEDIA_SOURCE")

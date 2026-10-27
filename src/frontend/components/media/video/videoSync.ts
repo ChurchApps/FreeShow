@@ -28,8 +28,7 @@ const pendingSeeks = new WeakMap<HTMLVideoElement, number>()
 const seekLatencyEMA = new WeakMap<HTMLVideoElement, number>()
 const droppedSample = new WeakMap<HTMLVideoElement, { dropped: number; at: number; struggling: boolean }>()
 
-// whether the video dropped frames within about the last second (sync runs far more often than that, so
-// comparing against the previous call would almost always see no change)
+// whether the video dropped frames within about the last second
 function isStruggling(vid: HTMLVideoElement, now: number): boolean {
     const dropped = vid.getVideoPlaybackQuality?.().droppedVideoFrames ?? 0
     const sample = droppedSample.get(vid)
@@ -107,8 +106,7 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
     const isExplicitSeek = isSoftLoop ? lastSyncedTime > targetTime + 0.1 : vid.paused ? Math.abs(targetDelta) > 0.05 : jumpAmount > 0.5 * seekRateScale || jumpAmount < -0.3 * seekRateScale || targetDelta < -0.3
 
     // 2. Cooldown & Hard Seek (Explicit seeks and paused scrubbing are never blocked by cooldown)
-    // A seek only helps once it has landed: on keyframe-sparse 4K that takes longer than the cooldown alone,
-    // and seeking again before then restarts it, so the measured seek time is added to the wait.
+    // a seek restarts if another lands before it, so the measured seek time is added to the cooldown
     const seekCooldownMs = 500 + (seekLatencyEMA.get(vid) ?? 0) * 1000
     const inSeekCooldown = now - (lastSeekTimestamps.get(vid) || 0) < seekCooldownMs
     const driftThreshold = Math.max(0.4, 0.8 * rate)
@@ -158,10 +156,8 @@ export function syncVideoToAudio(vid: HTMLVideoElement | null, targetTime: numbe
 
     lastSyncRecords.set(vid, { targetTime, timestamp: now, isNudging })
 
-    // Every playbackRate change makes the media pipeline resynchronize - a stall, often dropped frames, and
-    // so more drift to correct. The correction therefore moves in coarse steps and is only written when its
-    // step changes. A video already dropping frames or short of data is never sped up: asking it to decode
-    // faster deepens the deficit until it falls far enough behind to seek, and the seek starts that over.
+    // each playbackRate write resyncs the pipeline, so the rate moves in coarse steps;
+    // a video dropping frames or short of data is never sped up
     const step = 0.05 * rate
     let steppedRate = rate + Math.round((targetRate - rate) / step) * step
     if (steppedRate > rate && isStruggling(vid, now)) steppedRate = rate

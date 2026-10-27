@@ -131,7 +131,7 @@ export interface EncoderCommandOptions {
     rateControl?: "cbr" | "vbr"
     enableAudio: boolean
     sampleRate?: number
-    /** pixel format of the raw frames on stdin: BGRA (4 bytes/px) or planar yuv420p (1.5 bytes/px, no swscale) */
+    /** pixel format of the raw frames on stdin (default bgra) */
     inputPixelFormat?: "bgra" | "yuv420p"
 }
 
@@ -169,8 +169,7 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
     }
 
     args.push("-c:a", "aac", "-ar", "48000", "-ac", `${AUDIO_CHANNELS}`, "-b:a", AUDIO_BITRATE)
-    // end with the video: once the inputs close, aresample would otherwise fill the gap between the
-    // wall-clock video timestamps and the sample-counted audio with minutes of silence
+    // end with the video, or aresample pads the audio with silence after the inputs close
     args.push("-shortest")
 
     // SWITCH FROM MPEGTS TO FLV FOR RTMP

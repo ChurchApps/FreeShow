@@ -18,7 +18,7 @@ ipcMain.on("WEBRTC_LOG", (_event, { type, message }) => {
     }
 })
 
-// a stream the host gave up on (failed negotiation): the next start request must really start it
+// the host window gave up on this stream, so the next start must not be deduplicated
 ipcMain.on("WHIP_ENDED", (_event, { outputId }) => WebRtcHost.whipEnded(outputId))
 
 // Perform WHIP HTTP POST signaling from Electron Main (NodeJS) to bypass all browser CORS / Origin limits
@@ -84,12 +84,7 @@ ipcMain.on("DO_WHIP_DELETE", async (_event, { outputId, url, token }) => {
     }
 })
 
-// The hidden host window encodes and sends WebRTC (WHIP). Its frames come from the capture worker over
-// the shared-memory transport (capture/FrameServer.ts in the worker, streamLink.ts in the window's
-// preload): the worker serves each streamed output a BGRA frame at the output's size, and this window
-// draws it into the canvas whose captureStream feeds the peer connection. Main only relays the socket
-// details; no frame passes through it on the GPU capture path. sendFrame() below is the fallback for
-// the main-thread capture path (no shared-texture capture).
+// Hidden window that sends WHIP streams from frames the capture worker serves over shared memory.
 export class WebRtcHost {
     private static window: BrowserWindow | null = null
     private static started = false
@@ -119,8 +114,7 @@ export class WebRtcHost {
         }
     }
 
-    // hand the host window the worker's socket for one output; the worker asks once per output, so an
-    // output whose window was not ready is remembered and wired when it is
+    // the worker asks once per output: keep requests that arrive before the window is ready
     private static wire(targetId: string) {
         if (!this.isRunning() || !this.loaded || !this.wsInfo) {
             this.wanted.add(targetId)
@@ -155,7 +149,7 @@ export class WebRtcHost {
         this.loaded = false
         this.window.webContents.once("did-finish-load", () => {
             this.loaded = true
-            // the worker forgets what it asked for: every streamed output is requested again with its next frame
+            // the worker then requests each streamed output again with its next frame
             NdiSender.getSharedWorker()?.postMessage({ type: "webrtcReset" })
             for (const id of [...this.wanted]) this.wire(id)
         })
@@ -185,7 +179,7 @@ export class WebRtcHost {
         NdiSender.getSharedWorker()?.postMessage({ type: "webrtcReset" })
     }
 
-    /** Main-thread capture path only: push an RGBA frame for an output to the hidden renderer. */
+    /** RGBA frame from the main-thread capture path (no shared-texture capture). */
     static sendFrame(outputId: string, buffer: Buffer, size: { width: number; height: number }) {
         if (!this.isRunning()) return
         this.window!.webContents.send("WEBRTC_FRAME", { outputId, buffer, size })
@@ -197,9 +191,7 @@ export class WebRtcHost {
         this.window!.webContents.send("WEBRTC_AUDIO", { buffer, sampleRate, channelCount })
     }
 
-    // The settings each output's stream was started with. Every capture start or stop asks for every stream
-    // again, and a start replaces the running stream, so without this any output toggle or capture change
-    // dropped every WebRTC viewer for a reconnect. Only a stream whose settings changed is restarted.
+    // starts repeat on every capture change and a start drops viewers: restart only on changed settings
     private static whipConfigs = new Map<string, string>()
 
     /** Start a WHIP stream for a specific output window. Returns whether a (re)start was sent. */
@@ -258,9 +250,7 @@ console.info = (...args) => sendLog("info", ...args);
 console.warn = (...args) => sendLog("warn", ...args);
 console.error = (...args) => sendLog("error", ...args);
 
-// ----- frame canvases: one per output, drawn on the GPU (BGRA from the worker, RGBA from main) -----
-// A canvas lives as long as frames arrive for its output; a WHIP stream captures whichever canvas
-// belongs to its output, so frames can start before or after the stream is negotiated.
+// one WebGL canvas per output; frames may start before or after its stream is negotiated
 const VS = "attribute vec2 a;varying vec2 v;void main(){v=vec2((a.x+1.0)*0.5,1.0-(a.y+1.0)*0.5);gl_Position=vec4(a,0.0,1.0);}";
 const FS = "precision mediump float;varying vec2 v;uniform sampler2D t;uniform float swap;void main(){vec4 c=texture2D(t,v);gl_FragColor=mix(c,c.bgra,swap);gl_FragColor.a=1.0;}";
 const canvases = {};
@@ -330,7 +320,7 @@ function redraw(entry) {
     else { gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); }
 }
 
-// frames from the capture worker (shared memory, transferred ArrayBuffer; see streamLink.ts)
+// frames from the capture worker (transferred ArrayBuffer)
 window.addEventListener("message", (e) => {
     const m = e.data;
     if (m?.type !== "STREAM_FRAME" || !(m.data instanceof ArrayBuffer)) return;
@@ -341,7 +331,7 @@ window.addEventListener("message", (e) => {
     } catch (err) {
         console.error("Frame paint error: " + err.message);
     }
-    // the upload has read the buffer: hand it back to be refilled
+    // uploaded: return the buffer to be refilled
     window.postMessage({ type: "STREAM_ACK", target: m.target, slot: m.slot, data: m.data }, "*", [m.data]);
 });
 
@@ -351,7 +341,7 @@ setInterval(() => {
     frameCount = frameAge = 0;
 }, 5000);
 
-// frames from main (main-thread capture path only): RGBA
+// RGBA frames from main (main-thread capture path)
 host.on("WEBRTC_FRAME", ({ outputId, buffer, size }) => {
     try {
         drawFrame(outputId, size.width, size.height, new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength), false);
@@ -490,9 +480,7 @@ host.on("START_WHIP", async ({ outputId, url, token, fps, bitrate }) => {
     try {
         await stopStream(outputId);
 
-        // the output's canvas (black until frames arrive, so captureStream produces RTP immediately:
-        // without a first paint the encoder has nothing to encode and the WHIP server closes the
-        // session with "deadline exceeded while waiting tracks")
+        // paint black first: with no RTP the WHIP server closes the session ("waiting tracks")
         const entry = getCanvas(outputId);
         redraw(entry);
         const canvas = entry.canvas;
@@ -559,7 +547,7 @@ host.on("START_WHIP", async ({ outputId, url, token, fps, bitrate }) => {
         streams[outputId].keepAlive = setInterval(() => {
             const s = streams[outputId];
             if (!s) return;
-            if (Date.now() - (entry.lastPaintTime || 0) < 200) return; // real frames are flowing; leave it
+            if (Date.now() - (entry.lastPaintTime || 0) < 200) return; // real frames are flowing
             try { redraw(entry); } catch (e) {}
         }, 200);
 

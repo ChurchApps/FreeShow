@@ -1,7 +1,5 @@
-// Outputs the user has turned off, as the capture worker knows them. An off output stays connected, but
-// everything it sends goes dark: black in place of the picture (fully transparent for a transparent
-// output, so a keyed graphic disappears instead of covering the program) and silence in place of sound.
-// Main owns the state (OutputLifecycle.setOutputOn) and posts the full list whenever it changes.
+// Outputs turned off, as the capture worker knows them: they stay connected but send black (transparent
+// for a transparent output) and silence.
 
 import { cardFrameBytes } from "../blackmagic/cardFormat"
 
@@ -21,7 +19,7 @@ export function blankFrame(width: number, height: number, format: number, transp
         for (let i = 0; i < px * 2; i += 2) buf[i] = 128
         return buf
     }
-    // the SDI card formats (cardFormat.ts), limited range: Y 16 (64), chroma 128 (512)
+    // SDI card formats, limited range: Y 16 (64), chroma 128 (512)
     if (format === 5 || format === 6) {
         const buf = Buffer.alloc(px * 2, 16)
         for (let i = 0; i < px * 2; i += 2) buf[i] = 128
