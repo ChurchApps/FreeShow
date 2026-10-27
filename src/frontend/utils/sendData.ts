@@ -81,8 +81,8 @@ export async function sendData(id: Clients, msg: ClientMessage, check = false) {
     }
 
     if (channel === "API") {
-        if (id !== REMOTE) return
-        if (get(serverData)?.remote?.password && !get(connections).REMOTE?.[connectionId]?.entered) return
+        if (id !== REMOTE && id !== STAGE) return
+        if (id === REMOTE && get(serverData)?.remote?.password && !get(connections).REMOTE?.[connectionId]?.entered) return
 
         if (!msg.data) msg.data = {}
         const apiId = msg.api || ""
