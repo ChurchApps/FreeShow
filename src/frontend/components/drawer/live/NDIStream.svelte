@@ -8,12 +8,15 @@
     import { StreamCanvasRenderer } from "./streamCanvas"
     import { cacheStreamFrame, getCachedStreamFrame } from "./streamCache"
     import { StreamLayer } from "./streamLayer"
+    import { subscribeOutputPreview } from "./outputPreview"
     import { onStreamFrame } from "../../../utils/streamPort"
     import SelectElem from "../../system/SelectElem.svelte"
 
     interface Screen {
         id: string
         name: string
+        // set when the source is one of this machine's own outputs
+        outputId?: string
     }
     export let screen: Screen
     let frame: any
@@ -27,7 +30,16 @@
 
     let canvas: HTMLCanvasElement | undefined
 
+    let stopPreview: (() => void) | null = null
     onMount(() => {
+        // a tile of an own output draws its capture preview: receiving it would make its sender run for a thumbnail
+        if (!background && screen.outputId) {
+            stopPreview = subscribeOutputPreview(screen.outputId, 480, (f) => {
+                loaded = true
+                frame = f
+            })
+            return
+        }
         // only a real output takes the full-quality receive; anything else is a thumbnail
         if (background && mirror) return
         if (background && outputId) send(NDI, ["CAPTURE_STREAM"], { source: screen, outputId })
@@ -76,6 +88,7 @@
         layer.destroy()
         renderer.destroy()
         stopStream()
+        stopPreview?.()
         if (background && !mirror && outputId) send(NDI, ["CAPTURE_DESTROY"], { id: screen.id, outputId })
     })
 
@@ -88,7 +101,7 @@
     <canvas bind:this={canvas} data-source={screen.id} style={composited ? `${style};visibility: hidden;` : style} />
 {:else}
     <!-- class="context #screen_card" -->
-    <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} {loaded} icon="ndi" white showPlayOnHover showRefreshOnHover on:refresh={() => send(NDI, ["REFRESH_STREAM"], { source: screen })}>
+    <Card outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} {loaded} icon="ndi" white showPlayOnHover showRefreshOnHover={!screen.outputId} on:refresh={() => send(NDI, ["REFRESH_STREAM"], { source: screen })}>
         <SelectElem style="display: flex;" id="ndi" data={{ id: screen.id, type: "ndi", name: screen.name }} draggable>
             <canvas bind:this={canvas} />
         </SelectElem>

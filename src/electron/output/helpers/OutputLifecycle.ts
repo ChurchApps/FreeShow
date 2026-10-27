@@ -651,7 +651,11 @@ export class OutputLifecycle {
 
     // a previewed output renders at its configured rate even with no receiver connected
     static watchPreviewSubscribers() {
-        PreviewStream.onSubscribersChanged = (outputId) => CaptureHelper.updateRenderRate(RenderGroups.rendererOf(outputId))
+        PreviewStream.onSubscribersChanged = (outputId) => {
+            CaptureHelper.updateRenderRate(RenderGroups.rendererOf(outputId))
+            // a still page sends no frame until it paints
+            if (PreviewStream.hasSubscribers(outputId)) OutputLifecycle.requestRepaint(outputId)
+        }
     }
 
     static previewFps(id: string): number {

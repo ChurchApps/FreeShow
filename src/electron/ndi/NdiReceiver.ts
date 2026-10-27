@@ -3,13 +3,16 @@
 // the main thread. See ../capture/streamReceiverProcess.
 
 import { StreamReceiverHost } from "../capture/StreamReceiverHost"
+import { ownSenderOutput } from "../output/helpers/ownSenders"
+import { NdiSender } from "./NdiSender"
 
 export class NdiReceiver {
     static ndiDisabled = false
 
-    static async findStreamsNDI(data: { groups?: string }): Promise<{ name: string; urlAddress: string }[]> {
+    static async findStreamsNDI(data: { groups?: string }): Promise<{ name: string; urlAddress: string; outputId?: string }[]> {
         if (this.ndiDisabled) return []
-        return (await StreamReceiverHost.request("ndi:find", data)) || []
+        const sources: { name: string; urlAddress: string }[] = (await StreamReceiverHost.request("ndi:find", data)) || []
+        return sources.map((s) => ({ ...s, outputId: ownSenderOutput(s.name, NdiSender.NDI) || undefined }))
     }
 
     // low bandwidth reception for drawer cards
