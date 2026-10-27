@@ -11,7 +11,7 @@
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
     import { history } from "../../helpers/history"
-    import { changeTime } from "../../helpers/time"
+    import { changeTime, getWeekday } from "../../helpers/time"
     import InputRow from "../../input/InputRow.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialColorInput from "../../inputs/MaterialColorInput.svelte"
@@ -166,7 +166,7 @@
     }
 
     $: weekdayIndex = editEvent.isoFrom ? parseISODate(editEvent.isoFrom).getDay() : 1
-    $: weekdayName = translateText("weekday." + (weekdayIndex === 0 ? 7 : weekdayIndex))
+    $: weekdayName = getWeekday(weekdayIndex)
     $: repeats = [
         { value: "day", label: translateText("calendar.day") },
         { value: "week", label: translateText("calendar.week") },

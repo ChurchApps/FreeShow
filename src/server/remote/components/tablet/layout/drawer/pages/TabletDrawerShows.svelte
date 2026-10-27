@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { shows, dictionary, activeShow, activeCategory, categories, showSearchResults } from "../../../../../util/stores"
-    import { translate, dateToString } from "../../../../../util/helpers"
-    import { send } from "../../../../../util/socket"
-    import { _set } from "../../../../../util/stores"
-    import MaterialButton from "../../../../MaterialButton.svelte"
-    import Icon from "../../../../../../common/components/Icon.svelte"
-    import VirtualList from "../VirtualList.svelte"
     import Center from "../../../../../../common/components/Center.svelte"
+    import Icon from "../../../../../../common/components/Icon.svelte"
+    import { dateToString } from "../../../../../../common/util/time"
+    import { translate } from "../../../../../util/helpers"
+    import { send } from "../../../../../util/socket"
+    import { _set, activeCategory, activeShow, categories, dictionary, shows, showSearchResults } from "../../../../../util/stores"
+    import MaterialButton from "../../../../MaterialButton.svelte"
+    import VirtualList from "../VirtualList.svelte"
 
     export let searchValue: string = ""
     $: query = (searchValue || "").trim()
@@ -37,9 +37,7 @@
     $: active = $activeCategory || "all"
 
     // Map match scores from showSearchResults if matching current query
-    $: matchMap = $showSearchResults && $showSearchResults.query === query
-        ? new Map($showSearchResults.results.map((r: any) => [r.id, r.match]))
-        : null
+    $: matchMap = $showSearchResults && $showSearchResults.query === query ? new Map($showSearchResults.results.map((r: any) => [r.id, r.match])) : null
 
     // Filter shows based on search and category
     $: filteredShows = ($shows || [])

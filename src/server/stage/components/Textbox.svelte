@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte"
+    import { onDestroy, onMount, tick } from "svelte"
     import type { Item } from "../../../types/Show"
     import Button from "../../common/components/Button.svelte"
     import Icon from "../../common/components/Icon.svelte"
@@ -63,9 +63,20 @@
     $: if (autoSize && loaded) calculateAutosize()
     $: if ($variables) setTimeout(calculateAutosize, 50)
     let loopStop: any = null
+    let pendingAutosize = false
     function calculateAutosize() {
-        if (loopStop || !alignElem || !autoSize) return
-        loopStop = setTimeout(() => (loopStop = null), 200)
+        if (!alignElem || !autoSize) return
+        if (loopStop) {
+            pendingAutosize = true
+            return
+        }
+        loopStop = setTimeout(() => {
+            loopStop = null
+            if (pendingAutosize) {
+                pendingAutosize = false
+                calculateAutosize()
+            }
+        }, 100)
 
         let type = item?.textFit || "shrinkToFit"
 
@@ -291,6 +302,17 @@
     function update() {
         if (!hasDynamicValues) return
         updateDynamic++
+    }
+
+    const previousDynamicValues: { [key: string]: string } = {}
+    async function resolveDynamic(val: string) {
+        const res = await replaceDynamicValues(val)
+        if (previousDynamicValues[val] !== undefined && previousDynamicValues[val] !== res) {
+            await tick()
+            calculateAutosize()
+        }
+        previousDynamicValues[val] = res
+        return res
     }
 
     onDestroy(() => {
@@ -531,7 +553,7 @@
                                     {@const textStyle = text.style?.replace(/font-size:\s*0(?:px)?;?/gi, "") || ""}
 
                                     {#key updateDynamic}
-                                        {#await replaceDynamicValues(value)}
+                                        {#await resolveDynamic(value)}
                                             <span style="{style ? textStyle + (fontSize ? 'font-size: ' + fontSize + 'px;' : '') : 'font-size: ' + fontSize + 'px;'}{customStyle}">{@html getDynamicValue(value)}</span>
                                         {:then newValue}
                                             <span style="{style ? textStyle + (fontSize ? 'font-size: ' + fontSize + 'px;' : '') : 'font-size: ' + fontSize + 'px;'}{customStyle}">{@html newValue}</span>

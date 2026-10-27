@@ -1,12 +1,12 @@
 <script lang="ts">
     import { activeDays, activePopup, calendars, eventEdit, events, special } from "../../../stores"
     import { triggerClickOnEnterSpace } from "../../../utils/clickable"
-    import { translateText } from "../../../utils/language"
     import { actionData } from "../../actions/actionData"
     import { getActionName } from "../../actions/actions"
     import { sortByTime } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { getMonthName } from "../../helpers/time"
     import Center from "../../system/Center.svelte"
     import { copyDate, endsMidnightNextDay, getTime, isBetween, isSameDay } from "./calendar"
     import { isCalendarHidden } from "./calendars"
@@ -43,7 +43,7 @@
 {#if $activeDays.length}
     <div class="main">
         <span class="date">
-            {current.getDate()}. {translateText("month." + (current.getMonth() + 1))}
+            {current.getDate()}. {getMonthName(current.getMonth())}
             {current.getFullYear()}
         </span>
 

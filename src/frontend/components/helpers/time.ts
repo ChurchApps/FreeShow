@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { Time } from "../../../types/Main"
-import { dictionary } from "../../stores"
+import { dictionary, language } from "../../stores"
 
 export function secondsToTime(seconds: number): Time {
     // turn to positive (timers have custom negative placed before)
@@ -40,52 +40,110 @@ export function joinTimeBig(time: number, showHours = true, padding = true) {
     return (days + [h, m, allTimes.s].filter(Boolean).join(":")).replace(" :", " ")
 }
 
-export function dateToString(date: string | number | Date, full = false, d = get(dictionary)): string {
+export function dateToString(date: string | number | Date, short = false): string {
     if (!date) return ""
 
     date = new Date(date)
-    let year: any = date.getFullYear()
-    let month: any = date.getMonth() + 1
-    let day: any = date.getDate()
 
-    let value = ""
-    if (full) {
-        const weekday = getWeekday(date.getDay(), d, true)
-        month = getMonthName(date.getMonth(), d)
+    if (short) {
+        const now = new Date()
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+        const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+        const diffDays = Math.round((startOfToday - startOfDate) / (1000 * 60 * 60 * 24))
 
-        // Monday 6. February, 2021
-        value = weekday + " " + String(day) + ". " + String(month) + ", " + String(year)
-    } else {
-        if (month < 10) month = "0" + String(month)
-        if (day < 10) day = "0" + String(day)
-        year = year.toString().slice(-2)
-        value = [day, month, year].join(".")
+        if (diffDays >= 0 && diffDays <= 7) {
+            if (diffDays === 0) {
+                try {
+                    const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" })
+                    const res = rtf.format(0, "day")
+                    return res.charAt(0).toUpperCase() + res.slice(1)
+                } catch {
+                    return "Today"
+                }
+            }
+            if (diffDays < 7) {
+                try {
+                    const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "always" })
+                    const res = rtf.format(-diffDays, "day")
+                    return res.charAt(0).toUpperCase() + res.slice(1)
+                } catch {
+                    return `${diffDays} days ago`
+                }
+            }
+            if (diffDays === 7) {
+                try {
+                    const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "always" })
+                    const res = rtf.format(-1, "week")
+                    return res.charAt(0).toUpperCase() + res.slice(1)
+                } catch {
+                    return "1 week ago"
+                }
+            }
+        }
+
+        try {
+            const parts = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" }).formatToParts(date)
+            const fullParts = new Intl.DateTimeFormat(undefined, { month: "long" }).formatToParts(date)
+            const fullMonth = fullParts.find((p) => p.type === "month")?.value
+            if (fullMonth && fullMonth.length <= 4) {
+                const mPart = parts.find((p) => p.type === "month")
+                if (mPart) mPart.value = fullMonth
+            }
+            return parts.map((p) => p.value).join("")
+        } catch {
+            return date.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+        }
     }
 
-    // TODO: get format (DD.MM.YY) | YYYY-MM-DD | MM/DD/YYYY
-    return value
+    try {
+        const str = date.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+        return str.charAt(0).toUpperCase() + str.slice(1)
+    } catch {
+        const weekday = getWeekday(date.getDay(), get(dictionary), true)
+        const monthName = getMonthName(date.getMonth(), get(dictionary), true)
+        return weekday + " " + String(date.getDate()) + ". " + String(monthName) + ", " + String(date.getFullYear())
+    }
 }
 
-export function getWeekday(day: number, d = get(dictionary), uppercase = false) {
-    let weekday = d.weekday ? d.weekday[day === 0 ? 7 : day] : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][day]
+export function getWeekday(day: number, d = get(dictionary), uppercase = false, locale?: string) {
+    const dIndex = day === 7 || day === 0 ? 0 : day
+    const loc = (locale || get(language) || "").replace("_", "-") || undefined
+    let weekday = ""
+    try {
+        weekday = new Date(2000, 0, 2 + dIndex).toLocaleDateString(loc, { weekday: "long" })
+    } catch {
+        weekday = d.weekday ? d.weekday[day === 0 ? 7 : day] : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][dIndex]
+    }
     if (!weekday?.length) return ""
-    if (uppercase) weekday = weekday[0].toUpperCase() + weekday.slice(1, weekday.length)
+    if (uppercase) weekday = weekday[0].toUpperCase() + weekday.slice(1)
 
     return weekday
 }
 
-export function getMonthName(month: number, d = get(dictionary), uppercase = false) {
-    // this might be upper or lower case depending on the language
-    let monthname = d.month ? d.month[month + 1] : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][month]
+export function getMonthName(month: number, d = get(dictionary), uppercase = false, locale?: string) {
+    const mIndex = month >= 1 && month <= 12 ? month - 1 : month
+    const loc = (locale || get(language) || "").replace("_", "-") || undefined
+    let monthname = ""
+    try {
+        monthname = new Date(2000, mIndex, 1).toLocaleDateString(loc, { month: "long" })
+    } catch {
+        monthname = d.month ? d.month[mIndex + 1] : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][mIndex]
+    }
     if (!monthname?.length) return ""
-    if (uppercase) monthname = monthname[0].toUpperCase() + monthname.slice(1, monthname.length)
+    if (uppercase) monthname = monthname[0].toUpperCase() + monthname.slice(1)
 
     return monthname
 }
 
 export function getDateAndTimeString(time: number) {
-    const date = splitDate(new Date(time))
-    return dateToString(time) + " " + addZero(date.hours) + ":" + addZero(date.minutes)
+    if (!time) return ""
+    const date = new Date(time)
+    try {
+        return date.toLocaleDateString(undefined) + " " + date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    } catch {
+        const d = splitDate(date)
+        return [addZero(d.date), addZero(d.month + 1), d.year.toString().slice(-2)].join(".") + " " + addZero(d.hours) + ":" + addZero(d.minutes)
+    }
 }
 
 export const padString = (a: number) => (Number.isFinite(a) ? a.toString().padStart(2, "0") : "00")
@@ -130,13 +188,33 @@ const intervals = [
     { label: "second", seconds: 1 }
 ]
 
-export function timeAgo(time: number) {
+export function timeAgo(time: number, locale = undefined) {
     if (!time) return ""
-    const seconds = Math.floor((Date.now() - time) / 1000)
-    const interval: any = intervals.find((i) => i.seconds < seconds)
-    if (!interval) return "just now"
-    const count = Math.floor(seconds / interval.seconds)
-    return `${count} ${interval.label}${count !== 1 ? "s" : ""} ago`
+    const diffSec = Math.round((time - Date.now()) / 1000)
+    const absSec = Math.abs(diffSec)
+
+    if (absSec < 10) return "just now"
+
+    try {
+        const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "always" })
+        if (absSec < 60) return rtf.format(diffSec, "second")
+        const diffMin = Math.round(diffSec / 60)
+        if (Math.abs(diffMin) < 60) return rtf.format(diffMin, "minute")
+        const diffHours = Math.round(diffSec / 3600)
+        if (Math.abs(diffHours) < 24) return rtf.format(diffHours, "hour")
+        const diffDays = Math.round(diffSec / 86400)
+        if (Math.abs(diffDays) < 30) return rtf.format(diffDays, "day")
+        const diffMonths = Math.round(diffSec / (86400 * 30))
+        if (Math.abs(diffMonths) < 12) return rtf.format(diffMonths, "month")
+        const diffYears = Math.round(diffSec / (86400 * 365))
+        return rtf.format(diffYears, "year")
+    } catch {
+        const seconds = Math.floor((Date.now() - time) / 1000)
+        const interval: any = intervals.find((i) => i.seconds < seconds)
+        if (!interval) return "just now"
+        const count = Math.floor(seconds / interval.seconds)
+        return `${count} ${interval.label}${count !== 1 ? "s" : ""} ago`
+    }
 }
 
 export function getTimeFromInterval(interval) {

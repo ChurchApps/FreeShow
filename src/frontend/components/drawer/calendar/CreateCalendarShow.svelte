@@ -1,8 +1,8 @@
 <script lang="ts">
     import { activeProject, calendarAddShow, popupData } from "../../../stores"
-    import { translateText } from "../../../utils/language"
     import { history } from "../../helpers/history"
     import T from "../../helpers/T.svelte"
+    import { getMonthName } from "../../helpers/time"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
     import { createSlides } from "./calendar"
@@ -26,7 +26,7 @@
     <div class="main" style="padding: 10px;">
         {#if currentEvents.length}
             {#each currentEvents as day}
-                <b style="margin-top: 10px;">{new Date(day.date).getDate()}. {translateText("month." + (new Date(day.date).getMonth() + 1))}</b>
+                <b style="margin-top: 10px;">{new Date(day.date).getDate()}. {getMonthName(new Date(day.date).getMonth())}</b>
                 <ul style="list-style-position: inside;">
                     {#each day.events as event}
                         <li class="event">
