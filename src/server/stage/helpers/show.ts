@@ -24,6 +24,8 @@ export async function replaceDynamicValues(value: string, _updater: number = 0) 
     isRequested.set(value, now)
 
     const newValue = await awaitRequest("API:get_dynamic_value", { value, ref: { type: "stage" } })
-    if (typeof newValue === "string") cached[value] = newValue
-    return newValue ?? cached[value] ?? value
+    if (typeof newValue !== "string") return value
+
+    cached[value] = newValue
+    return newValue
 }
