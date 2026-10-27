@@ -757,7 +757,7 @@
             <div
                 bind:this={textElem}
                 on:mouseup={() => storeCurrentCaretPos()}
-                class="edit context {plain ? '#editbox_text' : '#edit_box__editbox_text'}"
+                class="edit context {plain ? '#editbox_text' : ref?.type === 'stage' ? '#stage_text_item__editbox_text' : '#edit_box__editbox_text'}"
                 class:hidden={chordsMode}
                 class:hasShapeOutside={!!shapeOutside}
                 class:autoSize={isAuto && autoSize && !plain}
