@@ -150,6 +150,7 @@ async function minifyJS(filePath, newPath = "") {
 // there is a slight difference, but it works!
 function renameOpusBuild() {
     const prebuildDir = join(__dirname, "..", "node_modules", "@discordjs", "opus", "prebuild")
+    if (!existsSync(prebuildDir)) return
     const folders = readdirSync(prebuildDir)
 
     if (folders.length !== 1 || folders[0].includes("electron")) return
