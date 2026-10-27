@@ -19,8 +19,7 @@
 
     // && !$editHistory.length
     $: editDisabled = $activeEdit.id && ($activeEdit.type || "show") !== "show" ? false : $activeShow && ($activeShow?.type || "show") === "show" ? isLocked : $activeShow?.type === "pdf" || !$activeShow?.id
-    // the button toggles every enabled output, network outputs included
-    $: enabledOutputs = Object.values($outputs).filter((a) => a.enabled)
+    $: physicalOutputWindows = Object.values($outputs).filter((a) => a.enabled && !a.invisible)
 
     let confirm = false
     let disableClick = false
@@ -61,7 +60,7 @@
     $: profile = $profiles[$activeProfile || ""]
     $: settingsDisabled = Object.keys(profile?.access.settings || {}).length >= settingsTabs.length
 
-    $: noEnabledOutputs = (!$outputDisplay && !enabledOutputs.length) || disableClick
+    $: noPhysicalOutputWindows = (!$outputDisplay && !physicalOutputWindows.length) || disableClick
 
     $: users = getCloudUsers($cloudUsers)
     function goToUser(user: { [key: string]: any }) {
@@ -119,7 +118,7 @@
             <TopButton id="settings" hideLabel />
         {/if}
 
-        <!-- <MaterialButton id="output_window_button" class="context #output display {$outputDisplay ? 'on' : 'off'}" title="menu.{$outputDisplay ? (confirm ? 'again_confirm' : '_title_display_stop') : '_title_display'} [Ctrl+O]" style={$outputDisplay || disableClick ? "" : "border-bottom: 2px solid var(--secondary);"} on:click={toggleOutput} disabled={(!$outputDisplay && !enabledOutputs.length) || disableClick} red={$outputDisplay}>
+        <!-- <MaterialButton id="output_window_button" class="context #output display {$outputDisplay ? 'on' : 'off'}" title="menu.{$outputDisplay ? (confirm ? 'again_confirm' : '_title_display_stop') : '_title_display'} [Ctrl+O]" style={$outputDisplay || disableClick ? "" : "border-bottom: 2px solid var(--secondary);"} on:click={toggleOutput} disabled={(!$outputDisplay && !physicalOutputWindows.length) || disableClick} red={$outputDisplay}>
             {#if $outputDisplay}
                 {#if confirm}
                     <Icon id="close" size={1.6} white />
@@ -136,7 +135,7 @@
                 </div>
             {/if}
         </MaterialButton> -->
-        <Button id="output_window_button" title={translateText(`menu.${$outputDisplay ? (confirm ? "again_confirm" : "_title_display_stop") : "_title_display"} [Ctrl+O]`, $dictionary)} style={$outputDisplay || disableClick ? "" : "border-bottom: 2px solid var(--secondary);"} on:click={toggleOutput} class="context #output display {$outputDisplay ? 'on' : 'off'}" red={$outputDisplay} disabled={noEnabledOutputs}>
+        <Button id="output_window_button" title={translateText(`menu.${$outputDisplay ? (confirm ? "again_confirm" : "_title_display_stop") : "_title_display"} [Ctrl+O]`, $dictionary)} style={$outputDisplay || disableClick ? "" : "border-bottom: 2px solid var(--secondary);"} on:click={toggleOutput} class="context #output display {$outputDisplay ? 'on' : 'off'}" red={$outputDisplay} disabled={noPhysicalOutputWindows}>
             {#if $outputDisplay}
                 {#if confirm}
                     <Icon id="close" size={1.6} white />
@@ -153,8 +152,8 @@
                 </div>
             {/if}
         </Button>
-        {#if !$outputDisplay && !enabledOutputs.length}
-            <div data-title={translateText("No outputs available!")} style="position: absolute;top: 0;inset-inline-end: 0;height: 100%;width: 60px;" role="none" on:click={openOutputSettings} />
+        {#if !$outputDisplay && !physicalOutputWindows.length}
+            <div data-title={translateText("No 'physical' outputs available!")} style="position: absolute;top: 0;inset-inline-end: 0;height: 100%;width: 60px;" role="none" on:click={openOutputSettings} />
         {/if}
     </span>
 </div>

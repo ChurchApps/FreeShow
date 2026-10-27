@@ -1,7 +1,6 @@
 import { spawn, type ChildProcess } from "child_process"
 import type { RtmpDestination, RtmpDestinationState, RtmpStatus } from "../../types/Output"
 import { buildEncoderCommand, buildFileRelayCommand, buildRelayCommand, getProfile, SAMPLE_RATE, type EncoderId } from "./encoderProfiles"
-import { outputsOff } from "../capture/outputsOff"
 
 // RTMP engine for the capture worker thread: no Electron imports, ffmpeg and encoder are resolved by the host
 export type RtmpResolved = { ffmpegPath: string; encoderId: EncoderId }
@@ -683,7 +682,7 @@ export class RtmpStreamer {
 
             try {
                 // an output turned off keeps streaming, silent
-                audioStream.write(outputsOff.has(streamer.outputId) ? Buffer.alloc(buffer.length) : buffer)
+                audioStream.write(buffer)
                 if (streamer.audioStats) {
                     streamer.audioStats.totalBytes += buffer.length
                     streamer.audioStats.chunkCount++

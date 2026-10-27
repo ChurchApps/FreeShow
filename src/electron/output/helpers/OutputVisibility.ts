@@ -10,14 +10,14 @@ import { OutputBounds } from "./OutputBounds"
 export class OutputVisibility {
     static async toggleOutputs(data: { outputs: (Output & { id: string })[]; state: boolean; force?: boolean; autoStartup?: boolean; autoPosition?: boolean }) {
         const newStates: { id: string; active: boolean | "invisible" }[] = []
-        console.info(`[OUTPUT] ${data.state ? "on" : "off"} requested for ${data.outputs.map((o) => o.id).join(", ")}${data.autoStartup ? " (auto output at startup)" : ""}`)
 
         // list order decides stacking; offscreen outputs are created first (awaited) so displayed ones can join their render
+        const rendersOffscreen = (o: Output) => !!(o.ndi || o.omt || o.webrtc || o.rtmp || o.blackmagic || o.invisible)
         const needsWindow = (o: Output & { id: string }) => {
             const win = OutputHelper.getOutput(o.id)?.window
             return !win || win.isDestroyed()
         }
-        for (const output of data.outputs.filter(needsWindow).filter(OutputVisibility.rendersOffscreen)) {
+        for (const output of data.outputs.filter(needsWindow).filter(rendersOffscreen)) {
             await OutputHelper.Lifecycle.createOutput(output)
         }
 
@@ -28,10 +28,6 @@ export class OutputVisibility {
         })
 
         toApp(OUTPUT, { channel: "OUTPUT_STATE", data: newStates })
-    }
-
-    static rendersOffscreen(o: Output) {
-        return !!(o.ndi || o.omt || o.webrtc || o.rtmp || o.blackmagic || o.invisible)
     }
 
     static toggleOutput(output: Output & { id: string }, state: boolean, autoStartup?: boolean, autoPosition?: boolean) {
@@ -50,14 +46,12 @@ export class OutputVisibility {
             if (window.isVisible()) this.hideWindow(window)
             // capture-only: render at the configured resolution (DPI-corrected)
             OutputBounds.updateBounds({ id: output.id, bounds: output.bounds })
-            // off sends black and silence
-            OutputHelper.Lifecycle.setOutputOn(output.id, state)
-            return state ? "invisible" : false
+            return "invisible"
         }
 
         const displays = screen.getAllDisplays()
         const isSingleScreenAutoStartup = autoStartup && displays.length <= 1
-        if (isSingleScreenAutoStartup) return this.windowNotShown(output, state)
+        if (isSingleScreenAutoStartup) return false
 
         const bounds: Rectangle = this.resolveOutputBounds(output, autoPosition)
 
@@ -68,7 +62,6 @@ export class OutputVisibility {
             this.showWindow(window, output.alwaysOnTop !== false)
 
             OutputHelper.Bounds.updateBounds({ id: output.id, bounds })
-            OutputHelper.Lifecycle.setOutputOn(output.id, true)
             return true
         } else {
             this.hideWindow(window, output)
@@ -76,15 +69,8 @@ export class OutputVisibility {
             OutputBounds.updateBounds({ id: output.id, bounds: output.bounds })
 
             if (state === true && !autoStartup) toApp(MAIN, { channel: "ALERT", data: "error.display" })
-            return this.windowNotShown(output, state)
+            return false
         }
-    }
-
-    // window not shown; an output that also sends elsewhere still follows the toggle
-    private static windowNotShown(output: Output & { id: string }, state: boolean): "invisible" | false {
-        const on = state && this.rendersOffscreen(output)
-        OutputHelper.Lifecycle.setOutputOn(output.id, on)
-        return on ? "invisible" : false
     }
 
     static resolveOutputBounds(output: Partial<Output> & { bounds: Rectangle; boundsLocked?: boolean; screen?: string | null }, autoPosition = false): Rectangle {

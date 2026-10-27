@@ -12,7 +12,6 @@ import { WebRtcHost } from "../../streaming/WebRtcHost"
 import { CaptureHelper } from "../CaptureHelper"
 import { ruleViolation } from "../../utils/ruleCheck"
 import { PreviewStream } from "../PreviewStream"
-import { blankFrame } from "../outputsOff"
 
 export type Channel = {
     key: string
@@ -193,24 +192,9 @@ export class CaptureTransmitter {
         if (OutputHelper.Lifecycle.isOffMainActive(captureId)) return
         if (!raw && (!image || image.isEmpty())) return
 
-        // a turned-off output sends black
-        if (!OutputHelper.Lifecycle.isOutputOn(captureId)) {
-            const size = raw?.size || image!.getSize()
-            raw = { buffer: this.blankFor(size, OutputHelper.getOutput(captureId)?.transparent === true), size, format: 0 }
-            image = null
-        }
-
         setImmediate(() => {
             this.transmitFrameBody(captureId, image, raw, frameTimestamp, captureOptions, framerates)
         })
-    }
-
-    private static blanks = new Map<string, Buffer>()
-    private static blankFor(size: Size, transparent: boolean): Buffer {
-        const key = `${size.width}x${size.height}:${transparent}`
-        let buf = this.blanks.get(key)
-        if (!buf) this.blanks.set(key, (buf = blankFrame(size.width, size.height, 0, transparent)))
-        return buf
     }
 
     private static transmitFrameBody(captureId: string, image: NativeImage | null, raw: { buffer: Buffer; size: Size; format?: number } | undefined, frameTimestamp: number, captureOptions: any, framerates: any) {
