@@ -180,7 +180,7 @@
         } else if (type === "audio") AudioPlayer.start(id, { name: show.name })
         else if (type === "overlay") setOutput("overlays", show.id, false, "", true)
         else if (type === "effect") setOutput("effects", show.id, false, "", true)
-        else if (type === "player") setOutput("background", { id, type: "player" })
+        else if (type === "player") setOutput("background", { id, type: "player", data: show.data || $playerVideos[id] })
     }
 
     function rename(e: any) {

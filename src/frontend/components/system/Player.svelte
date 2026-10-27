@@ -9,14 +9,14 @@
     export let id: string
     export let outputId = ""
     export let preview = false
+    export let data: { type: "youtube" | "vimeo"; id: string; name?: string } | null = null
 
-    let data: { type: "youtube" | "vimeo"; id: string; name?: string } | null = null
-    $: if ($activeShow && !$playerVideos[id]) getProjectData()
+    $: if (!$playerVideos[id] && !data) getProjectData()
     function getProjectData() {
         const showMedia = _show($activeShow?.id || "").get("media")?.[id]
         if ((showMedia as any)?.data) data = (showMedia as any).data
         else if (showMedia?.type === "youtube" || showMedia?.type === "vimeo") data = { type: showMedia.type, id: showMedia.id || showMedia.path || id, name: showMedia.name }
-        else data = $projects[$activeProject || ""]?.shows.find((a) => a.index === $activeShow?.index)?.data || null
+        else data = $projects[$activeProject || ""]?.shows?.find((a) => a.id === id || a.index === $activeShow?.index)?.data || null
     }
 
     $: video = $playerVideos[id] || data

@@ -616,6 +616,7 @@ export interface OutBackground {
     title?: string // player
     cameraGroup?: string // camera
     folderPath?: string // project media folder
+    data?: any // player / extra data
 
     ignoreLayer?: boolean // foreground background type
 }

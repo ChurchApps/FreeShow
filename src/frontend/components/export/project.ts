@@ -6,7 +6,7 @@ import { EXPORT } from "../../../types/Channels"
 import type { Effects } from "../../../types/Effects"
 import type { Project, ProjectShowRef } from "../../../types/Projects"
 import type { Action, Overlays, Shows, SlideData } from "../../../types/Show"
-import { actions as actionsStores, categories, effects as effectsStores, folders, media, overlays as overlayStores, showsCache, special } from "../../stores"
+import { actions as actionsStores, categories, effects as effectsStores, folders, media, overlays as overlayStores, playerVideos, showsCache, special } from "../../stores"
 import { send } from "../../utils/request"
 import { clone } from "../helpers/array"
 import { loadShows } from "../helpers/setShow"
@@ -123,6 +123,25 @@ export async function exportProject(project: Project, projectId: string, savePat
         usedCategories[show.category] = { name: cat.name, icon: cat.icon ?? null }
     })
     if (Object.keys(usedCategories).length) projectData.categories = usedCategories
+
+    // used player videos (YouTube / Vimeo)
+    const usedPlayerVideos: { [key: string]: any } = {}
+    const allPlayerVideos = get(playerVideos)
+    projectItems.forEach((showRef) => {
+        if (showRef.type === "player") {
+            const data = allPlayerVideos[showRef.id] || showRef.data
+            if (data) usedPlayerVideos[showRef.id] = data
+        }
+    })
+    Object.values(shows).forEach((show) => {
+        Object.entries(show?.media || {}).forEach(([id, mediaItem]: any) => {
+            if (mediaItem?.type === "player" || allPlayerVideos[id]) {
+                const data = allPlayerVideos[id] || mediaItem.data || mediaItem
+                if (data) usedPlayerVideos[id] = data
+            }
+        })
+    })
+    if (Object.keys(usedPlayerVideos).length) projectData.playerVideos = usedPlayerVideos
     const includeMediaFiles = get(special).projectIncludeMedia ?? true
     if (includeMediaFiles) {
         const resolvedFiles: string[] = []

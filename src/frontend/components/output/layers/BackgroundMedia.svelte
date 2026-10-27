@@ -52,9 +52,9 @@
         <Camera {id} groupId={data.cameraGroup || ""} class="media" style="width: 100%;height: 100%;" on:loaded />
     {:else if type === "player"}
         <!-- prevent showing controls in output -->
-        {#if $special.hideCursor || $playerVideos[id]?.type !== "youtube"}<div class="overlay" />{/if}
+        {#if $special.hideCursor || ($playerVideos[id]?.type || data.data?.type) !== "youtube"}<div class="overlay" />{/if}
         <!-- on:ended={videoEnded} -->
-        <Player {outputId} {id} on:loaded />
+        <Player {outputId} {id} data={data.data} on:loaded />
     {/if}
 </OutputTransition>
 

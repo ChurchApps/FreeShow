@@ -8,7 +8,7 @@ import { history } from "../components/helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
 import { sendMain } from "../IPC/main"
-import { actions as actionsStores, activePage, activePopup, activeProject, activeShow, alertMessage, categories as categoriesStore, editingProjectTemplate, effects as effectsStores, focusMode, folders, media as mediaStores, overlays as overlayStores, projects, projectTemplates, projectView, recentFiles } from "../stores"
+import { actions as actionsStores, activePage, activePopup, activeProject, activeShow, alertMessage, categories as categoriesStore, editingProjectTemplate, effects as effectsStores, focusMode, folders, media as mediaStores, overlays as overlayStores, playerVideos as playerVideosStore, projects, projectTemplates, projectView, recentFiles } from "../stores"
 import { translateText } from "../utils/language"
 import { confirmCustom } from "../utils/popup"
 import { audioExtensions, mediaExtensions } from "../values/extensions"
@@ -16,7 +16,7 @@ import { newToast } from "../utils/common"
 
 export function importProject(files: { content: string; path?: string; name?: string; extension?: string }[]) {
     files.forEach(({ content, path }) => {
-        const { project, parentFolder, shows, overlays, effects, actions, media, categories } = JSON.parse(content)
+        const { project, parentFolder, shows, overlays, effects, actions, media, categories, playerVideos } = JSON.parse(content)
         if (!project) return
 
         // find any parent folder with the same name as previous parent, or place at root
@@ -73,6 +73,61 @@ export function importProject(files: { content: string; path?: string; name?: st
             mediaStores.update((a) => {
                 Object.entries(media).forEach(([path, data]: any) => {
                     a[path] = { ...(a[path] || {}), ...data }
+                })
+                return a
+            })
+        }
+
+        // get player videos (YouTube / Vimeo)
+        if (playerVideos) {
+            playerVideosStore.update((a) => {
+                Object.entries(playerVideos).forEach(([id, vid]: any) => {
+                    if (!a[id] && vid) a[id] = vid
+                })
+                return a
+            })
+        }
+
+        // add any player videos from project items
+        if (project.shows) {
+            playerVideosStore.update((a) => {
+                project.shows.forEach((item: any) => {
+                    if (item.type === "player") {
+                        const vidData = item.data || {}
+                        const videoId = vidData.id || item.id
+                        if (videoId) {
+                            const entryId = item.id || videoId
+                            if (!a[entryId]) {
+                                a[entryId] = {
+                                    id: videoId,
+                                    name: item.name || vidData.name || videoId,
+                                    type: vidData.type || "youtube"
+                                }
+                            }
+                        }
+                    }
+                })
+                return a
+            })
+        }
+
+        // add any player videos from shows' media
+        if (shows) {
+            playerVideosStore.update((a) => {
+                Object.values(shows).forEach((show: any) => {
+                    Object.entries(show?.media || {}).forEach(([id, mediaItem]: any) => {
+                        if (mediaItem?.type === "player" || mediaItem?.type === "youtube" || mediaItem?.type === "vimeo" || mediaItem?.data) {
+                            const vidData = mediaItem.data || mediaItem
+                            const videoId = vidData.id || id
+                            if (videoId && !a[id]) {
+                                a[id] = {
+                                    id: videoId,
+                                    name: mediaItem.name || vidData.name || videoId,
+                                    type: vidData.type || (mediaItem.type === "vimeo" ? "vimeo" : "youtube")
+                                }
+                            }
+                        }
+                    })
                 })
                 return a
             })

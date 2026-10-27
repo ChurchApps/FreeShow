@@ -5,7 +5,7 @@
     import { Main } from "../../../types/IPC/Main"
     import type { MediaStyle } from "../../../types/Main"
     import { requestMain, sendMain } from "../../IPC/main"
-    import { activeProject, activeRename, audioChannelsData, focusMode, media, outLocked, outputs, playingVideos, projects, videoMarkers } from "../../stores"
+    import { activeProject, activeRename, audioChannelsData, focusMode, media, outLocked, outputs, playerVideos, playingVideos, projects, videoMarkers } from "../../stores"
     import { translateText } from "../../utils/language"
     import Icon from "../helpers/Icon.svelte"
     import T from "../helpers/T.svelte"
@@ -193,8 +193,10 @@
         if (videoType === "foreground" || (videoType !== "background" && !shouldLoop)) clearSlide()
         let bg: any = { type, startAt, muted, loop, ...mediaStyle, ignoreLayer: videoType === "foreground" }
 
-        if (type === "player") bg.id = mediaPath
-        else {
+        if (type === "player") {
+            bg.id = mediaPath
+            bg.data = show?.data || $playerVideos[mediaPath]
+        } else {
             bg.path = mediaPath
             // if (filter) data.filter = filter
         }
