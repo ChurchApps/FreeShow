@@ -68,6 +68,9 @@
     onMount(() => {
         Object.entries($events).forEach(addEvent)
         eventList = eventList.sort((a, b) => (new Date(a).getTime() > new Date(b).getTime() ? -1 : 1))
+
+        // add selected event to the top of the list if it's not already there (when event happened in the past)
+        if (timer.event && !eventList.find((a) => a.value === timer.event) && $events[timer.event]) eventList.unshift({ value: timer.event, label: `${getDateString(new Date($events[timer.event].from))}: ${$events[timer.event].name}` })
         if (!timer.event) timer.event = eventList[0]?.id || ""
     })
 
