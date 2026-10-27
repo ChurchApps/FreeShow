@@ -318,7 +318,7 @@
         height: 100%;
 
         --number-width: 100px;
-        --modified-width: 220px;
+        --modified-width: 120px;
     }
 
     .warning {

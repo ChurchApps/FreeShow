@@ -1,10 +1,10 @@
 <script lang="ts">
     import { activeDays, activePopup, calendars, eventEdit, events, labelsDisabled, popupData, special } from "../../../stores"
-    import { translateText } from "../../../utils/language"
     import { actionData } from "../../actions/actionData"
     import { removeDuplicates, sortByTime } from "../../helpers/array"
     import Icon from "../../helpers/Icon.svelte"
     import T from "../../helpers/T.svelte"
+    import { getMonthName, getWeekday } from "../../helpers/time"
     import FloatingInputs from "../../input/FloatingInputs.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import { MILLISECONDS_IN_A_DAY, copyDate, getDaysInMonth, getWeekNumber, isBetween, isSameDay } from "./calendar"
@@ -87,7 +87,7 @@
         weekdays = []
         for (let i = 0; i < 7; i++) {
             let index = sundayFirstDay ? (i === 0 ? 7 : i) : i + 1
-            weekdays.push(translateText("weekday." + index))
+            weekdays.push(getWeekday(index))
         }
     }
 
@@ -269,7 +269,7 @@
     <div class="divider"></div>
 
     <span style="opacity: 0.8;text-transform: capitalize;white-space: nowrap;align-self: center;padding: 0 10px;">
-        {translateText("month." + (current.getMonth() + 1))}
+        {getMonthName(current.getMonth())}
         {current.getFullYear()}
     </span>
 </FloatingInputs>
