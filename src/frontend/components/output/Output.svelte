@@ -243,6 +243,7 @@
         if (linesTimeout) clearTimeout(linesTimeout)
         linesTimeout = setTimeout(() => {
             lines[currentLineId] = getOutputLines(slide!, currentStyle.lines) // , currentSlide
+            if (slide?.index !== undefined) lines[`${currentLineId}_${slide.index}`] = lines[currentLineId]
         }, updateLinesTime)
     }
 
