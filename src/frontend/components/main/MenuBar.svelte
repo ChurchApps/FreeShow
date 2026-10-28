@@ -96,6 +96,7 @@
         opacity: 0.7;
         cursor: default !important;
         font-weight: normal !important;
+        -webkit-app-region: no-drag;
     }
 
     main {
