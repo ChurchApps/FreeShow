@@ -161,6 +161,6 @@
     },
     "optionalDependencies": {
         "libspotifyctl": "^0.3.4",
-        "sherpa-onnx-node": "^1.13.7"
+        "sherpa-onnx-node": "^2.0.1"
     }
 }
