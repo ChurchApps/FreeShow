@@ -301,7 +301,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
                 const isTempSlide = outData?.id === "temp" || outData?.id === "tempText"
                 const sameSlideOutput = !!previousSlide && !!outData && !isTempSlide && previousSlide.id === outData.id && previousSlide.layout === outData.layout && previousSlide.index === outData.index && previousSlide.page === outData.page && previousSlide.type === outData.type
 
-                if (sameSlideOutput) {
+                if (sameSlideOutput && previousSlide.line === outData.line) {
                     a[id].out!.refresh = Number(a[id].out!.refresh || 0) + 1
                 }
             }
