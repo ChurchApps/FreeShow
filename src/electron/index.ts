@@ -150,16 +150,6 @@ export let powerSaveBlockerId: number | null = null
 async function startApp() {
     if (RECORD_STARTUP_TIME) console.time("Initial")
 
-    // WIDEVINE
-    // Wait for Widevine CDM components to be ready (required for castlabs electron)
-    // try {
-    //     const { components } = require("electron")
-    //     await components.whenReady()
-    //     console.info("Widevine CDM components ready")
-    // } catch (err) {
-    //     console.warn("Failed to initialize Widevine CDM components:", err)
-    // }
-
     setTimeout(createLoading)
 
     RtmpBridge.setStatusListener((outputId, destinations) => sendToMain(ToMain.RTMP_STATUS, { outputId, destinations }))

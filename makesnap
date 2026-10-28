@@ -6,18 +6,13 @@ sed -i "s/version:.*/version: ${version}/" config/building/snapcraft.yaml
 arch="$(uname -m)"
 
 if [ "$arch" = "aarch64" ]; then
-  npm run replace-electron
   # GCC 15 on arm64 can fail compiling @discordjs/opus unless this warning is not treated as an error.
   CFLAGS="-Wno-error=implicit-function-declaration" npm install
 else
   npm install
 fi
 npm run build
-if [ "$arch" = "aarch64" ]; then
-  npm run pack:arm64
-else
-  npm run pack
-fi
+npm run pack
 
 chmod +x scripts/snap/*.sh
 mkdir -p snap

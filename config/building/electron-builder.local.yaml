@@ -1,0 +1,7 @@
+extends: config/building/electron-builder.yaml
+
+win:
+    azureSignOptions: null
+
+mac:
+    identity: null

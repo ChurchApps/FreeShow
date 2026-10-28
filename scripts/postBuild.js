@@ -1,7 +1,8 @@
-const { readdirSync, statSync, readFileSync, writeFileSync, existsSync, lstatSync, unlinkSync, rmdirSync, mkdirSync, rename } = require("fs")
+const { readdirSync, statSync, readFileSync, writeFileSync, existsSync, lstatSync, unlinkSync, rmdirSync, mkdirSync } = require("fs")
 const { join } = require("path")
 
 const Terser = require("terser")
+const { ensureOpusBuild } = require("./opus")
 // const HTMLMinifier = require("html-minifier")
 // const CleanCSS = require("clean-css")
 
@@ -142,29 +143,6 @@ async function minifyJS(filePath, newPath = "") {
 //     writeFileSync(newPath, minified.styles)
 // }
 
-// OPUS FIX
-
-// EXAMPLE
-// actual build: "node-v127-napi-v3-win32-x64-unknown-unknown"
-// should be: "electron-v32.2-napi-v3-win32-x64-unknown-unknown"
-// there is a slight difference, but it works!
-function renameOpusBuild() {
-    const prebuildDir = join(__dirname, "..", "node_modules", "@discordjs", "opus", "prebuild")
-    const folders = readdirSync(prebuildDir)
-
-    if (folders.length !== 1 || folders[0].includes("electron")) return
-
-    const electronVersion = require("electron/package.json").version || ""
-    if (!electronVersion) return
-
-    const electronMajorVersion = electronVersion.split(".")[0] + "." + electronVersion.split(".")[1]
-    const newName = `electron-v${electronMajorVersion}-${folders[0].slice(folders[0].indexOf("napi"))}`
-
-    rename(join(prebuildDir, folders[0]), join(prebuildDir, newName), (err) => {
-        if (err) console.error("Error renaming folder:", err)
-    })
-}
-
 const devScriptPath = '<script type="module" src="/src/frontend/main.ts"></script>'
 const prodHTMLPaths = '<script type="module" crossorigin src="./build/bundle.js"></script><link rel="stylesheet" href="./build/bundle.css">'
 function setProductionHTML() {
@@ -185,5 +163,5 @@ function setProductionHTML() {
     removeTsConfigs()
 
     // fix for OPUS electron vs node env
-    renameOpusBuild()
+    ensureOpusBuild()
 })()
