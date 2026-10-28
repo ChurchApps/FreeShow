@@ -97,7 +97,7 @@ export class MediaLayers {
             src.held.set(seq, tex)
             src.frames++
             if (STATS) src.size = `${info.codedSize.width}x${info.codedSize.height}`
-            const handle = process.platform === "linux" ? { planes: info.planes, modifier: info.modifier } : info.sharedTextureHandle
+            const handle = tex.handle
             SenderThread.post({ type: "mediaFrame", key, seq, handle, width: info.codedSize.width, height: info.codedSize.height })
             // the tick repaints the page, which drives its capture; followers are not captured
             for (const m of src.members) if (RenderGroups.isRenderer(m)) OutputHelper.Send.sendToWindow(m, { channel: "MEDIA_TICK", data: { outputId: m } })

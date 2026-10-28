@@ -1301,7 +1301,7 @@ export class OutputLifecycle {
             texturedPaints++
             const width = info.codedSize.width
             const height = info.codedSize.height
-            const source = process.platform === "linux" ? { planes: info.planes, modifier: info.modifier } : info.sharedTextureHandle
+            const source = tex.handle
             const requestedFormat = CaptureHelper.Transmitter.getReadbackFormat(id, { width, height })
 
             // an output showing another page keeps its own page current but never reads it
