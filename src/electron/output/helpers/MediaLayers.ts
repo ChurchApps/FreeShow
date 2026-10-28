@@ -6,6 +6,7 @@ import type { Message } from "../../../types/Socket"
 import { SenderCapture } from "../../capture/SenderCapture"
 import { SenderThread } from "../../capture/SenderThread"
 import { OutputHelper } from "../OutputHelper"
+import { OutputLifecycle } from "./OutputLifecycle"
 import { RenderGroups } from "./RenderGroups"
 
 // One hidden media window per shared background video, composited under each output page by the capture worker.
@@ -65,7 +66,7 @@ export class MediaLayers {
 
     /** returns the key of the source joined or started */
     private static acquire(base: string, outputId: string, spec: Spec): string {
-        const mine = [...this.used.get(outputId) || []].find((k) => this.sources.get(k)?.base === base)
+        const mine = [...(this.used.get(outputId) || [])].find((k) => this.sources.get(k)?.base === base)
         if (mine) return mine
         for (const src of this.sources.values()) {
             if (src.base !== base) continue
@@ -97,7 +98,7 @@ export class MediaLayers {
             src.held.set(seq, tex)
             src.frames++
             if (STATS) src.size = `${info.codedSize.width}x${info.codedSize.height}`
-            const handle = tex.handle
+            const handle = OutputLifecycle.getTextureHandle(info)
             SenderThread.post({ type: "mediaFrame", key, seq, handle, width: info.codedSize.width, height: info.codedSize.height })
             // the tick repaints the page, which drives its capture; followers are not captured
             for (const m of src.members) if (RenderGroups.isRenderer(m)) OutputHelper.Send.sendToWindow(m, { channel: "MEDIA_TICK", data: { outputId: m } })

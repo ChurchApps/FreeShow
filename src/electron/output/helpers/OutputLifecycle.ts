@@ -3,26 +3,26 @@ import { OUTPUT_CONSOLE, getMainWindow, hardwareAccelerationDisabled, isMac, loa
 import { OUTPUT, STARTUP } from "../../../types/Channels"
 import type { Output } from "../../../types/Output"
 import { BlackmagicBridge as BlackmagicSender } from "../../blackmagic/BlackmagicBridge"
-import { RtmpBridge } from "../../streaming/RtmpBridge"
-import { WebRtcHost } from "../../streaming/WebRtcHost"
 import { initializeSender } from "../../blackmagic/bmdTalk"
 import { CaptureHelper } from "../../capture/CaptureHelper"
+import { PreviewStream } from "../../capture/PreviewStream"
 import { SenderCapture } from "../../capture/SenderCapture"
-import { ruleViolation } from "../../utils/ruleCheck"
 import { StreamReceiverHost } from "../../capture/StreamReceiverHost"
 import { NdiSender } from "../../ndi/NdiSender"
 import { setDataNDI } from "../../ndi/talk"
 import { OmtSender } from "../../omt/OmtSender"
 import { setDataOMT } from "../../omt/talk"
+import { RtmpBridge } from "../../streaming/RtmpBridge"
+import { WebRtcHost } from "../../streaming/WebRtcHost"
 import { gpuCompositingAvailable, gpuStateSettled } from "../../utils/gpu"
 import { wait } from "../../utils/helpers"
+import { ruleViolation } from "../../utils/ruleCheck"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
-import { setOutputAlwaysOnTop, useOutputPanel } from "./OutputAlwaysOnTop"
 import { MediaLayers } from "./MediaLayers"
+import { setOutputAlwaysOnTop, useOutputPanel } from "./OutputAlwaysOnTop"
 import { OutputPresenter } from "./OutputPresenter"
 import { OutputVisibility } from "./OutputVisibility"
-import { PreviewStream } from "../../capture/PreviewStream"
 import { RenderGroups } from "./RenderGroups"
 
 // Tracks timing stages for off-main GPU readback and transmission (in ms)
@@ -283,7 +283,6 @@ export class OutputLifecycle {
 
         return window
     }
-
 
     // Chromium X11 shrinks a window matching a display's size by 1px, an odd width NDI/OMT refuses;
     // offscreen windows are not WM-managed, so nudge the size off the match
@@ -552,7 +551,6 @@ export class OutputLifecycle {
     static isHardwareAccelerationDisabled(): boolean {
         return hardwareAccelerationDisabled
     }
-
 
     // set once when shared-texture paints carry no texture (software GL can report gpu_compositing enabled)
     private static sharedTextureDemoted = false
@@ -1301,7 +1299,7 @@ export class OutputLifecycle {
             texturedPaints++
             const width = info.codedSize.width
             const height = info.codedSize.height
-            const source = tex.handle
+            const handle = this.getTextureHandle(info)
             const requestedFormat = CaptureHelper.Transmitter.getReadbackFormat(id, { width, height })
 
             // an output showing another page keeps its own page current but never reads it
@@ -1330,7 +1328,7 @@ export class OutputLifecycle {
                     if (STATS) sDropInterval++
                     releaseTex(pendingFrame.tex)
                 }
-                pendingFrame = { tex, source, width, height }
+                pendingFrame = { tex, source: handle, width, height }
                 tryAdmit()
                 return
             }
@@ -1346,7 +1344,7 @@ export class OutputLifecycle {
             // the readback lands in the main process on this path
             ruleViolation("main-frame", "readback into main")
             addon
-                .readback(source, width, height, requestedFormat, id)
+                .readback(handle, width, height, requestedFormat, id)
                 .then((buf: Buffer) => {
                     if (seq < appliedSeq) return
                     appliedSeq = seq
@@ -1396,6 +1394,27 @@ export class OutputLifecycle {
         }
         OutputLifecycle.osrTextureCleanup[id] = teardown
         window.on("closed", teardown)
+    }
+
+    static getTextureHandle(info: any) {
+        if (!info?.handle) return null
+
+        switch (process.platform) {
+            case "win32":
+                // Windows: NT Handle (D3D11/D3D12) with fallback to dxgiHandle
+                return info.handle.ntHandle ?? info.handle.dxgiHandle ?? info.handle.handle
+
+            case "darwin":
+                // macOS: IOSurface handle ID / Mach port
+                return info.handle.ioSurface
+
+            case "linux":
+                // Linux: DMA-BUF file descriptor (modern DRM/GBM) or NativePixmap (X11)
+                return info.handle.dmaBuf ?? info.handle.nativePixmap
+
+            default:
+                return null
+        }
     }
 
     // CPU fallback path: the paint event delivers a NativeImage directly.
