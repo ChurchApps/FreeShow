@@ -1,4 +1,4 @@
-import { loadOsrCapture, runSenderWorker, frameTimestamp, type FrameSize, type SenderAdapter, type VideoFrameOpts } from "../capture/senderWorker"
+import { loadOsrCapture, frameTimestamp, type FrameSize, type SenderAdapter, type VideoFrameOpts } from "../capture/senderWorker"
 
 // NDI adapter for the shared sender engine (../capture/senderWorker): everything grandiose-specific.
 //
@@ -96,7 +96,7 @@ function bgraToUyva(bgra: Buffer, width: number, height: number): Buffer {
     return out
 }
 
-const ndiAdapter: SenderAdapter = {
+export const ndiAdapter: SenderAdapter = {
     tag: "ndi",
     label: "NDI",
     load: loadGrandiose,
@@ -150,5 +150,3 @@ const ndiAdapter: SenderAdapter = {
         }
     }
 }
-
-runSenderWorker(ndiAdapter)

@@ -34,9 +34,12 @@
 
 {#if $activeRecording}
     <div class="scroll">
-        <video bind:this={videoElem} muted playsinline>
-            <track kind="captions" />
-        </video>
+        <!-- an output recording is encoded in the capture worker, so there is no stream here -->
+        {#if $currentRecordingStream}
+            <video bind:this={videoElem} muted playsinline>
+                <track kind="captions" />
+            </video>
+        {/if}
 
         <Button style="flex: 0" center on:click={() => (paused = toggleMediaRecorder())} dark>
             <Icon id={paused ? "play" : "pause"} white={paused} size={1.2} right />

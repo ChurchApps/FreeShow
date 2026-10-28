@@ -40,7 +40,7 @@
 </script>
 
 <div class="mediaContainer" style={cropState.mediaContainerStyle}>
-    <video class={$$props.class} bind:this={videoElem} style={cameraStyleString}>
+    <video class={$$props.class} bind:this={videoElem} data-source="{groupId}/{id}" style={cameraStyleString}>
         <track kind="captions" />
     </video>
 </div>

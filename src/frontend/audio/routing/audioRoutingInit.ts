@@ -60,7 +60,7 @@ export async function initAudioRouting(data: AudioRoutingConfig | null) {
     let firstConnected = false
     outputsList.forEach((out) => {
         // any network outputs should have their own channel
-        if (out.ndi || out.webrtc || out.rtmp) {
+        if (out.ndi || out.omt || out.webrtc || out.rtmp) {
             channels.push({ id: `channel_${out.id}`, name: out.name, color: out.color, outputLink: out.id })
             connections.push(...createOutputConnections(out.id))
             return
@@ -90,7 +90,7 @@ export async function resetAudioRouting() {
 // make sure at least one "active" output is connected to the main channel when creating a new output
 export function checkPrimaryOutputRouting() {
     const outputsList = getAllOutputs()
-    const primaryOutputs = outputsList.filter((out) => out.enabled && !out.ndi && !out.webrtc && !out.rtmp && !out.stageOutput)
+    const primaryOutputs = outputsList.filter((out) => out.enabled && !out.ndi && !out.omt && !out.webrtc && !out.rtmp && !out.stageOutput)
     const outputInputs = primaryOutputs.map((out) => `output_win_sub_${out.id}`)
     if (!outputInputs.length) return
 

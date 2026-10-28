@@ -17,6 +17,8 @@ declare module 'macadam' {
     lastPlayedFrameTime?(): number;
     onFramePlayed?(callback: (frameInfo: { time: number }) => void): void;
     frameRate?: [number, number];
+    width?: number;
+    height?: number;
   }
 
   export interface CaptureChannel {

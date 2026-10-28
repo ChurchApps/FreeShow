@@ -920,7 +920,8 @@
         "activate_show_opened": "Activate when show is opened",
         "activate_audio_playlist_ended": "Activate when audio playlist has ended",
         "mark_played": "Mark as played",
-        "unmark_all_as_played": "Reset all mark as played"
+        "unmark_all_as_played": "Reset all mark as played",
+        "refresh": "Refresh"
     },
     "conditions": {
         "show_item": "Show item if",
@@ -1502,8 +1503,7 @@
         "no_video_decode": "Hardware video decoding is unavailable",
         "no_video_decode_info": "Videos are decoding on the CPU (high usage, choppy playback).",
         "va_driver_missing": "A video driver is missing. To fix, run this and restart:",
-        "update_drivers": "Installing or updating your graphics drivers may fix this.",
-        "disable_hint": "Disable hardware acceleration in Settings to hide this."
+        "update_drivers": "Installing or updating your graphics drivers may fix this."
     },
     "output": {
         "state_inactive": "Inactive",

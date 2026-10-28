@@ -8,8 +8,18 @@ import { setOutputAlwaysOnTop } from "./OutputAlwaysOnTop"
 import { OutputBounds } from "./OutputBounds"
 
 export class OutputVisibility {
-    static toggleOutputs(data: { outputs: (Output & { id: string })[]; state: boolean; autoStartup?: boolean; autoPosition?: boolean }) {
+    static async toggleOutputs(data: { outputs: (Output & { id: string })[]; state: boolean; force?: boolean; autoStartup?: boolean; autoPosition?: boolean }) {
         const newStates: { id: string; active: boolean | "invisible" }[] = []
+
+        // list order decides stacking; offscreen outputs are created first (awaited) so displayed ones can join their render
+        const rendersOffscreen = (o: Output) => !!(o.ndi || o.omt || o.webrtc || o.rtmp || o.blackmagic || o.invisible)
+        const needsWindow = (o: Output & { id: string }) => {
+            const win = OutputHelper.getOutput(o.id)?.window
+            return !win || win.isDestroyed()
+        }
+        for (const output of data.outputs.filter(needsWindow).filter(rendersOffscreen)) {
+            await OutputHelper.Lifecycle.createOutput(output)
+        }
 
         data.outputs.forEach((output) => {
             const autoPosition = output.boundsLocked ? false : data.autoPosition

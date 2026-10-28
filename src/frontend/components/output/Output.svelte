@@ -2,6 +2,8 @@
 
 <script lang="ts">
     import { onDestroy } from "svelte"
+    import { compositedOutputs } from "../drawer/live/streamLayer"
+    import { mediaFill, mediaLayered } from "./layers/mediaLayers"
     import { uid } from "uid"
     import type { OutData } from "../../../types/Output"
     import type { Styles } from "../../../types/Settings"
@@ -23,6 +25,7 @@
     import PdfOutput from "./layers/PdfOutput.svelte"
     import SceneMedia from "./layers/SceneMedia.svelte"
     import SlideContent from "./layers/SlideContent.svelte"
+    import RepaintTick from "./RepaintTick.svelte"
     import Window from "./Window.svelte"
 
     export let outputId = ""
@@ -326,7 +329,20 @@
     $: cropping = currentOutput?.cropping || currentStyle?.cropping
 
     // values
-    $: backgroundColor = currentOutput?.transparent ? "transparent" : styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle?.background || slide?.settings?.backgroundColor || "black"
+    // a composited layer is drawn under the captured page, so it goes transparent; a mirror never does
+    $: opaqueBackground = styleTemplate?.settings?.backgroundColor || currentSlide?.settings?.color || currentStyle?.background || slide?.settings?.backgroundColor || "black"
+    $: layerUnder = !mirror && !!($compositedOutputs[outputId] || $mediaLayered[outputId])
+    $: backgroundColor = currentOutput?.transparent || layerUnder ? "transparent" : opaqueBackground
+    // the backdrop switches unfaded, so it never covers the video
+    let layerSwitching = false
+    let lastLayerUnder = false
+    $: if (layerUnder !== lastLayerUnder) {
+        lastLayerUnder = layerUnder
+        layerSwitching = true
+        requestAnimationFrame(() => requestAnimationFrame(() => (layerSwitching = false)))
+    }
+    // the capture worker fills around a media layer with this color
+    $: if (!mirror && outputId && $mediaFill[outputId] !== opaqueBackground) mediaFill.update((a) => ({ ...a, [outputId]: opaqueBackground }))
     // background image
     $: styleBackground = currentStyle?.clearStyleBackgroundOnText && (slide || background) ? "" : currentStyle?.backgroundImage || ""
     $: styleBackgroundData = { path: styleBackground, ...($media[styleBackground] || {}), loop: true }
@@ -386,7 +402,7 @@
     }
 </script>
 
-<Zoomed id={outputId} background={backgroundColor} checkered={(preview || mirror) && backgroundColor === "transparent"} backgroundDuration={transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} align={alignPosition} center {style} {resolution} styleIdOverride={styleId} {mirror} {drawZoom} {cropping} bind:ratio>
+<Zoomed id={outputId} background={backgroundColor} checkered={(preview || mirror) && backgroundColor === "transparent"} backgroundDuration={layerSwitching || transitions.media?.type === "none" ? 0 : (transitions.media?.duration ?? 800)} align={alignPosition} center {style} {resolution} styleIdOverride={styleId} {mirror} {drawZoom} {cropping} bind:ratio>
     <!-- always show style background (behind other backgrounds) -->
     {#if styleBackground && actualSlide?.type !== "pdf"}
         <Background data={styleBackgroundData} {outputId} transition={transitions.media} {currentStyle} {slideFilter} {ratio} animationStyle={animationData.style?.background || ""} mirror />
@@ -394,7 +410,7 @@
 
     <!-- scene media -->
     {#if sceneMedia}
-        <SceneMedia media={sceneMedia} {mirror} />
+        <SceneMedia media={sceneMedia} {mirror} {outputId} />
     {/if}
 
     <!-- background -->
@@ -458,6 +474,10 @@
     <!-- draw -->
     {#if zoomActive}
         <Draw />
+    {/if}
+
+    {#if !mirror && !preview}
+        <RepaintTick {outputId} />
     {/if}
 </Zoomed>
 

@@ -54,6 +54,6 @@
     }
 </script>
 
-<video bind:this={videoElem} class={$$props.class} style={$$props.style}>
+<video bind:this={videoElem} class={$$props.class} data-source={id} style={$$props.style}>
     <track kind="captions" />
 </video>

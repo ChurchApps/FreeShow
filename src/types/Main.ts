@@ -9,6 +9,8 @@ export interface Config {
     dataPath: string | null
     disableHardwareAcceleration: boolean | null
     graphicsDevice: string | null
+    /** last GPU problem reported, so it is not repeated every launch */
+    gpuHealthNotice?: string
     autoErrorReporting?: boolean
     mediaFolderPath?: string
 

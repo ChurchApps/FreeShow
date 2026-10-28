@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { fade } from "svelte/transition"
     import { OUTPUT } from "../types/Channels"
     import type { Resolution } from "../types/Settings"
@@ -7,7 +7,9 @@
     import Output from "./components/output/Output.svelte"
     import { getStyleResolution } from "./components/slide/getStyleResolution"
     import StageLayout from "./components/stage/StageLayout.svelte"
-    import { currentWindow, livePrepare, outputs, special, styles } from "./stores"
+    import { currentWindow, livePrepare, outputs, presenting, special, styles } from "./stores"
+    import { onStreamFrame } from "./utils/streamPort"
+    import { StreamCanvasRenderer } from "./components/drawer/live/streamCanvas"
     import { hideDisplay } from "./utils/common"
     import { send } from "./utils/request"
 
@@ -32,6 +34,24 @@
     }
     $: if ($currentWindow === "output") send(OUTPUT, ["MOVE"], { enabled: enableOutputMove })
 
+    // presenter mode: draw the capture's frames instead of rendering the content
+    let presentCanvas: HTMLCanvasElement | null = null
+    const presentRenderer = new StreamCanvasRenderer()
+    let unlistenPresent: (() => void) | null = null
+    $: listenPresent($presenting)
+    function listenPresent(active: boolean) {
+        unlistenPresent?.()
+        unlistenPresent = null
+        if (!active) return
+        unlistenPresent = onStreamFrame("PRESENT", ({ frame }) => {
+            if (presentCanvas) presentRenderer.draw(presentCanvas, frame)
+        })
+    }
+    onDestroy(() => {
+        unlistenPresent?.()
+        presentRenderer.destroy()
+    })
+
     // make sure it's loaded to prevent output not changing to stage output because of Svelte transition bug
     let loaded = false
     onMount(() => {
@@ -39,9 +59,68 @@
             loaded = true
         }, 2000)
     })
+
+    // reports whether the page is animating and a hash of its still content, for main's render sharing
+    let rootEl: HTMLElement | null = null
+    let reported = ""
+    // seq of the last applied message
+    let appliedSeq = 0
+    let checkQueued = false
+    function queueCheck() {
+        if (checkQueued) return
+        checkQueued = true
+        // next task, so a burst of changes is checked once
+        setTimeout(reportState, 0)
+    }
+    function reportState() {
+        checkQueued = false
+        if (!outputId || !rootEl) return
+        // a canvas drawn every frame (effects) is never still
+        const busy = document.getAnimations().some((a) => a.playState === "running") || !!rootEl.querySelector("[data-animated]")
+        // markup without element ids (some random) or this output's id, which differ between identical pages
+        const dom = busy ? "" : contentHash(rootEl.innerHTML.replace(/ id="[^"]*"/g, "").split(outputId).join("~"))
+        const state = `${busy}|${dom}|${appliedSeq}`
+        if (state === reported) return
+        reported = state
+        send(OUTPUT, ["RENDER_BUSY"], { id: outputId, busy, dom, seq: appliedSeq })
+    }
+    function contentHash(str: string): string {
+        let h1 = 0xdeadbeef
+        let h2 = 0x41c6ce57
+        for (let i = 0; i < str.length; i++) {
+            const ch = str.charCodeAt(i)
+            h1 = Math.imul(h1 ^ ch, 2654435761)
+            h2 = Math.imul(h2 ^ ch, 1597334677)
+        }
+        return `${(h1 >>> 0).toString(36)}${(h2 >>> 0).toString(36)}`
+    }
+    const animationEvents = ["animationstart", "animationend", "animationcancel", "transitionrun", "transitionend", "transitioncancel"]
+    onMount(() => {
+        if ($currentWindow !== "output" || !rootEl) return
+        const observer = new MutationObserver(queueCheck)
+        observer.observe(rootEl, { subtree: true, childList: true, attributes: true, characterData: true })
+        for (const ev of animationEvents) document.addEventListener(ev, queueCheck, true)
+        window.api.receive(
+            OUTPUT,
+            (msg: any) => {
+                if (typeof msg?.seq !== "number") return
+                appliedSeq = msg.seq
+                queueCheck()
+            },
+            "RENDER_SEQ"
+        )
+        queueCheck()
+        return () => {
+            observer.disconnect()
+            window.api.removeListener(OUTPUT, "RENDER_SEQ")
+            for (const ev of animationEvents) document.removeEventListener(ev, queueCheck, true)
+        }
+    })
+    $: if (outputId && $currentWindow === "output") queueCheck()
 </script>
 
 <div
+    bind:this={rootEl}
     class="fill context #output_window"
     style="flex-direction: {getStyleResolution(resolution, width, height, 'fit').includes('width') && !Object.values($outputs)[0]?.stageOutput ? 'row' : 'column'};"
     class:hideCursor={$special.hideCursor}
@@ -59,7 +138,9 @@
         </div>
     {/if}
 
-    {#if $outputs[outputId]?.stageOutput}
+    {#if $presenting}
+        <canvas class="presentCanvas" bind:this={presentCanvas}></canvas>
+    {:else if $outputs[outputId]?.stageOutput}
         <StageLayout {outputId} stageId={$outputs[outputId].stageOutput} edit={false} />
     {:else if loaded}
         <Output {outputId} style={getStyleResolution(resolution, width, height, "fit")} />
@@ -75,6 +156,13 @@
 </div>
 
 <style>
+    .presentCanvas {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background-color: black;
+    }
+
     .dragger {
         -webkit-app-region: drag;
         position: absolute;

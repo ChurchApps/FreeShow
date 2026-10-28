@@ -1,26 +1,21 @@
 import { isAudioEnabled } from "../../audio/processAudio"
-import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
+import { BlackmagicBridge as BlackmagicSender } from "../../blackmagic/BlackmagicBridge"
 import { OutputHelper } from "../../output/OutputHelper"
 import { getRtmpEncoderSetting } from "../../streaming/encoderDetection"
-import { RtmpStreamer } from "../../streaming/RtmpStreamer"
+import { OutputRecording } from "../../streaming/OutputRecording"
+import { RtmpBridge as RtmpStreamer } from "../../streaming/RtmpBridge"
 import { WebRtcHost } from "../../streaming/WebRtcHost"
 import { CaptureHelper } from "../CaptureHelper"
 import { CaptureTransmitter } from "./CaptureTransmitter"
 
 export class CaptureLifecycle {
-    private static readonly BACKPRESSURE_LOOKUP = [
-        { threshold: 6144, maxFps: 4 },
-        { threshold: 5120, maxFps: 6 },
-        { threshold: 4096, maxFps: 8 },
-        { threshold: 3072, maxFps: 10 }
-    ]
-    private static readonly FALLBACK_FPS = 60
+    // how soon to look again when a device refused a frame
+    private static get FALLBACK_FPS() {
+        return OutputHelper.Lifecycle.OSR_RENDER_FPS
+    }
     private static readonly MIN_DELAY_MS = 1
     private static readonly WEBRTC_START_DELAY_MS = 1000
-    private static readonly BYTES_PER_MB = 1048576
     // reduce capture rate when output content has not changed for a while (static slide/idle)
-    private static readonly IDLE_AFTER_MS = 2000
-    private static readonly IDLE_FPS = 3
 
     private static captureLoopToken: { [key: string]: number } = {}
     private static activeCaptures: Set<string> = new Set()
@@ -44,6 +39,10 @@ export class CaptureLifecycle {
             return
         }
 
+        // a displayed output is captured from a hidden offscreen surface, not capturePage on main
+        OutputHelper.Lifecycle.createCaptureSurface(id)
+        captureOptions.window = OutputHelper.renderWindow(output) || output.window
+
         this.activeCaptures.add(id)
         CaptureHelper.updateFramerate(id)
         CaptureHelper.Transmitter.startTransmitting(id)
@@ -53,10 +52,10 @@ export class CaptureLifecycle {
             try {
                 const wc = output.window.webContents
                 if (!wc.isPainting()) wc.startPainting()
-                wc.invalidate()
             } catch {
                 // window tearing down
             }
+            OutputHelper.Lifecycle.requestRepaint(id)
         }
 
         this.updateWebRtcHostState()
@@ -171,23 +170,6 @@ export class CaptureLifecycle {
 
         const baseCaptureFrameRate = CaptureHelper.getMaxActiveFramerate(frameRates, options)
 
-        // Blackmagic only - reduce frame rate if memory exceeds thresholds
-        if (captureOpts.options?.blackmagic) {
-            const externalMB = process.memoryUsage().external / this.BYTES_PER_MB
-            for (const { threshold, maxFps } of this.BACKPRESSURE_LOOKUP) {
-                if (externalMB > threshold) {
-                    return Math.min(baseCaptureFrameRate, maxFps)
-                }
-            }
-        }
-
-        // static content - capture at a low rate until a change is detected
-        // (Blackmagic and NDI frames bypass change detection / idle backoff to maintain video stream clocks)
-        const timeSinceChange = CaptureTransmitter.getTimeSinceLastChange(id)
-        if (!options.blackmagic && !options.ndi && timeSinceChange > this.IDLE_AFTER_MS) {
-            return Math.min(baseCaptureFrameRate, this.IDLE_FPS)
-        }
-
         return baseCaptureFrameRate
     }
 
@@ -209,6 +191,8 @@ export class CaptureLifecycle {
 
         console.info("Capture - stopping: " + id)
 
+        // a displayed output that shares a render keeps its surface: that is its page
+        if (!OutputHelper.Lifecycle.sharesThroughSurface(id)) OutputHelper.Lifecycle.destroyCaptureSurface(id)
         delete output.captureOptions
         this.updateWebRtcHostState()
         this.updateRtmpState()
@@ -232,7 +216,8 @@ export class CaptureLifecycle {
                         const fps = o.webrtcData?.fps ? Number(o.webrtcData.fps) : 30
                         const bitrate = o.webrtcData?.bitrate ? Number(o.webrtcData.bitrate) : 2500
                         if (o.captureOptions?.framerates) o.captureOptions.framerates.webrtc = fps
-                        if (url) WebRtcHost.startWhip(o.id, url, token, { fps, bitrate })
+                        // a new stream starts on a black canvas, and a still page sends nothing to replace it
+                        if (url && WebRtcHost.startWhip(o.id, url, token, { fps, bitrate })) OutputHelper.Lifecycle.requestRepaint(o.id)
                     } else {
                         WebRtcHost.stopWhip(o.id)
                     }
@@ -249,18 +234,20 @@ export class CaptureLifecycle {
         }
     }
 
+    // recording-only H.264 bitrate, in bits per pixel per frame
+    private static readonly RECORDING_BITS_PER_PIXEL = 0.1
+
     /** Public so a settings change (e.g. the encoder) can be applied without waiting for a capture event. */
     static updateRtmpState() {
         const allOutputs = OutputHelper.getAllOutputs()
         allOutputs.forEach((o) => {
             if (!o.id) return
 
-            if (!o.rtmpData?.streaming) {
-                RtmpStreamer.stop(o.id)
-                return
-            }
-
-            const destinations = (o.rtmpData.destinations || []).filter((d) => d.enabled && d.url)
+            // a recording is one more destination of the same encode
+            const streaming = !!o.rtmpData?.streaming
+            const destinations = streaming ? (o.rtmpData!.destinations || []).filter((d) => d.enabled && d.url) : []
+            const recording = OutputRecording.destination(o.id)
+            if (recording) destinations.push(recording)
             if (!destinations.length) {
                 RtmpStreamer.stop(o.id)
                 return
@@ -269,12 +256,18 @@ export class CaptureLifecycle {
             // getBounds() is the DPI-corrected render size (halved on HiDPI for capture-only outputs),
             // so broadcast at the configured resolution instead
             const bounds = o.intendedBounds || o.window?.getBounds() || { width: 1920, height: 1080 }
-            const fps = o.rtmpData.fps ? Number(o.rtmpData.fps) : 30
-            const bitrate = o.rtmpData.bitrate ? Number(o.rtmpData.bitrate) : 4000
+            const recordFps = o.captureOptions?.framerates?.recorder || CaptureHelper.defaultFramerates().recorder
+            const fps = streaming && o.rtmpData!.fps ? Number(o.rtmpData!.fps) : streaming ? 30 : recordFps
+            // a recording alone gets a bitrate from its pixel rate
+            const bitrate = streaming && o.rtmpData!.bitrate ? Number(o.rtmpData!.bitrate) : streaming ? 4000 : Math.round((bounds.width * bounds.height * fps * this.RECORDING_BITS_PER_PIXEL) / 1000)
             if (o.captureOptions?.framerates) o.captureOptions.framerates.rtmp = fps
 
+            const starting = !RtmpStreamer.isRunning(o.id)
             // destination changes only touch relays; the encode keeps running
-            RtmpStreamer.update(o.id, { width: bounds.width, height: bounds.height, fps, bitrate, rateControl: o.rtmpData.rateControl, enableAudio: isAudioEnabled(), encoder: getRtmpEncoderSetting(o.id) }, destinations)
+            // an encoder starting on a still page needs one repaint
+            void RtmpStreamer.update(o.id, { width: bounds.width, height: bounds.height, fps, bitrate, rateControl: o.rtmpData?.rateControl, enableAudio: isAudioEnabled(), encoder: getRtmpEncoderSetting(o.id) }, destinations).then(() => {
+                if (starting) OutputHelper.Lifecycle.requestRepaint(o.id)
+            })
         })
     }
 }

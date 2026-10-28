@@ -14,6 +14,7 @@ export async function receiveOMT(e: Electron.IpcMainEvent, msg: Message) {
 export const omtResponses = {
     RECEIVE_LIST: async () => await OmtReceiver.findStreamsOMT(),
     RECEIVE_STREAM: (data: { source: { name: string; urlAddress?: string; id: string } }) => OmtReceiver.receiveStreamFrameOMT(data),
+    RECEIVE_STOP: (data: { id: string }) => OmtReceiver.stopStreamFrameOMT(data),
     CAPTURE_STREAM: (data: { source: { name: string; urlAddress?: string; id: string }; outputId: string }) => OmtReceiver.captureStreamOMT(data),
     CAPTURE_DESTROY: (data: { id: string; outputId?: string }) => OmtReceiver.stopReceiversOMT(data),
 

@@ -115,16 +115,17 @@ export function applyGraphicsDeviceSelection() {
 
 // hardware video decode needs a *_drv_video.so VA driver; many installs (e.g. Ubuntu live ISOs) ship none
 const VA_DRIVER_DIRS = ["/usr/lib/x86_64-linux-gnu/dri", "/usr/lib/aarch64-linux-gnu/dri", "/usr/lib/dri", "/usr/lib64/dri", "/usr/local/lib/dri"]
+// deduped: some of these directories link to each other
 function findVaDrivers(): string[] {
-    const found: string[] = []
+    const found = new Set<string>()
     for (const dir of VA_DRIVER_DIRS) {
         try {
-            for (const f of fs.readdirSync(dir)) if (f.endsWith("_drv_video.so")) found.push(f)
+            for (const f of fs.readdirSync(dir)) if (f.endsWith("_drv_video.so")) found.add(f)
         } catch {
             // dir absent — expected on most systems
         }
     }
-    return found
+    return [...found]
 }
 
 // "enabled..." / "hardware..." = hardware acceleration active
@@ -168,16 +169,36 @@ export function scheduleGpuHealthCheck() {
     setTimeout(attempt, 20_000)
 }
 
-// Probes whether video hardware-decodes in the active renderer
+// 1920x1080 H.264 High 4.0 keyframe (Annex B), flat gray
+const PROBE_KEYFRAME = "AAAAAWdkECisuA8ARPy4CIAAAAMAgAAAHgIAAAABaO4PLIsAAAFliIQEv/73rd+BTYekVa7pXOLTLq5Q0PVH2lKZ4tkgAAADAAADAAADAAADAADLprQ5tRHDh/oPAAADAAADAAB+AAADABlwAAAIqAAABCwAAAMDUAAAAwMkAAADA4gAAAMD+AAABMgAAAhoAAAQEAAAGKAAADsAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMAAAMBAQ=="
+
+// decodes one frame with WebCodecs "prefer-hardware", which never falls back to software
+// (MediaCapabilities powerEfficient is false on Linux even with VA-API)
 async function probeHardwareDecode(): Promise<boolean | null> {
     const win = getMainWindow()
     if (!win || win.webContents.isLoading()) return null
     try {
         const result = await win.webContents.executeJavaScript(
-            `navigator.mediaCapabilities.decodingInfo({
-                type: "file",
-                video: { contentType: 'video/mp4; codecs="avc1.640028"', width: 1920, height: 1080, bitrate: 8000000, framerate: 30 }
-            }).then((r) => !!r.powerEfficient).catch(() => null)`,
+            `(async () => {
+                if (typeof VideoDecoder === "undefined" || typeof EncodedVideoChunk === "undefined") return null
+                const config = { codec: "avc1.640028", codedWidth: 1920, codedHeight: 1080, hardwareAcceleration: "prefer-hardware" }
+                const support = await VideoDecoder.isConfigSupported(config).catch(() => null)
+                if (!support) return null
+                if (!support.supported) return false
+                const data = Uint8Array.from(atob("${PROBE_KEYFRAME}"), (c) => c.charCodeAt(0))
+                return await new Promise((resolve) => {
+                    let settled = false
+                    const settle = (v) => { if (!settled) { settled = true; resolve(v) } }
+                    const decoder = new VideoDecoder({ output: (frame) => { frame.close(); settle(true) }, error: () => settle(false) })
+                    try {
+                        decoder.configure(config)
+                        decoder.decode(new EncodedVideoChunk({ type: "key", timestamp: 0, data }))
+                        decoder.flush().then(() => settle(false), () => settle(false)).finally(() => { try { decoder.close() } catch {} })
+                    } catch {
+                        settle(false)
+                    }
+                })
+            })()`,
             true
         )
         return typeof result === "boolean" ? result : null
@@ -268,6 +289,13 @@ async function runGpuHealthCheck() {
     }
 
     healthNotified = true
+    // notify once per distinct issue/platform/GPU/packages
+    const notice = [issue, process.platform, vendorName, packages.join(",")].join("|")
+    if (config.get("gpuHealthNotice") === notice) {
+        console.info(`[GPU-HEALTH] degraded (already reported): issue=${issue} gpu_compositing=${status.gpu_compositing} video_decode=${status.video_decode} probe=${hwDecodeProbe ?? "unavailable"} vendor=${vendorName || "?"}`)
+        return
+    }
+    config.set("gpuHealthNotice", notice)
     console.info(`[GPU-HEALTH] degraded: issue=${issue} gpu_compositing=${status.gpu_compositing} video_decode=${status.video_decode} probe=${hwDecodeProbe ?? "unavailable"} vendor=${vendorName || "?"} vaDriverMissing=${vaDriverMissing}`)
     sendToMain(ToMain.GPU_HEALTH, { issue, platform: process.platform, vendorName, vaDriverMissing, packages })
 }

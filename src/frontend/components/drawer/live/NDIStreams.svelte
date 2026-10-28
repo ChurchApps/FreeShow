@@ -8,7 +8,7 @@
     import Center from "../../system/Center.svelte"
     import NDIStream from "./NDIStream.svelte"
 
-    let sources: { name: string; id: string }[] = []
+    let sources: { name: string; id: string; outputId?: string }[] = []
 
     let loading = true
     const receiveNDI = {
@@ -16,7 +16,7 @@
             loading = false
             if (!msg || sources.length) return
 
-            sources = JSON.parse(msg).map(({ name, urlAddress }) => ({ name, id: urlAddress }))
+            sources = JSON.parse(msg).map(({ name, urlAddress, outputId }) => ({ name, id: urlAddress, outputId }))
         }
     }
 

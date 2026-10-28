@@ -1,40 +1,102 @@
-// Runs in an Electron utilityProcess: owns NDI/OMT receive loops, frame packing and preview downscaling,
-// and posts frames directly to renderers over MessagePorts.
+// Electron utilityProcess running the NDI/OMT/Blackmagic receive loops and serving their frames to windows.
 
 import { ensureOmtCodecSearchPath } from "../omt/omtModule"
+import { getMacadam } from "../blackmagic/macadamLoader"
+import { InputImageBufferConverter } from "../blackmagic/ImageBufferConverter"
+import util from "../ndi/vingester-util"
 import { packStreamFrame, previewStreamFrame, type StreamFrame, type StreamFrameFormat } from "./streamFrames"
 
 const parentPort: any = (process as any).parentPort
 
-// ----- transport -----
+import { FrameServer } from "./FrameServer"
+
+// pooled, refcounted frame buffers: OMT decodes into one, and each window still holding the frame keeps a reference
+const pooled = new Map<Buffer, number>()
+const freeBuffers: Buffer[] = []
+function acquireBuffer(bytes: number): Buffer {
+    const i = freeBuffers.findIndex((b) => b.length >= bytes)
+    const buf = i >= 0 ? freeBuffers.splice(i, 1)[0] : Buffer.allocUnsafeSlow(bytes)
+    pooled.set(buf, 1)
+    return buf
+}
+function poolBufferOf(data: Buffer): Buffer | null {
+    for (const b of pooled.keys()) if (b.buffer === data.buffer) return b
+    return null
+}
+function holdFrame(frame: { data: Buffer }) {
+    const b = poolBufferOf(frame.data)
+    if (b) pooled.set(b, (pooled.get(b) || 0) + 1)
+}
+function releaseFrame(frame: { data: Buffer }) {
+    const b = poolBufferOf(frame.data)
+    if (!b) return
+    const n = (pooled.get(b) || 1) - 1
+    if (n > 0) {
+        pooled.set(b, n)
+        return
+    }
+    pooled.delete(b)
+    freeBuffers.push(b)
+}
 
 const PREVIEW_MAX_WIDTH = 480
+// prefix of the targets that are the capture worker rather than a window
+// a drawer tile is drawn at this interval from a receiver kept open while the tile is shown
+const TILE_INTERVAL_MS = 200
+
+// tiles showing each source, counted
+class TileRefs {
+    private refs: { [sourceId: string]: number } = {}
+    add(id: string) {
+        this.refs[id] = (this.refs[id] || 0) + 1
+    }
+    /** true when no tile shows the source any more */
+    remove(id: string): boolean {
+        if (!this.refs[id]) return true
+        if (--this.refs[id] > 0) return false
+        delete this.refs[id]
+        return true
+    }
+    has(id: string) {
+        return !!this.refs[id]
+    }
+}
+const WORKER_TARGET = "worker:"
+// output -> source the worker composites; workerOnly: the page is not sent that source's frames
+const workerTargets = new Map<string, string>()
+const workerOnly = new Set<string>()
+
+// sources shown per output, refcounted (two during a crossfade)
+class OutputSources {
+    private refs: { [outputId: string]: { [sourceId: string]: number } } = {}
+
+    get outputs() {
+        return Object.keys(this.refs)
+    }
+
+    add(outputId: string, sourceId: string) {
+        const sources = (this.refs[outputId] ||= {})
+        sources[sourceId] = (sources[sourceId] || 0) + 1
+    }
+
+    remove(outputId: string, sourceId: string) {
+        const sources = this.refs[outputId]
+        if (!sources?.[sourceId]) return
+        if (--sources[sourceId] > 0) return
+        delete sources[sourceId]
+        if (!Object.keys(sources).length) delete this.refs[outputId]
+    }
+
+    clear() {
+        this.refs = {}
+    }
+
+    outputsFor(sourceId: string) {
+        return Object.keys(this.refs).filter((outputId) => this.refs[outputId][sourceId])
+    }
+}
+
 const APP_TARGET = "app"
-
-type Pending = { ipcChannel: string; id: string; frame: StreamFrame; time: number }
-type Subscriber = {
-    port: any
-    inFlight: number
-    sentAt: number[]
-    pending: Pending | null
-    roundTrip: number // measured post->ack, ms (smoothed)
-    frameInterval: number // measured arrival spacing, ms (smoothed)
-    lastFrameAt: number
-}
-
-// smoothing weight for the two measurements above; a weight, not a machine-dependent threshold
-const SMOOTHING = 0.2
-
-function smooth(previous: number, sample: number) {
-    return previous ? previous + (sample - previous) * SMOOTHING : sample
-}
-
-function allowedInFlight(subscriber: Subscriber) {
-    if (!subscriber.roundTrip || !subscriber.frameInterval) return 1
-    return Math.max(1, Math.ceil(subscriber.roundTrip / subscriber.frameInterval))
-}
-const subscribers: { [targetId: string]: Subscriber } = {}
-const requestedPorts = new Set<string>()
 
 function toMain(message: any) {
     parentPort?.postMessage(message)
@@ -44,72 +106,48 @@ function log(text: string) {
     toMain({ type: "log", text })
 }
 
-// A port is only asked for when there is actually a frame to deliver, so nothing is wired up for
-// outputs that never show a stream.
-function needPort(targetId: string, preview: boolean) {
-    if (subscribers[targetId] || requestedPorts.has(targetId)) return
-    requestedPorts.add(targetId)
-    toMain({ type: "needPort", targetId, preview })
+const frames = new FrameServer({
+    log,
+    onListening: (info) => toMain({ type: "wsInfo", port: info.port, token: info.token }),
+    onNeedTarget: (targetId, preview) => toMain({ type: "needPort", targetId, preview }),
+    retain: holdFrame,
+    release: releaseFrame,
+    stats: !!process.env.FS_CAP_STATS
+})
+
+// FS_CAP_STATS: where the receive loop spends its time, once a second
+const loopStats = { frames: 0, empty: 0, recvMs: 0, sendMs: 0, previewMs: 0 }
+if (process.env.FS_CAP_STATS) {
+    setInterval(() => {
+        if (!loopStats.frames && !loopStats.empty) return
+        log(`[RX-LOOP] frames=${loopStats.frames} empty=${loopStats.empty} recv=${loopStats.recvMs.toFixed(0)}ms send=${loopStats.sendMs.toFixed(0)}ms (shm=${frames.shmMs.toFixed(0)}ms preview=${loopStats.previewMs.toFixed(0)}ms)`)
+        loopStats.frames = loopStats.empty = loopStats.recvMs = loopStats.sendMs = loopStats.previewMs = 0
+        frames.shmMs = 0
+    }, 1000)
 }
 
-function deliver(targetId: string, ipcChannel: string, id: string, frame: StreamFrame, time: number) {
-    const subscriber = subscribers[targetId]
-    if (!subscriber) return
-
-    if (subscriber.lastFrameAt) subscriber.frameInterval = smooth(subscriber.frameInterval, time - subscriber.lastFrameAt)
-    subscriber.lastFrameAt = time
-
-    if (subscriber.inFlight >= allowedInFlight(subscriber)) {
-        subscriber.pending = { ipcChannel, id, frame, time }
-        return
-    }
-
-    post(targetId, subscriber, { ipcChannel, id, frame, time })
-}
-
-function post(targetId: string, subscriber: Subscriber, next: Pending) {
-    try {
-        subscriber.inFlight++
-        subscriber.sentAt.push(Date.now())
-        subscriber.port.postMessage({
-            ipcChannel: next.ipcChannel,
-            args: { channel: "RECEIVE_STREAM", data: { id: next.id, frame: next.frame, time: next.time } }
-        })
-    } catch {
-        delete subscribers[targetId]
-        requestedPorts.delete(targetId)
-    }
-}
-
-// Window acknowledged frame: update round trip and flush pending frame if any
-function onAck(targetId: string) {
-    const subscriber = subscribers[targetId]
-    if (!subscriber) return
-
-    subscriber.inFlight = Math.max(0, subscriber.inFlight - 1)
-    const sentAt = subscriber.sentAt.shift()
-    if (sentAt) subscriber.roundTrip = smooth(subscriber.roundTrip, Date.now() - sentAt)
-
-    const next = subscriber.pending
-    if (!next || subscriber.inFlight >= allowedInFlight(subscriber)) return
-
-    subscriber.pending = null
-    post(targetId, subscriber, next)
-}
-
-function sendFrame(ipcChannel: string, id: string, outputIds: string[], packed: StreamFrame) {
+// outputs get the full frame, the app window a PREVIEW_MAX_WIDTH copy; returns whether the app window got it
+function sendFrame(ipcChannel: string, id: string, outputIds: string[], packed: StreamFrame): boolean {
     const time = Date.now()
 
     outputIds.forEach((outputId) => {
-        needPort(outputId, false)
-        deliver(outputId, ipcChannel, id, packed, time)
+        // while the worker composites this source, the window is not sent the frame
+        const composited = workerTargets.get(outputId) === id
+        if (composited) frames.deliver(WORKER_TARGET + outputId, ipcChannel, id, packed, time, false)
+        if (!composited || !workerOnly.has(outputId) || !frames.hasSubscriber(WORKER_TARGET + outputId)) frames.deliver(outputId, ipcChannel, id, packed, time, false)
     })
+    // ends the receiver's acquireBuffer hold
+    releaseFrame(packed)
 
-    needPort(APP_TARGET, true)
-    if (subscribers[APP_TARGET]) {
-        const preview = packed.format === "rgba" && packed.xres <= PREVIEW_MAX_WIDTH ? packed : previewStreamFrame(packed, PREVIEW_MAX_WIDTH)
-        deliver(APP_TARGET, ipcChannel, id, preview, time)
+    if (!frames.hasSubscriber(APP_TARGET)) {
+        frames.request(APP_TARGET, true)
+        return false
     }
+    const tPreview = performance.now()
+    const preview = previewStreamFrame(packed, PREVIEW_MAX_WIDTH)
+    loopStats.previewMs += performance.now() - tPreview
+    frames.deliver(APP_TARGET, ipcChannel, id, preview, time, true)
+    return true
 }
 
 // ----- NDI -----
@@ -139,18 +177,14 @@ type NdiLoop = {
 }
 
 class Ndi {
-    private static outputRefs: { [outputId: string]: number } = {}
+    private static sources = new OutputSources()
     private static loops: { [sourceId: string]: NdiLoop } = {}
     static fourCCUyvy: number | null = null
     private static findInterval: NodeJS.Timeout | null = null
 
-    private static get outputs() {
-        return Object.keys(this.outputRefs)
-    }
-
     private static readonly RECEIVE_TIMEOUT_MS = 50
-    private static readonly FULL_LOOP_DELAY_MS = 0
-    private static readonly THUMBNAIL_LOOP_DELAY_MS = 500
+    private static readonly TILE_RECEIVE_TIMEOUT_MS = 1000 // a fresh receiver needs longer for its first frame
+    private static tiles = new TileRefs()
 
     static async createReceiver(source: { name: string; urlAddress: string }, lowbandwidth = false) {
         try {
@@ -235,30 +269,38 @@ class Ndi {
     }
 
     static async thumbnail({ source }: { source: any }) {
+        this.tiles.add(source.id)
         const existing = this.loops[source.id]
         if (existing) {
             if (!existing.stopped) return
             await this.stopLoop(existing)
         }
-        this.startLoop(source, true, this.THUMBNAIL_LOOP_DELAY_MS)
+        this.startLoop(source, true)
+    }
+
+    static tileStop({ id }: { id: string }) {
+        if (!this.tiles.remove(id)) return
+        const loop = this.loops[id]
+        if (loop?.lowbandwidth) void this.stopLoop(loop)
     }
 
     static async capture({ source, outputId }: { source: any; outputId: string }) {
-        this.outputRefs[outputId] = (this.outputRefs[outputId] || 0) + 1
+        this.sources.add(outputId, source.id)
 
+        // upgrade a thumbnail loop to a full capture
         const existing = this.loops[source.id]
         if (existing) {
             if (!existing.lowbandwidth && !existing.stopped) return
             await this.stopLoop(existing)
         }
 
-        this.startLoop(source, false, this.FULL_LOOP_DELAY_MS)
+        this.startLoop(source, false)
     }
 
-    private static startLoop(source: any, lowbandwidth: boolean, delayMs: number) {
+    private static startLoop(source: any, lowbandwidth: boolean) {
         const loop: NdiLoop = { source, lowbandwidth, stopped: false, receiver: null, done: Promise.resolve(), wake: null }
         this.loops[source.id] = loop
-        loop.done = this.frameLoop(source.id, loop, delayMs).catch((err) => log("NDI reception error for " + source.id + ": " + err.message))
+        loop.done = this.frameLoop(source.id, loop).catch((err) => log("NDI reception error for " + source.id + ": " + err.message))
     }
 
     private static stopLoop(loop: NdiLoop) {
@@ -267,6 +309,7 @@ class Ndi {
         return loop.done
     }
 
+    // a stop cuts the sleep short
     private static pause(loop: NdiLoop, ms: number) {
         if (ms === 0) {
             return new Promise<void>((resolve) => {
@@ -284,7 +327,7 @@ class Ndi {
         })
     }
 
-    private static async frameLoop(sourceId: string, loop: NdiLoop, delayMs: number) {
+    private static async frameLoop(sourceId: string, loop: NdiLoop) {
         let consecutiveErrors = 0
 
         try {
@@ -296,15 +339,15 @@ class Ndi {
                         if (loop.stopped) break
                     }
 
-                    const rawFrame = await loop.receiver.video(this.RECEIVE_TIMEOUT_MS)
+                    const rawFrame = await loop.receiver.video(loop.lowbandwidth ? this.TILE_RECEIVE_TIMEOUT_MS : this.RECEIVE_TIMEOUT_MS)
                     if (loop.stopped) break
                     if (rawFrame?.data) {
                         this.sendBuffer(sourceId, rawFrame)
                         consecutiveErrors = 0
                     }
 
-                    if (rawFrame?.data && delayMs < this.THUMBNAIL_LOOP_DELAY_MS) await new Promise((resolve) => setImmediate(resolve))
-                    else await this.pause(loop, delayMs)
+                    if (loop.lowbandwidth && rawFrame?.data) await this.pause(loop, TILE_INTERVAL_MS)
+                    else await this.pause(loop, 0)
                 } catch (err: any) {
                     const { shouldContinue, delay, newErrorCount } = this.handleError(err, consecutiveErrors)
                     consecutiveErrors = newErrorCount
@@ -339,30 +382,30 @@ class Ndi {
         }
     }
 
-    static sendBuffer(id: string, frame: any) {
-        if (!frame?.data) return
+    static sendBuffer(id: string, frame: any): boolean {
+        if (!frame?.data) return false
 
         let format: StreamFrameFormat = "rgba"
         if (frame.fourCC === this.fourCCUyvy) format = "uyvy"
         else if (frame.fourCC === grandioseModule?.FOURCC_BGRA || frame.fourCC === grandioseModule?.FOURCC_BGRX) format = "bgra"
 
         const packed = packStreamFrame(frame.data, frame.xres, frame.yres, frame.lineStrideBytes || 0, format)
-        if (!packed) return
+        if (!packed) return false
 
-        sendFrame("NDI", id, this.outputs, packed)
+        return sendFrame("NDI", id, this.sources.outputsFor(id), packed)
     }
 
     static stop(data: { id: string; outputId?: string } | null = null): Promise<void> {
         if (data?.id) {
-            if (data.outputId) {
-                const refs = (this.outputRefs[data.outputId] || 0) - 1
-                if (refs > 0) this.outputRefs[data.outputId] = refs
-                else delete this.outputRefs[data.outputId]
-            } else this.outputRefs = {}
+            if (data.outputId) this.sources.remove(data.outputId, data.id)
+            else this.sources.clear()
 
+            // a full receive no output shows any more stops, or goes back to serving its tiles
             const loop = this.loops[data.id]
-            if (!this.outputs.length && loop) return this.stopLoop(loop)
-            return Promise.resolve()
+            if (!loop || loop.lowbandwidth || this.sources.outputsFor(data.id).length) return Promise.resolve()
+            return this.stopLoop(loop).then(() => {
+                if (this.tiles.has(data.id) && !this.loops[data.id]) this.startLoop(loop.source, true)
+            })
         }
 
         return Promise.all(Object.values(this.loops).map((loop) => this.stopLoop(loop))).then(() => undefined)
@@ -391,6 +434,7 @@ async function loadOmt() {
 type OmtLoop = {
     source: any
     lowbandwidth: boolean
+    frameBytes: number
     stopped: boolean
     receiver: any
     done: Promise<void>
@@ -398,17 +442,16 @@ type OmtLoop = {
 }
 
 class Omt {
-    private static outputRefs: { [outputId: string]: number } = {}
+    private static sources = new OutputSources()
     static codecs: any = null
     private static loops: { [sourceId: string]: OmtLoop } = {}
 
-    private static get outputs() {
-        return Object.keys(this.outputRefs)
-    }
-
     private static readonly RECEIVE_TIMEOUT_MS = 50
-    private static readonly FULL_LOOP_DELAY_MS = 16 // ~60fps ceiling
-    private static readonly THUMBNAIL_LOOP_DELAY_MS = 500
+    // wait after an empty receive only; a live source paces the loop through receive()
+    private static readonly IDLE_POLL_MS = 16
+    // tiles take one frame and drop the receiver: an open receiver counts as a viewer on the sender
+    private static readonly TILE_RECEIVE_TIMEOUT_MS = 1000 // a fresh receiver needs longer for its first frame
+    private static tiles = new TileRefs()
 
     static async createReceiver(address: string, lowbandwidth = false) {
         try {
@@ -439,16 +482,23 @@ class Omt {
     }
 
     static async thumbnail({ source }: { source: any }) {
+        this.tiles.add(source.id)
         const existing = this.loops[source.id]
         if (existing) {
             if (!existing.stopped) return
             await this.stopLoop(existing)
         }
-        this.startLoop(source, true, this.THUMBNAIL_LOOP_DELAY_MS)
+        this.startLoop(source, true, TILE_INTERVAL_MS)
+    }
+
+    static tileStop({ id }: { id: string }) {
+        if (!this.tiles.remove(id)) return
+        const loop = this.loops[id]
+        if (loop?.lowbandwidth) void this.stopLoop(loop)
     }
 
     static async capture({ source, outputId }: { source: any; outputId: string }) {
-        this.outputRefs[outputId] = (this.outputRefs[outputId] || 0) + 1
+        this.sources.add(outputId, source.id)
 
         const existing = this.loops[source.id]
         if (existing) {
@@ -456,11 +506,11 @@ class Omt {
             await this.stopLoop(existing)
         }
 
-        this.startLoop(source, false, this.FULL_LOOP_DELAY_MS)
+        this.startLoop(source, false, this.IDLE_POLL_MS)
     }
 
     private static startLoop(source: any, lowbandwidth: boolean, delayMs: number) {
-        const loop: OmtLoop = { source, lowbandwidth, stopped: false, receiver: null, done: Promise.resolve(), wake: null }
+        const loop: OmtLoop = { source, lowbandwidth, frameBytes: 0, stopped: false, receiver: null, done: Promise.resolve(), wake: null }
         this.loops[source.id] = loop
         loop.done = this.frameLoop(source.id, loop, delayMs).catch((err) => log("OMT reception error for " + source.id + ": " + err.message))
     }
@@ -495,14 +545,31 @@ class Omt {
                         if (loop.stopped) break
                     }
 
-                    const frame = await loop.receiver.receive(this.RECEIVE_TIMEOUT_MS, 2 /* Video */)
+                    // pooled buffer sized from the largest frame so far; sendBuffer takes over the hold
+                    const into = loop.lowbandwidth || !loop.frameBytes ? null : acquireBuffer(loop.frameBytes)
+                    const tRecv = performance.now()
+                    let frame: any = null
+                    try {
+                        const timeoutMs = loop.lowbandwidth ? this.TILE_RECEIVE_TIMEOUT_MS : this.RECEIVE_TIMEOUT_MS
+                        frame = await loop.receiver.receive(timeoutMs, 2 /* Video */, into || undefined)
+                    } finally {
+                        if (into && !(frame?.data && frame.data.buffer === into.buffer)) releaseFrame({ data: into } as StreamFrame)
+                    }
+                    const tGot = performance.now()
+                    loopStats.recvMs += tGot - tRecv
                     if (loop.stopped) break
                     if (frame?.data) {
+                        loopStats.frames++
+                        loop.frameBytes = Math.max(loop.frameBytes, frame.data.length)
                         this.sendBuffer(sourceId, frame)
+                        loopStats.sendMs += performance.now() - tGot
                         consecutiveErrors = 0
-                    }
+                    } else loopStats.empty++
 
-                    if (frame?.data && delayMs < this.THUMBNAIL_LOOP_DELAY_MS) await new Promise((resolve) => setImmediate(resolve))
+                    // receive() blocks until the next frame; only an empty receive waits
+                    if (loop.lowbandwidth) {
+                        if (frame?.data) await this.pause(loop, delayMs)
+                    } else if (frame?.data) await new Promise((resolve) => setImmediate(resolve))
                     else await this.pause(loop, delayMs)
                 } catch (err: any) {
                     consecutiveErrors++
@@ -535,29 +602,159 @@ class Omt {
     }
 
     static sendBuffer(id: string, frame: any) {
-        if (!frame?.data) return
+        if (!frame?.data) return false
 
         const format: StreamFrameFormat = frame.codec === this.codecs?.UYVY ? "uyvy" : "bgra"
         const packed = packStreamFrame(frame.data, frame.width, frame.height, frame.stride || 0, format)
-        if (!packed) return
+        if (!packed) return false
 
-        sendFrame("OMT", id, this.outputs, packed)
+        return sendFrame("OMT", id, this.sources.outputsFor(id), packed)
     }
 
     static stop(data: { id: string; outputId?: string } | null = null): Promise<void> {
         if (data?.id) {
-            if (data.outputId) {
-                const refs = (this.outputRefs[data.outputId] || 0) - 1
-                if (refs > 0) this.outputRefs[data.outputId] = refs
-                else delete this.outputRefs[data.outputId]
-            } else this.outputRefs = {}
+            if (data.outputId) this.sources.remove(data.outputId, data.id)
+            else this.sources.clear()
 
+            // a full receive no output shows any more stops, or goes back to serving its tiles
             const loop = this.loops[data.id]
-            if (!this.outputs.length && loop) return this.stopLoop(loop)
-            return Promise.resolve()
+            if (!loop || loop.lowbandwidth || this.sources.outputsFor(data.id).length) return Promise.resolve()
+            return this.stopLoop(loop).then(() => {
+                if (this.tiles.has(data.id) && !this.loops[data.id]) this.startLoop(loop.source, true, TILE_INTERVAL_MS)
+            })
         }
 
         return Promise.all(Object.values(this.loops).map((loop) => this.stopLoop(loop))).then(() => undefined)
+    }
+}
+
+// ----- Blackmagic (DeckLink) input -----
+
+type BmdCaptureSpec = { deviceId: string; deviceIndex: number; displayMode: number; pixelFormat: number; pixelFormatName: string; audioChannels?: number }
+type BmdReceiver = { spec: BmdCaptureSpec; channel: any; running: boolean; stopped: boolean; loop: Promise<void> | null; tileAt: number }
+
+class Bmd {
+    static receivers: { [deviceId: string]: BmdReceiver } = {}
+    private static sources = new OutputSources()
+
+    private static async open(spec: BmdCaptureSpec): Promise<BmdReceiver | null> {
+        const existing = this.receivers[spec.deviceId]
+        if (existing) return existing
+
+        const macadam = getMacadam()
+        if (!macadam) {
+            log("Blackmagic input unavailable: macadam module not loaded")
+            return null
+        }
+        const channel = await macadam.capture({
+            deviceIndex: spec.deviceIndex,
+            displayMode: spec.displayMode,
+            pixelFormat: spec.pixelFormat,
+            channels: spec.audioChannels ?? 2,
+            sampleRate: macadam.bmdAudioSampleRate48kHz,
+            sampleType: macadam.bmdAudioSampleType16bitInteger
+        })
+        const receiver: BmdReceiver = { spec, channel, running: false, stopped: false, loop: null, tileAt: 0 }
+        this.receivers[spec.deviceId] = receiver
+        return receiver
+    }
+
+    private static pack(receiver: BmdReceiver, frame: any): StreamFrame | null {
+        const data: Buffer = frame?.video?.data
+        if (!data) return null
+        const width = receiver.channel.width
+        const height = receiver.channel.height
+        const name = receiver.spec.pixelFormatName || ""
+        const stride = frame.video.rowBytes || 0
+
+        let format: StreamFrameFormat = "rgba"
+        let pixels = data
+        if (name.includes("YUV")) {
+            if (name.includes("10") || name.includes("12")) {
+                pixels = InputImageBufferConverter.YUVtoRGBA(data, { width, height })
+                return packStreamFrame(pixels, width, height, 0, "rgba")
+            }
+            format = "uyvy"
+        } else if (name.includes("ARGB")) {
+            util.ImageBufferAdjustment.ARGBtoRGBA(pixels)
+        } else if (name.includes("BGRA")) {
+            format = "bgra"
+        } else if (name.includes("RGBXLE")) {
+            InputImageBufferConverter.RGBXLEtoRGBA(pixels)
+        } else if (name.includes("RGBLE")) {
+            pixels = InputImageBufferConverter.RGBLEtoRGBA(pixels)
+            return packStreamFrame(pixels, width, height, 0, "rgba")
+        } else if (name.includes("RGBX")) {
+            InputImageBufferConverter.RGBXtoRGBA(pixels)
+        } else if (name.includes("RGB")) {
+            pixels = InputImageBufferConverter.RGBtoRGBA(pixels)
+            return packStreamFrame(pixels, width, height, 0, "rgba")
+        }
+        return packStreamFrame(pixels, width, height, stride, format)
+    }
+
+    private static tiles = new TileRefs()
+
+    static async thumbnail(spec: BmdCaptureSpec) {
+        this.tiles.add(spec.deviceId)
+        await this.run(spec)
+    }
+
+    static tileStop({ id }: { id: string }) {
+        if (this.tiles.remove(id) && !this.sources.outputsFor(id).length) this.close(id)
+    }
+
+    static async capture(data: BmdCaptureSpec & { outputId: string }) {
+        this.sources.add(data.outputId, data.deviceId)
+        await this.run(data)
+    }
+
+    private static async run(spec: BmdCaptureSpec) {
+        const receiver = await this.open(spec)
+        if (!receiver || receiver.running) return
+        receiver.running = true
+        receiver.loop = this.frameLoop(receiver).catch((err) => log("Blackmagic reception error for " + spec.deviceId + ": " + err.message))
+    }
+
+    // Every frame is read: an unread frame keeps its card buffer. Frames only tiles show are drawn at the tile rate.
+    private static async frameLoop(receiver: BmdReceiver) {
+        const id = receiver.spec.deviceId
+        while (!receiver.stopped && this.receivers[id] === receiver) {
+            const frame = await receiver.channel.frame()
+            if (receiver.stopped) break
+            const outputs = this.sources.outputsFor(id)
+            if (!outputs.length) {
+                const now = Date.now()
+                if (now - receiver.tileAt < TILE_INTERVAL_MS) continue
+                receiver.tileAt = now
+            }
+            const packed = this.pack(receiver, frame)
+            if (packed) sendFrame("BLACKMAGIC", id, outputs, packed)
+        }
+    }
+
+    static stop(data: { id: string; outputId?: string } | null = null) {
+        if (data?.id) {
+            if (data.outputId) this.sources.remove(data.outputId, data.id)
+            else this.sources.clear()
+
+            if (!this.sources.outputsFor(data.id).length && !this.tiles.has(data.id)) this.close(data.id)
+            return
+        }
+        for (const id of Object.keys(this.receivers)) this.close(id)
+        this.sources.clear()
+    }
+
+    private static close(deviceId: string) {
+        const receiver = this.receivers[deviceId]
+        if (!receiver) return
+        receiver.stopped = true
+        delete this.receivers[deviceId]
+        try {
+            receiver.channel.stop()
+        } catch (err: any) {
+            log("Error stopping Blackmagic receiver: " + err.message)
+        }
     }
 }
 
@@ -566,31 +763,37 @@ class Omt {
 const HANDLERS: { [type: string]: (data: any) => any } = {
     "ndi:find": (data) => Ndi.findStreams(data || {}),
     "ndi:thumbnail": (data) => Ndi.thumbnail(data),
+    "ndi:tileStop": (data) => Ndi.tileStop(data),
     "ndi:capture": (data) => Ndi.capture(data),
     "ndi:stop": (data) => Ndi.stop(data),
     "omt:find": () => Omt.findStreams(),
     "omt:thumbnail": (data) => Omt.thumbnail(data),
+    "omt:tileStop": (data) => Omt.tileStop(data),
     "omt:capture": (data) => Omt.capture(data),
-    "omt:stop": (data) => Omt.stop(data)
+    "omt:stop": (data) => Omt.stop(data),
+    videoLayer: (data: { outputId: string; active: boolean; source?: string; exclusive?: boolean }) => {
+        if (data.active) workerTargets.set(data.outputId, data.source || "")
+        else {
+            workerTargets.delete(data.outputId)
+            workerOnly.delete(data.outputId)
+            frames.drop(WORKER_TARGET + data.outputId)
+            return
+        }
+        if (data.exclusive) workerOnly.add(data.outputId)
+        else workerOnly.delete(data.outputId)
+    },
+    "bmd:thumbnail": (data) => Bmd.thumbnail(data),
+    "bmd:tileStop": (data) => Bmd.tileStop(data),
+    "bmd:capture": (data) => Bmd.capture(data),
+    "bmd:stop": (data) => Bmd.stop(data)
 }
 
 parentPort.on("message", async (e: any) => {
     const message = e.data
     if (!message) return
 
-    if (message.type === "port") {
-        const port = e.ports?.[0]
-        if (!port) return
-        requestedPorts.delete(message.targetId)
-        subscribers[message.targetId] = { port, inFlight: 0, sentAt: [], pending: null, roundTrip: 0, frameInterval: 0, lastFrameAt: 0 }
-        port.on("message", () => onAck(message.targetId))
-        port.start()
-        return
-    }
-
     if (message.type === "dropPort") {
-        delete subscribers[message.targetId]
-        requestedPorts.delete(message.targetId)
+        frames.drop(message.targetId)
         return
     }
 

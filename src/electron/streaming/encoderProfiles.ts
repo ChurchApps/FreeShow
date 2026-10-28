@@ -131,9 +131,11 @@ export interface EncoderCommandOptions {
     rateControl?: "cbr" | "vbr"
     enableAudio: boolean
     sampleRate?: number
+    /** pixel format of the raw frames on stdin (default bgra) */
+    inputPixelFormat?: "bgra" | "yuv420p"
 }
 
-/** Full arg list for the encoder process: raw BGRA + PCM in, flv out on stdout. */
+/** Full arg list for the encoder process: raw video + PCM in, flv out on stdout. */
 // Inside buildEncoderCommand in encoderProfiles.ts:
 
 export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
@@ -146,7 +148,7 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
     if (profile.preInput) args.push(...profile.preInput)
 
     // VIDEO INPUT PIPE
-    args.push("-thread_queue_size", "512", "-use_wallclock_as_timestamps", "1", "-fflags", "+nobuffer", "-f", "rawvideo", "-pixel_format", "bgra", "-video_size", `${opts.inputWidth}x${opts.inputHeight}`, "-framerate", `${opts.fps}`, "-i", "pipe:0")
+    args.push("-thread_queue_size", "512", "-use_wallclock_as_timestamps", "1", "-fflags", "+nobuffer", "-f", "rawvideo", "-pixel_format", opts.inputPixelFormat || "bgra", "-video_size", `${opts.inputWidth}x${opts.inputHeight}`, "-framerate", `${opts.fps}`, "-i", "pipe:0")
 
     if (opts.enableAudio) {
         const ar = opts.sampleRate || SAMPLE_RATE
@@ -167,6 +169,8 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
     }
 
     args.push("-c:a", "aac", "-ar", "48000", "-ac", `${AUDIO_CHANNELS}`, "-b:a", AUDIO_BITRATE)
+    // end with the video, or aresample pads the audio with silence after the inputs close
+    args.push("-shortest")
 
     // SWITCH FROM MPEGTS TO FLV FOR RTMP
     // FLV is the native format for RTMP relays and YouTube ingest.
@@ -179,6 +183,11 @@ export function buildEncoderCommand(opts: EncoderCommandOptions): string[] {
 /** Relay process: forward the encoded FLV stream straight to one RTMP/RTMPS destination without re-encoding. */
 export function buildRelayCommand(url: string): string[] {
     return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-f", "flv", "-flvflags", "no_sequence_end", url]
+}
+
+/** copy the encoded stream into a file; fragmented MP4 stays playable if the recording is cut off */
+export function buildFileRelayCommand(filePath: string): string[] {
+    return ["-hide_banner", "-loglevel", "warning", "-f", "flv", "-i", "pipe:0", "-c", "copy", "-movflags", "+frag_keyframe+empty_moov+default_base_moof", "-f", "mp4", "-y", filePath]
 }
 
 /** Short throwaway encode used to prove the encoder actually works on this machine. */

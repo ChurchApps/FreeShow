@@ -7,6 +7,8 @@
 
     export let media: any = null
     export let mirror = false
+    // this output owns the full-quality receive
+    export let outputId = ""
 </script>
 
 {#if media}
@@ -16,11 +18,11 @@
         {:else if media.type === "screen"}
             <Window id={media.id} class="media" style="width: 100%;height: 100%;" />
         {:else if media.type === "ndi"}
-            <NdiStream screen={{ id: media.id, name: media.name || "" }} background {mirror} />
+            <NdiStream screen={{ id: media.id, name: media.name || "" }} background {mirror} {outputId} />
         {:else if media.type === "omt"}
-            <OmtStream screen={{ id: media.id, name: media.name || "" }} background {mirror} />
+            <OmtStream screen={{ id: media.id, name: media.name || "" }} background {mirror} {outputId} />
         {:else if media.type === "blackmagic"}
-            <BmdStream screen={{ id: media.id, name: media.name || "" }} background {mirror} />
+            <BmdStream screen={{ id: media.id, name: media.name || "" }} background {mirror} {outputId} />
         {/if}
     </div>
 {/if}

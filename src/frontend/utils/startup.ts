@@ -14,9 +14,10 @@ import { wait, waitUntilValueIsDefined } from "./common"
 import { getDefaultElements } from "./createData"
 import { setLanguage } from "./language"
 import { storeSubscriber } from "./listeners"
+import { renderSignatureHook } from "./renderSignature"
 import { autoOpenLastUsedProfile, openProfileByName } from "./profile"
 import { receiveOUTPUTasOUTPUT, remoteListen, setupMainReceivers } from "./receivers"
-import { destroy, receive, send } from "./request"
+import { destroy, receive, send, setBeforeOutputSend } from "./request"
 import { save, unsavedUpdater } from "./save"
 
 let initialized = false
@@ -42,7 +43,8 @@ export async function startup() {
             if (type) loaded.set(true)
 
             if (type === "pdf") return
-            if (type === "output") {
+            // a media window takes the same data as an output
+            if (type === "output" || type === "media") {
                 startupOutput()
                 return
             }
@@ -70,6 +72,8 @@ async function startupMain() {
     if (startupProfile) openProfileByName(startupProfile)
     else autoOpenLastUsedProfile()
 
+    // before storeSubscriber, so the signatures see every message
+    setBeforeOutputSend(renderSignatureHook)
     storeSubscriber()
     remoteListen()
 

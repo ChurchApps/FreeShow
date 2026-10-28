@@ -255,7 +255,7 @@ export class AudioSender {
         const rawOutputs = keysToID(get(outputs) || {})
         for (let i = 0; i < rawOutputs.length; i++) {
             const out = rawOutputs[i]
-            const networkOutput = out.ndi || out.blackmagic || out.webrtcData?.streaming || out.rtmpData?.streaming
+            const networkOutput = out.ndi || out.omt || out.blackmagic || out.webrtcData?.streaming || out.rtmpData?.streaming
             if (out?.enabled && networkOutput) targets.add(out.id)
         }
 
@@ -348,7 +348,7 @@ export class AudioSender {
         const outputList = keysToID(get(outputs) || {})
         for (let i = 0; i < outputList.length; i++) {
             const a = outputList[i]
-            const networkOutput = a.ndi || a.blackmagic || a.webrtcData?.streaming || a.rtmpData?.streaming
+            const networkOutput = a.ndi || a.omt || a.blackmagic || a.webrtcData?.streaming || a.rtmpData?.streaming
             if (a?.enabled && networkOutput) return true
         }
 

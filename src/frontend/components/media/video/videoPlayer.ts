@@ -53,6 +53,8 @@ export type VideoAudioData = {
 
 export type PlayingVideoState = {
     currentTime: number
+    /** when currentTime was read, in epoch ms */
+    at?: number
     duration: number
     paused: boolean
     loop: boolean
@@ -860,6 +862,7 @@ export class VideoPlayer {
 
                     a[id] = {
                         currentTime: Number.isFinite(activeAudio.currentTime) ? activeAudio.currentTime : 0,
+                        at: Date.now(),
                         duration: Number.isFinite(activeAudio.duration) && activeAudio.duration > 0 ? activeAudio.duration : 0,
                         paused: activeAudio.paused,
                         loop: video.loop || false,
