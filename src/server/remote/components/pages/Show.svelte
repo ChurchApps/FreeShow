@@ -114,6 +114,13 @@
         send("API:get_cleared")
     }
 
+    function navigate(action: "previous_slide" | "next_slide") {
+        send("API:" + action)
+
+        // next/previous might change the active show in the app (e.g. at first/last slide), sync with that (app watches for changes)
+        send("ACTIVE_SHOW", $activeShow?.id || "")
+    }
+
     // Cleanup scroll animation frame
     onDestroy(() => {
         if (scrollRaf !== null) {
@@ -157,32 +164,26 @@
             <Slides {dictionary} {scrollElem} on:click={(e) => playSlide(e.detail)} outSlide={slideNum} />
         </div>
 
-        {#if $activeShow.id === $outShow?.id || !$isCleared.all}
-            {#if $activeShow.id === $outShow?.id}
-                <div class="controls-section">
-                    <div class="buttons">
-                        {#key slideNum}
-                            <Clear outSlide={slideNum} />
-                        {/key}
-                    </div>
-
-                    <div class="slide-progress">
-                        <Button on:click={() => send("API:previous_slide")} disabled={slideNum <= 0} variant="outlined" center compact>
-                            <Icon id="previous" size={1.2} />
-                        </Button>
-                        <span class="counter">{slideNum + 1}/{totalSlides}</span>
-                        <Button on:click={() => send("API:next_slide")} disabled={slideNum + 1 >= totalSlides} variant="outlined" center compact>
-                            <Icon id="next" size={1.2} />
-                        </Button>
-                    </div>
+        {#if !$isCleared.all}
+            <div class="controls-section">
+                <div class="slide-progress">
+                    <!-- disabled={slideNum <= 0}  -->
+                    <Button on:click={() => navigate("previous_slide")} variant="outlined" center compact>
+                        <Icon id="previous" size={1.2} />
+                    </Button>
+                    <span class="counter">{slideNum + 1}/{totalSlides}</span>
+                    <!-- disabled={slideNum + 1 >= totalSlides} -->
+                    <Button on:click={() => navigate("next_slide")} variant="outlined" center compact>
+                        <Icon id="next" size={1.2} />
+                    </Button>
                 </div>
-            {:else}
+
                 <div class="buttons">
                     {#key slideNum}
                         <Clear outSlide={slideNum} />
                     {/key}
                 </div>
-            {/if}
+            </div>
         {:else}
             <div class="buttons">
                 {#if layouts.length > 1}
@@ -240,9 +241,9 @@
 
     .slide-progress :global(button) {
         min-width: 32px;
-        min-height: 32px !important;
+        min-height: 44px !important;
         padding: 2px 6px !important;
-        flex-shrink: 0;
+        flex: 1;
     }
 
     .slide-progress :global(button) :global(svg) {
@@ -250,9 +251,9 @@
     }
 
     .slide-progress .counter {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
+        position: static;
+        left: 0;
+        flex-shrink: 0;
         text-align: center;
         color: white;
         font-size: 0.85em;

@@ -90,6 +90,21 @@ export const receiveREMOTE: any = {
         openShow(showID)
         return msg
     },
+    // sync remote with the app active show for a short time (e.g. after next/previous changed project item)
+    ACTIVE_SHOW: (msg: any) => {
+        let done = false
+        let unsubscribe: (() => void) | null = null
+        const timeout = setTimeout(() => unsubscribe?.(), 2000)
+
+        unsubscribe = activeShow.subscribe((active) => {
+            if (done || !active?.id || (active.type || "show") !== "show" || active.id === msg.data) return
+            done = true
+
+            clearTimeout(timeout)
+            setTimeout(() => unsubscribe?.())
+            sendData(REMOTE, { id: msg.id, channel: "SHOW", data: active.id })
+        })
+    },
     OUT: async (msg: any) => {
         if (get(outLocked)) return
         // set id because convertBackgrounds might use a long time
@@ -441,7 +456,7 @@ export async function convertBackgrounds(show: Show, noLoad = false, init = fals
 
 function openShow(id: string) {
     if (get(activePage) !== "show") return
-    if (!get(shows)[id]) return
+    if (!get(shows)[id] || get(activeShow)?.id === id) return
     // don't open if last interaction was less than 20 seconds ago
     if (Date.now() - lastClickTime < 20000) return
 
