@@ -230,7 +230,9 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             const currentBackground = get(outputs)[outs?.[0]]?.out?.background || {}
             const mediaData = get(media)[currentBackground.path || ""] || {}
             const mediaType = getMediaLayerType(currentBackground.path || "", mediaData)
-            if (mediaType === "foreground") clearBackground()
+            // if a player video is played from a slide, it's treated as "background" instead of "foreground"
+            const isPlayerForeground = currentBackground.type === "player" && currentBackground.ignoreLayer !== false
+            if (isPlayerForeground || mediaType === "foreground") clearBackground()
         }
 
         let toggleState = false
