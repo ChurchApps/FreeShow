@@ -5,7 +5,7 @@ import { Main } from "../../../../types/IPC/Main"
 import { AudioAnalyser } from "../../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../../audio/audioFading"
 import { requestMain } from "../../../IPC/main"
-import { media, outputs, playerVideos, playingVideos, playingVideoState, special, styles, transitionData } from "../../../stores"
+import { activeProject, media, outputs, playerVideos, playingVideos, projects, playingVideoState, special, styles, transitionData } from "../../../stores"
 import { playFolder } from "../../../utils/shortcuts"
 import { customActionActivation } from "../../actions/actions"
 import { getVimeoData, getYouTubeData } from "../../drawer/player/playerHelper"
@@ -263,7 +263,7 @@ export class VideoPlayer {
 
     private static async createAudio(audioPath: string, originalId: string, outputIds?: string[], isOnline?: boolean): Promise<HTMLAudioElement | VirtualAudioElement | null> {
         if (isOnline) {
-            const playerData = get(playerVideos)[originalId]
+            const playerData = get(playerVideos)[originalId] || get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === originalId)?.data
             const path = playerData?.id || ""
             const data = await (playerData?.type === "youtube" ? getYouTubeData(path) : playerData?.type === "vimeo" ? getVimeoData(path) : null)
 
