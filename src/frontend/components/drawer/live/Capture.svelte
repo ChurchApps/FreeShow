@@ -56,13 +56,6 @@
         stopStream()
     })
 
-    // the card's refresh button
-    function refresh() {
-        stopStream()
-        loaded = false
-        capture()
-    }
-
     onMount(capture)
     function capture() {
         navigator.mediaDevices
@@ -99,7 +92,7 @@
         <track kind="captions" />
     </video>
 {:else}
-    <Card mediaData={JSON.stringify(constraints)} class="context #screen_card" {loaded} outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} icon={screen.id.includes("screen") ? "screen" : "window"} white={!screen.id.includes("screen")} showPlayOnHover showRefreshOnHover on:refresh={refresh}>
+    <Card mediaData={JSON.stringify(constraints)} class="context #screen_card" {loaded} outlineColor={findMatchingOut(screen.id, $outputs)} active={findMatchingOut(screen.id, $outputs) !== null} on:click title={screen.name} label={screen.name} icon={screen.id.includes("screen") ? "screen" : "window"} white={!screen.id.includes("screen")} showPlayOnHover>
         <SelectElem style="display: flex;" id="screen" data={{ id: screen.id, type: "screen", name: screen.name }} draggable>
             <canvas bind:this={canvas} />
             {#if !loaded}
