@@ -2,11 +2,6 @@ appId: app.freeshow
 productName: FreeShow
 artifactName: FreeShow-${version}-${arch}.${ext}
 
-# WIDEVINE
-# Use castlabs electron builds to get widevine support
-# electronDownload:
-#     mirror: https://github.com/castlabs/electron-releases/releases/download/
-
 files:
     - build/electron/**
     - build/types/**
@@ -33,6 +28,7 @@ win:
     icon: build/public/icon.png
     files:
         - "!**/node_modules/openmediatransport/lib/{macos,linux-*,win-arm64}/**"
+        - "!**/node_modules/better-sqlite3/prebuilds/{darwin-*,linux*,win32-arm64}.node"
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/libspotifyctl/**/*"
@@ -49,6 +45,7 @@ win:
 linux:
     files:
         - "!**/node_modules/openmediatransport/lib/{macos,win-*}/**"
+        - "!**/node_modules/better-sqlite3/prebuilds/{darwin-*,linuxmusl-*,win32-*}.node"
     asarUnpack:
         - "**/node_modules/grandiose/**"
         - "**/node_modules/openmediatransport/**"
@@ -76,6 +73,7 @@ mac:
     icon: build/public/icon.png
     files:
         - "!**/node_modules/openmediatransport/lib/{linux-*,win-*}/**"
+        - "!**/node_modules/better-sqlite3/prebuilds/{linux*,win32-*}.node"
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
         - "**/node_modules/openmediatransport/**"
@@ -98,9 +96,11 @@ mac:
     extendInfo:
         NSMicrophoneUsageDescription: Please give access to your microphone if you want to use it for input.
         NSCameraUsageDescription: Please give access to your camera if you want to use it for input.
+        NSAudioCaptureUsageDescription: Please give access to audio capture for desktop capture.
         com.apple.security.device.audio-input: true
         com.apple.security.device.camera: true
 
+afterExtract: scripts/opus.js
 afterSign: scripts/macos/notarize.js
 
 dmg:

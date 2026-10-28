@@ -1,8 +1,14 @@
 import { spawn, type ChildProcess } from "child_process"
 import type { RtmpDestination, RtmpDestinationState, RtmpStatus } from "../../types/Output"
-import { resolveEncoder } from "./encoderDetection"
-import { buildEncoderCommand, buildRelayCommand, getProfile, SAMPLE_RATE, type EncoderId } from "./encoderProfiles"
-import { resolveFfmpegPath } from "./ffmpegManager"
+import { buildEncoderCommand, buildFileRelayCommand, buildRelayCommand, getProfile, SAMPLE_RATE, type EncoderId } from "./encoderProfiles"
+
+// RTMP engine for the capture worker thread: no Electron imports, ffmpeg and encoder are resolved by the host
+export type RtmpResolved = { ffmpegPath: string; encoderId: EncoderId }
+type Resolvers = { resolveFfmpegPath: () => Promise<string | null>; resolveEncoder: (preference?: string) => Promise<EncoderId> }
+let resolvers: Resolvers | null = null
+export function setRtmpResolvers(r: Resolvers) {
+    resolvers = r
+}
 
 // status and notices are pushed through registered listeners rather than importing the IPC layer
 // directly, which would create an import cycle back through responsesMain
@@ -42,6 +48,8 @@ const ENCODER_MAX_CONSECUTIVE_FAILURES = 10
 const STATUS_PUSH_INTERVAL_MS = 1000
 
 interface RelayInstance {
+    /** recording relays only: how many files this destination has written */
+    fileParts?: number
     destination: RtmpDestination
     process: ChildProcess | null
     state: RtmpDestinationState
@@ -69,6 +77,8 @@ interface StreamInstance {
     flvHeader: Buffer | null
     /** actual size of the raw frames, learned from the first captured frame */
     inputSize: { width: number; height: number } | null
+    /** pixel format the encoder input is declared with */
+    inputPixFmt?: "bgra" | "yuv420p"
     sampleRate?: number
     encoderStartedAt: number
     encoderBackoffMs: number
@@ -80,6 +90,8 @@ interface StreamInstance {
     audioInterval?: NodeJS.Timeout
     lastAudioTime: number
     lastFrame: Buffer | null
+    /** returns the borrowed lastFrame to its owner once the engine no longer references it */
+    releaseFrame?: () => void
     audioStats?: {
         totalBytes: number
         startTime: number
@@ -88,9 +100,11 @@ interface StreamInstance {
     }
     videoFrameCount?: number
     hasReceivedFirstAudio?: boolean
+    frameWriting?: boolean
+    pendingRelease?: () => void
 }
 
-interface StreamConfig {
+export interface StreamConfig {
     /** dimensions to broadcast at */
     width: number
     height: number
@@ -105,7 +119,7 @@ interface StreamConfig {
 export class RtmpStreamer {
     private static streamers = new Map<string, StreamInstance>()
     private static starting = new Set<string>()
-    private static pending = new Map<string, { config: StreamConfig; destinations: RtmpDestination[] }>()
+    private static pending = new Map<string, { config: StreamConfig; destinations: RtmpDestination[]; resolved?: RtmpResolved }>()
     /** ids that were stopped while start() was still awaiting */
     private static cancelled = new Set<string>()
     private static statusTimers = new Map<string, NodeJS.Timeout>()
@@ -121,41 +135,48 @@ export class RtmpStreamer {
     // ----- lifecycle -----
 
     /** Apply the latest settings: restart only when the encode itself changed, otherwise just sync relays. */
-    static update(outputId: string, config: StreamConfig, destinations: RtmpDestination[]) {
+    static update(outputId: string, config: StreamConfig, destinations: RtmpDestination[], resolved?: RtmpResolved) {
         // encoder detection can take seconds on a cold cache; hold the latest settings until start() finishes
         if (this.starting.has(outputId)) {
-            this.pending.set(outputId, { config, destinations })
+            this.pending.set(outputId, { config, destinations, resolved })
             return
         }
 
         const streamer = this.streamers.get(outputId)
         if (!streamer) {
-            this.start(outputId, config, destinations)
+            void this.start(outputId, config, destinations, resolved)
             return
         }
 
         if (configRequiresRestart(streamer.config, config)) {
             console.log(`[RtmpStreamer] Encode settings changed for ${outputId}, restarting`)
             this.stop(outputId)
-            this.start(outputId, config, destinations)
+            void this.start(outputId, config, destinations, resolved)
             return
         }
 
         this.syncDestinations(outputId, destinations)
     }
 
-    static async start(outputId: string, config: StreamConfig, destinations: RtmpDestination[]) {
+    static async start(outputId: string, config: StreamConfig, destinations: RtmpDestination[], resolved?: RtmpResolved) {
         if (this.isRunning(outputId) || this.starting.has(outputId)) return
         this.starting.add(outputId)
 
         try {
-            const ffmpegPath = await resolveFfmpegPath()
-            if (!ffmpegPath) {
-                console.error("[RtmpStreamer] Cannot start: FFmpeg is not installed.")
-                return
+            let ffmpegPath = resolved?.ffmpegPath || null
+            let encoderId = resolved?.encoderId
+            if (!ffmpegPath || !encoderId) {
+                if (!resolvers) {
+                    console.error("[RtmpStreamer] Cannot start: no resolved ffmpeg/encoder and no resolvers set.")
+                    return
+                }
+                ffmpegPath = ffmpegPath || (await resolvers.resolveFfmpegPath())
+                if (!ffmpegPath) {
+                    console.error("[RtmpStreamer] Cannot start: FFmpeg is not installed.")
+                    return
+                }
+                encoderId = encoderId || (await resolvers.resolveEncoder(config.encoder))
             }
-
-            const encoderId = await resolveEncoder(config.encoder)
             if (this.cancelled.has(outputId)) return
 
             console.log(`[RtmpStreamer] Starting ${outputId} with ${getProfile(encoderId).label} at ${config.width}x${config.height} ${config.fps}fps ${config.bitrate}k`)
@@ -187,7 +208,7 @@ export class RtmpStreamer {
             const pending = this.pending.get(outputId)
             if (pending) {
                 this.pending.delete(outputId)
-                this.update(outputId, pending.config, pending.destinations)
+                this.update(outputId, pending.config, pending.destinations, pending.resolved)
             }
         }
     }
@@ -204,14 +225,23 @@ export class RtmpStreamer {
         // CLEAR AUDIO STATS AND QUEUES ON STOP
         streamer.audioStats = undefined
         streamer.lastFrame = null
+        streamer.releaseFrame?.()
+        streamer.releaseFrame = undefined
+        streamer.pendingRelease?.()
+        streamer.pendingRelease = undefined
 
         this.streamers.delete(outputId)
 
         if (streamer.encoderRestartTimer) clearTimeout(streamer.encoderRestartTimer)
         streamer.encoderRestartTimer = undefined
 
-        for (const relay of streamer.relays.values()) this.stopRelay(relay)
+        // stop the encoder first: it flushes into the relays as it exits
+        const relays = [...streamer.relays.values()]
+        const encoder = streamer.encoder
         this.stopEncoder(streamer)
+        const endRelays = () => relays.forEach((relay) => this.stopRelay(relay))
+        if (encoder && encoder.exitCode === null && encoder.signalCode === null) encoder.once("exit", endRelays)
+        else endRelays()
 
         const timer = this.statusTimers.get(outputId)
         if (timer) {
@@ -244,7 +274,8 @@ export class RtmpStreamer {
             bitrate: config.bitrate,
             rateControl: config.rateControl,
             enableAudio: config.enableAudio,
-            sampleRate: streamer.sampleRate || SAMPLE_RATE
+            sampleRate: streamer.sampleRate || SAMPLE_RATE,
+            inputPixelFormat: streamer.inputPixFmt || "bgra"
         })
 
         const scaling = inputSize.width !== config.width || inputSize.height !== config.height
@@ -314,13 +345,20 @@ export class RtmpStreamer {
                     if (stdin.writableLength > 0) return
 
                     isWriting = true
+                    streamer.frameWriting = true
                     try {
                         stdin.write(streamer.lastFrame, () => {
                             isWriting = false
+                            streamer.frameWriting = false
                             streamer.videoFrameCount = (streamer.videoFrameCount || 0) + 1
+                            // release the frame replaced while this write was in flight
+                            const pending = streamer.pendingRelease
+                            streamer.pendingRelease = undefined
+                            pending?.()
                         })
                     } catch {
                         isWriting = false
+                        streamer.frameWriting = false
                     }
                 }, delay)
             }
@@ -445,7 +483,8 @@ export class RtmpStreamer {
 
         let child: ChildProcess
         try {
-            child = spawn(streamer.ffmpegPath, buildRelayCommand(buildDestinationUrl(relay.destination)), {
+            const args = relay.destination.file ? buildFileRelayCommand(nextFilePart(relay)) : buildRelayCommand(buildDestinationUrl(relay.destination))
+            child = spawn(streamer.ffmpegPath, args, {
                 stdio: ["pipe", "ignore", "pipe"],
                 windowsHide: true
             })
@@ -582,24 +621,41 @@ export class RtmpStreamer {
 
     // ----- inputs -----
 
-    static updateFrame(outputId: string, buffer: Buffer, size: { width: number; height: number }) {
-        const streamer = this.streamers.get(outputId)
-        if (!streamer) return
+    static frameBytes(size: { width: number; height: number }, pixFmt: "bgra" | "yuv420p"): number {
+        return pixFmt === "yuv420p" ? size.width * size.height + 2 * (Math.floor(size.width / 2) * Math.floor(size.height / 2)) : size.width * size.height * 4
+    }
 
-        // -f rawvideo has no framing, so a buffer that disagrees with the declared -video_size would
-        // silently shear the broadcast diagonally rather than fail
-        const expected = size.width * size.height * 4
-        if (buffer.length !== expected) {
-            console.error(`[RtmpStreamer] Dropping frame for ${outputId}: got ${buffer.length} bytes, expected ${expected} for ${size.width}x${size.height}`)
+    // `buffer` is borrowed (not copied) until `release` is called; omit `release` for an owned buffer
+    static updateFrame(outputId: string, buffer: Buffer, size: { width: number; height: number }, release?: () => void, pixFmt: "bgra" | "yuv420p" = "bgra") {
+        const streamer = this.streamers.get(outputId)
+        if (!streamer) {
+            release?.()
             return
         }
 
+        // -f rawvideo has no framing, so a buffer that disagrees with the declared -video_size would
+        // silently shear the broadcast diagonally rather than fail
+        const expected = this.frameBytes(size, pixFmt)
+        if (buffer.length !== expected) {
+            console.error(`[RtmpStreamer] Dropping frame for ${outputId}: got ${buffer.length} bytes, expected ${expected} for ${size.width}x${size.height} ${pixFmt}`)
+            release?.()
+            return
+        }
+
+        // the previous frame may still be writing: defer its release until the write ends
+        const previousRelease = streamer.releaseFrame
         streamer.lastFrame = buffer
+        streamer.releaseFrame = release
+        if (previousRelease) {
+            if (streamer.frameWriting) streamer.pendingRelease = previousRelease
+            else previousRelease()
+        }
 
         if (!streamer.encoder) {
             // an encoder restart is already scheduled; do not race it
             if (streamer.encoderRestartTimer) return
 
+            streamer.inputPixFmt = pixFmt
             this.spawnEncoder(streamer, size)
             if (streamer.encoder) {
                 for (const relay of streamer.relays.values()) this.spawnRelay(streamer, relay)
@@ -607,9 +663,10 @@ export class RtmpStreamer {
             return
         }
 
-        // the capture resolution changed under us, so the encoder's -video_size no longer matches
-        if (streamer.inputSize && (streamer.inputSize.width !== size.width || streamer.inputSize.height !== size.height)) {
-            console.log(`[RtmpStreamer] Capture size changed to ${size.width}x${size.height}, restarting encoder`)
+        // capture size or pixel format changed: the encoder input declaration no longer matches
+        if (streamer.inputSize && (streamer.inputSize.width !== size.width || streamer.inputSize.height !== size.height || (streamer.inputPixFmt || "bgra") !== pixFmt)) {
+            console.log(`[RtmpStreamer] Capture input changed to ${size.width}x${size.height} ${pixFmt}, restarting encoder`)
+            streamer.inputPixFmt = pixFmt
             this.respawnEncoder(streamer, size, "Resolution changed")
         }
     }
@@ -624,6 +681,7 @@ export class RtmpStreamer {
             if (!streamer.hasReceivedFirstAudio) streamer.hasReceivedFirstAudio = true
 
             try {
+                // an output turned off keeps streaming, silent
                 audioStream.write(buffer)
                 if (streamer.audioStats) {
                     streamer.audioStats.totalBytes += buffer.length
@@ -686,6 +744,16 @@ export class RtmpStreamer {
 /** Destination changes are relay-only; anything here means the encoder has to be respawned. */
 function configRequiresRestart(prev: StreamConfig, next: StreamConfig): boolean {
     return prev.width !== next.width || prev.height !== next.height || prev.fps !== next.fps || prev.bitrate !== next.bitrate || prev.enableAudio !== next.enableAudio || prev.encoder !== next.encoder || prev.rateControl !== next.rateControl
+}
+
+// each recording relay restart writes a new part file so it does not overwrite the recording
+function nextFilePart(relay: RelayInstance): string {
+    relay.fileParts = (relay.fileParts || 0) + 1
+    if (relay.fileParts === 1) return relay.destination.url
+    const dot = relay.destination.url.lastIndexOf(".")
+    const base = dot > 0 ? relay.destination.url.slice(0, dot) : relay.destination.url
+    const ext = dot > 0 ? relay.destination.url.slice(dot) : ""
+    return `${base}_part${relay.fileParts}${ext}`
 }
 
 function buildDestinationUrl(destination: { url: string; key: string }): string {

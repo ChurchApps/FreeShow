@@ -1,16 +1,17 @@
 import { nativeImage, type NativeImage, type Size } from "electron"
 import os from "os"
-import { toApp } from "../.."
-import { OUTPUT, OUTPUT_STREAM } from "../../../types/Channels"
-import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
+import { CONTROLLER, OUTPUT_STREAM } from "../../../types/Channels"
+import { BlackmagicBridge as BlackmagicSender } from "../../blackmagic/BlackmagicBridge"
 import { NdiSender } from "../../ndi/NdiSender"
 import util from "../../ndi/vingester-util"
 import { OmtSender } from "../../omt/OmtSender"
 import { OutputHelper } from "../../output/OutputHelper"
 import { getConnections, getStageStreamSubscriberIds, toServer, toStageStreamSubscribers } from "../../servers"
-import { RtmpStreamer } from "../../streaming/RtmpStreamer"
+import { RtmpBridge as RtmpStreamer } from "../../streaming/RtmpBridge"
 import { WebRtcHost } from "../../streaming/WebRtcHost"
 import { CaptureHelper } from "../CaptureHelper"
+import { ruleViolation } from "../../utils/ruleCheck"
+import { PreviewStream } from "../PreviewStream"
 
 export type Channel = {
     key: string
@@ -19,35 +20,14 @@ export type Channel = {
     lastFrameTime: number
 }
 export class CaptureTransmitter {
-    private static readonly AUDIO_PRESENT_MARKER = Buffer.from([1])
     private static readonly IS_BIG_ENDIAN = os.endianness() === "BE"
-    private static readonly UNCHANGED_KEEPALIVE_MS = 1000
-    private static readonly REQUEST_LIST_MAX = 100
     // StageShow "Output window" items: push JPEG frames directly to connected clients
-    private static readonly STAGE_PUSH_MIN_INTERVAL_MS = 100 // max 10fps
     private static readonly STAGE_FRAME_MAX_WIDTH = 1280
 
-    private static readonly SERVER_RESIZE_THRESHOLDS = [
-        { connections: 20, scale: 0.3 },
-        { connections: 10, scale: 0.5 },
-        { connections: 5, scale: 0.7 }
-    ]
-    private static readonly DEFAULT_SERVER_SCALE = 0.8
     private static readonly FPS_EPSILON_HIGH = 10.0
     private static readonly FPS_EPSILON_LOW = 1.0
-    private static readonly SIGNATURE_GRID_X = 64
-    private static readonly SIGNATURE_GRID_Y = 36
-    private static readonly FNV_OFFSET_BASIS = 2166136261
-    private static readonly FNV_PRIME = 16777619
-    private static readonly SIGNATURE_FALLBACK_SAMPLES = 128
-    private static readonly SIGNATURE_JITTER_STEPS = 4
 
-    static requestList: string[] = []
     static channels: { [key: string]: Channel } = {}
-    private static lastFrameState: { [channelId: string]: { signature: number; sizeKey: string; lastSentAt: number } } = {}
-    private static signatureOffsetCache: { [sizeKey: string]: number[] } = {}
-    // last time any channel of a capture observed changed frame content (used for idle frame rate backoff)
-    private static lastChangeTimes: { [captureId: string]: number } = {}
     private static lastStagePushTimes: { [captureId: string]: number } = {}
 
     static startTransmitting(captureId: string) {
@@ -65,8 +45,6 @@ export class CaptureTransmitter {
         if (this.channels[combinedKey]) return
 
         this.channels[combinedKey] = { key, captureId, lastFrameTime: 0 }
-        // start at full frame rate until content proves static
-        this.lastChangeTimes[captureId] = performance.now()
     }
 
     static stopChannel(captureId: string, key: string) {
@@ -74,13 +52,10 @@ export class CaptureTransmitter {
         if (!this.channels[combinedKey]) return
 
         delete this.channels[combinedKey]
-        if (key !== "blackmagic") delete this.lastFrameState[combinedKey]
         if (key === "stage") {
             delete this.lastStagePushTimes[captureId]
         }
 
-        const hasRemainingChannels = Object.keys(this.channels).some((k) => k.startsWith(`${captureId}-`))
-        if (!hasRemainingChannels) delete this.lastChangeTimes[captureId]
     }
 
     // Choose shared-texture readback/convert target: 0=BGRA, 1=UYVY (opaque), 2=UYVA (transparency), 3=RGBA
@@ -100,162 +75,49 @@ export class CaptureTransmitter {
         return 0
     }
 
-    // Returns non-NDI/OMT consumers eligible for off-main capture (server/stage), or null if full-res path needed
+    // Returns non-NDI/OMT/RTMP consumers eligible for off-main capture (server/stage), or null if full-res path needed
     static getHeavyOffMainConsumers(captureId: string): string[] | null {
         const heavy = Object.keys(this.channels)
             .filter((k) => k.startsWith(`${captureId}-`))
             .map((k) => this.channels[k].key)
-            .filter((key) => key !== "ndi" && key !== "omt")
+            .filter((key) => key !== "ndi" && key !== "omt" && key !== "rtmp" && key !== "blackmagic" && key !== "webrtc" && key !== "recorder")
         if (heavy.some((key) => key !== "server" && key !== "stage")) return null
         return heavy
     }
 
-    // Downscale target for server/stage previews
-    static getScaledTarget(size: Size): { dstW: number; dstH: number } {
-        const dstW = Math.min(size.width, this.HEAVY_IMAGE_MAX_WIDTH)
+    // Downscale target for server/stage viewers and previews; with previews only, the widest drawn preview (even: packed formats pair pixels)
+    static getScaledTarget(size: Size, memberIds: string[] = []): { dstW: number; dstH: number } {
+        let dstW = Math.min(size.width, this.HEAVY_IMAGE_MAX_WIDTH)
+        if (!this.previewViewersConnected()) {
+            const wanted = PreviewStream.requestedWidth(memberIds)
+            if (wanted > 0) dstW = Math.min(dstW, Math.max(2, wanted + (wanted % 2)))
+        }
         const dstH = Math.max(1, Math.round((dstW * size.height) / size.width))
         return { dstW, dstH }
+    }
+
+    // a web output stream or stage "current output" mirror is connected
+    static previewViewersConnected(): boolean {
+        if (getConnections("OUTPUT_STREAM") > 0) return true
+        return getConnections("STAGE") > 0 && getStageStreamSubscriberIds().length > 0
     }
 
     // Checks if all members of a group only use NDI, server, or stage
     static groupOffMainInfo(memberIds: string[]): { eligible: boolean; needsScaled: boolean } {
         let needsScaled = false
+        const viewers = this.previewViewersConnected()
         for (const id of memberIds) {
             const heavy = Object.keys(this.channels)
                 .filter((k) => k.startsWith(`${id}-`))
                 .map((k) => this.channels[k].key)
-                .filter((key) => key !== "ndi" && key !== "omt")
+                .filter((key) => key !== "ndi" && key !== "omt" && key !== "rtmp" && key !== "blackmagic" && key !== "webrtc" && key !== "recorder")
             if (heavy.some((key) => key !== "server" && key !== "stage")) return { eligible: false, needsScaled: false }
-            if (heavy.length) needsScaled = true
+            // without it the preview falls back to a mirror that decodes the media again
+            if (PreviewStream.hasSubscribers(id) || (heavy.length && viewers)) needsScaled = true
         }
         return { eligible: true, needsScaled }
     }
 
-    // Dispatches downscaled frame from worker to server/stage channels
-    static receiveScaledFrame(memberIds: string[], buffer: ArrayBuffer, byteOffset: number, byteLength: number, size: Size) {
-        const image = nativeImage.createFromBitmap(Buffer.from(buffer, byteOffset, byteLength), size)
-        if (image.isEmpty()) return
-        for (const id of memberIds) {
-            for (const key of ["server", "stage"]) {
-                if (this.channels[`${id}-${key}`]) this.sendFrameToChannel(id, key, image)
-            }
-        }
-    }
-
-    static getTimeSinceLastChange(captureId: string): number {
-        const lastChange = this.lastChangeTimes[captureId]
-        if (lastChange === undefined) return 0
-        return performance.now() - lastChange
-    }
-
-    private static getSignatureOffsets(width: number, height: number): number[] {
-        const sizeKey = `${width}x${height}`
-        const cached = this.signatureOffsetCache[sizeKey]
-        if (cached) return cached
-
-        const stride = width * 4
-        const offsets: number[] = []
-        const xStep = Math.max(1, Math.floor(width / this.SIGNATURE_GRID_X))
-        const yStep = Math.max(1, Math.floor(height / this.SIGNATURE_GRID_Y))
-
-        // Basic grid
-        for (let y = Math.floor(yStep / 2); y < height; y += yStep) {
-            const rowOffset = y * stride
-            for (let x = Math.floor(xStep / 2); x < width; x += xStep) {
-                offsets.push(rowOffset + x * 4)
-            }
-        }
-
-        // Add additional sample points for jitter/interlacing
-        // This samples slightly different locations that rotate over time
-        for (let i = 1; i < this.SIGNATURE_JITTER_STEPS; i++) {
-            const xOffset = Math.floor((xStep * i) / this.SIGNATURE_JITTER_STEPS)
-            const yOffset = Math.floor((yStep * i) / this.SIGNATURE_JITTER_STEPS)
-            for (let y = yOffset; y < height; y += yStep * 2) {
-                const rowOffset = y * stride
-                for (let x = xOffset; x < width; x += xStep * 2) {
-                    offsets.push(rowOffset + x * 4)
-                }
-            }
-        }
-
-        this.signatureOffsetCache[sizeKey] = offsets
-        return offsets
-    }
-
-    /**
-     * Public method for computing frame signatures (used by CaptureLifecycle)
-     */
-    static computeFrameSignature(buffer: Buffer, size: { width: number; height: number }): number {
-        return this.getQuickSignature(buffer, size)
-    }
-
-    private static getQuickSignature(buffer: Buffer, size: { width: number; height: number }): number {
-        const len = buffer.length
-        if (len === 0) return 0
-
-        const width = Math.max(1, size.width | 0)
-        const height = Math.max(1, size.height | 0)
-        const expectedLen = width * height * 4
-        if (expectedLen <= 0 || len < 4) return len >>> 0
-
-        if (len < expectedLen) return this.calculateFallbackHash(buffer, len)
-        return this.calculateFullHash(buffer, width, height, len)
-    }
-
-    private static calculateFallbackHash(buffer: Buffer, len: number): number {
-        let hash = this.FNV_OFFSET_BASIS
-        const step = Math.max(1, Math.floor(len / this.SIGNATURE_FALLBACK_SAMPLES))
-        for (let i = 0; i < len; i += step) {
-            hash ^= buffer[i]
-            hash = Math.imul(hash, this.FNV_PRIME)
-        }
-        hash ^= len
-        return hash >>> 0
-    }
-
-    private static calculateFullHash(buffer: Buffer, width: number, height: number, len: number): number {
-        let hash = this.FNV_OFFSET_BASIS
-        const offsets = this.getSignatureOffsets(width, height)
-
-        // Calculate hash using all pre-calculated offsets.
-        // Given we increased the count with jittered sampling, using all is safest for detection.
-        for (const pixelOffset of offsets) {
-            if (pixelOffset + 2 >= len) break
-            hash ^= buffer[pixelOffset]
-            hash = Math.imul(hash, this.FNV_PRIME)
-            hash ^= buffer[pixelOffset + 1]
-            hash = Math.imul(hash, this.FNV_PRIME)
-            hash ^= buffer[pixelOffset + 2]
-            hash = Math.imul(hash, this.FNV_PRIME)
-        }
-
-        // Add a salt based on dimensions to ensure that even if pixel content matches,
-        // a resize is detected as a change (though sizeKey also handles this).
-        hash ^= width
-        hash = Math.imul(hash, this.FNV_PRIME)
-        hash ^= height
-        hash = Math.imul(hash, this.FNV_PRIME)
-        hash ^= len
-        return hash >>> 0
-    }
-
-    private static shouldSkipUnchangedNonBlackmagicFrame(channelKey: string, captureId: string, buffer: Buffer, size: { width: number; height: number }): boolean {
-        const channelId = `${captureId}-${channelKey}`
-        const sizeKey = `${size.width}x${size.height}`
-        const now = performance.now()
-        const previous = this.lastFrameState[channelId]
-
-        const signature = this.getQuickSignature(buffer, size)
-        const changed = !previous || previous.sizeKey !== sizeKey || previous.signature !== signature
-        if (changed) this.lastChangeTimes[captureId] = now
-
-        // skip unchanged frames, but still send a keepalive frame at a regular interval
-        if (!changed && previous && now - previous.lastSentAt < this.UNCHANGED_KEEPALIVE_MS) return true
-
-        this.lastFrameState[channelId] = { signature, sizeKey, lastSentAt: now }
-        return false
-    }
 
     // buffer-consumers need only raw BGRA bytes (no NativeImage resize/toJPEG), so on the shared-texture
     // path they can take the readback buffer directly instead of a createFromBitmap -> toBitmap round-trip.
@@ -271,6 +133,30 @@ export class CaptureTransmitter {
             this.osrModule = false
         }
         return this.osrModule
+    }
+
+    // legacy path only: cap main-thread consumers at this share of the thread, from their measured cost
+    private static readonly HEAVY_MAIN_SHARE = 0.5
+    private static readonly HEAVY_COST_SMOOTHING = 0.2
+    private static heavyCostMs: { [captureId: string]: number } = {}
+    private static heavyServedByWorker: { [captureId: string]: boolean } = {}
+
+    // the two paths cost very differently, so a switch resets the measured cost
+    private static noteHeavyMode(captureId: string, viaWorker: boolean) {
+        if (this.heavyServedByWorker[captureId] === viaWorker) return
+        this.heavyServedByWorker[captureId] = viaWorker
+        delete this.heavyCostMs[captureId]
+    }
+
+    private static noteHeavyCost(captureId: string, ms: number) {
+        const previous = this.heavyCostMs[captureId]
+        this.heavyCostMs[captureId] = previous === undefined ? ms : previous + (ms - previous) * this.HEAVY_COST_SMOOTHING
+    }
+
+    private static heavyRateCap(captureId: string): number {
+        const cost = this.heavyCostMs[captureId]
+        if (!cost || cost <= 0) return Infinity // not measured yet
+        return Math.max(1, Math.floor((1000 * this.HEAVY_MAIN_SHARE) / cost))
     }
 
     private static readonly HEAVY_IMAGE_MAX_WIDTH = 1280
@@ -294,6 +180,7 @@ export class CaptureTransmitter {
         return nativeImage.createFromBitmap(raw.buffer, raw.size)
     }
 
+    // runs on main; consumers below may toBitmap, resize or encode
     static transmitFrame(captureId: string, image: NativeImage | null, captureTimestamp?: number, raw?: { buffer: Buffer; size: Size; format?: number }) {
         const frameTimestamp = captureTimestamp ?? performance.now()
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
@@ -301,8 +188,11 @@ export class CaptureTransmitter {
 
         const framerates = captureOptions.framerates
 
+        // the worker serves every consumer while it owns this output
+        if (OutputHelper.Lifecycle.isOffMainActive(captureId)) return
+        if (!raw && (!image || image.isEmpty())) return
+
         setImmediate(() => {
-            if (!raw && (!image || image.isEmpty())) return
             this.transmitFrameBody(captureId, image, raw, frameTimestamp, captureOptions, framerates)
         })
     }
@@ -310,8 +200,7 @@ export class CaptureTransmitter {
     private static transmitFrameBody(captureId: string, image: NativeImage | null, raw: { buffer: Buffer; size: Size; format?: number } | undefined, frameTimestamp: number, captureOptions: any, framerates: any) {
         {
             const baseCaptureFrameRate = CaptureHelper.getMaxActiveFramerate(framerates || {}, captureOptions.options || {})
-            const px = raw?.size ? raw.size.width * raw.size.height : image ? image.getSize().width * image.getSize().height : 0
-            const heavyConsumerCap = px > 4_000_000 ? 12 : px > 2_000_000 ? 20 : Infinity
+            const heavyConsumerCap = this.heavyRateCap(captureId)
 
             const firing: Channel[] = []
             for (const channel of Object.values(this.channels)) {
@@ -330,14 +219,27 @@ export class CaptureTransmitter {
             }
             if (firing.length === 0) return
 
+            // resized/converted/encoded consumers go to the worker; main reads back once
+            const heavy = firing.filter((c) => !this.BUFFER_CONSUMERS.has(c.key)).map((c) => c.key)
+            let servedByWorker = false
+            if (heavy.length > 0) {
+                const started = performance.now()
+                servedByWorker = this.serveHeavyViaWorker(captureId, image, raw, heavy)
+                this.noteHeavyMode(captureId, servedByWorker)
+                if (servedByWorker) this.noteHeavyCost(captureId, performance.now() - started)
+            }
+
             let frameImage: NativeImage | null | undefined
             for (const channel of firing) {
                 if (raw && this.BUFFER_CONSUMERS.has(channel.key)) {
                     this.sendRawToChannel(captureId, channel.key, raw.buffer, raw.size, raw.format ?? 0)
                     continue
                 }
+                if (servedByWorker) continue
+                const started = performance.now()
                 if (frameImage === undefined) frameImage = this.buildHeavyImage(image, raw)
                 if (frameImage && !frameImage.isEmpty()) this.sendFrameToChannel(captureId, channel.key, frameImage)
+                this.noteHeavyCost(captureId, performance.now() - started)
             }
         }
     }
@@ -362,7 +264,8 @@ export class CaptureTransmitter {
                 this.sendRawToBlackmagic(captureId, buffer, size, format)
                 break
             case "recorder":
-                this.sendRawToRecorder(captureId, buffer, size, format)
+                // the recording is a destination of the output's RTMP encode; feed it once
+                if (!this.channels[`${captureId}-rtmp`]) this.sendRawToRtmp(captureId, buffer, size)
                 break
         }
     }
@@ -376,9 +279,7 @@ export class CaptureTransmitter {
             if (!BlackmagicSender.canAcceptFrame(captureId)) return
             const framerate = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.blackmagic
             if (!framerate) return
-            const audioBuffer = BlackmagicSender.audioQueueLength > 0 ? this.AUDIO_PRESENT_MARKER : null
-            // own copy: the native scheduler must not retain/mutate the shared readback buffer
-            BlackmagicSender.scheduleFrame(captureId, Buffer.from(buffer), audioBuffer, framerate, true)
+            BlackmagicSender.scheduleFrame(captureId, buffer, size, framerate, true)
             return
         }
         // BGRA: build a NativeImage once and use the standard converter path
@@ -392,13 +293,12 @@ export class CaptureTransmitter {
         const output = OutputHelper.getOutput(captureId)
         const ratio = size.height ? size.width / size.height : 16 / 9
         const transparent = output?.transparent === true
-        const framerate = output?.captureOptions?.framerates?.ndi || 30
+        const framerate = output?.captureOptions?.framerates?.ndi || CaptureHelper.defaultFramerates().ndi
         NdiSender.sendVideoBufferNDI(captureId, Buffer.from(buffer), { size, ratio, framerate, transparent, format })
     }
 
     private static sendRawToOmt(captureId: string, buffer: Buffer, size: Size, format: number) {
         if (!OmtSender.OMT[captureId]?.sender) return
-        if (this.shouldSkipUnchangedNonBlackmagicFrame("omt", captureId, buffer, size)) return
         const output = OutputHelper.getOutput(captureId)
         const ratio = size.height ? size.width / size.height : 16 / 9
         const transparent = output?.transparent !== false
@@ -408,7 +308,6 @@ export class CaptureTransmitter {
 
     private static sendRawToWebRtc(captureId: string, buffer: Buffer, size: Size, format = 0) {
         if (!WebRtcHost.isRunning()) return
-        if (this.shouldSkipUnchangedNonBlackmagicFrame("webrtc", captureId, buffer, size)) return
         if (format === 3) {
             WebRtcHost.sendFrame(captureId, buffer, size)
             return
@@ -420,7 +319,6 @@ export class CaptureTransmitter {
 
     private static sendRawToRtmp(captureId: string, buffer: Buffer, size: Size) {
         if (!RtmpStreamer.isRunning(captureId)) return
-        if (this.shouldSkipUnchangedNonBlackmagicFrame("rtmp", captureId, buffer, size)) return
         RtmpStreamer.updateFrame(captureId, Buffer.from(buffer), size)
     }
 
@@ -428,7 +326,8 @@ export class CaptureTransmitter {
     private static sizeMismatchLogged: { [captureId: string]: string } = {}
     private static toConfiguredSize(captureId: string, image: NativeImage): { image: NativeImage; size: Size } {
         const size = image.getSize()
-        const intended = OutputHelper.getOutput(captureId)?.intendedBounds
+        const out = OutputHelper.getOutput(captureId)
+        const intended = out?.sendSize || out?.intendedBounds
         if (!intended?.width || !intended?.height || (intended.width === size.width && intended.height === size.height)) return { image, size }
         const target = { width: intended.width, height: intended.height }
         const tag = `${size.width}x${size.height}->${target.width}x${target.height}`
@@ -457,10 +356,12 @@ export class CaptureTransmitter {
             case "blackmagic":
                 this.sendBufferToBlackmagic(captureId, image)
                 break
-            case "server":
-                const scale = this.getServerScale()
-                this.sendBufferToServer(captureId, image.resize({ width: size.width * scale, height: size.height * scale, quality: "good" }))
+            case "server": {
+                if (getConnections("OUTPUT_STREAM") === 0) break
+                const width = Math.min(size.width, this.serverFrameWidth())
+                this.sendBufferToServer(captureId, image.resize({ width, height: Math.max(1, Math.round((size.height * width) / size.width)), quality: "good" }))
                 break
+            }
             case "stage":
                 this.sendBufferToMain(captureId, image)
                 break
@@ -470,18 +371,55 @@ export class CaptureTransmitter {
             case "rtmp":
                 this.sendBufferToRtmpStreamer(captureId, image)
                 break
-            case "recorder":
-                this.sendBufferToRecorder(captureId, image)
-                break
         }
     }
 
-    private static getServerScale(): number {
-        const connections = getConnections("OUTPUT_STREAM")
-        for (const { connections: threshold, scale } of this.SERVER_RESIZE_THRESHOLDS) {
-            if (connections > threshold) return scale
+    // one readback to the capture worker, which derives every consumer's version
+    private static serveHeavyViaWorker(captureId: string, image: NativeImage | null, raw: { buffer: Buffer; size: Size; format?: number } | undefined, keys: string[]): boolean {
+        if (!NdiSender.hasWorker()) return false
+
+        const server = keys.includes("server") ? this.serverStreamRequest(captureId) : null
+        const stage = keys.includes("stage") ? this.stageStreamRequest() : null
+        const previewWidth = PreviewStream.hasSubscribers(captureId) ? Math.max(2, PreviewStream.requestedWidth([captureId]) || this.HEAVY_IMAGE_MAX_WIDTH) : 0
+        if (!server && !stage && !previewWidth) return false
+
+        let source: Buffer
+        let size: Size
+        if (raw && (raw.format ?? 0) === 0) {
+            source = raw.buffer
+            size = raw.size
+        } else {
+            if (!image || image.isEmpty()) return false
+            ruleViolation("main-frame", "readback of a window with no shared texture")
+            source = image.toBitmap()
+            size = image.getSize()
         }
-        return this.DEFAULT_SERVER_SCALE
+        if (!size.width || !size.height) return false
+
+        const copy = Buffer.from(source)
+        NdiSender.postToWorker(
+            {
+                type: "cpuFrame",
+                id: captureId,
+                members: OutputHelper.Lifecycle.groupMembers(captureId),
+                buffer: copy.buffer,
+                byteOffset: copy.byteOffset,
+                byteLength: copy.byteLength,
+                size,
+                server: server ? { width: Math.min(server.width, size.width) } : null,
+                stage: stage ? { width: Math.min(stage.width, size.width), quality: stage.quality, intervalMs: stage.intervalMs } : null,
+                preview: previewWidth ? { width: Math.min(previewWidth, size.width) } : null
+            },
+            [copy.buffer]
+        )
+        return true
+    }
+
+    // width falls with sqrt(viewers) to keep total bandwidth constant
+    static serverFrameWidth(): number {
+        const viewers = Math.max(1, getConnections("OUTPUT_STREAM"))
+        const width = Math.round(this.HEAVY_IMAGE_MAX_WIDTH / Math.sqrt(viewers))
+        return Math.max(2, width - (width % 2)) // even: packed formats pair pixels
     }
 
     // NDI
@@ -492,12 +430,13 @@ export class CaptureTransmitter {
         // for frames that would be dropped anyway (avoids ~33MB/frame of throwaway allocation at 4K).
         if (NdiSender.isBusyNDI(captureId)) return
 
+        ruleViolation("main-frame", "toBitmap")
         const buffer = image.toBitmap()
 
         const output = OutputHelper.getOutput(captureId)
         const ratio = image.getAspectRatio()
         const transparent = output?.transparent === true
-        const framerate = output?.captureOptions?.framerates?.ndi || 30
+        const framerate = output?.captureOptions?.framerates?.ndi || CaptureHelper.defaultFramerates().ndi
 
         NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate, transparent })
     }
@@ -508,8 +447,8 @@ export class CaptureTransmitter {
         // skip the toBitmap readback for frames the busy worker would drop anyway
         if (OmtSender.isBusyOMT(captureId)) return
 
+        ruleViolation("main-frame", "toBitmap")
         const buffer = image.toBitmap()
-        if (this.shouldSkipUnchangedNonBlackmagicFrame("omt", captureId, buffer, size)) return
 
         const output = OutputHelper.getOutput(captureId)
         const ratio = image.getAspectRatio()
@@ -521,6 +460,7 @@ export class CaptureTransmitter {
     }
 
     private static convertToRGBA(buffer: Buffer): void {
+        ruleViolation("main-frame", "convertToRGBA")
         if (this.IS_BIG_ENDIAN) util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
         else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
     }
@@ -530,26 +470,6 @@ export class CaptureTransmitter {
         else image = image.resize({ height: newSize.height, quality: "good" })
 
         return image
-    }
-
-    static sendToRequested(msg: any) {
-        const newList: string[] = []
-
-        const seen = new Set<string>()
-        for (const dataString of this.requestList) {
-            if (seen.has(dataString)) continue
-            seen.add(dataString)
-            const data: { id: string; previewId: string } = JSON.parse(dataString)
-
-            if (data.previewId !== msg.data?.id) {
-                newList.push(JSON.stringify(data))
-                continue
-            }
-
-            OutputHelper.Send.sendToWindow(data.id, msg)
-        }
-
-        this.requestList = newList
     }
 
     // BLACKMAGIC
@@ -566,44 +486,75 @@ export class CaptureTransmitter {
         }
 
         const buffer = image.toBitmap({ scaleFactor: 1 })
+        const frameSize = image.getSize()
         // release immediately to prevent memory accumulation
         image = null as any
 
         const framerate = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.blackmagic
         if (!framerate) return
 
-        const audioBuffer = BlackmagicSender.audioQueueLength > 0 ? this.AUDIO_PRESENT_MARKER : null
-        BlackmagicSender.scheduleFrame(captureId, buffer, audioBuffer, framerate)
+        BlackmagicSender.scheduleFrame(captureId, buffer, frameSize, framerate, false)
     }
 
     // MAIN (STAGE OUTPUT)
+    // legacy path only: an output that cannot be captured offscreen, whose frame the worker never sees
     static sendBufferToMain(captureId: string, image: NativeImage) {
         if (!image) return
+        if (getConnections("STAGE") === 0 || getStageStreamSubscriberIds().length === 0) return
 
-        const buffer = image.toBitmap()
-        const size = image.getSize()
-        if (this.shouldSkipUnchangedNonBlackmagicFrame("stage", captureId, buffer, size)) return
-
-        // push compressed frames directly to connected web StageShow clients ("current output" mirrors)
-        this.sendFrameToStageClients(captureId, image, size)
-
-        const hasPreviewRequests = this.requestList.length > 0
-        if (!hasPreviewRequests) return
-
-        /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
-        this.convertToRGBA(buffer)
-
-        const msg = { channel: "BUFFER", data: { id: captureId, time: Date.now(), buffer, size } }
-        this.sendToRequested(msg)
+        this.sendFrameToStageClients(captureId, image, image.getSize())
     }
 
     // push a downscaled JPEG frame to subscribed web StageShow clients
     // clients without a visible "current output" mirror never subscribe, so text-only stage displays receive nothing
+    // what connected OutputShow clients want (raw RGBA)
+    static serverStreamRequest(captureId: string): { width: number; intervalMs: number } | null {
+        if (getConnections("OUTPUT_STREAM") === 0) return null
+        const fps = OutputHelper.getOutput(captureId)?.captureOptions?.framerates?.server || CaptureHelper.defaultFramerates().server
+        return { width: this.serverFrameWidth(), intervalMs: 1000 / Math.max(1, fps) }
+    }
+
+    static sendServerFrame(outputId: string, buffer: Buffer, size: Size) {
+        toServer(OUTPUT_STREAM, { channel: "STREAM", data: { id: outputId, time: Date.now(), buffer, size } })
+    }
+
+    // the worker encodes the thumbnail from its current frame
+    private static thumbWanted = new Set<string>()
+
+    static requestControllerThumbnail(outputId: string) {
+        this.thumbWanted.add(outputId)
+    }
+
+    static thumbRequest(captureId: string): { width: number; quality: number } | null {
+        if (!this.thumbWanted.has(captureId)) return null
+        return { width: this.STAGE_FRAME_MAX_WIDTH, quality: 70 }
+    }
+
+    static sendControllerThumbnail(outputId: string, jpeg: Buffer, size: Size) {
+        this.thumbWanted.delete(outputId)
+        toServer(CONTROLLER, { channel: "OUTPUT_FRAME", data: { frame: "data:image/jpeg;base64," + jpeg.toString("base64"), width: size.width, height: size.height } })
+    }
+
+    private static stagePushIntervalMs() {
+        return 1000 / Math.max(1, CaptureHelper.defaultFramerates().stage)
+    }
+
+    // null = no stage viewer, so no frame is made
+    static stageStreamRequest(): { width: number; quality: number; intervalMs: number } | null {
+        if (getConnections("STAGE") === 0 || getStageStreamSubscriberIds().length === 0) return null
+        return { width: this.STAGE_FRAME_MAX_WIDTH, quality: 70, intervalMs: this.stagePushIntervalMs() }
+    }
+
+    static sendStageJpeg(captureId: string, jpeg: Buffer, size: Size) {
+        toStageStreamSubscribers({ channel: "STREAM_FRAME", data: { id: captureId, jpeg, size, time: Date.now() } })
+    }
+
+    // legacy path only: capturePage outputs have no worker
     private static sendFrameToStageClients(captureId: string, image: NativeImage, size: Size) {
         if (getConnections("STAGE") === 0 || getStageStreamSubscriberIds().length === 0) return
 
         const now = performance.now()
-        if (now - (this.lastStagePushTimes[captureId] || 0) < this.STAGE_PUSH_MIN_INTERVAL_MS) return
+        if (now - (this.lastStagePushTimes[captureId] || 0) < this.stagePushIntervalMs()) return
         this.lastStagePushTimes[captureId] = now
 
         let frameImage = image
@@ -623,9 +574,9 @@ export class CaptureTransmitter {
         // image = image.resize({ width: size.width / 3, height: size.height / 3, quality: "good" })
         // image = this.resizeImage(image, size, { width: size.width / 3, height: size.height / 3 })
 
+        ruleViolation("main-frame", "toBitmap")
         const buffer = image.toBitmap() // {scaleFactor: 0.5}
         const size = image.getSize()
-        if (this.shouldSkipUnchangedNonBlackmagicFrame("server", outputId, buffer, size)) return
 
         /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
         this.convertToRGBA(buffer)
@@ -636,9 +587,9 @@ export class CaptureTransmitter {
     static sendBufferToWebRtcHost(outputId: string, image: NativeImage) {
         if (!image || !WebRtcHost.isRunning()) return
 
+        ruleViolation("main-frame", "toBitmap")
         const buffer = image.toBitmap()
         const size = image.getSize()
-        if (this.shouldSkipUnchangedNonBlackmagicFrame("webrtc", outputId, buffer, size)) return
 
         /*  convert from ARGB/BGRA (Electron/Chromium capture output) to RGBA (Web canvas)  */
         this.convertToRGBA(buffer)
@@ -649,42 +600,11 @@ export class CaptureTransmitter {
     static sendBufferToRtmpStreamer(outputId: string, image: NativeImage) {
         if (!image || !RtmpStreamer.isRunning(outputId)) return
 
+        ruleViolation("main-frame", "toBitmap")
         const buffer = image.toBitmap()
         const size = image.getSize()
-        if (this.shouldSkipUnchangedNonBlackmagicFrame("rtmp", outputId, buffer, size)) return
 
         RtmpStreamer.updateFrame(outputId, buffer, size)
-    }
-
-    // RECORDER
-    private static sendRawToRecorder(captureId: string, buffer: Buffer, size: Size, format = 0) {
-        if (this.shouldSkipUnchangedNonBlackmagicFrame("recorder", captureId, buffer, size)) return
-
-        if (format === 3) {
-            toApp(OUTPUT, { channel: "RECORDER_FRAME", data: { id: captureId, buffer, size } })
-            return
-        }
-
-        const owned = Buffer.from(buffer)
-        this.convertToRGBA(owned)
-        toApp(OUTPUT, { channel: "RECORDER_FRAME", data: { id: captureId, buffer: owned, size } })
-    }
-
-    private static sendBufferToRecorder(captureId: string, image: NativeImage) {
-        if (!image) return
-
-        const buffer = image.toBitmap()
-        const size = image.getSize()
-        if (this.shouldSkipUnchangedNonBlackmagicFrame("recorder", captureId, buffer, size)) return
-
-        this.convertToRGBA(buffer)
-        toApp(OUTPUT, { channel: "RECORDER_FRAME", data: { id: captureId, buffer, size } })
-    }
-
-    static requestPreview(data: { id: string; previewId: string }) {
-        this.requestList.push(JSON.stringify(data))
-        // prevent unbounded growth if requested frames never arrive (e.g. capture not running)
-        if (this.requestList.length > this.REQUEST_LIST_MAX) this.requestList = this.requestList.slice(-this.REQUEST_LIST_MAX)
     }
 
     static removeAllChannels(captureId: string) {
@@ -692,5 +612,7 @@ export class CaptureTransmitter {
         for (const key of keysToRemove) {
             delete this.channels[key]
         }
+        delete this.heavyCostMs[captureId]
+        delete this.heavyServedByWorker[captureId]
     }
 }

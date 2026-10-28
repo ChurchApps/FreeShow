@@ -1,4 +1,5 @@
-import { BlackmagicSender } from "./BlackmagicSender"
+// set by main, so this module (also loaded in the capture worker) does not import main-process code
+export type BlackmagicSenderControl = { isDeviceStable(outputId: string): boolean; resetProblematicDevice(outputId: string): boolean }
 import { getBmdDisplayModes, getBmdPixelFormats } from "./bmdFormats"
 import { getMacadam } from "./macadamLoader"
 import type { DeviceConfig, DeviceData } from "./TypeData"
@@ -19,6 +20,8 @@ function safeMacadamCall<T>(fallback: T, fn: (m: NonNullable<ReturnType<typeof g
  * Manages Blackmagic Design device discovery, configuration, and state
  */
 export class BlackmagicManager {
+    static senderControl: BlackmagicSenderControl | null = null
+
     static getFirstDeviceName(): string | undefined {
         return safeMacadamCall(undefined, (m) => m.getFirstDevice())
     }
@@ -75,6 +78,13 @@ export class BlackmagicManager {
         mode = getBmdDisplayModes().get(normalized)
         if (mode !== undefined) return mode
 
+        // Desktop Video on macOS names the UHD modes without the "4K"/"8K" prefix ("2160p29.97")
+        const uhd = normalized.replace(/^2160/, "4K2160").replace(/^4320/, "8K4320")
+        if (uhd !== normalized) {
+            mode = getBmdDisplayModes().get(uhd)
+            if (mode !== undefined) return mode
+        }
+
         // Try with different case variations
         const lowerNormalized = normalized.toLowerCase()
         for (const [key, value] of getBmdDisplayModes()) {
@@ -121,10 +131,10 @@ export class BlackmagicManager {
             }
 
             // Check if the device was marked as unstable in BlackmagicSender
-            const wasUnstable = BlackmagicSender.isDeviceStable(deviceId) === false
+            const wasUnstable = this.senderControl ? this.senderControl.isDeviceStable(deviceId) === false : false
 
             // Reset the device in BlackmagicSender
-            const resetResult = BlackmagicSender.resetProblematicDevice(deviceId)
+            const resetResult = this.senderControl ? this.senderControl.resetProblematicDevice(deviceId) : false
 
             // If it wasn't previously marked as unstable, inform the user
             if (!wasUnstable && !resetResult) {

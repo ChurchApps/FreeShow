@@ -1680,12 +1680,11 @@ const clickActions = {
 
         const videoType = getMediaLayerType(path, mediaStyle)
 
-        // clear slide text
-        // if (get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === path)) clearSlide()
-        if (videoType === "foreground") clearSlide()
+        const ignoreLayer = videoType === "foreground"
+        if (ignoreLayer) clearSlide()
 
         const type = getMediaType(getExtension(path))
-        setOutput("background", { path, ...mediaStyle, type, loop: false, muted: false })
+        setOutput("background", { path, ...mediaStyle, type, loop: false, muted: false, ignoreLayer })
     },
     play_no_audio: (obj: ObjData) => {
         if (get(outLocked)) return
@@ -1710,6 +1709,9 @@ const clickActions = {
         const videoType = getMediaLayerType(path, get(media)[path])
         const loop = videoType === "foreground" ? false : true
         const muted = videoType === "foreground" ? false : true
+
+        // const ignoreLayer = videoType === "foreground"
+        // if (ignoreLayer) clearSlide()
 
         const type = getMediaType(getExtension(path))
         setOutput("background", { path, type, loop, muted })

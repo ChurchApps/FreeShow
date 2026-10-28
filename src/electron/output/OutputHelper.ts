@@ -10,7 +10,11 @@ import { OutputLifecycle } from "./helpers/OutputLifecycle"
 import { OutputSend } from "./helpers/OutputSend"
 import { OutputValues } from "./helpers/OutputValues"
 import { OutputVisibility } from "./helpers/OutputVisibility"
+import { PreviewStream } from "../capture/PreviewStream"
+import { OutputRecording } from "../streaming/OutputRecording"
+import { MediaLayers } from "./helpers/MediaLayers"
 import type { Output as OutputData } from "./Output"
+import { RenderGroups } from "./helpers/RenderGroups"
 
 export class OutputHelper {
     static receiveOutput(_e: Electron.IpcMainEvent, msg: Message) {
@@ -26,19 +30,28 @@ export class OutputHelper {
                 OutputHelper.getKeys().forEach((id) => OutputHelper.Lifecycle.updateWindowConstraints(id))
             },
 
-            UPDATE_BOUNDS: (data: { id: string; bounds: Rectangle }) => OutputHelper.Bounds.updateBounds(data),
+            UPDATE_BOUNDS: (data: { id: string; bounds: Rectangle }) => OutputHelper.Lifecycle.boundsChanged(data),
             SET_VALUE: (data: { id: string; key: string; value: boolean | { key: string; value: boolean } }) => OutputHelper.Values.updateValue(data),
             TO_FRONT: (data: string) => OutputHelper.Bounds.moveToFront(data),
 
-            REQUEST_PREVIEW: (data: { id: string; previewId: string }) => CaptureHelper.Transmitter.requestPreview(data),
+            STREAM_LAYER: (data: { id: string; active: boolean; source?: string; release?: boolean }) => OutputLifecycle.requestVideoLayer(data.id, !!data.active, data.source || "", !!data.release),
+            MEDIA_LAYERS: (data: { outputId: string; layers: any[]; fill: number[] }) => MediaLayers.update(data.outputId, data.layers || [], data.fill || [0, 0, 0]),
+            PREVIEW_SUBSCRIBE: (data: { id: string; subscriber?: string; width?: number }) => PreviewStream.subscribe(data.id, data.subscriber, data.width),
+            PREVIEW_UNSUBSCRIBE: (data: { id: string; subscriber?: string }) => PreviewStream.unsubscribe(data.id, data.subscriber),
+            PREVIEW_SIZE: (data: { id: string; subscriber: string; width: number }) => PreviewStream.setWidth(data.id, data.subscriber, data.width),
             CAPTURE: (data: { id: string; captures: { [key: string]: boolean } }) => CaptureHelper.Lifecycle.startCapture(data.id, data.captures),
+            RECORD_OUTPUT: (data: { id: string; state: boolean; name?: string; path?: string }) => (data.state ? OutputRecording.start(data.id, data.name || `${data.id}.mp4`, data.path) : OutputRecording.stop(data.id)),
 
             IDENTIFY_SCREENS: (data: { bounds: Rectangle }[]) => OutputHelper.Identify.identifyScreens(data),
             // PREVIEW_BOUNDS: (data) => OutputHelper.Bounds.setPreviewBounds(data),
 
-            FOCUS: (data: { id: string }) => OutputHelper.Lifecycle.focusOutput(data.id)
+            FOCUS: (data: { id: string }) => OutputHelper.Lifecycle.focusOutput(data.id),
+            // sent ahead of the change they reflect
+            RENDER_SIGNATURES: (data: { [id: string]: string }) => RenderGroups.setSignatures(data || {})
         }
 
+        if (msg.channel === "MEDIA_SOURCE_READY") return MediaLayers.sourceReady(_e.sender)
+        if (msg.channel === "RENDER_BUSY") return OutputHelper.Lifecycle.pageBusy(_e.sender, msg.data)
         if (msg.channel.includes("MAIN")) return toApp(OUTPUT, msg)
         if (msg.channel in outputResponses) return outputResponses[msg.channel as keyof typeof outputResponses](msg.data)
 
@@ -54,6 +67,11 @@ export class OutputHelper {
 
     static getAllOutputs() {
         return Object.entries(this.outputs).map(([id, output]) => ({ ...output, id }))
+    }
+
+    static renderWindow(output: OutputData | undefined) {
+        const win = output?.captureWindow && !output.captureWindow.isDestroyed() ? output.captureWindow : output?.window
+        return win && !win.isDestroyed() ? win : undefined
     }
 
     static setOutput(id: string, output: OutputData) {

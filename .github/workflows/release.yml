@@ -78,10 +78,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libfontconfig1-dev uuid-dev libltc-dev libegl1-mesa-dev libgles2-mesa-dev --fix-missing
 
-      # WIDEVINE
-      # - name: Use stock Electron on ARM64
-      #   run: npm run replace-electron
-
       - name: Install dependencies
         run: npm ci
 
@@ -100,7 +96,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           USE_SYSTEM_FPM: true
-        run: npm run release:arm64
+        run: npm run release
 
   publish_mac:
     name: "Publish MacOS"

@@ -35,7 +35,7 @@
                 <span class:default={typeof data.value === "string" ? data.value.includes(".") : false}>
                     {#if data.value}
                         {#if data.type === "date"}
-                            {dateToString(data.value, true)}
+                            {dateToString(data.value)}
                         {:else if data.type === "url" && typeof data.value === "string"}
                             <Link url={data.value}>{removeExtra(data.value)}</Link>
                         {:else if typeof data.value === "string"}

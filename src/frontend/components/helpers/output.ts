@@ -16,6 +16,7 @@ import {
     activeShow,
     activeTimers,
     allOutputs,
+    capturedOutputs,
     categories,
     connections,
     currentOutputSettings,
@@ -227,9 +228,16 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
             // if current playing background is "foreground", clear it
             const currentBackground = get(outputs)[outs?.[0]]?.out?.background || {}
-            const mediaData = get(media)[currentBackground.path || ""] || {}
-            const mediaType = getMediaLayerType(currentBackground.path || "", mediaData)
-            if (mediaType === "foreground") clearBackground()
+            const shouldClearLayer = currentBackground.ignoreLayer === true
+            // if a player video is played from a slide, it's treated as "background" instead of "foreground"
+            const isPlayerForeground = currentBackground.type === "player" && currentBackground.ignoreLayer !== false
+            if (shouldClearLayer || isPlayerForeground) clearBackground()
+            else {
+                // likely not needed, as ignoreLayer should be set when "foreground"
+                const mediaData = get(media)[currentBackground.path || ""] || {}
+                const mediaType = getMediaLayerType(currentBackground.path || "", mediaData)
+                if (mediaType === "foreground") clearBackground()
+            }
         }
 
         let toggleState = false
@@ -300,7 +308,7 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
                 const isTempSlide = outData?.id === "temp" || outData?.id === "tempText"
                 const sameSlideOutput = !!previousSlide && !!outData && !isTempSlide && previousSlide.id === outData.id && previousSlide.layout === outData.layout && previousSlide.index === outData.index && previousSlide.page === outData.page && previousSlide.type === outData.type
 
-                if (sameSlideOutput) {
+                if (sameSlideOutput && previousSlide.line === outData.line) {
                     a[id].out!.refresh = Number(a[id].out!.refresh || 0) + 1
                 }
             }
@@ -977,6 +985,14 @@ export function shouldBeCaptured(outputId: string, startup = false) {
 
     // alert user that screen recording starts
     if (!startup && Object.values(captures).filter(Boolean).length) newToast("toast.output_capture_enabled")
+
+    const active = Object.values(captures).some(Boolean)
+    capturedOutputs.update((a) => {
+        if (!!a[outputId] === active) return a
+        if (active) a[outputId] = true
+        else delete a[outputId]
+        return a
+    })
 
     send(OUTPUT, ["CAPTURE"], { id: outputId, captures })
 }

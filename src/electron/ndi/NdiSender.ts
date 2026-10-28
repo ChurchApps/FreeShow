@@ -1,8 +1,6 @@
-import { join } from "path"
-import { Worker } from "worker_threads"
 import { toApp } from ".."
 import { CaptureHelper } from "../capture/CaptureHelper"
-import { SenderCapture, type CaptureFrameOpts } from "../capture/SenderCapture"
+import { SenderThread } from "../capture/SenderThread"
 
 // Resources:
 // https://www.npmjs.com/package/grandiose-mac
@@ -10,9 +8,8 @@ import { SenderCapture, type CaptureFrameOpts } from "../capture/SenderCapture"
 // https://github.com/rse/grandiose
 // https://github.com/rse/vingester
 
-// NDI sender proxy: delegates NDI encoding and dispatch to a worker thread (./ndiWorker)
+// NDI sender proxy: delegates NDI encoding and dispatch to the shared sender worker (./ndiWorker)
 export class NdiSender {
-    private static worker: Worker | null = null
     private static readonly MAX_INFLIGHT_SENDS = 3
 
     static NDI: {
@@ -27,32 +24,37 @@ export class NdiSender {
         }
     } = {}
 
-    private static getWorker(): Worker | null {
-        if (this.worker) return this.worker
-
-        try {
-            this.worker = new Worker(join(__dirname, "ndiWorker.js"), {
-                env: { ...process.env, UV_THREADPOOL_SIZE: "32" }
-            })
-            this.worker.on("message", (msg: any) => this.onWorkerMessage(msg))
-            this.worker.on("error", (err) => console.error("NDI worker error:", err))
-            this.worker.on("exit", (code) => {
-                if (code !== 0) console.error(`NDI worker exited with code ${code}`)
-                this.worker = null
-                this.NDI = {}
-            })
-        } catch (err) {
-            console.error("Could not start NDI worker:", err)
-            this.worker = null
+    private static subscribed = false
+    private static get worker() {
+        if (!this.subscribed) {
+            this.subscribed = true
+            SenderThread.subscribe(
+                (msg) => this.onWorkerMessage(msg),
+                () => (this.NDI = {})
+            )
         }
-
-        return this.worker
+        return SenderThread.get()
     }
 
     private static onWorkerMessage(msg: any) {
-        if (!msg?.type) return
-        if (SenderCapture.handleMessage(msg)) return
+        const t0 = process.env.FS_CAP_STATS ? performance.now() : 0
+        try {
+            this.onWorkerMessageBody(msg)
+        } finally {
+            if (t0) {
+                const dt = performance.now() - t0
+                this.mainDiag.msgMs += dt
+                this.mainDiag.msgN++
+                if (dt > this.mainDiag.msgMax) this.mainDiag.msgMax = dt
+                const t = (this.mainDiag.byType[msg?.type || "?"] ||= { ms: 0, n: 0, max: 0 })
+                t.ms += dt
+                t.n++
+                if (dt > t.max) t.max = dt
+            }
+        }
+    }
 
+    private static onWorkerMessageBody(msg: any) {
         if (msg.type === "status") {
             const data = this.NDI[msg.id]
             if (!data) return
@@ -74,6 +76,19 @@ export class NdiSender {
     }
 
 
+    // also used by Blackmagic playback and the stream receive host
+    static getSharedWorker(): import("worker_threads").Worker | null {
+        return this.worker
+    }
+
+    static hasWorker(): boolean {
+        return !!this.worker
+    }
+
+    static postToWorker(msg: any, transfer?: any[]) {
+        SenderThread.post(msg, transfer)
+    }
+
     static initNameNDI(name?: string, outputName?: string) {
         return name || `FreeShow NDI${outputName ? ` - ${outputName}` : ""}`
     }
@@ -87,11 +102,11 @@ export class NdiSender {
             this.stopSenderNDI(id)
         }
 
-        const worker = this.getWorker()
+        const worker = this.worker
         if (!worker) return
 
         this.NDI[id] = { name, groups, sender: true, status: "unconnected" }
-        worker.postMessage({ type: "create", id, name, groups })
+        worker.postMessage({ type: "create", protocol: "ndi", id, name, groups })
     }
 
     static stopSenderNDI(id: string) {
@@ -116,11 +131,28 @@ export class NdiSender {
         this.worker.postMessage({ type: "video", id, buffer: arrayBuffer, byteOffset: 0, byteLength: arrayBuffer.byteLength, opts: { size, ratio, framerate, transparent, format } }, [arrayBuffer])
     }
 
-    static captureFrameNDI(id: string, source: any, opts: CaptureFrameOpts) {
-        const data = this.NDI[id]
-        if (!data?.sender || !this.getWorker()) return false
-        this.worker!.postMessage({ type: "captureFrame", id, source, opts })
-        return true
+    // FS_CAP_STATS: main-thread load; lag = lateness of a 5ms timer, paint/msg = sync ms per second
+    static mainDiag = { lagSum: 0, lagMax: 0, lagN: 0, paintMs: 0, paintN: 0, paintMax: 0, msgMs: 0, msgN: 0, msgMax: 0, lastTick: 0, started: false, byType: {} as { [type: string]: { ms: number; n: number; max: number } } }
+    static startMainDiag() {
+        if (this.mainDiag.started || !process.env.FS_CAP_STATS) return
+        this.mainDiag.started = true
+        const d = this.mainDiag
+        d.lastTick = performance.now()
+        setInterval(() => {
+            const now = performance.now()
+            const lag = Math.max(0, now - d.lastTick - 5)
+            d.lastTick = now
+            d.lagSum += lag
+            d.lagN++
+            if (lag > d.lagMax) d.lagMax = lag
+        }, 5)
+        setInterval(() => {
+            if (!d.lagN) return
+            const types = Object.entries(d.byType).map(([k, v]) => `${k}:n${v.n}/${v.ms.toFixed(0)}ms/max${v.max.toFixed(1)}`).join(" ")
+            console.info(`[MAIN-LOOP] lag(mean=${(d.lagSum / d.lagN).toFixed(2)}ms max=${d.lagMax.toFixed(1)}ms) paint(n=${d.paintN} ${d.paintMs.toFixed(1)}ms/s max=${d.paintMax.toFixed(1)}ms) workerMsg(n=${d.msgN} ${d.msgMs.toFixed(1)}ms/s max=${d.msgMax.toFixed(1)}ms) ${types}`)
+            d.lagSum = d.lagMax = d.lagN = d.paintMs = d.paintN = d.paintMax = d.msgMs = d.msgN = d.msgMax = 0
+            d.byType = {}
+        }, 1000)
     }
 
     static async sendAudioBufferNDITarget(id: string, buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {

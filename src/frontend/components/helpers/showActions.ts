@@ -410,6 +410,9 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                 const loop = bg.loop !== false
                 const muted = bg.muted !== false
 
+                // player videos on a slide are treated as background, so we don't clear slide layers
+                const ignoreLayer = type === "player" ? false : mediaStyle.videoType === "foreground"
+
                 const bgData = {
                     name,
                     type,
@@ -419,7 +422,7 @@ export function updateOut(showId: string, index: number, layout: LayoutRef[], ex
                     loop,
                     muted,
                     ...mediaStyle,
-                    ignoreLayer: mediaStyle.videoType === "foreground",
+                    ignoreLayer,
                     bindings
                 }
 

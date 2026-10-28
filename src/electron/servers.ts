@@ -90,7 +90,7 @@ function createServerInstance(id: ServerName) {
     // RECEIVE CONNECTION FROM CLIENT
     io.on("connection", (socket) => {
         if (Object.keys(servers[id]!.connections).length >= servers[id]!.max) {
-            io.emit(id, { channel: "ERROR", id: "overLimit", data: servers[id]!.max })
+            socket.emit(id, { channel: "ERROR", data: { key: "overLimit", max: servers[id]!.max } })
             socket.disconnect()
             return
         }
@@ -212,17 +212,22 @@ function initialize(id: ServerName, socket: Socket) {
         if (msg.channel === "STREAM_DONE") {
             responded[msg.data.id] = true
         } else if (msg.channel === "OUTPUT_FRAME") {
-            const window = OutputHelper.getOutput(msg.data.outputId)?.window
+            const outputId = msg.data.outputId
+            const window = OutputHelper.getOutput(outputId)?.window
             if (!window || window.isDestroyed()) return
+
+            // the capture worker encodes the thumbnail; only an output it is not capturing is captured here
+            CaptureHelper.Transmitter.requestControllerThumbnail(outputId)
+            if (OutputHelper.Lifecycle.isOffMainActive(outputId)) return
 
             const frame = await CaptureHelper.captureBase64Frame(window)
             if (window.isDestroyed()) return
 
             const bounds = window.getBounds()
             toServer(id, { channel: "OUTPUT_FRAME", data: { frame, width: bounds.width, height: bounds.height } })
-        } else if (msg) {
+        } else if (msg && typeof msg === "object") {
             if (id === "STAGE") updateStageStreamSubscription(socket.id, msg.channel)
-            toApp(id, msg)
+            toApp(id, { ...msg, id: socket.id })
         }
     })
 

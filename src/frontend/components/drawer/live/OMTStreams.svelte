@@ -7,7 +7,7 @@
     import Center from "../../system/Center.svelte"
     import OMTStream from "./OMTStream.svelte"
 
-    let sources: { name: string; id: string }[] = []
+    let sources: { name: string; id: string; outputId?: string }[] = []
 
     let loading = true
     const receiveOMT = {
@@ -15,7 +15,7 @@
             loading = false
             if (!msg) return
 
-            const list = JSON.parse(msg).map(({ name, urlAddress }) => ({ name, id: urlAddress }))
+            const list = JSON.parse(msg).map(({ name, urlAddress, outputId }) => ({ name, id: urlAddress, outputId }))
             if (JSON.stringify(list) !== JSON.stringify(sources)) sources = list
         }
     }

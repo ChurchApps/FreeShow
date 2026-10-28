@@ -200,7 +200,7 @@
                 <p style="display: flex;align-items: center;justify-content: space-between;padding-bottom: 5px;">
                     <span>{show.name || "—"}</span>
                     <!-- creation/modified date! -->
-                    <span style="opacity: 0.5;font-size: 0.7em;">{dateToString(show.timestamps?.modified || "", true)}</span>
+                    <span style="opacity: 0.5;font-size: 0.7em;">{dateToString(show.timestamps?.modified || "")}</span>
                 </p>
 
                 {#if loadedTexts[i]}

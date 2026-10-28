@@ -185,7 +185,6 @@ export const mainResponses: MainResponses = {
         } else {
             html += `<p>${translateText("gpu.update_drivers")}${a.vendorName ? ` (${a.vendorName})` : ""}</p>`
         }
-        html += `<p style="opacity: 0.7;">${translateText("gpu.disable_hint")}</p>`
         alertMessage.set(html)
         activePopup.set("alert")
     },

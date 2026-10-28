@@ -1,4 +1,9 @@
 import { parentPort } from "worker_threads"
+import { ruleViolation } from "../utils/ruleCheck"
+import { RtmpStreamer, setRtmpNoticeListener, setRtmpStatusListener } from "../streaming/RtmpStreamer"
+import { BlackmagicSender } from "../blackmagic/BlackmagicSender"
+import { cardFrameBytes } from "../blackmagic/cardFormat"
+import { FrameServer, type ServedFrame } from "./FrameServer"
 
 // Protocol-independent engine for the network sender workers (../ndi/ndiWorker, ../omt/omtWorker), which
 // run it with their own SenderAdapter.
@@ -21,6 +26,8 @@ export type PacerBuf = { buf: Buffer; refs: number; owner: string }
 
 export type Sender = {
     name: string
+    /** this sender's protocol; members of one render may differ */
+    adapter: SenderAdapter
     status?: string
     previousStatus?: string
     sender?: any
@@ -47,6 +54,7 @@ export type Sender = {
     paceCap?: number
     paceMisses?: number
     paceBusy?: number
+    paceDue?: boolean
     lastRealSendAt?: number
     realGaps?: number[]
     sendRejected?: number // sends the library accepted but did not put on the wire (OMT: encode failure)
@@ -77,7 +85,8 @@ export type SenderAdapter = {
 }
 
 const SENDERS: { [id: string]: Sender } = {}
-let ADAPTER: SenderAdapter
+const ADAPTERS: { [tag: string]: SenderAdapter } = {}
+let DEFAULT_ADAPTER: SenderAdapter
 
 let osrCaptureModule: any = null
 export function loadOsrCapture(): any {
@@ -93,18 +102,19 @@ export function loadOsrCapture(): any {
 
 async function createSender(id: string, msg: any) {
     // replace an existing sender instead of skipping the create
+    const adapter = ADAPTERS[msg.protocol] || DEFAULT_ADAPTER
     if (SENDERS[id]) {
         stopSender(id)
-        if (ADAPTER.recreateDelayMs) await new Promise((resolve) => setTimeout(resolve, ADAPTER.recreateDelayMs))
+        if (adapter.recreateDelayMs) await new Promise((resolve) => setTimeout(resolve, adapter.recreateDelayMs))
     }
 
     const name: string = msg.name
-    SENDERS[id] = { name }
-    console.info(`${ADAPTER.label} - creating sender: ` + name + (ADAPTER.describe?.(msg) || ""))
+    SENDERS[id] = { name, adapter }
+    console.info(`${adapter.label} - creating sender: ` + name + (adapter.describe?.(msg) || ""))
 
     try {
-        const lib = await ADAPTER.load()
-        const created = lib ? await ADAPTER.create(lib, id, msg) : null
+        const lib = await adapter.load()
+        const created = lib ? await adapter.create(lib, id, msg) : null
         if (!created) {
             delete SENDERS[id]
             port.postMessage({ type: "createFailed", id })
@@ -114,7 +124,7 @@ async function createSender(id: string, msg: any) {
         // destroy arriving while the create was in progress: destroy instead of leaking
         if (!SENDERS[id]) {
             try {
-                ADAPTER.destroy(created.sender)
+                adapter.destroy(created.sender)
             } catch {}
             return
         }
@@ -124,7 +134,7 @@ async function createSender(id: string, msg: any) {
         SENDERS[id].sendAudio = created.sendAudio
         SENDERS[id].tsKey = created.tsKey
     } catch (err) {
-        console.error(`Could not create ${ADAPTER.label} sender:`, err)
+        console.error(`Could not create ${adapter.label} sender:`, err)
         delete SENDERS[id]
         port.postMessage({ type: "createFailed", id })
         return
@@ -133,14 +143,14 @@ async function createSender(id: string, msg: any) {
     SENDERS[id].timer = setInterval(() => {
         const s = SENDERS[id]
         if (!s?.sender) return
-        const conns = ADAPTER.connections(s.sender)
+        const conns = s.adapter.connections(s.sender)
         s.status = conns > 0 ? "connected" : "unconnected"
 
         const newStatus = String(s.status) + conns.toString()
         if (newStatus !== s.previousStatus) {
             port.postMessage({ type: "status", id, status: s.status, connections: conns })
             s.previousStatus = newStatus
-            if (s.status === "connected") console.log(`[${ADAPTER.label}] Reconnected for ${id}`)
+            if (s.status === "connected") console.log(`[${s.adapter.label}] Reconnected for ${id}`)
         }
     }, CONNECTION_POLL_INTERVAL_MS)
 }
@@ -150,12 +160,12 @@ function stopSender(id: string) {
     // createSender fire if a create is still awaiting the library
     const s = SENDERS[id]
     if (!s) return
-    console.info(`${ADAPTER.label} - stopping sender: ` + (s.name || id))
+    console.info(`${s.adapter.label} - stopping sender: ` + (s.name || id))
     if (s.timer) clearInterval(s.timer)
 
     if (s.sender) {
         try {
-            ADAPTER.destroy(s.sender)
+            s.adapter.destroy(s.sender)
         } catch (err) {
             console.error("ERROR", err)
         }
@@ -194,11 +204,11 @@ function releaseReadbackResources(id: string) {
 // with nobody connected 0 is the normal idle result.
 function noteSendResult(senderData: Sender, id: string, frame: any, sent: unknown) {
     if (sent !== 0) return
-    if (ADAPTER.connections(senderData.sender) <= 0) return
+    if (senderData.adapter.connections(senderData.sender) <= 0) return
     senderData.sendRejected = (senderData.sendRejected || 0) + 1
     if (senderData.rejectLogged) return
     senderData.rejectLogged = true
-    console.error(`${ADAPTER.label} sender ${id} rejected a video frame: ${frame.width || frame.xres}x${frame.height || frame.yres} stride=${frame.stride || frame.lineStrideBytes} bytes=${frame.data?.length}`)
+    console.error(`${senderData.adapter.label} sender ${id} rejected a video frame: ${frame.width || frame.xres}x${frame.height || frame.yres} stride=${frame.stride || frame.lineStrideBytes} bytes=${frame.data?.length}`)
 }
 
 async function sendQueuedVideoFrame(id: string) {
@@ -238,15 +248,16 @@ async function sendVideoBuffer(id: string, buffer: Buffer, opts: VideoFrameOpts)
     if (!senderData?.sender) return
     senderData.offMain = false
 
-    const lib = await ADAPTER.load()
+    const adapter = senderData.adapter
+    const lib = await adapter.load()
     if (!lib) return
 
-    const prepared = ADAPTER.prepareVideo(lib, buffer, opts.size, opts.format ?? 0, opts.transparent !== false)
+    const prepared = adapter.prepareVideo(lib, buffer, opts.size, opts.format ?? 0, opts.transparent !== false)
 
     // main-path frames are always real; count the loss when overwriting an unsent one
     if (senderData.pendingVideoFrame && senderData.pendingReal) senderData.coalescedReal = (senderData.coalescedReal || 0) + 1
     senderData.pendingReal = true
-    senderData.pendingVideoFrame = ADAPTER.videoFrame(lib, prepared.data, { ...opts, format: prepared.format })
+    senderData.pendingVideoFrame = adapter.videoFrame(lib, prepared.data, { ...opts, format: prepared.format })
 
     sendQueuedVideoFrame(id)
 }
@@ -263,6 +274,7 @@ function releaseReadbackSlot(id: string, slot: number) {
 
 // Send-side pacer: dispatches at steady intervals from refcounted recycled buffers, repeating the last
 // frame when no new one arrives in time.
+// One send in flight per sender: the libraries serialize encodes per instance.
 const pacerPools: { [rendererId: string]: Buffer[] } = {}
 function acquirePacerBuf(owner: string, length: number): PacerBuf {
     const pool = (pacerPools[owner] ||= [])
@@ -299,10 +311,12 @@ function schedulePaceTick(id: string) {
     }, delay)
 }
 
-function paceTick(id: string) {
+function paceTick(id: string, realOnly = false) {
     const s = SENDERS[id]
     if (!s?.sender) return
     if (s.sendingVideo) {
+        // send still running: defer this tick to it instead of dropping the frame
+        s.paceDue = true
         s.paceBusy = (s.paceBusy || 0) + 1
         return
     }
@@ -311,6 +325,8 @@ function paceTick(id: string) {
         paceSend(id, entry, true)
         return
     }
+    // a deferred tick sends only real frames; a repeat would delay the next real one
+    if (realOnly) return
     if (s.lastPace) {
         s.paceMisses = (s.paceMisses || 0) + 1
         s.lastPace.pbuf.refs++
@@ -344,59 +360,455 @@ async function paceSend(id: string, entry: { frame: any; pbuf: PacerBuf }, real:
         }
         senderData.sendingVideo = false
         releasePacerRef(entry.pbuf)
+        // run the tick deferred during this send
+        if (senderData.paceDue) {
+            senderData.paceDue = false
+            paceTick(id, true)
+        }
     }
 }
 
 /** queue a frame for an output at its own rate, dropping the oldest when it is not keeping up */
-function enqueuePaced(id: string, frame: any, pbuf: PacerBuf, framerate: number, depth: number) {
-    const s = SENDERS[id]
-    if (!s) return
-    s.offMain = true
-    s.paceInterval = 1000 / framerate
-    if (s.paceTimer && s.paceNextDue && s.paceNextDue > Date.now() + s.paceInterval) {
-        clearTimeout(s.paceTimer)
-        s.paceTimer = undefined
-        startPacer(id)
-    }
-    s.paceCap = Math.max(2, depth + 1)
-    const queue = (s.paceQueue ||= [])
-    while (queue.length >= s.paceCap) {
-        const dropped = queue.shift()!
-        releasePacerRef(dropped.pbuf)
-        s.coalescedReal = (s.coalescedReal || 0) + 1
-    }
-    pbuf.refs++ // queue entry's ref
-    queue.push({ frame, pbuf })
-    pbuf.refs++ // lastPace pin's ref (repeats only fire when the queue is empty, i.e. this frame has
-    if (s.lastPace) releasePacerRef(s.lastPace.pbuf) // already been sent or dropped)
-    s.lastPace = { frame, pbuf }
-    startPacer(id)
-}
 
 export type CaptureOpts = { size: FrameSize; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number }
 
 // reads the output's shared GPU texture back, then fans that one readback out to every output sharing
 // the render, each at its own framerate
-async function captureAndSend(id: string, source: any, opts: CaptureOpts) {
-    // seq identifies this in-flight capture; the osr-capture key is slotted so concurrent readbacks for
-    // one output use independent pool entries
+// BGRA -> UYVY 4:2:2, BT.601 full range, fixed point (coefficients x256)
+function bgraToUyvy(bgra: Buffer, width: number, height: number): Buffer {
+    const out = Buffer.allocUnsafe(width * 2 * height)
+    const rowIn = width * 4
+    const rowOut = width * 2
+    for (let y = 0; y < height; y++) {
+        let si = y * rowIn
+        let di = y * rowOut
+        for (let x = 0; x < width; x += 2) {
+            const b0 = bgra[si],
+                g0 = bgra[si + 1],
+                r0 = bgra[si + 2]
+            const b1 = bgra[si + 4],
+                g1 = bgra[si + 5],
+                r1 = bgra[si + 6]
+            let u = ((-43 * r0 - 85 * g0 + 128 * b0) >> 8) + 128
+            let v = ((128 * r0 - 107 * g0 - 21 * b0) >> 8) + 128
+            out[di] = u < 0 ? 0 : u > 255 ? 255 : u // U
+            out[di + 1] = (77 * r0 + 150 * g0 + 29 * b0) >> 8 // Y0 (0..255, no clamp needed)
+            out[di + 2] = v < 0 ? 0 : v > 255 ? 255 : v // V
+            out[di + 3] = (77 * r1 + 150 * g1 + 29 * b1) >> 8 // Y1
+            si += 8
+            di += 4
+        }
+    }
+    return out
+}
+
+// BGRA -> UYVA: UYVY plane (width*2*height) followed by a full-res alpha plane (width*height)
+function bgraToUyva(bgra: Buffer, width: number, height: number): Buffer {
+    const uyvySize = width * 2 * height
+    const out = Buffer.allocUnsafe(uyvySize + width * height)
+    const rowIn = width * 4
+    const rowUyvy = width * 2
+    for (let y = 0; y < height; y++) {
+        let si = y * rowIn
+        let di = y * rowUyvy
+        let ai = uyvySize + y * width
+        for (let x = 0; x < width; x += 2) {
+            const b0 = bgra[si],
+                g0 = bgra[si + 1],
+                r0 = bgra[si + 2],
+                a0 = bgra[si + 3]
+            const b1 = bgra[si + 4],
+                g1 = bgra[si + 5],
+                r1 = bgra[si + 6],
+                a1 = bgra[si + 7]
+            let u = ((-43 * r0 - 85 * g0 + 128 * b0) >> 8) + 128
+            let v = ((128 * r0 - 107 * g0 - 21 * b0) >> 8) + 128
+            out[di] = u < 0 ? 0 : u > 255 ? 255 : u // U
+            out[di + 1] = (77 * r0 + 150 * g0 + 29 * b0) >> 8 // Y0
+            out[di + 2] = v < 0 ? 0 : v > 255 ? 255 : v // V
+            out[di + 3] = (77 * r1 + 150 * g1 + 29 * b1) >> 8 // Y1
+            out[ai] = a0 // alpha px0
+            out[ai + 1] = a1 // alpha px1
+            si += 8
+            di += 4
+            ai += 2
+        }
+    }
+    return out
+}
+
+function loadSharp() {
+    if (sharpModule === null) {
+        try {
+            sharpModule = require("sharp")
+        } catch (err: any) {
+            sharpModule = false
+            console.error("stage JPEG encoder unavailable:", err.message)
+        }
+    }
+    return sharpModule || null
+}
+
+function encodeStageFrame(id: string, members: string[], rgba: Buffer, cfg: { width: number; height: number; quality: number; intervalMs: number }) {
+    const sharp = loadSharp()
+    if (!sharp || stageBusy.has(id)) return
+    const now = Date.now()
+    if (now - (stageLastAt[id] || 0) < cfg.intervalMs) return
+    stageLastAt[id] = now
+    stageBusy.add(id)
+    // the frame buffer is recycled as soon as this returns, and the encode is asynchronous
+    const owned = Buffer.from(rgba)
+    sharp(owned, { raw: { width: cfg.width, height: cfg.height, channels: 4 } })
+        .jpeg({ quality: cfg.quality })
+        .toBuffer()
+        .then((jpeg: Buffer) => {
+            port.postMessage({ type: "stageJpeg", id, members, jpeg, size: { width: cfg.width, height: cfg.height } })
+        })
+        .catch((err: any) => console.error("stage JPEG encode failed:", err.message))
+        .finally(() => stageBusy.delete(id))
+}
+
+function encodeThumbFrame(id: string, rgba: Buffer, cfg: { width: number; height: number; quality: number }) {
+    const sharp = loadSharp()
+    if (!sharp || thumbBusy.has(id)) return
+    thumbBusy.add(id)
+    const owned = Buffer.from(rgba)
+    sharp(owned, { raw: { width: cfg.width, height: cfg.height, channels: 4 } })
+        .jpeg({ quality: cfg.quality })
+        .toBuffer()
+        .then((jpeg: Buffer) => {
+            port.postMessage({ type: "thumbJpeg", id, jpeg, size: { width: cfg.width, height: cfg.height } })
+        })
+        .catch((err: any) => console.error("thumbnail JPEG encode failed:", err.message))
+        .finally(() => thumbBusy.delete(id))
+}
+
+function webrtcFrames() {
+    if (webrtcServer) return webrtcServer
+    webrtcServer = new FrameServer({
+        log: (text) => console.info("[webrtc frames]", text),
+        onListening: (info) => port.postMessage({ type: "webrtcWs", port: info.port, token: info.token }),
+        onNeedTarget: (targetId) => port.postMessage({ type: "webrtcNeedTarget", targetId }),
+        retain: (frame) => {
+            const pb = servedPacer.get(frame)
+            if (pb) pb.refs++
+        },
+        release: (frame) => {
+            const pb = servedPacer.get(frame)
+            if (pb) releasePacerRef(pb)
+        },
+        stats: !!process.env.FS_CAP_STATS
+    })
+    return webrtcServer
+}
+
+function presentFrames() {
+    if (presentServer) return presentServer
+    presentServer = new FrameServer({
+        log: (text) => console.info("[present frames]", text),
+        onListening: (info) => port.postMessage({ type: "presentWs", port: info.port, token: info.token }),
+        onNeedTarget: (targetId) => port.postMessage({ type: "presentNeedTarget", targetId }),
+        retain: (frame) => {
+            const pb = servedPacer.get(frame)
+            if (pb) pb.refs++
+        },
+        release: (frame) => {
+            const pb = servedPacer.get(frame)
+            if (pb) releasePacerRef(pb)
+        },
+        stats: !!process.env.FS_CAP_STATS
+    })
+    return presentServer
+}
+
+function previewFrames() {
+    if (previewServer) return previewServer
+    previewServer = new FrameServer({
+        log: (text) => console.info("[preview frames]", text),
+        onListening: (info) => port.postMessage({ type: "previewWs", port: info.port, token: info.token }),
+        onNeedTarget: (targetId) => port.postMessage({ type: "previewNeedTarget", targetId }),
+        stats: !!process.env.FS_CAP_STATS
+    })
+    return previewServer
+}
+
+const servedPacer = new WeakMap<ServedFrame, PacerBuf>()
+
+// last server push per output, so OutputShow viewers get their own rate
+const lastServerPush = new Map<string, number>()
+
+const stageBusy = new Set<string>()
+
+const stageLastAt: { [id: string]: number } = {}
+
+const thumbBusy = new Set<string>()
+
+const videoLayers: { [outputId: string]: VideoLayerState } = {}
+
+function connectVideoSource(targetId: string, outputId: string, wsPort: number, token: string) {
+    const osr = loadOsrCapture()
+    if (!osr || typeof osr.shmReadAsync !== "function" || !osr.videoLayerSupported) return
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const WebSocket = require("ws")
+    const existing = videoLayers[outputId]
+    try {
+        existing?.ws?.close()
+    } catch {}
+    const state: VideoLayerState = { bufs: [], current: null, width: 0, height: 0, format: 0, ws: null, ring: null }
+    videoLayers[outputId] = state
+    const ws = new WebSocket(`ws://127.0.0.1:${wsPort}`)
+    state.ws = ws
+    ws.on("open", () => ws.send(JSON.stringify({ token, targetId, shm: true })))
+    ws.on("message", (raw: any, isBinary: boolean) => {
+        if (isBinary) return
+        let header: any = null
+        try {
+            header = JSON.parse(raw.toString())
+        } catch {
+            return
+        }
+        if (!header || header.slot === undefined) return
+        const done = () => {
+            try {
+                ws.send("1:" + header.slot)
+            } catch {}
+        }
+        if (header.shm && header.shm.name !== state.ring?.name) {
+            try {
+                if (state.ring) osr.shmUnmap(state.ring.name)
+                osr.shmMap(header.shm.name, header.shm.slotBytes * header.shm.slots, false)
+                state.ring = { name: header.shm.name, slotBytes: header.shm.slotBytes }
+            } catch {
+                state.ring = null
+            }
+        }
+        // formats the addon composites; others are left to the page's draw
+        const format = header.format === "uyvy" ? 1 : header.format === "bgra" ? 0 : header.format === "rgba" ? 3 : -1
+        if (!state.ring || format < 0) return done()
+
+        let slot = state.bufs.find((b) => !b.inUse && b.buf.length >= header.bytes)
+        if (!slot && state.bufs.length < VIDEO_BUFS) {
+            slot = { buf: Buffer.allocUnsafeSlow(header.bytes), bytes: 0, inUse: false }
+            state.bufs.push(slot)
+        }
+        if (!slot) return done() // all buffers busy: drop this frame
+        const target = slot
+        target.inUse = true
+        osr.shmReadAsync(state.ring.name, header.slot * state.ring.slotBytes, target.buf.subarray(0, header.bytes)).then(
+            () => {
+                target.bytes = header.bytes
+                target.inUse = false
+                state.width = header.xres
+                state.height = header.yres
+                state.format = format
+                state.current = target
+                done()
+                // repaint once per source frame so the capture runs at the source's rate
+                port.postMessage({ type: "videoFrame", id: outputId })
+            },
+            () => {
+                target.inUse = false
+                done()
+            }
+        )
+    })
+    ws.on("close", () => {
+        videoLayerReported.delete(outputId)
+        port.postMessage({ type: "videoLayerActive", id: outputId, active: false })
+        if (videoLayers[outputId] === state) {
+            try {
+                if (state.ring) osr.shmUnmap(state.ring.name)
+            } catch {}
+            delete videoLayers[outputId]
+        }
+    })
+    ws.on("error", () => {})
+}
+
+type VideoLayerState = { bufs: VideoBuf[]; current: VideoBuf | null; width: number; height: number; format: number; ws: any; ring: { name: string; slotBytes: number } | null }
+
+const VIDEO_BUFS = 3
+
+// outputs whose page has been told the composite is running (so it can stop drawing the frame itself)
+const videoLayerReported = new Set<string>()
+
+// FS_CONVERT_CHECK reports once per output; comparing every frame would swamp the log
+const convertChecked = new Set<string>()
+
+type VideoBuf = { buf: Buffer; bytes: number; inUse: boolean }
+const BMD_AUDIO_MARKER = Buffer.from([1])
+
+// One feed per Blackmagic output, ticking at the card's rate: each tick sends the newest frame or repeats
+// the last one, since a page only paints on change.
+type BmdFeed = { buf: Buffer | null; fresh: boolean; framerate: number; preConverted: boolean; timer: NodeJS.Timeout | null; due: number }
+const bmdFeeds = new Map<string, BmdFeed>()
+function bmdGive(outputId: string, buf: Buffer, framerate: number, preConverted: boolean) {
+    let feed = bmdFeeds.get(outputId)
+    if (!feed) {
+        feed = { buf: null, fresh: false, framerate, preConverted, timer: null, due: 0 }
+        bmdFeeds.set(outputId, feed)
+    }
+    // the feed holds the newest frame only; one it never sent goes back unplayed
+    if (feed.buf !== buf) BlackmagicSender.releaseBuffer(feed.buf)
+    feed.buf = buf
+    feed.fresh = true
+    feed.framerate = framerate
+    feed.preConverted = preConverted
+    if (!feed.timer) bmdTick(outputId)
+}
+function bmdTick(outputId: string) {
+    const feed = bmdFeeds.get(outputId)
+    if (!feed) return
+    feed.timer = null
+    if (!BlackmagicSender.playbackData[outputId]?.playback) {
+        bmdFeeds.delete(outputId)
+        return
+    }
+    const audio = BlackmagicSender.audioQueueLength > 0 ? BMD_AUDIO_MARKER : null
+    // as many frames as the card needs to stay full: the newest frame first, then repeats of it
+    let wanted = BlackmagicSender.canAcceptFrame(outputId) ? BlackmagicSender.framesWanted(outputId) : 0
+    if (!wanted) bmdNote(outputId, "waited")
+    if (wanted && feed.fresh && feed.buf) {
+        feed.fresh = false
+        bmdNote(outputId, "sent")
+        BlackmagicSender.scheduleFrame(outputId, feed.buf, audio, feed.framerate, feed.preConverted)
+        wanted--
+    }
+    for (; wanted > 0; wanted--) {
+        bmdNote(outputId, "repeat")
+        if (!BlackmagicSender.repeatLastFrame(outputId, audio)) {
+            if (feed.buf) BlackmagicSender.scheduleFrame(outputId, feed.buf, audio, feed.framerate, feed.preConverted)
+            break
+        }
+    }
+    if (!(feed.framerate > 0)) return
+    const period = 1000 / feed.framerate
+    const now = performance.now()
+    feed.due = Math.max((feed.due || now) + period, now)
+    feed.timer = setTimeout(() => bmdTick(outputId), feed.due - now)
+}
+// FS_CAP_STATS: once a second per Blackmagic output, what reached the card and what stopped short of it
+const bmdTrace: { [outputId: string]: { [what: string]: number } } = {}
+function bmdNote(outputId: string, what: string) {
+    if (!process.env.FS_CAP_STATS) return
+    const t = (bmdTrace[outputId] ||= {})
+    t[what] = (t[what] || 0) + 1
+}
+if (process.env.FS_CAP_STATS) {
+    setInterval(() => {
+        for (const id of new Set([...Object.keys(bmdTrace), ...Object.keys(BlackmagicSender.playbackData)])) {
+            const d = BlackmagicSender.playbackData[id]
+            const fmt = (o: { [k: string]: number } | undefined) => Object.entries(o || {}).map(([k, v]) => `${k}=${v}`).join(" ")
+            console.info(`[BMD-STATS ${id}] playing=${!!d?.playback} started=${!!d?.isStarted} target=${d?.targetSize?.width}x${d?.targetSize?.height} ${d?.pixelFormat || ""} worker(${fmt(bmdTrace[id])}) sender(${fmt(BlackmagicSender.stats[id])}) buffers(${BlackmagicSender.bufferStats(id)})`)
+            delete bmdTrace[id]
+            delete BlackmagicSender.stats[id]
+        }
+    }, 1000)
+}
+function bmdForget(outputId?: string) {
+    for (const [id, feed] of bmdFeeds) {
+        if (outputId && id !== outputId) continue
+        if (feed.timer) clearTimeout(feed.timer)
+        BlackmagicSender.releaseBuffer(feed.buf)
+        bmdFeeds.delete(id)
+    }
+}
+let sharpModule: any = null
+let webrtcServer: FrameServer | null = null
+let previewServer: FrameServer | null = null
+let presentServer: FrameServer | null = null
+
+// FS_CAP_STATS: lag = how late a 5ms timer fires; copyMs/fanMs = sync time copying and fanning out frames
+const loopDiag = { lagSum: 0, lagMax: 0, lagN: 0, copyMs: 0, copyN: 0, fanMs: 0, lastTick: 0 }
+if (process.env.FS_CAP_STATS) {
+    loopDiag.lastTick = performance.now()
+    setInterval(() => {
+        const now = performance.now()
+        const lag = Math.max(0, now - loopDiag.lastTick - 5)
+        loopDiag.lastTick = now
+        loopDiag.lagSum += lag
+        loopDiag.lagN++
+        if (lag > loopDiag.lagMax) loopDiag.lagMax = lag
+    }, 5)
+}
+
+// Shared media sources: a frame is released to main once superseded and no composite reads it.
+// handle: shared texture handle (Windows, macOS) or dmabuf { planes, modifier } (Linux)
+type MediaFrame = { key: string; seq: number; handle: Buffer | { planes: any[]; modifier: any }; width: number; height: number; refs: number }
+const mediaLatest = new Map<string, MediaFrame>()
+const mediaAssigned: { [outputId: string]: { layers: { key: string; alpha: number }[]; fill: number[] } } = {}
+
+function mediaFrameDone(f: MediaFrame) {
+    f.refs--
+    if (f.refs <= 0 && mediaLatest.get(f.key) !== f) port.postMessage({ type: "mediaRelease", key: f.key, seq: f.seq })
+}
+
+function mediaFramesFor(id: string): { frame: MediaFrame; alpha: number }[] {
+    const assigned = mediaAssigned[id]
+    if (!assigned) return []
+    const out: { frame: MediaFrame; alpha: number }[] = []
+    for (const l of assigned.layers) {
+        const frame = mediaLatest.get(l.key)
+        if (frame) out.push({ frame, alpha: l.alpha })
+    }
+    return out
+}
+
+// newest capture sent per output
+const newestCapture = new Map<string, { pipe: number; seq: number }>()
+
+async function captureAndSend(id: string, source: any, opts: { pipe?: number; size: { width: number; height: number }; ratio: number; framerate: number; memberFramerates?: { [id: string]: number }; format: number; mainFormat?: number; transparent?: boolean; dstW?: number; dstH?: number; seq?: number; members?: string[]; depth?: number; targets?: { width: number; height: number; format: number }[]; memberTarget?: { [id: string]: number }; memberFormats?: { [id: string]: number }; memberSizes?: { [id: string]: { width: number; height: number } }; cpuTargets?: boolean; rtmpMembers?: { [id: string]: { width: number; height: number } }; bmdMembers?: { [id: string]: { width: number; height: number; format: number; framerate: number } }; webrtcMembers?: { [id: string]: { width: number; height: number } }; presentMembers?: { [id: string]: { width: number; height: number } }; convertCheck?: boolean; stageStream?: { width: number; height: number; quality: number; intervalMs: number } | null; serverStream?: { width: number; height: number; intervalMs: number } | null; thumbStream?: { width: number; height: number; quality: number } | null }) {
+    // seq identifies this capture; slotted keys keep concurrent readbacks in separate pool entries
     const seq = opts.seq ?? 0
     const senderData = SENDERS[id]
     const osr = loadOsrCapture()
-    const lib = senderData?.sender ? await ADAPTER.load() : null
-    if (!lib || !osr?.readback) {
+    const membersAll = opts.members?.length ? opts.members : [id]
+    const activeMembers = membersAll.filter((m) => SENDERS[m]?.sender)
+    // members may use different protocols: load each, skip members whose library is unavailable
+    const libs: { [tag: string]: any } = {}
+    for (const m of activeMembers) {
+        const ad = SENDERS[m]!.adapter
+        if (!(ad.tag in libs)) libs[ad.tag] = await ad.load()
+    }
+    const sendMembers = activeMembers.filter((m) => !!libs[SENDERS[m]!.adapter.tag])
+    const hasSenders = sendMembers.length > 0
+    const rtmpMembers = Object.keys(opts.rtmpMembers || {}).filter((m) => RtmpStreamer.isRunning(m))
+    const hasRtmp = rtmpMembers.length > 0
+    const bmdMembers = Object.keys(opts.bmdMembers || {}).filter((m) => !!BlackmagicSender.playbackData[m]?.playback)
+    if (process.env.FS_CAP_STATS) {
+        for (const m of Object.keys(opts.bmdMembers || {})) bmdNote(m, bmdMembers.includes(m) ? "inCapture" : "inCaptureNotPlaying")
+        for (const m of membersAll) if (BlackmagicSender.playbackData[m] && !opts.bmdMembers?.[m]) bmdNote(m, "captureWithoutBmd")
+    }
+    const hasBmd = bmdMembers.length > 0
+    const webrtcMembers = Object.keys(opts.webrtcMembers || {})
+    const hasWebrtc = webrtcMembers.length > 0
+    const presentMembers = Object.keys(opts.presentMembers || {})
+    const hasPresent = presentMembers.length > 0
+    // scaled-frame-only consumers (web server, stage, preview) are still read back here
+    const wantsScaledOnly = !hasSenders && !hasRtmp && !hasBmd && !hasWebrtc && !hasPresent && (opts.dstW || 0) > 0 && (opts.dstH || 0) > 0
+    if ((!hasSenders && !hasRtmp && !hasBmd && !hasWebrtc && !hasPresent && !wantsScaledOnly) || !osr?.readback) {
         port.postMessage({ type: "releaseTexture", id, seq })
         port.postMessage({ type: "captureDone", id, seq })
         return
     }
     const { size, ratio, framerate, format, dstW = 0, dstH = 0 } = opts
-    // FS_CAP_STATS: per-frame hop timestamps posted back with captureDone
+    // FS_CAP_STATS: per-frame hop timestamps, posted back with captureDone
     const tl = process.env.FS_CAP_STATS ? { recv: Date.now(), cS: 0, cE: 0, fS: 0, fE: 0, enq: 0 } : null
-    const members = opts.members?.length ? opts.members : [id]
+    const members = membersAll
     const wantScaled = dstW > 0 && dstH > 0
     const slot = acquireReadbackSlot(id)
     const rbKey = `${id}#${slot}`
-    senderData.offMain = true
+    if (senderData) senderData.offMain = true
+    // the live frame this output is showing, composited under the page by the addon
+    const layer = videoLayers[id]
+    const layerBuf = layer?.current && layer.width && layer.height ? layer.current : null
+    // else the shared media sources it shows, held until the composite is recorded
+    const mediaFrames = layerBuf ? [] : mediaFramesFor(id)
+    const assigned = mediaAssigned[id]
+    const video = layerBuf ? { width: layer!.width, height: layer!.height, format: layer!.format, data: layerBuf.buf.subarray(0, layerBuf.bytes) } : mediaFrames.length ? { media: mediaFrames.map((m) => ({ handle: m.frame.handle, width: m.frame.width, height: m.frame.height, fit: 0, alpha: m.alpha })), fill: assigned!.fill } : null
+    if (layerBuf) layerBuf.inUse = true
+    for (const m of mediaFrames) m.frame.refs++
+
     const twoPhase = typeof osr.readbackConsume === "function" && typeof osr.readbackFinish === "function"
     const singleDispatch = !twoPhase && typeof osr.readbackOnce === "function"
     let textureReleased = false
@@ -405,6 +817,18 @@ async function captureAndSend(id: string, source: any, opts: CaptureOpts) {
         textureReleased = true
         port.postMessage({ type: "releaseTexture", id, seq })
     }
+    // full-size members in the main format share the main buffer; each other (size, format) is a target,
+    // from the same GPU pass when supported, else derived here from a BGRA main
+    const targets = opts.targets || []
+    const mainFormat = opts.mainFormat ?? format
+    const bytesFor = (w: number, h: number, f: number) => (f === 1 ? w * h * 2 : f === 2 ? w * h * 3 : f === 4 ? w * h + 2 * (Math.floor(w / 2) * Math.floor(h / 2)) : f >= 5 && f <= 8 ? cardFrameBytes(w, h, f) : w * h * 4)
+    const gpuTargets = twoPhase && targets.length > 0 && !opts.cpuTargets && !!osr.targetsSupported
+    const framePbuf = twoPhase ? acquirePacerBuf(id, bytesFor(size.width, size.height, format)) : null
+    const targetPbufs: PacerBuf[] = gpuTargets ? targets.map((t, i) => acquirePacerBuf(`${id}#t${i}`, bytesFor(t.width, t.height, t.format))) : []
+    const heldBufs: PacerBuf[] = [] // every pacer buffer this frame took; unqueued ones go back to their pools
+    if (framePbuf) heldBufs.push(framePbuf)
+    heldBufs.push(...targetPbufs)
+    const queued = new Set<PacerBuf>()
     try {
         let buffer: Buffer
         let scaled: Buffer | undefined
@@ -428,13 +852,22 @@ async function captureAndSend(id: string, source: any, opts: CaptureOpts) {
             }
         } else if (twoPhase) {
             if (tl) tl.cS = Date.now()
-            await osr.readbackConsume(source, size.width, size.height, format, rbKey, wantScaled ? dstW : 0, wantScaled ? dstH : 0)
+            try {
+                await osr.readbackConsume(source, size.width, size.height, format, rbKey, wantScaled ? dstW : 0, wantScaled ? dstH : 0, gpuTargets ? targets : undefined, video || undefined)
+            } finally {
+                for (const m of mediaFrames) mediaFrameDone(m.frame)
+            }
+            // not for a readback that finished after its layer was dropped
+            if (layerBuf && videoLayers[id] === layer && !videoLayerReported.has(id)) {
+                videoLayerReported.add(id)
+                port.postMessage({ type: "videoLayerActive", id })
+            }
             if (tl) tl.cE = Date.now()
             releaseTexture()
             if (tl) tl.fS = Date.now()
-            const res = await osr.readbackFinish(rbKey, size.width, size.height, format, wantScaled ? dstW : 0, wantScaled ? dstH : 0)
+            const res = await osr.readbackFinish(rbKey, size.width, size.height, format, wantScaled ? dstW : 0, wantScaled ? dstH : 0, framePbuf!.buf, gpuTargets ? targets : undefined, gpuTargets ? targetPbufs.map((p) => p.buf) : undefined)
             if (tl) tl.fE = Date.now()
-            if (wantScaled && res && res.main) {
+            if (res && res.main) {
                 buffer = res.main
                 scaled = res.scaled
             } else {
@@ -447,36 +880,246 @@ async function captureAndSend(id: string, source: any, opts: CaptureOpts) {
             releaseTexture()
         }
 
+        // readbacks finish out of order: drop a frame older than one already sent
+        const pipe = opts.pipe ?? 0
+        const newest = newestCapture.get(id)
+        if (newest && newest.pipe === pipe && seq < newest.seq) return
+        newestCapture.set(id, { pipe, seq })
+
+        // previews are served from here so main never holds a preview frame
         if (scaled && scaled.length) {
-            port.postMessage({ type: "scaledFrame", id, members, buffer: scaled.buffer, byteOffset: scaled.byteOffset, byteLength: scaled.byteLength, size: { width: dstW, height: dstH } })
+            const server = previewFrames()
+            const now = Date.now()
+            // own copy: the addon reuses its scaled buffer while the server may still hold this frame
+            const frame: ServedFrame = { xres: dstW, yres: dstH, format: "bgra", data: Buffer.from(new Uint8Array(scaled.buffer, scaled.byteOffset, scaled.byteLength)) }
+            for (const m of members) server.deliver(m, "PREVIEW", m, frame, now, true)
         }
 
-        const activeMembers = members.filter((m) => SENDERS[m]?.sender)
-        if (activeMembers.length) {
-            const transparent = opts.transparent !== false
-            const prepared = ADAPTER.prepareVideo(lib, buffer, size, format, transparent)
-            // one copy, referenced by every output that queues it
-            const pbuf = acquirePacerBuf(id, prepared.data.length)
-            prepared.data.copy(pbuf.buf, 0, 0, prepared.data.length)
-            for (const m of activeMembers) {
-                const mfr = Math.max(1, opts.memberFramerates?.[m] || framerate)
-                const frame = ADAPTER.videoFrame(lib, pbuf.buf, { size, ratio, framerate: mfr, transparent, format: prepared.format })
-                enqueuePaced(m, frame, pbuf, mfr, opts.depth ?? 1)
+        const tFan = performance.now()
+        type FrameBuf = { pbuf: PacerBuf; width: number; height: number; format: number }
+        const convertBgra = (bgra: Buffer, w: number, h: number, f: number): Buffer => {
+            ruleViolation("cpu-frame", "worker convert format " + f)
+            if (f === 2) return osr.convertBgraToUyva ? osr.convertBgraToUyva(bgra, w, h) : bgraToUyva(bgra, w, h)
+            if (f === 1) return osr.convertBgraToUyvy ? osr.convertBgraToUyvy(bgra, w, h) : bgraToUyvy(bgra, w, h)
+            if (f === 4) return osr.convertBgraToI420(bgra, w, h)
+            if (f >= 5 && f <= 8) return osr.convertBgraToCard(bgra, w, h, f)
+            return bgra
+        }
+        const intoPacerBuf = (owner: string, data: Buffer): PacerBuf => {
+            const tCopy = performance.now()
+            const pb = acquirePacerBuf(owner, data.length)
+            data.copy(pb.buf, 0, 0, data.length)
+            loopDiag.copyMs += performance.now() - tCopy
+            loopDiag.copyN++
+            heldBufs.push(pb)
+            return pb
+        }
+
+        // main buffer, in the format full-size members send in
+        let main: FrameBuf
+        if (format === 0 && mainFormat !== 0) {
+            // CPU-target or single-phase path: the readback is BGRA; convert once for full-size members
+            main = { pbuf: intoPacerBuf(`${id}#m`, convertBgra(buffer, size.width, size.height, mainFormat)), width: size.width, height: size.height, format: mainFormat }
+        } else if (framePbuf && buffer === framePbuf.buf) {
+            main = { pbuf: framePbuf, width: size.width, height: size.height, format }
+        } else {
+            main = { pbuf: intoPacerBuf(id, buffer), width: size.width, height: size.height, format }
+        }
+
+        const targetBufs: FrameBuf[] = []
+        if (gpuTargets) {
+            targets.forEach((t, i) => targetBufs.push({ pbuf: targetPbufs[i], width: t.width, height: t.height, format: t.format }))
+        } else if (targets.length && format === 0 && typeof osr.downscaleBgra === "function") {
+            for (const t of targets) {
+                ruleViolation("cpu-frame", "worker downscale for a target")
+                const small: Buffer = osr.downscaleBgra(buffer, size.width, size.height, t.width, t.height)
+                targetBufs.push({ pbuf: intoPacerBuf(`${id}#t`, convertBgra(small, t.width, t.height, t.format)), width: t.width, height: t.height, format: t.format })
             }
         }
+        const bufFor = (m: string): FrameBuf => {
+            const ti = opts.memberTarget?.[m] ?? -1
+            return ti >= 0 && targetBufs[ti] ? targetBufs[ti] : main
+        }
+        const enqueue = (m: string, frame: any, pbuf: PacerBuf, interval: number) => {
+            const md = SENDERS[m]!
+            md.offMain = true
+            md.paceInterval = interval
+            if (md.paceTimer && md.paceNextDue && md.paceNextDue > Date.now() + md.paceInterval) {
+                clearTimeout(md.paceTimer)
+                md.paceTimer = undefined
+                startPacer(m)
+            }
+            md.paceCap = Math.max(2, (opts.depth ?? 1) + 1)
+            const queue = (md.paceQueue ||= [])
+            while (queue.length >= md.paceCap) {
+                const dropped = queue.shift()!
+                releasePacerRef(dropped.pbuf)
+                md.coalescedReal = (md.coalescedReal || 0) + 1
+            }
+            pbuf.refs++ // queue entry's ref
+            queue.push({ frame, pbuf })
+            pbuf.refs++ // lastPace pin's ref
+            if (md.lastPace) releasePacerRef(md.lastPace.pbuf)
+            md.lastPace = { frame, pbuf }
+            queued.add(pbuf)
+            startPacer(m)
+        }
+
+        // a member whose buffer is still BGRA is converted by its adapter, which reports the format produced
+        if (hasSenders) {
+            const transparent = opts.transparent !== false
+            for (const m of sendMembers) {
+                const ad = SENDERS[m]!.adapter
+                const lib = libs[ad.tag]
+                let b = bufFor(m)
+                if (b.format === 0) {
+                    const prepared = ad.prepareVideo(lib, b.pbuf.buf.subarray(0, bytesFor(b.width, b.height, 0)), { width: b.width, height: b.height }, 0, transparent)
+                    if (prepared.format !== 0) b = { pbuf: intoPacerBuf(`${id}#${ad.tag}`, prepared.data), width: b.width, height: b.height, format: prepared.format }
+                }
+                const mfr = Math.max(1, opts.memberFramerates?.[m] || framerate)
+                const frame = ad.videoFrame(lib, b.pbuf.buf, { size: { width: b.width, height: b.height }, ratio: b.height ? b.width / b.height : ratio, framerate: mfr, transparent, format: b.format })
+                enqueue(m, frame, b.pbuf, 1000 / mfr)
+            }
+        }
+
+        // RTMP: I420 or BGRA at the broadcast size; the engine holds one pacer ref until a newer frame replaces it
+        for (const m of rtmpMembers) {
+            const want = opts.rtmpMembers![m]
+            const ti = targetBufs.findIndex((t) => t.width === want.width && t.height === want.height && (t.format === 4 || t.format === 0))
+            const b = ti >= 0 ? targetBufs[ti] : main.format === 0 && main.width === want.width && main.height === want.height ? main : null
+            if (!b) continue
+            const pb = b.pbuf
+            const bytes = bytesFor(b.width, b.height, b.format)
+            pb.refs++
+            queued.add(pb)
+            RtmpStreamer.updateFrame(m, pb.buf.length === bytes ? pb.buf : pb.buf.subarray(0, bytes), { width: b.width, height: b.height }, () => releasePacerRef(pb), b.format === 4 ? "yuv420p" : "bgra")
+        }
+        // WebRTC: BGRA at the output's size over shared memory; the server holds a pacer ref while it keeps the frame
+        if (hasWebrtc) {
+            const server = webrtcFrames()
+            const now = Date.now()
+            for (const m of webrtcMembers) {
+                const want = opts.webrtcMembers![m]
+                const ti = targetBufs.findIndex((t) => t.width === want.width && t.height === want.height && t.format === 0)
+                const b = ti >= 0 ? targetBufs[ti] : main.format === 0 && main.width === want.width && main.height === want.height ? main : null
+                if (!b) continue
+                const bytes = bytesFor(b.width, b.height, 0)
+                const frame: ServedFrame = { xres: b.width, yres: b.height, format: "bgra", data: b.pbuf.buf.length === bytes ? b.pbuf.buf : b.pbuf.buf.subarray(0, bytes) }
+                servedPacer.set(frame, b.pbuf)
+                // once retained the server releases it; without a window it returns to its pool below
+                server.deliver(m, "WEBRTC", m, frame, now)
+                if (b.pbuf.refs > 0) queued.add(b.pbuf)
+            }
+        }
+        // the on-screen window of a captured output, served like the WebRTC host window
+        if (hasPresent) {
+            const server = presentFrames()
+            const now = Date.now()
+            for (const m of presentMembers) {
+                const want = opts.presentMembers![m]
+                const ti = targetBufs.findIndex((t) => t.width === want.width && t.height === want.height && t.format === 0)
+                const b = ti >= 0 ? targetBufs[ti] : main.format === 0 && main.width === want.width && main.height === want.height ? main : null
+                if (!b) continue
+                const bytes = bytesFor(b.width, b.height, 0)
+                const frame: ServedFrame = { xres: b.width, yres: b.height, format: "bgra", data: b.pbuf.buf.length === bytes ? b.pbuf.buf : b.pbuf.buf.subarray(0, bytes) }
+                servedPacer.set(frame, b.pbuf)
+                server.deliver(m, "PRESENT", m, frame, now)
+                if (b.pbuf.refs > 0) queued.add(b.pbuf)
+            }
+        }
+        // Blackmagic: the card's scheduler retains frames, so it gets its own copy in the card's mode
+        for (const m of bmdMembers) {
+            const want = opts.bmdMembers![m]
+            const ti = targetBufs.findIndex((t) => t.width === want.width && t.height === want.height && t.format === want.format)
+            const b = ti >= 0 ? targetBufs[ti] : main.width === want.width && main.height === want.height && main.format === want.format ? main : null
+            if (!b) {
+                bmdNote(m, `noFrameAt${want.width}x${want.height}f${want.format}`)
+                continue
+            }
+            bmdNote(m, "given")
+            const bytes = bytesFor(b.width, b.height, b.format)
+            // the card's own copy, from its reused buffers
+            const frameData = BlackmagicSender.acquireBuffer(m, bytes)
+            b.pbuf.buf.copy(frameData, 0, 0, bytes)
+            bmdGive(m, frameData, want.framerate, b.format !== 0)
+        }
+        // FS_CONVERT_CHECK: compare each GPU-produced full-size format against a CPU convert of the BGRA target
+        if (opts.convertCheck && !convertChecked.has(id)) {
+            const si = targetBufs.findIndex((t) => t.width === size.width && t.height === size.height && t.format === 0)
+            if (si >= 0) {
+                convertChecked.add(id)
+                const backend = typeof osr._readbackBackend === "function" ? osr._readbackBackend() : "?"
+                const bgra = targetBufs[si].pbuf.buf.subarray(0, bytesFor(size.width, size.height, 0))
+                for (const f of [1, 2, 4, ...(osr.cardFormats ? [5, 6, 7, 8] : [])]) {
+                    const ti = targetBufs.findIndex((t) => t.width === size.width && t.height === size.height && t.format === f)
+                    if (ti < 0) {
+                        console.info(`[CONVERT-CHECK ${id}] format ${f}: the GPU produced no target for it`)
+                        continue
+                    }
+                    const bytes = bytesFor(size.width, size.height, f)
+                    const cpu = convertBgra(bgra, size.width, size.height, f)
+                    const gpu = targetBufs[ti].pbuf.buf
+                    let worst = 0
+                    let at = -1
+                    let differing = 0
+                    for (let k = 0; k < bytes; k++) {
+                        const d = Math.abs(cpu[k] - gpu[k])
+                        if (!d) continue
+                        differing++
+                        if (d > worst) {
+                            worst = d
+                            at = k
+                        }
+                    }
+                    const verdict = worst === 0 ? "identical to the CPU reference" : `worst ${worst} at byte ${at}, ${differing} of ${bytes} bytes differ`
+                    console.info(`[CONVERT-CHECK ${id}] ${size.width}x${size.height} format ${f} on ${backend}: ${verdict}`)
+                }
+            }
+        }
+
+        if (opts.serverStream && Date.now() - (lastServerPush.get(id) || 0) >= opts.serverStream.intervalMs) {
+            const cfg = opts.serverStream
+            lastServerPush.set(id, Date.now())
+            const ti = targetBufs.findIndex((t) => t.width === cfg.width && t.height === cfg.height && t.format === 3)
+            if (ti >= 0) {
+                const bytes = cfg.width * cfg.height * 4
+                const copy = Buffer.from(targetBufs[ti].pbuf.buf.subarray(0, bytes))
+                port.postMessage({ type: "serverFrame", id, buffer: copy, size: { width: cfg.width, height: cfg.height } }, [copy.buffer])
+            }
+        }
+
+        // a controller asked for a thumbnail: encode the frame already to hand
+        if (opts.thumbStream) {
+            const cfg = opts.thumbStream
+            const ti = targetBufs.findIndex((t) => t.width === cfg.width && t.height === cfg.height && t.format === 3)
+            if (ti >= 0) encodeThumbFrame(id, targetBufs[ti].pbuf.buf.subarray(0, cfg.width * cfg.height * 4), cfg)
+        }
+
+        if (opts.stageStream) {
+            const cfg = opts.stageStream
+            const ti = targetBufs.findIndex((t) => t.width === cfg.width && t.height === cfg.height && t.format === 3)
+            if (ti >= 0) encodeStageFrame(id, members, targetBufs[ti].pbuf.buf.subarray(0, cfg.width * cfg.height * 4), cfg)
+        }
+
+        loopDiag.fanMs += performance.now() - tFan
         if (tl) tl.enq = Date.now() // pacer enqueue complete (memcpy + fan-out done) — nonzero = clean path
     } catch (err) {
         console.error("Worker readback error:", err)
     } finally {
+        // buffers no member queued (error, or a target/main nobody used): return them to their pools
+        for (const pb of heldBufs) {
+            if (queued.has(pb) || pb.refs !== 0) continue
+            const pool = pacerPools[pb.owner]
+            if (pool && !pool.includes(pb.buf)) pool.push(pb.buf)
+        }
+        if (layerBuf) layerBuf.inUse = false
         releaseTexture() // safety: ensure the texture is released even on error
         releaseReadbackSlot(id, slot)
-        // capture done: this pipeline slot frees, so main may forward another frame
+        // frees this pipeline slot, so main may forward the next frame
         port.postMessage({ type: "captureDone", id, seq, tl })
     }
 }
 
-// Audio buffers arrive as planar float32 LE PCM. Each sender's FIFO queue is drained by a serial send
-// loop, capped so a stalled sender can't accumulate unbounded memory/latency.
 async function sendQueuedAudioFrame(id: string) {
     const senderData = SENDERS[id]
     if (!senderData?.sender || senderData.sendingAudio) return
@@ -505,14 +1148,14 @@ async function sendQueuedAudioFrame(id: string) {
     }
 }
 
-async function makeAudioFrame(buffer: Buffer, sampleRate: number, channelCount: number) {
+async function makeAudioFrame(adapter: SenderAdapter, buffer: Buffer, sampleRate: number, channelCount: number) {
     if (!buffer || buffer.length === 0) return null
     if (Math.trunc(buffer.length / (channelCount * BYTES_PER_FLOAT32)) <= 0) return null
 
-    const lib = await ADAPTER.load()
+    const lib = await adapter.load()
     if (!lib) return null
 
-    return ADAPTER.audioFrame(lib, buffer, sampleRate, channelCount)
+    return adapter.audioFrame(lib, buffer, sampleRate, channelCount)
 }
 
 /** audio for one output */
@@ -520,7 +1163,7 @@ async function sendAudioBufferTarget(id: string, buffer: Buffer, { sampleRate, c
     const senderData = SENDERS[id]
     if (!senderData?.sender) return
 
-    const frame = await makeAudioFrame(buffer, sampleRate, channelCount)
+    const frame = await makeAudioFrame(senderData.adapter, buffer, sampleRate, channelCount)
     if (!frame || !SENDERS[id]?.sender) return
 
     if (!senderData.audioQueue) senderData.audioQueue = []
@@ -532,17 +1175,20 @@ async function sendAudioBufferTarget(id: string, buffer: Buffer, { sampleRate, c
 async function sendAudioBuffer(buffer: Buffer, { sampleRate, channelCount }: { sampleRate: number; channelCount: number }) {
     if (!Object.values(SENDERS).some((s) => s?.sender)) return
 
-    const frame = await makeAudioFrame(buffer, sampleRate, channelCount)
-    if (!frame) return
-
-    Object.keys(SENDERS).forEach((id) => {
+    // one frame per protocol present: each library takes its own frame shape
+    const frames: { [tag: string]: any } = {}
+    for (const id of Object.keys(SENDERS)) {
         const senderData = SENDERS[id]
-        if (!senderData?.sender) return
+        if (!senderData?.sender) continue
+
+        const tag = senderData.adapter.tag
+        if (!(tag in frames)) frames[tag] = await makeAudioFrame(senderData.adapter, buffer, sampleRate, channelCount)
+        if (!frames[tag]) continue
 
         if (!senderData.audioQueue) senderData.audioQueue = []
-        senderData.audioQueue.push({ ...frame })
+        senderData.audioQueue.push({ ...frames[tag] })
         sendQueuedAudioFrame(id)
-    })
+    }
 }
 
 function startStats() {
@@ -567,7 +1213,7 @@ function startStats() {
                 const sorted = [...gaps].sort((a, b) => a - b)
                 gapP95 = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))]
             }
-            console.info(`[SEND-STATS ${ADAPTER.tag}#${id}] sentReal=${s.sentReal || 0} sentRepeat=${s.sentRepeat || 0} coalescedReal=${s.coalescedReal || 0} paceQ=${s.paceQueue?.length || 0} paceMisses=${s.paceMisses || 0} paceBusy=${s.paceBusy || 0} wireGap(mean=${Math.round(gapMean)} p95=${Math.round(gapP95)}) avgSendMs=${avg} rejected=${s.sendRejected || 0} rb=${rb} cpuCores=${cpuCores.toFixed(2)}`)
+            console.info(`[SEND-STATS ${s.adapter.tag}#${id}] sentReal=${s.sentReal || 0} sentRepeat=${s.sentRepeat || 0} coalescedReal=${s.coalescedReal || 0} paceQ=${s.paceQueue?.length || 0} paceMisses=${s.paceMisses || 0} paceBusy=${s.paceBusy || 0} wireGap(mean=${Math.round(gapMean)} p95=${Math.round(gapP95)}) avgSendMs=${avg} rejected=${s.sendRejected || 0} rb=${rb} cpuCores=${cpuCores.toFixed(2)}`)
             s.sentReal = 0
             s.sentRepeat = 0
             s.coalescedReal = 0
@@ -584,9 +1230,37 @@ function startStats() {
  * in:  create, destroy, video, audio, audioTarget, captureFrame
  * out: status, createFailed, videoDone, releaseTexture, captureDone, scaledFrame
  */
-export function runSenderWorker(adapter: SenderAdapter) {
-    ADAPTER = adapter
+export function runSenderWorker(adapters: SenderAdapter[]) {
+    for (const a of adapters) ADAPTERS[a.tag] = a
+    DEFAULT_ADAPTER = adapters[0]
     if (process.env.FS_CAP_STATS) startStats()
+
+    process.on("uncaughtException", (err) => console.error("[sender worker] uncaught exception:", err))
+    process.on("unhandledRejection", (err) => console.error("[sender worker] unhandled rejection:", err))
+
+    // RTMP engine (RtmpBridge on main proxies it)
+    setRtmpStatusListener((outputId, destinations) => port.postMessage({ type: "rtmpStatus", outputId, destinations }))
+    setRtmpNoticeListener((message) => port.postMessage({ type: "rtmpNotice", message }))
+    const rtmpStopWatch = new Set<string>()
+    setInterval(() => {
+        // the engine stops on its own when destinations vanish or the encoder gives up: tell main
+        for (const id of [...rtmpStopWatch]) {
+            if (RtmpStreamer.isRunning(id)) continue
+            rtmpStopWatch.delete(id)
+            port.postMessage({ type: "rtmpStopped", outputId: id })
+        }
+    }, 1000)
+
+    // Blackmagic output (BlackmagicBridge on main mirrors its state)
+    const bmdReportState = (outputId: string) => {
+        const d = BlackmagicSender.playbackData[outputId]
+        // playout rate from the opened mode ([frame duration, timescale]) when reported
+        const rate = Array.isArray(d?.playback?.frameRate) && d.playback.frameRate[0] > 0 ? d.playback.frameRate[1] / d.playback.frameRate[0] : d?.displayMode ? BlackmagicSender.getAccurateFrameRate(d.displayMode) : 0
+        port.postMessage({ type: "bmdState", outputId, ready: !!d?.playback, displayMode: d?.displayMode || "", pixelFormat: d?.pixelFormat || "", enableKeying: !!d?.enableKeying, colorSpace: d?.colorSpace || "", targetSize: d?.targetSize || null, stable: BlackmagicSender.isDeviceStable(outputId), framerate: rate })
+    }
+    setInterval(() => {
+        if (Object.keys(BlackmagicSender.playbackData).length) port.postMessage({ type: "bmdAudioQueued", length: BlackmagicSender.audioQueueLength })
+    }, 250)
 
     port.on("message", (msg: any) => {
         switch (msg?.type) {
@@ -601,6 +1275,114 @@ export function runSenderWorker(adapter: SenderAdapter) {
                 break
             case "captureFrame":
                 captureAndSend(msg.id, msg.source, msg.opts)
+                break
+            case "cpuFrame": {
+                // a frame without a shared texture, read back on main; each consumer's version is derived here
+                const osr = loadOsrCapture()
+                const buf = Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength)
+                const { id, size, server, stage, preview } = msg
+                if (!osr || typeof osr.previewFrame !== "function") break
+                const rgbaAt = (maxWidth: number) => osr.previewFrame(buf, size.width, size.height, 0, maxWidth)
+                try {
+                    if (server) {
+                        const f = rgbaAt(server.width)
+                        port.postMessage({ type: "serverFrame", id, buffer: f.data, size: { width: f.width, height: f.height } }, [f.data.buffer])
+                    }
+                    if (stage) {
+                        const f = rgbaAt(stage.width)
+                        encodeStageFrame(id, msg.members || [id], f.data, { width: f.width, height: f.height, quality: stage.quality, intervalMs: stage.intervalMs })
+                    }
+                    if (preview) {
+                        const f = rgbaAt(preview.width)
+                        previewFrames().deliver(id, "PREVIEW", id, { xres: f.width, yres: f.height, format: "rgba", data: f.data }, Date.now(), true)
+                    }
+                } catch (err: any) {
+                    console.error("cpu frame fan-out failed:", err?.message)
+                }
+                break
+            }
+            case "mediaFrame": {
+                const prev = mediaLatest.get(msg.key)
+                const handle = msg.handle?.planes ? msg.handle : Buffer.from(msg.handle)
+                mediaLatest.set(msg.key, { key: msg.key, seq: msg.seq, handle, width: msg.width, height: msg.height, refs: 0 })
+                if (prev && prev.refs <= 0) port.postMessage({ type: "mediaRelease", key: prev.key, seq: prev.seq })
+                break
+            }
+            case "mediaAssign":
+                if (msg.layers?.length) mediaAssigned[msg.outputId] = { layers: msg.layers, fill: msg.fill || [0, 0, 0] }
+                else delete mediaAssigned[msg.outputId]
+                break
+            case "mediaDrop": {
+                const prev = mediaLatest.get(msg.key)
+                mediaLatest.delete(msg.key)
+                if (prev && prev.refs <= 0) port.postMessage({ type: "mediaRelease", key: prev.key, seq: prev.seq })
+                break
+            }
+            case "videoSource":
+                connectVideoSource(msg.targetId, msg.outputId, msg.port, msg.token)
+                break
+            case "rtmpUpdate":
+                rtmpStopWatch.add(msg.outputId)
+                RtmpStreamer.update(msg.outputId, msg.config, msg.destinations, { ffmpegPath: msg.ffmpegPath, encoderId: msg.encoderId })
+                break
+            case "rtmpStop":
+                rtmpStopWatch.delete(msg.outputId)
+                RtmpStreamer.stop(msg.outputId)
+                break
+            case "rtmpStopAll":
+                rtmpStopWatch.clear()
+                RtmpStreamer.stopAll()
+                break
+            case "rtmpAudio":
+                RtmpStreamer.updateAudio(msg.outputId, Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.sampleRate)
+                break
+            case "rtmpFrame":
+                RtmpStreamer.updateFrame(msg.outputId, Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.size)
+                break
+            case "bmdInit": {
+                // native conversion to the card's YUV modes for frames the GPU did not produce in them
+                const osrMod = loadOsrCapture()
+                if (osrMod && typeof osrMod.convertBgraToCard === "function") BlackmagicSender.nativeCardConvert = (frame, w, h, f, into) => osrMod.convertBgraToCard(frame, w, h, f, into)
+                void BlackmagicSender.initialize(msg.outputId, msg.deviceIndex, msg.displayMode, msg.pixelFormat, msg.enableKeying, msg.audioChannels, msg.colorSpace).then(
+                    () => bmdReportState(msg.outputId),
+                    (err) => {
+                        console.error("Blackmagic init failed:", err)
+                        bmdReportState(msg.outputId)
+                    }
+                )
+                break
+            }
+            case "bmdStop":
+                bmdForget(msg.outputId)
+                BlackmagicSender.stop(msg.outputId)
+                bmdReportState(msg.outputId)
+                break
+            case "bmdStopAll":
+                bmdForget()
+                BlackmagicSender.stopAll()
+                break
+            case "bmdShutdown":
+                bmdForget()
+                BlackmagicSender.shutdown()
+                break
+            case "bmdReset":
+                BlackmagicSender.resetProblematicDevice(msg.outputId)
+                break
+            case "bmdAudio":
+                BlackmagicSender.sendAudioBuffer(Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.opts)
+                break
+            case "bmdFrame": {
+                bmdGive(msg.outputId, Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.framerate, !!msg.preConverted)
+                break
+            }
+            case "previewReset":
+                if (previewServer) for (const m of Object.keys(previewServer.targets())) previewServer.drop(m)
+                break
+            case "presentReset":
+                if (presentServer) for (const m of Object.keys(presentServer.targets())) presentServer.drop(m)
+                break
+            case "webrtcReset":
+                if (webrtcServer) for (const m of Object.keys(webrtcServer.targets())) webrtcServer.drop(m)
                 break
             case "audio":
                 sendAudioBuffer(Buffer.from(msg.buffer, msg.byteOffset, msg.byteLength), msg.opts)

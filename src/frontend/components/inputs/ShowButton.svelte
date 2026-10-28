@@ -169,10 +169,10 @@
             const located = await getMedia(id)
             if (!located) return
 
-            let out = { path: located.path, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type, ...mediaStyle }
+            const ignoreLayer = videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))
+            if (ignoreLayer) clearSlide()
 
-            // clear slide
-            if (videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))) clearSlide()
+            let out = { path: located.path, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type, ...mediaStyle, ignoreLayer }
 
             setOutput("background", out)
         } else if (type === "pdf") {

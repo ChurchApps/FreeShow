@@ -9,6 +9,8 @@ export interface Config {
     dataPath: string | null
     disableHardwareAcceleration: boolean | null
     graphicsDevice: string | null
+    /** last GPU problem reported, so it is not repeated every launch */
+    gpuHealthNotice?: string
     autoErrorReporting?: boolean
     mediaFolderPath?: string
 
@@ -295,7 +297,7 @@ export interface Variable {
     animateTowardsResult?: boolean
     animationDuration?: number
     eachNumberOnce?: boolean
-    sets?: { name: string; minValue?: number; maxValue?: number }[]
+    sets?: { name: string; minValue?: number; maxValue?: number; disabled?: boolean }[]
     setName?: string // chosen random set
     setLog?: { name: string; number: string }[]
 

@@ -5,7 +5,7 @@ import { Main } from "../../../../types/IPC/Main"
 import { AudioAnalyser } from "../../../audio/audioAnalyser"
 import { fadeinAllPlayingAudio, fadeoutAllPlayingAudio } from "../../../audio/audioFading"
 import { requestMain } from "../../../IPC/main"
-import { media, outputs, playerVideos, playingVideos, playingVideoState, special, styles, transitionData } from "../../../stores"
+import { activeProject, media, outputs, playerVideos, playingVideos, projects, playingVideoState, special, styles, transitionData } from "../../../stores"
 import { playFolder } from "../../../utils/shortcuts"
 import { customActionActivation } from "../../actions/actions"
 import { getVimeoData, getYouTubeData } from "../../drawer/player/playerHelper"
@@ -53,6 +53,8 @@ export type VideoAudioData = {
 
 export type PlayingVideoState = {
     currentTime: number
+    /** when currentTime was read, in epoch ms */
+    at?: number
     duration: number
     paused: boolean
     loop: boolean
@@ -261,7 +263,7 @@ export class VideoPlayer {
 
     private static async createAudio(audioPath: string, originalId: string, outputIds?: string[], isOnline?: boolean): Promise<HTMLAudioElement | VirtualAudioElement | null> {
         if (isOnline) {
-            const playerData = get(playerVideos)[originalId]
+            const playerData = get(playerVideos)[originalId] || get(projects)[get(activeProject) || ""]?.shows?.find((a) => a.id === originalId)?.data
             const path = playerData?.id || ""
             const data = await (playerData?.type === "youtube" ? getYouTubeData(path) : playerData?.type === "vimeo" ? getVimeoData(path) : null)
 
@@ -860,6 +862,7 @@ export class VideoPlayer {
 
                     a[id] = {
                         currentTime: Number.isFinite(activeAudio.currentTime) ? activeAudio.currentTime : 0,
+                        at: Date.now(),
                         duration: Number.isFinite(activeAudio.duration) && activeAudio.duration > 0 ? activeAudio.duration : 0,
                         paused: activeAudio.paused,
                         loop: video.loop || false,

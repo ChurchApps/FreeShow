@@ -118,5 +118,9 @@ export const DEFAULT_DICTIONARY = {
     },
     context: {
         addToProject: "Add to project"
+    },
+    error: {
+        wrongPass: "Wrong password!",
+        overLimit: "Maximum connections reached!"
     }
 }

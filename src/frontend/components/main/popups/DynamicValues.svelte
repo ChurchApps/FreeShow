@@ -45,7 +45,7 @@
         const hidden = ["slide_text", "slide_group_color", "slide_group_upcoming_color"]
         let nonStageHidden = ["show_text_full", "slide_group_text"]
         if ($showsCache[$activeShow?.id || ""]?.reference?.type !== "interaction") nonStageHidden.push("interaction_")
-        const stageHidden = ["interaction_"]
+        const stageHidden = ["interaction_", "slide_text+1"]
         if (isStage) list = list.filter((a) => !hidden.includes(a.id) && !stageHidden.some((h) => a.id.startsWith(h)))
         else list = list.filter((a) => !hidden.includes(a.id) && !nonStageHidden.some((h) => a.id.startsWith(h)))
 

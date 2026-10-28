@@ -122,7 +122,8 @@
 
 <svelte:window on:mousemove={mousemove} on:mouseup={mouseup} />
 
-<canvas bind:this={canvasElem}></canvas>
+<!-- data-animated: keeps the page busy (MainOutput.svelte) -->
+<canvas bind:this={canvasElem} data-animated></canvas>
 
 <!-- move boxes -->
 {#if edit}

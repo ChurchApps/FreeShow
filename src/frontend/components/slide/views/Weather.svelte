@@ -4,6 +4,7 @@
     import { translateText } from "../../../utils/language"
     import { getWeather } from "../../../utils/weather"
     import T from "../../helpers/T.svelte"
+    import { getWeekday } from "../../helpers/time"
 
     export let data: Weather
 
@@ -38,7 +39,7 @@
             .map((a, i) => {
                 const currentTime = new Date(a)
                 let dayIndex = currentTime.getDay() === 0 ? 7 : currentTime.getDay()
-                const dayname = translateText(i < 2 ? `calendar.${i === 0 ? "today" : "tomorrow"}` : `weekday.${dayIndex}`)
+                const dayname = i < 2 ? translateText(i === 0 ? "calendar.today" : "calendar.tomorrow") : getWeekday(dayIndex)
                 const isoTime = toGlobalISO(a)
                 let timedata = weather.properties.timeseries.find((a) => a.time === isoTime)
                 if (timedata && i === 0) timedata = weather.properties.timeseries[0]

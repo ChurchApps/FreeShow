@@ -85,8 +85,8 @@ export const receiveSTAGE = {
     },
     LAYOUT: (data: { id: string; password?: string }, connectionId: string) => {
         let layout = get(stageShows)[data.id]
-        if (!layout || layout.disabled) return { channel: "ERROR", data: "noShow" }
-        if (layout.password && layout.password !== data.password) return { channel: "ERROR", data: "wrongPass" }
+        if (!layout || layout.disabled) return { channel: "ERROR", data: { key: "noShow" } }
+        if (layout.password && layout.password !== data.password) return { channel: "ERROR", data: { key: "wrongPass" } }
         setConnectedState("STAGE", connectionId, "active", data.id)
 
         layout = arrayToObject(filterObjectArray(get(stageShows), ["disabled", "name", "settings", "items"]))[data.id]
@@ -116,11 +116,12 @@ export const receiveSTAGE = {
     },
 
     OUT: (data: any, connectionId: string = "") => {
-        let stageId = data?.id || get(connections).STAGE?.[connectionId]?.active || Object.values(get(connections).STAGE || {}).find((c: any) => c?.active)?.active
+        let stageId = (connectionId ? get(connections).STAGE?.[connectionId]?.active : "") || data?.id || (connectionId ? "" : Object.values(get(connections).STAGE || {}).find((c: any) => c?.active)?.active)
         if (!stageId) return
 
         const stageLayout = get(stageShows)[stageId]
         if (!stageLayout) return
+        if (connectionId && stageLayout.password && get(connections).STAGE?.[connectionId]?.active !== stageId) return
 
         const sourceOutputId = stageLayout.settings?.output
         const outputStores = get(outputs)
@@ -141,7 +142,12 @@ export const receiveSTAGE = {
     SHOW_DATA: (data: any, connectionId: string = "") => {
         let outSlideId = data?.id
         if (!outSlideId) {
-            const stageId = get(connections).STAGE?.[connectionId]?.active || Object.values(get(connections).STAGE || {}).find((c: any) => c?.active)?.active
+            const stageId = (connectionId ? get(connections).STAGE?.[connectionId]?.active : "") || (connectionId ? "" : Object.values(get(connections).STAGE || {}).find((c: any) => c?.active)?.active)
+            if (connectionId && stageId) {
+                const stageLayout = get(stageShows)[stageId]
+                if (stageLayout?.password && get(connections).STAGE?.[connectionId]?.active !== stageId) return
+            }
+
             const sourceOutputId = stageId ? get(stageShows)[stageId]?.settings?.output : ""
             const outputId = sourceOutputId && get(outputs)[sourceOutputId] ? sourceOutputId : getFirstOutput()?.id
             outSlideId = get(outputs)[outputId || ""]?.out?.slide?.id || ""

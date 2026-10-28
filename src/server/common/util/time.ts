@@ -42,31 +42,71 @@ export function joinTimeBig(time: number, showHours: boolean = true, padding: bo
     return (days + [h, m, allTimes.s].filter(Boolean).join(":")).replace(" :", " ")
 }
 
-export function dateToString(date: Date, full: boolean = false): string {
+export function dateToString(date: string | number | Date, short: boolean = false): string {
+    if (!date) return ""
     date = new Date(date)
 
-    let year: any = date.getFullYear()
-    let month: any = date.getMonth() + 1
-    let day: any = date.getDate()
+    if (short) {
+        const now = new Date()
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+        const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+        const diffDays = Math.round((startOfToday - startOfDate) / (1000 * 60 * 60 * 24))
 
-    let string: string = ""
-    if (full) {
-        let d: any = {}
-        // TODO: get dictionary...
-        let weekday = d.weekday ? d.weekday[date.getDay()] : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][date.getDay()]
-        month = d.month ? d.month[date.getMonth()] : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][date.getMonth()]
+        if (diffDays >= 0 && diffDays <= 7) {
+            if (diffDays === 0) {
+                try {
+                    const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" })
+                    const res = rtf.format(0, "day")
+                    return res.charAt(0).toUpperCase() + res.slice(1)
+                } catch {
+                    return "Today"
+                }
+            }
+            if (diffDays < 7) {
+                try {
+                    const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "always" })
+                    const res = rtf.format(-diffDays, "day")
+                    return res.charAt(0).toUpperCase() + res.slice(1)
+                } catch {
+                    return `${diffDays} days ago`
+                }
+            }
+            if (diffDays === 7) {
+                try {
+                    const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "always" })
+                    const res = rtf.format(-1, "week")
+                    return res.charAt(0).toUpperCase() + res.slice(1)
+                } catch {
+                    return "1 week ago"
+                }
+            }
+        }
 
-        // Monday 6. February, 2021
-        string = weekday + " " + day + ". " + month + ", " + year
-    } else {
-        if (month < 10) month = "0" + month
-        if (day < 10) day = "0" + day
-        year = year.toString().slice(-2)
-        string = [day, month, year].join(".")
+        try {
+            const parts = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" }).formatToParts(date)
+            const fullParts = new Intl.DateTimeFormat(undefined, { month: "long" }).formatToParts(date)
+            const fullMonth = fullParts.find((p) => p.type === "month")?.value
+            if (fullMonth && fullMonth.length <= 4) {
+                const mPart = parts.find((p) => p.type === "month")
+                if (mPart) mPart.value = fullMonth
+            }
+            return parts.map((p) => p.value).join("")
+        } catch {
+            return date.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+        }
     }
 
-    // TODO: get format (DD.MM.YY) | YYYY-MM-DD | MM/DD/YYYY
-    return string
+    try {
+        const str = date.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+        return str.charAt(0).toUpperCase() + str.slice(1)
+    } catch {
+        let d: any = {}
+        // TODO: get dictionary...
+        let monthName = d.month ? d.month[date.getMonth()] : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][date.getMonth()]
+        let weekday = d.weekday ? d.weekday[date.getDay()] : ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][date.getDay()]
+        // Monday 6. February, 2021
+        return weekday + " " + date.getDate() + ". " + monthName + ", " + date.getFullYear()
+    }
 }
 
 // TIMER

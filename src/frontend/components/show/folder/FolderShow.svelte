@@ -67,8 +67,11 @@
         let videoType = getMediaLayerType(file.path, mediaStyle)
         let loop = videoType === "foreground" ? false : true
         let muted = videoType === "background" ? true : false
-        if (videoType === "foreground") clearSlide()
-        setOutput("background", { path: file.path, type: file.type, loop, muted, startAt: 0, ...mediaStyle, ignoreLayer: videoType === "foreground" })
+
+        const ignoreLayer = videoType === "foreground" || (videoType !== "background" && (file.type === "image" || !loop))
+        if (ignoreLayer) clearSlide()
+
+        setOutput("background", { path: file.path, type: file.type, loop, muted, startAt: 0, ...mediaStyle, ignoreLayer })
 
         startFolderTimer(path, file)
     }

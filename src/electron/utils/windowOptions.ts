@@ -62,6 +62,7 @@ export const outputOptions: BrowserWindowConstructorOptions = {
         preload: join(__dirname, "..", "preload"),
         webSecurity: isProd,
         nodeIntegration: !isProd,
+        sandbox: false, // the preload maps the shared-memory frame ring (streamPort.ts) with a native module
         contextIsolation: true,
         allowRunningInsecureContent: false,
         webviewTag: true,

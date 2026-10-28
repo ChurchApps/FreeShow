@@ -8,15 +8,15 @@ import { history } from "../components/helpers/history"
 import { getExtension, getFileName, getMediaType, removeExtension } from "../components/helpers/media"
 import { checkName } from "../components/helpers/show"
 import { sendMain } from "../IPC/main"
-import { actions as actionsStores, activePage, activePopup, activeProject, activeShow, alertMessage, categories as categoriesStore, editingProjectTemplate, effects as effectsStores, focusMode, folders, media as mediaStores, overlays as overlayStores, projects, projectTemplates, projectView, recentFiles } from "../stores"
+import { actions as actionsStores, activePage, activePopup, activeProject, activeShow, alertMessage, categories as categoriesStore, editingProjectTemplate, effects as effectsStores, focusMode, folders, media as mediaStores, overlays as overlayStores, projects, projectTemplates, projectView, recentFiles, variables as variablesStore } from "../stores"
+import { newToast } from "../utils/common"
 import { translateText } from "../utils/language"
 import { confirmCustom } from "../utils/popup"
 import { audioExtensions, mediaExtensions } from "../values/extensions"
-import { newToast } from "../utils/common"
 
 export function importProject(files: { content: string; path?: string; name?: string; extension?: string }[]) {
     files.forEach(({ content, path }) => {
-        const { project, parentFolder, shows, overlays, effects, actions, media, categories } = JSON.parse(content)
+        const { project, parentFolder, shows, overlays, effects, actions, media, categories, variables } = JSON.parse(content)
         if (!project) return
 
         // find any parent folder with the same name as previous parent, or place at root
@@ -63,6 +63,16 @@ export function importProject(files: { content: string; path?: string; name?: st
                 Object.entries(actions).forEach(([id, action]: any) => {
                     // create new or replace existing
                     a[id] = action
+                })
+                return a
+            })
+        }
+
+        // add variables
+        if (variables) {
+            variablesStore.update((a) => {
+                Object.entries(variables).forEach(([id, variable]: any) => {
+                    a[id] = variable
                 })
                 return a
             })

@@ -1502,8 +1502,7 @@
         "no_video_decode": "Hardware video decoding is unavailable",
         "no_video_decode_info": "Videos are decoding on the CPU (high usage, choppy playback).",
         "va_driver_missing": "A video driver is missing. To fix, run this and restart:",
-        "update_drivers": "Installing or updating your graphics drivers may fix this.",
-        "disable_hint": "Disable hardware acceleration in Settings to hide this."
+        "update_drivers": "Installing or updating your graphics drivers may fix this."
     },
     "output": {
         "state_inactive": "Inactive",
@@ -1682,29 +1681,6 @@
         "minimum": "Minimum",
         "maximum": "Maximum",
         "add_set": "Add set"
-    },
-    "month": {
-        "1": "January",
-        "2": "February",
-        "3": "March",
-        "4": "April",
-        "5": "May",
-        "6": "June",
-        "7": "July",
-        "8": "August",
-        "9": "September",
-        "10": "October",
-        "11": "November",
-        "12": "December"
-    },
-    "weekday": {
-        "1": "Monday",
-        "2": "Tuesday",
-        "3": "Wednesday",
-        "4": "Thursday",
-        "5": "Friday",
-        "6": "Saturday",
-        "7": "Sunday"
     },
     "interval": {
         "daily": "Daily",

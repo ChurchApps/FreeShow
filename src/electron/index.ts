@@ -18,7 +18,8 @@ import { autoErrorReport } from "./IPC/responsesMain"
 import { receiveNDI } from "./ndi/talk"
 import { receiveOMT } from "./omt/talk"
 import { OutputHelper } from "./output/OutputHelper"
-import { setRtmpNoticeListener, setRtmpStatusListener } from "./streaming/RtmpStreamer"
+import { RenderGroups } from "./output/helpers/RenderGroups"
+import { RtmpBridge } from "./streaming/RtmpBridge"
 import { callClose, exitApp, saveAndClose } from "./utils/close"
 import { applyCommandLineSwitches } from "./utils/commandLineSwitches"
 import { applyGraphicsDeviceSelection, scheduleGpuHealthCheck } from "./utils/gpu"
@@ -50,6 +51,13 @@ export const isLinux: boolean = process.platform === "linux"
 
 // Chromium command-line switches must precede app "ready" (they configure the GPU process launch)
 applyCommandLineSwitches()
+
+// a closed stdout/stderr (pipe or terminal gone) raises EPIPE, which would otherwise crash the app
+for (const stream of [process.stdout, process.stderr]) {
+    stream.on("error", (err: NodeJS.ErrnoException) => {
+        if (err?.code !== "EPIPE") throw err
+    })
+}
 
 // graphics device selection (Settings > Other): must run before "ready" (command-line switches
 // precede GPU process launch); a change requires a restart, like the hardware-acceleration toggle
@@ -107,7 +115,7 @@ if (RECORD_STARTUP_TIME) console.time("Full startup")
 app.on("ready", async () => {
     // getGPUFeatureStatus() at app-ready is premature (GPU process still initializing, reports
     // disabled_software defaults) — only the delayed re-logs reflect the real state
-    logGpuStatus("t=0")
+    logGpuStatus("start")
     setTimeout(() => logGpuStatus("t=10s"), 10_000)
     setTimeout(() => logGpuStatus("t=25s"), 25_000)
     // compares the steady-state GPU regime against the user's intent, notifies on degradation
@@ -121,16 +129,19 @@ app.on("ready", async () => {
 // Always on for Linux, elsewhere gated behind FS_CAP_STATS; observational only.
 function logGpuStatus(tag: string) {
     if (!isLinux && !process.env.FS_CAP_STATS) return
-    try {
-        const s = app.getGPUFeatureStatus() as unknown as Record<string, string>
-        console.info(`[GPU-STATUS ${tag}] gpu_compositing=${s.gpu_compositing} gpu_rasterization=${s.rasterization ?? s.gpu_rasterization} webgl=${s.webgl} webgl2=${s.webgl2} video_decode=${s.video_decode}`)
-    } catch (err) {
-        console.warn(`[GPU-STATUS ${tag}] getGPUFeatureStatus failed:`, err)
-    }
-    app.getGPUInfo("basic")
+    // "complete" waits for the GPU process, so the feature status is real and GL strings exist ("basic" has none on macOS)
+    app.getGPUInfo("complete")
         .then((info: any) => {
+            try {
+                const s = app.getGPUFeatureStatus() as unknown as Record<string, string>
+                console.info(`[GPU-STATUS ${tag}] gpu_compositing=${s.gpu_compositing} gpu_rasterization=${s.rasterization ?? s.gpu_rasterization} webgl=${s.webgl} webgl2=${s.webgl2} video_decode=${s.video_decode}`)
+            } catch (err) {
+                console.warn(`[GPU-STATUS ${tag}] getGPUFeatureStatus failed:`, err)
+            }
             const d = info?.gpuDevice?.find((g: any) => g.active) ?? info?.gpuDevice?.[0] ?? {}
-            console.info(`[GPU-STATUS ${tag}] vendor=${info?.auxAttributes?.glVendor ?? d.vendorId} renderer=${info?.auxAttributes?.glRenderer ?? "?"} driver=${info?.auxAttributes?.glVersion ?? d.driverVersion ?? "?"}`)
+            const vendorId = typeof d.vendorId === "number" ? `0x${d.vendorId.toString(16).padStart(4, "0")}` : "?"
+            const name = d.deviceString || d.driverVendor || ""
+            console.info(`[GPU-STATUS ${tag}] gpu=${vendorId}${name ? ` (${name})` : ""} renderer=${info?.auxAttributes?.glRenderer || "?"} driver=${d.driverVersion || info?.auxAttributes?.glVersion || "?"}`)
         })
         .catch((err: Error) => console.warn(`[GPU-STATUS ${tag}] getGPUInfo failed:`, err))
 }
@@ -139,20 +150,10 @@ export let powerSaveBlockerId: number | null = null
 async function startApp() {
     if (RECORD_STARTUP_TIME) console.time("Initial")
 
-    // WIDEVINE
-    // Wait for Widevine CDM components to be ready (required for castlabs electron)
-    // try {
-    //     const { components } = require("electron")
-    //     await components.whenReady()
-    //     console.info("Widevine CDM components ready")
-    // } catch (err) {
-    //     console.warn("Failed to initialize Widevine CDM components:", err)
-    // }
-
     setTimeout(createLoading)
 
-    setRtmpStatusListener((outputId, destinations) => sendToMain(ToMain.RTMP_STATUS, { outputId, destinations }))
-    setRtmpNoticeListener((message) => sendToMain(ToMain.ALERT, message))
+    RtmpBridge.setStatusListener((outputId, destinations) => sendToMain(ToMain.RTMP_STATUS, { outputId, destinations }))
+    RtmpBridge.setNoticeListener((message) => sendToMain(ToMain.ALERT, message))
 
     await setupStores()
 
@@ -262,7 +263,7 @@ function mainWindowLoaded() {
     if (RECORD_STARTUP_TIME) console.timeEnd("Full startup")
 }
 
-export async function loadWindowContent(window: BrowserWindow, type: null | "output" = null) {
+export async function loadWindowContent(window: BrowserWindow, type: null | "output" | "media" = null) {
     const mainOutput = type === null
 
     if (isProd) window.loadFile("public/index.html").catch(loadingFailed)
@@ -275,6 +276,8 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     window.webContents.ipc.on(STARTUP, (_event, msg) => {
         if (msg?.channel === "READY") {
             window.webContents.send(STARTUP, { channel: "TYPE", data: type, autoProfile })
+            // render groups may have formed before this window could receive the broadcast
+            if (mainOutput) toApp(OUTPUT, { channel: "RENDER_GROUPS", data: RenderGroups.snapshot() })
         }
     })
 

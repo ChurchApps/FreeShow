@@ -23,18 +23,21 @@
         canvas.height = videoElem.offsetHeight
         canvas.getContext("2d")?.drawImage(videoElem, 0, 0, videoElem.offsetWidth, videoElem.offsetHeight)
         loaded = true
+        // the tile is a still, so the capture is no longer needed
+        stopStream()
     }
 
     // TS issue https://github.com/electron/electron/issues/27139
+    // a tile only needs one frame, and a drawer opens many at once
     let constraints: any = {
         video: {
             mandatory: {
                 chromeMediaSource: "desktop",
                 chromeMediaSourceId: screen.id,
-                maxWidth: 1920,
-                maxHeight: 1080,
+                maxWidth: background ? 1920 : 640,
+                maxHeight: background ? 1080 : 360,
                 // maxAspectRatio: 16/9,
-                maxFrameRate: 60
+                maxFrameRate: background ? 60 : 5
             }
         }
     }
@@ -42,10 +45,15 @@
     let retryTimeout: NodeJS.Timeout | null = null
     let currentStream: MediaStream | null = null
     let destroyed = false
+    function stopStream() {
+        currentStream?.getTracks().forEach((track) => track.stop())
+        currentStream = null
+    }
     onDestroy(() => {
         destroyed = true
         if (retryTimeout) clearTimeout(retryTimeout)
-        currentStream?.getTracks().forEach((track) => track.stop())
+        // the tiles get a throwaway `streams` array, so nothing else stops these
+        stopStream()
     })
 
     onMount(capture)

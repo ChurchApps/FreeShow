@@ -491,11 +491,16 @@ export const dropActions = {
             const slide = ref.type === "child" ? slides[ref.parent!.id] : slides[ref.id]
             const activeTab: string | null = get(drawerTabsData)[get(activeDrawerTab)]?.activeSubTab
 
+            const items = clone(slides[ref.id].items || []).map((item: Item) => {
+                delete item.autoFontSize
+                return item
+            })
+
             const data = {
                 name: slide.group || "",
                 color: slide.color || "",
                 category: activeTab === "all" || activeTab === "unlabeled" ? null : activeTab,
-                items: slides[ref.id].items
+                items
             }
             history({ id: "UPDATE", newData: { data }, location: { page: "drawer", id: drop.id.slice(0, -1) } })
         })

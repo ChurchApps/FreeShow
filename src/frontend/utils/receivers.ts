@@ -4,7 +4,6 @@ import type { ClientMessage } from "../../types/Socket"
 import { AudioMicrophone } from "../audio/audioMicrophone"
 import { MIN_DB } from "../audio/dBUtils"
 import { runAction } from "../components/actions/actions"
-import { handleRecorderFrame } from "../components/drawer/live/recorder"
 import { getDynamicValue } from "../components/edit/scripts/itemHelpers"
 import { clone } from "../components/helpers/array"
 import { receiveMainGlobal } from "../IPC/main"
@@ -49,14 +48,15 @@ import {
     playingAudioPaths,
     playingVideoState,
     popupData,
-    previewBuffers,
     projects,
     shows,
     showsCache,
+    presenting,
     slideTimelineSpeedMultiplier,
     special,
     stageShows,
     styles,
+    renderGroups,
     syncedOutputs,
     templates,
     timeFormat,
@@ -104,19 +104,7 @@ export function remoteListen() {
 // OUTPUT
 
 const receiveOUTPUTasMAIN: any = {
-    BUFFER: ({ id, time, buffer, size }) => {
-        // this will infinitely increace if this is not in place
-        const timeSinceSent = Date.now() - time
-        if (timeSinceSent > 100) return // skip frames if overloaded
-
-        previewBuffers.update((a) => {
-            a[id] = { buffer, size }
-            return a
-        })
-    },
-    RECORDER_FRAME: ({ id, buffer, size }: { id: string; buffer: ArrayBuffer | Uint8Array; size: { width: number; height: number } }) => {
-        handleRecorderFrame(id, buffer, size)
-    },
+    RENDER_GROUPS: (a: any) => renderGroups.set(a || {}),
     OUTPUTS: (a: any) => outputs.set(a),
     RESTART: ({ id }) => restartOutputs(id),
     // DISPLAY: (a: any) => outputDisplay.set(a.enabled),
@@ -209,20 +197,8 @@ export const receiveOUTPUTasOUTPUT: any = {
         // used for stage mirror data (hacky fix)
         allOutputs.set(a)
     },
-    // only received by stage screen outputs
-    BUFFER: ({ id, time, buffer, size }) => {
-        const timeSinceSent = Date.now() - time
-        if (timeSinceSent > 100) return // skip frames if overloaded
-
-        // WIP only receive the "output capture" from this outputs "stageOutput id"
-        // let outputId = Object.keys(get(outputs))[0]
-        // if (id !== outputId) return
-
-        previewBuffers.update((a) => {
-            a[id] = { buffer, size }
-            return a
-        })
-    },
+    // this window draws a capture's frames instead of rendering the content
+    PRESENT: ({ active }: { id: string; active: boolean }) => presenting.set(!!active),
     CLOSE_AD: () => closeAd.set(true),
     LANGUAGE: (a: any) => setLanguage(a),
     STYLES: (a: any) => styles.set(a),

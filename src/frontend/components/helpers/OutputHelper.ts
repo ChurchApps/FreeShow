@@ -307,6 +307,8 @@ export class OutputHelper {
 
     private static outShowIsSameAsActive(outSlide: OutSlide | null, active: OutSlide | null) {
         if (!outSlide || !active) return false
+        // the same show can be added multiple times in a project (e.g. a blank show)
+        if (typeof outSlide.projectIndex === "number" && typeof active.projectIndex === "number" && outSlide.projectIndex !== active.projectIndex) return false
         return outSlide.id === active.id && outSlide.layout === active.layout
     }
 

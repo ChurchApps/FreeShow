@@ -10,6 +10,7 @@ import { clone, removeDuplicates, sortByTime } from "../../helpers/array"
 import { loadShows } from "../../helpers/setShow"
 import { checkName, getLayoutRef } from "../../helpers/show"
 import { _show } from "../../helpers/shows"
+import { getMonthName, getWeekday } from "../../helpers/time"
 import { isCalendarHidden } from "./calendars"
 
 export const MILLISECONDS_IN_A_DAY = 86400000
@@ -66,7 +67,7 @@ export async function createSlides(currentEvents: any[], showId = "") {
     currentEvents.forEach(createEventSlide)
     function createEventSlide(day: any) {
         const id = uid()
-        let textDay = new Date(day.date).getDate() + ". " + translateText("month." + (new Date(day.date).getMonth() + 1))
+        let textDay = new Date(day.date).getDate() + ". " + getMonthName(new Date(day.date).getMonth())
         let group: string = textDay
 
         const from = new Date(day.events[0].from)
@@ -196,10 +197,10 @@ function getEventStringOverMultipleDays(textDay, [day, from, to]: Date[]): strin
     const startAndEndSameYear = from.getFullYear() === to.getFullYear()
     const startAndEndSameMonth = from.getMonth() === to.getMonth()
 
-    if (startAndEndSameMonth && startAndEndSameYear) return `${new Date(day).getDate()}.-${to.getDate()}. ${translateText("month." + to.getMonth() + 1)}`
+    if (startAndEndSameMonth && startAndEndSameYear) return `${new Date(day).getDate()}.-${to.getDate()}. ${getMonthName(to.getMonth())}`
 
     if (!startAndEndSameYear) textDay += " " + from.getFullYear()
-    textDay += ` - ${to.getDate()}. ${translateText("month." + to.getMonth() + 1)}`
+    textDay += ` - ${to.getDate()}. ${getMonthName(to.getMonth())}`
     if (!startAndEndSameYear) textDay += " " + to.getFullYear()
 
     return textDay
@@ -214,10 +215,7 @@ function getDayNameIfCloseToToday(day: Date): string {
     if (daysUntilEvent === 1) return translateText("calendar.tomorrow")
     if (daysUntilEvent < 7 && daysUntilEvent > 0) {
         const weekDay = new Date(day).getDay() || 7
-        const dayString = translateText("weekday." + weekDay)
-
-        if (!dayString.length) return ""
-        return dayString[0].toUpperCase() + dayString.slice(1, dayString.length)
+        return getWeekday(weekDay, undefined, true)
     }
 
     return ""
