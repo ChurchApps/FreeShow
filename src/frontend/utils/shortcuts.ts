@@ -526,13 +526,13 @@ export async function togglePlayingMedia(e: Event | null = null, back = false, a
         const shouldLoop = typeof projectItem?.loop === "boolean" ? projectItem.loop : videoType === "background" ? true : false
         const shouldBeMuted = typeof projectItem?.muted === "boolean" ? projectItem.muted : videoType === "background" ? true : false
 
-        // clear slide
-        if (videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))) clearSlide()
+        const ignoreLayer = videoType === "foreground" || (videoType !== "background" && (type === "image" || !shouldLoop))
+        if (ignoreLayer) clearSlide()
 
         const located = await getMedia(item.id)
         if (!located) return
 
-        setOutput("background", { type, path: located.path, muted: shouldBeMuted, loop: shouldLoop, ...mediaStyle })
+        setOutput("background", { type, path: located.path, muted: shouldBeMuted, loop: shouldLoop, ...mediaStyle, ignoreLayer })
     } else if (type === "audio") {
         AudioPlayer.start(item.id, { name: (item as any).name || "" }, { pauseIfPlaying: true })
     } else if (type === "folder") {

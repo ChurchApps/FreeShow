@@ -173,10 +173,10 @@ export async function startProjectItemByName(name: string) {
         const shouldLoop = videoType === "background" ? item.loop || true : false
         const shouldBeMuted = videoType === "background" ? item.muted || true : false
 
-        let out = { path: item.id, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type: item.type, ...mediaStyle }
+        const ignoreLayer = videoType === "foreground" || (videoType !== "background" && (item.type === "image" || !shouldLoop))
+        if (ignoreLayer) clearSlide()
 
-        // clear slide
-        if (videoType === "foreground" || (videoType !== "background" && (item.type === "image" || !shouldLoop))) clearSlide()
+        let out = { path: item.id, muted: shouldBeMuted, loop: shouldLoop, startAt: 0, type: item.type, ...mediaStyle, ignoreLayer }
 
         setOutput("background", out)
     } else if (item.type === "pdf") {

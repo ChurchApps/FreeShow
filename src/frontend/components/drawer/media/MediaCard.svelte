@@ -128,13 +128,15 @@
         let videoType = getMediaLayerType(path, mediaStyle)
         let loop = contentProvider || videoType === "foreground" ? false : true
         let muted = videoType === "background" ? true : false
-        if (videoType === "foreground") clearSlide()
+
+        const ignoreLayer = videoType === "foreground"
+        if (ignoreLayer) clearSlide()
 
         // get style per output
         activeOutputs.forEach((output) => {
             const currentOutputStyle = $styles[output.style || ""]
             const currentMediaStyle = getMediaStyle($media[path], currentOutputStyle)
-            setOutput("background", { path, type, loop, muted, startAt: 0, ...currentMediaStyle, ignoreLayer: videoType === "foreground" }, false, output.id)
+            setOutput("background", { path, type, loop, muted, startAt: 0, ...currentMediaStyle, ignoreLayer }, false, output.id)
         })
 
         // unsplash requires the download to be triggered when using their images
