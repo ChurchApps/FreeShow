@@ -95,7 +95,7 @@
 
         if (timeout) clearTimeout(timeout)
 
-        timeout = setTimeout(() => timeoutFinished(currentlyLoading), items?.length && stageItem?.textFit !== "none" ? waitDuration : 0)
+        timeout = setTimeout(() => timeoutFinished(currentlyLoading), stageItem?.textFit !== "none" ? waitDuration : 0)
     }
 
     function timeoutFinished(newActive: boolean) {
