@@ -61,7 +61,7 @@
             {@const itemTransition = item?.actions?.transition}
             {@const hasItemTransition = !!((itemTransition && itemTransition.type !== "none" && itemTransition.duration) || itemTransition?.in || itemTransition?.out)}
             {@const hasTimers = !!(item?.actions?.showTimer || item?.actions?.hideTimer)}
-            {@const itemTransitionEnabled = transitionEnabled || hasItemTransition || hasTimers}
+            {@const itemTransitionEnabled = (!mirror || preview) && (transitionEnabled || hasItemTransition || hasTimers)}
 
             <SlideItemTransition transitionEnabled={itemTransitionEnabled} {isClearing} {preview} globalTransition={transition} {item} let:customItem>
                 <Textbox item={customItem} ref={{ type: "overlay", id }} {mirror} {preview} {outputId} {styleIdOverride} updateDynamicValues={!isClearing} />
