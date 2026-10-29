@@ -32,10 +32,12 @@ class FakeResponse extends EventEmitter {
 
 let lastRequest: FakeClientRequest
 let lastResponse: FakeResponse
+let lastOptions: any
 
 vi.mock("https", () => ({
     default: {
-        request: (_options: any, onResponse: any) => {
+        request: (options: any, onResponse: any) => {
+            lastOptions = options
             lastRequest = new FakeClientRequest()
             lastResponse = new FakeResponse()
             lastRequest.on("__respond", () => onResponse(lastResponse))
@@ -102,5 +104,12 @@ describe("httpsRequest", () => {
         await new Promise((r) => setTimeout(r, 10))
         expect(cb).toHaveBeenCalledTimes(1)
         expect(cb.mock.calls[0][0].message).toMatch(/closed prematurely/i)
+    })
+
+    it("correctly separates path from hostname when hostname includes a base path", () => {
+        const cb = vi.fn()
+        httpsRequest("https://example.domain.com/api", "/membership/oauth/token", "POST", {}, {}, cb)
+        expect(lastOptions.hostname).toBe("example.domain.com")
+        expect(lastOptions.path).toBe("/api/membership/oauth/token")
     })
 })
