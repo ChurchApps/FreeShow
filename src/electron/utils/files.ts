@@ -731,30 +731,24 @@ function formatTimestamp(ms: number): string {
 const CHUNK_SIZE = 1024 * 1024 // Read in 1MB chunks
 function parseMp4File<T>(filePath: string, fallback: T, setupListeners: (mp4boxfile: any, resolve: (res: T) => void) => void): Promise<T> {
     return new Promise((resolve) => {
-        if (!fs.existsSync(filePath)) return resolve(fallback)
-
-        let fd: number | null = null
+        let file: fs.promises.FileHandle | null = null
         let settled = false
 
         const cleanupAndResolve = (result: T) => {
             if (settled) return
             settled = true
-            if (fd !== null) {
-                try {
-                    fs.closeSync(fd)
-                } catch {}
-            }
+            file?.close().catch(() => {})
             resolve(result)
         }
 
-        try {
-            const stats = fs.statSync(filePath)
-            fd = fs.openSync(filePath, "r")
+        const parse = async () => {
+            file = await fs.promises.open(filePath, "r")
+            const { size } = await file.stat()
 
             // Fast check: ISO-BMFF / MP4 containers must contain an "ftyp" box near the beginning
-            const headerBytes = Math.min(stats.size, 256 * 1024)
+            const headerBytes = Math.min(size, 256 * 1024)
             const header = Buffer.allocUnsafe(headerBytes)
-            fs.readSync(fd, header, 0, headerBytes, 0)
+            await file.read(header, 0, headerBytes, 0)
             if (!header.includes("ftyp")) return cleanupAndResolve(fallback)
 
             const MP4Box = require("mp4box")
@@ -763,32 +757,35 @@ function parseMp4File<T>(filePath: string, fallback: T, setupListeners: (mp4boxf
 
             setupListeners(mp4boxfile, cleanupAndResolve)
 
+            // read where mp4box asks next, so media data is skipped when the moov box is at the end
             let offset = 0
-            const buffer = Buffer.allocUnsafe(CHUNK_SIZE)
-
-            while (offset < stats.size && !settled) {
-                const bytesRead = fs.readSync(fd, buffer, 0, CHUNK_SIZE, offset)
-                if (bytesRead === 0) break
+            while (offset < size && !settled) {
+                const buffer = Buffer.allocUnsafe(Math.min(CHUNK_SIZE, size - offset))
+                const { bytesRead } = await file.read(buffer, 0, buffer.length, offset)
+                if (bytesRead === 0 || settled) break
 
                 const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + bytesRead) as ArrayBuffer & { fileStart?: number }
                 arrayBuffer.fileStart = offset
-                offset += bytesRead
 
                 // Safeguard against internal mp4box runtime errors
+                let next: number
                 try {
-                    mp4boxfile.appendBuffer(arrayBuffer)
+                    next = mp4boxfile.appendBuffer(arrayBuffer)
                 } catch {
                     return cleanupAndResolve(fallback)
                 }
+
+                if (next === offset) break
+                offset = next
             }
 
             try {
                 mp4boxfile.flush()
             } catch {}
             if (!settled) cleanupAndResolve(fallback)
-        } catch {
-            cleanupAndResolve(fallback)
         }
+
+        parse().catch(() => cleanupAndResolve(fallback))
     })
 }
 
