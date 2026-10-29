@@ -201,6 +201,11 @@ export class OutputLifecycle {
         const output = data?.id ? OutputHelper.getOutput(data.id) : null
         if (!output || OutputHelper.renderWindow(output)?.webContents !== sender) return
         RenderGroups.setPageState(data.id, !!data.busy, data.dom || "", data.seq || 0)
+        // ensure the settled post-animation frame is painted on offscreen renderers even if the
+        // compositor dropped or coalesced the final animation frame
+        if (!data.busy && output.osr && RenderGroups.isRenderer(data.id)) {
+            this.requestRepaint(data.id)
+        }
     }
 
     // a follower's own page idles (kept current, never read); a renderer's page returns to full rate
@@ -1008,8 +1013,10 @@ export class OutputLifecycle {
         // Coalesces rapid paints into a single pending frame and admits it at the target framerate
         // interval when the pipeline has capacity.
         let pendingFrame: { tex: any; source: any; width: number; height: number } | null = null
+        let parkedDropped = false
         let admitNextDue = 0
         let admitTimer: NodeJS.Timeout | null = null
+        let mainRetryTimer: NodeJS.Timeout | null = null
 
         const forwardOffMain = (rec: { tex: any; source: any; width: number; height: number }) => {
             const { tex, source, width, height } = rec
@@ -1186,6 +1193,7 @@ export class OutputLifecycle {
                             if (STATS) sParkExpired++
                             releaseTex(pendingFrame.tex)
                             pendingFrame = null
+                            parkedDropped = true
                             return
                         }
                         tryAdmit()
@@ -1195,9 +1203,14 @@ export class OutputLifecycle {
             }
             const rec = pendingFrame
             pendingFrame = null
+            parkedDropped = false
             if (admitTimer) {
                 clearTimeout(admitTimer)
                 admitTimer = null
+            }
+            if (mainRetryTimer) {
+                clearTimeout(mainRetryTimer)
+                mainRetryTimer = null
             }
             const interval = OutputLifecycle.getOsrTargetInterval(id)
             admitNextDue += interval
@@ -1239,7 +1252,12 @@ export class OutputLifecycle {
                 }
                 // a pipe slot just freed: flush a pending frame that was HELD at its due boundary by a full
                 // pipe (work-conserving even admission — see tryAdmit)
-                tryAdmit()
+                if (pendingFrame) {
+                    tryAdmit()
+                } else if (parkedDropped) {
+                    parkedDropped = false
+                    OutputLifecycle.requestRepaint(id)
+                }
             }
             if (STATS) {
                 sDone++
@@ -1309,6 +1327,7 @@ export class OutputLifecycle {
                     releaseTex(pendingFrame.tex)
                     pendingFrame = null
                 }
+                parkedDropped = false
                 return
             }
 
@@ -1328,6 +1347,7 @@ export class OutputLifecycle {
                     if (STATS) sDropInterval++
                     releaseTex(pendingFrame.tex)
                 }
+                parkedDropped = false
                 pendingFrame = { tex, source: handle, width, height }
                 tryAdmit()
                 return
@@ -1335,7 +1355,18 @@ export class OutputLifecycle {
 
             if (inFlight >= this.OSR_MAX_INFLIGHT_READBACKS || Date.now() - lastReadback < this.getOsrSendInterval(id)) {
                 releaseTex(tex)
+                if (!mainRetryTimer) {
+                    const delay = Math.max(1, this.getOsrSendInterval(id) - (Date.now() - lastReadback))
+                    mainRetryTimer = setTimeout(() => {
+                        mainRetryTimer = null
+                        OutputLifecycle.requestRepaint(id)
+                    }, delay)
+                }
                 return
+            }
+            if (mainRetryTimer) {
+                clearTimeout(mainRetryTimer)
+                mainRetryTimer = null
             }
             inFlight++
             lastReadback = Date.now()
@@ -1375,6 +1406,10 @@ export class OutputLifecycle {
             if (admitTimer) {
                 clearTimeout(admitTimer)
                 admitTimer = null
+            }
+            if (mainRetryTimer) {
+                clearTimeout(mainRetryTimer)
+                mainRetryTimer = null
             }
             if (pendingFrame) {
                 releaseTex(pendingFrame.tex)
