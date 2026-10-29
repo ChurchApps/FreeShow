@@ -1777,7 +1777,13 @@
         "all_at_once": "All inputs at once",
         "max_time": "Max time per input",
         "score_system": "Score system",
-        "points": "Points"
+        "points": "Points",
+        "auto_progress": "Automatically advance and reveal",
+        "answer_display_duration": "Show answer for",
+        "auto_progress_help": "Requires a question timer. The final answer stays visible.",
+        "resume_last_question": "Resume from last question",
+        "resume": "Resume",
+        "start_from_first_question": "Start Over"
     },
     "info": {
         "created": "Created",

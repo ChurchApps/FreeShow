@@ -128,8 +128,8 @@
         })
     }
 
-    async function start() {
-        await startInteraction(openedId)
+    async function start(startFromFirst = false) {
+        await startInteraction(openedId, startFromFirst)
     }
 
     let unsubscribes: (() => void)[] = []
@@ -228,6 +228,12 @@
 
             {#if !openedInteraction?.options?.allAtOnce}
                 <MaterialNumberInput label="interaction.max_time (conditions.seconds)" value={openedInteraction?.options?.maxTime ?? 0} defaultValue={0} on:change={(e) => setOption("maxTime", e.detail)} />
+                <MaterialToggleSwitch label="interaction.auto_progress" checked={openedInteraction?.options?.autoProgress ?? false} defaultValue={false} on:change={(e) => setOption("autoProgress", e.detail)} />
+                {#if openedInteraction?.options?.autoProgress}
+                    <MaterialNumberInput label="interaction.answer_display_duration (conditions.seconds)" value={openedInteraction?.options?.answerDisplayDuration ?? 5} defaultValue={5} min={1} on:change={(e) => setOption("answerDisplayDuration", e.detail)} />
+                    <p>{translateText("interaction.auto_progress_help")}</p>
+                {/if}
+                <MaterialToggleSwitch label="interaction.resume_last_question" checked={openedInteraction?.options?.resumeLastQuestion ?? false} defaultValue={false} on:change={(e) => setOption("resumeLastQuestion", e.detail)} />
 
                 <InputRow>
                     <MaterialDropdown label="interaction.score_system" value={openedInteraction?.options?.scoreSystem || "incremental"} options={scoreSystems} on:change={(e) => setOption("scoreSystem", e.detail)} />
@@ -433,9 +439,18 @@
             {/if}
         {:else}
             <FloatingInputs side="left" gradient>
-                <MaterialButton icon="play" disabled={!(openedInteraction?.inputs?.length || 0)} on:click={start} white>
-                    <T id="inputs.start" />
+                <MaterialButton icon="play" disabled={!(openedInteraction?.inputs?.length || 0)} on:click={() => start(false)} white>
+                    {#if openedInteraction?.options?.resumeLastQuestion && (openedInteraction?.lastQuestionIndex ?? 0) > 0}
+                        <T id="interaction.resume" />
+                    {:else}
+                        <T id="inputs.start" />
+                    {/if}
                 </MaterialButton>
+                {#if openedInteraction?.options?.resumeLastQuestion && (openedInteraction?.lastQuestionIndex ?? 0) > 0}
+                    <MaterialButton on:click={() => start(true)} white>
+                        <T id="interaction.start_from_first_question" />
+                    </MaterialButton>
+                {/if}
             </FloatingInputs>
         {/if}
     {/if}
@@ -526,7 +541,10 @@
     }
 
     .options {
-        padding: 10px;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 10px 10px 70px;
 
         display: flex;
         flex-direction: column;

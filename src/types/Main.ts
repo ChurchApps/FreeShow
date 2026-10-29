@@ -315,6 +315,7 @@ export interface Interaction {
     options?: Options
     history?: { time: number; leaderboard?: { name: string; score: number }[]; inputs: { question: string; answers: { name: string; value: any }[] }[] }[]
     lastConnection?: { id: string; secret: string }
+    lastQuestionIndex?: number
 }
 type Options = {
     requireName?: boolean // default = true
@@ -323,6 +324,9 @@ type Options = {
     maxTime?: number // seconds, default = no limit
     scoreSystem?: "incremental" | "falloff" | "speed" // default = "incremental"
     scorePoints?: number // default for incremental = 1, falloff = 10, speed = 100
+    autoProgress?: boolean // automatically reveal and advance after the timer
+    answerDisplayDuration?: number // seconds, default = 5
+    resumeLastQuestion?: boolean // resume at the saved question
 }
 
 export type InteractionInput = Heading | TextQuestion | NumberQuestion | MultipleChoiceQuestion

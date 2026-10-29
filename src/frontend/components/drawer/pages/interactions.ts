@@ -14,13 +14,13 @@ export function getInteraction(id: string): Interaction | undefined {
     return existingInteractions.get(id)
 }
 
-export async function startInteraction(id: string) {
+export async function startInteraction(id: string, startFromFirst = false) {
     if (existingInteractions.has(id)) {
         console.warn(`Interaction with ID: ${id} is already started`)
         return existingInteractions.get(id)!
     }
 
-    const interactionClass = new Interaction(id)
+    const interactionClass = new Interaction(id, startFromFirst)
     const success = await interactionClass.init() // Adjusted to be async because DB initialization is network-bound
     if (!success) {
         alertMessage.set("Failed to connect to Firebase. Please check your internet connection, or might be too many active users.")
@@ -105,13 +105,18 @@ class Interaction {
     startTimes: Record<number, number> = {}
     usedRandomNames: Set<string> = new Set()
     private timer: any = null
+    private autoTransitionTimer: ReturnType<typeof setTimeout> | null = null
+    private autoTransitionVersion = 0
+    private destroyed = false
+    private startFromFirst: boolean
     private unsubscribe: (() => void) | null = null
     private callbacks: ((data: { answers: any[]; clients: any; currentAnswer: any; inputIndex: number; closed: boolean }) => void)[] = []
     private tickCallbacks: ((data: { seconds: number; startTime: number; startTimes: Record<number, number>; closed: boolean }) => void)[] = []
     private lastData: { answers: any[]; clients: any; currentAnswer: any; inputIndex: number; closed: boolean } | null = null
 
-    constructor(id: string) {
+    constructor(id: string, startFromFirst = false) {
         this.id = id
+        this.startFromFirst = startFromFirst
     }
 
     onUpdate(callback: (data: { answers: any[]; clients: any; currentAnswer: any; inputIndex: number; closed: boolean }) => void) {
@@ -144,6 +149,8 @@ class Interaction {
             const data = this.getData()
             const maxTime = data?.options?.maxTime ?? 0
             if (maxTime > 0 && this.seconds >= maxTime) {
+                const expiredIndex = this.inputIndex
+                const transitionVersion = this.autoTransitionVersion
                 this.closed = true
                 this.stopTimer()
                 this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, startTimes: this.startTimes, closed: this.closed }))
@@ -152,12 +159,75 @@ class Interaction {
                     this.callbacks.forEach((cb) => cb(this.lastData!))
                 }
 
-                const updatePayload = this.getDbPayload()
-                await updateInteractionDb(this.dbid, this.dbsecret, updatePayload)
+                await updateInteractionDb(this.dbid, this.dbsecret, this.getDbPayload())
+
+                if (this.autoTransitionVersion === transitionVersion && this.inputIndex === expiredIndex && data?.options?.autoProgress && !data?.options?.allAtOnce) {
+                    await this.handleAutomaticAnswer(expiredIndex, transitionVersion)
+                }
             } else {
                 this.tickCallbacks.forEach((cb) => cb({ seconds: this.seconds, startTime: this.startTime, startTimes: this.startTimes, closed: this.closed }))
             }
         }, 1000)
+    }
+
+    private cancelAutoTransition() {
+        this.autoTransitionVersion++
+        if (this.autoTransitionTimer) {
+            clearTimeout(this.autoTransitionTimer)
+            this.autoTransitionTimer = null
+        }
+    }
+
+    private saveQuestionPosition() {
+        if (this.inputIndex < 0) return
+        interactions.update((all) => {
+            if (all[this.id]) all[this.id].lastQuestionIndex = this.inputIndex
+            return all
+        })
+    }
+
+    private async handleAutomaticAnswer(expectedIndex: number, transitionVersion: number) {
+        if (this.inputIndex !== expectedIndex || this.destroyed || this.autoTransitionVersion !== transitionVersion) return
+
+        const data = this.getData()
+        const input = data?.inputs?.[expectedIndex]
+        if (!data || !input || !data.options?.autoProgress || data.options.allAtOnce) return
+
+        if (hasAnswer(input)) await this.revealAnswer()
+
+        // Manual navigation may occur while the answer update is in progress.
+        if (this.inputIndex !== expectedIndex || this.destroyed || this.autoTransitionVersion !== transitionVersion) return
+
+        // Questions without a configured answer must still remain closed.
+        if (!this.closed) {
+            this.closed = true
+            await updateInteractionDb(this.dbid, this.dbsecret, this.getDbPayload())
+            if (this.inputIndex !== expectedIndex || this.destroyed || this.autoTransitionVersion !== transitionVersion) return
+        }
+
+        // Keep the final answer visible; never advance beyond the final question.
+        if (this.inputIndex >= data.inputs.length - 1 || this.destroyed || this.autoTransitionVersion !== transitionVersion) return
+
+        const duration = Math.max(1, data.options.answerDisplayDuration ?? 5)
+        if (this.autoTransitionTimer) clearTimeout(this.autoTransitionTimer)
+        this.autoTransitionTimer = setTimeout(async () => {
+            this.autoTransitionTimer = null
+            if (this.destroyed || this.inputIndex !== expectedIndex || this.autoTransitionVersion !== transitionVersion) return
+            const current = this.getData()
+            if (!current?.options?.autoProgress || current.options.allAtOnce) return
+            await this.advanceAutomatically(expectedIndex, transitionVersion)
+        }, duration * 1000)
+    }
+
+    private async advanceAutomatically(expectedIndex: number, transitionVersion: number) {
+        const data = this.getData()
+        if (!data || this.destroyed || this.inputIndex !== expectedIndex || this.autoTransitionVersion !== transitionVersion || this.inputIndex >= data.inputs.length - 1) return
+
+        this.inputIndex++
+        this.currentAnswer = null
+        this.saveQuestionPosition()
+        this.resetTimer()
+        await updateInteractionDb(this.dbid, this.dbsecret, this.getDbPayload())
     }
 
     private stopTimer() {
@@ -227,11 +297,15 @@ class Interaction {
         const data = this.getData()
         if (!data) return false
 
-        if (data.inputs?.length === 1) {
+        if (data.inputs?.length === 1 || this.startFromFirst) {
             this.inputIndex = 0
+        } else if (data.options?.resumeLastQuestion && Number.isInteger(data.lastQuestionIndex) && data.lastQuestionIndex! >= 0 && data.lastQuestionIndex! < data.inputs.length) {
+            this.inputIndex = data.lastQuestionIndex!
+        }
+
+        if (this.inputIndex >= 0) {
             this.startTime = Date.now()
-            this.startTimes[0] = this.startTime
-            this.startTimer()
+            this.startTimes[this.inputIndex] = this.startTime
         }
         let lastConnection = data.lastConnection || null
 
@@ -245,27 +319,63 @@ class Interaction {
             if (lastConnection) {
                 const existingData = await getInteractionDb(this.dbid, this.dbsecret)
                 if (existingData) {
-                    // recover existing state
-                    if (existingData.public?.inputIndex !== undefined) {
-                        this.inputIndex = existingData.public.inputIndex
-                        if (this.inputIndex >= 0) {
-                            this.startTime = existingData.public.startTime || Date.now()
-                            this.startTimes[this.inputIndex] = this.startTime
-                            this.closed = existingData.public.closed || false
-                            this.seconds = Math.floor((Date.now() - this.startTime) / 1000)
-                            if (!this.closed) this.startTimer()
-                        }
-                    }
-                    if (existingData.public?.currentAnswer !== undefined) {
-                        this.currentAnswer = existingData.public.currentAnswer
-                    }
-                    if (existingData.answers || existingData.clients) {
+                    // Start a fresh run only when the user explicitly chooses Question 1.
+                    if (this.startFromFirst) {
+                        // Preserve the recovered run before clearing its active submissions.
                         this.lastData = {
                             answers: existingData.answers || [],
                             clients: existingData.clients || {},
-                            currentAnswer: this.currentAnswer,
+                            currentAnswer: existingData.public?.currentAnswer ?? null,
+                            inputIndex: existingData.public?.inputIndex ?? this.inputIndex,
+                            closed: existingData.public?.closed ?? false
+                        }
+                        this.saveHistory()
+
+                        this.inputIndex = this.getData()?.inputs?.length ? 0 : -1
+                        this.startTime = Date.now()
+                        this.seconds = 0
+                        this.closed = false
+                        this.currentAnswer = null
+                        if (this.inputIndex >= 0) {
+                            this.startTimes[this.inputIndex] = this.startTime
+                        }
+                        this.saveQuestionPosition()
+
+                        // Clear active answers only; retain participant records and scores.
+                        await updateInteractionDb(this.dbid, this.dbsecret, {
+                            ...this.getDbPayload(),
+                            answers: null
+                        })
+
+                        this.lastData = {
+                            answers: [],
+                            clients: existingData.clients || {},
+                            currentAnswer: null,
                             inputIndex: this.inputIndex,
-                            closed: this.closed
+                            closed: false
+                        }
+                    } else {
+                        if (existingData.public?.inputIndex !== undefined) {
+                            this.cancelAutoTransition()
+                            this.inputIndex = existingData.public.inputIndex
+                            if (this.inputIndex >= 0) {
+                                this.startTime = existingData.public.startTime || Date.now()
+                                this.startTimes[this.inputIndex] = this.startTime
+                                this.closed = existingData.public.closed || false
+                                this.seconds = Math.floor((Date.now() - this.startTime) / 1000)
+                            }
+                        }
+                        if (existingData.public?.currentAnswer !== undefined) {
+                            this.currentAnswer = existingData.public.currentAnswer
+                        }
+                        if (existingData.answers || existingData.clients) {
+                            this.lastData = {
+                                answers: existingData.answers || [],
+                                clients: existingData.clients || {},
+                                currentAnswer: this.currentAnswer,
+                                inputIndex: this.inputIndex,
+                                closed: this.closed
+                            }
                         }
                     }
 
@@ -291,6 +401,13 @@ class Interaction {
                 this.unsubscribe = null
             }
             return false
+        }
+
+        // Start the timer only after the saved Firebase state has been recovered.
+        // This avoids leaving a timer running when the recovered question is closed.
+        this.stopTimer()
+        if (this.inputIndex >= 0 && !this.closed) {
+            this.startTimer()
         }
 
         // store last connection details, so users can connect with the same ID in case of a crash or something
@@ -367,6 +484,9 @@ class Interaction {
     }
 
     async destroy() {
+        this.destroyed = true
+        this.cancelAutoTransition()
+        this.saveQuestionPosition()
         this.saveHistory()
 
         this.stopTimer()
@@ -440,7 +560,9 @@ class Interaction {
 
     async previous() {
         if (this.inputIndex < 0) return // allow -1
+        this.cancelAutoTransition()
         this.inputIndex--
+        this.saveQuestionPosition()
         this.currentAnswer = null
 
         this.resetTimer()
@@ -451,6 +573,7 @@ class Interaction {
     }
 
     async next() {
+        this.cancelAutoTransition()
         const data = this.getData()
         if (!data) return
 
@@ -464,6 +587,7 @@ class Interaction {
         if (this.inputIndex < data.inputs.length - 1) {
             this.inputIndex++
             this.currentAnswer = null
+            this.saveQuestionPosition()
 
             this.resetTimer()
 
@@ -477,7 +601,9 @@ class Interaction {
         const data = this.getData()
         if (!data || index < 0 || index >= data.inputs.length) return
 
+        this.cancelAutoTransition()
         this.inputIndex = index
+        this.saveQuestionPosition()
         this.currentAnswer = null
 
         this.resetTimer()
