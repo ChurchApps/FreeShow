@@ -323,6 +323,8 @@ type Options = {
     randomNames?: boolean // default = false
     allAtOnce?: boolean // default = false
     maxTime?: number // seconds, default = no limit
+    timeUntilNext?: number // seconds, default = 0 (manual)
+    maxTimeAnswer?: number // seconds, default = 0 (manual)
     scoreSystem?: "incremental" | "falloff" | "speed" // default = "incremental"
     scorePoints?: number // default for incremental = 1, falloff = 10, speed = 100
 }
