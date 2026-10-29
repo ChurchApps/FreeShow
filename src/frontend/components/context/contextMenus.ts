@@ -102,6 +102,8 @@ export const contextMenuItems: { [key: string]: ContextMenuItem } = {
     // newPrivateShow: { label: "new.private", icon: "private" },
     private: { label: "actions.toggle_private", icon: "private", iconColor: "#ff5454" },
     unlink_pco: { label: "actions.unlink_pco", icon: "bind", iconColor: "#ff5454" },
+    link_item: { label: "actions.link_show", icon: "search" },
+    unlink_item: { label: "actions.unlink_show", icon: "unbind" },
     duplicate: { label: "actions.duplicate", icon: "duplicate", iconColor: "#97c7ff", shortcuts: ["Ctrl+D"] },
     make_unique: { label: "actions.make_unique", icon: "make_unique", iconColor: "#97c7ff" },
     mark_played: { label: "actions.mark_played", icon: "check", iconColor: "var(--text)" },
@@ -348,8 +350,8 @@ export const contextMenuLayouts: { [key: string]: string[] } = {
     project_player: ["remove"],
     // "delete" removed as too many users thought it just removed the show from the project
     // "duplicate" removed as it was people did not get that it only duplicated the reference in project, and not the entire show (keyboard / menu bar shortcuts can be used)
-    project_show: ["GROUP_rename_only", "remove", "SEPARATOR", "mark_played", "private"],
-    project_show_placeholder: ["remove"],
+    project_show: ["GROUP_rename_only", "remove", "SEPARATOR", "link_item", "unlink_item", "SEPARATOR", "mark_played", "private"],
+    project_show_placeholder: ["link_item", "remove"],
     project_show_placeholder_template: ["GROUP_rename_only", "remove"],
     pco_item: ["unlink_pco"],
     project_section: ["GROUP_recolor", "remove"],

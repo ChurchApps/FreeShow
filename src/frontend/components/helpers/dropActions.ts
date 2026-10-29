@@ -250,6 +250,9 @@ export const dropActions = {
             const replaceIndex = drop.data?.index !== undefined ? drop.data.index : activeShowObj?.index
             const indexes = drag.id === "show" ? getIndexes(data) : []
             const itemsToInsert = drag.id === "show" ? indexes.map((i) => projectShows[i]).filter(Boolean) : data
+            // a show dropped on an unlinked provider item takes over its link
+            const replaced = projectShows[replaceIndex]
+            if (replaced?.source && itemsToInsert.length === 1 && (itemsToInsert[0].type || "show") === "show") itemsToInsert[0] = { ...itemsToInsert[0], source: replaced.source, manual: true }
             h.newData.data = projectShows
                 .map((show, i) => (i === replaceIndex ? itemsToInsert : indexes.includes(i) ? null : show))
                 .flat()

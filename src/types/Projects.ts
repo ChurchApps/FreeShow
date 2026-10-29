@@ -33,6 +33,8 @@ export interface ProjectShowRef extends ShowRef {
     data?: any // section settings
     scheduleLength?: number // currently only from PCO import
     played?: boolean
+    source?: string // show id the content provider gave this item
+    manual?: boolean // linked or unlinked by hand: a provider re-sync keeps it
 }
 
 export interface ShowRef {

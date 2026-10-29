@@ -2,7 +2,7 @@ import { get } from "svelte/store"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
 import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
-import type { Project } from "../../types/Projects"
+import type { Project, ProjectShowRef } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
 import { Transcript } from "../ai/stt/transcript"
 import { API_ACTIONS, triggerAction } from "../components/actions/api"
@@ -391,10 +391,32 @@ export const mainResponses: MainResponses = {
             })
         }
 
+        // manual items per project, by provider show id; a provider show only they used is not imported again
+        const manualItems: { [projectId: string]: { [source: string]: ProjectShowRef[] } } = {}
+        const manualSources = new Set<string>()
+        const usedSources = new Set<string>()
+        data.projects.forEach((currentProject) => {
+            const manual: { [source: string]: ProjectShowRef[] } = {}
+            get(projects)[currentProject.id]?.shows?.forEach((item) => {
+                if (!item.manual || !item.source) return
+                ;(manual[item.source] ||= []).push(item)
+                manualSources.add(item.source)
+            })
+            manualItems[currentProject.id] = manual
+
+            const left: { [source: string]: number } = {}
+            Object.entries(manual).forEach(([source, items]) => (left[source] = items.length))
+            ;(currentProject.items || []).forEach((item) => {
+                if (left[item.id] > 0) left[item.id]--
+                else usedSources.add(item.id)
+            })
+        })
+
         // CREATE SHOWS
         const tempShows: { id: string; show: Show }[] = []
         for (const show of data.shows) {
             const id = show.id
+            if (manualSources.has(id) && !usedSources.has(id)) continue
 
             // if empty content and name is a scripture reference, generate slides from the active scripture
             const isEmptyContent = Object.keys(show.slides || {}).length === 0
@@ -510,13 +532,18 @@ export const mainResponses: MainResponses = {
                 created: currentProject.created,
                 used: Date.now(), // show on top in last used list
                 parent: folderId || "/",
-                shows: currentProject.items || [],
+                shows: (currentProject.items || []).map((item) => ((item.type || "show") === "show" ? { ...item, source: item.id } : item)),
                 origin
             }
             const project = createProviderProject(data.providerId, projectBase)
 
-            // REPLACE IDS
-            project.shows = project.shows.map((a) => ({ ...a, id: replaceIds[a.id] || a.id }))
+            // REPLACE IDS, keeping each manual item in place of the provider item it came from
+            const pending: { [source: string]: ProjectShowRef[] } = {}
+            Object.entries(manualItems[currentProject.id] || {}).forEach(([source, items]) => (pending[source] = [...items]))
+            project.shows = project.shows.map((a) => {
+                const manual = a.source ? pending[a.source]?.shift() : undefined
+                return manual ? { ...manual } : { ...a, id: replaceIds[a.id] || a.id }
+            })
 
             const projectId = currentProject.id
             history({ id: "UPDATE", newData: { data: project }, oldData: { id: projectId }, location: { page: "show", id: "project" } })

@@ -691,6 +691,8 @@
         "toggle_private": "Private",
         "view_private": "Show private",
         "unlink_pco": "Unlink from Planning Center",
+        "link_show": "Link show...",
+        "unlink_show": "Unlink show",
         "import": "Import",
         "export": "Export",
         "save_to_file": "Save to file",

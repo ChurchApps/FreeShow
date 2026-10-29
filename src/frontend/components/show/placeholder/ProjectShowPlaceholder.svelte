@@ -2,6 +2,7 @@
     import { activePopup, activeProject, activeShow, editingProjectTemplate, popupData, projects, projectTemplates, shows } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { history } from "../../helpers/history"
+    import { linkProjectItemTo } from "../../helpers/projectItemLink"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import Center from "../../system/Center.svelte"
     import DropArea from "../../system/DropArea.svelte"
@@ -35,14 +36,7 @@
                         location: { page: "show", id: "project_template" }
                     })
                 } else {
-                    newShows[showTemplateIndex] = { id: showId, type: "show" }
-                    history({
-                        id: "UPDATE",
-                        newData: { key: "shows", data: newShows },
-                        oldData: { id: projectId },
-                        location: { page: "show", id: "project_key" }
-                    })
-                    activeShow.set({ id: showId, type: "show", index: showTemplateIndex })
+                    linkProjectItemTo(showTemplateIndex, showId, projectId)
                 }
             }
         })

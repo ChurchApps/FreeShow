@@ -114,6 +114,7 @@ import { defaultOutput, getCurrentStyle, getFirstActiveOutput, isOutputBound, re
 import { select } from "../helpers/select"
 import { bindSlidesToOutput, checkName, formatToFileName, getLayoutRef, openShow, removeTemplatesFromShow, updateShowsList } from "../helpers/show"
 import { sendMidi } from "../helpers/showActions"
+import { linkProjectItem, unlinkProjectItem } from "../helpers/projectItemLink"
 import { _show } from "../helpers/shows"
 import { getMenuTagId, openTagManager, toggleSelectionTags, toggleTagFilter } from "../helpers/tags"
 import { clearSlide } from "../output/clear"
@@ -1149,6 +1150,14 @@ const clickActions = {
         const currentProject = isTemplate ? get(projectTemplates)[projectId || ""] : get(projects)[projectId || ""]
         const index: number = obj.sel?.data[0] ? obj.sel.data[0].index + 1 : currentProject?.shows?.length || 0
         history({ id: "UPDATE", newData: { key: "shows", index }, oldData: { id: projectId }, location: { page: "show", id: "section" } })
+    },
+    link_item: (obj: ObjData) => {
+        const index = obj.sel?.data?.[0]?.index
+        if (index !== undefined) linkProjectItem(Number(index))
+    },
+    unlink_item: (obj: ObjData) => {
+        const index = obj.sel?.data?.[0]?.index
+        if (index !== undefined) unlinkProjectItem(Number(index))
     },
     mark_played: (obj: ObjData) => {
         const indexes = (obj.sel?.data || []).map((item) => Number(item.index))
