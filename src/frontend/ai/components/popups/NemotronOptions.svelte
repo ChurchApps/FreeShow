@@ -18,7 +18,7 @@
     async function getStatus() {
         const result = await requestMain(Main.AI_GET_STATUS, { engineId: engine })
         status = result?.[engine] || null
-        if (status?.error) newToast(status.error)
+        if (status?.error && status.error !== "The local model is missing") newToast(status.error)
     }
 
     onMount(() => {
@@ -64,7 +64,7 @@
     <div style="display: flex;justify-content: center;padding: 10px;">
         <Loader />
     </div>
-{:else if status.error}
+{:else if status.unsupported}
     <Tip type="warning" value={status.error} />
 {:else if !status.ready}
     <MaterialButton variant="outlined" icon="download" disabled={isModelDownloading} style="flex: 1;" on:click={downloadModel}>
